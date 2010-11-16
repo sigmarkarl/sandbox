@@ -1259,6 +1259,7 @@ public class GeneSet {
 		String 	query = null;
 		String	evalue = null;
 		String line = br.readLine();
+		int count = 0;
 		while( line != null ) {
 			String trim = line.trim();
 			if( query != null && (trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb")) ) {
@@ -1286,9 +1287,11 @@ public class GeneSet {
 				String[] split = trim.split("[\t ]+");
 				evalue = split[split.length-1];
 			}
-			
+			count++;
 			line = br.readLine();
 		}
+		
+		System.err.println(count);
 		
 		Map<String,Set<String>>	mapset = new HashMap<String,Set<String>>();
 		for( String gene : set ) {
@@ -1340,6 +1343,8 @@ public class GeneSet {
 			}
 		}
 		
+		PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
+		System.setErr( ps );
 		for( String genegroup : mapset.keySet() ) {
 			Set<String> subset = mapset.get( genegroup );
 			System.err.println( genegroup + "   " + subset.size() );
@@ -1347,6 +1352,7 @@ public class GeneSet {
 				System.err.println( "\t" + gene );
 			}
 		}
+		ps.close();
 	}
 	
 	public static void main(String[] args) {
@@ -1354,9 +1360,10 @@ public class GeneSet {
 		//init( args );
 		
 		try {
+			blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
 			//blastparse( "/home/sigmar/spiro_blastresults.txt" );
-			blastparse( "/home/sigmar/lept_spir.lept_ames.blastout.txt" );
+			//blastparse( "/home/sigmar/lept_spir.lept_ames.blastout.txt" );
 			//blastparse( "/home/sigmar/brach_spir.brachh.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_brach.lepto_inter.blastout.txt" );
 			//newstuff();
