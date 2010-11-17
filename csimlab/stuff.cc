@@ -1741,15 +1741,24 @@ template <typename T,typename K,typename U> void t_histeq( T buffer, long length
 		int v = i/chunk;
 		int r = n*v;
 		double mx = kbuffer[r+n-1];
+		printf( "fs %f %f\n", (float)mx, (float)klen );
 		for( int k = i; k < i+chunk; k++ ) {
-			buffer[k] = (U)( ( (mmx-mmn) * kbuffer[ r+(int)((n*(buffer[k]-mmn))/(mmx-mmn)) ] )/mx + mmn);
+			int indx = r+(int)(((n-1)*(buffer[k]-mmn))/(mmx-mmn));
+			//if( indx >= 0 && indx < klen ) {
+			U val = ( ( (mmx-mmn) * kbuffer[ indx ] )/mx + mmn);
+			buffer[k] = val;
+			//}
+				/*else {
+				printf( "fs2 %f %f %f %f %f\n", (float)indx, (float)n, (float)r, (float)klen, (float)m );
+				//break;
+			}*/
 		}
 	}
 }
 
-template <typename T,typename K> K* t_hist( T buffer, long length, int chunk, K mmn, K mmx, int bin ) {
-	int retlen = bin*length/chunk;
-	K* ret = new K[ retlen ];
+template <typename T,typename K> void t_hist( T buffer, long length, int chunk, K mmn, K mmx, int* ret, int retlen ) {
+	//int retlen = bin*length/chunk;
+	int bin = (int)(((long long)retlen*(long long)chunk)/(long long)length);
 
 	if( mmn == mmx ) {
 		K* mn = t_min<T,K>( buffer, length, length, length );
@@ -1783,8 +1792,6 @@ template <typename T,typename K> K* t_hist( T buffer, long length, int chunk, K 
 			else hst[ bin*(int)((buffer[i]-mmn)/(mmx-mmn)) ]++;
 		}
 	}*/
-
-	return ret;
 }
 
 /*template <typename T,typename K, typename V> void t_copy( const T & buffer, int length, const K & c_buffer ) {
@@ -2104,14 +2111,14 @@ template <typename T> void t_floor( T* buffer, int length ) {
 	}
 }
 
-template <typename T, typename K> void t_matmul( T* buffer, int length, K* mulbuffer, int mullength, int val ) {
+template <typename T, typename K> void t_matmul( T* buffer, int length, K* mulbuffer, int mullength, int val, T* ret, int retlen ) {
 	//int length = (data.length/val)*(mul.length/val);
 	//printf( "%d\n", val );
 	int retc = (mullength/val);
 	int retr = (length/val);
-	int retlen = retc*retr;
-	T* ret = new T[retlen];
-	memset( ret, 0, sizeof( T )*retlen );
+	//int retlen = retc*retr;
+	//T* ret = new T[retlen];
+	//memset( ret, 0, sizeof( T )*retlen );
 	for( int r = 0; r < retr; r++ ) {
 		int rretc = r*retc;
 		for( int c = 0; c < retc; c++ ) {
@@ -2122,8 +2129,8 @@ template <typename T, typename K> void t_matmul( T* buffer, int length, K* mulbu
 			}
 		}
 	}
-	data.buffer = (long)ret;
-	data.length = retlen;
+	//data.buffer = (long)ret;
+	//data.length = retlen;
 }
 
 template <typename T> void t_idx( T* buffer, int len, void* cmp, int bytelen ) {
@@ -4005,8 +4012,14 @@ JNIEXPORT int sum( simlab ret, simlab l_chunk, simlab l_size ) {
 	else if( data.type == 34 ) t_sum( (float*)data.buffer, data.length, chunk, size, (float*)ret.buffer );
 	else if( data.type == 33 ) t_sum( (int*)data.buffer, data.length, chunk, size, (int*)ret.buffer );
 	else if( data.type == 32 ) t_sum( (unsigned int*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
+	else if( data.type == 17 ) t_sum( (short*)data.buffer, data.length, chunk, size, (short*)ret.buffer );
+	else if( data.type == 16 ) t_sum( (unsigned short*)data.buffer, data.length, chunk, size, (unsigned short*)ret.buffer );
 	else if( data.type == 9 ) t_sum( (char*)data.buffer, data.length, chunk, size, (char*)ret.buffer );
 	else if( data.type == 8 ) t_sum( (unsigned char*)data.buffer, data.length, chunk, size, (unsigned char*)ret.buffer );
+	/*else if( data.type == 17 ) t_sum( (short*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
+	else if( data.type == 16 ) t_sum( (unsigned short*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
+	else if( data.type == 9 ) t_sum( (char*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
+	else if( data.type == 8 ) t_sum( (unsigned char*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );*/
 
 	return 3;
 }
@@ -4557,26 +4570,26 @@ JNIEXPORT int mula( simlab value, simlab wh ) {
 	return 2;
 }
 
-JNIEXPORT int matmul( simlab mul, simlab vl ) {
+JNIEXPORT int matmul( simlab ret, simlab mul, simlab vl ) {
 	int val = vl.buffer;
-	if( val == 0 ) val = _gcd( data.length, mul.length );
+	//if( val == 0 ) val = _gcd( data.length, mul.length );
 
 	//int length = (data.length/val)*(mul.length/val);
 	if( data.type == 66 ) {
-		if( mul.type == 66 ) t_matmul( (double*)data.buffer, data.length, (double*)mul.buffer, mul.length, val );
-		else if( mul.type == 34 ) t_matmul( (double*)data.buffer, data.length, (float*)mul.buffer, mul.length, val );
-		else if( mul.type == 32 ) t_matmul( (double*)data.buffer, data.length, (int*)mul.buffer, mul.length, val );
+		if( mul.type == 66 ) t_matmul( (double*)data.buffer, data.length, (double*)mul.buffer, mul.length, val, (double*)ret.buffer, ret.length );
+		else if( mul.type == 34 ) t_matmul( (double*)data.buffer, data.length, (float*)mul.buffer, mul.length, val, (double*)ret.buffer, ret.length );
+		else if( mul.type == 32 ) t_matmul( (double*)data.buffer, data.length, (int*)mul.buffer, mul.length, val, (double*)ret.buffer, ret.length );
 	} else if( data.type == 34 ) {
-		if( mul.type == 66 ) t_matmul( (float*)data.buffer, data.length, (double*)mul.buffer, mul.length, val );
-		else if( mul.type == 34 ) t_matmul( (float*)data.buffer, data.length, (float*)mul.buffer, mul.length, val );
-		else if( mul.type == 32 ) t_matmul( (float*)data.buffer, data.length, (int*)mul.buffer, mul.length, val );
+		if( mul.type == 66 ) t_matmul( (float*)data.buffer, data.length, (double*)mul.buffer, mul.length, val, (float*)ret.buffer, ret.length );
+		else if( mul.type == 34 ) t_matmul( (float*)data.buffer, data.length, (float*)mul.buffer, mul.length, val, (float*)ret.buffer, ret.length );
+		else if( mul.type == 32 ) t_matmul( (float*)data.buffer, data.length, (int*)mul.buffer, mul.length, val, (float*)ret.buffer, ret.length );
 	} else if( data.type == 32 ) {
-		if( mul.type == 66 ) t_matmul( (int*)data.buffer, data.length, (double*)mul.buffer, mul.length, val );
-		else if( mul.type == 34 ) t_matmul( (int*)data.buffer, data.length, (float*)mul.buffer, mul.length, val );
-		else if( mul.type == 32 ) t_matmul( (int*)data.buffer, data.length, (int*)mul.buffer, mul.length, val );
+		if( mul.type == 66 ) t_matmul( (unsigned int*)data.buffer, data.length, (double*)mul.buffer, mul.length, val, (unsigned int*)ret.buffer, ret.length );
+		else if( mul.type == 34 ) t_matmul( (unsigned int*)data.buffer, data.length, (float*)mul.buffer, mul.length, val, (unsigned int*)ret.buffer, ret.length );
+		else if( mul.type == 32 ) t_matmul( (unsigned int*)data.buffer, data.length, (int*)mul.buffer, mul.length, val, (unsigned int*)ret.buffer, ret.length );
 	}
 
-	return current;
+	return 3;
 }
 
 JNIEXPORT int dct() {
@@ -5385,11 +5398,13 @@ JNIEXPORT int flip( simlab chunk ) {
 double dzval( simlab & check ) {
 	if( check.type == 32 ) return check.buffer;
 	else if( check.type == 34 ) return *(float*)&check.buffer;
+	else if( check.type == 65 ) return *(long*)&check.buffer;
+	else if( check.type == 66 ) return *(double*)&check.buffer;
 
 	return 0.0;
 }
 
-JNIEXPORT int hist( simlab bin, simlab chunk, simlab min, simlab max ) {
+JNIEXPORT int hist( simlab ret, simlab bin, simlab chunk, simlab min, simlab max ) {
 	int clen = 0;
 	double dmin = 0.0;
 	double dmax = 0.0;
@@ -5401,25 +5416,26 @@ JNIEXPORT int hist( simlab bin, simlab chunk, simlab min, simlab max ) {
 		dmax = dzval( max );
 	}
 
-	int wlen = data.length*bin.buffer/clen;
+	//int wlen = data.length*bin.buffer/clen;
 	if( data.type == 66 ) {
-		if( bin.type == 32 ) t_wrap( t_hist<double*,double>( (double*)data.buffer, data.length, clen, dmin, dmax, bin.buffer ), wlen );
+		if( ret.type == 32 ) t_hist<double*,double>( (double*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 	} else if( data.type == 34 ) {
-		if( bin.type == 32 ) t_wrap( t_hist<float*,float>( (float*)data.buffer, data.length, clen, dmin, dmax, bin.buffer ), wlen );
+		if( ret.type == 32 ) t_hist<float*,float>( (float*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 	} else if( data.type == 33 ) {
-		if( bin.type == 32 ) t_wrap( t_hist<int*,int>( (int*)data.buffer, data.length, clen, dmin, dmax, bin.buffer ), wlen );
+		if( ret.type == 32 ) t_hist<int*,int>( (int*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 	} else if( data.type == 32 ) {
-		if( bin.type == 32 ) t_wrap( t_hist<unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length, clen, dmin, dmax, bin.buffer ), wlen );
+		if( ret.type == 32 ) t_hist<unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 	} else if( data.type == 16 ) {
-		if( bin.type == 32 ) t_wrap( t_hist<unsigned short*,unsigned short>( (unsigned short*)data.buffer, data.length, clen, dmin, dmax, bin.buffer ), wlen );
+		if( ret.type == 32 ) t_hist<unsigned short*,unsigned short>( (unsigned short*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 	} else if( data.type == 8 ) {
-		if( bin.type == 32 ) {
-			t_wrap( t_hist<unsigned char*,int>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, bin.buffer ), wlen );
-		} else if( bin.type == 64 ) {
-			t_wrap( t_hist<unsigned char*,int>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, bin.buffer ), wlen );
+		if( ret.type == 32 ) {
+			t_hist<unsigned char*,int>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
+		} else if( ret.type == 64 ) {
+			t_hist<unsigned char*,int>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 		}
 	}
-	return 1;
+
+	return 5;
 }
 
 JNIEXPORT int histeq( simlab hist, simlab chunk, simlab min, simlab max ) {
@@ -5434,11 +5450,18 @@ JNIEXPORT int histeq( simlab hist, simlab chunk, simlab min, simlab max ) {
 		dmax = dzval( max );
 	}
 
-	printf("uff %d %d %d %d\n",(int)hist.type, (int)hist.length, (int)data.type, (int)data.length);
+	//printf("uff %d %d %d %d\n",(int)hist.type, (int)hist.length, (int)data.type, (int)data.length);
 	if( hist.type == 32 ) {
 		if( data.type == 8 ) {
-			printf("ok\n");
-			t_histeq<unsigned char*,int*,unsigned char>( (unsigned char*)data.buffer, data.length, clen, (int*)hist.buffer, hist.length, 0.0, 255.0 );
+			t_histeq<unsigned char*,unsigned int*,unsigned char>( (unsigned char*)data.buffer, data.length, clen, (unsigned int*)hist.buffer, hist.length, 0.0, 255.0 );
+		} else if( data.type == 9 ) {
+			t_histeq<char*,unsigned int*,char>( (char*)data.buffer, data.length, clen, (unsigned int*)hist.buffer, hist.length, 0.0, 255.0 );
+		} else if( data.type == 32 ) {
+			t_histeq<unsigned int*,unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length, clen, (unsigned int*)hist.buffer, hist.length, dmin, dmax );
+		} else if( data.type == 33 ) {
+			t_histeq<int*,unsigned int*,int>( (int*)data.buffer, data.length, clen, (unsigned int*)hist.buffer, hist.length, dmin, dmax );
+		} else if( data.type == 34 ) {
+			t_histeq<float*,unsigned int*,float>( (float*)data.buffer, data.length, clen, (unsigned int*)hist.buffer, hist.length, dmin, dmax );
 		}
 	}
 

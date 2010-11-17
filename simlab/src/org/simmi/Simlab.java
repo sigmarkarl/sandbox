@@ -157,8 +157,6 @@ public class Simlab implements ScriptEngineFactory {
 	// public static native bsimlab.ByValue stuff3();
 	public static native Pointer stuff2();
 
-	public native int matmul(simlab.ByValue v, simlab.ByValue s);
-
 	public native int sqr();
 
 	public native int prim();
@@ -173,6 +171,10 @@ public class Simlab implements ScriptEngineFactory {
 
 	public native int init();
 	
+	public native int histeq( simlab.ByValue hist, simlab.ByValue chunk, simlab.ByValue min, simlab.ByValue max );
+	
+	public native int hist( simlab.ByValue ret, simlab.ByValue bin, simlab.ByValue chunk, simlab.ByValue min, simlab.ByValue max );
+	
 	public native int diff( final simlab.ByValue chunk );
 	
 	public native int integ( final simlab.ByValue chunk );
@@ -183,13 +185,15 @@ public class Simlab implements ScriptEngineFactory {
 
 	public native int sub(simlab.ByValue val);
 
-	public native int mul(simlab.ByValue val);
+	public native int simlab_mul(simlab.ByValue val);
 
 	public native int simlab_div(simlab.ByValue val);
 
 	public native int simlab_floor();
 
 	public native int simlab_ceil();
+	
+	public native int matmul( simlab.ByValue ret, simlab.ByValue mul, simlab.ByValue val );
 
 	public native int mod(simlab.ByValue val);
 
@@ -605,6 +609,68 @@ public class Simlab implements ScriptEngineFactory {
 		}
 		
 		return 0;
+	}
+	
+	//public int histq()
+	
+	public int hist( final simlab.ByValue sl_bin, final simlab.ByValue sl_chunk ) {
+		hist( sl_bin, sl_chunk, nulldata, nulldata );
+
+		return 2;
+	}
+	
+	public int hist( final simlab.ByValue sl_bin, final simlab.ByValue sl_chunk, final simlab.ByValue sl_min, final simlab.ByValue sl_max ) {
+		long bin = sl_bin.getLong();
+		long chunk = sl_chunk.getLong();
+		long length = data.length;
+		
+		long retlen = bin*length/chunk;
+		//System.err.println( bin + "  " + length + "  " + chunk );
+		long p = allocateDirect( bytelength( UINTLEN, (int)retlen ) );
+		
+		final simlab.ByValue ret = new simlab.ByValue( retlen, UINTLEN, p );
+		
+		crnt( data );
+		hist( ret, sl_bin, sl_chunk, sl_min, sl_max );
+		
+		data.buffer = ret.buffer;
+		data.length = ret.length;
+		data.type = ret.type;
+		
+		return 4;
+	}
+	
+	private long _gcd( long a, long b ) {
+		if( b == 0 ) return a;
+		else return _gcd( b, a%b );
+	}
+	
+	public int matmul( final simlab.ByValue mul ) {
+		long val = _gcd( data.length, mul.length );
+		matmul( mul, new simlab.ByValue( val ) );
+		
+		return 1;
+	}
+	
+	public int matmul( final simlab.ByValue mul, final simlab.ByValue val ) {
+		int mullength = (int)mul.length;
+		int length = (int)data.length;
+		int v = (int)val.getLong();
+		
+		int retc = (mullength/v);
+		int retr = (length/v);
+		int retlen = retc*retr;
+		
+		long p = allocateDirect( bytelength(data.type, retlen) );
+		final simlab.ByValue ret = new simlab.ByValue( retlen, data.type, p );
+		
+		crnt( data );
+		matmul( ret, mul, val );
+		
+		data.buffer = p;
+		data.length = retlen;
+		
+		return 2;
 	}
 	
 	public int diff() {
@@ -1665,7 +1731,7 @@ public class Simlab implements ScriptEngineFactory {
 
 		// Pointer p = data.getThePointer();
 		if (data.length == 0) {
-			if (data.type == INTLEN) {
+			if (data.type == INTLEN || data.type == LONGLEN || data.type == ULONGLEN ) {
 				System.out.println(data.buffer);
 			} else if (data.type == DOUBLELEN) {
 				System.out.println(Double.longBitsToDouble(data.buffer));
@@ -1692,7 +1758,7 @@ public class Simlab implements ScriptEngineFactory {
 					}
 					System.out.println(bb.getFloat(k * bl));
 				}
-			} else if (data.type == INTLEN) {
+			} else if (data.type == INTLEN || data.type == UINTLEN) {
 				for (int i = 0; i < data.length; i += chunk) {
 					int k = i;
 					for (; k < Math.min(data.length, i + chunk) - 1; k++) {
