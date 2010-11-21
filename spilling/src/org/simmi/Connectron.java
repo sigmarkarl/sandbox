@@ -2,6 +2,7 @@ package org.simmi;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -23,10 +24,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -247,8 +246,8 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		
 		System.err.println( "xyz " + x + "  " + y + "  " + cz );
 		
-		double dx = x - this.getWidth()/2;
-		double dy = y - this.getHeight()/2;
+		double dx = x - scrollpane.getWidth()/2;
+		double dy = y - scrollpane.getHeight()/2;
 		double dz = cz;
 		
 		System.err.println( "dxyz " + dx + "  " + dy + "  " + dz );
@@ -305,8 +304,8 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		
 		System.err.println( "dxyz " + dx + "  " + dy + "  " + dz );
 		
-		x = dx+this.getWidth()/2;
-		y = dy+this.getHeight()/2;
+		x = dx+scrollpane.getWidth()/2;
+		y = dy+scrollpane.getHeight()/2;
 		double z = dz;
 		
 		System.err.println( "xyz " + x + "  " + y + "  " + z );
@@ -378,14 +377,14 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			double dx = (lx * mval) / (zval + dz);
 			double dy = (ly * mval) / (zval + dz);
 
-			rel.px = dx+this.getWidth()/2.0;
-			rel.py = dy+this.getHeight()/2.0;
+			rel.px = dx+scrollpane.getWidth()/2.0;
+			rel.py = dy+scrollpane.getHeight()/2.0;
 			rel.pz = dz;
 			
 			int size = (int) (d * dsize / (zval + dz));
 			
-			int x = (int)dx+this.getWidth()/2;
-			int y = (int)dy+this.getHeight()/2;
+			int x = (int)dx+scrollpane.getWidth()/2;
+			int y = (int)dy+scrollpane.getHeight()/2;
 			
 			/*if( backtracker != null ) {
 				System.err.println( "backtracker " + x + "  " + y + "  " + dz );
@@ -587,6 +586,18 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 	}
 	
 	public void init() {
+		Window window = SwingUtilities.windowForComponent(this);
+		if (window instanceof JFrame) {
+			JFrame frame = (JFrame)window;
+			if (!frame.isResizable()) frame.setResizable(true);
+		}
+		
+		initGUI( this );
+		
+		this.add( scrollpane );
+	}
+	
+	public void initGUI( Container cnt ) {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 			//SwingUtilities.updateComponentTreeUI( this );
@@ -598,12 +609,6 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			e.printStackTrace();
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
-		}
-		
-		Window window = SwingUtilities.windowForComponent(this);
-		if (window instanceof JFrame) {
-			JFrame frame = (JFrame)window;
-			if (!frame.isResizable()) frame.setResizable(true);
 		}
 		
 		this.getContentPane().setBackground( Color.white );
@@ -1080,7 +1085,6 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		c.setComponentPopupMenu(popup);
 		
 		scrollpane.setViewportView( c );
-		this.add( scrollpane );
 	}
 
 	Point	m = new Point(0,0);
@@ -1343,4 +1347,14 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 
 	@Override
 	public void keyTyped(KeyEvent e) {}
+	
+	public static void main(String[] args) {
+		Connectron cntr = new Connectron();
+		JFrame f = new JFrame();
+		f.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		f.setSize(800, 600);
+		cntr.initGUI( f );
+		f.add( cntr.scrollpane );
+		f.setVisible(true);
+	}
 }

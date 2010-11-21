@@ -957,12 +957,16 @@ public class GeneSet {
 			}
 		});*/
 		
+		Set<String> erm2 = new HashSet<String>();
+		erm2.addAll( famap.get("Brachyspira") );
+		erm2.addAll( famap.get("Leptospira") );
+		
 		Set<String>	all = new HashSet<String>();
 		br = new BufferedReader( new FileReader( f ) );
 		line = br.readLine();
 		while( line != null ) {
 			String[] split = line.split("[\t]+");
-			if( split.length >= 3 ) {
+			if( split.length > 2 ) {
 				Set<String>	erm = new HashSet<String>();
 				for( int i = 2; i < split.length; i++ ) {
 					erm.add( idmap.get(split[i].substring(0, split[i].indexOf('.') )) );
@@ -978,11 +982,30 @@ public class GeneSet {
 				}
 				incommon.add( line );
 				
-				if( erm.size() == 9 ) {
+				if( erm.size() == 13 ) {
 					//if( erm.containsAll(famap.get("TrepSpirBorr")) && erm.containsAll(famap.get("Leptospira")) ) {
 					//if( erm.containsAll(famap.get("TrepSpirBorr")) && erm.containsAll(famap.get("Brachyspira")) ) {
-					if( erm.containsAll(famap.get("Leptospira")) && erm.containsAll(famap.get("Brachyspira")) ) {
-						int start = line.indexOf("7394569560a961ac7ffe674befec5056");
+					//if( erm.containsAll(famap.get("Leptospira")) ) {
+					//if( erm.containsAll(famap.get("Brachyspira")) ) {
+					boolean includesAllLeptos = erm.containsAll(famap.get("Leptospira"));
+					boolean includesAllBrachys = erm.containsAll(famap.get("Brachyspira"));
+					Set<String> ho = new HashSet<String>( erm );
+					ho.removeAll(famap.get("Brachyspira"));
+					ho.removeAll(famap.get("TrepSpirBorr"));
+					boolean includesSomeLeptos = ho.size() > 0 && ho.size() != famap.get("Leptospira").size();
+					ho = new HashSet<String>( erm );
+					ho.removeAll(famap.get("Leptospira"));
+					ho.removeAll(famap.get("TrepSpirBorr"));
+					boolean includesSomeBrachys = ho.size() > 0 && ho.size() != famap.get("Brachyspira").size();
+					
+					if( erm.containsAll(famap.get("TrepSpirBorr")) ) { // && ( includesSomeBrachys || includesSomeLeptos ) ) {
+						//int start = line.indexOf("5743b451ec3e92efc596500d604750ed");
+						//int start = line.indexOf("be1843abfce51adcaa86b07a3c6bedbb");
+						//int start = line.indexOf("7394569560a961ac7ffe674befec5056");
+						//Set<String> ho = new TreeSet<String>( erm );
+						//ho.removeAll(famap.get("TrepSpirBorr"));
+						//System.err.println("erm " + ho);
+						int start = line.indexOf("d719570adc9e2969b0374564745432cd");
 						
 						if( start > 0 ) {
 							int end = line.indexOf('\t', start);
@@ -1013,11 +1036,16 @@ public class GeneSet {
 		}
 		br.close();
 		
-		f = new File("/home/sigmar/16.fsa");
+		PrintStream ps = new PrintStream("/home/sigmar/iron5.giant");
+		//System.setErr( ps );
+		
+		int count = 0;
+		f = new File("/home/sigmar/21.fsa");
 		br = new BufferedReader( new FileReader(f) );
 		line = br.readLine();
 		while( line != null ) {
 			if( all.contains(line.substring(1)) ) {
+				count++;
 				System.err.println( line );
 				line = br.readLine();
 				while( line != null && !line.startsWith(">") ) {
@@ -1027,6 +1055,8 @@ public class GeneSet {
 			} else line = br.readLine();
 		}
 		br.close();
+		
+		System.err.println( "hey: " + count );
 		
 		int total = 0;
 		System.err.println("total groups "+common.size());
@@ -1062,6 +1092,8 @@ public class GeneSet {
 		for( String astr : all ) {
 			System.err.println( astr );
 		}*/
+		
+		ps.close();
 	}
 	
 	public static void algoinbio() throws IOException {
@@ -1360,13 +1392,16 @@ public class GeneSet {
 		//init( args );
 		
 		try {
-			blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
+			//blastparse( "/home/sigmar/brachy_hyody.blastout.txt" );
+			//blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
 			//blastparse( "/home/sigmar/spiro_blastresults.txt" );
 			//blastparse( "/home/sigmar/lept_spir.lept_ames.blastout.txt" );
 			//blastparse( "/home/sigmar/brach_spir.brachh.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_brach.lepto_inter.blastout.txt" );
-			//newstuff();
+			//blastparse( "/home/sigmar/spir_brach.blastout.txt" );
+			//blastparse( "/home/sigmar/spiro_core_in_leptobrach_pan.blastout.txt" );
+			newstuff();
 			//algoinbio();
 		} catch (IOException e) {
 			e.printStackTrace();
