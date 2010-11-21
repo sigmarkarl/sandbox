@@ -171,6 +171,12 @@ public class Simlab implements ScriptEngineFactory {
 
 	public native int init();
 	
+	public native int invert();
+	
+	public native int simlab_min( simlab.ByValue ret, simlab.ByValue c );
+	
+	public native int simlab_max( simlab.ByValue ret, simlab.ByValue c );
+	
 	public native int histeq( simlab.ByValue hist, simlab.ByValue chunk, simlab.ByValue min, simlab.ByValue max );
 	
 	public native int hist( simlab.ByValue ret, simlab.ByValue bin, simlab.ByValue chunk, simlab.ByValue min, simlab.ByValue max );
@@ -214,6 +220,18 @@ public class Simlab implements ScriptEngineFactory {
 	public native int filter(simlab.ByValue convee, simlab.ByValue chunk, simlab.ByValue c_chunk);
 
 	public native int ifilter(simlab.ByValue convee, simlab.ByValue chunk, simlab.ByValue c_chunk);
+	
+	public native int wlet( simlab.ByValue c );
+	
+	public native int awlet( simlab.ByValue c );
+	
+	public native int minlet( simlab.ByValue c );
+	
+	public native int aminlet( simlab.ByValue c );
+	
+	public native int maxlet( simlab.ByValue c );
+	
+	public native int amaxlet( simlab.ByValue c );
 
 	public native int simlab_sin(simlab.ByValue val);
 
@@ -611,6 +629,48 @@ public class Simlab implements ScriptEngineFactory {
 		return 0;
 	}
 	
+	public int min( final simlab.ByValue c, final simlab.ByValue s ) {
+		int chunk = (int)c.getLong();
+		int size = (int)c.getLong();
+		int length = (int)data.length;
+		
+		int retsize = (chunk-size+1);
+		int retlen = (length*retsize)/chunk;
+		
+		int bl = bytelength(data.type, retlen);
+		long p = allocateDirect( bl );
+		simlab.ByValue ret = new simlab.ByValue( retlen, data.type, p );
+		
+		crnt( data );
+		simlab_min( ret, c );
+		
+		data.buffer = p;
+		data.length = retlen;
+		
+		return 1;
+	}
+	
+	public int max( final simlab.ByValue c, final simlab.ByValue s ) {
+		int chunk = (int)c.getLong();
+		int size = (int)c.getLong();
+		int length = (int)data.length;
+		
+		int retsize = (chunk-size+1);
+		int retlen = (length*retsize)/chunk;
+		
+		int bl = bytelength(data.type, retlen);
+		long p = allocateDirect( bl );
+		simlab.ByValue ret = new simlab.ByValue( retlen, data.type, p );
+		
+		crnt( data );
+		simlab_max( ret, c );
+		
+		data.buffer = p;
+		data.length = retlen;
+		
+		return 1;
+	}
+	
 	//public int histq()
 	
 	public int hist( final simlab.ByValue sl_bin, final simlab.ByValue sl_chunk ) {
@@ -932,6 +992,9 @@ public class Simlab implements ScriptEngineFactory {
 		crnt(data);
 		trans(v, nulldata);
 		data = getdata();
+		
+		long val = v.getLong();
+		update( data.buffer, val < 0 ? (-data.length/val) : val );
 
 		return 1;
 	}
@@ -1439,12 +1502,19 @@ public class Simlab implements ScriptEngineFactory {
 		return 0;
 	}
 
-	public void update(String name, final long w) {
-		ImageComp sc = (ImageComp) compmap.get(name);
-		sc.h = (int) ((sc.h * sc.w) / w);
-		sc.w = (int) w;
-		sc.bi = new BufferedImage(sc.w, sc.h, BufferedImage.TYPE_INT_RGB);
-		sc.reload();
+	private void update(long p, final long w) {
+		Set<SimComp> set = (Set<SimComp>)compmap.get(p);
+		for( SimComp scc : set ) {
+			if( scc instanceof ImageComp ) {
+				ImageComp sc = (ImageComp)scc;
+				if( data.length == sc.h*sc.w ) {
+					sc.w = (int) ((sc.h * sc.w) / w);
+					sc.h = (int) w;
+					sc.bi = new BufferedImage(sc.w, sc.h, BufferedImage.TYPE_INT_RGB);
+					sc.reload();
+				}
+			}
+		}
 	}
 
 	/*
@@ -2073,8 +2143,10 @@ public class Simlab implements ScriptEngineFactory {
 	
 	private void runMethod( Method m, List<simlab.ByValue> olist ) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		boolean nv = Modifier.isNative(m.getModifiers());
-		if (nv)
+		if (nv) {
 			crnt(data);
+		}
+		
 		if (m.getParameterTypes().length > 0 && m.getParameterTypes()[0] == simlab.ByValue[].class) {
 			m.invoke(Simlab.this, new Object[] { olist.toArray(new simlab.ByValue[0]) });
 		} else if (m.getParameterTypes().length > 1 && m.getParameterTypes()[1] == simlab.ByValue[].class) {
@@ -3054,13 +3126,13 @@ public class Simlab implements ScriptEngineFactory {
 			g2.drawString(vminstr, 2 * f - g2.getFontMetrics().stringWidth(vminstr), gh + f);
 			g2.drawString(vmaxstr, 2 * f - g2.getFontMetrics().stringWidth(vmaxstr), f);
 
-			String[] erm = new String[] { "A0201 (3089, 38%)", "A6802 (1434, 28%)", "B1501 (978, 18%)", "B5401 (255, 32%)", "B4402 (119, 37%)" };
+			/*String[] erm = new String[] { "A0201 (3089, 38%)", "A6802 (1434, 28%)", "B1501 (978, 18%)", "B5401 (255, 32%)", "B4402 (119, 37%)" };
 			for (int i = 0; i < colors.length; i++) {
 				g2.setColor(colors[erm.length - i - 1]);
 				g2.fillRoundRect(3 * ggw / 4, 125 + 25 * i, 20, 20, 5, 5);
 				g2.setColor(Color.black);
 				g2.drawString(erm[i], 3 * ggw / 4 + 25, 145 + 25 * i);
-			}
+			}*/
 			// g2.fillRect(100, 100, 100, 100);
 		}
 
