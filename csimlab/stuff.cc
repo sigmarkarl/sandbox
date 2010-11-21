@@ -1618,10 +1618,10 @@ template <typename T, typename K> void t_get( T* buffer, int length, K indx, int
 	data.length = ilength;
 }
 
-template <typename T, typename K> K* t_min( T buffer, long length, int chunk, int size ) {
-	int retsize = (chunk-size+1);
-	int retlen = (length*retsize)/chunk;
-	K* ret = new K[ retlen ];
+template <typename T, typename K> void t_min( T buffer, long length, int chunk, int size, T ret, int retlen ) {
+	//int retsize = (chunk-size+1);
+	//int retlen = (length*retsize)/chunk;
+	//K* ret = new K[ retlen ];
 
 	int r = 0;
 	for( int c = 0; c < length; c+=chunk ) {
@@ -1647,14 +1647,12 @@ template <typename T, typename K> K* t_min( T buffer, long length, int chunk, in
 			ret[r++] = val;
 		}
 	}
-
-	return ret;
 }
 
-template <typename T, typename K> K* t_max( T buffer, long length, int chunk, int size ) {
-	int retsize = (chunk-size+1);
-	int retlen = (length*retsize)/chunk;
-	K* ret = new K[ retlen ];
+template <typename T, typename K> void t_max( T buffer, long length, int chunk, int size, T ret, int retlen ) {
+	//int retsize = (chunk-size+1);
+	//int retlen = (length*retsize)/chunk;
+	//K* ret = new K[ retlen ];
 
 	int r = 0;
 	for( int c = 0; c < length; c+=chunk ) {
@@ -1683,8 +1681,6 @@ template <typename T, typename K> K* t_max( T buffer, long length, int chunk, in
 
 	//data.buffer = (long)ret;
 	//data.length = retlen;
-
-	return ret;
 }
 
 template <typename T> int t_minmax( simlab* data ) {
@@ -1703,10 +1699,12 @@ template <typename T> int t_minmax( simlab* data ) {
 }
 
 template <typename T, typename K> void t_invert( T buffer, int length ) {
-	K* min = t_min<T,K>( buffer, length, length, length );
-	K* max = t_max<T,K>( buffer, length, length, length );
+	K min;
+	t_min<T,K>( buffer, length, length, length, &min, 1 );
+	K max;
+	t_max<T,K>( buffer, length, length, length, &max, 1 );
 	for( int i = 0; i < length; i++ ) {
-		buffer[i] = -buffer[i]+max[0]+min[0];
+		buffer[i] = -buffer[i]+max+min;
 	}
 }
 
@@ -1761,16 +1759,15 @@ template <typename T,typename K> void t_hist( T buffer, long length, int chunk, 
 	int bin = (int)(((long long)retlen*(long long)chunk)/(long long)length);
 
 	if( mmn == mmx ) {
-		K* mn = t_min<T,K>( buffer, length, length, length );
-		K* mx = t_max<T,K>( buffer, length, length, length );
+		K mn;
+		t_min<T,K>( buffer, length, length, length, &mn, 1 );
+		K mx;
+		t_max<T,K>( buffer, length, length, length, &mx, 1 );
 
 		t_zero( ret, retlen );
 
-		mmn = mn[0];
-		mmx = mx[0];
-
-		free( mn );
-		free( mx );
+		mmn = mn;
+		mmx = mx;
 	}
 
 	for( int i = 0; i < length; i+=chunk ) {
@@ -1887,6 +1884,22 @@ template <typename T> void t_maxlet( T* buffer, int length, int chunk ) {
 }
 
 template <typename T> void t_amaxlet( T* buffer, int length, int chunk ) {
+	for( int k = 0; k < length; k+=chunk ) {
+		T* buf = &buffer[k];
+		for( int i = 0; i < chunk; i+=2 ) {
+			T tmp = buf[i+1];
+			if( tmp < 0 ) {
+				buf[i+1] = buf[i];
+				buf[i] = tmp+buf[i];
+			} else {
+				buf[i+1] = buf[i]-tmp;
+			}
+		}
+	}
+}
+
+
+template <typename T> void t_aminlet( T* buffer, int length, int chunk ) {
 	for( int k = 0; k < length; k+=chunk ) {
 		T* buf = &buffer[k];
 		for( int i = 0; i < chunk; i+=2 ) {
@@ -3810,8 +3823,11 @@ JNIEXPORT int diff( simlab chunk ) {
 	else clen = chunk.buffer;
 
 	if( data.type == 66 ) t_diff( (double*)data.buffer, data.length, clen );
+	else if( data.type == 65 ) t_diff( (long long*)data.buffer, data.length, clen );
+	else if( data.type == 64 ) t_diff( (unsigned long long*)data.buffer, data.length, clen );
 	else if( data.type == 34 ) t_diff( (float*)data.buffer, data.length, clen );
-	else if( data.type == 32 ) t_diff( (int*)data.buffer, data.length, clen );
+	else if( data.type == 33 ) t_diff( (int*)data.buffer, data.length, clen );
+	else if( data.type == 32 ) t_diff( (unsigned int*)data.buffer, data.length, clen );
 	else if( data.type == 16 ) t_diff( (short*)data.buffer, data.length, clen );
 	else if( data.type == 8 ) t_diff( (unsigned short*)data.buffer, data.length, clen );
 
@@ -3824,8 +3840,11 @@ JNIEXPORT int integ( simlab chunk ) {
 	else clen = chunk.buffer;
 
 	if( data.type == 66 ) t_integ( (double*)data.buffer, data.length, clen );
+	else if( data.type == 65 ) t_integ( (long long*)data.buffer, data.length, clen );
+	else if( data.type == 64 ) t_integ( (unsigned long long*)data.buffer, data.length, clen );
 	else if( data.type == 34 ) t_integ( (float*)data.buffer, data.length, clen );
-	else if( data.type == 32 ) t_integ( (int*)data.buffer, data.length, clen );
+	else if( data.type == 33 ) t_integ( (int*)data.buffer, data.length, clen );
+	else if( data.type == 32 ) t_integ( (unsigned int*)data.buffer, data.length, clen );
 	else if( data.type == 16 ) t_integ( (short*)data.buffer, data.length, clen );
 	else if( data.type == 8 ) t_integ( (unsigned char*)data.buffer, data.length, clen );
 
@@ -3844,6 +3863,8 @@ JNIEXPORT int complement() {
 
 JNIEXPORT int invert() {
 	if( data.type == 66 ) t_invert<double*,double>( (double*)data.buffer, data.length );
+	else if( data.type == 65 ) t_invert<long long*,long long>( (long long*)data.buffer, data.length );
+	else if( data.type == 64 ) t_invert<unsigned long long*,unsigned long long>( (unsigned long long*)data.buffer, data.length );
 	else if( data.type == 34 ) t_invert<float*,float>( (float*)data.buffer, data.length );
 	else if( data.type == 33 ) t_invert<int*,int>( (int*)data.buffer, data.length );
 	else if( data.type == 32 ) t_invert<unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length );
@@ -4247,6 +4268,34 @@ JNIEXPORT int extract( simlab val, simlab cnk ) {
 	return current;
 }
 
+JNIEXPORT int minlet( simlab s_chunk ) {
+	int chunk = data.length;
+	if( s_chunk.buffer != 0 ) {
+		chunk = s_chunk.buffer;
+	}
+	if( data.type == 128 ) t_minlet( (long double*)data.buffer, data.length, chunk );
+	else if( data.type == 66 ) t_minlet( (double*)data.buffer, data.length, chunk );
+	else if( data.type == 64 ) t_minlet( (long long*)data.buffer, data.length, chunk );
+	else if( data.type == 34 ) t_minlet( (float*)data.buffer, data.length, chunk );
+	else if( data.type == 32 ) t_minlet( (int*)data.buffer, data.length, chunk );
+
+	return 1;
+}
+
+JNIEXPORT int aminlet( simlab s_chunk ) {
+	int chunk = data.length;
+	if( s_chunk.buffer != 0 ) {
+		chunk = s_chunk.buffer;
+	}
+	if( data.type == 128 ) t_aminlet( (long double*)data.buffer, data.length, chunk );
+	else if( data.type == 66 ) t_aminlet( (double*)data.buffer, data.length, chunk );
+	else if( data.type == 64 ) t_aminlet( (long long*)data.buffer, data.length, chunk );
+	else if( data.type == 34 ) t_aminlet( (float*)data.buffer, data.length, chunk );
+	else if( data.type == 32 ) t_aminlet( (int*)data.buffer, data.length, chunk );
+
+	return 1;
+}
+
 JNIEXPORT int maxlet( simlab s_chunk ) {
 	int chunk = data.length;
 	if( s_chunk.buffer != 0 ) {
@@ -4258,7 +4307,7 @@ JNIEXPORT int maxlet( simlab s_chunk ) {
 	else if( data.type == 34 ) t_maxlet( (float*)data.buffer, data.length, chunk );
 	else if( data.type == 32 ) t_maxlet( (int*)data.buffer, data.length, chunk );
 
-	return current;
+	return 1;
 }
 
 JNIEXPORT int amaxlet( simlab s_chunk ) {
@@ -4272,7 +4321,7 @@ JNIEXPORT int amaxlet( simlab s_chunk ) {
 	else if( data.type == 34 ) t_amaxlet( (float*)data.buffer, data.length, chunk );
 	else if( data.type == 32 ) t_amaxlet( (int*)data.buffer, data.length, chunk );
 
-	return current;
+	return 1;
 }
 
 JNIEXPORT int awlet( simlab s_chunk ) {
@@ -4367,34 +4416,42 @@ JNIEXPORT int minmax() {
 	return current;
 }
 
-JNIEXPORT int min( simlab ck, simlab sz ) {
+JNIEXPORT int simlab_min( simlab ret, simlab ck, simlab sz ) {
 	int size = sz.buffer;
 	int chunk = ck.buffer;
 	if( chunk == 0 ) chunk = data.length;
 	if( size == 0 ) size = chunk;
-	if( data.type == 96 ) t_min<long double*,long double>( (long double*)data.buffer, data.length, chunk, size );
-	else if( data.type == 66 ) t_min<double*,double>( (double*)data.buffer, data.length, chunk, size );
-	else if( data.type == 64 ) t_min<long*,long>( (long*)data.buffer, data.length, chunk, size );
-	else if( data.type == 34 ) t_min<float*,float>( (float*)data.buffer, data.length, chunk, size );
-	else if( data.type == 32 ) t_min<int*,int>( (int*)data.buffer, data.length, chunk, size );
-	else if( data.type == 16 ) t_min<short*,short>( (short*)data.buffer, data.length, chunk, size );
-	else if( data.type == 8 ) t_min<char*,char>( (char*)data.buffer, data.length, chunk, size );
+	if( data.type == 96 ) t_min<long double*,long double>( (long double*)data.buffer, data.length, chunk, size, (long double*)ret.buffer, ret.length );
+	else if( data.type == 66 ) t_min<double*,double>( (double*)data.buffer, data.length, chunk, size, (double*)ret.buffer, ret.length );
+	else if( data.type == 65 ) t_min<long long*,long long>( (long long*)data.buffer, data.length, chunk, size, (long long*)ret.buffer, ret.length );
+	else if( data.type == 64 ) t_min<unsigned long long*,unsigned long long>( (unsigned long long*)data.buffer, data.length, chunk, size, (unsigned long long*)ret.buffer, ret.length );
+	else if( data.type == 34 ) t_min<float*,float>( (float*)data.buffer, data.length, chunk, size, (float*)ret.buffer, ret.length );
+	else if( data.type == 33 ) t_min<int*,int>( (int*)data.buffer, data.length, chunk, size, (int*)ret.buffer, ret.length );
+	else if( data.type == 32 ) t_min<unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer, ret.length );
+	else if( data.type == 17 ) t_min<short*,short>( (short*)data.buffer, data.length, chunk, size, (short*)ret.buffer, ret.length );
+	else if( data.type == 16 ) t_min<unsigned short*,unsigned short>( (unsigned short*)data.buffer, data.length, chunk, size, (unsigned short*)ret.buffer, ret.length );
+	else if( data.type == 9 ) t_min<char*,char>( (char*)data.buffer, data.length, chunk, size, (char*)ret.buffer, ret.length );
+	else if( data.type == 8 ) t_min<unsigned char*,unsigned char>( (unsigned char*)data.buffer, data.length, chunk, size, (unsigned char*)ret.buffer, ret.length );
 
 	return 2;
 }
 
-JNIEXPORT int max( simlab ck, simlab sz ) {
+JNIEXPORT int simlab_max( simlab ret, simlab ck, simlab sz ) {
 	int size = sz.buffer;
 	int chunk = ck.buffer;
 	if( chunk == 0 ) chunk = data.length;
 	if( size == 0 ) size = chunk;
-	if( data.type == 96 ) t_max<long double*,long double>( (long double*)data.buffer, data.length, chunk, size );
-	else if( data.type == 66 ) t_max<double*,double>( (double*)data.buffer, data.length, chunk, size );
-	else if( data.type == 64 ) t_max<long*,long>( (long*)data.buffer, data.length, chunk, size );
-	else if( data.type == 34 ) t_max<float*,float>( (float*)data.buffer, data.length, chunk, size );
-	else if( data.type == 32 ) t_max<int*,int>( (int*)data.buffer, data.length, chunk, size );
-	else if( data.type == 16 ) t_max<short*,short>( (short*)data.buffer, data.length, chunk, size );
-	else if( data.type == 8 ) t_max<char*,char>( (char*)data.buffer, data.length, chunk, size );
+	if( data.type == 96 ) t_max<long double*,long double>( (long double*)data.buffer, data.length, chunk, size, (long double*)ret.buffer, ret.length );
+	else if( data.type == 66 ) t_max<double*,double>( (double*)data.buffer, data.length, chunk, size, (double*)ret.buffer, ret.length );
+	else if( data.type == 65 ) t_max<long long*,long long>( (long long*)data.buffer, data.length, chunk, size, (long long*)ret.buffer, ret.length );
+	else if( data.type == 64 ) t_max<unsigned long long*,unsigned long long>( (unsigned long long*)data.buffer, data.length, chunk, size, (unsigned long long*)ret.buffer, ret.length );
+	else if( data.type == 34 ) t_max<float*,float>( (float*)data.buffer, data.length, chunk, size, (float*)ret.buffer, ret.length );
+	else if( data.type == 33 ) t_max<int*,int>( (int*)data.buffer, data.length, chunk, size, (int*)ret.buffer, ret.length );
+	else if( data.type == 32 ) t_max<unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer, ret.length );
+	else if( data.type == 17 ) t_max<short*,short>( (short*)data.buffer, data.length, chunk, size, (short*)ret.buffer, ret.length );
+	else if( data.type == 16 ) t_max<unsigned short*,unsigned short>( (unsigned short*)data.buffer, data.length, chunk, size, (unsigned short*)ret.buffer, ret.length );
+	else if( data.type == 9 ) t_max<char*,char>( (char*)data.buffer, data.length, chunk, size, (char*)ret.buffer, ret.length );
+	else if( data.type == 8 ) t_max<unsigned char*,unsigned char>( (unsigned char*)data.buffer, data.length, chunk, size, (unsigned char*)ret.buffer, ret.length );
 
 	return 2;
 }
@@ -5397,9 +5454,9 @@ JNIEXPORT int flip( simlab chunk ) {
 
 double dzval( simlab & check ) {
 	if( check.type == 32 ) return check.buffer;
-	else if( check.type == 34 ) return *(float*)&check.buffer;
-	else if( check.type == 65 ) return *(long*)&check.buffer;
-	else if( check.type == 66 ) return *(double*)&check.buffer;
+	else if( check.type == 34 ) return (double)(*(float*)&check.buffer);
+	else if( check.type == 65 ) return (double)(*(long long*)&check.buffer);
+	else if( check.type == 66 ) return (double)(*(double*)&check.buffer);
 
 	return 0.0;
 }
@@ -5429,9 +5486,9 @@ JNIEXPORT int hist( simlab ret, simlab bin, simlab chunk, simlab min, simlab max
 		if( ret.type == 32 ) t_hist<unsigned short*,unsigned short>( (unsigned short*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 	} else if( data.type == 8 ) {
 		if( ret.type == 32 ) {
-			t_hist<unsigned char*,int>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
+			t_hist<unsigned char*,unsigned char>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 		} else if( ret.type == 64 ) {
-			t_hist<unsigned char*,int>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
+			t_hist<unsigned char*,unsigned char>( (unsigned char*)data.buffer, data.length, clen, dmin, dmax, (int*)ret.buffer, ret.length );
 		}
 	}
 

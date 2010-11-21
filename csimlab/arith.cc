@@ -211,7 +211,7 @@ template <typename T, typename K> void t_add( T buffer, int length, K value, int
 }
 
 template <typename T, typename K> void t_mul( T t, int tlen, K k, int klen ) {
-	for( int i = 0; i < (tlen < klen ? tlen : klen); i++ ) {
+	for( int i = 0; i < (tlen > klen ? tlen : klen); i++ ) {
 		t[i] *= k[i];
 	}
 }
@@ -224,13 +224,13 @@ template <typename T, typename K> void t_sub( T buffer, int length, K value, int
 }
 
 template <typename T, typename K> void t_div( T t, int tlen, K k, int klen ) {
-	for( int i = 0; i < (tlen < klen ? tlen : klen); i++ ) {
+	for( int i = 0; i < (tlen > klen ? tlen : klen); i++ ) {
 		t[i] /= k[i];
 	}
 }
 
 template <typename T, typename K> void t_mod( T t, int tlen, K k, int klen ) {
-	for( int i = 0; i < (tlen < klen ? tlen : klen); i++ ) {
+	for( int i = 0; i < (tlen > klen ? tlen : klen); i++ ) {
 		t[i] = fmod( (double)t[i], (double)k[i] );
 		//t[i] %= (int)k[i];
 	}
