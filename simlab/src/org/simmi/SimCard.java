@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.awt.Window;
 import java.io.IOException;
 import java.io.PipedReader;
 import java.io.PipedWriter;
@@ -7,6 +8,8 @@ import java.io.PipedWriter;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.swing.JApplet;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -22,6 +25,13 @@ public class SimCard extends JApplet {
 			e.printStackTrace();
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
+		}
+		
+		Window window = SwingUtilities.windowForComponent(this);
+		if (window instanceof JFrame) {
+			JFrame frame = (JFrame) window;
+			if (!frame.isResizable())
+				frame.setResizable(true);
 		}
 
 		/*
