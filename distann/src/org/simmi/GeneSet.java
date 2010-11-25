@@ -223,7 +223,7 @@ public class GeneSet {
 		System.setErr( ps );
 		
 		for( String name : names ) {
-			File 			f = new File( dir, "new2_"+name );
+			File 			f = new File( dir, name );
 			Set<String>		set = new HashSet<String>();
 			
 			FileReader		fr = new FileReader( f );
@@ -248,7 +248,8 @@ public class GeneSet {
 						locset = new HashSet<String>();
 						geneloc.put(split[1], locset);
 					}
-					locset.add( swapmap.get(name)+"_"+query + " " + evalue );
+					//locset.add( swapmap.get(name)+"_"+query + " " + evalue );
+					locset.add( name+"_"+query + " " + evalue );
 					
 					query = null;
 				} else if( trim.startsWith("Query=") ) {
@@ -287,7 +288,8 @@ public class GeneSet {
 			for( String tname : nameset ) {
 				allset.removeAll( geneset.get(tname) );
 			}
-			System.err.println( "Genes found only in " + swapmap.get(aname) + "\t" + allset.size() );
+			//System.err.println( "Genes found only in " + swapmap.get(aname) + "\t" + allset.size() );
+			System.err.println( "Genes found only in " + aname + "\t" + allset.size() );
 			if( info ) {
 				for( String gname : allset ) {
 					System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
@@ -306,7 +308,8 @@ public class GeneSet {
 			
 			Set<String>	reset = new HashSet<String>();
 			for( String name : nameset ) {
-				reset.add( swapmap.get(name) );
+				//reset.add( swapmap.get(name) );
+				reset.add( name );
 			}
 			System.err.println( "Genes only in all off " + reset + "\t" + allset.size() );
 			if( info ) {
@@ -336,7 +339,8 @@ public class GeneSet {
 				//reset.add( swapmap.get(names[y]) );
 				
 				for( String name : nameset ) {
-					reset.add( swapmap.get(name) );
+					//reset.add( swapmap.get(name) );
+					reset.add( name );
 				}
 				System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
 				if( info ) {
@@ -363,8 +367,10 @@ public class GeneSet {
 				}
 				
 				Set<String>	reset = new HashSet<String>();
-				reset.add( swapmap.get(names[i]) );
-				reset.add( swapmap.get(names[y]) );
+				//reset.add( swapmap.get(names[i]) );
+				//reset.add( swapmap.get(names[y]) );
+				reset.add( names[i] );
+				reset.add( names[y] );
 				
 				/*for( String name : nameset ) {
 					reset.add( swapmap.get(name) );
@@ -402,7 +408,8 @@ public class GeneSet {
 					reset.add( swapmap.get(names[k]) );*/
 					
 					for( String name : nameset ) {
-						reset.add( swapmap.get(name) );
+						//reset.add( swapmap.get(name) );
+						reset.add( name );
 					}
 					
 					System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
@@ -423,20 +430,28 @@ public class GeneSet {
 	static Map<String,String>	aas = new HashMap<String,String>();
 	public static void loci2aasequence( String[] stuff, File dir2 ) throws IOException {
 		for( String st : stuff ) {
-			File aa = new File( dir2, st+".fsa" );
+			File aa = new File( dir2, st );
 			BufferedReader br = new BufferedReader( new FileReader(aa) );
 			String line = br.readLine();
 			String name = null;
 			String ac = "";
 			while( line != null ) {
 				if( line.startsWith(">") ) {
-					if( ac.length() > 0 ) aas.put(swapmap.get(st+".out")+" "+name, ac);
+					if( ac.length() > 0 ) aas.put(name, ac);
 					
 					ac = "";
 					name = line.substring(1).split(" ")[0];
+					
+					int v = name.indexOf("contig");
+					if( v != -1 ) {
+						int i1 = name.indexOf('_',v);
+						int i2 = name.indexOf('_', i1+1);
+						name = name.substring(0,i1) + name.substring(i2);
+					}
 				} else ac += line.trim();
 				line = br.readLine();
 			}
+			if( ac.length() > 0 ) aas.put(name, ac);
 			br.close();
 		}
 	}
@@ -473,7 +488,7 @@ public class GeneSet {
 			BufferedReader 	br = new BufferedReader( new FileReader( f ) );
 			String line = br.readLine();
 			while( line != null ) {
-				if( line.startsWith(">") ) fw.write( ">"+swapmap.get(name+".out")+" "+line.substring(1)+"\n" );
+				if( line.startsWith(">") ) fw.write( ">"+name+"_"+line.substring(1)+"\n" );
 				else fw.write( line+"\n" );
 				
 				line = br.readLine();
@@ -486,7 +501,7 @@ public class GeneSet {
 	public static void func4( File dir, String[] stuff ) throws IOException {
 		Set<Set<String>>	total = new HashSet<Set<String>>();
 		for( String name : stuff ) {
-			File f = new File( dir, name+"all.out" );
+			File f = new File( dir, name );
 			BufferedReader	br = new BufferedReader( new FileReader( f ) );
 			
 			String line = br.readLine();
@@ -496,8 +511,14 @@ public class GeneSet {
 					Set<String>	all = new HashSet<String>();
 					while( line != null && !line.startsWith(">") ) {
 						String trim = line.trim();
-						if( trim.startsWith("scoto") ) {
+						if( trim.startsWith("scoto") || trim.startsWith("anta") || trim.startsWith("tt") ) {
 							String val = trim.substring( 0, trim.indexOf('#')-1 );
+							int v = val.indexOf("contig");
+							if( v != -1 ) {
+								int i1 = val.indexOf('_',v);
+								int i2 = val.indexOf('_', i1+1);
+								val = val.substring(0,i1) + val.substring(i2);
+							}
 							all.add( val );
 						}
 						line = br.readLine();
@@ -533,10 +554,18 @@ public class GeneSet {
 		
 		HashMap<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
 		
+		Map<String,String>	joinmap = new HashMap<String,String>();
+		joinmap.put("ttpHB27", "ttHB27");
+		joinmap.put("ttp1HB8", "ttHB8");
+		joinmap.put("ttp2HB8", "ttHB8");
+		
 		for( Set<String>	t : total ) {
-			Set<String>	teg = new HashSet();
+			Set<String>	teg = new HashSet<String>();
 			for( String e : t ) {
-				String str = e.substring( 0, e.indexOf(' ') );
+				String str = e.substring( 0, e.indexOf('_') );
+				if( joinmap.containsKey( str ) ) {
+					str = joinmap.get(str);
+				}
 				teg.add( str );
 			}
 			
@@ -552,7 +581,11 @@ public class GeneSet {
 			setmap.add( submap );
 			
 			for( String e : t ) {
-				String str = e.substring( 0, e.indexOf(' ') );
+				String str = e.substring( 0, e.indexOf('_') );
+				if( joinmap.containsKey( str ) ) {
+					str = joinmap.get(str);
+				}
+				
 				Set<String>	set;
 				if( submap.containsKey( str ) ) {
 					set = submap.get(str);
@@ -564,7 +597,7 @@ public class GeneSet {
 			}
 		}
 		
-		PrintStream ps = new PrintStream( new FileOutputStream("/home/sigmar/out.out") );
+		PrintStream ps = new PrintStream( new FileOutputStream("/home/sigmar/out2.out") );
 		System.setErr( ps );
 		
 		System.err.println( "Total gene sets: " + total.size() );
@@ -581,7 +614,7 @@ public class GeneSet {
 					i += genes.size();
 				}
 			}
-			sortmap.add( new StrSort( setmap.size(), "Included in : " + set.size() + " scotos\t" + set + "\tcontaining: " + setmap.size() + " set of genes\ttotal of " + i + " loci" ) );
+			sortmap.add( new StrSort( setmap.size(), set.size()+"\t"+setmap.size()+"\tIncluded in : " + set.size() + " scotos\t" + set + "\tcontaining: " + setmap.size() + " set of genes\ttotal of " + i + " loci" ) );
 			//System.err.println( "Included in : " + set.size() + " scotos " + set + " containing: " + setmap.size() + " set of genes\ttotal of " + i + " loci" );
 		}
 		
@@ -593,8 +626,30 @@ public class GeneSet {
 		System.err.println();
 		
 		
+		//next( clusterMap );
 		
 		
+		ps.close();
+		
+		/*System.err.println( "# clusters: " + total.size() );
+		int max = 0;
+		for( Set<String> sc : total ) {
+			if( sc.size() > max ) max = sc.size();
+			System.err.println( "\tcluster size: " + sc.size() );
+		}
+		System.err.println( "maxsize: " + max );
+		
+		int[]	ia = new int[max];
+		for( Set<String> sc : total ) {
+			ia[sc.size()-1]++;
+		}
+		
+		for( int i : ia ) {
+			System.err.println( "hist: " + i );
+		}*/
+	}
+	
+	public static void next( HashMap<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
 		for( Set<String> set : clusterMap.keySet() ) {
 			Set<Map<String,Set<String>>>	setmap = clusterMap.get( set );
 			
@@ -619,7 +674,12 @@ public class GeneSet {
 					Map<String,Set<String>>	map = maplist.get(i);
 					for( String s: map.keySet() ) {
 						for( String s2 : map.get(s) ) {
-							ss.add( s2.substring(0, s2.indexOf('_', 10)) );
+							int ii = s2.indexOf('_', 0);
+							if( ii == -1 ) {
+								System.out.println( s2 );
+							} else {
+								ss.add( s2.substring(0, ii) );
+							}
 						}
 					}
 					
@@ -631,7 +691,7 @@ public class GeneSet {
 								map = maplist.get(k);
 								for( String s: map.keySet() ) {
 									for( String s2 : map.get(s) ) {
-										ss2.add( s2.substring(0, s2.indexOf('_', 10)) );
+										ss2.add( s2.substring(0, s2.indexOf('_', 0)) );
 									}
 								}
 								if( ss.containsAll( ss2 ) && ss2.containsAll( ss ) ) {
@@ -655,7 +715,12 @@ public class GeneSet {
 									Set<String>	sout = sm.get(s);
 									for( String loci : sout ) {
 										String gene = lociMap.get(loci);
-										if( gene == null ) gene = aas.get( loci );
+										if( gene == null ) {
+											gene = aas.get( loci );
+										}
+										if( gene == null ) {
+											System.out.println( "error" + loci );
+										}
 										geneset.add(gene.replace('\t', ' '));
 									}
 								}
@@ -699,24 +764,6 @@ public class GeneSet {
 				i++;
 			}
 		}
-		ps.close();
-		
-		/*System.err.println( "# clusters: " + total.size() );
-		int max = 0;
-		for( Set<String> sc : total ) {
-			if( sc.size() > max ) max = sc.size();
-			System.err.println( "\tcluster size: " + sc.size() );
-		}
-		System.err.println( "maxsize: " + max );
-		
-		int[]	ia = new int[max];
-		for( Set<String> sc : total ) {
-			ia[sc.size()-1]++;
-		}
-		
-		for( int i : ia ) {
-			System.err.println( "hist: " + i );
-		}*/
 	}
 	
 	static Map<String,String>	lociMap = new HashMap<String,String>();
@@ -730,15 +777,20 @@ public class GeneSet {
 			while( line != null ) {
 				if( line.startsWith("Query= ") ) {
 					name = line.substring(8).split(" ")[0];
+					int i1 = name.indexOf('_');
+					int i2 = name.indexOf('_', i1+1);
+					name = name.substring(0,i1) + name.substring(i2);
+					System.err.println(name);
 				}
 				
-				String prename = swapmap.get(st+".out")+" "+name;
 				if( line.contains("No hits") ) {
+					String prename = swapmap.get(st+".out")+"_"+name;
 					lociMap.put( prename, "No match\t"+aas.get(prename) );
 					//System.err.println( prename + "\tNo match" );
 				}
 				
 				if( line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") ) {
+					String prename = swapmap.get(st+".out")+"_"+name;
 					String[] split = line.split("\\|");
 					lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") );
 					//System.err.println( prename + "\t" + split[1] );
@@ -794,7 +846,7 @@ public class GeneSet {
 		}
 		br.close();
 		
-		//System.err.println( t1 + "\t" + t2 );
+		System.err.println( t1 + "\t" + t2 );
 		int na1 = 0;
 		int na2 = 0;
 		int nab = 0;
@@ -826,7 +878,7 @@ public class GeneSet {
 				dt += dval;
 				u++;
 				
-				//System.err.println( e + "\t" + (aa1map.get(e)) + "\t" + (aa2map.containsKey(e) ? (aa2map.get(e)) : "-") );
+				System.err.println( e + "\t" + (aa1map.get(e)) + "\t" + (aa2map.containsKey(e) ? (aa2map.get(e)) : "-") );
 			} else {
 				if( val == 3 ) {
 					notfound.add(e);
@@ -1387,12 +1439,59 @@ public class GeneSet {
 		ps.close();
 	}
 	
+	static class Gene {
+		public Gene( String name, String aa ) {
+			this.name = name;
+			this.aa = aa;
+		}
+		String	name;
+		String	aa;
+	};
+	
+	public static void splitGenes( String dir, String filename, int parts ) throws IOException {
+		List<Gene>	genelist = new ArrayList<Gene>();
+		File f = new File( dir, filename );
+		BufferedReader br = new BufferedReader( new FileReader( f ) );
+		String last = null;
+		String aa = "";
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( last != null ) genelist.add( new Gene(last, aa) );
+				last = line+"\n";
+				aa = "";
+			} else {
+				aa += line+"\n";
+			}
+			line = br.readLine();
+		}
+		genelist.add( new Gene( last, aa) );
+		br.close();
+		
+		int k = 0;
+		int chunk = genelist.size()/parts+1;
+		System.err.println( "Number of genes "+genelist.size()+" chunk size "+chunk );
+		FileWriter fw = null;
+		for( int i = 0; i < genelist.size(); i++ ) {
+			Gene g = genelist.get(i);
+			if( i%chunk == 0 ) {
+				f = new File( dir, (k++)+"_t.aa" );
+				if( fw != null ) fw.close();
+				fw = new FileWriter( f );
+			}
+			
+			fw.write( g.name );
+			fw.write( g.aa );
+		}
+		fw.close();
+	}
+	
 	public static void main(String[] args) {
 		//System.err.println( Runtime.getRuntime().availableProcessors() );
 		//init( args );
 		
 		try {
-			//blastparse( "/home/sigmar/brachy_hyody.blastout.txt" );
+			blastparse( "/home/sigmar/brachy_hyody.blastout.txt" );
 			//blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
 			//blastparse( "/home/sigmar/spiro_blastresults.txt" );
@@ -1401,34 +1500,42 @@ public class GeneSet {
 			//blastparse( "/home/sigmar/lept_brach.lepto_inter.blastout.txt" );
 			//blastparse( "/home/sigmar/spir_brach.blastout.txt" );
 			//blastparse( "/home/sigmar/spiro_core_in_leptobrach_pan.blastout.txt" );
-			newstuff();
+			//newstuff();
 			//algoinbio();
+			
+			//splitGenes( "/home/sigmar/thermus/sandbox/", "thermus.aa", 32 );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	private static void init( String[] args ) {
-		String[]	stuff = {"aa1","aa2","aa4","aa6","aa7","aa8"};
+		String[]	stuff = {"scoto346","scoto2101","antag2120","scoto2127","scoto252","scoto1572","scoto4063","ttHB27","ttpHB27","ttHB8","ttp1HB8","ttp2HB8","ttaqua"};
+		String[]	stuff2 = {"aa1","aa2","aa4","aa6","aa7","aa8"};
 		String[]	names = {"aa1.out","aa2.out","aa4.out","aa6.out","aa7.out","aa8.out"};
+		String[]	all = {"all.aa"};
+		String[]	name = {"thermus.blastout.txt"};
 		File 		dir = new File("/home/sigmar/thermus/results/");
-		File 		dir2 = new File("/home/sigmar/thermus/out/");
+		File 		dir2 = new File("/home/sigmar/thermus/sandbox/");
 		
-		swapmap.put("aa1.out", "scoto_346");
-		swapmap.put("aa2.out", "scoto_2101");
-		swapmap.put("aa4.out", "scoto_2127");
-		swapmap.put("aa6.out", "scoto_252");
-		swapmap.put("aa7.out", "scoto_1572");
-		swapmap.put("aa8.out", "scoto_4063");
+		swapmap.put("aa1.out", "scoto346");
+		swapmap.put("aa2.out", "scoto2101");
+		swapmap.put("aa4.out", "scoto2127");
+		swapmap.put("aa6.out", "scoto252");
+		swapmap.put("aa7.out", "scoto1572");
+		swapmap.put("aa8.out", "scoto4063");
 		
 		try {
-			//func1( names, dir );
+			//func1( name, dir2 );
 			//printnohits( stuff, dir, dir2 );
 			//createConcatFsa( stuff, dir2 );
 			
-			//loci2aasequence(stuff, dir2);
-			//loci2gene( stuff, dir );
-			//func4( dir2, stuff );
+			//loci2aasequence( all, dir2 );
+			//loci2gene( stuff2, dir );
+			//func4( dir2, name );
+			
+			PrintStream ps = new PrintStream("/home/sigmar/uff.txt");
+			System.setErr( ps );
 			
 			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/alls.fsa"), 1 );
 			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/alls.fsa"), 2 );
@@ -1437,10 +1544,10 @@ public class GeneSet {
 			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/alls.fsa"), 5 );
 			
 			//aahist( new File("/home/sigmar/tp.aa"), new File("/home/sigmar/nc.aa") );
-			/*aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 1 );
-			aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 2 );
+			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 1 );
+			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 2 );
 			aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 3 );
-			aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 4 );
+			/*aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 4 );
 			aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 5 );
 			
 			System.err.println();
@@ -1460,6 +1567,8 @@ public class GeneSet {
 			aahist( new File("/home/sigmar/thermus/hb27.aa"), new File("/home/sigmar/tp.aa"), 5 );*/
 			//aahist( new File("/home/sigmar/thermus/hb27.aa"), new File("/home/sigmar/thermus/out/aa2.fsa") );
 			//aahist( new File("/home/sigmar/thermus/out/aa2.fsa"), new File("/home/sigmar/thermus/hb27.aa") );
+			
+			ps.close();
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
