@@ -86,6 +86,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
+import com.sun.org.apache.xpath.internal.operations.Div;
 
 public class Simlab implements ScriptEngineFactory {
 	static {
@@ -273,7 +274,7 @@ public class Simlab implements ScriptEngineFactory {
 
 	public native int indexer();
 
-	public native int find(final simlab.ByValue s);
+	//public native int find(final simlab.ByValue s);
 
 	private native int viewer(simlab.ByValue s, simlab.ByValue t);
 
@@ -426,7 +427,7 @@ public class Simlab implements ScriptEngineFactory {
 			ByteBuffer bb = null;
 			if (buffers.containsKey(buffer)) {
 				bb = buffers.get(buffer);
-			} else {
+			} else if( length > 0 ) {
 				bb = new Pointer(buffer).getByteBuffer(0, getByteLength());
 				buffers.put(buffer, bb);
 			}
@@ -436,16 +437,18 @@ public class Simlab implements ScriptEngineFactory {
 
 		public Buffer getBuffer() {
 			ByteBuffer bb = getByteBuffer();
-			if (type == 66)
-				return bb.asDoubleBuffer();
-			else if (type == 65)
-				return bb.asLongBuffer();
-			else if (type == 34)
-				return bb.asFloatBuffer();
-			else if (type == 33)
-				return bb.asIntBuffer();
-			else if (type == 17)
-				return bb.asShortBuffer();
+			if( bb != null ) {
+				if (type == 66)
+					return bb.asDoubleBuffer();
+				else if (type == 65)
+					return bb.asLongBuffer();
+				else if (type == 34)
+					return bb.asFloatBuffer();
+				else if (type == 33)
+					return bb.asIntBuffer();
+				else if (type == 17)
+					return bb.asShortBuffer();
+			}
 
 			return bb;
 		}
@@ -484,6 +487,15 @@ public class Simlab implements ScriptEngineFactory {
 				s = buffer + " " + type + " " + length;
 
 			return s;
+		}
+		
+		public void put( int i, double val ) {
+			DoubleBuffer db = (DoubleBuffer)getBuffer();
+			if( db != null ) {
+				db.put( i, val );
+			} else {
+				buffer = Double.doubleToRawLongBits( val );
+			}
 		}
 
 		/*
@@ -747,6 +759,14 @@ public class Simlab implements ScriptEngineFactory {
 		return 0;
 	}
 	
+	public int mean() {
+		sum();
+		crnt( data );
+		simlab_div( new simlab.ByValue( data.length ) );
+		
+		return 0;
+	}
+	
 	public int sum( final simlab.ByValue sl_chunk, final simlab.ByValue sl_size ) {
 		int chunk = (int)sl_chunk.getLong();
 		int size = (int)sl_size.getLong();
@@ -757,6 +777,8 @@ public class Simlab implements ScriptEngineFactory {
 		
 		long p = allocateDirect( bytelength(data.type, retlen) );
 		final simlab.ByValue ret = new simlab.ByValue( retlen, data.type, p );
+		
+		crnt( data );
 		sum( ret, sl_chunk, sl_size );
 		
 		data.buffer = ret.buffer;
@@ -770,6 +792,12 @@ public class Simlab implements ScriptEngineFactory {
 		sum( sl_chunk, sl_chunk );
 		
 		return 1;
+	}
+	
+	public int sum() {
+		sum( new simlab.ByValue(data.length) );
+		
+		return 0;
 	}
 	
 	public int subsetsum( final simlab.ByValue sl ) {
@@ -1503,15 +1531,17 @@ public class Simlab implements ScriptEngineFactory {
 	}
 
 	private void update(long p, final long w) {
-		Set<SimComp> set = (Set<SimComp>)compmap.get(p);
-		for( SimComp scc : set ) {
-			if( scc instanceof ImageComp ) {
-				ImageComp sc = (ImageComp)scc;
-				if( data.length == sc.h*sc.w ) {
-					sc.w = (int) ((sc.h * sc.w) / w);
-					sc.h = (int) w;
-					sc.bi = new BufferedImage(sc.w, sc.h, BufferedImage.TYPE_INT_RGB);
-					sc.reload();
+		if( compmap.containsKey( p ) ) {
+			Set<SimComp> set = (Set<SimComp>)compmap.get(p);
+			for( SimComp scc : set ) {
+				if( scc instanceof ImageComp ) {
+					ImageComp sc = (ImageComp)scc;
+					if( data.length == sc.h*sc.w ) {
+						sc.w = (int) ((sc.h * sc.w) / w);
+						sc.h = (int) w;
+						sc.bi = new BufferedImage(sc.w, sc.h, BufferedImage.TYPE_INT_RGB);
+						sc.reload();
+					}
 				}
 			}
 		}
@@ -1719,6 +1749,129 @@ public class Simlab implements ScriptEngineFactory {
 
 		return 1;
 	}
+	
+	public int kendall( final simlab.ByValue otherdata, final simlab.ByValue chunk ) {
+		long ch = chunk.getLong();
+		
+		Buffer b = data.getBuffer();
+		if( b instanceof IntBuffer ) {
+			IntBuffer	x = (IntBuffer)b;
+			IntBuffer	y = (IntBuffer)otherdata.getBuffer();
+			
+			int c = 0;
+			int d = 0;
+			for( int i = 0; i < data.length; i++ ) {
+				for( int j = i+1; j < data.length; j++ ) {
+					int xi = x.get(i);
+					int xj = x.get(j);
+					int yi = y.get(i);
+					int yj = y.get(j);
+					if( xi > xj && yi > yj || (xi < xj && yi < yj) ) c++;
+					if( xi > xj && yi < yj || (xi < xj && yi > yj) ) d++; 
+				}
+			}
+			
+			double kt = (double)(2*(c-d))/(double)(data.length*(data.length-1));
+			
+			data.buffer = Double.doubleToLongBits(kt);
+			data.type = DOUBLELEN;
+			data.length = 0;
+		} else if( b instanceof DoubleBuffer ) {
+			DoubleBuffer	x = (DoubleBuffer)b;
+			DoubleBuffer	y = (DoubleBuffer)otherdata.getBuffer();
+			
+			int c = 0;
+			int d = 0;
+			for( int i = 0; i < data.length; i++ ) {
+				for( int j = i+1; j < data.length; j++ ) {
+					double xi = x.get(i);
+					double xj = x.get(j);
+					double yi = y.get(i);
+					double yj = y.get(j);
+					if( xi > xj && yi > yj || (xi < xj && yi < yj) ) c++;
+					if( xi > xj && yi < yj || (xi < xj && yi > yj) ) d++; 
+				}
+			}
+			
+			double kt = (double)(2*(c-d))/(double)(data.length*(data.length-1));
+			
+			data.buffer = Double.doubleToLongBits(kt);
+			data.type = DOUBLELEN;
+			data.length = 0;
+		}
+		
+		return 1;
+	}
+	
+	public int entropy() {
+		entropy( datalib.get("e") );
+		
+		return 1;
+	}
+	
+	public int entropy( final simlab.ByValue log ) {
+		entropy( log, new simlab.ByValue( data.length ) );
+		
+		return 1;
+	}
+	
+	public int entropy( final simlab.ByValue log, final simlab.ByValue chunk ) {
+		Buffer 	b = data.getBuffer();
+		double 	lv = log.getRealValue();
+		long	ch = chunk.getLong();
+		long	len = data.length/ch;
+		simlab.ByValue rb;
+		if( len == 1 ) rb = new simlab.ByValue(0.0);
+		else {
+			long p = allocateDirect( bytelength(DOUBLELEN, len) );
+			rb = new simlab.ByValue( len, DOUBLELEN, p );
+		}
+		if( b instanceof IntBuffer ) {
+			IntBuffer ib = (IntBuffer)b;
+			for( int i = 0; i < data.length; i+=ch ) {
+				Map<Integer,Integer>	mm = new HashMap<Integer,Integer>();
+				for( int k = i; k < i+ch; k++ ) {
+					int val = ib.get( k );
+					if( mm.containsKey( val ) ) {
+						mm.put( val, mm.get( val )+1 );
+					} else {
+						mm.put(val, 1);
+					}
+				}
+				double ret = 0.0;
+				for( int k = i; k < i+ch; k++ ) {
+					double p = (double)mm.get( ib.get(k) )/(double)ch;
+					ret += p*Math.log( p )/Math.log( lv );
+				}
+				rb.put( (int)(i/ch), -ret );
+			}
+		} else if( b instanceof ByteBuffer ) {
+			ByteBuffer ib = (ByteBuffer)b;
+			for( int i = 0; i < data.length; i+=ch ) {
+				Map<Byte,Integer>	mm = new HashMap<Byte,Integer>();
+				for( int k = i; k < i+ch; k++ ) {
+					byte val = ib.get( k );
+					if( mm.containsKey( val ) ) {
+						mm.put( val, mm.get( val )+1 );
+					} else {
+						mm.put(val, 1);
+					}
+				}
+				double ret = 0.0;
+				for( int k = i; k < i+ch; k++ ) {
+					double p = (double)mm.get( ib.get(k) )/(double)ch;
+					ret += p*Math.log( p )/Math.log( lv );
+				}
+				rb.put( (int)(i/ch), -ret );
+			}
+		}
+		
+		data.buffer = rb.buffer;
+		data.length = rb.length;
+		data.type = rb.type;
+		
+		return 2;
+	}
 
 	public int head(final simlab.ByValue sl) {
 		long chunk = sl.buffer;
@@ -1837,8 +1990,14 @@ public class Simlab implements ScriptEngineFactory {
 					System.out.println(bb.getInt(k * bl));
 				}
 			} else if (data.type == UBYTELEN || data.type == BYTELEN) {
-				System.err.println("never asked for " + data.getTheString() + "  " + data.buffer);
-				System.err.println(datalib.get("cview").buffer);
+				String str = data.getTheString();
+				for (int i = 0; i < data.length; i += chunk) {
+					int k = i;
+					for (; k < Math.min(data.length, i + chunk) - 1; k++) {
+						System.out.print( str.charAt(k) );
+					}
+					System.out.println( str.charAt(k) );
+				}
 				/*
 				 * if( chunk == 0 ) { System.out.println( new
 				 * String(bb.toString()) ); } else { byte[] bchunk = new
@@ -2419,6 +2578,119 @@ public class Simlab implements ScriptEngineFactory {
 		}
 
 		return 0;
+	}
+	
+	public int find( final simlab.ByValue m ) {
+		Buffer b = m.getBuffer();
+		if( b instanceof ByteBuffer ) {
+			ByteBuffer bb = (ByteBuffer)b;
+			Set<Byte>	bs = new HashSet<Byte>();
+			for( int i = 0; i < m.length; i++ ) {
+				bs.add( bb.get(i) );
+			}
+			
+			Buffer db = data.getBuffer();
+			if( db instanceof ByteBuffer ) {
+				List<Integer>	lb = new ArrayList<Integer>();
+				ByteBuffer dbb = (ByteBuffer)db;
+				for( int i = 0; i < data.length; i++ ) {
+					if( bs.contains( dbb.get(i) ) ) lb.add(i);
+				}
+				
+				long p = allocateDirect( bytelength(data.type, lb.size()) );
+				IntBuffer bpi = buffers.get(p).asIntBuffer();
+				
+				for( int i = 0; i < lb.size(); i++ ) {
+					bpi.put(i,lb.get(i));
+				}
+				
+				data.buffer = p;
+				data.type = INTLEN;
+				data.length = lb.size();
+			}
+		} else if( b instanceof IntBuffer ) {
+			IntBuffer ib = (IntBuffer)b;
+			Set<Integer>	is = new HashSet<Integer>();
+			for( int i = 0; i < m.length; i++ ) {
+				is.add( ib.get(i) );
+			}
+			
+			Buffer db = data.getBuffer();
+			if( db instanceof IntBuffer ) {
+				List<Integer>	li = new ArrayList<Integer>();
+				IntBuffer dbi = (IntBuffer)db;
+				for( int i = 0; i < data.length; i++ ) {
+					if( is.contains( dbi.get(i) ) ) li.add(i);
+				}
+				
+				long p = allocateDirect( bytelength(data.type, li.size()) );
+				IntBuffer bpi = buffers.get(p).asIntBuffer();
+				
+				for( int i = 0; i < li.size(); i++ ) {
+					bpi.put(i,li.get(i));
+				}
+				
+				data.buffer = p;
+				data.type = INTLEN;
+				data.length = li.size();
+			}
+		} else if( b instanceof DoubleBuffer ) {
+			DoubleBuffer db = (DoubleBuffer)b;
+			Set<Double>	ds = new HashSet<Double>();
+			for( int i = 0; i < m.length; i++ ) {
+				ds.add( db.get(i) );
+			}
+			
+			Buffer db2 = data.getBuffer();
+			if( db2 instanceof IntBuffer ) {
+				List<Integer>	ld = new ArrayList<Integer>();
+				IntBuffer dbi = (IntBuffer)db2;
+				for( int i = 0; i < data.length; i++ ) {
+					if( ds.contains( (double)dbi.get(i) ) ) ld.add(i);
+				}
+				
+				long p = allocateDirect( bytelength(data.type, ld.size()) );
+				IntBuffer bpi = buffers.get(p).asIntBuffer();
+				
+				for( int i = 0; i < ld.size(); i++ ) {
+					bpi.put(i,ld.get(i));
+				}
+				
+				data.buffer = p;
+				data.type = INTLEN;
+				data.length = ld.size();
+			}
+		}
+		
+		return 1;
+	}
+	
+	public int get( final simlab.ByValue what ) {
+		IntBuffer w = (IntBuffer)what.getBuffer();
+		long p = allocateDirect( bytelength(data.type, what.length ) );
+		ByteBuffer ret = buffers.get(p);
+		
+		Buffer b = data.getBuffer();
+		if( b instanceof ByteBuffer ) {
+			ByteBuffer bb = (ByteBuffer)b;
+			ByteBuffer res = (ByteBuffer)ret;
+				
+			for( int i = 0; i < what.length; i++ ) {
+				res.put(i, bb.get(w.get(i)));
+			}
+		} else if( b instanceof IntBuffer ) {
+			IntBuffer ib = (IntBuffer)b;
+			IntBuffer res = (IntBuffer)ret.asIntBuffer();
+			
+			for( int i = 0; i < what.length; i++ ) {
+				res.put(i, ib.get(w.get(i)));
+			}
+		}
+		
+		data.buffer = p;
+		data.length = what.length;
+		
+		return 1;
 	}
 	
 	public int bigidx() {		
