@@ -2002,7 +2002,29 @@ template <typename T, typename K> int t_intersectcount( T* buffer1, K* buffer2, 
 	return 0;
 }
 
-template <typename T, typename K> void t_intersect( T* buffer, int length, K* inter, int ilength ) {
+template <typename T, typename K, typename U> void t_intersect( T buffer, int length, K inter, int ilength ) {
+	std::set<int>	res;
+	for( int i = 0; i < length; i++ ) {
+		for( int j = 0; j < ilength; j++ ) {
+			if( buffer[i] == inter[j] && res.find(j) == res.end() ) {
+				res.insert( j );
+				break;
+			}
+		}
+	}
+
+	U* ret = new U[ res.size() ];
+	data.buffer = (long long)ret;
+	data.length = res.size();
+
+	int i = 0;
+	std::set<int>::iterator it = res.begin();
+	for( ; it != res.end(); it++ ) {
+		ret[i++] = inter[ *it ];
+	}
+}
+
+template <typename T, typename K> void t_intersectuniq( T* buffer, int length, K* inter, int ilength ) {
 	std::vector<T>	res;
 	for( int i = 0; i < length; i++ ) {
 		T	val = buffer[i];
@@ -2076,6 +2098,7 @@ template <typename T> void t_sum( T* buffer, int length, int chunk, int size, T*
 	//int retlen = (length*retsize)/chunk;
 	//T* ret = new T[ retlen ];
 
+	printf("here\n");
 	int r = 0;
 	for( int c = 0; c < length; c+=chunk ) {
 		T val = 0;
@@ -3713,15 +3736,37 @@ JNIEXPORT int matrix( int type, int columns, int rows ) {
 }
 
 JNIEXPORT int intersect( simlab inter ) {
-	printf("ja %d %d\n", (int)data.type, (int)inter.type);
-	if( data.type == 66 ) {
+	if( data.type == 96 ) {
+		if( inter.type == 96 ) {
+			t_intersect<long double*,long double*,long double>( (long double*)data.buffer, data.length, (long double*)inter.buffer, inter.length );
+		}
+	} else if( data.type == 66 ) {
 		if( inter.type == 66 ) {
-			t_intersect( (double*)data.buffer, data.length, (double*)inter.buffer, inter.length );
+			t_intersect<double*,double*,double>( (double*)data.buffer, data.length, (double*)inter.buffer, inter.length );
+		}
+	} else if( data.type == 65 ) {
+		if( inter.type == 65 ) {
+			t_intersect<long long*,long long*,long long>( (long long*)data.buffer, data.length, (long long*)inter.buffer, inter.length );
+		}
+	} else if( data.type == 64 ) {
+		if( inter.type == 64 ) {
+			t_intersect<unsigned long long*,unsigned long long*,unsigned long long>( (unsigned long long*)data.buffer, data.length, (unsigned long long*)inter.buffer, inter.length );
+		}
+	} else if( data.type == 34 ) {
+		if( inter.type == 34 ) {
+			t_intersect<float*,float*,float>( (float*)data.buffer, data.length, (float*)inter.buffer, inter.length );
+		}
+	} else if( data.type == 33 ) {
+		if( inter.type == 33 ) {
+			t_intersect<int*,int*,int>( (int*)data.buffer, data.length, (int*)inter.buffer, inter.length );
+		}
+	} else if( data.type == 32 ) {
+		if( inter.type == 32 ) {
+			t_intersect<unsigned int*,unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length, (unsigned int*)inter.buffer, inter.length );
 		}
 	} else if( data.type == 8 || data.type == 9 ) {
 		if( inter.type == 8 || inter.type == 9 ) {
-			printf("ja\n");
-			t_intersect( (unsigned char*)data.buffer, data.length, (unsigned char*)inter.buffer, inter.length );
+			t_intersect<unsigned char*,unsigned char*,unsigned char>( (unsigned char*)data.buffer, data.length, (unsigned char*)inter.buffer, inter.length );
 		}
 	}
 
@@ -4027,7 +4072,9 @@ JNIEXPORT int sum( simlab ret, simlab l_chunk, simlab l_size ) {
 	if( size == 0 ) size = chunk;
 
 	//int dlen = (data.length*(chunk-size+1))/chunk;
-	if( data.type == 66 ) t_sum( (double*)data.buffer, data.length, chunk, size, (double*)ret.buffer );
+	if( data.type == 66 ) {
+		t_sum( (double*)data.buffer, data.length, chunk, size, (double*)ret.buffer );
+	}
 	else if( data.type == 65 ) t_sum( (long*)data.buffer, data.length, chunk, size, (long*)ret.buffer );
 	else if( data.type == 64 ) t_sum( (unsigned long*)data.buffer, data.length, chunk, size, (unsigned long*)ret.buffer );
 	else if( data.type == 34 ) t_sum( (float*)data.buffer, data.length, chunk, size, (float*)ret.buffer );
