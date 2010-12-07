@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="loc"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="substance.jar"/>
+	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="/opt/swingx-1.6.2/swingx-core-1.6.2.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/poi-3.7-20101029.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/poi-ooxml-3.7-20101029.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/poi-ooxml-schemas-3.7-20101029.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/ooxml-lib/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/ooxml-lib/geronimo-stax-api_1.0_spec-1.0.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/ooxml-lib/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/lib/commons-logging-1.1.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/lib/junit-3.8.1.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.7/lib/log4j-1.2.13.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -204,9 +204,15 @@ template <typename T, typename K> void t_copy( T buffer, int length, K value, in
 }
 
 template <typename T, typename K> void t_add( T buffer, int length, K value, int vallen ) {
-	int len = vallen > length ? vallen : length;
-	for( int i = 0; i < len; i++ ) {
-		buffer[i] += value[i];
+	if( vallen < length ) {
+		for( int i = 0; i < length; i++ ) {
+			buffer[i] += value[i%vallen];
+		}
+	} else {
+		int len = vallen > length ? vallen : length;
+		for( int i = 0; i < len; i++ ) {
+			buffer[i] += value[i];
+		}
 	}
 }
 
@@ -379,7 +385,6 @@ template<template<typename T, typename V> class c_func, typename K> void subarit
 	} else if( data.length == 0 ) {
 		if( data.type == 66 ) c_func<double*,K>( (double*)&data.buffer, 1, kbuf, klen );
 		else if( data.type == 65 ) {
-			printf("eermermerm2\n");
 			c_func<long long*,K>( (long long*)&data.buffer, 1, kbuf, klen );
 		}
 		else if( data.type == 64 ) c_func<unsigned long long*,K>( (unsigned long long*)&data.buffer, 1, kbuf, klen );
