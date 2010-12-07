@@ -2,9 +2,11 @@ package org.simmi;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class GeneSet {
@@ -1148,12 +1151,125 @@ public class GeneSet {
 		ps.close();
 	}
 	
+	static class Pepbindaff implements Comparable<Pepbindaff> {
+		String	pep;
+		double	aff;
+		
+		public Pepbindaff( String pep, String aff ) {
+			this.pep = pep;
+			this.aff = Double.parseDouble( aff );
+		}
+		
+		public Pepbindaff( String pep, double aff ) {
+			this.pep = pep;
+			this.aff = aff;
+		}
+		
+		@Override
+		public int compareTo(Pepbindaff o) {
+			return aff > o.aff ? 1 : (aff < o.aff ? -1 : 0);
+		}		
+	}
+	
+	public static void pearsons( Map<Character,Double> what, List<Pepbindaff> peppi) {
+		double sums[] = new double[peppi.get(0).pep.length()];
+		Arrays.fill( sums, 0.0 );
+		for( Pepbindaff paff : peppi ) {
+			for( int i = 0; i < paff.pep.length(); i++ ) {
+				char c = paff.pep.charAt(i);
+				sums[i] += what.get(c);
+			}
+		}
+		for( int i = 0; i < peppi.get(0).pep.length(); i++ ) {
+			sums[i] /= peppi.size();
+		}
+		
+		for( int i = 0; i < peppi.get(0).pep.length(); i++ ) {
+			for( int j = i; j < peppi.get(0).pep.length(); j++ ) {
+				double t = 0.0;
+				double nx = 0.0;
+				double ny = 0.0;
+				for( Pepbindaff paff : peppi ) {
+					char c = paff.pep.charAt(j);
+					char ct = paff.pep.charAt(i);
+					double h = what.get(c) - sums[j];
+					double ht = what.get(ct) - sums[i];
+					t += h*ht;
+					nx += h*h;
+					ny += ht*ht;
+				}
+				double xy = nx * ny;
+				double val = (xy == 0 ? 0.0 : (t/Math.sqrt(xy)));
+				if( Math.abs(val) > 0.1 || i == j ) System.err.println( "Pearson (" + i + " " + j + "): " + val );
+			}
+		}
+	}
+	
+	public static void kendaltau( List<Pepbindaff> peppi ) {
+		int size = peppi.get(0).pep.length();
+		List<Pepbindaff>	erm = new ArrayList<Pepbindaff>();
+		for( int x = 0; x < size-1; x++ ) {
+			for( int y = x+1; y < size; y++ ) {
+				int con = 0;
+				int dis = 0;
+				for( int i = 0; i < peppi.size(); i++ ) {
+					for( int j = i+1; j < peppi.size(); j++ ) {
+						char xi = peppi.get(i).pep.charAt(x);
+						char xj = peppi.get(j).pep.charAt(x);
+						char yi = peppi.get(i).pep.charAt(y);
+						char yj = peppi.get(j).pep.charAt(y);
+						
+						if( (xi > xj && yi > yj) || (xi < xj && yi < yj) ) con++;
+						else if( xi > xj && yi < yj || xi < xj && yi > yj ) dis++;
+					}
+				}
+				double kt = (double)(2*(con - dis))/(double)(peppi.size()*(peppi.size()-1));
+				erm.add( new Pepbindaff("kt "+x+" "+y+": ", kt) );
+				//System.err.println( "kt "+i+" "+j+": "+kt );
+			}
+		}
+		Collections.sort( erm );
+		for( Pepbindaff p : erm ) {
+			System.err.println(p.pep + " " + p.aff);
+		}
+	}
+	
 	public static void algoinbio() throws IOException {
-		FileReader fr = new FileReader("/home/sigmar/dtu/27623-AlgoInBio/week11/f000");
+		FileReader fr = new FileReader("/home/sigmar/dtu/27623-AlgoInBio/week7/A0101/A0101.dat");
 		BufferedReader br = new BufferedReader( fr );
 		String line = br.readLine();
 		
-		double[]	hyp = new double[9];
+		Map<String,Double>	pepaff = new TreeMap<String,Double>();
+		List<Pepbindaff>	peppi = new ArrayList<Pepbindaff>();
+		while( line != null ) {
+			String[] split = line.trim().split("[\t ]+");
+			peppi.add( new Pepbindaff(split[0], split[1]) );
+			
+			line = br.readLine();
+		}
+		br.close();
+		
+		Collections.sort( peppi );
+		
+		kendaltau( peppi );
+		//pearsons( hydropathyindex, peppi );
+		
+		
+		/*for( Pepbindaff paff : peppi ) {
+			System.err.print( paff.pep );
+			for( int i = 0; i < paff.pep.length(); i++ ) {
+				char c1 = paff.pep.charAt(i);
+				//char c2 = paff.pep.charAt(i+1);
+				//System.err.print( "\t"+Math.min(hydropathyindex.get(c1),hydropathyindex.get(c2) ) );
+				//System.err.print( "\t"+sidechaincharge.get(c) );
+				System.err.print( "\t"+isoelectricpoint.get(c1) );
+				//System.err.print( "\t"+Math.min(isoelectricpoint.get(c1),isoelectricpoint.get(c2)) );
+				//System.err.print( "\t"+sidechainpolarity.get(c) );
+			}
+			System.err.println( "\t"+paff.aff );
+		}
+		
+		/*double[]	hyp = new double[9];
 		double[]	chr = new double[9];
 		double[]	iso = new double[9];
 		double[]	pol = new double[9];
@@ -1181,7 +1297,7 @@ public class GeneSet {
 		
 		/* Lowpoint */
 		
-		fr = new FileReader("/home/sigmar/dtu/27623-AlgoInBio/week11/f000");
+		/*fr = new FileReader("/home/sigmar/dtu/27623-AlgoInBio/week7/f000");
 		br = new BufferedReader( fr );
 		line = br.readLine();
 		
@@ -1252,7 +1368,7 @@ public class GeneSet {
 			System.err.println( "pos " + i + " " + hype[i] + " " + chre[i] + " " + isoe[i] + " " + pole[i] );
 		}
 		
-		/*********/
+		/*********
 		
 		fr = new FileReader("/home/sigmar/dtu/27623-AlgoInBio/week11/c000");
 		br = new BufferedReader( fr );
@@ -1486,12 +1602,95 @@ public class GeneSet {
 		fw.close();
 	}
 	
+	public static void aaset() throws IOException {
+		Set<String>	set1 = new HashSet<String>();
+		File fa = new File("/home/sigmar/dtu/27623-AlgoInBio/week7/");
+		File[] ff = fa.listFiles( new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				if( name.length() == 5 ) return true;
+				return false;
+			}
+		});
+		
+		for( File fb : ff ) {
+			File f = new File( fb, fb.getName()+".dat" );
+			if( f.exists() ) {
+				BufferedReader br = new BufferedReader( new FileReader(f) );
+				String line = br.readLine();
+				while( line != null ) {
+					String[] s = line.split("[\t ]+");
+					set1.add( s[0] );
+					
+					line = br.readLine();
+				}
+				br.close();
+				
+				Set<String>	set2 = new HashSet<String>();
+				f = new File("/home/sigmar/dtu/27623-AlgoInBio/project/train2.dat");
+				br = new BufferedReader( new FileReader(f) );
+				line = br.readLine();
+				while( line != null ) {
+					String[] s = line.split("[\t ]+");
+					set2.add( s[0] );
+					
+					line = br.readLine();
+				}
+				br.close();
+				
+				int s1 = set1.size();
+				int s2 = set2.size();
+				set1.removeAll( set2 );
+				int ns1 = set1.size();
+				
+				if( s1 != ns1 ) {
+					System.err.println( fb.getName() );
+					System.err.println( "\t"+s1 );
+					System.err.println( "\t"+s2 );
+					System.err.println( "\t"+ns1 );
+				}
+			}
+		}
+	}
+	
+	public static void newsets() throws IOException {
+		File mf = new File("/home/sigmar/dtu/new/dtu/main_project/code/SMM/");
+		File[] ff = mf.listFiles( new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				String name = pathname.getName();
+				if( name.length() == 5 && (name.startsWith("B") || name.startsWith("A")) && pathname.isDirectory() ) return true;
+				return false;
+			}
+		});
+		
+		for( File f : ff ) {
+			for( int x = 0; x < 5; x++ ) {
+				for( int y = x+1; y < 5; y++ ) {
+					FileWriter fw = new FileWriter( new File( f, "f00_"+x+"_"+y ) );
+					for( int u = 0; u < 5; u++ ) {
+						if( u != x && u != y ) {
+							FileReader fr = new FileReader( new File( f, "c00"+u ) );
+							BufferedReader br = new BufferedReader( fr );
+							String line = br.readLine();
+							while( line != null ) {
+								fw.write( line+"\n" );
+								line = br.readLine();
+							}
+						}
+					}
+					fw.close();
+				}
+			}
+		}
+	}
+	
 	public static void main(String[] args) {
 		//System.err.println( Runtime.getRuntime().availableProcessors() );
 		//init( args );
 		
 		try {
-			blastparse( "/home/sigmar/brachy_hyody.blastout.txt" );
+			//blastparse( "/home/sigmar/brachy_hyody.blastout.txt" );
 			//blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
 			//blastparse( "/home/sigmar/spiro_blastresults.txt" );
@@ -1502,6 +1701,10 @@ public class GeneSet {
 			//blastparse( "/home/sigmar/spiro_core_in_leptobrach_pan.blastout.txt" );
 			//newstuff();
 			//algoinbio();
+			
+			newsets();
+			
+			//aaset();
 			
 			//splitGenes( "/home/sigmar/thermus/sandbox/", "thermus.aa", 32 );
 		} catch (IOException e) {
