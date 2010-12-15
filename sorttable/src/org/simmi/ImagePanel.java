@@ -175,10 +175,10 @@ public class ImagePanel extends JComponent {
 		if( imageCache.containsKey(val) ) {
 			image = imageCache.get(val);
 		} else {
-			URL url = new URL( val );
+			URL url = new URL( val.replace(" ", "%20") );
 			image = ImageIO.read(url);
 			imageCache.put(val, image);
-		}		
+		}
 		//imageNameCache.put(oname, val);
 		
 		int sr = leftTable.getSelectedRow();
@@ -215,7 +215,6 @@ public class ImagePanel extends JComponent {
 					try {
 						getImage( val, index );
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					vals.remove( val );
@@ -278,6 +277,7 @@ public class ImagePanel extends JComponent {
 				ign.add("sodinn");
 				ign.add("jpg");
 				ign.add("sosa");
+				ign.add("-");
 				
 				int max = 0;
 				String val = null;
@@ -327,7 +327,7 @@ public class ImagePanel extends JComponent {
 						String vstr = str.replace(",", "");
 						vstr = vstr.replace(' ', '+');
 						vstr = URLEncoder.encode(vstr, "UTF-8");
-						url = new URL("http://images.google.com/images?hl=en&q="+vstr ); //+"&btnG=Search+Images&gbv=2" ); //&btnG=Search+Images" );//hl=en&q=Orange");//+str);
+						url = new URL("http://images.google.com/images?hl=en&biw=1920&bih=1043&gbv=2&tbs=isch:1&sa=1&q="+vstr ); //+"&btnG=Search+Images&gbv=2" ); //&btnG=Search+Images" );//hl=en&q=Orange");//+str);
 						System.err.println( "searching for " + url.toString() );
 						URLConnection connection = null;
 						connection = url.openConnection();
@@ -358,11 +358,14 @@ public class ImagePanel extends JComponent {
 						stream.close();
 						
 						String result = new String( ba.array(), 0, total);
+						
+						//System.err.println( result );
+						
 						int index = result.indexOf( startTag );
 						int val = result.indexOf("http:", index); //index+startTag.length();
 						
 						int stop = result.indexOf( "\\x26", val );
-						if( stop == -1 ) {
+						if( stop == -1 || stop-val >200 ) {
 							stop = result.indexOf( '&', val );
 						}
 						
@@ -370,7 +373,7 @@ public class ImagePanel extends JComponent {
 						if( stop != -1 ) {
 							urlstr = result.substring( val, stop );
 						}
-						System.err.println( urlstr );
+						//System.err.println( urlstr );
 						
 						/*while( index > 0 && (result.charAt(val) != 'h' || !(urlstr.endsWith("jpg") || urlstr.endsWith("png") || urlstr.endsWith("gif"))) ) {
 							index = result.indexOf( startTag, val );
