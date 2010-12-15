@@ -350,9 +350,9 @@ public class DetailPanel extends SimSplitPane {
 					if( columnIndex == 0 ) return "Næringarefni";
 					else if( columnIndex == 1 ) return "Næringarefnaflokkur";
 					else if( columnIndex == 2 ) return "Eining";
-					else if( columnIndex == 3 ) return "Mæligildi";
+					else if( columnIndex == 3 ) return "Innihald";
 					else if( columnIndex == 4 ) return "Æskilegt magn";
-					else if( columnIndex == 5 ) return "Hlutfall magns";
+					else if( columnIndex == 5 ) return "Hlutfall";
 					return "Sýna dálk";
 				} else {
 					if( columnIndex == 0 ) return "Name";
