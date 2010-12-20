@@ -1,6 +1,11 @@
 package org.simmi;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
@@ -11,6 +16,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import javax.imageio.ImageIO;
 
 public class GeneSet {
 	/**
@@ -415,6 +423,7 @@ public class GeneSet {
 						reset.add( name );
 					}
 					
+					
 					System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
 					if( info ) {
 						for( String gname : allset ) {
@@ -501,8 +510,243 @@ public class GeneSet {
 		fw.close();
 	}
 	
-	public static void func4( File dir, String[] stuff ) throws IOException {
-		Set<Set<String>>	total = new HashSet<Set<String>>();
+	public static void testbmatrix( String str ) throws IOException {
+		Set<String>	testset = new HashSet<String>( Arrays.asList( new String[] {"1s","2s","3s","4s"} ) );
+		Map<Set<String>,Set<Map<String,Set<String>>>> clustermap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
+		Set<Map<String,Set<String>>> smap = new HashSet<Map<String,Set<String>>>();
+		smap.add( new HashMap<String,Set<String>>() );
+		smap.add( new HashMap<String,Set<String>>() );
+		clustermap.put( new HashSet<String>( Arrays.asList( new String[] {"1s"} ) ), smap );
+		clustermap.put( new HashSet<String>( Arrays.asList( new String[] {"2s"} ) ), smap );
+		clustermap.put( new HashSet<String>( Arrays.asList( new String[] {"3s"} ) ), smap );
+		clustermap.put( new HashSet<String>( Arrays.asList( new String[] {"4s"} ) ), smap );
+		
+		BufferedImage img = bmatrix( testset, clustermap );
+		
+		ImageIO.write( img, "png", new File(str) );
+	}
+	
+	public static BufferedImage bmatrix( Set<String> species, Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap ) {
+		BufferedImage	bi = new BufferedImage(1,1,BufferedImage.TYPE_INT_RGB);
+		Graphics2D		g2 = (Graphics2D)bi.getGraphics();
+		int mstrw = 0;
+		for( String spc : species ) {
+			int tstrw = g2.getFontMetrics().stringWidth( spc );
+			if( tstrw > mstrw ) mstrw = tstrw;
+		}
+		
+		int sss = mstrw+72*species.size()+10;
+		bi = new BufferedImage( sss, sss, BufferedImage.TYPE_INT_RGB );
+		g2 = (Graphics2D)bi.getGraphics();
+		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
+		g2.setColor( Color.white );
+		g2.fillRect(0, 0, sss, sss);
+		
+		double minh = 100.0;
+		double maxh = 0.0;
+		
+		double minr = 100.0;
+		double maxr = 0.0;
+		
+		int where = 0;
+		for( String spc1 : species ) {
+			int strw = g2.getFontMetrics().stringWidth( spc1 );
+			
+			g2.setColor( Color.black );
+			g2.drawString(spc1, mstrw-strw, mstrw+47+where*72);
+			g2.rotate( Math.PI/2.0, mstrw+47+where*72, mstrw-strw );
+			g2.drawString(spc1, mstrw+42+where*72, mstrw-strw );
+			g2.rotate( -Math.PI/2.0, mstrw+47+where*72, mstrw-strw );			
+			
+			int wherex = 0;
+			for( String spc2 : species ) {				
+				int spc1tot = 0;
+				int spc2tot = 0;
+				int totot = 0;
+				for( Set<String> set : clusterMap.keySet() ) {
+					Set<Map<String,Set<String>>>	erm = clusterMap.get(set);
+					if( set.contains( spc1 ) ) {
+						spc1tot += erm.size();
+						for( Map<String,Set<String>> sm : erm ) {
+							Set<String> hset = sm.get(spc1);
+							totot += hset.size();
+						}
+						
+						if( set.contains( spc2 ) ) {
+							spc2tot += erm.size();
+						}
+					}
+				}
+				
+				double hh = (double)spc2tot/(double)spc1tot;
+				if( hh > maxh ) maxh = hh;
+				if( hh < minh ) minh = hh;
+				
+				double rr = (double)spc1tot/(double)totot;
+				if( rr > maxh ) maxr = rr;
+				if( rr < minh ) minr = rr;
+				
+				System.err.print( spc2tot+"/"+spc1tot+"\t" );
+				System.err.print( spc1tot+"/"+totot+"\t" );
+			}
+			System.err.println();
+			where++;
+		}
+		
+		ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+		PrintStream	ps = new PrintStream( baos );
+		
+		where = 0;
+		for( String spc1 : species ) {			
+			int wherex = 0;
+			for( String spc2 : species ) {				
+				int spc1tot = 0;
+				int spc2tot = 0;
+				int totot = 0;
+				for( Set<String> set : clusterMap.keySet() ) {
+					Set<Map<String,Set<String>>>	erm = clusterMap.get(set);
+					if( set.contains( spc1 ) ) {
+						spc1tot += erm.size();
+						for( Map<String,Set<String>> sm : erm ) {
+							Set<String> hset = sm.get(spc1);
+							totot += hset.size();
+						}
+						
+						if( set.contains( spc2 ) ) {
+							spc2tot += erm.size();
+						}
+					}
+				}
+				
+				if( where == wherex ) {
+					double dval = (double)spc1tot/(double)totot;
+					int cval = (int)(200.0*(maxr - dval)/(maxr - minr));
+					g2.setColor( new Color( 255, cval, cval ) );
+					g2.fillRoundRect( mstrw+10+wherex*72, mstrw+10+where*72, 64, 64, 16, 16);
+					
+					g2.setColor( Color.white );
+					String str = spc1tot+"/"+totot;
+					int	nstrw = g2.getFontMetrics().stringWidth( str );
+					g2.drawString( str, mstrw+42+wherex*72-nstrw/2, mstrw+47+where*72 );
+				} else {
+					double dval = (double)spc2tot/(double)spc1tot;
+					int cval = (int)(200.0*(maxh - dval)/(maxh - minh));
+					g2.setColor( new Color( cval, 255, cval ) );
+					g2.fillRoundRect( mstrw+10+wherex*72, mstrw+10+where*72, 64, 64, 16, 16);
+					
+					g2.setColor( Color.white );
+					String str = spc2tot+"";
+					int	nstrw2 = g2.getFontMetrics().stringWidth( str );
+					g2.drawString( str, mstrw+42+wherex*72-nstrw2/2, mstrw+47+where*72-25 );
+					//int	nstrw2 = g2.getFontMetrics().stringWidth( str );
+					str = spc1tot+"";
+					int	nstrw1 = g2.getFontMetrics().stringWidth( str );
+					g2.drawString( str, mstrw+42+wherex*72-nstrw1/2, mstrw+47+where*72 );
+					
+					double hlut = ((double)spc2tot/(double)spc1tot);
+					ps.printf("%.2f", (float)hlut );
+					str = baos.toString();
+					baos.reset();
+					int	pstrw = g2.getFontMetrics().stringWidth( str );
+					g2.drawString( str, mstrw+42+wherex*72-pstrw/2, mstrw+47+where*72+25 );
+				}
+				
+				wherex++;
+			}
+			System.err.println();
+			where++;
+		}
+		
+		return bi;
+	}
+	
+	private static void joinSets( Set<String> all, List<Set<String>> total ) {
+		System.err.println("starting");
+		
+		Set<String> cont = null;
+		Set<Set<String>>	rem = new HashSet<Set<String>>();
+		int i = 0;
+		for( Set<String>	check : total ) {
+			if( total.size() == 444 ) {
+				if( check.contains("ttHB27join_gi|46197919|gb|AE017221.1|_978_821") ) {
+					System.err.println( "uhuh " + i );
+					if( all.contains("ttHB27join_gi|46197919|gb|AE017221.1|_978_821") ) {
+						System.err.println("okok");
+					}
+				}
+			}
+			
+			for( String aval : all ) {
+				if( check.contains(aval) ) {
+					if( cont == null ) {
+						cont = check;
+						System.err.println( "conidx " + i );
+						check.addAll( all );
+						break;
+					} else {
+						cont.addAll( check );
+						rem.add( check );
+						break;
+					}
+				}
+			}
+			
+			i++;
+		}
+		
+		//for( Set<String> s : rem ) {
+		//	if( s.contains( "ttHB27join_gi|46197919|gb|AE017221.1|_978_821" ) ) System.err.println("okerm" + rem.size());
+		//}
+		
+		//int sbef = total.size();
+		//if( rem.size() > 0 ) System.err.println("tsize bef "+sbef);
+		//total.removeAll( rem );
+		
+		for( Set<String> erm : rem ) {
+			//if( erm.contains( "ttHB27join_gi|46197919|gb|AE017221.1|_978_821" ) ) System.err.println( "asdf "+erm.toString()+"  "+erm );
+
+			int ind = -1;
+			int count = 0;
+			for( Set<String> ok : total ) {
+				if( ok.size() == erm.size() && ok.containsAll(erm) ) {
+					ind = count;
+					break;
+				}
+				count++;
+			}
+			
+			if( ind != -1 ) {
+				total.remove( ind );
+			}
+		}
+		
+		//for( Set<String> erm : total ) {
+		//	if( erm.contains( "ttHB27join_gi|46197919|gb|AE017221.1|_978_821" ) ) System.err.println( "asdf2 "+erm.toString()+"  "+erm );
+		//}
+		
+		//int saft = total.size();
+		//if( rem.size() > 0 ) System.err.println("tsize aft "+saft);
+		
+		rem.clear();
+		if( cont == null ) total.add( all );
+		
+		Set<String>	erm = new HashSet<String>();
+		System.err.println( "erm " + total.size() );
+		for( Set<String> ss : total ) {
+			for( String s : ss ) {
+				if( erm.contains( s ) ) {
+					System.err.println( "buja " + s );
+					break;
+				}
+			}
+			erm.addAll( ss );
+		}
+	}
+	
+	private static Collection<Set<String>> func4_header( File dir, String[] stuff ) throws IOException {
+		List<Set<String>>	total = new ArrayList<Set<String>>();
+		FileWriter fw = new FileWriter("/home/sigmar/blastcluster.txt");
 		for( String name : stuff ) {
 			File f = new File( dir, name );
 			BufferedReader	br = new BufferedReader( new FileReader( f ) );
@@ -514,7 +758,7 @@ public class GeneSet {
 					Set<String>	all = new HashSet<String>();
 					while( line != null && !line.startsWith(">") ) {
 						String trim = line.trim();
-						if( trim.startsWith("scoto") || trim.startsWith("anta") || trim.startsWith("tt") ) {
+						if( trim.startsWith("scoto") || trim.startsWith("anta") || trim.startsWith("tt") || trim.startsWith("egg") || trim.startsWith("island") ) {
 							String val = trim.substring( 0, trim.indexOf('#')-1 );
 							int v = val.indexOf("contig");
 							if( v != -1 ) {
@@ -527,26 +771,9 @@ public class GeneSet {
 						line = br.readLine();
 					}
 					
-					Set<String> cont = null;
-					Set<Set<String>>	rem = null;
-					for( Set<String>	check : total ) {
-						for( String aval : all ) {
-							if( check.contains(aval) ) {
-								if( cont == null ) {
-									cont = check;
-									check.addAll( all );
-									break;
-								} else {
-									cont.addAll( check );
-									if( rem == null ) rem = new HashSet<Set<String>>();
-									rem.add( check );
-									break;
-								}
-							}
-						}
-					}
-					if( rem != null ) total.removeAll( rem );
-					if( cont == null ) total.add( all );
+					fw.write( all.toString()+"\n" );
+					
+					joinSets( all, total );
 					
 					if( line == null ) break;
 				}
@@ -554,22 +781,110 @@ public class GeneSet {
 				line = br.readLine();
 			}
 		}
+		fw.close();
 		
-		HashMap<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
+		return total;
+	}
+	
+	private static List<Set<String>> readBlastList( String filename ) throws IOException {
+		List<Set<String>>	total = new ArrayList<Set<String>>();
 		
-		Map<String,String>	joinmap = new HashMap<String,String>();
-		joinmap.put("ttpHB27", "ttHB27");
-		joinmap.put("ttp1HB8", "ttHB8");
-		joinmap.put("ttp2HB8", "ttHB8");
+		FileReader 		fr = new FileReader( filename );
+		BufferedReader	br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			String substr = line.substring(1, line.length()-1);
+			String[] split = substr.split("[, ]+");
+			Set<String>	all = new HashSet<String>( Arrays.asList( split ) );
+			
+			joinSets( all, total );
+			
+			line = br.readLine();
+		}
+		br.close();
+		
+		return total;
+	}
+	
+	private static Map<Set<String>,Set<Map<String,Set<String>>>> loadCluster( String path ) throws IOException {
+		Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
+		
+		FileReader		fr = new FileReader( path );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		Set<String>	olderm = null;
+		Map<String,Set<String>>	ok = null;
+		Set<Map<String,Set<String>>>	setmap = null;
+		String curspec = null;
+		
+		Set<String>	trall = new HashSet<String>();
+		List<String>	tralli = new ArrayList<String>();
+		
+		while( line != null ) {
+			if( line.startsWith("[") ) {
+				Set<String>	erm = new HashSet<String>();
+				String substr = line.substring(1, line.length()-1);
+				String[] split = substr.split("[, ]+");
+				erm.addAll( Arrays.asList(split) );
+				
+				if( olderm != null ) {
+					clusterMap.put( olderm, setmap );
+				}
+				olderm = erm;
+				setmap = new HashSet< Map<String,Set<String>> >();
+			} else if( !line.startsWith("\t") ) {
+				if( olderm != null ) {
+					clusterMap.put( olderm, setmap );
+				}
+				
+				ok = new HashMap<String,Set<String>>();
+				setmap.add( ok );
+			} else {
+				String trimline = line.trim();
+				if( trimline.startsWith("[") ) {
+					String[] subsplit = trimline.substring(1,trimline.length()-1).split("[, ]+");
+					Set<String> trset = new HashSet<String>( Arrays.asList(subsplit) );
+					
+					for( String trstr : trset ) {
+						if( trstr.contains("ttaqua") ) {
+							if( trall.contains( trstr ) ) {
+								System.err.println( "uhm1 " + trstr );
+							} else {
+								trall.add( trstr );
+							}
+							tralli.add( trstr );
+						}
+					}
+					
+					ok.put( curspec, trset );
+				} else {
+					curspec = trimline;
+				}
+			}
+			line = br.readLine();
+		}
+		clusterMap.put( olderm, setmap );
+		
+		br.close();
+		
+		System.err.println( "hohoho " + trall.size() + "  " + tralli.size() );
+		
+		return clusterMap;
+	}
+	
+	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( List<Set<String>>	total, Set<String> species ) {
+		Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
 		
 		for( Set<String>	t : total ) {
 			Set<String>	teg = new HashSet<String>();
 			for( String e : t ) {
 				String str = e.substring( 0, e.indexOf('_') );
-				if( joinmap.containsKey( str ) ) {
+				/*if( joinmap.containsKey( str ) ) {
 					str = joinmap.get(str);
-				}
+				}*/
 				teg.add( str );
+				
+				species.add(str);
 			}
 			
 			Set<Map<String,Set<String>>>	setmap;
@@ -585,26 +900,99 @@ public class GeneSet {
 			
 			for( String e : t ) {
 				String str = e.substring( 0, e.indexOf('_') );
-				if( joinmap.containsKey( str ) ) {
+				/*if( joinmap.containsKey( str ) ) {
 					str = joinmap.get(str);
-				}
+				}*/
 				
 				Set<String>	set;
 				if( submap.containsKey( str ) ) {
 					set = submap.get(str);
 				} else {
 					set = new HashSet<String>();
-					submap.put( str, set );	
+					submap.put( str, set );
 				}
 				set.add( e );
 			}
 		}
 		
+		return clusterMap;
+	}
+	
+	private static void writeSimplifiedCluster( String filename, Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap ) throws IOException {
+		FileWriter	fos = new FileWriter( filename );
+		for( Set<String> set : clusterMap.keySet() ) {
+			Set<Map<String,Set<String>>>	mapset = clusterMap.get( set );
+			fos.write( set.toString()+"\n" );
+			int i = 0;
+			for( Map<String,Set<String>> erm : mapset ) {
+				fos.write((i++)+"\n");
+				
+				for( String erm2 : erm.keySet() ) {
+					Set<String>	erm3 = erm.get(erm2);
+					fos.write("\t"+erm2+"\n");
+					fos.write("\t\t"+erm3.toString()+"\n");
+				}
+			}
+		}
+		fos.close();
+	}
+	
+	public static Set<String> speciesFromCluster( Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap ) {
+		Set<String>	species = new TreeSet<String>();
+		
+		for( Set<String> clustset : clusterMap.keySet() ) {
+			species.addAll( clustset );
+		}
+		
+		return species;
+	}
+	
+	public static void func4( File dir, String[] stuff ) throws IOException {
+		//HashMap<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
+		/*Map<String,String>	joinmap = new HashMap<String,String>();
+		joinmap.put("ttpHB27", "ttHB27");
+		joinmap.put("ttp1HB8", "ttHB8");
+		joinmap.put("ttp2HB8", "ttHB8");*/
+		
+		//Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = loadCluster("/home/sigmar/burb.txt");
+		
+		Set<String>	species = new TreeSet<String>();
+		//Set<Set<String>> total = func4_header( dir, stuff );
+		List<Set<String>> total = readBlastList( "/home/sigmar/blastcluster.txt" );
+		
+		FileWriter	fw = new FileWriter("/home/sigmar/joincluster.txt");
+		for( Set<String> sset : total ) {
+			fw.write( sset.toString()+"\n" );
+		}
+		fw.close();
+		
+		Set<String>	trall = new HashSet<String>();
+		for( Set<String> sset : total ) {
+			for( String trstr : sset ) {
+				if( trstr.contains("ttaqua") ) {
+					if( trall.contains( trstr ) ) {
+						System.err.println( "uhm1 " + trstr );
+					} else {
+						trall.add( trstr );
+					}
+					//tralli.add( trstr );
+				}
+			}
+		}
+		
+		Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+		//Set<String>	species = speciesFromCluster( clusterMap );
+		
+		writeSimplifiedCluster( "/home/sigmar/burb2.txt", clusterMap );
+		
+		BufferedImage	img = bmatrix( species, clusterMap );
+		ImageIO.write( img, "png", new File("/home/sigmar/mynd.png") );
+		
 		PrintStream ps = new PrintStream( new FileOutputStream("/home/sigmar/out2.out") );
 		System.setErr( ps );
 		
-		System.err.println( "Total gene sets: " + total.size() );
-		System.err.println();
+		//System.err.println( "Total gene sets: " + total.size() );
+		//System.err.println();
 		
 		List<StrSort>	sortmap = new ArrayList<StrSort>();
 		for( Set<String> set : clusterMap.keySet() ) {
@@ -1687,9 +2075,15 @@ public class GeneSet {
 	
 	public static void main(String[] args) {
 		//System.err.println( Runtime.getRuntime().availableProcessors() );
-		//init( args );
 		
-		try {
+		/*try {
+			testbmatrix("/home/sigmar/mynd.png");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
+		init( args );
+		
+		/*try {
 			//blastparse( "/home/sigmar/brachy_hyody.blastout.txt" );
 			//blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
@@ -1699,27 +2093,30 @@ public class GeneSet {
 			//blastparse( "/home/sigmar/lept_brach.lepto_inter.blastout.txt" );
 			//blastparse( "/home/sigmar/spir_brach.blastout.txt" );
 			//blastparse( "/home/sigmar/spiro_core_in_leptobrach_pan.blastout.txt" );
+			
+			blastparse( "/home/sigmar/thermus/newthermus/all.blastout" );
+			
 			//newstuff();
 			//algoinbio();
 			
-			newsets();
+			//newsets();
 			
 			//aaset();
 			
 			//splitGenes( "/home/sigmar/thermus/sandbox/", "thermus.aa", 32 );
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	private static void init( String[] args ) {
-		String[]	stuff = {"scoto346","scoto2101","antag2120","scoto2127","scoto252","scoto1572","scoto4063","ttHB27","ttpHB27","ttHB8","ttp1HB8","ttp2HB8","ttaqua"};
+		String[]	stuff = {"scoto346","scoto2101","antag2120","scoto2127","scoto252","scoto1572","scoto4063","eggertsoni2789","islandicus180610","ttHB27join","ttHB8join","ttaqua"};
 		String[]	stuff2 = {"aa1","aa2","aa4","aa6","aa7","aa8"};
 		String[]	names = {"aa1.out","aa2.out","aa4.out","aa6.out","aa7.out","aa8.out"};
 		String[]	all = {"all.aa"};
-		String[]	name = {"thermus.blastout.txt"};
+		String[]	name = {"all.blastout"};
 		File 		dir = new File("/home/sigmar/thermus/results/");
-		File 		dir2 = new File("/home/sigmar/thermus/sandbox/");
+		File 		dir2 = new File("/home/sigmar/thermus/newthermus/");
 		
 		swapmap.put("aa1.out", "scoto346");
 		swapmap.put("aa2.out", "scoto2101");
@@ -1733,12 +2130,12 @@ public class GeneSet {
 			//printnohits( stuff, dir, dir2 );
 			//createConcatFsa( stuff, dir2 );
 			
-			//loci2aasequence( all, dir2 );
-			//loci2gene( stuff2, dir );
-			//func4( dir2, name );
+			loci2aasequence( all, dir2 );
+			loci2gene( stuff2, dir );
+			func4( dir2, name );
 			
-			PrintStream ps = new PrintStream("/home/sigmar/uff.txt");
-			System.setErr( ps );
+			//PrintStream ps = new PrintStream("/home/sigmar/uff.txt");
+			//System.setErr( ps );
 			
 			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/alls.fsa"), 1 );
 			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/alls.fsa"), 2 );
@@ -1749,7 +2146,7 @@ public class GeneSet {
 			//aahist( new File("/home/sigmar/tp.aa"), new File("/home/sigmar/nc.aa") );
 			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 1 );
 			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 2 );
-			aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 3 );
+			//aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 3 );
 			/*aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 4 );
 			aahist( new File("/home/sigmar/thermus/out/all.fsa"), new File("/home/sigmar/nc.aa"), 5 );
 			
@@ -1771,7 +2168,7 @@ public class GeneSet {
 			//aahist( new File("/home/sigmar/thermus/hb27.aa"), new File("/home/sigmar/thermus/out/aa2.fsa") );
 			//aahist( new File("/home/sigmar/thermus/out/aa2.fsa"), new File("/home/sigmar/thermus/hb27.aa") );
 			
-			ps.close();
+			//ps.close();
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}

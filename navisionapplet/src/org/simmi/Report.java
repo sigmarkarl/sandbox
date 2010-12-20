@@ -63,6 +63,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jdesktop.swingx.JXDatePicker;
 
 public class Report extends JApplet {
 	JButton 		pdfComp;
@@ -85,6 +86,9 @@ public class Report extends JApplet {
 	
 	JScrollPane		scrollpane;
 	JScrollPane		detailscrollpane;
+	
+	JXDatePicker	after;
+	JXDatePicker	before;
 
 	public Report() throws IOException {
 		super();
@@ -118,6 +122,11 @@ public class Report extends JApplet {
 		 */
 
 		load(args[0]);
+	}
+	
+	public void setDatePickers( JXDatePicker before, JXDatePicker after ) {
+		this.before = before;
+		this.after = after;
 	}
 
 	class Job {
@@ -436,8 +445,264 @@ public class Report extends JApplet {
 			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 				
 			}
-		};
+		}; 
 		return model;
+	}
+	
+	public String getStartDate() {
+		String aftstr = (after == null || after.getDate() == null) ? null : (after.getDate().getYear()+1900) + "-" + (after.getDate().getMonth()+1) + "-" + after.getDate().getDate();
+		return aftstr;
+	}
+	
+	public String getEndDate() {
+		String befstr = (before == null || before.getDate() == null) ? null : (before.getDate().getYear()+1900) + "-" + (before.getDate().getMonth()+1) + "-" + before.getDate().getDate();
+		return befstr;
+	}
+	
+	public void plan( List<Object> jobstr, Sheet sheet ) throws SQLException {
+		int k = 3;
+		
+		String startDate = getStartDate();
+		String endDate = getEndDate();
+		for (Object o : jobstr) {
+			String sql = "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\") as Cost, sum(be.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Budget Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = "
+					+ o.toString()
+					+ " and be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\"";
+			
+			if( startDate != null ) sql += " and be.Date >= '"+startDate+"'";
+			if( endDate != null ) sql += " and be.Date <= '"+endDate+"'";
+			sql += " group by be.No_, be.Type, bl.Description";
+
+			System.err.println( "executing job " + o.toString() );
+			
+			PreparedStatement 	ps = con.prepareStatement(sql);
+			ResultSet			rs = ps.executeQuery();
+
+			costMap.clear();
+			costList.clear();
+			while (rs.next()) {
+				String nostr = rs.getString(1);
+				Cost cost = new Cost(nostr, rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5), null);
+				costMap.put(nostr, cost);
+				costList.add(cost);
+			}
+			rs.close();
+			ps.close();
+
+			for( int i = 9; i < 40; i++ ) {
+				Row row = sheet.getRow(i);
+				if (row == null) row = sheet.createRow( i );
+				
+				boolean unsucc = true;
+
+				Cell cell = row.getCell(0);
+				if (cell != null) {
+					int d = (int) cell.getNumericCellValue();
+					String dstr = Integer.toString(d);
+					if (d > 0) {
+						if (costMap.containsKey(dstr)) {
+							Cost cost = costMap.get(dstr);
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							if (d >= 1000 && d < 2000)
+								cell.setCellValue(cost.p);
+							else
+								cell.setCellValue(cost.c);
+						} else {
+							double tot = 0.0;
+
+							if (dstr.endsWith("99")) {
+								for (Cost c : costList) {
+									if (c.no >= d - 999 && c.no < d + 1)
+										tot += c.c;
+								}
+							} else if (dstr.endsWith("98")) {
+								for (Cost c : costList) {
+									if (c.no >= d - 98 && c.no < d + 2)
+										tot += c.c;
+								}
+							} else if (dstr.equals("1993")) {
+								for (Cost c : costList) {
+									if (c.no >= d - 993 && c.no < d + 7)
+										tot += c.p;
+								}
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(tot);
+						}
+
+						unsucc = false;
+					}
+				}
+
+				if (unsucc) {
+					cell = row.getCell(1);
+					if( cell == null ) {
+						cell = row.createCell(1);
+						cell.setCellValue( (String)rowHeader.getValueAt(9-i, 0) );
+					}
+					
+					if (cell != null && cell.getCellType() == Cell.CELL_TYPE_STRING) {
+						String dstr = cell.getStringCellValue();
+						if (dstr.equals("Kostnaður samtals")) {
+							double tot = 0.0;
+							for (String no : costMap.keySet()) {
+								Cost c = costMap.get(no);
+								if( c.type.contains("0") ) tot += c.p;
+								else tot += c.c;
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(tot);
+						} else if (dstr.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
+							double tot = 0.0;
+							for (String no : costMap.keySet()) {
+								Cost c = costMap.get(no);
+								if( c.type.contains("0") ) tot += c.p;
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(tot);
+						} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
+							double tot = 0.0;
+							double ctot = 0.0;
+							for (String no : costMap.keySet()) {
+								Cost c = costMap.get(no);
+								if( c.type.contains("0") ) tot += c.p;
+								//else if( c.type.contains("1") ) ctot += c.p;
+								else tot += c.c;
+								
+								if (c.no >= 1000 && c.no < 2000 ) {
+									ctot += c.p;
+								}
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(ctot-tot);
+						}
+					}
+				}
+			}
+
+			sql = "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\") as Cost, sum(\"Total Price\") as Price from dbo.\"Matís ohf_$Job Budget Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = "
+					+ o.toString() + " and be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\"";
+			
+			if( endDate != null ) sql += " and be.Date <= '"+endDate+"'";
+			sql += " group by be.No_, be.Type, bl.Description";
+
+			ps = con.prepareStatement(sql);
+			rs = ps.executeQuery();
+
+			costMap.clear();
+			costList.clear();
+			int count = 0;
+			while (rs.next()) {
+				count++;
+				//System.err.print( (count) + " " );
+				String nostr = rs.getString(1);
+				Cost cost = new Cost(nostr, rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5), null);
+				costMap.put(nostr, cost);
+				costList.add(cost);
+			}
+			rs.close();
+			ps.close();
+
+			for( int i = 40; i < 100; i++) {
+				Row row = sheet.getRow(i);
+				if (row == null) row = sheet.createRow(i);
+				
+				boolean unsucc = true;
+
+				Cell cell = row.getCell(0);
+				if (cell != null) {
+					int d = (int) cell.getNumericCellValue();
+					String dstr = Integer.toString(d);
+					if (d > 0) {
+						if (costMap.containsKey(dstr)) {
+							Cost cost = costMap.get(dstr);
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							if (d >= 1000 && d < 2000)
+								cell.setCellValue(cost.p);
+							else
+								cell.setCellValue(cost.c);
+						} else {
+							double tot = 0.0;
+
+							if (dstr.endsWith("99")) {
+								for (Cost c : costList) {
+									if (c.no >= d - 999 && c.no < d + 1)
+										tot += c.c;
+								}
+							} else if (dstr.endsWith("98")) {
+								for (Cost c : costList) {
+									if (c.no >= d - 98 && c.no < d + 2)
+										tot += c.c;
+								}
+							} else if (dstr.equals("1993")) {
+								for (Cost c : costList) {
+									if (c.no >= d - 993 && c.no < d + 7)
+										tot += c.p;
+								}
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(tot);
+						}
+
+						unsucc = false;
+					}
+				}
+
+				if (unsucc) {
+					cell = row.getCell(1);
+					if (cell != null
+							&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
+						String dstr = cell.getStringCellValue();
+						if (dstr.equals("Kostnaður samtals")) {
+							double tot = 0.0;
+							for (String no : costMap.keySet()) {
+								Cost c = costMap.get(no);
+								if( c.type.contains("0") ) tot += c.p;
+								else tot += c.c;
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(tot);
+						} else if (dstr
+								.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
+							double tot = 0.0;
+							for (String no : costMap.keySet()) {
+								Cost c = costMap.get(no);
+								if( c.type.contains("0") ) tot += c.p;									
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(tot);
+						} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
+							double tot = 0.0;
+							double ctot = 0.0;
+							for (String no : costMap.keySet()) {
+								Cost c = costMap.get(no);
+								if( c.type.contains("0") ) tot += c.p;
+								//else if( c.type.contains("1") ) ctot += c.p;
+								else tot += c.c;
+								
+								if (c.no >= 1000 && c.no < 2000 ) {
+									ctot += c.p;
+								}
+							}
+							cell = row.getCell(k);
+							if( cell == null ) cell = row.createCell(k);
+							cell.setCellValue(ctot-tot);
+						}
+					}
+				}	
+			}
+
+			k += 2;
+		}
 	}
 
 	public void load(String filename) {
@@ -653,242 +918,12 @@ public class Report extends JApplet {
 			}
 	
 			/********** plan ***************/
-			int k = 3;
-			for (Object o : jobstr) {
-				sql = "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\") as Cost, sum(be.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Budget Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = "
-						+ o.toString()
-						+ " and be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.Date >= '"+startDate+"' and be.Date <= '"+endDate+"' group by be.No_, be.Type, bl.Description";
-	
-				System.err.println( "executing job " + o.toString() );
-				
-				ps = con.prepareStatement(sql);
-				rs = ps.executeQuery();
-	
-				costMap.clear();
-				costList.clear();
-				while (rs.next()) {
-					String nostr = rs.getString(1);
-					Cost cost = new Cost(nostr, rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5), null);
-					costMap.put(nostr, cost);
-					costList.add(cost);
-				}
-				rs.close();
-				ps.close();
-	
-				for (i = 9; i < 40; i++) {
-					row = sheet.getRow(i);
-					if (row != null) {
-						boolean unsucc = true;
-	
-						cell = row.getCell(0);
-						if (cell != null) {
-							int d = (int) cell.getNumericCellValue();
-							String dstr = Integer.toString(d);
-							if (d > 0) {
-								if (costMap.containsKey(dstr)) {
-									Cost cost = costMap.get(dstr);
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									if (d >= 1000 && d < 2000)
-										cell.setCellValue(cost.p);
-									else
-										cell.setCellValue(cost.c);
-								} else {
-									double tot = 0.0;
-	
-									if (dstr.endsWith("99")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 999 && c.no < d + 1)
-												tot += c.c;
-										}
-									} else if (dstr.endsWith("98")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 98 && c.no < d + 2)
-												tot += c.c;
-										}
-									} else if (dstr.equals("1993")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 993 && c.no < d + 7)
-												tot += c.p;
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								}
-	
-								unsucc = false;
-							}
-	
-						}
-	
-						if (unsucc) {
-							cell = row.getCell(1);
-							if (cell != null
-									&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
-								String dstr = cell.getStringCellValue();
-								if (dstr.equals("Kostnaður samtals")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-										else tot += c.c;
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
-									double tot = 0.0;
-									double ctot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-										//else if( c.type.contains("1") ) ctot += c.p;
-										else tot += c.c;
-										
-										if (c.no >= 1000 && c.no < 2000 ) {
-											ctot += c.p;
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(ctot-tot);
-								}
-							}
-						}
-					}
-				}
-	
-				sql = "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\") as Cost, sum(\"Total Price\") as Price from dbo.\"Matís ohf_$Job Budget Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = "
-						+ o.toString()
-						+ " and be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.Date <= '"+endDate+"' group by be.No_, be.Type, bl.Description";
-	
-				ps = con.prepareStatement(sql);
-				rs = ps.executeQuery();
-	
-				costMap.clear();
-				costList.clear();
-				int count = 0;
-				while (rs.next()) {
-					count++;
-					//System.err.print( (count) + " " );
-					String nostr = rs.getString(1);
-					Cost cost = new Cost(nostr, rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5), null);
-					costMap.put(nostr, cost);
-					costList.add(cost);
-				}
-				rs.close();
-				ps.close();
-	
-				for (i = 40; i < 100; i++) {
-					row = sheet.getRow(i);
-					if (row != null) {
-						boolean unsucc = true;
-	
-						cell = row.getCell(0);
-						if (cell != null) {
-							int d = (int) cell.getNumericCellValue();
-							String dstr = Integer.toString(d);
-							if (d > 0) {
-								if (costMap.containsKey(dstr)) {
-									Cost cost = costMap.get(dstr);
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									if (d >= 1000 && d < 2000)
-										cell.setCellValue(cost.p);
-									else
-										cell.setCellValue(cost.c);
-								} else {
-									double tot = 0.0;
-	
-									if (dstr.endsWith("99")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 999 && c.no < d + 1)
-												tot += c.c;
-										}
-									} else if (dstr.endsWith("98")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 98 && c.no < d + 2)
-												tot += c.c;
-										}
-									} else if (dstr.equals("1993")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 993 && c.no < d + 7)
-												tot += c.p;
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								}
-	
-								unsucc = false;
-							}
-						}
-	
-						if (unsucc) {
-							cell = row.getCell(1);
-							if (cell != null
-									&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
-								String dstr = cell.getStringCellValue();
-								if (dstr.equals("Kostnaður samtals")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-										else tot += c.c;
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr
-										.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;									
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
-									double tot = 0.0;
-									double ctot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-										//else if( c.type.contains("1") ) ctot += c.p;
-										else tot += c.c;
-										
-										if (c.no >= 1000 && c.no < 2000 ) {
-											ctot += c.p;
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(ctot-tot);
-								}
-							}
-						}
-					}
-				}
-	
-				k += 2;
-			}
+			plan(jobstr, sheet);
 	
 			System.err.println( "fetching real data" );
 			/************ real ******************/
 	
-			k = 2;
+			int k = 2;
 			for (Object o : jobstr) {
 				// sql =
 				// "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\"), sum(\"Total Price\") as Cost from dbo.\"Matís ohf_$Job Ledger Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = '"+o.toString()+"' and be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.\"Posting Date\" >= '2009-01-01' and be.\"Posting Date\" < '2009-04-01' group by be.No_, be.Type, bl.Description";

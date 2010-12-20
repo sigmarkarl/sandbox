@@ -505,8 +505,8 @@ public class NavisionApplet extends JApplet {
 							tabbedpane.addTab("Job", rep.scrollpane);
 							tabbedpane.setSelectedIndex(1);
 							
-							personoptionspane.setTabComponentAt(0, rep.summaryscrollpane);
-							personoptionspane.setTabComponentAt(1, rep.detailscrollpane);
+							personoptionspane.setComponentAt(0, rep.summaryscrollpane);
+							personoptionspane.setComponentAt(1, rep.detailscrollpane);
 						} catch (ClassNotFoundException e1) {
 							e1.printStackTrace();
 						} catch (SQLException e1) {
