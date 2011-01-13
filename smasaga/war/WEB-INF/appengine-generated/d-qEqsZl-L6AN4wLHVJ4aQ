@@ -1,0 +1,84 @@
+#!/usr/bin/perl
+# Description: Reads a genomic sequence from STDIN and submits to RNAMmer to predict rRNA genes
+# Author: Peter Fischer Hallin
+# Email: pfh@cbs.dtu.dk
+# Version: 1.2 ws0
+# Date: 2008-09-09
+
+# include standard XML::Compile helper functions (used to initiate WSDL proxys)
+use lib '/home/people/karinl/scripts/rnammer';
+require "xml-compile.pl";
+require "fasta.inc.pl";
+
+# create proxy to genome atlas
+my $rnammer = WSDL2proxy ( 'http://www.cbs.dtu.dk/ws/RNAmmer/RNAmmer_1_2_ws0.wsdl' );
+
+# append schema definitions
+$rnammer = appendSchemas ( $rnammer , 
+ "http://www.cbs.dtu.dk/ws/common/ws_common_1_0b.xsd" ,
+ "http://www.cbs.dtu.dk/ws/RNAmmer/ws_rnammer_1_2_ws0.xsd"
+);
+
+my %ops = addOperations ( $rnammer ) ;
+
+my @fasta = read_fasta();
+my ($kingdom , $mol) = @ARGV;
+$kingdom = "bac" unless defined $kingdom;
+$mol = "ssu,lsu,tsu" unless defined $mol;
+
+print STDERR "# kingdom: $kingdom\n";
+print STDERR "# mol: $mol\n";
+for ( my $i = 0 ; $i < scalar ( @fasta ) ; $i++ ) {
+	my $ident = $fasta[$i]->{id};
+	my $comment = $fasta[$i]->{comment};
+	my $seq = $fasta[$i]->{seq};
+	run_rnammer  ($ident,$comment,$seq,$kingdom,$mol) ;
+}
+
+sub run_rnammer {
+	my ($jobid,$status,$expires);
+	my ($ident,$comment,$seq,$kingdom,$mol) = @_;
+	my $response = $ops{runService}->( 
+	 parameters => { 
+	  parameters => {
+	   mol => $mol ,
+	    kingdom => $kingdom,
+	    sequences => {
+	     entry => {
+	      ident => $ident,
+	      seq => $seq
+	    }
+	   }
+	  }
+	 }
+	);
+	if ( ! defined ( $response->{parameters}->{queueentry}) ) {
+		die "error obtaining jobid\n";
+	} else {
+		$jobid = $response->{parameters}->{queueentry}->{jobid};
+		wait_job($ops{pollQueue} , $jobid);
+		$response = $ops{fetchResult}->( job => { jobid => $jobid   }) ;
+		print  STDERR "# parsing 'anndata' object\n";
+		printf STDERR "# annotations from %s version %s\n" , 
+		$response->{parameters}->{anndata}->{annsource}->{method} , 
+		$response->{parameters}->{anndata}->{annsource}->{version};
+		foreach my $ann (@{$response->{parameters}->{output}->{entries}->{entry}}) {
+			my $inp_id = $ann->{sequenceEntry};
+			my ( $begin , $end ) = ( $ann->{start} , $ann->{stop} );
+			my $strand = $ann->{direction};
+			my $mol = $ann->{mol};
+			my $id;
+			if ( $strand eq "+")  {
+				$id = "rRNA_$begin-$end";
+			} else {
+				$id = "rRNA_$end-$begin";
+			}
+			my $gene = $ann->{sequence};
+			my $comment = "/input_id=$inp_id /mol=$mol";
+			print ">$id $comment\n";
+			for (my $x=0 ; $x < length ( $gene ) ; $x += 60) {
+				print substr($gene,$x,60),"\n";
+			}
+		}
+	}
+}
