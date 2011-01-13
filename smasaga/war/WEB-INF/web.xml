@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+  
+  <!-- Servlets -->
+  <servlet>
+    <servlet-name>greetServlet</servlet-name>
+    <servlet-class>org.simmi.server.GreetingServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet>
+    <servlet-name>gradeServlet</servlet-name>
+    <servlet-class>org.simmi.server.EinkunnServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet>
+    <servlet-name>listGreetServlet</servlet-name>
+    <servlet-class>org.simmi.server.ListGreetingServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet>
+    <servlet-name>signServlet</servlet-name>
+    <servlet-class>org.simmi.server.SignGuestbookServlet</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>signServlet</servlet-name>
+    <url-pattern>/sign</url-pattern>
+  </servlet-mapping>
+  
+  <servlet-mapping>
+    <servlet-name>greetServlet</servlet-name>
+    <url-pattern>/org.simmi.smasogur.sogur.Saga/greet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet-mapping>
+    <servlet-name>gradeServlet</servlet-name>
+    <url-pattern>/smasaga/listeinkunn</url-pattern>
+  </servlet-mapping>
+  
+  <servlet-mapping>
+    <servlet-name>listGreetServlet</servlet-name>
+    <url-pattern>/smasaga/listgreet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>Upload</servlet-name>
+    <servlet-class>org.simmi.server.Upload</servlet-class>
+  </servlet>
+  
+  <servlet>
+    <servlet-name>Serve</servlet-name>
+    <servlet-class>org.simmi.server.Serve</servlet-class>
+  </servlet>
+  
+  <servlet>
+    <servlet-name>Grade</servlet-name>
+    <servlet-class>org.simmi.server.Grade</servlet-class>
+  </servlet>
+ 
+  <servlet-mapping>
+    <servlet-name>Upload</servlet-name>
+    <url-pattern>/upload</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>Serve</servlet-name>
+    <url-pattern>/serve</url-pattern>
+  </servlet-mapping>
+  
+  <servlet-mapping>
+    <servlet-name>Grade</servlet-name>
+    <url-pattern>/grade</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>loginService</servlet-name>
+    <servlet-class>org.simmi.server.LoginServiceImpl</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>loginService</servlet-name>
+    <url-pattern>/smasaga/login</url-pattern>
+  </servlet-mapping>
+  
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>Smasaga.jsp</welcome-file>
+  </welcome-file-list>
+
+</web-app>

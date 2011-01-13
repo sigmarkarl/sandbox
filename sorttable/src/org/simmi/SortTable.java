@@ -15,6 +15,8 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.ImageProducer;
@@ -211,30 +213,42 @@ public class SortTable extends JApplet {
 			while (line != null) {
 				String[] split = line.split("\\t");
 
-				if (split.length > 4 && is.contains(Integer.parseInt(split[2]))) {
-					if (foodInd.containsKey(split[1])) {
-						start = foodInd.get(split[1]);
-					} else {
-
-					}
-					Object[] objs = result.get(start + 2);
-					if (split[5].length() > 0) {
-						String replc = split[5].replace(',', '.');
-						replc = replc.replace("<", "");
-						float f = -1.0f;
-						try {
-							f = Float.parseFloat(replc);
-						} catch (Exception e) {
-						}
-						Integer ngroupOffset = ngroupMap.get(split[2]);
+				if( split.length > 4 ) {
+					int ival = -1;
+					try {
+						ival = Integer.parseInt(split[2]);
+					} catch( Exception e ) {
 						
-						if( ngroupOffset != null ) {
-							if (f != -1.0f)
-								objs[2 + ngroupOffset] = f;
-							else
-								objs[2 + ngroupOffset] = null;
+					}
+					if( ival == -1 ) {
+						System.err.println( split[2] );
+					}
+					
+					if( is.contains(ival) ) {
+						if (foodInd.containsKey(split[1])) {
+							start = foodInd.get(split[1]);
 						} else {
-							System.err.println();
+	
+						}
+						Object[] objs = result.get(start + 2);
+						if (split[5].length() > 0) {
+							String replc = split[5].replace(',', '.');
+							replc = replc.replace("<", "");
+							float f = -1.0f;
+							try {
+								f = Float.parseFloat(replc);
+							} catch (Exception e) {
+							}
+							Integer ngroupOffset = ngroupMap.get(split[2]);
+							
+							if( ngroupOffset != null ) {
+								if (f != -1.0f)
+									objs[2 + ngroupOffset] = f;
+								else
+									objs[2 + ngroupOffset] = null;
+							} else {
+								System.err.println();
+							}
 						}
 					}
 				}
@@ -292,7 +306,8 @@ public class SortTable extends JApplet {
 		// table.tableChanged( new TableModelEvent( model ) );
 	}
 
-	public List<Object[]> parseData(String loc) throws IOException {
+	List<Object>[] nutList = null;
+	public List<Object[]> parseData( String loc ) throws IOException {
 		Map<String, String> fgroupMap = new HashMap<String, String>();
 
 		InputStream inputStream;
@@ -322,7 +337,7 @@ public class SortTable extends JApplet {
 			}
 		}
 
-		List<Object>[] nutList = new List[2];
+		nutList = new List[2];
 		// List<Object>[] nutList = nutList;
 		for (int i = 0; i < nutList.length; i++) {
 			List<Object> list = new ArrayList<Object>();
@@ -583,6 +598,7 @@ public class SortTable extends JApplet {
 		}
 	};
 
+	//static boolean shiftdown = false;
 	public void firstInit() {
 		CompatUtilities.updateLof();
 
@@ -603,6 +619,19 @@ public class SortTable extends JApplet {
 		}
 
 		loadStuff();
+		
+		this.addKeyListener( new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				reload();
+			}
+		});
 
 		// String par = this.getParameter("tab");
 		// System.err.println( "tabpar " + par );
@@ -620,6 +649,30 @@ public class SortTable extends JApplet {
 		 */
 
 		// List<Object[]> sublist = Collections.
+	}
+	
+	public List<Object[]> reload() {
+		final List<Object[]> result = new ArrayList<Object[]>();
+		for( List l : nutList ) {
+			result.add(l.toArray(new Object[0]));
+		}
+		
+		Collections.sort(stuff, new Comparator<Object[]>() {
+			public int compare(Object[] o1, Object[] o2) {
+				if (o1[0] == null || o2[0] == null)
+					return Integer.MIN_VALUE;
+				return ((String) o1[0]).compareToIgnoreCase((String) o2[0]);
+			}
+		});
+
+		foodNameInd.clear();
+		int i = 0;
+		for (Object[] oo : stuff) {
+			if (oo[0] != null)
+				foodNameInd.put((String) oo[0], i++);
+		}
+		
+		return result;
 	}
 
 	public void loadStuff() {
