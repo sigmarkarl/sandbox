@@ -12,6 +12,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.image.ImageProducer;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -425,9 +426,6 @@ public class Report extends JApplet {
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
 				String ret = "";
-				
-					
-				
 				return ret;
 			}
 
@@ -464,6 +462,51 @@ public class Report extends JApplet {
 		
 		String startDate = getStartDate();
 		String endDate = getEndDate();
+		
+		Row arow = sheet.getRow(3);
+		Cell acell = null;
+		if( arow == null ) {
+			arow = sheet.createRow( 3 );
+			acell = arow.createCell(1);
+		} else {
+			acell = arow.getCell(1);
+			if( acell == null ) acell = arow.createCell( 1 );				
+		}
+		acell.setCellValue( "Verkefni" );
+		
+		arow = sheet.getRow(4);
+		acell = null;
+		if( arow == null ) {
+			arow = sheet.createRow( 4 );
+			acell = arow.createCell(1);
+		} else {
+			acell = arow.getCell(1);
+			if( acell == null ) acell = arow.createCell( 1 );				
+		}
+		acell.setCellValue( "Verkefnastjóri" );
+		
+		arow = sheet.getRow(5);
+		acell = null;
+		if( arow == null ) {
+			arow = sheet.createRow( 5 );
+			acell = arow.createCell(1);
+		} else {
+			acell = arow.getCell(1);
+			if( acell == null ) acell = arow.createCell( 1 );				
+		}
+		acell.setCellValue( "Upphafs dags." );
+		
+		arow = sheet.getRow(6);
+		acell = null;
+		if( arow == null ) {
+			arow = sheet.createRow( 6 );
+			acell = arow.createCell(1);
+		} else {
+			acell = arow.getCell(1);
+			if( acell == null ) acell = arow.createCell( 1 );				
+		}
+		acell.setCellValue( "Enda dags." );		
+		
 		for (Object o : jobstr) {
 			String sql = "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\") as Cost, sum(be.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Budget Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = "
 					+ o.toString()
@@ -489,6 +532,17 @@ public class Report extends JApplet {
 			rs.close();
 			ps.close();
 
+			arow = sheet.getRow(8);
+			acell = null;
+			if( arow == null ) {
+				arow = sheet.createRow( 8 );
+				acell = arow.createCell(k);
+			} else {
+				acell = arow.getCell(k);
+				if( acell == null ) acell = arow.createCell( k );				
+			}
+			acell.setCellValue("Áætlun");
+			
 			for( int i = 9; i < 40; i++ ) {
 				Row row = sheet.getRow(i);
 				if (row == null) row = sheet.createRow( i );
@@ -496,55 +550,120 @@ public class Report extends JApplet {
 				boolean unsucc = true;
 
 				Cell cell = row.getCell(0);
-				if (cell != null) {
-					int d = (int) cell.getNumericCellValue();
-					String dstr = Integer.toString(d);
-					if (d > 0) {
-						if (costMap.containsKey(dstr)) {
-							Cost cost = costMap.get(dstr);
-							cell = row.getCell(k);
-							if( cell == null ) cell = row.createCell(k);
-							if (d >= 1000 && d < 2000)
-								cell.setCellValue(cost.p);
-							else
-								cell.setCellValue(cost.c);
-						} else {
-							double tot = 0.0;
-
-							if (dstr.endsWith("99")) {
-								for (Cost c : costList) {
-									if (c.no >= d - 999 && c.no < d + 1)
-										tot += c.c;
-								}
-							} else if (dstr.endsWith("98")) {
-								for (Cost c : costList) {
-									if (c.no >= d - 98 && c.no < d + 2)
-										tot += c.c;
-								}
-							} else if (dstr.equals("1993")) {
-								for (Cost c : costList) {
-									if (c.no >= d - 993 && c.no < d + 7)
-										tot += c.p;
-								}
-							}
-							cell = row.getCell(k);
-							if( cell == null ) cell = row.createCell(k);
-							cell.setCellValue(tot);
-						}
-
-						unsucc = false;
+				if (cell == null) {
+					cell = row.createCell(0);
+					Cell cell2 = row.createCell(1);
+					
+					if( i-9 == 0 ) {
+						cell2.setCellValue( "Kostnaður v/vinnu" );
+					} else if( i-9 == 2 ) {
+						cell.setCellValue( 2310 );
+						cell2.setCellValue( "Rannsóknarstofuefni" );
+					} else if( i-9 == 3 ) {
+						cell.setCellValue( 2311 );
+						cell2.setCellValue( "Aðföng rekstarvörur" );
+					} else if( i-9 == 4 ) {
+						cell.setCellValue( 2396 );
+						cell2.setCellValue( "Mælingar á milli deilda" );
+					} else if( i-9 == 5 ) {
+						cell.setCellValue( 2498 );
+						cell2.setCellValue( "Sérfræðiþjónusta samtals" );
+					} else if( i-9 == 6 ) {
+						cell.setCellValue( 2598 );
+						cell2.setCellValue( "Ferða- og uppihaldsk samtals" );
+					} else if( i-9 == 7 ) {
+						cell.setCellValue( 2710 );
+						cell2.setCellValue( "Styrkir til nemenda" );
+					} else if( i-9 == 9 ) {
+						cell.setCellValue( 2999 );
+						cell2.setCellValue( "Almennur rekstrarkostnaður samtals" );
+					} else if( i-9 == 10 ) {
+						cell2.setCellValue( "Kostnaður samtals" );
+					} else if( i-9 == 12 ) {
+						cell.setCellValue( 1010 );
+						cell2.setCellValue( "Fyrirtæki innlend m/vsk" );
+					} else if( i-9 == 13 ) {
+						cell.setCellValue( 1012 );
+						cell2.setCellValue( "Fyrirtæki innlend án/vsk" );
+					} else if( i-9 == 14 ) {
+						cell.setCellValue( 1013 );
+						cell2.setCellValue( "Opinberir aðilar m/vsk" );
+					} else if( i-9 == 15 ) {
+						cell.setCellValue( 1015 );
+						cell2.setCellValue( "Opinberir aðilar án/vsk" );
+					} else if( i-9 == 16 ) {
+						cell.setCellValue( 1030 );
+						cell2.setCellValue( "Erlendir sjóðir" );
+					} else if( i-9 == 17 ) {
+						cell.setCellValue( 1031 );
+						cell2.setCellValue( "Erlend fyrirtæki" );
+					} else if( i-9 == 18 ) {
+						cell.setCellValue( 1040 );
+						cell2.setCellValue( "Sjóðir innlent" );
+					} else if( i-9 == 19 ) {
+						cell.setCellValue( 1050 );
+						cell2.setCellValue( "Sjávarútvegs- og landb" );
+					} else if( i-9 == 20 ) {
+						cell.setCellValue( 1060 );
+						cell2.setCellValue( "Sala án/vsk" );
+					} else if( i-9 == 21 ) {
+						cell.setCellValue( 1096 );
+						cell2.setCellValue( "Sala milli deilda" );
+					} else if( i-9 == 23 ) {
+						cell.setCellValue( 1993 );
+						cell2.setCellValue( "Rekstrartekjur samtals" );
+					} else if( i-9 == 24 ) {
+						cell2.setCellValue( "Afkoma (v/útselds taxta)" );
 					}
+				}
+				
+				int d = (int) cell.getNumericCellValue();
+				String dstr = Integer.toString(d);
+				if (d > 0) {
+					if (costMap.containsKey(dstr)) {
+						Cost cost = costMap.get(dstr);
+						cell = row.getCell(k);
+						if( cell == null ) cell = row.createCell(k);
+						if (d >= 1000 && d < 2000)
+							cell.setCellValue(cost.p);
+						else
+							cell.setCellValue(cost.c);
+					} else {
+						double tot = 0.0;
+
+						if (dstr.endsWith("99")) {
+							for (Cost c : costList) {
+								if (c.no >= d - 999 && c.no < d + 1)
+									tot += c.c;
+							}
+						} else if (dstr.endsWith("98")) {
+							for (Cost c : costList) {
+								if (c.no >= d - 98 && c.no < d + 2)
+									tot += c.c;
+							}
+						} else if (dstr.equals("1993")) {
+							for (Cost c : costList) {
+								if (c.no >= d - 993 && c.no < d + 7)
+									tot += c.p;
+							}
+						}
+						cell = row.getCell(k);
+						if( cell == null ) cell = row.createCell(k);
+						cell.setCellValue(tot);
+					}
+
+					unsucc = false;
 				}
 
 				if (unsucc) {
 					cell = row.getCell(1);
 					if( cell == null ) {
 						cell = row.createCell(1);
-						cell.setCellValue( (String)rowHeader.getValueAt(9-i, 0) );
+						cell.setCellValue( (String)rowHeader.getValueAt(i-9, 0) );
 					}
 					
 					if (cell != null && cell.getCellType() == Cell.CELL_TYPE_STRING) {
-						String dstr = cell.getStringCellValue();
+						dstr = cell.getStringCellValue();
 						if (dstr.equals("Kostnaður samtals")) {
 							double tot = 0.0;
 							for (String no : costMap.keySet()) {
@@ -555,7 +674,7 @@ public class Report extends JApplet {
 							cell = row.getCell(k);
 							if( cell == null ) cell = row.createCell(k);
 							cell.setCellValue(tot);
-						} else if (dstr.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
+						} else if (dstr.equals("Kostnaður v/vinnu")) {
 							double tot = 0.0;
 							for (String no : costMap.keySet()) {
 								Cost c = costMap.get(no);
@@ -615,6 +734,73 @@ public class Report extends JApplet {
 				boolean unsucc = true;
 
 				Cell cell = row.getCell(0);
+				if( cell == null ) {
+					cell = row.createCell(0);
+					Cell	cell2 = row.createCell(1);
+					
+					if( i-40 == 0 ) {
+						cell2.setCellValue( "Kostnaður v/vinnu" );
+					} else if( i-40 == 2 ) {
+						cell.setCellValue( 2310 );
+						cell2.setCellValue( "Rannsóknarstofuefni" );
+					} else if( i-40 == 3 ) {
+						cell.setCellValue( 2311 );
+						cell2.setCellValue( "Aðföng rekstarvörur" );
+					} else if( i-40 == 4 ) {
+						cell.setCellValue( 2396 );
+						cell2.setCellValue( "Mælingar á milli deilda" );
+					} else if( i-40 == 5 ) {
+						cell.setCellValue( 2498 );
+						cell2.setCellValue( "Sérfræðiþjónusta samtals" );
+					} else if( i-40 == 6 ) {
+						cell.setCellValue( 2598 );
+						cell2.setCellValue( "Ferða- og uppihaldsk samtals" );
+					} else if( i-40 == 7 ) {
+						cell.setCellValue( 2710 );
+						cell2.setCellValue( "Styrkir til nemenda" );
+					} else if( i-40 == 9 ) {
+						cell.setCellValue( 2999 );
+						cell2.setCellValue( "Almennur rekstrarkostnaður samtals" );
+					} else if( i-40 == 10 ) {
+						cell2.setCellValue( "Kostnaður samtals" );
+					} else if( i-40 == 12 ) {
+						cell.setCellValue( 1010 );
+						cell2.setCellValue( "Fyrirtæki innlend m/vsk" );
+					} else if( i-40 == 13 ) {
+						cell.setCellValue( 1012 );
+						cell2.setCellValue( "Fyrirtæki innlend án/vsk" );
+					} else if( i-40 == 14 ) {
+						cell.setCellValue( 1013 );
+						cell2.setCellValue( "Opinberir aðilar m/vsk" );
+					} else if( i-40 == 15 ) {
+						cell.setCellValue( 1015 );
+						cell2.setCellValue( "Opinberir aðilar án/vsk" );
+					} else if( i-40 == 16 ) {
+						cell.setCellValue( 1030 );
+						cell2.setCellValue( "Erlendir sjóðir" );
+					} else if( i-40 == 17 ) {
+						cell.setCellValue( 1031 );
+						cell2.setCellValue( "Erlend fyrirtæki" );
+					} else if( i-40 == 18 ) {
+						cell.setCellValue( 1040 );
+						cell2.setCellValue( "Sjóðir innlent" );
+					} else if( i-40 == 19 ) {
+						cell.setCellValue( 1050 );
+						cell2.setCellValue( "Sjávarútvegs- og landb" );
+					} else if( i-40 == 20 ) {
+						cell.setCellValue( 1060 );
+						cell2.setCellValue( "Sala án/vsk" );
+					} else if( i-40 == 21 ) {
+						cell.setCellValue( 1096 );
+						cell2.setCellValue( "Sala milli deilda" );
+					} else if( i-40 == 23 ) {
+						cell.setCellValue( 1993 );
+						cell2.setCellValue( "Rekstrartekjur samtals" );
+					} else if( i-40 == 24 ) {
+						cell2.setCellValue( "Afkoma (v/útselds taxta)" );
+					}
+				}
+				
 				if (cell != null) {
 					int d = (int) cell.getNumericCellValue();
 					String dstr = Integer.toString(d);
@@ -657,8 +843,12 @@ public class Report extends JApplet {
 
 				if (unsucc) {
 					cell = row.getCell(1);
-					if (cell != null
-							&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					if( cell == null ) {
+						cell = row.createCell(1);
+						cell.setCellValue( (String)rowHeader.getValueAt(i-40, 0) );
+					}
+					
+					if (cell != null && cell.getCellType() == Cell.CELL_TYPE_STRING) {
 						String dstr = cell.getStringCellValue();
 						if (dstr.equals("Kostnaður samtals")) {
 							double tot = 0.0;
@@ -671,7 +861,7 @@ public class Report extends JApplet {
 							if( cell == null ) cell = row.createCell(k);
 							cell.setCellValue(tot);
 						} else if (dstr
-								.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
+								.equals("Kostnaður v/vinnu")) {
 							double tot = 0.0;
 							for (String no : costMap.keySet()) {
 								Cost c = costMap.get(no);
@@ -704,6 +894,86 @@ public class Report extends JApplet {
 			k += 2;
 		}
 	}
+	
+	public void collectSomething( Row row, Sheet sheet, String sql ) throws SQLException {
+		PreparedStatement ps = con.prepareStatement(sql);
+		ResultSet rs = ps.executeQuery();
+
+		Cell[] lastGoodCell = null;
+		Cell[] lastGoodCell2 = null;
+		int i = 2;
+		
+		Cell cell = row.getCell(i);
+		while( rs.next() ) {
+			String val = rs.getString(1);
+			
+			if( cell == null ) {
+				if( lastGoodCell != null ) {
+					for( int k = 2; k < 100; k++ ) {
+						Row		rr = sheet.getRow(k);
+						if( rr != null ) {
+							Cell 	cc = lastGoodCell[k];
+							Cell 	cc2 = lastGoodCell2[k];
+							Cell 	oc = rr.createCell(i);
+							Cell 	oc2 = rr.createCell(i+1);
+							
+							Comment comment;
+							CellStyle style;
+							//String rawValue;
+							RichTextString	rawValue;
+							int type;
+							if( cc != null ) {
+								comment = cc2.getCellComment();
+								if( comment != null ) oc2.setCellComment( comment );
+								style = cc2.getCellStyle();
+								if( style != null ) oc2.setCellStyle( style );
+								type = cc2.getCellType();
+								oc2.setCellType( type );
+								rawValue = cc2.getRichStringCellValue();
+								if( rawValue != null ) {
+									oc2.setCellValue( rawValue );
+									//oc2.setRawValue( rawValue );
+								}
+								
+								comment = cc.getCellComment();
+								if( comment != null ) oc.setCellComment( comment );
+								style = cc.getCellStyle();
+								if( style != null ) oc.setCellStyle( style );
+								type = cc.getCellType();
+								oc.setCellType( type );
+								rawValue = cc.getRichStringCellValue(); //cc.getRawValue();
+								if( rawValue != null ) {
+									oc.setCellValue( rawValue );
+									//oc.setRawValue( rawValue );
+								}
+							}
+							
+							if( k >= 2 && k <= 6 ) {
+								sheet.addMergedRegion( new CellRangeAddress(k, k, i, i+1) );
+							}
+						}
+					}
+				}
+				cell = row.getCell(i);
+				if( cell == null ) cell = row.createCell(i);
+			} else if( lastGoodCell == null ) {
+				lastGoodCell = new XSSFCell[100];
+				lastGoodCell2 = new XSSFCell[100];
+				for( int k = 2; k < 100; k++ ) {
+					Row	rr = sheet.getRow(k);
+					if( rr != null ) {
+						lastGoodCell[k] = rr.getCell(i);
+						lastGoodCell2[k] = rr.getCell(i+1);
+					}
+				}
+			}
+			cell.setCellValue( val );
+			
+			i += 2;
+			cell = row.getCell(i);
+		}
+		rs.close();
+	}
 
 	public void load(String filename) {
 		try {
@@ -732,115 +1002,50 @@ public class Report extends JApplet {
 				row = sheet.getRow(2);
 			}
 			
-			if( str == null ) str = "0200";
-			
-			Cell[] lastGoodCell = null;
-			Cell[] lastGoodCell2 = null;
-			int i = 2;
-			if( str != null ) {
+			List<Object> jobstr = new ArrayList<Object>();
+			if( str == null ) {
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					Object jstr = table.getValueAt(r, 1);
+					jobstr.add( jstr );
+					
+					if( str == null ) str = "("+jstr;
+					else str += ","+jstr;
+				}
+				str += ")";
+				//String sql = "SELECT No_ FROM \"Matís ohf_$Job\" where [No_] in "+str+" and \"Job Posting Group\" != 'INNSELD' and \"Completion Date\" < '1900-01-01'";
+				//collectSomething( row, sheet, sql );
+			} else {
 				String sql = "SELECT No_ FROM \"Matís ohf_$Job\" where \"Global Dimension 1 Code\" = '"+str+"' and \"Job Posting Group\" != 'INNSELD' and \"Completion Date\" < '1900-01-01'";
-				PreparedStatement ps = con.prepareStatement(sql);
-				ResultSet rs = ps.executeQuery();
-		
+				collectSomething( row, sheet, sql );
+				
+				int i = 2;
 				cell = row.getCell(i);
-				while (rs.next()) {
-					String val = rs.getString(1);
-					
-					if( cell == null ) {
-						if( lastGoodCell != null ) {
-							for( int k = 2; k < 100; k++ ) {
-								Row		rr = sheet.getRow(k);
-								if( rr != null ) {
-									Cell 	cc = lastGoodCell[k];
-									Cell 	cc2 = lastGoodCell2[k];
-									Cell 	oc = rr.createCell(i);
-									Cell 	oc2 = rr.createCell(i+1);
-									
-									Comment comment;
-									CellStyle style;
-									//String rawValue;
-									RichTextString	rawValue;
-									int type;
-									if( cc != null ) {
-										comment = cc2.getCellComment();
-										if( comment != null ) oc2.setCellComment( comment );
-										style = cc2.getCellStyle();
-										if( style != null ) oc2.setCellStyle( style );
-										type = cc2.getCellType();
-										oc2.setCellType( type );
-										rawValue = cc2.getRichStringCellValue();
-										if( rawValue != null ) {
-											oc2.setCellValue( rawValue );
-											//oc2.setRawValue( rawValue );
-										}
-										
-										comment = cc.getCellComment();
-										if( comment != null ) oc.setCellComment( comment );
-										style = cc.getCellStyle();
-										if( style != null ) oc.setCellStyle( style );
-										type = cc.getCellType();
-										oc.setCellType( type );
-										rawValue = cc.getRichStringCellValue(); //cc.getRawValue();
-										if( rawValue != null ) {
-											oc.setCellValue( rawValue );
-											//oc.setRawValue( rawValue );
-										}
-									}
-									
-									if( k >= 2 && k <= 6 ) {
-										sheet.addMergedRegion( new CellRangeAddress(k, k, i, i+1) );
-									}
-								}
-							}
-						}
-						cell = row.getCell(i);
-						if( cell == null ) cell = row.createCell(i);
-					} else if( lastGoodCell == null ) {
-						lastGoodCell = new XSSFCell[100];
-						lastGoodCell2 = new XSSFCell[100];
-						for( int k = 2; k < 100; k++ ) {
-							Row	rr = sheet.getRow(k);
-							if( rr != null ) {
-								lastGoodCell[k] = rr.getCell(i);
-								lastGoodCell2[k] = rr.getCell(i+1);
-							}
-						}
+				while (cell != null && ((cell.getCellType() == Cell.CELL_TYPE_NUMERIC && cell.getNumericCellValue() > 0) || (cell.getCellType() == Cell.CELL_TYPE_STRING && cell.getStringCellValue().length() > 0))) {
+					if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+						jobstr.add((int) cell.getNumericCellValue());
+					} else if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
+						String val = cell.getStringCellValue();
+						if (!val.equals("xxx"))
+							jobstr.add(val);
 					}
-					cell.setCellValue( val );
-					
 					i += 2;
 					cell = row.getCell(i);
 				}
-				rs.close();
-			}
-				
-			List<Object> jobstr = new ArrayList<Object>();
-			i = 2;
-			cell = row.getCell(i);
-			while (cell != null && ((cell.getCellType() == Cell.CELL_TYPE_NUMERIC && cell.getNumericCellValue() > 0) || (cell.getCellType() == Cell.CELL_TYPE_STRING && cell.getStringCellValue().length() > 0))) {
-				if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
-					jobstr.add((int) cell.getNumericCellValue());
-				} else if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
-					String val = cell.getStringCellValue();
-					if (!val.equals("xxx"))
-						jobstr.add(val);
+		
+				str = "(";
+				for (Object o : jobstr) {
+					if (o instanceof Integer) {
+						str += "'" + Integer.toString((Integer) o) + "'";
+					} else if (o instanceof String) {
+						String res = (String) o;
+						str += "'" + res + "'";
+					}
+					if (!o.equals(jobstr.get(jobstr.size() - 1)))
+						str += ", ";
 				}
-				i += 2;
-				cell = row.getCell(i);
+				str += ")";
 			}
-	
-			str = "(";
-			for (Object o : jobstr) {
-				if (o instanceof Integer) {
-					str += "'" + Integer.toString((Integer) o) + "'";
-				} else if (o instanceof String) {
-					String res = (String) o;
-					str += "'" + res + "'";
-				}
-				if (!o.equals(jobstr.get(jobstr.size() - 1)))
-					str += ", ";
-			}
-			str += ")";
 	
 			String sql = "select * from dbo.job_excel where No_ in " + str;
 			PreparedStatement ps = con.prepareStatement(sql);
@@ -849,7 +1054,7 @@ public class Report extends JApplet {
 			// List<Job> jobs = new ArrayList<Job>();
 			//i = 0;
 			while (rs.next()) {
-				i = 0;
+				int i = 0;
 				String job = rs.getString(1);
 				while( i < jobstr.size() && !job.contains( jobstr.get(i).toString() ) ) i++;
 				
@@ -891,8 +1096,8 @@ public class Report extends JApplet {
 			rs.close();
 			ps.close();
 			
-			String startDate = "2009-01-01";
-			String endDate = "2009-04-01";
+			/*String startDate; // = getStartDate(); //"2009-01-01";
+			String endDate; // = getEndDate(); //"2009-04-01";
 			
 			row = sheet.getRow(7);
 			if( row == null ) {
@@ -915,293 +1120,14 @@ public class Report extends JApplet {
 						endDate = "20" + endSplit[2] + "-" + endSplit[1] + "-" + endSplit[0];
 					}
 				}
-			}
+			}*/
 	
 			/********** plan ***************/
-			plan(jobstr, sheet);
+			plan( jobstr, sheet );
 	
 			System.err.println( "fetching real data" );
 			/************ real ******************/
-	
-			int k = 2;
-			for (Object o : jobstr) {
-				// sql =
-				// "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\"), sum(\"Total Price\") as Cost from dbo.\"Matís ohf_$Job Ledger Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = '"+o.toString()+"' and be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.\"Posting Date\" >= '2009-01-01' and be.\"Posting Date\" < '2009-04-01' group by be.No_, be.Type, bl.Description";
-				sql = "select le.No_, ge.\"Sales Account\", le.Type, sum(le.\"Total Cost\") as Cost, sum(le.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Ledger Entry\" le, dbo.\"Matís ohf_$General Posting Setup\" ge "
-						+ "where le.\"Job No_\" = " + o.toString()
-						+ " and le.\"Posting Date\" >= '"+startDate+"' and le.\"Posting Date\" <= '"+endDate+"' "
-						+ "and ge.\"Gen_ Bus_ Posting Group\" = le.\"Gen_ Bus_ Posting Group\" and ge.\"Gen_ Prod_ Posting Group\" = le.\"Gen_ Prod_ Posting Group\" group by le.No_, ge.\"Sales Account\", le.Type";
-	
-				System.err.println( "executing real " + o.toString() );
-				
-				ps = con.prepareStatement(sql);
-				rs = ps.executeQuery();
-	
-				costMap.clear();
-				costList.clear();
-				while (rs.next()) {
-					String nostr = rs.getString(2);
-					if( nostr.equals("") ) nostr = rs.getString(1);
-					Cost cost = new Cost(nostr, rs.getString(3), "", rs.getDouble(4), rs.getDouble(5), null);
-					costMap.put(nostr, cost);
-					costList.add(cost);
-				}
-				rs.close();
-				ps.close();
-	
-				for (i = 9; i < 40; i++) {
-					row = sheet.getRow(i);
-					if (row != null) {
-						boolean unsucc = true;
-	
-						cell = row.getCell(0);
-						if (cell != null) {
-							int d = (int) cell.getNumericCellValue();
-							String dstr = Integer.toString(d);
-							
-							if (d > 0) {
-								if (costMap.containsKey(dstr)) {
-									Cost cost = costMap.get(dstr);
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									if (d >= 1000 && d < 2000)
-										cell.setCellValue(cost.p);
-									else
-										cell.setCellValue(cost.c);
-								} /*else if( ledgerMap.containsValue(dstr) ) {
-									Set<Entry<Long,String>>	entr = ledgerMap.entrySet();
-									double tot = 0.0;
-									for (Cost c : costList) {
-										boolean check = false;
-										if( c.type.equals("1") ) {
-											for( Entry<Long,String> e : entr ) {
-												if( e.getValue().equals(dstr) && c.no == d ) {
-													check = true;
-													break;
-												}
-											}
-											if( check ) {
-												tot += c.p;
-											}
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								}*/ else {
-									double tot = 0.0;
-	
-									if (dstr.endsWith("99")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 999 && c.no < d + 1)
-												tot += c.c;
-										}
-									} else if (dstr.endsWith("98")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 98 && c.no < d + 2)
-												tot += c.c;
-										}
-									} else if (dstr.equals("1993")) {
-										for (Cost c : costList) {
-											if( c.type.contains("1") ) {
-												tot += c.p;
-											}
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								}
-	
-								unsucc = false;
-							}
-	
-						}
-	
-						if (unsucc) {
-							cell = row.getCell(1);
-							if (cell != null
-									&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
-								String dstr = cell.getStringCellValue();
-								if (dstr.equals("Kostnaður samtals")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-										else tot += c.c;
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
-									double tot = 0.0;
-									double ctot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-										//else if( c.type.contains("1") ) ctot += c.p;
-										else tot += c.c;
-										
-										if (c.no >= 1000 && c.no < 2000 ) {
-											ctot += c.p;
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(-ctot-tot);
-								}
-							}
-						}
-					}
-				}
-	
-				sql = "select le.No_, ge.\"Sales Account\", le.Type, sum(le.\"Total Cost\") as Cost, sum(le.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Ledger Entry\" le, dbo.\"Matís ohf_$General Posting Setup\" ge where le.\"Job No_\" = "
-						+ o.toString() + " and le.\"Posting Date\" <= '"+endDate+"' "
-						+ "and ge.\"Gen_ Bus_ Posting Group\" = le.\"Gen_ Bus_ Posting Group\" and ge.\"Gen_ Prod_ Posting Group\" = le.\"Gen_ Prod_ Posting Group\" group by le.No_, ge.\"Sales Account\", le.Type";
-	
-				ps = con.prepareStatement(sql);
-				rs = ps.executeQuery();
-	
-				costMap.clear();
-				costList.clear();
-				while (rs.next()) {
-					String nostr = rs.getString(2);
-					if( nostr.equals("") ) nostr = rs.getString(1);
-					Cost cost = new Cost(nostr, rs.getString(3), "", rs.getDouble(4), rs.getDouble(5), null);
-					costMap.put(nostr, cost);
-					costList.add(cost);
-				}
-				rs.close();
-				ps.close();
-	
-				for (i = 40; i < 100; i++) {
-					row = sheet.getRow(i);
-					if (row != null) {
-						boolean unsucc = true;
-	
-						cell = row.getCell(0);
-						if (cell != null) {
-							int d = (int) cell.getNumericCellValue();
-							String dstr = Integer.toString(d);
-							if (d > 0) {
-								if (costMap.containsKey(dstr)) {
-									Cost cost = costMap.get(dstr);
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									if (d >= 1000 && d < 2000)
-										cell.setCellValue(cost.p);
-									else
-										cell.setCellValue(cost.c);
-								} /*else if( ledgerMap.containsValue(dstr) ) {
-									Set<Entry<Long,String>>	entr = ledgerMap.entrySet();
-									double tot = 0.0;
-									for (Cost c : costList) {
-										boolean check = false;
-										if( c.type.equals("1") ) {
-											for( Entry<Long,String> e : entr ) {
-												if( e.getValue().equals(dstr) && e.getKey().equals(c.no) ) {
-													check = true;
-													break;
-												}
-											}
-											if( check ) {
-												tot += c.p;
-											}
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								}*/ else {
-									double tot = 0.0;
-	
-									if (dstr.endsWith("99")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 999 && c.no < d + 1)
-												tot += c.c;
-										}
-									} else if (dstr.endsWith("98")) {
-										for (Cost c : costList) {
-											if (c.no >= d - 98 && c.no < d + 2)
-												tot += c.c;
-										}
-									} else if (dstr.equals("1993")) {
-										for (Cost c : costList) {
-											if( c.type.contains("1") ) {
-												tot += c.p;
-											}
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								}
-	
-								unsucc = false;
-							}
-						}
-	
-						if (unsucc) {
-							cell = row.getCell(1);
-							if (cell != null
-									&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
-								String dstr = cell.getStringCellValue();
-								if (dstr.equals("Kostnaður samtals")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										
-										if( c.type.contains("0") ) tot += c.p;
-										else tot += c.c;
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr.equals("Kostnaður v/ vinnu (útselt) - verkb")) {
-									double tot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(tot);
-								} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
-									double tot = 0.0;
-									double ctot = 0.0;
-									for (String no : costMap.keySet()) {
-										Cost c = costMap.get(no);
-										if( c.type.contains("0") ) tot += c.p;
-										//else if( c.type.contains("1") ) ctot += c.p;
-										else tot += c.c;
-										
-										if( c.no >= 1000 && c.no < 2000 ) {
-											ctot += c.p;
-										}
-									}
-									cell = row.getCell(k);
-									if( cell == null ) cell = row.createCell(k);
-									cell.setCellValue(-ctot-tot);
-								}
-							}
-						}
-					}
-				}
-	
-				//sheet.autoSizeColumn(k);
-				//sheet.autoSizeColumn(k+1);
-				
-				k += 2;
-			}
+			real( jobstr, sheet );
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -1209,6 +1135,304 @@ public class Report extends JApplet {
 		}
 
 		// workbook.write( new FileOutputStream("/mnt/tmp/simmi.xlsx") );
+	}
+	
+	public void real( List<Object> jobstr, Sheet sheet ) throws SQLException {
+		int k = 2;
+		String startDate = getStartDate();
+		String endDate = getEndDate();
+		for (Object o : jobstr) {
+			// sql =
+			// "select be.No_, be.Type, bl.Description, sum(be.\"Total Cost\"), sum(\"Total Price\") as Cost from dbo.\"Matís ohf_$Job Ledger Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where be.\"Job No_\" = '"+o.toString()+"' and be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.\"Posting Date\" >= '2009-01-01' and be.\"Posting Date\" < '2009-04-01' group by be.No_, be.Type, bl.Description";
+			String sql = "select le.No_, ge.\"Sales Account\", le.Type, sum(le.\"Total Cost\") as Cost, sum(le.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Ledger Entry\" le, dbo.\"Matís ohf_$General Posting Setup\" ge "
+					+ "where le.\"Job No_\" = " + o.toString();
+			
+			if( startDate != null ) sql += " and le.\"Posting Date\" >= '"+startDate+"'";
+			if( endDate != null ) sql += " and le.\"Posting Date\" <= '"+endDate+"'";
+			sql += " and ge.\"Gen_ Bus_ Posting Group\" = le.\"Gen_ Bus_ Posting Group\" and ge.\"Gen_ Prod_ Posting Group\" = le.\"Gen_ Prod_ Posting Group\" group by le.No_, ge.\"Sales Account\", le.Type";
+
+			System.err.println( "executing real " + o.toString() );
+			
+			PreparedStatement 	ps = con.prepareStatement(sql);
+			ResultSet 			rs = ps.executeQuery();
+
+			costMap.clear();
+			costList.clear();
+			while (rs.next()) {
+				String nostr = rs.getString(2);
+				if( nostr.equals("") ) nostr = rs.getString(1);
+				Cost cost = new Cost(nostr, rs.getString(3), "", rs.getDouble(4), rs.getDouble(5), null);
+				costMap.put(nostr, cost);
+				costList.add(cost);
+			}
+			rs.close();
+			ps.close();
+			
+			Row arow = sheet.getRow(8);
+			Cell acell = null;
+			if( arow == null ) {
+				arow = sheet.createRow( 8 );
+				acell = arow.createCell(k);
+			} else {
+				acell = arow.getCell(k);
+				if( acell == null ) acell = arow.createCell( k );				
+			}
+			acell.setCellValue("Raun");
+
+			for ( int i = 9; i < 40; i++ ) {
+				Row row = sheet.getRow(i);
+				if (row != null) {
+					boolean unsucc = true;
+
+					Cell cell = row.getCell(0);
+					if (cell != null) {
+						int d = (int) cell.getNumericCellValue();
+						String dstr = Integer.toString(d);
+						
+						if (d > 0) {
+							if (costMap.containsKey(dstr)) {
+								Cost cost = costMap.get(dstr);
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								if (d >= 1000 && d < 2000)
+									cell.setCellValue(cost.p);
+								else
+									cell.setCellValue(cost.c);
+							} /*else if( ledgerMap.containsValue(dstr) ) {
+								Set<Entry<Long,String>>	entr = ledgerMap.entrySet();
+								double tot = 0.0;
+								for (Cost c : costList) {
+									boolean check = false;
+									if( c.type.equals("1") ) {
+										for( Entry<Long,String> e : entr ) {
+											if( e.getValue().equals(dstr) && c.no == d ) {
+												check = true;
+												break;
+											}
+										}
+										if( check ) {
+											tot += c.p;
+										}
+									}
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							}*/ else {
+								double tot = 0.0;
+
+								if (dstr.endsWith("99")) {
+									for (Cost c : costList) {
+										if (c.no >= d - 999 && c.no < d + 1)
+											tot += c.c;
+									}
+								} else if (dstr.endsWith("98")) {
+									for (Cost c : costList) {
+										if (c.no >= d - 98 && c.no < d + 2)
+											tot += c.c;
+									}
+								} else if (dstr.equals("1993")) {
+									for (Cost c : costList) {
+										if( c.type.contains("1") ) {
+											tot += c.p;
+										}
+									}
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							}
+
+							unsucc = false;
+						}
+
+					}
+
+					if (unsucc) {
+						cell = row.getCell(1);
+						if (cell != null
+								&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
+							String dstr = cell.getStringCellValue();
+							if (dstr.equals("Kostnaður samtals")) {
+								double tot = 0.0;
+								for (String no : costMap.keySet()) {
+									Cost c = costMap.get(no);
+									if( c.type.contains("0") ) tot += c.p;
+									else tot += c.c;
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							} else if (dstr.equals("Kostnaður v/vinnu")) {
+								double tot = 0.0;
+								for (String no : costMap.keySet()) {
+									Cost c = costMap.get(no);
+									if( c.type.contains("0") ) tot += c.p;
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
+								double tot = 0.0;
+								double ctot = 0.0;
+								for (String no : costMap.keySet()) {
+									Cost c = costMap.get(no);
+									if( c.type.contains("0") ) tot += c.p;
+									//else if( c.type.contains("1") ) ctot += c.p;
+									else tot += c.c;
+									
+									if (c.no >= 1000 && c.no < 2000 ) {
+										ctot += c.p;
+									}
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(-ctot-tot);
+							}
+						}
+					}
+				}
+			}
+
+			sql = "select le.No_, ge.\"Sales Account\", le.Type, sum(le.\"Total Cost\") as Cost, sum(le.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Ledger Entry\" le, dbo.\"Matís ohf_$General Posting Setup\" ge where le.\"Job No_\" = "
+					+ o.toString();
+			if( endDate != null ) sql += " and le.\"Posting Date\" <= '"+endDate+"'";
+			sql += " and ge.\"Gen_ Bus_ Posting Group\" = le.\"Gen_ Bus_ Posting Group\" and ge.\"Gen_ Prod_ Posting Group\" = le.\"Gen_ Prod_ Posting Group\" group by le.No_, ge.\"Sales Account\", le.Type";
+
+			ps = con.prepareStatement(sql);
+			rs = ps.executeQuery();
+
+			costMap.clear();
+			costList.clear();
+			while (rs.next()) {
+				String nostr = rs.getString(2);
+				if( nostr.equals("") ) nostr = rs.getString(1);
+				Cost cost = new Cost(nostr, rs.getString(3), "", rs.getDouble(4), rs.getDouble(5), null);
+				costMap.put(nostr, cost);
+				costList.add(cost);
+			}
+			rs.close();
+			ps.close();
+
+			for ( int i = 40; i < 100; i++) {
+				Row row = sheet.getRow(i);
+				if (row != null) {
+					boolean unsucc = true;
+
+					Cell cell = row.getCell(0);
+					if (cell != null) {
+						int d = (int) cell.getNumericCellValue();
+						String dstr = Integer.toString(d);
+						if (d > 0) {
+							if (costMap.containsKey(dstr)) {
+								Cost cost = costMap.get(dstr);
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								if (d >= 1000 && d < 2000)
+									cell.setCellValue(cost.p);
+								else
+									cell.setCellValue(cost.c);
+							} /*else if( ledgerMap.containsValue(dstr) ) {
+								Set<Entry<Long,String>>	entr = ledgerMap.entrySet();
+								double tot = 0.0;
+								for (Cost c : costList) {
+									boolean check = false;
+									if( c.type.equals("1") ) {
+										for( Entry<Long,String> e : entr ) {
+											if( e.getValue().equals(dstr) && e.getKey().equals(c.no) ) {
+												check = true;
+												break;
+											}
+										}
+										if( check ) {
+											tot += c.p;
+										}
+									}
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							}*/ else {
+								double tot = 0.0;
+
+								if (dstr.endsWith("99")) {
+									for (Cost c : costList) {
+										if (c.no >= d - 999 && c.no < d + 1)
+											tot += c.c;
+									}
+								} else if (dstr.endsWith("98")) {
+									for (Cost c : costList) {
+										if (c.no >= d - 98 && c.no < d + 2)
+											tot += c.c;
+									}
+								} else if (dstr.equals("1993")) {
+									for (Cost c : costList) {
+										if( c.type.contains("1") ) {
+											tot += c.p;
+										}
+									}
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							}
+
+							unsucc = false;
+						}
+					}
+
+					if (unsucc) {
+						cell = row.getCell(1);
+						if (cell != null
+								&& cell.getCellType() == Cell.CELL_TYPE_STRING) {
+							String dstr = cell.getStringCellValue();
+							if (dstr.equals("Kostnaður samtals")) {
+								double tot = 0.0;
+								for (String no : costMap.keySet()) {
+									Cost c = costMap.get(no);
+									
+									if( c.type.contains("0") ) tot += c.p;
+									else tot += c.c;
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							} else if (dstr.equals("Kostnaður v/vinnu")) {
+								double tot = 0.0;
+								for (String no : costMap.keySet()) {
+									Cost c = costMap.get(no);
+									if( c.type.contains("0") ) tot += c.p;
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(tot);
+							} else if (dstr.equals("Afkoma (v/útselds taxta)")) {
+								double tot = 0.0;
+								double ctot = 0.0;
+								for (String no : costMap.keySet()) {
+									Cost c = costMap.get(no);
+									if( c.type.contains("0") ) tot += c.p;
+									//else if( c.type.contains("1") ) ctot += c.p;
+									else tot += c.c;
+									
+									if( c.no >= 1000 && c.no < 2000 ) {
+										ctot += c.p;
+									}
+								}
+								cell = row.getCell(k);
+								if( cell == null ) cell = row.createCell(k);
+								cell.setCellValue(-ctot-tot);
+							}
+						}
+					}
+				}
+			}
+
+			//sheet.autoSizeColumn(k);
+			//sheet.autoSizeColumn(k+1);
+			
+			k += 2;
+		}
 	}
 	
 	public class Svid {
@@ -1405,7 +1629,7 @@ public class Report extends JApplet {
 		
 		initGUI();
 		JComponent 	parcomp = initParComp();
-		initModels();
+		initModels( null );
 		
 		JComponent graph = new JComponent() {
 			public void paintComponent( Graphics g ) {
@@ -1432,16 +1656,34 @@ public class Report extends JApplet {
 		this.add( parcomp, BorderLayout.EAST );
 	}
 	
+	public void exportExcel() throws FileNotFoundException, IOException {
+		JFileChooser fc = new JFileChooser();
+		fc.setSelectedFile( new File("excel_export.xlsx") );
+		
+		if( fc.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
+			File f = fc.getSelectedFile();
+			workbook.write( new FileOutputStream( f ) );
+		} else {
+			try {
+				File nf = File.createTempFile("tmp", ".xlsx");
+				workbook.write( new FileOutputStream( nf ) );
+				Desktop.getDesktop().open( nf );
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+	
 	public void initGUI() {
 		xlsComp = new JButton( new ImageIcon(xlsImg) );
 		xlsComp.addActionListener( new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				load( null );
 				try {
-					File nf = File.createTempFile("tmp", ".xlsx");
-					workbook.write( new FileOutputStream( nf ) );
-					Desktop.getDesktop().open( nf );
+					load( null );
+					exportExcel();
+				} catch (FileNotFoundException e1) {
+					e1.printStackTrace();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -1622,7 +1864,7 @@ public class Report extends JApplet {
 		return parcomp;
 	}
 	
-	public TableModel createSvidModel() {
+	public TableModel createSvidModel( Map<String,String> pmap ) {
 		final List<Svid>	svidlist = new ArrayList<Svid>();
 		try {			
 			String sql = "SELECT \"Global Dimension 1 Code\", No_, Description, \"Person Responsible\", \"Starting Date\", \"Ending Date\" FROM \"Matís ohf_$Job\" where \"Job Posting Group\" != 'INNSELD' and \"Completion Date\" < '1900-01-01'";
@@ -1632,7 +1874,8 @@ public class Report extends JApplet {
 				String svid = rs.getString(1);
 				String no = rs.getString(2);
 				String name = rs.getString(3);
-				String person = rs.getString(4);
+				String pn = rs.getString(4);
+				String person = (pmap != null && pmap.containsKey( pn )) ? pmap.get(pn) : pn;
 				Date	startdate = rs.getDate(5);
 				Date	stopdate = rs.getDate(6);
 				
@@ -1646,8 +1889,8 @@ public class Report extends JApplet {
 		return createModel( svidlist );
 	}
 	
-	public void initModels() {		
-		model = createSvidModel();
+	public void initModels( Map<String,String> pmap ) {		
+		model = createSvidModel( pmap );
 		table = new JTable( model ) {
 			public void sorterChanged( RowSorterEvent e ) {
 				currentsorter = (MySorter)e.getSource();
