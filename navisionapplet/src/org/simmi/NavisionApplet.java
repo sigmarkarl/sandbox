@@ -375,6 +375,7 @@ public class NavisionApplet extends JApplet {
 			e2.printStackTrace();
 		}
 		
+		final Map<String,String>	pmap = new HashMap<String,String>();
 		connect = new JButton( new AbstractAction("Connect") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -384,6 +385,11 @@ public class NavisionApplet extends JApplet {
 					connect( connectionUrl );
 					
 					List<Person>	plist = loadPersons();
+					
+					for( Person p : plist ) {
+						pmap.put(p.kt, p.name);
+					}
+					
 					TableModel		pmodel = createModel( plist );
 					persontable.setModel( pmodel );
 				} catch (SQLException e1) {
@@ -493,25 +499,31 @@ public class NavisionApplet extends JApplet {
 		tabbedpane.addChangeListener( new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				int selind = tabbedpane.getSelectedIndex();
-				String title = tabbedpane.getTitleAt( selind );
-				if( title.equals("Job") ) {
-					if( rep.model == null ) {
-						try {
-							rep.initModels();
-							Result res = rep.loadAll();
-							
-							tabbedpane.remove(1);
-							tabbedpane.addTab("Job", rep.scrollpane);
-							tabbedpane.setSelectedIndex(1);
-							
-							personoptionspane.setComponentAt(0, rep.summaryscrollpane);
-							personoptionspane.setComponentAt(1, rep.detailscrollpane);
-						} catch (ClassNotFoundException e1) {
-							e1.printStackTrace();
-						} catch (SQLException e1) {
-							e1.printStackTrace();
+				if( rep.con != null ) {
+					int selind = tabbedpane.getSelectedIndex();
+					String title = tabbedpane.getTitleAt( selind );
+					if( title.equals("Job") ) {
+						if( rep.model == null ) {
+							try {
+								rep.initModels( pmap );
+								Result res = rep.loadAll();
+								
+								tabbedpane.remove(1);
+								tabbedpane.addTab("Job", rep.scrollpane);
+								tabbedpane.setSelectedIndex(1);
+								
+								personoptionspane.setComponentAt(0, rep.summaryscrollpane);
+								personoptionspane.setComponentAt(1, rep.detailscrollpane);
+							} catch (ClassNotFoundException e1) {
+								e1.printStackTrace();
+							} catch (SQLException e1) {
+								e1.printStackTrace();
+							}
+						} else {
+							personoptionspane.setSelectedIndex(0);
 						}
+					} else if( title.equals("Person") ) {
+						personoptionspane.setSelectedIndex(2);
 					}
 				}
 			}
