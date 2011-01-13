@@ -1,0 +1,74 @@
+BLASTP 2.2.24+
+
+
+Reference: Stephen F. Altschul, Thomas L. Madden, Alejandro A.
+Schaffer, Jinghui Zhang, Zheng Zhang, Webb Miller, and David J.
+Lipman (1997), "Gapped BLAST and PSI-BLAST: a new generation of
+protein database search programs", Nucleic Acids Res. 25:3389-3402.
+
+
+
+Reference for composition-based statistics: Alejandro A. Schaffer,
+L. Aravind, Thomas L. Madden, Sergei Shavirin, John L. Spouge, Yuri
+I. Wolf, Eugene V. Koonin, and Stephen F. Altschul (2001),
+"Improving the accuracy of PSI-BLAST protein database searches with
+composition-based statistics and other refinements", Nucleic Acids
+Res. 29:2994-3005.
+
+
+
+Database: All non-redundant GenBank CDS translations+PDB+SwissProt+PIR+PRF
+excluding environmental samples from WGS projects
+           12,043,779 sequences; 4,112,781,762 total letters
+
+
+
+Query=  erm
+Length=104
+                                                                      Score     E
+Sequences producing significant alignments:                          (Bits)  Value
+
+ref|ZP_03496582.1|  V-type ATP synthase, subunit (VapC-therm) [Th...   130    6e-29
+
+
+>ref|ZP_03496582.1| V-type ATP synthase, subunit (VapC-therm) [Thermus aquaticus 
+Y51MC23]
+ gb|EED10472.1| V-type ATP synthase, subunit (VapC-therm) [Thermus aquaticus 
+Y51MC23]
+Length=104
+
+ Score =  130 bits (326),  Expect = 6e-29, Method: Compositional matrix adjust.
+ Identities = 93/104 (89%), Positives = 101/104 (97%), Gaps = 0/104 (0%)
+
+Query  1    MGGLGLIKSLAEKERELLARLEAAKKEAEALVGQAEAEARALLEEAEAKAKALEAEYRER  60
+            MGGLGLIKSLAEKE+ELLARLEAAKKEAE L+ +AEAEARALLEEAEAKAKALEA+YRE+
+Sbjct  1    MGGLGLIKSLAEKEKELLARLEAAKKEAEELLKRAEAEARALLEEAEAKAKALEAQYREK  60
+
+Query  61   EAKETEAILARYRAQAEAEAKAVKEKAGARLEEAVALVLKEVLP  104
+            EA+ETEAILARYRAQAEAEAKAV+EKAG RLEEA+ALVLKEVLP
+Sbjct  61   EAQETEAILARYRAQAEAEAKAVREKAGPRLEEALALVLKEVLP  104
+
+
+
+Lambda     K      H
+   0.305    0.122    0.290 
+
+Gapped
+Lambda     K      H
+   0.267   0.0410    0.140 
+
+Effective search space used: 103860149568
+
+
+  Database: All non-redundant GenBank CDS translations+PDB+SwissProt+PIR+PRF
+excluding environmental samples from WGS projects
+    Posted date:  Oct 13, 2010  5:42 PM
+  Number of letters in database: 4,112,781,762
+  Number of sequences in database:  12,043,779
+
+
+
+Matrix: BLOSUM62
+Gap Penalties: Existence: 11, Extension: 1
+Neighboring words threshold: 11
+Window for multiple hits: 40

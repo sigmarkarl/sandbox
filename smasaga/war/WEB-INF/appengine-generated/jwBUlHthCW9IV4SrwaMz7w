@@ -1,0 +1,50 @@
+#import <objc/Object.h>
+#include <cstdio>
+#include <gcj/cni.h>
+#include <java/lang/System.h>
+#include <java/io/PrintStream.h>
+#include <org/eclipse/swt/widgets/Display.h>
+#include <org/eclipse/swt/widgets/Shell.h>
+
+using namespace std;
+
+@interface Number : Object {
+@public
+    int number;    
+}
+- (void)printNum;
+@end
+
+@implementation Number: Object
+- (void)printNum
+{
+    printf("%d\n", number);
+}
+@end
+
+int main( int argc, char* argv[] ) {
+	using namespace org::eclipse::swt::widgets;
+	//using namespace java::lang;
+
+	JvCreateJavaVM(NULL);
+	JvAttachCurrentThread(NULL, NULL);
+	
+	Number *myNumber = [Number new]; // equal to [[Number alloc] init]
+    	myNumber->number = 6;
+    	[myNumber printNum];
+	printf( "hallo %d\n", 10 );
+
+	JvInitClass( &java::lang::System::class$ );
+	java::lang::String *str = JvNewStringUTF("simmi best");
+	java::lang::System::out->println( str );
+
+	Display* d = new Display();
+	Shell*	shell = new Shell( d );
+
+	shell->pack();
+	shell->open();
+	while( !shell->isDisposed() ) {
+		if( !d->readAndDispatch() ) d->sleep();
+	}
+	d->dispose();
+}

@@ -1,0 +1,4 @@
+select * from orders where folderno like 'R1001685'
+select * from folderservgrp where folderno like 'R1001685'
+
+select * from orders where folderno like 'R1001633'

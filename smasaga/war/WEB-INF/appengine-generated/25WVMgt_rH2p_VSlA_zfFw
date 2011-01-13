@@ -1,0 +1,6 @@
+#!/usr/bin/expect -f
+spawn ssh simmi
+sleep 1
+expect "*password:*"
+send "drsmorc.311\r"
+interact
