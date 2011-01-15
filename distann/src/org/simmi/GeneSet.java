@@ -2232,7 +2232,7 @@ public class GeneSet {
 			
 			//aaset();
 			
-			splitGenes( "/home/sigmar/thermus/newthermus/", "all.aa", 128 );
+			splitGenes( "/home/sigmar/thermus/newthermus/", "all.aa" );
 			//splitGenes( "/home/sigmar/", "dragon.txt", 48 );
 		} catch (IOException e) {
 			e.printStackTrace();
