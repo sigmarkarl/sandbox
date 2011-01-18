@@ -1,12 +1,12 @@
 package org.simmi;
 
-import java.applet.Applet;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
-import javax.swing.JLabel;
 import javax.swing.JTable;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -16,7 +16,11 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.DetailPanel.PercStr;
 
-public class PoiFactory extends Applet {
+public class PoiFactory {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	JTable	table, topTable, leftTable;
 	
 	public String getAppletInfo() {
@@ -24,8 +28,57 @@ public class PoiFactory extends Applet {
 	}
 	
 	public void init() {
-		JLabel label = new JLabel("simmi");
+		/*JLabel label = new JLabel("simmi");
 		this.add( label );
+		
+		String par = this.getParameter("function");
+		
+		System.err.println("parameter function "+par);
+		if( par.equals("export") ) {
+			Enumeration<Applet> appen = this.getAppletContext().getApplets();
+			while( appen.hasMoreElements() ) {
+				Applet ap = appen.nextElement();
+				
+				System.err.println( "try " + ap );
+				try {
+					Method m = ap.getClass().getMethod("getThreeTables");
+					JTable[] all = (JTable[])m.invoke( ap );
+					export( all[0], all[1], all[2] );
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}
+		} else if( par.contains("http://") ) {
+			Enumeration<Applet> appen = this.getAppletContext().getApplets();
+			while( appen.hasMoreElements() ) {
+				Applet ap = appen.nextElement();
+				
+				try {
+					Method m = ap.getClass().getMethod("setImage", Image.class );
+					Image img = ImageIO.read( new URL(par) );
+					JTable[] all = (JTable[])m.invoke( ap, img );
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}
+		} else {
+			Enumeration<Applet> appen = this.getAppletContext().getApplets();
+			while( appen.hasMoreElements() ) {
+				Applet ap = appen.nextElement();
+				
+				try {
+					Method m = ap.getClass().getMethod("setImage", Image.class );
+					String val = urlFetch( par );
+					String url = getImageURL( val );
+					if( url != null ) {
+						Image img = ImageIO.read( new URL(val) );
+						m.invoke( ap, img );
+					}
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}
+		}
 		
 		/*Applet applet = this.getAppletContext().getApplet("food");
 		
@@ -49,7 +102,7 @@ public class PoiFactory extends Applet {
 				e.printStackTrace();
 			}
 			
-		}*/
+		}
 		
 		new Thread() {
 			public void run() {
@@ -70,22 +123,7 @@ public class PoiFactory extends Applet {
 					}
 				}
 			}
-		}.start();
-	}
-	
-	public synchronized void bull() {
-		while( true ) {
-			try {
-				wait();
-				dummy();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		}.start();*/
 	}
 	
 	public synchronized void hey( JTable table, JTable topTable, JTable leftTable ) {
@@ -104,7 +142,22 @@ public class PoiFactory extends Applet {
 		CompatUtilities.browse( tmp.toURI() );
 	}
 	
-	public static void run( JTable table, JTable topTable, JTable leftTable ) throws FileNotFoundException, IOException {
+	public void runpriv( final JTable table, final JTable topTable, final JTable leftTable ) {
+		AccessController.doPrivileged(new PrivilegedAction<Object>() {
+			public Object run() {
+				try {
+					export( table, topTable, leftTable );
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return null;
+			}
+		});
+	}
+	
+	public static void export( JTable table, JTable topTable, JTable leftTable ) throws FileNotFoundException, IOException {
 		File tmp = File.createTempFile("tmp_", ".xlsx");
 		Workbook	wb = new XSSFWorkbook();
 		Sheet		sh = wb.createSheet("ISGEM");

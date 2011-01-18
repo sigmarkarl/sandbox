@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.applet.Applet;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -12,19 +13,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.nio.ByteBuffer;
+import java.security.AccessControlException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -32,10 +31,14 @@ import javax.swing.JComponent;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
 
+import netscape.javascript.JSObject;
+
 public class ImagePanel extends JComponent {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	Image	img;
-	final ByteBuffer	ba = ByteBuffer.allocate(1000000);
-	final String startTag = "imgurl";
 	Set<String>	imageNames;
 	Map<String,Image>	imageCache;
 	Map<String,String>	imageNameCache;
@@ -44,9 +47,12 @@ public class ImagePanel extends JComponent {
 	JProgressBar		progressbar;
 	String				imgUrl = null;
 	String				lang;
+	SortTable			applet;
+	boolean				restricted = true;
 	
-	public ImagePanel( final JTable leftTable, String lang ) {
+	public ImagePanel( SortTable applet, final JTable leftTable, String lang ) {
 		super();
+		this.applet = applet;
 		this.addMouseListener( new MouseAdapter() {
 			public void mousePressed( MouseEvent e ) {
 				int r = leftTable.getSelectedRow();
@@ -89,6 +95,10 @@ public class ImagePanel extends JComponent {
 		progressbar.setValue( 0 );
 		progressbar.setStringPainted( true );
 		this.add( progressbar );
+	}
+	
+	public void setImage( Image image ) {
+		this.img = image;
 	}
 	
 	public void setBounds( int x, int y, int w, int h ) {
@@ -161,12 +171,46 @@ public class ImagePanel extends JComponent {
 				String str = lang.equals("IS") ? "Engin mynd" : "No image";
 				drawString( g, str, 0 );
 			} else {
-				String str = lang.equals("IS") ? "Engin mynd\nSmelltu hér til að sækja mynd á google" : "No image\nClick here to fetch on google";
+				String str = lang.equals("IS") ? "Engin mynd\nSmelltu hér til að sækja mynd á google" : "No image\nClick here to fetch from google";
 				drawString( g, str, 0 );
 			}
 		} else if( imgUrl != null ) {
 			drawString( g, imgUrl, -1 );
 		}
+	}
+	
+	public Image getImage( URL url ) throws IOException {
+		boolean	safeUrl = false;
+		try {
+			SecurityManager secm = System.getSecurityManager();
+			if( secm != null ) {
+				secm.checkConnect(url.getHost(), url.getPort());
+				safeUrl = true;
+			} else safeUrl = true;
+		} catch( AccessControlException e ) {}
+		
+		if( !restricted || safeUrl ) {
+			return ImageIO.read( url ); //applet.getImage( url );
+		} else {
+			if( applet.applet == null ) {
+				JSObject win = JSObject.getWindow(applet);
+				win.call( "emmi", new Object[] {url.toString()} );
+				applet.applet = "simmi";
+			} else {
+				Enumeration<Applet> appen = applet.getAppletContext().getApplets();
+				while( appen.hasMoreElements() ) {
+					Applet ap = appen.nextElement();
+					try {
+						Method m = ap.getClass().getMethod( "runimage", URL.class );
+						return (Image)m.invoke( ap, url );
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		
+		return null;
 	}
 	
 	public void getImage( String val, int index ) throws IOException {
@@ -176,7 +220,8 @@ public class ImagePanel extends JComponent {
 			image = imageCache.get(val);
 		} else {
 			URL url = new URL( val.replace(" ", "%20") );
-			image = ImageIO.read(url);
+			image = getImage( url );
+			//image = ImageIO.read(url);
 			imageCache.put(val, image);
 		}
 		//imageNameCache.put(oname, val);
@@ -208,6 +253,8 @@ public class ImagePanel extends JComponent {
 			vals.add( val );
 			
 			imgUrl = val;
+			
+			progressbar.setVisible( true );
 			ImagePanel.this.repaint();
 			
 			t = new Thread() {
@@ -224,7 +271,6 @@ public class ImagePanel extends JComponent {
 				}
 			};
 			t.start();
-			progressbar.setVisible( true );
 		} else {
 			imgUrl = val;
 			progressbar.setVisible( true );
@@ -244,7 +290,7 @@ public class ImagePanel extends JComponent {
 				progressbar.setVisible( true );
 				img = null;
 			}
-		} else {			
+		} else if( lang.equals("IS") ) {			
 			/*boolean b = true;
 			try {
 				URL url = new URL( oName );
@@ -310,6 +356,83 @@ public class ImagePanel extends JComponent {
 		}
 	}
 	
+	private void runImageSearchThread( final String str, final int imindex ) {
+		Thread t = new Thread() {
+			public void run() {
+				String urlstr = null;
+				try {
+					//url = new URL("http://localhost:5001/images?hl=en&q="+URLEncoder.encode(str, "UTF-8") );
+					//url = new URL("http://search.live.com/images/results.aspx?q="+str);
+					//String result = PoiFactory.urlFetch( str );
+					
+					String result = null;
+					
+					if( restricted ) {
+						if( applet.applet == null ) {
+							JSObject win = JSObject.getWindow(applet);
+							win.call( "emmi", new Object[] {str} );
+							applet.applet = "simmi";
+						} else {
+							Enumeration<Applet> appen = applet.getAppletContext().getApplets();
+							while( appen.hasMoreElements() ) {
+								Applet ap = appen.nextElement();
+								
+								try {
+									Method m = ap.getClass().getMethod( "runfetch", String.class );
+									result = (String)m.invoke( ap, str );
+									break;
+								} catch( Exception e ) {
+									e.printStackTrace();
+								}
+							}
+						}
+					} else {
+						result = ImageFactory.urlFetch( str );
+					}
+					
+					if( result != null ) {
+						urlstr = ImageFactory.getImageURL( result );
+							
+						vals.add( urlstr );
+						imgUrl = urlstr;
+						ImagePanel.this.repaint();
+						
+						imageNameCache.put( str, urlstr );
+						getImage( urlstr, imindex );
+						/*url = new URL( urlstr );
+						connection = url.openConnection();
+						stream = connection.getInputStream();
+						Image image = ImageIO.read(stream);
+						imageCache.put(urlstr,image);
+						imageNameCache.put( str, urlstr );
+						
+						if( imindex == leftTable.getSelectedRow() ) {
+							progressbar.setVisible( false );
+							img = image;
+							ImagePanel.this.repaint();
+						}*/
+					}
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
+				
+				if( urlstr != null ) {
+					vals.remove( urlstr );
+					if( !imageCache.containsKey( urlstr ) ) {
+						imageCache.put( urlstr, null );
+					}
+				}
+				if( vals.size() == 0 ) {
+					progressbar.setVisible( false );
+				}
+				ImagePanel.this.repaint();
+			}
+		};
+		t.start();
+	}
+	
 	public void runThread( final String str ) {
 		if( imageNameCache.containsKey(str) ) {
 			//String urlstr = imageNameCache.get(str);
@@ -317,112 +440,22 @@ public class ImagePanel extends JComponent {
 			ImagePanel.this.repaint();
 		} else {
 			final int imindex = leftTable.getSelectedRow();
-			Thread t = new Thread() {
-				public void run() {
-					URL url;
-					String urlstr = null;
-					try {
-						//url = new URL("http://localhost:5001/images?hl=en&q="+URLEncoder.encode(str, "UTF-8") );
-						//url = new URL("http://search.live.com/images/results.aspx?q="+str);
-						String vstr = str.replace(",", "");
-						vstr = vstr.replace(' ', '+');
-						vstr = URLEncoder.encode(vstr, "UTF-8");
-						url = new URL("http://images.google.com/images?hl=en&biw=1920&bih=1043&gbv=2&tbs=isch:1&sa=1&q="+vstr ); //+"&btnG=Search+Images&gbv=2" ); //&btnG=Search+Images" );//hl=en&q=Orange");//+str);
-						System.err.println( "searching for " + url.toString() );
-						URLConnection connection = null;
-						connection = url.openConnection();
-						//Proxy proxy = new Proxy( Type.HTTP, new InetSocketAddress("proxy.decode.is",8080) );
-						//connection = url.openConnection( proxy );
-						//connection.setDoOutput( true );
-						if( connection instanceof HttpURLConnection ) {
-							HttpURLConnection httpConnection = (HttpURLConnection)connection;
-							httpConnection.setRequestProperty("Host", "images.google.com" );
-							httpConnection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.6) Gecko/2009020518 Ubuntu/9.04 (jaunty) Firefox/3.0.6" );
-							httpConnection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8" );
-							httpConnection.setRequestProperty("Accept-Language", "en-us,en;q=0.5" );
-							httpConnection.setRequestProperty("Accept-Encoding", "gzip,deflate" );
-							httpConnection.setRequestProperty("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7" );
-							httpConnection.setRequestProperty("Keep-Alive", "300" );
-							httpConnection.setRequestProperty("Connection", "keep-alive" );
-						}
-						InputStream stream = connection.getInputStream();
-						stream = new GZIPInputStream( stream );
-						
-						int total = 0;
-						int read = stream.read(ba.array(), total, ba.limit()-total );
-						total = 0;
-						while( read > 0 ) {
-							total += read;
-							read = stream.read( ba.array(), total, ba.limit()-total );
-						}
-						stream.close();
-						
-						String result = new String( ba.array(), 0, total);
-						
-						//System.err.println( result );
-						
-						int index = result.indexOf( startTag );
-						int val = result.indexOf("http:", index); //index+startTag.length();
-						
-						int stop = result.indexOf( "\\x26", val );
-						if( stop == -1 || stop-val >200 ) {
-							stop = result.indexOf( '&', val );
-						}
-						
-						urlstr = result.substring(val, val+20);
-						if( stop != -1 ) {
-							urlstr = result.substring( val, stop );
-						}
-						//System.err.println( urlstr );
-						
-						/*while( index > 0 && (result.charAt(val) != 'h' || !(urlstr.endsWith("jpg") || urlstr.endsWith("png") || urlstr.endsWith("gif"))) ) {
-							index = result.indexOf( startTag, val );
-							val = index+startTag.length();
-							stop = result.indexOf( '&', val );
-							urlstr = result.substring( val, stop );
-						}*/
-						
-						if( stop > 0 ) {
-							urlstr = urlstr.replace("%20", " ").replace("%2520", " ");
-							
-							vals.add( urlstr );
-							imgUrl = urlstr;
-							ImagePanel.this.repaint();
-							
-							imageNameCache.put( str, urlstr );
-							getImage( urlstr, imindex );
-							/*url = new URL( urlstr );
-							connection = url.openConnection();
-							stream = connection.getInputStream();
-							Image image = ImageIO.read(stream);
-							imageCache.put(urlstr,image);
-							imageNameCache.put( str, urlstr );
-							
-							if( imindex == leftTable.getSelectedRow() ) {
-								progressbar.setVisible( false );
-								img = image;
-								ImagePanel.this.repaint();
-							}*/
-						}
-					} catch (MalformedURLException e1) {
-						e1.printStackTrace();
-					} catch (IOException e2) {
-						e2.printStackTrace();
-					}
-					
-					if( urlstr != null ) {
-						vals.remove( urlstr );
-						if( !imageCache.containsKey( urlstr ) ) {
-							imageCache.put( urlstr, null );
-						}
-					}
-					if( vals.size() == 0 ) {
-						progressbar.setVisible( false );
-					}
-					ImagePanel.this.repaint();
+			
+			runImageSearchThread( str, imindex );
+			/*Enumeration<Applet> appen = applet.getAppletContext().getApplets();
+			while( appen.hasMoreElements() ) {
+				Applet ap = appen.nextElement();
+				
+				System.err.println( "try " + ap );
+				try {
+					Method m = ap.getClass().getMethod( "runImageSeachThread", JComponent.class, Set.class, Map.class, Map.class, String.class, int.class );
+					//m.invoke( ap, table, topTable, leftTable );
+				} catch( Exception e ) {
+					e.printStackTrace();
 				}
-			};
-			t.start();
+			}*/
+			//PoiFactory.runImageSearchThread( ImagePanel.this, str );
+			
 			imgUrl = null;
 			progressbar.setVisible( true );
 			this.repaint();
