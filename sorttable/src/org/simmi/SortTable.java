@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.applet.Applet;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -84,6 +86,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
+import netscape.javascript.JSObject;
+
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
 
@@ -102,6 +106,7 @@ public class SortTable extends JApplet {
 	JTextField field;
 	JTabbedPane tabbedPane;
 	RecipePanel recipe;
+	HabitsPanel	eat;
 	FriendsPanel friendsPanel;
 	JComboBox combo;
 
@@ -601,6 +606,8 @@ public class SortTable extends JApplet {
 	//static boolean shiftdown = false;
 	public void firstInit() {
 		CompatUtilities.updateLof();
+		
+		//this.getAppletContext().
 
 		Window window = SwingUtilities.windowForComponent(this);
 		if (window instanceof JFrame) {
@@ -775,13 +782,12 @@ public class SortTable extends JApplet {
 					
 					SortTable.this.add(splitPane);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		});
 
-		try {
+		/*try {
 			new Thread() {
 				public void run() {
 					System.err.println("starting");
@@ -796,7 +802,7 @@ public class SortTable extends JApplet {
 			}.start();
 		} catch( SecurityException se ) {
 			updateFriends(sessionKey, currentUser);
-		}
+		}*/
 	}
 
 	Color bgcolor = new Color(255, 255, 255);
@@ -1358,7 +1364,7 @@ public class SortTable extends JApplet {
 		leftComponent.add(leftScrollPane);
 		leftComponent.add(field, BorderLayout.SOUTH);
 
-		imgPanel = new ImagePanel(leftTable, lang);
+		imgPanel = new ImagePanel( this, leftTable, lang );
 		tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
 
 		FriendsPanel fp = new FriendsPanel(sessionKey, currentUser, lang);
@@ -1387,10 +1393,13 @@ public class SortTable extends JApplet {
 
 		try {
 			recipe = new RecipePanel(fp, lang, table, leftTable, foodNameInd);
+			eat = new HabitsPanel(lang, friendsPanel, stuff, recipe.recipes, foodNameInd, recipe.allskmt, recipe.skmt);
 		} catch (IOException e1) {
 			e1.printStackTrace();
+		} catch( NoClassDefFoundError e2 ) {
+			e2.printStackTrace();
 		}
-		final HabitsPanel eat = new HabitsPanel(lang, friendsPanel, stuff, recipe.recipes, foodNameInd, recipe.allskmt, recipe.skmt);
+		//final HabitsPanel eat = new HabitsPanel(lang, friendsPanel, stuff, recipe.recipes, foodNameInd, recipe.allskmt, recipe.skmt);
 		CostPanel buy = new CostPanel();
 
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplitPane, tabbedPane);
@@ -2030,6 +2039,9 @@ public class SortTable extends JApplet {
 				secm.checkConnect("test.matis.is", 80);
 				URL	url = new URL( "http://test.matis.is/isgem/help/" );
 				helppane.setPage( url );
+			} else {
+				URL	url = new URL( "http://test.matis.is/isgem/help/" );
+				helppane.setPage( url );
 			}
 		} catch( AccessControlException e ) {
 			
@@ -2121,7 +2133,7 @@ public class SortTable extends JApplet {
 		 */
 		
 		final JPopupMenu	leftpopup = new JPopupMenu();
-		leftpopup.add( new AbstractAction("Senda fæðutegund í valda uppskrift") {
+		leftpopup.add( new AbstractAction( lang.equals("IS") ? "Senda fæðutegund í valda uppskrift" : "Put food in selected recipe" ) {
 			public void actionPerformed(ActionEvent e) {
 				String str = "";
 				
@@ -2173,7 +2185,7 @@ public class SortTable extends JApplet {
 		if( xurl != null ) {
 			ImageProducer 	ims = (ImageProducer)xurl.getContent();
 			Image 		img = (ims != null ? this.createImage( ims ).getScaledInstance(16, 16, Image.SCALE_SMOOTH) : null);
-			popup.add( new AbstractAction("Opna val í Excel", img != null ? new ImageIcon(img) : null ) {
+			popup.add( new AbstractAction( lang.equals("IS") ? "Opna val í Excel" : "Open in Excel", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent ae) {
 					try {
 						openExcel();
@@ -2215,35 +2227,75 @@ public class SortTable extends JApplet {
 		return "SortTable";
 	}
 	
+	public JTable[] getThreeTables() {
+		return new JTable[] { table, topTable, leftTable };
+	}
+	
 	public String applet;
 	public void openExcel() throws IOException, SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		//this.getCodeBase();
 		
-		/*if( applet == null ) {
-			String js = "document.getElementById('applet').innerHTML = '<applet codebase=\"http://localhost/\" code=\"org.simmi.PoiFactory\" id=\"minunsign\" name=\"minunsign\"><param name=\"jnlp_href\" value=\"minapplet.jnlp\"></applet>'"; 
+		if( applet == null ) {
+			//String js = "document.getElementById('applet').innerHTML = '<applet codebase=\"http://localhost/\" code=\"org.simmi.PoiFactory\" id=\"minunsign\" name=\"minunsign\"><param name=\"jnlp_href\" value=\"export.jnlp\"></applet>'"; 
 				//"var attributes = { codebase:'http://localhost/', archive:'minapplet.jar', code:'org.simmi.PoiFactory', width:'1', height:'1', id:'food', name:'minunsign' }; var parameters = { jnlp_href:'minapplet.jnlp' }; deployJava.runApplet(attributes, parameters, '1.6');";
 				//System.err.println( js );
 			
-			System.err.println("mo");
+			String 	js = "var attributes = { codebase:\\'http://localhost/\\', archive:\\'minapplet.jar\\', code:\\'org.simmi.PoiFactory\\', width:\\'10\\', height:\\'10\\', id:\\'poi\\', name:\\'export\\' }; ";
+					js += "var parameters = { jnlp_href:\\'export.jnlp\\' }; ";
+					js += "deployJava.runApplet(attributes, parameters, \\'1.6\\')";
+			
+			System.err.println("mo5");
+			/*Applet app = this.getAppletContext().getApplet("panel1");
+			Enumeration<Applet> enappl = this.getAppletContext().getApplets();
+			while( enappl.hasMoreElements() ) {
+				Applet ap = enappl.nextElement();
+				System.err.println( ap.getName() );
+			}*/
+			
 			JSObject win = JSObject.getWindow(this);
 			//JSObject doc = (JSObject)win.getMember("document");
-			win.eval( js );
+			
+			//doc.eval("var appi = document.getElementById('applet'); var scrippi = document.createElement('script'); scrippi.appendChild( document.createTextNode('"+js+"') ); appi.appendChild( scrippi );");
+			win.call( "emmi", new Object[] {"export"} );
+			
+			/*JSObject app = (JSObject)doc.call("getElementById", new Object[] {"applet"});
+			//doc.
+			
+			JSObject script = (JSObject)doc.call("createElement", new Object[] {"script"} );
+			script.setMember("src", "dummy.js");
+			app.call("appendChild", new Object[] {script} );*/
+			
+			//JSObject win = JSObject.getWindow(this);
+			//JSObject doc = (JSObject)win.getMember("document");
+			
+			//app.eval( js );
+			//win.call("updateApplet", new Object[]{} );
 			
 			/*try {
 			      getAppletContext().showDocument( new URL("http://localhost/simple.html"), "simmi" );
 			      //getAppletContext().showDocument(url, target)
-			} catch (MalformedURLException me) { }*
+			} catch (MalformedURLException me) { }*/
 			//applet = getAppletContext().getApplet("minunsign");
 			applet = "simmi";
-		} else { //if( applet != null ) {
-			System.err.println("me");
-			
-			String js = "document.getElementById('minunsign').notifyAll();";
-			System.err.println("mo");
-			JSObject win = JSObject.getWindow(this);
+		} else { //if( applet != null ) {			
+			//String js = "document.getElementById('minunsign').notifyAll();";
+			//JSObject win = JSObject.getWindow(this);
 			//JSObject doc = (JSObject)win.getMember("document");
-			win.eval( js );
+			//win.eval( js );
 		
+			Enumeration<Applet> appen = this.getAppletContext().getApplets();
+			while( appen.hasMoreElements() ) {
+				Applet ap = appen.nextElement();
+				
+				System.err.println( "try " + ap );
+				try {
+					Method m = ap.getClass().getMethod("runpriv", JTable.class, JTable.class, JTable.class);
+					m.invoke( ap, table, topTable, leftTable );
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}
+			
 			//if( applet instanceof PoiFactory ) {
 			//	System.err.println("me2");
 				/*for( Method m : applet.getClass().getMethods() ) {
@@ -2252,15 +2304,15 @@ public class SortTable extends JApplet {
 				Method m = applet.getClass().getMethod("run", JTable.class, JTable.class, JTable.class);
 				if( m != null ) {
 					m.invoke( applet, table, topTable, leftTable );
-				}*
+				}*/
 				
 				//.run( table, topTable, leftTable );
 			//}
-		} else {
+		}/* else {
 			JOptionPane.showMessageDialog(this, "Hef ekki leyfi til að skifa á diskinn");
 		}*/
 		
-		PoiFactory.run( table, topTable, leftTable );
+		//PoiFactory.run( table, topTable, leftTable );
 	}
 	
 	public void openExcel( JCompatTable detailTable, JCompatTable	leftTable ) throws IOException {
@@ -2296,6 +2348,12 @@ public class SortTable extends JApplet {
 
 	public ImagePanel getImagePanel() {
 		return imgPanel;
+	}
+	
+	public void setImage( Image image ) {
+		ImagePanel imgPanel = getImagePanel();
+		imgPanel.setImage( image );
+		imgPanel.repaint();
 	}
 
 	/**
@@ -2340,8 +2398,8 @@ public class SortTable extends JApplet {
 		try {
 			frame.setBackground( bgcolor );
 			frame.getContentPane().setBackground( bgcolor );
-			this.initGui(null, null);
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			this.initGui(null, null);
 			
 			//frame.getContentPane().setLayout(new BorderLayout());
 			frame.add( this.splitPane );
