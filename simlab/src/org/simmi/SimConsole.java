@@ -8,6 +8,7 @@ import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.io.Writer;
 
+import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -128,7 +129,12 @@ public class SimConsole extends JScrollPane {
     
     public static void main( String[] args ) {
     	try {
-			new SimConsole( null );
+    		JFrame	frame = new JFrame();
+    		
+    		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+			frame.add( new SimConsole( null ) );
+			
+			frame.setVisible( true );
 		} catch (IOException e) { 
 			e.printStackTrace();
 		}
