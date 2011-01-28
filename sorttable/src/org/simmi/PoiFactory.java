@@ -142,21 +142,6 @@ public class PoiFactory {
 		CompatUtilities.browse( tmp.toURI() );
 	}
 	
-	public void runpriv( final JTable table, final JTable topTable, final JTable leftTable ) {
-		AccessController.doPrivileged(new PrivilegedAction<Object>() {
-			public Object run() {
-				try {
-					export( table, topTable, leftTable );
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return null;
-			}
-		});
-	}
-	
 	public static void export( JTable table, JTable topTable, JTable leftTable ) throws FileNotFoundException, IOException {
 		File tmp = File.createTempFile("tmp_", ".xlsx");
 		Workbook	wb = new XSSFWorkbook();
