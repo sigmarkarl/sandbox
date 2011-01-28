@@ -13,9 +13,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.AccessControlException;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -76,14 +78,15 @@ public class ImagePanel extends JComponent {
 		imageNameCache = new HashMap<String,String>();
 		 
 		InputStream inputStream = this.getClass().getResourceAsStream("/myndir.txt");
-		BufferedReader br = new BufferedReader( new InputStreamReader( inputStream ) );
-		String line;
 		try {
+			BufferedReader br = new BufferedReader( new InputStreamReader( inputStream, "UTF-8" ) );
+			String line;
 			line = br.readLine();
 			while( line != null ) {
 				imageNames.add( line );
 				line = br.readLine();
 			}
+			br.close();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -277,7 +280,7 @@ public class ImagePanel extends JComponent {
 		}
 	}
 
-	public void tryName( String oName ) {
+	public void tryName( String oName ) throws UnsupportedEncodingException {
 		if( imageNameCache.containsKey(oName) ) {
 			String imgUrl = imageNameCache.get(oName);
 			if( imageCache.containsKey(imgUrl) ) {
@@ -342,7 +345,7 @@ public class ImagePanel extends JComponent {
 				}
 				
 				if( val != null ) {
-					String path = "http://test.matis.is/isgem/myndir/"+val;
+					String path = "http://test.matis.is/isgem/myndir/"+URLEncoder.encode( val, "UTF-8" );;
 					if( imageCache.containsKey(path) ) {
 						img = imageCache.get(path);
 						imageNameCache.put(oName, path);
