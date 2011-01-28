@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -1095,7 +1096,11 @@ public class SortTable extends JApplet {
 										}
 									}
 								} else {
-									imgPanel.tryName(oStr);
+									try {
+										imgPanel.tryName(oStr);
+									} catch (UnsupportedEncodingException e1) {
+										e1.printStackTrace();
+									}
 								}
 
 							}

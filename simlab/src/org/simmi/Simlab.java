@@ -77,6 +77,11 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.apache.sshd.ClientChannel;
+import org.apache.sshd.ClientSession;
+import org.apache.sshd.SshClient;
+import org.apache.sshd.client.channel.ChannelExec;
+import org.apache.sshd.common.util.NoCloseOutputStream;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
 import org.simmi.Simlab.simlab.ByValue;
@@ -86,7 +91,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
-import com.sun.org.apache.xpath.internal.operations.Div;
 
 public class Simlab implements ScriptEngineFactory {
 	static {
@@ -558,6 +562,45 @@ public class Simlab implements ScriptEngineFactory {
 		currentDir = new File(dir.getTheString());
 
 		return 1;
+	}
+	
+	public int ssh( final simlab.ByValue user, final simlab.ByValue pass, final simlab.ByValue host, final simlab.ByValue port, final simlab.ByValue cmd ) throws InterruptedException, Exception {
+		SshClient	sshclient = SshClient.setUpDefaultClient();
+		sshclient.start();
+		
+		String hoststr = host.getTheString();
+		int portn = (int)port.getLong();
+		ClientSession session = sshclient.connect(hoststr, portn).await().getSession();
+        int ret = ClientSession.WAIT_AUTH;
+
+        String login = user.getTheString();
+        String password = pass.getTheString();
+        while ((ret & ClientSession.WAIT_AUTH) != 0) {
+            session.authPassword(login, password);
+            ret = session.waitFor(ClientSession.WAIT_AUTH | ClientSession.CLOSED | ClientSession.AUTHED, 0);
+        }
+        
+        String command = cmd.getTheString();
+        //ClientChannel channel = session.createExecChannel( command );
+        ChannelExec channel = session.createExecChannel( command );
+        //channel.
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        /*Writer w = new OutputStreamWriter(baos);
+        //for (String cmd : command) {
+            w.append( command ); //.append(" ");
+        //}
+        w.append("\n");
+        w.close();*/
+        channel.setIn(new ByteArrayInputStream(baos.toByteArray()));
+        channel.setOut( System.out );
+        channel.setErr( System.err );
+        channel.open().await();
+        channel.waitFor(ClientChannel.CLOSED, 0);
+        session.close(false);
+        
+        sshclient.stop();
+		
+		return 5;
 	}
 
 	public int viewer(final simlab.ByValue s) {
@@ -2270,6 +2313,13 @@ public class Simlab implements ScriptEngineFactory {
 				}
 				if (m == null)
 					m = Simlab.class.getMethod("simlab_" + fname, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class);
+			} else if (osize == 5) {
+				try {
+					m = Simlab.class.getMethod(fname, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class);
+				} catch (Exception e) {
+				}
+				if (m == null)
+					m = Simlab.class.getMethod("simlab_" + fname, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class, simlab.ByValue.class);
 			}
 		} catch (Exception e) {
 		}
@@ -2330,6 +2380,8 @@ public class Simlab implements ScriptEngineFactory {
 			m.invoke(Simlab.this, olist.get(0), olist.get(1), olist.get(2));
 		} else if (olist.size() == 4) {
 			m.invoke(Simlab.this, olist.get(0), olist.get(1), olist.get(2), olist.get(3));
+		} else if (olist.size() == 5) {
+			m.invoke(Simlab.this, olist.get(0), olist.get(1), olist.get(2), olist.get(3), olist.get(4));
 		}
 		if (nv) {
 			simlab.ByValue sb = getdata();
@@ -2564,7 +2616,12 @@ public class Simlab implements ScriptEngineFactory {
 		return 0;
 	}
 
+	PrintStream origerr = null;
 	public int printlen() {
+		if( origerr == null ) origerr = System.err;
+		origerr.println( System.out );
+		
+		
 		System.out.println(data.length);
 
 		return 0;
@@ -3685,13 +3742,19 @@ public class Simlab implements ScriptEngineFactory {
 				PipedWriter pw = new PipedWriter();
 				// BufferedWriter bw = new BufferedWriter( pw );
 				// SimConsole simconsole =
-				new SimConsole(pw);
+				
+				JFrame frame = new JFrame();
+				frame.setSize(400, 300);
+				frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+				frame.add( new SimConsole(pw) );
 				// ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				// InputStreamReader ir = new InputStreamReader(in);
 
 				PipedReader pr = new PipedReader(pw);
 				// BufferedReader br = new BufferedReader( pr );
 				engine.eval(pr);
+				
+				frame.setVisible( true );
 			} else {
 				if (args.length > 0) {
 					engine.eval(args[0]);

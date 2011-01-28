@@ -225,7 +225,7 @@ public class GeneSet {
 	}
 	
 	static Map<String,String>		swapmap = new HashMap<String,String>();
-	public static void func1( String[] names, File dir ) throws IOException {
+	public static void panCoreFromNRBlast( String[] names, File dir ) throws IOException {
 		Map<String,String>		allgenes = new HashMap<String,String>();
 		Map<String,Set<String>>	geneset = new HashMap<String,Set<String>>();
 		Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
@@ -233,10 +233,9 @@ public class GeneSet {
 		PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
 		System.setErr( ps );
 		
+		Set<String>	poddur = new HashSet<String>();
 		for( String name : names ) {
-			File 			f = new File( dir, name );
-			Set<String>		set = new HashSet<String>();
-			
+			File 			f = new File( dir, name );			
 			FileReader		fr = new FileReader( f );
 			BufferedReader 	br = new BufferedReader( fr );
 			String 	query = null;
@@ -244,35 +243,63 @@ public class GeneSet {
 			String line = br.readLine();
 			while( line != null ) {
 				String trim = line.trim();
-				if( trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") ) {
+				if( trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || 
+						trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg") ) {
 					String[] split = trim.split("\\|");
-					set.add( split[1] );
 					
-					if( !allgenes.containsKey( split[1] ) || allgenes.get( split[1] ) == null ) {
-						allgenes.put( split[1], split.length > 1 ? split[2].trim() : null );
+					String id = split[1];
+					String desc = split[2];
+					String teg = "";
+					int idx = desc.indexOf('[');
+					if( idx > 0 ) {
+						teg = desc.substring(idx);
+						desc = desc.substring(0, idx-1).trim();
+					} else {
+						desc = desc.trim();
+					}
+					
+					Set<String>	set;
+					String padda = query.split("_")[0];
+					if( geneset.containsKey( padda ) ) {
+						set = geneset.get( padda );
+					} else {
+						set = new HashSet<String>();
+						geneset.put( padda, set );
+					}
+					
+					//set.add( id );
+					set.add( desc );
+					
+					if( !allgenes.containsKey( desc ) || allgenes.get( desc ) == null ) {
+						allgenes.put( desc, split.length > 1 ? teg + " " + id : null );
 					}
 					
 					Set<String>	locset = null;
-					if( geneloc.containsKey( split[1] ) ) {
-						locset = geneloc.get(split[1]);
+					if( geneloc.containsKey( desc ) ) {
+						locset = geneloc.get(desc);
 					} else {
 						locset = new HashSet<String>();
-						geneloc.put(split[1], locset);
+						geneloc.put(desc, locset);
 					}
 					//locset.add( swapmap.get(name)+"_"+query + " " + evalue );
-					locset.add( name+"_"+query + " " + evalue );
+					locset.add( query + " " + evalue );
 					
 					query = null;
 				} else if( trim.startsWith("Query=") ) {
 					query = trim.substring(6).trim().split("[ ]+")[0];
-				} else if( query != null && trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") ) {
+					poddur.add( query.split("_")[0] );
+				} else if( query != null && trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || 
+						trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|") ) {
 					String[] split = trim.split("[\t ]+");
 					evalue = split[split.length-1];
 				}
 				
 				line = br.readLine();
 			}
-			
+		}
+		
+		for( String name : geneset.keySet() ) {
+			Set<String> set = geneset.get(name);
 			System.err.println( name + " genes total: " + set.size() );
 			geneset.put( name, set );
 		}
@@ -283,6 +310,7 @@ public class GeneSet {
 			allset.retainAll( gset );
 		}
 		System.err.println( "Core genome size: " + allset.size() );
+		System.err.println( "Pan genome size: " + allgenes.size() );
 		
 		Set<String>	nameset = null;
 		
@@ -292,15 +320,16 @@ public class GeneSet {
 		
 		boolean info = true;
 		
-		for( String aname : names ) {
+		for( String aname : poddur ) {
 			allset = new HashSet<String>( allgenes.keySet() );
-			nameset = new HashSet<String>( Arrays.asList(names) );
+			nameset = new HashSet<String>( poddur );
 			nameset.remove(aname);
 			for( String tname : nameset ) {
 				allset.removeAll( geneset.get(tname) );
 			}
 			//System.err.println( "Genes found only in " + swapmap.get(aname) + "\t" + allset.size() );
-			System.err.println( "Genes found only in " + aname + "\t" + allset.size() );
+			
+			if( allset.size() > 0 ) System.err.println( "Genes only in " + aname + "\t" + allset.size() );
 			if( info ) {
 				for( String gname : allset ) {
 					System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
@@ -308,9 +337,9 @@ public class GeneSet {
 			}
 		}
 		
-		for( String aname : names ) {
+		for( String aname : poddur ) {
 			allset = new HashSet<String>( allgenes.keySet() );
-			nameset = new HashSet<String>( Arrays.asList(names) );
+			nameset = new HashSet<String>( poddur );
 			nameset.remove(aname);
 			allset.removeAll( geneset.get(aname) );
 			for( String tname : nameset ) {
@@ -322,25 +351,23 @@ public class GeneSet {
 				//reset.add( swapmap.get(name) );
 				reset.add( name );
 			}
-			System.err.println( "Genes only in all off " + reset + "\t" + allset.size() );
-			if( info ) {
-				for( String gname : allset ) {
-					System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
-				}
-			}
+			
+			if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+			if( info ) printflubb( allset, allgenes, geneloc );
 		}
 		
-		for( int i = 0; i < names.length; i++ ) {
-			for( int y = i+1; y < names.length; y++ ) {
+		List<String> poddulist = new ArrayList<String>( poddur );
+		for( int i = 0; i < poddulist.size(); i++ ) {
+			for( int y = i+1; y < poddulist.size(); y++ ) {
 				allset = new HashSet<String>( allgenes.keySet() );
-				nameset = new HashSet<String>( Arrays.asList(names) );
+				nameset = new HashSet<String>( poddulist );
 				//nameset.add( names[i] );
 				//nameset.add( names[y] );
-				nameset.remove( names[i] );
-				nameset.remove( names[y] );
+				nameset.remove( poddulist.get(i) );
+				nameset.remove( poddulist.get(y) );
 				
-				allset.removeAll( geneset.get(names[i]) );
-				allset.removeAll( geneset.get(names[y]) );
+				allset.removeAll( geneset.get( poddulist.get(i) ) );
+				allset.removeAll( geneset.get( poddulist.get(y) ) );
 				for( String tname : nameset ) {
 					allset.retainAll( geneset.get(tname) );
 				}
@@ -353,26 +380,23 @@ public class GeneSet {
 					//reset.add( swapmap.get(name) );
 					reset.add( name );
 				}
-				System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
-				if( info ) {
-					for( String gname : allset ) {
-						System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
-					}
-				}
+				
+				if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+				if( info ) printflubb( allset, allgenes, geneloc );
 			}
 		}
 		
-		for( int i = 0; i < names.length; i++ ) {
-			for( int y = i+1; y < names.length; y++ ) {
+		for( int i = 0; i < poddulist.size(); i++ ) {
+			for( int y = i+1; y < poddulist.size(); y++ ) {
 				allset = new HashSet<String>( allgenes.keySet() );
-				nameset = new HashSet<String>( Arrays.asList(names) );
+				nameset = new HashSet<String>( poddulist );
 				//nameset.add( names[i] );
 				//nameset.add( names[y] );
-				nameset.remove( names[i] );
-				nameset.remove( names[y] );
+				nameset.remove( poddulist.get(i) );
+				nameset.remove( poddulist.get(y) );
 				
-				allset.retainAll( geneset.get(names[i]) );
-				allset.retainAll( geneset.get(names[y]) );
+				allset.retainAll( geneset.get( poddulist.get(i) ) );
+				allset.retainAll( geneset.get( poddulist.get(y) ) );
 				for( String tname : nameset ) {
 					allset.removeAll( geneset.get(tname) );
 				}
@@ -380,54 +404,77 @@ public class GeneSet {
 				Set<String>	reset = new HashSet<String>();
 				//reset.add( swapmap.get(names[i]) );
 				//reset.add( swapmap.get(names[y]) );
-				reset.add( names[i] );
-				reset.add( names[y] );
+				reset.add( poddulist.get(i) );
+				reset.add( poddulist.get(y) );
 				
 				/*for( String name : nameset ) {
 					reset.add( swapmap.get(name) );
 				}*/
-				System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
-				if( info ) {
-					for( String gname : allset ) {
-						System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+				
+				if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+				if( info ) printflubb( allset, allgenes, geneloc );
+			}
+		}
+		
+		for( int i = 0; i < poddulist.size(); i++ ) {
+			for( int y = i+1; y < poddulist.size(); y++ ) {
+				for( int k = y+1; k < poddulist.size(); k++ ) {
+					allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k)} ), info, false );
+					if( info ) printflubb( allset, allgenes, geneloc );
+					
+					allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k)} ), info, true );
+					if( info ) printflubb( allset, allgenes, geneloc );
+				}
+			}
+		}
+		
+		for( int i = 0; i < poddulist.size(); i++ ) {
+			for( int y = i+1; y < poddulist.size(); y++ ) {
+				for( int k = y+1; k < poddulist.size(); k++ ) {
+					for( int l = k+1; l < poddulist.size(); l++ ) {
+						allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l)} ), info, false );
+						if( info ) {
+							for( String gname : allset ) {
+								System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+							}
+						}
+						
+						allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l)} ), info, true );
+						if( info ) {
+							for( String gname : allset ) {
+								System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+							}
+						}
 					}
 				}
 			}
 		}
 		
-		for( int i = 0; i < names.length; i++ ) {
-			for( int y = i+1; y < names.length; y++ ) {
-				for( int k = y+1; k < names.length; k++ ) {
-					allset = new HashSet<String>( allgenes.keySet() );
-					nameset = new HashSet<String>( Arrays.asList(names) );
-					//nameset.add( names[i] );
-					//nameset.add( names[y] );
-					nameset.remove( names[i] );
-					nameset.remove( names[y] );
-					nameset.remove( names[k] );
-					
-					allset.removeAll( geneset.get(names[i]) );
-					allset.removeAll( geneset.get(names[y]) );
-					allset.removeAll( geneset.get(names[k]) );
-					for( String tname : nameset ) {
-						allset.retainAll( geneset.get(tname) );
+		for( int i = 0; i < poddulist.size(); i++ ) {
+			for( int y = i+1; y < poddulist.size(); y++ ) {
+				for( int k = y+1; k < poddulist.size(); k++ ) {
+					for( int l = k+1; l < poddulist.size(); l++ ) {
+						for( int m = l+1; m < poddulist.size(); m++ ) {
+							allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l), poddulist.get(m)} ), info, false );
+							if( info ) printflubb( allset, allgenes, geneloc );
+							
+							allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l), poddulist.get(m)} ), info, true );
+							if( info ) printflubb( allset, allgenes, geneloc );
+						}
 					}
-					
-					Set<String>	reset = new HashSet<String>();
-					/*reset.add( swapmap.get(names[i]) );
-					reset.add( swapmap.get(names[y]) );
-					reset.add( swapmap.get(names[k]) );*/
-					
-					for( String name : nameset ) {
-						//reset.add( swapmap.get(name) );
-						reset.add( name );
-					}
-					
-					
-					System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
-					if( info ) {
-						for( String gname : allset ) {
-							System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+				}
+			}
+		}
+		
+		for( int i = 0; i < poddulist.size(); i++ ) {
+			for( int y = i+1; y < poddulist.size(); y++ ) {
+				for( int k = y+1; k < poddulist.size(); k++ ) {
+					for( int l = k+1; l < poddulist.size(); l++ ) {
+						for( int m = l+1; m < poddulist.size(); m++ ) {
+							for( int n = m+1; n < poddulist.size(); n++ ) {
+								allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l), poddulist.get(m), poddulist.get(n)} ), info, false );
+								if( info ) printflubb( allset, allgenes, geneloc );
+							}
 						}
 					}
 				}
@@ -437,6 +484,67 @@ public class GeneSet {
 		System.err.println( "Unique genes total: " + allgenes.size() );
 		
 		ps.close();
+	}
+	
+	public static void printflubb( Set<String> allset, Map<String,String> allgenes, Map<String,Set<String>> geneloc ) {
+		for( String gname : allset ) {
+			System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+		}
+	}
+	
+	public static Set<String> flubb( Set<String> allgeneskeyset, List<String> poddulist, Map<String,Set<String>> geneset, Collection<String> rpoddur, boolean info, boolean invert ) {
+		Set<String> allset = new HashSet<String>( allgeneskeyset );
+		Set<String> nameset = new HashSet<String>( poddulist );
+		//nameset.add( names[i] );
+		//nameset.add( names[y] );
+		
+		nameset.removeAll( rpoddur );
+		//nameset.remove( poddulist.get(i) );
+		//nameset.remove( poddulist.get(y) );
+		//nameset.remove( poddulist.get(k) );
+		
+		Set<String>	reset = new HashSet<String>();
+		if( invert ) {
+			for( String padda : rpoddur ) {
+				allset.removeAll( geneset.get(padda) );
+			}
+			//allset.removeAll( geneset.get( poddulist.get(i) ) );
+			//allset.removeAll( geneset.get( poddulist.get(y) ) );
+			//allset.removeAll( geneset.get( poddulist.get(k) ) );
+			for( String tname : nameset ) {
+				allset.retainAll( geneset.get(tname) );
+			}
+			
+			for( String name : nameset ) {
+				//reset.add( swapmap.get(name) );
+				reset.add( name );
+			}
+		} else {
+			for( String padda : rpoddur ) {
+				allset.retainAll( geneset.get(padda) );
+			}
+			for( String tname : nameset ) {
+				allset.removeAll( geneset.get(tname) );
+			}
+			for( String name : rpoddur ) {
+				reset.add( name );
+			}
+		}
+		
+		/*reset.add( swapmap.get(names[i]) );
+		reset.add( swapmap.get(names[y]) );
+		reset.add( swapmap.get(names[k]) );*/
+		
+		if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+		return allset;
+	}
+	
+	public static void recursiveSet( int fin, int val ) {
+		if( val < fin ) {
+			recursiveSet( fin, val+1 );
+		} else {
+			
+		}
 	}
 	
 	static Map<String,String>	aas = new HashMap<String,String>();
@@ -455,11 +563,11 @@ public class GeneSet {
 					name = line.substring(1).split(" ")[0];
 					
 					int v = name.indexOf("contig");
-					if( v != -1 ) {
+					/*if( v != -1 ) {
 						int i1 = name.indexOf('_',v);
 						int i2 = name.indexOf('_', i1+1);
 						name = name.substring(0,i1) + name.substring(i2);
-					}
+					}*/
 				} else ac += line.trim();
 				line = br.readLine();
 			}
@@ -727,6 +835,75 @@ public class GeneSet {
 		return bi;
 	}
 	
+	private static void intersectSets( Set<String> all, List<Set<String>> total ) {
+		//Set<Set<String>>	rem = new HashSet<Set<String>>();
+		//int i = 0;
+		
+		if( all.contains("scoto2101_contig00162_11") ) {
+			System.err.println();
+		}
+		
+		List<Set<String>>	newtotal = new ArrayList<Set<String>>();
+		for( Set<String>	check : total ) {
+			Set<String> 		cont = new HashSet<String>();
+			
+			for( String aval : all ) {
+				if( check.contains( aval ) ) cont.add( aval );
+			}
+			all.removeAll( cont );
+			
+			if( cont.size() > 0 ) {
+				if( cont.size() < check.size() ) {
+					Set<String> 		ncont = new HashSet<String>( check );
+					ncont.removeAll( cont );
+					
+					newtotal.add( ncont );
+				}
+				newtotal.add( cont );
+			} else newtotal.add( check );
+			
+			//else if( all.size() > 0 ) newtotal.add( all );
+			
+			if( cont.size() > 0 ) all.removeAll( cont );
+		}
+		
+		if( all.size() > 0 ) newtotal.add( all );
+		
+		total.clear();
+		total.addAll( newtotal );
+		
+		/*for( Set<String> erm : rem ) {
+			int ind = -1;
+			int count = 0;
+			for( Set<String> ok : total ) {
+				if( ok.size() == erm.size() && ok.containsAll(erm) ) {
+					ind = count;
+					break;
+				}
+				count++;
+			}
+			
+			if( ind != -1 ) {
+				total.remove( ind );
+			}
+		}
+		
+		rem.clear();
+		if( cont == null ) total.add( all );
+		
+		Set<String>	erm = new HashSet<String>();
+		System.err.println( "erm " + total.size() );
+		for( Set<String> ss : total ) {
+			for( String s : ss ) {
+				if( erm.contains( s ) ) {
+					System.err.println( "buja " + s );
+					break;
+				}
+			}
+			erm.addAll( ss );
+		}*/
+	}
+	
 	private static void joinSets( Set<String> all, List<Set<String>> total ) {		
 		Set<String> cont = null;
 		Set<Set<String>>	rem = new HashSet<Set<String>>();
@@ -798,9 +975,9 @@ public class GeneSet {
 		}
 	}
 	
-	private static Collection<Set<String>> func4_header( File dir, String[] stuff ) throws IOException {
+	private static Collection<Set<String>> joinBlastSets( File dir, String[] stuff, String write, boolean union ) throws IOException {
 		List<Set<String>>	total = new ArrayList<Set<String>>();
-		FileWriter fw = new FileWriter("/home/sigmar/blastcluster.txt");
+		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
 		for( String name : stuff ) {
 			File f = new File( dir, name );
 			BufferedReader	br = new BufferedReader( new FileReader( f ) );
@@ -815,19 +992,20 @@ public class GeneSet {
 						if( trim.startsWith("scoto") || trim.startsWith("anta") || trim.startsWith("tt") || trim.startsWith("egg") || trim.startsWith("island") ) {
 							String val = trim.substring( 0, trim.indexOf('#')-1 );
 							int v = val.indexOf("contig");
-							if( v != -1 ) {
+							/*if( v != -1 ) {
 								int i1 = val.indexOf('_',v);
 								int i2 = val.indexOf('_', i1+1);
 								val = val.substring(0,i1) + val.substring(i2);
-							}
+							}*/
 							all.add( val );
 						}
 						line = br.readLine();
 					}
 					
-					fw.write( all.toString()+"\n" );
+					if( fw != null ) fw.write( all.toString()+"\n" );
 					
-					joinSets( all, total );
+					if( union ) joinSets( all, total );
+					else intersectSets( all, total );
 					
 					if( line == null ) break;
 				}
@@ -835,7 +1013,7 @@ public class GeneSet {
 				line = br.readLine();
 			}
 		}
-		fw.close();
+		if( fw != null ) fw.close();
 		
 		return total;
 	}
@@ -926,7 +1104,7 @@ public class GeneSet {
 		return clusterMap;
 	}
 	
-	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( List<Set<String>>	total, Set<String> species ) {
+	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( Collection<Set<String>>	total, Set<String> species ) {
 		Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
 		
 		for( Set<String>	t : total ) {
@@ -1008,6 +1186,7 @@ public class GeneSet {
 		joinmap.put("ttp1HB8", "ttHB8");
 		joinmap.put("ttp2HB8", "ttHB8");*/
 		
+		
 		Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = loadCluster("/home/sigmar/burb2.txt");
 		
 		//Set<String>	species = new TreeSet<String>();
@@ -1039,10 +1218,42 @@ public class GeneSet {
 		
 		//writeSimplifiedCluster( "/home/sigmar/burb2.txt", clusterMap );
 		
+		writeBlastAnalysis( clusterMap, species );
+	}
+	
+	public static void clusterFromSimplifiedBlast( String filename ) throws IOException {
+		clusterFromSimplifiedBlast(filename, null);
+	}
+	
+	public static void clusterFromSimplifiedBlast( String filename, String writeSimplifiedCluster ) throws IOException {
+		Set<String>	species = new TreeSet<String>();
+		List<Set<String>> total = readBlastList( filename ); //"/home/sigmar/blastcluster.txt" );
+		Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+		
+		if( writeSimplifiedCluster != null ) writeSimplifiedCluster( writeSimplifiedCluster, clusterMap ); //"/home/sigmar/burb2.txt", clusterMap );
+		
+		writeBlastAnalysis( clusterMap, species );
+	}
+	
+	public static void clusterFromBlastResults( File dir, String[] stuff ) throws IOException {
+		clusterFromBlastResults( dir, stuff, null, null, true );
+	}
+	
+	public static void clusterFromBlastResults( File dir, String[] stuff, String writeSimplifiedCluster, String writeSimplifiedBlast, boolean union ) throws IOException {
+		Set<String>	species = new TreeSet<String>();
+		Collection<Set<String>> total = joinBlastSets( dir, stuff, writeSimplifiedBlast, union );
+		Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+		
+		if( writeSimplifiedCluster != null ) writeSimplifiedCluster( writeSimplifiedCluster, clusterMap ); //"/home/sigmar/burb2.txt", clusterMap );
+		
+		writeBlastAnalysis( clusterMap, species );
+	}
+	
+	public static void writeBlastAnalysis( Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap, Set<String> species ) throws IOException {
 		BufferedImage	img = bmatrix( species, clusterMap );
 		ImageIO.write( img, "png", new File("/home/sigmar/mynd.png") );
 		
-		PrintStream ps = new PrintStream( new FileOutputStream("/home/sigmar/out2.out") );
+		PrintStream ps = new PrintStream( new FileOutputStream("/home/sigmar/out3.out") );
 		System.setErr( ps );
 		
 		//System.err.println( "Total gene sets: " + total.size() );
@@ -1165,8 +1376,7 @@ public class GeneSet {
 										}
 										if( gene == null ) {
 											System.out.println( "error" + loci );
-										}
-										geneset.add(gene.replace('\t', ' '));
+										} else geneset.add(gene.replace('\t', ' '));
 									}
 								}
 								System.err.println( "\t"+geneset );
@@ -1201,10 +1411,11 @@ public class GeneSet {
 					
 					System.err.println( "In " + s + " containing " + genes.size() );
 					for( String gene : genes ) {
-						String aa = null; //lociMap.get(gene);
+						String aa = lociMap.get(gene);
 						if( aa == null ) {
-							aa = aas.get( gene );
+							aa = "Not found\t" + aas.get( gene );
 						}
+						aa += "\t" + aas.get(gene);
 						System.err.println( gene + "\t" + aa );
 						
 						if( !done && set.size() == 12 && gene.startsWith("ttHB27") ) {
@@ -1229,29 +1440,37 @@ public class GeneSet {
 	public static void loci2gene( String[] stuff, File dir ) throws IOException {
 		//Map<String,String>	aas = new HashMap<String,String>();
 		for( String st : stuff ) {			
-			File ba = new File( dir, "new2_"+st+".out" );
+			File ba = new File( dir, st );
 			BufferedReader br = new BufferedReader( new FileReader(ba) );
 			String line = br.readLine();
 			String name = null;
+			String evalue = null;
 			while( line != null ) {
 				if( line.startsWith("Query= ") ) {
 					name = line.substring(8).split(" ")[0];
-					int i1 = name.indexOf('_');
-					int i2 = name.indexOf('_', i1+1);
-					name = name.substring(0,i1) + name.substring(i2);
-					System.err.println(name);
+					//int i1 = name.indexOf('_');
+					//int i2 = name.indexOf('_', i1+1);
+					//name = name.substring(0,i1) + name.substring(i2);
+					//System.err.println(name);
 				}
 				
 				if( line.contains("No hits") ) {
-					String prename = swapmap.get(st+".out")+"_"+name;
+					String prename = name; //swapmap.get(st+".out")+"_"+name;
 					lociMap.put( prename, "No match\t"+aas.get(prename) );
 					//System.err.println( prename + "\tNo match" );
 				}
 				
-				if( line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") ) {
-					String prename = swapmap.get(st+".out")+"_"+name;
+				if( line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || 
+						line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|") ) {
+					String[] split = line.split("[\t ]+");
+					evalue = split[split.length-1];
+				}
+				
+				if( line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || 
+						line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg") ) {
+					String prename = name; //swapmap.get(st+".out")+"_"+name;
 					String[] split = line.split("\\|");
-					lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") );
+					lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
 					//System.err.println( prename + "\t" + split[1] );
 				}
 				
@@ -1918,7 +2137,8 @@ public class GeneSet {
 		int count = 0;
 		while( line != null ) {
 			String trim = line.trim();
-			if( query != null && (trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb")) ) {
+			if( query != null && (trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || 
+					trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg") ) ) {
 				//String[] split = trim.split("\\|");
 				set.add( trim + "\t" + evalue );
 				
@@ -1939,7 +2159,8 @@ public class GeneSet {
 				evalue = null;
 			} else if( trim.startsWith("Query=") ) {
 				query = trim.substring(6).trim().split("[ ]+")[0];
-			} else if( evalue == null && query != null && (trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|")) ) {
+			} else if( evalue == null && query != null && (trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || 
+					trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|") ) ) {
 				String[] split = trim.split("[\t ]+");
 				evalue = split[split.length-1];
 			}
@@ -2209,10 +2430,10 @@ public class GeneSet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}*/
-		//init( args );
+		init( args );
 		
-		try {
-			//blastparse( "/home/sigmar/brachy_hyody.blastout.txt" );
+		/*try {
+			blastparse( "/home/sigmar/blastout/nilli.blastout" );
 			//blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
 			//blastparse( "/home/sigmar/spiro_blastresults.txt" );
@@ -2232,11 +2453,120 @@ public class GeneSet {
 			
 			//aaset();
 			
-			splitGenes( "/home/sigmar/thermus/newthermus/", "all.aa" );
-			//splitGenes( "/home/sigmar/", "dragon.txt", 48 );
+			//splitGenes( "/home/sigmar/thermus/newthermus/", "all.aa", 128 );
+			//splitGenes( "/home/sigmar/thermus/newthermus", "0_t.aa", 64 );
+			//splitGenes( "/home/sigmar/thermus/newthermus/test/", "erm.aa", 64 );
 		} catch (IOException e) {
 			e.printStackTrace();
+		}*/
+	}
+	
+	static List<String>	res = new ArrayList<String>();
+	public static void fixFile( String fastafile, String blastlist, String outfile ) throws IOException {
+		Set<String>	faset = new HashSet<String>();
+		FileReader fr = new FileReader( fastafile );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith(">") ) {				
+				String[] split = line.split("[\t ]+");
+				faset.add( split[0].substring(1) );
+				
+				int ind = line.lastIndexOf('|');
+				String resval;
+				if( ind > 0 ) {
+					String sub = line.substring( ind );
+					resval = line.substring(1, ind+1);
+					split = sub.split("_");
+					ind = 1;
+				} else {
+					split = line.split("_");
+					ind = 2;
+					resval = split[0].substring(1)+"_"+split[1];
+				}
+				
+				int val = 0;
+				try {
+					val = Integer.parseInt( split[ind] );
+				} catch( Exception e ) {
+					System.err.println( split[ind] );
+				}
+				while( val >= res.size() ) res.add( null );
+				res.set( val, resval );
+			}
+			
+			line = br.readLine();
+  		}
+		br.close();
+		
+		FileWriter	fw = new FileWriter( outfile );
+		
+		int count = 0;
+		int tcount = 0;
+		Set<String>	regset = new HashSet<String>();
+		String last = "";
+		String lastline = "";
+		String lastsp = "";
+		fr = new FileReader( blastlist );
+		br = new BufferedReader( fr );
+		line = br.readLine();
+		while( line != null ) {
+			String[] split = line.split("[\t ]+");
+			if( !split[0].equals(last) ) {
+				int sind = split[0].lastIndexOf("_");
+				String shorter = split[0].substring(0, sind);
+				
+				sind = last.lastIndexOf("_");
+				String lshorter = null;
+				if( sind > 0 ) lshorter = last.substring(0, sind);
+				
+				if( shorter.equals(lshorter) ) {
+					if( !split[1].equals(lastsp) ) {
+						count++;
+						//System.err.println( "erm " + line + "\n    " + lastline + "  " + lastsp );
+					}
+					tcount++;
+				} else {				
+				/*if( regset.contains(shorter) ) {
+					System.err.println( split[0] + " " + last + "  " + shorter );
+				} else regset.add( shorter );(*/
+				
+					if( split[0].startsWith("_") ) {
+						String[] lsp = split[0].split("_");
+						int val = Integer.parseInt( lsp[1] );
+						//System.err.println( lsp[1] + "  " + res.get( val ) );
+						String str = res.get( val ) + split[0];
+						for( int i = 1; i < split.length; i++ ) {
+							str += "\t"+split[i];
+						}
+						fw.write( str + "\n" );
+						
+						regset.add( res.get(val) + shorter );
+					} else {
+						fw.write( line+"\n" );
+						
+						regset.add( shorter );
+					}
+				}
+				
+				lastsp = split[1];
+			}
+			
+			last = split[0];
+			lastline = line;
+			
+			line = br.readLine();
 		}
+		fw.close();
+		br.close();
+		
+		System.err.println( count + "  " + tcount );
+		
+		faset.removeAll( regset );
+		for( String s : faset ) {
+			System.err.println( s );
+		}
+		System.err.println( faset.size() );
 	}
 	
 	private static void init( String[] args ) {
@@ -2245,7 +2575,8 @@ public class GeneSet {
 		String[]	names = {"aa1.out","aa2.out","aa4.out","aa6.out","aa7.out","aa8.out"};
 		String[]	all = {"all.aa"};
 		String[]	name = {"all.blastout"};
-		File 		dir = new File("/home/sigmar/thermus/results/");
+		String[]	nrblastres = {"nilli.blastout"};
+		File 		dir = new File("/home/sigmar/blastout/");
 		File 		dir2 = new File("/home/sigmar/thermus/newthermus/");
 		
 		swapmap.put("aa1.out", "scoto346");
@@ -2256,13 +2587,15 @@ public class GeneSet {
 		swapmap.put("aa8.out", "scoto4063");
 		
 		try {
-			//func1( name, dir2 );
+			panCoreFromNRBlast( nrblastres, dir );
 			//printnohits( stuff, dir, dir2 );
 			//createConcatFsa( stuff, dir2 );
 			
-			loci2aasequence( all, dir2 );
-			loci2gene( stuff2, dir );
-			func4( dir2, name );
+			//fixFile( "/home/sigmar/thermus/newthermus/all.aa", "/home/sigmar/thermus/newthermus/blastres_all.aa", "/home/sigmar/ermm.txt" );
+			
+			//loci2aasequence( all, dir2 );
+			//loci2gene( nrblastres, dir );
+			//clusterFromBlastResults(dir2, name, null, "/home/sigmar/simblastcluster.txt", false);
 			
 			//PrintStream ps = new PrintStream("/home/sigmar/uff.txt");
 			//System.setErr( ps );
