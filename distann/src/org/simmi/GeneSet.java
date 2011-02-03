@@ -1,8 +1,18 @@
 package org.simmi;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -13,7 +23,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +42,26 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.RowFilter;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
 public class GeneSet {
 	/**
@@ -224,83 +259,124 @@ public class GeneSet {
 		Collections.sort( isoel );
 	}
 	
+	private static void panCoreFromNRBlast( Reader rd, String outfile, Map<String,Gene>  ret, Map<String,String> allgenes, Map<String,Set<String>> geneset, Map<String,Set<String>> geneloc, Set<String> poddur ) throws IOException {
+		FileWriter fw = null;
+		if( outfile != null ) fw = new FileWriter( outfile );
+		
+		BufferedReader 	br = new BufferedReader( rd );
+		String 	query = null;
+		String	evalue = null;
+		String line = br.readLine();
+		while( line != null ) {
+			String trim = line.trim();
+			if( trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg") ) {
+				String[] split = trim.split("\\|");
+				
+				String id = split[1];
+				String desc = split[2];
+				String teg = "";
+				int idx = desc.indexOf('[');
+				if( idx > 0 ) {
+					teg = desc.substring(idx);
+					desc = desc.substring(0, idx-1).trim();
+				} else {
+					desc = desc.trim();
+				}
+				
+				Set<String>	set;
+				String padda = query.split("_")[0];
+				if( geneset.containsKey( padda ) ) {
+					set = geneset.get( padda );
+				} else {
+					set = new HashSet<String>();
+					geneset.put( padda, set );
+				}
+				
+				//set.add( id );
+				set.add( desc );
+				
+				Gene gene;
+				if( ret.containsKey( desc ) ) {
+					gene = ret.get( desc );
+				} else {
+					gene = new Gene(desc, null);
+					ret.put( desc, gene );
+					gene.refid = id;
+				}
+				//gene.blastspec = teg;
+				if( gene.species == null ) gene.species = new HashMap<String,Tegeval>();
+				gene.species.put( padda, new Tegeval( teg, Double.parseDouble(evalue), aas.get(query) ) );
+				
+				if( !allgenes.containsKey( desc ) || allgenes.get( desc ) == null ) {
+					allgenes.put( desc, split.length > 1 ? teg + " " + id : null );
+				}
+				
+				Set<String>	locset = null;
+				if( geneloc.containsKey( desc ) ) {
+					locset = geneloc.get(desc);
+				} else {
+					locset = new HashSet<String>();
+					geneloc.put(desc, locset);
+				}
+				//locset.add( swapmap.get(name)+"_"+query + " " + evalue );
+				locset.add( query + " " + evalue );
+				
+				query = null;
+				if( fw != null ) fw.write( line + "\n" );
+			} else if( trim.contains("No hits") ) {
+				Gene gene;
+				String aa = aas.get(query);
+				if( ret.containsKey( aa ) ) {
+					gene = ret.get( aa );
+				} else {
+					gene = new Gene(aa, null);
+					ret.put( aa, gene );
+					gene.refid = query;
+				}
+				
+				String padda = query.split("_")[0];
+				if( gene.species == null ) gene.species = new HashMap<String,Tegeval>();
+				gene.species.put( padda, new Tegeval( padda, Double.parseDouble(evalue), aas.get(query) ) );
+				
+				//System.err.println( prename + "\tNo match" );
+				if( fw != null ) fw.write( line + "\n" );
+			} else if( trim.startsWith("Query=") ) {
+				query = trim.substring(6).trim().split("[ ]+")[0];
+				poddur.add( query.split("_")[0] );
+				if( fw != null ) fw.write( line + "\n" );
+			} else if( query != null && trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|") ) {
+				String[] split = trim.split("[\t ]+");
+				evalue = split[split.length-1];
+				if( fw != null ) fw.write( line + "\n" );
+			}
+			
+			line = br.readLine();
+		}
+		br.close();
+		if( fw != null ) fw.close();
+	}
+	
 	static Map<String,String>		swapmap = new HashMap<String,String>();
-	public static void panCoreFromNRBlast( String[] names, File dir ) throws IOException {
+	public static Map<String,Gene> panCoreFromNRBlast( String[] names, File dir ) throws IOException {
+		Map<String,Gene>	ret = new HashMap<String,Gene>();
+		
 		Map<String,String>		allgenes = new HashMap<String,String>();
 		Map<String,Set<String>>	geneset = new HashMap<String,Set<String>>();
 		Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
 		
 		PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
-		System.setErr( ps );
+		System.setOut( ps );
 		
 		Set<String>	poddur = new HashSet<String>();
 		for( String name : names ) {
 			File 			f = new File( dir, name );			
-			FileReader		fr = new FileReader( f );
-			BufferedReader 	br = new BufferedReader( fr );
-			String 	query = null;
-			String	evalue = null;
-			String line = br.readLine();
-			while( line != null ) {
-				String trim = line.trim();
-				if( trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || 
-						trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg") ) {
-					String[] split = trim.split("\\|");
-					
-					String id = split[1];
-					String desc = split[2];
-					String teg = "";
-					int idx = desc.indexOf('[');
-					if( idx > 0 ) {
-						teg = desc.substring(idx);
-						desc = desc.substring(0, idx-1).trim();
-					} else {
-						desc = desc.trim();
-					}
-					
-					Set<String>	set;
-					String padda = query.split("_")[0];
-					if( geneset.containsKey( padda ) ) {
-						set = geneset.get( padda );
-					} else {
-						set = new HashSet<String>();
-						geneset.put( padda, set );
-					}
-					
-					//set.add( id );
-					set.add( desc );
-					
-					if( !allgenes.containsKey( desc ) || allgenes.get( desc ) == null ) {
-						allgenes.put( desc, split.length > 1 ? teg + " " + id : null );
-					}
-					
-					Set<String>	locset = null;
-					if( geneloc.containsKey( desc ) ) {
-						locset = geneloc.get(desc);
-					} else {
-						locset = new HashSet<String>();
-						geneloc.put(desc, locset);
-					}
-					//locset.add( swapmap.get(name)+"_"+query + " " + evalue );
-					locset.add( query + " " + evalue );
-					
-					query = null;
-				} else if( trim.startsWith("Query=") ) {
-					query = trim.substring(6).trim().split("[ ]+")[0];
-					poddur.add( query.split("_")[0] );
-				} else if( query != null && trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || 
-						trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|") ) {
-					String[] split = trim.split("[\t ]+");
-					evalue = split[split.length-1];
-				}
-				
-				line = br.readLine();
-			}
+			//FileReader		fr = new FileReader( f );
+			panCoreFromNRBlast( new FileReader(f), null, ret, allgenes, geneset, geneloc, poddur );
 		}
 		
 		for( String name : geneset.keySet() ) {
 			Set<String> set = geneset.get(name);
-			System.err.println( name + " genes total: " + set.size() );
+			System.out.println( name + " genes total: " + set.size() );
 			geneset.put( name, set );
 		}
 		
@@ -309,13 +385,13 @@ public class GeneSet {
 			Set<String>	gset = geneset.get( name );
 			allset.retainAll( gset );
 		}
-		System.err.println( "Core genome size: " + allset.size() );
-		System.err.println( "Pan genome size: " + allgenes.size() );
+		System.out.println( "Core genome size: " + allset.size() );
+		System.out.println( "Pan genome size: " + allgenes.size() );
 		
 		Set<String>	nameset = null;
 		
 		for( String gname : allset ) {
-			System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+			System.out.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
 		}
 		
 		boolean info = true;
@@ -329,10 +405,10 @@ public class GeneSet {
 			}
 			//System.err.println( "Genes found only in " + swapmap.get(aname) + "\t" + allset.size() );
 			
-			if( allset.size() > 0 ) System.err.println( "Genes only in " + aname + "\t" + allset.size() );
+			if( allset.size() > 0 ) System.out.println( "Genes only in " + aname + "\t" + allset.size() );
 			if( info ) {
 				for( String gname : allset ) {
-					System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+					System.out.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
 				}
 			}
 		}
@@ -352,7 +428,7 @@ public class GeneSet {
 				reset.add( name );
 			}
 			
-			if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+			if( allset.size() > 0 ) System.out.println( "Genes only in all of " + reset + "\t" + allset.size() );
 			if( info ) printflubb( allset, allgenes, geneloc );
 		}
 		
@@ -381,7 +457,7 @@ public class GeneSet {
 					reset.add( name );
 				}
 				
-				if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+				if( allset.size() > 0 ) System.out.println( "Genes only in all of " + reset + "\t" + allset.size() );
 				if( info ) printflubb( allset, allgenes, geneloc );
 			}
 		}
@@ -411,7 +487,7 @@ public class GeneSet {
 					reset.add( swapmap.get(name) );
 				}*/
 				
-				if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+				if( allset.size() > 0 ) System.out.println( "Genes only in all of " + reset + "\t" + allset.size() );
 				if( info ) printflubb( allset, allgenes, geneloc );
 			}
 		}
@@ -435,14 +511,14 @@ public class GeneSet {
 						allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l)} ), info, false );
 						if( info ) {
 							for( String gname : allset ) {
-								System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+								System.out.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
 							}
 						}
 						
 						allset = flubb( allgenes.keySet(), poddulist, geneset, Arrays.asList( new String[] {poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l)} ), info, true );
 						if( info ) {
 							for( String gname : allset ) {
-								System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+								System.out.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
 							}
 						}
 					}
@@ -481,14 +557,16 @@ public class GeneSet {
 			}
 		}
 		
-		System.err.println( "Unique genes total: " + allgenes.size() );
+		System.out.println( "Unique genes total: " + allgenes.size() );
 		
 		ps.close();
+		
+		return ret;
 	}
 	
 	public static void printflubb( Set<String> allset, Map<String,String> allgenes, Map<String,Set<String>> geneloc ) {
 		for( String gname : allset ) {
-			System.err.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
+			System.out.println( gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname) );
 		}
 	}
 	
@@ -535,7 +613,7 @@ public class GeneSet {
 		reset.add( swapmap.get(names[y]) );
 		reset.add( swapmap.get(names[k]) );*/
 		
-		if( allset.size() > 0 ) System.err.println( "Genes only in all of " + reset + "\t" + allset.size() );
+		if( allset.size() > 0 ) System.out.println( "Genes only in all of " + reset + "\t" + allset.size() );
 		return allset;
 	}
 	
@@ -547,32 +625,36 @@ public class GeneSet {
 		}
 	}
 	
+	private static void loci2aasequence( Reader rd ) throws IOException {
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		String name = null;
+		String ac = "";
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( ac.length() > 0 ) aas.put(name, ac);
+				
+				ac = "";
+				name = line.substring(1).split(" ")[0];
+				
+				int v = name.indexOf("contig");
+				/*if( v != -1 ) {
+					int i1 = name.indexOf('_',v);
+					int i2 = name.indexOf('_', i1+1);
+					name = name.substring(0,i1) + name.substring(i2);
+				}*/
+			} else ac += line.trim();
+			line = br.readLine();
+		}
+		if( ac.length() > 0 ) aas.put(name, ac);
+		br.close();
+	}
+	
 	static Map<String,String>	aas = new HashMap<String,String>();
 	public static void loci2aasequence( String[] stuff, File dir2 ) throws IOException {
 		for( String st : stuff ) {
 			File aa = new File( dir2, st );
-			BufferedReader br = new BufferedReader( new FileReader(aa) );
-			String line = br.readLine();
-			String name = null;
-			String ac = "";
-			while( line != null ) {
-				if( line.startsWith(">") ) {
-					if( ac.length() > 0 ) aas.put(name, ac);
-					
-					ac = "";
-					name = line.substring(1).split(" ")[0];
-					
-					int v = name.indexOf("contig");
-					/*if( v != -1 ) {
-						int i1 = name.indexOf('_',v);
-						int i2 = name.indexOf('_', i1+1);
-						name = name.substring(0,i1) + name.substring(i2);
-					}*/
-				} else ac += line.trim();
-				line = br.readLine();
-			}
-			if( ac.length() > 0 ) aas.put(name, ac);
-			br.close();
+			loci2aasequence( new FileReader(aa) );
 		}
 	}
 	
@@ -1436,47 +1518,62 @@ public class GeneSet {
 		fw.close();
 	}
 	
+	private static void loci2gene( Reader rd, String outfile ) throws IOException {
+		FileWriter fw = null;
+		if( outfile != null ) fw = new FileWriter( outfile );
+		
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		String name = null;
+		String evalue = null;
+		while( line != null ) {
+			if( line.startsWith("Query= ") ) {
+				name = line.substring(8).split(" ")[0];
+				//int i1 = name.indexOf('_');
+				//int i2 = name.indexOf('_', i1+1);
+				//name = name.substring(0,i1) + name.substring(i2);
+				//System.err.println(name);
+				
+				if( fw != null ) fw.write( line + "\n" );
+			}
+			
+			if( line.contains("No hits") ) {
+				String prename = name; //swapmap.get(st+".out")+"_"+name;
+				lociMap.put( prename, "No match\t"+aas.get(prename) );
+				//System.err.println( prename + "\tNo match" );
+				if( fw != null ) fw.write( line + "\n" );
+			}
+			
+			if( line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || 
+					line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|") ) {
+				String[] split = line.split("[\t ]+");
+				evalue = split[split.length-1];
+				
+				if( fw != null ) fw.write( line + "\n" );
+			}
+			
+			if( line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || 
+					line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg") ) {
+				String prename = name; //swapmap.get(st+".out")+"_"+name;
+				String[] split = line.split("\\|");
+				lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
+				//System.err.println( prename + "\t" + split[1] );
+				if( fw != null ) fw.write( line + "\n" );
+			}
+			
+			line = br.readLine();
+		}
+		br.close();
+		
+		if( fw != null ) fw.close();
+	}
+	
 	static Map<String,String>	lociMap = new HashMap<String,String>();
 	public static void loci2gene( String[] stuff, File dir ) throws IOException {
 		//Map<String,String>	aas = new HashMap<String,String>();
 		for( String st : stuff ) {			
 			File ba = new File( dir, st );
-			BufferedReader br = new BufferedReader( new FileReader(ba) );
-			String line = br.readLine();
-			String name = null;
-			String evalue = null;
-			while( line != null ) {
-				if( line.startsWith("Query= ") ) {
-					name = line.substring(8).split(" ")[0];
-					//int i1 = name.indexOf('_');
-					//int i2 = name.indexOf('_', i1+1);
-					//name = name.substring(0,i1) + name.substring(i2);
-					//System.err.println(name);
-				}
-				
-				if( line.contains("No hits") ) {
-					String prename = name; //swapmap.get(st+".out")+"_"+name;
-					lociMap.put( prename, "No match\t"+aas.get(prename) );
-					//System.err.println( prename + "\tNo match" );
-				}
-				
-				if( line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || 
-						line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|") ) {
-					String[] split = line.split("[\t ]+");
-					evalue = split[split.length-1];
-				}
-				
-				if( line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || 
-						line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg") ) {
-					String prename = name; //swapmap.get(st+".out")+"_"+name;
-					String[] split = line.split("\\|");
-					lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
-					//System.err.println( prename + "\t" + split[1] );
-				}
-				
-				line = br.readLine();
-			}
-			br.close();
+			loci2gene( new FileReader(ba), null );
 		}
 	}
 	
@@ -2241,13 +2338,54 @@ public class GeneSet {
 		ps.close();
 	}
 	
+	static class Function {
+		public Function() {}
+		String go;
+		String name;
+		String namespace;
+		String desc;
+		Set<String>	isa;
+		Set<String>	subset;
+		Set<String>	geneentries;
+		int index;
+	};
+	
+	static class Tegeval implements Comparable<Tegeval> {
+		public Tegeval( String tegund, double evalue, String sequence ) {
+			teg = tegund;
+			eval = evalue;
+			seq = sequence;
+		}
+		
+		String 	teg;
+		double	eval;
+		String	seq;
+		
+		public String toString() {
+			return eval + " " + teg;
+		}
+
+		@Override
+		public int compareTo(Tegeval o) {
+			int comp = Double.compare(eval, o.eval);
+			return comp == 0 ? teg.compareTo(o.teg) : comp;
+		}
+	}
+	
 	static class Gene {
 		public Gene( String name, String aa ) {
 			this.name = name;
 			this.aa = aa;
 		}
 		String	name;
+		String	refid;
+		String	genid;
+		String	uniid;
+		String	blastspec;
+		Set<String>	funcentries;
+		Map<String,Tegeval>		species;
 		String	aa;
+		int index;
 	};
 	
 	public static void splitGenes( String dir, String filename ) throws IOException {
@@ -2569,6 +2707,779 @@ public class GeneSet {
 		System.err.println( faset.size() );
 	}
 	
+	public static Map<String,Gene> idMapping( String blastfile, String idfile, String outfile, int ind, int secind, boolean getgeneids ) throws IOException {
+		Map<String,Gene>	refids = new HashMap<String,Gene>();
+		FileReader	fr = new FileReader(blastfile);
+		BufferedReader	br = new BufferedReader( fr );
+		String	line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || 
+					line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|") ) {
+				String[] split = line.split("\\|");
+				refids.put( split[1], null );
+			}
+			line = br.readLine();
+		}
+		fr.close();
+		
+		return idMapping( idfile, outfile, ind, secind, refids, getgeneids );
+	}
+	
+	public static Map<String,Gene> idMapping( String idfile, String outfile, int ind, int secind, Map<String,Gene> refids, boolean getgeneids ) throws IOException {
+		Map<String,Gene>	unimap = new HashMap<String,Gene>();		
+		PrintStream ps = new PrintStream(outfile);
+		System.setOut( ps );
+		
+		List<String>	list = new ArrayList<String>();
+		boolean	tone = false;
+		FileReader fr = new FileReader(idfile);
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		String last = "";
+		while( line != null ) {
+			String[] split = line.split("\t");
+			if( split.length > ind ) {
+				if( !split[secind].equals(last) ) {
+					if( tone ) {
+						for( String sstr : list ) {
+							System.out.println( sstr );
+						}
+						tone = false;
+					}
+					list.clear();
+				}
+				list.add( line );
+				
+				String refid = split[ind];
+				if( refids.containsKey( refid ) ) {
+					Gene gene = refids.get( refid );
+					if( getgeneids ) {
+						gene.genid = split[secind];
+						unimap.put( gene.genid, gene );
+					} else {
+						gene.uniid = split[secind];
+						unimap.put( gene.uniid, gene );
+					}
+					tone = true;
+				}
+			}
+			
+			if( split.length > secind ) {
+				last = split[secind];
+			}
+			line = br.readLine();
+		}
+		if( tone ) {
+			for( String sstr : list ) {
+				System.out.println( sstr );
+			}
+			tone = false;
+		}
+		list.clear();
+		
+		fr.close();
+		ps.close();
+		
+		return unimap;
+	}
+	
+	public static Map<String,Function> funcMapping( String gene2go, Map<String,Gene>	genids, String outshort ) throws IOException {
+		Map<String,Function>	funcmap = new HashMap<String,Function>();
+		
+		FileWriter fw = null;
+		if( outshort != null ) fw = new FileWriter(outshort);
+		
+		FileReader fr = new FileReader( gene2go );
+		BufferedReader	br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			String[]	split = line.split("\t");
+			if( split.length > 1 && genids.containsKey( split[1]) ) {
+				Gene gene = genids.get( split[1] );
+				if( gene.funcentries == null ) gene.funcentries = new HashSet<String>();
+				gene.funcentries.add( split[2] );
+				
+				if( fw != null ) fw.write( line + "\n" );
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		if( fw != null ) fw.close();
+		
+		return funcmap;
+	}
+	
+	public static void funcMappingUni( String sp2go, Map<String,Gene>	uniids, String outfile ) throws IOException {
+		FileWriter fw = null;
+		if( outfile != null ) fw = new FileWriter( outfile );
+		
+		FileReader fr = new FileReader( sp2go );
+		BufferedReader	br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			String[]	split = line.split("=");
+			if( split.length > 1 && uniids.containsKey( split[0].trim() ) ) {
+				Gene gene = uniids.get( split[0].trim() );
+				if( gene.funcentries == null ) gene.funcentries = new HashSet<String>();
+				for( String erm : split[1].trim().split("[\t ]+") ) {
+					gene.funcentries.add( erm );
+				}
+				if( fw != null ) fw.write( line + "\n" );
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		if( fw != null ) fw.close();
+	}
+	
+	public static void updateFilter( JTable table, RowFilter filter, JLabel label ) {
+		DefaultRowSorter<TableModel, Integer>	rowsorter = (DefaultRowSorter<TableModel,Integer>)table.getRowSorter();
+		rowsorter.setRowFilter( filter );
+		if( label != null ) label.setText( Integer.toString(table.getRowCount()) );
+	}
+	
+	private static void showGeneTable( final Map<String,Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, final List<Function> funclist ) {
+		try {
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
+		
+		JFrame	frame = new JFrame();
+		frame.setSize( 800, 600 );
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		
+		JSplitPane	splitpane = new JSplitPane();
+		splitpane.setOrientation( JSplitPane.VERTICAL_SPLIT );
+		JScrollPane	scrollpane = new JScrollPane();
+		final JTable		table = new JTable() {
+			public String getToolTipText(MouseEvent me) {
+				Point p = me.getPoint();
+				int r = rowAtPoint(p);
+				int c = columnAtPoint(p);
+				if (r >= 0 && r < super.getRowCount()) {
+					Object ret = super.getValueAt(r, c);
+					if (ret != null) {
+						return ret.toString(); // super.getToolTipText( me );
+					}
+				}
+				return "";
+			}
+		};
+		table.setAutoCreateRowSorter( true );
+		scrollpane.setViewportView( table );
+		
+		final JTextField	textfield = new JTextField();
+		JComponent topcomp = new JComponent() {};
+		topcomp.setLayout( new BorderLayout() );
+		topcomp.add( scrollpane );
+		
+		final JLabel	label = new JLabel();
+		textfield.setPreferredSize( new Dimension(500,25) );
+		JComponent topcombo = new JComponent() {};
+		topcombo.setLayout( new FlowLayout() );
+		topcombo.add( textfield );
+		topcombo.add( label );
+		
+		topcomp.add( topcombo, BorderLayout.SOUTH );
+		
+		JScrollPane	fscrollpane = new JScrollPane();		
+		final JTextField	ftextfield = new JTextField();
+		JComponent botcomp = new JComponent() {};
+		botcomp.setLayout( new BorderLayout() );
+		botcomp.add( fscrollpane );
+		
+		JButton sbutt = new JButton("Find conserved terms");
+		ftextfield.setPreferredSize( new Dimension(500,25) );
+		JComponent	botcombo = new JComponent() {};
+		botcombo.setLayout( new FlowLayout() );
+		botcombo.add( ftextfield );
+		botcombo.add( sbutt );
+		botcomp.add( botcombo, BorderLayout.SOUTH );
+		
+		splitpane.setBottomComponent( botcomp );
+		splitpane.setTopComponent( topcomp );
+		
+		table.setModel( new TableModel() {
+			@Override
+			public int getRowCount() {
+				return genelist.size();
+			}
+
+			@Override
+			public int getColumnCount() {
+				return 17;
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				if( columnIndex == 0 ) {
+					return "Desc";
+				} else if( columnIndex == 1 ) {
+					return "Genid";
+				} else if( columnIndex == 2 ) {
+					return "Refid";
+				} else if( columnIndex == 3 ) {
+					return "Unid";
+				} else if( columnIndex == 4 ) {
+					return "Present";
+				} else if( columnIndex == 5 ) {
+					return "T.HB8";
+				} else if( columnIndex == 6 ) {
+					return "T.HB27";
+				} else if( columnIndex == 7 ) {
+					return "T.aqua";
+				} else if( columnIndex == 8 ) {
+					return "T.eggert";
+				} else if( columnIndex == 9 ) {
+					return "T.island";
+				} else if( columnIndex == 10 ) {
+					return "T.antan";
+				} else if( columnIndex == 11 ) {
+					return "T.scoto346";
+				} else if( columnIndex == 12 ) {
+					return "T.scoto1572";
+				} else if( columnIndex == 13 ) {
+					return "T.scoto252";
+				} else if( columnIndex == 14 ) {
+					return "T.scoto2101";
+				} else if( columnIndex == 15 ) {
+					return "T.scoto2127";
+				} else if( columnIndex == 16 ) {
+					return "T.scoto4063";
+				}
+				return "";
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				if( columnIndex == 4 ) return Integer.class;
+				else if( columnIndex >= 5 ) return Tegeval.class;
+				return String.class;
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return false;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				Gene gene = genelist.get( rowIndex );
+				if( columnIndex == 0 ) {
+					return gene.name;
+				} else if( columnIndex == 1 ) {
+					return gene.genid;
+				} else if( columnIndex == 2 ) {
+					return gene.refid;
+				} else if( columnIndex == 3 ) {
+					return gene.uniid;
+				}  else if( columnIndex == 4 ) {
+					return gene.species == null ? -1 : gene.species.size();
+				} /*else if( columnIndex == 4 ) {
+					if( gene.funcentries != null ) {
+						String ret = "";
+						for( String fe : gene.funcentries ) {
+							ret += funcmap.get(fe).name + ", ";
+						}
+						return ret;
+					}
+				}*/
+				else if( columnIndex == 5 ) {
+					return gene.species == null ? null : gene.species.get("ttHB8join");
+				} else if( columnIndex == 6 ) {
+					return gene.species == null ? null : gene.species.get("ttHB27join");
+				} else if( columnIndex == 7 ) {
+					return gene.species == null ? null : gene.species.get("ttaqua");
+				} else if( columnIndex == 8 ) {
+					return gene.species == null ? null : gene.species.get("eggertsoni2789");
+				} else if( columnIndex == 9 ) {
+					return gene.species == null ? null : gene.species.get("islandicus180610");
+				} else if( columnIndex == 10 ) {
+					return gene.species == null ? null : gene.species.get("antag2120");
+				} else if( columnIndex == 11 ) {
+					return gene.species == null ? null : gene.species.get("scoto346");
+				} else if( columnIndex == 12 ) {
+					return gene.species == null ? null : gene.species.get("scoto1572");
+				} else if( columnIndex == 13 ) {
+					return gene.species == null ? null : gene.species.get("scoto252");
+				} else if( columnIndex == 14 ) {
+					return gene.species == null ? null : gene.species.get("scoto2101");
+				} else if( columnIndex == 15 ) {
+					return gene.species == null ? null : gene.species.get("scoto2127");
+				} else if( columnIndex == 16 ) {
+					return gene.species == null ? null : gene.species.get("scoto4063");
+				}
+				return "";
+			}
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {}
+		});
+		
+		final JTable 		ftable = new JTable() {
+			public String getToolTipText(MouseEvent me) {
+				Point p = me.getPoint();
+				int r = rowAtPoint(p);
+				int c = columnAtPoint(p);
+				if (r >= 0 && r < super.getRowCount()) {
+					Object ret = super.getValueAt(r, c);
+					if (ret != null) {
+						return ret.toString(); // super.getToolTipText( me );
+					}
+				}
+				return "";
+			}
+		};
+		
+		JPopupMenu	fpopup = new JPopupMenu();
+		fpopup.add(new AbstractAction("Amigo lookup") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = ftable.getSelectedRow();
+				if( r >= 0 ) {
+					String go = (String)ftable.getValueAt(r, 0);
+					try {
+						Desktop.getDesktop().browse( new URI("http://amigo.geneontology.org/cgi-bin/amigo/term_details?term="+go) );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		ftable.setComponentPopupMenu( fpopup );
+		
+		JPopupMenu	popup = new JPopupMenu();
+		popup.add(new AbstractAction("NCBI lookup") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				if( r >= 0 ) {
+					String ref = (String)table.getValueAt(r, 2);
+					try {
+						Desktop.getDesktop().browse( new URI("http://www.ncbi.nlm.nih.gov/gene?term="+ref) );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		table.setComponentPopupMenu( popup );
+		
+		ftable.setAutoCreateRowSorter( true );
+		ftable.setModel( new TableModel() {
+			@Override
+			public int getRowCount() {
+				return funclist.size();
+			}
+
+			@Override
+			public int getColumnCount() {
+				return 5;
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				if( columnIndex == 0 ) return "GO";
+				else if( columnIndex == 1 ) return "Number of proteins";
+				else if( columnIndex == 2 ) return "Name";
+				else if( columnIndex == 3 ) return "Namespace";
+				else if( columnIndex == 4 ) return "Def";
+				return "";
+			}
+
+			@Override
+			public Class<?> getColumnClass( int columnIndex ) {
+				if( columnIndex == 1 ) return Integer.class;
+				return String.class;
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return false;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				Function func = funclist.get( rowIndex );
+				if( columnIndex == 0 ) return func.go;
+				else if( columnIndex == 1 ) return func.geneentries == null ? 0 : func.geneentries.size();
+				else if( columnIndex == 2 ) return func.name;
+				else if( columnIndex == 3 ) return func.namespace;
+				else if( columnIndex == 4 ) return func.desc;
+				return null;
+			}
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {}
+		});
+		fscrollpane.setViewportView( ftable );
+		
+		final Set<Integer>	filterset = new HashSet<Integer>();
+		final Set<Integer>	genefilterset = new HashSet<Integer>();
+		
+		final RowFilter	filter = new RowFilter() {
+			@Override
+			public boolean include(Entry entry) {
+				return filterset.isEmpty() || filterset.contains( entry.getIdentifier() );
+			}
+		};
+		updateFilter( ftable, filter, null );
+		
+		final RowFilter	genefilter = new RowFilter() {
+			@Override
+			public boolean include(Entry entry) {
+				return genefilterset.isEmpty() || genefilterset.contains( entry.getIdentifier() );
+			}
+		};
+		updateFilter( table, genefilter, label );
+		
+		table.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				//table.clearSelection();
+				tableisselecting = true;
+				if( !ftableisselecting && filterset.isEmpty() ) {
+					ftable.removeRowSelectionInterval(0, ftable.getRowCount()-1);
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						int cr = table.convertRowIndexToModel( r );
+						Gene g = genelist.get( cr );
+						if( g.funcentries != null ) {
+							for( String go : g.funcentries ) {
+								Function f = funcmap.get( go );
+								int rf = ftable.convertRowIndexToView( f.index );
+								ftable.addRowSelectionInterval(rf, rf);
+							}
+						}
+					}
+				}
+				tableisselecting = false;
+			}
+		});
+		
+		ftable.addKeyListener( new KeyAdapter() {
+			public void keyPressed( KeyEvent ke ) {
+				if( ke.getKeyCode() == KeyEvent.VK_ESCAPE ) {
+					filterset.clear();
+					updateFilter( ftable, filter, null );
+				}
+			}
+		});
+		
+		table.addKeyListener( new KeyAdapter() {
+			public void keyPressed( KeyEvent ke ) {
+				if( ke.getKeyCode() == KeyEvent.VK_ESCAPE ) {
+					genefilterset.clear();
+					updateFilter( table, genefilter, label );
+				}
+			}
+		});
+		
+		table.addMouseListener( new MouseAdapter() {
+			public void mousePressed( MouseEvent e ) {
+				tableisselecting = true;
+				if( !ftableisselecting && e.getClickCount() == 2 ) {
+					/*int[] rr = ftable.getSelectedRows();
+					int minr = ftable.getRowCount();
+					int maxr = 0;
+					for( int r : rr ) {
+						if( r < minr ) minr = r;
+						if( r > maxr ) maxr = r;
+					}
+					ftable.removeRowSelectionInterval(minr, maxr);*/
+					//ftable.removeRowSelectionInterval(0, filterset.isEmpty() ? ftable.getRowCount()-1 : filterset.size()-1 );
+					filterset.clear();
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						int cr = table.convertRowIndexToModel( r );
+						Gene g = genelist.get( cr );
+						if( g.funcentries != null ) {
+							for( String go : g.funcentries ) {
+								Function f = funcmap.get( go );
+								//ftable.getRowSorter().convertRowIndexToView(index)
+								//int rf = ftable.convertRowIndexToView( f.index );
+								filterset.add( f.index );
+								//ftable.addRowSelectionInterval(rf, rf);
+							}
+						}
+					}
+					updateFilter( ftable, filter, null );
+					//ftable.sorterChanged( new RowSorterEvent( ftable.getRowSorter() ) );
+					//ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
+				}
+				tableisselecting = false;
+			}
+		});
+		
+		ftable.addMouseListener( new MouseAdapter() {
+			public void mousePressed( MouseEvent e ) {
+				ftableisselecting = true;
+				if( !tableisselecting && e.getClickCount() == 2 ) {
+					genefilterset.clear();
+					int[] rr = ftable.getSelectedRows();
+					for( int r : rr ) {
+						int cr = ftable.convertRowIndexToModel( r );
+						
+						Function f = funclist.get( cr );
+						if( f.geneentries != null ) {
+							for( String ref : f.geneentries ) {
+								Gene g = genemap.get( ref );
+								//int rf = table.convertRowIndexToView( g.index );
+								//table.addRowSelectionInterval(rf, rf);
+								genefilterset.add( g.index );
+							}
+						}
+					}
+					updateFilter( table, genefilter, label );
+					//ftable.sorterChanged( new RowSorterEvent( ftable.getRowSorter() ) );
+					//ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
+				}
+				ftableisselecting = false;
+			}
+		});
+		
+		ftable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				//ftable.clearSelection();
+				ftableisselecting = true;
+				if( !tableisselecting && genefilterset.isEmpty() ) {
+					table.removeRowSelectionInterval(0, table.getRowCount()-1);
+					int[] rr = ftable.getSelectedRows();
+					for( int r : rr ) {
+						int cr = ftable.convertRowIndexToModel( r );
+						Function f = funclist.get( cr );
+						if( f.geneentries != null ) {
+							for( String ref : f.geneentries ) {
+								Gene g = genemap.get( ref );
+								int rf = table.convertRowIndexToView( g.index );
+								table.addRowSelectionInterval(rf, rf);
+							}
+						}
+					}
+				}
+				ftableisselecting = false;
+			}
+		});
+		
+		textfield.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				updateFilter(0, textfield.getText(), table, genefilter, genefilterset, 0, label );
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				updateFilter(1, textfield.getText(), table, genefilter, genefilterset, 0, label );
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				updateFilter(2, textfield.getText(), table, genefilter, genefilterset, 0, label );
+			}
+		});
+		
+		ftextfield.getDocument().addDocumentListener(new DocumentListener() {
+
+			public void changedUpdate(DocumentEvent e) {
+				updateFilter(0, ftextfield.getText(), ftable, filter, filterset, 1, null );
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				updateFilter(1, ftextfield.getText(), ftable, filter, filterset, 1, null );
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				updateFilter(2, ftextfield.getText(), ftable, filter, filterset, 1, null );
+			}
+		});
+		
+		popup.add(new AbstractAction("Show genes with same sharing") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				genefilterset.clear();
+				int r = table.getSelectedRow();
+				if( r >= 0 ) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					for( Gene g : genelist ) {
+						if( gg.species != null && g.species != null ) {
+							Set<String> ggset = gg.species.keySet();
+							Set<String> gset = g.species.keySet();
+							
+							if( gset.size() == ggset.size() && gset.containsAll( ggset ) ) genefilterset.add( g.index ); 
+						}
+					}
+					updateFilter( table, genefilter, label );
+				}
+			}
+		});
+		popup.add(new AbstractAction("Show shared function") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				filterset.clear();
+				int[] rr = table.getSelectedRows();
+				Set<String>	startfunc = null;
+				for( int r : rr ) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if( gg.funcentries != null ) {
+						if( startfunc == null )	startfunc = new HashSet<String>( gg.funcentries );
+						else {
+							startfunc.retainAll( gg.funcentries );
+						}
+					}
+				}
+				for( String s : startfunc ) {
+					filterset.add( funcmap.get(s).index );
+				}
+				updateFilter( ftable, filter, null );
+			}
+		});
+		popup.add(new AbstractAction("Show all functions") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				filterset.clear();
+				int[] rr = table.getSelectedRows();
+				Set<String>	startfunc = null;
+				for( int r : rr ) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if( gg.funcentries != null ) {
+						if( startfunc == null )	startfunc = new HashSet<String>( gg.funcentries );
+						else {
+							startfunc.addAll( gg.funcentries );
+						}
+					}
+				}
+				for( String s : startfunc ) {
+					filterset.add( funcmap.get(s).index );
+				}
+				updateFilter( ftable, filter, null );
+			}
+		});
+		sbutt.setAction( new AbstractAction("Find conserved terms") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<Integer>	res = new HashSet<Integer>();
+				for( Function f : funclist ) {
+					if( f.geneentries != null ) {
+						Set<String>	check = new HashSet<String>();
+						for( String str : f.geneentries ) {
+							Gene g = genemap.get(str);
+							if( g.species != null ) {
+								if( check.isEmpty() ) check.addAll( g.species.keySet() );
+								else if( !(check.size() == g.species.size() && check.containsAll( g.species.keySet() )) ) {
+									check.clear();
+									break;
+								}
+							}
+						}
+						if( !check.isEmpty() ) res.add(f.index);
+					}
+				}
+				filterset.clear();
+				for( int i : res ) {
+					filterset.add(i);
+				}
+				updateFilter( ftable, filter, null );
+			}
+		});
+		
+		frame.add( splitpane );
+		frame.setVisible( true );
+	}
+	
+	public static void updateFilter( int val, String str, JTable table, RowFilter filter, Set<Integer> filterset, int ind, JLabel label ) {
+		filterset.clear();
+		String ustr = str.toLowerCase();
+		TableModel model = table.getModel();
+		for( int r = 0; r < model.getRowCount(); r++ ) {
+			String s = model.getValueAt(r, ind).toString().toLowerCase();
+			if( s != null && s.contains( ustr) ) filterset.add(r);
+		}
+		updateFilter( table, filter, label );
+	}
+	
+	static boolean ftableisselecting = false;
+	static boolean tableisselecting = false;
+	
+	private static Map<String,Function> readGoInfo( String obo, Map<String,Set<String>> gofilter, String outfile ) throws IOException {
+		Map<String,Function>	retmap = new HashMap<String,Function>();
+		
+		FileWriter fw = null;
+		if( outfile != null ) fw = new FileWriter( outfile );
+		
+		FileReader		fr = new FileReader( obo );
+		BufferedReader	br = new BufferedReader( fr );
+		
+		boolean on = false;
+		Function f = null;
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith("[Term]") ) {
+				on = false;
+				if( f != null && gofilter.containsKey(f.go) ) {
+					if( f.geneentries == null ) f.geneentries = new HashSet<String>();
+					f.geneentries.addAll( gofilter.get(f.go) );
+					retmap.put(f.go, f);
+				}
+				f = new Function();
+			} else if( line.startsWith("id:") ) {
+				f.go = line.substring(4);
+				
+				if( fw != null && gofilter.containsKey(f.go) ) {
+					fw.write("[Term]\n");
+					on = true;
+				}
+			} else if( line.startsWith("name:") ) {
+				f.name = line.substring(6);
+			} else if( line.startsWith("namespace:") ) {
+				f.namespace = line.substring(11);
+			} else if( line.startsWith("def:") ) {
+				f.desc = line.substring(5);
+			}
+			
+			if( on ) fw.write( line+"\n" );
+			
+			line = br.readLine();
+		}
+		if( f != null && gofilter.containsKey(f.go) ) {
+			if( f.geneentries == null ) f.geneentries = new HashSet<String>();
+			f.geneentries.addAll( gofilter.get(f.go) );
+			retmap.put(f.go, f);
+		}
+		fr.close();
+		
+		if( fw != null ) fw.close();
+		
+		return retmap;
+	}
+	
 	private static void init( String[] args ) {
 		String[]	stuff = {"scoto346","scoto2101","antag2120","scoto2127","scoto252","scoto1572","scoto4063","eggertsoni2789","islandicus180610","ttHB27join","ttHB8join","ttaqua"};
 		String[]	stuff2 = {"aa1","aa2","aa4","aa6","aa7","aa8"};
@@ -2587,7 +3498,57 @@ public class GeneSet {
 		swapmap.put("aa8.out", "scoto4063");
 		
 		try {
-			panCoreFromNRBlast( nrblastres, dir );
+			//idMapping( "/home/sigmar/blastout/nilli.blastout", "/home/sigmar/thermus/newthermus/idmapping.dat", "/home/sigmar/idmapping_short.dat", 2, 0 );
+			
+			InputStream is = GeneSet.class.getResourceAsStream("all.aa");
+			loci2aasequence( new InputStreamReader( is ) );
+			
+			Map<String,Gene>	descmap = new HashMap<String,Gene>();
+			Map<String,String>		allgenes = new HashMap<String,String>();
+			Map<String,Set<String>>	geneset = new HashMap<String,Set<String>>();
+			Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
+			Set<String>				poddur = new HashSet<String>();
+			panCoreFromNRBlast( new FileReader("/home/sigmar/blastout/nilli.blastout"), "/home/sigmar/workspace/distann/nilli_short.blastout", descmap, allgenes, geneset, geneloc, poddur );
+			Map<String,Gene>	refmap = new TreeMap<String,Gene>();
+			List<Gene>			genelist = new ArrayList<Gene>();
+			for( String genedesc : descmap.keySet() ) {
+				Gene gene = descmap.get( genedesc );
+				refmap.put(gene.refid, gene);
+				gene.index = genelist.size();
+				genelist.add( gene );
+			}
+			//genemap = idMapping( "/home/sigmar/blastout/nilli.blastout", "/mnt/tmp/gene2refseq.txt", "/home/sigmar/idmapping_short2.dat", 5, 1, genemap );
+			//genemap = idMapping( "/home/sigmar/blastout/nilli.blastout", "/home/sigmar/thermus/newthermus/idmapping.dat", "/home/sigmar/idmapping_short.dat", 2, 0, genemap );
+			Map<String,Gene> unimap = idMapping( "/home/sigmar/idmap.dat", "/home/sigmar/workspace/distann/idmapping_short.dat", 2, 0, refmap, false );
+			Map<String,Gene> genmap = idMapping( "/mnt/tmp/gene2refseq.txt", "/home/sigmar/workspace/distann/gene2refseq_short.txt", 5, 1, refmap, true );
+			funcMapping( "/home/sigmar/asgard-bio/data/gene2go", genmap, "/home/sigmar/workspace/distann/gene2go_short.txt" );
+			funcMappingUni( "/home/sigmar/asgard-bio/data/sp2go.txt", unimap, "/home/sigmar/workspace/distann/sp2go_short.txt" );
+			
+			Map<String,Set<String>>	totalgo = new HashMap<String,Set<String>>();
+			for( Gene g : genelist ) {
+				if( g.funcentries != null ) {
+					for( String f : g.funcentries ) {
+						Set<String>	set;
+						if( totalgo.containsKey( f ) ) {
+							set = totalgo.get(f);
+						} else {
+							set = new HashSet<String>();
+							totalgo.put( f,  set );
+						}
+						set.add( g.refid );
+					}
+				}
+			}
+			Map<String,Function>	funcmap = readGoInfo("/home/sigmar/asgard-bio/data/gene_ontology_ext.obo", totalgo, "/home/sigmar/workspace/distann/go_short.obo");
+			List<Function>	funclist = new ArrayList<Function>();
+			for( String go : funcmap.keySet() ) {
+				Function f = funcmap.get(go);
+				f.index = funclist.size();
+				funclist.add( f );
+			}
+			showGeneTable( refmap, genelist, funcmap, funclist );
+			
+			//panCoreFromNRBlast( nrblastres, dir );
 			//printnohits( stuff, dir, dir2 );
 			//createConcatFsa( stuff, dir2 );
 			
