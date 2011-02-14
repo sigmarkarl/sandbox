@@ -5,11 +5,15 @@ import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -46,6 +50,9 @@ import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultRowSorter;
 import javax.swing.JApplet;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -55,6 +62,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToolBar;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -63,6 +71,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.RowSorterEvent;
+import javax.swing.event.RowSorterListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
@@ -368,6 +378,9 @@ public class GeneSet extends JApplet {
 		
 		BufferedReader 	br = new BufferedReader( rd );
 		String 	query = null;
+		int start = 0;
+		int stop = 0;
+		int ori = 0;
 		String	evalue = null;
 		String line = br.readLine();
 		while( line != null ) {
@@ -409,20 +422,27 @@ public class GeneSet extends JApplet {
 					gene = ret.get( desc );
 				} else {
 					gene = new Gene(desc, null);
+					gene.allids = new HashSet<String>();
+					gene.species = new HashMap<String,Set<Tegeval>>();
 					ret.put( desc, gene );
 					gene.refid = id;
 				}
+				gene.allids.add( id );
 				//gene.blastspec = teg;
-				if( gene.species == null ) {
+				/*if( gene.species == null ) {
 					gene.species = new HashMap<String,Set<Tegeval>>();
-				}
+				}*/
 				
 				Set<Tegeval>	stv;
 				if( !gene.species.containsKey(padda) ) {
 					stv = new HashSet<Tegeval>(); 
 					gene.species.put( padda, stv );
 				} else stv = gene.species.get(padda);
-				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aas.get(query), query ) );
+				
+				int first = query.indexOf('_');
+				int sec = query.indexOf('_', first+1 );
+				String contig = query.substring(0, sec);
+				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aas.get(query), query, contig, start, stop, ori ) );
 				
 				if( !allgenes.containsKey( desc ) || allgenes.get( desc ) == null ) {
 					allgenes.put( desc, split.length > 1 ? teg + " " + id : null );
@@ -471,15 +491,32 @@ public class GeneSet extends JApplet {
 					stv = new HashSet<Tegeval>(); 
 					gene.species.put( padda, stv );
 				} else stv = gene.species.get(padda);
-				stv.add( new Tegeval( padda, deval, aas.get(query), query ) );
+				
+				int first = query.indexOf('_');
+				int sec = query.indexOf('_', first+1 );
+				String contig = query.substring(0, sec);
+				stv.add( new Tegeval( padda, deval, aas.get(query), query, contig, start, stop, ori ) );
 				
 				
 				//System.err.println( prename + "\tNo match" );
 				if( fw != null ) fw.write( line + "\n" );
 			} else if( trim.startsWith("Query=") ) {
+				//if( trim.)
 				query = trim.substring(6).trim().split("[ ]+")[0];
+				String[] split = trim.split("#");
+				start = Integer.parseInt( split[1].trim() );
+				stop = Integer.parseInt( split[2].trim() );
+				if( split.length < 4 ) {
+					ori = Integer.parseInt( split[3].trim() );
+				}
 				poddur.add( query.split("_")[0] );
-				if( fw != null ) fw.write( line + "\n" );
+				if( fw != null ) {
+					//String[] split = trim.split("#");
+					if( split.length < 4 ) {
+						line += br.readLine();
+					}
+					fw.write( line + "\n" );
+				}
 			} else if( query != null && trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|") ) {
 				String[] split = trim.split("[\t ]+");
 				evalue = split[split.length-1];
@@ -2524,18 +2561,27 @@ public class GeneSet extends JApplet {
 		int index;
 	};
 	
+	static boolean locsort = false;
 	static class Tegeval implements Comparable<Tegeval> {
-		public Tegeval( String tegund, double evalue, String sequence, String contig ) {
+		public Tegeval( String tegund, double evalue, String sequence, String contig, String shortcontig, int sta, int sto, int orient ) {
 			teg = tegund;
 			eval = evalue;
 			seq = sequence;
 			cont = contig;
+			contshort = shortcontig;
+			start = sta;
+			stop = sto;
+			ori = orient;
 		}
 		
 		String 	teg;
 		double	eval;
 		String	cont;
+		String  contshort;
 		String	seq;
+		int		start;
+		int		stop;
+		int		ori;
 		
 		public String toString() {
 			return eval + " " + teg;
@@ -2543,8 +2589,13 @@ public class GeneSet extends JApplet {
 
 		@Override
 		public int compareTo(Tegeval o) {
-			int comp = Double.compare(eval, o.eval);
-			return comp == 0 ? teg.compareTo(o.teg) : comp;
+			if( locsort ) {
+				int ret = contshort.compareTo(o.contshort);
+				return ret == 0 ? start - o.start : ret;
+			} else {
+				int comp = Double.compare(eval, o.eval);
+				return comp == 0 ? teg.compareTo(o.teg) : comp;
+			}
 		}
 	}
 	
@@ -2555,6 +2606,7 @@ public class GeneSet extends JApplet {
 		}
 		String	name;
 		String	refid;
+		Set<String>	allids;
 		String	genid;
 		String	uniid;
 		String  keggid;
@@ -2951,6 +3003,7 @@ public class GeneSet extends JApplet {
 						gene.uniid = split[secind];
 						unimap.put( gene.uniid, gene );
 					}
+					gene.allids.add( split[secind] );
 					tone = true;
 				}
 			}
@@ -2982,11 +3035,20 @@ public class GeneSet extends JApplet {
 		if( ps != null ) ps.close();
 		
 		if( !getgeneids ) {
-			for( String s : unimap.keySet() ) {
+			for( String s : refids.keySet() ) {
+				Gene g = refids.get(s);
+				if( g.allids != null ) for( String id : g.allids ) {
+					if( ref2kegg.containsKey( id) ) {
+						g.keggid = ref2kegg.get(id);
+						break;
+					}
+				}
+			}
+			/*for( String s : unimap.keySet() ) {
 				Gene g = unimap.get(s);
 				g.keggid = ref2kegg.get(g.uniid);
 				//System.err.println( g.refid + "  " + g.keggid );
-			}
+			}*/
 		}
 		
 		return unimap;
@@ -3051,7 +3113,7 @@ public class GeneSet extends JApplet {
 		if( label != null ) label.setText( table.getRowCount() + "/" + table.getSelectedRowCount() );
 	}
 	
-	private static JComponent showGeneTable( final Map<String,Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist ) {
+	private static JComponent showGeneTable( final Map<String,Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist, final Map<Set<String>,Integer> specset ) throws IOException {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 		} catch (ClassNotFoundException e) {
@@ -3086,6 +3148,62 @@ public class GeneSet extends JApplet {
 		table.setAutoCreateRowSorter( true );
 		scrollpane.setViewportView( table );
 		
+		final JComboBox combo = new JComboBox();
+		combo.addItem("Select pathway");
+		
+		final Map<String,Set<String>>	pathwaymap = new TreeMap<String,Set<String>>();
+		Set<String>	current = null;
+		InputStream is = GeneSet.class.getResourceAsStream("/kegg_pathways");
+		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				current = new HashSet<String>();
+				pathwaymap.put(line.substring(1), current);
+			} else if( !line.startsWith("K") ) {
+				if( current != null ) {
+					String str = line.split("[\t ]+")[0];
+					current.add( str );
+				}
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		Set<String>	allecs = new HashSet<String>();
+		for( Function f : funclist ) {
+			if( f.ec != null ) allecs.add( f.ec );
+		}
+		
+		for( String val : pathwaymap.keySet() ) {
+			Set<String> set = pathwaymap.get(val);
+			for( String s : set ) {
+				if( allecs.contains( s ) ) {
+					combo.addItem( val );
+					break;
+				}
+			}
+		}
+		
+		final JComboBox specombo = new JComboBox();
+		specombo.addItem("Select blast species");
+		
+		Set<String>	set = new TreeSet<String>();
+		for( Gene g : genelist ) {
+			if( g.species != null ) {
+				for( String sp : g.species.keySet() ) {
+					Set<Tegeval> stv = g.species.get(sp);
+					for( Tegeval tv : stv ) {
+						if( tv.eval <= 0.00001 && tv.teg.startsWith("[") && tv.teg.endsWith("]") ) set.add( tv.teg );
+					}
+				}
+			}
+		}
+		
+		for( String sp : set ) {
+			specombo.addItem( sp );
+		}
+		
 		final JTextField	textfield = new JTextField();
 		JComponent topcomp = new JComponent() {};
 		topcomp.setLayout( new BorderLayout() );
@@ -3093,19 +3211,45 @@ public class GeneSet extends JApplet {
 		
 		final JLabel	label = new JLabel();
 		textfield.setPreferredSize( new Dimension(500,25) );
-		JComponent topcombo = new JComponent() {};
-		topcombo.setLayout( new FlowLayout() );
-		topcombo.add( textfield );
-		topcombo.add( label );		
+		JToolBar topcombo = new JToolBar();
+		//topcombo.
+		//topcombo.setLayout( new FlowLayout() );
+		topcombo.add( combo );
+		topcombo.add( specombo );
 		topcomp.add( topcombo, BorderLayout.SOUTH );
+		
+		JComponent ttopcom = new JComponent() {};
+		ttopcom.setLayout( new FlowLayout() );
+		final JCheckBox	checkbox = new JCheckBox();
+		checkbox.setAction( new AbstractAction("Sort by location") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				locsort = checkbox.isSelected();
+			}
+		});
+		ttopcom.add( checkbox );
+		ttopcom.add( textfield );
+		ttopcom.add( label );
+		topcomp.add( ttopcom, BorderLayout.NORTH );
 		
 		table.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				label.setText( table.getRowCount() + "/" + table.getSelectedRowCount() );
+				if( gsplitpane != null ) gsplitpane.repaint();
 			}
 		});
 		
+		JButton but = new JButton( new AbstractAction("Compare") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					mynd( genelist, table, "tscotoSA01" );
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 		JScrollPane	fscrollpane = new JScrollPane();		
 		final JTextField	ftextfield = new JTextField();
 		JComponent botcomp = new JComponent() {};
@@ -3117,6 +3261,7 @@ public class GeneSet extends JApplet {
 		JComponent	botcombo = new JComponent() {};
 		botcombo.setLayout( new FlowLayout() );
 		botcombo.add( ftextfield );
+		botcombo.add( but );
 		//botcombo.add( sbutt );
 		botcomp.add( botcombo, BorderLayout.SOUTH );
 		
@@ -3131,7 +3276,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 21;
+				return 22;
 			}
 
 			@Override
@@ -3153,30 +3298,32 @@ public class GeneSet extends JApplet {
 				} else if( columnIndex == 7 ) {
 					return "max length";
 				} else if( columnIndex == 8 ) {
-					return "T.HB8";
+					return "sharing number";
 				} else if( columnIndex == 9 ) {
-					return "T.HB27";
+					return "T.HB8";
 				} else if( columnIndex == 10 ) {
-					return "T.SA01";
+					return "T.HB27";
 				} else if( columnIndex == 11 ) {
-					return "T.aqua";
+					return "T.SA01";
 				} else if( columnIndex == 12 ) {
-					return "T.eggert";
+					return "T.aqua";
 				} else if( columnIndex == 13 ) {
-					return "T.island";
+					return "T.eggert";
 				} else if( columnIndex == 14 ) {
-					return "T.antan";
+					return "T.island";
 				} else if( columnIndex == 15 ) {
-					return "T.scoto346";
+					return "T.antan";
 				} else if( columnIndex == 16 ) {
-					return "T.scoto1572";
+					return "T.scoto346";
 				} else if( columnIndex == 17 ) {
-					return "T.scoto252";
+					return "T.scoto1572";
 				} else if( columnIndex == 18 ) {
-					return "T.scoto2101";
+					return "T.scoto252";
 				} else if( columnIndex == 19 ) {
-					return "T.scoto2127";
+					return "T.scoto2101";
 				} else if( columnIndex == 20 ) {
+					return "T.scoto2127";
+				} else if( columnIndex == 21 ) {
 					return "T.scoto4063";
 				}
 				return "";
@@ -3228,6 +3375,10 @@ public class GeneSet extends JApplet {
 						}
 						return max;
 					}
+				} else if( columnIndex == 8 ) {
+					if( gene.species != null ) {
+						return specset.get(gene.species.keySet());
+					}
 				} /*else if( columnIndex == 4 ) {
 					if( gene.funcentries != null ) {
 						String ret = "";
@@ -3237,107 +3388,157 @@ public class GeneSet extends JApplet {
 						return ret;
 					}
 				}*/
-				else if( columnIndex == 8 ) {
+				else if( columnIndex == 9 ) {
 					if( gene.species != null ) {
+						Tegeval ret = null;
 						Set<Tegeval> set = gene.species.get("ttHB8join");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-				} else if( columnIndex == 9 ) {
-					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("ttHB27join");
-						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
-						}
-					}
-					//return gene.species == null ? null : gene.species.get("ttHB27join").iterator().next();
 				} else if( columnIndex == 10 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("tscotoSA01");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("ttHB27join");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
+					//return gene.species == null ? null : gene.species.get("ttHB27join").iterator().next();
 				} else if( columnIndex == 11 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("ttaqua");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("tscotoSA01");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
 					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
 				} else if( columnIndex == 12 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("eggertsoni2789");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("ttaqua");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("eggertsoni2789").iterator().next();
+					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
 				} else if( columnIndex == 13 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("islandicus180610");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("eggertsoni2789");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("islandicus180610").iterator().next();
+					//return gene.species == null ? null : gene.species.get("eggertsoni2789").iterator().next();
 				} else if( columnIndex == 14 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("antag2120");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("islandicus180610");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("antag2120").iterator().next();
+					//return gene.species == null ? null : gene.species.get("islandicus180610").iterator().next();
 				} else if( columnIndex == 15 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("scoto346");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("antag2120");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("scoto346").iterator().next();
+					//return gene.species == null ? null : gene.species.get("antag2120").iterator().next();
 				} else if( columnIndex == 16 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("scoto1572");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("scoto346");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("scoto1572").iterator().next();
+					//return gene.species == null ? null : gene.species.get("scoto346").iterator().next();
 				} else if( columnIndex == 17 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("scoto252");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("scoto1572");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("scoto252").iterator().next();
+					//return gene.species == null ? null : gene.species.get("scoto1572").iterator().next();
 				} else if( columnIndex == 18 ) {
 					if( gene.species != null ) {
-						Set<Tegeval> set = gene.species.get("scoto2101");
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("scoto252");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
-					//return gene.species == null ? null : gene.species.get("scoto2101").iterator().next();
+					//return gene.species == null ? null : gene.species.get("scoto252").iterator().next();
 				} else if( columnIndex == 19 ) {
 					if( gene.species != null ) {
+						Tegeval ret = null;
+						Set<Tegeval> set = gene.species.get("scoto2101");
+						if( set != null ) {
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
+						}
+						return ret;
+					}
+					//return gene.species == null ? null : gene.species.get("scoto2101").iterator().next();
+				} else if( columnIndex == 20 ) {
+					if( gene.species != null ) {
+						Tegeval ret = null;
 						Set<Tegeval> set = gene.species.get("scoto2127");
 						if( set != null ) {
 							for( Tegeval tv : set ) return tv;
 						}
+						return ret;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto2127").iterator().next();
-				} else if( columnIndex == 20 ) {
+				} else if( columnIndex == 21 ) {
 					if( gene.species != null ) {
+						Tegeval ret = null;
 						Set<Tegeval> set = gene.species.get("scoto4063");
 						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
+							for( Tegeval tv : set ) {
+								if( ret == null || tv.eval < ret.eval ) ret = tv;
+							}
 						}
+						return ret;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto4063").iterator().next();
 				}
@@ -3352,6 +3553,38 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public void removeTableModelListener(TableModelListener l) {}
+		});
+		table.getRowSorter().addRowSorterListener( new RowSorterListener() {
+			@Override
+			public void sorterChanged(RowSorterEvent e) {
+				if( gsplitpane != null ) {
+					for( String cstr : contigmap.keySet() ) {
+						Contig c = contigmap.get(cstr);
+						c.count = 0;
+						c.loc = 0.0;
+					}
+					
+					for( Gene g : genelist ) {
+						if( g.species != null ) {
+							for( String spec : g.species.keySet() ) {
+								Set<Tegeval> stv = g.species.get(spec);
+								for( Tegeval tv : stv ) {
+									//int first = tv.cont.indexOf('_');
+									//int sec = tv.cont.indexOf('_',first+1);
+									String cont = tv.contshort; //tv.cont.substring(0,sec);
+									if( contigmap.containsKey(cont) ) {
+										Contig c = contigmap.get(cont);
+										c.count++;
+										int val = table.convertRowIndexToView(g.index);
+										c.loc += (double)val;
+									}
+								}
+							}
+						}
+					}
+					gsplitpane.repaint();
+				}
+			}
 		});
 		
 		final JTable 		ftable = new JTable() {
@@ -3519,6 +3752,45 @@ public class GeneSet extends JApplet {
 		};
 		updateFilter( table, genefilter, label );
 		
+		combo.addItemListener( new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				String sel = (String)e.getItem();
+				filterset.clear();
+				if( pathwaymap.containsKey( sel ) ) {
+					Set<String> enz = pathwaymap.get(sel);
+					for( Function f : funclist ) {
+						if( f.ec != null && enz.contains(f.ec) ) {
+							filterset.add( f.index );
+						}
+					}
+				}
+				updateFilter(ftable, filter, null);
+			}
+		});
+		
+		specombo.addItemListener( new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				String sel = (String)e.getItem();
+				genefilterset.clear();
+				for( Gene g : genelist ) {
+					if( g.species != null ) {
+						for( String sp : g.species.keySet() ) {
+							Set<Tegeval> stv = g.species.get(sp);
+							for( Tegeval tv : stv ) {
+								if( sel.equals(tv.teg) ) {
+									System.out.println( g.name + " " + sp + " " + sel + "  " + tv.eval );
+									genefilterset.add( g.index );
+								}
+							}
+						}
+					}
+				}
+				updateFilter(table, genefilter, label);
+			}
+		});
+		
 		fpopup.add( new AbstractAction("Find conserved terms") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -3544,6 +3816,24 @@ public class GeneSet extends JApplet {
 					filterset.add(i);
 				}
 				updateFilter( ftable, filter, null );
+			}
+		});
+		fpopup.addSeparator();
+		fpopup.add(new AbstractAction("Show genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = ftable.getSelectedRows();
+				genefilterset.clear();
+				for( int r : rr ) {
+					int fr = ftable.convertRowIndexToModel(r);
+					Function f = funclist.get(fr);
+					Set<String> sset = f.geneentries;
+					for( String s : sset ) {
+						Gene g = genemap.get(s);
+						genefilterset.add( g.index );
+					}
+				}
+				updateFilter(table, genefilter, label);
 			}
 		});
 		
@@ -3705,6 +3995,24 @@ public class GeneSet extends JApplet {
 			}
 		});
 		
+		popup.add( new AbstractAction("KEGG gene lookup") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				if( r != -1 ) {
+					int rr = table.convertRowIndexToModel(r);
+					Gene g = genelist.get(rr);
+					try {
+						Desktop.getDesktop().browse( new URI("http://www.genome.jp/dbget-bin/www_bget?"+g.keggid) );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("Show genes with same sharing") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -4015,7 +4323,7 @@ public class GeneSet extends JApplet {
 		is = GeneSet.class.getResourceAsStream("/union_cluster_new.txt");
 		List<Set<String>>	uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
 		
-		Map<String,Gene>	descmap = new HashMap<String,Gene>();
+		Map<String,Gene>		descmap = new HashMap<String,Gene>();
 		Map<String,String>		allgenes = new HashMap<String,String>();
 		Map<String,Set<String>>	geneset = new HashMap<String,Set<String>>();
 		Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
@@ -4072,7 +4380,57 @@ public class GeneSet extends JApplet {
 			f.index = funclist.size();
 			funclist.add( f );
 		}
-		return showGeneTable( refmap, genelist, funcmap, funclist, iclusterlist, uclusterlist );
+		
+		
+		//is = //GeneSet.class.getResourceAsStream("")
+		Map<String,String> komap = koMapping( new FileReader("/home/sigmar/asgard-bio/data/ko"), funclist, genelist );
+		for( Function f : funclist ) {
+			if( komap.containsKey( f.ec ) ) {
+				for( String gn : f.geneentries ) {
+					Gene g = refmap.get(gn);
+					if( g.keggid == null ) g.keggid = komap.get(f.ec);
+				}
+			}
+		}
+		
+		Map<Set<String>,Integer>	specset = new HashMap<Set<String>,Integer>();
+		for( Gene g : genelist ) {
+			if( g.species != null ) {
+				int val = 0;
+				if( specset.containsKey( g.species.keySet() ) ) {
+					val = specset.get( g.species.keySet() );
+				}
+				specset.put( g.species.keySet(), val+1);
+			}
+		}
+		
+		return showGeneTable( refmap, genelist, funcmap, funclist, iclusterlist, uclusterlist, specset );
+	}
+	
+	private static Map<String,String> koMapping( Reader r, List<Function> funclist, List<Gene> genelist ) throws IOException {
+		Map<String,String>	ret = new HashMap<String,String>();
+		BufferedReader br = new BufferedReader( r );
+		String line = br.readLine();
+		String name = null;
+		while( line != null ) {
+			if( line.startsWith("NAME") ) {
+				String[] split = line.split("[\t ]+");
+				if( split.length > 1 ) {
+					int com = split[1].indexOf(',');
+					if( com != -1 ) {
+						name = split[1].substring(1, com);
+					} else {
+						name = split[1].substring(1);
+					}
+				}
+			} else if( line.contains("TTJ:") || line.contains("TTH:") ) {
+				ret.put(name, line.trim().replaceAll("[\t ]+", ""));
+			}
+			
+			line = br.readLine();
+		}
+		
+		return ret;
 	}
 	
 	public void init() {
@@ -4092,6 +4450,244 @@ public class GeneSet extends JApplet {
 	
 	private static void blastAlign( Reader r, String main, String second ) {
 		//BufferedReader	br = new BufferedReader();
+	}
+	
+	static class Contig {
+		public Contig( String name ) {
+			this.name = name;
+			loc = 0.0;
+			count = 0;
+		}
+		
+		String  name;
+		double	loc;
+		int		count;
+	}
+	
+	static JSplitPane gsplitpane = null;
+	 
+	static JFrame frame = new JFrame();
+	static Map<String,Contig>	contigmap = new HashMap<String,Contig>();
+	public static void mynd( final List<Gene> genes, final JTable sorting, String species ) throws IOException {		
+		if( gsplitpane == null ) {				
+			final List<Tegeval>	ltv = new ArrayList<Tegeval>();
+			for( Gene g : genes ) {
+				if( g.species != null ) {
+					//for( String sp : g.species.keySet() ) {
+						for( String spec : g.species.keySet() ) {
+							Set<Tegeval> stv = g.species.get(spec);
+							if( stv != null ) for( Tegeval tv : stv ) {
+								if( spec.equals(species) ) ltv.add( tv );
+								
+								int first = tv.cont.indexOf("_");
+								int sec = tv.cont.indexOf("_", first+1);
+								
+								String cname = tv.cont.substring(0, sec);
+								contigmap.put( cname, new Contig(cname) );
+							}
+						}
+					//}
+				}
+			}
+			locsort = true;
+			Collections.sort( ltv );
+			locsort = false;
+			
+			final List<Contig> contigs = new ArrayList<Contig>();
+			for( String c : contigmap.keySet() ) {
+				contigs.add( contigmap.get(c) );
+			}
+			
+			final int hey = genes.size(); //ltv.get(ltv.size()-1).stop/1000;
+			System.out.println( hey );
+			final JTable	rowheader = new JTable();
+			final JComponent c = new JComponent() {
+				Color gr = Color.green;
+				Color dg = Color.green.darker();
+				Color rd = Color.red;
+				Color dr = Color.red.darker();
+				//Color dg = Color.green.darker();
+				
+				public void paintComponent( Graphics g ) {
+					super.paintComponent( g );
+					
+					Rectangle rc = g.getClipBounds();
+					for( int i = (int)rc.getMinX(); i < (int)rc.getMaxX(); i++ ) {
+						int r = sorting.convertRowIndexToModel(i);
+						Gene gene = genes.get(r);
+						
+						if( sorting.isRowSelected(i) ) {
+							if( i % 2 == 0 ) g.setColor( rd );
+							else g.setColor( dr );
+						} else {
+							if( i % 2 == 0 ) g.setColor( gr );
+							else g.setColor( dg );
+						}
+						
+						if( gene.species != null ) {						
+							for( int y = (int)(rc.getMinY()/rowheader.getRowHeight()); y < rc.getMaxY()/rowheader.getRowHeight(); y++ ) {
+								String contig = (String)rowheader.getValueAt(y, 0);
+								
+								int und = contig.indexOf("_");
+								String spec = contig.substring(0, und);
+								if( gene.species.containsKey(spec) ) {
+									Set<Tegeval> stv = gene.species.get( spec );
+									for( Tegeval tv : stv ) {
+										if( tv.cont.startsWith(contig) ) {
+											g.fillRect(i, y*rowheader.getRowHeight(), 1, rowheader.getRowHeight());
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					/*Color color;
+					int i = 0;
+					for( Tegeval tv : ltv ) {
+						if( tv.ori < 0 ) color = Color.red;
+						else color = Color.green;
+						
+						if( (++i)%2 == 0 ) {
+							color = color.darker();
+						}
+						g.setColor( color );
+						
+						if( (tv.stop-tv.start)/1000 > 100 ) {
+							System.out.println("hund");
+						}
+						g.fillRect(tv.start/1000, 0, (tv.stop-tv.start)/10, 20);
+					}
+					System.out.println( i );*/
+				}
+				
+				/*public Rectangle getBounds() {
+					Rectangle r = super.getBounds();
+					r.width = hey;
+					r.height = rowheader.getHeight();
+					return r;
+				}
+				
+				public void setBounds( int x, int y, int w, int h ) {
+					super.setBounds(x, y, hey, rowheader.getHeight());
+				}*/
+			};
+			
+			c.addMouseListener( new MouseAdapter() {
+				Point p;
+				
+				public void mousePressed( MouseEvent me ) {
+					p = me.getPoint();
+				}
+				
+				public void mouseReleased( MouseEvent me ) {
+					Point np = me.getPoint();
+					
+					if( np.x > p.x ) {
+						sorting.setRowSelectionInterval(p.x, np.x);
+					}
+				}
+			});
+			
+			JScrollPane	scrollpane = new JScrollPane( c );
+			scrollpane.getViewport().setBackground( Color.white );
+			JScrollPane	rowheaderscroll = new JScrollPane();
+			rowheader.setAutoCreateRowSorter( true );
+			rowheader.setModel( new TableModel() {
+				@Override
+				public int getRowCount() {
+					return contigs.size();
+				}
+	
+				@Override
+				public int getColumnCount() {
+					return 3;
+				}
+	
+				@Override
+				public String getColumnName(int columnIndex) {
+					if( columnIndex == 1 ) return "species";
+					else if( columnIndex == 2 ) return "com";
+					return "contig";
+				}
+	
+				@Override
+				public Class<?> getColumnClass(int columnIndex) {
+					if( columnIndex == 2 ) return Integer.class;
+					return String.class;
+				}
+	
+				@Override
+				public boolean isCellEditable(int rowIndex, int columnIndex) {
+					return false;
+				}
+	
+				@Override
+				public Object getValueAt(int rowIndex, int columnIndex) {
+					if( columnIndex == 2 ) {
+						Contig c = contigs.get(rowIndex);
+						if( c.count > 0 ) return (int)((c.loc) / c.count);
+						return 0;
+					} else if( columnIndex == 1 ) {
+						Contig c = contigs.get(rowIndex);
+						String cname = c.name;
+						int i = cname.indexOf('_');
+						return cname.substring(0, i);
+					}
+					return contigs.get(rowIndex).name;
+				}
+	
+				@Override
+				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+	
+				@Override
+				public void addTableModelListener(TableModelListener l) {}
+	
+				@Override
+				public void removeTableModelListener(TableModelListener l) {}
+				
+			});
+			scrollpane.setRowHeaderView( rowheader );
+			rowheaderscroll.setViewport( scrollpane.getRowHeader() );
+			rowheaderscroll.setVerticalScrollBarPolicy( JScrollPane.VERTICAL_SCROLLBAR_NEVER );
+			rowheaderscroll.setHorizontalScrollBarPolicy( JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS );
+			//scrollpane.setCorner( JScrollPane.UPPER_LEFT_CORNER, rowheader.getTableHeader() );
+			
+			rowheader.getRowSorter().addRowSorterListener( new RowSorterListener() {
+				@Override
+				public void sorterChanged(RowSorterEvent e) {
+					c.repaint();
+				}
+			});
+			
+			gsplitpane = new JSplitPane();
+			gsplitpane.setLeftComponent( rowheaderscroll );
+			gsplitpane.setRightComponent( scrollpane );
+			
+			JComponent fillup = new JComponent() {};
+			fillup.setPreferredSize( new Dimension(hey,20) );
+			scrollpane.setColumnHeaderView( fillup );
+			
+			//JComponent filldown = new JComponent() {};
+			//filldown.setPreferredSize( new Dimension(100,25) );
+			//rowheaderscroll.setCorner( JScrollPane., corner)
+			
+			int rh = rowheader.getHeight();
+			if( rh == 0 ) {
+				rh = rowheader.getRowCount()*rowheader.getRowHeight();
+			}
+			c.setPreferredSize( new Dimension( hey, rh ) );
+			c.setSize(hey, rh );
+		}
+		
+		if( !frame.isVisible() ) {
+			frame = new JFrame();
+			frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+			frame.setSize(800, 600);
+			frame.add( gsplitpane );
+		}
+		
+		frame.setVisible( true );
 	}
 	
 	private static void init( String[] args ) {
