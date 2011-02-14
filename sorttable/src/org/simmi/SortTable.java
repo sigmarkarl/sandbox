@@ -1200,9 +1200,7 @@ public class SortTable extends JApplet {
 		URL codeBase = null;
 		try {
 			codeBase = SortTable.this.getCodeBase();
-		} catch (Exception e) {
-
-		}
+		} catch (Exception e) {}
 
 		if (codeBase == null) {
 			Image img = null;
