@@ -442,7 +442,7 @@ public class GeneSet extends JApplet {
 				int first = query.indexOf('_');
 				int sec = query.indexOf('_', first+1 );
 				String contig = query.substring(0, sec);
-				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aas.get(query), query, contig, start, stop, ori ) );
+				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aas.get(query), dna.get(query), query, contig, start, stop, ori ) );
 				
 				if( !allgenes.containsKey( desc ) || allgenes.get( desc ) == null ) {
 					allgenes.put( desc, split.length > 1 ? teg + " " + id : null );
@@ -495,7 +495,7 @@ public class GeneSet extends JApplet {
 				int first = query.indexOf('_');
 				int sec = query.indexOf('_', first+1 );
 				String contig = query.substring(0, sec);
-				stv.add( new Tegeval( padda, deval, aas.get(query), query, contig, start, stop, ori ) );
+				stv.add( new Tegeval( padda, deval, aas.get(query), dna.get(query), query, contig, start, stop, ori ) );
 				
 				
 				//System.err.println( prename + "\tNo match" );
@@ -825,7 +825,29 @@ public class GeneSet extends JApplet {
 		br.close();
 	}
 	
+	private static void loci2dnasequence( Reader rd ) throws IOException {
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		String name = null;
+		String ac = "";
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( ac.length() > 0 ) dna.put(name, ac);
+				
+				ac = "";
+				name = line.substring(1).split(" ")[0];
+				
+				int v = name.indexOf("contig");
+			} else ac += line.trim();
+			line = br.readLine();
+		}
+		if( ac.length() > 0 ) dna.put(name, ac);
+		br.close();
+	}
+	
 	static Map<String,String>	aas = new HashMap<String,String>();
+	static Map<String,String>	dna = new HashMap<String,String>();
+	
 	public static void loci2aasequence( String[] stuff, File dir2 ) throws IOException {
 		for( String st : stuff ) {
 			File aa = new File( dir2, st );
@@ -2563,10 +2585,11 @@ public class GeneSet extends JApplet {
 	
 	static boolean locsort = false;
 	static class Tegeval implements Comparable<Tegeval> {
-		public Tegeval( String tegund, double evalue, String sequence, String contig, String shortcontig, int sta, int sto, int orient ) {
+		public Tegeval( String tegund, double evalue, String sequence, String dnaseq, String contig, String shortcontig, int sta, int sto, int orient ) {
 			teg = tegund;
 			eval = evalue;
 			seq = sequence;
+			dna = dnaseq;
 			cont = contig;
 			contshort = shortcontig;
 			start = sta;
@@ -2579,6 +2602,7 @@ public class GeneSet extends JApplet {
 		String	cont;
 		String  contshort;
 		String	seq;
+		String  dna;
 		int		start;
 		int		stop;
 		int		ori;
@@ -4104,6 +4128,36 @@ public class GeneSet extends JApplet {
 				frame.setVisible( true );
 			}
 		});
+		popup.add(new AbstractAction("Show DNA sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JTextArea textarea = new JTextArea();
+				JScrollPane	scrollpane = new JScrollPane( textarea );
+				
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if( gg.species != null ) {
+						textarea.append( gg.name + ":\n" );
+						for( String sp : gg.species.keySet() ) {
+							Set<Tegeval> stv = gg.species.get( sp );
+							for( Tegeval tv : stv ) {
+								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
+								for( int i = 0; i < tv.dna.length(); i+=70 ) {
+									textarea.append(tv.dna.substring( i, Math.min(i+70,tv.dna.length()) )+"\n");
+								}
+							}
+						}
+					}
+				}			
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(scrollpane);
+				frame.setSize(400, 300);
+				frame.setVisible( true );
+			}
+		});
 		popup.add(new AbstractAction("Show genes in proximity") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -4317,6 +4371,9 @@ public class GeneSet extends JApplet {
 		InputStream is = GeneSet.class.getResourceAsStream("/allnew.aa");
 		loci2aasequence( new InputStreamReader( is ) );
 		
+		is = GeneSet.class.getResourceAsStream("/allnew.nn");
+		loci2dnasequence( new InputStreamReader( is ) );
+		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster_new.txt");
 		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );
 		
@@ -4382,7 +4439,7 @@ public class GeneSet extends JApplet {
 		}
 		
 		
-		//is = //GeneSet.class.getResourceAsStream("")
+		/*is = GeneSet.class.getResourceAsStream("");
 		Map<String,String> komap = koMapping( new FileReader("/home/sigmar/asgard-bio/data/ko"), funclist, genelist );
 		for( Function f : funclist ) {
 			if( komap.containsKey( f.ec ) ) {
@@ -4391,7 +4448,7 @@ public class GeneSet extends JApplet {
 					if( g.keggid == null ) g.keggid = komap.get(f.ec);
 				}
 			}
-		}
+		}*/
 		
 		Map<Set<String>,Integer>	specset = new HashMap<Set<String>,Integer>();
 		for( Gene g : genelist ) {
