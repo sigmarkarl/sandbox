@@ -15,5 +15,12 @@
 	<classpathentry kind="lib" path="/opt/poi-3.7/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.7/lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.7/lib/log4j-1.2.13.jar"/>
+	<classpathentry kind="lib" path="/opt/json-simple/json_simple-1.1.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/httpcore.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/httpclient.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/httpmime.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/apache-mime4j.jar"/>
+	<classpathentry kind="lib" path="/opt/htmlunit-2.8/lib/htmlunit-2.8.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/gdata-base.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,12 +1,17 @@
 package org.simmi;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 
 public class SmithWater {
@@ -37,9 +42,9 @@ public class SmithWater {
 		int[]		i;
 	};
 	
-	public class ALN {
+	public class ALN implements Comparable<ALN> {
 		public ALN() {
-			next = null;
+			//next = null;
 
 			alen = -99;
 			type = "undef";
@@ -60,7 +65,40 @@ public class SmithWater {
 			score = sscore = rscore = zscore = -99.9f;
 		}
 		
-		ALN 	next;
+		public String toString() {
+			ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+			PrintStream ps = new PrintStream( baos );
+			
+			aln_write_single( ps );
+			
+			return baos.toString();
+		}
+		
+		public void aln_write_single()	{
+			aln_write_single( System.out );
+		}
+		
+		public void aln_write_single( PrintStream ps )	{
+			String	shortname;
+
+			ps.printf( "ALN %s %d %s %d type %s alen %d %d %d %d score %g %g %g %f\n",
+				qname, qlen,
+				dname.substring(0, dname.indexOf('#')), dlen,
+				type, alen, mlen, nid, ngap,
+				score, sscore, rscore, zscore );
+
+			if(qal != null ) {
+				shortname = qname.substring( 0, Math.min(10, qname.length()) );
+				ps.printf( "QAL %s %5d %s\n", shortname, qof, new String(qal) );
+			}
+
+			if(dal != null) {
+				shortname = dname.substring( 0, Math.min(10, dname.length()) );
+				ps.printf( "DAL %s %5d %s\n", shortname, dof, new String(dal) );
+			}
+		}
+		
+		//ALN 	next;
 
 		int     alen;
 		String  type;
@@ -79,6 +117,11 @@ public class SmithWater {
 
 		int     mlen, nid, ngap;
 		float   score, sscore, rscore, zscore;
+		
+		@Override
+		public int compareTo(ALN o) {
+			return Float.compare(o.score, score);
+		}
 	};
 	
 	public SmithWater() {
@@ -328,30 +371,21 @@ public class SmithWater {
 
 			if ( eij[i][j] == 0 ) {
 				keep_going = 0;
-			} 
-			else if ( eij[i][j] == 1 ) { /* Match */
-
+			} else if ( eij[i][j] == 1 ) { /* Match */
 				qal[alen[acur]] = qseq[i];
 				dal[alen[acur]] = dseq[j];
 				i++;
 				j++;
 				alen[acur]++;
-
-			}
-			else if ( eij[i][j] == 4 ) { /* gap opening in Query */
-
+			} else if ( eij[i][j] == 4 ) { /* gap opening in Query */
 				qal[alen[acur]] = '-';
 				dal[alen[acur]] = dseq[j];
 				j++;
 				alen[acur]++;
-
-			}
-			else if (  eij[i][j] == 5 ) { /* gap extension in Query */
-
+			} else if (  eij[i][j] == 5 ) { /* gap extension in Query */
 				best = j+2;
 				Si = S[i];
 				temp = Si[best] - fg - ( best-j-1) * ng - Si[j];
-
 				while ( temp*temp > SMALL ) {
 					best++;
 					temp = Si[best] - fg - ( best-j-1) * ng - Si[j];
@@ -363,17 +397,12 @@ public class SmithWater {
 					j++;
 					alen[acur]++;
 				}
-
-			}
-			else if ( eij[i][j] == 2 ) { /* gap opening in Database */
-
+			} else if ( eij[i][j] == 2 ) { /* gap opening in Database */
 				qal[alen[acur]] = qseq[i];
 				dal[alen[acur]] = '-';
 				i++;
 				alen[acur]++;
-
-			}
-			else if (  eij[i][j] == 3 ) { /* gap extension in Database */
+			} else if (  eij[i][j] == 3 ) { /* gap extension in Database */
 
 				/* Write code for gap extension in database inspired by code for gap extension 
 				in query 25 linies up */
@@ -384,11 +413,8 @@ public class SmithWater {
 
 				while ( temp*temp > SMALL ) {
 					best++;
-					if( best < S.length && j < S[best].length )
-						temp = S[best][j] - fg - (best-i-1) * ng - S[best][j];
-					else {
-						System.err.println("oh");
-					}
+					//if( best < S.length && j < S[best].length )
+					temp = S[best][j] - fg - (best-i-1) * ng - S[i][j];
 				}
 				                              
 				for ( k=i; k<best; k++ ) {
@@ -449,12 +475,16 @@ public class SmithWater {
 		}
 
 		neb.qof = firsti[0];
-		neb.qal = new char[qpal.length+1]; //cvector(0, strlen(qpal));
-		System.arraycopy(qpal, 0, neb.qal, 0, neb.qal.length); //neb.qal = qpal;
+		int val = 0;
+		while( dpal[val] != 0 ) val++;
+		neb.qal = new char[val]; //cvector(0, strlen(qpal));
+		System.arraycopy(qpal, 0, neb.qal, 0, val); //neb.qal = qpal;
 
 		neb.dof = firstj[0];
-		neb.dal = new char[dpal.length+1]; //cvector(0, strlen(dpal));
-		System.arraycopy(dpal, 0, neb.dal, 0, neb.dal.length); //neb.dal = dpal;
+		val = 0;
+		while( dpal[val] != 0 ) val++;
+		neb.dal = new char[val]; //cvector(0, strlen(dpal));
+		System.arraycopy(dpal, 0, neb.dal, 0, val); //neb.dal = dpal;
 
 		neb.qname = q.name;
 		neb.qlen = q.len;
@@ -477,12 +507,10 @@ public class SmithWater {
 	        scomat = new float[q.len][d.len];
 
 	        for ( i=0; i<q.len; i++ ) {
-
 	                ix = q.i[i];
 
 	                if ( ix < 0 ) {
 	                        System.out.printf( "Error. Unconventional amino acid i query sequence %c %s\n", q.seq[i], q.name );
-	                        System.exit( 1 );
 	                }
 
 			if ( ix > 19 )
@@ -493,8 +521,7 @@ public class SmithWater {
 	                        jx = d.i[j];
 
 	                        if ( jx < 0 ) {
-	                                System.out.printf( "Error. Unconventional amino acid i query sequence %c %s\n", q.seq[i], q.name );
-	                                System.exit( 1 );                                                                             
+	                                System.out.printf( "Error. Unconventional amino acid i query sequence %c %s\n", d.seq[j], d.name );
 	                        }
 
 				if ( jx > 19 )
@@ -502,10 +529,8 @@ public class SmithWater {
 	               
 	                        scomat[i][j] = blmat[ix][jx];
 	                }
-	        }      
-	               
+	        }
 	        return( scomat );
-	          
 	}
 	
 	/*String sepchars = " ,\t";
@@ -570,7 +595,6 @@ public class SmithWater {
 
 	        if( br == null ) {
 	                System.out.printf( "Error. Cannot read from file %s\n", rd.toString() );
-	                System.exit( 1 );
 	        }
 	         
 	        //(*alphabet) = cvector( 0, 20 );
@@ -595,8 +619,6 @@ public class SmithWater {
                         for ( i=0;i<20;i++ ) {
                         	alphabet[i] = wvec[i+1].charAt(0);
                         }
-               
-                        alphabet[20] = 0;
                
                         ln = br.readLine();
                         continue;
@@ -650,7 +672,7 @@ public class SmithWater {
 
 		//BufferedReader br = new BufferedReader( new FileReader( fp ) );
 		String line = br.readLine();
-		while ( line != null && read == 0 ) {
+		while ( line != null ) {
 			if ( line.startsWith("#") ) { //fp && ( ch = fgetc( fp ) ) && ungetc( ch, fp ) && ch == '#' ) {
 				//fgets( line, sizeof(line), fp );
 				System.out.printf( "# %s", line );
@@ -676,7 +698,7 @@ public class SmithWater {
 				
 				neb = new FSALIST();
 				neb.name = line;
-				read = 1;
+				break;
 			} else { //if ( fp && ( fgets( line, sizeof(line), fp ) != null ) ) {
 				/*junk[0] = 0;
 				sscanf( line, "%[^\n\t ]", junk );
@@ -685,12 +707,12 @@ public class SmithWater {
 				if ( !isascii( junk[0] ) ) continue;*/
 
 				len = line.length();
+				if( line.endsWith("*") ) len--;
 
 				//junk[len] = 0;
 
 				if ( o+len > MAXFSALEN ) {
 					System.out.printf( "Error. %s Length > %i\n", neb.name, MAXFSALEN );
-					System.exit( 1 );
 				}
 
 				for ( i=0; i<len; i++ )
@@ -732,7 +754,7 @@ public class SmithWater {
 	}
 
 	
-	public FSALIST fsalist_read( String filename ) throws IOException {
+	public FSALIST fsalist_read( Reader rd ) throws IOException {
 		File	fp;
 		FSALIST	list = null;
 		FSALIST	last = null;
@@ -740,16 +762,16 @@ public class SmithWater {
 		int	fc, ff;
 		int	n;
 
-		fp = new File( filename );
+		/*fp = new File( filename );
 	    if( !fp.exists() ) {
-	    	System.out.printf( "Error. Cannot read FSALIST from file %s. Exit\n", filename );
+	    	System.out.printf( "Error. Cannot read FSALIST from file %s. Exit\n", rd.toString() );
 	        System.exit( 1 );
-	    }
+	    }*/
 
 		list = null;
 		n=0;
 
-		BufferedReader br = new BufferedReader( new FileReader(fp) );
+		BufferedReader br = new BufferedReader( rd );
 		while( (neb = fsalist_read_single( br, neb )) != null )  {
 			if( list == null )
 				list = neb;
@@ -763,35 +785,11 @@ public class SmithWater {
 		br.close();
 
 		if ( fsa_verbose != 0 )
-			System.out.printf( "# Number of FASTA entries read %d from file %s\n", n, filename );
+			System.out.printf( "# Number of FASTA entries read %d from file %s\n", n, rd.toString() );
 
 		//stream_close( fp, fc, filename );
 
 		return( list );
-	}
-	
-	public void aln_write_single( ALN a )	{
-		String	shortname;
-
-		if( a == null ) {
-			System.out.printf( "# ALN = NULL\n");
-			return;
-		}
-		System.out.printf( "ALN %s %d %s %d type %s alen %d %d %d %d score %g %g %g %f\n",
-			a.qname, a.qlen,
-			a.dname, a.dlen,
-			a.type, a.alen, a.mlen, a.nid, a.ngap,
-			a.score, a.sscore, a.rscore, a.zscore );
-
-		if(a.qal != null ) {
-			shortname = a.qname.substring( 0, Math.min(0, a.qname.length()) );
-			System.out.printf( "QAL %s %5d %s\n", shortname, a.qof, a.qal );
-		}
-
-		if(a.dal != null) {
-			shortname = a.dname.substring( 0, Math.min(0, a.dname.length()) );
-			System.out.printf( "DAL %s %5d %s\n", shortname, a.dof, a.dal);
-		}
 	}
 	
 	String PROFILE_ORDER = "ARNDCQEGHILKMFPSTWYVX";
@@ -809,13 +807,17 @@ public class SmithWater {
                 }
         }
 	}
-
+	
 	public void fasta_align( String[] args ) throws IOException {
+		fasta_align( new FileReader(args[0]), new FileReader(args[1]) );
+	}
+
+	public List<ALN> fasta_align( Reader qr, Reader dr ) throws IOException {
 		FSALIST		q_fsa, db_fsa, d;
 		float   	gapf, gapn;
 		ALN			neb;
 		float[][]   blmat, scomat;
-		char[]      alphabet = new char[21];
+		char[]      alphabet = new char[20];
 
 		//pparse(&argc, &argv, fasta_align_param, 2, "fsa1 db");
 
@@ -826,14 +828,12 @@ public class SmithWater {
 
 		if ( blmat == null ) {
 			System.out.printf( "Error. Cannot read BLOSUM matrix from file %s. Exit\n", p_blmat );
-			System.exit( 1 );
 		}
 
 		/* Read query FASTA file */
 
-		if ( ( q_fsa = fsalist_read( args[0] ) ) == null ) {
-			System.out.printf("Cannot read fasta file %s\n", args[0] );
-			System.exit(1);
+		if ( ( q_fsa = fsalist_read( qr ) ) == null ) {
+			System.out.printf("Cannot read fasta file %s\n", qr.toString() );
 		}
 
 		q_fsa = fsalist_check_names( q_fsa );
@@ -842,9 +842,8 @@ public class SmithWater {
 
 		fsalist_iassign_profile_order( q_fsa );
 
-		if ( ( db_fsa = fsalist_read( args[1] ) ) == null ) {
-			System.out.printf("Cannot read fasta file %s\n", args[1] );
-	        System.exit(1);
+		if ( ( db_fsa = fsalist_read( dr ) ) == null ) {
+			System.out.printf("Cannot read fasta file %s\n", dr.toString() );
 	    }
 
 		db_fsa = fsalist_check_names( db_fsa );
@@ -858,16 +857,14 @@ public class SmithWater {
 
 		System.out.printf("# Gap penalties. fgap: %f. ngap: %f\n", gapf, gapn);
 
+		List<ALN>	alnlist = new ArrayList<ALN>();
 		for ( d = db_fsa; d != null; d=d.next ) {
-
-			/* Make scoring matrix as described in exercise 1 */
-
 			scomat = score_mat( q_fsa, d, blmat );
 
 			neb = align( scomat, q_fsa, d, gapf, gapn );
 
-			if ( neb != null ) 
-				aln_write_single( neb );
+			if ( neb != null ) alnlist.add( neb );
+				//aln_write_single( neb );
 
 					/* Free dymanically allocated memory */
 
@@ -875,8 +872,13 @@ public class SmithWater {
 	                //aln_free( neb );
 
 		}
+		
+		Collections.sort( alnlist );
+		//alnlist.get(0).aln_write_single();
 
-		System.exit(0);
+		//System.exit(0);
+		
+		return alnlist;
 	}
 	
 	public static void main(String[] args) {
