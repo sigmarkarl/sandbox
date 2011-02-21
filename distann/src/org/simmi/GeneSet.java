@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -3286,6 +3287,87 @@ public class GeneSet extends JApplet {
 		botcombo.setLayout( new FlowLayout() );
 		botcombo.add( ftextfield );
 		botcombo.add( but );
+		
+		JComboBox	scombo = new JComboBox();
+		scombo.addItem("5S/8S");
+		scombo.addItem("16S/18S");
+		scombo.addItem("23S/28S");
+		scombo.addItemListener( new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if( e.getStateChange() == ItemEvent.SELECTED ) {
+					String name = e.getItem().toString().split("/")[0];
+					InputStream is = GeneSet.class.getResourceAsStream("/all"+name+".fsa");
+					InputStreamReader isr = new InputStreamReader( is );
+					BufferedReader br = new BufferedReader( isr );
+					
+					JTextArea textarea = new JTextArea();
+					JScrollPane	scrollpane = new JScrollPane( textarea );
+					
+					try {
+						String line = br.readLine();
+						while( line != null ) {
+							textarea.append(line+"\n");
+							
+							line = br.readLine();
+						}
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					
+					JFrame frame = new JFrame();
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+					frame.add(scrollpane);
+					frame.setSize(400, 300);
+					frame.setVisible( true );
+				}
+			}
+		});
+		botcombo.add( scombo );
+		
+		
+		JButton swsearch = new JButton( new AbstractAction("SW Search") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JComponent	c = new JComponent() {};
+				final JTextArea textarea = new JTextArea();
+				JButton		searchbut = new JButton( new AbstractAction("Blast") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						String fasta = textarea.getText();
+						SmithWater sw = new SmithWater();
+						InputStream is = GeneSet.class.getResourceAsStream("/allnew.aa");
+						try {
+							List<SmithWater.ALN> alns = sw.fasta_align( new StringReader(fasta), new InputStreamReader(is) );
+							int count = 0;
+							String result = "";
+							for( SmithWater.ALN aln : alns ) {
+								result += aln.toString();
+								
+								if( count++ == 10 ) break;
+							}
+							textarea.setText( result );
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+				});
+				c.setLayout( new BorderLayout() );
+				JScrollPane	scrollpane = new JScrollPane( textarea );
+				c.add(scrollpane);
+				c.add(searchbut, BorderLayout.SOUTH);
+				
+				
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(c);
+				frame.setSize(400, 300);
+				frame.setVisible( true );
+			}
+		});
+		botcombo.add( swsearch );
+		
+		
 		//botcombo.add( sbutt );
 		botcomp.add( botcombo, BorderLayout.SOUTH );
 		
@@ -4116,7 +4198,11 @@ public class GeneSet extends JApplet {
 						for( String sp : gg.species.keySet() ) {
 							Set<Tegeval> stv = gg.species.get( sp );
 							for( Tegeval tv : stv ) {
-								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" + tv.seq + "\n" );
+								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
+								for( int i = 0; i < tv.seq.length(); i+=70 ) {
+									textarea.append(tv.seq.substring( i, Math.min(i+70,tv.seq.length()) )+"\n");
+								}
+								//textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" + tv.seq + "\n" );
 							}
 						}
 					}
