@@ -14,6 +14,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
+import javax.swing.JProgressBar;
+
 public class SmithWater {
 	float   	p_gapf;
 	float   	p_gapn;
@@ -78,12 +80,16 @@ public class SmithWater {
 			aln_write_single( System.out );
 		}
 		
+		public final String getShortDestName() {
+			return dname.substring(1, dname.indexOf('#')).trim();
+		}
+		
 		public void aln_write_single( PrintStream ps )	{
 			String	shortname;
 
 			ps.printf( "ALN %s %d %s %d type %s alen %d %d %d %d score %g %g %g %f\n",
 				qname, qlen,
-				dname.substring(0, dname.indexOf('#')), dlen,
+				getShortDestName(), dlen,
 				type, alen, mlen, nid, ngap,
 				score, sscore, rscore, zscore );
 
@@ -594,7 +600,7 @@ public class SmithWater {
 	        //linelist = linelist_read( filename );
 
 	        if( br == null ) {
-	                System.out.printf( "Error. Cannot read from file %s\n", rd.toString() );
+	        	System.out.printf( "Error. Cannot read from file %s\n", rd.toString() );
 	        }
 	         
 	        //(*alphabet) = cvector( 0, 20 );
@@ -754,7 +760,7 @@ public class SmithWater {
 	}
 
 	
-	public FSALIST fsalist_read( Reader rd ) throws IOException {
+	public FSALIST fsalist_read( Reader rd, int[] mut ) throws IOException {
 		File	fp;
 		FSALIST	list = null;
 		FSALIST	last = null;
@@ -767,10 +773,9 @@ public class SmithWater {
 	    	System.out.printf( "Error. Cannot read FSALIST from file %s. Exit\n", rd.toString() );
 	        System.exit( 1 );
 	    }*/
-
+		
 		list = null;
 		n=0;
-
 		BufferedReader br = new BufferedReader( rd );
 		while( (neb = fsalist_read_single( br, neb )) != null )  {
 			if( list == null )
@@ -789,6 +794,8 @@ public class SmithWater {
 
 		//stream_close( fp, fc, filename );
 
+		mut[0] = n;
+		
 		return( list );
 	}
 	
@@ -809,10 +816,15 @@ public class SmithWater {
 	}
 	
 	public void fasta_align( String[] args ) throws IOException {
-		fasta_align( new FileReader(args[0]), new FileReader(args[1]) );
+		fasta_align( new FileReader(args[0]), new FileReader(args[1]), null );
 	}
 
-	public List<ALN> fasta_align( Reader qr, Reader dr ) throws IOException {
+	List<ALN>	alnlist;
+	public List<ALN> getAlignments() {
+		return alnlist;
+	}
+	
+	public List<ALN> fasta_align( Reader qr, Reader dr, JProgressBar pb ) throws IOException {
 		FSALIST		q_fsa, db_fsa, d;
 		float   	gapf, gapn;
 		ALN			neb;
@@ -832,7 +844,8 @@ public class SmithWater {
 
 		/* Read query FASTA file */
 
-		if ( ( q_fsa = fsalist_read( qr ) ) == null ) {
+		int[] mut = new int[1];
+		if ( ( q_fsa = fsalist_read( qr, mut ) ) == null ) {
 			System.out.printf("Cannot read fasta file %s\n", qr.toString() );
 		}
 
@@ -842,9 +855,14 @@ public class SmithWater {
 
 		fsalist_iassign_profile_order( q_fsa );
 
-		if ( ( db_fsa = fsalist_read( dr ) ) == null ) {
+		if ( ( db_fsa = fsalist_read( dr, mut ) ) == null ) {
 			System.out.printf("Cannot read fasta file %s\n", dr.toString() );
 	    }
+		
+		if( pb != null ) {
+			pb.setMinimum(0);
+			pb.setMaximum(mut[0]);
+		}
 
 		db_fsa = fsalist_check_names( db_fsa );
 
@@ -857,11 +875,14 @@ public class SmithWater {
 
 		System.out.printf("# Gap penalties. fgap: %f. ngap: %f\n", gapf, gapn);
 
-		List<ALN>	alnlist = new ArrayList<ALN>();
+		int i = 0;
+		alnlist = new ArrayList<ALN>();
 		for ( d = db_fsa; d != null; d=d.next ) {
 			scomat = score_mat( q_fsa, d, blmat );
 
 			neb = align( scomat, q_fsa, d, gapf, gapn );
+			
+			if( pb != null ) pb.setValue( ++i );
 
 			if ( neb != null ) alnlist.add( neb );
 				//aln_write_single( neb );

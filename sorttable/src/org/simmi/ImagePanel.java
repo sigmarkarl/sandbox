@@ -30,8 +30,14 @@ import java.util.Set;
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
+import javax.swing.text.Element;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ImageView;
 
 import netscape.javascript.JSObject;
 
@@ -41,6 +47,7 @@ public class ImagePanel extends JComponent {
 	 */
 	private static final long serialVersionUID = 1L;
 	Image	img;
+	String	imgstr = "http://members.lycos.nl/gitte1965/photoalbum/images/uni57.jpg";
 	Set<String>	imageNames;
 	Map<String,Image>	imageCache;
 	Map<String,String>	imageNameCache;
@@ -51,6 +58,35 @@ public class ImagePanel extends JComponent {
 	String				lang;
 	SortTable			applet;
 	boolean				restricted = true;
+	
+	JEditorPane		imged;
+	//Image			currentImage;
+	/*class SimImageView extends ImageView {
+		public SimImageView(Element elem) {
+			super(elem);
+		}
+		
+	}*/
+	
+	class SimViewFactory extends HTMLEditorKit.HTMLFactory {
+		public View create( Element e ) {
+			View ret = super.create(e);
+			
+			if( ret instanceof ImageView ) {
+				img = ((ImageView)ret).getImage();
+			}
+			
+			return ret;
+		}
+	};
+	
+	class EdKit extends HTMLEditorKit {
+		SimViewFactory svf = new SimViewFactory();
+		
+		public ViewFactory getViewFactory() {
+			return svf;
+		}
+	};
 	
 	public ImagePanel( SortTable applet, final JTable leftTable, String lang ) {
 		super();
@@ -71,6 +107,26 @@ public class ImagePanel extends JComponent {
 			}
 		});
 		this.leftTable = leftTable;
+		
+		imged = new JEditorPane();
+		imged.setEditable(false);
+		//imged.setEditorKitForContentType("text/html", new EdKit() );
+			/*try {
+				imged.setPage("http://localhost/canvas.html");
+				//HTMLEditorKit htmled = (HTMLEditorKit)imged.getEditorKitForContentType("text/html");
+				EditorKit edkit = imged.getEditorKit();
+				if( edkit instanceof HTMLEditorKit ) {
+					HTMLEditorKit htmled = (HTMLEditorKit)edkit;
+					htmled.set
+					//StyleSheet sheet = htmled.getStyleSheet();
+					//sheet.addRule("body {color:#000; font-family:times; margin: 4px; }");
+					//sheet.addRule("imed {width:100%}");
+				}
+			} catch (IOException e2) {
+				e2.printStackTrace();
+			}*/
+			//imged.setContentType("text/html");
+			//imged.setText("<html><body><img src=\""+imgstr+"\"</img></body></html>");
 		
 		this.lang = lang;
 		imageNames = new HashSet<String>();
@@ -98,10 +154,24 @@ public class ImagePanel extends JComponent {
 		progressbar.setValue( 0 );
 		progressbar.setStringPainted( true );
 		this.add( progressbar );
+		this.add( imged );
+	}
+	
+	public void setURL( String url ) throws IOException {
+		try {
+			imged.setPage( url );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		this.repaint();
 	}
 	
 	public void setImage( Image image ) {
 		this.img = image;
+	}
+	
+	public void setImage( String image ) {
+		this.img = null;
 	}
 	
 	public void setBounds( int x, int y, int w, int h ) {
@@ -128,6 +198,7 @@ public class ImagePanel extends JComponent {
 			}
 		}
 		progressbar.setBounds(this.getWidth()/2-75, this.getHeight()/2-10, 150, 20);
+		imged.setBounds(0,0,10,10);
 	}
 	
 	public void drawString( Graphics g, String str, int h ) {
@@ -371,7 +442,10 @@ public class ImagePanel extends JComponent {
 					String result = null;
 					
 					if( restricted ) {
-						if( applet.applet == null ) {
+						JSObject win = JSObject.getWindow(applet);
+						win.call( "imsearch2", new Object[] {str} );
+						
+						/*if( applet.applet == null ) {
 							JSObject win = JSObject.getWindow(applet);
 							win.call( "emmi", new Object[] {str} );
 							applet.applet = "simmi";
@@ -388,7 +462,7 @@ public class ImagePanel extends JComponent {
 									e.printStackTrace();
 								}
 							}
-						}
+						}*/
 					} else {
 						result = ImageFactory.urlFetch( str );
 					}
