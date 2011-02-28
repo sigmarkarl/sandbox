@@ -6,8 +6,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -22,6 +25,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.ImageProducer;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,6 +35,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.security.AccessControlException;
@@ -47,6 +52,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
+import javax.jnlp.BasicService;
+import javax.jnlp.DownloadService;
+import javax.jnlp.DownloadServiceListener;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
@@ -603,16 +613,60 @@ public class SortTable extends JApplet {
 			return this;
 		}
 	};
+	
+	public KeyListener initFSKeyListener( final Window window ) {
+		return new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+				
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {
+				
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+				if( e.getKeyCode() == KeyEvent.VK_F11 && gd.isFullScreenSupported() ) {
+					/*Window w = gd.getFullScreenWindow();
+					if( w != null ) {
+						gd.setFullScreenWindow(null);
+					} else {
+						gd.setFullScreenWindow(window);
+					}*/
+					//Screen s;R
+					//s.set
+					
+					if( window instanceof Frame ) {
+						((Frame)window).setExtendedState(Frame.MAXIMIZED_BOTH);
+						((Frame)window).setUndecorated( true );
+						((Frame)window).setResizable( false );
+						
+					}
+					
+					if( gd.getFullScreenWindow() == null ) {
+						gd.setFullScreenWindow(window);
+					} else {
+						gd.setFullScreenWindow( null );
+					}
+				}
+			}
+		};
+	}
 
 	//static boolean shiftdown = false;
-	public void firstInit() {
+	public KeyListener firstInit() {
 		CompatUtilities.updateLof();
 		
 		//this.getAppletContext().
 
 		Window window = SwingUtilities.windowForComponent(this);
+		KeyListener keylistener = initFSKeyListener( window );
 		if (window instanceof JFrame) {
 			JFrame frame = (JFrame) window;
+			//frame.setUndecorated( true );
 			if (!frame.isResizable())
 				frame.setResizable(true);
 		}
@@ -657,6 +711,8 @@ public class SortTable extends JApplet {
 		 */
 
 		// List<Object[]> sublist = Collections.
+		
+		return keylistener;
 	}
 	
 	public List<Object[]> reload() {
@@ -718,7 +774,7 @@ public class SortTable extends JApplet {
 	String currentUser = null;
 	public String lastResult;
 	public void init() {
-		firstInit();
+		final KeyListener keylistener = firstInit();
 
 		try {
 			sessionKey = SortTable.this.getParameter("fb_sig_session_key");
@@ -759,6 +815,9 @@ public class SortTable extends JApplet {
 					SortTable.this.setBackground(bgcolor);
 					SortTable.this.getRootPane().setBackground(bgcolor);
 					initGui(sessionKey, currentUser);
+					
+					table.addKeyListener( keylistener );
+					
 					SortTable.this.requestFocus();
 					
 					try {
@@ -1738,7 +1797,12 @@ public class SortTable extends JApplet {
 				int realColumnIndex = detail.convertIndex(columnIndex);
 				if (realColumnIndex != -1) {
 					Object[] obj = stuff.get(1);
-					return (String)obj[2+realColumnIndex];
+					//return "erm";
+					Object o = obj[2+realColumnIndex];
+					if( o instanceof String ) return (String)o;
+					/*else {
+						System.err.println("erm");
+					}*/
 					//return ngroupList.get(realColumnIndex);
 				}
 				return null;
@@ -2191,18 +2255,12 @@ public class SortTable extends JApplet {
 			popup.add( new AbstractAction( lang.equals("IS") ? "Opna val í Excel" : "Open in Excel", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent ae) {
 					try {
-						openExcel();
+						PoiFactory.export(table, topTable, leftTable, SortTable.this);
 					} catch (IOException e) {
 						e.printStackTrace();
 					} catch (SecurityException e) {
 						e.printStackTrace();
 					} catch (IllegalArgumentException e) {
-						e.printStackTrace();
-					} catch (NoSuchMethodException e) {
-						e.printStackTrace();
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
 						e.printStackTrace();
 					}
 				}
@@ -2239,11 +2297,15 @@ public class SortTable extends JApplet {
 		//this.getCodeBase();
 		
 		if( applet == null ) {
+			
+			
+			
+			
 			//String js = "document.getElementById('applet').innerHTML = '<applet codebase=\"http://localhost/\" code=\"org.simmi.PoiFactory\" id=\"minunsign\" name=\"minunsign\"><param name=\"jnlp_href\" value=\"export.jnlp\"></applet>'"; 
 				//"var attributes = { codebase:'http://localhost/', archive:'minapplet.jar', code:'org.simmi.PoiFactory', width:'1', height:'1', id:'food', name:'minunsign' }; var parameters = { jnlp_href:'minapplet.jnlp' }; deployJava.runApplet(attributes, parameters, '1.6');";
 				//System.err.println( js );
 			
-			String 	js = "var attributes = { codebase:\\'http://localhost/\\', archive:\\'minapplet.jar\\', code:\\'org.simmi.PoiFactory\\', width:\\'10\\', height:\\'10\\', id:\\'poi\\', name:\\'export\\' }; ";
+			/*String 	js = "var attributes = { codebase:\\'http://localhost/\\', archive:\\'minapplet.jar\\', code:\\'org.simmi.PoiFactory\\', width:\\'10\\', height:\\'10\\', id:\\'poi\\', name:\\'export\\' }; ";
 					js += "var parameters = { jnlp_href:\\'export.jnlp\\' }; ";
 					js += "deployJava.runApplet(attributes, parameters, \\'1.6\\')";
 			
@@ -2253,7 +2315,7 @@ public class SortTable extends JApplet {
 			while( enappl.hasMoreElements() ) {
 				Applet ap = enappl.nextElement();
 				System.err.println( ap.getName() );
-			}*/
+			}*
 			
 			JSObject win = JSObject.getWindow(this);
 			//JSObject doc = (JSObject)win.getMember("document");
@@ -2277,9 +2339,11 @@ public class SortTable extends JApplet {
 			/*try {
 			      getAppletContext().showDocument( new URL("http://localhost/simple.html"), "simmi" );
 			      //getAppletContext().showDocument(url, target)
-			} catch (MalformedURLException me) { }*/
+			} catch (MalformedURLException me) { }*
 			//applet = getAppletContext().getApplet("minunsign");
 			applet = "simmi";
+			
+			*/
 		} else { //if( applet != null ) {			
 			//String js = "document.getElementById('minunsign').notifyAll();";
 			//JSObject win = JSObject.getWindow(this);
@@ -2358,6 +2422,29 @@ public class SortTable extends JApplet {
 		imgPanel.setImage( image );
 		imgPanel.repaint();
 	}
+	
+	public void setByteArrayImage( byte[] bb ) throws IOException {
+		System.err.println("bull "+bb.length);
+		ByteArrayInputStream bais = new ByteArrayInputStream( bb );
+		Image img = ImageIO.read( bais );
+		setImage( img );
+	}
+	
+	public void setStrImage( String strdata ) throws IOException {
+		System.err.println( strdata );
+		setByteArrayImage( strdata.getBytes() );
+	}
+	
+	public void setJSImage( JSObject jsimg ) {
+		System.err.println("ok "+jsimg.toString().substring(0, 50));
+	}
+	
+	public void setImageURL( String urlstr ) throws UnsupportedEncodingException, IOException {
+		ImagePanel imgPanel = getImagePanel();
+		String newurl = this.getCodeBase().toString()+"imgproxy.php?url="+URLEncoder.encode(urlstr,"UTF8");
+		System.err.println( newurl );
+		imgPanel.setURL( newurl );
+	}
 
 	/**
 	 * @param args
@@ -2397,12 +2484,16 @@ public class SortTable extends JApplet {
 
 	public void frame() {
 		JFrame frame = new JFrame("Matisgem");
+		//frame.setUndecorated( true );
 		frame.setSize(800, 600);
 		try {
 			frame.setBackground( bgcolor );
 			frame.getContentPane().setBackground( bgcolor );
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			this.initGui(null, null);
+			
+			KeyListener keylistener = initFSKeyListener( frame );
+			table.addKeyListener( keylistener );
 			
 			//frame.getContentPane().setLayout(new BorderLayout());
 			frame.add( this.splitPane );
@@ -2520,5 +2611,14 @@ public class SortTable extends JApplet {
 			sortKeys.add(sortKey);
 			sorter.setSortKeys(sortKeys);
 		}
+	}
+	
+	public boolean jnlpShowDocument( URL url ) {
+		try {
+           BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");  
+           return bs.showDocument(url); 
+       } catch(UnavailableServiceException ue) {  
+           return false; 
+       } 
 	}
 }

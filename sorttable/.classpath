@@ -22,5 +22,6 @@
 	<classpathentry kind="lib" path="/usr/share/java/apache-mime4j.jar"/>
 	<classpathentry kind="lib" path="/opt/htmlunit-2.8/lib/htmlunit-2.8.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/gdata-base.jar"/>
+	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/jre/lib/javaws.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
