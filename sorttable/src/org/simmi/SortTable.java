@@ -52,11 +52,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.BasicService;
-import javax.jnlp.DownloadService;
-import javax.jnlp.DownloadServiceListener;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
@@ -616,17 +611,10 @@ public class SortTable extends JApplet {
 	
 	public KeyListener initFSKeyListener( final Window window ) {
 		return new KeyListener() {
-			@Override
-			public void keyTyped(KeyEvent e) {
-				
-			}
+			public void keyTyped(KeyEvent e) {}
 			
-			@Override
-			public void keyReleased(KeyEvent e) {
-				
-			}
+			public void keyReleased(KeyEvent e) {}
 			
-			@Override
 			public void keyPressed(KeyEvent e) {
 				GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 				if( e.getKeyCode() == KeyEvent.VK_F11 && gd.isFullScreenSupported() ) {
@@ -683,13 +671,10 @@ public class SortTable extends JApplet {
 		loadStuff();
 		
 		this.addKeyListener( new KeyListener() {
-			@Override
 			public void keyTyped(KeyEvent e) {}
 			
-			@Override
 			public void keyReleased(KeyEvent e) {}
 			
-			@Override
 			public void keyPressed(KeyEvent e) {
 				reload();
 			}
@@ -2614,11 +2599,13 @@ public class SortTable extends JApplet {
 	}
 	
 	public boolean jnlpShowDocument( URL url ) {
-		try {
+		/*try {
            BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");  
            return bs.showDocument(url); 
        } catch(UnavailableServiceException ue) {  
            return false; 
-       } 
+       }*/
+		
+		return false;
 	}
 }
