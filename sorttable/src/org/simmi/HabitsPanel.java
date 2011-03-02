@@ -94,7 +94,7 @@ public class HabitsPanel extends JComponent {
 	Map<String,Week>				eatList = new HashMap<String,Week>();
 	//JSplitPane						splitpane;
 	JToolBar						toolbar;
-	JXDatePicker					datepicker;
+	CompatDatePicker				datepicker;
 	JLabel							englabel;
 	Calendar						cal;
 	LinkedSplitPane					lsplitPane;
@@ -694,7 +694,7 @@ public class HabitsPanel extends JComponent {
 		}
 		
 		try {
-			datepicker = new JXDatePicker();
+			datepicker = new CompatDatePicker();
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
