@@ -20,7 +20,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import oauth.signpost.OAuth;
 
-import com.google.gdata.util.common.util.Base64;
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 public class DbSave {
 	//private static final String MAC_NAME = "HmacSHA1";
