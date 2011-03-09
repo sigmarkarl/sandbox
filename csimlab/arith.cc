@@ -8,6 +8,7 @@
 #include "simlab.h"
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 extern simlab 	data;
 extern c_const<int>		iconst;
@@ -195,6 +196,14 @@ template <typename T, typename K, typename U> void t_order( T buffer, long lengt
 	}
 }
 
+template <typename T, typename K> void t_specopy( T buffer, int length, K value, int vallen ) {
+	//unsigned long long val;
+	printf("hoho2\n");
+	int len = vallen > length ? vallen : length;
+	for( int i = 0; i < len; i++ ) {
+		memcpy( (void*)&buffer[i], (void*)((long long)value+(long long)(vallen/8)*i), vallen );
+	}
+}
 
 template <typename T, typename K> void t_copy( T buffer, int length, K value, int vallen ) {
 	int len = vallen > length ? vallen : length;
@@ -241,6 +250,13 @@ template <typename T, typename K> void t_mod( T t, int tlen, K k, int klen ) {
 		//t[i] %= (int)k[i];
 	}
 }
+
+template <typename T, typename K> class c_specopy {
+public:
+	c_specopy( T tbuf, int tlen, K kbuf, int klen ) {
+		t_specopy<T,K>( tbuf, tlen, kbuf, klen );
+	}
+};
 
 template <typename T, typename K> class c_copy {
 public:
@@ -378,6 +394,28 @@ template<template<typename T, typename K, typename U> class c_func> void order( 
 	}
 }
 
+template<template<typename T, typename V> class c_func, typename K> void specarith( K kbuf, long klen ) {
+	//printf("subarith\n");
+	if( data.length == -1 ) {
+
+	} else if( data.length == 0 ) {
+
+	} else if( data.type < 0 ) {
+
+	} else {
+		if( data.type == 66 ) c_func<double*,K>( (double*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 65 ) c_func<long long*,K>( (long long*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 64 ) c_func<unsigned long long*,K>( (unsigned long long*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 34 ) c_func<float*,K>( (float*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 33 ) c_func<int*,K>( (int*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 32 ) c_func<unsigned int*,K>( (unsigned int*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 17 ) c_func<short*,K>( (short*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 16 ) c_func<unsigned short*,K>( (unsigned short*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 9 ) c_func<char*,K>( (char*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == 8 ) c_func<unsigned char*,K>( (unsigned char*)data.buffer, data.length, kbuf, klen );
+	}
+}
+
 template<template<typename T, typename V> class c_func, typename K> void subarith( K kbuf, long klen ) {
 	//printf("subarith\n");
 	if( data.length == -1 ) {
@@ -413,6 +451,14 @@ template<template<typename T, typename V> class c_func, typename K> void subarit
 		else if( data.type == 16 ) c_func<unsigned short*,K>( (unsigned short*)data.buffer, data.length, kbuf, klen );
 		else if( data.type == 9 ) c_func<char*,K>( (char*)data.buffer, data.length, kbuf, klen );
 		else if( data.type == 8 ) c_func<unsigned char*,K>( (unsigned char*)data.buffer, data.length, kbuf, klen );
+	}
+}
+
+template<template<typename T, typename K> class c_func> void specarith( simlab & value ) {
+	if( value.length == 0 ) {
+	} else if( value.length == -1 ) {
+	} else {
+		if( value.type == 24 ) specarith< c_func, int* >( (int*)value.buffer, value.type );
 	}
 }
 
@@ -453,6 +499,7 @@ template<template<typename T, typename K> class c_func> void arith( simlab & val
 		else if( value.type == 34 ) subarith< c_func, float* >( (float*)value.buffer, value.length );
 		else if( value.type == 33 ) subarith< c_func, int* >( (int*)value.buffer, value.length );
 		else if( value.type == 32 ) subarith< c_func, unsigned int* >( (unsigned int*)value.buffer, value.length );
+		else if( value.type == 24 ) specarith< c_func, int* >( (int*)value.buffer, value.type );
 		else if( value.type == 17 ) subarith< c_func, short* >( (short*)value.buffer, value.length );
 		else if( value.type == 16 ) subarith< c_func, unsigned short* >( (unsigned short*)value.buffer, value.length );
 		else if( value.type == 9 ) subarith< c_func, char* >( (char*)value.buffer, value.length );
@@ -508,7 +555,13 @@ JNIEXPORT int simmi( simlab value ) {
 }*/
 
 JNIEXPORT int copy( simlab value ) {
-	arith< c_copy >( value );
+	if( value.type == 24 ) {
+		printf("hoho\n");
+		specarith< c_specopy >( value );
+	}
+	else arith< c_copy >( value );
+
+	return 1;
 }
 
 JNIEXPORT int reorder( simlab value ) {

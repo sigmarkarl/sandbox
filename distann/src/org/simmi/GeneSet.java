@@ -403,21 +403,20 @@ public class GeneSet extends JApplet {
 				
 				int idx = desc.lastIndexOf('[');
 				int idx2 = desc.indexOf(']', idx);
+				String newline = "";
 				if( idx > idx2 || idx == -1 ) {
-					String newline = br.readLine();
-					if( newline.startsWith("Query=") ) {
-						line = newline;
-						continue;
+					newline = br.readLine();
+					if( !newline.startsWith("Query=") ) {
+						line = line+newline;
+						trim = line.trim();
+						
+						split = trim.split("\\|");
+						
+						id = split[1];
+						desc = split[2];
+						
+						idx = desc.lastIndexOf('[');
 					}
-					line = line+newline;
-					trim = line.trim();
-					
-					split = trim.split("\\|");
-					
-					id = split[1];
-					desc = split[2];
-					
-					idx = desc.lastIndexOf('[');
 				}
 				
 				if( idx > 0 ) {
@@ -432,10 +431,6 @@ public class GeneSet extends JApplet {
 						|| desc.equals("transposase IS4 family protein") || desc.equals("inner-membrane translocator") ) {
 					desc = desc + " " + id;
 				}*/
-				
-				if( query == null ) {
-					System.err.println();
-				}
 				
 				String[] qsplit = query.split("_");
 				
@@ -458,7 +453,7 @@ public class GeneSet extends JApplet {
 				} else {
 					gene = new Gene(desc, null, teg);
 					gene.allids = new HashSet<String>();
-					gene.species = new HashMap<String,Set<Tegeval>>();
+					gene.species = new HashMap<String,Teginfo>();
 					ret.put( val, gene );
 					gene.refid = id;
 				}
@@ -468,9 +463,9 @@ public class GeneSet extends JApplet {
 					gene.species = new HashMap<String,Set<Tegeval>>();
 				}*/
 				
-				Set<Tegeval>	stv;
+				Teginfo	stv;
 				if( !gene.species.containsKey(padda) ) {
-					stv = new HashSet<Tegeval>(); 
+					stv = new Teginfo(); 
 					gene.species.put( padda, stv );
 				} else stv = gene.species.get(padda);
 				
@@ -505,6 +500,11 @@ public class GeneSet extends JApplet {
 					}*/
 					fw.write( line + "\n" );
 				}
+				
+				if( newline.startsWith("Query=") ) {
+					line = newline;
+					continue;
+				}
 			} else if( trim.contains("No hits") ) {
 				Gene gene;
 				String aa = aas.get(query);
@@ -517,17 +517,17 @@ public class GeneSet extends JApplet {
 					gene.refid = query;
 				}
 				
-				if( gene.species == null ) gene.species = new HashMap<String,Set<Tegeval>>();
+				if( gene.species == null ) gene.species = new HashMap<String,Teginfo>();
 				double deval = -1.0;
-				try {
+				/*try {
 					deval = Double.parseDouble(evalue);
 				} catch( Exception e ) {
 					System.err.println("ok");
-				}
+				}*/
 				//gene.species.put( padda, new Tegeval( padda, deval, aas.get(query), query ) );
-				Set<Tegeval>	stv;
+				Teginfo	stv;
 				if( !gene.species.containsKey(padda) ) {
-					stv = new HashSet<Tegeval>(); 
+					stv = new Teginfo(); 
 					gene.species.put( padda, stv );
 				} else stv = gene.species.get(padda);
 				
@@ -2636,7 +2636,6 @@ public class GeneSet extends JApplet {
 		public Tegeval( String tegund, double evalue, String sequence, String dnaseq, String contig, String shortcontig, String locontig, int sta, int sto, int orient ) {
 			teg = tegund;
 			eval = evalue;
-			seq = sequence;
 			dna = dnaseq;
 			cont = contig;
 			contshort = shortcontig;
@@ -2646,10 +2645,7 @@ public class GeneSet extends JApplet {
 			ori = orient;
 			
 			numCys = 0;
-			for( int i = 0; i < seq.length(); i++ ) {
-				char c = seq.charAt(i);
-				if( c == 'C' || c == 'c' ) numCys++;
-			}
+			setSequence( sequence );
 		}
 		
 		String 	teg;
@@ -2663,6 +2659,18 @@ public class GeneSet extends JApplet {
 		int		stop;
 		int		ori;
 		int		numCys;
+		
+		public void setSequence( String seq ) {
+			if( seq != null ) {
+				for( int i = 0; i < seq.length(); i++ ) {
+					char c = seq.charAt(i);
+					if( c == 'C' || c == 'c' ) numCys++;
+				}
+				this.seq = seq;
+			} else {
+				System.err.println();
+			}
+		}
 		
 		public String toString() {
 			return eval+" "+contloc;
@@ -2712,6 +2720,31 @@ public class GeneSet extends JApplet {
 	    }
 	}
 	
+	static class Teginfo implements Comparable<Teginfo> {
+		String 			tegund;
+		Set<Tegeval>	tset;
+		Tegeval			best;
+		
+		public void add( Tegeval tv ) {
+			if( tset == null ) tset = new HashSet<Tegeval>();
+			tset.add( tv );
+			if( best == null || tv.eval < best.eval ) best = tv;
+		}
+		
+		public String toString() {
+			String ret = best.toString();
+			for( Tegeval tv : tset ) {
+				if( tv != best ) ret += " "+tv.toString();
+			}
+			return ret;
+		}
+
+		@Override
+		public int compareTo(Teginfo o) {
+			return best.compareTo( o.best );
+		}
+	}
+	
 	static class Gene {
 		public Gene( String name, String aa, String origin ) {
 			this.name = name;
@@ -2738,7 +2771,7 @@ public class GeneSet extends JApplet {
 		String 			 				keggid;
 		String							blastspec;
 		Set<String>						funcentries;
-		Map<String,Set<Tegeval>>		species;
+		Map<String,Teginfo>				species;
 		private String	aac;
 		int index;
 		
@@ -3276,7 +3309,7 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
-		table.setDefaultRenderer(Tegeval.class, new DefaultTableCellRenderer() {			
+		table.setDefaultRenderer(Teginfo.class, new DefaultTableCellRenderer() {			
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 				Component label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -3351,8 +3384,8 @@ public class GeneSet extends JApplet {
 		for( Gene g : genelist ) {
 			if( g.species != null ) {
 				for( String sp : g.species.keySet() ) {
-					Set<Tegeval> stv = g.species.get(sp);
-					for( Tegeval tv : stv ) {
+					Teginfo stv = g.species.get(sp);
+					for( Tegeval tv : stv.tset ) {
 						if( tv.eval <= 0.00001 && tv.teg.startsWith("[") && tv.teg.endsWith("]") ) set.add( tv.teg );
 					}
 				}
@@ -3471,7 +3504,7 @@ public class GeneSet extends JApplet {
 					public void actionPerformed(ActionEvent e) {
 						final String fasta = textarea.getText();
 						final SmithWater sw = new SmithWater();
-						final InputStream is = GeneSet.class.getResourceAsStream("/allnew.aa");
+						final InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 						new Thread() {
 							public void run() {
 								try {
@@ -3496,8 +3529,8 @@ public class GeneSet extends JApplet {
 										if( g.species != null ) {
 											for( String teg : g.species.keySet() ) {
 												boolean found = false;
-												Set<Tegeval>	stv = g.species.get(teg);
-												for( Tegeval tv : stv ) {
+												Teginfo	stv = g.species.get(teg);
+												for( Tegeval tv : stv.tset ) {
 													if( regnames.contains(tv.cont) ) {
 														found = true;
 														break;
@@ -3549,7 +3582,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 26;
+				return 29;
 			}
 
 			@Override
@@ -3606,6 +3639,12 @@ public class GeneSet extends JApplet {
 					return "T.scoto2127";
 				} else if( columnIndex == 25 ) {
 					return "T.scoto4063";
+				} else if( columnIndex == 26 ) {
+					return "T.oshimai";
+				} else if( columnIndex == 27 ) {
+					return "T.brockianus";
+				} else if( columnIndex == 28 ) {
+					return "T.filiformis";
 				}
 				return "";
 			}
@@ -3613,7 +3652,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex >= 6 && columnIndex <= 12 ) return Integer.class;
-				else if( columnIndex >= 13 ) return Tegeval.class;
+				else if( columnIndex >= 13 ) return Teginfo.class;
 				return String.class;
 			}
 
@@ -3647,7 +3686,7 @@ public class GeneSet extends JApplet {
 					if( gene.species != null ) {
 						int val = 0;
 						for( String str : gene.species.keySet() ) {
-							val += gene.species.get(str).size();
+							val += gene.species.get(str).tset.size();
 						}
 						return val;
 					}
@@ -3655,8 +3694,8 @@ public class GeneSet extends JApplet {
 					if( gene.species != null ) {
 						int max = 0;
 						for( String str : gene.species.keySet() ) {
-							Set<Tegeval>	set = gene.species.get(str);
-							for( Tegeval tv : set ) {
+							Teginfo	set = gene.species.get(str);
+							for( Tegeval tv : set.tset ) {
 								max = Math.max(max,tv.seq.length());
 							}
 						}
@@ -3670,8 +3709,8 @@ public class GeneSet extends JApplet {
 					if( gene.species != null ) {
 						int max = 0;
 						for( String str : gene.species.keySet() ) {
-							Set<Tegeval>	set = gene.species.get(str);
-							for( Tegeval tv : set ) {
+							Teginfo	set = gene.species.get(str);
+							for( Tegeval tv : set.tset ) {
 								max = Math.max(max,tv.numCys);
 							}
 						}
@@ -3681,157 +3720,96 @@ public class GeneSet extends JApplet {
 				}
 				else if( columnIndex == 13 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("ttHB8join");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.tHB8join");
+						return set;
 					}
 				} else if( columnIndex == 14 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("ttHB27join");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.tHB27join");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttHB27join").iterator().next();
 				} else if( columnIndex == 15 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("tscotoSA01");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.scotoSA01");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
 				} else if( columnIndex == 16 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("ttaqua");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.aqua");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
 				} else if( columnIndex == 17 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("eggertsoni2789");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.eggertsoni");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("eggertsoni2789").iterator().next();
 				} else if( columnIndex == 18 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("islandicus180610");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.islandicus");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("islandicus180610").iterator().next();
 				} else if( columnIndex == 19 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("antag2120");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.antranikiani");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("antag2120").iterator().next();
 				} else if( columnIndex == 20 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("scoto346");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.scoto346");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto346").iterator().next();
 				} else if( columnIndex == 21 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("scoto1572");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.scoto1572");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto1572").iterator().next();
 				} else if( columnIndex == 22 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("scoto252");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.scoto252");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto252").iterator().next();
 				} else if( columnIndex == 23 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("scoto2101");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.scoto2101");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto2101").iterator().next();
 				} else if( columnIndex == 24 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("scoto2127");
-						if( set != null ) {
-							for( Tegeval tv : set ) return tv;
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.scoto2127");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto2127").iterator().next();
 				} else if( columnIndex == 25 ) {
 					if( gene.species != null ) {
-						Tegeval ret = null;
-						Set<Tegeval> set = gene.species.get("scoto4063");
-						if( set != null ) {
-							for( Tegeval tv : set ) {
-								if( ret == null || tv.eval < ret.eval ) ret = tv;
-							}
-						}
-						return ret;
+						Teginfo set = gene.species.get("t.scoto4063");
+						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto4063").iterator().next();
+				} else if( columnIndex == 26 ) {
+					if( gene.species != null ) {
+						Teginfo set = gene.species.get("t.oshimai");
+						return set;
+					}
+				} else if( columnIndex == 27 ) {
+					if( gene.species != null ) {
+						Teginfo set = gene.species.get("t.brockianus");
+						return set;
+					}
+				} else if( columnIndex == 28 ) {
+					if( gene.species != null ) {
+						Teginfo set = gene.species.get("t.filiformis");
+						return set;
+					}
 				}
 				return columnIndex >= 8 ? null : "";
 			}
@@ -3869,8 +3847,8 @@ public class GeneSet extends JApplet {
 					for( Gene g : genelist ) {
 						if( g.species != null ) {
 							for( String spec : g.species.keySet() ) {
-								Set<Tegeval> stv = g.species.get(spec);
-								for( Tegeval tv : stv ) {
+								Teginfo stv = g.species.get(spec);
+								for( Tegeval tv : stv.tset ) {
 									//int first = tv.cont.indexOf('_');
 									//int sec = tv.cont.indexOf('_',first+1);
 									String cont = tv.contshort; //tv.cont.substring(0,sec);
@@ -4080,8 +4058,8 @@ public class GeneSet extends JApplet {
 				for( Gene g : genelist ) {
 					if( g.species != null ) {
 						for( String sp : g.species.keySet() ) {
-							Set<Tegeval> stv = g.species.get(sp);
-							for( Tegeval tv : stv ) {
+							Teginfo stv = g.species.get(sp);
+							for( Tegeval tv : stv.tset ) {
 								if( sel.equals(tv.teg) ) {
 									System.out.println( g.name + " " + sp + " " + sel + "  " + tv.eval );
 									genefilterset.add( g.index );
@@ -4415,8 +4393,8 @@ public class GeneSet extends JApplet {
 					if( gg.species != null ) {
 						textarea.append( gg.name + ":\n" );
 						for( String sp : gg.species.keySet() ) {
-							Set<Tegeval> stv = gg.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = gg.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
 								for( int i = 0; i < tv.seq.length(); i+=70 ) {
 									textarea.append(tv.seq.substring( i, Math.min(i+70,tv.seq.length()) )+"\n");
@@ -4446,8 +4424,8 @@ public class GeneSet extends JApplet {
 					if( gg.species != null ) {
 						textarea.append( gg.name + ":\n" );
 						for( String sp : gg.species.keySet() ) {
-							Set<Tegeval> stv = gg.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = gg.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
 								for( int i = 0; i < tv.dna.length(); i+=70 ) {
 									textarea.append(tv.dna.substring( i, Math.min(i+70,tv.dna.length()) )+"\n");
@@ -4475,8 +4453,8 @@ public class GeneSet extends JApplet {
 					//genefilterset.add( gg.index );
 					if( gg.species != null ) {
 						for( String sp : gg.species.keySet() ) {
-							Set<Tegeval> stv = gg.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = gg.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								ct.add( tv.cont );
 								int ind = tv.cont.lastIndexOf("_");
 								int val = Integer.parseInt( tv.cont.substring(ind+1) );
@@ -4496,8 +4474,8 @@ public class GeneSet extends JApplet {
 				for( Gene g : genelist ) {
 					if( g.species != null ) {
 						for( String sp : g.species.keySet() ) {
-							Set<Tegeval> stv = g.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = g.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								if( ct.contains(tv.cont) ) {
 									genefilterset.add( g.index );
 									break;
@@ -4522,8 +4500,8 @@ public class GeneSet extends JApplet {
 					//genefilterset.add( gg.index );
 					if( gg.species != null ) {
 						for( String sp : gg.species.keySet() ) {
-							Set<Tegeval> stv = gg.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = gg.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								for( Set<String> uset : uclusterlist ) {
 									if( uset.contains(tv.cont) ) {
 										ct.addAll( uset );
@@ -4538,8 +4516,8 @@ public class GeneSet extends JApplet {
 				for( Gene g : genelist ) {
 					if( g.species != null ) {
 						for( String sp : g.species.keySet() ) {
-							Set<Tegeval> stv = g.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = g.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								if( ct.contains(tv.cont) ) {
 									genefilterset.add( g.index );
 									break;
@@ -4564,8 +4542,8 @@ public class GeneSet extends JApplet {
 					//genefilterset.add( gg.index );
 					if( gg.species != null ) {
 						for( String sp : gg.species.keySet() ) {
-							Set<Tegeval> stv = gg.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = gg.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								for( Set<String> uset : iclusterlist ) {
 									if( uset.contains(tv.cont) ) {
 										ct.addAll( uset );
@@ -4580,8 +4558,8 @@ public class GeneSet extends JApplet {
 				for( Gene g : genelist ) {
 					if( g.species != null ) {
 						for( String sp : g.species.keySet() ) {
-							Set<Tegeval> stv = g.species.get( sp );
-							for( Tegeval tv : stv ) {
+							Teginfo stv = g.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
 								if( ct.contains(tv.cont) ) {
 									genefilterset.add( g.index );
 									break;
@@ -4777,10 +4755,10 @@ public class GeneSet extends JApplet {
 	};
 	
 	private static JComponent newSoft() throws IOException {
-		InputStream is = GeneSet.class.getResourceAsStream("/allnew.aa");
+		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		loci2aasequence( new InputStreamReader( is ) );
 		
-		is = GeneSet.class.getResourceAsStream("/allnew.nn");
+		is = GeneSet.class.getResourceAsStream("/all.nn");
 		loci2dnasequence( new InputStreamReader( is ) );
 		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster_new.txt");
@@ -4796,7 +4774,7 @@ public class GeneSet extends JApplet {
 		Set<String>				poddur = new HashSet<String>();
 		Map<String,String>		locgene = new HashMap<String,String>();
 		//panCoreFromNRBlast( new FileReader("/home/sigmar/blastout/nr.blastout"), "/home/sigmar/workspace/distann/src/nr_short.blastout", refmap, allgenes, geneset, geneloc, poddur );
-		is = GeneSet.class.getResourceAsStream("/nr_short.blastout");
+		is = GeneSet.class.getResourceAsStream("/total_short.blastout");
 		panCoreFromNRBlast( new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur );
 		//Map<String,Gene>	refmap = new TreeMap<String,Gene>();
 		List<Gene>			genelist = new ArrayList<Gene>();
@@ -4809,8 +4787,8 @@ public class GeneSet extends JApplet {
 			if( gene.species != null ) {
 				for( Set<String> ucluster : uclusterlist ) {
 					for( String str : gene.species.keySet() ) {
-						Set<Tegeval> stv = gene.species.get(str);
-						for( Tegeval tv : stv ) {
+						Teginfo stv = gene.species.get(str);
+						for( Tegeval tv : stv.tset ) {
 							if( ucluster.contains(tv.cont) ) {
 								gene.group = ucluster;
 								break;
@@ -5056,8 +5034,8 @@ public class GeneSet extends JApplet {
 				if( g.species != null ) {
 					//for( String sp : g.species.keySet() ) {
 						for( String spec : g.species.keySet() ) {
-							Set<Tegeval> stv = g.species.get(spec);
-							if( stv != null ) for( Tegeval tv : stv ) {
+							Teginfo stv = g.species.get(spec);
+							if( stv != null ) for( Tegeval tv : stv.tset ) {
 								if( spec.equals(species) ) ltv.add( tv );
 								
 								int first = tv.cont.indexOf("_");
@@ -5112,8 +5090,8 @@ public class GeneSet extends JApplet {
 								int und = contig.indexOf("_");
 								String spec = contig.substring(0, und);
 								if( gene.species.containsKey(spec) ) {
-									Set<Tegeval> stv = gene.species.get( spec );
-									for( Tegeval tv : stv ) {
+									Teginfo stv = gene.species.get( spec );
+									for( Tegeval tv : stv.tset ) {
 										if( tv.cont.startsWith(contig) ) {
 											g.fillRect(i, y*rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 										}
