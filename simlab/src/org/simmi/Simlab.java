@@ -1337,9 +1337,18 @@ public class Simlab implements ScriptEngineFactory {
 
 	public int image(final simlab.ByValue ww, final simlab.ByValue... timer) {
 		final String name = "";// sl.getTheString();
-		final long w = ww.buffer;
-		final long t = data.length;
-		final long h = (t / w);
+		
+		final long w;
+		final long h;
+		if( ww.length <= 1 ) {
+			w = ww.getLong();
+			h = (data.length / w);
+		} else {
+			DoubleBuffer db = ww.getByteBuffer().asDoubleBuffer();
+			w = (long)db.get(0);
+			h = (long)db.get(1);
+		}
+		final long t = w*h;
 		final BufferedImage bi = new BufferedImage((int) w, (int) h, BufferedImage.TYPE_INT_RGB);
 		// final Pointer ptr = data.getPointer();
 		final simlab.ByValue slptr = data.clone();
@@ -1937,7 +1946,7 @@ public class Simlab implements ScriptEngineFactory {
 					System.out.print(bb.getFloat(i * bl) + "\t");
 				}
 				System.out.print(bb.getFloat(i * bl) + "\n");
-			} else if (data.type == INTLEN) {
+			} else if (data.type == INTLEN || data.type == UINTLEN) {
 				int i = 0;
 				for (; i < chunk - 1; i++) {
 					System.out.print(bb.getInt(i * bl) + "\t");
