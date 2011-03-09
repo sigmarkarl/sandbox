@@ -3313,24 +3313,24 @@ public class GeneSet extends JApplet {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 				Component label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-				Tegeval tv = (Tegeval)value;
+				Teginfo tv = (Teginfo)value;
 				if( tv == null ) {
 					label.setBackground( Color.white );
 				} else {
 					//label.setText( value.toString() );
 					if( colorCodes[0] == null ) GeneSet.setColors();
-					if( tv.eval == 0 ) {
+					if( tv.best.eval == 0 ) {
 						label.setBackground( colorCodes[0] );
 					}
-					else if( tv.eval < 1e-100 ) label.setBackground( colorCodes[0] );
-					else if( tv.eval < 1e-50 ) label.setBackground( colorCodes[1] );
-					else if( tv.eval < 1e-24 ) label.setBackground( colorCodes[2] );
-					else if( tv.eval < 1e-10 ) label.setBackground( colorCodes[3] );
-					else if( tv.eval < 1e-5 ) label.setBackground( colorCodes[4] );
-					else if( tv.eval < 1e-2 ) label.setBackground( colorCodes[5] );
-					else if( tv.eval < 1e-1 ) label.setBackground( colorCodes[6] );
-					else if( tv.eval < 1e0 ) label.setBackground( colorCodes[7] );
-					else if( tv.eval < 1e10 ) label.setBackground( colorCodes[8] );
+					else if( tv.best.eval < 1e-100 ) label.setBackground( colorCodes[0] );
+					else if( tv.best.eval < 1e-50 ) label.setBackground( colorCodes[1] );
+					else if( tv.best.eval < 1e-24 ) label.setBackground( colorCodes[2] );
+					else if( tv.best.eval < 1e-10 ) label.setBackground( colorCodes[3] );
+					else if( tv.best.eval < 1e-5 ) label.setBackground( colorCodes[4] );
+					else if( tv.best.eval < 1e-2 ) label.setBackground( colorCodes[5] );
+					else if( tv.best.eval < 1e-1 ) label.setBackground( colorCodes[6] );
+					else if( tv.best.eval < 1e0 ) label.setBackground( colorCodes[7] );
+					else if( tv.best.eval < 1e10 ) label.setBackground( colorCodes[8] );
 				}
 				return label;
 			}
