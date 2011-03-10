@@ -1316,7 +1316,7 @@ public class GeneSet extends JApplet {
 					Set<String>	all = new HashSet<String>();
 					while( line != null && !line.startsWith(">") ) {
 						String trim = line.trim();
-						if( trim.startsWith("scoto") || trim.startsWith("anta") || trim.startsWith("tt") || trim.startsWith("egg") || trim.startsWith("island") || trim.startsWith("tscoto") ) {
+						if( trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") ) {
 							String val = trim.substring( 0, trim.indexOf('#')-1 );
 							int v = val.indexOf("contig");
 							/*if( v != -1 ) {
