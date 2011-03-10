@@ -3277,6 +3277,85 @@ public class GeneSet extends JApplet {
 		if( label != null ) label.setText( table.getRowCount() + "/" + table.getSelectedRowCount() );
 	}
 	
+	private static void relati( JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, List<Set<String>> uclusterlist, boolean remove ) {
+		Set<String>	ct = new HashSet<String>();
+		for( int r : rr ) {
+			int cr = table.convertRowIndexToModel(r);
+			Gene gg = genelist.get(cr);
+			//genefilterset.add( gg.index );
+			if( gg.species != null ) {
+				for( String sp : gg.species.keySet() ) {
+					Teginfo stv = gg.species.get( sp );
+					for( Tegeval tv : stv.tset ) {
+						for( Set<String> uset : uclusterlist ) {
+							if( uset.contains(tv.cont) ) {
+								ct.addAll( uset );
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		for( Gene g : genelist ) {
+			if( g.species != null ) {
+				for( String sp : g.species.keySet() ) {
+					Teginfo stv = g.species.get( sp );
+					for( Tegeval tv : stv.tset ) {
+						if( ct.contains(tv.cont) ) {
+							if( remove ) genefilterset.remove( g.index );
+							else genefilterset.add( g.index );
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private static void proxi( JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, boolean remove ) {
+		Set<String>	ct = new HashSet<String>();
+		for( int r : rr ) {
+			int cr = table.convertRowIndexToModel(r);
+			Gene gg = genelist.get(cr);
+			//genefilterset.add( gg.index );
+			if( gg.species != null ) {
+				for( String sp : gg.species.keySet() ) {
+					Teginfo stv = gg.species.get( sp );
+					for( Tegeval tv : stv.tset ) {
+						ct.add( tv.cont );
+						int ind = tv.cont.lastIndexOf("_");
+						int val = Integer.parseInt( tv.cont.substring(ind+1) );
+						
+						String next = tv.cont.substring(0, ind+1)+(val+1);
+						System.err.println( next );
+						ct.add( next );
+						if( val > 1 ) {
+							String prev = tv.cont.substring(0, ind+1)+(val-1);
+							ct.add( prev );
+						}
+					}
+				}
+			}
+		}
+		
+		for( Gene g : genelist ) {
+			if( g.species != null ) {
+				for( String sp : g.species.keySet() ) {
+					Teginfo stv = g.species.get( sp );
+					for( Tegeval tv : stv.tset ) {
+						if( ct.contains(tv.cont) ) {
+							if( remove ) genefilterset.remove( g.index );
+							else genefilterset.add( g.index );
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	private static JComponent showGeneTable( final Map<String,Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist, final Map<Set<String>,ShareNum> specset, final Map<Set<String>,ClusterInfo> clustInfoMap ) throws IOException {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -4313,6 +4392,26 @@ public class GeneSet extends JApplet {
 				updateFilter( table, genefilter, label );
 			}
 		});
+		popup.add( new AbstractAction("Remove selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//genefilterset.clear();
+				int[] rr = table.getSelectedRows();
+				if( genefilterset.isEmpty() ) {
+					Set<Integer>	ii = new HashSet<Integer>();
+					for( int r : rr ) ii.add( r );
+					for( int i = 0; i < genelist.size(); i++ ) {
+						if( !ii.contains( i ) ) genefilterset.add( i );
+					}
+				} else {
+					for( int r : rr ) {
+						int mr = table.convertRowIndexToModel(r);
+						genefilterset.remove(mr);
+					}
+				}
+				updateFilter( table, genefilter, label );
+			}
+		});
 		popup.addSeparator();
 		popup.add(new AbstractAction("Show genes with same sharing") {
 			@Override
@@ -4380,6 +4479,7 @@ public class GeneSet extends JApplet {
 				updateFilter( ftable, filter, null );
 			}
 		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("Show sequences") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -4441,95 +4541,73 @@ public class GeneSet extends JApplet {
 				frame.setVisible( true );
 			}
 		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("Show genes in proximity") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				genefilterset.clear();
 				int[] rr = table.getSelectedRows();
-				Set<String>	ct = new HashSet<String>();
-				for( int r : rr ) {
-					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					//genefilterset.add( gg.index );
-					if( gg.species != null ) {
-						for( String sp : gg.species.keySet() ) {
-							Teginfo stv = gg.species.get( sp );
-							for( Tegeval tv : stv.tset ) {
-								ct.add( tv.cont );
-								int ind = tv.cont.lastIndexOf("_");
-								int val = Integer.parseInt( tv.cont.substring(ind+1) );
-								
-								String next = tv.cont.substring(0, ind+1)+(val+1);
-								System.err.println( next );
-								ct.add( next );
-								if( val > 1 ) {
-									String prev = tv.cont.substring(0, ind+1)+(val-1);
-									ct.add( prev );
-								}
-							}
-						}
-					}
-				}
-				
-				for( Gene g : genelist ) {
-					if( g.species != null ) {
-						for( String sp : g.species.keySet() ) {
-							Teginfo stv = g.species.get( sp );
-							for( Tegeval tv : stv.tset ) {
-								if( ct.contains(tv.cont) ) {
-									genefilterset.add( g.index );
-									break;
-								}
-							}
-						}
-					}
-				}
-				
+				proxi( table, rr, genelist, genefilterset, false );				
 				updateFilter( table, genefilter, label );
 			}
 		});
+		popup.add(new AbstractAction("Add genes in proximity") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = table.getSelectedRows();
+				proxi( table, rr, genelist, genefilterset, false );				
+				updateFilter( table, genefilter, label );
+			}
+		});
+		popup.add(new AbstractAction("Remove genes in proximity") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = table.getSelectedRows();
+				if( genefilterset.isEmpty() ) {
+					Set<Integer>	ii = new HashSet<Integer>();
+					for( int r : rr ) ii.add( r );
+					for( int i = 0; i < genelist.size(); i++ ) {
+						if( !ii.contains( i ) ) genefilterset.add( i );
+					}
+				}
+				proxi( table, rr, genelist, genefilterset, true );				
+				updateFilter( table, genefilter, label );
+			}
+		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("Show related genes") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				genefilterset.clear();
 				int[] rr = table.getSelectedRows();
-				Set<String>	ct = new HashSet<String>();
-				for( int r : rr ) {
-					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					//genefilterset.add( gg.index );
-					if( gg.species != null ) {
-						for( String sp : gg.species.keySet() ) {
-							Teginfo stv = gg.species.get( sp );
-							for( Tegeval tv : stv.tset ) {
-								for( Set<String> uset : uclusterlist ) {
-									if( uset.contains(tv.cont) ) {
-										ct.addAll( uset );
-										break;
-									}
-								}
-							}
-						}
-					}
-				}
-				
-				for( Gene g : genelist ) {
-					if( g.species != null ) {
-						for( String sp : g.species.keySet() ) {
-							Teginfo stv = g.species.get( sp );
-							for( Tegeval tv : stv.tset ) {
-								if( ct.contains(tv.cont) ) {
-									genefilterset.add( g.index );
-									break;
-								}
-							}
-						}
-					}
-				}
-				
+				relati( table, rr, genelist, genefilterset, uclusterlist, false );		
 				updateFilter( table, genefilter, label );
 			}
 		});
+		popup.add(new AbstractAction("Add related genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = table.getSelectedRows();
+				relati( table, rr, genelist, genefilterset, uclusterlist, false );		
+				updateFilter( table, genefilter, label );
+			}
+		});
+		popup.add(new AbstractAction("Remove related genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = table.getSelectedRows();
+				if( genefilterset.isEmpty() ) {
+					Set<Integer>	ii = new HashSet<Integer>();
+					for( int r : rr ) ii.add( r );
+					for( int i = 0; i < genelist.size(); i++ ) {
+						if( !ii.contains( i ) ) genefilterset.add( i );
+					}
+				}
+				relati( table, rr, genelist, genefilterset, uclusterlist, true );		
+				updateFilter( table, genefilter, label );
+			}
+		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("Show closely related genes") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -4761,10 +4839,10 @@ public class GeneSet extends JApplet {
 		is = GeneSet.class.getResourceAsStream("/all.nn");
 		loci2dnasequence( new InputStreamReader( is ) );
 		
-		is = GeneSet.class.getResourceAsStream("/intersect_cluster_new.txt");
+		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );
 		
-		is = GeneSet.class.getResourceAsStream("/union_cluster_new.txt");
+		is = GeneSet.class.getResourceAsStream("/union_cluster.txt");
 		List<Set<String>>	uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
 		
 		Map<String,Gene>		refmap = new HashMap<String,Gene>();
@@ -4812,15 +4890,28 @@ public class GeneSet extends JApplet {
 		
 		Set<String>	ss = new HashSet<String>();
 		Set<String>	gs = new HashSet<String>();
-		for( Set<String> cluster : uclusterlist ) {
-			int realsize = 0;
-			
+		for( Set<String> cluster : uclusterlist ) {			
 			ss.clear();
 			gs.clear();
+			
+			Set<Gene>	gset = new HashSet<Gene>();
 			for( String cont : cluster ) {
 				String[] split = cont.split("_");
 				ss.add(split[0]);
 				gs.add(locgene.get(cont));
+				
+				String refid = locgene.get(cont);
+				Gene g = refmap.get( refid );
+				if( g != null ) {
+					gset.add( g );
+				} else {
+					System.err.println( refid );
+				}
+			}
+			
+			for( Gene g : gset ) {
+				g.groupCoverage = ss.size();
+				g.groupGenCount = gs.size();
 			}
 			
 			//ClusterInfo cInfo = new ClusterInfo(id++,ss.size(),gs.size());
@@ -5287,8 +5378,8 @@ public class GeneSet extends JApplet {
 			
 			//loci2aasequence( all, dir2 );
 			//loci2gene( nrblastres, dir );
-			//clusterFromBlastResults( new File("/home/sigmar/thermus/newthermus/"), new String[] {"allnew.blastout"}, "/home/sigmar/union_cluster.txt", "/home/sigmar/simblastcluster.txt", true);
-			clusterFromBlastResults( new File("/home/sigmar/thermus/newthermus/"), new String[] {"allnew.blastout"}, "/home/sigmar/intersect_cluster_new.txt", "/home/sigmar/simblastcluster.txt", false);
+			clusterFromBlastResults( new File("/home/sigmar/thermus/"), new String[] {"all.blastout"}, "/home/sigmar/union_cluster.txt", "/home/sigmar/simblastcluster.txt", true);
+			//clusterFromBlastResults( new File("/home/sigmar/thermus/"), new String[] {"all.blastout"}, "/home/sigmar/intersect_cluster.txt", "/home/sigmar/simblastcluster.txt", false);
 			
 			//blastAlign( new FileReader("/home/sigmar/thermus/newthermus/all.aa"), "tscotoSA01", "scoto346" );
 			
