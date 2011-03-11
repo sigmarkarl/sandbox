@@ -3,6 +3,7 @@ package org.simmi;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -281,6 +282,17 @@ public class GeneSet extends JApplet {
 		Collections.sort( isoel );
 	}
 	
+	private static StringBuilder aaSearch( String query ) {
+		/*aquery.name = query;
+		int ind = Arrays.binarySearch(aas, aquery);
+		if( ind < 0 ) {
+			System.err.println();
+		}
+		return ind < 0 ? null : aas[ ind ].aas;*/
+		
+		return aas.get( query );
+	}
+	
 	private static void panCoreFromNRBlast( Reader rd, String outfile, Map<String,Gene>  ret, Map<String,String> allgenes, Map<String,Set<String>> geneset, Map<String,Set<String>> geneloc, Map<String,String> locgene, Set<String> poddur ) throws IOException {
 		FileWriter fw = null;
 		if( outfile != null ) fw = new FileWriter( outfile );
@@ -451,7 +463,7 @@ public class GeneSet extends JApplet {
 				if( ret.containsKey( val ) ) {
 					gene = ret.get( val );
 				} else {
-					gene = new Gene(desc, null, teg);
+					gene = new Gene(desc, teg);
 					gene.allids = new HashSet<String>();
 					gene.species = new HashMap<String,Teginfo>();
 					ret.put( val, gene );
@@ -474,7 +486,8 @@ public class GeneSet extends JApplet {
 				String contig = qsplit[0]+"_"+qsplit[1]; //&query.substring(0, sec);
 				String contloc = qsplit[1]+"_"+qsplit[3]; //query.substring(first+1,sec);
 				
-				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aas.get(query), dna.get(query), query, contig, contloc, start, stop, ori ) );
+				StringBuilder aa = aaSearch( query );
+				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aa, dna.get(query), query, contig, contloc, start, stop, ori ) );
 				
 				if( !allgenes.containsKey( val ) || allgenes.get( val ) == null ) {
 					allgenes.put( val, split.length > 1 ? teg + " " + id : null );
@@ -507,12 +520,13 @@ public class GeneSet extends JApplet {
 				}
 			} else if( trim.contains("No hits") ) {
 				Gene gene;
-				String aa = aas.get(query);
+				
+				StringBuilder aa = aaSearch( query );
 				String padda = query.split("_")[0];
 				if( ret.containsKey( aa ) ) {
 					gene = ret.get( aa );
 				} else {
-					gene = new Gene("_"+aa, null, padda);
+					gene = new Gene("_"+aa, padda);
 					ret.put( "_"+aa, gene );
 					gene.refid = query;
 				}
@@ -535,7 +549,9 @@ public class GeneSet extends JApplet {
 				int sec = query.indexOf('_', first+1 );
 				String contig = query.substring(0, sec);
 				String contloc = query.substring(first+1);
-				stv.add( new Tegeval( padda, deval, aas.get(query), dna.get(query), query, contig, contloc, start, stop, ori ) );
+				
+				StringBuilder aastr = aaSearch( query );
+				stv.add( new Tegeval( padda, deval, aastr, dna.get(query), query, contig, contloc, start, stop, ori ) );
 				
 				
 				//System.err.println( prename + "\tNo match" );
@@ -848,29 +864,71 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public static CharSequence trimSubstring(StringBuilder ac, String sb) {
+	    int first, last;
+
+	    for (first=0; first<sb.length(); first++)
+	        if (!Character.isWhitespace(sb.charAt(first)))
+	            break;
+
+	    for (last=sb.length(); last>first; last--)
+	        if (!Character.isWhitespace(sb.charAt(last-1)))
+	            break;
+
+	    return ac.append(sb, first, last);
+	}
+	
 	private static void loci2aasequence( Reader rd ) throws IOException {
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
 		String name = null;
-		String ac = "";
+		StringBuilder ac = new StringBuilder();
+		//StringBuffer	ac = new StringBuffer();
+		List<Aas>	aass = new ArrayList<Aas>();
+		
+		//FileWriter fw = new FileWriter("/home/sigmar/ok.txt");
 		while( line != null ) {
 			if( line.startsWith(">") ) {
-				if( ac.length() > 0 ) aas.put(name, ac);
+				if( ac.length() > 0 ) {
+					aas.put(name, ac);
+					//aass.add( new Aas(name, ac) );
+					
+					//fw.write(name);
+				}
 				
-				ac = "";
-				name = line.substring(1).split(" ")[0];
+				ac = new StringBuilder();
+				name = (line.substring(1)+"").split(" ")[0];
 				
-				int v = name.indexOf("contig");
+				//int v = name.indexOf("contig");
 				/*if( v != -1 ) {
 					int i1 = name.indexOf('_',v);
 					int i2 = name.indexOf('_', i1+1);
 					name = name.substring(0,i1) + name.substring(i2);
 				}*/
-			} else ac += line.trim();
+			} else ac.append( line.trim()+"" );
+			//else trimSubstring(ac, line);
 			line = br.readLine();
+			//br.re
 		}
-		if( ac.length() > 0 ) aas.put(name, ac);
+		if( ac.length() > 0 ) {
+			//aas.put(name, ac.getBytes());
+			aass.add( new Aas(name, ac) );
+		}
+		ac = null;
 		br.close();
+		//fw.close();
+		
+		/*System.err.println("erm "+aass.size());
+		aas = new Aas[aass.size()];
+		int i = 0;
+		for( Aas a : aass ) {
+			aas[i++] = a;
+		}
+		aass.clear();
+		System.gc();*/
+		
+		
+		//Arrays.sort( aas );
 	}
 	
 	private static void loci2dnasequence( Reader rd ) throws IOException {
@@ -893,8 +951,30 @@ public class GeneSet extends JApplet {
 		br.close();
 	}
 	
-	static Map<String,String>	aas = new HashMap<String,String>();
-	static Map<String,String>	dna = new HashMap<String,String>();
+	static Aas aquery = new Aas( null, null );
+	public final static class Aas implements Comparable<Aas> {
+		String 	name;
+		final StringBuilder	aas;
+		
+		public Aas( String name, StringBuilder aas ) {
+			this.name = name;
+			this.aas = aas;
+		}
+		
+		@Override
+		public final int compareTo(Aas o) {
+			return name.compareTo(o.name);
+		}
+		
+		public final String toString() {
+			return name;
+		}
+		
+		//public byte[] get( String name ) {
+	};
+	//static Aas[]	aas;
+	static Map<String,StringBuilder>	aas = new HashMap<String,StringBuilder>();
+	static Map<String,String>			dna = new HashMap<String,String>();
 	
 	public static void loci2aasequence( String[] stuff, File dir2 ) throws IOException {
 		for( String st : stuff ) {
@@ -919,7 +999,7 @@ public class GeneSet extends JApplet {
 				}
 				
 				if( line.contains("No hits") ) {
-					System.err.println( name + "\t" + aas.get(swapmap.get(st+".out")+" "+name) );
+					//System.err.println( name + "\t" + aas.get(swapmap.get(st+".out")+" "+name) );
 				}
 				
 				line = br.readLine();
@@ -1732,8 +1812,10 @@ public class GeneSet extends JApplet {
 									for( String loci : sout ) {
 										String gene = lociMap.get(loci);
 										if( gene == null ) {
-											gene = aas.get( loci );
+											StringBuilder aa = aas.get(loci);
+											gene = aa.toString();
 										}
+										
 										if( gene == null ) {
 											System.out.println( "error" + loci );
 										} else geneset.add(gene.replace('\t', ' '));
@@ -1772,10 +1854,12 @@ public class GeneSet extends JApplet {
 					System.err.println( "In " + s + " containing " + genes.size() );
 					for( String gene : genes ) {
 						String aa = lociMap.get(gene);
+						
+						StringBuilder aastr = aas.get(gene);
 						if( aa == null ) {
-							aa = "Not found\t" + aas.get( gene );
+							aa = "Not found\t" + aastr;
 						}
-						aa += "\t" + aas.get(gene);
+						aa += "\t" + aastr;
 						System.err.println( gene + "\t" + aa );
 						
 						if( !done && set.size() == 12 && gene.startsWith("ttHB27") ) {
@@ -1817,6 +1901,8 @@ public class GeneSet extends JApplet {
 			
 			if( line.contains("No hits") ) {
 				String prename = name; //swapmap.get(st+".out")+"_"+name;
+				
+				aquery.name = prename;
 				lociMap.put( prename, "No match\t"+aas.get(prename) );
 				//System.err.println( prename + "\tNo match" );
 				if( fw != null ) fw.write( line + "\n" );
@@ -2633,7 +2719,7 @@ public class GeneSet extends JApplet {
 	
 	static boolean locsort = true;
 	static class Tegeval implements Comparable<Tegeval> {
-		public Tegeval( String tegund, double evalue, String sequence, String dnaseq, String contig, String shortcontig, String locontig, int sta, int sto, int orient ) {
+		public Tegeval( String tegund, double evalue, StringBuilder sequence, String dnaseq, String contig, String shortcontig, String locontig, int sta, int sto, int orient ) {
 			teg = tegund;
 			eval = evalue;
 			dna = dnaseq;
@@ -2653,17 +2739,17 @@ public class GeneSet extends JApplet {
 		String	cont;
 		String  contshort;
 		String	contloc;
-		String	seq;
+		StringBuilder	seq;
 		String  dna;
 		int		start;
 		int		stop;
 		int		ori;
 		int		numCys;
 		
-		public void setSequence( String seq ) {
+		public void setSequence( StringBuilder seq ) {
 			if( seq != null ) {
 				for( int i = 0; i < seq.length(); i++ ) {
-					char c = seq.charAt(i);
+					char c = (char)seq.charAt(i);
 					if( c == 'C' || c == 'c' ) numCys++;
 				}
 				this.seq = seq;
@@ -2746,10 +2832,10 @@ public class GeneSet extends JApplet {
 	}
 	
 	static class Gene {
-		public Gene( String name, String aa, String origin ) {
+		public Gene( String name, String origin ) {
 			this.name = name;
 			this.origin = origin;
-			this.setAa( aa );
+			//this.setAa( aa );
 		}
 		
 		public void setAa( String aa ) {
@@ -2775,7 +2861,7 @@ public class GeneSet extends JApplet {
 		private String	aac;
 		int index;
 		
-		Set<String>	group;
+		//Set<String>						group;
 		int								groupGenCount;
 		int								groupCoverage;
 		int								groupIdx;
@@ -2786,7 +2872,7 @@ public class GeneSet extends JApplet {
 		File f = new File( dir, filename );
 		BufferedReader br = new BufferedReader( new FileReader( f ) );
 		String last = null;
-		String aa = "";
+		//String aa = "";
 		String line = br.readLine();
 		while( line != null ) {
 			if( line.startsWith(">") ) {
@@ -2799,13 +2885,13 @@ public class GeneSet extends JApplet {
 						genelist = new ArrayList<Gene>();
 						genemap.put( strain, genelist );
 					}
-					genelist.add( new Gene(last, aa, "mool") );
+					genelist.add( new Gene(last, "mool") );
 				}
 				last = line+"\n";
-				aa = "";
-			} else {
+				//aa = "";
+			}/* else {
 				aa += line+"\n";
-			}
+			}*/
 			line = br.readLine();
 		}
 		String strain = last.split("_")[0].substring(1);
@@ -2816,7 +2902,7 @@ public class GeneSet extends JApplet {
 			genelist = new ArrayList<Gene>();
 			genemap.put( strain, genelist );
 		}
-		genelist.add( new Gene( last, aa, "moool" ) );
+		genelist.add( new Gene( last, "moool" ) );
 		br.close();
 		
 		for( String str : genemap.keySet() ) {
@@ -2841,15 +2927,15 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		while( line != null ) {
 			if( line.startsWith(">") ) {
-				if( last != null ) genelist.add( new Gene( last, aa, "mool" ) );
+				if( last != null ) genelist.add( new Gene( last, "mool" ) );
 				last = line+"\n";
-				aa = "";
-			} else {
+				//aa = "";
+			}/* else {
 				aa += line+"\n";
-			}
+			}*/
 			line = br.readLine();
 		}
-		genelist.add( new Gene( last, aa, "mool" ) );
+		genelist.add( new Gene( last, "mool" ) );
 		br.close();
 		
 		int k = 0;
@@ -2954,6 +3040,14 @@ public class GeneSet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
+		JFrame frame = new JFrame();
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		
+		frame.setSize(800, 600);
+		GeneSet gs = new GeneSet();
+		gs.init( frame );
+		frame.setVisible( true );
+		
 		//System.err.println( Runtime.getRuntime().availableProcessors() );
 		
 		/*try {
@@ -2961,7 +3055,7 @@ public class GeneSet extends JApplet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}*/
-		init( args );
+		//init( args );
 		
 		/*try {
 			//blastparse( "/home/sigmar/blastout/nilli.blastout" );
@@ -3758,9 +3852,9 @@ public class GeneSet extends JApplet {
 				} else if( columnIndex == 6 ) {
 					return gene.species == null ? -1 : gene.species.size();
 				} else if( columnIndex == 7 ) {
-					return gene.group == null ? -1 : gene.groupCoverage;
+					return gene.groupCoverage;
 				} else if( columnIndex == 8 ) {
-					return gene.group == null ? -1 : gene.groupGenCount;
+					return gene.groupGenCount;
 				} else if( columnIndex == 9 ) {
 					if( gene.species != null ) {
 						int val = 0;
@@ -4497,7 +4591,8 @@ public class GeneSet extends JApplet {
 							for( Tegeval tv : stv.tset ) {
 								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
 								for( int i = 0; i < tv.seq.length(); i+=70 ) {
-									textarea.append(tv.seq.substring( i, Math.min(i+70,tv.seq.length()) )+"\n");
+									int end = Math.min(i+70,tv.seq.length());
+									textarea.append( tv.seq.substring(i, end) ); //new String( tv.seq, i, Math.min(i+70,tv.seq.length()) )+"\n");
 								}
 								//textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" + tv.seq + "\n" );
 							}
@@ -4527,8 +4622,10 @@ public class GeneSet extends JApplet {
 							Teginfo stv = gg.species.get( sp );
 							for( Tegeval tv : stv.tset ) {
 								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
-								for( int i = 0; i < tv.dna.length(); i+=70 ) {
-									textarea.append(tv.dna.substring( i, Math.min(i+70,tv.dna.length()) )+"\n");
+								if( tv.dna != null ) {
+									for( int i = 0; i < tv.dna.length(); i+=70 ) {
+										textarea.append(tv.dna.substring( i, Math.min(i+70,tv.dna.length()) )+"\n");
+									}
 								}
 							}
 						}
@@ -4836,8 +4933,8 @@ public class GeneSet extends JApplet {
 		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		loci2aasequence( new InputStreamReader( is ) );
 		
-		is = GeneSet.class.getResourceAsStream("/all.nn");
-		loci2dnasequence( new InputStreamReader( is ) );
+		//is = GeneSet.class.getResourceAsStream("/all.nn");
+		//loci2dnasequence( new InputStreamReader( is ) );
 		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );
@@ -4854,6 +4951,11 @@ public class GeneSet extends JApplet {
 		//panCoreFromNRBlast( new FileReader("/home/sigmar/blastout/nr.blastout"), "/home/sigmar/workspace/distann/src/nr_short.blastout", refmap, allgenes, geneset, geneloc, poddur );
 		is = GeneSet.class.getResourceAsStream("/total_short.blastout");
 		panCoreFromNRBlast( new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur );
+		geneloc.clear();
+		locgene.clear();
+		allgenes.clear();
+		geneset.clear();
+		poddur.clear();
 		//Map<String,Gene>	refmap = new TreeMap<String,Gene>();
 		List<Gene>			genelist = new ArrayList<Gene>();
 		for( String genedesc : refmap.keySet() ) {
@@ -4862,7 +4964,7 @@ public class GeneSet extends JApplet {
 			gene.index = genelist.size();
 			genelist.add( gene );
 			
-			if( gene.species != null ) {
+			/*if( gene.species != null ) {
 				for( Set<String> ucluster : uclusterlist ) {
 					for( String str : gene.species.keySet() ) {
 						Teginfo stv = gene.species.get(str);
@@ -4876,11 +4978,12 @@ public class GeneSet extends JApplet {
 					}
 					if( gene.group != null ) break;
 				}
-			}
+			}*/
 		}
 		
 		int id = 0;
 		//Map<Set<String>,ClusterInfo>	clustInfoMap = new HashMap<Set<String>,ClusterInfo>();
+		
 		Collections.sort( uclusterlist, new Comparator<Set<String>>() {
 			@Override
 			public int compare(Set<String> o1, Set<String> o2) {
@@ -4935,6 +5038,9 @@ public class GeneSet extends JApplet {
 		is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
 		funcMappingUni( new InputStreamReader(is), unimap, null );
 		
+		unimap.clear();
+		genmap.clear();
+		
 		Map<String,Set<String>>	totalgo = new HashMap<String,Set<String>>();
 		for( Gene g : genelist ) {
 			if( g.funcentries != null ) {
@@ -4959,6 +5065,7 @@ public class GeneSet extends JApplet {
 			f.index = funclist.size();
 			funclist.add( f );
 		}
+		totalgo.clear();
 		
 		
 		/*is = GeneSet.class.getResourceAsStream("");
@@ -4986,6 +5093,9 @@ public class GeneSet extends JApplet {
 			}
 		}
 		
+		//aas.clear();
+		
+		//return new JComponent() {};
 		return showGeneTable( refmap, genelist, funcmap, funclist, iclusterlist, uclusterlist, specset, null );//clustInfoMap );
 	}
 	
@@ -5078,10 +5188,10 @@ public class GeneSet extends JApplet {
 		colorCodes[8] = new Color(180,180,255);
 	}
 	
-	public void init() {
+	public void init( Container comp ) {
 		setColors();
 		
-		final Window window = SwingUtilities.windowForComponent(this);
+		final Window window = SwingUtilities.windowForComponent(comp);
 		initFSKeyListener(window);
 		if (window instanceof JFrame) {
 			JFrame frame = (JFrame) window;
@@ -5092,10 +5202,16 @@ public class GeneSet extends JApplet {
 		}
 		
 		try {
-			this.add( newSoft() );
+			comp.add( newSoft() );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		System.gc();
+	}
+	
+	public void init() {
+		init( this );
 	}
 	
 	private static void blastAlign( Reader r, String main, String second ) {
