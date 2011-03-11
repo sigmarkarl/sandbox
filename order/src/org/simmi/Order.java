@@ -594,7 +594,7 @@ public class Order extends JApplet {
 		ResultSet 			rs = ps.executeQuery();
 
 		while (rs.next()) {
-			ordlist.add( new Vara( rs.getString("cat"), rs.getString("framl"), rs.getString("byrgir"), rs.getString("cat"), rs.getString("user"), rs.getString("lastjob"), rs.getString("lastloc"), rs.getString("lastunit"), rs.getDouble("price") ) );
+			ordlist.add( new Vara( rs.getString("name"), rs.getString("framl"), rs.getString("byrgir"), rs.getString("cat"), rs.getString("user"), rs.getString("lastjob"), rs.getString("lastloc"), rs.getString("lastunit"), rs.getDouble("price") ) );
 		}
 		
 		rs.close();
@@ -690,8 +690,8 @@ public class Order extends JApplet {
 	}
 	
 	public void connect() throws SQLException {
-		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
-		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
+		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 		con = DriverManager.getConnection(connectionUrl);
 	}
 	
@@ -1134,12 +1134,13 @@ public class Order extends JApplet {
 			int rr = table.convertRowIndexToModel(r);
 			if( rr != -1 ) {
 				Vara v = ordlist.get( rr );
-				
-				if( v._User.equals("user") || userCheck() ) {
+				if( v._User.equals(user) || userCheck() ) {
 					//String cat = (String)model.getValueAt(rr, 3);
 					try {
 						delItem( v );
 						vars.add( v );
+						System.err.println( "removing "+v.e_Nafn );
+						modelRowMap.remove( v.e_Cat );
 						//combo.removeItem( v.Framleiðandi );
 						//pcombo.removeItem( v.Birgi );
 					} catch (SQLException e1) {
@@ -1823,7 +1824,7 @@ public class Order extends JApplet {
 		}
 		
 		for( int r = 0; r < model.getRowCount(); r++ ) {
-			modelRowMap.put( (String)model.getValueAt(r, 0), r );
+			modelRowMap.put( (String)model.getValueAt(r, 3), r );
 		}
 		
 		rtable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
@@ -1882,13 +1883,13 @@ public class Order extends JApplet {
 					}
 					
 					String name = (String)ptable.getValueAt(r, 4);
-					String vara = (String)ptable.getValueAt(r, 3);
+					String vara = (String)ptable.getValueAt(r, 2);
 					
 					if( vara != null && modelRowMap.containsKey( vara ) ) {
 						int nr = modelRowMap.get( vara );
 						if( nr != -1 ) {
 							nr = table.convertRowIndexToView( nr );
-							if( nr >= 0 && nr <= table.getRowCount() ) {
+							if( nr >= 0 && nr < table.getRowCount() ) {
 								table.setRowSelectionInterval( nr, nr );
 								table.scrollRectToVisible( table.getCellRect(nr, 0, false) );
 							} else {
@@ -2477,7 +2478,7 @@ public class Order extends JApplet {
 		Vara v = queryVara();
 		
 		if( v != null ) {
-			String ord = "'"+v.e_Nafn+"','"+v.e_Framleiðandi+"','"+v.e_Birgi+"','"+v.e_Cat+"','"+v._User+"',null,null,0.0";
+			String ord = "'"+v.e_Nafn+"','"+v.e_Framleiðandi+"','"+v.e_Birgi+"','"+v.e_Cat+"','"+v._User+"',null,null,0.0,null";
 			String sql = "insert into [order].[dbo].[Vara] values ("+ord+")";
 			
 			PreparedStatement 	ps = this.getPrepStat(sql);
@@ -2508,7 +2509,7 @@ public class Order extends JApplet {
 				}
 				
 				int mr = model.getRowCount()-1;
-				modelRowMap.put( (String)model.getValueAt( mr, 0), mr );
+				modelRowMap.put( (String)model.getValueAt( mr, 3 ), mr );
 				
 				myVars.add( v.e_Nafn );
 				table.tableChanged( new TableModelEvent(model) );
