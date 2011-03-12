@@ -293,7 +293,7 @@ public class GeneSet extends JApplet {
 		return aas.get( query );
 	}
 	
-	private static void panCoreFromNRBlast( Reader rd, String outfile, Map<String,Gene>  ret, Map<String,String> allgenes, Map<String,Set<String>> geneset, Map<String,Set<String>> geneloc, Map<String,String> locgene, Set<String> poddur ) throws IOException {
+	private static void panCoreFromNRBlast( Reader rd, String outfile, Map<String,Gene>  ret, Map<String,String> allgenes, Map<String,Set<String>> geneset, Map<String,Set<String>> geneloc, Map<String,Gene> locgene, Set<String> poddur ) throws IOException {
 		FileWriter fw = null;
 		if( outfile != null ) fw = new FileWriter( outfile );
 		
@@ -503,7 +503,7 @@ public class GeneSet extends JApplet {
 				//locset.add( swapmap.get(name)+"_"+query + " " + evalue );
 				locset.add( query + " " + evalue );
 				
-				locgene.put( query, val );
+				locgene.put( query, gene );
 				
 				query = null;
 				if( fw != null ) {
@@ -601,7 +601,7 @@ public class GeneSet extends JApplet {
 		Map<String,String>		allgenes = new HashMap<String,String>();
 		Map<String,Set<String>>	geneset = new HashMap<String,Set<String>>();
 		Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
-		Map<String,String>		locgene = new HashMap<String,String>();
+		Map<String,Gene>		locgene = new HashMap<String,Gene>();
 		
 		PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
 		System.setOut( ps );
@@ -2865,6 +2865,8 @@ public class GeneSet extends JApplet {
 		int								groupGenCount;
 		int								groupCoverage;
 		int								groupIdx;
+		
+		double							proximityGroupPreservation;
 	};
 	
 	public static void splitGenes( String dir, String filename ) throws IOException {
@@ -3755,7 +3757,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 29;
+				return 30;
 			}
 
 			@Override
@@ -3779,44 +3781,46 @@ public class GeneSet extends JApplet {
 				} else if( columnIndex == 8 ) {
 					return "Group size";
 				} else if( columnIndex == 9 ) {
-					return "# of locus";
+					return "Locprev";
 				} else if( columnIndex == 10 ) {
-					return "max length";
+					return "# of locus";
 				} else if( columnIndex == 11 ) {
-					return "sharing number";
+					return "max length";
 				} else if( columnIndex == 12 ) {
-					return "# Cyc";
+					return "sharing number";
 				} else if( columnIndex == 13 ) {
-					return "T.HB8";
+					return "# Cyc";
 				} else if( columnIndex == 14 ) {
-					return "T.HB27";
+					return "T.HB8";
 				} else if( columnIndex == 15 ) {
-					return "T.SA01";
+					return "T.HB27";
 				} else if( columnIndex == 16 ) {
-					return "T.aqua";
+					return "T.SA01";
 				} else if( columnIndex == 17 ) {
-					return "T.eggert";
+					return "T.aqua";
 				} else if( columnIndex == 18 ) {
-					return "T.island";
+					return "T.eggert";
 				} else if( columnIndex == 19 ) {
-					return "T.antan";
+					return "T.island";
 				} else if( columnIndex == 20 ) {
-					return "T.scoto346";
+					return "T.antan";
 				} else if( columnIndex == 21 ) {
-					return "T.scoto1572";
+					return "T.scoto346";
 				} else if( columnIndex == 22 ) {
-					return "T.scoto252";
+					return "T.scoto1572";
 				} else if( columnIndex == 23 ) {
-					return "T.scoto2101";
+					return "T.scoto252";
 				} else if( columnIndex == 24 ) {
-					return "T.scoto2127";
+					return "T.scoto2101";
 				} else if( columnIndex == 25 ) {
-					return "T.scoto4063";
+					return "T.scoto2127";
 				} else if( columnIndex == 26 ) {
-					return "T.oshimai";
+					return "T.scoto4063";
 				} else if( columnIndex == 27 ) {
-					return "T.brockianus";
+					return "T.oshimai";
 				} else if( columnIndex == 28 ) {
+					return "T.brockianus";
+				} else if( columnIndex == 29 ) {
 					return "T.filiformis";
 				}
 				return "";
@@ -3824,8 +3828,9 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex >= 6 && columnIndex <= 12 ) return Integer.class;
-				else if( columnIndex >= 13 ) return Teginfo.class;
+				if( columnIndex == 9 ) return Double.class;
+				else if( columnIndex >= 6 && columnIndex <= 13 ) return Integer.class;
+				else if( columnIndex >= 14 ) return Teginfo.class;
 				return String.class;
 			}
 
@@ -3856,6 +3861,8 @@ public class GeneSet extends JApplet {
 				} else if( columnIndex == 8 ) {
 					return gene.groupGenCount;
 				} else if( columnIndex == 9 ) {
+					return gene.proximityGroupPreservation;
+				} else if( columnIndex == 10 ) {
 					if( gene.species != null ) {
 						int val = 0;
 						for( String str : gene.species.keySet() ) {
@@ -3863,22 +3870,22 @@ public class GeneSet extends JApplet {
 						}
 						return val;
 					}
-				} else if( columnIndex == 10 ) {
+				} else if( columnIndex == 11 ) {
 					if( gene.species != null ) {
 						int max = 0;
 						for( String str : gene.species.keySet() ) {
 							Teginfo	set = gene.species.get(str);
 							for( Tegeval tv : set.tset ) {
-								max = Math.max(max,tv.seq.length());
+								if( tv.seq != null ) max = Math.max(max,tv.seq.length());
 							}
 						}
 						return max;
 					}
-				} else if( columnIndex == 11 ) {
+				} else if( columnIndex == 12 ) {
 					if( gene.species != null ) {
 						return specset.get(gene.species.keySet());
 					}
-				} else if( columnIndex == 12 ) {
+				} else if( columnIndex == 13 ) {
 					if( gene.species != null ) {
 						int max = 0;
 						for( String str : gene.species.keySet() ) {
@@ -3891,100 +3898,100 @@ public class GeneSet extends JApplet {
 					}
 					return 0;
 				}
-				else if( columnIndex == 13 ) {
+				else if( columnIndex == 14 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.tHB8join");
 						return set;
 					}
-				} else if( columnIndex == 14 ) {
+				} else if( columnIndex == 15 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.tHB27join");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttHB27join").iterator().next();
-				} else if( columnIndex == 15 ) {
+				} else if( columnIndex == 16 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scotoSA01");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
-				} else if( columnIndex == 16 ) {
+				} else if( columnIndex == 17 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.aqua");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
-				} else if( columnIndex == 17 ) {
+				} else if( columnIndex == 18 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.eggertsoni");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("eggertsoni2789").iterator().next();
-				} else if( columnIndex == 18 ) {
+				} else if( columnIndex == 19 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.islandicus");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("islandicus180610").iterator().next();
-				} else if( columnIndex == 19 ) {
+				} else if( columnIndex == 20 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.antranikiani");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("antag2120").iterator().next();
-				} else if( columnIndex == 20 ) {
+				} else if( columnIndex == 21 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto346");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto346").iterator().next();
-				} else if( columnIndex == 21 ) {
+				} else if( columnIndex == 22 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto1572");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto1572").iterator().next();
-				} else if( columnIndex == 22 ) {
+				} else if( columnIndex == 23 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto252");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto252").iterator().next();
-				} else if( columnIndex == 23 ) {
+				} else if( columnIndex == 24 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto2101");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto2101").iterator().next();
-				} else if( columnIndex == 24 ) {
+				} else if( columnIndex == 25 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto2127");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto2127").iterator().next();
-				} else if( columnIndex == 25 ) {
+				} else if( columnIndex == 26 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto4063");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto4063").iterator().next();
-				} else if( columnIndex == 26 ) {
+				} else if( columnIndex == 27 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.oshimai");
 						return set;
 					}
-				} else if( columnIndex == 27 ) {
+				} else if( columnIndex == 28 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.brockianus");
 						return set;
 					}
-				} else if( columnIndex == 28 ) {
+				} else if( columnIndex == 29 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.filiformis");
 						return set;
 					}
 				}
-				return columnIndex >= 8 ? null : "";
+				return columnIndex >= 9 ? null : "";
 			}
 
 			@Override
@@ -4592,7 +4599,7 @@ public class GeneSet extends JApplet {
 								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
 								for( int i = 0; i < tv.seq.length(); i+=70 ) {
 									int end = Math.min(i+70,tv.seq.length());
-									textarea.append( tv.seq.substring(i, end) ); //new String( tv.seq, i, Math.min(i+70,tv.seq.length()) )+"\n");
+									textarea.append( tv.seq.substring(i, end)+"\n" ); //new String( tv.seq, i, Math.min(i+70,tv.seq.length()) )+"\n");
 								}
 								//textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" + tv.seq + "\n" );
 							}
@@ -4947,12 +4954,11 @@ public class GeneSet extends JApplet {
 		Map<String,Set<String>>	geneset = new HashMap<String,Set<String>>();
 		Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
 		Set<String>				poddur = new HashSet<String>();
-		Map<String,String>		locgene = new HashMap<String,String>();
+		Map<String,Gene>		locgene = new HashMap<String,Gene>();
 		//panCoreFromNRBlast( new FileReader("/home/sigmar/blastout/nr.blastout"), "/home/sigmar/workspace/distann/src/nr_short.blastout", refmap, allgenes, geneset, geneloc, poddur );
 		is = GeneSet.class.getResourceAsStream("/total_short.blastout");
 		panCoreFromNRBlast( new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur );
 		geneloc.clear();
-		locgene.clear();
 		allgenes.clear();
 		geneset.clear();
 		poddur.clear();
@@ -4991,6 +4997,7 @@ public class GeneSet extends JApplet {
 			}
 		});
 		
+		int i = 0;
 		Set<String>	ss = new HashSet<String>();
 		Set<String>	gs = new HashSet<String>();
 		for( Set<String> cluster : uclusterlist ) {			
@@ -5001,25 +5008,68 @@ public class GeneSet extends JApplet {
 			for( String cont : cluster ) {
 				String[] split = cont.split("_");
 				ss.add(split[0]);
-				gs.add(locgene.get(cont));
+				Gene g = locgene.get(cont);
 				
-				String refid = locgene.get(cont);
-				Gene g = refmap.get( refid );
 				if( g != null ) {
+					gs.add( g.refid );
 					gset.add( g );
-				} else {
-					System.err.println( refid );
-				}
+				}/* else {
+					System.err.println( g.refid );
+				}*/
 			}
 			
 			for( Gene g : gset ) {
+				g.groupIdx = i;
 				g.groupCoverage = ss.size();
 				g.groupGenCount = gs.size();
 			}
 			
+			i++;
+			
 			//ClusterInfo cInfo = new ClusterInfo(id++,ss.size(),gs.size());
 			//clustInfoMap.put( cluster, cInfo);
 		}
+		
+		for( Gene gg : genelist ) {
+			if( gg.species != null ) {
+				Set<String>	ct = new HashSet<String>();
+				for( String sp : gg.species.keySet() ) {
+					Teginfo stv = gg.species.get( sp );
+					for( Tegeval tv : stv.tset ) {
+						ct.add( tv.cont );
+						int ind = tv.cont.lastIndexOf("_");
+						int val = Integer.parseInt( tv.cont.substring(ind+1) );
+						
+						String next = tv.cont.substring(0, ind+1)+(val+1);
+						ct.add( next );
+						if( val > 1 ) {
+							String prev = tv.cont.substring(0, ind+1)+(val-1);
+							ct.add( prev );
+						}
+					}
+				}
+				
+				Set<Integer>	groupIdxSet = new HashSet<Integer>();
+				for( String cont : ct ) {
+					Gene g = locgene.get(cont);
+					if( g != null && g.species != null ) {
+						for( String sp : g.species.keySet() ) {
+							Teginfo stv = g.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
+								if( ct.contains(tv.cont) ) {
+									groupIdxSet.add( g.groupIdx );
+									//if( remove ) genefilterset.remove( g.index );
+									//else genefilterset.add( g.index );
+									//break;
+								}
+							}
+						}
+					}
+				}
+				gg.proximityGroupPreservation = Math.ceil(groupIdxSet.size()/2.0);
+			}
+		}
+		locgene.clear();
 			
 		//genemap = idMapping( "/home/sigmar/blastout/nilli.blastout", "/mnt/tmp/gene2refseq.txt", "/home/sigmar/idmapping_short2.dat", 5, 1, genemap );
 		//genemap = idMapping( "/home/sigmar/blastout/nilli.blastout", "/home/sigmar/thermus/newthermus/idmapping.dat", "/home/sigmar/idmapping_short.dat", 2, 0, genemap );
