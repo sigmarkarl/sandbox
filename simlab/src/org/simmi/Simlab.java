@@ -27,6 +27,11 @@ import java.io.PipedReader;
 import java.io.PipedWriter;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -81,7 +86,6 @@ import org.apache.sshd.ClientChannel;
 import org.apache.sshd.ClientSession;
 import org.apache.sshd.SshClient;
 import org.apache.sshd.client.channel.ChannelExec;
-import org.apache.sshd.common.util.NoCloseOutputStream;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
 import org.simmi.Simlab.simlab.ByValue;
@@ -217,6 +221,8 @@ public class Simlab implements ScriptEngineFactory {
 	public native int transmem(simlab.ByValue m, simlab.ByValue vc);
 
 	public native int trans(simlab.ByValue val, simlab.ByValue val2);
+	
+	public native int transirr(simlab.ByValue ret, simlab.ByValue cl, simlab.ByValue cl2);
 
 	public native int conv(simlab.ByValue convee, simlab.ByValue chunk, simlab.ByValue c_chunk);
 
@@ -755,6 +761,28 @@ public class Simlab implements ScriptEngineFactory {
 		return 4;
 	}
 	
+	@mann(name="transirr: transpose of data with irregular sized elements")
+	public int transirr( @pann(name="vByteSizeOfElements") final simlab.ByValue cl, @pann(name="iNumberOfColumns") final simlab.ByValue cl2 ) {
+		long p = allocateDirect( bytelength( data.type, (int)data.length ) );
+		final simlab.ByValue ret = new simlab.ByValue( data.length, data.type, p );
+		
+		crnt( data );
+		transirr( ret, cl, cl2 );
+		
+		data.buffer = ret.buffer;
+		data.length = ret.length;
+		data.type = ret.type;
+		
+		return 2;
+	}
+	
+	@mann(name="transirr: transpose of data with irregular sized columns")
+	public int transirr( @pann(name="vByteSizeOfColumns") final simlab.ByValue cl ) {
+		transirr( cl, null );
+		
+		return 1;
+	}
+	
 	private long _gcd( long a, long b ) {
 		if( b == 0 ) return a;
 		else return _gcd( b, a%b );
@@ -1059,7 +1087,7 @@ public class Simlab implements ScriptEngineFactory {
 		return 1;
 	}
 
-	public int trans(final simlab.ByValue v) {
+	public int trans( @pann(name="iNumberOfColumns [negative value for inverse transpose]") final simlab.ByValue v) {
 		crnt(data);
 		trans(v, nulldata);
 		data = getdata();
@@ -1335,7 +1363,8 @@ public class Simlab implements ScriptEngineFactory {
 		return 1 + timer.length;
 	}
 
-	public int image(final simlab.ByValue ww, final simlab.ByValue... timer) {
+	@mann(name="image: shows image in a window, optionally with a timer function")
+	public int image( @pann(name="vDimensions") final simlab.ByValue ww, @pann(name="[optional] fTimer, iInterval") final simlab.ByValue ... timer) {
 		final String name = "";// sl.getTheString();
 		
 		final long w;
@@ -1349,6 +1378,7 @@ public class Simlab implements ScriptEngineFactory {
 			h = (long)db.get(1);
 		}
 		final long t = w*h;
+		//BufferedImage.type
 		final BufferedImage bi = new BufferedImage((int) w, (int) h, BufferedImage.TYPE_INT_RGB);
 		// final Pointer ptr = data.getPointer();
 		final simlab.ByValue slptr = data.clone();
@@ -2042,13 +2072,23 @@ public class Simlab implements ScriptEngineFactory {
 					System.out.println(bb.getInt(k * bl));
 				}
 			} else if (data.type == UBYTELEN || data.type == BYTELEN) {
-				String str = data.getTheString();
-				for (int i = 0; i < data.length; i += chunk) {
-					int k = i;
-					for (; k < Math.min(data.length, i + chunk) - 1; k++) {
-						System.out.print( str.charAt(k) );
+				if( data.type == UBYTELEN ) {
+					for (int i = 0; i < data.length; i += chunk) {
+						int k = i;
+						for (; k < Math.min(data.length, i + chunk) - 1; k++) {
+							System.out.print( (int)bb.get(k) + "\t" );
+						}
+						System.out.println( (int)bb.get(k) );
 					}
-					System.out.println( str.charAt(k) );
+				} else {
+					String str = data.getTheString();
+					for (int i = 0; i < data.length; i += chunk) {
+						int k = i;
+						for (; k < Math.min(data.length, i + chunk) - 1; k++) {
+							System.out.print( str.charAt(k) );
+						}
+						System.out.println( str.charAt(k) );
+					}
 				}
 				/*
 				 * if( chunk == 0 ) { System.out.println( new
@@ -2357,6 +2397,55 @@ public class Simlab implements ScriptEngineFactory {
 	public int cmd(final simlab.ByValue sl) {
 		String s = sl.getTheString();
 		return command(s);
+	}
+	
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface pann {
+	    public String name();
+	}
+	
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.METHOD)
+	public @interface mann {
+	    public String name();
+	}
+	
+	/**
+	 * 
+	 * @param f
+	 * @return
+	 */
+	@mann(name="usage: prints usage information for a method")
+	public int usage( @pann(name="strMethodName") final simlab.ByValue f ) {
+		String fstr = f.getTheString();
+		Method[] mm = Simlab.this.getClass().getMethods();
+		for( Method m : mm ) {
+			if( m.getName().equals(fstr) ) {
+				mann ma = m.getAnnotation( mann.class );
+				if( ma != null ) {
+					System.out.println(ma.name());
+				
+					Annotation[][] aaa = m.getParameterAnnotations();
+					System.out.print("Usage: "+fstr);
+					if( aaa.length > 0 ) System.out.print("(");
+					boolean first = true;
+					for( Annotation[] aa : aaa ) {
+						for( Annotation a : aa ) {
+							if( a instanceof pann ) {
+								if( first ) {
+									System.out.print( " "+((pann)a).name() );
+									first = false;
+								} else System.out.print( ", "+((pann)a).name() );
+							}
+						}
+					}
+					if( aaa.length > 0 ) System.out.println(" )");
+				}
+			}
+		}
+		
+		return 1;
 	}
 	
 	private void runMethod( Method m, List<simlab.ByValue> olist ) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
