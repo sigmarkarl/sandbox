@@ -1327,7 +1327,6 @@ template <typename T> void t_transold( T* buffer, int length, int c, int r ) {
 }
 
 template <typename T, typename K> void t_trans( T buffer, int length, int c, int r ) {
-	int dim = 0;
 	int len = c*r;
 
 	double m = len-1;
@@ -1371,23 +1370,27 @@ template <typename T, typename K> void t_trans( T buffer, int length, int c, int
 					k = fmod( (k*r), m );
 				}
 				if( k == l ) {
-					T buf = buffer;
-					while( dim*len < length ) {
-						K	to = buf[(int)l];
+					int dim = 0;
+					int dlen = dim*len;
+					while( dlen < length-len+1 ) {
+						//T buf = &buffer[dlen];
+
+						K	to = buffer[(int)l+dlen];
 						k = fmod( (l*r), m );
-						K	ti = buf[(int)k];
+						K	ti = buffer[(int)k+dlen];
 
 						while( k != l ) {
-							buf[(int)k] = to;
+							buffer[(int)k+dlen] = to;
 							to = ti;
 							k = fmod( (k*r), m );
-							ti = buf[(int)k];
-							i++;
+							ti = buffer[(int)k+dlen];
+							if( dim == 0 ) i++;
 						}
-						buf[(int)k] = to;
+						buffer[(int)k+dlen] = to;
 						//heyheyho
 						//buf += len;
 						dim++;
+						dlen = dim*len;
 					}
 					i++;
 				}
@@ -4814,6 +4817,66 @@ JNIEXPORT int transold( simlab cl, simlab rl ) {
 	else if( data.type == 7 ) t_transbits<unsigned long long>( *(unsigned char**)&data.buffer, data.length, data.type, 7, c, r );
 
 	return current;
+}
+
+JNIEXPORT int transirr( simlab ret, simlab cl, simlab cl2 ) {
+	int bl = bytelength( data.type, data.length );
+	double* d = (double*)cl.buffer;
+	long long dst = ret.buffer;
+	long long src = data.buffer;
+
+	if( cl2.buffer == 0 ) {
+		int c = cl.length;
+		double sum = d[c-1];
+		/*for( int i = 0; i < l; i++ ) {
+			sum += d[i];
+		}*/
+		int r = bl/sum;
+		int l = c*r;
+		int tot = 0;
+		for( int i = 0; i < l; i++ ) {
+			int cc = i%c;
+			int rr = i/c;
+			int ml = d[cc]-tot+sum*rr;
+			void* dest = (void*)(dst+(cc == 0 ? 0 : (int)d[cc-1]*r)+ml*rr);
+			void* source = (void*)(src+tot);
+			memcpy( dest, source, ml );
+			tot += ml;
+		}
+	} else {
+		int c = cl2.buffer;
+		int l = cl.length;
+		int r = l/c;
+
+		printf( "%d %d %d\n", l, c, r );
+
+		int tbl = bytelength( cl.type, l );
+		double* t = (double*)realloc( NULL, tbl );
+		memcpy( t, d, tbl );
+		t_diff<double>( t, l, l );
+		t_trans<double*,double>( t, l, c, r );
+		t_integ<double>( t, l, l );
+
+		printf( "%f %f %f %f %f %f\n", (float)t[0], (float)t[1], (float)t[2], (float)t[3], (float)t[4], (float)t[5] );
+		printf( "%f %f %f %f %f %f\n", (float)d[0], (float)d[1], (float)d[2], (float)d[3], (float)d[4], (float)d[5] );
+
+		int elsize = data.type/8;
+		for( int i = 0; i < l; i++ ) {
+			int cc = i%c;
+			int rr = i/c;
+			int ml = i > 0 ? d[i]-d[i-1] : d[i-1];
+
+			int k = cc*r+rr;
+			void* dest = (void*)(dst+(k > 0 ? (int)t[k-1]*elsize : 0));
+			void* source = (void*)(src+(i > 0 ? (int)d[i-1]*elsize : 0));
+			memcpy( dest, source, ml*elsize );
+
+			//tot += ml;
+		}
+		free(t);
+	}
+
+	return 3;
 }
 
 JNIEXPORT int transmem( simlab mem, simlab cl ) {
