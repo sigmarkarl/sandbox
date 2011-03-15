@@ -1224,6 +1224,26 @@ template <typename T> void t_invidx( T* buffer, int length  ) {
 	}
 }
 
+template<typename T> void t_invidx( c_simlab<T> buffer, int length ) {
+	for( int i = 0; i < length; i++ ) {
+		int v = (int)buffer[i];
+		while( v > i ) {
+			v = (int)buffer[v];
+		}
+		if( v == i ) {
+			int oi = i;
+			v = (int)buffer[i];
+			while( v > i ) {
+				int tmp = (int)buffer[v];
+				buffer[ v ] = (T)oi;
+				oi = v;
+				v = (int)tmp;
+			}
+			buffer[ v ] = (T)oi;
+		}
+	}
+}
+
 template <typename T> void t_transidx( T* buffer, int length, int c, int r ) {
 	int dim = 1;
 	int len = c*r;
@@ -2122,7 +2142,7 @@ template <typename T> void t_sum( T* buffer, int length, int chunk, int size, T*
 	//data.length = retlen;
 }
 
-template <typename T> void t_diff( T* buffer, int length, int clen ) {
+template <typename T> void t_diff( T buffer, int length, int clen ) {
 	for( int k = 0; k < length; k+=clen ) {
 		for( int i = k+clen-1; i > k; i-- ) {
 			buffer[i] -= buffer[i-1];
@@ -2130,7 +2150,7 @@ template <typename T> void t_diff( T* buffer, int length, int clen ) {
 	}
 }
 
-template <typename T> void t_integ( T* buffer, int length, int clen ) {
+template <typename T> void t_integ( T buffer, int length, int clen ) {
 	for( int k = 0; k < length; k+=clen ) {
 		for( int i = k+1; i < k+clen; i++ ) {
 			buffer[i] += buffer[i-1];
@@ -3870,7 +3890,7 @@ JNIEXPORT int diff( simlab chunk ) {
 	if( memcmp( &chunk, &nulldata, sizeof(simlab) ) == 0 ) clen = data.length;
 	else clen = chunk.buffer;
 
-	if( data.type == 66 ) t_diff( (double*)data.buffer, data.length, clen );
+	if( data.type == 66 ) t_diff<double*>( (double*)data.buffer, data.length, clen );
 	else if( data.type == 65 ) t_diff( (long long*)data.buffer, data.length, clen );
 	else if( data.type == 64 ) t_diff( (unsigned long long*)data.buffer, data.length, clen );
 	else if( data.type == 34 ) t_diff( (float*)data.buffer, data.length, clen );
@@ -3881,8 +3901,20 @@ JNIEXPORT int diff( simlab chunk ) {
 
 	return 1;
 }
+//typedef std::vector<double> v1d;
+//typedef std::sin (double (*dmove)(double));
+//typedef (void t_diff( double*, int, int )) d_diff;
+//t_diff<double*>
+
+void (*d_diff)(double*,int,int) = t_diff<double*>;
+void (*d_integ)(double*,int,int) = t_integ<double*>;
+//d_diff = t_diff<double*>;
+//d_integ(t_integ<double*>)
+//d_invidx(t_invidx<double*>)
 
 JNIEXPORT int integ( simlab chunk ) {
+	//d_diff = t_diff<double*>;
+
 	int clen = 0;
 	if( memcmp( &chunk, &nulldata, sizeof(simlab) ) == 0 ) clen = data.length;
 	else clen = chunk.buffer;
@@ -4728,12 +4760,16 @@ JNIEXPORT int permute( simlab sl_c, simlab sl_start ) {
 }
 
 JNIEXPORT int invidx() {
-	if( data.type == 66 ) t_invidx( (double*)data.buffer, data.length );
-	else if( data.type == 65 ) t_invidx( (long long*)data.buffer, data.length );
-	else if( data.type == 64 ) t_invidx( (unsigned long long*)data.buffer, data.length );
-	else if( data.type == 34 ) t_invidx( (float*)data.buffer, data.length );
-	else if( data.type == 33 ) t_invidx( (int*)data.buffer, data.length );
-	else if( data.type == 32 ) t_invidx( (unsigned int*)data.buffer, data.length );
+	if( data.type < 0 ) {
+		if( data.type == -66 ) t_invidx( *(c_simlab<double&>*)data.buffer, data.length );
+	} else {
+		if( data.type == 66 ) t_invidx( (double*)data.buffer, data.length );
+		else if( data.type == 65 ) t_invidx( (long long*)data.buffer, data.length );
+		else if( data.type == 64 ) t_invidx( (unsigned long long*)data.buffer, data.length );
+		else if( data.type == 34 ) t_invidx( (float*)data.buffer, data.length );
+		else if( data.type == 33 ) t_invidx( (int*)data.buffer, data.length );
+		else if( data.type == 32 ) t_invidx( (unsigned int*)data.buffer, data.length );
+	}
 
 	return 0;
 }
@@ -4853,9 +4889,9 @@ JNIEXPORT int transirr( simlab ret, simlab cl, simlab cl2 ) {
 		int tbl = bytelength( cl.type, l );
 		double* t = (double*)realloc( NULL, tbl );
 		memcpy( t, d, tbl );
-		t_diff<double>( t, l, l );
+		t_diff( t, l, l );
 		t_trans<double*,double>( t, l, c, r );
-		t_integ<double>( t, l, l );
+		t_integ( t, l, l );
 
 		printf( "%f %f %f %f %f %f\n", (float)t[0], (float)t[1], (float)t[2], (float)t[3], (float)t[4], (float)t[5] );
 		printf( "%f %f %f %f %f %f\n", (float)d[0], (float)d[1], (float)d[2], (float)d[3], (float)d[4], (float)d[5] );
