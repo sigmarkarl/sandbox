@@ -6,6 +6,7 @@
  */
 
 #include "simlab.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -13,6 +14,10 @@
 extern simlab 	data;
 extern c_const<int>		iconst;
 extern c_const<float>	fconst;
+
+//extern void (*d_reorder)( double* buffer, int length );
+extern void (*d_diff)( double* buffer, int length, int clen );
+extern void (*d_integ)( double* buffer, int length, int clen );
 
 int g_i = 0;
 unsigned int g_ui = 0;
@@ -92,6 +97,110 @@ template <typename T, typename K> void t_set( T buffer, long length, K value, lo
 
 	for( long i = 0; i < len; i++ ) {
 		buffer[i] = value[i];
+	}
+}
+
+template <typename T, typename K, typename U> void t_arrange( T buffer, long length, K value, long vallen ) {
+	int i = 0;
+	int l = 0;
+
+	if( length == vallen ) {
+		while( i < vallen && l < vallen ) {
+			int k = value[l];
+			while( k > l ) {
+				k = value[k];
+			}
+			if( k == l ) {
+				U	to = buffer[(int)l];
+				int k = value[l];
+				U	ti = buffer[(int)k];
+				int n = l;
+
+				while( k != l ) {
+					buffer[(int)n] = ti;
+					//ti = to;
+					n = k;
+					k = value[k];
+					ti = buffer[(int)k];
+					i++;
+				}
+				buffer[(int)n] = to;
+				i++;
+			}
+			l++;
+		}
+	} else {
+		while( i < vallen && l < vallen ) {
+			int k = value[l];
+			while( k > l ) {
+				k = value[k];
+			}
+			if( k == l ) {
+				U	to = buffer[(int)l];
+				k = value[l];
+				U	ti = buffer[(int)k];
+				int n = l;
+
+				while( k != l ) {
+					buffer[(int)n] = ti;
+					n = k;
+					k = value[k];
+					ti = buffer[(int)k];
+					i++;
+				}
+				buffer[(int)k] = to;
+
+				for( int u = vallen; u < length; u+=vallen ) {
+					U	to = buffer[(int)l+u];
+					k = value[l];
+					U	ti = buffer[(int)k+u];
+
+					while( k != l ) {
+						buffer[(int)k+u] = to;
+						to = ti;
+						k = value[k];
+						ti = buffer[(int)k+u];
+					}
+					buffer[(int)k+u] = to;
+				}
+
+				i++;
+			}
+			l++;
+		}
+
+		/*while( i < m-2 && l < m ) {
+			double k = fmod( (l*r), m );
+			double t = fmod( (l*c), m );
+			if( k > l && t > l ) {
+				k = fmod( (k*r), m );
+				while( k > l ) {
+					k = fmod( (k*r), m );
+				}
+				if( k == l ) {
+					T buf = buffer;
+					while( dim*len < length ) {
+						K	to = buf[(int)l];
+						k = fmod( (l*r), m );
+						K	ti = buf[(int)k];
+
+						while( k != l ) {
+							buf[(int)k] = to;
+							to = ti;
+							k = fmod( (k*r), m );
+							ti = buf[(int)k];
+							i++;
+						}
+						buf[(int)k] = to;
+						//heyheyho
+						//buf += len;
+						dim++;
+					}
+					i++;
+				}
+			}
+			l++;
+		}*/
 	}
 }
 
@@ -262,6 +371,13 @@ template <typename T, typename K> class c_copy {
 public:
 	c_copy( T tbuf, int tlen, K kbuf, int klen ) {
 		t_copy<T,K>( tbuf, tlen, kbuf, klen );
+	}
+};
+
+template <typename T, typename K, typename U> class c_arrange {
+public:
+	c_arrange( T tbuf, int tlen, K kbuf, int klen ) {
+		t_arrange<T,K,U>( tbuf, tlen, kbuf, klen );
 	}
 };
 
@@ -544,6 +660,90 @@ template<template<typename T, typename K> class c_func> void iarith( simlab & va
 	}
 }
 
+JNIEXPORT int irrange( simlab ret, simlab ord, simlab elen ) {
+	double* d = (double*)elen.buffer;
+	double* o = (double*)ord.buffer;
+	long long dst = ret.buffer;
+	long long src = data.buffer;
+
+	int l = elen.length;
+	int tbl = bytelength( elen.type, l );
+
+	double* t = (double*)realloc( NULL, tbl );
+	memcpy( t, d, tbl );
+	d_diff( t, l, l );
+	t_arrange<double*,double*,double>( t, (long)l, o, (long)ord.length );
+	d_integ( t, l, l );
+
+	int elsize = data.type/8;
+	for( int i = 0; i < l; i++ ) {
+		int ml = i > 0 ? d[i]-d[i-1] : d[i];
+
+		int k = o[i];
+
+		int dadd = (k > 0 ? (int)t[k-1] : 0);
+		int sadd = (i > 0 ? (int)d[i-1] : 0);
+		void* dest = (void*)(dst+dadd*elsize);
+		void* source = (void*)(src+sadd*elsize);
+		memcpy( dest, source, ml*elsize );
+
+		printf( "%d %d %d\n", ml, dadd, sadd );
+	}
+	free(t);
+
+	return 3;
+}
+
+JNIEXPORT int ordir( simlab ret, simlab ord, simlab elen ) {
+	//int bl = bytelength( data.type, data.length );
+	double* d = (double*)elen.buffer;
+	double* o = (double*)ord.buffer;
+	long long dst = ret.buffer;
+	long long src = data.buffer;
+
+	/*if( ord.length == 0 ) {
+		int c = cl.length;
+		double sum = d[c-1];
+		/*for( int i = 0; i < l; i++ ) {
+			sum += d[i];
+		}*
+		int r = bl/sum;
+		int l = c*r;
+		int tot = 0;
+		for( int i = 0; i < l; i++ ) {
+			int cc = i%c;
+			int rr = i/c;
+			int ml = d[cc]-tot+sum*rr;
+			void* dest = (void*)(dst+(cc == 0 ? 0 : (int)d[cc-1]*r)+ml*rr);
+			void* source = (void*)(src+tot);
+			memcpy( dest, source, ml );
+			tot += ml;
+		}
+	} else {*/
+
+	int l = elen.length;
+	int tbl = bytelength( elen.type, l );
+
+	double* t = (double*)realloc( NULL, tbl );
+	memcpy( t, d, tbl );
+	d_diff( t, l, l );
+	t_order<double*,double*,double>( t, (long)l, o, (long)ord.length );
+	d_integ( t, l, l );
+
+	int elsize = data.type/8;
+	for( int i = 0; i < l; i++ ) {
+		int ml = i > 0 ? d[i]-d[i-1] : d[i];
+
+		int k = o[i];
+		void* dest = (void*)(dst+(k > 0 ? (int)t[k-1]*elsize : 0));
+		void* source = (void*)(src+(i > 0 ? (int)d[i-1]*elsize : 0));
+		memcpy( dest, source, ml*elsize );
+	}
+	free(t);
+
+	return 3;
+}
+
 JNIEXPORT int simmi( simlab value ) {
 	printf("erm %d %d %d %d\n", (int)value.buffer, (int)data.buffer, (int)data.type, (int)data.length );
 
@@ -560,6 +760,12 @@ JNIEXPORT int copy( simlab value ) {
 		specarith< c_specopy >( value );
 	}
 	else arith< c_copy >( value );
+
+	return 1;
+}
+
+JNIEXPORT int rearrange( simlab value ) {
+	order< c_arrange >( value );
 
 	return 1;
 }
