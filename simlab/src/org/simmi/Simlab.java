@@ -269,9 +269,14 @@ public class Simlab implements ScriptEngineFactory {
 	public native int intersect(final simlab.ByValue s);
 
 	public native int reorder(final simlab.ByValue ro);
+	public native int rearrange(final simlab.ByValue ra);
+	public native int irrange( final simlab.ByValue ret, final simlab.ByValue ord, final simlab.ByValue el );
+	public native int ordir( final simlab.ByValue ret, final simlab.ByValue ord, final simlab.ByValue el );
 
+	@mann(name="invidx: inverts reorder indexes")
 	public native int invidx();
 
+	@mann(name="creates sorting indexes indicating the order of the sequence")
 	public native int sortidx();
 
 	public native int transidx(final simlab.ByValue c, final simlab.ByValue r);
@@ -759,6 +764,36 @@ public class Simlab implements ScriptEngineFactory {
 		data.type = ret.type;
 		
 		return 4;
+	}
+	
+	@mann(name="ordir: reorders array with irregularly sized elements")
+	public int ordir( @pann(name="vOrder") final simlab.ByValue ord, @pann(name="vElementIndices") final simlab.ByValue el ) {
+		long p = allocateDirect( bytelength( data.type, (int)data.length ) );
+		final simlab.ByValue ret = new simlab.ByValue( data.length, data.type, p );
+		
+		crnt( data );
+		ordir( ret, ord, el );
+		
+		data.buffer = ret.buffer;
+		data.length = ret.length;
+		data.type = ret.type;
+		
+		return 2;
+	}
+	
+	@mann(name="irrange: rearranges array with irregularly sized elements")
+	public int irrange( @pann(name="vOrder") final simlab.ByValue ord, @pann(name="vElementIndices") final simlab.ByValue el ) {
+		long p = allocateDirect( bytelength( data.type, (int)data.length ) );
+		final simlab.ByValue ret = new simlab.ByValue( data.length, data.type, p );
+		
+		crnt( data );
+		irrange( ret, ord, el );
+		
+		data.buffer = ret.buffer;
+		data.length = ret.length;
+		data.type = ret.type;
+		
+		return 2;
 	}
 	
 	@mann(name="transirr: transpose of data with irregular sized elements")
