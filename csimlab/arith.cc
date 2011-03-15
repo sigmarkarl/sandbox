@@ -677,12 +677,12 @@ JNIEXPORT int irrange( simlab ret, simlab ord, simlab elen ) {
 
 	int elsize = data.type/8;
 	for( int i = 0; i < l; i++ ) {
-		int ml = i > 0 ? d[i]-d[i-1] : d[i];
+		int ml = i > 0 ? t[i]-t[i-1] : t[i];
 
 		int k = o[i];
 
-		int dadd = (k > 0 ? (int)t[k-1] : 0);
-		int sadd = (i > 0 ? (int)d[i-1] : 0);
+		int dadd = (i > 0 ? (int)t[i-1] : 0);
+		int sadd = (k > 0 ? (int)d[k-1] : 0);
 		void* dest = (void*)(dst+dadd*elsize);
 		void* source = (void*)(src+sadd*elsize);
 		memcpy( dest, source, ml*elsize );
