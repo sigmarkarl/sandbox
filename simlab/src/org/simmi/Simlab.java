@@ -273,10 +273,10 @@ public class Simlab implements ScriptEngineFactory {
 	public native int irrange( final simlab.ByValue ret, final simlab.ByValue ord, final simlab.ByValue el );
 	public native int ordir( final simlab.ByValue ret, final simlab.ByValue ord, final simlab.ByValue el );
 
-	@mann(name="invidx: inverts reorder indexes")
+	@mann(name="invidx: inverts reorder indexes", dataChanging=true)
 	public native int invidx();
 
-	@mann(name="creates sorting indexes indicating the order of the sequence")
+	@mann(name="creates sorting indexes indicating the order of the sequence", dataChanging=true)
 	public native int sortidx();
 
 	public native int transidx(final simlab.ByValue c, final simlab.ByValue r);
@@ -461,11 +461,35 @@ public class Simlab implements ScriptEngineFactory {
 					return bb.asFloatBuffer();
 				else if (type == 33)
 					return bb.asIntBuffer();
+				else if (type == 32)
+					return bb.asIntBuffer();
 				else if (type == 17)
 					return bb.asShortBuffer();
 			}
 
 			return bb;
+		}
+		
+		public final short getShort( int i ) {
+			return getByteBuffer().asShortBuffer().get(i);
+		}
+		
+		public final double get( int i ) {
+			ByteBuffer bb = getByteBuffer();
+			if( bb != null ) {
+				if (type == 66)
+					return bb.asDoubleBuffer().get(i);
+				else if (type == 65)
+					return bb.asLongBuffer().get(i);
+				else if (type == 34)
+					return bb.asFloatBuffer().get(i);
+				else if (type == 33)
+					return bb.asIntBuffer().get(i);
+				else if (type == 17)
+					return bb.asShortBuffer().get(i);
+			}
+
+			return 0;
 		}
 
 		public simlab.ByValue clone() {
@@ -766,7 +790,7 @@ public class Simlab implements ScriptEngineFactory {
 		return 4;
 	}
 	
-	@mann(name="ordir: reorders array with irregularly sized elements")
+	@mann(name="ordir: reorders array with irregularly sized elements", dataChanging=true)
 	public int ordir( @pann(name="vOrder") final simlab.ByValue ord, @pann(name="vElementIndices") final simlab.ByValue el ) {
 		long p = allocateDirect( bytelength( data.type, (int)data.length ) );
 		final simlab.ByValue ret = new simlab.ByValue( data.length, data.type, p );
@@ -781,7 +805,7 @@ public class Simlab implements ScriptEngineFactory {
 		return 2;
 	}
 	
-	@mann(name="irrange: rearranges array with irregularly sized elements")
+	@mann(name="irrange: rearranges array with irregularly sized elements", dataChanging=true)
 	public int irrange( @pann(name="vOrder") final simlab.ByValue ord, @pann(name="vElementIndices") final simlab.ByValue el ) {
 		long p = allocateDirect( bytelength( data.type, (int)data.length ) );
 		final simlab.ByValue ret = new simlab.ByValue( data.length, data.type, p );
@@ -796,7 +820,7 @@ public class Simlab implements ScriptEngineFactory {
 		return 2;
 	}
 	
-	@mann(name="transirr: transpose of data with irregular sized elements")
+	@mann(name="transirr: transpose of data with irregular sized elements", dataChanging=true)
 	public int transirr( @pann(name="vByteSizeOfElements") final simlab.ByValue cl, @pann(name="iNumberOfColumns") final simlab.ByValue cl2 ) {
 		long p = allocateDirect( bytelength( data.type, (int)data.length ) );
 		final simlab.ByValue ret = new simlab.ByValue( data.length, data.type, p );
@@ -811,9 +835,9 @@ public class Simlab implements ScriptEngineFactory {
 		return 2;
 	}
 	
-	@mann(name="transirr: transpose of data with irregular sized columns")
+	@mann(name="transirr: transpose of data with irregular sized columns", dataChanging=true)
 	public int transirr( @pann(name="vByteSizeOfColumns") final simlab.ByValue cl ) {
-		transirr( cl, null );
+		transirr( cl, nulldata );
 		
 		return 1;
 	}
@@ -1397,8 +1421,43 @@ public class Simlab implements ScriptEngineFactory {
 
 		return 1 + timer.length;
 	}
+	
+	@mann(name="fill: creates a matrix from the array given the element locations, the column size is the largest of the elements", dataChanging=true)
+	public int fill( @pann(name="vIndices") final simlab.ByValue vIndices ) {
+		fill( vIndices, nulldata );
+		
+		return 1;
+	}
+	
+	@mann(name="fill: creates a vector of equal sized elements from the array, given the element locations and specifying the element size", dataChanging=true)
+	public int fill( @pann(name="vIndices") final simlab.ByValue vIndices, @pann(name="[optional] iElementSize") final simlab.ByValue iElementSize ) {
+		int elsize = (int)iElementSize.getLong();
+		int velsize = (int)(elsize*vIndices.length);
+		long p = allocateDirect( (int)(velsize*data.type/8) );
+		final simlab.ByValue ret = new simlab.ByValue( velsize, data.type, p );
+		
+		int size = (int)(data.type/8);
+		Buffer b = vIndices.getBuffer();
+		ByteBuffer src = data.getByteBuffer();
+		ByteBuffer dst = ret.getByteBuffer();
+		int start = 0;
+		for( int i = 0; i < vIndices.length; i++ ) {
+			int next = (int)vIndices.get(i);
+			for( int k = 0; k < Math.min(next-start,elsize); k++ ) {
+				for( int u = 0; u < size; u++ ) {
+					dst.put( (i*elsize+k)*size+u, src.get((start+k)*size+u) );
+				}
+			}
+			start = next;
+		}
+		data.buffer = ret.buffer;
+		data.length = ret.length;
+		data.type = ret.type;
+		
+		return 2;
+	}
 
-	@mann(name="image: shows image in a window, optionally with a timer function")
+	@mann(name="image: shows image in a window, optionally with a timer function", dataChanging=false)
 	public int image( @pann(name="vDimensions") final simlab.ByValue ww, @pann(name="[optional] fTimer, iInterval") final simlab.ByValue ... timer) {
 		final String name = "";// sl.getTheString();
 		
@@ -1538,86 +1597,95 @@ public class Simlab implements ScriptEngineFactory {
 			int i = 0;
 			while (i < slist.size()) {
 				simlab.ByValue sl = slist.get(i);
-				Method m = (Method) objects.get((int) sl.length);
-
-				boolean nat = Modifier.isNative(m.getModifiers());
-
-				// System.err.println("run " + m.getName());
-				/*
-				 * if (sl.type == Byte.MIN_VALUE) { Method m = (Method)
-				 * objects.get((int) sl.length); System.err.println("method " +
-				 * m.getName()); } else if (sl.type == 8 || sl.type == 9) {
-				 * System.err.println(sl.toString()); } else {
-				 * System.err.println(data.buffer + "  " + data.type + "  " +
-				 * data.length); }
-				 */
-
-				if (nat) {
+				Object o = objects.get((int) sl.length);
+				
+				if( o instanceof Method ) {
+					Method m = (Method)o;
+	
+					boolean nat = Modifier.isNative(m.getModifiers());
+	
+					// System.err.println("run " + m.getName());
 					/*
-					 * if( Platform.isWindows() ) {
-					 * Long.reverseBytes(data.buffer);
-					 * Long.reverseBytes(data.type);
-					 * Long.reverseBytes(data.length); }
+					 * if (sl.type == Byte.MIN_VALUE) { Method m = (Method)
+					 * objects.get((int) sl.length); System.err.println("method " +
+					 * m.getName()); } else if (sl.type == 8 || sl.type == 9) {
+					 * System.err.println(sl.toString()); } else {
+					 * System.err.println(data.buffer + "  " + data.type + "  " +
+					 * data.length); }
 					 */
-					crnt(data);
-				}
-
-				int len = m.getParameterTypes().length;
-				int ret = 0;
-				if (len == 0)
-					ret = (Integer) m.invoke(Simlab.this);
-				else if (len == 1) {
-					simlab.ByValue sb = slist.get(i + 1);
-					// System.err.println("with param " + sb.toString());
-					Object o = m.invoke(Simlab.this, sb);
-
-					// DoubleBuffer db = null;
-					// if( m.getName().equals("set") ) {
-					/*
-					 * simlab.ByValue sbv = datalib.get("drw"); db =
-					 * sbv.getPointer().getByteBuffer(0,
-					 * sbv.getByteLength()).asDoubleBuffer();
-					 * 
-					 * for( int ik = 400; ik < 500; ik++ ) { System.err.print(
-					 * db.get(ik) + " " ); } System.err.println();
-					 */
-					// if( m.getName().equals("add") &&
-					// sb.toString().equals("ind") ) {
-					/*
-					 * sbv = datalib.get("ind"); db =
-					 * sbv.getPointer().getByteBuffer(0,
-					 * sbv.getByteLength()).asDoubleBuffer();
-					 * 
-					 * for( int ik = 0; ik < 10; ik++ ) { System.err.print(
-					 * db.get(ik) + " u " ); } System.err.println();
-					 */
-					// }
-					// }
-					/*
-					 * if( db != null ) { for( int ik = 400; ik < 500; ik++ ) {
-					 * System.err.print( db.get(ik) + " " ); }
-					 * System.err.println(); }
-					 */
-					ret = (Integer) o;
-				} else if (len == 2)
-					ret = (Integer) m.invoke(Simlab.this, slist.get(i + 1), slist.get(i + 2));
-				else if (len == 3)
-					ret = (Integer) m.invoke(Simlab.this, slist.get(i + 1), slist.get(i + 2), slist.get(i + 3));
-				else if (len == 4)
-					ret = (Integer) m.invoke(Simlab.this, slist.get(i + 1), slist.get(i + 2), slist.get(i + 3), slist.get(i + 4));
-				i += ret;
-
-				if (nat) {
-					simlab.ByValue sb = getdata();
-					data.buffer = sb.buffer;
-					data.type = sb.type;
-					data.length = sb.length;
-					/*
-					 * if( Platform.isWindows() ) {
-					 * Long.reverseBytes(data.buffer);
-					 * Long.reverseBytes(data.type);
-					 * Long.reverseBytes(data.length); }
-					 */
+	
+					if (nat) {
+						/*
+						 * if( Platform.isWindows() ) {
+						 * Long.reverseBytes(data.buffer);
+						 * Long.reverseBytes(data.type);
+						 * Long.reverseBytes(data.length); }
+						 */
+						crnt(data);
+					}
+	
+					int len = m.getParameterTypes().length;
+					int ret = 0;
+					if (len == 0)
+						ret = (Integer) m.invoke(Simlab.this);
+					else if (len == 1) {
+						simlab.ByValue sb = slist.get(i + 1);
+						// System.err.println("with param " + sb.toString());
+						o = m.invoke(Simlab.this, sb);
+	
+						// DoubleBuffer db = null;
+						// if( m.getName().equals("set") ) {
+						/*
+						 * simlab.ByValue sbv = datalib.get("drw"); db =
+						 * sbv.getPointer().getByteBuffer(0,
+						 * sbv.getByteLength()).asDoubleBuffer();
+						 * 
+						 * for( int ik = 400; ik < 500; ik++ ) { System.err.print(
+						 * db.get(ik) + " " ); } System.err.println();
+						 */
+						// if( m.getName().equals("add") &&
+						// sb.toString().equals("ind") ) {
+						/*
+						 * sbv = datalib.get("ind"); db =
+						 * sbv.getPointer().getByteBuffer(0,
+						 * sbv.getByteLength()).asDoubleBuffer();
+						 * 
+						 * for( int ik = 0; ik < 10; ik++ ) { System.err.print(
+						 * db.get(ik) + " u " ); } System.err.println();
+						 */
+						// }
+						// }
+						/*
+						 * if( db != null ) { for( int ik = 400; ik < 500; ik++ ) {
+						 * System.err.print( db.get(ik) + " " ); }
+						 * System.err.println(); }
+						 */
+						ret = (Integer) o;
+					} else if (len == 2)
+						ret = (Integer) m.invoke(Simlab.this, slist.get(i + 1), slist.get(i + 2));
+					else if (len == 3)
+						ret = (Integer) m.invoke(Simlab.this, slist.get(i + 1), slist.get(i + 2), slist.get(i + 3));
+					else if (len == 4)
+						ret = (Integer) m.invoke(Simlab.this, slist.get(i + 1), slist.get(i + 2), slist.get(i + 3), slist.get(i + 4));
+					i += ret;
+	
+					if (nat) {
+						simlab.ByValue sb = getdata();
+						data.buffer = sb.buffer;
+						data.type = sb.type;
+						data.length = sb.length;
+						/*
+						 * if( Platform.isWindows() ) {
+						 * Long.reverseBytes(data.buffer);
+						 * Long.reverseBytes(data.type);
+						 * Long.reverseBytes(data.length); }
+						 */
+					}
+				} else if( o instanceof simlab.ByValue ){
+					simlab.ByValue slb = (simlab.ByValue)o;
+					data.buffer = slb.buffer;
+					data.type = slb.type;
+					data.length = slb.length;
 				}
 				i++;
 			}
@@ -1680,7 +1748,7 @@ public class Simlab implements ScriptEngineFactory {
 		return 0;
 	}
 
-	public int echo(simlab.ByValue sl) {
+	public int echo( final simlab.ByValue sl ) {
 		String val = sl.getTheString();
 		System.out.println(val);
 
@@ -2243,23 +2311,27 @@ public class Simlab implements ScriptEngineFactory {
 				List<Double> d_vec = new ArrayList<Double>();
 
 				float fval;
-				String val = str.substring(1);
-				fval = Float.parseFloat(val); // sscanf( result+1, "%e", &fval//
-												// );
-				d_vec.add((double) fval);
-
-				str = st.nextToken(endStr);
-				int len = str.length();
-				while (str.charAt(len - 1) != ']') {
-					// sscanf( result, "%e", &fval );
-					// val = str.substring(1);
-					fval = Float.parseFloat(str);
+				String val;
+				if( str.endsWith("]") ) {
+					val = str.substring(1,str.length()-1);
+				} else {
+					val = str.substring(1);
+					fval = Float.parseFloat(val); // sscanf( result+1, "%e", &fval//
+					
 					d_vec.add((double) fval);
 					str = st.nextToken(endStr);
-					len = str.length();
+					int len = str.length();
+					while (str.charAt(len - 1) != ']') {
+						// sscanf( result, "%e", &fval );
+						// val = str.substring(1);
+						fval = Float.parseFloat(str);
+						d_vec.add((double) fval);
+						str = st.nextToken(endStr);
+						len = str.length();
+					}
+					val = str.substring(0, str.length() - 1);
 				}
-				val = str.substring(0, str.length() - 1);
-				fval = Float.parseFloat(val); // sscanf( result, "%e]", &fval );
+				fval = Float.parseFloat(val);
 				d_vec.add((double) fval);
 
 				long pval = allocateDirect(8 * d_vec.size());
@@ -2444,6 +2516,20 @@ public class Simlab implements ScriptEngineFactory {
 	@Target(ElementType.METHOD)
 	public @interface mann {
 	    public String name();
+	    public boolean dataChanging();
+	}
+	
+	@mann(name="help: prints names of all available methods", dataChanging=false)
+	public int help() {
+		Method[] mm = Simlab.this.getClass().getMethods();
+		for( Method m : mm ) {
+			mann ma = m.getAnnotation( mann.class );
+			if( ma != null ) {
+				System.out.println(ma.name());
+			}
+		}
+		
+		return 0;
 	}
 	
 	/**
@@ -2451,7 +2537,7 @@ public class Simlab implements ScriptEngineFactory {
 	 * @param f
 	 * @return
 	 */
-	@mann(name="usage: prints usage information for a method")
+	@mann(name="usage: prints usage information for a method", dataChanging=false)
 	public int usage( @pann(name="strMethodName") final simlab.ByValue f ) {
 		String fstr = f.getTheString();
 		Method[] mm = Simlab.this.getClass().getMethods();
@@ -2549,8 +2635,9 @@ public class Simlab implements ScriptEngineFactory {
 						data.buffer = slval.buffer;
 						data.type = slval.type;
 						data.length = slval.length;
-					} else
+					} else {
 						System.out.println("No function: " + fname);
+					}
 				} else {
 					/*
 					 * } else if( olist.size() == 1 ) { m =
@@ -2562,7 +2649,8 @@ public class Simlab implements ScriptEngineFactory {
 					// if( where ) data = getdata();
 					// where = false;
 					
-					if( data.isJavaObject() && data.getJavaObject() instanceof List ) {
+					mann mnn = m.getAnnotation( mann.class );
+					if( data.isJavaObject() && data.getJavaObject() instanceof List && mnn != null && mnn.dataChanging() ) {
 						long oldbuf = data.buffer;
 						long oldtyp = data.type;
 						long oldlen = data.length;
@@ -2749,11 +2837,10 @@ public class Simlab implements ScriptEngineFactory {
 		return 0;
 	}
 
-	PrintStream origerr = null;
+	//PrintStream origerr = null;
 	public int printlen() {
-		if( origerr == null ) origerr = System.err;
-		origerr.println( System.out );
-		
+		//if( origerr == null ) origerr = System.err;
+		//origerr.println( System.out );
 		
 		System.out.println(data.length);
 
@@ -3248,6 +3335,14 @@ public class Simlab implements ScriptEngineFactory {
 
 					slist.add(fnc);
 					slist.addAll(olist);
+				} else {
+					simlab.ByValue sobj = datalib.get( result );
+					if( sobj != null ) {
+						simlab.ByValue slb = new simlab.ByValue(objects.size(), Byte.MIN_VALUE, 0);
+						objects.add( sobj );
+						slist.add( slb );
+					}
+					else System.err.println( "No such data" );
 				}
 			}
 
@@ -3359,7 +3454,7 @@ public class Simlab implements ScriptEngineFactory {
 		Reader oldreader = reader;
 		BufferedReader oldbufferedreader = bufferedreader;
 
-		if (data.buffer != 0 && (data.type == 8 || data.type == 9)) {
+		if(data.buffer != 0 && (data.type == 8 || data.type == 9)) {
 			byte[] bb = data.getByteArray(0, data.getByteLength());
 			reader = new InputStreamReader(new ByteArrayInputStream(bb));
 			bufferedreader = new BufferedReader(reader);
