@@ -2122,6 +2122,13 @@ public class Order extends JApplet {
 		unitcombo.addItem("Kassi");
 		unitcombo.addItem("Poki");
 		unitcombo.addItem("Pakki");
+		unitcombo.addItem("Rúllur");
+		unitcombo.addItem("Dósir");
+		unitcombo.addItem("500gr dósir");
+		unitcombo.addItem("Glas");
+		unitcombo.addItem("Glös");
+		unitcombo.addItem("Flaska");
+		unitcombo.addItem("Flöskur");
 		unitcombo.addItem("Stk");
 		unitcombo.addItem("Annað");
 		dce = new DefaultCellEditor( unitcombo );
