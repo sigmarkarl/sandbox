@@ -2929,15 +2929,21 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		while( line != null ) {
 			if( line.startsWith(">") ) {
-				if( last != null ) genelist.add( new Gene( last, "mool" ) );
+				if( last != null ) {
+					Gene g = new Gene( last, "mool" );
+					g.setAa( aa );
+					genelist.add( g );
+				}
 				last = line+"\n";
-				//aa = "";
-			}/* else {
+				aa = "";
+			} else {
 				aa += line+"\n";
-			}*/
+			}
 			line = br.readLine();
 		}
-		genelist.add( new Gene( last, "mool" ) );
+		Gene g = new Gene( last, "mool" );
+		g.setAa( aa );
+		genelist.add( g );
 		br.close();
 		
 		int k = 0;
@@ -2945,9 +2951,9 @@ public class GeneSet extends JApplet {
 		System.err.println( "Number of genes "+genelist.size()+" chunk size "+chunk );
 		FileWriter fw = null;
 		for( int i = 0; i < genelist.size(); i++ ) {
-			Gene g = genelist.get(i);
+			g = genelist.get(i);
 			if( i%chunk == 0 ) {
-				f = new File( dir, (k++)+"_t.aa" );
+				f = new File( dir, filename.substring(0, filename.lastIndexOf('.'))+"_"+(k++)+".aa" );
 				if( fw != null ) fw.close();
 				fw = new FileWriter( f );
 			}
@@ -3042,13 +3048,13 @@ public class GeneSet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
-		JFrame frame = new JFrame();
+		/*JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		
 		frame.setSize(800, 600);
 		GeneSet gs = new GeneSet();
 		gs.init( frame );
-		frame.setVisible( true );
+		frame.setVisible( true );*/
 		
 		//System.err.println( Runtime.getRuntime().availableProcessors() );
 		
@@ -3059,7 +3065,7 @@ public class GeneSet extends JApplet {
 		}*/
 		//init( args );
 		
-		/*try {
+		try {
 			//blastparse( "/home/sigmar/blastout/nilli.blastout" );
 			//blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
@@ -3080,12 +3086,15 @@ public class GeneSet extends JApplet {
 			
 			//aaset();
 			
+			for( int i = 1; i <= 16; i++ ) {
+				splitGenes( "/home/sigmar/viggo/", i+".TCA.454Reads.fna", 8 );
+			}
 			//splitGenes( "/home/sigmar/thermus/newthermus/", "all.aa", 128 );
 			//splitGenes( "/home/sigmar/thermus/newthermus", "0_t.aa", 64 );
 			//splitGenes( "/home/sigmar/thermus/newthermus/test/", "erm.aa", 64 );
 		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
 	
 	static List<String>	res = new ArrayList<String>();
@@ -4940,8 +4949,8 @@ public class GeneSet extends JApplet {
 		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		loci2aasequence( new InputStreamReader( is ) );
 		
-		//is = GeneSet.class.getResourceAsStream("/all.nn");
-		//loci2dnasequence( new InputStreamReader( is ) );
+		is = GeneSet.class.getResourceAsStream("/all.nn");
+		loci2dnasequence( new InputStreamReader( is ) );
 		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );

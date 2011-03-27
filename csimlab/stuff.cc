@@ -4855,13 +4855,20 @@ JNIEXPORT int transold( simlab cl, simlab rl ) {
 	return current;
 }
 
+JNIEXPORT int transirr2( simlab ret, simlab cl ) {
+	printf("erm\n");
+
+	return 3;
+}
+
 JNIEXPORT int transirr( simlab ret, simlab cl, simlab cl2 ) {
-	int bl = bytelength( data.type, data.length );
+	//int bl = bytelength( data.type, data.length );
 	double* d = (double*)cl.buffer;
 	long long dst = ret.buffer;
 	long long src = data.buffer;
 
 	if( cl2.buffer == 0 ) {
+		int bl = data.length;
 		int c = cl.length;
 		double sum = d[c-1];
 		/*for( int i = 0; i < l; i++ ) {
@@ -4870,13 +4877,17 @@ JNIEXPORT int transirr( simlab ret, simlab cl, simlab cl2 ) {
 		int r = bl/sum;
 		int l = c*r;
 		int tot = 0;
+
+		int elsize = data.type/8;
 		for( int i = 0; i < l; i++ ) {
 			int cc = i%c;
 			int rr = i/c;
 			int ml = d[cc]-tot+sum*rr;
-			void* dest = (void*)(dst+(cc == 0 ? 0 : (int)d[cc-1]*r)+ml*rr);
-			void* source = (void*)(src+tot);
-			memcpy( dest, source, ml );
+			int val = (cc == 0 ? 0 : (int)d[cc-1]*r)+ml*rr;
+			void* dest = (void*)(dst+val*elsize);
+			void* source = (void*)(src+tot*elsize);
+			//printf( "%lld %lld %d\n", (long long)source, (long long)dest, ml );
+			memcpy( dest, source, ml*elsize );
 			tot += ml;
 		}
 	} else {
