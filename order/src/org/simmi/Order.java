@@ -185,7 +185,7 @@ public class Order extends JApplet {
 	Map<String,String>	personMap = new HashMap<String,String>();
 	
 	VDialog 		d;
-	ADialog			ad;
+	//ADialog			ad;
 	
 	Image			image = null;
 	
@@ -224,8 +224,8 @@ public class Order extends JApplet {
 		public void init() {
 			this.setLayout( null );
 			
-			this.setUndecorated( true );
-			this.setModal( true );
+			this.setUndecorated( false );
+			this.setModal( false );
 			this.setResizable( false );
 			this.setTitle("Hve mikið magn á að panta?");
 			this.getContentPane().setBackground( Color.white );
@@ -457,7 +457,7 @@ public class Order extends JApplet {
 	}
 	
 	boolean userCheck() {
-		return user.equals("ragnar") || user.equals("annas") || user.equals("gulla") || user.equals("julia") || user.equals("root");// || user.equals("sigmar");
+		return user.equals("ragnar") || user.equals("annas") || user.equals("johanna") || user.equals("gulla") || user.equals("julia") || user.equals("root");// || user.equals("sigmar");
 	}
 	
 	public TableModel createModel( final List<?> datalist, final Class cls ) {
@@ -794,8 +794,10 @@ public class Order extends JApplet {
 		for( String v : verkList ) {
 			if( filter == null || v.startsWith( filter ) || (filter.equals("0") && v.startsWith("31")) ) vcombo.addItem( v );
 		}
-		if( filter == null || filter.equals("3") || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Almennt lab - 312(36%), 412(43%), 612(21%)" );
-		if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "60% 40000412, 30% 10000112, 10% 20000212" );
+		//if( filter == null || filter.equals("3") || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Almennt lab - 312(36%), 412(43%), 612(21%)" );
+		if( filter == null || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Rannsókn 1. hæð - 412(43%) & 612(57%)" );
+		if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "Rannsókn 2. hæð - 412(60%), 112(30%) & 212(10%)" );
+		//if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "60% 40000412, 30% 10000112, 10% 20000212" );
 	}
 	
 	List<String>	verkList = new ArrayList<String>();
@@ -877,19 +879,19 @@ public class Order extends JApplet {
 				
 				if( pnt.Pantað_Af.equals(user) || userCheck() ) {
 					if( pnt.e_Magn > 1 ) {
-						ad.sp.setModel( new SpinnerNumberModel((int)pnt.e_Magn, 1, (int)pnt.e_Magn, 1) );
+						/*ad.sp.setModel( new SpinnerNumberModel((int)pnt.e_Magn, 1, (int)pnt.e_Magn, 1) );
 						ad.setSize(350, 100);
 						ad.setLocationRelativeTo( this );
 						ad.setVisible( true );
 						
-						if( ad.appr ) {
-							if( !ad.sp.getValue().equals( pnt.e_Magn ) ) {
+						if( ad.appr ) {*/
+							/*if( !ad.sp.getValue().equals( pnt.e_Magn ) ) {
 								Pontun pntcln = pnt.clone();
 								int val = (Integer)ad.sp.getValue();
 								pntcln.e_Magn = pnt.e_Magn - val;
 								pnt.e_Magn = val;
 								afglist.add( pntcln );
-							}
+							}*/
 							
 							pnt._Afhent = new Date( System.currentTimeMillis() );
 							pnts.add( pnt );
@@ -905,7 +907,7 @@ public class Order extends JApplet {
 							
 							atable.tableChanged( new TableModelEvent( amodel ) );
 							rtable.tableChanged( new TableModelEvent( rmodel ) );
-						}
+						//}
 					} else {
 						pnt._Afhent = new Date( System.currentTimeMillis() );
 						pnts.add( pnt );
@@ -1216,11 +1218,11 @@ public class Order extends JApplet {
 			d = new VDialog();
 		}
 		
-		if( f != null ) {
+		/*if( f != null ) {
 			ad = new ADialog( f );
 		} else {
 			ad = new ADialog();
-		}
+		}*/
 		
 		try {
 			loadPersons();
