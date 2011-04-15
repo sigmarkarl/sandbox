@@ -12,6 +12,7 @@
 #include <string.h>
 
 extern simlab 	data;
+extern simlab	nulldata;
 extern c_const<int>		iconst;
 extern c_const<float>	fconst;
 
@@ -694,6 +695,19 @@ JNIEXPORT int irrange( simlab ret, simlab ord, simlab elen ) {
 	return 3;
 }
 
+JNIEXPORT int select2( simlab ret, simlab ind, simlab len, simlab dnd ) {
+	long long s = data.buffer;
+	long long d = ret.buffer;
+
+	int elsize = ret.type/8;
+	double* d_ind = (double*)ind.buffer;
+	double* d_dnd = (double*)dnd.buffer;
+	double* d_len = (double*)len.buffer;
+	for( int i = 0; i < ind.length; i++ ) {
+		memcpy( (void*)(long long)(d+d_dnd[i]*elsize), (void*)(long long)(s+d_ind[i]*elsize), (int)(d_len[i]*elsize) );
+	}
+}
+
 JNIEXPORT int ordir( simlab ret, simlab ord, simlab elen ) {
 	//int bl = bytelength( data.type, data.length );
 	double* d = (double*)elen.buffer;
@@ -754,12 +768,22 @@ JNIEXPORT int simmi( simlab value ) {
 	histo< c_hist >( ret );
 }*/
 
-JNIEXPORT int copy( simlab value ) {
-	if( value.type == 24 ) {
-		printf("hoho\n");
-		specarith< c_specopy >( value );
+JNIEXPORT int copy( simlab value, simlab indices, simlab sizes, simlab dind ) {
+	if( memcmp( &indices, &nulldata, sizeof(simlab) ) == 0 ) {
+		if( value.type == 24 ) {
+			specarith< c_specopy >( value );
+		}
+		else arith< c_copy >( value );
+	} else {
+		/*double sum = 0;
+		if( sizes.type == 66 ) {
+			double val;
+			t_sum( sizes.buffer, sizes.length, sizes.length, sizes.length, &val );
+			sum = val;
+		}*/
+
+
 	}
-	else arith< c_copy >( value );
 
 	return 1;
 }
@@ -805,4 +829,87 @@ JNIEXPORT int simlab_div( simlab value ) {
 JNIEXPORT int mod( simlab value ) {
 	arith< c_mod >( value );
 	return 1;
+}
+
+template<template<typename T, typename K, typename U> class c_func> void gettertemp( simlab & ret, simlab & what, simlab & where ) {
+	if( ret.length == 0 ) {
+		/*if( value.type == 32 ) {
+			c_const<unsigned int>	sl( *(unsigned int*)&value.buffer );
+			subarith< c_func, c_simlab<unsigned int>& >( sl, 1 );
+		} else if( value.type == 33 ) {
+			c_const<int>	sl( *(int*)&value.buffer );
+			subarith< c_func, c_simlab<int>& >( sl, 1 );
+		} else if( value.type == 34 ) {
+			c_const<float>	sl( *(float*)&value.buffer );
+			subarith< c_func, c_simlab<float>& >( sl, 1 );
+		} else if( value.type == 64 ) {
+			c_const<unsigned long long>	sl( *(unsigned long long*)&value.buffer );
+			subarith< c_func, c_simlab<unsigned long long>& >( sl, 1 );
+		} else if( value.type == 65 ) {
+			c_const<long long>	sl( *(long long*)&value.buffer );
+			subarith< c_func, c_simlab<long long>& >( sl, 1 );
+		} else if( value.type == 66 ) {
+			c_const<double>	sl( *(double*)&value.buffer );
+			subarith< c_func, c_simlab<double>& >( sl, 1 );
+		}*/
+	} else if( ret.length == -1 ) {
+		/*if( value.type == -66 ) subarith< c_func, c_simlab<double>& >( *(c_simlab<double>*)value.buffer, value.length );
+		else if( value.type == -65 ) subarith< c_func, c_simlab<long long>& >( *((c_simlab<long long>*)value.buffer), value.length );
+		else if( value.type == -64 ) subarith< c_func, c_simlab<unsigned long long>& >( *((c_simlab<unsigned long long>*)value.buffer), value.length );
+		else if( value.type == -34 ) subarith< c_func, c_simlab<float>& >( *((c_simlab<float>*)value.buffer), value.length );
+		else if( value.type == -33 ) subarith< c_func, c_simlab<int>& >( *((c_simlab<int>*)ret.buffer), ret.length );
+		else if( ret.type == -32 ) subarith< c_func, c_simlab<unsigned int>& >( *((c_simlab<unsigned int>*)ret.buffer), ret.length );
+		else if( ret.type == -16 ) subarith< c_func, c_simlab<short>& >( *((c_simlab<short>*)ret.buffer), ret.length );*/
+	} else {
+		if( ret.type == 66 ) subarith< c_func, double* >( (double*)ret.buffer, ret.length );
+		else if( ret.type == 65 ) subarith< c_func, long long* >( (long long*)ret.buffer, ret.length );
+		else if( ret.type == 64 ) subarith< c_func, unsigned long long* >( (unsigned long long*)ret.buffer, ret.length );
+		else if( ret.type == 34 ) subarith< c_func, float* >( (float*)ret.buffer, ret.length );
+		else if( ret.type == 33 ) subarith< c_func, int* >( (int*)ret.buffer, ret.length );
+		else if( ret.type == 32 ) subarith< c_func, unsigned int* >( (unsigned int*)ret.buffer, ret.length );
+		else if( ret.type == 24 ) specarith< c_func, int* >( (int*)ret.buffer, ret.type );
+		else if( ret.type == 17 ) subarith< c_func, short* >( (short*)ret.buffer, ret.length );
+		else if( ret.type == 16 ) subarith< c_func, unsigned short* >( (unsigned short*)ret.buffer, ret.length );
+		else if( ret.type == 9 ) subarith< c_func, char* >( (char*)ret.buffer, ret.length );
+		else if( ret.type == 8 ) subarith< c_func, unsigned char* >( (unsigned char*)ret.buffer, ret.length );
+	}
+}
+
+/*templatpublic:
+	getter( simlab & ret ) {
+		//getter<t_func,C-1>( ret );
+	}e*/
+
+
+template <typename T, typename K, typename V, typename U> void t_get( T t, int tlen, K k, int klen, V v, int vlen, U u, int ulen ) {
+	for( int i = 0; i < klen; i++ ) {
+		t[ (int)v[i] ] = k[ (int)u[i] ];
+	}
+}
+
+/*template <typename T, typename K, typename V, typename U> class c_get {
+public:
+	c_get( T tbuf, int tlen, K kbuf, int klen, V vbuf, int vlen, U ubuf, int ulen ) {
+		t_get<T,K>( tbuf, tlen, kbuf, klen, vbuf, vlen, ubuf, ulen );
+	}
+};*/
+
+typedef void (*f_ptr)( simlab & ret );
+
+template<typename T> void mu( T r ) {}
+
+//template<typename T> f_str;
+
+template< typename T, typename K, typename V, typename U, void (*s)( T, int, K, int, V, int, U, int ) > void getter( s func, ... ) {
+	//func();
+};
+
+/*template< void (*t_func)() > class getter<0> {
+	t_func();
+}*/
+
+JNIEXPORT int get( simlab ret, simlab from, simlab what, simlab where ) {
+	getter( t_get, ret, from, what, where );
+
+	return 4;
 }

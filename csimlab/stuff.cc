@@ -2116,15 +2116,14 @@ template <typename T> void t_mean( T* buffer, int length, int chunk, int size ) 
 	data.length = retlen;
 }
 
-template <typename T> void t_sum( T* buffer, int length, int chunk, int size, T* ret ) {
+template <typename T,typename K> void t_sum( T buffer, int length, int chunk, int size, T ret ) {
 	//int retsize = (chunk-size+1);
 	//int retlen = (length*retsize)/chunk;
 	//T* ret = new T[ retlen ];
 
-	printf("here\n");
 	int r = 0;
 	for( int c = 0; c < length; c+=chunk ) {
-		T val = 0;
+		K val = 0;
 		int i;
 		for( i = 0; i < size; i++ ) {
 			val += buffer[c+i];
@@ -3493,7 +3492,7 @@ JNIEXPORT int clnn() {
 	return current;
 }
 
-JNIEXPORT int get( simlab wh ) {
+JNIEXPORT int getold( simlab wh ) {
 	if( data.type == 66 ) {
 		if( wh.length == 0 ) {
 			if( wh.type == 32 ) t_get( (double*)data.buffer, data.length, &wh.buffer, 1 );
@@ -4108,17 +4107,17 @@ JNIEXPORT int sum( simlab ret, simlab l_chunk, simlab l_size ) {
 
 	//int dlen = (data.length*(chunk-size+1))/chunk;
 	if( data.type == 66 ) {
-		t_sum( (double*)data.buffer, data.length, chunk, size, (double*)ret.buffer );
+		t_sum<double*,double>( (double*)data.buffer, data.length, chunk, size, (double*)ret.buffer );
 	}
-	else if( data.type == 65 ) t_sum( (long*)data.buffer, data.length, chunk, size, (long*)ret.buffer );
-	else if( data.type == 64 ) t_sum( (unsigned long*)data.buffer, data.length, chunk, size, (unsigned long*)ret.buffer );
-	else if( data.type == 34 ) t_sum( (float*)data.buffer, data.length, chunk, size, (float*)ret.buffer );
-	else if( data.type == 33 ) t_sum( (int*)data.buffer, data.length, chunk, size, (int*)ret.buffer );
-	else if( data.type == 32 ) t_sum( (unsigned int*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
-	else if( data.type == 17 ) t_sum( (short*)data.buffer, data.length, chunk, size, (short*)ret.buffer );
-	else if( data.type == 16 ) t_sum( (unsigned short*)data.buffer, data.length, chunk, size, (unsigned short*)ret.buffer );
-	else if( data.type == 9 ) t_sum( (char*)data.buffer, data.length, chunk, size, (char*)ret.buffer );
-	else if( data.type == 8 ) t_sum( (unsigned char*)data.buffer, data.length, chunk, size, (unsigned char*)ret.buffer );
+	else if( data.type == 65 ) t_sum<long*,long>( (long*)data.buffer, data.length, chunk, size, (long*)ret.buffer );
+	else if( data.type == 64 ) t_sum<unsigned long*,unsigned long>( (unsigned long*)data.buffer, data.length, chunk, size, (unsigned long*)ret.buffer );
+	else if( data.type == 34 ) t_sum<float*,float>( (float*)data.buffer, data.length, chunk, size, (float*)ret.buffer );
+	else if( data.type == 33 ) t_sum<int*,int>( (int*)data.buffer, data.length, chunk, size, (int*)ret.buffer );
+	else if( data.type == 32 ) t_sum<unsigned int*,unsigned int>( (unsigned int*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
+	else if( data.type == 17 ) t_sum<short*,short>( (short*)data.buffer, data.length, chunk, size, (short*)ret.buffer );
+	else if( data.type == 16 ) t_sum<unsigned short*,unsigned short>( (unsigned short*)data.buffer, data.length, chunk, size, (unsigned short*)ret.buffer );
+	else if( data.type == 9 ) t_sum<char*,char>( (char*)data.buffer, data.length, chunk, size, (char*)ret.buffer );
+	else if( data.type == 8 ) t_sum<unsigned char*,unsigned char>( (unsigned char*)data.buffer, data.length, chunk, size, (unsigned char*)ret.buffer );
 	/*else if( data.type == 17 ) t_sum( (short*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
 	else if( data.type == 16 ) t_sum( (unsigned short*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
 	else if( data.type == 9 ) t_sum( (char*)data.buffer, data.length, chunk, size, (unsigned int*)ret.buffer );
