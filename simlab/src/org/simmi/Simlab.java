@@ -1086,6 +1086,45 @@ public class Simlab implements ScriptEngineFactory {
 		return 1;
 	}
 	
+	public int yuv2rgb( final simlab.ByValue ww, final simlab.ByValue hh ) {
+		int w = (int)ww.getLong();
+		int h = (int)hh.getLong();
+		
+		int framesize = (int)w*h;
+		int nframes = (int)(2*data.length)/(3*framesize);
+		
+		ByteBuffer	srcbb = data.getByteBuffer();
+		
+		int t = 4*framesize*nframes;
+		long p = allocateDirect( t );
+		data.buffer = p;
+		data.type = INTLEN;
+		data.length = framesize*nframes;
+		
+		ByteBuffer 	dstbb = data.getByteBuffer();
+		
+		for( int f = 0; f < nframes; f++ ) {
+			for( int i = 0; i < framesize; i++ ) {
+				int start = f*framesize;
+				
+				int xx = i%w;
+				int yy = i/w;
+				
+				int uff = (yy/2)*(w/2)+(xx/2)+framesize;
+				byte y = srcbb.get( i+3*start/2 );
+				byte u = srcbb.get( uff+3*start/2 );
+				byte v = srcbb.get( uff+framesize/4+3*start/2 );
+				
+				int nind = (start+i)*4;
+				dstbb.put( nind+0, (byte)(y+1.13983*v) );
+				dstbb.put( nind+1, (byte)(y-0.39465*u-0.58060*v) );
+				dstbb.put( nind+2, (byte)(y+2.03211*u) );
+			}
+		}
+		
+		return 0;
+	}
+	
 	public int cast( final simlab.ByValue casto ) {
 		long type = casto.getLong();
 		
@@ -2267,7 +2306,16 @@ public class Simlab implements ScriptEngineFactory {
 			String str = st.nextToken(endStr);
 			if (str.startsWith("\"")) {
 				// clist.add( str.getClass() );
-				String val = str.substring(1, str.length() - 1);
+				
+				String val = "";
+				int start = 1;
+				while( st.hasMoreElements() && (!str.endsWith("\"") || str.charAt(str.length()-2) == '\\') ) {
+					val += str.substring(start, str.length());
+					start = 0;
+					
+					str = st.nextToken("\"");
+				}
+				val += str.substring(start, str.length() - start);
 				// System.err.println("eehehe " + val);
 
 				long pval = 0;
