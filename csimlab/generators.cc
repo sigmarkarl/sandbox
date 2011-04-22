@@ -202,7 +202,7 @@ JNIEXPORT int fiboer() {
 	return 0;
 }
 
-extern "C" JNIEXPORT int indexer() {
+JNIEXPORT int indexer() {
 	data.buffer = (long)new c_indexer();
 	data.type = -32;
 	data.length = -1;
