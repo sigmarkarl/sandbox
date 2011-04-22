@@ -1977,7 +1977,7 @@ template <typename T, typename K> T* t_find( T* buffer, int length, K* what, int
 	return 0;
 }
 
-template <typename T> void t_flip( T* buffer, int length, int chunk ) {
+template <typename T> void t_flipold( T* buffer, int length, int chunk ) {
 	for( int i = 0; i < length; i+=chunk ) {
 		T* nbuffer = &buffer[i];
 		for( int k = 0; k < chunk/2; k++ ) {
@@ -5588,19 +5588,19 @@ JNIEXPORT int thread( simlab cmd ) {
 }
 #endif
 
-JNIEXPORT int flip( simlab chunk ) {
+JNIEXPORT int flipold( simlab chunk ) {
 	//printf( "%ld %ld %ld\n", chunk.buffer, chunk.type, chunk.length );
 	//printf( "%s\n", (char*)chunk.buffer );
 
 	if( chunk.buffer == 0 ) chunk.buffer = data.length;
-	if( data.type == 66 ) t_flip( (double*)data.buffer, data.length, chunk.buffer );
+	/*if( data.type == 66 ) t_flip( (double*)data.buffer, data.length, chunk.buffer );
 	else if( data.type == 65 ) t_flip( (long long*)data.buffer, data.length, chunk.buffer );
 	else if( data.type == 64 ) t_flip( (unsigned long long*)data.buffer, data.length, chunk.buffer );
 	else if( data.type == 34 ) t_flip( (float*)data.buffer, data.length, chunk.buffer );
 	else if( data.type == 33 ) t_flip( (int*)data.buffer, data.length, chunk.buffer );
 	else if( data.type == 32 ) t_flip( (unsigned int*)data.buffer, data.length, chunk.buffer );
 	else if( data.type == 9 ) t_flip( (char*)data.buffer, data.length, chunk.buffer );
-	else if( data.type == 8 ) t_flip( (unsigned char*)data.buffer, data.length, chunk.buffer );
+	else if( data.type == 8 ) t_flip( (unsigned char*)data.buffer, data.length, chunk.buffer );*/
 	else if( data.type > 7 ) {
 		t_flipmem( (char*)data.buffer, (int)(data.type/8), (int)data.length, (int)chunk.buffer );
 	}
