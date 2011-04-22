@@ -12,6 +12,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -185,7 +186,7 @@ public class Order extends JApplet {
 	Map<String,String>	personMap = new HashMap<String,String>();
 	
 	VDialog 		d;
-	//ADialog			ad;
+	ADialog			ad;
 	
 	Image			image = null;
 	
@@ -239,11 +240,36 @@ public class Order extends JApplet {
 			this.add( lab );
 		}
 		
+		Pontun 		pnt;
+		Set<Pontun>	pnts;
 		JButton ok = new JButton( new AbstractAction("OK") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				appr = true;
 				ADialog.this.setVisible( false );
+				
+				if( !sp.getValue().equals( pnt.e_Magn ) ) {
+					Pontun pntcln = pnt.clone();
+					int val = (Integer)ad.sp.getValue();
+					pntcln.e_Magn = pnt.e_Magn - val;
+					pnt.e_Magn = val;
+					afglist.add( pntcln );
+				}
+				
+				pnt._Afhent = new Date( System.currentTimeMillis() );
+				pnts.add( pnt );
+				
+				try {
+					updateorder( pnt );
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+				
+				afglist.removeAll( pnts );
+				afhlist.addAll( pnts );
+				
+				atable.tableChanged( new TableModelEvent( amodel ) );
+				rtable.tableChanged( new TableModelEvent( rmodel ) );	
 			}
 		});
 		
@@ -869,45 +895,31 @@ public class Order extends JApplet {
 	}
 	
 	private void afh() {
-		Set<Pontun>	pnts = new HashSet<Pontun>();
+		final Set<Pontun>	pnts = new HashSet<Pontun>();
 		int[] rr = atable.getSelectedRows();
 		for( int r : rr ) {
 			if( r != -1 ) {
 				r = atable.convertRowIndexToModel( r );
 				
-				Pontun pnt = afglist.get(r);
+				while( ad.isVisible() ) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 				
+				final Pontun pnt = afglist.get(r);
 				if( pnt.Pantað_Af.equals(user) || userCheck() ) {
 					if( pnt.e_Magn > 1 ) {
-						/*ad.sp.setModel( new SpinnerNumberModel((int)pnt.e_Magn, 1, (int)pnt.e_Magn, 1) );
-						ad.setSize(350, 100);
+						ad.sp.setModel( new SpinnerNumberModel((int)pnt.e_Magn, 1, (int)pnt.e_Magn, 1) );
+						ad.setSize(350, 150);
+						//ad.setBounds(0, 0, 350, 150);
+						
+						ad.pnt = pnt;
+						ad.pnts = pnts;
 						ad.setLocationRelativeTo( this );
 						ad.setVisible( true );
-						
-						if( ad.appr ) {*/
-							/*if( !ad.sp.getValue().equals( pnt.e_Magn ) ) {
-								Pontun pntcln = pnt.clone();
-								int val = (Integer)ad.sp.getValue();
-								pntcln.e_Magn = pnt.e_Magn - val;
-								pnt.e_Magn = val;
-								afglist.add( pntcln );
-							}*/
-							
-							pnt._Afhent = new Date( System.currentTimeMillis() );
-							pnts.add( pnt );
-							
-							try {
-								updateorder( pnt );
-							} catch (SQLException e1) {
-								e1.printStackTrace();
-							}
-							
-							afglist.removeAll( pnts );
-							afhlist.addAll( pnts );
-							
-							atable.tableChanged( new TableModelEvent( amodel ) );
-							rtable.tableChanged( new TableModelEvent( rmodel ) );
-						//}
 					} else {
 						pnt._Afhent = new Date( System.currentTimeMillis() );
 						pnts.add( pnt );
@@ -1035,7 +1047,7 @@ public class Order extends JApplet {
 	private static class SMTPAuthenticator extends javax.mail.Authenticator {
 	    public PasswordAuthentication getPasswordAuthentication() {
 	        String username = "sigmar";
-	        String password = "mirodc30";
+	        String password = "my11space";
 	        return new PasswordAuthentication(username, password);
 	    }
 	}
@@ -1218,11 +1230,11 @@ public class Order extends JApplet {
 			d = new VDialog();
 		}
 		
-		/*if( f != null ) {
+		if( f != null ) {
 			ad = new ADialog( f );
 		} else {
 			ad = new ADialog();
-		}*/
+		}
 		
 		try {
 			loadPersons();
