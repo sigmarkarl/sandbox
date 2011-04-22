@@ -900,16 +900,16 @@ template<typename T> void mu( T r ) {}
 
 //template<typename T> f_str;
 
-template< typename T, typename K, typename V, typename U, void (*s)( T, int, K, int, V, int, U, int ) > void getter( s func, ... ) {
+/*template< typename T, typename K, typename V, typename U, void (*s)( T, int, K, int, V, int, U, int ) > void getter( s func, ... ) {
 	//func();
 };
 
-/*template< void (*t_func)() > class getter<0> {
+template< void (*t_func)() > class getter<0> {
 	t_func();
 }*/
 
 JNIEXPORT int get( simlab ret, simlab from, simlab what, simlab where ) {
-	getter( t_get, ret, from, what, where );
+	//getter( t_get, ret, from, what, where );
 
 	return 4;
 }

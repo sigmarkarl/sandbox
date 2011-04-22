@@ -174,7 +174,7 @@ public class Simlab implements ScriptEngineFactory {
 
 	public native int gcd(simlab.ByValue v);
 
-	public native int flip(simlab.ByValue c);
+	public native int flip(simlab.ByValue data, simlab.ByValue idx, simlab.ByValue chunk);
 
 	public native int shift(simlab.ByValue v, simlab.ByValue c);
 
@@ -703,7 +703,9 @@ public class Simlab implements ScriptEngineFactory {
 	}
 
 	public int reverse(final simlab.ByValue s) {
-		return flip(s);
+		//return flip(s);
+		
+		return 1;
 	}
 	
 	public int tolower() {
@@ -1148,11 +1150,17 @@ public class Simlab implements ScriptEngineFactory {
 	}
 
 	public int flip() {
-		crnt(data);
-		flip(nulldata);
-		data = getdata();
+		//crnt(data);
+		flip( data, datalib.get("indexer"), new simlab.ByValue(data.length) );
+		//data = getdata();
 
-		return 1;
+		return 0;
+	}
+	
+	public int flip( final simlab.ByValue idx, final simlab.ByValue chk ) {
+		flip( data, idx, chk );
+		
+		return 2;
 	}
 
 	public int sin() {
@@ -3321,6 +3329,9 @@ public class Simlab implements ScriptEngineFactory {
 		datalib.put("one", new simlab.ByValue(0, 65, 1));
 		datalib.put("two", new simlab.ByValue(0, 65, 2));
 		datalib.put("ten", new simlab.ByValue(0, 65, 10));
+		
+		indexer();
+		datalib.put("indexer", getdata());
 
 		return 0;
 	}
