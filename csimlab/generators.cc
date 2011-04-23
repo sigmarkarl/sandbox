@@ -145,6 +145,32 @@ public:
 	virtual int operator[]( int i ) { return i; };
 };
 
+template<typename T> class c_ranger {
+public:
+	c_ranger( T buf, int len, long long & size ) : buffer(buf), length(len) {
+		int tot = 0;
+		for( int k = 0; k < length; k+=2 ) {
+			tot += buffer[k+1] - buffer[k];
+		}
+		size = tot;
+	};
+
+	virtual int operator[]( int i ) {
+		int tot = 0;
+		for( int k = 0; k < length; k+=2 ) {
+			int size = buffer[k+1] - buffer[k];
+			if( i < tot+size ) {
+				return buffer[k] + (i-tot);
+			}
+			tot += size;
+		}
+		return -1;
+	};
+	T	buffer;
+	int length;
+	int size;
+};
+
 class c_fiboer {
 public:
 	c_fiboer( int f = 1, int n = 1 ) : first(f), next(n), current(0) {};
@@ -208,6 +234,25 @@ JNIEXPORT int indexer() {
 	data.length = -1;
 
 	return 0;
+}
+
+JNIEXPORT int ranger( simlab range ) {
+	if( range.type == 66 ) {
+		data.buffer = (long)new c_ranger<double*>( (double*)range.buffer, range.length, data.length );
+	} else if( range.type == 65 ) {
+		data.buffer = (long)new c_ranger<long long*>( (long long*)range.buffer, range.length, data.length );
+	} else if( range.type == 64 ) {
+		data.buffer = (long)new c_ranger<unsigned long long*>( (unsigned long long*)range.buffer, range.length, data.length );
+	} else if( range.type == 34 ) {
+		data.buffer = (long)new c_ranger<float*>( (float*)range.buffer, range.length, data.length );
+	} else if( range.type == 33 ) {
+		data.buffer = (long)new c_ranger<int*>( (int*)range.buffer, range.length, data.length );
+	} else if( range.type == 32 ) {
+		data.buffer = (long)new c_ranger<unsigned int*>( (unsigned int*)range.buffer, range.length, data.length );
+	}
+	data.type = -32;
+
+	return 1;
 }
 
 template<typename T> void t_viewer( T t, int len, void* buffer ) {
@@ -321,7 +366,7 @@ JNIEXPORT int buffer( simlab bff ) {
 	return 0;
 }
 
-extern "C" JNIEXPORT int cnst( simlab cnst ) {
+JNIEXPORT int cnst( simlab cnst ) {
 	if( cnst.type == 32 ) data.buffer = (long)new c_const<int>( cnst.buffer );
 	else if( cnst.type == 34 ) data.buffer = (long)new c_const<float>( *((float*)&cnst.buffer) );
 	data.length = -1;
@@ -347,7 +392,7 @@ template<typename T> void t_caster() {
 	}
 }
 
-extern "C" JNIEXPORT int caster( simlab t ) {
+JNIEXPORT int caster( simlab t ) {
 	if( t.buffer == 32 ) t_caster<int>();
 	else if( t.buffer == 66 ) t_caster<double>();
 
