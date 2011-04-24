@@ -559,7 +559,7 @@ extern "C" JNIEXPORT int matmuler( simlab mat, simlab c, simlab r ) {
 	return 1;
 }
 
-extern "C" JNIEXPORT int dfuncer( simlab dfunc ) {
+JNIEXPORT int dfuncer( simlab dfunc ) {
 	if( data.type > 0 ) {
 		void** ptr = new void*[1];
 		*ptr = (void*)data.buffer;
