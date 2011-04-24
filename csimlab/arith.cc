@@ -906,10 +906,10 @@ template<typename T> void mu( T r ) {}
 
 template< void (*t_func)() > class getter<0> {
 	t_func();
-}*/
+}
 
 JNIEXPORT int get( simlab ret, simlab from, simlab what, simlab where ) {
 	//getter( t_get, ret, from, what, where );
 
 	return 4;
-}
+}*/
