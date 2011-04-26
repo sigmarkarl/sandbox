@@ -937,16 +937,16 @@ public class GeneSet extends JApplet {
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
 		String name = null;
-		String ac = "";
+		StringBuilder ac = new StringBuilder();
 		while( line != null ) {
 			if( line.startsWith(">") ) {
 				if( ac.length() > 0 ) dna.put(name, ac);
 				
-				ac = "";
+				ac = new StringBuilder();
 				name = line.substring(1).split(" ")[0];
 				
 				int v = name.indexOf("contig");
-			} else ac += line.trim();
+			} else ac.append( line.trim()+"" );
 			line = br.readLine();
 		}
 		if( ac.length() > 0 ) dna.put(name, ac);
@@ -976,7 +976,7 @@ public class GeneSet extends JApplet {
 	};
 	//static Aas[]	aas;
 	static Map<String,StringBuilder>	aas = new HashMap<String,StringBuilder>();
-	static Map<String,String>			dna = new HashMap<String,String>();
+	static Map<String,StringBuilder>	dna = new HashMap<String,StringBuilder>();
 	
 	public static void loci2aasequence( String[] stuff, File dir2 ) throws IOException {
 		for( String st : stuff ) {
@@ -2721,7 +2721,7 @@ public class GeneSet extends JApplet {
 	
 	static boolean locsort = true;
 	static class Tegeval implements Comparable<Tegeval> {
-		public Tegeval( String tegund, double evalue, StringBuilder sequence, String dnaseq, String contig, String shortcontig, String locontig, int sta, int sto, int orient ) {
+		public Tegeval( String tegund, double evalue, StringBuilder sequence, StringBuilder dnaseq, String contig, String shortcontig, String locontig, int sta, int sto, int orient ) {
 			teg = tegund;
 			eval = evalue;
 			dna = dnaseq;
@@ -2742,7 +2742,7 @@ public class GeneSet extends JApplet {
 		String  contshort;
 		String	contloc;
 		StringBuilder	seq;
-		String  dna;
+		StringBuilder	dna;
 		int		start;
 		int		stop;
 		int		ori;
@@ -3779,7 +3779,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 31;
+				return 32;
 			}
 
 			@Override
@@ -3801,50 +3801,52 @@ public class GeneSet extends JApplet {
 				} else if( columnIndex == 7 ) {
 					return "Present in";
 				} else if( columnIndex == 8 ) {
-					return "Group coverage";
+					return "Group index";
 				} else if( columnIndex == 9 ) {
-					return "Group size";
+					return "Group coverage";
 				} else if( columnIndex == 10 ) {
-					return "Locprev";
+					return "Group size";
 				} else if( columnIndex == 11 ) {
-					return "# of locus";
+					return "Locprev";
 				} else if( columnIndex == 12 ) {
-					return "max length";
+					return "# of locus";
 				} else if( columnIndex == 13 ) {
-					return "sharing number";
+					return "max length";
 				} else if( columnIndex == 14 ) {
-					return "# Cyc";
+					return "sharing number";
 				} else if( columnIndex == 15 ) {
-					return "T.HB8";
+					return "# Cyc";
 				} else if( columnIndex == 16 ) {
-					return "T.HB27";
+					return "T.HB8";
 				} else if( columnIndex == 17 ) {
-					return "T.SA01";
+					return "T.HB27";
 				} else if( columnIndex == 18 ) {
-					return "T.aqua";
+					return "T.SA01";
 				} else if( columnIndex == 19 ) {
-					return "T.eggert";
+					return "T.aqua";
 				} else if( columnIndex == 20 ) {
-					return "T.island";
+					return "T.eggert";
 				} else if( columnIndex == 21 ) {
-					return "T.antan";
+					return "T.island";
 				} else if( columnIndex == 22 ) {
-					return "T.scoto346";
+					return "T.antan";
 				} else if( columnIndex == 23 ) {
-					return "T.scoto1572";
+					return "T.scoto346";
 				} else if( columnIndex == 24 ) {
-					return "T.scoto252";
+					return "T.scoto1572";
 				} else if( columnIndex == 25 ) {
-					return "T.scoto2101";
+					return "T.scoto252";
 				} else if( columnIndex == 26 ) {
-					return "T.scoto2127";
+					return "T.scoto2101";
 				} else if( columnIndex == 27 ) {
-					return "T.scoto4063";
+					return "T.scoto2127";
 				} else if( columnIndex == 28 ) {
-					return "T.oshimai";
+					return "T.scoto4063";
 				} else if( columnIndex == 29 ) {
-					return "T.brockianus";
+					return "T.oshimai";
 				} else if( columnIndex == 30 ) {
+					return "T.brockianus";
+				} else if( columnIndex == 31 ) {
 					return "T.filiformis";
 				}
 				return "";
@@ -3853,8 +3855,8 @@ public class GeneSet extends JApplet {
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex == 9 ) return Double.class;
-				else if( columnIndex >= 6 && columnIndex <= 14 ) return Integer.class;
-				else if( columnIndex >= 15 ) return Teginfo.class;
+				else if( columnIndex >= 6 && columnIndex <= 15 ) return Integer.class;
+				else if( columnIndex >= 16 ) return Teginfo.class;
 				return String.class;
 			}
 
@@ -3883,12 +3885,14 @@ public class GeneSet extends JApplet {
 				} else if( columnIndex == 7 ) {
 					return gene.species == null ? -1 : gene.species.size();
 				} else if( columnIndex == 8 ) {
-					return gene.groupCoverage;
+					return gene.groupIdx;
 				} else if( columnIndex == 9 ) {
-					return gene.groupGenCount;
+					return gene.groupCoverage;
 				} else if( columnIndex == 10 ) {
-					return gene.proximityGroupPreservation;
+					return gene.groupGenCount;
 				} else if( columnIndex == 11 ) {
+					return gene.proximityGroupPreservation;
+				} else if( columnIndex == 12 ) {
 					if( gene.species != null ) {
 						int val = 0;
 						for( String str : gene.species.keySet() ) {
@@ -3896,7 +3900,7 @@ public class GeneSet extends JApplet {
 						}
 						return val;
 					}
-				} else if( columnIndex == 12 ) {
+				} else if( columnIndex == 13 ) {
 					if( gene.species != null ) {
 						int max = 0;
 						for( String str : gene.species.keySet() ) {
@@ -3907,11 +3911,11 @@ public class GeneSet extends JApplet {
 						}
 						return max;
 					}
-				} else if( columnIndex == 13 ) {
+				} else if( columnIndex == 14 ) {
 					if( gene.species != null ) {
 						return specset.get(gene.species.keySet());
 					}
-				} else if( columnIndex == 14 ) {
+				} else if( columnIndex == 15 ) {
 					if( gene.species != null ) {
 						int max = 0;
 						for( String str : gene.species.keySet() ) {
@@ -3924,100 +3928,100 @@ public class GeneSet extends JApplet {
 					}
 					return 0;
 				}
-				else if( columnIndex == 15 ) {
+				else if( columnIndex == 16 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.tHB8join");
 						return set;
 					}
-				} else if( columnIndex == 16 ) {
+				} else if( columnIndex == 17 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.tHB27join");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttHB27join").iterator().next();
-				} else if( columnIndex == 17 ) {
+				} else if( columnIndex == 18 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scotoSA01");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
-				} else if( columnIndex == 18 ) {
+				} else if( columnIndex == 19 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.aqua");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("ttaqua").iterator().next();
-				} else if( columnIndex == 19 ) {
+				} else if( columnIndex == 20 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.eggertsoni");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("eggertsoni2789").iterator().next();
-				} else if( columnIndex == 20 ) {
+				} else if( columnIndex == 21 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.islandicus");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("islandicus180610").iterator().next();
-				} else if( columnIndex == 21 ) {
+				} else if( columnIndex == 22 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.antranikiani");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("antag2120").iterator().next();
-				} else if( columnIndex == 22 ) {
+				} else if( columnIndex == 23 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto346");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto346").iterator().next();
-				} else if( columnIndex == 23 ) {
+				} else if( columnIndex == 24 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto1572");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto1572").iterator().next();
-				} else if( columnIndex == 24 ) {
+				} else if( columnIndex == 25 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto252");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto252").iterator().next();
-				} else if( columnIndex == 25 ) {
+				} else if( columnIndex == 26 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto2101");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto2101").iterator().next();
-				} else if( columnIndex == 26 ) {
+				} else if( columnIndex == 27 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto2127");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto2127").iterator().next();
-				} else if( columnIndex == 27 ) {
+				} else if( columnIndex == 28 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.scoto4063");
 						return set;
 					}
 					//return gene.species == null ? null : gene.species.get("scoto4063").iterator().next();
-				} else if( columnIndex == 28 ) {
+				} else if( columnIndex == 29 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.oshimai");
 						return set;
 					}
-				} else if( columnIndex == 29 ) {
+				} else if( columnIndex == 30 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.brockianus");
 						return set;
 					}
-				} else if( columnIndex == 30 ) {
+				} else if( columnIndex == 31 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.filiformis");
 						return set;
 					}
 				}
-				return columnIndex >= 10 ? null : "";
+				return columnIndex >= 11 ? null : "";
 			}
 
 			@Override
