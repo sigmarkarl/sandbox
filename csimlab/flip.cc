@@ -67,7 +67,7 @@ template<template<typename T, typename K> class c_func, typename T> void doubles
 			c_const<double>	sl( *(double*)&value.buffer );
 			c_func< T,c_simlab<double>& >( buffer, length, sl, 0 );
 		}
-	} else if( value.length == -1 ) {
+	} else if( value.type < 0 ) {
 		/*if( value.type == -66 ) step3< c_func, c_simlab<double>& >( *(c_simlab<double>*)value.buffer, value.length );
 		else if( value.type == -65 ) step3< c_func, c_simlab<long long>& >( *((c_simlab<long long>*)value.buffer), value.length );
 		else if( value.type == -64 ) step3< c_func, c_simlab<unsigned long long>& >( *((c_simlab<unsigned long long>*)value.buffer), value.length );
@@ -111,7 +111,7 @@ template<template<typename T, typename K> class c_func> void doublestep1( simlab
 			c_const<double>	sl( *(double*)&value.buffer );
 			doublestep2< c_func, c_simlab<double>& >( sl, 1, last );
 		}*/
-	} else if( value.length == -1 ) {
+	} else if( value.type < 0 ) {
 		if( value.type == -66 ) doublestep2< c_func, c_simlab<double&>& >( *(c_simlab<double&>*)value.buffer, value.length, last );
 		else if( value.type == -65 ) doublestep2< c_func, c_simlab<long long&>& >( *((c_simlab<long long&>*)value.buffer), value.length, last );
 		else if( value.type == -64 ) doublestep2< c_func, c_simlab<unsigned long long&>& >( *((c_simlab<unsigned long long&>*)value.buffer), value.length, last );
@@ -119,6 +119,8 @@ template<template<typename T, typename K> class c_func> void doublestep1( simlab
 		else if( value.type == -33 ) doublestep2< c_func, c_simlab<int&>& >( *((c_simlab<int&>*)value.buffer), value.length, last );
 		else if( value.type == -32 ) doublestep2< c_func, c_simlab<unsigned int&>& >( *((c_simlab<unsigned int&>*)value.buffer), value.length, last );
 		else if( value.type == -16 ) doublestep2< c_func, c_simlab<short&>& >( *((c_simlab<short&>*)value.buffer), value.length, last );
+		else if( value.type == -9 ) doublestep2< c_func, c_simlab<char&>& >( *((c_simlab<char&>*)value.buffer), value.length, last );
+		else if( value.type == -8 ) doublestep2< c_func, c_simlab<unsigned char&>& >( *((c_simlab<unsigned char&>*)value.buffer), value.length, last );
 	} else {
 		if( value.type == 66 ) doublestep2< c_func, double* >( (double*)value.buffer, value.length, last );
 		else if( value.type == 65 ) doublestep2< c_func, long long* >( (long long*)value.buffer, value.length, last );
