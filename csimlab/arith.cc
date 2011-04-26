@@ -93,14 +93,6 @@ template<> double& c_simlab<double&>::operator[]( int i ) {
 	return g_d;
 };
 
-template <typename T, typename K> void t_set( T buffer, long length, K value, long vallen ) {
-	long len = vallen > length ? vallen : length;
-
-	for( long i = 0; i < len; i++ ) {
-		buffer[i] = value[i];
-	}
-}
-
 template <typename T, typename K, typename U> void t_arrange( T buffer, long length, K value, long vallen ) {
 	int i = 0;
 	int l = 0;
@@ -392,7 +384,14 @@ public:
 template <typename T, typename K> class c_set {
 public:
 	c_set( T tbuf, int tlen, K kbuf, int klen ) {
-		t_set<T,K>( tbuf, tlen, kbuf, klen );
+		//template <typename T, typename K> void t_set( T buffer, long length, K value, long vallen ) {
+		long len = klen > tlen ? klen : tlen;
+
+		for( long i = 0; i < len; i++ ) {
+			tbuf[i] = kbuf[i];
+		}
+		//}
+		//t_set<T,K>( tbuf, tlen, kbuf, klen );
 	}
 };
 
