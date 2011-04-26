@@ -147,7 +147,7 @@ public:
 
 template<typename T> class c_ranger {
 public:
-	c_ranger( T buf, int len, long long & size ) : buffer(buf), length(len) {
+	c_ranger( T* buf, int len, long long & size ) : buffer(buf), length(len) {
 		int tot = 0;
 		for( int k = 0; k < length; k+=2 ) {
 			tot += buffer[k+1] - buffer[k];
@@ -155,18 +155,21 @@ public:
 		size = tot;
 	};
 
-	virtual int operator[]( int i ) {
-		int tot = 0;
+	virtual T operator[]( int i ) {
+		T tot = 0;
 		for( int k = 0; k < length; k+=2 ) {
-			int size = buffer[k+1] - buffer[k];
+			T size = buffer[k+1] - buffer[k];
 			if( i < tot+size ) {
-				return buffer[k] + (i-tot);
+				tot = buffer[k] + (i-tot);
+				return tot;
 			}
 			tot += size;
 		}
-		return -1;
+
+		tot = -1;
+		return tot;
 	};
-	T	buffer;
+	T*	buffer;
 	int length;
 	int size;
 };
@@ -238,17 +241,17 @@ JNIEXPORT int indexer() {
 
 JNIEXPORT int ranger( simlab range ) {
 	if( range.type == 66 ) {
-		data.buffer = (long)new c_ranger<double*>( (double*)range.buffer, range.length, data.length );
+		data.buffer = (long)new c_ranger<double>( (double*)range.buffer, range.length, data.length );
 	} else if( range.type == 65 ) {
-		data.buffer = (long)new c_ranger<long long*>( (long long*)range.buffer, range.length, data.length );
+		data.buffer = (long)new c_ranger<long long>( (long long*)range.buffer, range.length, data.length );
 	} else if( range.type == 64 ) {
-		data.buffer = (long)new c_ranger<unsigned long long*>( (unsigned long long*)range.buffer, range.length, data.length );
+		data.buffer = (long)new c_ranger<unsigned long long>( (unsigned long long*)range.buffer, range.length, data.length );
 	} else if( range.type == 34 ) {
-		data.buffer = (long)new c_ranger<float*>( (float*)range.buffer, range.length, data.length );
+		data.buffer = (long)new c_ranger<float>( (float*)range.buffer, range.length, data.length );
 	} else if( range.type == 33 ) {
-		data.buffer = (long)new c_ranger<int*>( (int*)range.buffer, range.length, data.length );
+		data.buffer = (long)new c_ranger<int>( (int*)range.buffer, range.length, data.length );
 	} else if( range.type == 32 ) {
-		data.buffer = (long)new c_ranger<unsigned int*>( (unsigned int*)range.buffer, range.length, data.length );
+		data.buffer = (long)new c_ranger<unsigned int>( (unsigned int*)range.buffer, range.length, data.length );
 	}
 	data.type = -32;
 

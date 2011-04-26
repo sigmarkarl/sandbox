@@ -3841,6 +3841,16 @@ JNIEXPORT int idx() {
 	return 0;
 }
 
+JNIEXPORT char getPseudoByte( void* p, int k ) {
+	c_simlab<char>	& c = *(c_simlab<char>*)p;
+	return c[k];
+}
+
+JNIEXPORT char getPseudoByter( void* p, int k ) {
+	c_simlab<char&>	& c = *(c_simlab<char&>*)p;
+	return c[k];
+}
+
 JNIEXPORT long long getPseudoUint( void* p, int k ) {
 	c_simlab<unsigned int>	& c = *(c_simlab<unsigned int>*)p;
 	return c[k];
@@ -3861,12 +3871,22 @@ JNIEXPORT int getPseudoIntr( void* p, int k ) {
 	return c[k];
 }
 
-JNIEXPORT int getPseudoDouble( void* p, int k ) {
+JNIEXPORT float getPseudoFloat( void* p, int k ) {
+	c_simlab<float>	& c = *(c_simlab<float>*)p;
+	return c[k];
+}
+
+JNIEXPORT float getPseudoFloatr( void* p, int k ) {
+	c_simlab<float&> & c = *(c_simlab<float&>*)p;
+	return c[k];
+}
+
+JNIEXPORT double getPseudoDouble( void* p, int k ) {
 	c_simlab<double>	& c = *(c_simlab<double>*)p;
 	return c[k];
 }
 
-JNIEXPORT int getPseudoDoubler( void* p, int k ) {
+JNIEXPORT double getPseudoDoubler( void* p, int k ) {
 	c_simlab<double&>	& c = *(c_simlab<double&>*)p;
 	return c[k];
 }
@@ -5688,7 +5708,7 @@ JNIEXPORT int median( simlab chunk ) {
 	return 1;
 }
 
-JNIEXPORT int shift( simlab val, simlab chunk ) {
+JNIEXPORT int shiftold( simlab val, simlab chunk ) {
 	//printf( "n %d %d\n", val.buffer, chunk.buffer );
 	if( chunk.buffer == 0 ) chunk.buffer = data.length;
 	if( val.length == 0 ) {
