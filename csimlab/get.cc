@@ -212,7 +212,7 @@ public:
 template <typename T, typename K> class c_getter<T*,K> {
 public:
 	c_getter( T* buffer, int length, K index, int ilen ) : buf(buffer), idx(index) {}
-	virtual T & operator[](int i) { printf("bleh %d %d\n", (int)idx[i], (int)buf[(int)idx[i]] ); return buf[(int)idx[i]]; };
+	virtual T & operator[](int i) { return buf[(int)idx[i]]; };
 	T* buf;
 	K idx;
 };
