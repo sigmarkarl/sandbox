@@ -162,7 +162,7 @@ JNIEXPORT int fetch( simlab name );
 JNIEXPORT int echo( simlab str, ... );
 JNIEXPORT int initjava();
 JNIEXPORT int cmd( simlab );
-JNIEXPORT int shift( simlab, simlab );
+//JNIEXPORT int shift( simlab, simlab );
 JNIEXPORT int add( simlab );
 
 //c_idx<int>	int_idx;
@@ -4800,6 +4800,8 @@ JNIEXPORT int sortidx() {
 	else if( data.type == 34 ) t_sortidx( (float*)data.buffer, data.length );
 	else if( data.type == 33 ) t_sortidx( (int*)data.buffer, data.length );
 	else if( data.type == 32 ) t_sortidx( (unsigned int*)data.buffer, data.length );
+	else if( data.type == 16 ) t_sortidx( (unsigned short*)data.buffer, data.length );
+	else if( data.type == 8 ) t_sortidx( (unsigned char*)data.buffer, data.length );
 
 	return 0;
 }
