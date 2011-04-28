@@ -186,7 +186,7 @@ public class Simlab implements ScriptEngineFactory {
 	
 	public native int getter( simlab.ByValue data, simlab.ByValue idx );
 	
-	public native int shift(simlab.ByValue v, simlab.ByValue c);
+	public native int shift( final simlab.ByValue d, final simlab.ByValue v, final simlab.ByValue c );
 
 	public native int init();
 	
@@ -289,6 +289,9 @@ public class Simlab implements ScriptEngineFactory {
 
 	@mann(name="creates sorting indexes indicating the order of the sequence", dataChanging=true)
 	public native int sortidx();
+	
+	@mann(name="creates suffix indexes indicating the order of the suffix sequence", dataChanging=true)
+	public native int suffidx( final simlab.ByValue data, final simlab.ByValue r );
 
 	public native int transidx(final simlab.ByValue c, final simlab.ByValue r);
 
@@ -1223,10 +1226,15 @@ public class Simlab implements ScriptEngineFactory {
 		return 1;
 	}
 
-	public int shift(final simlab.ByValue v) {
-		crnt(data);
-		shift(v, nulldata);
-		data = getdata();
+	public int shift( final simlab.ByValue v, final simlab.ByValue r ) {
+		shift(data, r, v);
+
+		return 1;
+	}
+
+	public int shift( final simlab.ByValue v ) {
+		if( v.length > 1 ) shift(v, new simlab.ByValue(data.length/v.length) );
+		else shift(v, new simlab.ByValue(data.length) );
 
 		return 1;
 	}
@@ -1245,6 +1253,20 @@ public class Simlab implements ScriptEngineFactory {
 		range( data, range );
 		
 		return 1;
+	}
+	
+	public int suffidx() {
+		long p = allocateDirect( bytelength(INTLEN, data.length) );
+		simlab.ByValue id = new simlab.ByValue(data.length, INTLEN, p);
+		crnt(id);
+		idx();
+		suffidx(data, id);
+		
+		data.buffer = id.buffer;
+		data.type = id.type;
+		data.length = id.length;
+		
+		return 0;
 	}
 
 	public int flip() {
