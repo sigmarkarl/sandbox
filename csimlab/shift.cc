@@ -1,27 +1,33 @@
 #include "simlab.h"
+#include <cstdio>
 
 template <typename T, typename K, typename U> class c_shift {
 public:
 	c_shift( T buffer, int length, K chunk, int clen, U shift, int ulen ) {}
 };
 
-int _gcd( int a, int b ) {
+extern int _gcd( int a, int b );/* {
 	if( b == 0 ) return a;
 	else return _gcd( b, a%b );
-}
+}*/
 
 template <typename T, typename K, typename U> class c_shift<T*,K,U> {
 public:
 	c_shift( T* buffer, int length, K chk, int clen, U sft, int ulen ) {
-		int i = 0;
-		int chunk = chk[i++];
-		int shift = sft[i++];
-
-		shift %= chunk;
-		if( shift < 0 ) shift = chunk + shift;
-		int ec = _gcd( shift, chunk );
+		int u = 0;
+		int chunk = 0;
 
 		for( int r = 0; r < length; r+=chunk ) {
+			//printf( "%d %d %d\n", chunk, shift, ec );
+
+			chunk = chk[u];
+			int shift = sft[u];
+			u++;
+
+			shift %= chunk;
+			if( shift < 0 ) shift = chunk + shift;
+			int ec = _gcd( shift, chunk );
+
 			T* rdata = &buffer[r];
 			for( int i = 0; i < ec; i++ ) {
 				int k = i;
@@ -34,13 +40,6 @@ public:
 					rdata[k] = tmp1;
 				} while( k != i );
 			}
-
-			chunk = chk[i++];
-			shift = sft[i++];
-
-			shift %= chunk;
-			if( shift < 0 ) shift = chunk + shift;
-			ec = _gcd( shift, chunk );
 		}
 	}
 };
