@@ -4932,7 +4932,8 @@ JNIEXPORT int transirr( simlab ret, simlab cl, simlab cl2 ) {
 		for( int i = 0; i < l; i++ ) {
 			int cc = i%c;
 			int rr = i/c;
-			int ml = i > 0 ? d[i]-d[i-1] : d[i-1];
+			int ml = i > 0 ? d[i]-d[i-1] : d[0];
+			printf("erm %d %d\n", ml, elsize);
 
 			int k = cc*r+rr;
 			void* dest = (void*)(dst+(k > 0 ? (int)t[k-1]*elsize : 0));
@@ -4962,14 +4963,12 @@ JNIEXPORT int transmem( simlab mem, simlab cl ) {
 }
 
 JNIEXPORT int trans( simlab cl, simlab rl ) {
-	printf("%d %d %d\n", (int)cl.buffer, (int)rl.buffer, (int)data.length );
+	//printf("%d %d %d\n", (int)cl.buffer, (int)rl.buffer, (int)data.length );
 
 	int c = cl.buffer;
 	if( c < 0 ) c = data.length/(-c);
 	int r = rl.buffer;
 	if( r == 0 ) r = data.length/c;
-
-	printf("oktokst\n");
 
 	//printf("%d\n", sizeof(long double) );
 	if( data.type < 0 ) {
