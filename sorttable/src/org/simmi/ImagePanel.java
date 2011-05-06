@@ -39,8 +39,6 @@ import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 
-import netscape.javascript.JSObject;
-
 public class ImagePanel extends JComponent {
 	/**
 	 * 
@@ -267,8 +265,7 @@ public class ImagePanel extends JComponent {
 			return ImageIO.read( url ); //applet.getImage( url );
 		} else {
 			if( applet.applet == null ) {
-				JSObject win = JSObject.getWindow(applet);
-				win.call( "emmi", new Object[] {url.toString()} );
+				JSUtil.call( applet, "emmi", new Object[] {url.toString()} );
 				applet.applet = "simmi";
 			} else {
 				Enumeration<Applet> appen = applet.getAppletContext().getApplets();
@@ -442,8 +439,7 @@ public class ImagePanel extends JComponent {
 					String result = null;
 					
 					if( restricted ) {
-						JSObject win = JSObject.getWindow(applet);
-						win.call( "imsearch2", new Object[] {str} );
+						JSUtil.call( applet, "imsearch2", new Object[] {str} );
 						
 						/*if( applet.applet == null ) {
 							JSObject win = JSObject.getWindow(applet);

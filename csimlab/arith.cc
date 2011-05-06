@@ -425,8 +425,21 @@ public:
 
 template <typename T, typename K> class c_mod {
 public:
-	c_mod( T tbuf, int tlen, K kbuf, int klen ) {
-		t_mod<T,K>( tbuf, tlen, kbuf, klen );
+	c_mod( T t, int tlen, K k, int klen ) {
+		for( int i = 0; i < (tlen > klen ? tlen : klen); i++ ) {
+			t[i] = fmod( (double)t[i], (double)k[i] );
+				//t[i] %= (int)k[i];
+		}
+		//t_mod<T,K>( tbuf, tlen, kbuf, klen );
+	}
+};
+
+template <typename T, typename K> class c_imod {
+public:
+	c_imod( T t, int tlen, K k, int klen ) {
+		for( int i = 0; i < (tlen > klen ? tlen : klen); i++ ) {
+			t[i] = fmod( (double)k[i], (double)t[i] );
+		}
 	}
 };
 
@@ -827,6 +840,11 @@ JNIEXPORT int simlab_div( simlab value ) {
 
 JNIEXPORT int mod( simlab value ) {
 	arith< c_mod >( value );
+	return 1;
+}
+
+JNIEXPORT int imod( simlab value ) {
+	arith< c_imod >( value );
 	return 1;
 }
 

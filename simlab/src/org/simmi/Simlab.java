@@ -221,6 +221,8 @@ public class Simlab implements ScriptEngineFactory {
 	public native int matmul( simlab.ByValue ret, simlab.ByValue mul, simlab.ByValue val );
 
 	public native int mod(simlab.ByValue val);
+	
+	public native int imod(simlab.ByValue val);
 
 	public synchronized native int set(simlab.ByValue val);
 
@@ -923,6 +925,43 @@ public class Simlab implements ScriptEngineFactory {
 		else return _gcd( b, a%b );
 	}
 	
+	@mann(name="abs: absolute value", dataChanging=true)
+	public int abs() {
+		if( data.type == BYTELEN ) {
+			ByteBuffer bb = data.getByteBuffer();
+			for( int i = 0; i < bb.limit(); i++ ) {
+				bb.put(i, (byte)Math.abs(bb.get(i)) );
+			}
+		} else if( data.type == SHORTLEN ) {
+			ShortBuffer sb = data.getByteBuffer().asShortBuffer();
+			for( int i = 0; i < sb.limit(); i++ ) {
+				sb.put(i, (short)Math.abs(sb.get(i)) );
+			}
+		} else if( data.type == INTLEN ) {
+			IntBuffer ib = data.getByteBuffer().asIntBuffer();
+			for( int i = 0; i < ib.limit(); i++ ) {
+				ib.put(i, Math.abs(ib.get(i)) );
+			}
+		} else if( data.type == FLOATLEN ) {
+			FloatBuffer fb = data.getByteBuffer().asFloatBuffer();
+			for( int i = 0; i < fb.limit(); i++ ) {
+				fb.put(i, Math.abs(fb.get(i)) );
+			}
+		} else if( data.type == LONGLEN ) {
+			LongBuffer lb = data.getByteBuffer().asLongBuffer();
+			for( int i = 0; i < lb.limit(); i++ ) {
+				lb.put(i, Math.abs(lb.get(i)) );
+			}
+		} else if( data.type == DOUBLELEN ) {
+			DoubleBuffer db = data.getByteBuffer().asDoubleBuffer();
+			for( int i = 0; i < db.limit(); i++ ) {
+				db.put(i, Math.abs(db.get(i)) );
+			}
+		}
+		
+		return 0;
+	}
+	
 	public int matmul( final simlab.ByValue mul ) {
 		long val = _gcd( data.length, mul.length );
 		matmul( mul, new simlab.ByValue( val ) );
@@ -984,12 +1023,16 @@ public class Simlab implements ScriptEngineFactory {
 		long p = allocateDirect( bytelength(data.type, retlen) );
 		final simlab.ByValue ret = new simlab.ByValue( retlen, data.type, p );
 		
-		crnt( data );
-		sum( ret, sl_chunk, sl_size );
-		
-		data.buffer = ret.buffer;
-		data.type = ret.type;
-		data.length = ret.length;
+		if( data.type > 100 ) {
+			
+		} else {
+			crnt( data );
+			sum( ret, sl_chunk, sl_size );
+			
+			data.buffer = ret.buffer;
+			data.type = ret.type;
+			data.length = ret.length;
+		}
 		
 		return 2;
 	}
@@ -2355,6 +2398,16 @@ public class Simlab implements ScriptEngineFactory {
 					}
 					System.out.printf("%e\n", dbb.get(k));
 				}
+			} else if (data.type == LONGLEN || data.type == ULONGLEN) {
+				LongBuffer dbb = bb.asLongBuffer();
+				for (int i = 0; i < data.length; i += chunk) {
+					int k = i;
+					for (; k < Math.min(data.length, i + chunk) - 1; k++) {
+						System.out.printf("%d\t", dbb.get(k));
+						// System.out.print(dbb.get(k) + "\t");
+					}
+					System.out.printf("%d\n", dbb.get(k));
+				}
 			} else if (data.type == FLOATLEN) {
 				for (int i = 0; i < data.length; i += chunk) {
 					int k = i;
@@ -2495,6 +2548,12 @@ public class Simlab implements ScriptEngineFactory {
 					
 					str = st.nextToken("\"");
 				}
+				
+				if( str.equals("\"") ) {
+					val += st.nextToken("\"");
+					start = 0;
+				}
+				
 				String nstr = str.substring(start, str.length() - start);
 				val += nstr.replace("\\n", "\n");
 				// System.err.println("eehehe " + val);
@@ -3015,6 +3074,23 @@ public class Simlab implements ScriptEngineFactory {
 		// nat.setPointer( Native.getDirectBufferPointer( bb ) );
 
 		long pval = allocateDirect(bytelen); // Pointer.nativeValue(Native.getDirectBufferPointer(bb));
+		
+		if( buffers.containsKey(data.buffer) ) {
+			ByteBuffer oldbuffer = buffers.get(data.buffer);
+			ByteBuffer newbuffer = buffers.get(pval);
+			for( int i = 0; i < Math.min( oldbuffer.limit(), newbuffer.limit() ); i++ ) {
+				newbuffer.put(i, oldbuffer.get(i));
+			}
+			
+			buffers.remove( data.buffer );
+			for( String name : datalib.keySet() ) {
+				simlab.ByValue sl = datalib.get(name);
+				if( sl.buffer == data.buffer ) {
+					sl.buffer = pval;
+					sl.length = lenval;
+				}
+			}
+		}
 		// data = new simlab.ByValue(lenval, data.type, pval);
 		data.buffer = pval;
 		data.length = lenval;
@@ -3181,7 +3257,8 @@ public class Simlab implements ScriptEngineFactory {
 		return 1;
 	}
 	
-	public int put( final simlab.ByValue what, final simlab.ByValue where ) {
+	@mann(name="put: changes values in positions", dataChanging=true)
+	public int put( @pann(name="what") final simlab.ByValue what, @pann(name="where") final simlab.ByValue where ) {
 		put( data, what, where );
 		
 		return 2;
@@ -4202,7 +4279,7 @@ public class Simlab implements ScriptEngineFactory {
 		Console console = System.console();
 		Simlab simlab = new Simlab();
 		simlab.init();
-		simlab.welcome();
+		if( console != null ) simlab.welcome();
 		simlab.jinit();
 		ScriptEngine engine = simlab.getScriptEngine();
 
