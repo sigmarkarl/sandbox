@@ -9,12 +9,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.net.URI;
 
 import javax.jnlp.FileContents;
 import javax.jnlp.FileSaveService;
 import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
+//import javax.jnlp.UnavailableServiceException;
+import javax.swing.JFileChooser;
 import javax.swing.JTable;
 
 import netscape.javascript.JSObject;
@@ -190,56 +190,66 @@ public class PoiFactory {
 			ir++;
 		}
 		
-		FileSaveService fss; 
-	    try {  
-	        fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService"); 
-	    } catch (UnavailableServiceException e) { 
-	        fss = null; 
-	    }
-
-	    /*if (fss != null) {
-	        try {
-	        	FileContents newfc = fss.saveFileDialog(null, null, , "export.xlsx");
-	    	    wb.write( newfc.getOutputStream(true) );
-	        } catch (Exception e) { 
-	            e.printStackTrace();
-	        } 
-	    }*/
-		
-		/*ExtendedService es; 
-	    try {  
-	        es = (ExtendedService)ServiceManager.lookup("javax.jnlp.ExtendedService");
-	    } catch (UnavailableServiceException e) { 
-	        es = null; 
-	    }
-
-	    File tmp = File.createTempFile("tmp_", ".xlsx");
-	    FileContents fc = es.openFile( tmp );
-	    
-	    //System.err.println( "erm "+fss );
-	    if( fc.canWrite() ) {
-	    	wb.write( fc.getOutputStream(true) );*/
-	    
-	    ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+		ByteArrayOutputStream	baos = new ByteArrayOutputStream();
     	wb.write( baos );
 	    byte[] bb = baos.toByteArray();
 	    String str = Base64.encode(bb);
 	    String datauri = "data:application/vnd.ms-excel;name=export.xlsx;base64,"+str;
-	    	
-        try {    	    
-    	    //js.call("opendataurl", new Object[] {datauri});
-            FileContents newfc = fss.saveFileDialog(null, new String[] {"xlsx"}, new ByteArrayInputStream( baos.toByteArray() ), "export.xlsx");
-            
-            //if( newfc.canRead() ) {
-            //CompatUtilities.browse( new URI(datauri) );
-            //}
-            //newfc.
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	    
+	    boolean suc = true;
+	    JSObject js = JSObject.getWindow(applet);
+	    try {
+		    js.eval( "location.href = '"+datauri+"'" );
+	    } catch( Exception e ) {
+	    	suc = false;
+	    	e.printStackTrace();
+	    }
+		
+	    if( !suc ) {
+			FileSaveService fss; 
+		    try {  
+		        fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService"); 
+		    } catch (Exception e) { 
+		        fss = null; 
+		    }
+		    
+		    if( fss != null ) {
+		        try {
+		            FileContents newfc = fss.saveFileDialog(null, new String[] {"xlsx"}, new ByteArrayInputStream( bb ), "export.xlsx");
+		        } catch (Exception e) {
+		            e.printStackTrace();
+		        }
+		    } else {
+		    	JFileChooser filechooser = new JFileChooser();
+		    	if( filechooser.showSaveDialog( applet ) == JFileChooser.APPROVE_OPTION ) {
+		    		File f = filechooser.getSelectedFile();
+		    		FileOutputStream fw = new FileOutputStream( f );
+		    		fw.write( bb );
+		    		fw.close();
+		    	}
+		    }
+			
+			/*ExtendedService es;
+		    try {  
+		        es = (ExtendedService)ServiceManager.lookup("javax.jnlp.ExtendedService");
+		    } catch (UnavailableServiceException e) { 
+		        es = null; 
+		    }
+	
+		    //File tmp = new File("c:\\temp", "export.xlsx");
+		    //FileContents fc = es.openFile( tmp );
+		    
+		    if( fc.canWrite() ) {
+		    	wb.write( fc.getOutputStream(true) );
+		    }
+		    
+		    try {
+				Desktop.getDesktop().browse( new URI("file://c:/temp/export.xlsx") );
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}*/
+	    }      
         
-        JSObject js = JSObject.getWindow(applet);
-        js.eval( "location.href = '"+datauri+"'" );
         //js.call("open", new Object[] {datauri});
 	        
 	    //}
@@ -247,7 +257,7 @@ public class PoiFactory {
 		//wb.write( new FileOutputStream( tmp ) );
 		//System.err.println( tmp.getName() );
 		
-	    //if( applet.getAppletContext().)
+	    //if( applet.getAppletContext().)*/
 	}
 
 	public static void run2( JTable detailTable, JTable leftTable ) throws FileNotFoundException, IOException {
@@ -309,7 +319,7 @@ public class PoiFactory {
 		FileSaveService fss; 
 	    try {  
 	        fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService"); 
-	    } catch (UnavailableServiceException e) { 
+	    } catch (Exception e) { 
 	        fss = null; 
 	    } 
 
