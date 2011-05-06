@@ -92,8 +92,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import netscape.javascript.JSObject;
-
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
 
@@ -2420,7 +2418,7 @@ public class SortTable extends JApplet {
 		setByteArrayImage( strdata.getBytes() );
 	}
 	
-	public void setJSImage( JSObject jsimg ) {
+	public void setJSImage( Object jsimg ) {
 		System.err.println("ok "+jsimg.toString().substring(0, 50));
 	}
 	
