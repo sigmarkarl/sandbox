@@ -85,7 +85,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import org.jdesktop.swingx.JXDatePicker;
 import org.simmi.RecipePanel.Recipe;
 
 public class HabitsPanel extends JComponent {

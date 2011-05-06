@@ -76,7 +76,10 @@ template<template<typename T, typename K> class c_func, typename T> void doubles
 		else if( value.type == -32 ) step3< c_func, c_simlab<unsigned int>& >( *((c_simlab<unsigned int>*)value.buffer), value.length );
 		else if( value.type == -16 ) step3< c_func, c_simlab<short>& >( *((c_simlab<short>*)value.buffer), value.length );*/
 	} else {
-		if( value.type == 66 ) c_func< T,double* >( buffer, length, (double*)value.buffer, value.length );
+		if( value.type == 130 ) c_func< T,__float128* >( buffer, length, (__float128*)value.buffer, value.length );
+		//else if( value.type == 129 ) c_func< T,__int128* >( buffer, length, (__int128*)value.buffer, value.length );
+		//else if( value.type == 128 ) c_func< T,unsigned __int128* >( buffer, length, (unsigned __int128*)value.buffer, value.length );
+		else if( value.type == 66 ) c_func< T,double* >( buffer, length, (double*)value.buffer, value.length );
 		else if( value.type == 65 ) c_func< T,long long* >( buffer, length, (long long*)value.buffer, value.length );
 		else if( value.type == 64 ) c_func< T,unsigned long long* >( buffer, length, (unsigned long long*)value.buffer, value.length );
 		else if( value.type == 34 ) c_func< T,float* >( buffer, length, (float*)value.buffer, value.length );
@@ -122,7 +125,10 @@ template<template<typename T, typename K> class c_func> void doublestep1( simlab
 		else if( value.type == -9 ) doublestep2< c_func, c_simlab<char&>& >( *((c_simlab<char&>*)value.buffer), value.length, last );
 		else if( value.type == -8 ) doublestep2< c_func, c_simlab<unsigned char&>& >( *((c_simlab<unsigned char&>*)value.buffer), value.length, last );
 	} else {
-		if( value.type == 66 ) doublestep2< c_func, double* >( (double*)value.buffer, value.length, last );
+		if( value.type == 130 ) doublestep2< c_func, __float128* >( (__float128*)value.buffer, value.length, last );
+		//else if( value.type == 129 ) doublestep2< c_func, __int128_t* >( (__int128_t*)value.buffer, value.length, last );
+		//else if( value.type == 128 ) doublestep2< c_func, unsigned __int128_t* >( (unsigned __int128_t*)value.buffer, value.length, last );
+		else if( value.type == 66 ) doublestep2< c_func, double* >( (double*)value.buffer, value.length, last );
 		else if( value.type == 65 ) doublestep2< c_func, long long* >( (long long*)value.buffer, value.length, last );
 		else if( value.type == 64 ) doublestep2< c_func, unsigned long long* >( (unsigned long long*)value.buffer, value.length, last );
 		else if( value.type == 34 ) doublestep2< c_func, float* >( (float*)value.buffer, value.length, last );
