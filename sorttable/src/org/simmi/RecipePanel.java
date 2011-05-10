@@ -217,28 +217,56 @@ public class RecipePanel extends JSplitPane {
 			return ret;
 		}
 		
-		public void destroy() {
-			File f = new File( System.getProperty("user.home"), ".isgem" );
-			f = new File( f, "recipes" );
-			if( f.exists() ) {
-				String fname = Integer.toString( Math.abs( this.toString().hashCode()) );
-				f = new File( f, fname );
-				f.delete();
+		public void destroy() throws IOException {
+			String fname = Integer.toString( Math.abs( this.toString().hashCode()) );
+			
+			boolean web = true;
+			try {
+				FileUtil.doTheNextThing( fname );
+			} catch (NoClassDefFoundError e) {
+				e.printStackTrace();
+				web = false;
+			} catch (Exception e) {
+				e.printStackTrace();
+				web = false;
 			}
+		    
+			if( !web ) {
+		    	File f = new File( System.getProperty("user.home"), ".isgem" );
+				f = new File( f, "recipes" );
+				if( f.exists() ) {
+					f = new File( f, fname );
+					f.delete();
+				}
+		    }
 		}
 		
 		public void save() throws IOException {
-			File f = new File( System.getProperty("user.home"), ".isgem" );
-			f = new File( f, "recipes" );
-			if( !f.exists() ) {
-				f.mkdirs();
-			}
 			String str = this.toString();
 			String fname = Integer.toString( Math.abs( str.hashCode() ) );
-			f = new File( f, fname );
-			FileWriter	fw = new FileWriter( f );
-			fw.write( str );
-			fw.close();
+			
+			boolean web = true;
+			try {
+				FileUtil.doTheThing(str, fname);
+			} catch( NoClassDefFoundError e ) {
+				e.printStackTrace();
+				web = false;
+			} catch( Exception e ) {
+				e.printStackTrace();
+				web = false;
+			}
+			
+			if( !web ) {
+				File f = new File( System.getProperty("user.home"), ".isgem" );
+				f = new File( f, "recipes" );
+				if( !f.exists() ) {
+					f.mkdirs();
+				}
+				f = new File( f, fname );
+				FileWriter	fw = new FileWriter( f );
+				fw.write( str );
+				fw.close();
+			}
 		}
 		
 		public float getWeight() {
@@ -501,6 +529,40 @@ public class RecipePanel extends JSplitPane {
 		rep.save();
 	}
 	
+	boolean recipesLoaded = false;
+	public void loadRecipes() throws IOException {
+		if( !recipesLoaded ) {
+			boolean web = true;
+			try {
+				FileUtil.doThing( this );
+			} catch( NoClassDefFoundError e ) {
+				e.printStackTrace();
+				web = false;
+			} catch( Exception e ) {
+				e.printStackTrace();
+				web = false;
+			}
+			
+			if( !web ) {
+				File f = new File( System.getProperty("user.home"), ".isgem" );
+				f = new File( f, "recipes" );
+				File[] ff = f.listFiles();
+				if( ff != null ) {
+					for( File file : ff ) {
+						FileReader	fr = new FileReader( file );
+						insertRecipe( fr );
+						fr.close();
+					}
+				}
+			}
+			
+			recipeTable.tableChanged( new TableModelEvent( recipeTable.getModel() ) );
+			recipeDetailTable.tableChanged( new TableModelEvent( recipeDetailTable.getModel() ) );
+			
+			recipesLoaded = true;
+		}
+	}
+	
 	public RecipePanel( final FriendsPanel fp, final String lang, final JCompatTable table, final JCompatTable leftTable, final Map<String,Integer> foodNameInd ) throws IOException {
 		super( JSplitPane.VERTICAL_SPLIT );
 		this.setDividerLocation( 300 );
@@ -544,24 +606,6 @@ public class RecipePanel extends JSplitPane {
 		foodInd = foodNameInd;
 		recipes = new ArrayList<Recipe>();
 		
-		try {
-			File f = new File( System.getProperty("user.home"), ".isgem" );
-			f = new File( f, "recipes" );
-			File[] ff = f.listFiles();
-			if( ff != null ) {
-				for( File file : ff ) {
-					FileReader	fr = new FileReader( file );
-					insertRecipe( fr );	
-					//String str = rep.toString();
-					//System.err.println( str );
-					
-					fr.close();
-				}
-			}
-		} catch( SecurityException se ) {
-			
-		}
-		
 		JScrollPane	recipeScroll = new JScrollPane();
 		recipeScroll.getViewport().setBackground( Color.white );
 		
@@ -582,10 +626,7 @@ public class RecipePanel extends JSplitPane {
 		recipeTable.setComponentPopupMenu( popup );
 		
 		TableModel recipeTableModel = new TableModel() {
-			public void addTableModelListener(TableModelListener arg0) {
-				// TODO Auto-generated method stub
-				
-			}
+			public void addTableModelListener(TableModelListener arg0) {}
 
 			public Class<?> getColumnClass(int arg0) {
 				return String.class;
@@ -630,13 +671,12 @@ public class RecipePanel extends JSplitPane {
 			public void removeTableModelListener(TableModelListener arg0) {}
 			public void setValueAt(Object arg0, int arg1, int arg2) {
 				Recipe rep = recipes.get(arg1);
-				rep.destroy();
-				if( arg2 == 0 ) rep.name = arg0.toString();
-				else if( arg2 == 1 ) rep.group = arg0.toString();
 				try {
+					rep.destroy();
+					if( arg2 == 0 ) rep.name = arg0.toString();
+					else if( arg2 == 1 ) rep.group = arg0.toString();
 					rep.save();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -728,16 +768,15 @@ public class RecipePanel extends JSplitPane {
 				int rr = recipeTable.convertRowIndexToModel(r);
 				if( rr >= 0 && rr < recipes.size() ) {
 					Recipe rep = recipes.get(rr);
-					rep.destroy();
-					RecipeIngredient ri = rep.ingredients.get( arg1 );
-					if( arg2 == 1 ) {
-						ri.measure = (Float)arg0;
-					} else if( arg0 != null ) {
-						ri.unit = arg0.toString();
-						
-						ri.cellEdit.setSelectedItem( ri.unit );
-					}
 					try {
+						rep.destroy();
+						RecipeIngredient ri = rep.ingredients.get( arg1 );
+						if( arg2 == 1 ) {
+							ri.measure = (Float)arg0;
+						} else if( arg0 != null ) {
+							ri.unit = arg0.toString();
+							ri.cellEdit.setSelectedItem( ri.unit );
+						}
 						rep.save();
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -758,8 +797,12 @@ public class RecipePanel extends JSplitPane {
 					}
 				}
 				recipes.removeAll( remSet );
-				for( Recipe rep : remSet ) {
-					rep.destroy();
+				try {
+					for( Recipe rep : remSet ) {
+						rep.destroy();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
 				}
 				recipeTable.revalidate();
 				recipeTable.repaint();
@@ -870,17 +913,16 @@ public class RecipePanel extends JSplitPane {
 					int fr = recipeTable.convertRowIndexToModel(r);
 					Recipe rep = recipes.get( fr );
 					
-					rep.destroy();
-					
-					Set<RecipeIngredient>	setRep = new HashSet<RecipeIngredient>();
-					int[]	rr = recipeDetailTable.getSelectedRows();
-					for( int tr : rr ) {
-						int sr = recipeDetailTable.convertRowIndexToModel(tr);
-						setRep.add( rep.ingredients.get( sr ) );	
-					}
-					
-					rep.ingredients.removeAll(setRep);
 					try {
+						rep.destroy();
+						Set<RecipeIngredient>	setRep = new HashSet<RecipeIngredient>();
+						int[]	rr = recipeDetailTable.getSelectedRows();
+						for( int tr : rr ) {
+							int sr = recipeDetailTable.convertRowIndexToModel(tr);
+							setRep.add( rep.ingredients.get( sr ) );	
+						}
+						
+						rep.ingredients.removeAll(setRep);
 						rep.save();
 					} catch (IOException e1) {
 						e1.printStackTrace();
@@ -960,9 +1002,9 @@ public class RecipePanel extends JSplitPane {
 		recipeInfo.addFocusListener( new FocusListener(){
 			public void focusLost(FocusEvent e) {
 				if( currentRecipe != null ) {
-					currentRecipe.destroy();
-					currentRecipe.desc = recipeInfo.getText();
 					try {
+						currentRecipe.destroy();
+						currentRecipe.desc = recipeInfo.getText();
 						currentRecipe.save();
 					} catch (IOException e1) {
 						e1.printStackTrace();
@@ -1057,7 +1099,12 @@ public class RecipePanel extends JSplitPane {
 						if( rep.desc != null ) {
 							recipeInfo.setText( "<html>"+rep.desc+"</html>" );
 						} else {
-							recipeInfo.setText( "<html></html>" );
+							/*try {
+								recipeInfo.setPage( "http://www.google.com/logos/2011/hargreaves11-hp-11.jpg" );
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}*/
+							recipeInfo.setText( "<html><head></head><body></body></html>" );
 						}
 						currentRecipe = rep;
 					}
