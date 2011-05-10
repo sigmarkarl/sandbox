@@ -792,7 +792,7 @@ public class SortTable extends JApplet {
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				try {
+				try {				
 					SortTable.this.setLayout(new BorderLayout());
 					SortTable.this.getContentPane().setBackground(bgcolor);
 					SortTable.this.setBackground(bgcolor);
@@ -810,7 +810,6 @@ public class SortTable extends JApplet {
 						String c = urlstr.substring(l - 1, l);
 						int v = -1;
 						try {
-							System.err.println(c);
 							v = Integer.parseInt(c);
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -824,6 +823,9 @@ public class SortTable extends JApplet {
 					}
 					
 					SortTable.this.add(splitPane);
+					//SortTable.this.invalidate();
+					//SortTable.this.repaint();
+					//SortTable.this.revalidate();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -1436,11 +1438,9 @@ public class SortTable extends JApplet {
 		leftSplitPane.setOneTouchExpandable(true);
 		leftSplitPane.setDividerLocation(50);
 
+		recipe = new RecipePanel(fp, lang, table, leftTable, foodNameInd);
 		try {
-			recipe = new RecipePanel(fp, lang, table, leftTable, foodNameInd);
 			eat = new HabitsPanel(lang, friendsPanel, stuff, recipe.recipes, foodNameInd, recipe.allskmt, recipe.skmt);
-		} catch (IOException e1) {
-			e1.printStackTrace();
 		} catch( NoClassDefFoundError e2 ) {
 			e2.printStackTrace();
 		}
@@ -1513,28 +1513,21 @@ public class SortTable extends JApplet {
 
 		TableModel topLeftModel = new TableModel() {
 
-			public void addTableModelListener(TableModelListener l) {
-				// TODO Auto-generated method stub
-
-			}
+			public void addTableModelListener(TableModelListener l) {}
 
 			public Class<?> getColumnClass(int columnIndex) {
-				// TODO Auto-generated method stub
 				return String.class;
 			}
 
 			public int getColumnCount() {
-				// TODO Auto-generated method stub
 				return 1;
 			}
 
 			public String getColumnName(int columnIndex) {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			public int getRowCount() {
-				// TODO Auto-generated method stub
 				return 2;
 			}
 
@@ -1551,19 +1544,12 @@ public class SortTable extends JApplet {
 			}
 
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				// TODO Auto-generated method stub
 				return false;
 			}
 
-			public void removeTableModelListener(TableModelListener l) {
-				// TODO Auto-generated method stub
+			public void removeTableModelListener(TableModelListener l) {}
 
-			}
-
-			public void setValueAt(Object value, int rowIndex, int columnIndex) {
-				// TODO Auto-generated method stub
-
-			}
+			public void setValueAt(Object value, int rowIndex, int columnIndex) {}
 		};
 		topLeftTable.setModel(topLeftModel);
 
@@ -1707,7 +1693,11 @@ public class SortTable extends JApplet {
 							// recipe.currentRecipe.ingredients.add( new
 							// RecipePanel.RecipeIngredient() );
 
-							recipe.currentRecipe.destroy();
+							try {
+								recipe.currentRecipe.destroy();
+							} catch (IOException e2) {
+								e2.printStackTrace();
+							}
 
 							int r = leftTable.getSelectedRow();
 							int rr = leftTable.convertRowIndexToModel(r);
@@ -2059,7 +2049,6 @@ public class SortTable extends JApplet {
 			if (url != null)
 				hlpicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 		} catch (IOException e2) {
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		
@@ -2214,6 +2203,11 @@ public class SortTable extends JApplet {
 				} else {
 					if( comp.equals(recipe) ) {
 						leftTable.setComponentPopupMenu( leftpopup );
+						try {
+							recipe.loadRecipes();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
 					} else if( comp.equals(graph) && eat.equals(previous) ) {
 						topLeftCombo.setSelectedIndex(0);
 						int rc = leftTable.getRowCount();
@@ -2251,6 +2245,8 @@ public class SortTable extends JApplet {
 		}
 		table.setComponentPopupMenu( popup );
 
+		System.err.println("hoho3334");
+		
 		splitPane.setBorder(new EmptyBorder(0, 0, 0, 0));
 		// SortTable.this.add(ed, BorderLayout.SOUTH);
 		splitPane.setDividerLocation(1.0 / 3.0);
