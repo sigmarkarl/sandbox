@@ -22,13 +22,20 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import javax.jnlp.BasicService;
+import javax.jnlp.FileContents;
+import javax.jnlp.PersistenceService;
+import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
@@ -1120,22 +1127,51 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 	}
 	
 	public void loadAll() throws IOException {
-		String homedir = System.getProperty("user.home");
-		File dir = new File( homedir, "spoil" );
-		if( dir.exists() ) {
-			File[] ff = dir.listFiles();
-			for( File f : ff ) {
-				if( !f.isDirectory() ) {
-					Corp corp = new Corp( f.getName() );
+		boolean succ = false;
+		try {
+			PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
+			BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+			 
+			String[] names = ps.getNames( bs.getCodeBase() );
+			for( String name : names ) {
+				if( name.startsWith("spoil_") ) {
+					Corp corp = new Corp( name.substring(6) );
 					c.add( corp );
 				}
-				//addFile( f );
 			}
 			
-			for( String name : Corp.corpMap.keySet() ) {
-				Corp c = Corp.corpMap.get( name );
-				c.load();
+			//URL url = new URL( bs.getCodeBase().toString() + "spoil_" + this.getName() );
+			//ps.create( url, 1000 );
+			//FileContents fc = ps.get( url );
+			//InputStream is = fc.getInputStream();
+			//InputStreamReader isr = new InputStreamReader( is );
+			//loadFile( isr, bs.getCodeBase().toString() );
+			
+			succ = true;
+		} catch( NoClassDefFoundError e ) {
+			e.printStackTrace();
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		
+		if( !succ ) {
+			String homedir = System.getProperty("user.home");
+			File dir = new File( homedir, "spoil" );
+			if( dir.exists() ) {
+				File[] ff = dir.listFiles();
+				for( File f : ff ) {
+					if( !f.isDirectory() ) {
+						Corp corp = new Corp( f.getName() );
+						c.add( corp );
+					}
+					//addFile( f );
+				}
 			}
+		}
+			
+		for( String name : Corp.corpMap.keySet() ) {
+			Corp c = Corp.corpMap.get( name );
+			c.load();
 		}
 	}
 	
@@ -1156,7 +1192,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 	public Corp loadFile( File save ) throws IOException {
 		String name = save.getName();
 		Corp corp = new Corp( name );
-		corp.loadFile( save );
+		corp.loadFile( new FileReader(save), new File( save.getParentFile(), "images" ).toURI().toURL().toString() );
 		return corp;
 	}
 

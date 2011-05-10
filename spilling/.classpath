@@ -7,6 +7,8 @@
 	<classpathentry kind="lib" path="/opt/poi-3.7/ooxml-lib/dom4j-1.6.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.7/ooxml-lib/geronimo-stax-api_1.0_spec-1.0.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.7/ooxml-lib/xmlbeans-2.3.0.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun-1.6.0.24/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun-1.6.0.24/jre/lib/javaws.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
