@@ -232,7 +232,7 @@ public class PoiFactory {
 			/*ExtendedService es;
 		    try {  
 		        es = (ExtendedService)ServiceManager.lookup("javax.jnlp.ExtendedService");
-		    } catch (UnavailableServiceException e) { 
+		    } catch (UnavailableServiceException e) {
 		        es = null; 
 		    }
 	
