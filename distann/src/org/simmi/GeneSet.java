@@ -1063,6 +1063,9 @@ public class GeneSet extends JApplet {
 		double minh = 100.0;
 		double maxh = 0.0;
 		
+		double minhwoc = 100.0;
+		double maxhwoc = 0.0;
+		
 		double minr = 100.0;
 		double maxr = 0.0;
 	
@@ -1087,9 +1090,27 @@ public class GeneSet extends JApplet {
 				int spc1tot = 0;
 				int spc2tot = 0;
 				int totot = 0;
+				
+				int spc1totwoc = 0;
+				int spc2totwoc = 0;
+				int tototwoc = 0;
 				for( Set<String> set : clusterMap.keySet() ) {
 					Set<Map<String,Set<String>>>	erm = clusterMap.get(set);
 					if( set.contains( spc1 ) ) {
+						if( set.size() < species.size() ) {
+							spc1totwoc += erm.size();
+							for( Map<String,Set<String>> sm : erm ) {
+								Set<String> hset = sm.get(spc1);
+								tototwoc += hset.size();
+							}
+							
+							if( set.contains( spc2 ) ) {
+								spc2totwoc += erm.size();
+							}
+							
+							if( spc2totwoc > spc1totwoc ) System.err.println("okoko " + spc1totwoc + " " + spc2totwoc );
+						}
+						
 						spc1tot += erm.size();
 						for( Map<String,Set<String>> sm : erm ) {
 							Set<String> hset = sm.get(spc1);
@@ -1105,6 +1126,10 @@ public class GeneSet extends JApplet {
 				double hh = (double)spc2tot/(double)spc1tot;
 				if( hh > maxh ) maxh = hh;
 				if( hh < minh ) minh = hh;
+				
+				double hhwoc = (double)spc2totwoc/(double)spc1totwoc;
+				if( hhwoc > maxhwoc ) maxhwoc = hhwoc;
+				if( hhwoc < minhwoc ) minhwoc = hhwoc;
 				
 				double rr = (double)spc1tot/(double)totot;
 				if( rr > maxr ) maxr = rr;
@@ -1132,9 +1157,27 @@ public class GeneSet extends JApplet {
 				int spc1tot = 0;
 				int spc2tot = 0;
 				int totot = 0;
+				
+				int spc1totwocore = 0;
+				int spc2totwocore = 0;
+				int tototwocore = 0;				
 				for( Set<String> set : clusterMap.keySet() ) {
 					Set<Map<String,Set<String>>>	erm = clusterMap.get(set);
 					if( set.contains( spc1 ) ) {
+						if( set.size() < species.size() ) {
+							spc1totwocore += erm.size();
+							for( Map<String,Set<String>> sm : erm ) {
+								Set<String> hset = sm.get(spc1);
+								tototwocore += hset.size();
+							}
+							
+							if( set.contains( spc2 ) ) {
+								spc2totwocore += erm.size();
+							}
+							
+							if( spc2totwocore > spc1totwocore ) System.err.println("okoko " + spc1totwocore + " " + spc2totwocore );
+						}
+						
 						spc1tot += erm.size();
 						for( Map<String,Set<String>> sm : erm ) {
 							Set<String> hset = sm.get(spc1);
@@ -1168,21 +1211,21 @@ public class GeneSet extends JApplet {
 					nstrw = g2.getFontMetrics().stringWidth( str );
 					g2.drawString( str, mstrw+42+wherex*72-nstrw/2, mstrw+47+where*72+15 );
 				} else {
-					double dval = (double)spc2tot/(double)spc1tot;
-					int cval = (int)(200.0*(maxh - dval)/(maxh - minh));
+					double dval = (double)spc2totwocore/(double)spc1totwocore;
+					int cval = (int)(200.0*(maxhwoc - dval)/(maxhwoc - minhwoc));
 					g2.setColor( new Color( cval, 255, cval ) );
 					g2.fillRoundRect( mstrw+10+wherex*72, mstrw+10+where*72, 64, 64, 16, 16);
 					
 					g2.setColor( Color.white );
-					String str = spc2tot+"";
+					String str = spc2totwocore+"";
 					int	nstrw2 = g2.getFontMetrics().stringWidth( str );
 					g2.drawString( str, mstrw+42+wherex*72-nstrw2/2, mstrw+47+where*72-15 );
 					//int	nstrw2 = g2.getFontMetrics().stringWidth( str );
-					str = spc1tot+"";
+					str = spc1totwocore+"";
 					int	nstrw1 = g2.getFontMetrics().stringWidth( str );
 					g2.drawString( str, mstrw+42+wherex*72-nstrw1/2, mstrw+47+where*72 );
 					
-					double hlut = 100.0*((double)spc2tot/(double)spc1tot);
+					double hlut = 100.0*((double)spc2totwocore/(double)spc1totwocore);
 					ps.printf("%.1f%s", (float)hlut, "%" );
 					str = baos.toString();
 					baos.reset();
@@ -1229,7 +1272,7 @@ public class GeneSet extends JApplet {
 			Set<Map<String,Set<String>>>	setmap = clusterMap.get( set );
 						
 			pan += setmap.size();
-			if( set.size() == 12 ) core += setmap.size();
+			if( set.size() == species.size() ) core += setmap.size();
 		}
 		
 		g2.setColor( Color.white );
@@ -3487,6 +3530,8 @@ public class GeneSet extends JApplet {
 			e.printStackTrace();
 		}
 		
+		
+		
 		JSplitPane	splitpane = new JSplitPane();
 		splitpane.setOrientation( JSplitPane.VERTICAL_SPLIT );
 		splitpane.setDividerLocation(400);
@@ -3617,6 +3662,33 @@ public class GeneSet extends JApplet {
 			}
 		});
 		ttopcom.add( checkbox );*/
+		
+		Set<String>	species = new TreeSet<String>();
+		Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( uclusterlist, species );
+		final BufferedImage bimg = bmatrix( species, clusterMap );
+		
+		AbstractAction matrixaction = new AbstractAction("Relation matrix") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFrame f = new JFrame();
+				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				f.setSize(500, 500);
+				
+				JComponent comp = new JComponent() {
+					public void paintComponent( Graphics g ) {
+						super.paintComponent(g);
+						g.drawImage(bimg, 0, 0, this);
+					}
+				};
+				JScrollPane	fsc = new JScrollPane( comp );
+				comp.setPreferredSize( new Dimension( bimg.getWidth(), bimg.getHeight() ) );
+				
+				f.add( fsc );
+				f.setVisible( true );
+			}
+		};
+		JButton	matrixbutton = new JButton( matrixaction );
+		ttopcom.add( matrixbutton );
 		ttopcom.add( textfield );
 		ttopcom.add( label );
 		topcomp.add( ttopcom, BorderLayout.NORTH );
@@ -3688,7 +3760,6 @@ public class GeneSet extends JApplet {
 			}
 		});
 		botcombo.add( scombo );
-		
 		
 		JButton swsearch = new JButton( new AbstractAction("SW Search") {
 			@Override

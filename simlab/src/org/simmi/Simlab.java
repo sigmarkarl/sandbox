@@ -98,24 +98,41 @@ import com.sun.jna.Structure;
 
 public class Simlab implements ScriptEngineFactory {
 	static {
+		/*String jwsv = System.getProperty("javawebstart.version");
+		String javalp = System.getProperty("java.library.path");
+		String jnalp = System.getProperty("jna.library.path");
+		
+		String lpath = Native.getWebStartLibraryPath("csimlab");
+		
+		System.err.println( jwsv + " " + javalp + " " + jnalp + " " + lpath );
+		
+		System.setProperty("jna.library.path", javalp);*/
+		
 		String jnalib = System.getProperty("jna.library.path");
 		if (jnalib == null || jnalib.length() == 0) {
 			System.setProperty("jna.library.path", ".");
 			boolean iswin = Platform.isWindows();
+			boolean is64bit = Platform.is64Bit();
 
 			String filename;
-			if( !iswin )
+			String resourcename;
+			if( !iswin ) {
+				if( is64bit ) resourcename = "linux64/libcsimlab.so";
+				else resourcename = "linux32/libcsimlab.so";
+				
 				filename = "libcsimlab.so";
-			else
+			} else {
+				resourcename = "win32/csimlab.dll";
 				filename = "csimlab.dll";
+			}
 
 			File f = new File(filename);
 			if (!f.exists()) {
 				InputStream is;
 				if (iswin)
-					is = Simlab.class.getResourceAsStream("/org/simmi/" + filename);
+					is = Simlab.class.getResourceAsStream("/" + resourcename);
 				else
-					is = Simlab.class.getResourceAsStream("/org/simmi/" + filename);
+					is = Simlab.class.getResourceAsStream("/" + resourcename);
 
 				if (is != null) {
 					try {
