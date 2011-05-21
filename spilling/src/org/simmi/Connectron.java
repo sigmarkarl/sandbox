@@ -20,13 +20,16 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
@@ -34,6 +37,8 @@ import java.util.Set;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.FileContents;
+import javax.jnlp.FileOpenService;
+import javax.jnlp.FileSaveService;
 import javax.jnlp.PersistenceService;
 import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
@@ -604,6 +609,148 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		this.add( scrollpane );
 	}
 	
+	private void importExcel( InputStream is ) {
+		XSSFWorkbook workbook;
+		try {
+			workbook = new XSSFWorkbook( is );
+			XSSFSheet corpSheet = workbook.getSheet("Nodes");
+			XSSFSheet linkSheet = workbook.getSheet("Links");
+			
+			Corp.corpMap.clear();
+			c.removeAll();
+			
+			int i = 0;
+			int l = 0;
+			XSSFRow 	corpRow = corpSheet.getRow( ++i );
+			while( corpRow != null ) {
+				XSSFCell	cell = corpRow.getCell(0);
+				String 	name = cell.getStringCellValue();
+				cell = corpRow.getCell(1);
+				String 	type = cell.getStringCellValue();
+				cell = corpRow.getCell(2);
+				String 	text = cell != null ? cell.getStringCellValue() : "";
+				cell = corpRow.getCell(3);
+				double x = cell.getNumericCellValue();
+				cell = corpRow.getCell(4);
+				double y = cell.getNumericCellValue();
+				cell = corpRow.getCell(5);
+				double z = cell.getNumericCellValue();
+				cell = corpRow.getCell(6);
+				Color color = new Color( Integer.parseInt( cell.getStringCellValue() ) ); //Color.decode( cell.getStringCellValue() );
+				
+				Corp corp = new Corp( name );
+				corp.setName( name );
+				corp.type = type;
+				//corp.kt = kt;
+				corp.text = text;
+				corp.setx( x );
+				corp.sety( y );
+				corp.setz( z );
+				corp.color = color;
+				c.add( corp );
+				corp.setBounds( (int)(corp.getx()-corp.size/2), (int)(corp.gety()-corp.size/2), corp.size, corp.size );
+				
+				corpRow = corpSheet.getRow( ++i );
+			}
+			System.err.println( c.getComponentCount() );
+			
+			XSSFRow 	linkRow = linkSheet.getRow( ++l );
+			while( linkRow != null ) {
+				XSSFCell cell = linkRow.getCell(0);
+				String 	id1 = cell.getStringCellValue();
+				cell = linkRow.getCell(1);
+				String		id2 = cell.getStringCellValue();
+				cell = linkRow.getCell(2);
+				String 	str = cell.getStringCellValue();
+				
+				Corp p1 = Corp.corpMap.get(id1);
+				Corp p2 = Corp.corpMap.get(id2);
+				
+				String[] ss = str.split("\n");
+				Set<String> 	value = new HashSet<String>( Arrays.asList(ss) );
+				p1.connections.put( p2, value );
+				
+				linkRow = linkSheet.getRow( ++l );
+			}
+			Connectron.this.repaint();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	private void exportExcel( OutputStream os ) throws IOException {
+		XSSFWorkbook 	workbook = new XSSFWorkbook();
+		
+		XSSFSheet corpSheet = workbook.createSheet("Nodes");
+		XSSFSheet linkSheet = workbook.createSheet("Links");
+		
+		int i = 0;
+		int l = 0;
+		XSSFRow 	corpRow = corpSheet.createRow( i );
+		XSSFCell cell = corpRow.createCell( 0 );
+		cell.setCellValue( "name" );
+		cell = corpRow.createCell( 1 );
+		cell.setCellValue( "type" );
+		cell = corpRow.createCell( 2 );
+		cell.setCellValue( "desc" );
+		cell = corpRow.createCell( 3 );
+		cell.setCellValue( "x" );
+		cell = corpRow.createCell( 4 );
+		cell.setCellValue( "y" );
+		cell = corpRow.createCell( 5 );
+		cell.setCellValue( "z" );
+		cell = corpRow.createCell( 6 );
+		cell.setCellValue( "image" );
+		
+		XSSFRow 		linkRow = linkSheet.createRow( l );
+		cell = linkRow.createCell( 0 );
+		cell.setCellValue( "id1" );
+		cell = linkRow.createCell( 1 );
+		cell.setCellValue( "id2" );
+		cell = linkRow.createCell( 2 );
+		cell.setCellValue( "desc" );
+		
+		for( String name : Corp.corpMap.keySet() ) {
+			Corp 		corp = Corp.corpMap.get( name );
+			corpRow = corpSheet.createRow( ++i );
+			
+			cell = corpRow.createCell( 0 );
+			cell.setCellValue( corp.getName() );
+			cell = corpRow.createCell( 1 );
+			cell.setCellValue( corp.type );
+			cell = corpRow.createCell( 2 );
+			cell.setCellValue( corp.text );
+			cell = corpRow.createCell( 3 );
+			cell.setCellValue( corp.getx() );
+			cell = corpRow.createCell( 4 );
+			cell.setCellValue( corp.gety() );
+			cell = corpRow.createCell( 5 );
+			cell.setCellValue( corp.getz() );
+			cell = corpRow.createCell( 6 );
+			if( corp.imageNames.size() > 0 && corp.imageNames.get(0) != null ) {
+				cell.setCellValue( corp.imageNames.get(0) );
+			} else {
+				cell.setCellValue( Integer.toString( corp.color.getRGB() ) );
+			}
+			
+			for( Corp cp : corp.connections.keySet() ) {
+				Set<String>		link = corp.connections.get(cp);
+				linkRow = linkSheet.createRow( ++l );
+				cell = linkRow.createCell( 0 );
+				cell.setCellValue( corp.getName() );
+				cell = linkRow.createCell( 1 );
+				cell.setCellValue( cp.getName() );
+				cell = linkRow.createCell( 2 );
+				String val = "";
+				for( String str : link ) {
+					val += str+"\n";
+				}
+				cell.setCellValue( val );
+			}
+		}
+		workbook.write( os );
+	}
+	
 	public void initGUI( Container cnt ) {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -923,160 +1070,61 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		popup.add( new AbstractAction("Import from Excel") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( Connectron.this ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					XSSFWorkbook workbook;
-					try {
-						workbook = new XSSFWorkbook( f.getCanonicalPath() );
-						XSSFSheet corpSheet = workbook.getSheet("Nodes");
-						XSSFSheet linkSheet = workbook.getSheet("Links");
-						
-						Corp.corpMap.clear();
-						c.removeAll();
-						
-						int i = 0;
-						int l = 0;
-						XSSFRow 	corpRow = corpSheet.getRow( ++i );
-						while( corpRow != null ) {
-							XSSFCell	cell = corpRow.getCell(0);
-							String 	name = cell.getStringCellValue();
-							cell = corpRow.getCell(1);
-							String 	type = cell.getStringCellValue();
-							cell = corpRow.getCell(2);
-							String 	text = cell != null ? cell.getStringCellValue() : "";
-							cell = corpRow.getCell(3);
-							double x = cell.getNumericCellValue();
-							cell = corpRow.getCell(4);
-							double y = cell.getNumericCellValue();
-							cell = corpRow.getCell(5);
-							double z = cell.getNumericCellValue();
-							cell = corpRow.getCell(6);
-							Color color = new Color( Integer.parseInt( cell.getStringCellValue() ) ); //Color.decode( cell.getStringCellValue() );
-							
-							Corp corp = new Corp( name );
-							corp.setName( name );
-							corp.type = type;
-							//corp.kt = kt;
-							corp.text = text;
-							corp.setx( x );
-							corp.sety( y );
-							corp.setz( z );
-							corp.color = color;
-							c.add( corp );
-							corp.setBounds( (int)(corp.getx()-corp.size/2), (int)(corp.gety()-corp.size/2), corp.size, corp.size );
-							
-							corpRow = corpSheet.getRow( ++i );
+				boolean succ = false;
+			    try {
+			    	FileOpenService fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
+			    	FileContents fc = fos.openFileDialog( null, new String[] {"xls", "xlsx"} );
+			    	importExcel( fc.getInputStream() );
+			    	succ = true;
+			    } catch( NoClassDefFoundError er) { 
+			        er.printStackTrace();
+			    } catch( Exception ex ) { 
+			        ex.printStackTrace();
+			    }
+			    
+			    if( !succ ) {
+					JFileChooser fc = new JFileChooser();
+					if( fc.showOpenDialog( Connectron.this ) == JFileChooser.APPROVE_OPTION ) {
+						File f = fc.getSelectedFile();
+						try {
+							importExcel( new FileInputStream(f) );
+						} catch (FileNotFoundException e1) {
+							e1.printStackTrace();
 						}
-						System.err.println( c.getComponentCount() );
-						
-						XSSFRow 	linkRow = linkSheet.getRow( ++l );
-						while( linkRow != null ) {
-							XSSFCell cell = linkRow.getCell(0);
-							String 	id1 = cell.getStringCellValue();
-							cell = linkRow.getCell(1);
-							String		id2 = cell.getStringCellValue();
-							cell = linkRow.getCell(2);
-							String 	str = cell.getStringCellValue();
-							
-							Corp p1 = Corp.corpMap.get(id1);
-							Corp p2 = Corp.corpMap.get(id2);
-							
-							String[] ss = str.split("\n");
-							Set<String> 	value = new HashSet<String>( Arrays.asList(ss) );
-							p1.connections.put( p2, value );
-							
-							linkRow = linkSheet.getRow( ++l );
-						}
-						Connectron.this.repaint();
-					} catch (IOException e1) {
-						e1.printStackTrace();
 					}
-				}
+			    }
 			}
 		});
 		popup.add( new AbstractAction("Open in Excel") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				boolean succ = false;
+			    try {
+			    	FileSaveService fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+			    	ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+			    	exportExcel( baos );
+			    	FileContents fc = fss.saveFileDialog( null, new String[] {"xls", "xlsx"}, new ByteArrayInputStream( baos.toByteArray() ), "export.xlsx" );
+			    	importExcel( fc.getInputStream() );
+			    	succ = true;
+			    } catch( NoClassDefFoundError er) { 
+			        er.printStackTrace();
+			    } catch( Exception ex ) { 
+			        ex.printStackTrace();
+			    }
+			    
+			    if( !succ ) {
+				
 				//JFileChooser fc = new JFileChooser();
 				//if( fc.showSaveDialog( Spilling.this ) == JFileChooser.APPROVE_OPTION ) {
 				//File f = fc.getSelectedFile();
-				try {
-					File nf = File.createTempFile("tmp", ".xlsx");
-					XSSFWorkbook 	workbook = new XSSFWorkbook();
-					
-					XSSFSheet corpSheet = workbook.createSheet("Nodes");
-					XSSFSheet linkSheet = workbook.createSheet("Links");
-					
-					int i = 0;
-					int l = 0;
-					XSSFRow 	corpRow = corpSheet.createRow( i );
-					XSSFCell cell = corpRow.createCell( 0 );
-					cell.setCellValue( "name" );
-					cell = corpRow.createCell( 1 );
-					cell.setCellValue( "type" );
-					cell = corpRow.createCell( 2 );
-					cell.setCellValue( "desc" );
-					cell = corpRow.createCell( 3 );
-					cell.setCellValue( "x" );
-					cell = corpRow.createCell( 4 );
-					cell.setCellValue( "y" );
-					cell = corpRow.createCell( 5 );
-					cell.setCellValue( "z" );
-					cell = corpRow.createCell( 6 );
-					cell.setCellValue( "image" );
-					
-					XSSFRow 		linkRow = linkSheet.createRow( l );
-					cell = linkRow.createCell( 0 );
-					cell.setCellValue( "id1" );
-					cell = linkRow.createCell( 1 );
-					cell.setCellValue( "id2" );
-					cell = linkRow.createCell( 2 );
-					cell.setCellValue( "desc" );
-					
-					for( String name : Corp.corpMap.keySet() ) {
-						Corp 		corp = Corp.corpMap.get( name );
-						corpRow = corpSheet.createRow( ++i );
-						
-						cell = corpRow.createCell( 0 );
-						cell.setCellValue( corp.getName() );
-						cell = corpRow.createCell( 1 );
-						cell.setCellValue( corp.type );
-						cell = corpRow.createCell( 2 );
-						cell.setCellValue( corp.text );
-						cell = corpRow.createCell( 3 );
-						cell.setCellValue( corp.getx() );
-						cell = corpRow.createCell( 4 );
-						cell.setCellValue( corp.gety() );
-						cell = corpRow.createCell( 5 );
-						cell.setCellValue( corp.getz() );
-						cell = corpRow.createCell( 6 );
-						if( corp.imageNames.size() > 0 && corp.imageNames.get(0) != null ) {
-							cell.setCellValue( corp.imageNames.get(0) );
-						} else {
-							cell.setCellValue( Integer.toString( corp.color.getRGB() ) );
-						}
-						
-						for( Corp cp : corp.connections.keySet() ) {
-							Set<String>		link = corp.connections.get(cp);
-							linkRow = linkSheet.createRow( ++l );
-							cell = linkRow.createCell( 0 );
-							cell.setCellValue( corp.getName() );
-							cell = linkRow.createCell( 1 );
-							cell.setCellValue( cp.getName() );
-							cell = linkRow.createCell( 2 );
-							String val = "";
-							for( String str : link ) {
-								val += str+"\n";
-							}
-							cell.setCellValue( val );
-						}
+					try {
+						File nf = File.createTempFile("tmp", ".xlsx");
+						exportExcel( new FileOutputStream( nf ) );
+						Desktop.getDesktop().open( nf );
+					} catch (IOException e1) {
+						e1.printStackTrace();
 					}
-					workbook.write( new FileOutputStream( nf ) );
-					Desktop.getDesktop().open( nf );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+			    }
 			}
 		});
 		popup.addSeparator();
