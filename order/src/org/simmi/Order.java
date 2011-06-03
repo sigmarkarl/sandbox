@@ -176,6 +176,7 @@ public class Order extends JApplet {
 	List<Pontun>	afhlist = new ArrayList<Pontun>();
 	List<Pontun>	pntlist = new ArrayList<Pontun>();
 	List<Vara>		ordlist;
+	Map<String,Vara>	ordmap = new HashMap<String,Vara>();
 	
 	int				ordno = 0;
 	
@@ -388,6 +389,7 @@ public class Order extends JApplet {
 		String		Cat;
 		Integer		_Númer;
 		String		Nafn;
+		String		Framleiðandi;
 		String		Pantað_Af;
 		Integer		e_Magn;
 		String		e_Mælieining;
@@ -409,12 +411,13 @@ public class Order extends JApplet {
 			return null;
 		}
 		
-		public Pontun( boolean urgent, String byrgir, String cat, int ordno, String name, String user, int quant, String unit, Date orddate, Date purdate, Date recdate, String description, String vn, String st, Double price, Date klrdate ) {
+		public Pontun( boolean urgent, String byrgir, String cat, int ordno, String name, String framl, String user, int quant, String unit, Date orddate, Date purdate, Date recdate, String description, String vn, String st, Double price, Date klrdate ) {
 			this.e_Mikilvægt = urgent;
 			this.Birgi = byrgir;
 			this.Cat = cat;
 			this._Númer = ordno;
 			this.Nafn = name;
+			this.Framleiðandi = framl;
 			this.Pantað_Af = user;
 			this.e_Magn = quant;
 			this.e_Mælieining = unit;
@@ -541,7 +544,7 @@ public class Order extends JApplet {
 				Field[] ff = cls.getDeclaredFields();
 				Field 	f = ff[columnIndex];
 				//this.getColumnCount() > 5 ? this.getValueAt(rowIndex, 5).equals(user) :
-				String userstr = this.getColumnCount() > 5 ? (String)this.getValueAt(rowIndex, 5) : null;
+				String userstr = this.getColumnCount() > 6 ? (String)this.getValueAt(rowIndex, 6) : null;
 				//if( userstr == null ) userstr = "";
 				//System.out.println(userstr + " " + user);
 				String fname = f.getName();
@@ -580,7 +583,9 @@ public class Order extends JApplet {
 			double	price = rs.getDouble("price");
 			String 	puser = rs.getString("user");
 			String	pname = rs.getString("name");
-			Pontun pnt = new Pontun( rs.getBoolean("urgent"), rs.getString("byrgir"), rs.getString("cat"), rs.getInt("ordno"), pname, puser, rs.getInt("quant"), 
+			String	cat = rs.getString("cat");
+			String	framl = ordmap.containsKey(cat) ? ordmap.get(cat).e_Framleiðandi : "";
+			Pontun pnt = new Pontun( rs.getBoolean("urgent"), rs.getString("byrgir"), cat, rs.getInt("ordno"), pname, framl, puser, rs.getInt("quant"), 
 					rs.getString("unit"), rs.getDate("orddate"), afgdate, afhdate, rs.getString("description"), rs.getString("jobid"), rs.getString("location"), price, findate );
 			if( afgdate == null ) pntlist.add( pnt );
 			else if( afhdate == null ) afglist.add( pnt ); 
@@ -738,7 +743,8 @@ public class Order extends JApplet {
 		boolean				b = ps.execute();
 		
 		if( !b ) {
-			pntlist.add( new Pontun( false, birgi, cat, ordno, name, user, quant, unit, new Date( System.currentTimeMillis() ), null, null, "", verknr, location, price, null ) );
+			String framl = ordmap.containsKey(cat) ? ordmap.get(cat).e_Framleiðandi : "";
+			pntlist.add( new Pontun( false, birgi, cat, ordno, name, framl, user, quant, unit, new Date( System.currentTimeMillis() ), null, null, "", verknr, location, price, null ) );
 		}
 		
 		ps.close();
@@ -808,7 +814,7 @@ public class Order extends JApplet {
 					}
 				}
 			}
-		}	
+		}
 		pntlist.removeAll( remset );
 		ptable.tableChanged( new TableModelEvent(pmodel) );
 		//ptable.setModel( nullmodel );
@@ -1522,6 +1528,9 @@ public class Order extends JApplet {
 		
 		try {
 			ordlist = loadOrders();
+			for( Vara v : ordlist ) {
+				ordmap.put( v.e_Cat, v );
+			}
 			model = createModel( ordlist );
 			
 			loadPnt();
@@ -2081,7 +2090,6 @@ public class Order extends JApplet {
 				try {
 					newItem();
 				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
