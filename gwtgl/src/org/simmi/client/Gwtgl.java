@@ -1,7 +1,12 @@
 package org.simmi.client;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.codec.binary.Base64;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
@@ -30,11 +35,11 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -172,8 +177,8 @@ public class Gwtgl implements EntryPoint {
 		$wnd.console.log( str );
 	}-*/;
 	
-	String[] 	val;
-	int			max = 0;
+	List<String> 	val;
+	int				max = 0;
 	public void fileLoaded( String content, int append ) {
 		console("befread");
 		String[] split = content.split(">");
@@ -187,13 +192,14 @@ public class Gwtgl implements EntryPoint {
 		}
 		int start = data.getNumberOfRows();
 		data.addRows( split.length-1 );
-		val = new String[ split.length-1 ];
+		val = new ArrayList<String>();// split.length-1 );
 		console("befloop");
 		for( int r = 0; r < split.length-1; r++ ) {
 			String s = split[r+1];
 			int i = s.indexOf('\n');
 			String seq = s.substring(i, s.length()).replace("\n", "");
-			val[r] = seq;
+			//val.set(r, seq);
+			val.add(seq);
 			if( seq.length() > max ) max = seq.length();
 			
 			data.setValue( r+start, 0, s.substring(0, i) );
@@ -241,6 +247,7 @@ public class Gwtgl implements EntryPoint {
 		}
 	}*/
 	
+	int prevtop = 0;
 	int xstart = 0;
 	public void draw() {
 		if( val != null ) {
@@ -249,15 +256,12 @@ public class Gwtgl implements EntryPoint {
 			
 			context.setFillStyle("#222222");
 			
-			//table.gete
 			NodeList<Element> ne = table.getElement().getElementsByTagName("table");
 			TableElement te = TableElement.as( ne.getItem(0) );
 			NodeList<TableRowElement> nl = te.getRows();
 			
 			int top = table.getElement().getFirstChildElement().getFirstChildElement().getScrollTop();
-			//console( "ok " + table.getElement().getFirstChildElement().getFirstChildElement().getOffsetTop() );
 			int th = 0;
-			context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 			
 			Set<Integer>	selset = new HashSet<Integer>();
 			JsArray<Selection> jsel = table.getSelections();
@@ -265,24 +269,38 @@ public class Gwtgl implements EntryPoint {
 				Selection sel = jsel.get(i);
 				selset.add( sel.getRow() );
 			}
-			//for( int y = 0; y < Math.min( val.length, canvas.getHeight()/10 ); y++ ) {
-			for( int y = 0; y < val.length; y++ ) {
-				int r = sortind != null ? sortind.get(y) : y;
-				String str = val[r];
-				TableRowElement	tre = nl.getItem(y+1);
-				
-				if( th+tre.getOffsetHeight() > top ) {		
-					//console( tre.getRowIndex() + " " + tre.getId() + " " + tre.getClassName() + " " + tre.getNodeValue() );
-					if( selset.contains(r) ) {
-						context.setFillStyle("#DDDDFF");
-						context.fillRect(0, th-top, canvas.getWidth(), tre.getClientHeight() );
+			
+			int atop = Math.abs(top-prevtop);
+			if( atop > 0 && atop < canvas.getHeight() ) {
+				int h = canvas.getHeight()-atop;
+				int uno = Math.max(0,top-prevtop);
+				int duo = Math.max(0,prevtop-top);
+				context.drawImage(canvas, 0, uno, canvas.getWidth(), h, 0, duo, canvas.getWidth(), h);
+			} else {
+				context.setFillStyle("#EEEEEE");
+				context.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+				//context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+			
+				int baseheight = nl.getItem(0).getOffsetHeight();
+				//for( int y = 0; y < Math.min( val.length, canvas.getHeight()/10 ); y++ ) {
+				for( int y = 0; y < val.size(); y++ ) {
+					int r = sortind != null ? sortind.get(y) : y;
+					String str = val.get(r);
+					TableRowElement	tre = nl.getItem(y+1);
+					
+					if( th+tre.getOffsetHeight() > top ) {		
+						//console( tre.getRowIndex() + " " + tre.getId() + " " + tre.getClassName() + " " + tre.getNodeValue() );
+						if( selset.contains(r) ) {
+							context.setFillStyle("#DDDDFF");
+							context.fillRect(0, th-top+baseheight, canvas.getWidth(), tre.getClientHeight() );
+						}
 						context.setFillStyle("#222222");
+						for( int x = xstart; x < Math.min( str.length(), xstart+canvas.getWidth()/10+1 ); x++ ) {
+							context.fillText(""+str.charAt(x), (x-xstart)*10, th+tre.getOffsetHeight()-top-3+baseheight );
+						}
 					}
-					for( int x = xstart; x < Math.min( str.length(), xstart+canvas.getWidth()/10+1 ); x++ ) {
-						context.fillText(""+str.charAt(x), (x-xstart)*10, th+tre.getOffsetHeight()-top );
-					}
+					th += tre.getOffsetHeight();
 				}
-				th += tre.getOffsetHeight();
 			}
 			
 			ocontext.clearRect(0, 0, ocanvas.getWidth(), ocanvas.getHeight());
@@ -292,9 +310,9 @@ public class Gwtgl implements EntryPoint {
 			//ocontext.setStrokeStyle("#CCFFCC");
 			//ocontext.setStrokeStyle(FillStrokeStyle.TYPE_CSSCOLOR);
 			//ocontext.setLineWidth(2.0);
-			for( int i = 0; i < val.length; i++ ) {		
+			for( int i = 0; i < val.size(); i++ ) {		
 				int y = sortind != null ? sortind.get(i) : i;
-				String seq = val[y];
+				String seq = val.get(y);
 				//ocontext.moveTo(0, i);
 				int x = seq.length()*ocanvas.getWidth()/max;
 				//ocontext.lineTo( x, i );
@@ -304,6 +322,8 @@ public class Gwtgl implements EntryPoint {
 			ocontext.setFillStyle("#333333");
 			int w = ( canvas.getWidth()*ocanvas.getWidth() ) / (max*10);
 			ocontext.fillRect(xstart*ocanvas.getWidth()/(max), 0, w, 20);
+			
+			prevtop = top;
 		}
 	}
 	
@@ -328,6 +348,8 @@ public class Gwtgl implements EntryPoint {
 	    
 		//form.add( vp );*/
 		final FileUpload	file = new FileUpload();
+		//file.
+		//file.getElement().setAttribute("accept", "");
 		file.getElement().setId("fasta");
 
 		form.add( file );
@@ -357,17 +379,13 @@ public class Gwtgl implements EntryPoint {
 	JsArrayInteger		sortind = null;
 	boolean				mouseDown = false;
 	public void onModuleLoad() {		
-		HorizontalPanel	hpanel = new HorizontalPanel();
-		hpanel.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
-		hpanel.setWidth("100%");
+		//HorizontalPanel	hpanel = new HorizontalPanel();
+		//hpanel.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
+		//hpanel.setWidth("100%");
 		
 		int height = Math.max( 1000, Window.getClientHeight() );
 		//int height = RootPanel.get().getOffsetHeight();
 		//hpanel.setHeight(Math.max(1000, height)+"px");
-		
-		final SplitLayoutPanel slp = new SplitLayoutPanel();
-		slp.setWidth("100%");
-		slp.setHeight(height+"px");
 		
 		MenuBar	popup = new MenuBar(true);
 		popup.addItem("Open", new Command() {
@@ -425,6 +443,63 @@ public class Gwtgl implements EntryPoint {
 				stuff( 1 );
 			}
 		});
+		popup.addItem( "Export", new Command() {
+			@Override
+			public void execute() {
+				DialogBox db = new DialogBox();
+				Anchor	a = new Anchor();
+				String out = "";
+				for( int i = 0; i < data.getNumberOfRows(); i++ ) {
+					String str = data.getValueString(i, 0);
+					out += ">" + str + "\n";
+					
+					String seq = val.get(i);
+					for( int k = 0; k < seq.length(); k+=60 ) {
+						out += seq.substring( k, Math.min(seq.length(), k+60) ) + "\n";
+					}
+				}
+				//String bstr = new String( Base64.encodeBase64( out.getBytes() ) );
+				//a.setHref();
+				db.add( a );
+				db.center();
+			}
+		});
+		MenuBar	epopup = new MenuBar(true);
+		epopup.addItem("Select All", new Command() {
+			@Override
+			public void execute() {
+				JsArray<Selection> jsel = (JsArray<Selection>)JsArray.createArray();
+				for( int i = 0; i < data.getNumberOfRows(); i++ ) jsel.push( Selection.createRowSelection(i) );
+				//JsArray<Selection>
+				/*JsArray<Selection>	all = new JsArray<Selection>() {
+					
+				};*/
+				table.setSelections( jsel );
+				draw();
+			}
+		});
+		epopup.addItem("Delete", new Command() {
+			@Override
+			public void execute() {
+				JsArray<Selection> ls = table.getSelections();
+				List<Integer>	slist = new ArrayList<Integer>();
+				//while( ls.length() > 0 ) {
+				for( int i = 0; i < ls.length(); i++ ) {
+					Selection sel = ls.get(i);
+					slist.add( sel.getRow() );
+					//ls = table.getSelections();
+				}
+				Collections.sort( slist, Collections.reverseOrder() );
+				
+				for( int i : slist ) {
+					//Arrays.
+					if( i < val.size() ) val.remove( i );
+					data.removeRow( i );
+				}
+				table.draw( data );
+				draw();
+			}
+		});
 		MenuBar	hpopup = new MenuBar(true);
 		hpopup.addItem("About", new Command() {
 			@Override
@@ -444,11 +519,25 @@ public class Gwtgl implements EntryPoint {
 		
 		MenuBar	menubar = new MenuBar();
 		menubar.addItem("File", popup);
+		menubar.addItem("Edit", epopup);
 		menubar.addItem("Help", hpopup);
 		VerticalPanel	vpanel = new VerticalPanel();
 		vpanel.setWidth("100%");
+		//vpanel.setHeight(height+"px");
 		vpanel.add( menubar );
+		
+		final SplitLayoutPanel slp = new SplitLayoutPanel();
+		slp.setWidth("100%");
+		slp.setHeight((height-25)+"px");
 		vpanel.add( slp );
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				int height = event.getHeight();
+				slp.setHeight((height-25)+"px");
+			}
+		});
 		
 		final Canvas canvas = Canvas.createIfSupported();
 		canvas.setWidth("100%");
@@ -569,8 +658,9 @@ public class Gwtgl implements EntryPoint {
 		ocontext.setFillStyle("#0000ff");
 		//ocontext.fillRect(10, 10, 100, 100);
 		
-		hpanel.add( vpanel );
-		RootPanel.get().add( hpanel );
+		//slp.addNorth(menubar, 20);
+		//hpanel.add( vpanel );
+		RootPanel.get().add( vpanel );
 		
 		/*//HorizontalSplitPanel hsp = new HorizontalSplitPanel();
 		slp.setWidth("1200px");
