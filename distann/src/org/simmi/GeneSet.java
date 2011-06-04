@@ -11,10 +11,14 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -25,6 +29,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
@@ -74,6 +79,7 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.DocumentEvent;
@@ -3550,6 +3556,120 @@ public class GeneSet extends JApplet {
 				return "";
 			}
 		};
+		
+		table.setDragEnabled( true );
+		try {
+			final DataFlavor df = new DataFlavor("text/plain");
+			//System.err.println( df.getHumanPresentableName() + " " + df.getPrimaryType() + " " + df.getSubType() + " " + df.getMimeType() );
+			//df = DataFlavor.getTextPlainUnicodeFlavor();
+			//System.err.println( df.getHumanPresentableName() + " " + df.getPrimaryType() + " " + df.getSubType() + " " + df.getMimeType() );
+			TransferHandler th = new TransferHandler() {
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 1L;
+				
+				public int getSourceActions(JComponent c) {
+					return TransferHandler.COPY_OR_MOVE;
+				}
+
+				public boolean canImport(TransferHandler.TransferSupport support) {
+					return false;
+				}
+
+				protected Transferable createTransferable(JComponent c) {
+					return new Transferable() {
+						@Override
+						public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+							StringBuilder ret = new StringBuilder();
+							int[] rr = table.getSelectedRows();
+							for( int r : rr ) {
+								int cr = table.convertRowIndexToModel(r);
+								Gene gg = genelist.get(cr);
+								if( gg.species != null ) {
+									//ret.append( gg.name + ":\n" );
+									for( String sp : gg.species.keySet() ) {
+										Teginfo stv = gg.species.get( sp );
+										for( Tegeval tv : stv.tset ) {
+											ret.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
+											if( tv.dna != null ) {
+												for( int i = 0; i < tv.dna.length(); i+=70 ) {
+													ret.append(tv.dna.substring( i, Math.min(i+70,tv.dna.length()) )+"\n");
+												}
+											}
+										}
+									}
+								}
+							}
+							return new ByteArrayInputStream( ret.toString().getBytes() );
+						}
+
+						@Override
+						public DataFlavor[] getTransferDataFlavors() {
+							return new DataFlavor[] { df };
+						}
+
+						@Override
+						public boolean isDataFlavorSupported(DataFlavor arg0) {
+							if (arg0.equals(df) ) {
+								return true;
+							}
+							return false;
+						}
+					};
+				}
+
+				public boolean importData(TransferHandler.TransferSupport support) {
+					Object obj = null;
+					
+					System.err.println( support.getDataFlavors().length );
+					int b = Arrays.binarySearch( support.getDataFlavors(), DataFlavor.javaFileListFlavor, new Comparator<DataFlavor>() {
+						@Override
+						public int compare(DataFlavor o1, DataFlavor o2) {
+							return o1 == o2 ? 1 : 0;
+						}
+					});
+					
+					try {
+						obj = support.getTransferable().getTransferData(DataFlavor.imageFlavor);
+					} catch (UnsupportedFlavorException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+					try {
+						if( obj != null && obj instanceof File[] ) {
+							//File[] ff = (File[])obj;
+							//wbStuff( ff[0].getCanonicalPath() );
+						} else if( obj instanceof Image ) {
+							
+						} else {
+							obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+							System.err.println(obj);
+							URL url = null;
+							try {
+								url = new URL( (String)obj );
+								Image image = ImageIO.read( url );
+								
+								
+							} catch( Exception e ) {
+								e.printStackTrace();
+							}
+						}	
+					} catch (UnsupportedFlavorException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+					return true;
+				}
+			};
+			table.setTransferHandler( th );
+		} catch (ClassNotFoundException e2) {
+			e2.printStackTrace();
+		}
 		
 		table.setDefaultRenderer(Teginfo.class, new DefaultTableCellRenderer() {			
 			@Override
