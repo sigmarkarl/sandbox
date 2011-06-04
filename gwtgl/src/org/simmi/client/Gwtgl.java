@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.codec.binary.Base64;
-
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
@@ -180,7 +178,6 @@ public class Gwtgl implements EntryPoint {
 	List<String> 	val;
 	int				max = 0;
 	public void fileLoaded( String content, int append ) {
-		console("befread");
 		String[] split = content.split(">");
 		
 		max = 0;
@@ -372,6 +369,63 @@ public class Gwtgl implements EntryPoint {
 		//file.fireEvent( new ClickEvent(){} );
 		click( file.getElement() );
 	}
+	
+	public native void dropTarget( JavaScriptObject canvas ) /*-{
+		var s = this;
+		//jso.ondrop = function() {
+		//	$wnd.alert('alert');
+		//	s.@org.simmi.client.Pifviewer::slubb()();
+		//};
+		
+		function f1( evt ) {
+			evt.stopPropagation();
+			evt.preventDefault();
+			
+			//$wnd.alert("hey");
+		};
+		
+		function f( evt ) {
+			evt.stopPropagation();
+			evt.preventDefault();
+	
+			var files = evt.dataTransfer.files;		
+			var count = files.length;
+		
+			if(count > 0) {
+				$wnd.alert("in file");
+				var file = files[0];
+				var reader = new FileReader();
+				reader.onload = function(e) {
+					//var iv;
+					//try {
+					//	var res = e.target.result;
+					//	iv = new Int16Array( res );
+					//} catch( e ) {
+					//	$wnd.alert(e);
+					//}
+					var res = e.target.result;
+					//s.@org.simmi.client.Pifviewer::loadImage(Lcom/google/gwt/dom/client/CanvasElement;Lcom/google/gwt/core/client/JavaScriptObject;)( canvas, iv );
+					s.@org.simmi.client.Gwtgl::fileLoaded(Ljava/lang/String;I)( res, 0 );
+				};
+				//reader.readAsArrayBuffer( file );
+				reader.readAsText( file );
+			} else {
+				$wnd.alert(evt.dataTransfer.dropEffect);
+				$wnd.alert(evt.dataTransfer.types);
+				var res = evt.dataTransfer.getData("Text");
+				$wnd.alert(evt.dataTransfer.effectAllowed);
+				s.@org.simmi.client.Gwtgl::fileLoaded(Ljava/lang/String;I)( res, 0 );
+			}
+		};
+		canvas.addEventListener("dragenter", f1, false );
+		canvas.addEventListener("dragexit", f1, false );
+		canvas.addEventListener("dragover", f1, false );
+		canvas.addEventListener("drop", f, false );
+	}-*/;
+	
+	public native int bb( JavaScriptObject jo, int ind ) /*-{
+		return jo.charCodeAt(ind);
+	}-*/;
 
 	Table 				table;
 	DataTable 			data;
@@ -543,6 +597,8 @@ public class Gwtgl implements EntryPoint {
 		canvas.setWidth("100%");
 		canvas.setHeight("100%");
 		context = canvas.getContext2d();
+		
+		dropTarget( context.getCanvas() );
 		
 		final ResizeLayoutPanel	sp = new ResizeLayoutPanel();
 		sp.setWidth("100%");
