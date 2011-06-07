@@ -2,8 +2,10 @@ package org.simmi.client;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.canvas.client.Canvas;
@@ -33,11 +35,13 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -139,6 +143,135 @@ public class Gwtgl implements EntryPoint {
 		//context.fillText("hohohoho", 10, 10);
 	}*/
 	
+	//String _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+	 
+	// public method for encoding
+	public native String encode( String input ) /*-{
+		var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+		var output = "";
+		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+		var i = 0;
+ 
+		input = this.@org.simmi.client.Gwtgl::_utf8_encode(Ljava/lang/String;)(input);
+ 
+		while (i < input.length) {
+ 
+			chr1 = input.charCodeAt(i++);
+			chr2 = input.charCodeAt(i++);
+			chr3 = input.charCodeAt(i++);
+ 
+			enc1 = chr1 >> 2;
+			enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+			enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+			enc4 = chr3 & 63;
+ 
+			if (isNaN(chr2)) {
+				enc3 = enc4 = 64;
+			} else if (isNaN(chr3)) {
+				enc4 = 64;
+			}
+ 
+			output = output +
+			_keyStr.charAt(enc1) + _keyStr.charAt(enc2) +
+			_keyStr.charAt(enc3) + _keyStr.charAt(enc4);
+ 
+		}
+ 
+		return output;
+	}-*/;
+ 
+	public native String decode( String input ) /*-{
+		var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+		var output = "";
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+ 
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+ 
+		while (i < input.length) {
+ 
+			enc1 = _keyStr.indexOf(input.charAt(i++));
+			enc2 = _keyStr.indexOf(input.charAt(i++));
+			enc3 = _keyStr.indexOf(input.charAt(i++));
+			enc4 = _keyStr.indexOf(input.charAt(i++));
+ 
+			chr1 = (enc1 << 2) | (enc2 >> 4);
+			chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+			chr3 = ((enc3 & 3) << 6) | enc4;
+ 
+			output = output + String.fromCharCode(chr1);
+ 
+			if (enc3 != 64) {
+				output = output + String.fromCharCode(chr2);
+			}
+			if (enc4 != 64) {
+				output = output + String.fromCharCode(chr3);
+			}
+ 
+		}
+ 
+		output = this.@org.simmi.client.Gwtgl::_utf8_decode(Ljava/lang/String;)(output);
+ 
+		return output;
+	}-*/;
+ 
+	private native String _utf8_encode( String string ) /*-{
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+ 
+		for (var n = 0; n < string.length; n++) {
+ 
+			var c = string.charCodeAt(n);
+ 
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			}
+			else if((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+			else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+ 
+		}
+ 
+		return utftext;
+	}-*/;
+ 
+	private native String _utf8_decode( String utftext ) /*-{
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+ 
+		while ( i < utftext.length ) {
+ 
+			c = utftext.charCodeAt(i);
+ 
+			if (c < 128) {
+				string += String.fromCharCode(c);
+				i++;
+			}
+			else if((c > 191) && (c < 224)) {
+				c2 = utftext.charCodeAt(i+1);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+				i += 2;
+			}
+			else {
+				c2 = utftext.charCodeAt(i+1);
+				c3 = utftext.charCodeAt(i+2);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+				i += 3;
+			}
+ 
+		}
+ 
+		return string;
+	}-*/;
+	
 	public native void scrollEv( JavaScriptObject te ) /*-{
 		//$wnd.alert('hook');
 		//for(var key in te){
@@ -175,34 +308,85 @@ public class Gwtgl implements EntryPoint {
 		$wnd.console.log( str );
 	}-*/;
 	
-	List<String> 	val;
-	int				max = 0;
+	class Annotation {
+		public Annotation( String name, String color, int start, int stop ) {
+			this.name = name;
+			this.color = color;
+			this.start = start;
+			this.stop = stop;
+		}
+		
+		String	name;
+		String	color;
+		int		start;
+		int		stop;
+	};
+	
+	class Sequence {
+		public Sequence( String name, String seq ) {
+			this.name = name;
+			this.seq = seq;
+			this.aInd = new int[seq.length()];
+			this.aList = new ArrayList<Annotation>();
+		}
+		
+		public void addAnnotation( Annotation a ) {
+			aList.add( a );
+			for( int i = a.start; i < a.stop; i++ ) {
+				if( aInd[i] == 0 ) aInd[i] = aList.size();
+				else aInd[i] = aList.size()<<16;
+			}
+		}
+		
+		public int length() {
+			return seq.length();
+		}
+		
+		String				name;
+		String				seq;
+		int[]				aInd;
+		List<Annotation>	aList;		
+	};
+	
+	List<Sequence> 			val;
+	Map<String,Sequence>	seqmap = new HashMap<String,Sequence>();
+	int						max = 0;
 	public void fileLoaded( String content, int append ) {
 		String[] split = content.split(">");
-		
+		seqmap.clear();
 		max = 0;
-		
 		if( append == 0 ) {
 			data = DataTable.create();
 	    	data.addColumn(ColumnType.STRING, "Name");
 	    	data.addColumn(ColumnType.NUMBER, "Length");
 		}
 		int start = data.getNumberOfRows();
-		data.addRows( split.length-1 );
-		val = new ArrayList<String>();// split.length-1 );
-		console("befloop");
+		//data.addRows( split.length-1 );
+		int count = 0;
+		val = new ArrayList<Sequence>();// split.length-1 );
 		for( int r = 0; r < split.length-1; r++ ) {
 			String s = split[r+1];
 			int i = s.indexOf('\n');
-			String seq = s.substring(i, s.length()).replace("\n", "");
-			//val.set(r, seq);
-			val.add(seq);
-			if( seq.length() > max ) max = seq.length();
-			
-			data.setValue( r+start, 0, s.substring(0, i) );
-			data.setValue( r+start, 1, seq.length() );
-			
-			console("inloop "+i);
+			String seqname = s.substring(0, i);
+			String subseq = s.substring(i+1, s.length());
+			if( seqmap.containsKey( seqname ) ) {
+				Sequence seq = seqmap.get(seqname);
+				String[] subsplit = subseq.split("\n");
+				for( String a : subsplit ) {
+					String[] aspl = a.split("\t");
+					seq.addAnnotation( new Annotation(aspl[0], aspl[1], Integer.parseInt(aspl[2]), Integer.parseInt(aspl[3])) );
+				}
+			} else {
+				String seqstr = subseq.replace("\n", "");
+				Sequence seq = new Sequence(seqname,seqstr);
+				seqmap.put( seqname, seq );
+				val.add( seq );
+				if( seqstr.length() > max ) max = seqstr.length();
+				data.addRow();
+				data.setValue( count+start, 0, seqname );
+				data.setValue( count+start, 1, seqstr.length() );
+				count++;
+			}
 		}
 		
 		//table.setWidth("200px");
@@ -210,7 +394,7 @@ public class Gwtgl implements EntryPoint {
 		table.draw(data, createTableOptions());
 		draw();
 		
-		Element e = table.getElement();        
+		Element e = table.getElement();
         e = e.getFirstChildElement();
         e = e.getFirstChildElement();
         scrollEv( e );
@@ -267,6 +451,8 @@ public class Gwtgl implements EntryPoint {
 				selset.add( sel.getRow() );
 			}
 			
+			int baseheight = nl.getItem(0).getOffsetHeight();
+			
 			int atop = Math.abs(top-prevtop);
 			if( atop > 0 && atop < canvas.getHeight() ) {
 				int h = canvas.getHeight()-atop;
@@ -277,12 +463,14 @@ public class Gwtgl implements EntryPoint {
 				context.setFillStyle("#EEEEEE");
 				context.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 				//context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-			
-				int baseheight = nl.getItem(0).getOffsetHeight();
 				//for( int y = 0; y < Math.min( val.length, canvas.getHeight()/10 ); y++ ) {
 				for( int y = 0; y < val.size(); y++ ) {
 					int r = sortind != null ? sortind.get(y) : y;
-					String str = val.get(r);
+					
+					Sequence seq = val.get(r);
+					String 	str = seq.seq;
+					int[]	ann = seq.aInd;
+					
 					TableRowElement	tre = nl.getItem(y+1);
 					
 					if( th+tre.getOffsetHeight() > top ) {		
@@ -294,10 +482,29 @@ public class Gwtgl implements EntryPoint {
 						context.setFillStyle("#222222");
 						for( int x = xstart; x < Math.min( str.length(), xstart+canvas.getWidth()/10+1 ); x++ ) {
 							context.fillText(""+str.charAt(x), (x-xstart)*10, th+tre.getOffsetHeight()-top-3+baseheight );
+							if( ann[x] != 0 ) {
+								Annotation a = seq.aList.get(ann[x]-1);
+								context.setFillStyle( a.color );
+								context.fillRect( (x-xstart)*10, th-top+baseheight, 10, 5 );
+								context.setFillStyle("#222222");
+							}
 						}
 					}
 					th += tre.getOffsetHeight();
 				}
+			}
+			
+			context.setFillStyle("#EEEEEE");
+			context.fillRect(0, 0, canvas.getWidth(), 30);
+			context.setFillStyle("#111111");
+			for( int x = xstart; x < xstart+canvas.getWidth()/10+1; x++ ) {
+				int val = 3;
+				if( x%10 == 0 ) val = 7;
+				else if( x%10 == 5 ) val = 5;
+				context.fillRect( (x-xstart)*10, baseheight-val, 1, val );
+			}
+			for( int x = (xstart/10)*10; x < ((xstart+canvas.getWidth()/10+1)/10+1)*10; x+=10 ) {
+				context.fillText( ""+x, (x-xstart)*10, baseheight-7 );
 			}
 			
 			ocontext.clearRect(0, 0, ocanvas.getWidth(), ocanvas.getHeight());
@@ -307,13 +514,31 @@ public class Gwtgl implements EntryPoint {
 			//ocontext.setStrokeStyle("#CCFFCC");
 			//ocontext.setStrokeStyle(FillStrokeStyle.TYPE_CSSCOLOR);
 			//ocontext.setLineWidth(2.0);
+			
+			int h = ocanvas.getHeight();
+			int seqh = ((double)h/(double)val.size() <= 1.0) ? 1 : 2;
+			double stph = Math.min( h, 2.0*val.size() );
 			for( int i = 0; i < val.size(); i++ ) {		
 				int y = sortind != null ? sortind.get(i) : i;
-				String seq = val.get(y);
+				Sequence seq = val.get(y);
+				//String seqstr = seq.seq;
 				//ocontext.moveTo(0, i);
 				int x = seq.length()*ocanvas.getWidth()/max;
 				//ocontext.lineTo( x, i );
-				ocontext.fillRect(0, i, x, 1);
+				ocontext.fillRect(0, i*stph/(double)val.size(), x, seqh);
+			}
+			
+			for( int i = 0; i < val.size(); i++ ) {		
+				int y = sortind != null ? sortind.get(i) : i;
+				Sequence seq = val.get(y);
+				for( Annotation ann : seq.aList ) {
+					ocontext.setFillStyle( ann.color );
+					//int x = seq.length()*ocanvas.getWidth()/max;
+					
+					long start = (long)ann.start*ocanvas.getWidth()/(long)max;
+					long stop = Math.max( start+1, (long)ann.stop*ocanvas.getWidth()/(long)max );
+					ocontext.fillRect( (int)start, i*stph/(double)val.size(), (int)(stop-start), seqh);
+				}
 			}
 			
 			ocontext.setFillStyle("#333333");
@@ -392,7 +617,6 @@ public class Gwtgl implements EntryPoint {
 			var count = files.length;
 		
 			if(count > 0) {
-				$wnd.alert("in file");
 				var file = files[0];
 				var reader = new FileReader();
 				reader.onload = function(e) {
@@ -410,10 +634,8 @@ public class Gwtgl implements EntryPoint {
 				//reader.readAsArrayBuffer( file );
 				reader.readAsText( file );
 			} else {
-				$wnd.alert(evt.dataTransfer.dropEffect);
-				$wnd.alert(evt.dataTransfer.types);
 				var res = evt.dataTransfer.getData("Text");
-				$wnd.alert(evt.dataTransfer.effectAllowed);
+				//$wnd.alert(evt.dataTransfer.effectAllowed);
 				s.@org.simmi.client.Gwtgl::fileLoaded(Ljava/lang/String;I)( res, 0 );
 			}
 		};
@@ -500,22 +722,25 @@ public class Gwtgl implements EntryPoint {
 		popup.addItem( "Export", new Command() {
 			@Override
 			public void execute() {
-				DialogBox db = new DialogBox();
-				Anchor	a = new Anchor();
+				//DialogBox db = new DialogBox();
+				//Anchor	a = new Anchor("okok");
 				String out = "";
 				for( int i = 0; i < data.getNumberOfRows(); i++ ) {
 					String str = data.getValueString(i, 0);
 					out += ">" + str + "\n";
 					
-					String seq = val.get(i);
+					Sequence seq = val.get(i);
+					String seqstr = seq.seq;
 					for( int k = 0; k < seq.length(); k+=60 ) {
-						out += seq.substring( k, Math.min(seq.length(), k+60) ) + "\n";
+						out += seqstr.substring( k, Math.min(seq.length(), k+60) ) + "\n";
 					}
 				}
-				//String bstr = new String( Base64.encodeBase64( out.getBytes() ) );
-				//a.setHref();
-				db.add( a );
-				db.center();
+				String bstr = encode( out );
+				String dataurl = "data:text/plain;fileName=export.fa;base64,"+bstr;
+				//a.setHref(  );
+				//db.add( a );
+				//db.center();
+				Window.open(dataurl, "export.fa", "");
 			}
 		});
 		MenuBar	epopup = new MenuBar(true);
@@ -554,6 +779,43 @@ public class Gwtgl implements EntryPoint {
 				draw();
 			}
 		});
+		
+		final Canvas canvas = Canvas.createIfSupported();
+		MenuBar vpopup = new MenuBar( true );
+		vpopup.addItem( "Goto", new Command() {
+			@Override
+			public void execute() {
+				DialogBox	db = new DialogBox();
+				db.setAutoHideEnabled( true );
+				db.setText("Goto");
+				
+				final IntegerBox	ib = new IntegerBox();
+				ib.addChangeHandler( new ChangeHandler() {
+					@Override
+					public void onChange(ChangeEvent event) {
+						xstart = ib.getValue();
+						draw();
+					}
+				});
+				VerticalPanel	vp = new VerticalPanel();
+				vp.add( ib );
+				
+				HorizontalPanel	hp = new HorizontalPanel();
+				Button	wlb = new Button("<<");
+				hp.add(wlb);
+				Button slb = new Button("<");
+				hp.add(slb);
+				Button	srb = new Button(">");
+				hp.add(srb);
+				Button wrb = new Button(">>");
+				hp.add(wrb);
+				
+				vp.add( hp );
+				
+				db.add( vp );
+				db.center();
+			}
+		});
 		MenuBar	hpopup = new MenuBar(true);
 		hpopup.addItem("About", new Command() {
 			@Override
@@ -574,6 +836,7 @@ public class Gwtgl implements EntryPoint {
 		MenuBar	menubar = new MenuBar();
 		menubar.addItem("File", popup);
 		menubar.addItem("Edit", epopup);
+		menubar.addItem("View", vpopup);
 		menubar.addItem("Help", hpopup);
 		VerticalPanel	vpanel = new VerticalPanel();
 		vpanel.setWidth("100%");
@@ -593,7 +856,6 @@ public class Gwtgl implements EntryPoint {
 			}
 		});
 		
-		final Canvas canvas = Canvas.createIfSupported();
 		canvas.setWidth("100%");
 		canvas.setHeight("100%");
 		context = canvas.getContext2d();
