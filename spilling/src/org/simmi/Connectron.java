@@ -12,6 +12,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
@@ -30,8 +33,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -49,6 +54,7 @@ import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -56,6 +62,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.simmi.Corp.LinkInfo;
 
 public class Connectron extends JApplet implements MouseListener, MouseMotionListener, KeyListener {
 	/**
@@ -104,9 +111,10 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		};
 	}
 	
+	double u = 1000.0;
 	public void spring() {
 		final double damp = 0.97;
-		final double u = 1000.0;
+		//final double u = 1000.0;
 		final double gorm = 0.0;
 		final double k = 0.001;
 		
@@ -133,9 +141,12 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 				double dy = corp.gety() - c.gety();
 				double dz = corp.getz() - c.getz();
 				
-				fx -= k*(dx-gorm);
-				fy -= k*(dy-gorm);
-				fz -= k*(dz-gorm);
+				LinkInfo li = corp.connections.get(c);
+				double st = li.getStrength();
+								
+				fx -= k*st*(dx-gorm);
+				fy -= k*st*(dy-gorm);
+				fz -= k*st*(dz-gorm);
 			}
 			
 			corp.vx = (corp.vx+fx)*damp;
@@ -504,8 +515,11 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 						c.add( fcorp );
 					}
 					
-					corp.connections.put( fcorp, new HashSet<String>( Arrays.asList( new String[] {"barn"} ) ) );
-					fcorp.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"faðir"} ) ) );
+					//corp.connections.put( fcorp, new HashSet<String>( Arrays.asList( new String[] {"barn"} ) ) );
+					//fcorp.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"faðir"} ) ) );
+					
+					corp.addLink( fcorp, "barn" );
+					fcorp.addLink( corp, "faðir" );
 				}
 				
 				if( mother.length() > 0 ) {
@@ -522,8 +536,11 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 						c.add( mcorp );
 					}
 					
-					corp.connections.put( mcorp, new HashSet<String>( Arrays.asList( new String[] {"barn"} ) ) );
-					mcorp.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"móðir"} ) ) );
+					//corp.connections.put( mcorp, new HashSet<String>( Arrays.asList( new String[] {"barn"} ) ) );
+					//mcorp.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"móðir"} ) ) );
+					
+					corp.addLink( mcorp, "barn" );
+					mcorp.addLink( corp, "móðir" );
 				}
 				
 				if( maki.length() > 0 ) {
@@ -540,8 +557,11 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 						c.add( mcorp );
 					}
 					
-					corp.connections.put( mcorp, new HashSet<String>( Arrays.asList( new String[] {"maki"} ) ) );
-					mcorp.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"maki"} ) ) );
+					//corp.connections.put( mcorp, new HashSet<String>( Arrays.asList( new String[] {"maki"} ) ) );
+					//mcorp.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"maki"} ) ) );
+					
+					corp.addLink( mcorp, "maki" );
+					mcorp.addLink( corp, "maki" );
 				}
 				
 				int l = 0;
@@ -565,8 +585,11 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 								link = Corp.corpMap.get( id );
 							}
 							
-							corp.connections.put( link, new HashSet<String>( Arrays.asList( new String[] {"link"} ) ) );
-							link.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"link"} ) ) );
+							//corp.connections.put( link, new HashSet<String>( Arrays.asList( new String[] {"link"} ) ) );
+							//link.connections.put( corp, new HashSet<String>( Arrays.asList( new String[] {"link"} ) ) );
+							
+							corp.addLink( link, "link" );
+							link.addLink( corp, "link" );
 						}
 					}
 					l++;
@@ -604,7 +627,11 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			if (!frame.isResizable()) frame.setResizable(true);
 		}
 		
-		initGUI( this );
+		try {
+			initGUI( this );
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 		
 		this.add( scrollpane );
 	}
@@ -668,7 +695,8 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 				
 				String[] ss = str.split("\n");
 				Set<String> 	value = new HashSet<String>( Arrays.asList(ss) );
-				p1.connections.put( p2, value );
+				//p1.connections.put( p2, value );
+				p1.addLink( p2, value );
 				
 				linkRow = linkSheet.getRow( ++l );
 			}
@@ -734,7 +762,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			}
 			
 			for( Corp cp : corp.connections.keySet() ) {
-				Set<String>		link = corp.connections.get(cp);
+				Set<String>		link = corp.connections.get(cp).linkTitles;
 				linkRow = linkSheet.createRow( ++l );
 				cell = linkRow.createCell( 0 );
 				cell.setCellValue( corp.getName() );
@@ -751,7 +779,44 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		workbook.write( os );
 	}
 	
-	public void initGUI( Container cnt ) {
+	public void importFromText( String text ) {
+		u = 50000.0;
+		
+		String[] split = text.split("\n");
+		String[] species = split[0].split("\t");
+		
+		List<Corp> corpList = new ArrayList<Corp>();
+		
+		Random r = new Random();
+		for( String spec : species ) {
+			Corp corp = new Corp( spec );
+			corp.setx( 400.0*r.nextDouble() );
+			corp.sety( 400.0*r.nextDouble() );
+			corp.setz( 400.0*r.nextDouble() );
+			c.add( corp );
+			
+			corpList.add( corp );
+		}
+		
+		for( int i = 1; i < split.length; i++ ) {
+			String[] subsplit = split[i].split("\t");
+			int y = i-1;
+			for( int x = 0; x < subsplit.length; x++ ) {
+				if( x != y ) {
+					double d = Double.parseDouble( subsplit[x] );
+					
+					Corp corpDst = corpList.get(x);
+					Corp corpSrc = corpList.get(y);
+					
+					corpSrc.addLink( corpDst, subsplit[x], d );
+				}
+			}
+		}
+		
+		c.repaint();
+	}
+	
+	public void initGUI( Container cnt ) throws ClassNotFoundException {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 			//SwingUtilities.updateComponentTreeUI( this );
@@ -830,7 +895,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 									g.drawLine( x3, y3, (int)(x3 - 10.0*Math.cos( h2 )), (int)(y3 - 10.0*Math.sin( h2 )) );*/
 									
 									if( drawLinkNames && !toggle && p == null ) {
-										Set<String> strset = corp.connections.get(cc);
+										Set<String> strset = corp.connections.get(cc).linkTitles;
 										int x = (x1+x2)/2;
 										int y = (y1+y2)/2;
 										double t = Math.atan2( y2-y1, x2-x1 );
@@ -899,6 +964,63 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		c.addMouseListener( this );
 		c.addMouseMotionListener( this );
 		c.addKeyListener( this );
+		
+		final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
+		
+		final Transferable transferable = new Transferable() {
+			@Override
+			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+				StringBuilder ret = new StringBuilder();				
+				return new ByteArrayInputStream( ret.toString().getBytes() );
+			}
+
+			@Override
+			public DataFlavor[] getTransferDataFlavors() {
+				return new DataFlavor[] { df };
+			}
+
+			@Override
+			public boolean isDataFlavorSupported(DataFlavor arg0) {
+				if( arg0.equals(df) ) {
+					return true;
+				}
+				return false;
+			}
+		};
+		
+		TransferHandler th = new TransferHandler() {
+			private static final long serialVersionUID = 1L;
+			
+			public int getSourceActions(JComponent c) {
+				return TransferHandler.COPY_OR_MOVE;
+			}
+
+			public boolean canImport(TransferHandler.TransferSupport support) {
+				return true;
+			}
+
+			protected Transferable createTransferable(JComponent c) {
+				return transferable;
+			}
+
+			public boolean importData(TransferHandler.TransferSupport support) {
+				try {
+					Object obj = support.getTransferable().getTransferData( df );
+					InputStream is = (InputStream)obj;
+					
+					byte[] bb = new byte[2048];
+					int r = is.read(bb);
+					
+					importFromText( new String(bb,0,r) );
+				} catch (UnsupportedFlavorException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return true;
+			}
+		};
+		c.setTransferHandler( th );
 		
 		try {
 			loadAll();
@@ -1298,13 +1420,13 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 					System.err.println( (x1-xx) + "  " + (y1-yy) );
 					System.err.println( h1+ "  " + h2 + "  " + h );*/
 					if( h < 0 ) {
-						Set<String>	strset = corp.connections.get(corp2);
+						Set<String>	strset = corp.connections.get(corp2).linkTitles;
 						if( strset != null && strset.size() > 0 && p.distance( xx, yy ) < 32 ) {
 							linkCorp = corp;
 							linkCorp2 = corp2;
 							
 							System.err.println("found link " + linkCorp.getName() + "  " + linkCorp2.getName() );
-							corp.selectedLink = corp.connections.get(corp2).iterator().next();
+							corp.selectedLink = corp.connections.get(corp2).linkTitles.iterator().next();
 						}
 					}
 				}
@@ -1376,7 +1498,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			updateCenterOfMass();
 		} else if( linkCorp != null ) {
 			if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
-				Set<String>	strset = linkCorp.connections.get( linkCorp2 );
+				Set<String>	strset = linkCorp.connections.get( linkCorp2 ).linkTitles;
 				strset.remove( linkCorp.selectedLink );
 				if( strset.size() == 0 ) linkCorp.connections.remove( linkCorp2 );
 				linkCorp.selectedLink = null;
@@ -1392,7 +1514,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 				linkCorp = null;
 				linkCorp2 = null;
 			} else if( e.getKeyCode() == KeyEvent.VK_BACK_SPACE ) {
-				Set<String>	strset = linkCorp.connections.get( linkCorp2 );
+				Set<String>	strset = linkCorp.connections.get( linkCorp2 ).linkTitles;
 				strset.remove( linkCorp.selectedLink );
 				if( linkCorp.selectedLink.length() > 0 ) {
 					linkCorp.selectedLink = linkCorp.selectedLink.substring(0, linkCorp.selectedLink.length()-1);
@@ -1401,7 +1523,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 					linkCorp.connections.remove( linkCorp2 );
 				}*/
 			} else if( e.getKeyCode() != KeyEvent.VK_ALT && e.getKeyCode() != KeyEvent.VK_CONTROL && e.getKeyCode() != KeyEvent.VK_SHIFT ) {
-				Set<String>	strset = linkCorp.connections.get( linkCorp2 );
+				Set<String>	strset = linkCorp.connections.get( linkCorp2 ).linkTitles;
 				strset.remove( linkCorp.selectedLink );
 				if( linkCorp.selectedLink.equals("link") ) linkCorp.selectedLink = "";
 				linkCorp.selectedLink += e.getKeyChar();
@@ -1437,7 +1559,11 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		JFrame f = new JFrame();
 		f.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		f.setSize(800, 600);
-		cntr.initGUI( f );
+		try {
+			cntr.initGUI( f );
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 		f.add( cntr.scrollpane );
 		f.setVisible(true);
 	}
