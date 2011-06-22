@@ -27,7 +27,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -299,7 +298,8 @@ public class GeneSet extends JApplet {
 		}
 		return ind < 0 ? null : aas[ ind ].aas;*/
 		
-		return aas.get( query ).aas;
+		Aas aass = aas.get( query );
+		return aass == null ? null : aass.aas;
 	}
 	
 	private static void panCoreFromNRBlast( Reader rd, String outfile, Map<String,Gene>  ret, Map<String,String> allgenes, Map<String,Set<String>> geneset, Map<String,Set<String>> geneloc, Map<String,Gene> locgene, Set<String> poddur ) throws IOException {
@@ -583,8 +583,11 @@ public class GeneSet extends JApplet {
 					split = trim.split("#");
 				}
 				
-				start = Integer.parseInt( split[1].trim() );
-				stop = Integer.parseInt( split[2].trim() );
+				
+				if( split.length >= 3 ) {
+					start = Integer.parseInt( split[1].trim() );
+					stop = Integer.parseInt( split[2].trim() );
+				}
 				if( split.length >= 4 ) {
 					ori = Integer.parseInt( split[3].trim() );
 				}
@@ -619,8 +622,8 @@ public class GeneSet extends JApplet {
 		Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
 		Map<String,Gene>		locgene = new HashMap<String,Gene>();
 		
-		PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
-		System.setOut( ps );
+		//PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
+		//System.setOut( ps );
 		
 		Set<String>	poddur = new HashSet<String>();
 		for( String name : names ) {
@@ -814,7 +817,7 @@ public class GeneSet extends JApplet {
 		
 		System.out.println( "Unique genes total: " + allgenes.size() );
 		
-		ps.close();
+		//ps.close();
 		
 		return ret;
 	}
@@ -1953,7 +1956,11 @@ public class GeneSet extends JApplet {
 	
 	private static void loci2gene( Reader rd, String outfile ) throws IOException {
 		FileWriter fw = null;
-		if( outfile != null ) fw = new FileWriter( outfile );
+		Map<String,List<String>>	maplist = null;
+		if( outfile != null ) {
+			fw = new FileWriter( outfile );
+			maplist = new HashMap<String,List<String>>();
+		}
 		
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
@@ -1962,45 +1969,129 @@ public class GeneSet extends JApplet {
 		while( line != null ) {
 			if( line.startsWith("Query= ") ) {
 				name = line.substring(8).split(" ")[0];
+				evalue = null;
 				//int i1 = name.indexOf('_');
 				//int i2 = name.indexOf('_', i1+1);
 				//name = name.substring(0,i1) + name.substring(i2);
 				//System.err.println(name);
 				
-				if( fw != null ) fw.write( line + "\n" );
+				//if( fw != null ) fw.write( line + "\n" );
 			}
 			
 			if( line.contains("No hits") ) {
 				String prename = name; //swapmap.get(st+".out")+"_"+name;
 				
 				aquery.name = prename;
-				lociMap.put( prename, "No match\t"+aas.get(prename) );
+				if( aas.containsKey(prename) ) lociMap.put( prename, "No match\t"+aas.get(prename) );
+				else if( dnaa.containsKey(prename) ) lociMap.put( prename, "No match\t"+dnaa.get(prename) );
+				else lociMap.put( prename, "No match" );
+				
+				evalue = "";
+				name = null;
+				
 				//System.err.println( prename + "\tNo match" );
-				if( fw != null ) fw.write( line + "\n" );
+				//if( fw != null ) fw.write( line + "\n" );
 			}
 			
-			if( line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || 
-					line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|") ) {
+			if( evalue == null && (line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|")) ) {
 				String[] split = line.split("[\t ]+");
 				evalue = split[split.length-1];
 				
-				if( fw != null ) fw.write( line + "\n" );
+				//if( fw != null ) fw.write( line + "\n" );
 			}
 			
-			if( line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || 
-					line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg") ) {
+			if( name != null && (line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg")) ) {
 				String prename = name; //swapmap.get(st+".out")+"_"+name;
 				String[] split = line.split("\\|");
-				lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
+				
+				//String id = split[1];
+				String desc = split[2];
+				String teg = "";
+				
+				int idx = desc.lastIndexOf('[');
+				int idx2 = desc.indexOf(']', idx);
+				String newline = "";
+				if( idx > idx2 || idx == -1 ) {
+					newline = br.readLine();
+					if( !newline.startsWith("Length=") && !newline.startsWith("Query=") ) {
+						line = line+newline;
+						String trim = line.trim();
+						
+						split = trim.split("\\|");
+						
+						//id = split[1];
+						desc = split[2];
+						
+						idx = desc.lastIndexOf('[');
+					}
+				}
+				
+				if( idx > 0 ) {
+					teg = desc.substring(idx);
+					desc = desc.substring(0, idx-1).trim();
+				} else {
+					desc = desc.trim();
+				}
+				
+				String stuff = split[0]+" "+split[1] + "\t" + desc + "\t" + evalue;
+				lociMap.put( prename, stuff );
+				//lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
+				name = null;
 				//System.err.println( prename + "\t" + split[1] );
-				if( fw != null ) fw.write( line + "\n" );
+				if( fw != null ) {
+					List<String>	list;
+					if( maplist.containsKey(desc) ) {
+						list = maplist.get(desc);
+					} else {
+						list = new ArrayList<String>();
+						maplist.put( desc, list );
+					}
+					String addstr = split[0]+" "+split[1] + "\t" + evalue;
+					list.add( addstr );
+					
+					//fw.write( stuff + "\n" );
+				}
+				
+				if( newline.startsWith("Query=") ) {
+					line = newline;
+					continue;
+				}
 			}
 			
 			line = br.readLine();
 		}
 		br.close();
 		
-		if( fw != null ) fw.close();
+		if( fw != null ) {
+			Map<Integer,List<String>>	mupl = new TreeMap<Integer,List<String>>( Collections.reverseOrder() );
+			for( String spec : maplist.keySet() ) {
+				List<String>	list = maplist.get(spec);
+				int i = list.size();
+				
+				List<String>	erm;
+				if( mupl.containsKey(i) ) {
+					erm = mupl.get(i);
+				} else {
+					erm = new ArrayList<String>();
+					mupl.put(i, erm);
+				}
+				erm.add( spec );
+			}
+			
+			for( int i : mupl.keySet() ) {
+				List<String>	list = mupl.get(i);
+				for( String spec : list ) {
+					fw.write( spec + "\t" + i + "\n" );
+					
+					/*List<String>	mlist = maplist.get( spec );
+					for( String str : mlist ) {
+						fw.write( "\t" + str + "\n" );
+					}*/
+				}
+			}
+			
+			fw.close();
+		}
 	}
 	
 	static Map<String,String>	lociMap = new HashMap<String,String>();
@@ -3138,6 +3229,9 @@ public class GeneSet extends JApplet {
 		//init( args );
 		
 		try {
+			loci2gene( new FileReader("/home/sigmar/arciformis.blastout"), "/home/sigmar/heysim.txt" );
+			//panCoreFromNRBlast( new String[] { "arciformis.blastout" }, new File("/home/sigmar/") );
+			
 			//blastparse( "/home/sigmar/blastout/nilli.blastout" );
 			//blastparse( "/home/sigmar/thermus/lepto.blastout.txt" );
 			//blastparse( "/home/sigmar/lept_spir.blastout.txt" );
@@ -3158,9 +3252,9 @@ public class GeneSet extends JApplet {
 			
 			//aaset();
 			
-			for( int i = 1; i <= 16; i++ ) {
+			/*for( int i = 1; i <= 16; i++ ) {
 				splitGenes( "/home/sigmar/viggo/", i+".TCA.454Reads.fna", 8 );
-			}
+			}*/
 			//splitGenes( "/home/sigmar/thermus/newthermus/", "all.aa", 128 );
 			//splitGenes( "/home/sigmar/thermus/newthermus", "0_t.aa", 64 );
 			//splitGenes( "/home/sigmar/thermus/newthermus/test/", "erm.aa", 64 );
