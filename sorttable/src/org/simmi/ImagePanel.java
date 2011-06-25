@@ -7,9 +7,23 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
-import java.awt.event.MouseAdapter;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceDragEvent;
+import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceEvent;
+import java.awt.dnd.DragSourceListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,21 +47,22 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
+import javax.swing.TransferHandler;
 import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 
-public class ImagePanel extends JComponent {
+public class ImagePanel extends JComponent implements DragGestureListener, DragSourceListener, Transferable, MouseListener {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	Image	img;
+	BufferedImage	img;
 	String	imgstr = "http://members.lycos.nl/gitte1965/photoalbum/images/uni57.jpg";
 	Set<String>	imageNames;
-	Map<String,Image>	imageCache;
+	Map<String,BufferedImage>	imageCache;
 	Map<String,String>	imageNameCache;
 	JTable				leftTable;
 	int					orientation;
@@ -57,7 +72,10 @@ public class ImagePanel extends JComponent {
 	SortTable			applet;
 	boolean				restricted = true;
 	
-	JEditorPane		imged;
+	JEditorPane				imged;
+	
+	DragSource 				dragSource;
+	Transferable			transferable;
 	//Image			currentImage;
 	/*class SimImageView extends ImageView {
 		public SimImageView(Element elem) {
@@ -71,7 +89,7 @@ public class ImagePanel extends JComponent {
 			View ret = super.create(e);
 			
 			if( ret instanceof ImageView ) {
-				img = ((ImageView)ret).getImage();
+				//img = ((ImageView)ret).getImage();
 			}
 			
 			return ret;
@@ -89,7 +107,8 @@ public class ImagePanel extends JComponent {
 	public ImagePanel( SortTable applet, final JTable leftTable, String lang ) {
 		super();
 		this.applet = applet;
-		this.addMouseListener( new MouseAdapter() {
+		this.addMouseListener(this);
+		/*this.addMouseListener( new MouseAdapter() {
 			public void mousePressed( MouseEvent e ) {
 				int r = leftTable.getSelectedRow();
 				//int rr = leftTable.convertRowIndexToModel(r);
@@ -103,8 +122,11 @@ public class ImagePanel extends JComponent {
 					}
 				}
 			}
-		});
+		});*/
 		this.leftTable = leftTable;
+		
+		dragSource = new DragSource();
+		dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 		
 		imged = new JEditorPane();
 		imged.setEditable(false);
@@ -128,7 +150,7 @@ public class ImagePanel extends JComponent {
 		
 		this.lang = lang;
 		imageNames = new HashSet<String>();
-		imageCache = new HashMap<String,Image>();
+		imageCache = new HashMap<String,BufferedImage>();
 		imageNameCache = new HashMap<String,String>();
 		 
 		InputStream inputStream = this.getClass().getResourceAsStream("/myndir.txt");
@@ -144,6 +166,60 @@ public class ImagePanel extends JComponent {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
+		//this.setDropTarget(dt)
+		//final DataFlavor df = DataFlavor.imageFlavor;//new DataFlavor("text/plain;charset=utf-8");
+		try { 
+			//final DataFlavor df = new DataFlavor ("application/x-java-url; class=java.net.URL"); 
+			//final DataFlavor df =	new DataFlavor ("application/x-chrome-named-url");
+			final DataFlavor df = new DataFlavor("application/x-moz-nativeimage");
+			//final DataFlavor df = DataFlavor.imageFlavor;
+			transferable = new Transferable() {
+				@Override
+				public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					ImageIO.write(img, "jpeg", baos);
+					return new ByteArrayInputStream( baos.toByteArray() );
+					//return new ByteArrayInputStream( imgstr.getBytes() );
+				}
+
+				@Override
+				public DataFlavor[] getTransferDataFlavors() {
+					return new DataFlavor[] { df };
+				}
+
+				@Override
+				public boolean isDataFlavorSupported(DataFlavor arg0) {
+					if( arg0.equals(df) ) {
+						return true;
+					}
+					return false;
+				}
+			};
+		} catch (ClassNotFoundException cnfe) { 
+			cnfe.printStackTrace( );
+		}
+		
+		TransferHandler th = new TransferHandler() {
+			private static final long serialVersionUID = 1L;
+			
+			public int getSourceActions(JComponent c) {
+				return TransferHandler.COPY_OR_MOVE;
+			}
+
+			public boolean canImport(TransferHandler.TransferSupport support) {
+				DataFlavor[] daf = support.getDataFlavors();
+				return false;
+			}
+
+			protected Transferable createTransferable(JComponent c) {
+				return transferable;
+			}
+
+			public boolean importData(TransferHandler.TransferSupport support) {
+				return true;
+			}
+		};		
+		this.setTransferHandler( th );
 		
 		progressbar = new JProgressBar();
 		progressbar.setVisible( false );
@@ -164,7 +240,7 @@ public class ImagePanel extends JComponent {
 		this.repaint();
 	}
 	
-	public void setImage( Image image ) {
+	public void setImage( BufferedImage image ) {
 		this.img = image;
 	}
 	
@@ -251,7 +327,7 @@ public class ImagePanel extends JComponent {
 		}
 	}
 	
-	public Image getImage( URL url ) throws IOException {
+	public BufferedImage getImage( URL url ) throws IOException {
 		boolean	safeUrl = false;
 		try {
 			SecurityManager secm = System.getSecurityManager();
@@ -273,7 +349,7 @@ public class ImagePanel extends JComponent {
 					Applet ap = appen.nextElement();
 					try {
 						Method m = ap.getClass().getMethod( "runimage", URL.class );
-						return (Image)m.invoke( ap, url );
+						return (BufferedImage)m.invoke( ap, url );
 					} catch( Exception e ) {
 						e.printStackTrace();
 					}
@@ -286,7 +362,7 @@ public class ImagePanel extends JComponent {
 	
 	public void getImage( String val, int index ) throws IOException {
 		//path = "http://test.matis.is/isgem/myndir/"+val;//URLEncoder.encode(iName,"UTF-8");		
-		Image	image = null;
+		BufferedImage	image = null;
 		if( imageCache.containsKey(val) ) {
 			image = imageCache.get(val);
 		} else {
@@ -352,7 +428,7 @@ public class ImagePanel extends JComponent {
 		if( imageNameCache.containsKey(oName) ) {
 			String imgUrl = imageNameCache.get(oName);
 			if( imageCache.containsKey(imgUrl) ) {
-				Image image = imageCache.get(imgUrl);
+				BufferedImage image = imageCache.get(imgUrl);
 
 				progressbar.setVisible( false );
 				this.img = image;
@@ -438,8 +514,12 @@ public class ImagePanel extends JComponent {
 					
 					String result = null;
 					
-					if( restricted ) {
-						JSUtil.call( applet, "imsearch2", new Object[] {str} );
+					if( restricted && applet != null ) {
+						try {
+							JSUtil.call( applet, "imsearch2", new Object[] {str} );
+						} catch( Exception e ) {
+							result = ImageFactory.urlFetch( str );
+						}
 						
 						/*if( applet.applet == null ) {
 							JSObject win = JSObject.getWindow(applet);
@@ -533,5 +613,98 @@ public class ImagePanel extends JComponent {
 			progressbar.setVisible( true );
 			this.repaint();
 		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if( img != null ) {
+			this.requestFocus();
+			this.getTransferHandler().exportAsDrag(this, e, TransferHandler.COPY_OR_MOVE);
+		} else {
+			int r = leftTable.getSelectedRow();
+			//int rr = leftTable.convertRowIndexToModel(r);
+			if( r >= 0 && r < leftTable.getRowCount() ) {
+				Object obj = leftTable.getValueAt(r, 0);
+				if( obj != null ) {
+					String s = obj.toString();
+					//System.err.println("hey " + s );
+					
+					if( !imageNameCache.containsKey(s) ) runThread( s );
+				}
+			}
+		}
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public DataFlavor[] getTransferDataFlavors() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isDataFlavorSupported(DataFlavor flavor) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void dragEnter(DragSourceDragEvent dsde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragOver(DragSourceDragEvent dsde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dropActionChanged(DragSourceDragEvent dsde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragExit(DragSourceEvent dse) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragDropEnd(DragSourceDropEvent dsde) {
+		
+	}
+
+	@Override
+	public void dragGestureRecognized(DragGestureEvent dge) {
+		dragSource.startDrag(dge, DragSource.DefaultCopyDrop, transferable, this);
 	}
 }
