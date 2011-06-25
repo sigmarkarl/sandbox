@@ -23,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageProducer;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -460,7 +461,7 @@ public class SortTable extends JApplet {
 		}
 
 		final List<Object[]> result = new ArrayList<Object[]>();
-		for (List l : nutList) {
+		for (List<Object> l : nutList) {
 			result.add(l.toArray(new Object[0]));
 		}
 
@@ -706,8 +707,10 @@ public class SortTable extends JApplet {
 		
 		Collections.sort(stuff, new Comparator<Object[]>() {
 			public int compare(Object[] o1, Object[] o2) {
-				if (o1[0] == null || o2[0] == null)
-					return Integer.MIN_VALUE;
+				if( o1[0] == null && o2[0] == null ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+				else if( o1[0] == null ) return Integer.MIN_VALUE;
+				else if( o2[0] == null ) return Integer.MAX_VALUE;
+				
 				return ((String) o1[0]).compareToIgnoreCase((String) o2[0]);
 			}
 		});
@@ -736,8 +739,10 @@ public class SortTable extends JApplet {
 
 				Collections.sort(stuff, new Comparator<Object[]>() {
 					public int compare(Object[] o1, Object[] o2) {
-						if (o1[0] == null || o2[0] == null)
-							return Integer.MIN_VALUE;
+						if( o1[0] == null && o2[0] == null ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+						else if( o1[0] == null ) return Integer.MIN_VALUE;
+						else if( o2[0] == null ) return Integer.MAX_VALUE;
+						
 						return ((String) o1[0]).compareToIgnoreCase((String) o2[0]);
 					}
 				});
@@ -1786,12 +1791,16 @@ public class SortTable extends JApplet {
 			}
 
 			public Object getValueAt(int rowIndex, int columnIndex) {
+				Float	retval = null;
+				
 				Object[] obj = null;
 				if (rowIndex < stuff.size() - 2) {
 					obj = stuff.get(rowIndex + 2);
 					int realColumnIndex = detail.convertIndex(columnIndex);
-					if (realColumnIndex != -1)
-						return obj[realColumnIndex + 2];
+					if (realColumnIndex != -1) {
+						Object retobj = obj[realColumnIndex + 2];
+						if( retobj instanceof Float ) retval = (Float)retobj;
+					}
 				} else if( rowIndex < stuff.size() - 2 + recipe.recipes.size() ) {
 					float ret = 0.0f;
 					int i = rowIndex - (stuff.size() - 2);
@@ -1858,7 +1867,7 @@ public class SortTable extends JApplet {
 
 					if (ret != 0.0f) {
 						// return (ret * 100.0f) / tot;
-						return ret;
+						retval = ret;
 					}
 				} else {
 					float ret = 0.0f;
@@ -1925,10 +1934,10 @@ public class SortTable extends JApplet {
 					}
 					
 					if (ret >= 0) {
-						return ret;
+						retval = ret;
 					}
 				}
-				return null;
+				return retval;
 			}
 
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -2396,7 +2405,7 @@ public class SortTable extends JApplet {
 		return imgPanel;
 	}
 	
-	public void setImage( Image image ) {
+	public void setImage( BufferedImage image ) {
 		ImagePanel imgPanel = getImagePanel();
 		imgPanel.setImage( image );
 		imgPanel.repaint();
@@ -2405,7 +2414,7 @@ public class SortTable extends JApplet {
 	public void setByteArrayImage( byte[] bb ) throws IOException {
 		System.err.println("bull "+bb.length);
 		ByteArrayInputStream bais = new ByteArrayInputStream( bb );
-		Image img = ImageIO.read( bais );
+		BufferedImage img = ImageIO.read( bais );
 		setImage( img );
 	}
 	

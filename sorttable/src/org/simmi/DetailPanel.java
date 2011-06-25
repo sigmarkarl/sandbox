@@ -494,29 +494,32 @@ public class DetailPanel extends SimSplitPane {
 					String[] split = efni.split("[,-]+");
 					//String[] fsplit = split[0].split("-");
 					Object[]	obj = stuff.get(1);
-					String ostr = (String)obj[ rowIndex+2 ];
-					String rdsStr = split[0];//+" - "+ostr;
-					float val = rdsp.getRdsf( rdsStr, ostr.trim() );
-					if( val != -1 ) {
-						return val;
-						/*try {
-							float f = Float.parseFloat(val);
-							
-							/*if( !split[1].equals( ostr ) ) {
-								if( split[1].equals("g") ) {
-									if( ostr.equals("mg") ) {
-										f*=1000.0f;
+					Object ostrobj = obj[ rowIndex+2 ];
+					if( ostrobj instanceof String ) {
+						String ostr = ((String)ostrobj).trim();
+						String rdsStr = split[0];//+" - "+ostr;
+						float val = rdsp.getRdsf( rdsStr, ostr );
+						if( val != -1 ) {
+							return val;
+							/*try {
+								float f = Float.parseFloat(val);
+								
+								/*if( !split[1].equals( ostr ) ) {
+									if( split[1].equals("g") ) {
+										if( ostr.equals("mg") ) {
+											f*=1000.0f;
+										}
+									} else if( split[1].equals("mg") ) {
+										if( ostr.equals("g") ) {
+											f/=1000.0f;
+										}
 									}
-								} else if( split[1].equals("mg") ) {
-									if( ostr.equals("g") ) {
-										f/=1000.0f;
-									}
-								}
-							}							
-							return f;
-						} catch( Exception e ) {
-							
-						}*/
+								}							
+								return f;
+							} catch( Exception e ) {
+								
+							}*/
+						}
 					}
 					return null;
 				} else if( columnIndex == 5 ) {
