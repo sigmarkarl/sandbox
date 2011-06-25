@@ -1989,6 +1989,19 @@ public class GeneSet extends JApplet {
 				evalue = "";
 				name = null;
 				
+				if( fw != null ) {
+					String desc = "*** No hits ***";
+					List<String>	list;
+					if( maplist.containsKey(desc) ) {
+						list = maplist.get(desc);
+					} else {
+						list = new ArrayList<String>();
+						maplist.put( desc, list );
+					}
+					String addstr = "bleh\t";
+					list.add( addstr );
+				}
+				
 				//System.err.println( prename + "\tNo match" );
 				//if( fw != null ) fw.write( line + "\n" );
 			}
@@ -2064,10 +2077,13 @@ public class GeneSet extends JApplet {
 		
 		if( fw != null ) {
 			Map<Integer,List<String>>	mupl = new TreeMap<Integer,List<String>>( Collections.reverseOrder() );
+			int tot = 0;
+			int subtot = 0;
 			for( String spec : maplist.keySet() ) {
 				List<String>	list = maplist.get(spec);
 				int i = list.size();
-				
+				tot += i;
+				if( !spec.contains("No hits") ) subtot += i;
 				List<String>	erm;
 				if( mupl.containsKey(i) ) {
 					erm = mupl.get(i);
@@ -2078,10 +2094,20 @@ public class GeneSet extends JApplet {
 				erm.add( spec );
 			}
 			
+			fw.write( "total: "+tot+" subtot: "+subtot+"\n" );
+			
+			tot = 0;
 			for( int i : mupl.keySet() ) {
 				List<String>	list = mupl.get(i);
 				for( String spec : list ) {
 					fw.write( spec + "\t" + i + "\n" );
+					if( tot >= 0 && !spec.contains("No hits") ) {
+						tot += i;
+						if( tot*100/subtot > 90 ) {
+							fw.write( "\n90%\n\n" );
+							tot = -1;
+						}
+					}
 					
 					/*List<String>	mlist = maplist.get( spec );
 					for( String str : mlist ) {
@@ -3229,7 +3255,28 @@ public class GeneSet extends JApplet {
 		//init( args );
 		
 		try {
-			loci2gene( new FileReader("/home/sigmar/arciformis.blastout"), "/home/sigmar/heysim.txt" );
+			loci2gene( new FileReader("/home/sigmar/flx/arciformis_repeat.blastout"), "/home/sigmar/flx/arciformis_repeat.txt" );
+			loci2gene( new FileReader("/home/sigmar/flx/kawarayensis_repeat.blastout"), "/home/sigmar/flx/kawaryensis_repeat.txt" );
+			loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
+			loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
+			
+			/*loci2gene( new FileReader("/home/sigmar/viggo/1.blastout"), "/home/sigmar/viggo/1.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/2.blastout"), "/home/sigmar/viggo/2.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/3.blastout"), "/home/sigmar/viggo/3.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/4.blastout"), "/home/sigmar/viggo/4.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/5.blastout"), "/home/sigmar/viggo/5.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/6.blastout"), "/home/sigmar/viggo/6.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/7.blastout"), "/home/sigmar/viggo/7.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/8.blastout"), "/home/sigmar/viggo/8.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/9.blastout"), "/home/sigmar/viggo/9.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/10.blastout"), "/home/sigmar/viggo/10.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/11.blastout"), "/home/sigmar/viggo/11.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/12.blastout"), "/home/sigmar/viggo/12.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/13.blastout"), "/home/sigmar/viggo/13.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/14.blastout"), "/home/sigmar/viggo/14.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/15.blastout"), "/home/sigmar/viggo/15.txt" );
+			loci2gene( new FileReader("/home/sigmar/viggo/16.blastout"), "/home/sigmar/viggo/16.txt" );*/
+			
 			//panCoreFromNRBlast( new String[] { "arciformis.blastout" }, new File("/home/sigmar/") );
 			
 			//blastparse( "/home/sigmar/blastout/nilli.blastout" );
