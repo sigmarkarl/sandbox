@@ -173,8 +173,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 			//final DataFlavor df =	new DataFlavor ("application/x-chrome-named-url");
 			final DataFlavor df = new DataFlavor("application/x-moz-nativeimage");
 			//final DataFlavor df = DataFlavor.imageFlavor;
-			transferable = new Transferable() {
-				@Override
+			transferable = new Transferable() {				
 				public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();
 					ImageIO.write(img, "jpeg", baos);
@@ -182,12 +181,10 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 					//return new ByteArrayInputStream( imgstr.getBytes() );
 				}
 
-				@Override
 				public DataFlavor[] getTransferDataFlavors() {
 					return new DataFlavor[] { df };
 				}
 
-				@Override
 				public boolean isDataFlavorSupported(DataFlavor arg0) {
 					if( arg0.equals(df) ) {
 						return true;
@@ -615,10 +612,8 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		}
 	}
 
-	@Override
 	public void mouseClicked(MouseEvent e) {}
 
-	@Override
 	public void mousePressed(MouseEvent e) {
 		if( img != null ) {
 			this.requestFocus();
@@ -638,72 +633,43 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		}
 	}
 
-	@Override
 	public void mouseReleased(MouseEvent e) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public void mouseEntered(MouseEvent e) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public void mouseExited(MouseEvent e) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public DataFlavor[] getTransferDataFlavors() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
 	public boolean isDataFlavorSupported(DataFlavor flavor) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
-	@Override
 	public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
-	public void dragEnter(DragSourceDragEvent dsde) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void dragEnter(DragSourceDragEvent dsde) {}
+	
+	public void dragOver(DragSourceDragEvent dsde) {}
 
-	@Override
-	public void dragOver(DragSourceDragEvent dsde) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void dropActionChanged(DragSourceDragEvent dsde) {}
 
-	@Override
-	public void dropActionChanged(DragSourceDragEvent dsde) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void dragExit(DragSourceEvent dse) {}
 
-	@Override
-	public void dragExit(DragSourceEvent dse) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void dragDropEnd(DragSourceDropEvent dsde) {}
 
-	@Override
-	public void dragDropEnd(DragSourceDropEvent dsde) {
-		
-	}
-
-	@Override
 	public void dragGestureRecognized(DragGestureEvent dge) {
 		dragSource.startDrag(dge, DragSource.DefaultCopyDrop, transferable, this);
 	}
