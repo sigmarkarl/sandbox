@@ -550,12 +550,10 @@ public class SortTable extends JApplet {
 	public void updateFilter(int val) {
 		// currentSorter = (MySorter)leftTableSorter;
 		combo.setSelectedIndex(0);
-		System.err.println(val);
-
 		String text = field.getText();
 		if (text.length() > 0) {
 			filter.fInd = 0;
-			filter.filterText = "(?i).*" + text + ".*";
+			filter.setFilterText( text );
 			// leftTableSorter.modelStructureChanged();
 			leftTable.updateFilter();
 			table.updateFilter();
@@ -565,7 +563,7 @@ public class SortTable extends JApplet {
 				table.updateFilter();
 			}
 		} else {
-			filter.filterText = null;
+			filter.setFilterText( null );
 			leftTable.updateFilter();
 			table.updateFilter();
 		}
@@ -1339,7 +1337,7 @@ public class SortTable extends JApplet {
 				String item = (String) combo.getSelectedItem();
 				item = item.substring(0, Math.min(100, item.length()));
 				if (item.equals(allfood)) {
-					filter.filterText = null;
+					filter.setFilterText( null );
 					filter.fInd = 0;
 
 					// leftTable.getColumnModel().getColumn(1).setMinWidth( 0 );
@@ -1347,7 +1345,7 @@ public class SortTable extends JApplet {
 					leftTable.getColumnModel().getColumn(1).setPreferredWidth(leftTable.getWidth() / 2);
 					leftTable.getColumnModel().getColumn(1).setWidth(leftTable.getWidth() / 2);
 				} else {
-					filter.filterText = "(?i).*" + item + ".*";
+					filter.setFilterText( item );
 					filter.fInd = 1;
 
 					leftTable.getColumnModel().getColumn(1).setMinWidth(0);
@@ -2268,10 +2266,7 @@ public class SortTable extends JApplet {
 				}
 			});
 		}
-		table.setComponentPopupMenu( popup );
-
-		System.err.println("hoho3334");
-		
+		table.setComponentPopupMenu( popup );		
 		splitPane.setBorder(new EmptyBorder(0, 0, 0, 0));
 		// SortTable.this.add(ed, BorderLayout.SOUTH);
 		splitPane.setDividerLocation(1.0 / 3.0);
@@ -2358,7 +2353,6 @@ public class SortTable extends JApplet {
 			while( appen.hasMoreElements() ) {
 				Applet ap = appen.nextElement();
 				
-				System.err.println( "try " + ap );
 				try {
 					Method m = ap.getClass().getMethod("runpriv", JTable.class, JTable.class, JTable.class);
 					m.invoke( ap, table, topTable, leftTable );
@@ -2446,8 +2440,9 @@ public class SortTable extends JApplet {
 	public void setImageURL( String urlstr ) throws UnsupportedEncodingException, IOException {
 		ImagePanel imgPanel = getImagePanel();
 		String newurl = this.getCodeBase().toString()+"imgproxy.php?url="+URLEncoder.encode(urlstr,"UTF8");
-		System.err.println( newurl );
-		imgPanel.setURL( newurl );
+		System.err.println( "the new url " + newurl );
+		URL url = new URL( newurl );
+		imgPanel.setURL( url );
 	}
 
 	/**
