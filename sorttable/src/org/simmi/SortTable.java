@@ -23,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageProducer;
 import java.io.BufferedReader;
@@ -75,7 +76,6 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SortOrder;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -732,7 +732,9 @@ public class SortTable extends JApplet {
 		 * loc; }
 		 */
 
-		ToolTipManager.sharedInstance().setInitialDelay(0);
+		//ToolTipManager.sharedInstance().setInitialDelay(100);
+		//ToolTipManager.sharedInstance().setDismissDelay(10000);
+		//ToolTipManager.sharedInstance().setReshowDelay(0);
 		if (stuff == null) {
 			try {
 				stuff = parseData(lang);
@@ -988,7 +990,7 @@ public class SortTable extends JApplet {
 				return super.getToolTipText();
 			}
 
-			public String getToolTipText(MouseEvent me) {
+			/*public String getToolTipText(MouseEvent me) {
 				Point p = me.getPoint();
 				int r = rowAtPoint(p);
 				int c = columnAtPoint(p);
@@ -998,8 +1000,8 @@ public class SortTable extends JApplet {
 						return ret.toString(); // super.getToolTipText( me );
 					}
 				}
-				return "";
-			}
+				return "muus";
+			}*/
 
 			public void setRowSelectionInterval(int r1, int r2) {
 				sel = true;
@@ -1034,11 +1036,12 @@ public class SortTable extends JApplet {
 			 */
 
 			public Point getToolTipLocation(MouseEvent e) {
-				return e.getPoint(); // super.getToolTipLocation(e);
+				return super.getToolTipLocation(e); //e.getPoint();
 			}
 		};
 		leftTable.setDragEnabled(true);
-		leftTable.setToolTipText(" ");
+		//leftTable.setToolTipText(" ");
+		//leftTable.sett
 		// leftTable.en
 		topTable = new JCompatTable() {
 			public void setRowSelectionInterval(int r1, int r2) {
@@ -1677,6 +1680,19 @@ public class SortTable extends JApplet {
 		topTable.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent e) {
 				sel = false;
+			}
+		});
+		leftTable.addMouseMotionListener( new MouseMotionAdapter() {
+			public void mouseMoved( MouseEvent me ) {
+				Point p = me.getPoint();
+				int r = leftTable.rowAtPoint(p);
+				int c = leftTable.columnAtPoint(p);
+				if (r >= 0 && r < leftTable.getRowCount()) {
+					Object ret = leftTable.getValueAt(r, c);
+					if (ret != null) {
+						leftTable.setToolTipText( ret.toString() ); // super.getToolTipText( me );
+					}
+				}
 			}
 		});
 		leftTable.addMouseListener(new MouseAdapter() {

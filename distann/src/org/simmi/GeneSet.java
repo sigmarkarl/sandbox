@@ -29,6 +29,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -1954,7 +1955,7 @@ public class GeneSet extends JApplet {
 		fw.close();
 	}
 	
-	private static void loci2gene( Reader rd, String outfile ) throws IOException {
+	private static void loci2gene( Reader rd, String outfile, String filtercont ) throws IOException {
 		FileWriter fw = null;
 		Map<String,List<String>>	maplist = null;
 		if( outfile != null ) {
@@ -1998,8 +1999,8 @@ public class GeneSet extends JApplet {
 						list = new ArrayList<String>();
 						maplist.put( desc, list );
 					}
-					String addstr = "bleh\t";
-					list.add( addstr );
+					//String addstr = "bleh\t";
+					//list.add( addstr );
 				}
 				
 				//System.err.println( prename + "\tNo match" );
@@ -2059,7 +2060,7 @@ public class GeneSet extends JApplet {
 						list = new ArrayList<String>();
 						maplist.put( desc, list );
 					}
-					String addstr = split[0]+" "+split[1] + "\t" + evalue;
+					String addstr = prename + "\t" + split[0]+" "+split[1] + "\t" + evalue;
 					list.add( addstr );
 					
 					//fw.write( stuff + "\n" );
@@ -2109,10 +2110,12 @@ public class GeneSet extends JApplet {
 						}
 					}
 					
-					/*List<String>	mlist = maplist.get( spec );
-					for( String str : mlist ) {
-						fw.write( "\t" + str + "\n" );
-					}*/
+					if( spec.contains( filtercont ) ) {
+						List<String>	mlist = maplist.get( spec );
+						for( String str : mlist ) {
+							fw.write( "\t" + str + "\n" );
+						}
+					}
 				}
 			}
 			
@@ -2125,7 +2128,7 @@ public class GeneSet extends JApplet {
 		//Map<String,String>	aas = new HashMap<String,String>();
 		for( String st : stuff ) {			
 			File ba = new File( dir, st );
-			loci2gene( new FileReader(ba), null );
+			loci2gene( new FileReader(ba), null, null );
 		}
 	}
 	
@@ -3236,6 +3239,102 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public static void blast2Filt( String name, String filtname ) throws IOException {
+		FileReader 		fr = new FileReader( name );
+		BufferedReader 	br = new BufferedReader( fr );
+		String line = br.readLine();
+		Set<String>	contigs = new HashSet<String>();
+		String stuff = null;
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				stuff = line.substring(7).trim();
+			} else if( line.contains("contig") ) {
+				contigs.add( stuff );
+			}
+			//String[] split = line.trim().split("[\t ]+");
+			//contigs.add( split[0].trim() );
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		FileWriter fw = new FileWriter( filtname );
+		for( String contig : contigs ) {
+			fw.write( contig.substring(0, 14)+"\n" );
+		}
+	}
+	
+	public static void contigShare( String name ) throws IOException {
+		FileReader 		fr = new FileReader( name );
+		BufferedReader 	br = new BufferedReader( fr );
+		String line = br.readLine();
+		Set<String>	contigs = new HashSet<String>();
+		while( line != null ) {
+			String[] split = line.trim().split("[\t ]+");
+			contigs.add( split[0].trim() );
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		System.err.println( contigs.size() );
+		for( String contig : contigs ) {
+			System.err.println( contig );
+		}
+	}
+	
+	public static void trimFasta( String name, String newname, String filter, boolean inverted ) throws IOException {
+		Set<String>	filterset = new HashSet<String>();
+        File		ff = new File( filter );
+        FileReader	fr = new FileReader( ff );
+        BufferedReader	br = new BufferedReader( fr );
+        String line = br.readLine();
+        while( line != null ) {
+        	filterset.add( line );
+        	line = br.readLine();
+        }
+        fr.close();
+        
+        FileWriter 		fw = new FileWriter( newname );
+        BufferedWriter	bw = new BufferedWriter( fw, 100000000 );
+        
+		fr = new FileReader( name );
+		br = new BufferedReader( fr, 100000000 );
+		line = br.readLine();
+		String seqname = null;
+		while( line != null ) {
+			if( line.startsWith(">") ) {				
+				if( inverted ) {
+					seqname = line;
+					for( String f : filterset ) {
+						if( line.contains(f) ) {
+							seqname = null;
+							break;
+						}
+					}
+					if( seqname != null ) bw.write( seqname+"\n" );
+				} else {
+					seqname = null;
+					for( String f : filterset ) {
+						if( line.contains(f) ) {
+							bw.write( line+"\n" );
+							seqname = line;
+							break;
+						}
+					}
+				}
+			} else if( seqname != null ) {
+				bw.write( line+"\n" );
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		bw.flush();
+		fw.close();
+	}
+	
 	public static void main(String[] args) {
 		/*JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
@@ -3255,10 +3354,15 @@ public class GeneSet extends JApplet {
 		//init( args );
 		
 		try {
-			loci2gene( new FileReader("/home/sigmar/flx/arciformis_repeat.blastout"), "/home/sigmar/flx/arciformis_repeat.txt" );
-			loci2gene( new FileReader("/home/sigmar/flx/kawarayensis_repeat.blastout"), "/home/sigmar/flx/kawaryensis_repeat.txt" );
-			loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
-			loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
+			blast2Filt( "/home/sigmar/kaw.blastout", "/home/sigmar/newkaw_filter.txt" );
+			//contigShare( "/home/sigmar/kaw_bac_contigs.txt" );
+			//trimFasta("/home/sigmar/kawarayensis.fna", "/home/sigmar/kawarayensis_bacillus.fna", "/home/sigmar/flx/kaw_filter.txt" );
+			//trimFasta("/home/sigmar/kawarayensis.fna", "/home/sigmar/kawarayensis_bacillus.fna", "/home/sigmar/flx/kaw_filter.txt" );
+			//trimFasta("/home/sigmar/kawarayensis_repeated_assembled.fna", "/home/sigmar/kawarayensis_clean.fna", "/home/sigmar/contig.txt", true );
+			//loci2gene( new FileReader("/home/sigmar/flx/arciformis_repeat.blastout"), "/home/sigmar/flx/arciformis_repeat_detailed.txt", "ferro" );
+			//loci2gene( new FileReader("/home/sigmar/flx/kawarayensis_repeat.blastout"), "/home/sigmar/flx/kawarayensis_repeat_detailed.txt", "ferro" );
+			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
+			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
 			/*loci2gene( new FileReader("/home/sigmar/viggo/1.blastout"), "/home/sigmar/viggo/1.txt" );
 			loci2gene( new FileReader("/home/sigmar/viggo/2.blastout"), "/home/sigmar/viggo/2.txt" );
