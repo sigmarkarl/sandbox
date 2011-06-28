@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -21,6 +20,7 @@ import java.awt.dnd.DragSourceListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,11 +37,16 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
@@ -60,7 +65,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 	 */
 	private static final long serialVersionUID = 1L;
 	BufferedImage	img;
-	String	imgstr = "http://members.lycos.nl/gitte1965/photoalbum/images/uni57.jpg";
+	//String	imgstr = "http://members.lycos.nl/gitte1965/photoalbum/images/uni57.jpg";
 	Set<String>	imageNames;
 	Map<String,BufferedImage>	imageCache;
 	Map<String,String>	imageNameCache;
@@ -76,6 +81,8 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 	
 	DragSource 				dragSource;
 	Transferable			transferable;
+	
+	Locale					locale = Locale.getDefault();
 	//Image			currentImage;
 	/*class SimImageView extends ImageView {
 		public SimImageView(Element elem) {
@@ -129,6 +136,10 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 		
 		imged = new JEditorPane();
+		imged.setContentType("text/html");
+		//imged.setEditorKit(JEditorPane.)
+		//imged.setBackground( Color.lightGray );
+		//imged.set
 		imged.setEditable(false);
 		//imged.setEditorKitForContentType("text/html", new EdKit() );
 			/*try {
@@ -149,6 +160,10 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 			//imged.setText("<html><body><img src=\""+imgstr+"\"</img></body></html>");
 		
 		this.lang = lang;
+		if( lang.equalsIgnoreCase("is") ) {
+			locale = Locale.forLanguageTag("is");
+		}
+		
 		imageNames = new HashSet<String>();
 		imageCache = new HashMap<String,BufferedImage>();
 		imageNameCache = new HashMap<String,String>();
@@ -228,13 +243,32 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		this.add( imged );
 	}
 	
-	public void setURL( String url ) throws IOException {
+	public void setImageURL( String urlstr ) {
+		this.imgUrl = urlstr;
+		/*if( urlstr != null ) {
+			try {
+				String newurl = applet.getCodeBase().toString()+"imgproxy.php?url="+URLEncoder.encode(imgstr,"UTF8");
+				System.err.println( "the local url " + newurl );
+				URL url = new URL( newurl );
+				setURL( url );
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+		}*/
+	}
+	
+	public void setURL( URL imageurl ) {
+		System.err.println("about to set "+imageurl.toString());
+		//imged.setText( "<html><body><img src=\""+url+"\" width=100 height=100></img></body></html>" );
 		try {
-			imged.setPage( url );
-		} catch( Exception e ) {
+			//imged.setText( "<html><body><img src=\""+url+"\"</img></body></html>" );
+			imged.setPage( imageurl );
+			//imged.repaint();
+		} catch( IOException e ) {
 			e.printStackTrace();
 		}
-		this.repaint();
 	}
 	
 	public void setImage( BufferedImage image ) {
@@ -325,6 +359,8 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 	}
 	
 	public BufferedImage getImage( URL url ) throws IOException {
+		//url = new URL("file:///home/sigmar/myndir/erm.jpg");
+		
 		boolean	safeUrl = false;
 		try {
 			SecurityManager secm = System.getSecurityManager();
@@ -335,7 +371,52 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		} catch( AccessControlException e ) {}
 		
 		if( !restricted || safeUrl ) {
-			return ImageIO.read( url ); //applet.getImage( url );
+			//return ImageIO.read( url ); //applet.getImage( url );
+			BufferedImage bi = null;
+			try {
+				bi = ImageIO.read( url );
+			} catch( Exception e ) {
+				e.printStackTrace();
+			}
+			
+			if( bi == null ) {
+				Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG");
+		        ImageReader reader = null;
+		        while(readers.hasNext()) {
+		            reader = (ImageReader)readers.next();
+		            if(reader.canReadRaster()) {
+		                break;
+		            }
+		        }
+
+		        ImageInputStream input = ImageIO.createImageInputStream( url.openStream() );
+		        reader.setInput(input);
+
+		        try {
+		            bi = reader.read(0);
+		        } catch(IIOException e) {
+		            Raster raster = reader.readRaster(0, null);
+		            int imageType;
+		            switch(raster.getNumBands()) {
+			            case 1:
+			                imageType = BufferedImage.TYPE_BYTE_GRAY;
+			                break;
+			            case 3:
+			                imageType = BufferedImage.TYPE_3BYTE_BGR;
+			                break;
+			            case 4:
+			                imageType = BufferedImage.TYPE_4BYTE_ABGR;
+			                break;
+			            default:
+			                throw new UnsupportedOperationException();
+		            }
+
+		            bi = new BufferedImage(raster.getWidth(), raster.getHeight(), imageType);
+		            bi.getRaster().setRect(raster);
+		        }
+			}
+			
+			return bi;
 		} else {
 			if( applet.applet == null ) {
 				JSUtil.call( applet, "emmi", new Object[] {url.toString()} );
@@ -363,7 +444,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		if( imageCache.containsKey(val) ) {
 			image = imageCache.get(val);
 		} else {
-			URL url = new URL( val.replace(" ", "%20") );
+			URL url = new URL( val );
 			image = getImage( url );
 			//image = ImageIO.read(url);
 			imageCache.put(val, image);
@@ -396,7 +477,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		if( !vals.contains( val ) ) {
 			vals.add( val );
 			
-			imgUrl = val;
+			setImageURL( val );
 			
 			progressbar.setVisible( true );
 			ImagePanel.this.repaint();
@@ -416,7 +497,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 			};
 			t.start();
 		} else {
-			imgUrl = val;
+			setImageURL( val );
 			progressbar.setVisible( true );
 		}
 	}
@@ -430,7 +511,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 				progressbar.setVisible( false );
 				this.img = image;
 			} else {
-				this.imgUrl = imgUrl;
+				setImageURL( imgUrl );
 				progressbar.setVisible( true );
 				img = null;
 			}
@@ -447,7 +528,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 			} else {*/
 				//path = "http://test.matis.is/isgem/myndir/"+oName;
 				
-				String lName = oName.toLowerCase();
+				String lName = oName.toLowerCase( locale );
 				String name = lName.replace('á', 'a');
 				name = name.replace('ó', 'o');
 				name = name.replace('ú', 'u');
@@ -456,37 +537,100 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 				name = name.replace('é', 'e');
 				name = name.replace('ð', 'd');
 				name = name.replace('þ', 't');
+				name = name.replace('ö', 'o');
 				name = name.replace("æ", "ae");
 				
-				List<String> oSpl = Arrays.asList( lName.split("[, ]+") );
+				//List<String> oSpl = Arrays.asList( lName.split("[, ]+") );
 				List<String> nSpl = Arrays.asList( name.split("[, ]+") );
 				
 				Set<String>	ign = new HashSet<String>();
 				ign.add("hrar");
 				ign.add("sodin");
 				ign.add("sodinn");
-				ign.add("jpg");
 				ign.add("sosa");
-				ign.add("-");
+				ign.add("an");
+				//ign.add("sykurlausir");
+				//ign.add("sykurlaus");
+				//ign.add("sykurlaust");
+				ign.add("sykurs");
+				ign.add("nidurs");
+				//ign.add("sykurskertur");
+				//ign.add("sykurskert");
+				ign.add("sukkuladi");
+				ign.add("avaxta");
 				
+				Set<String>	bn = new HashSet<String>();
+				bn.add("jpg");
+				bn.add("-");
+				
+				Set<String>	countset = new HashSet<String>();
+				Set<String>	partials = new HashSet<String>();
 				int max = 0;
-				String val = null;
+				Set<String> vals = new HashSet<String>();
 				for( String iName : imageNames ) {
-					String[] spl = iName.toLowerCase().split("[\\._ 0123456789]+");
+					String fname = iName.toLowerCase( locale );
+					fname = fname.replace('á', 'a');
+					fname = fname.replace('ó', 'o');
+					fname = fname.replace('ú', 'u');
+					fname = fname.replace('ý', 'y');
+					fname = fname.replace('í', 'i');
+					fname = fname.replace('é', 'e');
+					fname = fname.replace('ð', 'd');
+					fname = fname.replace('ö', 'o');
+					fname = fname.replace("æ", "ae");
+					String[] spl = fname.split("[\\._ 0123456789]+");
 					
-					int count = 0;
-					for( String iStr : spl ) {
-						if( !ign.contains(iStr) && (oSpl.contains(iStr) || nSpl.contains(iStr)) ) count++;
+					Set<String>	thset = new HashSet<String>();
+					for( int i = 0; i < spl.length; i++ ) {
+						if( spl[i].startsWith("þ") ) {
+							thset.add( spl[i].replace("þ", "th") );
+							spl[i] = spl[i].replace('þ', 't');
+						}
 					}
 					
+					if( thset.size() > 0 ) {
+						thset.addAll( Arrays.asList( spl ) );
+						spl = thset.toArray( new String[0] );
+					}
+					
+					countset.clear();
+					partials.clear();
+					for( String iStr : spl ) {
+						if( !bn.contains(iStr) ) {
+							if( /*(oSpl.contains(iStr) ||*/ nSpl.contains(iStr) ) {
+								countset.add(iStr);
+							} else if( iStr.length() > 4 && !ign.contains(iStr) ) {
+								String iShort = iStr.substring(0,iStr.length()-1);
+								for( String nstr : nSpl ) {
+									if( nstr.startsWith(iShort) || (iStr.length() > 6 && nstr.contains(iStr)) ) partials.add(iStr);
+								}
+							}
+						}
+					}
+					
+					int count = ign.containsAll( countset ) ? 0 : 100*countset.size();
+					count += partials.size();
 					if( count > max ) {
 						max = count;
-						val = iName;
+						vals.clear();
+						vals.add( iName );
+					} else if( count > 0 && count == max ) {
+						vals.add( iName );
 					}
 				}
 				
+				String val = null;
+				for( String v : vals ) {
+					if( val == null ) val = v;
+					else val = val.length() < v.length() ? val : v;
+				}
+				
 				if( val != null ) {
-					String path = "http://test.matis.is/isgem/myndir/"+URLEncoder.encode( val, "UTF-8" );;
+					String path ="http://test.matis.is/isgem/myndir/"+URLEncoder.encode( val, "UTF-8" ).replace("+", "%20");
+					//try {
+						//URI uri = new URI( "http", "test.matis.is", "/", val );
+						//String fragment = uri.getRawFragment();
+						//String path = "http://test.matis.is/isgem/myndir/"+URLEncoder.encode( fragment, "UTF-8" );
 					if( imageCache.containsKey(path) ) {
 						img = imageCache.get(path);
 						imageNameCache.put(oName, path);
@@ -544,7 +688,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 						urlstr = ImageFactory.getImageURL( result );
 							
 						vals.add( urlstr );
-						imgUrl = urlstr;
+						setImageURL( urlstr );
 						ImagePanel.this.repaint();
 						
 						imageNameCache.put( str, urlstr );
@@ -606,7 +750,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 			}*/
 			//PoiFactory.runImageSearchThread( ImagePanel.this, str );
 			
-			imgUrl = null;
+			setImageURL( null );
 			progressbar.setVisible( true );
 			this.repaint();
 		}

@@ -89,6 +89,7 @@ cv.GeneratedBy,
 0,
 cv.UpdatedBy
 from ComponentValue cv, Food f where f.WebPublishReady = 'J' and f.OriginalFoodCode = cv.OriginalFoodCode
+and cv.OriginalComponentCode in (1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44, 137, 138);
 
 select * from food
 
