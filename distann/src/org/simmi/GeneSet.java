@@ -3239,6 +3239,202 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public static void blastJoin( String name ) throws IOException {
+		FileReader 		fr = new FileReader( name );
+		BufferedReader 	br = new BufferedReader( fr );
+		String line = br.readLine();
+		
+		Map<String,Map<String,Set<String>>>	specmap = new HashMap<String,Map<String,Set<String>>>();
+		
+		String stuff = null;
+		String subject = null;
+		String length = null;
+		String start = null;
+		String stop = null;
+		String score = null;
+		String strand = null;
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				if( subject != null ) {
+					String inspec = subject.substring(0, subject.indexOf('_'));
+					String spec = stuff.substring(0, stuff.indexOf('_'));
+					if( !spec.equals(inspec) ) {
+						Map<String,Set<String>>	contigmap;
+						if( specmap.containsKey(spec) ) {
+							contigmap = specmap.get(spec);
+						} else {
+							contigmap = new HashMap<String,Set<String>>();
+							specmap.put(spec, contigmap );
+						}
+						
+						Set<String>	hitmap;
+						if( contigmap.containsKey( subject ) ) {
+							hitmap = contigmap.get( subject );
+						} else {
+							hitmap = new HashSet<String>();
+							contigmap.put( subject, hitmap );
+						}
+						hitmap.add( stuff + " " + start + " " + stop + " " + score + " " + strand );
+					}
+					
+					subject = null;
+				}
+				stuff = line.substring(7).trim();
+			} else if( line.startsWith("Length=") ) {
+				length = line;
+			} else if( line.startsWith(">") ) {
+				if( subject != null ) {
+					String inspec = subject.substring(0, subject.indexOf('_'));
+					String spec = stuff.substring(0, stuff.indexOf('_'));
+					if( !spec.equals(inspec) ) {
+						Map<String,Set<String>>	contigmap;
+						if( specmap.containsKey(spec) ) {
+							contigmap = specmap.get(spec);
+						} else {
+							contigmap = new HashMap<String,Set<String>>();
+							specmap.put(spec, contigmap );
+						}
+						
+						Set<String>	hitmap;
+						if( contigmap.containsKey( subject ) ) {
+							hitmap = contigmap.get( subject );
+						} else {
+							hitmap = new HashSet<String>();
+							contigmap.put( subject, hitmap );
+						}
+						hitmap.add( stuff + " " + start + " " + stop + " " + score + " " + strand );
+					}
+				}
+				length = null;
+				start = null;
+				stop = null;
+				subject = line.substring(1).trim();
+			} else if( line.startsWith("Sbjct") ) {
+				String[] split = line.split("[\t ]+");
+				if( start == null ) start = split[1];
+				stop = split[split.length-1];
+			} else if( length == null && subject != null ) {
+				subject += line;
+			} else if( line.startsWith(" Score") ) {				
+				if( start != null ) {
+					String inspec = subject.substring(0, subject.indexOf('_'));
+					String spec = stuff.substring(0, stuff.indexOf('_'));
+					if( !spec.equals(inspec) ) {
+						Map<String,Set<String>>	contigmap;
+						if( specmap.containsKey(spec) ) {
+							contigmap = specmap.get(spec);
+						} else {
+							contigmap = new HashMap<String,Set<String>>();
+							specmap.put(spec, contigmap );
+						}
+						
+						Set<String>	hitmap;
+						if( contigmap.containsKey( subject ) ) {
+							hitmap = contigmap.get( subject );
+						} else {
+							hitmap = new HashSet<String>();
+							contigmap.put( subject, hitmap );
+						}
+						hitmap.add( stuff + " " + start + " " + stop + " " + score + " " + strand );
+					}
+				}
+				score = line;
+				start = null;
+				stop = null;
+			} else if( line.startsWith(" Strand") ) {
+				strand = line;
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		for( String spec : specmap.keySet() ) {
+			if( spec.contains("346") ) {
+				System.out.println( spec );
+				
+				Set<List<String>>	sortorder = new HashSet<List<String>>();
+				
+				Map<String,Set<String>>	contigmap = specmap.get(spec);
+				for( String contig : contigmap.keySet() ) {
+					Set<String>	hitmap = contigmap.get(contig);
+					List<String>	hitlist = new ArrayList<String>( hitmap );
+					hitmap.clear();
+					for( int i = 0; i < hitlist.size(); i++ ) {
+						for( int x = i+1; x < hitlist.size(); x++ ) {
+							String str1 = hitlist.get(i);
+							String str2 = hitlist.get(x);
+							
+							boolean left1 = str1.contains("left");
+							boolean left2 = str2.contains("left");
+							boolean minus1 = str1.contains("Minus");
+							boolean minus2 = str2.contains("Minus");
+							boolean all1 = str1.contains("all");
+							boolean all2 = str2.contains("all");
+							
+							if( (all1 || all2) || (left1 != left2 && minus1 == minus2) || (left1 == left2 && minus1 != minus2) ) {
+								String[] split1 = str1.split("[\t ]+");
+								String[] split2 = str2.split("[\t ]+");
+								
+								int start1 = Integer.parseInt( split1[1] );
+								int stop1 = Integer.parseInt( split1[2] );
+								int start2 = Integer.parseInt( split2[1] );
+								int stop2 = Integer.parseInt( split2[2] );
+								
+								if( start1 > stop1 ) {
+									int tmp = start1;
+									start1 = stop1;
+									stop1 = tmp;
+								}
+								
+								if( start2 > stop2 ) {
+									int tmp = start2;
+									start2 = stop2;
+									stop2 = tmp;
+								}
+								
+								if( (start2 > start1-150 && start2 < stop1+150) || stop2 > start1-150 && stop2 < stop1+150 ) {
+									hitmap.add( str1 );
+									hitmap.add( str2 );
+									
+									int ind1 = str1.indexOf("_left");
+									if( ind1 == -1 ) str1.indexOf("_right");
+									if( ind1 == -1 ) str1.indexOf("_all");
+									String str1simple = str1.substring(0,ind1);
+									
+									int ind2 = str2.indexOf("_left");
+									if( ind2 == -1 ) str2.indexOf("_right");
+									if( ind2 == -1 ) str2.indexOf("_all");
+									String str2simple = str2.substring(0,ind2);
+									
+									List<String>	seqlist = null;
+									for( List<String> sl : sortorder ) {
+										for( String seq : sl ) {
+											if( seq.contains(str1simple) || seq.contains(str2simple) ) {
+												seqlist = sl;
+											}
+										}
+									}
+									if( seqlist == null ) {
+										seqlist = new ArrayList<String>();
+										sortorder.add( seqlist );
+									}
+								}
+							}
+						}
+					}
+					
+					if( hitmap.size() > 1 ) {
+						System.out.println( "\t"+contig );
+						for( String hit : hitmap ) {
+							System.out.println( "\t\t"+hit );
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	public static void blast2Filt( String name, String filtname ) throws IOException {
 		FileReader 		fr = new FileReader( name );
 		BufferedReader 	br = new BufferedReader( fr );
@@ -3335,6 +3531,52 @@ public class GeneSet extends JApplet {
 		fw.close();
 	}
 	
+	public static void flankingFasta( String name, String newname ) throws IOException {        
+        FileWriter 		fw = new FileWriter( newname );
+        BufferedWriter	bw = new BufferedWriter( fw );
+        
+        int fasti = 60;
+		FileReader fr = new FileReader( name );
+		BufferedReader br = new BufferedReader( fr, 100000000 );
+		String line = br.readLine();
+		String seqname = null;
+		StringBuilder	seq = new StringBuilder();
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( seqname != null ) {
+					if( seq.length() < 200 ) {
+						fw.write( seqname+"_all"+"\n" );
+						for( int i = 0; i < seq.length(); i+=fasti ) {
+							fw.write( seq.substring( i, Math.min( seq.length(), i+fasti ) )+"\n" );
+						}
+					} else {
+						fw.write( seqname+"_left"+"\n" );
+						for( int i = 0; i < 150; i+=fasti ) {
+							fw.write( seq.substring( i, Math.min( 150, i+fasti ) )+"\n" );
+						}
+						fw.write( seqname+"_right"+"\n" );
+						for( int i = seq.length()-151; i < seq.length(); i+=fasti ) {
+							fw.write( seq.substring( i, Math.min( seq.length(), i+fasti ) )+"\n" );
+						}
+					}
+				}
+				int endind = line.indexOf(' ');
+				if( endind == -1 ) endind = line.indexOf('\t');
+				if( endind == -1 ) endind = line.length();
+				seqname = line.substring(0, endind);
+				seq = new StringBuilder();
+			} else {
+				seq.append( line );
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		bw.flush();
+		fw.close();
+	}
+	
 	public static void main(String[] args) {
 		/*JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
@@ -3354,7 +3596,9 @@ public class GeneSet extends JApplet {
 		//init( args );
 		
 		try {
-			blast2Filt( "/home/sigmar/kaw.blastout", "/home/sigmar/newkaw_filter.txt" );
+			blastJoin("/home/sigmar/playground/stuff.blastout");
+			//flankingFasta("/home/sigmar/playground/all.fsa", "/home/sigmar/playground/flank.fsa");
+			//blast2Filt( "/home/sigmar/kaw.blastout", "/home/sigmar/newkaw_filter.txt" );
 			//contigShare( "/home/sigmar/kaw_bac_contigs.txt" );
 			//trimFasta("/home/sigmar/kawarayensis.fna", "/home/sigmar/kawarayensis_bacillus.fna", "/home/sigmar/flx/kaw_filter.txt" );
 			//trimFasta("/home/sigmar/kawarayensis.fna", "/home/sigmar/kawarayensis_bacillus.fna", "/home/sigmar/flx/kaw_filter.txt" );
