@@ -3350,11 +3350,12 @@ public class GeneSet extends JApplet {
 		fr.close();
 		
 		for( String spec : specmap.keySet() ) {
-			if( spec.contains("346") ) {
+			if( spec.contains("2127") ) {
 				System.out.println( spec );
 				
-				Set<List<String>>	sortorder = new HashSet<List<String>>();
+				List<List<String>>	sortorder = new ArrayList<List<String>>();
 				
+				Map<List<String>,Integer>	joinMap = new HashMap<List<String>,Integer>();
 				Map<String,Set<String>>	contigmap = specmap.get(spec);
 				for( String contig : contigmap.keySet() ) {
 					Set<String>	hitmap = contigmap.get(contig);
@@ -3393,43 +3394,513 @@ public class GeneSet extends JApplet {
 									stop2 = tmp;
 								}
 								
-								if( (start2 > start1-150 && start2 < stop1+150) || stop2 > start1-150 && stop2 < stop1+150 ) {
+								if( (stop2-start2 > 50) && (stop1-start1 > 50) && ((start2 > start1-150 && start2 < stop1+150) || (stop2 > start1-150 && stop2 < stop1+150)) ) {
 									hitmap.add( str1 );
 									hitmap.add( str2 );
 									
 									int ind1 = str1.indexOf("_left");
-									if( ind1 == -1 ) str1.indexOf("_right");
-									if( ind1 == -1 ) str1.indexOf("_all");
+									if( ind1 == -1 ) ind1 = str1.indexOf("_right");
+									if( ind1 == -1 ) ind1 = str1.indexOf("_all");
 									String str1simple = str1.substring(0,ind1);
+									String str1compl = str1.substring(0, str1.indexOf(' ', ind1));
 									
 									int ind2 = str2.indexOf("_left");
-									if( ind2 == -1 ) str2.indexOf("_right");
-									if( ind2 == -1 ) str2.indexOf("_all");
+									if( ind2 == -1 ) ind2 = str2.indexOf("_right");
+									if( ind2 == -1 ) ind2 = str2.indexOf("_all");
 									String str2simple = str2.substring(0,ind2);
+									String str2compl = str2.substring(0, str2.indexOf(' ', ind2));
 									
-									List<String>	seqlist = null;
-									for( List<String> sl : sortorder ) {
-										for( String seq : sl ) {
-											if( seq.contains(str1simple) || seq.contains(str2simple) ) {
-												seqlist = sl;
-											}
+									/*if( minus1 != minus2 ) {
+										if( str1compl.compareTo( str2compl ) > 0 ) {
+											str1compl += " Minus";
+										} else str2compl += " Minus";
+									}*/
+									
+									if( !str2simple.equals(str1simple) ) {
+										List<String> joinset = new ArrayList<String>();
+										joinset.add( str1compl );
+										joinset.add( str2compl );
+										Collections.sort( joinset );
+										if( minus1 != minus2 ) joinset.set(1, joinset.get(1)+" Minus");
+										
+										if( joinMap.containsKey( joinset ) ) {
+											joinMap.put( joinset, joinMap.get(joinset)+1 );
+										} else {
+											joinMap.put( joinset, 1 );
 										}
-									}
-									if( seqlist == null ) {
-										seqlist = new ArrayList<String>();
-										sortorder.add( seqlist );
 									}
 								}
 							}
 						}
 					}
-					
 					if( hitmap.size() > 1 ) {
 						System.out.println( "\t"+contig );
 						for( String hit : hitmap ) {
 							System.out.println( "\t\t"+hit );
 						}
 					}
+				}
+
+				System.out.println("Printing join count");
+				Map<Integer,List<List<String>>>	reverseset = new TreeMap<Integer,List<List<String>>>( Collections.reverseOrder() );
+				for( List<String> joinset : joinMap.keySet() ) {
+					int cnt = joinMap.get(joinset);
+					
+					if( joinset.get(0).contains("all") || joinset.get(1).contains("all") ) cnt -= 1000; 
+					
+					if( reverseset.containsKey(cnt) ) {
+						List<List<String>>	joinlist = reverseset.get(cnt);
+						joinlist.add( joinset );
+					} else {
+						List<List<String>> joinlist = new ArrayList<List<String>>();
+						joinlist.add( joinset );
+						reverseset.put(cnt, joinlist);
+					}
+				}
+				
+				for( int cnt : reverseset.keySet() ) {
+					List<List<String>>	joinlist = reverseset.get(cnt);
+					for( List<String> joinset : joinlist ) {
+						System.out.println( joinset + ": " + cnt);
+					}
+				}
+					
+					for( int cnt : reverseset.keySet() ) {
+						List<List<String>>	joinlist = reverseset.get(cnt);
+						for( List<String> joinset : joinlist ) {
+							
+							String str1 = joinset.get(0);
+							String str2 = joinset.get(1);
+							
+							/*for( String joinstr : joinset ) {
+								if( str1 == null ) str1 = joinstr;
+								else {
+									str2 = joinstr;
+									break;
+								}
+							}*/
+							
+							boolean minus1 = str1.contains("Minus");
+							str1 = str1.replace(" Minus", "");
+							str2 = str2.replace(" Minus", "");
+							//boolean minus1 = str1.contains("Minus");
+							//String str1com = str1.substring(0,str1.lastIndexOf('_'));
+							//String str2simple = str1.substring(0,str2.lastIndexOf('_'));
+							String str1simple = str1.substring(0,str1.lastIndexOf('_'));
+							String str2simple = str2.substring(0,str2.lastIndexOf('_'));
+							
+									List<String>	seqlist1 = null;
+									List<String>	seqlist2 = null;								
+									//boolean both = false;
+									for( List<String> sl : sortorder ) {
+										for( String seq : sl ) {
+											/*if( seq.contains(str1simple) && seq.contains(str2simple) ) {
+												seqlist1 = sl;
+												seqlist2 = sl;
+											} else*/
+											
+											if( seq.contains(str1simple) ) {
+												if( seqlist1 == null ) seqlist1 = sl;
+											} else if( seq.contains(str2simple) ) {
+												if( seqlist2 == null ) seqlist2 = sl;
+											}
+										}
+										if( seqlist1 != null && seqlist2 != null ) break;
+									}
+									
+									/*for( List<String> sl1 : sortorder ) {
+										for( List<String> sl2 : sortorder ) {
+											if( sl1 != sl2 ) {
+												for( String str : sl1 ) {
+													if( sl2.contains(str) ) {
+														System.err.println( str );
+														System.err.println();
+														for( String s1 : sl1 ) {
+															System.err.println( s1 );
+														}
+														System.err.println();
+														for( String s2 : sl2 ) {
+															System.err.println( s2 );
+														}
+														System.err.println();
+													}
+												}
+											}
+										}
+									}
+									
+									int count = 0;
+									if( seqlist1 != null ) {
+										for( String s : seqlist1 ) {
+											if( s.contains("00006") ) count++;
+											else if( s.contains("00034") ) count++;
+											
+											if( count == 2 ) {
+												System.err.println();
+											}
+										}
+									}
+									
+									if( seqlist2 != null ) {
+										for( String s : seqlist2 ) {
+											if( s.contains("00006") ) count++;
+											else if( s.contains("00034") ) count++;
+											
+											if( count == 2 ) {
+												System.err.println();
+											}
+										}
+									}*/
+									
+									boolean left1 = str1.contains("left");
+									boolean left2 = str2.contains("left");
+									
+									if( seqlist1 == null && seqlist2 == null ) {
+										List<String> seqlist = new ArrayList<String>();
+										sortorder.add( seqlist );
+										
+										if( left1 ) {
+											if( left2 ) {
+												if( minus1 ) {
+													seqlist.add( str1+" reverse" );
+													seqlist.add( str2 );
+												} else {
+													seqlist.add( str2+" reverse" );
+													seqlist.add( str1 );
+												}
+											} else {
+												if( minus1 ) {
+													seqlist.add( str1+" reverse" );
+													seqlist.add( str2+" reverse" );
+												} else {
+													seqlist.add( str2 );
+													seqlist.add( str1 );
+												}
+											}
+										} else {
+											if( left2 ) {
+												if( minus1 ) {
+													seqlist.add( str2+" reverse" );
+													seqlist.add( str1+" reverse" );
+												} else {
+													seqlist.add( str1 );
+													seqlist.add( str2 );
+												}
+											} else {
+												if( minus1 ) {
+													seqlist.add( str2 );
+													seqlist.add( str1+" reverse" );
+												} else {
+													seqlist.add( str1 );
+													seqlist.add( str2+" reverse" );
+												}
+											}
+										}
+									} else if( (seqlist1 == null && seqlist2 != null) || (seqlist1 != null && seqlist2 == null) ) {
+										List<String>	seqlist;
+										String selseq = null;
+										String noseq = null;
+										
+										int ind = -1;
+										if( seqlist1 == null ) {
+											seqlist = seqlist2;
+											selseq = str2;
+											noseq = str1;
+											
+											String seqf = seqlist.get(0);
+											String seql = seqlist.get( seqlist.size()-1 );
+											boolean bf = true; //(seqf.contains("left") && !seqf.contains("reverse")) || (!seqf.contains("left") && seqf.contains("reverse"));
+											boolean bl = true; //(seql.contains("left") && seql.contains("reverse")) || (!seql.contains("left") && !seql.contains("reverse"));
+											
+ 											if( seqf.contains(str2simple) && bf ) ind = 0;
+											else if( seql.contains(str2simple) && bl ) ind = seqlist.size()-1;
+										} else {
+											seqlist = seqlist1;
+											selseq = str1;
+											noseq = str2;
+											
+											String seqf = seqlist.get(0);
+											String seql = seqlist.get( seqlist.size()-1 );
+											boolean bf = true; //(seqf.contains("left") && !seqf.contains("reverse")) || (!seqf.contains("left") && seqf.contains("reverse"));
+											boolean bl = true; //(seql.contains("left") && seql.contains("reverse")) || (!seql.contains("left") && !seql.contains("reverse"));
+											
+											if( seqf.contains(str1simple) && bf ) ind = 0;
+											else if( seql.contains(str1simple) && bl ) ind = seqlist.size()-1;
+										}
+										
+										if( ind != -1 ) {
+											String tstr = seqlist.get(ind);
+											boolean leftbef = tstr.contains("left");
+											boolean leftaft = selseq.contains("left");
+											boolean allaft = false;//selseq.contains("all");
+											boolean revbef = tstr.contains("reverse");
+											//boolean revaft = selseq.contains("reverse");
+											
+											boolean leftno = noseq.contains("left");
+											//boolean revno = selseq.contains("reverse");
+											
+											if( leftbef && revbef) {
+												if( leftaft ) {
+													if( ind == seqlist.size()-1 || allaft ) {
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												} else {
+													if( ind == 0 || allaft ) {
+														seqlist.add( 0, selseq+" reverse" );
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												}
+											} else if( !leftbef && !revbef ) {
+												if( leftaft ) {
+													if( ind == 0 || allaft ) {
+														seqlist.add( 0, selseq );
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												} else {
+													if( ind == seqlist.size()-1 || allaft ) {
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												}
+											} else if( !leftbef && revbef ) {
+												if( leftaft ) {
+													if( ind == seqlist.size()-1 || allaft ) {
+														seqlist.add( seqlist.size(), selseq+" reverse" );
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												} else {
+													if( ind == 0 || allaft ) {
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												}
+												
+												//if( leftno ) seqlist.add( 0, noseq+" reverse" );
+												//else seqlist.add( 0, noseq );
+											} else if( leftbef && !revbef ) {
+												if( leftaft ) {
+													if( ind == 0 || allaft ) {
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												} else {
+													if( ind == seqlist.size()-1 || allaft ) {
+														seqlist.add( seqlist.size(), selseq );
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												}
+												
+												//if( leftno ) seqlist.add( 0, noseq+" reverse" );
+												//else seqlist.add( 0, noseq );
+											}
+											
+											/*if( selseq.contains(str1simple) ) {
+												if( selseq.contains("reverse ") ) {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind+1, str2 );
+														} else {
+															seqlist.add( ind+1, str2+" reverse" );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind, str2+" reverse" );
+														} else {
+															seqlist.add( ind, str2 );
+														}
+													}
+												} else {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind, str2+" reverse" );
+														} else {
+															seqlist.add( ind, str2 );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind+1, str2 );
+														} else {
+															seqlist.add( ind+1, str2+" reverse" );
+														}
+													}
+												}
+											} else {
+												if( selseq.contains("reverse ") ) {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind+1, str1 );
+														} else {
+															seqlist.add( ind, str1+" reverse" );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind+1, str1+" reverse" );
+														} else {
+															seqlist.add( ind, str1 );
+														}
+													}
+												} else {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind, str1+" reverse" );
+														} else {
+															seqlist.add( ind+1, str1 );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind, str1 );
+														} else {
+															seqlist.add( ind+1, str1+" reverse" );
+														}
+													}
+												}
+											}*/
+										}
+									} else if( seqlist1 != seqlist2 ) {
+										String selseq1 = null;
+										String selseq2 = null;
+										
+										int ind1 = -1;
+										if( seqlist1.get(0).contains(str1simple) ) {
+											ind1 = 0;
+											selseq1 = seqlist1.get(0);
+										} else if( seqlist1.get( seqlist1.size()-1 ).contains(str1simple) ) {
+											ind1 = seqlist1.size()-1;
+											selseq1 = seqlist1.get( seqlist1.size()-1 );
+										}
+										
+										int ind2 = -1;
+										if( seqlist2.get(0).contains(str2simple) ) {
+											ind2 = 0;
+											selseq2 = seqlist2.get(0);
+										} else if( seqlist2.get( seqlist2.size()-1 ).contains(str2simple) ) {
+											ind2 = seqlist2.size()-1;
+											selseq2 = seqlist2.get( seqlist2.size()-1 );
+										}
+										
+										boolean success = false;
+										
+										if( selseq1 == null || selseq2 == null ) {
+											System.err.println("bleh");
+										} else {											
+											System.err.println( "joining: " + seqlist1 );
+											System.err.println( "and: " + seqlist2 );
+										
+											boolean lef1 = selseq1.contains("left");
+											boolean lef2 = selseq2.contains("left");
+											boolean rev1 = selseq1.contains("reverse");
+											boolean rev2 = selseq2.contains("reverse");
+											
+											boolean bb = false;
+											if( bb ) {
+												System.err.println("subleh");
+											} else {
+												if( lef1 && !left1 ) {
+													if( rev1 && ind1 == 0 ) seqlist1.add( 0, str1+" reverse" );
+													else if( ind1 == seqlist1.size()-1 ) seqlist1.add( seqlist1.size(), str1 );
+												} else if( !lef1 && left1 ) {
+													if( rev1 && ind1 == seqlist1.size()-1 ) seqlist1.add( seqlist1.size(), str1+" reverse" );
+													else if( ind1 == 0 ) seqlist1.add( 0, str1 );
+												}
+												
+												if( lef2 && !left2 ) {
+													if( rev2 && ind2 == 0 ) seqlist2.add( 0, str2+" reverse" );
+													else if( ind2 == seqlist2.size()-1 ) seqlist2.add( seqlist2.size(), str2 );
+												} else if( !lef2 && left2 ) {
+													if( rev2 && ind2 == seqlist2.size()-1 ) seqlist2.add( seqlist2.size(), str2+" reverse" );
+													else if( ind2 == 0 ) seqlist2.add( 0, str2 );
+												}
+												
+												boolean left1beg = seqlist1.get(0).contains("left");
+												boolean rev1beg = seqlist1.get(0).contains("reverse");
+												boolean left1end = seqlist1.get(seqlist1.size()-1).contains("left");
+												boolean rev1end = seqlist1.get(seqlist1.size()-1).contains("reverse");
+												
+												boolean left2beg = seqlist2.get(0).contains("left");
+												boolean rev2beg = seqlist2.get(0).contains("reverse");
+												boolean left2end = seqlist2.get(seqlist2.size()-1).contains("left");
+												boolean rev2end = seqlist2.get(seqlist2.size()-1).contains("reverse");
+												
+												if( seqlist1.get(0).contains(str1simple) ) {
+													if( seqlist2.get(0).contains(str2simple) ) {
+														if( ((left1beg && !rev1beg) || (!left1beg && rev1beg)) && (((left2beg && !rev2beg) || (!left2beg && rev2beg))) ) {
+															Collections.reverse( seqlist2 );
+															for( int u = 0; u < seqlist2.size(); u++ ) {
+																String val = seqlist2.get(u);
+																if( val.contains(" reverse") ) seqlist2.set( u, val.replace(" reverse", "") );
+																else {
+																	int end = val.length()-1;
+																	while( val.charAt(end) == 'I' ) end--;
+																	seqlist2.set(u, val.substring(0, end+1)+" reverse"+val.substring(end+1, val.length()) );
+																}
+															}
+															success = true;
+															seqlist1.addAll(0, seqlist2);
+														}
+													} else {
+														if( ((left1beg && !rev1beg) || (!left1beg && rev1beg)) && (((left2end && rev2end) || (!left2end && !rev2end))) ) {
+															success = true;
+															seqlist1.addAll(0, seqlist2);
+														}
+													}
+												} else { //if( seqlist1.indexOf(str1) == seqlist1.size()-1 ) {
+													if( seqlist2.get(0).contains(str2simple) ) {
+														if( ((left1end && rev1end) || (!left1end && !rev1end)) && (((left2beg && !rev2beg) || (!left2beg && rev2beg))) ) {
+															success = true;
+															seqlist1.addAll(seqlist1.size(), seqlist2);
+														}
+													} else {
+														if( ((left1end && rev1end) || (!left1end && !rev1end)) && (((left2end && rev2end) || (!left2end && !rev2end))) ) {
+															Collections.reverse( seqlist2 );
+															for( int u = 0; u < seqlist2.size(); u++ ) {
+																String val = seqlist2.get(u);
+																if( val.contains(" reverse") ) seqlist2.set( u, val.replace(" reverse", "") );
+																else {
+																	int end = val.length()-1;
+																	while( val.charAt(end) == 'I' ) end--;
+																	seqlist2.set(u, val.substring(0, end+1)+" reverse"+val.substring(end+1, val.length()) );
+																}
+															}
+															success = true;
+															seqlist1.addAll(seqlist1.size(), seqlist2);
+														}
+													}
+												}
+												
+												if( success ) {
+													if( !sortorder.remove( seqlist2 ) ) {
+														System.err.println("no remove");
+													}
+												}
+												System.err.println("result is: "+seqlist1);
+											}
+										}
+									} else {
+										System.err.println( "same shit " + seqlist1 + " " + str1 + " " + str2 );
+										/*for( int k = 0; k < seqlist1.size(); k++ ) {
+											if( seqlist1.get(k).contains(str1) ) seqlist1.set(k, seqlist1.get(k)+"I");
+											else if( seqlist1.get(k).contains(str2) ) seqlist1.set(k, seqlist1.get(k)+"I");
+										}*/
+										int i = 0;
+										i = 2;
+									}
+								}
+							//}
+						//}
+					//}
+				}
+				
+				System.out.println("join");
+				for( List<String> so : sortorder ) {
+					for( String s : so ) {
+						System.out.println(s);
+					}
+					System.out.println();
 				}
 			}
 		}
