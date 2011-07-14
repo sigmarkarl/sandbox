@@ -97,6 +97,11 @@ import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
 
 public class SortTable extends JApplet {
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	JScrollPane scrollPane;
 	JScrollPane leftScrollPane;
 	JScrollPane topScrollPane;
@@ -113,7 +118,7 @@ public class SortTable extends JApplet {
 	RecipePanel recipe;
 	HabitsPanel	eat;
 	FriendsPanel friendsPanel;
-	JComboBox combo;
+	JComboBox<String> combo;
 
 	ImagePanel imgPanel;
 	JComponent graph;
@@ -218,7 +223,7 @@ public class SortTable extends JApplet {
 		InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
 		if (inputStream != null) {
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			int	linen = 0;
+			//int	linen = 0;
 			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\\t");
@@ -263,7 +268,7 @@ public class SortTable extends JApplet {
 					}
 				}
 				line = br.readLine();
-				linen++;
+				//linen++;
 			}
 		}
 		
@@ -431,8 +436,8 @@ public class SortTable extends JApplet {
 				}
 				ngroupList.add( cname );
 				ngroupGroups.add( group );
-				nutList[0].add(vals[3]);
-				nutList[1].add(vals[4]);
+				nutList[0].add(vals[3].trim());
+				nutList[1].add(vals[4].trim());
 			}
 		} else {
 			inputStream = this.getClass().getResourceAsStream("NUTR_DEF.txt");
@@ -452,9 +457,9 @@ public class SortTable extends JApplet {
 					// split[1].length()-1)+")" );
 					ngroupGroups.add(split[5]);
 					// List<Object> lobj = nutList.get(i).get(i)
-					nutList[0].add(sName);
+					nutList[0].add( sName == null ? null : sName.trim() );
 					String mName = split[1].substring(1, split[1].length() - 1);
-					nutList[1].add(mName);
+					nutList[1].add( mName == null ? null : mName.trim() );
 				}
 				line = br.readLine();
 			}
@@ -724,7 +729,7 @@ public class SortTable extends JApplet {
 	}
 
 	public void loadStuff() {
-		lang = "IS";
+		lang = "US";
 		/*
 		 * String loc = this.getParameter("loc"); if( loc != null ) { lang =
 		 * loc; }
@@ -1288,7 +1293,11 @@ public class SortTable extends JApplet {
 		// scrollPane.setColumnHeader( topScrollPane.getViewport() );
 		// scrollPane.setColumnHeaderView( topTable );
 
-		final JComboBox topLeftCombo = new JComboBox() {
+		final JComboBox<String> topLeftCombo = new JComboBox<String>() {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
 			private boolean layingOut = false;
 
 			public void doLayout() {
@@ -2213,6 +2222,60 @@ public class SortTable extends JApplet {
 			}
 		});
 		
+		final Set<String>	sortStuff = new HashSet<String>( Arrays.asList( new String[] {"Alcohol","Dietary fiber","Carbohydrates, total","Protein, total","Water","Ash","Fat, total"} ) );
+		final JPopupMenu	mainpopup = new JPopupMenu();
+		mainpopup.add( new AbstractAction( lang.equals("IS") ? "Raða fæðutegundum með svipuðu innihaldi" : "Sort food items with similar ingredients" ) {
+			public void actionPerformed(ActionEvent e) {
+				int r = leftTable.getSelectedRow();
+				final int mi = leftTable.convertRowIndexToModel(r);
+				
+				MySorter ms = (MySorter)leftTable.getRowSorter();
+				Comparator comp = ms.getComparator( 0 );
+				ms.setComparator(0, new Comparator<String>() {
+					Object[]	rr = stuff.get(0);
+					Object[]	mm = stuff.get(mi+2);
+					@Override
+					public int compare(String o1, String o2) {
+						Integer i1 = foodNameInd.get(o1);
+						Integer i2 = foodNameInd.get(o2);
+						
+						if( i1 == null && i2 == null ) return Integer.MAX_VALUE;
+						else if( i1 == null ) return Integer.MAX_VALUE;
+						else if( i2 == null ) return Integer.MIN_VALUE;
+						
+						Object[] r1 = stuff.get(i1+2);
+						Object[] r2 = stuff.get(i2+2);
+						
+						double val1 = 0;
+						double val2 = 0;
+						int r = 0;
+						for( Object o : rr ) {
+							if( sortStuff.contains(o) ) {
+								Float f = (Float)mm[r];
+								Float f1 = (Float)r1[r];
+								Float f2 = (Float)r2[r];
+								
+								if( f != null ) {
+									float abs1 = Math.abs( f-(f1 == null ? 0 : f1) );
+									float abs2 = Math.abs( f-(f2 == null ? 0 : f2) );
+									
+									val1 += abs1*abs1;
+									val2 += abs2*abs2;
+								}
+							}
+							r++;
+						}
+						
+						return Double.compare( Math.sqrt( val1 )*1000.0, Math.sqrt(val2)*1000.0 );
+					}
+				});
+				ms.setSortKeys( Arrays.asList( new RowSorter.SortKey[] { new RowSorter.SortKey(0,SortOrder.ASCENDING) } ) );
+				ms.sort();
+				ms.setComparator(0, comp);
+				//leftTable.sorter.sort();
+			}
+		});
+		
 		tabbedPane.addChangeListener(new ChangeListener() {
 			Component previous;
 				
@@ -2222,6 +2285,7 @@ public class SortTable extends JApplet {
 				
 				if ( comp.equals(rightSplitPane) ) {
 					leftScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+					leftTable.setComponentPopupMenu( mainpopup );
 					// leftSplitPane.setDividerLocation(60);
 				} else {
 					if( comp.equals(recipe) ) {
