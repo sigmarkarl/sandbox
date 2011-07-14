@@ -160,8 +160,10 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 			//imged.setText("<html><body><img src=\""+imgstr+"\"</img></body></html>");
 		
 		this.lang = lang;
+		locale = Locale.getDefault();
 		if( lang.equalsIgnoreCase("is") ) {
-			locale = Locale.forLanguageTag("is");
+			locale = new Locale("is");
+			//locale = Locale.forLanguageTag("is");
 		}
 		
 		imageNames = new HashSet<String>();
