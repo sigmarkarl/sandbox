@@ -3350,7 +3350,7 @@ public class GeneSet extends JApplet {
 		fr.close();
 		
 		for( String spec : specmap.keySet() ) {
-			if( spec.contains("2127") ) {
+			if( spec.contains("346") ) {
 				System.out.println( spec );
 				
 				List<List<String>>	sortorder = new ArrayList<List<String>>();
@@ -3897,9 +3897,25 @@ public class GeneSet extends JApplet {
 				
 				System.out.println("join");
 				for( List<String> so : sortorder ) {
-					for( String s : so ) {
-						System.out.println(s);
+					for( int i = 0; i < so.size(); i++ ) {
+						String s = so.get(i);
+						String ss = s.substring(0, s.indexOf("_contig")+12);
+						if( i == so.size()-1 ) {
+							System.out.println( ss + (s.contains("everse") ? "_reverse" : "") );
+						} else {
+							String n = so.get(i+1);
+							String nn = n.substring(0, n.indexOf("_contig")+12);
+							if( ss.equals(nn) ) {
+								System.out.println( ss + (s.contains("everse") ? "_reverse" : "") );
+								i++;
+							} else {
+								System.out.println( ss + (s.contains("everse") ? "_reverse" : "") );
+							}
+						}
 					}
+					/*for( String s : so ) {
+						System.out.println(s);
+					}*/
 					System.out.println();
 				}
 			}
