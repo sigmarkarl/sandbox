@@ -118,7 +118,7 @@ public class SortTable extends JApplet {
 	RecipePanel recipe;
 	HabitsPanel	eat;
 	FriendsPanel friendsPanel;
-	JComboBox<String> combo;
+	JComboBox combo;
 
 	ImagePanel imgPanel;
 	JComponent graph;
@@ -710,7 +710,10 @@ public class SortTable extends JApplet {
 		
 		Collections.sort(stuff, new Comparator<Object[]>() {
 			public int compare(Object[] o1, Object[] o2) {
-				if( o1[0] == null && o2[0] == null ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+				if( o1[0] == null && o2[0] == null ) {
+					if( lang.equals("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+					else return ((String) o2[2]).compareToIgnoreCase((String) o1[2]);
+				}
 				else if( o1[0] == null ) return Integer.MIN_VALUE;
 				else if( o2[0] == null ) return Integer.MAX_VALUE;
 				
@@ -744,7 +747,10 @@ public class SortTable extends JApplet {
 
 				Collections.sort(stuff, new Comparator<Object[]>() {
 					public int compare(Object[] o1, Object[] o2) {
-						if( o1[0] == null && o2[0] == null ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+						if( o1[0] == null && o2[0] == null ) {
+							if( lang.equals("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+							else return ((String) o2[2]).compareToIgnoreCase((String) o1[2]);
+						}
 						else if( o1[0] == null ) return Integer.MIN_VALUE;
 						else if( o2[0] == null ) return Integer.MAX_VALUE;
 						
@@ -1293,7 +1299,7 @@ public class SortTable extends JApplet {
 		// scrollPane.setColumnHeader( topScrollPane.getViewport() );
 		// scrollPane.setColumnHeaderView( topTable );
 
-		final JComboBox<String> topLeftCombo = new JComboBox<String>() {
+		final JComboBox topLeftCombo = new JComboBox() {
 			/**
 			 * 
 			 */
@@ -2222,7 +2228,9 @@ public class SortTable extends JApplet {
 			}
 		});
 		
-		final Set<String>	sortStuff = new HashSet<String>( Arrays.asList( new String[] {"Alcohol","Dietary fiber","Carbohydrates, total","Protein, total","Water","Ash","Fat, total"} ) );
+		String[] sortset = lang.equals("IS") ? 	new String[] {"Alcohol","Dietary fiber","Carbohydrates, total","Protein, total","Water","Ash","Fat, total"} : 
+												new String[] {"ALC","FIBTG","CHOCDF","PROCNT","WATER","ASH","FAT"};
+		final Set<String>	sortStuff = new HashSet<String>( Arrays.asList( sortset ) );
 		final JPopupMenu	mainpopup = new JPopupMenu();
 		mainpopup.add( new AbstractAction( lang.equals("IS") ? "Raða fæðutegundum með svipuðu innihaldi" : "Sort food items with similar ingredients" ) {
 			public void actionPerformed(ActionEvent e) {
