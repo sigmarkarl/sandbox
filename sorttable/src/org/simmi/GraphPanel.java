@@ -67,9 +67,9 @@ public class GraphPanel extends JTabbedPane {
 		if( col < table.getModel().getColumnCount() ) {
 			Float ff = (Float)table.getValueAt(row, col);
 			if( ff != null ) f = ff;
-		} else {
+		}/* else {
 			System.err.println(whr);
-		}
+		}*/
 			
 		return f;
 	}
@@ -97,9 +97,9 @@ public class GraphPanel extends JTabbedPane {
 		if( col < table.getModel().getColumnCount() ) {
 			Float ff = (Float)table.getValueAt(row, col);
 			if( ff != null ) f = ff;
-		} else {
+		}/* else {
 			System.err.println(whr);
-		}
+		}*/
 			
 		return f;
 	}
@@ -747,7 +747,7 @@ public class GraphPanel extends JTabbedPane {
 			comb = new String[] {"Alkóhól", "Prótein", "Kolvetni", "Fita", "Trefjar", "Steinefni", "Vatn"};
 			cnames = new String[] {"Alkóhól", "Prótein", "Kolvetni", "Fita", "Trefjar", "Steinefni", "Vatn"};
 		} else {
-			comb = new String[] {"Alcohol, ethyl", "Protein", "Carbohydrate, by difference", "Total lipid (fat)", "Dietary fiber", "Ash", "Water"};
+			comb = new String[] {"Alcohol, ethyl", "Protein", "Carbohydrate, by difference", "Total lipid (fat)", "Fiber, total dietary", "Ash", "Water"};
 			cnames = new String[] {"Alcohol", "Protein", "Carbohydrades", "Fat", "Dietary fiber", "Ash", "Water"};
 		}
 		
