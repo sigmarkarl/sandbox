@@ -710,9 +710,9 @@ public class Corp {
 			g.setFillStyle( color );
 			g.setStrokeStyle( "#000000" );
 			g.arc( this.getWidth()/2, this.getHeight()/2, this.getWidth()/2, 0, 2.0*Math.PI );
+			g.closePath();
 			g.fill();
 			g.stroke();
-			g.closePath();
 		}
 		
 		if( selected ) {
@@ -755,19 +755,19 @@ public class Corp {
 		this.getParent().repaint();
 	}
 
-	public void mouseReleased( MouseEvent e, int pxs, int pys, boolean isShiftKeyDown, boolean doubleClick ) {		
-		if( drag != null ) {
+	public void mouseReleased( MouseEvent e, int xx, int yy, boolean isShiftKeyDown, boolean doubleClick ) {		
+		/*if( drag != null ) {
 			pxs += drag.getX();
 			pys += drag.getY();
-		}
+		}*/
 		Connectron ct = this.getParent();
-		Corp c = ct.getComponentAt( pxs, pys );
-		if( c != null && c != drag ) {
+		Corp c = ct.getComponentAt( xx, yy );
+		if( c != null && c != drag && drag != null ) {
 			drag.addLink( c );
-		} else if( !dragging && Corp.drag != null && !(c instanceof Corp) ) {
-			Corp corp = new Corp( getCreateName(), "unknown", pxs-size/2, pys-size/2 );
+		} else if( !dragging && Corp.drag != null /*&& !(c instanceof Corp)*/ ) {
+			Corp corp = new Corp( getCreateName(), "unknown", xx-size/2, yy-size/2 );
 			corp.depz = Corp.drag.depz;
-			ct.backtrack(pxs-size/2, pys-size/2, Corp.drag.depz, ct.getParentWidth(), ct.getParentHeight(), corp);
+			ct.backtrack(xx-size/2, yy-size/2, Corp.drag.depz, ct.getParentWidth(), ct.getParentHeight(), corp);
 			this.getParent().add( corp );
 			Corp.drag.addLink( corp );
 			Corp.drag = null;
@@ -924,12 +924,13 @@ public class Corp {
 		prop.currentCorp = null;
 		this.getParent().remove( prop );
 		if( dragging ) {
+			int dx = npx - pxs;
+			int dy = npy - pys;
+			
 			if( selectedList.size() == 0 || !selectedList.contains(this) ) {
-				moveRelative( npx-pxs, npy-pys, true );
+				moveRelative( dx, dy, true );
 				hasMoved();
 			} else {
-				int dx = npx - pxs;
-				int dy = npy - pys;
 				moveRelativeVirt( dx, dy, false );
 				for( Corp c : selectedList ) {
 					if( c != this ) {
@@ -941,11 +942,16 @@ public class Corp {
 				}
 			}
 		} else {
-			px = npx;
-			py = npy;
+			//console( npx + "  " + npy );
+			pxs = npx;
+			pys = npy;
 		}
 		this.getParent().repaint();
 	}
+	
+	public native void console( String val ) /*-{
+		$wnd.console.log( val );
+	}-*/;
 	
 	public Connectron getParent() {
 		return connectron;
