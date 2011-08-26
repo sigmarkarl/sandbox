@@ -530,18 +530,14 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 			
 			g.clearRect(0, 0, this.getWidth(), this.getHeight());
 			
-			for( Corp corp : this.getComponents() ) {
-				g.translate( corp.getX(), corp.getY() );
-				corp.paintComponent( g );
-				g.translate( -corp.getX(), -corp.getY() );
-			}
-			
 			/*String	oldFont = g.getFont();
 			if( oldFont.getSize() != 7 ) {
 				oldFont = oldFont.deriveFont(8.0f);
 				g2.setFont( oldFont );
 			}*/
 			if( drawLinks ) {
+				g.setStrokeStyle("#000000");
+				
 				for( Corp corp : this.getComponents() ) {
 					Rectangle inrect = new Rectangle( this.getHorizontalScrollPosition(), this.getVerticalScrollPosition(), this.getWidth(), this.getHeight() ); //this.getVisibleRect();
 					for( Corp cc : corp.getLinks() ) {
@@ -552,10 +548,12 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 						
 						if( cc.depz > 0.0 && (inrect.contains(x1, y1) || inrect.contains(x2, y2)) ) {
 							g.setFillStyle( "#777777" );
+							
 							g.beginPath();
 							g.moveTo( x1, y1 );
 							g.lineTo( x2, y2 );
 							g.closePath();
+							g.stroke();
 							
 							/*double h1 = Math.atan2( y2 - y1, x2 - x1 );
 							double h2 = h1 + Math.PI/8.0;
@@ -612,10 +610,19 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 			
 			Corp c = Corp.drag;
 			if( c != null && c.px != -1 ) {
+				g.setStrokeStyle("#000000");
 				g.beginPath();
 				g.moveTo( c.getX()+c.getWidth()/2, c.getY()+c.getHeight()/2 );
-				g.lineTo( c.getX()+c.px, c.getY()+c.py );
+				//console( "erm " + c.px + "  " + c.py );
+				g.lineTo( c.pxs, c.pys );
 				g.closePath();
+				g.stroke();
+			}
+			
+			for( Corp corp : this.getComponents() ) {
+				g.translate( corp.getX(), corp.getY() );
+				corp.paintComponent( g );
+				g.translate( -corp.getX(), -corp.getY() );
 			}
 			
 			if( selRect != null ) {
@@ -1246,12 +1253,13 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		int x = event.getX();
 		int y = event.getY();
 		
-		if( dcorp != null ) {
-			if( mousedown ) dcorp.mouseDragged( event, x, y, event.isShiftKeyDown() );
-			//else dcorp.mouseMoved( event, x, y, event.isShiftKeyDown(), true );
+		if( Corp.drag != null ) {
+			if( mousedown ) {
+				Corp.drag.mouseDragged( event, x, y, event.isShiftKeyDown() );
+			} //else Corp.drag.mouseMoved( event, x, y, event.isShiftKeyDown(), true );
 		} else {
 			if( mousedown ) mouseDragged( event );
-			//else mouseMoved( event );
+			else mouseMoved( event );
 		}
 	}
 
@@ -1263,16 +1271,23 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		int x = event.getX();
 		int y = event.getY();
 		
-		if( dcorp != null ) dcorp.mouseReleased( event, x, y, event.isShiftKeyDown(), true );
+		if( Corp.drag != null ) Corp.drag.mouseReleased( event, x, y, event.isShiftKeyDown(), true );
 		mouseReleased( event );
 	}
 
 	@Override
-	public void onMouseDown(MouseDownEvent event) {
-		if( mousedown ) mouseReleased( event );
-		else {
+	public void onMouseDown(MouseDownEvent e) {
+		int x = e.getX();
+		int y = e.getY();
+		
+		if( mousedown ) {			
+			if( Corp.drag != null ) Corp.drag.mouseReleased( e, x, y, e.isShiftKeyDown(), false );
+		} else {
 			mousedown = true;
-			mousePressed( event );
+			
+			Corp c = this.getComponentAt( x, y );
+			if( c != null ) c.mousePressed( e, x, y, e.isShiftKeyDown(), false );
+			else mousePressed( e );
 		}
 	}
 
@@ -1284,12 +1299,11 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		keyPressed( keychar, keycode );
 	}
 
-	Corp dcorp = null;
 	@Override
 	public void onDoubleClick(DoubleClickEvent e) {
 		int x = e.getX();
 		int y = e.getY();
-		dcorp = this.getComponentAt( x, y );
+		Corp dcorp = this.getComponentAt( x, y );
 		if( dcorp != null ) {
 			mousedown = true;
 			dcorp.mousePressed(e, x, y, e.isShiftKeyDown(), true);
