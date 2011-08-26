@@ -6294,10 +6294,10 @@ public class GeneSet extends JApplet {
 	
 	private static JComponent newSoft( JButton jb ) throws IOException {
 		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
-		loci2aasequence( new InputStreamReader( is ) );
+		if( is != null ) loci2aasequence( new InputStreamReader( is ) );
 		
 		is = GeneSet.class.getResourceAsStream("/all.fsa");
-		loci2dnasequence( new InputStreamReader( is ) );
+		if( is != null ) loci2dnasequence( new InputStreamReader( is ) );
 		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );
