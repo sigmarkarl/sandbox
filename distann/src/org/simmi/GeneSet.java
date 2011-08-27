@@ -6287,7 +6287,7 @@ public class GeneSet extends JApplet {
 		
 		public ClusterInfo( int id, int sharing, int genum ) {
 			this.id = id;
-			this.sharing = sharing;
+			this.sharing = sharing;	
 			this.genum = genum;
 		}
 	};
