@@ -4,7 +4,12 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.ScriptElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
@@ -42,7 +47,15 @@ public class Navisionexplorer implements EntryPoint {
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get();
 		
-		final SplitLayoutPanel slp = new SplitLayoutPanel();
+		final DockLayoutPanel	dlp = new DockLayoutPanel( Unit.PX );
+		final SplitLayoutPanel 	slp = new SplitLayoutPanel();
+		
+		HorizontalPanel	toolbar = new HorizontalPanel();
+		
+		ScriptElement	se = Document.get().createScriptElement();
+		
+		dlp.addNorth( toolbar, 25 );
+		dlp.add( slp );
 		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {
