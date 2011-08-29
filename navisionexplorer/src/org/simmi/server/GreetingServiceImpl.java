@@ -88,7 +88,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			e2.printStackTrace();
 		}
 		
-		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=MATIS;user=simmi;password=mirodc30;";
+		String connectionUrl = "jdbc:sqlserver://navision.rf.is;databaseName=MATIS;user=simmi;password=mirodc30;";
 		
 		List<Person>	persons = null;
 		try {
