@@ -42,7 +42,7 @@ public class Corp {
 	static byte[]		buffer = new byte[200000];
 	static int			size = 32;
 	static Set<Corp>	selectedList = new HashSet<Corp>();
-	static Corp			drag;
+	//static Corp			drag;
 	static String 		paleColor = "#ffffff77";
 	//static JTextField	textfield = new JTextField();
 	static Prop					prop;
@@ -717,7 +717,9 @@ public class Corp {
 		
 		if( selected ) {
 			g.setFillStyle( paleColor );
+			g.setStrokeStyle( "#000000" );
 			g.fillRect( 0, 0, this.getWidth(), this.getHeight() );
+			g.strokeRect( 0, 0, this.getWidth(), this.getHeight() );
 		}
 	}
 
@@ -750,12 +752,12 @@ public class Corp {
 		lxs = this.getX();
 		lys = this.getY();
 		this.selected = true;
-		drag = this;
+		//drag = this;
 		//this.getParent().setComponentZOrder(this, 0);
 		this.getParent().repaint();
 	}
 
-	public void mouseReleased( MouseEvent e, int xx, int yy, boolean isShiftKeyDown, boolean doubleClick ) {		
+	public void mouseReleased( MouseEvent e, int xx, int yy, boolean isShiftKeyDown, boolean doubleClick, Corp drag ) {		
 		/*if( drag != null ) {
 			pxs += drag.getX();
 			pys += drag.getY();
@@ -764,13 +766,13 @@ public class Corp {
 		Corp c = ct.getComponentAt( xx, yy );
 		if( c != null && c != drag && drag != null ) {
 			drag.addLink( c );
-		} else if( !dragging && Corp.drag != null /*&& !(c instanceof Corp)*/ ) {
+		} else if( !dragging && drag != null /*&& !(c instanceof Corp)*/ ) {
 			Corp corp = new Corp( getCreateName(), "unknown", xx-size/2, yy-size/2 );
-			corp.depz = Corp.drag.depz;
-			ct.backtrack(xx-size/2, yy-size/2, Corp.drag.depz, ct.getParentWidth(), ct.getParentHeight(), corp);
+			corp.depz = drag.depz;
+			ct.backtrack(xx-size/2, yy-size/2, drag.depz, ct.getParentWidth(), ct.getParentHeight(), corp);
 			this.getParent().add( corp );
-			Corp.drag.addLink( corp );
-			Corp.drag = null;
+			drag.addLink( corp );
+			drag = null;
 		}
 		
 		dragging = false;
@@ -836,7 +838,7 @@ public class Corp {
 		
 		Connectron	ct = this.getParent();
 		ct.birta = false;
-		ct.backtrack( this.getX()-3+x, this.getY()-3+y, this.depz, ct.getParentWidth(), ct.getParentHeight(), this );
+		ct.backtrack( this.getX()+x, this.getY()+y, this.depz, ct.getParentWidth(), ct.getParentHeight(), this );
 		/*this.setx( this.getx()+x );
 		this.sety( this.gety()+y );
 		this.setz( 0 );*/
@@ -867,7 +869,7 @@ public class Corp {
 		double oldy = this.gety();
 		double oldz = this.getz();
 		
-		ct.backtrack( this.px+x-3, this.py+y-3, this.depz, ct.getParentWidth(), ct.getParentHeight(), this );
+		ct.backtrack( this.px+x, this.py+y, this.depz, ct.getParentWidth(), ct.getParentHeight(), this );
 		/*this.setx( this.getx()+x );
 		this.sety( this.gety()+y );
 		this.setz( 0 );*/
@@ -927,6 +929,8 @@ public class Corp {
 			int dx = npx - pxs;
 			int dy = npy - pys;
 			
+			//console( dx + "  " + dy );
+			
 			if( selectedList.size() == 0 || !selectedList.contains(this) ) {
 				moveRelative( dx, dy, true );
 				hasMoved();
@@ -941,11 +945,11 @@ public class Corp {
 					c.hasMoved();
 				}
 			}
-		} else {
-			//console( npx + "  " + npy );
-			pxs = npx;
-			pys = npy;
 		}
+			//console( npx + "  " + npy );
+		pxs = npx;
+		pys = npy;
+		
 		this.getParent().repaint();
 	}
 	
