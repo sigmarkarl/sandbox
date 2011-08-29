@@ -936,7 +936,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 				}
 				
 				Corp c = Corp.drag;
-				if( c != null && c.p != null ) {
+				if( c != null && c.getp() != null ) {
 					//g2.drawLine( c.getX()+c.getWidth()/2, c.getY()+c.getHeight()/2, c.getX()+c.p.x, c.getY()+c.p.y );
 				}
 				

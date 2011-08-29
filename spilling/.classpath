@@ -2,8 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/jre/lib/plugin.jar"/>
-	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/poi-3.8-beta3-20110606.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/poi-examples-3.8-beta3-20110606.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/poi-excelant-3.8-beta3-20110606.jar"/>
@@ -16,5 +14,7 @@
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/lib/log4j-1.2.13.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
