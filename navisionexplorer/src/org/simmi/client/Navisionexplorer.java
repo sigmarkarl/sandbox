@@ -60,7 +60,7 @@ public class Navisionexplorer implements EntryPoint {
 		    	  
 		    	greetingService.getAllUsers( new AsyncCallback<List<Person>>() {
 			    	@Override
-					public void onSuccess(List<Person> result) {			
+					public void onSuccess(List<Person> result) {
 						if( result != null ) {
 				    		for( Person person : result ) {
 								int r = data.getNumberOfRows();
