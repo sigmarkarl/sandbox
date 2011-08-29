@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyEvent;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -608,8 +609,8 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 				}
 			}
 			
-			Corp c = Corp.drag;
-			if( c != null && c.px != -1 ) {
+			Corp c = drag;
+			if( c != null && !c.dragging && c.px != -1 ) {
 				g.setStrokeStyle("#000000");
 				g.beginPath();
 				g.moveTo( c.getX()+c.getWidth()/2, c.getY()+c.getHeight()/2 );
@@ -882,6 +883,8 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 	int		mx = 0;
 	int		my = 0;
 	public void mouseDragged(MouseMoveEvent e) {
+		//console("erm");
+		
 		npx = e.getX();
 		npy = e.getY();
 		if( shift ) {
@@ -987,9 +990,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		$wnd.console.log( str );
 	}-*/;
 
-	public void mousePressed(MouseDownEvent e) {
-		int x = e.getX();
-		int y = e.getY();
+	public void mousePressed(MouseDownEvent e, int x, int y, int nativebutton ) {
 		Corp c = this.getComponentAt( x, y );
 		if( c == null ) {
 			px = x;
@@ -998,11 +999,11 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 			npy = py;
 			shift = e.isShiftKeyDown();
 			
-			console( mx + "  " + my );
-			if( e.getNativeButton() == NativeEvent.BUTTON_RIGHT ) {
+			if( nativebutton == NativeEvent.BUTTON_RIGHT ) {
+				mousedown = false;
 				popup.setPopupPosition(e.getX(), e.getY());
 				popup.show();
-			} else {	
+			} else {
 				requestFocus();
 				
 				Corp.selectedList.clear();
@@ -1030,10 +1031,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 						double h = h2 - h1;
 						if( h > Math.PI ) h -= 2*Math.PI;
 						if( h < -Math.PI ) h += 2*Math.PI;
-						/*System.err.println( (x1) + "  " + (y1) );
-						System.err.println( (x2) + "  " + (y2) );
-						System.err.println( (x1-xx) + "  " + (y1-yy) );
-						System.err.println( h1+ "  " + h2 + "  " + h );*/
+						
 						if( h < 0 ) {
 							Set<String>	strset = corp.connections.get(corp2).linkTitles;
 							double xxx = xx - px;
@@ -1042,7 +1040,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 								linkCorp = corp;
 								linkCorp2 = corp2;
 								
-								System.err.println("found link " + linkCorp.getName() + "  " + linkCorp2.getName() );
+								//System.err.println("found link " + linkCorp.getName() + "  " + linkCorp2.getName() );
 								corp.selectedLink = corp.connections.get(corp2).linkTitles.iterator().next();
 							}
 						}
@@ -1153,24 +1151,24 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 			py = -1;
 			repaint();
 		} else {
-			c.mouseReleased( e, x, y, e.isShiftKeyDown(), false );
+			c.mouseReleased( e, x, y, e.isShiftKeyDown(), false, drag );
 		}
 	}
 
 	public void keyPressed( int keychar, int keycode ) {
-		if( keycode == '+' ) {
+		if( keycode == 107 /*+*/ ) {
 			zoomval -= 100;
-		} else if( keycode == '-' ) {
+		} else if( keycode == 109 /*-*/ ) {
 			zoomval += 100;
-		} else if( keycode == '*' ) {
+		} else if( keycode == 106 /* * */ ) {
 			dzoomval -= 100;
-		} else if( keycode == '/' ) {
+		} else if( keycode == 111 /*/*/ ) {
 			dzoomval += 100;
-		} else if( keycode == ',' ) {
+		} else if( keycode == 188 /*,*/ ) {
 			dsize *= 0.8;
-		} else if( keycode == '.' ) {
+		} else if( keycode == 190 /*.*/ ) {
 			dsize *= 1.25;
-		} else if( keycode == ' ' ) {
+		} else if( keycode == 32 /* */ ) {
 			updateCenterOfMass();
 		} else if( linkCorp != null ) {
 			if( keycode == KeyCodes.KEY_DELETE ) {
@@ -1253,9 +1251,9 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		int x = event.getX();
 		int y = event.getY();
 		
-		if( Corp.drag != null ) {
+		if( drag != null ) {
 			if( mousedown ) {
-				Corp.drag.mouseDragged( event, x, y, event.isShiftKeyDown() );
+				drag.mouseDragged( event, x, y, event.isShiftKeyDown() );
 			} //else Corp.drag.mouseMoved( event, x, y, event.isShiftKeyDown(), true );
 		} else {
 			if( mousedown ) mouseDragged( event );
@@ -1263,31 +1261,47 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		}
 	}
 
+	Corp	drag = null;
 	boolean mousedown = false;
 	@Override
 	public void onMouseUp(MouseUpEvent event) {
+		//console( "mouseup" );
+		
 		mousedown = false;
 		
 		int x = event.getX();
 		int y = event.getY();
 		
-		if( Corp.drag != null ) Corp.drag.mouseReleased( event, x, y, event.isShiftKeyDown(), true );
+		if( drag != null ) {
+			Corp c = drag;
+			drag = null;
+			c.mouseReleased( event, x, y, event.isShiftKeyDown(), true, c );
+		}
 		mouseReleased( event );
 	}
 
 	@Override
 	public void onMouseDown(MouseDownEvent e) {
+		//console( "mousedown" );
+		
 		int x = e.getX();
 		int y = e.getY();
 		
 		if( mousedown ) {			
-			if( Corp.drag != null ) Corp.drag.mouseReleased( e, x, y, e.isShiftKeyDown(), false );
+			if( drag != null ) {
+				Corp c = drag;
+				drag = null;
+				c.mouseReleased( e, x, y, e.isShiftKeyDown(), false, c );
+			}
 		} else {
 			mousedown = true;
 			
 			Corp c = this.getComponentAt( x, y );
-			if( c != null ) c.mousePressed( e, x, y, e.isShiftKeyDown(), false );
-			else mousePressed( e );
+			if( c != null ) {
+				drag = c;
+				c.mousePressed( e, x, y, e.isShiftKeyDown(), false );
+			}
+			else mousePressed( e, x, y, e.getNativeButton() );
 		}
 	}
 
@@ -1303,10 +1317,11 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 	public void onDoubleClick(DoubleClickEvent e) {
 		int x = e.getX();
 		int y = e.getY();
-		Corp dcorp = this.getComponentAt( x, y );
-		if( dcorp != null ) {
+		Corp c = this.getComponentAt( x, y );
+		if( c != null ) {
 			mousedown = true;
-			dcorp.mousePressed(e, x, y, e.isShiftKeyDown(), true);
+			drag = c;
+			c.mousePressed(e, x, y, e.isShiftKeyDown(), true);
 		}
 	}
 }
