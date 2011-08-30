@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://130.208.252.31/">
+<information>
+  <title>Blastic</title>
+  <vendor>Matis</vendor>
+  <homepage href="http://www.matis.is" />
+  <description>Blastic</description>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="serify.jar"/>
+</resources>
+<applet-desc 
+	name="Matisgem"
+	main-class="org.simmi.SerifyApplet"
+	width="80"
+	height="80">
+</applet-desc>
+</jnlp>

@@ -19,7 +19,6 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyEvent;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -635,7 +634,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 				g.strokeRect( selRect.x, selRect.y, selRect.width, selRect.height );
 			}
 			
-			if( toggle ) {
+			/*if( toggle ) {
 				long val = System.currentTimeMillis();
 				long diff = val - last;
 				val = last;
@@ -650,7 +649,8 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 					t.schedule( (int)(100-diff) );
 				} else painting = false;
 				this.repaint();
-			} else painting = false;
+			} else*/
+			painting = false;
 		}
 	}
 	
@@ -870,7 +870,10 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		menu.addItem( "Spring Graph", new Command() {
 			@Override
 			public void execute() {
-				//if( !toggle ) springThread().start();
+				if( !toggle ) {
+					Timer t = springThread();
+					t.scheduleRepeating( 100 );
+				}
 				
 				toggle = !toggle;
 				
@@ -994,6 +997,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 	}-*/;
 
 	public void mousePressed(MouseDownEvent e, int x, int y, int nativebutton ) {
+		toggle = false;
 		Corp c = this.getComponentAt( x, y );
 		if( c == null ) {
 			px = x;
