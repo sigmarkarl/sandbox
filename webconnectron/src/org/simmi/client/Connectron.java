@@ -571,6 +571,8 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 								double x = (x1+x2)/2;
 								double y = (y1+y2)/2;
 								double t = Math.atan2( y2-y1, x2-x1 );
+								
+								g.translate(x, y);
 								g.rotate(t); //, x, y);
 								int k = 0;
 								g.setFillStyle( "#000000" );
@@ -582,12 +584,13 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 										/*if( cc == linkCorp2 && str.equals( corp.selectedLink ) ) {
 											g2.setFont( oldFont.deriveFont( Font.BOLD ) );
 										}*/
-										g.fillText( str, x-strw/2, y-5-k );
+										g.fillText( str, -strw/2, -5-k );
 										//if( g2.getFont() != oldFont ) g2.setFont( oldFont );
 										k += 10;
 									}
 								}
 								g.rotate(-t); //, x, y);
+								g.translate(-x, -y);
 							}
 						}
 					}
@@ -1042,8 +1045,11 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 								
 								//System.err.println("found link " + linkCorp.getName() + "  " + linkCorp2.getName() );
 								corp.selectedLink = corp.connections.get(corp2).linkTitles.iterator().next();
+								
+								break;
 							}
 						}
+						if( linkCorp != null ) break;
 					}
 				}
 				//c.remove( Corp.textfield );
@@ -1196,7 +1202,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 				Set<String>	strset = linkCorp.connections.get( linkCorp2 ).linkTitles;
 				strset.remove( linkCorp.selectedLink );
 				if( linkCorp.selectedLink.equals("link") ) linkCorp.selectedLink = "";
-				linkCorp.selectedLink += keychar;
+				linkCorp.selectedLink += (char)keycode;
 				strset.add( linkCorp.selectedLink );
 			}
 		} else {
