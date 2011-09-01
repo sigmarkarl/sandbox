@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="http://130.208.252.31/">
+<jnlp spec="1.0+" codebase="http://10.66.100.87:8888/">
 <information>
   <title>Blastic</title>
   <vendor>Matis</vendor>
@@ -7,6 +7,9 @@
   <description>Blastic</description>
 </information>
 <offline-allowed/>
+<security>
+  <all-permissions/>
+</security>
 <resources>
   <j2se version="1.6+" />
   <jar href="serify.jar"/>

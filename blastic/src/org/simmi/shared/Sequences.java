@@ -10,6 +10,10 @@ public class Sequences implements IsSerializable {
 	public String getName() {
 		return name;
 	}
+	
+	public String getType() {
+		return type;
+	}
 
 	public String getPath() {
 		return path;
@@ -21,6 +25,7 @@ public class Sequences implements IsSerializable {
 
 	String user;
 	String name;
+	String type;
 	String path;
 	int		num;
 	String key;
@@ -29,9 +34,10 @@ public class Sequences implements IsSerializable {
 		
 	}
 	
-	public Sequences( String user, String name, String path, int num ) {
+	public Sequences( String user, String name, String type, String path, int num ) {
 		this.user = user;
 		this.name = name;
+		this.type = type;
 		this.path = path;
 		this.num = num;
 	}
