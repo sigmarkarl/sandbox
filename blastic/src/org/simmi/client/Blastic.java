@@ -6,7 +6,7 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.ScriptElement;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -38,7 +38,7 @@ public class Blastic implements EntryPoint {
 
 	String user = "";
 	
-	public native int dropHandler( JavaScriptObject table, String uid ) /*-{
+	public native int dropHandler( JavaScriptObject table, String uid, String type ) /*-{
 		var s = this;
 		
 		function f1( evt ) {
@@ -69,7 +69,7 @@ public class Blastic implements EntryPoint {
 					var reader = new FileReader();
 					reader.onload = function(e) {
 						var res = e.target.result;
-						//s.@org.simmi.client.Blastic::fileLoad(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( file.name, file.path, uid, res );
+						//s.@org.simmi.client.Blastic::fileLoad(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( file.name, file.path, uid, type, res );
 					};
 					reader.readAsBinaryString( file );
 				}
@@ -93,8 +93,8 @@ public class Blastic implements EntryPoint {
 		return 0;
 	}-*/;
 	
-	public void fileLoad( String fileName, String filePath, String uid, int num ) {
-		final Sequences seqs = new Sequences( uid, fileName, filePath, num );
+	public void fileLoad( String fileName, String filePath, String uid, String type, int num ) {
+		final Sequences seqs = new Sequences( uid, fileName, type, filePath, num );
 		greetingService.saveSequences( seqs, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {
@@ -119,6 +119,41 @@ public class Blastic implements EntryPoint {
 		});
 	}
 	
+	public native int runApplet() /*-{
+		var attributes = { codebase:'http://10.66.100.87:8888/', archive:'serify.jar', code:'org.simmi.SerifyApplet', width:'80', height:'80', id:'serify', name:'serify' };
+        var parameters = { jnlp_href:'serify.jnlp' };
+        $wnd.deployJava.runApplet(attributes, parameters, '1.6');
+	}-*/;
+	
+	public native int resizeApplet( Element applet, String w, String h ) /*-{
+		$wnd.console.log( w + ' ' + h );
+		
+		applet.setSize( w, h );
+	}-*/;
+	
+	public native int initAddDb() /*-{
+		var s = this;
+		$wnd.addDb = function( user, name, path, result ) {
+			s.@org.simmi.client.Blastic::addDbInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, path, result );
+		};
+	}-*/;
+	
+	public native int addSeqs( Element e, String user, String name, String type, String path, int num ) /*-{
+		e.addSequences( "" );
+	}-*/;
+	
+	public void addDbInfo( String user, String name, String path, String result ) {
+		int r = data.getNumberOfRows();
+		
+		data.addRow();
+		data.setValue( r, 0, user );
+		data.setValue( r, 1, name );
+		data.setValue( r, 2, path );
+		data.setValue( r, 3, result );
+		view = DataView.create( data );
+		table.draw( view, options );
+	}
+	
 	DataTable	data;
 	DataView	view;
 	Table		table;
@@ -130,23 +165,24 @@ public class Blastic implements EntryPoint {
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
 		
+		initAddDb();
+		
 		final SplitLayoutPanel	slp = new SplitLayoutPanel();
 		slp.setWidth("1000px");
 		slp.setHeight("1000px");
 		slp.getElement().getStyle().setBorderWidth(3.0, Unit.PX);
 		
-		String source = "var attributes = { codebase:'http://130.208.252.31:8888/', archive:'serify.jar', code:'org.simmi.SerifyApplet', width:'80', height:'80', id:'serify', name:'serify' }\n";
-        source += "var parameters = { jnlp_href:'serify.jnlp' }\n";
-        source += "deployJava.runApplet(attributes, parameters, '1.6')\n";
-		ScriptElement se = Document.get().createScriptElement( source );
+		//String source = "var attributes = { codebase:'http://130.208.252.31:8888/', archive:'serify.jar', code:'org.simmi.SerifyApplet', width:'80', height:'80', id:'serify', name:'serify' }\n";
+        //source += "var parameters = { jnlp_href:'serify.jnlp' }\n";
+        //source += "deployJava.runApplet(attributes, parameters, '1.6')\n";
+		//ScriptElement se = Document.get().createScriptElement();
 		//se.removeFromParent();
 		
+		//final ResizeLayoutPanel	applet = new ResizeLayoutPanel();
 		final SimplePanel	applet = new SimplePanel();
-		applet.getElement().appendChild( se );
-		
 		final SimplePanel	tableview = new SimplePanel();
-		tableview.setWidth("640px");
-		tableview.setHeight("480px");
+		tableview.setWidth("100%");
+		tableview.setHeight("100%");
 		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {
@@ -154,18 +190,18 @@ public class Blastic implements EntryPoint {
 		    	data.addColumn( ColumnType.STRING, "User");
 		    	data.addColumn( ColumnType.STRING, "Name");
 		    	data.addColumn( ColumnType.STRING, "Path");
-		    	data.addColumn( ColumnType.NUMBER, "#Seq");
+		    	data.addColumn( ColumnType.STRING, "Result");
 		    	  
 		    	options = Options.create();
-		    	options.setWidth("640px");
-		    	options.setHeight("480px");
+		    	options.setWidth("100%");
+		    	options.setHeight("100%");
 		    	options.setAllowHtml( true );
 		    	  
 		    	data.addRow();
 				data.setValue( 0, 0, "erm" );
 				data.setValue( 0, 1, "erm" );
 				data.setValue( 0, 2, "erm" );
-				data.setValue( 0, 3, 1 );
+				data.setValue( 0, 3, "erm" );
 				
 		    	view = DataView.create( data );
 		    	table = new Table( view, options );
@@ -177,15 +213,8 @@ public class Blastic implements EntryPoint {
 					public void onSuccess(Sequences[] result) {
 						if( result != null ) {
 				    		for( Sequences seqs : result ) {
-								int r = data.getNumberOfRows();
-								
-								data.addRow();
-								data.setValue( r, 0, seqs.getUser() );
-								data.setValue( r, 1, seqs.getName() );
-								data.setValue( r, 2, seqs.getPath() );
-								data.setValue( r, 3, seqs.getNum() );
-								view = DataView.create( data );
-								table.draw( view, options );
+				    			Element e = Document.get().getElementById("serify");
+				    			addSeqs( e, seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), seqs.getNum() );
 							}
 						}
 					}
@@ -195,16 +224,44 @@ public class Blastic implements EntryPoint {
 							
 					}
 			    });
-		    	  
+		    	
+		    	table.setWidth("100%");
+		    	table.setHeight("100%");
 		    	tableview.add( table );
-		    	table.setWidth("640px");
-		    	table.setHeight("480px");
+		    	slp.addWest( applet, 500.0 );
+		    	slp.add( tableview );
+		    	  
+		    	//tableview.add( table );
+		    	//table.setWidth("640px");
+		    	//table.setHeight("480px");
 		    }
 		};
 		VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);
 				
-    	slp.add( tableview );
-    	slp.addEast( applet, 100.0 );
+		Element pe = Document.get().createElement("param");
+		pe.setAttribute("name", "jnlp_href");
+		pe.setAttribute("value", "serify.jnlp");
+		
+		final Element ae = Document.get().createElement("applet");
+		ae.appendChild( pe );
+		
+		ae.setAttribute("id", "serify");
+		ae.setAttribute("name", "serify");
+		ae.setAttribute("codebase", "http://10.66.100.87:8888/");
+		ae.setAttribute("width", "100%");
+		ae.setAttribute("height", "100%");
+		ae.setAttribute("jnlp_href", "serify.jnlp");
+		ae.setAttribute("archive", "serify.jar");
+		ae.setAttribute("code", "org.simmi.SerifyApplet");
+		
+		applet.getElement().appendChild( ae );
+		
+		/*applet.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				resizeApplet( ae, event.getWidth()+"px", event.getHeight()+"px" );
+			}
+		});*/
     	
 		rp.add( slp );
 	}
