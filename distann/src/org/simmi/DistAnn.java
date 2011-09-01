@@ -20,7 +20,6 @@ import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
