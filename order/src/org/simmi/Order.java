@@ -12,7 +12,6 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -48,11 +47,11 @@ import java.util.TreeSet;
 import javax.imageio.ImageIO;
 import javax.mail.Authenticator;
 import javax.mail.Message;
+import javax.mail.Message.RecipientType;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
-import javax.mail.Message.RecipientType;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
@@ -285,10 +284,12 @@ public class Order extends JApplet {
 		public void setBounds( int x, int y, int w, int h ) {
 			super.setBounds( x,y,w,h );
 			
-			lab.setBounds(0, 15, 95, 25);
-			sp.setBounds(100, 15, 225, 25);
-			ok.setBounds(70, 70, 100, 25);
-			cancel.setBounds(240, 70, 100, 25);
+			if( lab != null ) {
+				lab.setBounds(0, 15, 95, 25);
+				sp.setBounds(100, 15, 225, 25);
+				ok.setBounds(70, 70, 100, 25);
+				cancel.setBounds(240, 70, 100, 25);
+			}
 		}
 	};
 	
@@ -336,18 +337,20 @@ public class Order extends JApplet {
 		public void setBounds( int x, int y, int w, int h ) {
 			super.setBounds(x, y, w, h);
 			
-			name.setBounds(0, 15, 95, 25);
-			cat.setBounds(275, 15, 95, 25);
-			frml.setBounds(0, 45, 95, 25);
-			brgr.setBounds(275, 45, 95, 25);
-			
-			nameField.setBounds(100, 15, 225, 25);
-			catField.setBounds(375, 15, 150, 25);
-			frmlCombo.setBounds(100, 45, 150, 25);
-			brgrCombo.setBounds(375, 45, 150, 25);
-			
-			ok.setBounds(140, 100, 100, 25);
-			cancel.setBounds(310, 100, 100, 25);
+			if( name != null ) {
+				name.setBounds(0, 15, 95, 25);
+				cat.setBounds(275, 15, 95, 25);
+				frml.setBounds(0, 45, 95, 25);
+				brgr.setBounds(275, 45, 95, 25);
+				
+				nameField.setBounds(100, 15, 225, 25);
+				catField.setBounds(375, 15, 150, 25);
+				frmlCombo.setBounds(100, 45, 150, 25);
+				brgrCombo.setBounds(375, 45, 150, 25);
+				
+				ok.setBounds(140, 100, 100, 25);
+				cancel.setBounds(310, 100, 100, 25);
+			}
 		}
 		
 		private void init() {
@@ -721,8 +724,8 @@ public class Order extends JApplet {
 	}
 	
 	public void connect() throws SQLException {
-		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
-		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
+		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 		con = DriverManager.getConnection(connectionUrl);
 	}
 	
@@ -1053,7 +1056,7 @@ public class Order extends JApplet {
 	private static class SMTPAuthenticator extends javax.mail.Authenticator {
 	    public PasswordAuthentication getPasswordAuthentication() {
 	        String username = "sigmar";
-	        String password = "my11space";
+	        String password = "b.r3a1h1ms";
 	        return new PasswordAuthentication(username, password);
 	    }
 	}
