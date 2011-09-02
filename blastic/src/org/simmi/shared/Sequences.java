@@ -19,7 +19,7 @@ public class Sequences implements IsSerializable {
 		return path;
 	}
 
-	public int getNum() {
+	public long getNum() {
 		return num;
 	}
 
@@ -27,14 +27,14 @@ public class Sequences implements IsSerializable {
 	String name;
 	String type;
 	String path;
-	int		num;
+	long   num;
 	String key;
 	
 	public Sequences() {
 		
 	}
 	
-	public Sequences( String user, String name, String type, String path, int num ) {
+	public Sequences( String user, String name, String type, String path, long num ) {
 		this.user = user;
 		this.name = name;
 		this.type = type;
