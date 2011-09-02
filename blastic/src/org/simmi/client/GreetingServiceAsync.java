@@ -1,5 +1,7 @@
 package org.simmi.client;
 
+import org.simmi.shared.Blast;
+import org.simmi.shared.Database;
 import org.simmi.shared.Sequences;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -13,4 +15,8 @@ public interface GreetingServiceAsync {
 
 	void getSequences(AsyncCallback<Sequences[]> asyncCallback);
 	void saveSequences(Sequences seqs, AsyncCallback<String> asyncCallback);
+	void getBlastResults(AsyncCallback<Blast[]> asyncCallback);
+	void getDatabases(AsyncCallback<Database[]> asyncCallback);
+	void saveDb(Database b, AsyncCallback<String> asyncCallback);
+	void saveBlast(Blast b, AsyncCallback<String> asyncCallback);
 }
