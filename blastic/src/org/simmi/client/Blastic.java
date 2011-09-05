@@ -1,5 +1,8 @@
 package org.simmi.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.simmi.shared.Blast;
 import org.simmi.shared.Database;
 import org.simmi.shared.Sequences;
@@ -46,9 +49,27 @@ public class Blastic implements EntryPoint {
 	 */
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
-	String user = "";
+	String user = null;
 	
-	public native int console( String log ) /*-{
+	private native String fetchUser() /*-{
+		var user = null;
+		try {
+			var appli = $doc.getElementById('serify');
+			$wnd.console.log( appli );
+			user = appli.getUser();
+			$wnd.console.log( user );
+		} catch( e ) {
+			$wnd.console.log( e );
+		}
+		return user;
+	}-*/;
+	
+	private String getUser() {
+		if( user == null ) user = fetchUser();
+		return user;
+	}
+	
+	public native void console( String log ) /*-{
 		$wnd.console.log( log );
 	}-*/;		
 	
@@ -107,13 +128,12 @@ public class Blastic implements EntryPoint {
 		return 0;
 	}-*/;
 	
-	public native void addSequenceInApplet( JavaScriptObject appletelement, String user, String name, String type, String path, int num ) /*-{
-		appletelement.updateSequences( user, name, type, path, num );
+	public native void addSequenceInApplet( JavaScriptObject appletelement, String user, String name, String type, String path, int num, String key ) /*-{
+		appletelement.updateSequences( user, name, type, path, num, key );
 	}-*/;
 	
 	public void addSequence( final String user, final String name, final String type, final String path, final int num ) {
 		final Sequences seqs = new Sequences( user, name, type, path, num );
-		console( "about to save" );
 		greetingService.saveSequences( seqs, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {
@@ -122,12 +142,8 @@ public class Blastic implements EntryPoint {
 
 			@Override
 			public void onSuccess(String result) {
-				console( "saving successful" );
-				
-				seqs.setKey( result );
-				
 				Element applet = Document.get().getElementById("serify");
-				addSequenceInApplet( applet, user, name, type, path, num );
+				addSequenceInApplet( applet, user, name, type, path, num, result );
 				
 				/*int r = data.getNumberOfRows();
 				data.addRow();
@@ -183,7 +199,32 @@ public class Blastic implements EntryPoint {
 		$wnd.getSelectedDb = function() {
 			return s.@org.simmi.client.Blastic::getSelectedDb()();
 		};
+		
+		$wnd.deleteSequenceKey = function( key ) {
+			s.@org.simmi.client.Blastic::deleteSequenceKey(Ljava/lang/String;)( key );
+		};
+		
+		return 0;
 	}-*/;
+	
+	public native void deleteSequenceInApplet( String key ) /*-{
+		var applet = $doc.getElementById('serify');
+		applet.deleteSequence( key );
+	}-*/;
+	
+	public void deleteSequenceKey( final String key ) {
+		greetingService.deleteKey( key, new AsyncCallback<String>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				
+			}
+
+			@Override
+			public void onSuccess(String result) {
+				deleteSequenceInApplet( key );
+			}
+		});
+	}
 	
 	public String getSelectedDb() {
 		JsArray<Selection> jas = table.getSelections();
@@ -208,9 +249,32 @@ public class Blastic implements EntryPoint {
 			@Override
 			public void onSuccess(String res) {
 				b.setKey( res );
+				blastList.add( b );
 				addBlastToTable(user, name, path, result);
 			}
 		});
+	}
+	
+	private void updateDatabaseTable() {
+		for( Database db : databaseList ) {
+			String user = db.getUser();
+			String name = db.getName();
+			String type = db.getType();
+			String path = db.getPath();
+			String result = db.getResult();
+			addDbToTable(user, name, type, path, result);
+		}
+	}
+	
+	private void updateBlastTable() {
+		for( Blast b : blastList ) {
+			String user = b.getUser();
+			String name = b.getName();
+			//String type = b.getType();
+			String path = b.getPath();
+			String result = b.getResult();
+			addBlastToTable(user, name, path, result);
+		}
 	}
 	
 	private void addBlastToTable( String user, String name, String path, String result ) {
@@ -240,7 +304,7 @@ public class Blastic implements EntryPoint {
 	
 	private void addDbInfo( final String user, final String name, final String type, final String path, final String result ) {
 		console("saving db");
-		Database db = new Database( user, name, type, path, result );
+		final Database db = new Database( user, name, type, path, result );
 		greetingService.saveDb( db, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {
@@ -248,8 +312,10 @@ public class Blastic implements EntryPoint {
 			}
 
 			@Override
-			public void onSuccess(String result) {
+			public void onSuccess(String res) {
 				console("saving db succesful");
+				db.setKey( res );
+				databaseList.add( db );
 				addDbToTable( user, name, type, path, result );
 			}
 		});
@@ -265,19 +331,22 @@ public class Blastic implements EntryPoint {
 	Table		blasttable;
 	Options		blastoptions;
 	
+	List<Blast>		blastList = new ArrayList<Blast>();
+	List<Database> 	databaseList = new ArrayList<Database>();
+	//List<Sequences>	sequencesList = new ArrayList<Sequences>();
+	
 	boolean		hasFilled = false;
 	
 	public void getSequences( final boolean tableEmpty ) {
 		greetingService.getSequences( new AsyncCallback<Sequences[]>() {
 	    	@Override
 			public void onSuccess(Sequences[] result) {
-		    	console( "get sequences" );
 		    	Element e = Document.get().getElementById("serify");
 				if( e != null || result != null ) {
 					if( !hasFilled || (hasFilled && tableEmpty) ) {
 						hasFilled = true;
 			    		for( Sequences seqs : result ) {
-			    			addSequenceInApplet( e, seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), (int)seqs.getNum() );
+			    			addSequenceInApplet( e, seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), (int)seqs.getNum(), seqs.getKey() );
 						}
 					}
 				}
@@ -324,10 +393,10 @@ public class Blastic implements EntryPoint {
 		
 		//final ResizeLayoutPanel	applet = new ResizeLayoutPanel();
 		final SimplePanel	applet = new SimplePanel();
-		final SimplePanel	tableview = new SimplePanel();
+		final FocusPanel	tableviewfocus = new FocusPanel();
 		final FocusPanel	blasttablefocus = new FocusPanel();
-		tableview.setWidth("100%");
-		tableview.setHeight("100%");
+		//tableview.setWidth("100%");
+		//tableview.setHeight("100%");
 		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {
@@ -368,20 +437,15 @@ public class Blastic implements EntryPoint {
 		    	
 		    	//dropHandler( table.getElement(), user );
 		    	  
-		    	getSequences( true );
+		    	//getSequences( true );
 		    	greetingService.getDatabases( new AsyncCallback<Database[]>() {
 			    	@Override
-					public void onSuccess(Database[] dbs) {
-			    		console("succ get database");
-			    		
-			    		for( Database db : dbs ) {
-			    			String user = db.getUser();
-			    			String name = db.getName();
-			    			String type = db.getType();
-			    			String path = db.getPath();
-			    			String result = db.getResult();
-			    			addDbToTable(user, name, type, path, result);
+					public void onSuccess(Database[] dbs) {			    		
+			    		databaseList.clear();
+			    		for( Database b : dbs ) {			    			
+			    			databaseList.add( b );
 			    		}
+			    		updateDatabaseTable();
 			    		
 						/*if( result != null ) {
 				    		for( Sequences seqs : result ) {
@@ -400,14 +464,11 @@ public class Blastic implements EntryPoint {
 		    	greetingService.getBlastResults( new AsyncCallback<Blast[]>() {
 			    	@Override
 					public void onSuccess(Blast[] bbs) {
-			    		for( Blast b : bbs ) {
-			    			String user = b.getUser();
-			    			String name = b.getName();
-			    			//String type = b.getType();
-			    			String path = b.getPath();
-			    			String result = b.getResult();
-			    			addBlastToTable(user, name, path, result);
+			    		blastList.clear();
+			    		for( Blast b : bbs ) {			    			
+			    			blastList.add( b );
 			    		}
+			    		updateBlastTable();
 					}
 				
 					@Override
@@ -418,12 +479,12 @@ public class Blastic implements EntryPoint {
 		    	
 		    	table.setWidth("100%");
 		    	table.setHeight("100%");
-		    	tableview.add( table );
+		    	tableviewfocus.add( table );
 		    	blasttablefocus.add( blasttable );
 		    	
 		    	slp.addSouth( blasttablefocus, 300.0 );
 		    	slp.addWest( applet, 500.0 );
-		    	slp.add( tableview );
+		    	slp.add( tableviewfocus );
 		    	  
 		    	//tableview.add( table );
 		    	//table.setWidth("640px");
@@ -439,6 +500,52 @@ public class Blastic implements EntryPoint {
 			}
 		});*/
 		
+		tableviewfocus.addKeyDownHandler( new KeyDownHandler() {
+			
+			@Override
+			public void onKeyDown(KeyDownEvent event) {
+				int keycode = event.getNativeKeyCode();
+				if( keycode == KeyCodes.KEY_DELETE ) {
+					if( table != null ) {
+						JsArray<Selection> sel = table.getSelections();
+						if( sel.length() > 0 ) {
+							Selection selection = sel.get(0);
+							final int row = selection.getRow();
+							String userinfo = data.getValueString(row, 0);
+							if( userinfo.equals( getUser() ) ) {
+								String key = databaseList.get( row ).getKey();
+								greetingService.deleteKey( key, new AsyncCallback<String>() {
+									@Override
+									public void onFailure(Throwable caught) {
+										
+									}
+	
+									@Override
+									public void onSuccess(String result) {
+										databaseList.remove( row );
+										data.removeRow(row);
+										view = DataView.create( data );
+										table.draw( view, options );
+									}
+								});
+							}
+						}
+					}
+				} else if( keycode == KeyCodes.KEY_ENTER ) {
+					if( table != null ) {
+						JsArray<Selection> sel = table.getSelections();
+						if( sel.length() > 0 ) {
+							Selection selection = sel.get(0);
+							int row = selection.getRow();
+							String path = data.getValueString(row, 3);
+							
+							browse( Document.get().getElementById("serify"), path );
+						}
+					}
+				}
+			}
+		});
+		
 		blasttablefocus.addKeyDownHandler( new KeyDownHandler() {
 			@Override
 			public void onKeyDown(KeyDownEvent event) {
@@ -448,10 +555,26 @@ public class Blastic implements EntryPoint {
 						JsArray<Selection> sel = blasttable.getSelections();
 						if( sel.length() > 0 ) {
 							Selection selection = sel.get(0);
-							int row = selection.getRow();
-							blastdata.removeRow(row);
-							blastview = DataView.create( blastdata );
-							blasttable.draw( blastview, blastoptions );
+							final int row = selection.getRow();
+							String userinfo = blastdata.getValueString(row, 0);
+							String user = getUser();
+							if( userinfo.equals( user ) ) {
+								String key = blastList.get( row ).getKey();
+								greetingService.deleteKey( key, new AsyncCallback<String>() {
+									@Override
+									public void onFailure(Throwable caught) {
+										
+									}
+	
+									@Override
+									public void onSuccess(String result) {
+										blastList.remove( row );
+										blastdata.removeRow(row);
+										blastview = DataView.create( blastdata );
+										blasttable.draw( blastview, blastoptions );
+									}
+								});
+							}
 						}
 					}
 				} else if( keycode == KeyCodes.KEY_ENTER ) {
@@ -478,7 +601,7 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://10.66.100.75:8888/");
+		ae.setAttribute("codebase", "http://130.208.252.31:8888/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
