@@ -19,4 +19,5 @@ public interface GreetingService extends RemoteService {
 	Database[] getDatabases();
 	String saveDb(Database b);
 	String saveBlast(Blast b);
+	String deleteKey(String key);
 }
