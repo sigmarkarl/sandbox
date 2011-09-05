@@ -149,7 +149,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		ent.setProperty("name", b.getName());
 		ent.setProperty("type", b.getType());
 		ent.setProperty("path", b.getPath());
-		//ent.setProperty("result", b.getResult());
+		ent.setProperty("result", b.getResult());
 		
 		Key key = datastore.put( ent );
 		
