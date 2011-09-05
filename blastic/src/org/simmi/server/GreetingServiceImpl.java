@@ -66,7 +66,9 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		int i = 0;
 		for( Entity e : seqsEntities ) {
-			seqsArray[i++] = new Sequences( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (Long)e.getProperty("num") );
+			Sequences seqs = new Sequences( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (Long)e.getProperty("num") );
+			seqs.setKey( KeyFactory.keyToString( e.getKey()) );
+			seqsArray[i++] = seqs;
 		}
 		
 		return seqsArray; //Arrays.asList( seqsArray );
@@ -100,7 +102,9 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		int i = 0;
 		for( Entity e : blEntities ) {
-			blArray[i++] = new Blast( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("result") );
+			Blast b = new Blast( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("result") );
+			b.setKey( KeyFactory.keyToString( e.getKey() ) );
+			blArray[i++] = b;
 		}
 		
 		return blArray;
@@ -115,7 +119,9 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		int i = 0;
 		for( Entity e : dEntities ) {
-			dArray[i++] = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("database"), (String)e.getProperty("type"), (String)e.getProperty("path") );
+			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("database"), (String)e.getProperty("type"), (String)e.getProperty("path") );
+			db.setKey( KeyFactory.keyToString( e.getKey() ) );
+			dArray[i++] = db;
 		}
 		
 		return dArray;
@@ -154,5 +160,14 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		Key key = datastore.put( ent );
 		
 		return KeyFactory.keyToString(key);
+	}
+
+	@Override
+	public String deleteKey(String keystr ) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Key key = KeyFactory.stringToKey( keystr );
+		datastore.delete( key );
+		
+		return null;
 	}
 }
