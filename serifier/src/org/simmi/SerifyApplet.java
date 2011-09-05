@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Graphics;
@@ -51,6 +52,7 @@ import netscape.javascript.JSObject;
 public class SerifyApplet extends JApplet {
 	JTable				table;
 	List<Sequences>		sequences;
+	String globaluser = null;
 	
 	public SerifyApplet() {
 		super();
@@ -65,18 +67,27 @@ public class SerifyApplet extends JApplet {
 			this.nseq = nseq;
 		}
 		
+		public void setKey( String key ) {
+			_key = key;
+		}
+		
+		public String getKey() {
+			return _key;
+		}
+		
 		String user;
 		String name;
 		String type;
 		String path;
 		Integer nseq;
+		String _key;
 	};
 	
-	public List<Sequences> initSequences() {
+	public List<Sequences> initSequences( int rowcount) {
 		List<Sequences>	seqs = new ArrayList<Sequences>();
 		
 		JSObject js = JSObject.getWindow( SerifyApplet.this );
-		js.call( "getSequences", new Object[] {table.getRowCount() == 0} );
+		js.call( "getSequences", new Object[] {rowcount == 0} );
 		/*String[] split = seqsStr.split("\n");
 		
 		for( String ss : split ) {
@@ -278,7 +289,20 @@ public class SerifyApplet extends JApplet {
 		return res;
 	}
 	
+	public void deleteSequence( String key ) {
+		Sequences selseq = null;
+		for( Sequences s : sequences ) {
+			if( key.equals( s.getKey() ) ) selseq = s;
+		}
+		if( selseq != null ) {
+			sequences.remove( selseq );		
+			table.tableChanged( new TableModelEvent(table.getModel()) );
+		}
+	}
+	
 	public void init( final Container c ) {
+		globaluser = System.getProperty("user.name");
+		
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 		} catch (ClassNotFoundException e) {
@@ -300,9 +324,15 @@ public class SerifyApplet extends JApplet {
 		//final String[] 	columns = new String[] {"user", "name", "path", "type", "#seq"};
 		//final Class[]	types = new Class[] {String.class, String.class, String.class, String.class, Integer.class};
 		
-		sequences = initSequences();
+		Color bgcolor = Color.white;
+		SerifyApplet.this.getContentPane().setBackground(bgcolor);
+		SerifyApplet.this.setBackground(bgcolor);
+		SerifyApplet.this.getRootPane().setBackground(bgcolor);
 		
 		table = new JTable();
+		//table.setBackground( bgcolor );
+		
+		sequences = initSequences( table.getRowCount() );
 		table.setAutoCreateRowSorter( true );
 		TableModel model = createModel( sequences, Sequences.class );
 		table.setModel( model );
@@ -471,7 +501,7 @@ public class SerifyApplet extends JApplet {
 							if( dbPath != null ) {
 								String queryPathFixed = fixPath( infile.getAbsolutePath() );
 								String dbPathFixed = fixPath( dbPath );
-								String outPathFixed = fixPath( new File( selectedfile, title ).getAbsolutePath() );
+								String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
 								
 								String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
 								String result = runProcessBuilder( Arrays.asList( cmds ) );
@@ -517,6 +547,8 @@ public class SerifyApplet extends JApplet {
 		table.setComponentPopupMenu( popup );
 		
 		JScrollPane	scrollpane = new JScrollPane( table );
+		scrollpane.setBackground( bgcolor );
+		scrollpane.getViewport().setBackground( bgcolor );
 		scrollpane.setTransferHandler( new TransferHandler() {
 			public int getSourceActions(JComponent c) {
 				return TransferHandler.COPY_OR_MOVE;
@@ -612,14 +644,14 @@ public class SerifyApplet extends JApplet {
 		super.update( g );
 	}
 	
-	public void updateSequences( String user, String name, String type, String path, int nseq ) {
-		sequences.add( new Sequences( user, name, type, path, nseq ) );
+	public void updateSequences( String user, String name, String type, String path, int nseq, String key ) {
+		Sequences seqs = new Sequences( user, name, type, path, nseq );
+		seqs.setKey( key );
+		sequences.add( seqs );
 		table.tableChanged( new TableModelEvent( table.getModel() ) );
 	}
 	
-	private void addSequences( String user, String name, String type, String path, int nseq ) {
-		System.err.println("adding sequences in applet");
-		
+	private void addSequences( String user, String name, String type, String path, int nseq ) {		
 		JSObject js = JSObject.getWindow( SerifyApplet.this );
 		js.call( "addSequences", new Object[] {user, name, type, path, nseq} );
 	}
@@ -629,7 +661,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public String getUser() {
-		return System.getProperty("user.name");
+		return globaluser;
 	}
 	
 	public String runProcessBuilder( List<String> commands ) throws IOException {
