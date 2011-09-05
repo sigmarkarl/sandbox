@@ -1,6 +1,7 @@
 package org.simmi;
 
 import java.awt.Container;
+import java.awt.Desktop;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Window;
@@ -8,6 +9,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayOutputStream;
@@ -20,6 +23,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -70,9 +75,9 @@ public class SerifyApplet extends JApplet {
 	public List<Sequences> initSequences() {
 		List<Sequences>	seqs = new ArrayList<Sequences>();
 		
-		/*JSObject js = JSObject.getWindow( SerifyApplet.this );
-		String seqsStr = (String)js.call( "getSequences", new Object[] {} );
-		String[] split = seqsStr.split("\n");
+		JSObject js = JSObject.getWindow( SerifyApplet.this );
+		js.call( "getSequences", new Object[] {table.getRowCount() == 0} );
+		/*String[] split = seqsStr.split("\n");
 		
 		for( String ss : split ) {
 			String[] s = ss.split("\t");
@@ -231,6 +236,28 @@ public class SerifyApplet extends JApplet {
 		init( this );
 	}
 	
+	public void browse( final String url ) {
+		//System.err.println("");
+		
+		AccessController.doPrivileged( new PrivilegedAction() {
+			@Override
+			public Object run() {
+				try {
+					URI uri = new URI( url );
+					Desktop.getDesktop().browse( uri );
+					Desktop.getDesktop().open( new File( uri ) );
+					SerifyApplet.this.getAppletContext().showDocument( uri.toURL() );
+				} catch (URISyntaxException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
+				return null;
+			}
+		});
+	}
+	
 	public String fixPath( String path ) {
 		String[] split = path.split("\\\\");
 		String res = "";
@@ -284,20 +311,55 @@ public class SerifyApplet extends JApplet {
 			public void mousePressed( MouseEvent me ) {
 				if( me.getClickCount() == 2 ) {
 					int r = table.getSelectedRow();
-					String path = (String)table.getValueAt( r, 2 );
+					String path = (String)table.getValueAt( r, 3 );
 					
-					try {
+					/*try {
 						SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
 					} catch (MalformedURLException e) {
 						e.printStackTrace();
+					}*/
+					
+					browse( path );
+				}
+			}
+		});
+		table.addKeyListener( new KeyListener() {
+			
+			@Override
+			public void keyTyped(KeyEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				int keycode = e.getKeyCode();
+				if( keycode == KeyEvent.VK_DELETE ) {
+					int r = table.getSelectedRow();
+					if( r >= 0 ) {
+						int ind = table.convertRowIndexToModel( r );
+						if( ind >= 0 ) {
+							sequences.remove( ind );
+							table.tableChanged( new TableModelEvent(table.getModel()) );
+						}
 					}
+				} else if( keycode == KeyEvent.VK_ENTER ) {
+					int r = table.getSelectedRow();
+					String path = (String)table.getValueAt( r, 3 );
+					
 					/*try {
-						Desktop.getDesktop().browse( new URI( path ) );
-					} catch (IOException e) {
-						e.printStackTrace();
-					} catch (URISyntaxException e) {
+						SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
+					} catch (MalformedURLException e) {
 						e.printStackTrace();
 					}*/
+					
+					browse( path );
 				}
 			}
 		});
@@ -363,7 +425,6 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		
 		popup.add( new AbstractAction("Blast") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -376,7 +437,7 @@ public class SerifyApplet extends JApplet {
 					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
 					if( blast.exists() ) {
 						int r = table.getSelectedRow();
-						String path = (String)table.getValueAt( r, 2 );
+						String path = (String)table.getValueAt( r, 3 );
 						URL url = new URL( path );
 						
 						String file = url.getFile();
@@ -407,12 +468,17 @@ public class SerifyApplet extends JApplet {
 							JSObject js = JSObject.getWindow( SerifyApplet.this );
 							String dbPath = (String)js.call( "getSelectedDb", new Object[] {} );
 							
-							String[] cmds = new String[] { blast.getAbsolutePath(), "-query", fixPath( infile.getAbsolutePath() ), "-db", fixPath( dbPath ), "-out", fixPath( new File( selectedfile, title ).getAbsolutePath() ) };
-							String result = runProcessBuilder( Arrays.asList( cmds ) );
-							
-							js.call( "addResult", new Object[] {getUser(), "erm", "erm", result} );
-							
-							System.out.println( "erm " + result );
+							if( dbPath != null ) {
+								String queryPathFixed = fixPath( infile.getAbsolutePath() );
+								String dbPathFixed = fixPath( dbPath );
+								String outPathFixed = fixPath( new File( selectedfile, title ).getAbsolutePath() );
+								
+								String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
+								String result = runProcessBuilder( Arrays.asList( cmds ) );
+								
+								System.err.println( "this is the result " + result );
+								js.call( "addResult", new Object[] {getUser(), title, outPathFixed, result} );
+							}
 						}
 						
 						//infile.delete();
@@ -431,6 +497,23 @@ public class SerifyApplet extends JApplet {
 				
 			}
 		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Show file") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				String path = (String)table.getValueAt( r, 3 );
+				
+				/*try {
+					SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				}*/
+				
+				browse( path );
+			}
+		});
+		
 		table.setComponentPopupMenu( popup );
 		
 		JScrollPane	scrollpane = new JScrollPane( table );
