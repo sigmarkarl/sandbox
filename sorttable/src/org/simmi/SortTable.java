@@ -732,7 +732,7 @@ public class SortTable extends JApplet {
 	}
 
 	public void loadStuff() {
-		lang = "US";
+		lang = "IS";
 		/*
 		 * String loc = this.getParameter("loc"); if( loc != null ) { lang =
 		 * loc; }
@@ -2281,6 +2281,46 @@ public class SortTable extends JApplet {
 				ms.sort();
 				ms.setComparator(0, comp);
 				//leftTable.sorter.sort();
+			}
+		});
+		mainpopup.add( new AbstractAction("Sýna matartré") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				List<Double>	distmatrix = new ArrayList<Double>();
+				
+				Object[]	rr = stuff.get(0);
+				double[]	sums = new double[ stuff.size()-2 ];
+				Arrays.fill(sums, 0.0);
+				for( int i = 2; i < stuff.size(); i++ ) {
+					for( int k = i+1; k < stuff.size(); k++ ) {
+						Object[] r1 = stuff.get(i);
+						Object[] r2 = stuff.get(k);
+						
+						double val = 0;
+						int r = 0;
+						
+						for( Object o : rr ) {
+							if( sortStuff.contains(o) ) {
+								Float f1 = (Float)r1[r];
+								Float f2 = (Float)r2[r];
+								
+								float fl1 = (f1 == null) ? 0 : f1;
+								float fl2 = (f2 == null) ? 0 : f2;
+								
+								float abs = Math.abs( f1-f2 );
+								val += abs*abs;
+							}
+						}
+						double dist = Math.sqrt( val );
+						sums[i-2] += dist;
+						int v = k-2-stuff.size()+i+1;
+						if( v >= 0 ) {
+							sums[sums.length-(i-2)-1-v] += dist;
+						}
+						
+						distmatrix.add( dist );
+					}
+				}
 			}
 		});
 		
