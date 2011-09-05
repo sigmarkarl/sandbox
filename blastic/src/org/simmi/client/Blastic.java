@@ -10,8 +10,14 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
@@ -29,7 +35,7 @@ import com.google.gwt.visualization.client.visualizations.Table.Options;
 public class Blastic implements EntryPoint {
 	/**
 	 * The message displayed to the user when the server cannot be reached or
-	 * returns an error.
+	 * returns an error.f
 	 */
 	private static final String SERVER_ERROR = "An error occurred while "
 			+ "attempting to contact the server. Please check your network "
@@ -101,8 +107,8 @@ public class Blastic implements EntryPoint {
 		return 0;
 	}-*/;
 	
-	public native void addSequenceInApplet( Element e, String user, String name, String type, String path, int num ) /*-{
-		e.updateSequences( user, name, type, path, num );
+	public native void addSequenceInApplet( JavaScriptObject appletelement, String user, String name, String type, String path, int num ) /*-{
+		appletelement.updateSequences( user, name, type, path, num );
 	}-*/;
 	
 	public void addSequence( final String user, final String name, final String type, final String path, final int num ) {
@@ -144,10 +150,15 @@ public class Blastic implements EntryPoint {
         $wnd.deployJava.runApplet(attributes, parameters, '1.6');
 	}-*/;
 	
+	
 	public native int resizeApplet( Element applet, String w, String h ) /*-{
 		$wnd.console.log( w + ' ' + h );
 		
 		applet.setSize( w, h );
+	}-*/;
+	
+	private native int browse( Element applet, String url ) /*-{
+		e.browse( url );
 	}-*/;
 	
 	public native int initFunctions() /*-{
@@ -157,52 +168,59 @@ public class Blastic implements EntryPoint {
 			s.@org.simmi.client.Blastic::addDbInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, type, path, result );
 		};
 		
+		$wnd.addResult = function( user, name, path, result ) {
+			return s.@org.simmi.client.Blastic::addBlastInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, path, result );
+		};
+		
 		$wnd.addSequences = function( user, name, type, path, nseq ) {
 			s.@org.simmi.client.Blastic::addSequence(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)( user, name, path, type, nseq );
 		};
 		
-		//$wnd.getSequences = function() {
-		//	return s.@org.simmi.client.Blastic::getSequences()();
-		//};
+		$wnd.getSequences = function( tableEmpty ) {
+			return s.@org.simmi.client.Blastic::getSequences(Z)( tableEmpty );
+		};
 		
 		$wnd.getSelectedDb = function() {
-			s.@org.simmi.client.Blastic::getSelectedDb()();
+			return s.@org.simmi.client.Blastic::getSelectedDb()();
 		};
 	}-*/;
 	
 	public String getSelectedDb() {
 		JsArray<Selection> jas = table.getSelections();
 		
+		console( "hoho " + jas.length() );
 		if( jas.length() > 0 ) {
 			int row = jas.get(0).getRow();
-			return data.getValueString(row, 2);
+			String val = (String)data.getValueString(row, 3);
+			console("erm " + val + " " + row );
+			return val;
 		}
 		
 		return null;
 	}
 	
-	public void addBlastInfo( final String user, final String name, final String type, final String path, final String result ) {
-		Blast b = new Blast( user, name, type, path, result );
+	public void addBlastInfo( final String user, final String name, final String path, final String result ) {
+		final Blast b = new Blast( user, name, "unk", path, result );
 		greetingService.saveBlast( b, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {}
 
 			@Override
-			public void onSuccess(String result) {
-				addBlastToTable(user, name, type, path, result);
+			public void onSuccess(String res) {
+				b.setKey( res );
+				addBlastToTable(user, name, path, result);
 			}
 		});
 	}
 	
-	private void addBlastToTable( String user, String name, String type, String path, String result ) {
+	private void addBlastToTable( String user, String name, String path, String result ) {
 		int r = blastdata.getNumberOfRows();
 		
 		blastdata.addRow();
 		blastdata.setValue( r, 0, user );
 		blastdata.setValue( r, 1, name );
-		blastdata.setValue( r, 2, type );
-		blastdata.setValue( r, 3, path );
-		blastdata.setValue( r, 4, result );
+		blastdata.setValue( r, 2, path );
+		blastdata.setValue( r, 3, result );
 		blastview = DataView.create( blastdata );
 		blasttable.draw( blastview, blastoptions );
 	}
@@ -247,18 +265,56 @@ public class Blastic implements EntryPoint {
 	Table		blasttable;
 	Options		blastoptions;
 	
+	boolean		hasFilled = false;
+	
+	public void getSequences( final boolean tableEmpty ) {
+		greetingService.getSequences( new AsyncCallback<Sequences[]>() {
+	    	@Override
+			public void onSuccess(Sequences[] result) {
+		    	console( "get sequences" );
+		    	Element e = Document.get().getElementById("serify");
+				if( e != null || result != null ) {
+					if( !hasFilled || (hasFilled && tableEmpty) ) {
+						hasFilled = true;
+			    		for( Sequences seqs : result ) {
+			    			addSequenceInApplet( e, seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), (int)seqs.getNum() );
+						}
+					}
+				}
+			}
+		
+			@Override
+			public void onFailure(Throwable caught) {
+				console( "get sequences failure" );
+			}
+	    });
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
 		
+		int w = Window.getClientWidth();
+		int h = Window.getClientHeight();
+		rp.setSize(w+"px", h+"px");
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				int w = event.getWidth();
+				int h = event.getHeight();
+				rp.setSize(w+"px", h+"px");
+			}
+		});
+		
 		initFunctions();
 		
 		final SplitLayoutPanel	slp = new SplitLayoutPanel();
-		slp.setWidth("1000px");
-		slp.setHeight("1000px");
-		slp.getElement().getStyle().setBorderWidth(3.0, Unit.PX);
+		slp.setWidth("100%");
+		slp.setHeight("100%");
+		//slp.getElement().getStyle().setBorderWidth(3.0, Unit.PX);
 		
 		//String source = "var attributes = { codebase:'http://130.208.252.31:8888/', archive:'serify.jar', code:'org.simmi.SerifyApplet', width:'80', height:'80', id:'serify', name:'serify' }\n";
         //source += "var parameters = { jnlp_href:'serify.jnlp' }\n";
@@ -269,6 +325,7 @@ public class Blastic implements EntryPoint {
 		//final ResizeLayoutPanel	applet = new ResizeLayoutPanel();
 		final SimplePanel	applet = new SimplePanel();
 		final SimplePanel	tableview = new SimplePanel();
+		final FocusPanel	blasttablefocus = new FocusPanel();
 		tableview.setWidth("100%");
 		tableview.setHeight("100%");
 		
@@ -307,29 +364,11 @@ public class Blastic implements EntryPoint {
 		    	blastoptions.setAllowHtml( true );
 		    	  
 		    	blastview = DataView.create( blastdata );
-		    	blasttable = new Table( blastview, blastoptions );
-		    	
+		    	blasttable = new Table( blastview, blastoptions );		    	
 		    	
 		    	//dropHandler( table.getElement(), user );
 		    	  
-		    	greetingService.getSequences( new AsyncCallback<Sequences[]>() {
-			    	@Override
-					public void onSuccess(Sequences[] result) {
-			    		console( "get sequences" );
-						if( result != null ) {
-				    		for( Sequences seqs : result ) {
-				    			Element e = Document.get().getElementById("serify");
-				    			addSequenceInApplet( e, seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), (int)seqs.getNum() );
-							}
-						}
-					}
-				
-					@Override
-					public void onFailure(Throwable caught) {
-						console( "get sequences failure" );
-					}
-			    });
-		    	
+		    	getSequences( true );
 		    	greetingService.getDatabases( new AsyncCallback<Database[]>() {
 			    	@Override
 					public void onSuccess(Database[] dbs) {
@@ -364,10 +403,10 @@ public class Blastic implements EntryPoint {
 			    		for( Blast b : bbs ) {
 			    			String user = b.getUser();
 			    			String name = b.getName();
-			    			String type = b.getType();
+			    			//String type = b.getType();
 			    			String path = b.getPath();
 			    			String result = b.getResult();
-			    			addBlastToTable(user, name, type, path, result);
+			    			addBlastToTable(user, name, path, result);
 			    		}
 					}
 				
@@ -380,8 +419,9 @@ public class Blastic implements EntryPoint {
 		    	table.setWidth("100%");
 		    	table.setHeight("100%");
 		    	tableview.add( table );
+		    	blasttablefocus.add( blasttable );
 		    	
-		    	slp.addSouth( blasttable, 300.0 );
+		    	slp.addSouth( blasttablefocus, 300.0 );
 		    	slp.addWest( applet, 500.0 );
 		    	slp.add( tableview );
 		    	  
@@ -391,6 +431,43 @@ public class Blastic implements EntryPoint {
 		    }
 		};
 		VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);
+		
+		/*blasttablefocus.addKeyPressHandler( new KeyPressHandler() {
+			@Override
+			public void onKeyPress(KeyPressEvent event) {
+				event.get
+			}
+		});*/
+		
+		blasttablefocus.addKeyDownHandler( new KeyDownHandler() {
+			@Override
+			public void onKeyDown(KeyDownEvent event) {
+				int keycode = event.getNativeKeyCode();
+				if( keycode == KeyCodes.KEY_DELETE ) {
+					if( blasttable != null ) {
+						JsArray<Selection> sel = blasttable.getSelections();
+						if( sel.length() > 0 ) {
+							Selection selection = sel.get(0);
+							int row = selection.getRow();
+							blastdata.removeRow(row);
+							blastview = DataView.create( blastdata );
+							blasttable.draw( blastview, blastoptions );
+						}
+					}
+				} else if( keycode == KeyCodes.KEY_ENTER ) {
+					if( blasttable != null ) {
+						JsArray<Selection> sel = blasttable.getSelections();
+						if( sel.length() > 0 ) {
+							Selection selection = sel.get(0);
+							int row = selection.getRow();
+							String path = blastdata.getValueString(row, 2);
+							
+							browse( Document.get().getElementById("serify"), path );
+						}
+					}
+				}
+			}
+		});
 				
 		Element pe = Document.get().createElement("param");
 		pe.setAttribute("name", "jnlp_href");
@@ -401,7 +478,7 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://130.208.252.31:8888/");
+		ae.setAttribute("codebase", "http://10.66.100.75:8888/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
