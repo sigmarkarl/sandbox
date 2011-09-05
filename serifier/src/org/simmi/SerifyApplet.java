@@ -394,8 +394,12 @@ public class SerifyApplet extends JApplet {
 					if( r >= 0 ) {
 						int ind = table.convertRowIndexToModel( r );
 						if( ind >= 0 ) {
-							sequences.remove( ind );
-							table.tableChanged( new TableModelEvent(table.getModel()) );
+							Sequences seqs = sequences.get(ind);
+							JSObject js = JSObject.getWindow( SerifyApplet.this );
+							js.call( "deleteSequenceKey", new Object[] {seqs.getKey()} );
+							
+							//sequences.remove( ind );
+							//table.tableChanged( new TableModelEvent(table.getModel()) );
 						}
 					}
 				} else if( keycode == KeyEvent.VK_ENTER ) {
@@ -460,7 +464,7 @@ public class SerifyApplet extends JApplet {
 							
 							JSObject js = JSObject.getWindow( SerifyApplet.this );
 							//js = (JSObject)js.getMember("document");
-							js.call( "addDb", new Object[] {getUser(), "erm", outPath, result} );
+							js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
 							
 							System.out.println( "erm " + result );
 						}
