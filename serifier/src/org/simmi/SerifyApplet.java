@@ -28,7 +28,10 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
@@ -44,6 +47,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
@@ -306,6 +310,21 @@ public class SerifyApplet extends JApplet {
 		table.setAutoCreateRowSorter( true );
 		TableModel model = createModel( sequences, Sequences.class );
 		table.setModel( model );
+		
+		Field[] odecl = Sequences.class.getDeclaredFields();
+		Set<TableColumn>			remcol = new HashSet<TableColumn>();
+		Enumeration<TableColumn>	taben = table.getColumnModel().getColumns();
+		while( taben.hasMoreElements() ) {
+			TableColumn tc = taben.nextElement();
+			String name = odecl[tc.getModelIndex()].getName();
+			System.err.println( name );
+			if( name.startsWith("_") ) {
+				remcol.add( tc );
+			}
+		}
+		for( TableColumn tc : remcol ) {
+			table.removeColumn( tc );
+		}
 		
 		table.addMouseListener( new MouseAdapter() {
 			public void mousePressed( MouseEvent me ) {
