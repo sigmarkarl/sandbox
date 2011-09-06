@@ -189,7 +189,7 @@ public class Blastic implements EntryPoint {
 		};
 		
 		$wnd.addSequences = function( user, name, type, path, nseq ) {
-			s.@org.simmi.client.Blastic::addSequence(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)( user, name, path, type, nseq );
+			s.@org.simmi.client.Blastic::addSequence(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)( user, name, type, path, nseq );
 		};
 		
 		$wnd.getSequences = function( tableEmpty ) {
@@ -603,7 +603,7 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://127.0.0.1:8888/");
+		ae.setAttribute("codebase", "http://130.208.252.31:8888/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
