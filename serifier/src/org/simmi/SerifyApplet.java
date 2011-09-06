@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Desktop;
@@ -14,11 +15,17 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -37,11 +44,14 @@ import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -57,6 +67,7 @@ public class SerifyApplet extends JApplet {
 	JTable				table;
 	List<Sequences>		sequences;
 	String globaluser = null;
+	Container			cnt = null;
 	
 	public SerifyApplet() {
 		super();
@@ -77,6 +88,14 @@ public class SerifyApplet extends JApplet {
 		
 		public String getKey() {
 			return _key;
+		}
+		
+		public String getPath() {
+			return path;
+		}
+		
+		public String getName() {
+			return name;
 		}
 		
 		String user;
@@ -186,6 +205,14 @@ public class SerifyApplet extends JApplet {
 		};
 	}
 	
+	public File checkProdigalInstall( File dir ) throws IOException {
+		File check = new File( dir, "prodigal.v2_50.windows.exe" );
+		if( !check.exists() ) {
+			check = installProdigal( dir );
+		}
+		return check;
+	}
+	
 	public void checkInstall( File dir ) throws IOException {
 		File check1 = new File( dir, "bin/blastp.exe" );
 		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
@@ -242,6 +269,46 @@ public class SerifyApplet extends JApplet {
 			fos.write( baos.toByteArray() );
 			fos.close();
 			baos.close();
+		}
+		
+		return f;
+	}
+	
+	public File installProdigal( File homedir ) throws IOException {
+		URL url = new URL("http://prodigal.googlecode.com/files/prodigal.v2_50.windows.exe");
+		String fileurl = url.getFile();
+		String[] split = fileurl.split("/");
+		
+		File f = new File( homedir, split[split.length-1] );
+		ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+		byte[] bb = new byte[100000];
+		if( !f.exists() ) {
+			JProgressBar pb = new JProgressBar();
+			pb.setIndeterminate( true );
+			
+			JDialog dialog = null;
+			Window window = SwingUtilities.windowForComponent(cnt);
+			if( window != null ) dialog = new JDialog( window );
+			else dialog = new JDialog();
+			
+			dialog.setTitle("Downloading Prodigal ...");
+			dialog.add( pb );
+			dialog.setVisible( true );
+			
+			InputStream is = url.openStream();
+			int r = is.read(bb);
+			while( r > 0 ) {
+				baos.write( bb, 0, r );
+				r = is.read( bb );
+			}
+			is.close();
+			//f.mkdirs();
+			FileOutputStream fos = new FileOutputStream( f );
+			fos.write( baos.toByteArray() );
+			fos.close();
+			baos.close();
+			
+			dialog.setVisible( false );
 		}
 		
 		return f;
@@ -305,6 +372,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void init( final Container c ) {
+		this.cnt = c;
 		globaluser = System.getProperty("user.name");
 		
 		try {
@@ -437,7 +505,7 @@ public class SerifyApplet extends JApplet {
 						String[] split = file.split("/");
 						String fname = split[ split.length-1 ];
 						split = fname.split("\\.");
-						String title = split[0]; 
+						final String title = split[0]; 
 						File infile = new File( dir, fname );
 						
 						FileOutputStream fos = new FileOutputStream( infile );
@@ -458,15 +526,18 @@ public class SerifyApplet extends JApplet {
 							File selectedfile = fc.getSelectedFile();
 							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
 							
-							String outPath = fixPath( new File( selectedfile, title ).getAbsolutePath() );
+							final String outPath = fixPath( new File( selectedfile, title ).getAbsolutePath() );
 							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
-							String result = runProcessBuilder( Arrays.asList( cmds ) );
 							
-							JSObject js = JSObject.getWindow( SerifyApplet.this );
-							//js = (JSObject)js.getMember("document");
-							js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
-							
-							System.out.println( "erm " + result );
+							final Object[] cont = new Object[1];
+							Runnable run = new Runnable() {
+								public void run() {
+									JSObject js = JSObject.getWindow( SerifyApplet.this );
+									//js = (JSObject)js.getMember("document");
+									js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, cont[0]} );
+								}
+							};
+							runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
 						}
 						
 						//infile.delete();
@@ -497,7 +568,7 @@ public class SerifyApplet extends JApplet {
 						String[] split = file.split("/");
 						String fname = split[ split.length-1 ];
 						split = fname.split("\\.");
-						String title = split[0]; 
+						final String title = split[0]; 
 						File infile = new File( dir, fname );
 						
 						FileOutputStream fos = new FileOutputStream( infile );
@@ -518,19 +589,23 @@ public class SerifyApplet extends JApplet {
 							File selectedfile = fc.getSelectedFile();
 							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
 							
-							JSObject js = JSObject.getWindow( SerifyApplet.this );
+							final JSObject js = JSObject.getWindow( SerifyApplet.this );
 							String dbPath = (String)js.call( "getSelectedDb", new Object[] {} );
 							
 							if( dbPath != null ) {
 								String queryPathFixed = fixPath( infile.getAbsolutePath() );
 								String dbPathFixed = fixPath( dbPath );
-								String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
+								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
 								
 								String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
-								String result = runProcessBuilder( Arrays.asList( cmds ) );
 								
-								System.err.println( "this is the result " + result );
-								js.call( "addResult", new Object[] {getUser(), title, outPathFixed, result} );
+								final Object[] cont = new Object[1];
+								Runnable run = new Runnable() {
+									public void run() {
+										js.call( "addResult", new Object[] {getUser(), title, outPathFixed, cont[0]} );
+									}
+								};
+								String result = runProcessBuilder( "Performing blast", Arrays.asList( cmds ), run, cont );
 							}
 						}
 						
@@ -564,6 +639,131 @@ public class SerifyApplet extends JApplet {
 				}*/
 				
 				browse( path );
+			}
+		});
+		popup.add( new AbstractAction("Prodigal") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					String userhome = System.getProperty("user.home");	
+					File dir = new File( userhome );
+					File f = checkProdigalInstall( dir );
+					if( f != null && f.exists() ) {
+						int r = table.getSelectedRow();
+						String path = (String)table.getValueAt( r, 3 );
+						URL url = new URL( path );
+						
+						String file = url.getFile();
+						String[] split = file.split("/");
+						String fname = split[ split.length-1 ];
+						split = fname.split("\\.");
+						final String title = split[0];
+						File infile = new File( dir, fname );
+						
+						FileOutputStream fos = new FileOutputStream( infile );
+						InputStream is = url.openStream();
+						
+						byte[] bb = new byte[100000];
+						r = is.read(bb);
+						while( r > 0 ) {
+							fos.write(bb, 0, r);
+							r = is.read(bb);
+						}
+						is.close();
+						fos.close();
+						
+						JFileChooser fc = new JFileChooser();
+						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+						if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
+							File selectedfile = fc.getSelectedFile();
+							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+							
+							final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
+							final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
+							String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
+							
+							final Object[] cont = new Object[1];
+							Runnable run = new Runnable() {
+								public void run() {
+									System.err.println( cont[0] );
+									addSequences(title, "nucl", outPathD, 50);
+									addSequences(title, "prot", outPathA, 50);
+								}
+							};
+							runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
+							//JSObject js = JSObject.getWindow( SerifyApplet.this );
+							//js = (JSObject)js.getMember("document");
+							//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+						}
+						
+						//infile.delete();
+					} else System.err.println( "no blast installed" );
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
+			}
+		});
+		
+		popup.addSeparator();
+		popup.add( new AbstractAction("Join") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					//if( !f.isDirectory() ) f = f.getParentFile();
+					
+					try {
+						FileWriter fw = new FileWriter( f );
+						int[] rr = table.getSelectedRows();
+						for( int r : rr ) {
+							int rear = table.convertRowIndexToModel( r );
+							if( rear >= 0 ) {
+								Sequences s = sequences.get( rear );
+								File inf = new File( new URI(s.getPath()) );
+								BufferedReader br = new BufferedReader( new FileReader(inf) );
+								String line = br.readLine();
+								while( line != null ) {
+									if( line.startsWith(">") ) fw.write( line.replace( ">", ">"+s.getName()+"_" )+"\n" );
+									else fw.write( line+"\n" );
+									line = br.readLine();
+								}
+								br.close();
+							}
+						}
+						fw.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		popup.add( new AbstractAction("Split") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.isDirectory() ) f = f.getParentFile();
+					
+					int r = table.getSelectedRow();
+					int rr = table.convertRowIndexToModel( r );
+					if( rr >= 0 ) {
+						Sequences seqs = sequences.get( rr );
+						try {
+							File inf = new File( new URI(seqs.getPath() ) );
+							
+						} catch (URISyntaxException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
 			}
 		});
 		
@@ -687,36 +887,118 @@ public class SerifyApplet extends JApplet {
 		return globaluser;
 	}
 	
-	public String runProcessBuilder( List<String> commands ) throws IOException {
-		ProcessBuilder pb = new ProcessBuilder( commands );
+	public String runProcessBuilder( String title, final List<String> commands, final Runnable run, final Object[] cont ) throws IOException {
 		//System.err.println( pb.toString() );
 		//pb.directory( dir );
 		
-		byte[] bb = new byte[100000];
-		for( String s : pb.command() ) {
-			System.err.println( s );
-		}
+		final JDialog	dialog = new JDialog();
+		dialog.setTitle( title );
+		dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+		dialog.setSize(400, 300);
 		
-		Process p = pb.start();
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		InputStream is = p.getInputStream();
-		int r = is.read(bb);
-		while( r > 0 ) {
-			baos.write( bb, 0, r );
-			r = is.read( bb );
-		}
-		is.close();
+		JComponent comp = new JComponent() {
+			
+		};
+		comp.setLayout( new BorderLayout() );
 		
-		is = p.getErrorStream();
-		r = is.read(bb);
-		while( r > 0 ) {
-			baos.write( bb, 0, r );
-			r = is.read( bb );
-		}
-		is.close();
+		final JTextArea		ta = new JTextArea();
+		ta.setEditable( false );
+		final JScrollPane	sp = new JScrollPane( ta );
+		final JProgressBar	pbar = new JProgressBar();
 		
-		String result = baos.toString();
-		return result;
+		dialog.add( comp );
+		comp.add( pbar, BorderLayout.NORTH );
+		comp.add( sp, BorderLayout.CENTER );
+		pbar.setIndeterminate( true );
+		
+		System.err.println( "about to run" );
+		for( String c : commands ) {
+			System.err.print( c+" " );
+		}
+		System.err.println();
+		
+		Runnable runnable = new Runnable() {
+			boolean interupted = false;
+			
+			@Override
+			public void run() {
+				ProcessBuilder pb = new ProcessBuilder( commands );
+				try {
+					final Process p = pb.start();
+					dialog.addWindowListener( new WindowListener() {
+						
+						@Override
+						public void windowOpened(WindowEvent e) {}
+						
+						@Override
+						public void windowIconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+						
+						@Override
+						public void windowClosing(WindowEvent e) {}
+						
+						@Override
+						public void windowClosed(WindowEvent e) {
+							if( p != null ) {
+								interupted = true;
+								p.destroy();
+								//tt.interrupt();
+							}
+						}
+						
+						@Override
+						public void windowActivated(WindowEvent e) {}
+					});
+					dialog.setVisible( true );
+					
+					InputStream is = p.getInputStream();
+					BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+					String line = br.readLine();
+					while( line != null ) {
+						String str = line + "\n";
+						ta.append( str );
+					
+						line = br.readLine();
+					}
+					br.close();
+					is.close();
+					
+					is = p.getErrorStream();
+					br = new BufferedReader( new InputStreamReader(is) );
+					
+					line = br.readLine();
+					while( line != null ) {
+						String str = line + "\n";
+						ta.append( str );
+						
+						line = br.readLine();
+					}
+					br.close();
+					is.close();
+					
+					String result = ta.getText().trim();
+					if( !interupted && run != null ) {
+						cont[0] = result;
+						run.run();
+					}
+					
+					pbar.setIndeterminate( false );
+					pbar.setEnabled( false );
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		final Thread trd = new Thread( runnable );
+		trd.start();
+		
+		//dialog.setVisible( false );
+		return "";
 	}
 	
 	public static void main(String[] args) {
@@ -728,7 +1010,7 @@ public class SerifyApplet extends JApplet {
 		
 		String[] cmds = new String[] { "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\makeblastdb.exe", "-in", "c:\\\\Documents and settings\\sigmar\\Desktop\\erm.fna", "-out", "c:\\\\Documents and settings\\sigmar\\sim", "-title", "sim" };
 		try {
-			String result = sa.runProcessBuilder( Arrays.asList( cmds ) );
+			String result = sa.runProcessBuilder( "Something", Arrays.asList( cmds ), null, null );
 			System.err.println( result );
 		} catch (IOException e) {
 			e.printStackTrace();
