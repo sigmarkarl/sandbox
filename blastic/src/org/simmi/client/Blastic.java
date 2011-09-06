@@ -367,22 +367,23 @@ public class Blastic implements EntryPoint {
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
-		rp.setSize(w+"px", h+"px");
+		rp.setSize((w-20)+"px", (h-20)+"px");
+		
+		final SplitLayoutPanel	slp = new SplitLayoutPanel();
+		slp.setSize((w-20)+"px", (h-20)+"px");
 		
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
 				int w = event.getWidth();
 				int h = event.getHeight();
-				rp.setSize(w+"px", h+"px");
+				rp.setSize((w-20)+"px", (h-20)+"px");
+				slp.setSize((w-20)+"px", (h-20)+"px");
 			}
 		});
 		
 		initFunctions();
 		
-		final SplitLayoutPanel	slp = new SplitLayoutPanel();
-		slp.setWidth("100%");
-		slp.setHeight("100%");
 		//slp.getElement().getStyle().setBorderWidth(3.0, Unit.PX);
 		
 		//String source = "var attributes = { codebase:'http://130.208.252.31:8888/', archive:'serify.jar', code:'org.simmi.SerifyApplet', width:'80', height:'80', id:'serify', name:'serify' }\n";
@@ -393,6 +394,7 @@ public class Blastic implements EntryPoint {
 		
 		//final ResizeLayoutPanel	applet = new ResizeLayoutPanel();
 		final SimplePanel	applet = new SimplePanel();
+		//ResizeLayoutPanel rp;
 		final FocusPanel	tableviewfocus = new FocusPanel();
 		final FocusPanel	blasttablefocus = new FocusPanel();
 		//tableview.setWidth("100%");
@@ -601,7 +603,7 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://130.208.252.31:8888/");
+		ae.setAttribute("codebase", "http://127.0.0.1:8888/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
