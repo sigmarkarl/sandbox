@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Window;
@@ -20,6 +22,7 @@ import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -43,6 +46,7 @@ import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -50,6 +54,7 @@ import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -96,6 +101,14 @@ public class SerifyApplet extends JApplet {
 		
 		public String getName() {
 			return name;
+		}
+		
+		public String getType() {
+			return type;
+		}
+		
+		public int getNSeq() {
+			return nseq;
 		}
 		
 		String user;
@@ -458,17 +471,22 @@ public class SerifyApplet extends JApplet {
 			public void keyPressed(KeyEvent e) {
 				int keycode = e.getKeyCode();
 				if( keycode == KeyEvent.VK_DELETE ) {
-					int r = table.getSelectedRow();
-					if( r >= 0 ) {
+					Set<String>	keys = new HashSet<String>();
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
 						int ind = table.convertRowIndexToModel( r );
 						if( ind >= 0 ) {
 							Sequences seqs = sequences.get(ind);
-							JSObject js = JSObject.getWindow( SerifyApplet.this );
-							js.call( "deleteSequenceKey", new Object[] {seqs.getKey()} );
+							keys.add( seqs.getKey() );
 							
 							//sequences.remove( ind );
 							//table.tableChanged( new TableModelEvent(table.getModel()) );
 						}
+					}
+					
+					JSObject js = JSObject.getWindow( SerifyApplet.this );
+					for( String key : keys ) {
+						js.call( "deleteSequenceKey", new Object[] {key} );
 					}
 				} else if( keycode == KeyEvent.VK_ENTER ) {
 					int r = table.getSelectedRow();
@@ -751,17 +769,111 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
+					final File dir = f;
 					
 					int r = table.getSelectedRow();
 					int rr = table.convertRowIndexToModel( r );
 					if( rr >= 0 ) {
-						Sequences seqs = sequences.get( rr );
-						try {
-							File inf = new File( new URI(seqs.getPath() ) );
+						final Sequences seqs = sequences.get( rr );
+						final JSpinner spinner = new JSpinner();
+						spinner.setValue( seqs.getNSeq() );
+						spinner.setPreferredSize( new Dimension(100,25) );
+
+						final JDialog dl;
+						Window window = SwingUtilities.windowForComponent(cnt);
+						if( window != null ) dl = new JDialog( window );
+						else dl = new JDialog();
+						
+						dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+						JComponent c = new JComponent() {
 							
-						} catch (URISyntaxException e1) {
-							e1.printStackTrace();
-						}
+						};
+						c.setLayout( new FlowLayout() );
+						dl.setTitle("Number of sequences in each file");
+						JButton button = new JButton( new AbstractAction("Ok") {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								dl.setVisible( false );
+								dl.dispose();
+							}
+						});
+						c.add( spinner );
+						c.add( button );
+						dl.add( c );
+						dl.setSize(200, 60);
+						
+						dl.addWindowListener( new WindowListener() {
+							@Override
+							public void windowOpened(WindowEvent e) {}
+
+							@Override
+							public void windowClosing(WindowEvent e) {}
+
+							@Override
+							public void windowClosed(WindowEvent e) {
+								int spin = (Integer)spinner.getValue();
+								try {
+									File inf = new File( new URI(seqs.getPath() ) );
+									String name = inf.getName();
+									int ind = name.lastIndexOf('.');
+									
+									String sff = name.substring(0, ind);
+									String sf2 = name.substring(ind+1,name.length());
+									
+									int i = 0;
+									FileWriter 	fw = null;
+									File		of = null;
+									FileReader 	fr = new FileReader( inf );
+									BufferedReader br = new BufferedReader( fr );
+									String line = br.readLine();
+									while( line != null ) {
+										if( line.startsWith(">") ) {
+											if( i%spin == 0 ) {
+												if( fw != null ) {
+													fw.close();
+													name = of.getName();
+													ind = name.lastIndexOf('.');
+													name = name.substring(0,ind);
+													addSequences(name, seqs.getType(), of.toURI().toString(), spin);
+												}
+												of = new File( dir, sff + "_" + (i/spin+1) + "." + sf2 );
+												fw = new FileWriter( of );
+											}
+											i++;
+										}
+										fw.write( line+"\n" );
+										
+										line = br.readLine();
+									}
+									if( fw != null ) {
+										fw.close();
+										name = of.getName();
+										ind = name.lastIndexOf('.');
+										name = name.substring(0,ind);
+										addSequences(name, seqs.getType(), of.toURI().toString(), i%spin);
+									}									
+								} catch (URISyntaxException e1) {
+									e1.printStackTrace();
+								} catch (FileNotFoundException e1) {
+									e1.printStackTrace();
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							}
+
+							@Override
+							public void windowIconified(WindowEvent e) {}
+
+							@Override
+							public void windowDeiconified(WindowEvent e) {}
+
+							@Override
+							public void windowActivated(WindowEvent e) {}
+
+							@Override
+							public void windowDeactivated(WindowEvent e) {}
+						});
+						dl.setVisible( true );
 					}
 				}
 			}
@@ -830,7 +942,7 @@ public class SerifyApplet extends JApplet {
 					if( obj != null && obj instanceof List ) {
 						List<File> lf = (List<File>)obj;
 						for( File f : lf ) {
-							addSequences( f.getName(), f.toURI().toString(), "dna", 50 );
+							addSequences( f.getName(), f.toURI().toString() );
 						}
 					} else if( obj instanceof Image ) {
 						
@@ -841,7 +953,7 @@ public class SerifyApplet extends JApplet {
 						
 						for( String fileName : fileStr ) {
 							File f = new File( new URI( fileName ) );
-							addSequences( f.getName(), "dna", f.toURI().toString(), 50 );
+							addSequences( f.getName(), f.toURI().toString() );
 						}
 					}
 				} catch (UnsupportedFlavorException e) {
@@ -877,6 +989,29 @@ public class SerifyApplet extends JApplet {
 	private void addSequences( String user, String name, String type, String path, int nseq ) {		
 		JSObject js = JSObject.getWindow( SerifyApplet.this );
 		js.call( "addSequences", new Object[] {user, name, type, path, nseq} );
+	}
+	
+	private void addSequences( String name, String path ) throws URISyntaxException, IOException {
+		String type = "nucl";
+		int nseq = 0;
+		
+		File f = new File( new URI(path) );
+		FileReader	fr = new FileReader( f );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith(">") ) nseq++;
+			else if( type.equals("nucl") && !line.matches("^[acgtnACGTN]+$") ) {
+				System.err.println( line );
+				type = "prot";
+			}
+			line = br.readLine();
+		}
+		fr.close();
+		
+		if( nseq > 0 ) {
+			addSequences(name, type, path, nseq);
+		} else System.err.println( "no sequences in file" );
 	}
 	
 	private void addSequences( String name, String type, String path, int nseq ) {
