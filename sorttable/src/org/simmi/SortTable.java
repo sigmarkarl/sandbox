@@ -2307,7 +2307,7 @@ public class SortTable extends JApplet {
 								float fl1 = (f1 == null) ? 0 : f1;
 								float fl2 = (f2 == null) ? 0 : f2;
 								
-								float abs = Math.abs( f1-f2 );
+								float abs = Math.abs( fl1-fl2 );
 								val += abs*abs;
 							}
 						}
