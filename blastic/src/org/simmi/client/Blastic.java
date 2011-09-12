@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.simmi.shared.Blast;
 import org.simmi.shared.Database;
+import org.simmi.shared.Machine;
 import org.simmi.shared.Sequences;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -21,6 +22,7 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
@@ -71,7 +73,7 @@ public class Blastic implements EntryPoint {
 	
 	public native void console( String log ) /*-{
 		$wnd.console.log( log );
-	}-*/;		
+	}-*/;
 	
 	public native int dropHandler( JavaScriptObject table, String uid, String type ) /*-{
 		var s = this;
@@ -131,6 +133,14 @@ public class Blastic implements EntryPoint {
 	public native void addSequenceInApplet( JavaScriptObject appletelement, String user, String name, String type, String path, int num, String key ) /*-{
 		appletelement.updateSequences( user, name, type, path, num, key );
 	}-*/;
+	
+	public native String getMachineName( JavaScriptObject appletelement ) /*-{
+		if( appletelement.getMachine ) {
+			return appletelement.getMachine();
+		}
+		return null;
+	}-*/;
+
 	
 	public void addSequence( final String user, final String name, final String type, final String path, final int num ) {
 		final Sequences seqs = new Sequences( user, name, type, path, num );
@@ -204,8 +214,30 @@ public class Blastic implements EntryPoint {
 			s.@org.simmi.client.Blastic::deleteSequenceKey(Ljava/lang/String;)( key );
 		};
 		
+		$wnd.initMachines = function( hostname, procs ) {
+			s.@org.simmi.client.Blastic::initMachines(Ljava/lang/String;I)( hostname, procs );
+		};
+		
 		return 0;
 	}-*/;
+	
+	public void initMachines( String hostname, int procs ) {
+		greetingService.getMachineInfo( hostname, procs, new AsyncCallback<Machine[]>() {
+	    	@Override
+			public void onSuccess(Machine[] mcs) {
+	    		machineList.clear();
+	    		for( Machine m : mcs ) {			    			
+	    			machineList.add( m );
+	    		}
+	    		updateMachineTable();
+			}
+		
+			@Override
+			public void onFailure(Throwable caught) {
+					
+			}
+	    });
+	}
 	
 	public native void deleteSequenceInApplet( String key ) /*-{
 		var applet = $doc.getElementById('serify');
@@ -255,6 +287,21 @@ public class Blastic implements EntryPoint {
 		});
 	}
 	
+	public void addMachineInfo( final String name, final int nproc, final boolean on ) {
+		final Machine m = new Machine( name, nproc, on );
+		greetingService.saveMachine( m, new AsyncCallback<String>() {
+			@Override
+			public void onFailure(Throwable caught) {}
+
+			@Override
+			public void onSuccess(String res) {
+				m.setKey( res );
+				machineList.add( m );
+				addMachineToTable(name, nproc, on);
+			}
+		});
+	}
+	
 	private void updateDatabaseTable() {
 		for( Database db : databaseList ) {
 			String user = db.getUser();
@@ -274,6 +321,28 @@ public class Blastic implements EntryPoint {
 			String path = b.getPath();
 			String result = b.getResult();
 			addBlastToTable(user, name, path, result);
+		}
+	}
+	
+	private void updateMachineTable() {
+		for( Machine m : machineList ) {
+			String name = m.getName();
+			int nproc = m.getProcs();
+			boolean on = m.getOn();
+			addMachineToTable( name, nproc, on );
+		}
+	}
+
+	private void addMachineToTable( String name, int nproc, boolean on ) {
+		if( machinedata != null ) {
+			int r = machinedata.getNumberOfRows();
+			
+			machinedata.addRow();
+			machinedata.setValue( r, 0, name );
+			machinedata.setValue( r, 1, nproc );
+			machinedata.setValue( r, 2, on );
+			machineview = DataView.create( machinedata );
+			machinetable.draw( machineview, machineoptions );
 		}
 	}
 	
@@ -331,8 +400,14 @@ public class Blastic implements EntryPoint {
 	Table		blasttable;
 	Options		blastoptions;
 	
+	DataTable	machinedata;
+	DataView	machineview;
+	Table		machinetable;
+	Options		machineoptions;
+	
 	List<Blast>		blastList = new ArrayList<Blast>();
 	List<Database> 	databaseList = new ArrayList<Database>();
+	List<Machine> 	machineList = new ArrayList<Machine>();
 	//List<Sequences>	sequencesList = new ArrayList<Sequences>();
 	
 	boolean		hasFilled = false;
@@ -395,8 +470,11 @@ public class Blastic implements EntryPoint {
 		//final ResizeLayoutPanel	applet = new ResizeLayoutPanel();
 		final SimplePanel	applet = new SimplePanel();
 		//ResizeLayoutPanel rp;
+		
+		final ResizeLayoutPanel tableviewresize = new ResizeLayoutPanel();
 		final FocusPanel	tableviewfocus = new FocusPanel();
 		final FocusPanel	blasttablefocus = new FocusPanel();
+		final FocusPanel	machinefocus = new FocusPanel();
 		//tableview.setWidth("100%");
 		//tableview.setHeight("100%");
 		
@@ -413,12 +491,6 @@ public class Blastic implements EntryPoint {
 		    	options.setWidth("100%");
 		    	options.setHeight("100%");
 		    	options.setAllowHtml( true );
-		    	  
-		    	/*data.addRow();
-				data.setValue( 0, 0, "erm" );
-				data.setValue( 0, 1, "erm" );
-				data.setValue( 0, 2, "erm" );
-				data.setValue( 0, 3, "erm" );*/
 				
 		    	view = DataView.create( data );
 		    	table = new Table( view, options );
@@ -435,7 +507,21 @@ public class Blastic implements EntryPoint {
 		    	blastoptions.setAllowHtml( true );
 		    	  
 		    	blastview = DataView.create( blastdata );
-		    	blasttable = new Table( blastview, blastoptions );		    	
+		    	blasttable = new Table( blastview, blastoptions );
+		    	
+		    	
+		    	machinedata = DataTable.create();
+		    	machinedata.addColumn( ColumnType.STRING, "Name");
+		    	machinedata.addColumn( ColumnType.NUMBER, "Procs");
+		    	machinedata.addColumn( ColumnType.BOOLEAN, "On/Off");
+		    	  
+		    	machineoptions = Options.create();
+		    	machineoptions.setWidth("100%");
+		    	machineoptions.setHeight("100%");
+		    	machineoptions.setAllowHtml( true );
+		    	  
+		    	machineview = DataView.create( machinedata );
+		    	machinetable = new Table( machineview, machineoptions );
 		    	
 		    	//dropHandler( table.getElement(), user );
 		    	  
@@ -479,11 +565,58 @@ public class Blastic implements EntryPoint {
 					}
 			    });
 		    	
+		    	/*if( machinedata.getNumberOfRows() < machineList.size() ) {
+		    		Element ae = Document.get().getElementById("serify");
+		    		String machinename = getMachineName( ae );
+		    		if( machinename != null ) {
+		    			String[] split = machinename.split("\t");
+		    	    	greetingService.getMachineInfo( split[0], Integer.parseInt(split[1]), new AsyncCallback<Machine[]>() {
+		    		    	@Override
+		    				public void onSuccess(Machine[] mcs) {
+		    		    		machineList.clear();
+		    		    		for( Machine m : mcs ) {			    			
+		    		    			machineList.add( m );
+		    		    		}
+		    		    		updateMachineTable();
+		    				}
+		    			
+		    				@Override
+		    				public void onFailure(Throwable caught) {
+		    						
+		    				}
+		    		    });
+		    		}
+		    	}*/
+		    	
 		    	table.setWidth("100%");
 		    	table.setHeight("100%");
-		    	tableviewfocus.add( table );
-		    	blasttablefocus.add( blasttable );
+		    			    	
+		    	tableviewresize.add( table );
+		    	tableviewfocus.add( tableviewresize );
 		    	
+		    	tableviewresize.setSize("100%", "100%");
+		    	
+		    	tableviewresize.addResizeHandler( new ResizeHandler() {
+					@Override
+					public void onResize(ResizeEvent event) {
+						int w = event.getWidth();
+						int h = event.getHeight();
+						
+						//console( w + " " + h );
+						
+						options.setWidth(w+"px");
+						options.setHeight(h+"px");
+						//view = DataView.create( data );
+						table.setSize(w+"px", h+"px");
+						table.draw( view, options );
+						table.setSize(w+"px", h+"px");
+					}
+		    	});
+		    	
+		    	blasttablefocus.add( blasttable );
+		    	machinefocus.add( machinetable );
+		    	
+		    	slp.addEast( machinefocus, 200.0 );
 		    	slp.addSouth( blasttablefocus, 300.0 );
 		    	slp.addWest( applet, 500.0 );
 		    	slp.add( tableviewfocus );
@@ -611,6 +744,26 @@ public class Blastic implements EntryPoint {
 		ae.setAttribute("code", "org.simmi.SerifyApplet");
 		
 		applet.getElement().appendChild( ae );
+		
+		/*String machinename = getMachineName( ae );
+		if( machinename != null ) {
+			String[] split = machinename.split("\t");
+	    	greetingService.getMachineInfo( split[0], Integer.parseInt(split[1]), new AsyncCallback<Machine[]>() {
+		    	@Override
+				public void onSuccess(Machine[] mcs) {
+		    		machineList.clear();
+		    		for( Machine m : mcs ) {			    			
+		    			machineList.add( m );
+		    		}
+		    		updateMachineTable();
+				}
+			
+				@Override
+				public void onFailure(Throwable caught) {
+						
+				}
+		    });
+		}*/
 		
 		/*applet.addResizeHandler( new ResizeHandler() {
 			@Override

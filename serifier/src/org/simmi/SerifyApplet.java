@@ -30,10 +30,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -119,7 +121,7 @@ public class SerifyApplet extends JApplet {
 		String _key;
 	};
 	
-	public List<Sequences> initSequences( int rowcount) {
+	public List<Sequences> initSequences( int rowcount ) {
 		List<Sequences>	seqs = new ArrayList<Sequences>();
 		
 		JSObject js = JSObject.getWindow( SerifyApplet.this );
@@ -132,6 +134,34 @@ public class SerifyApplet extends JApplet {
 		}*/
 		
 		return seqs;
+	}
+	
+	public String getMachine() {
+		String hostinfo = "localhost\t1";
+		try {
+			String hostname = InetAddress.getLocalHost().getHostName();
+			int val = Runtime.getRuntime().availableProcessors();
+			
+			hostinfo = hostname + "\t" + val;
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		return hostinfo;
+	}
+	
+	private void initMachines() {
+		String hostname = "localhost";
+		int procs = 1;
+		
+		try {
+			hostname = InetAddress.getLocalHost().getHostName();
+			procs = Runtime.getRuntime().availableProcessors();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		
+		JSObject js = JSObject.getWindow( SerifyApplet.this );
+		js.call( "initMachines", new Object[] {hostname, procs} );
 	}
 	
 	public TableModel createModel( final List<?> datalist ) {
@@ -418,6 +448,7 @@ public class SerifyApplet extends JApplet {
 		//table.setBackground( bgcolor );
 		
 		sequences = initSequences( table.getRowCount() );
+		initMachines();
 		table.setAutoCreateRowSorter( true );
 		TableModel model = createModel( sequences, Sequences.class );
 		table.setModel( model );
@@ -578,29 +609,6 @@ public class SerifyApplet extends JApplet {
 						
 					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
 					if( blast.exists() ) {
-						int r = table.getSelectedRow();
-						String path = (String)table.getValueAt( r, 3 );
-						URL url = new URL( path );
-						
-						String file = url.getFile();
-						String[] split = file.split("/");
-						String fname = split[ split.length-1 ];
-						split = fname.split("\\.");
-						final String title = split[0]; 
-						File infile = new File( dir, fname );
-						
-						FileOutputStream fos = new FileOutputStream( infile );
-						InputStream is = url.openStream();
-						
-						byte[] bb = new byte[100000];
-						r = is.read(bb);
-						while( r > 0 ) {
-							fos.write(bb, 0, r);
-							r = is.read(bb);
-						}
-						is.close();
-						fos.close();
-						
 						JFileChooser fc = new JFileChooser();
 						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 						if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
@@ -611,19 +619,44 @@ public class SerifyApplet extends JApplet {
 							String dbPath = (String)js.call( "getSelectedDb", new Object[] {} );
 							
 							if( dbPath != null ) {
-								String queryPathFixed = fixPath( infile.getAbsolutePath() );
 								String dbPathFixed = fixPath( dbPath );
-								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
-								
-								String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
-								
-								final Object[] cont = new Object[1];
-								Runnable run = new Runnable() {
-									public void run() {
-										js.call( "addResult", new Object[] {getUser(), title, outPathFixed, cont[0]} );
+								int[] rr = table.getSelectedRows();
+								for( int r : rr ) {
+									String path = (String)table.getValueAt( r, 3 );
+									URL url = new URL( path );
+									
+									String file = url.getFile();
+									String[] split = file.split("/");
+									String fname = split[ split.length-1 ];
+									split = fname.split("\\.");
+									final String title = split[0]; 
+									File infile = new File( dir, fname );
+									
+									FileOutputStream fos = new FileOutputStream( infile );
+									InputStream is = url.openStream();
+									
+									byte[] bb = new byte[100000];
+									r = is.read(bb);
+									while( r > 0 ) {
+										fos.write(bb, 0, r);
+										r = is.read(bb);
 									}
-								};
-								String result = runProcessBuilder( "Performing blast", Arrays.asList( cmds ), run, cont );
+									is.close();
+									fos.close();
+							
+									String queryPathFixed = fixPath( infile.getAbsolutePath() );
+									final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
+									
+									String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
+									
+									final Object[] cont = new Object[1];
+									Runnable run = new Runnable() {
+										public void run() {
+											js.call( "addResult", new Object[] {getUser(), title, outPathFixed, cont[0]} );
+										}
+									};
+									runProcessBuilder( "Performing blast", Arrays.asList( cmds ), run, cont );
+								}
 							}
 						}
 						
