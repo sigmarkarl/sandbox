@@ -2290,6 +2290,10 @@ public class SortTable extends JApplet {
 				
 				Object[]	rr = stuff.get(0);
 				double[]	sums = new double[ stuff.size()-2 ];
+				List<Node>	nodelist = new ArrayList<Node>();
+				for( int i = 0; i < sums.length; i++ ) {
+					nodelist.add( new Node() );
+				}
 				Arrays.fill(sums, 0.0);
 				for( int i = 2; i < stuff.size(); i++ ) {
 					for( int k = i+1; k < stuff.size(); k++ ) {
@@ -2320,6 +2324,12 @@ public class SortTable extends JApplet {
 						
 						distmatrix.add( dist );
 					}
+				}
+				double[]	qmatrix = new double[ distmatrix.size() ];
+				for( int i = 0; i < qmatrix.length; i++ ) {
+					int y = i/(sums.length-1);
+					qmatrix[i] = (sums.length-2)*distmatrix.get(i) - sums[i] - sums[i+1];
+					
 				}
 			}
 		});
