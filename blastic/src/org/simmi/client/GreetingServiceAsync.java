@@ -2,6 +2,7 @@ package org.simmi.client;
 
 import org.simmi.shared.Blast;
 import org.simmi.shared.Database;
+import org.simmi.shared.Machine;
 import org.simmi.shared.Sequences;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -18,4 +19,6 @@ public interface GreetingServiceAsync {
 	void saveDb(Database b, AsyncCallback<String> asyncCallback);
 	void saveBlast(Blast b, AsyncCallback<String> asyncCallback);
 	void deleteKey(String key, AsyncCallback<String> asyncCallback);
+	void getMachineInfo(String thismachine, int procs, AsyncCallback<Machine[]> asyncCallback);
+	void saveMachine(Machine m, AsyncCallback<String> asyncCallback);
 }

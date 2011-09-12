@@ -6,6 +6,7 @@ import org.simmi.client.GreetingService;
 import org.simmi.shared.Blast;
 import org.simmi.shared.Database;
 import org.simmi.shared.FieldVerifier;
+import org.simmi.shared.Machine;
 import org.simmi.shared.Sequences;
 
 import com.google.appengine.api.datastore.DatastoreService;
@@ -170,5 +171,62 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		datastore.delete( key );
 		
 		return null;
+	}
+
+	@Override
+	public Machine[] getMachineInfo( String machineid, int procs ) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Query query = new Query("machine");
+		List<Entity> mEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		Machine[] mArray = new Machine[ mEntities.size() ];
+		
+		Machine mymachine = null;
+		Entity em = null;
+		int i = 0;
+		for( Entity e : mEntities ) {
+			int nproc = ((Number)e.getProperty("nproc")).intValue();
+			String name = (String)e.getProperty("name");
+			boolean on = (Boolean)e.getProperty("on");
+			
+			Machine m = new Machine( name, nproc, on );
+			if( machineid.equals( name ) ) {
+				mymachine = m;
+				em = e;
+			}
+			
+			m.setKey( KeyFactory.keyToString( e.getKey() ) );
+			mArray[i++] = m;
+		}
+		
+		if( mymachine == null ) {
+			mymachine = new Machine( machineid, procs, true );
+			em = new Entity("machine");
+			em.setProperty("name", machineid);
+		} else {
+			mymachine.setOn( true );
+			mymachine.setProcs( procs );
+		}
+		
+		em.setProperty("on", true);
+		em.setProperty("nproc", procs);
+		mymachine.setKey( KeyFactory.keyToString( datastore.put( em ) ) );
+		
+		return mArray;
+	}
+
+	@Override
+	public String saveMachine(Machine m) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Entity ent = new Entity("machine");
+		//Query query = new Query("sequences");
+		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
+		ent.setProperty("name", m.getName());
+		ent.setProperty("nproc", m.getProcs());
+		ent.setProperty("on", m.getOn());
+		
+		Key key = datastore.put( ent );
+		
+		return KeyFactory.keyToString(key);
 	}
 }
