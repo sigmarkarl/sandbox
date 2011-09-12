@@ -2,11 +2,17 @@ package org.simmi.client;
 
 import java.util.List;
 
+import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -41,6 +47,10 @@ public class Navisionexplorer implements EntryPoint {
 	Table		table;
 	Options		options;
 	
+	public native void console( String log ) /*-{
+		$wnd.console.log( log );
+	}-*/;
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -56,6 +66,26 @@ public class Navisionexplorer implements EntryPoint {
 		
 		dlp.addNorth( toolbar, 25 );
 		dlp.add( slp );
+		
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://130.208.252.31/cbi-bin/lubbi" );
+		try {
+			rb.sendRequest("", new RequestCallback() {
+				@Override
+				public void onResponseReceived(Request request, Response response) {
+					console( "succ" );
+					console( response.getText() );
+				}
+				
+				@Override
+				public void onError(Request request, Throwable exception) {
+					console( exception.getMessage() );
+				}
+			});
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+		
+		final Canvas canvas = Canvas.createIfSupported();
 		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {
@@ -149,6 +179,7 @@ public class Navisionexplorer implements EntryPoint {
 		    	  module.add( vp );*/
 		    	  
 		    	  slp.addWest( table, 200.0 );
+		    	  slp.add( canvas );
 		      }
 		    };
 		    VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);
