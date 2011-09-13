@@ -82,21 +82,21 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 
 	@Override
 	public List<Person> getAllUsers() throws IllegalArgumentException {
-		try {
+		/*try {
 			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 		} catch (ClassNotFoundException e2) {
 			e2.printStackTrace();
 		}
 		
-		String connectionUrl = "jdbc:sqlserver://navision.rf.is;databaseName=MATIS;user=simmi;password=mirodc30;";
+		String connectionUrl = "jdbc:sqlserver://navision.rf.is;databaseName=MATIS;user=simmi;password=mirodc30;";*/
 		
 		List<Person>	persons = null;
-		try {
+		/*try {
 			connect( connectionUrl );
 			persons = loadPersons();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		}*/
 		return persons;
 	}
 }
