@@ -67,17 +67,20 @@ public class Navisionexplorer implements EntryPoint {
 		dlp.addNorth( toolbar, 25 );
 		dlp.add( slp );
 		
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://130.208.252.31/cbi-bin/lubbi" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
 		try {
-			rb.sendRequest("", new RequestCallback() {
+			String sql = "select [Name], [User ID] from [MATIS].[dbo].[User]";
+			rb.sendRequest(sql, new RequestCallback() {
 				@Override
 				public void onResponseReceived(Request request, Response response) {
 					console( "succ" );
-					console( response.getText() );
+					String str = response.getText();
+					console( str );
 				}
 				
 				@Override
 				public void onError(Request request, Throwable exception) {
+					console( "hoho" );
 					console( exception.getMessage() );
 				}
 			});
