@@ -19,7 +19,7 @@ public class NavTest {
 			BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
 			String sql = br.readLine();
 			
-			System.out.println("Content-type: text/plain\n");
+			//System.out.println("Content-type: text/plain\n");
 			if( sql != null && sql.length() > 0 ) {
 				Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 				String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=MATIS;user=simmi2;password=drsmorc.311;";
