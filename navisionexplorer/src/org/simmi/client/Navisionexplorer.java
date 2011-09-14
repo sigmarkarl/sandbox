@@ -146,7 +146,7 @@ public class Navisionexplorer implements EntryPoint {
 	
 	DateBox before;
 	DateBox after;
-	public void loadJobs( final Collection<String>	set ) {
+	public void loadJobs( final Collection<String>	set, final String pname ) {
 		Date befdate = before == null ? null : before.getDatePicker().getValue();
 		Date aftdate = after == null ? null : after.getDatePicker().getValue();
 		
@@ -169,6 +169,7 @@ public class Navisionexplorer implements EntryPoint {
 					String str = response.getText();
 					String[] split = str.split("\n");
 					jlist.clear();
+					//String pname = "";
 					for( String spl : split ) {
 						String[] subsplit = spl.split("\t");
 						if( subsplit.length == 2 ) {
@@ -187,7 +188,7 @@ public class Navisionexplorer implements EntryPoint {
 					List<Job> subwork = initPersonJob( jlist );
 					pjMap.put( person, subwork );
 					
-					repaint( subwork );
+					repaint( subwork, pname );
 					
 					//if( pjMap.containsKey(key))
 				}
@@ -232,22 +233,24 @@ public class Navisionexplorer implements EntryPoint {
 	}
 	
 	Canvas canvas;
-	public void repaint( List<Job> subwork ) {
+	public void repaint( List<Job> subwork, String pname ) {
 		Context2d context = canvas.getContext2d();
-		double total = 0.0;
-		
-		for( Job j : subwork ) {
-			total += j.hour;
-		}
 		
 		int w = canvas.getCoordinateSpaceWidth();
 		int h = canvas.getCoordinateSpaceHeight();
+		context.clearRect(0, 0, w, h);
+		context.fillText(pname, 10, 30);
+		
+		double total = 0.0;
+		for( Job j : subwork ) {
+			total += j.hour;
+		}
 		
 		int c = 0;
 		double k = 0.0;
 		double w2 = w/2.0;
 		double h2 = h/2.0;
-		double next = (int)((k*2.0*Math.PI)/total);
+		double next = (k*2.0*Math.PI)/total;
 		for( int i = 0; i < (subwork.size()+1)/2; i++ ) {
 			Job j = subwork.get(i);
 			double d = j.hour;
@@ -255,8 +258,12 @@ public class Navisionexplorer implements EntryPoint {
 			
 			double val = ((k+d)*2.0*Math.PI)/total;
 			context.beginPath();
-			context.arc( w2, h2, 250.0, next, val-next );
-			context.closePath();
+			context.moveTo(w2, h2);
+			//context.lineTo( w2+250.0*Math.cos(next), h2+250.0*Math.sin(next) );
+			//console( i + "  " + next + "  " + val );
+			context.arc( w2, h2, 250.0, next, val );
+			context.lineTo(w2, h2);
+			//context.closePath();
 			context.fill();
 			//g2.fillArc(w/2-250, h/2-250, 500, 500, next, val-next );
 			next = val;
@@ -268,17 +275,17 @@ public class Navisionexplorer implements EntryPoint {
 				double strw = tm.getWidth();
 				u += 0.5*total;
 				context.translate( w2, h2 );
-				context.rotate( -Math.PI*2.0*u/total );
-				context.fillText(j.name, -255-strw, 0 );
 				context.rotate( Math.PI*2.0*u/total );
+				context.fillText(j.name, -255-strw, 0 );
+				context.rotate( -Math.PI*2.0*u/total );
 				context.translate( -w2, -h2 );
 			} else {
 				context.translate( w2, h2 );
-				context.rotate( -Math.PI*2.0*u/total );
-				context.fillText(j.name, 255, 0 );
 				context.rotate( Math.PI*2.0*u/total );
+				context.fillText(j.name, 255, 0 );
+				context.rotate( -Math.PI*2.0*u/total );
 				context.translate( -w2, -h2 );
-			}				
+			}
 			k += d;
 			c = (c+1)%cc.length;
 			
@@ -287,12 +294,13 @@ public class Navisionexplorer implements EntryPoint {
 				d = j.hour;
 				context.setFillStyle( cc[c] );
 				
-				val = (int)(((k+d)*360.0)/total);
+				val = ((k+d)*2.0*Math.PI)/total;
 				//g2.fillArc(w/2-250, h/2-250, 500, 500, next, val-next );
 				
 				context.beginPath();
-				context.arc( w2, h2, 250.0, next, val-next );
-				context.closePath();
+				context.moveTo( w2, h2 );
+				context.arc( w2, h2, 250.0, next, val );
+				context.lineTo( w2, h2 );
 				context.fill();
 				
 				next = val;
@@ -315,15 +323,15 @@ public class Navisionexplorer implements EntryPoint {
 					double strw = tm.getWidth();
 					u += 0.5*total;
 					context.translate( w2, h2 );
-					context.rotate( -Math.PI*2.0*u/total );
-					context.fillText(j.name, -255-strw, 0.0 );
 					context.rotate( Math.PI*2.0*u/total );
+					context.fillText(j.name, -255-strw, 0.0 );
+					context.rotate( -Math.PI*2.0*u/total );
 					context.translate( -w2, -h2 );
 				} else {
 					context.translate( w2, h2 );
-					context.rotate( -Math.PI*2.0*u/total );
-					context.fillText(j.name, 255, 0.0 );
 					context.rotate( Math.PI*2.0*u/total );
+					context.fillText(j.name, 255, 0.0 );
+					context.rotate( -Math.PI*2.0*u/total );
 					context.translate( -w2, -h2 );
 				}				
 				k += d;
@@ -406,17 +414,11 @@ public class Navisionexplorer implements EntryPoint {
 							break;
 						}
 						
-						Context2d context = canvas.getContext2d();
-						int w = canvas.getCoordinateSpaceWidth();
-						int h = canvas.getCoordinateSpaceHeight();
-						context.clearRect(0, 0, w, h);
-						context.fillText(name, 10, 30);
-						
 						if( pjMap.containsKey(person) ) {
 							List<Job> subwork = pjMap.get(person);
-							repaint( subwork );
+							repaint( subwork, name );
 						} else {
-							loadJobs( pkt );
+							loadJobs( pkt, name );
 						}
 					}
 		    	});
