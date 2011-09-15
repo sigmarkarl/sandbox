@@ -16,6 +16,16 @@ import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.DragEnterEvent;
+import com.google.gwt.event.dom.client.DragEnterHandler;
+import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragHandler;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
+import com.google.gwt.event.dom.client.DragLeaveHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -36,7 +46,10 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-public class Connectron extends ScrollPanel implements DoubleClickHandler, MouseDownHandler, MouseUpHandler, MouseMoveHandler, KeyDownHandler, KeyUpHandler, KeyPressHandler {
+public class Connectron extends ScrollPanel 
+	implements 	DoubleClickHandler, MouseDownHandler, MouseUpHandler, MouseMoveHandler, 
+				KeyDownHandler, KeyUpHandler, KeyPressHandler, 
+				DragHandler, DragEnterHandler, DragLeaveHandler, DragOverHandler, DropHandler {
 	/**
 	 * 
 	 */
@@ -61,7 +74,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 	boolean shift = false;
 	boolean	fixed = false;
 	
-	double dsize = 50;
+	double dsize = 1.0;
 	
 	public void repaint() {
 		paintComponent( canvas.getContext2d() );
@@ -418,7 +431,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 			rel.py = dy+getParentHeight()/2.0;
 			rel.pz = dz;
 			
-			int size = (int) (d * dsize / (zval + dz));
+			int size = (int) (d * rel.getSize() * dsize / (zval + dz));
 			
 			int x = (int)dx+getParentWidth()/2;
 			int y = (int)dy+getParentHeight()/2;
@@ -470,6 +483,192 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		initGUI();
 		
 		//this.add( scrollpane );
+	}
+	
+	private class Node {
+		String 		name;
+		private double		h;
+		private double		h2;
+		String		color;
+		List<Node>	nodes;
+		
+		public Node() {
+			nodes = new ArrayList<Node>();
+		}
+		
+		public double geth() {
+			return h2;
+		}
+		
+		public String toString() {
+			String str = "";
+			if( nodes.size() > 0 ) {
+				str += "(";
+				int i = 0;
+				for( i = 0; i < nodes.size()-1; i++ ) {
+					str += nodes.get(i)+",";
+				}
+				str += nodes.get(i)+")";
+			}
+			
+			return str+name;
+		}
+		
+		public int countLeaves() {
+			int total = 0;
+			for( Node node : nodes ) {
+				total += node.countLeaves();
+			}	
+			return Math.max( 1, total );
+		}
+		
+		public int countMaxHeight() {
+			int val = 0;
+			for( Node node : nodes ) {
+				val = Math.max( val, node.countMaxHeight() );
+			}
+			return val+1;
+		}
+	};
+	
+	double minh = Double.MAX_VALUE;
+	double maxh = 0.0;
+	double minh2 = Double.MAX_VALUE;
+	double maxh2 = 0.0;
+	int loc;
+	private Node parseTreeRecursive( String str, boolean inverse ) {
+		Node ret = new Node();
+		Node node = null;
+		while( loc < str.length()-1 && str.charAt(loc) != ')' ) {
+			loc++;
+			char c = str.charAt(loc);
+			if( c == '(' ) {
+				node = parseTreeRecursive(str, inverse);
+				if( inverse ) node.nodes.add( ret );
+				else ret.nodes.add( node );
+			} else {
+				node = new Node();
+				int end = loc+1;
+				char n = str.charAt(end);
+				while( end < str.length()-1 && n != ',' && n != ')' ) {
+					n = str.charAt(++end);
+				}
+				String code = str.substring( loc, end );
+				if( code.contains(":") ) {
+					String[] split = code.split(":");
+					node.name = split[0].replaceAll("'", "");
+					if( split.length > 2 ) {
+						String color = split[2].substring(1);
+						int r = Integer.parseInt( color.substring(0, 2), 16 );
+						int g = Integer.parseInt( color.substring(2, 4), 16 );
+						int b = Integer.parseInt( color.substring(4, 6), 16 );
+						node.color = "rgb( "+r+","+g+","+b+")"; //new Color( r,g,b );
+					} else node.color = null;
+					
+					String dstr = split[1].trim();
+					String dstr2 = "0";
+					if( dstr.contains("[") ) {
+						int start = split[1].indexOf('[');
+						int stop = split[1].indexOf(']');
+						dstr2 = dstr.substring( start+1, stop );
+						dstr = dstr.substring( 0, start );
+					}
+					node.h = Double.parseDouble( dstr );
+					node.h2 = Double.parseDouble( dstr2 );
+					
+					if( node.h < minh ) minh = node.h;
+					if( node.h > maxh ) maxh = node.h;
+					
+					if( node.h2 < minh2 ) minh2 = node.h2;
+					if( node.h2 > maxh2 ) maxh2 = node.h2;
+				} else {
+					node.name = code.replaceAll("'", "");;
+				}
+				loc = end;
+				
+				if( inverse ) node.nodes.add( ret );
+				else ret.nodes.add( node );
+			}
+		}
+		
+		if( loc < str.length()-1 ) {
+			loc++;
+			int end = loc;
+			char n = str.charAt(end);
+			while( end < str.length()-1 && n != ',' && n != ';' && n != ')' ) {
+				n = str.charAt(++end);
+			}
+			String code = str.substring( loc, end );
+			if( code.contains(":") ) {
+				String[] split = code.split(":");
+				ret.name = split[0].replaceAll("'", "");;
+				if( split.length > 2 ) {
+					String color = split[2].substring(1);
+					int r = Integer.parseInt( color.substring(0, 2), 16 );
+					int g = Integer.parseInt( color.substring(2, 4), 16 );
+					int b = Integer.parseInt( color.substring(4, 6), 16 );
+					ret.color = "rgb( "+r+","+g+","+b+")"; //new Color( r,g,b );
+				} else ret.color = null;
+				String dstr = split[1].trim();
+				String dstr2 = "0";
+				if( dstr.contains("[") ) {
+					int start = split[1].indexOf('[');
+					int stop = split[1].indexOf(']');
+					dstr2 = dstr.substring( start+1, stop );
+					dstr = dstr.substring( 0, start );
+				}
+				try {
+					ret.h = Double.parseDouble( dstr );
+					ret.h2 = Double.parseDouble( dstr2 );
+				} catch( Exception e ) {}
+				if( ret.h < minh ) minh = ret.h;
+				if( ret.h > maxh ) maxh = ret.h;
+				if( ret.h2 < minh2 ) minh2 = ret.h2;
+				if( ret.h2 > maxh2 ) maxh2 = ret.h2;
+			} else {
+				ret.name = code.replaceAll("'", "");
+			}
+			loc = end;
+		}
+		
+		return inverse ? node : ret;
+	}
+	
+	Random r = new Random();
+	private Corp recursiveNodeGeneration( List<Corp> corpList, Node node ) {
+		int i = node.name.indexOf("Thermus");
+		Corp corp = new Corp( i > 0 ? node.name.substring(i) : node.name );
+		corp.setx( 400.0*r.nextDouble() );
+		corp.sety( 400.0*r.nextDouble() );
+		corp.setz( 400.0*r.nextDouble() );
+		if( node.name == null || node.name.trim().length() == 0 ) {
+			corp.color = node.color;
+			corp.setSize( 8 );
+		}
+		this.add( corp );
+		corpList.add( corp );
+		
+		for( Node n : node.nodes ) {
+			Corp c = recursiveNodeGeneration(corpList, n);
+			double val = (1.0/(Math.abs(node.h)+0.0005))/50.0;
+			String strval = Double.toString( node.h ); //Math.round(val*100.0)/100.0 );
+			corp.addLink(c, strval, val );
+			c.addLink(corp, strval, val );
+		}
+		
+		return corp;
+	}
+	
+	public void importFromTree( String text ) {
+		u = 50.0;
+		
+		loc = 0;
+		Node resultnode = parseTreeRecursive( text, false );
+		
+		List<Corp> corpList = new ArrayList<Corp>();
+		recursiveNodeGeneration( corpList, resultnode );
+		
+		repaint();
 	}
 	
 	public void importFromText( String text ) {
@@ -669,6 +868,13 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 		canvas.addKeyDownHandler( this );
 		canvas.addKeyUpHandler( this );
 		canvas.addKeyPressHandler( this );
+		
+		
+		canvas.addDragHandler( this );
+		canvas.addDragEnterHandler( this );
+		canvas.addDragLeaveHandler( this );
+		canvas.addDragOverHandler( this );
+		canvas.addDropHandler( this );
 		//canvas.addKeyPressHandler( this );
 		
 		/*final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
@@ -779,7 +985,7 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 				if( Corp.corpList.size() > 0 ) z /= Corp.corpList.size();
 				//System.err.println( "len "+ Corp.corpList.size() );
 				
-				Corp 		corp = new Corp(Corp.getCreateName(),"unknown",mx-Corp.size/2, my-Corp.size/2);
+				Corp 		corp = new Corp(Corp.getCreateName(),"unknown",mx-32/2, my-32/2);
 				
 				//backtest( m.x, m.y );
 				
@@ -878,6 +1084,8 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 				toggle = !toggle;
 				
 				popup.hide();
+				
+				canvas.setFocus( true );
 				repaint();
 			}
 		});		
@@ -1166,13 +1374,13 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 	}
 
 	public void keyPressed( int keychar, int keycode ) {
-		if( keycode == 107 /*+*/ ) {
+		if( keycode == 107 || keycode == 187 /*+*/ ) {
 			zoomval -= 100;
-		} else if( keycode == 109 /*-*/ ) {
+		} else if( keycode == 109 || keycode == 189 /*-*/ ) {
 			zoomval += 100;
-		} else if( keycode == 106 /* * */ ) {
+		} else if( keycode == 106 || keycode == 56 /* * */ ) {
 			dzoomval -= 100;
-		} else if( keycode == 111 /*/*/ ) {
+		} else if( keycode == 111 || keycode == 55 /*/*/ ) {
 			dzoomval += 100;
 		} else if( keycode == 188 /*,*/ ) {
 			dsize *= 0.8;
@@ -1334,4 +1542,24 @@ public class Connectron extends ScrollPanel implements DoubleClickHandler, Mouse
 			c.mousePressed(e, x, y, e.isShiftKeyDown(), true);
 		}
 	}
+
+	@Override
+	public void onDrop(DropEvent event) {
+		String dropstuff = event.getData( "text/plain;charset=utf-8" );
+		if( dropstuff.startsWith("(") ) {
+			importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
+		} else importFromText( dropstuff );
+	}
+
+	@Override
+	public void onDragOver(DragOverEvent event) {}
+
+	@Override
+	public void onDragLeave(DragLeaveEvent event) {}
+
+	@Override
+	public void onDragEnter(DragEnterEvent event) {}
+
+	@Override
+	public void onDrag(DragEvent event) {}
 }
