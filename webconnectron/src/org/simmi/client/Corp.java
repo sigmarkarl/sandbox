@@ -40,7 +40,7 @@ public class Corp {
 	boolean						hilighted = false;
 	
 	static byte[]		buffer = new byte[200000];
-	static int			size = 32;
+	double				size = 32;
 	static Set<Corp>	selectedList = new HashSet<Corp>();
 	//static Corp			drag;
 	static String 		paleColor = "#ffffff77";
@@ -96,13 +96,26 @@ public class Corp {
 		});*/
 	}
 	
+	public double getSize() {
+		return size;
+	}
+	
+	public void setSize( int size ) {
+		this.size = size;
+	}
+	
 	Rectangle	bounds = new Rectangle();
 	public Rectangle getBounds() {
 		return bounds;
 	}
 	
-	public void setBounds( int x, int y, int w, int h ) {
+	public void setBounds( double x, double y, double w, double h ) {
 		bounds = new Rectangle( x,y,w,h );
+	}
+	
+	public void setSize( int w, int h ) {
+		bounds.width = w;
+		bounds.height = h;
 	}
 	
 	boolean hassaved = false;
