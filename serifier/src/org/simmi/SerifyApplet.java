@@ -545,6 +545,7 @@ public class SerifyApplet extends JApplet {
 					checkInstall( dir );
 						
 					File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\makeblastdb.exe" );
+					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.25+/bin/makeblastdb" );
 					if( makeblastdb.exists() ) {
 						int r = table.getSelectedRow();
 						String path = (String)table.getValueAt( r, 3 );
@@ -608,6 +609,7 @@ public class SerifyApplet extends JApplet {
 					checkInstall( dir );
 						
 					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
+					if( !blast.exists() ) blast = new File( "/opt/ncbi-blast-2.2.25+/bin/blastp" );
 					if( blast.exists() ) {
 						JFileChooser fc = new JFileChooser();
 						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
