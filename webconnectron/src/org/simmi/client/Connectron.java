@@ -708,6 +708,55 @@ public class Connectron extends ScrollPanel
 		repaint();
 	}
 	
+	public void importFromMatrix( String text ) {
+		u = 5000.0;
+		
+		String[] split = text.split("\n");
+		String[] persons = split[0].split("\t");
+		
+		List<Corp> corpList = new ArrayList<Corp>();
+		
+		Random r = new Random();
+		for( String spec : persons ) {
+			if( spec.length() > 1 ) {
+				Corp corp = new Corp( spec );
+				corp.setx( 400.0*r.nextDouble() );
+				corp.sety( 400.0*r.nextDouble() );
+				corp.setz( 400.0*r.nextDouble() );
+				this.add( corp );
+				
+				corpList.add( corp );
+			}
+		}
+		
+		for( int i = 1; i < split.length; i++ ) {
+			String[] subsplit = split[i].split("\t");
+			//int y = i-1;
+			String spec = subsplit[0];
+			Corp corp = new Corp( spec );
+			corp.setx( 400.0*r.nextDouble() );
+			corp.sety( 400.0*r.nextDouble() );
+			corp.setz( 400.0*r.nextDouble() );
+			corp.color = "#1111ee";
+			this.add( corp );
+			corpList.add( corp );
+			
+			for( int x = 1; x < subsplit.length; x++ ) {
+				double d = Double.parseDouble( subsplit[x] );
+				if( d > 0.0 ) {
+					//Corp corpDst = corpList.get(x);
+					//Corp corpSrc = corpList.get(y);
+					
+					Corp pcorp = corpList.get(x-1);
+					corp.addLink( pcorp, subsplit[x], d/100.0 );
+					pcorp.addLink( corp, subsplit[x], d/100.0 );
+				}
+			}
+		}
+		
+		repaint();
+	}
+	
 	long last = 0;
 	public boolean isVisible() {
 		return super.isVisible() && birta;
@@ -1548,6 +1597,8 @@ public class Connectron extends ScrollPanel
 		String dropstuff = event.getData( "text/plain;charset=utf-8" );
 		if( dropstuff.startsWith("(") ) {
 			importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
+		} else if( dropstuff.startsWith("\t") ) {
+			importFromMatrix( dropstuff );
 		} else importFromText( dropstuff );
 	}
 

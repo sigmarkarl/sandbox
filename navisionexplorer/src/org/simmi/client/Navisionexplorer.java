@@ -1,6 +1,7 @@
 package org.simmi.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -17,6 +18,20 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.DragEndEvent;
+import com.google.gwt.event.dom.client.DragEndHandler;
+import com.google.gwt.event.dom.client.DragEnterEvent;
+import com.google.gwt.event.dom.client.DragEnterHandler;
+import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragHandler;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
+import com.google.gwt.event.dom.client.DragLeaveHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DragStartEvent;
+import com.google.gwt.event.dom.client.DragStartHandler;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -27,6 +42,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -139,13 +155,19 @@ public class Navisionexplorer implements EntryPoint {
 		}
 	};
 	
+	Map<String,String>	pidMap = new HashMap<String,String>();
 	public void updateTable( List<Person> plist ) {
 		for( Person p : plist ) {
 			int r = data.getNumberOfRows();
 			data.addRow();
 			
-			data.setValue( r, 0, p.getName() );
-			data.setValue( r, 1, p.getKt() );
+			String name = p.getName();
+			String kt = p.getKt();
+			
+			pidMap.put( kt, name );
+			
+			data.setValue( r, 0, name );
+			data.setValue( r, 1, kt );
 		}
 		view = DataView.create( data );
 		table.draw( view, options );
@@ -233,13 +255,14 @@ public class Navisionexplorer implements EntryPoint {
 		
 		String aftstr = aftdate == null ? null : (aftdate.getYear()+1900) + "-" + (aftdate.getMonth()+1) + "-" + aftdate.getDate();
 		String befstr = befdate == null ? null : (befdate.getYear()+1900) + "-" + (befdate.getMonth()+1) + "-" + befdate.getDate();
-		String sql = "select j.[Description], jle.[Quantity] from [MATIS].[dbo].[Matís ohf_$Job] j, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where j.[No_] = jle.[Job No_] and jle.[No_] in ('";
+		String sql = "select j.[Description], sum(jle.[Quantity]) from [MATIS].[dbo].[Matís ohf_$Job] j, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where j.[No_] = jle.[Job No_] and jle.[No_] in ('";
 		for( String p : set ) {
 			sql += p;
 		}
 		sql += "')";
 		if( aftstr != null ) sql += " and jle.[Posting Date] >= '"+aftstr+"'";
 		if( befstr != null ) sql += " and jle.[Posting Date] <= '"+befstr+"'";
+		sql += " group by j.[Description]";
 		
 		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
 		try {
@@ -266,10 +289,11 @@ public class Navisionexplorer implements EntryPoint {
 						break;
 					}
 					
-					List<Job> subwork = initPersonJob( jlist );
-					pjMap.put( person, subwork );
-					
-					repaint( subwork, pname );
+					//List<Job> subwork = initPersonJob( jlist );
+					//pjMap.put( person, subwork );
+					Collections.sort( jlist );
+					pjMap.put( person, jlist );
+					repaint( jlist, pname );
 					
 					//if( pjMap.containsKey(key))
 				}
@@ -290,13 +314,14 @@ public class Navisionexplorer implements EntryPoint {
 		
 		String aftstr = aftdate == null ? null : (aftdate.getYear()+1900) + "-" + (aftdate.getMonth()+1) + "-" + aftdate.getDate();
 		String befstr = befdate == null ? null : (befdate.getYear()+1900) + "-" + (befdate.getMonth()+1) + "-" + befdate.getDate();
-		String sql = "select p.[Name], jle.[Quantity] from [MATIS].[dbo].[User] p, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where p.[User ID] = jle.[No_] and jle.[Job No_] in ('";
+		String sql = "select p.[Name], sum(jle.[Quantity]) from [MATIS].[dbo].[User] p, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where p.[User ID] = jle.[No_] and jle.[Job No_] in ('";
 		for( String p : set ) {
 			sql += p;
 		}
 		sql += "')";
 		if( aftstr != null ) sql += " and jle.[Posting Date] >= '"+aftstr+"'";
 		if( befstr != null ) sql += " and jle.[Posting Date] <= '"+befstr+"'";
+		sql += " group by p.[Name]";
 		
 		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
 		try {
@@ -323,10 +348,12 @@ public class Navisionexplorer implements EntryPoint {
 						break;
 					}
 					
-					List<Person> subwork = initJobPerson( plist );
-					jpMap.put( person, subwork );
+					//List<Person> subwork = initJobPerson( plist );
+					//jpMap.put( person, subwork );
 					
-					repaint( subwork, jname );
+					Collections.sort( plist );
+					jpMap.put( person, plist );
+					repaint( plist, jname );
 					
 					//if( pjMap.containsKey(key))
 				}
@@ -502,6 +529,142 @@ public class Navisionexplorer implements EntryPoint {
 		}
 	}
 	
+	public void loadDragJobs( final Collection<String> set ) {
+		Date befdate = before == null ? null : before.getDatePicker().getValue();
+		Date aftdate = after == null ? null : after.getDatePicker().getValue();
+		
+		String aftstr = aftdate == null ? null : (aftdate.getYear()+1900) + "-" + (aftdate.getMonth()+1) + "-" + aftdate.getDate();
+		String befstr = befdate == null ? null : (befdate.getYear()+1900) + "-" + (befdate.getMonth()+1) + "-" + befdate.getDate();
+		String sql = "select j.[Description], jle.[No_], sum(jle.[Quantity]) from [MATIS].[dbo].[Matís ohf_$Job] j, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where j.[No_] = jle.[Job No_] and jle.[No_] in ('";
+		
+		boolean first = true;
+		for( String p : set ) {
+			if( first ) {
+				sql += p;
+				first = false;
+			} else {
+				sql += "','"+p;
+			}
+		}
+		sql += "')";
+		if( aftstr != null ) sql += " and jle.[Posting Date] >= '"+aftstr+"'";
+		if( befstr != null ) sql += " and jle.[Posting Date] <= '"+befstr+"'";
+		sql += " group by j.[Description], jle.[No_]";
+		
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
+		try {
+			rb.sendRequest(sql, new RequestCallback() {
+				@Override
+				public void onResponseReceived(Request request, Response response) {
+					//Map<String,Integer>	pidx = new HashMap<String,Integer>();
+					//Map<String,Integer> jidx = new HashMap<String,Integer>();
+					
+					List<Job>	jlist;
+					String str = response.getText();
+					String[] split = str.split("\n");
+					//jlist.clear();
+					
+					//int p = 0;
+					//int j = 0;
+					for( String spl : split ) {
+						String[] subsplit = spl.split("\t");
+						if( subsplit.length == 3 ) {
+							String name = subsplit[0];
+							String person = subsplit[1];
+							String d = subsplit[2];
+							
+							//label.setText( person + " - " + name );
+						
+							if( pjMap.containsKey( person ) ) {
+								jlist = pjMap.get( person );
+							} else {
+								jlist = new ArrayList<Job>();
+								pjMap.put( person, jlist );
+							}
+							jlist.add( new Job( name, null, Double.parseDouble(d) ) );
+						}
+					}
+					
+					for( String pp : pjMap.keySet() ) {
+						List<Job> jl = pjMap.get(pp);
+						Collections.sort( jl );
+					}
+					
+					int p = 0;
+					int j = 0;
+					
+					Map<String,Integer>		pidx = new HashMap<String,Integer>();
+					Map<String,Integer>		jidx = new HashMap<String,Integer>();
+					List<String>			jslist = new ArrayList<String>();
+					
+					for( String pp : pjMap.keySet() ) {
+						if( !pidx.containsKey( pp ) ) {
+							pidx.put( pp, p++ );
+						}
+						
+						List<Job> jjlist = pjMap.get(pp);
+						for( Job jj : jjlist ) {
+							if( jj.name.length() > 1 && !jidx.containsKey(jj.name) ) {
+								jidx.put( jj.name, j++ );
+								jslist.add( jj.name );
+							}
+						}
+					}
+					
+					double[]	dvals = new double[ p*j ];
+					Arrays.fill( dvals, 0.0 );
+					
+					for( String pp : pjMap.keySet() ) {
+						int pi = pidx.get(pp);
+						List<Job> jjlist = pjMap.get(pp);
+						for( Job job : jjlist ) {
+							if( job.name.length() > 1 ) {
+								int ji = jidx.get(job.name);
+								dvals[ p*ji + pi ] = job.getHours();
+							}
+						}
+					}
+					
+					for( String pp : pjMap.keySet() ) {
+						exp += "\t"+pidMap.get(pp);
+					}
+					exp += "\n";
+					for( int y = 0; y < j; y++ ) {
+						String jstr = jslist.get(y);
+						
+						console( jstr );
+						
+						exp += jstr;
+						for( int x = 0; x < p; x++ ) {
+							exp += "\t"+dvals[p*y+x];
+						}
+						exp += "\n";
+					}
+					
+					/*String person = null;
+					for( String p : set ) {
+						person = p;
+						break;
+					}*/
+					
+					//List<Job> subwork = initPersonJob( jlist );
+					//pjMap.put( person, subwork );
+					
+					//repaint( subwork, pname );
+					//if( pjMap.containsKey(key))
+				}
+				
+				@Override
+				public void onError(Request request, Throwable exception) {
+					console( exception.getMessage() );
+				}
+			});
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	public void selectEvent() {
 		Set<String>	pkt = new HashSet<String>();
 		
@@ -555,6 +718,9 @@ public class Navisionexplorer implements EntryPoint {
 			if( jkt.size() > 0 ) loadPersons( jkt, name );
 		}
 	}
+	
+	DialogBox 	db;
+	String		exp = null;
 	
 	/**
 	 * This is the entry point method.
@@ -635,6 +801,80 @@ public class Navisionexplorer implements EntryPoint {
 				canvas.setCoordinateSpaceHeight( h );
 			}
 		});*/
+		canvas.addDragEnterHandler( new DragEnterHandler() {
+			@Override
+			public void onDragEnter(DragEnterEvent event) {
+				console("denter");
+			}
+		});
+		canvas.addDragLeaveHandler( new DragLeaveHandler() {
+			@Override
+			public void onDragLeave(DragLeaveEvent event) {
+				console("dleave");
+			}
+		});
+		canvas.addDragOverHandler( new DragOverHandler() {
+			@Override
+			public void onDragOver(DragOverEvent event) {
+				console("dover");
+			}
+		});
+		canvas.addDragStartHandler( new DragStartHandler() {
+			@Override
+			public void onDragStart(DragStartEvent event) {
+				console("dstart " + pjMap.size() + "  " + data.getNumberOfRows() );
+				
+				if( exp == null ) {
+					/*db = new DialogBox();
+					//db.setModal( true );
+					db.setTitle( "Progress" );
+					Label	l = new Label();
+					db.add( l );*/
+					
+					exp = "";
+					Set<String>	kts = new HashSet<String>();
+					for( int i = 0; i < data.getNumberOfRows(); i++ ) {
+						String kt = data.getValueString(i, 1);
+						kts.add( kt );
+					}
+					loadDragJobs(kts);
+					//db.setSize("300px", "200px");
+					//db.center();
+				} else {
+					event.setData( "text/plain", exp );
+				}
+			}
+		});
+		canvas.addDragHandler( new DragHandler() {
+			@Override
+			public void onDrag(DragEvent event) {
+				console("d");
+			}
+		});
+		canvas.addDragEndHandler( new DragEndHandler() {
+			@Override
+			public void onDragEnd(DragEndEvent event) {
+				console("dend");
+				
+				//while( db != null && db.isVisible() );
+				
+				/*Timer t = new Timer() {
+					public void run() {
+						if( !db.isVisible() ) {
+							event.setData("text/plain", );
+							t.cancel();
+						}
+					}
+				};
+				t.scheduleRepeating(1000);*/
+			}
+		});
+		canvas.addDropHandler( new DropHandler() {
+			@Override
+			public void onDrop(DropEvent event) {
+				console( "drop" );
+			}
+		});
 		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {
