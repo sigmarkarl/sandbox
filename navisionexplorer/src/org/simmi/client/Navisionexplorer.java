@@ -71,6 +71,7 @@ public class Navisionexplorer implements EntryPoint {
 			+ "attempting to contact the server. Please check your network "
 			+ "connection and try again.";
 
+	private final String serverUrl = "http://130.208.252.94/cgi-bin/lubbi";
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
@@ -186,7 +187,7 @@ public class Navisionexplorer implements EntryPoint {
 	}
 	
 	public void loadAllJobs( final List<Job> jlist ) {
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
 			String sql = "select j.[Description], j.[No_] from [MATIS].[dbo].[Matís ohf_$Job] j";
 			rb.sendRequest(sql, new RequestCallback() {
@@ -217,7 +218,7 @@ public class Navisionexplorer implements EntryPoint {
 	}
 	
 	public void loadAllPersons( final List<Person> plist ) {
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
 			String sql = "select [Name], [User ID] from [MATIS].[dbo].[User]";
 			rb.sendRequest(sql, new RequestCallback() {
@@ -264,7 +265,7 @@ public class Navisionexplorer implements EntryPoint {
 		if( befstr != null ) sql += " and jle.[Posting Date] <= '"+befstr+"'";
 		sql += " group by j.[Description]";
 		
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
 			rb.sendRequest(sql, new RequestCallback() {
 				@Override
@@ -323,7 +324,7 @@ public class Navisionexplorer implements EntryPoint {
 		if( befstr != null ) sql += " and jle.[Posting Date] <= '"+befstr+"'";
 		sql += " group by p.[Name]";
 		
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
 			rb.sendRequest(sql, new RequestCallback() {
 				@Override
@@ -551,7 +552,7 @@ public class Navisionexplorer implements EntryPoint {
 		if( befstr != null ) sql += " and jle.[Posting Date] <= '"+befstr+"'";
 		sql += " group by j.[Description], jle.[No_]";
 		
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.31/cgi-bin/lubbi" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
 			rb.sendRequest(sql, new RequestCallback() {
 				@Override
