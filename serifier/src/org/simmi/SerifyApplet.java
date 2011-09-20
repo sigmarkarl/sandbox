@@ -21,6 +21,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -80,52 +81,15 @@ public class SerifyApplet extends JApplet {
 		super();
 	}
 	
-	class Sequences {
-		public Sequences( String user, String name, String type, String path, int nseq ) {
-			this.user = user;
-			this.name = name;
-			this.type = type;
-			this.path = path;
-			this.nseq = nseq;
-		}
-		
-		public void setKey( String key ) {
-			_key = key;
-		}
-		
-		public String getKey() {
-			return _key;
-		}
-		
-		public String getPath() {
-			return path;
-		}
-		
-		public String getName() {
-			return name;
-		}
-		
-		public String getType() {
-			return type;
-		}
-		
-		public int getNSeq() {
-			return nseq;
-		}
-		
-		String user;
-		String name;
-		String type;
-		String path;
-		Integer nseq;
-		String _key;
-	};
-	
 	public List<Sequences> initSequences( int rowcount ) {
 		List<Sequences>	seqs = new ArrayList<Sequences>();
 		
-		JSObject js = JSObject.getWindow( SerifyApplet.this );
-		js.call( "getSequences", new Object[] {rowcount == 0} );
+		try {
+			JSObject js = JSObject.getWindow( SerifyApplet.this );
+			js.call( "getSequences", new Object[] {rowcount == 0} );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
 		/*String[] split = seqsStr.split("\n");
 		
 		for( String ss : split ) {
@@ -160,8 +124,12 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}
 		
-		JSObject js = JSObject.getWindow( SerifyApplet.this );
-		js.call( "initMachines", new Object[] {hostname, procs} );
+		try {
+			JSObject js = JSObject.getWindow( SerifyApplet.this );
+			js.call( "initMachines", new Object[] {hostname, procs} );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
 	}
 	
 	public TableModel createModel( final List<?> datalist ) {
@@ -414,6 +382,61 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
+	public static void splitit( int spin, Sequences seqs, File dir, SerifyApplet applet ) {
+		try {
+			File inf = new File( new URI(seqs.getPath() ) );
+			String name = inf.getName();
+			int ind = name.lastIndexOf('.');
+			
+			String sff = name.substring(0, ind);
+			String sf2 = name.substring(ind+1,name.length());
+			
+			int i = 0;
+			FileWriter 	fw = null;
+			File		of = null;
+			FileReader 	fr = new FileReader( inf );
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					if( i%spin == 0 ) {
+						if( fw != null ) {
+							fw.close();
+							
+							if( applet != null ) {
+								name = of.getName();
+								ind = name.lastIndexOf('.');
+								name = name.substring(0,ind);
+								applet.addSequences(name, seqs.getType(), of.toURI().toString(), spin);
+							}
+						}
+						of = new File( dir, sff + "_" + (i/spin+1) + "." + sf2 );
+						fw = new FileWriter( of );
+					}
+					i++;
+				}
+				fw.write( line+"\n" );
+				
+				line = br.readLine();
+			}
+			if( fw != null ) {
+				fw.close();
+				if( applet != null ) {
+					name = of.getName();
+					ind = name.lastIndexOf('.');
+					name = name.substring(0,ind);
+					applet.addSequences(name, seqs.getType(), of.toURI().toString(), i%spin);
+				}
+			}									
+		} catch (URISyntaxException e1) {
+			e1.printStackTrace();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
 	public void init( final Container c ) {
 		this.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -515,9 +538,13 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 					
-					JSObject js = JSObject.getWindow( SerifyApplet.this );
-					for( String key : keys ) {
-						js.call( "deleteSequenceKey", new Object[] {key} );
+					try {
+						JSObject js = JSObject.getWindow( SerifyApplet.this );
+						for( String key : keys ) {
+							js.call( "deleteSequenceKey", new Object[] {key} );
+						}
+					} catch( Exception e1 ) {
+						e1.printStackTrace();
 					}
 				} else if( keycode == KeyEvent.VK_ENTER ) {
 					int r = table.getSelectedRow();
@@ -847,53 +874,7 @@ public class SerifyApplet extends JApplet {
 							@Override
 							public void windowClosed(WindowEvent e) {
 								int spin = (Integer)spinner.getValue();
-								try {
-									File inf = new File( new URI(seqs.getPath() ) );
-									String name = inf.getName();
-									int ind = name.lastIndexOf('.');
-									
-									String sff = name.substring(0, ind);
-									String sf2 = name.substring(ind+1,name.length());
-									
-									int i = 0;
-									FileWriter 	fw = null;
-									File		of = null;
-									FileReader 	fr = new FileReader( inf );
-									BufferedReader br = new BufferedReader( fr );
-									String line = br.readLine();
-									while( line != null ) {
-										if( line.startsWith(">") ) {
-											if( i%spin == 0 ) {
-												if( fw != null ) {
-													fw.close();
-													name = of.getName();
-													ind = name.lastIndexOf('.');
-													name = name.substring(0,ind);
-													addSequences(name, seqs.getType(), of.toURI().toString(), spin);
-												}
-												of = new File( dir, sff + "_" + (i/spin+1) + "." + sf2 );
-												fw = new FileWriter( of );
-											}
-											i++;
-										}
-										fw.write( line+"\n" );
-										
-										line = br.readLine();
-									}
-									if( fw != null ) {
-										fw.close();
-										name = of.getName();
-										ind = name.lastIndexOf('.');
-										name = name.substring(0,ind);
-										addSequences(name, seqs.getType(), of.toURI().toString(), i%spin);
-									}									
-								} catch (URISyntaxException e1) {
-									e1.printStackTrace();
-								} catch (FileNotFoundException e1) {
-									e1.printStackTrace();
-								} catch (IOException e1) {
-									e1.printStackTrace();
-								}
+								splitit( spin, seqs, dir, SerifyApplet.this );
 							}
 
 							@Override
@@ -1021,9 +1002,18 @@ public class SerifyApplet extends JApplet {
 		table.tableChanged( new TableModelEvent( table.getModel() ) );
 	}
 	
-	private void addSequences( String user, String name, String type, String path, int nseq ) {		
-		JSObject js = JSObject.getWindow( SerifyApplet.this );
-		js.call( "addSequences", new Object[] {user, name, type, path, nseq} );
+	private void addSequences( String user, String name, String type, String path, int nseq ) {
+		boolean unsucc = false;
+		try {
+			JSObject js = JSObject.getWindow( SerifyApplet.this );
+			js.call( "addSequences", new Object[] {user, name, type, path, nseq} );
+		} catch( Exception e ) {
+			unsucc = true;
+		}
+		
+		if( unsucc ) {
+			updateSequences(user, name, type, path, nseq, null);
+		}
 	}
 	
 	private void addSequences( String name, String path ) throws URISyntaxException, IOException {
@@ -1172,7 +1162,44 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
-		JFrame frame = new JFrame();
+		List<String>	largs = Arrays.asList( args );
+		int i = largs.indexOf("--split");
+		if( i != -1 ) {
+			String filename;
+			if( i == 0 ) filename = largs.get( largs.size()-1 );
+			else filename = largs.get( 0 );
+			
+			File f = new File( filename );
+			
+			int chunks = Integer.parseInt( largs.get(i+1) );
+			
+			String type = "nucl";
+			int nseq = 0;
+			
+			try {
+				FileReader fr = new FileReader( f );
+				BufferedReader br = new BufferedReader( fr );
+				String line = br.readLine();
+				while( line != null ) {
+					if( line.startsWith(">") ) nseq++;
+					else if( type.equals("nucl") && !line.matches("^[acgtnACGTN]+$") ) {
+						type = "prot";
+					}
+					line = br.readLine();
+				}
+				fr.close();
+				
+				if( nseq > 0 ) {
+					Sequences seqs = new Sequences( null, f.getName(), type, f.toURI().toString(), nseq );
+					splitit( chunks, seqs, f.getParentFile(), null );
+				} else System.err.println( "no sequences in file" );
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		/*JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		frame.setSize( 800, 600 );
 		
@@ -1188,6 +1215,6 @@ public class SerifyApplet extends JApplet {
 		
 		//sa.init( frame );
 		
-		frame.setVisible( true );
+		frame.setVisible( true );*/
 	}
 }
