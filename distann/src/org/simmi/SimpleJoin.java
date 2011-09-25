@@ -17,7 +17,7 @@ import java.util.Set;
 public class SimpleJoin {
 	public static List<Collection<String>>	setlist = new ArrayList<Collection<String>>();
 	
-	private static Map<String,String> loci2dnasequence( Reader rd ) throws IOException {
+	private static Map<String,StringBuilder> loci2dnasequence( Reader rd ) throws IOException {
 		Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
 		
 		BufferedReader br = new BufferedReader( rd );
