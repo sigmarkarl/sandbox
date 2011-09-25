@@ -95,6 +95,10 @@ import javax.swing.table.TableModel;
 
 public class GeneSet extends JApplet {
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
 	 * @param args
 	 * @throws IOException 
 	 */
@@ -1955,7 +1959,79 @@ public class GeneSet extends JApplet {
 		fw.close();
 	}
 	
-	private static void loci2gene( Reader rd, String outfile, String filtercont ) throws IOException {
+	private static Map<String,Integer> loadFrequency( Reader r ) throws IOException {
+		Map<String,Integer>		ret = new HashMap<String,Integer>();
+		
+		BufferedReader br = new BufferedReader( r );
+		String name = null;
+		String evalue = null;
+		String score = null;
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith("Query= ") ) {
+				String[] split = line.split("[ ]+");
+				name = split[1];
+				
+				String lstr = split[ split.length-1 ];
+				int l = Integer.parseInt( lstr.substring(7) );
+				if( l > 80 ) {
+					evalue = null;
+					score = null;
+				} else {
+					name = null;
+				}
+			}
+			
+			if( line.contains("No hits") ) {
+				String prename = name;
+				
+				aquery.name = prename;
+				if( aas.containsKey(prename) ) lociMap.put( prename, "No match\t"+aas.get(prename) );
+				else if( dnaa.containsKey(prename) ) lociMap.put( prename, "No match\t"+dnaa.get(prename) );
+				else lociMap.put( prename, "No match" );
+				
+				score = "";
+				evalue = "";
+				name = null;
+			}
+			
+			if( evalue == null && (line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|")) ) {
+				String[] split = line.split("[\t ]+");
+				if( score == null ) {
+					score = split[split.length-2];
+					
+					if( ret.containsKey( split[0] ) ) {
+						int cnt = ret.get( split[0] );
+						ret.put( split[0], cnt+1 );
+					} else {
+						ret.put(split[0], 1);
+					}
+				} else {
+					String scstr = split[split.length-2];
+					double 	dsc = Double.parseDouble( scstr );
+					double 	osc = Double.parseDouble( score );
+					
+					if( dsc != osc ) {
+						evalue = split[split.length-1];
+					} else {
+						if( ret.containsKey( split[0] ) ) {
+							int cnt = ret.get( split[0] );
+							ret.put( split[0], cnt+1 );
+						} else {
+							ret.put(split[0], 1);
+						}
+					}
+				}
+				//evalue = split[split.length-1];
+			}
+			
+			line = br.readLine();
+		}
+		
+		return ret;
+	}
+	
+	private static void loci2gene( Reader rd, String outfile, String filtercont, Map<String,Integer> freqmap ) throws IOException {
 		FileWriter fw = null;
 		
 		Map<String,String>			id2desc = new HashMap<String,String>();
@@ -1969,11 +2045,25 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		String name = null;
 		String evalue = null;
+		String score = null;
+		int		freq = 0;
+		String  freqname = null;
 		while( line != null ) {
 			String trim = line.trim();
 			if( line.startsWith("Query= ") ) {
-				name = line.substring(8).split(" ")[0];
-				evalue = null;
+				String[] split = line.split("[ ]+");
+				name = split[1];
+				
+				String lstr = split[ split.length-1 ];
+				int l = Integer.parseInt( lstr.substring(7) );
+				if( l > 80 ) {
+					evalue = null;
+					score = null;
+					freq = 0;
+					freqname = null;
+				} else {
+					name = null;
+				}
 				//int i1 = name.indexOf('_');
 				//int i2 = name.indexOf('_', i1+1);
 				//name = name.substring(0,i1) + name.substring(i2);
@@ -1991,6 +2081,7 @@ public class GeneSet extends JApplet {
 				else lociMap.put( prename, "No match" );
 				
 				evalue = "";
+				freqname = "";
 				name = null;
 				
 				if( fw != null ) {
@@ -2012,68 +2103,94 @@ public class GeneSet extends JApplet {
 			
 			if( evalue == null && (line.startsWith("ref|") || line.startsWith("sp|") || line.startsWith("pdb|") || line.startsWith("dbj|") || line.startsWith("gb|") || line.startsWith("emb|") || line.startsWith("pir|") || line.startsWith("tpg|")) ) {
 				String[] split = line.split("[\t ]+");
-				evalue = split[split.length-1];
+				
+				if( score == null ) {
+					score = split[split.length-2];
+					int nfreq = freqmap.get( split[0] );
+					if( nfreq > freq ) {
+						freq = nfreq;
+						freqname = split[0];
+					}
+				} else {
+					String scstr = split[split.length-2];
+					double 	dsc = Double.parseDouble( scstr );
+					double 	osc = Double.parseDouble( score );
+					
+					if( dsc != osc ) {
+						evalue = split[split.length-1];
+					} else {
+						score = split[split.length-2];
+						int nfreq = freqmap.get( split[0] );
+						if( nfreq > freq ) {
+							freq = nfreq;
+							freqname = split[0];
+						}
+					}
+				}
 				
 				//if( fw != null ) fw.write( line + "\n" );
 			}
 			
 			if( name != null && (line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg")) ) {
-				String prename = name; //swapmap.get(st+".out")+"_"+name;
-				String[] split = line.split("\\|");
-				
-				String id = split[0] + "|" + split[1] + "|";
-				String desc = split[2];
-				String teg = "";
-				
-				int idx = desc.lastIndexOf('[');
-				int idx2 = desc.indexOf(']', idx);
-				String newline = "";
-				if( idx > idx2 || idx == -1 ) {
-					newline = br.readLine();
-					if( !newline.startsWith("Length=") && !newline.startsWith("Query=") ) {
-						line = line+newline;
-						String newtrim = line.trim();
-						
-						split = newtrim.split("\\|");
-						
-						id = split[0] + "|" + split[1] + "|";
-						desc = split[2];
-						
-						idx = desc.lastIndexOf('[');
-					}
-				}
-				
-				if( idx > 0 ) {
-					teg = desc.substring(idx);
-					desc = desc.substring(0, idx-1).trim();
-				} else {
-					desc = desc.trim();
-				}
-				
-				id2desc.put(id, desc);
-				
-				String stuff = id + "\t" + desc + "\t" + evalue;
-				lociMap.put( prename, stuff );
-				//lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
-				name = null;
-				//System.err.println( prename + "\t" + split[1] );
-				if( fw != null ) {
-					List<String>	list;
-					if( maplist.containsKey(id) ) {
-						list = maplist.get(id);
-					} else {
-						list = new ArrayList<String>();
-						maplist.put( id, list );
-					}
-					String addstr = prename + "\t" + id + "\t" + evalue;
-					list.add( addstr );
+				String checkstr = line.substring(1, freqname.length()+1);
+				if( freqname.equals( checkstr ) ) {
+					String prename = name; //swapmap.get(st+".out")+"_"+name;
+					String[] split = line.split("\\|");
 					
-					//fw.write( stuff + "\n" );
-				}
-				
-				if( newline.startsWith("Query=") ) {
-					line = newline;
-					continue;
+					String id = split[0] + "|" + split[1] + "|";
+					String desc = split[2];
+					String teg = "";
+					
+					int idx = desc.lastIndexOf('[');
+					int idx2 = desc.indexOf(']', idx);
+					String newline = "";
+					if( idx > idx2 || idx == -1 ) {
+						newline = br.readLine();
+						if( !newline.startsWith("Length=") && !newline.startsWith("Query=") ) {
+							line = line+newline;
+							String newtrim = line.trim();
+							
+							split = newtrim.split("\\|");
+							
+							id = split[0] + "|" + split[1] + "|";
+							desc = split[2];
+							
+							idx = desc.lastIndexOf('[');
+						}
+					}
+					
+					if( idx > 0 ) {
+						teg = desc.substring(idx);
+						desc = desc.substring(0, idx-1).trim();
+					} else {
+						desc = desc.trim();
+					}
+					
+					id2desc.put(id, desc);
+					
+					String stuff = id + "\t" + desc + "\t" + evalue;
+					lociMap.put( prename, stuff );
+					//lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
+					name = null;
+					//System.err.println( prename + "\t" + split[1] );
+					if( fw != null ) {
+						List<String>	list;
+						if( maplist.containsKey(id) ) {
+							list = maplist.get(id);
+						} else {
+							list = new ArrayList<String>();
+							maplist.put( id, list );
+						}
+						String addstr = prename + "\t" + id + "\t" + evalue;
+						list.add( addstr );
+						
+						//fw.write( stuff + "\n" );
+					}
+					
+					if( newline.startsWith("Query=") ) {
+						line = newline;
+						continue;
+					}
 				}
 			}
 			
@@ -2137,7 +2254,7 @@ public class GeneSet extends JApplet {
 		//Map<String,String>	aas = new HashMap<String,String>();
 		for( String st : stuff ) {			
 			File ba = new File( dir, st );
-			loci2gene( new FileReader(ba), null, null );
+			loci2gene( new FileReader(ba), null, null, null );
 		}
 	}
 	
@@ -4105,22 +4222,29 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			loci2gene( new FileReader("/home/sigmar/viggo/1.blastout"), "/home/sigmar/viggo/1v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/2.blastout"), "/home/sigmar/viggo/2v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/3.blastout"), "/home/sigmar/viggo/3v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/4.blastout"), "/home/sigmar/viggo/4v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/5.blastout"), "/home/sigmar/viggo/5v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/6.blastout"), "/home/sigmar/viggo/6v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/7.blastout"), "/home/sigmar/viggo/7v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/8.blastout"), "/home/sigmar/viggo/8v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/9.blastout"), "/home/sigmar/viggo/9v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/10.blastout"), "/home/sigmar/viggo/10v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/11.blastout"), "/home/sigmar/viggo/11v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/12.blastout"), "/home/sigmar/viggo/12v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/13.blastout"), "/home/sigmar/viggo/13v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/14.blastout"), "/home/sigmar/viggo/14v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/15.blastout"), "/home/sigmar/viggo/15v.txt", null );
-			loci2gene( new FileReader("/home/sigmar/viggo/16.blastout"), "/home/sigmar/viggo/16v.txt", null );
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/horfrae/viggo/5.blastout") );
+			/*for( String val : freqmap.keySet() ) {
+				int fv = freqmap.get(val);
+				System.err.println( val + "  " + fv );
+			}*/
+			loci2gene( new FileReader("/home/horfrae/viggo/5.blastout"), "/home/horfrae/viggo/5v2.txt", null, freqmap );
+			
+			/*loci2gene( new FileReader("/home/horfrae/viggo/1.blastout"), "/home/horfrae/viggo/1v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/2.blastout"), "/home/horfrae/viggo/2v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/3.blastout"), "/home/horfrae/viggo/3v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/4.blastout"), "/home/horfrae/viggo/4v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/5.blastout"), "/home/horfrae/viggo/5v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/6.blastout"), "/home/horfrae/viggo/6v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/7.blastout"), "/home/horfrae/viggo/7v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/8.blastout"), "/home/horfrae/viggo/8v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/9.blastout"), "/home/horfrae/viggo/9v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/10.blastout"), "/home/horfrae/viggo/10v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/11.blastout"), "/home/horfrae/viggo/11v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/12.blastout"), "/home/horfrae/viggo/12v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/13.blastout"), "/home/horfrae/viggo/13v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/14.blastout"), "/home/horfrae/viggo/14v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/15.blastout"), "/home/horfrae/viggo/15v.txt", null );
+			loci2gene( new FileReader("/home/horfrae/viggo/16.blastout"), "/home/horfrae/viggo/16v.txt", null );*/
 			
 			//panCoreFromNRBlast( new String[] { "arciformis.blastout" }, new File("/home/sigmar/") );
 			
