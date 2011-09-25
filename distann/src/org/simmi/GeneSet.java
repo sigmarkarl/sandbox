@@ -2048,8 +2048,12 @@ public class GeneSet extends JApplet {
 		String score = null;
 		int		freq = 0;
 		String  freqname = null;
+		
+		int linen = 0;
+		Map<String,String>	idtax = new HashMap<String,String>();
 		while( line != null ) {
-			String trim = line.trim();
+			if( linen++ % 1000 == 0 ) System.err.println( linen );
+			//String trim = line.trim();
 			if( line.startsWith("Query= ") ) {
 				String[] split = line.split("[ ]+");
 				name = split[1];
@@ -2124,6 +2128,11 @@ public class GeneSet extends JApplet {
 						if( nfreq > freq ) {
 							freq = nfreq;
 							freqname = split[0];
+						} else if( nfreq == freq ) {
+							if( !line.contains("cult") ) {
+								freq = nfreq;
+								freqname = split[0];
+							}
 						}
 					}
 				}
@@ -2137,9 +2146,35 @@ public class GeneSet extends JApplet {
 					String prename = name; //swapmap.get(st+".out")+"_"+name;
 					String[] split = line.split("\\|");
 					
+					URL url = new URL( "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id="+split[1]+"&retmode=xml" );
+					InputStream stream = url.openStream();
+					
+					StringBuilder sb = new StringBuilder();
+					try {
+						byte[] bb = new byte[1024];
+						int r = stream.read( bb );
+						while( r > 0 ) {
+							sb.append( new String(bb,0,r) );
+							r = stream.read( bb );
+						}
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+					stream.close();
+					
+					String gbstart = "<GBSeq_taxonomy>";
+					int lind = sb.indexOf(gbstart);
+					String sub = "not found";
+					if( lind > 0 ) {
+						int lend = sb.indexOf("</GBSeq_taxonomy>", lind+gbstart.length());
+						sub = sb.substring(lind+gbstart.length(), lend);
+					}
+					
 					String id = split[0] + "|" + split[1] + "|";
 					String desc = split[2];
 					String teg = "";
+					
+					idtax.put( id, sub );
 					
 					int idx = desc.lastIndexOf('[');
 					int idx2 = desc.indexOf(']', idx);
@@ -2227,6 +2262,7 @@ public class GeneSet extends JApplet {
 				List<String>	list = mupl.get(i);
 				for( String id : list ) {
 					String spec = id2desc.get(id);
+					fw.write( id + " " + idtax.get(id) + "\n" );
 					fw.write( id + "\t" + spec + "\t" + i + "\n" );
 					if( tot >= 0 && !spec.contains("No hits") ) {
 						tot += i;
@@ -4222,12 +4258,12 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/horfrae/viggo/5.blastout") );
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/5.blastout") );
 			/*for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}*/
-			loci2gene( new FileReader("/home/horfrae/viggo/5.blastout"), "/home/horfrae/viggo/5v2.txt", null, freqmap );
+			loci2gene( new FileReader("/home/sigmar/viggo/5.blastout"), "/home/sigmar/viggo/5v3.txt", null, freqmap );
 			
 			/*loci2gene( new FileReader("/home/horfrae/viggo/1.blastout"), "/home/horfrae/viggo/1v.txt", null );
 			loci2gene( new FileReader("/home/horfrae/viggo/2.blastout"), "/home/horfrae/viggo/2v.txt", null );
