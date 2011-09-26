@@ -2259,7 +2259,7 @@ public class GeneSet extends JApplet {
 			}
 			fw.write( "total: "+tot+" subtot: "+subtot+"\n" );
 			
-			FileInputStream gfr = new FileInputStream("/home/horfrae/GbAccList.0918.2011.gz");
+			FileInputStream gfr = new FileInputStream("/home/sigmar/GbAccList.0918.2011.gz");
 			GZIPInputStream gzi = new GZIPInputStream( gfr );
 			BufferedReader gbr = new BufferedReader( new InputStreamReader( gzi ) );
 			String gline = gbr.readLine();
@@ -2276,8 +2276,9 @@ public class GeneSet extends JApplet {
 			}
 			gfr.close();
 			
-			FileReader dfr = new FileReader("/home/horfrae/gi_taxid_nucl.dmp");
-			BufferedReader	dbr = new BufferedReader( dfr );
+			FileInputStream dfr = new FileInputStream("/home/sigmar/gi_taxid_nucl.dmp.gz");
+			GZIPInputStream dgzi = new GZIPInputStream( dfr );
+			BufferedReader	dbr = new BufferedReader( new InputStreamReader(dgzi) );
 			String dstr = dbr.readLine();
 			while( dstr != null ) {
 				String[] ss = dstr.split("[\t ]+");
@@ -2289,19 +2290,45 @@ public class GeneSet extends JApplet {
 			}
 			dfr.close();
 			
-			Map<String,String>	taxmap = new HashMap<String,String>();
-			FileReader tfr = new FileReader("/home/horfrae/tax/names.dmp");
+			List<String>	taxmap = new ArrayList<String>();
+			FileReader tfr = new FileReader("/home/sigmar/tax/names.dmp");
 			BufferedReader	tbr = new BufferedReader( tfr );
 			String tstr = tbr.readLine();
 			while( tstr != null ) {
 				if( tstr.contains("scientific name") ) {
 					String[] ss = tstr.split("\\|");
-					taxmap.put( ss[0].trim(), ss[1].trim() );
+					String tid = ss[0].trim();
+					int td = Integer.parseInt( tid );
+					
+					while( taxmap.size() < td ) {
+						taxmap.add(null);
+					}
+					if( td == taxmap.size() ) taxmap.add( ss[1].trim() );
+					else taxmap.set( td, ss[1].trim() );
 				}
 				
 				tstr = tbr.readLine();
 			}
 			tfr.close();
+			
+			Map<Integer,Integer>	parmap = new HashMap<Integer,Integer>();
+			FileReader pfr = new FileReader("/home/sigmar/tax/nodes.dmp");
+			BufferedReader	pbr = new BufferedReader( pfr );
+			String pstr = pbr.readLine();
+			while( pstr != null ) {
+				String[] ss = pstr.split("\\|");
+				
+				String tid = ss[0].trim();
+				int td = Integer.parseInt( tid );
+				
+				String pid = ss[1].trim();
+				int pd = Integer.parseInt( pid );
+				
+				parmap.put( td, pd );			
+				
+				pstr = pbr.readLine();
+			}
+			pfr.close();
 			
  			tot = 0;
 			for( int i : mupl.keySet() ) {
@@ -2310,11 +2337,32 @@ public class GeneSet extends JApplet {
 					String spec = id2desc.get(id);
 					
 					String[] spid = id.split("\\|");
-					String gid = giid.get( spid[1].replace('.', ',') );
-					String tid = idtax.get( gid );
+					if( spid.length > 1 ) {
+						String gid = giid.get( spid[1].replace('.', ',') );
+						String tid = idtax.get( gid );
+						
+						int td = -1;
+						try {
+							td = Integer.parseInt( tid );
+						} catch( Exception e ) {
+							System.err.println( "trying " + tid );
+						}
+						
+						if( td != -1 ) {
+							fw.write( taxmap.get( td ) );
+							Integer ntd = parmap.get(td);
+							while( ntd != null && ntd != td ) {
+								td = ntd;
+								
+								fw.write( " : " + taxmap.get( td ) );
+								
+								ntd = parmap.get(td);
+							}
+							fw.write( "\n" );
+						}
+					}
 					
-					fw.write( id + " " + taxmap.get( tid ) + "\n" );
-					fw.write( id + "\t" + spec + "\t" + i + "\n" );
+					fw.write( id + "\t" + spec + "\t" + i + "\n\n" );
 					if( tot >= 0 && !spec.contains("No hits") ) {
 						tot += i;
 						if( tot*100/subtot > 90 ) {
@@ -4309,12 +4357,12 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/horfrae/viggo/5.blastout") );
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/14.blastout") );
 			/*for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}*/
-			loci2gene( new FileReader("/home/horfrae/viggo/5.blastout"), "/home/horfrae/viggo/5v4.txt", null, freqmap );
+			loci2gene( new FileReader("/home/sigmar/viggo/14.blastout"), "/home/sigmar/viggo/14v1.txt", null, freqmap );
 			
 			/*loci2gene( new FileReader("/home/horfrae/viggo/1.blastout"), "/home/horfrae/viggo/1v.txt", null );
 			loci2gene( new FileReader("/home/horfrae/viggo/2.blastout"), "/home/horfrae/viggo/2v.txt", null );
