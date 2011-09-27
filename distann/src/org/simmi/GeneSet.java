@@ -2362,7 +2362,25 @@ public class GeneSet extends JApplet {
 						}
 					}
 					
-					fw.write( id + "\t" + spec + "\t" + i + "\n\n" );
+					fw.write( id + "\t" + spec + "\t" + i + "\n" );
+					
+					if( maplist.containsKey(id) ) {
+						fw.write("(");
+						boolean first = true;
+						List<String>	res = maplist.get(id);
+						for( String rstr : res ) {
+							String[] rspl = rstr.split("[\t ]+");
+							if( rspl.length == 3 ) {
+								if( first ) {
+									first = false;
+									fw.write( rspl[0] + " " + rspl[2] );
+								} else fw.write( "," + rspl[0] + " " + rspl[2] );
+							}
+						}
+						fw.write(")\n");
+					}
+					
+					fw.write("\n");
 					if( tot >= 0 && !spec.contains("No hits") ) {
 						tot += i;
 						if( tot*100/subtot > 90 ) {
