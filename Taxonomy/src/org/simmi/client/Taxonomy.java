@@ -19,14 +19,20 @@ import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.DialogBox;
+import com.google.gwt.user.client.ui.DialogBox.Caption;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 
@@ -48,6 +54,23 @@ public class Taxonomy implements EntryPoint {
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
 	Map<String,TreeItem>	treemap = new HashMap<String,TreeItem>();
+	
+	private final String server = "http://www.matis.is/taxonomy/";
+	//private final String server = "http://127.0.0.1:8888/";
+	
+	public void recursiveNames( TreeItem item, StringBuilder sb ) {
+		for( int i = 0; i < item.getChildCount(); i++ ) {
+			TreeItem ti = item.getChild(i);
+			if( ti.getChildCount() == 0 ) {
+				String[] sp = ti.getText().split(" ");
+				if( sb.length() == 0 ) sb.append( sp[0] );
+				else sb.append( ","+sp[0] );
+			} else {
+				recursiveNames( ti, sb );
+			}
+		}
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -59,6 +82,41 @@ public class Taxonomy implements EntryPoint {
 		rp.setSize(w+"px", h+"px");
 		
 		final Tree		tree = new Tree();
+		tree.addSelectionHandler( new SelectionHandler<TreeItem>() {
+			@Override
+			public void onSelection(SelectionEvent<TreeItem> event) {
+				TreeItem selectedtree = event.getSelectedItem();
+				StringBuilder sb = new StringBuilder();
+				//sb.append( selectedtree.getText() );
+				recursiveNames( selectedtree, sb );
+				
+				String qstr =  sb.toString();
+				//console( "qs " + qstr );
+				greetingService.greetServer( qstr, new AsyncCallback<String>() {
+					
+					@Override
+					public void onSuccess(String result) {
+						DialogBox db = new DialogBox();
+						//db.setSize("400px", "300px");
+						Caption cap = db.getCaption();
+						db.setAutoHideEnabled( true );
+						cap.setText("Fasta");
+						TextArea ta = new TextArea();
+						ta.setSize("400px", "300px");
+						db.add( ta );
+						
+						ta.setText( result );
+						
+						db.center();
+					}
+					
+					@Override
+					public void onFailure(Throwable caught) {
+						
+					}
+				});
+			}
+		});
 		//tree.setSize("100%", "100%");
 		
 		//tree.getElement().getStyle().setBorderColor("#aa4444");
@@ -71,12 +129,12 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	rootitem13 = tree.addItem( "root13" );
 		final TreeItem	rootitem14 = tree.addItem( "root14" );
 		
-		RequestBuilder rb3 = new RequestBuilder( RequestBuilder.GET, "http://www.matis.is/taxonomy/3v1.txt" );
-		RequestBuilder rb4 = new RequestBuilder( RequestBuilder.GET, "http://www.matis.is/taxonomy/4v1.txt" );
-		RequestBuilder rb5 = new RequestBuilder( RequestBuilder.GET, "http://www.matis.is/taxonomy/5v4.txt" );
-		RequestBuilder rb6 = new RequestBuilder( RequestBuilder.GET, "http://www.matis.is/taxonomy/6v1.txt" );
-		RequestBuilder rb13 = new RequestBuilder( RequestBuilder.GET, "http://www.matis.is/taxonomy/13v1.txt" );
-		RequestBuilder rb14 = new RequestBuilder( RequestBuilder.GET, "http://www.matis.is/taxonomy/14v1.txt" );
+		RequestBuilder rb3 = new RequestBuilder( RequestBuilder.GET, server+"3v1.txt" );
+		RequestBuilder rb4 = new RequestBuilder( RequestBuilder.GET, server+"4v1.txt" );
+		RequestBuilder rb5 = new RequestBuilder( RequestBuilder.GET, server+"5v4.txt" );
+		RequestBuilder rb6 = new RequestBuilder( RequestBuilder.GET, server+"6v1.txt" );
+		RequestBuilder rb13 = new RequestBuilder( RequestBuilder.GET, server+"13v1.txt" );
+		RequestBuilder rb14 = new RequestBuilder( RequestBuilder.GET, server+"14v1.txt" );
 		try {
 			rb3.sendRequest("", new RequestCallback() {
 				
@@ -219,9 +277,11 @@ public class Taxonomy implements EntryPoint {
 	public void stuff( String str, TreeItem rootitem ) {
 		String[] split = str.split("\n");
 		TreeItem	current = rootitem;
+		boolean first = true;
 		for( String s : split ) {
 			boolean gogg = s.startsWith(">");
-			if( !gogg && !s.contains("subtot") ) {
+			boolean svig = s.startsWith("(");
+			if( s.length() > 0 && !svig && !gogg && !first ) {
 				String[] subs = s.split("\\:");
 				if( subs.length > 1 ) {
 					current = rootitem;
@@ -251,9 +311,17 @@ public class Taxonomy implements EntryPoint {
 					}
 				}
 			} else if( gogg && current != rootitem ) {
-				current.addItem( s );
+				current = current.addItem( s );
+			} else if( svig && current != rootitem ) {
+				String[] spl = s.substring(1,s.length()-1).split(",");
+				//console("lenni " + spl.length);
+				for( String splstr : spl ) {
+					current.addItem( splstr );
+				}
+			} else {
 				current = rootitem;
 			}
+			first = false;
 		}
 		
 		recursiveCount( rootitem );
@@ -262,7 +330,7 @@ public class Taxonomy implements EntryPoint {
 	public int recursiveCount( TreeItem item ) {
 		int total = 0;
 		
-		if( item.getChildCount() == 0 ) {
+		if( item.getText().startsWith(">") ) {
 			String[] ss = item.getText().split("[\t ]+");
 			total = Integer.parseInt( ss[ss.length-1] );
 		} else {
