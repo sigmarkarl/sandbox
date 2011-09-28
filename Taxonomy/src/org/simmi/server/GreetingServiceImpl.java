@@ -1,9 +1,11 @@
 package org.simmi.server;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.zip.GZIPInputStream;
 
 import org.simmi.client.GreetingService;
 
@@ -15,13 +17,16 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
-	public String greetServer(String input, int searchnum) throws IllegalArgumentException {
+	public String greetServer(String input, int searchnum) throws IllegalArgumentException {		
 		StringBuilder ret = new StringBuilder();
 		
 		String[] split = input.split( "," );
 		try {
-			FileReader 		fr = new FileReader(searchnum+".TCA.454Reads.fna");
-			BufferedReader 	br = new BufferedReader( fr );
+			//FileReader 		fr = new FileReader(searchnum+".TCA.454Reads.fna.gz");
+			FileInputStream fis = new FileInputStream(searchnum+".TCA.454Reads.fna.gz");
+			GZIPInputStream gis = new GZIPInputStream( fis );
+			InputStreamReader	isr = new InputStreamReader( gis );
+			BufferedReader 	br = new BufferedReader( isr );
 			String line = br.readLine();
 			boolean inside = false;
 			while( line != null ) {
@@ -59,5 +64,10 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		}
 		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
 				.replaceAll(">", "&gt;");
+	}
+
+	@Override
+	public String getRemoteAddress() throws IllegalArgumentException {
+		return this.getThreadLocalRequest().getRemoteAddr();
 	}
 }
