@@ -55,8 +55,8 @@ public class Taxonomy implements EntryPoint {
 
 	Map<String,TreeItem>	treemap = new HashMap<String,TreeItem>();
 	
-	private final String server = "http://www.matis.is/taxonomy/";
-	//private final String server = "http://127.0.0.1:8888/";
+	//private final String server = "http://www.matis.is/taxonomy/";
+	private final String server = "http://130.208.252.34/";
 	
 	public void recursiveNames( TreeItem item, StringBuilder sb ) {
 		for( int i = 0; i < item.getChildCount(); i++ ) {
@@ -90,9 +90,16 @@ public class Taxonomy implements EntryPoint {
 				//sb.append( selectedtree.getText() );
 				recursiveNames( selectedtree, sb );
 				
+				int searchnum = 0;
+				TreeItem parent = selectedtree.getParentItem();
+				while( parent != null ) {
+					selectedtree = parent;
+					parent = selectedtree.getParentItem();
+				}
+				
 				String qstr =  sb.toString();
 				//console( "qs " + qstr );
-				greetingService.greetServer( qstr, new AsyncCallback<String>() {
+				greetingService.greetServer( qstr, searchnum, new AsyncCallback<String>() {
 					
 					@Override
 					public void onSuccess(String result) {

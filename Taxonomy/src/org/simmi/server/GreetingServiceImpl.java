@@ -13,15 +13,14 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  * The server side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class GreetingServiceImpl extends RemoteServiceServlet implements
-		GreetingService {
+public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
-	public String greetServer(String input) throws IllegalArgumentException {
+	public String greetServer(String input, int searchnum) throws IllegalArgumentException {
 		StringBuilder ret = new StringBuilder();
 		
 		String[] split = input.split( "," );
 		try {
-			FileReader 		fr = new FileReader("14.TCA.454Reads.fna");
+			FileReader 		fr = new FileReader(searchnum+".TCA.454Reads.fna");
 			BufferedReader 	br = new BufferedReader( fr );
 			String line = br.readLine();
 			boolean inside = false;
