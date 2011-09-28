@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -58,6 +59,7 @@ import javax.mail.internet.MimeMessage;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractCellEditor;
 import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultRowSorter;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -83,6 +85,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -141,7 +145,7 @@ public class Order extends JApplet {
 	JComboBox	combo = new JComboBox();
 	JComboBox	pcombo = new JComboBox();
 	
-	JComboBox	vcombo;
+	JComboBox<String>	vcombo;
 	JComboBox	stcombo;
 	
 	JButton		newItem = new JButton( "Ný vara" );
@@ -187,6 +191,7 @@ public class Order extends JApplet {
 	
 	VDialog 		d;
 	ADialog			ad;
+	BDialog			bd;
 	
 	Image			image = null;
 	
@@ -204,6 +209,80 @@ public class Order extends JApplet {
 		userMap.put( "kristinn", "Kristinn Ólafsson" );
 		userMap.put( "kristinnk", "Kristinn Kolbeinsson" );
 	}*/
+	
+	public class BCluster extends JComponent {
+		JComboBox<String>	name = new JComboBox<String>();
+		//new JSpinner
+		JSpinner			spin = new JSpinner();
+		
+		public BCluster() {
+			super();
+			
+			for( int i = 0; i < vcombo.getItemCount(); i++ ) {
+				name.addItem( vcombo.getItemAt(i) );
+			}
+			spin.setModel( new SpinnerNumberModel(0,0,100,1) );
+			this.setLayout( new FlowLayout() );
+			
+			this.add( name );
+			this.add( spin );
+		}
+	};
+	
+	public class BDialog extends JDialog {
+		//List<BCluster>	bcluster = new ArrayList<BCluster>();
+		
+		JButton	ok;
+		JButton cancel;
+		JLabel		name;
+		JTextField	field;
+		
+		public BDialog() {
+			super();
+			init();
+		}
+		
+		public BDialog( Frame f ) {
+			super( f );
+			init();
+		}
+		
+		public void init() {
+			//BoxLayout bl = new BoxLayout( this, BoxLayout.Y_AXIS );
+			//FlowLayout fl = new FlowLayout();
+			this.setLayout( null );
+			this.setUndecorated( true );
+			this.setModal( false );
+			this.setResizable( true );
+			this.setTitle("Blanda saman verknúmerum");
+			this.getContentPane().setBackground( Color.white );
+			this.setSize(512, 30);
+			
+			ok = new JButton( new AbstractAction("Ok") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					BDialog.this.dispose();
+				}
+			});
+			cancel = new JButton( new AbstractAction("Cancel") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					BDialog.this.dispose();
+				}
+			});
+			name = new JLabel( "Nafn:");
+			field = new JTextField();
+			
+			this.add( name );
+			this.add( field );
+			this.add( ok );
+			this.add( cancel );
+		}
+		
+		public void setBounds( int x, int y, int w, int h ) {
+			super.setBounds( x, y, w, h );
+		}
+	};
 	
 	public class ADialog extends JDialog {
 		JLabel		lab = new JLabel();
@@ -1582,6 +1661,18 @@ public class Order extends JApplet {
 		};
 		cb.setLayout( null );
 		
+		final JButton bland = new JButton();
+		AbstractAction	aba = new AbstractAction("Blanda") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				BDialog bd = new BDialog();
+				bd.add( new BCluster() );
+				bd.setLocationRelativeTo( Order.this );
+				bd.setVisible( true );
+			}
+		};
+		bland.setAction( aba );
+		
 		c = new JComponent() {
 			public void paintComponent( Graphics g ) {
 				super.paintComponent(g);
@@ -1616,6 +1707,7 @@ public class Order extends JApplet {
 				super.setBounds(x, y, w, h);
 				
 				if( vert ) {
+					bland.setBounds( (int)(0.9*w)-75, 230, 150, 25 );
 					vcombo.setBounds( (int)(0.9*w)-75, 260, 150, 25 );
 					stcombo.setBounds( (int)(0.9*w)-75, 290, 150, 25 );
 					
@@ -1634,6 +1726,7 @@ public class Order extends JApplet {
 					vertbut.setBounds( (int)(0.9*w)-75, this.getHeight()-80, 150, 25 );
 					excel.setBounds( (int)(0.9*w)-75, this.getHeight()-50, 150, 25 );
 				} else {
+					bland.setBounds( (int)(0.5*w)-75, 230, 150, 25 );
 					vcombo.setBounds( (int)(0.5*w)-75, 260, 150, 25 );
 					stcombo.setBounds( (int)(0.5*w)-75, 290, 150, 25 );
 					
@@ -2198,6 +2291,7 @@ public class Order extends JApplet {
 		
 		//ylabel.setBorder( BorderFactory.createLineBorder( Color.red ) );
 		
+		c.add( bland );
 		c.add( vcombo );
 		c.add( stcombo );
 		
@@ -2210,6 +2304,22 @@ public class Order extends JApplet {
 		
 		c.add( vertbut );
 		c.add( excel );
+		
+		final JTextField	tf = new JTextField();
+		tf.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				updateFilter(tf.getText(), 0);
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				updateFilter(tf.getText(), 1);
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				updateFilter(tf.getText(), 2);
+			}
+		});
+		c.add( tf );
 		
 		cvorur = new JComponent() {
 			/*public void paintComponent( Graphics g ) {
@@ -2224,7 +2334,8 @@ public class Order extends JApplet {
 			public void setBounds( int x, int y, int w, int h ) {
 				super.setBounds(x, y, w, h);
 				
-				scrollpane.setBounds( (int)(0.00*w), 70, (int)(1.00*w), (int)(1.0*h)-100 );
+				scrollpane.setBounds( (int)(0.00*w), 70, (int)(1.00*w), (int)(1.0*h)-125 );
+				tf.setBounds( (int)(0.00*w), 70+(int)(1.0*h)-125 , (int)(1.00*w), 25 );
 				
 				ylabel.setBounds( (int)(0.00*w), 20, (int)(0.30*w), 25 );
 				label.setBounds( (int)(0.35*w), 20, (int)(0.30*w), 25 );
@@ -2370,6 +2481,50 @@ public class Order extends JApplet {
 		});
 		
 		this.add( tpane );
+	}
+	
+	public void updateFilter( String filterText, int val ) {
+		DefaultRowSorter drs = (DefaultRowSorter)table.getRowSorter();
+		
+		if( filterText.length() > 0 ) drs.setRowFilter( RowFilter.regexFilter( "(?i).*" + filterText + ".*" ) );
+		else drs.setRowFilter( null );
+		
+		/*combo.setSelectedIndex(0);
+		String text = field.getText();
+		if (text.length() > 0) {
+			filter.fInd = 0;
+			filter.setFilterText( text );
+			// leftTableSorter.modelStructureChanged();
+			leftTable.updateFilter();
+			table.updateFilter();
+			if (leftTable.getRowCount() == 0) {
+				filter.fInd = 1;
+				leftTable.updateFilter();
+				table.updateFilter();
+			}
+		} else {
+			filter.setFilterText( null );
+			leftTable.updateFilter();
+			table.updateFilter();
+		}
+
+		if (leftTable.getRowCount() > 0) {
+			if (val == 1) {
+				sel = false;
+				leftTable.setRowSelectionIntervalSuper(0, 0);
+			}
+
+			int r = leftTable.getSelectedRow();
+
+			if (r != -1) {
+				Rectangle selrect = leftTable.getCellRect(r, 0, false);
+				// System.err.println( selrect );
+				// leftTable.repaint();
+				table.scrollRectToVisible(selrect);
+			}
+		}
+
+		// table.tableChanged( new TableModelEvent( table.getModel() ) );*/
 	}
 	
 	Set<String>	facesTrying = new HashSet<String>();
@@ -2624,7 +2779,7 @@ public class Order extends JApplet {
 			InputStreamReader 	ir = new InputStreamReader( is, "UTF-8" );
 			BufferedReader		br = new BufferedReader( ir );
 			
-			String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+			String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=blabla;user=blabla;password=blabla;";
 			Connection con = DriverManager.getConnection(connectionUrl);
 			PreparedStatement ps = con.prepareStatement("insert into Vara values (?,?,?,?,'None')");
 			
