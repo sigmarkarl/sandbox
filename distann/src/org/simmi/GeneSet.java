@@ -4375,12 +4375,12 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/14.blastout") );
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/4.blastout") );
 			/*for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}*/
-			loci2gene( new FileReader("/home/sigmar/viggo/14.blastout"), "/home/sigmar/viggo/14v1.txt", null, freqmap );
+			loci2gene( new FileReader("/home/sigmar/viggo/4.blastout"), "/home/sigmar/viggo/4v1.txt", null, freqmap );
 			
 			/*loci2gene( new FileReader("/home/horfrae/viggo/1.blastout"), "/home/horfrae/viggo/1v.txt", null );
 			loci2gene( new FileReader("/home/horfrae/viggo/2.blastout"), "/home/horfrae/viggo/2v.txt", null );
