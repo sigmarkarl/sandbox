@@ -3,16 +3,8 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="loc"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="substance.jar"/>
 	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="/opt/swingx-1.6.2/swingx-core-1.6.2.jar"/>
-	<classpathentry kind="lib" path="/opt/json-simple/json_simple-1.1.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/httpcore.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/httpclient.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/httpmime.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/apache-mime4j.jar"/>
-	<classpathentry kind="lib" path="/opt/htmlunit-2.8/lib/htmlunit-2.8.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/gdata-base.jar"/>
 	<classpathentry kind="lib" path="/usr/lib/jvm/java-6-sun/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta4/poi-3.8-beta4-20110826.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta4/poi-ooxml-3.8-beta4-20110826.jar"/>
