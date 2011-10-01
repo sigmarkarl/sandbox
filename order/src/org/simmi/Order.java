@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -98,10 +97,14 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import netscape.javascript.JSObject;
+
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import sun.misc.GC;
 
 public class Order extends JApplet {
 	JScrollPane	scrollpane;
@@ -146,7 +149,7 @@ public class Order extends JApplet {
 	JComboBox	pcombo = new JComboBox();
 	
 	JComboBox<String>	vcombo;
-	JComboBox	stcombo;
+	JComboBox<String>	stcombo;
 	
 	JButton		newItem = new JButton( "Ný vara" );
 	JButton		delItem = new JButton( "Eyða vöru" );
@@ -210,30 +213,96 @@ public class Order extends JApplet {
 		userMap.put( "kristinnk", "Kristinn Kolbeinsson" );
 	}*/
 	
+	public void addVerk( String str ) {
+		int i;
+		for( i = 0; i < vcombo.getItemCount(); i++ ) {
+			if( vcombo.getItemAt(i).equals( str ) ) break;
+		}
+		if( i == vcombo.getItemCount() ) vcombo.addItem( str );
+	}
+	
 	public class BCluster extends JComponent {
 		JComboBox<String>	name = new JComboBox<String>();
 		//new JSpinner
 		JSpinner			spin = new JSpinner();
 		
-		public BCluster() {
+		public BCluster( int val, final BDialog bd ) {
 			super();
 			
-			for( int i = 0; i < vcombo.getItemCount(); i++ ) {
-				name.addItem( vcombo.getItemAt(i) );
+			for( String v : verkList ) {
+				name.addItem( v );
 			}
-			spin.setModel( new SpinnerNumberModel(0,0,100,1) );
-			this.setLayout( new FlowLayout() );
+			spin.setModel( new SpinnerNumberModel(val,0,100,1) );
+			//this.setLayout( new FlowLayout() );
 			
 			this.add( name );
 			this.add( spin );
+			
+			spin.addChangeListener( new ChangeListener() {
+				@Override
+				public void stateChanged(ChangeEvent e) {
+					int sum = 0;
+					Component[] comps = bd.getContentPane().getComponents();
+					BCluster lastb = null;
+					BCluster next = null;
+					for( Component c : comps ) {
+						if( c instanceof BCluster ) {
+							BCluster curb = (BCluster)c;
+							if( curb.getValue() == 0 || sum >= 100 ) bd.remove( curb );
+							else {
+								int cval = curb.getValue();
+								
+								if( sum+cval > 100 ) curb.setValue( 100-sum );
+								
+								sum += cval;
+							}
+							
+							lastb = curb;
+							
+							if( curb == BCluster.this ) next = curb;
+							else if( next == BCluster.this ) next = curb;
+						}
+					}
+					boolean last = BCluster.this == lastb;
+					
+					if( sum < 100 ) {
+						if( last ) {
+							bd.add( new BCluster(100-sum, bd) );
+						} else {
+							next.setValue( 100-(sum-next.getValue()) );
+						}
+					}
+				}
+			});
+		}
+		
+		public String getVerkName() {
+			String spl = (String)name.getSelectedItem();
+			return spl.split("[ _]+")[0];
+		}
+		
+		public int getValue() {
+			return (Integer)spin.getValue();
+		}
+		
+		public void setValue( int val ) {
+			spin.setValue( val );
+		}
+		
+		public void setBounds( int x, int y, int w, int h ) {
+			super.setBounds(x, y, w, h);
+			
+			name.setBounds(0, 0, this.getWidth()-110, 30);
+			spin.setBounds(w-100, 0, 100, 30);
 		}
 	};
 	
 	public class BDialog extends JDialog {
 		//List<BCluster>	bcluster = new ArrayList<BCluster>();
 		
-		JButton	ok;
-		JButton cancel;
+		//JComponent comp;
+		JButton		ok;
+		JButton 	cancel;
 		JLabel		name;
 		JTextField	field;
 		
@@ -247,7 +316,49 @@ public class Order extends JApplet {
 			init();
 		}
 		
+		public Component add( Component comp ) {
+			Component ret = super.add( comp );
+			
+			int totalb = 0;
+			for( Component c : this.getContentPane().getComponents() ) {
+				if( c instanceof BCluster ) {
+					totalb++;
+				}
+			}
+			this.setSize( 512, 70+35*totalb );			
+			
+			return ret;
+		}
+		
+		public void remove( Component comp ) {
+			super.remove( comp );
+			
+			int totalb = 0;
+			for( Component c : this.getContentPane().getComponents() ) {
+				if( c instanceof BCluster ) {
+					totalb++;
+				}
+			}
+			this.setSize( 512, 70+35*totalb );			
+		}
+		
+		public String getVerkMix() {
+			StringBuilder sb = new StringBuilder();
+			sb.append( field.getText()+" (" );
+			for( Component c : this.getContentPane().getComponents() ) {
+				if( c instanceof BCluster ) {
+					BCluster bc = (BCluster)c;
+					if( sb.charAt(sb.length()-1) == '(' ) sb.append( bc.getVerkName()+" "+bc.getValue()+"%" );
+					else sb.append( ","+bc.getVerkName()+" "+bc.getValue()+"%" );
+				}
+			}
+			sb.append(")");
+			
+			return sb.toString();
+		}
+		
 		public void init() {
+			//comp = new JComponent() {};
 			//BoxLayout bl = new BoxLayout( this, BoxLayout.Y_AXIS );
 			//FlowLayout fl = new FlowLayout();
 			this.setLayout( null );
@@ -256,11 +367,13 @@ public class Order extends JApplet {
 			this.setResizable( true );
 			this.setTitle("Blanda saman verknúmerum");
 			this.getContentPane().setBackground( Color.white );
-			this.setSize(512, 30);
+			this.setSize(512, 90);
 			
 			ok = new JButton( new AbstractAction("Ok") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					JSObject js = JSObject.getWindow( Order.this );
+					js.call( "addVerkMix", new Object[] { getVerkMix() } );
 					BDialog.this.dispose();
 				}
 			});
@@ -273,14 +386,55 @@ public class Order extends JApplet {
 			name = new JLabel( "Nafn:");
 			field = new JTextField();
 			
+			ok.setEnabled( false );
+			field.getDocument().addDocumentListener( new DocumentListener() {
+				
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					editUpdate();
+				}
+				
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					editUpdate();
+				}
+				
+				@Override
+				public void changedUpdate(DocumentEvent e) {
+					editUpdate();
+				}
+			});
+			
 			this.add( name );
 			this.add( field );
 			this.add( ok );
 			this.add( cancel );
+			
+			this.add( new BCluster(100,this) );
+		}
+		
+		public void editUpdate() {
+			ok.setEnabled( field.getText().length() > 0 );
 		}
 		
 		public void setBounds( int x, int y, int w, int h ) {
 			super.setBounds( x, y, w, h );
+			
+			if( name != null ) {
+				name.setBounds( w/2-150, 5, 50, 25 );
+				field.setBounds( w/2-100, 5, 250, 25 );
+				ok.setBounds( w/3-25, h-30, 100, 25 );
+				cancel.setBounds( 2*w/3-25, h-30, 100, 25 );
+				
+				int totalb = 0;
+				for( Component c : this.getContentPane().getComponents() ) {
+					if( c instanceof BCluster ) {
+						c.setBounds(10, totalb*30+35, 490, 30);
+						
+						totalb++;
+					}
+				}
+			}
 		}
 	};
 	
@@ -911,6 +1065,9 @@ public class Order extends JApplet {
 		//if( filter == null || filter.equals("3") || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Almennt lab - 312(36%), 412(43%), 612(21%)" );
 		if( filter == null || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Rannsókn 1. hæð - 412(43%) & 612(57%)" );
 		if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "Rannsókn 2. hæð - 412(60%), 112(30%) & 212(10%)" );
+		
+		JSObject js = JSObject.getWindow( this );
+		js.call("getAllVerk", new Object[] {});
 		//if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "60% 40000412, 30% 10000112, 10% 20000212" );
 	}
 	
@@ -1666,7 +1823,6 @@ public class Order extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				BDialog bd = new BDialog();
-				bd.add( new BCluster() );
 				bd.setLocationRelativeTo( Order.this );
 				bd.setVisible( true );
 			}
