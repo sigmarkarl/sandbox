@@ -5,6 +5,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -16,6 +17,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -54,15 +56,22 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
+import javax.jnlp.ClipboardService;
+import javax.jnlp.FileSaveService;
+import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -874,7 +883,66 @@ public class SortTable extends JApplet {
 	boolean sel = false;
 
 	int size = 300;
+	
+	 public void copyData(Component source) {
+        TableModel model = table.getModel();
+ 
+        StringBuilder sb = null;
+        if (true) {
+            sb = new StringBuilder();
+            
+            int[] rr = table.getSelectedRows();
+            int[] cc = table.getSelectedColumns();
+            
+            sb.append("\t");
+            for( int c : cc ) {
+            	sb.append( "\t" + topTable.getValueAt(0, c) );
+            }
+            sb.append("\n\t");
+            for( int c : cc ) {
+            	sb.append( "\t" + table.getColumnName(c) );
+            }
+            sb.append("\n");
+            
+            for( int ii : rr ) {
+            	sb.append( leftTable.getValueAt(ii, 0) );
+            	sb.append( "\t"+leftTable.getValueAt(ii, 1) );
+                for( int jj : cc ) {
+                	Object val = model.getValueAt(ii,jj);
+                    if( val != null && val instanceof Float ) sb.append( "\t"+Float.toString( (Float)val ) );
+                    else sb.append( "\t" );
+                }
+                sb.append( "\n" );
+            }
+        }
+        String s = sb.toString();
+        if (s==null || s.trim().length()==0) {
+            JOptionPane.showMessageDialog(this, "There is no data selected!");
+        } else {
+            StringSelection selection = new StringSelection(s);
+            clipboardService.setContents( selection );
+        }
+        
+        if (grabFocus) {
+            source.requestFocus();
+        }
+    }
+	 
+    class CopyAction extends AbstractAction {
+        public CopyAction(String text, ImageIcon icon,
+            String desc, Integer mnemonic) {
+            super(text, icon);
+            putValue(SHORT_DESCRIPTION, desc);
+            putValue(MNEMONIC_KEY, mnemonic);
+        }
+ 
+        public void actionPerformed(ActionEvent e) {
+            copyData((Component)e.getSource());
+        }
+    }
 
+    private ClipboardService 	clipboardService;
+    private boolean 			grabFocus = false;
 	public void initGui(String sessionKey, String currentUser) throws IOException {
 		scrollPane = new JScrollPane();
 		leftScrollPane = new JScrollPane();
@@ -914,7 +982,17 @@ public class SortTable extends JApplet {
 			}
 		};
 		table.setColumnSelectionAllowed(true);
-
+		
+	    try {  
+	    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+	    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+            table.getActionMap().put( "copy", action );
+            grabFocus = true;
+	    } catch (Exception e) { 
+	    	e.printStackTrace();
+	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+	    }
+	   
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
 			public void valueChanged(ListSelectionEvent e) {
@@ -2418,10 +2496,6 @@ public class SortTable extends JApplet {
 		//this.getCodeBase();
 		
 		if( applet == null ) {
-			
-			
-			
-			
 			//String js = "document.getElementById('applet').innerHTML = '<applet codebase=\"http://localhost/\" code=\"org.simmi.PoiFactory\" id=\"minunsign\" name=\"minunsign\"><param name=\"jnlp_href\" value=\"export.jnlp\"></applet>'"; 
 				//"var attributes = { codebase:'http://localhost/', archive:'minapplet.jar', code:'org.simmi.PoiFactory', width:'1', height:'1', id:'food', name:'minunsign' }; var parameters = { jnlp_href:'minapplet.jnlp' }; deployJava.runApplet(attributes, parameters, '1.6');";
 				//System.err.println( js );
