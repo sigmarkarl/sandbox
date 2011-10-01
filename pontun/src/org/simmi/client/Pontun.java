@@ -2,6 +2,7 @@ package org.simmi.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -10,6 +11,7 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -38,6 +40,61 @@ public class Pontun implements EntryPoint {
 		}
 	}-*/;
 	
+	public native int initFunctions() /*-{
+		var s = this;
+		
+		$wnd.addVerkMix = function( str ) {
+			s.@org.simmi.client.Pontun::addVerkMix(Ljava/lang/String;)( str );
+		};
+		$wnd.getAllVerk = function() {
+			s.@org.simmi.client.Pontun::getAllVerk()();
+		};
+	}-*/;
+	
+	public native void addVerkInApplet( JavaScriptObject appletelement, String str ) /*-{
+		appletelement.addVerk( str );
+	}-*/;
+	
+	public native void console( String log ) /*-{
+		$wnd.console.log( log );
+	}-*/;
+	
+	public void getAllVerk() {
+		console("trying");
+		greetingService.getAllVerk( new AsyncCallback<String>() {
+			@Override
+			public void onSuccess(String result) {
+				console( result );
+				
+				Element ae = Document.get().getElementById("order");
+				String[] split = result.split("\n");
+				for( String s : split ) {
+					addVerkInApplet( ae, s );
+				}
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				
+			}
+		});
+	}
+	
+	public void addVerkMix( final String str ) {
+		greetingService.greetServer(str, new AsyncCallback<String>() {
+			@Override
+			public void onSuccess(String result) {
+				Element ae = Document.get().getElementById("order");
+				addVerkInApplet( ae, result );
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				
+			}
+		});
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -47,6 +104,8 @@ public class Pontun implements EntryPoint {
 		
 		Window.enableScrolling( false );
 		Window.setMargin("0px");
+		
+		initFunctions();
 		
 		final RootPanel	rp = RootPanel.get();
 		Style rootstyle = rp.getElement().getStyle();
@@ -80,6 +139,8 @@ public class Pontun implements EntryPoint {
 		ae.setAttribute("codebase", "http://"+server+"/");
 		ae.setAttribute("archive", "order.jar,sqljdbc4.jar,sqljdbc_auth.jar,mail.jar");
 		ae.setAttribute("code", "org.simmi.Order");
+		ae.setAttribute("id", "order");
+		ae.setAttribute("name", "order");
 		Element pe = Document.get().createElement("param");
 		pe.setAttribute("name", "jnlp_href");
 		pe.setAttribute("value", "order.jnlp");

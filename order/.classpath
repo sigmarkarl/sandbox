@@ -17,5 +17,6 @@
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8-beta3/lib/log4j-1.2.13.jar"/>
 	<classpathentry kind="lib" path="/opt/javamail-1.4.3/mail.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
