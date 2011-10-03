@@ -98,6 +98,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
+import netscape.javascript.JSObject;
+
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
 
@@ -880,10 +882,8 @@ public class SortTable extends JApplet {
 
 	int size = 300;
 	
-	 public void copyData(Component source) {
-        TableModel model = table.getModel();
- 
-        StringBuilder sb = null;
+	public  void showAjaxTable( boolean override ) {
+		StringBuilder sb = null;
         if (true) {
             sb = new StringBuilder();
             
@@ -914,10 +914,21 @@ public class SortTable extends JApplet {
         String s = sb.toString();
         if (s==null || s.trim().length()==0) {
             JOptionPane.showMessageDialog(this, "There is no data selected!");
-        } else {
+        } else if( clipboardService != null && !override ) {
             StringSelection selection = new StringSelection(s);
             clipboardService.setContents( selection );
+        } else {
+        	System.err.println( "ermerm" );
+        	JSObject js = JSObject.getWindow(this);
+        	String[] sa = { s };
+        	js.call( "showTable", sa );
         }
+	}
+	
+	public void copyData(Component source) {
+        TableModel model = table.getModel();
+ 
+        showAjaxTable( false );
         
         if (grabFocus) {
             source.requestFocus();
@@ -981,13 +992,13 @@ public class SortTable extends JApplet {
 		
 	    try {  
 	    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
-	    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
-            table.getActionMap().put( "copy", action );
-            grabFocus = true;
 	    } catch (Exception e) { 
 	    	e.printStackTrace();
 	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
 	    }
+	    Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+        table.getActionMap().put( "copy", action );
+        grabFocus = true;
 	   
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -2459,6 +2470,12 @@ public class SortTable extends JApplet {
 					} catch (IllegalArgumentException e) {
 						e.printStackTrace();
 					}
+				}
+			});
+			
+			popup.add( new AbstractAction( lang.equals("IS") ? "Opna töflu í vef" : "Open table in page" ) {
+				public void actionPerformed(ActionEvent ae) {
+					showAjaxTable( true );
 				}
 			});
 		}
