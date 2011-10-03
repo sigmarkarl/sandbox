@@ -12,7 +12,7 @@
 <offline-allowed/>
 <resources>
   <j2se version="1.6+" />
-  <jar href="food.jar"/>
+  <jar href="isgem.jar"/>
   <jar href="swingx-core-1.6.2.jar"/>
   <extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/>
   <!--extension name="dropbox" href="http://dl.dropbox.com/u/10024658/dbsave.jnlp"/-->
