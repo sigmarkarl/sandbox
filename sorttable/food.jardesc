@@ -24,8 +24,8 @@
         <file path="/sorttable/src/du.png"/>
         <javaElement handleIdentifier="=sorttable/src&lt;org.simmi{HabitsPanel.java"/>
         <javaElement handleIdentifier="=sorttable/src&lt;org.simmi{PoiFactory.java"/>
-        <file path="/sorttable/src/rds.png"/>
         <file path="/sorttable/src/eu.png"/>
+        <file path="/sorttable/src/rds.png"/>
         <file path="/sorttable/src/food.png"/>
         <javaElement handleIdentifier="=sorttable/src&lt;org.simmi{ImageFactory.java"/>
         <file path="/sorttable/src/sams.png"/>
