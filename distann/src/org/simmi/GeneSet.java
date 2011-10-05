@@ -2046,6 +2046,7 @@ public class GeneSet extends JApplet {
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
 		String name = null;
+		String nohitname = null;
 		String evalue = null;
 		String score = null;
 		int		freq = 0;
@@ -2060,6 +2061,7 @@ public class GeneSet extends JApplet {
 			if( line.startsWith("Query= ") ) {
 				String[] split = line.split("[ ]+");
 				name = split[1];
+				nohitname = name;
 				
 				String lstr = split[ split.length-1 ];
 				int l = Integer.parseInt( lstr.substring(7) );
@@ -2080,16 +2082,12 @@ public class GeneSet extends JApplet {
 			}
 			
 			if( line.contains("No hits") ) {
-				String prename = name; //swapmap.get(st+".out")+"_"+name;
+				String prename = nohitname; //swapmap.get(st+".out")+"_"+name;
 				
 				aquery.name = prename;
 				if( aas.containsKey(prename) ) lociMap.put( prename, "No match\t"+aas.get(prename) );
 				else if( dnaa.containsKey(prename) ) lociMap.put( prename, "No match\t"+dnaa.get(prename) );
 				else lociMap.put( prename, "No match" );
-				
-				evalue = "";
-				freqname = "";
-				name = null;
 				
 				if( fw != null ) {
 					String desc = "*** No hits ***";
@@ -2100,9 +2098,13 @@ public class GeneSet extends JApplet {
 						list = new ArrayList<String>();
 						maplist.put( desc, list );
 					}
-					//String addstr = "bleh\t";
-					//list.add( addstr );
+					String addstr = name;
+					list.add( addstr );
 				}
+				
+				evalue = "";
+				freqname = "";
+				name = null;
 				
 				//System.err.println( prename + "\tNo match" );
 				//if( fw != null ) fw.write( line + "\n" );
@@ -2369,12 +2371,14 @@ public class GeneSet extends JApplet {
 						boolean first = true;
 						List<String>	res = maplist.get(id);
 						for( String rstr : res ) {
-							String[] rspl = rstr.split("[\t ]+");
-							if( rspl.length == 3 ) {
-								if( first ) {
-									first = false;
-									fw.write( rspl[0] + " " + rspl[2] );
-								} else fw.write( "," + rspl[0] + " " + rspl[2] );
+							if( rstr != null ) {  
+								String[] rspl = rstr.split("[\t ]+");
+								if( rspl.length == 3 ) {
+									if( first ) {
+										first = false;
+										fw.write( rspl[0] + " " + rspl[2] );
+									} else fw.write( "," + rspl[0] + " " + rspl[2] );
+								}
 							}
 						}
 						fw.write(")\n");
@@ -4375,12 +4379,15 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/4.blastout") );
+			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/4.blastout") );
 			/*for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}*/
-			loci2gene( new FileReader("/home/sigmar/viggo/4.blastout"), "/home/sigmar/viggo/4v1.txt", null, freqmap );
+			//loci2gene( new FileReader("/home/sigmar/viggo/4.blastout"), "/home/sigmar/viggo/4v1.txt", null, freqmap );
+			
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/arciformis_repeat.blastout") );
+			loci2gene( new FileReader("/home/sigmar/arciformis_repeat.blastout"), "/home/sigmar/arciformis_v1.txt", null, freqmap );			
 			
 			/*loci2gene( new FileReader("/home/horfrae/viggo/1.blastout"), "/home/horfrae/viggo/1v.txt", null );
 			loci2gene( new FileReader("/home/horfrae/viggo/2.blastout"), "/home/horfrae/viggo/2v.txt", null );
