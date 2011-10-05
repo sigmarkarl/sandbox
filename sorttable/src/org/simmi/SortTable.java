@@ -16,7 +16,10 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -81,6 +84,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SortOrder;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -97,8 +101,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
-
-import netscape.javascript.JSObject;
 
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
@@ -851,6 +853,8 @@ public class SortTable extends JApplet {
 					//SortTable.this.revalidate();
 				} catch (IOException e) {
 					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
 				}
 			}
 		});
@@ -882,53 +886,45 @@ public class SortTable extends JApplet {
 
 	int size = 300;
 	
-	public  void showAjaxTable( boolean override ) {
-		StringBuilder sb = null;
-        if (true) {
-            sb = new StringBuilder();
+	public String makeCopyString() {
+		StringBuilder sb = new StringBuilder();
             
-            int[] rr = table.getSelectedRows();
-            int[] cc = table.getSelectedColumns();
-            
-            sb.append("\t");
-            for( int c : cc ) {
-            	sb.append( "\t" + topTable.getValueAt(0, c) );
-            }
-            sb.append("\n\t");
-            for( int c : cc ) {
-            	sb.append( "\t" + table.getColumnName(c) );
-            }
-            sb.append("\n");
-            
-            for( int ii : rr ) {
-            	sb.append( leftTable.getValueAt(ii, 0) );
-            	sb.append( "\t"+leftTable.getValueAt(ii, 1) );
-                for( int jj : cc ) {
-                	Object val = model.getValueAt(ii,jj);
-                    if( val != null && val instanceof Float ) sb.append( "\t"+Float.toString( (Float)val ) );
-                    else sb.append( "\t" );
-                }
-                sb.append( "\n" );
-            }
+        int[] rr = table.getSelectedRows();
+        int[] cc = table.getSelectedColumns();
+        
+        sb.append("\t");
+        for( int c : cc ) {
+        	sb.append( "\t" + topTable.getValueAt(0, c) );
         }
-        String s = sb.toString();
-        if (s==null || s.trim().length()==0) {
-            JOptionPane.showMessageDialog(this, "There is no data selected!");
-        } else if( clipboardService != null && !override ) {
-            StringSelection selection = new StringSelection(s);
-            clipboardService.setContents( selection );
-        } else {
-        	System.err.println( "ermerm" );
-        	JSObject js = JSObject.getWindow(this);
-        	String[] sa = { s };
-        	js.call( "showTable", sa );
+        sb.append("\n\t");
+        for( int c : cc ) {
+        	sb.append( "\t" + table.getColumnName(c) );
         }
+        sb.append("\n");
+        
+        for( int ii : rr ) {
+        	sb.append( leftTable.getValueAt(ii, 0) );
+        	sb.append( "\t"+leftTable.getValueAt(ii, 1) );
+            for( int jj : cc ) {
+            	Object val = table.getValueAt(ii,jj);
+                if( val != null && val instanceof Float ) sb.append( "\t"+Float.toString( (Float)val ) );
+                else sb.append( "\t" );
+            }
+            sb.append( "\n" );
+        }
+        return sb.toString();
 	}
 	
 	public void copyData(Component source) {
         TableModel model = table.getModel();
  
-        showAjaxTable( false );
+        String s = makeCopyString();
+        if (s==null || s.trim().length()==0) {
+            JOptionPane.showMessageDialog(this, "There is no data selected!");
+        } else {
+            StringSelection selection = new StringSelection(s);
+            clipboardService.setContents( selection );
+        }
         
         if (grabFocus) {
             source.requestFocus();
@@ -950,7 +946,7 @@ public class SortTable extends JApplet {
 
     private ClipboardService 	clipboardService;
     private boolean 			grabFocus = false;
-	public void initGui(String sessionKey, String currentUser) throws IOException {
+	public void initGui(String sessionKey, String currentUser) throws IOException, ClassNotFoundException {
 		scrollPane = new JScrollPane();
 		leftScrollPane = new JScrollPane();
 		topScrollPane = new JScrollPane();
@@ -992,13 +988,13 @@ public class SortTable extends JApplet {
 		
 	    try {  
 	    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+	    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+            table.getActionMap().put( "copy", action );
+            grabFocus = true;
 	    } catch (Exception e) { 
 	    	e.printStackTrace();
 	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
 	    }
-	    Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
-        table.getActionMap().put( "copy", action );
-        grabFocus = true;
 	   
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -1039,17 +1035,76 @@ public class SortTable extends JApplet {
 				}
 			}
 		});
+		
+		final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();//new DataFlavor("text/plain;charset=utf-8");
+		//final DataFlavor textfl = DataFlavor.pl
+		//String mime = df.getMimeType();
+		final String charset = df.getParameter("charset");
+		//int start = mime.indexOf("harset=")+7;
+		//int stop = mime.indexOf(';', start);
+		//if( stop == -1 ) stop = mime.length();
+		//final String type = mime.substring(start, stop);
+		
+		final Transferable transferable = new Transferable() {
+			@Override
+			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+				String ret = makeCopyString();
+				//return arg0.getReaderForText( this );
+				return new ByteArrayInputStream( ret.getBytes( charset ) );
+				//return ret;
+			}
 
-		/*
-		 * table.setTransferHandler( new TransferHandler() {
-		 * 
-		 * });
-		 */
+			@Override
+			public DataFlavor[] getTransferDataFlavors() {
+				return new DataFlavor[] { df };
+			}
+
+			@Override
+			public boolean isDataFlavorSupported(DataFlavor arg0) {
+				if( arg0.equals(df) ) {
+					return true;
+				}
+				return false;
+			}
+		};
+
+		TransferHandler th = new TransferHandler() {
+			private static final long serialVersionUID = 1L;
+			
+			public int getSourceActions(JComponent c) {
+				return TransferHandler.COPY_OR_MOVE;
+			}
+
+			public boolean canImport(TransferHandler.TransferSupport support) {
+				return false;
+			}
+
+			protected Transferable createTransferable(JComponent c) {
+				return transferable;
+			}
+
+			public boolean importData(TransferHandler.TransferSupport support) {
+				/*try {
+					Object obj = support.getTransferable().getTransferData( df );
+					InputStream is = (InputStream)obj;
+					
+					byte[] bb = new byte[2048];
+					int r = is.read(bb);
+					
+					//importFromText( new String(bb,0,r) );
+				} catch (UnsupportedFlavorException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}*/
+				return false;
+			}
+		};
+		table.setTransferHandler( th );
+		table.setDragEnabled( true );
 
 		table.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-
-			public void columnAdded(TableColumnModelEvent e) {
-			}
+			public void columnAdded(TableColumnModelEvent e) {}
 
 			public void columnMarginChanged(ChangeEvent e) {
 				Enumeration<TableColumn> tcs = table.getColumnModel().getColumns();
@@ -1064,10 +1119,7 @@ public class SortTable extends JApplet {
 				topTable.moveColumn(e.getFromIndex(), e.getToIndex());
 			}
 
-			public void columnRemoved(TableColumnModelEvent e) {
-				// TODO Auto-generated method stub
-
-			}
+			public void columnRemoved(TableColumnModelEvent e) {}
 
 			public void columnSelectionChanged(ListSelectionEvent e) {
 			}
@@ -2470,12 +2522,6 @@ public class SortTable extends JApplet {
 					} catch (IllegalArgumentException e) {
 						e.printStackTrace();
 					}
-				}
-			});
-			
-			popup.add( new AbstractAction( lang.equals("IS") ? "Opna töflu í vef" : "Open table in page" ) {
-				public void actionPerformed(ActionEvent ae) {
-					showAjaxTable( true );
 				}
 			});
 		}
