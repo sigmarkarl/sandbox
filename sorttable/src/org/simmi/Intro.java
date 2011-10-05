@@ -458,8 +458,9 @@ public class Intro extends JApplet {
 						Intro.this.add( ed );
 					}
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
 				}				
 			}
 		});
