@@ -97,8 +97,10 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	rootitem6 = tree.addItem( "root6" );
 		final TreeItem	rootitem13 = tree.addItem( "root13" );
 		final TreeItem	rootitem14 = tree.addItem( "root14" );
+		final TreeItem	arciformis = tree.addItem( "arciformis" );
+		final TreeItem	kawarayensis = tree.addItem( "kawarayensis" );
 		
-		RequestBuilder rb3 = new RequestBuilder( RequestBuilder.GET, "http://"+server+"/3v1.txt" );
+		/*RequestBuilder rb3 = new RequestBuilder( RequestBuilder.GET, "http://"+server+"/3v1.txt" );
 		RequestBuilder rb4 = new RequestBuilder( RequestBuilder.GET, "http://"+server+"/4v1.txt" );
 		RequestBuilder rb5 = new RequestBuilder( RequestBuilder.GET, "http://"+server+"/5v4.txt" );
 		RequestBuilder rb6 = new RequestBuilder( RequestBuilder.GET, "http://"+server+"/6v1.txt" );
@@ -111,6 +113,15 @@ public class Taxonomy implements EntryPoint {
 			runSubStuff(rb6, rootitem6);
 			runSubStuff(rb13, rootitem13);
 			runSubStuff(rb14, rootitem14);
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}*/
+	}
+	
+	public void runSpec( TreeItem rootitem, String serverurl ) {
+		try {
+			RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, serverurl );
+			runSubStuff(rb, rootitem);
 		} catch (RequestException e) {
 			e.printStackTrace();
 		}
@@ -136,51 +147,64 @@ public class Taxonomy implements EntryPoint {
 			@Override
 			public void onSelection(SelectionEvent<TreeItem> event) {
 				TreeItem selectedtree = event.getSelectedItem();
-				StringBuilder sb = new StringBuilder();
-				//sb.append( selectedtree.getText() );
-				recursiveNames( selectedtree, sb );
 				
-				int searchnum = 0;
-				TreeItem parent = selectedtree.getParentItem();
-				while( parent != null ) {
-					selectedtree = parent;
-					parent = selectedtree.getParentItem();
-				}
-				String rootname = selectedtree.getText();
-				if( rootname.contains("root") ) {
-					String[] rsplit = rootname.split(" ");
-					try {
-						searchnum = Integer.parseInt( rsplit[0].substring(4) );
-					} catch( Exception e ) {
-						
-					}
-				}
-				
-				String qstr =  sb.toString();
-				//console( "qs " + qstr );
-				greetingService.greetServer( qstr, searchnum, new AsyncCallback<String>() {
+				String nodename = selectedtree.getText();
+				if( nodename.contains("root") && selectedtree.getChildCount() == 0 ) {
+					if( nodename.equals("root3") ) runSpec( selectedtree, "http://"+server+"/3v1.txt" );
+					else if( nodename.equals("root4") ) runSpec( selectedtree, "http://"+server+"/4v1.txt" );
+					else if( nodename.equals("root5") ) runSpec( selectedtree, "http://"+server+"/5v1.txt" );
+					else if( nodename.equals("root6") ) runSpec( selectedtree, "http://"+server+"/6v1.txt" );
+					else if( nodename.equals("root13") ) runSpec( selectedtree, "http://"+server+"/13v1.txt" );
+					else if( nodename.equals("root14") ) runSpec( selectedtree, "http://"+server+"/14v1.txt" );
+					else if( nodename.equals("arciformis") ) runSpec( selectedtree, "http://"+server+"/arciformis_v1.txt" );
+					else if( nodename.equals("kawarayensis") ) runSpec( selectedtree, "http://"+server+"/kawarayensis_v1.txt" );
+				} else {
+					StringBuilder sb = new StringBuilder();
+					//sb.append( selectedtree.getText() );
+					recursiveNames( selectedtree, sb );
 					
-					@Override
-					public void onSuccess(String result) {
-						DialogBox db = new DialogBox();
-						//db.setSize("400px", "300px");
-						Caption cap = db.getCaption();
-						db.setAutoHideEnabled( true );
-						cap.setText("Fasta");
-						TextArea ta = new TextArea();
-						ta.setSize("400px", "300px");
-						db.add( ta );
-						
-						ta.setText( result );
-						
-						db.center();
+					int searchnum = 0;
+					TreeItem parent = selectedtree.getParentItem();
+					while( parent != null ) {
+						selectedtree = parent;
+						parent = selectedtree.getParentItem();
+					}
+					String rootname = selectedtree.getText();
+					if( rootname.contains("root") ) {
+						String[] rsplit = rootname.split(" ");
+						try {
+							searchnum = Integer.parseInt( rsplit[0].substring(4) );
+						} catch( Exception e ) {
+							
+						}
 					}
 					
-					@Override
-					public void onFailure(Throwable caught) {
+					String qstr =  sb.toString();
+					//console( "qs " + qstr );
+					greetingService.greetServer( qstr, searchnum, new AsyncCallback<String>() {
 						
-					}
-				});
+						@Override
+						public void onSuccess(String result) {
+							DialogBox db = new DialogBox();
+							//db.setSize("400px", "300px");
+							Caption cap = db.getCaption();
+							db.setAutoHideEnabled( true );
+							cap.setText("Fasta");
+							TextArea ta = new TextArea();
+							ta.setSize("400px", "300px");
+							db.add( ta );
+							
+							ta.setText( result );
+							
+							db.center();
+						}
+						
+						@Override
+						public void onFailure(Throwable caught) {
+							
+						}
+					});
+				}
 			}
 		});
 		//tree.setSize("100%", "100%");
