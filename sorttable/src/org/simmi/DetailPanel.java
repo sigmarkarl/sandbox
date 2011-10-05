@@ -2,11 +2,18 @@ package org.simmi;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Image;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageProducer;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -16,15 +23,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.jnlp.ClipboardService;
+import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.TransferHandler;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.RowSorterEvent;
@@ -36,6 +47,7 @@ import javax.swing.table.TableModel;
 
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
+import org.simmi.SortTable.CopyAction;
 
 public class DetailPanel extends SimSplitPane {
 	JCompatTable	detailTable;
@@ -172,6 +184,68 @@ public class DetailPanel extends SimSplitPane {
 		return null;
 	}
 	
+	public String makeCopyString( JCompatTable table ) {
+		StringBuilder sb = new StringBuilder();
+            
+        int[] rr = table.getSelectedRows();
+        //int[] cc = table.getSelectedColumns();
+        
+
+        for( int c = 0; c < table.getColumnCount(); c++ ) {
+        	if( c == 0 ) sb.append( table.getColumnName(c) );
+        	else sb.append( "\t"+table.getColumnName(c) );
+        }
+        sb.append("\n");
+        
+        for( int ii : rr ) {
+        	for( int c = 0; c < table.getColumnCount(); c++ ) {
+            	Object val = table.getValueAt(ii,c);
+                if( val != null ) {
+                	if( c == 0 ) sb.append( val.toString() );
+                	else sb.append( "\t"+val.toString() );
+                }
+                else sb.append( "\t" );
+            }
+            sb.append( "\n" );
+        }
+        return sb.toString();
+	}
+	
+	public void copyData( JCompatTable table, ClipboardService clipboardService, Component source ) {
+        TableModel model = table.getModel();
+ 
+        boolean grabFocus = true;
+        String s = makeCopyString( table );
+        if (s==null || s.trim().length()==0) {
+            JOptionPane.showMessageDialog(this, "There is no data selected!");
+        } else {
+            StringSelection selection = new StringSelection(s);
+            clipboardService.setContents( selection );
+        }
+        
+        if (grabFocus) {
+            source.requestFocus();
+        }
+    }
+	 
+    class CopyAction extends AbstractAction {
+    	JCompatTable 		table;
+    	ClipboardService 	clipboardService;
+    	
+        public CopyAction( JCompatTable table, ClipboardService clipboardService, String text, ImageIcon icon, String desc, Integer mnemonic) {
+            super(text, icon);
+            putValue(SHORT_DESCRIPTION, desc);
+            putValue(MNEMONIC_KEY, mnemonic);
+            
+            this.table = table;
+            this.clipboardService = clipboardService;
+        }
+ 
+        public void actionPerformed(ActionEvent e) {
+            copyData( table, clipboardService, (Component)e.getSource() );
+        }
+    }
+	
 	public DetailPanel( final SortTable sortTable, final RdsPanel rdsp, final String lang, final ImagePanel imgPanel, final JCompatTable table, final JCompatTable topTable, final JCompatTable leftTable, final List<Object[]> stuff, final List<String> ngroupList, final List<String> ngroupGroups, final Map<String,Integer> foodInd, final List<Recipe> recipes ) throws IOException {
 		super( JSplitPane.VERTICAL_SPLIT );
 		this.setDividerLocation( 300 );
@@ -269,6 +343,73 @@ public class DetailPanel extends SimSplitPane {
 				super.sorterChanged(e);
 			}
 		};
+		
+		try {  
+	    	ClipboardService clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+	    	Action action = new CopyAction( detailTable, clipboardService, "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+            detailTable.getActionMap().put( "copy", action );
+	    } catch (Exception e) { 
+	    	e.printStackTrace();
+	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+	    }
+		
+		final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();//new DataFlavor("text/plain;charset=utf-8");
+		final String charset = df.getParameter("charset");		
+		final Transferable transferable = new Transferable() {
+			@Override
+			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+				String ret = makeCopyString( detailTable );
+				return new ByteArrayInputStream( ret.getBytes( charset ) );
+			}
+
+			@Override
+			public DataFlavor[] getTransferDataFlavors() {
+				return new DataFlavor[] { df };
+			}
+
+			@Override
+			public boolean isDataFlavorSupported(DataFlavor arg0) {
+				if( arg0.equals(df) ) {
+					return true;
+				}
+				return false;
+			}
+		};
+
+		TransferHandler th = new TransferHandler() {
+			private static final long serialVersionUID = 1L;
+			
+			public int getSourceActions(JComponent c) {
+				return TransferHandler.COPY_OR_MOVE;
+			}
+
+			public boolean canImport(TransferHandler.TransferSupport support) {
+				return false;
+			}
+
+			protected Transferable createTransferable(JComponent c) {
+				return transferable;
+			}
+
+			public boolean importData(TransferHandler.TransferSupport support) {
+				/*try {
+					Object obj = support.getTransferable().getTransferData( df );
+					InputStream is = (InputStream)obj;
+					
+					byte[] bb = new byte[2048];
+					int r = is.read(bb);
+					
+					//importFromText( new String(bb,0,r) );
+				} catch (UnsupportedFlavorException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}*/
+				return false;
+			}
+		};
+		detailTable.setTransferHandler( th );
+		detailTable.setDragEnabled( true );
 		
 		TableCellEditor tce = null;
 		try{ 
