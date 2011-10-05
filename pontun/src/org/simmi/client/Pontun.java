@@ -12,7 +12,6 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
@@ -60,11 +59,11 @@ public class Pontun implements EntryPoint {
 	}-*/;
 	
 	public void getAllVerk() {
-		console("trying");
+		//console("trying");
 		greetingService.getAllVerk( new AsyncCallback<String>() {
 			@Override
 			public void onSuccess(String result) {
-				console( result );
+				//console( result );
 				
 				Element ae = Document.get().getElementById("order");
 				String[] split = result.split("\n");
@@ -137,14 +136,40 @@ public class Pontun implements EntryPoint {
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("codebase", "http://"+server+"/");
-		ae.setAttribute("archive", "order.jar,sqljdbc4.jar,sqljdbc_auth.jar,mail.jar");
+		ae.setAttribute("archive", "order.jar,sqljdbc4.jar,sqljdbc_auth.jar,mail.jar,smtp.jar");
 		ae.setAttribute("code", "org.simmi.Order");
 		ae.setAttribute("id", "order");
 		ae.setAttribute("name", "order");
 		Element pe = Document.get().createElement("param");
 		pe.setAttribute("name", "jnlp_href");
 		pe.setAttribute("value", "order.jnlp");
+
+		Element pe1 = Document.get().createElement("param");
+		pe1.setAttribute("name", "image");
+		pe1.setAttribute("value", "matis2.gif");
+		
+		Element pe2 = Document.get().createElement("param");
+		pe2.setAttribute("name", "centerimage");
+		pe2.setAttribute("value", "true");
+		
+		Element pe3 = Document.get().createElement("param");
+		pe3.setAttribute("name", "boxborder");
+		pe3.setAttribute("value", "false");
+		
+		Element pe4 = Document.get().createElement("param");
+		pe4.setAttribute("name", "draggable");
+		pe4.setAttribute("value", "true");
+		
+		/*<param name="image" value="matis2.gif"/> 
+		<param name="centerimage" value="true"/> 
+		<param name="boxborder" value="false"/>
+		<param name="draggable" value="true"/>*/
+		
 		ae.appendChild( pe );
+		ae.appendChild( pe1 );
+		ae.appendChild( pe2 );
+		ae.appendChild( pe3 );
+		ae.appendChild( pe4 );
 		//HTML applet = new HTML( "<applet width='100%' height='100%' codebase='http://"+server+"/' archive='pontun.jar' code='org.simmi.Order'><param name='jnlp_href' value='order.jnlp' /></applet>" );
 		rp.getElement().appendChild( ae );
 		

@@ -957,8 +957,8 @@ public class Order extends JApplet {
 	}
 	
 	public void connect() throws SQLException {
-		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
-		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
+		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 		con = DriverManager.getConnection(connectionUrl);
 	}
 	
@@ -1565,7 +1565,7 @@ public class Order extends JApplet {
 		
 		try {
 			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-			String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=MATIS;user=simmi;password=mirodc30;";
+			String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=MATIS;user=simmi2;password=drsmorc.311;";
 			con = DriverManager.getConnection(connectionUrl);
 			
 			updateVerk();
@@ -1608,7 +1608,7 @@ public class Order extends JApplet {
 		
 		if( !valid ) {
 			try {
-				String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+				String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 				con = DriverManager.getConnection(connectionUrl);
 			} catch (SQLException e) {
 				e.printStackTrace();
