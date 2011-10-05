@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="/home/horfrae/workspace/pontun/war/order.jar"/>
+    <jar path="/home/sigmar/sandbox/pontun/war/order.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/order/order.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
@@ -11,8 +11,6 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/order/src/emp.txt"/>
-        <file path="/order/src/persons.txt"/>
-        <javaElement handleIdentifier="=order/src&lt;org.simmi"/>
+        <javaElement handleIdentifier="=order/src"/>
     </selectedElements>
 </jardesc>
