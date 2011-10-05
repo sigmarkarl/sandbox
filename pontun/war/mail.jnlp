@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://pontunarkerfi.appspot.com/">
+<information>
+  <title>Javamail</title>
+  <vendor>Sun</vendor>
+  <homepage href="http://www.matis.is" />
+  <description>Javamail</description>
+</information>
+<offline-allowed/>
+<security>
+  <all-permissions/>
+</security>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="mail.jar"/>
+</resources>
+<component-desc />
+</jnlp>
