@@ -149,7 +149,7 @@ public class Taxonomy implements EntryPoint {
 				TreeItem selectedtree = event.getSelectedItem();
 				
 				String nodename = selectedtree.getText();
-				if( nodename.contains("root") && selectedtree.getChildCount() == 0 ) {
+				if( ( nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
 					if( nodename.equals("root3") ) runSpec( selectedtree, "http://"+server+"/3v1.txt" );
 					else if( nodename.equals("root4") ) runSpec( selectedtree, "http://"+server+"/4v1.txt" );
 					else if( nodename.equals("root5") ) runSpec( selectedtree, "http://"+server+"/5v1.txt" );
@@ -163,20 +163,23 @@ public class Taxonomy implements EntryPoint {
 					//sb.append( selectedtree.getText() );
 					recursiveNames( selectedtree, sb );
 					
-					int searchnum = 0;
+					String searchnum = "";
 					TreeItem parent = selectedtree.getParentItem();
 					while( parent != null ) {
 						selectedtree = parent;
 						parent = selectedtree.getParentItem();
 					}
 					String rootname = selectedtree.getText();
-					if( rootname.contains("root") ) {
-						String[] rsplit = rootname.split(" ");
+					String[] rsplit = rootname.split(" ");
+					String rootnodename = rsplit[0];
+					if( rootnodename.contains("root") ) {
 						try {
-							searchnum = Integer.parseInt( rsplit[0].substring(4) );
+							searchnum = rootnodename.substring(4);
 						} catch( Exception e ) {
 							
 						}
+					} else {
+						searchnum = rootnodename;
 					}
 					
 					String qstr =  sb.toString();
@@ -220,8 +223,9 @@ public class Taxonomy implements EntryPoint {
 
 			@Override
 			public void onSuccess(String result) {
-				if( result != null && result.contains("130.208.252.") ) runStuff( server, tree );
-			}			
+				//if( result != null && result.contains("130.208.252.") ) 
+				runStuff( server, tree );
+			}
 		});
 		FocusPanel	focus = new FocusPanel( tree );
 		//focus.setSize("100%", "100%");
