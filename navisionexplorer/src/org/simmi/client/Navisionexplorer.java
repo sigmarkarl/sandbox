@@ -34,6 +34,8 @@ import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
@@ -152,6 +154,10 @@ public class Navisionexplorer implements EntryPoint {
 			return 0;
 		}
 		
+		public String getId() {
+			return id;
+		}
+		
 		public String getSvid() {
 			return svid;
 		}
@@ -253,10 +259,11 @@ public class Navisionexplorer implements EntryPoint {
 			mdata.addRow();
 			
 			mdata.setValue( r, 0, v.getName() );
-			mdata.setValue( r, 1, v.getSvid() );
+			mdata.setValue( r, 1, v.getId() );
+			mdata.setValue( r, 2, v.getSvid() );
 		}
-		jview = DataView.create( jdata );
-		jtable.draw( jview, joptions );
+		mview = DataView.create( mdata );
+		mtable.draw( mview, moptions );
 	}
 	
 	public void loadAllJobs( final List<Job> jlist ) {
@@ -302,7 +309,7 @@ public class Navisionexplorer implements EntryPoint {
 					vlist.clear();
 					for( String spl : split ) {
 						String[] subsplit = spl.split("\t");
-						if( subsplit.length == 2 ) {
+						if( subsplit.length == 3 ) {
 							String name = subsplit[0].trim();
 							String id = subsplit[1].trim();
 							String svid = subsplit[2].trim();
@@ -592,7 +599,7 @@ public class Navisionexplorer implements EntryPoint {
 		context.clearRect(0, 0, w, h);
 		
 		double dtot = Math.round( total*100.0 )/100.0;
-		context.fillText(verkname + " (" + dtot + " klukkutímar)", 10, 30);
+		context.fillText(verkname + " (" + dtot + " krónur)", 10, 30);
 		
 		int c = 0;
 		double k = 0.0;
@@ -1087,6 +1094,35 @@ public class Navisionexplorer implements EntryPoint {
 		final List<Verk>	vlist = new ArrayList<Verk>();
 		loadAllVerks( vlist );
 		
+		final ResizeLayoutPanel mrlp = new ResizeLayoutPanel();
+		tlp.addSelectionHandler( new SelectionHandler<Integer>() {
+			@Override
+			public void onSelection(SelectionEvent<Integer> event) {
+				Integer sel = event.getSelectedItem();
+				if( sel != null && table != null && mtable != null ) {
+					if( sel == 0 ) {
+						table.draw( view, options );
+						jtable.draw( jview, joptions );
+					} else {
+						//mdata.removeRows(0, mdata.getNumberOfRows());
+						//updateVerkTable( vlist );
+						//int w = mrlp.getOffsetWidth();
+						//int h = mrlp.getOffsetHeight();
+						
+						int w = m_slp.getOffsetWidth();
+						int h = m_slp.getOffsetHeight();
+						int cw = mcanvas.getOffsetWidth();
+						int sw = m_slp.getSplitterSize();
+						
+						int ww = w - cw - sw;
+						mtable.setSize(ww+"px", h+"px");
+						mtable.draw( mview, moptions );
+						mtable.setSize(ww+"px", h+"px");
+					}
+				}
+			}
+		});
+		
 		canvas = Canvas.createIfSupported();
 		canvas.setSize("100%", "100%");
 		/*canvas.addAttachHandler( new AttachEvent.Handler() {
@@ -1181,6 +1217,9 @@ public class Navisionexplorer implements EntryPoint {
 			}
 		});
 		
+		mcanvas = Canvas.createIfSupported();
+		mcanvas.setSize("100%", "100%");
+		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {
 				data = DataTable.create();
@@ -1213,6 +1252,7 @@ public class Navisionexplorer implements EntryPoint {
 		    	
 		    	mdata = DataTable.create();
 		    	mdata.addColumn( ColumnType.STRING, "Verkefni");
+		    	mdata.addColumn( ColumnType.STRING, "Verknúmer");
 		    	mdata.addColumn( ColumnType.STRING, "Svið");
 		    	  
 		    	moptions = Options.create();
@@ -1223,7 +1263,9 @@ public class Navisionexplorer implements EntryPoint {
 		    	mview = DataView.create( mdata );
 		    	mtable = new Table( mview, moptions );
 		    	
-		    	if( vlist.size() > 0 && mdata.getNumberOfRows() < 2 ) updateVerkTable( vlist );
+		    	if( vlist.size() > 0 && mdata.getNumberOfRows() < 2 ) {
+		    		updateVerkTable( vlist );
+		    	}
 		    	
 		    	table.addSelectHandler( new SelectHandler() {
 					@Override
@@ -1289,7 +1331,6 @@ public class Navisionexplorer implements EntryPoint {
 					}
 		    	});
 		    	
-		    	ResizeLayoutPanel mrlp = new ResizeLayoutPanel();
 		    	mrlp.add( mtable );
 		    	mrlp.addResizeHandler( new ResizeHandler() {
 					@Override
