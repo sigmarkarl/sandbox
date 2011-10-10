@@ -49,6 +49,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
 import com.google.gwt.visualization.client.DataTable;
@@ -87,6 +88,11 @@ public class Navisionexplorer implements EntryPoint {
 	Table		jtable;
 	Options		joptions;
 	
+	DataTable	mdata;
+	DataView	mview;
+	Table		mtable;
+	Options		moptions;
+	
 	public native void console( String log ) /*-{
 		$wnd.console.log( log );
 	}-*/;
@@ -95,6 +101,61 @@ public class Navisionexplorer implements EntryPoint {
 		public String getName();
 		public double getHours();
 	}
+	
+	public interface Kronas extends Comparable<Kronas> {
+		public String getName();
+		public double getKronas();
+	}
+	
+	public class Sjodur implements Kronas {
+		@Override
+		public int compareTo(Kronas o) {
+			return 0;
+		}
+
+		@Override
+		public String getName() {
+			return null;
+		}
+
+		@Override
+		public double getKronas() {
+			return 0;
+		}
+	};
+	
+	public class Verk implements Kronas {
+		String 	name;
+		String	id;
+		String 	svid;
+		double	kronas;
+		
+		public Verk( String name, String id, String svid, double kronas ) {
+			this.name = name;
+			this.id = id;
+			this.svid = svid;
+			this.kronas = kronas;
+		}
+		
+		@Override
+		public int compareTo(Kronas o) {
+			return 0;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public double getKronas() {
+			return 0;
+		}
+		
+		public String getSvid() {
+			return svid;
+		}
+	};
 	
 	public class Person implements Hours {
 		String  name;
@@ -186,6 +247,18 @@ public class Navisionexplorer implements EntryPoint {
 		jtable.draw( jview, joptions );
 	}
 	
+	public void updateVerkTable( List<Verk> vlist ) {
+		for( Verk v : vlist ) {
+			int r = mdata.getNumberOfRows();
+			mdata.addRow();
+			
+			mdata.setValue( r, 0, v.getName() );
+			mdata.setValue( r, 1, v.getSvid() );
+		}
+		jview = DataView.create( jdata );
+		jtable.draw( jview, joptions );
+	}
+	
 	public void loadAllJobs( final List<Job> jlist ) {
 		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
@@ -205,6 +278,38 @@ public class Navisionexplorer implements EntryPoint {
 						}
 					}
 					if( table != null ) updateJobTable( jlist );
+				}
+				
+				@Override
+				public void onError(Request request, Throwable exception) {
+					console( exception.getMessage() );
+				}
+			});
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void loadAllVerks( final List<Verk> vlist ) {
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
+		try {
+			String sql = "select v.[Heiti verks (isl)], v.[Verknúmer], v.[Svið] from [vdb].[dbo].[Verkefnalisti] v";
+			rb.sendRequest(sql, new RequestCallback() {
+				@Override
+				public void onResponseReceived(Request request, Response response) {
+					String str = response.getText();
+					String[] split = str.split("\n");
+					vlist.clear();
+					for( String spl : split ) {
+						String[] subsplit = spl.split("\t");
+						if( subsplit.length == 2 ) {
+							String name = subsplit[0].trim();
+							String id = subsplit[1].trim();
+							String svid = subsplit[2].trim();
+							if( name.length() > 0 ) vlist.add( new Verk( name, id, svid, 0.0 ) );
+						}
+					}
+					if( mtable != null ) updateVerkTable( vlist );
 				}
 				
 				@Override
@@ -369,12 +474,65 @@ public class Navisionexplorer implements EntryPoint {
 		}
 	}
 	
+	public void loadVerks( final Collection<String>	set, final String vname ) {
+		String sql = "select v.[Nafn], v.[Hlutur Matís] from [vdb].[dbo].[Fjármögnun] f where v.[Verknúmer] ('";
+		for( String v : set ) {
+			sql += v;
+		}
+		sql += "')";
+		//sql += " group by j.[Description]";
+		
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
+		try {
+			rb.sendRequest(sql, new RequestCallback() {
+				@Override
+				public void onResponseReceived(Request request, Response response) {
+					final List<Verk>	vlist = new ArrayList<Verk>();
+					String str = response.getText();
+					String[] split = str.split("\n");
+					vlist.clear();
+					//String pname = "";
+					for( String spl : split ) {
+						String[] subsplit = spl.split("\t");
+						if( subsplit.length == 2 ) {
+							String name = subsplit[0];
+							String d = subsplit[1];
+							vlist.add( new Verk( name, null, null, Double.parseDouble(d) ) );
+						}
+					}
+					
+					String verk = null;
+					for( String v : set ) {
+						verk = v;
+						break;
+					}
+					
+					//List<Job> subwork = initPersonJob( jlist );
+					//pjMap.put( person, subwork );
+					Collections.sort( vlist );
+					vsMap.put( verk, vlist );
+					mrepaint( vlist, vname );
+					
+					//if( pjMap.containsKey(key))
+				}
+				
+				@Override
+				public void onError(Request request, Throwable exception) {
+					console( exception.getMessage() );
+				}
+			});
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	//Map<String,PersonJob>	pjMap = new HashMap<String,PersonJob>();
 
 	String[] cc = new String[] { "#666666", "#DD6666", "#66DD66", "#6666DD", "#DDDD66", "#DD66DD", "#66DDDD", "#DDDDDD" };
 	
 	Map<String,List<Job>>		pjMap = new HashMap<String,List<Job>>();
 	Map<String,List<Person>>	jpMap = new HashMap<String,List<Person>>();
+	Map<String,List<Verk>>		vsMap = new HashMap<String,List<Verk>>();
 	//ByteArrayOutputStream	baos = new ByteArrayOutputStream();
 	//PrintStream				ps = new PrintStream( baos );
 	
@@ -418,6 +576,116 @@ public class Navisionexplorer implements EntryPoint {
 		
 		Collections.sort( subwork );
 		return subwork;
+	}
+	
+	Canvas mcanvas;
+	public void mrepaint( List<? extends Kronas> subverk, String verkname ) {
+		Context2d context = mcanvas.getContext2d();
+		
+		double total = 0.0;
+		for( Kronas h : subverk ) {
+			total += h.getKronas();
+		}
+		
+		int w = mcanvas.getCoordinateSpaceWidth();
+		int h = mcanvas.getCoordinateSpaceHeight();
+		context.clearRect(0, 0, w, h);
+		
+		double dtot = Math.round( total*100.0 )/100.0;
+		context.fillText(verkname + " (" + dtot + " klukkutímar)", 10, 30);
+		
+		int c = 0;
+		double k = 0.0;
+		double w2 = w/2.0;
+		double h2 = h/2.0;
+		double next = (k*2.0*Math.PI)/total;
+		for( int i = 0; i < (subverk.size()+1)/2; i++ ) {
+			Kronas kr = subverk.get(i);
+			double d = kr.getKronas();
+			context.setFillStyle( cc[c] );
+			
+			double val = ((k+d)*2.0*Math.PI)/total;
+			context.beginPath();
+			context.moveTo(w2, h2);
+			//context.lineTo( w2+250.0*Math.cos(next), h2+250.0*Math.sin(next) );
+			//console( i + "  " + next + "  " + val );
+			context.arc( w2, h2, 250.0, next, val );
+			context.lineTo(w2, h2);
+			//context.closePath();
+			context.fill();
+			//g2.fillArc(w/2-250, h/2-250, 500, 500, next, val-next );
+			next = val;
+			
+			context.setFillStyle( "#000000" );
+			double u = k+d/2.0;
+			if( u > 0.25*total && u < 0.75*total ) {
+				TextMetrics tm = context.measureText( kr.getName() );
+				double strw = tm.getWidth();
+				u += 0.5*total;
+				context.translate( w2, h2 );
+				context.rotate( Math.PI*2.0*u/total );
+				context.fillText(kr.getName(), -255-strw, 0 );
+				context.rotate( -Math.PI*2.0*u/total );
+				context.translate( -w2, -h2 );
+			} else {
+				context.translate( w2, h2 );
+				context.rotate( Math.PI*2.0*u/total );
+				context.fillText(kr.getName(), 255, 0 );
+				context.rotate( -Math.PI*2.0*u/total );
+				context.translate( -w2, -h2 );
+			}
+			k += d;
+			c = (c+1)%cc.length;
+			
+			if( i != subverk.size()-i-1 ) {
+				kr = subverk.get(subverk.size()-i-1);
+				d = kr.getKronas();
+				context.setFillStyle( cc[c] );
+				
+				val = ((k+d)*2.0*Math.PI)/total;
+				//g2.fillArc(w/2-250, h/2-250, 500, 500, next, val-next );
+				
+				context.beginPath();
+				context.moveTo( w2, h2 );
+				context.arc( w2, h2, 250.0, next, val );
+				context.lineTo( w2, h2 );
+				context.fill();
+				
+				next = val;
+				context.setFillStyle( "#000000" );
+				u = k+d/2.0;
+				
+				String name = kr.getName();
+				double pc = kr.getKronas()/total;
+				if( pc > 0.5 ) {
+					double dval = Math.round( pc*10000.0 )/100.0;
+					name = "(" + dval + ") "+name;
+					//ps.printf("%.2f", (float)(pc*100.0) );
+					//name = "(" + baos.toString() + ") "+name;
+					//ps.flush();
+					//baos.reset();
+				}
+				
+				if( u > 0.25*total && u < 0.75*total ) {
+					TextMetrics tm = context.measureText( kr.getName() );
+					double strw = tm.getWidth();
+					u += 0.5*total;
+					context.translate( w2, h2 );
+					context.rotate( Math.PI*2.0*u/total );
+					context.fillText(kr.getName(), -255-strw, 0.0 );
+					context.rotate( -Math.PI*2.0*u/total );
+					context.translate( -w2, -h2 );
+				} else {
+					context.translate( w2, h2 );
+					context.rotate( Math.PI*2.0*u/total );
+					context.fillText(kr.getName(), 255, 0.0 );
+					context.rotate( -Math.PI*2.0*u/total );
+					context.translate( -w2, -h2 );
+				}
+				k += d;
+				c = (c+1)%cc.length;
+			}
+		}
 	}
 	
 	Canvas canvas;
@@ -720,6 +988,33 @@ public class Navisionexplorer implements EntryPoint {
 		}
 	}
 	
+	public void selectVerkEvent() {
+		Set<String>	mv = new HashSet<String>();
+		
+		String name = "";
+		JsArray<Selection> jsel = mtable.getSelections();
+		for( int i = 0; i < jsel.length(); i++ ) {
+			Selection sel = jsel.get( i );
+			int r = sel.getRow();
+			name += mdata.getValueString(r, 0);
+			String kt = mdata.getValueString(r, 1);
+			mv.add(kt);
+		}
+		
+		String verk = null;
+		for( String v : mv ) {
+			verk = v;
+			break;
+		}
+		
+		if( vsMap.containsKey( verk ) ) {
+			List<Verk> subwork = vsMap.get( verk );
+			mrepaint( subwork, name );
+		} else {
+			if( mv.size() > 0 ) loadVerks( mv, name );
+		}
+	}
+	
 	DialogBox 	db;
 	String		exp = null;
 	
@@ -732,6 +1027,8 @@ public class Navisionexplorer implements EntryPoint {
 		
 		final DockLayoutPanel	dlp = new DockLayoutPanel( Unit.PX );
 		final SplitLayoutPanel 	slp = new SplitLayoutPanel();
+		final SplitLayoutPanel 	m_slp = new SplitLayoutPanel();
+		final TabLayoutPanel	tlp = new TabLayoutPanel( 25, Unit.PX ); 
 		
 		before = new DateBox();
 		after = new DateBox();
@@ -770,7 +1067,11 @@ public class Navisionexplorer implements EntryPoint {
 		toolbar.getElement().getStyle().setPadding(0.0, Unit.PX);
 		
 		dlp.addNorth( toolbar, 30 );
-		dlp.add( slp );
+		
+		tlp.add( slp, "Tími" );
+		tlp.add( m_slp, "Peningar" );
+		
+		dlp.add( tlp );
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
@@ -782,6 +1083,9 @@ public class Navisionexplorer implements EntryPoint {
 		
 		final List<Job>	jlist = new ArrayList<Job>();
 		loadAllJobs( jlist );
+		
+		final List<Verk>	vlist = new ArrayList<Verk>();
+		loadAllVerks( vlist );
 		
 		canvas = Canvas.createIfSupported();
 		canvas.setSize("100%", "100%");
@@ -907,6 +1211,20 @@ public class Navisionexplorer implements EntryPoint {
 		    	
 		    	if( jlist.size() > 0 && jdata.getNumberOfRows() < 2 ) updateJobTable( jlist );
 		    	
+		    	mdata = DataTable.create();
+		    	mdata.addColumn( ColumnType.STRING, "Verkefni");
+		    	mdata.addColumn( ColumnType.STRING, "Svið");
+		    	  
+		    	moptions = Options.create();
+		    	moptions.setWidth("100%");
+		    	moptions.setHeight("100%");
+		    	moptions.setAllowHtml( true );
+		    	  
+		    	mview = DataView.create( mdata );
+		    	mtable = new Table( mview, moptions );
+		    	
+		    	if( vlist.size() > 0 && mdata.getNumberOfRows() < 2 ) updateVerkTable( vlist );
+		    	
 		    	table.addSelectHandler( new SelectHandler() {
 					@Override
 					public void onSelect(SelectEvent event) {
@@ -918,6 +1236,13 @@ public class Navisionexplorer implements EntryPoint {
 					@Override
 					public void onSelect(SelectEvent event) {
 						selectJobEvent();
+					}
+		    	});
+		    	
+		    	mtable.addSelectHandler( new SelectHandler() {
+					@Override
+					public void onSelect(SelectEvent event) {
+						selectVerkEvent();
 					}
 		    	});
 		    	
@@ -964,6 +1289,25 @@ public class Navisionexplorer implements EntryPoint {
 					}
 		    	});
 		    	
+		    	ResizeLayoutPanel mrlp = new ResizeLayoutPanel();
+		    	mrlp.add( mtable );
+		    	mrlp.addResizeHandler( new ResizeHandler() {
+					@Override
+					public void onResize(ResizeEvent event) {
+						int w = event.getWidth();
+						int h = event.getHeight();
+						
+						mtable.setSize(w+"px", h+"px");
+						mtable.draw( mview, moptions );
+						mtable.setSize(w+"px", h+"px");
+						
+						w = mcanvas.getOffsetWidth();
+						h = mcanvas.getOffsetHeight();
+						mcanvas.setCoordinateSpaceWidth( w );
+				    	mcanvas.setCoordinateSpaceHeight( h );
+					}
+		    	});
+		    	
 		    	  int w = Window.getClientWidth()-200;
 		    	  int h = Window.getClientHeight();
 		    	  canvas.setCoordinateSpaceWidth( w );
@@ -972,6 +1316,10 @@ public class Navisionexplorer implements EntryPoint {
 		    	  slp.addWest( rlp, 200.0 );
 		    	  slp.addEast( jrlp, 200.0 );
 		    	  slp.add( canvas );
+		    	  
+		    	  m_slp.addWest( mrlp, 200.0 );
+		    	  //m_slp.addEast( mrlp, 200.0 );
+		    	  m_slp.add( mcanvas );
 		      }
 		    };
 		    VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);
