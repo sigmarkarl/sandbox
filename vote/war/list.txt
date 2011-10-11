@@ -19,7 +19,6 @@ Jón Haukur Arnarson	jon.h.arnarson@matis.is	<img src="http://www.matis.is/media
 Aðalheiður Ólafsdóttir	adalheidur.olafsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Adalheidur_Olafsdottir_08.jpg">
 Alicja Obuchowska	alicja.obuchowska@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Alicja_Obuchowska.jpg">
 Anna Arndís Árnadóttir	anna.a.arnadottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Anna_Arndis_Arnadottir.jpg">
-Anna María Sigurðardóttir
 Anna Pála Vignisdóttir	anna.p.vignisdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Anna_Pala_Vignisdottir04.jpg">
 Annabelle Vrac	annabelle.vrac@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Anabelle_Vrac.jpg">
 Ágústa K. Sigfúsdóttir	agusta.k.sigfusdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Agusta_K._Sigfusdottir.jpg">
@@ -28,12 +27,12 @@ Björn Margeirsson	bjorn.margeirsson@matis.is	<img src="http://www.matis.is/medi
 Emilía Martinsdóttir	emilia.martinsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Emilia_Martinsdottir.jpg">
 Eydís Arnviðardóttir	eydis.arnvidardottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Eydis_Arnvidardottir.jpg">
 Eyjólfur Reynisson	eyjolfur.reynisson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Eyjolfur_Reynisson.jpg">
-Gísli Á. Sighvatsson	gislis@matis.is
+Gísli Á. Sighvatsson	gislis@matis.is	<img src="http://130.208.252.230:8888/gislia.jpg">
 Guðbjörg Ólafsdóttir	gudbjorg.olafsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Gudbjorg_Olafsdottir.jpg">
 Guðlaug Þóra Marinósdóttir	gudlaug.th.marinosdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Gudlaug_Th_Marinosdottir.jpg">
 Guðmundur Óli Hreggviðsson	gudmundur.o.hreggvidsson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Gudmundur_O._Hreggvidsson.jpg">
 Guðrún Ágústa Sigurbentsdóttir	gudrun.a.sigurbentsdottir@matis.is
-Gunnar Þórðarson	gunnar.thordarson@matis.is
+Gunnar Þórðarson	gunnar.thordarson@matis.is	<img src="http://130.208.252.230:8888/gunnar.jpg">
 Gunnþórunn Einarsdóttir	gunnthorunn.einarsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Gunnthora_Einarsdottir.jpg">
 Halldóra Viðarsdóttir	halldora.vidarsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Halldora_Vidarsdottir.jpg">
 Hannes Magnússon	hannes.magnusson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Hannes_Magnusson.jpg">
