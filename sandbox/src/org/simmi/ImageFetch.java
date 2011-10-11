@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Random;
 
 public class ImageFetch {
 
@@ -15,7 +16,7 @@ public class ImageFetch {
 	 */
 	public static void main(String[] args) {
 		try {
-			FileReader fr = new FileReader("/home/sigmar/list.txt");
+			FileReader fr = new FileReader("/home/horfrae/workspace/vote/war/list.txt");
 			BufferedReader br = new BufferedReader( fr );
 			
 			char[] cc = new char[1024];
@@ -31,10 +32,12 @@ public class ImageFetch {
 			}
 			is.close();
 			
+			Random rnd = new Random();
+			
 			int u = 0;
 			String line = br.readLine();
 			while( line != null ) {
-				String[] split = line.split("\t");
+				/*String[] split = line.split("\t");
 				String name = split[0];
 				
 				int k = sb.indexOf( name );
@@ -74,7 +77,7 @@ public class ImageFetch {
 						}
 						//"\t" + email.replace("()", "@") +
 					} else System.out.println( line );
-				} else System.out.println( line );
+				} else*/ System.out.println( line + "\t" + Math.abs(rnd.nextLong()) );
 				
 				line = br.readLine();
 			}
