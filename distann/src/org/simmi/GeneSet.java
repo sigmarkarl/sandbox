@@ -61,7 +61,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.zip.GZIPInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -2033,6 +2032,10 @@ public class GeneSet extends JApplet {
 		return ret;
 	}
 	
+	public static class StrCont {
+		String str;
+	}
+	
 	private static void loci2gene( Reader rd, String outfile, String filtercont, Map<String,Integer> freqmap ) throws IOException {
 		FileWriter fw = null;
 		
@@ -2052,14 +2055,29 @@ public class GeneSet extends JApplet {
 		String score = null;
 		int		freq = 0;
 		String  freqname = null;
+		String mostrecenttype = null;
+		String id = null;
+		String extend = null;
 		
 		//int linen = 0;
 		Map<String,String>	giid = new HashMap<String,String>();
-		Map<String,String>	idtax = new HashMap<String,String>();
+		Map<String,StrCont>	idtax = new HashMap<String,StrCont>();
 		while( line != null ) {
 			//if( linen++ % 1000 == 0 ) System.err.println( linen );
 			//String trim = line.trim();
 			if( line.startsWith("Query= ") ) {
+				if( extend != null && fw != null ) {
+					List<String>	list;
+					if( maplist.containsKey(id) ) {
+						list = maplist.get(id);
+					} else {
+						list = new ArrayList<String>();
+						maplist.put( id, list );
+					}
+					String addstr = nohitname + "\t" + id + "\t" + evalue + extend + "\t" + mostrecenttype;
+					list.add( addstr );
+				}
+				
 				String[] split = line.split("[ ]+");
 				name = split[1];
 				nohitname = name;
@@ -2076,8 +2094,18 @@ public class GeneSet extends JApplet {
 					freq = 0;
 					freqname = null;
 				} else {
-					name = null;
+					line = br.readLine();
+					while( line != null && !line.startsWith("Query=") ) {
+						line = br.readLine();
+					}
+					if( line == null ) break;
+					else {
+						extend = null;
+						continue;
+					}
+					//name = null;
 				}
+				mostrecenttype = null;
 				//int i1 = name.indexOf('_');
 				//int i2 = name.indexOf('_', i1+1);
 				//name = name.substring(0,i1) + name.substring(i2);
@@ -2156,112 +2184,105 @@ public class GeneSet extends JApplet {
 				//if( fw != null ) fw.write( line + "\n" );
 			}
 			
-			if( name != null && (line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg")) ) {
-				String checkstr = line.substring(1, freqname.length()+1);
-				if( evalue == null ) evalue = parseval;
-				if( freqname.equals( checkstr ) ) {
-					String prename = name; //swapmap.get(st+".out")+"_"+name;
-					String[] split = line.split("\\|");
-					
-					/*URL url = new URL( "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id="+split[1]+"&retmode=xml" );
-					InputStream stream = url.openStream();
-					
-					StringBuilder sb = new StringBuilder();
-					try {
-						byte[] bb = new byte[1024];
-						int r = stream.read( bb );
-						while( r > 0 ) {
-							sb.append( new String(bb,0,r) );
-							r = stream.read( bb );
-						}
-					} catch( Exception e ) {
-						e.printStackTrace();
-					}
-					stream.close();
-					
-					String gbstart = "<GBSeq_taxonomy>";
-					int lind = sb.indexOf(gbstart);
-					String sub = "not found";
-					if( lind > 0 ) {
-						int lend = sb.indexOf("</GBSeq_taxonomy>", lind+gbstart.length());
-						sub = sb.substring(lind+gbstart.length(), lend);
-					}*/
-					
-					String id = split[0] + "|" + split[1] + "|";
-					String desc = split[2];
-					String teg = "";
-					
-					giid.put( split[1].replace('.', ','), null );
-					
-					int idx = desc.lastIndexOf('[');
-					int idx2 = desc.indexOf(']', idx);
-					String newline = "";
-					boolean qbool = false;
-					if( idx > idx2 || idx == -1 ) {
-						newline = br.readLine();
-						qbool = newline.startsWith("Query=");
-						if( !newline.startsWith("Length=") && !qbool ) {
-							line = line+newline;
-							String newtrim = line.trim();
-							
-							split = newtrim.split("\\|");
-							
-							id = split[0] + "|" + split[1] + "|";
-							desc = split[2];
-							
-							idx = desc.lastIndexOf('[');
-						}
-					}
-					
-					boolean ibool = false;
-					while( !qbool && !ibool ) {
-						newline = br.readLine();
-						qbool = newline.startsWith("Query=");
-						if( !qbool ) {
-							ibool = newline.contains("Identities");
-						}
-					}
-					
-					if( idx > 0 ) {
-						teg = desc.substring(idx);
-						desc = desc.substring(0, idx-1).trim();
-					} else {
-						desc = desc.trim();
-					}
-					
-					id2desc.put(id, desc);
-					
-					String extend = "";
-					if( ibool ) {
-						String trim = newline.trim();
-						int end = trim.indexOf(',');
-						String nl = trim.substring(13,end);
-						extend += "\t" + nl;
-					}
-					String stuff = id + "\t" + desc + "\t" + evalue + extend;
-					
-					lociMap.put( prename, stuff );
-					//lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
-					name = null;
-					//System.err.println( prename + "\t" + split[1] );
-					if( fw != null ) {
-						List<String>	list;
-						if( maplist.containsKey(id) ) {
-							list = maplist.get(id);
-						} else {
-							list = new ArrayList<String>();
-							maplist.put( id, list );
-						}
-						String addstr = prename + "\t" + id + "\t" + evalue + extend;
-						list.add( addstr );
+			if( (line.startsWith(">ref") || line.startsWith(">sp") || line.startsWith(">pdb") || line.startsWith(">dbj") || line.startsWith(">gb") || line.startsWith(">emb") || line.startsWith(">pir") || line.startsWith(">tpg")) ) {
+				String[] split = line.split("\\|");
+				
+				String myid = split[0] + "|" + split[1] + "|";
+				String desc = split[2];
+				String teg = "";
+				
+				int idx = desc.lastIndexOf('[');
+				int idx2 = desc.indexOf(']', idx);
+				String newline = "";
+				boolean qbool = false;
+				if( idx > idx2 || idx == -1 ) {
+					newline = br.readLine();
+					qbool = newline.startsWith("Query=");
+					if( !newline.startsWith("Length=") && !qbool ) {
+						line = line+newline;
+						String newtrim = line.trim();
 						
-						//fw.write( stuff + "\n" );
+						split = newtrim.split("\\|");
+						
+						myid = split[0] + "|" + split[1] + "|";
+						desc = split[2];
+						
+						idx = desc.lastIndexOf('[');
 					}
-					
-					if( qbool ) {
-						line = newline;
-						continue;
+				}
+				
+				boolean ibool = false;
+				while( !qbool && !ibool ) {
+					newline = br.readLine();
+					qbool = newline.startsWith("Query=");
+					if( !qbool ) {
+						ibool = newline.contains("Identities");
 					}
+				}
+				
+				if( idx > 0 ) {
+					teg = desc.substring(idx);
+					desc = desc.substring(0, idx-1).trim();
+				} else {
+					desc = desc.trim();
+				}
+				
+				if( mostrecenttype == null && !desc.contains("cult") ) {
+					mostrecenttype = desc;
+				}
+				
+				if( name != null ) {
+					String checkstr = line.substring(1, freqname.length()+1);
+					if( evalue == null ) evalue = parseval;
+					if( freqname.equals( checkstr ) ) {
+						id = myid;
+						//String prename = name; //swapmap.get(st+".out")+"_"+name;
+						
+						/*URL url = new URL( "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id="+split[1]+"&retmode=xml" );
+						InputStream stream = url.openStream();
+						
+						StringBuilder sb = new StringBuilder();
+						try {
+							byte[] bb = new byte[1024];
+							int r = stream.read( bb );
+							while( r > 0 ) {
+								sb.append( new String(bb,0,r) );
+								r = stream.read( bb );
+							}
+						} catch( Exception e ) {
+							e.printStackTrace();
+						}
+						stream.close();
+						
+						String gbstart = "<GBSeq_taxonomy>";
+						int lind = sb.indexOf(gbstart);
+						String sub = "not found";
+						if( lind > 0 ) {
+							int lend = sb.indexOf("</GBSeq_taxonomy>", lind+gbstart.length());
+							sub = sb.substring(lind+gbstart.length(), lend);
+						}*/
+											
+						id2desc.put(id, desc);
+						
+						extend = "";
+						if( ibool ) {
+							String trim = newline.trim();
+							int end = trim.indexOf(',');
+							String nl = trim.substring(13,end);
+							extend += "\t" + nl;
+						}
+						String stuff = id + "\t" + desc + "\t" + evalue + extend;
+						lociMap.put( name, stuff );
+						
+						giid.put( split[1].replace('.', ','), null );
+						//lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
+						name = null;
+						//System.err.println( prename + "\t" + split[1] );
+					}
+				}
+				if( qbool ) {
+					line = newline;
+					continue;
 				}
 			}
 			
@@ -2270,17 +2291,28 @@ public class GeneSet extends JApplet {
 		br.close();
 		
 		if( fw != null ) {
+			List<String>	list;
+			if( maplist.containsKey(id) ) {
+				list = maplist.get(id);
+			} else {
+				list = new ArrayList<String>();
+				maplist.put( id, list );
+			}
+			String addstr = nohitname + "\t" + id + "\t" + evalue + extend + "\t" + mostrecenttype;
+			list.add( addstr );
+				
+			
 			Map<Integer,List<String>>	mupl = new TreeMap<Integer,List<String>>( Collections.reverseOrder() );
 			int tot = 0;
 			int subtot = 0;
-			for( String id : maplist.keySet() ) {
-				List<String>	list = maplist.get(id);
-				int i = list.size();
+			for( String nid : maplist.keySet() ) {
+				List<String>	listi = maplist.get(nid);
+				int i = listi.size();
 				tot += i;
 				
 				//String spec = id2desc.get( id );
 				
-				if( !id.contains("No hits") ) subtot += i;
+				if( !nid.contains("No hits") ) subtot += i;
 				List<String>	erm;
 				if( mupl.containsKey(i) ) {
 					erm = mupl.get(i);
@@ -2288,13 +2320,13 @@ public class GeneSet extends JApplet {
 					erm = new ArrayList<String>();
 					mupl.put(i, erm);
 				}
-				erm.add( id );
+				erm.add( nid );
 			}
 			fw.write( "total: "+tot+" subtot: "+subtot+"\n" );
 			
-			FileInputStream gfr = new FileInputStream("/home/sigmar/GbAccList.0918.2011.gz");
-			GZIPInputStream gzi = new GZIPInputStream( gfr );
-			BufferedReader gbr = new BufferedReader( new InputStreamReader( gzi ) );
+			FileInputStream gfr = new FileInputStream("c:/tax/GbAccList.0918.2011");
+			//GZIPInputStream gzi = new GZIPInputStream( gfr );
+			BufferedReader gbr = new BufferedReader( new InputStreamReader( gfr ) );
 			String gline = gbr.readLine();
 			while( gline != null ) {
 				int li = gline.lastIndexOf(',');
@@ -2303,28 +2335,33 @@ public class GeneSet extends JApplet {
 					String gi = gline.substring(li+1);
 					
 					giid.put( gkey, gi );
-					idtax.put( gi, null );
+					idtax.put( gi, new StrCont() );
 				}
 				gline = gbr.readLine();
 			}
 			gfr.close();
 			
-			FileInputStream dfr = new FileInputStream("/home/sigmar/tax/gi_taxid_nucl.dmp.gz");
-			GZIPInputStream dgzi = new GZIPInputStream( dfr );
-			BufferedReader	dbr = new BufferedReader( new InputStreamReader(dgzi) );
+			//FileInputStream dfr = new FileInputStream("c:/tax/gi_taxid_nucl.dmp");
+			//GZIPInputStream dgzi = new GZIPInputStream( dfr );
+			FileReader dfr = new FileReader("c:/tax/gi_taxid_nucl.dmp");
+			BufferedReader	dbr = new BufferedReader( dfr, 100000000 );
 			String dstr = dbr.readLine();
 			while( dstr != null ) {
-				String[] ss = dstr.split("[\t ]+");
-				if( idtax.containsKey( ss[0]) ) {
+				int fi = dstr.indexOf('\t');
+				String mi = dstr.substring(0, fi);
+				//String[] ss = dstr.split("[\t ]+");
+				StrCont sc = idtax.get( mi );
+				if( sc != null ) sc.str = dstr.substring(fi+1);
+				/*if( idtax.containsKey( ss[0]) ) {
 					idtax.put( ss[0], ss[1] );
-				}
+				}*/
 				
 				dstr = dbr.readLine();
 			}
 			dfr.close();
 			
 			List<String>	taxmap = new ArrayList<String>();
-			FileReader tfr = new FileReader("/home/sigmar/tax/names.dmp");
+			FileReader tfr = new FileReader("c:/tax/names.dmp");
 			BufferedReader	tbr = new BufferedReader( tfr );
 			String tstr = tbr.readLine();
 			while( tstr != null ) {
@@ -2345,7 +2382,7 @@ public class GeneSet extends JApplet {
 			tfr.close();
 			
 			Map<Integer,Integer>	parmap = new HashMap<Integer,Integer>();
-			FileReader pfr = new FileReader("/home/sigmar/tax/nodes.dmp");
+			FileReader pfr = new FileReader("c:/tax/nodes.dmp");
 			BufferedReader	pbr = new BufferedReader( pfr );
 			String pstr = pbr.readLine();
 			while( pstr != null ) {
@@ -2365,14 +2402,15 @@ public class GeneSet extends JApplet {
 			
  			tot = 0;
 			for( int i : mupl.keySet() ) {
-				List<String>	list = mupl.get(i);
-				for( String id : list ) {
-					String spec = id2desc.get(id);
+				List<String>	listi = mupl.get(i);
+				for( String nid : listi ) {
+					String spec = id2desc.get(nid);
 					
-					String[] spid = id.split("\\|");
+					String[] spid = nid.split("\\|");
 					if( spid.length > 1 ) {
 						String gid = giid.get( spid[1].replace('.', ',') );
-						String tid = idtax.get( gid );
+						StrCont sc = idtax.get( gid );
+						String tid = sc == null ? null : sc.str;
 						
 						int td = -1;
 						try {
@@ -2395,25 +2433,25 @@ public class GeneSet extends JApplet {
 						}
 					}
 					
-					fw.write( id + "\t" + spec + "\t" + i + "\n" );
+					fw.write( nid + "\t" + spec + "\t" + i + "\n" );
 					
-					if( maplist.containsKey(id) ) {
+					if( maplist.containsKey(nid) ) {
 						fw.write("(");
 						boolean first = true;
-						List<String>	res = maplist.get(id);
+						List<String>	res = maplist.get(nid);
 						for( String rstr : res ) {
 							if( rstr != null ) {  
 								String[] rspl = rstr.split("\t");
-								if( rspl.length == 3 ) {
+								if( rspl.length == 4 ) {
 									if( first ) {
 										first = false;
 										fw.write( rspl[0] + " " + rspl[2] );
 									} else fw.write( "," + rspl[0] + " " + rspl[2] );
-								} else if( rspl.length == 4 ) {
+								} else if( rspl.length == 5 ) {
 									if( first ) {
 										first = false;
-										fw.write( rspl[0] + " " + rspl[2] + " " + rspl[3] );
-									} else fw.write( "," + rspl[0] + " " + rspl[2] + " " + rspl[3] );
+										fw.write( rspl[0] + " " + rspl[2] + " " + rspl[3] + " " + rspl[4] );
+									} else fw.write( "," + rspl[0] + " " + rspl[2] + " " + rspl[3] + " " + rspl[4] );
 								}
 							}
 						}
@@ -2430,7 +2468,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					if( filtercont != null && spec.contains( filtercont ) ) {
-						List<String>	mlist = maplist.get( id );
+						List<String>	mlist = maplist.get( nid );
 						for( String str : mlist ) {
 							fw.write( "\t" + str + "\n" );
 						}
@@ -4415,12 +4453,12 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/horfrae/viggo/6.blastout") );
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo/6.blastout") );
 			/*for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}*/
-			loci2gene( new FileReader("/home/horfrae/viggo/6.blastout"), "/home/horfrae/viggo/6v2.txt", null, freqmap );
+			loci2gene( new FileReader("c:/viggo/6.blastout"), "c:/viggo/6v3.txt", null, freqmap );
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("/home/sigmar/arciformis_repeat.blastout"), "/home/sigmar/arciformis_v1.txt", null, freqmap );			
