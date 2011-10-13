@@ -57,7 +57,7 @@ Kristín A. Þórarinsdóttir	kristin.a.thorarinsdottir@matis.is	<img src="http:
 Kristjana Jóhanna Jónsdóttir	kristjana@matis.is
 Lilja Hulda Auðunsdóttir	lilja.h.audunsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/LiljaHuldaAudunsdottir.jpg">
 Margeir Gissurarson	margeir.gissurarson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Margeir_Gissurarson.jpg">
-Margrét Geirsdóttir	mg@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Margret_Geirsdottir.jpg">
+Margrét Geirsdóttir	margretg@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Margret_Geirsdottir_1.jpg">
 María Pétursdóttir	maria.petursdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Maria_Petursdottir.jpg">
 Maria Pilar Gomez	maria.pilar.gomez@matis.is
 Natasa Desnica	natasa@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Natasha_Desnica.jpg">
