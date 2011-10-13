@@ -69,7 +69,7 @@ public class Vote implements EntryPoint {
 		vp.setSize(w+"px", h+"px");
 		//vp.setSize( "100%", "100%" );
 		
-		HTML title = new HTML("Kosning í Starfsmannaráð Matís 2011");
+		HTML title = new HTML("Kosning í Starfsmannaráð Matís 2011<br>(veljið þrjá, kosið er jafnóðum og hnappur er valinn. Hægt er að breyta valinu seinna.)");
 		vp.add( title );
 		vp.add( grid );
 		
