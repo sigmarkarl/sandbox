@@ -198,7 +198,7 @@ public class Taxonomy implements EntryPoint {
 							db.setAutoHideEnabled( true );
 							cap.setText("Fasta");
 							TextArea ta = new TextArea();
-							ta.setSize("400px", "300px");
+							ta.setSize("512px", "384px");
 							db.add( ta );
 							
 							ta.setText( result );
@@ -294,7 +294,8 @@ public class Taxonomy implements EntryPoint {
 		for( String s : split ) {
 			boolean gogg = s.startsWith(">");
 			boolean svig = s.startsWith("(");
-			if( s.length() > 0 && !svig && !gogg && !first ) {
+			boolean nohi = s.startsWith("*");
+			if( s.length() > 0 && !svig && !gogg && !nohi && !first ) {
 				String[] subs = s.split("\\:");
 				if( subs.length > 1 ) {
 					current = rootitem;
@@ -331,13 +332,15 @@ public class Taxonomy implements EntryPoint {
 				for( String splstr : spl ) {
 					current.addItem( splstr );
 				}
+			} else if( nohi ) {
+				current = current.addItem("*** No hits ***");
 			} else {
 				current = rootitem;
 			}
 			first = false;
 		}
 		
-		recursiveCount( rootitem );
+		//recursiveCount( rootitem );
 	}
 	
 	public int recursiveCount( TreeItem item ) {
@@ -346,6 +349,9 @@ public class Taxonomy implements EntryPoint {
 		if( item.getText().startsWith(">") ) {
 			String[] ss = item.getText().split("[\t ]+");
 			total = Integer.parseInt( ss[ss.length-1] );
+		} else if( item.getText().startsWith("*") ) {
+			total = item.getChildCount();
+			item.setText( item.getText()+" ("+total+")" );
 		} else {
 			for( int i = 0; i < item.getChildCount(); i++ ) {
 				TreeItem ti = item.getChild(i);
