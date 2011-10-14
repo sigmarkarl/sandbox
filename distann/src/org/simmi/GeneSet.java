@@ -2440,9 +2440,16 @@ public class GeneSet extends JApplet {
 						boolean first = true;
 						List<String>	res = maplist.get(nid);
 						for( String rstr : res ) {
-							if( rstr != null ) {  
+							if( rstr != null ) {
 								String[] rspl = rstr.split("\t");
-								if( rspl.length == 4 ) {
+								if( rspl.length == 1 ) {
+									if( first ) {
+										first = false;
+										fw.write( rspl[0] );
+									} else {
+										fw.write( "," + rspl[0] );
+									}
+								} else if( rspl.length == 4 ) {
 									if( first ) {
 										first = false;
 										fw.write( rspl[0] + " " + rspl[2] );
@@ -4460,8 +4467,8 @@ public class GeneSet extends JApplet {
 			}*/
 			loci2gene( new FileReader("c:/viggo/6.blastout"), "c:/viggo/6v3.txt", null, freqmap );
 			
-			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/arciformis_repeat.blastout") );
-			//loci2gene( new FileReader("/home/sigmar/arciformis_repeat.blastout"), "/home/sigmar/arciformis_v1.txt", null, freqmap );			
+			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
+			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
 			
 			/*loci2gene( new FileReader("/home/horfrae/viggo/1.blastout"), "/home/horfrae/viggo/1v.txt", null );
 			loci2gene( new FileReader("/home/horfrae/viggo/2.blastout"), "/home/horfrae/viggo/2v.txt", null );
