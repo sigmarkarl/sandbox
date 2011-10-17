@@ -189,7 +189,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			boolean on = (Boolean)e.getProperty("on");
 			
 			Machine m = new Machine( name, nproc, on );
-			if( machineid.equals( name ) ) {
+			if( name.equals( machineid ) ) {
 				mymachine = m;
 				em = e;
 			}
@@ -202,6 +202,14 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			mymachine = new Machine( machineid, procs, true );
 			em = new Entity("machine");
 			em.setProperty("name", machineid);
+			
+			Machine[] newmArray = new Machine[ mArray.length + 1 ];
+			for( i = 0; i < mArray.length; i++ ) {
+				newmArray[i] = mArray[i];
+			}
+			newmArray[i] = mymachine;
+			
+			mArray = newmArray;
 		} else {
 			mymachine.setOn( true );
 			mymachine.setProcs( procs );
