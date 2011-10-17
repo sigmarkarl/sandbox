@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="http://192.168.1.67:8888/">
+<jnlp spec="1.0+" codebase="http://130.208.252.230:8886/">
 <information>
   <title>Blastic</title>
   <vendor>Matis</vendor>
