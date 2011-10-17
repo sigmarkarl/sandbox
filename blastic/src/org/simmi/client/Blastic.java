@@ -736,7 +736,7 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://192.168.1.67:8888/");
+		ae.setAttribute("codebase", "http://130.208.252.230:8886/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
@@ -745,26 +745,30 @@ public class Blastic implements EntryPoint {
 		
 		applet.getElement().appendChild( ae );
 		
-		/*String machinename = getMachineName( ae );
+		String machinename = getMachineName( ae );
+		String 	mcname = null;
+		int		nprocs = 0;
 		if( machinename != null ) {
 			String[] split = machinename.split("\t");
-	    	greetingService.getMachineInfo( split[0], Integer.parseInt(split[1]), new AsyncCallback<Machine[]>() {
-		    	@Override
-				public void onSuccess(Machine[] mcs) {
-		    		machineList.clear();
-		    		for( Machine m : mcs ) {			    			
-		    			machineList.add( m );
-		    		}
-		    		updateMachineTable();
-				}
-			
-				@Override
-				public void onFailure(Throwable caught) {
-						
-				}
-		    });
-		}*/
+			mcname = split[0];
+			nprocs = Integer.parseInt(split[1]);
+		}
+    	greetingService.getMachineInfo( mcname, nprocs, new AsyncCallback<Machine[]>() {
+	    	@Override
+			public void onSuccess(Machine[] mcs) {
+	    		machineList.clear();
+	    		for( Machine m : mcs ) {			    			
+	    			machineList.add( m );
+	    		}
+	    		updateMachineTable();
+			}
 		
+			@Override
+			public void onFailure(Throwable caught) {
+					
+			}
+	    });
+    	
 		/*applet.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
