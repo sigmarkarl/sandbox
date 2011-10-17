@@ -2074,7 +2074,8 @@ public class GeneSet extends JApplet {
 						list = new ArrayList<String>();
 						maplist.put( id, list );
 					}
-					String addstr = nohitname + "\t" + id + "\t" + evalue + extend + "\t" + mostrecenttype;
+					String addstr = nohitname + "\t" + id + "\t" + evalue + extend;
+					if( mostrecenttype != null ) addstr += "\t" + mostrecenttype;
 					list.add( addstr );
 				}
 				
@@ -2227,8 +2228,15 @@ public class GeneSet extends JApplet {
 					desc = desc.trim();
 				}
 				
+				String nl = "";
+				if( ibool ) {
+					String trim = newline.trim();
+					int end = trim.indexOf(',');
+					nl = trim.substring(13,end);
+				}
+				
 				if( mostrecenttype == null && !desc.contains("cult") ) {
-					mostrecenttype = desc;
+					mostrecenttype = desc.replace(",", "") + "\t" + nl;
 				}
 				
 				if( name != null ) {
@@ -2264,13 +2272,7 @@ public class GeneSet extends JApplet {
 											
 						id2desc.put(id, desc);
 						
-						extend = "";
-						if( ibool ) {
-							String trim = newline.trim();
-							int end = trim.indexOf(',');
-							String nl = trim.substring(13,end);
-							extend += "\t" + nl;
-						}
+						extend = nl.length() == 0 ? nl : "\t" + nl;
 						String stuff = id + "\t" + desc + "\t" + evalue + extend;
 						lociMap.put( name, stuff );
 						
@@ -2298,10 +2300,10 @@ public class GeneSet extends JApplet {
 				list = new ArrayList<String>();
 				maplist.put( id, list );
 			}
-			String addstr = nohitname + "\t" + id + "\t" + evalue + extend + "\t" + mostrecenttype;
+			String addstr = nohitname + "\t" + id + "\t" + evalue + extend;
+			if( mostrecenttype != null ) addstr += "\t" + mostrecenttype; 
 			list.add( addstr );
 				
-			
 			Map<Integer,List<String>>	mupl = new TreeMap<Integer,List<String>>( Collections.reverseOrder() );
 			int tot = 0;
 			int subtot = 0;
@@ -2452,13 +2454,13 @@ public class GeneSet extends JApplet {
 								} else if( rspl.length == 4 ) {
 									if( first ) {
 										first = false;
-										fw.write( rspl[0] + " " + rspl[2] );
-									} else fw.write( "," + rspl[0] + " " + rspl[2] );
-								} else if( rspl.length == 5 ) {
+										fw.write( rspl[0] + " " + rspl[2] + " " + rspl[3] );
+									} else fw.write( "," + rspl[0] + " " + rspl[2] + " " + rspl[3] );
+								} else if( rspl.length == 6 ) {
 									if( first ) {
 										first = false;
-										fw.write( rspl[0] + " " + rspl[2] + " " + rspl[3] + " " + rspl[4] );
-									} else fw.write( "," + rspl[0] + " " + rspl[2] + " " + rspl[3] + " " + rspl[4] );
+										fw.write( rspl[0] + " " + rspl[2] + " " + rspl[3] + " " + rspl[4] + " " + rspl[5] );
+									} else fw.write( "," + rspl[0] + " " + rspl[2] + " " + rspl[3] + " " + rspl[4] + " " + rspl[5] );
 								}
 							}
 						}
