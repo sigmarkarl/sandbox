@@ -258,27 +258,91 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
+	public void runProcess( String title, Runnable run, JDialog dialog ) {
+		dialog.setTitle( title );
+		dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+		dialog.setSize(400, 300);
+		
+		JComponent comp = new JComponent() {
+			
+		};
+		comp.setLayout( new BorderLayout() );
+		
+		final JTextArea		ta = new JTextArea();
+		ta.setEditable( false );
+		final JScrollPane	sp = new JScrollPane( ta );
+		final JProgressBar	pbar = new JProgressBar();
+		
+		dialog.add( comp );
+		comp.add( pbar, BorderLayout.NORTH );
+		comp.add( sp, BorderLayout.CENTER );
+		pbar.setIndeterminate( true );
+		
+		Thread thread = new Thread( run );
+		thread.start();
+	}
+	
 	public File installBlast( File homedir ) throws IOException {
-		URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.25/ncbi-blast-2.2.25+-win32.exe");
+		final URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.25/ncbi-blast-2.2.25+-win32.exe");
 		String fileurl = url.getFile();
 		String[] split = fileurl.split("/");
 		
-		File f = new File( homedir, split[split.length-1] );
-		ByteArrayOutputStream	baos = new ByteArrayOutputStream();
-		byte[] bb = new byte[100000];
+		final File f = new File( homedir, split[split.length-1] );
+		final ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+		final byte[] bb = new byte[100000];
 		if( !f.exists() ) {
-			InputStream is = url.openStream();
-			int r = is.read(bb);
-			while( r > 0 ) {
-				baos.write( bb, 0, r );
-				r = is.read( bb );
-			}
-			is.close();
-			//f.mkdirs();
-			FileOutputStream fos = new FileOutputStream( f );
-			fos.write( baos.toByteArray() );
-			fos.close();
-			baos.close();
+			final JDialog	dialog = new JDialog();
+			Runnable run = new Runnable() {
+				boolean interrupted = false;
+				
+				public void run() {
+					dialog.addWindowListener( new WindowListener() {
+						@Override
+						public void windowOpened(WindowEvent e) {}
+						
+						@Override
+						public void windowIconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+						
+						@Override
+						public void windowClosing(WindowEvent e) {}
+						
+						@Override
+						public void windowClosed(WindowEvent e) {
+							interrupted = true;
+						}
+						
+						@Override
+						public void windowActivated(WindowEvent e) {}
+					});
+
+					try {
+						InputStream is = url.openStream();
+						int r = is.read(bb);
+						while( r > 0 && !interrupted ) {
+							baos.write( bb, 0, r );
+							r = is.read( bb );
+						}
+						is.close();
+						//f.mkdirs();
+						
+						if( !interrupted ) {
+							FileOutputStream fos = new FileOutputStream( f );
+							fos.write( baos.toByteArray() );
+							fos.close();
+							baos.close();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			runProcess( "Downloading blast...", run, dialog );
 		}
 		
 		return f;
@@ -622,6 +686,27 @@ public class SerifyApplet extends JApplet {
 					e1.printStackTrace();
 				} catch (IOException e2) {
 					e2.printStackTrace();
+				}
+			}
+		});
+		popup.add( new AbstractAction("Link database") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String userhome = System.getProperty("user.home");	
+					
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( c ) == JFileChooser.APPROVE_OPTION ) {
+					File selectedfile = fc.getSelectedFile();
+					String title = selectedfile.getName();
+					int i = title.indexOf('.');
+					if( i != -1 ) title = title.substring(0,i);
+					
+					final String outPath = fixPath( selectedfile.getAbsolutePath() );
+					//String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
+					
+					JSObject js = JSObject.getWindow( SerifyApplet.this );
+					//js = (JSObject)js.getMember("document");
+					js.call( "addDb", new Object[] {getUser(), title, "prot", outPath, ""} );
 				}
 			}
 		});
@@ -1081,8 +1166,8 @@ public class SerifyApplet extends JApplet {
 			
 			@Override
 			public void run() {
-				ProcessBuilder pb = new ProcessBuilder( commands );
 				try {
+					ProcessBuilder pb = new ProcessBuilder( commands );
 					final Process p = pb.start();
 					dialog.addWindowListener( new WindowListener() {
 						
