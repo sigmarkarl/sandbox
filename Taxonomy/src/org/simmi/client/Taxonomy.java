@@ -340,7 +340,7 @@ public class Taxonomy implements EntryPoint {
 			first = false;
 		}
 		
-		//recursiveCount( rootitem );
+		recursiveCount( rootitem );
 	}
 	
 	public int recursiveCount( TreeItem item ) {
