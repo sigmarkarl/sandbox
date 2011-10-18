@@ -500,9 +500,79 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public String getParameters() {
+	public void getParameters() {
 		JSObject js = JSObject.getWindow( SerifyApplet.this );
-		return (String)js.call( "getBlastParameters", new Object[] {} );
+		js.call( "getBlastParameters", new Object[] {} );
+	}
+	
+	public void runBlastInApplet( final String extrapar, final String dbPath ) {
+		AccessController.doPrivileged( new PrivilegedAction<Object>() {
+			@Override
+			public Object run() {
+				try {
+					String userhome = System.getProperty("user.home");
+					File dir = new File( userhome );
+					
+					System.out.println("run blast in applet");
+					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
+					if( !blast.exists() ) blast = new File( "/opt/ncbi-blast-2.2.25+/bin/blastp" );
+					if( blast.exists() ) {
+						System.out.println("exists");
+						JFileChooser fc = new JFileChooser();
+						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+						if( fc.showSaveDialog( SerifyApplet.this.cnt ) == JFileChooser.APPROVE_OPTION ) {
+							File selectedfile = fc.getSelectedFile();
+							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+						
+							String dbPathFixed = fixPath( dbPath );
+							int[] rr = table.getSelectedRows();
+							for( int r : rr ) {
+								String path = (String)table.getValueAt( r, 3 );
+								URL url = new URL( path );
+								
+								String file = url.getFile();
+								String[] split = file.split("/");
+								String fname = split[ split.length-1 ];
+								split = fname.split("\\.");
+								final String title = split[0]; 
+								File infile = new File( dir, fname );
+								
+								FileOutputStream fos = new FileOutputStream( infile );
+								InputStream is = url.openStream();
+								
+								byte[] bb = new byte[100000];
+								r = is.read(bb);
+								while( r > 0 ) {
+									fos.write(bb, 0, r);
+									r = is.read(bb);
+								}
+								is.close();
+								fos.close();
+						
+								String queryPathFixed = fixPath( infile.getAbsolutePath() );
+								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
+								
+								String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
+								
+								final Object[] cont = new Object[1];
+								Runnable run = new Runnable() {
+									public void run() {
+										JSObject js = JSObject.getWindow( SerifyApplet.this );
+										js.call( "addResult", new Object[] {getUser(), title, outPathFixed, cont[0]} );
+									}
+								};
+								runProcessBuilder( "Performing blast", Arrays.asList( cmds ), run, cont );
+							}
+						}
+					} else System.err.println( "no blast installed" );
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+				
+				return null;
+			}
+			
+		});
 	}
 	
 	public void init( final Container c ) {
@@ -706,7 +776,7 @@ public class SerifyApplet extends JApplet {
 					int i = title.indexOf('.');
 					if( i != -1 ) title = title.substring(0,i);
 					
-					final String outPath = fixPath( selectedfile.getParentFile().getAbsolutePath()+title );
+					final String outPath = fixPath( selectedfile.getParentFile().getAbsolutePath()+System.getProperty("file.separator")+title );
 					//String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
 					
 					JSObject js = JSObject.getWindow( SerifyApplet.this );
@@ -719,69 +789,13 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					String userhome = System.getProperty("user.home");	
+					String userhome = System.getProperty("user.home");
 					File dir = new File( userhome );
 					
 					checkInstall( dir );
 						
-					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
-					if( !blast.exists() ) blast = new File( "/opt/ncbi-blast-2.2.25+/bin/blastp" );
-					if( blast.exists() ) {
-						JFileChooser fc = new JFileChooser();
-						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-						if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-							File selectedfile = fc.getSelectedFile();
-							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
-							
-							final JSObject js = JSObject.getWindow( SerifyApplet.this );
-							String dbPath = (String)js.call( "getSelectedDb", new Object[] {} );
-							
-							if( dbPath != null ) {
-								String param = getParameters();
-								
-								String dbPathFixed = fixPath( dbPath );
-								int[] rr = table.getSelectedRows();
-								for( int r : rr ) {
-									String path = (String)table.getValueAt( r, 3 );
-									URL url = new URL( path );
-									
-									String file = url.getFile();
-									String[] split = file.split("/");
-									String fname = split[ split.length-1 ];
-									split = fname.split("\\.");
-									final String title = split[0]; 
-									File infile = new File( dir, fname );
-									
-									FileOutputStream fos = new FileOutputStream( infile );
-									InputStream is = url.openStream();
-									
-									byte[] bb = new byte[100000];
-									r = is.read(bb);
-									while( r > 0 ) {
-										fos.write(bb, 0, r);
-										r = is.read(bb);
-									}
-									is.close();
-									fos.close();
-							
-									String queryPathFixed = fixPath( infile.getAbsolutePath() );
-									final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
-									
-									String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
-									
-									final Object[] cont = new Object[1];
-									Runnable run = new Runnable() {
-										public void run() {
-											js.call( "addResult", new Object[] {getUser(), title, outPathFixed, cont[0]} );
-										}
-									};
-									runProcessBuilder( "Performing blast", Arrays.asList( cmds ), run, cont );
-								}
-							}
-						}
-						
-						//infile.delete();
-					} else System.err.println( "no blast installed" );
+					getParameters();					
+					//infile.delete();
 				} catch (MalformedURLException e1) {
 					e1.printStackTrace();
 				} catch (IOException e2) {
