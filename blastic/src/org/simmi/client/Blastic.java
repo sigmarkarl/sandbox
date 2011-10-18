@@ -17,18 +17,23 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
+import com.google.gwt.user.client.ui.DialogBox.Caption;
 import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.IntegerBox;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
 import com.google.gwt.visualization.client.DataTable;
@@ -134,6 +139,16 @@ public class Blastic implements EntryPoint {
 		return 0;
 	}-*/;
 	
+	public native void runBlastInApplet( JavaScriptObject appletelement, String extrapar, String dbPath ) /*-{
+		console.log('sim1');
+		try {
+			appletelement.runBlastInApplet( extrapar, dbPath );
+		} catch( e ) {
+			console.log( e );
+		}
+		console.log('sim2');
+	}-*/;
+	
 	public native void addSequenceInApplet( JavaScriptObject appletelement, String user, String name, String type, String path, int num, String key ) /*-{
 		appletelement.updateSequences( user, name, type, path, num, key );
 	}-*/;
@@ -222,18 +237,20 @@ public class Blastic implements EntryPoint {
 		};
 		
 		$wnd.getBlastParameters = function() {
-			return s.@org.simmi.client.Blastic::getBlastParameters()();
+			s.@org.simmi.client.Blastic::getBlastParameters()();
 		};
 		
 		return 0;
 	}-*/;
 	
 	public void initMachines( String hostname, int procs ) {
+		console("fuck");
 		greetingService.getMachineInfo( hostname, procs, new AsyncCallback<Machine[]>() {
 	    	@Override
 			public void onSuccess(Machine[] mcs) {
+	    		console("you");
 	    		machineList.clear();
-	    		for( Machine m : mcs ) {			    			
+	    		for( Machine m : mcs ) {    			
 	    			machineList.add( m );
 	    		}
 	    		updateMachineTable();
@@ -241,23 +258,59 @@ public class Blastic implements EntryPoint {
 		
 			@Override
 			public void onFailure(Throwable caught) {
-					
+				console("check");
+				console( caught.getMessage() );
 			}
 	    });
 	}
 	
-	public String getBlastParameters() {
+	public void runBlast( String extrapar ) {
+		String dbPath = getSelectedDb();
+		
+		Element e = Document.get().getElementById("serify");
+		runBlastInApplet(e, extrapar, dbPath);
+	}
+	
+	public void getBlastParameters() {
 		DialogBox d = new DialogBox( true );
+		Caption c = d.getCaption();
+		c.setText("Blast parameters");
 		
-		VerticalPanel	vp = new VerticalPanel();
-		d.add( vp );
+		//VerticalPanel	vp = new VerticalPanel();
+		//d.add( vp );
 		
-		CheckBox	numal = new CheckBox("num_alignments");
-		CheckBox	numde = new CheckBox("num_descriptions");
+		Grid	grid = new Grid(2, 2);
 		
-		TextBox		numalinput = new TextBox();
+		final CheckBox	numal = new CheckBox("num_alignments");
+		final CheckBox	numde = new CheckBox("num_descriptions");
 		
-		return null;
+		final IntegerBox		numalinput = new IntegerBox();
+		final IntegerBox		numdeinput = new IntegerBox();
+		
+		grid.setWidget(0, 0, numal);
+		grid.setWidget(0, 1, numalinput);
+		grid.setWidget(1, 0, numde);
+		grid.setWidget(1, 1, numdeinput);
+		
+		d.add( grid );
+		
+		d.addCloseHandler( new CloseHandler<PopupPanel>() {
+			@Override
+			public void onClose(CloseEvent<PopupPanel> event) {
+				console( "erm" );
+				
+				String extrapar = "";
+				if( numal.getValue() ) {
+					extrapar += " -num_alignments "+numalinput.getValue();
+				}
+				if( numde.getValue() ) {
+					extrapar += " -num_descriptions "+numdeinput.getValue();
+				}
+				runBlast( extrapar );
+			}
+		});
+		
+		d.center();
 	}
 	
 	public native void deleteSequenceInApplet( String key ) /*-{
@@ -282,7 +335,6 @@ public class Blastic implements EntryPoint {
 	public String getSelectedDb() {
 		JsArray<Selection> jas = table.getSelections();
 		
-		console( "hoho " + jas.length() );
 		if( jas.length() > 0 ) {
 			int row = jas.get(0).getRow();
 			String val = (String)data.getValueString(row, 3);
@@ -757,7 +809,7 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://funblastic.appspot.com/");
+		ae.setAttribute("codebase", "http://130.208.252.230:8886/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
@@ -766,7 +818,7 @@ public class Blastic implements EntryPoint {
 		
 		applet.getElement().appendChild( ae );
 		
-		String machinename = getMachineName( ae );
+		/*String machinename = getMachineName( ae );
 		String 	mcname = null;
 		int		nprocs = 0;
 		if( machinename != null ) {
