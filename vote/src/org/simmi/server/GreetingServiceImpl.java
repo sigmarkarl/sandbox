@@ -1,6 +1,8 @@
 package org.simmi.server;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.simmi.client.GreetingService;
 
@@ -33,6 +35,24 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		}
 		
 		return ret;
+	}
+	
+	public Map<String,Integer> getVotes() throws IllegalArgumentException {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Query query = new Query("vote");
+		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		
+		Map<String,Integer>	votes = new HashMap<String,Integer>();	
+		for( Entity e : seqsEntities ) {
+			String votestr = (String)e.getProperty("vote");
+			String[] split = votestr.split("\t");
+			for( String name : split ) {
+				if( votes.containsKey(name) ) votes.put( name, votes.get(name)+1 );
+				else votes.put( name, 1 );
+			}
+		}
+		
+		return votes;
 	}
 
 	@Override
