@@ -16,9 +16,19 @@
     <url-pattern>/vote/greet</url-pattern>
   </servlet-mapping>
   
+  <servlet>
+    <servlet-name>greetServlet2</servlet-name>
+    <servlet-class>org.simmi.server.GreetingServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>greetServlet2</servlet-name>
+    <url-pattern>/result/greet</url-pattern>
+  </servlet-mapping>
+  
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Vote.jsp</welcome-file>
+    <welcome-file>Vote.html</welcome-file>
   </welcome-file-list>
 
 </web-app>
