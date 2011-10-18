@@ -224,7 +224,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void checkInstall( File dir ) throws IOException {
-		File check1 = new File( dir, "bin/blastp.exe" );
+		File check1 = new File( "/opt/ncbi-blast-2.2.25+/bin/blastp" );
 		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
 		if( !check1.exists() && !check2.exists() ) {
 			File f = installBlast( dir );
@@ -500,6 +500,11 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
+	public String getParameters() {
+		JSObject js = JSObject.getWindow( SerifyApplet.this );
+		return (String)js.call( "getBlastParameters", new Object[] {} );
+	}
+	
 	public void init( final Container c ) {
 		this.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -701,7 +706,7 @@ public class SerifyApplet extends JApplet {
 					int i = title.indexOf('.');
 					if( i != -1 ) title = title.substring(0,i);
 					
-					final String outPath = fixPath( selectedfile.getAbsolutePath() );
+					final String outPath = fixPath( selectedfile.getParentFile().getAbsolutePath()+title );
 					//String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
 					
 					JSObject js = JSObject.getWindow( SerifyApplet.this );
@@ -732,6 +737,8 @@ public class SerifyApplet extends JApplet {
 							String dbPath = (String)js.call( "getSelectedDb", new Object[] {} );
 							
 							if( dbPath != null ) {
+								String param = getParameters();
+								
 								String dbPathFixed = fixPath( dbPath );
 								int[] rr = table.getSelectedRows();
 								for( int r : rr ) {
