@@ -1109,15 +1109,18 @@ public class Navisionexplorer implements EntryPoint {
 						//int w = mrlp.getOffsetWidth();
 						//int h = mrlp.getOffsetHeight();
 						
-						int w = m_slp.getOffsetWidth();
-						int h = m_slp.getOffsetHeight();
+						int w = Window.getClientWidth();//m_slp.getOffsetWidth();
+						//int h = m_slp.getOffsetHeight();
 						int cw = mcanvas.getOffsetWidth();
 						int sw = m_slp.getSplitterSize();
 						
 						int ww = w - cw - sw;
-						mtable.setSize(ww+"px", h+"px");
+						mtable.setWidth(ww+"px");
+						console( ww );
+						//mtable.setSize(ww+"px", h+"px");
 						mtable.draw( mview, moptions );
-						mtable.setSize(ww+"px", h+"px");
+						mtable.setWidth(ww+"px");
+						//mtable.setSize(ww+"px", h+"px");
 					}
 				}
 			}
