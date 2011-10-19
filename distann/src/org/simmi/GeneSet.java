@@ -2042,6 +2042,11 @@ public class GeneSet extends JApplet {
 		Map<String,String>	giid = new HashMap<String,String>();
 		Map<String,StrCont>	idtax = new HashMap<String,StrCont>();
 		
+		for( String fid : freqmap.keySet() ) {
+			String[] split = fid.split("\\|");
+			giid.put( split[1].replace('.', ','), null );
+		}
+		
 		FileInputStream gfr = new FileInputStream("c:/tax/GbAccList.0918.2011");
 		//GZIPInputStream gzi = new GZIPInputStream( gfr );
 		BufferedReader gbr = new BufferedReader( new InputStreamReader( gfr ) );
@@ -2136,7 +2141,11 @@ public class GeneSet extends JApplet {
 				if( td != -1 ) {
 					Integer ntd = parmap.get(td);
 					String taxname = taxmap.get( ntd );
-					if( taxname.contains("nvironm") ) freqmap.put(fid, 0);
+					Integer ptd = parmap.get(ntd);
+					String npar = taxmap.get( ptd );
+					if( taxname.contains("nvironmental samples") && npar.equals("Bacteria") ) {
+						freqmap.put(fid, 0);
+					}
 					System.err.println( taxname );
 				}
 			}
@@ -2194,7 +2203,7 @@ public class GeneSet extends JApplet {
 				if( l > 80 ) {
 					evalue = null;
 					score = null;
-					freq = 0;
+					freq = -1;
 					freqname = null;
 				} else {
 					line = br.readLine();
@@ -2378,7 +2387,6 @@ public class GeneSet extends JApplet {
 						String stuff = id + "\t" + desc + "\t" + evalue + extend;
 						lociMap.put( name, stuff );
 						
-						giid.put( split[1].replace('.', ','), null );
 						//lociMap.put( prename, split[1] + (split.length > 2 ? "\t" + split[2] : "") + "\t" + evalue );
 						name = null;
 						//System.err.println( prename + "\t" + split[1] );
