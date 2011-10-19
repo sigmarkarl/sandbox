@@ -2,10 +2,10 @@ package org.simmi.client;
 
 import java.util.Map;
 
-import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 
 public class Results implements EntryPoint {
@@ -19,17 +19,21 @@ public class Results implements EntryPoint {
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get();
-		Canvas c = Canvas.createIfSupported();
-		c.setSize("100%", "100%");
+		//Canvas c = Canvas.createIfSupported();
+		//c.setSize("100%", "100%");
+		final HTML c = new HTML();
 		
 		console("about");
 		greetingService.getVotes( new AsyncCallback<Map<String,Integer>>() {
 			@Override
 			public void onSuccess(Map<String, Integer> result) {
-				console("mu" + result.size());
+				String html = "";
+				
 				for( String name : result.keySet() ) {
-					console( name + "+t" + result.get(name) );
+					//console( name + "+t" + result.get(name) );
+					html += "<br>"+name+"+"+result.get(name);
 				}
+				c.setHTML(html);
 			}
 			
 			@Override
