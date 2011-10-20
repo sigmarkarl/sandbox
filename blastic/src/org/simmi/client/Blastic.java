@@ -34,7 +34,6 @@ import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
 import com.google.gwt.visualization.client.DataTable;
 import com.google.gwt.visualization.client.DataView;
@@ -208,8 +207,8 @@ public class Blastic implements EntryPoint {
 	public native int initFunctions() /*-{
 		var s = this;
 		
-		$wnd.addDb = function( user, name, type, path, result ) {
-			s.@org.simmi.client.Blastic::addDbInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, type, path, result );
+		$wnd.addDb = function( user, name, type, path, machine, result ) {
+			s.@org.simmi.client.Blastic::addDbInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, type, path, machine, result );
 		};
 		
 		$wnd.addResult = function( user, name, path, result ) {
@@ -243,25 +242,31 @@ public class Blastic implements EntryPoint {
 		return 0;
 	}-*/;
 	
-	public void initMachines( String hostname, int procs ) {
-		console("fuck");
-		greetingService.getMachineInfo( hostname, procs, new AsyncCallback<Machine[]>() {
-	    	@Override
-			public void onSuccess(Machine[] mcs) {
-	    		console("you");
-	    		machineList.clear();
-	    		for( Machine m : mcs ) {    			
-	    			machineList.add( m );
-	    		}
-	    		updateMachineTable();
-			}
-		
-			@Override
-			public void onFailure(Throwable caught) {
-				console("check");
-				console( caught.getMessage() );
-			}
-	    });
+	public void initMachines( String hostname, int procs ) {		
+		try {
+			greetingService.getMachineInfo( hostname, procs, new AsyncCallback<Machine[]>() {
+				@Override
+				public void onSuccess(Machine[] mcs) {
+					console("you");
+					machineList.clear();
+					for( Machine m : mcs ) {    			
+						machineList.add( m );
+					}
+					updateMachineTable();
+				}
+			
+				@Override
+				public void onFailure(Throwable caught) {
+					console("check");
+					StackTraceElement[] stes = caught.getStackTrace();
+					for( StackTraceElement ste : stes ) {
+						console( ste.toString() );
+					}
+				}
+			});
+		} catch (Exception e) {
+			console( "something amiss "+e.getMessage() );
+		}
 	}
 	
 	public void runBlast( String extrapar ) {
@@ -444,9 +449,9 @@ public class Blastic implements EntryPoint {
 		table.draw( view, options );
 	}
 	
-	private void addDbInfo( final String user, final String name, final String type, final String path, final String result ) {
+	private void addDbInfo( final String user, final String name, final String type, final String path, final String machine, final String result ) {
 		console("saving db");
-		final Database db = new Database( user, name, type, path, result );
+		final Database db = new Database( user, name, type, path, machine, result );
 		greetingService.saveDb( db, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {
@@ -558,6 +563,7 @@ public class Blastic implements EntryPoint {
 		    	data.addColumn( ColumnType.STRING, "Name");
 		    	data.addColumn( ColumnType.STRING, "Type");
 		    	data.addColumn( ColumnType.STRING, "Path");
+		    	data.addColumn( ColumnType.STRING, "Machine");
 		    	data.addColumn( ColumnType.STRING, "Result");
 		    	  
 		    	options = Options.create();
@@ -572,6 +578,7 @@ public class Blastic implements EntryPoint {
 		    	blastdata.addColumn( ColumnType.STRING, "User");
 		    	blastdata.addColumn( ColumnType.STRING, "Name");
 		    	blastdata.addColumn( ColumnType.STRING, "Path");
+		    	blastdata.addColumn( ColumnType.STRING, "Machine");
 		    	blastdata.addColumn( ColumnType.STRING, "Result");
 		    	  
 		    	blastoptions = Options.create();
@@ -809,7 +816,7 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://130.208.252.230:8886/");
+		ae.setAttribute("codebase", "http://funblastic.appspot.com/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");

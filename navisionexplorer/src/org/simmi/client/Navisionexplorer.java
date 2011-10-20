@@ -74,7 +74,7 @@ public class Navisionexplorer implements EntryPoint {
 			+ "attempting to contact the server. Please check your network "
 			+ "connection and try again.";
 
-	private final String serverUrl = "http://130.208.252.7/cgi-bin/lubbi";
+	private final String serverUrl = "http://localhost:8081/cgi-bin/lubbi";
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
@@ -1110,16 +1110,16 @@ public class Navisionexplorer implements EntryPoint {
 						//int h = mrlp.getOffsetHeight();
 						
 						int w = Window.getClientWidth();//m_slp.getOffsetWidth();
-						//int h = m_slp.getOffsetHeight();
+						int h = Window.getClientHeight();//m_slp.getOffsetHeight();
 						int cw = mcanvas.getOffsetWidth();
 						int sw = m_slp.getSplitterSize();
 						
 						int ww = w - cw - sw;
-						mtable.setWidth(ww+"px");
-						console( ww );
+						mtable.setSize(ww+"px", h+"px");
+						console( "eeerm "+ww+" "+h );
 						//mtable.setSize(ww+"px", h+"px");
 						mtable.draw( mview, moptions );
-						mtable.setWidth(ww+"px");
+						mtable.setSize(ww+"px", h+"px");
 						//mtable.setSize(ww+"px", h+"px");
 					}
 				}

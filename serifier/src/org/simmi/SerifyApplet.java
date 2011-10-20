@@ -228,33 +228,6 @@ public class SerifyApplet extends JApplet {
 		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
 		if( !check1.exists() && !check2.exists() ) {
 			File f = installBlast( dir );
-			byte[] bb = new byte[100000];
-			
-			String path = f.getAbsolutePath();
-			//String[] cmds = new String[] { "wine", path };
-			ProcessBuilder pb = new ProcessBuilder( path );
-			pb.directory( dir );
-			Process p = pb.start();
-			
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			InputStream is = p.getInputStream();
-			int r = is.read(bb);
-			while( r > 0 ) {
-				baos.write( bb, 0, r );
-				r = is.read( bb );
-			}
-			is.close();
-			
-			is = p.getErrorStream();
-			r = is.read(bb);
-			while( r > 0 ) {
-				baos.write( bb, 0, r );
-				r = is.read( bb );
-			}
-			is.close();
-			
-			System.out.println( "erm " + baos.toString() );
-			baos.close();
 		}
 	}
 	
@@ -282,7 +255,7 @@ public class SerifyApplet extends JApplet {
 		thread.start();
 	}
 	
-	public File installBlast( File homedir ) throws IOException {
+	public File installBlast( final File homedir ) throws IOException {
 		final URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.25/ncbi-blast-2.2.25+-win32.exe");
 		String fileurl = url.getFile();
 		String[] split = fileurl.split("/");
@@ -320,6 +293,7 @@ public class SerifyApplet extends JApplet {
 						@Override
 						public void windowActivated(WindowEvent e) {}
 					});
+					dialog.setVisible( true );
 
 					try {
 						InputStream is = url.openStream();
@@ -335,6 +309,34 @@ public class SerifyApplet extends JApplet {
 							FileOutputStream fos = new FileOutputStream( f );
 							fos.write( baos.toByteArray() );
 							fos.close();
+							baos.close();
+							
+							byte[] bb = new byte[100000];
+							
+							String path = f.getAbsolutePath();
+							//String[] cmds = new String[] { "wine", path };
+							ProcessBuilder pb = new ProcessBuilder( path );
+							pb.directory( homedir );
+							Process p = pb.start();
+							
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							is = p.getInputStream();
+							r = is.read(bb);
+							while( r > 0 ) {
+								baos.write( bb, 0, r );
+								r = is.read( bb );
+							}
+							is.close();
+							
+							is = p.getErrorStream();
+							r = is.read(bb);
+							while( r > 0 ) {
+								baos.write( bb, 0, r );
+								r = is.read( bb );
+							}
+							is.close();
+							
+							System.out.println( "erm " + baos.toString() );
 							baos.close();
 						}
 					} catch (IOException e) {
@@ -749,7 +751,10 @@ public class SerifyApplet extends JApplet {
 								public void run() {
 									JSObject js = JSObject.getWindow( SerifyApplet.this );
 									//js = (JSObject)js.getMember("document");
-									js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, cont[0]} );
+									
+									String machineinfo = getMachine();
+									String[] split = machineinfo.split("\t");
+									js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, split[0], cont[0]} );
 								}
 							};
 							runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
@@ -781,7 +786,10 @@ public class SerifyApplet extends JApplet {
 					
 					JSObject js = JSObject.getWindow( SerifyApplet.this );
 					//js = (JSObject)js.getMember("document");
-					js.call( "addDb", new Object[] {getUser(), title, "prot", outPath, ""} );
+					
+					String machineinfo = getMachine();
+					String[] split = machineinfo.split("\t");
+					js.call( "addDb", new Object[] {getUser(), title, "prot", outPath, split[0], ""} );
 				}
 			}
 		});

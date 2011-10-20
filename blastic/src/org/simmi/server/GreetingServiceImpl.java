@@ -1,5 +1,6 @@
 package org.simmi.server;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.simmi.client.GreetingService;
@@ -120,7 +121,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		int i = 0;
 		for( Entity e : dEntities ) {
-			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("result") );
+			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), (String)e.getProperty("result") );
 			db.setKey( KeyFactory.keyToString( e.getKey() ) );
 			dArray[i++] = db;
 		}
@@ -139,6 +140,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		ent.setProperty("name", db.getName());
 		ent.setProperty("type", db.getType());
 		ent.setProperty("path", db.getPath());
+		ent.setProperty("machine", db.getMachine());
 		ent.setProperty("result", db.getResult());
 		
 		Key key = datastore.put( ent );
@@ -175,51 +177,59 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 
 	@Override
 	public Machine[] getMachineInfo( String machineid, int procs ) {
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Query query = new Query("machine");
-		List<Entity> mEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
-		Machine[] mArray = new Machine[ mEntities.size() ];
-		
-		Machine mymachine = null;
-		Entity em = null;
-		int i = 0;
-		for( Entity e : mEntities ) {
-			int nproc = ((Number)e.getProperty("nproc")).intValue();
-			String name = (String)e.getProperty("name");
-			boolean on = (Boolean)e.getProperty("on");
+		try {
+			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+			Query query = new Query("machine");
+			List<Entity> mEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			List<Machine> mArray = new ArrayList<Machine>();
 			
-			Machine m = new Machine( name, nproc, on );
-			if( name.equals( machineid ) ) {
-				mymachine = m;
-				em = e;
+			Machine mymachine = null;
+			Entity em = null;
+			//int i = 0;
+			for( Entity e : mEntities ) {
+				int nproc = ((Number)e.getProperty("nproc")).intValue();
+				String name = (String)e.getProperty("name");
+				boolean on = (Boolean)e.getProperty("on");
+				
+				if( name != null ) {
+					Machine m = new Machine( name, nproc, on );
+					if( name.equals( machineid ) ) {
+						mymachine = m;
+						em = e;
+					}
+					
+					m.setKey( KeyFactory.keyToString( e.getKey() ) );
+					//mArray[i++] = m;
+					mArray.add( m );
+				}
 			}
 			
-			m.setKey( KeyFactory.keyToString( e.getKey() ) );
-			mArray[i++] = m;
-		}
-		
-		if( mymachine == null ) {
-			mymachine = new Machine( machineid, procs, true );
-			em = new Entity("machine");
-			em.setProperty("name", machineid);
-			
-			Machine[] newmArray = new Machine[ mArray.length + 1 ];
-			for( i = 0; i < mArray.length; i++ ) {
-				newmArray[i] = mArray[i];
+			if( mymachine == null ) {
+				mymachine = new Machine( machineid, procs, true );
+				em = new Entity("machine");
+				em.setProperty("name", machineid);
+				
+				mArray.add( mymachine );
+			} else {
+				mymachine.setOn( true );
+				mymachine.setProcs( procs );
 			}
-			newmArray[i] = mymachine;
 			
-			mArray = newmArray;
-		} else {
-			mymachine.setOn( true );
-			mymachine.setProcs( procs );
+			em.setProperty("on", true);
+			em.setProperty("nproc", procs);
+			mymachine.setKey( KeyFactory.keyToString( datastore.put( em ) ) );
+			
+			return mArray.toArray( new Machine[mArray.size()] );
+		} catch( Exception e ) {
+			StackTraceElement[] stes = e.getStackTrace();
+			StringBuilder sb = new StringBuilder();
+			
+			for( StackTraceElement ste : stes ) {
+				sb.append( ste.toString() );
+			}
+			Machine[] mh = { new Machine(sb.toString(),-1,false) };
+			return mh;
 		}
-		
-		em.setProperty("on", true);
-		em.setProperty("nproc", procs);
-		mymachine.setKey( KeyFactory.keyToString( datastore.put( em ) ) );
-		
-		return mArray;
 	}
 
 	@Override
