@@ -19,6 +19,10 @@ public class Database implements IsSerializable {
 		return path;
 	}
 	
+	public String getMachine() {
+		return machine;
+	}
+	
 	public String getResult() {
 		return result;
 	}
@@ -27,6 +31,7 @@ public class Database implements IsSerializable {
 	String name;
 	String type;
 	String path;
+	String machine;
 	String result;
 	String key;
 	
@@ -34,7 +39,7 @@ public class Database implements IsSerializable {
 		
 	}
 	
-	public Database( String user, String name, String type, String path, String result ) {
+	public Database( String user, String name, String type, String path, String machine, String result ) {
 		this.user = user;
 		this.name = name;
 		this.type = type;
