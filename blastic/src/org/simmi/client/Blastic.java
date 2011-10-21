@@ -588,6 +588,8 @@ public class Blastic implements EntryPoint {
 		    	blastdata.addColumn( ColumnType.STRING, "Name");
 		    	blastdata.addColumn( ColumnType.STRING, "Path");
 		    	blastdata.addColumn( ColumnType.STRING, "Machine");
+		    	blastdata.addColumn( ColumnType.DATE, "Start date");
+		    	blastdata.addColumn( ColumnType.DATE, "Stop date");
 		    	blastdata.addColumn( ColumnType.STRING, "Result");
 		    	  
 		    	blastoptions = Options.create();

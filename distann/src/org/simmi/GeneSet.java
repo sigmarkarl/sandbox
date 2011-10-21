@@ -421,7 +421,7 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		while( line != null ) {
 			String trim = line.trim();
-			if( trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg") ) {
+			if( query != null && (trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg")) ) {
 				String[] split = trim.split("\\|");
 				
 				String id = split[1];
@@ -459,7 +459,12 @@ public class GeneSet extends JApplet {
 					desc = desc + " " + id;
 				}*/
 				
-				String[] qsplit = query.split("_");
+				String[] qsplit = null;
+				if( query != null ) {
+					qsplit = query.split("_");
+				} else {
+					System.err.println( line );
+				}
 				
 				Set<String>	set;
 				String padda = qsplit[0];
@@ -498,13 +503,27 @@ public class GeneSet extends JApplet {
 				
 				//int first = query.indexOf('_');
 				//int sec = query.indexOf('_', first+1 );
-				String contig = qsplit[0]+"_"+qsplit[1]; //&query.substring(0, sec);
-				String contloc = qsplit[1]+"_"+qsplit[3]; //query.substring(first+1,sec);
+				
+				String contig = null;
+				String contloc = null;
+				
+				if( qsplit.length > 3 ) {
+					contig = qsplit[0]+"_"+qsplit[1]; //&query.substring(0, sec);
+					contloc = qsplit[1]+"_"+qsplit[3]; //query.substring(first+1,sec);
+				} else {
+					contig = qsplit[0];
+					contloc = qsplit[0]+"_"+qsplit[1];
+				}
 				
 				StringBuilder aa = aaSearch( query );
 				int nq = query.lastIndexOf('_');
-				nq = query.lastIndexOf('_', nq-1);
-				String nquery = query.substring(0, nq);
+				int mq = query.lastIndexOf('_', nq-1);
+				String nquery;
+				if( mq != -1 ) {
+					nquery = query.substring(0, nq);
+				} else {
+					nquery = query;
+				}
 				StringBuilder dn = dnaa.get( nquery );
 				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aa, dn, query, contig, contloc, start, stop, ori ) );
 				
@@ -564,15 +583,30 @@ public class GeneSet extends JApplet {
 					gene.species.put( padda, stv );
 				} else stv = gene.species.get(padda);
 				
+				String contig = null;
+				String contloc = null;
+				
 				int first = query.indexOf('_');
 				int sec = query.indexOf('_', first+1 );
-				String contig = query.substring(0, sec);
-				String contloc = query.substring(first+1);
+				if( sec != -1 ) {
+					contig = query.substring(0, sec);
+					contloc = query.substring(first+1);
+				} else {
+					contig = query;
+					contloc = query.substring(first+1);
+				}
 				
 				StringBuilder aastr = aaSearch( query );
 				int nq = query.lastIndexOf('_');
-				nq = query.lastIndexOf('_', nq-1);
-				String nquery = query.substring(0, nq);
+				int mq = query.lastIndexOf('_', nq-1);
+				String nquery;
+				if( mq != -1 ) {
+					nq = mq;
+					nquery = query.substring(0, nq);
+				} else {
+					nquery = query;
+				}
+				
 				StringBuilder dn = dnaa.get( nquery );
 				stv.add( new Tegeval( padda, deval, aastr, dn, query, contig, contloc, start, stop, ori ) );
 				
@@ -6704,17 +6738,19 @@ public class GeneSet extends JApplet {
 	};
 	
 	private static JComponent newSoft( JButton jb ) throws IOException {
-		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
+		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
+		InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
 		if( is != null ) loci2aasequence( new InputStreamReader( is ) );
 		
-		is = GeneSet.class.getResourceAsStream("/all.fsa");
+		//is = GeneSet.class.getResourceAsStream("/all.fsa");
+		is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 		if( is != null ) loci2dnasequence( new InputStreamReader( is ) );
 		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
-		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );
+		List<Set<String>>	iclusterlist = new ArrayList<Set<String>>(); //loadSimpleClusters( new InputStreamReader(is) );
 		
 		is = GeneSet.class.getResourceAsStream("/union_cluster.txt");
-		List<Set<String>>	uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
+		List<Set<String>>	uclusterlist = new ArrayList<Set<String>>(); //loadSimpleClusters( new InputStreamReader(is) );
 		
 		Map<String,Gene>		refmap = new HashMap<String,Gene>();
 		Map<String,String>		allgenes = new HashMap<String,String>();
@@ -6722,9 +6758,15 @@ public class GeneSet extends JApplet {
 		Map<String,Set<String>>	geneloc = new HashMap<String,Set<String>>();
 		Set<String>				poddur = new HashSet<String>();
 		Map<String,Gene>		locgene = new HashMap<String,Gene>();
-		//panCoreFromNRBlast( new FileReader("/home/sigmar/blastout/nr.blastout"), "/home/sigmar/workspace/distann/src/nr_short.blastout", refmap, allgenes, geneset, geneloc, poddur );
-		is = GeneSet.class.getResourceAsStream("/total_short.blastout");
+		
+		
+		//panCoreFromNRBlast( new FileReader("/home/horfrae/arciformis_5.blastout"), "/home/horfrae/workspace/distann/src/arciformis_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur );
+
+		//is = GeneSet.class.getResourceAsStream("/total_short.blastout");
+		is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
 		panCoreFromNRBlast( new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur );
+		
+		
 		geneloc.clear();
 		allgenes.clear();
 		geneset.clear();
