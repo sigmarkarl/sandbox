@@ -41,6 +41,7 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -554,16 +555,26 @@ public class SerifyApplet extends JApplet {
 								String queryPathFixed = fixPath( infile.getAbsolutePath() );
 								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
 								
-								String[] cmds = new String[] { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-out", outPathFixed };
+								List<String>	lcmd = new ArrayList<String>();
+								String[] cmds = { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed };
+								String[] exts = extrapar.split(" ");
+								String[] nxst = { "-out", outPathFixed };
+								lcmd.addAll( Arrays.asList(cmds) );
+								lcmd.addAll( Arrays.asList(exts) );
+								lcmd.addAll( Arrays.asList(nxst) );
 								
-								final Object[] cont = new Object[1];
+								final Date start = new Date( System.currentTimeMillis() );								
+								final Object[] cont = new Object[2];
 								Runnable run = new Runnable() {
 									public void run() {
 										JSObject js = JSObject.getWindow( SerifyApplet.this );
-										js.call( "addResult", new Object[] {getUser(), title, outPathFixed, cont[0]} );
+										
+										String machineinfo = getMachine();
+										String[] split = machineinfo.split("\t");
+										js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[1], cont[0]} );
 									}
 								};
-								runProcessBuilder( "Performing blast", Arrays.asList( cmds ), run, cont );
+								runProcessBuilder( "Performing blast", lcmd, run, cont );
 							}
 						}
 					} else System.err.println( "no blast installed" );
@@ -1175,6 +1186,11 @@ public class SerifyApplet extends JApplet {
 		comp.setLayout( new BorderLayout() );
 		
 		final JTextArea		ta = new JTextArea();
+		for( String cmd : commands ) {
+			ta.append(cmd+" ");
+		}
+		ta.append("\n");
+		
 		ta.setEditable( false );
 		final JScrollPane	sp = new JScrollPane( ta );
 		final JProgressBar	pbar = new JProgressBar();
@@ -1257,6 +1273,7 @@ public class SerifyApplet extends JApplet {
 					String result = ta.getText().trim();
 					if( !interupted && run != null ) {
 						cont[0] = result;
+						cont[1] = new Date( System.currentTimeMillis() );
 						run.run();
 					}
 					
