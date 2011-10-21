@@ -1,5 +1,7 @@
 package org.simmi.shared;
 
+import java.util.Date;
+
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 public class Blast implements IsSerializable {
@@ -18,15 +20,30 @@ public class Blast implements IsSerializable {
 	public String getPath() {
 		return path;
 	}
+	
+	public String getMachine() {
+		return machine;
+	}
 
 	public String getResult() {
 		return result;
+	}
+	
+	public Date getStart() {
+		return startDate;
+	}
+	
+	public Date getStop() {
+		return endDate;
 	}
 
 	String user;
 	String name;
 	String type;
 	String path;
+	String machine;
+	Date	startDate;
+	Date	endDate;
 	String result;
 	String key;
 	

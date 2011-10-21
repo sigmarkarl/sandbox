@@ -11,6 +11,10 @@ public class Machine implements IsSerializable {
 		return nproc;
 	}
 	
+	public int getInuse() {
+		return inuse;
+	}
+	
 	public void setProcs( int procs ) {
 		this.nproc = procs;
 	}
@@ -18,6 +22,7 @@ public class Machine implements IsSerializable {
 	String name;
 	String key;
 	int nproc;
+	int inuse;
 	boolean	on;
 	
 	public Machine() {
