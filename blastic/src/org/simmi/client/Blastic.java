@@ -1,6 +1,7 @@
 package org.simmi.client;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.simmi.shared.Blast;
@@ -211,8 +212,8 @@ public class Blastic implements EntryPoint {
 			s.@org.simmi.client.Blastic::addDbInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, type, path, machine, result );
 		};
 		
-		$wnd.addResult = function( user, name, path, result ) {
-			return s.@org.simmi.client.Blastic::addBlastInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, path, result );
+		$wnd.addResult = function( user, name, path, machine, start, stop, result ) {
+			return s.@org.simmi.client.Blastic::addBlastInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Date;Ljava/lang/String;)( user, name, path, machine, start, stop, result );
 		};
 		
 		$wnd.addSequences = function( user, name, type, path, nseq ) {
@@ -350,7 +351,7 @@ public class Blastic implements EntryPoint {
 		return null;
 	}
 	
-	public void addBlastInfo( final String user, final String name, final String path, final String result ) {
+	public void addBlastInfo( final String user, final String name, final String path, final String machine, final Date start, final Date stop, final String result ) {
 		final Blast b = new Blast( user, name, "unk", path, result );
 		greetingService.saveBlast( b, new AsyncCallback<String>() {
 			@Override
@@ -360,12 +361,12 @@ public class Blastic implements EntryPoint {
 			public void onSuccess(String res) {
 				b.setKey( res );
 				blastList.add( b );
-				addBlastToTable(user, name, path, result);
+				addBlastToTable(user, name, path, machine, start, stop, result);
 			}
 		});
 	}
 	
-	public void addMachineInfo( final String name, final int nproc, final boolean on ) {
+	public void addMachineInfo( final String name, final int nproc, final int inuse, final boolean on ) {
 		final Machine m = new Machine( name, nproc, on );
 		greetingService.saveMachine( m, new AsyncCallback<String>() {
 			@Override
@@ -375,7 +376,7 @@ public class Blastic implements EntryPoint {
 			public void onSuccess(String res) {
 				m.setKey( res );
 				machineList.add( m );
-				addMachineToTable(name, nproc, on);
+				addMachineToTable(name, nproc, inuse, on);
 			}
 		});
 	}
@@ -386,8 +387,9 @@ public class Blastic implements EntryPoint {
 			String name = db.getName();
 			String type = db.getType();
 			String path = db.getPath();
+			String machine = db.getMachine();
 			String result = db.getResult();
-			addDbToTable(user, name, type, path, result);
+			addDbToTable(user, name, type, path, machine, result);
 		}
 	}
 	
@@ -397,8 +399,11 @@ public class Blastic implements EntryPoint {
 			String name = b.getName();
 			//String type = b.getType();
 			String path = b.getPath();
+			String machine = b.getMachine();
+			Date	startDate = b.getStart();
+			Date	stopDate = b.getStop();
 			String result = b.getResult();
-			addBlastToTable(user, name, path, result);
+			addBlastToTable(user, name, path, machine, startDate, stopDate, result);
 		}
 	}
 	
@@ -406,37 +411,42 @@ public class Blastic implements EntryPoint {
 		for( Machine m : machineList ) {
 			String name = m.getName();
 			int nproc = m.getProcs();
+			int inuse = m.getInuse();
 			boolean on = m.getOn();
-			addMachineToTable( name, nproc, on );
+			addMachineToTable( name, nproc, inuse, on );
 		}
 	}
 
-	private void addMachineToTable( String name, int nproc, boolean on ) {
+	private void addMachineToTable( String name, int nproc, int inuse, boolean on ) {
 		if( machinedata != null ) {
 			int r = machinedata.getNumberOfRows();
 			
 			machinedata.addRow();
 			machinedata.setValue( r, 0, name );
 			machinedata.setValue( r, 1, nproc );
-			machinedata.setValue( r, 2, on );
+			machinedata.setValue( r, 2, inuse );
+			machinedata.setValue( r, 3, on );
 			machineview = DataView.create( machinedata );
 			machinetable.draw( machineview, machineoptions );
 		}
 	}
 	
-	private void addBlastToTable( String user, String name, String path, String result ) {
+	private void addBlastToTable( String user, String name, String path, String machine, Date startDate, Date stopDate, String result ) {
 		int r = blastdata.getNumberOfRows();
 		
 		blastdata.addRow();
 		blastdata.setValue( r, 0, user );
 		blastdata.setValue( r, 1, name );
 		blastdata.setValue( r, 2, path );
-		blastdata.setValue( r, 3, result );
+		blastdata.setValue( r, 3, machine );
+		blastdata.setValue( r, 4, startDate );
+		blastdata.setValue( r, 5, stopDate );
+		blastdata.setValue( r, 6, result );
 		blastview = DataView.create( blastdata );
 		blasttable.draw( blastview, blastoptions );
 	}
 	
-	private void addDbToTable( String user, String name, String type, String path, String result ) {
+	private void addDbToTable( String user, String name, String type, String path, String machine, String result ) {
 		int r = data.getNumberOfRows();
 		
 		data.addRow();
@@ -444,7 +454,8 @@ public class Blastic implements EntryPoint {
 		data.setValue( r, 1, name );
 		data.setValue( r, 2, type );
 		data.setValue( r, 3, path );
-		data.setValue( r, 4, result );
+		data.setValue( r, 4, machine );
+		data.setValue( r, 5, result );
 		view = DataView.create( data );
 		table.draw( view, options );
 	}
@@ -454,16 +465,14 @@ public class Blastic implements EntryPoint {
 		final Database db = new Database( user, name, type, path, machine, result );
 		greetingService.saveDb( db, new AsyncCallback<String>() {
 			@Override
-			public void onFailure(Throwable caught) {
-				
-			}
+			public void onFailure(Throwable caught) {}
 
 			@Override
 			public void onSuccess(String res) {
 				console("saving db succesful");
 				db.setKey( res );
 				databaseList.add( db );
-				addDbToTable( user, name, type, path, result );
+				addDbToTable( user, name, type, path, machine, result );
 			}
 		});
 	}
@@ -593,6 +602,7 @@ public class Blastic implements EntryPoint {
 		    	machinedata = DataTable.create();
 		    	machinedata.addColumn( ColumnType.STRING, "Name");
 		    	machinedata.addColumn( ColumnType.NUMBER, "Procs");
+		    	machinedata.addColumn( ColumnType.NUMBER, "In use");
 		    	machinedata.addColumn( ColumnType.BOOLEAN, "On/Off");
 		    	  
 		    	machineoptions = Options.create();
