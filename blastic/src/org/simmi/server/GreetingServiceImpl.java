@@ -79,7 +79,6 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	@Override
 	public String saveSequences(Sequences seqs) {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		
 		Entity ent = new Entity("sequences");
 		//Query query = new Query("sequences");
 		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
