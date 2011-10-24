@@ -29,11 +29,11 @@ public class Blast implements IsSerializable {
 		return result;
 	}
 	
-	public Date getStart() {
+	public String getStart() {
 		return startDate;
 	}
 	
-	public Date getStop() {
+	public String getStop() {
 		return endDate;
 	}
 
@@ -42,8 +42,8 @@ public class Blast implements IsSerializable {
 	String type;
 	String path;
 	String machine;
-	Date	startDate;
-	Date	endDate;
+	String	startDate;
+	String	endDate;
 	String result;
 	String key;
 	
@@ -51,11 +51,14 @@ public class Blast implements IsSerializable {
 		
 	}
 	
-	public Blast( String user, String name, String type, String path, String result ) {
+	public Blast( String user, String name, String type, String path, String machine, String start, String stop, String result ) {
 		this.user = user;
 		this.name = name;
 		this.type = type;
 		this.path = path;
+		this.machine = machine;
+		this.startDate = start;
+		this.endDate = stop;
 		this.result = result;
 	}
 	
