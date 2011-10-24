@@ -4,21 +4,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
-import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
-
 public class Util {
 
     public static void authorizeForm(String url, String testing_user, String testing_password) throws IOException {
         BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 
 
-        assert url != null : "You must give a url.";
+        /*assert url != null : "You must give a url.";
         assert testing_user != null : "You gave a null testing_user.";
         assert testing_password != null : "You gave a null testing_password.";
 
@@ -49,7 +41,7 @@ public class Util {
             System.out.println("No allow button, must be already approved.");
         } catch(IndexOutOfBoundsException e) {
             System.out.println("No second form, must be already approved.");
-        }
+        }*/
     }
 
 }
