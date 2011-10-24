@@ -23,7 +23,5 @@
 	<classpathentry kind="lib" path="/usr/share/java/signpost-commonshttp4.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/signpost-core.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/gdata-base.jar"/>
-	<classpathentry kind="lib" path="/opt/htmlunit-2.8/lib/htmlunit-2.8.jar"/>
-	<classpathentry kind="lib" path="/opt/htmlunit-2.8/lib/htmlunit-core-js-2.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
