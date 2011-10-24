@@ -103,7 +103,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		int i = 0;
 		for( Entity e : blEntities ) {
-			Blast b = new Blast( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("result") );
+			Blast b = new Blast( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), (String)e.getProperty("start"), (String)e.getProperty("end"), (String)e.getProperty("result") );
 			b.setKey( KeyFactory.keyToString( e.getKey() ) );
 			blArray[i++] = b;
 		}
@@ -158,6 +158,9 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		ent.setProperty("name", b.getName());
 		ent.setProperty("type", b.getType());
 		ent.setProperty("path", b.getPath());
+		ent.setProperty("machine", b.getMachine());
+		ent.setProperty("start", b.getStart());
+		ent.setProperty("end", b.getStop());
 		ent.setProperty("result", b.getResult());
 		
 		Key key = datastore.put( ent );

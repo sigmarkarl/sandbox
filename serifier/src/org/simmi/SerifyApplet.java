@@ -21,6 +21,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -29,6 +30,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -214,6 +216,10 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		};
+	}
+	
+	public void console( String log ) {
+		System.err.println( log );
 	}
 	
 	public File checkProdigalInstall( File dir ) throws IOException {
@@ -508,7 +514,8 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
-	public void runBlastInApplet( final String extrapar, final String dbPath ) {
+	public void runBlastInApplet( final String extrapar, final String dbPath, final String dbType ) {
+		System.err.println("ff");
 		AccessController.doPrivileged( new PrivilegedAction<Object>() {
 			@Override
 			public Object run() {
@@ -517,10 +524,10 @@ public class SerifyApplet extends JApplet {
 					File dir = new File( userhome );
 					
 					System.out.println("run blast in applet");
-					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
-					if( !blast.exists() ) blast = new File( "/opt/ncbi-blast-2.2.25+/bin/blastp" );
+					String blasttype = dbType.equals("nucl") ? "blastn" : "blastp";
+					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\" + blasttype+".exe" );
+					if( !blast.exists() ) blast = new File( "/opt/ncbi-blast-2.2.25+/bin/"+blasttype );
 					if( blast.exists() ) {
-						System.out.println("exists");
 						JFileChooser fc = new JFileChooser();
 						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 						if( fc.showSaveDialog( SerifyApplet.this.cnt ) == JFileChooser.APPROVE_OPTION ) {
@@ -537,8 +544,9 @@ public class SerifyApplet extends JApplet {
 								String[] split = file.split("/");
 								String fname = split[ split.length-1 ];
 								split = fname.split("\\.");
-								final String title = split[0]; 
-								File infile = new File( dir, fname );
+								final String title = split[0];
+								
+								final File infile = new File( dir, "tmp_"+fname );
 								
 								FileOutputStream fos = new FileOutputStream( infile );
 								InputStream is = url.openStream();
@@ -552,28 +560,42 @@ public class SerifyApplet extends JApplet {
 								is.close();
 								fos.close();
 						
-								String queryPathFixed = fixPath( infile.getAbsolutePath() );
-								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() );
+								String queryPathFixed = fixPath( infile.getAbsolutePath() ).trim();
+								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() ).trim();
 								
 								List<String>	lcmd = new ArrayList<String>();
 								String[] cmds = { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed };
-								String[] exts = extrapar.split(" ");
+								String[] exts = extrapar.trim().split("[\t ]+");
+								
+								System.err.println( "nane" );
+								for( String ext : exts ) {
+									System.err.println( ext );
+								}
+								System.err.println( "bubu" );
+								
 								String[] nxst = { "-out", outPathFixed };
 								lcmd.addAll( Arrays.asList(cmds) );
-								lcmd.addAll( Arrays.asList(exts) );
+								if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
 								lcmd.addAll( Arrays.asList(nxst) );
 								
-								final Date start = new Date( System.currentTimeMillis() );								
-								final Object[] cont = new Object[2];
+								final String start = new Date( System.currentTimeMillis() ).toString();								
+								final Object[] cont = new Object[3];
 								Runnable run = new Runnable() {
-									public void run() {
-										JSObject js = JSObject.getWindow( SerifyApplet.this );
-										
-										String machineinfo = getMachine();
-										String[] split = machineinfo.split("\t");
-										js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[1], cont[0]} );
+									public void run() {										
+										infile.delete();
+										System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
+										if( cont[0] != null ) {
+											JSObject js = JSObject.getWindow( SerifyApplet.this );
+											String machineinfo = getMachine();
+											String[] split = machineinfo.split("\t");
+											js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
+										}
 									}
 								};
+								/*for( String cmd : lcmd ) {
+									System.err.println(cmd);
+								}
+								Thread.sleep(10000);*/
 								runProcessBuilder( "Performing blast", lcmd, run, cont );
 							}
 						}
@@ -586,7 +608,7 @@ public class SerifyApplet extends JApplet {
 			}
 			
 		});
-	}
+	}	
 	
 	public void init( final Container c ) {
 		this.cnt = c;
@@ -726,6 +748,7 @@ public class SerifyApplet extends JApplet {
 					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.25+/bin/makeblastdb" );
 					if( makeblastdb.exists() ) {
 						int r = table.getSelectedRow();
+						String dbtype = (String)table.getValueAt( r, 2 );
 						String path = (String)table.getValueAt( r, 3 );
 						URL url = new URL( path );
 						
@@ -734,7 +757,7 @@ public class SerifyApplet extends JApplet {
 						String fname = split[ split.length-1 ];
 						split = fname.split("\\.");
 						final String title = split[0]; 
-						File infile = new File( dir, fname );
+						final File infile = new File( dir, "tmp_"+fname );
 						
 						FileOutputStream fos = new FileOutputStream( infile );
 						InputStream is = url.openStream();
@@ -755,17 +778,23 @@ public class SerifyApplet extends JApplet {
 							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
 							
 							final String outPath = fixPath( new File( selectedfile, title ).getAbsolutePath() );
-							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
+							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-title", title, "-dbtype", dbtype, "-out", outPath };
 							
-							final Object[] cont = new Object[1];
+							final Object[] cont = new Object[3];
 							Runnable run = new Runnable() {
 								public void run() {
-									JSObject js = JSObject.getWindow( SerifyApplet.this );
-									//js = (JSObject)js.getMember("document");
+									if( cont[0] != null ) {
+										infile.delete();
 									
-									String machineinfo = getMachine();
-									String[] split = machineinfo.split("\t");
-									js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, split[0], cont[0]} );
+										if( cont[0] != null ) {
+											JSObject js = JSObject.getWindow( SerifyApplet.this );
+											//js = (JSObject)js.getMember("document");
+										
+											String machineinfo = getMachine();
+											String[] split = machineinfo.split("\t");
+											js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, split[0], cont[1]} );
+										}
+									}
 								}
 							};
 							runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
@@ -886,12 +915,14 @@ public class SerifyApplet extends JApplet {
 							final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
 							String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
 							
-							final Object[] cont = new Object[1];
+							final Object[] cont = new Object[3];
 							Runnable run = new Runnable() {
 								public void run() {
-									System.err.println( cont[0] );
-									addSequences(title, "nucl", outPathD, 50);
-									addSequences(title, "prot", outPathA, 50);
+									if( cont[0] != null ) {
+										System.err.println( cont[0] );
+										addSequences(title, "nucl", outPathD, 50);
+										addSequences(title, "prot", outPathA, 50);
+									}
 								}
 							};
 							runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
@@ -1078,6 +1109,26 @@ public class SerifyApplet extends JApplet {
 					e.printStackTrace();
 				}
 				
+				if( obj == null ) {
+					try {
+						obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+					} catch (UnsupportedFlavorException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				if( obj == null ) {
+					try {
+						obj = support.getTransferable().getTransferData( DataFlavor.getTextPlainUnicodeFlavor() );
+					} catch (UnsupportedFlavorException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
 				try {
 					if( obj != null && obj instanceof List ) {
 						List<File> lf = (List<File>)obj;
@@ -1086,18 +1137,62 @@ public class SerifyApplet extends JApplet {
 						}
 					} else if( obj instanceof Image ) {
 						
-					} else {
-						obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+					} else if( obj instanceof String ) {
+						System.err.println("String");
+						//obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
 						String filelistStr = (String)obj;
-						String[] fileStr = filelistStr.split("\r\n");
+						String[] fileStr = filelistStr.split("\n");
+						
+						System.err.println( filelistStr );
+						for( String fileName : fileStr ) {
+							String val = fileName.trim();
+							//File f = new File( new URI( fileName ) );
+							String[] split = val.split("/");
+							addSequences( split[ split.length-1 ], val );
+						}
+					} else if( obj instanceof Reader ) {
+						System.err.println("Reader");
+						//obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+						
+						CharArrayWriter	caw = new CharArrayWriter();
+						Reader rd = (Reader)obj;
+						char[] cbuf = new char[1024];
+						int r = rd.read(cbuf);
+						while( r > 0 ) {
+							caw.write( cbuf, 0, r );
+							r = rd.read(cbuf);
+						}
+						
+						String filelistStr = (String)caw.toString();
+						String[] fileStr = filelistStr.split("\n");
 						
 						for( String fileName : fileStr ) {
-							File f = new File( new URI( fileName ) );
-							addSequences( f.getName(), f.toURI().toString() );
+							String val = fileName.trim();
+							String[] split = val.split("/");
+							addSequences( split[ split.length-1 ], val.trim() );
+						}
+					} else if( obj instanceof InputStream ) {
+						System.err.println("InputStream");
+						//obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+						
+						CharArrayWriter	caw = new CharArrayWriter();
+						Reader rd = new InputStreamReader( (InputStream)obj );
+						char[] cbuf = new char[1024];
+						int r = rd.read(cbuf);
+						while( r > 0 ) {
+							caw.write( cbuf, 0, r );
+							r = rd.read(cbuf);
+						}
+						
+						String filelistStr = (String)caw.toString();
+						String[] fileStr = filelistStr.split("\n");
+						
+						for( String fileName : fileStr ) {
+							String val = fileName.trim();
+							String[] split = val.split("/");
+							addSequences( split[ split.length-1 ], val );
 						}
 					}
-				} catch (UnsupportedFlavorException e) {
-					e.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (URISyntaxException e) {
@@ -1144,19 +1239,20 @@ public class SerifyApplet extends JApplet {
 		String type = "nucl";
 		int nseq = 0;
 		
-		File f = new File( new URI(path) );
-		FileReader	fr = new FileReader( f );
-		BufferedReader br = new BufferedReader( fr );
+		URL url = new URL(path);
+		InputStreamReader isr = new InputStreamReader( url.openStream() );
+		//FileReader	fr = new FileReader( f );
+		BufferedReader br = new BufferedReader( isr );
 		String line = br.readLine();
 		while( line != null ) {
 			if( line.startsWith(">") ) nseq++;
-			else if( type.equals("nucl") && !line.matches("^[acgtnACGTN]+$") ) {
+			else if( type.equals("nucl") && !line.matches("^[acgtnxACGTNX]+$") ) {
 				System.err.println( line );
 				type = "prot";
 			}
 			line = br.readLine();
 		}
-		fr.close();
+		br.close();
 		
 		if( nseq > 0 ) {
 			addSequences(name, type, path, nseq);
@@ -1271,10 +1367,13 @@ public class SerifyApplet extends JApplet {
 					is.close();
 					
 					String result = ta.getText().trim();
-					if( !interupted && run != null ) {
-						cont[0] = result;
-						cont[1] = new Date( System.currentTimeMillis() );
+					if( run != null ) {
+					
+						cont[0] = interupted ? null : ""; 
+						cont[1] = result;
+						cont[2] = new Date( System.currentTimeMillis() ).toString();
 						run.run();
+					
 					}
 					
 					pbar.setIndeterminate( false );
@@ -1292,7 +1391,23 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
-		List<String>	largs = Arrays.asList( args );
+		
+		String[] lcmd = "/opt/ncbi-blast-2.2.25+/bin/blastp -query /home/horfrae/arciformis_3.aa -db /opt/db/nr  -num_alignments 1 -num_descriptions 1 -out /home/horfrae/arciformis_3.blastout".split("[ ]");
+		Runnable run = new Runnable() {
+			public void run() {
+				
+			}
+		};
+		Object[] cont = new Object[3];
+		
+		SerifyApplet a = new SerifyApplet();
+		try {
+			a.runProcessBuilder( "Performing blast", Arrays.asList(lcmd), run, cont );
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		/*List<String>	largs = Arrays.asList( args );
 		int i = largs.indexOf("--split");
 		if( i != -1 ) {
 			String filename;
