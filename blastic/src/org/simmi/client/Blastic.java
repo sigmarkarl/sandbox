@@ -81,7 +81,9 @@ public class Blastic implements EntryPoint {
 	}
 	
 	public native void console( String log ) /*-{
-		$wnd.console.log( log );
+		applet = $doc.getElementById( 'serify' );
+		applet.console( log );
+		//$wnd.console.log( log );
 	}-*/;
 	
 	public native int dropHandler( JavaScriptObject table, String uid, String type ) /*-{
@@ -139,14 +141,12 @@ public class Blastic implements EntryPoint {
 		return 0;
 	}-*/;
 	
-	public native void runBlastInApplet( JavaScriptObject appletelement, String extrapar, String dbPath ) /*-{
-		console.log('sim1');
+	public native void runBlastInApplet( JavaScriptObject appletelement, String extrapar, String dbPath, String dbType ) /*-{
 		try {
-			appletelement.runBlastInApplet( extrapar, dbPath );
+			appletelement.runBlastInApplet( extrapar, dbPath, dbType );
 		} catch( e ) {
 			console.log( e );
 		}
-		console.log('sim2');
 	}-*/;
 	
 	public native void addSequenceInApplet( JavaScriptObject appletelement, String user, String name, String type, String path, int num, String key ) /*-{
@@ -213,7 +213,7 @@ public class Blastic implements EntryPoint {
 		};
 		
 		$wnd.addResult = function( user, name, path, machine, start, stop, result ) {
-			return s.@org.simmi.client.Blastic::addBlastInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Date;Ljava/lang/String;)( user, name, path, machine, start, stop, result );
+			return s.@org.simmi.client.Blastic::addBlastInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, path, machine, start, stop, result );
 		};
 		
 		$wnd.addSequences = function( user, name, type, path, nseq ) {
@@ -248,7 +248,6 @@ public class Blastic implements EntryPoint {
 			greetingService.getMachineInfo( hostname, procs, new AsyncCallback<Machine[]>() {
 				@Override
 				public void onSuccess(Machine[] mcs) {
-					console("you");
 					machineList.clear();
 					for( Machine m : mcs ) {    			
 						machineList.add( m );
@@ -258,7 +257,6 @@ public class Blastic implements EntryPoint {
 			
 				@Override
 				public void onFailure(Throwable caught) {
-					console("check");
 					StackTraceElement[] stes = caught.getStackTrace();
 					for( StackTraceElement ste : stes ) {
 						console( ste.toString() );
@@ -271,10 +269,15 @@ public class Blastic implements EntryPoint {
 	}
 	
 	public void runBlast( String extrapar ) {
-		String dbPath = getSelectedDb();
+		String[] dbInfo = getSelectedDb();
 		
+		console( "fuck " + dbInfo.length );
+		String dbPath = dbInfo[0];
+		String dbType = dbInfo[1];
+		
+		console( "me" );
 		Element e = Document.get().getElementById("serify");
-		runBlastInApplet(e, extrapar, dbPath);
+		runBlastInApplet(e, extrapar, dbPath, dbType );
 	}
 	
 	public void getBlastParameters() {
@@ -338,21 +341,23 @@ public class Blastic implements EntryPoint {
 		});
 	}
 	
-	public String getSelectedDb() {
+	public String[] getSelectedDb() {
 		JsArray<Selection> jas = table.getSelections();
 		
 		if( jas.length() > 0 ) {
 			int row = jas.get(0).getRow();
 			String val = (String)data.getValueString(row, 3);
-			console("erm " + val + " " + row );
-			return val;
+			String typ = (String)data.getValueString(row, 2);
+			return new String[] {val, typ};
 		}
 		
 		return null;
 	}
 	
-	public void addBlastInfo( final String user, final String name, final String path, final String machine, final Date start, final Date stop, final String result ) {
-		final Blast b = new Blast( user, name, "unk", path, result );
+	public void addBlastInfo( final String user, final String name, final String path, final String machine, final String start, final String stop, final String result ) {
+		System.err.println("add blastinfo");
+		
+		final Blast b = new Blast( user, name, "unk", path, machine, start, stop, result );
 		greetingService.saveBlast( b, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {}
@@ -400,8 +405,8 @@ public class Blastic implements EntryPoint {
 			//String type = b.getType();
 			String path = b.getPath();
 			String machine = b.getMachine();
-			Date	startDate = b.getStart();
-			Date	stopDate = b.getStop();
+			String	startDate = b.getStart();
+			String	stopDate = b.getStop();
 			String result = b.getResult();
 			addBlastToTable(user, name, path, machine, startDate, stopDate, result);
 		}
@@ -431,7 +436,7 @@ public class Blastic implements EntryPoint {
 		}
 	}
 	
-	private void addBlastToTable( String user, String name, String path, String machine, Date startDate, Date stopDate, String result ) {
+	private void addBlastToTable( String user, String name, String path, String machine, String startDate, String stopDate, String result ) {
 		int r = blastdata.getNumberOfRows();
 		
 		blastdata.addRow();
@@ -588,8 +593,8 @@ public class Blastic implements EntryPoint {
 		    	blastdata.addColumn( ColumnType.STRING, "Name");
 		    	blastdata.addColumn( ColumnType.STRING, "Path");
 		    	blastdata.addColumn( ColumnType.STRING, "Machine");
-		    	blastdata.addColumn( ColumnType.DATE, "Start date");
-		    	blastdata.addColumn( ColumnType.DATE, "Stop date");
+		    	blastdata.addColumn( ColumnType.STRING, "Start date");
+		    	blastdata.addColumn( ColumnType.STRING, "Stop date");
 		    	blastdata.addColumn( ColumnType.STRING, "Result");
 		    	  
 		    	blastoptions = Options.create();
