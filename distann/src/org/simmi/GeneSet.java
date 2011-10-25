@@ -6760,9 +6760,9 @@ public class GeneSet extends JApplet {
 		Map<String,Gene>		locgene = new HashMap<String,Gene>();
 		
 		
-		//panCoreFromNRBlast( new FileReader("/home/horfrae/arciformis_5.blastout"), "/home/horfrae/workspace/distann/src/arciformis_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur );
-
+		//panCoreFromNRBlast( new FileReader("/home/horfrae/arc/arciformis.blastout"), "/home/horfrae/workspace/distann/src/arciformis_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur );
 		//is = GeneSet.class.getResourceAsStream("/total_short.blastout");
+		
 		is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
 		panCoreFromNRBlast( new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur );
 		
