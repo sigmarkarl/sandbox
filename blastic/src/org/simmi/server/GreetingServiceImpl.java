@@ -17,6 +17,7 @@ import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Text;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -120,7 +121,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		int i = 0;
 		for( Entity e : dEntities ) {
-			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), (String)e.getProperty("result") );
+			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), ((Text)e.getProperty("result")).getValue() );
 			db.setKey( KeyFactory.keyToString( e.getKey() ) );
 			dArray[i++] = db;
 		}
@@ -140,7 +141,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		ent.setProperty("type", db.getType());
 		ent.setProperty("path", db.getPath());
 		ent.setProperty("machine", db.getMachine());
-		ent.setProperty("result", db.getResult());
+		ent.setProperty("result", new Text(db.getResult()));
 		
 		Key key = datastore.put( ent );
 		

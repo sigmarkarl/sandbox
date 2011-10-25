@@ -223,7 +223,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public File checkProdigalInstall( File dir ) throws IOException {
-		File check = new File( dir, "prodigal.v2_50.windows.exe" );
+		File check = new File( dir, "prodigal.v2_60.windows.exe" );
 		if( !check.exists() ) {
 			check = installProdigal( dir );
 		}
@@ -357,22 +357,74 @@ public class SerifyApplet extends JApplet {
 		return f;
 	}
 	
-	public File installProdigal( File homedir ) throws IOException {
-		URL url = new URL("http://prodigal.googlecode.com/files/prodigal.v2_50.windows.exe");
+	public File installProdigal( final File homedir ) throws IOException {
+		final URL url = new URL("http://prodigal.googlecode.com/files/prodigal.v2_60.windows.exe");
 		String fileurl = url.getFile();
 		String[] split = fileurl.split("/");
 		
-		File f = new File( homedir, split[split.length-1] );
-		ByteArrayOutputStream	baos = new ByteArrayOutputStream();
-		byte[] bb = new byte[100000];
+		final File f = new File( homedir, split[split.length-1] );
 		if( !f.exists() ) {
-			JProgressBar pb = new JProgressBar();
-			pb.setIndeterminate( true );
-			
-			JDialog dialog = null;
+			final JDialog dialog;
 			Window window = SwingUtilities.windowForComponent(cnt);
 			if( window != null ) dialog = new JDialog( window );
 			else dialog = new JDialog();
+			
+			Runnable run = new Runnable() {
+				boolean interrupted = false;
+				
+				public void run() {
+					dialog.addWindowListener( new WindowListener() {
+						@Override
+						public void windowOpened(WindowEvent e) {}
+						
+						@Override
+						public void windowIconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+						
+						@Override
+						public void windowClosing(WindowEvent e) {}
+						
+						@Override
+						public void windowClosed(WindowEvent e) {
+							interrupted = true;
+						}
+						
+						@Override
+						public void windowActivated(WindowEvent e) {}
+					});
+					dialog.setVisible( true );
+					
+					try {
+						byte[] bb = new byte[100000];
+						ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+						InputStream is = url.openStream();
+						int r = is.read(bb);
+						while( r > 0 ) {
+							baos.write( bb, 0, r );
+							r = is.read( bb );
+						}
+						is.close();
+						//f.mkdirs();
+						FileOutputStream fos = new FileOutputStream( f );
+						fos.write( baos.toByteArray() );
+						fos.close();
+						baos.close();
+						
+						doProdigal(homedir, SerifyApplet.this.cnt, f);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			};
+			runProcess("Downloading Prodigal ...", run, dialog);
+			
+			/*JProgressBar pb = new JProgressBar();
+			pb.setIndeterminate( true );
 			
 			dialog.setTitle("Downloading Prodigal ...");
 			dialog.add( pb );
@@ -391,7 +443,9 @@ public class SerifyApplet extends JApplet {
 			fos.close();
 			baos.close();
 			
-			dialog.setVisible( false );
+			dialog.setVisible( false );*/
+			
+			return null;
 		}
 		
 		return f;
@@ -608,7 +662,60 @@ public class SerifyApplet extends JApplet {
 			}
 			
 		});
-	}	
+	}
+	
+	public void doProdigal( File dir, Container c, File f  ) throws IOException {		
+		int r = table.getSelectedRow();
+		String path = (String)table.getValueAt( r, 3 );
+		URL url = new URL( path );
+		
+		String file = url.getFile();
+		String[] split = file.split("/");
+		String fname = split[ split.length-1 ];
+		split = fname.split("\\.");
+		final String title = split[0];
+		File infile = new File( dir, fname );
+		
+		FileOutputStream fos = new FileOutputStream( infile );
+		InputStream is = url.openStream();
+		
+		byte[] bb = new byte[100000];
+		r = is.read(bb);
+		while( r > 0 ) {
+			fos.write(bb, 0, r);
+			r = is.read(bb);
+		}
+		is.close();
+		fos.close();
+		
+		JFileChooser fc = new JFileChooser();
+		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
+			File selectedfile = fc.getSelectedFile();
+			if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+			
+			final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
+			final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
+			String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
+			
+			final Object[] cont = new Object[3];
+			Runnable run = new Runnable() {
+				public void run() {
+					if( cont[0] != null ) {
+						System.err.println( cont[0] );
+						addSequences(title, "nucl", outPathD, 50);
+						addSequences(title, "prot", outPathA, 50);
+					}
+				}
+			};
+			runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
+			//JSObject js = JSObject.getWindow( SerifyApplet.this );
+			//js = (JSObject)js.getMember("document");
+			//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+		}
+		
+		//infile.delete();
+	}
 	
 	public void init( final Container c ) {
 		this.cnt = c;
@@ -748,8 +855,8 @@ public class SerifyApplet extends JApplet {
 					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.25+/bin/makeblastdb" );
 					if( makeblastdb.exists() ) {
 						int r = table.getSelectedRow();
-						String dbtype = (String)table.getValueAt( r, 2 );
-						String path = (String)table.getValueAt( r, 3 );
+						final String dbtype = (String)table.getValueAt( r, 2 );
+						final String path = (String)table.getValueAt( r, 3 );
 						URL url = new URL( path );
 						
 						String file = url.getFile();
@@ -792,7 +899,7 @@ public class SerifyApplet extends JApplet {
 										
 											String machineinfo = getMachine();
 											String[] split = machineinfo.split("\t");
-											js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, split[0], cont[1]} );
+											js.call( "addDb", new Object[] {getUser(), title, dbtype, outPath, split[0], cont[1]} );
 										}
 									}
 								}
@@ -882,56 +989,7 @@ public class SerifyApplet extends JApplet {
 					File dir = new File( userhome );
 					File f = checkProdigalInstall( dir );
 					if( f != null && f.exists() ) {
-						int r = table.getSelectedRow();
-						String path = (String)table.getValueAt( r, 3 );
-						URL url = new URL( path );
-						
-						String file = url.getFile();
-						String[] split = file.split("/");
-						String fname = split[ split.length-1 ];
-						split = fname.split("\\.");
-						final String title = split[0];
-						File infile = new File( dir, fname );
-						
-						FileOutputStream fos = new FileOutputStream( infile );
-						InputStream is = url.openStream();
-						
-						byte[] bb = new byte[100000];
-						r = is.read(bb);
-						while( r > 0 ) {
-							fos.write(bb, 0, r);
-							r = is.read(bb);
-						}
-						is.close();
-						fos.close();
-						
-						JFileChooser fc = new JFileChooser();
-						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-						if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-							File selectedfile = fc.getSelectedFile();
-							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
-							
-							final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
-							final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
-							String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
-							
-							final Object[] cont = new Object[3];
-							Runnable run = new Runnable() {
-								public void run() {
-									if( cont[0] != null ) {
-										System.err.println( cont[0] );
-										addSequences(title, "nucl", outPathD, 50);
-										addSequences(title, "prot", outPathA, 50);
-									}
-								}
-							};
-							runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
-							//JSObject js = JSObject.getWindow( SerifyApplet.this );
-							//js = (JSObject)js.getMember("document");
-							//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
-						}
-						
-						//infile.delete();
+						doProdigal( dir, c, f );
 					} else System.err.println( "no blast installed" );
 				} catch (MalformedURLException e1) {
 					e1.printStackTrace();
