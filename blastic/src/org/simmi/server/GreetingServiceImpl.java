@@ -121,7 +121,13 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		int i = 0;
 		for( Entity e : dEntities ) {
-			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), ((Text)e.getProperty("result")).getValue() );
+			String result = "";
+			Object res = e.getProperty("result");
+			if( res == null ) result = "";
+			else if( res instanceof String ) result = (String)res;
+			else if( res instanceof Text ) result = ((Text)res).getValue();
+			
+			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), result );
 			db.setKey( KeyFactory.keyToString( e.getKey() ) );
 			dArray[i++] = db;
 		}
