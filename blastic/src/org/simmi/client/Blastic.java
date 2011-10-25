@@ -1,7 +1,6 @@
 package org.simmi.client;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.simmi.shared.Blast;
@@ -834,6 +833,7 @@ public class Blastic implements EntryPoint {
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
 		ae.setAttribute("codebase", "http://funblastic.appspot.com/");
+		//ae.setAttribute("codebase", "http://130.208.181.105/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
