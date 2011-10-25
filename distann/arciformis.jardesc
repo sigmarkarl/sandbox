@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="distann/arciformis.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/distann/arciformis.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" mainClassHandleIdentifier="=distann/src&lt;org.simmi{GeneSet.java[GeneSet" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/distann/src/arciformis_short.blastout"/>
+        <file path="/distann/src/idmapping_short.dat"/>
+        <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
+        <file path="/distann/src/kegg2go.txt"/>
+        <file path="/distann/src/go_short.obo"/>
+        <file path="/distann/src/gene2refseq_short.txt"/>
+        <file path="/distann/src/arciformis.nn"/>
+        <file path="/distann/src/sp2go_short.txt"/>
+        <file path="/distann/src/union_cluster.txt"/>
+        <file path="/distann/src/kegg_pathways"/>
+        <file path="/distann/src/arciformis.aa"/>
+        <file path="/distann/src/gene2go_short.txt"/>
+        <file path="/distann/src/intersect_cluster.txt"/>
+    </selectedElements>
+</jardesc>
