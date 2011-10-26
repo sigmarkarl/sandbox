@@ -17,6 +17,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
@@ -63,14 +64,19 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
+import javax.jnlp.ClipboardService;
+import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
+import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -93,6 +99,7 @@ import javax.swing.event.RowSorterListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
+import javax.swing.text.DefaultEditorKit.CopyAction;
 
 public class GeneSet extends JApplet {
 	/**
@@ -6386,6 +6393,17 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JTextArea textarea = new JTextArea();
+				
+				try {  
+			    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+			    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+		            table.getActionMap().put( "copy", action );
+		            grabFocus = true;
+			    } catch (Exception ee) {
+			    	ee.printStackTrace();
+			    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+			    }
+				
 				JScrollPane	scrollpane = new JScrollPane( textarea );
 				
 				int[] rr = table.getSelectedRows();
@@ -6650,6 +6668,37 @@ public class GeneSet extends JApplet {
 		
 		return splitpane;
 	}
+	
+	static ClipboardService clipboardService;
+	static boolean			grabFocus;
+	public static void copyData(Component source) {
+        JTextArea	textarea = (JTextArea)source;
+        String s = textarea.getText();
+        
+        if (s==null || s.trim().length()==0) {
+            JOptionPane.showMessageDialog(source, "There is no data selected!");
+        } else {
+            StringSelection selection = new StringSelection(s);
+            clipboardService.setContents( selection );
+        }
+        
+        if (grabFocus) {
+            source.requestFocus();
+        }
+    }
+	
+	static class CopyAction extends AbstractAction {
+        public CopyAction(String text, ImageIcon icon,
+            String desc, Integer mnemonic) {
+            super(text, icon);
+            putValue(SHORT_DESCRIPTION, desc);
+            putValue(MNEMONIC_KEY, mnemonic);
+        }
+ 
+        public void actionPerformed(ActionEvent e) {
+            copyData((Component)e.getSource());
+        }
+    }
 	
 	public static void updateFilter( int val, String str, JTable table, RowFilter filter, Set<Integer> filterset, int ind, JLabel label ) {
 		filterset.clear();

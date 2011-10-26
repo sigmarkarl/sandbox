@@ -74,7 +74,7 @@ public class Navisionexplorer implements EntryPoint {
 			+ "attempting to contact the server. Please check your network "
 			+ "connection and try again.";
 
-	private final String serverUrl = "http://localhost:8081/cgi-bin/lubbi";
+	private final String serverUrl = "http://130.208.252.7/cgi-bin/lubbi";
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */

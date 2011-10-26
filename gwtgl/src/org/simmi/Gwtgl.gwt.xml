@@ -13,7 +13,6 @@
   <!-- Other module inherits
   <inherits name='com.google.gwt.logging.client.FirebugLogHandler'/ -->
   <inherits name='com.google.gwt.visualization.Visualization'/>
-  <inherits name='com.googlecode.gwtgl.binding'/>
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='org.simmi.client.Gwtgl'/>
