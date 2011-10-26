@@ -55,11 +55,6 @@ import com.google.gwt.visualization.client.VisualizationUtils;
 import com.google.gwt.visualization.client.events.SelectHandler;
 import com.google.gwt.visualization.client.events.SortHandler;
 import com.google.gwt.visualization.client.visualizations.Table;
-import com.googlecode.gwtgl.array.Float32Array;
-import com.googlecode.gwtgl.binding.WebGLBuffer;
-import com.googlecode.gwtgl.binding.WebGLProgram;
-import com.googlecode.gwtgl.binding.WebGLRenderingContext;
-import com.googlecode.gwtgl.binding.WebGLUniformLocation;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -76,10 +71,10 @@ public class Gwtgl implements EntryPoint {
 	 */
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
-	private WebGLRenderingContext glContext;
+	/*private WebGLRenderingContext glContext;
     private WebGLProgram shaderProgram;
     private int vertexPositionAttribute;
-    private WebGLBuffer vertexBuffer;
+    private WebGLBuffer vertexBuffer;*/
     
     Context2d 			context;
     Context2d 			ocontext;
@@ -1106,7 +1101,7 @@ public class Gwtgl implements EntryPoint {
         context.setFillStyle(randomColor);
         context.fillRect( rndX, rndY, rndWidth, rndHeight);
         context.fill();
-    }*/
+    }*
 	
 	private void drawScene() {
         glContext.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
@@ -1137,5 +1132,5 @@ public class Gwtgl implements EntryPoint {
                          1.0f, -1.0f,  -5.0f  // third vertex
         };
         glContext.bufferData(WebGLRenderingContext.ARRAY_BUFFER, Float32Array.create(vertices), WebGLRenderingContext.STATIC_DRAW);
-	}
+	}*/
 }
