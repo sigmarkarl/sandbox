@@ -14,6 +14,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -26,6 +28,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DialogBox.Caption;
+import com.google.gwt.user.client.ui.DoubleBox;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.IntegerBox;
@@ -227,6 +230,10 @@ public class Blastic implements EntryPoint {
 			return s.@org.simmi.client.Blastic::getSelectedDb()();
 		};
 		
+		$wnd.getSelectedBlast = function() {
+			return s.@org.simmi.client.Blastic::getSelectedBlast()();
+		};
+		
 		$wnd.deleteSequenceKey = function( key ) {
 			s.@org.simmi.client.Blastic::deleteSequenceKey(Ljava/lang/String;)( key );
 		};
@@ -270,11 +277,9 @@ public class Blastic implements EntryPoint {
 	public void runBlast( String extrapar ) {
 		String[] dbInfo = getSelectedDb();
 		
-		console( "fuck " + dbInfo.length );
 		String dbPath = dbInfo[0];
 		String dbType = dbInfo[1];
 		
-		console( "me" );
 		Element e = Document.get().getElementById("serify");
 		runBlastInApplet(e, extrapar, dbPath, dbType );
 	}
@@ -287,27 +292,32 @@ public class Blastic implements EntryPoint {
 		//VerticalPanel	vp = new VerticalPanel();
 		//d.add( vp );
 		
-		Grid	grid = new Grid(2, 2);
+		Grid	grid = new Grid(3, 2);
 		
+		final CheckBox	eval = new CheckBox("evalue");
 		final CheckBox	numal = new CheckBox("num_alignments");
 		final CheckBox	numde = new CheckBox("num_descriptions");
 		
+		final DoubleBox			evalinput = new DoubleBox();
 		final IntegerBox		numalinput = new IntegerBox();
 		final IntegerBox		numdeinput = new IntegerBox();
 		
-		grid.setWidget(0, 0, numal);
-		grid.setWidget(0, 1, numalinput);
-		grid.setWidget(1, 0, numde);
-		grid.setWidget(1, 1, numdeinput);
+		grid.setWidget(0, 0, eval);
+		grid.setWidget(0, 1, evalinput);
+		grid.setWidget(1, 0, numal);
+		grid.setWidget(1, 1, numalinput);
+		grid.setWidget(2, 0, numde);
+		grid.setWidget(2, 1, numdeinput);
 		
 		d.add( grid );
 		
 		d.addCloseHandler( new CloseHandler<PopupPanel>() {
 			@Override
 			public void onClose(CloseEvent<PopupPanel> event) {
-				console( "erm" );
-				
 				String extrapar = "";
+				if( eval.getValue() ) {
+					extrapar += " -evalue "+evalinput.getValue();
+				}
 				if( numal.getValue() ) {
 					extrapar += " -num_alignments "+numalinput.getValue();
 				}
@@ -338,6 +348,19 @@ public class Blastic implements EntryPoint {
 				deleteSequenceInApplet( key );
 			}
 		});
+	}
+	
+	public String getSelectedBlast() {
+		JsArray<Selection> jas = blasttable.getSelections();
+		
+		if( jas.length() > 0 ) {
+			int row = jas.get(0).getRow();
+			String path = (String)blastdata.getValueString(row, 2);
+			//String typ = (String)blastdata.getValueString(row, 2);
+			return path; //new String[] {val, typ};
+		}
+		
+		return null;
 	}
 	
 	public String[] getSelectedDb() {
@@ -547,6 +570,11 @@ public class Blastic implements EntryPoint {
 				slp.setSize((w-20)+"px", (h-20)+"px");
 			}
 		});
+		Window.enableScrolling( false );
+		Style st = rp.getElement().getStyle();
+		st.setBorderWidth( 0.0, Unit.PX );
+		st.setMargin(0.0, Unit.PX);
+		st.setPadding(0.0, Unit.PX);
 		
 		initFunctions();
 		
