@@ -20,9 +20,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -30,6 +32,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
@@ -42,12 +47,16 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
@@ -74,6 +83,11 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 public class SerifyApplet extends JApplet {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	JTable				table;
 	List<Sequences>		sequences;
 	String globaluser = null;
@@ -717,6 +731,767 @@ public class SerifyApplet extends JApplet {
 		//infile.delete();
 	}
 	
+	public void blastJoin( InputStream is, OutputStream os ) throws IOException {
+		InputStreamReader 		fr = new InputStreamReader( is );
+		BufferedReader 	br = new BufferedReader( fr );
+		String line = br.readLine();
+		
+		PrintStream ps = new PrintStream( os );
+		
+		Map<String,Map<String,Set<String>>>	specmap = new HashMap<String,Map<String,Set<String>>>();
+		
+		String stuff = null;
+		String subject = null;
+		String length = null;
+		String start = null;
+		String stop = null;
+		String score = null;
+		String strand = null;
+		
+		String thespec = null;
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				if( subject != null ) {
+					String inspec = subject.substring(0, subject.indexOf('_'));
+					String spec = stuff.substring(0, stuff.indexOf('_'));
+					if( !spec.equals(inspec) ) {
+						Map<String,Set<String>>	contigmap;
+						if( specmap.containsKey(spec) ) {
+							contigmap = specmap.get(spec);
+						} else {
+							contigmap = new HashMap<String,Set<String>>();
+							specmap.put(spec, contigmap );
+						}
+						
+						Set<String>	hitmap;
+						if( contigmap.containsKey( subject ) ) {
+							hitmap = contigmap.get( subject );
+						} else {
+							hitmap = new HashSet<String>();
+							contigmap.put( subject, hitmap );
+						}
+						hitmap.add( stuff + " " + start + " " + stop + " " + score + " " + strand );
+					}
+					
+					subject = null;
+				}
+				stuff = line.substring(7).trim();
+				if( thespec == null ) thespec = stuff.split("_")[0];
+			} else if( line.startsWith("Length=") ) {
+				length = line;
+			} else if( line.startsWith(">") ) {
+				if( subject != null ) {
+					String inspec = subject.substring(0, subject.indexOf('_'));
+					String spec = stuff.substring(0, stuff.indexOf('_'));
+					if( !spec.equals(inspec) ) {
+						Map<String,Set<String>>	contigmap;
+						if( specmap.containsKey(spec) ) {
+							contigmap = specmap.get(spec);
+						} else {
+							contigmap = new HashMap<String,Set<String>>();
+							specmap.put(spec, contigmap );
+						}
+						
+						Set<String>	hitmap;
+						if( contigmap.containsKey( subject ) ) {
+							hitmap = contigmap.get( subject );
+						} else {
+							hitmap = new HashSet<String>();
+							contigmap.put( subject, hitmap );
+						}
+						hitmap.add( stuff + " " + start + " " + stop + " " + score + " " + strand );
+					}
+				}
+				length = null;
+				start = null;
+				stop = null;
+				subject = line.substring(1).trim();
+			} else if( line.startsWith("Sbjct") ) {
+				String[] split = line.split("[\t ]+");
+				if( start == null ) start = split[1];
+				stop = split[split.length-1];
+			} else if( length == null && subject != null ) {
+				subject += line;
+			} else if( line.startsWith(" Score") ) {				
+				if( start != null ) {
+					String inspec = subject.substring(0, subject.indexOf('_'));
+					String spec = stuff.substring(0, stuff.indexOf('_'));
+					if( !spec.equals(inspec) ) {
+						Map<String,Set<String>>	contigmap;
+						if( specmap.containsKey(spec) ) {
+							contigmap = specmap.get(spec);
+						} else {
+							contigmap = new HashMap<String,Set<String>>();
+							specmap.put(spec, contigmap );
+						}
+						
+						Set<String>	hitmap;
+						if( contigmap.containsKey( subject ) ) {
+							hitmap = contigmap.get( subject );
+						} else {
+							hitmap = new HashSet<String>();
+							contigmap.put( subject, hitmap );
+						}
+						hitmap.add( stuff + " " + start + " " + stop + " " + score + " " + strand );
+					}
+				}
+				score = line;
+				start = null;
+				stop = null;
+			} else if( line.startsWith(" Strand") ) {
+				strand = line;
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		for( String spec : specmap.keySet() ) {
+			if( spec.contains( thespec ) ) {
+				ps.println( spec );
+				
+				List<List<String>>	sortorder = new ArrayList<List<String>>();
+				
+				Map<List<String>,Integer>	joinMap = new HashMap<List<String>,Integer>();
+				Map<String,Set<String>>	contigmap = specmap.get(spec);
+				for( String contig : contigmap.keySet() ) {
+					Set<String>	hitmap = contigmap.get(contig);
+					List<String>	hitlist = new ArrayList<String>( hitmap );
+					hitmap.clear();
+					for( int i = 0; i < hitlist.size(); i++ ) {
+						for( int x = i+1; x < hitlist.size(); x++ ) {
+							String str1 = hitlist.get(i);
+							String str2 = hitlist.get(x);
+							
+							boolean left1 = str1.contains("left");
+							boolean left2 = str2.contains("left");
+							boolean minus1 = str1.contains("Minus");
+							boolean minus2 = str2.contains("Minus");
+							boolean all1 = str1.contains("all");
+							boolean all2 = str2.contains("all");
+							
+							if( (all1 || all2) || (left1 != left2 && minus1 == minus2) || (left1 == left2 && minus1 != minus2) ) {
+								String[] split1 = str1.split("[\t ]+");
+								String[] split2 = str2.split("[\t ]+");
+								
+								int start1 = Integer.parseInt( split1[1] );
+								int stop1 = Integer.parseInt( split1[2] );
+								int start2 = Integer.parseInt( split2[1] );
+								int stop2 = Integer.parseInt( split2[2] );
+								
+								if( start1 > stop1 ) {
+									int tmp = start1;
+									start1 = stop1;
+									stop1 = tmp;
+								}
+								
+								if( start2 > stop2 ) {
+									int tmp = start2;
+									start2 = stop2;
+									stop2 = tmp;
+								}
+								
+								if( (stop2-start2 > 50) && (stop1-start1 > 50) && ((start2 > start1-150 && start2 < stop1+150) || (stop2 > start1-150 && stop2 < stop1+150)) ) {
+									hitmap.add( str1 );
+									hitmap.add( str2 );
+									
+									int ind1 = str1.indexOf("_left");
+									if( ind1 == -1 ) ind1 = str1.indexOf("_right");
+									if( ind1 == -1 ) ind1 = str1.indexOf("_all");
+									String str1simple = str1.substring(0,ind1);
+									String str1compl = str1.substring(0, str1.indexOf(' ', ind1));
+									
+									int ind2 = str2.indexOf("_left");
+									if( ind2 == -1 ) ind2 = str2.indexOf("_right");
+									if( ind2 == -1 ) ind2 = str2.indexOf("_all");
+									String str2simple = str2.substring(0,ind2);
+									String str2compl = str2.substring(0, str2.indexOf(' ', ind2));
+									
+									/*if( minus1 != minus2 ) {
+										if( str1compl.compareTo( str2compl ) > 0 ) {
+											str1compl += " Minus";
+										} else str2compl += " Minus";
+									}*/
+									
+									if( !str2simple.equals(str1simple) ) {
+										List<String> joinset = new ArrayList<String>();
+										joinset.add( str1compl );
+										joinset.add( str2compl );
+										Collections.sort( joinset );
+										if( minus1 != minus2 ) joinset.set(1, joinset.get(1)+" Minus");
+										
+										if( joinMap.containsKey( joinset ) ) {
+											joinMap.put( joinset, joinMap.get(joinset)+1 );
+										} else {
+											joinMap.put( joinset, 1 );
+										}
+									}
+								}
+							}
+						}
+					}
+					if( hitmap.size() > 1 ) {
+						ps.println( "\t"+contig );
+						for( String hit : hitmap ) {
+							ps.println( "\t\t"+hit );
+						}
+					}
+				}
+
+				ps.println("Printing join count");
+				Map<Integer,List<List<String>>>	reverseset = new TreeMap<Integer,List<List<String>>>( Collections.reverseOrder() );
+				for( List<String> joinset : joinMap.keySet() ) {
+					int cnt = joinMap.get(joinset);
+					
+					if( joinset.get(0).contains("all") || joinset.get(1).contains("all") ) cnt -= 1000; 
+					
+					if( reverseset.containsKey(cnt) ) {
+						List<List<String>>	joinlist = reverseset.get(cnt);
+						joinlist.add( joinset );
+					} else {
+						List<List<String>> joinlist = new ArrayList<List<String>>();
+						joinlist.add( joinset );
+						reverseset.put(cnt, joinlist);
+					}
+				}
+				
+				for( int cnt : reverseset.keySet() ) {
+					List<List<String>>	joinlist = reverseset.get(cnt);
+					for( List<String> joinset : joinlist ) {
+						ps.println( joinset + ": " + cnt);
+					}
+				}
+					
+					for( int cnt : reverseset.keySet() ) {
+						List<List<String>>	joinlist = reverseset.get(cnt);
+						for( List<String> joinset : joinlist ) {
+							
+							String str1 = joinset.get(0);
+							String str2 = joinset.get(1);
+							
+							/*for( String joinstr : joinset ) {
+								if( str1 == null ) str1 = joinstr;
+								else {
+									str2 = joinstr;
+									break;
+								}
+							}*/
+							
+							boolean minus1 = str1.contains("Minus");
+							str1 = str1.replace(" Minus", "");
+							str2 = str2.replace(" Minus", "");
+							//boolean minus1 = str1.contains("Minus");
+							//String str1com = str1.substring(0,str1.lastIndexOf('_'));
+							//String str2simple = str1.substring(0,str2.lastIndexOf('_'));
+							String str1simple = str1.substring(0,str1.lastIndexOf('_'));
+							String str2simple = str2.substring(0,str2.lastIndexOf('_'));
+							
+									List<String>	seqlist1 = null;
+									List<String>	seqlist2 = null;								
+									//boolean both = false;
+									for( List<String> sl : sortorder ) {
+										for( String seq : sl ) {
+											/*if( seq.contains(str1simple) && seq.contains(str2simple) ) {
+												seqlist1 = sl;
+												seqlist2 = sl;
+											} else*/
+											
+											if( seq.contains(str1simple) ) {
+												if( seqlist1 == null ) seqlist1 = sl;
+											} else if( seq.contains(str2simple) ) {
+												if( seqlist2 == null ) seqlist2 = sl;
+											}
+										}
+										if( seqlist1 != null && seqlist2 != null ) break;
+									}
+									
+									/*for( List<String> sl1 : sortorder ) {
+										for( List<String> sl2 : sortorder ) {
+											if( sl1 != sl2 ) {
+												for( String str : sl1 ) {
+													if( sl2.contains(str) ) {
+														System.err.println( str );
+														System.err.println();
+														for( String s1 : sl1 ) {
+															System.err.println( s1 );
+														}
+														System.err.println();
+														for( String s2 : sl2 ) {
+															System.err.println( s2 );
+														}
+														System.err.println();
+													}
+												}
+											}
+										}
+									}
+									
+									int count = 0;
+									if( seqlist1 != null ) {
+										for( String s : seqlist1 ) {
+											if( s.contains("00006") ) count++;
+											else if( s.contains("00034") ) count++;
+											
+											if( count == 2 ) {
+												System.err.println();
+											}
+										}
+									}
+									
+									if( seqlist2 != null ) {
+										for( String s : seqlist2 ) {
+											if( s.contains("00006") ) count++;
+											else if( s.contains("00034") ) count++;
+											
+											if( count == 2 ) {
+												System.err.println();
+											}
+										}
+									}*/
+									
+									boolean left1 = str1.contains("left");
+									boolean left2 = str2.contains("left");
+									
+									if( seqlist1 == null && seqlist2 == null ) {
+										List<String> seqlist = new ArrayList<String>();
+										sortorder.add( seqlist );
+										
+										if( left1 ) {
+											if( left2 ) {
+												if( minus1 ) {
+													seqlist.add( str1+" reverse" );
+													seqlist.add( str2 );
+												} else {
+													seqlist.add( str2+" reverse" );
+													seqlist.add( str1 );
+												}
+											} else {
+												if( minus1 ) {
+													seqlist.add( str1+" reverse" );
+													seqlist.add( str2+" reverse" );
+												} else {
+													seqlist.add( str2 );
+													seqlist.add( str1 );
+												}
+											}
+										} else {
+											if( left2 ) {
+												if( minus1 ) {
+													seqlist.add( str2+" reverse" );
+													seqlist.add( str1+" reverse" );
+												} else {
+													seqlist.add( str1 );
+													seqlist.add( str2 );
+												}
+											} else {
+												if( minus1 ) {
+													seqlist.add( str2 );
+													seqlist.add( str1+" reverse" );
+												} else {
+													seqlist.add( str1 );
+													seqlist.add( str2+" reverse" );
+												}
+											}
+										}
+									} else if( (seqlist1 == null && seqlist2 != null) || (seqlist1 != null && seqlist2 == null) ) {
+										List<String>	seqlist;
+										String selseq = null;
+										String noseq = null;
+										
+										int ind = -1;
+										if( seqlist1 == null ) {
+											seqlist = seqlist2;
+											selseq = str2;
+											noseq = str1;
+											
+											String seqf = seqlist.get(0);
+											String seql = seqlist.get( seqlist.size()-1 );
+											boolean bf = true; //(seqf.contains("left") && !seqf.contains("reverse")) || (!seqf.contains("left") && seqf.contains("reverse"));
+											boolean bl = true; //(seql.contains("left") && seql.contains("reverse")) || (!seql.contains("left") && !seql.contains("reverse"));
+											
+ 											if( seqf.contains(str2simple) && bf ) ind = 0;
+											else if( seql.contains(str2simple) && bl ) ind = seqlist.size()-1;
+										} else {
+											seqlist = seqlist1;
+											selseq = str1;
+											noseq = str2;
+											
+											String seqf = seqlist.get(0);
+											String seql = seqlist.get( seqlist.size()-1 );
+											boolean bf = true; //(seqf.contains("left") && !seqf.contains("reverse")) || (!seqf.contains("left") && seqf.contains("reverse"));
+											boolean bl = true; //(seql.contains("left") && seql.contains("reverse")) || (!seql.contains("left") && !seql.contains("reverse"));
+											
+											if( seqf.contains(str1simple) && bf ) ind = 0;
+											else if( seql.contains(str1simple) && bl ) ind = seqlist.size()-1;
+										}
+										
+										if( ind != -1 ) {
+											String tstr = seqlist.get(ind);
+											boolean leftbef = tstr.contains("left");
+											boolean leftaft = selseq.contains("left");
+											boolean allaft = false;//selseq.contains("all");
+											boolean revbef = tstr.contains("reverse");
+											//boolean revaft = selseq.contains("reverse");
+											
+											boolean leftno = noseq.contains("left");
+											//boolean revno = selseq.contains("reverse");
+											
+											if( leftbef && revbef) {
+												if( leftaft ) {
+													if( ind == seqlist.size()-1 || allaft ) {
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												} else {
+													if( ind == 0 || allaft ) {
+														seqlist.add( 0, selseq+" reverse" );
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												}
+											} else if( !leftbef && !revbef ) {
+												if( leftaft ) {
+													if( ind == 0 || allaft ) {
+														seqlist.add( 0, selseq );
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												} else {
+													if( ind == seqlist.size()-1 || allaft ) {
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												}
+											} else if( !leftbef && revbef ) {
+												if( leftaft ) {
+													if( ind == seqlist.size()-1 || allaft ) {
+														seqlist.add( seqlist.size(), selseq+" reverse" );
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												} else {
+													if( ind == 0 || allaft ) {
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												}
+												
+												//if( leftno ) seqlist.add( 0, noseq+" reverse" );
+												//else seqlist.add( 0, noseq );
+											} else if( leftbef && !revbef ) {
+												if( leftaft ) {
+													if( ind == 0 || allaft ) {
+														if( leftno ) seqlist.add( 0, noseq+" reverse" );
+														else seqlist.add( 0, noseq );
+													}
+												} else {
+													if( ind == seqlist.size()-1 || allaft ) {
+														seqlist.add( seqlist.size(), selseq );
+														if( leftno ) seqlist.add( seqlist.size(), noseq );
+														else seqlist.add( seqlist.size(), noseq+" reverse" );
+													}
+												}
+												
+												//if( leftno ) seqlist.add( 0, noseq+" reverse" );
+												//else seqlist.add( 0, noseq );
+											}
+											
+											/*if( selseq.contains(str1simple) ) {
+												if( selseq.contains("reverse ") ) {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind+1, str2 );
+														} else {
+															seqlist.add( ind+1, str2+" reverse" );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind, str2+" reverse" );
+														} else {
+															seqlist.add( ind, str2 );
+														}
+													}
+												} else {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind, str2+" reverse" );
+														} else {
+															seqlist.add( ind, str2 );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind+1, str2 );
+														} else {
+															seqlist.add( ind+1, str2+" reverse" );
+														}
+													}
+												}
+											} else {
+												if( selseq.contains("reverse ") ) {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind+1, str1 );
+														} else {
+															seqlist.add( ind, str1+" reverse" );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind+1, str1+" reverse" );
+														} else {
+															seqlist.add( ind, str1 );
+														}
+													}
+												} else {
+													if( left1 ) {
+														if( left2 ) {
+															seqlist.add( ind, str1+" reverse" );
+														} else {
+															seqlist.add( ind+1, str1 );
+														}
+													} else {
+														if( left2 ) {
+															seqlist.add( ind, str1 );
+														} else {
+															seqlist.add( ind+1, str1+" reverse" );
+														}
+													}
+												}
+											}*/
+										}
+									} else if( seqlist1 != seqlist2 ) {
+										String selseq1 = null;
+										String selseq2 = null;
+										
+										int ind1 = -1;
+										if( seqlist1.get(0).contains(str1simple) ) {
+											ind1 = 0;
+											selseq1 = seqlist1.get(0);
+										} else if( seqlist1.get( seqlist1.size()-1 ).contains(str1simple) ) {
+											ind1 = seqlist1.size()-1;
+											selseq1 = seqlist1.get( seqlist1.size()-1 );
+										}
+										
+										int ind2 = -1;
+										if( seqlist2.get(0).contains(str2simple) ) {
+											ind2 = 0;
+											selseq2 = seqlist2.get(0);
+										} else if( seqlist2.get( seqlist2.size()-1 ).contains(str2simple) ) {
+											ind2 = seqlist2.size()-1;
+											selseq2 = seqlist2.get( seqlist2.size()-1 );
+										}
+										
+										boolean success = false;
+										
+										if( selseq1 == null || selseq2 == null ) {
+											System.err.println("bleh");
+										} else {											
+											System.err.println( "joining: " + seqlist1 );
+											System.err.println( "and: " + seqlist2 );
+										
+											boolean lef1 = selseq1.contains("left");
+											boolean lef2 = selseq2.contains("left");
+											boolean rev1 = selseq1.contains("reverse");
+											boolean rev2 = selseq2.contains("reverse");
+											
+											boolean bb = false;
+											if( bb ) {
+												System.err.println("subleh");
+											} else {
+												if( lef1 && !left1 ) {
+													if( rev1 && ind1 == 0 ) seqlist1.add( 0, str1+" reverse" );
+													else if( ind1 == seqlist1.size()-1 ) seqlist1.add( seqlist1.size(), str1 );
+												} else if( !lef1 && left1 ) {
+													if( rev1 && ind1 == seqlist1.size()-1 ) seqlist1.add( seqlist1.size(), str1+" reverse" );
+													else if( ind1 == 0 ) seqlist1.add( 0, str1 );
+												}
+												
+												if( lef2 && !left2 ) {
+													if( rev2 && ind2 == 0 ) seqlist2.add( 0, str2+" reverse" );
+													else if( ind2 == seqlist2.size()-1 ) seqlist2.add( seqlist2.size(), str2 );
+												} else if( !lef2 && left2 ) {
+													if( rev2 && ind2 == seqlist2.size()-1 ) seqlist2.add( seqlist2.size(), str2+" reverse" );
+													else if( ind2 == 0 ) seqlist2.add( 0, str2 );
+												}
+												
+												boolean left1beg = seqlist1.get(0).contains("left");
+												boolean rev1beg = seqlist1.get(0).contains("reverse");
+												boolean left1end = seqlist1.get(seqlist1.size()-1).contains("left");
+												boolean rev1end = seqlist1.get(seqlist1.size()-1).contains("reverse");
+												
+												boolean left2beg = seqlist2.get(0).contains("left");
+												boolean rev2beg = seqlist2.get(0).contains("reverse");
+												boolean left2end = seqlist2.get(seqlist2.size()-1).contains("left");
+												boolean rev2end = seqlist2.get(seqlist2.size()-1).contains("reverse");
+												
+												if( seqlist1.get(0).contains(str1simple) ) {
+													if( seqlist2.get(0).contains(str2simple) ) {
+														if( ((left1beg && !rev1beg) || (!left1beg && rev1beg)) && (((left2beg && !rev2beg) || (!left2beg && rev2beg))) ) {
+															Collections.reverse( seqlist2 );
+															for( int u = 0; u < seqlist2.size(); u++ ) {
+																String val = seqlist2.get(u);
+																if( val.contains(" reverse") ) seqlist2.set( u, val.replace(" reverse", "") );
+																else {
+																	int end = val.length()-1;
+																	while( val.charAt(end) == 'I' ) end--;
+																	seqlist2.set(u, val.substring(0, end+1)+" reverse"+val.substring(end+1, val.length()) );
+																}
+															}
+															success = true;
+															seqlist1.addAll(0, seqlist2);
+														}
+													} else {
+														if( ((left1beg && !rev1beg) || (!left1beg && rev1beg)) && (((left2end && rev2end) || (!left2end && !rev2end))) ) {
+															success = true;
+															seqlist1.addAll(0, seqlist2);
+														}
+													}
+												} else { //if( seqlist1.indexOf(str1) == seqlist1.size()-1 ) {
+													if( seqlist2.get(0).contains(str2simple) ) {
+														if( ((left1end && rev1end) || (!left1end && !rev1end)) && (((left2beg && !rev2beg) || (!left2beg && rev2beg))) ) {
+															success = true;
+															seqlist1.addAll(seqlist1.size(), seqlist2);
+														}
+													} else {
+														if( ((left1end && rev1end) || (!left1end && !rev1end)) && (((left2end && rev2end) || (!left2end && !rev2end))) ) {
+															Collections.reverse( seqlist2 );
+															for( int u = 0; u < seqlist2.size(); u++ ) {
+																String val = seqlist2.get(u);
+																if( val.contains(" reverse") ) seqlist2.set( u, val.replace(" reverse", "") );
+																else {
+																	int end = val.length()-1;
+																	while( val.charAt(end) == 'I' ) end--;
+																	seqlist2.set(u, val.substring(0, end+1)+" reverse"+val.substring(end+1, val.length()) );
+																}
+															}
+															success = true;
+															seqlist1.addAll(seqlist1.size(), seqlist2);
+														}
+													}
+												}
+												
+												if( success ) {
+													if( !sortorder.remove( seqlist2 ) ) {
+														System.err.println("no remove");
+													}
+												}
+												System.err.println("result is: "+seqlist1);
+											}
+										}
+									} else {
+										System.err.println( "same shit " + seqlist1 + " " + str1 + " " + str2 );
+										/*for( int k = 0; k < seqlist1.size(); k++ ) {
+											if( seqlist1.get(k).contains(str1) ) seqlist1.set(k, seqlist1.get(k)+"I");
+											else if( seqlist1.get(k).contains(str2) ) seqlist1.set(k, seqlist1.get(k)+"I");
+										}*/
+										int i = 0;
+										i = 2;
+									}
+								}
+							//}
+						//}
+					//}
+				}
+				
+				ps.println("join");
+				for( List<String> so : sortorder ) {
+					for( int i = 0; i < so.size(); i++ ) {
+						String s = so.get(i);
+						String ss = s.substring(0, s.indexOf("_contig")+12);
+						if( i == so.size()-1 ) {
+							ps.println( ss + (s.contains("everse") ? "_reverse" : "") );
+						} else {
+							String n = so.get(i+1);
+							String nn = n.substring(0, n.indexOf("_contig")+12);
+							if( ss.equals(nn) ) {
+								ps.println( ss + (s.contains("everse") ? "_reverse" : "") );
+								i++;
+							} else {
+								ps.println( ss + (s.contains("everse") ? "_reverse" : "") );
+							}
+						}
+					}
+					/*for( String s : so ) {
+						System.out.println(s);
+					}*/
+					ps.println();
+				}
+			}
+		}
+	}
+	
+	public int flankingFasta( InputStream is, OutputStream os ) throws IOException {        
+        OutputStreamWriter 		fw = new OutputStreamWriter( os );
+        BufferedWriter			bw = new BufferedWriter( fw );
+        
+        int fasti = 60;
+        int nseq = 0;
+		InputStreamReader fr = new InputStreamReader( is );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		String seqname = null;
+		StringBuilder	seq = new StringBuilder();
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( seqname != null ) {
+					if( seq.length() < 200 ) {
+						fw.write( seqname+"_all"+"\n" );
+						for( int i = 0; i < seq.length(); i+=fasti ) {
+							fw.write( seq.substring( i, Math.min( seq.length(), i+fasti ) )+"\n" );
+						}
+						nseq++;
+					} else {
+						fw.write( seqname+"_left"+"\n" );
+						for( int i = 0; i < 150; i+=fasti ) {
+							fw.write( seq.substring( i, Math.min( 150, i+fasti ) )+"\n" );
+						}
+						nseq++;
+						fw.write( seqname+"_right"+"\n" );
+						for( int i = seq.length()-151; i < seq.length(); i+=fasti ) {
+							fw.write( seq.substring( i, Math.min( seq.length(), i+fasti ) )+"\n" );
+						}
+						nseq++;
+					}
+				}
+				int endind = line.indexOf(' ');
+				if( endind == -1 ) endind = line.indexOf('\t');
+				if( endind == -1 ) endind = line.length();
+				seqname = line.substring(0, endind);
+				seq = new StringBuilder();
+			} else {
+				seq.append( line );
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		if( seqname != null ) {
+			if( seq.length() < 200 ) {
+				fw.write( seqname+"_all"+"\n" );
+				for( int i = 0; i < seq.length(); i+=fasti ) {
+					fw.write( seq.substring( i, Math.min( seq.length(), i+fasti ) )+"\n" );
+				}
+				nseq++;
+			} else {
+				fw.write( seqname+"_left"+"\n" );
+				for( int i = 0; i < 150; i+=fasti ) {
+					fw.write( seq.substring( i, Math.min( 150, i+fasti ) )+"\n" );
+				}
+				nseq++;
+				fw.write( seqname+"_right"+"\n" );
+				for( int i = seq.length()-151; i < seq.length(); i+=fasti ) {
+					fw.write( seq.substring( i, Math.min( seq.length(), i+fasti ) )+"\n" );
+				}
+				nseq++;
+			}
+		}
+		
+		bw.flush();
+		fw.close();
+		
+		return nseq;
+	}
+	
 	public void init( final Container c ) {
 		this.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -998,6 +1773,49 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
+		popup.add( new AbstractAction("Flanking") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.isDirectory() ) f = f.getParentFile();
+					final File dir = f;
+					
+					int r = table.getSelectedRow();
+					int rr = table.convertRowIndexToModel( r );
+					if( rr >= 0 ) {
+						final Sequences seqs = sequences.get( rr );
+						
+						try {
+							URI uri = new URI( seqs.getPath() );
+							InputStream is = uri.toURL().openStream();
+							
+							String fname = seqs.getName();
+							String endn = ".fasta";
+							int li = fname.lastIndexOf('.');
+							if( li != -1 ) {
+								endn = fname.substring(li);
+								fname = fname.substring(0,li);
+							}
+							
+							File file = new File( dir, fname+"_flanking"+endn );
+							OutputStream os = new FileOutputStream( file );
+							
+							int nseq = flankingFasta(is, os);
+							addSequences(fname, seqs.type, file.getAbsolutePath(), nseq);
+						} catch (URISyntaxException e1) {
+							e1.printStackTrace();
+						} catch (MalformedURLException e1) {
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+		});
 		
 		popup.addSeparator();
 		popup.add( new AbstractAction("Join") {
@@ -1103,6 +1921,26 @@ public class SerifyApplet extends JApplet {
 							public void windowDeactivated(WindowEvent e) {}
 						});
 						dl.setVisible( true );
+					}
+				}
+			}
+		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Blast join") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JSObject	jso = JSObject.getWindow(SerifyApplet.this);
+				String s = (String)jso.call("getSelectedBlast", new Object[] {} );
+				
+				JFileChooser fc = new JFileChooser();
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					try {
+						blastJoin( new FileInputStream(s), new FileOutputStream(f) );
+					} catch (FileNotFoundException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
 					}
 				}
 			}
@@ -1449,7 +2287,6 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
-		
 		String[] lcmd = "/opt/ncbi-blast-2.2.25+/bin/blastp -query /home/horfrae/arciformis_3.aa -db /opt/db/nr  -num_alignments 1 -num_descriptions 1 -out /home/horfrae/arciformis_3.blastout".split("[ ]");
 		Runnable run = new Runnable() {
 			public void run() {
