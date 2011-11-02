@@ -82,12 +82,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-import org.apache.sshd.ClientChannel;
-import org.apache.sshd.ClientSession;
-import org.apache.sshd.SshClient;
-import org.apache.sshd.client.channel.ChannelExec;
-import org.lwjgl.LWJGLException;
-import org.lwjgl.opengl.Display;
 import org.simmi.Simlab.simlab.ByValue;
 
 import com.sun.jna.Function;
@@ -693,7 +687,7 @@ public class Simlab implements ScriptEngineFactory {
 	}
 	
 	public int ssh( final simlab.ByValue user, final simlab.ByValue pass, final simlab.ByValue host, final simlab.ByValue port, final simlab.ByValue cmd ) throws InterruptedException, Exception {
-		SshClient	sshclient = SshClient.setUpDefaultClient();
+		/*SshClient	sshclient = SshClient.setUpDefaultClient();
 		sshclient.start();
 		
 		String hoststr = host.getTheString();
@@ -718,7 +712,7 @@ public class Simlab implements ScriptEngineFactory {
             w.append( command ); //.append(" ");
         //}
         w.append("\n");
-        w.close();*/
+        w.close();*
         channel.setIn(new ByteArrayInputStream(baos.toByteArray()));
         channel.setOut( System.out );
         channel.setErr( System.err );
@@ -726,7 +720,7 @@ public class Simlab implements ScriptEngineFactory {
         channel.waitFor(ClientChannel.CLOSED, 0);
         session.close(false);
         
-        sshclient.stop();
+        sshclient.stop();*/
 		
 		return 5;
 	}
@@ -4084,7 +4078,7 @@ public class Simlab implements ScriptEngineFactory {
 		double vmin, vmax;
 
 		public void paint(Graphics g) {
-			System.err.println( this.getWidth() + " " + this.getHeight() );
+			/*System.err.println( this.getWidth() + " " + this.getHeight() );
 			if( !started && isShowing() ) {
 				try {
 					Display.setParent(this);
@@ -4096,11 +4090,11 @@ public class Simlab implements ScriptEngineFactory {
 			}
 			
 			super.paint( g );
-			if( started ) sd.draw();
+			if( started ) sd.draw();*/
 		}
 
 		public void reload() {
-			if( !started && this.isShowing() ) {
+			/*if( !started && this.isShowing() ) {
 				try {
 					Display.setParent(this);
 					Display.create();
@@ -4108,7 +4102,7 @@ public class Simlab implements ScriptEngineFactory {
 					e.printStackTrace();
 				}
 				started = true;
-			}
+			}*/
 			
 			Buffer b = ptr.getBuffer();
 			if (b instanceof DoubleBuffer) {

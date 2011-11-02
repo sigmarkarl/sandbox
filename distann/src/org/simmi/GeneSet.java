@@ -99,7 +99,6 @@ import javax.swing.event.RowSorterListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
-import javax.swing.text.DefaultEditorKit.CopyAction;
 
 public class GeneSet extends JApplet {
 	/**
@@ -3694,6 +3693,8 @@ public class GeneSet extends JApplet {
 		String stop = null;
 		String score = null;
 		String strand = null;
+		
+		String thespec = null;
 		while( line != null ) {
 			if( line.startsWith("Query=") ) {
 				if( subject != null ) {
@@ -3721,6 +3722,7 @@ public class GeneSet extends JApplet {
 					subject = null;
 				}
 				stuff = line.substring(7).trim();
+				if( thespec == null ) thespec = stuff.split("_")[0];
 			} else if( line.startsWith("Length=") ) {
 				length = line;
 			} else if( line.startsWith(">") ) {
@@ -3791,7 +3793,7 @@ public class GeneSet extends JApplet {
 		fr.close();
 		
 		for( String spec : specmap.keySet() ) {
-			if( spec.contains("346") ) {
+			if( spec.contains( thespec ) ) {
 				System.out.println( spec );
 				
 				List<List<String>>	sortorder = new ArrayList<List<String>>();
@@ -4524,7 +4526,7 @@ public class GeneSet extends JApplet {
 		//init( args );
 		
 		try {
-			//blastJoin("/home/sigmar/playground/stuff.blastout");
+			blastJoin("/home/horfrae/peter/stuff.blastout");
 			
 			//flankingFasta("/home/sigmar/playground/all.fsa", "/home/sigmar/playground/flank.fsa");
 			//blast2Filt( "/home/sigmar/kaw.blastout", "/home/sigmar/newkaw_filter.txt" );
@@ -4537,12 +4539,12 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo/6.blastout") );
+			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo/6.blastout") );
 			/*for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}*/
-			loci2gene( new FileReader("c:/viggo/6.blastout"), "c:/viggo/6v3.txt", null, freqmap );
+			//loci2gene( new FileReader("c:/viggo/6.blastout"), "c:/viggo/6v3.txt", null, freqmap );
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
@@ -6395,14 +6397,72 @@ public class GeneSet extends JApplet {
 				JTextArea textarea = new JTextArea();
 				
 				try {  
-			    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+			    	if( clipboardService == null ) clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
 			    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
-		            table.getActionMap().put( "copy", action );
+		            textarea.getActionMap().put( "copy", action );
 		            grabFocus = true;
 			    } catch (Exception ee) {
 			    	ee.printStackTrace();
 			    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
 			    }
+				
+				/*final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();//new DataFlavor("text/plain;charset=utf-8");
+				final String charset = df.getParameter("charset");		
+				final Transferable transferable = new Transferable() {
+					@Override
+					public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+						String ret = makeCopyString( detailTable );
+						return new ByteArrayInputStream( ret.getBytes( charset ) );
+					}
+
+					@Override
+					public DataFlavor[] getTransferDataFlavors() {
+						return new DataFlavor[] { df };
+					}
+
+					@Override
+					public boolean isDataFlavorSupported(DataFlavor arg0) {
+						if( arg0.equals(df) ) {
+							return true;
+						}
+						return false;
+					}
+				};
+
+				TransferHandler th = new TransferHandler() {
+					private static final long serialVersionUID = 1L;
+					
+					public int getSourceActions(JComponent c) {
+						return TransferHandler.COPY_OR_MOVE;
+					}
+
+					public boolean canImport(TransferHandler.TransferSupport support) {
+						return false;
+					}
+
+					protected Transferable createTransferable(JComponent c) {
+						return transferable;
+					}
+
+					public boolean importData(TransferHandler.TransferSupport support) {
+						/*try {
+							Object obj = support.getTransferable().getTransferData( df );
+							InputStream is = (InputStream)obj;
+							
+							byte[] bb = new byte[2048];
+							int r = is.read(bb);
+							
+							//importFromText( new String(bb,0,r) );
+						} catch (UnsupportedFlavorException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}*
+						return false;
+					}
+				};
+				textarea.setTransferHandler( th );*/
+				textarea.setDragEnabled( true );
 				
 				JScrollPane	scrollpane = new JScrollPane( textarea );
 				
@@ -6437,6 +6497,18 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JTextArea textarea = new JTextArea();
 				JScrollPane	scrollpane = new JScrollPane( textarea );
+				
+				try {  
+			    	if( clipboardService == null ) clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+			    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+		            textarea.getActionMap().put( "copy", action );
+		            grabFocus = true;
+			    } catch (Exception ee) {
+			    	ee.printStackTrace();
+			    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+			    }
+				
+				textarea.setDragEnabled( true );
 				
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {

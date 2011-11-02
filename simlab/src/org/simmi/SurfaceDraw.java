@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
-import org.lwjgl.opengl.GL11;
-
 public class SurfaceDraw {
 	int			matSize;
 	FloatBuffer	vertexBuffer = null;
@@ -26,7 +24,7 @@ public class SurfaceDraw {
 		loadData();
 	}
 	
-	public void mouseDown( GL11 gl, int ex, int ey, int ebutton ) {
+	/*public void mouseDown( GL11 gl, int ex, int ey, int ebutton ) {
 		x = ex;
 		y = ey;
 	}
@@ -39,7 +37,7 @@ public class SurfaceDraw {
 		float a = (float)Math.sqrt(fy*fy+fx*fx);
 		if( a > 0.1f ) GL11.glRotatef( (float)(0.2*a), fy/a, fx/a, 0.0f );
 		GL11.glMultMatrix( modelBuffer );
-	}
+	}*/
 	
 	public void initBuffers() {
 		int matSqure = matSize*matSize;
@@ -58,7 +56,7 @@ public class SurfaceDraw {
 		}
 	}
 	
-	public void initMatrix() {
+	/*public void initMatrix() {
 		GL11.glGetFloat( GL11.GL_MODELVIEW_MATRIX, modelBuffer );
 	}
 	
@@ -81,7 +79,7 @@ public class SurfaceDraw {
 		GL11.glLight(lightNumber, GL11.GL_SPOT_DIRECTION, f );
 		//GL11.glLight(lightNumber, GL11.GL_SPOT_EXPONENT, fb_exp_cut );
 		//GL11.glLight(lightNumber, GL11.GL_SPOT_CUTOFF, fb_exp_cut );
-	}
+	}*/
 	
 	public void initLight( ) {
 		FloatBuffer fLightBuffer = lightBuffer;
@@ -318,7 +316,7 @@ public class SurfaceDraw {
 	public void draw() {
 		int count = vertexBuffer.limit();
 		
-		GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		/*GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		GL11.glClearDepth(1.0f);
 		GL11.glClear( GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT );
 		
@@ -336,6 +334,6 @@ public class SurfaceDraw {
 		
 		GL11.glDisable( GL11.GL_COLOR_MATERIAL );
 		GL11.glDisable( GL11.GL_DEPTH_TEST );
-		GL11.glDisable( GL11.GL_LIGHTING );
+		GL11.glDisable( GL11.GL_LIGHTING );*/
 	}
 }
