@@ -1804,7 +1804,7 @@ public class SerifyApplet extends JApplet {
 							OutputStream os = new FileOutputStream( file );
 							
 							int nseq = flankingFasta(is, os);
-							addSequences(fname, seqs.type, file.getAbsolutePath(), nseq);
+							addSequences(file.getName(), seqs.type, file.toURI().toURL().toString(), nseq);
 						} catch (URISyntaxException e1) {
 							e1.printStackTrace();
 						} catch (MalformedURLException e1) {
@@ -2142,7 +2142,7 @@ public class SerifyApplet extends JApplet {
 		String line = br.readLine();
 		while( line != null ) {
 			if( line.startsWith(">") ) nseq++;
-			else if( type.equals("nucl") && !line.matches("^[acgtnxACGTNX]+$") ) {
+			else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTYKVRSWMNX]+$") ) {
 				System.err.println( line );
 				type = "prot";
 			}
