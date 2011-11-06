@@ -554,28 +554,28 @@ public class Blastic implements EntryPoint {
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
 		
-		int w = Window.getClientWidth();
-		int h = Window.getClientHeight();
-		rp.setSize((w-20)+"px", (h-20)+"px");
-		
-		final SplitLayoutPanel	slp = new SplitLayoutPanel();
-		slp.setSize((w-20)+"px", (h-20)+"px");
-		
-		Window.addResizeHandler( new ResizeHandler() {
-			@Override
-			public void onResize(ResizeEvent event) {
-				int w = event.getWidth();
-				int h = event.getHeight();
-				rp.setSize((w-20)+"px", (h-20)+"px");
-				slp.setSize((w-20)+"px", (h-20)+"px");
-			}
-		});
 		Window.enableScrolling( false );
 		Style st = rp.getElement().getStyle();
 		st.setBorderWidth( 0.0, Unit.PX );
 		st.setMargin(0.0, Unit.PX);
 		st.setPadding(0.0, Unit.PX);
 		
+		int w = Window.getClientWidth();
+		int h = Window.getClientHeight();
+		rp.setSize((w)+"px", (h)+"px");
+		
+		final SplitLayoutPanel	slp = new SplitLayoutPanel();
+		slp.setSize((w)+"px", (h)+"px");
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				int w = event.getWidth();
+				int h = event.getHeight();
+				rp.setSize((w)+"px", (h)+"px");
+				slp.setSize((w)+"px", (h)+"px");
+			}
+		});		
 		initFunctions();
 		
 		//slp.getElement().getStyle().setBorderWidth(3.0, Unit.PX);
