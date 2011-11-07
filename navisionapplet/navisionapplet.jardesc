@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="/home/sigmar/sandbox/navisionapplet/navisionapplet.jar"/>
+    <jar path="navisionexplorer/war/navisionapplet.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/navisionapplet/navisionapplet.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
