@@ -664,7 +664,7 @@ public class SortTable extends JApplet {
 		Window window = SwingUtilities.windowForComponent(this);
 		KeyListener keylistener = initFSKeyListener( window );
 		if (window instanceof JFrame) {
-			JFrame frame = (JFrame) window;
+			JFrame frame = (JFrame)window;
 			//frame.setUndecorated( true );
 			if (!frame.isResizable())
 				frame.setResizable(true);
