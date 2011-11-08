@@ -32,6 +32,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.jdesktop.swingx.JXDatePicker;
+
 public class Afstemming extends JApplet {
 
 	Connection connection;
@@ -167,11 +169,28 @@ public class Afstemming extends JApplet {
 		ps.close();
 	}
 	
+	JXDatePicker	after;
+	JXDatePicker	before;
+	public String getStartDate() {
+		String aftstr = (after == null || after.getDate() == null) ? null : (after.getDate().getYear()+1900) + "-" + (after.getDate().getMonth()+1) + "-" + after.getDate().getDate();
+		return aftstr;
+	}
+	
+	public String getEndDate() {
+		String befstr = (before == null || before.getDate() == null) ? null : (before.getDate().getYear()+1900) + "-" + (before.getDate().getMonth()+1) + "-" + before.getDate().getDate();
+		return befstr;
+	}
+	
 	public void loadAaetlun() throws SQLException {
+		String startDate = getStartDate();
+		String endDate = getEndDate();
+		
 		String	sql = "select be.\"Job No_\", be.No_, be.Type, bl.Description, sum(be.\"Total Cost\") as Cost, sum(\"Total Price\") as Price from dbo.\"Matís ohf_$Job Budget Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where "
 				//+ "be.\"Job No_\" = " o.toString() + " and "
-				+ "be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\"";
+				+ "be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.Type == '2'";
 		
+		if( startDate != null ) sql += " and be.Date >= '"+startDate+"'";
+		if( endDate != null ) sql += " and be.Date <= '"+endDate+"'";
 		//if( endDate != null ) sql += " and be.Date <= '"+endDate+"'";
 		sql += " group by be.\"Job No_\", be.No_, be.Type, bl.Description";
 		
@@ -670,10 +689,7 @@ public class Afstemming extends JApplet {
 				}
 				
 				@Override
-				public void addTableModelListener(TableModelListener l) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void addTableModelListener(TableModelListener l) {}
 			};
 			table.setModel( model );
 			
