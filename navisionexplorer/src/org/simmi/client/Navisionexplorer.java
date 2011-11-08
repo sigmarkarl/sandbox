@@ -1035,7 +1035,7 @@ public class Navisionexplorer implements EntryPoint {
 		final DockLayoutPanel	dlp = new DockLayoutPanel( Unit.PX );
 		final SplitLayoutPanel 	slp = new SplitLayoutPanel();
 		final SplitLayoutPanel 	m_slp = new SplitLayoutPanel();
-		final TabLayoutPanel	tlp = new TabLayoutPanel( 25, Unit.PX ); 
+		final TabLayoutPanel	tlp = new TabLayoutPanel( 25, Unit.PX );
 		
 		before = new DateBox();
 		after = new DateBox();
