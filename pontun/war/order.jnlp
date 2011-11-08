@@ -21,7 +21,8 @@
   <extension name="poi" href="http://dl.dropbox.com/u/10040394/poi/poi.jnlp"/>
 </resources>
 <resources os="Windows">
-<property name="file.encoding" value="utf-8"/>
+	<nativelib href = "sqljdbc_auth.jar" />
+	<property name="file.encoding" value="utf-8"/>
 </resources>
 <applet-desc 
 	name="Order"
