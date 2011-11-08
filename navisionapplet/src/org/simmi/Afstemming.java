@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -27,6 +28,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
@@ -60,17 +62,21 @@ public class Afstemming extends JApplet {
 			this.type = type;
 		}
 		
+		public String toString() {
+			return getValue() + " kr - " + name;
+		}
+		
 		String	name;
 		double	cost;
 		double	price;
 		boolean lokid;
 		String type;
 		
-		public double getValue() {
+		public int getValue() {
 			//if( type.contains("2") ) 
-			if( type.equals("1") ) return -price;
-			else if( type.equals("2") ) return price;
-			return cost;
+			if( type.equals("1") ) return (int)-price;
+			else if( type.equals("2") ) return (int)price;
+			return (int)cost;
 		}
 		
 		@Override
@@ -147,7 +153,7 @@ public class Afstemming extends JApplet {
 				vnum = Integer.parseInt( no );
 			} catch( Exception e ) {}
 			
-			if( vnr.equals("1894") ) {
+			if( vnr.equals("2092") ) {
 				System.err.println( "ranni " + typ + "  " + no + "  " + dsc + "  " + price + "  " + cost );
 			}
 			
@@ -185,6 +191,10 @@ public class Afstemming extends JApplet {
 			try {
 				vnum = Integer.parseInt( no );
 			} catch( Exception e ) {}
+			
+			if( vnr.equals("2092") ) {
+				System.err.println( "aa " + typ + "  " + no + "  " + dsc + "  " + price + "  " + cost );
+			}
 			
 			if( (vnum < 1100 && vnum >= 1000) && verkmap.containsKey( vnr ) ) {
 				Verk vrk = verkmap.get(vnr);
@@ -255,6 +265,189 @@ public class Afstemming extends JApplet {
 	}
 	
 	Color[] cc = new Color[] { new Color(100,100,100), new Color(200,100,100), new Color(100,200,100), new Color(100,100,200), new Color(200,200,100), new Color(200,100,200), new Color(100,200,200), new Color(200,200,200) };
+	public class ResultCanvas extends JComponent {
+		List<Varda>	vlist;
+		List<Varda>	llist;
+		List<Varda>	alist;
+		List<Varda>	rlist;
+		
+		JScrollPane	scrollpane;
+		JTable		table;
+		JTable		sumtable;
+		
+		int			max = 0;
+		
+		public ResultCanvas() {
+			table = new JTable();
+			table.setAutoCreateRowSorter( true );
+			sumtable = new JTable();
+			scrollpane = new JScrollPane( table );
+			
+			this.setLayout( new BorderLayout() );
+			TableModel	model = new TableModel() {
+				@Override
+				public int getRowCount() {
+					return max;
+				}
+
+				@Override
+				public int getColumnCount() {
+					return 4;
+				}
+
+				@Override
+				public String getColumnName(int columnIndex) {
+					if( columnIndex == 0 ) return "Vgrunnur";
+					else if( columnIndex == 1 ) return "Lokið";
+					else if( columnIndex == 2 ) return "Áætlun";
+					else if( columnIndex == 3 ) return "Raun";
+					else return "";
+				}
+
+				@Override
+				public Class<?> getColumnClass(int columnIndex) {
+					return Varda.class;
+				}
+
+				@Override
+				public boolean isCellEditable(int rowIndex, int columnIndex) {
+					// TODO Auto-generated method stub
+					return false;
+				}
+
+				@Override
+				public Object getValueAt(int rowIndex, int columnIndex) {
+					if( columnIndex == 0 ) {
+						if( rowIndex < vlist.size() ) {
+							return vlist.get(rowIndex);
+						}
+					} else if( columnIndex == 1 ) {
+						if( rowIndex < llist.size() ) {
+							return llist.get(rowIndex);
+						}
+					} else if( columnIndex == 2 ) {
+						if( rowIndex < rlist.size() ) {
+							return rlist.get(rowIndex);
+						}
+					} else if( columnIndex == 3 ) {
+						if( rowIndex < alist.size() ) {
+							return alist.get(rowIndex);
+						}
+					}
+					
+					return null;
+				}
+
+				@Override
+				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void addTableModelListener(TableModelListener l) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void removeTableModelListener(TableModelListener l) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+			};
+			table.setModel( model );
+			
+			TableModel	summodel = new TableModel() {
+
+				@Override
+				public int getRowCount() {
+					return 1;
+				}
+
+				@Override
+				public int getColumnCount() {
+					return 4;
+				}
+
+				@Override
+				public String getColumnName(int columnIndex) {
+					return null;
+				}
+
+				@Override
+				public Class<?> getColumnClass(int columnIndex) {
+					return String.class;
+				}
+
+				@Override
+				public boolean isCellEditable(int rowIndex, int columnIndex) {
+					// TODO Auto-generated method stub
+					return false;
+				}
+
+				@Override
+				public Object getValueAt(int rowIndex, int columnIndex) {
+					int sum = 0;
+					if( columnIndex == 0 ) {
+						if( vlist != null ) for( Varda v : vlist ) {
+							sum += v.getValue();
+						}
+					} else if( columnIndex == 1 ) {
+						if( llist != null ) for( Varda v : llist ) {
+							sum += v.getValue();
+						}
+					} else if( columnIndex == 2 ) {
+						if( rlist != null ) for( Varda v : rlist ) {
+							sum += v.getValue();
+						}
+					} else if( columnIndex == 3 ) {
+						if( alist != null ) for( Varda v : alist ) {
+							sum += v.getValue();
+						}
+					}
+					return sum + " kr";
+				}
+
+				@Override
+				public void setValueAt(Object aValue, int rowIndex,
+						int columnIndex) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void addTableModelListener(TableModelListener l) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void removeTableModelListener(TableModelListener l) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+			};
+			sumtable.setModel( summodel );
+			
+			this.add( scrollpane );
+			this.add( sumtable, BorderLayout.SOUTH );
+		}
+		
+		public void updateVordur( List<Varda> vlist, List<Varda> llist, List<Varda> alist, List<Varda> rlist ) {
+			this.vlist = vlist;
+			this.llist = llist;
+			this.alist = alist;
+			this.rlist = rlist;
+			
+			max = Math.max( vlist.size(), Math.max(llist.size(), Math.max( alist.size(), rlist.size()) ) );
+			table.tableChanged( new TableModelEvent( table.getModel() ) );
+			this.repaint();
+		}
+	};
+	
 	public class VorduCanvas extends JComponent {
 		List<Varda>	vlist;
 		List<Varda>	llist;
@@ -376,6 +569,7 @@ public class Afstemming extends JApplet {
 	
 	JTable			table;
 	VorduCanvas		vcanvas;
+	ResultCanvas	rcanvas;
 	public void init() {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -435,7 +629,19 @@ public class Afstemming extends JApplet {
 					if( columnIndex == 0 ) return vlist.get(rowIndex).vnr;
 					else if( columnIndex == 1 ) return vlist.get(rowIndex).name;
 					else if( columnIndex == 2 ) return vlist.get(rowIndex).svid;
-					else return vlist.get(rowIndex).vstj;
+					else if( columnIndex == 3 ) return vlist.get(rowIndex).vstj;
+					else {
+						Verk v = vlist.get(rowIndex);
+						double val = 0.0;
+						for( Varda vrd : v.lokid ) {
+							val += vrd.getValue();
+						}
+						double val2 = 0.0;
+						for( Varda vrd : v.raun ) {
+							val2 += vrd.getValue();
+						}
+						return val2 == 0.0 ? 0.0 : val/val2;
+					}
 				}
 				
 				@Override
@@ -448,17 +654,19 @@ public class Afstemming extends JApplet {
 					if( columnIndex == 0 ) return "Verknúmer";
 					else if( columnIndex == 1 ) return "Verkheiti";
 					else if( columnIndex == 2 ) return "Svið";
-					else return "Verkstjóri";
+					else if( columnIndex == 2 ) return "Verkstjóri";
+					else return "Stemm";
 				}
 				
 				@Override
 				public int getColumnCount() {
-					return 4;
+					return 5;
 				}
 				
 				@Override
 				public Class<?> getColumnClass(int columnIndex) {
-					return String.class;
+					if( columnIndex < 4 ) return String.class;
+					return Double.class;
 				}
 				
 				@Override
@@ -477,18 +685,20 @@ public class Afstemming extends JApplet {
 					
 					Verk v = vlist.get(i);
 					vcanvas.updateVordur( v.vordur, v.lokid, v.aaetlun, v.raun, v.name, v.vstj );
+					rcanvas.updateVordur( v.vordur, v.lokid, v.aaetlun, v.raun );
 				}
 			});
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
+		rcanvas = new ResultCanvas();
 		vcanvas = new VorduCanvas();
 		JScrollPane scrollpane = new JScrollPane( table );
 		
 		JSplitPane	splitpane = new JSplitPane();
 		splitpane.setLeftComponent( scrollpane );
-		splitpane.setRightComponent( vcanvas );
+		splitpane.setRightComponent( rcanvas );
 		
 		this.add( splitpane );
 	}
