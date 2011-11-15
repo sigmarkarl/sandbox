@@ -2287,7 +2287,19 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
-		String[] lcmd = "/opt/ncbi-blast-2.2.25+/bin/blastp -query /home/horfrae/arciformis_3.aa -db /opt/db/nr  -num_alignments 1 -num_descriptions 1 -out /home/horfrae/arciformis_3.blastout".split("[ ]");
+		SerifyApplet sa = new SerifyApplet();
+		
+		try {
+			FileInputStream is = new FileInputStream("c://peter/stuff.blastout");
+			FileOutputStream os = new FileOutputStream("c://result.txt");
+			sa.blastJoin( is, os );
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		/*String[] lcmd = "/opt/ncbi-blast-2.2.25+/bin/blastp -query /home/horfrae/arciformis_3.aa -db /opt/db/nr  -num_alignments 1 -num_descriptions 1 -out /home/horfrae/arciformis_3.blastout".split("[ ]");
 		Runnable run = new Runnable() {
 			public void run() {
 				
