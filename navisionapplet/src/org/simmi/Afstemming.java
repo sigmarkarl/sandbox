@@ -6,12 +6,15 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +26,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -98,7 +102,7 @@ public class Afstemming extends JApplet {
 		
 		public void addVarda( String name, double cost, double price, boolean lok ) {
 			if( lok ) lokid.add( new Varda(name,cost,price,lok) );
-			else vordur.add( new Varda(name,cost,price,lok) );
+			vordur.add( new Varda(name,cost,price,lok) );
 		}
 		
 		public void addOLokid( String name, double cost, double price ) {
@@ -127,13 +131,15 @@ public class Afstemming extends JApplet {
 		List<Varda>	raun;
 	};
 	
-	public void loadRaun() throws SQLException {
+	public void loadRaun( String startDate, String endDate ) throws SQLException {
 		String sql = "select le.\"Job No_\", le.No_, ge.\"Sales Account\", le.Type, ge.\"Gen_ Prod_ Posting Group\", sum(le.\"Total Cost\") as Cost, sum(le.\"Total Price\") as Price from dbo.\"Matís ohf_$Job Ledger Entry\" le, dbo.\"Matís ohf_$General Posting Setup\" ge where "
 				//+ "le.\"Job No_\" = " + str + " and "
-				+ "ge.\"Gen_ Bus_ Posting Group\" = le.\"Gen_ Bus_ Posting Group\" and ge.\"Gen_ Prod_ Posting Group\" = le.\"Gen_ Prod_ Posting Group\" "
-				+ "group by le.\"Job No_\", le.No_, ge.\"Sales Account\", ge.\"Gen_ Prod_ Posting Group\", le.Type";
+				+ "ge.\"Gen_ Bus_ Posting Group\" = le.\"Gen_ Bus_ Posting Group\" and ge.\"Gen_ Prod_ Posting Group\" = le.\"Gen_ Prod_ Posting Group\"";
+				
+		if( startDate != null ) sql += " and le.\"Posting Date\" >= '"+startDate+"'";
+		if( endDate != null ) sql += " and le.\"Posting Date\" <= '"+endDate+"'";
+		sql += " group by le.\"Job No_\", le.No_, ge.\"Sales Account\", ge.\"Gen_ Prod_ Posting Group\", le.Type";
 
-		
 		//if( endDate != null ) sql += " and be.Date <= '"+endDate+"'";
 		//sql += " group by be.\"Job No_\", be.No_, be.Type, bl.Description";
 		
@@ -181,13 +187,10 @@ public class Afstemming extends JApplet {
 		return befstr;
 	}
 	
-	public void loadAaetlun() throws SQLException {
-		String startDate = getStartDate();
-		String endDate = getEndDate();
-		
+	public void loadAaetlun( String startDate, String endDate ) throws SQLException {		
 		String	sql = "select be.\"Job No_\", be.No_, be.Type, bl.Description, sum(be.\"Total Cost\") as Cost, sum(\"Total Price\") as Price from dbo.\"Matís ohf_$Job Budget Entry\" be, dbo.\"Matís ohf_$Job Budget Line\" bl where "
 				//+ "be.\"Job No_\" = " o.toString() + " and "
-				+ "be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.Type == '2'";
+				+ "be.No_ = bl.No_ and bl.\"Job No_\" = be.\"Job No_\" and be.Type = '2'";
 		
 		if( startDate != null ) sql += " and be.Date >= '"+startDate+"'";
 		if( endDate != null ) sql += " and be.Date <= '"+endDate+"'";
@@ -215,7 +218,7 @@ public class Afstemming extends JApplet {
 				System.err.println( "aa " + typ + "  " + no + "  " + dsc + "  " + price + "  " + cost );
 			}
 			
-			if( (vnum < 1100 && vnum >= 1000) && verkmap.containsKey( vnr ) ) {
+			if( (vnum < 1100 && vnum >= 1000 && vnum != 1050) && verkmap.containsKey( vnr ) ) {
 				Verk vrk = verkmap.get(vnr);
 				vrk.addAaetlun( dsc, cost, price, typ );
 			}
@@ -226,10 +229,17 @@ public class Afstemming extends JApplet {
 	}
 	
 	Map<String,Verk>	verkmap;
-	public List<Verk> loadVerks() throws SQLException {
+	List<Verk>		 	vlist;
+	public List<Verk> loadVerks( String startDate, String endDate ) throws SQLException {
 		List<Verk>	vlist = new ArrayList<Verk>();
 		
 		String sql = "select [Verknúmer], [Heiti vörðu], [Verðmæti], [Lokið] from [vdb].[dbo].[Vörður]";
+		if( startDate != null && endDate != null ) {
+			sql += " where [Dagsetning vörðu] >= '"+startDate+"' and [Dagsetning vörðu] <= '"+endDate+"'";
+		} else {
+			if( startDate != null ) sql += " where [Dagsetning vörðu] >= '"+startDate+"'";
+			else if( endDate != null ) sql += " where [Dagsetning vörðu] <= '"+endDate+"'";
+		}
 		PreparedStatement 	ps = connection.prepareStatement(sql);
 		ResultSet 			rs = ps.executeQuery();
 
@@ -296,13 +306,20 @@ public class Afstemming extends JApplet {
 		
 		int			max = 0;
 		
+		public void setBounds( int x, int y, int w, int h ) {
+			super.setBounds(x, y, w, h);
+			
+			scrollpane.setBounds(0,0,w,table.getHeight()+28);
+			sumtable.setBounds(0, table.getHeight(), w, sumtable.getHeight());
+		}
+		
 		public ResultCanvas() {
 			table = new JTable();
 			table.setAutoCreateRowSorter( true );
 			sumtable = new JTable();
 			scrollpane = new JScrollPane( table );
 			
-			this.setLayout( new BorderLayout() );
+			this.setLayout( null );
 			TableModel	model = new TableModel() {
 				@Override
 				public int getRowCount() {
@@ -316,10 +333,10 @@ public class Afstemming extends JApplet {
 
 				@Override
 				public String getColumnName(int columnIndex) {
-					if( columnIndex == 0 ) return "Vgrunnur";
-					else if( columnIndex == 1 ) return "Lokið";
-					else if( columnIndex == 2 ) return "Áætlun";
-					else if( columnIndex == 3 ) return "Raun";
+					if( columnIndex == 0 ) return "Vgrunnur - áætlun";
+					else if( columnIndex == 1 ) return "Nav áætlun";
+					else if( columnIndex == 2 ) return "Vgrunnur - lokið";
+					else if( columnIndex == 3 ) return "Nav raun";
 					else return "";
 				}
 
@@ -330,7 +347,6 @@ public class Afstemming extends JApplet {
 
 				@Override
 				public boolean isCellEditable(int rowIndex, int columnIndex) {
-					// TODO Auto-generated method stub
 					return false;
 				}
 
@@ -341,16 +357,16 @@ public class Afstemming extends JApplet {
 							return vlist.get(rowIndex);
 						}
 					} else if( columnIndex == 1 ) {
+						if( rowIndex < alist.size() ) {
+							return alist.get(rowIndex);
+						}
+					} else if( columnIndex == 2 ) {
 						if( rowIndex < llist.size() ) {
 							return llist.get(rowIndex);
 						}
-					} else if( columnIndex == 2 ) {
+					} else if( columnIndex == 3 ) {
 						if( rowIndex < rlist.size() ) {
 							return rlist.get(rowIndex);
-						}
-					} else if( columnIndex == 3 ) {
-						if( rowIndex < alist.size() ) {
-							return alist.get(rowIndex);
 						}
 					}
 					
@@ -358,22 +374,13 @@ public class Afstemming extends JApplet {
 				}
 
 				@Override
-				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
 
 				@Override
-				public void addTableModelListener(TableModelListener l) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void addTableModelListener(TableModelListener l) {}
 
 				@Override
-				public void removeTableModelListener(TableModelListener l) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void removeTableModelListener(TableModelListener l) {}
 				
 			};
 			table.setModel( model );
@@ -402,7 +409,6 @@ public class Afstemming extends JApplet {
 
 				@Override
 				public boolean isCellEditable(int rowIndex, int columnIndex) {
-					// TODO Auto-generated method stub
 					return false;
 				}
 
@@ -414,15 +420,15 @@ public class Afstemming extends JApplet {
 							sum += v.getValue();
 						}
 					} else if( columnIndex == 1 ) {
-						if( llist != null ) for( Varda v : llist ) {
+						if( alist != null ) for( Varda v : alist ) {
 							sum += v.getValue();
 						}
 					} else if( columnIndex == 2 ) {
-						if( rlist != null ) for( Varda v : rlist ) {
+						if( llist != null ) for( Varda v : llist ) {
 							sum += v.getValue();
 						}
 					} else if( columnIndex == 3 ) {
-						if( alist != null ) for( Varda v : alist ) {
+						if( rlist != null ) for( Varda v : rlist ) {
 							sum += v.getValue();
 						}
 					}
@@ -430,23 +436,13 @@ public class Afstemming extends JApplet {
 				}
 
 				@Override
-				public void setValueAt(Object aValue, int rowIndex,
-						int columnIndex) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
 
 				@Override
-				public void addTableModelListener(TableModelListener l) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void addTableModelListener(TableModelListener l) {}
 
 				@Override
-				public void removeTableModelListener(TableModelListener l) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void removeTableModelListener(TableModelListener l) {}
 				
 			};
 			sumtable.setModel( summodel );
@@ -463,6 +459,10 @@ public class Afstemming extends JApplet {
 			
 			max = Math.max( vlist.size(), Math.max(llist.size(), Math.max( alist.size(), rlist.size()) ) );
 			table.tableChanged( new TableModelEvent( table.getModel() ) );
+			
+			scrollpane.setBounds(0,0,this.getWidth(),table.getRowHeight()*max+28);
+			sumtable.setBounds(0, table.getRowHeight()*max+28, this.getWidth(), 18);
+			
 			this.repaint();
 		}
 	};
@@ -511,8 +511,8 @@ public class Afstemming extends JApplet {
 				
 				stuff( g2, vlist, w2, h2, tval, -300, "verkefnagrunnur" );
 				stuff( g2, llist, w2, h2, tval, -100, "vgrunnur lokið" );
-				stuff( g2, alist, w2, h2, tval, 300, "raun" );
-				stuff( g2, rlist, w2, h2, tval, 100, "áætlun" );
+				stuff( g2, rlist, w2, h2, tval, 300, "raun" );
+				stuff( g2, alist, w2, h2, tval, 100, "áætlun" );
 				
 				int strw = g.getFontMetrics().stringWidth( title );
 				g.drawString( title, w2-strw/2, h2-380);
@@ -586,6 +586,17 @@ public class Afstemming extends JApplet {
 		g.drawString( type, w2+offset-strw/2, h2-340);
 	}
 	
+	public void reload() throws SQLException {
+		verkmap.clear();
+		
+		String startDate = getStartDate();
+		String endDate = getEndDate();
+		
+		vlist = loadVerks( startDate, endDate );
+		loadAaetlun( startDate, endDate );
+		loadRaun( startDate, endDate );
+	}
+	
 	JTable			table;
 	VorduCanvas		vcanvas;
 	ResultCanvas	rcanvas;
@@ -615,14 +626,49 @@ public class Afstemming extends JApplet {
 			e2.printStackTrace();
 		}
 		
+		Calendar cal = Calendar.getInstance();
+		cal.set(2011, 0, 1);
+		after = new JXDatePicker(); //cal.getTime() );
+		cal.set(2011, 11, 31);
+		before = new JXDatePicker(); //cal.getTime() );
+		
+		after.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					reload();
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}	
+			}
+		});
+		
+		before.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					reload();
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}	
+			}
+		});
+				
 		table = new JTable();
 		table.setAutoCreateRowSorter( true );
 		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=MATIS;user=simmi;password=mirodc30;";
 		try {
 			connect( connectionUrl );
-			final List<Verk> vlist = loadVerks();
-			loadAaetlun();
-			loadRaun();
+			
+			String startDate = getStartDate();
+			String endDate = getEndDate();
+			
+			vlist = loadVerks( startDate, endDate );
+			loadAaetlun( startDate, endDate );
+			loadRaun( startDate, endDate );
+			
 			TableModel model = new TableModel() {
 				
 				@Override
@@ -649,7 +695,18 @@ public class Afstemming extends JApplet {
 					else if( columnIndex == 1 ) return vlist.get(rowIndex).name;
 					else if( columnIndex == 2 ) return vlist.get(rowIndex).svid;
 					else if( columnIndex == 3 ) return vlist.get(rowIndex).vstj;
-					else {
+					else if( columnIndex == 4 ) {
+						Verk v = vlist.get(rowIndex);
+						double val = 0.0;
+						for( Varda vrd : v.vordur ) {
+							val += vrd.getValue();
+						}
+						double val2 = 0.0;
+						for( Varda vrd : v.aaetlun ) {
+							val2 += vrd.getValue();
+						}
+						return val2 == 0.0 ? 0.0 : val/val2;
+					} else {
 						Verk v = vlist.get(rowIndex);
 						double val = 0.0;
 						for( Varda vrd : v.lokid ) {
@@ -673,13 +730,14 @@ public class Afstemming extends JApplet {
 					if( columnIndex == 0 ) return "Verknúmer";
 					else if( columnIndex == 1 ) return "Verkheiti";
 					else if( columnIndex == 2 ) return "Svið";
-					else if( columnIndex == 2 ) return "Verkstjóri";
-					else return "Stemm";
+					else if( columnIndex == 3 ) return "Verkstjóri";
+					else if( columnIndex == 4 ) return "St. Áætlun";
+					else return "St. Raun";
 				}
 				
 				@Override
 				public int getColumnCount() {
-					return 5;
+					return 6;
 				}
 				
 				@Override
@@ -697,11 +755,13 @@ public class Afstemming extends JApplet {
 				@Override
 				public void valueChanged(ListSelectionEvent e) {
 					int r = table.getSelectedRow();
-					int i = table.convertRowIndexToModel(r);
-					
-					Verk v = vlist.get(i);
-					vcanvas.updateVordur( v.vordur, v.lokid, v.aaetlun, v.raun, v.name, v.vstj );
-					rcanvas.updateVordur( v.vordur, v.lokid, v.aaetlun, v.raun );
+					if( r != -1 ) {
+						int i = table.convertRowIndexToModel(r);
+						
+						Verk v = vlist.get(i);
+						vcanvas.updateVordur( v.vordur, v.lokid, v.aaetlun, v.raun, v.name, v.vstj );
+						rcanvas.updateVordur( v.vordur, v.lokid, v.aaetlun, v.raun );
+					}
 				}
 			});
 		} catch (SQLException e) {
@@ -716,6 +776,13 @@ public class Afstemming extends JApplet {
 		splitpane.setLeftComponent( scrollpane );
 		splitpane.setRightComponent( rcanvas );
 		
+		this.setLayout( new BorderLayout() );
+		JToolBar	toolbar = new JToolBar();
+		
+		toolbar.add( after );
+		toolbar.add( before );
+		
+		this.add( toolbar, BorderLayout.NORTH );
 		this.add( splitpane );
 	}
 	
