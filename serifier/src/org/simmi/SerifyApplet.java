@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.zip.GZIPInputStream;
 
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
@@ -71,6 +72,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -752,9 +754,14 @@ public class SerifyApplet extends JApplet {
 		while( line != null ) {
 			if( line.startsWith("Query=") ) {
 				if( subject != null ) {
-					String inspec = subject.substring(0, subject.indexOf('_'));
+					int val = subject.indexOf('_');
+					boolean valid = true;
 					String spec = stuff.substring(0, stuff.indexOf('_'));
-					if( !spec.equals(inspec) ) {
+					if( val != -1 ) {
+						String inspec = subject.substring(0, subject.indexOf('_'));
+						valid = !spec.equals(inspec);
+					}
+					if( valid ) {
 						Map<String,Set<String>>	contigmap;
 						if( specmap.containsKey(spec) ) {
 							contigmap = specmap.get(spec);
@@ -781,9 +788,14 @@ public class SerifyApplet extends JApplet {
 				length = line;
 			} else if( line.startsWith(">") ) {
 				if( subject != null ) {
-					String inspec = subject.substring(0, subject.indexOf('_'));
+					int val = subject.indexOf('_');
+					boolean valid = true;
 					String spec = stuff.substring(0, stuff.indexOf('_'));
-					if( !spec.equals(inspec) ) {
+					if( val != -1 ) {
+						String inspec = subject.substring(0, subject.indexOf('_'));
+						valid = !spec.equals(inspec);
+					}
+					if( valid ) {
 						Map<String,Set<String>>	contigmap;
 						if( specmap.containsKey(spec) ) {
 							contigmap = specmap.get(spec);
@@ -814,9 +826,14 @@ public class SerifyApplet extends JApplet {
 				subject += line;
 			} else if( line.startsWith(" Score") ) {				
 				if( start != null ) {
-					String inspec = subject.substring(0, subject.indexOf('_'));
+					int val = subject.indexOf('_');
+					boolean valid = true;
 					String spec = stuff.substring(0, stuff.indexOf('_'));
-					if( !spec.equals(inspec) ) {
+					if( val != -1 ) {
+						String inspec = subject.substring(0, subject.indexOf('_'));
+						valid = !spec.equals(inspec);
+					}
+					if( valid ) {
 						Map<String,Set<String>>	contigmap;
 						if( specmap.containsKey(spec) ) {
 							contigmap = specmap.get(spec);
@@ -1492,6 +1509,41 @@ public class SerifyApplet extends JApplet {
 		return nseq;
 	}
 	
+	public static void trimFasta( BufferedReader br, BufferedWriter bw, Set<String> filterset, boolean inverted ) throws IOException {        
+		String line = br.readLine();
+		String seqname = null;
+		while( line != null ) {
+			if( line.startsWith(">") ) {				
+				if( inverted ) {
+					seqname = line;
+					for( String f : filterset ) {
+						if( line.contains(f) ) {
+							seqname = null;
+							break;
+						}
+					}
+					if( seqname != null ) bw.write( seqname+"\n" );
+				} else {
+					seqname = null;
+					for( String f : filterset ) {
+						if( line.contains(f) ) {
+							bw.write( line+"\n" );
+							seqname = line;
+							break;
+						}
+					}
+				}
+			} else if( seqname != null ) {
+				bw.write( line+"\n" );
+			}
+			
+			line = br.readLine();
+		}
+		br.close();
+		bw.flush();
+		bw.close();
+	}
+	
 	public void init( final Container c ) {
 		this.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -1925,6 +1977,101 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
+		popup.add( new AbstractAction("Trim") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.isDirectory() ) f = f.getParentFile();
+					final File dir = f;
+					
+					int r = table.getSelectedRow();
+					int rr = table.convertRowIndexToModel( r );
+					if( rr >= 0 ) {
+						final Sequences seqs = sequences.get( rr );
+						final JTextField spinner = new JTextField();
+						//spinner.setValue( seqs.getNSeq() );
+						spinner.setPreferredSize( new Dimension(100,25) );
+
+						final JDialog dl;
+						Window window = SwingUtilities.windowForComponent(cnt);
+						if( window != null ) dl = new JDialog( window );
+						else dl = new JDialog();
+						
+						dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+						JComponent c = new JComponent() {
+							
+						};
+						c.setLayout( new FlowLayout() );
+						dl.setTitle("Filter sequences");
+						JButton button = new JButton( new AbstractAction("Ok") {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								dl.setVisible( false );
+								dl.dispose();
+							}
+						});
+						c.add( spinner );
+						c.add( button );
+						dl.add( c );
+						dl.setSize(200, 60);
+						
+						dl.addWindowListener( new WindowListener() {
+							@Override
+							public void windowOpened(WindowEvent e) {}
+
+							@Override
+							public void windowClosing(WindowEvent e) {}
+
+							@Override
+							public void windowClosed(WindowEvent e) {
+								try {
+									String trim = spinner.getText();
+									
+									URI uri = new URI( seqs.getPath() );
+									InputStream is = uri.toURL().openStream();
+									
+									if( seqs.getPath().endsWith(".gz") ) {
+										is = new GZIPInputStream( is );
+									}
+									
+									String name = uri.toURL().getFile();
+									int ind = name.lastIndexOf('.');
+									
+									String sff = name.substring(0, ind);
+									String sf2 = name.substring(ind+1,name.length());
+									
+									FileWriter fw = new FileWriter(sff+"_trimmed."+sf2);
+									
+									String[] farray = { trim };
+									
+									trimFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), new HashSet<String>( Arrays.asList( farray ) ), false);
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								} catch (URISyntaxException e1) {
+									e1.printStackTrace();
+								}
+							}
+
+							@Override
+							public void windowIconified(WindowEvent e) {}
+
+							@Override
+							public void windowDeiconified(WindowEvent e) {}
+
+							@Override
+							public void windowActivated(WindowEvent e) {}
+
+							@Override
+							public void windowDeactivated(WindowEvent e) {}
+						});
+						dl.setVisible( true );
+					}
+				}
+			}
+		});
 		popup.addSeparator();
 		popup.add( new AbstractAction("Blast join") {
 			@Override
@@ -2136,12 +2283,18 @@ public class SerifyApplet extends JApplet {
 		int nseq = 0;
 		
 		URL url = new URL(path);
-		InputStreamReader isr = new InputStreamReader( url.openStream() );
+		InputStream is = url.openStream();
+		if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
+		InputStreamReader isr = new InputStreamReader( is );
 		//FileReader	fr = new FileReader( f );
 		BufferedReader br = new BufferedReader( isr );
 		String line = br.readLine();
 		while( line != null ) {
-			if( line.startsWith(">") ) nseq++;
+			if( line.startsWith(">") ) {
+				nseq++;
+				
+				if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
+			}
 			else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTYKVRSWMNX]+$") ) {
 				System.err.println( line );
 				type = "prot";
@@ -2290,9 +2443,12 @@ public class SerifyApplet extends JApplet {
 		SerifyApplet sa = new SerifyApplet();
 		
 		try {
-			FileInputStream is = new FileInputStream("c://peter/stuff.blastout");
-			FileOutputStream os = new FileOutputStream("c://result.txt");
+			File f = new File( "/home/horfrae/result.txt" );
+			FileInputStream is = new FileInputStream("/home/horfrae/454AllContigs_flanking.blastout");
+			FileOutputStream os = new FileOutputStream(f);
 			sa.blastJoin( is, os );
+			is.close();
+			os.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
