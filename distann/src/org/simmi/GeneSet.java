@@ -314,6 +314,18 @@ public class GeneSet extends JApplet {
 		return aass == null ? null : aass.aas;
 	}
 	
+	private static StringBuilder dnaSearch( String query ) {
+		/*aquery.name = query;
+		int ind = Arrays.binarySearch(aas, aquery);
+		if( ind < 0 ) {
+			System.err.println();
+		}
+		return ind < 0 ? null : aas[ ind ].aas;*/
+		
+		if( dnaa.containsKey( query ) ) return dnaa.get( query );
+		return null;
+	}
+	
 	private static void panCoreFromNRBlast( Reader rd, String outfile, Map<String,Gene>  ret, Map<String,String> allgenes, Map<String,Set<String>> geneset, Map<String,Set<String>> geneloc, Map<String,Gene> locgene, Set<String> poddur ) throws IOException {
 		FileWriter fw = null;
 		if( outfile != null ) fw = new FileWriter( outfile );
@@ -522,15 +534,15 @@ public class GeneSet extends JApplet {
 				}
 				
 				StringBuilder aa = aaSearch( query );
-				int nq = query.lastIndexOf('_');
+				/*int nq = query.lastIndexOf('_');
 				int mq = query.lastIndexOf('_', nq-1);
 				String nquery;
 				if( mq != -1 ) {
 					nquery = query.substring(0, nq);
 				} else {
 					nquery = query;
-				}
-				StringBuilder dn = dnaa.get( nquery );
+				}*/
+				StringBuilder dn = dnaSearch( query );
 				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aa, dn, query, contig, contloc, start, stop, ori ) );
 				
 				if( !allgenes.containsKey( val ) || allgenes.get( val ) == null ) {
@@ -1577,7 +1589,7 @@ public class GeneSet extends JApplet {
 				String[] split = line.split("[\t ]+");
 				try {
 					Integer.parseInt( split[0] );
-					prevset = new HashSet<String>();
+					prevset = new TreeSet<String>();
 					ret.add( prevset );
 				} catch( Exception e ) {
 					
@@ -1586,7 +1598,7 @@ public class GeneSet extends JApplet {
 				String trimline = line.trim();
 				if( trimline.startsWith("[") ) {
 					String[] subsplit = trimline.substring(1,trimline.length()-1).split("[, ]+");
-					Set<String> trset = new HashSet<String>( Arrays.asList(subsplit) );
+					Set<String> trset = new TreeSet<String>( Arrays.asList(subsplit) );
 					if( prevset != null ) prevset.addAll( trset );
 					//ret.add( trset );
 				}
@@ -3497,6 +3509,7 @@ public class GeneSet extends JApplet {
 		int								groupGenCount;
 		int								groupCoverage;
 		int								groupIdx;
+		int								groupCount;
 		double							corr16s;
 		
 		double							proximityGroupPreservation;
@@ -5687,13 +5700,7 @@ public class GeneSet extends JApplet {
 						return val;
 					}
 				} else if( columnIndex == 13 ) {
-					if( gene.species != null ) {
-						int val = 0;
-						for( String str : gene.species.keySet() ) {
-							val += gene.species.get(str).tset.size();
-						}
-						return val;
-					}
+					return gene.groupCount;
 				} else if( columnIndex == 14 ) {
 					if( gene.species != null ) {
 						int max = 0;
@@ -5722,7 +5729,7 @@ public class GeneSet extends JApplet {
 					}
 					return 0;
 				} else if( columnIndex == 17 ) {
-					return gene.corr16s;
+					return gene.groupCoverage == 16 && gene.groupCount == 16 ? gene.corr16s : -1;
 				} else if( columnIndex == 18 ) {
 					if( gene.species != null ) {
 						Teginfo set = gene.species.get("t.tHB8join");
@@ -6873,7 +6880,7 @@ public class GeneSet extends JApplet {
 		}
 	};
 	
-	public static List<Double> load16SCorrelation( Reader r ) throws IOException {
+	public static List<Double> load16SCorrelation( Reader r, List<String>	order ) throws IOException {
 		List<Double>	ret = new ArrayList<Double>();
 		
 		Map<String,Map<String,Integer>>	tm = new TreeMap<String,Map<String,Integer>>();
@@ -6912,7 +6919,11 @@ public class GeneSet extends JApplet {
 			for( String subkey : subtm.keySet() ) {
 				ret.add( subtm.get(subkey).doubleValue() );
 			}
+			
+			order.add( key );
 		}
+		
+		System.err.println( order );
 		
 		double sum = 0.0;
 		for( double d : ret ) {
@@ -6933,7 +6944,7 @@ public class GeneSet extends JApplet {
 		//InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
 		if( is != null ) loci2aasequence( new InputStreamReader( is ) );
 		
-		is = GeneSet.class.getResourceAsStream("/all.fsa");
+		is = GeneSet.class.getResourceAsStream("/all.nn");
 		//is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 		if( is != null ) loci2dnasequence( new InputStreamReader( is ) );
 		
@@ -6989,8 +7000,9 @@ public class GeneSet extends JApplet {
 		int id = 0;
 		//Map<Set<String>,ClusterInfo>	clustInfoMap = new HashMap<Set<String>,ClusterInfo>();
 		
+		List<String>	corrInd = new ArrayList<String>();
 		is = GeneSet.class.getResourceAsStream("/all16S.blastout");
-		List<Double>	corr16sList = load16SCorrelation( new InputStreamReader(is) );
+		List<Double>	corr16sList = load16SCorrelation( new InputStreamReader(is), corrInd );
 		
 		Collections.sort( uclusterlist, new Comparator<Set<String>>() {
 			@Override
@@ -6999,10 +7011,12 @@ public class GeneSet extends JApplet {
 			}
 		});
 		
+		Map<Set<String>,List<Double>>	corrList = new HashMap<Set<String>,List<Double>>();
+		
 		int i = 0;
 		Set<String>	ss = new HashSet<String>();
 		Set<String>	gs = new HashSet<String>();
-		for( Set<String> cluster : uclusterlist ) {			
+		for( Set<String> cluster : uclusterlist ) {
 			ss.clear();
 			gs.clear();
 			
@@ -7020,10 +7034,24 @@ public class GeneSet extends JApplet {
 				}*/
 			}
 			
+			int val = 0;
+			for( Gene g : gset ) {
+				if( g.species != null ) {
+					for( String str : g.species.keySet() ) {
+						val += g.species.get(str).tset.size();
+					}
+				}
+			}
+			
+			if( val == 16 && ss.size() == 16 ) {
+				corrList.put( cluster, new ArrayList<Double>(256) );
+			}
+			
 			for( Gene g : gset ) {
 				g.groupIdx = i;
 				g.groupCoverage = ss.size();
 				g.groupGenCount = gs.size();
+				g.groupCount = val;
 			}
 			
 			i++;
@@ -7031,6 +7059,57 @@ public class GeneSet extends JApplet {
 			//ClusterInfo cInfo = new ClusterInfo(id++,ss.size(),gs.size());
 			//clustInfoMap.put( cluster, cInfo);
 		}
+		
+		is = GeneSet.class.getResourceAsStream("/all.blastout");
+		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				int k = line.indexOf('#');
+				if( k != -1 ) {
+					Set<String>	cluster = null;
+					String query = line.substring(7,k-1).trim();
+					for( Set<String> thecluster : corrList.keySet() ) {
+						if( thecluster.contains( query ) ) {
+							cluster = thecluster;
+							break;
+						}
+					}
+					
+					if( cluster != null ) {
+						List<Double> ld = corrList.get( cluster );
+						
+						int vi = query.indexOf('_');
+						int ki = 16*corrInd.indexOf( query.substring(0,vi) );
+						
+						line = br.readLine();
+						while( !line.startsWith(">") ) {
+							String trim = line.trim();
+							
+							String[] split = trim.split("[ ]+");
+							String val = split[0];
+							if( cluster.contains( val ) ) {
+								vi = val.indexOf('_');
+								int ni = corrInd.indexOf( val.substring(0,vi) );
+								
+								double el = -10.0;
+								try {
+									Double.parseDouble( split[split.length-2] );
+								} catch( Exception e ) {
+									
+								}
+								ld.set( ki+ni, el );
+							}
+							
+							line = br.readLine();
+						}
+					}
+				}
+			}
+			
+			line = br.readLine();
+		}
+		br.close();
 		
 		for( Gene gg : genelist ) {
 			if( gg.species != null ) {
