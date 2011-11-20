@@ -591,6 +591,8 @@ public class Blastic implements EntryPoint {
 		//ResizeLayoutPanel rp;
 		
 		final ResizeLayoutPanel tableviewresize = new ResizeLayoutPanel();
+		final ResizeLayoutPanel blasttableresize = new ResizeLayoutPanel();
+		final ResizeLayoutPanel machinetableresize = new ResizeLayoutPanel();
 		final FocusPanel	tableviewfocus = new FocusPanel();
 		final FocusPanel	blasttablefocus = new FocusPanel();
 		final FocusPanel	machinefocus = new FocusPanel();
@@ -631,7 +633,6 @@ public class Blastic implements EntryPoint {
 		    	  
 		    	blastview = DataView.create( blastdata );
 		    	blasttable = new Table( blastview, blastoptions );
-		    	
 		    	
 		    	machinedata = DataTable.create();
 		    	machinedata.addColumn( ColumnType.STRING, "Name");
@@ -737,8 +738,46 @@ public class Blastic implements EntryPoint {
 					}
 		    	});
 		    	
-		    	blasttablefocus.add( blasttable );
-		    	machinefocus.add( machinetable );
+		    	blasttableresize.addResizeHandler( new ResizeHandler() {
+					@Override
+					public void onResize(ResizeEvent event) {
+						int w = event.getWidth();
+						int h = event.getHeight();
+						
+						blastoptions.setWidth(w+"px");
+						blastoptions.setHeight(h+"px");
+						blasttable.setSize(w+"px", h+"px");
+						blasttable.draw( blastview, blastoptions );
+						blasttable.setSize(w+"px", h+"px");
+					}
+		    	});
+		    	
+		    	machinetableresize.addResizeHandler( new ResizeHandler() {
+					@Override
+					public void onResize(ResizeEvent event) {
+						int w = event.getWidth();
+						int h = event.getHeight();
+						
+						machineoptions.setWidth(w+"px");
+						machineoptions.setHeight(h+"px");
+						machinetable.setSize(w+"px", h+"px");
+						machinetable.draw( machineview, machineoptions );
+						machinetable.setSize(w+"px", h+"px");
+					}
+		    	});
+		    	
+		    	blasttable.setWidth("100%");
+		    	blasttable.setHeight("100%");
+		    	machinetable.setWidth("100%");
+		    	machinetable.setHeight("100%");
+		    	
+		    	blasttableresize.add( blasttable );
+		    	blasttablefocus.add( blasttableresize );
+		    	machinetableresize.add( machinetable );
+		    	machinefocus.add( machinetableresize );
+		    	
+		    	machinetableresize.setSize("100%", "100%");
+		    	blasttableresize.setSize("100%", "100%");
 		    	
 		    	slp.addEast( machinefocus, 200.0 );
 		    	slp.addSouth( blasttablefocus, 300.0 );
