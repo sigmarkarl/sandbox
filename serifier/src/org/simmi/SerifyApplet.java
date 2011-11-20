@@ -47,6 +47,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
 import javax.swing.AbstractAction;
@@ -731,6 +733,207 @@ public class SerifyApplet extends JApplet {
 		}
 		
 		//infile.delete();
+	}
+	
+	private static void joinSets( Set<String> all, List<Set<String>> total ) {		
+		Set<String> cont = null;
+		Set<Set<String>>	rem = new HashSet<Set<String>>();
+		int i = 0;
+		for( Set<String>	check : total ) {			
+			for( String aval : all ) {
+				if( check.contains(aval) ) {
+					if( cont == null ) {
+						cont = check;
+						check.addAll( all );
+						break;
+					} else {
+						cont.addAll( check );
+						rem.add( check );
+						break;
+					}
+				}
+			}
+			
+			i++;
+		}
+		
+		for( Set<String> erm : rem ) {
+			int ind = -1;
+			int count = 0;
+			for( Set<String> ok : total ) {
+				if( ok.size() == erm.size() && ok.containsAll(erm) ) {
+					ind = count;
+					break;
+				}
+				count++;
+			}
+			
+			if( ind != -1 ) {
+				total.remove( ind );
+			}
+		}
+		
+		rem.clear();
+		if( cont == null ) total.add( all );
+		
+		Set<String>	erm = new HashSet<String>();
+		for( Set<String> ss : total ) {
+			for( String s : ss ) {
+				if( erm.contains( s ) ) {
+					break;
+				}
+			}
+			erm.addAll( ss );
+		}
+	}
+	
+	private static Collection<Set<String>> joinBlastSets( InputStream is, String write, boolean union ) throws IOException {
+		List<Set<String>>	total = new ArrayList<Set<String>>();
+		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
+		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
+			
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith("Sequences prod") ) {
+				line = br.readLine();
+				Set<String>	all = new HashSet<String>();
+				while( line != null && !line.startsWith(">") ) {
+					String trim = line.trim();
+					if( trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") ) {
+						String val = trim.substring( 0, trim.indexOf('#')-1 );
+						int v = val.indexOf("contig");
+						all.add( val );
+					}
+					line = br.readLine();
+				}
+				
+				if( fw != null ) fw.write( all.toString()+"\n" );
+				
+				if( union ) joinSets( all, total );
+				//else intersectSets( all, total );
+				
+				if( line == null ) break;
+			}
+			
+			line = br.readLine();
+		}
+		if( fw != null ) fw.close();
+		
+		return total;
+	}
+	
+	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( Collection<Set<String>>	total, Set<String> species ) {
+		Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
+		
+		for( Set<String>	t : total ) {
+			Set<String>	teg = new HashSet<String>();
+			for( String e : t ) {
+				String str = e.substring( 0, e.indexOf('_') );
+				/*if( joinmap.containsKey( str ) ) {
+					str = joinmap.get(str);
+				}*/
+				teg.add( str );
+				
+				species.add(str);
+			}
+			
+			Set<Map<String,Set<String>>>	setmap;
+			if( clusterMap.containsKey( teg ) ) {
+				setmap = clusterMap.get( teg );
+			} else {
+				setmap = new HashSet<Map<String,Set<String>>>();
+				clusterMap.put( teg, setmap );
+			}
+			
+			Map<String,Set<String>>	submap = new HashMap<String,Set<String>>();
+			setmap.add( submap );
+			
+			for( String e : t ) {
+				String str = e.substring( 0, e.indexOf('_') );
+				/*if( joinmap.containsKey( str ) ) {
+					str = joinmap.get(str);
+				}*/
+				
+				Set<String>	set;
+				if( submap.containsKey( str ) ) {
+					set = submap.get(str);
+				} else {
+					set = new HashSet<String>();
+					submap.put( str, set );
+				}
+				set.add( e );
+			}
+		}
+		
+		return clusterMap;
+	}
+	
+	private static void writeSimplifiedCluster( OutputStream os, Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap ) throws IOException {
+		OutputStreamWriter	fos = new OutputStreamWriter( os );
+		for( Set<String> set : clusterMap.keySet() ) {
+			Set<Map<String,Set<String>>>	mapset = clusterMap.get( set );
+			fos.write( set.toString()+"\n" );
+			int i = 0;
+			for( Map<String,Set<String>> erm : mapset ) {
+				fos.write((i++)+"\n");
+				
+				for( String erm2 : erm.keySet() ) {
+					Set<String>	erm3 = erm.get(erm2);
+					fos.write("\t"+erm2+"\n");
+					fos.write("\t\t"+erm3.toString()+"\n");
+				}
+			}
+		}
+		fos.close();
+	}
+	
+	public void blastClusters( final InputStream is, final OutputStream os ) {
+		final JDialog	dialog = new JDialog();
+		Runnable run = new Runnable() {
+			boolean interrupted = false;
+			
+			public void run() {
+				dialog.addWindowListener( new WindowListener() {
+					@Override
+					public void windowOpened(WindowEvent e) {}
+					
+					@Override
+					public void windowIconified(WindowEvent e) {}
+					
+					@Override
+					public void windowDeiconified(WindowEvent e) {}
+					
+					@Override
+					public void windowDeactivated(WindowEvent e) {}
+					
+					@Override
+					public void windowClosing(WindowEvent e) {}
+					
+					@Override
+					public void windowClosed(WindowEvent e) {
+						interrupted = true;
+					}
+					
+					@Override
+					public void windowActivated(WindowEvent e) {}
+				});
+				dialog.setVisible( true );
+				
+				try {
+					Set<String>	species = new TreeSet<String>();
+					Collection<Set<String>> total = joinBlastSets( is, null, true );
+					if( !interrupted ) {
+						Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+						//if( writeSimplifiedCluster != null ) 
+						writeSimplifiedCluster( os, clusterMap );
+						//writeBlastAnalysis( clusterMap, species );
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		runProcess( "Blast clusters", run, dialog );
 	}
 	
 	public void blastJoin( InputStream is, OutputStream os ) throws IOException {
@@ -2084,6 +2287,25 @@ public class SerifyApplet extends JApplet {
 					File f = fc.getSelectedFile();
 					try {
 						blastJoin( new FileInputStream(s), new FileOutputStream(f) );
+					} catch (FileNotFoundException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		popup.add( new AbstractAction("Make clusters") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JSObject	jso = JSObject.getWindow(SerifyApplet.this);
+				String s = (String)jso.call("getSelectedBlast", new Object[] {} );
+				
+				JFileChooser fc = new JFileChooser();
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					try {
+						blastClusters( new FileInputStream(s), new FileOutputStream(f) );
 					} catch (FileNotFoundException e1) {
 						e1.printStackTrace();
 					} catch (IOException e1) {
