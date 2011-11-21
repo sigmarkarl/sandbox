@@ -602,6 +602,7 @@ public class Simlab implements ScriptEngineFactory {
 			// System.err.println("tostring " + buffer + "  " + type + "  " +
 			// length);
 			if ((type == 8 || type == 9) && buffer != 0 && length > 0) {
+				//getByteBuffer().put( (int)length, (byte)0 );
 				s = Native.getDirectBufferPointer(getByteBuffer()).getString(0);
 				// ).getString(0);
 				/*
