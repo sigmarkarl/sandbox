@@ -6880,7 +6880,7 @@ public class GeneSet extends JApplet {
 		}
 	};
 	
-	public static List<Double> load16SCorrelation( Reader r, List<String>	order ) throws IOException {
+	public static double[] load16SCorrelation( Reader r, List<String>	order ) throws IOException {
 		List<Double>	ret = new ArrayList<Double>();
 		
 		Map<String,Map<String,Integer>>	tm = new TreeMap<String,Map<String,Integer>>();
@@ -6930,13 +6930,12 @@ public class GeneSet extends JApplet {
 			sum += d;
 		}
 		
+		double[] dret = new double[ ret.size() ];
 		for( int i = 0; i < ret.size(); i++ ) {
-			ret.set(i, ret.get(i)/sum );
+			dret[i] = ret.get(i)/sum;
 		}
 		
-		System.err.println( "corr: " + ret.size() );
-		
-		return ret;
+		return dret;
 	}
 	
 	private static JComponent newSoft( JButton jb ) throws IOException {
@@ -7002,7 +7001,7 @@ public class GeneSet extends JApplet {
 		
 		List<String>	corrInd = new ArrayList<String>();
 		is = GeneSet.class.getResourceAsStream("/all16S.blastout");
-		List<Double>	corr16sList = load16SCorrelation( new InputStreamReader(is), corrInd );
+		double[]	corr16sArray = load16SCorrelation( new InputStreamReader(is), corrInd );
 		
 		Collections.sort( uclusterlist, new Comparator<Set<String>>() {
 			@Override
@@ -7011,7 +7010,7 @@ public class GeneSet extends JApplet {
 			}
 		});
 		
-		Map<Set<String>,List<Double>>	corrList = new HashMap<Set<String>,List<Double>>();
+		Map<Set<String>,double[]>	corrList = new HashMap<Set<String>,double[]>();
 		
 		int i = 0;
 		Set<String>	ss = new HashSet<String>();
@@ -7044,7 +7043,7 @@ public class GeneSet extends JApplet {
 			}
 			
 			if( val == 16 && ss.size() == 16 ) {
-				corrList.put( cluster, new ArrayList<Double>(256) );
+				corrList.put( cluster, new double[256] );
 			}
 			
 			for( Gene g : gset ) {
@@ -7077,7 +7076,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					if( cluster != null ) {
-						List<Double> ld = corrList.get( cluster );
+						double[] da = corrList.get( cluster );
 						
 						int vi = query.indexOf('_');
 						int ki = 16*corrInd.indexOf( query.substring(0,vi) );
@@ -7094,11 +7093,11 @@ public class GeneSet extends JApplet {
 								
 								double el = -10.0;
 								try {
-									Double.parseDouble( split[split.length-2] );
+									el = Double.parseDouble( split[split.length-2] );
 								} catch( Exception e ) {
 									
 								}
-								ld.set( ki+ni, el );
+								da[ki+ni] = el;
 							}
 							
 							line = br.readLine();
@@ -7110,6 +7109,49 @@ public class GeneSet extends JApplet {
 			line = br.readLine();
 		}
 		br.close();
+		
+		double davg = 1.0/corr16sArray.length;
+		for( Set<String> cluster : corrList.keySet() ) {
+			double[]	dcorr = corrList.get( cluster );
+			
+			double dsum = 0.0;
+			for( i = 0; i < dcorr.length; i++ ) {
+				dsum += dcorr[i];
+			}			
+			/*for( i = 0; i < dcorr.length; i++ ) {
+				dcorr[i] /= dsum;
+			}*/
+			
+			double cval = 0.0;
+			double xval = 0.0;
+			double yval = 0.0;
+			for( i = 0; i < dcorr.length; i++ ) {
+				double xx = (dcorr[i]/dsum-davg);
+				double yy = (corr16sArray[i]-davg);
+						
+				cval += xx*yy;
+				xval += xx*xx;
+				yval += yy*yy;
+			}
+			
+			double r = cval / ( Math.sqrt(xval) * Math.sqrt(yval) );
+			
+			Set<Gene>	gset = new HashSet<Gene>();
+			for( String cont : cluster ) {
+				String[] split = cont.split("_");
+				ss.add(split[0]);
+				Gene g = locgene.get(cont);
+				
+				if( g != null ) {
+					gs.add( g.refid );
+					gset.add( g );
+				}
+			}
+			
+			for( Gene g : gset ) {
+				g.corr16s = r;
+			}
+		}
 		
 		for( Gene gg : genelist ) {
 			if( gg.species != null ) {
