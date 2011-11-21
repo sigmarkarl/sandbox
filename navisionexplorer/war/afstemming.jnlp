@@ -14,6 +14,7 @@
   <j2se version="1.7" />
   <jar href="navisionapplet.jar"/>
   <extension name="sqljdbc" href="sqljdbc.jnlp"/>
+  <extension name="swingx" href="swingx.jnlp"/>
 </resources>
 <applet-desc 
 	name="JavaFasta"
