@@ -4541,7 +4541,7 @@ public class GeneSet extends JApplet {
 		init( args );
 		
 		try {
-			blastJoin("/home/horfrae/peter/stuff.blastout");
+			//blastJoin("/home/horfrae/peter/stuff.blastout");
 			
 			//flankingFasta("/home/sigmar/playground/all.fsa", "/home/sigmar/playground/flank.fsa");
 			//blast2Filt( "/home/sigmar/kaw.blastout", "/home/sigmar/newkaw_filter.txt" );
@@ -4554,12 +4554,12 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo/6.blastout") );
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/6.blastout") );
 			/*for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}*/
-			//loci2gene( new FileReader("c:/viggo/6.blastout"), "c:/viggo/6v3.txt", null, freqmap );
+			loci2gene( new FileReader("/home/sigmar/viggo/6.blastout"), "/home/sigmar/viggo/6v3.txt", null, freqmap );
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
