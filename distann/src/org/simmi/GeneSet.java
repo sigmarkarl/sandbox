@@ -74,6 +74,7 @@ import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -6556,6 +6557,52 @@ public class GeneSet extends JApplet {
 				frame.add(scrollpane);
 				frame.setSize(400, 300);
 				frame.setVisible( true );
+			}
+		});
+		popup.add(new AbstractAction("Export all DNA sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser	jfc = new JFileChooser();
+				jfc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					
+				try {
+					Map<Integer,FileWriter>	lfw = new HashMap<Integer,FileWriter>();
+					if( jfc.showOpenDialog( null ) == JFileChooser.APPROVE_OPTION ) {
+						File f = jfc.getSelectedFile();
+	
+						int[] rr = table.getSelectedRows();
+						for( int r : rr ) {
+							int cr = table.convertRowIndexToModel(r);
+							Gene gg = genelist.get(cr);
+							if( gg.species != null ) {
+								FileWriter fw = null;
+								if( lfw.containsKey( gg.groupIdx ) ) {
+									fw = lfw.get( gg.groupIdx );
+								} else {
+									fw = new FileWriter( new File( f, "group_"+gg.groupIdx+".fasta" ) );
+									lfw.put( gg.groupIdx, fw );
+								}
+								
+								for( String sp : gg.species.keySet() ) {
+									Teginfo stv = gg.species.get( sp );
+									for( Tegeval tv : stv.tset ) {
+										fw.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
+										if( tv.dna != null ) {
+											for( int i = 0; i < tv.dna.length(); i+=70 ) {
+												fw.append(tv.dna.substring( i, Math.min(i+70,tv.dna.length()) )+"\n");
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					for( int gi : lfw.keySet() ) {
+						lfw.get(gi).close();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 		popup.addSeparator();
