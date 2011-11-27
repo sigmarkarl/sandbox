@@ -10,6 +10,7 @@ import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -142,10 +143,12 @@ public class TreeDraw extends JComponent {
 	}
 	
 	Random	rnd = new Random();
-	public TreeDraw( String str, int w, int h, boolean equalHeight, boolean inverse ) {
+	public TreeDraw( String str, int w, int h, boolean equalHeight, boolean inverse, boolean vertical, Map<String,Map<String,String>> mapmap ) {
 		super();		
 		loc = 0;
-		Node resultnode = parseTreeRecursive( str, false );
+		Node resultnode = parseTreeRecursive( str, false, mapmap );
+		
+		System.err.println("minmax: "+minh+"  "+maxh);
 		
 		//Node newroot = findNode( resultnode, 1000.0 );
 		//double val = newroot.h;
@@ -208,9 +211,17 @@ public class TreeDraw extends JComponent {
 		
 		this.h = h;
 		this.w = w;
-		dh = h/levels;
-		dw = w/leaves;
-		int starty = h/25;
+		
+		if( vertical ) {
+			dh = h/leaves;
+			dw = w/levels;
+		} else {
+			dh = h/levels;
+			dw = w/leaves;
+		}
+		
+		int starty = 10; //h/25;
+		int startx = 10; //w/25;
 		if( equalHeight ) {
 			ny = starty+dh*(h/dh-levels);
 		} else {
@@ -218,12 +229,13 @@ public class TreeDraw extends JComponent {
 		}
 		GradientPaint shadeColor = createGradient( color, ny-k/2, h );
 		
-		//drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
+		drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
 		
 		yaml = "";
 		ci = 0;
 		g2.setFont( dFont );
-		drawTreeRecursive( g2, resultnode, 0, 0, w/2, starty, equalHeight, false );
+		if( vertical ) drawTreeRecursive( g2, resultnode, 0, 0, startx, h/2, equalHeight, false, vertical );
+		else drawTreeRecursive( g2, resultnode, 0, 0, w/2, starty, equalHeight, false, vertical );
 		if( resultnode.name != null && resultnode.name.length() > 0 ) {	
 			int strw = g2.getFontMetrics().stringWidth( resultnode.name );
 			g2.setColor( Color.red );
@@ -233,7 +245,7 @@ public class TreeDraw extends JComponent {
 		}
 	}
 	
-	int w;
+	int w;	
 	int h;
 	int dw;
 	int dh;
@@ -292,6 +304,9 @@ public class TreeDraw extends JComponent {
 				boolean paint = resnode.name != null && resnode.name.length() > 0;
 				
 				ci++;
+				for( int i = colors.size(); i <= ci; i++ ) {
+					colors.add( new Color( (int)(rnd.nextFloat()*255), (int)(rnd.nextFloat()*255), (int)(rnd.nextFloat()*255) ) );
+				}
 				Color color = colors.get(ci);
 				if( resnode.color != null ) {
 					color = resnode.color;
@@ -312,93 +327,128 @@ public class TreeDraw extends JComponent {
 		return maxh2;
 	}
 
-	public void drawTreeRecursive( Graphics2D g2, Node node, int x, int y, int startx, int starty, boolean equalHeight, boolean noAddHeight ) {		
-		if( node.nodes.size() > 0 ) {			
-			int total = 0;
-			for( Node resnode : node.nodes ) {
-				int nleaves = resnode.countLeaves();
-				int nlevels = resnode.countMaxHeight();
-				
-				int nx =  dw*total+(dw*nleaves)/2;
-				int ny;
-				
-				int k = w/32;
-				int yoff = starty-k/2;
-				
-				minh = 0.0;
+	public void drawTreeRecursive( Graphics2D g2, Node node, int x, int y, int startx, int starty, boolean equalHeight, boolean noAddHeight, boolean vertical ) {		
+		int total = 0;
+		for( Node resnode : node.nodes ) {
+			int nleaves = resnode.countLeaves();
+			int nlevels = resnode.countMaxHeight();
+			
+			int nx = 0;
+			int ny = 0;
+			
+			if( vertical ) {
+				//minh = 0.0;
+				ny = dh*total+(dh*nleaves)/2;
+				if( equalHeight ) {
+					nx = w/25+dw*(w/dw-nlevels);
+				} else {
+					nx = /*h/25+*/(int)(startx+(w*(resnode.h-minh))/((maxh-minh)*1.3));
+					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
+				}
+			} else {
+				//minh = 0.0;
+				nx = dw*total+(dw*nleaves)/2;
 				if( equalHeight ) {
 					ny = h/25+dh*(h/dh-nlevels);
 				} else {
 					ny = /*h/25+*/(int)(starty+(h*(resnode.h-minh))/((maxh-minh)*2.2));
-					
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
-				
-				boolean nullNodes = resnode.nodes == null || resnode.nodes.size() == 0;
-				boolean paint = resnode.name != null && resnode.name.length() > 0;
-				
-				ci++;
-				for( int i = colors.size(); i <= ci; i++ ) {
-					colors.add( new Color( (int)(rnd.nextFloat()*255), (int)(rnd.nextFloat()*255), (int)(rnd.nextFloat()*255) ) );
-				}
-				
-				Color color = colors.get(ci);
-				if( resnode.color != null ) {
-					color = resnode.color;
-				}
-				
-				drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight );
+			}
 			
-				//ny+=starty;
-				//drawTreeRecursive( g2, resnode, w, h, dw, dh, x+dw*total, y+h, (dw*nleaves)/2, ny, paint ? shadeColor : null );
-				
-				g2.setColor( Color.darkGray );
-				g2.setStroke( vStroke );
-				g2.drawLine( x+startx, starty, x+nx, starty);
-				g2.setStroke( hStroke );
-				g2.drawLine( x+nx, starty, x+nx, ny );
-				g2.setStroke( oldStroke );
-				
-				if( paint ) {
-					if( nullNodes ) {
-						g2.setColor( Color.black );
-						g2.setFont( bFont );
-						
-						String[] split = resnode.name.split("_");
-						int t = 0;
-						int mstrw = 0;
+			int k = w/32;
+			//int yoff = starty-k/2;
+			
+			boolean nullNodes = resnode.nodes == null || resnode.nodes.size() == 0;
+			boolean paint = resnode.name != null && resnode.name.length() > 0;
+			
+			ci++;
+			for( int i = colors.size(); i <= ci; i++ ) {
+				colors.add( new Color( (int)(rnd.nextFloat()*255), (int)(rnd.nextFloat()*255), (int)(rnd.nextFloat()*255) ) );
+			}
+			
+			Color color = colors.get(ci);
+			if( resnode.color != null ) {
+				color = resnode.color;
+			}
+			
+			if( vertical ) drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*nleaves)/2, equalHeight, noAddHeight, vertical );
+			else drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical );
+		
+			//ny+=starty;
+			//drawTreeRecursive( g2, resnode, w, h, dw, dh, x+dw*total, y+h, (dw*nleaves)/2, ny, paint ? shadeColor : null );
+			
+			g2.setColor( Color.darkGray );
+			g2.setStroke( vStroke );
+			if( vertical ) g2.drawLine( startx, y+starty, startx, y+ny );
+			else g2.drawLine( x+startx, starty, x+nx, starty );
+			g2.setStroke( hStroke );
+			if( vertical ) g2.drawLine( startx, y+ny, nx, y+ny );
+			else g2.drawLine( x+nx, starty, x+nx, ny );
+			g2.setStroke( oldStroke );
+			
+			if( paint ) {
+				if( nullNodes ) {
+					g2.setColor( Color.black );
+					g2.setFont( bFont );
+					
+					String[] split = resnode.name.split("_");
+					int t = 0;
+					int mstrw = 0;
+					int mstrh = 10;
+					if( !vertical ) {
 						for( String str : split ) {
 							int strw = g2.getFontMetrics().stringWidth( str );
 							mstrw = Math.max( mstrw, strw );
-							g2.drawString(str, x+nx-strw/2, ny+4+h/25+(t++)*bFont.getSize() );
+							g2.drawString(str, x+nx-strw/2, ny+4+10+(t++)*bFont.getSize() );
 						}
-						int x1 = (x+nx-mstrw/2);
-						int x2 = (x+nx+mstrw/2);
-						int y1 = ny+4+h/25+(-1)*bFont.getSize();
-						int y2 = ny+4+h/25+(split.length-1)*bFont.getSize();
-						yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";
 					} else {
-						boolean b = resnode.name.length() > 2;
-						
-						g2.setColor( color );
-						int strw = 0;
-						String[] split = resnode.name.split( "_" );
+						for( String str : split ) {
+							g2.drawString(str, nx+4+10+(t++)*bFont.getSize(), y+ny+mstrh/2 );
+						}
+					}
+					int x1 = (x+nx-mstrw/2);
+					int x2 = (x+nx+mstrw/2);
+					int y1 = ny+4+h/25+(-1)*bFont.getSize();
+					int y2 = ny+4+h/25+(split.length-1)*bFont.getSize();
+					yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";
+				} else {
+					boolean b = resnode.name.length() > 2;
+					
+					g2.setColor( color );
+					int strw = 0;
+					String[] split = resnode.name.split( "_" );
+					if( b ) {
+						g2.setFont( lFont );
+						for( String s : split ) {
+							strw = Math.max( strw, g2.getFontMetrics().stringWidth( s ) );
+						}
+					} else{
+						g2.setFont( bFont );
+						for( String s : split ) {
+							strw = Math.max( strw, g2.getFontMetrics().stringWidth( s ) );
+						}
+					}
+					strw = 50;
+					int strh = 10;
+					g2.fillRoundRect( x+nx-(5*strw)/8, ny-k/2, (5*strw)/4, k, k, k );
+					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
+					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
+					g2.setColor( Color.white );
+					int i = 0;
+					if( vertical ) {
 						if( b ) {
-							g2.setFont( lFont );
 							for( String s : split ) {
-								strw = Math.max( strw, g2.getFontMetrics().stringWidth( s ) );
+								g2.drawString(s, nx+5-8*(split.length-1)+i*16, y+ny-strh/2 );
+								i++;
 							}
-						} else{
-							g2.setFont( bFont );
+						} else {
 							for( String s : split ) {
-								strw = Math.max( strw, g2.getFontMetrics().stringWidth( s ) );
+								g2.drawString(s, nx+6-8*(split.length)+i*16, y+ny-strh/2 );
+								i++;
 							}
 						}
-						g2.fillRoundRect( x+nx-(5*strw)/8, ny-k/2, (5*strw)/4, k, k, k );
-						//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
-						//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
-						g2.setColor( Color.white );
-						int i = 0;
+					} else {
 						if( b ) {
 							for( String s : split ) {
 								strw = g2.getFontMetrics().stringWidth( s );
@@ -414,8 +464,8 @@ public class TreeDraw extends JComponent {
 						}
 					}
 				}
-				total += nleaves;
 			}
+			total += nleaves;
 		}
 	}
 	
@@ -434,13 +484,15 @@ public class TreeDraw extends JComponent {
 		JFrame	frame = new JFrame();
 		
 		String imgType = "png";
-		int x = 1600;
-		int y = 600;
+		int x = 1024;
+		int y = 4096;
 		boolean	equalHeight = false;
 		boolean inverse = false;
 		boolean show = false;
 		boolean help = false;
+		boolean vertical = false;
 		String coords = null;
+		String metafile = null;
 		Reader reader = new InputStreamReader( System.in );
 		OutputStream out = System.out;
 		
@@ -475,13 +527,18 @@ public class TreeDraw extends JComponent {
 				help = true;
 			} else if( args[i].equals("--coords") ) {
 				coords = args[++i];
+			} else if( args[i].equals("--vertical") ) {
+				vertical = true;
+			} else if( args[i].equals("--meta") ) {
+				metafile = args[++i];
 			}
 		}
 		
 		if( help ) {
 			System.err.print( "Usage: java -jar treedraw.jar" );
 			System.err.println( " --in [optional, filename, default:stdin] --out [optional, filename, default:stdout], --type [optional, imagetype, default:\"PNG\"]" );
-			System.err.println( "--x [optional, integer, default:1600 --y [optional, integer, default:800] --invert [optional, invert tree] --show [optional, show image, no output], --equalHeights [optional, do not use heights] --coords [optional, coords yaml]" );
+			System.err.println( "--vertical [optional, vertical tree] --x [optional, integer, default:1600] --y [optional, integer, default:800] --invert [optional, invert tree] --show [optional, show image, no output], --equalHeights [optional, do not use heights] --coords [optional, coords yaml]" );
+			System.err.println( "--meta [optional, metadata file path]" );
 		} else {
 			
 			/*if( args.length > 2 ) {
@@ -511,10 +568,36 @@ public class TreeDraw extends JComponent {
 				}
 			}*/
 			
-			if( reader != null ) {
-				char[] cbuf = new char[4096];
-				StringBuilder sb = new StringBuilder();
-				try {
+			try {
+				Map<String,Map<String,String>>	mapmap = new HashMap<String,Map<String,String>>();
+				
+				if( metafile != null ) {
+					FileReader fr = new FileReader( metafile );
+					BufferedReader br = new BufferedReader( fr );
+					String line = br.readLine();
+					Map<String,String>	keyval = null;
+					while( line != null ) {
+						int i = line.indexOf(':');
+						if( i != -1 ) {
+							String key = line.substring(4, i);
+							String val = line.substring(i+1,line.length()).trim();
+							
+							if( key.equals("name") ) {
+								 keyval = new HashMap<String,String>();
+								 mapmap.put(val, keyval);
+							} else if( keyval != null ) {
+								keyval.put(key, val);
+							}
+						}
+						line = br.readLine();
+					}
+					fr.close();
+				}
+				
+				if( reader != null ) {
+					char[] cbuf = new char[4096];
+					StringBuilder sb = new StringBuilder();
+					
 					int read = reader.read(cbuf);
 					while( read > 0 ) {
 						sb.append( cbuf, 0, read );
@@ -523,7 +606,7 @@ public class TreeDraw extends JComponent {
 					reader.close();
 					
 					String str = sb.toString().replaceAll("[\r\n]+", "");
-					TreeDraw treedraw = new TreeDraw( str, x, y, equalHeight, inverse );
+					TreeDraw treedraw = new TreeDraw( str, x, y, equalHeight, inverse, vertical, mapmap );
 					frame.add( treedraw );
 					if( !show ) ImageIO.write( treedraw.img, imgType, out );
 					if( coords != null ) {
@@ -532,9 +615,11 @@ public class TreeDraw extends JComponent {
 						fw.write( treedraw.yaml );
 						fw.close();
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			
 			frame.setSize( 800,600 );
@@ -548,14 +633,14 @@ public class TreeDraw extends JComponent {
 	double minh2 = Double.MAX_VALUE;
 	double maxh2 = 0.0;
 	int loc;
-	private Node parseTreeRecursive( String str, boolean inverse ) {
+	private Node parseTreeRecursive( String str, boolean inverse, Map<String,Map<String,String>> mapmap ) {
 		Node ret = new Node();
 		Node node = null;
 		while( loc < str.length()-1 && str.charAt(loc) != ')' ) {
 			loc++;
 			char c = str.charAt(loc);
 			if( c == '(' ) {
-				node = parseTreeRecursive(str, inverse);
+				node = parseTreeRecursive(str, inverse, mapmap);
 				if( inverse ) node.nodes.add( ret );
 				else ret.nodes.add( node );
 			} else {
@@ -569,6 +654,13 @@ public class TreeDraw extends JComponent {
 				if( code.contains(":") ) {
 					String[] split = code.split(":");
 					node.name = split[0].replaceAll("'", "");
+					if( mapmap.containsKey( node.name ) ) {
+						Map<String,String>	keyval = mapmap.get(node.name);
+						if( keyval.containsKey("country") ) {
+							node.name += keyval.get("country");
+						}
+					}
+					
 					if( split.length > 2 ) {
 						String color = split[2].substring(1);
 						int r = Integer.parseInt( color.substring(0, 2), 16 );
