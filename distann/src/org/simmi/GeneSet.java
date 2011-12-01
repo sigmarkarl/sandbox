@@ -36,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -62,6 +63,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.zip.GZIPInputStream;
 
 import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
@@ -74,6 +76,7 @@ import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -1014,6 +1017,26 @@ public class GeneSet extends JApplet {
 		//Arrays.sort( aas );
 	}
 	
+	private static void loadcontigs( Reader rd ) throws IOException {
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		String name = null;
+		StringBuilder ac = new StringBuilder();
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( ac.length() > 0 ) contigs.put(name, ac);
+				
+				ac = new StringBuilder();
+				
+				int i = line.indexOf(' ');
+				name = line.substring(1,i);
+			} else ac.append( line );
+			line = br.readLine();
+		}
+		if( ac.length() > 0 ) contigs.put(name, ac);
+		br.close();
+	}
+	
 	private static void loci2dnasequence( Reader rd ) throws IOException {
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
@@ -1064,6 +1087,7 @@ public class GeneSet extends JApplet {
 	//static Aas[]	aas;
 	static Map<String,Aas>				aas = new HashMap<String,Aas>();
 	static Map<String,StringBuilder>	dnaa = new HashMap<String,StringBuilder>();
+	static Map<String,StringBuilder>	contigs = new HashMap<String,StringBuilder>();
 	
 	public static void loci2aasequence( String[] stuff, File dir2 ) throws IOException {
 		for( String st : stuff ) {
@@ -4435,12 +4459,23 @@ public class GeneSet extends JApplet {
         }
         fr.close();
         
+        trimFasta( name, newname, filterset, inverted );
+	}
+     
+	public static void trimFasta( String name, String newname, Set<String> filterset, boolean inverted ) throws IOException {
         FileWriter 		fw = new FileWriter( newname );
-        BufferedWriter	bw = new BufferedWriter( fw, 100000000 );
+        BufferedWriter	bw = new BufferedWriter( fw );
         
-		fr = new FileReader( name );
-		br = new BufferedReader( fr, 100000000 );
-		line = br.readLine();
+        Reader fr;
+        if( name.endsWith("gz") ) {
+        	FileInputStream fis = new FileInputStream( name );
+        	GZIPInputStream gis = new GZIPInputStream( fis );
+        	fr = new InputStreamReader( gis );
+        } else {
+        	fr = new FileReader( name );
+        }
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
 		String seqname = null;
 		while( line != null ) {
 			if( line.startsWith(">") ) {				
@@ -4537,7 +4572,7 @@ public class GeneSet extends JApplet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}*/
-		init( args );
+		//init( args );
 		
 		try {
 			//blastJoin("/home/horfrae/peter/stuff.blastout");
@@ -4553,12 +4588,37 @@ public class GeneSet extends JApplet {
 			//loci2gene( new FileReader("/home/sigmar/flx/islandicus.blastoutcat"), "/home/sigmar/flx/islandicus.txt" );
 			//loci2gene( new FileReader("/home/sigmar/flx/scoto2127.blastoutcat"), "/home/sigmar/flx/scoto2127.txt" );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/6.blastout") );
-			/*for( String val : freqmap.keySet() ) {
+			//String[] filt = {"Thermus"};
+			//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/nt.gz", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/out.fna", new HashSet<String>( Arrays.asList(filt) ), false );
+			//String[] filt = {"16S"};
+			//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/out.fna", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/16s.fna", new HashSet<String>( Arrays.asList(filt) ), false );
+			
+				FileReader fr = new FileReader( "/home/horfrae/parc_thermus_accs.txt" );//new FileReader( "/home/horfrae/new.txt" );
+				BufferedReader br = new BufferedReader( fr );
+				
+				Set<String>	accset = new HashSet<String>();
+				String line = br.readLine();
+				while( line != null ) {
+					/*if( line.contains("acc:") ) {
+						int k = line.indexOf(":");
+						if( k != -1 ) {
+							String acc = line.substring(k+1).trim();
+							accset.add( acc );
+						}
+					}*/
+					accset.add( line );
+					line = br.readLine();
+				}
+				br.close();
+				
+				trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );
+			
+			/*Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/6.blastout") );
+			for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
-			}*/
-			loci2gene( new FileReader("/home/sigmar/viggo/6.blastout"), "/home/sigmar/viggo/6v3.txt", null, freqmap );
+			}
+			loci2gene( new FileReader("/home/sigmar/viggo/6.blastout"), "/home/sigmar/viggo/6v3.txt", null, freqmap );*/
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
@@ -6558,6 +6618,97 @@ public class GeneSet extends JApplet {
 				frame.setVisible( true );
 			}
 		});
+		popup.add(new AbstractAction("Export all DNA sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser	jfc = new JFileChooser();
+				jfc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					
+				try {
+					Map<Integer,FileWriter>	lfw = new HashMap<Integer,FileWriter>();
+					if( jfc.showOpenDialog( null ) == JFileChooser.APPROVE_OPTION ) {
+						File f = jfc.getSelectedFile();
+	
+						int[] rr = table.getSelectedRows();
+						for( int r : rr ) {
+							int cr = table.convertRowIndexToModel(r);
+							Gene gg = genelist.get(cr);
+							if( gg.species != null ) {
+								FileWriter fw = null;
+								if( lfw.containsKey( gg.groupIdx ) ) {
+									fw = lfw.get( gg.groupIdx );
+								} else {
+									fw = new FileWriter( new File( f, "group_"+gg.groupIdx+".fasta" ) );
+									lfw.put( gg.groupIdx, fw );
+								}
+								
+								for( String sp : gg.species.keySet() ) {
+									Teginfo stv = gg.species.get( sp );
+									for( Tegeval tv : stv.tset ) {
+										fw.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
+										if( tv.dna != null ) {
+											for( int i = 0; i < tv.dna.length(); i+=70 ) {
+												fw.append(tv.dna.substring( i, Math.min(i+70,tv.dna.length()) )+"\n");
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					for( int gi : lfw.keySet() ) {
+						lfw.get(gi).close();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		popup.add(new AbstractAction("Export relevant contigs") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser	jfc = new JFileChooser();
+					
+				try {
+					Map<Integer,FileWriter>	lfw = new HashMap<Integer,FileWriter>();
+					if( jfc.showOpenDialog( null ) == JFileChooser.APPROVE_OPTION ) {
+						File f = jfc.getSelectedFile();
+	
+						Set<String> contset = new HashSet<String>();
+						int[] rr = table.getSelectedRows();
+						for( int r : rr ) {
+							int cr = table.convertRowIndexToModel(r);
+							Gene gg = genelist.get(cr);
+							if( gg.species != null ) {								
+								for( String sp : gg.species.keySet() ) {
+									Teginfo stv = gg.species.get( sp );
+									for( Tegeval tv : stv.tset ) {
+										contset.add( tv.contshort );
+									}
+								}
+							}
+						}
+						
+						FileWriter fw = new FileWriter( f );
+						for( String contig : contset ) {
+							fw.append( ">" + contig + "\n" );
+							if( GeneSet.contigs.containsKey( contig ) ) {
+								StringBuilder dna = GeneSet.contigs.get( contig );
+								for( int i = 0; i < dna.length(); i+=70 ) {
+									fw.append(dna.substring( i, Math.min(i+70,dna.length()) )+"\n");
+								}
+							}
+						}
+						fw.close();
+					}
+					for( int gi : lfw.keySet() ) {
+						lfw.get(gi).close();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 		popup.addSeparator();
 		popup.add(new AbstractAction("Show genes in proximity") {
 			@Override
@@ -6947,6 +7098,10 @@ public class GeneSet extends JApplet {
 		//is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 		if( is != null ) loci2dnasequence( new InputStreamReader( is ) );
 		
+		is = GeneSet.class.getResourceAsStream("/all.fsa");
+		//is = GeneSet.class.getResourceAsStream("/arciformis.nn");
+		if( is != null ) loadcontigs( new InputStreamReader( is ) );
+		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );
 		
@@ -6960,12 +7115,10 @@ public class GeneSet extends JApplet {
 		Set<String>				poddur = new HashSet<String>();
 		Map<String,Gene>		locgene = new HashMap<String,Gene>();
 		
-		
 		//panCoreFromNRBlast( new FileReader("/home/horfrae/arc/arciformis.blastout"), "/home/horfrae/workspace/distann/src/arciformis_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur );
 		is = GeneSet.class.getResourceAsStream("/total_short.blastout");
 		//is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
 		panCoreFromNRBlast( new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur );
-		
 		
 		geneloc.clear();
 		allgenes.clear();
@@ -7059,11 +7212,13 @@ public class GeneSet extends JApplet {
 			//clustInfoMap.put( cluster, cInfo);
 		}
 		
-		is = GeneSet.class.getResourceAsStream("/all.blastout");
+		FileWriter	fw = null; //new FileWriter("all_short.blastout");
+		is = GeneSet.class.getResourceAsStream("/all_short.blastout");
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		String line = br.readLine();
 		while( line != null ) {
 			if( line.startsWith("Query=") ) {
+				if( fw != null ) fw.write( line + "\n" );
 				int k = line.indexOf('#');
 				if( k != -1 ) {
 					Set<String>	cluster = null;
@@ -7082,33 +7237,34 @@ public class GeneSet extends JApplet {
 						int ki = 16*corrInd.indexOf( query.substring(0,vi) );
 						
 						line = br.readLine();
-						while( !line.startsWith(">") ) {
+						while( line != null && !line.startsWith(">") && !line.startsWith("Query=") ) {
 							String trim = line.trim();
 							
 							String[] split = trim.split("[ ]+");
 							String val = split[0];
 							if( cluster.contains( val ) ) {
+								if( fw != null ) fw.write( line + "\n" );
 								vi = val.indexOf('_');
 								int ni = corrInd.indexOf( val.substring(0,vi) );
 								
 								double el = -10.0;
 								try {
 									el = Double.parseDouble( split[split.length-2] );
-								} catch( Exception e ) {
-									
-								}
+								} catch( Exception e ) {}
 								da[ki+ni] = el;
 							}
 							
 							line = br.readLine();
 						}
+						
+						if( line == null || line.startsWith("Query=") ) continue;  
 					}
 				}
 			}
-			
 			line = br.readLine();
 		}
 		br.close();
+		if( fw != null ) fw.close();
 		
 		double davg = 1.0/corr16sArray.length;
 		for( Set<String> cluster : corrList.keySet() ) {
