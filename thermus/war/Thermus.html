@@ -33,7 +33,7 @@
     <script type="text/javascript">
 
   var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-21191374-1']);
+  _gaq.push(['_setAccount', 'UA-21191374-1']);	
   _gaq.push(['_trackPageview']);
 
   (function() {
@@ -50,11 +50,7 @@
   <!-- you can leave the body empty if you want  -->
   <!-- to create a completely dynamic UI.        -->
   <!--                                           -->
-  <body>
-
-    <!-- OPTIONAL: include this if you want history support -->
-    <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
-    
+  <body>    
     <!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
     <noscript>
       <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
@@ -62,18 +58,5 @@
         in order for this application to display correctly.
       </div>
     </noscript>
-
-    <h1>Thermus gene navigator</h1>
-
-    <div id="fastdiv" style="text-align:center">
-    Double click on a gene in the upper table and you will get a list of GO terms associated with that gene in the lower table. <br>
-    Also the other way around, clicking on a GO term will show all genes associated with that term in the upper table. <br>
-    Right click on the upper table will show a menu where you can display related genes or genes in proximity of the selected genes.<br>
-    <script type="text/javascript" language="javascript">
-    	var attributes = { codebase:'http://dl.dropbox.com/u/10024658/', archive:'distann.jar', code:'org.simmi.GeneSet', width:'1200', height:'800', id:'thermus', name:'thermus' };
-        var parameters = { jnlp_href:'distann.jnlp' };
-       deployJava.runApplet(attributes, parameters, '1.6')
-    </script>
-    </div>
   </body>
 </html>
