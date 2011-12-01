@@ -48,6 +48,7 @@ public class TreeDraw extends JComponent {
 	
 	private class Node {
 		String 		name;
+		String		meta;
 		private double		h;
 		private double		h2;
 		Color		color;
@@ -72,7 +73,12 @@ public class TreeDraw extends JComponent {
 				str += nodes.get(i)+")";
 			}
 			
-			return str+name;
+			if( name != null && name.length() > 0 ) str += name;
+			if( meta != null && meta.length() > 0 ) str += meta;
+			
+			if( h > 0.0 ) str += ":"+h;
+			
+			return str;
 		}
 		
 		public int countLeaves() {
@@ -143,10 +149,19 @@ public class TreeDraw extends JComponent {
 	}
 	
 	Random	rnd = new Random();
-	public TreeDraw( String str, int w, int h, boolean equalHeight, boolean inverse, boolean vertical, Map<String,Map<String,String>> mapmap ) {
-		super();		
+	public TreeDraw( String str, int w, int h, boolean equalHeight, boolean inverse, boolean vertical, Map<String,Map<String,String>> mapmap, String export ) {
+		super();
 		loc = 0;
 		Node resultnode = parseTreeRecursive( str, false, mapmap );
+		if( export != null ) {
+			try {
+				FileWriter fw = new FileWriter( export );
+				fw.write( resultnode.toString() );
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		System.err.println("minmax: "+minh+"  "+maxh);
 		
@@ -356,11 +371,17 @@ public class TreeDraw extends JComponent {
 				}
 			}
 			
-			int k = w/32;
+			int k = 12;//w/32;
 			//int yoff = starty-k/2;
 			
+			String use = resnode.name == null || resnode.name.length() == 0 ? resnode.meta : resnode.name;
 			boolean nullNodes = resnode.nodes == null || resnode.nodes.size() == 0;
-			boolean paint = resnode.name != null && resnode.name.length() > 0;
+			boolean paint = use != null && use.length() > 0;
+			
+			/*System.err.println( resnode.meta );
+			if( resnode.meta != null && resnode.meta.contains("Bulgaria") ) {
+				System.err.println( resnode.nodes );
+			}*/
 			
 			ci++;
 			for( int i = colors.size(); i <= ci; i++ ) {
@@ -368,9 +389,9 @@ public class TreeDraw extends JComponent {
 			}
 			
 			Color color = colors.get(ci);
-			if( resnode.color != null ) {
+			/*if( resnode.color != null ) {
 				color = resnode.color;
-			}
+			}*/
 			
 			if( vertical ) drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*nleaves)/2, equalHeight, noAddHeight, vertical );
 			else drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical );
@@ -392,6 +413,7 @@ public class TreeDraw extends JComponent {
 					g2.setColor( Color.black );
 					g2.setFont( bFont );
 					
+					if( resnode.meta != null ) resnode.name += " ("+resnode.meta+")";
 					String[] split = resnode.name.split("_");
 					int t = 0;
 					int mstrw = 0;
@@ -413,11 +435,11 @@ public class TreeDraw extends JComponent {
 					int y2 = ny+4+h/25+(split.length-1)*bFont.getSize();
 					yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";
 				} else {
-					boolean b = resnode.name.length() > 2;
+					boolean b = use.length() > 2;
 					
 					g2.setColor( color );
 					int strw = 0;
-					String[] split = resnode.name.split( "_" );
+					String[] split = use.split( "_" );
 					if( b ) {
 						g2.setFont( lFont );
 						for( String s : split ) {
@@ -429,9 +451,9 @@ public class TreeDraw extends JComponent {
 							strw = Math.max( strw, g2.getFontMetrics().stringWidth( s ) );
 						}
 					}
-					strw = 50;
 					int strh = 10;
-					g2.fillRoundRect( x+nx-(5*strw)/8, ny-k/2, (5*strw)/4, k, k, k );
+					if( vertical ) g2.fillRoundRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, k, k, k );
+					else g2.fillRoundRect( x+nx-(5*strw)/8, ny-k/2, (5*strw)/4, k, k, k );
 					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
 					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
 					g2.setColor( Color.white );
@@ -439,12 +461,12 @@ public class TreeDraw extends JComponent {
 					if( vertical ) {
 						if( b ) {
 							for( String s : split ) {
-								g2.drawString(s, nx+5-8*(split.length-1)+i*16, y+ny-strh/2 );
+								g2.drawString(s, nx-strw/2, y+ny+strh/2-1-8*(split.length-1)+i*16 );
 								i++;
 							}
 						} else {
 							for( String s : split ) {
-								g2.drawString(s, nx+6-8*(split.length)+i*16, y+ny-strh/2 );
+								g2.drawString(s, nx-strw/2, y+ny+strh/2-1-8*(split.length)+i*16 );
 								i++;
 							}
 						}
@@ -481,6 +503,52 @@ public class TreeDraw extends JComponent {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		/*try {
+			FileReader fr = new FileReader( "/home/horfrae/new.txt" );
+			BufferedReader br = new BufferedReader( fr );
+			
+			Set<String>	accset = new HashSet<String>();
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.contains("acc:") ) {
+					int k = line.indexOf(":");
+					if( k != -1 ) {
+						String acc = line.substring(k+1).trim();
+						accset.add( acc );
+					}
+				}
+				line = br.readLine();
+			}
+			br.close();
+			
+			Set<String>	gaccset = new HashSet<String>();
+			fr = new FileReader( "/home/horfrae/greengenes.txt" );
+			br = new BufferedReader( fr );
+			line = br.readLine();
+			while( line != null ) {
+				if( line.contains("acc=") ) {
+					int k = line.indexOf("=");
+					if( k != -1 ) {
+						String acc = line.substring(k+1).trim();
+						gaccset.add( acc );
+					}
+				}
+				line = br.readLine();
+			}
+			br.close();
+			
+			gaccset.removeAll( accset );
+			System.err.println( gaccset );
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
+		
+		maintree( args );
+	}
+		
+	public static void maintree( String[] args ) {
 		JFrame	frame = new JFrame();
 		
 		String imgType = "png";
@@ -491,6 +559,7 @@ public class TreeDraw extends JComponent {
 		boolean show = false;
 		boolean help = false;
 		boolean vertical = false;
+		String export = null;
 		String coords = null;
 		String metafile = null;
 		Reader reader = new InputStreamReader( System.in );
@@ -508,7 +577,6 @@ public class TreeDraw extends JComponent {
 				try {
 					out = new FileOutputStream( args[++i] );
 				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} else if( args[i].equals("--type") ) {
@@ -531,6 +599,8 @@ public class TreeDraw extends JComponent {
 				vertical = true;
 			} else if( args[i].equals("--meta") ) {
 				metafile = args[++i];
+			} else if( args[i].equals("--export") ) {
+				export = args[++i];
 			}
 		}
 		
@@ -538,7 +608,7 @@ public class TreeDraw extends JComponent {
 			System.err.print( "Usage: java -jar treedraw.jar" );
 			System.err.println( " --in [optional, filename, default:stdin] --out [optional, filename, default:stdout], --type [optional, imagetype, default:\"PNG\"]" );
 			System.err.println( "--vertical [optional, vertical tree] --x [optional, integer, default:1600] --y [optional, integer, default:800] --invert [optional, invert tree] --show [optional, show image, no output], --equalHeights [optional, do not use heights] --coords [optional, coords yaml]" );
-			System.err.println( "--meta [optional, metadata file path]" );
+			System.err.println( "--meta [optional, metadata file path] --export [optional, save tree]" );
 		} else {
 			
 			/*if( args.length > 2 ) {
@@ -606,7 +676,7 @@ public class TreeDraw extends JComponent {
 					reader.close();
 					
 					String str = sb.toString().replaceAll("[\r\n]+", "");
-					TreeDraw treedraw = new TreeDraw( str, x, y, equalHeight, inverse, vertical, mapmap );
+					TreeDraw treedraw = new TreeDraw( str, x, y, equalHeight, inverse, vertical, mapmap, export );
 					frame.add( treedraw );
 					if( !show ) ImageIO.write( treedraw.img, imgType, out );
 					if( coords != null ) {
@@ -657,7 +727,15 @@ public class TreeDraw extends JComponent {
 					if( mapmap.containsKey( node.name ) ) {
 						Map<String,String>	keyval = mapmap.get(node.name);
 						if( keyval.containsKey("country") ) {
-							node.name += keyval.get("country");
+							String meta = keyval.get("country");
+							int i = meta.indexOf(':');
+							if( i != -1 ) meta = meta.substring(0, i);
+							node.meta = meta;
+						} else if( keyval.containsKey("full_name") ) {
+							String tax = keyval.get("full_name");
+							int i = tax.indexOf(':');
+							if( i != -1 ) tax = tax.substring(0, i);
+							node.name = tax;
 						}
 					}
 					
@@ -694,6 +772,25 @@ public class TreeDraw extends JComponent {
 				else ret.nodes.add( node );
 			}
 		}
+		
+		Node use = inverse ? node : ret;
+		List<Node> checklist = use.nodes;
+		String metacheck = null;
+		boolean dual = true;
+		for( Node n : checklist ) {
+			if( n.meta != null ) {
+				if( metacheck == null ) metacheck = n.meta;
+				else if( !n.meta.equals(metacheck) ) dual = false;
+			}
+		}
+		
+		if( dual ) {
+			for( Node n : checklist ) {
+				if( n.nodes != null && n.nodes.size() > 0 ) n.meta = null;
+			}
+			use.meta = metacheck;
+		} else use.meta = "";
+		//System.err.println("setting: "+metacheck + use.nodes);
 		
 		if( loc < str.length()-1 ) {
 			loc++;
@@ -739,6 +836,6 @@ public class TreeDraw extends JComponent {
 			loc = end;
 		}
 		
-		return inverse ? node : ret;
+		return use;
 	}
 }
