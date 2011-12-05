@@ -12,6 +12,7 @@
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <file path="/distann/src/all5S.fsa"/>
+        <file path="/distann/src/all16S.blastout"/>
         <file path="/distann/src/all.fsa"/>
         <file path="/distann/src/idmapping_short.dat"/>
         <file path="/distann/src/all.aa"/>
@@ -24,8 +25,8 @@
         <file path="/distann/src/sp2go_short.txt"/>
         <file path="/distann/src/all.nn"/>
         <file path="/distann/src/union_cluster.txt"/>
-        <file path="/distann/src/all23S.fsa"/>
         <file path="/distann/src/kegg_pathways"/>
+        <file path="/distann/src/all23S.fsa"/>
         <file path="/distann/src/gene2go_short.txt"/>
         <file path="/distann/src/intersect_cluster.txt"/>
         <file path="/distann/src/BLOSUM62"/>
