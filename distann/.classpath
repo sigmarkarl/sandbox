@@ -5,5 +5,6 @@
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_01/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_01/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="/opt/jna/jna.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/javafasta"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
