@@ -555,7 +555,7 @@ public class GeneSet extends JApplet {
 					nquery = query;
 				}*/
 				StringBuilder dn = dnaSearch( query );
-				System.err.println( "ermm " + ori );
+				//System.err.println( "ermm " + ori );
 				stv.add( new Tegeval( teg, Double.parseDouble(evalue), aa, dn, query, contig, contloc, start, stop, ori ) );
 				
 				if( !allgenes.containsKey( val ) || allgenes.get( val ) == null ) {
@@ -7235,13 +7235,23 @@ public class GeneSet extends JApplet {
 		//InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
 		if( is != null ) loci2aasequence( new InputStreamReader( is ) );
 		
-		is = GeneSet.class.getResourceAsStream("/all.nn");
-		//is = GeneSet.class.getResourceAsStream("/arciformis.nn");
-		if( is != null ) loci2dnasequence( new InputStreamReader( is ) );
+		//URL url = new URL("http://192.168.1.69/all.nn");
+		try {
+			is = GeneSet.class.getResourceAsStream("/all.nn");
+			//is = GeneSet.class.getResourceAsStream("/arciformis.nn");
+			if( is != null ) loci2dnasequence( new InputStreamReader( is ) );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
 		
-		is = GeneSet.class.getResourceAsStream("/all.fsa");
-		//is = GeneSet.class.getResourceAsStream("/arciformis.nn");
-		if( is != null ) loadcontigs( new InputStreamReader( is ) );
+		//url = new URL("http://192.168.1.69/all.fsa");
+		try {
+			is = GeneSet.class.getResourceAsStream("/all.fsa");
+			//is = GeneSet.class.getResourceAsStream("/arciformis.nn");
+			if( is != null ) loadcontigs( new InputStreamReader( is ) );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
 		
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>>	iclusterlist = loadSimpleClusters( new InputStreamReader(is) );
