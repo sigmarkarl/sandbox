@@ -161,11 +161,11 @@ public class Afstemming extends JApplet {
 				vnum = Integer.parseInt( no );
 			} catch( Exception e ) {}
 			
-			if( vnr.equals("2092") ) {
+			/*if( vnr.equals("2092") ) {
 				System.err.println( "ranni " + typ + "  " + no + "  " + dsc + "  " + price + "  " + cost );
-			}
+			}*/
 			
-			if( typ.equals("1") && verkmap.containsKey( vnr ) ) {
+			if( !sac.equals("1050") && typ.equals("1") && verkmap.containsKey( vnr ) ) {
 				Verk vrk = verkmap.get(vnr);
 				vrk.addRaun( dsc, cost, price, typ );
 			}
