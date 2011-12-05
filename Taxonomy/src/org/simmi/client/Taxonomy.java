@@ -29,7 +29,6 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DialogBox.Caption;
@@ -76,7 +75,6 @@ public class Taxonomy implements EntryPoint {
 	
 	public void runSubStuff( RequestBuilder rb, final TreeItem rootitem ) throws RequestException {
 		rb.sendRequest("", new RequestCallback() {
-			
 			@Override
 			public void onResponseReceived(Request request, Response response) {
 				String resp = response.getText();
@@ -133,7 +131,7 @@ public class Taxonomy implements EntryPoint {
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
-		final String server = Location.getHost();
+		final String server = "130.208.252.7";//Location.getHost();
 		
 		RootPanel		rp = RootPanel.get();
 		Style rootstyle = rp.getElement().getStyle();
@@ -188,8 +186,38 @@ public class Taxonomy implements EntryPoint {
 					
 					String qstr =  sb.toString();
 					//console( "qs " + qstr );
+					
+					RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://"+server+"/cgi-bin/getseq.cgi" );
+					try {
+						rb.sendRequest( searchnum+"_"+qstr, new RequestCallback() {
+							@Override
+							public void onResponseReceived(Request request, Response response) {
+								String result = response.getText();
+								
+								DialogBox db = new DialogBox();
+								Caption cap = db.getCaption();
+								db.setAutoHideEnabled( true );
+								cap.setText("Fasta");
+								TextArea ta = new TextArea();
+								ta.setSize("512px", "384px");
+								db.add( ta );
+								
+								ta.setText( result );
+								
+								db.center();
+							}
+
+							@Override
+							public void onError(Request request, Throwable exception) {
+								
+							}
+						});
+					} catch (RequestException e) {
+						e.printStackTrace();
+					}
+					
+					/*runSpec( selectedtree, "http://"+server+"/12v1.txt" );
 					greetingService.greetServer( qstr, searchnum, new AsyncCallback<String>() {
-						
 						@Override
 						public void onSuccess(String result) {
 							DialogBox db = new DialogBox();
@@ -207,10 +235,8 @@ public class Taxonomy implements EntryPoint {
 						}
 						
 						@Override
-						public void onFailure(Throwable caught) {
-							
-						}
-					});
+						public void onFailure(Throwable caught) {}
+					});*/
 				}
 			}
 		});
