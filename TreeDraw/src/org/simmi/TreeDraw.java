@@ -76,7 +76,9 @@ public class TreeDraw extends JComponent {
 			if( name != null && name.length() > 0 ) str += name;
 			if( meta != null && meta.length() > 0 ) str += meta;
 			
-			if( h > 0.0 ) str += ":"+h;
+			//if( h > 0.0 )
+				str += ":"+h;
+			//else str += ":0.0";
 			
 			return str;
 		}
@@ -152,6 +154,7 @@ public class TreeDraw extends JComponent {
 	public TreeDraw( String str, int w, int h, boolean equalHeight, boolean inverse, boolean vertical, Map<String,Map<String,String>> mapmap, String export ) {
 		super();
 		loc = 0;
+		System.err.println( str );
 		Node resultnode = parseTreeRecursive( str, false, mapmap );
 		if( export != null ) {
 			try {
@@ -195,7 +198,8 @@ public class TreeDraw extends JComponent {
 		//if( inverse ) resultnode = invertTree( resultnode );
 		int leaves = resultnode.countLeaves();
 		int levels = resultnode.countMaxHeight();
-		System.err.println( resultnode + "  " + leaves + "  " + levels );
+		System.err.println( resultnode );
+		System.err.println(leaves + "  " + levels);
 		
 		img = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		Graphics2D g2 = img.createGraphics();
@@ -228,17 +232,17 @@ public class TreeDraw extends JComponent {
 		this.w = w;
 		
 		if( vertical ) {
-			dh = h/leaves;
-			dw = w/levels;
+			dh = this.h/leaves;
+			dw = this.w/levels;
 		} else {
-			dh = h/levels;
-			dw = w/leaves;
+			dh = this.h/levels;
+			dw = this.w/leaves;
 		}
 		
 		int starty = 10; //h/25;
 		int startx = 10; //w/25;
 		if( equalHeight ) {
-			ny = starty+dh*(h/dh-levels);
+			ny = (int)(starty+dh*(h/dh-levels));
 		} else {
 			ny = (int)(starty+(h*resultnode.geth())/100000.0);
 		}
@@ -249,8 +253,12 @@ public class TreeDraw extends JComponent {
 		yaml = "";
 		ci = 0;
 		g2.setFont( dFont );
-		if( vertical ) drawTreeRecursive( g2, resultnode, 0, 0, startx, h/2, equalHeight, false, vertical );
-		else drawTreeRecursive( g2, resultnode, 0, 0, w/2, starty, equalHeight, false, vertical );
+		if( vertical ) {
+			drawTreeRecursive( g2, resultnode, 0, 0, startx, h/2, equalHeight, false, vertical );
+		} else {
+			drawTreeRecursive( g2, resultnode, 0, 0, w/2, starty, equalHeight, false, vertical );
+		}
+		
 		if( resultnode.name != null && resultnode.name.length() > 0 ) {	
 			int strw = g2.getFontMetrics().stringWidth( resultnode.name );
 			g2.setColor( Color.red );
@@ -260,10 +268,10 @@ public class TreeDraw extends JComponent {
 		}
 	}
 	
-	int w;	
-	int h;
-	int dw;
-	int dh;
+	double w;	
+	double h;
+	double dw;
+	double dh;
 	
 	public GradientPaint createGradient( Color color, int h1, int h2 ) {
 		return new GradientPaint( 0, h1, 
@@ -290,15 +298,15 @@ public class TreeDraw extends JComponent {
 		return -1;
 	}
 	
-	public void drawFramesRecursive( Graphics2D g2, Node node, int x, int y, int startx, int starty, GradientPaint sc, int total, boolean equalHeight ) {		
+	public void drawFramesRecursive( Graphics2D g2, Node node, double x, double y, double startx, double starty, GradientPaint sc, int total, boolean equalHeight ) {		
 		if( node.nodes.size() > 0 ) {			
 			if( sc != null ) {// paint && !(allNull || nullNodes) ) {
 				g2.setPaint( sc );
 				
-				int k = w/32;
-				int yoff = starty-(1*k)/4;
+				int k = (int)(w/32);
+				int yoff = (int)(starty-(1*k)/4);
 				
-				g2.fillRect( x+k/4, yoff, dw*total-k/2, h-yoff-h/17 ); //ny-yoff );
+				g2.fillRect( (int)(x+k/4), yoff, (int)(dw*total-k/2.0), (int)(h-yoff-h/17) ); //ny-yoff );
 				g2.setPaint( oldPaint );
 			}
 			
@@ -308,10 +316,10 @@ public class TreeDraw extends JComponent {
 				int nlevels = resnode.countMaxHeight();
 				
 				int ny;
-				int k = w/32;
+				int k = (int)(w/32);
 				
 				if( equalHeight ) {
-					ny = h/25+dh*(h/dh-nlevels);
+					ny = (int)(h/25.0+dh*(h/dh-nlevels));
 				} else {
 					ny = (int)(starty+(h*resnode.geth())/100000.0);
 				}
@@ -326,9 +334,9 @@ public class TreeDraw extends JComponent {
 				if( resnode.color != null ) {
 					color = resnode.color;
 				}
-				GradientPaint shadeColor = createGradient(color, ny-k/2, h);
+				GradientPaint shadeColor = createGradient(color, (int)(ny-k/2), (int)h);
 				
-				drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2, ny, paint ? shadeColor : null, nleaves, equalHeight );
+				drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, ny, paint ? shadeColor : null, nleaves, equalHeight );
 				total += nleaves;
 			}
 		}
@@ -342,31 +350,31 @@ public class TreeDraw extends JComponent {
 		return maxh2;
 	}
 
-	public void drawTreeRecursive( Graphics2D g2, Node node, int x, int y, int startx, int starty, boolean equalHeight, boolean noAddHeight, boolean vertical ) {		
+	public void drawTreeRecursive( Graphics2D g2, Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical ) {		
 		int total = 0;
 		for( Node resnode : node.nodes ) {
 			int nleaves = resnode.countLeaves();
 			int nlevels = resnode.countMaxHeight();
 			
-			int nx = 0;
-			int ny = 0;
+			double nx = 0;
+			double ny = 0;
 			
 			if( vertical ) {
 				//minh = 0.0;
-				ny = dh*total+(dh*nleaves)/2;
+				ny = dh*total+(dh*nleaves)/2.0;
 				if( equalHeight ) {
-					nx = w/25+dw*(w/dw-nlevels);
+					nx = w/25.0+dw*(w/dw-nlevels);
 				} else {
-					nx = /*h/25+*/(int)(startx+(w*(resnode.h-minh))/((maxh-minh)*1.3));
+					nx = /*h/25+*/startx+(w*(resnode.h-minh))/((maxh-minh)*30.0);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 			} else {
 				//minh = 0.0;
-				nx = dw*total+(dw*nleaves)/2;
+				nx = dw*total+(dw*nleaves)/2.0;
 				if( equalHeight ) {
-					ny = h/25+dh*(h/dh-nlevels);
+					ny = h/25.0+dh*(h/dh-nlevels);
 				} else {
-					ny = /*h/25+*/(int)(starty+(h*(resnode.h-minh))/((maxh-minh)*2.2));
+					ny = /*h/25+*/starty+(h*(resnode.h-minh))/((maxh-minh)*2.2);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 			}
@@ -393,19 +401,22 @@ public class TreeDraw extends JComponent {
 				color = resnode.color;
 			}*/
 			
-			if( vertical ) drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*nleaves)/2, equalHeight, noAddHeight, vertical );
-			else drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical );
+			if( vertical ) {
+				drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*nleaves)/2.0, equalHeight, noAddHeight, vertical );
+			} else {
+				drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical );
+			}
 		
 			//ny+=starty;
 			//drawTreeRecursive( g2, resnode, w, h, dw, dh, x+dw*total, y+h, (dw*nleaves)/2, ny, paint ? shadeColor : null );
 			
 			g2.setColor( Color.darkGray );
 			g2.setStroke( vStroke );
-			if( vertical ) g2.drawLine( startx, y+starty, startx, y+ny );
-			else g2.drawLine( x+startx, starty, x+nx, starty );
+			if( vertical ) g2.drawLine( (int)startx, (int)(y+starty), (int)startx, (int)(y+ny) );
+			else g2.drawLine( (int)(x+startx), (int)starty, (int)(x+nx), (int)starty );
 			g2.setStroke( hStroke );
-			if( vertical ) g2.drawLine( startx, y+ny, nx, y+ny );
-			else g2.drawLine( x+nx, starty, x+nx, ny );
+			if( vertical ) g2.drawLine( (int)startx, (int)(y+ny), (int)nx, (int)(y+ny) );
+			else g2.drawLine( (int)(x+nx), (int)starty, (int)(x+nx), (int)ny );
 			g2.setStroke( oldStroke );
 			
 			if( paint ) {
@@ -422,17 +433,17 @@ public class TreeDraw extends JComponent {
 						for( String str : split ) {
 							int strw = g2.getFontMetrics().stringWidth( str );
 							mstrw = Math.max( mstrw, strw );
-							g2.drawString(str, x+nx-strw/2, ny+4+10+(t++)*bFont.getSize() );
+							g2.drawString(str, (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*bFont.getSize()) );
 						}
 					} else {
 						for( String str : split ) {
-							g2.drawString(str, nx+4+10+(t++)*bFont.getSize(), y+ny+mstrh/2 );
+							g2.drawString(str, (int)(nx+4+10+(t++)*bFont.getSize()), (int)(y+ny+mstrh/2.0) );
 						}
 					}
-					int x1 = (x+nx-mstrw/2);
-					int x2 = (x+nx+mstrw/2);
-					int y1 = ny+4+h/25+(-1)*bFont.getSize();
-					int y2 = ny+4+h/25+(split.length-1)*bFont.getSize();
+					int x1 = (int)(x+nx-mstrw/2);
+					int x2 = (int)(x+nx+mstrw/2);
+					int y1 = (int)(ny+4+h/25+(-1)*bFont.getSize());
+					int y2 = (int)(ny+4+h/25+(split.length-1)*bFont.getSize());
 					yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";
 				} else {
 					boolean b = use.length() > 2;
@@ -452,8 +463,8 @@ public class TreeDraw extends JComponent {
 						}
 					}
 					int strh = 10;
-					if( vertical ) g2.fillRoundRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, k, k, k );
-					else g2.fillRoundRect( x+nx-(5*strw)/8, ny-k/2, (5*strw)/4, k, k, k );
+					if( vertical ) g2.fillRoundRect( (int)(nx-(5*strw)/8), (int)(y+ny-(5*strh)/8), (5*strw)/4, k, k, k );
+					else g2.fillRoundRect( (int)(x+nx-(5*strw)/8), (int)(ny-k/2.0), (5*strw)/4, k, k, k );
 					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
 					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
 					g2.setColor( Color.white );
@@ -461,12 +472,12 @@ public class TreeDraw extends JComponent {
 					if( vertical ) {
 						if( b ) {
 							for( String s : split ) {
-								g2.drawString(s, nx-strw/2, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+								g2.drawString(s, (int)(nx-strw/2.0), (int)(y+ny+strh/2-1-8*(split.length-1)+i*16) );
 								i++;
 							}
 						} else {
 							for( String s : split ) {
-								g2.drawString(s, nx-strw/2, y+ny+strh/2-1-8*(split.length)+i*16 );
+								g2.drawString(s, (int)(nx-strw/2.0), (int)(y+ny+strh/2-1-8*(split.length)+i*16) );
 								i++;
 							}
 						}
@@ -474,13 +485,13 @@ public class TreeDraw extends JComponent {
 						if( b ) {
 							for( String s : split ) {
 								strw = g2.getFontMetrics().stringWidth( s );
-								g2.drawString(s, x+nx-strw/2, ny+5-8*(split.length-1)+i*16 );
+								g2.drawString(s, (int)(x+nx-strw/2.0), (int)(ny+5-8*(split.length-1)+i*16) );
 								i++;
 							}
 						} else {
 							for( String s : split ) {
 								strw = g2.getFontMetrics().stringWidth( s );
-								g2.drawString(s, x+nx-strw/2, ny+6-8*(split.length)+i*16 );
+								g2.drawString(s, (int)(x+nx-strw/2.0), (int)(ny+6-8*(split.length)+i*16) );
 								i++;
 							}
 						}
@@ -553,7 +564,7 @@ public class TreeDraw extends JComponent {
 		
 		String imgType = "png";
 		int x = 1024;
-		int y = 4096;
+		int y = 1024*16;
 		boolean	equalHeight = false;
 		boolean inverse = false;
 		boolean show = false;
@@ -652,7 +663,7 @@ public class TreeDraw extends JComponent {
 							String key = line.substring(4, i);
 							String val = line.substring(i+1,line.length()).trim();
 							
-							if( key.equals("name") ) {
+							if( key.equals("acc") ) {
 								 keyval = new HashMap<String,String>();
 								 mapmap.put(val, keyval);
 							} else if( keyval != null ) {
@@ -678,7 +689,7 @@ public class TreeDraw extends JComponent {
 					String str = sb.toString().replaceAll("[\r\n]+", "");
 					TreeDraw treedraw = new TreeDraw( str, x, y, equalHeight, inverse, vertical, mapmap, export );
 					frame.add( treedraw );
-					if( !show ) ImageIO.write( treedraw.img, imgType, out );
+					ImageIO.write( treedraw.img, imgType, out );
 					if( coords != null ) {
 						File f = new File( coords );
 						FileWriter fw = new FileWriter( f );
@@ -724,14 +735,22 @@ public class TreeDraw extends JComponent {
 				if( code.contains(":") ) {
 					String[] split = code.split(":");
 					node.name = split[0].replaceAll("'", "");
-					if( mapmap.containsKey( node.name ) ) {
-						Map<String,String>	keyval = mapmap.get(node.name);
+					
+					String mapname = node.name;
+					int ik = node.name.indexOf('.');
+					if( ik != -1 ) {
+						mapname = node.name.substring(0, ik);
+					}
+					if( mapmap.containsKey( mapname ) ) {
+						Map<String,String>	keyval = mapmap.get( mapname );
 						if( keyval.containsKey("country") ) {
 							String meta = keyval.get("country");
 							int i = meta.indexOf(':');
 							if( i != -1 ) meta = meta.substring(0, i);
 							node.meta = meta;
-						} else if( keyval.containsKey("full_name") ) {
+						}
+						
+						if( keyval.containsKey("full_name") ) {
 							String tax = keyval.get("full_name");
 							int i = tax.indexOf(':');
 							if( i != -1 ) tax = tax.substring(0, i);
