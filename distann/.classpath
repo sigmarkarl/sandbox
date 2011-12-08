@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_01/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_01/jre/lib/plugin.jar"/>
-	<classpathentry kind="lib" path="/opt/jna/jna.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/javafasta"/>
+	<classpathentry kind="lib" path="/usr/java/jdk1.7.0_01/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/usr/java/jdk1.7.0_01/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/usr/java/jdk1.7.0_01/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -98,7 +98,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
-import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
@@ -4605,7 +4604,7 @@ public class GeneSet extends JApplet {
 			//String[] filt = {"16S"};
 			//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/out.fna", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/16s.fna", new HashSet<String>( Arrays.asList(filt) ), false );
 			
-				/*FileReader fr = new FileReader( "/home/horfrae/parc_thermus_accs.txt" );//new FileReader( "/home/horfrae/new.txt" );
+				FileReader fr = new FileReader( "/home/sigmar/parc_thermus_accs.txt" );//new FileReader( "/home/horfrae/new.txt" );
 				BufferedReader br = new BufferedReader( fr );
 				
 				Set<String>	accset = new HashSet<String>();
@@ -4617,20 +4616,48 @@ public class GeneSet extends JApplet {
 							String acc = line.substring(k+1).trim();
 							accset.add( acc );
 						}
-					}*
+					}*/
 					accset.add( line );
 					line = br.readLine();
 				}
 				br.close();
 				
-				trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );*/
+				fr = new FileReader( "/home/sigmar/noname.fasta" );//new FileReader( "/home/horfrae/new.txt" );
+				br = new BufferedReader( fr );
+				
+				Set<String>	accset2 = new HashSet<String>();
+				line = br.readLine();
+				while( line != null ) {
+					if( line.startsWith(">") ) {
+					/*if( line.contains("acc:") ) {
+						int k = line.indexOf(":");
+						if( k != -1 ) {
+							String acc = line.substring(k+1).trim();
+							accset.add( acc );
+						}
+					}*/
+						String[] split = line.split("[ ]+");
+						accset2.add( split[ split.length-1 ] );
+					}
+					line = br.readLine();
+				}
+				br.close();
+				
+				accset.removeAll( accset2 );
+				System.err.println( "accsize " + accset.size() );
+				
+				for( String erm : accset ) {
+					System.err.println( erm );
+				}
+				
+				//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );*/
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/6.blastout") );
+			/*Map<String,Integer>	freqmap = loadFrequency( new FileReader("/home/sigmar/viggo/6.blastout") );
 			for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}
-			loci2gene( new FileReader("/home/sigmar/viggo/6.blastout"), "/home/sigmar/viggo/6v3.txt", null, freqmap );
+			loci2gene( new FileReader("/home/sigmar/viggo/6.blastout"), "/home/sigmar/viggo/6v3.txt", null, freqmap );*/
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
