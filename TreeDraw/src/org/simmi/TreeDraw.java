@@ -384,7 +384,7 @@ public class TreeDraw extends JComponent {
 			} else {
 				//minh = 0.0;
 				nx = dw*total+(dw*nleaves)/2.0;
-				if( equalHeight ) {
+				if( equalHeight ) {	
 					ny = h/25.0+dh*(h/dh-nlevels);
 				} else {
 					ny = /*h/25+*/starty+(h*(resnode.h-minh))/((maxh-minh)*2.2);
