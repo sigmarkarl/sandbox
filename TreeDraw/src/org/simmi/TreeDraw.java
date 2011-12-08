@@ -151,12 +151,19 @@ public class TreeDraw extends JComponent {
 		if( n.h < 0.002 ) n.h = 0.6;
 	}
 	
+	public void extractMetaRecursive( Node node, Map<String,Map<String,String>> mapmap ) {
+		extractMeta( node, mapmap );
+		for( Node subnode : node.nodes ) {
+			extractMetaRecursive(subnode, mapmap);
+		}
+	}
+	
 	Random	rnd = new Random();
 	public TreeDraw( String str, int w, int h, boolean equalHeight, boolean inverse, boolean vertical, Map<String,Map<String,String>> mapmap, String export ) {
 		super();
 		loc = 0;
 		//System.err.println( str );
-		Node resultnode = parseTreeRecursive( str, false, mapmap );
+		Node resultnode = parseTreeRecursive( str, false );
 		if( export != null ) {
 			try {
 				FileWriter fw = new FileWriter( export );
@@ -166,8 +173,9 @@ public class TreeDraw extends JComponent {
 				e.printStackTrace();
 			}
 		}
+		extractMetaRecursive( resultnode, mapmap );
 		
-		//cont( resultnode, w, h, vertical, equalHeight );
+		cont( resultnode, w, h, vertical, equalHeight );
 		
 		//System.err.println("minmax: "+minh+"  "+maxh);
 		
@@ -252,9 +260,8 @@ public class TreeDraw extends JComponent {
 		} else {
 			ny = (int)(starty+(h*resultnode.geth())/100000.0);
 		}
-		GradientPaint shadeColor = createGradient( color, ny-k/2, h );
-		
-		drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
+		//GradientPaint shadeColor = createGradient( color, ny-k/2, h );
+		//drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
 		
 		yaml = "";
 		ci = 0;
@@ -371,7 +378,7 @@ public class TreeDraw extends JComponent {
 				if( equalHeight ) {
 					nx = w/25.0+dw*(w/dw-nlevels);
 				} else {
-					nx = /*h/25+*/startx+(w*(resnode.h-minh))/((maxh-minh)*25.0);
+					nx = /*h/25+*/startx+(w*(resnode.h-minh))/((maxh-minh)*1.3);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 			} else {
@@ -715,19 +722,55 @@ public class TreeDraw extends JComponent {
 		}
 	}
 	
+	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
+		node.name = node.name.replaceAll("'", "");
+		int ki = node.name.indexOf(',');
+		if( ki != -1 ) {
+			String[] metasplit = node.name.split(",");
+			String meta = metasplit[ metasplit.length-1 ].trim();
+			if( meta.contains(":") ) {
+				String[] msplit = meta.split(":");
+				node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1] : msplit[0];
+			}
+			node.name = metasplit[1];
+		}
+		
+		String mapname = node.name;
+		int ik = node.name.indexOf('.');
+		if( ik != -1 ) {
+			mapname = node.name.substring(0, ik);
+		}
+		if( mapmap.containsKey( mapname ) ) {
+			Map<String,String>	keyval = mapmap.get( mapname );
+			if( keyval.containsKey("country") ) {
+				String meta = keyval.get("country");
+				int i = meta.indexOf(':');
+				if( i != -1 ) meta = meta.substring(0, i);
+				node.meta = meta;
+			}
+			
+			if( keyval.containsKey("full_name") ) {
+				String tax = keyval.get("full_name");
+				int i = tax.indexOf(':');
+				if( i != -1 ) tax = tax.substring(0, i);
+				node.name = tax;
+			}
+		}
+	}
+	
 	double minh = Double.MAX_VALUE;
 	double maxh = 0.0;
 	double minh2 = Double.MAX_VALUE;
 	double maxh2 = 0.0;
 	int loc;
-	private Node parseTreeRecursive( String str, boolean inverse, Map<String,Map<String,String>> mapmap ) {
+	private Node parseTreeRecursive( String str, boolean inverse ) {
 		Node ret = new Node();
 		Node node = null;
 		while( loc < str.length()-1 && str.charAt(loc) != ')' ) {
 			loc++;
 			char c = str.charAt(loc);
 			if( c == '(' ) {
-				node = parseTreeRecursive(str, inverse, mapmap);
+				node = parseTreeRecursive(str, inverse);
 				//if( node.nodes.size() == 1573 ) System.err.println( node );
 				if( inverse ) {
 					node.nodes.add( ret );
@@ -756,45 +799,12 @@ public class TreeDraw extends JComponent {
 					int i = code.lastIndexOf("'");
 					if( i > 0 ) {
 						split = code.substring(i, code.length()).split(":");
-						node.name = code.substring(0, i);
+						node.name = code.substring(0, i+1);
 					} else {
 						split = code.split(":");
 						node.name = split[0];
 					}
-					node.name = node.name.replaceAll("'", "");
-					int ki = node.name.indexOf(',');
-					if( ki != -1 ) {
-						String meta = node.name.substring( ki+1, node.name.length() ).trim();
-						if( meta.contains(":") ) {
-							String[] msplit = meta.split(":");
-							node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1] : msplit[0];
-						} else {
-							
-						}
-						node.name = node.name.substring(0, ki);
-					}
-					
-					String mapname = node.name;
-					int ik = node.name.indexOf('.');
-					if( ik != -1 ) {
-						mapname = node.name.substring(0, ik);
-					}
-					if( mapmap.containsKey( mapname ) ) {
-						Map<String,String>	keyval = mapmap.get( mapname );
-						if( keyval.containsKey("country") ) {
-							String meta = keyval.get("country");
-							i = meta.indexOf(':');
-							if( i != -1 ) meta = meta.substring(0, i);
-							node.meta = meta;
-						}
-						
-						if( keyval.containsKey("full_name") ) {
-							String tax = keyval.get("full_name");
-							i = tax.indexOf(':');
-							if( i != -1 ) tax = tax.substring(0, i);
-							node.name = tax;
-						}
-					}
+					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
 						String color = split[2].substring(1);
@@ -898,9 +908,16 @@ public class TreeDraw extends JComponent {
 			loc = end;
 		}
 		
-		if( use.leaves == 1573 ) {
-			System.err.println( use );
-		}
+		/*if( use.leaves == 1573 ) {
+			try {
+				FileWriter fw = new FileWriter("/home/sigmar/tree"+(cnt++)+".ntree");
+				fw.write( use.toString() );
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}*/
 		return use;
 	}
+	int cnt = 0;
 }
