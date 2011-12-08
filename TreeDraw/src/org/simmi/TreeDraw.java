@@ -53,6 +53,7 @@ public class TreeDraw extends JComponent {
 		private double		h2;
 		Color		color;
 		List<Node>	nodes;
+		int			leaves = 0;
 		
 		public Node() {
 			nodes = new ArrayList<Node>();
@@ -154,7 +155,7 @@ public class TreeDraw extends JComponent {
 	public TreeDraw( String str, int w, int h, boolean equalHeight, boolean inverse, boolean vertical, Map<String,Map<String,String>> mapmap, String export ) {
 		super();
 		loc = 0;
-		System.err.println( str );
+		//System.err.println( str );
 		Node resultnode = parseTreeRecursive( str, false, mapmap );
 		if( export != null ) {
 			try {
@@ -166,7 +167,9 @@ public class TreeDraw extends JComponent {
 			}
 		}
 		
-		System.err.println("minmax: "+minh+"  "+maxh);
+		//cont( resultnode, w, h, vertical, equalHeight );
+		
+		//System.err.println("minmax: "+minh+"  "+maxh);
 		
 		//Node newroot = findNode( resultnode, 1000.0 );
 		//double val = newroot.h;
@@ -196,10 +199,13 @@ public class TreeDraw extends JComponent {
 		//resultnode = newroot;
 		
 		//if( inverse ) resultnode = invertTree( resultnode );
+	}
+		
+	public void cont( Node resultnode, int w, int h, boolean vertical, boolean equalHeight ) {
 		int leaves = resultnode.countLeaves();
 		int levels = resultnode.countMaxHeight();
-		System.err.println( resultnode );
-		System.err.println(leaves + "  " + levels);
+		//System.err.println( resultnode );
+		//System.err.println(leaves + "  " + levels);
 		
 		img = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		Graphics2D g2 = img.createGraphics();
@@ -365,7 +371,7 @@ public class TreeDraw extends JComponent {
 				if( equalHeight ) {
 					nx = w/25.0+dw*(w/dw-nlevels);
 				} else {
-					nx = /*h/25+*/startx+(w*(resnode.h-minh))/((maxh-minh)*30.0);
+					nx = /*h/25+*/startx+(w*(resnode.h-minh))/((maxh-minh)*25.0);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 			} else {
@@ -689,7 +695,7 @@ public class TreeDraw extends JComponent {
 					String str = sb.toString().replaceAll("[\r\n]+", "");
 					TreeDraw treedraw = new TreeDraw( str, x, y, equalHeight, inverse, vertical, mapmap, export );
 					frame.add( treedraw );
-					ImageIO.write( treedraw.img, imgType, out );
+					if( treedraw.img != null ) ImageIO.write( treedraw.img, imgType, out );
 					if( coords != null ) {
 						File f = new File( coords );
 						FileWriter fw = new FileWriter( f );
@@ -722,19 +728,51 @@ public class TreeDraw extends JComponent {
 			char c = str.charAt(loc);
 			if( c == '(' ) {
 				node = parseTreeRecursive(str, inverse, mapmap);
-				if( inverse ) node.nodes.add( ret );
-				else ret.nodes.add( node );
+				//if( node.nodes.size() == 1573 ) System.err.println( node );
+				if( inverse ) {
+					node.nodes.add( ret );
+					node.leaves++;
+				} else {
+					ret.nodes.add( node );
+					ret.leaves += node.leaves;
+				}
 			} else {
 				node = new Node();
 				int end = loc+1;
 				char n = str.charAt(end);
+				
+				if( c == '\'' ) {
+					while( end < str.length()-1 && n != '\'' ) {
+						n = str.charAt(++end);
+					}
+				}
 				while( end < str.length()-1 && n != ',' && n != ')' ) {
 					n = str.charAt(++end);
 				}
+				
 				String code = str.substring( loc, end );
 				if( code.contains(":") ) {
-					String[] split = code.split(":");
-					node.name = split[0].replaceAll("'", "");
+					String[] split;
+					int i = code.lastIndexOf("'");
+					if( i > 0 ) {
+						split = code.substring(i, code.length()).split(":");
+						node.name = code.substring(0, i);
+					} else {
+						split = code.split(":");
+						node.name = split[0];
+					}
+					node.name = node.name.replaceAll("'", "");
+					int ki = node.name.indexOf(',');
+					if( ki != -1 ) {
+						String meta = node.name.substring( ki+1, node.name.length() ).trim();
+						if( meta.contains(":") ) {
+							String[] msplit = meta.split(":");
+							node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1] : msplit[0];
+						} else {
+							
+						}
+						node.name = node.name.substring(0, ki);
+					}
 					
 					String mapname = node.name;
 					int ik = node.name.indexOf('.');
@@ -745,14 +783,14 @@ public class TreeDraw extends JComponent {
 						Map<String,String>	keyval = mapmap.get( mapname );
 						if( keyval.containsKey("country") ) {
 							String meta = keyval.get("country");
-							int i = meta.indexOf(':');
+							i = meta.indexOf(':');
 							if( i != -1 ) meta = meta.substring(0, i);
 							node.meta = meta;
 						}
 						
 						if( keyval.containsKey("full_name") ) {
 							String tax = keyval.get("full_name");
-							int i = tax.indexOf(':');
+							i = tax.indexOf(':');
 							if( i != -1 ) tax = tax.substring(0, i);
 							node.name = tax;
 						}
@@ -787,8 +825,13 @@ public class TreeDraw extends JComponent {
 				}
 				loc = end;
 				
-				if( inverse ) node.nodes.add( ret );
-				else ret.nodes.add( node );
+				if( inverse ) {
+					node.nodes.add( ret );
+					node.leaves++;
+				} else {
+					ret.nodes.add( node );
+					ret.leaves++;
+				}
 			}
 		}
 		
@@ -855,6 +898,9 @@ public class TreeDraw extends JComponent {
 			loc = end;
 		}
 		
+		if( use.leaves == 1573 ) {
+			System.err.println( use );
+		}
 		return use;
 	}
 }
