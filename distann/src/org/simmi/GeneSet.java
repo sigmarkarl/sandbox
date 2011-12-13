@@ -2123,7 +2123,7 @@ public class GeneSet extends JApplet {
 		String str;
 	}
 	
-	private static void loci2gene( Reader rd, String outfile, String filtercont, Map<String,Integer> freqmap, Set<String> included ) throws IOException {
+	private static void loci2gene( String base, Reader rd, String outfile, String filtercont, Map<String,Integer> freqmap, Set<String> included ) throws IOException {
 		FileWriter fw = null;
 		
 		Map<String,String>	giid = new HashMap<String,String>();
@@ -2134,7 +2134,7 @@ public class GeneSet extends JApplet {
 			giid.put( split[1].replace('.', ','), null );
 		}
 		
-		FileInputStream gfr = new FileInputStream("c:/tax/GbAccList.0918.2011");
+		FileInputStream gfr = new FileInputStream(base+"GbAccList.0918.2011");
 		//GZIPInputStream gzi = new GZIPInputStream( gfr );
 		BufferedReader gbr = new BufferedReader( new InputStreamReader( gfr ) );
 		String gline = gbr.readLine();
@@ -2153,7 +2153,7 @@ public class GeneSet extends JApplet {
 		
 		//FileInputStream dfr = new FileInputStream("c:/tax/gi_taxid_nucl.dmp");
 		//GZIPInputStream dgzi = new GZIPInputStream( dfr );
-		FileReader dfr = new FileReader("c:/tax/gi_taxid_nucl.dmp");
+		FileReader dfr = new FileReader(base+"gi_taxid_nucl.dmp");
 		BufferedReader	dbr = new BufferedReader( dfr, 100000000 );
 		String dstr = dbr.readLine();
 		while( dstr != null ) {
@@ -2171,7 +2171,7 @@ public class GeneSet extends JApplet {
 		dfr.close();
 		
 		List<String>	taxmap = new ArrayList<String>();
-		FileReader tfr = new FileReader("c:/tax/names.dmp");
+		FileReader tfr = new FileReader(base+"names.dmp");
 		BufferedReader	tbr = new BufferedReader( tfr );
 		String tstr = tbr.readLine();
 		while( tstr != null ) {
@@ -2192,7 +2192,7 @@ public class GeneSet extends JApplet {
 		tfr.close();
 		
 		Map<Integer,Integer>	parmap = new HashMap<Integer,Integer>();
-		FileReader pfr = new FileReader("c:/tax/nodes.dmp");
+		FileReader pfr = new FileReader(base+"nodes.dmp");
 		BufferedReader	pbr = new BufferedReader( pfr );
 		String pstr = pbr.readLine();
 		while( pstr != null ) {
@@ -2614,7 +2614,7 @@ public class GeneSet extends JApplet {
 		//Map<String,String>	aas = new HashMap<String,String>();
 		for( String st : stuff ) {			
 			File ba = new File( dir, st );
-			loci2gene( new FileReader(ba), null, null, null, null );
+			loci2gene( "", new FileReader(ba), null, null, null, null );
 		}
 	}
 	
@@ -4651,10 +4651,11 @@ public class GeneSet extends JApplet {
 				
 				//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );*/
 			
-			int num = 5;
+			String base = "/vg454flx/viggo/viggo/";
+			int num = 7;
 			int seqcount = 0;
 			Set<String>	included = new HashSet<String>();
-			FileReader fr = new FileReader("c:/viggo/reads/"+num+".TCA.454Reads.fna");
+			FileReader fr = new FileReader(base+"reads/"+num+".TCA.454Reads.fna");
 			BufferedReader br = new BufferedReader( fr );
 			String line = br.readLine();
 			String current = null;
@@ -4683,7 +4684,7 @@ public class GeneSet extends JApplet {
 			
 			int sum = 0;
 			int sumc = 0;
-			fr = new FileReader("c:/viggo/reads/"+num+".TCA.454Reads.qual");
+			fr = new FileReader(base+"reads/"+num+".TCA.454Reads.qual");
 			br = new BufferedReader( fr );
 			line = br.readLine();
 			current = null;
@@ -4711,12 +4712,12 @@ public class GeneSet extends JApplet {
 			
 			System.err.println( seqcount + "  " + included.size() );
 			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo/"+num+".blastout"), included );
+			Map<String,Integer>	freqmap = loadFrequency( new FileReader(base+""+num+".blastout"), included );
 			for( String val : freqmap.keySet() ) {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}
-			loci2gene( new FileReader("c:/viggo/"+num+".blastout"), "c:/viggo/"+num+"+v1.txt", null, freqmap, included );
+			loci2gene( "/vg454flx/tax/", new FileReader(base+""+num+".blastout"), base+""+num+"+v1.txt", null, freqmap, included );
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
