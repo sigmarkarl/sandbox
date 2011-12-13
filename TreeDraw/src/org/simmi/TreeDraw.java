@@ -724,6 +724,7 @@ public class TreeDraw extends JComponent {
 	
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
+		System.err.println( node.name );
 		int ki = node.name.indexOf(',');
 		if( ki != -1 ) {
 			String[] metasplit = node.name.split(",");
