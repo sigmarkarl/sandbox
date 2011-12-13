@@ -532,8 +532,12 @@ public class SerifyApplet extends JApplet {
 			String name = inf.getName();
 			int ind = name.lastIndexOf('.');
 			
-			String sff = name.substring(0, ind);
-			String sf2 = name.substring(ind+1,name.length());
+			String sff = name;
+			String sf2 = "";
+			if( ind != -1 ) {
+				sff = name.substring(0, ind);
+				sf2 = name.substring(ind+1,name.length());
+			}
 			
 			int i = 0;
 			FileWriter 	fw = null;
