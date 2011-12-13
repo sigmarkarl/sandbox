@@ -2,8 +2,14 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+<<<<<<< HEAD
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_01/jre/lib/deploy.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_01/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_01/jre/lib/plugin.jar"/>
+=======
+	<classpathentry kind="lib" path="/usr/local/jdk1.7.0_01/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/usr/local/jdk1.7.0_01/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/usr/local/jdk1.7.0_01/jre/lib/plugin.jar"/>
+>>>>>>> 2a81207feb5411bf2c1f86d0fae58ab18ad4bd07
 	<classpathentry kind="output" path="bin"/>
 </classpath>
