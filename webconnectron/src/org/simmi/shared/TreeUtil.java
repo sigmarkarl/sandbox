@@ -77,7 +77,11 @@ public class TreeUtil {
 			for( Node node : nodes ) {
 				total += node.countLeaves();
 			}	
-			return Math.max( 1, total );
+			return total;
+		}
+		
+		public int getLeavesCount() {
+			return leaves;
 		}
 		
 		public int countMaxHeight() {
@@ -135,8 +139,28 @@ public class TreeUtil {
 	
 	public void extractMetaRecursive( Node node, Map<String,Map<String,String>> mapmap ) {
 		extractMeta( node, mapmap );
-		for( Node subnode : node.nodes ) {
+		
+		List<Node> checklist = node.nodes;
+		for( Node subnode : checklist ) {
 			extractMetaRecursive(subnode, mapmap);
+		}
+		
+		if( checklist.size() > 0 ) {
+			String metacheck = null;
+			boolean dual = true;
+			for( Node n : checklist ) {
+				if( n.meta != null ) {
+					if( metacheck == null ) metacheck = n.meta;
+					else if( !n.meta.equals(metacheck) ) dual = false;
+				}
+			}
+			
+			if( dual ) {
+				for( Node n : checklist ) {
+					if( n.nodes != null && n.nodes.size() > 0 ) n.meta = null;
+				}
+				node.meta = metacheck;
+			} else node.meta = "";
 		}
 	}
 	
@@ -214,38 +238,49 @@ public class TreeUtil {
 		TreeUtil treeutil = new TreeUtil( str, inverse, null );
 	}
 	
+	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
+		System.err.println( node.name );
 		int ki = node.name.indexOf(',');
 		if( ki != -1 ) {
 			String[] metasplit = node.name.split(",");
-			String meta = metasplit[ metasplit.length-1 ].trim();
-			if( meta.contains(":") ) {
-				String[] msplit = meta.split(":");
-				node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1] : msplit[0];
-			}
-			node.name = metasplit[1];
-		}
-		
-		String mapname = node.name;
-		int ik = node.name.indexOf('.');
-		if( ik != -1 ) {
-			mapname = node.name.substring(0, ik);
-		}
-		if( mapmap != null && mapmap.containsKey( mapname ) ) {
-			Map<String,String>	keyval = mapmap.get( mapname );
-			if( keyval.containsKey("country") ) {
-				String meta = keyval.get("country");
-				int i = meta.indexOf(':');
-				if( i != -1 ) meta = meta.substring(0, i);
-				node.meta = meta;
+			
+			int ct = 1;
+			String meta = metasplit[ ct ].trim();
+			while( !meta.contains(":") && ct < metasplit.length-1 ) {
+				meta = metasplit[ ++ct ];
 			}
 			
-			if( keyval.containsKey("full_name") ) {
-				String tax = keyval.get("full_name");
-				int i = tax.indexOf(':');
-				if( i != -1 ) tax = tax.substring(0, i);
-				node.name = tax;
+			if( meta.contains(":") ) {
+				String[] msplit = meta.split(":");
+				node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1].trim() : msplit[0].trim();
+				metacount++;
+			}
+			node.name = metasplit[1] + "," + metasplit[2];
+		}
+		
+		if( mapmap != null ) {
+			String mapname = node.name;
+			int ik = mapname.indexOf('.');
+			if( ik != -1 ) {
+				mapname = mapname.substring(0, ik);
+			}
+			if( mapmap.containsKey( mapname ) ) {
+				Map<String,String>	keyval = mapmap.get( mapname );
+				if( keyval.containsKey("country") ) {
+					String meta = keyval.get("country");
+					int i = meta.indexOf(':');
+					if( i != -1 ) meta = meta.substring(0, i);
+					node.meta = meta;
+				}
+				
+				if( keyval.containsKey("full_name") ) {
+					String tax = keyval.get("full_name");
+					int i = tax.indexOf(':');
+					if( i != -1 ) tax = tax.substring(0, i);
+					node.name = tax;
+				}
 			}
 		}
 	}
