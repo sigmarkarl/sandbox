@@ -95,9 +95,16 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	rootitem4 = tree.addItem( "root4" );
 		final TreeItem	rootitem5 = tree.addItem( "root5" );
 		final TreeItem	rootitem6 = tree.addItem( "root6" );
+		final TreeItem	rootitem7 = tree.addItem( "root7" );
+		final TreeItem	rootitem8 = tree.addItem( "root8" );
+		final TreeItem	rootitem9 = tree.addItem( "root9" );
+		final TreeItem	rootitem10 = tree.addItem( "root10" );
+		final TreeItem	rootitem11 = tree.addItem( "root11" );
 		final TreeItem	rootitem12 = tree.addItem( "root12" );
 		final TreeItem	rootitem13 = tree.addItem( "root13" );
 		final TreeItem	rootitem14 = tree.addItem( "root14" );
+		final TreeItem	rootitem15 = tree.addItem( "root15" );
+		final TreeItem	rootitem16 = tree.addItem( "root16" );
 		final TreeItem	arciformis = tree.addItem( "arciformis" );
 		final TreeItem	kawarayensis = tree.addItem( "kawarayensis" );
 		
@@ -157,9 +164,16 @@ public class Taxonomy implements EntryPoint {
 					else if( nodename.equals("root4") ) runSpec( selectedtree, "http://"+server+"/4v1.txt" );
 					else if( nodename.equals("root5") ) runSpec( selectedtree, "http://"+server+"/5v1.txt" );
 					else if( nodename.equals("root6") ) runSpec( selectedtree, "http://"+server+"/6v1.txt" );
+					else if( nodename.equals("root7") ) runSpec( selectedtree, "http://"+server+"/7v1.txt" );
+					else if( nodename.equals("root8") ) runSpec( selectedtree, "http://"+server+"/8v1.txt" );
+					else if( nodename.equals("root9") ) runSpec( selectedtree, "http://"+server+"/9v1.txt" );
+					else if( nodename.equals("root10") ) runSpec( selectedtree, "http://"+server+"/10v1.txt" );
+					else if( nodename.equals("root11") ) runSpec( selectedtree, "http://"+server+"/11v1.txt" );
 					else if( nodename.equals("root12") ) runSpec( selectedtree, "http://"+server+"/12v1.txt" );
 					else if( nodename.equals("root13") ) runSpec( selectedtree, "http://"+server+"/13v1.txt" );
 					else if( nodename.equals("root14") ) runSpec( selectedtree, "http://"+server+"/14v1.txt" );
+					else if( nodename.equals("root15") ) runSpec( selectedtree, "http://"+server+"/15v1.txt" );
+					else if( nodename.equals("root16") ) runSpec( selectedtree, "http://"+server+"/16v1.txt" );
 					else if( nodename.equals("arciformis") ) runSpec( selectedtree, "http://"+server+"/arciformis_v1.txt" );
 					else if( nodename.equals("kawarayensis") ) runSpec( selectedtree, "http://"+server+"/kawarayensis_v1.txt" );
 				} else {
