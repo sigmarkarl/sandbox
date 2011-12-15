@@ -4566,6 +4566,145 @@ public class GeneSet extends JApplet {
 		fw.close();
 	}
 	
+	public static void viggo() throws IOException {
+		int num = 8;
+		int seqcount = 0;
+		Set<String>	included = new HashSet<String>();
+		FileReader fr = new FileReader("c:/viggo/reads/"+num+".TCA.454Reads.fna");
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		String current = null;
+		boolean inc = false;
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( inc && current != null ) {
+					included.add( current );
+				}
+				int k = line.indexOf(' ');
+				current = line.substring(1, k);
+				inc = true;
+				seqcount++;
+			} else {
+				if( inc && (line.indexOf('N') != -1 || line.indexOf('n') != -1) ) inc = false;
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		if( inc && current != null ) {
+			included.add( current );
+		}
+		
+		System.err.println( seqcount + "  " + included.size() );
+		
+		int sum = 0;
+		int sumc = 0;
+		fr = new FileReader("c:/viggo/reads/"+num+".TCA.454Reads.qual");
+		br = new BufferedReader( fr );
+		line = br.readLine();
+		current = null;
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				if( current != null && sum/sumc < 30 ) {
+					included.remove( current );
+				}
+				int k = line.indexOf(' ');
+				current = line.substring(1, k);
+				inc = true;
+				sum = 0;
+				sumc = 0;
+			} else {
+				String[] split = line.split("[ ]+");
+				for( String s : split ) {
+					int i = Integer.parseInt(s.trim());
+					sum += i;
+					sumc++;
+				}
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		System.err.println( seqcount + "  " + included.size() );
+		
+		Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo/"+num+".blastout"), included );
+		for( String val : freqmap.keySet() ) {
+			int fv = freqmap.get(val);
+			System.err.println( val + "  " + fv );
+		}
+		loci2gene( new FileReader("c:/viggo/"+num+".blastout"), "c:/viggo/"+num+"+v1.txt", null, freqmap, included );
+	}
+	
+	public static void simmi() throws IOException {
+		FileReader fr = new FileReader("c://cygwin/home/sigmar/thermus.blastout");
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		String current = null;
+		Map<String,String>	tegmap = new HashMap<String,String>();
+		while( line != null ) {
+			String trim = line.trim();
+			if( trim.startsWith("Query=") ) {
+				String[] split = trim.substring(7).trim().split("[ ]+");
+				current = split[0];
+			} else if( line.startsWith(">") ) {
+				int i = line.lastIndexOf('|');
+				String teg = line.substring(i+1).trim();
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					teg += line;
+					line = br.readLine();
+				}
+				if( teg.contains("Thermus") ) {
+					System.err.println( teg );
+					tegmap.put( current, teg );
+				}
+			}
+			
+			line = br.readLine();
+		}
+		fr.close();
+		
+		System.err.println( tegmap.size() );
+		
+		int[] iv = {0,10,16,50,8,8,8,8,60,50,30,50,150,150,80,50};
+		for( int i = 0; i < iv.length; i++ ) {
+			iv[i] += 1;
+		}
+		int[] isum = new int[ iv.length ];
+		isum[0] = iv[0];
+		for( int i = 1; i < iv.length; i++ ) {
+			isum[i] = isum[i-1]+iv[i];
+		}
+		
+		FileOutputStream fos = new FileOutputStream("c://cygwin/home/sigmar/therm.txt");
+		PrintStream pos = new PrintStream(fos);
+		fr = new FileReader("c://cygwin/home/sigmar/export.nds");
+		br = new BufferedReader( fr );
+		line = br.readLine();
+		while( line != null ) {
+			String name = line.substring( isum[0], isum[1] ).trim();
+			String acc = line.substring( isum[1], isum[2] ).trim();
+			String country = line.substring( isum[7], isum[8] ).trim();
+			String doi = line.substring( isum[8], isum[9] ).trim();
+			String pubmed = line.substring( isum[9], isum[10] ).trim();
+			String journal = line.substring( isum[10], isum[11] ).trim();
+			String auth = line.substring( isum[11], isum[12] ).trim();
+			String sub_auth = line.substring( isum[12], isum[13] ).trim();
+			String sub_date = line.substring( isum[13], isum[14] ).trim();
+			String source = isum.length > 14 ? line.substring( isum[14], isum[15]-1 ).trim() : "";
+			
+			if( tegmap.containsKey(name) ) {
+				String teg = tegmap.get(name);
+				pos.println( acc + "\t" + teg + "\t" + doi + "\t" + pubmed + "\t" + journal + "\t" + auth + "\t" + sub_auth + "\t" + sub_date + "\t" + country + "\t" + source );
+			}
+			//System.err.println( line.substring( isum[7], isum[8] ).trim() );
+			
+			line = br.readLine();
+		}
+		fr.close();
+		fos.close();
+	}
+	
 	public static void main(String[] args) {
 		/*JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
@@ -4651,72 +4790,8 @@ public class GeneSet extends JApplet {
 				
 				//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );*/
 			
-			int num = 5;
-			int seqcount = 0;
-			Set<String>	included = new HashSet<String>();
-			FileReader fr = new FileReader("c:/viggo/reads/"+num+".TCA.454Reads.fna");
-			BufferedReader br = new BufferedReader( fr );
-			String line = br.readLine();
-			String current = null;
-			boolean inc = false;
-			while( line != null ) {
-				if( line.startsWith(">") ) {
-					if( inc && current != null ) {
-						included.add( current );
-					}
-					int k = line.indexOf(' ');
-					current = line.substring(1, k);
-					inc = true;
-					seqcount++;
-				} else {
-					if( inc && (line.indexOf('N') != -1 || line.indexOf('n') != -1) ) inc = false;
-				}
-				line = br.readLine();
-			}
-			br.close();
-			
-			if( inc && current != null ) {
-				included.add( current );
-			}
-			
-			System.err.println( seqcount + "  " + included.size() );
-			
-			int sum = 0;
-			int sumc = 0;
-			fr = new FileReader("c:/viggo/reads/"+num+".TCA.454Reads.qual");
-			br = new BufferedReader( fr );
-			line = br.readLine();
-			current = null;
-			while( line != null ) {
-				if( line.startsWith(">") ) {
-					if( current != null && sum/sumc < 30 ) {
-						included.remove( current );
-					}
-					int k = line.indexOf(' ');
-					current = line.substring(1, k);
-					inc = true;
-					sum = 0;
-					sumc = 0;
-				} else {
-					String[] split = line.split("[ ]+");
-					for( String s : split ) {
-						int i = Integer.parseInt(s.trim());
-						sum += i;
-						sumc++;
-					}
-				}
-				line = br.readLine();
-			}
-			br.close();
-			
-			System.err.println( seqcount + "  " + included.size() );
-			
-			Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo/"+num+".blastout"), included );
-			for( String val : freqmap.keySet() ) {
-				int fv = freqmap.get(val);
-				System.err.println( val + "  " + fv );
-			}
-			loci2gene( new FileReader("c:/viggo/"+num+".blastout"), "c:/viggo/"+num+"+v1.txt", null, freqmap, included );
+			//viggo();
+			simmi();
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
