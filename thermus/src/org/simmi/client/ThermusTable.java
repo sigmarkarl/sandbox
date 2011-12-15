@@ -5,17 +5,10 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
 import com.google.gwt.visualization.client.DataTable;
 import com.google.gwt.visualization.client.DataView;
-import com.google.gwt.visualization.client.VisualizationUtils;
 import com.google.gwt.visualization.client.visualizations.Table;
 import com.google.gwt.visualization.client.visualizations.Table.Options;
 
@@ -29,6 +22,28 @@ public class ThermusTable implements EntryPoint {
 	@Override
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
+		
+		Window.enableScrolling( false );
+		int w = Window.getClientWidth();
+		int h = Window.getClientHeight();
+		rp.setSize(w+"px", h+"px");
+		
+		Style st = rp.getElement().getStyle();
+		st.setBorderWidth(0.0, Unit.PX);
+		st.setMargin(0.0, Unit.PX);
+		st.setPadding(0.0, Unit.PX);
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				int w = event.getWidth();
+				int h = event.getHeight();
+				
+				rp.setSize(w+"px", h+"px");
+			}
+		});
+		
+		/*final RootPanel	rp = RootPanel.get();
 		Window.enableScrolling( false );
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
@@ -105,7 +120,7 @@ public class ThermusTable implements EntryPoint {
 				}
 		    }
 		};
-		VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);
+		VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);*/
 	}
 
 }
