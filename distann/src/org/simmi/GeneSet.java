@@ -4652,7 +4652,7 @@ public class GeneSet extends JApplet {
 				//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );*/
 			
 			String base = "/vg454flx/viggo/viggo/";
-			int num = 7;
+			int num = 16;
 			int seqcount = 0;
 			Set<String>	included = new HashSet<String>();
 			FileReader fr = new FileReader(base+"reads/"+num+".TCA.454Reads.fna");
@@ -4717,7 +4717,7 @@ public class GeneSet extends JApplet {
 				int fv = freqmap.get(val);
 				System.err.println( val + "  " + fv );
 			}
-			loci2gene( "/vg454flx/tax/", new FileReader(base+""+num+".blastout"), base+""+num+"+v1.txt", null, freqmap, included );
+			loci2gene( "/vg454flx/tax/", new FileReader(base+""+num+".blastout"), base+""+num+"v1.txt", null, freqmap, included );
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
