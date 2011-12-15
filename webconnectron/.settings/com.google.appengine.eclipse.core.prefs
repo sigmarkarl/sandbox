@@ -1,4 +1,10 @@
+<<<<<<< HEAD
+#Thu Nov 24 09:38:06 GMT 2011
+eclipse.preferences.version=1
+filesCopiedToWebInfLib=appengine-api-labs-1.6.0.jar|jsr107cache-1.1.jar|datanucleus-appengine-1.0.10.final.jar|datanucleus-core-1.1.5.jar|datanucleus-jpa-1.1.5.jar|geronimo-jta_1.1_spec-1.1.1.jar|geronimo-jpa_3.0_spec-1.1.1.jar|jdo2-api-2.3-eb.jar|appengine-jsr107cache-1.6.0.jar|appengine-api-1.0-sdk-1.6.0.jar
+=======
 #Mon Nov 28 10:50:10 GMT 2011
 eclipse.preferences.version=1
 filesCopiedToWebInfLib=appengine-api-1.0-sdk-1.6.0.jar|datanucleus-appengine-1.0.10.final.jar|geronimo-jpa_3.0_spec-1.1.1.jar|geronimo-jta_1.1_spec-1.1.1.jar|datanucleus-jpa-1.1.5.jar|datanucleus-core-1.1.5.jar|jdo2-api-2.3-eb.jar|appengine-jsr107cache-1.6.0.jar|appengine-api-labs-1.6.0.jar|jsr107cache-1.1.jar
+>>>>>>> 799cf125a6b2ee4999c3d0c4f00cd5d5f2fcf721
 gaeDeployDialogSettings=
