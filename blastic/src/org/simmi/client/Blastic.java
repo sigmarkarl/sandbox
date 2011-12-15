@@ -16,6 +16,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -718,6 +720,13 @@ public class Blastic implements EntryPoint {
 		    			    	
 		    	tableviewresize.add( table );
 		    	tableviewfocus.add( tableviewresize );
+		    	
+		    	tableviewfocus.addDropHandler( new DropHandler() {
+					@Override
+					public void onDrop(DropEvent event) {
+						
+					}
+		    	});
 		    	
 		    	tableviewresize.setSize("100%", "100%");
 		    	
