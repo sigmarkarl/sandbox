@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.simmi.shared.TreeUtil;
+import org.simmi.shared.TreeUtil.Node;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
@@ -23,15 +24,26 @@ import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextArea;
 
 public class Treedraw implements EntryPoint {
-
+	Canvas	canvas;
+	Node[]	nodearray;
+	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get();
-		final Canvas		canvas = Canvas.createIfSupported();
+		canvas = Canvas.createIfSupported();
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
@@ -45,8 +57,11 @@ public class Treedraw implements EntryPoint {
 				TreeUtil	treeutil = new TreeUtil( tree, false, null );
 				int ww = Window.getClientWidth();
 				
-				int leaves = treeutil.getNode().countLeaves();
+				//treeutil.getNode().countLeaves()
+				int leaves = treeutil.getNode().getLeavesCount();
 				int levels = treeutil.getNode().countMaxHeight();
+				
+				nodearray = new Node[ leaves ];
 				
 				canvas.setSize((ww-10)+"px", (10*leaves)+"px");
 				canvas.setCoordinateSpaceWidth( ww-10 );
@@ -117,6 +132,45 @@ public class Treedraw implements EntryPoint {
 			public void onDragOver(DragOverEvent event) {}
 		});
 		
+		canvas.addMouseDownHandler( new MouseDownHandler() {
+			@Override
+			public void onMouseDown(MouseDownEvent event) {
+				if( nodearray != null ) {
+					int y = event.getY();
+					int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
+					final Node n = nodearray[i];
+					
+					int ci = n.getName().indexOf(",");
+					String fname = n.getName().substring(1,ci);
+					RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
+					try {
+						rq.sendRequest( fname, new RequestCallback() {
+							@Override
+							public void onResponseReceived(Request request, Response response) {
+								DialogBox	d = new DialogBox();
+								d.getCaption().setText("NCBI 16SMicrobial blast");
+								d.setAutoHideEnabled( true );
+								
+								TextArea	ta = new TextArea();
+								ta.setSize(800+"px", 600+"px");
+								ta.setText( response.getText() );
+								d.add( ta );
+								
+								d.center();
+							}
+							
+							@Override
+							public void onError(Request request, Throwable exception) {
+								console( exception.getMessage() );
+							}
+						} );
+					} catch (RequestException e) {
+						e.printStackTrace();
+					}				
+				}
+			}
+		});
+		
 		rp.add( canvas );
 	}
 	
@@ -130,27 +184,38 @@ public class Treedraw implements EntryPoint {
 	
 	Random	rnd = new Random();
 	
+	public native void console( String log ) /*-{
+		$wnd.console.log( log );
+	}-*/;
+	
 	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double minh, double maxh ) {		
 		int total = 0;
 		for( TreeUtil.Node resnode : node.getNodes() ) {
-			int nleaves = resnode.countLeaves();
+			int nleaves = resnode.getLeavesCount();
 			int nlevels = resnode.countMaxHeight();
+			int mleaves = Math.max(1, nleaves);
 			
 			double nx = 0;
 			double ny = 0;
 			
 			if( vertical ) {
 				//minh = 0.0;
-				ny = dh*total+(dh*nleaves)/2.0;
+				ny = dh*total+(dh*mleaves)/2.0;
 				if( equalHeight ) {
 					nx = w/25.0+dw*(w/dw-nlevels);
 				} else {
 					nx = /*h/25+*/startx+(w*(resnode.geth()-minh))/((maxh-minh)*1.3);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
+
+				if( nleaves == 0 ) {
+					int v = (int)((nodearray.length*(y+ny))/canvas.getCoordinateSpaceHeight());
+					//console( nodearray.length + "  " + canvas.getCoordinateSpaceHeight() + "  " + v );
+					if( v >= 0 && v < nodearray.length ) nodearray[v] = resnode;
+				}
 			} else {
 				//minh = 0.0;
-				nx = dw*total+(dw*nleaves)/2.0;
+				nx = dw*total+(dw*mleaves)/2.0;
 				if( equalHeight ) {	
 					ny = h/25.0+dh*(h/dh-nlevels);
 				} else {
@@ -182,9 +247,9 @@ public class Treedraw implements EntryPoint {
 			}*/
 			
 			if( vertical ) {
-				drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*nleaves)/2.0, equalHeight, noAddHeight, vertical, minh, maxh );
+				drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, minh, maxh );
 			} else {
-				drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, minh, maxh );
+				drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, minh, maxh );
 			}
 		
 			//ny+=starty;
@@ -290,7 +355,7 @@ public class Treedraw implements EntryPoint {
 					}
 				}
 			}
-			total += nleaves;
+			total += mleaves;
 		}
 	}
 }
