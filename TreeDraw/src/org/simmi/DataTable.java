@@ -220,16 +220,18 @@ public class DataTable extends JApplet {
 			@Override
 			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
 				InputStream is = DataTable.this.getClass().getResourceAsStream("/temp.ntree");
-				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+				BufferedReader br = new BufferedReader( new InputStreamReader(is, charset) );
 				StringBuilder sb = new StringBuilder();
 				String line = br.readLine();
 				while( line != null ) {
-					sb.append( line + "\n" );
+					sb.append( line );
 					line = br.readLine();
 				}
 				br.close();
+				
+				TreeUtil tu = new TreeUtil( sb.toString(), false, null );
 				//return arg0.getReaderForText( this );
-				return new ByteArrayInputStream( sb.toString().getBytes( charset ) );
+				return new ByteArrayInputStream( tu.currentNode.toString().getBytes() );
 				//return ret;
 			}
 
