@@ -4704,17 +4704,32 @@ public class GeneSet extends JApplet {
 		loci2gene( "/vg454flx/tax/", new FileReader(base+""+num+".blastout"), base+""+num+"+v1.txt", null, freqmap, included );
 	}
 	
+	public static class StrId {
+		public StrId( String teg, int len ) {
+			name = teg;
+			this.len = len;
+		}
+		
+		String 	name;
+		int		id;
+		int		len;
+	};
+	
 	public static void simmi() throws IOException {
 		FileReader fr = new FileReader("c://cygwin/home/sigmar/thermus.blastout");
 		BufferedReader br = new BufferedReader( fr );
 		String line = br.readLine();
-		String current = null;
-		Map<String,String>	tegmap = new HashMap<String,String>();
+		String 	current = null;
+		StrId	currteg = null;
+		int	currlen = 0;
+		Map<String,StrId>	tegmap = new HashMap<String,StrId>();
 		while( line != null ) {
 			String trim = line.trim();
 			if( trim.startsWith("Query=") ) {
 				String[] split = trim.substring(7).trim().split("[ ]+");
 				current = split[0];
+			} else if( trim.startsWith("Length=") ) {
+				currlen = Integer.parseInt( trim.substring(7).trim() );
 			} else if( line.startsWith(">") ) {
 				int i = line.lastIndexOf('|');
 				String teg = line.substring(i+1).trim();
@@ -4724,9 +4739,14 @@ public class GeneSet extends JApplet {
 					line = br.readLine();
 				}
 				if( teg.contains("Thermus") ) {
-					System.err.println( teg );
-					tegmap.put( current, teg );
+					currteg = new StrId( teg, currlen );
+					tegmap.put( current, currteg );
 				}
+			} else if( trim.startsWith("Ident") ) {
+				int sv = trim.indexOf('(');
+				int svl = trim.indexOf('%', sv+1);
+				
+				currteg.id = Integer.parseInt( trim.substring(sv+1, svl) );
 			}
 			
 			line = br.readLine();
@@ -4763,8 +4783,8 @@ public class GeneSet extends JApplet {
 			String source = isum.length > 14 ? line.substring( isum[14], isum[15]-1 ).trim() : "";
 			
 			if( tegmap.containsKey(name) ) {
-				String teg = tegmap.get(name);
-				pos.println( acc + "\t" + teg + "\t" + doi + "\t" + pubmed + "\t" + journal + "\t" + auth + "\t" + sub_auth + "\t" + sub_date + "\t" + country + "\t" + source );
+				StrId teg = tegmap.get(name);
+				pos.println( name + "\t" + acc + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + doi + "\t" + pubmed + "\t" + journal + "\t" + auth + "\t" + sub_auth + "\t" + sub_date + "\t" + country + "\t" + source );
 			}
 			//System.err.println( line.substring( isum[7], isum[8] ).trim() );
 			
