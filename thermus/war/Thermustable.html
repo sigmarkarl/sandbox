@@ -12,32 +12,24 @@
     <!--                                                               -->
     <!-- Consider inlining CSS to reduce the number of requested files -->
     <!--                                                               -->
-    <link type="text/css" rel="stylesheet" href="Webconnectron.css">
+    <link type="text/css" rel="stylesheet" href="Thermus.css">
 
     <!--                                           -->
     <!-- Any title is fine                         -->
     <!--                                           -->
-    <title>Treedraw</title>
+    <title>Thermus table</title>
+    <meta property="og:title" content="Thermus table" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="http://thermusgenes.appspot.com/" />
+    <meta property="og:image" content="http://fasteignaverd.appspot.com/ndb.png" />
     
     <!--                                           -->
     <!-- This script loads your compiled module.   -->
     <!-- If you add any GWT meta tags, they must   -->
     <!-- be added before this line.                -->
     <!--                                           -->
-    <script type="text/javascript" language="javascript" src="org.simmi.Treedraw/org.simmi.Treedraw.nocache.js"></script>
-    <!--script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-19596441-1']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-    </script-->
+    <script type="text/javascript" language="javascript" src="http://www.java.com/js/deployJava.js"></script>
+    <script type="text/javascript" language="javascript" src="org.simmi.Thermustable/org.simmi.Thermustable.nocache.js"></script>
   </head>
 
   <!--                                           -->
@@ -46,6 +38,7 @@
   <!-- to create a completely dynamic UI.        -->
   <!--                                           -->
   <body>
+
     <!-- OPTIONAL: include this if you want history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
     
@@ -56,5 +49,11 @@
         in order for this application to display correctly.
       </div>
     </noscript>
+    
+     <script type="text/javascript" language="javascript">
+    	var attributes = { codebase:'http://thermusgenes.appspot.com/', archive:'treedraw.jar', code:'org.simmi.DataTable', width:'100%', height:'100%', id:'datatable', name:'datatable' };
+        var parameters = { jnlp_href:'treedraw.jnlp' };
+       deployJava.runApplet(attributes, parameters, '1.6');
+    </script>
   </body>
 </html>
