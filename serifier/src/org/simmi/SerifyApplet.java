@@ -470,6 +470,28 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void init() {
+		JSObject jso = JSObject.getWindow( this );
+		final JSObject con = (JSObject)jso.getMember("console");
+		
+		OutputStream o = new OutputStream() {
+			Object[]	objs = {""};
+			ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+			
+			@Override
+			public void write(int b) throws IOException {
+				if( b == '\n' ) {
+					baos.write(b);
+					objs[0] = baos.toString();
+					baos.flush();
+					baos.reset();
+					con.call("log", objs);
+				} else baos.write(b);
+			}
+		};
+		PrintStream po = new PrintStream( o );
+		System.setOut( po );
+		System.setErr( po );
+		
 		init( this );
 	}
 	
@@ -532,8 +554,12 @@ public class SerifyApplet extends JApplet {
 			String name = inf.getName();
 			int ind = name.lastIndexOf('.');
 			
-			String sff = name.substring(0, ind);
-			String sf2 = name.substring(ind+1,name.length());
+			String sff = name;
+			String sf2 = "";
+			if( ind != -1 ) {
+				sff = name.substring(0, ind);
+				sf2 = name.substring(ind+1,name.length());
+			}
 			
 			int i = 0;
 			FileWriter 	fw = null;
@@ -1820,16 +1846,10 @@ public class SerifyApplet extends JApplet {
 		table.addKeyListener( new KeyListener() {
 			
 			@Override
-			public void keyTyped(KeyEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
+			public void keyTyped(KeyEvent e) {}
 			
 			@Override
-			public void keyReleased(KeyEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
+			public void keyReleased(KeyEvent e) {}
 			
 			@Override
 			public void keyPressed(KeyEvent e) {
