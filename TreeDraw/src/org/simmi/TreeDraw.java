@@ -153,8 +153,28 @@ public class TreeDraw extends JComponent {
 	
 	public void extractMetaRecursive( Node node, Map<String,Map<String,String>> mapmap ) {
 		extractMeta( node, mapmap );
-		for( Node subnode : node.nodes ) {
+		
+		List<Node> checklist = node.nodes;
+		for( Node subnode : checklist ) {
 			extractMetaRecursive(subnode, mapmap);
+		}
+		
+		if( checklist.size() > 0 ) {
+			String metacheck = null;
+			boolean dual = true;
+			for( Node n : checklist ) {
+				if( n.meta != null ) {
+					if( metacheck == null ) metacheck = n.meta;
+					else if( !n.meta.equals(metacheck) ) dual = false;
+				}
+			}
+			
+			if( dual ) {
+				for( Node n : checklist ) {
+					if( n.nodes != null && n.nodes.size() > 0 ) n.meta = null;
+				}
+				node.meta = metacheck;
+			} else node.meta = "";
 		}
 	}
 	
@@ -174,7 +194,7 @@ public class TreeDraw extends JComponent {
 			}
 		}
 		extractMetaRecursive( resultnode, mapmap );
-		
+		System.err.println( metacount );
 		cont( resultnode, w, h, vertical, equalHeight );
 		
 		//System.err.println("minmax: "+minh+"  "+maxh);
@@ -722,23 +742,32 @@ public class TreeDraw extends JComponent {
 		}
 	}
 	
+	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
+		System.err.println( node.name );
 		int ki = node.name.indexOf(',');
 		if( ki != -1 ) {
 			String[] metasplit = node.name.split(",");
-			String meta = metasplit[ metasplit.length-1 ].trim();
+			
+			int ct = 1;
+			String meta = metasplit[ ct ].trim();
+			while( !meta.contains(":") && ct < metasplit.length-1 ) {
+				meta = metasplit[ ++ct ];
+			}
+			
 			if( meta.contains(":") ) {
 				String[] msplit = meta.split(":");
-				node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1] : msplit[0];
+				node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1].trim() : msplit[0].trim();
+				metacount++;
 			}
-			node.name = metasplit[1];
+			node.name = metasplit[2];
 		}
 		
 		String mapname = node.name;
-		int ik = node.name.indexOf('.');
+		int ik = mapname.indexOf('.');
 		if( ik != -1 ) {
-			mapname = node.name.substring(0, ik);
+			mapname = mapname.substring(0, ik);
 		}
 		if( mapmap.containsKey( mapname ) ) {
 			Map<String,String>	keyval = mapmap.get( mapname );
@@ -846,22 +875,6 @@ public class TreeDraw extends JComponent {
 		}
 		
 		Node use = inverse ? node : ret;
-		List<Node> checklist = use.nodes;
-		String metacheck = null;
-		boolean dual = true;
-		for( Node n : checklist ) {
-			if( n.meta != null ) {
-				if( metacheck == null ) metacheck = n.meta;
-				else if( !n.meta.equals(metacheck) ) dual = false;
-			}
-		}
-		
-		if( dual ) {
-			for( Node n : checklist ) {
-				if( n.nodes != null && n.nodes.size() > 0 ) n.meta = null;
-			}
-			use.meta = metacheck;
-		} else use.meta = "";
 		//System.err.println("setting: "+metacheck + use.nodes);
 		
 		if( loc < str.length()-1 ) {
