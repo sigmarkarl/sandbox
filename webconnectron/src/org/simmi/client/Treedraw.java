@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.simmi.TreeUtil;
-import org.simmi.TreeUtil.Node;
+import org.simmi.shared.TreeUtil;
+import org.simmi.shared.TreeUtil.Node;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
