@@ -45,6 +45,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.simmi.shared.TreeUtil;
+
 public class DataTable extends JApplet {
 	static String lof = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
 	public static void updateLof() {
@@ -220,7 +222,7 @@ public class DataTable extends JApplet {
 			@Override
 			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
 				InputStream is = DataTable.this.getClass().getResourceAsStream("/temp.ntree");
-				BufferedReader br = new BufferedReader( new InputStreamReader(is, charset) );
+				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 				StringBuilder sb = new StringBuilder();
 				String line = br.readLine();
 				while( line != null ) {
@@ -231,7 +233,7 @@ public class DataTable extends JApplet {
 				
 				TreeUtil tu = new TreeUtil( sb.toString(), false, null );
 				//return arg0.getReaderForText( this );
-				return new ByteArrayInputStream( tu.currentNode.toString().getBytes() );
+				return new ByteArrayInputStream( tu.currentNode.toString().getBytes( charset ) );
 				//return ret;
 			}
 
