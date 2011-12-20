@@ -240,15 +240,15 @@ public class DataTable extends JApplet {
 				}
 				br.close();
 				
-				TreeUtil tu = new TreeUtil( sb.toString(), false, null );
-				//return arg0.getReaderForText( this );
-				String str = tu.currentNode.toString();
+				Set<String>	include = new HashSet<String>();
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
-					if( r == rr[0] ) str += ";"+table.getValueAt(r, 0);
-					else str += "," + table.getValueAt(r, 0);
+					include.add( (String)table.getValueAt(r, 0) );
 				}
-				System.err.println( str );
+				
+				TreeUtil tu = new TreeUtil( sb.toString(), false, include, null );
+				//return arg0.getReaderForText( this );
+				String str = tu.currentNode.toString();
 				return new ByteArrayInputStream( str.getBytes( charset ) );
 				//return ret;
 			}
