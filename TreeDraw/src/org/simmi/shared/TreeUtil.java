@@ -22,6 +22,7 @@ public class TreeUtil {
 		String		color;
 		List<Node>	nodes;
 		int			leaves = 0;
+		Node		parent;
 		
 		public Node() {
 			nodes = new ArrayList<Node>();
@@ -90,6 +91,15 @@ public class TreeUtil {
 				val = Math.max( val, node.countMaxHeight() );
 			}
 			return val+1;
+		}
+		
+		public double getMaxHeight() {
+			double max = 0.0;
+			for( Node n : nodes ) {
+				double nmax = n.getMaxHeight();
+				if( nmax > max ) max = nmax;
+			}
+			return geth()+max;
 		}
 	}
 	
@@ -164,13 +174,60 @@ public class TreeUtil {
 		}
 	}
 	
+	public Set<Node> includeNodes( Node n, Set<String> include ) {
+		Set<Node>	ret = null;
+		if( include.contains( n.name ) ) {
+			ret = new HashSet<Node>();
+			ret.add( n );
+		}
+		for( Node sn : n.nodes ) {
+			Set<Node>	ns = includeNodes( sn, include );
+			if( ns != null ) {
+				if( ret == null ) ret = ns;
+				else ret.addAll( ns );
+			}
+		}
+		
+		return ret;
+	}
+	
+	public void includeAlready( Node n, Set<Node> include ) {
+		if( n.parent != null && !include.contains(n.parent) ) {
+			include.add( n.parent );
+			includeAlready( n.parent, include );
+		}
+	}
+	
+	public void deleteNotContaining( Node n, Set<Node> ns ) {
+		n.nodes.retainAll( ns );
+		for( Node sn : ns ) {
+			deleteNotContaining(sn, ns);
+		}
+	}
+	
 	public TreeUtil( String str, boolean inverse, Map<String,Map<String,String>> mapmap ) {
 		super();
 		loc = 0;
 		//System.err.println( str );
-		Node resultnode = parseTreeRecursive( str, inverse );
-		extractMetaRecursive( resultnode, mapmap );
-		this.currentNode = resultnode;
+		Set<String>	strset = new HashSet<String>();
+		if( str != null && str.length() > 0 ) {
+			Node resultnode = parseTreeRecursive( str, inverse );
+			String inc = str.substring( loc );
+			String[] split = inc.split(",");
+			for( String sp : split ) {
+				strset.add( sp.trim() );
+			}
+			Set<Node> sn = includeNodes( resultnode, strset );
+			Set<Node> cloneset = new HashSet<Node>( sn );
+			for( Node n : sn ) {
+				includeAlready( n, cloneset );
+			}
+			deleteNotContaining( resultnode, cloneset );
+			//extractMetaRecursive( resultnode, mapmap );
+			this.currentNode = resultnode;
+		} else {
+			System.err.println( str );
+		}
 	}
 	
 	public double reroot( Node oldnode, Node newnode ) {
@@ -301,9 +358,11 @@ public class TreeUtil {
 				//if( node.nodes.size() == 1573 ) System.err.println( node );
 				if( inverse ) {
 					node.nodes.add( ret );
+					ret.parent = node;
 					node.leaves++;
 				} else {
 					ret.nodes.add( node );
+					node.parent = ret;
 					ret.leaves += node.leaves;
 				}
 			} else {
@@ -364,9 +423,11 @@ public class TreeUtil {
 				
 				if( inverse ) {
 					node.nodes.add( ret );
+					ret.parent = node;
 					node.leaves++;
 				} else {
 					ret.nodes.add( node );
+					node.parent = ret;
 					ret.leaves++;
 				}
 			}
