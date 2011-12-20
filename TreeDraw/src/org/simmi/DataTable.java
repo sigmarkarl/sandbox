@@ -209,7 +209,16 @@ public class DataTable extends JApplet {
 		table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
 		table.getColumnModel().getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
 		
-		final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();//new DataFlavor("text/plain;charset=utf-8");
+		//final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();
+		final DataFlavor df;
+		DataFlavor dflocal = null;
+		try {
+			dflocal = new DataFlavor("text/plain;charset=utf-8");
+		} catch (ClassNotFoundException e2) {
+			e2.printStackTrace();
+		} finally {
+			df = dflocal;
+		}
 		//final DataFlavor textfl = DataFlavor.pl
 		//String mime = df.getMimeType();
 		final String charset = df.getParameter("charset");
@@ -233,7 +242,14 @@ public class DataTable extends JApplet {
 				
 				TreeUtil tu = new TreeUtil( sb.toString(), false, null );
 				//return arg0.getReaderForText( this );
-				return new ByteArrayInputStream( tu.currentNode.toString().getBytes( charset ) );
+				String str = tu.currentNode.toString();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					if( r == rr[0] ) str += ";"+table.getValueAt(r, 0);
+					else str += "," + table.getValueAt(r, 0);
+				}
+				System.err.println( str );
+				return new ByteArrayInputStream( str.getBytes( charset ) );
 				//return ret;
 			}
 
