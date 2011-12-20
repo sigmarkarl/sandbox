@@ -200,29 +200,47 @@ public class TreeUtil {
 	
 	public void deleteNotContaining( Node n, Set<Node> ns ) {
 		n.nodes.retainAll( ns );
-		for( Node sn : ns ) {
+		if( n.nodes.size() == 1 ) {
+			Node nn = n.nodes.get(0);
+			if( nn.nodes.size() > 0 ) {
+				n.h += nn.h;
+				n.nodes = nn.nodes;
+			} else if( nn.name == null || nn.name.length() == 0 ) {
+				n.nodes.clear();
+				n.nodes = null;
+			}
+		}
+		for( Node sn : n.nodes ) {
 			deleteNotContaining(sn, ns);
 		}
 	}
 	
-	public TreeUtil( String str, boolean inverse, Map<String,Map<String,String>> mapmap ) {
+	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap ) {
 		super();
 		loc = 0;
 		//System.err.println( str );
-		Set<String>	strset = new HashSet<String>();
 		if( str != null && str.length() > 0 ) {
 			Node resultnode = parseTreeRecursive( str, inverse );
-			String inc = str.substring( loc );
-			String[] split = inc.split(",");
-			for( String sp : split ) {
-				strset.add( sp.trim() );
+			
+			if( include == null ) {
+				include = new HashSet<String>();
+				String inc = str.substring( loc+1 ).trim();
+				if( inc.length() > 0 ) {
+					String[] split = inc.split(",");
+					for( String sp : split ) {
+						include.add( sp.trim() );
+					}
+				}
 			}
-			Set<Node> sn = includeNodes( resultnode, strset );
-			Set<Node> cloneset = new HashSet<Node>( sn );
-			for( Node n : sn ) {
-				includeAlready( n, cloneset );
+			
+			if( include.size() > 0 ) {
+				Set<Node> sn = includeNodes( resultnode, include );
+				Set<Node> cloneset = new HashSet<Node>( sn );
+				for( Node n : sn ) {
+					includeAlready( n, cloneset );
+				}
+				deleteNotContaining( resultnode, cloneset );
 			}
-			deleteNotContaining( resultnode, cloneset );
 			//extractMetaRecursive( resultnode, mapmap );
 			this.currentNode = resultnode;
 		} else {
@@ -292,7 +310,7 @@ public class TreeUtil {
 		StringBuilder sb = new StringBuilder();
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
-		TreeUtil treeutil = new TreeUtil( str, inverse, null );
+		TreeUtil treeutil = new TreeUtil( str, inverse, null, null );
 	}
 	
 	int metacount = 0;
