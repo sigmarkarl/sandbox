@@ -60,6 +60,7 @@ public class Treedraw implements EntryPoint {
 				//treeutil.getNode().countLeaves()
 				int leaves = treeutil.getNode().getLeavesCount();
 				int levels = treeutil.getNode().countMaxHeight();
+				double	maxheight = treeutil.getNode().getMaxHeight();
 				
 				nodearray = new Node[ leaves ];
 				
@@ -88,10 +89,20 @@ public class Treedraw implements EntryPoint {
 				
 				ci = 0;
 				//g2.setFont( dFont );
+				double minh = treeutil.getminh();
+				double maxh = treeutil.getmaxh();
+				
+				double minh2 = treeutil.getminh2();
+				double maxh2 = treeutil.getmaxh2();
+				
+				console( Double.toString( maxheight ) );
+				console( Double.toString( maxh-minh ) );
+				console( Double.toString(maxh2-minh2) );
+				
 				if( vertical ) {
-					drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, treeutil.getminh(), treeutil.getmaxh() );
+					drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
 				} else {
-					drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, treeutil.getminh(), treeutil.getmaxh() );
+					drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
 				}
 				
 				//drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 10, 10, 10, 10, false, false, true, treeutil.getminh(), treeutil.getmaxh());
@@ -141,7 +152,7 @@ public class Treedraw implements EntryPoint {
 					final Node n = nodearray[i];
 					
 					int ci = n.getName().indexOf(",");
-					String fname = n.getName().substring(1,ci);
+					String fname = ci > 0 ? n.getName().substring(1,ci) : n.getName();
 					RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
 					try {
 						rq.sendRequest( fname, new RequestCallback() {
@@ -188,7 +199,7 @@ public class Treedraw implements EntryPoint {
 		$wnd.console.log( log );
 	}-*/;
 	
-	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double minh, double maxh ) {		
+	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {		
 		int total = 0;
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			int nleaves = resnode.getLeavesCount();
@@ -204,7 +215,7 @@ public class Treedraw implements EntryPoint {
 				if( equalHeight ) {
 					nx = w/25.0+dw*(w/dw-nlevels);
 				} else {
-					nx = /*h/25+*/startx+(w*(resnode.geth()-minh))/((maxh-minh)*1.3);
+					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.1);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 
@@ -219,7 +230,7 @@ public class Treedraw implements EntryPoint {
 				if( equalHeight ) {	
 					ny = h/25.0+dh*(h/dh-nlevels);
 				} else {
-					ny = /*h/25+*/starty+(h*(resnode.geth()-minh))/((maxh-minh)*2.2);
+					ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 			}
@@ -247,9 +258,9 @@ public class Treedraw implements EntryPoint {
 			}*/
 			
 			if( vertical ) {
-				drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, minh, maxh );
+				drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight );
 			} else {
-				drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, minh, maxh );
+				drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight );
 			}
 		
 			//ny+=starty;
