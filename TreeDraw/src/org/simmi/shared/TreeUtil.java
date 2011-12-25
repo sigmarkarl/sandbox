@@ -200,18 +200,21 @@ public class TreeUtil {
 	
 	public void deleteNotContaining( Node n, Set<Node> ns ) {
 		n.nodes.retainAll( ns );
-		if( n.nodes.size() == 1 ) {
-			Node nn = n.nodes.get(0);
-			if( nn.nodes.size() > 0 ) {
-				n.h += nn.h;
-				n.nodes = nn.nodes;
-			} else if( nn.name == null || nn.name.length() == 0 ) {
-				n.nodes.clear();
-				n.nodes = null;
-			}
-		}
 		for( Node sn : n.nodes ) {
 			deleteNotContaining(sn, ns);
+		}
+		if( n.nodes.size() == 1 ) {
+			Node nn = n.nodes.get(0);
+			//if( nn.nodes.size() > 0 ) {
+				n.name = nn.name;
+				n.meta = nn.meta;
+				n.h += nn.h;
+				n.nodes = nn.nodes;
+			//} 
+			/*else if( nn.name == null || nn.name.length() == 0 ) {
+				n.nodes.clear();
+				n.nodes = null;
+			}*/
 		}
 	}
 	
@@ -239,7 +242,12 @@ public class TreeUtil {
 				for( Node n : sn ) {
 					includeAlready( n, cloneset );
 				}
+				
 				deleteNotContaining( resultnode, cloneset );
+				
+				for( Node n : cloneset ) {
+					if( n.name != null && n.name.trim().length() > 0 ) System.err.println( "nnnnnnnn " + n.name );
+				}
 			}
 			//extractMetaRecursive( resultnode, mapmap );
 			this.currentNode = resultnode;
