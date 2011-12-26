@@ -127,7 +127,7 @@ public class DataTable extends JApplet {
 		final Map<String,String>	nameaccmap = new HashMap<String,String>();
 		
 		final List<String[]>	rowList = new ArrayList<String[]>();
-		InputStream is = this.getClass().getResourceAsStream( "/therm.txt" );
+		InputStream is = this.getClass().getResourceAsStream( "/therm2.txt" );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		try {
 			String line = br.readLine();
@@ -137,6 +137,7 @@ public class DataTable extends JApplet {
 				rowList.add( Arrays.copyOfRange(split, 1, split.length ) );
 				line = br.readLine();
 			}
+			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -196,14 +197,10 @@ public class DataTable extends JApplet {
 			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
 
 			@Override
-			public void addTableModelListener(TableModelListener l) {
-				
-			}
+			public void addTableModelListener(TableModelListener l) {}
 
 			@Override
-			public void removeTableModelListener(TableModelListener l) {
-				
-			}
+			public void removeTableModelListener(TableModelListener l) {}
 		});
 		
 		table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
