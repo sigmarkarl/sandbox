@@ -237,13 +237,22 @@ public class DataTable extends JApplet {
 				}
 				br.close();
 				
+				Map<String,Map<String,String>> mapmap = new HashMap<String,Map<String,String>>();
 				Set<String>	include = new HashSet<String>();
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
-					include.add( (String)table.getValueAt(r, 0) );
+					String name = (String)table.getValueAt(r, 0);
+					include.add( name );
+					
+					String country = (String)table.getValueAt(r, 10);
+					if( country != null && country.length() > 0 ) {
+						Map<String,String>	map = new HashMap<String,String>();
+						map.put( "country", country );
+						mapmap.put(name, map);
+					}
 				}
 				
-				TreeUtil tu = new TreeUtil( sb.toString(), false, include, null );
+				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap );
 				//return arg0.getReaderForText( this );
 				String str = tu.currentNode.toString();
 				return new ByteArrayInputStream( str.getBytes( charset ) );
@@ -354,12 +363,16 @@ public class DataTable extends JApplet {
 							int v = line.indexOf(' ');
 							String name = line.substring(1, v).trim();
 							String acc = nameaccmap.get(name);
-							if( include.contains(acc) ) inc = true;
-							else inc = false;
-						}
-						
-						if( inc ) {
-							sb.append( line+"\n" );
+							if( include.contains(acc) ) {
+								inc = true;
+								sb.append( line+"\n" );
+							} else inc = false;
+						} else if( inc ) {
+							if( line.length() > 100 ) {
+								for( int i = 0; i < line.length(); i+= 70 ) {
+									sb.append( line.substring(i, Math.min(i+70, line.length()))+"\n" );
+								}
+							} else sb.append( line+"\n" );
 						}
 						line = br.readLine();
 					}
@@ -367,7 +380,9 @@ public class DataTable extends JApplet {
 					e1.printStackTrace();
 				}
 				textarea.setText( sb.toString() );
-				dialog.add( textarea );
+				
+				JScrollPane	scrollpane = new JScrollPane( textarea );
+				dialog.add( scrollpane );
 				dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 				
 				dialog.setVisible( true );
