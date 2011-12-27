@@ -19,6 +19,9 @@ public class ThermusTable implements EntryPoint {
 	Table		table;
 	Options		options;
 	
+	int w;
+	int h;
+	
 	@Override
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
@@ -45,8 +48,8 @@ public class ThermusTable implements EntryPoint {
 		
 		/*final RootPanel	rp = RootPanel.get();
 		Window.enableScrolling( false );
-		int w = Window.getClientWidth();
-		int h = Window.getClientHeight();
+		w = Window.getClientWidth();
+		h = Window.getClientHeight();
 		rp.setSize(w+"", h+"");
 		
 		Style s = rp.getElement().getStyle();
@@ -57,9 +60,10 @@ public class ThermusTable implements EntryPoint {
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
-				int w = event.getWidth();
-				int h = event.getHeight();
+				w = event.getWidth();
+				h = event.getHeight();
 				rp.setSize(w+"", h+"");
+				if( table != null ) table.setSize(w+"", h+"");
 			}
 		});
 		
@@ -104,10 +108,10 @@ public class ThermusTable implements EntryPoint {
 								data.setValue( r, 8, tsplit[8] );
 							}
 							
-							view = DataView.create( data );
-							table.draw( view, options );
 						    view = DataView.create( data );
 						    table = new Table( view, options );
+						    
+						    table.setSize(w+"", h+"");
 						    	
 						    rp.add( table );
 						}
