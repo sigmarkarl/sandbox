@@ -4716,37 +4716,42 @@ public class GeneSet extends JApplet {
 	};
 	
 	public static void simmi() throws IOException {
-		FileReader fr = new FileReader("c://cygwin/home/sigmar/thermus.blastout");
+		FileReader fr = new FileReader("/home/sigmar/thermus.blastout");
 		BufferedReader br = new BufferedReader( fr );
 		String line = br.readLine();
 		String 	current = null;
 		StrId	currteg = null;
 		int	currlen = 0;
+		boolean done = false;
 		Map<String,StrId>	tegmap = new HashMap<String,StrId>();
 		while( line != null ) {
 			String trim = line.trim();
 			if( trim.startsWith("Query=") ) {
 				String[] split = trim.substring(7).trim().split("[ ]+");
 				current = split[0];
+				done = false;
 			} else if( trim.startsWith("Length=") ) {
 				currlen = Integer.parseInt( trim.substring(7).trim() );
-			} else if( line.startsWith(">") ) {
+			} else if( line.startsWith(">") && !done ) {
 				int i = line.lastIndexOf('|');
+				if( i == -1 ) i = 0;
 				String teg = line.substring(i+1).trim();
 				line = br.readLine();
 				while( !line.startsWith("Length") ) {
 					teg += line;
 					line = br.readLine();
 				}
-				if( teg.contains("Thermus") ) {
+				if( teg.contains("Thermus") || teg.startsWith("t.") ) {
 					currteg = new StrId( teg, currlen );
 					tegmap.put( current, currteg );
 				}
-			} else if( trim.startsWith("Ident") ) {
+			} else if( trim.startsWith("Ident") && !done ) {
 				int sv = trim.indexOf('(');
 				int svl = trim.indexOf('%', sv+1);
 				
 				currteg.id = Integer.parseInt( trim.substring(sv+1, svl) );
+				
+				done = true;
 			}
 			
 			line = br.readLine();
@@ -4765,12 +4770,12 @@ public class GeneSet extends JApplet {
 			isum[i] = isum[i-1]+iv[i];
 		}
 		
-		FileOutputStream fos = new FileOutputStream("c://cygwin/home/sigmar/therm.txt");
+		FileOutputStream fos = new FileOutputStream("/home/sigmar/therm.txt");
 		PrintStream pos = new PrintStream(fos);
-		fr = new FileReader("c://cygwin/home/sigmar/export.nds");
+		fr = new FileReader("/home/sigmar/export2.nds");
 		br = new BufferedReader( fr );
 		line = br.readLine();
-		while( line != null ) {
+		while( line != null ) {		
 			String name = line.substring( isum[0], isum[1] ).trim();
 			String acc = line.substring( isum[1], isum[2] ).trim();
 			String country = line.substring( isum[7], isum[8] ).trim();
@@ -4783,7 +4788,8 @@ public class GeneSet extends JApplet {
 			String source = isum.length > 14 ? line.substring( isum[14], isum[15]-1 ).trim() : "";
 			
 			if( tegmap.containsKey(name) ) {
-				StrId teg = tegmap.get(name);
+				//StrId teg = tegmap.get(name);
+				StrId teg = tegmap.remove( name );
 				pos.println( name + "\t" + acc + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + doi + "\t" + pubmed + "\t" + journal + "\t" + auth + "\t" + sub_auth + "\t" + sub_date + "\t" + country + "\t" + source );
 			}
 			//System.err.println( line.substring( isum[7], isum[8] ).trim() );
@@ -4791,6 +4797,11 @@ public class GeneSet extends JApplet {
 			line = br.readLine();
 		}
 		fr.close();
+		
+		for( String name : tegmap.keySet() ) {
+			StrId teg = tegmap.get( name );
+			pos.println( name + "\t" + name + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "simmi" + "\t" + "" + "\t" + "" + "\t" + "iceland" + "\t" + "unknown" );
+		}
 		fos.close();
 	}
 	

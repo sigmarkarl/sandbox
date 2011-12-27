@@ -52,8 +52,8 @@ public class Treedraw implements EntryPoint {
 		canvas.addDropHandler( new DropHandler() {
 			@Override
 			public void onDrop(DropEvent event) {
-				String tree = event.getData("text/plain");
-				
+				String str = event.getData("text/plain");
+				String tree = str.replaceAll("[\r\n]+", "");
 				TreeUtil	treeutil = new TreeUtil( tree, false, null, null );
 				int ww = Window.getClientWidth();
 				
@@ -109,7 +109,7 @@ public class Treedraw implements EntryPoint {
 					} else {
 						drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
 					}
-				} else console("bleh");
+				}
 				
 				//drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 10, 10, 10, 10, false, false, true, treeutil.getminh(), treeutil.getmaxh());
 			}
