@@ -470,6 +470,28 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void init() {
+		JSObject jso = JSObject.getWindow( this );
+		final JSObject con = (JSObject)jso.getMember("console");
+		
+		OutputStream o = new OutputStream() {
+			Object[]	objs = {""};
+			ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+			
+			@Override
+			public void write(int b) throws IOException {
+				if( b == '\n' ) {
+					baos.write(b);
+					objs[0] = baos.toString();
+					baos.flush();
+					baos.reset();
+					con.call("log", objs);
+				} else baos.write(b);
+			}
+		};
+		PrintStream po = new PrintStream( o );
+		System.setOut( po );
+		System.setErr( po );
+		
 		init( this );
 	}
 	
