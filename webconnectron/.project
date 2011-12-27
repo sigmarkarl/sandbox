@@ -38,9 +38,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>util</name>
-			<type>2</type>
-			<location>/home/sigmar/sandbox/TreeDraw/src/org/simmi/util</location>
+			<name>src/org/simmi/shared/TreeUtil.java</name>
+			<type>1</type>
+			<location>/home/sigmar/sandbox/TreeDraw/src/org/simmi/shared/TreeUtil.java</location>
 		</link>
 	</linkedResources>
 </projectDescription>
