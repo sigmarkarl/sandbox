@@ -237,6 +237,7 @@ public class TreeUtil {
 				}
 			}
 			
+			extractMetaRecursive( resultnode, mapmap );
 			if( include.size() > 0 ) {
 				Set<Node> sn = includeNodes( resultnode, include );
 				Set<Node> cloneset = new HashSet<Node>( sn );
@@ -250,7 +251,6 @@ public class TreeUtil {
 					if( n.name != null && n.name.trim().length() > 0 ) System.err.println( "nnnnnnnn " + n.name );
 				}*/
 			}
-			extractMetaRecursive( resultnode, mapmap );
 			this.currentNode = resultnode;
 		} else {
 			System.err.println( str );
@@ -325,9 +325,9 @@ public class TreeUtil {
 	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
-		int ki = node.name.indexOf(',');
+		int ki = node.name.indexOf(';');
 		if( ki != -1 ) {
-			String[] metasplit = node.name.split(",");
+			String[] metasplit = node.name.split(";");
 			
 			int ct = 1;
 			String meta = metasplit[ ct ].trim();
