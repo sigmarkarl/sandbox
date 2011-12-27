@@ -194,6 +194,9 @@ public class TreeUtil {
 	
 	public void includeAlready( Node n, Set<Node> include ) {
 		if( n.parent != null && !include.contains(n.parent) ) {
+			if( n.parent.name != null || n.parent.name.length() > 0 ) {
+				System.err.println( "erm " + n.parent.name );
+			}
 			include.add( n.parent );
 			includeAlready( n.parent, include );
 		}
@@ -389,6 +392,7 @@ public class TreeUtil {
 				} else {
 					ret.nodes.add( node );
 					node.parent = ret;
+					if( ret.name != null && ret.name.length() > 0 ) System.err.println("fokk you too");
 					ret.leaves += node.leaves;
 				}
 			} else {
@@ -453,6 +457,7 @@ public class TreeUtil {
 					node.leaves++;
 				} else {
 					ret.nodes.add( node );
+					if( ret.name != null && ret.name.length() > 0 ) System.err.println("fokk");
 					node.parent = ret;
 					ret.leaves++;
 				}
