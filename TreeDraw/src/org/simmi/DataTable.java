@@ -244,12 +244,25 @@ public class DataTable extends JApplet {
 					String name = (String)table.getValueAt(r, 0);
 					include.add( name );
 					
+					Map<String,String>	map = new HashMap<String,String>();
+					String nm = (String)table.getValueAt(r, 1);
+					
+					if( nm.contains("t.eggertsoni") ) nm = "Thermus eggertsoni";
+					else if( nm.contains("t.islandicus") ) nm = "Thermus islandicus";
+					else if( nm.contains("t.kawarayensis") ) nm = "Thermus kawarayensis";
+					else {
+						int ix = nm.indexOf(' ');
+						if( ix > 0 ) {
+							nm = nm.substring(ix, nm.indexOf(' ', ix+1) );
+						}
+					}
+					
+					map.put("name", nm);
 					String country = (String)table.getValueAt(r, 10);
 					if( country != null && country.length() > 0 ) {
-						Map<String,String>	map = new HashMap<String,String>();
 						map.put( "country", country );
-						mapmap.put(name, map);
 					}
+					mapmap.put(name, map);
 				}
 				
 				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap );
