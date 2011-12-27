@@ -47,8 +47,9 @@ public class TreeUtil {
 				str += nodes.get(i)+")";
 			}
 			
-			if( name != null && name.length() > 0 ) str += name;
-			if( meta != null && meta.length() > 0 ) str += meta;
+			if( meta != null && meta.length() > 0 ) {
+				str += "'"+name+";"+meta+"'";
+			} else if( name != null && name.length() > 0 ) str += name;
 			
 			//if( h > 0.0 )
 				str += ":"+h;
@@ -245,11 +246,11 @@ public class TreeUtil {
 				
 				deleteNotContaining( resultnode, cloneset );
 				
-				for( Node n : cloneset ) {
+				/*for( Node n : cloneset ) {
 					if( n.name != null && n.name.trim().length() > 0 ) System.err.println( "nnnnnnnn " + n.name );
-				}
+				}*/
 			}
-			//extractMetaRecursive( resultnode, mapmap );
+			extractMetaRecursive( resultnode, mapmap );
 			this.currentNode = resultnode;
 		} else {
 			System.err.println( str );
@@ -324,7 +325,6 @@ public class TreeUtil {
 	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
-		System.err.println( node.name );
 		int ki = node.name.indexOf(',');
 		if( ki != -1 ) {
 			String[] metasplit = node.name.split(",");
@@ -353,8 +353,8 @@ public class TreeUtil {
 				Map<String,String>	keyval = mapmap.get( mapname );
 				if( keyval.containsKey("country") ) {
 					String meta = keyval.get("country");
-					int i = meta.indexOf(':');
-					if( i != -1 ) meta = meta.substring(0, i);
+					//int i = meta.indexOf(':');
+					//if( i != -1 ) meta = meta.substring(0, i);
 					node.meta = meta;
 				}
 				
