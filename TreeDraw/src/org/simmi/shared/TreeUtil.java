@@ -48,7 +48,8 @@ public class TreeUtil {
 			}
 			
 			if( meta != null && meta.length() > 0 ) {
-				str += "'"+name+";"+meta+"'";
+				if( name != null && name.length() > 0 ) str += "'"+name+";"+meta+"'";
+				else str += "'"+meta+"'";
 			} else if( name != null && name.length() > 0 ) str += name;
 			
 			//if( h > 0.0 )
@@ -156,13 +157,20 @@ public class TreeUtil {
 			extractMetaRecursive(subnode, mapmap);
 		}
 		
-		if( checklist.size() > 0 ) {
+		if( mapmap != null && mapmap.size() > 0 && checklist.size() > 0 ) {
 			String metacheck = null;
 			boolean dual = true;
 			for( Node n : checklist ) {
 				if( n.meta != null ) {
-					if( metacheck == null ) metacheck = n.meta;
-					else if( !n.meta.equals(metacheck) ) dual = false;
+					String nmeta = n.meta;
+					String[] msp = nmeta.split(":");
+					if( msp.length > 1 ) {
+						nmeta = (msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
+					}
+					
+					if( metacheck == null ) {
+						metacheck = nmeta;
+					} else if( !nmeta.equals(metacheck) ) dual = false;
 				}
 			}
 			
@@ -170,6 +178,8 @@ public class TreeUtil {
 				for( Node n : checklist ) {
 					if( n.nodes != null && n.nodes.size() > 0 ) n.meta = null;
 				}
+				//String[] msp = metacheck.split(":");
+				//node.meta = (msp.length > 1 && (metacheck.contains("awai") || metacheck.contains("ibet") || metacheck.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
 				node.meta = metacheck;
 			} else node.meta = "";
 		}
@@ -194,9 +204,9 @@ public class TreeUtil {
 	
 	public void includeAlready( Node n, Set<Node> include ) {
 		if( n.parent != null && !include.contains(n.parent) ) {
-			if( n.parent.name != null || n.parent.name.length() > 0 ) {
+			/*if( n.parent.name != null || n.parent.name.length() > 0 ) {
 				System.err.println( "erm " + n.parent.name );
-			}
+			}*/
 			include.add( n.parent );
 			includeAlready( n.parent, include );
 		}
@@ -232,7 +242,7 @@ public class TreeUtil {
 			if( include == null ) {
 				include = new HashSet<String>();
 				String inc = str.substring( loc+1 ).trim();
-				if( inc.length() > 0 ) {
+				if( inc.length() > 0 && !inc.startsWith("(") ) {
 					String[] split = inc.split(",");
 					for( String sp : split ) {
 						include.add( sp.trim() );
@@ -240,7 +250,6 @@ public class TreeUtil {
 				}
 			}
 			
-			extractMetaRecursive( resultnode, mapmap );
 			if( include.size() > 0 ) {
 				Set<Node> sn = includeNodes( resultnode, include );
 				Set<Node> cloneset = new HashSet<Node>( sn );
@@ -254,6 +263,7 @@ public class TreeUtil {
 					if( n.name != null && n.name.trim().length() > 0 ) System.err.println( "nnnnnnnn " + n.name );
 				}*/
 			}
+			extractMetaRecursive( resultnode, mapmap );
 			this.currentNode = resultnode;
 		} else {
 			System.err.println( str );
@@ -328,17 +338,24 @@ public class TreeUtil {
 	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
+		
 		int ki = node.name.indexOf(';');
 		if( ki != -1 ) {
-			String[] metasplit = node.name.split(";");
+			//String[] metasplit = node.name.split(";");
+			node.meta = node.name.substring(ki+1).trim();
+			node.name = node.name.substring(0,ki).trim();
 			
 			/*int ct = 1;
 			String meta = metasplit[ ct ].trim();
 			while( !meta.contains(":") && ct < metasplit.length-1 ) {
 				meta = metasplit[ ++ct ];
-			}*/
+			}
 			
-			for( String meta : metasplit ) {
+			String[] msplit = meta.split(":");
+			node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1].split(" ")[0].trim() : msplit[0].trim();
+			metacount++;
+			
+			/*for( String meta : metasplit ) {
 				if( meta.contains("name:") ) {
 					node.name = meta.substring(5).trim();
 				} else if( meta.contains("country:") ) {
@@ -346,7 +363,7 @@ public class TreeUtil {
 					node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1].trim() : msplit[0].trim();
 					metacount++;
 				}
-			}
+			}*/
 		}
 		
 		if( mapmap != null ) {
@@ -355,14 +372,20 @@ public class TreeUtil {
 			if( ik != -1 ) {
 				mapname = mapname.substring(0, ik);
 			}
+
 			if( mapmap.containsKey( mapname ) ) {
 				Map<String,String>	keyval = mapmap.get( mapname );
 				
 				for( String key : keyval.keySet() ) {
-					if( node.meta == null || node.meta.length() == 0 ) {
-						node.meta = key + ":" + keyval.get(key);
+					String meta = keyval.get(key);
+					
+					if( key.equals("name") ) {
+						node.name = meta.trim();
+					} else if( node.meta == null || node.meta.length() == 0 ) {
+						node.meta = meta;
 					} else {
-						node.meta = ";" + key + ":" + keyval.get(key);
+						node.meta += ";" + meta;
+						//node.meta += meta;
 					}
 				}
 				/*if( keyval.containsKey("country") ) {
@@ -403,7 +426,7 @@ public class TreeUtil {
 				} else {
 					ret.nodes.add( node );
 					node.parent = ret;
-					if( ret.name != null && ret.name.length() > 0 ) System.err.println("fokk you too");
+					//if( ret.name != null && ret.name.length() > 0 ) System.err.println("fokk you too");
 					ret.leaves += node.leaves;
 				}
 			} else {
@@ -411,17 +434,24 @@ public class TreeUtil {
 				int end = loc+1;
 				char n = str.charAt(end);
 				
+				int si = 0;
 				if( c == '\'' ) {
 					while( end < str.length()-1 && n != '\'' ) {
 						n = str.charAt(++end);
 					}
+					si = end-loc-1;
+					//String code = str.substring( loc, end );
+					//node.name = code.replaceAll("'", "");
+					//loc = end+1;
 				}
+				
 				while( end < str.length()-1 && n != ',' && n != ')' ) {
 					n = str.charAt(++end);
 				}
 				
 				String code = str.substring( loc, end );
-				if( code.contains(":") ) {
+				int ci = code.indexOf(":", si);
+				if( ci != -1 ) {
 					String[] split;
 					int i = code.lastIndexOf("'");
 					if( i > 0 ) {
@@ -435,10 +465,14 @@ public class TreeUtil {
 					
 					if( split.length > 2 ) {
 						String color = split[2].substring(1);
-						int r = Integer.parseInt( color.substring(0, 2), 16 );
-						int g = Integer.parseInt( color.substring(2, 4), 16 );
-						int b = Integer.parseInt( color.substring(4, 6), 16 );
-						node.color = "rgb( "+r+","+g+","+b+")"; //new Color( r,g,b );
+						try {
+							int r = Integer.parseInt( color.substring(0, 2), 16 );
+							int g = Integer.parseInt( color.substring(2, 4), 16 );
+							int b = Integer.parseInt( color.substring(4, 6), 16 );
+							node.color = "rgb( "+r+","+g+","+b+")"; //new Color( r,g,b );
+						} catch( Exception e ) {
+							
+						}
 					} else node.color = null;
 					
 					String dstr = split[1].trim();
@@ -449,8 +483,13 @@ public class TreeUtil {
 						dstr2 = dstr.substring( start+1, stop );
 						dstr = dstr.substring( 0, start );
 					}
-					node.h = Double.parseDouble( dstr );
-					node.h2 = Double.parseDouble( dstr2 );
+					
+					try {
+						node.h = Double.parseDouble( dstr );
+						node.h2 = Double.parseDouble( dstr2 );
+					} catch( Exception e ) {
+						System.err.println();
+					}
 					
 					if( node.h < minh ) minh = node.h;
 					if( node.h > maxh ) maxh = node.h;
@@ -468,7 +507,7 @@ public class TreeUtil {
 					node.leaves++;
 				} else {
 					ret.nodes.add( node );
-					if( ret.name != null && ret.name.length() > 0 ) System.err.println("fokk");
+					//if( ret.name != null && ret.name.length() > 0 ) System.err.println("fokk");
 					node.parent = ret;
 					ret.leaves++;
 				}
@@ -476,7 +515,9 @@ public class TreeUtil {
 		}
 		
 		Node use = inverse ? node : ret;
-		List<Node> checklist = use.nodes;
+		
+		
+		/*List<Node> checklist = use.nodes;
 		String metacheck = null;
 		boolean dual = true;
 		for( Node n : checklist ) {
@@ -491,47 +532,71 @@ public class TreeUtil {
 				if( n.nodes != null && n.nodes.size() > 0 ) n.meta = null;
 			}
 			use.meta = metacheck;
-		} else use.meta = "";
+		} else use.meta = "";*/
+		
 		//System.err.println("setting: "+metacheck + use.nodes);
 		
 		if( loc < str.length()-1 ) {
 			loc++;
 			int end = loc;
 			char n = str.charAt(end);
+			
+			int si = 0;
+			if( n == '\'' ) {
+				n = str.charAt(++end);
+				while( end < str.length()-1 && n != '\'' ) {
+					n = str.charAt(++end);
+				}
+				si = end-loc-1;
+				//String code = str.substring( loc, end );
+				//node.name = code.replaceAll("'", "");
+				//loc = end+1;
+			}
+			
 			while( end < str.length()-1 && n != ',' && n != ';' && n != ')' ) {
 				n = str.charAt(++end);
 			}
 			String code = str.substring( loc, end );
-			if( code.contains(":") ) {
-				String[] split = code.split(":");
-				if( split.length > 0 ) {
-					ret.name = split[0].replaceAll("'", "");
-					if( split.length > 2 ) {
-						String color = split[2].substring(1);
+			int ci = code.indexOf(":", si);
+			if( ci != -1 ) {
+				String[] split;
+				int i = code.lastIndexOf("'");
+				if( i > 0 ) {
+					split = code.substring(i, code.length()).split(":");
+					ret.name = code.substring(0, i+1);
+				} else {
+					split = code.split(":");
+					ret.name = split[0];
+				}
+				
+				//String[] split = code.split(":");
+				if( split.length > 2 ) {
+					String color = split[2].substring(1);
+					try {
 						int r = Integer.parseInt( color.substring(0, 2), 16 );
 						int g = Integer.parseInt( color.substring(2, 4), 16 );
 						int b = Integer.parseInt( color.substring(4, 6), 16 );
 						ret.color = "rgb( "+r+","+g+","+b+")"; //new Color( r,g,b );
-					} else ret.color = null;
-					String dstr = split[1].trim();
-					String dstr2 = "0";
-					if( dstr.contains("[") ) {
-						int start = split[1].indexOf('[');
-						int stop = split[1].indexOf(']');
-						dstr2 = dstr.substring( start+1, stop );
-						dstr = dstr.substring( 0, start );
+					} catch( Exception e ) {
+						
 					}
-					try {
-						ret.h = Double.parseDouble( dstr );
-						ret.h2 = Double.parseDouble( dstr2 );
-					} catch( Exception e ) {}
-					if( ret.h < minh ) minh = ret.h;
-					if( ret.h > maxh ) maxh = ret.h;
-					if( ret.h2 < minh2 ) minh2 = ret.h2;
-					if( ret.h2 > maxh2 ) maxh2 = ret.h2;
-				} else {
-					System.out.println( str );
+				} else ret.color = null;
+				String dstr = split[1].trim();
+				String dstr2 = "0";
+				if( dstr.contains("[") ) {
+					int start = split[1].indexOf('[');
+					int stop = split[1].indexOf(']');
+					dstr2 = dstr.substring( start+1, stop );
+					dstr = dstr.substring( 0, start );
 				}
+				try {
+					ret.h = Double.parseDouble( dstr );
+					ret.h2 = Double.parseDouble( dstr2 );
+				} catch( Exception e ) {}
+				if( ret.h < minh ) minh = ret.h;
+				if( ret.h > maxh ) maxh = ret.h;
+				if( ret.h2 < minh2 ) minh2 = ret.h2;
+				if( ret.h2 > maxh2 ) maxh2 = ret.h2;
 			} else {
 				ret.name = code.replaceAll("'", "");
 			}
