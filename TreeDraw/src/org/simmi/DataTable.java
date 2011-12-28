@@ -253,7 +253,7 @@ public class DataTable extends JApplet {
 					else {
 						int ix = nm.indexOf(' ');
 						if( ix > 0 ) {
-							nm = nm.substring(ix, nm.indexOf(' ', ix+1) );
+							nm = nm.substring(0, nm.indexOf(' ', ix+1) );
 						}
 					}
 					
