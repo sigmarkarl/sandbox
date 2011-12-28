@@ -87,7 +87,9 @@ public class Lostfound implements EntryPoint {
 		hp.add( vpright );
 		
 		Label	l1 = new Label("Tapað");
+		l1.setHorizontalAlignment( Label.ALIGN_CENTER );
 		Label	l2 = new Label("Fundið");
+		l2.setHorizontalAlignment( Label.ALIGN_CENTER );
 		
 		HorizontalPanel	lostwhat = new HorizontalPanel();
 		Label	lostlab = new Label("Hvað týndist");
@@ -133,6 +135,31 @@ public class Lostfound implements EntryPoint {
 		
 		losttable.setRowCount( items.size(), true );
 		losttable.setRowData( items );
+
+		CellTable<Item>	foundtable = new CellTable<Item>();
+		TextColumn<Item> ftypecol = new TextColumn<Item>() {
+			@Override
+			public String getValue(Item object) {
+				return object.type;
+			}
+		};
+		ftypecol.setSortable( true );
+		TextColumn<Item> fdatecol = new TextColumn<Item>() {
+			@Override
+			public String getValue(Item object) {
+				return object.date.toString();
+			}
+		};
+		
+		List<Item> fitems = Arrays.asList(
+			    new Item("John", new Date(0)),
+			    new Item("Mary", new Date(0)) );
+		
+		foundtable.addColumn( ftypecol, "Hvað" );
+		foundtable.addColumn( fdatecol, "Hvenær" );
+		
+		foundtable.setRowCount( fitems.size(), true );
+		foundtable.setRowData( fitems );
 		
 		//ListHandler<Item>	lh = new ListHandler<Item>( items );
 		//losttable.addColumnSortHandler( lh );
@@ -161,11 +188,31 @@ public class Lostfound implements EntryPoint {
 		          }
 		    });
 		losttable.addColumnSortHandler(columnSortHandler);
-
-		    // We know that the data is sorted alphabetically by default.
 		losttable.getColumnSortList().push(typecol);
 		
-		vpleft.add( losttable );
+		ListDataProvider<Item> fldp = new ListDataProvider<Item>();
+		fldp.addDataDisplay( foundtable );
+		List<Item>	flitem = fldp.getList();
+		for( Item i : fitems ) {
+			flitem.add( i );
+		}
+		ListHandler<Item> fcolumnSortHandler = new ListHandler<Item>(flitem);
+		fcolumnSortHandler.setComparator(ftypecol,
+			new Comparator<Item>() {
+		          public int compare(Item o1, Item o2) {
+		            if (o1 == o2) {
+		              return 0;
+		            }
+
+		            // Compare the name columns.
+		            if (o1 != null) {
+		              return (o2 != null) ? o1.type.compareTo(o2.type) : 1;
+		            }
+		            return -1;
+		          }
+		    });
+		foundtable.addColumnSortHandler(fcolumnSortHandler);
+		foundtable.getColumnSortList().push(ftypecol);
 		
 		HorizontalPanel	foundwhat = new HorizontalPanel();
 		Label	foundlab = new Label("Hvað fannst");
@@ -206,10 +253,12 @@ public class Lostfound implements EntryPoint {
 		vpleft.add( lostwhat );
 		vpleft.add( first );
 		vpleft.add( lostdesc );
+		//vpleft.add( losttable );
 		vpright.add( l2 );
 		vpright.add( foundwhat );
 		vpright.add( last );
 		vpright.add( founddesc );
+		//vpright.add( foundtable );
 		
 		rp.add( hp );
 	}

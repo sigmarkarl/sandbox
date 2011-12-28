@@ -342,7 +342,7 @@ public class TreeUtil {
 				if( meta.contains("name:") ) {
 					node.name = meta.substring(5).trim();
 				} else if( meta.contains("country:") ) {
-					String[] msplit = meta.substring(8).split(":");
+					String[] msplit = meta.substring(8).trim().split(":");
 					node.meta = meta.contains("awai") || meta.contains("ellow") ? msplit[1].trim() : msplit[0].trim();
 					metacount++;
 				}
