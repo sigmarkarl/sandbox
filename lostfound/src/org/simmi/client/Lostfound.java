@@ -75,12 +75,23 @@ public class Lostfound implements EntryPoint {
 			}
 		});
 		
+		VerticalPanel	vp = new VerticalPanel();
+		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		vp.setSize("100%", "100%");
+		
 		HorizontalPanel	hp = new HorizontalPanel();
+		//hp.setBorderWidth( 1 );
+		hp.setSpacing(10);
 		hp.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
 		hp.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
-		hp.setSize("100%", "100%");
+		
+		vp.add( hp );
 		
 		VerticalPanel	vpleft = new VerticalPanel();
+		//Style s = vpleft.getElement().getStyle();
+		//s.setBorderWidth(4.0, Unit.PX);
+		//vpleft.setBorderWidth(1);
 		VerticalPanel	vpright = new VerticalPanel();
 		
 		hp.add( vpleft );
@@ -112,6 +123,7 @@ public class Lostfound implements EntryPoint {
 		lostwhat.add( lostlist );
 		
 		CellTable<Item>	losttable = new CellTable<Item>();
+		//losttable.setSelectionModel( SelectionModel.)
 		TextColumn<Item> typecol = new TextColumn<Item>() {
 			@Override
 			public String getValue(Item object) {
@@ -253,13 +265,13 @@ public class Lostfound implements EntryPoint {
 		vpleft.add( lostwhat );
 		vpleft.add( first );
 		vpleft.add( lostdesc );
-		//vpleft.add( losttable );
+		vpleft.add( losttable );
 		vpright.add( l2 );
 		vpright.add( foundwhat );
 		vpright.add( last );
 		vpright.add( founddesc );
-		//vpright.add( foundtable );
+		vpright.add( foundtable );
 		
-		rp.add( hp );
+		rp.add( vp );
 	}
 }

@@ -1773,6 +1773,49 @@ public class SerifyApplet extends JApplet {
 		bw.close();
 	}
 	
+	public Map<String,String> mapNameHit( InputStream blasti ) throws IOException {
+		Map<String,String>	mapHit = new HashMap<String,String>();
+		
+		BufferedReader br = new BufferedReader( new InputStreamReader( blasti ) );
+		String line = br.readLine();
+		while( line != null ) {
+			String trim = line.trim();
+			if( trim.startsWith("Query=") ) {
+				String name = trim.substring(6).trim();
+				line = br.readLine();
+				while( line != null && !line.startsWith(">") ) line = br.readLine();
+				if( line != null ) {
+					mapHit.put( name, line.substring(1).trim() );
+				}
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		return mapHit;
+	}
+	
+	public void doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
+		PrintStream pr = new PrintStream( os );
+		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+		String line = br.readLine();
+		boolean include = false;
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				String name = line.substring(1).trim();
+				if( mapHit.containsKey(name) ) {
+					pr.println( ">" + name + "_" + mapHit.get(name) );
+					include = true;
+				} else include = false;
+			} else if( include ) {
+				pr.println( line );
+			}
+			line = br.readLine();
+		}
+		br.close();
+		pr.close();
+	}
+	
 	public void init( final Container c ) {
 		this.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -1975,8 +2018,12 @@ public class SerifyApplet extends JApplet {
 				if( fc.showOpenDialog( c ) == JFileChooser.APPROVE_OPTION ) {
 					File selectedfile = fc.getSelectedFile();
 					String title = selectedfile.getName();
-					int i = title.indexOf('.');
-					if( i != -1 ) title = title.substring(0,i);
+					String dbtype = "prot";
+					int i = title.lastIndexOf('.');
+					if( i != -1 ) {
+						title = title.substring(0,i);
+						if( title.charAt(i+1) == 'n' ) dbtype = "nucl";
+					}
 					
 					final String outPath = fixPath( selectedfile.getParentFile().getAbsolutePath()+System.getProperty("file.separator")+title );
 					//String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
@@ -1986,7 +2033,7 @@ public class SerifyApplet extends JApplet {
 					
 					String machineinfo = getMachine();
 					String[] split = machineinfo.split("\t");
-					js.call( "addDb", new Object[] {getUser(), title, "prot", outPath, split[0], ""} );
+					js.call( "addDb", new Object[] {getUser(), title, dbtype, outPath, split[0], ""} );
 				}
 			}
 		});
@@ -2334,6 +2381,40 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Blast rename") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				int rr = table.convertRowIndexToModel( r );
+				if( rr >= 0 ) {
+					JFileChooser fc = new JFileChooser();
+					if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+						File f = fc.getSelectedFile();
+						
+						final Sequences seqs = sequences.get( rr );
+						JSObject	jso = JSObject.getWindow(SerifyApplet.this);
+						String s = (String)jso.call("getSelectedBlast", new Object[] {} );
+					
+						try {
+							URI uri = new URI( seqs.getPath() );
+							InputStream is = uri.toURL().openStream();
+							
+							if( seqs.getPath().endsWith(".gz") ) {
+								is = new GZIPInputStream( is );
+							}
+							
+							Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s) );
+							doMapHitStuff( nameHitMap, is, new FileOutputStream(f) );
+						} catch (URISyntaxException e1) {
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+		});
 		
 		table.setComponentPopupMenu( popup );
 		
@@ -2500,10 +2581,23 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void updateSequences( String user, String name, String type, String path, int nseq, String key ) {
-		Sequences seqs = new Sequences( user, name, type, path, nseq );
-		seqs.setKey( key );
-		sequences.add( seqs );
-		table.tableChanged( new TableModelEvent( table.getModel() ) );
+		boolean succ = true;
+		try {
+			URL url = new URL( path );
+			InputStream is = url.openStream();
+			if( is == null ) succ = false;
+		} catch (MalformedURLException e) {
+			succ = false;
+		} catch (IOException e) {
+			succ = false;
+		}
+		
+		if( succ ) {
+			Sequences seqs = new Sequences( user, name, type, path, nseq );
+			seqs.setKey( key );
+			sequences.add( seqs );
+			table.tableChanged( new TableModelEvent( table.getModel() ) );
+		}
 	}
 	
 	private void addSequences( String user, String name, String type, String path, int nseq ) {
