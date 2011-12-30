@@ -277,13 +277,29 @@ public class Blastic implements EntryPoint {
 	}
 	
 	public void runBlast( String extrapar ) {
-		String[] dbInfo = getSelectedDb();
+		String[][] dbInfos = getSelectedDbs();
 		
-		String dbPath = dbInfo[0];
-		String dbType = dbInfo[1];
-		
-		Element e = Document.get().getElementById("serify");
-		runBlastInApplet(e, extrapar, dbPath, dbType );
+		if( dbInfos.length > 0 ) {
+			String dbPath = "";
+			String dbType = null;
+			
+			if( dbInfos.length > 1 ) dbPath += "\"";
+			for( String[] stra : dbInfos ) {
+				if( dbType == null ) dbType = stra[1];
+				else if( !dbType.equals(stra[1]) ) {
+					dbType = "";
+					break;
+				}
+				if( stra[0].equals(dbInfos[0][0]) ) dbPath += " ";
+				dbPath += stra[0];
+			}
+			if( dbInfos.length > 1 ) dbPath += "\"";
+	
+			if( !dbType.equals("") ) {
+				Element e = Document.get().getElementById("serify");
+				runBlastInApplet(e, extrapar, dbPath, dbType );
+			}
+		}
 	}
 	
 	public void getBlastParameters() {
@@ -363,6 +379,20 @@ public class Blastic implements EntryPoint {
 		}
 		
 		return null;
+	}
+	
+	public String[][] getSelectedDbs() {
+		JsArray<Selection> jas = table.getSelections();
+		
+		List<String[]>	slist = new ArrayList<String[]>();
+		for( int i = 0; i < jas.length(); i++ ) {
+			int row = jas.get(i).getRow();
+			String val = (String)data.getValueString(row, 3);
+			String typ = (String)data.getValueString(row, 2);
+			slist.add( new String[] {val, typ} );
+		}
+		
+		return slist.toArray( new String[0][] );
 	}
 	
 	public String[] getSelectedDb() {
