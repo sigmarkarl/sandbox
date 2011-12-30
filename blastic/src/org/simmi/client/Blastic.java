@@ -174,8 +174,19 @@ public class Blastic implements EntryPoint {
 
 			@Override
 			public void onSuccess(String result) {
-				Element applet = Document.get().getElementById("serify");
-				addSequenceInApplet( applet, user, name, type, path, num, result );
+				console("bluh");
+				
+				try {
+					console("one");
+					Element applet = Document.get().getElementById("serify");
+					console("two");
+					addSequenceInApplet( applet, user, name, type, path, num, result );
+					console("trhe");
+				} catch( Exception e ) {
+					console( e.getMessage() );
+				}
+				
+				console("bleh");
 				
 				/*int r = data.getNumberOfRows();
 				data.addRow();
@@ -938,8 +949,8 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		ae.setAttribute("codebase", "http://funblastic.appspot.com/");
-		//ae.setAttribute("codebase", "http://130.208.181.105/");
+		//ae.setAttribute("codebase", "http://funblastic.appspot.com/");
+		ae.setAttribute("codebase", "http://127.0.0.1/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
