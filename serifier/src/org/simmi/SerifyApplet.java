@@ -2021,8 +2021,8 @@ public class SerifyApplet extends JApplet {
 					String dbtype = "prot";
 					int i = title.lastIndexOf('.');
 					if( i != -1 ) {
-						title = title.substring(0,i);
 						if( title.charAt(i+1) == 'n' ) dbtype = "nucl";
+						title = title.substring(0,i);
 					}
 					
 					final String outPath = fixPath( selectedfile.getParentFile().getAbsolutePath()+System.getProperty("file.separator")+title );
