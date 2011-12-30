@@ -473,7 +473,7 @@ public class SerifyApplet extends JApplet {
 		JSObject jso = JSObject.getWindow( this );
 		final JSObject con = (JSObject)jso.getMember("console");
 		
-		OutputStream o = new OutputStream() {
+		/*OutputStream o = new OutputStream() {
 			Object[]	objs = {""};
 			ByteArrayOutputStream	baos = new ByteArrayOutputStream();
 			
@@ -490,7 +490,7 @@ public class SerifyApplet extends JApplet {
 		};
 		PrintStream po = new PrintStream( o );
 		System.setOut( po );
-		System.setErr( po );
+		System.setErr( po );*/
 		
 		init( this );
 	}
@@ -2580,24 +2580,36 @@ public class SerifyApplet extends JApplet {
 		super.update( g );
 	}
 	
-	public void updateSequences( String user, String name, String type, String path, int nseq, String key ) {
-		boolean succ = true;
-		try {
-			URL url = new URL( path );
-			InputStream is = url.openStream();
-			if( is == null ) succ = false;
-		} catch (MalformedURLException e) {
-			succ = false;
-		} catch (IOException e) {
-			succ = false;
-		}
-		
-		if( succ ) {
-			Sequences seqs = new Sequences( user, name, type, path, nseq );
-			seqs.setKey( key );
-			sequences.add( seqs );
-			table.tableChanged( new TableModelEvent( table.getModel() ) );
-		}
+	public void updateSequences( final String user, final String name, final String type, final String path, final int nseq, final String key ) {
+		AccessController.doPrivileged( new PrivilegedAction() {
+			@Override
+			public Object run() {
+				boolean succ = true;
+				try {
+					URL url = new URL( path );
+					InputStream is = url.openStream();
+					if( is == null ) succ = false;
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+					succ = false;
+				} catch (IOException e) {
+					e.printStackTrace();
+					succ = false;
+				} catch( Exception e ) {
+					e.printStackTrace();
+					succ = false;
+				}
+				
+				if( succ ) {
+					Sequences seqs = new Sequences( user, name, type, path, nseq );
+					seqs.setKey( key );
+					sequences.add( seqs );
+					table.tableChanged( new TableModelEvent( table.getModel() ) );
+				}
+				
+				return null;
+			}
+		});
 	}
 	
 	private void addSequences( String user, String name, String type, String path, int nseq ) {
