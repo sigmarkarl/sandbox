@@ -470,8 +470,12 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void init() {
-		JSObject jso = JSObject.getWindow( this );
-		final JSObject con = (JSObject)jso.getMember("console");
+		try {
+			JSObject jso = JSObject.getWindow( this );
+			final JSObject con = (JSObject)jso.getMember("console");
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
 		
 		/*OutputStream o = new OutputStream() {
 			Object[]	objs = {""};
@@ -613,7 +617,6 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void runBlastInApplet( final String extrapar, final String dbPath, final String dbType ) {
-		System.err.println("ff");
 		AccessController.doPrivileged( new PrivilegedAction<Object>() {
 			@Override
 			public Object run() {
@@ -665,12 +668,6 @@ public class SerifyApplet extends JApplet {
 								String[] cmds = { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed };
 								String[] exts = extrapar.trim().split("[\t ]+");
 								
-								System.err.println( "nane" );
-								for( String ext : exts ) {
-									System.err.println( ext );
-								}
-								System.err.println( "bubu" );
-								
 								String[] nxst = { "-out", outPathFixed };
 								lcmd.addAll( Arrays.asList(cmds) );
 								if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
@@ -681,7 +678,7 @@ public class SerifyApplet extends JApplet {
 								Runnable run = new Runnable() {
 									public void run() {										
 										infile.delete();
-										System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
+										//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
 										if( cont[0] != null ) {
 											JSObject js = JSObject.getWindow( SerifyApplet.this );
 											String machineinfo = getMachine();
@@ -1738,11 +1735,14 @@ public class SerifyApplet extends JApplet {
 		return nseq;
 	}
 	
-	public static void trimFasta( BufferedReader br, BufferedWriter bw, Set<String> filterset, boolean inverted ) throws IOException {        
+	public static int trimFasta( BufferedReader br, BufferedWriter bw, Set<String> filterset, boolean inverted ) throws IOException {
+		int nseq = 0;
+		
 		String line = br.readLine();
 		String seqname = null;
 		while( line != null ) {
-			if( line.startsWith(">") ) {				
+			if( line.startsWith(">") ) {
+				nseq++;
 				if( inverted ) {
 					seqname = line;
 					for( String f : filterset ) {
@@ -1771,6 +1771,8 @@ public class SerifyApplet extends JApplet {
 		br.close();
 		bw.flush();
 		bw.close();
+		
+		return nseq;
 	}
 	
 	public Map<String,String> mapNameHit( InputStream blasti ) throws IOException {
@@ -1795,7 +1797,8 @@ public class SerifyApplet extends JApplet {
 		return mapHit;
 	}
 	
-	public void doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
+	public int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
+		int nseq = 0;
 		PrintStream pr = new PrintStream( os );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		String line = br.readLine();
@@ -1804,6 +1807,7 @@ public class SerifyApplet extends JApplet {
 			if( line.startsWith(">") ) {
 				String name = line.substring(1).trim();
 				if( mapHit.containsKey(name) ) {
+					nseq++;
 					pr.println( ">" + name + "_" + mapHit.get(name) );
 					include = true;
 				} else include = false;
@@ -1814,6 +1818,8 @@ public class SerifyApplet extends JApplet {
 		}
 		br.close();
 		pr.close();
+		
+		return nseq;
 	}
 	
 	public void init( final Container c ) {
@@ -2152,15 +2158,26 @@ public class SerifyApplet extends JApplet {
 					try {
 						FileWriter fw = new FileWriter( f );
 						int[] rr = table.getSelectedRows();
+						String seqtype = "nucl";
+						String joinname = f.getName();
+						int nseq = 0;
 						for( int r : rr ) {
 							int rear = table.convertRowIndexToModel( r );
 							if( rear >= 0 ) {
 								Sequences s = sequences.get( rear );
+								
+								seqtype = s.getType();
+								//if( joinname == null ) joinname = s.getName();
+								//else joinname += "_"+s.getName();
+								
 								File inf = new File( new URI(s.getPath()) );
 								BufferedReader br = new BufferedReader( new FileReader(inf) );
 								String line = br.readLine();
 								while( line != null ) {
-									if( line.startsWith(">") ) fw.write( line.replace( ">", ">"+s.getName()+"_" )+"\n" );
+									if( line.startsWith(">") ) {
+										fw.write( line.replace( ">", ">"+s.getName()+"_" )+"\n" );
+										nseq++;
+									}
 									else fw.write( line+"\n" );
 									line = br.readLine();
 								}
@@ -2168,6 +2185,8 @@ public class SerifyApplet extends JApplet {
 							}
 						}
 						fw.close();
+						
+						SerifyApplet.this.addSequences( joinname, seqtype, f.toURI().toString(), nseq);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					} catch (URISyntaxException e1) {
@@ -2310,14 +2329,22 @@ public class SerifyApplet extends JApplet {
 									String name = uri.toURL().getFile();
 									int ind = name.lastIndexOf('.');
 									
-									String sff = name.substring(0, ind);
-									String sf2 = name.substring(ind+1,name.length());
+									String sff = name;
+									String sf2 = "";
+									if( ind != -1 ) {
+										sff = name.substring(0, ind);
+										sf2 = name.substring(ind+1,name.length());
+									}
 									
-									FileWriter fw = new FileWriter(sff+"_trimmed."+sf2);
+									String trimname = sff+"_trimmed";
+									File f = new File( trimname+"."+sf2 );
+									FileWriter fw = new FileWriter(f);
 									
 									String[] farray = { trim };
 									
-									trimFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), new HashSet<String>( Arrays.asList( farray ) ), false);
+									int nseq = trimFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), new HashSet<String>( Arrays.asList( farray ) ), false);
+									
+									SerifyApplet.this.addSequences(trimname, seqs.getType(), f.toURI().toString(), nseq);
 								} catch (IOException e1) {
 									e1.printStackTrace();
 								} catch (URISyntaxException e1) {
@@ -2405,7 +2432,9 @@ public class SerifyApplet extends JApplet {
 							}
 							
 							Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s) );
-							doMapHitStuff( nameHitMap, is, new FileOutputStream(f) );
+							int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f) );
+							
+							SerifyApplet.this.addSequences(f.getName(), seqs.getType(), f.toURI().toString(), nseq );
 						} catch (URISyntaxException e1) {
 							e1.printStackTrace();
 						} catch (IOException e1) {
@@ -2589,6 +2618,7 @@ public class SerifyApplet extends JApplet {
 					URL url = new URL( path );
 					InputStream is = url.openStream();
 					if( is == null ) succ = false;
+					else is.close();
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 					succ = false;
@@ -2643,7 +2673,7 @@ public class SerifyApplet extends JApplet {
 				
 				if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
 			}
-			else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTYKVRSWMNX]+$") ) {
+			else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTDYKVRSWMNX]+$") ) {
 				System.err.println( line );
 				type = "prot";
 			}
