@@ -294,17 +294,17 @@ public class Blastic implements EntryPoint {
 			String dbPath = "";
 			String dbType = null;
 			
-			if( dbInfos.length > 1 ) dbPath += "\"";
+			//if( dbInfos.length > 1 ) dbPath += "'";
 			for( String[] stra : dbInfos ) {
 				if( dbType == null ) dbType = stra[1];
 				else if( !dbType.equals(stra[1]) ) {
 					dbType = "";
 					break;
 				}
-				if( stra[0].equals(dbInfos[0][0]) ) dbPath += " ";
+				if( !stra[0].equals(dbInfos[0][0]) ) dbPath += " ";
 				dbPath += stra[0];
 			}
-			if( dbInfos.length > 1 ) dbPath += "\"";
+			//if( dbInfos.length > 1 ) dbPath += "'";
 	
 			if( !dbType.equals("") ) {
 				Element e = Document.get().getElementById("serify");
@@ -949,8 +949,8 @@ public class Blastic implements EntryPoint {
 		
 		ae.setAttribute("id", "serify");
 		ae.setAttribute("name", "serify");
-		//ae.setAttribute("codebase", "http://funblastic.appspot.com/");
-		ae.setAttribute("codebase", "http://127.0.0.1/");
+		ae.setAttribute("codebase", "http://funblastic.appspot.com/");
+		//ae.setAttribute("codebase", "http://127.0.0.1/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "serify.jnlp");
