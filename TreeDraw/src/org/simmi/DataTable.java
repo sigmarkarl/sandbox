@@ -45,6 +45,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import netscape.javascript.JSObject;
+
 import org.simmi.shared.TreeUtil;
 
 public class DataTable extends JApplet {
@@ -179,6 +181,7 @@ public class DataTable extends JApplet {
 
 			@Override
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				if( columnIndex == 10 ) return true;
 				return false;
 			}
 
@@ -194,7 +197,14 @@ public class DataTable extends JApplet {
 			}
 
 			@Override
-			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+				int r = table.convertRowIndexToModel( rowIndex );
+				String[] row = rowList.get(r);
+				row[10] = (String)aValue;
+				
+				JSObject jso = JSObject.getWindow( DataTable.this );
+				jso.call( "saveMeta", new Object[] {row[0], row[10]} );
+			}
 
 			@Override
 			public void addTableModelListener(TableModelListener l) {}
