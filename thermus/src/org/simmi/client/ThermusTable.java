@@ -1,26 +1,55 @@
 package org.simmi.client;
 
+
+import java.util.Map;
+
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.visualization.client.DataTable;
-import com.google.gwt.visualization.client.DataView;
-import com.google.gwt.visualization.client.visualizations.Table;
-import com.google.gwt.visualization.client.visualizations.Table.Options;
 
-public class ThermusTable implements EntryPoint {
+public class ThermusTable implements EntryPoint {	
+	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
-	DataTable	data;
-	DataView	view;
-	Table		table;
-	Options		options;
+	public native void console( String log ) /*-{
+		$wnd.console.log( log );
+	}-*/;
 	
-	int w;
-	int h;
+	public native int initFunctions() /*-{
+		var s = this;
+		
+		$wnd.saveMeta = function( acc, country ) {
+			s.@org.simmi.client.ThermusTable::saveMeta(Ljava/lang/String;Ljava/lang/String;)( acc, country );
+		};
+
+		return 0;
+	}-*/;
+	
+	public void saveMeta( String acc, String country ) {
+		greetingService.greetServer( acc, country, new AsyncCallback<String>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				
+			}
+
+			@Override
+			public void onSuccess(String result) {
+				
+			}
+		});
+	}
+	
+	public native void updateTableInApplet( JavaScriptObject appletelement, Map<String,String> tmap ) /*-{
+		appletelement.updateTable( tmap );
+	}-*/;
 	
 	@Override
 	public void onModuleLoad() {
@@ -43,6 +72,17 @@ public class ThermusTable implements EntryPoint {
 				int h = event.getHeight();
 				
 				rp.setSize(w+"px", h+"px");
+			}
+		});
+		
+		greetingService.getThermus( new AsyncCallback<Map<String,String>>() {
+			@Override
+			public void onFailure(Throwable caught) {}
+
+			@Override
+			public void onSuccess(Map<String, String> result) {
+				Element e = Document.get().getElementById("datetable");
+				updateTableInApplet( e, result );
 			}
 		});
 		
