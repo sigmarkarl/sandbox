@@ -22,6 +22,8 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
 	public String greetServer(String acc, String country) throws IllegalArgumentException {
+		System.err.println("juhu");
+		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("thermus");
 		//Query query = new Query("sequences");
