@@ -1,6 +1,5 @@
 package org.simmi.client;
 
-
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -12,6 +11,8 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -29,6 +30,10 @@ public class ThermusTable implements EntryPoint {
 		$wnd.saveMeta = function( acc, country ) {
 			s.@org.simmi.client.ThermusTable::saveMeta(Ljava/lang/String;Ljava/lang/String;)( acc, country );
 		};
+		
+		$wnd.loadMeta = function() {
+			s.@org.simmi.client.ThermusTable::loadMeta()();
+		};
 
 		return 0;
 	}-*/;
@@ -37,19 +42,40 @@ public class ThermusTable implements EntryPoint {
 		greetingService.greetServer( acc, country, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {
-				
+				console( "fail: "+caught.getMessage() );
 			}
 
 			@Override
 			public void onSuccess(String result) {
-				
+				console( "succ " + result );
 			}
 		});
 	}
 	
-	public native void updateTableInApplet( JavaScriptObject appletelement, Map<String,String> tmap ) /*-{
+	public native void updateTableInApplet( JavaScriptObject appletelement, String tmap ) /*-{
+		$wnd.console.log( 'about to update table' );
 		appletelement.updateTable( tmap );
 	}-*/;
+	
+	public void loadMeta() {
+		greetingService.getThermus( new AsyncCallback<Map<String,String>>() {
+			@Override
+			public void onFailure(Throwable caught) {}
+
+			@Override
+			public void onSuccess(Map<String, String> result) {
+				Element e = Document.get().getElementById("datatable");
+				console( "before update "+e );
+				
+				//com.google.appengine.repackaged.org.json.JSONObject jsono = new com.google.appengine.repackaged.org.json.JSONObject(result);
+				JSONObject jsono = new JSONObject();
+				for( String key : result.keySet() ) {
+					jsono.put( key, new JSONString(result.get(key)) );
+				}
+				updateTableInApplet( e, jsono.toString() );
+			}
+		});
+	}
 	
 	@Override
 	public void onModuleLoad() {
@@ -75,16 +101,7 @@ public class ThermusTable implements EntryPoint {
 			}
 		});
 		
-		greetingService.getThermus( new AsyncCallback<Map<String,String>>() {
-			@Override
-			public void onFailure(Throwable caught) {}
-
-			@Override
-			public void onSuccess(Map<String, String> result) {
-				Element e = Document.get().getElementById("datetable");
-				updateTableInApplet( e, result );
-			}
-		});
+		initFunctions();
 		
 		/*final RootPanel	rp = RootPanel.get();
 		Window.enableScrolling( false );
