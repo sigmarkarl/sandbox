@@ -1,25 +1,26 @@
 package org.simmi;
 
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,11 +43,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.simmi.shared.TreeUtil;
 
 public class DataTable extends JApplet {
@@ -61,6 +65,22 @@ public class DataTable extends JApplet {
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		} catch (UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void updateTable( String tabmap ) {
+		try {
+			System.err.println( "hoho " + tabmap );
+			JSONObject jsono = new JSONObject( tabmap );
+			Iterator<String> keys = jsono.keys();
+			while( keys.hasNext() ) {
+				String key = keys.next();
+				String[] strs = tablemap.get( key );
+				strs[10] = jsono.getString(key);
+			}
+			table.tableChanged( new TableModelEvent(table.getModel()) );
+		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 	}
@@ -115,6 +135,7 @@ public class DataTable extends JApplet {
     }
 
     JTable	table;
+    Map<String,String[]>		tablemap;
     private ClipboardService 	clipboardService;
     private boolean				grabFocus = false;
 	
@@ -127,6 +148,7 @@ public class DataTable extends JApplet {
 		JScrollPane	scrollpane = new JScrollPane( table );
 		
 		final Map<String,String>	nameaccmap = new HashMap<String,String>();
+		tablemap = new HashMap<String,String[]>();
 		
 		final List<String[]>	rowList = new ArrayList<String[]>();
 		InputStream is = this.getClass().getResourceAsStream( "/therm2.txt" );
@@ -136,7 +158,10 @@ public class DataTable extends JApplet {
 			while( line != null ) {
 				String[] split = line.split("\t");
 				nameaccmap.put(split[0], split[1]);
-				rowList.add( Arrays.copyOfRange(split, 1, split.length ) );
+				String[] strs = Arrays.copyOfRange(split, 1, split.length );
+				rowList.add( strs );
+				tablemap.put(strs[0], strs);
+				
 				line = br.readLine();
 			}
 			br.close();
@@ -340,7 +365,7 @@ public class DataTable extends JApplet {
 	    	e.printStackTrace();
 	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
 	    }
-		table.addMouseListener( new MouseAdapter() {
+		/*table.addMouseListener( new MouseAdapter() {
 			public void mousePressed( MouseEvent me ) {
 				if( me.getClickCount() == 2 ) {
 					int r = table.getSelectedRow();
@@ -357,7 +382,7 @@ public class DataTable extends JApplet {
 					}
 				}
 			}
-		});
+		});*/
 		
 		JPopupMenu popup = new JPopupMenu();
 		popup.add( new AbstractAction("Show fasta") {
@@ -411,7 +436,49 @@ public class DataTable extends JApplet {
 				dialog.setVisible( true );
 			}
 		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Show article") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				int i = table.convertRowIndexToModel(r);
+				if( i != -1 ) {
+					String[] str = rowList.get( i );
+					String doi = str[4];
+					try {
+						URL url = new URL( "http://dx.doi.org/"+doi );
+						DataTable.this.getAppletContext().showDocument( url );
+					} catch (MalformedURLException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		popup.add( new AbstractAction("Article in new window") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				int i = table.convertRowIndexToModel(r);
+				if( i != -1 ) {
+					String[] str = rowList.get( i );
+					String doi = str[4];
+					try {
+						URL url = new URL( "http://dx.doi.org/"+doi );
+						Desktop.getDesktop().browse( url.toURI() );
+					} catch (MalformedURLException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
 		table.setComponentPopupMenu( popup );
+		
+		JSObject win = JSObject.getWindow(this);
+		win.call("loadMeta", new Object[] {});
 		
 		this.add( scrollpane );
 	}
