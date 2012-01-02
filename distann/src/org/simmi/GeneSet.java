@@ -4755,7 +4755,7 @@ public class GeneSet extends JApplet {
 	};
 	
 	public static void simmi() throws IOException {
-		FileReader fr = new FileReader("/home/sigmar/thermus.blastout");
+		FileReader fr = new FileReader("/home/sigmar/thermus_all_gaps.blastout");
 		BufferedReader br = new BufferedReader( fr );
 		String line = br.readLine();
 		String 	current = null;
@@ -4929,8 +4929,8 @@ public class GeneSet extends JApplet {
 				
 				//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );*/
 	
-			viggo();
-			//simmi();
+			//viggo();
+			simmi();
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			

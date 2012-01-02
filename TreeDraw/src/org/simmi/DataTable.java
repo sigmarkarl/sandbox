@@ -151,7 +151,7 @@ public class DataTable extends JApplet {
 		tablemap = new HashMap<String,String[]>();
 		
 		final List<String[]>	rowList = new ArrayList<String[]>();
-		InputStream is = this.getClass().getResourceAsStream( "/therm2.txt" );
+		InputStream is = this.getClass().getResourceAsStream( "/therm3.txt" );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		try {
 			String line = br.readLine();
@@ -477,8 +477,12 @@ public class DataTable extends JApplet {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		JSObject win = JSObject.getWindow(this);
-		win.call("loadMeta", new Object[] {});
+		try {
+			JSObject win = JSObject.getWindow(this);
+			win.call("loadMeta", new Object[] {});
+		} catch( Exception e ) {
+			
+		}
 		
 		this.add( scrollpane );
 	}
