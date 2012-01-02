@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="http://127.0.0.1:8888/" href="treedraw.jnlp">
+<jnlp spec="1.0+" codebase="http://thermusgenes.appspot.com/" href="treedraw.jnlp">
 <information>
   <title>Thermusgenes</title>
   <vendor>Huldufolk ehf.</vendor>
