@@ -151,7 +151,7 @@ public class DataTable extends JApplet {
 		tablemap = new HashMap<String,String[]>();
 		
 		final List<String[]>	rowList = new ArrayList<String[]>();
-		InputStream is = this.getClass().getResourceAsStream( "/therm3.txt" );
+		InputStream is = this.getClass().getResourceAsStream( "/therm.txt" );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		try {
 			String line = br.readLine();
