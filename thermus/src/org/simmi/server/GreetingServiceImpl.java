@@ -26,7 +26,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("thermus");
-		//Query query = new Query("sequences");
+		//Query query = new Query("sequences");	
 		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
 		ent.setProperty("acc", acc);
