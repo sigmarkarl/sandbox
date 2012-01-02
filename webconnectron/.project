@@ -36,4 +36,11 @@
 		<nature>com.google.appengine.eclipse.core.gaeNature</nature>
 		<nature>com.google.gwt.eclipse.core.gwtNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>src/org/simmi/shared/TreeUtil.java</name>
+			<type>1</type>
+			<location>/home/sigmar/sandbox/TreeDraw/src/org/simmi/shared/TreeUtil.java</location>
+		</link>
+	</linkedResources>
 </projectDescription>
