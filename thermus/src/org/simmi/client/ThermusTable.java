@@ -60,23 +60,26 @@ public class ThermusTable implements EntryPoint {
 	}-*/;
 	
 	public void loadMeta() {
-		greetingService.getThermus( new AsyncCallback<Map<String,Chunk>>() {
+		greetingService.getThermus( new AsyncCallback<Map<String,String>>() {
 			@Override
 			public void onFailure(Throwable caught) {}
 
 			@Override
-			public void onSuccess(Map<String, Chunk> result) {
+			public void onSuccess(Map<String, String> result) {
 				Element e = Document.get().getElementById("datatable");
 				console( "before update "+e );
 				
 				//com.google.appengine.repackaged.org.json.JSONObject jsono = new com.google.appengine.repackaged.org.json.JSONObject(result);
 				JSONObject jsono = new JSONObject();
 				for( String key : result.keySet() ) {
-					Chunk c = result.get(key);
-					JSONObject jsonc = new JSONObject();
-					jsonc.put("country", new JSONString( c.getCountry() ) );
-					jsonc.put("valid", new JSONString( Boolean.toString(c.isValid()) ) );
-					jsono.put( key, jsonc );
+					String c = result.get(key);
+					String[] split = c.split(";");
+					if( split.length > 1 ) {
+						JSONObject jsonc = new JSONObject();
+						jsonc.put("country", new JSONString(split[0]) );
+						jsonc.put("valid", new JSONString(split[1]) );
+						jsono.put( key, jsonc );
+					}
 				}
 				updateTableInApplet( e, jsono.toString() );
 			}
