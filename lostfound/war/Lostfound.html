@@ -1,9 +1,8 @@
 <!doctype html>
-<!-- The DOCTYPE declaration above will set the    -->
-<!-- browser's rendering engine into               -->
-<!-- "Standards Mode". Replacing this declaration  -->
-<!-- with a "Quirks Mode" doctype may lead to some -->
-<!-- differences in layout.                        -->
+<!-- The DOCTYPE declaration above will set the     -->
+<!-- browser's rendering engine into                -->
+<!-- "Standards Mode". Replacing this declaration   -->
+<!-- with a "Quirks Mode" doctype is not supported. -->
 
 <html>
   <head>
@@ -12,24 +11,19 @@
     <!--                                                               -->
     <!-- Consider inlining CSS to reduce the number of requested files -->
     <!--                                                               -->
-    <link type="text/css" rel="stylesheet" href="Thermus.css">
+    <link type="text/css" rel="stylesheet" href="Lostfound.css">
 
     <!--                                           -->
     <!-- Any title is fine                         -->
     <!--                                           -->
-    <title>Thermus table</title>
-    <meta property="og:title" content="Thermus table" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="http://thermusgenes.appspot.com/" />
-    <meta property="og:image" content="http://fasteignaverd.appspot.com/ndb.png" />
+    <title>Web Application Starter Project</title>
     
     <!--                                           -->
     <!-- This script loads your compiled module.   -->
     <!-- If you add any GWT meta tags, they must   -->
     <!-- be added before this line.                -->
     <!--                                           -->
-    <script type="text/javascript" language="javascript" src="http://www.java.com/js/deployJava.js"></script>
-    <script type="text/javascript" language="javascript" src="org.simmi.Thermustable/org.simmi.Thermustable.nocache.js"></script>
+    <script type="text/javascript" language="javascript" src="lostfound/lostfound.nocache.js"></script>
   </head>
 
   <!--                                           -->
@@ -49,11 +43,5 @@
         in order for this application to display correctly.
       </div>
     </noscript>
-    
-     <script type="text/javascript" language="javascript">
-    	var attributes = { codebase:'http://thermusgenes.appspot.com/', archive:'treedraw.jar', code:'org.simmi.DataTable', width:'100%', height:'100%', id:'datatable', name:'datatable' };
-        var parameters = { jnlp_href:'treedraw.jnlp' };
-        deployJava.runApplet(attributes, parameters, '1.6');
-    </script>
   </body>
 </html>
