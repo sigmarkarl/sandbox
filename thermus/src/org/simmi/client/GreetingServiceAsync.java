@@ -1,10 +1,15 @@
 package org.simmi.client;
 
+import java.util.Map;
+
+import org.simmi.shared.Chunk;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
  * The async counterpart of <code>GreetingService</code>.
  */
 public interface GreetingServiceAsync {
-	void greetServer(String input, AsyncCallback<String> callback) throws IllegalArgumentException;
+	void greetServer(String acc, String country, boolean valid, AsyncCallback<String> callback);
+	void getThermus( AsyncCallback<Map<String,Chunk>> callback );
 }

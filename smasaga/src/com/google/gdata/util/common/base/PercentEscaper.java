@@ -16,8 +16,6 @@
 
 package com.google.gdata.util.common.base;
 
-import com.google.appengine.repackaged.com.google.common.base.CharEscapers;
-
 /**
  * A {@code UnicodeEscaper} that escapes some set of Java characters using
  * the URI percent encoding scheme. The set of safe characters (those which
