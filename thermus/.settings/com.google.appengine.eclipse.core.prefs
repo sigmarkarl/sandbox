@@ -1,16 +1,7 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-#Thu Dec 15 14:13:12 GMT 2011
+#Thu Dec 29 11:20:43 GMT 2011
+=\=\=\=\=\=\=
+<<<<<<<=HEAD
+>>>>>>>=f658063e08ed85f863f24f001aab44517b5656d8
 eclipse.preferences.version=1
-filesCopiedToWebInfLib=appengine-api-labs-1.6.0.jar|jsr107cache-1.1.jar|datanucleus-appengine-1.0.10.final.jar|datanucleus-core-1.1.5.jar|datanucleus-jpa-1.1.5.jar|geronimo-jta_1.1_spec-1.1.1.jar|geronimo-jpa_3.0_spec-1.1.1.jar|jdo2-api-2.3-eb.jar|appengine-jsr107cache-1.6.0.jar|appengine-api-1.0-sdk-1.6.0.jar
-=======
-#Mon Dec 19 14:05:05 GMT 2011
-eclipse.preferences.version=1
-filesCopiedToWebInfLib=jsr107cache-1.1.jar|appengine-jsr107cache-1.6.0.jar|appengine-api-labs-1.6.0.jar|appengine-api-1.0-sdk-1.6.0.jar|datanucleus-appengine-1.0.10.final.jar|geronimo-jpa_3.0_spec-1.1.1.jar|jdo2-api-2.3-eb.jar|geronimo-jta_1.1_spec-1.1.1.jar|datanucleus-jpa-1.1.5.jar|datanucleus-core-1.1.5.jar
->>>>>>> 97176f03de00ac9285aab444191a625a364e0faa
-=======
-#Wed Dec 21 11:09:16 GMT 2011
-eclipse.preferences.version=1
-filesCopiedToWebInfLib=appengine-api-labs-1.6.1.jar|jsr107cache-1.1.jar|appengine-api-1.0-sdk-1.6.1.jar|appengine-jsr107cache-1.6.1.jar|datanucleus-jpa-1.1.5.jar|datanucleus-appengine-1.0.10.final.jar|geronimo-jpa_3.0_spec-1.1.1.jar|datanucleus-core-1.1.5.jar|geronimo-jta_1.1_spec-1.1.1.jar|jdo2-api-2.3-eb.jar|google_sql.jar
->>>>>>> f658063e08ed85f863f24f001aab44517b5656d8
+filesCopiedToWebInfLib=appengine-api-labs-1.6.1.jar|datanucleus-appengine-1.0.10.final.jar|geronimo-jpa_3.0_spec-1.1.1.jar|geronimo-jta_1.1_spec-1.1.1.jar|datanucleus-jpa-1.1.5.jar|datanucleus-core-1.1.5.jar|jdo2-api-2.3-eb.jar|jsr107cache-1.1.jar|appengine-jsr107cache-1.6.1.jar|appengine-api-1.0-sdk-1.6.1.jar|google_sql.jar
 gaeDeployDialogSettings=
