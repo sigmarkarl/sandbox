@@ -78,7 +78,8 @@ public class DataTable extends JApplet {
 				Object[] strs = tablemap.get( key );
 				JSONObject jo = jsono.getJSONObject(key);
 				strs[10] = jo.getString("country");
-				strs[12] = Boolean.parseBoolean( jsono.getString("valid") );
+				String vb = (String)jo.getString("valid");
+				if( vb != null ) strs[12] = Boolean.parseBoolean( vb );
 			}
 			table.tableChanged( new TableModelEvent(table.getModel()) );
 		} catch (JSONException e) {
