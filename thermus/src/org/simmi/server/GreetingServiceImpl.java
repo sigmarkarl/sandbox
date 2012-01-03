@@ -38,14 +38,21 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		return KeyFactory.keyToString(key);
 	}
 	
-	public Map<String,Chunk> getThermus() {
+	public Map<String,String> getThermus() {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query("thermus");
 		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
-		Map<String,Chunk>	ret = new HashMap<String,Chunk>();
+		Map<String,String>	ret = new HashMap<String,String>();
 		
 		for( Entity e : seqsEntities ) {
-			ret.put( (String)e.getProperty("acc"), new Chunk( (String)e.getProperty("country"), (Boolean)e.getProperty("valid") ) );
+			String str = (String)e.getProperty("country");
+			//String val = str == null ? "" : str;
+			Boolean b = (Boolean)e.getProperty("valid");
+			if( b != null ) {
+				if( str == null || str.length() == 0 ) str = ";"+Boolean.toString(b);
+				else str += ";"+Boolean.toString(b);
+			}
+			ret.put( (String)e.getProperty("acc"), str );
 		}
 		
 		return ret;
