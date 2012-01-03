@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.simmi.client.GreetingService;
+import org.simmi.shared.Chunk;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -21,7 +22,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
-	public String greetServer(String acc, String country) throws IllegalArgumentException {
+	public String greetServer(String acc, String country, boolean valid) throws IllegalArgumentException {
 		System.err.println("juhu");
 		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -31,19 +32,20 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
 		ent.setProperty("acc", acc);
 		ent.setProperty("country", country);
+		ent.setProperty("valid", valid);
 		Key key = datastore.put( ent );
 		
 		return KeyFactory.keyToString(key);
 	}
 	
-	public Map<String,String> getThermus() {
+	public Map<String,Chunk> getThermus() {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query("thermus");
 		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
-		Map<String,String>	ret = new HashMap<String,String>();
+		Map<String,Chunk>	ret = new HashMap<String,Chunk>();
 		
 		for( Entity e : seqsEntities ) {
-			ret.put( (String)e.getProperty("acc"), (String)e.getProperty("country") );
+			ret.put( (String)e.getProperty("acc"), new Chunk( (String)e.getProperty("country"), (Boolean)e.getProperty("valid") ) );
 		}
 		
 		return ret;
