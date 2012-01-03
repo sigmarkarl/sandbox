@@ -68,7 +68,8 @@ public class Thermus implements EntryPoint {
 		
 		ae.setAttribute("id", "thermus");
 		ae.setAttribute("name", "thermus");
-		ae.setAttribute("codebase", "http://dl.dropbox.com/u/10024658/");
+		//ae.setAttribute("codebase", "http://dl.dropbox.com/u/10024658/");
+		ae.setAttribute("codebase", "http://thermusgenes.appspot.com/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "distann.jnlp");
