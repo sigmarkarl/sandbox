@@ -2,6 +2,8 @@ package org.simmi.client;
 
 import java.util.Map;
 
+import org.simmi.shared.Chunk;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
@@ -10,6 +12,6 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("greet")
 public interface GreetingService extends RemoteService {
-	String greetServer(String acc, String country) throws IllegalArgumentException;
-	Map<String,String>	getThermus();
+	String greetServer(String acc, String country, boolean valid) throws IllegalArgumentException;
+	Map<String,Chunk>	getThermus();
 }

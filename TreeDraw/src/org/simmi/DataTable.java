@@ -17,7 +17,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -76,8 +75,10 @@ public class DataTable extends JApplet {
 			Iterator<String> keys = jsono.keys();
 			while( keys.hasNext() ) {
 				String key = keys.next();
-				String[] strs = tablemap.get( key );
-				strs[10] = jsono.getString(key);
+				Object[] strs = tablemap.get( key );
+				JSONObject jo = jsono.getJSONObject(key);
+				strs[10] = jo.getString("country");
+				strs[12] = Boolean.parseBoolean( jsono.getString("valid") );
 			}
 			table.tableChanged( new TableModelEvent(table.getModel()) );
 		} catch (JSONException e) {
@@ -135,7 +136,7 @@ public class DataTable extends JApplet {
     }
 
     JTable	table;
-    Map<String,String[]>		tablemap;
+    Map<String,Object[]>		tablemap;
     private ClipboardService 	clipboardService;
     private boolean				grabFocus = false;
 	
@@ -144,23 +145,35 @@ public class DataTable extends JApplet {
 		
 		table = new JTable();
 		table.setAutoCreateRowSorter( true );
-		table.setColumnSelectionAllowed( true );
+		//table.setColumnSelectionAllowed( true );
 		JScrollPane	scrollpane = new JScrollPane( table );
 		
 		final Map<String,String>	nameaccmap = new HashMap<String,String>();
-		tablemap = new HashMap<String,String[]>();
+		tablemap = new HashMap<String,Object[]>();
 		
-		final List<String[]>	rowList = new ArrayList<String[]>();
-		InputStream is = this.getClass().getResourceAsStream( "/therm.txt" );
+		final List<Object[]>	rowList = new ArrayList<Object[]>();
+		InputStream is = this.getClass().getResourceAsStream( "/therm3.txt" );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		try {
 			String line = br.readLine();
 			while( line != null ) {
 				String[] split = line.split("\t");
+				
 				nameaccmap.put(split[0], split[1]);
-				String[] strs = Arrays.copyOfRange(split, 1, split.length );
+				Object[] strs = new Object[ 13 ];
+				int i;
+				for( i = 1; i < split.length; i++ ) {
+					if( i == 3 || i == 4 ) strs[i-1] = Integer.parseInt( split[i] );
+					else strs[i-1] = split[i];
+				}
+				if( i == 9 ) strs[i++-1] = "";
+				if( i == 10 ) strs[i++-1] = "";
+				if( i == 11 ) strs[i++-1] = "";
+				if( i == 12 ) strs[i++-1] = "";
+				strs[i-1] = true;
+				//Arrays.copyOfRange(split, 1, split.length );
 				rowList.add( strs );
-				tablemap.put(strs[0], strs);
+				tablemap.put((String)strs[0], strs);
 				
 				line = br.readLine();
 			}
@@ -177,7 +190,7 @@ public class DataTable extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 12;
+				return 13;
 			}
 
 			@Override
@@ -194,6 +207,7 @@ public class DataTable extends JApplet {
 				else if( columnIndex == 9 ) return "sub_date";
 				else if( columnIndex == 10 ) return "country";
 				else if( columnIndex == 11 ) return "source";
+				else if( columnIndex == 12 ) return "valid";
 				
 				return "";
 			}
@@ -201,34 +215,37 @@ public class DataTable extends JApplet {
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex == 2 || columnIndex ==3 ) return Integer.class;
+				else if( columnIndex == 12 ) return Boolean.class;
 				return String.class;
 			}
 
 			@Override
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				if( columnIndex == 10 ) return true;
+				if( columnIndex == 10 || columnIndex == 12 ) return true;
 				return false;
 			}
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				String[] val = rowList.get(rowIndex);
-				if( columnIndex < val.length ) {
-					if( columnIndex == 2 || columnIndex ==3 ) return Integer.parseInt( val[columnIndex] );
-					return val[columnIndex];
-				}
+				Object ret = "";
 				
-				return "";
+				Object[] val = rowList.get(rowIndex);
+				if( columnIndex < val.length ) {
+					//if( columnIndex == 2 || columnIndex ==3 ) return Integer.parseInt( val[columnIndex] );
+					ret = val[columnIndex];
+				}
+				if( ret instanceof Integer ) System.err.println( columnIndex );
+				return ret;
 			}
 
 			@Override
 			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 				int r = table.convertRowIndexToModel( rowIndex );
-				String[] row = rowList.get(r);
-				row[10] = (String)aValue;
+				Object[] row = rowList.get(r);
+				row[columnIndex] = aValue;
 				
 				JSObject jso = JSObject.getWindow( DataTable.this );
-				jso.call( "saveMeta", new Object[] {row[0], row[10]} );
+				jso.call( "saveMeta", new Object[] {row[0], row[10], row[12]} );
 			}
 
 			@Override
@@ -294,9 +311,11 @@ public class DataTable extends JApplet {
 					
 					map.put("name", nm);
 					String country = (String)table.getValueAt(r, 10);
+					String acc = (String)table.getValueAt(r, 0);
 					if( country != null && country.length() > 0 ) {
 						map.put( "country", country );
 					}
+					map.put( "acc", acc );
 					mapmap.put(name, map);
 				}
 				
@@ -396,8 +415,8 @@ public class DataTable extends JApplet {
 				for( int r : rr ) {
 					int i = table.convertRowIndexToModel(r);
 					if( i != -1 ) {
-						String[] val = rowList.get(i);
-						include.add( val[0] );
+						Object[] val = rowList.get(i);
+						include.add( (String)val[0] );
 					}
 				}
 				StringBuilder sb = new StringBuilder();
@@ -443,8 +462,8 @@ public class DataTable extends JApplet {
 				int r = table.getSelectedRow();
 				int i = table.convertRowIndexToModel(r);
 				if( i != -1 ) {
-					String[] str = rowList.get( i );
-					String doi = str[4];
+					Object[] str = rowList.get( i );
+					String doi = (String)str[4];
 					try {
 						URL url = new URL( "http://dx.doi.org/"+doi );
 						DataTable.this.getAppletContext().showDocument( url );
@@ -460,8 +479,8 @@ public class DataTable extends JApplet {
 				int r = table.getSelectedRow();
 				int i = table.convertRowIndexToModel(r);
 				if( i != -1 ) {
-					String[] str = rowList.get( i );
-					String doi = str[4];
+					Object[] str = rowList.get( i );
+					String doi = (String)str[4];
 					try {
 						URL url = new URL( "http://dx.doi.org/"+doi );
 						Desktop.getDesktop().browse( url.toURI() );
@@ -475,6 +494,18 @@ public class DataTable extends JApplet {
 				}
 			}
 		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Select marked") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				table.removeRowSelectionInterval(0, table.getRowCount()-1);
+				for( int r = 0; r < table.getRowCount(); r++ ) {
+					boolean b = (Boolean)table.getValueAt(r, 11);
+					if( b ) table.setRowSelectionInterval(r, r);
+				}
+			}
+		});
+		
 		table.setComponentPopupMenu( popup );
 		
 		try {

@@ -48,6 +48,7 @@ public class TreeUtil {
 			}
 			
 			if( meta != null && meta.length() > 0 ) {
+				System.err.println("muuu " + meta);
 				if( name != null && name.length() > 0 ) str += "'"+name+";"+meta+"'";
 				else str += "'"+meta+"'";
 			} else if( name != null && name.length() > 0 ) str += name;
@@ -162,24 +163,31 @@ public class TreeUtil {
 			boolean dual = true;
 			for( Node n : checklist ) {
 				if( n.meta != null ) {
-					String nmeta = n.meta;
-					String[] msp = nmeta.split(":");
-					if( msp.length > 1 ) {
-						nmeta = (msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
+					if( n.meta.contains(";") || (n.nodes != null && n.nodes.size() > 0) ) {
+						String[] split = n.meta.split(";");
+						String nmeta = split[split.length-1];
+						String[] msp = nmeta.split(":");
+						if( msp.length > 1 ) {
+							nmeta = (msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
+						}
+						
+						if( metacheck == null ) {
+							metacheck = nmeta;
+						} else if( !nmeta.equals(metacheck) ) dual = false;
 					}
-					
-					if( metacheck == null ) {
-						metacheck = nmeta;
-					} else if( !nmeta.equals(metacheck) ) dual = false;
 				}
 			}
 			
 			if( dual ) {
 				for( Node n : checklist ) {
-					if( n.nodes != null && n.nodes.size() > 0 ) n.meta = null;
+					if( n.nodes != null && n.nodes.size() > 0 ) {
+						if(n.meta != null) System.err.println("delete meta" + n.meta);
+						n.meta = null;
+					}
 				}
 				//String[] msp = metacheck.split(":");
 				//node.meta = (msp.length > 1 && (metacheck.contains("awai") || metacheck.contains("ibet") || metacheck.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
+				if(metacheck != null) System.err.println("metacheck" + metacheck);
 				node.meta = metacheck;
 			} else node.meta = "";
 		}

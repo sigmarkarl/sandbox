@@ -2,6 +2,8 @@ package org.simmi.client;
 
 import java.util.Map;
 
+import org.simmi.shared.Chunk;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -27,8 +29,8 @@ public class ThermusTable implements EntryPoint {
 	public native int initFunctions() /*-{
 		var s = this;
 		
-		$wnd.saveMeta = function( acc, country ) {
-			s.@org.simmi.client.ThermusTable::saveMeta(Ljava/lang/String;Ljava/lang/String;)( acc, country );
+		$wnd.saveMeta = function( acc, country, valid ) {
+			s.@org.simmi.client.ThermusTable::saveMeta(Ljava/lang/String;Ljava/lang/String;Z)( acc, country, valid );
 		};
 		
 		$wnd.loadMeta = function() {
@@ -38,8 +40,8 @@ public class ThermusTable implements EntryPoint {
 		return 0;
 	}-*/;
 	
-	public void saveMeta( String acc, String country ) {
-		greetingService.greetServer( acc, country, new AsyncCallback<String>() {
+	public void saveMeta( String acc, String country, boolean valid ) {
+		greetingService.greetServer( acc, country, valid, new AsyncCallback<String>() {
 			@Override
 			public void onFailure(Throwable caught) {
 				console( "fail: "+caught.getMessage() );
@@ -58,19 +60,23 @@ public class ThermusTable implements EntryPoint {
 	}-*/;
 	
 	public void loadMeta() {
-		greetingService.getThermus( new AsyncCallback<Map<String,String>>() {
+		greetingService.getThermus( new AsyncCallback<Map<String,Chunk>>() {
 			@Override
 			public void onFailure(Throwable caught) {}
 
 			@Override
-			public void onSuccess(Map<String, String> result) {
+			public void onSuccess(Map<String, Chunk> result) {
 				Element e = Document.get().getElementById("datatable");
 				console( "before update "+e );
 				
 				//com.google.appengine.repackaged.org.json.JSONObject jsono = new com.google.appengine.repackaged.org.json.JSONObject(result);
 				JSONObject jsono = new JSONObject();
 				for( String key : result.keySet() ) {
-					jsono.put( key, new JSONString(result.get(key)) );
+					Chunk c = result.get(key);
+					JSONObject jsonc = new JSONObject();
+					jsonc.put("country", new JSONString( c.getCountry() ) );
+					jsonc.put("valid", new JSONString( Boolean.toString(c.isValid()) ) );
+					jsono.put( key, jsonc );
 				}
 				updateTableInApplet( e, jsono.toString() );
 			}
