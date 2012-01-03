@@ -1,26 +1,87 @@
 package org.simmi.client;
 
+import java.util.Map;
+
+import org.simmi.shared.Chunk;
+
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.visualization.client.DataTable;
-import com.google.gwt.visualization.client.DataView;
-import com.google.gwt.visualization.client.visualizations.Table;
-import com.google.gwt.visualization.client.visualizations.Table.Options;
 
-public class ThermusTable implements EntryPoint {
+public class ThermusTable implements EntryPoint {	
+	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
-	DataTable	data;
-	DataView	view;
-	Table		table;
-	Options		options;
+	public native void console( String log ) /*-{
+		$wnd.console.log( log );
+	}-*/;
 	
-	int w;
-	int h;
+	public native int initFunctions() /*-{
+		var s = this;
+		
+		$wnd.saveMeta = function( acc, country, valid ) {
+			s.@org.simmi.client.ThermusTable::saveMeta(Ljava/lang/String;Ljava/lang/String;Z)( acc, country, valid );
+		};
+		
+		$wnd.loadMeta = function() {
+			s.@org.simmi.client.ThermusTable::loadMeta()();
+		};
+
+		return 0;
+	}-*/;
+	
+	public void saveMeta( String acc, String country, boolean valid ) {
+		greetingService.greetServer( acc, country, valid, new AsyncCallback<String>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				console( "fail: "+caught.getMessage() );
+			}
+
+			@Override
+			public void onSuccess(String result) {
+				console( "succ " + result );
+			}
+		});
+	}
+	
+	public native void updateTableInApplet( JavaScriptObject appletelement, String tmap ) /*-{
+		$wnd.console.log( 'about to update table' );
+		appletelement.updateTable( tmap );
+	}-*/;
+	
+	public void loadMeta() {
+		greetingService.getThermus( new AsyncCallback<Map<String,Chunk>>() {
+			@Override
+			public void onFailure(Throwable caught) {}
+
+			@Override
+			public void onSuccess(Map<String, Chunk> result) {
+				Element e = Document.get().getElementById("datatable");
+				console( "before update "+e );
+				
+				//com.google.appengine.repackaged.org.json.JSONObject jsono = new com.google.appengine.repackaged.org.json.JSONObject(result);
+				JSONObject jsono = new JSONObject();
+				for( String key : result.keySet() ) {
+					Chunk c = result.get(key);
+					JSONObject jsonc = new JSONObject();
+					jsonc.put("country", new JSONString( c.getCountry() ) );
+					jsonc.put("valid", new JSONString( Boolean.toString(c.isValid()) ) );
+					jsono.put( key, jsonc );
+				}
+				updateTableInApplet( e, jsono.toString() );
+			}
+		});
+	}
 	
 	@Override
 	public void onModuleLoad() {
@@ -45,6 +106,8 @@ public class ThermusTable implements EntryPoint {
 				rp.setSize(w+"px", h+"px");
 			}
 		});
+		
+		initFunctions();
 		
 		/*final RootPanel	rp = RootPanel.get();
 		Window.enableScrolling( false );
