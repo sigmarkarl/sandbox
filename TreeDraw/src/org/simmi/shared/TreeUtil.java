@@ -1,6 +1,7 @@
 package org.simmi.shared;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,9 +79,11 @@ public class TreeUtil {
 		
 		public int countLeaves() {
 			int total = 0;
-			for( Node node : nodes ) {
-				total += node.countLeaves();
-			}	
+			if( nodes != null && nodes.size() > 0 ) {
+				for( Node node : nodes ) {
+					total += node.countLeaves();
+				}
+			} else total = 1;
 			return total;
 		}
 		
@@ -161,6 +164,7 @@ public class TreeUtil {
 		if( mapmap != null && mapmap.size() > 0 && checklist.size() > 0 ) {
 			String metacheck = null;
 			boolean dual = true;
+			String partial = "";
 			for( Node n : checklist ) {
 				if( n.meta != null ) {
 					String nmeta = null;
@@ -190,10 +194,38 @@ public class TreeUtil {
 						
 						if( metacheck == null ) {
 							metacheck = nmeta;
-						} else if( nmeta.length() == 0 || metacheck.length() == 0 || (!nmeta.contains(metacheck) && !metacheck.contains(nmeta)) ) {
+						} else if( nmeta.length() == 0 || metacheck.length() == 0 ) {
 							//System.err.println( "buuuu " + nmeta + "  " + metacheck);
 							dual = false;
-						} else metacheck = nmeta.length() > metacheck.length() ? nmeta : metacheck;
+						} else {
+							if( (!nmeta.contains(metacheck) && !metacheck.contains(nmeta)) ) {
+								String[] split1 = nmeta.split("-");
+								String[] split2 = metacheck.split("-");
+								String cont = null;
+								if( split1.length > 1 || split2.length > 1 ) {
+									Set<String>	s1 = new HashSet<String>( Arrays.asList(split1) );
+									Set<String> s2 = new HashSet<String>( Arrays.asList(split2) );
+									
+									if( s1.contains("Hungary") || s2.contains("Hungary") ) {
+										System.err.println("ok");
+									}
+									
+									for( String str : s1 ) {
+										if( s2.contains( str ) ) {
+											cont = str;
+											break;
+										}
+									}
+								}
+								
+								if( cont != null ) {
+									metacheck = cont;
+									partial = cont;
+								} else dual = false;
+							} else {
+								metacheck = nmeta.length() > metacheck.length() ? nmeta : metacheck;
+							}
+						}
 					}
 				}
 			}
@@ -203,13 +235,19 @@ public class TreeUtil {
 				for( Node n : checklist ) {
 					if( n.nodes != null && n.nodes.size() > 0 ) {
 						//if(n.meta != null) System.err.println("delete meta" + n.meta);
-						n.meta = null;
+						if( partial.length() > 0 ) {
+							//System.err.println( "meta " + n.meta );
+							//n.meta = n.meta.replace(partial, "");
+							//n.meta = n.meta.replace("-", "");
+						} else {
+							n.meta = null;
+						}
 					}
 				}
 				//String[] msp = metacheck.split(":");
 				//node.meta = (msp.length > 1 && (metacheck.contains("awai") || metacheck.contains("ibet") || metacheck.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
 				node.meta = metacheck;
-			} else node.meta = "";
+			} else node.meta = partial;
 		}
 	}
 	
@@ -260,7 +298,7 @@ public class TreeUtil {
 		}
 	}
 	
-	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap ) {
+	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse ) {
 		super();
 		loc = 0;
 		//System.err.println( str );
@@ -292,10 +330,59 @@ public class TreeUtil {
 				}*/
 			}
 			extractMetaRecursive( resultnode, mapmap );
+			if( collapse ) {
+				String[] ss = new String[] {"kawarayensis", "scotoductus", "thermophilus", "eggertsoni", "islandicus", "igniterrae", "brockianus", "aquaticus", "oshimai", "filiformis", "antranikianii"};
+				Set<String> collapset = new HashSet<String>( Arrays.asList( ss ) );
+				collapseTree( resultnode, collapset );
+			}
+			
 			this.currentNode = resultnode;
-		} else {
+		} /*else {
 			System.err.println( str );
+		}*/
+	}
+	
+	public void collapseTreeSimple( Node node, Set<String> collapset ) {
+		if( node.nodes != null && node.nodes.size() > 0 ) {
+			boolean check = false;
+			for( String s : collapset ) {
+				if( node.meta != null && node.meta.contains(s) ) {
+					check = true;
+					break;
+				}
+			}
+			if( check ) {
+				node.name = node.meta;
+				node.meta = Integer.toString( node.countLeaves() );
+				node.nodes.clear();
+				//node.nodes = null;
+			} else {
+				for( Node n : node.nodes ) {
+					collapseTreeSimple( n, collapset );
+				}
+			}
 		}
+	}
+	
+	public boolean collapseTree( Node node, Set<String> collapset ) {
+		boolean ret = false;
+		
+		if( node.nodes != null && node.nodes.size() > 0 ) {
+			boolean any = false;
+			for( Node n : node.nodes ) {
+				if( collapseTree( n, collapset ) ) any = true;
+			}
+			
+			if( (node.meta != null && node.meta.length() > 0) || any ) ret = true;
+			
+			if( !any ) {
+				node.name = node.meta;
+				node.meta = Integer.toString( node.countLeaves() );
+				node.nodes.clear();
+			}
+		}
+		
+		return ret;
 	}
 	
 	public double reroot( Node oldnode, Node newnode ) {
@@ -360,7 +447,7 @@ public class TreeUtil {
 		StringBuilder sb = new StringBuilder();
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
-		TreeUtil treeutil = new TreeUtil( str, inverse, null, null );
+		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false );
 	}
 	
 	int metacount = 0;
