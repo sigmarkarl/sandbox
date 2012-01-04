@@ -13,12 +13,11 @@
   
   <servlet-mapping>
     <servlet-name>greetServlet</servlet-name>
-    <url-pattern>/thermus/greet</url-pattern>
+    <url-pattern>/org.simmi.Thermustable/greet</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->
   <welcome-file-list>
     <welcome-file>Thermus.html</welcome-file>
   </welcome-file-list>
-
 </web-app>
