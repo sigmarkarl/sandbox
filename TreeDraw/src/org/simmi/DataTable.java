@@ -283,7 +283,7 @@ public class DataTable extends JApplet {
 		final Transferable transferable = new Transferable() {
 			@Override
 			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-				InputStream is = DataTable.this.getClass().getResourceAsStream("/temp.ntree");
+				InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus.ntree");
 				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 				StringBuilder sb = new StringBuilder();
 				String line = br.readLine();
@@ -323,7 +323,7 @@ public class DataTable extends JApplet {
 					mapmap.put(name, map);
 				}
 				
-				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap );
+				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected() );
 				//return arg0.getReaderForText( this );
 				String str = tu.currentNode.toString();
 				return new ByteArrayInputStream( str.getBytes( charset ) );
