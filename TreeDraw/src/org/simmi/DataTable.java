@@ -30,6 +30,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -141,6 +142,8 @@ public class DataTable extends JApplet {
     private ClipboardService 	clipboardService;
     private boolean				grabFocus = false;
 	
+    JCheckBoxMenuItem cbmi = new JCheckBoxMenuItem("Collapse tree");
+    
 	public void init() {
 		updateLof();
 		
@@ -506,6 +509,8 @@ public class DataTable extends JApplet {
 				}
 			}
 		});
+		popup.addSeparator();
+		popup.add( cbmi );
 		
 		table.setComponentPopupMenu( popup );
 		
