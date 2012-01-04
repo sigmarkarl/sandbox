@@ -48,7 +48,7 @@ public class TreeUtil {
 			}
 			
 			if( meta != null && meta.length() > 0 ) {
-				System.err.println("muuu " + meta);
+				//System.err.println("muuu " + meta);
 				if( name != null && name.length() > 0 ) str += "'"+name+";"+meta+"'";
 				else str += "'"+meta+"'";
 			} else if( name != null && name.length() > 0 ) str += name;
@@ -163,31 +163,51 @@ public class TreeUtil {
 			boolean dual = true;
 			for( Node n : checklist ) {
 				if( n.meta != null ) {
+					String nmeta = null;
+					if( n.name != null && n.name.length() > 0 ) nmeta = n.name.substring(7).trim();
+					
 					if( n.meta.contains(";") || (n.nodes != null && n.nodes.size() > 0) ) {
 						String[] split = n.meta.split(";");
-						String nmeta = split[split.length-1];
-						String[] msp = nmeta.split(":");
-						if( msp.length > 1 ) {
-							nmeta = (msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
+						if( nmeta == null ) nmeta = split[split.length-1];
+						else nmeta += "-"+split[split.length-1];
+						
+						String[] lsp = nmeta.split("-");
+						if( lsp.length > 1 ) {
+							String[] msp = lsp[1].split(":");
+							if( msp.length > 1 ) {
+								nmeta = lsp[0] + "-" + ((msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0]);
+							}
+						} else {
+							String[] msp = nmeta.split(":");
+							if( msp.length > 1 ) {
+								nmeta = (msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
+							}
 						}
+					}
+									
+					if( nmeta != null ) {
+						//if( nmeta.contains("oshimai") ) System.err.println( nmeta + "  " + metacheck );
 						
 						if( metacheck == null ) {
 							metacheck = nmeta;
-						} else if( !nmeta.equals(metacheck) ) dual = false;
+						} else if( nmeta.length() == 0 || metacheck.length() == 0 || (!nmeta.contains(metacheck) && !metacheck.contains(nmeta)) ) {
+							//System.err.println( "buuuu " + nmeta + "  " + metacheck);
+							dual = false;
+						} else metacheck = nmeta.length() > metacheck.length() ? nmeta : metacheck;
 					}
 				}
 			}
 			
 			if( dual ) {
+				//if( metacheck.contains("oshimai") ) System.err.println("dual "+metacheck);
 				for( Node n : checklist ) {
 					if( n.nodes != null && n.nodes.size() > 0 ) {
-						if(n.meta != null) System.err.println("delete meta" + n.meta);
+						//if(n.meta != null) System.err.println("delete meta" + n.meta);
 						n.meta = null;
 					}
 				}
 				//String[] msp = metacheck.split(":");
 				//node.meta = (msp.length > 1 && (metacheck.contains("awai") || metacheck.contains("ibet") || metacheck.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
-				if(metacheck != null) System.err.println("metacheck" + metacheck);
 				node.meta = metacheck;
 			} else node.meta = "";
 		}
