@@ -1,8 +1,19 @@
 package org.simmi.server;
 
-import org.simmi.client.GreetingService;
-import org.simmi.shared.FieldVerifier;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.simmi.client.GreetingService;
+import org.simmi.shared.Chunk;
+
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Query;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -11,35 +22,39 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
-	public String greetServer(String input) throws IllegalArgumentException {
-		// Verify that the input is valid. 
-		if (!FieldVerifier.isValidName(input)) {
-			// If the input is not valid, throw an IllegalArgumentException back to
-			// the client.
-			throw new IllegalArgumentException("Name must be at least 4 characters long");
-		}
-
-		String serverInfo = getServletContext().getServerInfo();
-		String userAgent = getThreadLocalRequest().getHeader("User-Agent");
-
-		// Escape data from the client to avoid cross-site script vulnerabilities.
-		input = escapeHtml(input);
-		userAgent = escapeHtml(userAgent);
-
-		return "Hello, " + input + "!<br><br>I am running " + serverInfo + ".<br><br>It looks like you are using:<br>" + userAgent;
+	public String greetServer(String acc, String country, boolean valid) throws IllegalArgumentException {
+		System.err.println("juhu");
+		
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Entity ent = new Entity("thermus");
+		//Query query = new Query("sequences");	
+		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
+		ent.setProperty("acc", acc);
+		ent.setProperty("country", country);
+		ent.setProperty("valid", valid);
+		Key key = datastore.put( ent );
+		
+		return KeyFactory.keyToString(key);
 	}
-
-	/**
-	 * Escape an html string. Escaping data received from the client helps to
-	 * prevent cross-site script vulnerabilities.
-	 * 
-	 * @param html the html string to escape
-	 * @return the escaped string
-	 */
-	private String escapeHtml(String html) {
-		if (html == null) {
-			return null;
+	
+	public Map<String,String> getThermus() {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Query query = new Query("thermus");
+		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		Map<String,String>	ret = new HashMap<String,String>();
+		
+		for( Entity e : seqsEntities ) {
+			String str = (String)e.getProperty("country");
+			//String val = str == null ? "" : str;
+			Boolean b = (Boolean)e.getProperty("valid");
+			if( b != null ) {
+				if( str == null || str.length() == 0 ) str = ";"+Boolean.toString(b);
+				else str += ";"+Boolean.toString(b);
+			}
+			ret.put( (String)e.getProperty("acc"), str );
 		}
-		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+		
+		return ret;
 	}
 }
