@@ -2,8 +2,6 @@ package org.simmi.client;
 
 import java.util.Map;
 
-import org.simmi.shared.Chunk;
-
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;

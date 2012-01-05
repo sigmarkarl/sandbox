@@ -54,7 +54,7 @@ public class Treedraw implements EntryPoint {
 			public void onDrop(DropEvent event) {
 				String str = event.getData("text/plain");
 				String tree = str.replaceAll("[\r\n]+", "");
-				TreeUtil	treeutil = new TreeUtil( tree, false, null, null );
+				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false );
 				int ww = Window.getClientWidth();
 				
 				//treeutil.getNode().countLeaves()
