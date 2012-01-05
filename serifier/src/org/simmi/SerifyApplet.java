@@ -2613,29 +2613,33 @@ public class SerifyApplet extends JApplet {
 		AccessController.doPrivileged( new PrivilegedAction() {
 			@Override
 			public Object run() {
-				boolean succ = true;
-				try {
-					URL url = new URL( path );
-					InputStream is = url.openStream();
-					if( is == null ) succ = false;
-					else is.close();
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-					succ = false;
-				} catch (IOException e) {
-					e.printStackTrace();
-					succ = false;
-				} catch( Exception e ) {
-					e.printStackTrace();
-					succ = false;
-				}
-				
-				if( succ ) {
-					Sequences seqs = new Sequences( user, name, type, path, nseq );
-					seqs.setKey( key );
-					sequences.add( seqs );
-					table.tableChanged( new TableModelEvent( table.getModel() ) );
-				}
+				new Thread() {
+					public void run() {
+						boolean succ = true;
+						try {
+							URL url = new URL( path );
+							InputStream is = url.openStream();
+							if( is == null ) succ = false;
+							else is.close();
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+							succ = false;
+						} catch (IOException e) {
+							e.printStackTrace();
+							succ = false;
+						} catch( Exception e ) {
+							e.printStackTrace();
+							succ = false;
+						}
+						
+						if( succ ) {
+							Sequences seqs = new Sequences( user, name, type, path, nseq );
+							seqs.setKey( key );
+							sequences.add( seqs );
+							table.tableChanged( new TableModelEvent( table.getModel() ) );
+						}
+					}
+				}.start();
 				
 				return null;
 			}
