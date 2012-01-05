@@ -172,9 +172,11 @@ public class TreeUtil {
 					
 					if( n.meta.contains(";") || (n.nodes != null && n.nodes.size() > 0) ) {
 						String[] split = n.meta.split(";");
-						if( nmeta == null ) nmeta = split[split.length-1];
-						else nmeta += "-"+split[split.length-1];
-						
+						if( split.length > 2 ) {
+							if( nmeta == null ) nmeta = split[split.length-1];
+							else nmeta += "-"+split[split.length-1];
+						} else if( nmeta == null ) nmeta = split[0];
+							
 						String[] lsp = nmeta.split("-");
 						if( lsp.length > 1 ) {
 							String[] msp = lsp[1].split(":");
@@ -187,6 +189,7 @@ public class TreeUtil {
 								nmeta = (msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
 							}
 						}
+						//}
 					}
 									
 					if( nmeta != null ) {
@@ -331,9 +334,9 @@ public class TreeUtil {
 			}
 			extractMetaRecursive( resultnode, mapmap );
 			if( collapse ) {
-				String[] ss = new String[] {"kawarayensis", "scotoductus", "thermophilus", "eggertsoni", "islandicus", "igniterrae", "brockianus", "aquaticus", "oshimai", "filiformis", "antranikianii"};
+				String[] ss = new String[] {"unkown", "kawarayensis", "scotoductus", "thermophilus", "eggertsoni", "islandicus", "igniterrae", "brockianus", "aquaticus", "oshimai", "filiformis", "antranikianii"};
 				Set<String> collapset = new HashSet<String>( Arrays.asList( ss ) );
-				collapseTree( resultnode, collapset );
+				collapseTree( resultnode, collapset, false );
 			}
 			
 			this.currentNode = resultnode;
@@ -364,21 +367,29 @@ public class TreeUtil {
 		}
 	}
 	
-	public boolean collapseTree( Node node, Set<String> collapset ) {
+	public boolean collapseTree( Node node, Set<String> collapset, boolean delete ) {
 		boolean ret = false;
 		
 		if( node.nodes != null && node.nodes.size() > 0 ) {
+			Set<Node>	delset = null;
+			if( delete ) delset = new HashSet<Node>();
+			
 			boolean any = false;
 			for( Node n : node.nodes ) {
-				if( collapseTree( n, collapset ) ) any = true;
+				if( collapseTree( n, collapset, delete ) ) any = true;
+				else if( delset != null ) delset.add( n );
 			}
 			
-			if( (node.meta != null && node.meta.length() > 0) || any ) ret = true;
+			if( delset != null ) node.nodes.removeAll( delset );
 			
-			if( !any ) {
-				node.name = node.meta;
-				node.meta = Integer.toString( node.countLeaves() );
-				node.nodes.clear();
+			if( any ) ret = true;
+			else {
+				if( node.meta != null && node.meta.length() > 0 ) {
+					node.name = node.meta;
+					node.meta = Integer.toString( node.countLeaves() );
+					node.nodes.clear();
+					ret = true;
+				}
 			}
 		}
 		
