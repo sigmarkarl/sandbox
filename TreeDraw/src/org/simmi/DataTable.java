@@ -164,17 +164,19 @@ public class DataTable extends JApplet {
 				String[] split = line.split("\t");
 				
 				nameaccmap.put(split[0], split[1]);
-				Object[] strs = new Object[ 13 ];
+				Object[] strs = new Object[ 14 ];
 				int i;
-				for( i = 1; i < split.length; i++ ) {
-					if( i == 3 || i == 4 ) strs[i-1] = Integer.parseInt( split[i] );
-					else strs[i-1] = split[i];
+				for( i = 0; i < split.length; i++ ) {
+					if( i == 3 || i == 4 ) strs[i] = Integer.parseInt( split[i] );
+					else strs[i] = split[i];
 				}
-				if( i == 9 ) strs[i++-1] = "";
-				if( i == 10 ) strs[i++-1] = "";
-				if( i == 11 ) strs[i++-1] = "";
-				if( i == 12 ) strs[i++-1] = "";
-				strs[i-1] = true;
+				if( i == 8 ) strs[i++] = "";
+				if( i == 9 ) strs[i++] = "";
+				if( i == 10 ) strs[i++] = "";
+				if( i == 11 ) strs[i++] = "";
+				if( i == 12 ) strs[i++] = "";
+				//if( i == 13 ) strs[i++] = "";
+				strs[i] = true;
 				//Arrays.copyOfRange(split, 1, split.length );
 				rowList.add( strs );
 				tablemap.put((String)strs[0], strs);
@@ -194,38 +196,39 @@ public class DataTable extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 13;
+				return 14;
 			}
 
 			@Override
 			public String getColumnName(int columnIndex) {
-				if( columnIndex == 0 ) return "acc";
-				else if( columnIndex == 1 ) return "species";
-				else if( columnIndex == 2 ) return "len";
-				else if( columnIndex == 3 ) return "ident";
-				else if( columnIndex == 4 ) return "doi";
-				else if( columnIndex == 5 ) return "pubmed";
-				else if( columnIndex == 6 ) return "journal";
-				else if( columnIndex == 7 ) return "auth";
-				else if( columnIndex == 8 ) return "sub_auth";
-				else if( columnIndex == 9 ) return "sub_date";
-				else if( columnIndex == 10 ) return "country";
-				else if( columnIndex == 11 ) return "source";
-				else if( columnIndex == 12 ) return "valid";
+				if( columnIndex == 0 ) return "name";
+				else if( columnIndex == 1 ) return "acc";
+				else if( columnIndex == 2 ) return "species";
+				else if( columnIndex == 3 ) return "len";
+				else if( columnIndex == 4 ) return "ident";
+				else if( columnIndex == 5 ) return "doi";
+				else if( columnIndex == 6 ) return "pubmed";
+				else if( columnIndex == 7 ) return "journal";
+				else if( columnIndex == 8 ) return "auth";
+				else if( columnIndex == 9 ) return "sub_auth";
+				else if( columnIndex == 10 ) return "sub_date";
+				else if( columnIndex == 11 ) return "country";
+				else if( columnIndex == 12 ) return "source";
+				else if( columnIndex == 13 ) return "valid";
 				
 				return "";
 			}
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 2 || columnIndex ==3 ) return Integer.class;
-				else if( columnIndex == 12 ) return Boolean.class;
+				if( columnIndex == 3 || columnIndex == 4 ) return Integer.class;
+				else if( columnIndex == 13 ) return Boolean.class;
 				return String.class;
 			}
 
 			@Override
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				if( columnIndex == 10 || columnIndex == 12 ) return true;
+				if( columnIndex == 11 || columnIndex == 13 ) return true;
 				return false;
 			}
 
@@ -298,29 +301,36 @@ public class DataTable extends JApplet {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					String name = (String)table.getValueAt(r, 0);
-					include.add( name );
+					String acc = (String)table.getValueAt(r, 1);
+					include.add( acc );
 					
 					Map<String,String>	map = new HashMap<String,String>();
-					String nm = (String)table.getValueAt(r, 1);
+					String nm = (String)table.getValueAt(r, 2);
+					int id = (Integer)table.getValueAt(r, 4);
 					
-					if( nm.contains("t.eggertsoni") ) nm = "Thermus eggertsoni";
-					else if( nm.contains("t.islandicus") ) nm = "Thermus islandicus";
-					else if( nm.contains("t.kawarayensis") ) nm = "Thermus kawarayensis";
-					else {
-						int ix = nm.indexOf(' ');
-						if( ix > 0 ) {
-							nm = nm.substring(0, nm.indexOf(' ', ix+1) );
+					if( id >= 97 ) {
+						if( nm.contains("t.eggertsoni") ) nm = "Thermus eggertsoni";
+						else if( nm.contains("t.islandicus") ) nm = "Thermus islandicus";
+						else if( nm.contains("t.kawarayensis") ) nm = "Thermus kawarayensis";
+						else {
+							int ix = nm.indexOf(' ');
+							if( ix > 0 ) {
+								nm = nm.substring(0, nm.indexOf(' ', ix+1) );
+							}
 						}
+					} else {
+						nm = "Thermus unknown";
 					}
 					
 					map.put("name", nm);
-					String country = (String)table.getValueAt(r, 10);
-					String acc = (String)table.getValueAt(r, 0);
+					String country = (String)table.getValueAt(r, 11);
+					//String acc = (String)table.getValueAt(r, 1);
 					if( country != null && country.length() > 0 ) {
 						map.put( "country", country );
 					}
 					map.put( "acc", acc );
-					mapmap.put(name, map);
+					map.put("id", Integer.toString(id));
+					mapmap.put(acc, map);
 				}
 				
 				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected() );
