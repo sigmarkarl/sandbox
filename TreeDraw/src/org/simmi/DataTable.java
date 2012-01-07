@@ -17,11 +17,13 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import javax.jnlp.ClipboardService;
@@ -296,6 +298,31 @@ public class DataTable extends JApplet {
 				}
 				br.close();
 				
+				Map<String,String>	colormap = new HashMap<String,String>();
+				
+				String[] ss = new String[] {"unknown", "kawarayensis", "scotoductus", "thermophilus", "eggertsoni", "islandicus", "igniterrae", "brockianus", "aquaticus", "oshimai", "filiformis", "antranikianii"};
+				Set<String> collapset = new HashSet<String>( Arrays.asList( ss ) );
+				
+				String[] cc = new String[] {"USA", "Yellowstone", "Hawaii", "Tibet", "Taiwan", "Italy", "Bulgaria", "Hungary", "Iceland", "Portugal", "China", "Japan", "Australia", "New Zealand", "Chile", "Antarctica", "Puerto Rico", "Greece", "Switzerland", "Russia", "India", "Indonesia"};
+				Set<String> countryset = new HashSet<String>( Arrays.asList( cc ) );
+				
+				Random rnd = new Random();
+				for( String c : cc ) {
+					//String cstr = "rgb( "+(int)(180+rnd.nextFloat()*75)+", "+(int)(180+rnd.nextFloat()*75)+", "+(int)(180+rnd.nextFloat()*75)+" )";
+					String cstr = Integer.toString( (int)(150+rnd.nextFloat()*75), 16 )+Integer.toString( (int)(150+rnd.nextFloat()*75), 16 )+Integer.toString( (int)(150+rnd.nextFloat()*75), 16 );
+					colormap.put( c, cstr );
+				}
+				for( String s : ss ) {
+					//colormap.put( s, "rgb( "+(int)(180+rnd.nextFloat()*75)+", "+(int)(180+rnd.nextFloat()*75)+", "+(int)(180+rnd.nextFloat()*75)+" )" );
+					String cstr = Integer.toString( (int)(150+rnd.nextFloat()*75), 16 )+Integer.toString( (int)(150+rnd.nextFloat()*75), 16 )+Integer.toString( (int)(150+rnd.nextFloat()*75), 16 );
+					colormap.put( s, cstr );
+					for( String c : cc ) {
+						//colormap.put( s+"-"+c, "rgb( "+(int)(180+rnd.nextFloat()*75)+", "+(int)(180+rnd.nextFloat()*75)+", "+(int)(180+rnd.nextFloat()*75)+" )" );
+						cstr = Integer.toString( (int)(150+rnd.nextFloat()*75), 16 )+Integer.toString( (int)(150+rnd.nextFloat()*75), 16 )+Integer.toString( (int)(150+rnd.nextFloat()*75), 16 );
+						colormap.put( s+"-"+c, cstr );
+					}
+				}
+				
 				Map<String,Map<String,String>> mapmap = new HashMap<String,Map<String,String>>();
 				Set<String>	include = new HashSet<String>();
 				int[] rr = table.getSelectedRows();
@@ -333,7 +360,7 @@ public class DataTable extends JApplet {
 					mapmap.put(acc, map);
 				}
 				
-				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected() );
+				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected(), collapset, colormap );
 				//return arg0.getReaderForText( this );
 				String str = tu.currentNode.toString();
 				return new ByteArrayInputStream( str.getBytes( charset ) );
