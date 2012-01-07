@@ -54,7 +54,7 @@ public class Treedraw implements EntryPoint {
 			public void onDrop(DropEvent event) {
 				String str = event.getData("text/plain");
 				String tree = str.replaceAll("[\r\n]+", "");
-				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false );
+				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null );
 				int ww = Window.getClientWidth();
 				
 				//treeutil.getNode().countLeaves()
@@ -105,8 +105,12 @@ public class Treedraw implements EntryPoint {
 					console( Double.toString(maxh2-minh2) );
 					
 					if( vertical ) {
+						drawFramesRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
+						ci = 0;
 						drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
 					} else {
+						drawFramesRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
+						ci = 0;
 						drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
 					}
 				}
@@ -195,6 +199,89 @@ public class Treedraw implements EntryPoint {
 		$wnd.console.log( log );
 	}-*/;
 	
+	public void drawFramesRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight, int leaves ) {		
+		if( node.getNodes().size() > 0 ) {			
+			int total = 0;
+			String sc = node.getColor();
+			if( sc != null ) {// paint && !(allNull || nullNodes) ) {
+				//g2.setPaint( sc );
+				g2.setFillStyle( sc );
+				
+				int k = 12;//(int)(w/32);
+				if( vertical ) {
+					int xoff = (int)(startx-(1*k)/4);
+					g2.fillRect( xoff, (int)(y+k/4-1), (int)(w-xoff-w/17), (int)(dh*leaves) ); //ny-yoff );
+				} else {
+					int yoff = (int)(starty-(1*k)/4);
+					g2.fillRect( (int)(x+k/4), yoff, (int)(dw*total-k/2.0), (int)(h-yoff-h/17) ); //ny-yoff );
+				}
+				//g2.setPaint( oldPaint );
+			}
+			
+			for( Node resnode : node.getNodes() ) {
+				int nleaves = resnode.countLeaves();
+				int nlevels = resnode.countMaxHeight();
+				int mleaves = Math.max(1, nleaves);
+				
+				double nx = 0;
+				double ny = 0;
+				
+				if( vertical ) {
+					//minh = 0.0;
+					ny = dh*total+(dh*mleaves)/2.0;
+					if( equalHeight ) {
+						nx = w/25.0+dw*(w/dw-nlevels);
+					} else {
+						nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.1);
+						//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
+					}
+
+					if( nleaves == 0 ) {
+						int v = (int)((nodearray.length*(y+ny))/canvas.getCoordinateSpaceHeight());
+						//console( nodearray.length + "  " + canvas.getCoordinateSpaceHeight() + "  " + v );
+						if( v >= 0 && v < nodearray.length ) nodearray[v] = resnode;
+					}
+				} else {
+					//minh = 0.0;
+					nx = dw*total+(dw*mleaves)/2.0;
+					if( equalHeight ) {	
+						ny = h/25.0+dh*(h/dh-nlevels);
+					} else {
+						ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
+						//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
+					}
+				}
+				int k = 12;//(int)(w/32);
+				
+				String use = resnode.getName() == null || resnode.getName().length() == 0 ? resnode.getMeta() : resnode.getName();
+				boolean nullNodes = resnode.getNodes() == null || resnode.getNodes().size() == 0;
+				boolean paint = use != null && use.length() > 0;
+				
+				/*ci++;
+				for( int i = colors.size(); i <= ci; i++ ) {
+					colors.add( "rgb( "+(int)(rnd.nextFloat()*255)+", "+(int)(rnd.nextFloat()*255)+", "+(int)(rnd.nextFloat()*255)+" )" );
+				}*/
+				//String color = node.getColor(); //colors.get(ci);
+				
+				/*if( resnode.color != null ) {
+					color = resnode.color;
+				}
+				GradientPaint shadeColor = createGradient(color, (int)(ny-k/2), (int)h);*/
+				
+				if( vertical ) {
+					//drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, ny, paint ? shadeColor : null, nleaves, equalHeight );
+					drawFramesRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, mleaves );
+				} else {
+					//drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, ny, paint ? shadeColor : null, nleaves, equalHeight );
+					drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, mleaves );
+				}
+				
+				//drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, ny, paint ? shadeColor : null, nleaves, equalHeight );
+				total += nleaves;
+			}
+		}
+	}
+	
 	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {		
 		int total = 0;
 		for( TreeUtil.Node resnode : node.getNodes() ) {
@@ -243,12 +330,14 @@ public class Treedraw implements EntryPoint {
 				System.err.println( resnode.nodes );
 			}*/
 			
-			ci++;
+			/*ci++;
 			for( int i = colors.size(); i <= ci; i++ ) {
 				colors.add( "rgb( "+(int)(rnd.nextFloat()*255)+", "+(int)(rnd.nextFloat()*255)+", "+(int)(rnd.nextFloat()*255)+" )" );
-			}
+			}			
+			String color = colors.get(ci);*/
 			
-			String color = colors.get(ci);
+			String color = resnode.getColor();
+			
 			/*if( resnode.color != null ) {
 				color = resnode.color;
 			}*/
@@ -292,14 +381,26 @@ public class Treedraw implements EntryPoint {
 					int t = 0;
 					double mstrw = 0;
 					double mstrh = 10;
+					
 					if( !vertical ) {
 						for( String str : split ) {
 							double strw = g2.measureText( str ).getWidth();
 							mstrw = Math.max( mstrw, strw );
+							if( resnode.getColor() != null ) {
+								g2.setFillStyle( resnode.getColor() );
+								g2.fillRect( (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize), strw, mstrh);
+								g2.setFillStyle( "#000000" );
+							}
 							g2.fillText(str, (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize) );
 						}
 					} else {
 						for( String str : split ) {
+							if( resnode.getColor() != null ) {
+								double strw = g2.measureText( str ).getWidth();
+								g2.setFillStyle( resnode.getColor() );
+								g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0-mstrh+1.0, strw+15, mstrh*1.15);
+								g2.setFillStyle( "#000000" );
+							}
 							g2.fillText(str, nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0 );
 						}
 					}
