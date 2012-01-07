@@ -18,6 +18,7 @@ public class TreeUtil {
 	public class Node {
 		String 		name;
 		String		meta;
+		int			metacount;
 		private double		h;
 		private double		h2;
 		String		color;
@@ -27,6 +28,7 @@ public class TreeUtil {
 		
 		public Node() {
 			nodes = new ArrayList<Node>();
+			metacount = 0;
 		}
 		
 		public double geth2() {
@@ -55,7 +57,8 @@ public class TreeUtil {
 			} else if( name != null && name.length() > 0 ) str += name;
 			
 			//if( h > 0.0 )
-				str += ":"+h;
+			str += ":"+h;
+			if( color != null && color.length() > 0 ) str += ":"+color;
 			//else str += ":0.0";
 			
 			return str;
@@ -75,6 +78,10 @@ public class TreeUtil {
 		
 		public String getMeta() {
 			return meta;
+		}
+		
+		public String getColor() {
+			return color;
 		}
 		
 		public int countLeaves() {
@@ -153,12 +160,12 @@ public class TreeUtil {
 		if( n.h < 0.002 ) n.h = 0.6;
 	}
 	
-	public void extractMetaRecursive( Node node, Map<String,Map<String,String>> mapmap ) {
-		extractMeta( node, mapmap );
+	public void extractMetaRecursive( Node node, Map<String,Map<String,String>> mapmap, Set<String> collapset, boolean collapse ) {
+		if( node.name != null ) extractMeta( node, mapmap );
 		
 		List<Node> checklist = node.nodes;
 		for( Node subnode : checklist ) {
-			extractMetaRecursive(subnode, mapmap);
+			extractMetaRecursive(subnode, mapmap, collapset, collapse);
 		}
 		
 		if( mapmap != null && mapmap.size() > 0 && checklist.size() > 0 ) {
@@ -173,11 +180,19 @@ public class TreeUtil {
 					if( n.meta.contains(";") || (n.nodes != null && n.nodes.size() > 0) ) {
 						String[] split = n.meta.split(";");
 						if( split.length > 2 ) {
-							if( nmeta == null ) nmeta = split[split.length-1];
-							else nmeta += "-"+split[split.length-1];
+							String[] msp = split[split.length-1].split(":");
+							String val = null;
+							if( msp.length > 1 ) {
+								val = (msp[1].contains("awai") || msp[1].contains("ibet") || msp[1].contains("ellow")) ? msp[1].split(" ")[0] : msp[0];
+							} else {
+								val = msp[0];
+							}
+														
+							if( nmeta == null ) nmeta = val;
+							else nmeta += "-"+val;
 						} else if( nmeta == null ) nmeta = split[0];
 							
-						String[] lsp = nmeta.split("-");
+						/*String[] lsp = nmeta.split("-");
 						if( lsp.length > 1 ) {
 							String[] msp = lsp[1].split(":");
 							if( msp.length > 1 ) {
@@ -188,7 +203,7 @@ public class TreeUtil {
 							if( msp.length > 1 ) {
 								nmeta = (msp.length > 1 && (nmeta.contains("awai") || nmeta.contains("ibet") || nmeta.contains("ellow"))) ? msp[1].split(" ")[0] : msp[0];
 							}
-						}
+						}*/
 						//}
 					}
 									
@@ -201,32 +216,40 @@ public class TreeUtil {
 							//System.err.println( "buuuu " + nmeta + "  " + metacheck);
 							dual = false;
 						} else {
-							if( (!nmeta.contains(metacheck) && !metacheck.contains(nmeta)) ) {
-								String[] split1 = nmeta.split("-");
-								String[] split2 = metacheck.split("-");
-								String cont = null;
-								if( split1.length > 1 || split2.length > 1 ) {
-									Set<String>	s1 = new HashSet<String>( Arrays.asList(split1) );
-									Set<String> s2 = new HashSet<String>( Arrays.asList(split2) );
+							if( !collapse ) { 
+								if( (!nmeta.contains(metacheck) && !metacheck.contains(nmeta)) ) {
+									String[] split1 = nmeta.split("-");
+									String[] split2 = metacheck.split("-");
 									
-									if( s1.contains("Hungary") || s2.contains("Hungary") ) {
-										System.err.println("ok");
-									}
-									
-									for( String str : s1 ) {
-										if( s2.contains( str ) ) {
-											cont = str;
-											break;
+									String cont = null;
+									if( split1.length > 1 || split2.length > 1 ) {
+										Set<String>	s1 = new HashSet<String>( Arrays.asList(split1) );
+										Set<String> s2 = new HashSet<String>( Arrays.asList(split2) );
+										
+										for( String str : s1 ) {
+											if( s2.contains( str ) ) {
+												cont = str;
+												break;
+											}
 										}
 									}
+									
+									if( cont != null ) {
+										metacheck = cont;
+										partial = cont;
+									} else dual = false;
+								} else {
+									if( nmeta.length() > metacheck.length() ) {
+										metacheck = collapset.contains(metacheck) ? nmeta : metacheck;
+									} else {
+										metacheck = collapset.contains(nmeta) ? metacheck : nmeta;
+									}
+									partial = metacheck;
 								}
-								
-								if( cont != null ) {
-									metacheck = cont;
-									partial = cont;
-								} else dual = false;
 							} else {
-								metacheck = nmeta.length() > metacheck.length() ? nmeta : metacheck;
+								if( (!nmeta.contains(metacheck) || !metacheck.contains(nmeta)) ) {
+									dual = false;
+								}
 							}
 						}
 					}
@@ -239,9 +262,12 @@ public class TreeUtil {
 					if( n.nodes != null && n.nodes.size() > 0 ) {
 						//if(n.meta != null) System.err.println("delete meta" + n.meta);
 						if( partial.length() > 0 ) {
+							if( n.meta != null && partial.length() >= n.meta.length() ) {
+								n.meta = null;
+							}
 							//System.err.println( "meta " + n.meta );
 							//n.meta = n.meta.replace(partial, "");
-							//n.meta = n.meta.replace("-", "");
+							//n.meta = n.meta.replace("-", "")	;
 						} else {
 							n.meta = null;
 						}
@@ -301,7 +327,14 @@ public class TreeUtil {
 		}
 	}
 	
-	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse ) {
+	public void markColor( Node node, Map<String,String> colormap ) {
+		if( colormap.containsKey(node.meta) ) node.color = colormap.get(node.meta);
+		for( Node n : node.nodes ) {
+			markColor(n, colormap);
+		}
+	}
+	
+	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap ) {
 		super();
 		loc = 0;
 		//System.err.println( str );
@@ -332,10 +365,12 @@ public class TreeUtil {
 					if( n.name != null && n.name.trim().length() > 0 ) System.err.println( "nnnnnnnn " + n.name );
 				}*/
 			}
-			extractMetaRecursive( resultnode, mapmap );
+			
+			extractMetaRecursive( resultnode, mapmap, collapset, collapse );
+			if( colormap != null ) {
+				markColor( resultnode, colormap );
+			}
 			if( collapse ) {
-				String[] ss = new String[] {"unkown", "kawarayensis", "scotoductus", "thermophilus", "eggertsoni", "islandicus", "igniterrae", "brockianus", "aquaticus", "oshimai", "filiformis", "antranikianii"};
-				Set<String> collapset = new HashSet<String>( Arrays.asList( ss ) );
 				collapseTree( resultnode, collapset, false );
 			}
 			
@@ -371,16 +406,16 @@ public class TreeUtil {
 		boolean ret = false;
 		
 		if( node.nodes != null && node.nodes.size() > 0 ) {
-			Set<Node>	delset = null;
-			if( delete ) delset = new HashSet<Node>();
+			//Set<Node>	delset = null;
+			//if( delete ) delset = new HashSet<Node>();
 			
 			boolean any = false;
 			for( Node n : node.nodes ) {
 				if( collapseTree( n, collapset, delete ) ) any = true;
-				else if( delset != null ) delset.add( n );
+				//else if( delset != null ) delset.add( n );
 			}
 			
-			if( delset != null ) node.nodes.removeAll( delset );
+			//if( delset != null ) node.nodes.removeAll( delset );
 			
 			if( any ) ret = true;
 			else {
@@ -458,7 +493,7 @@ public class TreeUtil {
 		StringBuilder sb = new StringBuilder();
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
-		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false );
+		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null );
 	}
 	
 	int metacount = 0;
@@ -590,12 +625,12 @@ public class TreeUtil {
 					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
-						String color = split[2].substring(1);
+						String color = split[2].substring(0);
 						try {
 							int r = Integer.parseInt( color.substring(0, 2), 16 );
 							int g = Integer.parseInt( color.substring(2, 4), 16 );
 							int b = Integer.parseInt( color.substring(4, 6), 16 );
-							node.color = "rgb( "+r+","+g+","+b+")"; //new Color( r,g,b );
+							node.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
 						} catch( Exception e ) {
 							
 						}
@@ -697,12 +732,12 @@ public class TreeUtil {
 				
 				//String[] split = code.split(":");
 				if( split.length > 2 ) {
-					String color = split[2].substring(1);
+					String color = split[2].substring(0);
 					try {
 						int r = Integer.parseInt( color.substring(0, 2), 16 );
 						int g = Integer.parseInt( color.substring(2, 4), 16 );
 						int b = Integer.parseInt( color.substring(4, 6), 16 );
-						ret.color = "rgb( "+r+","+g+","+b+")"; //new Color( r,g,b );
+						ret.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
 					} catch( Exception e ) {
 						
 					}
