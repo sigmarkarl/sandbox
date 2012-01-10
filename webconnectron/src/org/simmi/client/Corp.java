@@ -36,6 +36,7 @@ public class Corp {
 	List<Image>				images = new ArrayList<Image>();
 	List<String>			imageNames = new ArrayList<String>();
 	Map<Corp,LinkInfo>		connections = new HashMap<Corp,LinkInfo>();
+	Map<Corp,LinkInfo>		backconnections = new HashMap<Corp,LinkInfo>();
 	boolean						selected = false;
 	boolean						hilighted = false;
 	
@@ -323,7 +324,11 @@ public class Corp {
 		for( Corp corp : corpList ) {
 			//corp = corpMap.get(name);
 			if( corp.getLinks().contains( this ) ) {
-				corp.connections.remove( this );
+				corp.connections.remove( this );	
+			}
+			
+			if( corp.getBackLinks().contains( this ) ) {
+				corp.backconnections.remove( this );	
 			}
 		}
 		corpList.remove( this );
@@ -656,11 +661,16 @@ public class Corp {
 		return connections.keySet();
 	}
 	
+	public Set<Corp>	getBackLinks() {
+		return backconnections.keySet();
+	}
+	
 	public void addLink( Corp corp, String link, double strength ) {
 		LinkInfo linkInfo = connections.get(corp);
 		if( linkInfo == null ) {
 			linkInfo = new LinkInfo( strength );
 			connections.put( corp, linkInfo );
+			corp.backconnections.put( this, linkInfo );
 		}
 		linkInfo.linkTitles.add( link );
 	}
@@ -670,6 +680,7 @@ public class Corp {
 		if( linkInfo == null ) {
 			linkInfo = new LinkInfo( 1.0 );
 			connections.put( corp, linkInfo );
+			corp.backconnections.put( this, linkInfo );
 		}
 		linkInfo.linkTitles.addAll( linknames );
 	}
@@ -688,6 +699,7 @@ public class Corp {
 	
 	public void removeLink( Corp c ) {
 		connections.remove( c );
+		c.backconnections.remove( this );
 	}
 	
 	//int xs;
