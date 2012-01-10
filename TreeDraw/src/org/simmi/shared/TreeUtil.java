@@ -114,6 +114,10 @@ public class TreeUtil {
 			}
 			return geth()+max;
 		}
+		
+		public Node getParent() {
+			return parent;
+		}
 	}
 	
 	public Node findNode( Node old, Node node ) {
