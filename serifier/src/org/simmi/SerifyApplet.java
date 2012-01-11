@@ -1742,20 +1742,23 @@ public class SerifyApplet extends JApplet {
 		String seqname = null;
 		while( line != null ) {
 			if( line.startsWith(">") ) {
-				nseq++;
 				if( inverted ) {
 					seqname = line;
 					for( String f : filterset ) {
 						if( line.contains(f) ) {
+							nseq++;
 							seqname = null;
 							break;
 						}
 					}
-					if( seqname != null ) bw.write( seqname+"\n" );
+					if( seqname != null ) {
+						bw.write( seqname+"\n" );
+					}
 				} else {
 					seqname = null;
 					for( String f : filterset ) {
 						if( line.contains(f) ) {
+							nseq++;
 							bw.write( line+"\n" );
 							seqname = line;
 							break;
@@ -2272,9 +2275,9 @@ public class SerifyApplet extends JApplet {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					if( !f.isDirectory() ) f = f.getParentFile();
-					final File dir = f;
+					File f1 = fc.getSelectedFile();
+					if( !f1.isDirectory() ) f1 = f1.getParentFile();
+					final File dir = f1;
 					
 					int r = table.getSelectedRow();
 					int rr = table.convertRowIndexToModel( r );
@@ -2282,7 +2285,7 @@ public class SerifyApplet extends JApplet {
 						final Sequences seqs = sequences.get( rr );
 						final JTextField spinner = new JTextField();
 						//spinner.setValue( seqs.getNSeq() );
-						spinner.setPreferredSize( new Dimension(100,25) );
+						spinner.setPreferredSize( new Dimension(600,25) );
 
 						final JDialog dl;
 						Window window = SwingUtilities.windowForComponent(cnt);
@@ -2295,6 +2298,15 @@ public class SerifyApplet extends JApplet {
 						};
 						c.setLayout( new FlowLayout() );
 						dl.setTitle("Filter sequences");
+						JButton browse = new JButton( new AbstractAction("Browse") {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								JFileChooser	filechooser = new JFileChooser();
+								if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+									spinner.setText( filechooser.getSelectedFile().toURI().toString() );
+								}
+							}
+						});
 						JButton button = new JButton( new AbstractAction("Ok") {
 							@Override
 							public void actionPerformed(ActionEvent e) {
@@ -2303,9 +2315,10 @@ public class SerifyApplet extends JApplet {
 							}
 						});
 						c.add( spinner );
+						c.add( browse );
 						c.add( button );
 						dl.add( c );
-						dl.setSize(200, 60);
+						dl.setSize(800, 60);
 						
 						dl.addWindowListener( new WindowListener() {
 							@Override
@@ -2319,6 +2332,14 @@ public class SerifyApplet extends JApplet {
 								try {
 									String trim = spinner.getText();
 									
+									boolean nofile = false;
+									URL url;
+									try {
+										url = new URL( trim );
+									} catch( Exception exc ) {
+										nofile = true;
+									}
+									
 									URI uri = new URI( seqs.getPath() );
 									InputStream is = uri.toURL().openStream();
 									
@@ -2326,7 +2347,10 @@ public class SerifyApplet extends JApplet {
 										is = new GZIPInputStream( is );
 									}
 									
-									String name = uri.toURL().getFile();
+									url = uri.toURL();
+									String urlstr = url.toString();
+									String[] erm = urlstr.split("\\/");
+									String name = erm[ erm.length-1 ];
 									int ind = name.lastIndexOf('.');
 									
 									String sff = name;
@@ -2337,12 +2361,29 @@ public class SerifyApplet extends JApplet {
 									}
 									
 									String trimname = sff+"_trimmed";
-									File f = new File( trimname+"."+sf2 );
+									File f = new File( dir, trimname+"."+sf2 );
 									FileWriter fw = new FileWriter(f);
 									
-									String[] farray = { trim };
+									Set<String> fset = null;
 									
-									int nseq = trimFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), new HashSet<String>( Arrays.asList( farray ) ), false);
+									fset = new HashSet<String>();
+									if( nofile ) {
+										String[] farray = { trim };
+										fset.addAll( Arrays.asList( farray ) );
+									} else {
+										File fl = new File( new URI(trim) );
+										FileReader fr = new FileReader( fl );
+										BufferedReader br = new BufferedReader( fr );
+										String line = br.readLine();
+										while( line != null ) {
+											/*if( line.contains("ingletons") ) {
+												fset.add( line.split("[\t ]+")[0] );
+											}*/
+											fset.add( line );
+											line = br.readLine();
+										}
+									}
+									int nseq = trimFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), fset, false );
 									
 									SerifyApplet.this.addSequences(trimname, seqs.getType(), f.toURI().toString(), nseq);
 								} catch (IOException e1) {
