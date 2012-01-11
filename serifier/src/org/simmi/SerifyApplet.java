@@ -2275,9 +2275,9 @@ public class SerifyApplet extends JApplet {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					if( !f.isDirectory() ) f = f.getParentFile();
-					final File dir = f;
+					File f1 = fc.getSelectedFile();
+					if( !f1.isDirectory() ) f1 = f1.getParentFile();
+					final File dir = f1;
 					
 					int r = table.getSelectedRow();
 					int rr = table.convertRowIndexToModel( r );
@@ -2333,10 +2333,11 @@ public class SerifyApplet extends JApplet {
 									String trim = spinner.getText();
 									
 									boolean nofile = false;
+									URL url;
 									try {
-										URL url = new URL( trim );
+										url = new URL( trim );
 									} catch( Exception exc ) {
-										nofile = false;
+										nofile = true;
 									}
 									
 									URI uri = new URI( seqs.getPath() );
@@ -2346,7 +2347,10 @@ public class SerifyApplet extends JApplet {
 										is = new GZIPInputStream( is );
 									}
 									
-									String name = uri.toURL().getFile();
+									url = uri.toURL();
+									String urlstr = url.toString();
+									String[] erm = urlstr.split("\\/");
+									String name = erm[ erm.length-1 ];
 									int ind = name.lastIndexOf('.');
 									
 									String sff = name;
@@ -2357,7 +2361,7 @@ public class SerifyApplet extends JApplet {
 									}
 									
 									String trimname = sff+"_trimmed";
-									File f = new File( trimname+"."+sf2 );
+									File f = new File( dir, trimname+"."+sf2 );
 									FileWriter fw = new FileWriter(f);
 									
 									Set<String> fset = null;
