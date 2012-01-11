@@ -254,7 +254,7 @@ public class DataTable extends JApplet {
 				row[columnIndex] = aValue;
 				
 				JSObject jso = JSObject.getWindow( DataTable.this );
-				jso.call( "saveMeta", new Object[] {row[0], row[10], row[12]} );
+				jso.call( "saveMeta", new Object[] {row[1], row[11], row[13]} );
 			}
 
 			@Override
@@ -504,12 +504,22 @@ public class DataTable extends JApplet {
 				int i = table.convertRowIndexToModel(r);
 				if( i != -1 ) {
 					Object[] str = rowList.get( i );
-					String doi = (String)str[4];
-					try {
-						URL url = new URL( "http://dx.doi.org/"+doi );
-						DataTable.this.getAppletContext().showDocument( url );
-					} catch (MalformedURLException e1) {
-						e1.printStackTrace();
+					String doi = (String)str[5];
+					if( doi != null && doi.length() > 0 ) {
+						try {
+							URL url = new URL( "http://dx.doi.org/"+doi );
+							DataTable.this.getAppletContext().showDocument( url );
+						} catch (MalformedURLException e1) {
+							e1.printStackTrace();
+						}
+					} else {
+						String pubmed = (String)str[6];
+						try {
+							URL url = new URL( "http://www.ncbi.nlm.nih.gov/pubmed/?term="+pubmed );
+							DataTable.this.getAppletContext().showDocument( url );
+						} catch (MalformedURLException e1) {
+							e1.printStackTrace();
+						}
 					}
 				}
 			}
