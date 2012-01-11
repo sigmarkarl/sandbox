@@ -1742,20 +1742,23 @@ public class SerifyApplet extends JApplet {
 		String seqname = null;
 		while( line != null ) {
 			if( line.startsWith(">") ) {
-				nseq++;
 				if( inverted ) {
 					seqname = line;
 					for( String f : filterset ) {
 						if( line.contains(f) ) {
+							nseq++;
 							seqname = null;
 							break;
 						}
 					}
-					if( seqname != null ) bw.write( seqname+"\n" );
+					if( seqname != null ) {
+						bw.write( seqname+"\n" );
+					}
 				} else {
 					seqname = null;
 					for( String f : filterset ) {
 						if( line.contains(f) ) {
+							nseq++;
 							bw.write( line+"\n" );
 							seqname = line;
 							break;
@@ -2329,7 +2332,7 @@ public class SerifyApplet extends JApplet {
 								try {
 									String trim = spinner.getText();
 									
-									boolean nofile = true;
+									boolean nofile = false;
 									try {
 										URL url = new URL( trim );
 									} catch( Exception exc ) {
@@ -2369,9 +2372,10 @@ public class SerifyApplet extends JApplet {
 										BufferedReader br = new BufferedReader( fr );
 										String line = br.readLine();
 										while( line != null ) {
-											if( line.contains("ingletons") ) {
+											/*if( line.contains("ingletons") ) {
 												fset.add( line.split("[\t ]+")[0] );
-											}
+											}*/
+											fset.add( line );
 											line = br.readLine();
 										}
 									}
