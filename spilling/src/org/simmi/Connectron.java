@@ -63,6 +63,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.Corp.LinkInfo;
+import org.simmi.shared.TreeUtil;
 
 public class Connectron extends JApplet implements MouseListener, MouseMotionListener, KeyListener {
 	/**
@@ -90,7 +91,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 	boolean shift = false;
 	static boolean	fixed = false;
 	
-	double dsize = 50;
+	double dsize = 1.0;
 	
 	Point 	np;
 	Point	p;
@@ -404,7 +405,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			rel.py = dy+scrollpane.getHeight()/2.0;
 			rel.pz = dz;
 			
-			int size = (int) (d * dsize / (zval + dz));
+			int size = (int) (d * rel.getSizeDouble() * dsize / (zval + dz));
 			
 			int x = (int)dx+scrollpane.getWidth()/2;
 			int y = (int)dy+scrollpane.getHeight()/2;
@@ -675,7 +676,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 				corp.setz( z );
 				corp.color = color;
 				c.add( corp );
-				corp.setBounds( (int)(corp.getx()-corp.size/2), (int)(corp.gety()-corp.size/2), corp.size, corp.size );
+				corp.setBounds( (int)(corp.getx()-corp.size/2), (int)(corp.gety()-corp.size/2), (int)corp.size, (int)corp.size );
 				
 				corpRow = corpSheet.getRow( ++i );
 			}
@@ -779,6 +780,19 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		workbook.write( os );
 	}
 	
+	public Color translateColor( String colorstr ) {
+		Color color = Color.green;
+		try {
+			int r = Integer.parseInt( colorstr.substring(0, 2), 16 );
+			int g = Integer.parseInt( colorstr.substring(2, 4), 16 );
+			int b = Integer.parseInt( colorstr.substring(4, 6), 16 );
+			color = new Color( r,g,b );
+		} catch( Exception e ) {
+			
+		}
+		return color;
+	}
+	
 	public void importFromText( String text ) {
 		u = 50000.0;
 		
@@ -814,6 +828,110 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		}
 		
 		c.repaint();
+	}
+	
+	int loc;
+	Random r = new Random();
+	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node ) {
+		int i = node.getName().indexOf("Thermus");
+		Corp corp = new Corp( i > 0 ? node.getName().substring(i) : node.getName() );
+		corp.setx( 400.0*r.nextDouble() );
+		corp.sety( 400.0*r.nextDouble() );
+		corp.setz( 400.0*r.nextDouble() );
+		
+		if( node.getName() == null || node.getName().trim().length() == 0 ) {
+			corp.setSize( 8, 8 );
+			corp.color = Color.black;
+		} else {
+			String color = node.getColor();
+			if( color != null ) corp.color = translateColor( color );
+			else {
+				//TreeUtil.Node parent = node.getParent();
+				for( Corp parent : corp.getBackLinks() ) {
+					if( parent != null && parent.getName() != null && parent.getName().length() > 0 ) {
+						corp.color = parent.color;
+						break;
+					}
+				}
+			}
+		}
+		//else corp.color = "#000000";
+		//console( "col " + corp.color );
+		this.add( corp );
+		corpList.add( corp );
+		
+		for( TreeUtil.Node n : node.getNodes() ) {
+			Corp c = recursiveNodeGeneration(corpList, n);
+			double val = (1.0/( Math.abs( node.geth() )+0.0005 ))/50.0;
+			String strval = Double.toString( node.geth() ); //Math.round(val*100.0)/100.0 );
+			corp.addLink(c, strval, val );
+			c.addLink(corp, strval, val );
+		}
+		
+		return corp;
+	}
+	
+	public void importFromTree( String text ) {
+		u = 50.0;
+		
+		loc = 0;
+		TreeUtil treeutil = new TreeUtil( text, false, null, null, false, null, null );
+		TreeUtil.Node resultnode = treeutil.getNode();
+		//Node resultnode = parseTreeRecursive( text, false );
+		
+		List<Corp> corpList = new ArrayList<Corp>();
+		recursiveNodeGeneration( corpList, resultnode );
+		
+		repaint();
+	}
+	
+	public void importFromMatrix( String text ) {
+		u = 5000.0;
+		
+		String[] split = text.split("\n");
+		String[] persons = split[0].split("\t");
+		
+		List<Corp> corpList = new ArrayList<Corp>();
+		
+		Random r = new Random();
+		for( String spec : persons ) {
+			if( spec.length() > 1 ) {
+				Corp corp = new Corp( spec );
+				corp.setx( 400.0*r.nextDouble() );
+				corp.sety( 400.0*r.nextDouble() );
+				corp.setz( 400.0*r.nextDouble() );
+				this.add( corp );
+				
+				corpList.add( corp );
+			}
+		}
+		
+		for( int i = 1; i < split.length; i++ ) {
+			String[] subsplit = split[i].split("\t");
+			//int y = i-1;
+			String spec = subsplit[0];
+			Corp corp = new Corp( spec );
+			corp.setx( 400.0*r.nextDouble() );
+			corp.sety( 400.0*r.nextDouble() );
+			corp.setz( 400.0*r.nextDouble() );
+			corp.color = translateColor( "1111ee" );
+			this.add( corp );
+			corpList.add( corp );
+			
+			for( int x = 1; x < subsplit.length; x++ ) {
+				double d = Double.parseDouble( subsplit[x] );
+				if( d > 0.0 ) {
+					//Corp corpDst = corpList.get(x);
+					//Corp corpSrc = corpList.get(y);
+					
+					Corp pcorp = corpList.get(x-1);
+					corp.addLink( pcorp, subsplit[x], d/100.0 );
+					pcorp.addLink( corp, subsplit[x], d/100.0 );
+				}
+			}
+		}
+		
+		repaint();
 	}
 	
 	public void initGUI( Container cnt ) throws ClassNotFoundException {
@@ -1008,10 +1126,22 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 					Object obj = support.getTransferable().getTransferData( df );
 					InputStream is = (InputStream)obj;
 					
+					ByteArrayOutputStream	baos = new ByteArrayOutputStream();
 					byte[] bb = new byte[2048];
 					int r = is.read(bb);
+					while( r > 0 ) {
+						baos.write(bb, 0, r);
+						r = is.read(bb);
+					}
+					baos.close();
+					String dropstuff = new String(baos.toString());
+					if( dropstuff.startsWith("(") ) {
+						importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
+					} else if( dropstuff.startsWith("\t") ) {
+						importFromMatrix( dropstuff );
+					} else importFromText( dropstuff );
 					
-					importFromText( new String(bb,0,r) );
+					//importFromText( new String(bb,0,r) );
 				} catch (UnsupportedFlavorException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
@@ -1022,11 +1152,11 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		};
 		c.setTransferHandler( th );
 		
-		try {
+		/*try {
 			loadAll();
 		} catch (IOException e2) {
 			e2.printStackTrace();
-		}
+		}*/
 		
 		c.setPreferredSize( new Dimension(this.getWidth(), this.getHeight()) );
 		c.addContainerListener( new ContainerListener() {
@@ -1102,7 +1232,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 				if( Corp.corpList.size() > 0 ) z /= Corp.corpList.size();
 				//System.err.println( "len "+ Corp.corpList.size() );
 				
-				Corp 		corp = new Corp(Corp.getCreateName(),"unknown",m.x-Corp.size/2, m.y-Corp.size/2);
+				Corp 		corp = new Corp(Corp.getCreateName(),"unknown",m.x-(int)(32/2.0), m.y-(int)(32/2.0));
 				
 				//backtest( m.x, m.y );
 				
