@@ -636,7 +636,7 @@ public class Connectron extends ScrollPanel
 	
 	int loc;
 	Random r = new Random();
-	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node ) {
+	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node, TreeUtil.Node parent ) {
 		int i = node.getName().indexOf("Thermus");
 		Corp corp = new Corp( i > 0 ? node.getName().substring(i) : node.getName() );
 		corp.setx( 400.0*r.nextDouble() );
@@ -645,27 +645,26 @@ public class Connectron extends ScrollPanel
 		
 		if( node.getName() == null || node.getName().trim().length() == 0 ) {
 			corp.setSize( 8 );
-			corp.color = "#000000";
-		} else {
+		}
+		
+		/*	corp.color = "#000000";
+		} else {*/
 			String color = node.getColor();
 			if( color != null ) corp.color = color;
 			else {
 				//TreeUtil.Node parent = node.getParent();
-				for( Corp parent : corp.getBackLinks() ) {
-					if( parent != null && parent.getName() != null && parent.getName().length() > 0 ) {
-						corp.color = parent.color;
-						break;
-					}
+				if( parent != null ) {
+					corp.color = parent.getColor();
 				}
 			}
-		}
+		//}
 		//else corp.color = "#000000";
 		//console( "col " + corp.color );
 		this.add( corp );
 		corpList.add( corp );
 		
 		for( TreeUtil.Node n : node.getNodes() ) {
-			Corp c = recursiveNodeGeneration(corpList, n);
+			Corp c = recursiveNodeGeneration(corpList, n, node);
 			double val = (1.0/( Math.abs( node.geth() )+0.0005 ))/50.0;
 			String strval = Double.toString( node.geth() ); //Math.round(val*100.0)/100.0 );
 			corp.addLink(c, strval, val );
@@ -684,7 +683,7 @@ public class Connectron extends ScrollPanel
 		//Node resultnode = parseTreeRecursive( text, false );
 		
 		List<Corp> corpList = new ArrayList<Corp>();
-		recursiveNodeGeneration( corpList, resultnode );
+		recursiveNodeGeneration( corpList, resultnode, null );
 		
 		repaint();
 	}
