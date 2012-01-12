@@ -7259,6 +7259,50 @@ public class GeneSet extends JApplet {
 				updateFilter( table, genefilter, label );
 			}
 		});
+		popup.add( new AbstractAction("Show distance matrix") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JTextArea textarea = new JTextArea();
+				
+				try {  
+			    	if( clipboardService == null ) clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+			    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+		            textarea.getActionMap().put( "copy", action );
+		            grabFocus = true;
+			    } catch (Exception ee) {
+			    	ee.printStackTrace();
+			    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+			    }
+				textarea.setDragEnabled( true );
+				
+				JScrollPane	scrollpane = new JScrollPane( textarea );
+				
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if( gg.species != null ) {
+						textarea.append( gg.name + ":\n" );
+						for( String sp : gg.species.keySet() ) {
+							Teginfo stv = gg.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
+								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
+								for( int i = 0; i < tv.seq.length(); i+=70 ) {
+									int end = Math.min(i+70,tv.seq.length());
+									textarea.append( tv.seq.substring(i, end)+"\n" ); //new String( tv.seq, i, Math.min(i+70,tv.seq.length()) )+"\n");
+								}
+								//textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" + tv.seq + "\n" );
+							}
+						}
+					}
+				}			
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(scrollpane);
+				frame.setSize(400, 300);
+				frame.setVisible( true );
+			}
+		});
 		
 		/*final List<String>	reglist = new ArrayList<String>();
 		final Map<String,Gene>	regidx = new TreeMap<String,Gene>();
