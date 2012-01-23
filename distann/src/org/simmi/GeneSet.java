@@ -73,6 +73,7 @@ import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -5636,14 +5637,14 @@ public class GeneSet extends JApplet {
 		
 		JComponent ttopcom = new JComponent() {};
 		ttopcom.setLayout( new FlowLayout() );
-		/*final JCheckBox	checkbox = new JCheckBox();
+		final JCheckBox	checkbox = new JCheckBox();
 		checkbox.setAction( new AbstractAction("Sort by location") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				locsort = checkbox.isSelected();
 			}
 		});
-		ttopcom.add( checkbox );*/
+		ttopcom.add( checkbox );
 		
 		final Set<String>	species = new TreeSet<String>();
 		final Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( uclusterlist, species );
@@ -6320,6 +6321,51 @@ public class GeneSet extends JApplet {
 		ftable.setComponentPopupMenu( fpopup );
 		
 		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Table text") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JTextArea	ta = new JTextArea();
+				ta.setDragEnabled( true );
+				JScrollPane	scrollpane = new JScrollPane( ta );
+				
+				StringBuilder	sb = new StringBuilder();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					for( int c = 0; c < table.getColumnCount()-1; c++ ) {
+						Object o = table.getValueAt(r, c);
+						if( c > 18 ) {
+							if( o != null ) {
+								String val = o.toString();
+								int k = val.indexOf(' ');
+								sb.append( val.substring(0, k) );
+								sb.append( "\t"+val.substring(k+1) );
+							} else sb.append("\t");
+						} else {
+							if( o != null ) {
+								sb.append( o.toString() );
+							}
+						}
+						sb.append("\t");
+					}
+					Object o = table.getValueAt(r, table.getColumnCount()-1);
+					if( o != null ) {
+						String val = o.toString();
+						int k = val.indexOf(' ');
+						sb.append( val.substring(0, k) );
+						sb.append( "\t"+val.substring(k+1) );
+					} else sb.append("\t");
+					sb.append("\n");
+				}
+				
+				ta.setText( sb.toString() );
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(scrollpane);
+				frame.setSize(400, 300);
+				frame.setVisible( true );
+			}
+		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("NCBI lookup") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -6660,7 +6706,6 @@ public class GeneSet extends JApplet {
 				updateFilter(2, ftextfield.getText(), ftable, filter, filterset, 5, null );
 			}
 		});
-		
 		popup.add( new AbstractAction("KEGG gene lookup") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
