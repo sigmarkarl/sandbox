@@ -3583,6 +3583,7 @@ public class GeneSet extends JApplet {
 		int								groupIdx;
 		int								groupCount;
 		double							corr16s;
+		double[]						corrarr;
 		
 		double							proximityGroupPreservation;
 	};
@@ -7277,7 +7278,39 @@ public class GeneSet extends JApplet {
 				
 				JScrollPane	scrollpane = new JScrollPane( textarea );
 				
-				int[] rr = table.getSelectedRows();
+				int r = table.getSelectedRow();
+				int cr = table.convertRowIndexToModel( r );
+				Gene gg = genelist.get(cr);
+				if( gg.species != null ) {
+					for( String s : corrInd ) {
+						if( s.equals( corrInd.get(0) ) ) textarea.append( s );
+						else textarea.append( "\t"+s );
+					}
+					
+					double[]	corrarr = gg.corrarr;
+					for( int i = 0; i < 16; i++ ) {
+						double min = Double.MAX_VALUE;
+						for( int k = 0; k < 16; k++ ) {
+							if( corrarr[i*16+k] < min ) min = corrarr[i*16+k];
+						}
+						
+						for( int k = 0; k < 16; k++ ) {
+							corrarr[i*16+k] = corrarr[i*16+k] - min;
+						}
+					}
+					
+					int i = 0;
+					for( double d : corrarr ) {
+						double dval = Math.exp( d/20.0+1.0 )/100.0; //0.0 ? 0.0 : 100.0/d;
+						if( i % 16 == 0 ) textarea.append( "\n"+dval );
+						else textarea.append( "\t" + dval );
+						
+						i++;
+						
+					}
+				}
+				
+				/*int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
@@ -7295,7 +7328,7 @@ public class GeneSet extends JApplet {
 							}
 						}
 					}
-				}			
+				}*/			
 				JFrame frame = new JFrame();
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				frame.add(scrollpane);
@@ -7574,6 +7607,7 @@ public class GeneSet extends JApplet {
 		return dret;
 	}
 	
+	static List<String>	corrInd;
 	private static JComponent newSoft( JButton jb ) throws IOException {
 		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		//InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
@@ -7647,7 +7681,7 @@ public class GeneSet extends JApplet {
 		int id = 0;
 		//Map<Set<String>,ClusterInfo>	clustInfoMap = new HashMap<Set<String>,ClusterInfo>();
 		
-		List<String>	corrInd = new ArrayList<String>();
+		corrInd = new ArrayList<String>();
 		is = GeneSet.class.getResourceAsStream("/all16S.blastout");
 		double[]	corr16sArray = load16SCorrelation( new InputStreamReader(is), corrInd );
 		
@@ -7801,6 +7835,7 @@ public class GeneSet extends JApplet {
 			
 			for( Gene g : gset ) {
 				g.corr16s = r;
+				g.corrarr = dcorr;
 			}
 		}
 		
