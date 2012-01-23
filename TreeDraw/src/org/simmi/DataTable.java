@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import javax.jnlp.ClipboardService;
-import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -48,8 +46,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
-import netscape.javascript.JSObject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
