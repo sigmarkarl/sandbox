@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.simmi.client.GreetingService;
-import org.simmi.shared.Chunk;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
