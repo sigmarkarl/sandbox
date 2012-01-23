@@ -2072,6 +2072,48 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		popup.addSeparator();
+		popup.add( new AbstractAction("Download files") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.isDirectory() ) f = f.getParentFile();
+					final File dir = f;
+				
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						String path = (String)table.getValueAt( r, 3 );
+						try {
+							URL url = new URL( path );
+							String[] str = path.split("\\/");
+							f = new File( dir, str[str.length-1] );
+							FileOutputStream	fos = new FileOutputStream( f );
+							InputStream is = url.openStream();
+							byte[] bb = new byte[2048];
+							r = is.read(bb);
+							while( r > 0 ) {
+								fos.write(bb,0,r);
+								r = is.read(bb);
+							}
+							is.close();
+							fos.close();
+						} catch (MalformedURLException e1) {
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+				
+				/*try {
+					SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				}*/
+			}
+		});
 		popup.add( new AbstractAction("Show file") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
