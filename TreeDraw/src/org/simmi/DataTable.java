@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import javax.jnlp.ClipboardService;
-import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -48,8 +46,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
-import netscape.javascript.JSObject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,11 +74,13 @@ public class DataTable extends JApplet {
 			Iterator<String> keys = jsono.keys();
 			while( keys.hasNext() ) {
 				String key = keys.next();
-				Object[] strs = tablemap.get( key );
-				JSONObject jo = jsono.getJSONObject(key);
-				strs[10] = jo.getString("country");
-				String vb = (String)jo.getString("valid");
-				if( vb != null ) strs[12] = Boolean.parseBoolean( vb );
+				if( tablemap.containsKey(key) ) {
+					Object[] strs = tablemap.get( key );
+					JSONObject jo = jsono.getJSONObject(key);
+					strs[11] = jo.getString("country");
+					String vb = (String)jo.getString("valid");
+					if( vb != null ) strs[13] = Boolean.parseBoolean( vb );
+				}
 			}
 			table.tableChanged( new TableModelEvent(table.getModel()) );
 		} catch (JSONException e) {
@@ -181,7 +179,7 @@ public class DataTable extends JApplet {
 				strs[i] = true;
 				//Arrays.copyOfRange(split, 1, split.length );
 				rowList.add( strs );
-				tablemap.put((String)strs[0], strs);
+				tablemap.put((String)strs[1], strs);
 				
 				line = br.readLine();
 			}
@@ -249,8 +247,8 @@ public class DataTable extends JApplet {
 
 			@Override
 			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-				int r = table.convertRowIndexToModel( rowIndex );
-				Object[] row = rowList.get(r);
+				//int r = table.convertRowIndexToModel( rowIndex );
+				Object[] row = rowList.get(rowIndex);
 				row[columnIndex] = aValue;
 				
 				JSObject jso = JSObject.getWindow( DataTable.this );
