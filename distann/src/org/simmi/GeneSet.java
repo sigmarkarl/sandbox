@@ -73,6 +73,7 @@ import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -5635,14 +5636,14 @@ public class GeneSet extends JApplet {
 		
 		JComponent ttopcom = new JComponent() {};
 		ttopcom.setLayout( new FlowLayout() );
-		/*final JCheckBox	checkbox = new JCheckBox();
+		final JCheckBox	checkbox = new JCheckBox();
 		checkbox.setAction( new AbstractAction("Sort by location") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				locsort = checkbox.isSelected();
 			}
 		});
-		ttopcom.add( checkbox );*/
+		ttopcom.add( checkbox );
 		
 		final Set<String>	species = new TreeSet<String>();
 		final Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( uclusterlist, species );
