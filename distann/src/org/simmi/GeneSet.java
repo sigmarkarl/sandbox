@@ -6319,6 +6319,21 @@ public class GeneSet extends JApplet {
 		ftable.setComponentPopupMenu( fpopup );
 		
 		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Select similar") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				int c = table.getSelectedColumn();
+				
+				Object o = table.getValueAt(r, c);
+				
+				table.setRowSelectionInterval(0, table.getRowCount()-1);
+				for( int i = 0; i < table.getRowCount(); i++ ) {
+					Object no = table.getValueAt(i, c);
+					if( o.equals(no) ) table.addRowSelectionInterval(i, i);
+				}
+			}
+		});
 		popup.add( new AbstractAction("Table text") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
