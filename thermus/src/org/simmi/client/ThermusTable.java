@@ -53,7 +53,7 @@ public class ThermusTable implements EntryPoint {
 	}
 	
 	public native void updateTableInApplet( JavaScriptObject appletelement, String tmap ) /*-{
-		$wnd.console.log( 'about to update table' );
+		$wnd.console.log( 'about to update table '+tmap );
 		appletelement.updateTable( tmap );
 	}-*/;
 	

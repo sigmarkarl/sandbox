@@ -73,6 +73,7 @@ import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -3583,6 +3584,7 @@ public class GeneSet extends JApplet {
 		int								groupIdx;
 		int								groupCount;
 		double							corr16s;
+		double[]						corrarr;
 		
 		double							proximityGroupPreservation;
 	};
@@ -5635,14 +5637,14 @@ public class GeneSet extends JApplet {
 		
 		JComponent ttopcom = new JComponent() {};
 		ttopcom.setLayout( new FlowLayout() );
-		/*final JCheckBox	checkbox = new JCheckBox();
+		final JCheckBox	checkbox = new JCheckBox();
 		checkbox.setAction( new AbstractAction("Sort by location") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				locsort = checkbox.isSelected();
 			}
 		});
-		ttopcom.add( checkbox );*/
+		ttopcom.add( checkbox );
 		
 		final Set<String>	species = new TreeSet<String>();
 		final Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( uclusterlist, species );
@@ -6319,6 +6321,51 @@ public class GeneSet extends JApplet {
 		ftable.setComponentPopupMenu( fpopup );
 		
 		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Table text") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JTextArea	ta = new JTextArea();
+				ta.setDragEnabled( true );
+				JScrollPane	scrollpane = new JScrollPane( ta );
+				
+				StringBuilder	sb = new StringBuilder();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					for( int c = 0; c < table.getColumnCount()-1; c++ ) {
+						Object o = table.getValueAt(r, c);
+						if( c > 18 ) {
+							if( o != null ) {
+								String val = o.toString();
+								int k = val.indexOf(' ');
+								sb.append( val.substring(0, k) );
+								sb.append( "\t"+val.substring(k+1) );
+							} else sb.append("\t");
+						} else {
+							if( o != null ) {
+								sb.append( o.toString() );
+							}
+						}
+						sb.append("\t");
+					}
+					Object o = table.getValueAt(r, table.getColumnCount()-1);
+					if( o != null ) {
+						String val = o.toString();
+						int k = val.indexOf(' ');
+						sb.append( val.substring(0, k) );
+						sb.append( "\t"+val.substring(k+1) );
+					} else sb.append("\t");
+					sb.append("\n");
+				}
+				
+				ta.setText( sb.toString() );
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(scrollpane);
+				frame.setSize(400, 300);
+				frame.setVisible( true );
+			}
+		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("NCBI lookup") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -6659,7 +6706,6 @@ public class GeneSet extends JApplet {
 				updateFilter(2, ftextfield.getText(), ftable, filter, filterset, 5, null );
 			}
 		});
-		
 		popup.add( new AbstractAction("KEGG gene lookup") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -7259,6 +7305,82 @@ public class GeneSet extends JApplet {
 				updateFilter( table, genefilter, label );
 			}
 		});
+		popup.add( new AbstractAction("Show distance matrix") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JTextArea textarea = new JTextArea();
+				
+				try {  
+			    	if( clipboardService == null ) clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+			    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+		            textarea.getActionMap().put( "copy", action );
+		            grabFocus = true;
+			    } catch (Exception ee) {
+			    	ee.printStackTrace();
+			    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+			    }
+				textarea.setDragEnabled( true );
+				
+				JScrollPane	scrollpane = new JScrollPane( textarea );
+				
+				int r = table.getSelectedRow();
+				int cr = table.convertRowIndexToModel( r );
+				Gene gg = genelist.get(cr);
+				if( gg.species != null ) {
+					for( String s : corrInd ) {
+						if( s.equals( corrInd.get(0) ) ) textarea.append( s );
+						else textarea.append( "\t"+s );
+					}
+					
+					double[]	corrarr = gg.corrarr;
+					for( int i = 0; i < 16; i++ ) {
+						double min = Double.MAX_VALUE;
+						for( int k = 0; k < 16; k++ ) {
+							if( corrarr[i*16+k] < min ) min = corrarr[i*16+k];
+						}
+						
+						for( int k = 0; k < 16; k++ ) {
+							corrarr[i*16+k] = corrarr[i*16+k] - min;
+						}
+					}
+					
+					int i = 0;
+					for( double d : corrarr ) {
+						double dval = Math.exp( d/20.0+1.0 )/100.0; //0.0 ? 0.0 : 100.0/d;
+						if( i % 16 == 0 ) textarea.append( "\n"+dval );
+						else textarea.append( "\t" + dval );
+						
+						i++;
+						
+					}
+				}
+				
+				/*int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if( gg.species != null ) {
+						textarea.append( gg.name + ":\n" );
+						for( String sp : gg.species.keySet() ) {
+							Teginfo stv = gg.species.get( sp );
+							for( Tegeval tv : stv.tset ) {
+								textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" );
+								for( int i = 0; i < tv.seq.length(); i+=70 ) {
+									int end = Math.min(i+70,tv.seq.length());
+									textarea.append( tv.seq.substring(i, end)+"\n" ); //new String( tv.seq, i, Math.min(i+70,tv.seq.length()) )+"\n");
+								}
+								//textarea.append( ">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n" + tv.seq + "\n" );
+							}
+						}
+					}
+				}*/			
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(scrollpane);
+				frame.setSize(400, 300);
+				frame.setVisible( true );
+			}
+		});
 		
 		/*final List<String>	reglist = new ArrayList<String>();
 		final Map<String,Gene>	regidx = new TreeMap<String,Gene>();
@@ -7530,6 +7652,7 @@ public class GeneSet extends JApplet {
 		return dret;
 	}
 	
+	static List<String>	corrInd;
 	private static JComponent newSoft( JButton jb ) throws IOException {
 		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		//InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
@@ -7603,7 +7726,7 @@ public class GeneSet extends JApplet {
 		int id = 0;
 		//Map<Set<String>,ClusterInfo>	clustInfoMap = new HashMap<Set<String>,ClusterInfo>();
 		
-		List<String>	corrInd = new ArrayList<String>();
+		corrInd = new ArrayList<String>();
 		is = GeneSet.class.getResourceAsStream("/all16S.blastout");
 		double[]	corr16sArray = load16SCorrelation( new InputStreamReader(is), corrInd );
 		
@@ -7757,6 +7880,7 @@ public class GeneSet extends JApplet {
 			
 			for( Gene g : gset ) {
 				g.corr16s = r;
+				g.corrarr = dcorr;
 			}
 		}
 		
