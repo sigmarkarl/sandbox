@@ -959,12 +959,43 @@ public class SerifyApplet extends JApplet {
 		runProcess( "Blast clusters", run, dialog );
 	}
 	
-	public void blastJoin( InputStream is, OutputStream os ) throws IOException {
+	public static class AvgProvider {
+		List<String>	joinset;
+		double			avg;
+		
+		public int count() {
+			return joinset.size();
+		}
+		
+		public AvgProvider( List<String> joinset, double avg ) {
+			 this.joinset = joinset;
+			 this.avg = avg;
+		}
+	};
+	
+	public final static class CountAverage implements Comparable<CountAverage> {
+		int count;
+		double avg;
+		
+		public CountAverage( int count, double avg ) {
+			this.count = count;
+			this.avg = avg;
+		}
+
+		@Override
+		public int compareTo(CountAverage o) {
+			int res = Integer.compare(count, o.count);
+			if( res == 0 ) res = Double.compare(avg, o.avg);
+			return res;
+		}
+	}
+	
+	public static void blastJoin( InputStream is, PrintStream ps ) throws IOException {
 		InputStreamReader 		fr = new InputStreamReader( is );
 		BufferedReader 	br = new BufferedReader( fr );
 		String line = br.readLine();
 		
-		PrintStream ps = new PrintStream( os );
+		//PrintStream ps = new PrintStream( os );
 		
 		Map<String,Map<String,Set<String>>>	specmap = new HashMap<String,Map<String,Set<String>>>();
 		
@@ -1095,7 +1126,7 @@ public class SerifyApplet extends JApplet {
 				
 				List<List<String>>	sortorder = new ArrayList<List<String>>();
 				
-				Map<List<String>,Integer>	joinMap = new HashMap<List<String>,Integer>();
+				Map<List<String>,List<Double>>	joinMap = new HashMap<List<String>,List<Double>>();
 				Map<String,Set<String>>	contigmap = specmap.get(spec);
 				for( String contig : contigmap.keySet() ) {
 					Set<String>	hitmap = contigmap.get(contig);
@@ -1138,6 +1169,24 @@ public class SerifyApplet extends JApplet {
 									hitmap.add( str1 );
 									hitmap.add( str2 );
 									
+									int jfn = str1.indexOf("Score =");
+									int nxt = str1.indexOf("bits", jfn+8);
+									double scr1 = 0;
+									try {
+										scr1 = Double.parseDouble( str1.substring(jfn+8, nxt).trim() );
+									} catch( Exception e ) {
+										System.err.println( str1 );
+									}
+									
+									jfn = str2.indexOf("Score =");
+									nxt = str2.indexOf("bits", jfn+8);
+									double scr2 = 0;
+									try {
+										scr2 = Double.parseDouble( str2.substring(jfn+8, nxt).trim() );
+									} catch( Exception e ) {
+										System.err.println( str2 );
+									}
+									
 									int ind1 = str1.indexOf("_left");
 									if( ind1 == -1 ) ind1 = str1.indexOf("_right");
 									if( ind1 == -1 ) ind1 = str1.indexOf("_all");
@@ -1163,11 +1212,14 @@ public class SerifyApplet extends JApplet {
 										Collections.sort( joinset );
 										if( minus1 != minus2 ) joinset.set(1, joinset.get(1)+" Minus");
 										
+										List<Double>	cntList;
 										if( joinMap.containsKey( joinset ) ) {
-											joinMap.put( joinset, joinMap.get(joinset)+1 );
+											cntList = joinMap.get(joinset);
 										} else {
-											joinMap.put( joinset, 1 );
+											cntList = new ArrayList<Double>();
+											joinMap.put( joinset, cntList );
 										}
+										cntList.add( (scr1+scr2)/2.0 );
 									}
 								}
 							}
@@ -1182,33 +1234,40 @@ public class SerifyApplet extends JApplet {
 				}
 
 				ps.println("Printing join count");
-				Map<Integer,List<List<String>>>	reverseset = new TreeMap<Integer,List<List<String>>>( Collections.reverseOrder() );
+				Map<CountAverage,List<AvgProvider>>	reverseset = new TreeMap<CountAverage,List<AvgProvider>>( Collections.reverseOrder() );
 				for( List<String> joinset : joinMap.keySet() ) {
-					int cnt = joinMap.get(joinset);
+					List<Double> cntList = joinMap.get(joinset);
+					int cnt = cntList.size();
+					double avg = 0;
+					for( double val : cntList ) {
+						avg += val;
+					}
+					avg /= cnt;
+					CountAverage cntavg = new CountAverage(cnt,avg);
 					
 					if( joinset.get(0).contains("all") || joinset.get(1).contains("all") ) cnt -= 1000; 
 					
-					if( reverseset.containsKey(cnt) ) {
-						List<List<String>>	joinlist = reverseset.get(cnt);
-						joinlist.add( joinset );
+					if( reverseset.containsKey( cntavg ) ) {
+						List<AvgProvider>	joinlist = reverseset.get(cntavg);
+						joinlist.add( new AvgProvider( joinset, avg ) );
 					} else {
-						List<List<String>> joinlist = new ArrayList<List<String>>();
-						joinlist.add( joinset );
-						reverseset.put(cnt, joinlist);
+						List<AvgProvider> joinlist = new ArrayList<AvgProvider>();
+						joinlist.add( new AvgProvider( joinset, avg ) );
+						reverseset.put( new CountAverage(cnt, avg), joinlist);
 					}
 				}
 				
-				for( int cnt : reverseset.keySet() ) {
-					List<List<String>>	joinlist = reverseset.get(cnt);
-					for( List<String> joinset : joinlist ) {
-						ps.println( joinset + ": " + cnt);
+				for( CountAverage cnt : reverseset.keySet() ) {
+					List<AvgProvider>	joinlist = reverseset.get(cnt);
+					for( AvgProvider avgp : joinlist ) {
+						ps.println( avgp.joinset + " " + avgp.avg + ": " + avgp.count());
 					}
 				}
 					
-					for( int cnt : reverseset.keySet() ) {
-						List<List<String>>	joinlist = reverseset.get(cnt);
-						for( List<String> joinset : joinlist ) {
-							
+					for( CountAverage cnt : reverseset.keySet() ) {
+						List<AvgProvider>	joinlist = reverseset.get(cnt);
+						for( AvgProvider avgp : joinlist ) {
+							List<String>	joinset = avgp.joinset;
 							String str1 = joinset.get(0);
 							String str2 = joinset.get(1);
 							
@@ -2463,7 +2522,7 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						blastJoin( new FileInputStream(s), new FileOutputStream(f) );
+						blastJoin( new FileInputStream(s), new PrintStream(new FileOutputStream(f)) );
 					} catch (FileNotFoundException e1) {
 						e1.printStackTrace();
 					} catch (IOException e1) {
@@ -2911,7 +2970,7 @@ public class SerifyApplet extends JApplet {
 			File f = new File( "/home/horfrae/result.txt" );
 			FileInputStream is = new FileInputStream("/home/horfrae/454AllContigs_flanking.blastout");
 			FileOutputStream os = new FileOutputStream(f);
-			sa.blastJoin( is, os );
+			SerifyApplet.blastJoin( is, new PrintStream(os) );
 			is.close();
 			os.close();
 		} catch (FileNotFoundException e) {
