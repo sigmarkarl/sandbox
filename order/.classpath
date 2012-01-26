@@ -17,5 +17,6 @@
 	<classpathentry kind="lib" path="C:/poi-3.8-beta4/lib/log4j-1.2.13.jar"/>
 	<classpathentry kind="lib" path="C:/poi-3.8-beta4/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="C:/poi-3.8-beta4/lib/junit-3.8.1.jar"/>
+	<classpathentry kind="lib" path="C:/sqljdbc_2.0/enu/sqljdbc4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
