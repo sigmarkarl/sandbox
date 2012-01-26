@@ -1066,14 +1066,18 @@ public class Order extends JApplet {
 		if( filter == null || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Rannsókn 1. hæð - 412(43%) & 612(57%)" );
 		if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "Rannsókn 2. hæð - 412(60%), 112(30%) & 212(10%)" );
 		
-		JSObject js = JSObject.getWindow( this );
-		js.call("getAllVerk", new Object[] {});
+		try {
+			JSObject js = JSObject.getWindow( this );
+			js.call("getAllVerk", new Object[] {});
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
 		//if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "60% 40000412, 30% 10000112, 10% 20000212" );
 	}
 	
 	List<String>	verkList = new ArrayList<String>();
 	public void updateVerk() throws SQLException {
-		String sql = "select [No_], [Description] from [MATIS].[dbo].[Matís ohf_$Job] where ([Blocked] = 0 and ([Global Dimension 1 Code] = '0100' or [Global Dimension 1 Code] = '0200' or [Global Dimension 1 Code] = '0300' or [Global Dimension 1 Code] = '0400' or [Global Dimension 1 Code] = '0500' or [Global Dimension 1 Code] = '0600' or [Global Dimension 1 Code] = '0700') or [Global Dimension 1 Code] = '3000' )"; // where [user] = '"+user+"'";
+		String sql = "select [No_], [Description] from [MATIS].[dbo].[Matís ohf_$Job] where ([Blocked] = 0 and ([Global Dimension 1 Code] = '0100' or [Global Dimension 1 Code] = '0200' or [Global Dimension 1 Code] = '0300' or [Global Dimension 1 Code] = '0400' or [Global Dimension 1 Code] = '0500' or [Global Dimension 1 Code] = '0600' or [Global Dimension 1 Code] = '0700') or [Global Dimension 1 Code] = '0800' or [Global Dimension 1 Code] = '3000' )"; // where [user] = '"+user+"'";
 		
 		PreparedStatement 	ps = con.prepareStatement(sql);
 		ResultSet 			rs = ps.executeQuery();
@@ -1585,8 +1589,7 @@ public class Order extends JApplet {
 		stcombo.addItem("Mælingar og miðlun (0500)");
 		stcombo.addItem("Erfðir, öryggi og umhverfi (0600)");
 		stcombo.addItem("Viðskiptaþróun (0700)");
-		
-		
+		stcombo.addItem("Fjármál og rekstur (0800)");
 		stcombo.addItem("Svið þrjúþúsund (3000)");
 		
 		stcombo.addItemListener( new ItemListener() {
