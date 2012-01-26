@@ -3767,7 +3767,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	public static void blastJoin( String name ) throws IOException {
+	/*public static void blastJoin( String name ) throws IOException {
 		FileReader 		fr = new FileReader( name );
 		BufferedReader 	br = new BufferedReader( fr );
 		String line = br.readLine();
@@ -3886,7 +3886,7 @@ public class GeneSet extends JApplet {
 				
 				List<List<String>>	sortorder = new ArrayList<List<String>>();
 				
-				Map<List<String>,Integer>	joinMap = new HashMap<List<String>,Integer>();
+				Map<List<String>,List<Integer>>	joinMap = new HashMap<List<String>,List<Integer>>();
 				Map<String,Set<String>>	contigmap = specmap.get(spec);
 				for( String contig : contigmap.keySet() ) {
 					Set<String>	hitmap = contigmap.get(contig);
@@ -3945,7 +3945,7 @@ public class GeneSet extends JApplet {
 										if( str1compl.compareTo( str2compl ) > 0 ) {
 											str1compl += " Minus";
 										} else str2compl += " Minus";
-									}*/
+									}*
 									
 									if( !str2simple.equals(str1simple) ) {
 										List<String> joinset = new ArrayList<String>();
@@ -3955,9 +3955,12 @@ public class GeneSet extends JApplet {
 										if( minus1 != minus2 ) joinset.set(1, joinset.get(1)+" Minus");
 										
 										if( joinMap.containsKey( joinset ) ) {
-											joinMap.put( joinset, joinMap.get(joinset)+1 );
+											List<Integer> li = joinMap.get(joinset);
+											li.add( Integer.parseInt(score) );
 										} else {
-											joinMap.put( joinset, 1 );
+											List<Integer> li = new ArrayList<Integer>();
+											li.add( Integer.parseInt(score) );
+											joinMap.put( joinset, li );
 										}
 									}
 								}
@@ -3975,7 +3978,7 @@ public class GeneSet extends JApplet {
 				System.out.println("Printing join count");
 				Map<Integer,List<List<String>>>	reverseset = new TreeMap<Integer,List<List<String>>>( Collections.reverseOrder() );
 				for( List<String> joinset : joinMap.keySet() ) {
-					int cnt = joinMap.get(joinset);
+					int cnt = joinMap.get(joinset).size();
 					
 					if( joinset.get(0).contains("all") || joinset.get(1).contains("all") ) cnt -= 1000; 
 					
@@ -4009,7 +4012,7 @@ public class GeneSet extends JApplet {
 									str2 = joinstr;
 									break;
 								}
-							}*/
+							}*
 							
 							boolean minus1 = str1.contains("Minus");
 							str1 = str1.replace(" Minus", "");
@@ -4028,7 +4031,7 @@ public class GeneSet extends JApplet {
 											/*if( seq.contains(str1simple) && seq.contains(str2simple) ) {
 												seqlist1 = sl;
 												seqlist2 = sl;
-											} else*/
+											} else*
 											
 											if( seq.contains(str1simple) ) {
 												if( seqlist1 == null ) seqlist1 = sl;
@@ -4081,7 +4084,7 @@ public class GeneSet extends JApplet {
 												System.err.println();
 											}
 										}
-									}*/
+									}*
 									
 									boolean left1 = str1.contains("left");
 									boolean left2 = str2.contains("left");
@@ -4290,7 +4293,7 @@ public class GeneSet extends JApplet {
 														}
 													}
 												}
-											}*/
+											}*
 										}
 									} else if( seqlist1 != seqlist2 ) {
 										String selseq1 = null;
@@ -4416,7 +4419,7 @@ public class GeneSet extends JApplet {
 										/*for( int k = 0; k < seqlist1.size(); k++ ) {
 											if( seqlist1.get(k).contains(str1) ) seqlist1.set(k, seqlist1.get(k)+"I");
 											else if( seqlist1.get(k).contains(str2) ) seqlist1.set(k, seqlist1.get(k)+"I");
-										}*/
+										}*
 										int i = 0;
 										i = 2;
 									}
@@ -4446,12 +4449,12 @@ public class GeneSet extends JApplet {
 					}
 					/*for( String s : so ) {
 						System.out.println(s);
-					}*/
+					}*
 					System.out.println();
 				}
 			}
 		}
-	}
+	}*/
 	
 	public static void blast2Filt( String name, String filtname ) throws IOException {
 		FileReader 		fr = new FileReader( name );
@@ -4865,7 +4868,7 @@ public class GeneSet extends JApplet {
 		//init( args );
 		
 		try {
-			//blastJoin("/home/horfrae/peter/stuff.blastout");
+			SerifyApplet.blastJoin( new FileInputStream("/home/horfrae/peter/stuff.blastout"), System.out );
 			
 			//flankingFasta("/home/sigmar/playground/all.fsa", "/home/sigmar/playground/flank.fsa");
 			//blast2Filt( "/home/sigmar/kaw.blastout", "/home/sigmar/newkaw_filter.txt" );
@@ -4932,7 +4935,7 @@ public class GeneSet extends JApplet {
 				//trimFasta( "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/ssu-parc.fasta", "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/movies/parc_thermus.fna", accset, false );*/
 	
 			//viggo();
-			simmi();
+			//simmi();
 			
 			//Map<String,Integer>	freqmap = loadFrequency( new FileReader("c:/viggo//arciformis_repeat.blastout") );
 			//loci2gene( new FileReader("c:/viggo/arciformis_repeat.blastout"), "c:/viggo/arciformis_v1.txt", null, freqmap );			
@@ -6321,6 +6324,27 @@ public class GeneSet extends JApplet {
 		ftable.setComponentPopupMenu( fpopup );
 		
 		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Add similar") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = table.getSelectedRow();
+				int c = table.getSelectedColumn();
+				
+				Object o = table.getValueAt(r, c);
+				
+				if( c >= 18 ) {
+					for( int i = 0; i < table.getRowCount(); i++ ) {
+						Object no = table.getValueAt(i, c);
+						if( no != null && !table.isRowSelected(i) ) table.addRowSelectionInterval(i, i);
+					}
+				} else {
+					for( int i = 0; i < table.getRowCount(); i++ ) {
+						Object no = table.getValueAt(i, c);
+						if( o.equals(no) && !table.isRowSelected(i) ) table.addRowSelectionInterval(i, i);
+					}
+				}
+			}
+		});
 		popup.add( new AbstractAction("Select similar") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -6329,10 +6353,17 @@ public class GeneSet extends JApplet {
 				
 				Object o = table.getValueAt(r, c);
 				
-				table.setRowSelectionInterval(0, table.getRowCount()-1);
-				for( int i = 0; i < table.getRowCount(); i++ ) {
-					Object no = table.getValueAt(i, c);
-					if( o.equals(no) ) table.addRowSelectionInterval(i, i);
+				table.removeRowSelectionInterval(0, table.getRowCount()-1);
+				if( c >= 18 ) {
+					for( int i = 0; i < table.getRowCount(); i++ ) {
+						Object no = table.getValueAt(i, c);
+						if( no != null ) table.addRowSelectionInterval(i, i);
+					}
+				} else {
+					for( int i = 0; i < table.getRowCount(); i++ ) {
+						Object no = table.getValueAt(i, c);
+						if( o.equals(no) ) table.addRowSelectionInterval(i, i);
+					}
 				}
 			}
 		});
@@ -6776,6 +6807,17 @@ public class GeneSet extends JApplet {
 					}
 				}
 				updateFilter( table, genefilter, label );
+			}
+		});
+		popup.add( new AbstractAction("Invert selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//genefilterset.clear();
+				int[] rr = table.getSelectedRows();
+				for( int r = 0; r < table.getRowCount(); r++ ) {
+					if( table.isRowSelected( r ) ) table.removeRowSelectionInterval(r, r);
+					else table.addRowSelectionInterval(r, r);
+				}
 			}
 		});
 		popup.addSeparator();
