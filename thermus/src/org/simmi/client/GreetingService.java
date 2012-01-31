@@ -12,4 +12,5 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 public interface GreetingService extends RemoteService {
 	String greetServer(String acc, String country, boolean valid) throws IllegalArgumentException;
 	Map<String,String>	getThermus();
+	Map<String,String> saveSel( String name, String val );
 }

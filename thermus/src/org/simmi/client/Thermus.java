@@ -1,5 +1,7 @@
 package org.simmi.client;
 
+import java.util.Map;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -8,7 +10,12 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
@@ -30,10 +37,49 @@ public class Thermus implements EntryPoint {
 		$wnd.console.log( log );
 	}-*/;
 	
+	public native void initFunctions() /*-{
+		var s = this;
+		$wnd.saveSel = function( name, val ) {
+			s.@org.simmi.client.Thermus::saveSel(Ljava/lang/String;Ljava/lang/String;)( name, val );
+		};
+	}-*/;
+	
+	public native void fillSelSaveInApplet( Element e, String json ) /*-{
+		e.fillSelectionSave( json );
+	}-*/;
+	
+	public void saveSel( String name, String val ) {
+		greetingService.saveSel( name, val, new AsyncCallback<Map<String,String>>() {
+			@Override
+			public void onSuccess(Map<String, String> result) {
+				Element e = Document.get().getElementById("thermusapplet");
+				JSONObject	json = new JSONObject();
+				for( String key : result.keySet() ) {
+					JSONArray array = new JSONArray();
+					String str = result.get(key);
+					String[] numbers = str.split(",");
+					int k = 0;
+					for( String num : numbers ) {
+						array.set(k++, new JSONNumber(Integer.parseInt(num)) );
+					}
+					json.put( key, array );
+				}
+				fillSelSaveInApplet( e, json.toString() );
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				console( caught.getMessage() );
+			}
+		});
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
+		initFunctions();
+		
 		final RootPanel rp = RootPanel.get();
 		//final RootPanel thermus = RootPanel.get("thermus");
 		
@@ -66,8 +112,8 @@ public class Thermus implements EntryPoint {
 		final Element ae = Document.get().createElement("applet");
 		ae.appendChild( pe );
 		
-		ae.setAttribute("id", "thermus");
-		ae.setAttribute("name", "thermus");
+		ae.setAttribute("id", "thermusapplet");
+		ae.setAttribute("name", "thermusapplet");
 		//ae.setAttribute("codebase", "http://dl.dropbox.com/u/10024658/");
 		ae.setAttribute("codebase", "http://thermusgenes.appspot.com/");
 		ae.setAttribute("width", "100%");
