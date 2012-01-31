@@ -12,4 +12,5 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public interface GreetingServiceAsync {
 	void greetServer(String acc, String country, boolean valid, AsyncCallback<String> callback);
 	void getThermus( AsyncCallback<Map<String,String>> callback );
+	void saveSel(String name, String val, AsyncCallback<Map<String,String>> callback);
 }

@@ -1,6 +1,7 @@
 package org.simmi.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -10,6 +11,12 @@ import org.simmi.shared.TreeUtil.Node;
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.DragEndEvent;
 import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
@@ -33,12 +40,193 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DialogBox;
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
 
 public class Treedraw implements EntryPoint {
 	Canvas	canvas;
 	Node[]	nodearray;
+	
+	public void handleTree( TreeUtil treeutil ) {
+		int ww = Window.getClientWidth();
+		
+		//treeutil.getNode().countLeaves()
+		
+		Node n = treeutil.getNode();
+		if( n != null ) {
+			int leaves = treeutil.getNode().getLeavesCount();
+			int levels = treeutil.getNode().countMaxHeight();
+			
+			console( "leaves " + leaves );
+			double	maxheight = treeutil.getNode().getMaxHeight();
+			
+			nodearray = new Node[ leaves ];
+			
+			canvas.setSize((ww-10)+"px", (10*leaves)+"px");
+			canvas.setCoordinateSpaceWidth( ww-10 );
+			canvas.setCoordinateSpaceHeight( 10*leaves );
+			
+			boolean vertical = true;
+			boolean equalHeight = false;
+			
+			Treedraw.this.h = 10*leaves;
+			Treedraw.this.w = ww-10;
+			
+			if( vertical ) {
+				dh = Treedraw.this.h/leaves;
+				dw = Treedraw.this.w/levels;
+			} else {
+				dh = Treedraw.this.h/levels;
+				dw = Treedraw.this.w/leaves;
+			}
+			
+			int starty = 10; //h/25;
+			int startx = 10; //w/25;
+			//GradientPaint shadeColor = createGradient( color, ny-k/2, h );
+			//drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
+			
+			ci = 0;
+			//g2.setFont( dFont );
+			double minh = treeutil.getminh();
+			double maxh = treeutil.getmaxh();
+			
+			double minh2 = treeutil.getminh2();
+			double maxh2 = treeutil.getmaxh2();
+			
+			console( Double.toString( maxheight ) );
+			console( Double.toString( maxh-minh ) );
+			console( Double.toString(maxh2-minh2) );
+			
+			if( vertical ) {
+				drawFramesRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
+				ci = 0;
+				drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+			} else {
+				drawFramesRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
+				ci = 0;
+				drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+			}
+		}
+	}
+	
+	public void handleText( String str ) {
+		console( str );
+		if( !str.startsWith("(") ) {
+			TreeUtil treeutil = new TreeUtil();
+			int len = 0;
+			List<String> names;
+			double[] dvals;
+			if( str.startsWith(" ") ) {
+				names = new ArrayList<String>();
+				String[] lines = str.split("\n");
+				len = Integer.parseInt( lines[0].trim() );
+				dvals = new double[ len*len ];
+				int m = 0;
+				int u = 0;
+				for( int i = 1; i < lines.length; i++ ) {
+					String line = lines[i];
+					String[] ddstrs = line.split("[ ]+");
+					if( !line.startsWith(" ") ) {
+						m++;
+						u = 0;
+						
+						int si = ddstrs[0].indexOf('_');
+						String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
+						console( "name: " + name );
+						names.add( name );
+					}
+					if( ddstrs.length > 2 ) {
+						for( int k = 1; k < ddstrs.length; k++ ) {
+							int idx = (m-1)*len+(u++);
+							if( idx < 256 ) dvals[idx] = Double.parseDouble(ddstrs[k]);
+							else console( m + " more " + u );
+						}
+					}
+				}
+			} else {
+				String[] lines = str.split("\n");
+				names = Arrays.asList( lines[0].split("\t") );
+				len = names.size();
+				dvals = new double[len*len];
+				for( int i = 1; i < lines.length; i++ ) {
+					String[] ddstrs = lines[i].split("\t");
+					if( ddstrs.length > 1 ) {
+						int k = 0;
+						for( String ddstr : ddstrs ) {
+							dvals[(i-1)*len+(k++)] = Double.parseDouble(ddstr);
+						}
+					}
+				}
+			}
+			treeutil.neighborJoin( dvals, len, names );
+			console( treeutil.getNode().toString() );
+			handleTree( treeutil );
+		} else {
+			String tree = str.replaceAll("[\r\n]+", "");
+			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null );
+			handleTree( treeutil );
+		}
+	}
+	
+	public native String handleFiles( Element ie, int append ) /*-{		
+		$wnd.console.log('dcw');
+		var hthis = this;
+		file = ie.files[0];
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			hthis.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)(e.target.result);
+		};
+		reader.onerror = function(e) {
+	  		$wnd.console.log("error", e);
+	  		$wnd.console.log(e.getMessage());
+		};
+		$wnd.console.log('befreadastext');
+		reader.readAsText( file, "utf8" );
+		$wnd.console.log('afterreadastext');
+	}-*/;
+	
+	public native void click( JavaScriptObject e ) /*-{
+		e.click();
+	}-*/;
+	
+	public void openFileDialog( final int append ) {
+		final DialogBox	db = new DialogBox();
+		db.setText("Open file ...");
+		
+		//HorizontalPanel	vp = new HorizontalPanel();
+		final FormPanel	form = new FormPanel();
+		form.setAction("/");
+	    form.setEncoding(FormPanel.ENCODING_MULTIPART);
+	    form.setMethod(FormPanel.METHOD_POST);
+	    
+		//form.add( vp );*/
+		final FileUpload	file = new FileUpload();
+		//file.
+		//file.getElement().setAttribute("accept", "");
+		file.getElement().setId("fasta");
+	
+		form.add( file );
+		db.add( form );
+		/*file.fireEvent( GwtEvent)
+		
+		//SubmitButton	submit = new SubmitButton();	
+		//submit.setText("Open");*/
+		
+		file.addChangeHandler( new ChangeHandler() {
+			@Override
+			public void onChange(ChangeEvent event) {
+				handleFiles( file.getElement(), append );
+				db.hide();
+			}
+		});
+		
+		db.setAutoHideEnabled( true );
+		db.center();
+		//file.fireEvent( new ClickEvent(){} );
+		click( file.getElement() );
+	}
 	
 	@Override
 	public void onModuleLoad() {
@@ -53,67 +241,7 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onDrop(DropEvent event) {
 				String str = event.getData("text/plain");
-				String tree = str.replaceAll("[\r\n]+", "");
-				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null );
-				int ww = Window.getClientWidth();
-				
-				//treeutil.getNode().countLeaves()
-				
-				Node n = treeutil.getNode();
-				if( n != null ) {
-					int leaves = treeutil.getNode().getLeavesCount();
-					int levels = treeutil.getNode().countMaxHeight();
-					
-					console( "leaves " + leaves );
-					double	maxheight = treeutil.getNode().getMaxHeight();
-					
-					nodearray = new Node[ leaves ];
-					
-					canvas.setSize((ww-10)+"px", (10*leaves)+"px");
-					canvas.setCoordinateSpaceWidth( ww-10 );
-					canvas.setCoordinateSpaceHeight( 10*leaves );
-					
-					boolean vertical = true;
-					boolean equalHeight = false;
-					
-					Treedraw.this.h = 10*leaves;
-					Treedraw.this.w = ww-10;
-					
-					if( vertical ) {
-						dh = Treedraw.this.h/leaves;
-						dw = Treedraw.this.w/levels;
-					} else {
-						dh = Treedraw.this.h/levels;
-						dw = Treedraw.this.w/leaves;
-					}
-					
-					int starty = 10; //h/25;
-					int startx = 10; //w/25;
-					//GradientPaint shadeColor = createGradient( color, ny-k/2, h );
-					//drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
-					
-					ci = 0;
-					//g2.setFont( dFont );
-					double minh = treeutil.getminh();
-					double maxh = treeutil.getmaxh();
-					
-					double minh2 = treeutil.getminh2();
-					double maxh2 = treeutil.getmaxh2();
-					
-					console( Double.toString( maxheight ) );
-					console( Double.toString( maxh-minh ) );
-					console( Double.toString(maxh2-minh2) );
-					
-					if( vertical ) {
-						drawFramesRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
-						ci = 0;
-						drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
-					} else {
-						drawFramesRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
-						ci = 0;
-						drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
-					}
-				}
+				handleText( str );
 				
 				//drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 10, 10, 10, 10, false, false, true, treeutil.getminh(), treeutil.getmaxh());
 			}
@@ -142,7 +270,12 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onDragOver(DragOverEvent event) {}
 		});
-		
+		canvas.addDoubleClickHandler( new DoubleClickHandler() {
+			@Override
+			public void onDoubleClick(DoubleClickEvent event) {
+				openFileDialog( 0 );
+			}
+		});
 		canvas.addMouseDownHandler( new MouseDownHandler() {
 			@Override
 			public void onMouseDown(MouseDownEvent event) {
