@@ -1260,7 +1260,7 @@ public class SerifyApplet extends JApplet {
 				for( CountAverage cnt : reverseset.keySet() ) {
 					List<AvgProvider>	joinlist = reverseset.get(cnt);
 					for( AvgProvider avgp : joinlist ) {
-						ps.println( avgp.joinset + " " + avgp.avg + ": " + avgp.count());
+						ps.println( avgp.joinset + " " + avgp.avg + ": " + cnt.count);
 					}
 				}
 					

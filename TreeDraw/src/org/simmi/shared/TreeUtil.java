@@ -11,6 +11,101 @@ import java.util.Set;
 public class TreeUtil {
 	public Node currentNode = null;
 	
+	public void neighborJoin( double[] corrarr, int len, List<String> corrInd ) {
+		List<Node> nodes = new ArrayList<Node>();
+		for( int i = 0; i < len; i++ ) {
+			nodes.add( new Node( corrInd.get(i) ) );
+		}
+		
+		double[] dmat = new double[len*len];
+		double[] u = new double[len];
+		System.arraycopy(corrarr, 0, dmat, 0, len*len);
+		while( len > 2 ) {
+			System.err.println( "trying " + len + " size is " + nodes.size() );
+			for ( int i = 0; i < len; i++ ) {
+				u[i] = 0;
+				for ( int j = 0; j < len; j++ ) {
+					if( i != j ) {
+						u[i] += dmat[i*len+j];
+					}
+				}
+				u[i] /= len-2;
+			}
+			
+			int imin = 0;
+			int jmin = 0;
+			double dmin = Double.MAX_VALUE;
+			for ( int i = 0; i < len; i++ ) {
+				for ( int j = 0; j < len; j++ ) {
+					if( i != j ) {
+						double val = dmat[i*len+j] - u[i] - u[j];
+						if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+						if( val < dmin ) {
+							dmin = val;
+							imin = i;
+							jmin = j;
+							
+							System.err.println("mino " + val + " " + i + " " + j);
+						}
+					}
+				}
+			}
+			
+			System.err.println( dmat[imin*len+jmin] );
+			double vi = (dmat[imin*len+jmin]+u[imin]-u[jmin])/2.0;
+			double vj = (dmat[imin*len+jmin]+u[jmin]-u[imin])/2.0;
+			Node parnode = new Node();
+			parnode.addNode( nodes.get(imin), vi );
+			parnode.addNode( nodes.get(jmin), vj );
+			
+			if( imin > jmin ) {
+				nodes.remove(imin);
+				nodes.remove(jmin);
+			} else {
+				nodes.remove(jmin);
+				nodes.remove(imin);
+			}
+			nodes.add( parnode );
+			
+			double[] dmatmp = new double[(len-1)*(len-1)];
+			int k = 0;
+			for( int i = 0; i < len; i++ ) {
+				if( i != imin && i != jmin ) {
+					for( int j = 0; j < len; j++ ) {
+						if( j != imin && j != jmin ) {
+							dmatmp[k++] = dmat[i*len+j];
+						}
+					}
+					k++;
+				}
+			}
+			k = 0;
+			for( int i = 0; i < len; i++ ) {
+				if( i != imin && i != jmin ) {
+					dmatmp[((k++) + 1)*(len-1)-1] = (dmat[imin*len+i] + dmat[jmin*len+i] - dmat[imin*len+jmin])/2.0;
+				}
+			}
+			k = 0;
+			for( int i = 0; i < len; i++ ) {
+				if( i != imin && i != jmin ) {
+					dmatmp[(len-2)*(len-1)+(k++)] = (dmat[i*len+imin] + dmat[i*len+jmin] - dmat[jmin*len+imin])/2.0;
+				}
+			}
+			len--;
+			dmat = dmatmp;
+			
+			System.err.println( "size is " + nodes.size() );
+		}
+		
+		Node parnode = new Node();
+		parnode.addNode( nodes.get(0), dmat[1] );
+		parnode.addNode( nodes.get(1), dmat[3] );
+		nodes.clear();
+		
+		parnode.countLeaves();
+		currentNode = parnode;
+	}
+	
 	public Node getNode() {
 		return currentNode;
 	}
@@ -29,6 +124,11 @@ public class TreeUtil {
 		public Node() {
 			nodes = new ArrayList<Node>();
 			metacount = 0;
+		}
+		
+		public Node( String name ) {
+			this();
+			this.name = name;
 		}
 		
 		public double geth2() {
@@ -68,6 +168,11 @@ public class TreeUtil {
 			return nodes;
 		}
 		
+		public void addNode( Node node, double h ) {
+			nodes.add( node );
+			node.h = h;
+		}
+		
 		public void setName( String newname ) {
 			this.name = newname;
 		}
@@ -91,6 +196,8 @@ public class TreeUtil {
 					total += node.countLeaves();
 				}
 			} else total = 1;
+			leaves = total;
+			
 			return total;
 		}
 		
@@ -336,6 +443,10 @@ public class TreeUtil {
 		for( Node n : node.nodes ) {
 			markColor(n, colormap);
 		}
+	}
+	
+	public TreeUtil() {
+		super();
 	}
 	
 	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap ) {

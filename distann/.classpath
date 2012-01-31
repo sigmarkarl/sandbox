@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_02/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_02/jre/lib/plugin.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/serifier"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
