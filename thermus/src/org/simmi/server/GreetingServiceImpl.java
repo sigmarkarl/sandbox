@@ -53,7 +53,28 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			}
 			ret.put( (String)e.getProperty("acc"), str );
 		}
-		
 		return ret;
+	}
+
+	@Override
+	public Map<String,String> saveSel(String name, String val) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+		if( name != null ) {
+			Entity ent = new Entity("selection");
+			ent.setProperty("name", name);
+			ent.setProperty("sel", val);
+			Key key = datastore.put( ent );
+		}
+		
+		Map<String,String>	retmap = new HashMap<String,String>();
+		Query query = new Query("selection");	
+		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		for( Entity ent : seqsEntities ) {
+			retmap.put( (String)ent.getProperty("name"), (String)ent.getProperty("sel") );
+		}
+		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];		
+		
+		return retmap;
 	}
 }
