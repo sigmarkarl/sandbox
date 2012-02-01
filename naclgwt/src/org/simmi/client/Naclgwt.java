@@ -2,8 +2,10 @@ package org.simmi.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -55,10 +57,21 @@ public class Naclgwt implements EntryPoint {
 		});
 		
 		final TextArea	textarea = new TextArea();
-		textarea.addValueChangeHandler( new ValueChangeHandler<String>() {
+		textarea.addKeyPressHandler( new KeyPressHandler() {
 			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				console( event.getValue() );
+			public void onKeyPress(KeyPressEvent event) {
+				char cc = event.getCharCode();
+				if( cc == '\r' ) {
+					String val = textarea.getText();
+					int i = val.lastIndexOf('\n');
+					String last = "";
+					if( i != -1 ) {
+						last = val.substring(i+1, val.length());
+					} else {
+						last = val.substring(0, val.length());
+					}
+					console( last );
+				}
 			}
 		});
 		rp.add( textarea );
