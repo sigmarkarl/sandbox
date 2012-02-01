@@ -39,19 +39,17 @@ public class TreeUtil {
 				for ( int j = 0; j < len; j++ ) {
 					if( i != j ) {
 						double val = dmat[i*len+j] - u[i] - u[j];
-						if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+						//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
 						if( val < dmin ) {
 							dmin = val;
 							imin = i;
 							jmin = j;
-							
-							System.err.println("mino " + val + " " + i + " " + j);
 						}
 					}
 				}
 			}
 			
-			System.err.println( dmat[imin*len+jmin] );
+			//System.err.println( dmat[imin*len+jmin] );
 			double vi = (dmat[imin*len+jmin]+u[imin]-u[jmin])/2.0;
 			double vj = (dmat[imin*len+jmin]+u[jmin]-u[imin])/2.0;
 			Node parnode = new Node();
@@ -121,6 +119,9 @@ public class TreeUtil {
 		int			leaves = 0;
 		Node		parent;
 		
+		double		canvasx;
+		double		canvasy;
+		
 		public Node() {
 			nodes = new ArrayList<Node>();
 			metacount = 0;
@@ -129,6 +130,19 @@ public class TreeUtil {
 		public Node( String name ) {
 			this();
 			this.name = name;
+		}
+		
+		public void setCanvasLoc( double x, double y ) {
+			canvasx = x;
+			canvasy = y;
+		}
+		
+		public double getCanvasX() {
+			return canvasx;
+		}
+		
+		public double getCanvasY() {
+			return canvasy;
 		}
 		
 		public double geth2() {
