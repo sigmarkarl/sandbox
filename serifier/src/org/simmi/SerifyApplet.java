@@ -68,6 +68,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -2003,6 +2004,30 @@ public class SerifyApplet extends JApplet {
 		});
 		
 		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Import fasta") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser	filechooser = new JFileChooser();
+				filechooser.setMultiSelectionEnabled( true );
+				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+					File cd = filechooser.getCurrentDirectory();
+					String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
+					
+					if( path != null ) {
+						try {
+							for( File f : filechooser.getSelectedFiles() ) {
+								addSequences( f.getName(), path+f.getName() );
+							}
+						} catch (URISyntaxException e1) {
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+		});
+		popup.addSeparator();
 		popup.add( new AbstractAction("Create database") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -2588,8 +2613,8 @@ public class SerifyApplet extends JApplet {
 		});
 		
 		table.setComponentPopupMenu( popup );
-		
 		JScrollPane	scrollpane = new JScrollPane( table );
+		scrollpane.setComponentPopupMenu( popup );
 		scrollpane.setBackground( bgcolor );
 		scrollpane.getViewport().setBackground( bgcolor );
 		scrollpane.setTransferHandler( new TransferHandler() {
