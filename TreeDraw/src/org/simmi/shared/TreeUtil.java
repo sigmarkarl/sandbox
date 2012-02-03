@@ -122,6 +122,20 @@ public class TreeUtil {
 		double		canvasx;
 		double		canvasy;
 		
+		String		collapsed = null;
+		
+		public boolean isCollapsed() {
+			return collapsed != null;
+		}
+		
+		public String getCollapsedString() {
+			return collapsed;
+		}
+		
+		public void setCollapsed( String collapsed ) {
+			this.collapsed = collapsed;
+		}
+		
 		public Node() {
 			nodes = new ArrayList<Node>();
 			metacount = 0;
@@ -205,7 +219,7 @@ public class TreeUtil {
 		
 		public int countLeaves() {
 			int total = 0;
-			if( nodes != null && nodes.size() > 0 ) {
+			if( !isCollapsed() && nodes != null && nodes.size() > 0 ) {
 				for( Node node : nodes ) {
 					total += node.countLeaves();
 				}
