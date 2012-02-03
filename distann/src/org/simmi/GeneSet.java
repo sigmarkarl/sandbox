@@ -7253,6 +7253,16 @@ public class GeneSet extends JApplet {
 					}
 					
 					double[] corrarr = gg.corrarr;
+					boolean symmetrize = true;
+					if( symmetrize ) {
+						for( i = 0; i < len; i++ ) {
+							for( int k = i+1; k < len; k++ ) {
+								corrarr[i*len+k] = (corrarr[k*len+i]+corrarr[i*len+k])/2.0;
+								corrarr[k*len+i] = corrarr[i*len+k];
+							}
+						}
+					}
+					
 					for (i = 0; i < len; i++) {
 						for (int k = 0; k < len; k++) {
 							if (corrarr[i * len + k] < min[i])

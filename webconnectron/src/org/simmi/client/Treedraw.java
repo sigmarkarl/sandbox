@@ -10,6 +10,7 @@ import org.simmi.shared.TreeUtil.Node;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.cell.client.IsCollapsible;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
@@ -233,6 +234,18 @@ public class Treedraw implements EntryPoint {
 		click( file.getElement() );
 	}
 	
+	public void recursiveNodeCollapse( Node node, double x, double y ) {
+		if( node != null ) {
+			if( Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5 ) {
+				node.setCollapsed( node.isCollapsed() ? null : "collapsed" );
+			} else {
+				for( Node n : node.getNodes() ) {
+					recursiveNodeCollapse( n, x, y );
+				}
+			}
+		}
+	}
+	
 	public void recursiveNodeClick( Node node, double x, double y ) {
 		if( node != null ) {
 			if( Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5 ) {
@@ -308,42 +321,47 @@ public class Treedraw implements EntryPoint {
 				int x = event.getX();
 				int y = event.getY();
 				
-				recursiveNodeClick( root, x, y );
 				canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+				if( event.isControlKeyDown() ) {
+					recursiveNodeCollapse( root, x, y );
+					root.countLeaves();
+				} else {
+					recursiveNodeClick( root, x, y );
+					/*if( nodearray != null ) {
+						int y = event.getY();
+						int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
+						final Node n = nodearray[i];
+						
+						int ci = n.getName().indexOf(",");
+						String fname = ci > 0 ? n.getName().substring(1,ci) : n.getName();
+						RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
+						try {
+							rq.sendRequest( fname, new RequestCallback() {
+								@Override
+								public void onResponseReceived(Request request, Response response) {
+									DialogBox	d = new DialogBox();
+									d.getCaption().setText("NCBI 16SMicrobial blast");
+									d.setAutoHideEnabled( true );
+									
+									TextArea	ta = new TextArea();
+									ta.setSize(800+"px", 600+"px");
+									ta.setText( response.getText() );
+									d.add( ta );
+									
+									d.center();
+								}
+								
+								@Override
+								public void onError(Request request, Throwable exception) {
+									console( exception.getMessage() );
+								}
+							} );
+						} catch (RequestException e) {
+							e.printStackTrace();
+						}				
+					}*/
+				}
 				if( treeutil != null ) drawTree( treeutil );
-				/*if( nodearray != null ) {
-					int y = event.getY();
-					int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
-					final Node n = nodearray[i];
-					
-					int ci = n.getName().indexOf(",");
-					String fname = ci > 0 ? n.getName().substring(1,ci) : n.getName();
-					RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
-					try {
-						rq.sendRequest( fname, new RequestCallback() {
-							@Override
-							public void onResponseReceived(Request request, Response response) {
-								DialogBox	d = new DialogBox();
-								d.getCaption().setText("NCBI 16SMicrobial blast");
-								d.setAutoHideEnabled( true );
-								
-								TextArea	ta = new TextArea();
-								ta.setSize(800+"px", 600+"px");
-								ta.setText( response.getText() );
-								d.add( ta );
-								
-								d.center();
-							}
-							
-							@Override
-							public void onError(Request request, Throwable exception) {
-								console( exception.getMessage() );
-							}
-						} );
-					} catch (RequestException e) {
-						e.printStackTrace();
-					}				
-				}*/
 			}
 		});
 		
@@ -451,7 +469,8 @@ public class Treedraw implements EntryPoint {
 		return null;
 	}
 	
-	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {		
+	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
+		
 		int total = 0;
 		if( vertical ) node.setCanvasLoc( startx, y+starty );
 		else node.setCanvasLoc( x+startx, starty );
@@ -493,7 +512,8 @@ public class Treedraw implements EntryPoint {
 			//int yoff = starty-k/2;
 			
 			String use = resnode.getName() == null || resnode.getName().length() == 0 ? resnode.getMeta() : resnode.getName();
-			boolean nullNodes = resnode.getNodes() == null || resnode.getNodes().size() == 0;
+			use = resnode.isCollapsed() ? resnode.getCollapsedString() : use;
+			boolean nullNodes = resnode.isCollapsed() || resnode.getNodes() == null || resnode.getNodes().size() == 0;
 			boolean paint = use != null && use.length() > 0;
 			
 			/*System.err.println( resnode.meta );
@@ -513,10 +533,15 @@ public class Treedraw implements EntryPoint {
 				color = resnode.color;
 			}*/
 			
-			if( vertical ) {
-				drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight );
+			if( !resnode.isCollapsed() ) {
+				if( vertical ) {
+					drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight );
+				} else {
+					drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight );
+				}
 			} else {
-				drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight );
+				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
+				else resnode.setCanvasLoc( x+dw*total+(dw*mleaves)/2.0, ny );
 			}
 		
 			//ny+=starty;
@@ -548,7 +573,11 @@ public class Treedraw implements EntryPoint {
 					//g2.setFont( bFont );
 					
 					if( resnode.getMeta() != null ) resnode.setName( resnode.getName() + " ("+resnode.getMeta()+")" );
-					String[] split = resnode.getName().split("_");
+					
+					String[] split;
+					if( resnode.getName() == null || resnode.getName().length() == 0 ) split = resnode.getCollapsedString().split("_");
+					else split = resnode.getName().split("_");
+					
 					int t = 0;
 					double mstrw = 0;
 					double mstrh = 10;
