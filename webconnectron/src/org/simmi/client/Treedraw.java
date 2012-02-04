@@ -10,7 +10,7 @@ import org.simmi.shared.TreeUtil.Node;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.cell.client.IsCollapsible;
+import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
@@ -246,17 +246,23 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public void recursiveNodeClick( Node node, double x, double y ) {
+	public void recursiveNodeClick( Node node, double x, double y, int recursive ) {
 		if( node != null ) {
-			if( Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5 ) {
+			if( recursive > 1 || (Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5) ) {
 				for( int i = 0; i < node.getNodes().size()/2; i++ ) {
 					Node n = node.getNodes().get(i);
 					node.getNodes().set(i, node.getNodes().get(node.getNodes().size()-1-i) );
 					node.getNodes().set(node.getNodes().size()-1-i, n);
 				}
+				
+				if( recursive > 0 ) {
+					for( Node n : node.getNodes() ) {
+						recursiveNodeClick( n, x, y, recursive+1 );
+					}
+				}
 			} else {
 				for( Node n : node.getNodes() ) {
-					recursiveNodeClick( n, x, y );
+					recursiveNodeClick( n, x, y, recursive );
 				}
 			}
 		}
@@ -325,8 +331,10 @@ public class Treedraw implements EntryPoint {
 				if( event.isControlKeyDown() ) {
 					recursiveNodeCollapse( root, x, y );
 					root.countLeaves();
+				} else if( event.isShiftKeyDown() ) {
+					recursiveNodeClick( root, x, y, 1 );
 				} else {
-					recursiveNodeClick( root, x, y );
+					recursiveNodeClick( root, x, y, 0 );
 					/*if( nodearray != null ) {
 						int y = event.getY();
 						int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
@@ -364,6 +372,18 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
+		
+		//console( canvas.getOffsetWidth() + "  " + canvas.getOffsetHeight() );
+		canvas.setCoordinateSpaceWidth( w );
+		canvas.setCoordinateSpaceHeight( h );
+		Context2d context = canvas.getContext2d();
+		
+		String str = "Drop text in distance matrix or newick tree format to this canvas";
+		TextMetrics tm = context.measureText( str );
+		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0-8.0);
+		str = "Double click to open file dialog";
+		tm = context.measureText( str );
+		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
 		
 		rp.add( canvas );
 	}
@@ -572,11 +592,12 @@ public class Treedraw implements EntryPoint {
 					g2.setFillStyle( "#000000" );
 					//g2.setFont( bFont );
 					
-					if( resnode.getMeta() != null ) resnode.setName( resnode.getName() + " ("+resnode.getMeta()+")" );
+					String name = resnode.getName();
+					if( resnode.getMeta() != null ) name += " ("+resnode.getMeta()+")";
 					
 					String[] split;
-					if( resnode.getName() == null || resnode.getName().length() == 0 ) split = resnode.getCollapsedString().split("_");
-					else split = resnode.getName().split("_");
+					if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
+					else split = name.split("_");
 					
 					int t = 0;
 					double mstrw = 0;
