@@ -1,5 +1,7 @@
 package org.simmi.client;
 
+import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
@@ -52,10 +54,12 @@ public class Webconnectron implements EntryPoint {
 		Style				st = rp.getElement().getStyle();
 		st.setMargin( 0.0, Unit.PX );
 		st.setPadding( 0.0, Unit.PX );
+		st.setBorderWidth( 0.0, Unit.PX );
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
-		rp.setPixelSize(w, h);
+		//rp.setPixelSize(w, h);
+		rp.setSize(w+"px", h+"px");
 		
 		VerticalPanel vp = new VerticalPanel();
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
@@ -72,12 +76,32 @@ public class Webconnectron implements EntryPoint {
 			public void onResize(ResizeEvent event) {
 				int w = event.getWidth();
 				int h = event.getHeight();
-				rp.setPixelSize( w, h );
-				connectron.getCanvas().setCoordinateSpaceWidth( w );
-				connectron.getCanvas().setCoordinateSpaceHeight( h );
+				
+				if( w != oldw && w != olderw && h != oldh && h != olderh ) {
+					//rp.setPixelSize( w, h );
+					rp.setSize(w+"px", h+"px");
+					connectron.getCanvas().setCoordinateSpaceWidth( w );
+					connectron.getCanvas().setCoordinateSpaceHeight( h );
+					
+					Context2d context = connectron.getCanvas().getContext2d();
+					context.setFillStyle("#000000");
+					String str = "Drop text in distance matrix or newick tree format to this canvas";
+					TextMetrics tm = context.measureText( str );
+					context.fillText(str, (w-tm.getWidth())/2.0, h/2.0-8.0);
+					str = "Double click to open file dialog";
+					tm = context.measureText( str );
+					context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
+				}
+				
+				olderw = oldw;
+				oldw = w;
+				olderh = oldh;
+				oldh = h;
 			}
 		});
 		
 		rp.add( vp );
 	}
+	int oldw, olderw;
+	int oldh, olderh;
 }
