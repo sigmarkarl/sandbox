@@ -290,7 +290,9 @@ public class DataTable extends JApplet {
 		final Transferable transferable = new Transferable() {
 			@Override
 			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-				InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus.ntree");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus.ntree");
+				InputStream is = DataTable.this.getClass().getResourceAsStream("/RAxML_10993.ntree");
+				
 				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 				StringBuilder sb = new StringBuilder();
 				String line = br.readLine();
