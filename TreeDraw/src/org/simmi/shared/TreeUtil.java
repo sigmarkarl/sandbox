@@ -21,7 +21,7 @@ public class TreeUtil {
 		double[] u = new double[len];
 		System.arraycopy(corrarr, 0, dmat, 0, len*len);
 		while( len > 2 ) {
-			System.err.println( "trying " + len + " size is " + nodes.size() );
+			//System.err.println( "trying " + len + " size is " + nodes.size() );
 			for ( int i = 0; i < len; i++ ) {
 				u[i] = 0;
 				for ( int j = 0; j < len; j++ ) {
