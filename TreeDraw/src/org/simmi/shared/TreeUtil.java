@@ -586,6 +586,10 @@ public class TreeUtil {
 				//res.h = oldnode.h;
 				oldnode.h = b;
 				oldnode.nodes.remove( res );
+				
+				currentNode = newnode;
+				currentNode.countLeaves();
+				
 				return tmph;
 			}
 		}
