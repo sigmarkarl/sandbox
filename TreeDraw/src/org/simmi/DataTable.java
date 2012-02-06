@@ -2,12 +2,14 @@ package org.simmi;
 
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,7 +32,6 @@ import javax.jnlp.ClipboardService;
 import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -55,7 +56,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.TreeUtil;
 
-public class DataTable extends JApplet {
+public class DataTable extends JApplet implements ClipboardOwner {
 	static String lof = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
 	public static void updateLof() {
 		try {
@@ -102,10 +103,13 @@ public class DataTable extends JApplet {
         System.err.println( cc );
         
         for( int ii : rr ) {
-            for( int jj : cc ) {
+            for( int jj = 0; jj < table.getColumnCount(); jj++ ) {
             	Object val = table.getValueAt(ii,jj);
-                if( val != null && val instanceof Float ) sb.append( "\t"+Float.toString( (Float)val ) );
-                else sb.append( "\t" );
+                //if( val != null && val instanceof Float ) sb.append( "\t"+Float.toString( (Float)val ) );
+                //else sb.append( "\t" );
+            	
+            	if( jj == 0 ) sb.append( val.toString() );
+            	else sb.append( "\t"+val.toString() );
             }
             sb.append( "\n" );
         }
@@ -119,8 +123,14 @@ public class DataTable extends JApplet {
         if (s==null || s.trim().length()==0) {
             JOptionPane.showMessageDialog(this, "There is no data selected!");
         } else {
-            StringSelection selection = new StringSelection(s);
-            clipboardService.setContents( selection );
+        	if( clipboardService != null ) {
+        		StringSelection selection = new StringSelection(s);
+            	clipboardService.setContents( selection );
+        	} else {
+        		StringSelection stringSelection = new StringSelection( s );
+        		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        	    clipboard.setContents( stringSelection, this );
+        	}
         }
         
         if (grabFocus) {
@@ -129,11 +139,10 @@ public class DataTable extends JApplet {
     }
 	 
     class CopyAction extends AbstractAction {
-        public CopyAction(String text, ImageIcon icon,
-            String desc, Integer mnemonic) {
-            super(text, icon);
-            putValue(SHORT_DESCRIPTION, desc);
-            putValue(MNEMONIC_KEY, mnemonic);
+        public CopyAction(String text) {
+            super(text);
+            //putValue(SHORT_DESCRIPTION, desc);
+            //putValue(MNEMONIC_KEY, mnemonic);
         }
  
         public void actionPerformed(ActionEvent e) {
@@ -422,8 +431,7 @@ public class DataTable extends JApplet {
 		
 		try {
 	    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
-	    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
-            table.getActionMap().put( "copy", action );
+            //table.getActionMap().put( "copy", action );
             grabFocus = true;
 	    } catch (Exception e) { 
 	    	e.printStackTrace();
@@ -449,6 +457,9 @@ public class DataTable extends JApplet {
 		});*/
 		
 		JPopupMenu popup = new JPopupMenu();
+		Action action = new CopyAction( "Copy" );
+		popup.add( action );
+		popup.addSeparator();
 		popup.add( new AbstractAction("Show fasta") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -573,5 +584,11 @@ public class DataTable extends JApplet {
 		}
 		
 		this.add( scrollpane );
+	}
+
+	@Override
+	public void lostOwnership(Clipboard clipboard, Transferable contents) {
+		// TODO Auto-generated method stub
+		
 	}
 }

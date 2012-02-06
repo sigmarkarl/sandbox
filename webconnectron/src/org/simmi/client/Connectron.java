@@ -742,18 +742,23 @@ public class Connectron extends ScrollPanel
 	public void importFromMatrix( final String text ) {
 		DialogBox	db = new DialogBox( true );
 		
-		Grid		grid = new Grid(2,2);
+		Grid		grid = new Grid(3,2);
 		final DoubleBox	colomb = new DoubleBox();
 		colomb.setValue( 50.0 );
 		Label		colabel = new Label( "Coulomb: " );
 		final DoubleBox	scale = new DoubleBox();
 		scale.setValue( 400.0 );
-		Label		scabel = new Label( "Scale" );
+		Label		scabel = new Label( "Scale: " );
+		final DoubleBox	mult = new DoubleBox();
+		mult.setValue( 1.0 );
+		Label		mulabel = new Label( "Multiplier: " );
 		
 		grid.setWidget(0, 0, colabel);
 		grid.setWidget(0, 1, colomb);
 		grid.setWidget(1, 0, scabel);
 		grid.setWidget(1, 1, scale);
+		grid.setWidget(2, 0, mulabel);
+		grid.setWidget(2, 1, mult);
 		db.add( grid );
 		db.center();
 		
@@ -768,6 +773,7 @@ public class Connectron extends ScrollPanel
 				
 				List<Corp> corpList = new ArrayList<Corp>();
 				
+				double mulval = mult.getValue();
 				double scaleval = scale.getValue();
 				Random r = new Random();
 				for( String spec : persons ) {
@@ -802,8 +808,8 @@ public class Connectron extends ScrollPanel
 							//Corp corpSrc = corpList.get(y);
 							
 							Corp pcorp = corpList.get(x);
-							corp.addLink( pcorp, subsplit[x], d );
-							pcorp.addLink( corp, subsplit[x], d );
+							corp.addLink( pcorp, subsplit[x], d*mulval );
+							//pcorp.addLink( corp, subsplit[x], d*mulval );
 						}
 					}
 				}
