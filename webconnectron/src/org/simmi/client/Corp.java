@@ -283,6 +283,13 @@ public class Corp {
 		}*/
 	}
 	
+	public double distance( Corp other ) {
+		double xval = x-other.x;
+		double yval = y-other.y;
+		double zval = z-other.z;
+		return Math.sqrt( xval*xval + yval*yval + zval*zval );
+	}
+	
 	private void deleteSave() {
 		boolean succ = false;
 		/*try {
