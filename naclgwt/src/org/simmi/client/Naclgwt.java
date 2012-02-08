@@ -2,14 +2,10 @@ package org.simmi.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -32,14 +28,33 @@ public class Naclgwt implements EntryPoint {
 	private final GreetingServiceAsync greetingService = GWT
 			.create(GreetingService.class);
 
+	public native void init() /*-{
+		var ths = this;
+		$doc.appendText = function( str ) {
+			ths.@org.simmi.client.Naclgwt::appendText(Ljava/lang/String;)( str );
+		};
+	}-*/;
+	
+	public void appendText( String str ) {
+		textarea.setText( textarea.getText()+str+"\n" );
+	}
+	
 	public native void console( String str ) /*-{
 		$wnd.console.log( str );
 	}-*/;
+	
+	public native void postMessage( String message ) /*-{
+		$wnd.postMessage( message );
+	}-*/;
+	
+	final TextArea	textarea = new TextArea();
 	
 	/**
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
+		init();
+		
 		final RootPanel	rp = RootPanel.get();
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
@@ -56,7 +71,6 @@ public class Naclgwt implements EntryPoint {
 			}
 		});
 		
-		final TextArea	textarea = new TextArea();
 		textarea.addKeyPressHandler( new KeyPressHandler() {
 			@Override
 			public void onKeyPress(KeyPressEvent event) {
@@ -71,6 +85,7 @@ public class Naclgwt implements EntryPoint {
 						last = val.substring(0, val.length());
 					}
 					console( last );
+					postMessage( last );
 				}
 			}
 		});
