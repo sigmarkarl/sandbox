@@ -7253,6 +7253,16 @@ public class GeneSet extends JApplet {
 					}
 					
 					double[] corrarr = gg.corrarr;
+					boolean symmetrize = true;
+					if( symmetrize ) {
+						for( i = 0; i < len; i++ ) {
+							for( int k = i+1; k < len; k++ ) {
+								corrarr[i*len+k] = (corrarr[k*len+i]+corrarr[i*len+k])/2.0;
+								corrarr[k*len+i] = corrarr[i*len+k];
+							}
+						}
+					}
+					
 					for (i = 0; i < len; i++) {
 						for (int k = 0; k < len; k++) {
 							if (corrarr[i * len + k] < min[i])
@@ -7265,6 +7275,18 @@ public class GeneSet extends JApplet {
 							corrarr[i * 16 + k] = corrarr[i * 16 + k] - min;
 						}*/
 					}
+					
+					i = 0;
+					for (double d : corrarr) {
+						double dval = d;
+						if (i % len == 0)
+							textarea.append("\n" + dval);
+						else
+							textarea.append("\t" + dval);
+
+						i++;
+					}
+					textarea.append("\n");
 
 					i = 0;
 					for (double d : corrarr) {
@@ -7278,9 +7300,8 @@ public class GeneSet extends JApplet {
 
 						i++;
 					}
-					
 					double[] newcorr = Arrays.copyOf(corrarr, corrarr.length);
-					textarea.append("D matrix\n");
+					textarea.append("\nD matrix\n");
 					i = 0;
 					for (double d : corrarr) {
 						double dval = max[i/len]-d;

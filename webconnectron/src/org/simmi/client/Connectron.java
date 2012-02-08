@@ -14,7 +14,11 @@ import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.canvas.dom.client.TextMetrics;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
@@ -41,14 +45,24 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.DialogBox;
+import com.google.gwt.user.client.ui.DoubleBox;
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.TextArea;
 
 public class Connectron extends ScrollPanel 
-	implements 	DoubleClickHandler, MouseDownHandler, MouseUpHandler, MouseMoveHandler, 
+	implements 	DoubleClickHandler, MouseDownHandler, MouseUpHandler, MouseMoveHandler,
 				KeyDownHandler, KeyUpHandler, KeyPressHandler, 
 				DragHandler, DragEnterHandler, DragLeaveHandler, DragOverHandler, DropHandler {
 	/**
@@ -725,53 +739,86 @@ public class Connectron extends ScrollPanel
 		repaint();
 	}
 	
-	public void importFromMatrix( String text ) {
-		u = 5000.0;
+	public void importFromMatrix( final String text ) {
+		DialogBox	db = new DialogBox( true );
 		
-		String[] split = text.split("\n");
-		String[] persons = split[0].split("\t");
+		Grid		grid = new Grid(3,2);
+		final DoubleBox	colomb = new DoubleBox();
+		colomb.setValue( 50.0 );
+		Label		colabel = new Label( "Coulomb: " );
+		final DoubleBox	scale = new DoubleBox();
+		scale.setValue( 400.0 );
+		Label		scabel = new Label( "Scale: " );
+		final DoubleBox	mult = new DoubleBox();
+		mult.setValue( 1.0 );
+		Label		mulabel = new Label( "Multiplier: " );
 		
-		List<Corp> corpList = new ArrayList<Corp>();
+		grid.setWidget(0, 0, colabel);
+		grid.setWidget(0, 1, colomb);
+		grid.setWidget(1, 0, scabel);
+		grid.setWidget(1, 1, scale);
+		grid.setWidget(2, 0, mulabel);
+		grid.setWidget(2, 1, mult);
+		db.add( grid );
+		db.center();
 		
-		Random r = new Random();
-		for( String spec : persons ) {
-			if( spec.length() > 1 ) {
-				Corp corp = new Corp( spec );
-				corp.setx( 400.0*r.nextDouble() );
-				corp.sety( 400.0*r.nextDouble() );
-				corp.setz( 400.0*r.nextDouble() );
-				this.add( corp );
-				
-				corpList.add( corp );
-			}
-		}
-		
-		for( int i = 1; i < split.length; i++ ) {
-			String[] subsplit = split[i].split("\t");
-			//int y = i-1;
-			String spec = subsplit[0];
-			Corp corp = new Corp( spec );
-			corp.setx( 400.0*r.nextDouble() );
-			corp.sety( 400.0*r.nextDouble() );
-			corp.setz( 400.0*r.nextDouble() );
-			corp.color = "#1111ee";
-			this.add( corp );
-			corpList.add( corp );
+		db.addCloseHandler( new CloseHandler<PopupPanel>() {
 			
-			for( int x = 1; x < subsplit.length; x++ ) {
-				double d = Double.parseDouble( subsplit[x] );
-				if( d > 0.0 ) {
-					//Corp corpDst = corpList.get(x);
-					//Corp corpSrc = corpList.get(y);
-					
-					Corp pcorp = corpList.get(x-1);
-					corp.addLink( pcorp, subsplit[x], d/100.0 );
-					pcorp.addLink( corp, subsplit[x], d/100.0 );
+			@Override
+			public void onClose(CloseEvent<PopupPanel> event) {
+				u = colomb.getValue();
+				
+				String[] split = text.split("\n");
+				String[] persons = split[0].split("\t");
+				
+				List<Corp> corpList = new ArrayList<Corp>();
+				
+				double mulval = mult.getValue();
+				double scaleval = scale.getValue();
+				Random r = new Random();
+				for( String spec : persons ) {
+					if( spec.length() > 1 ) {
+						Corp corp = new Corp( spec );
+						corp.setx( scaleval*r.nextDouble() );
+						corp.sety( scaleval*r.nextDouble() );
+						corp.setz( scaleval*r.nextDouble() );
+						corp.color = "#1111ee";
+						Connectron.this.add( corp );
+						
+						corpList.add( corp );
+					}
 				}
+				
+				for( int i = 1; i < split.length; i++ ) {
+					String[] subsplit = split[i].split("\t");
+					//int y = i-1;
+					//String spec = subsplit[0];
+					Corp corp = corpList.get(i-1); //new Corp( spec );
+					/*corp.setx( 400.0*r.nextDouble() );
+					corp.sety( 400.0*r.nextDouble() );
+					corp.setz( 400.0*r.nextDouble() );
+					corp.color = "#1111ee";
+					this.add( corp );
+					corpList.add( corp );*/
+					
+					for( int x = 0; x < subsplit.length; x++ ) {
+						double d = Double.parseDouble( subsplit[x] );
+						if( d > 0.0 ) {
+							//Corp corpDst = corpList.get(x);
+							//Corp corpSrc = corpList.get(y);
+							
+							Corp pcorp = corpList.get(x);
+							corp.addLink( pcorp, subsplit[x], d*mulval );
+							//pcorp.addLink( corp, subsplit[x], d*mulval );
+						}
+					}
+				}
+				
+				console( "c size: " + corpList.size() );
+				
+				repaint();
 			}
-		}
-		
-		repaint();
+		});
 	}
 	
 	long last = 0;
@@ -924,6 +971,9 @@ public class Connectron extends ScrollPanel
 		Corp.prop = new Prop();
 		Corp.prop.setBounds(0, 0, 400, 75);
 		
+		int w = Window.getClientWidth();
+		int h = Window.getClientHeight();
+		
 		canvas = Canvas.createIfSupported();
 		canvas.setSize("100%", "100%");
 		
@@ -1029,6 +1079,33 @@ public class Connectron extends ScrollPanel
 				drawNodeNames = !drawNodeNames;
 				popup.hide();
 				repaint();
+			}
+		});
+		menu.addSeparator();
+		menu.addItem("Distance matrix", new Command() {
+			@Override
+			public void execute() {
+				DialogBox	db = new DialogBox(true);
+				TextArea	ta = new TextArea();
+				ta.setSize("800px", "600px");
+				
+				String dmatrix = "";
+				for( Corp c : Corp.corpList ) {
+					if( dmatrix.length() == 0 ) dmatrix += c.getName();
+					else dmatrix += "\t" + c.getName();
+				}
+				dmatrix += "\n";
+				for( Corp c1 : Corp.corpList ) {
+					for( Corp c2 : Corp.corpList ) {
+						if( dmatrix.charAt( dmatrix.length()-1 ) == '\n' ) dmatrix += c1.distance( c2 );
+						else dmatrix += "\t" + c1.distance( c2 );
+					}
+					dmatrix += "\n";
+				}
+				ta.setText( dmatrix );
+				
+				db.add( ta );
+				db.center();
 			}
 		});
 		menu.addSeparator();
@@ -1596,6 +1673,66 @@ public class Connectron extends ScrollPanel
 		
 		keyPressed( keychar, keycode );
 	}
+	
+	public void handleText( String dropstuff ) {
+		if( dropstuff.startsWith("(") ) {
+			importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
+		} else if( dropstuff.startsWith("\t") ) {
+			importFromMatrix( dropstuff );
+		} else importFromText( dropstuff );
+	}
+	
+	public native String handleFiles( Element ie, int append ) /*-{
+		var hthis = this;
+		file = ie.files[0];
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			hthis.@org.simmi.client.Connectron::handleText(Ljava/lang/String;)(e.target.result);
+		};
+		reader.onerror = function(e) {
+	  		$wnd.console.log("error", e);
+	  		$wnd.console.log(e.getMessage());
+		};
+		reader.readAsText( file, "utf8" );
+	}-*/;
+	
+	public void openFileDialog( final int append ) {
+		final DialogBox	db = new DialogBox();
+		db.setText("Open file ...");
+		
+		final FormPanel	form = new FormPanel();
+		form.setAction("/");
+	    form.setEncoding(FormPanel.ENCODING_MULTIPART);
+	    form.setMethod(FormPanel.METHOD_POST);
+	    
+		//form.add( vp );*/
+		final FileUpload	file = new FileUpload();
+		file.getElement().setId("fasta");
+	
+		form.add( file );
+		db.add( form );
+		/*file.fireEvent( GwtEvent)
+		
+		//SubmitButton	submit = new SubmitButton();	
+		//submit.setText("Open");*/
+		
+		file.addChangeHandler( new ChangeHandler() {
+			@Override
+			public void onChange(ChangeEvent event) {
+				handleFiles( file.getElement(), append );
+				db.hide();
+			}
+		});
+		
+		db.setAutoHideEnabled( true );
+		db.center();
+		//file.fireEvent( new ClickEvent(){} );
+		click( file.getElement() );
+	}
+	
+	public native void click( JavaScriptObject e ) /*-{
+		e.click();
+	}-*/;
 
 	@Override
 	public void onDoubleClick(DoubleClickEvent e) {
@@ -1606,17 +1743,15 @@ public class Connectron extends ScrollPanel
 			mousedown = true;
 			drag = c;
 			c.mousePressed(e, x, y, e.isShiftKeyDown(), true);
+		} else {
+			openFileDialog( 0 );
 		}
 	}
 
 	@Override
 	public void onDrop(DropEvent event) {
 		String dropstuff = event.getData( "text/plain;charset=utf-8" );
-		if( dropstuff.startsWith("(") ) {
-			importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
-		} else if( dropstuff.startsWith("\t") ) {
-			importFromMatrix( dropstuff );
-		} else importFromText( dropstuff );
+		handleText( dropstuff );
 	}
 
 	@Override

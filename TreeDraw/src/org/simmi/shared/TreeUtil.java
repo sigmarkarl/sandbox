@@ -21,7 +21,7 @@ public class TreeUtil {
 		double[] u = new double[len];
 		System.arraycopy(corrarr, 0, dmat, 0, len*len);
 		while( len > 2 ) {
-			System.err.println( "trying " + len + " size is " + nodes.size() );
+			//System.err.println( "trying " + len + " size is " + nodes.size() );
 			for ( int i = 0; i < len; i++ ) {
 				u[i] = 0;
 				for ( int j = 0; j < len; j++ ) {
@@ -122,6 +122,20 @@ public class TreeUtil {
 		double		canvasx;
 		double		canvasy;
 		
+		String		collapsed = null;
+		
+		public boolean isCollapsed() {
+			return collapsed != null;
+		}
+		
+		public String getCollapsedString() {
+			return collapsed;
+		}
+		
+		public void setCollapsed( String collapsed ) {
+			this.collapsed = collapsed;
+		}
+		
 		public Node() {
 			nodes = new ArrayList<Node>();
 			metacount = 0;
@@ -205,7 +219,7 @@ public class TreeUtil {
 		
 		public int countLeaves() {
 			int total = 0;
-			if( nodes != null && nodes.size() > 0 ) {
+			if( !isCollapsed() && nodes != null && nodes.size() > 0 ) {
 				for( Node node : nodes ) {
 					total += node.countLeaves();
 				}
@@ -572,6 +586,10 @@ public class TreeUtil {
 				//res.h = oldnode.h;
 				oldnode.h = b;
 				oldnode.nodes.remove( res );
+				
+				currentNode = newnode;
+				currentNode.countLeaves();
+				
 				return tmph;
 			}
 		}
