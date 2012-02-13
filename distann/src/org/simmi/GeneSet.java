@@ -340,7 +340,8 @@ public class GeneSet extends JApplet {
 		return null;
 	}
 
-	private static void panCoreFromNRBlast(Reader rd, String outfile, Map<String, Gene> ret, Map<String, String> allgenes, Map<String, Set<String>> geneset, Map<String, Set<String>> geneloc, Map<String, Gene> locgene, Set<String> poddur)
+	private static void panCoreFromNRBlast(Reader rd, String outfile, Map<String, Gene> ret, Map<String, String> allgenes, Map<String, Set<String>> geneset, 
+			Map<String, Set<String>> geneloc, Map<String, Gene> locgene, Set<String> poddur, List<Set<String>> uclusterlist ) 
 			throws IOException {
 		FileWriter fw = null;
 		if (outfile != null)
@@ -511,32 +512,7 @@ public class GeneSet extends JApplet {
 				}
 
 				String val = id;
-				set.add(val);
 				// set.add( desc );
-
-				Gene gene;
-				if (ret.containsKey(val)) {
-					gene = ret.get(val);
-				} else {
-					gene = new Gene(desc, teg);
-					gene.allids = new HashSet<String>();
-					gene.species = new HashMap<String, Teginfo>();
-					ret.put(val, gene);
-					gene.refid = id;
-				}
-				gene.allids.add(id);
-				// gene.blastspec = teg;
-				/*
-				 * if( gene.species == null ) { gene.species = new
-				 * HashMap<String,Set<Tegeval>>(); }
-				 */
-
-				Teginfo stv;
-				if (!gene.species.containsKey(padda)) {
-					stv = new Teginfo();
-					gene.species.put(padda, stv);
-				} else
-					stv = gene.species.get(padda);
 
 				// int first = query.indexOf('_');
 				// int sec = query.indexOf('_', first+1 );
@@ -544,7 +520,7 @@ public class GeneSet extends JApplet {
 				String contig = null;
 				String contloc = null;
 
-				if (qsplit.length > 3) {
+				//if (qsplit.length > 3) {
 					contig = qsplit[0] + "_" + qsplit[1];// +"_"+qsplit[2];
 															// //&query.substring(0,
 															// sec);
@@ -553,11 +529,11 @@ public class GeneSet extends JApplet {
 						contig += "_" + qsplit[2];
 						k++;
 					}
-					contloc = qsplit[1] + "_" + qsplit[3 + k]; // query.substring(first+1,sec);
-				} else {
+					contloc = qsplit[1] + "_" + qsplit[2 + k]; // query.substring(first+1,sec);
+				/*} else {
 					contig = qsplit[0];
 					contloc = qsplit[0] + "_" + qsplit[1];
-				}
+				}*/
 				// System.err.println("contig "+contig);
 
 				StringBuilder aa = aaSearch(query);
@@ -568,7 +544,59 @@ public class GeneSet extends JApplet {
 				 */
 				StringBuilder dn = dnaSearch(query);
 				// System.err.println( "ermm " + ori );
-				stv.add(new Tegeval(teg, Double.parseDouble(evalue), aa, dn, query, contig, contloc, start, stop, ori));
+				Tegeval tv = new Tegeval(teg, Double.parseDouble(evalue), aa, dn, query, contig, contloc, start, stop, ori);
+				
+				Gene gene;
+				if (ret.containsKey(val)) {
+					gene = ret.get(val);
+					Gene newgene = gene;
+					for( Set<String>	clusterset : uclusterlist ) {
+						if( clusterset.contains( contig ) ) {
+							for( String padd : gene.species.keySet() ) {
+								Teginfo stv = gene.species.get(padd);
+								for( Tegeval tvl : stv.tset ) {
+									if( !clusterset.contains( tvl.cont ) ) {
+										newgene = new Gene(desc, teg);
+										newgene.allids = new HashSet<String>();
+										newgene.species = new HashMap<String, Teginfo>();
+										ret.put(val, newgene);
+										newgene.refid = gene.refid + " new";
+										
+										break;
+									}
+								}
+								
+								if( newgene != gene ) break;
+							}
+						}
+						if( newgene != gene ) break;
+					}
+					
+					gene = newgene;
+				} else {
+					gene = new Gene(desc, teg);
+					gene.allids = new HashSet<String>();
+					gene.species = new HashMap<String, Teginfo>();
+					ret.put(val, gene);
+					gene.refid = id;
+				}
+				gene.allids.add(id);
+				set.add(val);
+				
+				Teginfo stv;
+				if (!gene.species.containsKey(padda)) {
+					stv = new Teginfo();
+					gene.species.put(padda, stv);
+				} else {
+					stv = gene.species.get(padda);
+				}
+				
+				stv.add( tv );
+				// gene.blastspec = teg;
+				/*
+				 * if( gene.species == null ) { gene.species = new
+				 * HashMap<String,Set<Tegeval>>(); }
+				 */
 
 				if (!allgenes.containsKey(val) || allgenes.get(val) == null) {
 					allgenes.put(val, split.length > 1 ? teg + " " + id : null);
@@ -584,10 +612,10 @@ public class GeneSet extends JApplet {
 				// locset.add( swapmap.get(name)+"_"+query + " " + evalue );
 				locset.add(query + " " + evalue);
 
-				int li = query.lastIndexOf('_');
-				int ln = query.lastIndexOf('_', li-1);
-				String queryshort = query.substring(0, ln)+query.substring(li);
-				locgene.put(queryshort, gene);
+				//int li = query.lastIndexOf('_');
+				//int ln = query.lastIndexOf('_', li-1);
+				//String queryshort = query.substring(0, ln)+query.substring(li);
+				locgene.put(query, gene);
 
 				query = null;
 				if (fw != null) {
@@ -650,7 +678,7 @@ public class GeneSet extends JApplet {
 				}
 
 				StringBuilder aastr = aaSearch(query);
-				int nq = query.lastIndexOf('_');
+				/*int nq = query.lastIndexOf('_');
 				int mq = query.lastIndexOf('_', nq - 1);
 				String nquery;
 				if (mq != -1) {
@@ -658,34 +686,52 @@ public class GeneSet extends JApplet {
 					nquery = query.substring(0, nq);
 				} else {
 					nquery = query;
-				}
+				}*/
 
-				StringBuilder dn = dnaSearch( nquery ); //dnaa.get(nquery);
+				StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
 				stv.add(new Tegeval(padda, deval, aastr, dn, query, contig, contloc, start, stop, ori));
 				
-				/*if (!allgenes.containsKey(val) || allgenes.get(val) == null) {
-					allgenes.put(val, split.length > 1 ? teg + " " + id : null);
+				if (!allgenes.containsKey(aaid) || allgenes.get(aaid) == null) {
+					allgenes.put(aaid, "Thermus " + aaid);
 				}
 
 				Set<String> locset = null;
-				if (geneloc.containsKey(val)) {
-					locset = geneloc.get(val);
+				if (geneloc.containsKey(aaid)) {
+					locset = geneloc.get(aaid);
 				} else {
 					locset = new HashSet<String>();
-					geneloc.put(val, locset);
-				}*/
+					geneloc.put(aaid, locset);
+				}
 				
-//				locset.add(query + " " + evalue);
-				int li = query.lastIndexOf('_');
-				int ln = query.lastIndexOf('_', li-1);
-				String queryshort = query.substring(0, ln)+query.substring(li);
-				locgene.put(queryshort, gene);
+				locset.add(query + " -1.0");
+				//int li = query.lastIndexOf('_');
+				//int ln = query.lastIndexOf('_', li-1);
+				//String queryshort = query.substring(0, ln)+query.substring(li);
+				locgene.put(query, gene);
 
 				if (fw != null)
 					fw.write(line + "\n");
 			} else if (trim.startsWith("Query=")) {
 				// if( trim.)
 				query = trim.substring(6).trim().split("[ ]+")[0];
+				
+				int count = 0;
+				if( query.contains("contig") ) {
+					int k = query.indexOf('_');
+					while( k != -1 ) {
+						k = query.indexOf('_', k+1);
+						count++;
+					}
+				} else if( query.contains("|") && !query.startsWith("mt.") ) {
+					count = 3;
+				}
+				
+				if( count == 3 ) {
+					int li = query.lastIndexOf('_');
+					int ln = query.lastIndexOf('_', li-1);
+					query = query.substring(0, ln)+query.substring(li);
+				}
+				
 				String[] split = trim.split("#");
 				if (split.length < 4) {
 					String newline = br.readLine();
@@ -741,7 +787,7 @@ public class GeneSet extends JApplet {
 		for (String name : names) {
 			File f = new File(dir, name);
 			// FileReader fr = new FileReader( f );
-			panCoreFromNRBlast(new FileReader(f), null, ret, allgenes, geneset, geneloc, locgene, poddur);
+			panCoreFromNRBlast(new FileReader(f), null, ret, allgenes, geneset, geneloc, locgene, poddur, null);
 		}
 
 		for (String name : geneset.keySet()) {
@@ -1635,8 +1681,7 @@ public class GeneSet extends JApplet {
 					Set<String> all = new HashSet<String>();
 					while (line != null && !line.startsWith(">")) {
 						String trim = line.trim();
-						if (trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi")
-								|| trim.startsWith("t.brock") || trim.startsWith("t.fili")) {
+						if (trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") || trim.startsWith("mt.") ) {
 							String val = trim.substring(0, trim.indexOf('#') - 1);
 							int v = val.indexOf("contig");
 							/*
@@ -3577,6 +3622,8 @@ public class GeneSet extends JApplet {
 			this.name = name;
 			this.origin = origin;
 			// this.setAa( aa );
+			
+			groupIdx = -10;
 		}
 
 		public void setAa(String aa) {
@@ -5027,10 +5074,11 @@ public class GeneSet extends JApplet {
 				for (String sp : gg.species.keySet()) {
 					Teginfo stv = gg.species.get(sp);
 					for (Tegeval tv : stv.tset) {
-						int li = tv.cont.lastIndexOf('_');
-						String tvshort = tv.contshort+tv.cont.substring(li);
+						//System.err.println( tv.cont );
+						//int li = tv.cont.lastIndexOf('_');
+						//String tvshort = tv.contshort+tv.cont.substring(li);
 						for (Set<String> uset : uclusterlist) {
-							if (uset.contains(tvshort)) {
+							if (uset.contains(tv.cont)) {
 								ct.addAll(uset);
 								break;
 							}
@@ -5045,9 +5093,10 @@ public class GeneSet extends JApplet {
 				for (String sp : g.species.keySet()) {
 					Teginfo stv = g.species.get(sp);
 					for (Tegeval tv : stv.tset) {
-						int li = tv.cont.lastIndexOf('_');
-						String tvshort = tv.contshort+tv.cont.substring(li);
-						if (ct.contains(tvshort)) {
+						//System.err.println( tv.cont );
+						//int li = tv.cont.lastIndexOf('_');
+						//String tvshort = tv.contshort+tv.cont.substring(li);
+						if (ct.contains(tv.cont)) {
 							if (remove)
 								genefilterset.remove(g.index);
 							else
@@ -5936,26 +5985,26 @@ public class GeneSet extends JApplet {
 					return gene.groupCoverage == 16 && gene.groupCount == 16 ? gene.corr16s : -1;
 				} else if (columnIndex == 18) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.tHB8join");
+						Teginfo set = gene.species.get("t.thermophilusHB8");
 						return set;
 					}
 				} else if (columnIndex == 19) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.tHB27join");
+						Teginfo set = gene.species.get("t.thermophilusHB27");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("ttHB27join").iterator().next();
 				} else if (columnIndex == 20) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.scotoSA01");
+						Teginfo set = gene.species.get("t.scotoductusSA01");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("ttaqua").iterator().next();
 				} else if (columnIndex == 21) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.aqua");
+						Teginfo set = gene.species.get("t.aquaticus");
 						return set;
 					}
 					// return gene.species == null ? null :
@@ -5983,42 +6032,42 @@ public class GeneSet extends JApplet {
 					// gene.species.get("antag2120").iterator().next();
 				} else if (columnIndex == 25) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.scoto346");
+						Teginfo set = gene.species.get("t.scotoductus346");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto346").iterator().next();
 				} else if (columnIndex == 26) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.scoto1572");
+						Teginfo set = gene.species.get("t.scotoductus1572");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto1572").iterator().next();
 				} else if (columnIndex == 27) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.scoto252");
+						Teginfo set = gene.species.get("t.scotoductus252");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto252").iterator().next();
 				} else if (columnIndex == 28) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.scoto2101");
+						Teginfo set = gene.species.get("t.scotoductus2101");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto2101").iterator().next();
 				} else if (columnIndex == 29) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.scoto2127");
+						Teginfo set = gene.species.get("t.scotoductus2127");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto2127").iterator().next();
 				} else if (columnIndex == 30) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.scoto4063");
+						Teginfo set = gene.species.get("t.scotoductus4063");
 						return set;
 					}
 					// return gene.species == null ? null :
@@ -6050,12 +6099,12 @@ public class GeneSet extends JApplet {
 					}
 				} else if (columnIndex == 36) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("mt.silvanus");
+						Teginfo set = gene.species.get("mt.silvanusDSM9946");
 						return set;
 					}
 				} else if (columnIndex == 37) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("mt.ruber");
+						Teginfo set = gene.species.get("mt.ruberDSM1279");
 						return set;
 					}
 				}
@@ -6980,7 +7029,7 @@ public class GeneSet extends JApplet {
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
-					if (gg.species != null) {
+					if(gg.species != null) {
 						textarea.append(gg.name + ":\n");
 						for (String sp : gg.species.keySet()) {
 							Teginfo stv = gg.species.get(sp);
@@ -7684,7 +7733,12 @@ public class GeneSet extends JApplet {
 						line = br.readLine();
 						trim = line.trim();
 					}
-					int score = Integer.parseInt(trim.split(" ")[2]);
+					int score = 0;
+					try {
+						score = Integer.parseInt(trim.split("[ ]+")[2]);
+					} catch( Exception e ) {
+						System.err.println( line );
+					}
 
 					subtm.put(thespec, score);
 				}
@@ -7768,7 +7822,7 @@ public class GeneSet extends JApplet {
 		// refmap, allgenes, geneset, geneloc, locgene, poddur );
 		is = GeneSet.class.getResourceAsStream("/thermus_short.blastout");
 		// is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
-		panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur);
+		panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();
@@ -7797,7 +7851,7 @@ public class GeneSet extends JApplet {
 		// HashMap<Set<String>,ClusterInfo>();
 
 		corrInd = new ArrayList<String>();
-		is = GeneSet.class.getResourceAsStream("/all16S.blastout");
+		is = GeneSet.class.getResourceAsStream("/thermus16S.blastout");
 		double[] corr16sArray = load16SCorrelation(new InputStreamReader(is), corrInd);
 
 		Collections.sort(uclusterlist, new Comparator<Set<String>>() {
@@ -7825,12 +7879,6 @@ public class GeneSet extends JApplet {
 				if (g != null) {
 					gs.add(g.refid);
 					gset.add(g);
-					
-					if( g.name.startsWith("_") ) {
-						System.err.println("ood");
-					}
-				} else {
-					System.err.println( cont );
 				}
 			}
 
@@ -7848,9 +7896,6 @@ public class GeneSet extends JApplet {
 				corrList.put(cluster, new double[20*20]);
 			}
 
-			if( gset.isEmpty() ) {
-				System.err.println("ok");
-			}
 			for (Gene g : gset) {
 				g.groupIdx = i;
 				g.groupCoverage = ss.size();
