@@ -68,6 +68,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -2003,6 +2004,84 @@ public class SerifyApplet extends JApplet {
 		});
 		
 		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Import fasta") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser	filechooser = new JFileChooser();
+				filechooser.setMultiSelectionEnabled( true );
+				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+					File cd = filechooser.getCurrentDirectory();
+					String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
+					
+					if( path != null ) {
+						try {
+							for( File f : filechooser.getSelectedFiles() ) {
+								addSequences( f.getName(), path+f.getName() );
+							}
+						} catch (URISyntaxException e1) {
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+		});
+		popup.add( new AbstractAction("Concatenate") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser	filechooser = new JFileChooser();
+				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+					File f = filechooser.getSelectedFile();
+					try {
+						Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
+						
+						int[] rr = table.getSelectedRows();
+						for( int r : rr ) {
+							String path = (String)table.getValueAt( r, 3 );
+							URL url = new URL( path );
+							StringBuilder	sb = null;
+							InputStream is = url.openStream();
+							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+							String line = br.readLine();
+							while( line != null ) {
+								if( line.startsWith(">") ) {
+									String subline = line.substring(1);
+									if( seqmap.containsKey( subline ) ) {
+										sb = seqmap.get( subline );
+									} else {
+										sb = new StringBuilder();
+										seqmap.put( subline, sb );
+									}
+								} else {
+									if( sb != null ) sb.append( line );
+								}
+								
+								line = br.readLine();
+							}
+							br.close();
+						}
+						
+						FileWriter	fw = new FileWriter( f );
+						for( String key : seqmap.keySet() ) {
+							fw.write( ">"+key+"\n" );
+							StringBuilder sb = seqmap.get( key );
+							for (int i = 0; i < sb.length(); i += 70) {
+								fw.append(sb.substring(i, Math.min(i + 70, sb.length())) + "\n");
+							}
+						}
+						fw.close();
+						
+						addSequences( f.getName(), f.toURI().toString() );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		popup.addSeparator();
 		popup.add( new AbstractAction("Create database") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -2588,8 +2667,8 @@ public class SerifyApplet extends JApplet {
 		});
 		
 		table.setComponentPopupMenu( popup );
-		
 		JScrollPane	scrollpane = new JScrollPane( table );
+		scrollpane.setComponentPopupMenu( popup );
 		scrollpane.setBackground( bgcolor );
 		scrollpane.getViewport().setBackground( bgcolor );
 		scrollpane.setTransferHandler( new TransferHandler() {
@@ -2813,23 +2892,51 @@ public class SerifyApplet extends JApplet {
 		//FileReader	fr = new FileReader( f );
 		BufferedReader br = new BufferedReader( isr );
 		String line = br.readLine();
-		while( line != null ) {
-			if( line.startsWith(">") ) {
-				nseq++;
-				
-				if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
-			}
-			else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTDYKVRSWMNX]+$") ) {
-				System.err.println( line );
-				type = "prot";
-			}
-			line = br.readLine();
-		}
-		br.close();
 		
-		if( nseq > 0 ) {
-			addSequences(name, type, path, nseq);
-		} else System.err.println( "no sequences in file" );
+		if( line.endsWith(":") ) {
+			JFileChooser	filechooser = new JFileChooser();
+			filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+				File dir = filechooser.getSelectedFile();
+				String curname = line.substring(0, line.length()-1);
+				File f = new File( dir, curname+".fasta" );
+				FileWriter	fw = new FileWriter( f );
+				line = br.readLine();
+				while( line != null ) {
+					if( line.endsWith(":") ) {
+						fw.close();
+						addSequences(curname, f.toURI().toString());
+						curname = line.substring(0, line.length()-1);
+						f = new File( dir, curname+".fasta" );
+						fw = new FileWriter( f );
+					} else {
+						fw.write( line+"\n" );
+					}
+					
+					line = br.readLine();
+				}
+				fw.close();
+				addSequences( curname, f.toURI().toString() );
+			}
+		} else {
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					nseq++;
+					
+					if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
+				}
+				else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTDYKVRSWMNX]+$") ) {
+					System.err.println( line );
+					type = "prot";
+				}
+				line = br.readLine();
+			}
+			br.close();
+			
+			if( nseq > 0 ) {
+				addSequences(name, type, path, nseq);
+			} else System.err.println( "no sequences in file" );
+		}
 	}
 	
 	private void addSequences( String name, String type, String path, int nseq ) {
