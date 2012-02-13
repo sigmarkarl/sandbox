@@ -104,6 +104,8 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import com.sun.security.auth.module.NTSystem;
+
 import sun.misc.GC;
 
 public class Order extends JApplet {
@@ -722,7 +724,7 @@ public class Order extends JApplet {
 	}
 	
 	boolean userCheck() {
-		return user.equals("ragnar") || user.equals("annas") || user.equals("johanna") || user.equals("adalheidur") || user.equals("gulla") || user.equals("julia") || user.equals("root");// || user.equals("sigmar");
+		return user.equals("ragnar") || user.equals("annas") || user.equals("johanna") || user.equals("adalheidur") || user.equals("gulla") || user.equals("julia") || user.equals("root") || user.equals("sigmar");
 	}
 	
 	public TableModel createModel( final List<?> datalist, final Class cls ) {
@@ -1767,6 +1769,14 @@ public class Order extends JApplet {
 		}*/
 		//System.err.println( domain );
 		user = System.getProperty("user.name");
+		System.err.println( "trying user: " + user );
+		if( user == null || user.length() < 3 ) {
+			NTSystem ntsys = new NTSystem();
+			user = ntsys.getName();
+			
+			System.err.println( "nt user: " + user );
+		}
+		System.err.println( "done: " + user );
 		
 		try {
 			ordlist = loadOrders();
