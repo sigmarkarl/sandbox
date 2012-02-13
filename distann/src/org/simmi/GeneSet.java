@@ -112,7 +112,6 @@ import org.json.JSONObject;
 import org.simmi.JavaFasta.Annotation;
 import org.simmi.JavaFasta.Sequence;
 import org.simmi.shared.TreeUtil;
-import org.simmi.shared.TreeUtil.Node;
 
 public class GeneSet extends JApplet {
 	/**
@@ -585,7 +584,10 @@ public class GeneSet extends JApplet {
 				// locset.add( swapmap.get(name)+"_"+query + " " + evalue );
 				locset.add(query + " " + evalue);
 
-				locgene.put(query, gene);
+				int li = query.lastIndexOf('_');
+				int ln = query.lastIndexOf('_', li-1);
+				String queryshort = query.substring(0, ln)+query.substring(li);
+				locgene.put(queryshort, gene);
 
 				query = null;
 				if (fw != null) {
@@ -604,14 +606,19 @@ public class GeneSet extends JApplet {
 				Gene gene;
 
 				StringBuilder aa = aaSearch(query);
-				String padda = query.split("_")[0];
-				if (ret.containsKey(aa)) {
-					gene = ret.get(aa);
+				String aaid = "_"+aa;
+				String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
+				if (ret.containsKey(aaid)) {
+					gene = ret.get(aaid);
 				} else {
-					gene = new Gene("_" + aa, padda);
-					ret.put("_" + aa, gene);
-					gene.refid = query;
+					gene = new Gene(aaid, padda);
+					ret.put(aaid, gene);
+					gene.allids = new HashSet<String>();
+					gene.species = new HashMap<String, Teginfo>();
+					ret.put(aaid, gene);
+					gene.refid = aaid;
 				}
+				gene.allids.add(aaid);
 
 				if (gene.species == null)
 					gene.species = new HashMap<String, Teginfo>();
@@ -653,10 +660,27 @@ public class GeneSet extends JApplet {
 					nquery = query;
 				}
 
-				StringBuilder dn = dnaa.get(nquery);
+				StringBuilder dn = dnaSearch( nquery ); //dnaa.get(nquery);
 				stv.add(new Tegeval(padda, deval, aastr, dn, query, contig, contloc, start, stop, ori));
+				
+				/*if (!allgenes.containsKey(val) || allgenes.get(val) == null) {
+					allgenes.put(val, split.length > 1 ? teg + " " + id : null);
+				}
 
-				// System.err.println( prename + "\tNo match" );
+				Set<String> locset = null;
+				if (geneloc.containsKey(val)) {
+					locset = geneloc.get(val);
+				} else {
+					locset = new HashSet<String>();
+					geneloc.put(val, locset);
+				}*/
+				
+//				locset.add(query + " " + evalue);
+				int li = query.lastIndexOf('_');
+				int ln = query.lastIndexOf('_', li-1);
+				String queryshort = query.substring(0, ln)+query.substring(li);
+				locgene.put(queryshort, gene);
+
 				if (fw != null)
 					fw.write(line + "\n");
 			} else if (trim.startsWith("Query=")) {
@@ -4503,11 +4527,11 @@ public class GeneSet extends JApplet {
 
 	public static void main(String[] args) {
 		
-		String[] stra = {"A", "B", "C", "D"};
+		/*String[] stra = {"A", "B", "C", "D"};
 		corrInd = Arrays.asList( stra );
 		double[] dd = { 0.0, 17.0, 21.0, 27.0, 17.0, 0.0, 12.0, 18.0, 21.0, 12.0, 0.0, 14.0, 27.0, 18.0, 14.0, 0.0 };
 		TreeUtil treeutil = new TreeUtil();
-		treeutil.neighborJoin( dd, 4, corrInd );
+		treeutil.neighborJoin( dd, 4, corrInd );*/
 		/*
 		 * JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
 		 * JFrame.EXIT_ON_CLOSE );
@@ -4522,7 +4546,7 @@ public class GeneSet extends JApplet {
 		 * try { testbmatrix("/home/sigmar/mynd.png"); } catch (IOException e) {
 		 * e.printStackTrace(); }
 		 */
-		// init( args );
+		init( args );
 
 		try {
 			dummy();
@@ -4995,7 +5019,7 @@ public class GeneSet extends JApplet {
 
 	private static void relati(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, List<Set<String>> uclusterlist, boolean remove) {
 		Set<String> ct = new HashSet<String>();
-		for (int r : rr) {
+ 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
 			Gene gg = genelist.get(cr);
 			// genefilterset.add( gg.index );
@@ -5003,8 +5027,10 @@ public class GeneSet extends JApplet {
 				for (String sp : gg.species.keySet()) {
 					Teginfo stv = gg.species.get(sp);
 					for (Tegeval tv : stv.tset) {
+						int li = tv.cont.lastIndexOf('_');
+						String tvshort = tv.contshort+tv.cont.substring(li);
 						for (Set<String> uset : uclusterlist) {
-							if (uset.contains(tv.cont)) {
+							if (uset.contains(tvshort)) {
 								ct.addAll(uset);
 								break;
 							}
@@ -5019,7 +5045,9 @@ public class GeneSet extends JApplet {
 				for (String sp : g.species.keySet()) {
 					Teginfo stv = g.species.get(sp);
 					for (Tegeval tv : stv.tset) {
-						if (ct.contains(tv.cont)) {
+						int li = tv.cont.lastIndexOf('_');
+						String tvshort = tv.contshort+tv.cont.substring(li);
+						if (ct.contains(tvshort)) {
 							if (remove)
 								genefilterset.remove(g.index);
 							else
@@ -5736,7 +5764,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 34;
+				return 38;
 			}
 
 			@Override
@@ -5809,6 +5837,14 @@ public class GeneSet extends JApplet {
 					return "T.brockianus";
 				} else if (columnIndex == 33) {
 					return "T.filiformis";
+				} else if (columnIndex == 34) {
+					return "T.igniterrae";
+				} else if (columnIndex == 35) {
+					return "T.kawarayensis";
+				} else if (columnIndex == 36) {
+					return "MT.silvianus";
+				} else if (columnIndex == 37) {
+					return "MT.ruber";
 				}
 				return "";
 			}
@@ -6002,6 +6038,26 @@ public class GeneSet extends JApplet {
 						Teginfo set = gene.species.get("t.filiformis");
 						return set;
 					}
+				} else if (columnIndex == 34) {
+					if (gene.species != null) {
+						Teginfo set = gene.species.get("t.igniterrae");
+						return set;
+					}
+				} else if (columnIndex == 35) {
+					if (gene.species != null) {
+						Teginfo set = gene.species.get("t.kawarayensis");
+						return set;
+					}
+				} else if (columnIndex == 36) {
+					if (gene.species != null) {
+						Teginfo set = gene.species.get("mt.silvanus");
+						return set;
+					}
+				} else if (columnIndex == 37) {
+					if (gene.species != null) {
+						Teginfo set = gene.species.get("mt.ruber");
+						return set;
+					}
 				}
 				return columnIndex >= 11 ? null : "";
 			}
@@ -6129,6 +6185,79 @@ public class GeneSet extends JApplet {
 		ftable.setComponentPopupMenu(fpopup);
 
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("Show group sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JTextArea textarea = new JTextArea();
+				JScrollPane scrollpane = new JScrollPane(textarea);
+
+				try {
+					if (clipboardService == null)
+						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
+					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
+					textarea.getActionMap().put("copy", action);
+					grabFocus = true;
+				} catch (Exception ee) {
+					ee.printStackTrace();
+					System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+				}
+
+				textarea.setDragEnabled(true);
+
+				Map<Integer,String>		ups = new HashMap<Integer,String>();
+				Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if (gg.species != null) {
+						ups.put( gg.groupIdx, gg.name );
+						List<Tegeval>	tlist;
+						if( ups2.containsKey( gg.groupIdx ) ) tlist = ups2.get( gg.groupIdx );
+						else {
+							tlist = new ArrayList<Tegeval>();
+							ups2.put( gg.groupIdx, tlist );
+						}
+						
+						//textarea.append(gg.name + ":\n");
+						for (String sp : gg.species.keySet()) {
+							Teginfo stv = gg.species.get(sp);
+							for (Tegeval tv : stv.tset) {
+								tlist.add( tv );
+								/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+								if (tv.dna != null) {
+									for (int i = 0; i < tv.dna.length(); i += 70) {
+										textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
+									}
+								}*/
+							}
+						}
+					}
+				}
+				
+				for( int gi : ups.keySet() ) {
+					String name = ups.get(gi);
+					List<Tegeval>	tlist = ups2.get(gi);
+					
+					textarea.append(name.replace('/', '-') + ":\n");
+					for( Tegeval tv : tlist ) {
+						textarea.append(">" + tv.cont.substring(0, tv.cont.indexOf('_')) + "\n");
+						if (tv.dna != null) {
+							for (int i = 0; i < tv.dna.length(); i += 70) {
+								textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
+							}
+						}
+					}
+				}
+				
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(scrollpane);
+				frame.setSize(400, 300);
+				frame.setVisible(true);
+			}
+		});
+		popup.addSeparator();
 		popup.add(new AbstractAction("Add similar") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -7253,6 +7382,16 @@ public class GeneSet extends JApplet {
 					}
 					
 					double[] corrarr = gg.corrarr;
+					boolean symmetrize = true;
+					if( symmetrize ) {
+						for( i = 0; i < len; i++ ) {
+							for( int k = i+1; k < len; k++ ) {
+								corrarr[i*len+k] = (corrarr[k*len+i]+corrarr[i*len+k])/2.0;
+								corrarr[k*len+i] = corrarr[i*len+k];
+							}
+						}
+					}
+					
 					for (i = 0; i < len; i++) {
 						for (int k = 0; k < len; k++) {
 							if (corrarr[i * len + k] < min[i])
@@ -7265,6 +7404,18 @@ public class GeneSet extends JApplet {
 							corrarr[i * 16 + k] = corrarr[i * 16 + k] - min;
 						}*/
 					}
+					
+					i = 0;
+					for (double d : corrarr) {
+						double dval = d;
+						if (i % len == 0)
+							textarea.append("\n" + dval);
+						else
+							textarea.append("\t" + dval);
+
+						i++;
+					}
+					textarea.append("\n");
 
 					i = 0;
 					for (double d : corrarr) {
@@ -7278,9 +7429,8 @@ public class GeneSet extends JApplet {
 
 						i++;
 					}
-					
 					double[] newcorr = Arrays.copyOf(corrarr, corrarr.length);
-					textarea.append("D matrix\n");
+					textarea.append("\nD matrix\n");
 					i = 0;
 					for (double d : corrarr) {
 						double dval = max[i/len]-d;
@@ -7570,14 +7720,16 @@ public class GeneSet extends JApplet {
 	static List<String> corrInd;
 
 	private static JComponent newSoft(JButton jb, Container comp, JComboBox selcomblocal) throws IOException {
-		InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
+		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
+		InputStream is = GeneSet.class.getResourceAsStream("/thermus_join.aa");
 		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
 		if (is != null)
 			loci2aasequence(new InputStreamReader(is));
 
 		// URL url = new URL("http://192.168.1.69/all.nn");
 		try {
-			is = GeneSet.class.getResourceAsStream("/all.nn");
+			is = GeneSet.class.getResourceAsStream("/thermus_join.nn");
+			//is = GeneSet.class.getResourceAsStream("/all.nn");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
 				loci2dnasequence(new InputStreamReader(is));
@@ -7587,7 +7739,8 @@ public class GeneSet extends JApplet {
 
 		// url = new URL("http://192.168.1.69/all.fsa");
 		try {
-			is = GeneSet.class.getResourceAsStream("/all.fsa");
+			is = GeneSet.class.getResourceAsStream("/thermus_join.fna");
+			//is = GeneSet.class.getResourceAsStream("/all.fsa");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
 				loadcontigs(new InputStreamReader(is));
@@ -7598,7 +7751,8 @@ public class GeneSet extends JApplet {
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>> iclusterlist = loadSimpleClusters(new InputStreamReader(is));
 
-		is = GeneSet.class.getResourceAsStream("/union_cluster.txt");
+		//is = GeneSet.class.getResourceAsStream("/union_cluster.txt");
+		is = GeneSet.class.getResourceAsStream("/thermus_union_cluster.txt");
 		List<Set<String>> uclusterlist = loadSimpleClusters(new InputStreamReader(is));
 
 		Map<String, Gene> refmap = new HashMap<String, Gene>();
@@ -7612,7 +7766,7 @@ public class GeneSet extends JApplet {
 		// FileReader("/home/horfrae/arc/arciformis.blastout"),
 		// "/home/horfrae/workspace/distann/src/arciformis_short.blastout",
 		// refmap, allgenes, geneset, geneloc, locgene, poddur );
-		is = GeneSet.class.getResourceAsStream("/total_short.blastout");
+		is = GeneSet.class.getResourceAsStream("/thermus_short.blastout");
 		// is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
 		panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur);
 
@@ -7667,13 +7821,17 @@ public class GeneSet extends JApplet {
 				String[] split = cont.split("_");
 				ss.add(split[0]);
 				Gene g = locgene.get(cont);
-
+				
 				if (g != null) {
 					gs.add(g.refid);
 					gset.add(g);
-				}/*
-				 * else { System.err.println( g.refid ); }
-				 */
+					
+					if( g.name.startsWith("_") ) {
+						System.err.println("ood");
+					}
+				} else {
+					System.err.println( cont );
+				}
 			}
 
 			int val = 0;
@@ -7685,10 +7843,14 @@ public class GeneSet extends JApplet {
 				}
 			}
 
-			if (val == 16 && ss.size() == 16) {
-				corrList.put(cluster, new double[256]);
+			int len = 20; //16
+			if (val == len && ss.size() == len) {
+				corrList.put(cluster, new double[20*20]);
 			}
 
+			if( gset.isEmpty() ) {
+				System.err.println("ok");
+			}
 			for (Gene g : gset) {
 				g.groupIdx = i;
 				g.groupCoverage = ss.size();
@@ -8393,7 +8555,10 @@ public class GeneSet extends JApplet {
 
 			// loci2aasequence( all, dir2 );
 			// loci2gene( nrblastres, dir );
-			clusterFromBlastResults(new File("/home/horfrae/workspace/distann/src"), new String[] { "all.blastout" }, "/home/horfrae/union_cluster.txt", "/home/horfrae/simblastcluster.txt", true);
+			//clusterFromBlastResults(new File("/home/horfrae/workspace/distann/src"), new String[] { "all.blastout" }, "/home/horfrae/union_cluster.txt", "/home/horfrae/simblastcluster.txt", true);
+			
+			clusterFromBlastResults(new File("/home/sigmar/"), new String[] { "thermus_join.blastout" }, "/home/sigmar/thermus_cluster.txt", "/home/sigmar/simblastcluster.txt", true);
+			
 			// clusterFromBlastResults( new File("/home/sigmar/thermus/"), new
 			// String[] {"all.blastout"}, "/home/sigmar/intersect_cluster.txt",
 			// "/home/sigmar/simblastcluster.txt", false);
