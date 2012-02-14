@@ -87,6 +87,9 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.simmi.JavaFasta.Annotation;
+import org.simmi.JavaFasta.Sequence;
+
 public class SerifyApplet extends JApplet {
 	/**
 	 * 
@@ -2079,6 +2082,70 @@ public class SerifyApplet extends JApplet {
 						e1.printStackTrace();
 					}
 				}
+			}
+		});
+		popup.add( new AbstractAction("View sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFrame frame = new JFrame();
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				JavaFasta jf = new JavaFasta();
+				jf.initGui(frame);
+
+				Map<String, Sequence> contset = new HashMap<String, Sequence>();
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int cr = table.convertRowIndexToModel(r);
+					Sequences seqs = sequences.get(cr);
+					
+					int nseq = 0;
+					StringBuilder	dna = new StringBuilder();
+					try {
+						File inf = new File( new URI(seqs.getPath()) );
+						BufferedReader br = new BufferedReader( new FileReader(inf) );
+						String cont = null;
+						String line = br.readLine();
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								if( cont != null ) {
+									Sequence seq = jf.new Sequence(cont, dna);
+									contset.put(cont, seq);
+								}
+								cont = line.replace( ">", seqs.getName()+"_" );
+								dna = new StringBuilder();
+								//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
+								nseq++;
+							}
+							else dna.append( line+"\n" );
+							line = br.readLine();
+						}
+						br.close();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					
+								/*Annotation a = jf.new Annotation(seq, contig, Color.red);
+								a.setStart(tv.start);
+								a.setStop(tv.stop);
+								a.setOri(tv.ori);
+								a.setGroup(gg.name);
+								a.setType("gene");
+								jf.addAnnotation(a);
+								// seq.addAnnotation( new Annotation( seq, ) );*/
+				}
+
+				for (String contig : contset.keySet()) {
+					Sequence seq = contset.get(contig);
+					jf.addSequence(seq);
+					if (seq.annset != null)
+						Collections.sort(seq.annset);
+				}
+				jf.updateView();
+
+				frame.setVisible(true);
 			}
 		});
 		popup.addSeparator();
