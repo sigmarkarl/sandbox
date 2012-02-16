@@ -109,9 +109,10 @@ import netscape.javascript.JSObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.simmi.JavaFasta.Annotation;
-import org.simmi.JavaFasta.Sequence;
 import org.simmi.shared.TreeUtil;
+import org.simmi.unsigned.JavaFasta;
+import org.simmi.unsigned.JavaFasta.Annotation;
+import org.simmi.unsigned.JavaFasta.Sequence;
 
 public class GeneSet extends JApplet {
 	/**
