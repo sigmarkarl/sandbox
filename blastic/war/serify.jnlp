@@ -13,6 +13,7 @@
 <resources>
   <j2se version="1.6+" />
   <jar href="serify.jar"/>
+  <extension name="javafasta" href="http://webfasta.appspot.com/javafastacomp.jnlp"/>
 </resources>
 <applet-desc 
 	name="Matisgem"

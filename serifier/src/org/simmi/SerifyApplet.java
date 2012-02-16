@@ -87,8 +87,8 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
-import org.simmi.JavaFasta.Annotation;
-import org.simmi.JavaFasta.Sequence;
+import org.simmi.unsigned.JavaFasta;
+import org.simmi.unsigned.JavaFasta.Sequence;
 
 public class SerifyApplet extends JApplet {
 	/**
@@ -2140,8 +2140,8 @@ public class SerifyApplet extends JApplet {
 				for (String contig : contset.keySet()) {
 					Sequence seq = contset.get(contig);
 					jf.addSequence(seq);
-					if (seq.annset != null)
-						Collections.sort(seq.annset);
+					if (seq.getAnnotations() != null)
+						Collections.sort(seq.getAnnotations());
 				}
 				jf.updateView();
 
