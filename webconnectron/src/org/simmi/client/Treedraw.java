@@ -14,10 +14,13 @@ import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.DragEndEvent;
@@ -36,13 +39,16 @@ import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 
-public class Treedraw implements EntryPoint {
+public class Treedraw implements EntryPoint, MouseDownHandler {
 	Canvas		canvas;
 	Node		root;
 	Node[]		nodearray;
@@ -176,7 +182,7 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public native String handleFiles( Element ie, int append ) /*-{		
+	public native String handleFiles( Element ie, int append ) /*-{	
 		$wnd.console.log('dcw');
 		var hthis = this;
 		file = ie.files[0];
@@ -281,9 +287,55 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	PopupPanel	popup;
+	int 	npx;
+	int		npy;
+	int		px;
+	int		py;
+	boolean 		toggle = false;
+	boolean 		shift = false;
+	boolean 		mousedown = false;
+	
+	@Override
+	public void onMouseDown(MouseDownEvent e) {
+		toggle = false;
+		px = e.getX();
+		py = e.getY();
+		npx = px;
+		npy = py;
+		shift = e.isShiftKeyDown();
+		int nativebutton = e.getNativeButton();
+		
+		if( nativebutton == NativeEvent.BUTTON_RIGHT ) {
+			mousedown = false;
+			popup.setPopupPosition(e.getX(), e.getY());
+			popup.show();
+		}
+	}
+	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get();
+		rp.addDomHandler( new ContextMenuHandler() {
+			@Override
+			public void onContextMenu(ContextMenuEvent event) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		}, ContextMenuEvent.getType());
+		
+		popup = new PopupPanel( true );
+		final MenuBar	menu = new MenuBar( true );
+		popup.add( menu );
+		
+		menu.addItem( "Save tree", new Command() {
+			@Override
+			public void execute() {
+				save( root.toString() );
+				popup.hide();
+			}
+		});
+		
 		canvas = Canvas.createIfSupported();
 		
 		Style s = rp.getElement().getStyle();
