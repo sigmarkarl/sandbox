@@ -985,7 +985,6 @@ public class Connectron extends ScrollPanel
 		canvas.addKeyUpHandler( this );
 		canvas.addKeyPressHandler( this );
 		
-		
 		canvas.addDragHandler( this );
 		canvas.addDragEnterHandler( this );
 		canvas.addDragLeaveHandler( this );
