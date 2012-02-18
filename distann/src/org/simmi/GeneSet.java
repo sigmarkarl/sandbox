@@ -340,6 +340,43 @@ public class GeneSet extends JApplet {
 			return dnaa.get(query);
 		return null;
 	}
+	
+	private static Gene genestuff( List<Set<String>> uclusterlist, String query, String desc, String teg, String val, Map<String,Gene> ret ) {
+		Gene gene = null;
+		
+		if( ret.containsKey(val) ) {
+			gene = ret.get(val);
+			for( Set<String>	clusterset : uclusterlist ) {
+				if( clusterset.contains( query ) ) {
+					for( String padd : gene.species.keySet() ) {
+						Teginfo stv = gene.species.get(padd);
+						for( Tegeval tvl : stv.tset ) {
+							if( !clusterset.contains( tvl.cont ) ) {
+								Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
+								
+								if( newgene == null ) {
+									newgene = new Gene(desc, teg);
+									newgene.allids = new HashSet<String>();
+									newgene.species = new HashMap<String, Teginfo>();
+									newgene.refid = gene.refid + " new";
+									ret.put( newgene.refid, newgene );
+								}
+								
+								return newgene;
+								
+								//break;
+							}
+						}
+						
+						//if( newgene != gene ) break;
+					}
+					//newgene = genestuff( gene, clusterset, desc, teg, id, ret );
+				}
+			}
+		}
+		
+		return gene;
+	}
 
 	private static void panCoreFromNRBlast(Reader rd, String outfile, Map<String, Gene> ret, Map<String, String> allgenes, Map<String, Set<String>> geneset, 
 			Map<String, Set<String>> geneloc, Map<String, Gene> locgene, Set<String> poddur, List<Set<String>> uclusterlist ) 
@@ -549,31 +586,7 @@ public class GeneSet extends JApplet {
 				
 				Gene gene;
 				if (ret.containsKey(val)) {
-					gene = ret.get(val);
-					Gene newgene = gene;
-					for( Set<String>	clusterset : uclusterlist ) {
-						if( clusterset.contains( contig ) ) {
-							for( String padd : gene.species.keySet() ) {
-								Teginfo stv = gene.species.get(padd);
-								for( Tegeval tvl : stv.tset ) {
-									if( !clusterset.contains( tvl.cont ) ) {
-										newgene = new Gene(desc, teg);
-										newgene.allids = new HashSet<String>();
-										newgene.species = new HashMap<String, Teginfo>();
-										ret.put(val, newgene);
-										newgene.refid = gene.refid + " new";
-										
-										break;
-									}
-								}
-								
-								if( newgene != gene ) break;
-							}
-						}
-						if( newgene != gene ) break;
-					}
-					
-					gene = newgene;
+					gene = genestuff( uclusterlist, query, desc, teg, val, ret );
 				} else {
 					gene = new Gene(desc, teg);
 					gene.allids = new HashSet<String>();
@@ -6292,6 +6305,78 @@ public class GeneSet extends JApplet {
 					textarea.append(name.replace('/', '-') + ":\n");
 					for( Tegeval tv : tlist ) {
 						textarea.append(">" + tv.cont.substring(0, tv.cont.indexOf('_')) + "\n");
+						if (tv.seq != null) {
+							for (int i = 0; i < tv.seq.length(); i += 70) {
+								textarea.append(tv.seq.substring(i, Math.min(i + 70, tv.seq.length())) + "\n");
+							}
+						}
+					}
+				}
+				
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.add(scrollpane);
+				frame.setSize(400, 300);
+				frame.setVisible(true);
+			}
+		});
+		popup.add( new AbstractAction("Show group DNA sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JTextArea textarea = new JTextArea();
+				JScrollPane scrollpane = new JScrollPane(textarea);
+
+				try {
+					if (clipboardService == null)
+						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
+					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
+					textarea.getActionMap().put("copy", action);
+					grabFocus = true;
+				} catch (Exception ee) {
+					ee.printStackTrace();
+					System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+				}
+
+				textarea.setDragEnabled(true);
+
+				Map<Integer,String>		ups = new HashMap<Integer,String>();
+				Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if (gg.species != null) {
+						ups.put( gg.groupIdx, gg.name );
+						List<Tegeval>	tlist;
+						if( ups2.containsKey( gg.groupIdx ) ) tlist = ups2.get( gg.groupIdx );
+						else {
+							tlist = new ArrayList<Tegeval>();
+							ups2.put( gg.groupIdx, tlist );
+						}
+						
+						//textarea.append(gg.name + ":\n");
+						for (String sp : gg.species.keySet()) {
+							Teginfo stv = gg.species.get(sp);
+							for (Tegeval tv : stv.tset) {
+								tlist.add( tv );
+								/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+								if (tv.dna != null) {
+									for (int i = 0; i < tv.dna.length(); i += 70) {
+										textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
+									}
+								}*/
+							}
+						}
+					}
+				}
+				
+				for( int gi : ups.keySet() ) {
+					String name = ups.get(gi);
+					List<Tegeval>	tlist = ups2.get(gi);
+					
+					textarea.append(name.replace('/', '-') + ":\n");
+					for( Tegeval tv : tlist ) {
+						textarea.append(">" + tv.cont.substring(0, tv.cont.indexOf('_')) + "\n");
 						if (tv.dna != null) {
 							for (int i = 0; i < tv.dna.length(); i += 70) {
 								textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
@@ -7191,8 +7276,8 @@ public class GeneSet extends JApplet {
 				for (String contig : contset.keySet()) {
 					Sequence seq = contset.get(contig);
 					jf.addSequence(seq);
-					if (seq.annset != null)
-						Collections.sort(seq.annset);
+					if (seq.getAnnotations() != null)
+						Collections.sort(seq.getAnnotations());
 				}
 				jf.updateView();
 
@@ -7268,8 +7353,8 @@ public class GeneSet extends JApplet {
 				for (String contig : contset.keySet()) {
 					Sequence seq = contset.get(contig);
 					jf.addSequence(seq);
-					if (seq.annset != null)
-						Collections.sort(seq.annset);
+					if (seq.getAnnotations() != null)
+						Collections.sort(seq.getAnnotations());
 				}
 				jf.updateView();
 
