@@ -41,6 +41,7 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
@@ -48,7 +49,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 
-public class Treedraw implements EntryPoint, MouseDownHandler {
+public class Treedraw implements EntryPoint {
 	Canvas		canvas;
 	Node		root;
 	Node[]		nodearray;
@@ -287,6 +288,75 @@ public class Treedraw implements EntryPoint, MouseDownHandler {
 		}
 	}
 	
+	public native String encode( String input ) /*-{
+		var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+		var output = "";
+		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+		var i = 0;
+	
+		input = this.@org.simmi.client.Treedraw::_utf8_encode(Ljava/lang/String;)(input);
+	
+		while (i < input.length) {
+	
+			chr1 = input.charCodeAt(i++);
+			chr2 = input.charCodeAt(i++);
+			chr3 = input.charCodeAt(i++);
+	
+			enc1 = chr1 >> 2;
+			enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+			enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+			enc4 = chr3 & 63;
+	
+			if (isNaN(chr2)) {
+				enc3 = enc4 = 64;
+			} else if (isNaN(chr3)) {
+				enc4 = 64;
+			}
+	
+			output = output +
+			_keyStr.charAt(enc1) + _keyStr.charAt(enc2) +
+			_keyStr.charAt(enc3) + _keyStr.charAt(enc4);
+	
+		}
+	
+		return output;
+	}-*/;
+	
+	private native String _utf8_encode( String string ) /*-{
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+	
+		for (var n = 0; n < string.length; n++) {
+	
+			var c = string.charCodeAt(n);
+	
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			}
+			else if((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+			else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+	
+		}
+	
+		return utftext;
+	}-*/;
+
+	
+	public void save( String treestr ) {
+		String base64tree = encode( treestr );
+		//String base64tree = new String( Base64.encodeBase64( treestr.getBytes() ) );
+		Anchor	anchor = new Anchor();
+		anchor.setHref( "data:text/plain;filename:tmp.ntree;base64,"+base64tree );
+		click( anchor.getElement() );
+	}
+	
 	PopupPanel	popup;
 	int 	npx;
 	int		npy;
@@ -295,23 +365,6 @@ public class Treedraw implements EntryPoint, MouseDownHandler {
 	boolean 		toggle = false;
 	boolean 		shift = false;
 	boolean 		mousedown = false;
-	
-	@Override
-	public void onMouseDown(MouseDownEvent e) {
-		toggle = false;
-		px = e.getX();
-		py = e.getY();
-		npx = px;
-		npy = py;
-		shift = e.isShiftKeyDown();
-		int nativebutton = e.getNativeButton();
-		
-		if( nativebutton == NativeEvent.BUTTON_RIGHT ) {
-			mousedown = false;
-			popup.setPopupPosition(e.getX(), e.getY());
-			popup.show();
-		}
-	}
 	
 	@Override
 	public void onModuleLoad() {
@@ -402,46 +455,61 @@ public class Treedraw implements EntryPoint, MouseDownHandler {
 				int y = event.getY();
 				
 				canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-				if( event.isControlKeyDown() ) {
-					recursiveNodeCollapse( root, x, y );
-					root.countLeaves();
-				} else if( event.isShiftKeyDown() ) {
-					recursiveNodeClick( root, x, y, 1 );
+				
+				toggle = false;
+				px = event.getX();
+				py = event.getY();
+				npx = px;
+				npy = py;
+				shift = event.isShiftKeyDown();
+				int nativebutton = event.getNativeButton();
+				
+				if( nativebutton == NativeEvent.BUTTON_RIGHT ) {
+					mousedown = false;
+					popup.setPopupPosition(px, py);
+					popup.show();
 				} else {
-					recursiveNodeClick( root, x, y, 0 );
-					/*if( nodearray != null ) {
-						int y = event.getY();
-						int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
-						final Node n = nodearray[i];
-						
-						int ci = n.getName().indexOf(",");
-						String fname = ci > 0 ? n.getName().substring(1,ci) : n.getName();
-						RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
-						try {
-							rq.sendRequest( fname, new RequestCallback() {
-								@Override
-								public void onResponseReceived(Request request, Response response) {
-									DialogBox	d = new DialogBox();
-									d.getCaption().setText("NCBI 16SMicrobial blast");
-									d.setAutoHideEnabled( true );
+					if( event.isControlKeyDown() ) {
+						recursiveNodeCollapse( root, x, y );
+						root.countLeaves();
+					} else if( shift ) {
+						recursiveNodeClick( root, x, y, 1 );
+					} else {
+						recursiveNodeClick( root, x, y, 0 );
+						/*if( nodearray != null ) {
+							int y = event.getY();
+							int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
+							final Node n = nodearray[i];
+							
+							int ci = n.getName().indexOf(",");
+							String fname = ci > 0 ? n.getName().substring(1,ci) : n.getName();
+							RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
+							try {
+								rq.sendRequest( fname, new RequestCallback() {
+									@Override
+									public void onResponseReceived(Request request, Response response) {
+										DialogBox	d = new DialogBox();
+										d.getCaption().setText("NCBI 16SMicrobial blast");
+										d.setAutoHideEnabled( true );
+										
+										TextArea	ta = new TextArea();
+										ta.setSize(800+"px", 600+"px");
+										ta.setText( response.getText() );
+										d.add( ta );
+										
+										d.center();
+									}
 									
-									TextArea	ta = new TextArea();
-									ta.setSize(800+"px", 600+"px");
-									ta.setText( response.getText() );
-									d.add( ta );
-									
-									d.center();
-								}
-								
-								@Override
-								public void onError(Request request, Throwable exception) {
-									console( exception.getMessage() );
-								}
-							} );
-						} catch (RequestException e) {
-							e.printStackTrace();
-						}				
-					}*/
+									@Override
+									public void onError(Request request, Throwable exception) {
+										console( exception.getMessage() );
+									}
+								} );
+							} catch (RequestException e) {
+								e.printStackTrace();
+							}				
+						}*/
+					}
 				}
 				if( treeutil != null ) drawTree( treeutil );
 			}
