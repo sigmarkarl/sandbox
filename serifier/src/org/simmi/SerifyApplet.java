@@ -2394,7 +2394,75 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		
+		popup.addSeparator();
+		popup.add( new AbstractAction("Clustal") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.isDirectory() ) f = f.getParentFile();
+					
+					int[] rr = table.getSelectedRows();
+					//String seqtype = "nucl";
+					//String joinname = f.getName();
+					//int nseq = 0;
+					for( int r : rr ) {
+						int rear = table.convertRowIndexToModel( r );
+						if( rear >= 0 ) {
+							final Sequences s = sequences.get( rear );
+							final String seqtype = s.getType();
+							String path = s.getPath();
+							
+							try {
+								URL url = new URL( path );
+								
+								String file = url.getFile();
+								String[] split = file.split("/");
+								String fname = split[ split.length-1 ];
+								split = fname.split("\\.");
+								final String title = split[0];
+								
+								final File infile = new File( f, "tmp_"+fname );
+								
+								FileOutputStream fos = new FileOutputStream( infile );
+								InputStream is = url.openStream();
+								
+								byte[] bb = new byte[100000];
+								r = is.read(bb);
+								while( r > 0 ) {
+									fos.write(bb, 0, r);
+									r = is.read(bb);
+								}
+								is.close();
+								fos.close();
+						
+								String inputPathFixed = fixPath( infile.getAbsolutePath() ).trim();
+								final String newname = s.getName()+"_aligned";
+								final String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
+								Runnable run = new Runnable() {
+									public void run() {										
+										infile.delete();
+										addSequences(newname, seqtype, newpath, s.getNSeq());
+									}
+								};
+								
+								if( seqtype.equals("nucl") ) {
+									String[] cmds = {"clustalw", "-infile="+inputPathFixed, "-align", "-outfile="+newpath, "-output=FASTA"};
+									runProcessBuilder("Clustal alignment", Arrays.asList( cmds ), run, null);
+								} else {
+									String[] cmds = {"clustalo", "-i "+inputPathFixed, "-o "+newpath};
+									runProcessBuilder("Clustal alignment", Arrays.asList( cmds ), run, null);
+								}
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+						}
+					}
+				}
+			}
+		});
 		popup.addSeparator();
 		popup.add( new AbstractAction("Join") {
 			@Override
@@ -3115,7 +3183,6 @@ public class SerifyApplet extends JApplet {
 					
 					String result = ta.getText().trim();
 					if( run != null ) {
-					
 						cont[0] = interupted ? null : ""; 
 						cont[1] = result;
 						cont[2] = new Date( System.currentTimeMillis() ).toString();
