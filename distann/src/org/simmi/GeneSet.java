@@ -6323,7 +6323,7 @@ public class GeneSet extends JApplet {
 		popup.add( new AbstractAction("Show group DNA sequences") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JTextArea textarea = new JTextArea();
+				final JTextArea textarea = new JTextArea();
 				JScrollPane scrollpane = new JScrollPane(textarea);
 
 				try {
@@ -6338,6 +6338,57 @@ public class GeneSet extends JApplet {
 				}
 
 				textarea.setDragEnabled(true);
+				
+				try {
+					final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
+					TransferHandler th = new TransferHandler() {
+						/**
+						 * 
+						 */
+						private static final long serialVersionUID = 1L;
+	
+						public int getSourceActions(JComponent c) {
+							return TransferHandler.COPY_OR_MOVE;
+						}
+	
+						public boolean canImport(TransferHandler.TransferSupport support) {
+							return false;
+						}
+	
+						protected Transferable createTransferable(JComponent c) {
+							return new Transferable() {
+								@Override
+								public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+									if (arg0.equals(df) ) {
+										return new ByteArrayInputStream( textarea.getText().getBytes() );
+									} else {
+										return textarea.getText();
+									}
+								}
+	
+								@Override
+								public DataFlavor[] getTransferDataFlavors() {
+									return new DataFlavor[] { df, DataFlavor.stringFlavor };
+								}
+	
+								@Override
+								public boolean isDataFlavorSupported(DataFlavor arg0) {
+									if (arg0.equals(df) || arg0.equals(DataFlavor.stringFlavor)) {
+										return true;
+									}
+									return false;
+								}
+							};
+						}
+	
+						public boolean importData(TransferHandler.TransferSupport support) {
+							return false;
+						}
+					};
+					textarea.setTransferHandler( th );
+				} catch (ClassNotFoundException e1) {
+					e1.printStackTrace();
+				}
 
 				Map<Integer,String>		ups = new HashMap<Integer,String>();
 				Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
