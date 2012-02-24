@@ -19,8 +19,8 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ContextMenuEvent;
-import com.google.gwt.event.dom.client.ContextMenuHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.DragEndEvent;
@@ -39,12 +39,19 @@ import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -368,14 +375,14 @@ public class Treedraw implements EntryPoint {
 	
 	@Override
 	public void onModuleLoad() {
-		RootPanel	rp = RootPanel.get();
-		rp.addDomHandler( new ContextMenuHandler() {
+		RootPanel	rp = RootPanel.get("canvas");
+		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
 			public void onContextMenu(ContextMenuEvent event) {
 				event.preventDefault();
 				event.stopPropagation();
 			}
-		}, ContextMenuEvent.getType());
+		}, ContextMenuEvent.getType());*/
 		
 		popup = new PopupPanel( true );
 		final MenuBar	menu = new MenuBar( true );
@@ -397,7 +404,7 @@ public class Treedraw implements EntryPoint {
 		s.setMargin(0.0, Unit.PX);
 		
 		int w = Window.getClientWidth();
-		int h = Window.getClientHeight();
+		int h = 480; //Window.getClientHeight();
 		canvas.setSize(w+"px", h+"px");
 		
 		canvas.addDropHandler( new DropHandler() {
@@ -411,27 +418,33 @@ public class Treedraw implements EntryPoint {
 		});
 		canvas.addDragHandler( new DragHandler() {
 			@Override
-			public void onDrag(DragEvent event) {}
+			public void onDrag(DragEvent event) {
+				console( "drag" );
+				
+				event.setData("text/plain", root.toString());
+			}
 		});
 		canvas.addDragEnterHandler( new DragEnterHandler() {
 			@Override
-			public void onDragEnter(DragEnterEvent event) {}
+			public void onDragEnter(DragEnterEvent event) {
+				console( "enter" );
+			}
 		});
 		canvas.addDragLeaveHandler( new DragLeaveHandler() {
 			@Override
-			public void onDragLeave(DragLeaveEvent event) {}
+			public void onDragLeave(DragLeaveEvent event) { console( "leave" ); }
 		});
 		canvas.addDragStartHandler( new DragStartHandler() {
 			@Override
-			public void onDragStart(DragStartEvent event) {}
+			public void onDragStart(DragStartEvent event) { console( "start" ); }
 		});
 		canvas.addDragEndHandler( new DragEndHandler() {
 			@Override
-			public void onDragEnd(DragEndEvent event) {}
+			public void onDragEnd(DragEndEvent event) { console( "end" ); }
 		});
 		canvas.addDragOverHandler( new DragOverHandler() {
 			@Override
-			public void onDragOver(DragOverEvent event) {}
+			public void onDragOver(DragOverEvent event) { console( "over" ); }
 		});
 		canvas.addDoubleClickHandler( new DoubleClickHandler() {
 			@Override
@@ -465,9 +478,9 @@ public class Treedraw implements EntryPoint {
 				int nativebutton = event.getNativeButton();
 				
 				if( nativebutton == NativeEvent.BUTTON_RIGHT ) {
-					mousedown = false;
+					/*mousedown = false;
 					popup.setPopupPosition(px, py);
-					popup.show();
+					popup.show();*/
 				} else {
 					if( event.isControlKeyDown() ) {
 						recursiveNodeCollapse( root, x, y );
@@ -526,6 +539,60 @@ public class Treedraw implements EntryPoint {
 		str = "Double click to open file dialog";
 		tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
+		
+		final Anchor	treeAnchor = new Anchor("tree");
+		treeAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				treeAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
+			}
+		});
+		final Anchor	imageAnchor = new Anchor("image");
+		imageAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				imageAnchor.setHref( canvas.toDataUrl() );
+			}
+		});
+		final Anchor	sampleAnchor = new Anchor("sample");
+		sampleAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, "sample.tree");
+				try {
+					rb.sendRequest("", new RequestCallback() {
+						@Override
+						public void onResponseReceived(Request request, Response response) {
+							handleText( response.getText() );
+						}
+						
+						@Override
+						public void onError(Request request, Throwable exception) {
+							console( exception.getMessage() );
+						}
+					});
+				} catch (RequestException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		RootPanel	help = RootPanel.get("help");
+		HorizontalPanel	hp = new HorizontalPanel();
+		hp.setSpacing(5);
+		HTML html = new HTML("Download as");
+		hp.add( html );
+		hp.add( treeAnchor );
+		html = new HTML("as");
+		hp.add( html );
+		hp.add( imageAnchor );
+		
+		html = new HTML(". Run");
+		hp.add( html );
+		hp.add( sampleAnchor );
+		
+		help.add( hp );
+		//help.add
 		
 		rp.add( canvas );
 	}
