@@ -53,13 +53,13 @@ public class Webconnectron implements EntryPoint {
 		RootPanel.get("connectron").add( vp );*/
 		
 		final RootPanel 	rp = RootPanel.get();
-		rp.addDomHandler( new ContextMenuHandler() {
+		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
 			public void onContextMenu(ContextMenuEvent event) {
 				event.preventDefault();
 				event.stopPropagation();
 			}
-		}, ContextMenuEvent.getType());
+		}, ContextMenuEvent.getType());*/
 		
 		Style				st = rp.getElement().getStyle();
 		st.setMargin( 0.0, Unit.PX );
