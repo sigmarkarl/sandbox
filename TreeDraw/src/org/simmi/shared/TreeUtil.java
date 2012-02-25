@@ -241,6 +241,13 @@ public class TreeUtil {
 			return val+1;
 		}
 		
+		public double getHeight() {
+			double h = this.geth();
+			double d = h + ((parent != null) ? parent.getHeight() : 0.0);
+			//console( h + " total " + d );
+			return d;
+		}
+		
 		public double getMaxHeight() {
 			double max = 0.0;
 			for( Node n : nodes ) {
