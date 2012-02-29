@@ -153,9 +153,71 @@ public class DataTable extends JApplet implements ClipboardOwner {
     JTable	table;
     Map<String,Object[]>		tablemap;
     private ClipboardService 	clipboardService;
-    private boolean				grabFocus = false;
-	
-    JCheckBoxMenuItem cbmi = new JCheckBoxMenuItem("Collapse tree");
+    private boolean			grabFocus = false;
+    JCheckBoxMenuItem 			cbmi = new JCheckBoxMenuItem("Collapse tree");
+    final Map<String,String>	nameaccmap = new HashMap<String,String>();
+    final List<Object[]>		rowList = new ArrayList<Object[]>();
+    
+    public void loadData( String data ) {
+    	String[] lines = data.split("\n");
+    	List<String> splitlist = new ArrayList<String>();
+    	for( int i = 1; i < lines.length; i++ ) {
+    		splitlist.clear();
+    		
+    		String line = lines[i];
+    		int first = 0;
+    		int last = line.indexOf('"');
+    		while( last != -1 ) {
+	    		String sub = line.substring(first, last);
+	    		if( sub.length() > 0 ) {
+	    			for( String s : sub.split(",") ) {
+	    				splitlist.add( s );
+	    			}
+	    		}
+	    		first = last+1;
+	    		last = line.indexOf('"', first);
+	    		
+	    		if( last != -1 ) {
+	    			sub = line.substring(first, last);
+	    			splitlist.add( sub );
+	    		
+	    			first = last+2;
+	    			last = line.indexOf('"', first);
+	    		}
+    		}
+    		String sub = line.substring(first);
+    		if( sub.length() > 0 ) {
+    			for( String s : sub.split(",") ) {
+    				splitlist.add( s );
+    			}
+    		}
+    		String[] split = splitlist.toArray( new String[0] ); //lines[i].split(",");
+    		
+    		if( split.length > 13 ) {
+	    		nameaccmap.put(split[0], split[1]);
+				Object[] strs = new Object[ 14 ];
+				for( int k = 0; k < strs.length; k++ ) {
+					if( k < 3 ) {
+						strs[k] = split[(k+2)%3];
+					} else if( k == 3 || k == 4 ) {
+						try {
+							strs[k] = Integer.parseInt( split[k] );
+						} catch( Exception e ) {
+							e.printStackTrace();
+						}
+					}
+					if( k == 13 ) strs[k] = (split[k] != null && split[k].length() > 0 ? Boolean.parseBoolean( split[k] ) : true);
+					else strs[k] = split[k];
+				}
+				//Arrays.copyOfRange(split, 1, split.length );
+				rowList.add( strs );
+				tablemap.put((String)strs[2], strs);
+    		} else {
+    			System.err.println("ermimeri " + split.length );
+    		}
+    	}
+    	table.tableChanged( new TableModelEvent( table.getModel() ) );
+    }
     
 	public void init() {
 		updateLof();
@@ -164,12 +226,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		table.setAutoCreateRowSorter( true );
 		//table.setColumnSelectionAllowed( true );
 		JScrollPane	scrollpane = new JScrollPane( table );
-		
-		final Map<String,String>	nameaccmap = new HashMap<String,String>();
 		tablemap = new HashMap<String,Object[]>();
 		
-		final List<Object[]>	rowList = new ArrayList<Object[]>();
-		InputStream is = this.getClass().getResourceAsStream( "/therm3.txt" );
+		/*InputStream is = this.getClass().getResourceAsStream( "/therm3.txt" );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		try {
 			String line = br.readLine();
@@ -199,7 +258,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		table.setModel( new TableModel() {
 			@Override
@@ -228,6 +287,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else if( columnIndex == 11 ) return "country";
 				else if( columnIndex == 12 ) return "source";
 				else if( columnIndex == 13 ) return "valid";
+				else if( columnIndex == 13 ) return "color";
 				
 				return "";
 			}
@@ -466,6 +526,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				JDialog	dialog = new JDialog( SwingUtilities.getWindowAncestor( DataTable.this ) );
 				dialog.setSize(800, 600);
 				JTextArea textarea = new JTextArea();
+				textarea.setDragEnabled(true);
 				Set<String>	include = new HashSet<String>();
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
@@ -486,7 +547,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							int v = line.indexOf(' ');
 							String name = line.substring(1, v).trim();
 							String acc = nameaccmap.get(name);
-							if( include.contains(acc) ) {
+							if( include.contains(name) ) {
 								inc = true;
 								sb.append( line+"\n" );
 							} else inc = false;
@@ -545,11 +606,24 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				int r = table.getSelectedRow();
 				int i = table.convertRowIndexToModel(r);
 				if( i != -1 ) {
-					Object[] str = rowList.get( i );
-					String doi = (String)str[4];
 					try {
-						URL url = new URL( "http://dx.doi.org/"+doi );
-						Desktop.getDesktop().browse( url.toURI() );
+						Object[] str = rowList.get( i );
+						String doi = (String)str[5];
+						if( doi != null && doi.length() > 0 ) {
+						
+							URL url = new URL( "http://dx.doi.org/"+doi );
+							Desktop.getDesktop().browse( url.toURI() );
+							//URL url = new URL( "http://dx.doi.org/"+doi );
+							//DataTable.this.getAppletContext().showDocument( url );
+						} else {
+							String pubmed = (String)str[6];
+							try {
+								URL url = new URL( "http://www.ncbi.nlm.nih.gov/pubmed/?term="+pubmed );
+								Desktop.getDesktop().browse( url.toURI() );
+							} catch (MalformedURLException e1) {
+								e1.printStackTrace();
+							}
+						}
 					} catch (MalformedURLException e1) {
 						e1.printStackTrace();
 					} catch (IOException e1) {
@@ -578,6 +652,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		
 		try {
 			JSObject win = JSObject.getWindow(this);
+			System.err.println( "about to run loadData" );
+			win.call("loadData", new Object[] {});
+			System.err.println( "done loadData" );
 			win.call("loadMeta", new Object[] {});
 		} catch( Exception e ) {
 			
@@ -587,8 +664,5 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 
 	@Override
-	public void lostOwnership(Clipboard clipboard, Transferable contents) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void lostOwnership(Clipboard clipboard, Transferable contents) {}
 }
