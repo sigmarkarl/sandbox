@@ -16,6 +16,7 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ThermusTable implements EntryPoint {	
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
@@ -34,8 +35,64 @@ public class ThermusTable implements EntryPoint {
 		$wnd.loadMeta = function() {
 			s.@org.simmi.client.ThermusTable::loadMeta()();
 		};
+		
+		$wnd.loadData = function() {
+			s.@org.simmi.client.ThermusTable::loadData()();
+		};
 
 		return 0;
+	}-*/;
+	
+	public void loadData() {
+		console("loading data");
+		greetingService.getThermusFusion( new AsyncCallback<String>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				console( "caught " + caught.getMessage() );
+			}
+
+			@Override
+			public void onSuccess(String result) {
+				if( result != null ) {
+					Element e = Document.get().getElementById("datatable");
+					loadApplet( e, result );
+				}
+			}
+		});
+	}
+	
+	public native void loadApplet( JavaScriptObject applet, String data ) /*-{
+		//var applet = $doc.getElementById('datatable');
+  		applet.loadData( data );
+	}-*/;
+	
+	public native String encodeURIPassword( String password ) /*-{
+	  	return encodeURIComponent(password);
+	}-*/;
+	
+	public native String getGAauthenticationToken( String email, String password ) /*-{
+		  //password = encodeURIComponent(password);
+		  //var response == UrlFetchApp.fetch("https://www.google.com/accounts/ClientLogin", {
+		  //    method: "post",
+		  //    payload: "accountType=GOOGLE&Email=" + email + "&Passwd=" + password + "&service=fusiontables&Source=testing"
+		  //});
+		  //var responseStr = response.getContentText();
+		  //responseStr = responseStr.slice(responseStr.search("Auth=") + 5, responseStr.length);
+		  ///responseStr = responseStr.replace(/\n/g, "");
+		  //return responseStr;
+		  return "ok";
+	}-*/;
+
+	public native String getdata( String authToken ) /*-{
+		  query = encodeURIComponent("SHOW TABLES");
+		  var URL = "http://www.google.com/fusiontables/api/query?sql=" + query;
+		  var response = UrlFetchApp.fetch(URL, {
+		     method: "get",
+		     headers: {
+		          "Authorization": "GoogleLogin auth=" + authToken,
+		     }
+		  });
+		  return response.getContentText();
 	}-*/;
 	
 	public void saveMeta( String acc, String country, boolean valid ) {
@@ -107,6 +164,32 @@ public class ThermusTable implements EntryPoint {
 				rp.setSize(w+"px", h+"px");
 			}
 		});
+		
+		//console( "authtoken: "+authtoken );
+		//String data = getdata( authtoken );
+		//console( "data: "+data );
+		
+		
+		Element pe = Document.get().createElement("param");
+		pe.setAttribute("name", "jnlp_href");
+		pe.setAttribute("value", "treedraw.jnlp");
+		
+		final Element ae = Document.get().createElement("applet");
+		ae.appendChild( pe );
+		
+		ae.setAttribute("id", "datatable");
+		ae.setAttribute("name", "datatable");
+		ae.setAttribute("codebase", "http://127.0.0.1:8888/");
+		//ae.setAttribute("codebase", "http://127.0.0.1/");
+		ae.setAttribute("width", "100%");
+		ae.setAttribute("height", "100%");
+		ae.setAttribute("jnlp_href", "treedraw.jnlp");
+		ae.setAttribute("archive", "treedraw.jar");
+		ae.setAttribute("code", "org.simmi.DataTable");
+		
+		final SimplePanel	applet = new SimplePanel();
+		applet.getElement().appendChild( ae );
+		rp.add( applet );
 		
 		initFunctions();
 		
