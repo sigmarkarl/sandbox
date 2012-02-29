@@ -260,6 +260,10 @@ public class TreeUtil {
 		public Node getParent() {
 			return parent;
 		}
+		
+		public void setParent( Node parent ) {
+			this.parent = parent;
+		}
 	}
 	
 	public Node findNode( Node old, Node node ) {
@@ -589,6 +593,8 @@ public class TreeUtil {
 			
 			if( b != -1 ) {
 				res.nodes.add( oldnode );
+				oldnode.parent = res;
+				
 				double tmph = oldnode.h;
 				//res.h = oldnode.h;
 				oldnode.h = b;
