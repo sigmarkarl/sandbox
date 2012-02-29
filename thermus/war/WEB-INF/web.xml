@@ -11,10 +11,28 @@
     <servlet-class>org.simmi.server.GreetingServiceImpl</servlet-class>
   </servlet>
   
+  <servlet>
+    <servlet-name>Step1</servlet-name>
+    <servlet-class>org.simmi.server.FetcherServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>Step2</servlet-name>
+    <servlet-class>org.simmi.server.RequestTokenCallbackServlet</servlet-class>
+  </servlet>
+  
   <servlet-mapping>
     <servlet-name>greetServlet</servlet-name>
     <url-pattern>/org.simmi.Thermustable/greet</url-pattern>
     <url-pattern>/thermus/greet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet-mapping>
+    <servlet-name>Step1</servlet-name>
+    <url-pattern>/step1</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>Step2</servlet-name>
+    <url-pattern>/step2</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->
