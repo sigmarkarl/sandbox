@@ -320,17 +320,22 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public void recursiveReroot( Node node, double x, double y ) {
+	public Node recursiveReroot( Node node, double x, double y ) {
+		Node ret = null;
 		if( node != null ) {
 			if( Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5 ) {
-				treeutil.reroot(root, node);
-				root = node;
+				ret = node;
 			} else {
 				for( Node n : node.getNodes() ) {
-					recursiveReroot( n, x, y );
+					Node pot = recursiveReroot( n, x, y );
+					if( pot != null ) {
+						ret = pot;
+						break;
+					}
 				}
 			}
 		}
+		return ret;
 	}
 	
 	public void recursiveNodeClick( Node node, double x, double y, int recursive ) {
@@ -432,6 +437,7 @@ public class Treedraw implements EntryPoint {
 	boolean 		toggle = false;
 	boolean 		shift = false;
 	boolean 		mousedown = false;
+	boolean			rerooting = false;
 	
 	@Override
 	public void onModuleLoad() {
@@ -514,7 +520,18 @@ public class Treedraw implements EntryPoint {
 					int y = event.getY();
 					
 					canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-					recursiveReroot( root, x, y );
+					if( !rerooting ) {
+						rerooting = true;
+						
+						Node newroot = recursiveReroot( root, x, y );
+						if( newroot != null ) {
+							newroot.setParent( null );
+							treeutil.reroot(root, newroot);
+							root = newroot;
+						}
+						
+						rerooting = false;
+					}
 					if( treeutil != null ) drawTree( treeutil );
 				} else {
 					openFileDialog( 0 );
