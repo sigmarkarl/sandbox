@@ -692,7 +692,7 @@ public class Connectron extends ScrollPanel
 		u = 50.0;
 		
 		loc = 0;
-		TreeUtil treeutil = new TreeUtil( text, false, null, null, false, null, null );
+		TreeUtil treeutil = new TreeUtil( text, false, null, null, false, null, null, false );
 		TreeUtil.Node resultnode = treeutil.getNode();
 		//Node resultnode = parseTreeRecursive( text, false );
 		
