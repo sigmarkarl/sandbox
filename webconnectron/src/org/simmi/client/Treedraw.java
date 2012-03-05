@@ -123,7 +123,9 @@ public class Treedraw implements EntryPoint {
 		Context2d ctx = canvas.getContext2d();
 		Node node = getMaxHeight( root, ctx, ww-30 );
 		double gh = getHeight(node);
-		double maxheight = (gh*(ww-30))/(ww-60-ctx.measureText(node.getName()).getWidth());
+		String name = node.getName();
+		if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+		double maxheight = (gh*(ww-30))/(ww-60-ctx.measureText(name).getWidth());
 		
 		console( maxheightold + "  " + gh );
 		if( vertical ) {
@@ -138,9 +140,8 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	public double getHeight( Node n ) {
-		//double h = n.geth();
-		double d = ((n.getParent() != null) ? n.geth() + getHeight( n.getParent() ) : 0.0);
-		//console( h + " total " + d );
+		double h = n.geth();
+		double d = h + ((n.getParent() != null) ? getHeight( n.getParent() ) : 0.0);
 		return d;
 	}
 	
@@ -163,7 +164,9 @@ public class Treedraw implements EntryPoint {
 		double max = 0.0;
 		console( ""+leaves.size() );
 		for( Node node : leaves ) {
-			TextMetrics tm = ctx.measureText( node.getName() );
+			String name = node.getName();
+			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			TextMetrics tm = ctx.measureText( name );
 			double tw = tm.getWidth();
 			double h = node.getHeight();
 			
@@ -173,7 +176,11 @@ public class Treedraw implements EntryPoint {
 				sel = node;
 			}
 		}
-		console( sel.getName() );
+		
+		String name = sel.getName();
+		if( sel.getMeta() != null ) name += " ("+sel.getMeta()+")";
+		console( name );
+		
 		return sel;
 	}
 	
@@ -245,7 +252,7 @@ public class Treedraw implements EntryPoint {
 			handleTree( treeutil );
 		} else {
 			String tree = str.replaceAll("[\r\n]+", "");
-			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null );
+			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
 			handleTree( treeutil );
 		}
 	}
