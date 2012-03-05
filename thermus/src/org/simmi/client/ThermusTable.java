@@ -179,7 +179,7 @@ public class ThermusTable implements EntryPoint {
 		
 		ae.setAttribute("id", "datatable");
 		ae.setAttribute("name", "datatable");
-		ae.setAttribute("codebase", "http://127.0.0.1:8888/");
+		ae.setAttribute("codebase", "http://thermusgenes.appspot.com/");
 		//ae.setAttribute("codebase", "http://127.0.0.1/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
@@ -188,6 +188,7 @@ public class ThermusTable implements EntryPoint {
 		ae.setAttribute("code", "org.simmi.DataTable");
 		
 		final SimplePanel	applet = new SimplePanel();
+		applet.setSize("100%", "100%");
 		applet.getElement().appendChild( ae );
 		rp.add( applet );
 		
