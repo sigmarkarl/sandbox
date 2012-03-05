@@ -488,12 +488,25 @@ public class TreeUtil {
 		super();
 	}
 	
-	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap ) {
+	public void clearParentNames( Node node ) {
+		if( node.getNodes() != null && node.getNodes().size() > 0 ) {
+			node.setName("");
+			for( Node n : node.getNodes() ) {
+				clearParentNames( n );
+			}
+		}
+	}
+	
+	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap, boolean clearParentNodes ) {
 		super();
 		loc = 0;
 		//System.err.println( str );
 		if( str != null && str.length() > 0 ) {
 			Node resultnode = parseTreeRecursive( str, inverse );
+			
+			if( clearParentNodes ) {
+				clearParentNames( resultnode );
+			}
 			
 			if( include == null ) {
 				include = new HashSet<String>();
@@ -514,6 +527,7 @@ public class TreeUtil {
 				}
 				
 				deleteNotContaining( resultnode, cloneset );
+				resultnode.h = 0.0;
 				
 				/*for( Node n : cloneset ) {
 					if( n.name != null && n.name.trim().length() > 0 ) System.err.println( "nnnnnnnn " + n.name );
@@ -653,7 +667,7 @@ public class TreeUtil {
 		StringBuilder sb = new StringBuilder();
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
-		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null );
+		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null, false );
 	}
 	
 	int metacount = 0;

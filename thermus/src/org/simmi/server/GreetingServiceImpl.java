@@ -19,7 +19,6 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.gdata.client.ClientLoginAccountType;
 import com.google.gdata.client.GoogleService;
@@ -54,16 +53,16 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			
-			/*try {
-				//service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			try {
+				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}*/
+			}
 		}
 		
 		if( service != null ) {
 			try {
-				String rowid = run("select rowid from "+tableid+" where name = '"+acc+"'", true);
+				String rowid = run("select rowid from "+tableid+" where acc = '"+acc+"'", true);
 				String[] split = rowid.split("\n");
 				if( split.length > 1 ) {
 					String ret = run("update "+tableid+" set country = '"+country+"' where rowid = '"+split[1]+"'", true);
@@ -130,11 +129,11 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
 		if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
-			/*try {
+			try {
 				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}*/
+			}
 		}
 		
 		if( service != null ) {

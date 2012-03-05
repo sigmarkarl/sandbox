@@ -1,7 +1,9 @@
 package org.simmi;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
@@ -15,9 +17,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +36,9 @@ import javax.jnlp.ClipboardService;
 import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.DefaultRowSorter;
 import javax.swing.JApplet;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -42,6 +48,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -55,6 +62,14 @@ import netscape.javascript.JSObject;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.TreeUtil;
+
+import com.google.gdata.client.ClientLoginAccountType;
+import com.google.gdata.client.GoogleService;
+import com.google.gdata.client.Service.GDataRequest;
+import com.google.gdata.client.Service.GDataRequest.RequestType;
+import com.google.gdata.util.AuthenticationException;
+import com.google.gdata.util.ContentType;
+import com.google.gdata.util.ServiceException;
 
 public class DataTable extends JApplet implements ClipboardOwner {
 	static String lof = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
@@ -74,7 +89,6 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	
 	public void updateTable( String tabmap ) {
 		try {
-			System.err.println( "hoho " + tabmap );
 			JSONObject jsono = new JSONObject( tabmap );
 			Iterator<String> keys = jsono.keys();
 			while( keys.hasNext() ) {
@@ -161,63 +175,172 @@ public class DataTable extends JApplet implements ClipboardOwner {
     public void loadData( String data ) {
     	String[] lines = data.split("\n");
     	List<String> splitlist = new ArrayList<String>();
-    	for( int i = 1; i < lines.length; i++ ) {
-    		splitlist.clear();
-    		
-    		String line = lines[i];
-    		int first = 0;
-    		int last = line.indexOf('"');
-    		while( last != -1 ) {
-	    		String sub = line.substring(first, last);
-	    		if( sub.length() > 0 ) {
-	    			for( String s : sub.split(",") ) {
-	    				splitlist.add( s );
-	    			}
-	    		}
-	    		first = last+1;
-	    		last = line.indexOf('"', first);
+    	
+    	try {
+	    	for( int i = 1; i < lines.length; i++ ) {
+	    		splitlist.clear();
 	    		
-	    		if( last != -1 ) {
-	    			sub = line.substring(first, last);
-	    			splitlist.add( sub );
-	    		
-	    			first = last+2;
-	    			last = line.indexOf('"', first);
+	    		//System.err.println( "uff " + i );
+	    		String line = lines[i];
+	    		int first = 0;
+	    		int last = line.indexOf('"');
+	    		while( last != -1 ) {
+	    			
+	    			if( last > first ) {
+	    				String sub = line.substring(first, last-1);
+		    		//if( sub.length() > 0 ) {
+		    			int uno = 0;
+		    			int duo = sub.indexOf(',');
+		    			while( duo != -1 ) {
+		    				splitlist.add( sub.substring(uno, duo) );
+		    				uno = duo+1;
+		    				duo = sub.indexOf(',', uno);
+		    			}
+		    			splitlist.add( sub.substring(uno) );
+		    		}
+		    		first = last+1;
+		    		last = line.indexOf('"', first);
+		    		
+		    		if( last != -1 ) {
+		    			String sub = line.substring(first, last);
+		    			splitlist.add( sub );
+		    		
+		    			first = last+2;
+		    			last = line.indexOf('"', first);
+		    		}
 	    		}
-    		}
-    		String sub = line.substring(first);
-    		if( sub.length() > 0 ) {
-    			for( String s : sub.split(",") ) {
-    				splitlist.add( s );
-    			}
-    		}
-    		String[] split = splitlist.toArray( new String[0] ); //lines[i].split(",");
-    		
-    		if( split.length > 13 ) {
-	    		nameaccmap.put(split[0], split[1]);
-				Object[] strs = new Object[ 14 ];
-				for( int k = 0; k < strs.length; k++ ) {
-					if( k < 3 ) {
-						strs[k] = split[(k+2)%3];
-					} else if( k == 3 || k == 4 ) {
-						try {
-							strs[k] = Integer.parseInt( split[k] );
-						} catch( Exception e ) {
-							e.printStackTrace();
+	    		if( first != -1 && first < line.length() ) {
+		    		String sub = line.substring(first);
+		    		if( sub.length() > 0 ) {
+		    			int uno = 0;
+		    			int duo = sub.indexOf(',');
+		    			while( duo != -1 ) {
+		    				splitlist.add( sub.substring(uno, duo) );
+		    				uno = duo+1;
+		    				duo = sub.indexOf(',', uno);
+		    			}
+		    			splitlist.add( sub.substring(uno) );
+		    		}
+	    		} else System.err.println("first is not");
+	    		String[] split = splitlist.toArray( new String[0] ); //lines[i].split(",");
+	    		
+	    		if( split.length > 8 ) {
+		    		nameaccmap.put(split[0], split[1]);
+					Object[] strs = new Object[ 14 ];
+					
+					int k = 0;
+					for( k = 0; k < split.length; k++ ) {
+						/*if( k < 3 ) {
+							strs[k] = split[(k+2)%3];
+						} else */
+						if( k == 3 || k == 4 ) {
+							try {
+								strs[k] = Integer.parseInt( split[k] );
+							} catch( Exception e ) {
+								e.printStackTrace();
+							}
 						}
+						else if( k == 13 ) strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
+						else strs[k] = split[k];
 					}
-					if( k == 13 ) strs[k] = (split[k] != null && split[k].length() > 0 ? Boolean.parseBoolean( split[k] ) : true);
-					else strs[k] = split[k];
-				}
-				//Arrays.copyOfRange(split, 1, split.length );
-				rowList.add( strs );
-				tablemap.put((String)strs[2], strs);
-    		} else {
-    			System.err.println("ermimeri " + split.length );
-    		}
+					
+					if( k == 8 ) strs[k++] = "";
+					if( k == 9 ) strs[k++] = "";
+					if( k == 10 ) strs[k++] = "";
+					if( k == 11 ) strs[k++] = "";
+					if( k == 12 ) strs[k++] = "";
+					strs[k] = true;
+					
+					//Arrays.copyOfRange(split, 1, split.length );
+					rowList.add( strs );
+					tablemap.put((String)strs[2], strs);
+	    		} else {
+	    			System.err.println("ermimeri " + split.length );
+	    		}
+	    	}
+	    	table.tableChanged( new TableModelEvent( table.getModel() ) );
+    	} catch( Exception e ) {
+    		e.printStackTrace();
     	}
-    	table.tableChanged( new TableModelEvent( table.getModel() ) );
     }
+    
+    private GoogleService service;
+	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private final String email = "huldaeggerts@gmail.com";
+	private final String password = "b.r3a1h1ms";
+	private final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
+	
+	public String getThermusFusion() {
+		//System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
+		if( service == null ) {
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			try {
+				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			} catch (AuthenticationException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if( service != null ) {
+			try {
+				String ret = run("select * from "+tableid, true);
+				return ret;
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ServiceException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
+	}
+	
+	public String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
+		   String lowercaseQuery = query.toLowerCase();
+		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
+
+		   GDataRequest request;
+		   // If the query is a select, describe, or show query, run a GET request.
+		   if (lowercaseQuery.startsWith("select") ||
+		       lowercaseQuery.startsWith("describe") ||
+		       lowercaseQuery.startsWith("show")) {
+		     URL url = new URL(SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.QUERY, url,
+		         ContentType.TEXT_PLAIN);
+		   } else {
+		     // Otherwise, run a POST request.
+		     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
+		         new ContentType("application/x-www-form-urlencoded"));
+		     OutputStreamWriter writer = new OutputStreamWriter(request.getRequestStream());
+		     writer.append("sql=" + encodedQuery);
+		     writer.flush();
+		   }
+
+		   request.execute();
+
+		   return getResultsText(request);
+	}
+	
+	private String getResultsText(GDataRequest request) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		StringBuilder sb = new StringBuilder();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			sb.append( line + "\n" );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		
+		return sb.toString();
+	}
+	
+	public static void updateFilter(JTable table, RowFilter filter) {
+		DefaultRowSorter<TableModel, Integer> rowsorter = (DefaultRowSorter<TableModel, Integer>)table.getRowSorter();
+		rowsorter.setRowFilter(filter);
+	}
     
 	public void init() {
 		updateLof();
@@ -251,7 +374,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				strs[i] = true;
 				//Arrays.copyOfRange(split, 1, split.length );
 				rowList.add( strs );
-				tablemap.put((String)strs[1], strs);
+				tablemap.put((String)strs[1t], strs);
 				
 				line = br.readLine();
 			}
@@ -287,7 +410,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else if( columnIndex == 11 ) return "country";
 				else if( columnIndex == 12 ) return "source";
 				else if( columnIndex == 13 ) return "valid";
-				else if( columnIndex == 13 ) return "color";
+				//else if( columnIndex == 13 ) return "color";
 				
 				return "";
 			}
@@ -360,7 +483,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
 				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus.ntree");
-				InputStream is = DataTable.this.getClass().getResourceAsStream("/RAxML_10993.ntree");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/RAxML_10993.ntree");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/testskrimsli.phb");
+				InputStream is = DataTable.this.getClass().getResourceAsStream("/lmin900idmin95phyml.tree");	
 				
 				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 				StringBuilder sb = new StringBuilder();
@@ -402,6 +527,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( int r : rr ) {
 					String name = (String)table.getValueAt(r, 0);
 					String acc = (String)table.getValueAt(r, 1);
+					include.add( name );
 					include.add( acc );
 					
 					Map<String,String>	map = new HashMap<String,String>();
@@ -430,10 +556,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					}
 					map.put( "acc", acc );
 					map.put("id", Integer.toString(id));
-					mapmap.put(acc, map);
+					//mapmap.put(acc, map);
+					mapmap.put(name, map);
 				}
 				
-				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected(), collapset, colormap );
+				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected(), collapset, colormap, true );
 				//return arg0.getReaderForText( this );
 				String str = tu.currentNode.toString();
 				return new ByteArrayInputStream( str.getBytes( charset ) );
@@ -516,7 +643,87 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		});*/
 		
+		final Set<Integer>	filterset = new HashSet<Integer>();
+		final RowFilter 	filter = new RowFilter() {
+			@Override
+			public boolean include(Entry entry) {
+				return filterset.isEmpty() || filterset.contains(entry.getIdentifier());
+			}
+		};
+		updateFilter(table, filter);
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("SQL") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final JDialog	dialog = new JDialog( SwingUtilities.getWindowAncestor( DataTable.this ) );
+				dialog.setSize(800, 600);
+				dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+				final JTextArea	textarea = new JTextArea();
+				
+				JButton	exc = new JButton( new AbstractAction("Execute") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						String sql = textarea.getSelectedText();
+						if( sql == null ) sql = textarea.getText();
+						if( sql != null ) {
+							sql = sql.replace("table", tableid);
+							try {
+								if( sql.startsWith("update") && sql.contains(" in ") ) {
+									int start = sql.indexOf('(')+1;
+									int stop = sql.indexOf(')', start);
+									
+									String innersql = sql.substring(start, stop);
+									String result = run( innersql, true );
+									String[] split = result.split("\n");
+									
+									int sw = sql.indexOf("where");
+									String subsql = sql.substring(0, sw);
+									for( int i = 1; i < split.length; i++ ) {
+										String rowid = split[i];
+										System.err.println("about to run "+rowid);
+										run( subsql+"where rowid = '"+rowid+"'", true );
+									}
+								} else {
+									run( sql, true );
+								}
+							} catch (IOException | ServiceException e1) {
+								e1.printStackTrace();
+							}
+						}
+					}
+				});
+				JButton	cls = new JButton( new AbstractAction("Close") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						dialog.dispose();
+					}
+				});
+				
+				JComponent comp = new JComponent() {};
+				comp.setLayout( new FlowLayout() );
+				comp.add( exc );
+				comp.add( cls );
+				
+				dialog.setLayout( new BorderLayout() );
+				JScrollPane	scrollpane = new JScrollPane( textarea );
+				dialog.add( scrollpane );
+				dialog.add( comp, BorderLayout.SOUTH );
+				
+				dialog.setVisible( true );
+			}
+		});
+		popup.add(new AbstractAction("Crop to selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				filterset.clear();
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int mr = table.convertRowIndexToModel(r);
+					filterset.add(mr);
+				}
+				updateFilter(table, filter);
+			}
+		});
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );
 		popup.addSeparator();
@@ -650,12 +857,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		
 		table.setComponentPopupMenu( popup );
 		
+		String res = getThermusFusion();
+		loadData( res );
+		
 		try {
 			JSObject win = JSObject.getWindow(this);
 			System.err.println( "about to run loadData" );
 			win.call("loadData", new Object[] {});
-			System.err.println( "done loadData" );
-			win.call("loadMeta", new Object[] {});
+			//System.err.println( "done loadData" );
+			//win.call("loadMeta", new Object[] {});
 		} catch( Exception e ) {
 			
 		}
