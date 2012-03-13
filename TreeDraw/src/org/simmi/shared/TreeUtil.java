@@ -325,7 +325,13 @@ public class TreeUtil {
 			for( Node n : checklist ) {
 				if( n.meta != null ) {
 					String nmeta = null;
-					if( n.name != null && n.name.length() > 0 ) nmeta = n.name.substring(7).trim();
+					if( n.name != null && n.name.length() > 0 ) {
+						nmeta = n.name.substring(7).trim();
+						
+						/*if( n.name.startsWith("T.ign") ) {
+							System.err.println();
+						}*/
+					}
 					
 					if( n.meta.contains(";") || (n.nodes != null && n.nodes.size() > 0) ) {
 						String[] split = n.meta.split(";");
@@ -378,7 +384,7 @@ public class TreeUtil {
 										
 										for( String str : s1 ) {
 											if( s2.contains( str ) ) {
-												cont = str;
+												cont = str+"-";
 												break;
 											}
 										}
@@ -703,10 +709,10 @@ public class TreeUtil {
 		
 		if( mapmap != null ) {
 			String mapname = node.name;
-			int ik = mapname.indexOf('.');
+			/*int ik = mapname.indexOf('.');
 			if( ik != -1 ) {
 				mapname = mapname.substring(0, ik);
-			}
+			}*/
 
 			if( mapmap.containsKey( mapname ) ) {
 				Map<String,String>	keyval = mapmap.get( mapname );
@@ -780,8 +786,19 @@ public class TreeUtil {
 					//loc = end+1;
 				}
 				
-				while( end < str.length()-1 && n != ',' && n != ')' ) {
+				boolean outsvig = true;
+				//while( end < str.length()-1 && n != ',' && n != ')' ) {
+				while( end < str.length()-1 && (n != ',' && n != ')' || !outsvig) ) {
 					n = str.charAt(++end);
+					if( outsvig && n == '(' ) {
+						outsvig = false;
+						n = str.charAt(++end);
+					} else if( !outsvig && n == ')' ) {
+						outsvig = true;
+						n = str.charAt(++end);
+					}
+					
+					//end++;
 				}
 				
 				String code = str.substring( loc, end );
@@ -794,19 +811,33 @@ public class TreeUtil {
 						node.name = code.substring(0, i+1);
 					} else {
 						split = code.split(":");
-						node.name = split[0];
+						node.name = split[0];	
 					}
 					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
 						String color = split[2].substring(0);
-						try {
-							int r = Integer.parseInt( color.substring(0, 2), 16 );
-							int g = Integer.parseInt( color.substring(2, 4), 16 );
-							int b = Integer.parseInt( color.substring(4, 6), 16 );
-							node.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
-						} catch( Exception e ) {
-							
+						if( color.contains("rgb") ) {
+							try {
+								int co = color.indexOf('(');
+								int ce = color.indexOf(')', co+1);
+								String[] csplit = color.substring(co+1, ce).split(",");
+								int r = Integer.parseInt( csplit[0].trim() );
+								int g = Integer.parseInt( csplit[1].trim() );
+								int b = Integer.parseInt( csplit[2].trim() );
+								node.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
+							} catch( Exception e ) {
+								
+							}
+						} else {
+							try {
+								int r = Integer.parseInt( color.substring(0, 2), 16 );
+								int g = Integer.parseInt( color.substring(2, 4), 16 );
+								int b = Integer.parseInt( color.substring(4, 6), 16 );
+								node.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
+							} catch( Exception e ) {
+								
+							}
 						}
 					} else node.color = null;
 					
