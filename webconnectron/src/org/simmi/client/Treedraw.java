@@ -885,11 +885,18 @@ public class Treedraw implements EntryPoint {
 					//g2.setFont( bFont );
 					
 					String name = resnode.getName();
-					if( resnode.getMeta() != null ) name += " ("+resnode.getMeta()+")";
+					if( resnode.getMeta() != null ) {
+						String meta = resnode.getMeta();
+						name += " ("+meta+")";
+						
+						/*if( meta.contains("T.ign") ) {
+							System.err.println();
+						}*/
+					}
 					
 					String[] split;
 					if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
-					else split = name.split("_");
+					else split = new String[] { name }; //name.split("_");
 					
 					int t = 0;
 					double mstrw = 0;
