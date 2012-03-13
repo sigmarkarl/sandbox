@@ -853,8 +853,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	private static Collection<Set<String>> joinBlastSets( InputStream is, String write, boolean union ) throws IOException {
-		List<Set<String>>	total = new ArrayList<Set<String>>();
+	public static void joinBlastSets( InputStream is, String write, boolean union, List<Set<String>> total ) throws IOException {
 		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
 		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
 			
@@ -865,7 +864,7 @@ public class SerifyApplet extends JApplet {
 				Set<String>	all = new HashSet<String>();
 				while( line != null && !line.startsWith(">") ) {
 					String trim = line.trim();
-					if( trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") ) {
+					if( trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.spCCB") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
 						String val = trim.substring( 0, trim.indexOf('#')-1 );
 						int v = val.indexOf("contig");
 						all.add( val );
@@ -884,8 +883,6 @@ public class SerifyApplet extends JApplet {
 			line = br.readLine();
 		}
 		if( fw != null ) fw.close();
-		
-		return total;
 	}
 	
 	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( Collection<Set<String>>	total, Set<String> species ) {
@@ -985,21 +982,26 @@ public class SerifyApplet extends JApplet {
 				});
 				dialog.setVisible( true );
 				
-				try {
-					Set<String>	species = new TreeSet<String>();
-					Collection<Set<String>> total = joinBlastSets( is, null, true );
-					if( !interrupted ) {
-						Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
-						//if( writeSimplifiedCluster != null ) 
-						writeSimplifiedCluster( os, clusterMap );
-						//writeBlastAnalysis( clusterMap, species );
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
+				if( !interrupted ) {
+					makeBlastCluster( is, os );
 				}
 			}
 		};
 		runProcess( "Blast clusters", run, dialog );
+	}
+	
+	public static void makeBlastCluster( final InputStream is, final OutputStream os ) {
+		try {
+			Set<String>	species = new TreeSet<String>();
+			List<Set<String>>	total = new ArrayList<Set<String>>();
+			joinBlastSets( is, null, true, total );
+			Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+			//if( writeSimplifiedCluster != null ) 
+			writeSimplifiedCluster( os, clusterMap );
+			//writeBlastAnalysis( clusterMap, species );
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static class AvgProvider {
@@ -3338,10 +3340,11 @@ public class SerifyApplet extends JApplet {
 		SerifyApplet sa = new SerifyApplet();
 		
 		try {
-			File f = new File( "/home/horfrae/result.txt" );
-			FileInputStream is = new FileInputStream("/home/horfrae/454AllContigs_flanking.blastout");
+			File f = new File( "/home/sigmar/thermus_union_cluster.txt" );
+			FileInputStream is = new FileInputStream("/home/sigmar/thermus_join2.blastout");
 			FileOutputStream os = new FileOutputStream(f);
-			SerifyApplet.blastJoin( is, new PrintStream(os) );
+			SerifyApplet.makeBlastCluster( is, os );
+			//SerifyApplet.blastJoin( is, new PrintStream(os) );
 			is.close();
 			os.close();
 		} catch (FileNotFoundException e) {
