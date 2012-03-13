@@ -14,6 +14,8 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -98,7 +100,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					JSONObject jo = jsono.getJSONObject(key);
 					strs[11] = jo.getString("country");
 					String vb = (String)jo.getString("valid");
-					if( vb != null ) strs[13] = Boolean.parseBoolean( vb );
+					if( vb != null ) strs[15] = Boolean.parseBoolean( vb );
 				}
 			}
 			table.tableChanged( new TableModelEvent(table.getModel()) );
@@ -121,9 +123,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
             	Object val = table.getValueAt(ii,jj);
                 //if( val != null && val instanceof Float ) sb.append( "\t"+Float.toString( (Float)val ) );
                 //else sb.append( "\t" );
-            	
             	if( jj == 0 ) sb.append( val.toString() );
-            	else sb.append( "\t"+val.toString() );
+            	else {
+            		if( val == null ) sb.append( "\t" );
+            		else sb.append( "\t"+val.toString() );
+            	}
             }
             sb.append( "\n" );
         }
@@ -185,7 +189,6 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	    		int first = 0;
 	    		int last = line.indexOf('"');
 	    		while( last != -1 ) {
-	    			
 	    			if( last > first ) {
 	    				String sub = line.substring(first, last-1);
 		    		//if( sub.length() > 0 ) {
@@ -226,7 +229,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	    		
 	    		if( split.length > 8 ) {
 		    		nameaccmap.put(split[0], split[1]);
-					Object[] strs = new Object[ 14 ];
+					Object[] strs = new Object[ 16 ];
 					
 					int k = 0;
 					for( k = 0; k < split.length; k++ ) {
@@ -234,13 +237,29 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							strs[k] = split[(k+2)%3];
 						} else */
 						if( k == 3 || k == 4 ) {
-							try {
-								strs[k] = Integer.parseInt( split[k] );
-							} catch( Exception e ) {
-								e.printStackTrace();
+							String istr = split[k];
+							if( istr != null && istr.length() > 0 ) {
+								try {
+									strs[k] = Integer.parseInt( istr );
+								} catch( Exception e ) {
+									e.printStackTrace();
+								}
+							} else {
+								strs[k] = null;
 							}
-						}
-						else if( k == 13 ) strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
+						} else if( k == 13 || k == 14 ) {
+							String dstr = split[k];
+							if( dstr != null && dstr.length() > 0 ) {
+								System.err.println("hu");
+								try {
+									strs[k] = Double.parseDouble( dstr );
+								} catch( Exception e ) {
+									e.printStackTrace();
+								}
+							} else {
+								strs[k] = null;
+							}
+						} else if( k == 15 ) strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
 						else strs[k] = split[k];
 					}
 					
@@ -249,6 +268,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( k == 10 ) strs[k++] = "";
 					if( k == 11 ) strs[k++] = "";
 					if( k == 12 ) strs[k++] = "";
+					if( k == 13 ) strs[k++] = null;
+					if( k == 14 ) strs[k++] = null;
 					strs[k] = true;
 					
 					//Arrays.copyOfRange(split, 1, split.length );
@@ -264,11 +285,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
     	}
     }
     
-    private GoogleService service;
+    private static GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
-	private final String email = "huldaeggerts@gmail.com";
-	private final String password = "b.r3a1h1ms";
-	private final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
+	private static final String email = "huldaeggerts@gmail.com";
+	private static final String password = "b.r3a1h1ms";
+	private static final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	
 	public String getThermusFusion() {
 		//System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
@@ -295,7 +316,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return null;
 	}
 	
-	public String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
+	public static String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
 		   String lowercaseQuery = query.toLowerCase();
 		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
 
@@ -322,7 +343,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		   return getResultsText(request);
 	}
 	
-	private String getResultsText(GDataRequest request) throws IOException {
+	private static String getResultsText(GDataRequest request) throws IOException {
 		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
 		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
 		
@@ -391,7 +412,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 			@Override
 			public int getColumnCount() {
-				return 14;
+				return 16;
 			}
 
 			@Override
@@ -409,7 +430,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else if( columnIndex == 10 ) return "sub_date";
 				else if( columnIndex == 11 ) return "country";
 				else if( columnIndex == 12 ) return "source";
-				else if( columnIndex == 13 ) return "valid";
+				else if( columnIndex == 13 ) return "temp";
+				else if( columnIndex == 14 ) return "pH";
+				else if( columnIndex == 15 ) return "valid";
 				//else if( columnIndex == 13 ) return "color";
 				
 				return "";
@@ -418,13 +441,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex == 3 || columnIndex == 4 ) return Integer.class;
-				else if( columnIndex == 13 ) return Boolean.class;
+				else if( columnIndex == 13 || columnIndex == 14 ) return Double.class;
+				else if( columnIndex == 15 ) return Boolean.class;
 				return String.class;
 			}
 
 			@Override
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				if( columnIndex == 11 || columnIndex == 13 ) return true;
+				if( columnIndex == 11 || columnIndex == 15 ) return true;
 				return false;
 			}
 
@@ -485,7 +509,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus.ntree");
 				//InputStream is = DataTable.this.getClass().getResourceAsStream("/RAxML_10993.ntree");
 				//InputStream is = DataTable.this.getClass().getResourceAsStream("/testskrimsli.phb");
-				InputStream is = DataTable.this.getClass().getResourceAsStream("/lmin900idmin95phyml.tree");	
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/lmin900idmin95phyml.tree");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus16S_hq.phb");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus16S_hq.phy_phyml_tree.txt");
+				InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus16S_selected.phb");
 				
 				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 				StringBuilder sb = new StringBuilder();
@@ -526,6 +553,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					String name = (String)table.getValueAt(r, 0);
+					name = name.substring(0, Math.min( name.length(), 10 ));
 					String acc = (String)table.getValueAt(r, 1);
 					include.add( name );
 					include.add( acc );
@@ -538,6 +566,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( nm.contains("t.eggertsoni") ) nm = "Thermus eggertsoni";
 						else if( nm.contains("t.islandicus") ) nm = "Thermus islandicus";
 						else if( nm.contains("t.kawarayensis") ) nm = "Thermus kawarayensis";
+						else if( nm.contains("t.brock") ) nm = "Thermus brockianus";
 						else {
 							int ix = nm.indexOf(' ');
 							if( ix > 0 ) {
@@ -752,6 +781,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					while( line != null ) {
 						if( line.startsWith(">") ) {
 							int v = line.indexOf(' ');
+							if( v == -1 ) v = line.length();
 							String name = line.substring(1, v).trim();
 							String acc = nameaccmap.get(name);
 							if( include.contains(name) ) {
@@ -857,8 +887,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		
 		table.setComponentPopupMenu( popup );
 		
-		String res = getThermusFusion();
-		loadData( res );
+		//String res = getThermusFusion();
+		//loadData( res );
 		
 		try {
 			JSObject win = JSObject.getWindow(this);
@@ -875,4 +905,117 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {}
+	
+	public static class StrId {
+		public StrId(String teg, int len) {
+			name = teg;
+			this.len = len;
+		}
+
+		String name;
+		int id;
+		int len;
+	};
+	
+	public static void main_new(String[] args) {
+		try {
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			
+			run("insert into "+tableid+" (name, acc) values ('t.spCCB_US3_UF1','t.spCCB_US3_UF1')", true);
+			/*String ret = run("select rowid from "+tableid+" where name = 'Unl042jm'", true);
+			System.err.println( ret );
+			String[] lines = ret.split("\n");
+			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*/
+		} catch (AuthenticationException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void main(String[] args) {
+		Map<String, StrId> tegmap = new HashMap<String, StrId>();
+		//Map<String,String>	rowidmap = new HashMap<String,String>();
+		
+		try {
+			FileReader fr = new FileReader("/home/sigmar/thermus16S_all.blastout");
+			//FileReader fr = new FileReader("/home/sigmar/newthermus16S.blastout");
+			BufferedReader br = new BufferedReader(fr);
+			String line = br.readLine();
+			String current = null;
+			StrId currteg = null;
+			int currlen = 0;
+			boolean done = false;
+			while (line != null) {
+				String trim = line.trim();
+				if (trim.startsWith("Query=")) {
+					String[] split = trim.substring(7).trim().split("[ ]+");
+					current = split[0];
+					done = false;
+				} else if (trim.startsWith("Length=")) {
+					currlen = Integer.parseInt(trim.substring(7).trim());
+				} else if (line.startsWith(">") && !done) {
+					int i = line.lastIndexOf('|');
+					if (i == -1)
+						i = 0;
+					String teg = line.substring(i + 1).trim();
+					line = br.readLine();
+					while (!line.startsWith("Length")) {
+						teg += line;
+						line = br.readLine();
+					}
+					//if (teg.contains("Thermus") || teg.startsWith("t.")) {
+					currteg = new StrId(teg, currlen);
+					tegmap.put(current, currteg);
+					//}
+				} else if (trim.startsWith("Ident") && !done) {
+					if( currteg != null ) {
+						int sv = trim.indexOf('(');
+						int svl = trim.indexOf('%', sv + 1);
+	
+						String trimsub = trim.substring(sv + 1, svl);
+						currteg.id = Integer.parseInt( trimsub );
+					}
+					done = true;
+				}
+
+				line = br.readLine();
+			}
+			fr.close();
+			
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+		
+			//String ret = run("select name, rowid from "+tableid+" where name like 't.spCCB%'", true);
+			String ret = run("select name, rowid from "+tableid, true);
+			String[] lines = ret.split("\n");
+			for( int i = 1; i < lines.length; i++ ) {
+				line = lines[i];
+				int comma = line.indexOf(',');
+				String name = line.substring(0, comma);
+				String rowid = line.substring( comma+1 );
+				if( tegmap.containsKey(name) ) {
+					StrId species = tegmap.get(name);
+					System.err.println( i + "  " + name + "  " + species.id + " of " + lines.length );
+					run("update "+tableid+" set species = '"+species.name+"', ident = '"+species.id+"', len = '"+species.len+"' where rowid = '"+rowid+"'", true);
+				} else {
+					System.err.println( "fail "+name );
+				}
+				//rowidmap.put( name, rowid );
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (AuthenticationException e) {
+			e.printStackTrace();
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		
+		System.err.println( tegmap.size() );
+	}
 }
