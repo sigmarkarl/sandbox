@@ -1680,7 +1680,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	private static Collection<Set<String>> joinBlastSets(File dir, String[] stuff, String write, boolean union) throws IOException {
+	/*private static Collection<Set<String>> joinBlastSets(File dir, String[] stuff, String write, boolean union) throws IOException {
 		List<Set<String>> total = new ArrayList<Set<String>>();
 		FileWriter fw = write == null ? null : new FileWriter(write); // new
 																		// FileWriter("/home/sigmar/blastcluster.txt");
@@ -1702,7 +1702,7 @@ public class GeneSet extends JApplet {
 							 * if( v != -1 ) { int i1 = val.indexOf('_',v); int
 							 * i2 = val.indexOf('_', i1+1); val =
 							 * val.substring(0,i1) + val.substring(i2); }
-							 */
+							 *
 							all.add(val);
 						}
 						line = br.readLine();
@@ -1727,7 +1727,7 @@ public class GeneSet extends JApplet {
 			fw.close();
 
 		return total;
-	}
+	}*/
 
 	private static List<Set<String>> readBlastList(String filename) throws IOException {
 		List<Set<String>> total = new ArrayList<Set<String>>();
@@ -1986,7 +1986,13 @@ public class GeneSet extends JApplet {
 
 	public static void clusterFromBlastResults(File dir, String[] stuff, String writeSimplifiedCluster, String writeSimplifiedBlast, boolean union) throws IOException {
 		Set<String> species = new TreeSet<String>();
-		Collection<Set<String>> total = joinBlastSets(dir, stuff, writeSimplifiedBlast, union);
+		List<Set<String>> total = new ArrayList<Set<String>>(); 
+		for( String name : stuff ) {
+			File ff = new File( dir, name );
+			FileInputStream	fis = new FileInputStream( ff );
+			
+			SerifyApplet.joinBlastSets(fis, writeSimplifiedBlast, union, total);
+		}
 		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total, species);
 
 		if (writeSimplifiedCluster != null)
