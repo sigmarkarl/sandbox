@@ -546,6 +546,7 @@ public class GeneSet extends JApplet {
 					set = geneset.get(padda);
 				} else {
 					set = new HashSet<String>();
+					System.err.println("new padda " + padda);
 					geneset.put(padda, set);
 				}
 
@@ -675,6 +676,8 @@ public class GeneSet extends JApplet {
 				if (!gene.species.containsKey(padda)) {
 					stv = new Teginfo();
 					gene.species.put(padda, stv);
+					
+					System.err.println( "new annars " + padda );
 				} else
 					stv = gene.species.get(padda);
 
@@ -1402,7 +1405,7 @@ public class GeneSet extends JApplet {
 				if (rs < minrs)
 					minrs = rs;
 			}
-			System.err.println();
+			//System.err.println();
 			where++;
 		}
 
@@ -1518,7 +1521,7 @@ public class GeneSet extends JApplet {
 				wherex++;
 			}
 
-			System.err.println();
+			//System.err.println();
 			where++;
 		}
 
@@ -1551,11 +1554,7 @@ public class GeneSet extends JApplet {
 	private static void intersectSets(Set<String> all, List<Set<String>> total) {
 		// Set<Set<String>> rem = new HashSet<Set<String>>();
 		// int i = 0;
-
-		if (all.contains("scoto2101_contig00162_11")) {
-			System.err.println();
-		}
-
+		
 		List<Set<String>> newtotal = new ArrayList<Set<String>>();
 		for (Set<String> check : total) {
 			Set<String> cont = new HashSet<String>();
@@ -3556,8 +3555,6 @@ public class GeneSet extends JApplet {
 						numCys++;
 				}
 				this.seq = seq;
-			} else {
-				System.err.println();
 			}
 		}
 
@@ -5833,7 +5830,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 38;
+				return 39;
 			}
 
 			@Override
@@ -5911,8 +5908,10 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 35) {
 					return "T.kawarayensis";
 				} else if (columnIndex == 36) {
-					return "MT.silvianus";
+					return "T.spCCB";
 				} else if (columnIndex == 37) {
+					return "MT.silvianus";
+				} else if (columnIndex == 38) {
 					return "MT.ruber";
 				}
 				return "";
@@ -6119,10 +6118,15 @@ public class GeneSet extends JApplet {
 					}
 				} else if (columnIndex == 36) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("mt.silvanusDSM9946");
+						Teginfo set = gene.species.get("t.spCCB");
 						return set;
 					}
 				} else if (columnIndex == 37) {
+					if (gene.species != null) {
+						Teginfo set = gene.species.get("mt.silvanusDSM9946");
+						return set;
+					}
+				} else if (columnIndex == 38) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("mt.ruberDSM1279");
 						return set;
@@ -8154,7 +8158,7 @@ public class GeneSet extends JApplet {
 			}
 		}
 
-		for (Gene gg : genelist) {
+		/*for (Gene gg : genelist) {
 			if (gg.species != null) {
 				Set<String> ct = new HashSet<String>();
 				for (String sp : gg.species.keySet()) {
@@ -8193,7 +8197,7 @@ public class GeneSet extends JApplet {
 				}
 				gg.proximityGroupPreservation = Math.ceil(groupIdxSet.size() / 2.0);
 			}
-		}
+		}*/
 		locgene.clear();
 
 		// genemap = idMapping( "/home/sigmar/blastout/nilli.blastout",

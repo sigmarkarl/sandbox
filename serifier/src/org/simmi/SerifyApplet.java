@@ -2156,6 +2156,10 @@ public class SerifyApplet extends JApplet {
 							} else dna.append( line );
 							line = br.readLine();
 						}
+						if( cont != null ) {
+							Sequence seq = jf.new Sequence(cont, dna);
+							contset.put(cont, seq);
+						}
 						br.close();
 					} catch (URISyntaxException e1) {
 						e1.printStackTrace();
