@@ -864,7 +864,7 @@ public class SerifyApplet extends JApplet {
 				Set<String>	all = new HashSet<String>();
 				while( line != null && !line.startsWith(">") ) {
 					String trim = line.trim();
-					if( trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.spCCB") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
+					if( trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.spCCB") || trim.startsWith("t.arci") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
 						String val = trim.substring( 0, trim.indexOf('#')-1 );
 						int v = val.indexOf("contig");
 						all.add( val );
@@ -3345,7 +3345,7 @@ public class SerifyApplet extends JApplet {
 		
 		try {
 			File f = new File( "/home/sigmar/thermus_union_cluster.txt" );
-			FileInputStream is = new FileInputStream("/home/sigmar/thermus_join2.blastout");
+			FileInputStream is = new FileInputStream("/home/sigmar/sandbox/distann/src/thermus_join.blastout");
 			FileOutputStream os = new FileOutputStream(f);
 			SerifyApplet.makeBlastCluster( is, os );
 			//SerifyApplet.blastJoin( is, new PrintStream(os) );
