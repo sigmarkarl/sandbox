@@ -1,5 +1,13 @@
 package org.simmi.server;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +19,15 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
+import com.google.gdata.client.ClientLoginAccountType;
+import com.google.gdata.client.GoogleService;
+import com.google.gdata.client.Service.GDataRequest;
+import com.google.gdata.client.Service.GDataRequest.RequestType;
+import com.google.gdata.client.http.GoogleGDataRequest;
+import com.google.gdata.util.AuthenticationException;
+import com.google.gdata.util.ContentType;
+import com.google.gdata.util.ServiceException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -21,12 +36,11 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
+	private final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	public String greetServer(String acc, String country, boolean valid) throws IllegalArgumentException {
-		System.err.println("juhu");
-		
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		/*DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("thermus");
-		//Query query = new Query("sequences");	
+		//Query query = new Query("sequences");
 		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
 		ent.setProperty("acc", acc);
@@ -34,7 +48,34 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		ent.setProperty("valid", valid);
 		Key key = datastore.put( ent );
 		
-		return KeyFactory.keyToString(key);
+		return KeyFactory.keyToString(key);*/
+		
+		if( service == null ) {
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			
+			try {
+				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			} catch (AuthenticationException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if( service != null ) {
+			try {
+				String rowid = run("select rowid from "+tableid+" where acc = '"+acc+"'", true);
+				String[] split = rowid.split("\n");
+				if( split.length > 1 ) {
+					String ret = run("update "+tableid+" set country = '"+country+"' where rowid = '"+split[1]+"'", true);
+					return ret;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ServiceException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
 	}
 	
 	public Map<String,String> getThermus() {
@@ -77,4 +118,131 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		
 		return retmap;
 	}
+	
+	private GoogleService service;
+	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private final String email = "huldaeggerts@gmail.com";
+	private final String password = "b.r3a1h1ms";
+	
+	@Override
+	public String getThermusFusion() {
+		System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
+		if( service == null ) {
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			try {
+				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			} catch (AuthenticationException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if( service != null ) {
+			try {
+				String ret = run("select * from "+tableid, true);
+				return ret;
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ServiceException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
+	}
+	
+	public String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
+		   String lowercaseQuery = query.toLowerCase();
+		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
+
+		   GDataRequest request;
+		   // If the query is a select, describe, or show query, run a GET request.
+		   if (lowercaseQuery.startsWith("select") ||
+		       lowercaseQuery.startsWith("describe") ||
+		       lowercaseQuery.startsWith("show")) {
+		     URL url = new URL(SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.QUERY, url,
+		         ContentType.TEXT_PLAIN);
+		   } else {
+		     // Otherwise, run a POST request.
+		     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
+		         new ContentType("application/x-www-form-urlencoded"));
+		     OutputStreamWriter writer = new OutputStreamWriter(request.getRequestStream());
+		     writer.append("sql=" + encodedQuery);
+		     writer.flush();
+		   }
+
+		   request.execute();
+
+		   return getResultsText(request);
+	}
+	
+	private String getResultsText(GDataRequest request) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		StringBuilder sb = new StringBuilder();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			sb.append( line + "\n" );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		
+		return sb.toString();
+	}
+	
+	private QueryResults getResults(GDataRequest request) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		List<String[]>	csvLines = new ArrayList<String[]>();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			csvLines.add( line.split(",") );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		//CSVReader reader = new CSVReader(bufferedStreamReader);
+		// The first line is the column names, and the remaining lines are the rows.
+		List<String> columns = Arrays.asList(csvLines.get(0));
+		List<String[]> rows = csvLines.subList(1, csvLines.size());
+		QueryResults results = new QueryResults(columns, rows);
+		
+		return results;
+	}
+	
+	private static class QueryResults {
+		   final List<String> columnNames;
+		   final List<String[]> rows;
+
+		   public QueryResults(List<String> columnNames, List<String[]> rows) {
+		     this.columnNames = columnNames;
+		     this.rows = rows;
+		   }
+
+		  /**
+		   * Prints the query results.
+		   *
+		   * @param the results from the query
+		   */
+		  public void print() {
+		    String sep = "";
+		    for (int i = 0; i < columnNames.size(); i++) {
+		      System.out.print(sep + columnNames.get(i));
+		      sep = ", ";
+		    }
+		    System.out.println();
+
+		    for (int i = 0; i < rows.size(); i++) {
+		      String[] rowValues = rows.get(i);
+		      sep = "";
+		      for (int j = 0; j < rowValues.length; j++) {
+		        System.out.print(sep + rowValues[j]);
+		        sep = ", ";
+		      }
+		      System.out.println();
+		    }
+		  }
+	};
 }
