@@ -1,7 +1,9 @@
 package org.simmi;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
@@ -12,12 +14,16 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +38,9 @@ import javax.jnlp.ClipboardService;
 import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.DefaultRowSorter;
 import javax.swing.JApplet;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -42,6 +50,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -55,6 +64,14 @@ import netscape.javascript.JSObject;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.TreeUtil;
+
+import com.google.gdata.client.ClientLoginAccountType;
+import com.google.gdata.client.GoogleService;
+import com.google.gdata.client.Service.GDataRequest;
+import com.google.gdata.client.Service.GDataRequest.RequestType;
+import com.google.gdata.util.AuthenticationException;
+import com.google.gdata.util.ContentType;
+import com.google.gdata.util.ServiceException;
 
 public class DataTable extends JApplet implements ClipboardOwner {
 	static String lof = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
@@ -74,7 +91,6 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	
 	public void updateTable( String tabmap ) {
 		try {
-			System.err.println( "hoho " + tabmap );
 			JSONObject jsono = new JSONObject( tabmap );
 			Iterator<String> keys = jsono.keys();
 			while( keys.hasNext() ) {
@@ -84,7 +100,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					JSONObject jo = jsono.getJSONObject(key);
 					strs[11] = jo.getString("country");
 					String vb = (String)jo.getString("valid");
-					if( vb != null ) strs[13] = Boolean.parseBoolean( vb );
+					if( vb != null ) strs[15] = Boolean.parseBoolean( vb );
 				}
 			}
 			table.tableChanged( new TableModelEvent(table.getModel()) );
@@ -107,9 +123,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
             	Object val = table.getValueAt(ii,jj);
                 //if( val != null && val instanceof Float ) sb.append( "\t"+Float.toString( (Float)val ) );
                 //else sb.append( "\t" );
-            	
             	if( jj == 0 ) sb.append( val.toString() );
-            	else sb.append( "\t"+val.toString() );
+            	else {
+            		if( val == null ) sb.append( "\t" );
+            		else sb.append( "\t"+val.toString() );
+            	}
             }
             sb.append( "\n" );
         }
@@ -153,9 +171,197 @@ public class DataTable extends JApplet implements ClipboardOwner {
     JTable	table;
     Map<String,Object[]>		tablemap;
     private ClipboardService 	clipboardService;
-    private boolean				grabFocus = false;
+    private boolean			grabFocus = false;
+    JCheckBoxMenuItem 			cbmi = new JCheckBoxMenuItem("Collapse tree");
+    final Map<String,String>	nameaccmap = new HashMap<String,String>();
+    final List<Object[]>		rowList = new ArrayList<Object[]>();
+    
+    public void loadData( String data ) {
+    	String[] lines = data.split("\n");
+    	List<String> splitlist = new ArrayList<String>();
+    	
+    	try {
+	    	for( int i = 1; i < lines.length; i++ ) {
+	    		splitlist.clear();
+	    		
+	    		//System.err.println( "uff " + i );
+	    		String line = lines[i];
+	    		int first = 0;
+	    		int last = line.indexOf('"');
+	    		while( last != -1 ) {
+	    			if( last > first ) {
+	    				String sub = line.substring(first, last-1);
+		    		//if( sub.length() > 0 ) {
+		    			int uno = 0;
+		    			int duo = sub.indexOf(',');
+		    			while( duo != -1 ) {
+		    				splitlist.add( sub.substring(uno, duo) );
+		    				uno = duo+1;
+		    				duo = sub.indexOf(',', uno);
+		    			}
+		    			splitlist.add( sub.substring(uno) );
+		    		}
+		    		first = last+1;
+		    		last = line.indexOf('"', first);
+		    		
+		    		if( last != -1 ) {
+		    			String sub = line.substring(first, last);
+		    			splitlist.add( sub );
+		    		
+		    			first = last+2;
+		    			last = line.indexOf('"', first);
+		    		}
+	    		}
+	    		if( first != -1 && first < line.length() ) {
+		    		String sub = line.substring(first);
+		    		if( sub.length() > 0 ) {
+		    			int uno = 0;
+		    			int duo = sub.indexOf(',');
+		    			while( duo != -1 ) {
+		    				splitlist.add( sub.substring(uno, duo) );
+		    				uno = duo+1;
+		    				duo = sub.indexOf(',', uno);
+		    			}
+		    			splitlist.add( sub.substring(uno) );
+		    		}
+	    		} else System.err.println("first is not");
+	    		String[] split = splitlist.toArray( new String[0] ); //lines[i].split(",");
+	    		
+	    		if( split.length > 8 ) {
+		    		nameaccmap.put(split[0], split[1]);
+					Object[] strs = new Object[ 16 ];
+					
+					int k = 0;
+					for( k = 0; k < split.length; k++ ) {
+						/*if( k < 3 ) {
+							strs[k] = split[(k+2)%3];
+						} else */
+						if( k == 3 || k == 4 ) {
+							String istr = split[k];
+							if( istr != null && istr.length() > 0 ) {
+								try {
+									strs[k] = Integer.parseInt( istr );
+								} catch( Exception e ) {
+									e.printStackTrace();
+								}
+							} else {
+								strs[k] = null;
+							}
+						} else if( k == 13 || k == 14 ) {
+							String dstr = split[k];
+							if( dstr != null && dstr.length() > 0 ) {
+								System.err.println("hu");
+								try {
+									strs[k] = Double.parseDouble( dstr );
+								} catch( Exception e ) {
+									e.printStackTrace();
+								}
+							} else {
+								strs[k] = null;
+							}
+						} else if( k == 15 ) strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
+						else strs[k] = split[k];
+					}
+					
+					if( k == 8 ) strs[k++] = "";
+					if( k == 9 ) strs[k++] = "";
+					if( k == 10 ) strs[k++] = "";
+					if( k == 11 ) strs[k++] = "";
+					if( k == 12 ) strs[k++] = "";
+					if( k == 13 ) strs[k++] = null;
+					if( k == 14 ) strs[k++] = null;
+					strs[k] = true;
+					
+					//Arrays.copyOfRange(split, 1, split.length );
+					rowList.add( strs );
+					tablemap.put((String)strs[2], strs);
+	    		} else {
+	    			System.err.println("ermimeri " + split.length );
+	    		}
+	    	}
+	    	table.tableChanged( new TableModelEvent( table.getModel() ) );
+    	} catch( Exception e ) {
+    		e.printStackTrace();
+    	}
+    }
+    
+    private static GoogleService service;
+	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private static final String email = "huldaeggerts@gmail.com";
+	private static final String password = "b.r3a1h1ms";
+	private static final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	
-    JCheckBoxMenuItem cbmi = new JCheckBoxMenuItem("Collapse tree");
+	public String getThermusFusion() {
+		//System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
+		if( service == null ) {
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			try {
+				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			} catch (AuthenticationException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if( service != null ) {
+			try {
+				String ret = run("select * from "+tableid, true);
+				return ret;
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ServiceException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
+	}
+	
+	public static String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
+		   String lowercaseQuery = query.toLowerCase();
+		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
+
+		   GDataRequest request;
+		   // If the query is a select, describe, or show query, run a GET request.
+		   if (lowercaseQuery.startsWith("select") ||
+		       lowercaseQuery.startsWith("describe") ||
+		       lowercaseQuery.startsWith("show")) {
+		     URL url = new URL(SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.QUERY, url,
+		         ContentType.TEXT_PLAIN);
+		   } else {
+		     // Otherwise, run a POST request.
+		     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
+		         new ContentType("application/x-www-form-urlencoded"));
+		     OutputStreamWriter writer = new OutputStreamWriter(request.getRequestStream());
+		     writer.append("sql=" + encodedQuery);
+		     writer.flush();
+		   }
+
+		   request.execute();
+
+		   return getResultsText(request);
+	}
+	
+	private static String getResultsText(GDataRequest request) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		StringBuilder sb = new StringBuilder();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			sb.append( line + "\n" );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		
+		return sb.toString();
+	}
+	
+	public static void updateFilter(JTable table, RowFilter filter) {
+		DefaultRowSorter<TableModel, Integer> rowsorter = (DefaultRowSorter<TableModel, Integer>)table.getRowSorter();
+		rowsorter.setRowFilter(filter);
+	}
     
 	public void init() {
 		updateLof();
@@ -164,12 +370,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		table.setAutoCreateRowSorter( true );
 		//table.setColumnSelectionAllowed( true );
 		JScrollPane	scrollpane = new JScrollPane( table );
-		
-		final Map<String,String>	nameaccmap = new HashMap<String,String>();
 		tablemap = new HashMap<String,Object[]>();
 		
-		final List<Object[]>	rowList = new ArrayList<Object[]>();
-		InputStream is = this.getClass().getResourceAsStream( "/therm3.txt" );
+		/*InputStream is = this.getClass().getResourceAsStream( "/therm3.txt" );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 		try {
 			String line = br.readLine();
@@ -192,14 +395,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				strs[i] = true;
 				//Arrays.copyOfRange(split, 1, split.length );
 				rowList.add( strs );
-				tablemap.put((String)strs[1], strs);
+				tablemap.put((String)strs[1t], strs);
 				
 				line = br.readLine();
 			}
 			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		table.setModel( new TableModel() {
 			@Override
@@ -209,7 +412,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 			@Override
 			public int getColumnCount() {
-				return 14;
+				return 16;
 			}
 
 			@Override
@@ -227,7 +430,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else if( columnIndex == 10 ) return "sub_date";
 				else if( columnIndex == 11 ) return "country";
 				else if( columnIndex == 12 ) return "source";
-				else if( columnIndex == 13 ) return "valid";
+				else if( columnIndex == 13 ) return "temp";
+				else if( columnIndex == 14 ) return "pH";
+				else if( columnIndex == 15 ) return "valid";
+				//else if( columnIndex == 13 ) return "color";
 				
 				return "";
 			}
@@ -235,13 +441,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex == 3 || columnIndex == 4 ) return Integer.class;
-				else if( columnIndex == 13 ) return Boolean.class;
+				else if( columnIndex == 13 || columnIndex == 14 ) return Double.class;
+				else if( columnIndex == 15 ) return Boolean.class;
 				return String.class;
 			}
 
 			@Override
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				if( columnIndex == 11 || columnIndex == 13 ) return true;
+				if( columnIndex == 11 || columnIndex == 15 ) return true;
 				return false;
 			}
 
@@ -300,7 +507,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
 				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus.ntree");
-				InputStream is = DataTable.this.getClass().getResourceAsStream("/RAxML_10993.ntree");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/RAxML_10993.ntree");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/testskrimsli.phb");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/lmin900idmin95phyml.tree");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus16S_hq.phb");
+				//InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus16S_hq.phy_phyml_tree.txt");
+				InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus16S_selected.phb");
 				
 				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 				StringBuilder sb = new StringBuilder();
@@ -341,7 +553,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					String name = (String)table.getValueAt(r, 0);
+					name = name.substring(0, Math.min( name.length(), 10 ));
 					String acc = (String)table.getValueAt(r, 1);
+					include.add( name );
 					include.add( acc );
 					
 					Map<String,String>	map = new HashMap<String,String>();
@@ -352,6 +566,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( nm.contains("t.eggertsoni") ) nm = "Thermus eggertsoni";
 						else if( nm.contains("t.islandicus") ) nm = "Thermus islandicus";
 						else if( nm.contains("t.kawarayensis") ) nm = "Thermus kawarayensis";
+						else if( nm.contains("t.brock") ) nm = "Thermus brockianus";
 						else {
 							int ix = nm.indexOf(' ');
 							if( ix > 0 ) {
@@ -370,10 +585,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					}
 					map.put( "acc", acc );
 					map.put("id", Integer.toString(id));
-					mapmap.put(acc, map);
+					//mapmap.put(acc, map);
+					mapmap.put(name, map);
 				}
 				
-				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected(), collapset, colormap );
+				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected(), collapset, colormap, true );
 				//return arg0.getReaderForText( this );
 				String str = tu.currentNode.toString();
 				return new ByteArrayInputStream( str.getBytes( charset ) );
@@ -456,7 +672,87 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		});*/
 		
+		final Set<Integer>	filterset = new HashSet<Integer>();
+		final RowFilter 	filter = new RowFilter() {
+			@Override
+			public boolean include(Entry entry) {
+				return filterset.isEmpty() || filterset.contains(entry.getIdentifier());
+			}
+		};
+		updateFilter(table, filter);
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("SQL") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final JDialog	dialog = new JDialog( SwingUtilities.getWindowAncestor( DataTable.this ) );
+				dialog.setSize(800, 600);
+				dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+				final JTextArea	textarea = new JTextArea();
+				
+				JButton	exc = new JButton( new AbstractAction("Execute") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						String sql = textarea.getSelectedText();
+						if( sql == null ) sql = textarea.getText();
+						if( sql != null ) {
+							sql = sql.replace("table", tableid);
+							try {
+								if( sql.startsWith("update") && sql.contains(" in ") ) {
+									int start = sql.indexOf('(')+1;
+									int stop = sql.indexOf(')', start);
+									
+									String innersql = sql.substring(start, stop);
+									String result = run( innersql, true );
+									String[] split = result.split("\n");
+									
+									int sw = sql.indexOf("where");
+									String subsql = sql.substring(0, sw);
+									for( int i = 1; i < split.length; i++ ) {
+										String rowid = split[i];
+										System.err.println("about to run "+rowid);
+										run( subsql+"where rowid = '"+rowid+"'", true );
+									}
+								} else {
+									run( sql, true );
+								}
+							} catch (IOException | ServiceException e1) {
+								e1.printStackTrace();
+							}
+						}
+					}
+				});
+				JButton	cls = new JButton( new AbstractAction("Close") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						dialog.dispose();
+					}
+				});
+				
+				JComponent comp = new JComponent() {};
+				comp.setLayout( new FlowLayout() );
+				comp.add( exc );
+				comp.add( cls );
+				
+				dialog.setLayout( new BorderLayout() );
+				JScrollPane	scrollpane = new JScrollPane( textarea );
+				dialog.add( scrollpane );
+				dialog.add( comp, BorderLayout.SOUTH );
+				
+				dialog.setVisible( true );
+			}
+		});
+		popup.add(new AbstractAction("Crop to selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				filterset.clear();
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int mr = table.convertRowIndexToModel(r);
+					filterset.add(mr);
+				}
+				updateFilter(table, filter);
+			}
+		});
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );
 		popup.addSeparator();
@@ -466,6 +762,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				JDialog	dialog = new JDialog( SwingUtilities.getWindowAncestor( DataTable.this ) );
 				dialog.setSize(800, 600);
 				JTextArea textarea = new JTextArea();
+				textarea.setDragEnabled(true);
 				Set<String>	include = new HashSet<String>();
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
@@ -484,9 +781,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					while( line != null ) {
 						if( line.startsWith(">") ) {
 							int v = line.indexOf(' ');
+							if( v == -1 ) v = line.length();
 							String name = line.substring(1, v).trim();
 							String acc = nameaccmap.get(name);
-							if( include.contains(acc) ) {
+							if( include.contains(name) ) {
 								inc = true;
 								sb.append( line+"\n" );
 							} else inc = false;
@@ -545,11 +843,24 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				int r = table.getSelectedRow();
 				int i = table.convertRowIndexToModel(r);
 				if( i != -1 ) {
-					Object[] str = rowList.get( i );
-					String doi = (String)str[4];
 					try {
-						URL url = new URL( "http://dx.doi.org/"+doi );
-						Desktop.getDesktop().browse( url.toURI() );
+						Object[] str = rowList.get( i );
+						String doi = (String)str[5];
+						if( doi != null && doi.length() > 0 ) {
+						
+							URL url = new URL( "http://dx.doi.org/"+doi );
+							Desktop.getDesktop().browse( url.toURI() );
+							//URL url = new URL( "http://dx.doi.org/"+doi );
+							//DataTable.this.getAppletContext().showDocument( url );
+						} else {
+							String pubmed = (String)str[6];
+							try {
+								URL url = new URL( "http://www.ncbi.nlm.nih.gov/pubmed/?term="+pubmed );
+								Desktop.getDesktop().browse( url.toURI() );
+							} catch (MalformedURLException e1) {
+								e1.printStackTrace();
+							}
+						}
 					} catch (MalformedURLException e1) {
 						e1.printStackTrace();
 					} catch (IOException e1) {
@@ -576,9 +887,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		
 		table.setComponentPopupMenu( popup );
 		
+		//String res = getThermusFusion();
+		//loadData( res );
+		
 		try {
 			JSObject win = JSObject.getWindow(this);
-			win.call("loadMeta", new Object[] {});
+			System.err.println( "about to run loadData" );
+			win.call("loadData", new Object[] {});
+			//System.err.println( "done loadData" );
+			//win.call("loadMeta", new Object[] {});
 		} catch( Exception e ) {
 			
 		}
@@ -587,8 +904,118 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 
 	@Override
-	public void lostOwnership(Clipboard clipboard, Transferable contents) {
-		// TODO Auto-generated method stub
+	public void lostOwnership(Clipboard clipboard, Transferable contents) {}
+	
+	public static class StrId {
+		public StrId(String teg, int len) {
+			name = teg;
+			this.len = len;
+		}
+
+		String name;
+		int id;
+		int len;
+	};
+	
+	public static void main_new(String[] args) {
+		try {
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			
+			run("insert into "+tableid+" (name, acc) values ('t.spCCB_US3_UF1','t.spCCB_US3_UF1')", true);
+			/*String ret = run("select rowid from "+tableid+" where name = 'Unl042jm'", true);
+			System.err.println( ret );
+			String[] lines = ret.split("\n");
+			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*/
+		} catch (AuthenticationException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void main(String[] args) {
+		Map<String, StrId> tegmap = new HashMap<String, StrId>();
+		//Map<String,String>	rowidmap = new HashMap<String,String>();
 		
+		try {
+			FileReader fr = new FileReader("/home/sigmar/thermus16S_all.blastout");
+			//FileReader fr = new FileReader("/home/sigmar/newthermus16S.blastout");
+			BufferedReader br = new BufferedReader(fr);
+			String line = br.readLine();
+			String current = null;
+			StrId currteg = null;
+			int currlen = 0;
+			boolean done = false;
+			while (line != null) {
+				String trim = line.trim();
+				if (trim.startsWith("Query=")) {
+					String[] split = trim.substring(7).trim().split("[ ]+");
+					current = split[0];
+					done = false;
+				} else if (trim.startsWith("Length=")) {
+					currlen = Integer.parseInt(trim.substring(7).trim());
+				} else if (line.startsWith(">") && !done) {
+					int i = line.lastIndexOf('|');
+					if (i == -1)
+						i = 0;
+					String teg = line.substring(i + 1).trim();
+					line = br.readLine();
+					while (!line.startsWith("Length")) {
+						teg += line;
+						line = br.readLine();
+					}
+					//if (teg.contains("Thermus") || teg.startsWith("t.")) {
+					currteg = new StrId(teg, currlen);
+					tegmap.put(current, currteg);
+					//}
+				} else if (trim.startsWith("Ident") && !done) {
+					if( currteg != null ) {
+						int sv = trim.indexOf('(');
+						int svl = trim.indexOf('%', sv + 1);
+	
+						String trimsub = trim.substring(sv + 1, svl);
+						currteg.id = Integer.parseInt( trimsub );
+					}
+					done = true;
+				}
+
+				line = br.readLine();
+			}
+			fr.close();
+			
+			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+		
+			//String ret = run("select name, rowid from "+tableid+" where name like 't.spCCB%'", true);
+			String ret = run("select name, rowid from "+tableid, true);
+			String[] lines = ret.split("\n");
+			for( int i = 1; i < lines.length; i++ ) {
+				line = lines[i];
+				int comma = line.indexOf(',');
+				String name = line.substring(0, comma);
+				String rowid = line.substring( comma+1 );
+				if( tegmap.containsKey(name) ) {
+					StrId species = tegmap.get(name);
+					System.err.println( i + "  " + name + "  " + species.id + " of " + lines.length );
+					run("update "+tableid+" set species = '"+species.name+"', ident = '"+species.id+"', len = '"+species.len+"' where rowid = '"+rowid+"'", true);
+				} else {
+					System.err.println( "fail "+name );
+				}
+				//rowidmap.put( name, rowid );
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (AuthenticationException e) {
+			e.printStackTrace();
+		} catch (ServiceException e) {
+			e.printStackTrace();
+		}
+		
+		System.err.println( tegmap.size() );
 	}
 }
