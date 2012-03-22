@@ -20,8 +20,16 @@
   <extension name="javamail" href="mail.jnlp"/>
   <extension name="poi" href="http://dl.dropbox.com/u/10040394/poi/poi.jnlp"/>
 </resources>
-<resources os="Windows">
-	<nativelib href = "sqljdbc_auth.jar" />
+<resources os="Windows" arch="x86">
+	<nativelib href = "sqljdbc_x86.jar" />
+	<property name="file.encoding" value="utf-8"/>
+</resources>
+<resources os="Windows" arch="x86_64">
+	<nativelib href = "sqljdbc_x64.jar" />
+	<property name="file.encoding" value="utf-8"/>
+</resources>
+<resources os="Windows" arch="ia64">
+	<nativelib href = "sqljdbc_ia64.jar" />
 	<property name="file.encoding" value="utf-8"/>
 </resources>
 <applet-desc 
