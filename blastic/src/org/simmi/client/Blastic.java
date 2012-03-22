@@ -86,7 +86,7 @@ public class Blastic implements EntryPoint {
 	
 	public native void console( String log ) /*-{
 		applet = $doc.getElementById( 'serify' );
-		applet.console( log );
+		//applet.console( log );
 		//$wnd.console.log( log );
 	}-*/;
 	
