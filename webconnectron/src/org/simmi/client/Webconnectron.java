@@ -6,6 +6,8 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
@@ -51,6 +53,14 @@ public class Webconnectron implements EntryPoint {
 		RootPanel.get("connectron").add( vp );*/
 		
 		final RootPanel 	rp = RootPanel.get();
+		/*rp.addDomHandler( new ContextMenuHandler() {
+			@Override
+			public void onContextMenu(ContextMenuEvent event) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		}, ContextMenuEvent.getType());*/
+		
 		Style				st = rp.getElement().getStyle();
 		st.setMargin( 0.0, Unit.PX );
 		st.setPadding( 0.0, Unit.PX );
