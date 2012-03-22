@@ -14,10 +14,13 @@ import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.DragEndEvent;
@@ -36,10 +39,21 @@ import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 
 public class Treedraw implements EntryPoint {
@@ -72,7 +86,7 @@ public class Treedraw implements EntryPoint {
 		int levels = root.countMaxHeight();
 		
 		console( "leaves " + leaves );
-		double	maxheight = root.getMaxHeight();
+		double	maxheightold = root.getMaxHeight();
 		
 		nodearray = new Node[ leaves ];
 		
@@ -106,16 +120,83 @@ public class Treedraw implements EntryPoint {
 		//console( Double.toString( maxh-minh ) );
 		//console( Double.toString(maxh2-minh2) );
 		
+		Context2d ctx = canvas.getContext2d();
+		Node node = getMaxHeight( root, ctx, ww-30 );
+		double gh = getHeight(node);
+		String name = node.getName();
+		if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+		double maxheight = (gh*(ww-30))/(ww-60-ctx.measureText(name).getWidth());
+		
+		console( maxheightold + "  " + gh );
 		if( vertical ) {
-			drawFramesRecursive( canvas.getContext2d(), root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
+			drawFramesRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
 			ci = 0;
-			drawTreeRecursive( canvas.getContext2d(), root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+			drawTreeRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
 		} else {
-			drawFramesRecursive( canvas.getContext2d(), root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
+			drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
 			ci = 0;
-			drawTreeRecursive( canvas.getContext2d(), root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+			drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
 		}
 	}
+	
+	public double getHeight( Node n ) {
+		double h = n.geth();
+		double d = h + ((n.getParent() != null) ? getHeight( n.getParent() ) : 0.0);
+		return d;
+	}
+	
+	public void recursiveLeavesGet( Node root, List<Node> leaves ) {
+		List<Node> nodes = root.getNodes();
+		if( nodes == null || nodes.size() == 0 ) {
+			leaves.add( root );
+		} else {
+			for( Node n : nodes ) {
+				recursiveLeavesGet( n, leaves );
+			}
+		}
+	}
+	
+	public Node getMaxHeight( Node root, Context2d ctx, int ww ) {
+		List<Node>	leaves = new ArrayList<Node>();
+		recursiveLeavesGet( root, leaves );
+		
+		Node sel = null;
+		double max = 0.0;
+		console( ""+leaves.size() );
+		for( Node node : leaves ) {
+			String name = node.getName();
+			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			TextMetrics tm = ctx.measureText( name );
+			double tw = tm.getWidth();
+			double h = node.getHeight();
+			
+			double val = h/(ww-tw);
+			if( val > max ) {
+				max = val;
+				sel = node;
+			}
+		}
+		
+		String name = sel.getName();
+		if( sel.getMeta() != null ) name += " ("+sel.getMeta()+")";
+		console( name );
+		
+		return sel;
+	}
+	
+	/*	double max = 0.0;
+		List<Node>	nodes = root.getNodes();
+		if( nodes == null || nodes.size() == 0 ) {
+			TextMetrics tm = ctx.measureText( root.getName() );
+			max = tm.getWidth();
+		} else {
+			for( Node n : root.getNodes() ) {
+				double nmax = n.getMaxHeight();
+				if( nmax > max ) max = nmax;
+			}
+		}
+		return root.geth()+max;
+	}*/
 	
 	public void handleText( String str ) {
 		console( str );
@@ -171,12 +252,12 @@ public class Treedraw implements EntryPoint {
 			handleTree( treeutil );
 		} else {
 			String tree = str.replaceAll("[\r\n]+", "");
-			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null );
+			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
 			handleTree( treeutil );
 		}
 	}
 	
-	public native String handleFiles( Element ie, int append ) /*-{		
+	public native String handleFiles( Element ie, int append ) /*-{	
 		$wnd.console.log('dcw');
 		var hthis = this;
 		file = ie.files[0];
@@ -246,17 +327,22 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public void recursiveReroot( Node node, double x, double y ) {
+	public Node recursiveReroot( Node node, double x, double y ) {
+		Node ret = null;
 		if( node != null ) {
 			if( Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5 ) {
-				treeutil.reroot(root, node);
-				root = node;
+				ret = node;
 			} else {
 				for( Node n : node.getNodes() ) {
-					recursiveReroot( n, x, y );
+					Node pot = recursiveReroot( n, x, y );
+					if( pot != null ) {
+						ret = pot;
+						break;
+					}
 				}
 			}
 		}
+		return ret;
 	}
 	
 	public void recursiveNodeClick( Node node, double x, double y, int recursive ) {
@@ -281,9 +367,108 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	public native String encode( String input ) /*-{
+		var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+		var output = "";
+		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+		var i = 0;
+	
+		input = this.@org.simmi.client.Treedraw::_utf8_encode(Ljava/lang/String;)(input);
+	
+		while (i < input.length) {
+	
+			chr1 = input.charCodeAt(i++);
+			chr2 = input.charCodeAt(i++);
+			chr3 = input.charCodeAt(i++);
+	
+			enc1 = chr1 >> 2;
+			enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+			enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+			enc4 = chr3 & 63;
+	
+			if (isNaN(chr2)) {
+				enc3 = enc4 = 64;
+			} else if (isNaN(chr3)) {
+				enc4 = 64;
+			}
+	
+			output = output +
+			_keyStr.charAt(enc1) + _keyStr.charAt(enc2) +
+			_keyStr.charAt(enc3) + _keyStr.charAt(enc4);
+	
+		}
+	
+		return output;
+	}-*/;
+	
+	private native String _utf8_encode( String string ) /*-{
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+	
+		for (var n = 0; n < string.length; n++) {
+	
+			var c = string.charCodeAt(n);
+	
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			}
+			else if((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+			else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+	
+		}
+	
+		return utftext;
+	}-*/;
+
+	
+	public void save( String treestr ) {
+		String base64tree = encode( treestr );
+		//String base64tree = new String( Base64.encodeBase64( treestr.getBytes() ) );
+		Anchor	anchor = new Anchor();
+		anchor.setHref( "data:text/plain;filename:tmp.ntree;base64,"+base64tree );
+		click( anchor.getElement() );
+	}
+	
+	PopupPanel	popup;
+	int 	npx;
+	int		npy;
+	int		px;
+	int		py;
+	boolean 		toggle = false;
+	boolean 		shift = false;
+	boolean 		mousedown = false;
+	boolean			rerooting = false;
+	
 	@Override
 	public void onModuleLoad() {
-		RootPanel	rp = RootPanel.get();
+		RootPanel	rp = RootPanel.get("canvas");
+		/*rp.addDomHandler( new ContextMenuHandler() {
+			@Override
+			public void onContextMenu(ContextMenuEvent event) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		}, ContextMenuEvent.getType());*/
+		
+		popup = new PopupPanel( true );
+		final MenuBar	menu = new MenuBar( true );
+		popup.add( menu );
+		
+		menu.addItem( "Save tree", new Command() {
+			@Override
+			public void execute() {
+				save( root.toString() );
+				popup.hide();
+			}
+		});
+		
 		canvas = Canvas.createIfSupported();
 		
 		Style s = rp.getElement().getStyle();
@@ -292,7 +477,7 @@ public class Treedraw implements EntryPoint {
 		s.setMargin(0.0, Unit.PX);
 		
 		int w = Window.getClientWidth();
-		int h = Window.getClientHeight();
+		int h = 480; //Window.getClientHeight();
 		canvas.setSize(w+"px", h+"px");
 		
 		canvas.addDropHandler( new DropHandler() {
@@ -306,27 +491,33 @@ public class Treedraw implements EntryPoint {
 		});
 		canvas.addDragHandler( new DragHandler() {
 			@Override
-			public void onDrag(DragEvent event) {}
+			public void onDrag(DragEvent event) {
+				console( "drag" );
+				
+				event.setData("text/plain", root.toString());
+			}
 		});
 		canvas.addDragEnterHandler( new DragEnterHandler() {
 			@Override
-			public void onDragEnter(DragEnterEvent event) {}
+			public void onDragEnter(DragEnterEvent event) {
+				console( "enter" );
+			}
 		});
 		canvas.addDragLeaveHandler( new DragLeaveHandler() {
 			@Override
-			public void onDragLeave(DragLeaveEvent event) {}
+			public void onDragLeave(DragLeaveEvent event) { console( "leave" ); }
 		});
 		canvas.addDragStartHandler( new DragStartHandler() {
 			@Override
-			public void onDragStart(DragStartEvent event) {}
+			public void onDragStart(DragStartEvent event) { console( "start" ); }
 		});
 		canvas.addDragEndHandler( new DragEndHandler() {
 			@Override
-			public void onDragEnd(DragEndEvent event) {}
+			public void onDragEnd(DragEndEvent event) { console( "end" ); }
 		});
 		canvas.addDragOverHandler( new DragOverHandler() {
 			@Override
-			public void onDragOver(DragOverEvent event) {}
+			public void onDragOver(DragOverEvent event) { console( "over" ); }
 		});
 		canvas.addDoubleClickHandler( new DoubleClickHandler() {
 			@Override
@@ -336,7 +527,18 @@ public class Treedraw implements EntryPoint {
 					int y = event.getY();
 					
 					canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-					recursiveReroot( root, x, y );
+					if( !rerooting ) {
+						rerooting = true;
+						
+						Node newroot = recursiveReroot( root, x, y );
+						if( newroot != null ) {
+							newroot.setParent( null );
+							treeutil.reroot(root, newroot);
+							root = newroot;
+						}
+						
+						rerooting = false;
+					}
 					if( treeutil != null ) drawTree( treeutil );
 				} else {
 					openFileDialog( 0 );
@@ -350,46 +552,61 @@ public class Treedraw implements EntryPoint {
 				int y = event.getY();
 				
 				canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-				if( event.isControlKeyDown() ) {
-					recursiveNodeCollapse( root, x, y );
-					root.countLeaves();
-				} else if( event.isShiftKeyDown() ) {
-					recursiveNodeClick( root, x, y, 1 );
+				
+				toggle = false;
+				px = event.getX();
+				py = event.getY();
+				npx = px;
+				npy = py;
+				shift = event.isShiftKeyDown();
+				int nativebutton = event.getNativeButton();
+				
+				if( nativebutton == NativeEvent.BUTTON_RIGHT ) {
+					/*mousedown = false;
+					popup.setPopupPosition(px, py);
+					popup.show();*/
 				} else {
-					recursiveNodeClick( root, x, y, 0 );
-					/*if( nodearray != null ) {
-						int y = event.getY();
-						int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
-						final Node n = nodearray[i];
-						
-						int ci = n.getName().indexOf(",");
-						String fname = ci > 0 ? n.getName().substring(1,ci) : n.getName();
-						RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
-						try {
-							rq.sendRequest( fname, new RequestCallback() {
-								@Override
-								public void onResponseReceived(Request request, Response response) {
-									DialogBox	d = new DialogBox();
-									d.getCaption().setText("NCBI 16SMicrobial blast");
-									d.setAutoHideEnabled( true );
+					if( event.isControlKeyDown() ) {
+						recursiveNodeCollapse( root, x, y );
+						root.countLeaves();
+					} else if( shift ) {
+						recursiveNodeClick( root, x, y, 1 );
+					} else {
+						recursiveNodeClick( root, x, y, 0 );
+						/*if( nodearray != null ) {
+							int y = event.getY();
+							int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
+							final Node n = nodearray[i];
+							
+							int ci = n.getName().indexOf(",");
+							String fname = ci > 0 ? n.getName().substring(1,ci) : n.getName();
+							RequestBuilder rq = new RequestBuilder( RequestBuilder.POST, "http://130.208.252.7/cgi-bin/blast");
+							try {
+								rq.sendRequest( fname, new RequestCallback() {
+									@Override
+									public void onResponseReceived(Request request, Response response) {
+										DialogBox	d = new DialogBox();
+										d.getCaption().setText("NCBI 16SMicrobial blast");
+										d.setAutoHideEnabled( true );
+										
+										TextArea	ta = new TextArea();
+										ta.setSize(800+"px", 600+"px");
+										ta.setText( response.getText() );
+										d.add( ta );
+										
+										d.center();
+									}
 									
-									TextArea	ta = new TextArea();
-									ta.setSize(800+"px", 600+"px");
-									ta.setText( response.getText() );
-									d.add( ta );
-									
-									d.center();
-								}
-								
-								@Override
-								public void onError(Request request, Throwable exception) {
-									console( exception.getMessage() );
-								}
-							} );
-						} catch (RequestException e) {
-							e.printStackTrace();
-						}				
-					}*/
+									@Override
+									public void onError(Request request, Throwable exception) {
+										console( exception.getMessage() );
+									}
+								} );
+							} catch (RequestException e) {
+								e.printStackTrace();
+							}				
+						}*/
+					}
 				}
 				if( treeutil != null ) drawTree( treeutil );
 			}
@@ -406,6 +623,60 @@ public class Treedraw implements EntryPoint {
 		str = "Double click to open file dialog";
 		tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
+		
+		final Anchor	treeAnchor = new Anchor("tree");
+		treeAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				treeAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
+			}
+		});
+		final Anchor	imageAnchor = new Anchor("image");
+		imageAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				imageAnchor.setHref( canvas.toDataUrl() );
+			}
+		});
+		final Anchor	sampleAnchor = new Anchor("sample");
+		sampleAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, "sample.tree");
+				try {
+					rb.sendRequest("", new RequestCallback() {
+						@Override
+						public void onResponseReceived(Request request, Response response) {
+							handleText( response.getText() );
+						}
+						
+						@Override
+						public void onError(Request request, Throwable exception) {
+							console( exception.getMessage() );
+						}
+					});
+				} catch (RequestException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		RootPanel	help = RootPanel.get("help");
+		HorizontalPanel	hp = new HorizontalPanel();
+		hp.setSpacing(5);
+		HTML html = new HTML("Download as");
+		hp.add( html );
+		hp.add( treeAnchor );
+		html = new HTML("as");
+		hp.add( html );
+		hp.add( imageAnchor );
+		
+		html = new HTML(". Run");
+		hp.add( html );
+		hp.add( sampleAnchor );
+		
+		help.add( hp );
+		//help.add
 		
 		rp.add( canvas );
 	}
@@ -512,7 +783,6 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
-		
 		int total = 0;
 		if( vertical ) node.setCanvasLoc( startx, y+starty );
 		else node.setCanvasLoc( x+startx, starty );
@@ -530,7 +800,7 @@ public class Treedraw implements EntryPoint {
 				if( equalHeight ) {
 					nx = w/25.0+dw*(w/dw-nlevels);
 				} else {
-					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.1);
+					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.0);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 
@@ -615,11 +885,18 @@ public class Treedraw implements EntryPoint {
 					//g2.setFont( bFont );
 					
 					String name = resnode.getName();
-					if( resnode.getMeta() != null ) name += " ("+resnode.getMeta()+")";
+					if( resnode.getMeta() != null ) {
+						String meta = resnode.getMeta();
+						name += " ("+meta+")";
+						
+						/*if( meta.contains("T.ign") ) {
+							System.err.println();
+						}*/
+					}
 					
 					String[] split;
 					if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
-					else split = name.split("_");
+					else split = new String[] { name }; //name.split("_");
 					
 					int t = 0;
 					double mstrw = 0;

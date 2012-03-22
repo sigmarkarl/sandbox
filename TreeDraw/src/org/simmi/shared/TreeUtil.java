@@ -241,6 +241,13 @@ public class TreeUtil {
 			return val+1;
 		}
 		
+		public double getHeight() {
+			double h = this.geth();
+			double d = h + ((parent != null) ? parent.getHeight() : 0.0);
+			//console( h + " total " + d );
+			return d;
+		}
+		
 		public double getMaxHeight() {
 			double max = 0.0;
 			for( Node n : nodes ) {
@@ -252,6 +259,10 @@ public class TreeUtil {
 		
 		public Node getParent() {
 			return parent;
+		}
+		
+		public void setParent( Node parent ) {
+			this.parent = parent;
 		}
 	}
 	
@@ -314,7 +325,13 @@ public class TreeUtil {
 			for( Node n : checklist ) {
 				if( n.meta != null ) {
 					String nmeta = null;
-					if( n.name != null && n.name.length() > 0 ) nmeta = n.name.substring(7).trim();
+					if( n.name != null && n.name.length() > 0 ) {
+						nmeta = n.name.substring(7).trim();
+						
+						/*if( n.name.startsWith("T.ign") ) {
+							System.err.println();
+						}*/
+					}
 					
 					if( n.meta.contains(";") || (n.nodes != null && n.nodes.size() > 0) ) {
 						String[] split = n.meta.split(";");
@@ -367,7 +384,7 @@ public class TreeUtil {
 										
 										for( String str : s1 ) {
 											if( s2.contains( str ) ) {
-												cont = str;
+												cont = str+"-";
 												break;
 											}
 										}
@@ -477,12 +494,25 @@ public class TreeUtil {
 		super();
 	}
 	
-	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap ) {
+	public void clearParentNames( Node node ) {
+		if( node.getNodes() != null && node.getNodes().size() > 0 ) {
+			node.setName("");
+			for( Node n : node.getNodes() ) {
+				clearParentNames( n );
+			}
+		}
+	}
+	
+	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap, boolean clearParentNodes ) {
 		super();
 		loc = 0;
 		//System.err.println( str );
 		if( str != null && str.length() > 0 ) {
 			Node resultnode = parseTreeRecursive( str, inverse );
+			
+			if( clearParentNodes ) {
+				clearParentNames( resultnode );
+			}
 			
 			if( include == null ) {
 				include = new HashSet<String>();
@@ -503,6 +533,7 @@ public class TreeUtil {
 				}
 				
 				deleteNotContaining( resultnode, cloneset );
+				resultnode.h = 0.0;
 				
 				/*for( Node n : cloneset ) {
 					if( n.name != null && n.name.trim().length() > 0 ) System.err.println( "nnnnnnnn " + n.name );
@@ -582,6 +613,8 @@ public class TreeUtil {
 			
 			if( b != -1 ) {
 				res.nodes.add( oldnode );
+				oldnode.parent = res;
+				
 				double tmph = oldnode.h;
 				//res.h = oldnode.h;
 				oldnode.h = b;
@@ -640,7 +673,7 @@ public class TreeUtil {
 		StringBuilder sb = new StringBuilder();
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
-		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null );
+		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null, false );
 	}
 	
 	int metacount = 0;
@@ -676,10 +709,10 @@ public class TreeUtil {
 		
 		if( mapmap != null ) {
 			String mapname = node.name;
-			int ik = mapname.indexOf('.');
+			/*int ik = mapname.indexOf('.');
 			if( ik != -1 ) {
 				mapname = mapname.substring(0, ik);
-			}
+			}*/
 
 			if( mapmap.containsKey( mapname ) ) {
 				Map<String,String>	keyval = mapmap.get( mapname );
@@ -753,8 +786,19 @@ public class TreeUtil {
 					//loc = end+1;
 				}
 				
-				while( end < str.length()-1 && n != ',' && n != ')' ) {
+				boolean outsvig = true;
+				//while( end < str.length()-1 && n != ',' && n != ')' ) {
+				while( end < str.length()-1 && (n != ',' && n != ')' || !outsvig) ) {
 					n = str.charAt(++end);
+					if( outsvig && n == '(' ) {
+						outsvig = false;
+						n = str.charAt(++end);
+					} else if( !outsvig && n == ')' ) {
+						outsvig = true;
+						n = str.charAt(++end);
+					}
+					
+					//end++;
 				}
 				
 				String code = str.substring( loc, end );
@@ -767,19 +811,33 @@ public class TreeUtil {
 						node.name = code.substring(0, i+1);
 					} else {
 						split = code.split(":");
-						node.name = split[0];
+						node.name = split[0];	
 					}
 					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
 						String color = split[2].substring(0);
-						try {
-							int r = Integer.parseInt( color.substring(0, 2), 16 );
-							int g = Integer.parseInt( color.substring(2, 4), 16 );
-							int b = Integer.parseInt( color.substring(4, 6), 16 );
-							node.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
-						} catch( Exception e ) {
-							
+						if( color.contains("rgb") ) {
+							try {
+								int co = color.indexOf('(');
+								int ce = color.indexOf(')', co+1);
+								String[] csplit = color.substring(co+1, ce).split(",");
+								int r = Integer.parseInt( csplit[0].trim() );
+								int g = Integer.parseInt( csplit[1].trim() );
+								int b = Integer.parseInt( csplit[2].trim() );
+								node.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
+							} catch( Exception e ) {
+								
+							}
+						} else {
+							try {
+								int r = Integer.parseInt( color.substring(0, 2), 16 );
+								int g = Integer.parseInt( color.substring(2, 4), 16 );
+								int b = Integer.parseInt( color.substring(4, 6), 16 );
+								node.color = "rgb("+r+","+g+","+b+")"; //new Color( r,g,b );
+							} catch( Exception e ) {
+								
+							}
 						}
 					} else node.color = null;
 					
