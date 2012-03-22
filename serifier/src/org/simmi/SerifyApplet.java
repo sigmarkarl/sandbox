@@ -21,6 +21,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
@@ -86,6 +87,9 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
+
+import org.simmi.unsigned.JavaFasta;
+import org.simmi.unsigned.JavaFasta.Sequence;
 
 public class SerifyApplet extends JApplet {
 	/**
@@ -542,6 +546,44 @@ public class SerifyApplet extends JApplet {
 		return res;
 	}
 	
+	public void deleteSeqs() {
+		Set<String>	keys = new TreeSet<String>();
+		int[] rr = table.getSelectedRows();
+		for( int r : rr ) {
+			int ind = table.convertRowIndexToModel( r );
+			if( ind >= 0 ) {
+				Sequences seqs = sequences.get(ind);
+				keys.add( seqs.getKey() );
+				
+				//sequences.remove( ind );
+				//table.tableChanged( new TableModelEvent(table.getModel()) );
+			}
+		}
+		
+		boolean unsucc = false;
+		try {
+			JSObject js = JSObject.getWindow( SerifyApplet.this );
+			for( String key : keys ) {
+				js.call( "deleteSequenceKey", new Object[] {key} );
+			}
+		} catch( Exception e1 ) {
+			unsucc = true;
+		}
+		
+		if( unsucc ) {
+			Set<Integer>	rselset = new TreeSet<Integer>();
+			for( int r : rr ) {
+				int ind = table.convertRowIndexToModel( r );
+				rselset.add( ind );
+			}
+			
+			for( int r : rselset ) {
+				sequences.remove( r );	
+			}
+			table.tableChanged( new TableModelEvent(table.getModel()) );
+		}
+	}
+	
 	public void deleteSequence( String key ) {
 		Sequences selseq = null;
 		for( Sequences s : sequences ) {
@@ -811,8 +853,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	private static Collection<Set<String>> joinBlastSets( InputStream is, String write, boolean union ) throws IOException {
-		List<Set<String>>	total = new ArrayList<Set<String>>();
+	public static void joinBlastSets( InputStream is, String write, boolean union, List<Set<String>> total ) throws IOException {
 		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
 		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
 			
@@ -823,7 +864,7 @@ public class SerifyApplet extends JApplet {
 				Set<String>	all = new HashSet<String>();
 				while( line != null && !line.startsWith(">") ) {
 					String trim = line.trim();
-					if( trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") ) {
+					if( trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.spCCB") || trim.startsWith("t.arci") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
 						String val = trim.substring( 0, trim.indexOf('#')-1 );
 						int v = val.indexOf("contig");
 						all.add( val );
@@ -842,8 +883,6 @@ public class SerifyApplet extends JApplet {
 			line = br.readLine();
 		}
 		if( fw != null ) fw.close();
-		
-		return total;
 	}
 	
 	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( Collection<Set<String>>	total, Set<String> species ) {
@@ -943,21 +982,26 @@ public class SerifyApplet extends JApplet {
 				});
 				dialog.setVisible( true );
 				
-				try {
-					Set<String>	species = new TreeSet<String>();
-					Collection<Set<String>> total = joinBlastSets( is, null, true );
-					if( !interrupted ) {
-						Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
-						//if( writeSimplifiedCluster != null ) 
-						writeSimplifiedCluster( os, clusterMap );
-						//writeBlastAnalysis( clusterMap, species );
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
+				if( !interrupted ) {
+					makeBlastCluster( is, os );
 				}
 			}
 		};
 		runProcess( "Blast clusters", run, dialog );
+	}
+	
+	public static void makeBlastCluster( final InputStream is, final OutputStream os ) {
+		try {
+			Set<String>	species = new TreeSet<String>();
+			List<Set<String>>	total = new ArrayList<Set<String>>();
+			joinBlastSets( is, null, true, total );
+			Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+			//if( writeSimplifiedCluster != null ) 
+			writeSimplifiedCluster( os, clusterMap );
+			//writeBlastAnalysis( clusterMap, species );
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static class AvgProvider {
@@ -1838,6 +1882,22 @@ public class SerifyApplet extends JApplet {
 		return nseq;
 	}
 	
+	public static void cutFasta( BufferedReader br, BufferedWriter bw, char ch ) throws IOException {
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				bw.write( line.substring( 0, line.indexOf(ch) )+"\n" );
+			} else {
+				bw.write( line+"\n" );
+			}
+			
+			line = br.readLine();
+		}
+		br.close();
+		bw.flush();
+		bw.close();
+	}
+	
 	public Map<String,String> mapNameHit( InputStream blasti ) throws IOException {
 		Map<String,String>	mapHit = new HashMap<String,String>();
 		
@@ -1967,27 +2027,7 @@ public class SerifyApplet extends JApplet {
 			public void keyPressed(KeyEvent e) {
 				int keycode = e.getKeyCode();
 				if( keycode == KeyEvent.VK_DELETE ) {
-					Set<String>	keys = new HashSet<String>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						int ind = table.convertRowIndexToModel( r );
-						if( ind >= 0 ) {
-							Sequences seqs = sequences.get(ind);
-							keys.add( seqs.getKey() );
-							
-							//sequences.remove( ind );
-							//table.tableChanged( new TableModelEvent(table.getModel()) );
-						}
-					}
-					
-					try {
-						JSObject js = JSObject.getWindow( SerifyApplet.this );
-						for( String key : keys ) {
-							js.call( "deleteSequenceKey", new Object[] {key} );
-						}
-					} catch( Exception e1 ) {
-						e1.printStackTrace();
-					}
+					deleteSeqs();
 				} else if( keycode == KeyEvent.VK_ENTER ) {
 					int r = table.getSelectedRow();
 					String path = (String)table.getValueAt( r, 3 );
@@ -2025,6 +2065,134 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				}
+			}
+		});
+		popup.add( new AbstractAction("Concatenate") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser	filechooser = new JFileChooser();
+				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+					File f = filechooser.getSelectedFile();
+					try {
+						Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
+						
+						int[] rr = table.getSelectedRows();
+						for( int r : rr ) {
+							String path = (String)table.getValueAt( r, 3 );
+							URL url = new URL( path );
+							StringBuilder	sb = null;
+							InputStream is = url.openStream();
+							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+							String line = br.readLine();
+							while( line != null ) {
+								if( line.startsWith(">") ) {
+									String subline = line.substring(1);
+									if( seqmap.containsKey( subline ) ) {
+										sb = seqmap.get( subline );
+									} else {
+										sb = new StringBuilder();
+										seqmap.put( subline, sb );
+									}
+								} else {
+									if( sb != null ) sb.append( line );
+								}
+								
+								line = br.readLine();
+							}
+							br.close();
+						}
+						
+						FileWriter	fw = new FileWriter( f );
+						for( String key : seqmap.keySet() ) {
+							fw.write( ">"+key+"\n" );
+							StringBuilder sb = seqmap.get( key );
+							for (int i = 0; i < sb.length(); i += 70) {
+								fw.append(sb.substring(i, Math.min(i + 70, sb.length())) + "\n");
+							}
+						}
+						fw.close();
+						
+						addSequences( f.getName(), f.toURI().toString() );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		popup.add( new AbstractAction("View sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFrame frame = new JFrame();
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				JavaFasta jf = new JavaFasta();
+				jf.initGui(frame);
+
+				Map<String, Sequence> contset = new HashMap<String, Sequence>();
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int cr = table.convertRowIndexToModel(r);
+					Sequences seqs = sequences.get(cr);
+					
+					int nseq = 0;
+					StringBuilder	dna = new StringBuilder();
+					try {
+						File inf = new File( new URI(seqs.getPath()) );
+						BufferedReader br = new BufferedReader( new FileReader(inf) );
+						String cont = null;
+						String line = br.readLine();
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								if( cont != null ) {
+									Sequence seq = jf.new Sequence(cont, dna);
+									contset.put(cont, seq);
+								}
+								cont = line.replace( ">", seqs.getName()+"_" );
+								dna = new StringBuilder();
+								//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
+								nseq++;
+							} else dna.append( line );
+							line = br.readLine();
+						}
+						if( cont != null ) {
+							Sequence seq = jf.new Sequence(cont, dna);
+							contset.put(cont, seq);
+						}
+						br.close();
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					
+								/*Annotation a = jf.new Annotation(seq, contig, Color.red);
+								a.setStart(tv.start);
+								a.setStop(tv.stop);
+								a.setOri(tv.ori);
+								a.setGroup(gg.name);
+								a.setType("gene");
+								jf.addAnnotation(a);
+								// seq.addAnnotation( new Annotation( seq, ) );*/
+				}
+
+				for (String contig : contset.keySet()) {
+					Sequence seq = contset.get(contig);
+					jf.addSequence(seq);
+					if (seq.getAnnotations() != null)
+						Collections.sort(seq.getAnnotations());
+				}
+				jf.updateView();
+
+				frame.setVisible(true);
+			}
+		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Delete") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				deleteSeqs();
 			}
 		});
 		popup.addSeparator();
@@ -2273,7 +2441,80 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		
+		popup.addSeparator();
+		popup.add( new AbstractAction("Clustal") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.exists() ) f.mkdirs();
+					else if( !f.isDirectory() ) f = f.getParentFile();
+					
+					int[] rr = table.getSelectedRows();
+					//String seqtype = "nucl";
+					//String joinname = f.getName();
+					//int nseq = 0;
+					for( int r : rr ) {
+						int rear = table.convertRowIndexToModel( r );
+						if( rear >= 0 ) {
+							final Sequences s = sequences.get( rear );
+							final String seqtype = s.getType();
+							String path = s.getPath();
+							
+							try {
+								URL url = new URL( path );
+								
+								String file = url.getFile();
+								String[] split = file.split("/");
+								String fname = split[ split.length-1 ];
+								split = fname.split("\\.");
+								final String title = split[0];
+								
+								final File infile = new File( f, "tmp_"+fname );
+								
+								FileOutputStream fos = new FileOutputStream( infile );
+								InputStream is = url.openStream();
+								
+								byte[] bb = new byte[100000];
+								r = is.read(bb);
+								while( r > 0 ) {
+									fos.write(bb, 0, r);
+									r = is.read(bb);
+								}
+								is.close();
+								fos.close();
+						
+								String inputPathFixed = fixPath( infile.getAbsolutePath() ).trim();
+								final String newname = s.getName()+"_aligned";
+								String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
+								final String newurl = new File( newpath ).toURI().toString();
+								final Object[] cont = new Object[3];
+								Runnable run = new Runnable() {
+									public void run() {										
+										infile.delete();
+										addSequences(newname, seqtype, newurl, s.getNSeq());
+									}
+								};
+								
+								List<String> cmdarr = null;
+								if( seqtype.equals("nucl") ) {
+									String[] cmds = {"clustalw", "-infile="+inputPathFixed, "-align", "-outfile="+newpath, "-output=FASTA"};
+									cmdarr = Arrays.asList( cmds );
+								} else {
+									String[] cmds = {"clustalo", "-i "+inputPathFixed, "-o "+newpath};
+									cmdarr = Arrays.asList( cmds );
+								}
+								runProcessBuilder("Clustal alignment", cmdarr, run, cont);
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+						}
+					}
+				}
+			}
+		});
 		popup.addSeparator();
 		popup.add( new AbstractAction("Join") {
 			@Override
@@ -2391,6 +2632,60 @@ public class SerifyApplet extends JApplet {
 							public void windowDeactivated(WindowEvent e) {}
 						});
 						dl.setVisible( true );
+					}
+				}
+			}
+		});
+		popup.add( new AbstractAction("Cut") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f1 = fc.getSelectedFile();
+					if( !f1.isDirectory() ) f1 = f1.getParentFile();
+					final File dir = f1;
+					
+					int r = table.getSelectedRow();
+					int rr = table.convertRowIndexToModel( r );
+					if( rr >= 0 ) {
+						final Sequences seqs = sequences.get( rr );
+						
+						String val = JOptionPane.showInputDialog("Select character", "_");
+						try {
+							URI uri = new URI( seqs.getPath() );
+							InputStream is = uri.toURL().openStream();
+							
+							if( seqs.getPath().endsWith(".gz") ) {
+								is = new GZIPInputStream( is );
+							}
+							
+							URL url = uri.toURL();
+							String urlstr = url.toString();
+							String[] erm = urlstr.split("\\/");
+							String name = erm[ erm.length-1 ];
+							int ind = name.lastIndexOf('.');
+							
+							String sff = name;
+							String sf2 = "";
+							if( ind != -1 ) {
+								sff = name.substring(0, ind);
+								sf2 = name.substring(ind+1,name.length());
+							}
+							
+							String trimname = sff+"_cut";
+							File f = new File( dir, trimname+"."+sf2 );
+							FileWriter fw = new FileWriter(f);
+							
+							cutFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), val.charAt(0) );
+							SerifyApplet.this.addSequences( trimname, seqs.getType(), f.toURI().toString(), seqs.getNSeq() );
+						} catch (URISyntaxException e1) {
+							e1.printStackTrace();
+						} catch (MalformedURLException e1) {
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
 					}
 				}
 			}
@@ -2700,17 +2995,21 @@ public class SerifyApplet extends JApplet {
 					} else if( obj instanceof Image ) {
 						
 					} else if( obj instanceof String ) {
-						System.err.println("String");
 						//obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
 						String filelistStr = (String)obj;
-						String[] fileStr = filelistStr.split("\n");
 						
-						System.err.println( filelistStr );
-						for( String fileName : fileStr ) {
-							String val = fileName.trim();
-							//File f = new File( new URI( fileName ) );
-							String[] split = val.split("/");
-							addSequences( split[ split.length-1 ], val );
+						if( filelistStr.contains("\n>") ) {
+							addSequences(null, new InputStreamReader( new ByteArrayInputStream(filelistStr.getBytes()) ), null);
+						} else {
+							String[] fileStr = filelistStr.split("\n");
+							
+							System.err.println( filelistStr );
+							for( String fileName : fileStr ) {
+								String val = fileName.trim();
+								//File f = new File( new URI( fileName ) );
+								String[] split = val.split("/");
+								addSequences( split[ split.length-1 ], val );
+							}
 						}
 					} else if( obj instanceof Reader ) {
 						System.err.println("Reader");
@@ -2827,34 +3126,88 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	private void addSequences( String name, String path ) throws URISyntaxException, IOException {
+	private void addSequences( String name, Reader rd, String path ) throws URISyntaxException, IOException {
 		String type = "nucl";
 		int nseq = 0;
 		
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		
+		if( line.endsWith(":") ) {
+			JFileChooser	filechooser = new JFileChooser();
+			filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+				File dir = filechooser.getSelectedFile();
+				if( !dir.exists() ) dir.mkdirs();
+				
+				Set<String>	curset = new HashSet<String>();
+				String curname = line.substring( 0, Math.min( 64, line.length()-1 ) ).replace(' ', '_');;
+				curset.add( curname );
+				
+				File f = new File( dir, curname+".fasta" );
+				FileWriter	fw = new FileWriter( f );
+				line = br.readLine();
+				while( line != null ) {
+					if( line.endsWith(":") ) {
+						fw.close();
+						addSequences(curname, f.toURI().toString());
+						
+						int val = 1;
+						curname = line.substring( 0,  Math.min( 64, line.length()-1 ) ).replace(' ', '_');
+						String newcurname = curname;
+						while( curset.contains(newcurname) ) newcurname = curname+"_"+(val++);
+						curname = newcurname;
+						
+						f = new File( dir, curname+".fasta" );
+						fw = new FileWriter( f );
+					} else {
+						fw.write( line+"\n" );
+					}
+					
+					line = br.readLine();
+				}
+				fw.close();
+				addSequences( curname, f.toURI().toString() );
+			}
+		} else {
+			if( path == null ) {
+				JFileChooser	filechooser = new JFileChooser();
+				filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+					File f = filechooser.getSelectedFile();
+					path = f.toURI().toString();
+				}
+			}
+			
+			if( path != null ) {
+				while( line != null ) {
+					if( line.startsWith(">") ) {
+						nseq++;
+						
+						if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
+					}
+					else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTDYKVRSWMNX]+$") ) {
+						System.err.println( line );
+						type = "prot";
+					}
+					line = br.readLine();
+				}
+				br.close();
+				
+				if( nseq > 0 ) {
+					addSequences(name, type, path, nseq);
+				} else System.err.println( "no sequences in file" );
+			}
+		}
+	}
+	
+	private void addSequences( String name, String path ) throws URISyntaxException, IOException {
 		URL url = new URL(path);
 		InputStream is = url.openStream();
 		if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
 		InputStreamReader isr = new InputStreamReader( is );
+		addSequences( name, isr, path );
 		//FileReader	fr = new FileReader( f );
-		BufferedReader br = new BufferedReader( isr );
-		String line = br.readLine();
-		while( line != null ) {
-			if( line.startsWith(">") ) {
-				nseq++;
-				
-				if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
-			}
-			else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTDYKVRSWMNX]+$") ) {
-				System.err.println( line );
-				type = "prot";
-			}
-			line = br.readLine();
-		}
-		br.close();
-		
-		if( nseq > 0 ) {
-			addSequences(name, type, path, nseq);
-		} else System.err.println( "no sequences in file" );
 	}
 	
 	private void addSequences( String name, String type, String path, int nseq ) {
@@ -2966,7 +3319,6 @@ public class SerifyApplet extends JApplet {
 					
 					String result = ta.getText().trim();
 					if( run != null ) {
-					
 						cont[0] = interupted ? null : ""; 
 						cont[1] = result;
 						cont[2] = new Date( System.currentTimeMillis() ).toString();
@@ -2992,10 +3344,11 @@ public class SerifyApplet extends JApplet {
 		SerifyApplet sa = new SerifyApplet();
 		
 		try {
-			File f = new File( "/home/horfrae/result.txt" );
-			FileInputStream is = new FileInputStream("/home/horfrae/454AllContigs_flanking.blastout");
+			File f = new File( "/home/sigmar/thermus_union_cluster.txt" );
+			FileInputStream is = new FileInputStream("/home/sigmar/sandbox/distann/src/thermus_join.blastout");
 			FileOutputStream os = new FileOutputStream(f);
-			SerifyApplet.blastJoin( is, new PrintStream(os) );
+			SerifyApplet.makeBlastCluster( is, os );
+			//SerifyApplet.blastJoin( is, new PrintStream(os) );
 			is.close();
 			os.close();
 		} catch (FileNotFoundException e) {
