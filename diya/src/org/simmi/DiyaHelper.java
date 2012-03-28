@@ -83,7 +83,7 @@ public class DiyaHelper {
 				line = bufferedReader.readLine();
 				while( line != null ) {
 					String[] split = line.split("[ ]+");
-					if( split.length > 1 && split[1].equals("CDS") ) {
+					if( split.length > 1 && (split[1].equals("CDS") || split[1].equals("gene")) ) {
 						fw.write( line + "\n" );
 						line = bufferedReader.readLine();
 						String res = "/note";
@@ -95,7 +95,10 @@ public class DiyaHelper {
 								writeline = line;
 								String val = res.substring(12, res.length()-1);
 								InnerHelper in = inMap.get( val );
-								if( in != null ) name = in.longName;
+								if( in != null ) {
+									name = in.longName;
+									writeline += "\n                     /product=\""+name+"\"";
+								}
 								line = bufferedReader.readLine();
 							} else if( res.startsWith("/product") ) {
 								if( name != null ) writeline = "                     /product=\""+name+"\"";
