@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://nutritiondb.appspot.com/">
+<information>
+  <title>Sigmasoft</title>
+  <vendor>Sigmar</vendor>
+  <homepage href="http://nutritiondb.appstore.com" />
+  <description>Nutrition Database</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="food_usda.jar"/>
+  <jar href="swingx-core-1.6.2.jar"/>
+</resources>
+<applet-desc 
+	name="FoodUSDA"
+	main-class="org.simmi.SortTable"
+	width="1280"
+	height="800">
+<param name="draggable" value="true"/>
+</applet-desc>
+</jnlp>
