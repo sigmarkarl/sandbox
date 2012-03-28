@@ -254,8 +254,8 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void checkInstall( File dir ) throws IOException {
-		File check1 = new File( "/opt/ncbi-blast-2.2.25+/bin/blastp" );
-		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\blastp.exe" );
+		File check1 = new File( "/opt/ncbi-blast-2.2.26+/bin/blastp" );
+		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastp.exe" );
 		if( !check1.exists() && !check2.exists() ) {
 			File f = installBlast( dir );
 		}
@@ -286,7 +286,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public File installBlast( final File homedir ) throws IOException {
-		final URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.25/ncbi-blast-2.2.25+-win32.exe");
+		final URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.26/ncbi-blast-2.2.26+-win32.exe");
 		String fileurl = url.getFile();
 		String[] split = fileurl.split("/");
 		
@@ -548,12 +548,14 @@ public class SerifyApplet extends JApplet {
 	
 	public void deleteSeqs() {
 		Set<String>	keys = new TreeSet<String>();
+		Set<Integer>	rselset = new TreeSet<Integer>();
 		int[] rr = table.getSelectedRows();
 		for( int r : rr ) {
 			int ind = table.convertRowIndexToModel( r );
 			if( ind >= 0 ) {
+				rselset.add( ind );
 				Sequences seqs = sequences.get(ind);
-				keys.add( seqs.getKey() );
+				if( seqs.getKey() != null ) keys.add( seqs.getKey() );
 				
 				//sequences.remove( ind );
 				//table.tableChanged( new TableModelEvent(table.getModel()) );
@@ -571,17 +573,16 @@ public class SerifyApplet extends JApplet {
 		}
 		
 		if( unsucc ) {
-			Set<Integer>	rselset = new TreeSet<Integer>();
 			for( int r : rr ) {
 				int ind = table.convertRowIndexToModel( r );
 				rselset.add( ind );
 			}
-			
-			for( int r : rselset ) {
-				sequences.remove( r );	
-			}
-			table.tableChanged( new TableModelEvent(table.getModel()) );
 		}
+		
+		for( int r : rselset ) {
+			sequences.remove( r );	
+		}
+		table.tableChanged( new TableModelEvent(table.getModel()) );
 	}
 	
 	public void deleteSequence( String key ) {
@@ -668,10 +669,18 @@ public class SerifyApplet extends JApplet {
 					File dir = new File( userhome );
 					
 					System.out.println("run blast in applet");
-					String blasttype = dbType.equals("nucl") ? "blastn" : "blastp";
-					File blast = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\" + blasttype+".exe" );
-					if( !blast.exists() ) blast = new File( "/opt/ncbi-blast-2.2.25+/bin/"+blasttype );
-					if( blast.exists() ) {
+					File blastn;
+					File blastp;
+					File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastx.exe" );
+					if( !blastx.exists() ) {
+						blastx = new File( "/opt/ncbi-blast-2.2.26+/bin/blastx" );
+						blastn = new File( "/opt/ncbi-blast-2.2.26+/bin/blastn" );
+						blastp = new File( "/opt/ncbi-blast-2.2.26+/bin/blastp" );
+					} else {
+						blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastn.exe" );
+						blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastp.exe" );
+					}
+					if( blastx.exists() ) {
 						JFileChooser fc = new JFileChooser();
 						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 						if( fc.showSaveDialog( SerifyApplet.this.cnt ) == JFileChooser.APPROVE_OPTION ) {
@@ -682,6 +691,11 @@ public class SerifyApplet extends JApplet {
 							int[] rr = table.getSelectedRows();
 							for( int r : rr ) {
 								String path = (String)table.getValueAt( r, 3 );
+								String type = (String)table.getValueAt( r, 2 );
+								
+								//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
+								File blastFile = dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+								
 								URL url = new URL( path );
 								
 								String file = url.getFile();
@@ -708,7 +722,7 @@ public class SerifyApplet extends JApplet {
 								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() ).trim();
 								
 								List<String>	lcmd = new ArrayList<String>();
-								String[] cmds = { blast.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed };
+								String[] cmds = { blastFile.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed };
 								String[] exts = extrapar.trim().split("[\t ]+");
 								
 								String[] nxst = { "-out", outPathFixed };
@@ -1839,7 +1853,7 @@ public class SerifyApplet extends JApplet {
 		return nseq;
 	}
 	
-	public static int trimFasta( BufferedReader br, BufferedWriter bw, Set<String> filterset, boolean inverted ) throws IOException {
+	public static int trimFasta( BufferedReader br, BufferedWriter bw, Map<String,String> filterset, boolean inverted ) throws IOException {
 		int nseq = 0;
 		
 		String line = br.readLine();
@@ -1848,7 +1862,7 @@ public class SerifyApplet extends JApplet {
 			if( line.startsWith(">") ) {
 				if( inverted ) {
 					seqname = line;
-					for( String f : filterset ) {
+					for( String f : filterset.keySet() ) {
 						if( line.contains(f) ) {
 							nseq++;
 							seqname = null;
@@ -1860,10 +1874,13 @@ public class SerifyApplet extends JApplet {
 					}
 				} else {
 					seqname = null;
-					for( String f : filterset ) {
+					for( String f : filterset.keySet() ) {
 						if( line.contains(f) ) {
+							String swap = filterset.get(f);
+							
 							nseq++;
-							bw.write( line+"\n" );
+							if( swap != null ) bw.write( ">"+swap+"_"+f+"\n" );
+							else bw.write( line+"\n" );
 							seqname = line;
 							break;
 						}
@@ -2149,11 +2166,12 @@ public class SerifyApplet extends JApplet {
 									Sequence seq = jf.new Sequence(cont, dna);
 									contset.put(cont, seq);
 								}
-								cont = line.replace( ">", seqs.getName()+"_" );
+								if( rr.length == 1 ) cont = line.replace( ">", "" );
+								else cont = line.replace( ">", seqs.getName()+"_" );
 								dna = new StringBuilder();
 								//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
 								nseq++;
-							} else dna.append( line );
+							} else dna.append( line.replace(" ", "") );
 							line = br.readLine();
 						}
 						if( cont != null ) {
@@ -2205,8 +2223,8 @@ public class SerifyApplet extends JApplet {
 					
 					checkInstall( dir );
 						
-					File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\makeblastdb.exe" );
-					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.25+/bin/makeblastdb" );
+					File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\makeblastdb.exe" );
+					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.26+/bin/makeblastdb" );
 					if( makeblastdb.exists() ) {
 						int r = table.getSelectedRow();
 						final String dbtype = (String)table.getValueAt( r, 2 );
@@ -2283,7 +2301,17 @@ public class SerifyApplet extends JApplet {
 					int i = title.lastIndexOf('.');
 					if( i != -1 ) {
 						if( title.charAt(i+1) == 'n' ) dbtype = "nucl";
-						title = title.substring(0,i);
+						
+						int li = title.lastIndexOf('.', i-1);
+						if( li != -1 ) {
+							if( i-li == 3 ) {
+								title = title.substring(0,li);
+							} else {
+								title = title.substring(0,i);
+							}
+						} else {
+							title = title.substring(0,i);
+						}
 					}
 					
 					final String outPath = fixPath( selectedfile.getParentFile().getAbsolutePath()+System.getProperty("file.separator")+title );
@@ -2316,7 +2344,6 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		
 		popup.add( new AbstractAction("tBlast") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -2785,12 +2812,15 @@ public class SerifyApplet extends JApplet {
 									File f = new File( dir, trimname+"."+sf2 );
 									FileWriter fw = new FileWriter(f);
 									
-									Set<String> fset = null;
+									Map<String,String> fset = null;
 									
-									fset = new HashSet<String>();
+									fset = new HashMap<String,String>();
 									if( nofile ) {
 										String[] farray = { trim };
-										fset.addAll( Arrays.asList( farray ) );
+										for( String str : farray ) {
+											fset.put(str, null);
+										}
+										//fset.addAll( Arrays.asList( farray ) );
 									} else {
 										File fl = new File( new URI(trim) );
 										FileReader fr = new FileReader( fl );
@@ -2800,7 +2830,10 @@ public class SerifyApplet extends JApplet {
 											/*if( line.contains("ingletons") ) {
 												fset.add( line.split("[\t ]+")[0] );
 											}*/
-											fset.add( line );
+											String[] split = line.split("\t");
+											if( split.length > 1 ) fset.put( split[0], split[1] );
+											else fset.put( line, null );
+											
 											line = br.readLine();
 										}
 									}
