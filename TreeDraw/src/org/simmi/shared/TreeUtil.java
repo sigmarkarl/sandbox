@@ -108,6 +108,10 @@ public class TreeUtil {
 		return currentNode;
 	}
 	
+	public void setNode( Node node ) {
+		currentNode = node;
+	}
+	
 	public class Node {
 		String 		name;
 		String		meta;
@@ -167,6 +171,14 @@ public class TreeUtil {
 			return h;
 		}
 		
+		public void seth( double h ) {
+			this.h = h;
+		}
+		
+		public void seth2( double h2 ) {
+			this.h2 = h2;
+		}
+		
 		public String toString() {
 			String str = "";
 			if( nodes.size() > 0 ) {
@@ -201,6 +213,10 @@ public class TreeUtil {
 			node.h = h;
 		}
 		
+		public void removeNode( Node node ) {
+			nodes.remove( node );
+		}
+		
 		public void setName( String newname ) {
 			this.name = newname;
 		}
@@ -211,6 +227,10 @@ public class TreeUtil {
 		
 		public String getMeta() {
 			return meta;
+		}
+		
+		public void setMeta( String newmeta ) {
+			this.meta = newmeta;
 		}
 		
 		public String getColor() {
