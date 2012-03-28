@@ -37,6 +37,8 @@ import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.http.client.Request;
@@ -59,6 +61,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class Treedraw implements EntryPoint {
 	Canvas		canvas;
 	Node		root;
+	Node		selectedNode;
 	Node[]		nodearray;
 	TreeUtil	treeutil;
 	
@@ -345,9 +348,11 @@ public class Treedraw implements EntryPoint {
 		return ret;
 	}
 	
-	public void recursiveNodeClick( Node node, double x, double y, int recursive ) {
+	public Node recursiveNodeClick( Node node, double x, double y, int recursive ) {
+		Node ret = null;
 		if( node != null ) {
 			if( recursive > 1 || (Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5) ) {
+				ret = node;
 				for( int i = 0; i < node.getNodes().size()/2; i++ ) {
 					Node n = node.getNodes().get(i);
 					node.getNodes().set(i, node.getNodes().get(node.getNodes().size()-1-i) );
@@ -361,10 +366,12 @@ public class Treedraw implements EntryPoint {
 				}
 			} else {
 				for( Node n : node.getNodes() ) {
-					recursiveNodeClick( n, x, y, recursive );
+					Node res = recursiveNodeClick( n, x, y, recursive );
+					if( res != null ) ret = res;
 				}
 			}
 		}
+		return ret;
 	}
 	
 	public native String encode( String input ) /*-{
@@ -446,6 +453,17 @@ public class Treedraw implements EntryPoint {
 	boolean 		mousedown = false;
 	boolean			rerooting = false;
 	
+	public void recursiveMarkings( Node node ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			node.setName( "" );
+			node.setMeta( "" );
+			for( Node newnode : nodes ) {
+				recursiveMarkings( newnode );
+			}
+		}
+	}
+	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get("canvas");
@@ -477,7 +495,7 @@ public class Treedraw implements EntryPoint {
 		s.setMargin(0.0, Unit.PX);
 		
 		int w = Window.getClientWidth();
-		int h = 480; //Window.getClientHeight();
+		int h = 400; //Window.getClientHeight();
 		canvas.setSize(w+"px", h+"px");
 		
 		canvas.addDropHandler( new DropHandler() {
@@ -567,12 +585,22 @@ public class Treedraw implements EntryPoint {
 					popup.show();*/
 				} else {
 					if( event.isControlKeyDown() ) {
-						recursiveNodeCollapse( root, x, y );
-						root.countLeaves();
+						canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+						Node newroot = recursiveReroot( root, x, y );
+						if( newroot != null ) {
+							newroot.setParent( null );
+							treeutil.setNode( newroot );
+							//treeutil.reroot(root, newroot);
+							root = newroot;
+							root.seth( 0.0 );
+							root.seth2( 0.0 );
+						}
+						//recursiveNodeCollapse( root, x, y );
+						//root.countLeaves();
 					} else if( shift ) {
 						recursiveNodeClick( root, x, y, 1 );
 					} else {
-						recursiveNodeClick( root, x, y, 0 );
+						selectedNode = recursiveNodeClick( root, x, y, 0 );
 						/*if( nodearray != null ) {
 							int y = event.getY();
 							int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
@@ -606,6 +634,42 @@ public class Treedraw implements EntryPoint {
 								e.printStackTrace();
 							}				
 						}*/
+					}
+				}
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		canvas.addKeyPressHandler( new KeyPressHandler() {
+			@Override
+			public void onKeyPress(KeyPressEvent event) {
+				char c = event.getCharCode();
+				if( selectedNode != null ) {
+					if( c == 'c' || c == 'C' ) {
+						selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
+						root.countLeaves();
+					} else if( c == 'd' || c == 'D' ) {
+						selectedNode.getParent().removeNode( selectedNode );
+						selectedNode = null;
+						root.countLeaves();
+					} else if( c == 'r' || c == 'R' ) {
+						//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+						//Node newroot = recursiveReroot( root, x, y );
+						selectedNode.setParent( null );
+						treeutil.setNode( selectedNode );
+							//treeutil.reroot(root, newroot);
+						root = selectedNode;
+						root.seth( 0.0 );
+						root.seth2( 0.0 );
+					} else if( c == 'm' || c == 'M' ) {
+						recursiveMarkings( root );
+						//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+						//Node newroot = recursiveReroot( root, x, y );
+						//selectedNode.setParent( null );
+						//treeutil.setNode( selectedNode );
+						//treeutil.reroot(root, newroot);
+						//root = selectedNode;
+						//root.seth( 0.0 );
+						//root.seth2( 0.0 );
 					}
 				}
 				if( treeutil != null ) drawTree( treeutil );
