@@ -766,10 +766,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View aligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JCheckBox accession = new JCheckBox("Acc");
+				JCheckBox species = new JCheckBox("Species");
 				JCheckBox country = new JCheckBox("Country");
 				JCheckBox source = new JCheckBox("Source");
-				Object[] params = new Object[] {accession, country, source};
+				JCheckBox accession = new JCheckBox("Accession");
+				Object[] params = new Object[] {species, country, source, accession};
 				JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);
 				
 				Set<String>	include = new HashSet<String>();
@@ -788,14 +789,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				JavaFasta jf = new JavaFasta();
 				jf.initGui(frame);
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
-				StringBuilder	dna = new StringBuilder();
+				Sequence	seq = null;
 				int nseq = 0;
 				
 				InputStream is = DataTable.this.getClass().getResourceAsStream("/noname.fasta");
 				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 				try {
 					String inc = null;
-					String cont = null;
 					String line = br.readLine();
 					while( line != null ) {
 						/*if( line.startsWith(">") ) {
@@ -834,9 +834,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						}*/
 						
 						if( line.startsWith(">") ) {
-							if( cont != null ) {
-								Sequence seq = jf.new Sequence(cont, dna);
-								contset.put(cont, seq);
+							if( seq != null ) {
+								//Sequence seq = jf.new Sequence(cont, dna);
+								contset.put(seq.getName(), seq);
 							}
 							
 							inc = null;
@@ -851,10 +851,16 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								Object[] obj = tablemap.get(inc);
 								
 								String fname = "";
-								if( accession.isSelected() ) {
-									if( fname.length() == 0 ) fname += obj[1];
-									else fname += "_"+obj[1];
-								} 
+								if( species.isSelected() ) {
+									String spec = (String)obj[2];
+									int iv = spec.indexOf('_');
+									if( iv == -1 ) {
+										iv = spec.indexOf("16S");
+									}
+									if( iv != -1 ) spec = spec.substring(0, iv).trim();
+									if( fname.length() == 0 ) fname += spec;
+									else fname += "_"+spec;
+								}
 								if( country.isSelected() ) {
 									if( fname.length() == 0 ) fname += obj[11];
 									else fname += "_"+obj[11];
@@ -863,32 +869,37 @@ public class DataTable extends JApplet implements ClipboardOwner {
 									if( fname.length() == 0 ) fname += obj[12];
 									else fname += "_"+obj[12];
 								}
+								if( accession.isSelected() ) {
+									if( fname.length() == 0 ) fname += obj[1];
+									else fname += "_"+obj[1];
+								} 
 								
+								String cont;
 								if( fname.length() > 1 ) {
 									cont = fname;
 								} else cont = line.substring(1);
-							}
 							//if( rr.length == 1 ) cont = line.replace( ">", "" );
 							//else cont = line.replace( ">", seqs.getName()+"_" );
-							dna = new StringBuilder();
+								seq = jf.new Sequence( cont );
 							//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
-							nseq++;
+								nseq++;
+							}
 						} else if( inc != null ) {
-							dna.append( line.replace(" ", "") );
+							seq.append( line.replace(" ", "") );
 						}
 						line = br.readLine();
 					}
 					br.close();
-					if( cont != null ) {
-						Sequence seq = jf.new Sequence(cont, dna);
-						contset.put(cont, seq);
+					if( seq != null ) {
+						//Sequence seq = jf.new Sequence(cont, dna);
+						contset.put(seq.getName(), seq);
 					}
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
 
 				for (String contig : contset.keySet()) {
-					Sequence seq = contset.get(contig);
+					seq = contset.get(contig);
 					jf.addSequence(seq);
 					if (seq.getAnnotations() != null)
 						Collections.sort(seq.getAnnotations());
@@ -936,17 +947,17 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								Object[] obj = tablemap.get(acc);
 								
 								inc = true;
-								String fname = ">";
+								String fname = "";
 								if( accession.isSelected() ) {
-									if( fname.length() == 1 ) fname += obj[1];
+									if( fname.length() == 0 ) fname += obj[1];
 									else fname += "_"+obj[1];
 								} 
 								if( country.isSelected() ) {
-									if( fname.length() == 1 ) fname += obj[11];
+									if( fname.length() == 0 ) fname += obj[11];
 									else fname += "_"+obj[11];
 								} 
 								if( source.isSelected() ) {
-									if( fname.length() == 1 ) fname += obj[12];
+									if( fname.length() == 0 ) fname += obj[12];
 									else fname += "_"+obj[12];
 								}
 								
