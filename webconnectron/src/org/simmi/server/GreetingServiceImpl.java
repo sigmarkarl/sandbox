@@ -1,7 +1,17 @@
 package org.simmi.server;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.simmi.client.GreetingService;
 import org.simmi.shared.FieldVerifier;
+
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -10,6 +20,36 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
+	public void doGet( HttpServletRequest req, HttpServletResponse resp ) throws IOException {
+		/*resp.setContentType("text/xml");
+		try {
+			PrintWriter pw = resp.getWriter();
+			
+			pw.println("<xml>");
+			pw.println("<simmi attr=\"erm\">");
+			pw.println("hoho");
+			pw.println("</simmi>");
+			pw.println("</xml>");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//super.dopo*/
+		resp.setContentType("text/html");
+		
+		//InputStream is = this.getClass().getResourceAsStream("/Webconnectron.html");
+		FileInputStream is = new FileInputStream( "Treedraw.html" );
+		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+		PrintWriter pw = resp.getWriter();
+		String line = br.readLine();
+		while( line != null ) {
+			pw.println(line);
+			line = br.readLine();
+		}
+		br.close();
+		pw.close();
+	}
+	
 	public String greetServer(String input) throws IllegalArgumentException {
 		// Verify that the input is valid. 
 		if (!FieldVerifier.isValidName(input)) {
