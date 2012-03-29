@@ -58,7 +58,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 
-public class Treedraw implements EntryPoint {
+public class FacebookTree implements EntryPoint {
 	Canvas		canvas;
 	Node		root;
 	Node		selectedNode;
@@ -100,15 +100,15 @@ public class Treedraw implements EntryPoint {
 		boolean vertical = true;
 		boolean equalHeight = false;
 		
-		Treedraw.this.h = 10*leaves;
-		Treedraw.this.w = ww-10;
+		FacebookTree.this.h = 10*leaves;
+		FacebookTree.this.w = ww-10;
 		
 		if( vertical ) {
-			dh = Treedraw.this.h/leaves;
-			dw = Treedraw.this.w/levels;
+			dh = FacebookTree.this.h/leaves;
+			dw = FacebookTree.this.w/levels;
 		} else {
-			dh = Treedraw.this.h/levels;
-			dw = Treedraw.this.w/leaves;
+			dh = FacebookTree.this.h/levels;
+			dw = FacebookTree.this.w/leaves;
 		}
 		
 		int starty = 10; //h/25;
@@ -132,13 +132,13 @@ public class Treedraw implements EntryPoint {
 		
 		console( maxheightold + "  " + gh );
 		if( vertical ) {
-			drawFramesRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
+			drawFramesRecursive( ctx, root, 0, 0, startx, FacebookTree.this.h/2, equalHeight, false, vertical, maxheight, 0 );
 			ci = 0;
-			drawTreeRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+			drawTreeRecursive( ctx, root, 0, 0, startx, FacebookTree.this.h/2, equalHeight, false, vertical, maxheight );
 		} else {
-			drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
+			drawFramesRecursive( ctx, root, 0, 0, FacebookTree.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
 			ci = 0;
-			drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+			drawTreeRecursive( ctx, root, 0, 0, FacebookTree.this.w/2, starty, equalHeight, false, vertical, maxheight );
 		}
 	}
 	
