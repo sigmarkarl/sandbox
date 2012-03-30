@@ -1,9 +1,6 @@
 package org.simmi.server;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,8 +15,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  * The server side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
-
+public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {	
 	public void doGet( HttpServletRequest req, HttpServletResponse resp ) throws IOException {
 		/*resp.setContentType("text/xml");
 		try {
@@ -35,10 +31,10 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		}
 		
 		//super.dopo*/
-		resp.setContentType("text/html");
+		//resp.setContentType("text/html");
 		
 		//InputStream is = this.getClass().getResourceAsStream("/Webconnectron.html");
-		FileInputStream is = new FileInputStream( "Treedraw.html" );
+		/*FileInputStream is = new FileInputStream( "Treedraw.html" );
 		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 		PrintWriter pw = resp.getWriter();
 		String line = br.readLine();
@@ -47,6 +43,16 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			line = br.readLine();
 		}
 		br.close();
+		pw.close();*/
+		
+		PrintWriter pw = resp.getWriter();
+		pw.println("<html>");
+		pw.println("<head>");
+		pw.println( "<script type=\"text/javascript\" language=\"javascript\" src=\"org.simmi.Facebooktree/org.simmi.Facebooktree.nocache.js\"></script>" );
+		pw.println("</head>");
+		pw.println("<body>");
+		pw.println("</body>");
+		pw.println("</html>");
 		pw.close();
 	}
 	

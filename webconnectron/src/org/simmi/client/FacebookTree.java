@@ -19,8 +19,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.DragEndEvent;
@@ -41,19 +39,12 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -77,12 +68,6 @@ public class FacebookTree implements EntryPoint {
 	}
 	
 	public void drawTree( TreeUtil treeutil ) {
-		double minh = treeutil.getminh();
-		double maxh = treeutil.getmaxh();
-		
-		double minh2 = treeutil.getminh2();
-		double maxh2 = treeutil.getmaxh2();
-		
 		int ww = Window.getClientWidth();
 		
 		int leaves = root.getLeavesCount();
@@ -477,7 +462,7 @@ public class FacebookTree implements EntryPoint {
 	
 	@Override
 	public void onModuleLoad() {
-		RootPanel	rp = RootPanel.get("canvas");
+		RootPanel	rp = RootPanel.get();
 		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
 			public void onContextMenu(ContextMenuEvent event) {
@@ -700,60 +685,6 @@ public class FacebookTree implements EntryPoint {
 		str = "Double click to open file dialog";
 		tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
-		
-		final Anchor	treeAnchor = new Anchor("tree");
-		treeAnchor.addClickHandler( new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				treeAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
-			}
-		});
-		final Anchor	imageAnchor = new Anchor("image");
-		imageAnchor.addClickHandler( new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				imageAnchor.setHref( canvas.toDataUrl() );
-			}
-		});
-		final Anchor	sampleAnchor = new Anchor("sample");
-		sampleAnchor.addClickHandler( new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, "sample.tree");
-				try {
-					rb.sendRequest("", new RequestCallback() {
-						@Override
-						public void onResponseReceived(Request request, Response response) {
-							handleText( response.getText() );
-						}
-						
-						@Override
-						public void onError(Request request, Throwable exception) {
-							console( exception.getMessage() );
-						}
-					});
-				} catch (RequestException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		
-		RootPanel	help = RootPanel.get("help");
-		HorizontalPanel	hp = new HorizontalPanel();
-		hp.setSpacing(5);
-		HTML html = new HTML("Download as");
-		hp.add( html );
-		hp.add( treeAnchor );
-		html = new HTML("as");
-		hp.add( html );
-		hp.add( imageAnchor );
-		
-		html = new HTML(". Run");
-		hp.add( html );
-		hp.add( sampleAnchor );
-		
-		help.add( hp );
-		//help.add
 		
 		rp.add( canvas );
 	}
