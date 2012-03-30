@@ -10,6 +10,16 @@
     <servlet-class>org.simmi.server.GreetingServiceImpl</servlet-class>
   </servlet>
   
+  <servlet>
+    <servlet-name>facebookTreeServlet</servlet-name>
+    <servlet-class>org.simmi.server.FacebookTreeServlet</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>facebookTreeServlet</servlet-name>
+    <url-pattern>/FacebookTree/</url-pattern>
+  </servlet-mapping>
+  
   <servlet-mapping>
     <servlet-name>greetServlet</servlet-name>
     <url-pattern>/greet</url-pattern>
