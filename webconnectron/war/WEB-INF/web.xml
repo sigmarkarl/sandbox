@@ -17,7 +17,7 @@
   
   <servlet-mapping>
     <servlet-name>facebookTreeServlet</servlet-name>
-    <url-pattern>/FacebookTree/</url-pattern>
+    <url-pattern>/FacebookTree/*</url-pattern>
   </servlet-mapping>
   
   <servlet-mapping>
@@ -32,7 +32,7 @@
 
   <security-constraint>
       <web-resource-collection>
-          <url-pattern>/FacebookTree/</url-pattern>
+          <url-pattern>/FacebookTree/*</url-pattern>
       </web-resource-collection>
       <user-data-constraint>
           <transport-guarantee>CONFIDENTIAL</transport-guarantee>
