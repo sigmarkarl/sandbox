@@ -13,8 +13,10 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -45,6 +47,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -365,10 +368,9 @@ public class FacebookTree implements EntryPoint {
 		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
 		var i = 0;
 	
-		input = this.@org.simmi.client.Treedraw::_utf8_encode(Ljava/lang/String;)(input);
+		input = this.@org.simmi.client.FacebookTree::_utf8_encode(Ljava/lang/String;)(input);
 	
 		while (i < input.length) {
-	
 			chr1 = input.charCodeAt(i++);
 			chr2 = input.charCodeAt(i++);
 			chr3 = input.charCodeAt(i++);
@@ -417,6 +419,71 @@ public class FacebookTree implements EntryPoint {
 		}
 	
 		return utftext;
+	}-*/;
+	
+	public native String decode( String input ) /*-{
+		var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+		var output = "";
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+	
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+	
+		while (i < input.length) {
+			console.log( i );
+			
+			enc1 = _keyStr.indexOf(input.charAt(i++));
+			enc2 = _keyStr.indexOf(input.charAt(i++));
+			enc3 = _keyStr.indexOf(input.charAt(i++));
+			enc4 = _keyStr.indexOf(input.charAt(i++));
+	
+			chr1 = (enc1 << 2) | (enc2 >> 4);
+			chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+			chr3 = ((enc3 & 3) << 6) | enc4;
+	
+			output = output + String.fromCharCode(chr1);
+	
+			if (enc3 != 64) {
+				output = output + String.fromCharCode(chr2);
+			}
+			if (enc4 != 64) {
+				output = output + String.fromCharCode(chr3);
+			}
+		}
+	
+		output = this.@org.simmi.client.FacebookTree::_utf8_decode(Ljava/lang/String;)(output);
+	
+		return output;
+	}-*/;
+	
+	private native String _utf8_decode( String utftext ) /*-{
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+	
+		while ( i < utftext.length ) {
+			c = utftext.charCodeAt(i);
+	
+			if (c < 128) {
+				string += String.fromCharCode(c);
+				i++;
+			}
+			else if((c > 191) && (c < 224)) {
+				c2 = utftext.charCodeAt(i+1);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+				i += 2;
+			}
+			else {
+				c2 = utftext.charCodeAt(i+1);
+				c3 = utftext.charCodeAt(i+2);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+				i += 3;
+			}
+	
+		}
+	
+		return string;
 	}-*/;
 
 	
@@ -687,6 +754,25 @@ public class FacebookTree implements EntryPoint {
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
 		
 		rp.add( canvas );
+		
+		NodeList<Element> meta = Document.get().getElementsByTagName("meta");
+		Element metael = meta.getItem(0);
+		String mstr = metael.getAttribute("content");
+		int i = mstr.indexOf('.');
+		String ensig = mstr.substring(0, i);
+		String payload = mstr.substring(i+1);
+		
+		ensig = ensig.replace('-', '+').replace('_', '/');
+		payload = payload.replace('-', '+').replace('_', '/');
+		
+		//String sig = decode( ensig );
+		String data = decode( payload );
+		
+		Label	stuff = new Label( "simmi "+data );
+		rp.add( stuff );
+		
+		//Label	stuff2 = new Label( "simmi2 "+payload );
+		//rp.add( stuff2 );
 	}
 	
 	double w;	
