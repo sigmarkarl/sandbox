@@ -1064,8 +1064,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		
 		table.setComponentPopupMenu( popup );
 		
-		String res = getThermusFusion();
-		loadData( res );
+		//String res = getThermusFusion();
+		//loadData( res );
 		
 		try {
 			JSObject win = JSObject.getWindow(this);
