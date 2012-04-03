@@ -12,9 +12,10 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -22,7 +23,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -369,7 +369,144 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		DefaultRowSorter<TableModel, Integer> rowsorter = (DefaultRowSorter<TableModel, Integer>)table.getRowSorter();
 		rowsorter.setRowFilter(filter);
 	}
+	
+	public void viewAligned( JavaFasta jf ) {
+		JCheckBox species = new JCheckBox("Species");
+		JCheckBox country = new JCheckBox("Country");
+		JCheckBox source = new JCheckBox("Source");
+		JCheckBox accession = new JCheckBox("Accession");
+		Object[] params = new Object[] {species, country, source, accession};
+		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);
+		
+		Set<String>	include = new HashSet<String>();
+		int[] rr = table.getSelectedRows();
+		for( int r : rr ) {
+			int i = table.convertRowIndexToModel(r);
+			if( i != -1 ) {
+				Object[] val = rowList.get(i);
+				include.add( (String)val[1] );
+			}
+		}
+		
+		List<Sequence> contset = new ArrayList<Sequence>();
+		Sequence	seq = null;
+		int nseq = 0;
+		
+		InputStream is = DataTable.this.getClass().getResourceAsStream("/noname.fasta");
+		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+		try {
+			String inc = null;
+			String line = br.readLine();
+			while( line != null ) {
+				/*if( line.startsWith(">") ) {
+					int v = line.indexOf(' ');
+					if( v == -1 ) v = line.length();
+					String name = line.substring(1, v).trim();
+					String acc = nameaccmap.get(name);
+					if( include.contains(name) ) {
+						Object[] obj = tablemap.get(acc);
+						
+						inc = true;
+						String fname = ">";
+						if( accession.isSelected() ) {
+							if( fname.length() == 1 ) fname += obj[1];
+							else fname += "_"+obj[1];
+						} 
+						if( country.isSelected() ) {
+							if( fname.length() == 1 ) fname += obj[11];
+							else fname += "_"+obj[11];
+						} 
+						if( source.isSelected() ) {
+							if( fname.length() == 1 ) fname += obj[12];
+							else fname += "_"+obj[12];
+						}
+						
+						if( fname.length() > 1 ) {
+							sb.append(">"+fname+"\n");
+						} else sb.append( line+"\n" );
+					} else inc = false;
+				} else if( inc ) {
+					if( line.length() > 100 ) {
+						for( int i = 0; i < line.length(); i+= 70 ) {
+							sb.append( line.substring(i, Math.min(i+70, line.length()))+"\n" );
+						}
+					} else sb.append( line+"\n" );
+				}*/
+				
+				if( line.startsWith(">") ) {
+					if( inc != null && seq != null ) {
+						//Sequence seq = jf.new Sequence(cont, dna);
+						contset.add(seq);
+					}
+					
+					inc = null;
+					for( String str : include ) {
+						if( line.contains( str ) ) {
+							inc = str;
+							break;
+						}
+					}
+					
+					if( inc != null ) {
+						Object[] obj = tablemap.get(inc);
+						
+						String fname = "";
+						if( species.isSelected() ) {
+							String spec = (String)obj[2];
+							int iv = spec.indexOf('_');
+							if( iv == -1 ) {
+								iv = spec.indexOf("16S");
+							}
+							if( iv != -1 ) spec = spec.substring(0, iv).trim();
+							if( fname.length() == 0 ) fname += spec;
+							else fname += "_"+spec;
+						}
+						if( country.isSelected() ) {
+							if( fname.length() == 0 ) fname += obj[11];
+							else fname += "_"+obj[11];
+						} 
+						if( source.isSelected() ) {
+							if( fname.length() == 0 ) fname += obj[12];
+							else fname += "_"+obj[12];
+						}
+						if( accession.isSelected() ) {
+							if( fname.length() == 0 ) fname += obj[1];
+							else fname += "_"+obj[1];
+						} 
+						
+						String cont;
+						if( fname.length() > 1 ) {
+							cont = fname;
+						} else cont = line.substring(1);
+					//if( rr.length == 1 ) cont = line.replace( ">", "" );
+					//else cont = line.replace( ">", seqs.getName()+"_" );
+						seq = jf.new Sequence( cont );
+					//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
+						nseq++;
+					}
+				} else if( inc != null ) {
+					seq.append( line.replace(" ", "") );
+				}
+				line = br.readLine();
+			}
+			br.close();
+			if( inc != null && seq != null ) {
+				//Sequence seq = jf.new Sequence(cont, dna);
+				contset.add(seq);
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
+		for (Sequence contig : contset) {
+			jf.addSequence(contig);
+			if (contig.getAnnotations() != null)
+				Collections.sort(contig.getAnnotations());
+		}
+		jf.updateView();
+	}
     
+	JavaFasta	currentjavafasta;
 	public void init() {
 		updateLof();
 		
@@ -766,147 +903,28 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View aligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JCheckBox species = new JCheckBox("Species");
-				JCheckBox country = new JCheckBox("Country");
-				JCheckBox source = new JCheckBox("Source");
-				JCheckBox accession = new JCheckBox("Accession");
-				Object[] params = new Object[] {species, country, source, accession};
-				JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);
-				
-				Set<String>	include = new HashSet<String>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					int i = table.convertRowIndexToModel(r);
-					if( i != -1 ) {
-						Object[] val = rowList.get(i);
-						include.add( (String)val[1] );
-					}
-				}
-				
+				JavaFasta jf = new JavaFasta();
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta();
 				jf.initGui(frame);
-				Map<String, Sequence> contset = new HashMap<String, Sequence>();
-				Sequence	seq = null;
-				int nseq = 0;
-				
-				InputStream is = DataTable.this.getClass().getResourceAsStream("/noname.fasta");
-				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-				try {
-					String inc = null;
-					String line = br.readLine();
-					while( line != null ) {
-						/*if( line.startsWith(">") ) {
-							int v = line.indexOf(' ');
-							if( v == -1 ) v = line.length();
-							String name = line.substring(1, v).trim();
-							String acc = nameaccmap.get(name);
-							if( include.contains(name) ) {
-								Object[] obj = tablemap.get(acc);
-								
-								inc = true;
-								String fname = ">";
-								if( accession.isSelected() ) {
-									if( fname.length() == 1 ) fname += obj[1];
-									else fname += "_"+obj[1];
-								} 
-								if( country.isSelected() ) {
-									if( fname.length() == 1 ) fname += obj[11];
-									else fname += "_"+obj[11];
-								} 
-								if( source.isSelected() ) {
-									if( fname.length() == 1 ) fname += obj[12];
-									else fname += "_"+obj[12];
-								}
-								
-								if( fname.length() > 1 ) {
-									sb.append(">"+fname+"\n");
-								} else sb.append( line+"\n" );
-							} else inc = false;
-						} else if( inc ) {
-							if( line.length() > 100 ) {
-								for( int i = 0; i < line.length(); i+= 70 ) {
-									sb.append( line.substring(i, Math.min(i+70, line.length()))+"\n" );
-								}
-							} else sb.append( line+"\n" );
-						}*/
-						
-						if( line.startsWith(">") ) {
-							if( seq != null ) {
-								//Sequence seq = jf.new Sequence(cont, dna);
-								contset.put(seq.getName(), seq);
-							}
-							
-							inc = null;
-							for( String str : include ) {
-								if( line.contains( str ) ) {
-									inc = str;
-									break;
-								}
-							}
-							
-							if( inc != null ) {
-								Object[] obj = tablemap.get(inc);
-								
-								String fname = "";
-								if( species.isSelected() ) {
-									String spec = (String)obj[2];
-									int iv = spec.indexOf('_');
-									if( iv == -1 ) {
-										iv = spec.indexOf("16S");
-									}
-									if( iv != -1 ) spec = spec.substring(0, iv).trim();
-									if( fname.length() == 0 ) fname += spec;
-									else fname += "_"+spec;
-								}
-								if( country.isSelected() ) {
-									if( fname.length() == 0 ) fname += obj[11];
-									else fname += "_"+obj[11];
-								} 
-								if( source.isSelected() ) {
-									if( fname.length() == 0 ) fname += obj[12];
-									else fname += "_"+obj[12];
-								}
-								if( accession.isSelected() ) {
-									if( fname.length() == 0 ) fname += obj[1];
-									else fname += "_"+obj[1];
-								} 
-								
-								String cont;
-								if( fname.length() > 1 ) {
-									cont = fname;
-								} else cont = line.substring(1);
-							//if( rr.length == 1 ) cont = line.replace( ">", "" );
-							//else cont = line.replace( ">", seqs.getName()+"_" );
-								seq = jf.new Sequence( cont );
-							//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
-								nseq++;
-							}
-						} else if( inc != null ) {
-							seq.append( line.replace(" ", "") );
-						}
-						line = br.readLine();
-					}
-					br.close();
-					if( seq != null ) {
-						//Sequence seq = jf.new Sequence(cont, dna);
-						contset.put(seq.getName(), seq);
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-
-				for (String contig : contset.keySet()) {
-					seq = contset.get(contig);
-					jf.addSequence(seq);
-					if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());
-				}
-				jf.updateView();
-
+				currentjavafasta = jf;
+				viewAligned( jf );
 				frame.setVisible(true);
+			}
+		});
+		popup.add( new AbstractAction("Append aligned") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if( currentjavafasta == null ) {
+					currentjavafasta = new JavaFasta();
+					JFrame frame = new JFrame();
+					frame.setSize(800, 600);
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+					currentjavafasta.initGui(frame);
+					frame.setVisible(true);
+				}
+				viewAligned( currentjavafasta );
 			}
 		});
 		popup.add( new AbstractAction("Show fasta") {
@@ -1062,10 +1080,25 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.addSeparator();
 		popup.add( cbmi );
 		
+		table.addKeyListener( new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if( e.getKeyCode() == KeyEvent.VK_ESCAPE ) {
+					filterset.clear();
+					updateFilter(table, filter);
+				}
+			}
+		});
 		table.setComponentPopupMenu( popup );
 		
-		//String res = getThermusFusion();
-		//loadData( res );
+		String res = getThermusFusion();
+		loadData( res );
 		
 		try {
 			JSObject win = JSObject.getWindow(this);
