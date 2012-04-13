@@ -574,6 +574,41 @@ public class TreeUtil {
 		}*/
 	}
 	
+	public void collapseTreeAdvanced( Node node, Set<String> collapset ) {
+		if( node.nodes != null && node.nodes.size() > 0 ) {
+			for( Node n : node.nodes ) {
+				collapseTreeAdvanced( n, collapset );
+			}
+			
+			String test = null;
+			boolean collapse = true;
+			for( Node n : node.nodes ) {
+				String nname = n.getName() != null ? n.getName() : "";
+				if( test == null ) {
+					for( String s : collapset ) {
+						if( nname.contains(s) ) {
+							test = s;
+							break;
+						}
+					}
+					
+					if( test == null ) {
+						test = "";
+					}
+				} else if( !nname.contains(test) ) {
+					collapse = false;
+					break;
+				}
+			}
+			
+			if( collapse && collapset.contains(test) ) {
+				node.nodes.clear();
+				//node.nodes = null;
+				node.setName( test );
+			}
+		}
+	}
+	
 	public void collapseTreeSimple( Node node, Set<String> collapset ) {
 		if( node.nodes != null && node.nodes.size() > 0 ) {
 			boolean check = false;
