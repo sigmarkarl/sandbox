@@ -2,6 +2,7 @@ package org.simmi.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
@@ -125,20 +126,22 @@ public class Treedraw implements EntryPoint {
 		
 		Context2d ctx = canvas.getContext2d();
 		Node node = getMaxHeight( root, ctx, ww-30 );
-		double gh = getHeight(node);
-		String name = node.getName();
-		if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
-		double maxheight = (gh*(ww-30))/(ww-60-ctx.measureText(name).getWidth());
-		
-		console( maxheightold + "  " + gh );
-		if( vertical ) {
-			drawFramesRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
-			ci = 0;
-			drawTreeRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
-		} else {
-			drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
-			ci = 0;
-			drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+		if( node != null ) {
+			double gh = getHeight(node);
+			String name = node.getName();
+			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			double maxheight = (gh*(ww-30))/(ww-60-ctx.measureText(name).getWidth());
+			
+			console( maxheightold + "  " + gh );
+			if( vertical ) {
+				drawFramesRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
+				ci = 0;
+				drawTreeRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+			} else {
+				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
+				ci = 0;
+				drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+			}
 		}
 	}
 	
@@ -180,9 +183,11 @@ public class Treedraw implements EntryPoint {
 			}
 		}
 		
-		String name = sel.getName();
-		if( sel.getMeta() != null ) name += " ("+sel.getMeta()+")";
-		console( name );
+		if( sel != null ) {
+			String name = sel.getName();
+			if( sel.getMeta() != null ) name += " ("+sel.getMeta()+")";
+			console( name );
+		}
 		
 		return sel;
 	}
@@ -654,7 +659,11 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onKeyPress(KeyPressEvent event) {
 				char c = event.getCharCode();
-				if( c == 'm' || c == 'M' ) {
+				if( c == 'a' || c == 'A' ) {
+					String[] ts = new String[] {"T.unknown", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
+					treeutil.collapseTreeAdvanced(root, new HashSet<String>( Arrays.asList(ts) ));
+					root.countLeaves();
+				} else if( c == 'm' || c == 'M' ) {
 					recursiveMarkings( root );
 					//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 					//Node newroot = recursiveReroot( root, x, y );
