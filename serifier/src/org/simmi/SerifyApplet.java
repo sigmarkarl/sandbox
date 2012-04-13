@@ -2351,6 +2351,21 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		popup.addSeparator();
+		popup.add( new AbstractAction("Genebank file") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				String addon = "nnnttaattaattaannn";
+				List<Integer>	startlist = new ArrayList<Integer>();
+				int r = table.getSelectedRow();
+				int i = table.convertRowIndexToModel( r );
+				Sequences s = sequences.get(i);
+				try {
+					URL url = new URL( s.getPath() );
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 		popup.add( new AbstractAction("Download files") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
