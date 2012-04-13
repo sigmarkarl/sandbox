@@ -3218,8 +3218,7 @@ public class SerifyApplet extends JApplet {
 						nseq++;
 						
 						if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
-					}
-					else if( type.equals("nucl") && !line.matches("^[acgtykvrswmnxACGTDYKVRSWMNX]+$") ) {
+					} else if( type.equals("nucl") && !line.matches("^[acgtykvrswmunxACGTDYKVRSWMUNX]+$") ) {
 						System.err.println( line );
 						type = "prot";
 					}
