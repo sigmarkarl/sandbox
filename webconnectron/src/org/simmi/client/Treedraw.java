@@ -1019,7 +1019,8 @@ public class Treedraw implements EntryPoint {
 				} else {
 					boolean b = use.length() > 2;
 					
-					g2.setFillStyle( color );
+					if( color != null && color.length() > 0 ) g2.setFillStyle( color );
+					else g2.setFillStyle( "#000000" );
 					double strw = 0;
 					String[] split = use.split( "_" );
 					if( b ) {
@@ -1034,8 +1035,9 @@ public class Treedraw implements EntryPoint {
 						}
 					}
 					double strh = 10;
-					if( vertical ) g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, k );
-					else g2.fillRect( x+nx-(5*strw)/8, ny-k/2.0, (5*strw)/4, k );
+					if( vertical ) {
+						g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, k );
+					} else g2.fillRect( x+nx-(5*strw)/8, ny-k/2.0, (5*strw)/4, k );
 					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
 					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
 					g2.setFillStyle( "#ffffff" );
@@ -1048,7 +1050,7 @@ public class Treedraw implements EntryPoint {
 							}
 						} else {
 							for( String s : split ) {
-								g2.fillText( s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length)+i*16 );
+								g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
 								i++;
 							}
 						}
