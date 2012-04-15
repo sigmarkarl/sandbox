@@ -661,6 +661,75 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 		jf.updateView();
 	}
+	
+	public String extractFasta( String filename ) {
+		JCheckBox accession = new JCheckBox("Acc");
+		JCheckBox country = new JCheckBox("Country");
+		JCheckBox source = new JCheckBox("Source");
+		Object[] params = new Object[] {accession, country, source};
+		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);
+		
+		Set<String>	include = new HashSet<String>();
+		int[] rr = table.getSelectedRows();
+		for( int r : rr ) {
+			int i = table.convertRowIndexToModel(r);
+			if( i != -1 ) {
+				Object[] val = rowList.get(i);
+				include.add( (String)val[0] );
+			}
+		}
+		
+		System.err.println( "about to" );
+		StringBuilder sb = new StringBuilder();
+		InputStream is = DataTable.this.getClass().getResourceAsStream(filename);
+		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+		try {
+			boolean inc = false;
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					int v = line.indexOf(' ');
+					if( v == -1 ) v = line.length();
+					String name = line.substring(1, v).trim();
+					String acc = nameaccmap.get(name);
+					if( include.contains(name) ) {
+						Object[] obj = tablemap.get(acc);
+						
+						inc = true;
+						String fname = "";
+						if( accession.isSelected() ) {
+							if( fname.length() == 0 ) fname += obj[1];
+							else fname += "_"+obj[1];
+						} 
+						if( country.isSelected() ) {
+							if( fname.length() == 0 ) fname += obj[11];
+							else fname += "_"+obj[11];
+						} 
+						if( source.isSelected() ) {
+							if( fname.length() == 0 ) fname += obj[12];
+							else fname += "_"+obj[12];
+						}
+						
+						if( fname.length() > 1 ) {
+							sb.append(">"+fname+"\n");
+						} else sb.append( line+"\n" );
+					} else inc = false;
+				} else if( inc ) {
+					if( line.length() > 100 ) {
+						for( int i = 0; i < line.length(); i+= 70 ) {
+							sb.append( line.substring(i, Math.min(i+70, line.length()))+"\n" );
+						}
+					} else sb.append( line+"\n" );
+				}
+				line = br.readLine();
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		System.err.println( "after" );
+		return sb.toString();
+	}
     
 	JavaFasta	currentjavafasta;
 	public void init() {
@@ -1056,6 +1125,16 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );
 		popup.addSeparator();
+		popup.add( new AbstractAction("FastTree") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String tree = extractFasta("/thermales_nodupl_new.fasta");
+				System.err.println( tree );
+				Object[] objs = { tree };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("fasttree", objs);
+			}
+		});
 		popup.add( new AbstractAction("Show conserved species sites") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1111,73 +1190,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		popup.add( new AbstractAction("Show fasta") {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JCheckBox accession = new JCheckBox("Acc");
-				JCheckBox country = new JCheckBox("Country");
-				JCheckBox source = new JCheckBox("Source");
-				Object[] params = new Object[] {accession, country, source};
-				JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);
-				
+			public void actionPerformed(ActionEvent e) {				
 				JDialog	dialog = new JDialog( SwingUtilities.getWindowAncestor( DataTable.this ) );
 				dialog.setSize(800, 600);
 				JTextArea textarea = new JTextArea();
 				textarea.setDragEnabled(true);
-				Set<String>	include = new HashSet<String>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					int i = table.convertRowIndexToModel(r);
-					if( i != -1 ) {
-						Object[] val = rowList.get(i);
-						include.add( (String)val[0] );
-					}
-				}
-				StringBuilder sb = new StringBuilder();
-				InputStream is = DataTable.this.getClass().getResourceAsStream("/thermus_all_gaps.fasta");
-				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-				try {
-					boolean inc = false;
-					String line = br.readLine();
-					while( line != null ) {
-						if( line.startsWith(">") ) {
-							int v = line.indexOf(' ');
-							if( v == -1 ) v = line.length();
-							String name = line.substring(1, v).trim();
-							String acc = nameaccmap.get(name);
-							if( include.contains(name) ) {
-								Object[] obj = tablemap.get(acc);
-								
-								inc = true;
-								String fname = "";
-								if( accession.isSelected() ) {
-									if( fname.length() == 0 ) fname += obj[1];
-									else fname += "_"+obj[1];
-								} 
-								if( country.isSelected() ) {
-									if( fname.length() == 0 ) fname += obj[11];
-									else fname += "_"+obj[11];
-								} 
-								if( source.isSelected() ) {
-									if( fname.length() == 0 ) fname += obj[12];
-									else fname += "_"+obj[12];
-								}
-								
-								if( fname.length() > 1 ) {
-									sb.append(">"+fname+"\n");
-								} else sb.append( line+"\n" );
-							} else inc = false;
-						} else if( inc ) {
-							if( line.length() > 100 ) {
-								for( int i = 0; i < line.length(); i+= 70 ) {
-									sb.append( line.substring(i, Math.min(i+70, line.length()))+"\n" );
-								}
-							} else sb.append( line+"\n" );
-						}
-						line = br.readLine();
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				textarea.setText( sb.toString() );
+				String fasta = extractFasta("/thermus_all_gaps.fasta");
+				textarea.setText( fasta );
 				
 				JScrollPane	scrollpane = new JScrollPane( textarea );
 				dialog.add( scrollpane );
@@ -1293,6 +1312,20 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 		
 		this.add( scrollpane );
+	}
+	
+	public void showTree( String tree ) {
+		JDialog	dialog = new JDialog( SwingUtilities.getWindowAncestor( DataTable.this ) );
+		dialog.setSize(800, 600);
+		JTextArea textarea = new JTextArea();
+		textarea.setDragEnabled(true);
+		textarea.setText( tree );
+		
+		JScrollPane	scrollpane = new JScrollPane( textarea );
+		dialog.add( scrollpane );
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		
+		dialog.setVisible( true );
 	}
 
 	@Override
