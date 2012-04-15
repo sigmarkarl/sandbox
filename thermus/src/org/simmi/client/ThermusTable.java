@@ -39,6 +39,16 @@ public class ThermusTable implements EntryPoint {
 		$wnd.loadData = function() {
 			s.@org.simmi.client.ThermusTable::loadData()();
 		};
+		
+		$wnd.fasttree = function( fasta ) {
+			$wnd.postMessage( fasta );
+		};
+		
+		$doc.appendText = function( str ) {
+			$wnd.console.log( str );
+			var datatable = $doc.getElementById('datatable');
+			datatable.showTree( str );
+		};
 
 		return 0;
 	}-*/;

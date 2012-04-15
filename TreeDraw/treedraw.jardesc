@@ -13,6 +13,7 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <file path="/TreeDraw/src/RAxML_10993.ntree"/>
         <file path="/TreeDraw/src/thermus16S_selected.phb"/>
+        <file path="/TreeDraw/src/thermales_nodupl_new.fasta"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
         <file path="/TreeDraw/src/testskrimsli.phb"/>
         <file path="/TreeDraw/src/therm3.txt"/>
@@ -21,6 +22,7 @@
         <file path="/TreeDraw/src/noname.fasta"/>
         <file path="/TreeDraw/src/temp.ntree"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
+        <file path="/TreeDraw/src/thermales.fasta"/>
         <file path="/TreeDraw/src/therm.txt"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
         <file path="/TreeDraw/src/thermus_all_gaps.fasta"/>
