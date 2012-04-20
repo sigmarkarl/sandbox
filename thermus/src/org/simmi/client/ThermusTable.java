@@ -158,22 +158,11 @@ public class ThermusTable implements EntryPoint {
 		Window.enableScrolling( false );
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
-		rp.setSize(w+"px", h+"px");
 		
 		Style st = rp.getElement().getStyle();
 		st.setBorderWidth(0.0, Unit.PX);
 		st.setMargin(0.0, Unit.PX);
 		st.setPadding(0.0, Unit.PX);
-		
-		Window.addResizeHandler( new ResizeHandler() {
-			@Override
-			public void onResize(ResizeEvent event) {
-				int w = event.getWidth();
-				int h = event.getHeight();
-				
-				rp.setSize(w+"px", h+"px");
-			}
-		});
 		
 		//console( "authtoken: "+authtoken );
 		//String data = getdata( authtoken );
@@ -186,20 +175,40 @@ public class ThermusTable implements EntryPoint {
 		
 		final Element ae = Document.get().createElement("applet");
 		ae.appendChild( pe );
-		
+			
 		ae.setAttribute("id", "datatable");
 		ae.setAttribute("name", "datatable");
 		ae.setAttribute("codebase", "http://thermusgenes.appspot.com/");
 		//ae.setAttribute("codebase", "http://127.0.0.1/");
-		ae.setAttribute("width", "100%");
-		ae.setAttribute("height", "100%");
+		//ae.setAttribute("width", "100%");
+		//ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "treedraw.jnlp");
 		ae.setAttribute("archive", "treedraw.jar");
 		ae.setAttribute("code", "org.simmi.DataTable");
+		st = ae.getStyle();
+		st.setWidth(100, Unit.PCT);
+		st.setHeight(100, Unit.PCT);
+		st.setBorderWidth(0.0, Unit.PX);
+		st.setMargin(0.0, Unit.PX);
+		st.setPadding(0.0, Unit.PX);
 		
 		final SimplePanel	applet = new SimplePanel();
-		applet.setSize("100%", "100%");
+		//applet.setSize("100%", "100%");
 		applet.getElement().appendChild( ae );
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				int w = event.getWidth();
+				int h = event.getHeight();
+				
+				rp.setSize(w+"px", h+"px");
+				applet.setSize(w+"px", (h-40)+"px");
+			}
+		});
+		rp.setSize(w+"px", h+"px");
+		applet.setSize(w+"px", (h-40)+"px");
+		
 		rp.add( applet );
 		
 		initFunctions();
