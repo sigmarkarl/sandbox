@@ -469,6 +469,18 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	public void omitLast( Node node ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node newnode : nodes ) {
+				omitLast( newnode );
+			}
+		} else {
+			int li = node.getName().lastIndexOf('_');
+			if( li != -1 ) node.setName( node.getName().substring(0,li) );
+		}
+	}
+	
 	public void recursiveZero( Node node ) {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null ) {
@@ -675,6 +687,8 @@ public class Treedraw implements EntryPoint {
 					//root.seth2( 0.0 );
 				} else if( c == 'z' || c == 'Z' ) {
 					recursiveZero( root );
+				} else if( c == 'o' || c == 'O' ) {
+					omitLast( selectedNode != null ? selectedNode : root );
 				} else if( selectedNode != null ) {
 					if( c == 'c' || c == 'C' ) {
 						selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );

@@ -4495,7 +4495,7 @@ public class GeneSet extends JApplet {
 	};
 
 	public static void simmi() throws IOException {
-		FileReader fr = new FileReader("/home/sigmar/thermus_all_gaps.blastout");
+		FileReader fr = new FileReader("/home/sigmar/allbutthermus.blastout");
 		BufferedReader br = new BufferedReader(fr);
 		String line = br.readLine();
 		String current = null;
@@ -4521,10 +4521,10 @@ public class GeneSet extends JApplet {
 					teg += line;
 					line = br.readLine();
 				}
-				if (teg.contains("Thermus") || teg.startsWith("t.")) {
+				//if (teg.contains("Thermus") || teg.startsWith("t.")) {
 					currteg = new StrId(teg, currlen);
 					tegmap.put(current, currteg);
-				}
+				//}
 			} else if (trim.startsWith("Ident") && !done) {
 				int sv = trim.indexOf('(');
 				int svl = trim.indexOf('%', sv + 1);
@@ -4540,7 +4540,8 @@ public class GeneSet extends JApplet {
 
 		System.err.println(tegmap.size());
 
-		int[] iv = { 0, 10, 16, 50, 8, 8, 8, 8, 60, 50, 30, 50, 150, 150, 80, 50 };
+		//int[] iv = { 0, 10, 16, 50, 8, 8, 8, 8, 60, 50, 30, 50, 150, 150, 80, 50 };
+		int[] iv = { 0, 10, 16, 50, 8, 100, 25, 250, 250, 250, 250, 250, 250 };
 		for (int i = 0; i < iv.length; i++) {
 			iv[i] += 1;
 		}
@@ -4550,27 +4551,40 @@ public class GeneSet extends JApplet {
 			isum[i] = isum[i - 1] + iv[i];
 		}
 
-		FileOutputStream fos = new FileOutputStream("/home/sigmar/therm.txt");
+		FileOutputStream fos = new FileOutputStream("/home/sigmar/allbuttherm.txt");
 		PrintStream pos = new PrintStream(fos);
-		fr = new FileReader("/home/sigmar/export2.nds");
+		pos.println( "name\tacc\tspecies\tlen\tident\tdoi\tpubmed\tjournal\tauth\tsub_auth\tsub_date\tcountry\tsource\ttemp\tpH" );
+		
+		fr = new FileReader("/home/sigmar/exp.nds");
 		br = new BufferedReader(fr);
 		line = br.readLine();
 		while (line != null) {
 			String name = line.substring(isum[0], isum[1]).trim();
 			String acc = line.substring(isum[1], isum[2]).trim();
-			String country = line.substring(isum[7], isum[8]).trim();
+			
+			String fulln = line.substring(isum[2], isum[3]).trim();
+			String len = line.substring(isum[3], isum[4]).trim();
+			String doi = line.substring(isum[4], isum[5]).trim();
+			String pubmed = line.substring(isum[5], isum[6]).trim();
+			String journal = line.substring(isum[6], isum[7]).trim();
+			String auth = line.substring(isum[7], isum[8]).trim();
+			String sub_auth = line.substring(isum[8], isum[9]).trim();
+			String sub_date = line.substring(isum[9], isum[10]).trim();
+			String country = line.substring(isum[10], isum[11]).trim();
+			String source = isum.length > 12 && isum[12] < line.length() ? line.substring(isum[11], isum[12]).trim() : "";
+			/*String country = line.substring(isum[7], isum[8]).trim();
 			String doi = line.substring(isum[8], isum[9]).trim();
 			String pubmed = line.substring(isum[9], isum[10]).trim();
 			String journal = line.substring(isum[10], isum[11]).trim();
 			String auth = line.substring(isum[11], isum[12]).trim();
 			String sub_auth = line.substring(isum[12], isum[13]).trim();
 			String sub_date = line.substring(isum[13], isum[14]).trim();
-			String source = isum.length > 14 ? line.substring(isum[14], isum[15] - 1).trim() : "";
+			String source = isum.length > 14 ? line.substring(isum[14], isum[15] - 1).trim() : "";*/
 
 			if (tegmap.containsKey(name)) {
 				// StrId teg = tegmap.get(name);
 				StrId teg = tegmap.remove(name);
-				pos.println(name + "\t" + acc + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + doi + "\t" + pubmed + "\t" + journal + "\t" + auth + "\t" + sub_auth + "\t" + sub_date + "\t" + country + "\t" + source);
+				pos.println(name + "\t" + acc + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + doi + "\t" + pubmed + "\t" + journal + "\t" + auth + "\t" + sub_auth + "\t" + sub_date + "\t" + country + "\t" + source + "\t\t" );
 			}
 			// System.err.println( line.substring( isum[7], isum[8] ).trim() );
 
@@ -4610,7 +4624,7 @@ public class GeneSet extends JApplet {
 		 * try { testbmatrix("/home/sigmar/mynd.png"); } catch (IOException e) {
 		 * e.printStackTrace(); }
 		 */
-		init( args );
+		//init( args );
 
 		try {
 			dummy();
@@ -4690,7 +4704,7 @@ public class GeneSet extends JApplet {
 			 */
 
 			// viggo();
-			// simmi();
+			simmi();
 
 			// Map<String,Integer> freqmap = loadFrequency( new
 			// FileReader("c:/viggo//arciformis_repeat.blastout") );
