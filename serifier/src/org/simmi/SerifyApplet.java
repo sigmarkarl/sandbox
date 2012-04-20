@@ -3517,7 +3517,6 @@ public class SerifyApplet extends JApplet {
 						cont[1] = result;
 						cont[2] = new Date( System.currentTimeMillis() ).toString();
 						run.run();
-					
 					}
 					
 					pbar.setIndeterminate( false );
