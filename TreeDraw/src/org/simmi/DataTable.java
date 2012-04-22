@@ -696,7 +696,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			int i = table.convertRowIndexToModel(r);
 			if( i != -1 ) {
 				Object[] val = rowList.get(i);
-				include.add( (String)val[1] );
+				String acc = (String)val[1];
+				//System.err.println( acc );
+				include.add( acc );
 			}
 		}
 		
@@ -724,6 +726,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					String incstr = null;
 					for( String str : include ) {
 						if( line.contains( str ) ) {
+							if( str.contains("AB071811") ) {
+								System.err.println("eee");
+							}
+							
 							incstr = str;
 							break;
 						}
@@ -1374,8 +1380,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		//String res = getThermusFusion();
-		//loadData( res );
+		String res = getThermusFusion();
+		loadData( res );
 		
 		try {
 			JSObject win = JSObject.getWindow(this);
