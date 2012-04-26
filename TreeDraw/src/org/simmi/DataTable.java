@@ -463,8 +463,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						else fname += "_"+spec;
 						
 						if( country.isSelected() ) {
-							if( fname.length() == 0 ) fname += obj[11];
-							else fname += "_"+obj[11];
+							String cntr = (String)obj[11];
+							int idx = cntr.indexOf('(');
+							if( idx > 0 ) {
+								int idx2 = cntr.indexOf(')', idx+1);
+								if( idx2 == -1 ) idx2 = cntr.length()-1;
+								cntr = cntr.substring(0, idx) + cntr.substring(idx2+1);
+							}
+							if( fname.length() == 0 ) fname += cntr;
+							else fname += "_"+cntr;
 						} 
 						if( source.isSelected() ) {
 							if( fname.length() == 0 ) fname += obj[12];
@@ -624,8 +631,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							else fname += "_"+spec;
 						}
 						if( country.isSelected() ) {
-							if( fname.length() == 0 ) fname += obj[11];
-							else fname += "_"+obj[11];
+							String cntr = (String)obj[11];
+							int idx = cntr.indexOf('(');
+							if( idx > 0 ) {
+								int idx2 = cntr.indexOf(')', idx+1);
+								if( idx2 == -1 ) idx2 = cntr.length()-1;
+								cntr = cntr.substring(0, idx) + cntr.substring(idx2+1);
+							}
+							if( fname.length() == 0 ) fname += cntr;
+							else fname += "_"+cntr;
 						} 
 						if( source.isSelected() ) {
 							if( fname.length() == 0 ) fname += obj[12];
@@ -644,7 +658,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						} else cont = line.substring(1);
 					//if( rr.length == 1 ) cont = line.replace( ">", "" );
 					//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = jf.new Sequence( cont.replace(' ', '_').replace(':', '-').replace(",", "") );
+						seq = jf.new Sequence( cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "") );
 					//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
 						nseq++;
 					}
@@ -726,10 +740,6 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					String incstr = null;
 					for( String str : include ) {
 						if( line.contains( str ) ) {
-							if( str.contains("AB071811") ) {
-								System.err.println("eee");
-							}
-							
 							incstr = str;
 							break;
 						}
@@ -741,24 +751,35 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						inc = true;
 						String fname = "";
 						if( species.isSelected() ) {
-							String spec = (String)obj[2];
-							spec = spec.replace("Thermus ", "T.");
-							
-							int iv = spec.indexOf('_');
-							int iv2 = spec.indexOf(' ');
-							if( iv == -1 || iv2 == -1 ) iv = Math.max(iv, iv2);
-							else iv = Math.min(iv, iv2);
-							if( iv == -1 ) {
-								iv = spec.indexOf("16S");
+							Integer ident = (Integer)obj[4];
+							String spec = "T.unkown";
+							if( ident >= 98 ) {
+								spec = (String)obj[2];
+								spec = spec.replace("Thermus ", "T.");
+								
+								int iv = spec.indexOf('_');
+								int iv2 = spec.indexOf(' ');
+								if( iv == -1 || iv2 == -1 ) iv = Math.max(iv, iv2);
+								else iv = Math.min(iv, iv2);
+								if( iv == -1 ) {
+									iv = spec.indexOf("16S");
+								}
+								if( iv != -1 ) spec = spec.substring(0, iv).trim();
 							}
-							if( iv != -1 ) spec = spec.substring(0, iv).trim();
 							
 							if( fname.length() == 0 ) fname += spec;
 							else fname += "_"+spec;
 						} 
 						if( country.isSelected() ) {
-							if( fname.length() == 0 ) fname += obj[11];
-							else fname += "_"+obj[11];
+							String cntr = (String)obj[11];
+							int idx = cntr.indexOf('(');
+							if( idx > 0 ) {
+								int idx2 = cntr.indexOf(')', idx+1);
+								if( idx2 == -1 ) idx2 = cntr.length()-1;
+								cntr = cntr.substring(0, idx) + cntr.substring(idx2+1);
+							}
+							if( fname.length() == 0 ) fname += cntr;
+							else fname += "_"+cntr;
 						} 
 						if( source.isSelected() ) {
 							if( fname.length() == 0 ) fname += obj[12];
@@ -772,7 +793,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						} 
 						
 						if( fname.length() > 1 ) {
-							sb.append(">"+fname.replace(' ', '_').replace(':', '-').replace(",", "")+"\n");
+							sb.append(">"+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -1380,8 +1401,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		String res = getThermusFusion();
-		loadData( res );
+		//String res = getThermusFusion();
+		//loadData( res );
 		
 		try {
 			JSObject win = JSObject.getWindow(this);

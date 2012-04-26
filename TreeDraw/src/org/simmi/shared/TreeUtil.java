@@ -2,6 +2,7 @@ package org.simmi.shared;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -574,7 +575,7 @@ public class TreeUtil {
 		}*/
 	}
 	
-	public void collapseTreeAdvanced( Node node, Set<String> collapset ) {
+	public void collapseTreeAdvanced( Node node, Collection<String> collapset ) {
 		if( node.nodes != null && node.nodes.size() > 0 ) {
 			for( Node n : node.nodes ) {
 				collapseTreeAdvanced( n, collapset );
@@ -584,24 +585,33 @@ public class TreeUtil {
 			boolean collapse = true;
 			for( Node n : node.nodes ) {
 				String nname = n.getName() != null ? n.getName() : "";
-				if( test == null ) {
-					for( String s : collapset ) {
-						if( nname.contains(s) ) {
-							test = s;
-							break;
-						}
-					}
-					
+				if( collapset == null || collapset.isEmpty() ) {
 					if( test == null ) {
-						test = "";
+						test = nname;
+					} else if( test.length() == 0 || nname.length() == 0 || !nname.equals(test) ) {
+						collapse = false;
+						break;
 					}
-				} else if( !nname.contains(test) ) {
-					collapse = false;
-					break;
+				} else {
+					if( test == null ) {
+						for( String s : collapset ) {
+							if( nname.contains(s) ) {
+								test = s;
+								break;
+							}
+						}
+						
+						if( test == null ) {
+							test = "";
+						}
+					} else if( !nname.contains(test) ) {
+						collapse = false;
+						break;
+					}
 				}
 			}
 			
-			if( collapse && collapset.contains(test) ) {
+			if( collapse && (collapset == null || collapset.contains(test)) ) {
 				node.nodes.clear();
 				//node.nodes = null;
 				node.setName( test );
@@ -987,7 +997,7 @@ public class TreeUtil {
 					ret.name = code.substring(0, i+1);
 				} else {
 					split = code.split(":");
-					ret.name = split[0];
+					ret.name = split.length > 0 ? split[0] : "";
 				}
 				
 				//String[] split = code.split(":");
@@ -1002,7 +1012,7 @@ public class TreeUtil {
 						
 					}
 				} else ret.color = null;
-				String dstr = split[1].trim();
+				String dstr = split.length > 1 ? split[1].trim() : "0";
 				String dstr2 = "0";
 				if( dstr.contains("[") ) {
 					int start = split[1].indexOf('[');
