@@ -2,8 +2,11 @@ package org.simmi.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.simmi.shared.TreeUtil;
@@ -42,6 +45,8 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -57,7 +62,9 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class Treedraw implements EntryPoint {
 	Canvas		canvas;
@@ -65,6 +72,7 @@ public class Treedraw implements EntryPoint {
 	Node		selectedNode;
 	Node[]		nodearray;
 	TreeUtil	treeutil;
+	boolean	center = false;
 	
 	public void handleTree( TreeUtil treeutil ) {
 		this.treeutil = treeutil;
@@ -136,11 +144,13 @@ public class Treedraw implements EntryPoint {
 			if( vertical ) {
 				drawFramesRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
 				ci = 0;
-				drawTreeRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+				else drawTreeRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
 			} else {
 				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
 				ci = 0;
-				drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
 			}
 		}
 	}
@@ -469,15 +479,28 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public void omitLast( Node node ) {
+	public void omitLast( Node node, int harshness ) {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
 			for( Node newnode : nodes ) {
-				omitLast( newnode );
+				omitLast( newnode, harshness );
 			}
 		} else {
-			int li = node.getName().lastIndexOf('_');
-			if( li != -1 ) node.setName( node.getName().substring(0,li) );
+			String nname = node.getName();
+			if( harshness == 2 ) {
+				int li = nname.indexOf('_');
+				if( li != -1 ) node.setName( nname.substring(0,li) );
+			} else if( harshness == 1 ) {
+				int li = nname.lastIndexOf('-');
+				if( li != -1 ) {
+					if( nname.charAt(li+1) == 'Y' && nname.charAt(li+2) == 'e' ) node.setName( nname.substring(0,Math.min(nname.length(), li+12)) );
+					else if( nname.charAt(li+1) == 'H' && nname.charAt(li+2) == 'a' ) node.setName( nname.substring(0,Math.min(nname.length(), li+6)) );
+					else node.setName( nname.substring(0,li) );
+				}
+			} else {
+				int li = nname.lastIndexOf('_');
+				if( li != -1 ) node.setName( nname.substring(0,li) );
+			}
 		}
 	}
 	
@@ -523,7 +546,7 @@ public class Treedraw implements EntryPoint {
 		s.setMargin(0.0, Unit.PX);
 		
 		int w = Window.getClientWidth();
-		int h = 360; //Window.getClientHeight();
+		int h =240; //Window.getClientHeight();
 		canvas.setSize(w+"px", h+"px");
 		
 		canvas.addDropHandler( new DropHandler() {
@@ -673,7 +696,8 @@ public class Treedraw implements EntryPoint {
 				char c = event.getCharCode();
 				if( c == 'a' || c == 'A' ) {
 					String[] ts = new String[] {"T.unknown", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
-					treeutil.collapseTreeAdvanced(root, new HashSet<String>( Arrays.asList(ts) ));
+					Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
+					treeutil.collapseTreeAdvanced(root, cset);
 					root.countLeaves();
 				} else if( c == 'm' || c == 'M' ) {
 					recursiveMarkings( root );
@@ -688,7 +712,11 @@ public class Treedraw implements EntryPoint {
 				} else if( c == 'z' || c == 'Z' ) {
 					recursiveZero( root );
 				} else if( c == 'o' || c == 'O' ) {
-					omitLast( selectedNode != null ? selectedNode : root );
+					omitLast( selectedNode != null ? selectedNode : root, 2 );
+				} else if( c == 'l' || c == 'l' ) {
+					omitLast( selectedNode != null ? selectedNode : root, 1 );
+				} else if( c == 'k' || c == 'k' ) {
+					omitLast( selectedNode != null ? selectedNode : root, 0 );
 				} else if( selectedNode != null ) {
 					if( c == 'c' || c == 'C' ) {
 						selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
@@ -762,6 +790,32 @@ public class Treedraw implements EntryPoint {
 		});
 		
 		RootPanel	help = RootPanel.get("help");
+		VerticalPanel	choicePanel = new VerticalPanel();
+		choicePanel.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		
+		HorizontalPanel	bc = new HorizontalPanel();
+		HTML	bctext = new HTML( "Center" );
+		RadioButton	branch = new RadioButton("bc", "on branch");
+		branch.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				center = event.getValue();
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		RadioButton	cluster = new RadioButton("bc", "on cluster");
+		cluster.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				center = !event.getValue();
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		cluster.setValue( true );
+		bc.add( bctext );
+		bc.add( branch );
+		bc.add( cluster );
+		
 		HorizontalPanel	hp = new HorizontalPanel();
 		hp.setSpacing(5);
 		HTML html = new HTML("Download as");
@@ -775,7 +829,9 @@ public class Treedraw implements EntryPoint {
 		hp.add( html );
 		hp.add( sampleAnchor );
 		
-		help.add( hp );
+		choicePanel.add( bc );
+		choicePanel.add( hp );
+		help.add( choicePanel );
 		//help.add
 		
 		rp.add( canvas );
@@ -882,10 +938,119 @@ public class Treedraw implements EntryPoint {
 		return null;
 	}
 	
-	public void drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
+	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
+		Map<Node,Double>	cmap = new HashMap<Node,Double>();
+		int total = 0;
+		double nyavg = 0.0;
+		for( TreeUtil.Node resnode : node.getNodes() ) {
+			int nleaves = resnode.getLeavesCount();
+			int nlevels = resnode.countMaxHeight();
+			int mleaves = Math.max(1, nleaves);
+			
+			double nx = 0;
+			double ny = 0;
+			
+			if( vertical ) {
+				ny = dh*total+(dh*mleaves)/2.0;
+				if( equalHeight ) {
+					nx = w/25.0+dw*(w/dw-nlevels);
+				} else {
+					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.0);
+				}
+
+				if( nleaves == 0 ) {
+					int v = (int)((nodearray.length*(y+ny))/canvas.getCoordinateSpaceHeight());
+					if( v >= 0 && v < nodearray.length ) nodearray[v] = resnode;
+				}
+			} else {
+				nx = dw*total+(dw*mleaves)/2.0;
+				if( equalHeight ) {	
+					ny = h/25.0+dh*(h/dh-nlevels);
+				} else {
+					ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
+				}
+			}
+			
+			if( !resnode.isCollapsed() ) {
+				if( vertical ) {
+					double newy = dh*total + drawTreeRecursiveCenter( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight );
+					cmap.put( resnode, newy );
+					nyavg += newy;
+				} else {
+					drawTreeRecursiveCenter( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight );
+				}
+			} else {
+				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
+				else resnode.setCanvasLoc( x+dw*total+(dw*mleaves)/2.0, ny );
+			}
+			
+			total += mleaves;
+		}
+		
+		double ret = (node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : dh/2.0;
+		if( vertical ) node.setCanvasLoc( startx, y+ret );
+		else node.setCanvasLoc( x+ret, starty );
+		total = 0;
+		for( TreeUtil.Node resnode : node.getNodes() ) {
+			int nleaves = resnode.getLeavesCount();
+			int nlevels = resnode.countMaxHeight();
+			int mleaves = Math.max(1, nleaves);
+			
+			double nx = 0;
+			double ny = 0;
+			
+			if( vertical ) {
+				ny = dh*total+(dh*mleaves)/2.0;
+				if( equalHeight ) {
+					nx = w/25.0+dw*(w/dw-nlevels);
+				} else {
+					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.0);
+				}
+
+				if( nleaves == 0 ) {
+					int v = (int)((nodearray.length*(y+ny))/canvas.getCoordinateSpaceHeight());
+					if( v >= 0 && v < nodearray.length ) nodearray[v] = resnode;
+				}
+			} else {
+				nx = dw*total+(dw*mleaves)/2.0;
+				if( equalHeight ) {	
+					ny = h/25.0+dh*(h/dh-nlevels);
+				} else {
+					ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
+				}
+			}
+			
+			double newy = cmap.containsKey(resnode) ? cmap.get(resnode) : 0.0;
+			g2.setStrokeStyle( "#333333" );
+			g2.beginPath();
+			if( vertical ) {
+				double yfloor = Math.floor(y+newy);
+				g2.moveTo( startx, y+ret );
+				g2.lineTo( startx, yfloor );
+				g2.moveTo( startx, yfloor );
+				g2.lineTo( nx, yfloor );
+			} else {
+				g2.moveTo( x+startx, starty );
+				g2.lineTo( x+nx, starty );
+				g2.lineTo( x+nx, ny );
+			}
+			g2.closePath();
+			g2.stroke();
+			//g2.setStroke( hStroke );
+			//g2.setStroke( oldStroke );
+			
+			paintTree( g2, resnode, vertical, x, y, nx, ny );
+			total += mleaves;
+		}
+		
+		return ret;
+	}
+	
+	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
 		int total = 0;
 		if( vertical ) node.setCanvasLoc( startx, y+starty );
 		else node.setCanvasLoc( x+startx, starty );
+		
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			int nleaves = resnode.getLeavesCount();
 			int nlevels = resnode.countMaxHeight();
@@ -920,27 +1085,16 @@ public class Treedraw implements EntryPoint {
 				}
 			}
 			
-			int k = 12;//w/32;
 			//int yoff = starty-k/2;
-			
-			String use = resnode.getName() == null || resnode.getName().length() == 0 ? resnode.getMeta() : resnode.getName();
-			use = resnode.isCollapsed() ? resnode.getCollapsedString() : use;
-			boolean nullNodes = resnode.isCollapsed() || resnode.getNodes() == null || resnode.getNodes().size() == 0;
-			boolean paint = use != null && use.length() > 0;
-			
 			/*System.err.println( resnode.meta );
 			if( resnode.meta != null && resnode.meta.contains("Bulgaria") ) {
 				System.err.println( resnode.nodes );
 			}*/
-			
 			/*ci++;
 			for( int i = colors.size(); i <= ci; i++ ) {
 				colors.add( "rgb( "+(int)(rnd.nextFloat()*255)+", "+(int)(rnd.nextFloat()*255)+", "+(int)(rnd.nextFloat()*255)+" )" );
 			}			
 			String color = colors.get(ci);*/
-			
-			String color = resnode.getColor();
-			
 			/*if( resnode.color != null ) {
 				color = resnode.color;
 			}*/
@@ -977,115 +1131,129 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			int fontSize = 10;
+			paintTree( g2, resnode, vertical, x, y, nx, ny );
+			total += mleaves;
+		}
+		
+		return /*(node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : */0.0;
+	}
+	
+	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny ) {
+		int k = 12;//w/32;
+		int fontSize = 10;
+		
+		String use = resnode.getName() == null || resnode.getName().length() == 0 ? resnode.getMeta() : resnode.getName();
+		use = resnode.isCollapsed() ? resnode.getCollapsedString() : use;
+		boolean nullNodes = resnode.isCollapsed() || resnode.getNodes() == null || resnode.getNodes().size() == 0;
+		boolean paint = use != null && use.length() > 0;
+		
+		String color = resnode.getColor();
 			
-			if( paint ) {
-				if( nullNodes ) {
-					g2.setFillStyle( "#000000" );
-					//g2.setFont( bFont );
+		if( paint ) {
+			if( nullNodes ) {
+				g2.setFillStyle( "#000000" );
+				//g2.setFont( bFont );
+				
+				String name = resnode.getName();
+				if( resnode.getMeta() != null ) {
+					String meta = resnode.getMeta();
+					name += " ("+meta+")";
 					
-					String name = resnode.getName();
-					if( resnode.getMeta() != null ) {
-						String meta = resnode.getMeta();
-						name += " ("+meta+")";
-						
-						/*if( meta.contains("T.ign") ) {
-							System.err.println();
-						}*/
-					}
-					
-					String[] split;
-					if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
-					else split = new String[] { name }; //name.split("_");
-					
-					int t = 0;
-					double mstrw = 0;
-					double mstrh = 10;
-					
-					if( !vertical ) {
-						for( String str : split ) {
-							double strw = g2.measureText( str ).getWidth();
-							mstrw = Math.max( mstrw, strw );
-							if( resnode.getColor() != null ) {
-								g2.setFillStyle( resnode.getColor() );
-								g2.fillRect( (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize), strw, mstrh);
-								g2.setFillStyle( "#000000" );
-							}
-							g2.fillText(str, (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize) );
+					/*if( meta.contains("T.ign") ) {
+						System.err.println();
+					}*/
+				}
+				
+				String[] split;
+				if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
+				else split = new String[] { name }; //name.split("_");
+				
+				int t = 0;
+				double mstrw = 0;
+				double mstrh = 10;
+				
+				if( !vertical ) {
+					for( String str : split ) {
+						double strw = g2.measureText( str ).getWidth();
+						mstrw = Math.max( mstrw, strw );
+						if( resnode.getColor() != null ) {
+							g2.setFillStyle( resnode.getColor() );
+							g2.fillRect( (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize), strw, mstrh);
+							g2.setFillStyle( "#000000" );
 						}
-					} else {
-						for( String str : split ) {
-							if( resnode.getColor() != null ) {
-								double strw = g2.measureText( str ).getWidth();
-								g2.setFillStyle( resnode.getColor() );
-								g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0-mstrh+1.0, strw+15, mstrh*1.15);
-								g2.setFillStyle( "#000000" );
-							}
-							g2.fillText(str, nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0 );
-						}
+						g2.fillText(str, (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize) );
 					}
-					
-					/*int x1 = (int)(x+nx-mstrw/2);
-					int x2 = (int)(x+nx+mstrw/2);
-					int y1 = (int)(ny+4+h/25+(-1)*bFont.getSize());
-					int y2 = (int)(ny+4+h/25+(split.length-1)*bFont.getSize());
-					yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";*/
 				} else {
-					boolean b = use.length() > 2;
-					
-					if( color != null && color.length() > 0 ) g2.setFillStyle( color );
-					else g2.setFillStyle( "#000000" );
-					double strw = 0;
-					String[] split = use.split( "_" );
-					if( b ) {
-						//g2.setFont( lFont );
-						for( String s : split ) {
-							strw = Math.max( strw, g2.measureText( s ).getWidth() );
+					for( String str : split ) {
+						if( resnode.getColor() != null ) {
+							double strw = g2.measureText( str ).getWidth();
+							g2.setFillStyle( resnode.getColor() );
+							g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0-mstrh+1.0, strw+15, mstrh*1.15);
+							g2.setFillStyle( "#000000" );
 						}
-					} else{
-						//g2.setFont( bFont );
-						for( String s : split ) {
-							strw = Math.max( strw, g2.measureText( s ).getWidth() );
-						}
+						g2.fillText(str, nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0 );
 					}
-					double strh = 10;
-					if( vertical ) {
-						g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, k );
-					} else g2.fillRect( x+nx-(5*strw)/8, ny-k/2.0, (5*strw)/4, k );
-					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
-					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
-					g2.setFillStyle( "#ffffff" );
-					int i = 0;
-					if( vertical ) {
-						if( b ) {
-							for( String s : split ) {
-								g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-								i++;
-							}
-						} else {
-							for( String s : split ) {
-								g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-								i++;
-							}
+				}
+				
+				/*int x1 = (int)(x+nx-mstrw/2);
+				int x2 = (int)(x+nx+mstrw/2);
+				int y1 = (int)(ny+4+h/25+(-1)*bFont.getSize());
+				int y2 = (int)(ny+4+h/25+(split.length-1)*bFont.getSize());
+				yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";*/
+			} else {
+				boolean b = use.length() > 2;
+				
+				if( color != null && color.length() > 0 ) g2.setFillStyle( color );
+				else g2.setFillStyle( "#000000" );
+				double strw = 0;
+				String[] split = use.split( "_" );
+				if( b ) {
+					//g2.setFont( lFont );
+					for( String s : split ) {
+						strw = Math.max( strw, g2.measureText( s ).getWidth() );
+					}
+				} else{
+					//g2.setFont( bFont );
+					for( String s : split ) {
+						strw = Math.max( strw, g2.measureText( s ).getWidth() );
+					}
+				}
+				double strh = 10;
+				if( vertical ) {
+					g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, k );
+				} else g2.fillRect( x+nx-(5*strw)/8, ny-k/2.0, (5*strw)/4, k );
+				//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
+				//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
+				g2.setFillStyle( "#ffffff" );
+				int i = 0;
+				if( vertical ) {
+					if( b ) {
+						for( String s : split ) {
+							g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+							i++;
 						}
 					} else {
-						if( b ) {
-							for( String s : split ) {
-								strw = g2.measureText( s ).getWidth();
-								g2.fillText(s, x+nx-strw/2.0, ny+5-8*(split.length-1)+i*16 );
-								i++;
-							}
-						} else {
-							for( String s : split ) {
-								strw = g2.measureText(s).getWidth();
-								g2.fillText(s, x+nx-strw/2.0, ny+6-8*(split.length)+i*16 );
-								i++;
-							}
+						for( String s : split ) {
+							g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+							i++;
+						}
+					}
+				} else {
+					if( b ) {
+						for( String s : split ) {
+							strw = g2.measureText( s ).getWidth();
+							g2.fillText(s, x+nx-strw/2.0, ny+5-8*(split.length-1)+i*16 );
+							i++;
+						}
+					} else {
+						for( String s : split ) {
+							strw = g2.measureText(s).getWidth();
+							g2.fillText(s, x+nx-strw/2.0, ny+6-8*(split.length)+i*16 );
+							i++;
 						}
 					}
 				}
 			}
-			total += mleaves;
 		}
 	}
 }
