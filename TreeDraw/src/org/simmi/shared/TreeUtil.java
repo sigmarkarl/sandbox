@@ -216,6 +216,14 @@ public class TreeUtil {
 		
 		public void removeNode( Node node ) {
 			nodes.remove( node );
+			
+			if( nodes.size() == 1 ) {
+				if( this.getParent().getNodes().remove( this ) ) {
+					Node thenode = nodes.get(0);
+					thenode.seth( thenode.geth() + this.geth() );
+					this.getParent().getNodes().add( thenode );
+				}
+			}
 		}
 		
 		public void setName( String newname ) {
@@ -582,13 +590,13 @@ public class TreeUtil {
 			}
 			
 			String test = null;
-			boolean collapse = true;
+			boolean collapse = node.nodes.size() > 1;
 			for( Node n : node.nodes ) {
 				String nname = n.getName() != null ? n.getName() : "";
 				if( collapset == null || collapset.isEmpty() ) {
 					if( test == null ) {
 						test = nname;
-					} else if( test.length() == 0 || nname.length() == 0 || !nname.equals(test) ) {
+					} else if( test.length() == 0 || nname.length() == 0 || !(nname.contains(test) || test.contains(nname)) ) {
 						collapse = false;
 						break;
 					}
