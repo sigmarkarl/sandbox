@@ -49,7 +49,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DoubleBox;
 import com.google.gwt.user.client.ui.FileUpload;
@@ -58,10 +57,10 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class Connectron extends ScrollPanel 
+public class Connectron extends VerticalPanel 
 	implements 	DoubleClickHandler, MouseDownHandler, MouseUpHandler, MouseMoveHandler,
 				KeyDownHandler, KeyUpHandler, KeyPressHandler, 
 				DragHandler, DragEnterHandler, DragLeaveHandler, DragOverHandler, DropHandler {
@@ -494,7 +493,11 @@ public class Connectron extends ScrollPanel
 		Connectron.this.repaint();
 	}
 	
-	public void init() {		
+	public void init() {
+		this.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		this.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		this.setSize("100%", "100%");
+		
 		initGUI();
 		
 		//this.add( scrollpane );
@@ -850,8 +853,9 @@ public class Connectron extends ScrollPanel
 			if( drawLinks ) {
 				g.setStrokeStyle("#000000");
 				
-				for( Corp corp : this.getComponents() ) {
-					Rectangle inrect = new Rectangle( this.getHorizontalScrollPosition(), this.getVerticalScrollPosition(), this.getWidth(), this.getHeight() ); //this.getVisibleRect();
+				for(Corp corp : this.getComponents() ) {
+					//Rectangle inrect = new Rectangle( this.getHorizontalScrollPosition(), this.getVerticalScrollPosition(), this.getWidth(), this.getHeight() ); //this.getVisibleRect();
+					Rectangle inrect = new Rectangle( 0, 0, this.getWidth(), this.getHeight() ); //this.getVisibleRect();
 					for( Corp cc : corp.getLinks() ) {
 						double x1 = corp.getX()+corp.getWidth()/2;
 						double y1 = corp.getY()+corp.getHeight()/2;
@@ -971,11 +975,11 @@ public class Connectron extends ScrollPanel
 		Corp.prop = new Prop();
 		Corp.prop.setBounds(0, 0, 400, 75);
 		
-		int w = Window.getClientWidth();
-		int h = Window.getClientHeight();
+		//int w = Window.getClientWidth();
+		//int h = Window.getClientHeight();
 		
 		canvas = Canvas.createIfSupported();
-		canvas.setSize("100%", "100%");
+		//canvas.setSize("100%", "100%");
 		
 		canvas.addDoubleClickHandler( this );
 		canvas.addMouseDownHandler( this );
@@ -1052,15 +1056,15 @@ public class Connectron extends ScrollPanel
 		loadAll();
 		//canvas.setPixelSize( this.getWidth(), this.getHeight() );
 		
-		popup = new PopupPanel( true );
+		//popup = new PopupPanel( true );
 		final MenuBar	menu = new MenuBar( true );
-		popup.add( menu );
+		//popup.add( menu );
 		
 		menu.addItem( "Show/Hide Links", new Command() {
 			@Override
 			public void execute() {
 				drawLinks = !drawLinks;
-				popup.hide();
+				if( popup != null ) popup.hide();
 				repaint();
 			}
 		});
@@ -1068,7 +1072,7 @@ public class Connectron extends ScrollPanel
 			@Override
 			public void execute() {
 				drawLinkNames = !drawLinkNames;
-				popup.hide();
+				if( popup != null ) popup.hide();
 				repaint();
 			}
 		});
@@ -1076,7 +1080,7 @@ public class Connectron extends ScrollPanel
 			@Override
 			public void execute() {
 				drawNodeNames = !drawNodeNames;
-				popup.hide();
+				if( popup != null ) popup.hide();
 				repaint();
 			}
 		});
@@ -1113,7 +1117,7 @@ public class Connectron extends ScrollPanel
 			public void execute() {
 				Corp.autosave = !Corp.autosave;
 				
-				popup.hide();
+				if( popup != null ) popup.hide();
 			}
 		});
 		menu.addSeparator();
@@ -1136,7 +1140,7 @@ public class Connectron extends ScrollPanel
 				corp.save();
 				add( corp );
 				
-				popup.hide();
+				if( popup != null ) popup.hide();
 				repaint();
 			}
 		});
@@ -1144,14 +1148,14 @@ public class Connectron extends ScrollPanel
 			@Override
 			public void execute() {
 				selectAll();
-				popup.hide();
+				if( popup != null ) popup.hide();
 			}
 		});
 		menu.addItem( "Invert selection", new Command() {
 			@Override
 			public void execute() {
 				invertSelection();
-				popup.hide();
+				if( popup != null ) popup.hide();
 			}
 		});
 		menu.addItem( "Flatten", new Command() {
@@ -1195,7 +1199,7 @@ public class Connectron extends ScrollPanel
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}*/
-				popup.hide();
+				if( popup != null ) popup.hide();
 			}
 		});
 		
@@ -1225,7 +1229,7 @@ public class Connectron extends ScrollPanel
 				
 				toggle = !toggle;
 				
-				popup.hide();
+				if( popup != null ) popup.hide();
 				
 				canvas.setFocus( true );
 				repaint();
@@ -1233,6 +1237,9 @@ public class Connectron extends ScrollPanel
 		});		
 		//scrollpane.setViewportView( c );
 		
+		MenuBar	menubar = new MenuBar();
+		menubar.addItem("Options", menu);
+		this.add( menubar );
 		this.add( canvas );
 	}
 
@@ -1358,8 +1365,8 @@ public class Connectron extends ScrollPanel
 			
 			if( nativebutton == NativeEvent.BUTTON_RIGHT ) {
 				mousedown = false;
-				popup.setPopupPosition(e.getX(), e.getY());
-				popup.show();
+				//popup.setPopupPosition(e.getX(), e.getY());
+				//popup.show();
 			} else {
 				requestFocus();
 				

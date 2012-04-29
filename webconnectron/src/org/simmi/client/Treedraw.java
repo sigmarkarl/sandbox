@@ -493,9 +493,10 @@ public class Treedraw implements EntryPoint {
 			} else if( harshness == 1 ) {
 				int li = nname.lastIndexOf('-');
 				if( li != -1 ) {
-					if( nname.charAt(li+1) == 'Y' && nname.charAt(li+2) == 'e' ) node.setName( nname.substring(0,Math.min(nname.length(), li+12)) );
-					else if( nname.charAt(li+1) == 'H' && nname.charAt(li+2) == 'a' ) node.setName( nname.substring(0,Math.min(nname.length(), li+6)) );
-					else node.setName( nname.substring(0,li) );
+					if( nname.charAt(li-3) == 'U' && nname.charAt(li-2) == 'S' && nname.charAt(li-1) == 'A' ) {
+						int val = nname.indexOf('_', li+1);
+						node.setName( nname.substring( 0, Math.min(nname.length(), val == -1 ? nname.length() : val) ) );
+					} else node.setName( nname.substring(0,li) );
 				}
 			} else {
 				int li = nname.lastIndexOf('_');
@@ -1039,7 +1040,7 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, Math.floor(newy) );
 			total += mleaves;
 		}
 		
