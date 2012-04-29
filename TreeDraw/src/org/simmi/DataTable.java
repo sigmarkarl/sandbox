@@ -650,15 +650,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							acc = acc.replace("_", "");
 							if( fname.length() == 0 ) fname += acc;
 							else fname += "_"+acc;
-						} 
+						}
 						
 						String cont;
 						if( fname.length() > 1 ) {
-							cont = fname;
+							cont = (Integer)obj[3] >= 900 ? fname : "*"+fname;
 						} else cont = line.substring(1);
 					//if( rr.length == 1 ) cont = line.replace( ">", "" );
 					//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = jf.new Sequence( cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "") );
+						seq = jf.new Sequence( cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "") );
 					//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
 						nseq++;
 					}
@@ -793,7 +793,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						} 
 						
 						if( fname.length() > 1 ) {
-							sb.append(">"+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "")+"\n");
+							String startf = (Integer)obj[3] >= 900 ? ">" : ">*";
+							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -1219,7 +1220,6 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String tree = extractFasta("/thermales.fasta");
-				System.err.println( tree );
 				Object[] objs = { tree };
 				JSObject win = JSObject.getWindow( DataTable.this );
 				win.call("fasttree", objs);
