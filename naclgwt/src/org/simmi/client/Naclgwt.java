@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -85,7 +86,7 @@ public class Naclgwt implements EntryPoint {
 			$wnd.console.log(e.getMessage());
 		};
 		reader.onload = function(e) {
-			hthis.@org.simmi.client.Naclgwt::handleBinary(Ljava/lang/String;)(e.target.result);
+			//hthis.@org.simmi.client.Naclgwt::handleBinary(Ljava/lang/String;)(e.target.result);
 		};
 		reader.readAsArrayBuffer( file );
 	}-*/;
@@ -155,8 +156,10 @@ public class Naclgwt implements EntryPoint {
 				}
 			}
 		});
-		fp.add( textarea );
-		fp.add( file );
+		VerticalPanel vp = new VerticalPanel();
+		fp.add( vp );
+		vp.add( textarea );
+		vp.add( file );
 		rp.add( fp );
 	}
 }
