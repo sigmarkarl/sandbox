@@ -17,11 +17,15 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -38,9 +42,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.jnlp.ClipboardService;
+import javax.jnlp.FileContents;
+import javax.jnlp.FileSaveService;
 import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
@@ -50,6 +58,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -68,6 +77,10 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.TreeUtil;
@@ -1141,6 +1154,184 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		};
 		updateFilter(table, filter);
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("Export biogeography report") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String[] specs = {"antranikianii","aquaticus","arciformis","brockianus","eggertsoni","filiformis","igniterrae","islandicus","kawarayensis","oshimai","scotoductus","thermophilus"};
+				
+				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
+				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
+				for( Object[] row : rowList ) {
+					String country = (String)row[11];
+					if( country != null && country.length() > 0 ) {
+						String species = (String)row[2];
+						String thespec = null;
+						for( String spec : specs ) {
+							if( species.contains(spec) ) {
+								thespec = "T."+spec;
+								break;
+							}
+						}
+						
+						if( thespec != null ) {
+							int len = (Integer)row[3];
+							int id = (Integer)row[4];
+							long idlen = (((long)len)<<32)+id;
+							
+							Map<String,Long> cmap;
+							if( specLoc.containsKey( thespec ) ) {
+								cmap = specLoc.get( thespec );
+							} else {
+								cmap = new TreeMap<String,Long>();
+								specLoc.put( thespec, cmap );
+							}
+							
+							if( cmap.containsKey(country) ) {
+								long oldidlen = cmap.get(country);
+								int oldid = (int)(oldidlen&0xFFFF);
+								int oldlen = (int)(oldidlen>>32);
+								
+								if( id > oldid || (id == oldid && len > oldlen) ) cmap.put( country, idlen );
+							} else cmap.put( country, idlen );
+							
+							Map<String,Long> smap;
+							if( locSpec.containsKey( country ) ) {
+								smap = locSpec.get( country );
+							} else {
+								smap = new TreeMap<String,Long>();
+								locSpec.put( country, smap );
+							}
+							if( smap.containsKey(country) ) {
+								long oldidlen = smap.get(country);
+								int oldid = (int)(oldidlen&0xFFFF);
+								int oldlen = (int)(oldidlen>>32);
+								
+								if( id > oldid || (id == oldid && len > oldlen) ) smap.put( thespec, idlen );
+							} else smap.put( thespec, idlen );
+						}
+					}
+				}
+				
+				Workbook wb = new XSSFWorkbook();
+				Sheet lSheet = wb.createSheet("Locations");
+				Sheet sSheet = wb.createSheet("Species");
+				Sheet bSheet = wb.createSheet("Boolean");
+				
+				Row r = lSheet.createRow(0);
+				r.createCell(0).setCellValue("Loction");
+				r.createCell(1).setCellValue("Species");
+				r.createCell(2).setCellValue("Identity");
+				r.createCell(3).setCellValue("Length");
+				
+				int val = 1;
+				for( String cnt : locSpec.keySet() ) {
+					Map<String,Long> smap = locSpec.get(cnt);
+					int subval = 0;
+					for( String spec : smap.keySet() ) {
+						long idlen = smap.get(spec);
+						int id = (int)(idlen&0xFFFF);
+						int len = (int)(idlen>>32);
+						
+						r = lSheet.createRow(val+subval);
+						if( subval == 0 ) r.createCell(0).setCellValue( cnt );
+						r.createCell(1).setCellValue( spec );
+						r.createCell(2).setCellValue( id );
+						r.createCell(3).setCellValue( len );
+						
+						subval++;
+					}
+					val += subval;
+				}
+				
+				r = sSheet.createRow(0);
+				r.createCell(0).setCellValue("Species");
+				r.createCell(1).setCellValue("Location");
+				r.createCell(2).setCellValue("Identity");
+				r.createCell(3).setCellValue("Length");
+				
+				val = 1;
+				for( String spec : specLoc.keySet() ) {
+					Map<String,Long> cmap = specLoc.get(spec);
+					int subval = 0;
+					for( String cnt : cmap.keySet() ) {
+						long idlen = cmap.get(cnt);
+						int id = (int)(idlen&0xFFFF);
+						int len = (int)(idlen>>32);
+						r = sSheet.createRow(val+subval);
+						if( subval == 0 ) r.createCell(0).setCellValue( spec );
+						r.createCell(1).setCellValue( cnt );
+						r.createCell(2).setCellValue( id );
+						r.createCell(3).setCellValue( len );
+						
+						subval++;
+					}
+					val += subval;
+				}
+				
+				Map<String,Integer>	specIndex = new HashMap<String,Integer>();
+				r = bSheet.createRow(0);
+				val = 0;
+				for( String spec : specLoc.keySet() ) {
+					specIndex.put( spec, val );
+					r.createCell(++val).setCellValue( spec );
+				}
+				
+				val = 1;
+				for( String cnt : locSpec.keySet() ) {
+					Map<String,Long> smap = locSpec.get(cnt);
+					
+					r = bSheet.createRow(val);
+					r.createCell(0).setCellValue(cnt);
+					for( String spec : smap.keySet() ) {
+						long idlen = smap.get(spec);
+						int id = (int)(idlen&0xFF);
+						int len = (int)(idlen>>32);
+						
+						int idx = -1;
+						if( specIndex.containsKey(spec) ) idx = specIndex.get(spec);
+						if( idx != -1 ) r.createCell(idx+1).setCellValue( id );
+					}
+					val++;
+				}
+				
+				FileSaveService fss = null;
+		        FileContents fileContents = null;
+		        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		        OutputStreamWriter	osw = new OutputStreamWriter( baos );
+		    	
+		    	try {
+		    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+		    	} catch( UnavailableServiceException e1 ) {
+		    		fss = null;
+		    	}
+		    	 
+		    	try {
+			        if (fss != null) {
+			        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
+			            fileContents = fss.saveFileDialog(null, null, bais, "export.xlsx");
+			            bais.close();
+			            OutputStream os = fileContents.getOutputStream(true);
+			            //os.write( baos.toByteArray() );
+			            wb.write( os );
+			            os.close();
+			        } else {
+			        	JFileChooser jfc = new JFileChooser();
+			        	if( jfc.showSaveDialog( DataTable.this ) == JFileChooser.APPROVE_OPTION ) {
+			        		File f = jfc.getSelectedFile();
+			        		FileOutputStream fos = new FileOutputStream( f );
+			        		wb.write( fos );
+			        		//fos.write( baos.toByteArray() );
+			        		fos.close();
+			        		 
+			        		Desktop.getDesktop().browse( f.toURI() );
+			        	}
+			        }
+		    	} catch( IOException ioe ) {
+		    		ioe.printStackTrace();
+		    	}
+			}
+		});
+		popup.addSeparator();
 		popup.add( new AbstractAction("SQL") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1401,8 +1592,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		//String res = getThermusFusion();
-		//loadData( res );
+		String res = getThermusFusion();
+		loadData( res );
 		
 		try {
 			JSObject win = JSObject.getWindow(this);
