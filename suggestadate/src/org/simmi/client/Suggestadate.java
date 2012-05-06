@@ -128,10 +128,13 @@ public class Suggestadate implements EntryPoint {
 		hp.remove( currentAnchor );
 		//PopupPanel pp = new PopupPanel( true );
 		
+		int sel = -1;
 		final ListBox	lb = new ListBox();
 		for( String uname : fmap.keySet() ) {
+			if( uname.equals(currentAnchor.getText()) ) sel = lb.getItemCount();
 			lb.addItem( uname );
 		}
+		if( sel != -1 ) lb.setSelectedIndex( sel );
 		lb.addChangeHandler( new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
@@ -163,8 +166,9 @@ public class Suggestadate implements EntryPoint {
 	}
 	
 	public native void fetchUserName() /*-{
-		FB.api('/me', function(response) {
-	    	ths.@org.simmi.client.Suggestadate::setUserId(Ljava/lang/String;)( response.name );
+		var ths = this;
+		$wnd.FB.api('/me', function(response) {
+	    	ths.@org.simmi.client.Suggestadate::setUserName(Ljava/lang/String;)( response.name );
 	    });
 	}-*/;
 	
@@ -172,11 +176,12 @@ public class Suggestadate implements EntryPoint {
 		uname = val;
 	}
 	
-	String		uid = null;
-	String		uname = null;
+	String		uid = "";
+	String		uname = "";
 	SimplePanel	sp;
 	Element		like;
 	Element		login;
+	Grid		grid;
 	public void setUserId( String val ) {
 		uid = val;
 		
@@ -189,6 +194,64 @@ public class Suggestadate implements EntryPoint {
 		else sp.getElement().appendChild( login );
 		
 		if( uid.length() > 0 ) {
+			fetchUserName();
+			greetingService.greetServer(uid, new AsyncCallback<String>() {
+				@Override
+				public void onSuccess(String result) {
+					if( result.length() > 0 ) {
+						String[]	split = result.split("\n");
+						grid.resizeRows(split.length);
+						
+						int r = 0;
+						for( String lin : split ) {
+							String[] subsplit = lin.split("\t");
+							
+							final String key = subsplit[0];
+							String name = subsplit[1];
+							grid.setText(r, 0, name);
+							
+							final int row = r;
+							Anchor	accept = new Anchor("Accept");
+							accept.addClickHandler( new ClickHandler() {
+								@Override
+								public void onClick(ClickEvent event) {
+									greetingService.greetServer("delete "+key, new AsyncCallback<String>() {
+										@Override
+										public void onSuccess(String result) {
+											grid.removeRow(row);
+										}
+										
+										@Override
+										public void onFailure(Throwable caught) {}
+									});
+								}
+							});
+							grid.setWidget(r, 1, accept);
+							Anchor	reject = new Anchor("Reject");
+							reject.addClickHandler( new ClickHandler() {
+								@Override
+								public void onClick(ClickEvent event) {
+									greetingService.greetServer("delete "+key, new AsyncCallback<String>() {
+										@Override
+										public void onSuccess(String result) {
+											grid.removeRow(row);
+										}
+										
+										@Override
+										public void onFailure(Throwable caught) {}
+									});
+								}
+							});
+							grid.setWidget(r, 2, reject);
+							
+							r++;
+						}
+					}
+				}
+				
+				@Override
+				public void onFailure(Throwable caught) {}
+			});
 			//getSuperPowers( uid, null );
 			//sendListener( uid );
 		}
@@ -309,9 +372,10 @@ public class Suggestadate implements EntryPoint {
 		match.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				String u1 = a1.getTitle();
-				String u2 = a2.getTitle();
+				String u1 = a1.getText();
+				String u2 = a2.getText();
 				String date = uname+"\t"+u1+"\t"+u2+"\t"+uid+"\t"+fmap.get(u1)+"\t"+fmap.get(u2);
+				console( date );
 				greetingService.greetServer(date, new AsyncCallback<String>() {
 					@Override
 					public void onFailure(Throwable caught) {}
@@ -327,63 +391,8 @@ public class Suggestadate implements EntryPoint {
 		
 		vp.add( new HTML("<h3>Your dates</h3>") );
 	
-		final Grid	grid = new Grid();
+		grid = new Grid();
 		grid.resizeColumns(3);
-		greetingService.greetServer("", new AsyncCallback<String>() {
-			@Override
-			public void onSuccess(String result) {
-				String[]	split = result.split("\n");
-				grid.resizeRows(split.length);
-				
-				int r = 0;
-				for( String lin : split ) {
-					String[] subsplit = lin.split("\t");
-					
-					final String key = subsplit[0];
-					String name = subsplit[1];
-					grid.setText(r, 0, name);
-					
-					final int row = r;
-					Anchor	accept = new Anchor("Accept");
-					accept.addClickHandler( new ClickHandler() {
-						@Override
-						public void onClick(ClickEvent event) {
-							greetingService.greetServer("delete "+key, new AsyncCallback<String>() {
-								@Override
-								public void onSuccess(String result) {
-									grid.removeRow(row);
-								}
-								
-								@Override
-								public void onFailure(Throwable caught) {}
-							});
-						}
-					});
-					grid.setWidget(r, 1, accept);
-					Anchor	reject = new Anchor("Reject");
-					accept.addClickHandler( new ClickHandler() {
-						@Override
-						public void onClick(ClickEvent event) {
-							greetingService.greetServer("delete "+key, new AsyncCallback<String>() {
-								@Override
-								public void onSuccess(String result) {
-									grid.removeRow(row);
-								}
-								
-								@Override
-								public void onFailure(Throwable caught) {}
-							});
-						}
-					});
-					grid.setWidget(r, 2, reject);
-					
-					r++;
-				}
-			}
-			
-			@Override
-			public void onFailure(Throwable caught) {}
-		});
 		vp.add( grid );
 		vp.add( new HTML("*your date will only know you accepted if he/she self accepts") );
 		
