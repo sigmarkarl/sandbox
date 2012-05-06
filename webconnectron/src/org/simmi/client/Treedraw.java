@@ -85,6 +85,7 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	double hchunk = 10.0;
 	public void drawTree( TreeUtil treeutil ) {
 		double minh = treeutil.getminh();
 		double maxh = treeutil.getmaxh();
@@ -97,19 +98,17 @@ public class Treedraw implements EntryPoint {
 		int leaves = root.getLeavesCount();
 		int levels = root.countMaxHeight();
 		
-		console( "leaves " + leaves );
-		double	maxheightold = root.getMaxHeight();
-		
 		nodearray = new Node[ leaves ];
 		
-		canvas.setSize((ww-10)+"px", (10*leaves)+"px");
+		int hsize = (int)(hchunk*leaves);
+		canvas.setSize((ww-10)+"px", (hsize+2)+"px");
 		canvas.setCoordinateSpaceWidth( ww-10 );
-		canvas.setCoordinateSpaceHeight( 10*leaves );
+		canvas.setCoordinateSpaceHeight( hsize+2 );
 		
 		boolean vertical = true;
 		boolean equalHeight = false;
 		
-		Treedraw.this.h = 10*leaves;
+		Treedraw.this.h = hchunk*leaves;
 		Treedraw.this.w = ww-10;
 		
 		if( vertical ) {
@@ -133,14 +132,21 @@ public class Treedraw implements EntryPoint {
 		//console( Double.toString(maxh2-minh2) );
 		
 		Context2d ctx = canvas.getContext2d();
+		
+		if( hchunk != 10.0 ) ctx.setFont( ""+(int)(5.0*Math.log(hchunk))+"px sans-serif" );
+		console( "leaves " + leaves );
+		double	maxheightold = root.getMaxHeight();
+		
 		Node node = getMaxHeight( root, ctx, ww-30 );
 		if( node != null ) {
 			double gh = getHeight(node);
 			String name = node.getName();
 			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
-			double maxheight = (gh*(ww-30))/(ww-60-ctx.measureText(name).getWidth());
+			double textwidth = ctx.measureText(name).getWidth();
+			console( ""+textwidth );
+			double maxheight = (gh*(ww-30))/(ww-60-textwidth);
+			//console( maxheightold + "  " + gh );
 			
-			console( maxheightold + "  " + gh );
 			if( vertical ) {
 				drawFramesRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
 				ci = 0;
@@ -789,6 +795,22 @@ public class Treedraw implements EntryPoint {
 				}
 			}
 		});
+		final Anchor	zoominAnchor = new Anchor("in");
+		zoominAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				hchunk *= 0.8;
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		final Anchor	zoomoutAnchor = new Anchor("out");
+		zoomoutAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				hchunk *= 1.25;
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
 		
 		RootPanel	help = RootPanel.get("help");
 		VerticalPanel	choicePanel = new VerticalPanel();
@@ -829,6 +851,13 @@ public class Treedraw implements EntryPoint {
 		html = new HTML(". Run");
 		hp.add( html );
 		hp.add( sampleAnchor );
+		
+		html = new HTML(". Zoom");
+		hp.add( html );
+		hp.add( zoominAnchor );
+		html = new HTML(" / ");
+		hp.add( html );
+		hp.add( zoomoutAnchor );
 		
 		choicePanel.add( bc );
 		choicePanel.add( hp );
@@ -1118,10 +1147,11 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( vStroke );
 			g2.beginPath();
 			if( vertical ) {
+				double yfloor = Math.floor(y+ny);
 				g2.moveTo( startx, y+starty );
-				g2.lineTo( startx, y+ny );
-				g2.moveTo( startx, y+ny );
-				g2.lineTo( nx, y+ny );
+				g2.lineTo( startx, yfloor );
+				g2.moveTo( startx, yfloor );
+				g2.lineTo( nx, yfloor );
 			} else {
 				g2.moveTo( x+startx, starty );
 				g2.lineTo( x+nx, starty );
