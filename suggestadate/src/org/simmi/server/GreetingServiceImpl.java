@@ -1,48 +1,66 @@
 package org.simmi.server;
 
+import java.util.List;
+
 import org.simmi.client.GreetingService;
-import org.simmi.shared.FieldVerifier;
+
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
  * The server side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class GreetingServiceImpl extends RemoteServiceServlet implements
-		GreetingService {
+public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
 
 	public String greetServer(String input) throws IllegalArgumentException {
-		// Verify that the input is valid. 
-		if (!FieldVerifier.isValidName(input)) {
-			// If the input is not valid, throw an IllegalArgumentException back to
-			// the client.
-			throw new IllegalArgumentException(
-					"Name must be at least 4 characters long");
+		String ret = "";
+		
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		if( input.startsWith("delete") ) {
+			String keystr = input.substring(7);
+			Key key = KeyFactory.stringToKey( keystr );
+			datastore.delete( key );
+		} else if( !input.contains("\t") ) {
+			Query query = new Query("date");
+			query.addFilter("uid1", FilterOperator.EQUAL, input);
+			List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			for( Entity e : seqsEntities ) {
+				String val = (String)e.getProperty("uid2")+"\t"+(String)e.getProperty("date2");;
+				if( ret.length() == 0 ) ret += val;
+				else ret += "\n"+val;
+			}
+			
+			query = new Query("date");
+			query.addFilter("uid2", FilterOperator.EQUAL, input);
+			seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			for( Entity e : seqsEntities ) {
+				String val = KeyFactory.keyToString(e.getKey())+"\t"+(String)e.getProperty("date1");;
+				if( ret.length() == 0 ) ret += val;
+				else ret += "\n"+val;
+			}
+		} else {
+			String[] split = input.split("\t");
+			Entity ent = new Entity("date");
+			
+			ent.setProperty("user", split[0]);
+			ent.setProperty("date1", split[1]);
+			ent.setProperty("date2", split[2]);
+			ent.setProperty("uid", split[3]);
+			ent.setProperty("uid1", split[4]);
+			ent.setProperty("uid2", split[5]);
+			
+			//Key key = 
+			datastore.put( ent );
 		}
-
-		String serverInfo = getServletContext().getServerInfo();
-		String userAgent = getThreadLocalRequest().getHeader("User-Agent");
-
-		// Escape data from the client to avoid cross-site script vulnerabilities.
-		input = escapeHtml(input);
-		userAgent = escapeHtml(userAgent);
-
-		return "Hello, " + input + "!<br><br>I am running " + serverInfo
-				+ ".<br><br>It looks like you are using:<br>" + userAgent;
-	}
-
-	/**
-	 * Escape an html string. Escaping data received from the client helps to
-	 * prevent cross-site script vulnerabilities.
-	 * 
-	 * @param html the html string to escape
-	 * @return the escaped string
-	 */
-	private String escapeHtml(String html) {
-		if (html == null) {
-			return null;
-		}
-		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-				.replaceAll(">", "&gt;");
+		
+		return ret;
 	}
 }
