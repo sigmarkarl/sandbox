@@ -13,6 +13,7 @@
 <resources>
   <j2se version="1.6+" max-heap-size="1000M"/>
   <jar href="treedraw.jar"/>
+  <extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/>
   <extension name="gdata" href="http://thermusgenes.appspot.com/gdata.jnlp"/>
   <extension name="javafasta" href="http://webfasta.appspot.com/javafastacomp.jnlp"/>
 </resources>
