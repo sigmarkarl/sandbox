@@ -1,5 +1,7 @@
 package org.simmi.client;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -28,6 +30,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -53,9 +56,6 @@ public class Suggestadate implements EntryPoint {
 	    	$wnd.FB.init({appId: '390867450957358', status: true, cookie: true, xfbml: true, oauth : true});
 	    	if( login == null ) {
 		    	try {
-		    		$wnd.console.log( "login null" );
-		    		$wnd.console.log( $wnd.FB );
-		    		$wnd.console.log( $wnd.FB.getLoginStatus );
 					$wnd.FB.getLoginStatus( function(response) {
 						$wnd.console.log( "inside login response" );
 						try {
@@ -172,8 +172,66 @@ public class Suggestadate implements EntryPoint {
 	    });
 	}-*/;
 	
+	public native void fetchUserEmail( final String key ) /*-{
+		var ths = this;
+		$wnd.FB.api('/me', function(response) {
+	    	ths.@org.simmi.client.Suggestadate::setUserEmail(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( key, response.id, response.email );
+	    });
+	}-*/;
+	
+	public native void sendMessage( String fuid1, String fuid2, String fname, String body ) /*-{
+		var ths = this;
+		$wnd.console.log( "about to request" );
+		
+		var requestCallback = function(response) {
+        	$wnd.console.log( response );
+      	}
+      
+		$wnd.FB.ui({method: 'apprequests',
+	    	message: body,
+	    	to: fuid1+','+fuid2
+	  	}, requestCallback);
+//		$wnd.FB.api('/me/feed', 'post', { to: friend, message: body }, function(response) {
+//		  if (!response || response.error) {
+//		    if( !response ) alert('Error occured');
+//		    else $wnd.console.log( response.error );
+//		  } else {
+//		    alert('Post ID: ' + response.id);
+//		  }
+//		});
+		
+		//$wnd.FB.api('/'+fuid+'/feed', function(response) {
+	    //	ths.@org.simmi.client.Suggestadate::setUserName(Ljava/lang/String;)( response.name );
+	    //});
+    }-*/;
+	
 	public void setUserName( String val ) {
 		uname = val;
+	}
+	
+	List<String>	keys = new ArrayList<String>();
+	public void setUserEmail( final String key, final String uid, final String email ) {
+		console("set email "+key+"\t"+uid+"\t"+email);
+		greetingService.greetServer("accept "+key+"\t"+uid+"\t"+email, new AsyncCallback<String>() {
+			@Override
+			public void onSuccess(String result) {
+				int row = keys.indexOf( key );
+				if( result.length() > 0 ) {
+					Anchor mail = new Anchor( email );
+					mail.setHref( "mailto:"+email );
+					grid.setWidget(row, 1, mail);
+					//grid.setWidget(row, 1, mail);
+				} else {
+					grid.setText(row, 1, "waiting");
+				}
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				console("set email fail");
+				console(caught.getMessage());
+			}
+		});
 	}
 	
 	String		uid = "";
@@ -199,46 +257,66 @@ public class Suggestadate implements EntryPoint {
 				@Override
 				public void onSuccess(String result) {
 					if( result.length() > 0 ) {
+						console("fetch all "+result);
+						
 						String[]	split = result.split("\n");
 						grid.resizeRows(split.length);
 						
+						keys.clear();
 						int r = 0;
 						for( String lin : split ) {
 							String[] subsplit = lin.split("\t");
 							
 							final String key = subsplit[0];
+							keys.add( key );
+							
 							String name = subsplit[1];
 							grid.setText(r, 0, name);
 							
+							String email1 = "";
+							String email2 = "";
+							if( subsplit.length > 2 ) email1 = subsplit[2];
+							if( subsplit.length > 3 ) email2 = subsplit[3];
+							
 							final int row = r;
-							Anchor	accept = new Anchor("Accept");
-							accept.addClickHandler( new ClickHandler() {
-								@Override
-								public void onClick(ClickEvent event) {
-									greetingService.greetServer("delete "+key, new AsyncCallback<String>() {
-										@Override
-										public void onSuccess(String result) {
-											grid.removeRow(row);
-										}
-										
-										@Override
-										public void onFailure(Throwable caught) {}
-									});
-								}
-							});
-							grid.setWidget(r, 1, accept);
-							Anchor	reject = new Anchor("Reject");
+							
+							Widget w;
+							if( email1.length() > 0 && email2.length() > 0 ) {
+								Anchor a = new Anchor( email1 );
+								a.setHref("mailto:"+email1);
+								w = a;
+							} else if( email2.length() > 0 ) {
+								HTML html = new HTML("waiting");
+								w = html;
+							} else {
+								Anchor	accept = new Anchor("Accept");
+								accept.addClickHandler( new ClickHandler() {
+									@Override
+									public void onClick(ClickEvent event) {
+										fetchUserEmail( key );
+									}
+								});
+								w = accept;
+							}
+							grid.setWidget(r, 1, w);
+							
+							Anchor	reject = new Anchor("Remove");
 							reject.addClickHandler( new ClickHandler() {
 								@Override
 								public void onClick(ClickEvent event) {
 									greetingService.greetServer("delete "+key, new AsyncCallback<String>() {
 										@Override
 										public void onSuccess(String result) {
-											grid.removeRow(row);
+											console( "successfully removed row "+row+" using key "+key );
+											grid.removeRow( keys.indexOf(key) );
+											keys.remove( key );
 										}
 										
 										@Override
-										public void onFailure(Throwable caught) {}
+										public void onFailure(Throwable caught) {
+											console( "delete failure " + key );
+											console( caught.getMessage() );
+										}
 									});
 								}
 							});
@@ -260,13 +338,13 @@ public class Suggestadate implements EntryPoint {
 	public Element loginButton() {
 		Element elem = Document.get().createElement("div");
 		elem.setAttribute("class", "fb-login-button");
-		//elem.setAttribute("scope", "user");
+		elem.setAttribute("scope", "email");
 		
 		return elem;
 	}
 	
 	/**
-	 * This is the entry point method.
+	 * This is the entry point method.	hkt
 	 */
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
@@ -372,17 +450,29 @@ public class Suggestadate implements EntryPoint {
 		match.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				String u1 = a1.getText();
-				String u2 = a2.getText();
-				String date = uname+"\t"+u1+"\t"+u2+"\t"+uid+"\t"+fmap.get(u1)+"\t"+fmap.get(u2);
+				final String u1 = a1.getText();
+				final String u2 = a2.getText();
+				final Integer ui1 = fmap.get(u1);
+				final Integer ui2 = fmap.get(u2);
+				String date = uname+"\t"+u1+"\t"+u2+"\t"+uid+"\t"+ui1+"\t"+ui2;
 				console( date );
 				greetingService.greetServer(date, new AsyncCallback<String>() {
 					@Override
-					public void onFailure(Throwable caught) {}
+					public void onFailure(Throwable caught) {
+						console("fail");
+						console( caught.getMessage() );
+					}
 
 					@Override
 					public void onSuccess(String result) {
-						
+						if( result.length() > 0 ) {
+							Window.alert("This date has already been suggested");
+						} else {
+							console( "before send" );
+							sendMessage( Integer.toString(ui1), Integer.toString(ui2), u1, "A date has been suggested for you" );
+							//sendMessage( Integer.toString(ui2), u2, "Haeho" );
+							console( "message sent" );
+						}
 					}
 				});
 			}
@@ -395,6 +485,7 @@ public class Suggestadate implements EntryPoint {
 		grid.resizeColumns(3);
 		vp.add( grid );
 		vp.add( new HTML("*your date will only know you accepted if he/she self accepts") );
+		vp.add( new HTML("if both accept their emails will show up") );
 		
 		HorizontalPanel bot = new HorizontalPanel();
 		bot.setSpacing( 5 );
@@ -410,6 +501,17 @@ public class Suggestadate implements EntryPoint {
 		bot.add( new HTML("|") );
 		bot.add( l3 );
 		vp.add( bot );
+		
+		HorizontalPanel	mapps = new HorizontalPanel();
+		mapps.setSpacing( 5 );
+		mapps.add( new HTML("More apps: ") );
+		Anchor	webworm = new Anchor("Webworm");
+		webworm.setHref("http://webwormgame.appspot.com");
+		mapps.add( webworm );
+		Anchor	treedraw = new Anchor("Treedraw");
+		treedraw.setHref("http://webconnectron.appspot.com/Treedraw.html");
+		mapps.add( treedraw );
+		vp.add( mapps );
 		
 		VerticalPanel mainvp = new VerticalPanel();
 		mainvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
