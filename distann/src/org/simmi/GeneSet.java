@@ -559,7 +559,10 @@ public class GeneSet extends JApplet {
 				String contig = null;
 				String contloc = null;
 
-				//if (qsplit.length > 3) {
+				if (qsplit.length < 3) {
+					System.err.println();
+				}
+				
 					contig = qsplit[0] + "_" + qsplit[1];// +"_"+qsplit[2];
 															// //&query.substring(0,
 															// sec);
@@ -732,7 +735,7 @@ public class GeneSet extends JApplet {
 				// if( trim.)
 				query = trim.substring(6).trim().split("[ ]+")[0];
 				
-				int count = 0;
+				/*int count = 0;
 				if( query.contains("contig") ) {
 					int k = query.indexOf('_');
 					while( k != -1 ) {
@@ -747,7 +750,7 @@ public class GeneSet extends JApplet {
 					int li = query.lastIndexOf('_');
 					int ln = query.lastIndexOf('_', li-1);
 					query = query.substring(0, ln)+query.substring(li);
-				}
+				}*/
 				
 				String[] split = trim.split("#");
 				if (split.length < 4) {
@@ -2202,7 +2205,13 @@ public class GeneSet extends JApplet {
 				name = split[1];
 
 				String lstr = split[split.length - 1];
-				int l = Integer.parseInt(lstr.substring(7));
+				int us = lstr.indexOf('_');
+				int l = 0;
+				try {
+					l = Integer.parseInt( us == -1 ? lstr.substring(7) : lstr.substring(7, us) );
+				} catch( Exception e ) {
+					System.err.println( lstr );
+				}
 				if (l > 80 && included.contains(name)) {
 					evalue = null;
 					score = null;
@@ -2462,7 +2471,13 @@ public class GeneSet extends JApplet {
 				 */
 
 				String lstr = split[split.length - 1];
-				int l = Integer.parseInt(lstr.substring(7));
+				int us = lstr.indexOf('_');
+				int l = 0;
+				try {
+					l = Integer.parseInt( us == -1 ? lstr.substring(7) : lstr.substring(7, us) );
+				} catch( Exception e ) {
+					System.err.println( lstr );
+				}
 				if (l > 80 && included.contains(name)) {
 					evalue = null;
 					score = null;
@@ -4375,7 +4390,7 @@ public class GeneSet extends JApplet {
 		fw.close();
 	}
 
-	public static void viggo() throws IOException {
+	public static void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
 		/*
 		 * String base = "/vg454flx/viggo/viggo/"; int num = 16; int seqcount =
 		 * 0; Set<String> included = new HashSet<String>(); FileReader fr = new
@@ -4412,11 +4427,11 @@ public class GeneSet extends JApplet {
 		 * freqmap, included );
 		 */
 
-		String base = "/media/a1dec3c6-1400-4c3c-8d72-0e6f75bf1fb3/viggo/";
-		int num = 6;
+		//String base = "/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/stuff/viggo/";
+		//int num = 6;
 		int seqcount = 0;
 		Set<String> included = new HashSet<String>();
-		FileReader fr = new FileReader(base + "reads/" + num + ".TCA.454Reads.fna");
+		FileReader fr = new FileReader( fastapath ); //new FileReader(base + "reads/" + num + ".TCA.454Reads.fna");
 		BufferedReader br = new BufferedReader(fr);
 		String line = br.readLine();
 		String current = null;
@@ -4446,7 +4461,7 @@ public class GeneSet extends JApplet {
 
 		int sum = 0;
 		int sumc = 0;
-		fr = new FileReader(base + "reads/" + num + ".TCA.454Reads.qual");
+		fr = new FileReader( qualpath ); // new FileReader(base + "reads/" + num + ".TCA.454Reads.qual");
 		br = new BufferedReader(fr);
 		line = br.readLine();
 		current = null;
@@ -4474,13 +4489,13 @@ public class GeneSet extends JApplet {
 
 		System.err.println(seqcount + "  " + included.size());
 
-		String blastoutFilename = base + "16S_" + num + ".blastout";
-		Map<String, Integer> freqmap = loadFrequency(new FileReader(blastoutFilename), included);
+		//String blastoutFilename = base + "16S_" + num + ".blastout";
+		Map<String, Integer> freqmap = loadFrequency(new FileReader(blastoutpath), included);
 		for (String val : freqmap.keySet()) {
 			int fv = freqmap.get(val);
 			System.err.println(val + "  " + fv);
 		}
-		loci2gene("/media/a1dec3c6-1400-4c3c-8d72-0e6f75bf1fb3/tax/", new FileReader(blastoutFilename), base + "_bleh_" + num + "+v1.txt", null, freqmap, included);
+		loci2gene("/media/3cb6dcc1-0069-4cb7-9e8e-db00bf300d96/stuff/tax/", new FileReader(blastoutpath), resultpath, null, freqmap, included);
 	}
 
 	public static class StrId {
@@ -4703,8 +4718,8 @@ public class GeneSet extends JApplet {
 			 * , accset, false );
 			 */
 
-			// viggo();
-			simmi();
+			viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
+			//simmi();
 
 			// Map<String,Integer> freqmap = loadFrequency( new
 			// FileReader("c:/viggo//arciformis_repeat.blastout") );
@@ -5193,7 +5208,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	JComboBox<String> selcomb;
+	JComboBox selcomb;
 	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, final Map<String, Function> funcmap, final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
 			final Map<Set<String>, ShareNum> specset, final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb, final Container comp, final JComboBox selcomblocal) throws IOException {
 		JSplitPane splitpane = new JSplitPane();
@@ -7977,13 +7992,10 @@ public class GeneSet extends JApplet {
 		Set<String> poddur = new HashSet<String>();
 		Map<String, Gene> locgene = new HashMap<String, Gene>();
 
-		// panCoreFromNRBlast( new
-		// FileReader("/home/horfrae/arc/arciformis.blastout"),
-		// "/home/horfrae/workspace/distann/src/arciformis_short.blastout",
-		// refmap, allgenes, geneset, geneloc, locgene, poddur );
-		is = GeneSet.class.getResourceAsStream("/thermus_short.blastout");
+		is = GeneSet.class.getResourceAsStream("/thermus_nr.blastout");
+		panCoreFromNRBlast( new InputStreamReader(is), "/home/sigmar/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
 		// is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
-		panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		//panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();
@@ -8406,7 +8418,7 @@ public class GeneSet extends JApplet {
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
-		selcomb = new JComboBox<String>();
+		selcomb = new JComboBox();
 		
 		setColors();
 
