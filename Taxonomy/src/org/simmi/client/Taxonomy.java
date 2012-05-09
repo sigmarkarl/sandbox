@@ -160,7 +160,7 @@ public class Taxonomy implements EntryPoint {
 				
 				String nodename = selectedtree.getText();
 				if( ( nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
-					if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/eyjo.txt" );
+					if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 					else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
 					else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
 					else if( nodename.equals("root2") ) runSpec( selectedtree, "http://"+server+"/2v1.txt" );
