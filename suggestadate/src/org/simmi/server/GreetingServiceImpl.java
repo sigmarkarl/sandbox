@@ -37,13 +37,20 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 				String uid1 = (String)e.getProperty("uid1");
 				String uid2 = (String)e.getProperty("uid2");
 				
+				String femail = "";
+				String fuid = "";
 				if( uid.equals(uid1) ) {
-					ret = (String)e.getProperty("email2");
+					fuid = (String)e.getProperty("uid2");
+					femail = (String)e.getProperty("email2");
 					e.setProperty("email1", email);
+					ret = fuid+"\t"+femail;
 				} else if( uid.equals(uid2) ) {
-					ret = (String)e.getProperty("email1");
+					fuid = (String)e.getProperty("uid1");
+					femail = (String)e.getProperty("email1");
 					e.setProperty("email2", email);
+					ret = fuid+"\t"+femail;
 				}
+				
 				datastore.put(e);
 			} catch (EntityNotFoundException e) {
 				e.printStackTrace();
@@ -60,7 +67,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			query.addFilter("uid1", FilterOperator.EQUAL, input);
 			List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 			for( Entity e : seqsEntities ) {
-				String val = KeyFactory.keyToString(e.getKey())+"\t"+(String)e.getProperty("date2")+"\t"+(String)e.getProperty("email2")+"\t"+(String)e.getProperty("email1");
+				String val = KeyFactory.keyToString(e.getKey())+"\t"+(String)e.getProperty("date2")+"\t"+(String)e.getProperty("link2")+"\t"+(String)e.getProperty("email2")+"\t"+(String)e.getProperty("email1");
 				if( ret.length() == 0 ) ret += val;
 				else ret += "\n"+val;
 			}
@@ -69,7 +76,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			query.addFilter("uid2", FilterOperator.EQUAL, input);
 			seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 			for( Entity e : seqsEntities ) {
-				String val = KeyFactory.keyToString(e.getKey())+"\t"+(String)e.getProperty("date1")+(String)e.getProperty("email1")+"\t"+(String)e.getProperty("email2");
+				String val = KeyFactory.keyToString(e.getKey())+"\t"+(String)e.getProperty("date1")+"\t"+(String)e.getProperty("link1")+"\t"+(String)e.getProperty("email1")+"\t"+(String)e.getProperty("email2");
 				if( ret.length() == 0 ) ret += val;
 				else ret += "\n"+val;
 			}
@@ -78,6 +85,8 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			
 			String uid1 = split[4];
 			String uid2 = split[5];
+			String l1 = split[6];
+			String l2 = split[7];
 			
 			boolean already = false;
 			
@@ -113,6 +122,8 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 				ent.setProperty("uid", split[3]);
 				ent.setProperty("uid1", uid1);
 				ent.setProperty("uid2", uid2);
+				ent.setProperty("link1", l1);
+				ent.setProperty("link2", l2);
 				ent.setProperty("email1", "");
 				ent.setProperty("email2", "");
 				
