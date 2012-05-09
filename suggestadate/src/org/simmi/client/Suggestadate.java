@@ -100,10 +100,10 @@ public class Suggestadate implements EntryPoint {
 	public native void hehe() /*-{
 		var ths = this;
 		try {
-			$wnd.FB.api('/me/friends', function(response) {
+			$wnd.FB.api('/me/friends', {fields: 'id,name,link'}, function(response) {
 				for( i = 0; i < response.data.length; i++ ) {
 					var frd = response.data[i];
-					ths.@org.simmi.client.Suggestadate::putFriend(ILjava/lang/String;)( frd.id, frd.name );
+					ths.@org.simmi.client.Suggestadate::putFriend(ILjava/lang/String;Ljava/lang/String;)( frd.id, frd.name, frd.link );
 				}
 				ths.@org.simmi.client.Suggestadate::showFriendDialog()();
 			
@@ -114,8 +114,10 @@ public class Suggestadate implements EntryPoint {
 	}-*/;
 	
 	Map<String,Integer>	fmap = new TreeMap<String,Integer>();
-	public void putFriend( int id, String name) {
+	Map<Integer,String>	lmap = new TreeMap<Integer,String>();
+	public void putFriend( int id, String name, String link ) {
 		fmap.put( name, id );
+		lmap.put( id, link );
 	}
 	
 	HorizontalPanel	hp;
@@ -179,6 +181,19 @@ public class Suggestadate implements EntryPoint {
 	    });
 	}-*/;
 	
+	public native void sendAcceptMessage( String fuid, String body, final int row, final String femail ) /*-{
+		var ths = this;
+		var requestCallback = function(response) {
+	    	$wnd.console.log( response );
+	    	ths.@org.simmi.client.Suggestadate::addEmail(ILjava/lang/String;)( row, femail );
+	  	}
+	  
+		$wnd.FB.ui({method: 'apprequests',
+	    	message: body,
+	    	to: fuid
+	  	}, requestCallback);
+	}-*/;
+	
 	public native void sendMessage( String fuid1, String fuid2, String fname, String body ) /*-{
 		var ths = this;
 		$wnd.console.log( "about to request" );
@@ -209,6 +224,13 @@ public class Suggestadate implements EntryPoint {
 		uname = val;
 	}
 	
+	public void addEmail( int row, String femail ) {
+		Anchor mail = new Anchor( femail );
+		mail.setTarget("_parent");
+		mail.setHref( "mailto:"+femail );
+		grid.setWidget(row, 1, mail);
+	}
+	
 	List<String>	keys = new ArrayList<String>();
 	public void setUserEmail( final String key, final String uid, final String email ) {
 		console("set email "+key+"\t"+uid+"\t"+email);
@@ -216,10 +238,14 @@ public class Suggestadate implements EntryPoint {
 			@Override
 			public void onSuccess(String result) {
 				int row = keys.indexOf( key );
-				if( result.length() > 0 ) {
-					Anchor mail = new Anchor( email );
-					mail.setHref( "mailto:"+email );
-					grid.setWidget(row, 1, mail);
+				String[] split = result.split("\t");
+				String	fuid = split[0];
+				
+				if( split.length > 1 && split[1].length() > 0 ) {
+					String	femail = split[1];
+					
+					String body = "Your date request has been accepted";
+					sendAcceptMessage(fuid, body, row, femail);
 					//grid.setWidget(row, 1, mail);
 				} else {
 					grid.setText(row, 1, "waiting");
@@ -271,18 +297,23 @@ public class Suggestadate implements EntryPoint {
 							keys.add( key );
 							
 							String name = subsplit[1];
-							grid.setText(r, 0, name);
+							String link = subsplit[2];
+							Anchor	dateanchor = new Anchor(name);
+							dateanchor.setTarget("_blank");
+							dateanchor.setHref( link );
+							grid.setWidget(r, 0, dateanchor);
 							
 							String email1 = "";
 							String email2 = "";
-							if( subsplit.length > 2 ) email1 = subsplit[2];
-							if( subsplit.length > 3 ) email2 = subsplit[3];
+							if( subsplit.length > 3 ) email1 = subsplit[3];
+							if( subsplit.length > 4 ) email2 = subsplit[4];
 							
 							final int row = r;
 							
 							Widget w;
 							if( email1.length() > 0 && email2.length() > 0 ) {
 								Anchor a = new Anchor( email1 );
+								a.setTarget("_parent");
 								a.setHref("mailto:"+email1);
 								w = a;
 							} else if( email2.length() > 0 ) {
@@ -454,7 +485,9 @@ public class Suggestadate implements EntryPoint {
 				final String u2 = a2.getText();
 				final Integer ui1 = fmap.get(u1);
 				final Integer ui2 = fmap.get(u2);
-				String date = uname+"\t"+u1+"\t"+u2+"\t"+uid+"\t"+ui1+"\t"+ui2;
+				final String l1 = lmap.get(ui1);
+				final String l2 = lmap.get(ui2);
+				String date = uname+"\t"+u1+"\t"+u2+"\t"+uid+"\t"+ui1+"\t"+ui2+"\t"+l1+"\t"+l2;
 				console( date );
 				greetingService.greetServer(date, new AsyncCallback<String>() {
 					@Override
@@ -489,11 +522,14 @@ public class Suggestadate implements EntryPoint {
 		
 		HorizontalPanel bot = new HorizontalPanel();
 		bot.setSpacing( 5 );
-		Anchor l1 = new Anchor("http://suggestadate.appspot.com");
-		l1.setHref( "http://suggestadate.appspot.com" );
-		Anchor l2 = new Anchor("http://apps.facebook.com/suggestdate");
-		l2.setHref( "http://apps.facebook.com/suggestdate" );
+		Anchor l1 = new Anchor("https://suggestadate.appspot.com");
+		l1.setTarget("_parent");
+		l1.setHref( "https://suggestadate.appspot.com" );
+		Anchor l2 = new Anchor("https://apps.facebook.com/suggestdate");
+		l2.setTarget("_parent");
+		l2.setHref( "https://apps.facebook.com/suggestdate" );
 		Anchor l3 = new Anchor("huldaeggerts@gmail.com");
+		l3.setTarget("_parent");
 		l3.setHref( "mailto:huldaeggerts@gmail.com" );
 		bot.add( l1 );
 		bot.add( new HTML("|") );
@@ -506,10 +542,12 @@ public class Suggestadate implements EntryPoint {
 		mapps.setSpacing( 5 );
 		mapps.add( new HTML("More apps: ") );
 		Anchor	webworm = new Anchor("Webworm");
-		webworm.setHref("http://webwormgame.appspot.com");
+		webworm.setTarget("_parent");
+		webworm.setHref("https://webwormgame.appspot.com");
 		mapps.add( webworm );
 		Anchor	treedraw = new Anchor("Treedraw");
-		treedraw.setHref("http://webconnectron.appspot.com/Treedraw.html");
+		treedraw.setTarget("_parent");
+		treedraw.setHref("https://webconnectron.appspot.com/Treedraw.html");
 		mapps.add( treedraw );
 		vp.add( mapps );
 		
