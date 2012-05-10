@@ -522,9 +522,9 @@ public class Suggestadate implements EntryPoint {
 		
 		HorizontalPanel bot = new HorizontalPanel();
 		bot.setSpacing( 5 );
-		Anchor l1 = new Anchor("https://suggestadate.appspot.com");
+		Anchor l1 = new Anchor("http://suggestadate.appspot.com");
 		l1.setTarget("_parent");
-		l1.setHref( "https://suggestadate.appspot.com" );
+		l1.setHref( "http://suggestadate.appspot.com" );
 		Anchor l2 = new Anchor("https://apps.facebook.com/suggestdate");
 		l2.setTarget("_parent");
 		l2.setHref( "https://apps.facebook.com/suggestdate" );
@@ -543,11 +543,11 @@ public class Suggestadate implements EntryPoint {
 		mapps.add( new HTML("More apps: ") );
 		Anchor	webworm = new Anchor("Webworm");
 		webworm.setTarget("_parent");
-		webworm.setHref("https://webwormgame.appspot.com");
+		webworm.setHref("http://webwormgame.appspot.com");
 		mapps.add( webworm );
 		Anchor	treedraw = new Anchor("Treedraw");
 		treedraw.setTarget("_parent");
-		treedraw.setHref("https://webconnectron.appspot.com/Treedraw.html");
+		treedraw.setHref("http://webconnectron.appspot.com/Treedraw.html");
 		mapps.add( treedraw );
 		vp.add( mapps );
 		
