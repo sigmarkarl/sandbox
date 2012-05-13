@@ -41,10 +41,15 @@ import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
@@ -64,6 +69,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class Treedraw implements EntryPoint {
@@ -732,6 +738,63 @@ public class Treedraw implements EntryPoint {
 						selectedNode.getParent().removeNode( selectedNode );
 						selectedNode = null;
 						root.countLeaves();
+					} else if( c == 'e' || c == 'E' || c == '\r' ) {
+						final TextBox	text = new TextBox();
+						
+						final PopupPanel	pp = new PopupPanel();
+						pp.add( text );
+						pp.setPopupPosition( (int)selectedNode.getCanvasX(), (int)selectedNode.getCanvasY()+canvas.getAbsoluteTop()-5 );
+						pp.setAutoHideEnabled( true );
+						pp.show();
+						
+						final Boolean[] b = new Boolean[1];
+						b[0] = true;
+						text.addKeyDownHandler( new KeyDownHandler() {
+							@Override
+							public void onKeyDown(KeyDownEvent event) {
+								int c = event.getNativeEvent().getCharCode();
+								int key = event.getNativeKeyCode();
+								if( key == KeyCodes.KEY_ESCAPE ) {
+									b[0] = false;
+									pp.hide();
+								} else if( key == KeyCodes.KEY_ENTER || key == 18 || c == '\n' || c == '\r' ) {
+									pp.hide();
+								}
+							}
+						});
+						/*text.addKeyPressHandler( new KeyPressHandler() {
+							@Override
+							public void onKeyPress(KeyPressEvent event) {
+								char c = event.getCharCode();
+								int  key = event.getNativeEvent().getKeyCode();
+								if( c == '\n' || c == '\r' ) {
+									if( text.getText().length() == 0 ) {
+										text.setText( selectedNode.getName() );
+										text.selectAll();
+									} else {
+										pp.hide();
+									}
+								} else if( key == KeyCodes.KEY_ESCAPE ) {
+									pp.hide();
+								} else console( Character.toString( c ) );
+							}
+						});*/
+						pp.addCloseHandler( new CloseHandler<PopupPanel>() {
+							@Override
+							public void onClose(CloseEvent<PopupPanel> event) {
+								if( b[0] ) {
+									selectedNode.setName( text.getText() );
+									if( treeutil != null ) drawTree( treeutil );
+								}
+							}
+						});
+						
+						text.setText( selectedNode.getName() );
+						text.selectAll();
+						//text.setFocus( true );
+						/*selectedNode.getParent().removeNode( selectedNode );
+						selectedNode = null;
+						root.countLeaves();*/
 					} else if( c == 'r' || c == 'R' ) {
 						//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 						//Node newroot = recursiveReroot( root, x, y );
