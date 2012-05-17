@@ -708,7 +708,7 @@ public class Treedraw implements EntryPoint {
 			public void onKeyPress(KeyPressEvent event) {
 				char c = event.getCharCode();
 				if( c == 'a' || c == 'A' ) {
-					String[] ts = new String[] {"T.unknown", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
+					String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
 					Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
 					treeutil.collapseTreeAdvanced(root, cset);
 					root.countLeaves();

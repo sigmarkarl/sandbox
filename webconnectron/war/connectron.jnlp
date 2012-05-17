@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="http://connectron.appspot.com/" href="connectron.jnlp">
+<jnlp spec="1.0+" codebase="http://webconnectron.appspot.com/" href="connectron.jnlp">
 <information>
   <title>Connectron</title>
   <vendor>Huldufolk ehf.</vendor>
@@ -13,9 +13,10 @@
 <resources>
   <j2se version="1.7+" max-heap-size="1000M"/>
   <jar href="connectron.jar"/>
+  <extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/>
 </resources>
 <applet-desc 
-	name="JavaFasta"
+	name="Connectron"
 	main-class="org.simmi.Connectron"
 	width="1280"
 	height="800"> 
