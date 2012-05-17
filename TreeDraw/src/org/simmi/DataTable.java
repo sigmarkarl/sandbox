@@ -766,7 +766,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( species.isSelected() ) {
 							Integer ident = (Integer)obj[4];
 							String spec = "T.unkown";
-							if( ident >= 98 ) {
+							if( ident >= 97 ) {
 								spec = (String)obj[2];
 								spec = spec.replace("Thermus ", "T.");
 								
