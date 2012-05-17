@@ -2370,146 +2370,178 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent arg0) {
 				String addon = "nnnttaattaattaannn";
 				List<Integer>	startlist = new ArrayList<Integer>();
-				int r = table.getSelectedRow();
-				int i = table.convertRowIndexToModel( r );
-				Sequences s = sequences.get(i);
-				try {
-					URL url = new URL( s.getPath() );
-					InputStream is = url.openStream();
-					InputStreamReader	isr = new InputStreamReader(is);
-					BufferedReader	br = new BufferedReader( isr );
-					Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
-					StringBuilder	sb = null;
-					String			name = null;
-					String line = br.readLine();
-					while( line != null ) {
-						if( line.startsWith(">") ) {
-							if( name != null ) {
-								seqmap.put(name, sb);
-							}
-							name = line.substring(1);
-							sb = new StringBuilder();
-						} else {
-							sb.append( line.replace(" ", "") );
-						}
-						line = br.readLine();
+				int[] rr = table.getSelectedRows();
+				JFileChooser	fc = new JFileChooser();
+				File dir = null;
+				if( rr.length > 1 ) {
+					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+						dir = fc.getSelectedFile();
+						fc.setFileSelectionMode( JFileChooser.FILES_ONLY );
 					}
-					if( name != null ) {
-						seqmap.put(name, sb);
-					}
-					br.close();
-					
-					int count = 0;
-					for( String key : seqmap.keySet() ) {
-						StringBuilder sbld = seqmap.get(key);
-						count += sbld.length();
-					}
-					count += (seqmap.size()-1)*addon.length();
-					
-					Map<String,List<Anno>>	mapan = new HashMap<String,List<Anno>>();
-					JFileChooser	fc = new JFileChooser();
-					if( fc.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						File f = fc.getSelectedFile();
-						FileReader	fr = new FileReader( f );
-						br = new BufferedReader( fr );
-						line = br.readLine();
-						Anno ann = null;
+				}
+				for( int r : rr ) {
+					int i = table.convertRowIndexToModel( r );
+					Sequences s = sequences.get(i);
+					try {
+						URL url = new URL( s.getPath() );
+						InputStream is = url.openStream();
+						InputStreamReader	isr = new InputStreamReader(is);
+						BufferedReader	br = new BufferedReader( isr );
+						Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
+						StringBuilder	sb = null;
+						String			name = null;
+						String line = br.readLine();
+						
+						Set<String>	pool = new HashSet<String>();
 						while( line != null ) {
-							if( line.startsWith("Query=") ) {
-								int ki = line.indexOf('_');
-								String cont = line.substring(7,ki).trim();
-								
-								List<Anno> lann;
-								if( mapan.containsKey(cont) ) {
-									lann = mapan.get( cont );
-								} else {
-									lann = new ArrayList<Anno>();
-									mapan.put(cont, lann);
+							if( line.startsWith(">") ) {
+								if( name != null ) {
+									seqmap.put(name, sb);
+									int l = name.indexOf(' ');
+									if( l == -1 ) l = name.length();
+									pool.add( name.substring(0,l) );
 								}
-								
-								String[] split = line.split("#");
-								
-								int start = Integer.parseInt( split[1].trim() );
-								int stop = Integer.parseInt( split[2].trim() );
-								int rev = Integer.parseInt( split[3].trim() );
-								ann = new Anno( start, stop, rev == -1, null );
-								lann.add(ann);
-							} else if( line.startsWith(">") ) {
-								if( ann != null && ann.name == null ) {
-									String hit = line.substring(1);
-									line = br.readLine();
-									while( !line.startsWith("Length") ) {
-										hit += line.substring(1);
-										line = br.readLine();
-									}
-									ann.name = hit;
-								}
-							} else if( line.contains("Not hits") ) {
-								if( ann != null && ann.name == null ) {
-									ann.name = line;
-								}
+								int li = line.indexOf(' ');
+								if( li == -1 ) li = line.length();
+								name = line.substring(1,li);
+								sb = new StringBuilder();
+							} else {
+								sb.append( line.replace(" ", "") );
 							}
 							line = br.readLine();
 						}
+						if( name != null ) {
+							seqmap.put(name, sb);
+						}
 						br.close();
-					}
-					
-					if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						File f = fc.getSelectedFile();
-						FileWriter	fw = new FileWriter( f );
-						String loc = "LOCUS       CP51                "+count+" bp    dna     linear   UNK";
-						String def = "DEFINITION  [organism=CP51] [strain=CP51] [gcode=11] [date=3-20-2012]";
-						String acc = "ACCESSION   CP51";
-						String keyw = "KEYWORDS    .";
-						String feat = "FEATURES             Location/Qualifiers";
-						fw.write( loc+"\n" );
-						fw.write( def+"\n" );
-						fw.write( acc+"\n" );
-						fw.write( keyw+"\n" );
-						fw.write( feat+"\n" );
-						count = 1;
+						
+						int count = 0;
 						for( String key : seqmap.keySet() ) {
 							StringBuilder sbld = seqmap.get(key);
-							fw.write( "     fasta_record    "+count+".."+(count+sbld.length())+"\n" );
-							fw.write( "                     /name=\""+key+"\"\n" );
-							
-							if( mapan.containsKey(key) ) {
-								List<Anno> lann = mapan.get(key);
-								int ac = 1;
-								for( Anno ann : lann ) {
-									String locstr = (ann.start+count)+".."+(ann.stop+count);
-									if( ann.comp ) fw.write( "     gene            complement("+locstr+")\n" );
-									else fw.write( "     gene            "+locstr+"\n" );
-									fw.write( "                     /locus_tag=\""+key+"_"+ac+"\"\n" );
-									fw.write( "                     /product=\""+ann.name+"\"\n" );
-									ac++;
+							count += sbld.length();
+						}
+						count += (seqmap.size()-1)*addon.length();
+						
+						Map<String,List<Anno>>	mapan = new HashMap<String,List<Anno>>();							
+						if( fc.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+							File f = fc.getSelectedFile();
+							FileReader	fr = new FileReader( f );
+							br = new BufferedReader( fr );
+							line = br.readLine();
+							Anno ann = null;
+							while( line != null ) {
+								if( line.startsWith("Query=") ) {
+									int li = line.indexOf(' ', 7);
+									if( li == -1 ) li = line.length();
+									int ki = line.lastIndexOf('_', li);
+									//int ki = line.indexOf('_');
+									
+									String cont = line.substring(7,ki).trim();
+									if( pool.contains( cont ) ) {
+										List<Anno> lann;
+										if( mapan.containsKey(cont) ) {
+											lann = mapan.get( cont );
+										} else {
+											lann = new ArrayList<Anno>();
+											mapan.put(cont, lann);
+										}
+										
+										String[] split = line.split("#");
+										
+										int start = Integer.parseInt( split[1].trim() );
+										int stop = Integer.parseInt( split[2].trim() );
+										int rev = Integer.parseInt( split[3].trim() );
+										ann = new Anno( start, stop, rev == -1, null );
+										lann.add(ann);
+									} else ann = null;
+									
+									System.err.println( cont );
+								} else if( line.startsWith(">") ) {
+									if( ann != null && ann.name == null ) {
+										String hit = line.substring(1);
+										line = br.readLine();
+										while( !line.startsWith("Length") && !line.startsWith("Query") ) {
+											hit += line.substring(1);
+											line = br.readLine();
+										}
+										ann.name = hit;
+										
+										if( line.startsWith("Query") ) continue;
+									}
+								} else if( line.contains("Not hits") ) {
+									if( ann != null && ann.name == null ) {
+										ann.name = line;
+									}
+								}
+								line = br.readLine();
+							}
+							br.close();
+						}
+						
+						File f = null;
+						if( dir != null ) {
+							f = new File( dir, s.getName()+".gb" );
+						} else if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+							f = fc.getSelectedFile();
+						}
+						
+						if( f != null ) {
+							FileWriter	fw = new FileWriter( f );
+							String loc = "LOCUS       CP51                "+count+" bp    dna     linear   UNK";
+							String def = "DEFINITION  [organism=CP51] [strain=CP51] [gcode=11] [date=3-20-2012]";
+							String acc = "ACCESSION   CP51";
+							String keyw = "KEYWORDS    .";
+							String feat = "FEATURES             Location/Qualifiers";
+							fw.write( loc+"\n" );
+							fw.write( def+"\n" );
+							fw.write( acc+"\n" );
+							fw.write( keyw+"\n" );
+							fw.write( feat+"\n" );
+							count = 1;
+							for( String key : seqmap.keySet() ) {
+								StringBuilder sbld = seqmap.get(key);
+								fw.write( "     fasta_record    "+count+".."+(count+sbld.length())+"\n" );
+								fw.write( "                     /name=\""+key+"\"\n" );
+								
+								if( mapan.containsKey(key) ) {
+									List<Anno> lann = mapan.get(key);
+									int ac = 1;
+									for( Anno ann : lann ) {
+										String locstr = (ann.start+count)+".."+(ann.stop+count);
+										if( ann.comp ) fw.write( "     gene            complement("+locstr+")\n" );
+										else fw.write( "     gene            "+locstr+"\n" );
+										fw.write( "                     /locus_tag=\""+key+"_"+ac+"\"\n" );
+										fw.write( "                     /product=\""+ann.name+"\"\n" );
+										ac++;
+									}
+								}
+								
+								count += sbld.length();
+								count += addon.length();
+							}
+							fw.write( "ORIGIN" );
+							count = 1;
+							//int start = 1;
+							for( String key : seqmap.keySet() ) {
+								StringBuilder sbld = seqmap.get(key);
+								for( int k = 0; k < sbld.length(); k++ ) {
+									if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
+									else if( (count-1)%10 == 0 ) fw.write( " " );
+									
+									fw.write( sbld.charAt(k) );
+									
+									count++;
 								}
 							}
-							
-							count += sbld.length();
-							count += addon.length();
+							fw.write("\n//");
+							fw.close();
 						}
-						fw.write( "ORIGIN" );
-						count = 1;
-						//int start = 1;
-						for( String key : seqmap.keySet() ) {
-							StringBuilder sbld = seqmap.get(key);
-							for( int k = 0; k < sbld.length(); k++ ) {
-								if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
-								else if( (count-1)%10 == 0 ) fw.write( " " );
-								
-								fw.write( sbld.charAt(k) );
-								
-								count++;
-							}
-						}
-						fw.write("\n//");
-						fw.close();
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
 		});
