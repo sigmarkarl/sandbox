@@ -590,6 +590,7 @@ public class TreeUtil {
 			}
 			
 			String test = null;
+			int count = 0;
 			boolean collapse = node.nodes.size() > 1;
 			for( Node n : node.nodes ) {
 				String nname = n.getName() != null ? n.getName() : "";
@@ -617,11 +618,22 @@ public class TreeUtil {
 						break;
 					}
 				}
+				
+				String meta = n.getMeta();
+				try {
+					if( meta != null && meta.length() > 0 ) {
+						int mi = Integer.parseInt( meta );
+						count += mi;
+					} else count++; 
+				} catch( Exception e ) {
+					count++;
+				}
 			}
 			
 			if( collapse && (collapset == null || collapset.contains(test)) ) {
 				node.nodes.clear();
 				//node.nodes = null;
+				node.setMeta( Integer.toString(count) );
 				node.setName( test );
 			}
 		}
