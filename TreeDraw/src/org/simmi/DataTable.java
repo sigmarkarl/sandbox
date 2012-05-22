@@ -1419,7 +1419,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("Show conserved species sites") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta();
+				JavaFasta jf = new JavaFasta( DataTable.this );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -1432,7 +1432,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("Show variant species sites") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta();
+				JavaFasta jf = new JavaFasta( DataTable.this );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -1445,7 +1445,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View aligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta();
+				JavaFasta jf = new JavaFasta( DataTable.this );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -1458,7 +1458,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View unaligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta();
+				JavaFasta jf = new JavaFasta( DataTable.this );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -1472,7 +1472,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if( currentjavafasta == null ) {
-					currentjavafasta = new JavaFasta();
+					currentjavafasta = new JavaFasta( DataTable.this );
 					JFrame frame = new JFrame();
 					frame.setSize(800, 600);
 					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -1592,8 +1592,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		String res = getThermusFusion();
-		loadData( res );
+		//String res = getThermusFusion();
+		//loadData( res );
 		
 		try {
 			JSObject win = JSObject.getWindow(this);

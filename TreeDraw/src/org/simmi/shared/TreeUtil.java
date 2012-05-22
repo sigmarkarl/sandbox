@@ -212,6 +212,7 @@ public class TreeUtil {
 		public void addNode( Node node, double h ) {
 			nodes.add( node );
 			node.h = h;
+			node.setParent( this );
 		}
 		
 		public void removeNode( Node node ) {
