@@ -235,7 +235,7 @@ public class Treedraw implements EntryPoint {
 			int len = 0;
 			List<String> names;
 			double[] dvals;
-			if( str.startsWith(" ") ) {
+			if( str.startsWith(" ") || str.startsWith("\t") ) {
 				names = new ArrayList<String>();
 				String[] lines = str.split("\n");
 				len = Integer.parseInt( lines[0].trim() );
@@ -244,20 +244,22 @@ public class Treedraw implements EntryPoint {
 				int u = 0;
 				for( int i = 1; i < lines.length; i++ ) {
 					String line = lines[i];
-					String[] ddstrs = line.split("[ ]+");
+					String[] ddstrs = line.split("[ \t]+");
 					if( !line.startsWith(" ") ) {
 						m++;
 						u = 0;
 						
-						int si = ddstrs[0].indexOf('_');
-						String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
-						console( "name: " + name );
+						//int si = ddstrs[0].indexOf('_');
+						//String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
+						//console( "name: " + name );
+						
+						String name = ddstrs[0];
 						names.add( name );
 					}
 					if( ddstrs.length > 2 ) {
 						for( int k = 1; k < ddstrs.length; k++ ) {
 							int idx = (m-1)*len+(u++);
-							if( idx < 256 ) dvals[idx] = Double.parseDouble(ddstrs[k]);
+							if( idx < dvals.length ) dvals[idx] = Double.parseDouble(ddstrs[k]);
 							else console( m + " more " + u );
 						}
 					}
@@ -308,7 +310,25 @@ public class Treedraw implements EntryPoint {
 		e.click();
 	}-*/;
 	
-	public void openFileDialog( final int append ) {
+	public native void postParent( String from ) /*-{
+		var s = this;
+		$wnd.addEventListener('message',function(event) {
+			$wnd.console.log('message received from webfasta');
+			if(event.origin == 'http://'+from+'.appspot.com') {
+				$wnd.console.log('correct webfasta origin');
+				s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( event.data );
+			}
+		});
+			
+		//var loadHandler = function(event){
+		//	$wnd.console.log('sending message to webfasta');
+		//	event.currentTarget.opener.postMessage('ready','http://webfasta.appspot.com');
+		//}
+		//window.addEventListener('DOMContentLoaded', loadHandler, false);
+		$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
+	}-*/;
+	
+	public void openFileDialog( final int append ) {		
 		final DialogBox	db = new DialogBox();
 		db.setText("Open file ...");
 		
@@ -461,6 +481,70 @@ public class Treedraw implements EntryPoint {
 		return utftext;
 	}-*/;
 
+	public native String decode( String input ) /*-{
+		var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+		var output = "";
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+	
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+	
+		while (i < input.length) {
+			console.log( i );
+			
+			enc1 = _keyStr.indexOf(input.charAt(i++));
+			enc2 = _keyStr.indexOf(input.charAt(i++));
+			enc3 = _keyStr.indexOf(input.charAt(i++));
+			enc4 = _keyStr.indexOf(input.charAt(i++));
+	
+			chr1 = (enc1 << 2) | (enc2 >> 4);
+			chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+			chr3 = ((enc3 & 3) << 6) | enc4;
+	
+			output = output + String.fromCharCode(chr1);
+	
+			if (enc3 != 64) {
+				output = output + String.fromCharCode(chr2);
+			}
+			if (enc4 != 64) {
+				output = output + String.fromCharCode(chr3);
+			}
+		}
+	
+		output = this.@org.simmi.client.FacebookTree::_utf8_decode(Ljava/lang/String;)(output);
+	
+		return output;
+	}-*/;
+
+	private native String _utf8_decode( String utftext ) /*-{
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+	
+		while ( i < utftext.length ) {
+			c = utftext.charCodeAt(i);
+	
+			if (c < 128) {
+				string += String.fromCharCode(c);
+				i++;
+			}
+			else if((c > 191) && (c < 224)) {
+				c2 = utftext.charCodeAt(i+1);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+				i += 2;
+			}
+			else {
+				c2 = utftext.charCodeAt(i+1);
+				c3 = utftext.charCodeAt(i+2);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+				i += 3;
+			}
+	
+		}
+	
+		return string;
+	}-*/;
 	
 	public void save( String treestr ) {
 		String base64tree = encode( treestr );
@@ -735,7 +819,8 @@ public class Treedraw implements EntryPoint {
 						selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
 						root.countLeaves();
 					} else if( c == 'd' || c == 'D' ) {
-						selectedNode.getParent().removeNode( selectedNode );
+						Node parent = selectedNode.getParent();
+						if( parent != null ) parent.removeNode( selectedNode );
 						selectedNode = null;
 						root.countLeaves();
 					} else if( c == 'e' || c == 'E' || c == '\r' ) {
@@ -928,6 +1013,16 @@ public class Treedraw implements EntryPoint {
 		//help.add
 		
 		rp.add( canvas );
+		
+		String dist = Window.Location.getParameter("dist");
+		if( dist != null ) {
+			String dmat = decode( dist );
+			handleText( dmat );
+		}
+		console( Window.Location.getParameterMap().keySet().toString() );
+		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
+			postParent( Window.Location.getParameter("callback") );
+		}
 	}
 	
 	double w;	
