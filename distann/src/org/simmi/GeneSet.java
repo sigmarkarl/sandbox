@@ -7325,7 +7325,7 @@ public class GeneSet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -7380,7 +7380,7 @@ public class GeneSet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();

@@ -104,10 +104,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.sun.security.auth.module.NTSystem;
-
-import sun.misc.GC;
-
 public class Order extends JApplet {
 	JScrollPane	scrollpane;
 	JScrollPane	pscrollpane;
@@ -1814,8 +1810,8 @@ public class Order extends JApplet {
 		user = System.getProperty("user.name");
 		System.err.println( "trying user: " + user );
 		if( user == null || user.length() < 3 ) {
-			NTSystem ntsys = new NTSystem();
-			user = ntsys.getName();
+			//NTSystem ntsys = new NTSystem();
+			//user = ntsys.getName();
 			
 			System.err.println( "nt user: " + user );
 		}
