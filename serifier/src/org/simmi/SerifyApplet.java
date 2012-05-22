@@ -2158,7 +2158,7 @@ public class SerifyApplet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta();
+				JavaFasta jf = new JavaFasta( SerifyApplet.this );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -2365,7 +2365,7 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		popup.addSeparator();
-		popup.add( new AbstractAction("Genebank file") {
+		popup.add( new AbstractAction("Genbank file") {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				String addon = "nnnttaattaattaannn";
@@ -2388,7 +2388,7 @@ public class SerifyApplet extends JApplet {
 						InputStream is = url.openStream();
 						InputStreamReader	isr = new InputStreamReader(is);
 						BufferedReader	br = new BufferedReader( isr );
-						Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
+						Map<String,StringBuilder>	seqmap = new TreeMap<String,StringBuilder>();
 						StringBuilder	sb = null;
 						String			name = null;
 						String line = br.readLine();
@@ -2429,6 +2429,7 @@ public class SerifyApplet extends JApplet {
 							FileReader	fr = new FileReader( f );
 							br = new BufferedReader( fr );
 							line = br.readLine();
+							String evalue = null;
 							Anno ann = null;
 							while( line != null ) {
 								if( line.startsWith("Query=") ) {
@@ -2455,7 +2456,7 @@ public class SerifyApplet extends JApplet {
 										ann = new Anno( start, stop, rev == -1, null );
 										lann.add(ann);
 									} else ann = null;
-									
+									evalue = null;
 									System.err.println( cont );
 								} else if( line.startsWith(">") ) {
 									if( ann != null && ann.name == null ) {
@@ -2472,6 +2473,14 @@ public class SerifyApplet extends JApplet {
 								} else if( line.contains("Not hits") ) {
 									if( ann != null && ann.name == null ) {
 										ann.name = line;
+									}
+								} else if( line.startsWith(" Score =") ) {
+									int u = line.indexOf("Expect =");
+									if( u > 0 ) {
+										u += 9;
+										int k = line.indexOf(',', u);
+										evalue = line.substring(u, k);
+										if( ann != null ) ann.name += "\t" + evalue;
 									}
 								}
 								line = br.readLine();
