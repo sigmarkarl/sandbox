@@ -271,6 +271,16 @@ public class TreeUtil {
 			return val+1;
 		}
 		
+		public int countParentHeight() {
+			int val = 0;
+			Node parent = this.getParent();
+			while( parent != null ) {
+				val++;
+				parent = parent.getParent();
+			}
+			return val;
+		}
+		
 		public double getHeight() {
 			double h = this.geth();
 			double d = h + ((parent != null) ? parent.getHeight() : 0.0);
