@@ -146,8 +146,8 @@ public class Order extends JApplet {
 	JComboBox	combo = new JComboBox();
 	JComboBox	pcombo = new JComboBox();
 	
-	JComboBox<String>	vcombo;
-	JComboBox<String>	stcombo;
+	JComboBox	vcombo;
+	JComboBox	stcombo;
 	
 	JButton		newItem = new JButton( "Ný vara" );
 	JButton		delItem = new JButton( "Eyða vöru" );
@@ -220,7 +220,7 @@ public class Order extends JApplet {
 	}
 	
 	public class BCluster extends JComponent {
-		JComboBox<String>	name = new JComboBox<String>();
+		JComboBox	name = new JComboBox();
 		//new JSpinner
 		JSpinner			spin = new JSpinner();
 		
