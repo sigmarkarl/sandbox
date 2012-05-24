@@ -547,14 +547,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		jf.updateView();
 	}
 	
-	public void viewAligned( JavaFasta jf, boolean aligned ) {
-		JCheckBox species = new JCheckBox("Species");
-		JCheckBox country = new JCheckBox("Country");
-		JCheckBox source = new JCheckBox("Source");
-		JCheckBox accession = new JCheckBox("Accession");
-		Object[] params = new Object[] {species, country, source, accession};
-		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);
-		
+	public void loadAligned( JavaFasta jf, boolean aligned ) {
 		Set<String>	include = new HashSet<String>();
 		int[] rr = table.getSelectedRows();
 		for( int r : rr ) {
@@ -564,10 +557,20 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				include.add( (String)val[1] );
 			}
 		}
+		loadAligned( jf, aligned, include );
+	}
+	
+	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> include ) {
+		JCheckBox species = new JCheckBox("Species");
+		JCheckBox country = new JCheckBox("Country");
+		JCheckBox source = new JCheckBox("Source");
+		JCheckBox accession = new JCheckBox("Accession");
+		Object[] params = new Object[] {species, country, source, accession};
+		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);
 		
 		List<Sequence> contset = new ArrayList<Sequence>();
 		Sequence	seq = null;
-		int nseq = 0;
+		//int nseq = 0;
 		
 		InputStream is = DataTable.this.getClass().getResourceAsStream("/thermales.fasta");
 		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
@@ -669,11 +672,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( fname.length() > 1 ) {
 							cont = (Integer)obj[3] >= 900 ? fname : "*"+fname;
 						} else cont = line.substring(1);
-					//if( rr.length == 1 ) cont = line.replace( ">", "" );
-					//else cont = line.replace( ">", seqs.getName()+"_" );
+						//if( rr.length == 1 ) cont = line.replace( ">", "" );
+						//else cont = line.replace( ">", seqs.getName()+"_" );
 						seq = jf.new Sequence( cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "") );
-					//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
-						nseq++;
+						//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
+						//nseq++;
 					}
 				} else if( inc != null ) {
 					String lrp = line.replace(" ", "");
@@ -692,11 +695,23 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 
 		for (Sequence contig : contset) {
+			contig.checkLengths();
 			jf.addSequence(contig);
 			if (contig.getAnnotations() != null)
 				Collections.sort(contig.getAnnotations());
 		}
+	}
+	
+	public void viewAligned( JavaFasta jf, boolean aligned ) {
+		loadAligned( jf, aligned );
 		jf.updateView();
+	}
+	
+	public StringBuilder extractFastaWoGaps( String filename ) {
+		JavaFasta jf = new JavaFasta( DataTable.this );
+		jf.initDataStructures();
+		loadAligned(jf, true);
+		return jf.getFastaWoGaps();
 	}
 	
 	public String extractFasta( String filename ) {
@@ -833,6 +848,34 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		
 		System.err.println( "after" );
 		return sb.toString();
+	}
+	
+	public void runSql( String sql ) {
+		if( sql != null ) {
+			sql = sql.replace("table", tableid);
+			try {
+				if( sql.startsWith("update") && sql.contains(" in ") ) {
+					int start = sql.indexOf('(')+1;
+					int stop = sql.indexOf(')', start);
+					
+					String innersql = sql.substring(start, stop);
+					String result = run( innersql, true );
+					String[] split = result.split("\n");
+					
+					int sw = sql.indexOf("where");
+					String subsql = sql.substring(0, sw);
+					for( int i = 1; i < split.length; i++ ) {
+						String rowid = split[i];
+						System.err.println("about to run "+rowid);
+						run( subsql+"where rowid = '"+rowid+"'", true );
+					}
+				} else {
+					run( sql, true );
+				}
+			} catch (IOException | ServiceException e1) {
+				e1.printStackTrace();
+			}
+		}
 	}
     
 	JavaFasta	currentjavafasta;
@@ -1345,31 +1388,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					public void actionPerformed(ActionEvent e) {
 						String sql = textarea.getSelectedText();
 						if( sql == null ) sql = textarea.getText();
-						if( sql != null ) {
-							sql = sql.replace("table", tableid);
-							try {
-								if( sql.startsWith("update") && sql.contains(" in ") ) {
-									int start = sql.indexOf('(')+1;
-									int stop = sql.indexOf(')', start);
-									
-									String innersql = sql.substring(start, stop);
-									String result = run( innersql, true );
-									String[] split = result.split("\n");
-									
-									int sw = sql.indexOf("where");
-									String subsql = sql.substring(0, sw);
-									for( int i = 1; i < split.length; i++ ) {
-										String rowid = split[i];
-										System.err.println("about to run "+rowid);
-										run( subsql+"where rowid = '"+rowid+"'", true );
-									}
-								} else {
-									run( sql, true );
-								}
-							} catch (IOException | ServiceException e1) {
-								e1.printStackTrace();
-							}
-						}
+						runSql( sql );
 					}
 				});
 				JButton	cls = new JButton( new AbstractAction("Close") {
@@ -1407,11 +1426,70 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );
 		popup.addSeparator();
+		popup.add( new AbstractAction("NJTree") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//String tree = extractFasta("/thermales.fasta");
+				//String distm = dist
+				JavaFasta jf = new JavaFasta( DataTable.this );
+				jf.initDataStructures();
+				/*Set<String> include = new HashSet<String>();
+				for( Sequence seq : lseq ) {
+					
+				}*/
+				System.err.println( "erm" );
+				loadAligned(jf, true);
+				double[] corr = jf.distanceMatrixNumeric( false );
+				List<String>	corrInd = jf.getNames();
+				
+				System.err.println( "befne" );
+				
+				TreeUtil	tu = new TreeUtil();
+				tu.neighborJoin(corr, jf.getNumberOfSequences(), corrInd);
+				String tree = tu.getNode().toString();
+				System.err.println( tree );
+				Object[] objs = { tree };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				System.err.println( "bleh" );
+				win.call("showTree", objs);
+			}
+		});
+		popup.add( new AbstractAction("NJTree w/o gaps") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//String tree = extractFasta("/thermales.fasta");
+				//String distm = dist
+				JavaFasta jf = new JavaFasta( DataTable.this );
+				jf.initDataStructures();
+				/*Set<String> include = new HashSet<String>();
+				for( Sequence seq : lseq ) {
+					
+				}*/
+				loadAligned(jf, true);
+				double[] corr = jf.distanceMatrixNumeric( true );
+				List<String>	corrInd = jf.getNames();
+				
+				TreeUtil	tu = new TreeUtil();
+				tu.neighborJoin(corr, jf.getNumberOfSequences(), corrInd);
+				Object[] objs = { tu.getNode().toString() };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("showTree", objs);
+			}
+		});
 		popup.add( new AbstractAction("FastTree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String tree = extractFasta("/thermales.fasta");
 				Object[] objs = { tree };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("fasttree", objs);
+			}
+		});
+		popup.add( new AbstractAction("FastTree w/o gaps") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder tree = extractFastaWoGaps("/thermales.fasta");
+				Object[] objs = { tree.toString() };
 				JSObject win = JSObject.getWindow( DataTable.this );
 				win.call("fasttree", objs);
 			}
@@ -1634,12 +1712,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		int len;
 	};
 	
-	public static void main_new(String[] args) {
+	public static void main(String[] args) {
 		try {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			
-			run("insert into "+tableid+" (name, acc) values ('t.spCCB_US3_UF1','t.spCCB_US3_UF1')", true);
+			String ret = run("select rowid, ident from "+tableid+" where country like '%hile%' and species like '%filiform%'", true);
+			String[] split = ret.split("\n");
+			for( int i = 1; i < split.length; i++ ) {
+				String row = split[i];
+				String[] subsplit = row.split(",");
+				int ident = Integer.parseInt( subsplit[1] );
+				run( "update "+tableid+" set species = 'Thermus chileunknown', ident = "+(ident+4)+" where rowid = '"+subsplit[0]+"'", true );
+			}
 			/*String ret = run("select rowid from "+tableid+" where name = 'Unl042jm'", true);
 			System.err.println( ret );
 			String[] lines = ret.split("\n");
@@ -1653,7 +1738,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 	}
 	
-	public static void main(String[] args) {
+	public static void main_old(String[] args) {
 		Map<String, StrId> tegmap = new HashMap<String, StrId>();
 		//Map<String,String>	rowidmap = new HashMap<String,String>();
 		

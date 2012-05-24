@@ -3,6 +3,8 @@ package org.simmi.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +62,7 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
@@ -78,7 +81,8 @@ public class Treedraw implements EntryPoint {
 	Node		selectedNode;
 	Node[]		nodearray;
 	TreeUtil	treeutil;
-	boolean	center = false;
+	boolean		center = false;
+	int			equalHeight = 0;
 	
 	public void handleTree( TreeUtil treeutil ) {
 		this.treeutil = treeutil;
@@ -112,7 +116,7 @@ public class Treedraw implements EntryPoint {
 		canvas.setCoordinateSpaceHeight( hsize+2 );
 		
 		boolean vertical = true;
-		boolean equalHeight = false;
+		//boolean equalHeight = false;
 		
 		Treedraw.this.h = hchunk*leaves;
 		Treedraw.this.w = ww-10;
@@ -143,14 +147,17 @@ public class Treedraw implements EntryPoint {
 		console( "leaves " + leaves );
 		double	maxheightold = root.getMaxHeight();
 		
-		Node node = getMaxHeight( root, ctx, ww-30 );
+		Node node = equalHeight > 0 ? getMaxNameLength( root, ctx, ww-30 ) : getMaxHeight( root, ctx, ww-30 );
 		if( node != null ) {
 			double gh = getHeight(node);
 			String name = node.getName();
 			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 			double textwidth = ctx.measureText(name).getWidth();
 			console( ""+textwidth );
-			double maxheight = (gh*(ww-30))/(ww-60-textwidth);
+			
+			double maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth);
+			if( equalHeight > 0 ) dw = maxheight/levels;
+					
 			//console( maxheightold + "  " + gh );
 			
 			if( vertical ) {
@@ -182,6 +189,29 @@ public class Treedraw implements EntryPoint {
 				recursiveLeavesGet( n, leaves );
 			}
 		}
+	}
+	
+	public Node getMaxNameLength( Node root, Context2d ctx, int ww ) {
+		List<Node>	leaves = new ArrayList<Node>();
+		recursiveLeavesGet( root, leaves );
+		
+		Node sel = null;
+		double max = 0.0;
+		console( ""+leaves.size() );
+		for( Node node : leaves ) {
+			String name = node.getName();
+			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			TextMetrics tm = ctx.measureText( name );
+			double tw = tm.getWidth();
+			//double h = node.getHeight();
+			//double val = h/(ww-tw);
+			if( tw > max ) {
+				max = tw;
+				sel = node;
+			}
+		}
+		
+		return sel;
 	}
 	
 	public Node getMaxHeight( Node root, Context2d ctx, int ww ) {
@@ -612,6 +642,16 @@ public class Treedraw implements EntryPoint {
 		node.seth2( Math.max( node.geth2(), 0.0 ) );
 	}
 	
+	public void arrange( Node root, Comparator<Node> comparator ) {
+		List<Node> nodes = root.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				arrange( n, comparator );
+			}
+			Collections.sort( nodes, comparator );
+		}
+	}
+	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get("canvas");
@@ -643,7 +683,7 @@ public class Treedraw implements EntryPoint {
 		s.setMargin(0.0, Unit.PX);
 		
 		int w = Window.getClientWidth();
-		int h =240; //Window.getClientHeight();
+		int h =180; //Window.getClientHeight();
 		canvas.setSize(w+"px", h+"px");
 		
 		canvas.addDropHandler( new DropHandler() {
@@ -947,7 +987,7 @@ public class Treedraw implements EntryPoint {
 		zoominAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				hchunk *= 0.8;
+				hchunk *= 1.25;
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
@@ -955,7 +995,7 @@ public class Treedraw implements EntryPoint {
 		zoomoutAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				hchunk *= 1.25;
+				hchunk *= 0.8;
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
@@ -965,8 +1005,8 @@ public class Treedraw implements EntryPoint {
 		choicePanel.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		
 		HorizontalPanel	bc = new HorizontalPanel();
-		HTML	bctext = new HTML( "Center" );
-		RadioButton	branch = new RadioButton("bc", "on branch");
+		HTML	bctext = new HTML( "Center on" );
+		RadioButton	branch = new RadioButton("bc", "branch");
 		branch.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
 			@Override
 			public void onValueChange(ValueChangeEvent<Boolean> event) {
@@ -974,7 +1014,7 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
-		RadioButton	cluster = new RadioButton("bc", "on cluster");
+		RadioButton	cluster = new RadioButton("bc", "cluster");
 		cluster.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
 			@Override
 			public void onValueChange(ValueChangeEvent<Boolean> event) {
@@ -986,6 +1026,38 @@ public class Treedraw implements EntryPoint {
 		bc.add( bctext );
 		bc.add( branch );
 		bc.add( cluster );
+		
+		HorizontalPanel	eqhp = new HorizontalPanel();
+		RadioButton	uselen = new RadioButton("eq", "Use lengths. ");
+		uselen.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				equalHeight = 0;
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		HTML	eqtext = new HTML( "Equal" );
+		RadioButton	equidist = new RadioButton("eq", "distance");
+		equidist.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				equalHeight = 2;
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		RadioButton	equidep = new RadioButton("eq", "depth");
+		equidep.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				equalHeight = 1;
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		uselen.setValue( true );
+		eqhp.add( uselen );
+		eqhp.add( eqtext );
+		eqhp.add( equidist );
+		eqhp.add( equidep );
 		
 		HorizontalPanel	hp = new HorizontalPanel();
 		hp.setSpacing(5);
@@ -1007,7 +1079,53 @@ public class Treedraw implements EntryPoint {
 		hp.add( html );
 		hp.add( zoomoutAnchor );
 		
+		HTML arhtml = new HTML( "Arrange by " );
+		Button arbl = new Button( "branch length" );
+		arbl.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+					@Override
+					public int compare(Node o1, Node o2) {
+						if( o1.geth() > o2.geth() ) return 1;
+						else if( o1.geth() == o2.geth() ) return 0;
+						
+						return -1;
+					}
+				};
+				arrange( treeutil.getNode(), comp );
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		Button arcs = new Button( "cluster size" );
+		arcs.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+					@Override
+					public int compare(Node o1, Node o2) {
+						int c1 = o1.countLeaves();
+						int c2 = o2.countLeaves();
+						
+						if( c1 > c2 ) return 1;
+						else if( c1 == c2 ) return 0;
+						
+						return -1;
+					}
+				};
+				arrange( treeutil.getNode(), comp );
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		HorizontalPanel	arrangehp = new HorizontalPanel();
+		arrangehp.setSpacing(5);
+		arrangehp.add( arhtml );
+		arrangehp.add( arbl );
+		arrangehp.add( arcs );
+		
+		choicePanel.add( arrangehp );
 		choicePanel.add( bc );
+		choicePanel.add( eqhp );
 		choicePanel.add( hp );
 		help.add( choicePanel );
 		//help.add
@@ -1039,7 +1157,7 @@ public class Treedraw implements EntryPoint {
 		$wnd.console.log( log );
 	}-*/;
 	
-	public void drawFramesRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight, int leaves ) {		
+	public void drawFramesRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, int leaves ) {		
 		if( node.getNodes().size() > 0 ) {			
 			int total = 0;
 			String sc = node.getColor();
@@ -1069,7 +1187,7 @@ public class Treedraw implements EntryPoint {
 				if( vertical ) {
 					//minh = 0.0;
 					ny = dh*total+(dh*mleaves)/2.0;
-					if( equalHeight ) {
+					if( equalHeight > 0 ) {
 						nx = w/25.0+dw*(w/dw-nlevels);
 					} else {
 						nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.1);
@@ -1084,7 +1202,7 @@ public class Treedraw implements EntryPoint {
 				} else {
 					//minh = 0.0;
 					nx = dw*total+(dw*mleaves)/2.0;
-					if( equalHeight ) {	
+					if( equalHeight > 0 ) {	
 						ny = h/25.0+dh*(h/dh-nlevels);
 					} else {
 						ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
@@ -1126,13 +1244,14 @@ public class Treedraw implements EntryPoint {
 		return null;
 	}
 	
-	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
+	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
 		Map<Node,Double>	cmap = new HashMap<Node,Double>();
 		int total = 0;
 		double nyavg = 0.0;
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			int nleaves = resnode.getLeavesCount();
 			int nlevels = resnode.countMaxHeight();
+			int plevels = resnode.countParentHeight();
 			int mleaves = Math.max(1, nleaves);
 			
 			double nx = 0;
@@ -1140,8 +1259,11 @@ public class Treedraw implements EntryPoint {
 			
 			if( vertical ) {
 				ny = dh*total+(dh*mleaves)/2.0;
-				if( equalHeight ) {
-					nx = w/25.0+dw*(w/dw-nlevels);
+				if( equalHeight > 0 ) {
+					//nx = w/25.0+dw*(w/dw-nlevels);
+					
+					if( equalHeight == 1 ) nx = 30.0+dw*(maxheight/dw-nlevels);
+					else nx = 30.0+(dw*plevels);
 				} else {
 					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.0);
 				}
@@ -1152,7 +1274,7 @@ public class Treedraw implements EntryPoint {
 				}
 			} else {
 				nx = dw*total+(dw*mleaves)/2.0;
-				if( equalHeight ) {	
+				if( equalHeight > 0 ) {	
 					ny = h/25.0+dh*(h/dh-nlevels);
 				} else {
 					ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
@@ -1182,6 +1304,7 @@ public class Treedraw implements EntryPoint {
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			int nleaves = resnode.getLeavesCount();
 			int nlevels = resnode.countMaxHeight();
+			int plevels = resnode.countParentHeight();
 			int mleaves = Math.max(1, nleaves);
 			
 			double nx = 0;
@@ -1189,8 +1312,9 @@ public class Treedraw implements EntryPoint {
 			
 			if( vertical ) {
 				ny = dh*total+(dh*mleaves)/2.0;
-				if( equalHeight ) {
-					nx = w/25.0+dw*(w/dw-nlevels);
+				if( equalHeight > 0 ) {
+					if( equalHeight == 1 ) nx = 30.0+dw*(maxheight/dw-nlevels);
+					else nx = 30.0+(dw*plevels);
 				} else {
 					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.0);
 				}
@@ -1201,7 +1325,7 @@ public class Treedraw implements EntryPoint {
 				}
 			} else {
 				nx = dw*total+(dw*mleaves)/2.0;
-				if( equalHeight ) {	
+				if( equalHeight > 0 ) {	
 					ny = h/25.0+dh*(h/dh-nlevels);
 				} else {
 					ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
@@ -1234,7 +1358,7 @@ public class Treedraw implements EntryPoint {
 		return ret;
 	}
 	
-	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, boolean equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
+	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
 		int total = 0;
 		if( vertical ) node.setCanvasLoc( startx, y+starty );
 		else node.setCanvasLoc( x+startx, starty );
@@ -1242,6 +1366,7 @@ public class Treedraw implements EntryPoint {
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			int nleaves = resnode.getLeavesCount();
 			int nlevels = resnode.countMaxHeight();
+			int plevels = resnode.countParentHeight();
 			int mleaves = Math.max(1, nleaves);
 			
 			double nx = 0;
@@ -1250,8 +1375,10 @@ public class Treedraw implements EntryPoint {
 			if( vertical ) {
 				//minh = 0.0;
 				ny = dh*total+(dh*mleaves)/2.0;
-				if( equalHeight ) {
-					nx = w/25.0+dw*(w/dw-nlevels);
+				if( equalHeight > 0 ) {
+					//w/25.0
+					if( equalHeight == 1 ) nx = 30.0+dw*(maxheight/dw-nlevels);
+					else nx = 30.0+(dw*plevels);
 				} else {
 					nx = /*h/25+*/startx+(w*resnode.geth())/(maxheight*1.0);
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
@@ -1265,7 +1392,7 @@ public class Treedraw implements EntryPoint {
 			} else {
 				//minh = 0.0;
 				nx = dw*total+(dw*mleaves)/2.0;
-				if( equalHeight ) {	
+				if( equalHeight > 0 ) {	
 					ny = h/25.0+dh*(h/dh-nlevels);
 				} else {
 					ny = /*h/25+*/starty+(h*resnode.geth())/(maxheight*2.2);
