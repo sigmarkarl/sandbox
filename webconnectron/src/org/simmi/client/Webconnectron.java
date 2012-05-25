@@ -31,6 +31,24 @@ public class Webconnectron implements EntryPoint {
 	 */
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
+	Connectron connectron;
+	public void handleText( String stuff ) {
+		connectron.handleText( stuff );
+	}
+	
+	public native void postParent( String from ) /*-{
+		var s = this;
+		$wnd.addEventListener('message',function(event) {
+			$wnd.console.log('message received from treedraw');
+			if(event.origin == 'http://'+from+'.appspot.com') {
+				$wnd.console.log('correct treedraw origin');
+				s.@org.simmi.client.Webconnectron::handleText(Ljava/lang/String;)( event.data );
+			}
+		});
+			
+		$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
+	}-*/;
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -83,7 +101,7 @@ public class Webconnectron implements EntryPoint {
 		SimplePanel	sp = new SimplePanel();
 		sp.getElement().appendChild( ads );
 		
-		final Connectron connectron = new Connectron();
+		connectron = new Connectron();
 		hp.add( connectron );
 		hp.add( sp );
 		
@@ -121,6 +139,10 @@ public class Webconnectron implements EntryPoint {
 				oldh = h;
 			}
 		});
+		
+		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
+			postParent( Window.Location.getParameter("callback") );
+		}
 		
 		rp.add( hp );
 	}
