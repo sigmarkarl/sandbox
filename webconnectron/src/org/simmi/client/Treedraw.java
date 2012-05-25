@@ -1068,6 +1068,17 @@ public class Treedraw implements EntryPoint {
 		hp.add( html );
 		hp.add( imageAnchor );
 		
+		html = new HTML(". View in");
+		hp.add( html );
+		Anchor td = new Anchor("3d");
+		td.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				
+			}
+		});
+		hp.add( td );
+		
 		html = new HTML(". Run");
 		hp.add( html );
 		hp.add( sampleAnchor );
