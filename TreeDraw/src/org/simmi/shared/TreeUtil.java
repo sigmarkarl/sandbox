@@ -68,14 +68,21 @@ public class TreeUtil {
 			
 			double[] dmatmp = new double[(len-1)*(len-1)];
 			int k = 0;
+			//boolean done = false;
 			for( int i = 0; i < len; i++ ) {
 				if( i != imin && i != jmin ) {
 					for( int j = 0; j < len; j++ ) {
 						if( j != imin && j != jmin ) {
+							/*if( k >= dmatmp.length ) {
+								System.err.println();
+							}*/
 							dmatmp[k++] = dmat[i*len+j];
 						}
 					}
+					
 					k++;
+					
+					//done = true;
 				}
 			}
 			k = 0;
