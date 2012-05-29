@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/javamail-1.4.4/mail.jar"/>
-	<classpathentry kind="lib" path="C:/javamail-1.4.4/lib/smtp.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.6.0_27/jre/lib/plugin.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/poi-scratchpad-3.8-beta4-20110826.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/poi-3.8-beta4-20110826.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/poi-examples-3.8-beta4-20110826.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/poi-excelant-3.8-beta4-20110826.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/poi-ooxml-3.8-beta4-20110826.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/poi-ooxml-schemas-3.8-beta4-20110826.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/ooxml-lib/xmlbeans-2.3.0.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/ooxml-lib/dom4j-1.6.1.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/ooxml-lib/stax-api-1.0.1.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/lib/log4j-1.2.13.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/lib/commons-logging-1.1.jar"/>
-	<classpathentry kind="lib" path="C:/poi-3.8-beta4/lib/junit-3.8.1.jar"/>
-	<classpathentry kind="lib" path="C:/sqljdbc3/sqljdbc_3.0/enu/sqljdbc4.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/poi-3.8-20120326.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/poi-examples-3.8-20120326.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/poi-excelant-3.8-20120326.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/poi-ooxml-3.8-20120326.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/poi-ooxml-schemas-3.8-20120326.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/poi-scratchpad-3.8-20120326.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/ooxml-lib/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/ooxml-lib/stax-api-1.0.1.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/ooxml-lib/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/lib/commons-logging-1.1.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/lib/junit-3.8.1.jar"/>
+	<classpathentry kind="lib" path="/opt/poi-3.8/lib/log4j-1.2.13.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/gnumail.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_04/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_04/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_04/jre/lib/plugin.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.6.0_30"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

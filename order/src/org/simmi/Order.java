@@ -104,10 +104,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.sun.security.auth.module.NTSystem;
-
-import sun.misc.GC;
-
 public class Order extends JApplet {
 	JScrollPane	scrollpane;
 	JScrollPane	pscrollpane;
@@ -150,8 +146,8 @@ public class Order extends JApplet {
 	JComboBox	combo = new JComboBox();
 	JComboBox	pcombo = new JComboBox();
 	
-	JComboBox<String>	vcombo;
-	JComboBox<String>	stcombo;
+	JComboBox	vcombo;
+	JComboBox	stcombo;
 	
 	JButton		newItem = new JButton( "Ný vara" );
 	JButton		delItem = new JButton( "Eyða vöru" );
@@ -224,7 +220,7 @@ public class Order extends JApplet {
 	}
 	
 	public class BCluster extends JComponent {
-		JComboBox<String>	name = new JComboBox<String>();
+		JComboBox	name = new JComboBox();
 		//new JSpinner
 		JSpinner			spin = new JSpinner();
 		
@@ -808,6 +804,48 @@ public class Order extends JApplet {
 		};
 	}
 	
+	public void updateLocal( Pontun pnt ) throws SQLException {		
+		String sql = "select [ordno], [name], [user], [quant], [unit], [orddate], [purdate], [urgent], [description], [jobid], [location], [recdate], [price], [byrgir], [cat], [findate] from [order].[dbo].[Pontun] where ordno = "+pnt._Númer;// where [user] = '"+user+"'";
+		
+		PreparedStatement 	ps = con.prepareStatement(sql);
+		ResultSet 			rs = ps.executeQuery();
+
+		while (rs.next()) {
+			//Date 	afgdate = rs.getDate("purdate");
+			//Date	afhdate = rs.getDate("recdate");
+			//Date	findate = rs.getDate("findate");
+			double	price = rs.getDouble("price");
+			//String 	puser = rs.getString("user");
+			//String	pname = rs.getString("name");
+			String	cat = rs.getString("cat");
+			//String	framl = ordmap.containsKey(cat) ? ordmap.get(cat).e_Framleiðandi : "";
+			
+			pnt.e_Mikilvægt = rs.getBoolean("urgent");
+			pnt.Birgi = rs.getString("byrgir");
+			pnt.Cat = cat;
+			pnt._Lýsing = rs.getString("description");
+			pnt.e_Magn = rs.getInt("quant");
+			pnt.e_Mælieining = rs.getString("unit");
+			String st = rs.getString("location");
+			String vn = pnt.e_Verknúmer = rs.getString("jobid");
+			if( vn == null ) { 
+				pnt.e_Verknúmer = "";
+			} else {
+				pnt.e_Verknúmer = vn;
+			}
+			
+			if( st == null ) {
+				pnt.e_Svið = "";
+			} else {
+				pnt.e_Svið = st;
+			}
+			pnt.e_Verð = price;
+		}
+		
+		rs.close();
+		ps.close();
+	}
+	
 	public void loadPnt() throws SQLException {		
 		String sql = "select [ordno], [name], [user], [quant], [unit], [orddate], [purdate], [urgent], [description], [jobid], [location], [recdate], [price], [byrgir], [cat], [findate] from [order].[dbo].[Pontun]";// where [user] = '"+user+"'";
 		
@@ -1264,6 +1302,7 @@ public class Order extends JApplet {
 					pnts.add( pnt );
 					
 					try {
+						updateLocal(pnt);
 						updateorder( pnt );
 					} catch (SQLException e1) {
 						e1.printStackTrace();
@@ -1298,7 +1337,7 @@ public class Order extends JApplet {
 	private static class SMTPAuthenticator extends javax.mail.Authenticator {
 	    public PasswordAuthentication getPasswordAuthentication() {
 	        String username = "sigmar";
-	        String password = "b.r3a1h1ms";
+	        String password = "mouse.123";
 	        return new PasswordAuthentication(username, password);
 	    }
 	}
@@ -1771,8 +1810,8 @@ public class Order extends JApplet {
 		user = System.getProperty("user.name");
 		System.err.println( "trying user: " + user );
 		if( user == null || user.length() < 3 ) {
-			NTSystem ntsys = new NTSystem();
-			user = ntsys.getName();
+			//NTSystem ntsys = new NTSystem();
+			//user = ntsys.getName();
 			
 			System.err.println( "nt user: " + user );
 		}
