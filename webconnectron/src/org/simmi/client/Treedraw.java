@@ -831,6 +831,7 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onKeyPress(KeyPressEvent event) {
 				char c = event.getCharCode();
+				int keycode = event.getNativeEvent().getKeyCode();
 				if( c == 'a' || c == 'A' ) {
 					String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
 					Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
@@ -858,7 +859,7 @@ public class Treedraw implements EntryPoint {
 					if( c == 'c' || c == 'C' ) {
 						selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
 						root.countLeaves();
-					} else if( c == 'd' || c == 'D' ) {
+					} else if( c == 'd' || c == 'D' || keycode == KeyCodes.KEY_DELETE ) {
 						Node parent = selectedNode.getParent();
 						if( parent != null ) parent.removeNode( selectedNode );
 						selectedNode = null;
@@ -1068,7 +1069,7 @@ public class Treedraw implements EntryPoint {
 		hp.add( html );
 		hp.add( imageAnchor );
 		
-		html = new HTML(". View in");
+		/*html = new HTML(". View in");
 		hp.add( html );
 		Anchor td = new Anchor("3d");
 		td.addClickHandler( new ClickHandler() {
@@ -1077,7 +1078,7 @@ public class Treedraw implements EntryPoint {
 				
 			}
 		});
-		hp.add( td );
+		hp.add( td );*/
 		
 		html = new HTML(". Run");
 		hp.add( html );
