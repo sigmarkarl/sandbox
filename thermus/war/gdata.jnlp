@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://thermusgenes.appspot.com/" href="gdata.jnlp">
+<information>
+  <title>Gdata extension</title>
+  <vendor>Huldufolk ehf.</vendor>
+  <homepage href="http://thermusgenes.appspot.com" />
+  <description>Gdata java extension</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="gdata-core-1.0.jar"/>
+  <jar href="gdata-client-1.0.jar"/>
+  <jar href="gdata-client-meta-1.0.jar"/>
+  <jar href="google-collect-1.0-rc1.jar"/>
+</resources>
+<component-desc />
+</jnlp>
