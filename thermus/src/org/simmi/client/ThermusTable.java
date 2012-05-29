@@ -46,8 +46,9 @@ public class ThermusTable implements EntryPoint {
 		
 		$doc.appendText = function( str ) {
 			$wnd.console.log( str );
-			var datatable = $doc.getElementById('datatable');
-			datatable.showTree( str );
+			//var datatable = $doc.getElementById('datatable');
+			//datatable.showTree( str );
+			$wnd.showTree( str );
 		};
 
 		return 0;
