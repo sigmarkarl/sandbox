@@ -91,7 +91,6 @@ import org.simmi.shared.TreeUtil;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.JavaFasta.Sequence;
 
-import com.google.gdata.client.ClientLoginAccountType;
 import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.Service.GDataRequest;
 import com.google.gdata.client.Service.GDataRequest.RequestType;
@@ -313,19 +312,17 @@ public class DataTable extends JApplet implements ClipboardOwner {
     
     private static GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
-	private static final String email = "huldaeggerts@gmail.com";
-	private static final String password = "b.r3a1h1ms";
 	private static final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	
 	public String getThermusFusion() {
 		//System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
 		if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
-			try {
+			/*try {
 				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}
+			}*/
 		}
 		
 		if( service != null ) {
@@ -926,7 +923,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( spec.contains("eggert") || spec.contains("yunnan") || spec.contains("rehai") || spec.contains("malas") || spec.contains("chile") ) {
 							spec = '"'+spec+'"';
 						}
-					} else spec = "Thermus unkown";
+					} else spec = '"'+"T.unkown"+'"';
 					
 					int iv = spec.indexOf('_');
 					int iv2 = spec.indexOf(' ');
@@ -1961,16 +1958,24 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		String res = getThermusFusion();
-		loadData( res );
+		//String res = getThermusFusion();
+		//loadData( res );
 		
+		boolean succ = true;
 		try {
 			JSObject win = JSObject.getWindow(this);
 			System.err.println( "about to run loadData" );
 			win.call("loadData", new Object[] {});
 			//System.err.println( "done loadData" );
 			//win.call("loadMeta", new Object[] {});
-		} catch( Exception e ) {}
+		} catch( Exception e ) {
+			succ = false;
+		}
+		
+		if( !succ ) {
+			String res = getThermusFusion();
+			loadData( res );
+		}
 		
 		this.add( scrollpane );
 	}
@@ -2006,7 +2011,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	public static void main(String[] args) {
 		try {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
-			service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			//service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			
 			String ret = run("select rowid, ident from "+tableid+" where country like '%hile%' and species like '%filiform%'", true);
 			String[] split = ret.split("\n");
@@ -2080,7 +2085,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			fr.close();
 			
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
-			service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			//service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 		
 			//String ret = run("select name, rowid from "+tableid+" where name like 't.spCCB%'", true);
 			String ret = run("select name, rowid from "+tableid, true);
