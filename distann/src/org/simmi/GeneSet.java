@@ -542,6 +542,7 @@ public class GeneSet extends JApplet {
 
 				Set<String> set;
 				String padda = qsplit[0];
+				if( padda.endsWith(".fna") ) padda = padda.substring(0, padda.length()-4);
 				if (geneset.containsKey(padda)) {
 					set = geneset.get(padda);
 				} else {
@@ -654,6 +655,7 @@ public class GeneSet extends JApplet {
 				StringBuilder aa = aaSearch(query);
 				String aaid = "_"+aa;
 				String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
+				if( padda.endsWith(".fna") ) padda = padda.substring(0,padda.length()-4);
 				if (ret.containsKey(aaid)) {
 					gene = ret.get(aaid);
 				} else {
@@ -733,7 +735,7 @@ public class GeneSet extends JApplet {
 					fw.write(line + "\n");
 			} else if (trim.startsWith("Query=")) {
 				// if( trim.)
-				query = trim.substring(6).trim().split("[ ]+")[0];
+				query = trim.substring(6).trim().split("[ ]+")[0].replace(".fna", "");
 				
 				/*int count = 0;
 				if( query.contains("contig") ) {
@@ -1112,7 +1114,7 @@ public class GeneSet extends JApplet {
 				ac = new StringBuilder();
 				String cont = line.substring(1) + "";
 				String[] split = cont.split(" ");
-				name = split[0];
+				name = split[0].replace(".fna","");
 				start = Integer.parseInt(split[2]);
 				stop = Integer.parseInt(split[4]);
 				dir = Integer.parseInt(split[6]);
@@ -1182,7 +1184,7 @@ public class GeneSet extends JApplet {
 					dnaa.put(name, ac);
 
 				ac = new StringBuilder();
-				name = line.substring(1).split(" ")[0];
+				name = line.substring(1).split(" ")[0].replace(".fna","");
 
 				int v = name.indexOf("contig");
 			} else
@@ -5859,7 +5861,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 39;
+				return 40;
 			}
 
 			@Override
@@ -5937,10 +5939,12 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 35) {
 					return "T.kawarayensis";
 				} else if (columnIndex == 36) {
-					return "T.spCCB";
+					return "T.arciformis";
 				} else if (columnIndex == 37) {
-					return "MT.silvianus";
+					return "T.spCCB";
 				} else if (columnIndex == 38) {
+					return "MT.silvianus";
+				} else if (columnIndex == 39) {
 					return "MT.ruber";
 				}
 				return "";
@@ -6147,15 +6151,20 @@ public class GeneSet extends JApplet {
 					}
 				} else if (columnIndex == 36) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.spCCB");
+						Teginfo set = gene.species.get("t.arciformis");
 						return set;
 					}
 				} else if (columnIndex == 37) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("mt.silvanusDSM9946");
+						Teginfo set = gene.species.get("t.spCCB");
 						return set;
 					}
 				} else if (columnIndex == 38) {
+					if (gene.species != null) {
+						Teginfo set = gene.species.get("mt.silvanusDSM9946");
+						return set;
+					}
+				} else if (columnIndex == 39) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("mt.ruberDSM1279");
 						return set;
@@ -6306,14 +6315,22 @@ public class GeneSet extends JApplet {
 
 				textarea.setDragEnabled(true);
 
-				Map<Integer,String>		ups = new HashMap<Integer,String>();
+				Map<Integer,String>			ups = new HashMap<Integer,String>();
+				Set<Integer>				stuck = new HashSet<Integer>();
 				Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
 					if (gg.species != null) {
-						ups.put( gg.groupIdx, gg.name );
+						if( gg.genid != null && gg.genid.length() > 0 ) {
+							ups.put( gg.groupIdx, gg.name );
+							stuck.add( gg.groupIdx );
+						}
+						if( !stuck.contains(gg.groupIdx) ) {
+							if( !ups.containsKey(gg.groupIdx) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.groupIdx, gg.name );
+						}
+						
 						List<Tegeval>	tlist;
 						if( ups2.containsKey( gg.groupIdx ) ) tlist = ups2.get( gg.groupIdx );
 						else {
@@ -6429,14 +6446,22 @@ public class GeneSet extends JApplet {
 					e1.printStackTrace();
 				}
 
-				Map<Integer,String>		ups = new HashMap<Integer,String>();
+				Map<Integer,String>			ups = new HashMap<Integer,String>();
+				Set<Integer>				stuck = new HashSet<Integer>();
 				Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
 					if (gg.species != null) {
-						ups.put( gg.groupIdx, gg.name );
+						if( gg.genid != null && gg.genid.length() > 0 ) {
+							ups.put( gg.groupIdx, gg.name );
+							stuck.add( gg.groupIdx );
+						}
+						if( !stuck.contains(gg.groupIdx) ) {
+							if( !ups.containsKey(gg.groupIdx) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.groupIdx, gg.name );
+						}
+						
 						List<Tegeval>	tlist;
 						if( ups2.containsKey( gg.groupIdx ) ) tlist = ups2.get( gg.groupIdx );
 						else {
@@ -7993,7 +8018,7 @@ public class GeneSet extends JApplet {
 		Map<String, Gene> locgene = new HashMap<String, Gene>();
 
 		is = GeneSet.class.getResourceAsStream("/thermus_nr.blastout");
-		panCoreFromNRBlast( new InputStreamReader(is), "/home/sigmar/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
+		panCoreFromNRBlast( new InputStreamReader(is), "c:/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
 		// is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
 		//panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
