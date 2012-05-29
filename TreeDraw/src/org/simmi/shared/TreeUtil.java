@@ -68,14 +68,21 @@ public class TreeUtil {
 			
 			double[] dmatmp = new double[(len-1)*(len-1)];
 			int k = 0;
+			//boolean done = false;
 			for( int i = 0; i < len; i++ ) {
 				if( i != imin && i != jmin ) {
 					for( int j = 0; j < len; j++ ) {
 						if( j != imin && j != jmin ) {
+							/*if( k >= dmatmp.length ) {
+								System.err.println();
+							}*/
 							dmatmp[k++] = dmat[i*len+j];
 						}
 					}
+					
 					k++;
+					
+					//done = true;
 				}
 			}
 			k = 0;
@@ -212,6 +219,7 @@ public class TreeUtil {
 		public void addNode( Node node, double h ) {
 			nodes.add( node );
 			node.h = h;
+			node.setParent( this );
 		}
 		
 		public void removeNode( Node node ) {
@@ -268,6 +276,16 @@ public class TreeUtil {
 				val = Math.max( val, node.countMaxHeight() );
 			}
 			return val+1;
+		}
+		
+		public int countParentHeight() {
+			int val = 0;
+			Node parent = this.getParent();
+			while( parent != null ) {
+				val++;
+				parent = parent.getParent();
+			}
+			return val;
 		}
 		
 		public double getHeight() {
@@ -590,6 +608,7 @@ public class TreeUtil {
 			}
 			
 			String test = null;
+			int count = 0;
 			boolean collapse = node.nodes.size() > 1;
 			for( Node n : node.nodes ) {
 				String nname = n.getName() != null ? n.getName() : "";
@@ -617,11 +636,22 @@ public class TreeUtil {
 						break;
 					}
 				}
+				
+				String meta = n.getMeta();
+				try {
+					if( meta != null && meta.length() > 0 ) {
+						int mi = Integer.parseInt( meta );
+						count += mi;
+					} else count++; 
+				} catch( Exception e ) {
+					count++;
+				}
 			}
 			
 			if( collapse && (collapset == null || collapset.contains(test)) ) {
 				node.nodes.clear();
 				//node.nodes = null;
+				node.setMeta( Integer.toString(count) );
 				node.setName( test );
 			}
 		}
