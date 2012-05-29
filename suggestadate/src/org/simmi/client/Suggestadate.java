@@ -452,7 +452,7 @@ public class Suggestadate implements EntryPoint {
 		a1.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				if( uid != null ) {
+				if( uid != null && uid.length() > 0 ) {
 					currentAnchor = a1;
 					if( fmap.size() == 0 ) hehe();
 					else showFriendDialog();
@@ -463,7 +463,7 @@ public class Suggestadate implements EntryPoint {
 		a2.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				if( uid != null ) {
+				if( uid != null && uid.length() > 0 ) {
 					currentAnchor = a2;
 					if( fmap.size() == 0 ) hehe();
 					else showFriendDialog();
