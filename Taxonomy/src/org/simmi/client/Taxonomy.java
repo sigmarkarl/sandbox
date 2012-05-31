@@ -61,13 +61,13 @@ public class Taxonomy implements EntryPoint {
 	//private final String server = "http://130.208.252.34/";
 	
 	public void recursiveNames( TreeItem item, StringBuilder sb ) {
-		for( int i = 0; i < item.getChildCount(); i++ ) {
-			TreeItem ti = item.getChild(i);
-			if( ti.getChildCount() == 0 ) {
-				String[] sp = ti.getText().split(" ");
-				if( sb.length() == 0 ) sb.append( sp[0] );
-				else sb.append( ","+sp[0] );
-			} else {
+		if( item.getChildCount() == 0 ) {
+			String[] sp = item.getText().split(" ");
+			if( sb.length() == 0 ) sb.append( sp[0] );
+			else sb.append( ","+sp[0] );
+		} else {
+			for( int i = 0; i < item.getChildCount(); i++ ) {
+				TreeItem ti = item.getChild(i);
 				recursiveNames( ti, sb );
 			}
 		}
@@ -89,6 +89,7 @@ public class Taxonomy implements EntryPoint {
 	}
 	
 	public void runStuff( String server, Tree tree ) {
+		final TreeItem	eyjosilva = tree.addItem( "eyjosilva" );
 		final TreeItem	eyjoroot = tree.addItem( "eyjo" );
 		final TreeItem	newroot6 = tree.addItem( "newroot6" );
 		final TreeItem	rootitem1 = tree.addItem( "root1" );
@@ -160,7 +161,8 @@ public class Taxonomy implements EntryPoint {
 				
 				String nodename = selectedtree.getText();
 				if( ( nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
-					if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
+					if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
+					else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 					else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
 					else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
 					else if( nodename.equals("root2") ) runSpec( selectedtree, "http://"+server+"/2v1.txt" );
@@ -204,9 +206,7 @@ public class Taxonomy implements EntryPoint {
 						searchnum = rootnodename;
 					}
 					
-					String qstr =  sb.toString();
-					//console( "qs " + qstr );
-					
+					String qstr =  sb.toString();					
 					RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "http://"+server+"/cgi-bin/getseq.cgi" );
 					try {
 						rb.sendRequest( searchnum+"_"+qstr, new RequestCallback() {
@@ -229,7 +229,7 @@ public class Taxonomy implements EntryPoint {
 
 							@Override
 							public void onError(Request request, Throwable exception) {
-								
+								console( "erm error" );
 							}
 						});
 					} catch (RequestException e) {
