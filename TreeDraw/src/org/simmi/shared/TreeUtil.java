@@ -226,10 +226,12 @@ public class TreeUtil {
 			nodes.remove( node );
 			
 			if( nodes.size() == 1 ) {
-				if( this.getParent().getNodes().remove( this ) ) {
+				Node parent = this.getParent();
+				if( parent.getNodes().remove( this ) ) {
 					Node thenode = nodes.get(0);
 					thenode.seth( thenode.geth() + this.geth() );
-					this.getParent().getNodes().add( thenode );
+					parent.getNodes().add( thenode );
+					thenode.setParent( parent );
 				}
 			}
 		}
@@ -603,48 +605,61 @@ public class TreeUtil {
 	
 	public void collapseTreeAdvanced( Node node, Collection<String> collapset ) {
 		if( node.nodes != null && node.nodes.size() > 0 ) {
+			if( node.nodes.size() == 1 ) {
+				Node parent = node.getParent();
+				if( parent.getNodes().remove( node ) ) {
+					Node thenode = node.nodes.get(0);
+					thenode.seth( thenode.geth() + node.geth() );
+					parent.getNodes().add( thenode );
+				}
+			}
+			
 			for( Node n : node.nodes ) {
 				collapseTreeAdvanced( n, collapset );
 			}
 			
 			String test = null;
 			int count = 0;
+			
 			boolean collapse = node.nodes.size() > 1;
-			for( Node n : node.nodes ) {
-				String nname = n.getName() != null ? n.getName() : "";
-				if( collapset == null || collapset.isEmpty() ) {
-					if( test == null ) {
-						test = nname;
-					} else if( test.length() == 0 || nname.length() == 0 || !(nname.contains(test) || test.contains(nname)) ) {
-						collapse = false;
-						break;
-					}
-				} else {
-					if( test == null ) {
-						for( String s : collapset ) {
-							if( nname.contains(s) ) {
-								test = s;
-								break;
-							}
-						}
-						
+			if( collapse ) {
+				for( Node n : node.nodes ) {
+					String nname = n.getName() != null ? n.getName() : "";
+					if( collapset == null || collapset.isEmpty() ) {
 						if( test == null ) {
-							test = "";
+							test = nname;
+						} else if( test.length() == 0 || nname.length() == 0 || !nname.equals(test) ) { //!(nname.contains(test) || test.contains(nname)) ) {
+							test = test.length() > nname.length() ? test : nname;
+							collapse = false;
+							break;
 						}
-					} else if( !nname.contains(test) ) {
-						collapse = false;
-						break;
+					} else {
+						if( test == null ) {
+							for( String s : collapset ) {
+								if( nname.contains(s) ) {
+									test = s;
+									break;
+								}
+							}
+							
+							if( test == null ) {
+								test = "";
+							}
+						} else if( !nname.contains(test) ) {
+							collapse = false;
+							break;
+						}
 					}
-				}
-				
-				String meta = n.getMeta();
-				try {
-					if( meta != null && meta.length() > 0 ) {
-						int mi = Integer.parseInt( meta );
-						count += mi;
-					} else count++; 
-				} catch( Exception e ) {
-					count++;
+					
+					String meta = n.getMeta();
+					try {
+						if( meta != null && meta.length() > 0 ) {
+							int mi = Integer.parseInt( meta );
+							count += mi;
+						} else count++; 
+					} catch( Exception e ) {
+						count++;
+					}
 				}
 			}
 			
