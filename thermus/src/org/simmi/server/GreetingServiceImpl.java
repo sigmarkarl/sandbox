@@ -20,6 +20,7 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Text;
 import com.google.gdata.client.ClientLoginAccountType;
 import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.Service.GDataRequest;
@@ -115,6 +116,30 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			retmap.put( (String)ent.getProperty("name"), (String)ent.getProperty("sel") );
 		}
 		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];		
+		
+		return retmap;
+	}
+	
+	@Override
+	public Map<String,String> saveThermusSel(String name, String val) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+		Map<String,String>	retmap = new HashMap<String,String>();
+		if( name != null ) {
+			Entity ent = new Entity("thermusselection");
+			ent.setProperty("name", name);
+			ent.setProperty("sel", new Text(val) );
+			Key key = datastore.put( ent );
+			
+			retmap.put( name, val );
+		} else {
+			Query query = new Query("thermusselection");
+			List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			for( Entity ent : seqsEntities ) {
+				retmap.put( (String)ent.getProperty("name"), ((Text)ent.getProperty("sel")).getValue() );
+			}
+			//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
+		}
 		
 		return retmap;
 	}
