@@ -4391,7 +4391,122 @@ public class GeneSet extends JApplet {
 		bw.flush();
 		fw.close();
 	}
+	
+	public static class HitList implements Comparable<HitList> {
+		List<String>	hitlist;
+		String			group;
+		
+		public HitList( String group, List<String> hitlist ) {
+			this.group = group;
+			this.hitlist = hitlist;
+		}
+		
+		@Override
+		public int compareTo(HitList o) {
+			return o.hitlist.size() - this.hitlist.size();
+		}
+	};
 
+	public static void eyjo( String blast, String result ) throws IOException {
+		Map<String,List<String>> treemap = new HashMap<String,List<String>>();
+		
+		FileReader	fr = new FileReader( blast );
+		FileWriter	fw = new FileWriter( result );
+		
+		String hit = null;
+		BufferedReader	br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				hit = line.substring(7).trim();
+				int i = hit.indexOf(' ');
+				if( i > 0 ) hit = hit.substring(0,i);
+			} else if( line.startsWith("***** No hits") ) {
+				String group = "No hits";
+				
+				List<String>	hitlist;
+				if( treemap.containsKey( group ) ) {
+					hitlist = treemap.get(group);
+				} else {
+					hitlist = new ArrayList<String>();
+					treemap.put( group, hitlist );
+				}
+				hitlist.add( hit+" 0.0 0/0 (0%)" );
+			} else if( line.startsWith(">") ) {
+				String group = line.substring(2);
+				
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					group += line;
+					line = br.readLine();	
+				}
+				
+				line = br.readLine();
+				while( !line.contains("Strand=") ) {
+					int i = line.indexOf("Expect = ");
+					if( i != -1 ) {
+						hit += " "+line.substring(i+9);
+					}
+					
+					i = line.indexOf("Identities = ");
+					if( i != -1 ) {
+						int k = line.indexOf(',');
+						hit += " "+line.substring(i+13,k);
+					}
+					
+					line = br.readLine();
+				}
+				
+				List<String>	hitlist;
+				if( treemap.containsKey( group ) ) {
+					hitlist = treemap.get(group);
+				} else {
+					hitlist = new ArrayList<String>();
+					treemap.put( group, hitlist );
+				}
+				hitlist.add( hit );
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		fw.write("total: 0 subtot: 0\n");
+		
+		List<HitList>	lhit = new ArrayList<HitList>();
+		for( String group : treemap.keySet() ) {			
+			List<String> hitlist = treemap.get( group );
+			lhit.add( new HitList( group, hitlist ) );
+		}
+		Collections.sort( lhit );
+		
+		for( HitList hlist : lhit ) {
+			String 			group = hlist.group;
+			List<String>	hitlist = hlist.hitlist;
+			
+			String first = "No_hits";
+			String lst = group;
+			if( !group.contains("No hits") ) {
+				int i = group.indexOf(' ');
+				first = group.substring(0,i);
+				lst = group.substring(i+1);
+			}
+			
+			String[] split = lst.split(";");
+			fw.write( split[ split.length-1 ] );
+			for( int i = split.length-2; i >= 0; i-- ) {
+				fw.write( " : " + split[i] );
+			}
+			fw.write( " : root" );
+			fw.write( "\n>"+first+"  "+hitlist.size()+"\n(" );
+			fw.write( hitlist.get(0) );
+			for( int i = 1; i < hitlist.size(); i++ ) {
+				fw.write( ","+hitlist.get(i) );
+			}
+			fw.write(")\n\n");
+		}
+		fw.close();
+	}
+	
 	public static void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
 		/*
 		 * String base = "/vg454flx/viggo/viggo/"; int num = 16; int seqcount =
@@ -4720,7 +4835,8 @@ public class GeneSet extends JApplet {
 			 * , accset, false );
 			 */
 
-			viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
+			eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/mysilva1.txt" );
+			//viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
 			//simmi();
 
 			// Map<String,Integer> freqmap = loadFrequency( new
