@@ -136,6 +136,7 @@ public class ThermusTable implements EntryPoint {
 	}
 	
 	public void requestSavedSelections() {
+		console("trying");
 		greetingService.saveThermusSel( null, null, new AsyncCallback<Map<String,String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
@@ -144,6 +145,8 @@ public class ThermusTable implements EntryPoint {
 
 			@Override
 			public void onSuccess(Map<String,String> result) {
+				console("success");
+				console( ""+result.size() );
 				//String applet = Document.get().getElementById("");
 				for( String key : result.keySet() ) {
 					appendSelection( appletelement, key, result.get(key) );
