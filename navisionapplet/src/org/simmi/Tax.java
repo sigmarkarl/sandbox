@@ -16,12 +16,15 @@ public class Tax {
 	public static void main(String[] args) {
 		StringBuilder ret = new StringBuilder();
 		String str = "";
+		
+		//str = "eyjosilva_HM2RNR208JLXW0";
+		
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			byte[] bb = new byte[1024];
 			int r = System.in.read( bb );
 			while( r > 0 ) {
-				baos.write( bb );
+				baos.write( bb, 0, r );
 				r = System.in.read( bb );
 			}
 			baos.close();
@@ -31,16 +34,17 @@ public class Tax {
 			e1.printStackTrace();
 		}
 		
-		int searchnum = -1;
+		String searchnum = "";
 		int ind = -1;
 		if( str != null ) {
 			ind = str.indexOf('_');
-			try {
+			searchnum = str.substring(0,ind);
+			/*try {
 				searchnum = Integer.parseInt( str.substring(0, ind) );
-			} catch( Exception e ) {}
+			} catch( Exception e ) {}*/
 		}
 		
-		if( ind != -1 && searchnum != -1 ) {
+		if( ind != -1 ) {
 			String input = str.substring(ind+1);
 			String[] split = input.split( "," );
 			try {
