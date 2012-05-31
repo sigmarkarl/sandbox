@@ -40,6 +40,14 @@ public class ThermusTable implements EntryPoint {
 			s.@org.simmi.client.ThermusTable::loadData()();
 		};
 		
+		$wnd.saveSel = function( key, val ) {
+			s.@org.simmi.client.ThermusTable::saveSel(Ljava/lang/String;Ljava/lang/String;)( key, val );
+		};
+		
+		$wnd.reqSavedSel = function() {
+			s.@org.simmi.client.ThermusTable::requestSavedSelections()();
+		};
+		
 		$wnd.fasttree = function( fasta ) {
 			$wnd.postMessage( fasta );
 		};
@@ -65,8 +73,8 @@ public class ThermusTable implements EntryPoint {
 			@Override
 			public void onSuccess(String result) {
 				if( result != null ) {
-					Element e = Document.get().getElementById("datatable");
-					loadApplet( e, result );
+					//Element e = Document.get().getElementById("datatable");
+					loadApplet( appletelement, result );
 				}
 			}
 		});
@@ -106,6 +114,44 @@ public class ThermusTable implements EntryPoint {
 		  return response.getContentText();
 	}-*/;
 	
+	public native void appendSelection( Element ae, String key, String value ) /*-{
+		ae.appendSelection( key, value );
+	}-*/;
+	
+	public void saveSel( String key, String val ) {
+		greetingService.saveThermusSel( key, val, new AsyncCallback<Map<String,String>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				console( "fail: "+caught.getMessage() );
+			}
+
+			@Override
+			public void onSuccess(Map<String,String> result) {
+				//String applet = Document.get().getElementById("");
+				for( String key : result.keySet() ) {
+					appendSelection( appletelement, key, result.get(key) );
+				}
+			}
+		});
+	}
+	
+	public void requestSavedSelections() {
+		greetingService.saveThermusSel( null, null, new AsyncCallback<Map<String,String>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				console( "fail: "+caught.getMessage() );
+			}
+
+			@Override
+			public void onSuccess(Map<String,String> result) {
+				//String applet = Document.get().getElementById("");
+				for( String key : result.keySet() ) {
+					appendSelection( appletelement, key, result.get(key) );
+				}
+			}
+		});
+	}
+	
 	public void saveMeta( String acc, String country, boolean valid ) {
 		greetingService.greetServer( acc, country, valid, new AsyncCallback<String>() {
 			@Override
@@ -132,8 +178,8 @@ public class ThermusTable implements EntryPoint {
 
 			@Override
 			public void onSuccess(Map<String, String> result) {
-				Element e = Document.get().getElementById("datatable");
-				console( "before update "+e );
+				//Element e = Document.get().getElementById("datatable");
+				//console( "before update "+e );
 				
 				//com.google.appengine.repackaged.org.json.JSONObject jsono = new com.google.appengine.repackaged.org.json.JSONObject(result);
 				JSONObject jsono = new JSONObject();
@@ -147,11 +193,12 @@ public class ThermusTable implements EntryPoint {
 						jsono.put( key, jsonc );
 					}
 				}
-				updateTableInApplet( e, jsono.toString() );
+				updateTableInApplet( appletelement, jsono.toString() );
 			}
 		});
 	}
 	
+	Element appletelement;
 	@Override
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
@@ -175,6 +222,7 @@ public class ThermusTable implements EntryPoint {
 		pe.setAttribute("value", "treedraw.jnlp");
 		
 		final Element ae = Document.get().createElement("applet");
+		appletelement = ae;
 		ae.appendChild( pe );
 			
 		ae.setAttribute("id", "datatable");

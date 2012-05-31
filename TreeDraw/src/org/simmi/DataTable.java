@@ -61,6 +61,8 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -74,6 +76,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
@@ -1129,6 +1133,24 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		}
 	}
+	
+	JMenu	selectionMenu = new JMenu("Saved selections");
+	//Map<String,String>	selectionMap = new HashMap<String,String>();
+	public void appendSelection( final String key, final String value ) {
+		selectionMenu.add( new AbstractAction( key ) {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String[] split = value.split(",");
+				Set<String>	selset = new HashSet<String>( Arrays.asList(split) );
+				
+				for( int i = 0; i < table.getRowCount(); i++ ) {
+					if( selset.contains( table.getValueAt(i, 1) ) ) {
+						table.addRowSelectionInterval(i, i);
+					}
+				}
+			}
+		});
+	}
     
 	JavaFasta	currentjavafasta;
 	public void init() {
@@ -1675,6 +1697,23 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				updateFilter(table, filter);
 			}
 		});
+		popup.add( new AbstractAction("Save selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String selname = JOptionPane.showInputDialog("Name of selection?");
+				StringBuilder sb = new StringBuilder();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					Object o = table.getValueAt(r, 1);
+					if( r == rr[0] ) sb.append( (String)o );
+					else sb.append( ","+(String)o );
+				}
+				
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("saveSel", new Object[] {selname, sb.toString()} );
+			}
+		});
+		popup.add( selectionMenu );
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );
 		popup.addSeparator();
@@ -1966,6 +2005,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			JSObject win = JSObject.getWindow(this);
 			System.err.println( "about to run loadData" );
 			win.call("loadData", new Object[] {});
+			win.call("reqSavedSel", new Object[] {});
 			//System.err.println( "done loadData" );
 			//win.call("loadMeta", new Object[] {});
 		} catch( Exception e ) {
