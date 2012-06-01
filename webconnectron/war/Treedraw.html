@@ -51,6 +51,27 @@
 	google_ad_height = 90;
 	//-->
 	</script>
+	
+	<script>
+	var domain = 'http://webconnectron.appspot.com';
+	var treetext = "";
+	var myPopup;
+	function receiveMessage(event) {
+		console.log( 'ready message received' );
+		if (event.origin == "http://webconnectron.appspot.com") {
+			console.log( 'correct origin' );
+			if( treetext.length > 0 ) {
+				myPopup.postMessage(treetext,domain);
+			}
+    	}
+  	}
+	window.addEventListener("message", receiveMessage, false);
+	
+	showTree = function( newtree ) {
+		treetext = newtree;
+		myPopup = window.open(domain + '/Webconnectron.html?callback=webconnectron','_blank');
+	}
+	</script>
   </head>
 
   <!--                                           -->
@@ -72,7 +93,8 @@
 	Draw phylogenetic trees on a html5 canvas. Drag-drop text in distance matrix or newick tree format on the canvas. Double-click on canvas to open file dialog. <br>
 	Press node to flip, Ctrl-press node to draw subtree, Shift-press to reverse. Shift-Doubleclick to reroot. Select and press C to collapse. <br>
 	Select and press D to delete. Select and press R to retain. Press M to remove markings. Press Z to zero negative branches.<br>
-	<b>New!</b> Press Return after mouse selection to edit node names (Esc to cancel).
+	<b>New!</b> Press Return after mouse selection to edit node names (Esc to cancel).<br>
+	Choose option -> spring graph in 3d view to visualize tree;
 	</div>
 	
 	<div id="canvas">
