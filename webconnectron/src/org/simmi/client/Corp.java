@@ -31,6 +31,7 @@ public class Corp {
 	double					px,py,pz;
 	String					text;
 	double					depz;
+	double					coulomb;
 	String					color = "#00FF00";
 	
 	List<Image>				images = new ArrayList<Image>();
@@ -53,16 +54,22 @@ public class Corp {
 	//static Map<String,Corp>		corpNameMap = new HashMap<String,Corp>();
 	
 	class LinkInfo {
-		public LinkInfo( double strength ) {
+		public LinkInfo( double strength, double offset ) {
 			this.linkStrength = strength;
+			this.linkOffset = offset;
 		}
 		
 		public double getStrength() {
 			return linkStrength;
 		}
 		
+		public double getOffset() {
+			return linkOffset;
+		}
+		
 		Set<String>				linkTitles = new HashSet<String>();
 		private double			linkStrength;
+		private double			linkOffset;
 	};
 	
 	String				selectedLink = null;
@@ -95,6 +102,14 @@ public class Corp {
 				}
 			}
 		});*/
+	}
+	
+	public void setCoulomb( double coulomb ) {
+		this.coulomb = coulomb;
+	}
+	
+	public double getCoulomb() {
+		return this.coulomb;
 	}
 	
 	public double getSize() {
@@ -453,6 +468,7 @@ public class Corp {
 		this.vx = 0;
 		this.vy = 0;
 		this.vz = 0;
+		this.coulomb = 1000.0;
 		
 		init();
 	}
@@ -467,6 +483,7 @@ public class Corp {
 		this.vx = 0;
 		this.vy = 0;
 		this.vz = 0;
+		this.coulomb = 1000.0;
 		
 		init();
 	}
@@ -483,6 +500,7 @@ public class Corp {
 		this.vx = 0;
 		this.vy = 0;
 		this.vz = 0;
+		this.coulomb = 1000.0;
 		
 		this.setBounds((int)x, (int)y, size, size);
 		init();
@@ -672,10 +690,10 @@ public class Corp {
 		return backconnections.keySet();
 	}
 	
-	public void addLink( Corp corp, String link, double strength ) {
+	public void addLink( Corp corp, String link, double strength, double offset ) {
 		LinkInfo linkInfo = connections.get(corp);
 		if( linkInfo == null ) {
-			linkInfo = new LinkInfo( strength );
+			linkInfo = new LinkInfo( strength, offset );
 			connections.put( corp, linkInfo );
 			corp.backconnections.put( this, linkInfo );
 		}
@@ -685,7 +703,7 @@ public class Corp {
 	public void addLink( Corp corp, Set<String> linknames ) {
 		LinkInfo linkInfo = connections.get(corp);
 		if( linkInfo == null ) {
-			linkInfo = new LinkInfo( 1.0 );
+			linkInfo = new LinkInfo( 0.001, 0.0 );
 			connections.put( corp, linkInfo );
 			corp.backconnections.put( this, linkInfo );
 		}
@@ -693,7 +711,7 @@ public class Corp {
 	}
 	
 	public void addLink( Corp corp, String link ) {
-		addLink( corp, link, 1.0 );
+		addLink( corp, link, 1.0, 0.0 );
 	}
 	
 	public void addLink( Corp corp ) {
