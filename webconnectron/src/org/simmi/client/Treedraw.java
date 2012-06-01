@@ -1069,16 +1069,16 @@ public class Treedraw implements EntryPoint {
 		hp.add( html );
 		hp.add( imageAnchor );
 		
-		/*html = new HTML(". View in");
+		html = new HTML(". View in");
 		hp.add( html );
 		Anchor td = new Anchor("3d");
 		td.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				
+				showTree( treeutil.currentNode.toString() );
 			}
 		});
-		hp.add( td );*/
+		hp.add( td );
 		
 		html = new HTML(". Run");
 		hp.add( html );
@@ -1154,6 +1154,30 @@ public class Treedraw implements EntryPoint {
 			postParent( Window.Location.getParameter("callback") );
 		}
 	}
+	
+	public native void showTree( String tree ) /*-{
+		$wnd.showTree( tree );
+		
+//		$wnd.domain = 'http://127.0.0.1:8888'; //'http://webconnectron.appspot.com';
+//		$wnd.treetext = tree;
+//		$wnd.receiveMessage = function(event) {
+//			$wnd.console.log( $wnd.domain );
+//			$wnd.console.log( 'ready message received' );
+//			if (event.origin == $wnd.domain) { //"http://webconnectron.appspot.com") {
+//				$wnd.console.log( 'correct origin' );
+//				if( $wnd.treetext.length > 0 ) {
+//					$wnd.myPopup.postMessage($wnd.treetext,$wnd.domain);
+//				}
+//			}
+//		}
+//		$wnd.addEventListener("message", $wnd.receiveMessage, false);
+//		$wnd.myPopup = window.open($wnd.domain + '/Webconnectron.html?callback=webconnectron','_blank');
+	}-*/;
+	
+	/*showTree = function( newtree ) {
+		treetext = newtree;
+		myPopup = window.open(domain + '/Treedraw.html?callback=webfasta','_blank');
+	}*/
 	
 	double w;	
 	double h;

@@ -39,13 +39,14 @@ public class Webconnectron implements EntryPoint {
 	public native void postParent( String from ) /*-{
 		var s = this;
 		$wnd.addEventListener('message',function(event) {
+			$wnd.console.log( event.origin );
 			$wnd.console.log('message received from treedraw');
 			if(event.origin == 'http://'+from+'.appspot.com') {
 				$wnd.console.log('correct treedraw origin');
 				s.@org.simmi.client.Webconnectron::handleText(Ljava/lang/String;)( event.data );
 			}
 		});
-			
+		$wnd.console.log('posting ready');	
 		$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
 	}-*/;
 	
@@ -145,6 +146,10 @@ public class Webconnectron implements EntryPoint {
 		}
 		
 		rp.add( hp );
+		
+		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
+			postParent( Window.Location.getParameter("callback") );
+		}
 	}
 	int oldw, olderw;
 	int oldh, olderh;
