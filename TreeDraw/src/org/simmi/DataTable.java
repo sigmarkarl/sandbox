@@ -1128,7 +1128,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				} else {
 					run( sql, true );
 				}
-			} catch (IOException | ServiceException e1) {
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			} catch (ServiceException e1) {
 				e1.printStackTrace();
 			}
 		}
