@@ -667,7 +667,7 @@ public class Connectron extends VerticalPanel
 	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node, TreeUtil.Node parent ) {
 		//int i = node.getName().indexOf("Thermus");
 		Corp corp = new Corp( node.getName() ); //i > 0 ? node.getName().substring(i) : node.getName() );
-		corp.setCoulomb( 1000.0 );
+		corp.setCoulomb( 100.0 );
 		corp.setx( 400.0*r.nextDouble() );
 		corp.sety( 400.0*r.nextDouble() );
 		corp.setz( 400.0*r.nextDouble() );
@@ -695,9 +695,9 @@ public class Connectron extends VerticalPanel
 		for( TreeUtil.Node n : node.getNodes() ) {
 			Corp c = recursiveNodeGeneration(corpList, n, node);
 			//double val = (1.0/( Math.abs( node.geth() )+0.0005 ))/50.0;
-			String strval = Double.toString( node.geth() ); //Math.round(val*100.0)/100.0 );
-			corp.addLink(c, strval, 0.01, 5000.0*n.geth() );
-			c.addLink(corp, strval, 0.01, 5000.0*n.geth() );
+			String strval = Double.toString( n.geth() ); //Math.round(val*100.0)/100.0 );
+			corp.addLink(c, strval, 0.02, 100.0*n.geth() );
+			c.addLink(corp, strval, 0.02, 100.0*n.geth() );
 		}
 		
 		return corp;
