@@ -54,11 +54,11 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			
-			try {
+			/*try {
 				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}
+			}*/
 		}
 		
 		if( service != null ) {
@@ -146,19 +146,17 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	
 	private GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
-	private final String email = "huldaeggerts@gmail.com";
-	private final String password = "b.r3a1h1ms";
 	
 	@Override
 	public String getThermusFusion() {
 		System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
 		if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
-			try {
+			/*try {
 				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}
+			}*/
 		}
 		
 		if( service != null ) {
