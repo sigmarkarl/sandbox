@@ -342,13 +342,19 @@ public class Treedraw implements EntryPoint {
 	
 	public native void postParent( String from ) /*-{
 		var s = this;
-		$wnd.addEventListener('message',function(event) {
-			$wnd.console.log('message received from webfasta');
-			if(event.origin == 'http://'+from+'.appspot.com') {
-				$wnd.console.log('correct webfasta origin');
-				s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( event.data );
-			}
-		});
+		$wnd.from = from;
+		$wnd.handleText = function( str ) {
+			s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( str );
+		}
+	
+		//var s = this;
+		//		$wnd.addEventListener('message',function(event) {
+		//			$wnd.console.log('message received from webfasta');
+		//			if(event.origin == 'http://'+from+'.appspot.com') {
+		//				$wnd.console.log('correct webfasta origin');
+		//				s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( event.data );
+		//			}
+		//		});
 			
 		//var loadHandler = function(event){
 		//	$wnd.console.log('sending message to webfasta');
