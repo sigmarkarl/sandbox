@@ -62,8 +62,13 @@
 			console.log( 'correct origin' );
 			if( treetext.length > 0 ) {
 				myPopup.postMessage(treetext,domain);
+			} else {
+				handleText( event.data );
 			}
-    	}
+    	} else if(event.origin == 'http://'+from+'.appspot.com') {
+			console.log('correct webfasta origin');
+			handleText( event.data );
+		}
   	}
 	window.addEventListener("message", receiveMessage, false);
 	

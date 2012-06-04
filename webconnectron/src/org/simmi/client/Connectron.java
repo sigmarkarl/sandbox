@@ -754,7 +754,67 @@ public class Connectron extends VerticalPanel
 		repaint();
 	}
 	
-	public void importFromMatrix( final String text ) {
+	public void importFromMatrix( final String text, double scaleval ) {
+		String[] split = text.split("\n");
+		//String[] persons = split[0].split("\t");
+		
+		List<Corp> corpList = new ArrayList<Corp>();
+		
+		//double mulval = mult.getValue();
+		//double scaleval = scale.getValue();
+		
+		List<String[]>	lines = new ArrayList<String[]>();
+		for( int i = 1; i < split.length; i++ ) {
+			lines.add( split[i].split("\t") );
+		}
+		
+		Random r = new Random();
+		for( String[] spec : lines ) {
+			if( spec.length > 1 ) {
+				Corp corp = new Corp( spec[0] );
+				corp.setCoulomb(100.0);
+				corp.setx( scaleval*r.nextDouble() );
+				corp.sety( scaleval*r.nextDouble() );
+				corp.setz( scaleval*r.nextDouble() );
+				corp.color = "#1111ee";
+				Connectron.this.add( corp );
+				
+				corpList.add( corp );
+			}
+		}
+		
+		int i = 0;
+		for( String[] spec : lines ) {
+			//int y = i-1;
+			//String spec = subsplit[0];
+			Corp corp = corpList.get(i); //new Corp( spec );
+			/*corp.setx( 400.0*r.nextDouble() );
+			corp.sety( 400.0*r.nextDouble() );
+			corp.setz( 400.0*r.nextDouble() );
+			corp.color = "#1111ee";
+			this.add( corp );
+			corpList.add( corp );*/
+			
+			for( int x = 0; x < spec.length-1; x++ ) {
+				double d = Double.parseDouble( spec[x+1] );
+				if( i != x && d > 0.0 ) {
+					//Corp corpDst = corpList.get(x);
+					//Corp corpSrc = corpList.get(y);
+					
+					Corp pcorp = corpList.get(x);
+					corp.addLink( pcorp, d+"", 0.01, 10000.0*d );
+					//pcorp.addLink( corp, subsplit[x], d*mulval );
+				}
+			}
+			i++;
+		}
+		
+		console( "c size: " + corpList.size() );
+		
+		repaint();
+	}
+	
+	public void oldImportFromMatrix( final String text ) {
 		DialogBox	db = new DialogBox( true );
 		
 		Grid		grid = new Grid(3,2);
@@ -781,56 +841,7 @@ public class Connectron extends VerticalPanel
 			@Override
 			public void onClose(CloseEvent<PopupPanel> event) {
 				//su = colomb.getValue();
-				
-				String[] split = text.split("\n");
-				String[] persons = split[0].split("\t");
-				
-				List<Corp> corpList = new ArrayList<Corp>();
-				
-				double mulval = mult.getValue();
-				double scaleval = scale.getValue();
-				Random r = new Random();
-				for( String spec : persons ) {
-					if( spec.length() > 1 ) {
-						Corp corp = new Corp( spec );
-						corp.setx( scaleval*r.nextDouble() );
-						corp.sety( scaleval*r.nextDouble() );
-						corp.setz( scaleval*r.nextDouble() );
-						corp.color = "#1111ee";
-						Connectron.this.add( corp );
-						
-						corpList.add( corp );
-					}
-				}
-				
-				for( int i = 1; i < split.length; i++ ) {
-					String[] subsplit = split[i].split("\t");
-					//int y = i-1;
-					//String spec = subsplit[0];
-					Corp corp = corpList.get(i-1); //new Corp( spec );
-					/*corp.setx( 400.0*r.nextDouble() );
-					corp.sety( 400.0*r.nextDouble() );
-					corp.setz( 400.0*r.nextDouble() );
-					corp.color = "#1111ee";
-					this.add( corp );
-					corpList.add( corp );*/
-					
-					for( int x = 0; x < subsplit.length; x++ ) {
-						double d = Double.parseDouble( subsplit[x] );
-						if( d > 0.0 ) {
-							//Corp corpDst = corpList.get(x);
-							//Corp corpSrc = corpList.get(y);
-							
-							Corp pcorp = corpList.get(x);
-							corp.addLink( pcorp, subsplit[x], d*mulval, 0.0 );
-							//pcorp.addLink( corp, subsplit[x], d*mulval );
-						}
-					}
-				}
-				
-				console( "c size: " + corpList.size() );
-				
-				repaint();
+				importFromMatrix(text, scale.getValue());
 			}
 		});
 	}
@@ -1703,7 +1714,7 @@ public class Connectron extends VerticalPanel
 		if( dropstuff.startsWith("(") ) {
 			importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
 		} else if( dropstuff.startsWith("\t") ) {
-			importFromMatrix( dropstuff );
+			importFromMatrix( dropstuff, 400.0 );
 		} else importFromText( dropstuff );
 	}
 	
