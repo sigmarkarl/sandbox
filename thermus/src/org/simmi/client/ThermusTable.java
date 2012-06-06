@@ -52,6 +52,10 @@ public class ThermusTable implements EntryPoint {
 			$wnd.postMessage( fasta );
 		};
 		
+		$wnd.dnapars = function( phy ) {
+			$wnd.postMessage( phy );
+		};
+		
 		$doc.appendText = function( str ) {
 			$wnd.console.log( str );
 			//var datatable = $doc.getElementById('datatable');
