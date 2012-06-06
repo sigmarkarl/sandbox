@@ -967,6 +967,145 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return fname;
 	}
 	
+	public String extractPhy( String filename ) {
+		/*JCheckBox species = new JCheckBox("Species");
+		JCheckBox accession = new JCheckBox("Acc");
+		JCheckBox country = new JCheckBox("Country");
+		JCheckBox source = new JCheckBox("Source");
+		Object[] params = new Object[] {species, accession, country, source};
+		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
+		
+		List<NameSel>	namesel = nameSelection();
+		
+		int start = 0;
+		int stop = -1;
+		if( currentjavafasta != null ) {
+			Rectangle selrect = currentjavafasta.getSelectedRect();
+			if( selrect.width > 0 ) {
+				start = selrect.x;
+				stop = selrect.x+selrect.width;
+			}
+		}
+		
+		Set<String>	include = new HashSet<String>();
+		int[] rr = table.getSelectedRows();
+		for( int r : rr ) {
+			int i = table.convertRowIndexToModel(r);
+			if( i != -1 ) {
+				Object[] val = rowList.get(i);
+				String acc = (String)val[1];
+				//System.err.println( acc );
+				include.add( acc );
+			}
+		}
+		
+		System.err.println( "about to" );
+		StringBuilder sb = new StringBuilder();
+		InputStream is = DataTable.this.getClass().getResourceAsStream(filename);
+		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+		try {
+			int istart = 0;
+			boolean inc = false;
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					istart = 0;
+					/*int v = line.indexOf(' ');
+					if( v == -1 ) v = line.length();
+					String name = line.substring(1, v).trim();
+					String acc = nameaccmap.get(name);*/
+					
+					/*if( inc != null && seq != null ) {
+						//Sequence seq = jf.new Sequence(cont, dna);
+						contset.add(seq);
+					}*/
+					
+					String incstr = null;
+					for( String str : include ) {
+						if( line.contains( str ) ) {
+							incstr = str;
+							break;
+						}
+					}
+					
+					if( incstr != null ) {
+						Object[] obj = tablemap.get(incstr);
+						
+						inc = true;
+						/*String fname = "";
+						if( species.isSelected() ) {
+							Integer ident = (Integer)obj[4];
+							String spec = "T.unkown";
+							if( ident >= 97 ) {
+								spec = (String)obj[2];
+								spec = spec.replace("Thermus ", "T.");
+								
+								int iv = spec.indexOf('_');
+								int iv2 = spec.indexOf(' ');
+								if( iv == -1 || iv2 == -1 ) iv = Math.max(iv, iv2);
+								else iv = Math.min(iv, iv2);
+								if( iv == -1 ) {
+									iv = spec.indexOf("16S");
+								}
+								if( iv != -1 ) spec = spec.substring(0, iv).trim();
+							}
+							
+							if( fname.length() == 0 ) fname += spec;
+							else fname += "_"+spec;
+						} 
+						if( country.isSelected() ) {
+							String cntr = (String)obj[11];
+							int idx = cntr.indexOf('(');
+							if( idx > 0 ) {
+								int idx2 = cntr.indexOf(')', idx+1);
+								if( idx2 == -1 ) idx2 = cntr.length()-1;
+								cntr = cntr.substring(0, idx) + cntr.substring(idx2+1);
+							}
+							if( fname.length() == 0 ) fname += cntr;
+							else fname += "_"+cntr;
+						} 
+						if( source.isSelected() ) {
+							if( fname.length() == 0 ) fname += obj[12];
+							else fname += "_"+obj[12];
+						}
+						if( accession.isSelected() ) {
+							String acc = (String)obj[1];
+							acc = acc.replace("_", "");
+							if( fname.length() == 0 ) fname += acc;
+							else fname += "_"+acc;
+						}*/
+						String fname = getFastaName( namesel, obj );
+						
+						if( fname.length() > 1 ) {
+							String startf = (Integer)obj[3] >= 900 ? ">" : ">*";
+							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "")+"\n");
+						} else sb.append( line+"\n" );
+					} else inc = false;
+				} else if( inc ) {
+					if( stop > 0 ) {
+						for( int i = start; i < Math.min( stop, istart+line.length() ); i++ ) {
+							sb.append( line.charAt(i) );
+							if( (i-start)%70 == 69 ) sb.append( '\n' );
+						}
+						istart += line.length();
+					} else {
+						if( line.length() > 100 ) {
+							for( int i = 0; i < line.length(); i+= 70 ) {
+								sb.append( line.substring(i, Math.min(i+70, line.length()))+"\n" );
+							}
+						} else sb.append( line+"\n" );
+					}
+				}
+				line = br.readLine();
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		System.err.println( "after" );
+		return sb.toString();
+	}
+	
 	public String extractFasta( String filename ) {
 		/*JCheckBox species = new JCheckBox("Species");
 		JCheckBox accession = new JCheckBox("Acc");
@@ -1788,7 +1927,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String tree = extractFasta("/thermales.fasta");
-				Object[] objs = { tree };
+				Object[] objs = { "f"+tree };
 				JSObject win = JSObject.getWindow( DataTable.this );
 				win.call("fasttree", objs);
 			}
@@ -1797,9 +1936,71 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				StringBuilder tree = extractFastaWoGaps("/thermales.fasta");
-				Object[] objs = { tree.toString() };
+				Object[] objs = { "f"+tree.toString() };
 				JSObject win = JSObject.getWindow( DataTable.this );
 				win.call("fasttree", objs);
+			}
+		});
+		popup.add( new AbstractAction("Dnapars") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//String tree = extractFasta("/thermales.fasta");
+				
+				JavaFasta jf = new JavaFasta( DataTable.this );
+				jf.initDataStructures();
+				loadAligned(jf, true);
+				String phy = jf.getPhylip();
+				
+				Object[] objs = { "p"+phy };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("dnapars", objs);
+			}
+		});
+		popup.add( new AbstractAction("Dnapars w/o gaps") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//String tree = extractFasta("/thermales.fasta");
+				
+				JavaFasta jf = new JavaFasta( DataTable.this );
+				jf.initDataStructures();
+				loadAligned(jf, true);
+				jf.removeGaps( jf.getSequences() );
+				String phy = jf.getPhylip();
+				
+				Object[] objs = { "p"+phy };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("dnapars", objs);
+			}
+		});
+		popup.add( new AbstractAction("Dnaml") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//String tree = extractFasta("/thermales.fasta");
+				
+				JavaFasta jf = new JavaFasta( DataTable.this );
+				jf.initDataStructures();
+				loadAligned(jf, true);
+				String phy = jf.getPhylip();
+				
+				Object[] objs = { "c"+phy };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("dnapars", objs);
+			}
+		});
+		popup.add( new AbstractAction("Dnaml w/o gaps") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//String tree = extractFasta("/thermales.fasta");
+				
+				JavaFasta jf = new JavaFasta( DataTable.this );
+				jf.initDataStructures();
+				loadAligned(jf, true);
+				jf.removeGaps( jf.getSequences() );
+				String phy = jf.getPhylip();
+				
+				Object[] objs = { "c"+phy };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("dnapars", objs);
 			}
 		});
 		popup.add( new AbstractAction("Show conserved species sites") {
