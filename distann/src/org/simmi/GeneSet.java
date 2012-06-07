@@ -4407,12 +4407,30 @@ public class GeneSet extends JApplet {
 		}
 	};
 
-	public static void eyjo( String blast, String result ) throws IOException {
-		Map<String,List<String>> treemap = new HashMap<String,List<String>>();
+	public static void eyjo( String blast, String filter, String result ) throws IOException {
+		Map<String,String>	filtermap = new HashMap<String,String>();
+		if( filter != null ) {
+			FileReader fr = new FileReader( filter );
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			String name = null;
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					int i = line.indexOf(' ');
+					if( i == -1 ) i = line.length();
+					name = line.substring(1, i);
+				} else {
+					filtermap.put( name, line );
+				}
+				line = br.readLine();
+			}
+			br.close();
+		}
+		
+		Map<String,Map<String,List<String>>>	treemapmap = new HashMap<String,Map<String,List<String>>>();
+		Map<String,List<String>> treemap = null;// = hlmnew HashMap<String,List<String>>();
 		
 		FileReader	fr = new FileReader( blast );
-		FileWriter	fw = new FileWriter( result );
-		
 		String hit = null;
 		BufferedReader	br = new BufferedReader( fr );
 		String line = br.readLine();
@@ -4421,6 +4439,13 @@ public class GeneSet extends JApplet {
 				hit = line.substring(7).trim();
 				int i = hit.indexOf(' ');
 				if( i > 0 ) hit = hit.substring(0,i);
+				
+				String val = filtermap.get( hit );
+				if( treemapmap.containsKey( val ) ) treemap = treemapmap.get( val );
+				else {
+					treemap = new HashMap<String,List<String>>();
+					treemapmap.put( val, treemap );
+				}
 			} else if( line.startsWith("***** No hits") ) {
 				String group = "No hits";
 				
@@ -4470,41 +4495,56 @@ public class GeneSet extends JApplet {
 		}
 		br.close();
 		
-		fw.write("total: 0 subtot: 0\n");
-		
-		List<HitList>	lhit = new ArrayList<HitList>();
-		for( String group : treemap.keySet() ) {			
-			List<String> hitlist = treemap.get( group );
-			lhit.add( new HitList( group, hitlist ) );
+		Map<String,Integer>	count = new HashMap<String,Integer>();
+		for( String val : filtermap.keySet() ) {
+			String val2 = filtermap.get( val );
+			if( count.containsKey( val2 ) ) {
+				count.put( val2, count.get(val2)+1 );
+			} else count.put( val2, 1 );
 		}
-		Collections.sort( lhit );
 		
-		for( HitList hlist : lhit ) {
-			String 			group = hlist.group;
-			List<String>	hitlist = hlist.hitlist;
-			
-			String first = "No_hits";
-			String lst = group;
-			if( !group.contains("No hits") ) {
-				int i = group.indexOf(' ');
-				first = group.substring(0,i);
-				lst = group.substring(i+1);
+		for( String val : treemapmap.keySet() ) {
+			if( count.get(val) > 20 ) {
+				treemap = treemapmap.get( val );
+				
+				FileWriter	fw = new FileWriter( result+"_"+val+".txt" );
+				fw.write("total: 0 subtot: 0\n");
+				
+				List<HitList>	lhit = new ArrayList<HitList>();
+				for( String group : treemap.keySet() ) {			
+					List<String> hitlist = treemap.get( group );
+					lhit.add( new HitList( group, hitlist ) );
+				}
+				Collections.sort( lhit );
+				
+				for( HitList hlist : lhit ) {
+					String 			group = hlist.group;
+					List<String>	hitlist = hlist.hitlist;
+					
+					String first = "No_hits";
+					String lst = group;
+					if( !group.contains("No hits") ) {
+						int i = group.indexOf(' ');
+						first = group.substring(0,i);
+						lst = group.substring(i+1);
+					}
+					
+					String[] split = lst.split(";");
+					fw.write( split[ split.length-1 ] );
+					for( int i = split.length-2; i >= 0; i-- ) {
+						fw.write( " : " + split[i] );
+					}
+					fw.write( " : root" );
+					fw.write( "\n>"+first+"  "+hitlist.size()+"\n(" );
+					fw.write( hitlist.get(0) );
+					for( int i = 1; i < hitlist.size(); i++ ) {
+						fw.write( ","+hitlist.get(i) );
+					}
+					fw.write(")\n\n");
+				}
+				fw.close();
 			}
-			
-			String[] split = lst.split(";");
-			fw.write( split[ split.length-1 ] );
-			for( int i = split.length-2; i >= 0; i-- ) {
-				fw.write( " : " + split[i] );
-			}
-			fw.write( " : root" );
-			fw.write( "\n>"+first+"  "+hitlist.size()+"\n(" );
-			fw.write( hitlist.get(0) );
-			for( int i = 1; i < hitlist.size(); i++ ) {
-				fw.write( ","+hitlist.get(i) );
-			}
-			fw.write(")\n\n");
 		}
-		fw.close();
 	}
 	
 	public static void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
@@ -4835,7 +4875,7 @@ public class GeneSet extends JApplet {
 			 * , accset, false );
 			 */
 
-			eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/mysilva1.txt" );
+			eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/eyjo_filter.fasta", "/home/sigmar/mysilva" );
 			//viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
 			//simmi();
 
