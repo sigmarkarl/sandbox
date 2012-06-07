@@ -89,6 +89,31 @@ public class Taxonomy implements EntryPoint {
 	}
 	
 	public void runStuff( String server, Tree tree ) {
+		final TreeItem	eyjosilva1 = tree.addItem( "eyjoACGACTACAG" );
+		final TreeItem	eyjosilva2 = tree.addItem( "eyjoACGCTCGACA" );
+		final TreeItem	eyjosilva3 = tree.addItem( "eyjoAGACGCACTC" );
+		final TreeItem	eyjosilva4 = tree.addItem( "eyjoATACGACGTA" );
+		final TreeItem	eyjosilva5 = tree.addItem( "eyjoATATCGCGAG" );
+		final TreeItem	eyjosilva6 = tree.addItem( "eyjoATCAGACACG" );
+		final TreeItem	eyjosilva7 = tree.addItem( "eyjoATCAGACACT" );
+		final TreeItem	eyjosilva8 = tree.addItem( "eyjoCATAGTAGTG" );
+		final TreeItem	eyjosilva9 = tree.addItem( "eyjoCGAGAGATAC" );
+		final TreeItem	eyjosilva10 = tree.addItem( "eyjoCGGAGAGATA" );
+		final TreeItem	eyjosilva11 = tree.addItem( "eyjoCGTAGACTAG" );
+		final TreeItem	eyjosilva12 = tree.addItem( "eyjoCGTCTAGTAC" );
+		final TreeItem	eyjosilva13 = tree.addItem( "eyjoCGTGTCTCTA" );
+		final TreeItem	eyjosilva14 = tree.addItem( "eyjoCTCGCGTGTC" );
+		final TreeItem	eyjosilva15 = tree.addItem( "eyjoGAGACGCACT" );
+		final TreeItem	eyjosilva16 = tree.addItem( "eyjoGTCTACGTAG" );
+		final TreeItem	eyjosilva17 = tree.addItem( "eyjoTACGAGTATG" );
+		final TreeItem	eyjosilva18 = tree.addItem( "eyjoTACTCTCGTG" );
+		final TreeItem	eyjosilva19 = tree.addItem( "eyjoTAGAGACGAG" );
+		final TreeItem	eyjosilva20 = tree.addItem( "eyjoTCACGTACTA" );
+		final TreeItem	eyjosilva21 = tree.addItem( "eyjoTCTACGTAGC" );
+		final TreeItem	eyjosilva22 = tree.addItem( "eyjoTCTCTATGCG" );
+		final TreeItem	eyjosilva23 = tree.addItem( "eyjoTGATACGTCT" );
+		final TreeItem	eyjosilva24 = tree.addItem( "eyjoTGTACTACTC" );
+		
 		final TreeItem	eyjosilva = tree.addItem( "eyjosilva" );
 		final TreeItem	eyjoroot = tree.addItem( "eyjo" );
 		final TreeItem	newroot6 = tree.addItem( "newroot6" );
@@ -161,7 +186,31 @@ public class Taxonomy implements EntryPoint {
 				
 				String nodename = selectedtree.getText();
 				if( ( nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
-					if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
+					if( nodename.equals("eyjoACGACTACAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_ACGACTACAG.txt" );
+					else if( nodename.equals("eyjoACGCTCGACA") ) runSpec( selectedtree, "http://"+server+"/mysilva_ACGCTCGACA.txt" );
+					else if( nodename.equals("eyjoAGACGCACTC") ) runSpec( selectedtree, "http://"+server+"/mysilva_AGACGCACTC.txt" );
+					else if( nodename.equals("eyjoATACGACGTA") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATACGACGTA.txt" );
+					else if( nodename.equals("eyjoATATCGCGAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATATCGCGAG.txt" );
+					else if( nodename.equals("eyjoATCAGACACG") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATCAGACACG.txt" );
+					else if( nodename.equals("eyjoATCAGACACT") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATCAGACACT.txt" );
+					else if( nodename.equals("eyjoCATAGTAGTG") ) runSpec( selectedtree, "http://"+server+"/mysilva_CATAGTAGTG.txt" );
+					else if( nodename.equals("eyjoCGAGAGATAC") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGAGAGATAC.txt" );
+					else if( nodename.equals("eyjoCGGAGAGATA") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGGAGAGATA.txt" );
+					else if( nodename.equals("eyjoCGTAGACTAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGTAGACTAG.txt" );
+					else if( nodename.equals("eyjoCGTCTAGTAC") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGTCTAGTAC.txt" );
+					else if( nodename.equals("eyjoCGTGTCTCTA") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGTGTCTCTA.txt" );
+					else if( nodename.equals("eyjoCTCGCGTGTC") ) runSpec( selectedtree, "http://"+server+"/mysilva_CTCGCGTGTC.txt" );
+					else if( nodename.equals("eyjoGAGACGCACT") ) runSpec( selectedtree, "http://"+server+"/mysilva_GAGACGCACT.txt" );
+					else if( nodename.equals("eyjoGTCTACGTAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_GTCTACGTAG.txt" );
+					else if( nodename.equals("eyjoTACGAGTATG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TACGAGTATG.txt" );
+					else if( nodename.equals("eyjoTACTCTCGTG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TACTCTCGTG.txt" );
+					else if( nodename.equals("eyjoTAGAGACGAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TAGAGACGAG.txt" );
+					else if( nodename.equals("eyjoTCACGTACTA") ) runSpec( selectedtree, "http://"+server+"/mysilva_TCACGTACTA.txt" );
+					else if( nodename.equals("eyjoTCTACGTAGC") ) runSpec( selectedtree, "http://"+server+"/mysilva_TCTACGTAGC.txt" );
+					else if( nodename.equals("eyjoTCTCTATGCG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TCTCTATGCG.txt" );
+					else if( nodename.equals("eyjoTGATACGTCT") ) runSpec( selectedtree, "http://"+server+"/mysilva_TGATACGTCT.txt" );
+					else if( nodename.equals("eyjoTGTACTACTC") ) runSpec( selectedtree, "http://"+server+"/mysilva_TGTACTACTC.txt" );
+					else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
 					else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 					else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
 					else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
