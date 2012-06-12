@@ -135,6 +135,15 @@ public class TreeUtil {
 		double		canvasy;
 		
 		String		collapsed = null;
+		boolean		selected = false;
+		
+		public void setSelected( boolean selected ) {
+			this.selected = selected;
+		}
+		
+		public boolean isSelected() {
+			return this.selected;
+		}
 		
 		public boolean isCollapsed() {
 			return collapsed != null;

@@ -2,6 +2,7 @@ package org.simmi.client;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.canvas.dom.client.ImageData;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -64,9 +65,31 @@ public class Naclgwt implements EntryPoint {
 		e.click();
 	}-*/;
 	
+	public native void loadimage() /*-{
+		var hthis = this;
+		
+		$wnd.console.log("erm");
+		var b = new Blob( $wnd.current );
+		$wnd.console.log("erm2");
+		var f = new FileReader();
+		$wnd.console.log("erm3");
+		f.onerror = function(e) {
+		  	$wnd.console.log("error");
+			$wnd.console.log(e.getMessage());
+		};
+		f.onload = function(e) {
+			hthis.@org.simmi.client.Naclgwt::handleImage(Ljava/lang/String;)(e.target.result);
+		};
+		f.readAsDataURL( b );
+	}-*/;
+	
 	public void handleText( String text ) {
 		
 	}
+	
+	public native void postimage( ImageData id ) /*-{
+		$wnd.postMessage( id.data );
+	}-*/;
 	
 	public void handleImage( String dataurl ) {
 		Image img = new Image( dataurl );
@@ -74,7 +97,10 @@ public class Naclgwt implements EntryPoint {
 		c.setCoordinateSpaceWidth( img.getWidth() );
 		c.setCoordinateSpaceHeight( img.getHeight() );
 		Context2d c2 = c.getContext2d();
-		c2.drawImage( (ImageElement)img.getElement().cast(), 0, 0);
+		c2.drawImage( (ImageElement)img.getElement().cast(), 0, 0 );
+		ImageData id = c2.getImageData(0, 0, img.getWidth(), img.getHeight());
+		
+		postimage( id );
 	}
 	
 	public native String handleFiles( Element ie, int append ) /*-{	
@@ -86,7 +112,8 @@ public class Naclgwt implements EntryPoint {
 			$wnd.console.log(e.getMessage());
 		};
 		reader.onload = function(e) {
-			//hthis.@org.simmi.client.Naclgwt::handleBinary(Ljava/lang/String;)(e.target.result);
+			$wnd.current = e.target.result;
+			$wnd.postMessage(e.target.result);
 		};
 		reader.readAsArrayBuffer( file );
 	}-*/;
@@ -108,7 +135,7 @@ public class Naclgwt implements EntryPoint {
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
-		init();
+		init();		
 		
 		final RootPanel	rp = RootPanel.get();
 		int w = Window.getClientWidth();
@@ -131,7 +158,7 @@ public class Naclgwt implements EntryPoint {
 		file.addChangeHandler( new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
-				
+				handleFiles( file.getElement(), 0 );
 			}
 		});
 		Style st = file.getElement().getStyle();
@@ -152,6 +179,8 @@ public class Naclgwt implements EntryPoint {
 					//console( last );
 					if( last.startsWith("fileread") ) {
 						click( file.getElement() );
+					} else if( last.startsWith("loadimage") ) {
+						loadimage();
 					} else postMessage( last );
 				}
 			}

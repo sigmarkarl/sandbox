@@ -16,6 +16,8 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -62,7 +64,6 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -76,8 +77,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
@@ -753,18 +752,64 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return table;
 	}
 	
-	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> include ) {
+	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> iset ) {
 		/*JCheckBox species = new JCheckBox("Species");
 		JCheckBox country = new JCheckBox("Country");
 		JCheckBox source = new JCheckBox("Source");
 		JCheckBox accession = new JCheckBox("Accession");
 		Object[] params = new Object[] {species, country, source, accession};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
-		List<NameSel>	namesel = nameSelection();
 		
+		boolean fail = false;
+		try {
+			JSObject win = JSObject.getWindow( DataTable.this );
+			StringBuilder include = new StringBuilder();
+			for( String is : iset ) {
+				if( include.length() == 0 ) include.append( is );
+				else include.append( ","+is );
+			}
+			win.call( "fetchSeq", new Object[] { include.toString() } );
+		} catch( Exception e ) {
+			fail = true;
+		}
+		
+		if( fail ) {
+			try {
+				JSONObject jsono = new JSONObject();
+				for( String is : iset ) {
+					jsono.put(is, (Object)null);
+				}
+				loadSequences( jsono.toString(), aligned );
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void loadSequences( String jsonstr ) throws JSONException {
+		loadSequences( jsonstr, true );
+	}
+	
+	public void loadSequences( String jsonstr, boolean aligned ) throws JSONException {
+		List<NameSel>	namesel = nameSelection();
 		List<Sequence> contset = new ArrayList<Sequence>();
 		Sequence	seq = null;
 		//int nseq = 0;
+		
+		JSONObject jsono = new JSONObject( jsonstr );
+		Set<String> include = new HashSet<String>();
+		Iterator it = jsono.keys();
+		while( it.hasNext() ) {
+			String n = it.next().toString();
+			Object o = jsono.get( n );
+			if( o == null || o.toString().length() <= 1 || o.toString().equalsIgnoreCase("null") ) {
+				include.add( n );
+			} else {
+				Object[] obj = tablemap.get(n);
+				String fname = getFastaName( namesel, obj );
+				contset.add( currentjavafasta.new Sequence( fname, new StringBuilder(o.toString()) ) );
+			}
+		}
 		
 		InputStream is = DataTable.this.getClass().getResourceAsStream("/thermales.fasta");
 		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
@@ -814,7 +859,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					}
 					
 					inc = null;
+					
+					//Iterator it = jsono.keys();
+					//while( it.hasNext() ) {
 					for( String str : include ) {
+						//String str = it.next().toString();
 						if( line.contains( str ) ) {
 							inc = str;
 							break;
@@ -823,7 +872,6 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					
 					if( inc != null ) {
 						Object[] obj = tablemap.get(inc);
-						
 						String fname = getFastaName( namesel, obj );
 						/*String fname = "";
 						for( NameSel ns : namesel ) {
@@ -874,7 +922,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						} else cont = line.substring(1);
 						//if( rr.length == 1 ) cont = line.replace( ">", "" );
 						//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = jf.new Sequence( cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "") );
+						seq = currentjavafasta.new Sequence( cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "") );
 						//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
 						//nseq++;
 					}
@@ -896,22 +944,60 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 		for (Sequence contig : contset) {
 			contig.checkLengths();
-			jf.addSequence(contig);
+			currentjavafasta.addSequence(contig);
 			if (contig.getAnnotations() != null)
 				Collections.sort(contig.getAnnotations());
 		}
+		currentjavafasta.updateView();
 	}
 	
 	public void viewAligned( JavaFasta jf, boolean aligned ) {
 		loadAligned( jf, aligned );
-		jf.updateView();
 	}
 	
 	public StringBuilder extractFastaWoGaps( String filename ) {
 		JavaFasta jf = new JavaFasta( DataTable.this );
+		//jf.add
 		jf.initDataStructures();
 		loadAligned(jf, true);
 		return jf.getFastaWoGaps();
+	}
+	
+	public void addSave( JFrame frame, final JavaFasta jf ) {
+		frame.addWindowListener( new WindowListener() {
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				List<Sequence> lseq = jf.getEditedSequences();
+				if( lseq.size() > 0 && JOptionPane.showConfirmDialog(DataTable.this, "Save", "Do you want to save?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION ) {
+					JSObject jso = JSObject.getWindow( DataTable.this );
+					Map<String,String>	map = new HashMap<String,String>();
+					for( Sequence s : lseq ) {
+						map.put(s.getName(), s.getStringBuilder().toString());
+					}
+					JSONObject jsono = new JSONObject( map );
+					String savestr = jsono.toString();
+					jso.call("saveSeq2", new Object[] {savestr} );
+				}
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {}
+		});
 	}
 	
 	public String getFastaName( List<NameSel> namesel, Object[] obj ) {
@@ -1858,7 +1944,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );
 		popup.addSeparator();
-		popup.add( new AbstractAction("NJTree") {
+		
+		JMenu	njmenu = new JMenu( "NJTree" );
+		popup.add( njmenu );
+		njmenu.add( new AbstractAction("NJTree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//String tree = extractFasta("/thermales.fasta");
@@ -1901,7 +1990,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				}
 			}
 		});
-		popup.add( new AbstractAction("NJTree w/o gaps") {
+		njmenu.add( new AbstractAction("NJTree w/o gaps") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//String tree = extractFasta("/thermales.fasta");
@@ -1923,7 +2012,23 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("showTree", objs);
 			}
 		});
-		popup.add( new AbstractAction("FastTree") {
+		njmenu.add( new AbstractAction("NJTree current view") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				double[] corr = currentjavafasta.distanceMatrixNumeric( true );
+				List<String>	corrInd = currentjavafasta.getNames();
+				
+				TreeUtil	tu = new TreeUtil();
+				tu.neighborJoin(corr, currentjavafasta.getNumberOfSequences(), corrInd);
+				Object[] objs = { tu.getNode().toString() };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("showTree", objs);
+			}
+		});
+		
+		JMenu fasttreemenu = new JMenu("FastTree");
+		popup.add( fasttreemenu );
+		fasttreemenu.add( new AbstractAction("FastTree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String tree = extractFasta("/thermales.fasta");
@@ -1932,7 +2037,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("fasttree", objs);
 			}
 		});
-		popup.add( new AbstractAction("FastTree w/o gaps") {
+		fasttreemenu.add( new AbstractAction("FastTree w/o gaps") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				StringBuilder tree = extractFastaWoGaps("/thermales.fasta");
@@ -1941,7 +2046,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("fasttree", objs);
 			}
 		});
-		popup.add( new AbstractAction("Dnapars") {
+		fasttreemenu.add( new AbstractAction("FastTree current view") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String fasta = currentjavafasta.getFasta( currentjavafasta.getSequences() );
+				Object[] objs = { "f"+fasta.toString() };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("fasttree", objs);
+			}
+		});
+		JMenu	dnaparsmenu = new JMenu("Dnapars");
+		popup.add( dnaparsmenu );
+		dnaparsmenu.add( new AbstractAction("Dnapars") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//String tree = extractFasta("/thermales.fasta");
@@ -1956,7 +2072,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("dnapars", objs);
 			}
 		});
-		popup.add( new AbstractAction("Dnapars w/o gaps") {
+		dnaparsmenu.add( new AbstractAction("Dnapars w/o gaps") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//String tree = extractFasta("/thermales.fasta");
@@ -1972,7 +2088,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("dnapars", objs);
 			}
 		});
-		popup.add( new AbstractAction("Dnaml") {
+		dnaparsmenu.add( new AbstractAction("Dnapars current view") {
+			@Override
+			public void actionPerformed(ActionEvent e) {				
+				String phy = currentjavafasta.getPhylip();
+				Object[] objs = { "p"+phy };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("dnapars", objs);
+			}
+		});
+		JMenu	dnamlmenu = new JMenu("Dnaml");
+		popup.add( dnamlmenu );
+		dnamlmenu.add( new AbstractAction("Dnaml") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//String tree = extractFasta("/thermales.fasta");
@@ -1987,7 +2114,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("dnapars", objs);
 			}
 		});
-		popup.add( new AbstractAction("Dnaml w/o gaps") {
+		dnamlmenu.add( new AbstractAction("Dnaml w/o gaps") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//String tree = extractFasta("/thermales.fasta");
@@ -2003,11 +2130,21 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("dnapars", objs);
 			}
 		});
-		popup.add( new AbstractAction("Show conserved species sites") {
+		dnamlmenu.add( new AbstractAction("Dnaml current view") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				String phy = currentjavafasta.getPhylip( );
+				Object[] objs = { "c"+phy };
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("dnapars", objs);
+			}
+		});
+		dnamlmenu.add( new AbstractAction("Show conserved species sites") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final JavaFasta jf = new JavaFasta( DataTable.this );
 				JFrame frame = new JFrame();
+				addSave( frame, jf );
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				jf.initGui(frame);
@@ -2034,6 +2171,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			public void actionPerformed(ActionEvent e) {
 				JavaFasta jf = new JavaFasta( DataTable.this );
 				JFrame frame = new JFrame();
+				addSave( frame, jf );
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				jf.initGui(frame);
