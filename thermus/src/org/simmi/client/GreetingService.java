@@ -15,4 +15,6 @@ public interface GreetingService extends RemoteService {
 	Map<String,String> saveSel( String name, String val );
 	Map<String,String> saveThermusSel( String name, String val );
 	String	getThermusFusion();
+	String saveSeq(Map<String,String> jsonstr);
+	Map<String, String> fetchSeq(String include);
 }
