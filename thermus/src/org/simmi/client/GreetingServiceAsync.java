@@ -13,4 +13,7 @@ public interface GreetingServiceAsync {
 	void saveSel(String name, String val, AsyncCallback<Map<String,String>> callback);
 	void getThermusFusion(AsyncCallback<String> callback);
 	void saveThermusSel(String name, String val, AsyncCallback<Map<String, String>> callback);
+	void saveSeq(Map<String,String> jsonstr, AsyncCallback<String> asyncCallback);
+	void fetchSeq(String include,
+			AsyncCallback<Map<String, String>> asyncCallback);
 }

@@ -143,9 +143,12 @@ public class Treedraw implements EntryPoint {
 		
 		Context2d ctx = canvas.getContext2d();
 		
-		if( hchunk != 10.0 ) ctx.setFont( ""+(int)(5.0*Math.log(hchunk))+"px sans-serif" );
-		console( "leaves " + leaves );
-		double	maxheightold = root.getMaxHeight();
+		if( hchunk != 10.0 ) {
+			String fontstr = (int)(5.0*Math.log(hchunk))+"px sans-serif";
+			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
+		}
+		//console( "leaves " + leaves );
+		//double	maxheightold = root.getMaxHeight();
 		
 		Node node = equalHeight > 0 ? getMaxNameLength( root, ctx, ww-30 ) : getMaxHeight( root, ctx, ww-30 );
 		if( node != null ) {
@@ -320,7 +323,7 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	public native String handleFiles( Element ie, int append ) /*-{	
-		$wnd.console.log('dcw');
+		//$wnd.console.log('dcw');
 		var hthis = this;
 		file = ie.files[0];
 		var reader = new FileReader();
@@ -401,6 +404,15 @@ public class Treedraw implements EntryPoint {
 		click( file.getElement() );
 	}
 	
+	public void selectRecursive( Node node, boolean select ) {
+		if( node != null ) {
+			node.setSelected( select );
+			if( node.getNodes() != null ) for( Node n : node.getNodes() ) {
+				selectRecursive( n, select );
+			}
+		}
+	}
+	
 	public void recursiveNodeCollapse( Node node, double x, double y ) {
 		if( node != null ) {
 			if( Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5 ) {
@@ -450,6 +462,21 @@ public class Treedraw implements EntryPoint {
 			} else {
 				for( Node n : node.getNodes() ) {
 					Node res = recursiveNodeClick( n, x, y, recursive );
+					if( res != null ) ret = res;
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public Node findSelectedNode( Node node, double x, double y ) {
+		Node ret = null;
+		if( node != null ) {
+			if( (Math.abs( node.getCanvasX()-x ) < 5 && Math.abs( node.getCanvasY()-y ) < 5) ) {
+				ret = node;
+			} else {
+				for( Node n : node.getNodes() ) {
+					Node res = findSelectedNode( n, x, y );
 					if( res != null ) ret = res;
 				}
 			}
@@ -779,7 +806,7 @@ public class Treedraw implements EntryPoint {
 					popup.show();*/
 				} else {
 					if( event.isControlKeyDown() ) {
-						canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+						/*canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 						Node newroot = recursiveReroot( root, x, y );
 						if( newroot != null ) {
 							newroot.setParent( null );
@@ -790,11 +817,14 @@ public class Treedraw implements EntryPoint {
 							root.seth2( 0.0 );
 						}
 						//recursiveNodeCollapse( root, x, y );
-						//root.countLeaves();
+						//root.countLeaves();*/
+						
+						recursiveNodeClick( root, x, y, 0 );
 					} else if( shift ) {
 						recursiveNodeClick( root, x, y, 1 );
 					} else {
-						selectedNode = recursiveNodeClick( root, x, y, 0 );
+						selectedNode = findSelectedNode( root, x, y );
+						if( selectedNode != null ) selectRecursive( selectedNode, !selectedNode.isSelected() );
 						/*if( nodearray != null ) {
 							int y = event.getY();
 							int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
@@ -859,7 +889,7 @@ public class Treedraw implements EntryPoint {
 					omitLast( selectedNode != null ? selectedNode : root, 2 );
 				} else if( c == 'l' || c == 'l' ) {
 					omitLast( selectedNode != null ? selectedNode : root, 1 );
-				} else if( c == 'k' || c == 'k' ) {
+				} else if( c == 'k' || c == 'K' ) {
 					omitLast( selectedNode != null ? selectedNode : root, 0 );
 				} else if( selectedNode != null ) {
 					if( c == 'c' || c == 'C' ) {
@@ -936,6 +966,8 @@ public class Treedraw implements EntryPoint {
 						root = selectedNode;
 						root.seth( 0.0 );
 						root.seth2( 0.0 );
+					} else if( c == 'i' || c == 'I' ) {
+						invertSelectionRecursive( root );
 					}
 				}
 				if( treeutil != null ) drawTree( treeutil );
@@ -1161,6 +1193,13 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	public void invertSelectionRecursive( Node root ) {
+		root.setSelected( !root.isSelected() );
+		if( root.getNodes() != null ) for( Node n : root.getNodes() ) {
+			invertSelectionRecursive( n );
+		}
+	}
+	
 	public native void showTree( String tree ) /*-{
 		$wnd.showTree( tree );
 		
@@ -1375,7 +1414,14 @@ public class Treedraw implements EntryPoint {
 			}
 			
 			double newy = cmap.containsKey(resnode) ? cmap.get(resnode) : 0.0;
-			g2.setStrokeStyle( "#333333" );
+			if( resnode.isSelected() ) {
+				g2.setStrokeStyle( "#000000" );
+				g2.setLineWidth( 2.0 );
+			}
+			else {
+				g2.setStrokeStyle( "#333333" );
+				g2.setLineWidth( 1.0 );
+			}
 			g2.beginPath();
 			if( vertical ) {
 				double yfloor = Math.floor(y+newy);
@@ -1470,7 +1516,14 @@ public class Treedraw implements EntryPoint {
 			//ny+=starty;
 			//drawTreeRecursive( g2, resnode, w, h, dw, dh, x+dw*total, y+h, (dw*nleaves)/2, ny, paint ? shadeColor : null );
 			
-			g2.setStrokeStyle( "#333333" );
+			if( resnode.isSelected() ) {
+				g2.setStrokeStyle( "#000000" );
+				g2.setLineWidth( 2.0 );
+			}
+			else {
+				g2.setStrokeStyle( "#333333" );
+				g2.setLineWidth( 1.0 );
+			}
 			//g2.setStroke( vStroke );
 			g2.beginPath();
 			if( vertical ) {
@@ -1506,7 +1559,6 @@ public class Treedraw implements EntryPoint {
 		boolean paint = use != null && use.length() > 0;
 		
 		String color = resnode.getColor();
-			
 		if( paint ) {
 			if( nullNodes ) {
 				g2.setFillStyle( "#000000" );
@@ -1529,6 +1581,9 @@ public class Treedraw implements EntryPoint {
 				int t = 0;
 				double mstrw = 0;
 				double mstrh = 10;
+				
+				String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(5.0*Math.log(hchunk))+"px sans-serif";
+				if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
 				
 				if( !vertical ) {
 					for( String str : split ) {
