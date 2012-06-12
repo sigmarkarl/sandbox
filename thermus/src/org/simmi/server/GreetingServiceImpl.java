@@ -9,8 +9,10 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.simmi.client.GreetingService;
 
@@ -20,13 +22,12 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Text;
-import com.google.gdata.client.ClientLoginAccountType;
 import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.Service.GDataRequest;
 import com.google.gdata.client.Service.GDataRequest.RequestType;
 import com.google.gdata.client.http.GoogleGDataRequest;
-import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -267,5 +268,50 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		      System.out.println();
 		    }
 		  }
+	}
+
+	@Override
+	public String saveSeq(Map<String,String> jsonmap) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+		Set<String>	keyset = jsonmap.keySet();
+		Query query = new Query("sequence");
+		query.addFilter("name", FilterOperator.IN, keyset);
+		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		
+		for( Entity e : seqsEntities ) {
+			String name = (String)e.getProperty("name");
+			String seq = (String)jsonmap.get( name );
+			e.setProperty("seq", new Text(seq) );
+			Key key = datastore.put( e );
+			jsonmap.remove( name );
+		}
+		for( String keyval : keyset ) {
+			Entity ent = new Entity("sequence");
+			ent.setProperty("name", keyval);
+			ent.setProperty("seq", new Text(jsonmap.get(keyval)) );
+			Key key = datastore.put( ent );
+		}
+		return "";
+	}
+
+	@Override
+	public Map<String, String> fetchSeq(String include) {
+		Map<String,String>	retmap = new HashMap<String,String>();
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Set<String>	keyset = new HashSet<String>( Arrays.asList(include.split(",")) );
+		Query query = new Query("sequence");
+		query.addFilter("name", FilterOperator.IN, keyset);
+		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		
+		for( Entity e : seqsEntities ) {
+			String name = (String)e.getProperty("name");
+			String seq = ((Text)e.getProperty("seq")).getValue();
+			retmap.put( name, seq );
+		}
+		for( String str : keyset ) {
+			if( !retmap.containsKey(str) ) retmap.put(str, null);
+		}
+		return retmap;
 	};
 }

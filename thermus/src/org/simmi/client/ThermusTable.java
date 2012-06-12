@@ -1,5 +1,6 @@
 package org.simmi.client;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -12,7 +13,9 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -42,6 +45,16 @@ public class ThermusTable implements EntryPoint {
 		
 		$wnd.saveSel = function( key, val ) {
 			s.@org.simmi.client.ThermusTable::saveSel(Ljava/lang/String;Ljava/lang/String;)( key, val );
+		};
+		
+		$wnd.saveSeq2 = function( jsonstr ) {
+			//$wnd.console.log('blehblehble');
+			s.@org.simmi.client.ThermusTable::saveSeq(Ljava/lang/String;)( jsonstr );
+		};
+		
+		$wnd.fetchSeq = function( include ) {
+			//$wnd.console.log('blehblehble');
+			s.@org.simmi.client.ThermusTable::fetchSeq(Ljava/lang/String;)( include );
 		};
 		
 		$wnd.reqSavedSel = function() {
@@ -84,6 +97,11 @@ public class ThermusTable implements EntryPoint {
 		});
 	}
 	
+	public native void loadAppletSequences( JavaScriptObject applet, String data ) /*-{
+		//var applet = $doc.getElementById('datatable');
+		applet.loadSequences( data );
+	}-*/;
+	
 	public native void loadApplet( JavaScriptObject applet, String data ) /*-{
 		//var applet = $doc.getElementById('datatable');
   		applet.loadData( data );
@@ -121,6 +139,48 @@ public class ThermusTable implements EntryPoint {
 	public native void appendSelection( Element ae, String key, String value ) /*-{
 		ae.appendSelection( key, value );
 	}-*/;
+	
+	public void saveSeq( String jsonstr ) {
+		JSONValue jsonv = JSONParser.parseStrict( jsonstr );
+		Map<String,String> jsonmap = new HashMap<String,String>();
+		JSONObject jsono = jsonv.isObject();
+		for( String json : jsono.keySet() ) {
+			jsonmap.put( json, jsono.get(json).toString().replace("\"", "") );
+		}
+		greetingService.saveSeq( jsonmap, new AsyncCallback<String>() {
+			@Override
+			public void onSuccess(String result) {
+				console("saveseq successfull");
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				console( caught.getMessage() );
+			}
+		});
+	}
+	
+	public void fetchSeq( String include ) {
+		greetingService.fetchSeq( include, new AsyncCallback<Map<String,String>>() {
+			@Override
+			public void onSuccess(Map<String,String> result) {
+				JSONObject	jsono = new JSONObject();
+				for( String name : result.keySet() ) {
+					String res = result.get(name);
+					String erm = res == null ? "" : res;
+					jsono.put( name, new JSONString(erm) );
+				}
+				String jsonstr = jsono.toString();
+				console( jsonstr );
+				loadAppletSequences( appletelement, jsonstr );
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				console( caught.getMessage() );
+			}
+		});
+	}
 	
 	public void saveSel( String key, String val ) {
 		greetingService.saveThermusSel( key, val, new AsyncCallback<Map<String,String>>() {
@@ -349,5 +409,4 @@ public class ThermusTable implements EntryPoint {
 		};
 		VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);*/
 	}
-
 }
