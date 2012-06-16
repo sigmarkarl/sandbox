@@ -8173,10 +8173,10 @@ public class GeneSet extends JApplet {
 		Set<String> poddur = new HashSet<String>();
 		Map<String, Gene> locgene = new HashMap<String, Gene>();
 
-		is = GeneSet.class.getResourceAsStream("/thermus_nr.blastout");
-		panCoreFromNRBlast( new InputStreamReader(is), "c:/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
-		// is = GeneSet.class.getResourceAsStream("/arciformis_short.blastout");
-		//panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		//is = GeneSet.class.getResourceAsStream("/thermus_nr.blastout");
+		//panCoreFromNRBlast( new InputStreamReader(is), "c:/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
+		is = GeneSet.class.getResourceAsStream("/thermus_nr_short.blastout");
+		panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();

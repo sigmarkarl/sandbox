@@ -675,16 +675,6 @@ public class Treedraw implements EntryPoint {
 		node.seth2( Math.max( node.geth2(), 0.0 ) );
 	}
 	
-	public void arrange( Node root, Comparator<Node> comparator ) {
-		List<Node> nodes = root.getNodes();
-		if( nodes != null ) {
-			for( Node n : nodes ) {
-				arrange( n, comparator );
-			}
-			Collections.sort( nodes, comparator );
-		}
-	}
-	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get("canvas");
@@ -819,12 +809,12 @@ public class Treedraw implements EntryPoint {
 						//recursiveNodeCollapse( root, x, y );
 						//root.countLeaves();*/
 						
-						recursiveNodeClick( root, x, y, 0 );
-					} else if( shift ) {
 						recursiveNodeClick( root, x, y, 1 );
-					} else {
+					} else if( shift ) {
 						selectedNode = findSelectedNode( root, x, y );
 						if( selectedNode != null ) selectRecursive( selectedNode, !selectedNode.isSelected() );
+					} else {
+						recursiveNodeClick( root, x, y, 0 );
 						/*if( nodearray != null ) {
 							int y = event.getY();
 							int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
@@ -1143,7 +1133,7 @@ public class Treedraw implements EntryPoint {
 						return -1;
 					}
 				};
-				arrange( treeutil.getNode(), comp );
+				treeutil.arrange( treeutil.getNode(), comp );
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
@@ -1163,7 +1153,24 @@ public class Treedraw implements EntryPoint {
 						return -1;
 					}
 				};
-				arrange( treeutil.getNode(), comp );
+				treeutil.arrange( treeutil.getNode(), comp );
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		Button titl = new Button( "title" );
+		titl.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+					@Override
+					public int compare(Node o1, Node o2) {
+						String c1 = o1.toStringWoLengths();
+						String c2 = o2.toStringWoLengths();
+						
+						return c1.compareTo( c2 );
+					}
+				};
+				treeutil.arrange( treeutil.getNode(), comp );
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
@@ -1172,6 +1179,7 @@ public class Treedraw implements EntryPoint {
 		arrangehp.add( arhtml );
 		arrangehp.add( arbl );
 		arrangehp.add( arcs );
+		arrangehp.add( titl );
 		
 		choicePanel.add( arrangehp );
 		choicePanel.add( bc );

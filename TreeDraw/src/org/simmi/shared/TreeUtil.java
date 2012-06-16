@@ -3,6 +3,8 @@ package org.simmi.shared;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +14,68 @@ import java.util.Set;
 public class TreeUtil {
 	public Node currentNode = null;
 	
-	public void neighborJoin( double[] corrarr, int len, List<String> corrInd ) {
+	public void propogateCompare( Node n ) {
+		if( n.getNodes().size() > 0 ) {
+			n.comp++;
+			for( Node nn : n.getNodes() ) {
+				propogateCompare( nn );
+			}
+		}
+	}	
+	
+	public void appendCompare( Node n ) {
+		if( n.getNodes().size() > 0 ) {
+			n.name = ""+n.comp;
+			for( Node nn : n.getNodes() ) {
+				appendCompare( nn );
+			}
+		}
+	}
+	
+	public Node findNode( Node root, String subtree ) {
+		Node ret = null;
+		
+		String rn = root.toStringWoLengths();
+		if( rn.equals(subtree) ) ret = root;
+		else if( rn.length() > subtree.length() ) {
+			for( Node n : root.getNodes() ) {
+				Node nn = findNode( n, subtree );
+				if( nn != null ) {
+					ret = nn;
+					break;
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
+	public void compareTrees( String ns1, Node n1, Node n2 ) {
+		if( n2.getNodes().size() > 1 ) {
+			String ns2 = n2.toStringWoLengths();
+		
+			if( ns1.contains(ns2) ) {
+				Node n = findNode( n1, ns2 );
+				propogateCompare( n );
+			} else {
+				for( Node n : n2.getNodes() ) {
+					compareTrees( ns1, n1, n );
+				}
+			}
+		}
+	}
+	
+	public void arrange( Node root, Comparator<Node> comparator ) {
+		List<Node> nodes = root.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				arrange( n, comparator );
+			}
+			Collections.sort( nodes, comparator );
+		}
+	}
+	
+	public Node neighborJoin( double[] corrarr, int len, List<String> corrInd ) {		
 		List<Node> nodes = new ArrayList<Node>();
 		for( int i = 0; i < len; i++ ) {
 			nodes.add( new Node( corrInd.get(i) ) );
@@ -100,7 +163,7 @@ public class TreeUtil {
 			len--;
 			dmat = dmatmp;
 			
-			System.err.println( "size is " + nodes.size() );
+			//System.err.println( "size is " + nodes.size() );
 		}
 		
 		Node parnode = new Node();
@@ -109,7 +172,8 @@ public class TreeUtil {
 		nodes.clear();
 		
 		parnode.countLeaves();
-		currentNode = parnode;
+		
+		return parnode;
 	}
 	
 	public Node getNode() {
@@ -130,6 +194,7 @@ public class TreeUtil {
 		List<Node>	nodes;
 		int			leaves = 0;
 		Node		parent;
+		int			comp = 0;
 		
 		double		canvasx;
 		double		canvasy;
@@ -194,6 +259,37 @@ public class TreeUtil {
 		
 		public void seth2( double h2 ) {
 			this.h2 = h2;
+		}
+		
+		public String toStringWoLengths() {
+			String str = "";
+			if( nodes.size() > 0 ) {
+				str += "(";
+				int i = 0;
+				
+				/*String n1 = nodes.get(0).toStringSortedWoLengths();
+				if( nodes.size() > 1 ) {
+					String n2 = nodes.get(1).toStringSortedWoLengths();
+					if( n1.compareTo( n2 ) > 0 ) {
+						str += n2+","+n1+")";
+					} else {
+						str += n1+","+n2+")";
+					}
+				} else {
+					str += n1+")";
+				}*/
+				for( i = 0; i < nodes.size()-1; i++ ) {
+					str += nodes.get(i).toStringWoLengths()+",";
+				}
+				str += nodes.get(i).toStringWoLengths()+")";
+			}
+			
+			if( meta != null && meta.length() > 0 ) {
+				if( name != null && name.length() > 0 ) str += "'"+name+";"+meta+"'";
+				else str += "'"+meta+"'";
+			} else if( name != null && name.length() > 0 ) str += name;
+			
+			return str;
 		}
 		
 		public String toString() {
@@ -969,17 +1065,22 @@ public class TreeUtil {
 					} else node.color = null;
 					
 					String dstr = split[1].trim();
-					String dstr2 = "0";
+					String dstr2 = "";
 					if( dstr.contains("[") ) {
-						int start = split[1].indexOf('[');
-						int stop = split[1].indexOf(']');
+						int start = dstr.indexOf('[');
+						int stop = dstr.indexOf(']');
 						dstr2 = dstr.substring( start+1, stop );
 						dstr = dstr.substring( 0, start );
 					}
 					
 					try {
 						node.h = Double.parseDouble( dstr );
-						node.h2 = Double.parseDouble( dstr2 );
+						if( dstr2.length() > 0 ) {
+							node.h2 = Double.parseDouble( dstr2 );
+							if( node.name == null || node.name.length() == 0 ) {
+								node.name = dstr2; 
+							}
+						}
 					} catch( Exception e ) {
 						System.err.println();
 					}
@@ -1075,7 +1176,7 @@ public class TreeUtil {
 					}
 				} else ret.color = null;
 				String dstr = split.length > 1 ? split[1].trim() : "0";
-				String dstr2 = "0";
+				String dstr2 = "";
 				if( dstr.contains("[") ) {
 					int start = split[1].indexOf('[');
 					int stop = split[1].indexOf(']');
@@ -1084,7 +1185,12 @@ public class TreeUtil {
 				}
 				try {
 					ret.h = Double.parseDouble( dstr );
-					ret.h2 = Double.parseDouble( dstr2 );
+					if( dstr2.length() > 0 ) {
+						ret.h2 = Double.parseDouble( dstr2 );
+						if( ret.name == null || ret.name.length() == 0 ) {
+							ret.name = dstr2;
+						}
+					}
 				} catch( Exception e ) {}
 				if( ret.h < minh ) minh = ret.h;
 				if( ret.h > maxh ) maxh = ret.h;
