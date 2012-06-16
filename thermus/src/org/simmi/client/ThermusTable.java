@@ -171,7 +171,7 @@ public class ThermusTable implements EntryPoint {
 					jsono.put( name, new JSONString(erm) );
 				}
 				String jsonstr = jsono.toString();
-				console( jsonstr );
+				//console( jsonstr );
 				loadAppletSequences( appletelement, jsonstr );
 			}
 			
