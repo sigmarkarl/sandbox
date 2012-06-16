@@ -105,6 +105,10 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class Order extends JApplet {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	JScrollPane	scrollpane;
 	JScrollPane	pscrollpane;
 	JScrollPane ascrollpane;
@@ -115,6 +119,11 @@ public class Order extends JApplet {
 	
 	JTable		table = new JTable();
 	JTable		ptable = new JTable() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
 		public Component prepareRenderer( TableCellRenderer renderer, int row, int column ) {
 			Component ret = super.prepareRenderer(renderer, row, column);
 			
@@ -720,7 +729,7 @@ public class Order extends JApplet {
 	}
 	
 	boolean userCheck() {
-		return user.equals("ragnar") || user.equals("annas") || user.equals("johanna") || user.equals("adalheidur") || user.equals("gulla") || user.equals("julia") || user.equals("root") || user.equals("sigmar");
+		return user.equals("ragnar") || user.equals("annas") || user.equals("johanna") || user.equals("adalheidur") || user.equals("unnurh") || user.equals("gulla") || user.equals("julia") || user.equals("root") || user.equals("sigmar");
 	}
 	
 	public TableModel createModel( final List<?> datalist, final Class cls ) {
