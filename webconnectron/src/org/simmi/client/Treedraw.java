@@ -312,8 +312,9 @@ public class Treedraw implements EntryPoint {
 					}
 				}
 			}
-			treeutil.neighborJoin( dvals, len, names );
-			console( treeutil.getNode().toString() );
+			Node n = treeutil.neighborJoin( dvals, len, names );
+			treeutil.setNode( n );
+			//console( treeutil.getNode().toString() );
 			handleTree( treeutil );
 		} else {
 			String tree = str.replaceAll("[\r\n]+", "");

@@ -2542,65 +2542,80 @@ public class SerifyApplet extends JApplet {
 							}
 						}
 						for( String phage : pool ) {
-							File f = null;
-							if( dir != null ) {
-								f = new File( dir, s.getName()+"_"+phage+".gb" );
-							} else if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-								f = fc.getSelectedFile();
-							}
-							
-							if( f != null ) {
-								FileWriter	fw = new FileWriter( f );
-								String loc = "LOCUS       "+phage+" on "+s.getName()+"                "+count+" bp    dna     linear   UNK";
-								String def = "DEFINITION  [organism=unknown] [strain=unknown] [gcode=11] [date=3-20-2012]";
-								String acc = "ACCESSION   CP51";
-								String keyw = "KEYWORDS    .";
-								String feat = "FEATURES             Location/Qualifiers";
-								fw.write( loc+"\n" );
-								fw.write( def+"\n" );
-								fw.write( acc+"\n" );
-								fw.write( keyw+"\n" );
-								fw.write( feat+"\n" );
-								count = 1;
-								for( String key : seqmap.keySet() ) {
-									StringBuilder sbld = seqmap.get(key);
-									fw.write( "     fasta_record    "+count+".."+(count+sbld.length())+"\n" );
-									fw.write( "                     /name=\""+key+"\"\n" );
-									
-									if( mapan.containsKey(key) ) {
-										List<Anno> lann = mapan.get(key);
-										int ac = 1;
-										for( Anno ann : lann ) {
-											if( ann.name.contains(phage) ) {
-												String locstr = (ann.start+count)+".."+(ann.stop+count);
-												if( ann.comp ) fw.write( "     gene            complement("+locstr+")\n" );
-												else fw.write( "     gene            "+locstr+"\n" );
-												fw.write( "                     /locus_tag=\""+key+"_"+ac+"\"\n" );
-												fw.write( "                     /product=\""+ann.name+"\"\n" );
-												ac++;
-											}
+							boolean empty = true;
+							for( String key : mapan.keySet() ) {
+								List<Anno> lann = mapan.get( key );
+								if( lann != null ) {
+									for( Anno a : lann ) {
+										if( a.name.contains( phage ) ) {
+											empty = false;
+											break;
 										}
 									}
-									
-									count += sbld.length();
-									count += addon.length();
 								}
-								fw.write( "ORIGIN" );
-								count = 1;
-								//int start = 1;
-								for( String key : seqmap.keySet() ) {
-									StringBuilder sbld = seqmap.get(key);
-									for( int k = 0; k < sbld.length(); k++ ) {
-										if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
-										else if( (count-1)%10 == 0 ) fw.write( " " );
+							}
+							
+							if( !empty ) {
+								File f = null;
+								if( dir != null ) {
+									f = new File( dir, s.getName()+"_"+phage+".gb" );
+								} else if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+									f = fc.getSelectedFile();
+								}
+								
+								if( f != null ) {
+									FileWriter	fw = new FileWriter( f );
+									String loc = "LOCUS       "+phage+" on "+s.getName()+"                "+count+" bp    dna     linear   UNK";
+									String def = "DEFINITION  [organism=unknown] [strain=unknown] [gcode=11] [date=3-20-2012]";
+									String acc = "ACCESSION   CP51";
+									String keyw = "KEYWORDS    .";
+									String feat = "FEATURES             Location/Qualifiers";
+									fw.write( loc+"\n" );
+									fw.write( def+"\n" );
+									fw.write( acc+"\n" );
+									fw.write( keyw+"\n" );
+									fw.write( feat+"\n" );
+									count = 1;
+									for( String key : seqmap.keySet() ) {
+										StringBuilder sbld = seqmap.get(key);
+										fw.write( "     fasta_record    "+count+".."+(count+sbld.length())+"\n" );
+										fw.write( "                     /name=\""+key+"\"\n" );
 										
-										fw.write( sbld.charAt(k) );
+										if( mapan.containsKey(key) ) {
+											List<Anno> lann = mapan.get(key);
+											int ac = 1;
+											for( Anno ann : lann ) {
+												if( ann.name.contains(phage) ) {
+													String locstr = (ann.start+count)+".."+(ann.stop+count);
+													if( ann.comp ) fw.write( "     gene            complement("+locstr+")\n" );
+													else fw.write( "     gene            "+locstr+"\n" );
+													fw.write( "                     /locus_tag=\""+key+"_"+ac+"\"\n" );
+													fw.write( "                     /product=\""+ann.name+"\"\n" );
+													ac++;
+												}
+											}
+										}
 										
-										count++;
+										count += sbld.length();
+										count += addon.length();
 									}
+									fw.write( "ORIGIN" );
+									count = 1;
+									//int start = 1;
+									for( String key : seqmap.keySet() ) {
+										StringBuilder sbld = seqmap.get(key);
+										for( int k = 0; k < sbld.length(); k++ ) {
+											if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
+											else if( (count-1)%10 == 0 ) fw.write( " " );
+											
+											fw.write( sbld.charAt(k) );
+											
+											count++;
+										}
+									}
+									fw.write("\n//");
+									fw.close();
 								}
-								fw.write("\n//");
-								fw.close();
 							}
 						}
 					} catch (MalformedURLException e) {
