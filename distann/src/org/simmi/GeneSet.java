@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.applet.Applet;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -5367,8 +5368,10 @@ public class GeneSet extends JApplet {
 	}
 	
 	JComboBox selcomb;
-	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, final Map<String, Function> funcmap, final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
-			final Map<Set<String>, ShareNum> specset, final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb, final Container comp, final JComboBox selcomblocal) throws IOException {
+	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, 
+			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
+			final Map<Set<String>, ShareNum> specset, final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
+			final Container comp, final JComboBox selcomblocal) throws IOException {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		splitpane.setDividerLocation(400);
@@ -5810,6 +5813,155 @@ public class GeneSet extends JApplet {
 			}
 		};
 		JButton matrixbutton = new JButton(matrixaction);
+		
+		AbstractAction freqdistaction = new AbstractAction("Frequency distribution") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFrame f = new JFrame("Genome frequency distribution");
+				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				f.setSize(500, 500);
+
+				final Map<Integer,Integer>	frqmap = new HashMap<Integer,Integer>();
+				//int i = 0;
+				Set<String> ss = new HashSet<String>();
+				//Set<String> gs = new HashSet<String>();
+				for (Set<String> cluster : uclusterlist) {
+					ss.clear();
+					//gs.clear();
+
+					//Set<Gene> gset = new HashSet<Gene>();
+					for (String cont : cluster) {
+						String[] split = cont.split("_");
+						ss.add(split[0]);
+						//Gene g = locgene.get(cont);
+						
+						/*if (g != null) {
+							gs.add(g.refid);
+							gset.add(g);
+						}*/
+					}
+					
+					if( frqmap.containsKey( ss.size() ) ) {
+						frqmap.put( ss.size(), frqmap.get(ss.size())+1 );
+					} else frqmap.put( ss.size(), 1 );
+
+					/*int val = 0;
+					for (Gene g : gset) {
+						if (g.species != null) {
+							for (String str : g.species.keySet()) {
+								val += g.species.get(str).tset.size();
+							}
+						}
+					}
+
+					for (Gene g : gset) {
+						g.groupIdx = i;
+						g.groupCoverage = ss.size();
+						g.groupGenCount = gs.size();
+						g.groupCount = val;
+					}
+
+					i++;*/
+				}
+				
+				JScrollPane	jsp = new JScrollPane();
+				JComponent	comp = new JComponent() {
+					public void paintComponent( Graphics g ) {
+						super.paintComponent(g);
+						g.setColor( Color.white );
+						g.fillRect(0, 0, this.getWidth(), this.getHeight());
+						g.setColor( Color.blue );
+						
+						int min = 30;
+						int max = 0;
+						
+						int minh = 100000000;
+						int maxh = 0;
+						
+						for( Integer k : frqmap.keySet() ) {
+							if( k > max ) max = k;
+							if( k < min ) min = k;
+							
+							int h = frqmap.get( k );
+							if( h > maxh ) maxh = h;
+							if( h < minh ) minh = h;
+						}
+						
+						if( minh != maxh ) {
+							for( Integer k : frqmap.keySet() ) {
+								int h = frqmap.get( k );
+								int x = (k-min)*(this.getWidth()-20)/(max-min)+10;
+								int y = -(h-minh)*(this.getHeight()-20)/(maxh-minh)+(this.getHeight()-10);
+								g.fillOval(x-4, y-4, 8, 8);
+							}
+						}
+					}
+				};
+				comp.setPreferredSize( new Dimension(800,600) );
+				jsp.setViewportView( comp );
+				f.add( jsp );
+				f.setVisible( true );
+			}
+		};
+		JButton freqdistbutton = new JButton(freqdistaction);
+		
+		AbstractAction presabsaction = new AbstractAction("Pres-Abs tree") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JCheckBox	check = new JCheckBox("Skip core");
+				JOptionPane.showMessageDialog( comp, new Object[] {check} );
+				
+				StringBuilder distmat = new StringBuilder();
+				distmat.append("\t"+species.size()+"\n");
+				for( String spec1 : species ) {
+					distmat.append( spec1 );
+					for( String spec2 : species ) {
+						if( spec1.equals(spec2) ) distmat.append( "\t0.0" );
+						else {
+							int total = 0;
+							int count = 0;
+							for( Set<String> specset : clusterMap.keySet() ) {
+								if( !check.isSelected() || specset.size() < species.size() ) {
+									boolean b1 = specset.contains(spec1);
+									boolean b2 = specset.contains(spec2);
+									if( b1 || b2 ) {
+										total++;
+										if( b1 && b2 ) count++;
+									}
+								} else {
+									System.err.println("blehbheh");
+								}
+							}
+							distmat.append( "\t"+(double)(total-count)/(double)total );
+						}
+					}
+					distmat.append("\n");
+				}
+				
+				boolean succ = true;
+				try {
+					JSObject win = JSObject.getWindow( (Applet)comp );
+				} catch( Exception e1 ) {
+					succ = false;
+				}
+				
+				if( !succ ) {
+					JFrame f = new JFrame("Pres-Abs dist matrix");
+					f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+					f.setSize( 800, 600 );
+					
+					JTextArea	ta = new JTextArea();
+					ta.setText( distmat.toString() );
+					JScrollPane	sp = new JScrollPane(ta);
+					f.add( sp );
+					f.setVisible( true );
+				}
+			}
+		};
+		JButton presabsbutton = new JButton( presabsaction );
+		
+		ttopcom.add( presabsbutton );
+		ttopcom.add(freqdistbutton);
 		ttopcom.add(matrixbutton);
 		ttopcom.add(textfield);
 		ttopcom.add(label);
@@ -8139,7 +8291,7 @@ public class GeneSet extends JApplet {
 
 		// URL url = new URL("http://192.168.1.69/all.nn");
 		try {
-			is = GeneSet.class.getResourceAsStream("/thermus_join.nn");
+			is = null; //GeneSet.class.getResourceAsStream("/thermus_join.nn");
 			//is = GeneSet.class.getResourceAsStream("/all.nn");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
@@ -8150,7 +8302,7 @@ public class GeneSet extends JApplet {
 
 		// url = new URL("http://192.168.1.69/all.fsa");
 		try {
-			is = GeneSet.class.getResourceAsStream("/thermus_join.fna");
+			is = null; //GeneSet.class.getResourceAsStream("/thermus_join.fna");
 			//is = GeneSet.class.getResourceAsStream("/all.fsa");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
@@ -8160,7 +8312,7 @@ public class GeneSet extends JApplet {
 		}
 
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
-		List<Set<String>> iclusterlist = loadSimpleClusters(new InputStreamReader(is));
+		List<Set<String>> iclusterlist = null; //loadSimpleClusters(new InputStreamReader(is));
 
 		//is = GeneSet.class.getResourceAsStream("/union_cluster.txt");
 		is = GeneSet.class.getResourceAsStream("/thermus_union_cluster.txt");
@@ -8492,8 +8644,7 @@ public class GeneSet extends JApplet {
 		// aas.clear();
 
 		// return new JComponent() {};
-		return showGeneTable(refmap, genelist, funcmap, funclist, iclusterlist, uclusterlist, specset, null, jb, comp, selcomblocal);// clustInfoMap
-																																		// );
+		return showGeneTable(refmap, genelist, funcmap, funclist, iclusterlist, uclusterlist, specset, null, jb, comp, selcomblocal);// clustInfoMap// );
 	}
 
 	public static class ShareNum implements Comparable<ShareNum> {
