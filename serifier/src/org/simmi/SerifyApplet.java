@@ -88,8 +88,8 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.simmi.shared.Sequence;
 import org.simmi.unsigned.JavaFasta;
-import org.simmi.unsigned.JavaFasta.Sequence;
 
 public class SerifyApplet extends JApplet {
 	/**
@@ -2183,7 +2183,7 @@ public class SerifyApplet extends JApplet {
 						while( line != null ) {
 							if( line.startsWith(">") ) {
 								if( cont != null ) {
-									Sequence seq = jf.new Sequence(cont, dna);
+									Sequence seq = new Sequence(cont, dna);
 									contset.put(cont, seq);
 								}
 								if( rr.length == 1 ) cont = line.replace( ">", "" );
@@ -2195,7 +2195,7 @@ public class SerifyApplet extends JApplet {
 							line = br.readLine();
 						}
 						if( cont != null ) {
-							Sequence seq = jf.new Sequence(cont, dna);
+							Sequence seq = new Sequence(cont, dna);
 							contset.put(cont, seq);
 						}
 						br.close();

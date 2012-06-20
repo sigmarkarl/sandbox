@@ -1,9 +1,9 @@
 package org.simmi.client;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.simmi.shared.Sequence;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 
@@ -63,6 +64,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
@@ -81,8 +83,9 @@ public class Treedraw implements EntryPoint {
 	Node		selectedNode;
 	Node[]		nodearray;
 	TreeUtil	treeutil;
-	boolean		center = false;
+	boolean	center = false;
 	int			equalHeight = 0;
+	boolean	showscale = true;
 	
 	public void handleTree( TreeUtil treeutil ) {
 		this.treeutil = treeutil;
@@ -110,7 +113,11 @@ public class Treedraw implements EntryPoint {
 		
 		nodearray = new Node[ leaves ];
 		
+		String treelabel = treeutil.getTreeLabel();
+		
 		int hsize = (int)(hchunk*leaves);
+		if( treelabel != null ) hsize += 2*hchunk;
+		if( showscale ) hsize += 2*hchunk;
 		canvas.setSize((ww-10)+"px", (hsize+2)+"px");
 		canvas.setCoordinateSpaceWidth( ww-10 );
 		canvas.setCoordinateSpaceHeight( hsize+2 );
@@ -142,37 +149,55 @@ public class Treedraw implements EntryPoint {
 		//console( Double.toString(maxh2-minh2) );
 		
 		Context2d ctx = canvas.getContext2d();
-		
 		if( hchunk != 10.0 ) {
 			String fontstr = (int)(5.0*Math.log(hchunk))+"px sans-serif";
 			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
 		}
+		if( treelabel != null ) ctx.fillText( treelabel, 10, hchunk+2 );
 		//console( "leaves " + leaves );
 		//double	maxheightold = root.getMaxHeight();
 		
-		Node node = equalHeight > 0 ? getMaxNameLength( root, ctx, ww-30 ) : getMaxHeight( root, ctx, ww-30 );
+		Node node = equalHeight > 0 ? getMaxNameLength( root, ctx, ww-30 ) : getMaxHeight( root, ctx, ww-30, true );
 		if( node != null ) {
 			double gh = getHeight(node);
 			String name = node.getName();
 			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 			double textwidth = ctx.measureText(name).getWidth();
-			console( ""+textwidth );
 			
 			double maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth);
 			if( equalHeight > 0 ) dw = maxheight/levels;
 					
-			//console( maxheightold + "  " + gh );
-			
 			if( vertical ) {
-				drawFramesRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
+				drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
 				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
-				else drawTreeRecursive( ctx, root, 0, 0, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
 			} else {
 				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
 				ci = 0;
 				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
 				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+			}
+			
+			if( showscale ) {
+				Node n = getMaxHeight( root, ctx, ww, false );
+				double h = n.getHeight();
+				double wh = n.getCanvasX()-10;
+				double ch = canvas.getCoordinateSpaceHeight();
+				
+				double nh = Math.pow( 10.0, Math.floor( Math.log10( h/5.0 ) ) );
+				double nwh = wh*nh/h;
+				
+				ctx.beginPath();
+				ctx.moveTo(10, ch );
+				ctx.lineTo(10, ch-5 );
+				ctx.lineTo(10+nwh, ch-5 );
+				ctx.lineTo(10+nwh, ch );
+				ctx.stroke();
+				ctx.closePath();
+				String htext = ""+nh;
+				double sw = ctx.measureText( htext ).getWidth();
+				ctx.fillText( htext, 10+(nwh-sw)/2.0, ch-8 );
 			}
 		}
 	}
@@ -217,32 +242,42 @@ public class Treedraw implements EntryPoint {
 		return sel;
 	}
 	
-	public Node getMaxHeight( Node root, Context2d ctx, int ww ) {
+	public Node getMaxHeight( Node root, Context2d ctx, int ww, boolean includetext ) {
 		List<Node>	leaves = new ArrayList<Node>();
 		recursiveLeavesGet( root, leaves );
 		
 		Node sel = null;
 		double max = 0.0;
-		console( ""+leaves.size() );
-		for( Node node : leaves ) {
-			String name = node.getName();
-			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
-			TextMetrics tm = ctx.measureText( name );
-			double tw = tm.getWidth();
-			double h = node.getHeight();
-			
-			double val = h/(ww-tw);
-			if( val > max ) {
-				max = val;
-				sel = node;
+		
+		if( includetext ) {
+			for( Node node : leaves ) {
+				String name = node.getName();
+				if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+				TextMetrics tm = ctx.measureText( name );
+				double tw = tm.getWidth();
+				double h = node.getHeight();
+				
+				double val = h/(ww-tw);
+				if( val > max ) {
+					max = val;
+					sel = node;
+				}
+			}
+		} else {
+			for( Node node : leaves ) {
+				double h = node.getHeight();
+				if( h > max ) {
+					max = h;
+					sel = node;
+				}
 			}
 		}
 		
-		if( sel != null ) {
+		/*if( sel != null ) {
 			String name = sel.getName();
 			if( sel.getMeta() != null ) name += " ("+sel.getMeta()+")";
 			console( name );
-		}
+		}*/
 		
 		return sel;
 	}
@@ -261,9 +296,51 @@ public class Treedraw implements EntryPoint {
 		return root.geth()+max;
 	}*/
 	
+	public List<Sequence> importReader( String str ) throws IOException {
+		List<Sequence> lseq = new ArrayList<Sequence>();
+		int i = str.indexOf('>');
+		int e = 0;
+		String name = null;
+		while( i != -1 ) {
+			if( name != null ) {
+				Sequence s = new Sequence( name, new StringBuilder( str.subSequence(e+1, i-1) ) );
+				s.checkLengths();
+				lseq.add( s );
+			}
+			e = str.indexOf('\n',i);
+			name = str.substring(i+1, e);
+			i = str.indexOf('>', e);
+		}
+		if( name != null ) {
+			Sequence s = new Sequence( name, new StringBuilder( str.subSequence(e+1, str.length()) ) );
+			s.checkLengths();
+			lseq.add( s );
+		}
+		return lseq;
+	}
+	
 	public void handleText( String str ) {
-		console( str );
-		if( !str.startsWith("(") ) {
+		if( str.startsWith(">") ) {
+			TreeUtil treeutil = new TreeUtil();
+			try {
+				List<Sequence> lseq = importReader( str );
+				
+				boolean excludeGaps = false;
+				boolean bootstrap = false;
+				boolean cantor = true;
+				double[] dvals = Sequence.distanceMatrixNumeric(lseq, excludeGaps, bootstrap, cantor);
+				
+				List<String>	names = new ArrayList<String>();
+				for( Sequence seq : lseq ) {
+					names.add( seq.getName() );
+				}
+				Node n = treeutil.neighborJoin( dvals, names );
+				treeutil.setNode( n );
+				handleTree( treeutil );
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else if( !str.startsWith("(") ) {
 			TreeUtil treeutil = new TreeUtil();
 			int len = 0;
 			List<String> names;
@@ -312,7 +389,7 @@ public class Treedraw implements EntryPoint {
 					}
 				}
 			}
-			Node n = treeutil.neighborJoin( dvals, len, names );
+			Node n = treeutil.neighborJoin( dvals, names );
 			treeutil.setNode( n );
 			//console( treeutil.getNode().toString() );
 			handleTree( treeutil );
@@ -970,7 +1047,7 @@ public class Treedraw implements EntryPoint {
 		canvas.setCoordinateSpaceHeight( h );
 		Context2d context = canvas.getContext2d();
 		
-		String str = "Drop text in distance matrix or newick tree format to this canvas";
+		String str = "Drop text in distance matrix, aligned fasta or newick tree format to this canvas";
 		TextMetrics tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0-8.0);
 		str = "Double click to open file dialog";
@@ -1072,7 +1149,10 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onValueChange(ValueChangeEvent<Boolean> event) {
 				equalHeight = 2;
-				if( treeutil != null ) drawTree( treeutil );
+				showscale = false;
+				if( treeutil != null ) {
+					drawTree( treeutil );
+				}
 			}
 		});
 		RadioButton	equidep = new RadioButton("eq", "depth");
@@ -1080,7 +1160,10 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onValueChange(ValueChangeEvent<Boolean> event) {
 				equalHeight = 1;
-				if( treeutil != null ) drawTree( treeutil );
+				showscale = false;
+				if( treeutil != null ) {
+					drawTree( treeutil );
+				}
 			}
 		});
 		uselen.setValue( true );
@@ -1182,9 +1265,39 @@ public class Treedraw implements EntryPoint {
 		arrangehp.add( arcs );
 		arrangehp.add( titl );
 		
+		HorizontalPanel labhp = new HorizontalPanel();
+		labhp.setSpacing( 5 );
+		CheckBox scalecheck = new CheckBox("Scale");
+		scalecheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				showscale = event.getValue();
+				drawTree( treeutil );
+			}
+		});
+		scalecheck.setValue( true );
+		CheckBox labcheck = new CheckBox("Label");
+		final TextBox	label = new TextBox();
+		label.setText("A tree");
+		label.setEnabled( false );
+		labcheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				boolean b = event.getValue();
+				label.setEnabled( b );
+				treeutil.setTreeLabel( b ? label.getText() : null );
+				drawTree( treeutil );
+			}
+		});
+		
+		labhp.add( scalecheck );
+		labhp.add( labcheck);
+		labhp.add( label );
+		
 		choicePanel.add( arrangehp );
 		choicePanel.add( bc );
 		choicePanel.add( eqhp );
+		choicePanel.add( labhp );
 		choicePanel.add( hp );
 		help.add( choicePanel );
 		//help.add
