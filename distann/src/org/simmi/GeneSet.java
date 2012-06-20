@@ -110,10 +110,10 @@ import netscape.javascript.JSObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.simmi.shared.Sequence;
+import org.simmi.shared.Sequence.Annotation;
 import org.simmi.shared.TreeUtil;
 import org.simmi.unsigned.JavaFasta;
-import org.simmi.unsigned.JavaFasta.Annotation;
-import org.simmi.unsigned.JavaFasta.Sequence;
 
 public class GeneSet extends JApplet {
 	/**
@@ -5941,6 +5941,7 @@ public class GeneSet extends JApplet {
 				boolean succ = true;
 				try {
 					JSObject win = JSObject.getWindow( (Applet)comp );
+					win.call("showTree", new Object[] {distmat.toString()});
 				} catch( Exception e1 ) {
 					succ = false;
 				}
@@ -7677,13 +7678,13 @@ public class GeneSet extends JApplet {
 								} else {
 									if (GeneSet.contigs.containsKey(contig)) {
 										StringBuilder dna = GeneSet.contigs.get(contig);
-										seq = jf.new Sequence(contig, dna);
+										seq = new Sequence(contig, dna, jf.mseq);
 									} else
-										seq = jf.new Sequence(contig);
+										seq = new Sequence(contig, jf.mseq);
 									contset.put(contig, seq);
 								}
 
-								Annotation a = jf.new Annotation(seq, contig, Color.red);
+								Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
 								a.setStart(tv.start);
 								a.setStop(tv.stop);
 								a.setOri(tv.ori);
@@ -7732,9 +7733,9 @@ public class GeneSet extends JApplet {
 								} else {
 									if (GeneSet.contigs.containsKey(contig)) {
 										StringBuilder dna = GeneSet.contigs.get(contig);
-										seq = jf.new Sequence(contig, dna);
+										seq = new Sequence(contig, dna, jf.mseq);
 									} else
-										seq = jf.new Sequence(contig);
+										seq = new Sequence(contig, jf.mseq);
 
 									contset.put(contig, seq);
 								}
@@ -7760,7 +7761,7 @@ public class GeneSet extends JApplet {
 								String contig = tv.contshort;
 								if (contset.keySet().contains(contig)) {
 									Sequence seq = contset.get(contig);
-									Annotation a = jf.new Annotation(seq, contig, Color.red);
+									Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
 									a.setStart(tv.start);
 									a.setStop(tv.stop);
 									a.setOri(tv.ori);
@@ -8002,7 +8003,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					TreeUtil treeutil = new TreeUtil();
-					treeutil.neighborJoin( newcorr, len, corrInd );
+					treeutil.neighborJoin( newcorr, corrInd );
 				}
 				
 				/*
@@ -8291,7 +8292,7 @@ public class GeneSet extends JApplet {
 
 		// URL url = new URL("http://192.168.1.69/all.nn");
 		try {
-			is = null; //GeneSet.class.getResourceAsStream("/thermus_join.nn");
+			is = GeneSet.class.getResourceAsStream("/thermus_join.nn");
 			//is = GeneSet.class.getResourceAsStream("/all.nn");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)

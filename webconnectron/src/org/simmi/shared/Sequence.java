@@ -1,19 +1,15 @@
 package org.simmi.shared;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 public class Sequence implements Comparable<Sequence> {
-	public static int						max = 0;
+	/*public static int						max = 0;
 	public static int						min = 0;
 	
 	public static ArrayList<Sequence>		lseq = new ArrayList<Sequence>() {
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = 1L;
 
 		public boolean add( Sequence seq ) {
@@ -23,7 +19,7 @@ public class Sequence implements Comparable<Sequence> {
 	};
 	public static Map<String,Sequence>		mseq = new HashMap<String,Sequence>();
 	public static ArrayList<Annotation>	lann = new ArrayList<Annotation>();
-	public static Map<String,Annotation>	mann = new HashMap<String,Annotation>();
+	public static Map<String,Annotation>	mann = new HashMap<String,Annotation>();*/
 	
 	public String 				name;
 	public String				id;
@@ -39,6 +35,7 @@ public class Sequence implements Comparable<Sequence> {
 	public int					index = -1;
 	public boolean				edited = false;
 	
+	static Random r = new Random();
 	public static double[] distanceMatrixNumeric( List<Sequence> lseq, boolean excludeGaps, boolean bootstrap, boolean cantor ) {		
 		double[]	dmat = new double[ lseq.size()*lseq.size() ];
 		if( excludeGaps ) {
@@ -75,12 +72,23 @@ public class Sequence implements Comparable<Sequence> {
 						int count = 0;
 						int mism = 0;
 						
-						for( int k : idxs ) {
-							char c1 = seq1.charAt( k-seq1.getStart() );
-							char c2 = seq2.charAt( k-seq2.getStart() );
-							
-							if( c1 != c2 ) mism++;
-							count++;
+						if( bootstrap ) {
+							for( int k : idxs ) {
+								int ir = r.nextInt( idxs.size() );
+								char c1 = seq1.charAt( idxs.get(ir)-seq1.getStart() );
+								char c2 = seq2.charAt( idxs.get(ir)-seq2.getStart() );
+								
+								if( c1 != c2 ) mism++;
+								count++;
+							}
+						} else {
+							for( int k : idxs ) {
+								char c1 = seq1.charAt( k-seq1.getStart() );
+								char c2 = seq2.charAt( k-seq2.getStart() );
+								
+								if( c1 != c2 ) mism++;
+								count++;
+							}
 						}
 						double d = count == 0 ? 0.0 : ((double)mism/(double)count);
 						if( cantor ) d = -3.0*Math.log( 1.0 - 4.0*d/3.0 )/4.0;
@@ -91,7 +99,6 @@ public class Sequence implements Comparable<Sequence> {
 			}
 		} else {
 			int i = 0;
-			Random r = new Random();
 			for( Sequence seq1 : lseq ) {
 				for( Sequence seq2 : lseq ) {
 					if( seq1 == seq2 ) dmat[i] = 0.0; 
@@ -108,7 +115,7 @@ public class Sequence implements Comparable<Sequence> {
 								char c1 = seq1.charAt( ir-seq1.getStart() );
 								char c2 = seq2.charAt( ir-seq2.getStart() );
 								
-								if( c1 != '.' && c1 != '-' && c1 != ' ' &&  c2 != '.' && c2 != '-' && c2 != ' ' ) {
+								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
 									if( c1 != c2 ) mism++;
 									count++;
 								}
@@ -118,7 +125,7 @@ public class Sequence implements Comparable<Sequence> {
 								char c1 = seq1.charAt( k-seq1.getStart() );
 								char c2 = seq2.charAt( k-seq2.getStart() );
 								
-								if( c1 != '.' && c1 != '-' && c1 != ' ' &&  c2 != '.' && c2 != '-' && c2 != ' ' ) {
+								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
 									if( c1 != c2 ) mism++;
 									count++;
 								}
@@ -147,13 +154,13 @@ public class Sequence implements Comparable<Sequence> {
 		public int				ori;
 		public Object			color;
 		
-		public Annotation( Sequence seq, String name, Object color, int start, int stop ) {
-			this( seq, name, color );
+		public Annotation( Sequence seq, String name, Object color, int start, int stop, Map<String,Annotation> mann ) {
+			this( seq, name, color, mann );
 			this.setStart( start );
 			this.setStop( stop );
 		}
 		
-		public Annotation( Sequence seq, String name, Object color ) {
+		public Annotation( Sequence seq, String name, Object color, Map<String,Annotation>  mann ) {
 			this.name = name;
 			this.color = color;
 			this.seq = seq;
@@ -231,23 +238,23 @@ public class Sequence implements Comparable<Sequence> {
 		this.id = id;
 	}
 	
-	public Sequence( String id, String name ) {
-		this( name );
+	public Sequence( String id, String name, Map<String,Sequence> mseq ) {
+		this( name, mseq );
 		this.id = id;
 	}
 	
-	public Sequence( String name ) {
+	public Sequence( String name, Map<String,Sequence> mseq ) {
 		this.name = name;
 		sb = new StringBuilder();
-		mseq.put( name, this );
+		if( mseq != null ) mseq.put( name, this );
 	}
 	
-	public Sequence( String id, String name, StringBuilder sb ) {
-		this( name, sb );
+	public Sequence( String id, String name, StringBuilder sb, Map<String,Sequence> mseq ) {
+		this( name, sb, mseq );
 		this.id = id;
 	}
 	
-	public Sequence( String name, StringBuilder sb ) {
+	public Sequence( String name, StringBuilder sb, Map<String,Sequence> mseq ) {
 		this.name = name;
 		this.sb = sb;
 		mseq.put( name, this );
@@ -362,21 +369,27 @@ public class Sequence implements Comparable<Sequence> {
 		return substop - substart;
 	}
 	
-	public void boundsCheck() {
+	/*public void boundsCheck() {
 		if( start < min ) min = start;
 		if( start+sb.length() > max ) max = start+sb.length();
-	}
+	}*/
 	
+	public interface RunInt {
+		public void run( Sequence s );
+	};
+	
+	public static RunInt runbl = null;
 	public void setStart( int start ) {
 		this.start = start;
 		
-		boundsCheck();
+		if( runbl != null ) runbl.run( this ); //boundsCheck();
 	}
 	
 	public void setEnd( int end ) {
 		this.start = end-sb.length();
 		
-		boundsCheck();
+		if( runbl != null ) runbl.run( this );
+		//boundsCheck();
 	}
 	
 	public int getStart() {

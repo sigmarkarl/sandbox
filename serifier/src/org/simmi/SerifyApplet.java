@@ -2183,7 +2183,7 @@ public class SerifyApplet extends JApplet {
 						while( line != null ) {
 							if( line.startsWith(">") ) {
 								if( cont != null ) {
-									Sequence seq = new Sequence(cont, dna);
+									Sequence seq = new Sequence(cont, dna, jf.mseq);
 									contset.put(cont, seq);
 								}
 								if( rr.length == 1 ) cont = line.replace( ">", "" );
@@ -2195,7 +2195,7 @@ public class SerifyApplet extends JApplet {
 							line = br.readLine();
 						}
 						if( cont != null ) {
-							Sequence seq = new Sequence(cont, dna);
+							Sequence seq = new Sequence(cont, dna, jf.mseq);
 							contset.put(cont, seq);
 						}
 						br.close();
