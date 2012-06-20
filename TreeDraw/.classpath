@@ -7,9 +7,6 @@
 	<classpathentry kind="lib" path="gdata-client-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="gdata-core-1.0.jar"/>
 	<classpathentry kind="lib" path="google-collect-1.0-rc1.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_04/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_04/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_04/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/lib/log4j-1.2.13.jar"/>
@@ -22,5 +19,8 @@
 	<classpathentry kind="lib" path="/opt/poi-3.8/poi-ooxml-3.8-20120326.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/poi-ooxml-schemas-3.8-20120326.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/poi-scratchpad-3.8-20120326.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_05/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_05/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_05/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
