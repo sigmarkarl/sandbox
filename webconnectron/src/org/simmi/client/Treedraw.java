@@ -303,7 +303,7 @@ public class Treedraw implements EntryPoint {
 		String name = null;
 		while( i != -1 ) {
 			if( name != null ) {
-				Sequence s = new Sequence( name, new StringBuilder( str.subSequence(e+1, i-1) ) );
+				Sequence s = new Sequence( name, new StringBuilder( str.subSequence(e+1, i-1) ), null );
 				s.checkLengths();
 				lseq.add( s );
 			}
@@ -312,7 +312,7 @@ public class Treedraw implements EntryPoint {
 			i = str.indexOf('>', e);
 		}
 		if( name != null ) {
-			Sequence s = new Sequence( name, new StringBuilder( str.subSequence(e+1, str.length()) ) );
+			Sequence s = new Sequence( name, new StringBuilder( str.subSequence(e+1, str.length()) ), null );
 			s.checkLengths();
 			lseq.add( s );
 		}
