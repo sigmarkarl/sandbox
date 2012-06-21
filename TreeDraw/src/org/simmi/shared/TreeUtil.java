@@ -13,6 +13,15 @@ import java.util.Set;
 
 public class TreeUtil {
 	public Node currentNode = null;
+	String treelabel = null;
+	
+	public void setTreeLabel( String label ) {
+		this.treelabel = label;
+	}
+	
+	public String getTreeLabel() {
+		return this.treelabel;
+	}
 	
 	public void propogateCompare( Node n ) {
 		if( n.getNodes().size() > 0 ) {
@@ -75,8 +84,9 @@ public class TreeUtil {
 		}
 	}
 	
-	public Node neighborJoin( double[] corrarr, int len, List<String> corrInd ) {		
+	public Node neighborJoin( double[] corrarr, List<String> corrInd ) {		
 		List<Node> nodes = new ArrayList<Node>();
+		int len = corrInd.size();
 		for( int i = 0; i < len; i++ ) {
 			nodes.add( new Node( corrInd.get(i) ) );
 		}

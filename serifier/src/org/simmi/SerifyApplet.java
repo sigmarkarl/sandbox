@@ -62,9 +62,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
+import javax.sound.midi.Sequence;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -87,9 +89,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
-
-import org.simmi.unsigned.JavaFasta;
-import org.simmi.unsigned.JavaFasta.Sequence;
 
 public class SerifyApplet extends JApplet {
 	/**
@@ -2183,7 +2182,7 @@ public class SerifyApplet extends JApplet {
 						while( line != null ) {
 							if( line.startsWith(">") ) {
 								if( cont != null ) {
-									Sequence seq = jf.new Sequence(cont, dna);
+									Sequence seq = new Sequence(cont, dna, jf.mseq);
 									contset.put(cont, seq);
 								}
 								if( rr.length == 1 ) cont = line.replace( ">", "" );
@@ -2195,7 +2194,7 @@ public class SerifyApplet extends JApplet {
 							line = br.readLine();
 						}
 						if( cont != null ) {
-							Sequence seq = jf.new Sequence(cont, dna);
+							Sequence seq = new Sequence(cont, dna, jf.mseq);
 							contset.put(cont, seq);
 						}
 						br.close();
@@ -3004,6 +3003,84 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				}
+			}
+		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Concatenated tree") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
+				JCheckBox	exgaps = new JCheckBox("Exclude gaps");
+				JCheckBox	boots = new JCheckBox("Bootstrap");
+				JOptionPane.showMessageDialog( SerifyApplet.this, new Object[] {jukes, exgaps, boots} );
+				boolean cantor = jukes.isSelected();
+				boolean bootstrap = boots.isSelected();
+				boolean excludeGaps = exgaps.isSelected();
+				
+				List<Sequence> lseq = new ArrayList<Sequence>();
+				
+				Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
+				
+				try {
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						String path = (String)table.getValueAt( r, 3 );
+						URL url = new URL( path );
+						StringBuilder	sb = null;
+						InputStream is = url.openStream();
+						BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+						String line = br.readLine();
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								String subline = line.substring(1);
+								if( seqmap.containsKey( subline ) ) {
+									sb = seqmap.get( subline );
+								} else {
+									sb = new StringBuilder();
+									seqmap.put( subline, sb );
+								}
+							} else {
+								if( sb != null ) sb.append( line );
+							}
+							
+							line = br.readLine();
+						}
+						br.close();
+					}
+				} catch( Exception e1 ) {
+					e1.printStackTrace();
+				}
+				
+				for( String key : seqmap.keySet() ) {
+					StringBuilder sb = seqmap.get( key );
+					lseq.add( new Sequence( key, sb, null ) );
+				}
+				
+				double[] dd = Sequence.distanceMatrixNumeric(lseq, excludeGaps, bootstrap, cantor);
+				
+				StringBuilder tree = new StringBuilder();
+				tree.append( "\t"+lseq.size()+"\n" );
+				int i = 0;
+				for( Sequence s : lseq ) {
+					tree.append( s.getName() );
+					int k;
+					for( k = i; k < i+lseq.size(); k++ ) {
+						tree.append( "\t"+dd[k] );
+					}
+					i = k;
+					
+					tree.append("\n");
+				}
+				System.err.println( tree.toString() );
+				JSObject win = JSObject.getWindow( SerifyApplet.this );
+				win.call("showTree", new Object[] {tree.toString()});
+			}
+		});
+		popup.add( new AbstractAction("Majority rule consensus tree") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
 			}
 		});
 		popup.addSeparator();
