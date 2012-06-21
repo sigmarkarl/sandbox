@@ -110,10 +110,10 @@ import netscape.javascript.JSObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.simmi.shared.Sequence;
+import org.simmi.shared.Sequence.Annotation;
 import org.simmi.shared.TreeUtil;
 import org.simmi.unsigned.JavaFasta;
-import org.simmi.unsigned.JavaFasta.Annotation;
-import org.simmi.unsigned.JavaFasta.Sequence;
 
 public class GeneSet extends JApplet {
 	/**
@@ -4783,13 +4783,15 @@ public class GeneSet extends JApplet {
 		double[] dd = { 0.0, 17.0, 21.0, 27.0, 17.0, 0.0, 12.0, 18.0, 21.0, 12.0, 0.0, 14.0, 27.0, 18.0, 14.0, 0.0 };
 		TreeUtil treeutil = new TreeUtil();
 		treeutil.neighborJoin( dd, 4, corrInd );*/
-		/*
-		 * JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
-		 * JFrame.EXIT_ON_CLOSE );
-		 * 
-		 * frame.setSize(800, 600); GeneSet gs = new GeneSet(); gs.init( frame
-		 * ); frame.setVisible( true );
-		 */
+		
+		JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
+		JFrame.EXIT_ON_CLOSE );
+		 
+		frame.setSize(800, 600); 
+		GeneSet gs = new GeneSet(); 
+		gs.init( frame );
+		frame.setVisible( true );
+		 
 
 		// System.err.println( Runtime.getRuntime().availableProcessors() );
 
@@ -4876,7 +4878,7 @@ public class GeneSet extends JApplet {
 			 * , accset, false );
 			 */
 
-			eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/eyjo_filter.fasta", "/home/sigmar/mysilva" );
+			//eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/eyjo_filter.fasta", "/home/sigmar/mysilva" );
 			//viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
 			//simmi();
 
@@ -5357,21 +5359,12 @@ public class GeneSet extends JApplet {
 			}
 		}
 	}
-
-	public void saveSel(String name, String val) {
-		try {
-			JSObject jso = JSObject.getWindow(this);
-			jso.call("saveSel", new Object[] { name, val });
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
-	}
 	
 	JComboBox selcomb;
 	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
 			final Map<Set<String>, ShareNum> specset, final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
-			final Container comp, final JComboBox selcomblocal) throws IOException {
+			final Container comp, final Applet applet, final JComboBox selcomblocal) throws IOException {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		splitpane.setDividerLocation(400);
@@ -5941,6 +5934,7 @@ public class GeneSet extends JApplet {
 				boolean succ = true;
 				try {
 					JSObject win = JSObject.getWindow( (Applet)comp );
+					win.call("showTree", new Object[] {distmat.toString()});
 				} catch( Exception e1 ) {
 					succ = false;
 				}
@@ -5976,7 +5970,13 @@ public class GeneSet extends JApplet {
 						val += ","+table.convertRowIndexToModel(rr[i]);
 					}
 					String selname = JOptionPane.showInputDialog("Selection name");
-					((GeneSet) comp).saveSel(selname, val);
+					if( comp instanceof Applet ) {
+						try {
+							((GeneSet)comp).saveSel( selname, val);
+						} catch (Exception e1) {
+							e1.printStackTrace();
+						}
+					}
 				}
 			}
 		};
@@ -7677,13 +7677,13 @@ public class GeneSet extends JApplet {
 								} else {
 									if (GeneSet.contigs.containsKey(contig)) {
 										StringBuilder dna = GeneSet.contigs.get(contig);
-										seq = jf.new Sequence(contig, dna);
+										seq = new Sequence(contig, dna, jf.mseq);
 									} else
-										seq = jf.new Sequence(contig);
+										seq = new Sequence(contig, jf.mseq);
 									contset.put(contig, seq);
 								}
 
-								Annotation a = jf.new Annotation(seq, contig, Color.red);
+								Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
 								a.setStart(tv.start);
 								a.setStop(tv.stop);
 								a.setOri(tv.ori);
@@ -7732,9 +7732,9 @@ public class GeneSet extends JApplet {
 								} else {
 									if (GeneSet.contigs.containsKey(contig)) {
 										StringBuilder dna = GeneSet.contigs.get(contig);
-										seq = jf.new Sequence(contig, dna);
+										seq = new Sequence(contig, dna, jf.mseq);
 									} else
-										seq = jf.new Sequence(contig);
+										seq = new Sequence(contig, jf.mseq);
 
 									contset.put(contig, seq);
 								}
@@ -7760,7 +7760,7 @@ public class GeneSet extends JApplet {
 								String contig = tv.contshort;
 								if (contset.keySet().contains(contig)) {
 									Sequence seq = contset.get(contig);
-									Annotation a = jf.new Annotation(seq, contig, Color.red);
+									Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
 									a.setStart(tv.start);
 									a.setStop(tv.stop);
 									a.setOri(tv.ori);
@@ -8002,7 +8002,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					TreeUtil treeutil = new TreeUtil();
-					treeutil.neighborJoin( newcorr, len, corrInd );
+					treeutil.neighborJoin( newcorr, corrInd );
 				}
 				
 				/*
@@ -8282,7 +8282,7 @@ public class GeneSet extends JApplet {
 
 	static List<String> corrInd;
 
-	private static JComponent newSoft(JButton jb, Container comp, JComboBox selcomblocal) throws IOException {
+	private static JComponent newSoft(JButton jb, Container comp, Applet applet, JComboBox selcomblocal) throws IOException {
 		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		InputStream is = GeneSet.class.getResourceAsStream("/thermus_join.aa");
 		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
@@ -8291,7 +8291,7 @@ public class GeneSet extends JApplet {
 
 		// URL url = new URL("http://192.168.1.69/all.nn");
 		try {
-			is = null; //GeneSet.class.getResourceAsStream("/thermus_join.nn");
+			is = GeneSet.class.getResourceAsStream("/thermus_join.nn");
 			//is = GeneSet.class.getResourceAsStream("/all.nn");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
@@ -8644,7 +8644,7 @@ public class GeneSet extends JApplet {
 		// aas.clear();
 
 		// return new JComponent() {};
-		return showGeneTable(refmap, genelist, funcmap, funclist, iclusterlist, uclusterlist, specset, null, jb, comp, selcomblocal);// clustInfoMap// );
+		return showGeneTable(refmap, genelist, funcmap, funclist, iclusterlist, uclusterlist, specset, null, jb, comp, applet, selcomblocal);// clustInfoMap// );
 	}
 
 	public static class ShareNum implements Comparable<ShareNum> {
@@ -8776,14 +8776,25 @@ public class GeneSet extends JApplet {
 			}
 		});
 
-		((GeneSet) comp).saveSel(null, null);
+		if( comp instanceof Applet )
+			try {
+				((GeneSet)comp).saveSel( null, null);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		
 		try {
-			comp.add(newSoft(jb, comp, selcomb));
+			comp.add(newSoft(jb, comp, GeneSet.this, selcomb));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		System.gc();
+	}
+	
+	public void saveSel( String name, String val) throws Exception {
+		JSObject jso = JSObject.getWindow( this );
+		jso.call("saveSel", new Object[] { name, val });
 	}
 
 	Map<String, Set<Integer>> selectionMap = new HashMap<String, Set<Integer>>();
