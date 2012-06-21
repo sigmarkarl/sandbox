@@ -28,7 +28,7 @@ public class ThermusTable implements EntryPoint {
 		$wnd.console.log( log );
 	}-*/;
 	
-	public native int initFunctions() /*-{
+	public native int initFunctions( Element applet ) /*-{
 		var s = this;
 		
 		$wnd.saveMeta = function( acc, country, valid ) {
@@ -61,19 +61,24 @@ public class ThermusTable implements EntryPoint {
 			s.@org.simmi.client.ThermusTable::requestSavedSelections()();
 		};
 		
+		$wnd,replacetreetext = false;
 		$wnd.fasttree = function( fasta ) {
+			$wnd.replacetreetext = false;
 			$wnd.postMessage( fasta );
 		};
 		
 		$wnd.dnapars = function( phy ) {
+			$wnd.replacetreetext = true;
 			$wnd.postMessage( phy );
 		};
 		
 		$doc.appendText = function( str ) {
-			$wnd.console.log( str );
+			//$wnd.console.log( str );
 			//var datatable = $doc.getElementById('datatable');
 			//datatable.showTree( str );
-			$wnd.showTree( str );
+			if( $wnd.replacetreetext ) {
+				applet.replaceTreeText( str );
+			} else $wnd.showTree( str );
 		};
 
 		return 0;
@@ -327,7 +332,7 @@ public class ThermusTable implements EntryPoint {
 		
 		rp.add( applet );
 		
-		initFunctions();
+		initFunctions( ae );
 		
 		/*final RootPanel	rp = RootPanel.get();
 		Window.enableScrolling( false );
