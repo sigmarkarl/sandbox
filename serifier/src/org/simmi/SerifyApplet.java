@@ -62,7 +62,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
-import javax.sound.midi.Sequence;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JButton;
@@ -89,6 +88,9 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
+
+import org.simmi.shared.Sequence;
+import org.simmi.unsigned.JavaFasta;
 
 public class SerifyApplet extends JApplet {
 	/**
@@ -1969,13 +1971,13 @@ public class SerifyApplet extends JApplet {
 		
 		public Anno( int start, int stop, boolean comp, String name ) {
 			if( stop > start ) {
-				this.start = stop;
-				this.stop = start;
-				this.comp = !comp;
-			} else {
 				this.start = start;
 				this.stop = stop;
 				this.comp = comp;
+			} else {
+				this.start = stop;
+				this.stop = start;
+				this.comp = !comp;
 			}
 			this.name = name;
 		}
@@ -2485,6 +2487,7 @@ public class SerifyApplet extends JApplet {
 										sstop = Integer.parseInt( split[3] );
 									} else if( line.startsWith(">") ) {
 										String cont = line.substring(1).trim();
+										cont = cont.replaceAll(".fna", "");
 										
 										int li = cont.indexOf(' ');
 										if( li != -1 ) {
@@ -2566,7 +2569,7 @@ public class SerifyApplet extends JApplet {
 									FileWriter	fw = new FileWriter( f );
 									String loc = "LOCUS       "+phage+" on "+s.getName()+"                "+count+" bp    dna     linear   UNK";
 									String def = "DEFINITION  [organism=unknown] [strain=unknown] [gcode=11] [date=3-20-2012]";
-									String acc = "ACCESSION   CP51";
+									String acc = "ACCESSION   Unknown";
 									String keyw = "KEYWORDS    .";
 									String feat = "FEATURES             Location/Qualifiers";
 									fw.write( loc+"\n" );
@@ -2601,6 +2604,7 @@ public class SerifyApplet extends JApplet {
 									fw.write( "ORIGIN" );
 									count = 1;
 									//int start = 1;
+									int total = 0;
 									for( String key : seqmap.keySet() ) {
 										StringBuilder sbld = seqmap.get(key);
 										for( int k = 0; k < sbld.length(); k++ ) {
@@ -2611,6 +2615,19 @@ public class SerifyApplet extends JApplet {
 											
 											count++;
 										}
+										
+										if( total < seqmap.size()-1 ) {
+											for( int k = 0; k < addon.length(); k++ ) {
+												if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
+												else if( (count-1)%10 == 0 ) fw.write( " " );
+												
+												fw.write( addon.charAt(k) );
+												
+												count++;
+											}	
+										}
+										
+										total++;
 									}
 									fw.write("\n//");
 									fw.close();
@@ -2664,7 +2681,7 @@ public class SerifyApplet extends JApplet {
 								}
 								int li = line.indexOf(' ');
 								if( li == -1 ) li = line.length();
-								name = line.substring(1,li);
+								name = line.substring(1,li).replace(".fna", "");
 								sb = new StringBuilder();
 							} else {
 								sb.append( line.replace(" ", "") );
@@ -2699,6 +2716,7 @@ public class SerifyApplet extends JApplet {
 									//int ki = line.indexOf('_');
 									
 									String cont = line.substring(7,ki).trim();
+									//cont = cont.replace(".fna", "");
 									if( pool.contains( cont ) ) {
 										List<Anno> lann;
 										if( mapan.containsKey(cont) ) {
@@ -2713,7 +2731,7 @@ public class SerifyApplet extends JApplet {
 										int start = Integer.parseInt( split[1].trim() );
 										int stop = Integer.parseInt( split[2].trim() );
 										int rev = Integer.parseInt( split[3].trim() );
-										ann = new Anno( start, stop, rev == -1, null );
+										ann = new Anno( start-1, stop-1, rev == -1, null );
 										lann.add(ann);
 									} else ann = null;
 									evalue = null;
@@ -2757,9 +2775,9 @@ public class SerifyApplet extends JApplet {
 						
 						if( f != null ) {
 							FileWriter	fw = new FileWriter( f );
-							String loc = "LOCUS       CP51                "+count+" bp    dna     linear   UNK";
-							String def = "DEFINITION  [organism=CP51] [strain=CP51] [gcode=11] [date=3-20-2012]";
-							String acc = "ACCESSION   CP51";
+							String loc = "LOCUS       "+s.getName()+"                "+count+" bp    dna     linear   UNK";
+							String def = "DEFINITION  [organism=Unknown] [strain=Unknown] [gcode=11] [date=6-26-2012]";
+							String acc = "ACCESSION   "+s.getName()+"_Unknown";
 							String keyw = "KEYWORDS    .";
 							String feat = "FEATURES             Location/Qualifiers";
 							fw.write( loc+"\n" );
@@ -2791,6 +2809,7 @@ public class SerifyApplet extends JApplet {
 							}
 							fw.write( "ORIGIN" );
 							count = 1;
+							int total = 0;
 							//int start = 1;
 							for( String key : seqmap.keySet() ) {
 								StringBuilder sbld = seqmap.get(key);
@@ -2802,6 +2821,19 @@ public class SerifyApplet extends JApplet {
 									
 									count++;
 								}
+								
+								if( total < seqmap.size()-1 ) {
+									for( int k = 0; k < addon.length(); k++ ) {
+										if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
+										else if( (count-1)%10 == 0 ) fw.write( " " );
+										
+										fw.write( addon.charAt(k) );
+										
+										count++;
+									}	
+								}
+								
+								total++;
 							}
 							fw.write("\n//");
 							fw.close();
@@ -3053,7 +3085,9 @@ public class SerifyApplet extends JApplet {
 				
 				for( String key : seqmap.keySet() ) {
 					StringBuilder sb = seqmap.get( key );
-					lseq.add( new Sequence( key, sb, null ) );
+					Sequence s = new Sequence( key, sb, null );
+					s.checkLengths();
+					lseq.add( s );
 				}
 				
 				double[] dd = Sequence.distanceMatrixNumeric(lseq, excludeGaps, bootstrap, cantor);
