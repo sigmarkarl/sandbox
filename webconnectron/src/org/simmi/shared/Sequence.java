@@ -257,7 +257,7 @@ public class Sequence implements Comparable<Sequence> {
 	public Sequence( String name, StringBuilder sb, Map<String,Sequence> mseq ) {
 		this.name = name;
 		this.sb = sb;
-		mseq.put( name, this );
+		if( mseq != null ) mseq.put( name, this );
 	}
 	
 	public List<Annotation> getAnnotations() {
