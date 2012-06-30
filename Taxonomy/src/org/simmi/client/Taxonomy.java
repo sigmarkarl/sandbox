@@ -21,6 +21,11 @@ import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.http.client.Request;
@@ -88,7 +93,7 @@ public class Taxonomy implements EntryPoint {
 		});
 	}
 	
-	public void runStuff( String server, Tree tree ) {
+	public void runStuff( String server, Tree tree, Map<String,String> rmapstr ) {
 		final TreeItem	eyjosilva1 = tree.addItem( "eyjoACGACTACAG" );
 		final TreeItem	eyjosilva2 = tree.addItem( "eyjoACGCTCGACA" );
 		final TreeItem	eyjosilva3 = tree.addItem( "eyjoAGACGCACTC" );
@@ -113,6 +118,17 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	eyjosilva22 = tree.addItem( "eyjoTCTCTATGCG" );
 		final TreeItem	eyjosilva23 = tree.addItem( "eyjoTGATACGTCT" );
 		final TreeItem	eyjosilva24 = tree.addItem( "eyjoTGTACTACTC" );
+		
+		for( int i = 0; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rmapstr.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rmapstr.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
 		
 		final TreeItem	eyjosilva = tree.addItem( "eyjosilva" );
 		final TreeItem	eyjoroot = tree.addItem( "eyjo" );
@@ -163,11 +179,68 @@ public class Taxonomy implements EntryPoint {
 		}
 	}
 	
+	boolean shift = false;
+	boolean ctrl = false;
+	
+	public void recursiveBlast( TreeItem ti, Map<Integer,Map<String,Integer>> mstr, int depth ) {
+		if( ti.getChildCount() > 0 ) {
+			Map<String,Integer> mi;
+			if( mstr.containsKey(depth) ) {
+				mi = mstr.get(depth);
+			} else {
+				mi = new HashMap<String,Integer>();
+				mstr.put( depth, mi );
+			}
+			
+			String t = ti.getText();
+			int i = t.lastIndexOf('(');
+			if( i != -1 ) {
+				int n = t.indexOf(')', i+1);
+				try {
+					int val = Integer.parseInt( t.substring(i+1, n) );
+					mi.put( t.substring(0,i).trim(), val );
+				} catch( Exception e ) {}
+			}
+			
+			for( i = 0; i < ti.getChildCount(); i++ ) {
+				recursiveBlast( ti.getChild(i), mstr, depth+1 );
+			}
+		}
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
 		final String server = "130.208.252.7";//Location.getHost();
+		//final String server = "127.0.0.1:8888";in
+		
+		final Map<String,String>	mapstr = new HashMap<String,String>();
+		mapstr.put( "148-30", "ACGAGTGCGT" );
+		mapstr.put( "115-50", "ACGCTCGACA" );
+		mapstr.put( "121-0", "AGACGCACTC" );
+		mapstr.put( "133-0", "ATCAGACACG" );
+		mapstr.put( "133-50", "ATATCGCGAG" );
+		mapstr.put( "137-0", "CGTGTCTCTA" );
+		mapstr.put( "137-50", "CTCGCGTGTC" );
+		mapstr.put( "148-0", "TCTCTATGCG" );
+		mapstr.put( "148-50", "TGATACGTCT" );
+		mapstr.put( "153-50", "CATAGTAGTG" );
+		mapstr.put( "153-800", "CGAGAGATAC" );
+		mapstr.put( "160-0", "ATACGACGTA" );
+		mapstr.put( "160-50", "TCACGTACTA" );
+		mapstr.put( "166-0", "CGTCTAGTAC" );
+		mapstr.put( "166-1000", "TCTACGTAGC" );
+		mapstr.put( "197-0", "TGTACTACTC" );
+		mapstr.put( "197-10", "ACGACTACAG" );
+		mapstr.put( "197-50", "CGTAGACTAG" );
+		mapstr.put( "200-0", "TACGAGTATG" );
+		mapstr.put( "200-50", "TACTCTCGTG" );
+		mapstr.put( "200-1000", "TAGAGACGAG" );
+		final Map<String,String>	rmapstr = new HashMap<String,String>();
+		for( String key : mapstr.keySet() ) {
+			rmapstr.put( mapstr.get(key), key );
+		}
 		
 		RootPanel		rp = RootPanel.get();
 		Style rootstyle = rp.getElement().getStyle();
@@ -179,6 +252,24 @@ public class Taxonomy implements EntryPoint {
 		rp.setSize(w+"px", h+"px");
 		
 		final Tree		tree = new Tree();
+		
+		tree.addKeyDownHandler( new KeyDownHandler() {
+			@Override
+			public void onKeyDown(KeyDownEvent event) {
+				shift = event.getNativeKeyCode() == KeyCodes.KEY_SHIFT;
+				ctrl = event.getNativeKeyCode() == KeyCodes.KEY_CTRL;
+			}
+		});
+		tree.addKeyUpHandler( new KeyUpHandler() {
+			@Override
+			public void onKeyUp(KeyUpEvent event) {
+				if( event.getNativeKeyCode() == KeyCodes.KEY_SHIFT ) {
+					shift = !(event.getNativeKeyCode() == KeyCodes.KEY_SHIFT);
+					ctrl = !(event.getNativeKeyCode() == KeyCodes.KEY_CTRL);
+				}
+			}
+		});
+		
 		tree.addSelectionHandler( new SelectionHandler<TreeItem>() {
 			@Override
 			public void onSelection(SelectionEvent<TreeItem> event) {
@@ -186,52 +277,39 @@ public class Taxonomy implements EntryPoint {
 				
 				String nodename = selectedtree.getText();
 				if( ( nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
-					if( nodename.equals("eyjoACGACTACAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_ACGACTACAG.txt" );
-					else if( nodename.equals("eyjoACGCTCGACA") ) runSpec( selectedtree, "http://"+server+"/mysilva_ACGCTCGACA.txt" );
-					else if( nodename.equals("eyjoAGACGCACTC") ) runSpec( selectedtree, "http://"+server+"/mysilva_AGACGCACTC.txt" );
-					else if( nodename.equals("eyjoATACGACGTA") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATACGACGTA.txt" );
-					else if( nodename.equals("eyjoATATCGCGAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATATCGCGAG.txt" );
-					else if( nodename.equals("eyjoATCAGACACG") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATCAGACACG.txt" );
-					else if( nodename.equals("eyjoATCAGACACT") ) runSpec( selectedtree, "http://"+server+"/mysilva_ATCAGACACT.txt" );
-					else if( nodename.equals("eyjoCATAGTAGTG") ) runSpec( selectedtree, "http://"+server+"/mysilva_CATAGTAGTG.txt" );
-					else if( nodename.equals("eyjoCGAGAGATAC") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGAGAGATAC.txt" );
-					else if( nodename.equals("eyjoCGGAGAGATA") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGGAGAGATA.txt" );
-					else if( nodename.equals("eyjoCGTAGACTAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGTAGACTAG.txt" );
-					else if( nodename.equals("eyjoCGTCTAGTAC") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGTCTAGTAC.txt" );
-					else if( nodename.equals("eyjoCGTGTCTCTA") ) runSpec( selectedtree, "http://"+server+"/mysilva_CGTGTCTCTA.txt" );
-					else if( nodename.equals("eyjoCTCGCGTGTC") ) runSpec( selectedtree, "http://"+server+"/mysilva_CTCGCGTGTC.txt" );
-					else if( nodename.equals("eyjoGAGACGCACT") ) runSpec( selectedtree, "http://"+server+"/mysilva_GAGACGCACT.txt" );
-					else if( nodename.equals("eyjoGTCTACGTAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_GTCTACGTAG.txt" );
-					else if( nodename.equals("eyjoTACGAGTATG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TACGAGTATG.txt" );
-					else if( nodename.equals("eyjoTACTCTCGTG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TACTCTCGTG.txt" );
-					else if( nodename.equals("eyjoTAGAGACGAG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TAGAGACGAG.txt" );
-					else if( nodename.equals("eyjoTCACGTACTA") ) runSpec( selectedtree, "http://"+server+"/mysilva_TCACGTACTA.txt" );
-					else if( nodename.equals("eyjoTCTACGTAGC") ) runSpec( selectedtree, "http://"+server+"/mysilva_TCTACGTAGC.txt" );
-					else if( nodename.equals("eyjoTCTCTATGCG") ) runSpec( selectedtree, "http://"+server+"/mysilva_TCTCTATGCG.txt" );
-					else if( nodename.equals("eyjoTGATACGTCT") ) runSpec( selectedtree, "http://"+server+"/mysilva_TGATACGTCT.txt" );
-					else if( nodename.equals("eyjoTGTACTACTC") ) runSpec( selectedtree, "http://"+server+"/mysilva_TGTACTACTC.txt" );
-					else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
-					else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
-					else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
-					else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
-					else if( nodename.equals("root2") ) runSpec( selectedtree, "http://"+server+"/2v1.txt" );
-					else if( nodename.equals("root3") ) runSpec( selectedtree, "http://"+server+"/3v1.txt" );
-					else if( nodename.equals("root4") ) runSpec( selectedtree, "http://"+server+"/4v1.txt" );
-					else if( nodename.equals("root5") ) runSpec( selectedtree, "http://"+server+"/5v1.txt" );
-					else if( nodename.equals("root6") ) runSpec( selectedtree, "http://"+server+"/6v1.txt" );
-					else if( nodename.equals("root7") ) runSpec( selectedtree, "http://"+server+"/7v1.txt" );
-					else if( nodename.equals("root8") ) runSpec( selectedtree, "http://"+server+"/8v1.txt" );
-					else if( nodename.equals("root9") ) runSpec( selectedtree, "http://"+server+"/9v1.txt" );
-					else if( nodename.equals("root10") ) runSpec( selectedtree, "http://"+server+"/10v1.txt" );
-					else if( nodename.equals("root11") ) runSpec( selectedtree, "http://"+server+"/11v1.txt" );
-					else if( nodename.equals("root12") ) runSpec( selectedtree, "http://"+server+"/12v1.txt" );
-					else if( nodename.equals("root13") ) runSpec( selectedtree, "http://"+server+"/13v1.txt" );
-					else if( nodename.equals("root14") ) runSpec( selectedtree, "http://"+server+"/14v1.txt" );
-					else if( nodename.equals("root15") ) runSpec( selectedtree, "http://"+server+"/15v1.txt" );
-					else if( nodename.equals("root16") ) runSpec( selectedtree, "http://"+server+"/16v1.txt" );
-					else if( nodename.equals("arciformis") ) runSpec( selectedtree, "http://"+server+"/arciformis_v1.txt" );
-					else if( nodename.equals("kawarayensis") ) runSpec( selectedtree, "http://"+server+"/kawarayensis_v1.txt" );
-				} else {
+					boolean already = false;
+					for( String key : mapstr.keySet() ) {
+						if( nodename.equals("eyjo"+key) ) {
+							String val = mapstr.get(key);
+							runSpec( selectedtree, "http://"+server+"/mysilva_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					if( !already ) {
+						if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
+						else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
+						else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
+						else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
+						else if( nodename.equals("root2") ) runSpec( selectedtree, "http://"+server+"/2v1.txt" );
+						else if( nodename.equals("root3") ) runSpec( selectedtree, "http://"+server+"/3v1.txt" );
+						else if( nodename.equals("root4") ) runSpec( selectedtree, "http://"+server+"/4v1.txt" );
+						else if( nodename.equals("root5") ) runSpec( selectedtree, "http://"+server+"/5v1.txt" );
+						else if( nodename.equals("root6") ) runSpec( selectedtree, "http://"+server+"/6v1.txt" );
+						else if( nodename.equals("root7") ) runSpec( selectedtree, "http://"+server+"/7v1.txt" );
+						else if( nodename.equals("root8") ) runSpec( selectedtree, "http://"+server+"/8v1.txt" );
+						else if( nodename.equals("root9") ) runSpec( selectedtree, "http://"+server+"/9v1.txt" );
+						else if( nodename.equals("root10") ) runSpec( selectedtree, "http://"+server+"/10v1.txt" );
+						else if( nodename.equals("root11") ) runSpec( selectedtree, "http://"+server+"/11v1.txt" );
+						else if( nodename.equals("root12") ) runSpec( selectedtree, "http://"+server+"/12v1.txt" );
+						else if( nodename.equals("root13") ) runSpec( selectedtree, "http://"+server+"/13v1.txt" );
+						else if( nodename.equals("root14") ) runSpec( selectedtree, "http://"+server+"/14v1.txt" );
+						else if( nodename.equals("root15") ) runSpec( selectedtree, "http://"+server+"/15v1.txt" );
+						else if( nodename.equals("root16") ) runSpec( selectedtree, "http://"+server+"/16v1.txt" );
+						else if( nodename.equals("arciformis") ) runSpec( selectedtree, "http://"+server+"/arciformis_v1.txt" );
+						else if( nodename.equals("kawarayensis") ) runSpec( selectedtree, "http://"+server+"/kawarayensis_v1.txt" );
+					}
+				} else if( shift ) {
 					StringBuilder sb = new StringBuilder();
 					//sb.append( selectedtree.getText() );
 					recursiveNames( selectedtree, sb );
@@ -306,6 +384,32 @@ public class Taxonomy implements EntryPoint {
 						@Override
 						public void onFailure(Throwable caught) {}
 					});*/
+				} else if( ctrl ) {
+					Map<Integer,Map<String,Integer>>	mstr = new HashMap<Integer,Map<String,Integer>>();
+					try {
+						recursiveBlast( selectedtree, mstr, 0 );
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+					StringBuilder res = new StringBuilder();
+					for( Integer d : mstr.keySet() ) {
+						Map<String,Integer> mi = mstr.get(d);
+						for( String key : mi.keySet() ) {
+							Integer i = mi.get(key);
+							res.append( key + "\t" + i + "\n" );
+						}
+						res.append("\n");
+					}
+					
+					DialogBox db = new DialogBox();
+					Caption cap = db.getCaption();
+					db.setAutoHideEnabled( true );
+					cap.setText("Fasta");
+					TextArea ta = new TextArea();
+					ta.setSize("512px", "384px");
+					db.add( ta );
+					ta.setText( res.toString() );
+					db.center();
 				}
 			}
 		});
@@ -316,14 +420,12 @@ public class Taxonomy implements EntryPoint {
 		
 		greetingService.getRemoteAddress( new AsyncCallback<String>() {
 			@Override
-			public void onFailure(Throwable caught) {
-				
-			}
+			public void onFailure(Throwable caught) {}
 
 			@Override
 			public void onSuccess(String result) {
 				//if( result != null && result.contains("130.208.252.") ) 
-				runStuff( server, tree );
+				runStuff( server, tree, rmapstr );
 			}
 		});
 		FocusPanel	focus = new FocusPanel( tree );
@@ -335,45 +437,32 @@ public class Taxonomy implements EntryPoint {
 		
 		focus.addDragHandler( new DragHandler() {
 			@Override
-			public void onDrag(DragEvent event) {
-				
-			}
+			public void onDrag(DragEvent event) {}
 		});
 		focus.addDragStartHandler( new DragStartHandler() {
 			@Override
-			public void onDragStart(DragStartEvent event) {
-				
-			}
+			public void onDragStart(DragStartEvent event) {}
 		});
 		focus.addDragEndHandler( new DragEndHandler() {
 			@Override
-			public void onDragEnd(DragEndEvent event) {
-				
-			}
+			public void onDragEnd(DragEndEvent event) {}
 		});
 		focus.addDragOverHandler( new DragOverHandler() {
 			@Override
-			public void onDragOver(DragOverEvent event) {
-				
-			}
+			public void onDragOver(DragOverEvent event) {}
 		});
 		focus.addDragEnterHandler( new DragEnterHandler() {
 			@Override
-			public void onDragEnter(DragEnterEvent event) {
-				
-			}
+			public void onDragEnter(DragEnterEvent event) {}
 		});
 		focus.addDragLeaveHandler( new DragLeaveHandler() {
 			@Override
-			public void onDragLeave(DragLeaveEvent event) {
-				
-			}
+			public void onDragLeave(DragLeaveEvent event) {}
 		});
 		focus.addDropHandler( new DropHandler() {
 			@Override
 			public void onDrop(DropEvent event) {
 				String str = event.getData("text/plain");
-				
 				//stuff( str, rootitem5 );
 			}
 		});
