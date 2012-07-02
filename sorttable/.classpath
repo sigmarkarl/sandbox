@@ -28,5 +28,7 @@
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_05/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="swingx-all-1.6.3.jar"/>
 	<classpathentry kind="lib" path="/opt/gdata/java/lib/gdata-base-1.0.jar"/>
+	<classpathentry kind="lib" path="/opt/gdata/java/lib/gdata-core-1.0.jar"/>
+	<classpathentry kind="lib" path="/opt/guava/guava-12.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

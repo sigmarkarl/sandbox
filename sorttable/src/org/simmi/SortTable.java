@@ -35,6 +35,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -104,6 +105,12 @@ import javax.swing.table.TableModel;
 
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
+
+import com.google.gdata.client.GoogleService;
+import com.google.gdata.client.Service.GDataRequest;
+import com.google.gdata.client.Service.GDataRequest.RequestType;
+import com.google.gdata.util.ContentType;
+import com.google.gdata.util.ServiceException;
 
 public class SortTable extends JApplet {
 	/**
@@ -202,7 +209,7 @@ public class SortTable extends JApplet {
 		String unit;
 	}
 	
-	public void inThread( final List<Object[]>	result, final Set<Integer> is ) throws IOException {
+	public void inThread( InputStream inputStream, final List<Object[]>	result, final Set<Integer> is, String sep, boolean skipfirst ) throws IOException {
 		int start = -1;
 
 		/*
@@ -229,41 +236,41 @@ public class SortTable extends JApplet {
 		// InputStream inputStream = zipfile.getInputStream(
 		// zipentry );
 
-		InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
 		if (inputStream != null) {
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
 			//int	linen = 0;
 			String line = br.readLine();
+			if( skipfirst ) line = br.readLine();
 			while (line != null) {
-				String[] split = line.split("\\t");
+				String[] split = line.split( sep );
 
-				if( split.length > 4 ) {
+				if( split.length > 3 ) {
 					int ival = -1;
 					try {
-						ival = Integer.parseInt(split[2]);
+						ival = Integer.parseInt(split[1]);
 					} catch( Exception e ) {
 						
 					}
 					if( ival == -1 ) {
-						System.err.println( split[2] );
+						System.err.println( split[1] );
 					}
 					
 					if( is.contains(ival) ) {
-						if (foodInd.containsKey(split[1])) {
-							start = foodInd.get(split[1]);
+						if (foodInd.containsKey(split[0])) {
+							start = foodInd.get(split[0]);
 						} else {
 	
 						}
 						Object[] objs = result.get(start + 2);
-						if (split[5].length() > 0) {
-							String replc = split[5].replace(',', '.');
+						if (split[4].length() > 0) {
+							String replc = split[4].replace(',', '.');
 							replc = replc.replace("<", "");
 							float f = -1.0f;
 							try {
 								f = Float.parseFloat(replc);
 							} catch (Exception e) {
 							}
-							Integer ngroupOffset = ngroupMap.get(split[2]);
+							Integer ngroupOffset = ngroupMap.get(split[1]);
 							
 							if( ngroupOffset != null ) {
 								if (f != -1.0f)
@@ -329,29 +336,202 @@ public class SortTable extends JApplet {
 		 */
 		// table.tableChanged( new TableModelEvent( model ) );
 	}
+	
+	public InputStream run(String query, boolean isUsingEncId) throws IOException, ServiceException {
+		   String lowercaseQuery = query.toLowerCase();
+		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
+
+		   GDataRequest request;
+		   // If the query is a select, describe, or show query, run a GET request.
+		   if (lowercaseQuery.startsWith("select") ||
+		       lowercaseQuery.startsWith("describe") ||
+		       lowercaseQuery.startsWith("show")) {
+		     URL url = new URL(SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.QUERY, url,
+		         ContentType.TEXT_PLAIN);
+		   } else {
+		     // Otherwise, run a POST request.
+		     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
+		         new ContentType("application/x-www-form-urlencoded"));
+		     OutputStreamWriter writer = new OutputStreamWriter(request.getRequestStream());
+		     writer.append("sql=" + encodedQuery);
+		     writer.flush();
+		   }
+
+		   request.execute();
+
+		   return request.getResponseStream();
+	}
+	
+	private StringBuilder getResultsText(GDataRequest request) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		StringBuilder sb = new StringBuilder();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			sb.append( line + "\n" );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		
+		return sb;
+	}
+	
+	public Map<String, String> isGroup( InputStream inputStream, String sep, boolean skipfirst ) throws IOException {
+		Map<String, String> fgroupMap = new HashMap<String, String>();
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		String line = br.readLine();
+		
+		if( skipfirst ) line = br.readLine();
+		
+		while (line != null) {
+			String[] split = line.split( sep );
+			if (split.length > 1 && split[0].contains(".")) {
+				fgroupMap.put(split[0], split[1]);
+			}
+			line = br.readLine();
+		}
+		
+		return fgroupMap;
+	}
+	
+	public Set<Integer> isComponent( InputStream inputStream, String sep, boolean skipfirst ) throws IOException {
+		Integer[] ii = { 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44, 137, 138 };
+		final Set<Integer> is = new HashSet<Integer>(Arrays.asList(ii));
+		List<String[]> idList = new ArrayList<String[]>();
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		String line = br.readLine();
+	
+		if( skipfirst ) line = br.readLine();
+		
+		int i = 0;
+		while (line != null) {
+			String[] split = line.split( sep );
+			if (split.length > 3 && is.contains(Integer.parseInt(split[1]))) {
+				String sName = null;
+				if (split[3] != null && split[3].length() > 0) {
+					sName = split[3];
+				}
+				String nName = split[2];
+	
+				String[] strs = new String[] { split[1], nName, split[7], sName, split[5] };
+				idList.add(strs);
+				// ngroupMap.put( split[2], i++ );
+	
+				/*
+				 * ngroupList.add( nName ); // + " ("+split[1].substring(1,
+				 * split[1].length()-1)+")" ); ngroupGroups.add( split[8] );
+				 * //List<Object> lobj = nutList.get(i).get(i)
+				 * nutList[0].add( sName ); String mName = split[6];
+				 * nutList[1].add( mName );
+				 */
+			}
+			line = br.readLine();
+		}
+	
+		Collections.sort(idList, new Comparator<String[]>() {
+			public int compare(String[] s1, String[] s2) {
+				return s1[0].compareTo(s2[0]);
+			}
+		});
+		
+		ngroupMap.put( "0200", i++ );
+		ngroupList.add( "Orka" );
+		ngroupGroups.add( "1" );
+		nutList[0].add( "Energy" );
+		nutList[1].add( "kJ" );
+		ngroupMap.put( "0201", i++ );
+		ngroupList.add( "Orka" );
+		ngroupGroups.add( "1" );
+		nutList[0].add( "Energy" );
+		nutList[1].add( "kcal" );
+		for (String[] vals : idList) {
+			ngroupMap.put(vals[0], i++);
+			String cname = vals[1];
+			String group = vals[2];
+			if( group.equals("4") || group.equals("5") ) {
+				cname = cname.split(",")[0];
+			} else {
+				if( group.equals("6") || group.equals("1") ) {
+					if( cname.endsWith("n-3") ) {
+						cname = "Fjölóm. fitus. ómega-3";
+					} else if( cname.endsWith("n-6") ) {
+						cname = "Fjölóm. fitus. ómega-6";
+					} else {
+						cname = cname.replace("cis-", "");
+					}
+				}
+				
+				cname = cname.replace(", alls", "");
+				cname = cname.replace("Trefjaefni", "Trefjar");
+			}
+			ngroupList.add( cname );
+			ngroupGroups.add( group );
+			nutList[0].add(vals[3].trim());
+			nutList[1].add(vals[4].trim());
+		}
+		
+		return is;
+	}
+	
+	public void isFood( InputStream inputStream, Map<String,String> fgroupMap, List<Object[]> result, String sep, boolean skipfirst ) throws IOException {
+		int i = 0;
+		int k = 0;
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		String line = br.readLine();
+		
+		if( skipfirst ) line = br.readLine();
+		
+		while (line != null) {
+			String[] split = line.split( sep );
+			if( split.length > 7 ) {
+				foodInd.put(split[0], k);
+				// foodNameInd.put(split[2], k);
+				k++;
+	
+				String val = split[7];
+				split[7] = fgroupMap.get(val);
+				Object[] array = new Object[2 + ngroupList.size()];
+				array[0] = split[1];
+				array[1] = split[7];
+				for (i = 2; i < array.length; i++) {
+					array[i] = null;
+				}
+				result.add(array);
+				line = br.readLine();
+			} else {
+				System.err.println( line );
+				break;
+			}
+		}
+	}
 
 	List<Object>[] nutList = null;
-	public List<Object[]> parseData( String loc ) throws IOException {
-		Map<String, String> fgroupMap = new HashMap<String, String>();
+	public List<Object[]> parseData( String loc ) throws IOException, ServiceException {
+		Map<String, String> fgroupMap = null;
 
-		InputStream inputStream;
-		BufferedReader br;
-		String line;
-		if (loc.equals("IS")) {
-			inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			line = br.readLine();
-			while (line != null) {
-				String[] split = line.split("\\t");
-				if (split.length > 1 && split[0].contains(".")) {
-					fgroupMap.put(split[0], split[1]);
-				}
-				line = br.readLine();
+		if( loc.equals("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
+			
+			if( service != null ) {
+				InputStream inputStream = run("select * from "+grouptableid, true);
+				fgroupMap = isGroup( inputStream, ",", true );
+			}
+		} else if (loc.equals("IS")) {
+			InputStream inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
+			fgroupMap = isGroup( inputStream, "\\t", false );
 		} else {
-			inputStream = this.getClass().getResourceAsStream("FD_GROUP.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			fgroupMap = new HashMap<String, String>();
+			InputStream inputStream = this.getClass().getResourceAsStream("FD_GROUP.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\\^");
 				if (split.length == 2) {
@@ -373,85 +553,23 @@ public class SortTable extends JApplet {
 		ngroupList = new ArrayList<String>();
 		ngroupGroups = new ArrayList<String>();
 
-		Integer[] ii = { 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44, 137, 138 };
-		final Set<Integer> is = new HashSet<Integer>(Arrays.asList(ii));
-
-		List<String[]> idList = new ArrayList<String[]>();
-		if (loc.equals("IS")) {
-			inputStream = this.getClass().getResourceAsStream("/Component.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			line = br.readLine();
-
-			int i = 0;
-			while (line != null) {
-				String[] split = line.split("[\t]");
-				if (split.length > 3 && is.contains(Integer.parseInt(split[2]))) {
-					String sName = null;
-					if (split[4] != null && split[4].length() > 0) {
-						sName = split[4];
-					}
-					String nName = split[3];
-
-					String[] strs = new String[] { split[2], nName, split[8], sName, split[6] };
-					idList.add(strs);
-					// ngroupMap.put( split[2], i++ );
-
-					/*
-					 * ngroupList.add( nName ); // + " ("+split[1].substring(1,
-					 * split[1].length()-1)+")" ); ngroupGroups.add( split[8] );
-					 * //List<Object> lobj = nutList.get(i).get(i)
-					 * nutList[0].add( sName ); String mName = split[6];
-					 * nutList[1].add( mName );
-					 */
-				}
-				line = br.readLine();
+		Set<Integer> is = null;
+		if( loc.equals("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
-
-			Collections.sort(idList, new Comparator<String[]>() {
-				public int compare(String[] s1, String[] s2) {
-					return s1[0].compareTo(s2[0]);
-				}
-			});
 			
-			ngroupMap.put( "0200", i++ );
-			ngroupList.add( "Orka" );
-			ngroupGroups.add( "1" );
-			nutList[0].add( "Energy" );
-			nutList[1].add( "kJ" );
-			ngroupMap.put( "0201", i++ );
-			ngroupList.add( "Orka" );
-			ngroupGroups.add( "1" );
-			nutList[0].add( "Energy" );
-			nutList[1].add( "kcal" );
-			for (String[] vals : idList) {
-				ngroupMap.put(vals[0], i++);
-				String cname = vals[1];
-				String group = vals[2];
-				if( group.equals("4") || group.equals("5") ) {
-					cname = cname.split(",")[0];
-				} else {
-					if( group.equals("6") || group.equals("1") ) {
-						if( cname.endsWith("n-3") ) {
-							cname = "Fjölóm. fitus. ómega-3";
-						} else if( cname.endsWith("n-6") ) {
-							cname = "Fjölóm. fitus. ómega-6";
-						} else {
-							cname = cname.replace("cis-", "");
-						}
-					}
-					
-					cname = cname.replace(", alls", "");
-					cname = cname.replace("Trefjaefni", "Trefjar");
-				}
-				ngroupList.add( cname );
-				ngroupGroups.add( group );
-				nutList[0].add(vals[3].trim());
-				nutList[1].add(vals[4].trim());
+			if( service != null ) {
+				InputStream inputStream = run("select * from "+componenttableid, true);
+				is = isComponent( inputStream, ",", true );
 			}
+		} else if (loc.equals("IS")) {
+			InputStream inputStream = this.getClass().getResourceAsStream("/Component.txt");
+			is = isComponent( inputStream, "[\t]", false );
 		} else {
-			inputStream = this.getClass().getResourceAsStream("NUTR_DEF.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			InputStream inputStream = this.getClass().getResourceAsStream("NUTR_DEF.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			int i = 0;
 			while (line != null) {
 				String[] split = line.split("\\^");
@@ -478,34 +596,23 @@ public class SortTable extends JApplet {
 		for (List<Object> l : nutList) {
 			result.add(l.toArray(new Object[0]));
 		}
-
-		int i = 0;
-		int k = 0;
-		if (loc.equals("IS")) {
-			inputStream = this.getClass().getResourceAsStream("/Food.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			line = br.readLine();
-			while (line != null) {
-				String[] split = line.split("\\t");
-				foodInd.put(split[1], k);
-				// foodNameInd.put(split[2], k);
-				k++;
-
-				String val = split[6];
-				split[6] = fgroupMap.get(val);
-				Object[] array = new Object[2 + ngroupList.size()];
-				array[0] = split[2];
-				array[1] = split[6];
-				for (i = 2; i < array.length; i++) {
-					array[i] = null;
-				}
-				result.add(array);
-				line = br.readLine();
+		
+		if( loc.equals("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
+			
+			if( service != null ) {
+				InputStream inputStream = run("select * from "+foodtableid, true);
+				isFood( inputStream, fgroupMap, result, ",", true );
+			}
+		} else if (loc.equals("IS")) {
+			InputStream inputStream = this.getClass().getResourceAsStream("/Food.txt");
+			isFood( inputStream, fgroupMap, result, "\t", false );
 		} else {
-			inputStream = this.getClass().getResourceAsStream("FOOD_DES.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			InputStream inputStream = this.getClass().getResourceAsStream("FOOD_DES.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\\^");
 				String val = split[1];
@@ -513,7 +620,7 @@ public class SortTable extends JApplet {
 				Object[] array = new Object[2 + ngroupList.size()];
 				array[0] = split[2].substring(1, split[2].length() - 1);
 				array[1] = split[1];
-				for (i = 2; i < array.length; i++) {
+				for (int i = 2; i < array.length; i++) {
 					array[i] = null;
 				}
 				result.add(array);
@@ -522,7 +629,16 @@ public class SortTable extends JApplet {
 		}
 
 		String prev = "";
-		if (loc.equals("IS")) {
+		if( loc.equals("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			}
+			
+			if( service != null ) {
+				InputStream inputStream = run("select * from "+componentvaluetableid, true);
+				inThread( inputStream, result, is, ",", true );
+			}
+		} else if( loc.equals("IS") ) {
 			/*try {
 				new Thread() {
 					public void run() {
@@ -534,17 +650,13 @@ public class SortTable extends JApplet {
 					}
 				}.run();
 			} catch( SecurityException e ) {*/
-				try {
-					inThread( result, is );
-				} catch (IOException ee) {
-					ee.printStackTrace();
-				}
-			//}
+			InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
+			inThread( inputStream, result, is, "\\t", false );
 		} else {
 			int start = -1;
-			inputStream = this.getClass().getResourceAsStream("NUT_DATA.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			InputStream inputStream = this.getClass().getResourceAsStream("NUT_DATA.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\\^");
 				if (!split[0].equals(prev)) {
@@ -740,8 +852,15 @@ public class SortTable extends JApplet {
 		return result;
 	}
 
+	private static GoogleService service;
+	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private static final String grouptableid = "1VDYeREOR6SvxX7VxiGBHVvUZbw_q1GeSsFsvh3U";
+	private static final String componenttableid = "1V220glQaJXgeWrimZ5gDiyRwhKMNp437ZeAnRNI";
+	private static final String foodtableid = "1kVdzllCGHpktvP7jjwVGuQ6M5XF3qUMkBBq9Cn4";
+	private static final String componentvaluetableid = "1iPhnOf7BlPQSeMz1zsanxA2mqQ2Kv0PYo-BQE9U";
+	
 	public void loadStuff() {
-		lang = "IS";
+		lang = "IS_fusion";
 		/*
 		 * String loc = this.getParameter("loc"); if( loc != null ) { lang =
 		 * loc; }
@@ -773,6 +892,8 @@ public class SortTable extends JApplet {
 						foodNameInd.put((String) oo[0], i++);
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ServiceException e) {
 				e.printStackTrace();
 			}
 		}
