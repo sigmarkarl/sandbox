@@ -676,7 +676,7 @@ public class HabitsPanel extends JComponent {
 		malCombo = new JComboBox();
 		malCombo.setPreferredSize( prefSize );
 		malCombo.setMinimumSize( prefSize );
-		if( lang.equals("IS") ) {
+		if( lang.startsWith("IS") ) {
 			malCombo.addItem("Morgunmatur");
 			malCombo.addItem("Millimáltíð1");
 			malCombo.addItem("Hádegismatur");
@@ -697,7 +697,7 @@ public class HabitsPanel extends JComponent {
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
-		englabel = new JLabel( lang.equals("IS") ? "Orka í vali: " : "Energy in selection" );
+		englabel = new JLabel( lang.startsWith("IS") ? "Orka í vali: " : "Energy in selection" );
 		
 		Dimension d = new Dimension( 300, 25 );
 		englabel.setPreferredSize( d );
@@ -707,7 +707,7 @@ public class HabitsPanel extends JComponent {
 		};
 		//datepicker.setMonthView(new JXM)*/
 		
-		JButton	sendfriend = new JButton( new AbstractAction(lang.equals("IS") ? "Senda völdum vinum" : "Send to selected friends") {
+		JButton	sendfriend = new JButton( new AbstractAction(lang.startsWith("IS") ? "Senda völdum vinum" : "Send to selected friends") {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					sendToFriend( fp.currentUserId, fp.getSelectedFriendsIds() );
@@ -819,8 +819,8 @@ public class HabitsPanel extends JComponent {
 					Graphics2D g2 = (Graphics2D)g;
 					g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 					
-					String str = lang.equals("IS") ? "Dragðu fæðutegundir úr tölfunni" : "Drag food from the table";
-					String nstr = lang.equals("IS") ? "til vinstri hingað" : "to the left to here";
+					String str = lang.startsWith("IS") ? "Dragðu fæðutegundir úr tölfunni" : "Drag food from the table";
+					String nstr = lang.startsWith("IS") ? "til vinstri hingað" : "to the left to here";
 					int strw = g.getFontMetrics().stringWidth( str );
 					int nstrw = g.getFontMetrics().stringWidth( nstr );
 					g.setColor( Color.lightGray );
@@ -1035,7 +1035,7 @@ public class HabitsPanel extends JComponent {
 		};
 		tsplitPane.setBackground( Color.white );
 		
-		/*if( lang.equals("IS") ) {
+		/*if( lang.startsWith("IS") ) {
 			timelineTabPane.addTab("Inn", timelineSplit);
 			timelineTabPane.addTab("Út", null);
 		} else {
@@ -1068,7 +1068,7 @@ public class HabitsPanel extends JComponent {
 				//cal.setTimeInMillis( time );
 				//return cal.get( Calendar.WEEK_OF_YEAR ) + "";
 				
-				if( lang.equals("IS") ) {
+				if( lang.startsWith("IS") ) {
 					if( arg1 == 0 ) return "Sunnudagur";
 					else if( arg1 == 1 ) return "Mánudagur";
 					else if( arg1 == 2 ) return "Þriðjudagur";
@@ -1111,7 +1111,7 @@ public class HabitsPanel extends JComponent {
 					int mday = cal.get( Calendar.DAY_OF_MONTH );
 					int mnum = cal.get( Calendar.MONTH );
 					
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						if( mnum == 0 ) return mday + ". janúar";
 						else if( mnum == 1 ) return mday + ". febrúar";
 						else if( mnum == 2 ) return mday + ". mars";
@@ -1432,7 +1432,7 @@ public class HabitsPanel extends JComponent {
 				//cal.setTimeInMillis( time );
 				//return cal.get( Calendar.WEEK_OF_YEAR ) + "";
 				
-				if( lang.equals("IS") ) {
+				if( lang.startsWith("IS") ) {
 					if( arg1 == 0 ) return "Sunnudagur";
 					else if( arg1 == 1 ) return "Mánudagur";
 					else if( arg1 == 2 ) return "Þriðjudagur";
@@ -1575,7 +1575,7 @@ public class HabitsPanel extends JComponent {
 				cal.setTimeInMillis( time );
 				int week = cal.get( Calendar.WEEK_OF_YEAR );
 				
-				return lang.equals("IS") ? "Máltíð - " + week + ". vika" : "Food for - " + week + ". week";
+				return lang.startsWith("IS") ? "Máltíð - " + week + ". vika" : "Food for - " + week + ". week";
 			}
 
 			public int getRowCount() {
