@@ -17,7 +17,6 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
@@ -36,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -59,10 +60,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.ClipboardService;
-import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
@@ -71,7 +69,6 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -105,6 +102,7 @@ import javax.swing.table.TableModel;
 
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
+import org.simmi.shared.TreeUtil;
 
 import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.Service.GDataRequest;
@@ -209,7 +207,29 @@ public class SortTable extends JApplet {
 		String unit;
 	}
 	
-	public void inThread( InputStream inputStream, final List<Object[]>	result, final Set<Integer> is, String sep, boolean skipfirst ) throws IOException {
+	public String[] intelliSplit( String line, String sep ) {
+		int com = 0;
+		List<String> splitlist = new ArrayList<String>();
+		while( com < line.length() ) {
+			if( line.charAt(com) == '"' ) {
+				int newgus = line.indexOf('"', com+1);
+				splitlist.add( line.substring(com+1, newgus) );
+				
+				int ind = line.indexOf(sep, newgus+1);
+				if( ind == -1 ) ind = line.length();
+				com = ind+1;
+			} else {
+				int newcom = line.indexOf(sep, com);
+				if( newcom == -1 ) newcom = line.length();
+				splitlist.add( line.substring(com, newcom) );
+				com = newcom+1;
+			}
+		}
+		String[] split = splitlist.toArray( new String[0] );
+		return split;
+	}
+	
+	public void inThread( Reader rd, final List<Object[]>	result, final Set<Integer> is, String sep, boolean skipfirst ) throws IOException {
 		int start = -1;
 
 		/*
@@ -236,15 +256,16 @@ public class SortTable extends JApplet {
 		// InputStream inputStream = zipfile.getInputStream(
 		// zipentry );
 
-		if (inputStream != null) {
-			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		if (rd != null) {
+			BufferedReader br = new BufferedReader( rd );
 			//int	linen = 0;
 			String line = br.readLine();
 			if( skipfirst ) line = br.readLine();
 			while (line != null) {
-				String[] split = line.split( sep );
+				String[] split = intelliSplit( line, sep );
+				//String[] split = line.split( sep );
 
-				if( split.length > 3 ) {
+				if( split.length > 2 ) {
 					int ival = -1;
 					try {
 						ival = Integer.parseInt(split[1]);
@@ -262,8 +283,8 @@ public class SortTable extends JApplet {
 	
 						}
 						Object[] objs = result.get(start + 2);
-						if (split[4].length() > 0) {
-							String replc = split[4].replace(',', '.');
+						if (split[2].length() > 0) {
+							String replc = split[2].replace(',', '.');
 							replc = replc.replace("<", "");
 							float f = -1.0f;
 							try {
@@ -337,10 +358,33 @@ public class SortTable extends JApplet {
 		// table.tableChanged( new TableModelEvent( model ) );
 	}
 	
-	public InputStream run(String query, boolean isUsingEncId) throws IOException, ServiceException {
-		   String lowercaseQuery = query.toLowerCase();
+	String input = null;
+	public void setInput( String input ) {
+		this.input = input;
+	}
+	
+	public Reader run(String query, boolean isUsingEncId) throws IOException, ServiceException, InterruptedException {
+		boolean fail = false;
+		try {
+			JSUtil.console( SortTable.this, "about to loaddata");
+		   JSUtil.call( SortTable.this, "loadData", new Object[] {query} );
+		   JSUtil.console( SortTable.this, "done loaddata");
+		   
+		   while( input == null ) Thread.sleep(1000);
+		   
+		   JSUtil.console( SortTable.this, "after wait");
+		   
+		   StringReader res = new StringReader( input );
+		   input = null;
+		   return res;
+	   } catch(Exception e) {
+		   fail = true;
+	   }
+	    
+	    if( fail ) {
+			String lowercaseQuery = query.toLowerCase();
 		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
-
+	
 		   GDataRequest request;
 		   // If the query is a select, describe, or show query, run a GET request.
 		   if (lowercaseQuery.startsWith("select") ||
@@ -358,10 +402,11 @@ public class SortTable extends JApplet {
 		     writer.append("sql=" + encodedQuery);
 		     writer.flush();
 		   }
-
+	
 		   request.execute();
-
-		   return request.getResponseStream();
+	
+		   return new InputStreamReader( request.getResponseStream() );
+	   } else return null;
 	}
 	
 	private StringBuilder getResultsText(GDataRequest request) throws IOException {
@@ -379,16 +424,19 @@ public class SortTable extends JApplet {
 		return sb;
 	}
 	
-	public Map<String, String> isGroup( InputStream inputStream, String sep, boolean skipfirst ) throws IOException {
+	public Map<String, String> isGroup( Reader reader, String sep, boolean skipfirst ) throws IOException {
 		Map<String, String> fgroupMap = new HashMap<String, String>();
 		
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		BufferedReader br = new BufferedReader( reader );
 		String line = br.readLine();
 		
 		if( skipfirst ) line = br.readLine();
 		
 		while (line != null) {
-			String[] split = line.split( sep );
+			while( countOccur( line, '"' ) % 2 != 0 ) line += br.readLine();
+			
+			String[] split = intelliSplit(line, sep);
+			//String[] split = line.split( sep );
 			if (split.length > 1 && split[0].contains(".")) {
 				fgroupMap.put(split[0], split[1]);
 			}
@@ -398,19 +446,22 @@ public class SortTable extends JApplet {
 		return fgroupMap;
 	}
 	
-	public Set<Integer> isComponent( InputStream inputStream, String sep, boolean skipfirst ) throws IOException {
+	public Set<Integer> isComponent( Reader rd, String sep, boolean skipfirst ) throws IOException {
 		Integer[] ii = { 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44, 137, 138 };
 		final Set<Integer> is = new HashSet<Integer>(Arrays.asList(ii));
 		List<String[]> idList = new ArrayList<String[]>();
 		
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
 	
 		if( skipfirst ) line = br.readLine();
 		
 		int i = 0;
 		while (line != null) {
-			String[] split = line.split( sep );
+			while( countOccur( line, '"' ) % 2 != 0 ) line += br.readLine();
+			
+			String[] split = intelliSplit(line, sep);
+			//String[] split = line.split( sep );
 			if (split.length > 3 && is.contains(Integer.parseInt(split[1]))) {
 				String sName = null;
 				if (split[3] != null && split[3].length() > 0) {
@@ -478,27 +529,39 @@ public class SortTable extends JApplet {
 		return is;
 	}
 	
-	public void isFood( InputStream inputStream, Map<String,String> fgroupMap, List<Object[]> result, String sep, boolean skipfirst ) throws IOException {
+	public int countOccur( String str, char c ) {
+		int count = 0;
+		
+		for( int i = 0; i < str.length(); i++ ) {
+			if( str.charAt( i ) == c ) count++;
+		}
+		
+		return count;
+	}
+	
+	public void isFood( Reader rd, Map<String,String> fgroupMap, List<Object[]> result, String sep, boolean skipfirst ) throws IOException {
 		int i = 0;
 		int k = 0;
 		
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
 		
 		if( skipfirst ) line = br.readLine();
 		
 		while (line != null) {
-			String[] split = line.split( sep );
+			while( countOccur( line, '"' ) % 2 != 0 ) line += br.readLine();
+			
+			String[] split = intelliSplit(line, sep);
 			if( split.length > 7 ) {
 				foodInd.put(split[0], k);
 				// foodNameInd.put(split[2], k);
 				k++;
 	
-				String val = split[7];
-				split[7] = fgroupMap.get(val);
+				String val = split[5];
+				split[5] = fgroupMap.get(val);
 				Object[] array = new Object[2 + ngroupList.size()];
 				array[0] = split[1];
-				array[1] = split[7];
+				array[1] = split[5];
 				for (i = 2; i < array.length; i++) {
 					array[i] = null;
 				}
@@ -512,21 +575,21 @@ public class SortTable extends JApplet {
 	}
 
 	List<Object>[] nutList = null;
-	public List<Object[]> parseData( String loc ) throws IOException, ServiceException {
+	public List<Object[]> parseData( String loc ) throws IOException, ServiceException, InterruptedException {
 		Map<String, String> fgroupMap = null;
 
-		if( loc.equals("IS_fusion") ) {
+		if( loc.startsWith("IS_fusion") ) {
 			if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
 			if( service != null ) {
-				InputStream inputStream = run("select * from "+grouptableid, true);
-				fgroupMap = isGroup( inputStream, ",", true );
+				Reader rd = run("select * from "+grouptableid, true);
+				fgroupMap = isGroup( rd, ",", true );
 			}
-		} else if (loc.equals("IS")) {
+		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
-			fgroupMap = isGroup( inputStream, "\\t", false );
+			fgroupMap = isGroup( new InputStreamReader( inputStream ), "\\t", false );
 		} else {
 			fgroupMap = new HashMap<String, String>();
 			InputStream inputStream = this.getClass().getResourceAsStream("FD_GROUP.txt");
@@ -554,18 +617,18 @@ public class SortTable extends JApplet {
 		ngroupGroups = new ArrayList<String>();
 
 		Set<Integer> is = null;
-		if( loc.equals("IS_fusion") ) {
+		if( loc.startsWith("IS_fusion") ) {
 			if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
 			if( service != null ) {
-				InputStream inputStream = run("select * from "+componenttableid, true);
-				is = isComponent( inputStream, ",", true );
+				Reader rd = run("select * from "+componenttableid, true);
+				is = isComponent( rd, ",", true );
 			}
-		} else if (loc.equals("IS")) {
+		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/Component.txt");
-			is = isComponent( inputStream, "[\t]", false );
+			is = isComponent( new InputStreamReader(inputStream, "UTF-8"), "[\t]", false );
 		} else {
 			InputStream inputStream = this.getClass().getResourceAsStream("NUTR_DEF.txt");
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
@@ -597,18 +660,18 @@ public class SortTable extends JApplet {
 			result.add(l.toArray(new Object[0]));
 		}
 		
-		if( loc.equals("IS_fusion") ) {
+		if( loc.startsWith("IS_fusion") ) {
 			if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
 			if( service != null ) {
-				InputStream inputStream = run("select * from "+foodtableid, true);
-				isFood( inputStream, fgroupMap, result, ",", true );
+				Reader rd = run("select * from "+foodtableid+" where WebPublishReady = 'J'", true);
+				isFood( rd, fgroupMap, result, ",", true );
 			}
-		} else if (loc.equals("IS")) {
+		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/Food.txt");
-			isFood( inputStream, fgroupMap, result, "\t", false );
+			isFood( new InputStreamReader( inputStream ), fgroupMap, result, "\t", false );
 		} else {
 			InputStream inputStream = this.getClass().getResourceAsStream("FOOD_DES.txt");
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
@@ -629,16 +692,18 @@ public class SortTable extends JApplet {
 		}
 
 		String prev = "";
-		if( loc.equals("IS_fusion") ) {
+		if( loc.startsWith("IS_fusion") ) {
 			if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
 			if( service != null ) {
-				InputStream inputStream = run("select * from "+componentvaluetableid, true);
-				inThread( inputStream, result, is, ",", true );
+				String istr = is.toString();
+				istr = '('+istr.substring(1, istr.length()-1)+')';
+				Reader rd = run("select OriginalFoodCode, OriginalComponentCode, SelectedValue from "+componentvaluetableid+" where OriginalComponentCode in "+istr, true);
+				inThread( rd, result, is, ",", true );
 			}
-		} else if( loc.equals("IS") ) {
+		} else if( loc.startsWith("IS") ) {
 			/*try {
 				new Thread() {
 					public void run() {
@@ -651,7 +716,7 @@ public class SortTable extends JApplet {
 				}.run();
 			} catch( SecurityException e ) {*/
 			InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
-			inThread( inputStream, result, is, "\\t", false );
+			inThread( new InputStreamReader( inputStream ), result, is, "\\t", false );
 		} else {
 			int start = -1;
 			InputStream inputStream = this.getClass().getResourceAsStream("NUT_DATA.txt");
@@ -832,7 +897,7 @@ public class SortTable extends JApplet {
 		Collections.sort(stuff, new Comparator<Object[]>() {
 			public int compare(Object[] o1, Object[] o2) {
 				if( o1[0] == null && o2[0] == null ) {
-					if( lang.equals("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+					if( lang.startsWith("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
 					else return ((String) o2[2]).compareToIgnoreCase((String) o1[2]);
 				}
 				else if( o1[0] == null ) return Integer.MIN_VALUE;
@@ -876,7 +941,7 @@ public class SortTable extends JApplet {
 				Collections.sort(stuff, new Comparator<Object[]>() {
 					public int compare(Object[] o1, Object[] o2) {
 						if( o1[0] == null && o2[0] == null ) {
-							if( lang.equals("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+							if( lang.startsWith("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
 							else return ((String) o2[2]).compareToIgnoreCase((String) o1[2]);
 						}
 						else if( o1[0] == null ) return Integer.MIN_VALUE;
@@ -894,6 +959,8 @@ public class SortTable extends JApplet {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ServiceException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
@@ -1035,38 +1102,7 @@ public class SortTable extends JApplet {
         }
         return sb.toString();
 	}
-	
-	public void copyData(Component source) {
-        TableModel model = table.getModel();
- 
-        String s = makeCopyString();
-        if (s==null || s.trim().length()==0) {
-            JOptionPane.showMessageDialog(this, "There is no data selected!");
-        } else {
-            StringSelection selection = new StringSelection(s);
-            clipboardService.setContents( selection );
-        }
-        
-        if (grabFocus) {
-            source.requestFocus();
-        }
-    }
-	 
-    class CopyAction extends AbstractAction {
-        public CopyAction(String text, ImageIcon icon,
-            String desc, Integer mnemonic) {
-            super(text, icon);
-            putValue(SHORT_DESCRIPTION, desc);
-            putValue(MNEMONIC_KEY, mnemonic);
-        }
- 
-        public void actionPerformed(ActionEvent e) {
-            copyData((Component)e.getSource());
-        }
-    }
 
-    private ClipboardService 	clipboardService;
-    private boolean 			grabFocus = false;
 	public void initGui(String sessionKey, String currentUser) throws IOException, ClassNotFoundException {
 		scrollPane = new JScrollPane();
 		leftScrollPane = new JScrollPane();
@@ -1107,15 +1143,13 @@ public class SortTable extends JApplet {
 		};
 		table.setColumnSelectionAllowed(true);
 		
-	    try {  
-	    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
-	    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
-            table.getActionMap().put( "copy", action );
-            grabFocus = true;
-	    } catch (Exception e) { 
-	    	e.printStackTrace();
-	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-	    }
+		//if( this.applet != null ) {
+		try {
+			WSUtil.clipboard( this );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		//}
 	   
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -1589,8 +1623,8 @@ public class SortTable extends JApplet {
 				foodTypes.add((String) objs[1]);
 		}
 
-		final String allfood = lang.equals("IS") ? "Allar fæðutegundir" : "All food groups";
-		final String recipes = lang.equals("IS") ? "Uppskriftir" : "Recipes";
+		final String allfood = lang.startsWith("IS") ? "Allar fæðutegundir" : "All food groups";
+		final String recipes = lang.startsWith("IS") ? "Uppskriftir" : "Recipes";
 		
 		topLeftCombo.addItem(allfood);
 		topLeftCombo.addItem(recipes);
@@ -1675,7 +1709,7 @@ public class SortTable extends JApplet {
 					}
 					g.setColor(Color.gray);
 					
-					String leit = lang.equals("IS") ? "leit í " + (stuff.size()-2) + " fæðutegundum" : "search " + (stuff.size()-2) + " food entries";
+					String leit = lang.startsWith("IS") ? "leit í " + (stuff.size()-2) + " fæðutegundum" : "search " + (stuff.size()-2) + " food entries";
 					int strw = g.getFontMetrics().stringWidth(leit);
 					int x = (this.getWidth() - strw) / 2;
 					g.drawString(leit, x, 20);
@@ -1811,7 +1845,7 @@ public class SortTable extends JApplet {
 			}
 
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				if (lang.equals("IS")) {
+				if (lang.startsWith("IS")) {
 					if (rowIndex == 0)
 						return "Nafn efnis";
 					return "Eining";
@@ -1888,7 +1922,7 @@ public class SortTable extends JApplet {
 			}
 
 			public String getColumnName(int columnIndex) {
-				if (lang.equals("IS")) {
+				if (lang.startsWith("IS")) {
 					if (columnIndex == 0)
 						return "Fæðutegund";
 					else if (columnIndex == 1)
@@ -2385,7 +2419,7 @@ public class SortTable extends JApplet {
 		}
 		
 		JScrollPane help = new JScrollPane( helppane );
-		if (lang.equals("IS")) {
+		if (lang.startsWith("IS")) {
 			tabbedPane.addTab("Hjálp", hlpicon, help);
 			tabbedPane.addTab("Fæða", fodicon, rightSplitPane);
 			tabbedPane.addTab("Næringarefni", helicon, detail);
@@ -2468,7 +2502,7 @@ public class SortTable extends JApplet {
 		 */
 		
 		final JPopupMenu	leftpopup = new JPopupMenu();
-		leftpopup.add( new AbstractAction( lang.equals("IS") ? "Senda fæðutegund í valda uppskrift" : "Put food in selected recipe" ) {
+		leftpopup.add( new AbstractAction( lang.startsWith("IS") ? "Senda fæðutegund í valda uppskrift" : "Put food in selected recipe" ) {
 			public void actionPerformed(ActionEvent e) {
 				String str = "";
 				
@@ -2486,11 +2520,11 @@ public class SortTable extends JApplet {
 			}
 		});
 		
-		String[] sortset = lang.equals("IS") ? 	new String[] {"Alcohol","Dietary fiber","Carbohydrates, total","Protein, total","Water","Ash","Fat, total"} : 
+		String[] sortset = lang.startsWith("IS") ? 	new String[] {"Alcohol","Dietary fiber","Carbohydrates, total","Protein, total","Water","Ash","Fat, total"} : 
 												new String[] {"ALC","FIBTG","CHOCDF","PROCNT","WATER","ASH","FAT"};
 		final Set<String>	sortStuff = new HashSet<String>( Arrays.asList( sortset ) );
 		final JPopupMenu	mainpopup = new JPopupMenu();
-		mainpopup.add( new AbstractAction( lang.equals("IS") ? "Raða fæðutegundum með svipuðu innihaldi" : "Sort food items with similar ingredients" ) {
+		mainpopup.add( new AbstractAction( lang.startsWith("IS") ? "Raða fæðutegundum með svipuðu innihaldi" : "Sort food items with similar ingredients" ) {
 			public void actionPerformed(ActionEvent e) {
 				int r = leftTable.getSelectedRow();
 				final int mi = leftTable.convertRowIndexToModel(r);
@@ -2632,7 +2666,7 @@ public class SortTable extends JApplet {
 		if( xurl != null ) {
 			ImageProducer 	ims = (ImageProducer)xurl.getContent();
 			Image 		img = (ims != null ? this.createImage( ims ).getScaledInstance(16, 16, Image.SCALE_SMOOTH) : null);
-			popup.add( new AbstractAction( lang.equals("IS") ? "Opna val í Excel" : "Open in Excel", img != null ? new ImageIcon(img) : null ) {
+			popup.add( new AbstractAction( lang.startsWith("IS") ? "Opna val í Excel" : "Open in Excel", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent ae) {
 					try {
 						PoiFactory.export(table, topTable, leftTable, SortTable.this);
@@ -2643,6 +2677,47 @@ public class SortTable extends JApplet {
 					} catch (IllegalArgumentException e) {
 						e.printStackTrace();
 					}
+				}
+			});
+			popup.add( new AbstractAction( lang.startsWith("IS") ? "Opna tre" : "Open tree", img != null ? new ImageIcon(img) : null ) {
+				public void actionPerformed(ActionEvent ae) {
+					TreeUtil tu = new TreeUtil();
+					List<String> corrInd = new ArrayList<String>();
+					int len = stuff.size()-2;
+					double[] corrarr = new double[ len*len ];
+					Arrays.fill(corrarr, 0.0);
+					for( int i = 2; i < stuff.size(); i++ ) {
+						Object[] obj = stuff.get(i);
+						corrInd.add( (String)obj[0] );
+						
+						for( int k = i+1; k < stuff.size(); k++ ) {
+							Object[] obj2 = stuff.get(k);
+							
+							double tot = 0.0;
+							for( int y = 2; y < obj.length; y++ ) {
+								double val;
+								Float f1 = (Float)obj[y];
+								Float f2 = (Float)obj2[y];
+								
+								if( f1 != null ) {
+									if( f2 != null ) val = f1-f2;
+									else val = f1;
+								} else {
+									if( f2 != null ) val = f2;
+									else val = 0.0;
+								}
+								
+								tot += val*val;
+							}
+							tot = Math.sqrt( tot );
+							corrarr[ (i-2)*len+(k-2) ] = tot;
+							corrarr[ (k-2)*len+(i-2) ] = tot;
+						}
+					}
+					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd);
+					
+					System.err.println("about to call showTree");
+						JSUtil.call( SortTable.this, "showTree",  new Object[] {node.toString()} );
 				}
 			});
 		}
