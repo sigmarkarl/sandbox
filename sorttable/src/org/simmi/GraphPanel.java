@@ -160,7 +160,7 @@ public class GraphPanel extends JTabbedPane {
 					String wghstr = baos.toString();
 					
 					String enStr = "";
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						enStr = "Orka (í "+wghstr+")";
 					} else {
 						enStr = "Energy (in "+wghstr+")";
@@ -175,7 +175,7 @@ public class GraphPanel extends JTabbedPane {
 					double enc = 0.0;
 					double enj = 0.0;
 					
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						alc = stuffYou(row, "Alkóhól");
 						prt = stuffYou(row, "Prótein");
 						cbh = stuffYou(row, "Kolvetni");
@@ -199,7 +199,7 @@ public class GraphPanel extends JTabbedPane {
 					double f = enj; //(alco + prto + cbho + fato + fibo)*100.0;
 					f *= 100.0;
 					
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						if( f > 0 ) {
 							double fv = Math.round( f )/100.0;
 							
@@ -347,23 +347,23 @@ public class GraphPanel extends JTabbedPane {
 						g2.setFont( new Font("Arial", Font.BOLD, this.getHeight()/40 ) );
 						g2.setColor( Color.darkGray );
 						String str;
-						if( lang.equals("IS") ) str = "Alkóhól";
+						if( lang.startsWith("IS") ) str = "Alkóhól";
 						else str = "Alcohol";
 						int strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (19*w)/20-strw-hh/2, (1*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Prótein";
+						if( lang.startsWith("IS") ) str = "Prótein";
 						else str = "Protein";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (19*w)/20-strw-hh/2, (2*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Kolvetni";
+						if( lang.startsWith("IS") ) str = "Kolvetni";
 						else str = "Carbohydrates";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (19*w)/20-strw-hh/2, (3*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Fita";
+						if( lang.startsWith("IS") ) str = "Fita";
 						else str = "Fat";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (19*w)/20-strw-hh/2, (4*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Trefjar";
+						if( lang.startsWith("IS") ) str = "Trefjar";
 						else str = "Dietary fiber";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (19*w)/20-strw-hh/2, (5*this.getHeight())/25+hh/4 );
@@ -407,7 +407,7 @@ public class GraphPanel extends JTabbedPane {
 					double enj = 0.0;
 					double enc = 0.0;
 					
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						alc = stuffYou(row, "Alkóhól");
 						prt = stuffYou(row, "Prótein");
 						cbh = stuffYou(row, "Kolvetni");
@@ -443,7 +443,7 @@ public class GraphPanel extends JTabbedPane {
 					String wghstr = baos.toString();
 					
 					String enStr = "";
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						enStr = "Orka (í "+wghstr+")";
 					} else {
 						enStr = "Energy (in "+wghstr+")";
@@ -458,7 +458,7 @@ public class GraphPanel extends JTabbedPane {
 					double f = enj; //(prto + cbho + fato + alco + fibo)*100.0;
 					f *= 100.0;
 					
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						if( f > 0 ) {
 							double fv = Math.round( f )/100.0;
 							//double fcal = f/4.184;
@@ -708,23 +708,23 @@ public class GraphPanel extends JTabbedPane {
 						
 						g2.setFont( new Font("Arial", Font.BOLD, this.getHeight()/40 ) );
 						g2.setColor( Color.darkGray );
-						if( lang.equals("IS") ) str = "Alkóhól";
+						if( lang.startsWith("IS") ) str = "Alkóhól";
 						else str = "Alcohol";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (19*w)/20-strw-hh/2, (1*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Prótein";
+						if( lang.startsWith("IS") ) str = "Prótein";
 						else str = "Protein";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (19*w)/20-strw-hh/2, (2*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Kolvetni";
+						if( lang.startsWith("IS") ) str = "Kolvetni";
 						else str = "Carbohydrates";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (15*w)/20-strw-hh/2, (1*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Fita";
+						if( lang.startsWith("IS") ) str = "Fita";
 						else str = "Fat";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (15*w)/20-strw-hh/2, (2*this.getHeight())/25+hh/4 );
-						if( lang.equals("IS") ) str = "Trefjar";
+						if( lang.startsWith("IS") ) str = "Trefjar";
 						else str = "Dietary fiber";
 						strw = g2.getFontMetrics().stringWidth(str);
 						g2.drawString(str, (11*w)/20-strw-hh/2, (1*this.getHeight())/25+hh/4 );
@@ -743,7 +743,7 @@ public class GraphPanel extends JTabbedPane {
 		
 		String[] comb;
 		String[] cnames;
-		if( lang.equals("IS") ) {
+		if( lang.startsWith("IS") ) {
 			comb = new String[] {"Alkóhól", "Prótein", "Kolvetni", "Fita", "Trefjar", "Steinefni", "Vatn"};
 			cnames = new String[] {"Alkóhól", "Prótein", "Kolvetni", "Fita", "Trefjar", "Steinefni", "Vatn"};
 		} else {
@@ -751,12 +751,12 @@ public class GraphPanel extends JTabbedPane {
 			cnames = new String[] {"Alcohol", "Protein", "Carbohydrades", "Fat", "Dietary fiber", "Ash", "Water"};
 		}
 		
-		SkifuGraph perc = new SkifuGraph( lang.equals("IS") ? "Hlutföll" : "Ratio", lang, comb, cnames, tables );
+		SkifuGraph perc = new SkifuGraph( lang.startsWith("IS") ? "Hlutföll" : "Ratio", lang, comb, cnames, tables );
 		
 		vitaminv = new VitaminPanel( true, leftTable, this, rdsPanel, lang );
 		vitaminf = new VitaminPanel( false, leftTable, this, rdsPanel, lang );
 		
-		if( lang.equals("IS") ) {
+		if( lang.startsWith("IS") ) {
 			this.addTab(null, new VerticalTextIcon( "Hlutföll",  tabPlacement==JTabbedPane.RIGHT ), perc);
 			this.addTab(null, new VerticalTextIcon( "Orka",  tabPlacement==JTabbedPane.RIGHT ), energy);
 			this.addTab(null, new VerticalTextIcon( "Orkuhlutföll",  tabPlacement==JTabbedPane.RIGHT ), energyPart);

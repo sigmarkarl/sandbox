@@ -13,7 +13,6 @@
 	<classpathentry kind="lib" path="/opt/poi-3.8/poi-ooxml-3.8-20120326.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/poi-ooxml-schemas-3.8-20120326.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/poi-scratchpad-3.8-20120326.jar"/>
-	<classpathentry kind="lib" path="/opt/poi-3.8/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/lib/log4j-1.2.13.jar"/>
 	<classpathentry kind="lib" path="/opt/poi-3.8/ooxml-lib/dom4j-1.6.1.jar"/>
