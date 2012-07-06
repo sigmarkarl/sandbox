@@ -39,8 +39,7 @@ public class Naclgwt implements EntryPoint {
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
-	private final GreetingServiceAsync greetingService = GWT
-			.create(GreetingService.class);
+	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
 	public native void init() /*-{
 		var ths = this;
@@ -53,6 +52,21 @@ public class Naclgwt implements EntryPoint {
 		textarea.setText( textarea.getText()+str );
 	}
 	
+	public native void resize( int size, int type ) /*-{
+		if( type == 8 ) $wnd.current = new Int8Array( size );
+		else if( type == 9 ) $wnd.current = new Uint8Array( size );
+		else if( type == 16 ) $wnd.current = new Int16Array( size );
+		else if( type == 17 ) $wnd.current = new Uint16Array( size );
+		else if( type == 32 ) $wnd.current = new Int32Array( size );
+		else if( type == 33 ) $wnd.current = new Uint32Array( size );
+		else if( type == 34 ) $wnd.current = new Float32Array( size );
+		else if( type == 66 ) $wnd.current = new Float64Array( size );
+		
+		var stuff = [ $wnd.current, size, type ];
+		
+		$wnd.postMessage( stuff );
+	}-*/;
+
 	public native void console( String str ) /*-{
 		$wnd.console.log( str );
 	}-*/;
@@ -102,6 +116,10 @@ public class Naclgwt implements EntryPoint {
 		
 		postimage( id );
 	}
+	
+	public native void line() /*-{
+		
+	}-*/;
 	
 	public native String handleFiles( Element ie, int append ) /*-{	
 		var hthis = this;
@@ -179,8 +197,17 @@ public class Naclgwt implements EntryPoint {
 					//console( last );
 					if( last.startsWith("fileread") ) {
 						click( file.getElement() );
+					} else if( last.startsWith("type") ) {
+						loadimage();
+					} else if( last.startsWith("resize") ) {
+						String[] split = last.split("[(, )]+");
+						int rval = Integer.parseInt( split[1] );
+						int type = Integer.parseInt( split[2] );
+						resize( rval, type );
 					} else if( last.startsWith("loadimage") ) {
 						loadimage();
+					} else if( last.startsWith("line") ) {
+						line();
 					} else postMessage( last );
 				}
 			}

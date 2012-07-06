@@ -184,13 +184,14 @@ public class Hvaderimatnum implements EntryPoint {
 	    	"var parameters = { jnlp_href:'order.jnlp' };\n"+
 	    	"deployJava.runApplet(attributes, parameters, '1.6');" );*/
 		
-		Element ae = Document.get().createElement("applet");
+		Element ae = Document.get().createElement("object");
 		appletelement = ae;
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
-		ae.setAttribute("codebase", "http://"+server+"/");
+		ae.setAttribute("type", "application/x-java-applet");
+		/*ae.setAttribute("codebase", "http://"+server+"/");
 		ae.setAttribute("archive", "food.jar,swingx-all-1.6.3.jar");
-		ae.setAttribute("code", "org.simmi.SortTable");
+		ae.setAttribute("code", "org.simmi.SortTable");*/
 		ae.setAttribute("id", "isgem");
 		ae.setAttribute("name", "isgem");
 		
