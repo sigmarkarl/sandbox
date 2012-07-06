@@ -64,11 +64,13 @@ import javax.swing.AbstractAction;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -279,27 +281,26 @@ public class SortTable extends JApplet {
 					if( is.contains(ival) ) {
 						if (foodInd.containsKey(split[0])) {
 							start = foodInd.get(split[0]);
-						} else {
-	
-						}
-						Object[] objs = result.get(start + 2);
-						if (split[2].length() > 0) {
-							String replc = split[2].replace(',', '.');
-							replc = replc.replace("<", "");
-							float f = -1.0f;
-							try {
-								f = Float.parseFloat(replc);
-							} catch (Exception e) {
-							}
-							Integer ngroupOffset = ngroupMap.get(split[1]);
-							
-							if( ngroupOffset != null ) {
-								if (f != -1.0f)
-									objs[2 + ngroupOffset] = f;
-								else
-									objs[2 + ngroupOffset] = null;
-							} else {
-								System.err.println();
+						
+							Object[] objs = result.get(start + 2);
+							if (split[2].length() > 0) {
+								String replc = split[2].replace(',', '.');
+								replc = replc.replace("<", "");
+								float f = -1.0f;
+								try {
+									f = Float.parseFloat(replc);
+								} catch (Exception e) {
+								}
+								Integer ngroupOffset = ngroupMap.get(split[1]);
+								
+								if( ngroupOffset != null ) {
+									if (f != -1.0f)
+										objs[2 + ngroupOffset] = f;
+									else
+										objs[2 + ngroupOffset] = null;
+								} else {
+									System.err.println();
+								}
 							}
 						}
 					}
@@ -549,7 +550,10 @@ public class SortTable extends JApplet {
 		if( skipfirst ) line = br.readLine();
 		
 		while (line != null) {
-			while( countOccur( line, '"' ) % 2 != 0 ) line += br.readLine();
+			while( countOccur( line, '"' ) % 2 != 0 ) {
+				String addline = br.readLine();
+				line += addline;
+			}
 			
 			String[] split = intelliSplit(line, sep);
 			if( split.length > 7 ) {
@@ -700,7 +704,7 @@ public class SortTable extends JApplet {
 			if( service != null ) {
 				String istr = is.toString();
 				istr = '('+istr.substring(1, istr.length()-1)+')';
-				Reader rd = run("select OriginalFoodCode, OriginalComponentCode, SelectedValue from "+componentvaluetableid+" where OriginalComponentCode in "+istr, true);
+				Reader rd = run("select OriginalFoodCode, OriginalComponentCode, SelectedValue from "+componentvaluetableid+" where OriginalComponentCode in "+istr, true ); //+" and OriginalFoodCode in (select OriginalFoodCode from "+foodtableid+" where WebPublishReady = 'J')", true);
 				inThread( rd, result, is, ",", true );
 			}
 		} else if( loc.startsWith("IS") ) {
@@ -2679,49 +2683,82 @@ public class SortTable extends JApplet {
 					}
 				}
 			});
-			popup.add( new AbstractAction( lang.startsWith("IS") ? "Opna tre" : "Open tree", img != null ? new ImageIcon(img) : null ) {
+			popup.add( new AbstractAction( lang.startsWith("IS") ? "Opna tré" : "Open tree", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent ae) {
+					JCheckBox message = new JCheckBox("Sleppa ókláruðum matvælum");
+					JOptionPane.showMessageDialog(SortTable.this, message);
+					
+					List<Integer> lint = new ArrayList<Integer>();
+					int colc = table.getColumnCount();
+					for( int i = 0; i < colc; i++ ) {
+						int val = table.convertColumnIndexToModel(i);
+						if( val >= 2 ) lint.add( val+2 );
+					}
+					
 					TreeUtil tu = new TreeUtil();
-					List<String> corrInd = new ArrayList<String>();
-					int len = stuff.size()-2;
+					List<String> corrInd = new ArrayList<String>();					
+					List<Integer> validIndices = new ArrayList<Integer>();
+					for( int i = 2; i < stuff.size(); i++ ) {
+						Object[] objs = stuff.get(i);
+						boolean valid = true;
+						for( int u = 0; u < lint.size(); u++ ) {
+							Object obj = objs[ lint.get(u) ];
+							if( message.isSelected() && obj == null ) {
+								valid = false;
+								break;
+							}
+						}
+						if( valid ) {
+							validIndices.add( i );
+							corrInd.add( ((String)objs[0]).replace(",", "") );
+						}
+					}
+					int len = validIndices.size();
 					double[] corrarr = new double[ len*len ];
 					Arrays.fill(corrarr, 0.0);
-					for( int i = 2; i < stuff.size(); i++ ) {
-						Object[] obj = stuff.get(i);
-						corrInd.add( (String)obj[0] );
 						
-						for( int k = i+1; k < stuff.size(); k++ ) {
-							Object[] obj2 = stuff.get(k);
+					for( int i = 0; i < validIndices.size(); i++ ) {
+						Object[] obj = stuff.get( validIndices.get(i) );
+						for( int k = i+1; k < validIndices.size(); k++ ) {
+							Object[] obj2 = stuff.get( validIndices.get(k) );
 							
 							double tot = 0.0;
-							for( int y = 2; y < obj.length; y++ ) {
-								double val;
-								Float f1 = (Float)obj[y];
-								Float f2 = (Float)obj2[y];
+							for( int y = 0; y < lint.size(); y++ ) {
+								int u = lint.get(y);
+								Float f1 = (Float)obj[u];
+								Float f2 = (Float)obj2[u];
 								
-								if( f1 != null ) {
-									if( f2 != null ) val = f1-f2;
-									else val = f1;
+								if( message.isSelected() ) {
+									double val = f1-f2;
+									tot += val*val;
 								} else {
-									if( f2 != null ) val = f2;
-									else val = 0.0;
+									double val;
+									
+									if( f1 != null ) {
+										if( f2 != null ) val = f1-f2;
+										else val = f1;
+									} else {
+										if( f2 != null ) val = f2;
+										else val = 0.0;
+									}
+									
+									tot += val*val;
 								}
-								
-								tot += val*val;
 							}
 							tot = Math.sqrt( tot );
-							corrarr[ (i-2)*len+(k-2) ] = tot;
-							corrarr[ (k-2)*len+(i-2) ] = tot;
+							corrarr[ (i)*len+(k) ] = tot;
+							corrarr[ (k)*len+(i) ] = tot;
 						}
 					}
 					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd);
-					
+					String tree = node.toString();
 					System.err.println("about to call showTree");
-						JSUtil.call( SortTable.this, "showTree",  new Object[] {node.toString()} );
+					System.err.println( tree );
+					JSUtil.call( SortTable.this, "showTree",  new Object[] {tree} );
 				}
 			});
 		}
-		table.setComponentPopupMenu( popup );		
+		table.setComponentPopupMenu( popup );	
 		splitPane.setBorder(new EmptyBorder(0, 0, 0, 0));
 		// SortTable.this.add(ed, BorderLayout.SOUTH);
 		splitPane.setDividerLocation(1.0 / 3.0);
