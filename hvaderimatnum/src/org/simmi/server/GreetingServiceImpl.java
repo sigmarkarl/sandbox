@@ -56,6 +56,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			     writer.flush();
 			   }
 		
+			   request.setConnectTimeout(0);
 			   request.execute();
 		
 			   res = getResultsText( request.getResponseStream() ).toString();
@@ -73,13 +74,13 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	}
 
 	private StringBuilder getResultsText( InputStream is ) throws IOException {
-		InputStreamReader inputStreamReader = new InputStreamReader( is );
+		InputStreamReader inputStreamReader = new InputStreamReader( is, "UTF-8" );
 		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
 		
 		StringBuilder sb = new StringBuilder();
 		String line = bufferedStreamReader.readLine();
 		while( line != null ) {
-			sb.append( line + "\n" );
+			sb.append( line + '\n' );
 			
 			line = bufferedStreamReader.readLine();
 		}

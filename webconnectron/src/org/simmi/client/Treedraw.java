@@ -320,7 +320,32 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	public void handleText( String str ) {
-		if( str.startsWith(">") ) {
+		if( str.startsWith("#") ) {
+			int i = str.lastIndexOf("tree");
+			if( i != -1 ) {
+				i = str.indexOf('(', i);
+				int l = str.indexOf(';', i+1);
+				
+				Map<String,String> namemap = new HashMap<String,String>();
+				int t = str.indexOf("translate");
+				int n = str.indexOf("\n", t);
+				int c = str.indexOf(";", n);
+				
+				String treelist = str.substring(n+1, c);
+				String[] split = treelist.split(",");
+				for( String name : split ) {
+					String trim = name.trim();
+					int v = trim.indexOf(' ');
+					namemap.put( trim.substring(0, v), trim.substring(v+1) );
+				}
+				
+				String tree = str.substring(i, l).replaceAll("[\r\n]+", "");
+				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
+				treeutil.replaceNames( treeutil.getNode(), namemap );
+				handleTree( treeutil );
+				
+			}
+		} else if( str.startsWith(">") ) {
 			TreeUtil treeutil = new TreeUtil();
 			try {
 				List<Sequence> lseq = importReader( str );
