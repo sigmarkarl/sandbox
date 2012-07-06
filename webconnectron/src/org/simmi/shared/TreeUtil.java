@@ -909,6 +909,17 @@ public class TreeUtil {
 		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null, false );
 	}
 	
+	public void replaceNames( Node node, Map<String,String> namesMap ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes == null || nodes.size() == 0 ) {
+			if( namesMap.containsKey( node.getName() ) ) node.setName( namesMap.get(node.getName()) );
+		} else {
+			for( Node n : nodes ) {
+				replaceNames(n, namesMap);
+			}
+		}
+	}
+	
 	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
