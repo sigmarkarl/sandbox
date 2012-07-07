@@ -61,10 +61,19 @@ public class Naclgwt implements EntryPoint {
 		else if( type == 33 ) $wnd.current = new Uint32Array( size );
 		else if( type == 34 ) $wnd.current = new Float32Array( size );
 		else if( type == 66 ) $wnd.current = new Float64Array( size );
+		$wnd.curstruct = size + (type<<32);
+		$wnd.console.log( "siztyp " + $wnd.curstruct + "  " + size + "  " + type + " " + (type<<2) );
 		
-		var stuff = [ $wnd.current, size, type ];
-		
-		$wnd.postMessage( stuff );
+		$wnd.postMessage( $wnd.curstruct );
+		$wnd.postMessage( $wnd.current );
+	}-*/;
+	
+	public native void print() /*-{
+		var str = "\n";
+		for( i = 0; i < $wnd.current.length; i++ ) {
+			str += $wnd.current[i] + "\t";
+		}
+		this.@org.simmi.client.Naclgwt::appendText(Ljava/lang/String;)( str );
 	}-*/;
 
 	public native void console( String str ) /*-{
@@ -204,6 +213,8 @@ public class Naclgwt implements EntryPoint {
 						int rval = Integer.parseInt( split[1] );
 						int type = Integer.parseInt( split[2] );
 						resize( rval, type );
+					} else if( last.startsWith("print") ) {
+						print();
 					} else if( last.startsWith("loadimage") ) {
 						loadimage();
 					} else if( last.startsWith("line") ) {
