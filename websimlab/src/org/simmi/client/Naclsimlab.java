@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -74,6 +75,22 @@ public class Naclsimlab implements EntryPoint {
 		}
 	}-*/;
 	
+	public native void postParent( String from ) /*-{
+		//var s = this;
+		$wnd.addEventListener('message',function(event) {
+			$wnd.console.log( event.origin );
+			$wnd.console.log('message received from '+from);
+			if(event.origin == 'http://'+from+'.appspot.com') {
+				$wnd.console.log('correct origin');
+				if( event.data instanceof ArrayBuffer ) $wnd.postMessage( event.data );
+				//s.@org.simmi.client.Websimlab::handleText(Ljava/lang/String;)( event.data );
+			}
+		});
+		$wnd.console.log('posting ready');
+		if( $wnd.simmiModule != null ) $wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
+		else $wnd.message = 'http://'+from+'.appspot.com';
+	}-*/;
+	
 	public native int save( String type ) /*-{
 		$wnd.currentFunc = function( buf ) {
 			var ia = new Int8Array( buf );
@@ -103,7 +120,6 @@ public class Naclsimlab implements EntryPoint {
 		
 		rp.setSize(w+"px", h+"px");
 		Window.addResizeHandler( new ResizeHandler() {
-			
 			@Override
 			public void onResize(ResizeEvent event) {
 				int w = event.getWidth();
@@ -123,6 +139,7 @@ public class Naclsimlab implements EntryPoint {
 		});
 		Style st = file.getElement().getStyle();
 		st.setVisibility( Visibility.HIDDEN );
+		textarea.setSize("800px", "600px");
 		textarea.addDropHandler( new DropHandler() {
 			@Override
 			public void onDrop(DropEvent event) {
@@ -194,7 +211,12 @@ public class Naclsimlab implements EntryPoint {
 							}
 						});
 					} else if( last.startsWith("loadimage") ) {
-						loadimage();
+						String type = "text/plain";
+						String[]	split = last.split( "[(, )]" );
+						if( split.length > 1 ) {
+							type = split[1];
+						}
+						loadimage( type );
 					} else if( last.startsWith("save") ) {
 						String type = "text/plain";
 						String[]	split = last.split( "[(, )]" );
@@ -212,6 +234,9 @@ public class Naclsimlab implements EntryPoint {
 			}
 		});
 		VerticalPanel vp = new VerticalPanel();
+		vp.setSize( "100%", "100%" );
+		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		fp.add( vp );
 		vp.add( textarea );
 		vp.add( file );
@@ -219,12 +244,6 @@ public class Naclsimlab implements EntryPoint {
 	}
 	
 	public native void init() /*-{
-		if ($wnd.simmiModule == null) {
-        	$wnd.updateStatus('LOADING...');
-    	} else {
-        	$wnd.updateStatus();
-    	}
-		
 		var ths = this;
 		$doc.appendText = function( str ) {
 			ths.@org.simmi.client.Naclsimlab::appendText(Ljava/lang/String;)( str );
@@ -271,24 +290,21 @@ public class Naclsimlab implements EntryPoint {
 		e.click();
 	}-*/;
 	
-	public native void loadimage() /*-{
+	public native void loadimage( String type ) /*-{
 		var hthis = this;
-		
-		//if (!$wnd.BlobBuilder && $wnd.WebKitBlobBuilder)
-    	//	$wnd.BlobBuilder = $wnd.WebKitBlobBuilder;
-		//var bb = new $wnd.BlobBuilder();
-		//bb.append( $wnd.current );
-		//var b = bb.getBlob();
-		var ia = new Int8Array( $wnd.current );
-		var b = new Blob( [ia] );
-		var f = new FileReader();
-		f.onerror = function(e) {
-			$wnd.console.log(e.getMessage());
-		};
-		f.onload = function(e) {
-			hthis.@org.simmi.client.Naclsimlab::handleImage(Ljava/lang/String;)(e.target.result);
-		};
-		f.readAsDataURL( b );
+		$wnd.currentFunc = function( buf ) {
+			var ia = new Int8Array( buf );
+			var b = new Blob( [ia], { "type" : type } );
+			var f = new FileReader();
+			f.onerror = function(e) {
+				$wnd.console.log(e.getMessage());
+			};
+			f.onload = function(e) {
+				hthis.@org.simmi.client.Naclsimlab::handleImage(Ljava/lang/String;)(e.target.result);
+			};
+			f.readAsDataURL( b );
+		}
+		$wnd.postMessage("current");
 	}-*/;
 	
 	public void handleText( String text ) {
@@ -343,6 +359,7 @@ public class Naclsimlab implements EntryPoint {
 	
 	public void imageInt( final int w, final int h, final JavaScriptObject arraybuffer ) {
 		final PopupPanel	pp = new PopupPanel( true );
+		final ScrollPanel	sp = new ScrollPanel();
 		final Canvas 		c = Canvas.createIfSupported();
 		pp.setSize(w+"px", h+"px");
 		pp.setPopupPositionAndShow( new PositionCallback() {
@@ -355,11 +372,19 @@ public class Naclsimlab implements EntryPoint {
 				c.setCoordinateSpaceHeight(h);
 				Context2d ctx = c.getContext2d();
 				ImageData id = ctx.getImageData(0, 0, w, h);
-				console("ok2");
 				imSet( id, arraybuffer );
 				ctx.putImageData( id, 0, 0 );
-				console("ok3");
-				pp.add( c );
+				if( w > Window.getClientWidth() || h > Window.getClientHeight() ) {
+					int neww = (int)(Window.getClientWidth()*0.8);
+					int newh = (int)(Window.getClientHeight()*0.8);
+					
+					sp.setSize( neww+"px", newh+"px" );
+					
+					sp.add( c );
+					pp.add( sp );
+				} else {					
+					pp.add( c );
+				}
 			}
 		});
 	}
@@ -428,5 +453,9 @@ public class Naclsimlab implements EntryPoint {
 	public void onModuleLoad() {
 		init();
 		subinit();
+		
+		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
+			postParent( Window.Location.getParameter("callback") );
+		}
 	}
 }
