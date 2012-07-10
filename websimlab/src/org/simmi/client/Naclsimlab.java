@@ -28,6 +28,8 @@ import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
@@ -43,7 +45,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class Naclgwt implements EntryPoint {
+public class Naclsimlab implements EntryPoint {
 	/**
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
@@ -56,10 +58,8 @@ public class Naclgwt implements EntryPoint {
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
-
 	
-	public native void dropHandler( JavaScriptObject dataTransfer ) /*-{			
-		$wnd.console.log("dropp");
+	public native void dropHandler( JavaScriptObject dataTransfer ) /*-{
 		var files = dataTransfer.files;		
 		var count = files.length;
 		
@@ -72,6 +72,28 @@ public class Naclgwt implements EntryPoint {
 			};
 			reader.readAsArrayBuffer( file );
 		}
+	}-*/;
+	
+	public native int save( String type ) /*-{
+		$wnd.currentFunc = function( buf ) {
+			var ia = new Int8Array( buf );
+			var b = new Blob( [ia], { "type" : type } );
+			var f = new FileReader();
+			f.onerror = function(e) {
+				$wnd.console.log(e.getMessage());
+			};
+			f.onload = function(e) {
+				var url = e.target.result;
+				$wnd.open( url );
+			};
+			f.readAsDataURL( b );
+		}
+		$wnd.postMessage("current");
+	}-*/;
+	
+	public native int imSet( ImageData id, JavaScriptObject buf ) /*-{
+		var clamp = new Uint8ClampedArray( buf );
+		id.data.set( clamp );
 	}-*/;
 	
 	public void subinit() {
@@ -148,25 +170,40 @@ public class Naclgwt implements EntryPoint {
 					//console( last );
 					if( last.startsWith("fileread") ) {
 						click( file.getElement() );
+					} else if( last.startsWith("image") ) {
+						String[] 			split = last.split( "[(, )]" );
+						final int 			b = Integer.parseInt( split[1] );
+						final int 			w = Integer.parseInt( split[2] );
+						image( b, w );
 					} else if( last.startsWith("line") ) {
-						String[] split = last.split( "[(, )]" );
+						final String[] split = last.split( "[(, )]" );
 						final PopupPanel	pp = new PopupPanel( true );
 						pp.setSize("800px", "600px");
 						pp.setPopupPositionAndShow( new PositionCallback() {
 							@Override
 							public void setPosition(int offsetWidth, int offsetHeight) {
 								pp.setPopupPosition( (int)(Window.getClientWidth()*0.1), (int)(Window.getClientHeight()*0.1) );
+								
+								String name = "";
+								if( split.length > 0 ) name = split[1];
+								String a1 = "";
+								if( split.length > 1 ) a1 = split[2];
+								String a2 = "";
+								if( split.length > 2 ) a2 = split[3];
+								line( name, pp.getElement(), (int)(Window.getClientWidth()*0.8), (int)(Window.getClientHeight()*0.8), a1, a2 );
 							}
 						});
-						String name = "";
-						if( split.length > 0 ) name = split[1];
-						String a1 = "";
-						if( split.length > 1 ) a1 = split[2];
-						String a2 = "";
-						if( split.length > 2 ) a2 = split[3];
-						line( name, pp.getElement(), (int)(Window.getClientWidth()*0.8), (int)(Window.getClientHeight()*0.8), a1, a2 );
 					} else if( last.startsWith("loadimage") ) {
 						loadimage();
+					} else if( last.startsWith("save") ) {
+						String type = "text/plain";
+						String[]	split = last.split( "[(, )]" );
+						if( split.length > 1 ) {
+							type = split[1];
+						}
+						save( type );
+					} else if( last.startsWith("saveimage") ) {
+						
 					} else if( last.startsWith("plot") ) {
 						postMessage( "fetch" );
 						//line();
@@ -190,7 +227,7 @@ public class Naclgwt implements EntryPoint {
 		
 		var ths = this;
 		$doc.appendText = function( str ) {
-			ths.@org.simmi.client.Naclgwt::appendText(Ljava/lang/String;)( str );
+			ths.@org.simmi.client.Naclsimlab::appendText(Ljava/lang/String;)( str );
 		};
 	}-*/;
 	
@@ -219,7 +256,7 @@ public class Naclgwt implements EntryPoint {
 		for( i = 0; i < $wnd.current.length; i++ ) {
 			str += $wnd.current[i] + "\t";
 		}
-		this.@org.simmi.client.Naclgwt::appendText(Ljava/lang/String;)( str );
+		this.@org.simmi.client.Naclsimlab::appendText(Ljava/lang/String;)( str );
 	}-*/;
 
 	public native void console( String str ) /*-{
@@ -237,17 +274,19 @@ public class Naclgwt implements EntryPoint {
 	public native void loadimage() /*-{
 		var hthis = this;
 		
-		$wnd.console.log("erm");
-		var b = new Blob( $wnd.current );
-		$wnd.console.log("erm2");
+		//if (!$wnd.BlobBuilder && $wnd.WebKitBlobBuilder)
+    	//	$wnd.BlobBuilder = $wnd.WebKitBlobBuilder;
+		//var bb = new $wnd.BlobBuilder();
+		//bb.append( $wnd.current );
+		//var b = bb.getBlob();
+		var ia = new Int8Array( $wnd.current );
+		var b = new Blob( [ia] );
 		var f = new FileReader();
-		$wnd.console.log("erm3");
 		f.onerror = function(e) {
-		  	$wnd.console.log("error");
 			$wnd.console.log(e.getMessage());
 		};
 		f.onload = function(e) {
-			hthis.@org.simmi.client.Naclgwt::handleImage(Ljava/lang/String;)(e.target.result);
+			hthis.@org.simmi.client.Naclsimlab::handleImage(Ljava/lang/String;)(e.target.result);
 		};
 		f.readAsDataURL( b );
 	}-*/;
@@ -257,24 +296,83 @@ public class Naclgwt implements EntryPoint {
 	}
 	
 	public native void postimage( ImageData id ) /*-{
-		$wnd.postMessage( id.data );
+		$wnd.console.log( id.data.buffer );
+		$wnd.current = id.data.buffer;
+		$wnd.postMessage( id.data.buffer );
 	}-*/;
 	
-	public void handleImage( String dataurl ) {
-		Image img = new Image( dataurl );
-		Canvas c = Canvas.createIfSupported();
+	public native void imageLoad( Element im, Canvas c, Image img ) /*-{
+		var s = this;
+		im.onload = function() {
+			s.@org.simmi.client.Naclsimlab::imgLoadFunc(Lcom/google/gwt/canvas/client/Canvas;Lcom/google/gwt/user/client/ui/Image;)(c, img);
+		}
+	}-*/;
+	
+	public void imgLoadFunc( Canvas c, Image img ) {
+		console("hehe");
+		
 		c.setCoordinateSpaceWidth( img.getWidth() );
 		c.setCoordinateSpaceHeight( img.getHeight() );
 		Context2d c2 = c.getContext2d();
 		c2.drawImage( (ImageElement)img.getElement().cast(), 0, 0 );
 		ImageData id = c2.getImageData(0, 0, img.getWidth(), img.getHeight());
 		
+		appendText(img.getWidth()+" "+img.getHeight()+"\n");
+		
+		console("postimage");
 		postimage( id );
+	}
+	
+	public void handleImage( String dataurl ) {
+		console("handling image");
+		final Image img = new Image();
+		final Canvas c = Canvas.createIfSupported();
+		img.addLoadHandler( new LoadHandler() {
+			@Override
+			public void onLoad(LoadEvent event) {
+				imgLoadFunc( c, img );
+			}
+		});
+		imageLoad( img.getElement(), c, img );
+		img.setUrl( dataurl );
 	}
 	
 	public void drawLine() {
 		//LineChart lc = new LineChart();
 	}
+	
+	public void imageInt( final int w, final int h, final JavaScriptObject arraybuffer ) {
+		final PopupPanel	pp = new PopupPanel( true );
+		final Canvas 		c = Canvas.createIfSupported();
+		pp.setSize(w+"px", h+"px");
+		pp.setPopupPositionAndShow( new PositionCallback() {
+			@Override
+			public void setPosition(int offsetWidth, int offsetHeight) {				
+				pp.setPopupPosition( (int)(Window.getClientWidth()-w)/2, (int)(Window.getClientHeight()-h)/2 );
+				
+				c.setSize(w+"px", h+"px");
+				c.setCoordinateSpaceWidth(w);
+				c.setCoordinateSpaceHeight(h);
+				Context2d ctx = c.getContext2d();
+				ImageData id = ctx.getImageData(0, 0, w, h);
+				console("ok2");
+				imSet( id, arraybuffer );
+				ctx.putImageData( id, 0, 0 );
+				console("ok3");
+				pp.add( c );
+			}
+		});
+	}
+	
+	public native void image( int b, int w ) /*-{
+		var s = this;
+		$wnd.currentFunc = function( buf ) {
+			var cl = buf.byteLength;
+			var h = cl/(w*b);
+			s.@org.simmi.client.Naclsimlab::imageInt(IILcom/google/gwt/core/client/JavaScriptObject;)(w, h, buf);
+		}
+		$wnd.postMessage("current");
+	}-*/;	
 	
 	public native void line( String name, Element popup, int width, int height, String ax, String ay ) /*-{
 		$wnd.currentFunc = function( arraybuf ) {
