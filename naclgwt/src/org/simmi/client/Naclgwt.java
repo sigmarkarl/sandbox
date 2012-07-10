@@ -101,6 +101,7 @@ public class Naclgwt implements EntryPoint {
 		});
 		Style st = file.getElement().getStyle();
 		st.setVisibility( Visibility.HIDDEN );
+		textarea.setSize("800px", "600px");
 		textarea.addDropHandler( new DropHandler() {
 			@Override
 			public void onDrop(DropEvent event) {
