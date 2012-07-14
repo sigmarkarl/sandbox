@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -914,10 +915,10 @@ public class Treedraw implements EntryPoint {
 						
 						recursiveNodeClick( root, x, y, 1 );
 					} else if( shift ) {
+						recursiveNodeClick( root, x, y, 0 );
+					} else {
 						selectedNode = findSelectedNode( root, x, y );
 						if( selectedNode != null ) selectRecursive( selectedNode, !selectedNode.isSelected() );
-					} else {
-						recursiveNodeClick( root, x, y, 0 );
 						/*if( nodearray != null ) {
 							int y = event.getY();
 							int i = (nodearray.length*y)/canvas.getCoordinateSpaceHeight();
@@ -994,7 +995,11 @@ public class Treedraw implements EntryPoint {
 						selectedNode = null;
 						root.countLeaves();
 					} else if( c == 'e' || c == 'E' || c == '\r' ) {
+						event.stopPropagation();
+						event.preventDefault();
+						
 						final TextBox	text = new TextBox();
+						text.setText( selectedNode.getName() );
 						
 						final PopupPanel	pp = new PopupPanel();
 						pp.add( text );
@@ -1751,7 +1756,55 @@ public class Treedraw implements EntryPoint {
 							g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0-mstrh+1.0, strw+15, mstrh*1.15);
 							g2.setFillStyle( "#000000" );
 						}
-						g2.fillText(str, nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0 );
+						
+						boolean it = false;
+						boolean sub = false;
+						boolean sup = false;
+						List<Integer> li = new ArrayList<Integer>();
+						int start = 0;
+						String[] tags = { "<i>", "<sub>", "<sup>", "</i>", "</sub>", "</sup>" };
+						double pos = 0.0;
+						
+						while( start < str.length() ) {
+							li.clear();
+							
+							for( String tag : tags ) {
+								int ti = str.indexOf(tag, start);
+								if( ti == -1 ) ti = str.length();
+								
+								li.add( ti );
+							}
+							
+							int min = Collections.min( li );
+							if( min < str.length() ) {
+								int mini = li.indexOf( min );
+								String tag = tags[mini];
+								
+								fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)( ( (sup || sub) ? 3.0 : 5.0 )*Math.log(hchunk) )+"px sans-serif";
+								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+								
+								String substr = str.substring(start, min);
+								g2.fillText(substr, nx+4+10+(t)*fontSize+pos, y+ny+mstrh/2.0 );
+								pos += g2.measureText( substr ).getWidth();
+								
+								int next = min+tag.length();
+								start = next;
+								if( tag.equals("<i>") ) it = true;
+								else if( tag.equals("</i>") ) it = false;
+								if( tag.equals("<sup>") ) sup = true;
+								else if( tag.equals("</sup>") ) sup = false;
+								if( tag.equals("<sub>") ) sub = true;
+								else if( tag.equals("</sub>") ) sub = false;
+							} else {
+								fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)( ( (sup || sub) ? 3.0 : 5.0 )*Math.log(hchunk) )+"px sans-serif";
+								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+								
+								String substr = str.substring(start, str.length());
+								g2.fillText(substr, nx+4+10+(t)*fontSize+pos, y+ny+mstrh/2.0 );
+								start = str.length();
+							}
+						
+						}
 					}
 				}
 				
