@@ -6,6 +6,7 @@ import com.google.gwt.canvas.dom.client.ImageData;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Style;
@@ -33,13 +34,16 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -139,7 +143,7 @@ public class Naclsimlab implements EntryPoint {
 		});
 		Style st = file.getElement().getStyle();
 		st.setVisibility( Visibility.HIDDEN );
-		textarea.setSize("800px", "600px");
+		textarea.setSize("728px", "512px");
 		textarea.addDropHandler( new DropHandler() {
 			@Override
 			public void onDrop(DropEvent event) {
@@ -233,13 +237,38 @@ public class Naclsimlab implements EntryPoint {
 				}
 			}
 		});
+		
+		SimplePanel	ads = new SimplePanel();
+		Element adsElem = Document.get().getElementById("ads");
+		adsElem.removeFromParent();
+		ads.getElement().appendChild( adsElem );
+		
+		HorizontalPanel links = new HorizontalPanel();
+		links.setSpacing(10);
+		Anchor jsimlab = new Anchor( "javasimlab ", "http://wensimlab.appspot.com/Javasimlab.html" );
+		links.add( jsimlab );
+		Anchor mail = new Anchor( "| huldaeggerts@gmail.com", "mailto:huldaeggerts@gmail.com" );
+		links.add( mail );
+		
 		VerticalPanel vp = new VerticalPanel();
+		VerticalPanel subvp = new VerticalPanel();
+		
+		vp.setSpacing(0);
+		subvp.setSpacing(0);
+		
 		vp.setSize( "100%", "100%" );
+		
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		subvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		subvp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		
+		vp.add( subvp );
 		fp.add( vp );
-		vp.add( textarea );
-		vp.add( file );
+		subvp.add( ads );
+		subvp.add( textarea );
+		subvp.add( links );
+		subvp.add( file );
 		rp.add( fp );
 	}
 	
