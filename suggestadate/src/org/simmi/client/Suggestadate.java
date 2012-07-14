@@ -57,7 +57,6 @@ public class Suggestadate implements EntryPoint {
 	    	if( login == null ) {
 		    	try {
 					$wnd.FB.getLoginStatus( function(response) {
-						$wnd.console.log( "inside login response" );
 						try {
 							if (response.status === 'connected') {
 							    // the user is logged in and has authenticated your
@@ -77,24 +76,18 @@ public class Suggestadate implements EntryPoint {
 							    ths.@org.simmi.client.Suggestadate::setUserId(Ljava/lang/String;)( "" );
 							}
 							$wnd.FB.XFBML.parse();
-						} catch( e ) {
-							$wnd.console.log( "getLoginStatus error" );
-							$wnd.console.log( e );
-						}
+						} catch( e ) {}
 					});
-				} catch( e ) {
-					$wnd.console.log( "gls error" );
-					$wnd.console.log( e );
-				}
+				} catch( e ) {}
 			} else {
-				$wnd.console.log( login );
+				//$wnd.console.log( login );
 				ths.@org.simmi.client.Suggestadate::setUserId(Ljava/lang/String;)( login );
 			}
 	  	};
 	}-*/;
 	
 	public native void console( String s ) /*-{
-		$wnd.console.log( s );
+		if( $wnd.console ) $wnd.console.log( s );
 	}-*/;
 	
 	public native void hehe( Anchor anc ) /*-{
@@ -109,7 +102,7 @@ public class Suggestadate implements EntryPoint {
 			
 			});
 		} catch( e ) {
-			$wnd.console.log( e );
+			if( $wnd.console ) $wnd.console.log( e );
 		}
 	}-*/;
 	
@@ -186,7 +179,7 @@ public class Suggestadate implements EntryPoint {
 	public native void sendAcceptMessage( String fuid, String body, final int row, final String femail ) /*-{
 		var ths = this;
 		var requestCallback = function(response) {
-	    	$wnd.console.log( response );
+	    	if( $wnd.console ) $wnd.console.log( response );
 	    	ths.@org.simmi.client.Suggestadate::addEmail(ILjava/lang/String;)( row, femail );
 	  	}
 	  
@@ -198,10 +191,10 @@ public class Suggestadate implements EntryPoint {
 	
 	public native void sendMessage( String fuid1, String fuid2, String fname, String body ) /*-{
 		var ths = this;
-		$wnd.console.log( "about to request" );
+		if( $wnd.console ) $wnd.console.log( "about to request" );
 		
 		var requestCallback = function(response) {
-        	$wnd.console.log( response );
+        	if( $wnd.console ) $wnd.console.log( response );
       	}
       
 		$wnd.FB.ui({method: 'apprequests',
