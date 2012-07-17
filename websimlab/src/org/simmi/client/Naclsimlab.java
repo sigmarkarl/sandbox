@@ -33,6 +33,7 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.media.client.Audio;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FileUpload;
@@ -95,24 +96,30 @@ public class Naclsimlab implements EntryPoint {
 		else $wnd.message = 'http://'+from+'.appspot.com';
 	}-*/;
 	
-	public native int save( String type ) /*-{
+	public native void save( String type, JavaScriptObject buf ) /*-{
+		var ia = new Int8Array( buf );
+		var b = new Blob( [ia], { "type" : type } );
+		var f = new FileReader();
+		f.onerror = function(e) {
+			$wnd.console.log(e.getMessage());
+		};
+		f.onload = function(e) {
+			var url = e.target.result;
+			$wnd.open( url );
+		};
+		f.readAsDataURL( b );
+	}-*/;
+	
+	public native void savecurrent( String type ) /*-{
+		var s = this;
 		$wnd.currentFunc = function( buf ) {
-			var ia = new Int8Array( buf );
-			var b = new Blob( [ia], { "type" : type } );
-			var f = new FileReader();
-			f.onerror = function(e) {
-				$wnd.console.log(e.getMessage());
-			};
-			f.onload = function(e) {
-				var url = e.target.result;
-				$wnd.open( url );
-			};
-			f.readAsDataURL( b );
+			s.@org.simmi.client.Naclsimlab::save(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)( type, buf );
+			//save( type, buf );
 		}
 		$wnd.postMessage("current");
 	}-*/;
 	
-	public native int imSet( ImageData id, JavaScriptObject buf ) /*-{
+	public native void imSet( ImageData id, JavaScriptObject buf ) /*-{
 		var clamp = new Uint8ClampedArray( buf );
 		id.data.set( clamp );
 	}-*/;
@@ -193,9 +200,11 @@ public class Naclsimlab implements EntryPoint {
 						click( file.getElement() );
 					} else if( last.startsWith("image") ) {
 						String[] 			split = last.split( "[(, )]" );
-						final int 			b = Integer.parseInt( split[1] );
-						final int 			w = Integer.parseInt( split[2] );
-						image( b, w );
+						if( split.length > 2 ) {
+							final int 			b = Integer.parseInt( split[1] );
+							final int 			w = Integer.parseInt( split[2] );
+							image( b, w );
+						}
 					} else if( last.startsWith("line") ) {
 						final String[] split = last.split( "[(, )]" );
 						final PopupPanel	pp = new PopupPanel( true );
@@ -221,15 +230,28 @@ public class Naclsimlab implements EntryPoint {
 							type = split[1];
 						}
 						loadimage( type );
+					} else if( last.startsWith("loadaudio") ) {
+						String type = "text/plain";
+						String[]	split = last.split( "[(, )]" );
+						if( split.length > 1 ) {
+							type = split[1];
+						}
+						loadaudio( type );
+					} else if( last.startsWith("saveimage") ) {
+						String type = "image/png";
+						String[]	split = last.split( "[(, )]" );
+						if( split.length > 1 ) {
+							int w = Integer.parseInt( split[1] );
+							if( split.length > 2 ) type = split[2];
+							saveimage( type, w );
+						}
 					} else if( last.startsWith("save") ) {
 						String type = "text/plain";
 						String[]	split = last.split( "[(, )]" );
 						if( split.length > 1 ) {
 							type = split[1];
 						}
-						save( type );
-					} else if( last.startsWith("saveimage") ) {
-						
+						savecurrent( type );
 					} else if( last.startsWith("plot") ) {
 						postMessage( "fetch" );
 						//line();
@@ -336,6 +358,48 @@ public class Naclsimlab implements EntryPoint {
 		$wnd.postMessage("current");
 	}-*/;
 	
+	public native void loadaudio( String type ) /*-{
+		var hthis = this;
+		$wnd.currentFunc = function( buf ) {
+			var ia = new Int8Array( buf );
+			var b = new Blob( [ia], { "type" : type } );
+			var f = new FileReader();
+			f.onerror = function(e) {
+				$wnd.console.log(e.getMessage());
+			};
+			f.onload = function(e) {
+				hthis.@org.simmi.client.Naclsimlab::handleAudio(Ljava/lang/String;)(e.target.result);
+			};
+			f.readAsDataURL( b );
+		}
+		$wnd.postMessage("current");
+	}-*/;
+	
+	public native void saveimage( String type, int w ) /*-{
+		var s = this;
+		$wnd.currentFunc = function( buf ) {
+			var h = buf.byteLength / (4*w);
+			$wnd.console.log( type );
+			$wnd.console.log( w + " " + h );
+			s.@org.simmi.client.Naclsimlab::saveImage(Ljava/lang/String;IILcom/google/gwt/core/client/JavaScriptObject;)( type, w, h, buf );
+		}
+		$wnd.postMessage("current");
+	}-*/;
+	
+	public void saveImage( String type, int w, int h, JavaScriptObject arraybuffer ) {
+		Canvas c = Canvas.createIfSupported();
+		c.setSize(w+"px", h+"px");
+		c.setCoordinateSpaceWidth(w);
+		c.setCoordinateSpaceHeight(h);
+		Context2d ctx = c.getContext2d();
+		ImageData id = ctx.getImageData(0, 0, w, h);
+		imSet( id, arraybuffer );
+		ctx.putImageData( id, 0, 0 );
+		String url = c.toDataUrl( type );
+		
+		Window.open( url, "_blank", "" );
+	}
+	
 	public void handleText( String text ) {
 		
 	}
@@ -382,11 +446,29 @@ public class Naclsimlab implements EntryPoint {
 		img.setUrl( dataurl );
 	}
 	
+	public void handleAudio( String dataurl ) {
+		console("handling audio");
+		final Audio audio = Audio.createIfSupported();
+		audio.setSrc( dataurl );
+		audio.load();
+		/*audio.getAudioElement().
+		final Canvas c = Canvas.createIfSupported();
+		img.addLoadHandler( new LoadHandler() {
+			@Override
+			public void onLoad(LoadEvent event) {
+				imgLoadFunc( c, img );
+			}
+		});
+		imageLoad( img.getElement(), c, img );
+		img.setUrl( dataurl );*/
+	}
+	
 	public void drawLine() {
 		//LineChart lc = new LineChart();
 	}
 	
 	public void imageInt( final int w, final int h, final JavaScriptObject arraybuffer ) {
+		console("what the fuck");
 		final PopupPanel	pp = new PopupPanel( true );
 		final ScrollPanel	sp = new ScrollPanel();
 		final Canvas 		c = Canvas.createIfSupported();
@@ -420,6 +502,7 @@ public class Naclsimlab implements EntryPoint {
 	
 	public native void image( int b, int w ) /*-{
 		var s = this;
+		$wnd.console.log( b + "  " + w );
 		$wnd.currentFunc = function( buf ) {
 			var cl = buf.byteLength;
 			var h = cl/(w*b);
