@@ -36,19 +36,10 @@ public class Sequence implements Comparable<Sequence> {
 	public boolean				edited = false;
 	
 	static Random r = new Random();
-	public static double[] distanceMatrixNumeric( List<Sequence> lseq, boolean excludeGaps, boolean bootstrap, boolean cantor ) {		
-		double[]	dmat = new double[ lseq.size()*lseq.size() ];
-		if( excludeGaps ) {
-			int start = Integer.MIN_VALUE;
-			int end = Integer.MAX_VALUE;
-			
-			for( Sequence seq : lseq ) {
-				if( seq.getRealStart() > start ) start = seq.getRealStart();
-				if( seq.getRealStop() < end ) end = seq.getRealStop();
-			}
-			
+	public static void distanceMatrixNumeric( List<Sequence> lseq, double[] dmat, int startex, int endex, boolean excludeGaps, boolean bootstrap, boolean cantor ) {		
+		if( excludeGaps ) {			
 			List<Integer>	idxs = new ArrayList<Integer>();
-			for( int x = start; x < end; x++ ) {
+			for( int x = startex; x < endex; x++ ) {
 				int i;
 				boolean skip = false;
 				for( Sequence seq : lseq ) {
@@ -140,7 +131,7 @@ public class Sequence implements Comparable<Sequence> {
 			}
 		}
 		
-		return dmat;
+		//return dmat;
 	}
 	
 	public class Annotation implements Comparable<Annotation> {
