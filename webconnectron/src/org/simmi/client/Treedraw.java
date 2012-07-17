@@ -347,22 +347,89 @@ public class Treedraw implements EntryPoint {
 				
 			}
 		} else if( str.startsWith(">") ) {
-			TreeUtil treeutil = new TreeUtil();
+			final TreeUtil treeutil = new TreeUtil();
 			try {
-				List<Sequence> lseq = importReader( str );
+				final List<Sequence> lseq = importReader( str );
 				
-				boolean excludeGaps = false;
-				boolean bootstrap = false;
-				boolean cantor = true;
-				double[] dvals = Sequence.distanceMatrixNumeric(lseq, excludeGaps, bootstrap, cantor);
+				CheckBox egCheck = new CheckBox("Exclude gaps");
+				CheckBox btCheck = new CheckBox("Bootstrap");
+				CheckBox ctCheck = new CheckBox("Jukes-cantor");
+				ctCheck.setValue( true );
 				
-				List<String>	names = new ArrayList<String>();
-				for( Sequence seq : lseq ) {
-					names.add( seq.getName() );
-				}
-				Node n = treeutil.neighborJoin( dvals, names );
-				treeutil.setNode( n );
-				handleTree( treeutil );
+				final DialogBox db = new DialogBox();
+				VerticalPanel	dbvp = new VerticalPanel();
+				dbvp.add( egCheck );
+				dbvp.add( btCheck );
+				dbvp.add( ctCheck );
+				
+				db.setModal( true );
+				HorizontalPanel hp = new HorizontalPanel();
+				Button closeButton = new Button("Ok");
+				closeButton.addClickHandler( new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						db.hide();
+					}
+				});
+				hp.add( closeButton );
+				hp.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
+				dbvp.add( hp );
+				
+				db.add( dbvp );
+				db.center();
+				
+				final boolean excludeGaps = egCheck.getValue();
+				final boolean bootstrap = btCheck.getValue();
+				final boolean cantor = ctCheck.getValue();
+				
+				db.addCloseHandler( new CloseHandler<PopupPanel>() {
+					@Override
+					public void onClose(CloseEvent<PopupPanel> event) {
+						int start = Integer.MIN_VALUE;
+						int end = Integer.MAX_VALUE;
+						
+						for( Sequence seq : lseq ) {
+							if( seq.getRealStart() > start ) start = seq.getRealStart();
+							if( seq.getRealStop() < end ) end = seq.getRealStop();
+						}
+						
+						double[]	dvals = new double[ lseq.size()*lseq.size() ];
+						Sequence.distanceMatrixNumeric(lseq, dvals, start, end, excludeGaps, false, cantor);
+						
+						List<String>	names = new ArrayList<String>();
+						for( Sequence seq : lseq ) {
+							names.add( seq.getName() );
+						}
+						Node n = treeutil.neighborJoin( dvals, names );
+						
+						if( bootstrap ) {
+							Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+								@Override
+								public int compare(Node o1, Node o2) {
+									String c1 = o1.toStringWoLengths();
+									String c2 = o2.toStringWoLengths();
+									
+									return c1.compareTo( c2 );
+								}
+							};
+							treeutil.arrange( n, comp );
+							String tree = n.toStringWoLengths();
+							
+							for( int i = 0; i < 100; i++ ) {
+								Sequence.distanceMatrixNumeric( lseq, dvals, start, end, excludeGaps, true, cantor );
+								Node nn = treeutil.neighborJoin(dvals, names);
+								treeutil.arrange( nn, comp );
+								treeutil.compareTrees( tree, n, nn );
+								
+								//String btree = nn.toStringWoLengths();
+								//System.err.println( btree );
+							}
+							treeutil.appendCompare( n );
+						}
+						treeutil.setNode( n );
+						handleTree( treeutil );
+					}
+				});
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
