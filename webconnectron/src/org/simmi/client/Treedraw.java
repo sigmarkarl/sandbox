@@ -351,9 +351,9 @@ public class Treedraw implements EntryPoint {
 			try {
 				final List<Sequence> lseq = importReader( str );
 				
-				CheckBox egCheck = new CheckBox("Exclude gaps");
-				CheckBox btCheck = new CheckBox("Bootstrap");
-				CheckBox ctCheck = new CheckBox("Jukes-cantor");
+				final CheckBox egCheck = new CheckBox("Exclude gaps");
+				final CheckBox btCheck = new CheckBox("Bootstrap");
+				final CheckBox ctCheck = new CheckBox("Jukes-cantor");
 				ctCheck.setValue( true );
 				
 				final DialogBox db = new DialogBox();
@@ -378,23 +378,43 @@ public class Treedraw implements EntryPoint {
 				db.add( dbvp );
 				db.center();
 				
-				final boolean excludeGaps = egCheck.getValue();
-				final boolean bootstrap = btCheck.getValue();
-				final boolean cantor = ctCheck.getValue();
-				
 				db.addCloseHandler( new CloseHandler<PopupPanel>() {
 					@Override
 					public void onClose(CloseEvent<PopupPanel> event) {
-						int start = Integer.MIN_VALUE;
-						int end = Integer.MAX_VALUE;
+						boolean excludeGaps = egCheck.getValue();
+						boolean bootstrap = btCheck.getValue();
+						boolean cantor = ctCheck.getValue();
 						
-						for( Sequence seq : lseq ) {
-							if( seq.getRealStart() > start ) start = seq.getRealStart();
-							if( seq.getRealStop() < end ) end = seq.getRealStop();
+						List<Integer>	idxs = null;
+						if( excludeGaps ) {
+							int start = Integer.MIN_VALUE;
+							int end = Integer.MAX_VALUE;
+							
+							for( Sequence seq : lseq ) {
+								if( seq.getRealStart() > start ) start = seq.getRealStart();
+								if( seq.getRealStop() < end ) end = seq.getRealStop();
+							}
+							
+							idxs = new ArrayList<Integer>();
+							for( int x = start; x < end; x++ ) {
+								int i;
+								boolean skip = false;
+								for( Sequence seq : lseq ) {
+									char c = seq.charAt( x );
+									if( c != '-' && c != '.' && c == ' ' ) {
+										skip = true;
+										break;
+									}
+								}
+								
+								if( !skip ) {
+									idxs.add( x );
+								}
+							}
 						}
 						
 						double[]	dvals = new double[ lseq.size()*lseq.size() ];
-						Sequence.distanceMatrixNumeric(lseq, dvals, start, end, excludeGaps, false, cantor);
+						Sequence.distanceMatrixNumeric(lseq, dvals, idxs, false, cantor);
 						
 						List<String>	names = new ArrayList<String>();
 						for( Sequence seq : lseq ) {
@@ -416,7 +436,7 @@ public class Treedraw implements EntryPoint {
 							String tree = n.toStringWoLengths();
 							
 							for( int i = 0; i < 100; i++ ) {
-								Sequence.distanceMatrixNumeric( lseq, dvals, start, end, excludeGaps, true, cantor );
+								Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor );
 								Node nn = treeutil.neighborJoin(dvals, names);
 								treeutil.arrange( nn, comp );
 								treeutil.compareTrees( tree, n, nn );
