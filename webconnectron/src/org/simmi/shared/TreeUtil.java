@@ -87,13 +87,13 @@ public class TreeUtil {
 	public Node neighborJoin( double[] corrarr, List<String> corrInd ) {		
 		List<Node> nodes = new ArrayList<Node>();
 		int len = corrInd.size();
-		for( int i = 0; i < len; i++ ) {
-			nodes.add( new Node( corrInd.get(i) ) );
+		for( String name : corrInd ) {
+			nodes.add( new Node( name ) );
 		}
 		
-		double[] dmat = new double[len*len];
+		double[] dmat = corrarr; //new double[len*len];
 		double[] u = new double[len];
-		System.arraycopy(corrarr, 0, dmat, 0, len*len);
+		//System.arraycopy(corrarr, 0, dmat, 0, len*len);
 		while( len > 2 ) {
 			//System.err.println( "trying " + len + " size is " + nodes.size() );
 			for ( int i = 0; i < len; i++ ) {
@@ -109,9 +109,9 @@ public class TreeUtil {
 			int imin = 0;
 			int jmin = 0;
 			double dmin = Double.MAX_VALUE;
-			for ( int i = 0; i < len; i++ ) {
-				for ( int j = 0; j < len; j++ ) {
-					if( i != j ) {
+			for ( int i = 0; i < len-1; i++ ) {
+				for ( int j = i+1; j < len; j++ ) {
+					//if( i != j ) {
 						double val = dmat[i*len+j] - u[i] - u[j];
 						//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
 						if( val < dmin ) {
@@ -119,7 +119,7 @@ public class TreeUtil {
 							imin = i;
 							jmin = j;
 						}
-					}
+					//}
 				}
 			}
 			
