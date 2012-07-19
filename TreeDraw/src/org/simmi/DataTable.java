@@ -2004,7 +2004,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						
 						String tree = "";
 						List<String>	corrInd = currentjavafasta.getNames();
-						double[] corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, false, cantor );
+						double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
+						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor );
 						TreeUtil	tu = new TreeUtil();
 						Node n = tu.neighborJoin(corr, corrInd);
 
@@ -2022,7 +2023,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							tree = n.toStringWoLengths();
 							
 							for( int i = 0; i < 1000; i++ ) {
-								corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, true, cantor );
+								Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, true, cantor );
 								Node nn = tu.neighborJoin(corr, corrInd);
 								tu.arrange( nn, comp );
 								tu.compareTrees( tree, n, nn );
@@ -2088,7 +2089,33 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						boolean cantor = jukes.isSelected();
 						boolean bootstrap = boots.isSelected();
 						
-						double[] corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, true, false, cantor );
+						int start = Integer.MIN_VALUE;
+						int end = Integer.MAX_VALUE;
+						
+						for( Sequence seq : currentjavafasta.lseq ) {
+							if( seq.getRealStart() > start ) start = seq.getRealStart();
+							if( seq.getRealStop() < end ) end = seq.getRealStop();
+						}
+						
+						List<Integer>	idxs = new ArrayList<Integer>();
+						for( int x = start; x < end; x++ ) {
+							int i;
+							boolean skip = false;
+							for( Sequence seq : currentjavafasta.lseq ) {
+								char c = seq.charAt( x );
+								if( c != '-' && c != '.' && c == ' ' ) {
+									skip = true;
+									break;
+								}
+							}
+							
+							if( !skip ) {
+								idxs.add( x );
+							}
+						}
+						
+						double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
+						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, false, cantor );
 						List<String>	corrInd = currentjavafasta.getNames();
 						
 						TreeUtil	tu = new TreeUtil();
@@ -2108,7 +2135,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							String tree = n.toStringWoLengths();
 							
 							for( int i = 0; i < 1000; i++ ) {
-								corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, true, cantor );
+								Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor );
 								Node nn = tu.neighborJoin(corr, corrInd);
 								tu.arrange( nn, comp );
 								tu.compareTrees( tree, n, nn );
@@ -2144,7 +2171,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				boolean cantor = jukes.isSelected();
 				boolean bootstrap = boots.isSelected();
 				
-				double[] corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, false, cantor );
+				double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
+				Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor );
 				List<String>	corrInd = currentjavafasta.getNames();
 				
 				TreeUtil	tu = new TreeUtil();
@@ -2164,7 +2192,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					String tree = n.toStringWoLengths();
 					
 					for( int i = 0; i < 1000; i++ ) {
-						corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, true, cantor );
+						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, true, cantor );
 						Node nn = tu.neighborJoin(corr, corrInd);
 						tu.arrange( nn, comp );
 						tu.compareTrees( tree, n, nn );
