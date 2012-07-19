@@ -3090,7 +3090,36 @@ public class SerifyApplet extends JApplet {
 					lseq.add( s );
 				}
 				
-				double[] dd = Sequence.distanceMatrixNumeric(lseq, excludeGaps, bootstrap, cantor);
+				List<Integer>	idxs = null;
+				if( excludeGaps ) {
+					int start = Integer.MIN_VALUE;
+					int end = Integer.MAX_VALUE;
+					
+					for( Sequence seq : lseq ) {
+						if( seq.getRealStart() > start ) start = seq.getRealStart();
+						if( seq.getRealStop() < end ) end = seq.getRealStop();
+					}
+					
+					idxs = new ArrayList<Integer>();
+					for( int x = start; x < end; x++ ) {
+						int i;
+						boolean skip = false;
+						for( Sequence seq : lseq ) {
+							char c = seq.charAt( x );
+							if( c != '-' && c != '.' && c == ' ' ) {
+								skip = true;
+								break;
+							}
+						}
+						
+						if( !skip ) {
+							idxs.add( x );
+						}
+					}
+				}
+				
+				double[] dd = new double[ lseq.size()*lseq.size() ];
+				Sequence.distanceMatrixNumeric(lseq, dd, idxs, bootstrap, cantor);
 				
 				StringBuilder tree = new StringBuilder();
 				tree.append( "\t"+lseq.size()+"\n" );

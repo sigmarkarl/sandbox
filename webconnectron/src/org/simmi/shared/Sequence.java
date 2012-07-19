@@ -36,30 +36,19 @@ public class Sequence implements Comparable<Sequence> {
 	public boolean				edited = false;
 	
 	static Random r = new Random();
-	public static void distanceMatrixNumeric( List<Sequence> lseq, double[] dmat, int startex, int endex, boolean excludeGaps, boolean bootstrap, boolean cantor ) {		
-		if( excludeGaps ) {			
-			List<Integer>	idxs = new ArrayList<Integer>();
-			for( int x = startex; x < endex; x++ ) {
-				int i;
-				boolean skip = false;
-				for( Sequence seq : lseq ) {
-					char c = seq.charAt( x );
-					if( c != '-' && c != '.' && c == ' ' ) {
-						skip = true;
-						break;
-					}
-				}
-				
-				if( !skip ) {
-					idxs.add( x );
-				}
-			}
-			
-			int i = 0;
-			for( Sequence seq1 : lseq ) {
-				for( Sequence seq2 : lseq ) {
-					if( seq1 == seq2 ) dmat[i] = 0.0;
-					else {
+	public static void distanceMatrixNumeric( List<Sequence> lseq, double[] dmat, List<Integer> idxs, boolean bootstrap, boolean cantor ) {		
+		int len = lseq.size();
+		for( int x = 0; x < lseq.size(); x++ ) {
+			dmat[x*len+x] = 0.0;
+		}
+		if( idxs != null ) {
+			for( int x = 0; x < len-1; x++ ) {
+				for( int y = x+1; y < len; y++ ) {
+					Sequence seq1 = lseq.get(x);
+					Sequence seq2 = lseq.get(y);
+					
+					//if( seq1 == seq2 ) dmat[i] = 0.0;
+					//else {
 						int count = 0;
 						int mism = 0;
 						
@@ -83,50 +72,50 @@ public class Sequence implements Comparable<Sequence> {
 						}
 						double d = count == 0 ? 0.0 : ((double)mism/(double)count);
 						if( cantor ) d = -3.0*Math.log( 1.0 - 4.0*d/3.0 )/4.0;
-						dmat[i] = d;
-					}
-					i++;
+						dmat[x*len+y] = d;
+						dmat[y*len+x] = d;
+					//}
+					//i++;
 				}
 			}
 		} else {
-			int i = 0;
-			for( Sequence seq1 : lseq ) {
-				for( Sequence seq2 : lseq ) {
-					if( seq1 == seq2 ) dmat[i] = 0.0; 
-					else {
-						int count = 0;
-						int mism = 0;
+			for( int x = 0; x < len-1; x++ ) {
+				for( int y = x+1; y < len; y++ ) {
+					Sequence seq1 = lseq.get(x);
+					Sequence seq2 = lseq.get(y);
 						
-						int start = Math.max( seq1.getRealStart(), seq2.getRealStart() );
-						int end = Math.min( seq1.getRealStop(), seq2.getRealStop() );
-						
-						if( bootstrap ) {
-							for( int k = start; k < end; k++ ) {
-								int ir = start + r.nextInt( end-start );
-								char c1 = seq1.charAt( ir-seq1.getStart() );
-								char c2 = seq2.charAt( ir-seq2.getStart() );
-								
-								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
-									if( c1 != c2 ) mism++;
-									count++;
-								}
-							}
-						} else {
-							for( int k = start; k < end; k++ ) {
-								char c1 = seq1.charAt( k-seq1.getStart() );
-								char c2 = seq2.charAt( k-seq2.getStart() );
-								
-								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
-									if( c1 != c2 ) mism++;
-									count++;
-								}
+					int count = 0;
+					int mism = 0;
+					
+					int start = Math.max( seq1.getRealStart(), seq2.getRealStart() );
+					int end = Math.min( seq1.getRealStop(), seq2.getRealStop() );
+					
+					if( bootstrap ) {
+						for( int k = start; k < end; k++ ) {
+							int ir = start + r.nextInt( end-start );
+							char c1 = seq1.charAt( ir-seq1.getStart() );
+							char c2 = seq2.charAt( ir-seq2.getStart() );
+							
+							if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
+								if( c1 != c2 ) mism++;
+								count++;
 							}
 						}
-						double d = count == 0 ? 0.0 : ((double)mism/(double)count);
-						if( cantor ) d = -3.0*Math.log( 1.0 - 4.0*d/3.0 )/4.0;
-						dmat[i] = d;
+					} else {
+						for( int k = start; k < end; k++ ) {
+							char c1 = seq1.charAt( k-seq1.getStart() );
+							char c2 = seq2.charAt( k-seq2.getStart() );
+							
+							if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
+								if( c1 != c2 ) mism++;
+								count++;
+							}
+						}
 					}
-					i++;
+					double d = count == 0 ? 0.0 : ((double)mism/(double)count);
+					if( cantor ) d = -3.0*Math.log( 1.0 - 4.0*d/3.0 )/4.0;
+					dmat[x*len+y] = d;
+					dmat[y*len+x] = d;
 				}
 			}
 		}
