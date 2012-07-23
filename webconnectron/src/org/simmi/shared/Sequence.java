@@ -1,6 +1,7 @@
 package org.simmi.shared;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -36,12 +37,38 @@ public class Sequence implements Comparable<Sequence> {
 	public boolean				edited = false;
 	
 	static Random r = new Random();
-	public static void distanceMatrixNumeric( List<Sequence> lseq, double[] dmat, List<Integer> idxs, boolean bootstrap, boolean cantor ) {		
+	public static void distanceMatrixNumeric( List<Sequence> lseq, double[] dmat, List<Integer> idxs, boolean bootstrap, boolean cantor, boolean entWeigtht ) {		
 		int len = lseq.size();
 		for( int x = 0; x < lseq.size(); x++ ) {
 			dmat[x*len+x] = 0.0;
 		}
-		if( idxs != null ) {
+		double[] ent = null;
+		if( idxs != null && idxs.size() > 0 ) {
+			if( entWeigtht ) {
+				int total = idxs.size();
+				ent = new double[total];
+				Map<Character,Integer>	shanmap = new HashMap<Character,Integer>();
+				for( int x = 0; x < total; x++ ) {
+					shanmap.clear();
+					
+					for( Sequence seq : lseq ) {
+						char c = seq.charAt( idxs.get(x) );
+						int val = 0;
+						if( shanmap.containsKey(c) ) val = shanmap.get(c);
+						shanmap.put( c, val+1 );
+					}
+					
+					double res = 0.0;
+					for( char c : shanmap.keySet() ) {
+						int val = shanmap.get(c);
+						double p = (double)val/(double)lseq.size();
+						res -= p*Math.log(p);
+					}
+					ent[x] = res/Math.log(2.0);
+				}
+			}
+			
+			int count = idxs.size();
 			for( int x = 0; x < len-1; x++ ) {
 				for( int y = x+1; y < len; y++ ) {
 					Sequence seq1 = lseq.get(x);
@@ -49,28 +76,48 @@ public class Sequence implements Comparable<Sequence> {
 					
 					//if( seq1 == seq2 ) dmat[i] = 0.0;
 					//else {
-						int count = 0;
-						int mism = 0;
+						double mism = 0;
 						
-						if( bootstrap ) {
-							for( int k : idxs ) {
-								int ir = r.nextInt( idxs.size() );
-								char c1 = seq1.charAt( idxs.get(ir)-seq1.getStart() );
-								char c2 = seq2.charAt( idxs.get(ir)-seq2.getStart() );
-								
-								if( c1 != c2 ) mism++;
-								count++;
+						if( ent != null ) {
+							int i = 0;
+							if( bootstrap ) {
+								for( int k : idxs ) {
+									int ir = r.nextInt( idxs.size() );
+									char c1 = seq1.charAt( idxs.get(ir)-seq1.getStart() );
+									char c2 = seq2.charAt( idxs.get(ir)-seq2.getStart() );
+									
+									if( c1 != c2 ) mism += 1.0/ent[i];
+									//count++;
+									i++;
+								}
+							} else {
+								for( int k : idxs ) {
+									char c1 = seq1.charAt( k-seq1.getStart() );
+									char c2 = seq2.charAt( k-seq2.getStart() );
+									
+									if( c1 != c2 ) mism += 1.0/ent[i];
+									i++;
+								}
 							}
 						} else {
-							for( int k : idxs ) {
-								char c1 = seq1.charAt( k-seq1.getStart() );
-								char c2 = seq2.charAt( k-seq2.getStart() );
-								
-								if( c1 != c2 ) mism++;
-								count++;
+							if( bootstrap ) {
+								for( int k : idxs ) {
+									int ir = r.nextInt( idxs.size() );
+									char c1 = seq1.charAt( idxs.get(ir)-seq1.getStart() );
+									char c2 = seq2.charAt( idxs.get(ir)-seq2.getStart() );
+									
+									if( c1 != c2 ) mism++;
+								}
+							} else {
+								for( int k : idxs ) {
+									char c1 = seq1.charAt( k-seq1.getStart() );
+									char c2 = seq2.charAt( k-seq2.getStart() );
+									
+									if( c1 != c2 ) mism++;
+								}
 							}
 						}
-						double d = count == 0 ? 0.0 : ((double)mism/(double)count);
+						double d = mism/(double)count;
 						if( cantor ) d = -3.0*Math.log( 1.0 - 4.0*d/3.0 )/4.0;
 						dmat[x*len+y] = d;
 						dmat[y*len+x] = d;
@@ -79,36 +126,89 @@ public class Sequence implements Comparable<Sequence> {
 				}
 			}
 		} else {
+			if( entWeigtht ) {
+				int total = lseq.get(0).getLength();
+				ent = new double[total];
+				Map<Character,Integer>	shanmap = new HashMap<Character,Integer>();
+				for( int x = 0; x < total; x++ ) {
+					shanmap.clear();
+					
+					int count = 0;
+					for( Sequence seq : lseq ) {
+						char c = seq.charAt( x );
+						if( c != '.' && c != '-' && c != ' ' && c != '\n' ) {
+							int val = 0;
+							if( shanmap.containsKey(c) ) val = shanmap.get(c);
+							shanmap.put( c, val+1 );
+							count++;
+						}
+					}
+					
+					double res = 0.0;
+					for( char c : shanmap.keySet() ) {
+						int val = shanmap.get(c);
+						double p = (double)val/(double)count;
+						res -= p*Math.log(p);
+					}
+					ent[x] = res/Math.log(2.0);
+				}
+			}
+			
 			for( int x = 0; x < len-1; x++ ) {
 				for( int y = x+1; y < len; y++ ) {
 					Sequence seq1 = lseq.get(x);
 					Sequence seq2 = lseq.get(y);
 						
 					int count = 0;
-					int mism = 0;
+					double mism = 0;
 					
 					int start = Math.max( seq1.getRealStart(), seq2.getRealStart() );
 					int end = Math.min( seq1.getRealStop(), seq2.getRealStop() );
 					
-					if( bootstrap ) {
-						for( int k = start; k < end; k++ ) {
-							int ir = start + r.nextInt( end-start );
-							char c1 = seq1.charAt( ir-seq1.getStart() );
-							char c2 = seq2.charAt( ir-seq2.getStart() );
-							
-							if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
-								if( c1 != c2 ) mism++;
-								count++;
+					if( ent != null ) {
+						if( bootstrap ) {
+							for( int k = start; k < end; k++ ) {
+								int ir = start + r.nextInt( end-start );
+								char c1 = seq1.charAt( ir-seq1.getStart() );
+								char c2 = seq2.charAt( ir-seq2.getStart() );
+								
+								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
+									if( c1 != c2 ) mism += 1.0/ent[k];
+									count++;
+								}
+							}
+						} else {
+							for( int k = start; k < end; k++ ) {
+								char c1 = seq1.charAt( k-seq1.getStart() );
+								char c2 = seq2.charAt( k-seq2.getStart() );
+								
+								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
+									if( c1 != c2 ) mism += 1.0/ent[k];
+									count++;
+								}
 							}
 						}
 					} else {
-						for( int k = start; k < end; k++ ) {
-							char c1 = seq1.charAt( k-seq1.getStart() );
-							char c2 = seq2.charAt( k-seq2.getStart() );
-							
-							if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
-								if( c1 != c2 ) mism++;
-								count++;
+						if( bootstrap ) {
+							for( int k = start; k < end; k++ ) {
+								int ir = start + r.nextInt( end-start );
+								char c1 = seq1.charAt( ir-seq1.getStart() );
+								char c2 = seq2.charAt( ir-seq2.getStart() );
+								
+								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
+									if( c1 != c2 ) mism++;
+									count++;
+								}
+							}
+						} else {
+							for( int k = start; k < end; k++ ) {
+								char c1 = seq1.charAt( k-seq1.getStart() );
+								char c2 = seq2.charAt( k-seq2.getStart() );
+								
+								if( c1 != '.' && c1 != '-' && c1 != ' ' && c1 != '\n' &&  c2 != '.' && c2 != '-' && c2 != ' ' && c2 != '\n') {
+									if( c1 != c2 ) mism++;
+									count++;
+								}
 							}
 						}
 					}
