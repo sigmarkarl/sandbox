@@ -351,6 +351,7 @@ public class Treedraw implements EntryPoint {
 			try {
 				final List<Sequence> lseq = importReader( str );
 				
+				final CheckBox ewCheck = new CheckBox("Entropy weighted dist-matrix");
 				final CheckBox egCheck = new CheckBox("Exclude gaps");
 				final CheckBox btCheck = new CheckBox("Bootstrap");
 				final CheckBox ctCheck = new CheckBox("Jukes-cantor");
@@ -358,6 +359,7 @@ public class Treedraw implements EntryPoint {
 				
 				final DialogBox db = new DialogBox();
 				VerticalPanel	dbvp = new VerticalPanel();
+				dbvp.add( ewCheck );
 				dbvp.add( egCheck );
 				dbvp.add( btCheck );
 				dbvp.add( ctCheck );
@@ -384,6 +386,7 @@ public class Treedraw implements EntryPoint {
 						boolean excludeGaps = egCheck.getValue();
 						boolean bootstrap = btCheck.getValue();
 						boolean cantor = ctCheck.getValue();
+						boolean entropyWeight = ewCheck.getValue();
 						
 						List<Integer>	idxs = null;
 						if( excludeGaps ) {
@@ -414,7 +417,7 @@ public class Treedraw implements EntryPoint {
 						}
 						
 						double[]	dvals = new double[ lseq.size()*lseq.size() ];
-						Sequence.distanceMatrixNumeric(lseq, dvals, idxs, false, cantor);
+						Sequence.distanceMatrixNumeric(lseq, dvals, idxs, false, cantor, entropyWeight);
 						
 						List<String>	names = new ArrayList<String>();
 						for( Sequence seq : lseq ) {
@@ -436,7 +439,7 @@ public class Treedraw implements EntryPoint {
 							String tree = n.toStringWoLengths();
 							
 							for( int i = 0; i < 100; i++ ) {
-								Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor );
+								Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor, entropyWeight );
 								Node nn = treeutil.neighborJoin(dvals, names);
 								treeutil.arrange( nn, comp );
 								treeutil.compareTrees( tree, n, nn );
