@@ -84,7 +84,7 @@ public class TreeUtil {
 		}
 	}
 	
-	public Node neighborJoin( double[] corrarr, List<String> corrInd ) {		
+	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {		
 		List<Node> nodes = new ArrayList<Node>();
 		int len = corrInd.size();
 		for( String name : corrInd ) {
@@ -149,7 +149,11 @@ public class TreeUtil {
 							/*if( k >= dmatmp.length ) {
 								System.err.println();
 							}*/
-							dmatmp[k++] = dmat[i*len+j];
+							if( k >= dmatmp.length ) {
+								System.err.println("ok");
+							}
+							dmatmp[k] = dmat[i*len+j];
+							k++;
 						}
 					}
 					
@@ -196,6 +200,7 @@ public class TreeUtil {
 	
 	public class Node {
 		String 		name;
+		String		id;
 		String		meta;
 		int			metacount;
 		private double		h;
@@ -211,6 +216,65 @@ public class TreeUtil {
 		
 		String		collapsed = null;
 		boolean		selected = false;
+		
+		public Node findNode( String id ) {
+			if( id.equals( this.id ) ) {
+				return this;
+			} else {
+				for( Node n : this.nodes ) {
+					Node ret = n.findNode( id );
+					if( ret != null ) {
+						return ret;
+					}
+				}
+			}
+			return null;
+		}
+		
+		public Node firstLeaf() {
+			Node res = null;
+			if( nodes == null || nodes.size() == 0 ) {
+				res = this;
+			} else {
+				for( Node subn : nodes ) {
+					res = subn.firstLeaf();
+					break;
+				}
+			}
+			return res;
+		}
+		
+		public Set<String> nodeCalc( List<Set<String>>	ls ) {
+			Set<String>	s = new HashSet<String>();
+			if( nodes == null || nodes.size() == 0 ) {
+				s.add( id );
+			} else {
+				for( Node subn : nodes ) {
+					Set<String> set = subn.nodeCalc( ls );
+					s.addAll( set );
+				}
+				ls.add( s );
+			}
+			return s;
+		}
+		
+		public Set<String> leafIdSet() {
+			Set<String> lidSet = new HashSet<String>();
+			
+			if( nodes == null || nodes.size() == 0 ) {
+				lidSet.add( id );
+			} else {
+				for( Node subn : nodes ) {
+					lidSet.addAll( subn.leafIdSet() );
+				}
+			}
+			
+			return lidSet;
+		}
+		
+		public String getId() {
+			return id;
+		}
 		
 		public void setSelected( boolean selected ) {
 			this.selected = selected;
@@ -240,6 +304,7 @@ public class TreeUtil {
 		public Node( String name ) {
 			this();
 			this.name = name;
+			this.id = name;
 		}
 		
 		public void setCanvasLoc( double x, double y ) {
@@ -1235,4 +1300,38 @@ public class TreeUtil {
 		return use;
 	}
 	int cnt = 0;
+
+	public double nDistance(Node node1, Node node2) {
+		double ret = 0.0;
+		
+		List<Set<String>>	nlist1 = new ArrayList<Set<String>>();
+		node1.nodeCalc( nlist1 );
+		
+		List<Set<String>>	nlist2 = new ArrayList<Set<String>>();
+		node2.nodeCalc( nlist2 );
+		
+		for( Set<String> s1 : nlist1 ) {
+			boolean found = false;
+			for( Set<String> s2 : nlist2 ) {
+				if( s1.size() == s2.size() && s1.containsAll( s2 ) ) {
+					found = true;
+					break;
+				}
+			}
+			if( !found ) ret += 1.0;
+		}
+		
+		for( Set<String> s2 : nlist2 ) {
+			boolean found = false;
+			for( Set<String> s1 : nlist1 ) {
+				if( s1.size() == s2.size() && s1.containsAll( s2 ) ) {
+					found = true;
+					break;
+				}
+			}
+			if( !found ) ret += 1.0;
+		}
+		
+		return ret;
+	}
 }
