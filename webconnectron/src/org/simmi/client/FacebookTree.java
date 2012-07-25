@@ -238,7 +238,7 @@ public class FacebookTree implements EntryPoint {
 					}
 				}
 			}
-			treeutil.neighborJoin( dvals, names );
+			treeutil.neighborJoin( dvals, names, null );
 			console( treeutil.getNode().toString() );
 			handleTree( treeutil );
 		} else {
