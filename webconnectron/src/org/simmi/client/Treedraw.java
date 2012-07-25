@@ -320,7 +320,11 @@ public class Treedraw implements EntryPoint {
 		return lseq;
 	}
 	
+	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
+		List<Sequence> seqs = currentSeqs;
+		currentSeqs = null;
+		//TreeUtil	treeutil;
 		if( str.startsWith("#") ) {
 			int i = str.lastIndexOf("tree");
 			if( i != -1 ) {
@@ -341,24 +345,52 @@ public class Treedraw implements EntryPoint {
 				}
 				
 				String tree = str.substring(i, l).replaceAll("[\r\n]+", "");
-				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
+				treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
 				treeutil.replaceNames( treeutil.getNode(), namemap );
 				handleTree( treeutil );
 				
 			}
 		} else if( str.startsWith(">") ) {
-			final TreeUtil treeutil = new TreeUtil();
+			//final TreeUtil 
+			treeutil = new TreeUtil();
 			try {
 				final List<Sequence> lseq = importReader( str );
+				currentSeqs = lseq;
+				
+				final DialogBox db = new DialogBox();
+				VerticalPanel	dbvp = new VerticalPanel();
 				
 				final CheckBox ewCheck = new CheckBox("Entropy weighted dist-matrix");
 				final CheckBox egCheck = new CheckBox("Exclude gaps");
 				final CheckBox btCheck = new CheckBox("Bootstrap");
 				final CheckBox ctCheck = new CheckBox("Jukes-cantor");
+				
+				final RadioButton rb = new RadioButton("Parsimony insertion", "parseChoice");
+				if( seqs != null && seqs.get(0).getLength() == currentSeqs.get(0).getLength() ) {
+					final RadioButton rb2 = new RadioButton("New tree", "parseChoice");
+					
+					rb2.addClickHandler( new ClickHandler() {
+						@Override
+						public void onClick(ClickEvent event) {
+							if( !rb2.getValue() ) {
+								ewCheck.setEnabled( false );
+								egCheck.setEnabled( false );
+								btCheck.setEnabled( false );
+								ctCheck.setEnabled( false );
+							} else {
+								ewCheck.setEnabled( true );
+								egCheck.setEnabled( true );
+								btCheck.setEnabled( true );
+								ctCheck.setEnabled( true );
+							}
+						}
+					});
+					
+					dbvp.add( rb );
+					dbvp.add( rb2 );
+				}
 				ctCheck.setValue( true );
 				
-				final DialogBox db = new DialogBox();
-				VerticalPanel	dbvp = new VerticalPanel();
 				dbvp.add( ewCheck );
 				dbvp.add( egCheck );
 				dbvp.add( btCheck );
@@ -383,81 +415,126 @@ public class Treedraw implements EntryPoint {
 				db.addCloseHandler( new CloseHandler<PopupPanel>() {
 					@Override
 					public void onClose(CloseEvent<PopupPanel> event) {
-						boolean excludeGaps = egCheck.getValue();
-						boolean bootstrap = btCheck.getValue();
-						boolean cantor = ctCheck.getValue();
-						boolean entropyWeight = ewCheck.getValue();
-						
-						List<Integer>	idxs = null;
-						if( excludeGaps ) {
-							int start = Integer.MIN_VALUE;
-							int end = Integer.MAX_VALUE;
-							
-							for( Sequence seq : lseq ) {
-								if( seq.getRealStart() > start ) start = seq.getRealStart();
-								if( seq.getRealStop() < end ) end = seq.getRealStop();
+						if( rb.getValue() ) {
+							if( treeutil != null ) {
+								
 							}
+						} else {
+							boolean excludeGaps = egCheck.getValue();
+							boolean bootstrap = btCheck.getValue();
+							boolean cantor = ctCheck.getValue();
+							boolean entropyWeight = ewCheck.getValue();
 							
-							idxs = new ArrayList<Integer>();
-							for( int x = start; x < end; x++ ) {
-								int i;
-								boolean skip = false;
+							List<Integer>	idxs = null;
+							if( excludeGaps ) {
+								int start = Integer.MIN_VALUE;
+								int end = Integer.MAX_VALUE;
+								
 								for( Sequence seq : lseq ) {
-									char c = seq.charAt( x );
-									if( c != '-' && c != '.' && c == ' ' ) {
-										skip = true;
-										break;
+									if( seq.getRealStart() > start ) start = seq.getRealStart();
+									if( seq.getRealStop() < end ) end = seq.getRealStop();
+								}
+								
+								idxs = new ArrayList<Integer>();
+								for( int x = start; x < end; x++ ) {
+									int i;
+									boolean skip = false;
+									for( Sequence seq : lseq ) {
+										char c = seq.charAt( x );
+										if( c != '-' && c != '.' && c == ' ' ) {
+											skip = true;
+											break;
+										}
+									}
+									
+									if( !skip ) {
+										idxs.add( x );
 									}
 								}
-								
-								if( !skip ) {
-									idxs.add( x );
-								}
 							}
-						}
-						
-						double[]	dvals = new double[ lseq.size()*lseq.size() ];
-						Sequence.distanceMatrixNumeric(lseq, dvals, idxs, false, cantor, entropyWeight);
-						
-						List<String>	names = new ArrayList<String>();
-						for( Sequence seq : lseq ) {
-							names.add( seq.getName() );
-						}
-						Node n = treeutil.neighborJoin( dvals, names );
-						
-						if( bootstrap ) {
-							Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
-								@Override
-								public int compare(Node o1, Node o2) {
-									String c1 = o1.toStringWoLengths();
-									String c2 = o2.toStringWoLengths();
-									
-									return c1.compareTo( c2 );
-								}
-							};
-							treeutil.arrange( n, comp );
-							String tree = n.toStringWoLengths();
 							
-							for( int i = 0; i < 100; i++ ) {
-								Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor, entropyWeight );
-								Node nn = treeutil.neighborJoin(dvals, names);
-								treeutil.arrange( nn, comp );
-								treeutil.compareTrees( tree, n, nn );
+							double[]	dvals = new double[ lseq.size()*lseq.size() ];
+							double[] ent = null;
+							if( entropyWeight ) ent = Sequence.entropy( lseq );
 								
-								//String btree = nn.toStringWoLengths();
-								//System.err.println( btree );
+								/*if( idxs != null ) {
+									int total = idxs.size();
+									ent = new double[total];
+									Map<Character,Integer>	shanmap = new HashMap<Character,Integer>();
+									for( int x = 0; x < total; x++ ) {
+										shanmap.clear();
+										
+										for( Sequence seq : lseq ) {
+											char c = seq.charAt( idxs.get(x) );
+											int val = 0;
+											if( shanmap.containsKey(c) ) val = shanmap.get(c);
+											shanmap.put( c, val+1 );
+										}
+										
+										double res = 0.0;
+										for( char c : shanmap.keySet() ) {
+											int val = shanmap.get(c);
+											double p = (double)val/(double)lseq.size();
+											res -= p*Math.log(p);
+										}
+										ent[x] = res/Math.log(2.0);
+									}
+								} else {
+									
+								}
+								}*/
+						
+							Sequence.distanceMatrixNumeric(lseq, dvals, idxs, false, cantor, ent);
+							
+							List<String>	names = new ArrayList<String>();
+							for( Sequence seq : lseq ) {
+								names.add( seq.getName() );
 							}
-							treeutil.appendCompare( n );
+							Node n = treeutil.neighborJoin( dvals, names, null );
+							
+							if( bootstrap ) {
+								Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+									@Override
+									public int compare(Node o1, Node o2) {
+										String c1 = o1.toStringWoLengths();
+										String c2 = o2.toStringWoLengths();
+										
+										return c1.compareTo( c2 );
+									}
+								};
+								treeutil.arrange( n, comp );
+								String tree = n.toStringWoLengths();
+								
+								for( int i = 0; i < 100; i++ ) {
+									Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor, ent );
+									Node nn = treeutil.neighborJoin(dvals, names, null);
+									treeutil.arrange( nn, comp );
+									treeutil.compareTrees( tree, n, nn );
+									
+									//String btree = nn.toStringWoLengths();
+									//System.err.println( btree );
+								}
+								treeutil.appendCompare( n );
+							}
+							treeutil.setNode( n );
+							handleTree( treeutil );
 						}
-						treeutil.setNode( n );
-						handleTree( treeutil );
 					}
 				});
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		} else if( str.startsWith("[") ) {
+			int k = str.indexOf(']');
+			int i = str.indexOf('(', k+1);
+			if( i != -1 ) {
+				String treestr = str.substring(i);
+				String tree = treestr.replaceAll("[\r\n]+", "");
+				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
+				handleTree( treeutil );
+			}
 		} else if( !str.startsWith("(") ) {
-			TreeUtil treeutil = new TreeUtil();
+			treeutil = new TreeUtil();
 			int len = 0;
 			List<String> names;
 			double[] dvals;
@@ -505,13 +582,13 @@ public class Treedraw implements EntryPoint {
 					}
 				}
 			}
-			Node n = treeutil.neighborJoin( dvals, names );
+			Node n = treeutil.neighborJoin( dvals, names, null );
 			treeutil.setNode( n );
 			//console( treeutil.getNode().toString() );
 			handleTree( treeutil );
 		} else {
 			String tree = str.replaceAll("[\r\n]+", "");
-			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
+			treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
 			handleTree( treeutil );
 		}
 	}
@@ -1197,6 +1274,31 @@ public class Treedraw implements EntryPoint {
 					rb.sendRequest("", new RequestCallback() {
 						@Override
 						public void onResponseReceived(Request request, Response response) {
+							hchunk = 10.0;
+							handleText( response.getText() );
+						}
+						
+						@Override
+						public void onError(Request request, Throwable exception) {
+							console( exception.getMessage() );
+						}
+					});
+				} catch (RequestException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		final Anchor	ltpAnchor = new Anchor("LTPs108_SSU");
+		ltpAnchor.setTitle("Select sub-branch and press R.<br>Maximum canvas height is 32768 pixels");
+		ltpAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, "LTPs108_SSU_tree.newick");
+				try {
+					rb.sendRequest("", new RequestCallback() {
+						@Override
+						public void onResponseReceived(Request request, Response response) {
+							hchunk = 10.0*0.8*0.8*0.8*0.8*0.8;
 							handleText( response.getText() );
 						}
 						
@@ -1315,6 +1417,9 @@ public class Treedraw implements EntryPoint {
 		html = new HTML(". Run");
 		hp.add( html );
 		hp.add( sampleAnchor );
+		html = new HTML(" or ");
+		hp.add( html );
+		hp.add( ltpAnchor );
 		
 		html = new HTML(". Zoom");
 		hp.add( html );
@@ -1694,6 +1799,9 @@ public class Treedraw implements EntryPoint {
 		else node.setCanvasLoc( x+startx, starty );
 		
 		for( TreeUtil.Node resnode : node.getNodes() ) {
+			//String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(strh)+"px sans-serif";
+			//if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+			
 			int nleaves = resnode.getLeavesCount();
 			int nlevels = resnode.countMaxHeight();
 			int plevels = resnode.countParentHeight();
@@ -1792,7 +1900,7 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny ) {
-		int k = 12;//w/32;
+		//int k = 12;//w/32;
 		int fontSize = 10;
 		
 		String use = resnode.getName() == null || resnode.getName().length() == 0 ? resnode.getMeta() : resnode.getName();
@@ -1908,52 +2016,68 @@ public class Treedraw implements EntryPoint {
 				
 				if( color != null && color.length() > 0 ) g2.setFillStyle( color );
 				else g2.setFillStyle( "#000000" );
+				
+				double mhchunk = Math.max( 10.0, hchunk );
 				double strw = 0;
-				String[] split = use.split( "_" );
+				double strh = 5.0*Math.log(mhchunk);
+				
+				String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(strh)+"px sans-serif";
+				if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+				//String[] split = use.split( "_" );
+				TextMetrics tm;
 				if( b ) {
 					//g2.setFont( lFont );
-					for( String s : split ) {
-						strw = Math.max( strw, g2.measureText( s ).getWidth() );
-					}
-				} else{
+					//for( String s : split ) {
+					tm = g2.measureText( use );
+					strw = Math.max( strw, tm.getWidth() );
+					//}
+				} else {
 					//g2.setFont( bFont );
-					for( String s : split ) {
-						strw = Math.max( strw, g2.measureText( s ).getWidth() );
-					}
+					//for( String s : split ) {
+						//strw = Math.max( strw, g2.measureText( use ).getWidth() );
+					//}
+					tm = g2.measureText( use );
+					strw = Math.max( strw, tm.getWidth() );
 				}
-				double strh = 10;
+				
+				//double strh = Math.max( 10.0, hchunk );//10;
 				if( vertical ) {
-					g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, k );
-				} else g2.fillRect( x+nx-(5*strw)/8, ny-k/2.0, (5*strw)/4, k );
+					g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
+				} else g2.fillRect( x+nx-(5*strw)/8, ny-strh/2.0, (5*strw)/4, strh*1.2 );
 				//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
 				//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
 				g2.setFillStyle( "#ffffff" );
-				int i = 0;
+				
+				//int i = 0;
 				if( vertical ) {
 					if( b ) {
-						for( String s : split ) {
-							g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-							i++;
-						}
+						//for( String s : split ) {
+							//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+							//i++;
+						//}
+						g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
 					} else {
-						for( String s : split ) {
-							g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-							i++;
-						}
+						//for( String s : split ) {
+							//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+							//i++;
+						//}
+						g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
 					}
 				} else {
 					if( b ) {
-						for( String s : split ) {
+						/*for( String s : split ) {
 							strw = g2.measureText( s ).getWidth();
 							g2.fillText(s, x+nx-strw/2.0, ny+5-8*(split.length-1)+i*16 );
 							i++;
-						}
+						}*/
+						g2.fillText(use, x+nx-strw/2.0, ny+5 );
 					} else {
-						for( String s : split ) {
+						/*for( String s : split ) {
 							strw = g2.measureText(s).getWidth();
 							g2.fillText(s, x+nx-strw/2.0, ny+6-8*(split.length)+i*16 );
 							i++;
-						}
+						}*/
+						g2.fillText(use, x+nx-strw/2.0, ny+6 );
 					}
 				}
 			}
