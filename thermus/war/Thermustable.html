@@ -99,15 +99,6 @@
   	}
 	window.addEventListener("message", receiveMessage, false);
 	
-	showShannon = function( newshannon, cmd ) {
-		var dbuffer = new Float64Array( newshannon.length );
-		dbuffer.set( newshannon );
-		treetext = dbuffer.buffer;
-		commands = cmd;
-		console.log( cmd );
-		myPopup = window.open(simlabdomain + '/Websimlab.html?callback=thermusgenes','_blank');
-	}
-	
 	showTree = function( newtree ) {
 		treetext = newtree;
 		myPopup = window.open(domain + '/Treedraw.html?callback=thermusgenes','_blank');
@@ -116,6 +107,15 @@
 	showMatr = function( newmatrix ) {
 		treetext = newmatrix;
 		myPopup = window.open(domain + '/Webconnectron.html?callback=thermusgenes','_blank');
+	}
+	
+	showShannon = function( newshannon, cmd ) {
+		var dbuffer = new Float64Array( newshannon.length );
+		dbuffer.set( newshannon );
+		treetext = dbuffer.buffer;
+		commands = cmd;
+		console.log( cmd );
+		myPopup = window.open(simlabdomain + '/Websimlab.html?callback=thermusgenes','_blank');
 	}
   </script>
     <!--                                           -->
