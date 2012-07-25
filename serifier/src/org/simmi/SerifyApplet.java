@@ -90,6 +90,8 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.simmi.shared.Sequence;
+import org.simmi.shared.TreeUtil;
+import org.simmi.shared.TreeUtil.Node;
 import org.simmi.unsigned.JavaFasta;
 
 public class SerifyApplet extends JApplet {
@@ -3119,7 +3121,7 @@ public class SerifyApplet extends JApplet {
 				}
 				
 				double[] dd = new double[ lseq.size()*lseq.size() ];
-				Sequence.distanceMatrixNumeric(lseq, dd, idxs, bootstrap, cantor);
+				Sequence.distanceMatrixNumeric(lseq, dd, idxs, bootstrap, cantor, null);
 				
 				StringBuilder tree = new StringBuilder();
 				tree.append( "\t"+lseq.size()+"\n" );
@@ -3140,10 +3142,212 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		popup.add( new AbstractAction("Majority rule consensus tree") {
-
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
+			}
+		});
+		popup.add( new AbstractAction("Gene evolution phylogeny (distance matrix correlation)") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				List<double[]>	ldmat = new ArrayList<double[]>();
+				List<String>	names = new ArrayList<String>();
+				
+				try {
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						String path = (String)table.getValueAt( r, 3 );
+						
+						String name = (String)table.getValueAt( r, 1 );
+						int l = name.lastIndexOf('.');
+						if( l != -1 ) name = name.substring(0, l);
+						name = name.replace("(", "").replace(")", "").replace(",", "");
+						names.add( name );
+						
+						URL url = new URL( path );
+						InputStream is = url.openStream();
+						BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+						String line = br.readLine();
+						Sequence seq = null;
+						List<Sequence> 	lseq = new ArrayList<Sequence>();
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								String subline = line.substring(1);
+								seq = new Sequence( subline, null );
+								lseq.add( seq );
+							} else {
+								if( seq != null ) seq.append( line );
+							}
+							
+							line = br.readLine();
+						}
+						br.close();
+						
+						for( Sequence s : lseq ) {
+							s.checkLengths();
+						}
+					
+						if( ldmat.size() > 0 && ldmat.get(0).length != lseq.size()*lseq.size() ) {
+							System.err.println( ldmat.size() + "  " + lseq.size() );
+							System.err.println( lseq.size()*lseq.size() + "  " + ldmat.get(0).length );
+							break;
+						}
+						double[] dmat = new double[ lseq.size()*lseq.size() ];
+						ldmat.add( dmat );
+						
+						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
+					}
+					
+					if( ldmat.size() == rr.length ) {
+						double[]	submat = new double[ ldmat.size()*ldmat.size() ];
+						for( int i = 0; i < ldmat.size(); i++ ) {
+							submat[i*ldmat.size()+i] = 0.0;
+						}
+						
+						for( int i = 0; i < ldmat.size()-1; i++ ) {
+							for( int k = i+1; k < ldmat.size(); k++ ) {
+								double[] dmat1 = ldmat.get(i);
+								double[] dmat2 = ldmat.get(k);
+								double corr = correlateDistance( dmat1, dmat2 );
+								submat[i*ldmat.size()+k] = corr;
+								submat[k*ldmat.size()+i] = corr;
+							}
+						}
+						
+						StringBuilder tree = new StringBuilder();
+						tree.append( "\t"+ldmat.size()+"\n" );
+						int i = 0;
+						for( String name : names ) {
+							tree.append( name );
+							int k;
+							for( k = i; k < i+ldmat.size(); k++ ) {
+								tree.append( "\t"+submat[k] );
+							}
+							i = k;
+							
+							tree.append("\n");
+						}
+						//System.err.println( tree.toString() );
+						JSObject win = JSObject.getWindow( SerifyApplet.this );
+						win.call("showTree", new Object[] {tree.toString()});
+					}
+				} catch( Exception e1 ) {
+					e1.printStackTrace();
+				}
+			}
+
+			private double correlateDistance(double[] dmat1, double[] dmat2) {
+				double ret = 0.0;
+				
+				for( int i = 0; i < dmat1.length; i++ ) {
+					double dif = dmat1[i]-dmat2[i];
+					ret += dif*dif;
+				}
+				
+				return Math.sqrt( ret );
+			}
+		});
+		popup.add( new AbstractAction("Gene evolution phylogeny (nni distance)") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				List<Node>		lnode = new ArrayList<Node>();
+				List<String>	names = new ArrayList<String>();
+				TreeUtil 		treeutil = new TreeUtil();
+				String			rootid = null;
+				try {
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						String path = (String)table.getValueAt( r, 3 );
+						
+						String name = (String)table.getValueAt( r, 1 );
+						int l = name.lastIndexOf('.');
+						if( l != -1 ) name = name.substring(0, l);
+						name = name.replace("(", "").replace(")", "").replace(",", "");
+						names.add( name );
+						
+						URL url = new URL( path );
+						InputStream is = url.openStream();
+						BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+						String line = br.readLine();
+						Sequence seq = null;
+						List<String> 	corrInd = new ArrayList<String>();
+						List<Sequence> 	lseq = new ArrayList<Sequence>();
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								String subline = line.substring(1);
+								corrInd.add( subline );
+								seq = new Sequence( subline, null );
+								lseq.add( seq );
+							} else {
+								if( seq != null ) seq.append( line );
+							}
+							
+							line = br.readLine();
+						}
+						br.close();
+						
+						for( Sequence s : lseq ) {
+							s.checkLengths();
+						}
+					
+						/*if( lnode.size() > 0 && lnode.get(0).length != lseq.size()*lseq.size() ) {
+							System.err.println( lnode.size() + "  " + lseq.size() );
+							System.err.println( lseq.size()*lseq.size() + "  " + lnode.get(0).length );
+							break;
+						}*/
+						double[] dmat = new double[ lseq.size()*lseq.size() ];
+						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
+						
+						Node n = treeutil.neighborJoin(dmat, corrInd, null);
+						if( rootid == null ) rootid = n.firstLeaf().getId();
+						Node root = n.findNode( rootid );
+						Node rootparent = root.getParent();
+						treeutil.reroot( n, rootparent );
+						lnode.add( rootparent );
+					}
+					
+					if( lnode.size() == rr.length ) {
+						double[]	submat = new double[ lnode.size()*lnode.size() ];
+						for( int i = 0; i < lnode.size(); i++ ) {
+							submat[i*lnode.size()+i] = 0.0;
+						}
+						
+						Node nod = lnode.get(0);
+						double corri = treeutil.nDistance( nod, nod );
+						
+						for( int i = 0; i < lnode.size()-1; i++ ) {
+							for( int k = i+1; k < lnode.size(); k++ ) {
+								Node node1 = lnode.get(i);
+								Node node2 = lnode.get(k);
+								double corr = treeutil.nDistance( node1, node2 );
+								submat[i*lnode.size()+k] = corr;
+								submat[k*lnode.size()+i] = corr;
+							}
+						}
+						
+						StringBuilder tree = new StringBuilder();
+						tree.append( "\t"+lnode.size()+"\n" );
+						int i = 0;
+						for( String name : names ) {
+							tree.append( name );
+							int k;
+							for( k = i; k < i+lnode.size(); k++ ) {
+								tree.append( "\t"+submat[k] );
+							}
+							i = k;
+							
+							tree.append("\n");
+						}
+						
+						Node node = treeutil.neighborJoin(submat, names, null);
+						String treestr = node.toString();
+						System.err.println( treestr );
+						JSObject win = JSObject.getWindow( SerifyApplet.this );
+						win.call("showTree", new Object[] { treestr });
+					}
+				} catch( Exception e1 ) {
+					e1.printStackTrace();
+				}
 			}
 		});
 		popup.addSeparator();
