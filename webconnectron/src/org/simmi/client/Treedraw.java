@@ -84,9 +84,10 @@ public class Treedraw implements EntryPoint {
 	Node		selectedNode;
 	Node[]		nodearray;
 	TreeUtil	treeutil;
-	boolean	center = false;
+	boolean		center = false;
 	int			equalHeight = 0;
-	boolean	showscale = true;
+	boolean		showscale = true;
+	boolean		showbubble = false;
 	
 	public void handleTree( TreeUtil treeutil ) {
 		this.treeutil = treeutil;
@@ -437,7 +438,7 @@ public class Treedraw implements EntryPoint {
 								
 								idxs = new ArrayList<Integer>();
 								for( int x = start; x < end; x++ ) {
-									int i;
+									//int i;
 									boolean skip = false;
 									for( Sequence seq : lseq ) {
 										char c = seq.charAt( x );
@@ -946,6 +947,23 @@ public class Treedraw implements EntryPoint {
 		node.seth2( Math.max( node.geth2(), 0.0 ) );
 	}
 	
+	public void reroot( int x, int y ) {		
+		canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+		if( !rerooting ) {
+			rerooting = true;
+			
+			Node newroot = recursiveReroot( root, x, y );
+			if( newroot != null ) {
+				newroot.setParent( null );
+				treeutil.reroot( newroot);
+				root = newroot;
+			}
+			
+			rerooting = false;
+		}
+		if( treeutil != null ) drawTree( treeutil );
+	}
+	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get("canvas");
@@ -1023,23 +1041,7 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onDoubleClick(DoubleClickEvent event) {
 				if( event.isShiftKeyDown() ) {
-					int x = event.getX();
-					int y = event.getY();
-					
-					canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-					if( !rerooting ) {
-						rerooting = true;
-						
-						Node newroot = recursiveReroot( root, x, y );
-						if( newroot != null ) {
-							newroot.setParent( null );
-							treeutil.reroot(root, newroot);
-							root = newroot;
-						}
-						
-						rerooting = false;
-					}
-					if( treeutil != null ) drawTree( treeutil );
+					reroot( event.getX(), event.getY() );
 				} else {
 					openFileDialog( 0 );
 				}
@@ -1222,7 +1224,7 @@ public class Treedraw implements EntryPoint {
 						/*selectedNode.getParent().removeNode( selectedNode );
 						selectedNode = null;
 						root.countLeaves();*/
-					} else if( c == 'r' || c == 'R' ) {
+					} else if( c == 's' || c == 'S' ) {
 						//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 						//Node newroot = recursiveReroot( root, x, y );
 						selectedNode.setParent( null );
@@ -1233,6 +1235,12 @@ public class Treedraw implements EntryPoint {
 						root.seth2( 0.0 );
 					} else if( c == 'i' || c == 'I' ) {
 						invertSelectionRecursive( root );
+					} else if( c == 'r' || c == 'R' ) {
+						if( treeutil != null && selectedNode != null ) {
+							//selectedNode.setParent( null );
+							treeutil.reroot( selectedNode );
+							root = treeutil.currentNode;
+						}
 					}
 				}
 				if( treeutil != null ) drawTree( treeutil );
@@ -1514,10 +1522,19 @@ public class Treedraw implements EntryPoint {
 				drawTree( treeutil );
 			}
 		});
-		
+		CheckBox bubblecheck = new CheckBox("Node bubble");
+		bubblecheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				showbubble = event.getValue();
+				drawTree( treeutil );	
+			}
+		});
+			
 		labhp.add( scalecheck );
 		labhp.add( labcheck);
 		labhp.add( label );
+		labhp.add( bubblecheck );
 		
 		choicePanel.add( arrangehp );
 		choicePanel.add( bc );
@@ -1783,6 +1800,18 @@ public class Treedraw implements EntryPoint {
 			}
 			g2.closePath();
 			g2.stroke();
+			
+			if( showbubble ) {
+				g2.beginPath();
+				if( vertical ) {
+					double yfloor = Math.floor(y+ny);
+					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
+				} else {
+					
+				}
+				g2.fill();
+				g2.closePath();
+			}
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
@@ -1889,6 +1918,18 @@ public class Treedraw implements EntryPoint {
 			}
 			g2.closePath();
 			g2.stroke();
+			
+			if( showbubble ) {
+				g2.beginPath();
+				if( vertical ) {
+					double yfloor = Math.floor(y+ny);
+					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
+				} else {
+					
+				}
+				g2.fill();
+				g2.closePath();
+			}
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
