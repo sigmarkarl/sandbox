@@ -614,7 +614,7 @@ public class FacebookTree implements EntryPoint {
 						Node newroot = recursiveReroot( root, x, y );
 						if( newroot != null ) {
 							newroot.setParent( null );
-							treeutil.reroot(root, newroot);
+							treeutil.reroot(newroot);
 							root = newroot;
 						}
 						
