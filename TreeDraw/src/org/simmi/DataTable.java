@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -93,7 +94,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
-import org.simmi.shared.Sequence.Annotation;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.unsigned.JavaFasta;
@@ -106,6 +106,10 @@ import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
 
 public class DataTable extends JApplet implements ClipboardOwner {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	static String lof = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
 	public static void updateLof() {
 		try {
@@ -571,6 +575,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	public void loadAligned( JavaFasta jf, boolean aligned ) {
+		loadAligned( jf, aligned, null );
+	}
+	
+	public void loadAligned( JavaFasta jf, boolean aligned, Object[] extra ) {
+		List<NameSel> namesel = nameSelection( extra );
+		
 		Set<String>	include = new HashSet<String>();
 		int[] rr = table.getSelectedRows();
 		for( int r : rr ) {
@@ -579,11 +589,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Object[] val = rowList.get(i);
 				String cacheval = (String)val[1];
 				if( seqcache.containsKey( cacheval ) ) {
-					jf.addSequence( seqcache.get( cacheval ) );
+					Sequence seq = seqcache.get( cacheval );
+					
+					Object[] obj = tablemap.get( seq.id );
+					if( obj != null ) {
+						String fname = getFastaName( namesel, obj );
+						seq.setName( fname );
+					}
+					
+					jf.addSequence( seq );
 				} else include.add( cacheval );
 			}
 		}
-		if( include.size() > 0 ) loadAligned( jf, aligned, include );
+		if( include.size() > 0 ) loadAligned( jf, aligned, include, namesel );
 		else if( runnable != null ) {
 			runnable.run();
 			runnable = null;
@@ -619,9 +637,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	
 	List<NameSel>		names = new ArrayList<NameSel>();
 	int[] currentRowSelection;
-	public List<NameSel> nameSelection() {
+	public List<NameSel> nameSelection( Object[] extra ) {
 		JTable table = nameSelectionComponent();
-		JOptionPane.showMessageDialog( DataTable.this, table, "Select names", JOptionPane.PLAIN_MESSAGE );
+		if( extra == null ) extra = new Object[] {table};
+		else {
+			Object[] oldextra = extra;
+			extra = new Object[ extra.length+1 ];
+			extra[0] = table;
+			for( int i = 0; i < oldextra.length; i++ ) {
+				extra[i+1] = oldextra[ i ];
+			}
+		}
+		JOptionPane.showMessageDialog( DataTable.this, extra, "Select names", JOptionPane.PLAIN_MESSAGE );
 		return names;
 	}
 	
@@ -776,10 +803,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return table;
 	}
 	
-	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> iset ) {
+	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> iset, List<NameSel> namesel ) {
 		/*JCheckBox species = new JCheckBox("Species");
 		JCheckBox country = new JCheckBox("Country");
-		JCheckBox source = new JCheckBox("Source");
+		JCheckBox source =s new JCheckBox("Source");
 		JCheckBox accession = new JCheckBox("Accession");
 		Object[] params = new Object[] {species, country, source, accession};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
@@ -792,7 +819,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				if( include.length() == 0 ) include.append( is );
 				else include.append( ","+is );
 			}
-			win.call( "fetchSeq", new Object[] { include.toString() } );
+			this.ns = namesel;
+			String includes = include.toString();
+			win.call( "fetchSeq", new Object[] { includes } );
 		} catch( Exception e ) {
 			fail = true;
 		}
@@ -803,15 +832,17 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( String is : iset ) {
 					jsono.put(is, (Object)"");
 				}
-				loadSequences( jsono.toString(), aligned );
+				loadSequences( jsono.toString(), aligned, namesel );
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 	
+	List<NameSel> ns;
 	public void loadSequences( String jsonstr ) throws JSONException {
-		loadSequences( jsonstr, true );
+		loadSequences( jsonstr, true, ns );
+		ns = null;
 	}
 	
 	public void console( String message ) {
@@ -824,8 +855,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 	}
 	
-	public void loadSequences( String jsonstr, boolean aligned ) throws JSONException {
-		List<NameSel>	namesel = nameSelection();
+	public void loadSequences( String jsonstr, boolean aligned, List<NameSel> namesel ) throws JSONException {
+		//List<NameSel> namesel = nameSelection( extra );
+		
 		List<Sequence> contset = new ArrayList<Sequence>();
 		Sequence	seq = null;
 		//int nseq = 0;
@@ -1105,7 +1137,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Object[] params = new Object[] {species, accession, country, source};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
 		
-		List<NameSel>	namesel = nameSelection();
+		List<NameSel>	namesel = nameSelection( null );
 		
 		int start = 0;
 		int stop = -1;
@@ -1244,7 +1276,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Object[] params = new Object[] {species, accession, country, source};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
 		
-		List<NameSel>	namesel = nameSelection();
+		List<NameSel>	namesel = nameSelection( null );
 		
 		int start = 0;
 		int stop = -1;
@@ -1994,19 +2026,58 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		njmenu.add( new AbstractAction("NJTree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				final JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
+				final JCheckBox	boots = new JCheckBox("Bootstrap");
+				final JCheckBox	entropy = new JCheckBox("Entropy weighting");
+				final JCheckBox	exgaps = new JCheckBox("Exclude gaps");
+				Object[] extraObjs = new Object[] {jukes, boots, exgaps, entropy};
+				//JOptionPane.showMessageDialog( DataTable.this, extraObjs );
+				
 				runnable = new Runnable() {
 					public void run() {
-						JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
-						JCheckBox	boots = new JCheckBox("Bootstrap");
-						JOptionPane.showMessageDialog( DataTable.this, new Object[] {jukes, boots} );
 						boolean cantor = jukes.isSelected();
 						boolean bootstrap = boots.isSelected();
+						boolean entr = entropy.isSelected();
+						boolean exg = exgaps.isSelected();
+						
+						double[] ent = null;
+						if( entr ) {
+							ent = Sequence.entropy( currentjavafasta.lseq );
+						}
+						
+						List<Integer>	idxs = null;
+						if( exg ) {
+							int start = Integer.MIN_VALUE;
+							int end = Integer.MAX_VALUE;
+							
+							for( Sequence seq : currentjavafasta.lseq ) {
+								if( seq.getRealStart() > start ) start = seq.getRealStart();
+								if( seq.getRealStop() < end ) end = seq.getRealStop();
+							}
+							
+							idxs = new ArrayList<Integer>();
+							for( int x = start; x < end; x++ ) {
+								boolean skip = false;
+								for( Sequence seq : currentjavafasta.lseq ) {
+									char c = seq.charAt( x );
+									if( c != '-' && c != '.' && c == ' ' ) {
+										skip = true;
+										break;
+									}
+								}
+								
+								if( !skip ) {
+									idxs.add( x );
+								}
+							}
+						}
 						
 						String tree = "";
 						List<String>	corrInd = currentjavafasta.getNames();
-						double[] corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, false, cantor );
+						double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
+						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
 						TreeUtil	tu = new TreeUtil();
-						Node n = tu.neighborJoin(corr, corrInd);
+						Node n = tu.neighborJoin(corr, corrInd, null);
 
 						if( bootstrap ) {
 							Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
@@ -2022,8 +2093,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							tree = n.toStringWoLengths();
 							
 							for( int i = 0; i < 1000; i++ ) {
-								corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, true, cantor );
-								Node nn = tu.neighborJoin(corr, corrInd);
+								Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
+								Node nn = tu.neighborJoin(corr, corrInd, null);
 								tu.arrange( nn, comp );
 								tu.compareTrees( tree, n, nn );
 								
@@ -2041,9 +2112,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								Object[] objs = { tree };
 								win.call("showTree", objs);
 							} catch( Exception e1 ) {
+								scc = false;
 								console( e1.getMessage() );
 								console( tree );
-								scc = false;
 							}
 							
 							if( !scc ) {
@@ -2070,10 +2141,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( Sequence seq : lseq ) {
 					
 				}*/
-				loadAligned(jf, true);
+				loadAligned(jf, true, extraObjs);
 			}
 		});
-		njmenu.add( new AbstractAction("NJTree w/o gaps") {
+		/*njmenu.add( new AbstractAction("NJTree w/o gaps") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//String tree = extractFasta("/thermales.fasta");
@@ -2084,11 +2155,38 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					public void run() {
 						JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
 						JCheckBox	boots = new JCheckBox("Bootstrap");
+						//JCheckBox	boots = new JCheckBox("Bootstrap");
 						JOptionPane.showMessageDialog( DataTable.this, new Object[] {jukes, boots} );
 						boolean cantor = jukes.isSelected();
 						boolean bootstrap = boots.isSelected();
 						
-						double[] corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, true, false, cantor );
+						int start = Integer.MIN_VALUE;
+						int end = Integer.MAX_VALUE;
+						
+						for( Sequence seq : currentjavafasta.lseq ) {
+							if( seq.getRealStart() > start ) start = seq.getRealStart();
+							if( seq.getRealStop() < end ) end = seq.getRealStop();
+						}
+						
+						List<Integer>	idxs = new ArrayList<Integer>();
+						for( int x = start; x < end; x++ ) {
+							int i;
+							boolean skip = false;
+							for( Sequence seq : currentjavafasta.lseq ) {
+								char c = seq.charAt( x );
+								if( c != '-' && c != '.' && c == ' ' ) {
+									skip = true;
+									break;
+								}
+							}
+							
+							if( !skip ) {
+								idxs.add( x );
+							}
+						}
+						
+						double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
+						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, false, cantor, ent );
 						List<String>	corrInd = currentjavafasta.getNames();
 						
 						TreeUtil	tu = new TreeUtil();
@@ -2108,7 +2206,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							String tree = n.toStringWoLengths();
 							
 							for( int i = 0; i < 1000; i++ ) {
-								corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, true, cantor );
+								Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
 								Node nn = tu.neighborJoin(corr, corrInd);
 								tu.arrange( nn, comp );
 								tu.compareTrees( tree, n, nn );
@@ -2131,24 +2229,31 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				/*Set<String> include = new HashSet<String>();
 				for( Sequence seq : lseq ) {
 					
-				}*/
+				}*
 				loadAligned(jf, true);
 			}
-		});
+		});*/
 		njmenu.add( new AbstractAction("NJTree current view") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
 				JCheckBox	boots = new JCheckBox("Bootstrap");
+				JCheckBox	entropy = new JCheckBox("Entropy weighting");
+				
 				JOptionPane.showMessageDialog( DataTable.this, new Object[] {jukes, boots} );
 				boolean cantor = jukes.isSelected();
 				boolean bootstrap = boots.isSelected();
+				boolean entr = entropy.isSelected();
 				
-				double[] corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, false, cantor );
+				double[] ent = null;
+				if( entr ) ent = Sequence.entropy( currentjavafasta.lseq );
+				
+				double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
+				Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
 				List<String>	corrInd = currentjavafasta.getNames();
 				
 				TreeUtil	tu = new TreeUtil();
-				Node n = tu.neighborJoin(corr, corrInd);
+				Node n = tu.neighborJoin(corr, corrInd, null);
 				
 				if( bootstrap ) {
 					Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
@@ -2164,8 +2269,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					String tree = n.toStringWoLengths();
 					
 					for( int i = 0; i < 1000; i++ ) {
-						corr = Sequence.distanceMatrixNumeric( currentjavafasta.lseq, false, true, cantor );
-						Node nn = tu.neighborJoin(corr, corrInd);
+						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, true, cantor, ent );
+						Node nn = tu.neighborJoin(corr, corrInd, null);
 						tu.arrange( nn, comp );
 						tu.compareTrees( tree, n, nn );
 						
@@ -2588,7 +2693,26 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	};
 	
 	public static void main(String[] args) {
+		File f = new File("/home/sigmar/sim.newick");
 		try {
+			char[] cbuf = new char[(int)f.length()];
+			FileReader fr = new FileReader(f);
+			int r = fr.read(cbuf);
+			String str = new String( cbuf );
+			String tree = str.replaceAll("[\r\n]+", "");
+			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
+			Node n = treeutil.getNode();
+			String thetree = n.toString();
+			FileWriter fw = new FileWriter("/home/sigmar/fw.newick");
+			fw.write( thetree );
+			fw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		/*try {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			//service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			
@@ -2603,14 +2727,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			/*String ret = run("select rowid from "+tableid+" where name = 'Unl042jm'", true);
 			System.err.println( ret );
 			String[] lines = ret.split("\n");
-			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*/
+			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*
 		} catch (AuthenticationException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ServiceException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	public static void main_old(String[] args) {
