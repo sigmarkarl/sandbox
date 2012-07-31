@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -1940,6 +1941,17 @@ public class SerifyApplet extends JApplet {
 		return mapHit;
 	}
 	
+	public static double correlateDistance(double[] dmat1, double[] dmat2) {
+		double ret = 0.0;
+		
+		for( int i = 0; i < dmat1.length; i++ ) {
+			double dif = dmat1[i]-dmat2[i];
+			ret += dif*dif;
+		}
+		
+		return Math.sqrt( ret );
+	}
+	
 	public int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
 		int nseq = 0;
 		PrintStream pr = new PrintStream( os );
@@ -3248,17 +3260,6 @@ public class SerifyApplet extends JApplet {
 					e1.printStackTrace();
 				}
 			}
-
-			private double correlateDistance(double[] dmat1, double[] dmat2) {
-				double ret = 0.0;
-				
-				for( int i = 0; i < dmat1.length; i++ ) {
-					double dif = dmat1[i]-dmat2[i];
-					ret += dif*dif;
-				}
-				
-				return Math.sqrt( ret );
-			}
 		});
 		popup.add( new AbstractAction("Gene evolution phylogeny (nni distance)") {
 			@Override
@@ -3370,7 +3371,7 @@ public class SerifyApplet extends JApplet {
 							for( int k = i+1; k < lnode.size(); k++ ) {
 								Node node1 = lnode.get(i);
 								Node node2 = lnode.get(k);
-								double corr = Math.exp( (treeutil.nDistance( node1, node2 ) - 2.0)*0.1 ) - 1.0;
+								double corr = Math.exp( (treeutil.nDistance( node1, node2 ) - 2.0)*0.2 ) - 1.0;
 								
 								
 								/*if( (names.get(i).equals("transcription_elongation_factor_NusA") && names.get(k).equals("ABC_transporter_permease")) || (names.get(k).equals("transcription_elongation_factor_NusA") && names.get(i).equals("ABC_transporter_permease")) ) {
@@ -4307,8 +4308,87 @@ public class SerifyApplet extends JApplet {
 	
 	public static void main(String[] args) {
 		try {
+			List<double[]>	ldmat = new ArrayList<double[]>();
+			File f = new File( "/root/ermermerm/dist/" );
+			File[] ff = f.listFiles( new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					if( name.endsWith(".fasta") ) return true;
+					return false;
+				}
+			});
 			List<String> names = new ArrayList<String>();
-			FileReader f = new FileReader( "/home/sigmar/transposed_again/tree/erm.txt" );
+			for( File tf : ff ) {
+				names.add( tf.getName().replace("(", "").replace(")", "").replace("'", "") );
+				BufferedReader br = new BufferedReader( new FileReader(tf) );
+				String line = br.readLine();
+				int c = Integer.parseInt(line.trim());
+				double[] d = new double[ c*c ];
+				ldmat.add( d );
+				line = br.readLine();
+				int k = 0;
+				while( line != null ) {
+					String[] split = line.split("[\t ]+");
+					for( int i = 1; i < split.length; i++ ) {
+						d[k] = Double.parseDouble( split[i] );
+						k++;
+					}
+					line = br.readLine();
+				}
+				br.close();
+			}
+			
+			double[]	submat = new double[ ldmat.size()*ldmat.size() ];
+			for( int i = 0; i < ldmat.size(); i++ ) {
+				submat[i*ldmat.size()+i] = 0.0;
+			}
+			
+			double mincorr = Double.MAX_VALUE;
+			int mini = 0;
+			int mink = 0;
+			for( int i = 0; i < ldmat.size()-1; i++ ) {
+				for( int k = i+1; k < ldmat.size(); k++ ) {
+					double[] dmat1 = ldmat.get(i);
+					double[] dmat2 = ldmat.get(k);
+					double corr = correlateDistance( dmat1, dmat2 );
+					if( corr < mincorr ) {
+						mincorr = corr;
+						mini = i;
+						mink = k;
+					}
+					submat[i*ldmat.size()+k] = corr;
+					submat[k*ldmat.size()+i] = corr;
+				}
+			}
+			System.err.println( mini + "  " + mink + "  " + mincorr );
+			
+			StringBuilder tree = new StringBuilder();
+			tree.append( "\t"+ldmat.size()+"\n" );
+			int i = 0;
+			for( String name : names ) {
+				tree.append( name );
+				int k;
+				for( k = i; k < i+ldmat.size(); k++ ) {
+					tree.append( "\t"+submat[k] );
+				}
+				i = k;
+				
+				tree.append("\n");
+			}
+			String treestr = tree.toString();
+			FileWriter fw = new FileWriter( "/home/sigmar/mat.txt" );
+			fw.write( treestr );
+			fw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+		/*try {
+			List<String> names = new ArrayList<String>();
+			FileReader f = new FileReader( "/root/ermermerm/aligned/tree/erm.txt" );
 			BufferedReader br = new BufferedReader( f );
 			String line = br.readLine();
 			while( line != null ) {
@@ -4317,7 +4397,7 @@ public class SerifyApplet extends JApplet {
 			}
 			br.close();
 			
-			f = new FileReader( "/home/sigmar/outfile" );
+			f = new FileReader( "/root/ermermerm/aligned/tree/outfile" );
 			br = new BufferedReader( f );
 			line = br.readLine();
 			double[] dmat = new double[403*403];
@@ -4334,7 +4414,7 @@ public class SerifyApplet extends JApplet {
 						if( ind > dmat.length ) {
 							System.err.println();
 						}
-						dmat[ind] = Math.exp( (double)n/10.0 )-1.0;
+						dmat[ind] = Math.exp( (double)n/5.0 )-1.0;
 						i++;
 					}
 					c++;
@@ -4357,7 +4437,7 @@ public class SerifyApplet extends JApplet {
 				
 				c++;
 			}
-			fw.write("\n");*/
+			fw.write("\n");*
 			TreeUtil tu = new TreeUtil();
 			Node n = tu.neighborJoin(dmat, names, null);
 			fw.write( n.toString() );
@@ -4366,7 +4446,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		/*SerifyApplet sa = new SerifyApplet();
 		
