@@ -10,6 +10,7 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
@@ -35,8 +36,7 @@ public class Hvaderimatnum implements EntryPoint {
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
-	private final GreetingServiceAsync greetingService = GWT
-			.create(GreetingService.class);
+	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
 	public native int initApplet( final String server ) /*-{
 		$wnd.runApplet = function() {
@@ -52,6 +52,26 @@ public class Hvaderimatnum implements EntryPoint {
 		$wnd.showTable = function( str ) {
 			s.@org.simmi.client.Hvaderimatnum::showTable(Ljava/lang/String;)( str );
 		};
+		
+		$wnd.loadData = function( str ) {
+			s.@org.simmi.client.Hvaderimatnum::loadData(Ljava/lang/String;)( str );
+		};
+	}-*/;
+	
+	public void loadData( String query ) {
+		greetingService.greetServer( query, new AsyncCallback<String>() {
+			@Override
+			public void onSuccess(String result) {
+				setAppletInputStream( appletelement, result );
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {}
+		});
+	}
+	
+	public native void setAppletInputStream( Element ae, String result ) /*-{
+		ae.setInput( result );
 	}-*/;
 	
 	public native void console( String log ) /*-{
@@ -100,6 +120,7 @@ public class Hvaderimatnum implements EntryPoint {
 	DataView	view;
 	Table		table;
 	Options		options;
+	Element		appletelement;
 
 	/**
 	 * This is the entry point method.
@@ -163,12 +184,14 @@ public class Hvaderimatnum implements EntryPoint {
 	    	"var parameters = { jnlp_href:'order.jnlp' };\n"+
 	    	"deployJava.runApplet(attributes, parameters, '1.6');" );*/
 		
-		Element ae = Document.get().createElement("applet");
+		Element ae = Document.get().createElement("object");
+		appletelement = ae;
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
-		ae.setAttribute("codebase", "http://"+server+"/");
-		ae.setAttribute("archive", "isgem.jar,swingx-core-1.6.2.jar,javaws.jar");
-		ae.setAttribute("code", "org.simmi.SortTable");
+		ae.setAttribute("type", "application/x-java-applet");
+		/*ae.setAttribute("codebase", "http://"+server+"/");
+		ae.setAttribute("archive", "food.jar,swingx-all-1.6.3.jar");
+		ae.setAttribute("code", "org.simmi.SortTable");*/
 		ae.setAttribute("id", "isgem");
 		ae.setAttribute("name", "isgem");
 		

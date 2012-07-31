@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -90,6 +91,11 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.simmi.shared.Sequence;
+<<<<<<< HEAD
+=======
+import org.simmi.shared.TreeUtil;
+import org.simmi.shared.TreeUtil.Node;
+>>>>>>> b23165568f44f677ced2c6275503243c60061d81
 import org.simmi.unsigned.JavaFasta;
 
 public class SerifyApplet extends JApplet {
@@ -1938,6 +1944,17 @@ public class SerifyApplet extends JApplet {
 		return mapHit;
 	}
 	
+	public static double correlateDistance(double[] dmat1, double[] dmat2) {
+		double ret = 0.0;
+		
+		for( int i = 0; i < dmat1.length; i++ ) {
+			double dif = dmat1[i]-dmat2[i];
+			ret += dif*dif;
+		}
+		
+		return Math.sqrt( ret );
+	}
+	
 	public int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
 		int nseq = 0;
 		PrintStream pr = new PrintStream( os );
@@ -1971,13 +1988,13 @@ public class SerifyApplet extends JApplet {
 		
 		public Anno( int start, int stop, boolean comp, String name ) {
 			if( stop > start ) {
-				this.start = stop;
-				this.stop = start;
-				this.comp = !comp;
-			} else {
 				this.start = start;
 				this.stop = stop;
 				this.comp = comp;
+			} else {
+				this.start = stop;
+				this.stop = start;
+				this.comp = !comp;
 			}
 			this.name = name;
 		}
@@ -2487,6 +2504,7 @@ public class SerifyApplet extends JApplet {
 										sstop = Integer.parseInt( split[3] );
 									} else if( line.startsWith(">") ) {
 										String cont = line.substring(1).trim();
+										cont = cont.replaceAll(".fna", "");
 										
 										int li = cont.indexOf(' ');
 										if( li != -1 ) {
@@ -2568,7 +2586,7 @@ public class SerifyApplet extends JApplet {
 									FileWriter	fw = new FileWriter( f );
 									String loc = "LOCUS       "+phage+" on "+s.getName()+"                "+count+" bp    dna     linear   UNK";
 									String def = "DEFINITION  [organism=unknown] [strain=unknown] [gcode=11] [date=3-20-2012]";
-									String acc = "ACCESSION   CP51";
+									String acc = "ACCESSION   Unknown";
 									String keyw = "KEYWORDS    .";
 									String feat = "FEATURES             Location/Qualifiers";
 									fw.write( loc+"\n" );
@@ -2603,6 +2621,7 @@ public class SerifyApplet extends JApplet {
 									fw.write( "ORIGIN" );
 									count = 1;
 									//int start = 1;
+									int total = 0;
 									for( String key : seqmap.keySet() ) {
 										StringBuilder sbld = seqmap.get(key);
 										for( int k = 0; k < sbld.length(); k++ ) {
@@ -2613,6 +2632,19 @@ public class SerifyApplet extends JApplet {
 											
 											count++;
 										}
+										
+										if( total < seqmap.size()-1 ) {
+											for( int k = 0; k < addon.length(); k++ ) {
+												if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
+												else if( (count-1)%10 == 0 ) fw.write( " " );
+												
+												fw.write( addon.charAt(k) );
+												
+												count++;
+											}	
+										}
+										
+										total++;
 									}
 									fw.write("\n//");
 									fw.close();
@@ -2666,7 +2698,7 @@ public class SerifyApplet extends JApplet {
 								}
 								int li = line.indexOf(' ');
 								if( li == -1 ) li = line.length();
-								name = line.substring(1,li);
+								name = line.substring(1,li).replace(".fna", "");
 								sb = new StringBuilder();
 							} else {
 								sb.append( line.replace(" ", "") );
@@ -2701,6 +2733,7 @@ public class SerifyApplet extends JApplet {
 									//int ki = line.indexOf('_');
 									
 									String cont = line.substring(7,ki).trim();
+									//cont = cont.replace(".fna", "");
 									if( pool.contains( cont ) ) {
 										List<Anno> lann;
 										if( mapan.containsKey(cont) ) {
@@ -2715,7 +2748,7 @@ public class SerifyApplet extends JApplet {
 										int start = Integer.parseInt( split[1].trim() );
 										int stop = Integer.parseInt( split[2].trim() );
 										int rev = Integer.parseInt( split[3].trim() );
-										ann = new Anno( start, stop, rev == -1, null );
+										ann = new Anno( start-1, stop-1, rev == -1, null );
 										lann.add(ann);
 									} else ann = null;
 									evalue = null;
@@ -2759,9 +2792,9 @@ public class SerifyApplet extends JApplet {
 						
 						if( f != null ) {
 							FileWriter	fw = new FileWriter( f );
-							String loc = "LOCUS       CP51                "+count+" bp    dna     linear   UNK";
-							String def = "DEFINITION  [organism=CP51] [strain=CP51] [gcode=11] [date=3-20-2012]";
-							String acc = "ACCESSION   CP51";
+							String loc = "LOCUS       "+s.getName()+"                "+count+" bp    dna     linear   UNK";
+							String def = "DEFINITION  [organism=Unknown] [strain=Unknown] [gcode=11] [date=6-26-2012]";
+							String acc = "ACCESSION   "+s.getName()+"_Unknown";
 							String keyw = "KEYWORDS    .";
 							String feat = "FEATURES             Location/Qualifiers";
 							fw.write( loc+"\n" );
@@ -2793,6 +2826,7 @@ public class SerifyApplet extends JApplet {
 							}
 							fw.write( "ORIGIN" );
 							count = 1;
+							int total = 0;
 							//int start = 1;
 							for( String key : seqmap.keySet() ) {
 								StringBuilder sbld = seqmap.get(key);
@@ -2804,6 +2838,19 @@ public class SerifyApplet extends JApplet {
 									
 									count++;
 								}
+								
+								if( total < seqmap.size()-1 ) {
+									for( int k = 0; k < addon.length(); k++ ) {
+										if( (count-1)%60 == 0 ) fw.write( String.format( "\n%10s ", Integer.toString(count) ) );
+										else if( (count-1)%10 == 0 ) fw.write( " " );
+										
+										fw.write( addon.charAt(k) );
+										
+										count++;
+									}	
+								}
+								
+								total++;
 							}
 							fw.write("\n//");
 							fw.close();
@@ -3055,10 +3102,41 @@ public class SerifyApplet extends JApplet {
 				
 				for( String key : seqmap.keySet() ) {
 					StringBuilder sb = seqmap.get( key );
-					lseq.add( new Sequence( key, sb, null ) );
+					Sequence s = new Sequence( key, sb, null );
+					s.checkLengths();
+					lseq.add( s );
 				}
 				
-				double[] dd = Sequence.distanceMatrixNumeric(lseq, excludeGaps, bootstrap, cantor);
+				List<Integer>	idxs = null;
+				if( excludeGaps ) {
+					int start = Integer.MIN_VALUE;
+					int end = Integer.MAX_VALUE;
+					
+					for( Sequence seq : lseq ) {
+						if( seq.getRealStart() > start ) start = seq.getRealStart();
+						if( seq.getRealStop() < end ) end = seq.getRealStop();
+					}
+					
+					idxs = new ArrayList<Integer>();
+					for( int x = start; x < end; x++ ) {
+						int i;
+						boolean skip = false;
+						for( Sequence seq : lseq ) {
+							char c = seq.charAt( x );
+							if( c != '-' && c != '.' && c == ' ' ) {
+								skip = true;
+								break;
+							}
+						}
+						
+						if( !skip ) {
+							idxs.add( x );
+						}
+					}
+				}
+				
+				double[] dd = new double[ lseq.size()*lseq.size() ];
+				Sequence.distanceMatrixNumeric(lseq, dd, idxs, bootstrap, cantor, null);
 				
 				StringBuilder tree = new StringBuilder();
 				tree.append( "\t"+lseq.size()+"\n" );
@@ -3079,10 +3157,262 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		popup.add( new AbstractAction("Majority rule consensus tree") {
-
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
+			}
+		});
+		popup.add( new AbstractAction("Gene evolution phylogeny (distance matrix correlation)") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				List<double[]>	ldmat = new ArrayList<double[]>();
+				List<String>	names = new ArrayList<String>();
+				
+				try {
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						String path = (String)table.getValueAt( r, 3 );
+						
+						String name = (String)table.getValueAt( r, 1 );
+						int l = name.lastIndexOf('.');
+						if( l != -1 ) name = name.substring(0, l);
+						name = name.replace("(", "").replace(")", "").replace(",", "");
+						names.add( name );
+						
+						URL url = new URL( path );
+						InputStream is = url.openStream();
+						BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+						String line = br.readLine();
+						Sequence seq = null;
+						List<Sequence> 	lseq = new ArrayList<Sequence>();
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								String subline = line.substring(1);
+								seq = new Sequence( subline, null );
+								lseq.add( seq );
+							} else {
+								if( seq != null ) seq.append( line );
+							}
+							
+							line = br.readLine();
+						}
+						br.close();
+						
+						for( Sequence s : lseq ) {
+							s.checkLengths();
+						}
+					
+						if( ldmat.size() > 0 && ldmat.get(0).length != lseq.size()*lseq.size() ) {
+							System.err.println( ldmat.size() + "  " + lseq.size() );
+							System.err.println( lseq.size()*lseq.size() + "  " + ldmat.get(0).length );
+							break;
+						}
+						double[] dmat = new double[ lseq.size()*lseq.size() ];
+						ldmat.add( dmat );
+						
+						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
+					}
+					
+					if( ldmat.size() == rr.length ) {
+						double[]	submat = new double[ ldmat.size()*ldmat.size() ];
+						for( int i = 0; i < ldmat.size(); i++ ) {
+							submat[i*ldmat.size()+i] = 0.0;
+						}
+						
+						double mincorr = Double.MAX_VALUE;
+						int mini = 0;
+						int mink = 0;
+						for( int i = 0; i < ldmat.size()-1; i++ ) {
+							for( int k = i+1; k < ldmat.size(); k++ ) {
+								double[] dmat1 = ldmat.get(i);
+								double[] dmat2 = ldmat.get(k);
+								double corr = correlateDistance( dmat1, dmat2 );
+								if( corr < mincorr ) {
+									mincorr = corr;
+									mini = i;
+									mink = k;
+								}
+								submat[i*ldmat.size()+k] = corr;
+								submat[k*ldmat.size()+i] = corr;
+							}
+						}
+						System.err.println( mini + "  " + mink + "  " + mincorr );
+						
+						StringBuilder tree = new StringBuilder();
+						tree.append( "\t"+ldmat.size()+"\n" );
+						int i = 0;
+						for( String name : names ) {
+							tree.append( name );
+							int k;
+							for( k = i; k < i+ldmat.size(); k++ ) {
+								tree.append( "\t"+submat[k] );
+							}
+							i = k;
+							
+							tree.append("\n");
+						}
+						String treestr = tree.toString();
+						FileWriter fw = new FileWriter( "/home/sigmar/mat.txt" );
+						fw.write( treestr );
+						fw.close();
+						//System.err.println( tree.toString() );
+						JSObject win = JSObject.getWindow( SerifyApplet.this );
+						win.call("showTree", new Object[] {treestr});
+					}
+				} catch( Exception e1 ) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		popup.add( new AbstractAction("Gene evolution phylogeny (nni distance)") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				List<Node>		lnode = new ArrayList<Node>();
+				List<String>	names = new ArrayList<String>();
+				TreeUtil 		treeutil = new TreeUtil();
+				String			rootid = null;
+				try {
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						String path = (String)table.getValueAt( r, 3 );
+						
+						String name = (String)table.getValueAt( r, 1 );
+						int l = name.lastIndexOf('.');
+						if( l != -1 ) name = name.substring(0, l);
+						name = name.replace("(", "").replace(")", "").replace(",", "");
+						names.add( name );
+						
+						URL url = new URL( path );
+						boolean mu = true;
+						String fstr = url.getFile();
+						int fi = fstr.lastIndexOf('/');
+						if( fi != -1 ) {
+							File f = new File( fstr.substring(0, fi), "tree" );
+							if( f.exists() && f.isDirectory() ) {
+								File treef = new File( f, fstr.substring(fi+1) );
+								if( treef.exists() ) {
+									mu = false;
+									url = treef.toURI().toURL();
+								}
+							}
+						}
+						Node n = null;
+						if( mu ) {
+							InputStream is = url.openStream();
+							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+							String line = br.readLine();
+							Sequence seq = null;
+							List<String> 	corrInd = new ArrayList<String>();
+							List<Sequence> 	lseq = new ArrayList<Sequence>();
+							while( line != null ) {
+								if( line.startsWith(">") ) {
+									String subline = line.substring(1);
+									corrInd.add( subline );
+									seq = new Sequence( subline, null );
+									lseq.add( seq );
+								} else {
+									if( seq != null ) seq.append( line );
+								}
+								
+								line = br.readLine();
+							}
+							br.close();
+							
+							for( Sequence s : lseq ) {
+								s.checkLengths();
+							}
+						
+							/*if( lnode.size() > 0 && lnode.get(0).length != lseq.size()*lseq.size() ) {
+								System.err.println( lnode.size() + "  " + lseq.size() );
+								System.err.println( lseq.size()*lseq.size() + "  " + lnode.get(0).length );
+								break;
+							}*/
+							double[] dmat = new double[ lseq.size()*lseq.size() ];
+							Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
+							
+							n = treeutil.neighborJoin(dmat, corrInd, null);
+						} else {
+							StringBuilder tree = new StringBuilder();
+							InputStream is = url.openStream();
+							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+							String str = br.readLine();
+							while( str != null ) {
+								tree.append( str );
+								str = br.readLine();
+							}
+							//treeutil = new TreeUtil( tree.toString(), false, null, null, false, null, null, false );
+							treeutil.setLoc( 0 );
+							n = treeutil.parseTreeRecursive( tree.toString(), false );
+						}
+						
+						if( rootid == null ) rootid = n.firstLeaf().getId();
+						Node root = n.findNode( rootid );
+						if( root == null ) {
+							System.err.println("ok");
+						}
+						Node rootparent = root.getParent();
+						treeutil.currentNode = n;
+						treeutil.reroot( rootparent );
+						Node newroot = treeutil.currentNode;
+						//System.err.println( rootparent.getNodes().size() );
+						if( lnode.size() == 26 || lnode.size() == 36 ) {
+							System.err.println( newroot.toString() );
+						}
+						lnode.add( newroot );
+					}
+					
+					if( lnode.size() == rr.length ) {
+						double[]	submat = new double[ lnode.size()*lnode.size() ];
+						for( int i = 0; i < lnode.size(); i++ ) {
+							submat[i*lnode.size()+i] = 0.0;
+						}
+						
+						Node nod = lnode.get(0);
+						double corri = treeutil.nDistance( nod, nod );
+						
+						for( int i = 0; i < lnode.size()-1; i++ ) {
+							for( int k = i+1; k < lnode.size(); k++ ) {
+								Node node1 = lnode.get(i);
+								Node node2 = lnode.get(k);
+								double corr = Math.exp( (treeutil.nDistance( node1, node2 ) - 2.0)*0.2 ) - 1.0;
+								
+								
+								/*if( (names.get(i).equals("transcription_elongation_factor_NusA") && names.get(k).equals("ABC_transporter_permease")) || (names.get(k).equals("transcription_elongation_factor_NusA") && names.get(i).equals("ABC_transporter_permease")) ) {
+									System.err.println( "corr" + corr );
+								}*/
+								if( corr == 0.0 ) System.err.println( names.get(i) + "  " + names.get(k) );
+								
+								submat[i*lnode.size()+k] = corr;
+								submat[k*lnode.size()+i] = corr;
+							}
+						}
+						
+						StringBuilder tree = new StringBuilder();
+						tree.append( "\t"+lnode.size()+"\n" );
+						int i = 0;
+						for( String name : names ) {
+							tree.append( name );
+							int k;
+							for( k = i; k < i+lnode.size(); k++ ) {
+								tree.append( "\t"+submat[k] );
+							}
+							i = k;
+							
+							tree.append("\n");
+						}
+						FileWriter distm = new FileWriter("/home/sigmar/distm.txt");
+						distm.write( tree.toString() );
+						distm.close();
+						
+						Node node = treeutil.neighborJoin(submat, names, null);
+						String treestr = node.toString();
+						System.err.println( treestr );
+						JSObject win = JSObject.getWindow( SerifyApplet.this );
+						win.call("showTree", new Object[] { treestr });
+					}
+				} catch( Exception e1 ) {
+					e1.printStackTrace();
+				}
 			}
 		});
 		popup.addSeparator();
@@ -3404,6 +3734,71 @@ public class SerifyApplet extends JApplet {
 						});
 						dl.setVisible( true );
 					}
+				}
+			}
+		});
+		popup.add( new AbstractAction("Transpose") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					JFileChooser fc = new JFileChooser();
+					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+						File f1 = fc.getSelectedFile();
+						if( !f1.isDirectory() ) f1 = f1.getParentFile();
+						final File dir = f1;
+						
+						Map<String,Map<String,StringBuilder>>	seqmap = new HashMap<String,Map<String,StringBuilder>>();
+						
+						int[] rr = table.getSelectedRows();
+						for( int r : rr ) {
+							String path = (String)table.getValueAt( r, 3 );
+							
+							String name = (String)table.getValueAt( r, 1 );
+							int l = name.lastIndexOf('.');
+							if( l != -1 ) name = name.substring(0, l);
+							
+							URL url = new URL( path );
+							Map<String,StringBuilder>	msb = null;
+							StringBuilder				sb = null;
+							InputStream is = url.openStream();
+							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+							String line = br.readLine();
+							while( line != null ) {
+								if( line.startsWith(">") ) {
+									sb = new StringBuilder();
+									String subline = line.substring(1);
+									if( seqmap.containsKey( subline ) ) {
+										msb = seqmap.get( subline );
+									} else {
+										msb = new HashMap<String,StringBuilder>();
+										seqmap.put( subline, msb );
+									}
+									msb.put( name, sb );
+								} else {
+									if( sb != null ) sb.append( line );
+								}
+								
+								line = br.readLine();
+							}
+							br.close();
+						}
+						
+						for( String name : seqmap.keySet() ) {
+							Map<String,StringBuilder>	subset = seqmap.get( name );
+							FileWriter fw = new FileWriter( new File(dir, name+".fasta") );
+							for( String subname : subset.keySet() ) {
+								fw.write( ">"+subname+"\n" );
+								StringBuilder sb = subset.get(subname);
+								for( int i = 0; i < sb.length(); i+=70 ) {
+									fw.write( sb.substring(i, Math.min(sb.length(), i+70) ) + "\n" );
+								}
+							}
+							fw.close();
+						}
+					}
+				} catch( Exception ee ) {
+					ee.printStackTrace();
 				}
 			}
 		});
@@ -3915,7 +4310,148 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
-		SerifyApplet sa = new SerifyApplet();
+		try {
+			List<double[]>	ldmat = new ArrayList<double[]>();
+			File f = new File( "/root/ermermerm/dist/" );
+			File[] ff = f.listFiles( new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					if( name.endsWith(".fasta") ) return true;
+					return false;
+				}
+			});
+			List<String> names = new ArrayList<String>();
+			for( File tf : ff ) {
+				names.add( tf.getName().replace("(", "").replace(")", "").replace("'", "") );
+				BufferedReader br = new BufferedReader( new FileReader(tf) );
+				String line = br.readLine();
+				int c = Integer.parseInt(line.trim());
+				double[] d = new double[ c*c ];
+				ldmat.add( d );
+				line = br.readLine();
+				int k = 0;
+				while( line != null ) {
+					String[] split = line.split("[\t ]+");
+					for( int i = 1; i < split.length; i++ ) {
+						d[k] = Double.parseDouble( split[i] );
+						k++;
+					}
+					line = br.readLine();
+				}
+				br.close();
+			}
+			
+			double[]	submat = new double[ ldmat.size()*ldmat.size() ];
+			for( int i = 0; i < ldmat.size(); i++ ) {
+				submat[i*ldmat.size()+i] = 0.0;
+			}
+			
+			double mincorr = Double.MAX_VALUE;
+			int mini = 0;
+			int mink = 0;
+			for( int i = 0; i < ldmat.size()-1; i++ ) {
+				for( int k = i+1; k < ldmat.size(); k++ ) {
+					double[] dmat1 = ldmat.get(i);
+					double[] dmat2 = ldmat.get(k);
+					double corr = correlateDistance( dmat1, dmat2 );
+					if( corr < mincorr ) {
+						mincorr = corr;
+						mini = i;
+						mink = k;
+					}
+					submat[i*ldmat.size()+k] = corr;
+					submat[k*ldmat.size()+i] = corr;
+				}
+			}
+			System.err.println( mini + "  " + mink + "  " + mincorr );
+			
+			StringBuilder tree = new StringBuilder();
+			tree.append( "\t"+ldmat.size()+"\n" );
+			int i = 0;
+			for( String name : names ) {
+				tree.append( name );
+				int k;
+				for( k = i; k < i+ldmat.size(); k++ ) {
+					tree.append( "\t"+submat[k] );
+				}
+				i = k;
+				
+				tree.append("\n");
+			}
+			String treestr = tree.toString();
+			FileWriter fw = new FileWriter( "/home/sigmar/mat.txt" );
+			fw.write( treestr );
+			fw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+		/*try {
+			List<String> names = new ArrayList<String>();
+			FileReader f = new FileReader( "/root/ermermerm/aligned/tree/erm.txt" );
+			BufferedReader br = new BufferedReader( f );
+			String line = br.readLine();
+			while( line != null ) {
+				names.add( line.replace("(", "").replace(")", "").replace("'", "") );
+				line = br.readLine();
+			}
+			br.close();
+			
+			f = new FileReader( "/root/ermermerm/aligned/tree/outfile" );
+			br = new BufferedReader( f );
+			line = br.readLine();
+			double[] dmat = new double[403*403];
+			int c = 0;
+			int start = 0;
+			while( line != null ) {
+				int k = line.indexOf('|');
+				if( k != -1 ) {
+					String[] split = line.substring(k+1).trim().split("[ ]+");
+					int i = start;
+					for( String num : split ) {
+						int n = Integer.parseInt(num);
+						int ind = c*403+i;
+						if( ind > dmat.length ) {
+							System.err.println();
+						}
+						dmat[ind] = Math.exp( (double)n/5.0 )-1.0;
+						i++;
+					}
+					c++;
+					if( c == 403 ) {
+						c = 0;
+						start += 10;
+					}
+				}
+				line = br.readLine();
+			}
+			br.close();
+			f.close();
+			
+			FileWriter fw = new FileWriter("/home/sigmar/fwout.txt");
+			/*fw.write("\t"+403);
+			c = 0;
+			for( double d : dmat ) {
+				if( c % 403 == 0 ) fw.write( "\n"+names.get(c/403)+"\t"+d );
+				else fw.write( "\t"+d );
+				
+				c++;
+			}
+			fw.write("\n");*
+			TreeUtil tu = new TreeUtil();
+			Node n = tu.neighborJoin(dmat, names, null);
+			fw.write( n.toString() );
+			fw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
+		
+		/*SerifyApplet sa = new SerifyApplet();
 		
 		try {
 			File f = new File( "/home/sigmar/thermus_union_cluster.txt" );
@@ -3929,7 +4465,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		/*String[] lcmd = "/opt/ncbi-blast-2.2.25+/bin/blastp -query /home/horfrae/arciformis_3.aa -db /opt/db/nr  -num_alignments 1 -num_descriptions 1 -out /home/horfrae/arciformis_3.blastout".split("[ ]");
 		Runnable run = new Runnable() {
