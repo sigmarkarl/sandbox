@@ -141,10 +141,6 @@ public class Webconnectron implements EntryPoint {
 			}
 		});
 		
-		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
-			postParent( Window.Location.getParameter("callback") );
-		}
-		
 		rp.add( hp );
 		
 		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
