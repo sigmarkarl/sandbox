@@ -62,7 +62,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
-import javax.sound.midi.Sequence;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JButton;
@@ -89,6 +88,9 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
+
+import org.simmi.shared.Sequence;
+import org.simmi.unsigned.JavaFasta;
 
 public class SerifyApplet extends JApplet {
 	/**
