@@ -127,7 +127,7 @@ public class FriendsPanel extends SimSplitPane {
                 loginUrl) == null) {
             throw new IOException("Authorizatoin declined");
         }*/
-		if( JOptionPane.showConfirmDialog(FriendsPanel.this, lang.equals("IS") ? "Vinsamlegast skráðu þig inná Facebook" : "Log in to Facebook", lang.equals("IS") ? "Facebook innskráning" : "Facebook login", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION ) return token;
+		if( JOptionPane.showConfirmDialog(FriendsPanel.this, lang.startsWith("IS") ? "Vinsamlegast skráðu þig inná Facebook" : "Log in to Facebook", lang.equals("IS") ? "Facebook innskráning" : "Facebook login", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION ) return token;
 
         return null;
     }
@@ -552,7 +552,7 @@ public class FriendsPanel extends SimSplitPane {
 		super();
 		this.setDividerLocation( 500 );
 		
-		this.currentUser = lang.equals("IS") ? "Velja höfund" : "Choose author";
+		this.currentUser = lang.startsWith("IS") ? "Velja höfund" : "Choose author";
 		this.sessionKey = sessionKey0;
 		this.setBackground( Color.white );
 		
@@ -629,7 +629,7 @@ public class FriendsPanel extends SimSplitPane {
 			}
 
 			public String getColumnName(int arg0) {
-				if( lang.equals("IS") ) {
+				if( lang.startsWith("IS") ) {
 					if( arg0 == 0 ) return "Val";
 					else if( arg0 == 1 ) return "Nafn";
 					else if( arg0 == 2 ) return "Fæðingardagur";
@@ -701,7 +701,7 @@ public class FriendsPanel extends SimSplitPane {
 		});
 		
 		JPopupMenu popup = new JPopupMenu();
-		Action action = new AbstractAction(lang.equals("IS") ? "Velja mig" : "Select as current user") {
+		Action action = new AbstractAction(lang.startsWith("IS") ? "Velja mig" : "Select as current user") {
 			public void actionPerformed(ActionEvent e) {
 				int r = table.getSelectedRow();
 				selectMe( mypanel, r );
@@ -709,7 +709,7 @@ public class FriendsPanel extends SimSplitPane {
 		};
 		popup.add( action );
 		popup.addSeparator();
-		action = new AbstractAction(lang.equals("IS") ? "Sýna alla" : "Show all") {
+		action = new AbstractAction(lang.startsWith("IS") ? "Sýna alla" : "Show all") {
 			public void actionPerformed(ActionEvent e) {
 				for( int i : table.getSelectedRows() ) {
 					int k = table.convertRowIndexToModel(i);
@@ -734,7 +734,7 @@ public class FriendsPanel extends SimSplitPane {
 			}
 		};
 		popup.add( action );
-		action = new AbstractAction(lang.equals("IS") ? "Viðsnúa vali" : "Swap selection") {
+		action = new AbstractAction(lang.startsWith("IS") ? "Viðsnúa vali" : "Swap selection") {
 			public void actionPerformed(ActionEvent e) {
 				int[] rows = table.getSelectedRows();
 				table.selectAll();
@@ -745,7 +745,7 @@ public class FriendsPanel extends SimSplitPane {
 		};
 		popup.add( action );
 		popup.addSeparator();
-		popup.add( new AbstractAction(lang.equals("IS") ? "Bjóða völdum vinum" : "Invite selected friends") {
+		popup.add( new AbstractAction(lang.startsWith("IS") ? "Bjóða völdum vinum" : "Invite selected friends") {
 			public void actionPerformed(ActionEvent e) {
 				List<String>	id = new ArrayList<String>();
 				for( Object[] obj : friendList ) {
@@ -753,9 +753,9 @@ public class FriendsPanel extends SimSplitPane {
 				}
 				
 				if( id.size() > 0 ) {
-					JOptionPane.showMessageDialog(FriendsPanel.this, lang.equals("IS") ? "Vinum hefur verið boðið að nota Matísgem" : "Friends have been invited to use this program");
+					JOptionPane.showMessageDialog(FriendsPanel.this, lang.startsWith("IS") ? "Vinum hefur verið boðið að nota Matísgem" : "Friends have been invited to use this program");
 				} else {
-					JOptionPane.showMessageDialog(FriendsPanel.this, lang.equals("IS") ? "Enginn vinur sem ekki er notandi Matísgem hefur verið valinn" : "No program user has been selected");
+					JOptionPane.showMessageDialog(FriendsPanel.this, lang.startsWith("IS") ? "Enginn vinur sem ekki er notandi Matísgem hefur verið valinn" : "No program user has been selected");
 				}
 			}
 		});
@@ -781,8 +781,8 @@ public class FriendsPanel extends SimSplitPane {
 					Graphics2D g2 = (Graphics2D)g;
 					g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 					
-					String str = lang.equals("IS") ? "Hægri smelltu til að" : "Right-click to get a";
-					String nstr = lang.equals("IS") ? "fá upp vallista" : "list of choices";
+					String str = lang.startsWith("IS") ? "Hægri smelltu til að" : "Right-click to get a";
+					String nstr = lang.startsWith("IS") ? "fá upp vallista" : "list of choices";
 					int strw = g.getFontMetrics().stringWidth( str );
 					int nstrw = g.getFontMetrics().stringWidth( nstr );
 					g.setColor( Color.lightGray );

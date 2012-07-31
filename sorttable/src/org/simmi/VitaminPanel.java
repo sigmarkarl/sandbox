@@ -84,7 +84,7 @@ public class VitaminPanel extends JComponent {
 				g2.drawString(oval.toString(), 10, this.getHeight()/12 );
 			}
 			
-			if( lang.equals("IS") ) {
+			if( lang.startsWith("IS") ) {
 				g2.drawString("Vítamín (hlutfall af RDS í 100g)", 10, this.getHeight()/25 );
 			} else {
 				g2.drawString("Vitamin (suggested daily intake proportion in 100g)", 10, this.getHeight()/25 );
@@ -124,11 +124,11 @@ public class VitaminPanel extends JComponent {
 			
 			double[] dvals = null;
 			if( waterSol ) {
-				float cc = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "C-vítamín" : "Vitamin C" ), 0.0 );
-				float bt1 = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "B1-vítamín, þíamín" : "Vitamin B-1" ), 0.0 );
-				float bt2 = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "B2-vítamín, ríbóflavín" : "Vitamin B-2" ), 0.0 );
-				float bt6 = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "B6-vítamín" : "Vitamin B-6" ), 0.0 );
-				float bt12 = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "B12-vítamín" : "Vitamin B-12" ), 0.0 );
+				float cc = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "C-vítamín" : "Vitamin C" ), 0.0 );
+				float bt1 = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "B1-vítamín, þíamín" : "Vitamin B-1" ), 0.0 );
+				float bt2 = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "B2-vítamín, ríbóflavín" : "Vitamin B-2" ), 0.0 );
+				float bt6 = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "B6-vítamín" : "Vitamin B-6" ), 0.0 );
+				float bt12 = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "B12-vítamín" : "Vitamin B-12" ), 0.0 );
 				String ccval = rdsPanel.getRds("C - mg");
 				String bb1val = rdsPanel.getRds("B1 - mg");
 				String bb2val = rdsPanel.getRds("B2 - mg");
@@ -152,9 +152,9 @@ public class VitaminPanel extends JComponent {
 					dvals = dvalstmp;
 				}
 			} else {
-				float va = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "A-vítamín, RJ" : "Vitamin A" ), 0.0 );
-				float vd = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "D-vítamín" : "Vitamin D" ), 0.0 );
-				float ve = (float)Math.max( parent.stuffYou( lang.equals("IS") ? "E-vítamín, a-TJ" : "Vitamin E" ), 0.0 );
+				float va = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "A-vítamín, RJ" : "Vitamin A" ), 0.0 );
+				float vd = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "D-vítamín" : "Vitamin D" ), 0.0 );
+				float ve = (float)Math.max( parent.stuffYou( lang.startsWith("IS") ? "E-vítamín, a-TJ" : "Vitamin E" ), 0.0 );
 				//float vk = (float)Math.max( parent.stuffYou( "K-vítamín" ), 0.0 );
 				String vas = rdsPanel.getRds("A - RJ");
 				String vds = rdsPanel.getRds("D - ug");
@@ -355,40 +355,40 @@ public class VitaminPanel extends JComponent {
 			}
 			
 			if( waterSol ) {
-				if( lang.equals("IS") ) str = "C - vítamín";
+				if( lang.startsWith("IS") ) str = "C - vítamín";
 				else str = "C";
 				int strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (1*this.getHeight())/25+hh/4 );
-				if( lang.equals("IS") ) str = "B1 - þíamín";
+				if( lang.startsWith("IS") ) str = "B1 - þíamín";
 				else str = "B-1";
 				strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (2*this.getHeight())/25+hh/4 );
-				if( lang.equals("IS") ) str = "B2 - ríbólfavín";
+				if( lang.startsWith("IS") ) str = "B2 - ríbólfavín";
 				else str = "B-2";
 				strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (3*this.getHeight())/25+hh/4 );
-				if( lang.equals("IS") ) str = "B6 - pýridoxín";
+				if( lang.startsWith("IS") ) str = "B6 - pýridoxín";
 				else str = "B-6";
 				strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (4*this.getHeight())/25+hh/4 );
-				if( lang.equals("IS") ) str = "B12 - kóbalamín";
+				if( lang.startsWith("IS") ) str = "B12 - kóbalamín";
 				else str = "B-12";
 				strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (5*this.getHeight())/25+hh/4 );
 			} else {
-				if( lang.equals("IS") ) str = "A - retínól";
+				if( lang.startsWith("IS") ) str = "A - retínól";
 				else str = "A";
 				int strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (1*this.getHeight())/25+hh/4 );
-				if( lang.equals("IS") ) str = "D - kalsíferól";
+				if( lang.startsWith("IS") ) str = "D - kalsíferól";
 				else str = "D";
 				strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (2*this.getHeight())/25+hh/4 );
-				if( lang.equals("IS") ) str = "E - tokóferól";
+				if( lang.startsWith("IS") ) str = "E - tokóferól";
 				else str = "E";
 				strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (3*this.getHeight())/25+hh/4 );
-				/*if( lang.equals("IS") ) str = "K - menakvínon";
+				/*if( lang.startsWith("IS") ) str = "K - menakvínon";
 				else str = "K";
 				strw = g2.getFontMetrics().stringWidth(str);
 				g2.drawString(str, (19*w)/20-strw-hh/2, (4*this.getHeight())/25+hh/4 );*/
