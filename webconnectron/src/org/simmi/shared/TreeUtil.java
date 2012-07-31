@@ -404,7 +404,7 @@ public class TreeUtil {
 		
 		public void removeNode( Node node ) {
 			nodes.remove( node );
-			//node.setParent( null );
+			node.setParent( null );
 			
 			if( nodes.size() == 1 ) {
 				Node parent = this.getParent();
@@ -923,6 +923,9 @@ public class TreeUtil {
 				oldnode.h = b;
 				oldnode.nodes.remove( res );
 				
+				currentNode = newnode;
+				currentNode.countLeaves();
+				
 				return tmph;
 			}
 		}
@@ -935,9 +938,11 @@ public class TreeUtil {
 	}
 	
 	public void reroot( Node newnode ) {
-		//rerootRecur(currentNode, newnode);
+		rerootRecur(currentNode, newnode);
+		currentNode = newnode;
+		currentNode.countLeaves();
 		
-		double h = newnode.h;
+		/*double h = newnode.h;
 		
 		Node formerparent = newnode.getParent();
 		if( formerparent != null ) {
@@ -989,7 +994,7 @@ public class TreeUtil {
 			currentNode = newroot;
 			//console( currentNode.nodes.size() );
 			currentNode.countLeaves();
-		}
+		}*/
 	}
 	
 	public double getminh2() {
