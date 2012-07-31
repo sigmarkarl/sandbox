@@ -22,6 +22,8 @@ import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 import org.apache.http.HttpRequest;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -140,4 +142,29 @@ public class Authenticator {
     public String getTokenSecret() {
         return consumer.getTokenSecret();
     }
+    
+    public static void main(String[] args) {
+    	JSONObject returnData = new JSONObject();
+    	JSONArray	itemArray = new JSONArray();
+    	
+    	JSONObject item1 = new JSONObject();
+            item1.put("title","BFF Locket");
+            item1.put("price",1);
+            item1.put("description","This is a BFF Locket...");
+            item1.put("image_url","http://www.facebook.com/images/gifts/21.png");
+            item1.put("product_url","http://www.facebook.com/images/gifts/21.png");          
+
+        JSONObject item2 = new JSONObject();
+            item2.put("title","A Facebook Hat");
+            item2.put("price",1);
+            item2.put("description","The coolest hat you\'ve ever seen.");
+            item2.put("image_url","http://www.facebook.com/images/gifts/740.png");
+            item2.put("product_url","http://www.facebook.com/images/gifts/740.png");
+            
+        itemArray.add(item1);
+        itemArray.add(item2);
+        returnData.put("content", itemArray);
+        returnData.put("method", "payments_get_items");
+        System.err.println( returnData.toJSONString() );            
+	}
 }

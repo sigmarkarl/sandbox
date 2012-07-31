@@ -193,8 +193,8 @@ public class RecipePanel extends JSplitPane {
 		}
 		
 		public Recipe( String author ) {
-			this.name = lang.equals("IS") ? "Velja nafn" : "Choose name";
-			this.group = lang.equals("IS") ? "Velja hóp" : "Choose group";
+			this.name = lang.startsWith("IS") ? "Velja nafn" : "Choose name";
+			this.group = lang.startsWith("IS") ? "Velja hóp" : "Choose group";
 			this.author = author;
 			
 			ingredients = new ArrayList<RecipeIngredient>();
@@ -637,7 +637,7 @@ public class RecipePanel extends JSplitPane {
 			}
 
 			public String getColumnName(int arg0) {
-				if( lang.equals("IS") ) {
+				if( lang.startsWith("IS") ) {
 					if( arg0 == 0 ) return "Nafn";
 					else if( arg0 == 1 ) return "Hópur";
 					else if( arg0 == 2 ) return "Höfundur";
@@ -703,7 +703,7 @@ public class RecipePanel extends JSplitPane {
 			}
 
 			public String getColumnName(int arg0) {
-				if( lang.equals("IS") ) {
+				if( lang.startsWith("IS") ) {
 					if( arg0 == 0 ) return "Efni";
 					else if( arg0 == 1 ) return "Magn";
 					else if( arg0 == 2 ) return "Eining";
@@ -1037,7 +1037,7 @@ public class RecipePanel extends JSplitPane {
 					Graphics2D g2 = (Graphics2D)g;
 					g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 	
-					String str = lang.equals("IS") ? "Settu inn upplýsingar um uppskriftina hér" : "Put recipe information here";
+					String str = lang.startsWith("IS") ? "Settu inn upplýsingar um uppskriftina hér" : "Put recipe information here";
 					int strw = g.getFontMetrics().stringWidth( str );
 					g.setColor( Color.lightGray );
 					g.drawString(str, (this.getWidth()-strw)/2, this.getHeight()/2-5);
@@ -1048,8 +1048,8 @@ public class RecipePanel extends JSplitPane {
 		
 		final JTabbedPane			recipeInfoPane = new JTabbedPane();
 		recipeInfoPane.setTabPlacement( JTabbedPane.RIGHT );
-		recipeInfoPane.addTab(lang.equals("IS") ? "Skoða" : "View", recipeInfoScroll);
-		recipeInfoPane.addTab(lang.equals("IS") ? "Breyta" : "Change", null);
+		recipeInfoPane.addTab(lang.startsWith("IS") ? "Skoða" : "View", recipeInfoScroll);
+		recipeInfoPane.addTab(lang.startsWith("IS") ? "Breyta" : "Change", null);
 		recipeInfoPane.addChangeListener( new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				if( recipeInfoPane.getSelectedIndex() == 0 ) {
@@ -1076,8 +1076,8 @@ public class RecipePanel extends JSplitPane {
 					Graphics2D g2 = (Graphics2D)g;
 					g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 
-					String str = lang.equals("IS") ? "Dragðu fæðutegundir úr tölfunni" : "Drag food from food table";
-					String nstr = lang.equals("IS") ? "til vinstri hingað" : "on the left to here";
+					String str = lang.startsWith("IS") ? "Dragðu fæðutegundir úr tölfunni" : "Drag food from food table";
+					String nstr = lang.startsWith("IS") ? "til vinstri hingað" : "on the left to here";
 					int strw = g.getFontMetrics().stringWidth( str );
 					int nstrw = g.getFontMetrics().stringWidth( nstr );
 					g.setColor( Color.lightGray );
@@ -1172,7 +1172,7 @@ public class RecipePanel extends JSplitPane {
 		recipeDetailTable.setModel( recipeDetailModel );
 		recipeDetailTable.setDropMode2( DropMode.INSERT_ROWS );
 		
-		TableColumn unitcolumn = lang.equals("IS") ? recipeDetailTable.getColumn("Eining") : recipeDetailTable.getColumn("Unit");;
+		TableColumn unitcolumn = lang.startsWith("IS") ? recipeDetailTable.getColumn("Eining") : recipeDetailTable.getColumn("Unit");;
 		unitcolumn.setCellRenderer( renderer );
 		DropTarget dropTarget = new DropTarget() {
 			public boolean isActive() {
