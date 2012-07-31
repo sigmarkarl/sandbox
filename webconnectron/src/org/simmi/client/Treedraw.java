@@ -964,6 +964,27 @@ public class Treedraw implements EntryPoint {
 		if( treeutil != null ) drawTree( treeutil );
 	}
 	
+	public native boolean dropHandler( JavaScriptObject dataTransfer ) /*-{
+		var succ = false;
+		try {
+			var file;
+			if( dataTransfer.files.length > 0 ) file = dataTransfer.files[0];
+			var s = this;
+			if( file ) {
+				succ = true;
+				var reader = new FileReader();
+				reader.onload = function(e) {
+					var res = e.target.result;
+					s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( res );
+				};
+				reader.readAsText( file );
+			}
+		} catch( e ) {
+			if( $wnd.console ) $wnd.console.log( 'error '+e );
+		}
+		return succ;
+	}-*/;
+	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get("canvas");
@@ -1001,8 +1022,11 @@ public class Treedraw implements EntryPoint {
 		canvas.addDropHandler( new DropHandler() {
 			@Override
 			public void onDrop(DropEvent event) {
-				String str = event.getData("text/plain");
-				handleText( str );
+				event.preventDefault();
+				if( !dropHandler( event.getDataTransfer() ) ) {
+					String str = event.getData("text/plain");
+					handleText( str );
+				}
 				
 				//drawTreeRecursive( canvas.getContext2d(), treeutil.getNode(), 10, 10, 10, 10, false, false, true, treeutil.getminh(), treeutil.getmaxh());
 			}
@@ -1237,8 +1261,9 @@ public class Treedraw implements EntryPoint {
 						invertSelectionRecursive( root );
 					} else if( c == 'r' || c == 'R' ) {
 						if( treeutil != null && selectedNode != null ) {
-							//selectedNode.setParent( null );
+							selectedNode.setParent( null );
 							treeutil.reroot( selectedNode );
+							//treeutil.rerootRecur( treeutil.currentNode, selectedNode );
 							root = treeutil.currentNode;
 						}
 					}
