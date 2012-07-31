@@ -76,7 +76,9 @@
     }
     
     var domain = 'http://webconnectron.appspot.com';
+    var simlabdomain = 'http://websimlab.appspot.com';
 	var treetext = "";
+	var commands = "";
 	var myPopup;
 	function receiveMessage(event) {
 		console.log( 'ready message received' );
@@ -84,6 +86,14 @@
 			console.log( 'correct origin' );
 			if( treetext.length > 0 ) {
 				myPopup.postMessage(treetext,domain);
+			}
+    	} else if (event.origin == "http://websimlab.appspot.com") {
+			console.log( 'simlab origin' );
+			console.log( commands );
+			if( commands.length > 0 ) {
+				console.log( treetext + " " + treetext.byteLength );
+				myPopup.postMessage(treetext,simlabdomain);
+				//myPopup.postMessage(cmd,simlabdomain);
 			}
     	}
   	}
@@ -95,9 +105,17 @@
 	}
 	
 	showMatr = function( newmatrix ) {
-		console.log( 'eerrnm' );
 		treetext = newmatrix;
 		myPopup = window.open(domain + '/Webconnectron.html?callback=thermusgenes','_blank');
+	}
+	
+	showShannon = function( newshannon, cmd ) {
+		var dbuffer = new Float64Array( newshannon.length );
+		dbuffer.set( newshannon );
+		treetext = dbuffer.buffer;
+		commands = cmd;
+		console.log( cmd );
+		myPopup = window.open(simlabdomain + '/Websimlab.html?callback=thermusgenes','_blank');
 	}
   </script>
     <!--                                           -->

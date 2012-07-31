@@ -98,34 +98,34 @@ public class MyPanel extends JComponent {
 		rotatebutton = new JButton( icon );
 		rotatebutton.setBounds( 9,9,32,32 );
 		
-		namelabel = new JLabel( lang.equals("IS") ? "Nafn:" : "Name:" );
+		namelabel = new JLabel( lang.startsWith("IS") ? "Nafn:" : "Name:" );
 		namefield = new JTextField();
-		agelabel = new JLabel( lang.equals("IS") ? "Aldur:" : "Age" );
+		agelabel = new JLabel( lang.startsWith("IS") ? "Aldur:" : "Age" );
 		agefield = new JSpinner( new SpinnerNumberModel(40,1,100,1) );
-		weightlabel = new JLabel( lang.equals("IS") ? "Þyngd:" : "Weight" );
+		weightlabel = new JLabel( lang.startsWith("IS") ? "Þyngd:" : "Weight" );
 		weightfield = new JFormattedTextField( NumberFormat.getNumberInstance() );
-		heightlabel = new JLabel( lang.equals("IS") ? "Hæð:" : "Height" );
+		heightlabel = new JLabel( lang.startsWith("IS") ? "Hæð:" : "Height" );
 		heightfield = new JFormattedTextField( NumberFormat.getNumberInstance() );
-		sexlabel = new JLabel( lang.equals("IS") ? "Kyn:" : "Gender" );
-		sexfield = new JComboBox( lang.equals("IS") ? new String[] {"Karl","Kona"} : new String[] {"Male","Female"} );
+		sexlabel = new JLabel( lang.startsWith("IS") ? "Kyn:" : "Gender" );
+		sexfield = new JComboBox( lang.startsWith("IS") ? new String[] {"Karl","Kona"} : new String[] {"Male","Female"} );
 		
-		restlabel = new JLabel(lang.equals("IS") ? "Hreyfing (klst.)" : "Action (hours)");
+		restlabel = new JLabel(lang.startsWith("IS") ? "Hreyfing (klst.)" : "Action (hours)");
 		
 		SpinnerNumberModel restspmod = new SpinnerNumberModel(24,0,24,1);
 		SpinnerNumberModel easyspmod = new SpinnerNumberModel(0,0,24,1);
 		SpinnerNumberModel medspmod = new SpinnerNumberModel(0,0,24,1);
 		SpinnerNumberModel hardspmod = new SpinnerNumberModel(0,0,24,1);
 		
-		rest = new JLabel(lang.equals("IS") ? "Hvíld:" : "Rest");
+		rest = new JLabel(lang.startsWith("IS") ? "Hvíld:" : "Rest");
 		resthours = new JSpinner( restspmod );
 		
-		easy = new JLabel(lang.equals("IS") ? "Létt hreyfing:" : "Light action");
+		easy = new JLabel(lang.startsWith("IS") ? "Létt hreyfing:" : "Light action");
 		easyhours = new JSpinner( easyspmod );
 		
-		medium = new JLabel(lang.equals("IS") ? "Miðlungs hreyfing:" : "Medium action");
+		medium = new JLabel(lang.startsWith("IS") ? "Miðlungs hreyfing:" : "Medium action");
 		mediumhours = new JSpinner( medspmod );
 		
-		hard = new JLabel(lang.equals("IS") ? "Mikil hreyfing:" : "Heavy action");
+		hard = new JLabel(lang.startsWith("IS") ? "Mikil hreyfing:" : "Heavy action");
 		hardhours = new JSpinner( hardspmod );
 		
 		final JSpinner[]	sp = {resthours,easyhours,mediumhours,hardhours};
