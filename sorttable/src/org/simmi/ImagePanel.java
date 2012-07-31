@@ -238,7 +238,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 		progressbar = new JProgressBar();
 		progressbar.setVisible( false );
 		progressbar.setIndeterminate( true );
-		progressbar.setString(lang.equals("IS") ? "Sæki mynd" : "Fetch image");
+		progressbar.setString(lang.startsWith("IS") ? "Sæki mynd" : "Fetch image");
 		progressbar.setValue( 0 );
 		progressbar.setStringPainted( true );
 		this.add( progressbar );
@@ -349,10 +349,10 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 			
 			g.setColor( Color.lightGray );
 			if( b ) {
-				String str = lang.equals("IS") ? "Engin mynd" : "No image";
+				String str = lang.startsWith("IS") ? "Engin mynd" : "No image";
 				drawString( g, str, 0 );
 			} else {
-				String str = lang.equals("IS") ? "Engin mynd\nSmelltu hér til að sækja mynd á google" : "No image\nClick here to fetch from google";
+				String str = lang.startsWith("IS") ? "Engin mynd\nSmelltu hér til að sækja mynd á google" : "No image\nClick here to fetch from google";
 				drawString( g, str, 0 );
 			}
 		} else if( imgUrl != null ) {
@@ -517,7 +517,7 @@ public class ImagePanel extends JComponent implements DragGestureListener, DragS
 				progressbar.setVisible( true );
 				img = null;
 			}
-		} else if( lang.equals("IS") ) {			
+		} else if( lang.startsWith("IS") ) {			
 			/*boolean b = true;
 			try {
 				URL url = new URL( oName );
