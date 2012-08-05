@@ -985,6 +985,155 @@ public class Treedraw implements EntryPoint {
 		return succ;
 	}-*/;
 	
+	public native boolean ieSpec() /*-{
+		var s = this;
+		function whatKey(evt) {
+			var keycode = evt.keyCode;
+			var c = evt.charCode;
+			if( c == 13 ) {
+				evt.stopPropagation();
+				evt.preventDefault();
+			}
+			s.@org.simmi.client.Treedraw::keyCheck(CI)( c, keycode );
+		}
+		$wnd.addEventListener('keypress', whatKey, true);
+	}-*/;
+	
+	public void keyCheck( char c, int keycode ) {
+		if( c == 'a' || c == 'A' ) {
+			String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
+			Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
+			treeutil.collapseTreeAdvanced(root, cset);
+			root.countLeaves();
+		} else if( c == 'm' || c == 'M' ) {
+			recursiveMarkings( root );
+			//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+			//Node newroot = recursiveReroot( root, x, y );
+			//selectedNode.setParent( null );
+			//treeutil.setNode( selectedNode );
+			//treeutil.reroot(root, newroot);
+			//root = selectedNode;
+			//root.seth( 0.0 );
+			//root.seth2( 0.0 );
+		} else if( c == 'z' || c == 'Z' ) {
+			recursiveZero( root );
+		} else if( c == 'o' || c == 'O' ) {
+			omitLast( selectedNode != null ? selectedNode : root, 2 );
+		} else if( c == 'l' || c == 'l' ) {
+			omitLast( selectedNode != null ? selectedNode : root, 1 );
+		} else if( c == 'k' || c == 'K' ) {
+			omitLast( selectedNode != null ? selectedNode : root, 0 );
+		} else if( selectedNode != null ) {
+			if( c == 'c' || c == 'C' ) {
+				selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
+				root.countLeaves();
+			} else if( c == 'd' || c == 'D' || keycode == KeyCodes.KEY_DELETE ) {
+				Node parent = selectedNode.getParent();
+				if( parent != null ) parent.removeNode( selectedNode );
+				selectedNode = null;
+				root.countLeaves();
+			} else if( c == 'e' || c == 'E' || c == '\r' ) {				
+				final TextBox	text = new TextBox();
+				text.setText( selectedNode.getName() );
+				
+				final PopupPanel	pp = new PopupPanel();
+				pp.add( text );
+				pp.setPopupPosition( (int)selectedNode.getCanvasX(), (int)selectedNode.getCanvasY()+canvas.getAbsoluteTop()-5 );
+				pp.setAutoHideEnabled( true );
+				pp.show();
+				
+				final Boolean[] b = new Boolean[1];
+				b[0] = true;
+				text.addKeyPressHandler( new KeyPressHandler() {
+					@Override
+					public void onKeyPress(KeyPressEvent event) {
+						event.stopPropagation();
+						int c = event.getCharCode();
+						int key = event.getNativeEvent().getKeyCode();
+						if( key == KeyCodes.KEY_ESCAPE ) {
+							b[0] = false;
+							pp.hide();
+						} else if( key == KeyCodes.KEY_ENTER || key == 18 || c == '\n' || c == '\r' ) {
+							pp.hide();
+						}
+					}
+				});
+				text.addKeyDownHandler( new KeyDownHandler() {
+					@Override
+					public void onKeyDown(KeyDownEvent event) {
+						event.stopPropagation();
+					}
+				});
+				/*text.addKeyDownHandler( new KeyDownHandler() {
+					@Override
+					public void onKeyDown(KeyDownEvent event) {
+						event.stopPropagation();
+						int c = event.getNativeEvent().getCharCode();
+						int key = event.getNativeKeyCode();
+						if( key == KeyCodes.KEY_ESCAPE ) {
+							b[0] = false;
+							pp.hide();
+						} else if( key == KeyCodes.KEY_ENTER || key == 18 || c == '\n' || c == '\r' ) {
+							pp.hide();
+						}
+					}
+				});*/
+				/*text.addKeyPressHandler( new KeyPressHandler() {
+					@Override
+					public void onKeyPress(KeyPressEvent event) {
+						char c = event.getCharCode();
+						int  key = event.getNativeEvent().getKeyCode();
+						if( c == '\n' || c == '\r' ) {
+							if( text.getText().length() == 0 ) {
+								text.setText( selectedNode.getName() );
+								text.selectAll();
+							} else {
+								pp.hide();
+							}
+						} else if( key == KeyCodes.KEY_ESCAPE ) {
+							pp.hide();
+						} else console( Character.toString( c ) );
+					}
+				});*/
+				pp.addCloseHandler( new CloseHandler<PopupPanel>() {
+					@Override
+					public void onClose(CloseEvent<PopupPanel> event) {
+						if( b[0] ) {
+							selectedNode.setName( text.getText() );
+							if( treeutil != null ) drawTree( treeutil );
+						}
+					}
+				});
+				
+				text.setText( selectedNode.getName() );
+				text.selectAll();
+				//text.setFocus( true );
+				/*selectedNode.getParent().removeNode( selectedNode );
+				selectedNode = null;
+				root.countLeaves();*/
+			} else if( c == 's' || c == 'S' ) {
+				//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+				//Node newroot = recursiveReroot( root, x, y );
+				selectedNode.setParent( null );
+				treeutil.setNode( selectedNode );
+					//treeutil.reroot(root, newroot);
+				root = selectedNode;
+				root.seth( 0.0 );
+				root.seth2( 0.0 );
+			} else if( c == 'i' || c == 'I' ) {
+				invertSelectionRecursive( root );
+			} else if( c == 'r' || c == 'R' ) {
+				if( treeutil != null && selectedNode != null ) {
+					selectedNode.setParent( null );
+					treeutil.reroot( selectedNode );
+					//treeutil.rerootRecur( treeutil.currentNode, selectedNode );
+					root = treeutil.currentNode;
+				}
+			}
+		}
+		if( treeutil != null ) drawTree( treeutil );
+	}
+	
 	@Override
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get("canvas");
@@ -1024,7 +1173,8 @@ public class Treedraw implements EntryPoint {
 			public void onDrop(DropEvent event) {
 				event.preventDefault();
 				if( !dropHandler( event.getDataTransfer() ) ) {
-					String str = event.getData("text/plain");
+					//String str = event.getData("text/plain");
+					String str = event.getData("Text");
 					handleText( str );
 				}
 				
@@ -1150,127 +1300,32 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
-		canvas.addKeyPressHandler( new KeyPressHandler() {
+		canvas.addKeyDownHandler( new KeyDownHandler() {
+			@Override
+			public void onKeyDown(KeyDownEvent event) {
+				console( "ok" );
+			}
+		});
+		
+		KeyPressHandler keypressHandler = new KeyPressHandler() {
 			@Override
 			public void onKeyPress(KeyPressEvent event) {
 				char c = event.getCharCode();
 				int keycode = event.getNativeEvent().getKeyCode();
-				if( c == 'a' || c == 'A' ) {
-					String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
-					Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
-					treeutil.collapseTreeAdvanced(root, cset);
-					root.countLeaves();
-				} else if( c == 'm' || c == 'M' ) {
-					recursiveMarkings( root );
-					//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-					//Node newroot = recursiveReroot( root, x, y );
-					//selectedNode.setParent( null );
-					//treeutil.setNode( selectedNode );
-					//treeutil.reroot(root, newroot);
-					//root = selectedNode;
-					//root.seth( 0.0 );
-					//root.seth2( 0.0 );
-				} else if( c == 'z' || c == 'Z' ) {
-					recursiveZero( root );
-				} else if( c == 'o' || c == 'O' ) {
-					omitLast( selectedNode != null ? selectedNode : root, 2 );
-				} else if( c == 'l' || c == 'l' ) {
-					omitLast( selectedNode != null ? selectedNode : root, 1 );
-				} else if( c == 'k' || c == 'K' ) {
-					omitLast( selectedNode != null ? selectedNode : root, 0 );
-				} else if( selectedNode != null ) {
-					if( c == 'c' || c == 'C' ) {
-						selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
-						root.countLeaves();
-					} else if( c == 'd' || c == 'D' || keycode == KeyCodes.KEY_DELETE ) {
-						Node parent = selectedNode.getParent();
-						if( parent != null ) parent.removeNode( selectedNode );
-						selectedNode = null;
-						root.countLeaves();
-					} else if( c == 'e' || c == 'E' || c == '\r' ) {
-						event.stopPropagation();
-						event.preventDefault();
-						
-						final TextBox	text = new TextBox();
-						text.setText( selectedNode.getName() );
-						
-						final PopupPanel	pp = new PopupPanel();
-						pp.add( text );
-						pp.setPopupPosition( (int)selectedNode.getCanvasX(), (int)selectedNode.getCanvasY()+canvas.getAbsoluteTop()-5 );
-						pp.setAutoHideEnabled( true );
-						pp.show();
-						
-						final Boolean[] b = new Boolean[1];
-						b[0] = true;
-						text.addKeyDownHandler( new KeyDownHandler() {
-							@Override
-							public void onKeyDown(KeyDownEvent event) {
-								int c = event.getNativeEvent().getCharCode();
-								int key = event.getNativeKeyCode();
-								if( key == KeyCodes.KEY_ESCAPE ) {
-									b[0] = false;
-									pp.hide();
-								} else if( key == KeyCodes.KEY_ENTER || key == 18 || c == '\n' || c == '\r' ) {
-									pp.hide();
-								}
-							}
-						});
-						/*text.addKeyPressHandler( new KeyPressHandler() {
-							@Override
-							public void onKeyPress(KeyPressEvent event) {
-								char c = event.getCharCode();
-								int  key = event.getNativeEvent().getKeyCode();
-								if( c == '\n' || c == '\r' ) {
-									if( text.getText().length() == 0 ) {
-										text.setText( selectedNode.getName() );
-										text.selectAll();
-									} else {
-										pp.hide();
-									}
-								} else if( key == KeyCodes.KEY_ESCAPE ) {
-									pp.hide();
-								} else console( Character.toString( c ) );
-							}
-						});*/
-						pp.addCloseHandler( new CloseHandler<PopupPanel>() {
-							@Override
-							public void onClose(CloseEvent<PopupPanel> event) {
-								if( b[0] ) {
-									selectedNode.setName( text.getText() );
-									if( treeutil != null ) drawTree( treeutil );
-								}
-							}
-						});
-						
-						text.setText( selectedNode.getName() );
-						text.selectAll();
-						//text.setFocus( true );
-						/*selectedNode.getParent().removeNode( selectedNode );
-						selectedNode = null;
-						root.countLeaves();*/
-					} else if( c == 's' || c == 'S' ) {
-						//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-						//Node newroot = recursiveReroot( root, x, y );
-						selectedNode.setParent( null );
-						treeutil.setNode( selectedNode );
-							//treeutil.reroot(root, newroot);
-						root = selectedNode;
-						root.seth( 0.0 );
-						root.seth2( 0.0 );
-					} else if( c == 'i' || c == 'I' ) {
-						invertSelectionRecursive( root );
-					} else if( c == 'r' || c == 'R' ) {
-						if( treeutil != null && selectedNode != null ) {
-							selectedNode.setParent( null );
-							treeutil.reroot( selectedNode );
-							//treeutil.rerootRecur( treeutil.currentNode, selectedNode );
-							root = treeutil.currentNode;
-						}
-					}
+				if( c == '\r' ) {
+					event.stopPropagation();
+					event.preventDefault();
 				}
-				if( treeutil != null ) drawTree( treeutil );
+				keyCheck( c, keycode );
 			}
-		});
+		};
+		String useragent = Window.Navigator.getUserAgent();
+		console( useragent );
+		if( useragent.contains("MSIE") ) {
+			ieSpec();
+		} else {
+			canvas.addKeyPressHandler( keypressHandler );
+		}
 		
 		//console( canvas.getOffsetWidth() + "  " + canvas.getOffsetHeight() );
 		canvas.setCoordinateSpaceWidth( w );
@@ -1280,7 +1335,7 @@ public class Treedraw implements EntryPoint {
 		String str = "Drop text in distance matrix, aligned fasta or newick tree format to this canvas";
 		TextMetrics tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0-8.0);
-		str = "Double click to open file dialog";
+		str = "Double click to open file dialog (non-IE browsers)";
 		tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
 		
@@ -1624,7 +1679,7 @@ public class Treedraw implements EntryPoint {
 	Random	rnd = new Random();
 	
 	public native void console( String log ) /*-{
-		$wnd.console.log( log );
+		if( $wnd.console ) $wnd.console.log( log );
 	}-*/;
 	
 	public void drawFramesRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, int leaves ) {		
@@ -1829,7 +1884,7 @@ public class Treedraw implements EntryPoint {
 			if( showbubble ) {
 				g2.beginPath();
 				if( vertical ) {
-					double yfloor = Math.floor(y+ny);
+					double yfloor = Math.floor(y+newy);
 					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
 				} else {
 					
