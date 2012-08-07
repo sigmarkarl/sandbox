@@ -4668,7 +4668,7 @@ public class GeneSet extends JApplet {
 	};
 
 	public static void simmi() throws IOException {
-		FileReader fr = new FileReader("/home/sigmar/allbutthermus.blastout");
+		FileReader fr = new FileReader("c:\\cygwin\\home\\simmi\\allbutthermus.blastout");
 		BufferedReader br = new BufferedReader(fr);
 		String line = br.readLine();
 		String current = null;
@@ -4714,8 +4714,8 @@ public class GeneSet extends JApplet {
 		System.err.println(tegmap.size());
 
 		//int[] iv = { 0, 10, 16, 50, 8, 8, 8, 8, 60, 50, 30, 50, 150, 150, 80, 50 };
-		int[] iv = { 0, 10, 16, 50, 100, 100, 60, 30, 500, 150, 500, 500, 30, 50, 200 };
-		for (int i = 0; i < iv.length; i++) {
+		int[] iv = { 0, 10, 16, 50, 100, 100, 60, 30, 500, 150, 500, 500, 30, 50, 200, 30, 30 };
+		for (int i = 0; i < iv.length-1; i++) {
 			iv[i] += 1;
 		}
 		int[] isum = new int[iv.length];
@@ -4724,12 +4724,12 @@ public class GeneSet extends JApplet {
 			isum[i] = isum[i - 1] + iv[i];
 		}
 
-		FileOutputStream fos = new FileOutputStream("/home/sigmar/noname.txt");
+		FileOutputStream fos = new FileOutputStream("c:\\cygwin\\home\\simmi\\noname.txt");
 		PrintStream pos = new PrintStream(fos);
 		//pos.println( "name\tacc\tspecies\tlen\tident\tdoi\tpubmed\tjournal\tauth\tsub_auth\tsub_date\tcountry\tsource\ttemp\tpH" );
-		pos.println( "name\tacc\tfullname\tspecies\tlen\tident\tcountry\tsource\tdoi\tpubmed\tauthor\tjournal\tsub_auth\tsub_date\tlat_lon\tdate\ttitle\ttemp\tpH" );
+		pos.println( "name\tacc\tfullname\tspecies\tlen\tident\tcountry\tsource\tdoi\tpubmed\tauthor\tjournal\tsub_auth\tsub_date\tlat_lon\tdate\ttitle\tarb\ttemp\tpH" );
 		
-		fr = new FileReader("/home/sigmar/export2.nds");
+		fr = new FileReader("c:\\cygwin\\home\\simmi\\export2.nds");
 		br = new BufferedReader(fr);
 		line = br.readLine();
 		while (line != null) {
@@ -4746,7 +4746,10 @@ public class GeneSet extends JApplet {
 			String sub_date = line.substring(isum[10], isum[11]).trim().replace("\"", "");
 			String lat_lon = line.substring(isum[11], isum[12]).trim();
 			String date = line.substring(isum[12], isum[13]).trim();
-			String title = isum.length > 15 && isum[15] < line.length() ? line.substring(isum[13], isum[14]).trim() : "";
+			String title = line.substring(isum[13], isum[14]).trim();
+			String length = line.substring(isum[14], isum[15]).trim();
+			String arb = isum.length > 16 && isum[16] <= line.length() ? line.substring(isum[15], isum[16]).trim() : "";
+			
 			/*String country = line.substring(isum[7], isum[8]).trim();
 			String doi = line.substring(isum[8], isum[9]).trim();
 			String pubmed = line.substring(isum[9], isum[10]).trim();
@@ -4760,7 +4763,7 @@ public class GeneSet extends JApplet {
 				// StrId teg = tegmap.get(name);
 				StrId teg = tegmap.remove(name);
 				if( teg.name.contains("Thermus") || teg.name.contains("Meiothermus") || teg.name.contains("Marinithermus") || teg.name.contains("Oceanithermus") || teg.name.contains("Vulcani") ) 
-				pos.println(name + "\t" + acc + "\t" + fullname + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + country + "\t" + source + "\t" + doi + "\t" + pubmed + "\t" + author + "\t" + journal + "\t" + sub_auth + "\t" + sub_date + "\t" + lat_lon + "\t" + date + "\t" + title + "\t\t" );
+				pos.println(name + "\t" + acc + "\t" + fullname + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + country + "\t" + source + "\t" + doi + "\t" + pubmed + "\t" + author + "\t" + journal + "\t" + sub_auth + "\t" + sub_date + "\t" + lat_lon + "\t" + date + "\t" + title + "\t" + arb + "\t\t" );
 			}
 			// System.err.println( line.substring( isum[7], isum[8] ).trim() );
 
