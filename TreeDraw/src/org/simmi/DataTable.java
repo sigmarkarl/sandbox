@@ -87,10 +87,6 @@ import javax.swing.table.TableRowSorter;
 
 import netscape.javascript.JSObject;
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
@@ -104,6 +100,7 @@ import com.google.gdata.client.Service.GDataRequest.RequestType;
 import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
+import com.sun.rowset.internal.Row;
 
 public class DataTable extends JApplet implements ClipboardOwner {
 	/**
