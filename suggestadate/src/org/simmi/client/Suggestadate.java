@@ -429,13 +429,13 @@ public class Suggestadate implements EntryPoint {
 		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		vp.setSpacing( 5 );
 		
-		final Element ads = Document.get().getElementById("ads");
+		/*final Element ads = Document.get().getElementById("ads");
 		if( ads != null ) {
 			SimplePanel	adspanel = new SimplePanel();
 			ads.removeFromParent();
 			adspanel.getElement().appendChild( ads );
 			vp.add( adspanel );
-		}
+		}*/
 		vp.add( new HTML("<h3>Suggest a date</h3>") );
 		
 		hp = new HorizontalPanel();
