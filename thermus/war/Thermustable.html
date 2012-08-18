@@ -42,8 +42,13 @@
       document.appendText( message_event.data );
     }
     
-    function postMessage( message ) {
-    	simmiModule.postMessage( message );
+    tot = "";
+    function postModuleMessage( message, size ) {
+    	tot += message;
+    	if( tot == size ) { 
+    		simmiModule.postMessage( tot );
+    		tot = "";
+    	}
     }
 
     // If the page loads before the Native Client module loads, then set the
