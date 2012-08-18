@@ -202,9 +202,7 @@ public class Sequence implements Comparable<Sequence> {
 					}
 					double d = count == 0 ? 0.0 : mism/(double)count;
 					if( cantor ) d = -3.0*Math.log( 1.0 - 4.0*d/3.0 )/4.0;
-					/*if( Double.isNaN( d ) ) {
-						System.err.println("ok");
-					}*/
+					
 					dmat[x*len+y] = d;
 					dmat[y*len+x] = d;
 				}
