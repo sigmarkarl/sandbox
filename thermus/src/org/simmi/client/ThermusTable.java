@@ -72,13 +72,20 @@ public class ThermusTable implements EntryPoint {
 			$wnd.postMessage( phy );
 		};
 		
+	 	$wnd.isString = function(s) {
+    		return typeof(s) === 'string' || s instanceof String;
+		}
+		
 		$doc.appendText = function( str ) {
 			//$wnd.console.log( str );
 			//var datatable = $doc.getElementById('datatable');
 			//datatable.showTree( str );
 			if( $wnd.replacetreetext ) {
 				applet.replaceTreeText( str );
-			} else $wnd.showTree( str );
+			} else {
+				if( $wnd.isString(str) && str.indexOf('(') == 0 ) $wnd.showTree( str );
+				else $wnd.console.log( str );
+			}
 		};
 
 		return 0;
