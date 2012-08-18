@@ -91,11 +91,8 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.simmi.shared.Sequence;
-<<<<<<< HEAD
-=======
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
->>>>>>> b23165568f44f677ced2c6275503243c60061d81
 import org.simmi.unsigned.JavaFasta;
 
 public class SerifyApplet extends JApplet {

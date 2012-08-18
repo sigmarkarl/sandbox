@@ -37,8 +37,8 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  */
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
-
-	private final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
+	private final String tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
+	//private final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	public String greetServer(String acc, String country, boolean valid) throws IllegalArgumentException {
 		/*DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("thermus");

@@ -20,12 +20,12 @@
         <file path="/TreeDraw/src/thermus.ntree"/>
         <file path="/TreeDraw/src/temp.ntree"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
-        <file path="/TreeDraw/src/thermales.fasta"/>
         <file path="/TreeDraw/src/therm.txt"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
         <file path="/TreeDraw/src/thermus16S_hq.phy_phyml_tree.txt"/>
         <file path="/TreeDraw/src/lmin900idmin95phyml.tree"/>
         <file path="/TreeDraw/src/thermus16S_hq.phb"/>
+        <file path="/TreeDraw/src/thermaceae_16S_aligned.fasta"/>
         <file path="/TreeDraw/src/tree6.ntree"/>
     </selectedElements>
 </jardesc>
