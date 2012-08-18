@@ -4660,15 +4660,38 @@ public class GeneSet extends JApplet {
 		public StrId(String teg, int len) {
 			name = teg;
 			this.len = len;
+			
+			if( teg.contains("thermophilus") || teg.contains("composti") ) {
+				color = "small_blue";
+			} else if( teg.contains("scotoductus") || teg.contains("antrani") || teg.contains("yunnan") || teg.contains("rehai")  ) {
+				color = "small_orange";
+			} else if( teg.contains("aquaticus") ) {
+				color = "small_red";
+			} else if( teg.contains("oshimai") ) {
+				color = "small_brown";
+			} else if( teg.contains("filiformis") ) {
+				color = "small_purple";
+			} else if( teg.contains("arciformis") || teg.contains("islandicus") || teg.contains("kawaray") ) {
+				color = "small_green";
+			} else if( teg.contains("eggertsoni") || teg.contains("brockianus") || teg.contains("igniterr") ) {
+				color = "small_yellow";
+			} else if( teg.contains("Meiothermus") || teg.contains("Vulcanithermus") ) {
+				color = "small_black";
+			} else if( teg.contains("Oceanithermus") ) {
+				color = "small_grey";
+			} else /*if( teg.contains("Marinithermus") )*/ {
+				color = "small_white";
+			}
 		}
 
 		String name;
 		int id;
 		int len;
+		String color;
 	};
 
 	public static void simmi() throws IOException {
-		FileReader fr = new FileReader("c:\\cygwin\\home\\simmi\\allbutthermus.blastout");
+		FileReader fr = new FileReader("/home/sigmar/allbutthermus.blastout");
 		BufferedReader br = new BufferedReader(fr);
 		String line = br.readLine();
 		String current = null;
@@ -4724,12 +4747,12 @@ public class GeneSet extends JApplet {
 			isum[i] = isum[i - 1] + iv[i];
 		}
 
-		FileOutputStream fos = new FileOutputStream("c:\\cygwin\\home\\simmi\\noname.txt");
+		FileOutputStream fos = new FileOutputStream("/home/sigmar/noname.txt");
 		PrintStream pos = new PrintStream(fos);
 		//pos.println( "name\tacc\tspecies\tlen\tident\tdoi\tpubmed\tjournal\tauth\tsub_auth\tsub_date\tcountry\tsource\ttemp\tpH" );
-		pos.println( "name\tacc\tfullname\tspecies\tlen\tident\tcountry\tsource\tdoi\tpubmed\tauthor\tjournal\tsub_auth\tsub_date\tlat_lon\tdate\ttitle\tarb\ttemp\tpH" );
+		pos.println( "name\tacc\tfullname\tspecies\tlen\tident\tcountry\tsource\tdoi\tpubmed\tauthor\tjournal\tsub_auth\tsub_date\tlat_lon\tdate\ttitle\tarb\tcolor\ttemp\tpH" );
 		
-		fr = new FileReader("c:\\cygwin\\home\\simmi\\export2.nds");
+		fr = new FileReader("/home/sigmar/export3.nds");
 		br = new BufferedReader(fr);
 		line = br.readLine();
 		while (line != null) {
@@ -4763,7 +4786,7 @@ public class GeneSet extends JApplet {
 				// StrId teg = tegmap.get(name);
 				StrId teg = tegmap.remove(name);
 				if( teg.name.contains("Thermus") || teg.name.contains("Meiothermus") || teg.name.contains("Marinithermus") || teg.name.contains("Oceanithermus") || teg.name.contains("Vulcani") ) 
-				pos.println(name + "\t" + acc + "\t" + fullname + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + country + "\t" + source + "\t" + doi + "\t" + pubmed + "\t" + author + "\t" + journal + "\t" + sub_auth + "\t" + sub_date + "\t" + lat_lon + "\t" + date + "\t" + title + "\t" + arb + "\t\t" );
+				pos.println(name + "\t" + acc + "\t" + fullname + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + country + "\t" + source + "\t" + doi + "\t" + pubmed + "\t" + author + "\t" + journal + "\t" + sub_auth + "\t" + sub_date + "\t" + lat_lon + "\t" + date + "\t" + title + "\t" + arb + "\t" + teg.color + "\t\t" );
 			}
 			// System.err.println( line.substring( isum[7], isum[8] ).trim() );
 
@@ -4773,7 +4796,7 @@ public class GeneSet extends JApplet {
 
 		for (String name : tegmap.keySet()) {
 			StrId teg = tegmap.get(name);
-			pos.println(name + "\t" + name + "\t" + name + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" );
+			pos.println(name + "\t" + name + "\t" + name + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + "Simmaland" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + "" + "\t" + teg.color + "\t" + "\t" );
 		}
 		fos.close();
 	}

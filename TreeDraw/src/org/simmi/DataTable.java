@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -87,6 +86,10 @@ import javax.swing.table.TableRowSorter;
 
 import netscape.javascript.JSObject;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
@@ -94,13 +97,13 @@ import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.unsigned.JavaFasta;
 
+import com.google.gdata.client.ClientLoginAccountType;
 import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.Service.GDataRequest;
 import com.google.gdata.client.Service.GDataRequest.RequestType;
 import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
-import com.sun.rowset.internal.Row;
 
 public class DataTable extends JApplet implements ClipboardOwner {
 	/**
@@ -133,9 +136,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				if( tablemap.containsKey(key) ) {
 					Object[] strs = tablemap.get( key );
 					JSONObject jo = jsono.getJSONObject(key);
-					strs[11] = jo.getString("country");
+					strs[6] = jo.getString("country");
 					String vb = (String)jo.getString("valid");
-					if( vb != null ) strs[15] = Boolean.parseBoolean( vb );
+					if( vb != null ) strs[20] = Boolean.parseBoolean( vb );
 				}
 			}
 			table.tableChanged( new TableModelEvent(table.getModel()) );
@@ -278,14 +281,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	    		
 	    		if( split.length > 8 ) {
 		    		nameaccmap.put(split[0], split[1]);
-					Object[] strs = new Object[ 16 ];
+					Object[] strs = new Object[ 22 ];
 					
 					int k = 0;
 					for( k = 0; k < split.length; k++ ) {
 						/*if( k < 3 ) {
 							strs[k] = split[(k+2)%3];
 						} else */
-						if( k == 3 || k == 4 ) {
+						if( k == 4 || k == 5 ) {
 							String istr = split[k];
 							if( istr != null && istr.length() > 0 ) {
 								try {
@@ -296,7 +299,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							} else {
 								strs[k] = null;
 							}
-						} else if( k == 13 || k == 14 ) {
+						} else if( k == 19 || k == 20 ) {
 							String dstr = split[k];
 							if( dstr != null && dstr.length() > 0 ) {
 								try {
@@ -307,8 +310,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							} else {
 								strs[k] = null;
 							}
-						} else if( k == 15 ) strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
-						else strs[k] = split[k];
+						} else if( k == 21 ) {
+							strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
+						} else {
+							strs[k] = split[k];
+						}
 					}
 					
 					if( k == 8 ) strs[k++] = "";
@@ -316,8 +322,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( k == 10 ) strs[k++] = "";
 					if( k == 11 ) strs[k++] = "";
 					if( k == 12 ) strs[k++] = "";
-					if( k == 13 ) strs[k++] = null;
-					if( k == 14 ) strs[k++] = null;
+					if( k == 13 ) strs[k++] = "";
+					if( k == 14 ) strs[k++] = "";
+					if( k == 15 ) strs[k++] = "";
+					if( k == 16 ) strs[k++] = "";
+					if( k == 17 ) strs[k++] = "";
+					if( k == 18 ) strs[k++] = "";
+					if( k == 19 ) strs[k++] = null;
+					if( k == 20 ) strs[k++] = null;
 					strs[k] = true;
 					
 					//Arrays.copyOfRange(split, 1, split.length );
@@ -335,7 +347,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
     
     private static GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
-	private static final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
+	private static final String oldtableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
+	private static final String tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
 	
 	public String getThermusFusion() {
 		//System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
@@ -431,7 +444,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		int nseq = 0;
 		
 		Map<String,Collection<Sequence>>	specMap = new HashMap<String,Collection<Sequence>>();
-		InputStream is = DataTable.this.getClass().getResourceAsStream("/thermales.fasta");
+		InputStream is = DataTable.this.getClass().getResourceAsStream("/thermaceae_16S_aligned.fasta");
 		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 		try {
 			String inc = null;
@@ -490,7 +503,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						Object[] obj = tablemap.get(inc);
 						
 						String fname = "";
-						String spec = (String)obj[2];
+						String spec = (String)obj[3];
 						int iv = spec.indexOf('_');
 						if( iv == -1 ) {
 							iv = spec.indexOf("16S");
@@ -500,7 +513,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						else fname += "_"+spec;
 						
 						if( country.isSelected() ) {
-							String cntr = (String)obj[11];
+							String cntr = (String)obj[6];
 							int idx = cntr.indexOf('(');
 							if( idx > 0 ) {
 								int idx2 = cntr.indexOf(')', idx+1);
@@ -511,8 +524,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							else fname += "_"+cntr;
 						} 
 						if( source.isSelected() ) {
-							if( fname.length() == 0 ) fname += obj[12];
-							else fname += "_"+obj[12];
+							if( fname.length() == 0 ) fname += obj[7];
+							else fname += "_"+obj[7];
 						}
 						if( accession.isSelected() ) {
 							if( fname.length() == 0 ) fname += obj[1];
@@ -591,7 +604,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					Object[] obj = tablemap.get( seq.id );
 					if( obj != null ) {
 						String fname = getFastaName( namesel, obj );
-						seq.setName( fname );
+						String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
+						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+						seq.setName( cont );
 					}
 					
 					jf.addSequence( seq );
@@ -870,11 +885,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			} else {
 				Object[] obj = tablemap.get(n);
 				String fname = getFastaName( namesel, obj );
-				contset.add( new Sequence( n, fname, new StringBuilder(o.toString()), currentjavafasta.mseq ) );
+				
+				String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
+				cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+				
+				contset.add( new Sequence( n, cont, new StringBuilder(o.toString()), currentjavafasta.mseq ) );
 			}
 		}
 		
-		InputStream is = DataTable.this.getClass().getResourceAsStream("/thermales.fasta");
+		InputStream is = DataTable.this.getClass().getResourceAsStream("/thermaceae_16S_aligned.fasta");
 		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 		try {
 			String inc = null;
@@ -981,11 +1000,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						
 						String cont;
 						if( fname.length() > 1 ) {
-							cont = (Integer)obj[3] >= 900 ? fname : "*"+fname;
+							cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
 						} else cont = line.substring(1);
+						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
 						//if( rr.length == 1 ) cont = line.replace( ">", "" );
 						//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = new Sequence( inc, cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", ""), currentjavafasta.mseq );
+						seq = new Sequence( inc, cont, currentjavafasta.mseq );
 						//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
 						//nseq++;
 					}
@@ -1078,8 +1098,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		for( NameSel ns : namesel ) {
 			if( ns.isSelected() ) {
 				if( ns.name.equals("Species") ) {
-					String spec = (String)obj[2];
-					int		id = (Integer)obj[4];
+					String spec = (String)obj[3];
+					int		id = (Integer)obj[5];
 					if( id >= 97 ) {
 						spec = spec.replace("Thermus ", "T.");
 						
@@ -1099,7 +1119,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( fname.length() == 0 ) fname += spec;
 					else fname += "_"+spec;
 				} else if( ns.name.equals("Country") ) {
-					String cntr = (String)obj[11];
+					String cntr = (String)obj[6];
 					int idx = cntr.indexOf('(');
 					if( idx > 0 ) {
 						int idx2 = cntr.indexOf(')', idx+1);
@@ -1109,15 +1129,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( fname.length() == 0 ) fname += cntr;
 					else fname += "_"+cntr;
 				} else if( ns.name.equals("Source") ) {
-					if( fname.length() == 0 ) fname += obj[12];
-					else fname += "_"+obj[12];
+					if( fname.length() == 0 ) fname += obj[7];
+					else fname += "_"+obj[7];
 				} else if( ns.name.equals("Accession") ) {
 					String acc = (String)obj[1];
 					acc = acc.replace("_", "");
 					if( fname.length() == 0 ) fname += acc;
 					else fname += "_"+acc;
 				} else if( ns.name.equals("Pubmed") ) {
-					String pubmed = (String)obj[6];
+					String pubmed = (String)obj[8];
 					if( fname.length() == 0 ) fname += pubmed;
 					else fname += "_"+pubmed;
 				}
@@ -1266,6 +1286,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	public String extractFasta( String filename ) {
+		
 		/*JCheckBox species = new JCheckBox("Species");
 		JCheckBox accession = new JCheckBox("Acc");
 		JCheckBox country = new JCheckBox("Country");
@@ -1375,7 +1396,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						String fname = getFastaName( namesel, obj );
 						
 						if( fname.length() > 1 ) {
-							String startf = (Integer)obj[3] >= 900 ? ">" : ">*";
+							String startf = (Integer)obj[4] >= 900 ? ">" : ">*";
 							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
@@ -1400,8 +1421,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			e1.printStackTrace();
 		}
 		
-		System.err.println( "after" );
-		return sb.toString();
+		String fst = sb.toString();
+		return fst;
 	}
 	
 	public void runSql( String sql ) {
@@ -1502,27 +1523,33 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 			@Override
 			public int getColumnCount() {
-				return 16;
+				return 22;
 			}
 
 			@Override
 			public String getColumnName(int columnIndex) {
 				if( columnIndex == 0 ) return "name";
 				else if( columnIndex == 1 ) return "acc";
-				else if( columnIndex == 2 ) return "species";
-				else if( columnIndex == 3 ) return "len";
-				else if( columnIndex == 4 ) return "ident";
-				else if( columnIndex == 5 ) return "doi";
-				else if( columnIndex == 6 ) return "pubmed";
-				else if( columnIndex == 7 ) return "journal";
-				else if( columnIndex == 8 ) return "auth";
-				else if( columnIndex == 9 ) return "sub_auth";
-				else if( columnIndex == 10 ) return "sub_date";
-				else if( columnIndex == 11 ) return "country";
-				else if( columnIndex == 12 ) return "source";
-				else if( columnIndex == 13 ) return "temp";
-				else if( columnIndex == 14 ) return "pH";
-				else if( columnIndex == 15 ) return "valid";
+				else if( columnIndex == 2 ) return "fullname";
+				else if( columnIndex == 3 ) return "species";
+				else if( columnIndex == 4 ) return "len";
+				else if( columnIndex == 5 ) return "ident";
+				else if( columnIndex == 6 ) return "country";
+				else if( columnIndex == 7 ) return "source";
+				else if( columnIndex == 8 ) return "doi";
+				else if( columnIndex == 9 ) return "pubmed";
+				else if( columnIndex == 10 ) return "author";
+				else if( columnIndex == 11 ) return "journal";
+				else if( columnIndex == 12 ) return "sub_auth";
+				else if( columnIndex == 13 ) return "sub_date";
+				else if( columnIndex == 14 ) return "lat_lon";
+				else if( columnIndex == 15 ) return "date";
+				else if( columnIndex == 16 ) return "title";
+				else if( columnIndex == 17 ) return "arb";
+				else if( columnIndex == 18 ) return "color";
+				else if( columnIndex == 19 ) return "temp";
+				else if( columnIndex == 20 ) return "pH";
+				else if( columnIndex == 21 ) return "valid";
 				//else if( columnIndex == 13 ) return "color";
 				
 				return "";
@@ -1530,15 +1557,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 3 || columnIndex == 4 ) return Integer.class;
-				else if( columnIndex == 13 || columnIndex == 14 ) return Double.class;
-				else if( columnIndex == 15 ) return Boolean.class;
+				if( columnIndex == 4 || columnIndex == 5 ) return Integer.class;
+				else if( columnIndex == 19 || columnIndex == 20 ) return Double.class;
+				else if( columnIndex == 21 ) return Boolean.class;
 				return String.class;
 			}
 
 			@Override
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				if( columnIndex == 11 || columnIndex == 15 ) return true;
+				if( columnIndex == 6 || columnIndex == 19 ) return true;
 				return false;
 			}
 
@@ -1774,14 +1801,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("Export biogeography report") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String[] specs = {"antranikianii","aquaticus","arciformis","brockianus","eggertsoni","filiformis","igniterrae","islandicus","kawarayensis","oshimai","scotoductus","thermophilus"};
+				String[] specs = {"antranikianii","aquaticus","arciformis","brockianus","eggertsoni","filiformis","igniterrae","islandicus","kawarayensis","oshimai","scotoductus","thermophilus","yunnanensis","rehai","composti","unknownchile"};
 				
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
 				for( Object[] row : rowList ) {
-					String country = (String)row[11];
+					String country = (String)row[6];
 					if( country != null && country.length() > 0 ) {
-						String species = (String)row[2];
+						String species = (String)row[3];
 						String thespec = null;
 						for( String spec : specs ) {
 							if( species.contains(spec) ) {
@@ -1791,9 +1818,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						}
 						
 						if( thespec != null ) {
-							int len = (Integer)row[3];
-							int id = (Integer)row[4];
-							long idlen = (((long)len)<<32)+id;
+							int len = (Integer)row[4];
+							int id = (Integer)row[5];
+							long idlen = (((long)len)<<16)+id;
 							
 							Map<String,Long> cmap;
 							if( specLoc.containsKey( thespec ) ) {
@@ -1804,12 +1831,22 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							}
 							
 							if( cmap.containsKey(country) ) {
-								long oldidlen = cmap.get(country);
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>32);
+								long oldidlencount = cmap.get(country);
 								
-								if( id > oldid || (id == oldid && len > oldlen) ) cmap.put( country, idlen );
-							} else cmap.put( country, idlen );
+								int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
+								int oldcount = (int)(oldidlencount>>32);
+								
+								int oldid = (int)(oldidlen&0xFFFF);
+								int oldlen = (int)(oldidlen>>16);
+								
+								if( id > oldid || (id == oldid && len > oldlen) ) {
+									cmap.put( country, idlen+((long)(oldcount+1)<<32) );
+								} else {
+									cmap.put( country, oldidlen+((long)(oldcount+1)<<32) );
+								}
+							} else {
+								cmap.put( country, idlen+(1L<<32) );
+							}
 							
 							Map<String,Long> smap;
 							if( locSpec.containsKey( country ) ) {
@@ -1818,13 +1855,27 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								smap = new TreeMap<String,Long>();
 								locSpec.put( country, smap );
 							}
-							if( smap.containsKey(country) ) {
-								long oldidlen = smap.get(country);
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>32);
+							if( smap.containsKey(thespec) ) {
+								long oldidlencount = smap.get( thespec );
 								
-								if( id > oldid || (id == oldid && len > oldlen) ) smap.put( thespec, idlen );
-							} else smap.put( thespec, idlen );
+								int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
+								int oldcount = (int)(oldidlencount>>32);
+								
+								int oldid = (int)(oldidlen&0xFFFF);
+								int oldlen = (int)(oldidlen>>16);
+								
+								/*long oldidlen = smap.get(country);
+								int oldid = (int)(oldidlen&0xFFFF);
+								int oldlen = (int)(oldidlen>>32);*/
+								
+								if( id > oldid || (id == oldid && len > oldlen) ) {
+									smap.put( thespec, idlen+((long)(oldcount+1)<<32) );
+								} else {
+									smap.put( thespec, oldidlen+((long)(oldcount+1)<<32) );
+								}
+							} else {
+								smap.put( thespec, idlen+(1L<<32)  );
+							}
 						}
 					}
 				}
@@ -1845,13 +1896,21 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					Map<String,Long> smap = locSpec.get(cnt);
 					int subval = 0;
 					for( String spec : smap.keySet() ) {
-						long idlen = smap.get(spec);
+						long idlencount = smap.get(spec);
+						
+						int idlen = (int)(idlencount&0xFFFFFFFF);
+						int count = (int)(idlencount>>32);
+						
 						int id = (int)(idlen&0xFFFF);
-						int len = (int)(idlen>>32);
+						int len = (int)(idlen>>16);
 						
 						r = lSheet.createRow(val+subval);
 						if( subval == 0 ) r.createCell(0).setCellValue( cnt );
-						r.createCell(1).setCellValue( spec );
+						if( id < 97 || len < 900 || (id == 97 &&  len < 900) ) {
+							r.createCell(1).setCellValue( "*"+spec+" ("+count+")" );
+						} else {
+							r.createCell(1).setCellValue( spec+" ("+count+")" );
+						}
 						r.createCell(2).setCellValue( id );
 						r.createCell(3).setCellValue( len );
 						
@@ -1871,12 +1930,25 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					Map<String,Long> cmap = specLoc.get(spec);
 					int subval = 0;
 					for( String cnt : cmap.keySet() ) {
-						long idlen = cmap.get(cnt);
+						long idlencount = cmap.get( cnt);
+						
+						int idlen = (int)(idlencount&0xFFFFFFFF);
+						int count = (int)(idlencount>>32);
+						
 						int id = (int)(idlen&0xFFFF);
-						int len = (int)(idlen>>32);
+						int len = (int)(idlen>>16);
+						
+						/*long idlen = cmap.get(cnt);
+						int id = (int)(idlen&0xFFFF);
+						int len = (int)(idlen>>32);*/
+						
 						r = sSheet.createRow(val+subval);
 						if( subval == 0 ) r.createCell(0).setCellValue( spec );
-						r.createCell(1).setCellValue( cnt );
+						if( id < 97 || len < 900 || (id == 97 &&  len < 900) ) {
+							r.createCell(1).setCellValue( "*"+cnt+" ("+count+")" );
+						} else {
+							r.createCell(1).setCellValue( cnt+" ("+count+")" );
+						}
 						r.createCell(2).setCellValue( id );
 						r.createCell(3).setCellValue( len );
 						
@@ -1900,13 +1972,27 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					r = bSheet.createRow(val);
 					r.createCell(0).setCellValue(cnt);
 					for( String spec : smap.keySet() ) {
-						long idlen = smap.get(spec);
+						long idlencount = smap.get( spec );
+						
+						int idlen = (int)(idlencount&0xFFFFFFFF);
+						int count = (int)(idlencount>>32);
+						
+						int id = (int)(idlen&0xFFFF);
+						int len = (int)(idlen>>16);
+						
+						/*long idlen = smap.get(spec);
 						int id = (int)(idlen&0xFF);
-						int len = (int)(idlen>>32);
+						int len = (int)(idlen>>32);*/
 						
 						int idx = -1;
 						if( specIndex.containsKey(spec) ) idx = specIndex.get(spec);
-						if( idx != -1 ) r.createCell(idx+1).setCellValue( id );
+						if( idx != -1 ) {
+							if( id < 97 || len < 900 || (id == 97 &&  len < 900) ) {
+								r.createCell(idx+1).setCellValue( "*" + id + "/" + len+" ("+count+")" );
+							} else {
+								r.createCell(idx+1).setCellValue( id + "/" + len+" ("+count+")" );
+							}
+						}
 					}
 					val++;
 				}
@@ -2293,10 +2379,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					JSObject win = JSObject.getWindow( DataTable.this );
 					win.call("fasttree", objs);
 				}*/
-				String tree = extractFasta("/thermales.fasta");
+				String tree = extractFasta("/thermaceae_16S_aligned.fasta");
 				Object[] objs = { "f"+tree };
 				JSObject win = JSObject.getWindow( DataTable.this );
-				win.call("fasttree", objs);
+				Object smod = win.getMember("simmiModule");
+				System.err.println("about to call nacl");
+				if( smod != null && smod instanceof JSObject ) {
+					JSObject obj = (JSObject)smod;
+					System.err.println("about to postmessage to nacl");
+					obj.call("postMessage", objs);
+				} else {
+					System.err.println("fasttree fail");
+				}
 			}
 		});
 		fasttreemenu.add( new AbstractAction("FastTree w/o gaps") {
@@ -2690,7 +2784,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	};
 	
 	public static void main(String[] args) {
-		File f = new File("/home/sigmar/sim.newick");
+		/*File f = new File("/home/sigmar/sim.newick");
 		try {
 			char[] cbuf = new char[(int)f.length()];
 			FileReader fr = new FileReader(f);
@@ -2707,31 +2801,62 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
-		/*try {
+		try {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
-			//service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
+			service.setUserCredentials("signinhelpdesk@gmail.com", "vid-311.hald", ClientLoginAccountType.GOOGLE);
 			
-			String ret = run("select rowid, ident from "+tableid+" where country like '%hile%' and species like '%filiform%'", true);
+			//String ret = run("select acc from "+oldtabhleid+" where country like '%hile%' and species like '%filiform%'", true);
+			String ret = run("select acc, country from "+oldtableid+" where len(country) > 1", true);
 			String[] split = ret.split("\n");
+			Map<String,String>	oldids = new HashMap<String,String>();
 			for( int i = 1; i < split.length; i++ ) {
+				String s = split[i];
+				int val = s.indexOf(',');
+				if( val != -1 ) {
+					oldids.put( s.substring(0, val), s.substring(val+1, s.length()) );	
+				} else {
+					oldids.put( s, null );
+				}
+			}
+			/*System.err.println( oldids.size() );
+			System.err.println( oldids.keySet() );*/
+			
+			ret = run("select acc, rowid from "+tableid+" where len(country) < 2", true);
+			split = ret.split("\n");
+			HashMap<String,String>	newids = new HashMap<String,String>();
+			for( String s : split ) {
+				int val = s.indexOf(',');
+				newids.put( s.substring(0, val), s.substring(val+1, s.length()) );
+			}
+			
+			newids.keySet().retainAll( oldids.keySet() );
+			
+			for( String id : newids.keySet() ) {
+				String rowid = newids.get(id);
+				String country = oldids.get(id).replace("\"", "");
+				//System.err.println( id + "\t" + oldids.get(id) );
+				run( "update "+tableid+" set country = '"+country+"' where rowid = '"+rowid+"'", true );
+			}
+			
+			/*for( int i = 1; i < split.length; i++ ) {
 				String row = split[i];
-				String[] subsplit = row.split(",");
-				int ident = Integer.parseInt( subsplit[1] );
-				run( "update "+tableid+" set species = 'Thermus chileunknown', ident = "+(ident+4)+" where rowid = '"+subsplit[0]+"'", true );
+				//String[] subsplit = row.split(",");
+				//int ident = Integer.parseInt( subsplit[1] );
+				run( "update "+tableid+" set country = 'USA:Yellowstone' where rowid = '"+row+"'", true );
 			}
 			/*String ret = run("select rowid from "+tableid+" where name = 'Unl042jm'", true);
 			System.err.println( ret );
 			String[] lines = ret.split("\n");
-			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*
+			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*/
 		} catch (AuthenticationException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ServiceException e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
 	
 	public static void main_old(String[] args) {

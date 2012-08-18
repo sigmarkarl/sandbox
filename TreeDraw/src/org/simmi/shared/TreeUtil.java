@@ -100,7 +100,11 @@ public class TreeUtil {
 				u[i] = 0;
 				for ( int j = 0; j < len; j++ ) {
 					if( i != j ) {
-						u[i] += dmat[i*len+j];
+						double dval = dmat[i*len+j];
+						if( Double.isNaN( dval ) ) {
+							System.err.println("erm");
+						}
+						u[i] += dval;
 					}
 				}
 				u[i] /= len-2;
@@ -149,9 +153,9 @@ public class TreeUtil {
 							/*if( k >= dmatmp.length ) {
 								System.err.println();
 							}*/
-							if( k >= dmatmp.length ) {
+							/*if( k >= dmatmp.length ) {
 								System.err.println("ok");
-							}
+							}*/
 							dmatmp[k] = dmat[i*len+j];
 							k++;
 						}
