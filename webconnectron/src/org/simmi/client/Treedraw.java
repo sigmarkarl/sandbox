@@ -79,18 +79,24 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class Treedraw implements EntryPoint {
-	Canvas		canvas;
-	Node		root;
-	Node		selectedNode;
-	Node[]		nodearray;
-	TreeUtil	treeutil;
-	boolean		center = false;
-	int			equalHeight = 0;
-	boolean		showscale = true;
-	boolean		showbubble = false;
+	Canvas				canvas;
+	Node				root;
+	Node				selectedNode;
+	Node[]				nodearray;
+	private TreeUtil	treeutil;
+	boolean			center = false;
+	int					equalHeight = 0;
+	boolean			showscale = true;
+	boolean			showbubble = false;
+	boolean			showlinage = false;
 	
-	public void handleTree( TreeUtil treeutil ) {
-		this.treeutil = treeutil;
+	private void setTreeUtil( TreeUtil tu, String val ) {
+		if( this.treeutil != null ) console( "batjong2 " + val );
+		this.treeutil = tu;
+	}
+	
+	public void handleTree() {
+		//this.treeutil = treeutil;
 		//treeutil.getNode().countLeaves()
 		
 		Node n = treeutil.getNode();
@@ -98,6 +104,21 @@ public class Treedraw implements EntryPoint {
 			root = n;
 			drawTree( treeutil );
 		}
+	}
+	
+	public double getMaxInternalNameLength( Node n, Context2d ctx ) {
+		double ret = 0.0;
+		String name = n.getName();
+		List<Node> nl = n.getNodes();
+		if( nl != null ) {
+			if( name != null && nl.size() > 0 ) ret = ctx.measureText( name ).getWidth();
+		
+			for( Node nn : n.getNodes() ) {
+				double val = getMaxInternalNameLength( nn, ctx );
+				if( val > ret ) ret = val;
+			}
+		}
+		return ret;
 	}
 	
 	double hchunk = 10.0;
@@ -128,7 +149,7 @@ public class Treedraw implements EntryPoint {
 		//boolean equalHeight = false;
 		
 		Treedraw.this.h = hchunk*leaves;
-		Treedraw.this.w = ww-10;
+		Treedraw.this.w = ww - 10;
 		
 		if( vertical ) {
 			dh = Treedraw.this.h/leaves;
@@ -165,6 +186,11 @@ public class Treedraw implements EntryPoint {
 			String name = node.getName();
 			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 			double textwidth = ctx.measureText(name).getWidth();
+			
+			if( showlinage ) {
+				double ml = getMaxInternalNameLength( root, ctx );
+				w -= ml+30;
+			}
 			
 			double maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth);
 			if( equalHeight > 0 ) dw = maxheight/levels;
@@ -323,274 +349,276 @@ public class Treedraw implements EntryPoint {
 	
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
-		List<Sequence> seqs = currentSeqs;
-		currentSeqs = null;
-		//TreeUtil	treeutil;
-		if( str.startsWith("#") ) {
-			int i = str.lastIndexOf("tree");
-			if( i != -1 ) {
-				i = str.indexOf('(', i);
-				int l = str.indexOf(';', i+1);
-				
-				Map<String,String> namemap = new HashMap<String,String>();
-				int t = str.indexOf("translate");
-				int n = str.indexOf("\n", t);
-				int c = str.indexOf(";", n);
-				
-				String treelist = str.substring(n+1, c);
-				String[] split = treelist.split(",");
-				for( String name : split ) {
-					String trim = name.trim();
-					int v = trim.indexOf(' ');
-					namemap.put( trim.substring(0, v), trim.substring(v+1) );
-				}
-				
-				String tree = str.substring(i, l).replaceAll("[\r\n]+", "");
-				treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
-				treeutil.replaceNames( treeutil.getNode(), namemap );
-				handleTree( treeutil );
-				
-			}
-		} else if( str.startsWith(">") ) {
-			//final TreeUtil 
-			treeutil = new TreeUtil();
-			try {
-				final List<Sequence> lseq = importReader( str );
-				currentSeqs = lseq;
-				
-				final DialogBox db = new DialogBox();
-				VerticalPanel	dbvp = new VerticalPanel();
-				
-				final CheckBox ewCheck = new CheckBox("Entropy weighted dist-matrix");
-				final CheckBox egCheck = new CheckBox("Exclude gaps");
-				final CheckBox btCheck = new CheckBox("Bootstrap");
-				final CheckBox ctCheck = new CheckBox("Jukes-cantor");
-				
-				final RadioButton rb = new RadioButton("Parsimony insertion", "parseChoice");
-				if( seqs != null && seqs.get(0).getLength() == currentSeqs.get(0).getLength() ) {
-					final RadioButton rb2 = new RadioButton("New tree", "parseChoice");
+		if( str != null && str.length() > 1 && !str.startsWith("{") ) {
+			List<Sequence> seqs = currentSeqs;
+			currentSeqs = null;
+			//TreeUtil	treeutil;
+			if( str.startsWith("#") ) {
+				int i = str.lastIndexOf("tree");
+				if( i != -1 ) {
+					i = str.indexOf('(', i);
+					int l = str.indexOf(';', i+1);
 					
-					rb2.addClickHandler( new ClickHandler() {
+					Map<String,String> namemap = new HashMap<String,String>();
+					int t = str.indexOf("translate");
+					int n = str.indexOf("\n", t);
+					int c = str.indexOf(";", n);
+					
+					String treelist = str.substring(n+1, c);
+					String[] split = treelist.split(",");
+					for( String name : split ) {
+						String trim = name.trim();
+						int v = trim.indexOf(' ');
+						namemap.put( trim.substring(0, v), trim.substring(v+1) );
+					}
+					
+					String tree = str.substring(i, l).replaceAll("[\r\n]+", "");
+					setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
+					treeutil.replaceNames( treeutil.getNode(), namemap );
+					handleTree();
+					
+				}
+			} else if( str.startsWith(">") ) {
+				//final TreeUtil 
+				setTreeUtil( new TreeUtil(), str );
+				try {
+					final List<Sequence> lseq = importReader( str );
+					currentSeqs = lseq;
+					
+					final DialogBox db = new DialogBox();
+					VerticalPanel	dbvp = new VerticalPanel();
+					
+					final CheckBox ewCheck = new CheckBox("Entropy weighted dist-matrix");
+					final CheckBox egCheck = new CheckBox("Exclude gaps");
+					final CheckBox btCheck = new CheckBox("Bootstrap");
+					final CheckBox ctCheck = new CheckBox("Jukes-cantor");
+					
+					final RadioButton rb = new RadioButton("Parsimony insertion", "parseChoice");
+					if( seqs != null && seqs.get(0).getLength() == currentSeqs.get(0).getLength() ) {
+						final RadioButton rb2 = new RadioButton("New tree", "parseChoice");
+						
+						rb2.addClickHandler( new ClickHandler() {
+							@Override
+							public void onClick(ClickEvent event) {
+								if( !rb2.getValue() ) {
+									ewCheck.setEnabled( false );
+									egCheck.setEnabled( false );
+									btCheck.setEnabled( false );
+									ctCheck.setEnabled( false );
+								} else {
+									ewCheck.setEnabled( true );
+									egCheck.setEnabled( true );
+									btCheck.setEnabled( true );
+									ctCheck.setEnabled( true );
+								}
+							}
+						});
+						
+						dbvp.add( rb );
+						dbvp.add( rb2 );
+					}
+					ctCheck.setValue( true );
+					
+					dbvp.add( ewCheck );
+					dbvp.add( egCheck );
+					dbvp.add( btCheck );
+					dbvp.add( ctCheck );
+					
+					db.setModal( true );
+					HorizontalPanel hp = new HorizontalPanel();
+					Button closeButton = new Button("Ok");
+					closeButton.addClickHandler( new ClickHandler() {
 						@Override
 						public void onClick(ClickEvent event) {
-							if( !rb2.getValue() ) {
-								ewCheck.setEnabled( false );
-								egCheck.setEnabled( false );
-								btCheck.setEnabled( false );
-								ctCheck.setEnabled( false );
+							db.hide();
+						}
+					});
+					hp.add( closeButton );
+					hp.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
+					dbvp.add( hp );
+					
+					db.add( dbvp );
+					db.center();
+					
+					db.addCloseHandler( new CloseHandler<PopupPanel>() {
+						@Override
+						public void onClose(CloseEvent<PopupPanel> event) {
+							if( rb.getValue() ) {
+								if( treeutil != null ) {
+									
+								}
 							} else {
-								ewCheck.setEnabled( true );
-								egCheck.setEnabled( true );
-								btCheck.setEnabled( true );
-								ctCheck.setEnabled( true );
+								boolean excludeGaps = egCheck.getValue();
+								boolean bootstrap = btCheck.getValue();
+								boolean cantor = ctCheck.getValue();
+								boolean entropyWeight = ewCheck.getValue();
+								
+								List<Integer>	idxs = null;
+								if( excludeGaps ) {
+									int start = Integer.MIN_VALUE;
+									int end = Integer.MAX_VALUE;
+									
+									for( Sequence seq : lseq ) {
+										if( seq.getRealStart() > start ) start = seq.getRealStart();
+										if( seq.getRealStop() < end ) end = seq.getRealStop();
+									}
+									
+									idxs = new ArrayList<Integer>();
+									for( int x = start; x < end; x++ ) {
+										//int i;
+										boolean skip = false;
+										for( Sequence seq : lseq ) {
+											char c = seq.charAt( x );
+											if( c != '-' && c != '.' && c == ' ' ) {
+												skip = true;
+												break;
+											}
+										}
+										
+										if( !skip ) {
+											idxs.add( x );
+										}
+									}
+								}
+								
+								double[]	dvals = new double[ lseq.size()*lseq.size() ];
+								double[] ent = null;
+								if( entropyWeight ) ent = Sequence.entropy( lseq );
+									
+									/*if( idxs != null ) {
+										int total = idxs.size();
+										ent = new double[total];
+										Map<Character,Integer>	shanmap = new HashMap<Character,Integer>();
+										for( int x = 0; x < total; x++ ) {
+											shanmap.clear();
+											
+											for( Sequence seq : lseq ) {
+												char c = seq.charAt( idxs.get(x) );
+												int val = 0;
+												if( shanmap.containsKey(c) ) val = shanmap.get(c);
+												shanmap.put( c, val+1 );
+											}
+											
+											double res = 0.0;
+											for( char c : shanmap.keySet() ) {
+												int val = shanmap.get(c);
+												double p = (double)val/(double)lseq.size();
+												res -= p*Math.log(p);
+											}
+											ent[x] = res/Math.log(2.0);
+										}
+									} else {
+										
+									}
+									}*/
+							
+								Sequence.distanceMatrixNumeric(lseq, dvals, idxs, false, cantor, ent);
+								
+								List<String>	names = new ArrayList<String>();
+								for( Sequence seq : lseq ) {
+									names.add( seq.getName() );
+								}
+								Node n = treeutil.neighborJoin( dvals, names, null );
+								
+								if( bootstrap ) {
+									Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+										@Override
+										public int compare(Node o1, Node o2) {
+											String c1 = o1.toStringWoLengths();
+											String c2 = o2.toStringWoLengths();
+											
+											return c1.compareTo( c2 );
+										}
+									};
+									treeutil.arrange( n, comp );
+									String tree = n.toStringWoLengths();
+									
+									for( int i = 0; i < 100; i++ ) {
+										Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor, ent );
+										Node nn = treeutil.neighborJoin(dvals, names, null);
+										treeutil.arrange( nn, comp );
+										treeutil.compareTrees( tree, n, nn );
+										
+										//String btree = nn.toStringWoLengths();
+										//System.err.println( btree );
+									}
+									treeutil.appendCompare( n );
+								}
+								setNode( n );
+								handleTree();
 							}
 						}
 					});
-					
-					dbvp.add( rb );
-					dbvp.add( rb2 );
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-				ctCheck.setValue( true );
-				
-				dbvp.add( ewCheck );
-				dbvp.add( egCheck );
-				dbvp.add( btCheck );
-				dbvp.add( ctCheck );
-				
-				db.setModal( true );
-				HorizontalPanel hp = new HorizontalPanel();
-				Button closeButton = new Button("Ok");
-				closeButton.addClickHandler( new ClickHandler() {
-					@Override
-					public void onClick(ClickEvent event) {
-						db.hide();
-					}
-				});
-				hp.add( closeButton );
-				hp.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
-				dbvp.add( hp );
-				
-				db.add( dbvp );
-				db.center();
-				
-				db.addCloseHandler( new CloseHandler<PopupPanel>() {
-					@Override
-					public void onClose(CloseEvent<PopupPanel> event) {
-						if( rb.getValue() ) {
-							if( treeutil != null ) {
-								
-							}
-						} else {
-							boolean excludeGaps = egCheck.getValue();
-							boolean bootstrap = btCheck.getValue();
-							boolean cantor = ctCheck.getValue();
-							boolean entropyWeight = ewCheck.getValue();
+			} else if( str.startsWith("[") ) {
+				int k = str.indexOf(']');
+				int i = str.indexOf('(', k+1);
+				if( i != -1 ) {
+					String treestr = str.substring(i);
+					String tree = treestr.replaceAll("[\r\n]+", "");
+					setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
+					handleTree();
+				}
+			} else if( !str.startsWith("(") ) {
+				setTreeUtil( new TreeUtil(), str );
+				int len = 0;
+				List<String> names;
+				double[] dvals;
+				if( str.startsWith(" ") || str.startsWith("\t") ) {
+					names = new ArrayList<String>();
+					String[] lines = str.split("\n");
+					len = Integer.parseInt( lines[0].trim() );
+					dvals = new double[ len*len ];
+					int m = 0;
+					int u = 0;
+					for( int i = 1; i < lines.length; i++ ) {
+						String line = lines[i];
+						String[] ddstrs = line.split("[ \t]+");
+						if( !line.startsWith(" ") ) {
+							m++;
+							u = 0;
 							
-							List<Integer>	idxs = null;
-							if( excludeGaps ) {
-								int start = Integer.MIN_VALUE;
-								int end = Integer.MAX_VALUE;
-								
-								for( Sequence seq : lseq ) {
-									if( seq.getRealStart() > start ) start = seq.getRealStart();
-									if( seq.getRealStop() < end ) end = seq.getRealStop();
-								}
-								
-								idxs = new ArrayList<Integer>();
-								for( int x = start; x < end; x++ ) {
-									//int i;
-									boolean skip = false;
-									for( Sequence seq : lseq ) {
-										char c = seq.charAt( x );
-										if( c != '-' && c != '.' && c == ' ' ) {
-											skip = true;
-											break;
-										}
-									}
-									
-									if( !skip ) {
-										idxs.add( x );
-									}
-								}
-							}
+							//int si = ddstrs[0].indexOf('_');
+							//String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
+							//console( "name: " + name );
 							
-							double[]	dvals = new double[ lseq.size()*lseq.size() ];
-							double[] ent = null;
-							if( entropyWeight ) ent = Sequence.entropy( lseq );
-								
-								/*if( idxs != null ) {
-									int total = idxs.size();
-									ent = new double[total];
-									Map<Character,Integer>	shanmap = new HashMap<Character,Integer>();
-									for( int x = 0; x < total; x++ ) {
-										shanmap.clear();
-										
-										for( Sequence seq : lseq ) {
-											char c = seq.charAt( idxs.get(x) );
-											int val = 0;
-											if( shanmap.containsKey(c) ) val = shanmap.get(c);
-											shanmap.put( c, val+1 );
-										}
-										
-										double res = 0.0;
-										for( char c : shanmap.keySet() ) {
-											int val = shanmap.get(c);
-											double p = (double)val/(double)lseq.size();
-											res -= p*Math.log(p);
-										}
-										ent[x] = res/Math.log(2.0);
-									}
-								} else {
-									
-								}
-								}*/
-						
-							Sequence.distanceMatrixNumeric(lseq, dvals, idxs, false, cantor, ent);
-							
-							List<String>	names = new ArrayList<String>();
-							for( Sequence seq : lseq ) {
-								names.add( seq.getName() );
+							String name = ddstrs[0];
+							names.add( name );
+						}
+						if( ddstrs.length > 2 ) {
+							for( int k = 1; k < ddstrs.length; k++ ) {
+								int idx = (m-1)*len+(u++);
+								if( idx < dvals.length ) dvals[idx] = Double.parseDouble(ddstrs[k]);
+								else console( m + " more " + u );
 							}
-							Node n = treeutil.neighborJoin( dvals, names, null );
-							
-							if( bootstrap ) {
-								Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
-									@Override
-									public int compare(Node o1, Node o2) {
-										String c1 = o1.toStringWoLengths();
-										String c2 = o2.toStringWoLengths();
-										
-										return c1.compareTo( c2 );
-									}
-								};
-								treeutil.arrange( n, comp );
-								String tree = n.toStringWoLengths();
-								
-								for( int i = 0; i < 100; i++ ) {
-									Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor, ent );
-									Node nn = treeutil.neighborJoin(dvals, names, null);
-									treeutil.arrange( nn, comp );
-									treeutil.compareTrees( tree, n, nn );
-									
-									//String btree = nn.toStringWoLengths();
-									//System.err.println( btree );
-								}
-								treeutil.appendCompare( n );
-							}
-							treeutil.setNode( n );
-							handleTree( treeutil );
 						}
 					}
-				});
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else if( str.startsWith("[") ) {
-			int k = str.indexOf(']');
-			int i = str.indexOf('(', k+1);
-			if( i != -1 ) {
-				String treestr = str.substring(i);
-				String tree = treestr.replaceAll("[\r\n]+", "");
-				TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
-				handleTree( treeutil );
-			}
-		} else if( !str.startsWith("(") ) {
-			treeutil = new TreeUtil();
-			int len = 0;
-			List<String> names;
-			double[] dvals;
-			if( str.startsWith(" ") || str.startsWith("\t") ) {
-				names = new ArrayList<String>();
-				String[] lines = str.split("\n");
-				len = Integer.parseInt( lines[0].trim() );
-				dvals = new double[ len*len ];
-				int m = 0;
-				int u = 0;
-				for( int i = 1; i < lines.length; i++ ) {
-					String line = lines[i];
-					String[] ddstrs = line.split("[ \t]+");
-					if( !line.startsWith(" ") ) {
-						m++;
-						u = 0;
-						
-						//int si = ddstrs[0].indexOf('_');
-						//String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
-						//console( "name: " + name );
-						
-						String name = ddstrs[0];
-						names.add( name );
-					}
-					if( ddstrs.length > 2 ) {
-						for( int k = 1; k < ddstrs.length; k++ ) {
-							int idx = (m-1)*len+(u++);
-							if( idx < dvals.length ) dvals[idx] = Double.parseDouble(ddstrs[k]);
-							else console( m + " more " + u );
+				} else {
+					String[] lines = str.split("\n");
+					names = Arrays.asList( lines[0].split("\t") );
+					len = names.size();
+					dvals = new double[len*len];
+					for( int i = 1; i < lines.length; i++ ) {
+						String[] ddstrs = lines[i].split("\t");
+						if( ddstrs.length > 1 ) {
+							int k = 0;
+							for( String ddstr : ddstrs ) {
+								dvals[(i-1)*len+(k++)] = Double.parseDouble(ddstr);
+							}
 						}
 					}
 				}
+				Node n = treeutil.neighborJoin( dvals, names, null );
+				setNode( n );
+				//console( treeutil.getNode().toString() );
+				handleTree();
 			} else {
-				String[] lines = str.split("\n");
-				names = Arrays.asList( lines[0].split("\t") );
-				len = names.size();
-				dvals = new double[len*len];
-				for( int i = 1; i < lines.length; i++ ) {
-					String[] ddstrs = lines[i].split("\t");
-					if( ddstrs.length > 1 ) {
-						int k = 0;
-						for( String ddstr : ddstrs ) {
-							dvals[(i-1)*len+(k++)] = Double.parseDouble(ddstr);
-						}
-					}
-				}
+				String tree = str.replaceAll("[\r\n]+", "");
+				setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
+				handleTree();
 			}
-			Node n = treeutil.neighborJoin( dvals, names, null );
-			treeutil.setNode( n );
-			//console( treeutil.getNode().toString() );
-			handleTree( treeutil );
-		} else {
-			String tree = str.replaceAll("[\r\n]+", "");
-			treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
-			handleTree( treeutil );
 		}
 	}
 	
@@ -610,6 +638,12 @@ public class Treedraw implements EntryPoint {
 		reader.readAsText( file, "utf8" );
 		$wnd.console.log('afterreadastext');
 	}-*/;
+	
+	public void setNode( Node n ) {
+		if( n == null ) console( "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeermmmmmmmmmmmmmmmmmmmmmmmmmmm" );
+		else console( "fjorulalli " + n.toString() );
+		treeutil.setNode( n );
+	}
 	
 	public native void click( JavaScriptObject e ) /*-{
 		e.click();
@@ -1115,7 +1149,7 @@ public class Treedraw implements EntryPoint {
 				//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 				//Node newroot = recursiveReroot( root, x, y );
 				selectedNode.setParent( null );
-				treeutil.setNode( selectedNode );
+				setNode( selectedNode );
 					//treeutil.reroot(root, newroot);
 				root = selectedNode;
 				root.seth( 0.0 );
@@ -1124,10 +1158,27 @@ public class Treedraw implements EntryPoint {
 				invertSelectionRecursive( root );
 			} else if( c == 'r' || c == 'R' ) {
 				if( treeutil != null && selectedNode != null ) {
+					if( treeutil.getNode() != null ) {
+						console( "not null first" );
+						console( "muu " + treeutil.getNode().toString() );
+					} else {
+						console( "null first" );
+					}
+					
+					
 					selectedNode.setParent( null );
+					
+					//console( selectedNode.toString() );
+					if( treeutil.getNode() != null ) {
+						console( "not null" );
+						console( "muu " + treeutil.getNode().toString() );
+					} else {
+						console( "null" );
+					}
+					
 					treeutil.reroot( selectedNode );
 					//treeutil.rerootRecur( treeutil.currentNode, selectedNode );
-					root = treeutil.currentNode;
+					root = treeutil.getNode();
 				}
 			}
 		}
@@ -1497,7 +1548,7 @@ public class Treedraw implements EntryPoint {
 		td.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				showTree( treeutil.currentNode.toString() );
+				showTree( treeutil.getNode().toString() );
 			}
 		});
 		hp.add( td );
@@ -1602,11 +1653,19 @@ public class Treedraw implements EntryPoint {
 				drawTree( treeutil );
 			}
 		});
-		CheckBox bubblecheck = new CheckBox("Node bubble");
+		CheckBox bubblecheck = new CheckBox("Node bubbles");
 		bubblecheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
 			@Override
 			public void onValueChange(ValueChangeEvent<Boolean> event) {
 				showbubble = event.getValue();
+				drawTree( treeutil );	
+			}
+		});
+		CheckBox linagecheck = new CheckBox("Internal node linages");
+		linagecheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				showlinage = event.getValue();
 				drawTree( treeutil );	
 			}
 		});
@@ -1615,6 +1674,7 @@ public class Treedraw implements EntryPoint {
 		labhp.add( labcheck);
 		labhp.add( label );
 		labhp.add( bubblecheck );
+		labhp.add( linagecheck );
 		
 		choicePanel.add( arrangehp );
 		choicePanel.add( bc );
@@ -2162,27 +2222,34 @@ public class Treedraw implements EntryPoint {
 				}
 				
 				//double strh = Math.max( 10.0, hchunk );//10;
-				if( vertical ) {
-					g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
-				} else g2.fillRect( x+nx-(5*strw)/8, ny-strh/2.0, (5*strw)/4, strh*1.2 );
-				//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
-				//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
-				g2.setFillStyle( "#ffffff" );
+				
+				if( !showlinage ) {
+					if( vertical ) {
+						g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
+					} else g2.fillRect( x+nx-(5*strw)/8, ny-strh/2.0, (5*strw)/4, strh*1.2 );
+					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
+					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
+					g2.setFillStyle( "#ffffff" );
+				}
 				
 				//int i = 0;
 				if( vertical ) {
-					if( b ) {
-						//for( String s : split ) {
-							//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-							//i++;
-						//}
-						g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+					if( showlinage ) {fn
+						g2.fillText(use, w+20, y+ny+strh/2.3 );
 					} else {
-						//for( String s : split ) {
-							//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-							//i++;
-						//}
-						g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+						if( b ) {
+							//for( String s : split ) {
+								//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+								//i++;
+							//}
+							g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+						} else {
+							//for( String s : split ) {
+								//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+								//i++;
+							//}
+							g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+						}
 					}
 				} else {
 					if( b ) {
