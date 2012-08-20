@@ -64,12 +64,12 @@ public class ThermusTable implements EntryPoint {
 		$wnd,replacetreetext = false;
 		$wnd.fasttree = function( fasta ) {
 			$wnd.replacetreetext = false;
-			$wnd.postMessage( fasta );
+			$wnd.postModuleMessage( fasta, fasta.length );
 		};
 		
 		$wnd.dnapars = function( phy ) {
 			$wnd.replacetreetext = true;
-			$wnd.postMessage( phy );
+			$wnd.postModuleMessage( phy, phy.length );
 		};
 		
 	 	$wnd.isString = function(s) {

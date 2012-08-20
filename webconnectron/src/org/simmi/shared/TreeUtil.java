@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class TreeUtil {
-	public Node currentNode = null;
+	private Node currentNode = null;
 	String treelabel = null;
 	
 	public void setTreeLabel( String label ) {
@@ -782,7 +782,7 @@ public class TreeUtil {
 				collapseTree( resultnode, collapset, false );
 			}
 			
-			this.currentNode = resultnode;
+			this.setNode( resultnode );
 		} /*else {
 			System.err.println( str );
 		}*/
@@ -923,7 +923,7 @@ public class TreeUtil {
 				oldnode.h = b;
 				oldnode.nodes.remove( res );
 				
-				currentNode = newnode;
+				setNode( newnode );
 				currentNode.countLeaves();
 				
 				return tmph;
@@ -937,9 +937,9 @@ public class TreeUtil {
 		
 	}
 	
-	public void reroot( Node newnode ) {
+	public void reroot( Node newnode ) {		
 		rerootRecur(currentNode, newnode);
-		currentNode = newnode;
+		setNode( newnode );
 		currentNode.countLeaves();
 		
 		/*double h = newnode.h;
