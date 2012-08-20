@@ -1285,7 +1285,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return sb.toString();
 	}
 	
-	public String extractFasta( String filename ) {
+	public StringBuilder extractFasta( String filename ) {
 		
 		/*JCheckBox species = new JCheckBox("Species");
 		JCheckBox accession = new JCheckBox("Acc");
@@ -1421,8 +1421,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			e1.printStackTrace();
 		}
 		
-		String fst = sb.toString();
-		return fst;
+		//String fst = sb.toString();
+		return sb;
 	}
 	
 	public void runSql( String sql ) {
@@ -2379,10 +2379,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					JSObject win = JSObject.getWindow( DataTable.this );
 					win.call("fasttree", objs);
 				}*/
-				String tree = extractFasta("/thermaceae_16S_aligned.fasta");
-				Object[] objs = { "f"+tree };
+				
+				StringBuilder tree = extractFasta("/thermaceae_16S_aligned.fasta");
+				String t1 = "f"+tree.substring(0, tree.length()/2);
+				String t2 = tree.substring(tree.length()/2, tree.length());
+				
+				int tlen = tree.length()+1;
 				JSObject win = JSObject.getWindow( DataTable.this );
-				Object smod = win.getMember("simmiModule");
+				Object[] objs1 = { t1, tlen };
+				win.call( "postModuleMessage", objs1 );
+				Object[] objs2 = { t2, tlen };
+				win.call( "postModuleMessage", objs2 );
+				
+				/*Object smod = win.getMember("simmiModule");
 				System.err.println("about to call nacl");
 				if( smod != null && smod instanceof JSObject ) {
 					JSObject obj = (JSObject)smod;
@@ -2390,7 +2399,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					obj.call("postMessage", objs);
 				} else {
 					System.err.println("fasttree fail");
-				}
+				}*/
 			}
 		});
 		fasttreemenu.add( new AbstractAction("FastTree w/o gaps") {
