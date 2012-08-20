@@ -45,7 +45,7 @@
     tot = "";
     function postModuleMessage( message, size ) {
     	tot += message;
-    	if( tot == size ) { 
+    	if( tot.length == size ) { 
     		simmiModule.postMessage( tot );
     		tot = "";
     	}
