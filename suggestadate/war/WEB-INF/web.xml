@@ -15,6 +15,11 @@
     <servlet-name>greetServlet</servlet-name>
     <url-pattern>/suggestadate/greet</url-pattern>
   </servlet-mapping>
+
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>Suggestadate.jsp</welcome-file>
+  </welcome-file-list>
   
   <security-constraint>
       <web-resource-collection>
@@ -24,9 +29,4 @@
           <transport-guarantee>CONFIDENTIAL</transport-guarantee>
       </user-data-constraint>
   </security-constraint>
-
-  <!-- Default page to serve -->
-  <welcome-file-list>
-    <welcome-file>Suggestadate.jsp</welcome-file>
-  </welcome-file-list>
 </web-app>
