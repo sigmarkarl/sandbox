@@ -187,24 +187,26 @@ public class Treedraw implements EntryPoint {
 			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 			double textwidth = ctx.measureText(name).getWidth();
 			
+			double mns = 0.0;
 			if( showlinage ) {
 				double ml = getMaxInternalNameLength( root, ctx );
-				w -= ml+30;
+				mns = ml+30;
 			}
+			double addon = mns;
 			
-			double maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth);
+			double maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth-mns);
 			if( equalHeight > 0 ) dw = maxheight/levels;
 					
 			if( vertical ) {
-				drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0 );
+				drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
 				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
-				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
+				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
 			} else {
-				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0 );
+				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0, addon );
 				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
-				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon );
+				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon );
 			}
 			
 			if( showscale ) {
@@ -1742,7 +1744,7 @@ public class Treedraw implements EntryPoint {
 		if( $wnd.console ) $wnd.console.log( log );
 	}-*/;
 	
-	public void drawFramesRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, int leaves ) {		
+	public void drawFramesRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, int leaves, double addon ) {		
 		if( node.getNodes().size() > 0 ) {			
 			int total = 0;
 			String sc = node.getColor();
@@ -1813,10 +1815,10 @@ public class Treedraw implements EntryPoint {
 				
 				if( vertical ) {
 					//drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, ny, paint ? shadeColor : null, nleaves, equalHeight );
-					drawFramesRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, mleaves );
+					drawFramesRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, mleaves, addon );
 				} else {
 					//drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, ny, paint ? shadeColor : null, nleaves, equalHeight );
-					drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, mleaves );
+					drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, mleaves, addon );
 				}
 				
 				//drawFramesRecursive( g2, resnode, x+dw*total, y+h, (dw*nleaves)/2.0, ny, paint ? shadeColor : null, nleaves, equalHeight );
@@ -1829,7 +1831,7 @@ public class Treedraw implements EntryPoint {
 		return null;
 	}
 	
-	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
+	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon ) {
 		Map<Node,Double>	cmap = new HashMap<Node,Double>();
 		int total = 0;
 		double nyavg = 0.0;
@@ -1868,11 +1870,11 @@ public class Treedraw implements EntryPoint {
 			
 			if( !resnode.isCollapsed() ) {
 				if( vertical ) {
-					double newy = dh*total + drawTreeRecursiveCenter( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight );
+					double newy = dh*total + drawTreeRecursiveCenter( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon );
 					cmap.put( resnode, newy );
 					nyavg += newy;
 				} else {
-					drawTreeRecursiveCenter( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight );
+					drawTreeRecursiveCenter( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon );
 				}
 			} else {
 				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
@@ -1955,14 +1957,14 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, Math.floor(newy) );
+			paintTree( g2, resnode, vertical, x, y, nx, Math.floor(newy), addon, mleaves, ny );
 			total += mleaves;
 		}
 		
 		return ret;
 	}
 	
-	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight ) {
+	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon ) {
 		int total = 0;
 		if( vertical ) node.setCanvasLoc( startx, y+starty );
 		else node.setCanvasLoc( x+startx, starty );
@@ -2023,9 +2025,9 @@ public class Treedraw implements EntryPoint {
 			
 			if( !resnode.isCollapsed() ) {
 				if( vertical ) {
-					drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight );
+					drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon );
 				} else {
-					drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight );
+					drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon );
 				}
 			} else {
 				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
@@ -2073,14 +2075,14 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, ny, addon, total+mleaves, ny );
 			total += mleaves;
 		}
 		
 		return /*(node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : */0.0;
 	}
 	
-	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny ) {
+	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny, double addon, int mleaves, double realny ) {
 		//int k = 12;//w/32;
 		int fontSize = 10;
 		
@@ -2234,8 +2236,15 @@ public class Treedraw implements EntryPoint {
 				
 				//int i = 0;
 				if( vertical ) {
-					if( showlinage ) {fn
-						g2.fillText(use, w+20, y+ny+strh/2.3 );
+					if( showlinage ) {
+						g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
+						double hdiff = (dh*mleaves/2.0);
+						g2.beginPath();
+						g2.moveTo(w-addon+5, y+realny-hdiff);
+						//g2.lineTo(w-addon, ny);
+						g2.lineTo(w-addon+5, y+realny+hdiff);
+						g2.closePath();
+						g2.stroke();
 					} else {
 						if( b ) {
 							//for( String s : split ) {
