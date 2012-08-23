@@ -265,7 +265,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void runProcess( String title, Runnable run, JDialog dialog ) {
+	public static void runProcess( String title, Runnable run, JDialog dialog ) {
 		dialog.setTitle( title );
 		dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
 		dialog.setSize(400, 300);
@@ -876,6 +876,7 @@ public class SerifyApplet extends JApplet {
 		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
 			
 		String line = br.readLine();
+		int cnt = 0;
 		while( line != null ) {
 			if( line.startsWith("Sequences prod") ) {
 				line = br.readLine();
@@ -883,7 +884,9 @@ public class SerifyApplet extends JApplet {
 				while( line != null && !line.startsWith(">") ) {
 					String trim = line.trim();
 					if( trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.spCCB") || trim.startsWith("t.arci") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
-						String val = trim.substring( 0, trim.indexOf('#')-1 );
+						int millind = trim.indexOf('#');
+						if( millind == -1 ) millind = trim.indexOf('.');
+						String val = trim.substring( 0, millind-1 );
 						int v = val.indexOf("contig");
 						all.add( val );
 					}
@@ -898,6 +901,9 @@ public class SerifyApplet extends JApplet {
 				if( line == null ) break;
 			}
 			
+			if( cnt++ % 100000 == 0 ) {
+				System.err.println( cnt );
+			}
 			line = br.readLine();
 		}
 		if( fw != null ) fw.close();
@@ -968,7 +974,7 @@ public class SerifyApplet extends JApplet {
 		fos.close();
 	}
 	
-	public void blastClusters( final InputStream is, final OutputStream os ) {
+	public static void blastClusters( final InputStream is, final OutputStream os ) {
 		final JDialog	dialog = new JDialog();
 		Runnable run = new Runnable() {
 			boolean interrupted = false;
@@ -4308,6 +4314,14 @@ public class SerifyApplet extends JApplet {
 	
 	public static void main(String[] args) {
 		try {
+			FileInputStream fis = new FileInputStream( "/home/sigmar/sandbox/distann/src/tmp_thermus.blastout" );
+			FileOutputStream fos = new FileOutputStream( "/home/sigmar/sandbox/distann/src/thermus_unioncluster.txt" );
+			blastClusters(fis, fos);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		/*try {
 			List<double[]>	ldmat = new ArrayList<double[]>();
 			File f = new File( "/root/ermermerm/dist/" );
 			File[] ff = f.listFiles( new FilenameFilter() {
