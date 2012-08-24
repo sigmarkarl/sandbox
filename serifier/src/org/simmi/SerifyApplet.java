@@ -858,7 +858,9 @@ public class SerifyApplet extends JApplet {
 		}
 		
 		rem.clear();
-		if( cont == null ) total.add( all );
+		if( cont == null ) {
+			total.add( all );
+		}
 		
 		Set<String>	erm = new HashSet<String>();
 		for( Set<String> ss : total ) {
@@ -883,12 +885,15 @@ public class SerifyApplet extends JApplet {
 				Set<String>	all = new HashSet<String>();
 				while( line != null && !line.startsWith(">") ) {
 					String trim = line.trim();
-					if( trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.spCCB") || trim.startsWith("t.arci") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
+					if( trim.startsWith("o.prof") || trim.startsWith("m.hydro") || trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.RLM") || trim.startsWith("t.spCCB") || trim.startsWith("t.arci") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
 						int millind = trim.indexOf('#');
-						if( millind == -1 ) millind = trim.indexOf('.');
+						if( millind == -1 ) millind = trim.indexOf('.', 5);
 						String val = trim.substring( 0, millind-1 );
-						int v = val.indexOf("contig");
-						all.add( val );
+						if( val.length() < 2 ) {
+							System.err.println();
+						}
+						//int v = val.indexOf("contig");
+						all.add( val.replace(".fna", "") );
 					}
 					line = br.readLine();
 				}
@@ -915,13 +920,19 @@ public class SerifyApplet extends JApplet {
 		for( Set<String>	t : total ) {
 			Set<String>	teg = new HashSet<String>();
 			for( String e : t ) {
-				String str = e.substring( 0, e.indexOf('_') );
-				/*if( joinmap.containsKey( str ) ) {
-					str = joinmap.get(str);
-				}*/
-				teg.add( str );
+				int ind = e.indexOf('_');
 				
-				species.add(str);
+				if( ind != -1 ) {
+					String str = e.substring( 0, ind );
+					/*if( joinmap.containsKey( str ) ) {
+						str = joinmap.get(str);
+					}*/
+					teg.add( str );
+					
+					species.add(str);
+				} else {
+					System.err.println("");
+				}
 			}
 			
 			Set<Map<String,Set<String>>>	setmap;
@@ -4314,7 +4325,7 @@ public class SerifyApplet extends JApplet {
 	
 	public static void main(String[] args) {
 		try {
-			FileInputStream fis = new FileInputStream( "/home/sigmar/sandbox/distann/src/tmp_thermus.blastout" );
+			FileInputStream fis = new FileInputStream( "/home/sigmar/thermus.blastout" );
 			FileOutputStream fos = new FileOutputStream( "/home/sigmar/sandbox/distann/src/thermus_unioncluster.txt" );
 			blastClusters(fis, fos);
 		} catch (FileNotFoundException e) {
