@@ -50,10 +50,63 @@ public class Fiskis implements EntryPoint {
 		}
 	}
 	
+	public interface ChangeListener {
+		public void onChange( double oldval, double newval );
+		public void setDrawable( Drawable d );
+		public Drawable getDrawable();
+	}
+	
 	public interface Clickable {
 		public void click( double x, double y );
 		public Rectangle getBounds();
+		public void addChangeListener( ChangeListener c );
 	};
+	
+	public class Kassi implements Drawable {
+		double x,y,w,h;
+		private double hiti;
+		private double dagar;
+		
+		public Kassi( double x, double y, double w, double h ) {
+			this.w = w;
+			this.h = h;
+			this.x = x;
+			this.y = y;
+		}
+		
+		@Override
+		public void draw(Context2d ctx) {
+			ctx.clearRect(x, y, w, h);
+			
+			String label;
+			if( dagar == 0 ) label = "Kaela i 0 gradur";
+			else label = "Vidhalda i "+dagar+" daga";
+			double tw = ctx.measureText( label ).getWidth();
+			ctx.fillText( label, x+(w-tw)/2, y+50 );
+			
+			if( dagar == 0 ) {
+				double dval = Math.round( 1000.0*0.0114*hiti*10.0 )/10.0;
+				
+				ctx.fillText( dval+"", x+200, y+200 );
+			}
+		}
+
+		public double getHiti() {
+			return hiti;
+		}
+
+		public void setHiti(double hiti) {
+			this.hiti = hiti;
+		}
+
+		public double getDagar() {
+			return dagar;
+		}
+
+		public void setDagar(double dagar) {
+			this.dagar = dagar;
+		}
+	}
 	
 	public class Meter implements Drawable, Clickable {
 		public Meter( String label, double x, double y, double h, double start, double stop, double jump ) {
@@ -113,12 +166,22 @@ public class Fiskis implements EntryPoint {
 		public void click(double x, double y) {
 			double retval = start + (h-y)*(stop-start)/h;
 			retval = Math.round( retval*jump )/jump;
+			double oldval = val;
 			val = Math.max( start, Math.min( stop, retval ) );
+			for( ChangeListener cl : listchange ) {
+				cl.onChange( oldval, val );
+			}
 		}
 
 		@Override
 		public Rectangle getBounds() {
 			return new Rectangle( x, y, 16, h );
+		}
+
+		List<ChangeListener>	listchange = new ArrayList<ChangeListener>();
+		@Override
+		public void addChangeListener(ChangeListener c) {
+			listchange.add( c );
 		}
 	}
 	
@@ -138,18 +201,66 @@ public class Fiskis implements EntryPoint {
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get();
 		Canvas		c = Canvas.createIfSupported();
-		c.setSize("800x", "600px");
-		c.setCoordinateSpaceWidth( 800 );
-		c.setCoordinateSpaceHeight( 600 );
+		c.setSize("400x", "300px");
+		c.setCoordinateSpaceWidth( 400 );
+		c.setCoordinateSpaceHeight( 300 );
+		final Context2d ctx = c.getContext2d();
 		
-		dlist.add( new Meter( "dagar", 20, 20, 500.0, 0.0, 7.0, 1.0 ) );
-		dlist.add( new Meter( "hiti", 60, 20, 500.0, 0.0, 10.0, 10.0 ) );
+		final Meter dagameter = new Meter( "dagar", 20, 20, 250.0, 0.0, 7.0, 1.0 );
+		final Meter hitameter = new Meter( "hiti", 60, 20, 250.0, 0.0, 30.0, 10.0 );
+		final Kassi kassi = new Kassi( 100.0, 20.0, 300.0, 250.0 );
+		
+		dlist.add( dagameter );
+		dlist.add( hitameter );
+		dlist.add( kassi );
+		
+		ChangeListener cl = new ChangeListener() {
+			Drawable d;
+			
+			@Override
+			public void onChange(double oldval, double newval) {
+				kassi.setDagar(newval);
+				if( d != null ) d.draw(ctx);
+			}
+
+			@Override
+			public void setDrawable(Drawable d) {
+				this.d = d;
+			}
+
+			@Override
+			public Drawable getDrawable() {
+				return this.d;
+			}
+		};
+		cl.setDrawable( kassi );
+		dagameter.addChangeListener( cl );
+		
+		cl = new ChangeListener() {
+			Drawable d;
+			
+			@Override
+			public void onChange(double oldval, double newval) {
+				kassi.setHiti(newval);
+				if( d != null ) d.draw(ctx);
+			}
+
+			@Override
+			public void setDrawable(Drawable d) {
+				this.d = d;
+			}
+
+			@Override
+			public Drawable getDrawable() {
+				return this.d;
+			}
+		};
+		cl.setDrawable( kassi );
+		hitameter.addChangeListener( cl );
 		
 		for( Drawable d : dlist ) {
 			if( d instanceof Clickable ) clist.add( (Clickable)d );
 		}
-		
-		final Context2d ctx = c.getContext2d();
 		draw( ctx );
 		
 		c.addMouseDownHandler( new MouseDownHandler() {
