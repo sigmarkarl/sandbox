@@ -494,9 +494,16 @@ public class GeneSet extends JApplet {
 			if (query != null && trim.startsWith("> ") ) {
 				//String[] split = trim.split("\\|");
 
-				int i = trim.indexOf(' ', 2);
-				String id = trim.substring(2,i);
-				String desc = trim.substring(i+1);
+				line = br.readLine();
+				while( !line.startsWith("Length=") ) {
+					trim += " "+line.trim();
+					line = br.readLine();
+				}
+				
+				int i = trim.indexOf(".aa", 2);
+				int i2 = trim.indexOf(' ', i);
+				String id = trim.substring(i+4,i2).trim();
+				String desc = trim.substring(i2+1);
 				//String id = split[1];
 				//String desc = split[2];
 				String teg = "";
@@ -559,6 +566,14 @@ public class GeneSet extends JApplet {
 					System.err.println();
 				}
 				String padda = query.substring(0, i);
+				
+				if( padda.startsWith("Ocean") ) padda = "o.profundus";
+				else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
+				else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
+				else if( padda.contains("Ruber") ) padda = "mt.ruber";
+				else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) {
+					padda = "t.thermSG0_5JP17_16";
+				}
 				//if( padda.endsWith(".fna") ) padda = padda.substring(0, padda.length()-4);
 				
 				if (geneset.containsKey(padda)) {
@@ -584,7 +599,10 @@ public class GeneSet extends JApplet {
 				
 					//i = query.indexOf('_', i);
 					//String[] qsplit = query.substring(i+5).split("_");
-					contig = padda;// + "_" + qsplit[0];// +"_"+qsplit[2];
+				
+					int fi = query.indexOf('_');
+					int li = query.lastIndexOf('_');
+					contig = query.substring(0, li);// + "_" + qsplit[0];// +"_"+qsplit[2];
 															// //&query.substring(0,
 															// sec);
 					/*int k = 0;
@@ -592,7 +610,7 @@ public class GeneSet extends JApplet {
 						contig += "_" + qsplit[1];
 						k++;
 					}*/
-					contloc = query;//qsplit[0] + "_" + qsplit[1 + k]; // query.substring(first+1,sec);
+					contloc = query.substring(fi+1,query.length());//qsplit[0] + "_" + qsplit[1 + k]; // query.substring(first+1,sec);
 				/*} else {
 					contig = qsplit[0];
 					contloc = qsplit[0] + "_" + qsplit[1];
@@ -611,9 +629,6 @@ public class GeneSet extends JApplet {
 				
 				Gene gene;
 				if (ret.containsKey(val)) {
-					if( query.startsWith("t.sc") ) {
-						System.err.println();
-					}
 					gene = genestuff( uclusterlist, query, desc, teg, val, ret );
 				} else {
 					gene = new Gene(desc, teg);
@@ -689,6 +704,11 @@ public class GeneSet extends JApplet {
 				int i = query.lastIndexOf("_", Math.min(ival,ival2) );
 				String padda = query.substring(0, i);
 				
+				if( padda.startsWith("Ocean") ) padda = "o.profundus";
+				else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
+				else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
+				else if( padda.contains("Ruber") ) padda = "mt.ruber";
+				else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) padda = "t.thermSG0_5JP17_16";
 				
 				if (ret.containsKey(aaid)) {
 					gene = ret.get(aaid);
@@ -6167,7 +6187,7 @@ public class GeneSet extends JApplet {
 					public void actionPerformed(ActionEvent e) {
 						final String fasta = textarea.getText();
 						final SmithWater sw = new SmithWater();
-						final InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
+						final InputStream is = GeneSet.class.getResourceAsStream("/thomas.aa");
 						new Thread() {
 							public void run() {
 								try {
@@ -6434,7 +6454,7 @@ public class GeneSet extends JApplet {
 					return gene.groupCoverage == 16 && gene.groupCount == 16 ? gene.corr16s : -1;
 				} else if (columnIndex == 18) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.thermophilusSG0");
+						Teginfo set = gene.species.get("t.thermSG0_5JP17_16");
 						return set;
 					}
 				} else if (columnIndex == 19) {
@@ -6563,12 +6583,12 @@ public class GeneSet extends JApplet {
 					}
 				} else if (columnIndex == 39) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.spCCB");
+						Teginfo set = gene.species.get("t.spCCB_US3_UF1");
 						return set;
 					}
 				} else if (columnIndex == 40) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.spRLM");
+						Teginfo set = gene.species.get("t.RLM");
 						return set;
 					}
 				} else if (columnIndex == 41) {
@@ -8398,14 +8418,14 @@ public class GeneSet extends JApplet {
 
 	private static JComponent newSoft(JButton jb, Container comp, Applet applet, JComboBox selcomblocal) throws IOException {
 		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
-		InputStream is = GeneSet.class.getResourceAsStream("/thermus_join.aa");
+		InputStream is = GeneSet.class.getResourceAsStream("/thomas.aa");
 		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
 		if (is != null)
 			loci2aasequence(new InputStreamReader(is));
 
 		// URL url = new URL("http://192.168.1.69/all.nn");
 		try {
-			is = GeneSet.class.getResourceAsStream("/thermus_join.nn");
+			is = GeneSet.class.getResourceAsStream("/thomas.nn");
 			//is = GeneSet.class.getResourceAsStream("/all.nn");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
@@ -8491,6 +8511,14 @@ public class GeneSet extends JApplet {
 		for (Set<String> cluster : uclusterlist) {
 			ss.clear();
 			gs.clear();
+			
+			if( cluster.size() == 1 ) {
+				String s = "";
+				for( String u : cluster ) s = u;
+				if( s.contains("ilva") ) {
+					System.err.println();
+				}
+			}
 
 			Set<Gene> gset = new HashSet<Gene>();
 			for (String cont : cluster) {

@@ -30,7 +30,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -3459,7 +3458,7 @@ public class SerifyApplet extends JApplet {
 								String line = br.readLine();
 								while( line != null ) {
 									if( line.startsWith(">") ) {
-										fw.write( line.replace( ">", ">"+s.getName()+"_" )+"\n" );
+										fw.write( line.replace( ">", ">"+s.getName().replace(".fna", "")+"_" )+"\n" );
 										nseq++;
 									}
 									else fw.write( line+"\n" );
@@ -4325,7 +4324,7 @@ public class SerifyApplet extends JApplet {
 	
 	public static void main(String[] args) {
 		try {
-			FileInputStream fis = new FileInputStream( "/home/sigmar/thermus.blastout" );
+			FileInputStream fis = new FileInputStream( "/home/sigmar/thomas/thomas.blastout" );
 			FileOutputStream fos = new FileOutputStream( "/home/sigmar/sandbox/distann/src/thermus_unioncluster.txt" );
 			blastClusters(fis, fos);
 		} catch (FileNotFoundException e) {
