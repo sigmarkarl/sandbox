@@ -44,6 +44,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -68,7 +70,10 @@ import java.util.zip.GZIPInputStream;
 
 import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
+import javax.jnlp.FileContents;
+import javax.jnlp.FileSaveService;
 import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
@@ -488,17 +493,19 @@ public class GeneSet extends JApplet {
 		int ori = 0;
 		String evalue = null;
 		String line = br.readLine();
+		int cnt = 0;
 		while (line != null) {
 			String trim = line.trim();
+			cnt++;
 			//if (query != null && (trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg"))) {
 			if (query != null && trim.startsWith("> ") ) {
 				//String[] split = trim.split("\\|");
 
-				line = br.readLine();
-				while( !line.startsWith("Length=") ) {
+				/*line = br.readLine();
+				while( !line.startsWith("Length=") && !line.startsWith("Query=") ) {
 					trim += " "+line.trim();
 					line = br.readLine();
-				}
+				}*/
 				
 				int i = trim.indexOf(".aa", 2);
 				int i2 = trim.indexOf(' ', i);
@@ -567,13 +574,13 @@ public class GeneSet extends JApplet {
 				}
 				String padda = query.substring(0, i);
 				
-				if( padda.startsWith("Ocean") ) padda = "o.profundus";
+				/*if( padda.startsWith("Ocean") ) padda = "o.profundus";
 				else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
 				else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
 				else if( padda.contains("Ruber") ) padda = "mt.ruber";
 				else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) {
 					padda = "t.thermSG0_5JP17_16";
-				}
+				}*/
 				//if( padda.endsWith(".fna") ) padda = padda.substring(0, padda.length()-4);
 				
 				if (geneset.containsKey(padda)) {
@@ -672,7 +679,7 @@ public class GeneSet extends JApplet {
 
 				//int li = query.lastIndexOf('_');
 				//int ln = query.lastIndexOf('_', li-1);
-				//String queryshort = query.substring(0, ln)+query.substring(li);
+				//String 	queryshort = query.substring(0, ln)+query.substring(li);
 				locgene.put(query, gene);
 
 				query = null;
@@ -681,7 +688,7 @@ public class GeneSet extends JApplet {
 					 * if( line.lastIndexOf('[') > line.indexOf(']') ) { String
 					 * newline = br.readLine(); line += newline.trim(); }
 					 */
-					fw.write(line + "\n");
+					fw.write(trim + "\n");
 				}
 
 				if (newline.startsWith("Query=")) {
@@ -697,18 +704,24 @@ public class GeneSet extends JApplet {
 				
 				/*String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
 				if( padda.endsWith(".fna") ) padda = padda.substring(0,padda.length()-4);*/
-				int ival = query.indexOf("|");
-				if( ival == -1 ) ival = query.length();
-				int ival2 = query.indexOf("ontig");
-				if( ival2 == -1 ) ival2 = query.length();
-				int i = query.lastIndexOf("_", Math.min(ival,ival2) );
-				String padda = query.substring(0, i);
 				
-				if( padda.startsWith("Ocean") ) padda = "o.profundus";
+				String padda;
+				if( query != null ) {
+					int ival = query.indexOf("|");
+					if( ival == -1 ) ival = query.length();
+					int ival2 = query.indexOf("ontig");
+					if( ival2 == -1 ) ival2 = query.length();
+					int i = query.lastIndexOf("_", Math.min(ival,ival2) );
+					padda = query.substring(0, i);
+				} else {
+					padda = "";
+				}
+				
+				/*if( padda.startsWith("Ocean") ) padda = "o.profundus";
 				else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
 				else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
 				else if( padda.contains("Ruber") ) padda = "mt.ruber";
-				else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) padda = "t.thermSG0_5JP17_16";
+				else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) padda = "t.thermSG0_5JP17_16";*/
 				
 				if (ret.containsKey(aaid)) {
 					gene = ret.get(aaid);
@@ -743,7 +756,7 @@ public class GeneSet extends JApplet {
 				String contig = null;
 				String contloc = null;
 
-				int first = query.indexOf('_');
+				/*int first = query.indexOf('_');
 				int sec = query.indexOf('_', first + 1);
 				if (sec != -1) {
 					contig = query.substring(0, sec);
@@ -751,7 +764,12 @@ public class GeneSet extends JApplet {
 				} else {
 					contig = query;
 					contloc = query.substring(first + 1);
-				}
+				}*/
+				
+				int fi = query.indexOf('_');
+				int li = query.lastIndexOf('_');
+				contig = query.substring(0, li);
+				contloc = query.substring(fi+1,query.length());
 
 				StringBuilder aastr = aaSearch(query);
 				/*int nq = query.lastIndexOf('_');
@@ -815,7 +833,7 @@ public class GeneSet extends JApplet {
 					trim = line.trim();
 					split = trim.split("#");
 				}
-				query = trim.substring(6).trim().split("[ ]+")[0].replace(".fna", "");
+				query = trim.substring(6).trim().split("[ ]+")[0]; //.replace(".fna", "");
 
 				if (split.length >= 3) {
 					start = Integer.parseInt(split[1].trim());
@@ -842,15 +860,15 @@ public class GeneSet extends JApplet {
 					fw.write(line + "\n");
 				}
 			//} else if (query != null && (trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|"))) {
-			} else if (query != null && trim.startsWith("Sequences producing") ) {
-				line = br.readLine();
-				line = br.readLine();
+			} else if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
+				//line = br.readLine();
+				//line = br.readLine();
 				trim = line.trim();
 				
 				String[] split = trim.split("[\t ]+");
 				evalue = split[split.length - 1];
 				if (fw != null)
-					fw.write(line + "\n");
+					fw.write(trim + "\n");
 			}
 
 			line = br.readLine();
@@ -4881,13 +4899,13 @@ public class GeneSet extends JApplet {
 		TreeUtil treeutil = new TreeUtil();
 		treeutil.neighborJoin( dd, 4, corrInd );*/
 		
-/*		JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
+		JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
 		JFrame.EXIT_ON_CLOSE );
 		 
 		frame.setSize(800, 600); 
 		GeneSet gs = new GeneSet(); 
 		gs.init( frame );
-		frame.setVisible( true );*/
+		frame.setVisible( true );
 		 
 
 		// System.err.println( Runtime.getRuntime().availableProcessors() );
@@ -4899,7 +4917,7 @@ public class GeneSet extends JApplet {
 		//init( args );
 
 		try {
-			simmi();
+			//simmi();
 			dummy();
 			//SerifyApplet.blastJoin(new FileInputStream("/home/horfrae/peter/stuff.blastout"), System.out);
 
@@ -5896,6 +5914,50 @@ public class GeneSet extends JApplet {
 					JScrollPane fsc = new JScrollPane(comp);
 					comp.setPreferredSize(new Dimension(bimg.getWidth(), bimg.getHeight()));
 
+					JPopupMenu	popup = new JPopupMenu();
+					popup.add( new AbstractAction("Save image") {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							FileSaveService fss = null;
+					        FileContents fileContents = null;
+					    	 
+					        try {
+					        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						        OutputStreamWriter	osw = new OutputStreamWriter( baos );
+								ImageIO.write(bimg, "png", baos);
+								baos.close();
+
+						    	try {
+						    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+						    	} catch( UnavailableServiceException e1 ) {
+						    		fss = null;
+						    	}
+						    	 
+						        if (fss != null) {
+						        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
+						            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
+						            bais.close();
+						            OutputStream os = fileContents.getOutputStream(true);
+						            os.write( baos.toByteArray() );
+						            os.close();
+						        } else {
+						        	JFileChooser jfc = new JFileChooser();
+						        	if( jfc.showSaveDialog( applet ) == JFileChooser.APPROVE_OPTION ) {
+						        		 File f = jfc.getSelectedFile();
+						        		 FileOutputStream fos = new FileOutputStream( f );
+						        		 fos.write( baos.toByteArray() );
+						        		 fos.close();
+						        		 
+						        		 Desktop.getDesktop().browse( f.toURI() );
+						        	}
+						        }
+							} catch (IOException e2) {
+								e2.printStackTrace();
+							}
+						}
+					});
+					comp.setComponentPopupMenu( popup );
+					
 					f.add(fsc);
 					f.setVisible(true);
 				} catch (ClassNotFoundException e1) {
@@ -8463,8 +8525,9 @@ public class GeneSet extends JApplet {
 		//panCoreFromNRBlast( new InputStreamReader(is), "c:/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
 		//is = GeneSet.class.getResourceAsStream("/thermus_nr_short.blastout");
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_short.blastout" );
-		is = new FileInputStream( "/home/sigmar/thermus_nr_ftp.blastout" );
-		panCoreFromNRBlast(new InputStreamReader(is), "/home/sigmar/thermus_nr_ftp_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
+		is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
+		panCoreFromNRBlast(new InputStreamReader(is), null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();

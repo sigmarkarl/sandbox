@@ -2075,7 +2075,7 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, ny, addon, total+mleaves, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, ny, addon, mleaves, ny );
 			total += mleaves;
 		}
 		
@@ -2238,7 +2238,7 @@ public class Treedraw implements EntryPoint {
 				if( vertical ) {
 					if( showlinage ) {
 						g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
-						double hdiff = (dh*mleaves/2.0);
+						double hdiff = (dh*(mleaves-1)/2.0);
 						g2.beginPath();
 						g2.moveTo(w-addon+5, y+realny-hdiff);
 						//g2.lineTo(w-addon, ny);
