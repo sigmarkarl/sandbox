@@ -262,6 +262,22 @@ public class TreeUtil {
 			return s;
 		}
 		
+		public Set<String> nodeCalcMap( Map<Set<String>,Integer>	ls ) {
+			Set<String>	s = new HashSet<String>();
+			if( nodes == null || nodes.size() == 0 ) {
+				s.add( id );
+			} else {
+				for( Node subn : nodes ) {
+					Set<String> set = subn.nodeCalcMap( ls );
+					s.addAll( set );
+				}
+				
+				if( ls.containsKey( s ) ) ls.put( s, ls.get(s)+1 );
+				else ls.put( s, 1 );
+			}
+			return s;
+		}
+		
 		public Set<String> leafIdSet() {
 			Set<String> lidSet = new HashSet<String>();
 			
@@ -401,9 +417,11 @@ public class TreeUtil {
 		}
 		
 		public void addNode( Node node, double h ) {
-			nodes.add( node );
-			node.h = h;
-			node.setParent( this );
+			if( !nodes.contains( node ) ) {
+				nodes.add( node );
+				node.h = h;
+				node.setParent( this );
+			}
 		}
 		
 		public void removeNode( Node node ) {
@@ -498,6 +516,19 @@ public class TreeUtil {
 		public void setParent( Node parent ) {
 			this.parent = parent;
 		}
+	}
+	
+	public Set<String> getLeaveNames( Node node ) {
+		Set<String>	ret = new HashSet<String>();
+		
+		List<Node> nodes = node.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node n : nodes ) {
+				ret.addAll( getLeaveNames( n ) );
+			}
+		} else ret.add( node.getName() );
+		
+		return ret;
 	}
 	
 	public Node findNode( Node old, Node node ) {
