@@ -13,24 +13,22 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <file path="/distann/src/all16S.blastout"/>
         <file path="/distann/src/idmapping_short.dat"/>
+        <file path="/distann/src/thermus_nr_ftp_short.blastout"/>
         <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
         <file path="/distann/src/kegg2go.txt"/>
-        <file path="/distann/src/thermus_join.fna"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
-        <file path="/distann/src/total_short.blastout"/>
+        <file path="/distann/src/thermus_unioncluster.txt"/>
         <file path="/distann/src/thermus_union_cluster.txt"/>
-        <file path="/distann/src/thermus_join.aa"/>
+        <file path="/distann/src/thomas.aa"/>
         <file path="/distann/src/go_short.obo"/>
+        <file path="/distann/src/thomas.nn"/>
         <file path="/distann/src/gene2refseq_short.txt"/>
         <file path="/distann/src/sp2go_short.txt"/>
         <file path="/distann/src/thermus16S.blastout"/>
-        <file path="/distann/src/union_cluster.txt"/>
-        <file path="/distann/src/thermus_join.nn"/>
         <file path="/distann/src/kegg_pathways"/>
         <file path="/distann/src/gene2go_short.txt"/>
         <file path="/distann/src/intersect_cluster.txt"/>
         <file path="/distann/src/all16S.fsa"/>
-        <file path="/distann/src/thermus_nr_short.blastout"/>
         <file path="/distann/src/all_short.blastout"/>
     </selectedElements>
 </jardesc>
