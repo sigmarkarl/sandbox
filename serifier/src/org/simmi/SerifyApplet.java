@@ -3265,9 +3265,9 @@ public class SerifyApplet extends JApplet {
 							tree.append("\n");
 						}
 						String treestr = tree.toString();
-						FileWriter fw = new FileWriter( "/home/sigmar/mat.txt" );
+						/*FileWriter fw = new FileWriter( "/home/sigmar/mat.txt" );
 						fw.write( treestr );
-						fw.close();
+						fw.close();*/
 						//System.err.println( tree.toString() );
 						JSObject win = JSObject.getWindow( SerifyApplet.this );
 						win.call("showTree", new Object[] {treestr});
@@ -3400,7 +3400,7 @@ public class SerifyApplet extends JApplet {
 							}
 						}
 						
-						StringBuilder tree = new StringBuilder();
+						/*StringBuilder tree = new StringBuilder();
 						tree.append( "\t"+lnode.size()+"\n" );
 						int i = 0;
 						for( String name : names ) {
@@ -3415,7 +3415,7 @@ public class SerifyApplet extends JApplet {
 						}
 						FileWriter distm = new FileWriter("/home/sigmar/distm.txt");
 						distm.write( tree.toString() );
-						distm.close();
+						distm.close();*/
 						
 						Node node = treeutil.neighborJoin(submat, names, null);
 						String treestr = node.toString();
@@ -4322,8 +4322,116 @@ public class SerifyApplet extends JApplet {
 		return "";
 	}
 	
+	public static class NodeSet implements Comparable<NodeSet> {
+		public NodeSet( Set<String> nodes, int count ) {
+			this.nodes = nodes;
+			this.count = count;
+		}
+		
+		Set<String>	nodes;
+		int count;
+		
+		@Override
+		public int compareTo(NodeSet o) {
+			return o.count - count;
+		}
+	}
+	
+	public static void removeNames( Set<String> set, Node node ) {
+		List<Node> subnodes = node.getNodes();
+		if( subnodes != null ) for( Node n : subnodes ) {
+			removeNames(set, n);
+		}
+		set.remove( node.getName() );
+	}
+	
 	public static void main(String[] args) {
 		try {
+			TreeUtil treeutil = new TreeUtil();
+			Map<Set<String>,Integer> nmap = new HashMap<Set<String>,Integer>();
+			File dir = new File( "/home/sigmar/thermusgenes/aligned/trees/" );
+			File[] ff = dir.listFiles();
+			for( File f : ff ) {
+				FileReader fr = new FileReader( f );
+				BufferedReader br = new BufferedReader( fr );
+				StringBuilder sb = new StringBuilder();
+				String line = br.readLine();
+				while( line != null ) {
+					sb.append( line );
+					line = br.readLine();
+				}
+				br.close();
+
+				Node n = treeutil.parseTreeRecursive( sb.toString(), false );
+				treeutil.setLoc( 0 );
+				n.nodeCalcMap( nmap );
+			}
+			
+			List<NodeSet>	nslist = new ArrayList<NodeSet>();
+			System.err.println( nmap.size() );
+			for( Set<String> nodeset : nmap.keySet() ) {
+				int count = nmap.get( nodeset );
+				nslist.add( new NodeSet( nodeset, count ) );
+			}
+			
+			Collections.sort( nslist );
+			int c = 0;
+			for( NodeSet nodeset : nslist ) {
+				System.err.println( nodeset.count + "  " + nodeset.nodes );
+				c++;
+				if( c > 20 ) break;
+			}
+			
+			Map<Set<String>, Node>	nodemap = new HashMap<Set<String>, Node>();
+			Map<String, Node>		leafmap = new HashMap<String, Node>();
+			NodeSet	allnodes = nslist.get(0);
+			Node root = treeutil.new Node();
+			for( String nname : allnodes.nodes ) {
+				Node n = treeutil.new Node( nname );
+				root.addNode(n, 1.0);
+				//n.seth( 1.0 );
+				leafmap.put( nname, n );
+			}
+			
+			for( int i = 1; i < 19; i++ ) {
+				NodeSet	allsubnodes = nslist.get(i);
+				Node subroot = treeutil.new Node();
+				
+				while( allsubnodes.nodes.size() > 0 ) {
+					for( String nname : allsubnodes.nodes ) {
+						Node leaf = leafmap.get( nname );
+						Node newparent = leaf.getParent();
+						Node current = leaf;
+						while( newparent.countLeaves() <= allsubnodes.nodes.size() ) {
+							current = newparent;
+							newparent = current.getParent();
+							if( newparent == null ) {
+								System.err.println();
+							}
+						}
+						
+						if( allsubnodes.nodes.containsAll( treeutil.getLeaveNames( current ) ) ) {
+							Node parent = current.getParent();
+							parent.removeNode( current );
+							parent.addNode( subroot, 1.0 );
+							subroot.addNode( current, 1.0 );
+						
+							removeNames( allsubnodes.nodes, current );
+						} else allsubnodes.nodes.clear();
+						
+						break;
+					}
+				}
+			}
+			
+			System.err.println( root.toString() );
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		/*try {
 			FileInputStream fis = new FileInputStream( "/home/sigmar/thomas/thomas.blastout" );
 			FileOutputStream fos = new FileOutputStream( "/home/sigmar/sandbox/distann/src/thermus_unioncluster.txt" );
 			blastClusters(fis, fos);
@@ -4331,7 +4439,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}
 		
-		/*try {
+		try {
 			List<double[]>	ldmat = new ArrayList<double[]>();
 			File f = new File( "/root/ermermerm/dist/" );
 			File[] ff = f.listFiles( new FilenameFilter() {
