@@ -3280,152 +3280,21 @@ public class SerifyApplet extends JApplet {
 		popup.add( new AbstractAction("Gene evolution phylogeny (nni distance)") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				List<Node>		lnode = new ArrayList<Node>();
-				List<String>	names = new ArrayList<String>();
-				TreeUtil 		treeutil = new TreeUtil();
-				String			rootid = null;
-				try {
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						String path = (String)table.getValueAt( r, 3 );
-						
-						String name = (String)table.getValueAt( r, 1 );
-						int l = name.lastIndexOf('.');
-						if( l != -1 ) name = name.substring(0, l);
-						name = name.replace("(", "").replace(")", "").replace(",", "");
-						names.add( name );
-						
-						URL url = new URL( path );
-						boolean mu = true;
-						String fstr = url.getFile();
-						int fi = fstr.lastIndexOf('/');
-						if( fi != -1 ) {
-							File f = new File( fstr.substring(0, fi), "tree" );
-							if( f.exists() && f.isDirectory() ) {
-								File treef = new File( f, fstr.substring(fi+1) );
-								if( treef.exists() ) {
-									mu = false;
-									url = treef.toURI().toURL();
-								}
-							}
-						}
-						Node n = null;
-						if( mu ) {
-							InputStream is = url.openStream();
-							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
-							String line = br.readLine();
-							Sequence seq = null;
-							List<String> 	corrInd = new ArrayList<String>();
-							List<Sequence> 	lseq = new ArrayList<Sequence>();
-							while( line != null ) {
-								if( line.startsWith(">") ) {
-									String subline = line.substring(1);
-									corrInd.add( subline );
-									seq = new Sequence( subline, null );
-									lseq.add( seq );
-								} else {
-									if( seq != null ) seq.append( line );
-								}
-								
-								line = br.readLine();
-							}
-							br.close();
-							
-							for( Sequence s : lseq ) {
-								s.checkLengths();
-							}
-						
-							/*if( lnode.size() > 0 && lnode.get(0).length != lseq.size()*lseq.size() ) {
-								System.err.println( lnode.size() + "  " + lseq.size() );
-								System.err.println( lseq.size()*lseq.size() + "  " + lnode.get(0).length );
-								break;
-							}*/
-							double[] dmat = new double[ lseq.size()*lseq.size() ];
-							Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
-							
-							n = treeutil.neighborJoin(dmat, corrInd, null);
-						} else {
-							StringBuilder tree = new StringBuilder();
-							InputStream is = url.openStream();
-							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
-							String str = br.readLine();
-							while( str != null ) {
-								tree.append( str );
-								str = br.readLine();
-							}
-							//treeutil = new TreeUtil( tree.toString(), false, null, null, false, null, null, false );
-							treeutil.setLoc( 0 );
-							n = treeutil.parseTreeRecursive( tree.toString(), false );
-						}
-						
-						if( rootid == null ) rootid = n.firstLeaf().getId();
-						Node root = n.findNode( rootid );
-						if( root == null ) {
-							System.err.println("ok");
-						}
-						Node rootparent = root.getParent();
-						treeutil.currentNode = n;
-						treeutil.reroot( rootparent );
-						Node newroot = treeutil.currentNode;
-						//System.err.println( rootparent.getNodes().size() );
-						if( lnode.size() == 26 || lnode.size() == 36 ) {
-							System.err.println( newroot.toString() );
-						}
-						lnode.add( newroot );
-					}
+				Map<String,String> namePath = new HashMap<String,String>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					String path = (String)table.getValueAt( r, 3 );
 					
-					if( lnode.size() == rr.length ) {
-						double[]	submat = new double[ lnode.size()*lnode.size() ];
-						for( int i = 0; i < lnode.size(); i++ ) {
-							submat[i*lnode.size()+i] = 0.0;
-						}
-						
-						Node nod = lnode.get(0);
-						double corri = treeutil.nDistance( nod, nod );
-						
-						for( int i = 0; i < lnode.size()-1; i++ ) {
-							for( int k = i+1; k < lnode.size(); k++ ) {
-								Node node1 = lnode.get(i);
-								Node node2 = lnode.get(k);
-								double corr = Math.exp( (treeutil.nDistance( node1, node2 ) - 2.0)*0.2 ) - 1.0;
-								
-								
-								/*if( (names.get(i).equals("transcription_elongation_factor_NusA") && names.get(k).equals("ABC_transporter_permease")) || (names.get(k).equals("transcription_elongation_factor_NusA") && names.get(i).equals("ABC_transporter_permease")) ) {
-									System.err.println( "corr" + corr );
-								}*/
-								if( corr == 0.0 ) System.err.println( names.get(i) + "  " + names.get(k) );
-								
-								submat[i*lnode.size()+k] = corr;
-								submat[k*lnode.size()+i] = corr;
-							}
-						}
-						
-						/*StringBuilder tree = new StringBuilder();
-						tree.append( "\t"+lnode.size()+"\n" );
-						int i = 0;
-						for( String name : names ) {
-							tree.append( name );
-							int k;
-							for( k = i; k < i+lnode.size(); k++ ) {
-								tree.append( "\t"+submat[k] );
-							}
-							i = k;
-							
-							tree.append("\n");
-						}
-						FileWriter distm = new FileWriter("/home/sigmar/distm.txt");
-						distm.write( tree.toString() );
-						distm.close();*/
-						
-						Node node = treeutil.neighborJoin(submat, names, null);
-						String treestr = node.toString();
-						System.err.println( treestr );
-						JSObject win = JSObject.getWindow( SerifyApplet.this );
-						win.call("showTree", new Object[] { treestr });
-					}
-				} catch( Exception e1 ) {
-					e1.printStackTrace();
+					String name = (String)table.getValueAt( r, 1 );
+					int l = name.lastIndexOf('.');
+					if( l != -1 ) name = name.substring(0, l);
+					name = name.replace("(", "").replace(")", "").replace(",", "");
+					
+					namePath.put( name, path );
 				}
+				String tree = genePhylogenyNNI( namePath, false );
+				JSObject win = JSObject.getWindow( SerifyApplet.this );
+				win.call("showTree", new Object[] { tree });
 			}
 		});
 		popup.addSeparator();
@@ -4345,7 +4214,7 @@ public class SerifyApplet extends JApplet {
 		set.remove( node.getName() );
 	}
 	
-	public static void main(String[] args) {
+	public static void majorityRuleConsensus() {
 		try {
 			TreeUtil treeutil = new TreeUtil();
 			Map<Set<String>,Integer> nmap = new HashMap<Set<String>,Integer>();
@@ -4385,6 +4254,7 @@ public class SerifyApplet extends JApplet {
 			Map<Set<String>, Node>	nodemap = new HashMap<Set<String>, Node>();
 			Map<String, Node>		leafmap = new HashMap<String, Node>();
 			NodeSet	allnodes = nslist.get(0);
+			int total = allnodes.count;
 			Node root = treeutil.new Node();
 			for( String nname : allnodes.nodes ) {
 				Node n = treeutil.new Node( nname );
@@ -4393,33 +4263,34 @@ public class SerifyApplet extends JApplet {
 				leafmap.put( nname, n );
 			}
 			
-			for( int i = 1; i < 19; i++ ) {
+			for( int i = 1; i < 100; i++ ) {
 				NodeSet	allsubnodes = nslist.get(i);
 				Node subroot = treeutil.new Node();
+				subroot.setName( Math.round( (double)(allsubnodes.count*1000) / (double)total ) / 10.0 + "%" );
 				
-				while( allsubnodes.nodes.size() > 0 ) {
-					for( String nname : allsubnodes.nodes ) {
-						Node leaf = leafmap.get( nname );
-						Node newparent = leaf.getParent();
-						Node current = leaf;
-						while( newparent.countLeaves() <= allsubnodes.nodes.size() ) {
-							current = newparent;
-							newparent = current.getParent();
-							if( newparent == null ) {
-								System.err.println();
+				Node vn = treeutil.getValidNode( allsubnodes.nodes, root );
+				if( treeutil.isValidSet( allsubnodes.nodes, vn ) ) {				
+					while( allsubnodes.nodes.size() > 0 ) {
+						for( String nname : allsubnodes.nodes ) {
+							Node leaf = leafmap.get( nname );
+							Node newparent = leaf.getParent();
+							Node current = leaf;
+							while( newparent.countLeaves() <= allsubnodes.nodes.size() ) {
+								current = newparent;
+								newparent = current.getParent();
 							}
+							
+							if( allsubnodes.nodes.containsAll( treeutil.getLeaveNames( current ) ) ) {
+								Node parent = current.getParent();
+								parent.removeNode( current );
+								parent.addNode( subroot, 1.0 );
+								subroot.addNode( current, 1.0 );
+							
+								removeNames( allsubnodes.nodes, current );
+							} else allsubnodes.nodes.clear();
+							
+							break;
 						}
-						
-						if( allsubnodes.nodes.containsAll( treeutil.getLeaveNames( current ) ) ) {
-							Node parent = current.getParent();
-							parent.removeNode( current );
-							parent.addNode( subroot, 1.0 );
-							subroot.addNode( current, 1.0 );
-						
-							removeNames( allsubnodes.nodes, current );
-						} else allsubnodes.nodes.clear();
-						
-						break;
 					}
 				}
 			}
@@ -4430,6 +4301,183 @@ public class SerifyApplet extends JApplet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static String genePhylogenyNNI( Map<String,String> namePath, boolean treefiles ) {
+		String			treestr = null;
+		
+		List<Node>		lnode = new ArrayList<Node>();
+		List<String>	names = new ArrayList<String>();
+		TreeUtil 		treeutil = new TreeUtil();
+		String			rootid = null;
+		try {
+			for( String name : namePath.keySet() ) {
+				String path = namePath.get( name );
+				names.add( name );
+				Node n = null;
+				if( !treefiles ) {
+					URL url = new URL( path );
+					
+					boolean mu = true;
+					String fstr = url.getFile();
+					int fi = fstr.lastIndexOf('/');
+					if( fi != -1 ) {
+						File f = new File( fstr.substring(0, fi), "tree" );
+						if( f.exists() && f.isDirectory() ) {
+							File treef = new File( f, fstr.substring(fi+1) );
+							if( treef.exists() ) {
+								mu = false;
+								url = treef.toURI().toURL();
+							}
+						}
+					}
+					if( mu ) {
+						InputStream is = url.openStream();
+						BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+						String line = br.readLine();
+						Sequence seq = null;
+						List<String> 	corrInd = new ArrayList<String>();
+						List<Sequence> 	lseq = new ArrayList<Sequence>();
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								String subline = line.substring(1);
+								corrInd.add( subline );
+								seq = new Sequence( subline, null );
+								lseq.add( seq );
+							} else {
+								if( seq != null ) seq.append( line );
+							}
+							
+							line = br.readLine();
+						}
+						br.close();
+						
+						for( Sequence s : lseq ) {
+							s.checkLengths();
+						}
+					
+						/*if( lnode.size() > 0 && lnode.get(0).length != lseq.size()*lseq.size() ) {
+							System.err.println( lnode.size() + "  " + lseq.size() );
+							System.err.println( lseq.size()*lseq.size() + "  " + lnode.get(0).length );
+							break;
+						}*/
+						double[] dmat = new double[ lseq.size()*lseq.size() ];
+						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
+						
+						n = treeutil.neighborJoin(dmat, corrInd, null);
+					} else {
+						StringBuilder tree = new StringBuilder();
+						InputStream is = url.openStream();
+						BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
+						String str = br.readLine();
+						while( str != null ) {
+							tree.append( str );
+							str = br.readLine();
+						}
+						//treeutil = new TreeUtil( tree.toString(), false, null, null, false, null, null, false );
+						treeutil.setLoc( 0 );
+						n = treeutil.parseTreeRecursive( tree.toString(), false );
+					}
+				} else {
+					StringBuilder tree = new StringBuilder();
+					BufferedReader	br = new BufferedReader( new FileReader( path ) );
+					String str = br.readLine();
+					while( str != null ) {
+						tree.append( str );
+						str = br.readLine();
+					}
+					br.close();
+					//treeutil = new TreeUtil( tree.toString(), false, null, null, false, null, null, false );
+					treeutil.setLoc( 0 );
+					n = treeutil.parseTreeRecursive( tree.toString(), false );
+				}
+				
+				if( rootid == null ) rootid = n.firstLeaf().getId();
+				Node root = n.findNode( rootid );
+				if( root == null ) {
+					System.err.println("ok");
+				}
+				Node rootparent = root.getParent();
+				treeutil.setNode( n );
+				treeutil.reroot( rootparent );
+				Node newroot = treeutil.getNode();
+				//System.err.println( rootparent.getNodes().size() );
+				lnode.add( newroot );
+			}
+			
+			if( lnode.size() == namePath.size() ) treestr = treeDistTree( treeutil, lnode, names );
+		} catch( Exception e1 ) {
+			e1.printStackTrace();
+		}
+		
+		return treestr;
+	}
+	
+	public static String treeDistTree( TreeUtil treeutil, List<Node> lnode, List<String> names ) {
+		double[]	submat = new double[ lnode.size()*lnode.size() ];
+		for( int i = 0; i < lnode.size(); i++ ) {
+			submat[i*lnode.size()+i] = 0.0;
+		}
+		
+		Node nod = lnode.get(0);
+		double corri = treeutil.nDistance( nod, nod );
+		
+		for( int i = 0; i < lnode.size()-1; i++ ) {
+			for( int k = i+1; k < lnode.size(); k++ ) {
+				Node node1 = lnode.get(i);
+				Node node2 = lnode.get(k);
+				double corr = Math.exp( (treeutil.nDistance( node1, node2 ) - 2.0)*0.2 ) - 1.0;
+				
+				
+				/*if( (names.get(i).equals("transcription_elongation_factor_NusA") && names.get(k).equals("ABC_transporter_permease")) || (names.get(k).equals("transcription_elongation_factor_NusA") && names.get(i).equals("ABC_transporter_permease")) ) {
+					System.err.println( "corr" + corr );
+				}*/
+				if( corr == 0.0 ) System.err.println( names.get(i) + "  " + names.get(k) );
+				
+				submat[i*lnode.size()+k] = corr;
+				submat[k*lnode.size()+i] = corr;
+			}
+		}
+		
+		/*StringBuilder tree = new StringBuilder();
+		tree.append( "\t"+lnode.size()+"\n" );
+		int i = 0;
+		for( String name : names ) {
+			tree.append( name );
+			int k;
+			for( k = i; k < i+lnode.size(); k++ ) {
+				tree.append( "\t"+submat[k] );
+			}
+			i = k;
+			
+			tree.append("\n");
+		}
+		FileWriter distm = new FileWriter("/home/sigmar/distm.txt");
+		distm.write( tree.toString() );
+		distm.close();*/
+		
+		Node node = treeutil.neighborJoin(submat, names, null);
+		return node.toString();
+	}
+	
+	public static void main(String[] args) {
+		Map<String,String> nmap = new HashMap<String,String>();
+		File dir = new File( "/home/sigmar/thermusgenes_short/aligned/trees/" );
+		File[] ff = dir.listFiles();
+		for( File f : ff ) {
+			String fname = f.getName();
+			int i = fname.indexOf('.');
+			if( i == -1 ) i = fname.length();
+			String nodename = fname.substring(0, i).replace("(", "");
+			nodename = nodename.replace(")", "");
+			nodename = nodename.replace(",", "");
+			nodename = nodename.replace("'", "");
+			nmap.put( nodename, f.getAbsolutePath() );
+		}
+		
+		String tree = genePhylogenyNNI( nmap, true );
+		System.err.println( tree );
+		//majorityRuleConsensus();
 		
 		/*try {
 			FileInputStream fis = new FileInputStream( "/home/sigmar/thomas/thomas.blastout" );
