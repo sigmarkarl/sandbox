@@ -6818,6 +6818,8 @@ public class GeneSet extends JApplet {
 				}
 
 				textarea.setDragEnabled(true);
+				
+				String[] farr = new String[] {"m.hydrothermalis", "t.scotoductus252", "t.antranikiani", "t.kawarayensis", "t.brockianus", "t.igniterrae", "t.eggertsoni", "t.RLM", "t.oshimai", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB_US3_UF1"};
 
 				Map<Integer,String>			ups = new HashMap<Integer,String>();
 				Set<Integer>				stuck = new HashSet<Integer>();
@@ -6843,16 +6845,22 @@ public class GeneSet extends JApplet {
 						}
 						
 						//textarea.append(gg.name + ":\n");
-						for (String sp : gg.species.keySet()) {
+						//for (String sp : gg.species.keySet()) {
+						for(String sp : farr) {
 							Teginfo stv = gg.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								tlist.add( tv );
-								/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-								if (tv.dna != null) {
-									for (int i = 0; i < tv.dna.length(); i += 70) {
-										textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
-									}
-								}*/
+							//System.err.println( gg.species.keySet() );
+							if( stv == null ) {
+								System.err.println( sp );
+							} else {
+								for (Tegeval tv : stv.tset) {
+									tlist.add( tv );
+									/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+									if (tv.dna != null) {
+										for (int i = 0; i < tv.dna.length(); i += 70) {
+											textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
+										}
+									}*/
+								}
 							}
 						}
 					}

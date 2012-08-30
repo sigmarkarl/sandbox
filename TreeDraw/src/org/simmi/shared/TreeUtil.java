@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class TreeUtil {
-	public Node currentNode = null;
+	private Node currentNode = null;
 	String treelabel = null;
 	
 	public void setTreeLabel( String label ) {
@@ -186,7 +186,7 @@ public class TreeUtil {
 		
 		Node parnode = new Node();
 		parnode.addNode( nodes.get(0), dmat[1] );
-		parnode.addNode( nodes.get(1), dmat[3] );
+		parnode.addNode( nodes.get(1), dmat[2] );
 		nodes.clear();
 		
 		parnode.countLeaves();
@@ -518,8 +518,97 @@ public class TreeUtil {
 		}
 	}
 	
+	public Node getValidNode( Set<String> s, Node n ) {
+		List<Node> subn = n.getNodes();
+		if( subn != null ) {
+			for( Node sn : subn ) {
+				Set<String> ln = this.getLeaveNames( sn );
+				if( ln.containsAll( s ) ) {
+					return getValidNode( s, sn );
+				}
+			}
+		}	
+		return n;
+	}
+	
+	public boolean isValidSet( Set<String> s, Node n ) {
+		if( n.countLeaves() > s.size() ) {
+			List<Node> subn = n.getNodes();
+			if( subn != null ) {
+				for( Node sn : subn ) {
+					Set<String> lns = this.getLeaveNames( sn );
+					int cntcnt = 0;
+					for( String ln : lns ) {
+						if( s.contains(ln) ) cntcnt++;
+					}
+					if( !(cntcnt == 0 || cntcnt == lns.size()) ) {
+						return false; 
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	public Node getConnectingParent( Node leaf1, Node leaf2 ) {
+		Set<Node> ns = new HashSet<>();
+		Node parent1 = leaf1.getParent();
+		while( parent1 != null ) {
+			ns.add( parent1 );
+			parent1 = parent1.getParent();
+		}
+		
+		Node parent2 = leaf2.getParent();
+		while( parent2 != null ) {
+			if( ns.contains( parent2 ) ) break;
+			parent2 = parent2.getParent();
+		}
+		
+		return parent2;
+	}
+	
+	public double[] getDistanceMatrix( Node n ) {
+		List<Node> leaves = getLeaves( n );
+		double[] ret = new double[ leaves.size() * leaves.size() ];
+		
+		for( int i = 0; i < leaves.size(); i++ ) {
+			ret[i+i*leaves.size()] = 0.0;
+		}
+		
+		for( int i = 0; i < leaves.size(); i++ ) {
+			for( int k = i+1; k < leaves.size(); k++ ) {
+				Node leaf1 = leaves.get(i);
+				Node leaf2 = leaves.get(k);
+				Node parent = getConnectingParent(leaf1, leaf2);
+				double val = 0.0;
+				
+				Node par = leaf1.getParent();
+				while( par != parent ) {
+					val += leaf1.geth();
+					leaf1 = par;
+					par = leaf1.getParent();
+				}
+				val += leaf1.geth();
+				
+				par = leaf2.getParent();
+				while( par != parent ) {
+					val += leaf2.geth();
+					leaf2 = par;
+					par = leaf2.getParent();
+				}
+				val += leaf2.geth();
+				
+				ret[i+k*leaves.size()] = val;
+				ret[k+i*leaves.size()] = val;
+			}
+		}
+		
+		return ret;
+	}
+	
 	public Set<String> getLeaveNames( Node node ) {
-		Set<String>	ret = new HashSet<String>();
+		Set<String>	ret = new HashSet<>();
 		
 		List<Node> nodes = node.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -527,6 +616,19 @@ public class TreeUtil {
 				ret.addAll( getLeaveNames( n ) );
 			}
 		} else ret.add( node.getName() );
+		
+		return ret;
+	}
+	
+	public List<Node> getLeaves( Node node ) {
+		List<Node>	ret = new ArrayList<>();
+		
+		List<Node> nodes = node.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node n : nodes ) {
+				ret.addAll( getLeaves( n ) );
+			}
+		} else ret.add( node );
 		
 		return ret;
 	}
@@ -817,7 +919,7 @@ public class TreeUtil {
 				collapseTree( resultnode, collapset, false );
 			}
 			
-			this.currentNode = resultnode;
+			this.setNode( resultnode );
 		} /*else {
 			System.err.println( str );
 		}*/
@@ -958,7 +1060,7 @@ public class TreeUtil {
 				oldnode.h = b;
 				oldnode.nodes.remove( res );
 				
-				currentNode = newnode;
+				setNode( newnode );
 				currentNode.countLeaves();
 				
 				return tmph;
@@ -972,9 +1074,9 @@ public class TreeUtil {
 		
 	}
 	
-	public void reroot( Node newnode ) {
+	public void reroot( Node newnode ) {		
 		rerootRecur(currentNode, newnode);
-		currentNode = newnode;
+		setNode( newnode );
 		currentNode.countLeaves();
 		
 		/*double h = newnode.h;

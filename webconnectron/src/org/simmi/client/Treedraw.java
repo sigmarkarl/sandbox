@@ -1385,7 +1385,7 @@ public class Treedraw implements EntryPoint {
 		canvas.setCoordinateSpaceHeight( h );
 		Context2d context = canvas.getContext2d();
 		
-		String str = "Drop text in distance matrix, aligned fasta or newick tree format to this canvas";
+		String str = "Drop text in newick tree, distance matrix or aligned fasta format to this canvas";
 		TextMetrics tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0-8.0);
 		str = "Double click to open file dialog (non-IE browsers)";
@@ -1406,6 +1406,26 @@ public class Treedraw implements EntryPoint {
 				imageAnchor.setHref( canvas.toDataUrl() );
 			}
 		});
+		final Anchor	dmAnchor = new Anchor("distance matrix");
+		dmAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				StringBuilder dmsb = new StringBuilder();
+				List<Node> leaves = treeutil.getLeaves( treeutil.getNode() );
+				double[] d = treeutil.getDistanceMatrix( leaves );
+				
+				int size = leaves.size();
+				dmsb.append( "\t"+size );
+				for( int i = 0; i < d.length; i++ ) {
+					if( i % size == 0 ) {
+						dmsb.append( "\n"+leaves.get(i/size).getName() );
+					}
+					dmsb.append( "\t"+d[i] );
+				}
+				dmAnchor.setHref( "data:text/plain;base64,"+encode( dmsb.toString() ) );
+			}
+		});
+		
 		final Anchor	sampleAnchor = new Anchor("sample");
 		sampleAnchor.addClickHandler( new ClickHandler() {
 			@Override
@@ -1540,9 +1560,12 @@ public class Treedraw implements EntryPoint {
 		HTML html = new HTML("Download as");
 		hp.add( html );
 		hp.add( treeAnchor );
-		html = new HTML("as");
+		html = new HTML("or");
 		hp.add( html );
 		hp.add( imageAnchor );
+		html = new HTML("or");
+		hp.add( html );
+		hp.add( dmAnchor );
 		
 		html = new HTML(". View in");
 		hp.add( html );
