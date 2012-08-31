@@ -23,6 +23,10 @@ public class TreeUtil {
 		return this.treelabel;
 	}
 	
+	public boolean isRooted() {
+		return currentNode.getNodes().size() == 2;
+	}
+	
 	public void propogateCompare( Node n ) {
 		if( n.getNodes().size() > 0 ) {
 			n.comp++;
