@@ -4218,7 +4218,7 @@ public class SerifyApplet extends JApplet {
 		try {
 			TreeUtil treeutil = new TreeUtil();
 			Map<Set<String>,Integer> nmap = new HashMap<Set<String>,Integer>();
-			File dir = new File( "/home/sigmar/thermusgenes/aligned/trees/" );
+			File dir = new File( "c:/cygwin/home/simmi/thermusgenes_short/aligned/trees/" );
 			File[] ff = dir.listFiles();
 			for( File f : ff ) {
 				FileReader fr = new FileReader( f );
@@ -4461,7 +4461,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
-		Map<String,String> nmap = new HashMap<String,String>();
+		/*Map<String,String> nmap = new HashMap<String,String>();
 		File dir = new File( "/home/sigmar/thermusgenes_short/aligned/trees/" );
 		File[] ff = dir.listFiles();
 		for( File f : ff ) {
@@ -4476,8 +4476,8 @@ public class SerifyApplet extends JApplet {
 		}
 		
 		String tree = genePhylogenyNNI( nmap, true );
-		System.err.println( tree );
-		//majorityRuleConsensus();
+		System.err.println( tree );*/
+		majorityRuleConsensus();
 		
 		/*try {
 			FileInputStream fis = new FileInputStream( "/home/sigmar/thomas/thomas.blastout" );
