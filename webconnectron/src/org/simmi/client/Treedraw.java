@@ -71,6 +71,7 @@ import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RadioButton;
@@ -349,6 +350,36 @@ public class Treedraw implements EntryPoint {
 		return lseq;
 	}
 	
+	private double[] parseDistance( int len, String[] lines, List<String> names ) {
+		double[] dvals = new double[ len*len ];
+		int m = 0;
+		int u = 0;
+		for( int i = 1; i < lines.length; i++ ) {
+			String line = lines[i];
+			String[] ddstrs = line.split("[ \t]+");
+			if( !line.startsWith(" ") ) {
+				m++;
+				u = 0;
+				
+				//int si = ddstrs[0].indexOf('_');
+				//String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
+				//console( "name: " + name );
+				
+				String name = ddstrs[0];
+				names.add( name );
+			}
+			if( ddstrs.length > 2 ) {
+				for( int k = 1; k < ddstrs.length; k++ ) {
+					int idx = (m-1)*len+(u++);
+					if( idx < dvals.length ) dvals[idx] = Double.parseDouble(ddstrs[k]);
+					else console( m + " more " + u );
+				}
+			}
+		}
+		
+		return dvals;
+	}
+	
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
 		if( str != null && str.length() > 1 && !str.startsWith("{") ) {
@@ -565,37 +596,56 @@ public class Treedraw implements EntryPoint {
 				}
 			} else if( !str.startsWith("(") ) {
 				setTreeUtil( new TreeUtil(), str );
-				int len = 0;
-				List<String> names;
-				double[] dvals;
+				final List<String> names;
+				final double[] dvals;
+				final int len;
+				
+				boolean b = false;				
 				if( str.startsWith(" ") || str.startsWith("\t") ) {
 					names = new ArrayList<String>();
-					String[] lines = str.split("\n");
+					final String[] lines = str.split("\n");
 					len = Integer.parseInt( lines[0].trim() );
-					dvals = new double[ len*len ];
-					int m = 0;
-					int u = 0;
-					for( int i = 1; i < lines.length; i++ ) {
-						String line = lines[i];
-						String[] ddstrs = line.split("[ \t]+");
-						if( !line.startsWith(" ") ) {
-							m++;
-							u = 0;
-							
-							//int si = ddstrs[0].indexOf('_');
-							//String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
-							//console( "name: " + name );
-							
-							String name = ddstrs[0];
-							names.add( name );
-						}
-						if( ddstrs.length > 2 ) {
-							for( int k = 1; k < ddstrs.length; k++ ) {
-								int idx = (m-1)*len+(u++);
-								if( idx < dvals.length ) dvals[idx] = Double.parseDouble(ddstrs[k]);
-								else console( m + " more " + u );
+					dvals = parseDistance( len, lines, names );
+					
+					if( root != null && len == root.countLeaves() ) {
+						b = true;
+						
+						final DialogBox db = new DialogBox( false, true );
+						db.setModal( true );
+						db.getElement().getStyle().setBackgroundColor( "#EEEEEE" );
+						//db.setSize("400px", "300px");
+						VerticalPanel	vp = new VerticalPanel();
+						vp.add( new Label("Apply distances to existing tree?") );
+						HorizontalPanel hp = new HorizontalPanel();
+						
+						Button	yesb = new Button("Yes");
+						Button nob = new Button("No");
+						yesb.addClickHandler( new ClickHandler() {
+							@Override
+							public void onClick(ClickEvent event) {
+								Node n = treeutil.neighborJoin( dvals, names, root );
+								setNode( n );
+								handleTree();
+								
+								db.hide();
 							}
-						}
+						});
+						nob.addClickHandler( new ClickHandler() {
+							@Override
+							public void onClick(ClickEvent event) {
+								Node n = treeutil.neighborJoin( dvals, names, null );
+								setNode( n );
+								handleTree();
+								
+								db.hide();
+							}
+						});
+						
+						hp.add( yesb );
+						hp.add( nob );
+						vp.add( hp );
+						db.add( vp );
+						db.center();
 					}
 				} else {
 					String[] lines = str.split("\n");
@@ -612,10 +662,13 @@ public class Treedraw implements EntryPoint {
 						}
 					}
 				}
-				Node n = treeutil.neighborJoin( dvals, names, null );
-				setNode( n );
-				//console( treeutil.getNode().toString() );
-				handleTree();
+				
+				if( !b ) {
+					Node n = treeutil.neighborJoin( dvals, names, null );
+					setNode( n );
+					//console( treeutil.getNode().toString() );
+					handleTree();
+				}
 			} else {
 				String tree = str.replaceAll("[\r\n]+", "");
 				setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
@@ -1059,6 +1112,27 @@ public class Treedraw implements EntryPoint {
 			omitLast( selectedNode != null ? selectedNode : root, 1 );
 		} else if( c == 'k' || c == 'K' ) {
 			omitLast( selectedNode != null ? selectedNode : root, 0 );
+		} else if( c == 'g' || c == 'G' ) {
+			if( treeutil != null && root != null ) {
+				List<Node> nn = root.getNodes();
+				if( nn != null && nn.size() == 3 ) {
+					double h = 0.0;
+					Node seln = null;
+					for( Node n : nn ) {
+						if( n.geth() > h ) {
+							h = n.geth();
+							seln = n; 
+						}
+					}
+					root.removeNode( seln );
+					Node newroot = treeutil.new Node();
+					newroot.addNode( root, 1.0*h/3.0 );
+					newroot.addNode( seln, 2.0*h/3.0 );
+					treeutil.setNode( newroot );
+					newroot.countLeaves();
+					root = treeutil.getNode();
+				}
+			}
 		} else if( selectedNode != null ) {
 			if( c == 'c' || c == 'C' ) {
 				selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
@@ -1160,7 +1234,7 @@ public class Treedraw implements EntryPoint {
 				invertSelectionRecursive( root );
 			} else if( c == 'r' || c == 'R' ) {
 				if( treeutil != null && selectedNode != null ) {
-					if( treeutil.getNode() != null ) {
+					/*if( treeutil.getNode() != null ) {
 						console( "not null first" );
 						console( "muu " + treeutil.getNode().toString() );
 					} else {
@@ -1179,12 +1253,64 @@ public class Treedraw implements EntryPoint {
 					}
 					
 					treeutil.reroot( selectedNode );
-					//treeutil.rerootRecur( treeutil.currentNode, selectedNode );
+					//treeutil.rerootRecur( treeutil.currentNode, selectedNode );*/
+					
+					Node selparent = selectedNode.getParent();
+					if( selparent != null ) {
+						double h2 = selectedNode.geth()/2.0;
+						Node newroot = treeutil.new Node();
+						treeutil.setNode( newroot );
+						
+						Node parent = selparent.getParent();
+						double h = selparent.geth();
+						
+						if( parent == null ) {
+							//List<Node> otherChilds = selparent.getOtherChild( selectedNode );							
+							selparent.getNodes().remove( selectedNode );
+							
+							for( Node n : selparent.getNodes() ) {
+								double oh2 = n.geth()/2.0;
+								if( n == selparent.getNodes().get(0) ) newroot.addNode( selectedNode, h2+oh2 );
+								newroot.addNode( n, (h2+oh2)*2.0 - selectedNode.geth() );
+							}
+						} else {
+							selparent.getNodes().remove( selectedNode );
+							newroot.addNode( selectedNode, h2 );
+							newroot.addNode( selparent, h2 );
+						}
+						
+						while( parent != null ) {
+							Node nextparent = parent.getParent();
+							
+							double hh = parent.geth();
+							if( nextparent == null ) {
+								//Node otherchild = parent.getOtherChild( selparent );
+								parent.getNodes().remove( selparent );
+								
+								for( Node n : parent.getNodes() ) {
+									//double oh2 = n.geth()/2.0;
+									//newroot.addNode( selectedNode, h2+oh2 );
+									//newroot.addNode( n, h2+oh2 );
+									selparent.addNode( n, hh+n.geth() );
+								}								
+							} else {
+								parent.getNodes().remove( selparent );
+								selparent.addNode( parent, h );
+							}
+							
+							h = hh;
+							selparent = parent;
+							parent = nextparent;
+						}
+						newroot.countLeaves();
+					}
 					root = treeutil.getNode();
 				}
 			}
 		}
-		if( treeutil != null ) drawTree( treeutil );
+		if( treeutil != null ) {
+			drawTree( treeutil );
+		}
 	}
 	
 	@Override
