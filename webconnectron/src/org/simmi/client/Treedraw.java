@@ -1549,6 +1549,34 @@ public class Treedraw implements EntryPoint {
 				}
 			}
 		});
+		CheckBox	roottree = new CheckBox("Root tree");
+		roottree.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				boolean v = event.getValue();
+				if( v && root.getNodes().size() == 3 ) {
+					double maxh = 0.0;
+					Node seln = null;
+					for( Node n : root.getNodes() ) {
+						if( n.geth() > maxh ) {
+							maxh = n.geth();
+							seln = n;
+						}
+					}
+					
+					Node newroot = treeutil.new Node();
+					root.getNodes().remove( seln );
+					newroot.addNode( seln, maxh/2.0 );
+					newroot.addNode( root, maxh/2.0 );
+					
+					treeutil.setNode( newroot );
+					root = treeutil.getNode();
+					
+					newroot.countLeaves();
+				}
+			}
+		});
+		
 		uselen.setValue( true );
 		eqhp.add( uselen );
 		eqhp.add( eqtext );
