@@ -664,13 +664,13 @@ public class Connectron extends VerticalPanel
 	
 	int loc;
 	Random r = new Random();
-	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node, TreeUtil.Node parent ) {
+	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node, TreeUtil.Node parent, int dim ) {
 		//int i = node.getName().indexOf("Thermus");
 		Corp corp = new Corp( node.getName() ); //i > 0 ? node.getName().substring(i) : node.getName() );
 		corp.setCoulomb( 100.0 );
 		corp.setx( 400.0*r.nextDouble() );
 		corp.sety( 400.0*r.nextDouble() );
-		corp.setz( 400.0*r.nextDouble() );
+		corp.setz( dim == 2 ? 0.0 : 400.0*r.nextDouble() );
 		
 		if( node.getName() == null || node.getName().trim().length() == 0 ) {
 			corp.setSize( 8 );
@@ -693,7 +693,7 @@ public class Connectron extends VerticalPanel
 		corpList.add( corp );
 		
 		for( TreeUtil.Node n : node.getNodes() ) {
-			Corp c = recursiveNodeGeneration(corpList, n, node);
+			Corp c = recursiveNodeGeneration(corpList, n, node, dim);
 			//double val = (1.0/( Math.abs( node.geth() )+0.0005 ))/50.0;
 			String strval = Double.toString( n.geth() ); //Math.round(val*100.0)/100.0 );
 			corp.addLink(c, strval, 0.02, 100.0*n.geth() );
@@ -703,8 +703,9 @@ public class Connectron extends VerticalPanel
 		return corp;
 	}
 	
-	public void importFromTree( String text ) {
+	public void importFromTree( String text, int dim ) {
 		//u = 50.0;
+		this.removeAll();
 		
 		loc = 0;
 		TreeUtil treeutil = new TreeUtil( text, false, null, null, false, null, null, false );
@@ -712,13 +713,14 @@ public class Connectron extends VerticalPanel
 		//Node resultnode = parseTreeRecursive( text, false );
 		
 		List<Corp> corpList = new ArrayList<Corp>();
-		recursiveNodeGeneration( corpList, resultnode, null );
+		recursiveNodeGeneration( corpList, resultnode, null, dim );
 		
 		repaint();
 	}
 	
 	public void importFromText( String text ) {
 		//u = 50000.0;
+		this.removeAll();
 		
 		String[] split = text.split("\n");
 		String[] species = split[0].split("\t");
@@ -755,6 +757,8 @@ public class Connectron extends VerticalPanel
 	}
 	
 	public void importFromMatrix( final String text, double scaleval ) {
+		this.removeAll();
+		
 		String[] split = text.split("\n");
 		//String[] persons = split[0].split("\t");
 		
@@ -1710,12 +1714,15 @@ public class Connectron extends VerticalPanel
 	}
 	
 	public void handleText( String dropstuff ) {
-		this.removeAll();
-		if( dropstuff.startsWith("(") ) {
-			importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
+		console( dropstuff.substring( 0, Math.min( 100,dropstuff.length() ) ) );
+		char c = dropstuff.charAt( 0 );
+		if( c >= '0' && c <= '9' && dropstuff.charAt(1) == '(' ) {
+			importFromTree( dropstuff.substring(1).replaceAll("[\r\n]+", ""), c-'0' );
+		} else if( dropstuff.startsWith("(") ) {
+			importFromTree( dropstuff.replaceAll("[\r\n]+", ""), 3 );
 		} else if( dropstuff.startsWith("\t") ) {
 			importFromMatrix( dropstuff, 400.0 );
-		} else importFromText( dropstuff );
+		} else if( !dropstuff.startsWith("{") && !dropstuff.startsWith("(") ) importFromText( dropstuff );
 	}
 	
 	public native String handleFiles( Element ie, int append ) /*-{
