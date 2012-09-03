@@ -55,13 +55,14 @@
 	<script>
 	var domain = 'http://webconnectron.appspot.com';
 	var treetext = "";
+	var dim = 0;
 	var myPopup;
 	function receiveMessage(event) {
 		console.log( 'ready message received' );
 		if (event.origin == "http://webconnectron.appspot.com") {
 			console.log( 'correct origin' );
 			if( treetext.length > 0 ) {
-				myPopup.postMessage(treetext,domain);
+				myPopup.postMessage(dim+""+treetext,domain);
 			} else {
 				handleText( event.data );
 			}
@@ -72,8 +73,9 @@
   	}
 	window.addEventListener("message", receiveMessage, false);
 	
-	showTree = function( newtree ) {
+	showTree = function( newtree, dims ) {
 		treetext = newtree;
+		dim = dims;
 		myPopup = window.open(domain + '/Webconnectron.html?callback=webconnectron','_blank');
 	}
 	</script>
