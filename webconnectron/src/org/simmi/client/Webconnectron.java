@@ -4,8 +4,6 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -13,7 +11,6 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
@@ -74,7 +71,7 @@ public class Webconnectron implements EntryPoint {
 		RootPanel.get("connectron").add( vp );*/
 		
 		Window.enableScrolling(false);
-		final RootPanel 	rp = RootPanel.get();
+		final RootPanel 	rp = RootPanel.get( "main" );
 		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
 			public void onContextMenu(ContextMenuEvent event) {
@@ -88,7 +85,7 @@ public class Webconnectron implements EntryPoint {
 		st.setPadding( 0.0, Unit.PX );
 		st.setBorderWidth( 0.0, Unit.PX );
 		
-		int w = Window.getClientWidth();
+		int w = Window.getClientWidth()-160;
 		int h = Window.getClientHeight();
 		//rp.setPixelSize(w, h);
 		rp.setSize(w+"px", h+"px");
@@ -98,15 +95,15 @@ public class Webconnectron implements EntryPoint {
 		hp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		hp.setSize("100%", "100%");
 		
-		final Element ads = Document.get().getElementById("ads");
-		SimplePanel	sp = new SimplePanel();
-		sp.getElement().appendChild( ads );
+		//final Element ads = Document.get().getElementById("ads");
+		//SimplePanel	sp = new SimplePanel();
+		//sp.getElement().appendChild( ads );
 		
 		connectron = new Connectron();
 		hp.add( connectron );
-		hp.add( sp );
+		//hp.add( sp );
 		
-		int ww = w-160;
+		int ww = w;
 		int hh = h-20;
 		connectron.getCanvas().setSize(ww+"px", hh+"px");
 		connectron.getCanvas().setCoordinateSpaceWidth( ww );
@@ -115,7 +112,7 @@ public class Webconnectron implements EntryPoint {
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
-				int w = event.getWidth();
+				int w = event.getWidth()-160;
 				int h = event.getHeight();
 				
 				if( w != oldw && w != olderw && h != oldh && h != olderh ) {
