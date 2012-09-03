@@ -1234,75 +1234,78 @@ public class Treedraw implements EntryPoint {
 				invertSelectionRecursive( root );
 			} else if( c == 'r' || c == 'R' ) {
 				if( treeutil != null && selectedNode != null ) {
-					/*if( treeutil.getNode() != null ) {
-						console( "not null first" );
-						console( "muu " + treeutil.getNode().toString() );
-					} else {
-						console( "null first" );
-					}
-					
-					
-					selectedNode.setParent( null );
-					
-					//console( selectedNode.toString() );
-					if( treeutil.getNode() != null ) {
-						console( "not null" );
-						console( "muu " + treeutil.getNode().toString() );
-					} else {
-						console( "null" );
-					}
-					
-					treeutil.reroot( selectedNode );
-					//treeutil.rerootRecur( treeutil.currentNode, selectedNode );*/
-					
-					Node selparent = selectedNode.getParent();
-					if( selparent != null ) {
-						double h2 = selectedNode.geth()/2.0;
-						Node newroot = treeutil.new Node();
-						treeutil.setNode( newroot );
+					if( !treeutil.isRooted() ) {
 						
-						Node parent = selparent.getParent();
-						double h = selparent.geth();
-						
-						if( parent == null ) {
-							//List<Node> otherChilds = selparent.getOtherChild( selectedNode );							
-							selparent.getNodes().remove( selectedNode );
-							
-							for( Node n : selparent.getNodes() ) {
-								double oh2 = n.geth()/2.0;
-								if( n == selparent.getNodes().get(0) ) newroot.addNode( selectedNode, h2+oh2 );
-								newroot.addNode( n, (h2+oh2)*2.0 - selectedNode.geth() );
-							}
+						/*if( treeutil.getNode() != null ) {
+							console( "not null first" );
+							console( "muu " + treeutil.getNode().toString() );
 						} else {
-							selparent.getNodes().remove( selectedNode );
-							newroot.addNode( selectedNode, h2 );
-							newroot.addNode( selparent, h2 );
+							console( "null first" );
 						}
 						
-						while( parent != null ) {
-							Node nextparent = parent.getParent();
+						//console( selectedNode.toString() );
+						if( treeutil.getNode() != null ) {
+							console( "not null" );
+							console( "muu " + treeutil.getNode().toString() );
+						} else {
+							console( "null" );
+						}
+						
+						treeutil.reroot( selectedNode );
+						//treeutil.rerootRecur( treeutil.currentNode, selectedNode );*/
+					
+						selectedNode.setParent( null );
+						treeutil.reroot( selectedNode );
+					} else {
+						Node selparent = selectedNode.getParent();
+						if( selparent != null ) {
+							double h2 = selectedNode.geth()/2.0;
+							Node newroot = treeutil.new Node();
+							treeutil.setNode( newroot );
 							
-							double hh = parent.geth();
-							if( nextparent == null ) {
-								//Node otherchild = parent.getOtherChild( selparent );
-								parent.getNodes().remove( selparent );
+							Node parent = selparent.getParent();
+							double h = selparent.geth();
+							
+							if( parent == null ) {
+								//List<Node> otherChilds = selparent.getOtherChild( selectedNode );							
+								selparent.getNodes().remove( selectedNode );
 								
-								for( Node n : parent.getNodes() ) {
-									//double oh2 = n.geth()/2.0;
-									//newroot.addNode( selectedNode, h2+oh2 );
-									//newroot.addNode( n, h2+oh2 );
-									selparent.addNode( n, hh+n.geth() );
-								}								
+								for( Node n : selparent.getNodes() ) {
+									double oh2 = n.geth()/2.0;
+									if( n == selparent.getNodes().get(0) ) newroot.addNode( selectedNode, h2+oh2 );
+									newroot.addNode( n, (h2+oh2)*2.0 - selectedNode.geth() );
+								}
 							} else {
-								parent.getNodes().remove( selparent );
-								selparent.addNode( parent, h );
+								selparent.getNodes().remove( selectedNode );
+								newroot.addNode( selectedNode, h2 );
+								newroot.addNode( selparent, h2 );
 							}
 							
-							h = hh;
-							selparent = parent;
-							parent = nextparent;
+							while( parent != null ) {
+								Node nextparent = parent.getParent();
+								
+								double hh = parent.geth();
+								if( nextparent == null ) {
+									//Node otherchild = parent.getOtherChild( selparent );
+									parent.getNodes().remove( selparent );
+									
+									for( Node n : parent.getNodes() ) {
+										//double oh2 = n.geth()/2.0;
+										//newroot.addNode( selectedNode, h2+oh2 );
+										//newroot.addNode( n, h2+oh2 );
+										selparent.addNode( n, hh+n.geth() );
+									}								
+								} else {
+									parent.getNodes().remove( selparent );
+									selparent.addNode( parent, h );
+								}
+								
+								h = hh;
+								selparent = parent;
+								parent = nextparent;
+							}
+							newroot.countLeaves();
 						}
-						newroot.countLeaves();
 					}
 					root = treeutil.getNode();
 				}
@@ -1700,8 +1703,23 @@ public class Treedraw implements EntryPoint {
 					
 					newroot.countLeaves();
 				} else if( !v && root.getNodes().size() == 2 ) {
+					List<Node> ln = root.getNodes();
+					Node n1 = ln.get( 0 );
+					Node n2 = ln.get( 1 );
+					if( n1.getNodes() != null & n1.getNodes().size() > 0 ) {
+						n1.addNode( n2, n1.geth()+n2.geth() );
+						n1.setParent( null );
+						treeutil.setNode( n1 );
+					} else {
+						n2.addNode( n1, n2.geth()+n2.geth() );
+						n2.setParent( null );
+						treeutil.setNode( n2 );
+					}
+					root = treeutil.getNode();			
 					
+					root.countLeaves();
 				}
+				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
 		
@@ -1710,6 +1728,7 @@ public class Treedraw implements EntryPoint {
 		eqhp.add( eqtext );
 		eqhp.add( equidist );
 		eqhp.add( equidep );
+		eqhp.add( roottree );
 		
 		HorizontalPanel	hp = new HorizontalPanel();
 		hp.setSpacing(5);
@@ -1729,10 +1748,18 @@ public class Treedraw implements EntryPoint {
 		td.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				showTree( treeutil.getNode().toString() );
+				showTree( treeutil.getNode().toString(), 3 );
 			}
 		});
 		hp.add( td );
+		Anchor twd = new Anchor("(2d)");
+		twd.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				showTree( treeutil.getNode().toString(), 2 );
+			}
+		});
+		hp.add( twd );
 		
 		html = new HTML(". Run");
 		hp.add( html );
@@ -1885,8 +1912,8 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public native void showTree( String tree ) /*-{
-		$wnd.showTree( tree );
+	public native void showTree( String tree, int dim ) /*-{
+		$wnd.showTree( tree, dim );
 		
 //		$wnd.domain = 'http://127.0.0.1:8888'; //'http://webconnectron.appspot.com';
 //		$wnd.treetext = tree;
