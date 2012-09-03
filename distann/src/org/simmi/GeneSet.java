@@ -5476,6 +5476,76 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public static Set<String> getSelspec( Component comp, final List<String>	specs ) {		
+		final Boolean[] b = new Boolean[ specs.size() ];
+		for( int i = 0; i < b.length; i++ ) {
+			b[i] = true;
+		}
+		JTable	table = new JTable();
+		JScrollPane	scroll = new JScrollPane( table );
+		table.setAutoCreateRowSorter( true );
+		table.setModel( new TableModel() {
+			@Override
+			public int getRowCount() {
+				return specs.size();
+			}
+
+			@Override
+			public int getColumnCount() {
+				return 2;
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				if( columnIndex == 0 ) return "Sel";
+				else return "Spec";
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				if( columnIndex == 0 ) return Boolean.class;
+				else return String.class;
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return columnIndex == 0;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				if( columnIndex == 0 ) return b[rowIndex];
+				else return specs.get(rowIndex);
+			}
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+				b[ rowIndex ] = (Boolean)aValue;
+			}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {}
+		});
+		Object[] ctls = new Object[] { scroll };
+		JOptionPane.showMessageDialog( comp, ctls );
+		Set<String>	selspec = new HashSet<String>();
+		for( int i = 0; i < table.getRowCount(); i++ ) {
+			if( (Boolean)table.getValueAt(i, 0) ) selspec.add( (String)table.getValueAt(i, 1) );
+		}
+		return selspec;
+	}
+	
+	public static int containmentCount( Set<String> set1, Set<String> set2 ) {
+		int r = 0;
+		for( String s1 : set1 ) {
+			if( set2.contains( s1 ) ) r++;
+		}
+		return r;
+	}
+	
 	JComboBox selcomb;
 	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
@@ -6062,41 +6132,90 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JCheckBox	check = new JCheckBox("Skip core");
-				JOptionPane.showMessageDialog( comp, new Object[] {check} );
+				JCheckBox	align = new JCheckBox("Show aignment");
+				JOptionPane.showMessageDialog( comp, new Object[] {check, align} );
 				
-				StringBuilder distmat = new StringBuilder();
-				distmat.append("\t"+species.size()+"\n");
-				for( String spec1 : species ) {
-					distmat.append( spec1 );
-					for( String spec2 : species ) {
-						if( spec1.equals(spec2) ) distmat.append( "\t0.0" );
-						else {
-							int total = 0;
-							int count = 0;
-							for( Set<String> specset : clusterMap.keySet() ) {
-								if( !check.isSelected() || specset.size() < species.size() ) {
-									boolean b1 = specset.contains(spec1);
-									boolean b2 = specset.contains(spec2);
-									if( b1 || b2 ) {
-										total++;
-										if( b1 && b2 ) count++;
-									}
-								} else {
-									System.err.println("blehbheh");
-								}
-							}
-							distmat.append( "\t"+(double)(total-count)/(double)total );
-						}
-					}
-					distmat.append("\n");
-				}
+				Set<String>	selspec = getSelspec( applet, new ArrayList( species ) );
 				
 				boolean succ = true;
-				try {
-					JSObject win = JSObject.getWindow( (Applet)comp );
-					win.call("showTree", new Object[] {distmat.toString()});
-				} catch( Exception e1 ) {
+				String restext = null;
+				if( !align.isSelected() ) {
+					StringBuilder distmat = new StringBuilder();
+					distmat.append("\t"+selspec.size()+"\n");
+					for( String spec1 : selspec ) {
+						distmat.append( spec1 );
+						for( String spec2 : selspec ) {
+							if( spec1.equals(spec2) ) distmat.append( "\t0.0" );
+							else {
+								int total = 0;
+								int count = 0;
+								for( Set<String> specset : clusterMap.keySet() ) {
+									if( !check.isSelected() || containmentCount(specset, selspec) < selspec.size() ) {
+										boolean b1 = specset.contains(spec1);
+										boolean b2 = specset.contains(spec2);
+										Set<Map<String,Set<String>>>	sm = clusterMap.get( specset );
+										if( b1 || b2 ) {
+											total += sm.size();
+											if( b1 && b2 ) count += sm.size();
+										}
+									}/* else {
+										System.err.println("blehbheh");
+									}*/
+								}
+								distmat.append( "\t"+(double)(total-count)/(double)total );
+							}
+						}
+						distmat.append("\n");
+					}
+					
+					restext = distmat.toString();
+					try {
+						JSObject win = JSObject.getWindow( (Applet)comp );
+						win.call("showTree", new Object[] { restext });
+					} catch( Exception e1 ) {
+						succ = false;
+					}
+				} else {
 					succ = false;
+					Map<String,StringBuilder>	sbmap = new HashMap<String,StringBuilder>();
+					for( Set<String> specset : clusterMap.keySet() ) {
+						if( !check.isSelected() || containmentCount(specset, selspec) < selspec.size() ) {
+							for( String spec : selspec ) {
+								StringBuilder sb;
+								if( sbmap.containsKey( spec ) ) {
+									sb = sbmap.get( spec );
+								} else {
+									sb = new StringBuilder();
+									sbmap.put( spec, sb );
+								}
+								
+								Set<Map<String,Set<String>>> cset = clusterMap.get( specset );
+								if( specset.contains( spec ) ) {
+									for( int i = 0; i < cset.size(); i++ ) sb.append('1');
+								} else {
+									for( int i = 0; i < cset.size(); i++ ) sb.append('0');
+								}
+							}
+						}
+					}
+					
+					/*StringBuilder sb = new StringBuilder();
+					for( String s : sbmap.keySet() ) {
+						sb.append( ">"+s+"\n" );
+						StringBuilder subsb = sbmap.get( s );
+						for( int i = 0; i < subsb.length(); i+=70 ) {
+							sb.append( subsb.substring( i, Math.min( i+70, subsb.length() ) ) + "\n" );
+						}
+					}
+					restext = sb.toString();*/
+					
+					List<Sequence> ls = new ArrayList<Sequence>();
+					for( String s : sbmap.keySet() ) {
+						StringBuilder sb = sbmap.get(s);
+						Sequence seq = new Sequence( s, s, sb, null );
+						ls.add( seq );
+					}
+					restext = JavaFasta.getPhylip( ls, false );
 				}
 				
 				if( !succ ) {
@@ -6105,7 +6224,7 @@ public class GeneSet extends JApplet {
 					f.setSize( 800, 600 );
 					
 					JTextArea	ta = new JTextArea();
-					ta.setText( distmat.toString() );
+					ta.setText( restext );
 					JScrollPane	sp = new JScrollPane(ta);
 					f.add( sp );
 					f.setVisible( true );
