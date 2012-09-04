@@ -7,13 +7,19 @@ import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.user.client.ui.DoubleBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -74,21 +80,91 @@ public class Fiskis implements EntryPoint {
 			this.y = y;
 		}
 		
+		private void drawKassi(Context2d ctx, double ratio ) {
+			ctx.setStrokeStyle("#000000");
+			ctx.setFillStyle("#FFFF00");
+			ctx.beginPath();
+			ctx.moveTo(x+40, y+50);
+			ctx.lineTo(x+40, y+200);
+			ctx.lineTo(x+250, y+200);
+			ctx.lineTo(x+250, y+50);
+			ctx.lineTo(x+245, y+50);
+			ctx.lineTo(x+245, y+195);
+			ctx.lineTo(x+45, y+195);
+			ctx.lineTo(x+45, y+50);
+			ctx.lineTo(x+40, y+50);
+			ctx.closePath();
+			ctx.stroke();
+			ctx.fill();
+			
+			ctx.setFillStyle("#FFFEFE");
+			ctx.fillRect(x+45.5, y+70.0, 199, ratio*125.0);
+			ctx.setLineWidth(0.5);
+			ctx.strokeRect(x+45.5, y+70.0, 199, ratio*125.0);
+			
+			ctx.setFillStyle("#2299FF");
+			ctx.fillRect(x+45.5, y+70.0+ratio*125.0, 199, 125.0-ratio*125.0);
+			ctx.setLineWidth(0.5);
+			ctx.strokeRect(x+45.5, y+70.0+ratio*125.0, 199, 125.0-ratio*125.0);
+		}
+		
 		@Override
 		public void draw(Context2d ctx) {
 			ctx.clearRect(x, y, w, h);
 			
+			ctx.setFillStyle( "#000000" );
 			String label;
-			if( dagar == 0 ) label = "Kaela i 0 gradur";
-			else label = "Vidhalda i "+dagar+" daga";
+			if( dagar == 0 ) label = "Kæla "+hiti+" gráðu heitan fisk í 0 gráður";
+			else label = "Viðhalda við 0 gráður í "+dagar+" daga í "+hiti+" gráðu umhverfishita";
 			double tw = ctx.measureText( label ).getWidth();
-			ctx.fillText( label, x+(w-tw)/2, y+50 );
+			ctx.fillText( label, x+(w-tw)/2, y+30 );
 			
 			if( dagar == 0 ) {
-				double dval = Math.round( 1000.0*0.0114*hiti*10.0 )/10.0;
+				if( stuckdb == fiskdb ) {
+					double dval = Math.round( fiskdb.getValue()*0.0114*hiti*10.0 )/10.0;
+					isdb.setValue( dval );
+				} else {
+					double dval = Math.round( 10.0*isdb.getValue()/(0.0114*hiti) )/10.0;
+					fiskdb.setValue( dval );
+				}
 				
-				ctx.fillText( dval+"", x+200, y+200 );
+				double ratio = isdb.getValue()/(fiskdb.getValue()+isdb.getValue());
+				drawKassi( ctx, ratio );
+				ctx.setLineWidth( 1.0 );
+				
+				String isstr = isdb.getValue()+" kg af ís";
+				double strw = ctx.measureText( isstr ).getWidth();
+				ctx.fillText( isstr, x+(w-strw)/2.0, y+50 );
+				
+				ctx.setFillStyle( "#000000" );
+				String fiskstr = fiskdb.getValue()+" kg af fiski";
+				strw = ctx.measureText( fiskstr ).getWidth();
+				ctx.fillText( fiskstr, x+(w-strw)/2.0, y+70.0+(1.0+ratio)*125.0/2.0 );
+			} else {
+				if( stuckdb == fiskdb ) {
+					double dval = Math.round( fiskdb.getValue()*0.015*hiti*dagar*10.0 )/10.0;
+					isdb.setValue( dval );
+				} else {
+					double dval = Math.round( 10.0*isdb.getValue()/(0.015*hiti*dagar) )/10.0;
+					fiskdb.setValue( dval );
+				}
+				
+				double ratio = isdb.getValue()/(fiskdb.getValue()+isdb.getValue());
+				drawKassi( ctx, ratio );
+				ctx.setLineWidth( 1.0 );
+				
+				String isstr = isdb.getValue()+" kg af ís";
+				double strw = ctx.measureText( isstr ).getWidth();
+				ctx.fillText( isstr, x+(w-strw)/2.0, y+50 );
+				
+				ctx.setFillStyle( "#000000" );
+				String fiskstr = fiskdb.getValue()+" kg af fiski";
+				strw = ctx.measureText( fiskstr ).getWidth();
+				ctx.fillText( fiskstr, x+(w-strw)/2.0, y+70.0+(1.0+ratio)*125.0/2.0 );
 			}
+			
+			ctx.setStrokeStyle("#EEEEEE");
+			ctx.strokeRect(x, y, w, h);
 		}
 
 		public double getHiti() {
@@ -127,39 +203,52 @@ public class Fiskis implements EntryPoint {
 		String	label;
 		double	jump;
 		
+		public double getValue() {
+			return val;
+		}
+		
+		public void setValue( double val ) {
+			this.val = val;
+		}
+		
 		public void draw( Context2d ctx ) {
 			ctx.clearRect(x-8, y-20, 32, h+40);
 			
-			ctx.setFillStyle("#000000");
+			ctx.setLineWidth( 1.0 );
+			ctx.setStrokeStyle("#000000");
+			//ctx.setFillStyle("#000000");
 			ctx.beginPath();
 			ctx.moveTo(x, y);
-			ctx.lineTo(x+16, y);
+			ctx.lineTo(x+12, y);
 			ctx.closePath();
 			ctx.stroke();
 			
 			ctx.beginPath();
-			ctx.moveTo(x+8, y);
-			ctx.lineTo(x+8, y+h);
+			ctx.moveTo(x+6, y);
+			ctx.lineTo(x+6, y+h);
 			ctx.closePath();
 			ctx.stroke();
 			
 			ctx.beginPath();
 			ctx.moveTo(x, y+h);
-			ctx.lineTo(x+16, y+h);
+			ctx.lineTo(x+12, y+h);
 			ctx.closePath();
 			ctx.stroke();
 			
+			ctx.setFillStyle("#FF9999");
 			ctx.beginPath();
-			ctx.arc(x+8, y+h-(h*(val-start))/(stop-start), 5.0, 0.0, 2*Math.PI );
+			ctx.arc(x+6, y+h-(h*(val-start))/(stop-start), 5.0, 0.0, 2*Math.PI );
 			ctx.closePath();
 			ctx.stroke();
+			ctx.fill();
 			
+			ctx.setFillStyle("#000000");
 			double tw = ctx.measureText( label ).getWidth();
-			ctx.fillText( label, x+(16-tw)/2, y+h+12 );
+			ctx.fillText( label, x+(12-tw)/2, y+h+18 );
 			
 			String sval = val+"";
 			double vw = ctx.measureText( sval ).getWidth();
-			ctx.fillText( sval, x+(16-vw)/2, y-3 );
+			ctx.fillText( sval, x+(12-vw)/2, y-7 );
 		}
 
 		@Override
@@ -187,6 +276,9 @@ public class Fiskis implements EntryPoint {
 	
 	List<Drawable>	dlist = new ArrayList<Drawable>();
 	List<Clickable>	clist = new ArrayList<Clickable>();
+	DoubleBox		fiskdb = new DoubleBox();
+	DoubleBox		isdb = new DoubleBox();
+	DoubleBox		stuckdb = fiskdb;
 	
 	public void draw( Context2d ctx ) {
 		for( Drawable d : dlist ) {
@@ -200,19 +292,65 @@ public class Fiskis implements EntryPoint {
 	 */
 	public void onModuleLoad() {
 		RootPanel	rp = RootPanel.get();
+		
+		VerticalPanel vp = new VerticalPanel();
+		vp.setSize("400px", "300px");
+		
 		Canvas		c = Canvas.createIfSupported();
-		c.setSize("400x", "300px");
+		c.setSize("400x", "275px");
 		c.setCoordinateSpaceWidth( 400 );
-		c.setCoordinateSpaceHeight( 300 );
+		c.setCoordinateSpaceHeight( 275 );
 		final Context2d ctx = c.getContext2d();
 		
-		final Meter dagameter = new Meter( "dagar", 20, 20, 250.0, 0.0, 7.0, 1.0 );
-		final Meter hitameter = new Meter( "hiti", 60, 20, 250.0, 0.0, 30.0, 10.0 );
-		final Kassi kassi = new Kassi( 100.0, 20.0, 300.0, 250.0 );
+		HorizontalPanel hp = new HorizontalPanel();
+		hp.setSpacing( 0 );
+		hp.setSize( "400px", "25px" );
+		
+		Label	l = new Label("Fiskmagn:");
+		fiskdb.setWidth("60px");
+		fiskdb.setValue( 1000.0 );
+		Label	m = new Label("kg");
+		hp.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
+		
+		Label	isl = new Label("Ísmagn:");
+		isdb.setWidth("60px");
+		isdb.setValue( 0.0 );
+		//Label	ism = new Label("kg");
+		
+		hp.add( l );
+		hp.add( fiskdb );
+		//hp.add( m );
+		
+		hp.add( isl );
+		hp.add( isdb );
+		hp.add( m );
+		
+		vp.add( c );
+		vp.add( hp );
+		
+		final Meter dagameter = new Meter( "dagar", 20, 20, 230.0, 0.0, 7.0, 1.0 );
+		final Meter hitameter = new Meter( "gráður", 60, 20, 230.0, 0.0, 30.0, 10.0 );
+		final Kassi kassi = new Kassi( 100.0, 20.0, 290.0, 230.0 );
 		
 		dlist.add( dagameter );
 		dlist.add( hitameter );
 		dlist.add( kassi );
+		
+		fiskdb.addChangeHandler( new ChangeHandler() {
+			@Override
+			public void onChange(ChangeEvent event) {
+				stuckdb = fiskdb;
+				kassi.draw( ctx );
+			}
+		});
+		
+		isdb.addChangeHandler( new ChangeHandler() {
+			@Override
+			public void onChange(ChangeEvent event) {
+				stuckdb = isdb;
+				kassi.draw( ctx );
+			}
+		});
 		
 		ChangeListener cl = new ChangeListener() {
 			Drawable d;
@@ -220,6 +358,9 @@ public class Fiskis implements EntryPoint {
 			@Override
 			public void onChange(double oldval, double newval) {
 				kassi.setDagar(newval);
+				//kassi.setHiti( 0.0 );
+				//hitameter.setValue( 0.0 );
+				//hitameter.draw( ctx );
 				if( d != null ) d.draw(ctx);
 			}
 
@@ -242,6 +383,9 @@ public class Fiskis implements EntryPoint {
 			@Override
 			public void onChange(double oldval, double newval) {
 				kassi.setHiti(newval);
+				//kassi.setDagar( 0.0 );
+				//dagameter.setValue( 0.0 );
+				//dagameter.draw( ctx );
 				if( d != null ) d.draw(ctx);
 			}
 
@@ -300,6 +444,6 @@ public class Fiskis implements EntryPoint {
 				currentclick = null;
 			}
 		});
-		rp.add( c );
+		rp.add( vp );
 	}
 }
