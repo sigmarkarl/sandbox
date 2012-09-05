@@ -23,6 +23,10 @@ public class TreeUtil {
 		return this.treelabel;
 	}
 	
+	public boolean isRooted() {
+		return currentNode.getNodes().size() == 2;
+	}
+	
 	public void propogateCompare( Node n ) {
 		if( n.getNodes().size() > 0 ) {
 			n.comp++;
@@ -84,11 +88,27 @@ public class TreeUtil {
 		}
 	}
 	
-	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {		
-		List<Node> nodes = new ArrayList<Node>();
+	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {
+		List<Node> nodes;
 		int len = corrInd.size();
-		for( String name : corrInd ) {
-			nodes.add( new Node( name ) );
+		if( guideTree != null ) {
+			nodes = this.getLeaves( guideTree );
+			int c = 0;
+			for( String s : corrInd ) {
+				int i = c;
+				while( !s.equals( nodes.get(i).getName() ) ) i++;
+				
+				Node tnode = nodes.get(c);
+				nodes.set( c, nodes.get(i) );
+				nodes.set( i, tnode );
+				
+				c++;
+			}
+		} else {
+			nodes = new ArrayList<Node>();
+			for( String name : corrInd ) {
+				nodes.add( new Node( name ) );
+			}
 		}
 		
 		double[] dmat = corrarr; //new double[len*len];
@@ -111,28 +131,57 @@ public class TreeUtil {
 			}
 			
 			int imin = 0;
-			int jmin = 0;
+			int jmin = 1;
 			double dmin = Double.MAX_VALUE;
-			for ( int i = 0; i < len-1; i++ ) {
-				for ( int j = i+1; j < len; j++ ) {
-					//if( i != j ) {
-						double val = dmat[i*len+j] - u[i] - u[j];
-						//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
-						if( val < dmin ) {
-							dmin = val;
-							imin = i;
-							jmin = j;
+			
+			if( guideTree == null ) {
+				for ( int i = 0; i < len-1; i++ ) {
+					for ( int j = i+1; j < len; j++ ) {
+						//if( i != j ) {
+							double val = dmat[i*len+j] - u[i] - u[j];
+							//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+							if( val < dmin ) {
+								dmin = val;
+								imin = i;
+								jmin = j;
+							}
+						//}
+					}
+				}
+			} else {
+				for ( int i = 0; i < len-1; i++ ) {
+					for ( int j = i+1; j < len; j++ ) {
+						Node iparent = nodes.get( i ).getParent();
+						Node jparent = nodes.get( j ).getParent();
+						if( iparent == jparent ) {
+							double val = dmat[i*len+j] - u[i] - u[j];
+							//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+							if( val < dmin ) {
+								dmin = val;
+								imin = i;
+								jmin = j;
+							}
 						}
-					//}
+					}
 				}
 			}
 			
 			//System.err.println( dmat[imin*len+jmin] );
 			double vi = (dmat[imin*len+jmin]+u[imin]-u[jmin])/2.0;
 			double vj = (dmat[imin*len+jmin]+u[jmin]-u[imin])/2.0;
-			Node parnode = new Node();
-			parnode.addNode( nodes.get(imin), vi );
-			parnode.addNode( nodes.get(jmin), vj );
+			
+			Node parnode;
+			Node nodi = nodes.get( imin );
+			Node nodj = nodes.get( jmin );
+			if( guideTree == null ) {
+				parnode = new Node();
+				parnode.addNode( nodi, vi );
+				parnode.addNode( nodj, vj );
+			} else {
+				parnode = nodi.getParent(); 
+				nodi.seth( vi );
+				nodj.seth( vj );
+			}
 			
 			if( imin > jmin ) {
 				nodes.remove(imin);
@@ -231,6 +280,14 @@ public class TreeUtil {
 						return ret;
 					}
 				}
+			}
+			return null;
+		}
+		
+		public Node getOtherChild( Node child ) {
+			if( nodes != null && nodes.size() > 0 ) {
+				int i = nodes.indexOf( child );
+				return i == 0 ? nodes.get(1) : nodes.get(0);
 			}
 			return null;
 		}
@@ -405,8 +462,11 @@ public class TreeUtil {
 			} else if( name != null && name.length() > 0 ) str += name;
 			
 			//if( h > 0.0 )
+			if( color != null && color.length() > 0 ) str += "["+color+"]";
+			
 			str += ":"+h;
-			if( color != null && color.length() > 0 ) str += ":"+color;
+			// change: if( color != null && color.length() > 0 ) str += ":"+color;
+			
 			//else str += ":0.0";
 			
 			return str;
@@ -552,7 +612,7 @@ public class TreeUtil {
 	}
 	
 	public Node getConnectingParent( Node leaf1, Node leaf2 ) {
-		Set<Node> ns = new HashSet<>();
+		Set<Node> ns = new HashSet<Node>();
 		Node parent1 = leaf1.getParent();
 		while( parent1 != null ) {
 			ns.add( parent1 );
@@ -568,8 +628,7 @@ public class TreeUtil {
 		return parent2;
 	}
 	
-	public double[] getDistanceMatrix( Node n ) {
-		List<Node> leaves = getLeaves( n );
+	public double[] getDistanceMatrix( List<Node> leaves ) {
 		double[] ret = new double[ leaves.size() * leaves.size() ];
 		
 		for( int i = 0; i < leaves.size(); i++ ) {
@@ -608,7 +667,7 @@ public class TreeUtil {
 	}
 	
 	public Set<String> getLeaveNames( Node node ) {
-		Set<String>	ret = new HashSet<>();
+		Set<String>	ret = new HashSet<String>();
 		
 		List<Node> nodes = node.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -621,7 +680,7 @@ public class TreeUtil {
 	}
 	
 	public List<Node> getLeaves( Node node ) {
-		List<Node>	ret = new ArrayList<>();
+		List<Node>	ret = new ArrayList<Node>();
 		
 		List<Node> nodes = node.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -1321,15 +1380,24 @@ public class TreeUtil {
 				if( ci != -1 ) {
 					String[] split;
 					int i = code.lastIndexOf("'");
+					String name;
 					if( i > 0 ) {
 						split = code.substring(i, code.length()).split(":");
-						node.name = code.substring(0, i+1);
-						node.id = node.name;
+						name = code.substring(0, i+1);
 					} else {
 						split = code.split(":");
-						node.name = split[0];
-						node.id = node.name;
+						name = split[0];
 					}
+					
+					int coli = name.indexOf("[#");
+					if( coli != -1 ) {
+						int ecoli = name.indexOf("]", coli+2);
+						node.color = name.substring(coli+1,ecoli);
+						name = name.substring(0, coli);
+					}
+					
+					node.name = name;
+					node.id = node.name;
 					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
@@ -1356,7 +1424,7 @@ public class TreeUtil {
 								
 							}
 						}
-					} else node.color = null;
+					}// else node.color = null;
 					
 					String dstr = split[1].trim();
 					String dstr2 = "";
