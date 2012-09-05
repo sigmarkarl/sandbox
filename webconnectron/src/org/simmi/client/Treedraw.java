@@ -2150,7 +2150,15 @@ public class Treedraw implements EntryPoint {
 			g2.stroke();
 			
 			if( showbubble ) {
+				String ncolor = resnode.getColor();
+				if( ncolor != null ) {
+					g2.setFillStyle( ncolor );
+				} else {
+					g2.setFillStyle( "#000000" );
+				}
+				
 				g2.beginPath();
+				
 				if( vertical ) {
 					double yfloor = Math.floor(y+newy);
 					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
@@ -2268,6 +2276,13 @@ public class Treedraw implements EntryPoint {
 			g2.stroke();
 			
 			if( showbubble ) {
+				String ncolor = resnode.getColor();
+				if( ncolor != null ) {
+					g2.setFillStyle( ncolor );
+				} else {
+					g2.setFillStyle( "#000000" );
+				}
+				
 				g2.beginPath();
 				if( vertical ) {
 					double yfloor = Math.floor(y+ny);
@@ -2328,21 +2343,21 @@ public class Treedraw implements EntryPoint {
 					for( String str : split ) {
 						double strw = g2.measureText( str ).getWidth();
 						mstrw = Math.max( mstrw, strw );
-						if( resnode.getColor() != null ) {
+						/*if( resnode.getColor() != null ) {
 							g2.setFillStyle( resnode.getColor() );
 							g2.fillRect( (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize), strw, mstrh);
 							g2.setFillStyle( "#000000" );
-						}
+						}*/
 						g2.fillText(str, (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize) );
 					}
 				} else {
 					for( String str : split ) {
-						if( resnode.getColor() != null ) {
+						/*if( resnode.getColor() != null ) {
 							double strw = g2.measureText( str ).getWidth();
 							g2.setFillStyle( resnode.getColor() );
 							g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0-mstrh+1.0, strw+15, mstrh*1.15);
 							g2.setFillStyle( "#000000" );
-						}
+						}*/
 						
 						boolean it = false;
 						boolean sub = false;

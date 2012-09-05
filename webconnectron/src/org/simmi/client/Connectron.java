@@ -136,6 +136,7 @@ public class Connectron extends VerticalPanel
 		canvas.setFocus( true );
 	}
 	
+	double mincoulombradius = 0.1;
 	//double u = 1000.0;
 	public void spring() {
 		final double damp = 0.97;
@@ -143,6 +144,7 @@ public class Connectron extends VerticalPanel
 		final double gorm = 0.0;
 		final double k = 1.0;
 		
+		double mcr = Math.pow( mincoulombradius, 1.0/3.0 );
 		for( Corp corp : Corp.corpList ) {
 			double fx = 0;
 			double fy = 0;
@@ -153,13 +155,18 @@ public class Connectron extends VerticalPanel
 				double dz = corp.getz() - c.getz();
 				double d = dx*dx + dy*dy + dz*dz;
 				double r = Math.sqrt( d );
-				double r3 = r*r*r;
+				double r2 = r*r;
+				double r3 = r2*r;
 				
 				double u = c.getCoulomb();
-				if( r3 > 0.1 ) {
+				if( r3 > mincoulombradius ) {
 					fx += (u*dx)/r3;
 					fy += (u*dy)/r3;
 					fz += (u*dz)/r3;
+				} else {
+					//fx += (u*dx*mcr)/(r*mincoulombradius);
+					//fy += (u*dy*mcr)/(r*mincoulombradius);
+					//fz += (u*dz*mcr)/(r*mincoulombradius);
 				}
 			}
 			for( Corp c : corp.backconnections.keySet() ) {
@@ -175,13 +182,14 @@ public class Connectron extends VerticalPanel
 				double st = li.getStrength();
 					//double k = li.getStrength();
 				
-				if( r > 0.1 ) {
-					double dh = r-h;
-					
-					fx -= k*st*(dx*dh/r-gorm);
-					fy -= k*st*(dy*dh/r-gorm);
-					fz -= k*st*(dz*dh/r-gorm);
-				}
+				r = Math.max( r, 0.1 );
+				//if( r > 0.1 ) {
+				double dh = r-h;
+				
+				fx -= k*st*(dx*dh/r-gorm);
+				fy -= k*st*(dy*dh/r-gorm);
+				fz -= k*st*(dz*dh/r-gorm);
+				//}
 			}
 			
 			corp.vx = (corp.vx+fx)*damp;
@@ -672,7 +680,7 @@ public class Connectron extends VerticalPanel
 		corp.sety( 400.0*r.nextDouble() );
 		corp.setz( dim == 2 ? 0.0 : 400.0*r.nextDouble() );
 		
-		if( node.getName() == null || node.getName().trim().length() == 0 ) {
+		if( (node.getNodes() != null && node.getNodes().size() > 0) || node.getName() == null || node.getName().trim().length() == 0 ) {
 			corp.setSize( 8 );
 		}
 		
@@ -712,6 +720,7 @@ public class Connectron extends VerticalPanel
 		TreeUtil.Node resultnode = treeutil.getNode();
 		//Node resultnode = parseTreeRecursive( text, false );
 		
+		if( dim == 2 ) mincoulombradius = 1.0;
 		List<Corp> corpList = new ArrayList<Corp>();
 		recursiveNodeGeneration( corpList, resultnode, null, dim );
 		
