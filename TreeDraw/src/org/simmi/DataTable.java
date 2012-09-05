@@ -667,7 +667,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	public JTable nameSelectionComponent() {
 		final JTable table = new JTable();
 		table.setDragEnabled( true );
-		String[] nlist = {"Species", "Pubmed", "Country", "Source", "Accession"};
+		String[] nlist = {"Species", "Pubmed", "Country", "Source", "Accession", "Color"};
 		names.clear();
 		for( String name : nlist ) {
 			names.add( new NameSel( name ) );
@@ -1137,9 +1137,17 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( fname.length() == 0 ) fname += acc;
 					else fname += "_"+acc;
 				} else if( ns.name.equals("Pubmed") ) {
-					String pubmed = (String)obj[8];
+					String pubmed = (String)obj[9];
 					if( fname.length() == 0 ) fname += pubmed;
 					else fname += "_"+pubmed;
+				} else if( ns.name.equals("Color") ) {
+					String col = (String)obj[18];
+					//col = col.replace("_", "");
+					//if( fname.length() == 0 ) fname += col;
+					//else 
+					if( colmap.containsKey(col) ) {
+						fname += "["+colmap.get(col)+"]";	
+					}
 				}
 			}
 		}
@@ -1473,9 +1481,23 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 	}
     
+	Map<String,String>	colmap = new HashMap<String,String>();
 	JavaFasta	currentjavafasta;
 	public void init() {
 		updateLof();
+		
+		colmap.put("small_red", "#FF0000");
+		colmap.put("small_green", "#00FF00");
+		colmap.put("small_blue", "#0000FF");
+		colmap.put("small_cyan", "#00FFFF");
+		colmap.put("small_yellow", "#FFFF00");
+		colmap.put("small_magenta", "#FF00FF");
+		colmap.put("small_white", "#FFFFFF");
+		colmap.put("small_grey", "#999999");
+		colmap.put("small_brown", "#555511");
+		colmap.put("small_orange", "#999944");
+		colmap.put("small_purple", "#AA22AA");
+		colmap.put("small_black", "#000000");
 		
 		table = new JTable();
 		table.setAutoCreateRowSorter( true );	
@@ -2109,6 +2131,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		njmenu.add( new AbstractAction("NJTree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				//final JCheckBox	colors = new JCheckBox("Species colors");
 				final JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
 				final JCheckBox	boots = new JCheckBox("Bootstrap");
 				final JCheckBox	entropy = new JCheckBox("Entropy weighting");
@@ -2118,6 +2141,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				
 				runnable = new Runnable() {
 					public void run() {
+						//boolean color = colors.isSelected();
 						boolean cantor = jukes.isSelected();
 						boolean bootstrap = boots.isSelected();
 						boolean entr = entropy.isSelected();
