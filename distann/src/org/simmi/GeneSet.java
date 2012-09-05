@@ -6215,7 +6215,7 @@ public class GeneSet extends JApplet {
 						Sequence seq = new Sequence( s, s, sb, null );
 						ls.add( seq );
 					}
-					restext = JavaFasta.getPhylip( ls, false );
+					restext = Sequence.getPhylip( ls, false );
 				}
 				
 				if( !succ ) {
@@ -7805,28 +7805,32 @@ public class GeneSet extends JApplet {
 				textarea.setDragEnabled(true);
 
 				JScrollPane scrollpane = new JScrollPane(textarea);
-
+				
+				Set<String> selectedSpecies = getSelspec( applet, new ArrayList( species ) );
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
 					if (gg.species != null) {
 						textarea.append(gg.name + ":\n");
-						for (String sp : gg.species.keySet()) {
-							Teginfo stv = gg.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-								for (int i = 0; i < tv.seq.length(); i += 70) {
-									int end = Math.min(i + 70, tv.seq.length());
-									textarea.append(tv.seq.substring(i, end) + "\n"); // new
-																						// String(
-																						// tv.seq,
-																						// i,
-																						// Math.min(i+70,tv.seq.length())
-																						// )+"\n");
+						//for (String sp : gg.species.keySet()) {
+						for( String sp : selectedSpecies ) {
+							if( gg.species.containsKey(sp) ) {
+								Teginfo stv = gg.species.get(sp);
+								for (Tegeval tv : stv.tset) {
+									textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+									for (int i = 0; i < tv.seq.length(); i += 70) {
+										int end = Math.min(i + 70, tv.seq.length());
+										textarea.append(tv.seq.substring(i, end) + "\n"); // new
+																							// String(
+																							// tv.seq,
+																							// i,
+																							// Math.min(i+70,tv.seq.length())
+																							// )+"\n");
+									}
+									// textarea.append( ">" + tv.cont + " " + tv.teg
+									// + " " + tv.eval + "\n" + tv.seq + "\n" );
 								}
-								// textarea.append( ">" + tv.cont + " " + tv.teg
-								// + " " + tv.eval + "\n" + tv.seq + "\n" );
 							}
 						}
 					}
