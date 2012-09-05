@@ -2,9 +2,11 @@ package org.simmi.shared;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public class Sequence implements Comparable<Sequence> {
 	/*public static int						max = 0;
@@ -37,6 +39,77 @@ public class Sequence implements Comparable<Sequence> {
 	public boolean				edited = false;
 	
 	static Random r = new Random();
+	
+	public static String getPhylip( List<Sequence> lseq, boolean numeric ) {
+		StringBuilder out = new StringBuilder();
+		
+		String erm = ""+lseq.size();
+		String seqlen = "";
+		for( int i = 0; i < 6-erm.length(); i++ ) {
+			seqlen += " ";
+		}
+		seqlen += erm;
+		int alen = lseq.get(0).getLength();
+		seqlen += "   "+alen;
+		
+		out.append( seqlen+"\n" );
+		
+		Set<String> seqset = new HashSet<String>();
+		
+		int u = 0;
+		int count = 0;
+		for( int k = 0; k < alen; k+=50 ) {
+			int seqi = 0;
+			for( Sequence seq : lseq ) {
+				if( u == 0 ) {
+					if( !numeric ) {
+						String seqname = seq.getName();
+						int m = Math.min( seqname.length(), 10 );
+						
+						String subname = seqname.substring(0, m);
+						
+						if( seqset.contains( subname ) ) {
+							if( seqname.length() > 10 ) {
+								subname = seqname.substring( seqname.length()-10, seqname.length() );
+							} else {
+								m = Math.min( seqname.length(), 10-1 );
+								subname = seqname.substring(0,m)+(++count);
+							}
+						}
+						seqset.add( subname );
+						
+						out.append( subname );
+						while( m < 10 ) {
+							out.append(' ');
+							m++;
+						}
+					} else {
+						String sind = Integer.toString( seqi++ );
+						
+						int m = 0;
+						while( m < 10-sind.length() ) {
+							out.append('0');
+							m++;
+						}
+						out.append( sind );
+					}
+				} else out.append("          ");
+				
+				for( int l = k; l < Math.min(k+50, alen); l++ ) {
+					if( l % 10 == 0 ) {
+						out.append(" ");
+					}
+					out.append( seq.charAt(l + seq.getStart()) );
+				}
+				out.append("\n");
+			}
+			out.append("\n");
+			
+			u++;
+		}
+		
+		return out.toString();
+	}
 	
 	public static double[] entropy( List<Sequence> lseq ) {
 		int total = lseq.get(0).getLength();
@@ -384,9 +457,16 @@ public class Sequence implements Comparable<Sequence> {
 		}
 	}
 	
-	public char charAt( int i ) {
+	public void setCharAt( int i, char c ) {
 		int ind = i-start;
 		if( ind >= 0 && ind < sb.length() ) {
+			sb.setCharAt( ind, c );
+		}
+	}
+	
+	public char charAt( int i ) {
+		int ind = i-start;
+		if( ind >= 0 && ind < getLength() ) {
 			return sb.charAt( ind );
 		}
 		

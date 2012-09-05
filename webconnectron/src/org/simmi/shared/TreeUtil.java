@@ -462,8 +462,11 @@ public class TreeUtil {
 			} else if( name != null && name.length() > 0 ) str += name;
 			
 			//if( h > 0.0 )
+			if( color != null && color.length() > 0 ) str += "["+color+"]";
+			
 			str += ":"+h;
-			if( color != null && color.length() > 0 ) str += ":"+color;
+			// change: if( color != null && color.length() > 0 ) str += ":"+color;
+			
 			//else str += ":0.0";
 			
 			return str;
@@ -1377,15 +1380,24 @@ public class TreeUtil {
 				if( ci != -1 ) {
 					String[] split;
 					int i = code.lastIndexOf("'");
+					String name;
 					if( i > 0 ) {
 						split = code.substring(i, code.length()).split(":");
-						node.name = code.substring(0, i+1);
-						node.id = node.name;
+						name = code.substring(0, i+1);
 					} else {
 						split = code.split(":");
-						node.name = split[0];
-						node.id = node.name;
+						name = split[0];
 					}
+					
+					int coli = name.indexOf("[#");
+					if( coli != -1 ) {
+						int ecoli = name.indexOf("]", coli+2);
+						node.color = name.substring(coli+1,ecoli);
+						name = name.substring(0, coli);
+					}
+					
+					node.name = name;
+					node.id = node.name;
 					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
@@ -1412,7 +1424,7 @@ public class TreeUtil {
 								
 							}
 						}
-					} else node.color = null;
+					}// else node.color = null;
 					
 					String dstr = split[1].trim();
 					String dstr2 = "";
