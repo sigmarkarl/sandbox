@@ -1,36 +1,93 @@
 package org.simmi.server;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+
 import org.simmi.client.GreetingService;
-import org.simmi.shared.FieldVerifier;
+
+import com.google.gdata.client.GoogleService;
+import com.google.gdata.client.Service.GDataRequest;
+import com.google.gdata.client.Service.GDataRequest.RequestType;
+import com.google.gdata.util.ContentType;
+import com.google.gdata.util.ServiceException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
  * The server side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class GreetingServiceImpl extends RemoteServiceServlet implements
-		GreetingService {
-
-	public String greetServer(String input) throws IllegalArgumentException {
-		// Verify that the input is valid. 
-		if (!FieldVerifier.isValidName(input)) {
-			// If the input is not valid, throw an IllegalArgumentException back to
-			// the client.
-			throw new IllegalArgumentException(
-					"Name must be at least 4 characters long");
+public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
+	private GoogleService service;
+	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private static final boolean isUsingEncId = true;
+	
+	public String greetServer(String query) {
+		String res = "";
+	
+		try {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+				service.setConnectTimeout(0);
+			}
+			
+			String lowercaseQuery = query.toLowerCase();
+			String encodedQuery = URLEncoder.encode(query, "UTF-8");
+			 GDataRequest request;
+			   // If the query is a select, describe, or show query, run a GET request.
+			   if (lowercaseQuery.startsWith("select") ||
+			       lowercaseQuery.startsWith("describe") ||
+			       lowercaseQuery.startsWith("show")) {
+			     URL url = new URL(SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId);
+			     request = service.getRequestFactory().getRequest(RequestType.QUERY, url, ContentType.TEXT_PLAIN);
+			   } else {
+			     // Otherwise, run a POST request.
+			     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
+			     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
+			         new ContentType("application/x-www-form-urlencoded"));
+			     OutputStreamWriter writer = new OutputStreamWriter(request.getRequestStream());
+			     writer.append("sql=" + encodedQuery);
+			     writer.flush();
+			   }
+		
+			   request.setConnectTimeout(0);
+			   request.execute();
+		
+			   res = getResultsText( request.getResponseStream() ).toString();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ServiceException e) {
+			e.printStackTrace();
 		}
-
-		String serverInfo = getServletContext().getServerInfo();
-		String userAgent = getThreadLocalRequest().getHeader("User-Agent");
-
-		// Escape data from the client to avoid cross-site script vulnerabilities.
-		input = escapeHtml(input);
-		userAgent = escapeHtml(userAgent);
-
-		return "Hello, " + input + "!<br><br>I am running " + serverInfo
-				+ ".<br><br>It looks like you are using:<br>" + userAgent;
+	
+		  return res;
 	}
 
+	private StringBuilder getResultsText( InputStream is ) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader( is, "UTF-8" );
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		StringBuilder sb = new StringBuilder();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			sb.append( line + '\n' );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		
+		return sb;
+	}
+	
 	/**
 	 * Escape an html string. Escaping data received from the client helps to
 	 * prevent cross-site script vulnerabilities.

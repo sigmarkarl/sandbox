@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="http://pontunarkerfi.appspot.com/" href="order.jnlp">
+<jnlp spec="1.0+" codebase="http://pontunarkerfi.appspot.com" href="order.jnlp">
 <information>
   <title>Pontunarkerfi</title>
   <vendor>Matis ohf.</vendor>
@@ -21,15 +21,15 @@
   <extension name="poi" href="http://dl.dropbox.com/u/10040394/poi/poi.jnlp"/>
 </resources>
 <resources os="Windows" arch="x86">
-	<nativelib href = "sqljdbc_x86.jar" />
+	<nativelib href = "sqljdbc4_x86.jar" />
 	<property name="file.encoding" value="utf-8"/>
 </resources>
 <resources os="Windows" arch="x86_64">
-	<nativelib href = "sqljdbc_x64.jar" />
+	<nativelib href = "sqljdbc4_x64.jar" />
 	<property name="file.encoding" value="utf-8"/>
 </resources>
 <resources os="Windows" arch="ia64">
-	<nativelib href = "sqljdbc_ia64.jar" />
+	<nativelib href = "sqljdbc4_ia64.jar" />
 	<property name="file.encoding" value="utf-8"/>
 </resources>
 <applet-desc 
