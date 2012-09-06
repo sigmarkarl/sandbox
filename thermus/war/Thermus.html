@@ -43,6 +43,27 @@
   })();
 
 	</script>
+	
+	<script>
+	var domain = 'http://webconnectron.appspot.com';
+	var treetext = "";
+	var myPopup;
+	function receiveMessage(event) {
+		console.log( 'ready message received' );
+		if (event.origin == "http://webconnectron.appspot.com") {
+			console.log( 'correct origin' );
+			if( treetext.length > 0 ) {
+				myPopup.postMessage(treetext,domain);
+			}
+    	}
+  	}
+	window.addEventListener("message", receiveMessage, false);
+	
+	showTree = function( newtree ) {
+		treetext = newtree;
+		myPopup = window.open(domain + '/Treedraw.html?callback=thermusgenes','_blank');
+	}
+	</script>
   </head>
 
   <!--                                           -->

@@ -2,7 +2,6 @@
 <!DOCTYPE web-app
     PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
     "http://java.sun.com/dtd/web-app_2_3.dtd">
-
 <web-app>
   
   <!-- Servlets -->
@@ -11,9 +10,19 @@
     <servlet-class>org.simmi.server.GreetingServiceImpl</servlet-class>
   </servlet>
   
+  <servlet>
+    <servlet-name>facebookTreeServlet</servlet-name>
+    <servlet-class>org.simmi.server.FacebookTreeServlet</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>facebookTreeServlet</servlet-name>
+    <url-pattern>/FacebookTree/*</url-pattern>
+  </servlet-mapping>
+  
   <servlet-mapping>
     <servlet-name>greetServlet</servlet-name>
-    <url-pattern>/webconnectron/greet</url-pattern>
+    <url-pattern>/greet</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->
@@ -21,4 +30,12 @@
     <welcome-file>Webconnectron.html</welcome-file>
   </welcome-file-list>
 
+  <security-constraint>
+      <web-resource-collection>
+          <url-pattern>/FacebookTree/*</url-pattern>
+      </web-resource-collection>
+      <user-data-constraint>
+          <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+      </user-data-constraint>
+  </security-constraint>
 </web-app>
