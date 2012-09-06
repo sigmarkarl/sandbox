@@ -4257,7 +4257,7 @@ JNIEXPORT int lg10( simlab wh ) {
 	return current;
 }
 
-JNIEXPORT int lg2( simlab wh ) {
+JNIEXPORT int simlab_log2( simlab wh ) {
 	simlab func;
 	func.type = 32;
 	func.length = 0;
@@ -4265,10 +4265,10 @@ JNIEXPORT int lg2( simlab wh ) {
 	func.buffer = (long)log2;
 	dfunc( func, wh );
 
-	return current;
+	return 1;
 }
 
-JNIEXPORT int ln( simlab wh ) {
+JNIEXPORT int simlab_ln( simlab wh ) {
 	simlab func;
 	func.type = 32;
 	func.length = 0;
@@ -4276,7 +4276,18 @@ JNIEXPORT int ln( simlab wh ) {
 	func.buffer = (long)log;
 	dfunc( func, wh );
 
-	return current;
+	return 1;
+}
+
+JNIEXPORT int simlab_log10( simlab wh ) {
+	simlab func;
+	func.type = 32;
+	func.length = 0;
+
+	func.buffer = (long)log10;
+	dfunc( func, wh );
+
+	return 1;
 }
 
 JNIEXPORT int simlab_cos( simlab wh ) {
@@ -4325,7 +4336,7 @@ JNIEXPORT int simlab_sin( simlab wh ) {
 	return 1;
 }
 
-/*JNIEXPORT int arcsin( simlab wh ) {
+JNIEXPORT int simlab_asin( simlab wh ) {
 	simlab func;
 	func.type = 32;
 	func.length = 0;
@@ -4338,7 +4349,7 @@ JNIEXPORT int simlab_sin( simlab wh ) {
 		ffunc( func, wh );
 	}
 	return current;
-}*/
+}
 
 JNIEXPORT int bessel() {
 	simlab* data = (simlab*)current;
