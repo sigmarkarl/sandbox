@@ -243,7 +243,6 @@ public class Gwtgl implements EntryPoint {
 		var c = c1 = c2 = 0;
  
 		while ( i < utftext.length ) {
- 
 			c = utftext.charCodeAt(i);
  
 			if (c < 128) {
