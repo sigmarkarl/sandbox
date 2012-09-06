@@ -1,9 +1,11 @@
 package org.simmi;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -166,10 +168,10 @@ public class GBK2AminoFasta {
 			
 			while( line != null ) {
 				String trimline = line.trim();
-				String[] split = trimline.split("[\t ]+");
 				
-				if( split[0].equals("CDS") && split.length > 1 ) {
+				if( trimline.startsWith("CDS") || trimline.startsWith("gene") ) {
 					anno = new Anno();
+					String[] split = trimline.split("[\t ]+");
 					if( split[1].startsWith("compl") ) {
 						int iof = split[1].indexOf(")");
 						String substr = split[1].substring(11, iof);
@@ -186,7 +188,7 @@ public class GBK2AminoFasta {
 				} else if( trimline.startsWith("/product") ) {
 					anno.name = trimline.substring(10,trimline.length()-1);
 					annolist.add( anno );
-				} else if( split[0].equals("ORIGIN") ) {
+				} else if( trimline.startsWith("ORIGIN") ) {
 					break;
 				}
 				
@@ -201,47 +203,53 @@ public class GBK2AminoFasta {
 				line = br.readLine();
 			}
 			
+			PrintStream ps = new PrintStream( new File("/home/sigmar/stuff2.txt") ); //System.out;
+			
 			int c = 0;
 			for( Anno ao : annolist ) {
-				System.out.println( "> "+ao.name + " " + ao.comp );
-				String 	val = strbuf.substring(ao.start, ao.stop);
+				ps.println( ">"+ao.name + " " + ao.comp );
+				int start = Math.min( ao.start, ao.stop );
+				int stop = Math.max( ao.start, ao.stop );
+				String 	val = strbuf.substring( start, stop+1 );
 				
 				//System.err.println(val);
 				//String	ami = "";
 				
 				int t = 0;
-				if( ao.comp ) {
-					for( int i = val.length()-3; i >= 0; i-=3 ) {
+				if( ao.start > ao.stop || ao.comp ) {
+					for( int i = val.length()-3; i > 2; i-=3 ) {
 						//ami += 
 						String first = val.substring(i, i+3).toUpperCase();
 						String second = revcom.get(first);
 						String str = amimap.get( second );
 						if( str != null ) {
 							if( str.equals("0") || str.equals("1") ) break;
-							else System.out.print( str );//+ " " + t + " " );
-							if( (++t % 60) == 0 ) System.out.println();
+							else ps.print( str );//+ " " + t + " " );
+							if( (++t % 60) == 0 ) ps.println();
 						}
 					}
 				} else {
-					for( int i = 2; i < val.length()-2; i+=3 ) {
+					for( int i = 0; i < val.length()-2; i+=3 ) {
 						//ami += 
 						String first = val.substring(i, i+3).toUpperCase();
 						String str = amimap.get( first );
 						if( str != null ) {
-							if( str.equals("0") || str.equals("1") ) break;
-							else System.out.print( str );//+ " " + t + " " );
-							if( (++t % 60) == 0 ) System.out.println();
+							if( str.equals("0") || str.equals("1") ) {
+								break;
+							} else ps.print( str );//+ " " + t + " " );
+							if( (++t % 60) == 0 ) ps.println();
 						}
 					}
 				}
-				System.out.println();
+				ps.println();
 				
 				//if( c++ > 10 ) break;
 			}
+			ps.close();
 			
-			//FileWriter fw = new FileWriter("/home/sigmar/stuff2.txt");
-			//fw.write( strbuf.toString() );
-			//fw.close();
+			/*FileWriter fw = new FileWriter("/home/sigmar/stuff2.txt");
+			fw.write( strbuf.toString() );
+			fw.close();*/
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

@@ -9,8 +9,10 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.simmi.client.GreetingService;
 
@@ -20,12 +22,12 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Query;
-import com.google.gdata.client.ClientLoginAccountType;
+import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Text;
 import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.Service.GDataRequest;
 import com.google.gdata.client.Service.GDataRequest.RequestType;
 import com.google.gdata.client.http.GoogleGDataRequest;
-import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -35,8 +37,8 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  */
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
-
-	private final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
+	private final String tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
+	//private final String tableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	public String greetServer(String acc, String country, boolean valid) throws IllegalArgumentException {
 		/*DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("thermus");
@@ -53,11 +55,11 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			
-			try {
+			/*try {
 				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}
+			}*/
 		}
 		
 		if( service != null ) {
@@ -119,21 +121,43 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		return retmap;
 	}
 	
+	@Override
+	public Map<String,String> saveThermusSel(String name, String val) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+		Map<String,String>	retmap = new HashMap<String,String>();
+		if( name != null ) {
+			Entity ent = new Entity("thermusselection");
+			ent.setProperty("name", name);
+			ent.setProperty("sel", new Text(val) );
+			Key key = datastore.put( ent );
+			
+			retmap.put( name, val );
+		} else {
+			Query query = new Query("thermusselection");
+			List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			for( Entity ent : seqsEntities ) {
+				retmap.put( (String)ent.getProperty("name"), ((Text)ent.getProperty("sel")).getValue() );
+			}
+			//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
+		}
+		
+		return retmap;
+	}
+	
 	private GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
-	private final String email = "huldaeggerts@gmail.com";
-	private final String password = "b.r3a1h1ms";
 	
 	@Override
 	public String getThermusFusion() {
 		System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
 		if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
-			try {
+			/*try {
 				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}
+			}*/
 		}
 		
 		if( service != null ) {
@@ -244,5 +268,50 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		      System.out.println();
 		    }
 		  }
+	}
+
+	@Override
+	public String saveSeq(Map<String,String> jsonmap) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+		Set<String>	keyset = jsonmap.keySet();
+		Query query = new Query("sequence");
+		query.addFilter("name", FilterOperator.IN, keyset);
+		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		
+		for( Entity e : seqsEntities ) {
+			String name = (String)e.getProperty("name");
+			String seq = (String)jsonmap.get( name );
+			e.setProperty("seq", new Text(seq) );
+			Key key = datastore.put( e );
+			jsonmap.remove( name );
+		}
+		for( String keyval : keyset ) {
+			Entity ent = new Entity("sequence");
+			ent.setProperty("name", keyval);
+			ent.setProperty("seq", new Text(jsonmap.get(keyval)) );
+			Key key = datastore.put( ent );
+		}
+		return "";
+	}
+
+	@Override
+	public Map<String, String> fetchSeq(String include) {
+		Map<String,String>	retmap = new HashMap<String,String>();
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Set<String>	keyset = new HashSet<String>( Arrays.asList(include.split(",")) );
+		Query query = new Query("sequence");
+		query.addFilter("name", FilterOperator.IN, keyset);
+		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+		
+		for( Entity e : seqsEntities ) {
+			String name = (String)e.getProperty("name");
+			String seq = ((Text)e.getProperty("seq")).getValue();
+			retmap.put( name, seq );
+		}
+		for( String str : keyset ) {
+			if( !retmap.containsKey(str) ) retmap.put(str, null);
+		}
+		return retmap;
 	};
 }
