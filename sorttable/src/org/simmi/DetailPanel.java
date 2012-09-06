@@ -47,7 +47,6 @@ import javax.swing.table.TableModel;
 
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
-import org.simmi.SortTable.CopyAction;
 
 public class DetailPanel extends SimSplitPane {
 	JCompatTable	detailTable;
@@ -211,7 +210,7 @@ public class DetailPanel extends SimSplitPane {
         return sb.toString();
 	}
 	
-	public void copyData( JCompatTable table, ClipboardService clipboardService, Component source ) {
+	public void copyData( JCompatTable table, Object clipboardService, Component source ) {
         TableModel model = table.getModel();
  
         boolean grabFocus = true;
@@ -220,7 +219,7 @@ public class DetailPanel extends SimSplitPane {
             JOptionPane.showMessageDialog(this, "There is no data selected!");
         } else {
             StringSelection selection = new StringSelection(s);
-            clipboardService.setContents( selection );
+            //clipboardService.setContents( selection );
         }
         
         if (grabFocus) {
@@ -230,9 +229,9 @@ public class DetailPanel extends SimSplitPane {
 	 
     class CopyAction extends AbstractAction {
     	JCompatTable 		table;
-    	ClipboardService 	clipboardService;
+    	Object 	clipboardService;
     	
-        public CopyAction( JCompatTable table, ClipboardService clipboardService, String text, ImageIcon icon, String desc, Integer mnemonic) {
+        public CopyAction( JCompatTable table, Object clipboardService, String text, ImageIcon icon, String desc, Integer mnemonic) {
             super(text, icon);
             putValue(SHORT_DESCRIPTION, desc);
             putValue(MNEMONIC_KEY, mnemonic);
@@ -274,7 +273,7 @@ public class DetailPanel extends SimSplitPane {
 		imgPanel.add( button );
 		
 		groupMap = new HashMap<String,String>();
-		if( lang.equals("IS") ) {
+		if( lang.startsWith("IS") ) {
 			groupMap.put("1", "Annað");
 			groupMap.put("2", "Fituleysanleg vítamín");
 			groupMap.put("3", "Vatnsleysanleg vítamín");
@@ -344,14 +343,16 @@ public class DetailPanel extends SimSplitPane {
 			}
 		};
 		
-		try {  
-	    	ClipboardService clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
-	    	Action action = new CopyAction( detailTable, clipboardService, "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
-            detailTable.getActionMap().put( "copy", action );
-	    } catch (Exception e) { 
-	    	e.printStackTrace();
-	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-	    }
+		if( sortTable.applet != null ) {
+			try {
+		    	Object clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
+		    	Action action = new CopyAction( detailTable, clipboardService, "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
+	            detailTable.getActionMap().put( "copy", action );
+		    } catch (Exception e) { 
+		    	e.printStackTrace();
+		    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
+		    }
+		}
 		
 		final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();//new DataFlavor("text/plain;charset=utf-8");
 		final String charset = df.getParameter("charset");		
@@ -429,7 +430,7 @@ public class DetailPanel extends SimSplitPane {
 		}
 		
 		JPopupMenu popup = new JPopupMenu();
-		Action action = new AbstractAction(lang.equals("IS") ? "Sýna alla" : "Show all") {
+		Action action = new AbstractAction(lang.startsWith("IS") ? "Sýna alla" : "Show all") {
 			public void actionPerformed(ActionEvent e) {
 				for( int i : detailTable.getSelectedRows() ) {
 					int k = detailTable.convertRowIndexToModel(i);
@@ -443,7 +444,7 @@ public class DetailPanel extends SimSplitPane {
 		};
 		//if( lang.equals("EN") ) action.
 		popup.add( action );
-		action = new AbstractAction(lang.equals("IS") ? "Fela alla" : "Hide all") {
+		action = new AbstractAction(lang.startsWith("IS") ? "Fela alla" : "Hide all") {
 			public void actionPerformed(ActionEvent e) {
 				for( int i : detailTable.getSelectedRows() ) {
 					int k = detailTable.convertRowIndexToModel(i);
@@ -456,7 +457,7 @@ public class DetailPanel extends SimSplitPane {
 			}
 		};
 		popup.add( action );
-		action = new AbstractAction(lang.equals("IS") ? "Viðsnúa vali" : "Swap selection") {
+		action = new AbstractAction(lang.startsWith("IS") ? "Viðsnúa vali" : "Swap selection") {
 			public void actionPerformed(ActionEvent e) {
 				int[] rows = detailTable.getSelectedRows();
 				detailTable.selectAll();
@@ -487,7 +488,7 @@ public class DetailPanel extends SimSplitPane {
 			}
 	
 			public String getColumnName(int columnIndex) {
-				if( lang.equals("IS") ) {
+				if( lang.startsWith("IS") ) {
 					if( columnIndex == 0 ) return "Næringarefni";
 					else if( columnIndex == 1 ) return "Næringarefnaflokkur";
 					else if( columnIndex == 2 ) return "Eining";
@@ -513,7 +514,7 @@ public class DetailPanel extends SimSplitPane {
 			public Object getValueAt(int rowIndex, int columnIndex) {
 				if( columnIndex == 0 ) return ngroupList.get( rowIndex );
 				else if( columnIndex == 1 ) {
-					if( lang.equals("IS") ) {
+					if( lang.startsWith("IS") ) {
 						String ind = ngroupGroups.get( rowIndex );
 						if( ind.equals("1") ) {
 							String colVal = ngroupList.get( rowIndex );
@@ -725,7 +726,7 @@ public class DetailPanel extends SimSplitPane {
 			}
 		});
 		detailScroll.setViewportView( detailTable );
-		TableColumn col = lang.equals("IS") ? detailTable.getColumn("Sýna dálk") : detailTable.getColumn("Show column");
+		TableColumn col = lang.startsWith("IS") ? detailTable.getColumn("Sýna dálk") : detailTable.getColumn("Show column");
 		if( col != null ) {
 			col.setMaxWidth( 100 );
 		}
@@ -735,7 +736,7 @@ public class DetailPanel extends SimSplitPane {
 		if( xurl != null ) {
 			ImageProducer 	ims = (ImageProducer)xurl.getContent();
 			Image 		img = (ims != null ? this.createImage( ims ).getScaledInstance(16, 16, Image.SCALE_SMOOTH) : null);
-			popup.add( new AbstractAction(lang.equals("IS") ? "Opna val í Excel" : "Open selection in Excel", img != null ? new ImageIcon(img) : null ) {
+			popup.add( new AbstractAction(lang.startsWith("IS") ? "Opna val í Excel" : "Open selection in Excel", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent e) {
 					try {
 						sortTable.openExcel( detailTable, leftTable );
