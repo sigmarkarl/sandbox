@@ -6,11 +6,10 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ContextMenuEvent;
-import com.google.gwt.event.dom.client.ContextMenuHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -29,6 +28,25 @@ public class Webconnectron implements EntryPoint {
 	 */
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
+	Connectron connectron;
+	public void handleText( String stuff ) {
+		connectron.handleText( stuff );
+	}
+	
+	public native void postParent( String from ) /*-{
+		var s = this;
+		$wnd.addEventListener('message',function(event) {
+			$wnd.console.log( event.origin );
+			$wnd.console.log('message received from treedraw');
+			if(event.origin == 'http://'+from+'.appspot.com') {
+				$wnd.console.log('correct treedraw origin');
+				s.@org.simmi.client.Webconnectron::handleText(Ljava/lang/String;)( event.data );
+			}
+		});
+		$wnd.console.log('posting ready');	
+		$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
+	}-*/;
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -52,7 +70,8 @@ public class Webconnectron implements EntryPoint {
 		
 		RootPanel.get("connectron").add( vp );*/
 		
-		final RootPanel 	rp = RootPanel.get();
+		Window.enableScrolling(false);
+		final RootPanel 	rp = RootPanel.get( "main" );
 		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
 			public void onContextMenu(ContextMenuEvent event) {
@@ -66,25 +85,34 @@ public class Webconnectron implements EntryPoint {
 		st.setPadding( 0.0, Unit.PX );
 		st.setBorderWidth( 0.0, Unit.PX );
 		
-		int w = Window.getClientWidth();
+		int w = Window.getClientWidth()-160;
 		int h = Window.getClientHeight();
 		//rp.setPixelSize(w, h);
 		rp.setSize(w+"px", h+"px");
 		
-		VerticalPanel vp = new VerticalPanel();
-		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
-		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
-		vp.setSize("100%", "100%");
+		HorizontalPanel hp = new HorizontalPanel();
+		hp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		hp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		hp.setSize("100%", "100%");
 		
-		final Connectron connectron = new Connectron();
-		vp.add( connectron );
-		connectron.getCanvas().setCoordinateSpaceWidth( w );
-		connectron.getCanvas().setCoordinateSpaceHeight( h );
+		//final Element ads = Document.get().getElementById("ads");
+		//SimplePanel	sp = new SimplePanel();
+		//sp.getElement().appendChild( ads );
+		
+		connectron = new Connectron();
+		hp.add( connectron );
+		//hp.add( sp );
+		
+		int ww = w;
+		int hh = h-20;
+		connectron.getCanvas().setSize(ww+"px", hh+"px");
+		connectron.getCanvas().setCoordinateSpaceWidth( ww );
+		connectron.getCanvas().setCoordinateSpaceHeight( hh );
 		
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
-				int w = event.getWidth();
+				int w = event.getWidth()-160;
 				int h = event.getHeight();
 				
 				if( w != oldw && w != olderw && h != oldh && h != olderh ) {
@@ -110,7 +138,11 @@ public class Webconnectron implements EntryPoint {
 			}
 		});
 		
-		rp.add( vp );
+		rp.add( hp );
+		
+		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
+			postParent( Window.Location.getParameter("callback") );
+		}
 	}
 	int oldw, olderw;
 	int oldh, olderh;
