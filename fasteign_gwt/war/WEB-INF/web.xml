@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+  
+  <!-- Servlets -->
+  <servlet>
+    <servlet-name>greetServlet</servlet-name>
+    <servlet-class>org.simmi.server.GreetingServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>greetServlet</servlet-name>
+    <url-pattern>/fasteign_gwt/greet</url-pattern>
+  </servlet-mapping>
+  
+ 	<servlet>
+        <servlet-name>facebook</servlet-name>
+        <jsp-file>/Fasteign_facebook.jsp</jsp-file>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>facebook</servlet-name>
+        <url-pattern>/facebook2</url-pattern>
+    </servlet-mapping>
+  
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>Fasteign_gwt.html</welcome-file>
+  </welcome-file-list>
+
+</web-app>
