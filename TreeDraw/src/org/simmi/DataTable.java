@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -126,6 +127,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	Map<String,Sequence>	seqcache = new HashMap<String,Sequence>();
+	String[] specs = {"antranikianii","aquaticus","arciformis","brockianus","eggertsoni","filiformis","igniterrae","islandicus","kawarayensis","oshimai","scotoductus","thermophilus","yunnanensis","rehai","composti","unknownchile"};
+	Map<String,String>	specColors = new HashMap<String,String>();
 	
 	public void updateTable( String tabmap ) {
 		try {
@@ -228,60 +231,62 @@ public class DataTable extends JApplet implements ClipboardOwner {
     final Map<String,String>	nameaccmap = new HashMap<String,String>();
     final List<Object[]>		rowList = new ArrayList<Object[]>();
     
+    public static String[] csvSplit( String line ) {
+    	List<String> splitlist = new ArrayList<String>();
+		
+		int first = 0;
+		int last = line.indexOf('"');
+		while( last != -1 ) {
+			if( last > first ) {
+				String sub = line.substring(first, last-1);
+    		//if( sub.length() > 0 ) {
+    			int uno = 0;
+    			int duo = sub.indexOf(',');
+    			while( duo != -1 ) {
+    				splitlist.add( sub.substring(uno, duo) );
+    				uno = duo+1;
+    				duo = sub.indexOf(',', uno);
+    			}
+    			splitlist.add( sub.substring(uno) );
+    		}
+    		first = last+1;
+    		last = line.indexOf('"', first);
+    		
+    		if( last != -1 ) {
+    			String sub = line.substring(first, last);
+    			splitlist.add( sub );
+    		
+    			first = last+2;
+    			last = line.indexOf('"', first);
+    		}
+		}
+		if( first != -1 && first < line.length() ) {
+    		String sub = line.substring(first);
+    		if( sub.length() > 0 ) {
+    			int uno = 0;
+    			int duo = sub.indexOf(',');
+    			while( duo != -1 ) {
+    				splitlist.add( sub.substring(uno, duo) );
+    				uno = duo+1;
+    				duo = sub.indexOf(',', uno);
+    			}
+    			splitlist.add( sub.substring(uno) );
+    		}
+		} else System.err.println("first is not");
+		return splitlist.toArray( new String[0] );
+    }
+    
     public void loadData( String data ) {
     	String[] lines = data.split("\n");
     	List<String> splitlist = new ArrayList<String>();
     	
     	try {
 	    	for( int i = 1; i < lines.length; i++ ) {
-	    		splitlist.clear();
-	    		
-	    		//System.err.println( "uff " + i );
-	    		String line = lines[i];
-	    		int first = 0;
-	    		int last = line.indexOf('"');
-	    		while( last != -1 ) {
-	    			if( last > first ) {
-	    				String sub = line.substring(first, last-1);
-		    		//if( sub.length() > 0 ) {
-		    			int uno = 0;
-		    			int duo = sub.indexOf(',');
-		    			while( duo != -1 ) {
-		    				splitlist.add( sub.substring(uno, duo) );
-		    				uno = duo+1;
-		    				duo = sub.indexOf(',', uno);
-		    			}
-		    			splitlist.add( sub.substring(uno) );
-		    		}
-		    		first = last+1;
-		    		last = line.indexOf('"', first);
-		    		
-		    		if( last != -1 ) {
-		    			String sub = line.substring(first, last);
-		    			splitlist.add( sub );
-		    		
-		    			first = last+2;
-		    			last = line.indexOf('"', first);
-		    		}
-	    		}
-	    		if( first != -1 && first < line.length() ) {
-		    		String sub = line.substring(first);
-		    		if( sub.length() > 0 ) {
-		    			int uno = 0;
-		    			int duo = sub.indexOf(',');
-		    			while( duo != -1 ) {
-		    				splitlist.add( sub.substring(uno, duo) );
-		    				uno = duo+1;
-		    				duo = sub.indexOf(',', uno);
-		    			}
-		    			splitlist.add( sub.substring(uno) );
-		    		}
-	    		} else System.err.println("first is not");
-	    		String[] split = splitlist.toArray( new String[0] ); //lines[i].split(",");
-	    		
+	    		 //lines[i].split(",");
+	    		String[] split = csvSplit( lines[i] );
 	    		if( split.length > 8 ) {
 		    		nameaccmap.put(split[0], split[1]);
-					Object[] strs = new Object[ 22 ];
+					Object[] strs = new Object[ 23 ];
 					
 					int k = 0;
 					for( k = 0; k < split.length; k++ ) {
@@ -310,7 +315,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							} else {
 								strs[k] = null;
 							}
-						} else if( k == 21 ) {
+						} else if( k == 22 ) {
 							strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
 						} else {
 							strs[k] = split[k];
@@ -330,6 +335,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( k == 18 ) strs[k++] = "";
 					if( k == 19 ) strs[k++] = null;
 					if( k == 20 ) strs[k++] = null;
+					if( k == 21 ) strs[k++] = "";
 					strs[k] = true;
 					
 					//Arrays.copyOfRange(split, 1, split.length );
@@ -347,6 +353,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
     
     private static GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private static final String GEOCODE_SERVICE_URL = "http://maps.googleapis.com/maps/api/geocode";
 	private static final String oldtableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	private static final String tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
 	
@@ -378,7 +385,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	public static String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
 		   String lowercaseQuery = query.toLowerCase();
 		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
-
+		  
 		   GDataRequest request;
 		   // If the query is a select, describe, or show query, run a GET request.
 		   if (lowercaseQuery.startsWith("select") ||
@@ -1141,13 +1148,20 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( fname.length() == 0 ) fname += pubmed;
 					else fname += "_"+pubmed;
 				} else if( ns.name.equals("Color") ) {
-					String col = (String)obj[18];
+					String spec = (String)obj[3];
+					for( String ss : specs ) {
+						if( spec.contains( ss ) ) {
+							fname += "[#"+specColors.get(ss)+"]";
+							break;
+						}
+					}
+					/*String col = (String)obj[18];
 					//col = col.replace("_", "");
 					//if( fname.length() == 0 ) fname += col;
 					//else 
 					if( colmap.containsKey(col) ) {
 						fname += "["+colmap.get(col)+"]";	
-					}
+					}*/
 				}
 			}
 		}
@@ -1441,16 +1455,22 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					int start = sql.indexOf('(')+1;
 					int stop = sql.indexOf(')', start);
 					
-					String innersql = sql.substring(start, stop);
+					String innerstr = sql.substring(start, stop).replace(" ", "").replace(",", "','");
+					innerstr = "('"+innerstr+"')";
+					int sw = sql.indexOf("where");
+					String innersql = "select rowid from "+tableid+" "+sql.substring(sw,start-1)+innerstr; //sql.substring(start, stop);
+					//System.err.println("about to run "+innersql);
 					String result = run( innersql, true );
 					String[] split = result.split("\n");
 					
-					int sw = sql.indexOf("where");
+					System.err.println( sql );
+					
 					String subsql = sql.substring(0, sw);
 					for( int i = 1; i < split.length; i++ ) {
 						String rowid = split[i];
-						System.err.println("about to run "+rowid);
-						run( subsql+"where rowid = '"+rowid+"'", true );
+						String runsql = subsql+"where rowid = '"+rowid+"'";
+						System.err.println("about to run "+runsql);
+						run( runsql, true );
 					}
 				} else {
 					run( sql, true );
@@ -1480,11 +1500,163 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		});
 	}
+	
+	public void getSpecLoc( String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse ) {
+		for( Object[] row : rowList ) {
+			String country = reverse ? (String)row[21] : (String)row[6];
+			if( country != null && country.length() > 0 ) {
+				String species = (String)row[3];
+				String geocode = reverse ? (String)row[6] : (String)row[21];
+				geoLoc.put( country, geocode );
+				
+				String thespec = null;
+				for( String spec : specs ) {
+					if( species.contains(spec) ) {
+						thespec = "T."+spec;
+						break;
+					}
+				}
+				
+				if( thespec != null ) {
+					int len = (Integer)row[4];
+					int id = (Integer)row[5];
+					long idlen = (((long)len)<<16)+id;
+					
+					Map<String,Long> cmap;
+					if( specLoc.containsKey( thespec ) ) {
+						cmap = specLoc.get( thespec );
+					} else {
+						cmap = new TreeMap<String,Long>();
+						specLoc.put( thespec, cmap );
+					}
+					
+					if( cmap.containsKey(country) ) {
+						long oldidlencount = cmap.get(country);
+						
+						int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
+						int oldcount = (int)(oldidlencount>>32);
+						
+						int oldid = (int)(oldidlen&0xFFFF);
+						int oldlen = (int)(oldidlen>>16);
+						
+						if( id > oldid || (id == oldid && len > oldlen) ) {
+							cmap.put( country, idlen+((long)(oldcount+1)<<32) );
+						} else {
+							cmap.put( country, oldidlen+((long)(oldcount+1)<<32) );
+						}
+					} else {
+						cmap.put( country, idlen+(1L<<32) );
+					}
+					
+					Map<String,Long> smap;
+					if( locSpec.containsKey( country ) ) {
+						smap = locSpec.get( country );
+					} else {
+						smap = new TreeMap<String,Long>();
+						locSpec.put( country, smap );
+					}
+					if( smap.containsKey(thespec) ) {
+						long oldidlencount = smap.get( thespec );
+						
+						int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
+						int oldcount = (int)(oldidlencount>>32);
+						
+						int oldid = (int)(oldidlen&0xFFFF);
+						int oldlen = (int)(oldidlen>>16);
+						
+						/*long oldidlen = smap.get(country);
+						int oldid = (int)(oldidlen&0xFFFF);
+						int oldlen = (int)(oldidlen>>32);*/
+						
+						if( id > oldid || (id == oldid && len > oldlen) ) {
+							smap.put( thespec, idlen+((long)(oldcount+1)<<32) );
+						} else {
+							smap.put( thespec, oldidlen+((long)(oldcount+1)<<32) );
+						}
+					} else {
+						smap.put( thespec, idlen+(1L<<32)  );
+					}
+				}
+			}
+		}
+	}
+	
+	public void insertGeocodes() throws IOException, AuthenticationException {
+		service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+		service.setUserCredentials("sigmarkarl@gmail.com", "mul", ClientLoginAccountType.GOOGLE);
+		
+		FileReader fr = new FileReader( "/home/sigmar/Downloads/Thermus_16S_aligned.csv" );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		line = br.readLine();
+		
+		Map<String,Set<String>>		accsetMap = new HashMap<String,Set<String>>();
+		Map<String,String>			accountryMap = new HashMap<String,String>();
+		Map<String,String>			accspecMap = new HashMap<String,String>();
+		//int count = 0;
+		while( line != null ) {
+			String[] split = csvSplit( line ); //line.split(",");
+			String acc = split[1];
+			String spec = split[3];
+			String country = split[6];
+			Set<String>	accset;
+			if( accsetMap.containsKey( country ) ) {
+				accset = accsetMap.get( country );
+			} else {
+				accset = new HashSet<String>();
+				accsetMap.put( country, accset );
+			}
+			accset.add( acc );
+			
+			accountryMap.put( acc, country );
+			accspecMap.put( acc, spec );
+			
+			line = br.readLine();
+		}
+		br.close();
+		
+		Set<String> finished = new HashSet<String>();
+		for( Object[] row : rowList ) {
+			String acc = (String)row[1];
+			if( !finished.contains( acc ) ) {
+				System.err.println("try "+acc);
+				
+				String coord = fetchCoord( acc );
+				String country = accountryMap.get( acc );
+				Set<String> accset = accsetMap.get( country );
+				finished.addAll( accset );
+				String accsetStr = accset.toString();
+				String accsetStr2 = accsetStr.substring(1, accsetStr.length()-1);
+				//String sql = "update table set geocode = '"+coord+"' where acc in ("+accsetStr2+")";
+				String sql = "update table set geocode = '"+coord+"' where acc in ("+accsetStr2+")";
+				runSql( sql );
+				
+				System.err.println("done");
+			}
+		}
+	}
     
 	Map<String,String>	colmap = new HashMap<String,String>();
 	JavaFasta	currentjavafasta;
 	public void init() {
 		updateLof();
+		
+		specColors.put("antranikianii", "000088");
+		specColors.put("aquaticus", "FFFF00");
+		specColors.put("arciformis", "888800");
+		specColors.put("brockianus", "00FF00");
+		specColors.put("igniterrae", "008800");
+		specColors.put("eggertsoni", "88FF88");
+		specColors.put("filiformis", "00FFFF");
+		specColors.put("islandicus", "FF8800");
+		specColors.put("kawarayensis", "88FF00");
+		specColors.put("oshimai", "FF00FF");
+		specColors.put("scotoductus", "0000FF");
+		specColors.put("thermophilus", "FF0000");
+		specColors.put("yunnanensis", "8888FF");
+		specColors.put("rehai", "8888FF");
+		specColors.put("composti", "888844");
+		specColors.put("unknownchile", "008888");
 		
 		colmap.put("small_red", "#FF0000");
 		colmap.put("small_green", "#00FF00");
@@ -1500,7 +1672,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		colmap.put("small_black", "#000000");
 		
 		table = new JTable();
-		table.setAutoCreateRowSorter( true );	
+		table.setAutoCreateRowSorter( true );
 		//table.setColumnSelectionAllowed( true );
 		JScrollPane	scrollpane = new JScrollPane( table );
 		tablemap = new HashMap<String,Object[]>();
@@ -1545,7 +1717,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 			@Override
 			public int getColumnCount() {
-				return 22;
+				return 23;
 			}
 
 			@Override
@@ -1571,7 +1743,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else if( columnIndex == 18 ) return "color";
 				else if( columnIndex == 19 ) return "temp";
 				else if( columnIndex == 20 ) return "pH";
-				else if( columnIndex == 21 ) return "valid";
+				else if( columnIndex == 21 ) return "geocode";
+				else if( columnIndex == 22 ) return "valid";
 				//else if( columnIndex == 13 ) return "color";
 				
 				return "";
@@ -1581,7 +1754,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex == 4 || columnIndex == 5 ) return Integer.class;
 				else if( columnIndex == 19 || columnIndex == 20 ) return Double.class;
-				else if( columnIndex == 21 ) return Boolean.class;
+				else if( columnIndex == 22 ) return Boolean.class;
 				return String.class;
 			}
 
@@ -1820,6 +1993,85 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		};
 		updateFilter(table, filter);
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("Export KML") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
+				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
+				Map<String,String>				geoLoc = new HashMap<String,String>();
+				getSpecLoc( specs, specLoc, locSpec, geoLoc, true );
+				
+				try {
+					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
+					fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+					fw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+					fw.write("<Document>");
+					
+					for( String coord : locSpec.keySet() ) {
+						String country = geoLoc.get( coord );
+						
+						Map<String,Long>	specMap = locSpec.get( coord );
+						String specsstr = null;
+						
+						String unos = null;
+						String colors = null;
+						String size = "40x40";
+						for( String spec : specMap.keySet() ) {
+							long idlencount = specMap.get(spec);
+							
+							int idlen = (int)(idlencount&0xFFFFFFFF);
+							int count = (int)(idlencount>>32);
+							
+							int id = (int)(idlen&0xFFFF);
+							int len = (int)(idlen>>16);
+							
+							if( specsstr == null ) specsstr = spec + " ("+id+","+len+","+count+")";
+							else specsstr += "," + spec + " ("+id+","+len+","+count+")";
+							
+							if( len > 900 && id > 97 ) size = "50x50";
+							
+							if( unos == null ) {
+								if( len > 900 && id > 97 ) unos = "2";
+								else unos = "1";
+								colors = specColors.get( spec.substring(2) );
+							} else {
+								if( len > 900 && id > 97 ) unos += ",2";
+								else unos += ",1";
+								colors += ","+specColors.get( spec.substring(2) );
+							}
+						}
+						
+						fw.write("<Placemark>\n");
+						fw.write("<name>"+specsstr+"</name>\n");
+						fw.write("<description>"+country+"</description>\n");
+						fw.write("<Style>");
+						fw.write("<IconStyle>");
+						fw.write("<scale>1.0</scale>");
+						fw.write("<Icon>");
+						fw.write("<href>http://chart.apis.google.com/chart?cht=p&amp;chd=t:"+unos+"&amp;chs="+size+"&amp;chf=bg,s,ffffff00&amp;chco="+colors+"</href>");
+						fw.write("</Icon>");
+						fw.write("</IconStyle>");
+						fw.write("</Style>");
+						fw.write("<Point>\n");
+						fw.write("<coordinates>"+coord+"</coordinates>\n");
+						fw.write("</Point>\n");
+						fw.write("</Placemark>\n");
+					}
+					
+					fw.write("</Document>\n");
+					fw.write("</kml>\n");
+					fw.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				/*try {
+					insertGeocodes();
+				} catch (IOException | AuthenticationException e1) {
+					e1.printStackTrace();
+				}*/
+			}
+		});
 		popup.add( new AbstractAction("Export biogeography report") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1827,80 +2079,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
-				for( Object[] row : rowList ) {
-					String country = (String)row[6];
-					if( country != null && country.length() > 0 ) {
-						String species = (String)row[3];
-						String thespec = null;
-						for( String spec : specs ) {
-							if( species.contains(spec) ) {
-								thespec = "T."+spec;
-								break;
-							}
-						}
-						
-						if( thespec != null ) {
-							int len = (Integer)row[4];
-							int id = (Integer)row[5];
-							long idlen = (((long)len)<<16)+id;
-							
-							Map<String,Long> cmap;
-							if( specLoc.containsKey( thespec ) ) {
-								cmap = specLoc.get( thespec );
-							} else {
-								cmap = new TreeMap<String,Long>();
-								specLoc.put( thespec, cmap );
-							}
-							
-							if( cmap.containsKey(country) ) {
-								long oldidlencount = cmap.get(country);
-								
-								int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
-								int oldcount = (int)(oldidlencount>>32);
-								
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>16);
-								
-								if( id > oldid || (id == oldid && len > oldlen) ) {
-									cmap.put( country, idlen+((long)(oldcount+1)<<32) );
-								} else {
-									cmap.put( country, oldidlen+((long)(oldcount+1)<<32) );
-								}
-							} else {
-								cmap.put( country, idlen+(1L<<32) );
-							}
-							
-							Map<String,Long> smap;
-							if( locSpec.containsKey( country ) ) {
-								smap = locSpec.get( country );
-							} else {
-								smap = new TreeMap<String,Long>();
-								locSpec.put( country, smap );
-							}
-							if( smap.containsKey(thespec) ) {
-								long oldidlencount = smap.get( thespec );
-								
-								int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
-								int oldcount = (int)(oldidlencount>>32);
-								
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>16);
-								
-								/*long oldidlen = smap.get(country);
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>32);*/
-								
-								if( id > oldid || (id == oldid && len > oldlen) ) {
-									smap.put( thespec, idlen+((long)(oldcount+1)<<32) );
-								} else {
-									smap.put( thespec, oldidlen+((long)(oldcount+1)<<32) );
-								}
-							} else {
-								smap.put( thespec, idlen+(1L<<32)  );
-							}
-						}
-					}
-				}
+				Map<String,String>				geoLoc = new HashMap<String,String>();
+				getSpecLoc( specs, specLoc, locSpec, geoLoc, false );
 				
 				Workbook wb = new XSSFWorkbook();
 				Sheet lSheet = wb.createSheet("Locations");
@@ -2816,7 +2996,204 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		int len;
 	};
 	
+	public static StringBuilder exportGeocode( String acc, String country, Map<String,StringBuilder> countryMap ) throws IOException {
+		StringBuilder json = null;
+		if( countryMap.containsKey( country ) ) {
+			json = countryMap.get( country );
+		}
+		
+		if( json == null ) {			
+			json = new StringBuilder();
+			
+			String qcountry = country.replace(": ", " ").replace(":", " ").replace(" ", "+").replace(",+", "+").replace("Antarctica+East+Antarctica+Vostok+Glacier", "Antarctica+Vostok");
+			System.err.println( qcountry );
+			URL url = new URL( GEOCODE_SERVICE_URL + "/json?address="+qcountry+"&sensor=false" );
+			
+			InputStream is = url.openStream();
+			BufferedReader bb = new BufferedReader( new InputStreamReader( is ) );
+			String subline = bb.readLine();
+			while( subline != null ) {
+				json.append( subline + "\n" );
+				subline = bb.readLine();
+			}
+			bb.close();
+			
+			countryMap.put( country, json );
+		}
+		
+		return json;
+	}
+	
+	public static boolean checkValid( String acc ) throws IOException {
+		FileReader fr = new FileReader( "/home/sigmar/geocode/"+acc );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.contains("OVER_QUERY_LIMIT") || line.contains("ZERO_RESULTS") ) return false;
+			line = br.readLine();
+		}
+		br.close();
+		
+		return true;
+	}
+	
+	public static String fetchCoord( String acc ) throws IOException {
+		String ret = null;
+		
+		FileReader fr = new FileReader( "/home/sigmar/geocode/"+acc );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			String trim = line.trim();
+			if( trim.contains("\"location\" : {" ) ) {
+				line = br.readLine();
+				trim = line.trim();
+				String[] ss = trim.split("[\t ]+");
+				String lat = ss[ ss.length-1 ];
+				line = br.readLine();
+				trim = line.trim();
+				ss = trim.split("[\t ]+");
+				String lng = ss[ ss.length-1 ];
+				
+				ret = lng + "," + lat.substring(0,lat.length()-1);
+				//ret = lat + lng;
+				
+				break;
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		return ret;
+	}
+	
+	public static Map<String,StringBuilder> loadCountryMap( Map<String,String> acm ) throws IOException {
+		Map<String,StringBuilder>	ret = new HashMap<String,StringBuilder>();
+		File f = new File( "/home/sigmar/geocode/" );
+		File[] ff = f.listFiles();
+		for( File tf : ff ) {
+			String acc = tf.getName();
+			if( acm.containsKey( acc ) ) {
+				String country = acm.get( acc );
+				
+				if( country != null && country.length() > 2 && !ret.containsKey( country ) ) {
+					StringBuilder json = new StringBuilder();
+					BufferedReader bb = new BufferedReader( new FileReader( tf ) );
+					String subline = bb.readLine();
+					while( subline != null ) {
+						json.append( subline + "\n" );
+						subline = bb.readLine();
+					}
+					bb.close();
+					
+					if( json.indexOf("ZERO_RESULTS") == -1 && json.indexOf("OVER_QUERY_LIMIT") == -1 ) ret.put( country, json );
+					else ret.put( country, null );
+				}
+			}
+		}
+		return ret;
+	}
+	
 	public static void main(String[] args) {
+		try {
+			FileReader fr = new FileReader( "/home/sigmar/Downloads/Thermus_16S_aligned.csv" );
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			line = br.readLine();
+			
+			FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
+			fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+			fw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+			fw.write("<Document>");
+			Map<String,Set<String>>		accsetMap = new HashMap<String,Set<String>>();
+			Map<String,String>			accountryMap = new HashMap<String,String>();
+			Map<String,String>			accspecMap = new HashMap<String,String>();
+			//int count = 0;
+			while( line != null ) {
+				String[] split = csvSplit( line ); //line.split(",");
+				String acc = split[1];
+				String spec = split[3];
+				String country = split[6];
+				Set<String>	accset;
+				if( accsetMap.containsKey( country ) ) {
+					accset = accsetMap.get( country );
+				} else {
+					accset = new HashSet<String>();
+					accsetMap.put( country, accset );
+				}
+				accset.add( acc );
+				
+				accountryMap.put( acc, country );
+				accspecMap.put( acc, spec );
+				
+				line = br.readLine();
+			}
+			br.close();
+				
+			Map<String,StringBuilder>	countryMap = loadCountryMap( accountryMap );
+			for( String acc : accountryMap.keySet() ) {
+				String country = accountryMap.get( acc );
+				if( country.length() > 2 ) {
+					if( countryMap.get( country ) == null ) {
+					//if( !checkValid( acc ) ) {
+						//int i = country.indexOf(':');
+						//if( i > 0 ) country = country.substring(0,i).trim()+" Gotthard";
+						StringBuilder json = exportGeocode( acc, country, countryMap );
+						if( json.indexOf("ZERO_RESULTS") == -1 && json.indexOf("OVER_QUERY_LIMIT") == -1 ) {
+							System.err.println( "succ: "+acc );
+							System.err.println( "succ: "+country );
+							//System.err.println( "succ: "+json );
+							for( String accs : accsetMap.get(country) ) {
+								//System.err.println( "succsub: "+accs );
+								FileWriter fwo = new FileWriter( "/home/sigmar/geocode/"+accs );
+								fwo.write( json.toString() );
+								fwo.close();
+							}
+						} else {
+							System.err.println( "fail: "+country );
+							System.err.println( "fail: "+json );
+							
+							break;
+						}
+						
+						//break;
+						/*try {
+							Thread.sleep(900);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}*/
+					}
+					//exportGeocode( split[1], split[6], countryMap );
+					String coord = fetchCoord( acc );
+					String spec = accspecMap.get( acc );
+					if( coord != null && coord.length() > 0 ) {
+						fw.write("<Placemark>\n");
+						fw.write("<name>"+spec+"</name>\n");
+						fw.write("<description>"+country+" "+acc+"</description>\n");
+						fw.write("<Point>\n");
+						fw.write("<coordinates>"+coord+"</coordinates>\n");
+						fw.write("</Point>\n");
+						fw.write("</Placemark>\n");
+					}
+				}
+				
+				//System.err.println( split[1] + "  " + split[6] );
+				
+				//count++;
+				
+				//if( count == 50 ) break;
+				//break;
+			}
+			fw.write("</Document>\n");
+			fw.write("</kml>\n");
+			fw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		/*File f = new File("/home/sigmar/sim.newick");
 		try {
 			char[] cbuf = new char[(int)f.length()];
@@ -2834,7 +3211,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
 		
 		try {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
@@ -2848,13 +3225,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				String s = split[i];
 				int val = s.indexOf(',');
 				if( val != -1 ) {
-					oldids.put( s.substring(0, val), s.substring(val+1, s.length()) );	
+					oldids.put( s.substring(0, val), s.substring(val+1, s.length()) );
 				} else {
 					oldids.put( s, null );
 				}
 			}
 			/*System.err.println( oldids.size() );
-			System.err.println( oldids.keySet() );*/
+			System.err.println( oldids.keySet() );*
 			
 			ret = run("select acc, rowid from "+tableid+" where len(country) < 2", true);
 			split = ret.split("\n");
@@ -2882,14 +3259,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			/*String ret = run("select rowid from "+tableid+" where name = 'Unl042jm'", true);
 			System.err.println( ret );
 			String[] lines = ret.split("\n");
-			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*/
+			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);
 		} catch (AuthenticationException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ServiceException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	public static void main_old(String[] args) {
