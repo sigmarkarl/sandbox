@@ -85,11 +85,12 @@ public class Treedraw implements EntryPoint {
 	Node				selectedNode;
 	Node[]				nodearray;
 	private TreeUtil	treeutil;
-	boolean			center = false;
+	boolean				center = false;
 	int					equalHeight = 0;
-	boolean			showscale = true;
-	boolean			showbubble = false;
-	boolean			showlinage = false;
+	boolean				showscale = true;
+	boolean				showbubble = false;
+	boolean				showlinage = false;
+	boolean				circular = false;
 	
 	private void setTreeUtil( TreeUtil tu, String val ) {
 		if( this.treeutil != null ) console( "batjong2 " + val );
@@ -142,18 +143,24 @@ public class Treedraw implements EntryPoint {
 		int hsize = (int)(hchunk*leaves);
 		if( treelabel != null ) hsize += 2*hchunk;
 		if( showscale ) hsize += 2*hchunk;
-		canvas.setSize((ww-10)+"px", (hsize+2)+"px");
-		canvas.setCoordinateSpaceWidth( ww-10 );
-		canvas.setCoordinateSpaceHeight( hsize+2 );
+		if( circular ) {
+			canvas.setSize((ww-10)+"px", (ww-10)+"px");
+			canvas.setCoordinateSpaceWidth( ww-10 );
+			canvas.setCoordinateSpaceHeight( ww-10 );
+		} else {
+			canvas.setSize((ww-10)+"px", (hsize+2)+"px");
+			canvas.setCoordinateSpaceWidth( ww-10 );
+			canvas.setCoordinateSpaceHeight( hsize+2 );
+		}
 		
 		boolean vertical = true;
 		//boolean equalHeight = false;
 		
-		Treedraw.this.h = hchunk*leaves;
+		Treedraw.this.h = hchunk*leaves; //circular ? ww-10 : hchunk*leaves;
 		Treedraw.this.w = ww - 10;
 		
 		if( vertical ) {
-			dh = Treedraw.this.h/leaves;
+			dh = hchunk;
 			dw = Treedraw.this.w/levels;
 		} else {
 			dh = Treedraw.this.h/levels;
@@ -1641,10 +1648,19 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
+		CheckBox circularCheck = new CheckBox("Circular");
+		circularCheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				circular = event.getValue();
+				drawTree( treeutil );
+			}
+		});
 		cluster.setValue( true );
 		bc.add( bctext );
 		bc.add( branch );
 		bc.add( cluster );
+		bc.add( circularCheck );
 		
 		HorizontalPanel	eqhp = new HorizontalPanel();
 		RadioButton	uselen = new RadioButton("eq", "Use lengths. ");
@@ -2263,17 +2279,38 @@ public class Treedraw implements EntryPoint {
 			g2.beginPath();
 			if( vertical ) {
 				double yfloor = Math.floor(y+ny);
-				g2.moveTo( startx, y+starty );
-				g2.lineTo( startx, yfloor );
-				g2.moveTo( startx, yfloor );
-				g2.lineTo( nx, yfloor );
+				if( circular ) {
+					double a1 = (2.0*Math.PI*(y+starty))/h;
+					double a2 = (2.0*Math.PI*(yfloor))/h;
+					
+					if( a1 > a2 ) {
+						g2.moveTo( (w+startx*Math.cos(a2))/2.0, (w+startx*Math.sin(a2))/2.0 );
+						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx/2.0, a2, a1 );
+					} else {
+						g2.moveTo( (w+startx*Math.cos(a1))/2.0, (w+startx*Math.sin(a1))/2.0 );
+						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx/2.0, a1, a2 );
+					}
+					//g2.closePath();
+					//g2.stroke();
+					//g2.beginPath();
+					g2.moveTo( (w+startx*Math.cos( a2 ))/2.0, (w+startx*Math.sin( a2 ))/2.0 );
+					g2.lineTo( (w+nx*Math.cos( a2 ))/2.0, (w+nx*Math.sin( a2 ))/2.0 );
+					//g2.closePath();
+				} else {
+					g2.moveTo( startx, y+starty );
+					g2.lineTo( startx, yfloor );
+					//g2.moveTo( startx, yfloor );
+					g2.lineTo( nx, yfloor );
+				}
 			} else {
 				g2.moveTo( x+startx, starty );
 				g2.lineTo( x+nx, starty );
 				g2.lineTo( x+nx, ny );
 			}
-			g2.closePath();
 			g2.stroke();
+			g2.closePath();
 			
 			if( showbubble ) {
 				String ncolor = resnode.getColor();
@@ -2386,7 +2423,15 @@ public class Treedraw implements EntryPoint {
 								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
 								
 								String substr = str.substring(start, min);
-								g2.fillText(substr, nx+4+10+(t)*fontSize+pos, y+ny+mstrh/2.0 );
+								double lx = nx+4+10+(t)*fontSize+pos;
+								double ly = y+ny;
+								if( circular ) {
+									double a = (2.0*Math.PI*ly)/h;
+									g2.fillText(substr, (w+lx*Math.cos( a ))/2.0, (w+lx*Math.sin( a ))/2.0 );
+								} else {
+									ly += mstrh/2.0;
+									g2.fillText(substr, lx, ly );
+								}
 								pos += g2.measureText( substr ).getWidth();
 								
 								int next = min+tag.length();
@@ -2402,7 +2447,16 @@ public class Treedraw implements EntryPoint {
 								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
 								
 								String substr = str.substring(start, str.length());
-								g2.fillText(substr, nx+4+10+(t)*fontSize+pos, y+ny+mstrh/2.0 );
+								
+								double lx = nx+4+10+(t)*fontSize+pos;
+								double ly = y+ny;
+								if( circular ) {
+									double a = (2.0*Math.PI*ly)/h;
+									g2.fillText(substr, (w+lx*Math.cos( a ))/2.0, (w+lx*Math.sin( a ))/2.0 );
+								} else {
+									ly += mstrh/2.0;
+									g2.fillText(substr, lx, ly );
+								}
 								start = str.length();
 							}
 						
