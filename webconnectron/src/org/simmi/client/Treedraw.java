@@ -2107,7 +2107,14 @@ public class Treedraw implements EntryPoint {
 		}
 		
 		double ret = (node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : dh/2.0;
-		if( vertical ) node.setCanvasLoc( startx, y+ret );
+		if( vertical ) {
+			if( circular ) {
+				double a = 2.0*Math.PI*(y+ret)/h;
+				node.setCanvasLoc( (w+startx*circularScale*Math.cos(a))/2.0, (w+startx*circularScale*Math.sin(a))/2.0 );
+			}
+			else node.setCanvasLoc( startx, y+ret );
+			//node.setCanvasLoc( startx, y+ret );
+		}
 		else node.setCanvasLoc( x+ret, starty );
 		total = 0;
 		for( TreeUtil.Node resnode : node.getNodes() ) {
@@ -2145,25 +2152,40 @@ public class Treedraw implements EntryPoint {
 			if( resnode.isSelected() ) {
 				g2.setStrokeStyle( "#000000" );
 				g2.setLineWidth( 2.0 );
-			}
-			else {
+			} else {
 				g2.setStrokeStyle( "#333333" );
 				g2.setLineWidth( 1.0 );
 			}
 			g2.beginPath();
 			if( vertical ) {
 				double yfloor = Math.floor(y+newy);
-				g2.moveTo( startx, y+ret );
-				g2.lineTo( startx, yfloor );
-				g2.moveTo( startx, yfloor );
-				g2.lineTo( nx, yfloor );
+				
+				if( circular ) {
+					double a1 = (2.0*Math.PI*(y+ret))/h;
+					double a2 = (2.0*Math.PI*(yfloor))/h;
+					
+					if( a1 > a2 ) {
+						g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a2, a1 );
+					} else {
+						g2.moveTo( (w+startx*circularScale*Math.cos(a1))/2.0, (w+startx*circularScale*Math.sin(a1))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2 );
+					}
+					g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
+					g2.lineTo( (w+nx*circularScale*Math.cos(a2))/2.0, (w+nx*circularScale*Math.sin(a2))/2.0 );
+				} else {
+					g2.moveTo( startx, y+ret );
+					g2.lineTo( startx, yfloor );
+					g2.moveTo( startx, yfloor );
+					g2.lineTo( nx, yfloor );
+				}
 			} else {
 				g2.moveTo( x+startx, starty );
 				g2.lineTo( x+nx, starty );
 				g2.lineTo( x+nx, ny );
 			}
-			g2.closePath();
 			g2.stroke();
+			g2.closePath();
 			
 			if( showbubble ) {
 				String ncolor = resnode.getColor();
@@ -2173,11 +2195,18 @@ public class Treedraw implements EntryPoint {
 					g2.setFillStyle( "#000000" );
 				}
 				
+				double radius = 1.5;
+				if( resnode.getNodes() == null || resnode.getNodes().size() == 0 ) radius = 3.0;
 				g2.beginPath();
-				
 				if( vertical ) {
 					double yfloor = Math.floor(y+newy);
-					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
+					
+					if( circular ) {
+						double a = 2.0*Math.PI*yfloor/h;
+						g2.arc( (w+nx*circularScale*Math.cos(a))/2.0, (w+nx*circularScale*Math.sin(a))/2.0, radius, 0.0, 2*Math.PI);
+					} else {
+						g2.arc(nx, yfloor, radius, 0.0, 2*Math.PI);
+					}
 				} else {
 					
 				}
@@ -2196,8 +2225,12 @@ public class Treedraw implements EntryPoint {
 	
 	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon ) {
 		int total = 0;
-		if( vertical ) node.setCanvasLoc( startx, y+starty );
-		else node.setCanvasLoc( x+startx, starty );
+		if( vertical ) {
+			if( circular ) {
+				double a = 2.0*Math.PI*(y+starty)/h;
+				node.setCanvasLoc( (w+startx*circularScale*Math.cos(a))/2.0, (w+startx*circularScale*Math.sin(a))/2.0 );
+			} else node.setCanvasLoc( startx, y+starty );
+		} else node.setCanvasLoc( x+startx, starty );
 		
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			//String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(strh)+"px sans-serif";
@@ -2284,19 +2317,19 @@ public class Treedraw implements EntryPoint {
 					double a2 = (2.0*Math.PI*(yfloor))/h;
 					
 					if( a1 > a2 ) {
-						g2.moveTo( (w+startx*Math.cos(a2))/2.0, (w+startx*Math.sin(a2))/2.0 );
+						g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
 						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
-						g2.arc( w/2.0, w/2.0, startx/2.0, a2, a1 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a2, a1 );
 					} else {
-						g2.moveTo( (w+startx*Math.cos(a1))/2.0, (w+startx*Math.sin(a1))/2.0 );
+						g2.moveTo( (w+startx*circularScale*Math.cos(a1))/2.0, (w+startx*circularScale*Math.sin(a1))/2.0 );
 						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
-						g2.arc( w/2.0, w/2.0, startx/2.0, a1, a2 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2 );
 					}
 					//g2.closePath();
 					//g2.stroke();
 					//g2.beginPath();
-					g2.moveTo( (w+startx*Math.cos( a2 ))/2.0, (w+startx*Math.sin( a2 ))/2.0 );
-					g2.lineTo( (w+nx*Math.cos( a2 ))/2.0, (w+nx*Math.sin( a2 ))/2.0 );
+					g2.moveTo( (w+startx*circularScale*Math.cos( a2 ))/2.0, (w+startx*circularScale*Math.sin( a2 ))/2.0 );
+					g2.lineTo( (w+nx*circularScale*Math.cos( a2 ))/2.0, (w+nx*circularScale*Math.sin( a2 ))/2.0 );
 					//g2.closePath();
 				} else {
 					g2.moveTo( startx, y+starty );
@@ -2321,9 +2354,16 @@ public class Treedraw implements EntryPoint {
 				}
 				
 				g2.beginPath();
+				double radius = 1.5;
+				if( resnode.getNodes() == null || resnode.getNodes().size() == 0 ) radius = 3.0;
 				if( vertical ) {
 					double yfloor = Math.floor(y+ny);
-					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
+					if( circular ) {
+						double a = 2.0*Math.PI*yfloor/h;
+						g2.arc( (w+nx*circularScale*Math.cos(a))/2.0, (w+nx*circularScale*Math.sin(a))/2.0, radius, 0.0, 2*Math.PI);
+					} else {
+						g2.arc(nx, yfloor, radius, 0.0, 2*Math.PI);
+					}
 				} else {
 					
 				}
@@ -2340,6 +2380,7 @@ public class Treedraw implements EntryPoint {
 		return /*(node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : */0.0;
 	}
 	
+	double circularScale = 0.9;
 	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny, double addon, int mleaves, double realny ) {
 		//int k = 12;//w/32;
 		int fontSize = 10;
@@ -2427,7 +2468,26 @@ public class Treedraw implements EntryPoint {
 								double ly = y+ny;
 								if( circular ) {
 									double a = (2.0*Math.PI*ly)/h;
-									g2.fillText(substr, (w+lx*Math.cos( a ))/2.0, (w+lx*Math.sin( a ))/2.0 );
+									double cx = (w+lx*circularScale*Math.cos( a ))/2.0;
+									double cy = (w+lx*circularScale*Math.sin( a ))/2.0;
+									
+									if( a > Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+										TextMetrics tm = g2.measureText( substr );
+										double strw = tm.getWidth();
+										//u += 0.5*total;
+										g2.translate( cx, cy );
+										g2.rotate( a+Math.PI );
+										g2.fillText( substr, 0.0-strw, 0.0 );
+										g2.rotate( -a-Math.PI );
+										g2.translate( -cx, -cy );
+									} else {
+										g2.translate( cx, cy );
+										g2.rotate( a );
+										g2.fillText( substr, 0.0, 0.0 );
+										g2.rotate( -a );
+										g2.translate( -cx, -cy );
+									}
+									//g2.fillText(substr, (w+lx*0.8*Math.cos( a ))/2.0, (w+lx*0.8*Math.sin( a ))/2.0 );
 								} else {
 									ly += mstrh/2.0;
 									g2.fillText(substr, lx, ly );
@@ -2452,7 +2512,28 @@ public class Treedraw implements EntryPoint {
 								double ly = y+ny;
 								if( circular ) {
 									double a = (2.0*Math.PI*ly)/h;
-									g2.fillText(substr, (w+lx*Math.cos( a ))/2.0, (w+lx*Math.sin( a ))/2.0 );
+									double cx = (w+lx*circularScale*Math.cos( a ))/2.0;
+									double cy = (w+lx*circularScale*Math.sin( a ))/2.0;
+									
+									if( a > Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+										TextMetrics tm = g2.measureText( substr );
+										double strw = tm.getWidth();
+										//u += 0.5*total;
+										g2.translate( cx, cy );
+										g2.rotate( a+Math.PI );
+										g2.fillText( substr, 0.0-strw, 0.0 );
+										g2.rotate( -a-Math.PI );
+										g2.translate( -cx, -cy );
+									} else {
+										g2.translate( cx, cy );
+										g2.rotate( a );
+										g2.fillText( substr, 0.0, 0.0 );
+										g2.rotate( -a );
+										g2.translate( -cx, -cy );
+									}
+									
+									//double a = (2.0*Math.PI*ly)/h;
+									//g2.fillText(substr, (w+lx*0.8*Math.cos( a ))/2.0, (w+lx*0.8*Math.sin( a ))/2.0 );
 								} else {
 									ly += mstrh/2.0;
 									g2.fillText(substr, lx, ly );
