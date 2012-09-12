@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -52,6 +54,7 @@ import java.util.TreeMap;
 
 import javax.jnlp.ClipboardService;
 import javax.jnlp.FileContents;
+import javax.jnlp.FileOpenService;
 import javax.jnlp.FileSaveService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
@@ -596,7 +599,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	public void loadAligned( JavaFasta jf, boolean aligned, Object[] extra ) {
-		List<NameSel> namesel = nameSelection( extra );
+		nameSelection( extra );
 		
 		Set<String>	include = new HashSet<String>();
 		int[] rr = table.getSelectedRows();
@@ -610,9 +613,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					
 					Object[] obj = tablemap.get( seq.id );
 					if( obj != null ) {
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( names, metas, obj );
 						String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
-						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "");
 						seq.setName( cont );
 					}
 					
@@ -620,7 +623,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				} else include.add( cacheval );
 			}
 		}
-		if( include.size() > 0 ) loadAligned( jf, aligned, include, namesel );
+		if( include.size() > 0 ) loadAligned( jf, aligned, include, names, metas );
 		else if( runnable != null ) {
 			runnable.run();
 			runnable = null;
@@ -644,7 +647,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		JComponent comp = new JComponent() {};
 		comp.setLayout( new BorderLayout() );
 		JSpinner spin = new JSpinner( new SpinnerNumberModel(5, 1, 10, 1) );
-		JTable	table = nameSelectionComponent();
+		JTable	table = nameSelectionComponent( names );
 		
 		comp.add( table );
 		comp.add( spin, BorderLayout.NORTH );
@@ -655,23 +658,25 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	List<NameSel>		names = new ArrayList<NameSel>();
-	int[] currentRowSelection;
-	public List<NameSel> nameSelection( Object[] extra ) {
-		JTable table = nameSelectionComponent();
-		if( extra == null ) extra = new Object[] {table};
+	List<NameSel>		metas = new ArrayList<NameSel>();
+	int[] 				currentRowSelection;
+	public void nameSelection( Object[] extra ) {
+		JTable table = nameSelectionComponent( names );
+		JTable mtable = nameSelectionComponent( metas );
+		if( extra == null ) extra = new Object[] {table, mtable};
 		else {
 			Object[] oldextra = extra;
-			extra = new Object[ extra.length+1 ];
+			extra = new Object[ extra.length+2 ];
 			extra[0] = table;
+			extra[1] = mtable;
 			for( int i = 0; i < oldextra.length; i++ ) {
-				extra[i+1] = oldextra[ i ];
+				extra[i+2] = oldextra[ i ];
 			}
 		}
 		JOptionPane.showMessageDialog( DataTable.this, extra, "Select names", JOptionPane.PLAIN_MESSAGE );
-		return names;
 	}
 	
-	public JTable nameSelectionComponent() {
+	public JTable nameSelectionComponent( final List<NameSel> names ) {
 		final JTable table = new JTable();
 		table.setDragEnabled( true );
 		String[] nlist = {"Species", "Pubmed", "Country", "Source", "Accession", "Color"};
@@ -742,7 +747,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								newlist.add( names.get(i) );
 							}
 							names.clear();
-							names = newlist;
+							if( names == DataTable.this.names ) DataTable.this.names = newlist;
+							else DataTable.this.metas = newlist;
 							
 							Point p = support.getDropLocation().getDropPoint();
 							int k = table.rowAtPoint( p );
@@ -822,7 +828,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return table;
 	}
 	
-	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> iset, List<NameSel> namesel ) {
+	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> iset, List<NameSel> namesel, List<NameSel> metasel ) {
 		/*JCheckBox species = new JCheckBox("Species");
 		JCheckBox country = new JCheckBox("Country");
 		JCheckBox source =s new JCheckBox("Source");
@@ -839,6 +845,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else include.append( ","+is );
 			}
 			this.ns = namesel;
+			this.ms = metasel;
 			String includes = include.toString();
 			win.call( "fetchSeq", new Object[] { includes } );
 		} catch( Exception e ) {
@@ -851,7 +858,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( String is : iset ) {
 					jsono.put(is, (Object)"");
 				}
-				loadSequences( jsono.toString(), aligned, namesel );
+				loadSequences( jsono.toString(), aligned, namesel, metasel );
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -859,9 +866,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	List<NameSel> ns;
+	List<NameSel> ms;
 	public void loadSequences( String jsonstr ) throws JSONException {
-		loadSequences( jsonstr, true, ns );
+		loadSequences( jsonstr, true, ns, ms );
 		ns = null;
+		ms = null;
 	}
 	
 	public void console( String message ) {
@@ -874,7 +883,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 	}
 	
-	public void loadSequences( String jsonstr, boolean aligned, List<NameSel> namesel ) throws JSONException {
+	public void loadSequences( String jsonstr, boolean aligned, List<NameSel> namesel, List<NameSel> metasel ) throws JSONException {
 		//List<NameSel> namesel = nameSelection( extra );
 		
 		List<Sequence> contset = new ArrayList<Sequence>();
@@ -891,10 +900,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				include.add( n );
 			} else {
 				Object[] obj = tablemap.get(n);
-				String fname = getFastaName( namesel, obj );
+				String fname = getFastaName( namesel, metasel, obj );
 				
 				String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
-				cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+				cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "");
 				
 				contset.add( new Sequence( n, cont, new StringBuilder(o.toString()), currentjavafasta.mseq ) );
 			}
@@ -961,7 +970,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					
 					if( inc != null ) {
 						Object[] obj = tablemap.get(inc);
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( namesel, metasel, obj );
 						/*String fname = "";
 						for( NameSel ns : namesel ) {
 							if( ns.isSelected() ) {
@@ -1009,7 +1018,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( fname.length() > 1 ) {
 							cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
 						} else cont = line.substring(1);
-						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "");
 						//if( rr.length == 1 ) cont = line.replace( ">", "" );
 						//else cont = line.replace( ">", seqs.getName()+"_" );
 						seq = new Sequence( inc, cont, currentjavafasta.mseq );
@@ -1100,7 +1109,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 	}
 	
-	public String getFastaName( List<NameSel> namesel, Object[] obj ) {
+	public String getFastaName( List<NameSel> namesel, List<NameSel> metasel, Object[] obj ) {
+		String name = getConstructedName( namesel, obj );
+		String meta = getConstructedName( metasel, obj );
+		return meta == null || meta.length() == 0 ? name : name + ";" + meta;
+	}
+	
+	public String getConstructedName( List<NameSel> namesel, Object[] obj ) {
 		String fname = "";
 		for( NameSel ns : namesel ) {
 			if( ns.isSelected() ) {
@@ -1176,7 +1191,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Object[] params = new Object[] {species, accession, country, source};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
 		
-		List<NameSel>	namesel = nameSelection( null );
+		nameSelection( null );
 		
 		int start = 0;
 		int stop = -1;
@@ -1275,11 +1290,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							if( fname.length() == 0 ) fname += acc;
 							else fname += "_"+acc;
 						}*/
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( names, metas, obj );
 						
 						if( fname.length() > 1 ) {
 							String startf = (Integer)obj[3] >= 900 ? ">" : ">*";
-							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "")+"\n");
+							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -1316,7 +1331,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Object[] params = new Object[] {species, accession, country, source};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
 		
-		List<NameSel>	namesel = nameSelection( null );
+		nameSelection( null );
 		
 		int start = 0;
 		int stop = -1;
@@ -1415,11 +1430,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							if( fname.length() == 0 ) fname += acc;
 							else fname += "_"+acc;
 						}*/
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( names, metas, obj );
 						
 						if( fname.length() > 1 ) {
 							String startf = (Integer)obj[4] >= 900 ? ">" : ">*";
-							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "")+"\n");
+							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -2904,7 +2919,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					int rv = table.convertRowIndexToModel( r );
 					Object[] obj = rowList.get( rv );
 					
-					String name = getFastaName(names, obj);
+					String name = getFastaName(names, metas, obj);
 					if( nameNum.containsKey( name ) ) {
 						int nnum = nameNum.get( name );
 						if( num > nnum ) nameNum.put( name, nnum+1 );
@@ -2922,6 +2937,67 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( int r = 0; r < table.getRowCount(); r++ ) {
 					boolean b = (Boolean)table.getValueAt(r, 11);
 					if( b ) table.setRowSelectionInterval(r, r);
+				}
+			}
+		});
+		popup.add( new AbstractAction("Import selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileOpenService fos = null;
+				try {
+		    		fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
+		    	} catch( UnavailableServiceException e1 ) {
+		    		fos = null;
+		    	}
+		    	
+		        Set<String>		selection = new HashSet<String>();
+		        try {
+			        InputStream is = null;
+				    if( fos != null ) {
+				    	FileContents fc = fos.openFileDialog( null, null );
+				    	if( fc != null ) is = fc.getInputStream();
+				    }
+				    
+				    if( is == null ) {
+				    	JFileChooser fc = new JFileChooser();
+				    	if( fc.showOpenDialog( DataTable.this ) == JFileChooser.APPROVE_OPTION ) {
+				    		is = new FileInputStream( fc.getSelectedFile() );
+				    	}
+				    }
+					
+					Reader rd = new InputStreamReader( is );
+					BufferedReader 	br = new BufferedReader( rd );
+					String line = br.readLine();
+					while( line != null ) {
+						String[] split = line.substring(1, line.length()-1).split(",");
+						
+						String sel = null;
+						int len = 0;
+						for( String s : split ) {
+							String strim = s.trim();
+							if( tablemap.containsKey(strim) ) {
+								Object[] obj = tablemap.get(strim);
+								int tlen = (Integer)obj[4];
+								if( tlen > len ) {
+									sel = s;
+									len = tlen;
+								}
+							}
+						}
+						if( sel != null ) selection.add( sel );
+						line = br.readLine();
+					}
+					br.close();
+		        } catch( Exception e1 ) {
+		        	e1.printStackTrace();
+		        }
+				
+				table.removeRowSelectionInterval(0, table.getRowCount()-1);
+				for( int r = 0; r < table.getRowCount(); r++ ) {
+					boolean b = selection.contains( table.getValueAt(r, 1) );
+					if( b ) {
+						table.addRowSelectionInterval(r, r);
+					}
 				}
 			}
 		});
