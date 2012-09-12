@@ -107,7 +107,8 @@ public class TreeUtil {
 		} else {
 			nodes = new ArrayList<Node>();
 			for( String name : corrInd ) {
-				nodes.add( new Node( name ) );
+				Node n = new Node( name );
+				nodes.add( n );
 			}
 		}
 		
@@ -380,8 +381,9 @@ public class TreeUtil {
 		
 		public Node( String name ) {
 			this();
-			this.name = name;
-			this.id = name;
+			this.setName( name );
+			/*this.name = name;
+			this.id = name;*/
 		}
 		
 		public void setCanvasLoc( double x, double y ) {
@@ -457,12 +459,20 @@ public class TreeUtil {
 			
 			if( meta != null && meta.length() > 0 ) {
 				//System.err.println("muuu " + meta);
-				if( name != null && name.length() > 0 ) str += "'"+name+";"+meta+"'";
-				else str += "'"+meta+"'";
-			} else if( name != null && name.length() > 0 ) str += name;
+				if( name != null && name.length() > 0 ) {
+					str += name;
+					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					str += ";"+meta; //"'"+name+";"+meta+"'";
+				} else {
+					if( color != null && color.length() > 0 ) str += "["+color+"];";
+					str += meta; //"'"+meta+"'";
+				}
+			} else if( name != null && name.length() > 0 ) {
+				str += name;
+				if( color != null && color.length() > 0 ) str += "["+color+"]";
+			}
 			
 			//if( h > 0.0 )
-			if( color != null && color.length() > 0 ) str += "["+color+"]";
 			
 			str += ":"+h;
 			// change: if( color != null && color.length() > 0 ) str += ":"+color;
@@ -500,7 +510,23 @@ public class TreeUtil {
 		}
 		
 		public void setName( String newname ) {
-			this.name = newname;
+			if( newname != null ) {
+				int fi = newname.indexOf(';');
+				if( fi == -1 ) {
+					int ci = newname.indexOf("[#");
+					if( ci == -1 ) {
+						this.name = newname;
+					} else {
+						this.name = newname.substring(0,ci);
+						int ce = newname.indexOf("]",ci+1);
+						this.setColor( newname.substring(ci+1,ce) );
+					}
+					this.id = this.name;
+				} else {
+					this.setName( newname.substring(0,fi) );
+					this.meta = newname.substring(fi+1);
+				}
+			}
 		}
 		
 		public String getName() {
@@ -517,6 +543,10 @@ public class TreeUtil {
 		
 		public String getColor() {
 			return color;
+		}
+		
+		public void setColor( String color ) {
+			this.color = color;
 		}
 		
 		public int countLeaves() {
@@ -1250,6 +1280,18 @@ public class TreeUtil {
 		}
 	}
 	
+	public void swapNamesMeta( Node node ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				swapNamesMeta( n );
+			}
+		}
+		String meta = node.getMeta();
+		node.setMeta( node.getName() );
+		node.setName( meta );
+	}
+	
 	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");
@@ -1389,15 +1431,22 @@ public class TreeUtil {
 						name = split[0];
 					}
 					
-					int coli = name.indexOf("[#");
+					/*int coli = name.indexOf("[#");
 					if( coli != -1 ) {
 						int ecoli = name.indexOf("]", coli+2);
 						node.color = name.substring(coli+1,ecoli);
 						name = name.substring(0, coli);
 					}
 					
-					node.name = name;
-					node.id = node.name;
+					int idx = name.indexOf(';');
+					if( idx == -1 ) {
+						node.name = name;
+					} else {
+						node.name = name.substring(0,idx);
+						node.meta = name.substring(idx+1);
+					}
+					node.id = node.name;*/
+					node.setName( name );
 					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
@@ -1440,8 +1489,9 @@ public class TreeUtil {
 						if( dstr2.length() > 0 ) {
 							node.h2 = Double.parseDouble( dstr2 );
 							if( node.name == null || node.name.length() == 0 ) {
-								node.name = dstr2; 
-								node.id = node.name;
+								node.setName( dstr2 );
+								/*node.name = dstr2; 
+								node.id = node.name;*/
 							}
 						}
 					} catch( Exception e ) {
@@ -1454,8 +1504,16 @@ public class TreeUtil {
 					if( node.h2 < minh2 ) minh2 = node.h2;
 					if( node.h2 > maxh2 ) maxh2 = node.h2;
 				} else {
-					node.name = code.replaceAll("'", "");
-					node.id = node.name;
+					node.setName( code );
+					/*int idx = code.indexOf(';');
+					if( idx == -1 ) {
+						node.name = code;
+					} else {
+						node.name = code.substring(0,idx);
+						node.meta = code.substring(idx+1);
+					}
+					//node.name = code; //code.replaceAll("'", "");
+					node.id = node.name;*/
 				}
 				loc = end;
 				
@@ -1521,10 +1579,10 @@ public class TreeUtil {
 				int i = code.lastIndexOf("'");
 				if( i > 0 ) {
 					split = code.substring(i, code.length()).split(":");
-					ret.name = code.substring(0, i+1);
+					ret.setName( code.substring(0, i+1) );
 				} else {
 					split = code.split(":");
-					ret.name = split.length > 0 ? split[0] : "";
+					ret.setName( split.length > 0 ? split[0] : "" );
 				}
 				
 				//String[] split = code.split(":");
@@ -1552,7 +1610,7 @@ public class TreeUtil {
 					if( dstr2.length() > 0 ) {
 						ret.h2 = Double.parseDouble( dstr2 );
 						if( ret.name == null || ret.name.length() == 0 ) {
-							ret.name = dstr2;
+							ret.setName( dstr2 );
 						}
 					}
 				} catch( Exception e ) {}
@@ -1561,7 +1619,7 @@ public class TreeUtil {
 				if( ret.h2 < minh2 ) minh2 = ret.h2;
 				if( ret.h2 > maxh2 ) maxh2 = ret.h2;
 			} else {
-				ret.name = code.replaceAll("'", "");
+				ret.setName( code.replaceAll("'", "") );
 			}
 			loc = end;
 		}
