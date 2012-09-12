@@ -123,6 +123,11 @@ public class Treedraw implements EntryPoint {
 		return ret;
 	}
 	
+	double clientscale = 1.0;
+	public int getClientWidth() {
+		return (int)(clientscale*Window.getClientWidth());
+	}
+	
 	double hchunk = 10.0;
 	public void drawTree( TreeUtil treeutil ) {
 		double minh = treeutil.getminh();
@@ -131,7 +136,7 @@ public class Treedraw implements EntryPoint {
 		double minh2 = treeutil.getminh2();
 		double maxh2 = treeutil.getmaxh2();
 		
-		int ww = Window.getClientWidth();
+		int ww = getClientWidth();
 		
 		int leaves = root.getLeavesCount();
 		int levels = root.countMaxHeight();
@@ -192,7 +197,7 @@ public class Treedraw implements EntryPoint {
 		if( node != null ) {
 			double gh = getHeight(node);
 			String name = node.getName();
-			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 			double textwidth = ctx.measureText(name).getWidth();
 			
 			double mns = 0.0;
@@ -204,9 +209,9 @@ public class Treedraw implements EntryPoint {
 			
 			double maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth-mns);
 			if( equalHeight > 0 ) dw = maxheight/levels;
-					
+			
 			if( vertical ) {
-				drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
+				//drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
 				ci = 0;
 				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
 				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
@@ -266,7 +271,7 @@ public class Treedraw implements EntryPoint {
 		console( ""+leaves.size() );
 		for( Node node : leaves ) {
 			String name = node.getName();
-			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 			TextMetrics tm = ctx.measureText( name );
 			double tw = tm.getWidth();
 			//double h = node.getHeight();
@@ -290,7 +295,7 @@ public class Treedraw implements EntryPoint {
 		if( includetext ) {
 			for( Node node : leaves ) {
 				String name = node.getName();
-				if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+				//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 				TextMetrics tm = ctx.measureText( name );
 				double tw = tm.getWidth();
 				double h = node.getHeight();
@@ -1097,10 +1102,20 @@ public class Treedraw implements EntryPoint {
 	
 	public void keyCheck( char c, int keycode ) {
 		if( c == 'a' || c == 'A' ) {
-			String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
+			String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii", "T.unkownchile"};
 			Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
 			treeutil.collapseTreeAdvanced(root, cset);
 			root.countLeaves();
+		} else if( c == '*' ) {
+			clientscale *= 1.25;
+		} else if( c == '/' ) {
+			clientscale *= 0.8;
+		} else if( c == '+' ) {
+			hchunk *= 1.25;
+		} else if( c == '-' ) {
+			hchunk *= 0.8;
+		} else if( c == 'w' || c == 'W' ) {
+			treeutil.swapNamesMeta( treeutil.getNode() );
 		} else if( c == 'm' || c == 'M' ) {
 			recursiveMarkings( root );
 			//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
@@ -1151,7 +1166,7 @@ public class Treedraw implements EntryPoint {
 				root.countLeaves();
 			} else if( c == 'e' || c == 'E' || c == '\r' ) {				
 				final TextBox	text = new TextBox();
-				text.setText( selectedNode.getName() );
+				text.setText( selectedNode.getColor() == null ? selectedNode.getName() : selectedNode.getName() + "[" + selectedNode.getColor() + "]" );
 				
 				final PopupPanel	pp = new PopupPanel();
 				pp.add( text );
@@ -1216,13 +1231,14 @@ public class Treedraw implements EntryPoint {
 					@Override
 					public void onClose(CloseEvent<PopupPanel> event) {
 						if( b[0] ) {
-							selectedNode.setName( text.getText() );
+							String name = text.getText();
+							selectedNode.setName( name );	
 							if( treeutil != null ) drawTree( treeutil );
 						}
 					}
 				});
 				
-				text.setText( selectedNode.getName() );
+				text.setText( selectedNode.getColor() == null ? selectedNode.getName() : selectedNode.getName() + "[" + selectedNode.getColor() + "]" );
 				text.selectAll();
 				//text.setFocus( true );
 				/*selectedNode.getParent().removeNode( selectedNode );
@@ -2111,11 +2127,9 @@ public class Treedraw implements EntryPoint {
 			if( circular ) {
 				double a = 2.0*Math.PI*(y+ret)/h;
 				node.setCanvasLoc( (w+startx*circularScale*Math.cos(a))/2.0, (w+startx*circularScale*Math.sin(a))/2.0 );
-			}
-			else node.setCanvasLoc( startx, y+ret );
+			} else node.setCanvasLoc( startx, y+ret );
 			//node.setCanvasLoc( startx, y+ret );
-		}
-		else node.setCanvasLoc( x+ret, starty );
+		} else node.setCanvasLoc( x+ret, starty );
 		total = 0;
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			int nleaves = resnode.getLeavesCount();
@@ -2158,19 +2172,20 @@ public class Treedraw implements EntryPoint {
 			}
 			g2.beginPath();
 			if( vertical ) {
-				double yfloor = Math.floor(y+newy);
+				double yfloor = y+newy; //Math.floor(y+newy);
 				
 				if( circular ) {
 					double a1 = (2.0*Math.PI*(y+ret))/h;
 					double a2 = (2.0*Math.PI*(yfloor))/h;
 					
-					if( a1 > a2 ) {
+					g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2, a1 > a2 );
+					/*if( a1 > a2 ) {
 						g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
 						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a2, a1 );
 					} else {
 						g2.moveTo( (w+startx*circularScale*Math.cos(a1))/2.0, (w+startx*circularScale*Math.sin(a1))/2.0 );
 						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2 );
-					}
+					}*/
 					g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
 					g2.lineTo( (w+nx*circularScale*Math.cos(a2))/2.0, (w+nx*circularScale*Math.sin(a2))/2.0 );
 				} else {
@@ -2199,7 +2214,7 @@ public class Treedraw implements EntryPoint {
 				if( resnode.getNodes() == null || resnode.getNodes().size() == 0 ) radius = 3.0;
 				g2.beginPath();
 				if( vertical ) {
-					double yfloor = Math.floor(y+newy);
+					double yfloor = y+newy; //Math.floor(y+newy);
 					
 					if( circular ) {
 						double a = 2.0*Math.PI*yfloor/h;
@@ -2216,7 +2231,7 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, Math.floor(newy), addon, mleaves, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, newy /*Math.floor(newy)*/, addon, mleaves, ny );
 			total += mleaves;
 		}
 		
@@ -2311,12 +2326,13 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( vStroke );
 			g2.beginPath();
 			if( vertical ) {
-				double yfloor = Math.floor(y+ny);
+				double yfloor = y+ny; //Math.floor(y+ny);
 				if( circular ) {
 					double a1 = (2.0*Math.PI*(y+starty))/h;
 					double a2 = (2.0*Math.PI*(yfloor))/h;
 					
-					if( a1 > a2 ) {
+					g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2, a1 > a2 );
+					/*if( a1 > a2 ) {
 						g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
 						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
 						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a2, a1 );
@@ -2324,7 +2340,7 @@ public class Treedraw implements EntryPoint {
 						g2.moveTo( (w+startx*circularScale*Math.cos(a1))/2.0, (w+startx*circularScale*Math.sin(a1))/2.0 );
 						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
 						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2 );
-					}
+					}*/
 					//g2.closePath();
 					//g2.stroke();
 					//g2.beginPath();
@@ -2357,7 +2373,7 @@ public class Treedraw implements EntryPoint {
 				double radius = 1.5;
 				if( resnode.getNodes() == null || resnode.getNodes().size() == 0 ) radius = 3.0;
 				if( vertical ) {
-					double yfloor = Math.floor(y+ny);
+					double yfloor = y+ny; //Math.floor(y+ny);
 					if( circular ) {
 						double a = 2.0*Math.PI*yfloor/h;
 						g2.arc( (w+nx*circularScale*Math.cos(a))/2.0, (w+nx*circularScale*Math.sin(a))/2.0, radius, 0.0, 2*Math.PI);
@@ -2397,14 +2413,14 @@ public class Treedraw implements EntryPoint {
 				//g2.setFont( bFont );
 				
 				String name = resnode.getName();
-				if( resnode.getMeta() != null ) {
+				/*if( resnode.getMeta() != null ) {
 					String meta = resnode.getMeta();
 					name += " ("+meta+")";
 					
 					/*if( meta.contains("T.ign") ) {
 						System.err.println();
-					}*/
-				}
+					}*
+				}*/
 				
 				String[] split;
 				if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
@@ -2464,7 +2480,7 @@ public class Treedraw implements EntryPoint {
 								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
 								
 								String substr = str.substring(start, min);
-								double lx = nx+4+10+(t)*fontSize+pos;
+								double lx = nx+4.0+10.0+(t)*fontSize+pos;
 								double ly = y+ny;
 								if( circular ) {
 									double a = (2.0*Math.PI*ly)/h;
@@ -2477,7 +2493,7 @@ public class Treedraw implements EntryPoint {
 										//u += 0.5*total;
 										g2.translate( cx, cy );
 										g2.rotate( a+Math.PI );
-										g2.fillText( substr, 0.0-strw, 0.0 );
+										g2.fillText( substr, -strw, 0.0 );
 										g2.rotate( -a-Math.PI );
 										g2.translate( -cx, -cy );
 									} else {
@@ -2487,6 +2503,13 @@ public class Treedraw implements EntryPoint {
 										g2.rotate( -a );
 										g2.translate( -cx, -cy );
 									}
+									
+									/*g2.beginPath();
+									g2.moveTo(w/2.0, w/2.0);
+									g2.lineTo(cx, cy);
+									g2.stroke();
+									g2.closePath();*/
+									
 									//g2.fillText(substr, (w+lx*0.8*Math.cos( a ))/2.0, (w+lx*0.8*Math.sin( a ))/2.0 );
 								} else {
 									ly += mstrh/2.0;
@@ -2582,8 +2605,18 @@ public class Treedraw implements EntryPoint {
 				//double strh = Math.max( 10.0, hchunk );//10;
 				
 				if( !showlinage ) {
+					if( color != null ) g2.setFillStyle( color );
 					if( vertical ) {
-						g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
+						if( circular ) {
+							double a = 2.0*Math.PI*(y+ny)/h;
+							double cx = (w+nx*circularScale*Math.cos(a))/2.0;
+							double cy = (w+nx*circularScale*Math.sin(a))/2.0;
+							g2.translate( cx, cy );
+							g2.rotate( a );
+							g2.fillRect( -(5*strw)/8, -(5*strh)/8, (5*strw)/4, strh*1.2 );
+							g2.rotate( -a );
+							g2.translate( -cx, -cy );
+						} else g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
 					} else g2.fillRect( x+nx-(5*strw)/8, ny-strh/2.0, (5*strw)/4, strh*1.2 );
 					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
 					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
@@ -2593,27 +2626,135 @@ public class Treedraw implements EntryPoint {
 				//int i = 0;
 				if( vertical ) {
 					if( showlinage ) {
-						g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
-						double hdiff = (dh*(mleaves-1)/2.0);
-						g2.beginPath();
-						g2.moveTo(w-addon+5, y+realny-hdiff);
-						//g2.lineTo(w-addon, ny);
-						g2.lineTo(w-addon+5, y+realny+hdiff);
-						g2.closePath();
-						g2.stroke();
-					} else {
-						if( b ) {
-							//for( String s : split ) {
-								//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-								//i++;
-							//}
-							g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+						if( circular ) {
+							g2.setLineWidth( strh*1.5 );
+							g2.setStrokeStyle( color );
+							//g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
+							double hdiff = (dh*(mleaves-1)/2.0);
+							g2.beginPath();
+							
+							double a1 = 2.0*Math.PI*(y+realny-hdiff)/h;
+							double a2 = 2.0*Math.PI*(y+realny+hdiff)/h;
+							double rad = w-addon+5;
+							
+							//g2.fillText(use, cx, cy );
+							//double cy = 
+							
+							//g2.moveTo( (w+cx*circularScale*Math.cos(a1))/2.0, (w+cx*circularScale*Math.cos(a1))/2.0 );
+							g2.arc( w/2.0, w/2.0, rad/2.0, a1, a2, a1 > a2 );
+							//g2.lineTo(w-addon, ny);
+							//g2.lineTo(w-addon+5, y+realny+hdiff);
+							g2.stroke();
+							g2.closePath();
+							g2.setLineWidth( 1.0 );
+							
+							g2.setStrokeStyle( "#000000" );
+							g2.setFillStyle("#000000");
+							String[] mysplit = use.split("_");
+							String fstr = mysplit[0];
+							String[] newsplit = new String[ mysplit.length-1 ];
+							for( int i = 1; i < mysplit.length; i++ ) {
+								newsplit[i-1] = mysplit[i];
+							}
+							mysplit = newsplit;
+							double a = 2.0*Math.PI*(y+realny)/h;//(a1+a2)/2.0;
+							
+							double fstrw = g2.measureText( fstr ).getWidth();
+							double start = 0.0;
+							if( a >= 0.0 && a < Math.PI ) {
+								for( int i = 0; i < fstr.length(); i++ ) {
+									char c = fstr.charAt(i);
+									double am = 2.0*Math.PI*(y+realny)/h+2.0*(fstrw/2.0-start)/rad;//(a1+a2)/2.0;
+									double cx = (w+(rad)*Math.cos(am))/2.0;
+									double cy = (w+(rad)*Math.sin(am))/2.0;
+									g2.translate( cx, cy );
+									g2.rotate( am-Math.PI/2.0 );
+									g2.fillText( c+"", 0.0, strh/3.0 );
+									g2.rotate( -am+Math.PI/2.0 );
+									g2.translate( -cx, -cy );
+									
+									start = g2.measureText( fstr.substring(0,i+1) ).getWidth();
+								}
+							} else {
+								for( int i = 0; i < fstr.length(); i++ ) {
+									char c = fstr.charAt(i);
+									double am = 2.0*Math.PI*(y+realny)/h-2.0*(fstrw/2.0-start)/rad;//(a1+a2)/2.0;
+									double cx = (w+(rad)*Math.cos(am))/2.0;
+									double cy = (w+(rad)*Math.sin(am))/2.0;
+									g2.translate( cx, cy );
+									g2.rotate( am+Math.PI/2.0 );
+									g2.fillText( c+"", 0.0, strh/3.0 );
+									g2.rotate( -am-Math.PI/2.0 );
+									g2.translate( -cx, -cy );
+									
+									start = g2.measureText( fstr.substring(0,i+1) ).getWidth();
+								}
+							}
+							
+							if( a > Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+								int k = 0;
+								for( String split : mysplit ) {
+									double substrw = g2.measureText( split ).getWidth();
+									double am = 2.0*Math.PI*(y+realny-0.8*(mysplit.length-1)+k*1.6)/h;//(a1+a2)/2.0;
+									double cx = (w+(rad+10+hchunk)*Math.cos(am))/2.0;
+									double cy = (w+(rad+10+hchunk)*Math.sin(am))/2.0;
+									g2.translate( cx, cy );
+									g2.rotate( am+Math.PI );
+									g2.fillText( split, -substrw, 0.0 );
+									g2.rotate( -am-Math.PI );
+									g2.translate( -cx, -cy );
+									
+									k++;
+								}
+							} else {
+								int k = 0;
+								for( String split : mysplit ) {
+									double am = 2.0*Math.PI*(y+realny-0.8*(mysplit.length-1)+k*1.6)/h;//(a1+a2)/2.0;
+									double cx = (w+(rad+10+hchunk)*Math.cos(am))/2.0;
+									double cy = (w+(rad+10+hchunk)*Math.sin(am))/2.0;
+									g2.translate( cx, cy );
+									g2.rotate( am );
+									g2.fillText( split, 0.0, 0.0 );
+									g2.rotate( -am );
+									g2.translate( -cx, -cy );
+									
+									k++;
+								}
+							}
 						} else {
-							//for( String s : split ) {
-								//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-								//i++;
-							//}
-							g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+							g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
+							double hdiff = (dh*(mleaves-1)/2.0);
+							g2.beginPath();
+							g2.moveTo(w-addon+5, y+realny-hdiff);
+							//g2.lineTo(w-addon, ny);
+							g2.lineTo(w-addon+5, y+realny+hdiff);
+							g2.stroke();
+							g2.closePath();
+						}
+					} else {
+						if( circular ) {
+							double a = 2.0*Math.PI*(y+ny)/h;
+							double cx = (w+nx*circularScale*Math.cos(a))/2.0;
+							double cy = (w+nx*circularScale*Math.sin(a))/2.0;
+							g2.translate( cx, cy );
+							g2.rotate( a );
+							g2.fillText(use, -strw/2.0, strh/2.3 );
+							g2.rotate( -a );
+							g2.translate( -cx, -cy );
+						} else {
+							if( b ) {
+								//for( String s : split ) {
+									//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+									//i++;
+								//}
+								g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+							} else {
+								//for( String s : split ) {
+									//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+									//i++;
+								//}
+								g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+							}
 						}
 					}
 				} else {
