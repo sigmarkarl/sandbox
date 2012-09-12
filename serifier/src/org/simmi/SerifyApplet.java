@@ -821,23 +821,19 @@ public class SerifyApplet extends JApplet {
 	private static void joinSets( Set<String> all, List<Set<String>> total ) {		
 		Set<String> cont = null;
 		Set<Set<String>>	rem = new HashSet<Set<String>>();
-		int i = 0;
 		for( Set<String>	check : total ) {			
 			for( String aval : all ) {
 				if( check.contains(aval) ) {
 					if( cont == null ) {
 						cont = check;
 						check.addAll( all );
-						break;
 					} else {
 						cont.addAll( check );
 						rem.add( check );
-						break;
 					}
+					break;
 				}
 			}
-			
-			i++;
 		}
 		
 		for( Set<String> erm : rem ) {
@@ -858,10 +854,13 @@ public class SerifyApplet extends JApplet {
 		
 		rem.clear();
 		if( cont == null ) {
+			if( total.contains( all ) ) {
+				System.err.println("fuckfuckfuck");
+			}
 			total.add( all );
 		}
 		
-		Set<String>	erm = new HashSet<String>();
+		/*Set<String>	erm = new HashSet<String>();
 		for( Set<String> ss : total ) {
 			for( String s : ss ) {
 				if( erm.contains( s ) ) {
@@ -869,10 +868,10 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 			erm.addAll( ss );
-		}
+		}*/
 	}
 	
-	public static void joinBlastSets( InputStream is, String write, boolean union, List<Set<String>> total ) throws IOException {
+	public static void joinBlastSetsThermus( InputStream is, String write, boolean union, List<Set<String>> total ) throws IOException {
 		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
 		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
 			
@@ -897,7 +896,7 @@ public class SerifyApplet extends JApplet {
 					line = br.readLine();
 				}
 				
-				if( fw != null ) fw.write( all.toString()+"\n" );
+				//if( fw != null ) fw.write( all.toString()+"\n" );
 				
 				if( union ) joinSets( all, total );
 				//else intersectSets( all, total );
@@ -910,7 +909,52 @@ public class SerifyApplet extends JApplet {
 			}
 			line = br.readLine();
 		}
-		if( fw != null ) fw.close();
+		if( fw != null ) {
+			for( Set<String> all : total ) {
+				fw.write( all.toString()+"\n" );
+			}
+			fw.close();
+		}
+	}
+	
+	public static void joinBlastSets( InputStream is, String write, boolean union, List<Set<String>> total ) throws IOException {
+		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
+		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
+			
+		String line = br.readLine();
+		int cnt = 0;
+		while( line != null ) {
+			if( line.startsWith("Sequences prod") ) {
+				line = br.readLine();
+				Set<String>	all = new HashSet<String>();
+				while( line != null && !line.startsWith(">") ) {
+					String trim = line.trim();
+					
+					String[] split = trim.split("[\t ]+");
+					//int v = val.indexOf("contig");
+					if( split[0].length() > 0 ) all.add( split[0] );
+					
+					line = br.readLine();
+				}
+				
+				if( union ) joinSets( all, total );
+				//else intersectSets( all, total );
+				
+				if( line == null ) break;
+			}
+			
+			if( cnt++ % 100000 == 0 ) {
+				System.err.println( cnt );
+			}
+			line = br.readLine();
+		}
+		
+		if( fw != null ) {
+			for( Set<String> all : total ) {
+				fw.write( all.toString()+"\n" );
+			}
+			fw.close();
+		}
 	}
 	
 	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( Collection<Set<String>>	total, Set<String> species ) {
@@ -1028,7 +1072,7 @@ public class SerifyApplet extends JApplet {
 		try {
 			Set<String>	species = new TreeSet<String>();
 			List<Set<String>>	total = new ArrayList<Set<String>>();
-			joinBlastSets( is, null, true, total );
+			joinBlastSetsThermus( is, null, true, total );
 			Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
 			//if( writeSimplifiedCluster != null ) 
 			writeSimplifiedCluster( os, clusterMap );
@@ -3715,9 +3759,9 @@ public class SerifyApplet extends JApplet {
 					File f = fc.getSelectedFile();
 					try {
 						blastClusters( new FileInputStream(s), new FileOutputStream(f) );
-					} catch (FileNotFoundException e1) {
+					} catch(FileNotFoundException e1) {
 						e1.printStackTrace();
-					} catch (IOException e1) {
+					} catch(IOException e1) {
 						e1.printStackTrace();
 					}
 				}
@@ -4478,7 +4522,18 @@ public class SerifyApplet extends JApplet {
 		
 		String tree = genePhylogenyNNI( nmap, true );
 		System.err.println( tree );*/
-		majorityRuleConsensus();
+		//majorityRuleConsensus();
+		
+		List<Set<String>>	total = new ArrayList<Set<String>>();
+		try {
+			joinBlastSets( new FileInputStream("/home/sigmar/ok_unaligned.blastout"), "/home/sigmar/union_16S.txt", true, total );
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		/*try {
 			FileInputStream fis = new FileInputStream( "/home/sigmar/thomas/thomas.blastout" );
