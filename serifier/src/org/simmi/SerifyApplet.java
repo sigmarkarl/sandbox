@@ -4526,7 +4526,7 @@ public class SerifyApplet extends JApplet {
 		
 		List<Set<String>>	total = new ArrayList<Set<String>>();
 		try {
-			joinBlastSets( new FileInputStream("/home/sigmar/ok_unaligned.blastout"), "/home/sigmar/union_16S.txt", true, total );
+			joinBlastSets( new FileInputStream("/u0/retry.blastout"), "/u0/union_16S2.txt", true, total );
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
