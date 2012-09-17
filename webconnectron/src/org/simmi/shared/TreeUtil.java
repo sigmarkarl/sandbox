@@ -1665,7 +1665,7 @@ public class TreeUtil {
 				//loc = end+1;
 			}
 			
-			while( end < str.length()-1 && n != ',' && n != ';' && n != ')' ) {
+			while( end < str.length()-1 && n != ',' && n != ')' ) {
 				n = str.charAt(++end);
 			}
 			String code = str.substring( loc, end );
