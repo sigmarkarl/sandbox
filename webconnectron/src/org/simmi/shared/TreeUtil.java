@@ -464,8 +464,8 @@ public class TreeUtil {
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
 					str += ";"+meta; //"'"+name+";"+meta+"'";
 				} else {
-					if( color != null && color.length() > 0 ) str += "["+color+"];";
-					str += meta; //"'"+meta+"'";
+					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					str += ";"+meta; //"'"+meta+"'";
 				}
 			} else if( name != null && name.length() > 0 ) {
 				str += name;
@@ -1130,7 +1130,7 @@ public class TreeUtil {
 							break;
 						}
 					}
-				}
+				} else check = false;
 			}
 			if( check ) {
 				for( Node n : node.nodes ) {
@@ -1140,6 +1140,39 @@ public class TreeUtil {
 				}
 				String name = (col == null || col.length() == 0) ? sel : sel+"["+col+"]";
 				node.setName( name );
+			}
+		}
+	}
+	
+	public void nameParentNodesMeta( Node node ) {
+		if( node.nodes != null && node.nodes.size() > 0 ) {
+			for( Node n : node.nodes ) {
+				nameParentNodesMeta( n );
+			}
+			boolean check = true;
+			String sel = null;
+			//String col = null;
+			for( Node n : node.nodes ) {
+				if( n.getMeta() != null && n.getMeta().length() > 0 ) {
+					if( sel == null ) {
+						sel = n.getMeta();
+						//col = n.getColor();
+					} else {
+						if( !sel.equals( n.getMeta() ) ) {
+							check = false;
+							break;
+						}
+					}
+				} else check = false;
+			}
+			if( check ) {
+				for( Node n : node.nodes ) {
+					if( n.nodes != null && n.nodes.size() > 0 ) {
+						n.setMeta( "" );
+					}
+				}
+				String meta = sel; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
+				node.setMeta( meta );
 			}
 		}
 	}
@@ -1306,6 +1339,21 @@ public class TreeUtil {
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
 		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null, false );
+	}
+	
+	public void softReplaceNames( Node node, Map<String,String> namesMap ) {
+		List<Node> nodes = node.getNodes();
+		for( String key : namesMap.keySet() ) {
+			//if( node.getName() != null && node.getName().length() > 0 ) 
+			//	System.err.println( "blehehe " + node.getName() );
+			if( node.getName() != null && node.getName().contains( key ) ) {
+				node.name = namesMap.get( key );
+			}
+		}
+			//if( namesMap.containsKey( node.getName() ) ) node.setName( namesMap.get(node.getName()) );
+		for( Node n : nodes ) {
+			softReplaceNames(n, namesMap);
+		}
 	}
 	
 	public void replaceNames( Node node, Map<String,String> namesMap ) {
