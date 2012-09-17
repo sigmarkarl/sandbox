@@ -516,16 +516,22 @@ public class TreeUtil {
 					int ci = newname.indexOf("[#");
 					if( ci == -1 ) {
 						this.name = newname;
+						this.setColor( null );
 					} else {
 						this.name = newname.substring(0,ci);
 						int ce = newname.indexOf("]",ci+1);
 						this.setColor( newname.substring(ci+1,ce) );
 					}
 					this.id = this.name;
+					this.setMeta( null );
 				} else {
 					this.setName( newname.substring(0,fi) );
-					this.meta = newname.substring(fi+1);
+					this.setMeta( newname.substring(fi+1) );
 				}
+			} else {
+				this.name = newname;
+				this.setMeta( null );
+				this.setColor( null );
 			}
 		}
 		
@@ -1077,8 +1083,8 @@ public class TreeUtil {
 			if( collapse && (collapset == null || collapset.contains(test)) ) {
 				node.nodes.clear();
 				//node.nodes = null;
-				node.setMeta( Integer.toString(count) );
-				node.setName( test );
+				//node.setMeta( Integer.toString(count) );
+				node.setName( test+";"+Integer.toString(count) );
 			}
 		}
 	}
@@ -1101,6 +1107,39 @@ public class TreeUtil {
 				for( Node n : node.nodes ) {
 					collapseTreeSimple( n, collapset );
 				}
+			}
+		}
+	}
+	
+	public void nameParentNodes( Node node ) {
+		if( node.nodes != null && node.nodes.size() > 0 ) {
+			for( Node n : node.nodes ) {
+				nameParentNodes( n );
+			}
+			boolean check = true;
+			String sel = null;
+			String col = null;
+			for( Node n : node.nodes ) {
+				if( n.getName() != null && n.getName().length() > 0 ) {
+					if( sel == null ) {
+						sel = n.getName();
+						col = n.getColor();
+					} else {
+						if( !sel.equals( n.getName() ) ) {
+							check = false;
+							break;
+						}
+					}
+				}
+			}
+			if( check ) {
+				for( Node n : node.nodes ) {
+					if( n.nodes != null && n.nodes.size() > 0 ) {
+						n.setName( null );
+					}
+				}
+				String name = (col == null || col.length() == 0) ? sel : sel+"["+col+"]";
+				node.setName( name );
 			}
 		}
 	}
@@ -1288,8 +1327,17 @@ public class TreeUtil {
 			}
 		}
 		String meta = node.getMeta();
-		node.setMeta( node.getName() );
-		node.setName( meta );
+		String name = node.getName() == null ? "" : node.getName();
+		name = node.getColor() == null ? name : (name + "["+node.getColor()+"]");
+		if( meta != null && meta.length() > 0 ) {
+			if( name != null && name.length() > 0 ) {
+				node.setName( meta+";"+name );
+			} else {
+				node.setName( meta );
+			}
+		} else {
+			node.setName( ";"+name );
+		}
 	}
 	
 	int metacount = 0;
@@ -1476,24 +1524,24 @@ public class TreeUtil {
 					}// else node.color = null;
 					
 					String dstr = split[1].trim();
-					String dstr2 = "";
+					/*String dstr2 = "";
 					if( dstr.contains("[") ) {
 						int start = dstr.indexOf('[');
 						int stop = dstr.indexOf(']');
 						dstr2 = dstr.substring( start+1, stop );
 						dstr = dstr.substring( 0, start );
-					}
+					}*/
 					
 					try {
 						node.h = Double.parseDouble( dstr );
-						if( dstr2.length() > 0 ) {
+						/*if( dstr2.length() > 0 ) {
 							node.h2 = Double.parseDouble( dstr2 );
 							if( node.name == null || node.name.length() == 0 ) {
 								node.setName( dstr2 );
 								/*node.name = dstr2; 
-								node.id = node.name;*/
+								node.id = node.name;*
 							}
-						}
+						}*/
 					} catch( Exception e ) {
 						System.err.println();
 					}
@@ -1598,21 +1646,21 @@ public class TreeUtil {
 					}
 				} else ret.color = null;
 				String dstr = split.length > 1 ? split[1].trim() : "0";
-				String dstr2 = "";
+				/*String dstr2 = "";
 				if( dstr.contains("[") ) {
 					int start = split[1].indexOf('[');
 					int stop = split[1].indexOf(']');
 					dstr2 = dstr.substring( start+1, stop );
 					dstr = dstr.substring( 0, start );
-				}
+				}*/
 				try {
 					ret.h = Double.parseDouble( dstr );
-					if( dstr2.length() > 0 ) {
+					/*if( dstr2.length() > 0 ) {
 						ret.h2 = Double.parseDouble( dstr2 );
 						if( ret.name == null || ret.name.length() == 0 ) {
 							ret.setName( dstr2 );
 						}
-					}
+					}*/
 				} catch( Exception e ) {}
 				if( ret.h < minh ) minh = ret.h;
 				if( ret.h > maxh ) maxh = ret.h;

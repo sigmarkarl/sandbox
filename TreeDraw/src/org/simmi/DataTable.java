@@ -615,7 +615,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( obj != null ) {
 						String fname = getFastaName( names, metas, obj );
 						String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
-						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "");
+						cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 						seq.setName( cont );
 					}
 					
@@ -679,7 +679,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	public JTable nameSelectionComponent( final List<NameSel> names ) {
 		final JTable table = new JTable();
 		table.setDragEnabled( true );
-		String[] nlist = {"Species", "Pubmed", "Country", "Source", "Accession", "Color"};
+		String[] nlist = {"Species", "Pubmed", "Country", "Source", "Accession", "Color", "Country color"};
 		names.clear();
 		for( String name : nlist ) {
 			names.add( new NameSel( name ) );
@@ -903,7 +903,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				String fname = getFastaName( namesel, metasel, obj );
 				
 				String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
-				cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "");
+				cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 				
 				contset.add( new Sequence( n, cont, new StringBuilder(o.toString()), currentjavafasta.mseq ) );
 			}
@@ -1018,7 +1018,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( fname.length() > 1 ) {
 							cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
 						} else cont = line.substring(1);
-						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "");
+						cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 						//if( rr.length == 1 ) cont = line.replace( ">", "" );
 						//else cont = line.replace( ">", seqs.getName()+"_" );
 						seq = new Sequence( inc, cont, currentjavafasta.mseq );
@@ -1115,6 +1115,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return meta == null || meta.length() == 0 ? name : name + ";" + meta;
 	}
 	
+	Map<String,String> 	ccol;
+	Random				rand;
 	public String getConstructedName( List<NameSel> namesel, Object[] obj ) {
 		String fname = "";
 		for( NameSel ns : namesel ) {
@@ -1142,6 +1144,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					else fname += "_"+spec;
 				} else if( ns.name.equals("Country") ) {
 					String cntr = (String)obj[6];
+					cntr = cntr.replace('_', ' ');
 					int idx = cntr.indexOf('(');
 					if( idx > 0 ) {
 						int idx2 = cntr.indexOf(')', idx+1);
@@ -1149,7 +1152,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						cntr = cntr.substring(0, idx) + cntr.substring(idx2+1);
 					}
 					if( fname.length() == 0 ) fname += cntr;
-					else fname += "_"+cntr;
+					else fname += " "+cntr;
 				} else if( ns.name.equals("Source") ) {
 					if( fname.length() == 0 ) fname += obj[7];
 					else fname += "_"+obj[7];
@@ -1170,6 +1173,29 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							break;
 						}
 					}
+					/*String col = (String)obj[18];
+					//col = col.replace("_", "");
+					//if( fname.length() == 0 ) fname += col;
+					//else 
+					if( colmap.containsKey(col) ) {
+						fname += "["+colmap.get(col)+"]";	
+					}*/
+				} else if( ns.name.equals("Country color") ) {
+					String country = (String)obj[6];
+					if( country != null && country.length() > 0 ) {
+						String color;
+						if( ccol == null ) ccol = new HashMap<String,String>();
+						if( rand == null ) rand = new Random();
+						if( ccol.containsKey(country) ) {
+							color = ccol.get(country);
+						} else {
+							color = "[#"+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+"]";
+							ccol.put(country, color);
+						}
+						
+						fname += color;
+					}
+					
 					/*String col = (String)obj[18];
 					//col = col.replace("_", "");
 					//if( fname.length() == 0 ) fname += col;
@@ -1294,7 +1320,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						
 						if( fname.length() > 1 ) {
 							String startf = (Integer)obj[3] >= 900 ? ">" : ">*";
-							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "")+"\n");
+							sb.append(startf+fname.replace(": ", "-").replace(':', '-').replace(",", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -1434,7 +1460,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						
 						if( fname.length() > 1 ) {
 							String startf = (Integer)obj[4] >= 900 ? ">" : ">*";
-							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "")+"\n");
+							sb.append(startf+fname.replace(": ", "-").replace(':', '-').replace(",", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -2405,6 +2431,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							}
 							tu.appendCompare( n );
 						}
+						tu.nameParentNodes( n );
 						tree = n.toString();
 						
 						boolean scc = true;
@@ -2950,7 +2977,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		    		fos = null;
 		    	}
 		    	
-		        Set<String>		selection = new HashSet<String>();
+		        Set<String>				selection = new HashSet<String>();
 		        try {
 			        InputStream is = null;
 				    if( fos != null ) {
@@ -2971,20 +2998,40 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					while( line != null ) {
 						String[] split = line.substring(1, line.length()-1).split(",");
 						
-						String sel = null;
-						int len = 0;
+						Map<String,String>		selmap = new HashMap<String,String>();
 						for( String s : split ) {
 							String strim = s.trim();
 							if( tablemap.containsKey(strim) ) {
 								Object[] obj = tablemap.get(strim);
 								int tlen = (Integer)obj[4];
-								if( tlen > len ) {
-									sel = s;
-									len = tlen;
+								String spec = (String)obj[3];
+								String country = (String)obj[6];
+								String specoun = spec+country;
+								
+								if( selmap.containsKey(specoun) ) {
+									String acc = selmap.get(specoun);
+									Object[] subobj = tablemap.get(acc);
+									if( subobj == null ) {
+										System.err.println( tablemap.size() + "  " + acc );
+									} else {
+										int len = (Integer)subobj[4];
+										if( tlen > len ) {
+											selmap.put(specoun, acc);
+										}
+									}
+								} else {
+									selmap.put(specoun, strim);
 								}
 							}
 						}
-						if( sel != null ) selection.add( sel );
+						
+						if( selmap.size() > 1 ) selmap.remove("");
+						
+						for( String str : selmap.keySet() ) {
+							String acc = selmap.get( str );
+							selection.add( acc );
+						}
+						//if( sel != null ) selection.add( sel );
 						line = br.readLine();
 					}
 					br.close();
