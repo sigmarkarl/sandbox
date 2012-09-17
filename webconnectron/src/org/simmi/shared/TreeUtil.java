@@ -1644,7 +1644,7 @@ public class TreeUtil {
 					} catch( Exception e ) {
 						
 					}
-				} else ret.color = null;
+				}// else ret.color = null;
 				String dstr = split.length > 1 ? split[1].trim() : "0";
 				/*String dstr2 = "";
 				if( dstr.contains("[") ) {

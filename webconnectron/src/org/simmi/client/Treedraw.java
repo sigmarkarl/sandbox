@@ -2429,7 +2429,7 @@ public class Treedraw implements EntryPoint {
 				}*/
 				
 				String[] split;
-				if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
+				if( name == null || name.length() == 0 && resnode.getCollapsedString() != null ) split = resnode.getCollapsedString().split("_");
 				else split = new String[] { name }; //name.split("_");
 				
 				int t = 0;
