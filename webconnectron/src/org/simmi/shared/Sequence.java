@@ -449,6 +449,15 @@ public class Sequence implements Comparable<Sequence> {
 		}
 	}
 	
+	public void delete( int dstart, int dstop ) {
+		int ind = dstart-start;
+		int end = dstop-start;
+		if( ind >= 0 && end <= sb.length() ) {
+			sb.delete( ind, end );
+			edited = true;
+		}
+	}
+	
 	public void clearCharAt( int i ) {
 		int ind = i-start;
 		if( ind >= 0 && ind < sb.length() ) {
