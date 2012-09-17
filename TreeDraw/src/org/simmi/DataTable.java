@@ -132,6 +132,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	Map<String,Sequence>	seqcache = new HashMap<String,Sequence>();
 	String[] specs = {"antranikianii","aquaticus","arciformis","brockianus","eggertsoni","filiformis","igniterrae","islandicus","kawarayensis","oshimai","scotoductus","thermophilus","yunnanensis","rehai","composti","unknownchile"};
 	Map<String,String>	specColors = new HashMap<String,String>();
+	Map<String,String> namesMap = new HashMap<String,String>();
+	//tu.softReplaceNames( n, namesMap );*/
 	
 	public void updateTable( String tabmap ) {
 		try {
@@ -1144,6 +1146,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					else fname += "_"+spec;
 				} else if( ns.name.equals("Country") ) {
 					String cntr = (String)obj[6];
+					for( String key : namesMap.keySet() ) {
+						if( cntr != null && cntr.contains(key) ) {
+							cntr = namesMap.get( key );
+							break;
+						}
+					}
+					
 					cntr = cntr.replace('_', ' ');
 					int idx = cntr.indexOf('(');
 					if( idx > 0 ) {
@@ -1182,6 +1191,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					}*/
 				} else if( ns.name.equals("Country color") ) {
 					String country = (String)obj[6];
+					
+					for( String key : namesMap.keySet() ) {
+						if( country != null && country.contains(key) ) {
+							country = namesMap.get( key );
+						}
+					}
+					
 					if( country != null && country.length() > 0 ) {
 						String color;
 						if( ccol == null ) ccol = new HashMap<String,String>();
@@ -1711,6 +1727,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		colmap.put("small_orange", "#999944");
 		colmap.put("small_purple", "#AA22AA");
 		colmap.put("small_black", "#000000");
+		
+		namesMap.put("Chile", "Chile");
+		namesMap.put("Yellowstone", "Yellowstone");
+		namesMap.put("Iceland", "Iceland");
+		namesMap.put("Australia", "Australia");
+		namesMap.put("Oregon", "Oregon");
+		namesMap.put("OR", "Oregon");
+		namesMap.put("China", "China");
+		namesMap.put("Japan", "Japan");
+		namesMap.put("Bulgaria", "Bulgaria");
+		namesMap.put("Taiwan", "Taiwan");
+		namesMap.put("New Zealand", "New Zealand");
 		
 		table = new JTable();
 		table.setAutoCreateRowSorter( true );
@@ -2431,7 +2459,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							}
 							tu.appendCompare( n );
 						}
+						/*Map<String,String> namesMap = new HashMap<String,String>();
+						namesMap.put("Chile", "Chile");
+						namesMap.put("Yellowstone", "Yellowstone");
+						namesMap.put("Iceland", "Iceland");
+						namesMap.put("Australia", "Australia");
+						namesMap.put("Oregon", "Oregon");
+						namesMap.put("China", "China");
+						namesMap.put("Japan", "Japan");
+						namesMap.put("Bulgaria", "Bulgaria");
+						tu.softReplaceNames( n, namesMap );*/
 						tu.nameParentNodes( n );
+						tu.nameParentNodesMeta( n );
 						tree = n.toString();
 						
 						boolean scc = true;
@@ -3006,6 +3045,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								int tlen = (Integer)obj[4];
 								String spec = (String)obj[3];
 								String country = (String)obj[6];
+								for( String key : namesMap.keySet() ) {
+									if( country != null && country.contains(key) ) {
+										country = namesMap.get( key );
+										break;
+									}
+								}
 								String specoun = spec+country;
 								
 								if( selmap.containsKey(specoun) ) {
