@@ -729,7 +729,7 @@ public class Order extends JApplet {
 	}
 	
 	boolean userCheck() {
-		return user.equals("ragnar") || user.equals("annas") || user.equals("johanna") || user.equals("adalheidur") || user.equals("unnurh") || user.equals("gulla") || user.equals("julia") || user.equals("root") || user.equals("sigmar");
+		return user.equals("ragnar") || user.equals("annas") || user.equals("johanna") || user.equals("adalheidur") || user.equals("unnurh") || user.equals("gulla") || user.equals("julia") || user.equals("andrea") || user.equals("hjordis") || user.equals("root") || user.equals("sigmar");
 	}
 	
 	public TableModel createModel( final List<?> datalist, final Class cls ) {
