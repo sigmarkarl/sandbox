@@ -264,6 +264,7 @@ public class TreeUtil {
 		int			leaves = 0;
 		Node		parent;
 		int			comp = 0;
+		double		fontsize = -1.0;
 		
 		double		canvasx;
 		double		canvasy;
@@ -462,14 +463,17 @@ public class TreeUtil {
 				if( name != null && name.length() > 0 ) {
 					str += name;
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					if( fontsize != -1.0 ) str += "{"+fontsize+"}";
 					str += ";"+meta; //"'"+name+";"+meta+"'";
 				} else {
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					if( fontsize != -1.0 ) str += "{"+fontsize+"}";
 					str += ";"+meta; //"'"+meta+"'";
 				}
 			} else if( name != null && name.length() > 0 ) {
 				str += name;
 				if( color != null && color.length() > 0 ) str += "["+color+"]";
+				if( fontsize != -1.0 ) str += "{"+fontsize+"}";
 			}
 			
 			//if( h > 0.0 )
@@ -514,13 +518,30 @@ public class TreeUtil {
 				int fi = newname.indexOf(';');
 				if( fi == -1 ) {
 					int ci = newname.indexOf("[#");
+					int si = newname.indexOf("{");
 					if( ci == -1 ) {
-						this.name = newname;
+						if( si == -1 ) {
+							this.name = newname;
+							this.setFontSize( -1.0 );
+						} else {
+							this.name = newname.substring(0,si);
+							int se = newname.indexOf("}",si+1);
+							this.setFontSize( Double.parseDouble( newname.substring(si+1,se) ) );
+						}
 						this.setColor( null );
 					} else {
-						this.name = newname.substring(0,ci);
-						int ce = newname.indexOf("]",ci+1);
-						this.setColor( newname.substring(ci+1,ce) );
+						if( si == -1 ) {
+							this.name = newname.substring(0,ci);
+							int ce = newname.indexOf("]",ci+1);
+							this.setColor( newname.substring(ci+1,ce) );
+							this.setFontSize( -1.0 );
+						} else {
+							this.name = newname.substring(0,Math.min(ci, si));
+							int ce = newname.indexOf("]",ci+1);
+							int se = newname.indexOf("}",si+1);
+							this.setColor( newname.substring(ci+1,ce) );
+							this.setFontSize( Double.parseDouble( newname.substring(si+1,se) ) );
+						}
 					}
 					this.id = this.name;
 					this.setMeta( null );
@@ -537,6 +558,14 @@ public class TreeUtil {
 		
 		public String getName() {
 			return name;
+		}
+		
+		public double getFontSize() {
+			return fontsize;
+		}
+		
+		public void setFontSize( double fs ) {
+			this.fontsize = fs;
 		}
 		
 		public String getMeta() {
