@@ -1168,6 +1168,7 @@ public class Treedraw implements EntryPoint {
 				final TextBox	text = new TextBox();
 				
 				String newtext = selectedNode.getColor() == null ? selectedNode.getName() : selectedNode.getName() + "[" + selectedNode.getColor() + "]";
+				if( selectedNode.getFontSize() != -1.0 ) newtext += "{" + selectedNode.getColor() + "}";
 				if( selectedNode.getMeta() != null && selectedNode.getMeta().length() > 0 ) newtext += ";"+selectedNode.getMeta();
 				
 				text.setText( newtext );
@@ -2413,7 +2414,7 @@ public class Treedraw implements EntryPoint {
 		boolean paint = (use != null && use.length() > 0) || (resnode.getMeta() != null && resnode.getMeta().length() > 0);
 		
 		if( paint ) {
-			String color = resnode.getColor() == null ? "#FFFFFF" : resnode.getColor();
+			String color = resnode.getColor(); // == null ? "#FFFFFF" : resnode.getColor();
 			if( nullNodes ) {
 				g2.setFillStyle( "#000000" );
 				//g2.setFont( bFont );
@@ -2587,7 +2588,7 @@ public class Treedraw implements EntryPoint {
 				
 				double mhchunk = Math.max( 10.0, hchunk );
 				double strw = 0;
-				double strh = 5.0*Math.log(mhchunk);
+				double strh = resnode.getFontSize() == -1.0 ? 5.0*Math.log(mhchunk) : resnode.getFontSize();
 				
 				String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(strh)+"px sans-serif";
 				if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
@@ -2611,7 +2612,9 @@ public class Treedraw implements EntryPoint {
 				//double strh = Math.max( 10.0, hchunk );//10;
 				
 				if( !showlinage ) {
-					if( color != null ) g2.setFillStyle( color );
+					if( color != null && color.length() > 0 ) { 
+						g2.setFillStyle( color );
+					}
 					if( vertical ) {
 						if( circular ) {
 							double a = 2.0*Math.PI*(y+ny)/h;
@@ -2619,7 +2622,11 @@ public class Treedraw implements EntryPoint {
 							double cy = (w+nx*circularScale*Math.sin(a))/2.0;
 							g2.translate( cx, cy );
 							g2.rotate( a );
-							g2.fillRect( -(5*strw)/8, -(5*strh)/8, (5*strw)/4, strh*1.2 );
+							if( color != null && color.length() > 0 ) g2.fillRect( -(5*strw)/8, -(5*strh)/8, (5*strw)/4, strh*1.2 );
+							else {
+								g2.setStrokeStyle("#000000");
+								g2.strokeRect( -(5*strw)/8, -(5*strh)/8, (5*strw)/4, strh*1.2 );
+							}
 							g2.rotate( -a );
 							g2.translate( -cx, -cy );
 						} else g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
@@ -2642,12 +2649,26 @@ public class Treedraw implements EntryPoint {
 								for( String meta : metasplit ) {
 									int mi = meta.indexOf( "[#" );
 									if( mi == -1 ) mi = meta.length();
-									String metadata = meta.substring(0,mi);
+									int fi = meta.indexOf( "{" );
+									if( fi == -1 ) fi = meta.length();
+									String metadata = meta.substring(0,Math.min(mi,fi));
 									
-									String metacolor = mi < meta.length() ? meta.substring(mi+1,meta.length()-1) : "#FFFFFF";
+									String metacolor = null;
+									if( mi < meta.length() ) {
+										int me = meta.indexOf(']', mi+1 );
+										metacolor = meta.substring(mi+1,me);
+									}
+									double metafontsize = strh;
+									if( fi < meta.length() ) {
+										int fe = meta.indexOf('}', fi+1 );
+										metafontsize = Double.parseDouble( meta.substring(fi+1,fe) );
+									}
 									
 									k++;
-									drawMundi( g2, metadata, metacolor, strh, y+realny, mleaves, w-addon+5+(k*strh*4.0) );
+									
+									fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(strh)+"px sans-serif";
+									if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+									drawMundi( g2, metadata, metacolor, metafontsize, y+realny, mleaves, w-addon+5+(k*strh*4.0) );
 								}
 							}
 						} else {
@@ -2708,26 +2729,59 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	public void drawMundi( Context2d g2, String use, String color, double strh, double yrealny, int mleaves, double rad ) {
-		g2.setLineWidth( strh*1.5 );
-		g2.setStrokeStyle( color );
-		//g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
 		double hdiff = (dh*(mleaves-1)/2.0);
-		g2.beginPath();
-		
 		double a1 = 2.0*Math.PI*(yrealny-hdiff)/h;
 		double a2 = 2.0*Math.PI*(yrealny+hdiff)/h;
-		//double rad = w-addon+5;
-		
-		//g2.fillText(use, cx, cy );
-		//double cy = 
-		
-		//g2.moveTo( (w+cx*circularScale*Math.cos(a1))/2.0, (w+cx*circularScale*Math.cos(a1))/2.0 );
-		g2.arc( w/2.0, w/2.0, rad/2.0, a1, a2, a1 > a2 );
-		//g2.lineTo(w-addon, ny);
-		//g2.lineTo(w-addon+5, y+realny+hdiff);
-		g2.stroke();
-		g2.closePath();
-		g2.setLineWidth( 1.0 );
+		if( color != null && color.length() > 0 ) {
+			g2.setLineWidth( strh*1.5 );
+			g2.setStrokeStyle( color );
+			//g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
+			//double rad = w-addon+5;
+			
+			//g2.fillText(use, cx, cy );
+			//double cy = 
+			g2.beginPath();
+			
+			//g2.moveTo( (w+cx*circularScale*Math.cos(a1))/2.0, (w+cx*circularScale*Math.cos(a1))/2.0 );
+			g2.arc( w/2.0, w/2.0, rad/2.0, a1, a2, a1 > a2 );
+			//g2.lineTo(w-addon, ny);
+			//g2.lineTo(w-addon+5, y+realny+hdiff);
+			g2.stroke();
+			g2.closePath();
+			g2.setLineWidth( 1.0 );
+		} else {
+			/*g2.setLineWidth( strh*1.5 );
+			g2.setStrokeStyle( color );
+			g2.beginPath();
+			g2.arc( w/2.0, w/2.0, rad/2.0, a1, a2, a1 > a2 );
+			g2.stroke();
+			g2.closePath();*/
+			
+			g2.setLineWidth( 1.0 );
+			g2.setStrokeStyle( "#000000" );
+			//g2.setFillStyle("#FFEEEE");
+			
+			double cx1i = (w+(rad-strh*1.5)*Math.cos( a1 ))/2.0;
+			double cy1i = (w+(rad-strh*1.5)*Math.sin( a1 ))/2.0;
+			double cx2i = (w+(rad-strh*1.5)*Math.cos( a2 ))/2.0;
+			double cy2i = (w+(rad-strh*1.5)*Math.sin( a2 ))/2.0;
+			double cx1o = (w+(rad+strh*1.5)*Math.cos( a1 ))/2.0;
+			double cy1o = (w+(rad+strh*1.5)*Math.sin( a1 ))/2.0;
+			double cx2o = (w+(rad+strh*1.5)*Math.cos( a2 ))/2.0;
+			double cy2o = (w+(rad+strh*1.5)*Math.sin( a2 ))/2.0;
+			
+			g2.beginPath();
+			//g2.moveTo(cx1i, cy1i);
+			//g2.lineTo(cx1o, cy1o);
+			g2.arc(w/2.0, w/2.0, (rad+strh*1.5)/2.0, a1, a2, false);
+			g2.arc(w/2.0, w/2.0, (rad-strh*1.5)/2.0, a2, a1, true); //rad+strh);
+			//g2.arcTo(cx2i, cy2i, cx1i, cy1i, rad-strh);
+			//g2.lineTo(cx2i, cy2i);
+			g2.lineTo(cx1o, cy1o);
+			//g2.fill();
+			g2.stroke();
+			g2.closePath();
+		}
 		
 		g2.setStrokeStyle( "#000000" );
 		g2.setFillStyle("#000000");
