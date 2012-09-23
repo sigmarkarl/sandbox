@@ -264,6 +264,9 @@ public class TreeUtil {
 		int			leaves = 0;
 		Node		parent;
 		int			comp = 0;
+		double		fontsize = -1.0;
+		double		framesize = -1.0;
+		double		frameoffset = -1.0;
 		
 		double		canvasx;
 		double		canvasy;
@@ -462,14 +465,26 @@ public class TreeUtil {
 				if( name != null && name.length() > 0 ) {
 					str += name;
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					if( fontsize != -1.0 ) {
+						if( framesize == -1.0 ) str += "{"+fontsize+"}";
+						else str += "{"+fontsize+" "+framesize+"}";
+					}
 					str += ";"+meta; //"'"+name+";"+meta+"'";
 				} else {
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					if( fontsize != -1.0 ) {
+						if( framesize == -1.0 ) str += "{"+fontsize+"}";
+						else str += "{"+fontsize+" "+framesize+"}";
+					}
 					str += ";"+meta; //"'"+meta+"'";
 				}
 			} else if( name != null && name.length() > 0 ) {
 				str += name;
 				if( color != null && color.length() > 0 ) str += "["+color+"]";
+				if( fontsize != -1.0 ) {
+					if( framesize == -1.0 ) str += "{"+fontsize+"}";
+					else str += "{"+fontsize+" "+framesize+"}";
+				}
 			}
 			
 			//if( h > 0.0 )
@@ -514,13 +529,38 @@ public class TreeUtil {
 				int fi = newname.indexOf(';');
 				if( fi == -1 ) {
 					int ci = newname.indexOf("[#");
+					int si = newname.indexOf("{");
 					if( ci == -1 ) {
-						this.name = newname;
+						if( si == -1 ) {
+							this.name = newname;
+							this.setFontSize( -1.0 );
+						} else {
+							this.name = newname.substring(0,si);
+							int se = newname.indexOf("}",si+1);
+							String mfstr = newname.substring(si+1,se);
+							String[] mfsplit = mfstr.split(" ");
+							this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+							if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+							if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+						}
 						this.setColor( null );
 					} else {
-						this.name = newname.substring(0,ci);
-						int ce = newname.indexOf("]",ci+1);
-						this.setColor( newname.substring(ci+1,ce) );
+						if( si == -1 ) {
+							this.name = newname.substring(0,ci);
+							int ce = newname.indexOf("]",ci+1);
+							this.setColor( newname.substring(ci+1,ce) );
+							this.setFontSize( -1.0 );
+						} else {
+							this.name = newname.substring(0,Math.min(ci, si));
+							int ce = newname.indexOf("]",ci+1);
+							int se = newname.indexOf("}",si+1);
+							this.setColor( newname.substring(ci+1,ce) );
+							String mfstr = newname.substring(si+1,se);
+							String[] mfsplit = mfstr.split(" ");
+							this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+							if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+							if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+						}
 					}
 					this.id = this.name;
 					this.setMeta( null );
@@ -537,6 +577,43 @@ public class TreeUtil {
 		
 		public String getName() {
 			return name;
+		}
+		
+		public double getFontSize() {
+			return fontsize;
+		}
+		
+		public double getFrameSize() {
+			return framesize == -1.0 ? fontsize : framesize;
+		}
+		
+		public double getFrameOffset() {
+			return frameoffset;
+		}
+		
+		public String getFrameString() {
+			if( fontsize != -1.0 ) {
+				if( framesize != -1.0 ) {
+					if( frameoffset != -1.0 ) return fontsize+" " + framesize + " " + frameoffset;
+					return fontsize+" "+framesize;
+				} else {
+					return ""+fontsize;
+				}
+			}
+			
+			return null;
+		}
+		
+		public void setFontSize( double fs ) {
+			this.fontsize = fs;
+		}
+		
+		public void setFrameSize( double fs ) {
+			this.framesize = fs;
+		}
+		
+		public void setFrameOffset( double fo ) {
+			this.frameoffset = fo;
 		}
 		
 		public String getMeta() {
@@ -1377,6 +1454,7 @@ public class TreeUtil {
 		String meta = node.getMeta();
 		String name = node.getName() == null ? "" : node.getName();
 		name = node.getColor() == null ? name : (name + "["+node.getColor()+"]");
+		name = node.getFrameString() == null ? name : name + "{" + node.getFrameString() + "}";
 		if( meta != null && meta.length() > 0 ) {
 			if( name != null && name.length() > 0 ) {
 				node.setName( meta+";"+name );
@@ -1665,7 +1743,7 @@ public class TreeUtil {
 				//loc = end+1;
 			}
 			
-			while( end < str.length()-1 && n != ',' && n != ';' && n != ')' ) {
+			while( end < str.length()-1 && n != ',' && n != ')' ) {
 				n = str.charAt(++end);
 			}
 			String code = str.substring( loc, end );
