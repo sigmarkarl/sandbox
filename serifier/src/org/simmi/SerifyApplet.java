@@ -1979,7 +1979,7 @@ public class SerifyApplet extends JApplet {
 		bw.close();
 	}
 	
-	public Map<String,String> mapNameHit( InputStream blasti ) throws IOException {
+	public static Map<String,String> mapNameHit( InputStream blasti ) throws IOException {
 		Map<String,String>	mapHit = new HashMap<String,String>();
 		
 		BufferedReader br = new BufferedReader( new InputStreamReader( blasti ) );
@@ -1989,7 +1989,7 @@ public class SerifyApplet extends JApplet {
 			if( trim.startsWith("Query=") ) {
 				String name = trim.substring(6).trim();
 				line = br.readLine();
-				while( line != null && !line.startsWith(">") ) line = br.readLine();
+				while( line != null && !line.startsWith(">") && !line.contains("No hits") ) line = br.readLine();
 				if( line != null ) {
 					mapHit.put( name, line.substring(1).trim() );
 				}
@@ -2012,7 +2012,11 @@ public class SerifyApplet extends JApplet {
 		return Math.sqrt( ret );
 	}
 	
-	public int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
+	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
+		return doMapHitStuff(mapHit, is, os, "_");
+	}
+	
+	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String sep ) throws IOException {
 		int nseq = 0;
 		PrintStream pr = new PrintStream( os );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
@@ -2023,7 +2027,7 @@ public class SerifyApplet extends JApplet {
 				String name = line.substring(1).trim();
 				if( mapHit.containsKey(name) ) {
 					nseq++;
-					pr.println( ">" + name + "_" + mapHit.get(name) );
+					pr.println( ">" + name + sep + mapHit.get(name) );
 					include = true;
 				} else include = false;
 			} else if( include ) {
@@ -4506,6 +4510,24 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
+		try {
+			Map<String,String> mstr = mapNameHit( new FileInputStream("/u0/viggo.blastout") );
+			for( String key : mstr.keySet() ) {
+				String val = mstr.get(key);
+				if( val.contains("No hits") ) {
+					mstr.put( key, "Unknown" );
+				} else {
+					int i = val.indexOf(' ');
+					int k = val.indexOf("strain");
+					if( k < 0 ) k = val.length();
+					mstr.put( key, val.substring(i+1, k).trim().replace(' ', '_') );
+				}
+			}
+			doMapHitStuff( mstr, new FileInputStream("/u0/viggo_aligned.fasta"), new FileOutputStream("/u0/viggo_aligned_renamed.fasta"), ";" );
+		} catch( IOException e ) {
+			e.printStackTrace();
+		}
+		
 		/*Map<String,String> nmap = new HashMap<String,String>();
 		File dir = new File( "/home/sigmar/thermusgenes_short/aligned/trees/" );
 		File[] ff = dir.listFiles();
@@ -4524,7 +4546,7 @@ public class SerifyApplet extends JApplet {
 		System.err.println( tree );*/
 		//majorityRuleConsensus();
 		
-		List<Set<String>>	total = new ArrayList<Set<String>>();
+		/*List<Set<String>>	total = new ArrayList<Set<String>>();
 		try {
 			joinBlastSets( new FileInputStream("/u0/retry.blastout"), "/u0/union_16S2.txt", true, total );
 		} catch (FileNotFoundException e) {
@@ -4533,7 +4555,7 @@ public class SerifyApplet extends JApplet {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		
 		/*try {
 			FileInputStream fis = new FileInputStream( "/home/sigmar/thomas/thomas.blastout" );
