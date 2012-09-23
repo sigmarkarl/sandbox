@@ -1138,7 +1138,7 @@ public class TreeUtil {
 						n.setName( null );
 					}
 				}
-				String name = (col == null || col.length() == 0) ? sel : sel+"["+col+"]";
+				String name = (col == null || col.length() == 0) ? sel : sel+"["+col+"]{1.0 2.0 1.05}";
 				node.setName( name );
 			}
 		}
@@ -1171,7 +1171,7 @@ public class TreeUtil {
 						n.setMeta( "" );
 					}
 				}
-				String meta = sel; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
+				String meta = sel+"{1.0 2.0 1.10}"; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
 				node.setMeta( meta );
 			}
 		}

@@ -1732,8 +1732,16 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		namesMap.put("Yellowstone", "Yellowstone");
 		namesMap.put("Iceland", "Iceland");
 		namesMap.put("Australia", "Australia");
-		namesMap.put("Oregon", "Oregon");
-		namesMap.put("OR", "Oregon");
+		namesMap.put("Oregon", "USA-Oregon");
+		namesMap.put("Nevada", "USA-Nevada");
+		namesMap.put("Washington", "USA-Washington");
+		namesMap.put("California", "USA-California");
+		namesMap.put("Guinea", "Papua New Guinea");
+		namesMap.put("OR", "USA-Oregon");
+		namesMap.put("Fiji", "Fiji");
+		namesMap.put("Italy", "Italy");
+		namesMap.put("India", "India");
+		namesMap.put("New Mexico", "USA-New Mexico");
 		namesMap.put("China", "China");
 		namesMap.put("Japan", "Japan");
 		namesMap.put("Bulgaria", "Bulgaria");
