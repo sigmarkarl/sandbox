@@ -195,7 +195,9 @@ public class Treedraw implements EntryPoint {
 		//console( "leaves " + leaves );
 		//double	maxheightold = root.getMaxHeight();
 		
-		Node node = equalHeight > 0 ? getMaxNameLength( root, ctx, ww-30 ) : getMaxHeight( root, ctx, ww-30, showleafnames );
+		Node mnnode = getMaxNameLength( root, ctx );
+		String maxstr = mnnode.getName();
+		Node node = equalHeight > 0 ? mnnode : getMaxHeight( root, ctx, ww-30, showleafnames );
 		if( node != null ) {
 			double gh = getHeight(node);
 			String name = node.getName();
@@ -210,7 +212,7 @@ public class Treedraw implements EntryPoint {
 			double addon = mns;
 			
 			double maxheight = 0.0;
-			if( circular ) maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30)*circularScale)/((ww-60)*circularScale-(textwidth+mns)*2.0);
+			if( circular ) maxheight = equalHeight > 0 ? ((ww-30)*circularScale-(textwidth)*2.0) : (gh*(ww-30)*circularScale)/((ww-60)*circularScale-(textwidth+mns)*2.0);
 			else maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth-mns);
 			
 			if( equalHeight > 0 ) dw = maxheight/levels;
@@ -218,13 +220,13 @@ public class Treedraw implements EntryPoint {
 			if( vertical ) {
 				//drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
 				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
-				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
+				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
 			} else {
 				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0, addon );
 				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon );
-				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
+				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
 			}
 			
 			if( showscale ) {
@@ -267,7 +269,7 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public Node getMaxNameLength( Node root, Context2d ctx, int ww ) {
+	public Node getMaxNameLength( Node root, Context2d ctx ) {
 		List<Node>	leaves = new ArrayList<Node>();
 		recursiveLeavesGet( root, leaves );
 		
@@ -2113,7 +2115,7 @@ public class Treedraw implements EntryPoint {
 		return null;
 	}
 	
-	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon ) {
+	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon, String maxstr ) {
 		Map<Node,Double>	cmap = new HashMap<Node,Double>();
 		int total = 0;
 		double nyavg = 0.0;
@@ -2152,11 +2154,11 @@ public class Treedraw implements EntryPoint {
 			
 			if( !resnode.isCollapsed() ) {
 				if( vertical ) {
-					double newy = dh*total + drawTreeRecursiveCenter( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon );
+					double newy = dh*total + drawTreeRecursiveCenter( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 					cmap.put( resnode, newy );
 					nyavg += newy;
 				} else {
-					drawTreeRecursiveCenter( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon );
+					drawTreeRecursiveCenter( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 				}
 			} else {
 				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
@@ -2277,14 +2279,14 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, newy /*Math.floor(newy)*/, addon, mleaves, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, newy /*Math.floor(newy)*/, addon, mleaves, ny, maxstr );
 			total += mleaves;
 		}
 		
 		return ret;
 	}
 	
-	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon ) {
+	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon, String maxstr ) {
 		int total = 0;
 		
 		//double cirscl = 0.5;
@@ -2355,9 +2357,9 @@ public class Treedraw implements EntryPoint {
 			
 			if( !resnode.isCollapsed() ) {
 				if( vertical ) {
-					drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon );
+					drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 				} else {
-					drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon );
+					drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 				}
 			} else {
 				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
@@ -2443,7 +2445,7 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, ny, addon, mleaves, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, ny, addon, mleaves, ny, maxstr );
 			total += mleaves;
 		}
 		
@@ -2451,7 +2453,7 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	double circularScale = 0.9;
-	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny, double addon, int mleaves, double realny ) {
+	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny, double addon, int mleaves, double realny, String maxstr ) {
 		//int k = 12;//w/32;
 		int fontSize = 10;
 		
@@ -2462,9 +2464,17 @@ public class Treedraw implements EntryPoint {
 		
 		if( paint ) {
 			String color = resnode.getColor(); // == null ? "#FFFFFF" : resnode.getColor();
+			
+			double mhchunk = Math.max( 10.0, hchunk );
+			//double strw = 0;
+			double strh = 5.0*Math.log(mhchunk);
+			double nstrh = resnode.getFontSize() == -1.0 ? strh : resnode.getFontSize()*strh;
+			double frmh = strh;
+			frmh = resnode.getFontSize() == -1.0 ? frmh : resnode.getFrameSize()*frmh;
+			double frmo = resnode.getFrameOffset();
+			
 			if( nullNodes ) {
 				if( showleafnames ) {
-				
 					g2.setFillStyle( "#000000" );
 					//g2.setFont( bFont );
 					
@@ -2483,19 +2493,19 @@ public class Treedraw implements EntryPoint {
 					else split = new String[] { name }; //name.split("_");
 					
 					int t = 0;
-					double mstrw = 0;
-					double mstrh = 10;
-					double strh = (5.0*Math.log(hchunk));
-					double fontscale = resnode.getFontSize();
-					if( fontscale != -1.0 ) strh *= fontscale;
+					//double mstrw = 0;
+					//double mstrh = strh;
+					//double fontscale = resnode.getFontSize();
+					//if( fontscale != -1.0 ) strh *= fontscale;
 					
-					String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)strh+"px sans-serif";
+					String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)nstrh+"px sans-serif";
 					if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
 					
 					if( !vertical ) {
 						for( String str : split ) {
-							double strw = g2.measureText( str ).getWidth();
-							mstrw = Math.max( mstrw, strw );
+							TextMetrics tm = g2.measureText( str );
+							double strw = tm.getWidth();
+							//mstrw = Math.max( mstrw, strw );
 							/*if( resnode.getColor() != null ) {
 								g2.setFillStyle( resnode.getColor() );
 								g2.fillRect( (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize), strw, mstrh);
@@ -2505,13 +2515,6 @@ public class Treedraw implements EntryPoint {
 						}
 					} else {
 						for( String str : split ) {
-							/*if( resnode.getColor() != null ) {
-								double strw = g2.measureText( str ).getWidth();
-								g2.setFillStyle( resnode.getColor() );
-								g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0-mstrh+1.0, strw+15, mstrh*1.15);
-								g2.setFillStyle( "#000000" );
-							}*/
-							
 							boolean it = false;
 							boolean sub = false;
 							boolean sup = false;
@@ -2530,10 +2533,13 @@ public class Treedraw implements EntryPoint {
 									li.add( ti );
 								}
 								
-								double nstrh = ( ( (sup || sub) ? 3.0 : 5.0 )*Math.log(hchunk) );
-								if( fontscale != -1.0 ) nstrh *= fontscale;
-								fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)nstrh+"px sans-serif";
+								double nnstrh = ( ( (sup || sub) ? 3.0 : 5.0 )*nstrh/5.0 );
+								double nfrmh = ( ( (sup || sub) ? 3.0 : 5.0 )*frmh/5.0 );
+								//if( fontscale != -1.0 ) nnstrh *= fontscale;
+								fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)nnstrh+"px sans-serif";
 								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+								
+								double maxstrw = g2.measureText( maxstr ).getWidth();
 								
 								int min = Collections.min( li );
 								if( min < str.length() ) {
@@ -2555,13 +2561,23 @@ public class Treedraw implements EntryPoint {
 											//u += 0.5*total;
 											g2.translate( cx, cy );
 											g2.rotate( a+Math.PI );
-											g2.fillText( substr, rightalign ? 0.0 : -strw, mstrh/2.0 );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect( -7+(t++)*fontSize  - (rightalign ? 0.0 : strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? 0.0 : -strw, strh/2.0 );
 											g2.rotate( -a-Math.PI );
 											g2.translate( -cx, -cy );
 										} else {
 											g2.translate( cx, cy );
 											g2.rotate( a );
-											g2.fillText( substr, rightalign ? -strw : 0.0, mstrh/2.0 );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect( -7+(t++)*fontSize - (rightalign ? maxstrw : 0.0), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? -strw : 0.0, nnstrh/2.0 );
 											g2.rotate( -a );
 											g2.translate( -cx, -cy );
 										}
@@ -2574,7 +2590,14 @@ public class Treedraw implements EntryPoint {
 										
 										//g2.fillText(substr, (w+lx*0.8*Math.cos( a ))/2.0, (w+lx*0.8*Math.sin( a ))/2.0 );
 									} else {
-										ly += mstrh/2.0;
+										if( !showbubble && resnode.getColor() != null ) {
+											double strw = g2.measureText( str ).getWidth();
+											g2.setFillStyle( resnode.getColor() );
+											g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+nnstrh/2.0-nnstrh+1.0, strw+15, nnstrh*1.15);
+											g2.setFillStyle( "#000000" );
+										}
+										
+										ly += nnstrh/2.0;
 										if( !rightalign ) {
 											g2.fillText(substr, lx, ly );
 										} else {
@@ -2615,13 +2638,23 @@ public class Treedraw implements EntryPoint {
 											//u += 0.5*total;
 											g2.translate( cx, cy );
 											g2.rotate( a+Math.PI );
-											g2.fillText( substr, rightalign ? 0.0 : -strw, mstrh/2.0 );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect( -7+(t++)*fontSize  - (rightalign ? 0.0 : strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15  );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? 0.0 : -strw, nnstrh/2.0 );
 											g2.rotate( -a-Math.PI );
 											g2.translate( -cx, -cy );
 										} else {
 											g2.translate( cx, cy );
 											g2.rotate( a );
-											g2.fillText( substr, rightalign ? -strw : 0.0, mstrh/2.0 );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect(-7+(t++)*fontSize  - (rightalign ? maxstrw : 0.0), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15  );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? -strw : 0.0, nnstrh/2.0 );
 											g2.rotate( -a );
 											g2.translate( -cx, -cy );
 										}
@@ -2629,7 +2662,14 @@ public class Treedraw implements EntryPoint {
 										//double a = (2.0*Math.PI*ly)/h;
 										//g2.fillText(substr, (w+lx*0.8*Math.cos( a ))/2.0, (w+lx*0.8*Math.sin( a ))/2.0 );
 									} else {
-										ly += mstrh/2.0;
+										if( !showbubble && resnode.getColor() != null ) {
+											double strw = g2.measureText( str ).getWidth();
+											g2.setFillStyle( resnode.getColor() );
+											g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+nnstrh/2.0-nnstrh+1.0, strw+15, nnstrh*1.15);
+											g2.setFillStyle( "#000000" );
+										}
+										
+										ly += nnstrh/2.0;
 										if( !rightalign ) {
 											g2.fillText(substr, lx, ly );
 										} else {
@@ -2657,18 +2697,11 @@ public class Treedraw implements EntryPoint {
 				if( color != null && color.length() > 0 ) g2.setFillStyle( color );
 				else g2.setFillStyle( "#000000" );
 				
-				double mhchunk = Math.max( 10.0, hchunk );
-				double strw = 0;
-				double strh = 5.0*Math.log(mhchunk);
-				double nstrh = resnode.getFontSize() == -1.0 ? strh : resnode.getFontSize()*strh;
-				double frmh = strh;
-				frmh = resnode.getFontSize() == -1.0 ? frmh : resnode.getFrameSize()*frmh;
-				double frmo = resnode.getFrameOffset();
-				
 				String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)nstrh+"px sans-serif";
 				if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
 				//String[] split = use.split( "_" );
 				TextMetrics tm;
+				double strw = 0.0;
 				if( b ) {
 					//g2.setFont( lFont );
 					//for( String s : split ) {
@@ -2715,7 +2748,9 @@ public class Treedraw implements EntryPoint {
 				if( vertical ) {
 					if( showlinage ) {
 						if( circular ) {
-							if( use != null && use.length() > 0 ) drawMundi( g2, use, color, strh, frmh, frmo, y+realny, mleaves, (w-addon+5)*circularScale );
+							if( use != null && use.length() > 0 ) {
+								drawMundi( g2, use, color, nstrh, frmh, frmo, y+realny, mleaves, (w-addon*2.0+5)*circularScale );
+							}
 							
 							if( resnode.getMeta() != null && resnode.getMeta().length() > 0 ) {
 								String[] metasplit = resnode.getMeta().split("_");
@@ -2757,11 +2792,11 @@ public class Treedraw implements EntryPoint {
 									
 									fontstr = (resnode.isSelected() ? "bold " : " ")+(int)nstrh+"px sans-serif";
 									if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
-									drawMundi( g2, metadata, metacolor, nstrh, mfrmh, metaframeoffset, y+realny, mleaves, (w-addon+5)*circularScale/*+(k*metaframesize*4.0)*/ );
+									drawMundi( g2, metadata, metacolor, nstrh, mfrmh, metaframeoffset, y+realny, mleaves, (w-addon*2.0+5)*circularScale/*+(k*metaframesize*4.0)*/ );
 								}
 							}
 						} else {
-							g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
+							g2.fillText(use, w-addon+10, y+realny+nstrh/2.3 );
 							double hdiff = (dh*(mleaves-1)/2.0);
 							g2.beginPath();
 							g2.moveTo(w-addon+5, y+realny-hdiff);
@@ -2777,7 +2812,7 @@ public class Treedraw implements EntryPoint {
 							double cy = (w+nx*circularScale*Math.sin(a))/2.0;
 							g2.translate( cx, cy );
 							g2.rotate( a );
-							g2.fillText(use, -strw/2.0, strh/2.3 );
+							g2.fillText(use, -strw/2.0, nstrh/2.3 );
 							g2.rotate( -a );
 							g2.translate( -cx, -cy );
 						} else {
@@ -2786,13 +2821,13 @@ public class Treedraw implements EntryPoint {
 									//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
 									//i++;
 								//}
-								g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+								g2.fillText(use, nx-strw/2.0, y+ny+nstrh/2.3 );
 							} else {
 								//for( String s : split ) {
 									//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
 									//i++;
 								//}
-								g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+								g2.fillText(use, nx-strw/2.0, y+ny+nstrh/2.3 );
 							}
 						}
 					}

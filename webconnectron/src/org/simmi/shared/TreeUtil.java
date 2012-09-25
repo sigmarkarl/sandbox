@@ -465,26 +465,20 @@ public class TreeUtil {
 				if( name != null && name.length() > 0 ) {
 					str += name;
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
-					if( fontsize != -1.0 ) {
-						if( framesize == -1.0 ) str += "{"+fontsize+"}";
-						else str += "{"+fontsize+" "+framesize+"}";
-					}
+					String framestr = this.getFrameString();
+					if( framestr != null ) str += "{"+framestr+"}";
 					str += ";"+meta; //"'"+name+";"+meta+"'";
 				} else {
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
-					if( fontsize != -1.0 ) {
-						if( framesize == -1.0 ) str += "{"+fontsize+"}";
-						else str += "{"+fontsize+" "+framesize+"}";
-					}
+					String framestr = this.getFrameString();
+					if( framestr != null ) str += "{"+framestr+"}";
 					str += ";"+meta; //"'"+meta+"'";
 				}
 			} else if( name != null && name.length() > 0 ) {
 				str += name;
 				if( color != null && color.length() > 0 ) str += "["+color+"]";
-				if( fontsize != -1.0 ) {
-					if( framesize == -1.0 ) str += "{"+fontsize+"}";
-					else str += "{"+fontsize+" "+framesize+"}";
-				}
+				String framestr = this.getFrameString();
+				if( framestr != null ) str += "{"+framestr+"}";
 			}
 			
 			//if( h > 0.0 )
