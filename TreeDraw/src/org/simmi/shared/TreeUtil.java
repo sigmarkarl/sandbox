@@ -465,26 +465,24 @@ public class TreeUtil {
 				if( name != null && name.length() > 0 ) {
 					str += name;
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
-					if( fontsize != -1.0 ) {
-						if( framesize == -1.0 ) str += "{"+fontsize+"}";
-						else str += "{"+fontsize+" "+framesize+"}";
-					}
+					String framestr = this.getFrameString();
+					if( framestr != null ) str += "{"+framestr+"}";
 					str += ";"+meta; //"'"+name+";"+meta+"'";
 				} else {
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
-					if( fontsize != -1.0 ) {
-						if( framesize == -1.0 ) str += "{"+fontsize+"}";
-						else str += "{"+fontsize+" "+framesize+"}";
-					}
+					String framestr = this.getFrameString();
+					if( framestr != null ) str += "{"+framestr+"}";
 					str += ";"+meta; //"'"+meta+"'";
 				}
 			} else if( name != null && name.length() > 0 ) {
 				str += name;
 				if( color != null && color.length() > 0 ) str += "["+color+"]";
-				if( fontsize != -1.0 ) {
+				String framestr = this.getFrameString();
+				if( framestr != null ) str += "{"+framestr+"}";
+				/*if( fontsize != -1.0 ) {
 					if( framesize == -1.0 ) str += "{"+fontsize+"}";
 					else str += "{"+fontsize+" "+framesize+"}";
-				}
+				}*/
 			}
 			
 			//if( h > 0.0 )
@@ -1215,7 +1213,7 @@ public class TreeUtil {
 						n.setName( null );
 					}
 				}
-				String name = (col == null || col.length() == 0) ? sel : sel+"["+col+"]{1.0 2.0 1.05}";
+				String name = (col == null || col.length() == 0) ? sel : sel+"["+col+"]{1.0 3.0 1.00}";
 				node.setName( name );
 			}
 		}
@@ -1230,12 +1228,30 @@ public class TreeUtil {
 			String sel = null;
 			//String col = null;
 			for( Node n : node.nodes ) {
+				int c1 = n.countMaxHeight();
+				/*if( c1 > 4 && n.getMeta() != null && n.getMeta().contains("aquat") ) {
+					System.err.println();
+				}*/
 				if( n.getMeta() != null && n.getMeta().length() > 0 ) {
 					if( sel == null ) {
 						sel = n.getMeta();
+						int i1 = sel.indexOf('[');
+						if( i1 == -1 ) i1 = sel.length();
+						int i2 = sel.indexOf('{');
+						if( i2 == -1 ) i2 = sel.length();
+						int i = Math.min(i1, i2);
+						sel = sel.substring(0, i);
 						//col = n.getColor();
-					} else {
-						if( !sel.equals( n.getMeta() ) ) {
+					} else {						
+						String nmeta = n.getMeta();
+						int i1 = nmeta.indexOf('[');
+						if( i1 == -1 ) i1 = nmeta.length();
+						int i2 = nmeta.indexOf('{');
+						if( i2 == -1 ) i2 = nmeta.length();
+						int i = Math.min(i1, i2);
+						String str = nmeta.substring(0, i);
+						
+						if( !sel.equals( str ) ) {
 							check = false;
 							break;
 						}
@@ -1248,7 +1264,7 @@ public class TreeUtil {
 						n.setMeta( "" );
 					}
 				}
-				String meta = sel+"{1.0 2.0 1.10}"; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
+				String meta = sel+"{1.0 3.0 1.10}"; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
 				node.setMeta( meta );
 			}
 		}
