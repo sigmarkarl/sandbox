@@ -1205,7 +1205,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( ccol.containsKey(country) ) {
 							color = ccol.get(country);
 						} else {
-							color = "[#"+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+"]";
+							color = "[#"+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+"]{1.0 2.0 1.0}";
 							ccol.put(country, color);
 						}
 						
@@ -2477,7 +2477,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						namesMap.put("Japan", "Japan");
 						namesMap.put("Bulgaria", "Bulgaria");
 						tu.softReplaceNames( n, namesMap );*/
-						tu.nameParentNodes( n );
+						//tu.nameParentNodes( n );
 						tu.nameParentNodesMeta( n );
 						tree = n.toString();
 						
