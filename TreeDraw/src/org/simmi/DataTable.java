@@ -2378,6 +2378,21 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("saveSel", new Object[] {selname, sb.toString()} );
 			}
 		});
+		popup.add( new AbstractAction("Propogate selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder sb = new StringBuilder();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					Object o = table.getValueAt(r, 1);
+					if( r == rr[0] ) sb.append( (String)o );
+					else sb.append( ","+(String)o );
+				}
+				
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("propSel", new Object[] {sb.toString()} );
+			}
+		});
 		popup.add( selectionMenu );
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );

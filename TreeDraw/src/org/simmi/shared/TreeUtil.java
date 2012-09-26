@@ -15,6 +15,24 @@ public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
 	
+	public void propogateSelection( Set<String> selset, Node node ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				propogateSelection(selset, n);
+			}
+		}
+		if( selset.contains( node.getName() ) ) node.setSelected( true );
+		else node.setSelected( false );
+	}
+	
+	public void invertSelectionRecursive( Node root ) {
+		root.setSelected( !root.isSelected() );
+		if( root.getNodes() != null ) for( Node n : root.getNodes() ) {
+			invertSelectionRecursive( n );
+		}
+	}
+	
 	public void setTreeLabel( String label ) {
 		this.treelabel = label;
 	}

@@ -61,7 +61,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -72,12 +71,14 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+
+import elemental.client.Browser;
+import elemental.html.Console;
 
 public class Treedraw implements EntryPoint {
 	Canvas				canvas;
@@ -405,7 +406,26 @@ public class Treedraw implements EntryPoint {
 			List<Sequence> seqs = currentSeqs;
 			currentSeqs = null;
 			//TreeUtil	treeutil;
-			if( str.startsWith("#") ) {
+			
+			elemental.html.Window wnd = Browser.getWindow();
+			Console cnsl = wnd.getConsole();
+			if( cnsl != null ) {
+				cnsl.log( "eitthvad i gangi" );
+			}
+			
+			if( str.startsWith("propogate") ) {
+				if( cnsl != null ) {
+					cnsl.log( str );
+				}
+				
+				int iof = str.indexOf('{');
+				int eof = str.indexOf('}', iof+1);
+				String[] split = str.substring(iof+1, eof).split(",");
+				if( treeutil.getNode() != null ) {
+					treeutil.propogateSelection( new HashSet<String>( Arrays.asList(split) ), treeutil.getNode() );
+					handleTree();
+				}
+			} else if( str.startsWith("#") ) {
 				int i = str.lastIndexOf("tree");
 				if( i != -1 ) {
 					i = str.indexOf('(', i);
@@ -1289,7 +1309,7 @@ public class Treedraw implements EntryPoint {
 				root.seth( 0.0 );
 				root.seth2( 0.0 );
 			} else if( c == 'i' || c == 'I' ) {
-				invertSelectionRecursive( root );
+				treeutil.invertSelectionRecursive( root );
 			} else if( c == 'r' || c == 'R' ) {
 				if( treeutil != null && selectedNode != null ) {
 					if( !treeutil.isRooted() ) {
@@ -1385,7 +1405,7 @@ public class Treedraw implements EntryPoint {
 			}
 		}, ContextMenuEvent.getType());*/
 		
-		popup = new PopupPanel( true );
+		/*popup = new PopupPanel( true );
 		final MenuBar	menu = new MenuBar( true );
 		popup.add( menu );
 		
@@ -1395,7 +1415,7 @@ public class Treedraw implements EntryPoint {
 				save( root.toString() );
 				popup.hide();
 			}
-		});
+		});*/
 		
 		canvas = Canvas.createIfSupported();
 		
@@ -1915,6 +1935,18 @@ public class Treedraw implements EntryPoint {
 		arrangehp.add( arcs );
 		arrangehp.add( titl );
 		
+		Label	selab = new Label("Selection ");
+		Button	retsel = new Button("retain");
+		retsel.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				treeutil.retainSelection( treeutil.getNode() );
+			}
+		});
+		HorizontalPanel	selpan = new HorizontalPanel();
+		selpan.add( selab );
+		selpan.add( retsel );
+		
 		HorizontalPanel labhp = new HorizontalPanel();
 		labhp.setSpacing( 5 );
 		CheckBox scalecheck = new CheckBox("Scale");
@@ -1963,6 +1995,7 @@ public class Treedraw implements EntryPoint {
 		labhp.add( linagecheck );
 		
 		choicePanel.add( arrangehp );
+		choicePanel.add( selpan );
 		choicePanel.add( bc );
 		choicePanel.add( eqhp );
 		choicePanel.add( labhp );
@@ -1980,13 +2013,6 @@ public class Treedraw implements EntryPoint {
 		console( Window.Location.getParameterMap().keySet().toString() );
 		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
 			postParent( Window.Location.getParameter("callback") );
-		}
-	}
-	
-	public void invertSelectionRecursive( Node root ) {
-		root.setSelected( !root.isSelected() );
-		if( root.getNodes() != null ) for( Node n : root.getNodes() ) {
-			invertSelectionRecursive( n );
 		}
 	}
 	
