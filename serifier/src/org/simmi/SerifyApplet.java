@@ -3732,6 +3732,43 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
+		popup.add( new AbstractAction("Remove gaps") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f1 = fc.getSelectedFile();
+					if( !f1.isDirectory() ) f1 = f1.getParentFile();
+					final File dir = f1;
+					
+					Map<String,Map<String,StringBuilder>>	seqmap = new HashMap<String,Map<String,StringBuilder>>();
+					
+					JavaFasta jf = new JavaFasta( SerifyApplet.this );
+					jf.initDataStructures();
+					
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						String name = (String)table.getValueAt( r, 1 );
+						String path = (String)table.getValueAt( r, 3 );
+						
+						jf.lseq.clear();
+						try {
+							URL url = new URL( path );
+							jf.importFile( name, url.openStream() );
+							jf.removeAllGaps( jf.lseq );
+							int i = path.lastIndexOf('.');
+							if( i == -1 ) i = path.length();
+							URI uri = new URI(path.substring(0, i)+"_unaligned.fasta");
+							File f = new File( uri );
+							jf.writeFasta( jf.lseq, new FileWriter( f ) );
+						} catch(IOException | URISyntaxException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+		});
 		popup.addSeparator();
 		popup.add( new AbstractAction("Blast join") {
 			@Override
@@ -4027,7 +4064,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	private void addSequences( String name, Reader rd, String path ) throws URISyntaxException, IOException {
+	public void addSequences( String name, Reader rd, String path ) throws URISyntaxException, IOException {
 		String type = "nucl";
 		int nseq = 0;
 		
