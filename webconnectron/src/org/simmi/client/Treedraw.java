@@ -77,8 +77,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-import elemental.client.Browser;
-import elemental.html.Console;
+//import elemental.client.Browser;
+//import elemental.html.Console;
 
 public class Treedraw implements EntryPoint {
 	Canvas				canvas;
@@ -407,16 +407,16 @@ public class Treedraw implements EntryPoint {
 			currentSeqs = null;
 			//TreeUtil	treeutil;
 			
-			elemental.html.Window wnd = Browser.getWindow();
-			Console cnsl = wnd.getConsole();
-			if( cnsl != null ) {
+			//elemental.html.Window wnd = Browser.getWindow();
+			//Console cnsl = wnd.getConsole();
+			/*if( cnsl != null ) {
 				cnsl.log( "eitthvad i gangi" );
-			}
+			}*/
 			
 			if( str.startsWith("propogate") ) {
-				if( cnsl != null ) {
+				/*if( cnsl != null ) {
 					cnsl.log( str );
-				}
+				}*/
 				
 				int iof = str.indexOf('{');
 				int eof = str.indexOf('}', iof+1);
@@ -1941,6 +1941,8 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onClick(ClickEvent event) {
 				treeutil.retainSelection( treeutil.getNode() );
+				treeutil.getNode().countLeaves();
+				drawTree( treeutil );
 			}
 		});
 		HorizontalPanel	selpan = new HorizontalPanel();
