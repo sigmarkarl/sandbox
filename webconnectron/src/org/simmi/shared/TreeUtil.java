@@ -33,24 +33,38 @@ public class TreeUtil {
 		}
 	}
 	
-	public boolean retainSelection( Node n ) {
-		boolean ret = n.isSelected();
+	public boolean isChildSelected( Node n ) {
+		if( n.isSelected() ) return true;
+		
 		List<Node> nodes = n.getNodes();
 		if( nodes != null ) {
-			List<Node> rem = new ArrayList<Node>();
 			for( Node node : nodes ) {
-				boolean b = retainSelection( node );
-				if( b ) {
-					ret = true;
-				} else rem.add(node);
-			}
-			
-			for( Node r : rem ) {
-				n.removeNode( r );
+				if( isChildSelected(node) ) return true;
 			}
 		}
 		
-		return ret;
+		return false;
+	}
+	
+	public boolean retainSelection( Node n ) {
+		if( isChildSelected( n ) ) {
+			List<Node> nodes = n.getNodes();
+			if( nodes != null ) {
+				Node rem = null;
+				List<Node> copy = new ArrayList<Node>(nodes);
+				for( Node node : copy ) {
+					if( retainSelection( node ) ) {
+						rem = node;
+					}
+				}
+				if( rem != null ) {
+					rem.getParent().removeNode( rem );
+				}
+			}
+			return false;
+		} else {
+			return true;
+		}
 	}
 	
 	public void setTreeLabel( String label ) {
