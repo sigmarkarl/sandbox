@@ -15,6 +15,17 @@ public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
 	
+	public void reduceParentSize( Node n ) {
+		List<Node> nodes = n.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node node : nodes) {
+				reduceParentSize( node );
+			}
+			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*0.8 );
+			else n.setFontSize( 0.8 );
+		}
+	}
+	
 	public void propogateSelection( Set<String> selset, Node node ) {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null ) {
@@ -23,7 +34,7 @@ public class TreeUtil {
 			}
 		}
 		if( selset.contains( node.getName() ) ) node.setSelected( true );
-		else node.setSelected( false );
+		//else node.setSelected( false );
 	}
 	
 	public void invertSelectionRecursive( Node root ) {
@@ -564,6 +575,19 @@ public class TreeUtil {
 				if( parent != null && parent.getNodes().remove( this ) ) {
 					Node thenode = nodes.get(0);
 					thenode.seth( thenode.geth() + this.geth() );
+					
+					String hi = thenode.getName();
+					String lo = this.getName();
+					
+					if( hi != null && hi.length() > 0 && lo != null && lo.length() > 0 ) {
+						try {
+							double l = Double.parseDouble( lo );
+							double h = Double.parseDouble( hi );
+							
+							if( l > h ) thenode.setName( lo );
+						} catch( Exception e ) {};
+					}
+					
 					parent.getNodes().add( thenode );
 					thenode.setParent( parent );
 				}
