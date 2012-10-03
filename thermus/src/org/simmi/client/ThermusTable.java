@@ -42,6 +42,8 @@ public class ThermusTable implements EntryPoint {
 		
 		$wnd.showTree = function( newtree ) {
 			$wnd.treetext = newtree;
+			$wnd.console.log( "sisim" );
+			$wnd.console.log( newtree );
 			$wnd.myPopup = s.@org.simmi.client.ThermusTable::windowOpen(Ljava/lang/String;Ljava/lang/String;)( $wnd.domain + '/Treedraw.html?callback=thermusgenes','_blank' ); 
 			//window.open(domain + '/Treedraw.html?callback=thermusgenes','_blank');
 		}

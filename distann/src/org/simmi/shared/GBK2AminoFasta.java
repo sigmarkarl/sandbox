@@ -1,5 +1,10 @@
 package org.simmi.shared;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -163,7 +168,7 @@ public class GBK2AminoFasta {
 			String trimline = line.trim();
 			//String[] split = trimline.split("[\t ]+");
 			
-			if( trimline.startsWith("CDS ") /*|| trimline.startsWith("gene")*/ ) {
+			if( trimline.startsWith("CDS ") || trimline.startsWith("gene") ) {
 				if( anno != null ) annolist.add( anno );
 				anno = new Anno();
 				anno.spec = filename;
@@ -390,10 +395,36 @@ public class GBK2AminoFasta {
 		}
 	}*/
 	
-	/*public static void main(String[] args) {
-		//ftpExtract();
+	public static void main(String[] args) {
 		
-		try {
+		/*try {
+			File f = new File("/home/sigmar/ami57/ami.gb");
+			FileReader fr = new FileReader( f );
+			BufferedReader br = new BufferedReader( fr );
+			StringBuilder filetext = new StringBuilder();
+			String line = br.readLine();
+			while( line != null ) {
+				filetext.append( line+"\n" );
+				line = br.readLine();
+			}
+			br.close();
+			fr.close();
+			
+			StringBuilder sb = handleText("filename.aa", filetext.toString());
+			FileWriter fw = new FileWriter("/home/sigmar/filename.aa");
+			fw.write( sb.toString() );
+			fw.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//ftpExtract();
+ catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		
+		/*try {
 			File file = new File("/home/sigmar/ftpncbi/");
 			File[] ff = file.listFiles();
 			for( File f : ff ) {
@@ -418,6 +449,6 @@ public class GBK2AminoFasta {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}*/
+		}*/
+	}
 }
