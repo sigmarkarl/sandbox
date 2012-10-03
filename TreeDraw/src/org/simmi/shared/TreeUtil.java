@@ -107,6 +107,8 @@ public class TreeUtil {
 	}
 	
 	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {
+		Node retnode = new Node();
+		try {
 		List<Node> nodes;
 		int len = corrInd.size();
 		if( guideTree != null ) {
@@ -252,14 +254,16 @@ public class TreeUtil {
 			//System.err.println( "size is " + nodes.size() );
 		}
 		
-		Node parnode = new Node();
-		parnode.addNode( nodes.get(0), dmat[1] );
-		parnode.addNode( nodes.get(1), dmat[2] );
+		retnode.addNode( nodes.get(0), dmat[1] );
+		retnode.addNode( nodes.get(1), dmat[2] );
 		nodes.clear();
+		} catch( Exception e ) {
+			e.printStackTrace();
+			//console( e.getMessage() );
+		}
 		
-		parnode.countLeaves();
-		
-		return parnode;
+		retnode.countLeaves();
+		return retnode;
 	}
 	
 	public Node getNode() {
