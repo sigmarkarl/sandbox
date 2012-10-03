@@ -151,6 +151,42 @@ public class TreeUtil {
 		}
 	}
 	
+	public void lms( double[] distmat, List<String> corrInd, Node toptree ) {
+		int len = corrInd.size();
+		List<Node> nodes = this.getLeaves( toptree );
+		int c = 0;
+		for( String s : corrInd ) {
+			int i = c;
+			while( !s.equals( nodes.get(i).getName() ) ) i++;
+			
+			Node tnode = nodes.get(c);
+			nodes.set( c, nodes.get(i) );
+			nodes.set( i, tnode );
+			
+			c++;
+		}
+		
+		List<Double> lad = new ArrayList<Double>();
+		for( int y = 0; y < corrInd.size()-1; y++ ) {
+			for( int x = y+1; x < corrInd.size(); x++ ) {
+				lad.add( distmat[y*corrInd.size()+x] );
+			}
+		}
+		double[] d = new double[ lad.size() ];
+		int count = 0;
+		for( double dval : lad ) {
+			d[count++] = dval;
+		}
+		
+		int nodecount = toptree.countSubnodes();
+		int[] X = new int[ lad.size()*nodecount ];
+		for( int k = 0; k < nodecount; k++ ) {
+			for( int i = 0; i < lad.size(); i++ ) {
+				
+			}
+		}
+	}
+	
 	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {
 		List<Node> nodes;
 		int len = corrInd.size();
@@ -700,6 +736,18 @@ public class TreeUtil {
 		
 		public void setColor( String color ) {
 			this.color = color;
+		}
+		
+		public int countSubnodes() {
+			int total = 0;
+			if( !isCollapsed() && nodes != null && nodes.size() > 0 ) {
+				for( Node node : nodes ) {
+					total += node.countLeaves();
+				}
+				total += nodes.size();
+			} else total = 1;
+			
+			return total;
 		}
 		
 		public int countLeaves() {
