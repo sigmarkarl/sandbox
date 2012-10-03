@@ -2579,7 +2579,7 @@ public class Treedraw implements EntryPoint {
 									double ly = y+ny;
 									if( circular ) {
 										double a = (2.0*Math.PI*ly)/h;
-										double val = rightalign ? w-addon : lx;
+										double val = rightalign ? w-addon+10 : lx;
 										double cx = (w+val*circularScale*Math.cos( a ))/2.0;
 										double cy = (w+val*circularScale*Math.sin( a ))/2.0;
 										
@@ -2654,7 +2654,7 @@ public class Treedraw implements EntryPoint {
 									double ly = y+ny;
 									if( circular ) {
 										double a = (2.0*Math.PI*ly)/h;
-										double val = rightalign ? w-addon : lx;
+										double val = rightalign ? w-addon+100 : lx;
 										double cx = (w+val*circularScale*Math.cos( a ))/2.0;
 										double cy = (w+val*circularScale*Math.sin( a ))/2.0;
 										//double cx = (w+val*Math.cos( a ))/2.0;
