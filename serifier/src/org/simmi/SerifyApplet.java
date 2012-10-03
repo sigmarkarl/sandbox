@@ -1984,15 +1984,29 @@ public class SerifyApplet extends JApplet {
 		
 		BufferedReader br = new BufferedReader( new InputStreamReader( blasti ) );
 		String line = br.readLine();
+		String current;
 		while( line != null ) {
 			String trim = line.trim();
 			if( trim.startsWith("Query=") ) {
+				current = null;
 				String name = trim.substring(6).trim();
 				line = br.readLine();
-				while( line != null && !line.startsWith(">") && !line.contains("No hits") ) line = br.readLine();
-				if( line != null ) {
-					mapHit.put( name, line.substring(1).trim() );
+				while( line != null ) {
+					while( line != null && (!line.startsWith(">") && !line.contains("No hits") && !line.startsWith("Query=")) ) {
+						line = br.readLine();
+					}
+					if( line != null ) {
+						if( line.startsWith("Query") ) break;
+						String newcurrent = line.substring(1).trim();
+						if( current == null || (current.contains("Uncultured bacterium") && !newcurrent.contains("Uncultured bacterium")) || (current.contains("Uncultured") && !newcurrent.contains("Uncultured")) ) {
+							mapHit.put( name, newcurrent );
+							current = newcurrent;
+						}
+						line = br.readLine();
+					}
 				}
+				if( line == null ) break;
+				else if( line.startsWith("Query") ) continue;
 			}
 			line = br.readLine();
 		}
@@ -4548,7 +4562,7 @@ public class SerifyApplet extends JApplet {
 	
 	public static void main(String[] args) {
 		try {
-			Map<String,String> mstr = mapNameHit( new FileInputStream("/u0/viggo.blastout") );
+			Map<String,String> mstr = mapNameHit( new FileInputStream("/u0/viggo_nt_10.blastout") );
 			for( String key : mstr.keySet() ) {
 				String val = mstr.get(key);
 				if( val.contains("No hits") ) {
@@ -4557,10 +4571,16 @@ public class SerifyApplet extends JApplet {
 					int i = val.indexOf(' ');
 					int k = val.indexOf("strain");
 					if( k < 0 ) k = val.length();
-					mstr.put( key, val.substring(i+1, k).trim().replace(' ', '_') );
+					
+					String newval = val.substring(i+1, k).trim().replace("Uncultured ", "");//.replace(' ', '_');
+					i = newval.indexOf(' ');
+					if( i > 0 ) newval = newval.substring(0,i);
+					newval = newval.substring(0, 1).toUpperCase()+newval.substring(1);
+					
+					mstr.put( key, newval );
 				}
 			}
-			doMapHitStuff( mstr, new FileInputStream("/u0/viggo_aligned.fasta"), new FileOutputStream("/u0/viggo_aligned_renamed.fasta"), ";" );
+			doMapHitStuff( mstr, new FileInputStream("/u0/viggo_aligned.fasta"), new FileOutputStream("/u0/viggo_aligned_renamed_nt.fasta"), ";" );
 		} catch( IOException e ) {
 			e.printStackTrace();
 		}
