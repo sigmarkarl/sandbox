@@ -2385,8 +2385,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					Object o = table.getValueAt(r, 1);
-					if( r == rr[0] ) sb.append( (String)o );
-					else sb.append( ","+(String)o );
+					String val = ((String)o).replace("_", "");
+					if( r == rr[0] ) sb.append( val );
+					else sb.append( ","+val );
 				}
 				
 				JSObject win = JSObject.getWindow( DataTable.this );
@@ -2413,6 +2414,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				
 				runnable = new Runnable() {
 					public void run() {
+						System.err.println( "fuck you bleh2" );
+						console( "hey what the fuck" );
 						//boolean color = colors.isSelected();
 						boolean cantor = jukes.isSelected();
 						boolean bootstrap = boots.isSelected();
@@ -2456,8 +2459,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
 						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
 						TreeUtil	tu = new TreeUtil();
+						
+						console( "eeerm" + corrInd.size() );
 						Node n = tu.neighborJoin(corr, corrInd, null);
-
+						console( "hey what the fuck eeeerm" );
+						
 						if( bootstrap ) {
 							Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
 								@Override
@@ -2482,6 +2488,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							}
 							tu.appendCompare( n );
 						}
+						System.err.println( "fuck you bleh" );
+						console( "hey what the fuck2" );
 						/*Map<String,String> namesMap = new HashMap<String,String>();
 						namesMap.put("Chile", "Chile");
 						namesMap.put("Yellowstone", "Yellowstone");
@@ -2501,6 +2509,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							try {
 								JSObject win = JSObject.getWindow( DataTable.this );
 								Object[] objs = { tree };
+								System.err.println( "fuck you" + tree );
+								console( "sko hey what the fuck" + tree );
 								win.call("showTree", objs);
 							} catch( Exception e1 ) {
 								scc = false;
