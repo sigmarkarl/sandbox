@@ -170,8 +170,11 @@ public class TreeUtil {
 		int nodecount = toptree.countSubnodes();
 		int[] X = new int[ lad.size()*nodecount ];
 		for( int k = 0; k < nodecount; k++ ) {
-			for( int i = 0; i < lad.size(); i++ ) {
-				
+			for( int y = 0; y < corrInd.size()-1; y++ ) {
+				Node ny = nodes.get(y);
+				for( int x = y+1; x < corrInd.size(); x++ ) {
+					Node nx = nodes.get(x);
+				}
 			}
 		}
 	}
