@@ -15,6 +15,17 @@ public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
 	
+	public void reduceParentSize( Node n ) {
+		List<Node> nodes = n.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node node : nodes) {
+				reduceParentSize( node );
+			}
+			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*0.8 );
+			else n.setFontSize( 0.8 );
+		}
+	}
+	
 	public void propogateSelection( Set<String> selset, Node node ) {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null ) {
@@ -23,7 +34,7 @@ public class TreeUtil {
 			}
 		}
 		if( selset.contains( node.getName() ) ) node.setSelected( true );
-		else node.setSelected( false );
+		//else node.setSelected( false );
 	}
 	
 	public void invertSelectionRecursive( Node root ) {
@@ -180,6 +191,8 @@ public class TreeUtil {
 	}
 	
 	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {
+		Node retnode = new Node();
+		try {
 		List<Node> nodes;
 		int len = corrInd.size();
 		if( guideTree != null ) {
@@ -325,14 +338,16 @@ public class TreeUtil {
 			//System.err.println( "size is " + nodes.size() );
 		}
 		
-		Node parnode = new Node();
-		parnode.addNode( nodes.get(0), dmat[1] );
-		parnode.addNode( nodes.get(1), dmat[2] );
+		retnode.addNode( nodes.get(0), dmat[1] );
+		retnode.addNode( nodes.get(1), dmat[2] );
 		nodes.clear();
+		} catch( Exception e ) {
+			e.printStackTrace();
+			//console( e.getMessage() );
+		}
 		
-		parnode.countLeaves();
-		
-		return parnode;
+		retnode.countLeaves();
+		return retnode;
 	}
 	
 	public Node getNode() {
@@ -570,6 +585,10 @@ public class TreeUtil {
 				if( color != null && color.length() > 0 ) str += "["+color+"]";
 				String framestr = this.getFrameString();
 				if( framestr != null ) str += "{"+framestr+"}";
+				/*if( fontsize != -1.0 ) {
+					if( framesize == -1.0 ) str += "{"+fontsize+"}";
+					else str += "{"+fontsize+" "+framesize+"}";
+				}*/
 			}
 			
 			//if( h > 0.0 )
@@ -603,6 +622,19 @@ public class TreeUtil {
 				if( parent != null && parent.getNodes().remove( this ) ) {
 					Node thenode = nodes.get(0);
 					thenode.seth( thenode.geth() + this.geth() );
+					
+					String hi = thenode.getName();
+					String lo = this.getName();
+					
+					if( hi != null && hi.length() > 0 && lo != null && lo.length() > 0 ) {
+						try {
+							double l = Double.parseDouble( lo );
+							double h = Double.parseDouble( hi );
+							
+							if( l > h ) thenode.setName( lo );
+						} catch( Exception e ) {};
+					}
+					
 					parent.getNodes().add( thenode );
 					thenode.setParent( parent );
 				}
@@ -1327,12 +1359,30 @@ public class TreeUtil {
 			String sel = null;
 			//String col = null;
 			for( Node n : node.nodes ) {
+				int c1 = n.countMaxHeight();
+				/*if( c1 > 4 && n.getMeta() != null && n.getMeta().contains("aquat") ) {
+					System.err.println();
+				}*/
 				if( n.getMeta() != null && n.getMeta().length() > 0 ) {
 					if( sel == null ) {
 						sel = n.getMeta();
+						int i1 = sel.indexOf('[');
+						if( i1 == -1 ) i1 = sel.length();
+						int i2 = sel.indexOf('{');
+						if( i2 == -1 ) i2 = sel.length();
+						int i = Math.min(i1, i2);
+						sel = sel.substring(0, i);
 						//col = n.getColor();
-					} else {
-						if( !sel.equals( n.getMeta() ) ) {
+					} else {						
+						String nmeta = n.getMeta();
+						int i1 = nmeta.indexOf('[');
+						if( i1 == -1 ) i1 = nmeta.length();
+						int i2 = nmeta.indexOf('{');
+						if( i2 == -1 ) i2 = nmeta.length();
+						int i = Math.min(i1, i2);
+						String str = nmeta.substring(0, i);
+						
+						if( !sel.equals( str ) ) {
 							check = false;
 							break;
 						}
