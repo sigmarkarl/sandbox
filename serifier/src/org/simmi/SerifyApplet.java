@@ -89,6 +89,9 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
@@ -4313,7 +4316,7 @@ public class SerifyApplet extends JApplet {
 		set.remove( node.getName() );
 	}
 	
-	public static void majorityRuleConsensus() {
+	public static void majorityRuleConsensus( double[] distmat, List<String> corrInd ) {
 		try {
 			TreeUtil treeutil = new TreeUtil();
 			Map<Set<String>,Integer> nmap = new HashMap<Set<String>,Integer>();
@@ -4393,6 +4396,46 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				}
+			}
+			
+			if( distmat != null ) {
+				List<Node> nodes = treeutil.getLeaves( root );
+				c = 0;
+				for( String s : corrInd ) {
+					int i = c;
+					while( !s.equals( nodes.get(i).getName() ) ) i++;
+					
+					Node tnode = nodes.get(c);
+					nodes.set( c, nodes.get(i) );
+					nodes.set( i, tnode );
+					
+					c++;
+				}
+				
+				List<Double> lad = new ArrayList<Double>();
+				for( int y = 0; y < corrInd.size()-1; y++ ) {
+					for( int x = y+1; x < corrInd.size(); x++ ) {
+						lad.add( distmat[y*corrInd.size()+x] );
+					}
+				}
+				double[] d = new double[ lad.size() ];
+				int count = 0;
+				for( double dval : lad ) {
+					d[count++] = dval;
+				}
+				
+				List<Node> subnodes = root.getSubNodes();
+				int nodecount = subnodes.size();
+				double[][] X = new double[ lad.size() ][ nodecount ];
+				for( int k = 0; k < nodecount; k++ ) {
+					for( int i = 0; i < lad.size(); i++ ) {
+						
+					}
+				}
+				
+				RealMatrix Xmat = new Array2DRowRealMatrix( X );
+				RealMatrix XX = Xmat.transpose().multiply(Xmat);
+				RealMatrix invXX = new LUDecomposition( XX ).getSolver().getInverse();
 			}
 			
 			System.err.println( root.toString() );
