@@ -15,6 +15,17 @@ public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
 	
+	public void reduceParentSize( Node n ) {
+		List<Node> nodes = n.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node node : nodes) {
+				reduceParentSize( node );
+			}
+			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*0.8 );
+			else n.setFontSize( 0.8 );
+		}
+	}
+	
 	public void propogateSelection( Set<String> selset, Node node ) {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null ) {
@@ -23,13 +34,47 @@ public class TreeUtil {
 			}
 		}
 		if( selset.contains( node.getName() ) ) node.setSelected( true );
-		else node.setSelected( false );
+		//else node.setSelected( false );
 	}
 	
 	public void invertSelectionRecursive( Node root ) {
 		root.setSelected( !root.isSelected() );
 		if( root.getNodes() != null ) for( Node n : root.getNodes() ) {
 			invertSelectionRecursive( n );
+		}
+	}
+	
+	public boolean isChildSelected( Node n ) {
+		if( n.isSelected() ) return true;
+		
+		List<Node> nodes = n.getNodes();
+		if( nodes != null ) {
+			for( Node node : nodes ) {
+				if( isChildSelected(node) ) return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public boolean retainSelection( Node n ) {
+		if( isChildSelected( n ) ) {
+			List<Node> nodes = n.getNodes();
+			if( nodes != null ) {
+				Node rem = null;
+				List<Node> copy = new ArrayList<Node>(nodes);
+				for( Node node : copy ) {
+					if( retainSelection( node ) ) {
+						rem = node;
+					}
+				}
+				if( rem != null ) {
+					rem.getParent().removeNode( rem );
+				}
+			}
+			return false;
+		} else {
+			return true;
 		}
 	}
 	
@@ -106,7 +151,47 @@ public class TreeUtil {
 		}
 	}
 	
+	public double[][] lms( double[] distmat, List<String> corrInd, Node toptree ) {
+		int len = corrInd.size();
+		List<Node> nodes = this.getLeaves( toptree );
+		int c = 0;
+		for( String s : corrInd ) {
+			int i = c;
+			while( !s.equals( nodes.get(i).getName() ) ) i++;
+			
+			Node tnode = nodes.get(c);
+			nodes.set( c, nodes.get(i) );
+			nodes.set( i, tnode );
+			
+			c++;
+		}
+		
+		List<Double> lad = new ArrayList<Double>();
+		for( int y = 0; y < corrInd.size()-1; y++ ) {
+			for( int x = y+1; x < corrInd.size(); x++ ) {
+				lad.add( distmat[y*corrInd.size()+x] );
+			}
+		}
+		double[] d = new double[ lad.size() ];
+		int count = 0;
+		for( double dval : lad ) {
+			d[count++] = dval;
+		}
+		
+		int nodecount = toptree.countSubnodes();
+		double[][] X = new double[ lad.size() ][ nodecount ];
+		for( int k = 0; k < nodecount; k++ ) {
+			for( int i = 0; i < lad.size(); i++ ) {
+				
+			}
+		}
+		
+		return X;
+	}
+	
 	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {
+		Node retnode = new Node();
+		try {
 		List<Node> nodes;
 		int len = corrInd.size();
 		if( guideTree != null ) {
@@ -252,14 +337,16 @@ public class TreeUtil {
 			//System.err.println( "size is " + nodes.size() );
 		}
 		
-		Node parnode = new Node();
-		parnode.addNode( nodes.get(0), dmat[1] );
-		parnode.addNode( nodes.get(1), dmat[2] );
+		retnode.addNode( nodes.get(0), dmat[1] );
+		retnode.addNode( nodes.get(1), dmat[2] );
 		nodes.clear();
+		} catch( Exception e ) {
+			e.printStackTrace();
+			//console( e.getMessage() );
+		}
 		
-		parnode.countLeaves();
-		
-		return parnode;
+		retnode.countLeaves();
+		return retnode;
 	}
 	
 	public Node getNode() {
@@ -534,6 +621,19 @@ public class TreeUtil {
 				if( parent != null && parent.getNodes().remove( this ) ) {
 					Node thenode = nodes.get(0);
 					thenode.seth( thenode.geth() + this.geth() );
+					
+					String hi = thenode.getName();
+					String lo = this.getName();
+					
+					if( hi != null && hi.length() > 0 && lo != null && lo.length() > 0 ) {
+						try {
+							double l = Double.parseDouble( lo );
+							double h = Double.parseDouble( hi );
+							
+							if( l > h ) thenode.setName( lo );
+						} catch( Exception e ) {};
+					}
+					
 					parent.getNodes().add( thenode );
 					thenode.setParent( parent );
 				}
@@ -646,6 +746,18 @@ public class TreeUtil {
 		
 		public void setColor( String color ) {
 			this.color = color;
+		}
+		
+		public int countSubnodes() {
+			int total = 0;
+			if( !isCollapsed() && nodes != null && nodes.size() > 0 ) {
+				for( Node node : nodes ) {
+					total += node.countLeaves();
+				}
+				total += nodes.size();
+			} else total = 1;
+			
+			return total;
 		}
 		
 		public int countLeaves() {
@@ -817,6 +929,20 @@ public class TreeUtil {
 				ret.addAll( getLeaves( n ) );
 			}
 		} else ret.add( node );
+		
+		return ret;
+	}
+	
+	public List<Node> getSubNodes( Node node ) {
+		List<Node>	ret = new ArrayList<Node>();
+		
+		List<Node> nodes = node.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				ret.addAll( getLeaves( n ) );
+			}
+		} 
+		ret.add( node );
 		
 		return ret;
 	}
