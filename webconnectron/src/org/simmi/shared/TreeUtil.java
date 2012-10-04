@@ -188,6 +188,8 @@ public class TreeUtil {
 	}
 	
 	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {
+		Node retnode = new Node();
+		try {
 		List<Node> nodes;
 		int len = corrInd.size();
 		if( guideTree != null ) {
@@ -333,14 +335,16 @@ public class TreeUtil {
 			//System.err.println( "size is " + nodes.size() );
 		}
 		
-		Node parnode = new Node();
-		parnode.addNode( nodes.get(0), dmat[1] );
-		parnode.addNode( nodes.get(1), dmat[2] );
+		retnode.addNode( nodes.get(0), dmat[1] );
+		retnode.addNode( nodes.get(1), dmat[2] );
 		nodes.clear();
+		} catch( Exception e ) {
+			e.printStackTrace();
+			//console( e.getMessage() );
+		}
 		
-		parnode.countLeaves();
-		
-		return parnode;
+		retnode.countLeaves();
+		return retnode;
 	}
 	
 	public Node getNode() {
@@ -578,6 +582,10 @@ public class TreeUtil {
 				if( color != null && color.length() > 0 ) str += "["+color+"]";
 				String framestr = this.getFrameString();
 				if( framestr != null ) str += "{"+framestr+"}";
+				/*if( fontsize != -1.0 ) {
+					if( framesize == -1.0 ) str += "{"+fontsize+"}";
+					else str += "{"+fontsize+" "+framesize+"}";
+				}*/
 			}
 			
 			//if( h > 0.0 )
@@ -1348,12 +1356,30 @@ public class TreeUtil {
 			String sel = null;
 			//String col = null;
 			for( Node n : node.nodes ) {
+				int c1 = n.countMaxHeight();
+				/*if( c1 > 4 && n.getMeta() != null && n.getMeta().contains("aquat") ) {
+					System.err.println();
+				}*/
 				if( n.getMeta() != null && n.getMeta().length() > 0 ) {
 					if( sel == null ) {
 						sel = n.getMeta();
+						int i1 = sel.indexOf('[');
+						if( i1 == -1 ) i1 = sel.length();
+						int i2 = sel.indexOf('{');
+						if( i2 == -1 ) i2 = sel.length();
+						int i = Math.min(i1, i2);
+						sel = sel.substring(0, i);
 						//col = n.getColor();
-					} else {
-						if( !sel.equals( n.getMeta() ) ) {
+					} else {						
+						String nmeta = n.getMeta();
+						int i1 = nmeta.indexOf('[');
+						if( i1 == -1 ) i1 = nmeta.length();
+						int i2 = nmeta.indexOf('{');
+						if( i2 == -1 ) i2 = nmeta.length();
+						int i = Math.min(i1, i2);
+						String str = nmeta.substring(0, i);
+						
+						if( !sel.equals( str ) ) {
 							check = false;
 							break;
 						}
