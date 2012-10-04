@@ -54,7 +54,7 @@ public class Sequence implements Comparable<Sequence> {
 		
 		out.append( seqlen+"\n" );
 		
-		Set<String> seqset = new HashSet<String>();
+		Map<String,Integer> seqset = new HashMap<String,Integer>();
 		
 		int u = 0;
 		int count = 0;
@@ -68,17 +68,21 @@ public class Sequence implements Comparable<Sequence> {
 						
 						String subname = seqname.substring(0, m);
 						
-						if( seqset.contains( subname ) ) {
-							if( seqname.length() > 10 ) {
-								subname = seqname.substring( seqname.length()-10, seqname.length() );
-							} else {
-								m = Math.min( seqname.length(), 10-1 );
-								subname = seqname.substring(0,m)+(++count);
-							}
-						}
-						seqset.add( subname );
+						int scount = 1;
+						String newname;
+						if( seqset.containsKey( subname ) ) {
+							scount = seqset.get( subname )+1;
+							//if( seqname.length() > 10 ) {
+							//	subname = seqname.substring( seqname.length()-10, seqname.length() );
+							//} else {
+							String cstr = ""+scount;
+								m = Math.min( seqname.length(), 10-cstr.length() );
+								newname = seqname.substring(0,m)+cstr;
+							//}
+						} else newname = subname;
+						seqset.put( subname, scount );
 						
-						out.append( subname );
+						out.append( newname );
 						while( m < 10 ) {
 							out.append(' ');
 							m++;
