@@ -95,6 +95,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
+import org.simmi.shared.TreeUtil.NodeSet;
 import org.simmi.unsigned.JavaFasta;
 
 public class SerifyApplet extends JApplet {
@@ -4293,21 +4294,6 @@ public class SerifyApplet extends JApplet {
 		return "";
 	}
 	
-	public static class NodeSet implements Comparable<NodeSet> {
-		public NodeSet( Set<String> nodes, int count ) {
-			this.nodes = nodes;
-			this.count = count;
-		}
-		
-		Set<String>	nodes;
-		int count;
-		
-		@Override
-		public int compareTo(NodeSet o) {
-			return o.count - count;
-		}
-	}
-	
 	public static void removeNames( Set<String> set, Node node ) {
 		List<Node> subnodes = node.getNodes();
 		if( subnodes != null ) for( Node n : subnodes ) {
@@ -4316,11 +4302,22 @@ public class SerifyApplet extends JApplet {
 		set.remove( node.getName() );
 	}
 	
+	public static boolean inPath( Node leaf, Node n ) {
+		if( leaf == n ) return true;
+		else {
+			Node p = leaf.getParent();
+			if( p != null ) {
+				return inPath( p, n );
+			}
+		}
+		return false;
+	}
+	
 	public static void majorityRuleConsensus( double[] distmat, List<String> corrInd ) {
 		try {
 			TreeUtil treeutil = new TreeUtil();
-			Map<Set<String>,Integer> nmap = new HashMap<Set<String>,Integer>();
-			File dir = new File( "/home/sigmar/thermusgenes_short/aligned/trees/" );
+			Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
+			File dir = new File( "/u0/40genes/thermus/aligned/trees/" );
 			//File dir = new File( "c:/cygwin/home/simmi/thermusgenes_short/aligned/trees/" );
 			File[] ff = dir.listFiles();
 			for( File f : ff ) {
@@ -4334,7 +4331,7 @@ public class SerifyApplet extends JApplet {
 				}
 				br.close();
 
-				Node n = treeutil.parseTreeRecursive( sb.toString(), false );
+				Node n = treeutil.parseTreeRecursive( sb.toString(), true );
 				treeutil.setLoc( 0 );
 				n.nodeCalcMap( nmap );
 			}
@@ -4342,14 +4339,14 @@ public class SerifyApplet extends JApplet {
 			List<NodeSet>	nslist = new ArrayList<NodeSet>();
 			System.err.println( nmap.size() );
 			for( Set<String> nodeset : nmap.keySet() ) {
-				int count = nmap.get( nodeset );
-				nslist.add( new NodeSet( nodeset, count ) );
+				NodeSet count = nmap.get( nodeset );
+				nslist.add( count );
 			}
 			
 			Collections.sort( nslist );
 			int c = 0;
 			for( NodeSet nodeset : nslist ) {
-				System.err.println( nodeset.count + "  " + nodeset.nodes );
+				System.err.println( nodeset.getCount() + "  " + nodeset.getAverageHeight() );
 				c++;
 				if( c > 20 ) break;
 			}
@@ -4357,9 +4354,9 @@ public class SerifyApplet extends JApplet {
 			Map<Set<String>, Node>	nodemap = new HashMap<Set<String>, Node>();
 			Map<String, Node>		leafmap = new HashMap<String, Node>();
 			NodeSet	allnodes = nslist.get(0);
-			int total = allnodes.count;
+			int total = allnodes.getCount();
 			Node root = treeutil.new Node();
-			for( String nname : allnodes.nodes ) {
+			for( String nname : allnodes.getNodes() ) {
 				Node n = treeutil.new Node( nname );
 				root.addNode(n, 1.0);
 				//n.seth( 1.0 );
@@ -4369,28 +4366,33 @@ public class SerifyApplet extends JApplet {
 			for( int i = 1; i < 100; i++ ) {
 				NodeSet	allsubnodes = nslist.get(i);
 				Node subroot = treeutil.new Node();
-				subroot.setName( Math.round( (double)(allsubnodes.count*1000) / (double)total ) / 10.0 + "%" );
+				subroot.setName( Math.round( (double)(allsubnodes.getCount()*1000) / (double)total ) / 10.0 + "%" );
 				
-				Node vn = treeutil.getValidNode( allsubnodes.nodes, root );
-				if( treeutil.isValidSet( allsubnodes.nodes, vn ) ) {				
-					while( allsubnodes.nodes.size() > 0 ) {
-						for( String nname : allsubnodes.nodes ) {
+				Node vn = treeutil.getValidNode( allsubnodes.getNodes(), root );
+				if( treeutil.isValidSet( allsubnodes.getNodes(), vn ) ) {
+					while( allsubnodes.getNodes().size() > 0 ) {
+						for( String nname : allsubnodes.getNodes() ) {
 							Node leaf = leafmap.get( nname );
+							if( leaf == null ) {
+								System.err.println("");
+							}
 							Node newparent = leaf.getParent();
 							Node current = leaf;
-							while( newparent.countLeaves() <= allsubnodes.nodes.size() ) {
+							while( newparent.countLeaves() <= allsubnodes.getNodes().size() ) {
 								current = newparent;
 								newparent = current.getParent();
 							}
 							
-							if( allsubnodes.nodes.containsAll( treeutil.getLeaveNames( current ) ) ) {
+							if( allsubnodes.getNodes().containsAll( treeutil.getLeaveNames( current ) ) ) {
 								Node parent = current.getParent();
 								parent.removeNode( current );
-								parent.addNode( subroot, 1.0 );
-								subroot.addNode( current, 1.0 );
+								parent.addNode( subroot, allsubnodes.getAverageHeight() );
+								
+								double lh = allsubnodes.getAverageLeaveHeight(nname);
+								if( lh != -1.0 ) subroot.addNode( current, lh );
 							
-								removeNames( allsubnodes.nodes, current );
-							} else allsubnodes.nodes.clear();
+								removeNames( allsubnodes.getNodes(), current );
+							} else allsubnodes.getNodes().clear();
 							
 							break;
 						}
@@ -4399,6 +4401,7 @@ public class SerifyApplet extends JApplet {
 			}
 			
 			if( distmat != null ) {
+				if( root.getNodes().size() == 2 ) root = treeutil.removeRoot( root );
 				List<Node> nodes = treeutil.getLeaves( root );
 				c = 0;
 				for( String s : corrInd ) {
@@ -4418,24 +4421,57 @@ public class SerifyApplet extends JApplet {
 						lad.add( distmat[y*corrInd.size()+x] );
 					}
 				}
+				
+				double[][] W = new double[lad.size()][lad.size()];
+				for( int y = 0; y < lad.size(); y++ ) {
+					for( int x = 0; x < lad.size(); x++ ) {
+						W[y][x] = 0.0;
+					}
+				}
 				double[] d = new double[ lad.size() ];
 				int count = 0;
 				for( double dval : lad ) {
-					d[count++] = dval;
+					d[count] = dval;
+					W[count][count] = 1.0; //(dval*dval);
+					count++;
 				}
 				
-				List<Node> subnodes = root.getSubNodes();
+				List<Node> subnodes = treeutil.getSubNodes( root );
 				int nodecount = subnodes.size();
 				double[][] X = new double[ lad.size() ][ nodecount ];
 				for( int k = 0; k < nodecount; k++ ) {
-					for( int i = 0; i < lad.size(); i++ ) {
-						
+					Node n = subnodes.get(k);
+					int i = 0;
+					for( int y = 0; y < corrInd.size()-1; y++ ) {
+						Node l1 = nodes.get(y);
+						boolean hit = inPath( l1, n );
+						for( int x = y+1; x < corrInd.size(); x++ ) {
+							if( hit ) X[i][k] = 1.0;
+							else {
+								Node l2 = nodes.get(x);
+								X[i][k] = inPath(l2,n) ? 1.0 : 0.0;
+							}
+							i++;
+						}
 					}
+					//for( int i = 0; i < lad.size(); i++ ) {}
 				}
 				
+				RealMatrix dmat = new Array2DRowRealMatrix( d );
 				RealMatrix Xmat = new Array2DRowRealMatrix( X );
-				RealMatrix XX = Xmat.transpose().multiply(Xmat);
-				RealMatrix invXX = new LUDecomposition( XX ).getSolver().getInverse();
+				RealMatrix Wmat = new Array2DRowRealMatrix( W );
+				System.err.println( Xmat.getColumnDimension() + "  " + Xmat.getRowDimension() );
+				System.err.println( Xmat.toString() );
+				RealMatrix Xtranspose = Xmat.transpose();
+				RealMatrix XW = Xtranspose.multiply( Wmat );
+				RealMatrix XWX = XW.multiply(Xmat);
+				RealMatrix invXX = new LUDecomposition( XWX ).getSolver().getInverse();
+				RealMatrix v = invXX.multiply( XW.multiply(dmat) );
+				
+				int i = 0;
+				for( Node n : subnodes ) {
+					n.seth( v.getEntry(i++, 0) );
+				}
 			}
 			
 			System.err.println( root.toString() );
@@ -4507,7 +4543,7 @@ public class SerifyApplet extends JApplet {
 						double[] dmat = new double[ lseq.size()*lseq.size() ];
 						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
 						
-						n = treeutil.neighborJoin(dmat, corrInd, null);
+						n = treeutil.neighborJoin(dmat, corrInd, null, false);
 					} else {
 						StringBuilder tree = new StringBuilder();
 						InputStream is = url.openStream();
@@ -4599,12 +4635,70 @@ public class SerifyApplet extends JApplet {
 		distm.write( tree.toString() );
 		distm.close();*/
 		
-		Node node = treeutil.neighborJoin(submat, names, null);
+		Node node = treeutil.neighborJoin(submat, names, null, false);
 		return node.toString();
+	}
+	
+	private static double[] parseDistance( int len, String[] lines, List<String> names ) {
+		double[] dvals = new double[ len*len ];
+		int m = 0;
+		int u = 0;
+		for( int i = 1; i < lines.length; i++ ) {
+			String line = lines[i];
+			String[] ddstrs = line.split("[ \t]+");
+			if( !line.startsWith(" ") ) {
+				m++;
+				u = 0;
+				
+				//int si = ddstrs[0].indexOf('_');
+				//String name = si == -1 ? ddstrs[0] : ddstrs[0].substring( 0, si );
+				//console( "name: " + name );
+				
+				String name = ddstrs[0];
+				names.add( name );
+			}
+			if( ddstrs.length > 2 ) {
+				for( int k = 1; k < ddstrs.length; k++ ) {
+					int idx = (m-1)*len+(u++);
+					if( idx < dvals.length ) dvals[idx] = Double.parseDouble(ddstrs[k]);
+					else System.err.println( m + " more " + u );
+				}
+			}
+		}
+		
+		return dvals;
 	}
 	
 	public static void main(String[] args) {
 		try {
+			FileReader fr = new FileReader("/home/sigmar/conc_40genes.dst");
+			List<String>	llines = new ArrayList<String>();
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			while( line != null ) {
+				llines.add( line );
+				line = br.readLine();
+			}
+			br.close();
+			String[] lines = llines.toArray( new String[ llines.size() ] );
+			int len = Integer.parseInt( lines[0].trim() );
+			List<String> names = new ArrayList<String>();
+			double[] dvals = parseDistance( len, lines, names );
+			
+			TreeUtil tu = new TreeUtil();
+			Node n = tu.neighborJoin(dvals, names, null, false);
+			System.err.println( dvals.length + " " + names.size() );
+			System.err.println( n );
+			
+			majorityRuleConsensus(null, null);
+			//majorityRuleConsensus(dvals, names);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		/*try {
 			Map<String,String> mstr = mapNameHit( new FileInputStream("/u0/viggo_nt_10.blastout") );
 			for( String key : mstr.keySet() ) {
 				String val = mstr.get(key);
@@ -4626,7 +4720,7 @@ public class SerifyApplet extends JApplet {
 			doMapHitStuff( mstr, new FileInputStream("/u0/viggo_aligned.fasta"), new FileOutputStream("/u0/viggo_aligned_renamed_nt.fasta"), ";" );
 		} catch( IOException e ) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		/*Map<String,String> nmap = new HashMap<String,String>();
 		File dir = new File( "/home/sigmar/thermusgenes_short/aligned/trees/" );
