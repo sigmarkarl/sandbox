@@ -1800,21 +1800,8 @@ public class Treedraw implements EntryPoint {
 					
 					newroot.countLeaves();
 				} else if( !v && root.getNodes().size() == 2 ) {
-					List<Node> ln = root.getNodes();
-					Node n1 = ln.get( 0 );
-					Node n2 = ln.get( 1 );
-					if( n1.getNodes() != null & n1.getNodes().size() > 0 ) {
-						n1.addNode( n2, n1.geth()+n2.geth() );
-						n1.setParent( null );
-						treeutil.setNode( n1 );
-					} else {
-						n2.addNode( n1, n2.geth()+n2.geth() );
-						n2.setParent( null );
-						treeutil.setNode( n2 );
-					}
-					root = treeutil.getNode();			
-					
-					root.countLeaves();
+					root = treeutil.removeRoot( treeutil.getNode() );
+					treeutil.setNode( root );
 				}
 				if( treeutil != null ) drawTree( treeutil );
 			}

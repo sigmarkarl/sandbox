@@ -15,6 +15,25 @@ public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
 	
+	public Node removeRoot( Node n ) {
+		Node ret;
+		List<Node> ln = n.getNodes();
+		Node n1 = ln.get( 0 );
+		Node n2 = ln.get( 1 );
+		if( n1.getNodes() != null & n1.getNodes().size() > 0 ) {
+			n1.addNode( n2, n1.geth()+n2.geth() );
+			n1.setParent( null );
+			ret = n1;
+		} else {
+			n2.addNode( n1, n2.geth()+n2.geth() );
+			n2.setParent( null );
+			ret = n2 ;
+		}			
+		ret.countLeaves();
+		
+		return ret;
+	}
+	
 	public void reduceParentSize( Node n ) {
 		List<Node> nodes = n.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {

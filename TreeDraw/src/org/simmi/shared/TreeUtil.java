@@ -15,6 +15,25 @@ public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
 	
+	public Node removeRoot( Node n ) {
+		Node ret;
+		List<Node> ln = n.getNodes();
+		Node n1 = ln.get( 0 );
+		Node n2 = ln.get( 1 );
+		if( n1.getNodes() != null & n1.getNodes().size() > 0 ) {
+			n1.addNode( n2, n1.geth()+n2.geth() );
+			n1.setParent( null );
+			ret = n1;
+		} else {
+			n2.addNode( n1, n2.geth()+n2.geth() );
+			n2.setParent( null );
+			ret = n2 ;
+		}			
+		ret.countLeaves();
+		
+		return ret;
+	}
+	
 	public void reduceParentSize( Node n ) {
 		List<Node> nodes = n.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -189,157 +208,164 @@ public class TreeUtil {
 		return X;
 	}
 	
-	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree ) {
+	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree, boolean rootTree ) {
 		Node retnode = new Node();
 		try {
-		List<Node> nodes;
-		int len = corrInd.size();
-		if( guideTree != null ) {
-			nodes = this.getLeaves( guideTree );
-			int c = 0;
-			for( String s : corrInd ) {
-				int i = c;
-				while( !s.equals( nodes.get(i).getName() ) ) i++;
-				
-				Node tnode = nodes.get(c);
-				nodes.set( c, nodes.get(i) );
-				nodes.set( i, tnode );
-				
-				c++;
-			}
-		} else {
-			nodes = new ArrayList<Node>();
-			for( String name : corrInd ) {
-				Node n = new Node( name );
-				nodes.add( n );
-			}
-		}
-		
-		double[] dmat = corrarr; //new double[len*len];
-		double[] u = new double[len];
-		//System.arraycopy(corrarr, 0, dmat, 0, len*len);
-		while( len > 2 ) {
-			//System.err.println( "trying " + len + " size is " + nodes.size() );
-			for ( int i = 0; i < len; i++ ) {
-				u[i] = 0;
-				for ( int j = 0; j < len; j++ ) {
-					if( i != j ) {
-						double dval = dmat[i*len+j];
-						if( Double.isNaN( dval ) ) {
-							System.err.println("erm");
-						}
-						u[i] += dval;
-					}
-				}
-				u[i] /= len-2;
-			}
-			
-			int imin = 0;
-			int jmin = 1;
-			double dmin = Double.MAX_VALUE;
-			
-			if( guideTree == null ) {
-				for ( int i = 0; i < len-1; i++ ) {
-					for ( int j = i+1; j < len; j++ ) {
-						//if( i != j ) {
-							double val = dmat[i*len+j] - u[i] - u[j];
-							//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
-							if( val < dmin ) {
-								dmin = val;
-								imin = i;
-								jmin = j;
-							}
-						//}
-					}
-				}
-			} else {
-				for ( int i = 0; i < len-1; i++ ) {
-					for ( int j = i+1; j < len; j++ ) {
-						Node iparent = nodes.get( i ).getParent();
-						Node jparent = nodes.get( j ).getParent();
-						if( iparent == jparent ) {
-							double val = dmat[i*len+j] - u[i] - u[j];
-							//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
-							if( val < dmin ) {
-								dmin = val;
-								imin = i;
-								jmin = j;
-							}
-						}
-					}
-				}
-			}
-			
-			//System.err.println( dmat[imin*len+jmin] );
-			double vi = (dmat[imin*len+jmin]+u[imin]-u[jmin])/2.0;
-			double vj = (dmat[imin*len+jmin]+u[jmin]-u[imin])/2.0;
-			
-			Node parnode;
-			Node nodi = nodes.get( imin );
-			Node nodj = nodes.get( jmin );
-			if( guideTree == null ) {
-				parnode = new Node();
-				parnode.addNode( nodi, vi );
-				parnode.addNode( nodj, vj );
-			} else {
-				parnode = nodi.getParent(); 
-				nodi.seth( vi );
-				nodj.seth( vj );
-			}
-			
-			if( imin > jmin ) {
-				nodes.remove(imin);
-				nodes.remove(jmin);
-			} else {
-				nodes.remove(jmin);
-				nodes.remove(imin);
-			}
-			nodes.add( parnode );
-			
-			double[] dmatmp = new double[(len-1)*(len-1)];
-			int k = 0;
-			//boolean done = false;
-			for( int i = 0; i < len; i++ ) {
-				if( i != imin && i != jmin ) {
-					for( int j = 0; j < len; j++ ) {
-						if( j != imin && j != jmin ) {
-							/*if( k >= dmatmp.length ) {
-								System.err.println();
-							}*/
-							/*if( k >= dmatmp.length ) {
-								System.err.println("ok");
-							}*/
-							dmatmp[k] = dmat[i*len+j];
-							k++;
-						}
-					}
+			List<Node> nodes;
+			int len = corrInd.size();
+			if( guideTree != null ) {
+				nodes = this.getLeaves( guideTree );
+				int c = 0;
+				for( String s : corrInd ) {
+					int i = c;
+					while( !s.equals( nodes.get(i).getName() ) ) i++;
 					
-					k++;
+					Node tnode = nodes.get(c);
+					nodes.set( c, nodes.get(i) );
+					nodes.set( i, tnode );
 					
-					//done = true;
+					c++;
+				}
+			} else {
+				nodes = new ArrayList<Node>();
+				for( String name : corrInd ) {
+					Node n = new Node( name );
+					nodes.add( n );
 				}
 			}
-			k = 0;
-			for( int i = 0; i < len; i++ ) {
-				if( i != imin && i != jmin ) {
-					dmatmp[((k++) + 1)*(len-1)-1] = (dmat[imin*len+i] + dmat[jmin*len+i] - dmat[imin*len+jmin])/2.0;
-				}
-			}
-			k = 0;
-			for( int i = 0; i < len; i++ ) {
-				if( i != imin && i != jmin ) {
-					dmatmp[(len-2)*(len-1)+(k++)] = (dmat[i*len+imin] + dmat[i*len+jmin] - dmat[jmin*len+imin])/2.0;
-				}
-			}
-			len--;
-			dmat = dmatmp;
 			
-			//System.err.println( "size is " + nodes.size() );
-		}
-		
-		retnode.addNode( nodes.get(0), dmat[1] );
-		retnode.addNode( nodes.get(1), dmat[2] );
-		nodes.clear();
+			double[] dmat = corrarr; //new double[len*len];
+			double[] u = new double[len];
+			//System.arraycopy(corrarr, 0, dmat, 0, len*len);
+			while( len > 2 ) {
+				//System.err.println( "trying " + len + " size is " + nodes.size() );
+				for ( int i = 0; i < len; i++ ) {
+					u[i] = 0;
+					for ( int j = 0; j < len; j++ ) {
+						if( i != j ) {
+							double dval = dmat[i*len+j];
+							if( Double.isNaN( dval ) ) {
+								System.err.println("erm");
+							}
+							u[i] += dval;
+						}
+					}
+					u[i] /= len-2;
+				}
+				
+				int imin = 0;
+				int jmin = 1;
+				double dmin = Double.MAX_VALUE;
+				
+				if( guideTree == null ) {
+					for ( int i = 0; i < len-1; i++ ) {
+						for ( int j = i+1; j < len; j++ ) {
+							//if( i != j ) {
+								double val = dmat[i*len+j] - u[i] - u[j];
+								//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+								if( val < dmin ) {
+									dmin = val;
+									imin = i;
+									jmin = j;
+								}
+							//}
+						}
+					}
+				} else {
+					for ( int i = 0; i < len-1; i++ ) {
+						for ( int j = i+1; j < len; j++ ) {
+							Node iparent = nodes.get( i ).getParent();
+							Node jparent = nodes.get( j ).getParent();
+							if( iparent == jparent ) {
+								double val = dmat[i*len+j] - u[i] - u[j];
+								//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+								if( val < dmin ) {
+									dmin = val;
+									imin = i;
+									jmin = j;
+								}
+							}
+						}
+					}
+				}
+				
+				//System.err.println( dmat[imin*len+jmin] );
+				double vi = (dmat[imin*len+jmin]+u[imin]-u[jmin])/2.0;
+				double vj = (dmat[imin*len+jmin]+u[jmin]-u[imin])/2.0;
+				
+				Node parnode;
+				Node nodi = nodes.get( imin );
+				Node nodj = nodes.get( jmin );
+				if( guideTree == null ) {
+					parnode = new Node();
+					parnode.addNode( nodi, vi );
+					parnode.addNode( nodj, vj );
+				} else {
+					parnode = nodi.getParent(); 
+					nodi.seth( vi );
+					nodj.seth( vj );
+				}
+				
+				if( imin > jmin ) {
+					nodes.remove(imin);
+					nodes.remove(jmin);
+				} else {
+					nodes.remove(jmin);
+					nodes.remove(imin);
+				}
+				nodes.add( parnode );
+				
+				double[] dmatmp = new double[(len-1)*(len-1)];
+				int k = 0;
+				//boolean done = false;
+				for( int i = 0; i < len; i++ ) {
+					if( i != imin && i != jmin ) {
+						for( int j = 0; j < len; j++ ) {
+							if( j != imin && j != jmin ) {
+								/*if( k >= dmatmp.length ) {
+									System.err.println();
+								}*/
+								/*if( k >= dmatmp.length ) {
+									System.err.println("ok");
+								}*/
+								dmatmp[k] = dmat[i*len+j];
+								k++;
+							}
+						}
+						
+						k++;
+						
+						//done = true;
+					}
+				}
+				k = 0;
+				for( int i = 0; i < len; i++ ) {
+					if( i != imin && i != jmin ) {
+						dmatmp[((k++) + 1)*(len-1)-1] = (dmat[imin*len+i] + dmat[jmin*len+i] - dmat[imin*len+jmin])/2.0;
+					}
+				}
+				k = 0;
+				for( int i = 0; i < len; i++ ) {
+					if( i != imin && i != jmin ) {
+						dmatmp[(len-2)*(len-1)+(k++)] = (dmat[i*len+imin] + dmat[i*len+jmin] - dmat[jmin*len+imin])/2.0;
+					}
+				}
+				len--;
+				dmat = dmatmp;
+				
+				//System.err.println( "size is " + nodes.size() );
+			}
+			
+			if( rootTree ) {
+				retnode.addNode( nodes.get(0), dmat[1] );
+				retnode.addNode( nodes.get(1), dmat[2] );
+			} else {
+				retnode = nodes.get(0);
+				retnode.seth(0);
+				retnode.setParent( null );
+				retnode.addNode( nodes.get(1), dmat[1]+dmat[2] );
+			}
+			nodes.clear();
 		} catch( Exception e ) {
 			e.printStackTrace();
 			//console( e.getMessage() );
@@ -356,6 +382,73 @@ public class TreeUtil {
 	public void setNode( Node node ) {
 		currentNode = node;
 	}
+	
+	public static class NodeSet implements Comparable<NodeSet> {
+		public NodeSet( Set<String> nodes ) {
+			this.nodes = nodes;
+			//this.count = count;
+		}
+		
+		Set<String>					nodes;
+		Map<String,List<Double>>	leaveHeightMap = new HashMap<String,List<Double>>();
+		List<Double> 				count = new ArrayList<Double>();
+		
+		public int getCount() {
+			return count.size();
+		}
+		
+		public Set<String> getNodes() {
+			return nodes;
+		}
+		
+		public void addLeaveHeight( String name, double h ) {
+			List<Double>	leaveHeights;
+			if( leaveHeightMap.containsKey(name) ) {
+				leaveHeights = leaveHeightMap.get( name );
+			} else {
+				leaveHeights = new ArrayList<Double>();
+				leaveHeightMap.put(name, leaveHeights);
+			}
+			leaveHeights.add( h );
+		}
+		
+		public double getAverageLeaveHeight( String name ) {
+			if( leaveHeightMap.containsKey( name ) ) {
+				List<Double> dlist = leaveHeightMap.get( name );
+				
+				double avg = 0.0;
+				
+				for( double d : dlist ) {
+					avg += d;
+				}
+				
+				avg /= dlist.size();
+				return avg;
+			}
+			return -1.0;
+		}
+		
+		public void add( double h ) {
+			//if( count == null ) count = new ArrayList<Double>();
+			count.add( h );
+		}
+		
+		public double getAverageHeight() {
+			double avg = 0.0;
+			
+			for( double d : count ) {
+				avg += d;
+			}
+			
+			avg /= count.size();
+			return avg;
+		}
+		
+		@Override
+		public int compareTo(NodeSet o) {
+			return o.count.size() - count.size();
+		}
+	};
 	
 	public class Node {
 		String 		name;
@@ -378,6 +471,10 @@ public class TreeUtil {
 		
 		String		collapsed = null;
 		boolean		selected = false;
+		
+		public boolean isLeaf() {
+			return nodes == null || nodes.size() == 0;
+		}
 		
 		public Node findNode( String id ) {
 			if( id.equals( this.id ) ) {
@@ -428,7 +525,7 @@ public class TreeUtil {
 			return s;
 		}
 		
-		public Set<String> nodeCalcMap( Map<Set<String>,Integer>	ls ) {
+		public Set<String> nodeCalcMap( Map<Set<String>,NodeSet>	ls ) {
 			Set<String>	s = new HashSet<String>();
 			if( nodes == null || nodes.size() == 0 ) {
 				s.add( id );
@@ -438,8 +535,18 @@ public class TreeUtil {
 					s.addAll( set );
 				}
 				
-				if( ls.containsKey( s ) ) ls.put( s, ls.get(s)+1 );
-				else ls.put( s, 1 );
+				NodeSet	heights;
+				if( ls.containsKey( s ) ) {
+					heights = ls.get( s );
+					//ls.put( s, ls.get(s)+1 );
+				} else {
+					heights = new NodeSet( s );
+					ls.put( s, heights );
+				}
+				for( Node subn : nodes ) {
+					if( subn.isLeaf() ) heights.addLeaveHeight( subn.getName(), subn.geth() );
+				}
+				heights.add( this.geth() );
 			}
 			return s;
 		}
@@ -939,10 +1046,10 @@ public class TreeUtil {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null ) {
 			for( Node n : nodes ) {
-				ret.addAll( getLeaves( n ) );
+				ret.add( n );
+				ret.addAll( getSubNodes( n ) );
 			}
-		} 
-		ret.add( node );
+		}
 		
 		return ret;
 	}
