@@ -4317,7 +4317,8 @@ public class SerifyApplet extends JApplet {
 		try {
 			TreeUtil treeutil = new TreeUtil();
 			Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
-			File dir = new File( "/u0/40genes/thermus/aligned/trees/" );
+			//File dir = new File( "/home/sigmar/40genes/thermus/aligned/trees/" );
+			File dir = new File( "/home/sigmar/thermusgenes/aligned/trees/" );
 			//File dir = new File( "c:/cygwin/home/simmi/thermusgenes_short/aligned/trees/" );
 			File[] ff = dir.listFiles();
 			for( File f : ff ) {
@@ -4331,8 +4332,9 @@ public class SerifyApplet extends JApplet {
 				}
 				br.close();
 
-				Node n = treeutil.parseTreeRecursive( sb.toString(), true );
+				Node n = treeutil.parseTreeRecursive( sb.toString(), false );
 				treeutil.setLoc( 0 );
+				System.err.println( "about to process "+f.getName() );
 				n.nodeCalcMap( nmap );
 			}
 			
@@ -4346,7 +4348,7 @@ public class SerifyApplet extends JApplet {
 			Collections.sort( nslist );
 			int c = 0;
 			for( NodeSet nodeset : nslist ) {
-				System.err.println( nodeset.getCount() + "  " + nodeset.getAverageHeight() );
+				System.err.println( nodeset.getCount() + "  " + nodeset.getNodes() + "  " + nodeset.getAverageHeight() );
 				c++;
 				if( c > 20 ) break;
 			}
@@ -4373,9 +4375,6 @@ public class SerifyApplet extends JApplet {
 					while( allsubnodes.getNodes().size() > 0 ) {
 						for( String nname : allsubnodes.getNodes() ) {
 							Node leaf = leafmap.get( nname );
-							if( leaf == null ) {
-								System.err.println("");
-							}
 							Node newparent = leaf.getParent();
 							Node current = leaf;
 							while( newparent.countLeaves() <= allsubnodes.getNodes().size() ) {
@@ -4386,10 +4385,20 @@ public class SerifyApplet extends JApplet {
 							if( allsubnodes.getNodes().containsAll( treeutil.getLeaveNames( current ) ) ) {
 								Node parent = current.getParent();
 								parent.removeNode( current );
-								parent.addNode( subroot, allsubnodes.getAverageHeight() );
 								
+								double h = allsubnodes.getAverageHeight();
 								double lh = allsubnodes.getAverageLeaveHeight(nname);
-								if( lh != -1.0 ) subroot.addNode( current, lh );
+								
+								/*subroot.addNode( current, h );
+								if( lh != -1.0 ) parent.addNode( subroot, lh );
+								else parent.addNode( subroot, 1.0 );*/
+								
+								parent.addNode( subroot, h );
+								
+								if( current.isLeaf() && lh != -1.0 ) {
+									System.err.println( "printing "+current.getName() + "  " + lh );
+									subroot.addNode( current, lh );
+								} else subroot.addNode( current, current.geth() );
 							
 								removeNames( allsubnodes.getNodes(), current );
 							} else allsubnodes.getNodes().clear();
