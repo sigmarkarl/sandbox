@@ -1558,7 +1558,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 	}
 	
-	public void getSpecLoc( String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse ) {
+	public void getSpecLoc( List<Object[]> rowList, String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse ) {
 		for( Object[] row : rowList ) {
 			String country = reverse ? (String)row[21] : (String)row[6];
 			if( country != null && country.length() > 0 ) {
@@ -1860,8 +1860,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Object[] row = rowList.get(rowIndex);
 				row[columnIndex] = aValue;
 				
-				JSObject jso = JSObject.getWindow( DataTable.this );
-				jso.call( "saveMeta", new Object[] {row[1], row[11], row[13]} );
+				try {
+					JSObject jso = JSObject.getWindow( DataTable.this );
+					jso.call( "saveMeta", new Object[] {row[1], row[11], row[13]} );
+				} catch( Exception e ) {
+					
+				}
 			}
 
 			@Override
@@ -2076,7 +2080,92 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
 				Map<String,String>				geoLoc = new HashMap<String,String>();
-				getSpecLoc( specs, specLoc, locSpec, geoLoc, true );
+				
+				List<Object[]>	selectedRowList = new ArrayList<Object[]>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					selectedRowList.add( rowList.get( table.convertRowIndexToModel(r) ) );
+				}
+				getSpecLoc( selectedRowList, specs, specLoc, locSpec, geoLoc, true );
+				
+				try {
+					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
+					fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+					fw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+					fw.write("<Document>");
+					
+					for( String coord : locSpec.keySet() ) {
+						String country = geoLoc.get( coord );
+						
+						Map<String,Long>	specMap = locSpec.get( coord );
+						String specsstr = null;
+						
+						String unos = null;
+						String colors = null;
+						String size = "40x40";
+						for( String spec : specMap.keySet() ) {
+							long idlencount = specMap.get(spec);
+							
+							int idlen = (int)(idlencount&0xFFFFFFFF);
+							int count = (int)(idlencount>>32);
+							
+							int id = (int)(idlen&0xFFFF);
+							int len = (int)(idlen>>16);
+							
+							if( specsstr == null ) specsstr = spec + " ("+id+","+len+","+count+")";
+							else specsstr += "," + spec + " ("+id+","+len+","+count+")";
+							
+							if( len > 900 && id > 97 ) size = "50x50";
+							
+							if( unos == null ) {
+								if( len > 900 && id > 97 ) unos = "2";
+								else unos = "1";
+								colors = specColors.get( spec.substring(2) );
+							} else {
+								if( len > 900 && id > 97 ) unos += ",2";
+								else unos += ",1";
+								colors += ","+specColors.get( spec.substring(2) );
+							}
+						}
+						
+						fw.write("<Placemark>\n");
+						fw.write("<name>"+specsstr+"</name>\n");
+						fw.write("<description>"+country+"</description>\n");
+						fw.write("<Style>");
+						fw.write("<IconStyle>");
+						fw.write("<scale>1.0</scale>");
+						fw.write("<Icon>");
+						fw.write("<href>http://chart.apis.google.com/chart?cht=p&amp;chd=t:"+unos+"&amp;chs="+size+"&amp;chf=bg,s,ffffff00&amp;chco="+colors+"</href>");
+						fw.write("</Icon>");
+						fw.write("</IconStyle>");
+						fw.write("</Style>");
+						fw.write("<Point>\n");
+						fw.write("<coordinates>"+coord+"</coordinates>\n");
+						fw.write("</Point>\n");
+						fw.write("</Placemark>\n");
+					}
+					
+					fw.write("</Document>\n");
+					fw.write("</kml>\n");
+					fw.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				/*try {
+					insertGeocodes();
+				} catch (IOException | AuthenticationException e1) {
+					e1.printStackTrace();
+				}*/
+			}
+		});
+		popup.add( new AbstractAction("Export all KML") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
+				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
+				Map<String,String>				geoLoc = new HashMap<String,String>();
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, true );
 				
 				try {
 					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
@@ -2157,7 +2246,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
 				Map<String,String>				geoLoc = new HashMap<String,String>();
-				getSpecLoc( specs, specLoc, locSpec, geoLoc, false );
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, false );
 				
 				Workbook wb = new XSSFWorkbook();
 				Sheet lSheet = wb.createSheet("Locations");

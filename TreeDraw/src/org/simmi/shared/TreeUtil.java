@@ -544,7 +544,10 @@ public class TreeUtil {
 					ls.put( s, heights );
 				}
 				for( Node subn : nodes ) {
-					if( subn.isLeaf() ) heights.addLeaveHeight( subn.getName(), subn.geth() );
+					if( subn.isLeaf() ) {
+						System.err.println( subn.getName() + "  " + subn.geth() );
+						heights.addLeaveHeight( subn.getName(), subn.geth() );
+					}
 				}
 				heights.add( this.geth() );
 			}

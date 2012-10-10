@@ -8402,7 +8402,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					TreeUtil treeutil = new TreeUtil();
-					treeutil.neighborJoin( newcorr, corrInd, null );
+					treeutil.neighborJoin( newcorr, corrInd, null, true );
 				}
 				
 				/*
