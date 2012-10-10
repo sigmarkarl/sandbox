@@ -634,6 +634,7 @@ public class Order extends JApplet {
 		String		Nafn;
 		String		Framleiðandi;
 		String		Pantað_Af;
+		String		e_Pantað_Fyrir;
 		Integer		e_Magn;
 		String		e_Mælieining;
 		Date		Pantað;
@@ -654,7 +655,7 @@ public class Order extends JApplet {
 			return null;
 		}
 		
-		public Pontun( boolean urgent, String byrgir, String cat, int ordno, String name, String framl, String user, int quant, String unit, Date orddate, Date purdate, Date recdate, String description, String vn, String st, Double price, Date klrdate ) {
+		public Pontun( boolean urgent, String byrgir, String cat, int ordno, String name, String framl, String user, String whom, int quant, String unit, Date orddate, Date purdate, Date recdate, String description, String vn, String st, Double price, Date klrdate ) {
 			this.e_Mikilvægt = urgent;
 			this.Birgi = byrgir;
 			this.Cat = cat;
@@ -662,6 +663,7 @@ public class Order extends JApplet {
 			this.Nafn = name;
 			this.Framleiðandi = framl;
 			this.Pantað_Af = user;
+			this.e_Pantað_Fyrir = whom;
 			this.e_Magn = quant;
 			this.e_Mælieining = unit;
 			this.Pantað = orddate;
@@ -856,7 +858,7 @@ public class Order extends JApplet {
 	}
 	
 	public void loadPnt() throws SQLException {		
-		String sql = "select [ordno], [name], [user], [quant], [unit], [orddate], [purdate], [urgent], [description], [jobid], [location], [recdate], [price], [byrgir], [cat], [findate] from [order].[dbo].[Pontun]";// where [user] = '"+user+"'";
+		String sql = "select [ordno], [name], [user], [orderfor], [quant], [unit], [orddate], [purdate], [urgent], [description], [jobid], [location], [recdate], [price], [byrgir], [cat], [findate] from [order].[dbo].[Pontun]";// where [user] = '"+user+"'";
 		
 		PreparedStatement 	ps = con.prepareStatement(sql);
 		ResultSet 			rs = ps.executeQuery();
@@ -870,7 +872,7 @@ public class Order extends JApplet {
 			String	pname = rs.getString("name");
 			String	cat = rs.getString("cat");
 			String	framl = ordmap.containsKey(cat) ? ordmap.get(cat).e_Framleiðandi : "";
-			Pontun pnt = new Pontun( rs.getBoolean("urgent"), rs.getString("byrgir"), cat, rs.getInt("ordno"), pname, framl, puser, rs.getInt("quant"), 
+			Pontun pnt = new Pontun( rs.getBoolean("urgent"), rs.getString("byrgir"), cat, rs.getInt("ordno"), pname, framl, puser, rs.getString("orderfor"), rs.getInt("quant"), 
 					rs.getString("unit"), rs.getDate("orddate"), afgdate, afhdate, rs.getString("description"), rs.getString("jobid"), rs.getString("location"), price, findate );
 			if( afgdate == null ) pntlist.add( pnt );
 			else if( afhdate == null ) afglist.add( pnt ); 
@@ -965,14 +967,14 @@ public class Order extends JApplet {
 	
 	public void updateorder( Pontun order ) throws SQLException {
 		//String ord = ordno+",'"+name+"','"+user+"',"+quant+",GetDate(),null,0,null";
-		String sql = "update [order].[dbo].[Pontun] set [quant] = "+order.e_Magn+", [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
+		String sql = "update [order].[dbo].[Pontun] set [quant] = "+order.e_Magn+", [orderfor] = '"+order.e_Pantað_Fyrir+"', [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
 		
 		if( order._Klárað != null ) {
-			sql = "update [order].[dbo].[Pontun] set [findate] = GetDate(), [quant] = "+order.e_Magn+", [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
+			sql = "update [order].[dbo].[Pontun] set [findate] = GetDate(), [quant] = "+order.e_Magn+", [orderfor] = '"+order.e_Pantað_Fyrir+"', [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
 		} else if( order._Afhent != null ) {
-			sql = "update [order].[dbo].[Pontun] set [recdate] = GetDate(), [quant] = "+order.e_Magn+", [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
+			sql = "update [order].[dbo].[Pontun] set [recdate] = GetDate(), [quant] = "+order.e_Magn+", [orderfor] = '"+order.e_Pantað_Fyrir+"', [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
 		} else if( order._Afgreitt != null ) {
-			sql = "update [order].[dbo].[Pontun] set [purdate] = GetDate(), [quant] = "+order.e_Magn+", [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
+			sql = "update [order].[dbo].[Pontun] set [purdate] = GetDate(), [quant] = "+order.e_Magn+", [orderfor] = '"+order.e_Pantað_Fyrir+"', [unit] = '"+order.e_Mælieining+"', [Description] = '"+order._Lýsing+"', [Location] = '"+order.e_Svið+"', [jobid] = '"+order.e_Verknúmer+"', [price] = "+order.e_Verð+" where [ordno] = "+order._Númer;
 		}
 		
 		Integer i = modelRowMap.get( order.Cat );
@@ -1019,9 +1021,9 @@ public class Order extends JApplet {
 		return con.prepareStatement( sql );
 	}
 	
-	public void order( String name, String birgi, String cat, int quant, String unit, String verknr, String location, double price ) throws SQLException {
+	public void order( String name, String birgi, String cat, String whom, int quant, String unit, String verknr, String location, double price ) throws SQLException {
 		ordno++;
-		String ord = ordno+",'"+name+"','"+user+"',"+quant+",GetDate(),null,0,null,'"+verknr.substring(0, 10)+"','"+location+"',null,"+price+",'"+birgi+"','"+cat+"',null,'"+unit+"'";
+		String ord = ordno+",'"+name+"','"+user+"',"+quant+",GetDate(),null,0,null,'"+verknr.substring(0, 10)+"','"+location+"',null,"+price+",'"+birgi+"','"+cat+"',null,'"+unit+"','"+whom+"',null";
 		String sql = "insert into [order].[dbo].[Pontun] values ("+ord+")";
 		
 		PreparedStatement 	ps = getPrepStat(sql);
@@ -1029,7 +1031,7 @@ public class Order extends JApplet {
 		
 		if( !b ) {
 			String framl = ordmap.containsKey(cat) ? ordmap.get(cat).e_Framleiðandi : "";
-			pntlist.add( new Pontun( false, birgi, cat, ordno, name, framl, user, quant, unit, new Date( System.currentTimeMillis() ), null, null, "", verknr, location, price, null ) );
+			pntlist.add( new Pontun( false, birgi, cat, ordno, name, framl, user, whom, quant, unit, new Date( System.currentTimeMillis() ), null, null, "", verknr, location, price, null ) );
 		}
 		
 		ps.close();
@@ -1144,6 +1146,7 @@ public class Order extends JApplet {
 	
 	private void panta(String name, String birgi, String cat, String lastjob, String lastloc, String lastunit, double price ) {
 		int 		quant = 1;
+		String		whom = "";
 		Pontun 		tpnt = null;
 		for( Pontun pnt : pntlist ) {
 			if( pnt.Nafn.equals( name ) && pnt.Pantað_Af.equals(user) && pnt.e_Verknúmer.equals(lastjob) ) {
@@ -1156,7 +1159,7 @@ public class Order extends JApplet {
 			if( tpnt != null ) {
 				updateorder( tpnt, tpnt.e_Magn+1, tpnt.e_Verð+price );
 			} else {
-				order( name, birgi, cat, quant, lastunit, lastjob, lastloc, price );
+				order( name, birgi, cat, whom, quant, lastunit, lastjob, lastloc, price );
 			}
 		} catch (SQLException e1) {
 			e1.printStackTrace();
@@ -1661,6 +1664,8 @@ public class Order extends JApplet {
 		
 		if( !valid ) {
 			try {
+				//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+				
 				String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 				con = DriverManager.getConnection(connectionUrl);
 			} catch (SQLException e) {
