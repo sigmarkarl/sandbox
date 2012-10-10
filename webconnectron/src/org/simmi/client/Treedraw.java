@@ -188,6 +188,8 @@ public class Treedraw implements EntryPoint {
 		//console( Double.toString(maxh2-minh2) );
 		
 		Context2d ctx = canvas.getContext2d();
+		ctx.setFillStyle("#FFFFFF");
+		ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 		if( hchunk != 10.0 ) {
 			String fontstr = (int)(5.0*Math.log(hchunk))+"px sans-serif";
 			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
