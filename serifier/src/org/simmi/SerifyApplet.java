@@ -1961,8 +1961,6 @@ public class SerifyApplet extends JApplet {
 			line = br.readLine();
 		}
 		br.close();
-		bw.flush();
-		bw.close();
 		
 		return nseq;
 	}
@@ -3548,67 +3546,113 @@ public class SerifyApplet extends JApplet {
 					if( !f1.isDirectory() ) f1 = f1.getParentFile();
 					final File dir = f1;
 					
-					int r = table.getSelectedRow();
-					int rr = table.convertRowIndexToModel( r );
-					if( rr >= 0 ) {
-						final Sequences seqs = sequences.get( rr );
-						final JTextField spinner = new JTextField();
-						//spinner.setValue( seqs.getNSeq() );
-						spinner.setPreferredSize( new Dimension(600,25) );
+					final JTextField spinner = new JTextField();
+					//spinner.setValue( seqs.getNSeq() );
+					spinner.setPreferredSize( new Dimension(600,25) );
 
-						final JDialog dl;
-						Window window = SwingUtilities.windowForComponent(cnt);
-						if( window != null ) dl = new JDialog( window );
-						else dl = new JDialog();
+					final JDialog dl;
+					Window window = SwingUtilities.windowForComponent(cnt);
+					if( window != null ) dl = new JDialog( window );
+					else dl = new JDialog();
+					
+					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+					JComponent c = new JComponent() {
 						
-						dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-						JComponent c = new JComponent() {
-							
-						};
-						c.setLayout( new FlowLayout() );
-						dl.setTitle("Filter sequences");
-						JButton browse = new JButton( new AbstractAction("Browse") {
-							@Override
-							public void actionPerformed(ActionEvent e) {
-								JFileChooser	filechooser = new JFileChooser();
-								if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-									spinner.setText( filechooser.getSelectedFile().toURI().toString() );
-								}
+					};
+					c.setLayout( new FlowLayout() );
+					dl.setTitle("Filter sequences");
+					JButton browse = new JButton( new AbstractAction("Browse") {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							JFileChooser	filechooser = new JFileChooser();
+							if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+								spinner.setText( filechooser.getSelectedFile().toURI().toString() );
 							}
-						});
-						JButton button = new JButton( new AbstractAction("Ok") {
-							@Override
-							public void actionPerformed(ActionEvent e) {
-								dl.setVisible( false );
-								dl.dispose();
-							}
-						});
-						c.add( spinner );
-						c.add( browse );
-						c.add( button );
-						dl.add( c );
-						dl.setSize(800, 60);
-						
-						dl.addWindowListener( new WindowListener() {
-							@Override
-							public void windowOpened(WindowEvent e) {}
+						}
+					});
+					JButton button = new JButton( new AbstractAction("Ok") {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							dl.setVisible( false );
+							dl.dispose();
+						}
+					});
+					c.add( spinner );
+					c.add( browse );
+					c.add( button );
+					dl.add( c );
+					dl.setSize(800, 60);
+					
+					dl.addWindowListener( new WindowListener() {
+						@Override
+						public void windowOpened(WindowEvent e) {}
 
-							@Override
-							public void windowClosing(WindowEvent e) {}
+						@Override
+						public void windowClosing(WindowEvent e) {}
 
-							@Override
-							public void windowClosed(WindowEvent e) {
+						@Override
+						public void windowClosed(WindowEvent e) {
+							try {
+								String trim = spinner.getText();
+								
+								boolean nofile = false;
+								URL url;
 								try {
-									String trim = spinner.getText();
-									
-									boolean nofile = false;
-									URL url;
-									try {
-										url = new URL( trim );
-									} catch( Exception exc ) {
-										nofile = true;
+									url = new URL( trim );
+								} catch( Exception exc ) {
+									nofile = true;
+								}
+								
+								String path = null;
+								String type = null;
+								String trimname = null;
+								
+								Map<String,String> fset = new HashMap<String,String>();
+								if( nofile ) {
+									String[] farray = { trim };
+									for( String str : farray ) {
+										fset.put(str, null);
 									}
-									
+									//fset.addAll( Arrays.asList( farray ) );
+								} else {
+									File fl = new File( new URI(trim) );
+									FileReader fr = new FileReader( fl );
+									BufferedReader br = new BufferedReader( fr );
+									String line = br.readLine();
+									if( !trim.contains("454ReadStatus") ) {
+										while( line != null ) {
+											/*if( line.contains("ingletons") ) {
+												fset.add( line.split("[\t ]+")[0] );
+											}*/								
+											String[] split = line.split("\t");
+											if( split.length > 1 ) fset.put( split[0], split[1] );
+											else fset.put( line, null );
+											
+											line = br.readLine();
+										}
+									} else {
+										while( line != null ) {
+											/*if( line.contains("ingletons") ) {
+												fset.add( line.split("[\t ]+")[0] );
+											}*/								
+											if( line.contains("Singleton") ) { 
+												String[] split = line.split("[\t ]+");
+												//if( split.length > 1 ) fset.put( split[0], split[1] );
+												fset.put( split[0], null );
+											}
+											
+											line = br.readLine();
+										}
+									}
+									br.close();
+								}
+								
+								int nseq = 0;
+								BufferedWriter bw = null;
+								int[] rr = table.getSelectedRows();
+								for( int r : rr ) {
+									int rrr = table.convertRowIndexToModel( r );
+									final Sequences seqs = sequences.get( rrr );
 									URI uri = new URI( seqs.getPath() );
 									InputStream is = uri.toURL().openStream();
 									
@@ -3616,72 +3660,57 @@ public class SerifyApplet extends JApplet {
 										is = new GZIPInputStream( is );
 									}
 									
-									url = uri.toURL();
-									String urlstr = url.toString();
-									String[] erm = urlstr.split("\\/");
-									String name = erm[ erm.length-1 ];
-									int ind = name.lastIndexOf('.');
-									
-									String sff = name;
-									String sf2 = "";
-									if( ind != -1 ) {
-										sff = name.substring(0, ind);
-										sf2 = name.substring(ind+1,name.length());
+									if( bw == null ) {
+										url = uri.toURL();
+										String urlstr = url.toString();
+										String[] erm = urlstr.split("\\/");
+										String name = erm[ erm.length-1 ];
+										int ind = name.lastIndexOf('.');
+										
+										String sff = name;
+										String sf2 = "";
+										if( ind != -1 ) {
+											sff = name.substring(0, ind);
+											sf2 = name.substring(ind+1,name.length());
+										}
+										
+										trimname = sff+"_trimmed";
+										File f = new File( dir, trimname+"."+sf2 );
+										path = f.toURI().toString();
+										type = seqs.getType();
+												FileWriter fw = new FileWriter(f);
+										
+										bw = new BufferedWriter( fw );
 									}
 									
-									String trimname = sff+"_trimmed";
-									File f = new File( dir, trimname+"."+sf2 );
-									FileWriter fw = new FileWriter(f);
-									
-									Map<String,String> fset = null;
-									
-									fset = new HashMap<String,String>();
-									if( nofile ) {
-										String[] farray = { trim };
-										for( String str : farray ) {
-											fset.put(str, null);
-										}
-										//fset.addAll( Arrays.asList( farray ) );
-									} else {
-										File fl = new File( new URI(trim) );
-										FileReader fr = new FileReader( fl );
-										BufferedReader br = new BufferedReader( fr );
-										String line = br.readLine();
-										while( line != null ) {
-											/*if( line.contains("ingletons") ) {
-												fset.add( line.split("[\t ]+")[0] );
-											}*/
-											String[] split = line.split("\t");
-											if( split.length > 1 ) fset.put( split[0], split[1] );
-											else fset.put( line, null );
-											
-											line = br.readLine();
-										}
-									}
-									int nseq = trimFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), fset, false );
-									
-									SerifyApplet.this.addSequences(trimname, seqs.getType(), f.toURI().toString(), nseq);
-								} catch (IOException e1) {
-									e1.printStackTrace();
-								} catch (URISyntaxException e1) {
-									e1.printStackTrace();
+									nseq += trimFasta( new BufferedReader( new InputStreamReader( is ) ), bw, fset, false );
 								}
+								if( bw != null ) {
+									bw.flush();
+									bw.close();
+								}
+								
+								SerifyApplet.this.addSequences(trimname, type, path, nseq);
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							} catch (URISyntaxException e1) {
+								e1.printStackTrace();
 							}
+						}
 
-							@Override
-							public void windowIconified(WindowEvent e) {}
+						@Override
+						public void windowIconified(WindowEvent e) {}
 
-							@Override
-							public void windowDeiconified(WindowEvent e) {}
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
 
-							@Override
-							public void windowActivated(WindowEvent e) {}
+						@Override
+						public void windowActivated(WindowEvent e) {}
 
-							@Override
-							public void windowDeactivated(WindowEvent e) {}
-						});
-						dl.setVisible( true );
-					}
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+					});
+					dl.setVisible( true );
 				}
 			}
 		});
