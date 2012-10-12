@@ -13,6 +13,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -2204,9 +2206,9 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser	filechooser = new JFileChooser();
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-					File f = filechooser.getSelectedFile();
+					final File f = filechooser.getSelectedFile();
 					try {
-						Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
+						final Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
 						
 						int[] rr = table.getSelectedRows();
 						for( int r : rr ) {
@@ -2234,20 +2236,128 @@ public class SerifyApplet extends JApplet {
 							br.close();
 						}
 						
-						FileWriter	fw = new FileWriter( f );
-						for( String key : seqmap.keySet() ) {
-							fw.write( ">"+key+"\n" );
-							StringBuilder sb = seqmap.get( key );
-							for (int i = 0; i < sb.length(); i += 70) {
-								fw.append(sb.substring(i, Math.min(i + 70, sb.length())) + "\n");
-							}
-						}
-						fw.close();
+						JFrame popup = new JFrame();
+						popup.setSize(800, 600);
+						popup.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 						
-						addSequences( f.getName(), f.toURI().toString() );
+						final List<String> keyList = new ArrayList<String>( seqmap.keySet() );
+						final boolean[]	barr = new boolean[ keyList.size() ];
+						for( int i = 0; i < barr.length; i++ ) {
+							barr[i] = true;
+						}
+						
+						JTable table = new JTable();
+						table.setModel( new TableModel() {
+							
+							@Override
+							public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+								barr[rowIndex] = (Boolean)aValue;
+							}
+							
+							@Override
+							public void removeTableModelListener(TableModelListener l) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public boolean isCellEditable(int rowIndex, int columnIndex) {
+								return columnIndex == 0;
+							}
+							
+							@Override
+							public Object getValueAt(int rowIndex, int columnIndex) {
+								if( columnIndex == 0 ) return barr[ rowIndex ]; 
+								return keyList.get( rowIndex );
+							}
+							
+							@Override
+							public int getRowCount() {
+								return keyList.size();
+							}
+							
+							@Override
+							public String getColumnName(int columnIndex) {
+								if( columnIndex == 0 ) return "Use";
+								return "Name";
+							}
+							
+							@Override
+							public int getColumnCount() {
+								return 2;
+							}
+							
+							@Override
+							public Class<?> getColumnClass(int columnIndex) {
+								if( columnIndex == 0 ) return Boolean.class;
+								return String.class;
+							}
+							
+							@Override
+							public void addTableModelListener(TableModelListener l) {
+								// TODO Auto-generated method stub
+								
+							}
+						});
+						JScrollPane	scrollpane = new JScrollPane( table );
+						
+						popup.add( scrollpane );
+						popup.setVisible( true );
+						
+						popup.addWindowListener( new WindowListener() {
+							
+							@Override
+							public void windowOpened(WindowEvent e) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public void windowIconified(WindowEvent e) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public void windowDeiconified(WindowEvent e) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public void windowDeactivated(WindowEvent e) {}
+								
+							@Override
+							public void windowClosing(WindowEvent e) {}
+							
+							@Override
+							public void windowClosed(WindowEvent e) {
+								try {
+									int k = 0;
+									FileWriter fw = new FileWriter( f );
+									for( boolean b : barr ) {
+										if( b ) {
+											String key = keyList.get(k);
+											fw.write( ">"+key+"\n" );
+											StringBuilder sb = seqmap.get( key );
+											for (int i = 0; i < sb.length(); i += 70) {
+												fw.append(sb.substring(i, Math.min(i + 70, sb.length())) + "\n");
+											}
+										}
+										k++;
+									}
+									fw.close();
+									
+									addSequences( f.getName(), f.toURI().toString() );
+								} catch (IOException | URISyntaxException e1) {
+									e1.printStackTrace();
+								}
+							}
+							
+							@Override
+							public void windowActivated(WindowEvent e) {}
+						});
 					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
 						e1.printStackTrace();
 					}
 				}
