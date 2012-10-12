@@ -609,7 +609,7 @@ public class SortTable extends JApplet {
 			}
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
-			fgroupMap = isGroup( new InputStreamReader( inputStream ), "\t", false );
+			fgroupMap = isGroup( new InputStreamReader( inputStream, "UTF-8" ), "\t", false );
 		} else {
 			fgroupMap = new HashMap<String, String>();
 			InputStream inputStream = this.getClass().getResourceAsStream("FD_GROUP.txt");
@@ -691,7 +691,7 @@ public class SortTable extends JApplet {
 			}
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/Food.txt");
-			isFood( new InputStreamReader( inputStream ), fgroupMap, result, "\t", false );
+			isFood( new InputStreamReader( inputStream, "UTF-8" ), fgroupMap, result, "\t", false );
 		} else {
 			InputStream inputStream = this.getClass().getResourceAsStream("FOOD_DES.txt");
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
@@ -736,7 +736,7 @@ public class SortTable extends JApplet {
 				}.run();
 			} catch( SecurityException e ) {*/
 			InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
-			inThread( new InputStreamReader( inputStream ), result, is, "\t", false );
+			inThread( new InputStreamReader( inputStream, "UTF-8" ), result, is, "\t", false );
 		} else {
 			int start = -1;
 			InputStream inputStream = this.getClass().getResourceAsStream("NUT_DATA.txt");
