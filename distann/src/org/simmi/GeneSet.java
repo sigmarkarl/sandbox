@@ -4901,13 +4901,13 @@ public class GeneSet extends JApplet {
 		TreeUtil treeutil = new TreeUtil();
 		treeutil.neighborJoin( dd, 4, corrInd );*/
 		
-		JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
+		/*JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
 		JFrame.EXIT_ON_CLOSE );
 		 
 		frame.setSize(800, 600); 
 		GeneSet gs = new GeneSet(); 
 		gs.init( frame );
-		frame.setVisible( true );
+		frame.setVisible( true );*/
 		 
 
 		// System.err.println( Runtime.getRuntime().availableProcessors() );
@@ -4996,6 +4996,7 @@ public class GeneSet extends JApplet {
 			 * , accset, false );
 			 */
 
+			eyjo( "/home/sigmar/flex2.blastout", "/home/sigmar/ok.fasta", "/home/sigmar/gumol" );
 			//eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/eyjo_filter.fasta", "/home/sigmar/mysilva" );
 			//viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
 			//simmi();
