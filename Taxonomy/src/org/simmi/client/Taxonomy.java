@@ -119,6 +119,32 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	eyjosilva23 = tree.addItem( "eyjoTGATACGTCT" );
 		final TreeItem	eyjosilva24 = tree.addItem( "eyjoTGTACTACTC" );
 		
+		final TreeItem	gumolsilva1 = tree.addItem( "gumolACGACGTCGA" );
+		final TreeItem	gumolsilva2 = tree.addItem( "gumolACGAGTGCGT" );
+		final TreeItem	gumolsilva3 = tree.addItem( "gumolACGCTCGACA" );
+		final TreeItem	gumolsilva4 = tree.addItem( "gumolACGNGTCGCT" );
+		final TreeItem	gumolsilva5 = tree.addItem( "gumolAGACGCACTC" );
+		final TreeItem	gumolsilva6 = tree.addItem( "gumolAGCACTGTAG" );
+		final TreeItem	gumolsilva7 = tree.addItem( "gumolAGGACGCACT" );
+		final TreeItem	gumolsilva8 = tree.addItem( "gumolAGGCACTGTA" );
+		final TreeItem	gumolsilva9 = tree.addItem( "gumolATATCGCGAG" );
+		final TreeItem	gumolsilva10 = tree.addItem( "gumolATATCGCGGA" );
+		final TreeItem	gumolsilva11 = tree.addItem( "gumolATATCGGCGA" );
+		final TreeItem	gumolsilva12 = tree.addItem( "gumolATCAGACACG" );
+		final TreeItem	gumolsilva13 = tree.addItem( "gumolCGGTGTCTCT" );
+		final TreeItem	gumolsilva14 = tree.addItem( "gumolCGTCGTCGTC" );
+		final TreeItem	gumolsilva15 = tree.addItem( "gumolCGTCTCTCAG" );
+		final TreeItem	gumolsilva16 = tree.addItem( "gumolCGTGTCTCTA" );
+		final TreeItem	gumolsilva17 = tree.addItem( "gumolCTCGCGTGTC" );
+		final TreeItem	gumolsilva18 = tree.addItem( "gumolGACGCTCGAC" );
+		final TreeItem	gumolsilva19 = tree.addItem( "gumolGAGACGCACT" );
+		final TreeItem	gumolsilva20 = tree.addItem( "gumolGATATCGCGA" );
+		final TreeItem	gumolsilva21 = tree.addItem( "gumolGCGTGTCTCT" );
+		final TreeItem	gumolsilva22 = tree.addItem( "gumolGCTCGCGTGT" );
+		final TreeItem	gumolsilva23 = tree.addItem( "gumolGTCTCTATGC" );
+		final TreeItem	gumolsilva24 = tree.addItem( "gumolTCTCTATGCG" );
+		final TreeItem	gumolsilva25 = tree.addItem( "gumolTGATACGTCT" );
+		
 		for( int i = 0; i < tree.getItemCount(); i++ ) {
 			TreeItem ti = tree.getItem( i );
 			String text = ti.getText();
@@ -287,7 +313,9 @@ public class Taxonomy implements EntryPoint {
 						}
 					}
 					if( !already ) {
-						if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
+						if( nodename.startsWith("gumol") ) {
+							runSpec( selectedtree, "http://"+server+"/gumol_"+nodename.substring(5)+".txt" );
+						} else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
 						else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 						else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
 						else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
