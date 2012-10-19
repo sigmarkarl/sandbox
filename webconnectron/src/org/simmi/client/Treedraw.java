@@ -1063,18 +1063,18 @@ public class Treedraw implements EntryPoint {
 			String nname = node.getName();
 			if( harshness == 2 ) {
 				int li = nname.indexOf('_');
-				if( li != -1 ) node.setName( nname.substring(0,li) );
+				if( li != -1 ) node.setName( nname.substring(0,li), false );
 			} else if( harshness == 1 ) {
 				int li = nname.lastIndexOf('-');
 				if( li != -1 ) {
 					if( nname.charAt(li-3) == 'U' && nname.charAt(li-2) == 'S' && nname.charAt(li-1) == 'A' ) {
 						int val = nname.indexOf('_', li+1);
-						node.setName( nname.substring( 0, Math.min(nname.length(), val == -1 ? nname.length() : val) ) );
-					} else node.setName( nname.substring(0,li) );
+						node.setName( nname.substring( 0, Math.min(nname.length(), val == -1 ? nname.length() : val) ), false );
+					} else node.setName( nname.substring(0,li), false );
 				}
 			} else {
 				int li = nname.lastIndexOf('_');
-				if( li != -1 ) node.setName( nname.substring(0,li) );
+				if( li != -1 ) node.setName( nname.substring(0,li), false );
 			}
 		}
 	}

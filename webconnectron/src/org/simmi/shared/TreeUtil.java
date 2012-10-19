@@ -661,53 +661,61 @@ public class TreeUtil {
 		}
 		
 		public void setName( String newname ) {
-			if( newname != null ) {
-				int fi = newname.indexOf(';');
-				if( fi == -1 ) {
-					int ci = newname.indexOf("[#");
-					int si = newname.indexOf("{");
-					if( ci == -1 ) {
-						if( si == -1 ) {
-							this.name = newname;
-							this.setFontSize( -1.0 );
+			setName( newname, true );
+		}
+		
+		public void setName( String newname, boolean parse ) {
+			if( parse ) {
+				if( newname != null ) {
+					int fi = newname.indexOf(';');
+					if( fi == -1 ) {
+						int ci = newname.indexOf("[#");
+						int si = newname.indexOf("{");
+						if( ci == -1 ) {
+							if( si == -1 ) {
+								this.name = newname;
+								this.setFontSize( -1.0 );
+							} else {
+								this.name = newname.substring(0,si);
+								int se = newname.indexOf("}",si+1);
+								String mfstr = newname.substring(si+1,se);
+								String[] mfsplit = mfstr.split(" ");
+								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							}
+							this.setColor( null );
 						} else {
-							this.name = newname.substring(0,si);
-							int se = newname.indexOf("}",si+1);
-							String mfstr = newname.substring(si+1,se);
-							String[] mfsplit = mfstr.split(" ");
-							this.setFontSize( Double.parseDouble( mfsplit[0] ) );
-							if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
-							if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							if( si == -1 ) {
+								this.name = newname.substring(0,ci);
+								int ce = newname.indexOf("]",ci+1);
+								this.setColor( newname.substring(ci+1,ce) );
+								this.setFontSize( -1.0 );
+							} else {
+								this.name = newname.substring(0,Math.min(ci, si));
+								int ce = newname.indexOf("]",ci+1);
+								int se = newname.indexOf("}",si+1);
+								this.setColor( newname.substring(ci+1,ce) );
+								String mfstr = newname.substring(si+1,se);
+								String[] mfsplit = mfstr.split(" ");
+								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							}
 						}
-						this.setColor( null );
+						this.id = this.name;
+						this.setMeta( null );
 					} else {
-						if( si == -1 ) {
-							this.name = newname.substring(0,ci);
-							int ce = newname.indexOf("]",ci+1);
-							this.setColor( newname.substring(ci+1,ce) );
-							this.setFontSize( -1.0 );
-						} else {
-							this.name = newname.substring(0,Math.min(ci, si));
-							int ce = newname.indexOf("]",ci+1);
-							int se = newname.indexOf("}",si+1);
-							this.setColor( newname.substring(ci+1,ce) );
-							String mfstr = newname.substring(si+1,se);
-							String[] mfsplit = mfstr.split(" ");
-							this.setFontSize( Double.parseDouble( mfsplit[0] ) );
-							if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
-							if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
-						}
+						this.setName( newname.substring(0,fi) );
+						this.setMeta( newname.substring(fi+1) );
 					}
-					this.id = this.name;
-					this.setMeta( null );
 				} else {
-					this.setName( newname.substring(0,fi) );
-					this.setMeta( newname.substring(fi+1) );
+					this.name = newname;
+					this.setMeta( null );
+					this.setColor( null );
 				}
 			} else {
 				this.name = newname;
-				this.setMeta( null );
-				this.setColor( null );
 			}
 		}
 		
