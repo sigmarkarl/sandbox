@@ -119,6 +119,17 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	eyjosilva23 = tree.addItem( "eyjoTGATACGTCT" );
 		final TreeItem	eyjosilva24 = tree.addItem( "eyjoTGTACTACTC" );
 		
+		for( int i = 0; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rmapstr.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rmapstr.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+		
 		final TreeItem	gumolsilva1 = tree.addItem( "gumolACGACGTCGA" );
 		final TreeItem	gumolsilva2 = tree.addItem( "gumolACGAGTGCGT" );
 		final TreeItem	gumolsilva3 = tree.addItem( "gumolACGCTCGACA" );
@@ -144,17 +155,6 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	gumolsilva23 = tree.addItem( "gumolGTCTCTATGC" );
 		final TreeItem	gumolsilva24 = tree.addItem( "gumolTCTCTATGCG" );
 		final TreeItem	gumolsilva25 = tree.addItem( "gumolTGATACGTCT" );
-		
-		for( int i = 0; i < tree.getItemCount(); i++ ) {
-			TreeItem ti = tree.getItem( i );
-			String text = ti.getText();
-			for( String key : rmapstr.keySet() ) {
-				if( text.contains(key) ) {
-					String val = rmapstr.get(key);
-					ti.setText( text.replace(key, val) );
-				}
-			}
-		}
 		
 		final TreeItem	eyjosilva = tree.addItem( "eyjosilva" );
 		final TreeItem	eyjoroot = tree.addItem( "eyjo" );
@@ -302,7 +302,7 @@ public class Taxonomy implements EntryPoint {
 				TreeItem selectedtree = event.getSelectedItem();
 				
 				String nodename = selectedtree.getText();
-				if( ( nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
+				if( ( nodename.contains("gumol") || nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
 					boolean already = false;
 					for( String key : mapstr.keySet() ) {
 						if( nodename.equals("eyjo"+key) ) {
