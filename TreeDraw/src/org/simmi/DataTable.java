@@ -52,12 +52,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.jnlp.ClipboardService;
-import javax.jnlp.FileContents;
-import javax.jnlp.FileOpenService;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
@@ -87,8 +81,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-
-import netscape.javascript.JSObject;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
