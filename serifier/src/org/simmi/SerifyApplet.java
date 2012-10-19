@@ -3733,7 +3733,7 @@ public class SerifyApplet extends JApplet {
 										while( line != null ) {
 											/*if( line.contains("ingletons") ) {
 												fset.add( line.split("[\t ]+")[0] );
-											}*/								
+											}*/							
 											String[] split = line.split("\t");
 											if( split.length > 1 ) fset.put( split[0], split[1] );
 											else fset.put( line, null );

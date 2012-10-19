@@ -1114,7 +1114,7 @@ public class Order extends JApplet {
 			if( filter == null || v.startsWith( filter ) || (filter.equals("0") && v.startsWith("31")) ) vcombo.addItem( v );
 		}
 		//if( filter == null || filter.equals("3") || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Almennt lab - 312(36%), 412(43%), 612(21%)" );
-		if( filter == null || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Rannsókn 1. hæð - 412(43%) & 612(57%)" );
+		if( filter == null || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Rannsókn 1. hæð - 412(50%) & 612(50%)" );
 		if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "Rannsókn 2. hæð - 412(60%), 112(30%) & 212(10%)" );
 		
 		try {
