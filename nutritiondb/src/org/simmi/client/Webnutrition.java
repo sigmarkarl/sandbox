@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jdo.annotations.Columns;
+
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
@@ -17,20 +19,26 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -57,7 +65,8 @@ public class Webnutrition implements EntryPoint {
 		}
 		
 		public Object valAt( int i ) {
-			return columns[i];
+			if( i < columns.length ) return columns[i];
+			return null;
 		}
 		
 		public int getLength() {
@@ -68,18 +77,142 @@ public class Webnutrition implements EntryPoint {
 		public int compareTo(FoodInfo o) {
 			Object obj = columns[ sortcolumn ];
 			if( obj instanceof String ) {
-				((String)obj).compareTo( (String)o.getSortObject() );
+				return ((String)obj).compareTo( (String)o.getSortObject() );
 			} else if( obj instanceof Double ) {
-				((Double)obj).compareTo( (Double)o.getSortObject() );
+				return ((Double)obj).compareTo( (Double)o.getSortObject() );
 			}
 			return 0;
 		}
 	};
+	
+	public class Column {
+		public Column( String name, int width ) {
+			this.name = name;
+			this.width = width;
+		}
+		
+		String 	name;
+		int		width;
+	};
+	
+	Map<String,Column> nutrmap = new HashMap<String,Column>();
+	Map<String,FoodInfo> foodmap = new HashMap<String,FoodInfo>();
 	List<FoodInfo>	lfoodinfo = new ArrayList<FoodInfo>();
-	List<Integer>	lcolumnwidth = new ArrayList<Integer>();
+	List<Column>	lcolumnwidth = new ArrayList<Column>();
+	
+	public void fetchNutr() throws RequestException {
+		String url = "https://www.googleapis.com/fusiontables/v1/";
+		
+		String appkey = "key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
+		String sql = "SELECT FoodId,NutrId,Value FROM 1NXpzVjOWmM9AXPOb173Z7fZmGrpUlISH3P6DBdo where NutrId='~268~'";
+		String sqlkey = "sql="+URL.encode( sql );
+		String requestData = "query?"+sqlkey+"&"+appkey;
+		url += requestData;
+		console.log( "about to "+requestData );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, url );
+		rb.sendRequest( "", new RequestCallback() {
+			@Override
+			public void onResponseReceived(Request request, Response response) {
+				String jsonString = response.getText();
+				JSONValue jsval = JSONParser.parseLenient( jsonString );
+				JSONObject jsobj = jsval.isObject();
+				if( jsobj != null ) {
+					JSONArray rows = (JSONArray)jsobj.get("rows");
+					//boolean done = false;
+					for( int i = 0; i < rows.size(); i++ ) {
+						JSONArray row = (JSONArray)rows.get(i);
+						JSONString foodid = (JSONString)row.get(0);
+						JSONString nutrid = (JSONString)row.get(1);
+						JSONString value = (JSONString)row.get(2);
+						String foodidstr = foodid.stringValue();
+						String nutridstr = nutrid.stringValue();
+						double val = Double.parseDouble( value.stringValue() );
+						
+						String foodShort = foodidstr.substring(1, foodidstr.length()-1);
+						String nutrShort = nutridstr.substring(1, nutridstr.length()-1);
+						if( foodmap.containsKey( foodShort ) ) {
+							FoodInfo fi = foodmap.get( foodShort );
+							
+							int ind = lcolumnwidth.indexOf( nutrmap.get( nutrShort ) );
+							fi.columns[ind] = val;
+						} else {
+							for( String key : foodmap.keySet() ) {
+								console.log("uff" + key);
+								break;
+							}
+						}
+						//groupIdMap.put( idstr.substring(1, idstr.length()-1), namestr.substring(1, namestr.length()-1 ) );
+					}
+					
+					draw( canvas.getContext2d(), xstart, ystart );
+				}
+				//console( response.getText() );
+			}
+			
+			@Override
+			public void onError(Request request, Throwable exception) { console.log("uhh"); }
+		});
+	}
+	
+	public void fetchNutrDef() throws RequestException {
+		String url = "https://www.googleapis.com/fusiontables/v1/";
+		
+		String appkey = "key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
+		String sql = "SELECT Id,Unit,Name FROM 1NXpzVjOWmM9AXPOb173Z7fZmGrpUlISH3P6DBdo where NutrId='~268~'";
+		String sqlkey = "sql="+URL.encode( sql );
+		String requestData = "query?"+sqlkey+"&"+appkey;
+		url += requestData;
+		console.log( "about to "+requestData );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, url );
+		rb.sendRequest( "", new RequestCallback() {
+			@Override
+			public void onResponseReceived(Request request, Response response) {
+				String jsonString = response.getText();
+				JSONValue jsval = JSONParser.parseLenient( jsonString );
+				JSONObject jsobj = jsval.isObject();
+				if( jsobj != null ) {
+					JSONArray rows = (JSONArray)jsobj.get("rows");
+					//boolean done = false;
+					for( int i = 0; i < rows.size(); i++ ) {
+						JSONArray row = (JSONArray)rows.get(i);
+						JSONString foodid = (JSONString)row.get(0);
+						JSONString nutrid = (JSONString)row.get(1);
+						JSONString value = (JSONString)row.get(2);
+						String foodidstr = foodid.stringValue();
+						String nutridstr = nutrid.stringValue();
+						double val = Double.parseDouble( value.stringValue() );
+						
+						String foodShort = foodidstr.substring(1, foodidstr.length()-1);
+						String nutrShort = nutridstr.substring(1, nutridstr.length()-1);
+						if( foodmap.containsKey( foodShort ) ) {
+							FoodInfo fi = foodmap.get( foodShort );
+							
+							int ind = lcolumnwidth.indexOf( nutrmap.get( nutrShort ) );
+							fi.columns[ind] = val;
+						} else {
+							for( String key : foodmap.keySet() ) {
+								console.log("uff" + key);
+								break;
+							}
+						}
+					}
+				}
+				
+				try {
+					fetchFood();
+				} catch (RequestException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			@Override
+			public void onError(Request request, Throwable exception) { console.log("uhh"); }
+		});
+	}
 	
 	public void fetchFood() throws RequestException {
 		String url = "https://www.googleapis.com/fusiontables/v1/query?sql=SELECT%20Id,GroupId,Name%20FROM%2011kJvZY3UCjtqcA0gN8WRZwtTVGXJ_MxAto7cdUU&key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
+		//String url = "https://www.googleapis.com/fusiontables/v1/query?sql=SELECT%20Id,GroupId,Name%20FROM%201H84iyd1430-Nxzd1o84rFzZQN3dXi-BP7MsNuCE&key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
 		                                                                                                   //1ysVkwxLAO7U4F-ULp58q4P5DqcD70V_MpiKuJ4U
 		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, url );
 		rb.sendRequest( "", new RequestCallback() {
@@ -102,14 +235,32 @@ public class Webnutrition implements EntryPoint {
 						String namestr = name.stringValue();
 						
 						if( namestr.length() > 0 && groupidstr.length() > 0 ) {
-							lfoodinfo.add( new FoodInfo( namestr.substring(1, namestr.length()-1), groupIdMap.get( groupidstr.substring(1, groupidstr.length()-1) ), 0.0 ) );
-							lcolumnwidth.add( 100 );
+							FoodInfo fi = new FoodInfo( namestr.substring(1, namestr.length()-1), groupIdMap.get( groupidstr.substring(1, groupidstr.length()-1) ), 0.0 );
+							foodmap.put( idstr.substring(1, idstr.length()-1), fi );
+							lfoodinfo.add( fi );
 						} else if( !done ) {
 							done = true;
 							console.log( jsonString );
 						}
 						//groupIdMap.put( idstr.substring(1, idstr.length()-1), namestr.substring(1, namestr.length()-1 ) );
 					}
+					lcolumnwidth.add( new Column("Food", 300) );
+					lcolumnwidth.add( new Column("Group", 300) );
+					lcolumnwidth.add( new Column("Energy (kJ)", 100) );
+					lcolumnwidth.add( new Column("Protein (g)", 100) );
+					lcolumnwidth.add( new Column("Carbohydrates (g)", 100) );
+					lcolumnwidth.add( new Column("Starch (g)", 100) );
+					lcolumnwidth.add( new Column("Fat (g)", 100) );
+					lcolumnwidth.add( new Column("Alcohol (g)", 100) );
+					
+					nutrmap.put( "268", lcolumnwidth.get(2) );
+					
+					try {
+						fetchNutr();
+					} catch (RequestException e) {
+						e.printStackTrace();
+					}
+					
 					draw( canvas.getContext2d(), xstart, ystart );
 				}
 				//console( response.getText() );
@@ -135,38 +286,56 @@ public class Webnutrition implements EntryPoint {
 	public void drawSection( Context2d context, int xstartLocal, int ystartLocal, int xloc, int yloc, int canvasWidth, int canvasHeight ) {
 		Set<Integer>	selset = new HashSet<Integer>();
 		
-		int xs = Math.max( 0, ((xstartLocal+xloc)/unitwidth)*unitwidth );
+		//console.log( xstartLocal + "  " + ystartLocal );
+		//int xs = Math.max( 0, ((xstartLocal+xloc)/unitwidth)*unitwidth );
 		int ys = Math.max( 0, ((ystartLocal+yloc)/unitheight)*unitheight );
-		int xe = ((xstartLocal+xloc+canvasWidth)/unitwidth+1)*unitwidth;
+		//int xe = ((xstartLocal+xloc+canvasWidth)/unitwidth+1)*unitwidth;
 		int ye = Math.min( ((ystartLocal+yloc+canvasHeight)/unitheight+1)*unitheight, getFoodNumber()*unitheight );
 		
-		context.fillRect( xs-xstartLocal, ys-ystartLocal+unitheight, xe-xs, ye-ys );
-		
-		context.setFillStyle("#222222");
-		for( int x = xs; x < Math.min( lfoodinfo.get(0).getLength()*unitwidth, xe ); x+=unitwidth ) {
-			int k = x/unitwidth;
-			int xx = k*unitwidth;
-			
-			context.save();
-			context.beginPath();
-			context.rect(x, 0, unitwidth, canvas.getCoordinateSpaceHeight());
-			context.clip();
-			for( int y = ys; y < ye; y+=unitheight ) {
-				int i = y/unitheight;
+		//context.fillRect( xs-xstartLocal, ys-ystartLocal+unitheight, xe-xs, ye-ys );
+		context.fillRect( 0, ys-ystartLocal+columnHeight, canvas.getCoordinateSpaceWidth()-scrollBarWidth, ye-ys );
+		context.setFillStyle("#DDDDFF");
+		for( int y = ys; y < ye; y+=unitheight ) {
+			int i = y/unitheight;
+			if( i % 2 == 0 ) {
 				int yy = i*unitheight;
-				FoodInfo fi = getFoodInfo(i);
-				//int[]	ann = seq.getAnnotationIndex();
-					
-				if( selset.contains(i) ) {
-					context.setFillStyle("#DDDDFF");
-					context.fillRect(0, ystartLocal, canvasWidth, unitheight );
-					context.setFillStyle("#222222");
-				}
-				
-				Object c = fi.valAt(k);
-				context.fillText(c.toString(), (xx-xstartLocal), yy+2.0*unitheight-3.0-ystartLocal );
+				context.fillRect( 0, yy+columnHeight-ystartLocal, canvas.getCoordinateSpaceWidth()-scrollBarWidth, unitheight );
 			}
-			context.restore();
+		}
+		
+		int w = 0;
+		int k = 0;
+		context.setFillStyle("#222222");
+		for( Column c : lcolumnwidth ) {
+			if( w+c.width > xstartLocal ) {
+				//int x = xs; x < Math.min( getMax(), xe ); x+=unitwidth 
+				
+				//int k = x/unitwidth;
+				//int xx = k*unitwidth;
+				
+				context.save();
+				context.beginPath();
+				context.rect(w-xstartLocal, 0, c.width, canvas.getCoordinateSpaceHeight());
+				context.clip();
+				for( int y = ys; y < ye; y+=unitheight ) {
+					int i = y/unitheight;
+					int yy = i*unitheight;
+					FoodInfo fi = getFoodInfo(i);
+					//int[]	ann = seq.getAnnotationIndex();
+						
+					if( selset.contains(i) ) {
+						context.setFillStyle("#DDDDFF");
+						context.fillRect(0, ystartLocal, canvasWidth, unitheight );
+						context.setFillStyle("#222222");
+					}
+					
+					Object o = fi.valAt(k);
+					if( o != null ) context.fillText(o.toString(), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
+				}
+				context.restore();
+			}
+			w += c.width;
+			k++;
 		}
 	}
 	
@@ -234,6 +403,13 @@ public class Webnutrition implements EntryPoint {
 				context.fillText( ""+(x/unitwidth), (x-xstartLocal), unitheight-7 );
 			}*/
 			
+			int w = 0;
+			for( Column c : lcolumnwidth ) {
+				context.fillRect( w-xstartLocal, 0, 1, columnHeight );
+				context.fillText( c.name, (w+5-xstartLocal), columnHeight-7 );
+				w += c.width;
+			}
+			
 			context.setFillStyle("#EEEEEE");
 			context.fillRect(rw, columnHeight, scrollBarWidth, rh);
 			context.fillRect(0, rh+columnHeight, rw, scrollBarHeight);
@@ -241,9 +417,10 @@ public class Webnutrition implements EntryPoint {
 			context.fillRect(rw, 0, scrollBarWidth, columnHeight);
 			context.fillRect(rw, rh+columnHeight, scrollBarWidth, scrollBarHeight);
 			context.setFillStyle("#333333");
+			int max = getMax();
 			if( getFoodNumber() > 0 && max > 0 ) {
 				context.fillRect( rw, columnHeight+(rh*ystartLocal)/(getFoodNumber()*unitheight-rh)-3.0, scrollBarWidth, 6.0 );
-				context.fillRect( (rw*xstartLocal)/(max*unitwidth-rw)-3.0, rh+columnHeight, 6.0, scrollBarHeight );
+				context.fillRect( (rw*xstartLocal)/(max-rw)-3.0, rh+columnHeight, 6.0, scrollBarHeight );
 			}
 			
 			prevx = xstartLocal;
@@ -264,13 +441,19 @@ public class Webnutrition implements EntryPoint {
 	int scrollBarHeight = 20;
 	
 	int	unitheight = 20;
-	int	unitwidth = 200;
+	//int	unitwidth = 200;
 	int prevx = 0;
 	int prevy = 0;
 	int xstart = 0;
 	int ystart = 0;
 	
-	int max = 3;
+	public int getMax() {
+		int w = 0;
+		for( Column c : lcolumnwidth ) {
+			w += c.width;
+		}
+		return w;
+	}
 	
 	final ListBox	filterCombo = new ListBox();
 	List<Integer>	filtInd = new ArrayList<Integer>();
@@ -287,14 +470,27 @@ public class Webnutrition implements EntryPoint {
 		
 		RootPanel	rp = RootPanel.get();
 		
-		VerticalPanel	vp = new VerticalPanel();
+		final VerticalPanel	vp = new VerticalPanel();
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		
+		int w = Window.getClientWidth();
+		int h = Window.getClientHeight();
+		vp.setSize(w+"px", h+"px");
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				int w = event.getWidth();
+				int h = event.getHeight();
+				vp.setSize(w+"px", h+"px");
+			}
+		});
+		
 		canvas = Canvas.createIfSupported();
-		canvas.setSize("1024px", "768px");
+		canvas.setSize("1024px", "600px");
 		canvas.setCoordinateSpaceWidth( 1024 );
-		canvas.setCoordinateSpaceHeight( 768 );
+		canvas.setCoordinateSpaceHeight( 600 );
 		
 		String groupurl = "https://www.googleapis.com/fusiontables/v1/query?sql=SELECT%20*%20FROM%201ysVkwxLAO7U4F-ULp58q4P5DqcD70V_MpiKuJ4U&key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";		
 		try {
@@ -322,7 +518,7 @@ public class Webnutrition implements EntryPoint {
 						}
 						
 						try {
-							fetchFood();
+							fetchNutrDef();
 						} catch (RequestException e) {
 							e.printStackTrace();
 						}
@@ -361,20 +557,28 @@ public class Webnutrition implements EntryPoint {
 				
 				if( mousey < columnHeight ) {
 					int i = 0;
-					int w = lcolumnwidth.get(i);
-					while( w < mousex ) {
+					int w = lcolumnwidth.get(i).width;
+					while( w < mousex-xstart ) {
 						i++;
-						w += lcolumnwidth.get(i);
+						if( i == lcolumnwidth.size() ) {
+							i = -1;
+							break;
+						}
+						w += lcolumnwidth.get(i).width;
 					}
-					sortcolumn = i;
 					
-					Collections.sort( lfoodinfo );
+					console.log("ok "+i);
+					if( i != -1 ) {
+						sortcolumn = i;	
+						Collections.sort( lfoodinfo );
+					}
 				} else if( mousex > cw-scrollBarWidth || mousey > ch-scrollBarHeight ) {
 					//int xstart = Webfasta.this.xstart;
 					if( mousey > ch-scrollBarHeight ) {
 						scrollx = true;
 						
-						double xmin1 = max*unitwidth-cw;
+						int max = getMax();
+						double xmin1 = max-(cw-scrollBarWidth);
 						double xmin2 = (xmin1*mousex)/(cw-scrollBarWidth);
 						xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
 					}
@@ -383,19 +587,28 @@ public class Webnutrition implements EntryPoint {
 					if( mousex > cw-scrollBarWidth ) {
 						scrolly = true;
 						
-						double ymin1 = getFoodNumber()*unitheight-ch;
-						double ymin2 = (ymin1*(mousey-unitheight))/(ch-scrollBarHeight-unitheight);
+						double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
+						double ymin2 = (ymin1*(mousey-columnHeight))/(ch-columnHeight-scrollBarHeight);
 						ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
 					}
-					
-					draw( canvas.getContext2d(), xstart, ystart );
 				}
+				draw( canvas.getContext2d(), xstart, ystart );
+			}
+		});
+		canvas.addMouseOutHandler( new MouseOutHandler() {
+			@Override
+			public void onMouseOut(MouseOutEvent event) {
+				mousedown = false;
+				scrollx = false;
+				scrolly = false;
 			}
 		});
 		canvas.addMouseUpHandler( new MouseUpHandler() {
 			@Override
 			public void onMouseUp(MouseUpEvent event) {
 				mousedown = false;
+				scrollx = false;
+				scrolly = false;
 			}
 		});
 		canvas.addMouseMoveHandler( new MouseMoveHandler() {
@@ -409,20 +622,20 @@ public class Webnutrition implements EntryPoint {
 					double ch = (double)canvas.getCoordinateSpaceHeight();
 					if( scrollx || scrolly ) {
 						if( scrollx ) {
-							double xmin1 = max*unitwidth-cw;
+							int max = getMax();
+							double xmin1 = max-(cw-scrollBarWidth);
 							double xmin2 = (xmin1*x)/(cw-scrollBarWidth);
 							xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
 						}
 						
 						if( scrolly ) {
-							double ymin1 = getFoodNumber()*unitheight-canvas.getCoordinateSpaceHeight();
-							double ymin2 = (ymin1*(y-unitheight))/(ch-scrollBarHeight-unitheight);
+							double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
+							double ymin2 = (ymin1*(y-unitheight))/(ch-columnHeight-scrollBarHeight);
 							ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
 						}
-						
-						draw( canvas.getContext2d(), xstart, ystart );
 					} else {
-						double xmin1 = max*unitwidth-cw;
+						int max = getMax();
+						double xmin1 = max-cw;
 						double xmin2 = xstart + (mousex-x);
 						int xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
 						
@@ -430,16 +643,15 @@ public class Webnutrition implements EntryPoint {
 							mousex = mousex+(int)(xmin1-xmin2);
 						}
 						
-						double ymin1 = getFoodNumber()*unitheight-ch;
+						double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
 						double ymin2 = ystart + (mousey-y);
 						int ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
 						
 						if( ymin2 > ymin1 ) {
 							mousey = mousey+(int)(ymin1-ymin2);
 						}
-						
-						draw( canvas.getContext2d(), xstart, ystart );
 					}
+					draw( canvas.getContext2d(), xstart, ystart );
 				}
 			}
 		});
