@@ -5549,7 +5549,7 @@ public class GeneSet extends JApplet {
 		return r;
 	}
 	
-	public static StringBuilder getSelectedASeqs( JTable table, List<Gene> genelist, SerifyApplet applet, Set<String> species ) {
+	public static StringBuilder getSelectedASeqs( JTable table, List<Gene> genelist, JApplet applet, Set<String> species ) {
 		StringBuilder sb = new StringBuilder();
 		
 		Set<String> selectedSpecies = getSelspec( applet, new ArrayList( species ) );
@@ -5614,7 +5614,7 @@ public class GeneSet extends JApplet {
 	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
 			final Map<Set<String>, ShareNum> specset, final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
-			final Container comp, final Applet applet, final JComboBox selcomblocal) throws IOException {
+			final Container comp, final JApplet applet, final JComboBox selcomblocal) throws IOException {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		splitpane.setDividerLocation(400);
@@ -7828,10 +7828,69 @@ public class GeneSet extends JApplet {
 		popup.add(new AbstractAction("Show sequences") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				StringBuilder sb = getSelectedASeqs( table, genelist, (SerifyApplet)applet, species );
+				JFrame frame = new JFrame();
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null );
+				jf.initGui(frame);
+
+				Map<String, Sequence> contset = new HashMap<String, Sequence>();
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int cr = table.convertRowIndexToModel(r);
+					Gene gg = genelist.get(cr);
+					if (gg.species != null) {
+						for (String sp : gg.species.keySet()) {
+							Teginfo stv = gg.species.get(sp);
+							for (Tegeval tv : stv.tset) {
+								String contig = tv.contshort;
+								StringBuilder dna = tv.seq;
+								Sequence seq = new Sequence( contig, dna, jf.mseq );
+								contset.put( contig, seq );
+								
+								/*String contig = tv.contshort;
+								if (contset.containsKey(contig)) {
+									seq = contset.get(contig);
+								} else {
+									if (GeneSet.contigs.containsKey(contig)) {
+										StringBuilder dna = GeneSet.contigs.get(contig);
+										seq = new Sequence(contig, dna, jf.mseq);
+									} else
+										seq = new Sequence(contig, jf.mseq);
+									contset.put(contig, seq);
+								}
+
+								Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
+								a.setStart(tv.start);
+								a.setStop(tv.stop);
+								a.setOri(tv.ori);
+								a.setGroup(gg.name);
+								a.setType("gene");
+								jf.addAnnotation(a);*/
+								// seq.addAnnotation( new Annotation( seq, ) );
+							}
+						}
+					}
+				}
+
+				for (String contig : contset.keySet()) {
+					Sequence seq = contset.get(contig);
+					jf.addSequence(seq);
+					if (seq.getAnnotations() != null)
+						Collections.sort(seq.getAnnotations());
+				}
+				jf.updateView();
+
+				frame.setVisible(true);
+			}
+		});
+		popup.add(new AbstractAction("Split/Show sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder sb = getSelectedASeqs( table, genelist, applet, species );
 				if( currentSerify == null ) {
 					JFrame frame = new JFrame();
-					frame.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
+					frame.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
 					frame.setSize(800, 600);
 					
 					SerifyApplet sa = new SerifyApplet();
@@ -7847,8 +7906,8 @@ public class GeneSet extends JApplet {
 					e1.printStackTrace();
 				}
 				
-				JTextArea textarea = new JTextArea();
-				textarea.append( sb.toString() );
+				//JTextArea textarea = new JTextArea();
+				//textarea.append( sb.toString() );
 				
 				/*try {
 					if (clipboardService == null)
@@ -8683,7 +8742,7 @@ public class GeneSet extends JApplet {
 
 	static List<String> corrInd;
 
-	private static JComponent newSoft(JButton jb, Container comp, Applet applet, JComboBox selcomblocal) throws IOException {
+	private static JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
 		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		InputStream is = GeneSet.class.getResourceAsStream("/thomas.aa");
 		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
