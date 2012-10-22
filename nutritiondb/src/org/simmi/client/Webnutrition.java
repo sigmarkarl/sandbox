@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.jdo.annotations.Columns;
-
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
@@ -56,8 +54,10 @@ public class Webnutrition implements EntryPoint {
 	public class FoodInfo implements Comparable<FoodInfo> {
 		Object[]	columns;
 		
-		public FoodInfo( String name, String group, double energy ) {
-			columns = new Object[] { name, group, energy };
+		public FoodInfo( String name, String group ) {
+			columns = new Object[ lcolumnwidth.size() ];
+			columns[0] = name;
+			columns[1] = group;
 		}
 		
 		public Object getSortObject() {
@@ -86,13 +86,15 @@ public class Webnutrition implements EntryPoint {
 	};
 	
 	public class Column {
-		public Column( String name, int width ) {
+		public Column( String name, int width, String id ) {
 			this.name = name;
 			this.width = width;
+			this.id = id;
 		}
 		
 		String 	name;
 		int		width;
+		String 	id;
 	};
 	
 	Map<String,Column> nutrmap = new HashMap<String,Column>();
@@ -104,7 +106,8 @@ public class Webnutrition implements EntryPoint {
 		String url = "https://www.googleapis.com/fusiontables/v1/";
 		
 		String appkey = "key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
-		String sql = "SELECT FoodId,NutrId,Value FROM 1NXpzVjOWmM9AXPOb173Z7fZmGrpUlISH3P6DBdo where NutrId='~268~'";
+		//String sql = "SELECT FoodId,NutrId,Value FROM 1NXpzVjOWmM9AXPOb173Z7fZmGrpUlISH3P6DBdo where NutrId='~268~'";
+		String sql = "SELECT FoodId,NutrId,Value FROM 1NXpzVjOWmM9AXPOb173Z7fZmGrpUlISH3P6DBdo";
 		String sqlkey = "sql="+URL.encode( sql );
 		String requestData = "query?"+sqlkey+"&"+appkey;
 		url += requestData;
@@ -158,7 +161,7 @@ public class Webnutrition implements EntryPoint {
 		String url = "https://www.googleapis.com/fusiontables/v1/";
 		
 		String appkey = "key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
-		String sql = "SELECT Id,Unit,Name FROM 1NXpzVjOWmM9AXPOb173Z7fZmGrpUlISH3P6DBdo where NutrId='~268~'";
+		String sql = "SELECT Id,Unit,Name FROM 129hFkqxrJnhaRTPDS1COEGs5d2q0dBasWg9gOJM";
 		String sqlkey = "sql="+URL.encode( sql );
 		String requestData = "query?"+sqlkey+"&"+appkey;
 		url += requestData;
@@ -174,27 +177,22 @@ public class Webnutrition implements EntryPoint {
 					JSONArray rows = (JSONArray)jsobj.get("rows");
 					//boolean done = false;
 					for( int i = 0; i < rows.size(); i++ ) {
-						JSONArray row = (JSONArray)rows.get(i);
-						JSONString foodid = (JSONString)row.get(0);
-						JSONString nutrid = (JSONString)row.get(1);
-						JSONString value = (JSONString)row.get(2);
-						String foodidstr = foodid.stringValue();
-						String nutridstr = nutrid.stringValue();
-						double val = Double.parseDouble( value.stringValue() );
+						JSONArray  row = (JSONArray)rows.get(i);
+						JSONString id = (JSONString)row.get(0);
+						JSONString unit = (JSONString)row.get(1);
+						JSONString name = (JSONString)row.get(2);
+						String idstr = id.stringValue();
+						String unitstr = unit.stringValue();
+						String namestr = name.stringValue();
+						//double val = Double.parseDouble( value.stringValue() );
 						
-						String foodShort = foodidstr.substring(1, foodidstr.length()-1);
-						String nutrShort = nutridstr.substring(1, nutridstr.length()-1);
-						if( foodmap.containsKey( foodShort ) ) {
-							FoodInfo fi = foodmap.get( foodShort );
-							
-							int ind = lcolumnwidth.indexOf( nutrmap.get( nutrShort ) );
-							fi.columns[ind] = val;
-						} else {
-							for( String key : foodmap.keySet() ) {
-								console.log("uff" + key);
-								break;
-							}
-						}
+						String idShort = idstr.substring(1, idstr.length()-1);
+						String unitShort = unitstr.substring(1, unitstr.length()-1);
+						String nameShort = namestr.substring(1, namestr.length()-1);
+						
+						Column col = new Column( nameShort, 100, idShort);
+						lcolumnwidth.add( col );
+						nutrmap.put( idShort, col );
 					}
 				}
 				
@@ -235,7 +233,7 @@ public class Webnutrition implements EntryPoint {
 						String namestr = name.stringValue();
 						
 						if( namestr.length() > 0 && groupidstr.length() > 0 ) {
-							FoodInfo fi = new FoodInfo( namestr.substring(1, namestr.length()-1), groupIdMap.get( groupidstr.substring(1, groupidstr.length()-1) ), 0.0 );
+							FoodInfo fi = new FoodInfo( namestr.substring(1, namestr.length()-1), groupIdMap.get( groupidstr.substring(1, groupidstr.length()-1) ) );
 							foodmap.put( idstr.substring(1, idstr.length()-1), fi );
 							lfoodinfo.add( fi );
 						} else if( !done ) {
@@ -244,16 +242,14 @@ public class Webnutrition implements EntryPoint {
 						}
 						//groupIdMap.put( idstr.substring(1, idstr.length()-1), namestr.substring(1, namestr.length()-1 ) );
 					}
-					lcolumnwidth.add( new Column("Food", 300) );
-					lcolumnwidth.add( new Column("Group", 300) );
-					lcolumnwidth.add( new Column("Energy (kJ)", 100) );
+					/*lcolumnwidth.add( new Column("Energy (kJ)", 100) );
 					lcolumnwidth.add( new Column("Protein (g)", 100) );
 					lcolumnwidth.add( new Column("Carbohydrates (g)", 100) );
 					lcolumnwidth.add( new Column("Starch (g)", 100) );
 					lcolumnwidth.add( new Column("Fat (g)", 100) );
-					lcolumnwidth.add( new Column("Alcohol (g)", 100) );
+					lcolumnwidth.add( new Column("Alcohol (g)", 100) );*/
 					
-					nutrmap.put( "268", lcolumnwidth.get(2) );
+					//nutrmap.put( "268", lcolumnwidth.get(2) );
 					
 					try {
 						fetchNutr();
@@ -491,6 +487,9 @@ public class Webnutrition implements EntryPoint {
 		canvas.setSize("1024px", "600px");
 		canvas.setCoordinateSpaceWidth( 1024 );
 		canvas.setCoordinateSpaceHeight( 600 );
+		
+		lcolumnwidth.add( new Column("Food", 300, "0") );
+		lcolumnwidth.add( new Column("Group", 300, "0") );
 		
 		String groupurl = "https://www.googleapis.com/fusiontables/v1/query?sql=SELECT%20*%20FROM%201ysVkwxLAO7U4F-ULp58q4P5DqcD70V_MpiKuJ4U&key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";		
 		try {
