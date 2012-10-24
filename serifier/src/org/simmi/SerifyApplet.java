@@ -13,8 +13,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -205,11 +203,17 @@ public class SerifyApplet extends JApplet {
 				try {
 					if( columnIndex >= 0 ) {
 						Field f = cls.getDeclaredFields()[columnIndex];
-						ret = f.get( datalist.get(rowIndex) );
-						
-						if( ret != null && ret.getClass() != f.getType() ) {
-							System.err.println( ret.getClass() + "  " + f.getType() );
-							ret = null;
+						if( rowIndex >= datalist.size() ) {
+							System.err.println( "out of b" );
+						} else {
+							Object obj = datalist.get(rowIndex);
+							//System.err.println( obj );
+							ret = f.get( obj );
+							
+							if( ret != null && ret.getClass() != f.getType() ) {
+								//System.err.println( ret.getClass() + "  " + f.getType() );
+								ret = null;
+							}
 						}
 					}
 				} catch (IllegalArgumentException e) {
@@ -217,6 +221,8 @@ public class SerifyApplet extends JApplet {
 				} catch (SecurityException e) {
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch( Exception e ) {
 					e.printStackTrace();
 				}
 				return ret;
@@ -4452,12 +4458,18 @@ public class SerifyApplet extends JApplet {
 		return false;
 	}
 	
-	public static void majorityRuleConsensus( double[] distmat, List<String> corrInd ) {
+	public static void majorityRuleConsensus( double[] distmat, List<String> corrInd, boolean copybootstrap ) {
 		try {
+			Map<String,Node>	alltrees = new TreeMap<String,Node>();
 			TreeUtil treeutil = new TreeUtil();
 			Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
 			//File dir = new File( "/home/sigmar/40genes/thermus/aligned/trees/" );
-			File dir = new File( "/home/sigmar/thermusgenes/aligned/trees/" );
+			
+			
+			//File dir = new File( "/home/sigmar/thermusgenes/aligned/trees/" );
+			File dir = new File( "/root/thermusgenes_transposed/trees/" );
+			
+			
 			//File dir = new File( "c:/cygwin/home/simmi/thermusgenes_short/aligned/trees/" );
 			File[] ff = dir.listFiles();
 			for( File f : ff ) {
@@ -4472,8 +4484,12 @@ public class SerifyApplet extends JApplet {
 				br.close();
 
 				Node n = treeutil.parseTreeRecursive( sb.toString(), false );
+				String treename = f.getName();
+				int i = treename.indexOf(".fasta");
+				if( i == -1 ) i = treename.length();
+				alltrees.put( treename.substring(0, i), n );
 				treeutil.setLoc( 0 );
-				System.err.println( "about to process "+f.getName() );
+				//System.err.println( "about to process "+f.getName() );
 				n.nodeCalcMap( nmap );
 			}
 			
@@ -4487,7 +4503,7 @@ public class SerifyApplet extends JApplet {
 			Collections.sort( nslist );
 			int c = 0;
 			for( NodeSet nodeset : nslist ) {
-				System.err.println( nodeset.getCount() + "  " + nodeset.getNodes() + "  " + nodeset.getAverageHeight() );
+				System.err.println( nodeset.getCount() + "  " + nodeset.getNodes() + "  " + nodeset.getAverageHeight() + "  " + nodeset.getAverageBootstrap() );
 				c++;
 				if( c > 20 ) break;
 			}
@@ -4507,7 +4523,11 @@ public class SerifyApplet extends JApplet {
 			for( int i = 1; i < 100; i++ ) {
 				NodeSet	allsubnodes = nslist.get(i);
 				Node subroot = treeutil.new Node();
-				subroot.setName( Math.round( (double)(allsubnodes.getCount()*1000) / (double)total ) / 10.0 + "%" );
+				if( !copybootstrap ) {
+					subroot.setName( Math.round( (double)(allsubnodes.getCount()*1000) / (double)total ) / 10.0 + "%" );
+				} else {
+					subroot.setName( Double.toString( Math.round( (allsubnodes.getAverageBootstrap()*100.0) )/100.0 ) );
+				}
 				
 				Node vn = treeutil.getValidNode( allsubnodes.getNodes(), root );
 				if( treeutil.isValidSet( allsubnodes.getNodes(), vn ) ) {
@@ -4521,11 +4541,12 @@ public class SerifyApplet extends JApplet {
 								newparent = current.getParent();
 							}
 							
-							if( allsubnodes.getNodes().containsAll( treeutil.getLeaveNames( current ) ) ) {
+							if( allsubnodes.getNodes().containsAll( current.getLeaveNames() ) ) {
 								Node parent = current.getParent();
 								parent.removeNode( current );
 								
 								double h = allsubnodes.getAverageHeight();
+								//double b = allsubnodes.getAverageBootstrap();
 								double lh = allsubnodes.getAverageLeaveHeight(nname);
 								
 								/*subroot.addNode( current, h );
@@ -4622,6 +4643,23 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 			
+			List<Object[]>	sortlist = new ArrayList<Object[]>();
+			for( String name : alltrees.keySet() ) {
+				double dist = 0.0;
+				Node tree = alltrees.get( name );
+				dist = treeutil.nDistance(root, tree);
+				//System.err.println( name + "  " + dist );
+				sortlist.add( new Object[] {name, dist} );
+			}
+			Collections.sort( sortlist, new Comparator<Object[]>() {
+				@Override
+				public int compare(Object[] o1, Object[] o2) {
+					return Double.compare( (Double)o1[1], (Double)o2[1] );
+				}
+			});
+			for( Object[] o : sortlist ) {
+				System.err.println( o[0] + "  " + o[1] );
+			}
 			System.err.println( root.toString() );
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -4838,7 +4876,7 @@ public class SerifyApplet extends JApplet {
 			System.err.println( dvals.length + " " + names.size() );
 			System.err.println( n );
 			
-			majorityRuleConsensus(null, null);
+			majorityRuleConsensus(null, null, true);
 			//majorityRuleConsensus(dvals, names);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
