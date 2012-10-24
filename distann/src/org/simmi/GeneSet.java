@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -53,6 +54,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -118,6 +121,7 @@ import org.json.JSONObject;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequence.Annotation;
 import org.simmi.shared.TreeUtil;
+import org.simmi.shared.TreeUtil.Node;
 import org.simmi.unsigned.JavaFasta;
 
 public class GeneSet extends JApplet {
@@ -3740,6 +3744,24 @@ public class GeneSet extends JApplet {
 		}
 	}
 
+	static class GeneGroup {
+		Set<Gene>	genes = new HashSet<Gene>();
+		Set<String>	species = new HashSet<String>();
+		int 		groupIndex = -10;
+		
+		public void addGene( Gene gene ) {
+			genes.add( gene );
+		}
+		
+		public void addSpecies( Set<String> species ) {
+			this.species.addAll( species );
+		}
+		
+		public GeneGroup( int i ) {
+			this.groupIndex = i;
+		}
+	};
+	
 	static class Gene {
 		public Gene(String name, String origin) {
 			this.name = name;
@@ -5610,6 +5632,81 @@ public class GeneSet extends JApplet {
 		return sb;
 	}
 	
+	private static void assignGain( Node n, Map<Node,List<GeneGroup>> gainMap, PrintStream ps ) {
+		Set<String>	specs = n.getLeaveNames();
+		
+		List<GeneGroup> lgg = ggSpecMap.get( specs );
+		gainMap.put( n, lgg );
+		
+		ps.println( specs );
+		if( lgg != null ) for( GeneGroup gg : lgg ) {
+			Set<String>	nset = new HashSet<String>();
+			for( Gene g : gg.genes ) {
+				nset.add( g.name );
+			}
+			ps.println( "\t" + nset );
+		}
+		
+		List<Node> nodes = n.getNodes();
+		if( nodes != null ) {
+			for( Node node : nodes) {
+				assignGain( node, gainMap, ps );
+			}
+		}
+	}
+	
+	private static void assignLoss( Node n, Map<Node,List<GeneGroup>> lossMap, PrintStream ps ) {
+		//Set<String>	specs = n.getLeaveNames();
+		
+		/*List<GeneGroup> lgg = ggSpecMap.get( specs );
+		gainMap.put( n, lgg );
+		
+		ps.println( specs );
+		if( lgg != null ) for( GeneGroup gg : lgg ) {
+			Set<String>	nset = new HashSet<String>();
+			for( Gene g : gg.genes ) {
+				nset.add( g.name );
+			}
+			ps.println( "\t" + nset );
+		}*/
+		
+		List<Node> nodes = n.getNodes();
+		if( nodes != null ) {
+			for( Node node : nodes) {
+				Set<String> loss = node.getLeaveNames();
+				List<GeneGroup> lgg = null;
+				for( Set<String> specs : ggSpecMap.keySet() ) {
+					boolean fail = false;
+					for( String spec : specs ) {
+						if( !loss.contains(spec) ) {
+							fail = true;
+							break;
+						}
+					}
+					if( !fail ) {
+						if( lgg == null ) lgg = new ArrayList<GeneGroup>();
+						lgg.addAll( ggSpecMap.get(specs) );
+					}
+				}
+				//ps.println( loss );
+				if( lgg != null ) for( Node nnode : nodes ) {
+					if( nnode != node ) {
+						ps.println( nnode.getLeaveNames() );
+						for( GeneGroup gg : lgg ) {
+							Set<String>	nset = new HashSet<String>();
+							for( Gene g : gg.genes ) {
+								nset.add( g.name );
+							}
+							ps.println( "\t" + nset );
+						}
+						lossMap.put(nnode, lgg);
+					}
+				}
+				assignLoss( node, lossMap, ps );
+			}
+		}
+	}
+	
 	JComboBox selcomb;
 	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, final Map<String,Function> funcmap, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
@@ -6983,6 +7080,50 @@ public class GeneSet extends JApplet {
 		ftable.setComponentPopupMenu(fpopup);
 
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("Gene gain/loss") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<Node,List<GeneGroup>>	nodeGainMap = new HashMap<Node,List<GeneGroup>>();
+				Map<Node,List<GeneGroup>>	nodeLossMap = new HashMap<Node,List<GeneGroup>>();
+				
+				String treestr = "";
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( applet ) == JFileChooser.APPROVE_OPTION ) {
+					File file = fc.getSelectedFile();
+					try {
+						byte[] bb = Files.readAllBytes( Paths.get(file.toURI()) );
+						treestr = new String( bb );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+				
+				TreeUtil tu = new TreeUtil();
+				Node n = tu.parseTreeRecursive(treestr, false);
+				String[] sobj = {"mt.ruber", "mt.silvanus", "o.profundus", "m.hydrothermalis"};
+				Node newnode = tu.getParent( n, new HashSet<String>( Arrays.asList( sobj ) ) );
+				tu.rerootRecur( n, newnode );
+				
+				File f = new File("/home/sigmar/gain_list.txt");
+				try {
+					PrintStream ps = new PrintStream( f );
+					assignGain( newnode, nodeGainMap, ps );
+					ps.close();
+				} catch (FileNotFoundException e1) {
+					e1.printStackTrace();
+				}
+				
+				f = new File("/home/sigmar/loss_list.txt");
+				try {
+					PrintStream ps = new PrintStream( f );
+					assignLoss( newnode, nodeLossMap, ps );
+					ps.close();
+				} catch (FileNotFoundException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		popup.addSeparator();
 		popup.add( new AbstractAction("Show group sequences") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -8742,6 +8883,7 @@ public class GeneSet extends JApplet {
 
 	static List<String> corrInd;
 
+	static Map<Set<String>,List<GeneGroup>> ggSpecMap;
 	private static JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
 		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		InputStream is = GeneSet.class.getResourceAsStream("/thomas.aa");
@@ -8832,6 +8974,8 @@ public class GeneSet extends JApplet {
 
 		Map<Set<String>, double[]> corrList = new HashMap<Set<String>, double[]>();
 
+		
+		List<GeneGroup>	ggList = new ArrayList<GeneGroup>();
 		int i = 0;
 		Set<String> ss = new HashSet<String>();
 		Set<String> gs = new HashSet<String>();
@@ -8873,17 +9017,36 @@ public class GeneSet extends JApplet {
 				corrList.put(cluster, new double[20*20]);
 			}
 
+			GeneGroup gg = new GeneGroup( i );
+			ggList.add( gg );
+			
 			for (Gene g : gset) {
 				g.groupIdx = i;
 				g.groupCoverage = ss.size();
 				g.groupGenCount = gs.size();
 				g.groupCount = val;
+				
+				gg.addGene( g );
+				gg.addSpecies( ss );
 			}
 
 			i++;
 
 			// ClusterInfo cInfo = new ClusterInfo(id++,ss.size(),gs.size());
 			// clustInfoMap.put( cluster, cInfo);
+		}
+		
+		ggSpecMap = new HashMap<Set<String>,List<GeneGroup>>();
+		for( GeneGroup gg : ggList ) {
+			List<GeneGroup>	speclist;
+			Set<String> specset = gg.species;
+			if( ggSpecMap.containsKey( specset ) ) {
+				speclist = ggSpecMap.get(specset);
+			} else {
+				speclist = new ArrayList<GeneGroup>();
+				ggSpecMap.put( specset, speclist );
+			}
+			speclist.add( gg );
 		}
 
 		FileWriter fw = null; // new FileWriter("all_short.blastout");
