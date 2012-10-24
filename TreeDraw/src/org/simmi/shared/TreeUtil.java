@@ -34,6 +34,22 @@ public class TreeUtil {
 		return ret;
 	}
 	
+	public Node getParent( Node root, Set<String> leaveNames ) {
+		Set<String> currentLeaveNames = root.getLeaveNames();
+		if( currentLeaveNames.size() >= leaveNames.size() ) {
+			//System.err.println( currentLeaveNames );
+			if( currentLeaveNames.equals( leaveNames ) ) return root;
+			else {
+				for( Node n : root.getNodes() ) {
+					Node par = getParent(n, leaveNames);
+					if( par != null ) return par;
+				}
+			}
+		}
+			
+		return null;
+	}
+	
 	public void reduceParentSize( Node n ) {
 		List<Node> nodes = n.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -391,7 +407,9 @@ public class TreeUtil {
 		
 		Set<String>					nodes;
 		Map<String,List<Double>>	leaveHeightMap = new HashMap<String,List<Double>>();
+		//Map<String,List<Double>>	leaveHeightMap = new HashMap<String,List<Double>>();
 		List<Double> 				count = new ArrayList<Double>();
+		List<Double> 				boots = new ArrayList<Double>();
 		
 		public int getCount() {
 			return count.size();
@@ -428,9 +446,14 @@ public class TreeUtil {
 			return -1.0;
 		}
 		
-		public void add( double h ) {
+		public void addHeight( double h ) {
 			//if( count == null ) count = new ArrayList<Double>();
 			count.add( h );
+		}
+		
+		public void addBootstrap( double h ) {
+			//if( count == null ) count = new ArrayList<Double>();
+			boots.add( h );
 		}
 		
 		public double getAverageHeight() {
@@ -441,6 +464,17 @@ public class TreeUtil {
 			}
 			
 			avg /= count.size();
+			return avg;
+		}
+		
+		public double getAverageBootstrap() {
+			double avg = 0.0;
+			
+			for( double d : boots ) {
+				avg += d;
+			}
+			
+			avg /= boots.size();
 			return avg;
 		}
 		
@@ -457,6 +491,7 @@ public class TreeUtil {
 		int			metacount;
 		private double		h;
 		private double		h2;
+		private double		bootstrap;
 		String		color;
 		List<Node>	nodes;
 		int			leaves = 0;
@@ -474,6 +509,19 @@ public class TreeUtil {
 		
 		public boolean isLeaf() {
 			return nodes == null || nodes.size() == 0;
+		}
+		
+		public Set<String> getLeaveNames() {
+			Set<String>	ret = new HashSet<String>();
+			
+			List<Node> nodes = this.getNodes();
+			if( nodes != null && nodes.size() > 0 ) {
+				for( Node n : nodes ) {
+					ret.addAll( n.getLeaveNames() );
+				}
+			} else ret.add( this.getName() );
+			
+			return ret;
 		}
 		
 		public Node findNode( String id ) {
@@ -545,11 +593,19 @@ public class TreeUtil {
 				}
 				for( Node subn : nodes ) {
 					if( subn.isLeaf() ) {
-						System.err.println( subn.getName() + "  " + subn.geth() );
+						//System.err.println( subn.getName() + "  " + subn.geth() );
 						heights.addLeaveHeight( subn.getName(), subn.geth() );
 					}
 				}
-				heights.add( this.geth() );
+				heights.addHeight( this.geth() );
+				
+				double bt = this.getBootstrap();
+				if( bt > 0.0 ) {
+					if( s.size() == 2 && s.contains("t.scotoductusSA01") ) {
+						System.err.println( "bootstrap " + s + "  " + this.getBootstrap() );
+					}
+					heights.addBootstrap( bt );
+				} else heights.addBootstrap( 1.0 );
 			}
 			return s;
 		}
@@ -617,12 +673,20 @@ public class TreeUtil {
 			return canvasy;
 		}
 		
+		public double getBootstrap() {
+			return bootstrap;
+		}
+		
 		public double geth2() {
 			return h2;
 		}
 		
 		public double geth() {
 			return h;
+		}
+		
+		public void setBootstrap( double bootstrap ) {
+			this.bootstrap = bootstrap;
 		}
 		
 		public void seth( double h ) {
@@ -751,53 +815,67 @@ public class TreeUtil {
 		}
 		
 		public void setName( String newname ) {
-			if( newname != null ) {
-				int fi = newname.indexOf(';');
-				if( fi == -1 ) {
-					int ci = newname.indexOf("[#");
-					int si = newname.indexOf("{");
-					if( ci == -1 ) {
-						if( si == -1 ) {
-							this.name = newname;
-							this.setFontSize( -1.0 );
+			setName( newname, true );
+		}
+		
+		public void setName( String newname, boolean parse ) {
+			if( parse ) {
+				if( newname != null ) {
+					int fi = newname.indexOf(';');
+					if( fi == -1 ) {
+						int ci = newname.indexOf("[#");
+						int si = newname.indexOf("{");
+						if( ci == -1 ) {
+							if( si == -1 ) {
+								this.setName( newname, false );
+								this.setFontSize( -1.0 );
+							} else {
+								this.setName( newname.substring(0,si), false );
+								int se = newname.indexOf("}",si+1);
+								String mfstr = newname.substring(si+1,se);
+								String[] mfsplit = mfstr.split(" ");
+								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							}
+							this.setColor( null );
 						} else {
-							this.name = newname.substring(0,si);
-							int se = newname.indexOf("}",si+1);
-							String mfstr = newname.substring(si+1,se);
-							String[] mfsplit = mfstr.split(" ");
-							this.setFontSize( Double.parseDouble( mfsplit[0] ) );
-							if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
-							if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							if( si == -1 ) {
+								this.setName( newname.substring(0,ci), false );
+								int ce = newname.indexOf("]",ci+1);
+								this.setColor( newname.substring(ci+1,ce) );
+								this.setFontSize( -1.0 );
+							} else {
+								this.setName( newname.substring(0,Math.min(ci, si)), false );
+								int ce = newname.indexOf("]",ci+1);
+								int se = newname.indexOf("}",si+1);
+								this.setColor( newname.substring(ci+1,ce) );
+								String mfstr = newname.substring(si+1,se);
+								String[] mfsplit = mfstr.split(" ");
+								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							}
 						}
-						this.setColor( null );
+						this.id = this.name;
+						this.setMeta( null );
 					} else {
-						if( si == -1 ) {
-							this.name = newname.substring(0,ci);
-							int ce = newname.indexOf("]",ci+1);
-							this.setColor( newname.substring(ci+1,ce) );
-							this.setFontSize( -1.0 );
-						} else {
-							this.name = newname.substring(0,Math.min(ci, si));
-							int ce = newname.indexOf("]",ci+1);
-							int se = newname.indexOf("}",si+1);
-							this.setColor( newname.substring(ci+1,ce) );
-							String mfstr = newname.substring(si+1,se);
-							String[] mfsplit = mfstr.split(" ");
-							this.setFontSize( Double.parseDouble( mfsplit[0] ) );
-							if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
-							if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
-						}
+						this.setName( newname.substring(0,fi) );
+						this.setMeta( newname.substring(fi+1) );
 					}
-					this.id = this.name;
-					this.setMeta( null );
 				} else {
-					this.setName( newname.substring(0,fi) );
-					this.setMeta( newname.substring(fi+1) );
+					this.setName( newname, false );
+	 				this.setMeta( null );
+					this.setColor( null );
 				}
 			} else {
 				this.name = newname;
-				this.setMeta( null );
-				this.setColor( null );
+				try {
+					double val = Double.parseDouble( newname );
+					this.setBootstrap( val );
+				} catch( Exception e ) {
+					
+				}
 			}
 		}
 		
@@ -933,7 +1011,7 @@ public class TreeUtil {
 		List<Node> subn = n.getNodes();
 		if( subn != null ) {
 			for( Node sn : subn ) {
-				Set<String> ln = this.getLeaveNames( sn );
+				Set<String> ln = sn.getLeaveNames();
 				if( ln.containsAll( s ) ) {
 					return getValidNode( s, sn );
 				}
@@ -947,7 +1025,7 @@ public class TreeUtil {
 			List<Node> subn = n.getNodes();
 			if( subn != null ) {
 				for( Node sn : subn ) {
-					Set<String> lns = this.getLeaveNames( sn );
+					Set<String> lns = sn.getLeaveNames();
 					int cntcnt = 0;
 					for( String ln : lns ) {
 						if( s.contains(ln) ) cntcnt++;
@@ -1013,19 +1091,6 @@ public class TreeUtil {
 				ret[k+i*leaves.size()] = val;
 			}
 		}
-		
-		return ret;
-	}
-	
-	public Set<String> getLeaveNames( Node node ) {
-		Set<String>	ret = new HashSet<String>();
-		
-		List<Node> nodes = node.getNodes();
-		if( nodes != null && nodes.size() > 0 ) {
-			for( Node n : nodes ) {
-				ret.addAll( getLeaveNames( n ) );
-			}
-		} else ret.add( node.getName() );
 		
 		return ret;
 	}
