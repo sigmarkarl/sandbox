@@ -156,6 +156,32 @@ public class Taxonomy implements EntryPoint {
 		final TreeItem	gumolsilva24 = tree.addItem( "gumolTCTCTATGCG" );
 		final TreeItem	gumolsilva25 = tree.addItem( "gumolTGATACGTCT" );
 		
+		final TreeItem	snaedissilva1 = tree.addItem( "snaedisACGACGTCGA" );
+		final TreeItem	snaedissilva2 = tree.addItem( "snaedisACGAGTGCGT" );
+		final TreeItem	snaedissilva3 = tree.addItem( "snaedisACGCTCGACA" );
+		final TreeItem	snaedissilva4 = tree.addItem( "snaedisACGNGTCGCT" );
+		final TreeItem	snaedissilva5 = tree.addItem( "snaedisAGACGCACTC" );
+		final TreeItem	snaedissilva6 = tree.addItem( "snaedisAGCACTGTAG" );
+		final TreeItem	snaedissilva7 = tree.addItem( "snaedisAGGACGCACT" );
+		final TreeItem	snaedissilva8 = tree.addItem( "snaedisAGGCACTGTA" );
+		final TreeItem	snaedissilva9 = tree.addItem( "snaedisATATCGCGAG" );
+		final TreeItem	snaedissilva10 = tree.addItem( "snaedisATATCGCGGA" );
+		final TreeItem	snaedissilva11 = tree.addItem( "snaedisATATCGGCGA" );
+		final TreeItem	snaedissilva12 = tree.addItem( "snaedisATCAGACACG" );
+		final TreeItem	snaedissilva13 = tree.addItem( "snaedisCGGTGTCTCT" );
+		final TreeItem	snaedissilva14 = tree.addItem( "snaedisCGTCGTCGTC" );
+		final TreeItem	snaedissilva15 = tree.addItem( "snaedisCGTCTCTCAG" );
+		final TreeItem	snaedissilva16 = tree.addItem( "snaedisCGTGTCTCTA" );
+		final TreeItem	snaedissilva17 = tree.addItem( "snaedisCTCGCGTGTC" );
+		final TreeItem	snaedissilva18 = tree.addItem( "snaedisGACGCTCGAC" );
+		final TreeItem	snaedissilva19 = tree.addItem( "snaedisGAGACGCACT" );
+		final TreeItem	snaedissilva20 = tree.addItem( "snaedisGATATCGCGA" );
+		final TreeItem	snaedissilva21 = tree.addItem( "snaedisGCGTGTCTCT" );
+		final TreeItem	snaedissilva22 = tree.addItem( "snaedisGCTCGCGTGT" );
+		final TreeItem	snaedissilva23 = tree.addItem( "snaedisGTCTCTATGC" );
+		final TreeItem	snaedissilva24 = tree.addItem( "snaedisTCTCTATGCG" );
+		final TreeItem	snaedissilva25 = tree.addItem( "snaedisTGATACGTCT" );
+		
 		final TreeItem	eyjosilva = tree.addItem( "eyjosilva" );
 		final TreeItem	eyjoroot = tree.addItem( "eyjo" );
 		final TreeItem	newroot6 = tree.addItem( "newroot6" );
@@ -302,7 +328,7 @@ public class Taxonomy implements EntryPoint {
 				TreeItem selectedtree = event.getSelectedItem();
 				
 				String nodename = selectedtree.getText();
-				if( ( nodename.contains("gumol") || nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
+				if( ( nodename.contains("snaedis") || nodename.contains("gumol") || nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
 					boolean already = false;
 					for( String key : mapstr.keySet() ) {
 						if( nodename.equals("eyjo"+key) ) {
@@ -315,6 +341,8 @@ public class Taxonomy implements EntryPoint {
 					if( !already ) {
 						if( nodename.startsWith("gumol") ) {
 							runSpec( selectedtree, "http://"+server+"/gumol_"+nodename.substring(5)+".txt" );
+						} else if( nodename.startsWith("snaedis") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis_"+nodename.substring(7)+".txt" );
 						} else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
 						else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 						else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
