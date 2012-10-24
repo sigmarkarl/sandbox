@@ -177,10 +177,8 @@ public class DataExtract {
 			de.extractDataFiles();
 			de.con.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
