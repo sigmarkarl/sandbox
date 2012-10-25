@@ -492,8 +492,9 @@ public class GeneSet extends JApplet {
 		 * extra.add("spermidine/putrescine import ATP-binding protein PotA");
 		 */
 
+		// uclusterlist with avg identity
 		BufferedReader br = new BufferedReader(rd);
-		parseBlast( br, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist );
+		parseBlast( br, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, false, false );
 		br.close();
 		if (fw != null) {
 			fw.close();
@@ -504,7 +505,7 @@ public class GeneSet extends JApplet {
 			fw = new FileWriter(outfile2);
 
 		br = new BufferedReader(rd2);
-		parseBlast( br, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist );
+		parseBlast( br, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, true, true );
 		br.close();
 		if (fw != null) {
 			fw.close();
@@ -512,7 +513,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	public static void parseBlast( BufferedReader br, FileWriter fw, Map<String, Gene> ret, Map<String, String> allgenes, Map<String, Set<String>> geneset, 
-			Map<String, Set<String>> geneloc, Map<String, Gene> locgene, Set<String> poddur, List<Set<String>> uclusterlist ) throws IOException {
+			Map<String, Set<String>> geneloc, Map<String, Gene> locgene, Set<String> poddur, List<Set<String>> uclusterlist, boolean old, boolean addon ) throws IOException {
 		String query = null;
 		int start = 0;
 		int stop = 0;
@@ -535,7 +536,16 @@ public class GeneSet extends JApplet {
 				
 				int i = trim.indexOf(".aa", 2);
 				int i2 = trim.indexOf(' ', i);
-				String id = trim.substring(i+4,i2).trim();
+				String id;
+				//boolean addon = i == -1;
+				if( addon ) {
+					int si = trim.indexOf('|');
+					int ei = trim.lastIndexOf('|', i2);
+					id = trim.substring(si+1,ei);
+				} else {
+					id = trim.substring(i+4,i2).trim();
+				}
+				//String id = i == -1 ? trim.substring(1,i2).trim() : trim.substring(i+4,i2).trim();
 				String desc = trim.substring(i2+1);
 				//String id = split[1];
 				//String desc = split[2];
@@ -667,8 +677,14 @@ public class GeneSet extends JApplet {
 				Tegeval tv = new Tegeval(teg, deval, aa, dn, query, contig, contloc, start, stop, ori);
 				
 				Gene gene;
-				if (ret.containsKey(val)) {
-					gene = genestuff( uclusterlist, query, desc, teg, val, ret );
+				String check = addon ? "_"+aa : val;
+				if (ret.containsKey( check ) ) {
+					gene = genestuff( uclusterlist, query, desc, teg, check, ret );
+					if( addon ) {
+						gene.name = desc;
+						gene.origin = teg;
+						gene.allids.remove( check );
+					}
 				} else {
 					gene = new Gene(desc, teg);
 					gene.allids = new HashSet<String>();
@@ -727,7 +743,7 @@ public class GeneSet extends JApplet {
 					line = newline;
 					continue;
 				}
-			} else if (trim.contains("No hits")) {
+			} else if ( !addon && trim.contains("No hits")) {
 				Gene gene;
 
 				StringBuilder aa = aaSearch(query);
@@ -859,7 +875,7 @@ public class GeneSet extends JApplet {
 				}*/
 				
 				String[] split = trim.split("#");
-				if (split.length < 4) {
+				if ( split.length > 1 && split.length < 4) {
 					String newline = br.readLine();
 					line = line + newline;
 					trim = line.trim();
@@ -891,16 +907,32 @@ public class GeneSet extends JApplet {
 					// }
 					fw.write(line + "\n");
 				}
-			//} else if (query != null && (trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|"))) {
-			} else if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
-				//line = br.readLine();
-				//line = br.readLine();
-				trim = line.trim();
-				
-				String[] split = trim.split("[\t ]+");
-				evalue = split[split.length - 1];
-				if (fw != null)
-					fw.write(trim + "\n");
+			} else {
+				if( old ) {
+					if (query != null && (trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|"))) {
+						//} else if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
+						//line = br.readLine();
+						//line = br.readLine();
+						trim = line.trim();
+						
+						String[] split = trim.split("[\t ]+");
+						evalue = split[split.length - 1];
+						if (fw != null)
+							fw.write(trim + "\n");
+					}
+				} else {
+					if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
+						//} else if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
+						//line = br.readLine();
+						//line = br.readLine();
+						trim = line.trim();
+						
+						String[] split = trim.split("[\t ]+");
+						evalue = split[split.length - 1];
+						if (fw != null)
+							fw.write(trim + "\n");
+					}
+				}
 			}
 
 			line = br.readLine();
@@ -8999,8 +9031,9 @@ public class GeneSet extends JApplet {
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_short.blastout" );
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
 		is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
-		InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
-		panCoreFromNRBlast(new InputStreamReader(is), new InputStreamReader(nis), null, "/u0/sandbox/distann/src/exp_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		InputStream nis = GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		//"/home/sigmar/sandbox/distann/src/exp_short.blastout"
+		panCoreFromNRBlast(new InputStreamReader(is), new InputStreamReader(nis), null, null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();
