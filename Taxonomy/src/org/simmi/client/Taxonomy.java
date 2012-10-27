@@ -406,7 +406,7 @@ public class Taxonomy implements EntryPoint {
 							runSpec( selectedtree, "http://"+server+"/mysilva_"+val+".txt" );
 							already = true;
 							break;
-						}
+							}
 					}
 					
 					for( String key : snaedis1map.keySet() ) {
