@@ -36,12 +36,15 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.typedarrays.shared.ArrayBuffer;
+import com.google.gwt.typedarrays.shared.Uint8Array;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.server.Base64Utils;
 
 import elemental.client.Browser;
 import elemental.html.Console;
@@ -102,7 +105,52 @@ public class Webnutrition implements EntryPoint {
 	List<FoodInfo>	lfoodinfo = new ArrayList<FoodInfo>();
 	List<Column>	lcolumnwidth = new ArrayList<Column>();
 	
+	public native String bunzip2( String bintext ) /*-{
+		return $wnd.ArchUtils.bz2.decode( bintext );
+	}-*/;
+	
+	public native String getBinaryResource(String url) /*-{
+	    // ...implemented with JavaScript                 
+	    var req = new XMLHttpRequest();
+	    req.open("GET", url, false);  // The last parameter determines whether the request is asynchronous -> this case is sync.
+	    req.overrideMimeType('text/plain; charset=x-user-defined');
+	    req.send(null);
+	    if (req.status == 200) {                    
+	        return req.responseText;
+	    } else return null;
+	}-*/;
+	
+	public void fetchNutr2s() {
+		String bintext = getBinaryResource( "http://127.0.0.1:8888/NUT_DATA.txt.bz2" );
+		String res = bunzip2( bintext );
+		//utf8
+		console.log( res.length() );
+		console.log( res.substring(0, 100) );
+	}
+	
 	public void fetchNutr() throws RequestException {
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://127.0.0.1:8888/NUT_DATA.txt.gz.base64" );
+		//rb.getHeader(header)
+		rb.sendRequest("", new RequestCallback() {
+			@Override
+			public void onResponseReceived(Request request, Response response) {
+				String bintext = response.getText();
+				console.log( bintext.length() );
+				byte[] bb = Base64Utils.fromBase64( bintext );
+				
+				//com.google.gwt.
+				//String res = bunzip2( bintext );
+				//utf8
+				//console.log( res.substring(0, 100) );
+			}
+			
+			@Override
+			public void onError(Request request, Throwable exception) {
+			}
+		});
+	}
+	
+	public void fetchNutrFusion() throws RequestException {
 		String url = "https://www.googleapis.com/fusiontables/v1/";
 		
 		String appkey = "key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
@@ -251,6 +299,7 @@ public class Webnutrition implements EntryPoint {
 					
 					//nutrmap.put( "268", lcolumnwidth.get(2) );
 					
+					//fetchNutr2();
 					try {
 						fetchNutr();
 					} catch (RequestException e) {
