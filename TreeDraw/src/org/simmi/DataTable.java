@@ -99,6 +99,7 @@ import org.json.JSONObject;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
+import org.simmi.shared.TreeUtil.NodeSet;
 import org.simmi.unsigned.JavaFasta;
 
 import com.google.gdata.client.ClientLoginAccountType;
@@ -1692,6 +1693,94 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		}
 	}
+	
+	public static Node majoRuleConsensus( TreeUtil tu, Map<Set<String>,NodeSet> nmap, boolean copybootstrap ) {
+		List<NodeSet>	nslist = new ArrayList<NodeSet>();
+		System.err.println( nmap.size() );
+		for( Set<String> nodeset : nmap.keySet() ) {
+			NodeSet count = nmap.get( nodeset );
+			nslist.add( count );
+		}
+		
+		Collections.sort( nslist );
+		int c = 0;
+		for( NodeSet nodeset : nslist ) {
+			System.err.println( nodeset.getCount() + "  " + nodeset.getNodes() + "  " + nodeset.getAverageHeight() + "  " + nodeset.getAverageBootstrap() );
+			c++;
+			if( c > 20 ) break;
+		}
+		
+		//Map<Set<String>, Node>	nodemap = new HashMap<Set<String>, Node>();
+		Map<String, Node>		leafmap = new HashMap<String, Node>();
+		NodeSet	allnodes = nslist.get(0);
+		int total = allnodes.getCount();
+		Node root = tu.new Node();
+		for( String nname : allnodes.getNodes() ) {
+			Node n = tu.new Node( nname );
+			root.addNode(n, 1.0);
+			//n.seth( 1.0 );
+			leafmap.put( nname, n );
+		}
+		
+		for( int i = 1; i < Math.min( nslist.size(), 100 ); i++ ) {
+			NodeSet	allsubnodes = nslist.get(i);
+			Node subroot = tu.new Node();
+			if( !copybootstrap ) {
+				subroot.setName( Math.round( (double)(allsubnodes.getCount()*1000) / (double)total ) / 10.0 + "%" );
+			} else {
+				subroot.setName( Double.toString( Math.round( (allsubnodes.getAverageBootstrap()*100.0) )/100.0 ) );
+			}
+			
+			Node vn = tu.getValidNode( allsubnodes.getNodes(), root );
+			if( tu.isValidSet( allsubnodes.getNodes(), vn ) ) {
+				while( allsubnodes.getNodes().size() > 0 ) {
+					for( String nname : allsubnodes.getNodes() ) {
+						Node leaf = leafmap.get( nname );
+						Node newparent = leaf.getParent();
+						Node current = leaf;
+						while( newparent.countLeaves() <= allsubnodes.getNodes().size() ) {
+							current = newparent;
+							newparent = current.getParent();
+						}
+						
+						if( allsubnodes.getNodes().containsAll( current.getLeaveNames() ) ) {
+							Node parent = current.getParent();
+							parent.removeNode( current );
+							
+							double h = allsubnodes.getAverageHeight();
+							//double b = allsubnodes.getAverageBootstrap();
+							double lh = allsubnodes.getAverageLeaveHeight(nname);
+							
+							/*subroot.addNode( current, h );
+							if( lh != -1.0 ) parent.addNode( subroot, lh );
+							else parent.addNode( subroot, 1.0 );*/
+							
+							parent.addNode( subroot, h );
+							
+							if( current.isLeaf() && lh != -1.0 ) {
+								System.err.println( "printing "+current.getName() + "  " + lh );
+								subroot.addNode( current, lh );
+							} else subroot.addNode( current, current.geth() );
+						
+							removeNames( allsubnodes.getNodes(), current );
+						} else allsubnodes.getNodes().clear();
+						
+						break;
+					}
+				}
+			}
+		}
+		
+		return root;
+	}
+	
+	public static void removeNames( Set<String> set, Node node ) {
+		List<Node> subnodes = node.getNodes();
+		if( subnodes != null ) for( Node n : subnodes ) {
+			removeNames(set, n);
+		}
+		set.remove( node.getName() );
+	}
     
 	Map<String,String>	colmap = new HashMap<String,String>();
 	JavaFasta	currentjavafasta;
@@ -2496,18 +2585,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				//final JCheckBox	colors = new JCheckBox("Species colors");
 				final JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
 				final JCheckBox	boots = new JCheckBox("Bootstrap");
+				final JCheckBox	majo = new JCheckBox("Majority-rule consensus from bootstrap replicates");
 				final JCheckBox	entropy = new JCheckBox("Entropy weighting");
 				final JCheckBox	exgaps = new JCheckBox("Exclude gaps");
-				Object[] extraObjs = new Object[] {jukes, boots, exgaps, entropy};
+				Object[] extraObjs = new Object[] {jukes, boots, majo, exgaps, entropy};
 				//JOptionPane.showMessageDialog( DataTable.this, extraObjs );
 				
 				runnable = new Runnable() {
 					public void run() {
-						System.err.println( "fuck you bleh2" );
-						console( "hey what the fuck" );
 						//boolean color = colors.isSelected();
 						boolean cantor = jukes.isSelected();
 						boolean bootstrap = boots.isSelected();
+						boolean majorule = majo.isSelected();
 						boolean entr = entropy.isSelected();
 						boolean exg = exgaps.isSelected();
 						
@@ -2549,36 +2638,55 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
 						TreeUtil	tu = new TreeUtil();
 						
-						console( "eeerm" + corrInd.size() );
 						Node n = tu.neighborJoin(corr, corrInd, null, false);
-						console( "hey what the fuck eeeerm" );
-						
 						if( bootstrap ) {
-							Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
-								@Override
-								public int compare(Node o1, Node o2) {
-									String c1 = o1.toStringWoLengths();
-									String c2 = o2.toStringWoLengths();
+							if( majorule ) {
+								Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
+								for( int i = 0; i < 1000; i++ ) {
+									Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
+									Node nn = tu.neighborJoin(corr, corrInd, null, false);
 									
-									return c1.compareTo( c2 );
+									//String[] sobj = {"mt.ruber", "mt.silvanus", "o.profundus", "m.hydrothermalis"};
+									//Node newnode = tu.getParent( n, new HashSet<String>( Arrays.asList( sobj ) ) );
+									//tu.rerootRecur( n, newnode );
+									
+									tu.setLoc( 0 );
+									n.nodeCalcMap( nmap );
+									
+									//tu.arrange( nn, comp );
+									//tu.compareTrees( tree, n, nn );
+									
+									//String btree = nn.toStringWoLengths();
+									//System.err.println( btree );
 								}
-							};
-							tu.arrange( n, comp );
-							tree = n.toStringWoLengths();
-							
-							for( int i = 0; i < 1000; i++ ) {
-								Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
-								Node nn = tu.neighborJoin(corr, corrInd, null, false);
-								tu.arrange( nn, comp );
-								tu.compareTrees( tree, n, nn );
 								
-								//String btree = nn.toStringWoLengths();
-								//System.err.println( btree );
+								n = majoRuleConsensus( tu, nmap, false );
+							} else {
+								Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+									@Override
+									public int compare(Node o1, Node o2) {
+										String c1 = o1.toStringWoLengths();
+										String c2 = o2.toStringWoLengths();
+										
+										return c1.compareTo( c2 );
+									}
+								};
+								tu.arrange( n, comp );
+								tree = n.toStringWoLengths();
+								
+								for( int i = 0; i < 1000; i++ ) {
+									Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
+									Node nn = tu.neighborJoin(corr, corrInd, null, false);
+									tu.arrange( nn, comp );
+									tu.compareTrees( tree, n, nn );
+									
+									//String btree = nn.toStringWoLengths();
+									//System.err.println( btree );
+								}
+								tu.appendCompare( n );
 							}
-							tu.appendCompare( n );
 						}
-						System.err.println( "fuck you bleh" );
-						console( "hey what the fuck2" );
+						
 						/*Map<String,String> namesMap = new HashMap<String,String>();
 						namesMap.put("Chile", "Chile");
 						namesMap.put("Yellowstone", "Yellowstone");
