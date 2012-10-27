@@ -1,6 +1,10 @@
 package org.simmi.client;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -93,7 +97,7 @@ public class Taxonomy implements EntryPoint {
 		});
 	}
 	
-	public void runStuff( String server, Tree tree, Map<String,String> rmapstr, Map<String,String> rsnaedismap ) {
+	public void runStuff( String server, Tree tree, Map<String,String> rmapstr, Map<String,String> rsnaedis1map, Map<String,String> rsnaedis2map ) {
 		final TreeItem	eyjosilva1 = tree.addItem( "eyjoACGACTACAG" );
 		final TreeItem	eyjosilva2 = tree.addItem( "eyjoACGCTCGACA" );
 		final TreeItem	eyjosilva3 = tree.addItem( "eyjoAGACGCACTC" );
@@ -131,38 +135,60 @@ public class Taxonomy implements EntryPoint {
 			}
 		}
 		
-		final TreeItem	snaedissilva1 = tree.addItem( "snaedisACGACGTCGA" );
-		final TreeItem	snaedissilva2 = tree.addItem( "snaedisACGAGTGCGT" );
-		final TreeItem	snaedissilva3 = tree.addItem( "snaedisACGCTCGACA" );
-		final TreeItem	snaedissilva4 = tree.addItem( "snaedisACGNGTCGCT" );
-		final TreeItem	snaedissilva5 = tree.addItem( "snaedisAGACGCACTC" );
-		final TreeItem	snaedissilva6 = tree.addItem( "snaedisAGCACTGTAG" );
-		final TreeItem	snaedissilva7 = tree.addItem( "snaedisAGGACGCACT" );
-		final TreeItem	snaedissilva8 = tree.addItem( "snaedisAGGCACTGTA" );
-		final TreeItem	snaedissilva9 = tree.addItem( "snaedisATATCGCGAG" );
-		final TreeItem	snaedissilva10 = tree.addItem( "snaedisATATCGCGGA" );
-		final TreeItem	snaedissilva11 = tree.addItem( "snaedisATATCGGCGA" );
-		final TreeItem	snaedissilva12 = tree.addItem( "snaedisATCAGACACG" );
-		final TreeItem	snaedissilva13 = tree.addItem( "snaedisCGGTGTCTCT" );
-		final TreeItem	snaedissilva14 = tree.addItem( "snaedisCGTCGTCGTC" );
-		final TreeItem	snaedissilva15 = tree.addItem( "snaedisCGTCTCTCAG" );
-		final TreeItem	snaedissilva16 = tree.addItem( "snaedisCGTGTCTCTA" );
-		final TreeItem	snaedissilva17 = tree.addItem( "snaedisCTCGCGTGTC" );
-		final TreeItem	snaedissilva18 = tree.addItem( "snaedisGACGCTCGAC" );
-		final TreeItem	snaedissilva19 = tree.addItem( "snaedisGAGACGCACT" );
-		final TreeItem	snaedissilva20 = tree.addItem( "snaedisGATATCGCGA" );
-		final TreeItem	snaedissilva21 = tree.addItem( "snaedisGCGTGTCTCT" );
-		final TreeItem	snaedissilva22 = tree.addItem( "snaedisGCTCGCGTGT" );
-		final TreeItem	snaedissilva23 = tree.addItem( "snaedisGTCTCTATGC" );
-		final TreeItem	snaedissilva24 = tree.addItem( "snaedisTCTCTATGCG" );
-		final TreeItem	snaedissilva25 = tree.addItem( "snaedisTGATACGTCT" );
+		final TreeItem	snaedissilva1 = tree.addItem( "snaedis1ACGACGTCGA" );
+		final TreeItem	snaedissilva2 = tree.addItem( "snaedis1ACGAGTGCGT" );
+		final TreeItem	snaedissilva3 = tree.addItem( "snaedis1ACGCTCGACA" );
+		final TreeItem	snaedissilva4 = tree.addItem( "snaedis1ACGNGTCGCT" );
+		final TreeItem	snaedissilva5 = tree.addItem( "snaedis1AGACGCACTC" );
+		final TreeItem	snaedissilva6 = tree.addItem( "snaedis1AGCACTGTAG" );
+		final TreeItem	snaedissilva7 = tree.addItem( "snaedis1AGGACGCACT" );
+		final TreeItem	snaedissilva8 = tree.addItem( "snaedis1AGGCACTGTA" );
+		final TreeItem	snaedissilva9 = tree.addItem( "snaedis1ATATCGCGAG" );
+		final TreeItem	snaedissilva10 = tree.addItem( "snaedis1ATATCGCGGA" );
+		final TreeItem	snaedissilva11 = tree.addItem( "snaedis1ATATCGGCGA" );
+		final TreeItem	snaedissilva12 = tree.addItem( "snaedis1ATCAGACACG" );
+		final TreeItem	snaedissilva13 = tree.addItem( "snaedis1CGGTGTCTCT" );
+		final TreeItem	snaedissilva14 = tree.addItem( "snaedis1CGTCGTCGTC" );
+		final TreeItem	snaedissilva15 = tree.addItem( "snaedis1CGTCTCTCAG" );
+		final TreeItem	snaedissilva16 = tree.addItem( "snaedis1CGTGTCTCTA" );
+		final TreeItem	snaedissilva17 = tree.addItem( "snaedis1CTCGCGTGTC" );
+		final TreeItem	snaedissilva18 = tree.addItem( "snaedis1GACGCTCGAC" );
+		final TreeItem	snaedissilva19 = tree.addItem( "snaedis1GAGACGCACT" );
+		final TreeItem	snaedissilva20 = tree.addItem( "snaedis1GATATCGCGA" );
+		final TreeItem	snaedissilva21 = tree.addItem( "snaedis1GCGTGTCTCT" );
+		final TreeItem	snaedissilva22 = tree.addItem( "snaedis1GCTCGCGTGT" );
+		final TreeItem	snaedissilva23 = tree.addItem( "snaedis1GTCTCTATGC" );
+		final TreeItem	snaedissilva24 = tree.addItem( "snaedis1TCTCTATGCG" );
+		final TreeItem	snaedissilva25 = tree.addItem( "snaedis1TGATACGTCT" );
 		
 		for( ; i < tree.getItemCount(); i++ ) {
 			TreeItem ti = tree.getItem( i );
 			String text = ti.getText();
-			for( String key : rsnaedismap.keySet() ) {
+			for( String key : rsnaedis1map.keySet() ) {
 				if( text.contains(key) ) {
-					String val = rsnaedismap.get(key);
+					String val = rsnaedis1map.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+		
+		final TreeItem	snaedis2silva1 = tree.addItem( "snaedis2ACGAGTGCGT" );
+		final TreeItem	snaedis2silva2 = tree.addItem( "snaedis2ACGCTCGACA" );
+		final TreeItem	snaedis2silva3 = tree.addItem( "snaedis2AGACGCACTC" );
+		final TreeItem	snaedis2silva4 = tree.addItem( "snaedis2AGCACTGTAG" );
+		final TreeItem	snaedis2silva5 = tree.addItem( "snaedis2ATCAGACACG" );
+		final TreeItem	snaedis2silva6 = tree.addItem( "snaedis2ATATCGCGAG" );
+		final TreeItem	snaedis2silva7 = tree.addItem( "snaedis2CGTGTCTCTA" );
+		final TreeItem	snaedis2silva8 = tree.addItem( "snaedis2CTCGCGTGTC" );
+		final TreeItem	snaedis2silva9 = tree.addItem( "snaedis2TGATACGTCT" );
+		final TreeItem	snaedis2silva10 = tree.addItem( "snaedis2TCTCTATGCG" );
+		
+		for( ; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rsnaedis2map.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rsnaedis2map.get(key);
 					ti.setText( text.replace(key, val) );
 				}
 			}
@@ -306,31 +332,36 @@ public class Taxonomy implements EntryPoint {
 			rmapstr.put( mapstr.get(key), key );
 		}
 		
-		final Map<String,String>	snaedismap = new HashMap<String,String>();
-		mapstr.put( "770_geysir_north_jardvegur", "ACGAGTGCGT" );
-		mapstr.put( "770_geysir_north_vatn", "ACGCTCGACA" );
-		mapstr.put( "771_geysir_north_jardvegur", "AGACGCACTC" );
-		mapstr.put( "771_geysir_north_vatn", "AGCACTGTAG" );
-		mapstr.put( "772_geysir_north_jardvegur", "ATCAGACACG" );
-		mapstr.put( "772_geysir_north_vatn", "ATATCGCGAG" );
-		mapstr.put( "773_geysir_west_jardvegur", "CGTGTCTCTA" );
-		mapstr.put( "773_geysir_west_vatn", "CTCGCGTGTC" );
-		mapstr.put( "774_geysir_west_jardvegur", "TGATACGTCT" );
-		mapstr.put( "774_geysir_west_vatn", "TCTCTATGCG" );
+		final Map<String,String>	snaedis1map = new HashMap<String,String>();
+		snaedis1map.put( "770_geysir_north_jardvegur", "ACGAGTGCGT" );
+		snaedis1map.put( "770_geysir_north_vatn", "ACGCTCGACA" );
+		snaedis1map.put( "771_geysir_north_jardvegur", "AGACGCACTC" );
+		snaedis1map.put( "771_geysir_north_vatn", "AGCACTGTAG" );
+		snaedis1map.put( "772_geysir_north_jardvegur", "ATCAGACACG" );
+		snaedis1map.put( "772_geysir_north_vatn", "ATATCGCGAG" );
+		snaedis1map.put( "773_geysir_west_jardvegur", "CGTGTCTCTA" );
+		snaedis1map.put( "773_geysir_west_vatn", "CTCGCGTGTC" );
+		snaedis1map.put( "774_geysir_west_jardvegur", "TGATACGTCT" );
+		snaedis1map.put( "774_geysir_west_vatn", "TCTCTATGCG" );
+		final Map<String,String>	rsnaedis1map = new HashMap<String,String>();
+		for( String key : snaedis1map.keySet() ) {
+			rsnaedis1map.put( snaedis1map.get(key), key );
+		}
 		
-		mapstr.put( "775_geysir_west_jardvegur", "ACGAGTGCGT" );
-		mapstr.put( "775_geysir_west_vatn", "ACGCTCGACA" );
-		mapstr.put( "776_geysir_west_jardvegur", "AGACGCACTC" );
-		mapstr.put( "776_geysir_west_vatn", "AGCACTGTAG" );
-		mapstr.put( "777_fludir_vatn", "ATCAGACACG" );
-		mapstr.put( "777_fludir_lifmassi", "ATATCGCGAG" );
-		mapstr.put( "778_fludir_jardvegur", "CGTGTCTCTA" );
-		mapstr.put( "778_fludir_vatn", "CTCGCGTGTC" );
-		mapstr.put( "779_fludir_jardvegur", "TGATACGTCT" );
-		mapstr.put( "779_fludir_vatn", "TCTCTATGCG" );
-		final Map<String,String>	rsnaedismap = new HashMap<String,String>();
-		for( String key : snaedismap.keySet() ) {
-			rsnaedismap.put( snaedismap.get(key), key );
+		final Map<String,String>	snaedis2map = new HashMap<String,String>();
+		snaedis2map.put( "775_geysir_west_jardvegur", "ACGAGTGCGT" );
+		snaedis2map.put( "775_geysir_west_vatn", "ACGCTCGACA" );
+		snaedis2map.put( "776_geysir_west_jardvegur", "AGACGCACTC" );
+		snaedis2map.put( "776_geysir_west_vatn", "AGCACTGTAG" );
+		snaedis2map.put( "777_fludir_vatn", "ATCAGACACG" );
+		snaedis2map.put( "777_fludir_lifmassi", "ATATCGCGAG" );
+		snaedis2map.put( "778_fludir_jardvegur", "CGTGTCTCTA" );
+		snaedis2map.put( "778_fludir_vatn", "CTCGCGTGTC" );
+		snaedis2map.put( "779_fludir_jardvegur", "TGATACGTCT" );
+		snaedis2map.put( "779_fludir_vatn", "TCTCTATGCG" );
+		final Map<String,String>	rsnaedis2map = new HashMap<String,String>();
+		for( String key : snaedis2map.keySet() ) {
+			rsnaedis2map.put( snaedis2map.get(key), key );
 		}
 		
 		RootPanel		rp = RootPanel.get();
@@ -378,10 +409,19 @@ public class Taxonomy implements EntryPoint {
 						}
 					}
 					
-					for( String key : snaedismap.keySet() ) {
-						if( nodename.equals("snaedis"+key) ) {
-							String val = mapstr.get(key);
+					for( String key : snaedis1map.keySet() ) {
+						if( nodename.equals("snaedis1"+key) ) {
+							String val = snaedis1map.get(key);
 							runSpec( selectedtree, "http://"+server+"/snaedis_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					
+					for( String key : snaedis2map.keySet() ) {
+						if( nodename.equals("snaedis2"+key) ) {
+							String val = snaedis2map.get(key);
+							runSpec( selectedtree, "http://"+server+"/snaedis2_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -390,8 +430,10 @@ public class Taxonomy implements EntryPoint {
 					if( !already ) {
 						if( nodename.startsWith("gumol") ) {
 							runSpec( selectedtree, "http://"+server+"/gumol_"+nodename.substring(5)+".txt" );
-						//} else if( nodename.startsWith("snaedis") ) {
-						//	runSpec( selectedtree, "http://"+server+"/snaedis_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis1") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis2") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis2_"+nodename.substring(7)+".txt" );
 						} else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
 						else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 						else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
@@ -434,7 +476,16 @@ public class Taxonomy implements EntryPoint {
 						} catch( Exception e ) {
 							
 						}
-					} else {
+					} else if( rootnodename.contains("snaedis1") ) {
+						for( String snaedis : snaedis1map.keySet() ) {
+							if( rootnodename.contains(snaedis) ) {
+								searchnum = rootnodename.replace(snaedis, snaedis1map.get(snaedis) );
+								break;
+							}
+						}
+					} 
+					
+					if( searchnum.length() == 0 ) {
 						searchnum = rootnodename;
 					}
 					
@@ -499,9 +550,23 @@ public class Taxonomy implements EntryPoint {
 					StringBuilder res = new StringBuilder();
 					for( Integer d : mstr.keySet() ) {
 						Map<String,Integer> mi = mstr.get(d);
+						
+						List<Object[]> lobj = new ArrayList<Object[]>();
 						for( String key : mi.keySet() ) {
 							Integer i = mi.get(key);
-							res.append( key + "\t" + i + "\n" );
+							Object[] obj = { i, key };
+							lobj.add( obj );
+						}
+						Collections.sort( lobj, new Comparator<Object[]>() {
+							@Override
+							public int compare(Object[] o1, Object[] o2) {
+								Integer i1 = (Integer)o1[0];
+								Integer i2 = (Integer)o2[0];
+								return i2.intValue() - i1.intValue();
+							}
+						});
+						for( Object[] obj : lobj ) {
+							res.append( obj[1] + "\t" + obj[0] + "\n" );
 						}
 						res.append("\n");
 					}
@@ -530,7 +595,7 @@ public class Taxonomy implements EntryPoint {
 			@Override
 			public void onSuccess(String result) {
 				//if( result != null && result.contains("130.208.252.") ) 
-				runStuff( server, tree, rmapstr, rsnaedismap );
+				runStuff( server, tree, rmapstr, rsnaedis1map, rsnaedis2map );
 			}
 		});
 		FocusPanel	focus = new FocusPanel( tree );
