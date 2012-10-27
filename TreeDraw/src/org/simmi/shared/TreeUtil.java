@@ -480,7 +480,9 @@ public class TreeUtil {
 		
 		@Override
 		public int compareTo(NodeSet o) {
-			return o.count.size() - count.size();
+			int val = o.count.size() - count.size();
+			if( val == 0 ) return o.nodes.size() - nodes.size(); 
+			else return val;
 		}
 	};
 	
