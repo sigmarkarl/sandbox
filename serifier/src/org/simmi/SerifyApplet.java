@@ -4439,14 +4439,6 @@ public class SerifyApplet extends JApplet {
 		return "";
 	}
 	
-	public static void removeNames( Set<String> set, Node node ) {
-		List<Node> subnodes = node.getNodes();
-		if( subnodes != null ) for( Node n : subnodes ) {
-			removeNames(set, n);
-		}
-		set.remove( node.getName() );
-	}
-	
 	public static boolean inPath( Node leaf, Node n ) {
 		if( leaf == n ) return true;
 		else {
@@ -4493,7 +4485,9 @@ public class SerifyApplet extends JApplet {
 				n.nodeCalcMap( nmap );
 			}
 			
-			List<NodeSet>	nslist = new ArrayList<NodeSet>();
+			Node root = DataTable.majoRuleConsensus(treeutil, nmap, copybootstrap);
+			
+			/*List<NodeSet>	nslist = new ArrayList<NodeSet>();
 			System.err.println( nmap.size() );
 			for( Set<String> nodeset : nmap.keySet() ) {
 				NodeSet count = nmap.get( nodeset );
@@ -4551,7 +4545,7 @@ public class SerifyApplet extends JApplet {
 								
 								/*subroot.addNode( current, h );
 								if( lh != -1.0 ) parent.addNode( subroot, lh );
-								else parent.addNode( subroot, 1.0 );*/
+								else parent.addNode( subroot, 1.0 );*
 								
 								parent.addNode( subroot, h );
 								
@@ -4567,12 +4561,12 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				}
-			}
+			}*/
 			
 			if( distmat != null ) {
 				if( root.getNodes().size() == 2 ) root = treeutil.removeRoot( root );
 				List<Node> nodes = treeutil.getLeaves( root );
-				c = 0;
+				int c = 0;
 				for( String s : corrInd ) {
 					int i = c;
 					while( !s.equals( nodes.get(i).getName() ) ) i++;
