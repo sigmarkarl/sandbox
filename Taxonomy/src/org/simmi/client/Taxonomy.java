@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DragEndEvent;
@@ -30,6 +31,8 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.http.client.Request;
@@ -404,14 +407,40 @@ public class Taxonomy implements EntryPoint {
 		rp.setSize(w+"px", h+"px");
 		
 		final Tree		tree = new Tree();
-		
+
 		tree.addKeyDownHandler( new KeyDownHandler() {
 			@Override
 			public void onKeyDown(KeyDownEvent event) {
 				shift = event.getNativeKeyCode() == KeyCodes.KEY_SHIFT;
 				ctrl = event.getNativeKeyCode() == KeyCodes.KEY_CTRL;
 				
-				
+				int cc = event.getNativeEvent().getCharCode();
+				if( cc == 'f' || cc == 'F' ) {
+					String allstr = "";
+					for( String key : datamap.keySet() ) {
+						List<Double> tdlist = datamap.get(key);
+						String cres = key;
+						for( int i = 0; i < tdlist.size(); i++ ) {
+							cres += "\t"+tdlist.get(i);
+						}
+						for( int i = tdlist.size(); i < max; i++ ) {
+							tdlist.add( 0.0 );
+							cres += "\t"+tdlist.get(i);
+						}
+						
+						allstr += cres+"\n";
+					}
+			
+					DialogBox db = new DialogBox();
+					Caption cap = db.getCaption();
+					db.setAutoHideEnabled( true );
+					cap.setText("PCA");
+					TextArea ta = new TextArea();
+					ta.setSize("512px", "384px");
+					db.add( ta );
+					ta.setText( allstr );
+					db.center();
+				}
 			}
 		});
 		tree.addKeyUpHandler( new KeyUpHandler() {
@@ -424,6 +453,51 @@ public class Taxonomy implements EntryPoint {
 			}
 		});
 		
+		tree.addMouseDownHandler( new MouseDownHandler() {
+			@Override
+			public void onMouseDown(MouseDownEvent event) {
+				if( event.getNativeButton() == NativeEvent.BUTTON_MIDDLE ) {
+					String allstr = "";
+					for( String key : datamap.keySet() ) {
+						List<Double> tdlist = datamap.get(key);
+						String cres = "";//key;
+						for( int i = 0; i < tdlist.size(); i++ ) {
+							cres += tdlist.get(i)+"\t";
+						}
+						for( int i = tdlist.size(); i < max; i++ ) {
+							tdlist.add( 0.0 );
+							cres += tdlist.get(i)+"\t";
+						}
+						
+						allstr += cres+"\n";
+					}
+					
+					allstr += "\n";
+					for( String key : datamap.keySet() ) {
+						double dval = 0.0;
+						String keyval = key.substring(8);
+						if( snaedis1heatmap.containsKey( keyval ) ) {
+							dval = snaedis1heatmap.get( keyval );
+						} else if( snaedis2heatmap.containsKey( keyval ) ) {
+							dval = snaedis2heatmap.get( keyval );
+						}
+						
+						double tval = (dval-60.0)/30.0;
+						allstr += tval+"\t0.0\t"+(1.0-tval)+"\n";
+					}
+			
+					DialogBox db = new DialogBox();
+					Caption cap = db.getCaption();
+					db.setAutoHideEnabled( true );
+					cap.setText("PCA");
+					TextArea ta = new TextArea();
+					ta.setSize("512px", "384px");
+					db.add( ta );
+					ta.setText( allstr );
+					db.center();
+				}
+			}
+		});
 		tree.addSelectionHandler( new SelectionHandler<TreeItem>() {
 			@Override
 			public void onSelection(SelectionEvent<TreeItem> event) {
@@ -632,7 +706,7 @@ public class Taxonomy implements EntryPoint {
 								dlist.set( k, ((Integer)obj[0])/sum );
 							}
 							
-							for( String key : datamap.keySet() ) {
+							/*for( String key : datamap.keySet() ) {
 								List<Double> tdlist = datamap.get(key);
 								String cres = key;
 								for( int i = 0; i < tdlist.size(); i++ ) {
@@ -644,7 +718,7 @@ public class Taxonomy implements EntryPoint {
 								}
 								console( cres );
 							}
-							console("\n");
+							console("\n");*/
 						}
 					}
 					
