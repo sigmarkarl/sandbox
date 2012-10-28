@@ -360,6 +360,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis1heatmap.put( "774_geysir_west_jardvegur", 88.0 );
 		snaedis1heatmap.put( "774_geysir_west_vatn", 88.0 );
 		
+		final Map<String,Double>	snaedis1phmap = new HashMap<String,Double>();
+		snaedis1phmap.put( "770_geysir_north_jardvegur", 6.75 );
+		snaedis1phmap.put( "770_geysir_north_vatn", 6.75 );
+		snaedis1phmap.put( "771_geysir_north_jardvegur", 6.0 );
+		snaedis1phmap.put( "771_geysir_north_vatn", 6.0 );
+		snaedis1phmap.put( "772_geysir_north_jardvegur", 5.0 );
+		snaedis1phmap.put( "772_geysir_north_vatn", 5.0 );
+		snaedis1phmap.put( "773_geysir_west_jardvegur", 9.0 );
+		snaedis1phmap.put( "773_geysir_west_vatn", 9.0 );
+		snaedis1phmap.put( "774_geysir_west_jardvegur", 8.0 );
+		snaedis1phmap.put( "774_geysir_west_vatn", 8.0 );
+		
 		final Map<String,String>	rsnaedis1map = new HashMap<String,String>();
 		for( String key : snaedis1map.keySet() ) {
 			rsnaedis1map.put( snaedis1map.get(key), key );
@@ -389,6 +401,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis2heatmap.put( "779_fludir_jardvegur", 79.1 );
 		snaedis2heatmap.put( "779_fludir_vatn", 79.1 );
 		
+		final Map<String,Double>	snaedis2phmap = new HashMap<String,Double>();
+		snaedis2phmap.put( "775_geysir_west_jardvegur", 9.0 );
+		snaedis2phmap.put( "775_geysir_west_vatn", 9.0 );
+		snaedis2phmap.put( "776_geysir_west_jardvegur", 7.0 );
+		snaedis2phmap.put( "776_geysir_west_vatn", 7.0 );
+		snaedis2phmap.put( "777_fludir_vatn", 8.0 );
+		snaedis2phmap.put( "777_fludir_lifmassi", 8.0 );
+		snaedis2phmap.put( "778_fludir_jardvegur", 8.25 );
+		snaedis2phmap.put( "778_fludir_vatn", 8.25 );
+		snaedis2phmap.put( "779_fludir_jardvegur", 8.0 );
+		snaedis2phmap.put( "779_fludir_vatn", 8.0 );
+		
 		final Map<String,String>	rsnaedis2map = new HashMap<String,String>();
 		for( String key : snaedis2map.keySet() ) {
 			rsnaedis2map.put( snaedis2map.get(key), key );
@@ -411,7 +435,7 @@ public class Taxonomy implements EntryPoint {
 				shift = event.getNativeKeyCode() == KeyCodes.KEY_SHIFT;
 				ctrl = event.getNativeKeyCode() == KeyCodes.KEY_CTRL;
 				
-				
+								
 			}
 		});
 		tree.addKeyUpHandler( new KeyUpHandler() {
