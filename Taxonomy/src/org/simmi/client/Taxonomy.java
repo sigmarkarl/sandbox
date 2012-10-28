@@ -298,6 +298,10 @@ public class Taxonomy implements EntryPoint {
 		}
 	}
 	
+	public static Map<String,List<Double>>	datamap = new HashMap<String,List<Double>>();
+	public static Map<String,Integer>		indexmap = new HashMap<String,Integer>();
+	public static int max = 0;
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -343,6 +347,19 @@ public class Taxonomy implements EntryPoint {
 		snaedis1map.put( "773_geysir_west_vatn", "CTCGCGTGTC" );
 		snaedis1map.put( "774_geysir_west_jardvegur", "TGATACGTCT" );
 		snaedis1map.put( "774_geysir_west_vatn", "TCTCTATGCG" );
+		
+		final Map<String,Double>	snaedis1heatmap = new HashMap<String,Double>();
+		snaedis1heatmap.put( "770_geysir_north_jardvegur", 83.0 );
+		snaedis1heatmap.put( "770_geysir_north_vatn", 83.0 );
+		snaedis1heatmap.put( "771_geysir_north_jardvegur", 72.0 );
+		snaedis1heatmap.put( "771_geysir_north_vatn", 72.0 );
+		snaedis1heatmap.put( "772_geysir_north_jardvegur", 68.5 );
+		snaedis1heatmap.put( "772_geysir_north_vatn", 68.5 );
+		snaedis1heatmap.put( "773_geysir_west_jardvegur", 79.4 );
+		snaedis1heatmap.put( "773_geysir_west_vatn", 79.4 );
+		snaedis1heatmap.put( "774_geysir_west_jardvegur", 88.0 );
+		snaedis1heatmap.put( "774_geysir_west_vatn", 88.0 );
+		
 		final Map<String,String>	rsnaedis1map = new HashMap<String,String>();
 		for( String key : snaedis1map.keySet() ) {
 			rsnaedis1map.put( snaedis1map.get(key), key );
@@ -359,6 +376,19 @@ public class Taxonomy implements EntryPoint {
 		snaedis2map.put( "778_fludir_vatn", "CTCGCGTGTC" );
 		snaedis2map.put( "779_fludir_jardvegur", "TGATACGTCT" );
 		snaedis2map.put( "779_fludir_vatn", "TCTCTATGCG" );
+		
+		final Map<String,Double>	snaedis2heatmap = new HashMap<String,Double>();
+		snaedis2heatmap.put( "775_geysir_west_jardvegur", 83.0 );
+		snaedis2heatmap.put( "775_geysir_west_vatn", 83.0 );
+		snaedis2heatmap.put( "776_geysir_west_jardvegur", 88.0 );
+		snaedis2heatmap.put( "776_geysir_west_vatn", 88.0 );
+		snaedis2heatmap.put( "777_fludir_vatn", 63.0 );
+		snaedis2heatmap.put( "777_fludir_lifmassi", 63.0 );
+		snaedis2heatmap.put( "778_fludir_jardvegur", 69.4 );
+		snaedis2heatmap.put( "778_fludir_vatn", 69.4 );
+		snaedis2heatmap.put( "779_fludir_jardvegur", 79.1 );
+		snaedis2heatmap.put( "779_fludir_vatn", 79.1 );
+		
 		final Map<String,String>	rsnaedis2map = new HashMap<String,String>();
 		for( String key : snaedis2map.keySet() ) {
 			rsnaedis2map.put( snaedis2map.get(key), key );
@@ -380,15 +410,17 @@ public class Taxonomy implements EntryPoint {
 			public void onKeyDown(KeyDownEvent event) {
 				shift = event.getNativeKeyCode() == KeyCodes.KEY_SHIFT;
 				ctrl = event.getNativeKeyCode() == KeyCodes.KEY_CTRL;
+				
+				
 			}
 		});
 		tree.addKeyUpHandler( new KeyUpHandler() {
 			@Override
 			public void onKeyUp(KeyUpEvent event) {
-				if( event.getNativeKeyCode() == KeyCodes.KEY_SHIFT ) {
-					shift = !(event.getNativeKeyCode() == KeyCodes.KEY_SHIFT);
-					ctrl = !(event.getNativeKeyCode() == KeyCodes.KEY_CTRL);
-				}
+				//if( event.getNativeKeyCode() == KeyCodes.KEY_SHIFT ) {
+				shift = !(event.getNativeKeyCode() == KeyCodes.KEY_SHIFT);
+				ctrl = !(event.getNativeKeyCode() == KeyCodes.KEY_CTRL);
+				//}
 			}
 		});
 		
@@ -569,6 +601,51 @@ public class Taxonomy implements EntryPoint {
 							res.append( obj[1] + "\t" + obj[0] + "\n" );
 						}
 						res.append("\n");
+						
+						if( d == 2 ) {
+							double sum = 0.0;
+							for( Object[] obj : lobj ) {
+								if( !indexmap.containsKey(obj[1]) ) {
+									indexmap.put((String)obj[1], indexmap.size());
+									/*for( String key : datamap.keySet() ) {
+										List<Double> dlist = datamap.get(key);
+										for( int i = dlist.size(); i <= indexmap.size(); i++ ) {
+											dlist.add( 0.0 );
+										}
+									}*/
+									max = Math.max(max, indexmap.size());
+								}
+								sum += (Integer)obj[0];
+							}
+							
+							List<Double>	dlist = new ArrayList<Double>();
+							String tstr = selectedtree.getText();
+							int ti = tstr.indexOf(' ');
+							if( ti == -1 ) ti = tstr.length();
+							datamap.put( tstr.substring(0,ti), dlist);
+							
+							for( Object[] obj : lobj ) {
+								int k = indexmap.get(obj[1]);
+								for( int i = dlist.size(); i <= k; i++ ) {
+									dlist.add( 0.0 );
+								}
+								dlist.set( k, ((Integer)obj[0])/sum );
+							}
+							
+							for( String key : datamap.keySet() ) {
+								List<Double> tdlist = datamap.get(key);
+								String cres = key;
+								for( int i = 0; i < tdlist.size(); i++ ) {
+									cres += "\t"+tdlist.get(i);
+								}
+								for( int i = tdlist.size(); i < max; i++ ) {
+									tdlist.add( 0.0 );
+									cres += "\t"+tdlist.get(i);
+								}
+								console( cres );
+							}
+							console("\n");
+						}
 					}
 					
 					DialogBox db = new DialogBox();
