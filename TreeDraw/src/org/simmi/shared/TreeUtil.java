@@ -521,6 +521,7 @@ public class TreeUtil {
 				for( Node n : nodes ) {
 					ret.addAll( n.getLeaveNames() );
 				}
+				if( nodes.size() == 1 ) ret.add( this.getName() );
 			} else ret.add( this.getName() );
 			
 			return ret;
@@ -584,6 +585,7 @@ public class TreeUtil {
 					Set<String> set = subn.nodeCalcMap( ls );
 					s.addAll( set );
 				}
+				if( nodes.size() == 1 ) s.add( id );
 				
 				NodeSet	heights;
 				if( ls.containsKey( s ) ) {
@@ -603,9 +605,9 @@ public class TreeUtil {
 				
 				double bt = this.getBootstrap();
 				if( bt > 0.0 ) {
-					if( s.size() == 2 && s.contains("t.scotoductusSA01") ) {
+					/*if( s.size() == 2 && s.contains("t.scotoductusSA01") ) {
 						System.err.println( "bootstrap " + s + "  " + this.getBootstrap() );
-					}
+					}*/
 					heights.addBootstrap( bt );
 				} else heights.addBootstrap( 1.0 );
 			}
