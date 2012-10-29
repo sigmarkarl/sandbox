@@ -2646,12 +2646,22 @@ public class DataTable extends JApplet implements ClipboardOwner {
 									Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
 									Node nn = tu.neighborJoin(corr, corrInd, null, false);
 									
+									int val = nn.getLeaveNames().size();
+									if( val == 16 ) {
+										int nval = nn.getLeaveNames().size();
+										System.err.println( nval );
+									}
+									
+									if( nn.getLeavesCount() != 17 ) {
+										System.err.println("bah " + nn.getLeavesCount());
+									}
+									
 									//String[] sobj = {"mt.ruber", "mt.silvanus", "o.profundus", "m.hydrothermalis"};
 									//Node newnode = tu.getParent( n, new HashSet<String>( Arrays.asList( sobj ) ) );
 									//tu.rerootRecur( n, newnode );
 									
 									tu.setLoc( 0 );
-									n.nodeCalcMap( nmap );
+									nn.nodeCalcMap( nmap );
 									
 									//tu.arrange( nn, comp );
 									//tu.compareTrees( tree, n, nn );
