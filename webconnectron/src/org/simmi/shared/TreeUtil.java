@@ -1781,6 +1781,28 @@ public class TreeUtil {
 		}
 	}
 	
+	public void replaceNamesMeta( Node node ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				replaceNamesMeta( n );
+			}
+		}
+		String meta = node.getMeta();
+		String name = node.getName() == null ? "" : node.getName();
+		name = node.getColor() == null || node.getColor().length() == 0 ? name : (name + "["+node.getColor()+"]");
+		name = node.getFrameString() == null || node.getFrameString().length() == 0 ? name : name + "{" + node.getFrameString() + "}";
+		if( meta != null && meta.length() > 0 ) {
+			if( name != null && name.length() > 0 ) {
+				node.setName( meta+";"+name );
+			} else {
+				node.setName( meta );
+			}
+		} else {
+			node.setName( name );
+		}
+	}
+	
 	int metacount = 0;
 	public void extractMeta( Node node, Map<String,Map<String,String>> mapmap ) {
 		node.name = node.name.replaceAll("'", "");

@@ -1716,7 +1716,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		int total = allnodes.getCount();
 		Node root = tu.new Node();
 		for( String nname : allnodes.getNodes() ) {
-			Node n = tu.new Node( nname );
+			Node n = tu.new Node( nname, false );
 			root.addNode(n, 1.0);
 			//n.seth( 1.0 );
 			leafmap.put( nname, n );
@@ -2638,13 +2638,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
 						TreeUtil	tu = new TreeUtil();
 						
-						Node n = tu.neighborJoin(corr, corrInd, null, false);
+						Node n = tu.neighborJoin(corr, corrInd, null, false, true);
 						if( bootstrap ) {
 							if( majorule ) {
 								Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
 								for( int i = 0; i < 1000; i++ ) {
 									Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
-									Node nn = tu.neighborJoin(corr, corrInd, null, false);
+									Node nn = tu.neighborJoin(corr, corrInd, null, false, false);
 									
 									int val = nn.getLeaveNames().size();
 									if( val == 16 ) {
@@ -2686,7 +2686,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								
 								for( int i = 0; i < 1000; i++ ) {
 									Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
-									Node nn = tu.neighborJoin(corr, corrInd, null, false);
+									Node nn = tu.neighborJoin(corr, corrInd, null, false, true);
 									tu.arrange( nn, comp );
 									tu.compareTrees( tree, n, nn );
 									
@@ -2861,7 +2861,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				List<String>	corrInd = currentjavafasta.getNames();
 				
 				TreeUtil	tu = new TreeUtil();
-				Node n = tu.neighborJoin(corr, corrInd, null, false);
+				Node n = tu.neighborJoin(corr, corrInd, null, false, true);
 				
 				if( bootstrap ) {
 					Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
@@ -2878,7 +2878,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					
 					for( int i = 0; i < 1000; i++ ) {
 						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, true, cantor, ent );
-						Node nn = tu.neighborJoin(corr, corrInd, null, false);
+						Node nn = tu.neighborJoin(corr, corrInd, null, false, true);
 						tu.arrange( nn, comp );
 						tu.compareTrees( tree, n, nn );
 						
