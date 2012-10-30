@@ -4723,7 +4723,7 @@ public class SerifyApplet extends JApplet {
 						double[] dmat = new double[ lseq.size()*lseq.size() ];
 						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
 						
-						n = treeutil.neighborJoin(dmat, corrInd, null, false);
+						n = treeutil.neighborJoin(dmat, corrInd, null, false, true);
 					} else {
 						StringBuilder tree = new StringBuilder();
 						InputStream is = url.openStream();
@@ -4815,7 +4815,7 @@ public class SerifyApplet extends JApplet {
 		distm.write( tree.toString() );
 		distm.close();*/
 		
-		Node node = treeutil.neighborJoin(submat, names, null, false);
+		Node node = treeutil.neighborJoin(submat, names, null, false, true);
 		return node.toString();
 	}
 	
@@ -4866,7 +4866,7 @@ public class SerifyApplet extends JApplet {
 			double[] dvals = parseDistance( len, lines, names );
 			
 			TreeUtil tu = new TreeUtil();
-			Node n = tu.neighborJoin(dvals, names, null, false);
+			Node n = tu.neighborJoin(dvals, names, null, false, true);
 			System.err.println( dvals.length + " " + names.size() );
 			System.err.println( n );
 			
