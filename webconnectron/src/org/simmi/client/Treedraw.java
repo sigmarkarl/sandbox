@@ -592,7 +592,7 @@ public class Treedraw implements EntryPoint {
 								for( Sequence seq : lseq ) {
 									names.add( seq.getName() );
 								}
-								Node n = treeutil.neighborJoin( dvals, names, null );
+								Node n = treeutil.neighborJoin( dvals, names, null, true );
 								
 								if( bootstrap ) {
 									Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
@@ -609,7 +609,7 @@ public class Treedraw implements EntryPoint {
 									
 									for( int i = 0; i < 100; i++ ) {
 										Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor, ent );
-										Node nn = treeutil.neighborJoin(dvals, names, null);
+										Node nn = treeutil.neighborJoin(dvals, names, null, true);
 										treeutil.arrange( nn, comp );
 										treeutil.compareTrees( tree, n, nn );
 										
@@ -664,7 +664,7 @@ public class Treedraw implements EntryPoint {
 						yesb.addClickHandler( new ClickHandler() {
 							@Override
 							public void onClick(ClickEvent event) {
-								Node n = treeutil.neighborJoin( dvals, names, root );
+								Node n = treeutil.neighborJoin( dvals, names, root, true );
 								setNode( n );
 								handleTree();
 								
@@ -674,7 +674,7 @@ public class Treedraw implements EntryPoint {
 						nob.addClickHandler( new ClickHandler() {
 							@Override
 							public void onClick(ClickEvent event) {
-								Node n = treeutil.neighborJoin( dvals, names, null );
+								Node n = treeutil.neighborJoin( dvals, names, null, true );
 								setNode( n );
 								handleTree();
 								
@@ -705,7 +705,7 @@ public class Treedraw implements EntryPoint {
 				}
 				
 				if( !b ) {
-					Node n = treeutil.neighborJoin( dvals, names, null );
+					Node n = treeutil.neighborJoin( dvals, names, null, true );
 					setNode( n );
 					//console( treeutil.getNode().toString() );
 					handleTree();
@@ -1160,6 +1160,8 @@ public class Treedraw implements EntryPoint {
 			treeutil.reduceParentSize( treeutil.getNode() );
 		} else if( c == 'w' || c == 'W' ) {
 			treeutil.swapNamesMeta( treeutil.getNode() );
+		} else if( c == 'v' || c == 'V' ) {
+			treeutil.replaceNamesMeta( treeutil.getNode() );
 		} else if( c == 'n' || c == 'N' ) {
 			showleafnames = !showleafnames;
 		} else if( c == 'j' || c == 'J' ) {
