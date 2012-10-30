@@ -224,7 +224,7 @@ public class TreeUtil {
 		return X;
 	}
 	
-	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree, boolean rootTree ) {
+	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree, boolean rootTree, boolean parseName ) {
 		Node retnode = new Node();
 		try {
 			List<Node> nodes;
@@ -245,7 +245,7 @@ public class TreeUtil {
 			} else {
 				nodes = new ArrayList<Node>();
 				for( String name : corrInd ) {
-					Node n = new Node( name );
+					Node n = new Node( name, parseName );
 					nodes.add( n );
 				}
 			}
@@ -657,9 +657,16 @@ public class TreeUtil {
 			metacount = 0;
 		}
 		
+		public Node( String name, boolean parse ) {
+			this();
+			this.setName( name, parse );
+			/*this.name = name;
+			this.id = name;*/
+		}
+		
 		public Node( String name ) {
 			this();
-			this.setName( name );
+			this.setName( name, true );
 			/*this.name = name;
 			this.id = name;*/
 		}
@@ -874,6 +881,7 @@ public class TreeUtil {
 				}
 			} else {
 				this.name = newname;
+				this.id = newname;
 				try {
 					double val = Double.parseDouble( newname );
 					this.setBootstrap( val );
