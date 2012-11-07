@@ -504,9 +504,11 @@ public class GeneSet extends JApplet {
 		if (outfile2 != null)
 			fw = new FileWriter(outfile2);
 
-		br = new BufferedReader(rd2);
-		parseBlast( br, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, true, true );
-		br.close();
+		BufferedReader br2 = new BufferedReader(rd2);
+		//String line = br.readLine();
+		//System.err.println( line );
+		parseBlast( br2, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, true, true );
+		br2.close();
 		if (fw != null) {
 			fw.close();
 		}
@@ -703,6 +705,18 @@ public class GeneSet extends JApplet {
 					stv = gene.species.get(padda);
 				}
 				
+				if( addon ) {
+					Tegeval rem = null;
+					for( Tegeval te : stv.tset ) {
+						if( te.cont.equals( query ) ) {
+							rem = te;
+							break;
+						}
+					}
+					if( rem != null ) {
+						stv.tset.remove( rem );
+					}
+				}
 				stv.add( tv );
 				// gene.blastspec = teg;
 				/*
@@ -743,113 +757,115 @@ public class GeneSet extends JApplet {
 					line = newline;
 					continue;
 				}
-			} else if ( !addon && trim.contains("No hits")) {
-				Gene gene;
-
-				StringBuilder aa = aaSearch(query);
-				String aaid = "_"+aa;
-				
-				
-				/*String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
-				if( padda.endsWith(".fna") ) padda = padda.substring(0,padda.length()-4);*/
-				
-				String padda;
-				if( query != null ) {
-					int ival = query.indexOf("|");
-					if( ival == -1 ) ival = query.length();
-					int ival2 = query.indexOf("ontig");
-					if( ival2 == -1 ) ival2 = query.length();
-					int i = query.lastIndexOf("_", Math.min(ival,ival2) );
-					padda = query.substring(0, i);
-				} else {
-					padda = "";
-				}
-				
-				/*if( padda.startsWith("Ocean") ) padda = "o.profundus";
-				else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
-				else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
-				else if( padda.contains("Ruber") ) padda = "mt.ruber";
-				else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) padda = "t.thermSG0_5JP17_16";*/
-				
-				if (ret.containsKey(aaid)) {
-					gene = ret.get(aaid);
-				} else {
-					gene = new Gene(aaid, padda);
-					ret.put(aaid, gene);
-					gene.allids = new HashSet<String>();
-					gene.species = new HashMap<String, Teginfo>();
-					ret.put(aaid, gene);
-					gene.refid = aaid;
-				}
-				gene.allids.add(aaid);
-
-				if (gene.species == null)
-					gene.species = new HashMap<String, Teginfo>();
-				double deval = -1.0;
-				/*
-				 * try { deval = Double.parseDouble(evalue); } catch( Exception
-				 * e ) { System.err.println("ok"); }
-				 */
-				// gene.species.put( padda, new Tegeval( padda, deval,
-				// aas.get(query), query ) );
-				Teginfo stv;
-				if (!gene.species.containsKey(padda)) {
-					stv = new Teginfo();
-					gene.species.put(padda, stv);
+			} else if ( trim.contains("No hits")) {
+				if( !addon ) {
+					Gene gene;
+	
+					StringBuilder aa = aaSearch(query);
+					String aaid = "_"+aa;
 					
-					System.err.println( "new annars " + padda );
-				} else
-					stv = gene.species.get(padda);
-
-				String contig = null;
-				String contloc = null;
-
-				/*int first = query.indexOf('_');
-				int sec = query.indexOf('_', first + 1);
-				if (sec != -1) {
-					contig = query.substring(0, sec);
-					contloc = query.substring(first + 1);
-				} else {
-					contig = query;
-					contloc = query.substring(first + 1);
-				}*/
-				
-				int fi = query.indexOf('_');
-				int li = query.lastIndexOf('_');
-				contig = query.substring(0, li);
-				contloc = query.substring(fi+1,query.length());
-
-				StringBuilder aastr = aaSearch(query);
-				/*int nq = query.lastIndexOf('_');
-				int mq = query.lastIndexOf('_', nq - 1);
-				String nquery;
-				if (mq != -1) {
-					nq = mq;
-					nquery = query.substring(0, nq);
-				} else {
-					nquery = query;
-				}*/
-
-				StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
-				stv.add(new Tegeval(padda, deval, aastr, dn, query, contig, contloc, start, stop, ori));
-				
-				if (!allgenes.containsKey(aaid) || allgenes.get(aaid) == null) {
-					allgenes.put(aaid, "Thermus " + aaid);
+					
+					/*String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
+					if( padda.endsWith(".fna") ) padda = padda.substring(0,padda.length()-4);*/
+					
+					String padda;
+					if( query != null ) {
+						int ival = query.indexOf("|");
+						if( ival == -1 ) ival = query.length();
+						int ival2 = query.indexOf("ontig");
+						if( ival2 == -1 ) ival2 = query.length();
+						int i = query.lastIndexOf("_", Math.min(ival,ival2) );
+						padda = query.substring(0, i);
+					} else {
+						padda = "";
+					}
+					
+					/*if( padda.startsWith("Ocean") ) padda = "o.profundus";
+					else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
+					else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
+					else if( padda.contains("Ruber") ) padda = "mt.ruber";
+					else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) padda = "t.thermSG0_5JP17_16";*/
+					
+					if (ret.containsKey(aaid)) {
+						gene = ret.get(aaid);
+					} else {
+						gene = new Gene(aaid, padda);
+						ret.put(aaid, gene);
+						gene.allids = new HashSet<String>();
+						gene.species = new HashMap<String, Teginfo>();
+						ret.put(aaid, gene);
+						gene.refid = aaid;
+					}
+					gene.allids.add(aaid);
+	
+					if (gene.species == null)
+						gene.species = new HashMap<String, Teginfo>();
+					double deval = -1.0;
+					/*
+					 * try { deval = Double.parseDouble(evalue); } catch( Exception
+					 * e ) { System.err.println("ok"); }
+					 */
+					// gene.species.put( padda, new Tegeval( padda, deval,
+					// aas.get(query), query ) );
+					Teginfo stv;
+					if (!gene.species.containsKey(padda)) {
+						stv = new Teginfo();
+						gene.species.put(padda, stv);
+						
+						System.err.println( "new annars " + padda );
+					} else
+						stv = gene.species.get(padda);
+	
+					String contig = null;
+					String contloc = null;
+	
+					/*int first = query.indexOf('_');
+					int sec = query.indexOf('_', first + 1);
+					if (sec != -1) {
+						contig = query.substring(0, sec);
+						contloc = query.substring(first + 1);
+					} else {
+						contig = query;
+						contloc = query.substring(first + 1);
+					}*/
+					
+					int fi = query.indexOf('_');
+					int li = query.lastIndexOf('_');
+					contig = query.substring(0, li);
+					contloc = query.substring(fi+1,query.length());
+	
+					StringBuilder aastr = aaSearch(query);
+					/*int nq = query.lastIndexOf('_');
+					int mq = query.lastIndexOf('_', nq - 1);
+					String nquery;
+					if (mq != -1) {
+						nq = mq;
+						nquery = query.substring(0, nq);
+					} else {
+						nquery = query;
+					}*/
+	
+					StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
+					stv.add(new Tegeval(padda, deval, aastr, dn, query, contig, contloc, start, stop, ori));
+					
+					if (!allgenes.containsKey(aaid) || allgenes.get(aaid) == null) {
+						allgenes.put(aaid, "Thermus " + aaid);
+					}
+	
+					Set<String> locset = null;
+					if (geneloc.containsKey(aaid)) {
+						locset = geneloc.get(aaid);
+					} else {
+						locset = new HashSet<String>();
+						geneloc.put(aaid, locset);
+					}
+					
+					locset.add(query + " -1.0");
+					//int li = query.lastIndexOf('_');
+					//int ln = query.lastIndexOf('_', li-1);
+					//String queryshort = query.substring(0, ln)+query.substring(li);
+					locgene.put(query, gene);
 				}
-
-				Set<String> locset = null;
-				if (geneloc.containsKey(aaid)) {
-					locset = geneloc.get(aaid);
-				} else {
-					locset = new HashSet<String>();
-					geneloc.put(aaid, locset);
-				}
-				
-				locset.add(query + " -1.0");
-				//int li = query.lastIndexOf('_');
-				//int ln = query.lastIndexOf('_', li-1);
-				//String queryshort = query.substring(0, ln)+query.substring(li);
-				locgene.put(query, gene);
 
 				if (fw != null)
 					fw.write(line + "\n");
@@ -8983,6 +8999,12 @@ public class GeneSet extends JApplet {
 
 	static Map<Set<String>,List<GeneGroup>> ggSpecMap;
 	private static JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
+		InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
+		String line2 = br2.readLine();
+		br2.close();
+		
+		
 		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
 		InputStream is = GeneSet.class.getResourceAsStream("/thomas.aa");
 		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
@@ -9031,9 +9053,9 @@ public class GeneSet extends JApplet {
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_short.blastout" );
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
 		is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
-		InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
-		//InputStream nis = GeneSet.class.getResourceAsStream("/exp_short.blastout");
-		panCoreFromNRBlast(new InputStreamReader(is), new InputStreamReader(nis), null, "/u0/sandbox/distann/src/exp_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		//InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
+		InputStream nis = GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		panCoreFromNRBlast(new InputStreamReader(is), new InputStreamReader(nis), null, null /*"/u0/sandbox/distann/src/exp_short.blastout"*/, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();
