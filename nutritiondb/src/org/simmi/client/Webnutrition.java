@@ -36,8 +36,6 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.typedarrays.shared.ArrayBuffer;
-import com.google.gwt.typedarrays.shared.Uint8Array;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
@@ -128,8 +126,8 @@ public class Webnutrition implements EntryPoint {
 		console.log( res.substring(0, 100) );
 	}
 	
-	public void fetchNutr() throws RequestException {
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://127.0.0.1:8888/NUT_DATA.txt.gz.base64" );
+	public void fetchNutrOld() throws RequestException {
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://127.0.0.1:8888/NUT_DATA.txt.bz2.base64" );
 		//rb.getHeader(header)
 		rb.sendRequest("", new RequestCallback() {
 			@Override
@@ -137,17 +135,22 @@ public class Webnutrition implements EntryPoint {
 				String bintext = response.getText();
 				console.log( bintext.length() );
 				byte[] bb = Base64Utils.fromBase64( bintext );
-				
+				String binstr = new String( bb );
 				//com.google.gwt.
-				//String res = bunzip2( bintext );
+				String res = bunzip2( binstr );
 				//utf8
-				//console.log( res.substring(0, 100) );
+				console.log( res.substring(0, 100) );
 			}
 			
 			@Override
 			public void onError(Request request, Throwable exception) {
 			}
 		});
+	}
+	
+	public void fetchNutr() {
+		//DataResource dr = MyResources.INSTANCE.nut_bzip2();
+		//dr.getSafeUri().
 	}
 	
 	public void fetchNutrFusion() throws RequestException {
@@ -300,11 +303,8 @@ public class Webnutrition implements EntryPoint {
 					//nutrmap.put( "268", lcolumnwidth.get(2) );
 					
 					//fetchNutr2();
-					try {
-						fetchNutr();
-					} catch (RequestException e) {
-						e.printStackTrace();
-					}
+					//try {
+					fetchNutr();
 					
 					draw( canvas.getContext2d(), xstart, ystart );
 				}
