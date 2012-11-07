@@ -9031,9 +9031,9 @@ public class GeneSet extends JApplet {
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_short.blastout" );
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
 		is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
-		InputStream nis = GeneSet.class.getResourceAsStream("/exp_short.blastout");
-		//"/home/sigmar/sandbox/distann/src/exp_short.blastout"
-		panCoreFromNRBlast(new InputStreamReader(is), new InputStreamReader(nis), null, null, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
+		//InputStream nis = GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		panCoreFromNRBlast(new InputStreamReader(is), new InputStreamReader(nis), null, "/u0/sandbox/distann/src/exp_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();
