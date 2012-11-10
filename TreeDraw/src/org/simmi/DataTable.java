@@ -1168,7 +1168,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					else fname += "_"+obj[7];
 				} else if( ns.name.equals("Accession") ) {
 					String acc = (String)obj[1];
-					acc = acc.replace("_", "");
+					//acc = acc.replace("_", "");
 					if( fname.length() == 0 ) fname += acc;
 					else fname += "_"+acc;
 				} else if( ns.name.equals("Pubmed") ) {
@@ -2563,7 +2563,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					Object o = table.getValueAt(r, 1);
-					String val = ((String)o).replace("_", "");
+					String val = ((String)o);//.replace("_", "");
 					if( r == rr[0] ) sb.append( val );
 					else sb.append( ","+val );
 				}
