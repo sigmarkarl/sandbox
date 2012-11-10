@@ -42,7 +42,6 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.server.Base64Utils;
 
 import elemental.client.Browser;
 import elemental.html.Console;
@@ -107,7 +106,7 @@ public class Webnutrition implements EntryPoint {
 		return $wnd.ArchUtils.bz2.decode( bintext );
 	}-*/;
 	
-	public native String getBinaryResource(String url) /*-{
+	public native String getBinaryResourceOld(String url) /*-{
 	    // ...implemented with JavaScript                 
 	    var req = new XMLHttpRequest();
 	    req.open("GET", url, false);  // The last parameter determines whether the request is asynchronous -> this case is sync.
@@ -118,39 +117,102 @@ public class Webnutrition implements EntryPoint {
 	    } else return null;
 	}-*/;
 	
-	public void fetchNutr2s() {
-		String bintext = getBinaryResource( "http://127.0.0.1:8888/NUT_DATA.txt.bz2" );
-		String res = bunzip2( bintext );
-		//utf8
-		console.log( res.length() );
-		console.log( res.substring(0, 100) );
+	public native String getBinaryResource( String url ) /*-{
+		var ths = this;
+		
+		var oReq = new XMLHttpRequest();
+		oReq.open("GET", url, true);
+		oReq.responseType = "arraybuffer";
+		 
+		oReq.onload = function (oEvent) {
+		  var arrayBuffer = oReq.response; // Note: not oReq.responseText
+		  if (arrayBuffer) {
+		  	var view = new Uint8Array( arrayBuffer );
+		  	//var blob = new Blob([view], {type: "application/x-bzip2"});
+		  	var blob = new Blob([view], {type: "text/plan"});
+		  	var reader = new FileReader();
+		  	reader.onload = function( ev ) {
+		  		$wnd.console.log( "about to unzip" );
+		  		var unzip = ev.target.result; //$wnd.ArchUtils.bz2.decode( ev.target.result );
+		  		$wnd.console.log( "done unzipping" );
+		  		ths.@org.simmi.client.Webnutrition::fetchNutrFromText(Ljava/lang/String;)( unzip );
+		  		//( $wnd.ArchUtils.bz2.decode( ev.target.result ) );
+		  	};
+		  	reader.readAsBinaryString( blob );
+		    //var byteArray = new Uint8Array(arrayBuffer);
+		    //for (var i = 0; i < byteArray.byteLength; i++) {
+		    // do something with each byte in the array
+		    //}
+		  }
+		};
+	 
+		oReq.send(null);
+	}-*/;
+
+	
+	public void fetchNutr() {
+		getBinaryResource( "http://127.0.0.1:8888/NUT_DATA_trim.txt" );
 	}
 	
-	public void fetchNutrOld() throws RequestException {
+	public void fetchNutrRequest() throws RequestException {
 		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://127.0.0.1:8888/NUT_DATA.txt.bz2.base64" );
 		//rb.getHeader(header)
 		rb.sendRequest("", new RequestCallback() {
 			@Override
 			public void onResponseReceived(Request request, Response response) {
 				String bintext = response.getText();
+				//ArrayBufferNative ab = new ArrayBufferImpl(length);
 				console.log( bintext.length() );
-				byte[] bb = Base64Utils.fromBase64( bintext );
-				String binstr = new String( bb );
-				//com.google.gwt.
-				String res = bunzip2( binstr );
-				//utf8
-				console.log( res.substring(0, 100) );
 			}
 			
 			@Override
-			public void onError(Request request, Throwable exception) {
-			}
+			public void onError(Request request, Throwable exception) {}
 		});
 	}
 	
-	public void fetchNutr() {
+	public void fetchNutrResource() {
 		//DataResource dr = MyResources.INSTANCE.nut_bzip2();
 		//dr.getSafeUri().
+	}
+	
+	public void fetchNutrFromText( String text ) {
+		console.log( text.length() + " " + text.substring( 0,100 ) );
+		
+		int s = 0;
+		int i = text.indexOf( '\n' );
+		while( i != -1 ) {
+			/*int t1 = text.indexOf('^', s);
+			String foodShort = text.substring(s+1, t1-1);
+			int t2 = text.indexOf('^', t1+1);
+			String nutrShort = text.substring( t1+2, t2-1);
+			int t3 = text.indexOf('^', t2+1);
+			double val = Double.parseDouble( text.substring(t2+1,t3) );*/
+			
+			String foodShort = text.substring(s, s+5);
+			String nutrShort = text.substring(s+5, s+8);
+			double val = Double.parseDouble( text.substring(s+8,i) );
+			
+			if( foodmap.containsKey( foodShort ) ) {
+				FoodInfo fi = foodmap.get( foodShort );
+				
+				int ind = lcolumnwidth.indexOf( nutrmap.get( nutrShort ) );
+				fi.columns[ind] = val;
+			} else {
+				console.log( foodShort );
+				for( String key : foodmap.keySet() ) {
+					console.log("uff " + key);
+					break;
+				}
+				if( i > 1000 ) break;
+			}
+			
+			s = i+1;
+			i = text.indexOf( '\n', s );
+			//groupIdMap.put( idstr.substring(1, idstr.length()-1), namestr.substring(1, namestr.length()-1 ) );
+		}
+		console.log( "done" );
+	
+		draw( canvas.getContext2d(), xstart, ystart );
 	}
 	
 	public void fetchNutrFusion() throws RequestException {
@@ -303,7 +365,6 @@ public class Webnutrition implements EntryPoint {
 					//nutrmap.put( "268", lcolumnwidth.get(2) );
 					
 					//fetchNutr2();
-					//try {
 					fetchNutr();
 					
 					draw( canvas.getContext2d(), xstart, ystart );
