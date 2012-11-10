@@ -563,13 +563,13 @@ public class SerifyApplet extends JApplet {
 	
 	public void deleteSeqs() {
 		Set<String>	keys = new TreeSet<String>();
-		Set<Integer>	rselset = new TreeSet<Integer>();
+		Set<Sequences>	rselset = new TreeSet<Sequences>();
 		int[] rr = table.getSelectedRows();
 		for( int r : rr ) {
 			int ind = table.convertRowIndexToModel( r );
 			if( ind >= 0 ) {
-				rselset.add( ind );
 				Sequences seqs = sequences.get(ind);
+				rselset.add( seqs );
 				if( seqs.getKey() != null ) keys.add( seqs.getKey() );
 				
 				//sequences.remove( ind );
@@ -590,13 +590,11 @@ public class SerifyApplet extends JApplet {
 		if( unsucc ) {
 			for( int r : rr ) {
 				int ind = table.convertRowIndexToModel( r );
-				rselset.add( ind );
+				rselset.add( sequences.get(ind) );
 			}
 		}
 		
-		for( int r : rselset ) {
-			sequences.remove( r );	
-		}
+		sequences.removeAll( rselset );
 		table.tableChanged( new TableModelEvent(table.getModel()) );
 	}
 	
@@ -611,7 +609,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public static void splitit( int spin, Sequences seqs, File dir, SerifyApplet applet ) {
+	public static void splitit( int nspin, Sequences seqs, File dir, SerifyApplet applet ) {
 		try {
 			File inf = new File( new URI(seqs.getPath() ) );
 			String name = inf.getName();
@@ -624,11 +622,13 @@ public class SerifyApplet extends JApplet {
 				sf2 = name.substring(ind+1,name.length());
 			}
 			
+			int spin = (int)Math.ceil( (double)seqs.getNSeq()/(double)nspin );
+			
 			int i = 0;
-			FileWriter 	fw = null;
-			File		of = null;
-			FileReader 	fr = new FileReader( inf );
-			BufferedReader br = new BufferedReader( fr );
+			FileWriter 		fw = null;
+			File			of = null;
+			FileReader 		fr = new FileReader( inf );
+			BufferedReader 	br = new BufferedReader( fr );
 			String line = br.readLine();
 			while( line != null ) {
 				if( line.startsWith(">") ) {
@@ -2375,7 +2375,7 @@ public class SerifyApplet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta( SerifyApplet.this );
+				final JavaFasta jf = new JavaFasta( SerifyApplet.this );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -2434,6 +2434,57 @@ public class SerifyApplet extends JApplet {
 				}
 				jf.updateView();
 
+				frame.addWindowListener( new WindowListener() {
+					
+					@Override
+					public void windowOpened(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowIconified(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowDeiconified(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowDeactivated(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowClosing(WindowEvent e) {}
+					
+					@Override
+					public void windowClosed(WindowEvent e) {
+						if( JOptionPane.showConfirmDialog( SerifyApplet.this, "Do you wan't to save?" ) == JOptionPane.YES_OPTION ) {
+							JFileChooser jfc = new JFileChooser();
+							if( jfc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+								try {
+									File f = jfc.getSelectedFile();
+									FileWriter fw = new FileWriter( f );
+									jf.writeFasta( jf.lseq, fw );
+									fw.close();
+									
+									SerifyApplet.this.addSequences( f.getName(), f.toURI().toURL().toString() );
+								} catch (IOException | URISyntaxException e1) {
+									e1.printStackTrace();
+								}
+							}
+						}
+					}
+					
+					@Override
+					public void windowActivated(WindowEvent e) {}
+				});
 				frame.setVisible(true);
 			}
 		});
@@ -3536,65 +3587,62 @@ public class SerifyApplet extends JApplet {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
+					final JSpinner spinner = new JSpinner();
+					spinner.setValue( 1 ); //seqs.getNSeq() );
+					spinner.setPreferredSize( new Dimension(100,25) );
+					final JDialog dl;
+					Window window = SwingUtilities.windowForComponent(cnt);
+					if( window != null ) dl = new JDialog( window );
+					else dl = new JDialog();
+					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+					JComponent c = new JComponent() {};
+					c.setLayout( new FlowLayout() );
+					dl.setTitle("Number of sequences in each file");
+					JButton button = new JButton( new AbstractAction("Ok") {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							dl.setVisible( false );
+							dl.dispose();
+						}
+					});
+					c.add( spinner );
+					c.add( button );
+					dl.add( c );
+					dl.setSize(200, 60);
 					
-					int r = table.getSelectedRow();
-					int rr = table.convertRowIndexToModel( r );
-					if( rr >= 0 ) {
-						final Sequences seqs = sequences.get( rr );
-						final JSpinner spinner = new JSpinner();
-						spinner.setValue( seqs.getNSeq() );
-						spinner.setPreferredSize( new Dimension(100,25) );
+					dl.addWindowListener( new WindowListener() {
+						@Override
+						public void windowOpened(WindowEvent e) {}
 
-						final JDialog dl;
-						Window window = SwingUtilities.windowForComponent(cnt);
-						if( window != null ) dl = new JDialog( window );
-						else dl = new JDialog();
-						
-						dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-						JComponent c = new JComponent() {
-							
-						};
-						c.setLayout( new FlowLayout() );
-						dl.setTitle("Number of sequences in each file");
-						JButton button = new JButton( new AbstractAction("Ok") {
-							@Override
-							public void actionPerformed(ActionEvent e) {
-								dl.setVisible( false );
-								dl.dispose();
+						@Override
+						public void windowClosing(WindowEvent e) {}
+
+						@Override
+						public void windowClosed(WindowEvent e) {
+							int spin = (Integer)spinner.getValue();
+							int[] ra = table.getSelectedRows();
+							for( int r : ra ) {
+								int rr = table.convertRowIndexToModel( r );
+								if( rr >= 0 ) {
+									final Sequences seqs = sequences.get( rr );
+									splitit( spin, seqs, dir, SerifyApplet.this );
+								}
 							}
-						});
-						c.add( spinner );
-						c.add( button );
-						dl.add( c );
-						dl.setSize(200, 60);
-						
-						dl.addWindowListener( new WindowListener() {
-							@Override
-							public void windowOpened(WindowEvent e) {}
+						}
 
-							@Override
-							public void windowClosing(WindowEvent e) {}
+						@Override
+						public void windowIconified(WindowEvent e) {}
 
-							@Override
-							public void windowClosed(WindowEvent e) {
-								int spin = (Integer)spinner.getValue();
-								splitit( spin, seqs, dir, SerifyApplet.this );
-							}
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
 
-							@Override
-							public void windowIconified(WindowEvent e) {}
+						@Override
+						public void windowActivated(WindowEvent e) {}
 
-							@Override
-							public void windowDeiconified(WindowEvent e) {}
-
-							@Override
-							public void windowActivated(WindowEvent e) {}
-
-							@Override
-							public void windowDeactivated(WindowEvent e) {}
-						});
-						dl.setVisible( true );
-					}
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+					});
+					dl.setVisible( true );
 				}
 			}
 		});
