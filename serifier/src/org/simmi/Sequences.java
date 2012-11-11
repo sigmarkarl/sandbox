@@ -1,6 +1,6 @@
 package org.simmi;
 
-class Sequences {
+class Sequences implements Comparable<Sequences> {
 	public Sequences( String user, String name, String type, String path, int nseq ) {
 		this.user = user;
 		this.name = name;
@@ -39,4 +39,9 @@ class Sequences {
 	String path;
 	Integer nseq;
 	String _key;
+	
+	@Override
+	public int compareTo(Sequences o) {
+		return name.compareTo( o.name );
+	}
 };
