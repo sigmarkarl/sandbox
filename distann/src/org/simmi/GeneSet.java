@@ -5100,7 +5100,7 @@ public class GeneSet extends JApplet {
 			 * , accset, false );
 			 */
 
-			eyjo( "/u0/snaedis2.blastout", "/home/sigmar/ok2.fasta", "/home/sigmar/snaedis2" );
+			eyjo( "/u0/snaedis8.blastout", "/home/sigmar/ok8.fasta", "/home/sigmar/snaedis8" );
 			//eyjo( "/home/sigmar/flex2.blastout", "/home/sigmar/ok.fasta", "/home/sigmar/gumol" );
 			//eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/eyjo_filter.fasta", "/home/sigmar/mysilva" );
 			//viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
