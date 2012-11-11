@@ -100,7 +100,15 @@ public class Taxonomy implements EntryPoint {
 		});
 	}
 	
-	public void runStuff( String server, Tree tree, Map<String,String> rmapstr, Map<String,String> rsnaedis1map, Map<String,String> rsnaedis2map ) {
+	Map<String,String> rsnaedis1map;
+	Map<String,String> rsnaedis2map;
+	Map<String,String> rsnaedis3map;
+	Map<String,String> rsnaedis4map;
+	Map<String,String> rsnaedis5map;
+	Map<String,String> rsnaedis6map;
+	Map<String,String> rsnaedis7map;
+	Map<String,String> rsnaedis8map;
+	public void runStuff( String server, Tree tree, Map<String,String> rmapstr ) {
 		final TreeItem	eyjosilva1 = tree.addItem( "eyjoACGACTACAG" );
 		final TreeItem	eyjosilva2 = tree.addItem( "eyjoACGCTCGACA" );
 		final TreeItem	eyjosilva3 = tree.addItem( "eyjoAGACGCACTC" );
@@ -192,6 +200,136 @@ public class Taxonomy implements EntryPoint {
 			for( String key : rsnaedis2map.keySet() ) {
 				if( text.contains(key) ) {
 					String val = rsnaedis2map.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+		
+		final TreeItem	snaedis3silva1 = tree.addItem( "snaedis3ACGAGTGCGT" );
+		final TreeItem	snaedis3silva2 = tree.addItem( "snaedis3ACGCTCGACA" );
+		final TreeItem	snaedis3silva3 = tree.addItem( "snaedis3AGACGCACTC" );
+		final TreeItem	snaedis3silva4 = tree.addItem( "snaedis3AGCACTGTAG" );
+		final TreeItem	snaedis3silva5 = tree.addItem( "snaedis3ATCAGACACG" );
+		final TreeItem	snaedis3silva6 = tree.addItem( "snaedis3ATATCGCGAG" );
+		final TreeItem	snaedis3silva7 = tree.addItem( "snaedis3CGTGTCTCTA" );
+		final TreeItem	snaedis3silva8 = tree.addItem( "snaedis3CTCGCGTGTC" );
+		final TreeItem	snaedis3silva9 = tree.addItem( "snaedis3TGATACGTCT" );
+		final TreeItem	snaedis3silva10 = tree.addItem( "snaedis3TCTCTATGCG" );
+		
+		for( ; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rsnaedis3map.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rsnaedis3map.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+		
+		final TreeItem	snaedis4silva1 = tree.addItem( "snaedis4ACGAGTGCGT" );
+		final TreeItem	snaedis4silva2 = tree.addItem( "snaedis4ACGCTCGACA" );
+		final TreeItem	snaedis4silva3 = tree.addItem( "snaedis4AGACGCACTC" );
+		final TreeItem	snaedis4silva4 = tree.addItem( "snaedis4AGCACTGTAG" );
+		final TreeItem	snaedis4silva5 = tree.addItem( "snaedis4ATCAGACACG" );
+		final TreeItem	snaedis4silva6 = tree.addItem( "snaedis4ATATCGCGAG" );
+		final TreeItem	snaedis4silva7 = tree.addItem( "snaedis4CGTGTCTCTA" );
+		final TreeItem	snaedis4silva8 = tree.addItem( "snaedis4CTCGCGTGTC" );
+		final TreeItem	snaedis4silva9 = tree.addItem( "snaedis4TGATACGTCT" );
+		final TreeItem	snaedis4silva10 = tree.addItem( "snaedis4TCTCTATGCG" );
+		
+		for( ; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rsnaedis4map.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rsnaedis4map.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+		
+		final TreeItem	snaedis5silva1 = tree.addItem( "snaedis5ACGAGTGCGT" );
+		final TreeItem	snaedis5silva2 = tree.addItem( "snaedis5ACGCTCGACA" );
+		final TreeItem	snaedis5silva3 = tree.addItem( "snaedis5AGACGCACTC" );
+		final TreeItem	snaedis5silva4 = tree.addItem( "snaedis5AGCACTGTAG" );
+		final TreeItem	snaedis5silva5 = tree.addItem( "snaedis5ATCAGACACG" );
+		final TreeItem	snaedis5silva6 = tree.addItem( "snaedis5ATATCGCGAG" );
+		final TreeItem	snaedis5silva7 = tree.addItem( "snaedis5CGTGTCTCTA" );
+		final TreeItem	snaedis5silva8 = tree.addItem( "snaedis5CTCGCGTGTC" );
+		final TreeItem	snaedis5silva9 = tree.addItem( "snaedis5TGATACGTCT" );
+		final TreeItem	snaedis5silva10 = tree.addItem( "snaedis5TCTCTATGCG" );
+		
+		for( ; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rsnaedis5map.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rsnaedis5map.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+		
+		final TreeItem	snaedis6silva1 = tree.addItem( "snaedis6ACGAGTGCGT" );
+		final TreeItem	snaedis6silva2 = tree.addItem( "snaedis6ACGCTCGACA" );
+		final TreeItem	snaedis6silva3 = tree.addItem( "snaedis6AGACGCACTC" );
+		final TreeItem	snaedis6silva4 = tree.addItem( "snaedis6AGCACTGTAG" );
+		final TreeItem	snaedis6silva5 = tree.addItem( "snaedis6ATCAGACACG" );
+		final TreeItem	snaedis6silva6 = tree.addItem( "snaedis6ATATCGCGAG" );
+		final TreeItem	snaedis6silva7 = tree.addItem( "snaedis6CGTGTCTCTA" );
+		final TreeItem	snaedis6silva8 = tree.addItem( "snaedis6CTCGCGTGTC" );
+		final TreeItem	snaedis6silva9 = tree.addItem( "snaedis6TGATACGTCT" );
+		final TreeItem	snaedis6silva10 = tree.addItem( "snaedis6TCTCTATGCG" );
+		
+		for( ; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rsnaedis6map.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rsnaedis6map.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+		
+		final TreeItem	snaedis7silva1 = tree.addItem( "snaedis7ACGAGTGCGT" );
+		final TreeItem	snaedis7silva2 = tree.addItem( "snaedis7ACGCTCGACA" );
+		final TreeItem	snaedis7silva3 = tree.addItem( "snaedis7AGACGCACTC" );
+		final TreeItem	snaedis7silva4 = tree.addItem( "snaedis7AGCACTGTAG" );
+		final TreeItem	snaedis7silva5 = tree.addItem( "snaedis7ATCAGACACG" );
+		final TreeItem	snaedis7silva6 = tree.addItem( "snaedis7ATATCGCGAG" );
+		final TreeItem	snaedis7silva7 = tree.addItem( "snaedis7CGTGTCTCTA" );
+		final TreeItem	snaedis7silva8 = tree.addItem( "snaedis7CTCGCGTGTC" );
+		final TreeItem	snaedis7silva9 = tree.addItem( "snaedis7TGATACGTCT" );
+		final TreeItem	snaedis7silva10 = tree.addItem( "snaedis7TCTCTATGCG" );
+		
+		for( ; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rsnaedis7map.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rsnaedis7map.get(key);
+					ti.setText( text.replace(key, val) );
+				}
+			}
+		}
+	
+		final TreeItem	snaedis8silva1 = tree.addItem( "snaedis8ACGAGTGCGT" );
+		final TreeItem	snaedis8silva2 = tree.addItem( "snaedis8ACGCTCGACA" );
+		final TreeItem	snaedis8silva3 = tree.addItem( "snaedis8AGACGCACTC" );
+		final TreeItem	snaedis8silva4 = tree.addItem( "snaedis8AGCACTGTAG" );
+		final TreeItem	snaedis8silva5 = tree.addItem( "snaedis8ATCAGACACG" );
+		final TreeItem	snaedis8silva6 = tree.addItem( "snaedis8ATATCGCGAG" );
+		final TreeItem	snaedis8silva7 = tree.addItem( "snaedis8CGTGTCTCTA" );
+		final TreeItem	snaedis8silva8 = tree.addItem( "snaedis8CTCGCGTGTC" );
+		
+		for( ; i < tree.getItemCount(); i++ ) {
+			TreeItem ti = tree.getItem( i );
+			String text = ti.getText();
+			for( String key : rsnaedis8map.keySet() ) {
+				if( text.contains(key) ) {
+					String val = rsnaedis8map.get(key);
 					ti.setText( text.replace(key, val) );
 				}
 			}
@@ -375,7 +513,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis1phmap.put( "774_geysir_west_jardvegur", 8.0 );
 		snaedis1phmap.put( "774_geysir_west_vatn", 8.0 );
 		
-		final Map<String,String>	rsnaedis1map = new HashMap<String,String>();
+		rsnaedis1map = new HashMap<String,String>();
 		for( String key : snaedis1map.keySet() ) {
 			rsnaedis1map.put( snaedis1map.get(key), key );
 		}
@@ -416,9 +554,249 @@ public class Taxonomy implements EntryPoint {
 		snaedis2phmap.put( "779_fludir_jardvegur", 8.0 );
 		snaedis2phmap.put( "779_fludir_vatn", 8.0 );
 		
-		final Map<String,String>	rsnaedis2map = new HashMap<String,String>();
+		final Map<String,String>	snaedis3map = new HashMap<String,String>();
+		snaedis3map.put( "780_fludir_jardvegur", "ACGAGTGCGT" );
+		snaedis3map.put( "780_fludir_vatn", "ACGCTCGACA" );
+		snaedis3map.put( "781_olkelduhals_vatn", "AGACGCACTC" );
+		snaedis3map.put( "781_olkelduhals_lifmassi", "AGCACTGTAG" );
+		snaedis3map.put( "782_olkelduhals_lifmassi", "ATCAGACACG" );
+		snaedis3map.put( "783_olkelduhals_jardvlifm", "ATATCGCGAG" );
+		snaedis3map.put( "783_olkelduhals_vatn", "CGTGTCTCTA" );
+		snaedis3map.put( "808_hrafntinnusker_jardvegur", "CTCGCGTGTC" );
+		snaedis3map.put( "808_hrafntinnusker_vatn", "TGATACGTCT" );
+		snaedis3map.put( "808_hrafntinnusker_lifmassi", "TCTCTATGCG" );
+		
+		final Map<String,Double>	snaedis3heatmap = new HashMap<String,Double>();
+		snaedis3heatmap.put( "780_fludir_jardvegur", 83.0 );
+		snaedis3heatmap.put( "780_fludir_vatn", 83.0 );
+		snaedis3heatmap.put( "781_olkelduhals_vatn", 88.0 );
+		snaedis3heatmap.put( "781_olkelduhals_lifmassi", 88.0 );
+		snaedis3heatmap.put( "782_olkelduhals_lifmassi", 63.0 );
+		snaedis3heatmap.put( "783_olkelduhals_jardvlifm", 63.0 );
+		snaedis3heatmap.put( "783_olkelduhals_vatn", 69.4 );
+		snaedis3heatmap.put( "808_hrafntinnusker_jardvegur", 69.4 );
+		snaedis3heatmap.put( "808_hrafntinnusker_vatn", 79.1 );
+		snaedis3heatmap.put( "808_hrafntinnusker_lifmassi", 79.1 );
+		
+		final Map<String,Double>	snaedis3phmap = new HashMap<String,Double>();
+		snaedis3phmap.put( "780_fludir_jardvegur", 9.0 );
+		snaedis3phmap.put( "780_fludir_vatn", 9.0 );
+		snaedis3phmap.put( "781_olkelduhals_vatn", 7.0 );
+		snaedis3phmap.put( "781_olkelduhals_lifmassi", 7.0 );
+		snaedis3phmap.put( "782_olkelduhals_lifmassi", 8.0 );
+		snaedis3phmap.put( "783_olkelduhals_jardvlifm", 8.0 );
+		snaedis3phmap.put( "783_olkelduhals_vatn", 8.25 );
+		snaedis3phmap.put( "808_hrafntinnusker_jardvegur", 8.25 );
+		snaedis3phmap.put( "808_hrafntinnusker_vatn", 8.0 );
+		snaedis3phmap.put( "808_hrafntinnusker_lifmassi", 8.0 );
+		
+		final Map<String,String>	snaedis4map = new HashMap<String,String>();
+		snaedis4map.put( "809_hrafntinnusker_jardvegur", "ACGAGTGCGT" );
+		snaedis4map.put( "809_hrafntinnusker_vatn", "ACGCTCGACA" );
+		snaedis4map.put( "809_hrafntinnusker_lifmassi", "AGACGCACTC" );
+		snaedis4map.put( "810_hrafntinnusker_jardvegur", "AGCACTGTAG" );
+		snaedis4map.put( "810_hrafntinnusker_vatn", "ATCAGACACG" );
+		snaedis4map.put( "810_hrafntinnusker_lifmassi", "ATATCGCGAG" );
+		snaedis4map.put( "811_hrafntinnusker_jardvegur", "CGTGTCTCTA" );
+		snaedis4map.put( "811_hrafntinnusker_vatn", "CTCGCGTGTC" );
+		snaedis4map.put( "811_hrafntinnusker_lifmassi", "TGATACGTCT" );
+		snaedis4map.put( "812_hrafntinnusker_jardvegur", "TCTCTATGCG" );
+		
+		final Map<String,Double>	snaedis4heatmap = new HashMap<String,Double>();
+		snaedis4heatmap.put( "809_hrafntinnusker_jardvegur", 83.0 );
+		snaedis4heatmap.put( "809_hrafntinnusker_vatn", 83.0 );
+		snaedis4heatmap.put( "809_hrafntinnusker_lifmassi", 88.0 );
+		snaedis4heatmap.put( "810_hrafntinnusker_jardvegur", 88.0 );
+		snaedis4heatmap.put( "810_hrafntinnusker_vatn", 63.0 );
+		snaedis4heatmap.put( "810_hrafntinnusker_lifmassi", 63.0 );
+		snaedis4heatmap.put( "811_hrafntinnusker_jardvegur", 69.4 );
+		snaedis4heatmap.put( "811_hrafntinnusker_vatn", 69.4 );
+		snaedis4heatmap.put( "811_hrafntinnusker_lifmassi", 79.1 );
+		snaedis4heatmap.put( "812_hrafntinnusker_jardvegur", 79.1 );
+		
+		final Map<String,Double>	snaedis4phmap = new HashMap<String,Double>();
+		snaedis4phmap.put( "809_hrafntinnusker_jardvegur", 9.0 );
+		snaedis4phmap.put( "809_hrafntinnusker_vatn", 9.0 );
+		snaedis4phmap.put( "809_hrafntinnusker_lifmassi", 7.0 );
+		snaedis4phmap.put( "810_hrafntinnusker_jardvegur", 7.0 );
+		snaedis4phmap.put( "810_hrafntinnusker_vatn", 8.0 );
+		snaedis4phmap.put( "810_hrafntinnusker_lifmassi", 8.0 );
+		snaedis4phmap.put( "811_hrafntinnusker_jardvegur", 8.25 );
+		snaedis4phmap.put( "811_hrafntinnusker_vatn", 8.25 );
+		snaedis4phmap.put( "811_hrafntinnusker_lifmassi", 8.0 );
+		snaedis4phmap.put( "812_hrafntinnusker_jardvegur", 8.0 );
+	
+		final Map<String,String>	snaedis5map = new HashMap<String,String>();
+		snaedis5map.put( "812_hrafntinnusker_vatn", "ACGAGTGCGT" );
+		snaedis5map.put( "813_hrafntinnusker_jardvegur", "ACGCTCGACA" );
+		snaedis5map.put( "813_hrafntinnusker_vatn", "AGACGCACTC" );
+		snaedis5map.put( "814_hrafntinnusker_jardvegur", "AGCACTGTAG" );
+		snaedis5map.put( "814_hrafntinnusker_vatn", "ATCAGACACG" );
+		snaedis5map.put( "815_reykjadalir_jardvegur", "ATATCGCGAG" );
+		snaedis5map.put( "815_reykjadalir_vatn", "CGTGTCTCTA" );
+		snaedis5map.put( "815_reykjadalir_lifmassi", "CTCGCGTGTC" );
+		snaedis5map.put( "816_vondugil_jardvegur", "TGATACGTCT" );
+		snaedis5map.put( "816_vondugil_vatn", "TCTCTATGCG" );
+	
+		final Map<String,Double>	snaedis5heatmap = new HashMap<String,Double>();
+		snaedis5heatmap.put( "812_hrafntinnusker_vatn", 83.0 );
+		snaedis5heatmap.put( "813_hrafntinnusker_jardvegur", 83.0 );
+		snaedis5heatmap.put( "813_hrafntinnusker_vatn", 88.0 );
+		snaedis5heatmap.put( "814_hrafntinnusker_jardvegur", 88.0 );
+		snaedis5heatmap.put( "814_hrafntinnusker_vatn", 63.0 );
+		snaedis5heatmap.put( "815_reykjadalir_jardvegur", 63.0 );
+		snaedis5heatmap.put( "815_reykjadalir_vatn", 69.4 );
+		snaedis5heatmap.put( "815_reykjadalir_lifmassi", 69.4 );
+		snaedis5heatmap.put( "816_vondugil_jardvegur", 79.1 );
+		snaedis5heatmap.put( "816_vondugil_vatn", 79.1 );
+	
+		final Map<String,Double>	snaedis5phmap = new HashMap<String,Double>();
+		snaedis5phmap.put( "812_hrafntinnusker_vatn", 9.0 );
+		snaedis5phmap.put( "813_hrafntinnusker_jardvegur", 9.0 );
+		snaedis5phmap.put( "813_hrafntinnusker_vatn", 7.0 );
+		snaedis5phmap.put( "814_hrafntinnusker_jardvegur", 7.0 );
+		snaedis5phmap.put( "814_hrafntinnusker_vatn", 8.0 );
+		snaedis5phmap.put( "815_reykjadalir_jardvegur", 8.0 );
+		snaedis5phmap.put( "815_reykjadalir_vatn", 8.25 );
+		snaedis5phmap.put( "815_reykjadalir_lifmassi", 8.25 );
+		snaedis5phmap.put( "816_vondugil_jardvegur", 8.0 );
+		snaedis5phmap.put( "816_vondugil_vatn", 8.0 );
+		
+		final Map<String,String>	snaedis6map = new HashMap<String,String>();
+		snaedis6map.put( "817_vondugil_jardvegur", "ACGAGTGCGT" );
+		snaedis6map.put( "817_vondugil_vatn", "ACGCTCGACA" );
+		snaedis6map.put( "818_vondugil_jardvegur", "AGACGCACTC" );
+		snaedis6map.put( "818_vondugil_vatn", "AGCACTGTAG" );
+		snaedis6map.put( "819_vondugil_jardvegur", "ATCAGACACG" );
+		snaedis6map.put( "819_vondugil_vatn", "ATATCGCGAG" );
+		snaedis6map.put( "820_vondugil_jardvegur", "CGTGTCTCTA" );
+		snaedis6map.put( "820_vondugil_vatn", "CTCGCGTGTC" );
+		snaedis6map.put( "821_vondugil_jardvegur", "TGATACGTCT" );
+		snaedis6map.put( "821_vondugil_vatn", "TCTCTATGCG" );
+		
+		final Map<String,Double>	snaedis6heatmap = new HashMap<String,Double>();
+		snaedis6heatmap.put( "817_vondugil_jardvegur", 83.0 );
+		snaedis6heatmap.put( "817_vondugil_vatn", 83.0 );
+		snaedis6heatmap.put( "818_vondugil_jardvegur", 88.0 );
+		snaedis6heatmap.put( "818_vondugil_vatn", 88.0 );
+		snaedis6heatmap.put( "819_vondugil_jardvegur", 63.0 );
+		snaedis6heatmap.put( "819_vondugil_vatn", 63.0 );
+		snaedis6heatmap.put( "820_vondugil_jardvegur", 69.4 );
+		snaedis6heatmap.put( "820_vondugil_vatn", 69.4 );
+		snaedis6heatmap.put( "821_vondugil_jardvegur", 79.1 );
+		snaedis6heatmap.put( "821_vondugil_vatn", 79.1 );
+	
+		final Map<String,Double>	snaedis6phmap = new HashMap<String,Double>();
+		snaedis6phmap.put( "817_vondugil_jardvegur", 9.0 );
+		snaedis6phmap.put( "817_vondugil_vatn", 9.0 );
+		snaedis6phmap.put( "818_vondugil_jardvegur", 7.0 );
+		snaedis6phmap.put( "818_vondugil_vatn", 7.0 );
+		snaedis6phmap.put( "819_vondugil_jardvegur", 8.0 );
+		snaedis6phmap.put( "819_vondugil_vatn", 8.0 );
+		snaedis6phmap.put( "820_vondugil_jardvegur", 8.25 );
+		snaedis6phmap.put( "820_vondugil_vatn", 8.25 );
+		snaedis6phmap.put( "821_vondugil_jardvegur", 8.0 );
+		snaedis6phmap.put( "821_vondugil_vatn", 8.0 );
+		
+		final Map<String,String>	snaedis7map = new HashMap<String,String>();
+		snaedis7map.put( "846_hurdarbak_jardvegur", "ACGAGTGCGT" );
+		snaedis7map.put( "846_hurdarbak_vatn", "ACGCTCGACA" );
+		snaedis7map.put( "846_hurdarbak_lifmassi", "AGACGCACTC" );
+		snaedis7map.put( "847_hurdarbak_jardvegur", "AGCACTGTAG" );
+		snaedis7map.put( "847_hurdarbak_vatn", "ATCAGACACG" );
+		snaedis7map.put( "848_kleppjarnsreykir_jardvegur", "ATATCGCGAG" );
+		snaedis7map.put( "848_kleppjarnsreykir_vatn", "CGTGTCTCTA" );
+		snaedis7map.put( "848_kleppjarnsreykir_lifmassi", "CTCGCGTGTC" );
+		snaedis7map.put( "849_kleppjarnsreykir_jardvegur", "TGATACGTCT" );
+		snaedis7map.put( "849_kleppjarnsreykir_vatn", "TCTCTATGCG" );
+		
+		final Map<String,Double>	snaedis7heatmap = new HashMap<String,Double>();
+		snaedis7heatmap.put( "846_hurdarbak_jardvegur", 83.0 );
+		snaedis7heatmap.put( "846_hurdarbak_vatn", 83.0 );
+		snaedis7heatmap.put( "846_hurdarbak_lifmassi", 88.0 );
+		snaedis7heatmap.put( "847_hurdarbak_jardvegur", 88.0 );
+		snaedis7heatmap.put( "847_hurdarbak_vatn", 63.0 );
+		snaedis7heatmap.put( "848_kleppjarnsreykir_jardvegur", 63.0 );
+		snaedis7heatmap.put( "848_kleppjarnsreykir_vatn", 69.4 );
+		snaedis7heatmap.put( "848_kleppjarnsreykir_lifmassi", 69.4 );
+		snaedis7heatmap.put( "849_kleppjarnsreykir_jardvegur", 79.1 );
+		snaedis7heatmap.put( "849_kleppjarnsreykir_vatn", 79.1 );
+		
+		final Map<String,Double>	snaedis7phmap = new HashMap<String,Double>();
+		snaedis7phmap.put( "846_hurdarbak_jardvegur", 9.0 );
+		snaedis7phmap.put( "846_hurdarbak_vatn", 9.0 );
+		snaedis7phmap.put( "846_hurdarbak_lifmassi", 7.0 );
+		snaedis7phmap.put( "847_hurdarbak_jardvegur", 7.0 );
+		snaedis7phmap.put( "847_hurdarbak_vatn", 8.0 );
+		snaedis7phmap.put( "848_kleppjarnsreykir_jardvegur", 8.0 );
+		snaedis7phmap.put( "848_kleppjarnsreykir_vatn", 8.25 );
+		snaedis7phmap.put( "848_kleppjarnsreykir_lifmassi", 8.25 );
+		snaedis7phmap.put( "849_kleppjarnsreykir_jardvegur", 8.0 );
+		snaedis7phmap.put( "849_kleppjarnsreykir_vatn", 8.0 );
+	
+		final Map<String,String>	snaedis8map = new HashMap<String,String>();
+		snaedis8map.put( "849_kleppjarnsreykir_lifmassi", "ACGAGTGCGT" );
+		snaedis8map.put( "850_kleppjarnsreykir_jardvegur", "ACGCTCGACA" );
+		snaedis8map.put( "850_kleppjarnsreykir_vatn", "AGACGCACTC" );
+		snaedis8map.put( "850_kleppjarnsreykir_lifmassi", "AGCACTGTAG" );
+		snaedis8map.put( "851_deildartunguhver_jardvegur", "ATCAGACACG" );
+		snaedis8map.put( "851_deildartunguhver_vatn", "ATATCGCGAG" );
+		snaedis8map.put( "852_deildartunguhver_jardvegur", "CGTGTCTCTA" );
+		snaedis8map.put( "852_deildartunguhver_vatn", "CTCGCGTGTC" );
+		
+		final Map<String,Double>	snaedis8heatmap = new HashMap<String,Double>();
+		snaedis8heatmap.put( "849_kleppjarnsreykir_lifmassi", 83.0 );
+		snaedis8heatmap.put( "850_kleppjarnsreykir_jardvegur", 83.0 );
+		snaedis8heatmap.put( "850_kleppjarnsreykir_vatn", 88.0 );
+		snaedis8heatmap.put( "850_kleppjarnsreykir_lifmassi", 88.0 );
+		snaedis8heatmap.put( "851_deildartunguhver_jardvegur", 63.0 );
+		snaedis8heatmap.put( "851_deildartunguhver_vatn", 63.0 );
+		snaedis8heatmap.put( "852_deildartunguhver_jardvegur", 69.4 );
+		snaedis8heatmap.put( "852_deildartunguhver_vatn", 69.4 );
+		
+		final Map<String,Double>	snaedis8phmap = new HashMap<String,Double>();
+		snaedis2phmap.put( "849_kleppjarnsreykir_lifmassi", 9.0 );
+		snaedis2phmap.put( "850_kleppjarnsreykir_jardvegur", 9.0 );
+		snaedis2phmap.put( "850_kleppjarnsreykir_vatn", 7.0 );
+		snaedis2phmap.put( "850_kleppjarnsreykir_lifmassi", 7.0 );
+		snaedis2phmap.put( "851_deildartunguhver_jardvegur", 8.0 );
+		snaedis2phmap.put( "851_deildartunguhver_vatn", 8.0 );
+		snaedis2phmap.put( "852_deildartunguhver_jardvegur", 8.25 );
+		snaedis2phmap.put( "852_deildartunguhver_vatn", 8.25 );
+		
+		rsnaedis2map = new HashMap<String,String>();
 		for( String key : snaedis2map.keySet() ) {
 			rsnaedis2map.put( snaedis2map.get(key), key );
+		}
+		
+		rsnaedis3map = new HashMap<String,String>();
+		for( String key : snaedis3map.keySet() ) {
+			rsnaedis3map.put( snaedis3map.get(key), key );
+		}
+		
+		rsnaedis4map = new HashMap<String,String>();
+		for( String key : snaedis4map.keySet() ) {
+			rsnaedis4map.put( snaedis4map.get(key), key );
+		}
+		
+		rsnaedis5map = new HashMap<String,String>();
+		for( String key : snaedis5map.keySet() ) {
+			rsnaedis5map.put( snaedis5map.get(key), key );
+		}
+		
+		rsnaedis6map = new HashMap<String,String>();
+		for( String key : snaedis6map.keySet() ) {
+			rsnaedis6map.put( snaedis6map.get(key), key );
+		}
+		
+		rsnaedis7map = new HashMap<String,String>();
+		for( String key : snaedis7map.keySet() ) {
+			rsnaedis7map.put( snaedis7map.get(key), key );
+		}
+		
+		rsnaedis8map = new HashMap<String,String>();
+		for( String key : snaedis8map.keySet() ) {
+			rsnaedis8map.put( snaedis8map.get(key), key );
 		}
 		
 		RootPanel		rp = RootPanel.get();
@@ -571,6 +949,60 @@ public class Taxonomy implements EntryPoint {
 						}
 					}
 					
+					for( String key : snaedis3map.keySet() ) {
+						if( nodename.equals("snaedis3"+key) ) {
+							String val = snaedis3map.get(key);
+							runSpec( selectedtree, "http://"+server+"/snaedis3_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					
+					for( String key : snaedis4map.keySet() ) {
+						if( nodename.equals("snaedis4"+key) ) {
+							String val = snaedis4map.get(key);
+							runSpec( selectedtree, "http://"+server+"/snaedis4_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					
+					for( String key : snaedis5map.keySet() ) {
+						if( nodename.equals("snaedis5"+key) ) {
+							String val = snaedis5map.get(key);
+							runSpec( selectedtree, "http://"+server+"/snaedis5_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					
+					for( String key : snaedis6map.keySet() ) {
+						if( nodename.equals("snaedis6"+key) ) {
+							String val = snaedis6map.get(key);
+							runSpec( selectedtree, "http://"+server+"/snaedis6_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					
+					for( String key : snaedis7map.keySet() ) {
+						if( nodename.equals("snaedis7"+key) ) {
+							String val = snaedis7map.get(key);
+							runSpec( selectedtree, "http://"+server+"/snaedis7_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					
+					for( String key : snaedis8map.keySet() ) {
+						if( nodename.equals("snaedis8"+key) ) {
+							String val = snaedis8map.get(key);
+							runSpec( selectedtree, "http://"+server+"/snaedis8_"+val+".txt" );
+							already = true;
+							break;
+						}
+					}
+					
 					if( !already ) {
 						if( nodename.startsWith("gumol") ) {
 							runSpec( selectedtree, "http://"+server+"/gumol_"+nodename.substring(5)+".txt" );
@@ -578,6 +1010,18 @@ public class Taxonomy implements EntryPoint {
 							runSpec( selectedtree, "http://"+server+"/snaedis_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis2") ) {
 							runSpec( selectedtree, "http://"+server+"/snaedis2_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis3") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis3_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis4") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis4_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis5") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis5_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis6") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis6_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis7") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis7_"+nodename.substring(7)+".txt" );
+						} else if( nodename.startsWith("snaedis8") ) {
+							runSpec( selectedtree, "http://"+server+"/snaedis8_"+nodename.substring(7)+".txt" );
 						} else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
 						else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 						else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
@@ -784,7 +1228,7 @@ public class Taxonomy implements EntryPoint {
 			@Override
 			public void onSuccess(String result) {
 				//if( result != null && result.contains("130.208.252.") ) 
-				runStuff( server, tree, rmapstr, rsnaedis1map, rsnaedis2map );
+				runStuff( server, tree, rmapstr );
 			}
 		});
 		FocusPanel	focus = new FocusPanel( tree );
