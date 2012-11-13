@@ -874,7 +874,7 @@ public class Taxonomy implements EntryPoint {
 			rsnaedis1map.put( snaedis1map.get(key), key );
 		}
 		
-		final Map<String,String>	snaedis2map = new HashMap<String,String>();
+		snaedis2map = new HashMap<String,String>();
 		snaedis2map.put( "775_geysir_west_jardvegur", "ACGAGTGCGT" );
 		snaedis2map.put( "775_geysir_west_vatn", "ACGCTCGACA" );
 		snaedis2map.put( "776_geysir_west_jardvegur", "AGACGCACTC" );
@@ -910,7 +910,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis2phmap.put( "779_fludir_jardvegur", 8.0 );
 		snaedis2phmap.put( "779_fludir_vatn", 8.0 );
 		
-		final Map<String,String>	snaedis3map = new HashMap<String,String>();
+		snaedis3map = new HashMap<String,String>();
 		snaedis3map.put( "780_fludir_jardvegur", "ACGAGTGCGT" );
 		snaedis3map.put( "780_fludir_vatn", "ACGCTCGACA" );
 		snaedis3map.put( "781_olkelduhals_vatn", "AGACGCACTC" );
@@ -946,7 +946,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis3phmap.put( "808_hrafntinnusker_vatn", 7.0 );
 		snaedis3phmap.put( "808_hrafntinnusker_lifmassi", 7.0 );
 		
-		final Map<String,String>	snaedis4map = new HashMap<String,String>();
+		snaedis4map = new HashMap<String,String>();
 		snaedis4map.put( "809_hrafntinnusker_jardvegur", "ACGAGTGCGT" );
 		snaedis4map.put( "809_hrafntinnusker_vatn", "ACGCTCGACA" );
 		snaedis4map.put( "809_hrafntinnusker_lifmassi", "AGACGCACTC" );
@@ -982,7 +982,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis4phmap.put( "811_hrafntinnusker_lifmassi", 7.0 );
 		snaedis4phmap.put( "812_hrafntinnusker_jardvegur", 6.0 );
 	
-		final Map<String,String>	snaedis5map = new HashMap<String,String>();
+		snaedis5map = new HashMap<String,String>();
 		snaedis5map.put( "812_hrafntinnusker_vatn", "ACGAGTGCGT" );
 		snaedis5map.put( "813_hrafntinnusker_jardvegur", "ACGCTCGACA" );
 		snaedis5map.put( "813_hrafntinnusker_vatn", "AGACGCACTC" );
@@ -1018,7 +1018,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis5phmap.put( "816_vondugil_jardvegur", 9.0 );
 		snaedis5phmap.put( "816_vondugil_vatn", 9.0 );
 		
-		final Map<String,String>	snaedis6map = new HashMap<String,String>();
+		snaedis6map = new HashMap<String,String>();
 		snaedis6map.put( "817_vondugil_jardvegur", "ACGAGTGCGT" );
 		snaedis6map.put( "817_vondugil_vatn", "ACGCTCGACA" );
 		snaedis6map.put( "818_vondugil_jardvegur", "AGACGCACTC" );
@@ -1054,7 +1054,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis6phmap.put( "821_vondugil_jardvegur", 6.0 );
 		snaedis6phmap.put( "821_vondugil_vatn", 6.0 );
 		
-		final Map<String,String>	snaedis7map = new HashMap<String,String>();
+		snaedis7map = new HashMap<String,String>();
 		snaedis7map.put( "846_hurdarbak_jardvegur", "ACGAGTGCGT" );
 		snaedis7map.put( "846_hurdarbak_vatn", "ACGCTCGACA" );
 		snaedis7map.put( "846_hurdarbak_lifmassi", "AGACGCACTC" );
@@ -1090,7 +1090,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis7phmap.put( "849_kleppjarnsreykir_jardvegur", 7.5 );
 		snaedis7phmap.put( "849_kleppjarnsreykir_vatn", 7.5 );
 	
-		final Map<String,String>	snaedis8map = new HashMap<String,String>();
+		snaedis8map = new HashMap<String,String>();
 		snaedis8map.put( "849_kleppjarnsreykir_lifmassi", "ACGAGTGCGT" );
 		snaedis8map.put( "850_kleppjarnsreykir_jardvegur", "ACGCTCGACA" );
 		snaedis8map.put( "850_kleppjarnsreykir_vatn", "AGACGCACTC" );
