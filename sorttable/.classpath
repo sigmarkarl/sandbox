@@ -22,9 +22,6 @@
 	<classpathentry kind="lib" path="/opt/poi-3.8/lib/log4j-1.2.13.jar"/>
 	<classpathentry kind="lib" path="swingx-all-1.6.3.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_07/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_07/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_07/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/json_simple.jar"/>
 	<classpathentry kind="lib" path="/opt/gdata/java/lib/gdata-base-1.0.jar"/>
 	<classpathentry kind="lib" path="/opt/gdata/java/lib/gdata-client-1.0.jar"/>
@@ -32,5 +29,8 @@
 	<classpathentry kind="lib" path="/usr/share/java/apache-mime4j.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/httpmime.jar"/>
 	<classpathentry kind="lib" path="/pontun/war/sqljdbc4.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_09/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_09/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_09/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
