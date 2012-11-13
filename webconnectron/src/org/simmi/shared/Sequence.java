@@ -43,6 +43,10 @@ public class Sequence implements Comparable<Sequence> {
 	public static String getPhylip( List<Sequence> lseq, boolean numeric ) {
 		StringBuilder out = new StringBuilder();
 		
+		for( Sequence seq : lseq ) {
+			System.err.println( seq.getName() );
+		}
+		
 		String erm = ""+lseq.size();
 		String seqlen = "";
 		for( int i = 0; i < 6-erm.length(); i++ ) {
