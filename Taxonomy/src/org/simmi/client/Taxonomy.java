@@ -12,6 +12,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DragEndEvent;
 import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
@@ -35,6 +37,8 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -42,13 +46,17 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DialogBox.Caption;
 import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -445,6 +453,352 @@ public class Taxonomy implements EntryPoint {
 	public static Map<String,Integer>		indexmap = new HashMap<String,Integer>();
 	public static int max = 0;
 	
+	Map<String,String>	snaedis1map;
+	Map<String,String>	snaedis2map;
+	Map<String,String>	snaedis3map;
+	Map<String,String>	snaedis4map;
+	Map<String,String>	snaedis5map;
+	Map<String,String>	snaedis6map;
+	Map<String,String>	snaedis7map;
+	Map<String,String>	snaedis8map;
+	
+	Map<String,Double>	snaedis1heatmap;
+	Map<String,Double>	snaedis2heatmap;
+	Map<String,Double>	snaedis3heatmap;
+	Map<String,Double>	snaedis4heatmap;
+	Map<String,Double>	snaedis5heatmap;
+	Map<String,Double>	snaedis6heatmap;
+	Map<String,Double>	snaedis7heatmap;
+	Map<String,Double>	snaedis8heatmap;
+	
+	Map<String,Double>	snaedis1phmap;
+	Map<String,Double>	snaedis2phmap;
+	Map<String,Double>	snaedis3phmap;
+	Map<String,Double>	snaedis4phmap;
+	Map<String,Double>	snaedis5phmap;
+	Map<String,Double>	snaedis6phmap;
+	Map<String,Double>	snaedis7phmap;
+	Map<String,Double>	snaedis8phmap;
+	
+	public void pcaAnalysis() {
+		console( "about to pca" );
+		String allstr = "";
+		for( String key : datamap.keySet() ) {
+			console( "pca "+key );
+			List<Double> tdlist = datamap.get(key);
+			String cres = key;
+			for( int i = 0; i < tdlist.size(); i++ ) {
+				cres += "\t"+tdlist.get(i);
+			}
+			for( int i = tdlist.size(); i < max; i++ ) {
+				tdlist.add( 0.0 );
+				cres += "\t"+tdlist.get(i);
+			}
+			
+			allstr += cres+"\n";
+		}
+		
+		allstr += "\n";
+		for( String key : datamap.keySet() ) {
+			double dval = 0.0;
+			String keyval = key.substring(8);
+			if( snaedis1heatmap.containsKey( keyval ) ) {
+				dval = snaedis1heatmap.get( keyval );
+			} else if( snaedis2heatmap.containsKey( keyval ) ) {
+				dval = snaedis2heatmap.get( keyval );
+			} else if( snaedis3heatmap.containsKey( keyval ) ) {
+				dval = snaedis3heatmap.get( keyval );
+			} else if( snaedis4heatmap.containsKey( keyval ) ) {
+				dval = snaedis4heatmap.get( keyval );
+			} else if( snaedis5heatmap.containsKey( keyval ) ) {
+				dval = snaedis5heatmap.get( keyval );
+			} else if( snaedis6heatmap.containsKey( keyval ) ) {
+				dval = snaedis6heatmap.get( keyval );
+			} else if( snaedis7heatmap.containsKey( keyval ) ) {
+				dval = snaedis7heatmap.get( keyval );
+			} else if( snaedis8heatmap.containsKey( keyval ) ) {
+				dval = snaedis8heatmap.get( keyval );
+			}
+			
+			double tval = (dval-60.0)/30.0;
+			allstr += tval+"\t0.0\t"+(1.0-tval)+"\n";
+		}
+		
+		allstr += "\n";
+		for( String key : datamap.keySet() ) {
+			double dval = 0.0;
+			String keyval = key.substring(8);
+			if( snaedis1phmap.containsKey( keyval ) ) {
+				dval = snaedis1phmap.get( keyval );
+			} else if( snaedis2phmap.containsKey( keyval ) ) {
+				dval = snaedis2phmap.get( keyval );
+			} else if( snaedis3phmap.containsKey( keyval ) ) {
+				dval = snaedis3phmap.get( keyval );
+			} else if( snaedis4phmap.containsKey( keyval ) ) {
+				dval = snaedis4phmap.get( keyval );
+			} else if( snaedis5phmap.containsKey( keyval ) ) {
+				dval = snaedis5phmap.get( keyval );
+			} else if( snaedis6phmap.containsKey( keyval ) ) {
+				dval = snaedis6phmap.get( keyval );
+			} else if( snaedis7phmap.containsKey( keyval ) ) {
+				dval = snaedis7phmap.get( keyval );
+			} else if( snaedis8phmap.containsKey( keyval ) ) {
+				dval = snaedis8phmap.get( keyval );
+			}
+			
+			double tval = (dval-5.0)/4.0;
+			allstr += tval+"\t0.0\t"+(1.0-tval)+"\n";
+		}
+
+		DialogBox db = new DialogBox();
+		Caption cap = db.getCaption();
+		db.setAutoHideEnabled( true );
+		cap.setText("PCA");
+		TextArea ta = new TextArea();
+		ta.setSize("512px", "384px");
+		db.add( ta );
+		ta.setText( allstr );
+		db.center();
+		
+		/*String allstr = "";
+		for( String key : datamap.keySet() ) {
+			List<Double> tdlist = datamap.get(key);
+			String cres = key;
+			for( int i = 0; i < tdlist.size(); i++ ) {
+				cres += "\t"+tdlist.get(i);
+			}
+			for( int i = tdlist.size(); i < max; i++ ) {
+				tdlist.add( 0.0 );
+				cres += "\t"+tdlist.get(i);
+			}
+			
+			allstr += cres+"\n";
+		}
+
+		DialogBox db = new DialogBox();
+		Caption cap = db.getCaption();
+		db.setAutoHideEnabled( true );
+		cap.setText("PCA");
+		TextArea ta = new TextArea();
+		ta.setSize("512px", "384px");
+		db.add( ta );
+		ta.setText( allstr );
+		db.center();*/
+	}
+	
+	public StringBuilder calcContent( TreeItem selectedtree, int level ) {
+		Map<Integer,Map<String,Integer>>	mstr = new HashMap<Integer,Map<String,Integer>>();
+		try {
+			recursiveBlast( selectedtree, mstr, 0 );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		StringBuilder res = new StringBuilder();
+		for( Integer d : mstr.keySet() ) {
+			Map<String,Integer> mi = mstr.get(d);
+			
+			List<Object[]> lobj = new ArrayList<Object[]>();
+			for( String key : mi.keySet() ) {
+				Integer i = mi.get(key);
+				Object[] obj = { i, key };
+				lobj.add( obj );
+			}
+			Collections.sort( lobj, new Comparator<Object[]>() {
+				@Override
+				public int compare(Object[] o1, Object[] o2) {
+					Integer i1 = (Integer)o1[0];
+					Integer i2 = (Integer)o2[0];
+					return i2.intValue() - i1.intValue();
+				}
+			});
+			for( Object[] obj : lobj ) {
+				res.append( obj[1] + "\t" + obj[0] + "\n" );
+			}
+			res.append("\n");
+			
+			if( d == level ) {
+				double sum = 0.0;
+				for( Object[] obj : lobj ) {
+					if( !indexmap.containsKey(obj[1]) ) {
+						indexmap.put((String)obj[1], indexmap.size());
+						/*for( String key : datamap.keySet() ) {
+							List<Double> dlist = datamap.get(key);
+							for( int i = dlist.size(); i <= indexmap.size(); i++ ) {
+								dlist.add( 0.0 );
+							}
+						}*/
+						max = Math.max(max, indexmap.size());
+					}
+					sum += (Integer)obj[0];
+				}
+				
+				List<Double>	dlist = new ArrayList<Double>();
+				String tstr = selectedtree.getText();
+				int ti = tstr.indexOf(' ');
+				if( ti == -1 ) ti = tstr.length();
+				datamap.put( tstr.substring(0,ti), dlist );
+				
+				for( Object[] obj : lobj ) {
+					int k = indexmap.get(obj[1]);
+					for( int i = dlist.size(); i <= k; i++ ) {
+						dlist.add( 0.0 );
+					}
+					dlist.set( k, ((Integer)obj[0])/sum );
+				}
+				
+				/*for( String key : datamap.keySet() ) {
+					List<Double> tdlist = datamap.get(key);
+					String cres = key;
+					for( int i = 0; i < tdlist.size(); i++ ) {
+						cres += "\t"+tdlist.get(i);
+					}
+					for( int i = tdlist.size(); i < max; i++ ) {
+						tdlist.add( 0.0 );
+						cres += "\t"+tdlist.get(i);
+					}
+					console( cres );
+				}
+				console("\n");*/
+			}
+		}
+		
+		return res;
+	}
+	
+	public void loadNode( TreeItem selectedtree, String server, Map<String,String> mapstr ) {
+		String nodename = selectedtree.getText();
+		boolean already = false;
+		if( mapstr != null ) for( String key : mapstr.keySet() ) {
+			if( nodename.equals("eyjo"+key) ) {
+				String val = mapstr.get(key);
+				runSpec( selectedtree, "http://"+server+"/mysilva_"+val+".txt" );
+				already = true;
+				break;
+				}
+		}
+		
+		String prefix = "snaedis";
+		if( zkey ) {
+			console( "zkey " + zkey );
+			prefix = "short";
+		}
+		
+		console( prefix );
+		for( String key : snaedis1map.keySet() ) {
+			if( nodename.equals("snaedis1"+key) ) {
+				String val = snaedis1map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"1_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		for( String key : snaedis2map.keySet() ) {
+			if( nodename.equals("snaedis2"+key) ) {
+				String val = snaedis2map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"2_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		for( String key : snaedis3map.keySet() ) {
+			if( nodename.equals("snaedis3"+key) ) {
+				String val = snaedis3map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"3_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		for( String key : snaedis4map.keySet() ) {
+			if( nodename.equals("snaedis4"+key) ) {
+				String val = snaedis4map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"4_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		for( String key : snaedis5map.keySet() ) {
+			if( nodename.equals("snaedis5"+key) ) {
+				String val = snaedis5map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"5_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		for( String key : snaedis6map.keySet() ) {
+			if( nodename.equals("snaedis6"+key) ) {
+				String val = snaedis6map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"6_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		for( String key : snaedis7map.keySet() ) {
+			if( nodename.equals("snaedis7"+key) ) {
+				String val = snaedis7map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"7_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		for( String key : snaedis8map.keySet() ) {
+			if( nodename.equals("snaedis8"+key) ) {
+				String val = snaedis8map.get(key);
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"8_"+val+".txt" );
+				already = true;
+				break;
+			}
+		}
+		
+		if( !already ) {
+			if( nodename.startsWith("gumol") ) {
+				runSpec( selectedtree, "http://"+server+"/gumol_"+nodename.substring(5)+".txt" );
+			} else if( nodename.startsWith("snaedis1") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"1_"+nodename.substring(7)+".txt" );
+			} else if( nodename.startsWith("snaedis2") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"2_"+nodename.substring(7)+".txt" );
+			} else if( nodename.startsWith("snaedis3") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"3_"+nodename.substring(7)+".txt" );
+			} else if( nodename.startsWith("snaedis4") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"4_"+nodename.substring(7)+".txt" );
+			} else if( nodename.startsWith("snaedis5") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"5_"+nodename.substring(7)+".txt" );
+			} else if( nodename.startsWith("snaedis6") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"6_"+nodename.substring(7)+".txt" );
+			} else if( nodename.startsWith("snaedis7") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"7_"+nodename.substring(7)+".txt" );
+			} else if( nodename.startsWith("snaedis8") ) {
+				runSpec( selectedtree, "http://"+server+"/"+prefix+"8_"+nodename.substring(7)+".txt" );
+			} else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
+			else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
+			else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
+			else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
+			else if( nodename.equals("root2") ) runSpec( selectedtree, "http://"+server+"/2v1.txt" );
+			else if( nodename.equals("root3") ) runSpec( selectedtree, "http://"+server+"/3v1.txt" );
+			else if( nodename.equals("root4") ) runSpec( selectedtree, "http://"+server+"/4v1.txt" );
+			else if( nodename.equals("root5") ) runSpec( selectedtree, "http://"+server+"/5v1.txt" );
+			else if( nodename.equals("root6") ) runSpec( selectedtree, "http://"+server+"/6v1.txt" );
+			else if( nodename.equals("root7") ) runSpec( selectedtree, "http://"+server+"/7v1.txt" );
+			else if( nodename.equals("root8") ) runSpec( selectedtree, "http://"+server+"/8v1.txt" );
+			else if( nodename.equals("root9") ) runSpec( selectedtree, "http://"+server+"/9v1.txt" );
+			else if( nodename.equals("root10") ) runSpec( selectedtree, "http://"+server+"/10v1.txt" );
+			else if( nodename.equals("root11") ) runSpec( selectedtree, "http://"+server+"/11v1.txt" );
+			else if( nodename.equals("root12") ) runSpec( selectedtree, "http://"+server+"/12v1.txt" );
+			else if( nodename.equals("root13") ) runSpec( selectedtree, "http://"+server+"/13v1.txt" );
+			else if( nodename.equals("root14") ) runSpec( selectedtree, "http://"+server+"/14v1.txt" );
+			else if( nodename.equals("root15") ) runSpec( selectedtree, "http://"+server+"/15v1.txt" );
+			else if( nodename.equals("root16") ) runSpec( selectedtree, "http://"+server+"/16v1.txt" );
+			else if( nodename.equals("arciformis") ) runSpec( selectedtree, "http://"+server+"/arciformis_v1.txt" );
+			else if( nodename.equals("kawarayensis") ) runSpec( selectedtree, "http://"+server+"/kawarayensis_v1.txt" );
+		}
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -479,7 +833,7 @@ public class Taxonomy implements EntryPoint {
 			rmapstr.put( mapstr.get(key), key );
 		}
 		
-		final Map<String,String>	snaedis1map = new HashMap<String,String>();
+		snaedis1map = new HashMap<String,String>();
 		snaedis1map.put( "770_geysir_north_jardvegur", "ACGAGTGCGT" );
 		snaedis1map.put( "770_geysir_north_vatn", "ACGCTCGACA" );
 		snaedis1map.put( "771_geysir_north_jardvegur", "AGACGCACTC" );
@@ -491,7 +845,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis1map.put( "774_geysir_west_jardvegur", "TGATACGTCT" );
 		snaedis1map.put( "774_geysir_west_vatn", "TCTCTATGCG" );
 		
-		final Map<String,Double>	snaedis1heatmap = new HashMap<String,Double>();
+		snaedis1heatmap = new HashMap<String,Double>();
 		snaedis1heatmap.put( "770_geysir_north_jardvegur", 83.0 );
 		snaedis1heatmap.put( "770_geysir_north_vatn", 83.0 );
 		snaedis1heatmap.put( "771_geysir_north_jardvegur", 72.0 );
@@ -503,7 +857,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis1heatmap.put( "774_geysir_west_jardvegur", 88.0 );
 		snaedis1heatmap.put( "774_geysir_west_vatn", 88.0 );
 		
-		final Map<String,Double>	snaedis1phmap = new HashMap<String,Double>();
+		snaedis1phmap = new HashMap<String,Double>();
 		snaedis1phmap.put( "770_geysir_north_jardvegur", 6.75 );
 		snaedis1phmap.put( "770_geysir_north_vatn", 6.75 );
 		snaedis1phmap.put( "771_geysir_north_jardvegur", 6.0 );
@@ -532,7 +886,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis2map.put( "779_fludir_jardvegur", "TGATACGTCT" );
 		snaedis2map.put( "779_fludir_vatn", "TCTCTATGCG" );
 		
-		final Map<String,Double>	snaedis2heatmap = new HashMap<String,Double>();
+		snaedis2heatmap = new HashMap<String,Double>();
 		snaedis2heatmap.put( "775_geysir_west_jardvegur", 83.0 );
 		snaedis2heatmap.put( "775_geysir_west_vatn", 83.0 );
 		snaedis2heatmap.put( "776_geysir_west_jardvegur", 88.0 );
@@ -544,7 +898,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis2heatmap.put( "779_fludir_jardvegur", 79.1 );
 		snaedis2heatmap.put( "779_fludir_vatn", 79.1 );
 		
-		final Map<String,Double>	snaedis2phmap = new HashMap<String,Double>();
+		snaedis2phmap = new HashMap<String,Double>();
 		snaedis2phmap.put( "775_geysir_west_jardvegur", 9.0 );
 		snaedis2phmap.put( "775_geysir_west_vatn", 9.0 );
 		snaedis2phmap.put( "776_geysir_west_jardvegur", 7.0 );
@@ -568,7 +922,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis3map.put( "808_hrafntinnusker_vatn", "TGATACGTCT" );
 		snaedis3map.put( "808_hrafntinnusker_lifmassi", "TCTCTATGCG" );
 		
-		final Map<String,Double>	snaedis3heatmap = new HashMap<String,Double>();
+		snaedis3heatmap = new HashMap<String,Double>();
 		snaedis3heatmap.put( "780_fludir_jardvegur", 87.6 );
 		snaedis3heatmap.put( "780_fludir_vatn", 87.6 );
 		snaedis3heatmap.put( "781_olkelduhals_vatn", 70.0 );
@@ -580,7 +934,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis3heatmap.put( "808_hrafntinnusker_vatn", 72.0 );
 		snaedis3heatmap.put( "808_hrafntinnusker_lifmassi", 72.0 );
 		
-		final Map<String,Double>	snaedis3phmap = new HashMap<String,Double>();
+		snaedis3phmap = new HashMap<String,Double>();
 		snaedis3phmap.put( "780_fludir_jardvegur", 8.5 );
 		snaedis3phmap.put( "780_fludir_vatn", 8.5 );
 		snaedis3phmap.put( "781_olkelduhals_vatn", 6.5 );
@@ -604,7 +958,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis4map.put( "811_hrafntinnusker_lifmassi", "TGATACGTCT" );
 		snaedis4map.put( "812_hrafntinnusker_jardvegur", "TCTCTATGCG" );
 		
-		final Map<String,Double>	snaedis4heatmap = new HashMap<String,Double>();
+		snaedis4heatmap = new HashMap<String,Double>();
 		snaedis4heatmap.put( "809_hrafntinnusker_jardvegur", 63.5 );
 		snaedis4heatmap.put( "809_hrafntinnusker_vatn", 63.5 );
 		snaedis4heatmap.put( "809_hrafntinnusker_lifmassi", 63.5 );
@@ -616,7 +970,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis4heatmap.put( "811_hrafntinnusker_lifmassi", 71.1 );
 		snaedis4heatmap.put( "812_hrafntinnusker_jardvegur", 68.3 );
 		
-		final Map<String,Double>	snaedis4phmap = new HashMap<String,Double>();
+		snaedis4phmap = new HashMap<String,Double>();
 		snaedis4phmap.put( "809_hrafntinnusker_jardvegur", 6.0 );
 		snaedis4phmap.put( "809_hrafntinnusker_vatn", 6.0 );
 		snaedis4phmap.put( "809_hrafntinnusker_lifmassi", 6.0 );
@@ -640,7 +994,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis5map.put( "816_vondugil_jardvegur", "TGATACGTCT" );
 		snaedis5map.put( "816_vondugil_vatn", "TCTCTATGCG" );
 	
-		final Map<String,Double>	snaedis5heatmap = new HashMap<String,Double>();
+		snaedis5heatmap = new HashMap<String,Double>();
 		snaedis5heatmap.put( "812_hrafntinnusker_vatn", 68.3 );
 		snaedis5heatmap.put( "813_hrafntinnusker_jardvegur", 71.5 );
 		snaedis5heatmap.put( "813_hrafntinnusker_vatn", 71.5 );
@@ -652,7 +1006,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis5heatmap.put( "816_vondugil_jardvegur", 78.0 );
 		snaedis5heatmap.put( "816_vondugil_vatn", 78.0 );
 	
-		final Map<String,Double>	snaedis5phmap = new HashMap<String,Double>();
+		snaedis5phmap = new HashMap<String,Double>();
 		snaedis5phmap.put( "812_hrafntinnusker_vatn", 6.0 );
 		snaedis5phmap.put( "813_hrafntinnusker_jardvegur", 5.75 );
 		snaedis5phmap.put( "813_hrafntinnusker_vatn", 5.75 );
@@ -676,7 +1030,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis6map.put( "821_vondugil_jardvegur", "TGATACGTCT" );
 		snaedis6map.put( "821_vondugil_vatn", "TCTCTATGCG" );
 		
-		final Map<String,Double>	snaedis6heatmap = new HashMap<String,Double>();
+		snaedis6heatmap = new HashMap<String,Double>();
 		snaedis6heatmap.put( "817_vondugil_jardvegur", 75.7 );
 		snaedis6heatmap.put( "817_vondugil_vatn", 75.7 );
 		snaedis6heatmap.put( "818_vondugil_jardvegur", 78.5 );
@@ -688,7 +1042,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis6heatmap.put( "821_vondugil_jardvegur", 79.0 );
 		snaedis6heatmap.put( "821_vondugil_vatn", 79.0 );
 	
-		final Map<String,Double>	snaedis6phmap = new HashMap<String,Double>();
+		snaedis6phmap = new HashMap<String,Double>();
 		snaedis6phmap.put( "817_vondugil_jardvegur", 9.0 );
 		snaedis6phmap.put( "817_vondugil_vatn", 9.0 );
 		snaedis6phmap.put( "818_vondugil_jardvegur", 8.5 );
@@ -712,7 +1066,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis7map.put( "849_kleppjarnsreykir_jardvegur", "TGATACGTCT" );
 		snaedis7map.put( "849_kleppjarnsreykir_vatn", "TCTCTATGCG" );
 		
-		final Map<String,Double>	snaedis7heatmap = new HashMap<String,Double>();
+		snaedis7heatmap = new HashMap<String,Double>();
 		snaedis7heatmap.put( "846_hurdarbak_jardvegur", 80.5 );
 		snaedis7heatmap.put( "846_hurdarbak_vatn", 80.5 );
 		snaedis7heatmap.put( "846_hurdarbak_lifmassi", 80.5 );
@@ -724,7 +1078,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis7heatmap.put( "849_kleppjarnsreykir_jardvegur", 76.8 );
 		snaedis7heatmap.put( "849_kleppjarnsreykir_vatn", 76.8 );
 		
-		final Map<String,Double>	snaedis7phmap = new HashMap<String,Double>();
+		snaedis7phmap = new HashMap<String,Double>();
 		snaedis7phmap.put( "846_hurdarbak_jardvegur", 8.0 );
 		snaedis7phmap.put( "846_hurdarbak_vatn", 8.0 );
 		snaedis7phmap.put( "846_hurdarbak_lifmassi", 8.0 );
@@ -746,7 +1100,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis8map.put( "852_deildartunguhver_jardvegur", "CGTGTCTCTA" );
 		snaedis8map.put( "852_deildartunguhver_vatn", "CTCGCGTGTC" );
 		
-		final Map<String,Double>	snaedis8heatmap = new HashMap<String,Double>();
+		snaedis8heatmap = new HashMap<String,Double>();
 		snaedis8heatmap.put( "849_kleppjarnsreykir_lifmassi", 76.8 );
 		snaedis8heatmap.put( "850_kleppjarnsreykir_jardvegur", 65.8 );
 		snaedis8heatmap.put( "850_kleppjarnsreykir_vatn", 65.8 );
@@ -756,7 +1110,7 @@ public class Taxonomy implements EntryPoint {
 		snaedis8heatmap.put( "852_deildartunguhver_jardvegur", 86.1 );
 		snaedis8heatmap.put( "852_deildartunguhver_vatn", 86.1 );
 		
-		final Map<String,Double>	snaedis8phmap = new HashMap<String,Double>();
+		snaedis8phmap = new HashMap<String,Double>();
 		snaedis2phmap.put( "849_kleppjarnsreykir_lifmassi", 7.5 );
 		snaedis2phmap.put( "850_kleppjarnsreykir_jardvegur", 8.5 );
 		snaedis2phmap.put( "850_kleppjarnsreykir_vatn", 8.5 );
@@ -824,30 +1178,7 @@ public class Taxonomy implements EntryPoint {
 				console( "zkey now "+zkey );
 				
 				if( cc == 'f' || cc == 'F' ) {
-					String allstr = "";
-					for( String key : datamap.keySet() ) {
-						List<Double> tdlist = datamap.get(key);
-						String cres = key;
-						for( int i = 0; i < tdlist.size(); i++ ) {
-							cres += "\t"+tdlist.get(i);
-						}
-						for( int i = tdlist.size(); i < max; i++ ) {
-							tdlist.add( 0.0 );
-							cres += "\t"+tdlist.get(i);
-						}
-						
-						allstr += cres+"\n";
-					}
-			
-					DialogBox db = new DialogBox();
-					Caption cap = db.getCaption();
-					db.setAutoHideEnabled( true );
-					cap.setText("PCA");
-					TextArea ta = new TextArea();
-					ta.setSize("512px", "384px");
-					db.add( ta );
-					ta.setText( allstr );
-					db.center();
+					pcaAnalysis();
 				}
 			}
 		});
@@ -869,58 +1200,7 @@ public class Taxonomy implements EntryPoint {
 			@Override
 			public void onMouseDown(MouseDownEvent event) {
 				if( event.getNativeButton() == NativeEvent.BUTTON_MIDDLE ) {
-					String allstr = "";
-					for( String key : datamap.keySet() ) {
-						List<Double> tdlist = datamap.get(key);
-						String cres = "";//key;
-						for( int i = 0; i < tdlist.size(); i++ ) {
-							cres += tdlist.get(i)+"\t";
-						}
-						for( int i = tdlist.size(); i < max; i++ ) {
-							tdlist.add( 0.0 );
-							cres += tdlist.get(i)+"\t";
-						}
-						
-						allstr += cres+"\n";
-					}
-					
-					allstr += "\n";
-					for( String key : datamap.keySet() ) {
-						double dval = 0.0;
-						String keyval = key.substring(8);
-						if( snaedis1heatmap.containsKey( keyval ) ) {
-							dval = snaedis1heatmap.get( keyval );
-						} else if( snaedis2heatmap.containsKey( keyval ) ) {
-							dval = snaedis2heatmap.get( keyval );
-						}
-						
-						double tval = (dval-60.0)/30.0;
-						allstr += tval+"\t0.0\t"+(1.0-tval)+"\n";
-					}
-					
-					allstr += "\n";
-					for( String key : datamap.keySet() ) {
-						double dval = 0.0;
-						String keyval = key.substring(8);
-						if( snaedis1phmap.containsKey( keyval ) ) {
-							dval = snaedis1phmap.get( keyval );
-						} else if( snaedis2phmap.containsKey( keyval ) ) {
-							dval = snaedis2phmap.get( keyval );
-						}
-						
-						double tval = (dval-5.0)/4.0;
-						allstr += tval+"\t0.0\t"+(1.0-tval)+"\n";
-					}
-			
-					DialogBox db = new DialogBox();
-					Caption cap = db.getCaption();
-					db.setAutoHideEnabled( true );
-					cap.setText("PCA");
-					TextArea ta = new TextArea();
-					ta.setSize("512px", "384px");
-					db.add( ta );
-					ta.setText( allstr );
-					db.center();
+					pcaAnalysis();
 				}
 			}
 		});
@@ -928,139 +1208,9 @@ public class Taxonomy implements EntryPoint {
 			@Override
 			public void onSelection(SelectionEvent<TreeItem> event) {
 				TreeItem selectedtree = event.getSelectedItem();
-				
 				String nodename = selectedtree.getText();
 				if( ( nodename.contains("snaedis") || nodename.contains("gumol") || nodename.contains("eyjo") || nodename.contains("root") || nodename.equals("arciformis") || nodename.equals("kawarayensis") ) && selectedtree.getChildCount() == 0 ) {
-					boolean already = false;
-					for( String key : mapstr.keySet() ) {
-						if( nodename.equals("eyjo"+key) ) {
-							String val = mapstr.get(key);
-							runSpec( selectedtree, "http://"+server+"/mysilva_"+val+".txt" );
-							already = true;
-							break;
-							}
-					}
-					
-					String prefix = "snaedis";
-					if( zkey ) {
-						console( "zkey " + zkey );
-						prefix = "short";
-					}
-					
-					console( prefix );
-					for( String key : snaedis1map.keySet() ) {
-						if( nodename.equals("snaedis1"+key) ) {
-							String val = snaedis1map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"1_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					for( String key : snaedis2map.keySet() ) {
-						if( nodename.equals("snaedis2"+key) ) {
-							String val = snaedis2map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"2_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					for( String key : snaedis3map.keySet() ) {
-						if( nodename.equals("snaedis3"+key) ) {
-							String val = snaedis3map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"3_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					for( String key : snaedis4map.keySet() ) {
-						if( nodename.equals("snaedis4"+key) ) {
-							String val = snaedis4map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"4_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					for( String key : snaedis5map.keySet() ) {
-						if( nodename.equals("snaedis5"+key) ) {
-							String val = snaedis5map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"5_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					for( String key : snaedis6map.keySet() ) {
-						if( nodename.equals("snaedis6"+key) ) {
-							String val = snaedis6map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"6_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					for( String key : snaedis7map.keySet() ) {
-						if( nodename.equals("snaedis7"+key) ) {
-							String val = snaedis7map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"7_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					for( String key : snaedis8map.keySet() ) {
-						if( nodename.equals("snaedis8"+key) ) {
-							String val = snaedis8map.get(key);
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"8_"+val+".txt" );
-							already = true;
-							break;
-						}
-					}
-					
-					if( !already ) {
-						if( nodename.startsWith("gumol") ) {
-							runSpec( selectedtree, "http://"+server+"/gumol_"+nodename.substring(5)+".txt" );
-						} else if( nodename.startsWith("snaedis1") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"1_"+nodename.substring(7)+".txt" );
-						} else if( nodename.startsWith("snaedis2") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"2_"+nodename.substring(7)+".txt" );
-						} else if( nodename.startsWith("snaedis3") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"3_"+nodename.substring(7)+".txt" );
-						} else if( nodename.startsWith("snaedis4") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"4_"+nodename.substring(7)+".txt" );
-						} else if( nodename.startsWith("snaedis5") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"5_"+nodename.substring(7)+".txt" );
-						} else if( nodename.startsWith("snaedis6") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"6_"+nodename.substring(7)+".txt" );
-						} else if( nodename.startsWith("snaedis7") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"7_"+nodename.substring(7)+".txt" );
-						} else if( nodename.startsWith("snaedis8") ) {
-							runSpec( selectedtree, "http://"+server+"/"+prefix+"8_"+nodename.substring(7)+".txt" );
-						} else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
-						else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
-						else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
-						else if( nodename.equals("root1") ) runSpec( selectedtree, "http://"+server+"/1v1.txt" );
-						else if( nodename.equals("root2") ) runSpec( selectedtree, "http://"+server+"/2v1.txt" );
-						else if( nodename.equals("root3") ) runSpec( selectedtree, "http://"+server+"/3v1.txt" );
-						else if( nodename.equals("root4") ) runSpec( selectedtree, "http://"+server+"/4v1.txt" );
-						else if( nodename.equals("root5") ) runSpec( selectedtree, "http://"+server+"/5v1.txt" );
-						else if( nodename.equals("root6") ) runSpec( selectedtree, "http://"+server+"/6v1.txt" );
-						else if( nodename.equals("root7") ) runSpec( selectedtree, "http://"+server+"/7v1.txt" );
-						else if( nodename.equals("root8") ) runSpec( selectedtree, "http://"+server+"/8v1.txt" );
-						else if( nodename.equals("root9") ) runSpec( selectedtree, "http://"+server+"/9v1.txt" );
-						else if( nodename.equals("root10") ) runSpec( selectedtree, "http://"+server+"/10v1.txt" );
-						else if( nodename.equals("root11") ) runSpec( selectedtree, "http://"+server+"/11v1.txt" );
-						else if( nodename.equals("root12") ) runSpec( selectedtree, "http://"+server+"/12v1.txt" );
-						else if( nodename.equals("root13") ) runSpec( selectedtree, "http://"+server+"/13v1.txt" );
-						else if( nodename.equals("root14") ) runSpec( selectedtree, "http://"+server+"/14v1.txt" );
-						else if( nodename.equals("root15") ) runSpec( selectedtree, "http://"+server+"/15v1.txt" );
-						else if( nodename.equals("root16") ) runSpec( selectedtree, "http://"+server+"/16v1.txt" );
-						else if( nodename.equals("arciformis") ) runSpec( selectedtree, "http://"+server+"/arciformis_v1.txt" );
-						else if( nodename.equals("kawarayensis") ) runSpec( selectedtree, "http://"+server+"/kawarayensis_v1.txt" );
-					}
+					loadNode( selectedtree, server, mapstr );
 				} else if( shift ) {
 					StringBuilder sb = new StringBuilder();
 					//sb.append( selectedtree.getText() );
@@ -1146,80 +1296,7 @@ public class Taxonomy implements EntryPoint {
 						public void onFailure(Throwable caught) {}
 					});*/
 				} else if( ctrl ) {
-					Map<Integer,Map<String,Integer>>	mstr = new HashMap<Integer,Map<String,Integer>>();
-					try {
-						recursiveBlast( selectedtree, mstr, 0 );
-					} catch( Exception e ) {
-						e.printStackTrace();
-					}
-					StringBuilder res = new StringBuilder();
-					for( Integer d : mstr.keySet() ) {
-						Map<String,Integer> mi = mstr.get(d);
-						
-						List<Object[]> lobj = new ArrayList<Object[]>();
-						for( String key : mi.keySet() ) {
-							Integer i = mi.get(key);
-							Object[] obj = { i, key };
-							lobj.add( obj );
-						}
-						Collections.sort( lobj, new Comparator<Object[]>() {
-							@Override
-							public int compare(Object[] o1, Object[] o2) {
-								Integer i1 = (Integer)o1[0];
-								Integer i2 = (Integer)o2[0];
-								return i2.intValue() - i1.intValue();
-							}
-						});
-						for( Object[] obj : lobj ) {
-							res.append( obj[1] + "\t" + obj[0] + "\n" );
-						}
-						res.append("\n");
-						
-						if( d == 2 ) {
-							double sum = 0.0;
-							for( Object[] obj : lobj ) {
-								if( !indexmap.containsKey(obj[1]) ) {
-									indexmap.put((String)obj[1], indexmap.size());
-									/*for( String key : datamap.keySet() ) {
-										List<Double> dlist = datamap.get(key);
-										for( int i = dlist.size(); i <= indexmap.size(); i++ ) {
-											dlist.add( 0.0 );
-										}
-									}*/
-									max = Math.max(max, indexmap.size());
-								}
-								sum += (Integer)obj[0];
-							}
-							
-							List<Double>	dlist = new ArrayList<Double>();
-							String tstr = selectedtree.getText();
-							int ti = tstr.indexOf(' ');
-							if( ti == -1 ) ti = tstr.length();
-							datamap.put( tstr.substring(0,ti), dlist);
-							
-							for( Object[] obj : lobj ) {
-								int k = indexmap.get(obj[1]);
-								for( int i = dlist.size(); i <= k; i++ ) {
-									dlist.add( 0.0 );
-								}
-								dlist.set( k, ((Integer)obj[0])/sum );
-							}
-							
-							/*for( String key : datamap.keySet() ) {
-								List<Double> tdlist = datamap.get(key);
-								String cres = key;
-								for( int i = 0; i < tdlist.size(); i++ ) {
-									cres += "\t"+tdlist.get(i);
-								}
-								for( int i = tdlist.size(); i < max; i++ ) {
-									tdlist.add( 0.0 );
-									cres += "\t"+tdlist.get(i);
-								}
-								console( cres );
-							}
-							console("\n");*/
-						}
-					}
+					StringBuilder res = calcContent( selectedtree, 2 );
 					
 					DialogBox db = new DialogBox();
 					Caption cap = db.getCaption();
@@ -1287,7 +1364,59 @@ public class Taxonomy implements EntryPoint {
 			}
 		});
 		
-		rp.add( focus );
+		HorizontalPanel	hp = new HorizontalPanel();
+		CheckBox check = new CheckBox( "98% identity threshold" );
+		check.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				zkey = event.getValue();
+			}
+		});
+		Button pcabutton = new Button( "PCA" );
+		pcabutton.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				pcaAnalysis();
+			}
+		});
+		Button calcbutton = new Button( "Content Calc" );
+		calcbutton.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				for( int i = 0; i < tree.getItemCount(); i++ ) {
+					TreeItem ti = tree.getItem(i);
+					//console( "hey "+i );
+					if( ti.getChildCount() > 0 ) {
+						console( "calculating "+ti.getText() );
+						calcContent( ti, 2 );
+					}
+				}
+			}
+		});
+		Button snaedisbutton = new Button( "Snaedis" );
+		snaedisbutton.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				for( int i = 0; i < tree.getItemCount(); i++ ) {
+					TreeItem ti = tree.getItem(i);
+					//console( "hey "+i );
+					if( ti.getText().startsWith("snaedis") ) {
+						loadNode( ti, server, null );
+					}
+				}
+			}
+		});
+		hp.add( check );
+		hp.add( pcabutton );
+		hp.add( calcbutton );
+		hp.add( snaedisbutton );
+		
+		VerticalPanel vp = new VerticalPanel();
+		vp.setSize("100%", "100%");
+		vp.add( hp );
+		vp.add( focus );
+		
+		rp.add( vp );
 		focus.setFocus( true );
 	}
 	
