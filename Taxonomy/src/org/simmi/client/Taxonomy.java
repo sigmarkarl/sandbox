@@ -412,6 +412,8 @@ public class Taxonomy implements EntryPoint {
 	
 	boolean shift = false;
 	boolean ctrl = false;
+	boolean alt = false;
+	boolean zkey = false;
 	
 	public void recursiveBlast( TreeItem ti, Map<Integer,Map<String,Integer>> mstr, int depth ) {
 		if( ti.getChildCount() > 0 ) {
@@ -815,8 +817,12 @@ public class Taxonomy implements EntryPoint {
 			public void onKeyDown(KeyDownEvent event) {
 				shift = event.getNativeKeyCode() == KeyCodes.KEY_SHIFT;
 				ctrl = event.getNativeKeyCode() == KeyCodes.KEY_CTRL;
+				alt = event.getNativeKeyCode() == KeyCodes.KEY_ALT;
 				
 				int cc = event.getNativeEvent().getCharCode();
+				zkey = cc == 'z' || cc == 'Z';
+				console( "zkey now "+zkey );
+				
 				if( cc == 'f' || cc == 'F' ) {
 					String allstr = "";
 					for( String key : datamap.keySet() ) {
@@ -851,6 +857,10 @@ public class Taxonomy implements EntryPoint {
 				//if( event.getNativeKeyCode() == KeyCodes.KEY_SHIFT ) {
 				shift = !(event.getNativeKeyCode() == KeyCodes.KEY_SHIFT);
 				ctrl = !(event.getNativeKeyCode() == KeyCodes.KEY_CTRL);
+				alt = !(event.getNativeKeyCode() == KeyCodes.KEY_ALT);
+				
+				int cc = event.getNativeEvent().getCharCode();
+				zkey = !(cc == 'z');
 				//}
 			}
 		});
@@ -931,10 +941,17 @@ public class Taxonomy implements EntryPoint {
 							}
 					}
 					
+					String prefix = "snaedis";
+					if( zkey ) {
+						console( "zkey " + zkey );
+						prefix = "short";
+					}
+					
+					console( prefix );
 					for( String key : snaedis1map.keySet() ) {
 						if( nodename.equals("snaedis1"+key) ) {
 							String val = snaedis1map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"1_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -943,7 +960,7 @@ public class Taxonomy implements EntryPoint {
 					for( String key : snaedis2map.keySet() ) {
 						if( nodename.equals("snaedis2"+key) ) {
 							String val = snaedis2map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis2_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"2_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -952,7 +969,7 @@ public class Taxonomy implements EntryPoint {
 					for( String key : snaedis3map.keySet() ) {
 						if( nodename.equals("snaedis3"+key) ) {
 							String val = snaedis3map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis3_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"3_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -961,7 +978,7 @@ public class Taxonomy implements EntryPoint {
 					for( String key : snaedis4map.keySet() ) {
 						if( nodename.equals("snaedis4"+key) ) {
 							String val = snaedis4map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis4_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"4_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -970,7 +987,7 @@ public class Taxonomy implements EntryPoint {
 					for( String key : snaedis5map.keySet() ) {
 						if( nodename.equals("snaedis5"+key) ) {
 							String val = snaedis5map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis5_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"5_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -979,7 +996,7 @@ public class Taxonomy implements EntryPoint {
 					for( String key : snaedis6map.keySet() ) {
 						if( nodename.equals("snaedis6"+key) ) {
 							String val = snaedis6map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis6_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"6_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -988,7 +1005,7 @@ public class Taxonomy implements EntryPoint {
 					for( String key : snaedis7map.keySet() ) {
 						if( nodename.equals("snaedis7"+key) ) {
 							String val = snaedis7map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis7_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"7_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -997,7 +1014,7 @@ public class Taxonomy implements EntryPoint {
 					for( String key : snaedis8map.keySet() ) {
 						if( nodename.equals("snaedis8"+key) ) {
 							String val = snaedis8map.get(key);
-							runSpec( selectedtree, "http://"+server+"/snaedis8_"+val+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"8_"+val+".txt" );
 							already = true;
 							break;
 						}
@@ -1007,21 +1024,21 @@ public class Taxonomy implements EntryPoint {
 						if( nodename.startsWith("gumol") ) {
 							runSpec( selectedtree, "http://"+server+"/gumol_"+nodename.substring(5)+".txt" );
 						} else if( nodename.startsWith("snaedis1") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"1_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis2") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis2_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"2_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis3") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis3_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"3_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis4") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis4_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"4_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis5") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis5_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"5_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis6") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis6_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"6_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis7") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis7_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"7_"+nodename.substring(7)+".txt" );
 						} else if( nodename.startsWith("snaedis8") ) {
-							runSpec( selectedtree, "http://"+server+"/snaedis8_"+nodename.substring(7)+".txt" );
+							runSpec( selectedtree, "http://"+server+"/"+prefix+"8_"+nodename.substring(7)+".txt" );
 						} else if( nodename.equals("eyjosilva") ) runSpec( selectedtree, "http://"+server+"/mysilva1.txt" );
 						else if( nodename.equals("eyjo") ) runSpec( selectedtree, "http://"+server+"/my1.txt" );
 						else if( nodename.equals("newroot6") ) runSpec( selectedtree, "http://"+server+"/6v2.txt" );
