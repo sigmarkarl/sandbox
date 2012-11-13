@@ -2773,7 +2773,7 @@ public class SortTable extends JApplet {
 							corrarr[ (k)*len+(i) ] = tot;
 						}
 					}
-					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd, null, true);
+					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd, null, true, false);
 					String tree = node.toString();
 					System.err.println("about to call showTree");
 					System.err.println( tree );
