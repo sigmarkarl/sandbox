@@ -4588,7 +4588,7 @@ public class GeneSet extends JApplet {
 		}
 	};
 
-	public static void eyjo( String blast, String filter, String result ) throws IOException {
+	public static void eyjo( String blast, String filter, String result, int threshold ) throws IOException {
 		Map<String,String>	filtermap = new HashMap<String,String>();
 		if( filter != null ) {
 			FileReader fr = new FileReader( filter );
@@ -4659,20 +4659,33 @@ public class GeneSet extends JApplet {
 					line = br.readLine();	
 				}
 				
+				String idstr = "";
+				String estr = "";
 				line = br.readLine();
 				while( !line.contains("Strand=") ) {
 					int i = line.indexOf("Expect = ");
 					if( i != -1 ) {
-						hit += " "+line.substring(i+9);
+						estr = line.substring(i+9);
 					}
 					
 					i = line.indexOf("Identities = ");
 					if( i != -1 ) {
 						int k = line.indexOf(',');
-						hit += " "+line.substring(i+13,k);
+						idstr = line.substring(i+13,k);
 					}
 					
 					line = br.readLine();
+				}
+				
+				int svidx = idstr.indexOf('(');
+				int esvidx = idstr.indexOf('%', svidx+1);
+				int id = Integer.parseInt( idstr.substring(svidx+1, esvidx) );
+				if( id < threshold ) {
+					group = "No hits";
+					hit += " 0.0 0/0 (0%)";
+				} else {
+					hit += " "+idstr;
+					hit += " "+estr;
 				}
 				
 				List<String>	hitlist;
@@ -5100,7 +5113,7 @@ public class GeneSet extends JApplet {
 			 * , accset, false );
 			 */
 
-			eyjo( "/u0/snaedis8.blastout", "/home/sigmar/ok8.fasta", "/home/sigmar/snaedis8" );
+			eyjo( "/u0/snaedis8.blastout", "/home/sigmar/ok8.fasta", "/home/sigmar/short8", 98 );
 			//eyjo( "/home/sigmar/flex2.blastout", "/home/sigmar/ok.fasta", "/home/sigmar/gumol" );
 			//eyjo( "/home/sigmar/flex.blastout", "/home/sigmar/eyjo_filter.fasta", "/home/sigmar/mysilva" );
 			//viggo( "/home/sigmar/Dropbox/eyjo/sim.fasta", "/home/sigmar/Dropbox/eyjo/8.TCA.454Reads.qual", "/home/sigmar/blastresults/sim16S.blastout", "/home/sigmar/my1.txt");
