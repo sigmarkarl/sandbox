@@ -11,9 +11,19 @@
     <servlet-class>org.simmi.server.GreetingServiceImpl</servlet-class>
   </servlet>
   
+   <servlet>
+    <servlet-name>euroFirServlet</servlet-name>
+    <servlet-class>org.simmi.server.EuroFIRServlet</servlet-class>
+  </servlet>
+  
   <servlet-mapping>
     <servlet-name>greetServlet</servlet-name>
     <url-pattern>/nutritiondb/greet</url-pattern>
+  </servlet-mapping>
+  
+  <servlet-mapping>
+    <servlet-name>euroFirServlet</servlet-name>
+    <url-pattern>/EuroFIRServive/EuroFIRPort</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->

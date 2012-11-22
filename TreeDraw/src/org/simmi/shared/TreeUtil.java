@@ -1595,7 +1595,7 @@ public class TreeUtil {
 						n.setMeta( "" );
 					}
 				}
-				String meta = sel+"{1.0 3.0 1.10}"; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
+				String meta = sel+"{1.5 2.0 1.10}"; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
 				node.setMeta( meta );
 			}
 		}

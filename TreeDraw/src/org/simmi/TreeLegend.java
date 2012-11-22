@@ -32,7 +32,7 @@ public class TreeLegend {
 		}
 	}
 	
-	public static void main(String[] args) {
+	public void treeLegend() {
 		File f = new File( "/home/sigmar/new.tre" );
 		char[] cbuf = new char[ (int )f.length() ];
 		try {
@@ -58,20 +58,29 @@ public class TreeLegend {
 			nameMap.put( name, color );
 		}
 		
-		BufferedImage	bi = new BufferedImage(200,450,BufferedImage.TYPE_INT_ARGB);
+		makeImage( nameMap );
+	}
+	
+	public static void makeImage( Map<String,?> nameMap ) {
+		BufferedImage	bi = new BufferedImage(400,500,BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = bi.createGraphics();
 		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-		g2.setFont( g2.getFont().deriveFont(36.0f) );
+		g2.setFont( g2.getFont().deriveFont(30.0f) );
 		int i = 0;
 		for( String name : nameMap.keySet() ) {
-			String color = nameMap.get(name);
-			Color c = new Color( Integer.parseInt(color.substring(1,3), 16), Integer.parseInt(color.substring(3,5), 16), Integer.parseInt(color.substring(5,7), 16) );
-			System.err.println( color + "  " + name );
+			Object colorObj = nameMap.get(name);
+			Color c;
+			if( colorObj instanceof Color ) c = (Color)colorObj;
+			else {
+				String color = (String)colorObj;
+				c = new Color( Integer.parseInt(color.substring(1,3), 16), Integer.parseInt(color.substring(3,5), 16), Integer.parseInt(color.substring(5,7), 16) );
+			}
+			//System.err.println( color + "  " + name );
 			
 			g2.setColor( c );
-			g2.fillRect(0, i, 200, 45);
+			g2.fillRect(0, i, 45, 45);
 			g2.setColor( Color.black );
-			g2.drawString(name, 20, i+36);
+			g2.drawString(name, 50, i+36);
 			i += 50;
 		}
 		
@@ -80,5 +89,21 @@ public class TreeLegend {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void main(String[] args) {
+		Map<String,Color> locleg = new HashMap<String,Color>();
+		locleg.put("Geysir norður", new Color(0.0f, 0.5f, 1.0f) );
+		locleg.put("Geysir vestur", new Color(0.0f, 1.0f, 0.5f) );
+		locleg.put("Flúðir", new Color(1.0f, 0.0f, 1.0f) );
+		locleg.put("Ölkelduháls", new Color(1.0f, 1.0f, 0.0f) );
+		locleg.put("Hrafntinnusker", new Color(0.0f, 0.0f, 1.0f) );
+		locleg.put("Reykjadalir", new Color(0.0f, 1.0f, 0.0f) );
+		locleg.put("Vondugil", new Color(1.0f, 0.0f, 0.0f) );
+		locleg.put("Hurðarbak", new Color(1.0f, 0.0f, 0.5f) );
+		locleg.put("Kleppjárnsreykir", new Color(1.0f, 0.5f, 0.0f) );
+		locleg.put("Deildartunguhver", new Color(0.5f, 0.0f, 0.5f) );
+		
+		makeImage( locleg );
 	}
 }
