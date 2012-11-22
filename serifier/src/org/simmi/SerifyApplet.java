@@ -2340,6 +2340,66 @@ public class SerifyApplet extends JApplet {
 		SerifyApplet.this.addSequences(trimname, type, path, nseq);
 	}
 	
+	public void appendSequenceInJavaFasta( JavaFasta jf, Sequences seqs, Map<String,Sequence> contset, boolean namefix ) {
+		StringBuilder	dna = new StringBuilder();
+		try {
+			File inf = new File( new URI(seqs.getPath()) );
+			BufferedReader br = new BufferedReader( new FileReader(inf) );
+			String cont = null;
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					if( cont != null ) {
+						Sequence seq = new Sequence(cont, dna, jf.mseq);
+						contset.put(cont, seq);
+					}
+					if( /*rr.length == 1*/ namefix ) cont = line.replace( ">", "" );
+					else cont = line.replace( ">", seqs.getName()+"_" );
+					dna = new StringBuilder();
+					//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
+					//nseq++;
+				} else dna.append( line.replace(" ", "") );
+				line = br.readLine();
+			}
+			if( cont != null ) {
+				Sequence seq = new Sequence(cont, dna, jf.mseq);
+				contset.put(cont, seq);
+			}
+			br.close();
+		} catch (URISyntaxException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public void loadSequencesInJavaFasta( JavaFasta jf ) {
+		Map<String, Sequence> contset = new HashMap<String, Sequence>();
+		int[] rr = table.getSelectedRows();
+		for (int r : rr) {
+			int cr = table.convertRowIndexToModel(r);
+			Sequences seqs = sequences.get(cr);
+			
+			int nseq = 0;
+			appendSequenceInJavaFasta( jf, seqs, contset, rr.length == 1 );
+						/*Annotation a = jf.new Annotation(seq, contig, Color.red);
+						a.setStart(tv.start);
+						a.setStop(tv.stop);
+						a.setOri(tv.ori);
+						a.setGroup(gg.name);
+						a.setType("gene");
+						jf.addAnnotation(a);
+						// seq.addAnnotation( new Annotation( seq, ) );*/
+		}
+
+		for (String contig : contset.keySet()) {
+			Sequence seq = contset.get(contig);
+			jf.addSequence(seq);
+			if (seq.getAnnotations() != null)
+				Collections.sort(seq.getAnnotations());
+		}
+	}
+	
 	public void init( final Container c ) {
 		this.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -2620,65 +2680,10 @@ public class SerifyApplet extends JApplet {
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				final JavaFasta jf = new JavaFasta( SerifyApplet.this );
 				jf.initGui(frame);
-
-				Map<String, Sequence> contset = new HashMap<String, Sequence>();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					Sequences seqs = sequences.get(cr);
-					
-					int nseq = 0;
-					StringBuilder	dna = new StringBuilder();
-					try {
-						File inf = new File( new URI(seqs.getPath()) );
-						BufferedReader br = new BufferedReader( new FileReader(inf) );
-						String cont = null;
-						String line = br.readLine();
-						while( line != null ) {
-							if( line.startsWith(">") ) {
-								if( cont != null ) {
-									Sequence seq = new Sequence(cont, dna, jf.mseq);
-									contset.put(cont, seq);
-								}
-								if( rr.length == 1 ) cont = line.replace( ">", "" );
-								else cont = line.replace( ">", seqs.getName()+"_" );
-								dna = new StringBuilder();
-								//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
-								nseq++;
-							} else dna.append( line.replace(" ", "") );
-							line = br.readLine();
-						}
-						if( cont != null ) {
-							Sequence seq = new Sequence(cont, dna, jf.mseq);
-							contset.put(cont, seq);
-						}
-						br.close();
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					
-								/*Annotation a = jf.new Annotation(seq, contig, Color.red);
-								a.setStart(tv.start);
-								a.setStop(tv.stop);
-								a.setOri(tv.ori);
-								a.setGroup(gg.name);
-								a.setType("gene");
-								jf.addAnnotation(a);
-								// seq.addAnnotation( new Annotation( seq, ) );*/
-				}
-
-				for (String contig : contset.keySet()) {
-					Sequence seq = contset.get(contig);
-					jf.addSequence(seq);
-					if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());
-				}
+				loadSequencesInJavaFasta( jf );
 				jf.updateView();
 
 				frame.addWindowListener( new WindowListener() {
-					
 					@Override
 					public void windowOpened(WindowEvent e) {}
 					
@@ -4342,6 +4347,59 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		popup.addSeparator();
+		popup.add( new AbstractAction("FastTree prepare") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JavaFasta jf = new JavaFasta( SerifyApplet.this );
+				jf.initDataStructures();
+				
+				int[] rr = table.getSelectedRows();
+				for (int r : rr) {
+					int cr = table.convertRowIndexToModel(r);
+					Sequences seqs = sequences.get(cr);
+					Map<String,Sequence> contset = new HashMap<String,Sequence>();
+					appendSequenceInJavaFasta( jf, seqs, contset, true );
+				
+					for (String contig : contset.keySet()) {
+						Sequence seq = contset.get(contig);
+						jf.addSequence(seq);
+						if (seq.getAnnotations() != null)
+							Collections.sort(seq.getAnnotations());
+					}
+					jf.selectAll();
+					jf.nameReplace(" ", "_");
+					jf.removeGaps( jf.lseq );
+					
+					String path = seqs.getPath();
+					int i = path.lastIndexOf('.');
+					if( i == -1 ) path += "_fixed";
+					else path = path.substring(0,i)+".fixed"+path.substring(i);
+					
+					i = path.lastIndexOf('/');
+					String fname = path.substring(i+1);
+					
+					try {
+						URI uri = new URI( path );
+						//URL url = uri.toURL();
+						File f = new File( uri );
+						FileWriter osw = new FileWriter( f );
+						//OutputStreamWriter osw = new OutputStreamWriter( url.openConnection().getOutputStream() );
+						jf.writeFasta( jf.lseq, osw );
+						osw.close();
+						
+						SerifyApplet.this.addSequences( fname, path );
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					} catch (MalformedURLException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					
+					jf.clearAll();
+				}
+			}
+		});
 		popup.add( new AbstractAction("Blast rename") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
