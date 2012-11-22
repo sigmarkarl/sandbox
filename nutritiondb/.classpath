@@ -6,5 +6,6 @@
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
 	<classpathentry kind="lib" path="/opt/gwt-2.5.0.rc2/gwt-elemental.jar"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/eurofir"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

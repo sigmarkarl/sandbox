@@ -3249,6 +3249,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("Import selection") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				// union_16S.txt
+				
 				FileOpenService fos = null;
 				try {
 		    		fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
