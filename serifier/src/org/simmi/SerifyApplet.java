@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,6 +38,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -44,6 +46,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -609,6 +615,96 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
+	public static void tagsplit( Map<String,String> tagmap, Sequences seqs, File dir, SerifyApplet applet ) {
+		try {
+			File inf = new File( new URI(seqs.getPath() ) );
+			String name = inf.getName();
+			int ind = name.lastIndexOf('.');
+			
+			String sff = name;
+			String sf2 = "";
+			if( ind != -1 ) {
+				sff = name.substring(0, ind);
+				sf2 = name.substring(ind+1,name.length());
+			}
+			
+			Map<String,String>		urlmap = new HashMap<String,String>();
+			Map<String,FileWriter> fwmap = new HashMap<String,FileWriter>();
+			StringBuilder			include = new StringBuilder();
+			int i = 0;
+			String			current = null;
+			//FileWriter 		fw = null;
+			//File			of = null;
+			FileReader 		fr = new FileReader( inf );
+			BufferedReader 	br = new BufferedReader( fr );
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					if( current != null ) {
+						String all = include.toString();
+						for( String key : tagmap.keySet() ) {
+							if( all.startsWith(key) ) {
+								String tagname = tagmap.get(key);
+								FileWriter fw;
+								if( fwmap.containsKey(key) ) {
+									fw = fwmap.get(key);
+								} else {
+									File of = new File( dir, tagname+".fna" );
+									fw = new FileWriter( of );
+									fwmap.put( key, fw );
+									urlmap.put( key, of.toURI().toString() );
+								}
+								fw.write( current + "\n" + all );
+								break;
+							}
+						}
+					}
+					current = line;
+					include.delete(0, include.length());
+				} else {
+					include.append( line+"\n" );
+				}
+				
+				line = br.readLine();
+			}
+			br.close();
+			String all = include.toString();
+			for( String key : tagmap.keySet() ) {
+				if( all.startsWith(key) ) {
+					String tagname = tagmap.get(key);
+					FileWriter fw;
+					if( fwmap.containsKey(key) ) {
+						fw = fwmap.get(key);
+					} else {
+						File of = new File( dir, tagname+".fna" );
+						fw = new FileWriter( of );
+						fwmap.put( key, fw );
+						urlmap.put( key, of.toURI().toString() );
+					}
+					fw.write( current + "\n" + all );
+					break;
+				}
+			}
+			
+			for( String key : fwmap.keySet() ) {
+				FileWriter fw = fwmap.get( key );
+				fw.close();
+				if( applet != null ) {
+					name = tagmap.get(key);
+					/*ind = name.lastIndexOf('.');
+					name = name.substring(0,ind);*/
+					applet.addSequences( name, urlmap.get( key ) );
+				}
+			}					
+		} catch (URISyntaxException e1) {
+			e1.printStackTrace();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
 	public static void splitit( int nspin, Sequences seqs, File dir, SerifyApplet applet ) {
 		try {
 			File inf = new File( new URI(seqs.getPath() ) );
@@ -652,6 +748,7 @@ public class SerifyApplet extends JApplet {
 				
 				line = br.readLine();
 			}
+			br.close();
 			if( fw != null ) {
 				fw.close();
 				if( applet != null ) {
@@ -659,6 +756,65 @@ public class SerifyApplet extends JApplet {
 					ind = name.lastIndexOf('.');
 					name = name.substring(0,ind);
 					applet.addSequences(name, seqs.getType(), of.toURI().toString(), i%spin);
+				}
+			}									
+		} catch (URISyntaxException e1) {
+			e1.printStackTrace();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public static void filtit( int nspin, Sequences seqs, File dir, SerifyApplet applet ) {
+		try {
+			File inf = new File( new URI(seqs.getPath() ) );
+			String name = inf.getName();
+			int ind = name.lastIndexOf('.');
+			
+			String sff = name;
+			String sf2 = "";
+			if( ind != -1 ) {
+				sff = name.substring(0, ind);
+				sf2 = name.substring(ind+1,name.length());
+			}
+			
+			//int spin = (int)Math.ceil( (double)seqs.getNSeq()/(double)nspin );
+			
+			StringBuilder 	include = new StringBuilder();
+			String			current = null;
+			int i = 0;
+			
+			File			of = new File( dir, sff + "_lenfilt." + sf2 );
+			FileWriter 		fw = new FileWriter( of );
+			
+			FileReader 		fr = new FileReader( inf );
+			BufferedReader 	br = new BufferedReader( fr );
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					if( include.length() >= nspin ) {
+						i++;
+						fw.write( current + "\n" );
+						for( int k = 0; k < include.length(); k+=70 ) {
+							fw.write( include.substring(k, Math.min(include.length(), k+70))+"\n" );
+						}
+					}
+					current = line;
+					include.delete(0, include.length());
+				} else include.append( line );
+				
+				line = br.readLine();
+			}
+			br.close();
+			if( fw != null ) {
+				fw.close();
+				if( applet != null ) {
+					name = of.getName();
+					ind = name.lastIndexOf('.');
+					name = name.substring(0,ind);
+					applet.addSequences(name, seqs.getType(), of.toURI().toString(), i);
 				}
 			}									
 		} catch (URISyntaxException e1) {
@@ -955,9 +1111,9 @@ public class SerifyApplet extends JApplet {
 				if( line == null ) break;
 			}
 			
-			if( cnt++ % 100000 == 0 ) {
+			/*if( cnt++ % 100000 == 0 ) {
 				System.err.println( cnt );
-			}
+			}*/
 			line = br.readLine();
 		}
 		
@@ -1040,6 +1196,14 @@ public class SerifyApplet extends JApplet {
 		fos.close();
 	}
 	
+	private static void writeClusters( OutputStream os, List<Set<String>> cluster ) throws IOException {
+		OutputStreamWriter	fos = new OutputStreamWriter( os );
+		for( Set<String> set : cluster ) {
+			fos.write( set.toString()+"\n" );
+		}
+		fos.close();
+	}
+	
 	public static void blastClusters( final InputStream is, final OutputStream os ) {
 		final JDialog	dialog = new JDialog();
 		Runnable run = new Runnable() {
@@ -1080,18 +1244,29 @@ public class SerifyApplet extends JApplet {
 		runProcess( "Blast clusters", run, dialog );
 	}
 	
-	public static void makeBlastCluster( final InputStream is, final OutputStream os ) {
+	public static List<Set<String>> makeBlastCluster( final InputStream is, final OutputStream os ) {
+		List<Set<String>>	total = new ArrayList<Set<String>>();
 		try {
 			Set<String>	species = new TreeSet<String>();
-			List<Set<String>>	total = new ArrayList<Set<String>>();
-			joinBlastSetsThermus( is, null, true, total );
-			Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+			
+			joinBlastSets( is, null, true, total );
+			//joinBlastSetsThermus( is, null, true, total );
+			//Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+			
 			//if( writeSimplifiedCluster != null ) 
-			writeSimplifiedCluster( os, clusterMap );
+			
+			
+			// -- writeSimplifiedCluster( os, clusterMap );
+			
+			
 			//writeBlastAnalysis( clusterMap, species );
+			
+			if( os != null ) writeClusters( os, total );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		return total;
 	}
 	
 	public static class AvgProvider {
@@ -1929,8 +2104,12 @@ public class SerifyApplet extends JApplet {
 		return nseq;
 	}
 	
-	public static int trimFasta( BufferedReader br, BufferedWriter bw, Map<String,String> filterset, boolean inverted ) throws IOException {
+	public static int trimFasta( BufferedReader br, Writer bw, Object filterset, boolean inverted ) throws IOException {
 		int nseq = 0;
+		
+		Set<String> keyset;
+		if( filterset instanceof Map ) keyset = (Set<String>)((Map) filterset).keySet();
+		else keyset = (Set<String>)filterset;
 		
 		String line = br.readLine();
 		String seqname = null;
@@ -1938,7 +2117,7 @@ public class SerifyApplet extends JApplet {
 			if( line.startsWith(">") ) {
 				if( inverted ) {
 					seqname = line;
-					for( String f : filterset.keySet() ) {
+					for( String f : keyset ) {
 						if( line.contains(f) ) {
 							nseq++;
 							seqname = null;
@@ -1950,9 +2129,9 @@ public class SerifyApplet extends JApplet {
 					}
 				} else {
 					seqname = null;
-					for( String f : filterset.keySet() ) {
+					for( String f : keyset ) {
 						if( line.contains(f) ) {
-							String swap = filterset.get(f);
+							Object swap = (filterset instanceof Map) ? ((Map)filterset).get(f) : null;
 							
 							nseq++;
 							if( swap != null ) bw.write( ">"+swap+"_"+f+"\n" );
@@ -2007,11 +2186,30 @@ public class SerifyApplet extends JApplet {
 					}
 					if( line != null ) {
 						if( line.startsWith("Query") ) break;
-						String newcurrent = line.substring(1).trim();
-						if( current == null || (current.contains("Uncultured bacterium") && !newcurrent.contains("Uncultured bacterium")) || (current.contains("Uncultured") && !newcurrent.contains("Uncultured")) ) {
+						
+						if( line.startsWith(">") ) {
+							String newcurrent = line.substring(1).trim();
+							line = br.readLine();
+							while( !line.startsWith("Length") ) {
+								newcurrent += " "+line.trim();
+								line = br.readLine();
+							}
+							
+							int i = name.indexOf(' ');
+							if( i == -1 ) i = name.length();
+							name = name.substring(0,i);
+							
+							i = newcurrent.lastIndexOf(';');
+							if( i == -1 ) i = newcurrent.length();
+							newcurrent = newcurrent.substring(i+1);
+							
 							mapHit.put( name, newcurrent );
-							current = newcurrent;
 						}
+						
+							/*if( current == null || (current.contains("Uncultured bacterium") && !newcurrent.contains("Uncultured bacterium")) || (current.contains("Uncultured") && !newcurrent.contains("Uncultured")) ) {
+								mapHit.put( name, newcurrent );
+								current = newcurrent;
+							}*/
 						line = br.readLine();
 					}
 				}
@@ -2036,11 +2234,11 @@ public class SerifyApplet extends JApplet {
 		return Math.sqrt( ret );
 	}
 	
-	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os ) throws IOException {
-		return doMapHitStuff(mapHit, is, os, "_");
+	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String filter ) throws IOException {
+		return doMapHitStuff(mapHit, is, os, "_", filter);
 	}
 	
-	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String sep ) throws IOException {
+	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String sep, String filter ) throws IOException {
 		int nseq = 0;
 		PrintStream pr = new PrintStream( os );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
@@ -2050,9 +2248,15 @@ public class SerifyApplet extends JApplet {
 			if( line.startsWith(">") ) {
 				String name = line.substring(1).trim();
 				if( mapHit.containsKey(name) ) {
-					nseq++;
-					pr.println( ">" + name + sep + mapHit.get(name) );
-					include = true;
+					String maphitstr = mapHit.get(name);
+					int li = maphitstr.lastIndexOf(';');
+					if( li != -1 ) maphitstr = maphitstr.substring(li+1);
+					
+					if( maphitstr.contains(filter) ) {
+						nseq++;
+						pr.println( ">" + maphitstr + sep + name ); //+ sep + mapHit.get(name) );
+						include = true;
+					} else include = false;
 				} else include = false;
 			} else if( include ) {
 				pr.println( line );
@@ -2084,6 +2288,57 @@ public class SerifyApplet extends JApplet {
 			this.name = name;
 		}
 	};
+	
+	public void totalTrim( File dir, Object fset ) throws URISyntaxException, MalformedURLException, IOException {
+		String path = null;
+		String type = null;
+		String trimname = null;
+		
+		int nseq = 0;
+		BufferedWriter bw = null;
+		int[] rr = table.getSelectedRows();
+		for( int r : rr ) {
+			int rrr = table.convertRowIndexToModel( r );
+			final Sequences seqs = sequences.get( rrr );
+			URI uri = new URI( seqs.getPath() );
+			InputStream is = uri.toURL().openStream();
+			
+			if( seqs.getPath().endsWith(".gz") ) {
+				is = new GZIPInputStream( is );
+			}
+			
+			if( bw == null ) {
+				URL url = uri.toURL();
+				String urlstr = url.toString();
+				String[] erm = urlstr.split("\\/");
+				String name = erm[ erm.length-1 ];
+				int ind = name.lastIndexOf('.');
+				
+				String sff = name;
+				String sf2 = "";
+				if( ind != -1 ) {
+					sff = name.substring(0, ind);
+					sf2 = name.substring(ind+1,name.length());
+				}
+				
+				trimname = sff+"_trimmed";
+				File f = new File( dir, trimname+"."+sf2 );
+				path = f.toURI().toString();
+				type = seqs.getType();
+				FileWriter fw = new FileWriter(f);
+				
+				bw = new BufferedWriter( fw );
+			}
+			
+			nseq += trimFasta( new BufferedReader( new InputStreamReader( is ) ), bw, fset, false );
+		}
+		if( bw != null ) {
+			bw.flush();
+			bw.close();
+		}
+		
+		SerifyApplet.this.addSequences(trimname, type, path, nseq);
+	}
 	
 	public void init( final Container c ) {
 		this.cnt = c;
@@ -2300,10 +2555,7 @@ public class SerifyApplet extends JApplet {
 							}
 							
 							@Override
-							public void addTableModelListener(TableModelListener l) {
-								// TODO Auto-generated method stub
-								
-							}
+							public void addTableModelListener(TableModelListener l) {}
 						});
 						JScrollPane	scrollpane = new JScrollPane( table );
 						
@@ -2313,22 +2565,13 @@ public class SerifyApplet extends JApplet {
 						popup.addWindowListener( new WindowListener() {
 							
 							@Override
-							public void windowOpened(WindowEvent e) {
-								// TODO Auto-generated method stub
-								
-							}
+							public void windowOpened(WindowEvent e) {}
 							
 							@Override
-							public void windowIconified(WindowEvent e) {
-								// TODO Auto-generated method stub
-								
-							}
+							public void windowIconified(WindowEvent e) {}
 							
 							@Override
-							public void windowDeiconified(WindowEvent e) {
-								// TODO Auto-generated method stub
-								
-							}
+							public void windowDeiconified(WindowEvent e) {}
 							
 							@Override
 							public void windowDeactivated(WindowEvent e) {}
@@ -2437,28 +2680,16 @@ public class SerifyApplet extends JApplet {
 				frame.addWindowListener( new WindowListener() {
 					
 					@Override
-					public void windowOpened(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowOpened(WindowEvent e) {}
 					
 					@Override
-					public void windowIconified(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowIconified(WindowEvent e) {}
 					
 					@Override
-					public void windowDeiconified(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowDeiconified(WindowEvent e) {}
 					
 					@Override
-					public void windowDeactivated(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowDeactivated(WindowEvent e) {}
 					
 					@Override
 					public void windowClosing(WindowEvent e) {}
@@ -3578,6 +3809,111 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
+		popup.add( new AbstractAction("Min length filter") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.isDirectory() ) f = f.getParentFile();
+					final File dir = f;
+					final JSpinner spinner = new JSpinner();
+					spinner.setValue( 500 ); //seqs.getNSeq() );
+					spinner.setPreferredSize( new Dimension(100,25) );
+					final JDialog dl;
+					Window window = SwingUtilities.windowForComponent(cnt);
+					if( window != null ) dl = new JDialog( window );
+					else dl = new JDialog();
+					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+					JComponent c = new JComponent() {};
+					c.setLayout( new FlowLayout() );
+					dl.setTitle("Number of sequences in each file");
+					JButton button = new JButton( new AbstractAction("Ok") {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							dl.setVisible( false );
+							dl.dispose();
+						}
+					});
+					c.add( spinner );
+					c.add( button );
+					dl.add( c );
+					dl.setSize(200, 60);
+					
+					dl.addWindowListener( new WindowListener() {
+						@Override
+						public void windowOpened(WindowEvent e) {}
+
+						@Override
+						public void windowClosing(WindowEvent e) {}
+
+						@Override
+						public void windowClosed(WindowEvent e) {
+							int spin = (Integer)spinner.getValue();
+							int[] ra = table.getSelectedRows();
+							for( int r : ra ) {
+								int rr = table.convertRowIndexToModel( r );
+								if( rr >= 0 ) {
+									final Sequences seqs = sequences.get( rr );
+									filtit( spin, seqs, dir, SerifyApplet.this );
+								}
+							}
+						}
+
+						@Override
+						public void windowIconified(WindowEvent e) {}
+
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
+
+						@Override
+						public void windowActivated(WindowEvent e) {}
+
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+					});
+					dl.setVisible( true );
+				}
+			}
+		});
+		popup.add( new AbstractAction("Tag split") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					if( !f.isDirectory() ) f = f.getParentFile();
+					final File dir = f;
+					
+					fc.setFileSelectionMode( JFileChooser.FILES_ONLY );
+					if( fc.showOpenDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+						File fo = fc.getSelectedFile();
+						Path pt = Paths.get( fo.toURI() );
+						Map<String,String>	tagmap = new HashMap<String,String>();
+						try {
+							List<String> lines = Files.readAllLines( pt, Charset.defaultCharset() );
+							for( String line : lines ) {
+								String[] split = line.split("\t");
+								tagmap.put( split[0], split[1] );
+							}
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						
+						int[] ra = table.getSelectedRows();
+						for( int r : ra ) {
+							int rr = table.convertRowIndexToModel( r );
+							if( rr >= 0 ) {
+								final Sequences seqs = sequences.get( rr );
+								tagsplit( tagmap, seqs, dir, SerifyApplet.this );
+							}
+						}
+					}
+				}
+			}
+		});
 		popup.add( new AbstractAction("Split") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -3767,10 +4103,6 @@ public class SerifyApplet extends JApplet {
 									nofile = true;
 								}
 								
-								String path = null;
-								String type = null;
-								String trimname = null;
-								
 								Map<String,String> fset = new HashMap<String,String>();
 								if( nofile ) {
 									String[] farray = { trim };
@@ -3811,50 +4143,7 @@ public class SerifyApplet extends JApplet {
 									br.close();
 								}
 								
-								int nseq = 0;
-								BufferedWriter bw = null;
-								int[] rr = table.getSelectedRows();
-								for( int r : rr ) {
-									int rrr = table.convertRowIndexToModel( r );
-									final Sequences seqs = sequences.get( rrr );
-									URI uri = new URI( seqs.getPath() );
-									InputStream is = uri.toURL().openStream();
-									
-									if( seqs.getPath().endsWith(".gz") ) {
-										is = new GZIPInputStream( is );
-									}
-									
-									if( bw == null ) {
-										url = uri.toURL();
-										String urlstr = url.toString();
-										String[] erm = urlstr.split("\\/");
-										String name = erm[ erm.length-1 ];
-										int ind = name.lastIndexOf('.');
-										
-										String sff = name;
-										String sf2 = "";
-										if( ind != -1 ) {
-											sff = name.substring(0, ind);
-											sf2 = name.substring(ind+1,name.length());
-										}
-										
-										trimname = sff+"_trimmed";
-										File f = new File( dir, trimname+"."+sf2 );
-										path = f.toURI().toString();
-										type = seqs.getType();
-												FileWriter fw = new FileWriter(f);
-										
-										bw = new BufferedWriter( fw );
-									}
-									
-									nseq += trimFasta( new BufferedReader( new InputStreamReader( is ) ), bw, fset, false );
-								}
-								if( bw != null ) {
-									bw.flush();
-									bw.close();
-								}
-								
-								SerifyApplet.this.addSequences(trimname, type, path, nseq);
+								totalTrim( dir, fset );
 							} catch (IOException e1) {
 								e1.printStackTrace();
 							} catch (URISyntaxException e1) {
@@ -4003,19 +4292,52 @@ public class SerifyApplet extends JApplet {
 		popup.add( new AbstractAction("Make clusters") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JSObject	jso = JSObject.getWindow(SerifyApplet.this);
-				String s = (String)jso.call("getSelectedBlast", new Object[] {} );
+				InputStream is = null;
+				try {
+					JSObject	jso = JSObject.getWindow(SerifyApplet.this);
+					String s = (String)jso.call("getSelectedBlast", new Object[] {} );
+					is = new FileInputStream(s);
+				} catch( Exception ex ) {
+					
+				}
 				
 				JFileChooser fc = new JFileChooser();
+				if( is == null ) {
+					if( fc.showOpenDialog(cnt) == JFileChooser.APPROVE_OPTION ) {
+						try {
+							is = new FileInputStream( fc.getSelectedFile() );
+						} catch (FileNotFoundException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+				
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
+						List<Set<String>> cluster = makeBlastCluster( is, null );
+						
+						Set<String> headset = new HashSet<String>();
+						for( Set<String> cl : cluster ) {
+							for( String c : cl ) {
+								headset.add( c );
+								break;
+							}
+						}
+						
+						totalTrim( f.getParentFile(), headset );
+						//trimFasta( br, new FileWriter( f ), headset, false );
+					} catch ( URISyntaxException | IOException e1) {
+						e1.printStackTrace();
+					}
+					
+					/*try {
 						blastClusters( new FileInputStream(s), new FileOutputStream(f) );
 					} catch(FileNotFoundException e1) {
 						e1.printStackTrace();
 					} catch(IOException e1) {
 						e1.printStackTrace();
-					}
+					}*/
 				}
 			}
 		});
@@ -4031,25 +4353,39 @@ public class SerifyApplet extends JApplet {
 						File f = fc.getSelectedFile();
 						
 						final Sequences seqs = sequences.get( rr );
-						JSObject	jso = JSObject.getWindow(SerifyApplet.this);
-						String s = (String)jso.call("getSelectedBlast", new Object[] {} );
-					
+						String s = null;
 						try {
-							URI uri = new URI( seqs.getPath() );
-							InputStream is = uri.toURL().openStream();
-							
-							if( seqs.getPath().endsWith(".gz") ) {
-								is = new GZIPInputStream( is );
+							JSObject	jso = JSObject.getWindow(SerifyApplet.this);
+							s = (String)jso.call("getSelectedBlast", new Object[] {} );
+						} catch( Exception exp ) {
+							exp.printStackTrace();
+						}
+						
+						if( s == null ) {
+							JFileChooser filechooser = new JFileChooser();
+							if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+								s = filechooser.getSelectedFile().getAbsolutePath();
 							}
-							
-							Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s) );
-							int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f) );
-							
-							SerifyApplet.this.addSequences(f.getName(), seqs.getType(), f.toURI().toString(), nseq );
-						} catch (URISyntaxException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
+						}
+					
+						if( s != null ) {
+							try {
+								URI uri = new URI( seqs.getPath() );
+								InputStream is = uri.toURL().openStream();
+								
+								if( seqs.getPath().endsWith(".gz") ) {
+									is = new GZIPInputStream( is );
+								}
+								
+								Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s) );
+								int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f), "Thermus" );
+								
+								SerifyApplet.this.addSequences(f.getName(), seqs.getType(), f.toURI().toString(), nseq );
+							} catch (URISyntaxException e1) {
+								e1.printStackTrace();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
 						}
 					}
 				}
@@ -4897,8 +5233,195 @@ public class SerifyApplet extends JApplet {
 		return dvals;
 	}
 	
+	public static void mapFiles() {
+		Map<String,String>	snaedis1map;
+		Map<String,String>	snaedis2map;
+		Map<String,String>	snaedis3map;
+		Map<String,String>	snaedis4map;
+		Map<String,String>	snaedis5map;
+		Map<String,String>	snaedis6map;
+		Map<String,String>	snaedis7map;
+		Map<String,String>	snaedis8map;
+		
+		snaedis1map = new HashMap<String,String>();
+		snaedis1map.put( "770_geysir_north_jardvegur", "ACGAGTGCGT" );
+		snaedis1map.put( "770_geysir_north_vatn", "ACGCTCGACA" );
+		snaedis1map.put( "771_geysir_north_jardvegur", "AGACGCACTC" );
+		snaedis1map.put( "771_geysir_north_vatn", "AGCACTGTAG" );
+		snaedis1map.put( "772_geysir_north_jardvegur", "ATCAGACACG" );
+		snaedis1map.put( "772_geysir_north_vatn", "ATATCGCGAG" );
+		snaedis1map.put( "773_geysir_west_jardvegur", "CGTGTCTCTA" );
+		snaedis1map.put( "773_geysir_west_vatn", "CTCGCGTGTC" );
+		snaedis1map.put( "774_geysir_west_jardvegur", "TGATACGTCT" );
+		snaedis1map.put( "774_geysir_west_vatn", "TCTCTATGCG" );
+		
+		snaedis2map = new HashMap<String,String>();
+		snaedis2map.put( "775_geysir_west_jardvegur", "ACGAGTGCGT" );
+		snaedis2map.put( "775_geysir_west_vatn", "ACGCTCGACA" );
+		snaedis2map.put( "776_geysir_west_jardvegur", "AGACGCACTC" );
+		snaedis2map.put( "776_geysir_west_vatn", "AGCACTGTAG" );
+		snaedis2map.put( "777_fludir_vatn", "ATCAGACACG" );
+		snaedis2map.put( "777_fludir_lifmassi", "ATATCGCGAG" );
+		snaedis2map.put( "778_fludir_jardvegur", "CGTGTCTCTA" );
+		snaedis2map.put( "778_fludir_vatn", "CTCGCGTGTC" );
+		snaedis2map.put( "779_fludir_jardvegur", "TGATACGTCT" );
+		snaedis2map.put( "779_fludir_vatn", "TCTCTATGCG" );
+		
+		snaedis3map = new HashMap<String,String>();
+		snaedis3map.put( "780_fludir_jardvegur", "ACGAGTGCGT" );
+		snaedis3map.put( "780_fludir_vatn", "ACGCTCGACA" );
+		snaedis3map.put( "781_olkelduhals_vatn", "AGACGCACTC" );
+		snaedis3map.put( "781_olkelduhals_lifmassi", "AGCACTGTAG" );
+		snaedis3map.put( "782_olkelduhals_lifmassi", "ATCAGACACG" );
+		snaedis3map.put( "783_olkelduhals_jardvlifm", "ATATCGCGAG" );
+		snaedis3map.put( "783_olkelduhals_vatn", "CGTGTCTCTA" );
+		snaedis3map.put( "808_hrafntinnusker_jardvegur", "CTCGCGTGTC" );
+		snaedis3map.put( "808_hrafntinnusker_vatn", "TGATACGTCT" );
+		snaedis3map.put( "808_hrafntinnusker_lifmassi", "TCTCTATGCG" );
+		
+		snaedis4map = new HashMap<String,String>();
+		snaedis4map.put( "809_hrafntinnusker_jardvegur", "ACGAGTGCGT" );
+		snaedis4map.put( "809_hrafntinnusker_vatn", "ACGCTCGACA" );
+		snaedis4map.put( "809_hrafntinnusker_lifmassi", "AGACGCACTC" );
+		snaedis4map.put( "810_hrafntinnusker_jardvegur", "AGCACTGTAG" );
+		snaedis4map.put( "810_hrafntinnusker_vatn", "ATCAGACACG" );
+		snaedis4map.put( "810_hrafntinnusker_lifmassi", "ATATCGCGAG" );
+		snaedis4map.put( "811_hrafntinnusker_jardvegur", "CGTGTCTCTA" );
+		snaedis4map.put( "811_hrafntinnusker_vatn", "CTCGCGTGTC" );
+		snaedis4map.put( "811_hrafntinnusker_lifmassi", "TGATACGTCT" );
+		snaedis4map.put( "812_hrafntinnusker_jardvegur", "TCTCTATGCG" );
+	
+		snaedis5map = new HashMap<String,String>();
+		snaedis5map.put( "812_hrafntinnusker_vatn", "ACGAGTGCGT" );
+		snaedis5map.put( "813_hrafntinnusker_jardvegur", "ACGCTCGACA" );
+		snaedis5map.put( "813_hrafntinnusker_vatn", "AGACGCACTC" );
+		snaedis5map.put( "814_hrafntinnusker_jardvegur", "AGCACTGTAG" );
+		snaedis5map.put( "814_hrafntinnusker_vatn", "ATCAGACACG" );
+		snaedis5map.put( "815_reykjadalir_jardvegur", "ATATCGCGAG" );
+		snaedis5map.put( "815_reykjadalir_vatn", "CGTGTCTCTA" );
+		snaedis5map.put( "815_reykjadalir_lifmassi", "CTCGCGTGTC" );
+		snaedis5map.put( "816_vondugil_jardvegur", "TGATACGTCT" );
+		snaedis5map.put( "816_vondugil_vatn", "TCTCTATGCG" );
+		
+		snaedis6map = new HashMap<String,String>();
+		snaedis6map.put( "817_vondugil_jardvegur", "ACGAGTGCGT" );
+		snaedis6map.put( "817_vondugil_vatn", "ACGCTCGACA" );
+		snaedis6map.put( "818_vondugil_jardvegur", "AGACGCACTC" );
+		snaedis6map.put( "818_vondugil_vatn", "AGCACTGTAG" );
+		snaedis6map.put( "819_vondugil_jardvegur", "ATCAGACACG" );
+		snaedis6map.put( "819_vondugil_vatn", "ATATCGCGAG" );
+		snaedis6map.put( "820_vondugil_jardvegur", "CGTGTCTCTA" );
+		snaedis6map.put( "820_vondugil_vatn", "CTCGCGTGTC" );
+		snaedis6map.put( "821_vondugil_jardvegur", "TGATACGTCT" );
+		snaedis6map.put( "821_vondugil_vatn", "TCTCTATGCG" );
+		
+		snaedis7map = new HashMap<String,String>();
+		snaedis7map.put( "846_hurdarbak_jardvegur", "ACGAGTGCGT" );
+		snaedis7map.put( "846_hurdarbak_vatn", "ACGCTCGACA" );
+		snaedis7map.put( "846_hurdarbak_lifmassi", "AGACGCACTC" );
+		snaedis7map.put( "847_hurdarbak_jardvegur", "AGCACTGTAG" );
+		snaedis7map.put( "847_hurdarbak_vatn", "ATCAGACACG" );
+		snaedis7map.put( "848_kleppjarnsreykir_jardvegur", "ATATCGCGAG" );
+		snaedis7map.put( "848_kleppjarnsreykir_vatn", "CGTGTCTCTA" );
+		snaedis7map.put( "848_kleppjarnsreykir_lifmassi", "CTCGCGTGTC" );
+		snaedis7map.put( "849_kleppjarnsreykir_jardvegur", "TGATACGTCT" );
+		snaedis7map.put( "849_kleppjarnsreykir_vatn", "TCTCTATGCG" );
+	
+		snaedis8map = new HashMap<String,String>();
+		snaedis8map.put( "849_kleppjarnsreykir_lifmassi", "ACGAGTGCGT" );
+		snaedis8map.put( "850_kleppjarnsreykir_jardvegur", "ACGCTCGACA" );
+		snaedis8map.put( "850_kleppjarnsreykir_vatn", "AGACGCACTC" );
+		snaedis8map.put( "850_kleppjarnsreykir_lifmassi", "AGCACTGTAG" );
+		snaedis8map.put( "851_deildartunguhver_jardvegur", "ATCAGACACG" );
+		snaedis8map.put( "851_deildartunguhver_vatn", "ATATCGCGAG" );
+		snaedis8map.put( "852_deildartunguhver_jardvegur", "CGTGTCTCTA" );
+		snaedis8map.put( "852_deildartunguhver_vatn", "CTCGCGTGTC" );
+		
+		int i = 0;
+		Map[] maps = {snaedis1map,snaedis2map,snaedis3map,snaedis4map,snaedis5map,snaedis6map,snaedis7map,snaedis8map};
+		for( Map map : maps ) {
+			i++;
+			try {
+				FileWriter fw = new FileWriter( "/home/sigmar/"+i+".map" );
+				for( Object key : map.keySet() ) {
+					String keystr = (String)key;
+					String valstr = (String)map.get( key );
+					fw.write( valstr + "\t" + keystr + "\n" );
+				}
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public static void main(String[] args) {
+		//Path path = Paths.get( "/home/sigmar/pyro/locs" );
+		//Files.
+		
+		File dir = new File("/home/sigmar/pyro/locs");
+		File[] ff = dir.listFiles( new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				if( name.endsWith(".fna") ) return true;
+				return false;
+			}
+		});
+		
 		try {
+			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ) );
+			System.err.println( nameHitMap.size() );
+			
+			for( String key : nameHitMap.keySet() ) {
+				System.err.println( key + "  " + nameHitMap.get(key) );
+				break;
+			}
+			
+			int countmissing = 0;
+			for( File f : ff ) {
+				File nf = new File( dir, "mega"+f.getName()+".blastout" );
+				List<Set<String>> cluster = makeBlastCluster( new FileInputStream( nf ), null );
+				
+				Map<String,String> headset = new HashMap<String,String>();
+				for( Set<String> cl : cluster ) {
+					Map<String,Integer> tegcount = new HashMap<String,Integer>();
+					Map<String,String> tegmap = new HashMap<String,String>();
+					for( String c : cl ) {
+						String teg = nameHitMap.get(c);
+						if( teg == null ) {
+							System.err.println( c );
+							countmissing++;
+						} else if( teg.contains( "hermus" ) ) {
+							if( !tegcount.containsKey( teg ) ) {
+								tegmap.put( c, teg );
+								tegcount.put( teg, 1 );
+							} else {
+								tegcount.put( teg, tegcount.get(teg)+1 );
+							}
+						}
+					}
+					for( String c : tegmap.keySet() ) {
+						String teg = tegmap.get( c );
+						int count = tegcount.get(teg);
+						if( count > 1 ) {
+							System.err.println( count );
+						}
+						headset.put( c, teg+"_"+count );
+					}
+				}
+				
+				trimFasta( new BufferedReader( new FileReader(f) ), new FileWriter("/home/sigmar/pyro/locs/thermus/"+f.getName().substring(0, f.getName().length()-4)+"_thermus.fna"), headset, false );
+			}
+			System.err.println( countmissing );
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//mapFiles();
+		
+		/*try {
 			FileReader fr = new FileReader("/home/sigmar/conc_40genes.dst");
 			List<String>	llines = new ArrayList<String>();
 			BufferedReader br = new BufferedReader( fr );
