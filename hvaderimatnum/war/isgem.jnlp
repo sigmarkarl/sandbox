@@ -16,7 +16,7 @@
   <jar href="swingx-all-1.6.3.jar"/>
   <jar href="gdata-core-1.0.jar"/>
   <jar href="guava-12.0.jar"/>
-  <extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/>
+  <!--extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/-->
   <!--extension name="dropbox" href="http://dl.dropbox.com/u/10024658/dbsave.jnlp"/-->
 </resources>
 <applet-desc 
