@@ -462,6 +462,15 @@ public class Taxonomy implements EntryPoint {
 	Map<String,String>	snaedis7map;
 	Map<String,String>	snaedis8map;
 	
+	Map<String,String>	snaedis1colormap;
+	Map<String,String>	snaedis2colormap;
+	Map<String,String>	snaedis3colormap;
+	Map<String,String>	snaedis4colormap;
+	Map<String,String>	snaedis5colormap;
+	Map<String,String>	snaedis6colormap;
+	Map<String,String>	snaedis7colormap;
+	Map<String,String>	snaedis8colormap;
+	
 	Map<String,Double>	snaedis1heatmap;
 	Map<String,Double>	snaedis2heatmap;
 	Map<String,Double>	snaedis3heatmap;
@@ -483,6 +492,15 @@ public class Taxonomy implements EntryPoint {
 	public void pcaAnalysis() {
 		console( "about to pca" );
 		String allstr = "";
+		String[] names = new String[ indexmap.size() ];
+		for( String key : indexmap.keySet() ) {
+			names[ indexmap.get(key) ] = key;
+		}
+		for( String name : names ) {
+			allstr += "\t"+name;
+		}
+		allstr += "\n";
+		
 		for( String key : datamap.keySet() ) {
 			console( "pca "+key );
 			List<Double> tdlist = datamap.get(key);
@@ -520,7 +538,7 @@ public class Taxonomy implements EntryPoint {
 				dval = snaedis8heatmap.get( keyval );
 			}
 			
-			double tval = (dval-60.0)/30.0;
+			double tval = (dval-50.0)/40.0;
 			allstr += tval+"\t0.0\t"+(1.0-tval)+"\n";
 		}
 		
@@ -547,7 +565,32 @@ public class Taxonomy implements EntryPoint {
 			}
 			
 			double tval = (dval-5.0)/4.0;
-			allstr += tval+"\t0.0\t"+(1.0-tval)+"\n";
+			allstr += tval+"\t"+(1.0-tval)+"\t0.0\n";
+		}
+		
+		allstr += "\n";
+		for( String key : datamap.keySet() ) {
+			String dval = "";
+			String keyval = key.substring(8);
+			if( snaedis1colormap.containsKey( keyval ) ) {
+				dval = snaedis1colormap.get( keyval );
+			} else if( snaedis2colormap.containsKey( keyval ) ) {
+				dval = snaedis2colormap.get( keyval );
+			} else if( snaedis3colormap.containsKey( keyval ) ) {
+				dval = snaedis3colormap.get( keyval );
+			} else if( snaedis4colormap.containsKey( keyval ) ) {
+				dval = snaedis4colormap.get( keyval );
+			} else if( snaedis5colormap.containsKey( keyval ) ) {
+				dval = snaedis5colormap.get( keyval );
+			} else if( snaedis6colormap.containsKey( keyval ) ) {
+				dval = snaedis6colormap.get( keyval );
+			} else if( snaedis7colormap.containsKey( keyval ) ) {
+				dval = snaedis7colormap.get( keyval );
+			} else if( snaedis8colormap.containsKey( keyval ) ) {
+				dval = snaedis8colormap.get( keyval );
+			}
+			
+			allstr += dval;
 		}
 
 		DialogBox db = new DialogBox();
@@ -586,7 +629,7 @@ public class Taxonomy implements EntryPoint {
 		db.center();*/
 	}
 	
-	public StringBuilder calcContent( TreeItem selectedtree, int level ) {
+	public StringBuilder calcContent( TreeItem selectedtree, int level, String filter ) {
 		Map<Integer,Map<String,Integer>>	mstr = new HashMap<Integer,Map<String,Integer>>();
 		try {
 			recursiveBlast( selectedtree, mstr, 0 );
@@ -619,17 +662,20 @@ public class Taxonomy implements EntryPoint {
 			if( d == level ) {
 				double sum = 0.0;
 				for( Object[] obj : lobj ) {
-					if( !indexmap.containsKey(obj[1]) ) {
-						indexmap.put((String)obj[1], indexmap.size());
-						/*for( String key : datamap.keySet() ) {
-							List<Double> dlist = datamap.get(key);
-							for( int i = dlist.size(); i <= indexmap.size(); i++ ) {
-								dlist.add( 0.0 );
-							}
-						}*/
-						max = Math.max(max, indexmap.size());
+					String val = (String)obj[1];
+					if( filter == null || val.startsWith(filter) ) {
+						if( !indexmap.containsKey( val ) ) {
+							indexmap.put( val, indexmap.size() );
+							/*for( String key : datamap.keySet() ) {
+								List<Double> dlist = datamap.get(key);
+								for( int i = dlist.size(); i <= indexmap.size(); i++ ) {
+									dlist.add( 0.0 );
+								}
+							}*/
+							max = Math.max(max, indexmap.size());
+						}
+						sum += (Integer)obj[0];
 					}
-					sum += (Integer)obj[0];
 				}
 				
 				List<Double>	dlist = new ArrayList<Double>();
@@ -639,11 +685,15 @@ public class Taxonomy implements EntryPoint {
 				datamap.put( tstr.substring(0,ti), dlist );
 				
 				for( Object[] obj : lobj ) {
-					int k = indexmap.get(obj[1]);
-					for( int i = dlist.size(); i <= k; i++ ) {
-						dlist.add( 0.0 );
+					String val = (String)obj[1];
+					
+					if( filter == null || val.startsWith(filter) ) {
+						int k = indexmap.get( val );
+						for( int i = dlist.size(); i <= k; i++ ) {
+							dlist.add( 0.0 );
+						}
+						dlist.set( k, ((Integer)obj[0])/sum );
 					}
-					dlist.set( k, ((Integer)obj[0])/sum );
 				}
 				
 				/*for( String key : datamap.keySet() ) {
@@ -845,6 +895,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis1map.put( "774_geysir_west_jardvegur", "TGATACGTCT" );
 		snaedis1map.put( "774_geysir_west_vatn", "TCTCTATGCG" );
 		
+		snaedis1colormap = new HashMap<String,String>();
+		snaedis1colormap.put( "770_geysir_north_jardvegur", "0.0\t0.5\t1.0\n" );
+		snaedis1colormap.put( "770_geysir_north_vatn", "0.0\t0.5\t1.0\n" );
+		snaedis1colormap.put( "771_geysir_north_jardvegur", "0.0\t0.5\t1.0\n" );
+		snaedis1colormap.put( "771_geysir_north_vatn", "0.0\t0.5\t1.0\n" );
+		snaedis1colormap.put( "772_geysir_north_jardvegur", "0.0\t0.5\t1.0\n" );
+		snaedis1colormap.put( "772_geysir_north_vatn", "0.0\t0.5\t1.0\n" );
+		snaedis1colormap.put( "773_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
+		snaedis1colormap.put( "773_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
+		snaedis1colormap.put( "774_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
+		snaedis1colormap.put( "774_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
+		
 		snaedis1heatmap = new HashMap<String,Double>();
 		snaedis1heatmap.put( "770_geysir_north_jardvegur", 83.0 );
 		snaedis1heatmap.put( "770_geysir_north_vatn", 83.0 );
@@ -886,6 +948,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis2map.put( "779_fludir_jardvegur", "TGATACGTCT" );
 		snaedis2map.put( "779_fludir_vatn", "TCTCTATGCG" );
 		
+		snaedis2colormap = new HashMap<String,String>();
+		snaedis2colormap.put( "775_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
+		snaedis2colormap.put( "775_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
+		snaedis2colormap.put( "776_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
+		snaedis2colormap.put( "776_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
+		snaedis2colormap.put( "777_fludir_vatn", "1.0\t0.0\t1.0\n" );
+		snaedis2colormap.put( "777_fludir_lifmassi", "1.0\t0.0\t1.0\n" );
+		snaedis2colormap.put( "778_fludir_jardvegur", "1.0\t0.0\t1.0\n" );
+		snaedis2colormap.put( "778_fludir_vatn", "1.0\t0.0\t1.0\n" );
+		snaedis2colormap.put( "779_fludir_jardvegur", "1.0\t0.0\t1.0\n" );
+		snaedis2colormap.put( "779_fludir_vatn", "1.0\t0.0\t1.0\n" );
+		
 		snaedis2heatmap = new HashMap<String,Double>();
 		snaedis2heatmap.put( "775_geysir_west_jardvegur", 83.0 );
 		snaedis2heatmap.put( "775_geysir_west_vatn", 83.0 );
@@ -921,6 +995,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis3map.put( "808_hrafntinnusker_jardvegur", "CTCGCGTGTC" );
 		snaedis3map.put( "808_hrafntinnusker_vatn", "TGATACGTCT" );
 		snaedis3map.put( "808_hrafntinnusker_lifmassi", "TCTCTATGCG" );
+		
+		snaedis3colormap = new HashMap<String,String>();
+		snaedis3colormap.put( "780_fludir_jardvegur", "1.0\t0.0\t1.0\n" );
+		snaedis3colormap.put( "780_fludir_vatn", "1.0\t0.0\t1.0\n" );
+		snaedis3colormap.put( "781_olkelduhals_vatn", "1.0\t1.0\t0.0\n" );
+		snaedis3colormap.put( "781_olkelduhals_lifmassi", "1.0\t1.0\t0.0\n" );
+		snaedis3colormap.put( "782_olkelduhals_lifmassi", "1.0\t1.0\t0.0\n" );
+		snaedis3colormap.put( "783_olkelduhals_jardvlifm", "1.0\t1.0\t0.0\n" );
+		snaedis3colormap.put( "783_olkelduhals_vatn", "1.0\t1.0\t0.0\n" );
+		snaedis3colormap.put( "808_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
+		snaedis3colormap.put( "808_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
+		snaedis3colormap.put( "808_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
 		
 		snaedis3heatmap = new HashMap<String,Double>();
 		snaedis3heatmap.put( "780_fludir_jardvegur", 87.6 );
@@ -958,6 +1044,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis4map.put( "811_hrafntinnusker_lifmassi", "TGATACGTCT" );
 		snaedis4map.put( "812_hrafntinnusker_jardvegur", "TCTCTATGCG" );
 		
+		snaedis4colormap = new HashMap<String,String>();
+		snaedis4colormap.put( "809_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "809_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "809_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "810_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "810_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "810_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "811_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "811_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "811_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
+		snaedis4colormap.put( "812_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
+		
 		snaedis4heatmap = new HashMap<String,Double>();
 		snaedis4heatmap.put( "809_hrafntinnusker_jardvegur", 63.5 );
 		snaedis4heatmap.put( "809_hrafntinnusker_vatn", 63.5 );
@@ -993,6 +1091,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis5map.put( "815_reykjadalir_lifmassi", "CTCGCGTGTC" );
 		snaedis5map.put( "816_vondugil_jardvegur", "TGATACGTCT" );
 		snaedis5map.put( "816_vondugil_vatn", "TCTCTATGCG" );
+		
+		snaedis5colormap = new HashMap<String,String>();
+		snaedis5colormap.put( "812_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
+		snaedis5colormap.put( "813_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
+		snaedis5colormap.put( "813_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
+		snaedis5colormap.put( "814_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
+		snaedis5colormap.put( "814_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
+		snaedis5colormap.put( "815_reykjadalir_jardvegur", "0.0\t1.0\t0.0\n" );
+		snaedis5colormap.put( "815_reykjadalir_vatn", "0.0\t1.0\t0.0\n" );
+		snaedis5colormap.put( "815_reykjadalir_lifmassi", "0.0\t1.0\t0.0\n" );
+		snaedis5colormap.put( "816_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
+		snaedis5colormap.put( "816_vondugil_vatn", "1.0\t0.0\t0.0\n" );
 	
 		snaedis5heatmap = new HashMap<String,Double>();
 		snaedis5heatmap.put( "812_hrafntinnusker_vatn", 68.3 );
@@ -1030,6 +1140,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis6map.put( "821_vondugil_jardvegur", "TGATACGTCT" );
 		snaedis6map.put( "821_vondugil_vatn", "TCTCTATGCG" );
 		
+		snaedis6colormap = new HashMap<String,String>();
+		snaedis6colormap.put( "817_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "817_vondugil_vatn", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "818_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "818_vondugil_vatn", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "819_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "819_vondugil_vatn", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "820_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "820_vondugil_vatn", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "821_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
+		snaedis6colormap.put( "821_vondugil_vatn", "1.0\t0.0\t0.0\n" );
+		
 		snaedis6heatmap = new HashMap<String,Double>();
 		snaedis6heatmap.put( "817_vondugil_jardvegur", 75.7 );
 		snaedis6heatmap.put( "817_vondugil_vatn", 75.7 );
@@ -1066,6 +1188,18 @@ public class Taxonomy implements EntryPoint {
 		snaedis7map.put( "849_kleppjarnsreykir_jardvegur", "TGATACGTCT" );
 		snaedis7map.put( "849_kleppjarnsreykir_vatn", "TCTCTATGCG" );
 		
+		snaedis7colormap = new HashMap<String,String>();
+		snaedis7colormap.put( "846_hurdarbak_jardvegur", "1.0\t0.0\t0.5\n" );
+		snaedis7colormap.put( "846_hurdarbak_vatn", "1.0\t0.0\t0.5\n" );
+		snaedis7colormap.put( "846_hurdarbak_lifmassi", "1.0\t0.0\t0.5\n" );
+		snaedis7colormap.put( "847_hurdarbak_jardvegur", "1.0\t0.0\t0.5\n" );
+		snaedis7colormap.put( "847_hurdarbak_vatn", "1.0\t0.0\t0.5\n" );
+		snaedis7colormap.put( "848_kleppjarnsreykir_jardvegur", "1.0\t0.5\t0.0\n" );
+		snaedis7colormap.put( "848_kleppjarnsreykir_vatn", "1.0\t0.5\t0.0\n" );
+		snaedis7colormap.put( "848_kleppjarnsreykir_lifmassi", "1.0\t0.5\t0.0\n" );
+		snaedis7colormap.put( "849_kleppjarnsreykir_jardvegur", "1.0\t0.5\t0.0\n" );
+		snaedis7colormap.put( "849_kleppjarnsreykir_vatn", "1.0\t0.5\t0.0\n" );
+		
 		snaedis7heatmap = new HashMap<String,Double>();
 		snaedis7heatmap.put( "846_hurdarbak_jardvegur", 80.5 );
 		snaedis7heatmap.put( "846_hurdarbak_vatn", 80.5 );
@@ -1100,6 +1234,16 @@ public class Taxonomy implements EntryPoint {
 		snaedis8map.put( "852_deildartunguhver_jardvegur", "CGTGTCTCTA" );
 		snaedis8map.put( "852_deildartunguhver_vatn", "CTCGCGTGTC" );
 		
+		snaedis8colormap = new HashMap<String,String>();
+		snaedis8colormap.put( "849_kleppjarnsreykir_lifmassi", "1.0\t0.5\t0.0\n" );
+		snaedis8colormap.put( "850_kleppjarnsreykir_jardvegur", "1.0\t0.5\t0.0\n" );
+		snaedis8colormap.put( "850_kleppjarnsreykir_vatn", "1.0\t0.5\t0.0\n" );
+		snaedis8colormap.put( "850_kleppjarnsreykir_lifmassi", "1.0\t0.5\t0.0\n" );
+		snaedis8colormap.put( "851_deildartunguhver_jardvegur", "0.5\t0.0\t0.5\n" );
+		snaedis8colormap.put( "851_deildartunguhver_vatn", "0.5\t0.0\t0.5\n" );
+		snaedis8colormap.put( "852_deildartunguhver_jardvegur", "0.5\t0.0\t0.5\n" );
+		snaedis8colormap.put( "852_deildartunguhver_vatn", "0.5\t0.0\t0.5\n" );
+		
 		snaedis8heatmap = new HashMap<String,Double>();
 		snaedis8heatmap.put( "849_kleppjarnsreykir_lifmassi", 76.8 );
 		snaedis8heatmap.put( "850_kleppjarnsreykir_jardvegur", 65.8 );
@@ -1111,14 +1255,14 @@ public class Taxonomy implements EntryPoint {
 		snaedis8heatmap.put( "852_deildartunguhver_vatn", 86.1 );
 		
 		snaedis8phmap = new HashMap<String,Double>();
-		snaedis2phmap.put( "849_kleppjarnsreykir_lifmassi", 7.5 );
-		snaedis2phmap.put( "850_kleppjarnsreykir_jardvegur", 8.5 );
-		snaedis2phmap.put( "850_kleppjarnsreykir_vatn", 8.5 );
-		snaedis2phmap.put( "850_kleppjarnsreykir_lifmassi", 8.5 );
-		snaedis2phmap.put( "851_deildartunguhver_jardvegur", 8.5 );
-		snaedis2phmap.put( "851_deildartunguhver_vatn", 8.5 );
-		snaedis2phmap.put( "852_deildartunguhver_jardvegur", 8.5 );
-		snaedis2phmap.put( "852_deildartunguhver_vatn", 8.5 );
+		snaedis8phmap.put( "849_kleppjarnsreykir_lifmassi", 7.5 );
+		snaedis8phmap.put( "850_kleppjarnsreykir_jardvegur", 8.5 );
+		snaedis8phmap.put( "850_kleppjarnsreykir_vatn", 8.5 );
+		snaedis8phmap.put( "850_kleppjarnsreykir_lifmassi", 8.5 );
+		snaedis8phmap.put( "851_deildartunguhver_jardvegur", 8.5 );
+		snaedis8phmap.put( "851_deildartunguhver_vatn", 8.5 );
+		snaedis8phmap.put( "852_deildartunguhver_jardvegur", 8.5 );
+		snaedis8phmap.put( "852_deildartunguhver_vatn", 8.5 );
 		
 		rsnaedis2map = new HashMap<String,String>();
 		for( String key : snaedis2map.keySet() ) {
@@ -1296,7 +1440,7 @@ public class Taxonomy implements EntryPoint {
 						public void onFailure(Throwable caught) {}
 					});*/
 				} else if( ctrl ) {
-					StringBuilder res = calcContent( selectedtree, 2 );
+					StringBuilder res = calcContent( selectedtree, 2, null );
 					
 					DialogBox db = new DialogBox();
 					Caption cap = db.getCaption();
@@ -1388,7 +1532,7 @@ public class Taxonomy implements EntryPoint {
 					//console( "hey "+i );
 					if( ti.getChildCount() > 0 ) {
 						console( "calculating "+ti.getText() );
-						calcContent( ti, 2 );
+						calcContent( ti, 7, "Thermus" );
 					}
 				}
 			}
