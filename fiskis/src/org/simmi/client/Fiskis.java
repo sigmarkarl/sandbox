@@ -7,6 +7,7 @@ import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -15,8 +16,12 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DoubleBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -69,11 +74,15 @@ public class Fiskis implements EntryPoint {
 	};
 	
 	public class Kassi implements Drawable {
-		double x,y,w,h;
-		private double hiti;
-		private double dagar;
+		double 			x,y,w,h;
+		private double 	hiti;
+		private double  umh;
+		private double 	dagar;
+		Image			wallpaper;
 		
-		public Kassi( double x, double y, double w, double h ) {
+		public Kassi( double x, double y, double w, double h, Image wallpaper ) {
+			this.wallpaper = wallpaper;
+			
 			this.w = w;
 			this.h = h;
 			this.x = x;
@@ -85,27 +94,45 @@ public class Fiskis implements EntryPoint {
 			ctx.setFillStyle("#FFFF00");
 			ctx.beginPath();
 			ctx.moveTo(x+40, y+50);
-			ctx.lineTo(x+40, y+200);
-			ctx.lineTo(x+250, y+200);
-			ctx.lineTo(x+250, y+50);
-			ctx.lineTo(x+245, y+50);
-			ctx.lineTo(x+245, y+195);
-			ctx.lineTo(x+45, y+195);
+			ctx.lineTo(x+40, y+350);
+			ctx.lineTo(x+450, y+350);
+			ctx.lineTo(x+450, y+50);
+			ctx.lineTo(x+445, y+50);
+			ctx.lineTo(x+445, y+345);
+			ctx.lineTo(x+45, y+345);
 			ctx.lineTo(x+45, y+50);
 			ctx.lineTo(x+40, y+50);
 			ctx.closePath();
 			ctx.stroke();
 			ctx.fill();
 			
-			ctx.setFillStyle("#FFFEFE");
-			ctx.fillRect(x+45.5, y+70.0, 199, ratio*125.0);
-			ctx.setLineWidth(0.5);
-			ctx.strokeRect(x+45.5, y+70.0, 199, ratio*125.0);
-			
+			//ctx.setFillStyle("#FFFEFE");
 			ctx.setFillStyle("#2299FF");
-			ctx.fillRect(x+45.5, y+70.0+ratio*125.0, 199, 125.0-ratio*125.0);
+			ctx.fillRect(x+45.5, y+100.0, 399, ratio*245.0);
 			ctx.setLineWidth(0.5);
-			ctx.strokeRect(x+45.5, y+70.0+ratio*125.0, 199, 125.0-ratio*125.0);
+			ctx.strokeRect(x+45.5, y+100.0, 399, ratio*245.0);
+			
+			/*ctx.setFillStyle("#2299FF");
+			ctx.fillRect(x+45.5, y+100.0+ratio*245.0, 399, 245.0-ratio*245.0);
+			ctx.setLineWidth(0.5);
+			ctx.strokeRect(x+45.5, y+100.0+ratio*245.0, 399, 245.0-ratio*245.0);*/
+			
+			double w = Math.max( 85.0, wallpaper.getWidth()*0.2 );
+			double h = Math.max( 35.2, wallpaper.getHeight()*0.2 );
+			
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect( x+45.5, y+100.5, 398.0, 243.0 );
+			ctx.closePath();
+			ctx.clip();
+			
+			for( double xx = x+45.5; xx < x+46.0+398.0; xx += w ) {
+				for( double yy = y+100.5+ratio*245.0; yy < y+100.0+245.0; yy += h ) {
+					ctx.drawImage( ImageElement.as( wallpaper.getElement() ), xx, yy, w, h );
+				}
+			}
+			
+			ctx.restore();
 		}
 		
 		@Override
@@ -115,7 +142,7 @@ public class Fiskis implements EntryPoint {
 			ctx.setFillStyle( "#000000" );
 			String label;
 			if( dagar == 0 ) label = "Kæla "+hiti+" gráðu heitan fisk í 0 gráður";
-			else label = "Viðhalda við 0 gráður í "+dagar+" daga í "+hiti+" gráðu umhverfishita";
+			else label = "Kæla og viðhalda við 0 gráður í "+dagar+" daga úr "+hiti+" gráðum við "+umh+" gráðu umhverfishita";
 			double tw = ctx.measureText( label ).getWidth();
 			ctx.fillText( label, x+(w-tw)/2, y+30 );
 			
@@ -139,13 +166,13 @@ public class Fiskis implements EntryPoint {
 				ctx.setFillStyle( "#000000" );
 				String fiskstr = fiskdb.getValue()+" kg af fiski";
 				strw = ctx.measureText( fiskstr ).getWidth();
-				ctx.fillText( fiskstr, x+(w-strw)/2.0, y+70.0+(1.0+ratio)*125.0/2.0 );
+				ctx.fillText( fiskstr, x+(w-strw)/2.0, y+100.0+(1.0+ratio)*245.0/2.0 );
 			} else {
 				if( stuckdb == fiskdb ) {
-					double dval = Math.round( fiskdb.getValue()*0.015*hiti*dagar*10.0 )/10.0;
+					double dval = Math.round( fiskdb.getValue()*0.015*umh*dagar*10.0 )/10.0  +  Math.round( fiskdb.getValue()*0.0114*hiti*10.0 )/10.0;
 					isdb.setValue( dval );
 				} else {
-					double dval = Math.round( 10.0*isdb.getValue()/(0.015*hiti*dagar) )/10.0;
+					double dval = Math.round( 10.0*isdb.getValue()/(0.015*dagar*umh+0.0114*hiti) )/10.0;
 					fiskdb.setValue( dval );
 				}
 				
@@ -160,7 +187,7 @@ public class Fiskis implements EntryPoint {
 				ctx.setFillStyle( "#000000" );
 				String fiskstr = fiskdb.getValue()+" kg af fiski";
 				strw = ctx.measureText( fiskstr ).getWidth();
-				ctx.fillText( fiskstr, x+(w-strw)/2.0, y+70.0+(1.0+ratio)*125.0/2.0 );
+				ctx.fillText( fiskstr, x+(w-strw)/2.0, y+100.0+(1.0+ratio)*245.0/2.0 );
 			}
 			
 			ctx.setStrokeStyle("#EEEEEE");
@@ -170,9 +197,17 @@ public class Fiskis implements EntryPoint {
 		public double getHiti() {
 			return hiti;
 		}
+		
+		public double getUmHiti() {
+			return umh;
+		}
 
 		public void setHiti(double hiti) {
 			this.hiti = hiti;
+		}
+		
+		public void setUmHiti(double hiti) {
+			this.umh = hiti;
 		}
 
 		public double getDagar() {
@@ -291,20 +326,40 @@ public class Fiskis implements EntryPoint {
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
-		RootPanel	rp = RootPanel.get();
+		final RootPanel	rp = RootPanel.get();
+		rp.setSize( Window.getClientWidth()+"px", Window.getClientHeight()+"px" );
+		Window.addResizeHandler( new ResizeHandler() {
+			
+			@Override
+			public void onResize(ResizeEvent event) {
+				rp.setSize( event.getWidth()+"px", event.getHeight()+"px" );
+			}
+		});
+		
+		Image img = new Image( "/torskur.jpg" );
+		
+		VerticalPanel	pvp = new VerticalPanel();
+		pvp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		pvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		pvp.setSize( "100%", "100%" );
+		//HorizontalPanel	php = new HorizontalPanel();
+		//php.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
+		//php.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
 		
 		VerticalPanel vp = new VerticalPanel();
-		vp.setSize("400px", "300px");
+		vp.setSize("640px", "480px");
+		
+		pvp.add( vp );
 		
 		Canvas		c = Canvas.createIfSupported();
-		c.setSize("400x", "275px");
-		c.setCoordinateSpaceWidth( 400 );
-		c.setCoordinateSpaceHeight( 275 );
+		c.setSize("640x", "450px");
+		c.setCoordinateSpaceWidth( 640 );
+		c.setCoordinateSpaceHeight( 450 );
 		final Context2d ctx = c.getContext2d();
 		
 		HorizontalPanel hp = new HorizontalPanel();
 		hp.setSpacing( 0 );
-		hp.setSize( "400px", "25px" );
+		hp.setSize( "640px", "30px" );
 		
 		Label	l = new Label("Fiskmagn:");
 		fiskdb.setWidth("60px");
@@ -328,12 +383,15 @@ public class Fiskis implements EntryPoint {
 		vp.add( c );
 		vp.add( hp );
 		
-		final Meter dagameter = new Meter( "dagar", 20, 20, 230.0, 0.0, 7.0, 1.0 );
-		final Meter hitameter = new Meter( "gráður", 60, 20, 230.0, 0.0, 30.0, 10.0 );
-		final Kassi kassi = new Kassi( 100.0, 20.0, 290.0, 230.0 );
+		final Meter dagameter = new Meter( "dagar", 30, 30, 390.0, 0.0, 7.0, 1.0 );
+		final Meter hitameter = new Meter( "gráður", 60, 30, 390.0, 0.0, 20.0, 10.0 );
+		final Meter umhmeter = new Meter( "umhv. hiti", 90, 30, 390.0, 0.0, 20.0, 10.0 );
+		
+		final Kassi kassi = new Kassi( 120.0, 30.0, 500.0, 390.0, img );
 		
 		dlist.add( dagameter );
 		dlist.add( hitameter );
+		dlist.add( umhmeter );
 		dlist.add( kassi );
 		
 		fiskdb.addChangeHandler( new ChangeHandler() {
@@ -402,6 +460,31 @@ public class Fiskis implements EntryPoint {
 		cl.setDrawable( kassi );
 		hitameter.addChangeListener( cl );
 		
+		cl = new ChangeListener() {
+			Drawable d;
+			
+			@Override
+			public void onChange(double oldval, double newval) {
+				kassi.setUmHiti(newval);
+				//kassi.setDagar( 0.0 );
+				//dagameter.setValue( 0.0 );
+				//dagameter.draw( ctx );
+				if( d != null ) d.draw(ctx);
+			}
+
+			@Override
+			public void setDrawable(Drawable d) {
+				this.d = d;
+			}
+
+			@Override
+			public Drawable getDrawable() {
+				return this.d;
+			}
+		};
+		cl.setDrawable( kassi );
+		umhmeter.addChangeListener( cl );
+		
 		for( Drawable d : dlist ) {
 			if( d instanceof Clickable ) clist.add( (Clickable)d );
 		}
@@ -444,6 +527,6 @@ public class Fiskis implements EntryPoint {
 				currentclick = null;
 			}
 		});
-		rp.add( vp );
+		rp.add( pvp );
 	}
 }

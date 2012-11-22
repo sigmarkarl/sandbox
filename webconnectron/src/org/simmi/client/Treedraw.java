@@ -1142,8 +1142,28 @@ public class Treedraw implements EntryPoint {
 		$wnd.addEventListener('keypress', whatKey, true);
 	}-*/;
 	
+	public void scaleMeta( Node n, double x ) {
+		double frmo = n.getFrameOffset();
+		if( frmo > 0.0 ) n.setFrameOffset( frmo+x );
+		for( Node rn : n.getNodes() ) {
+			scaleMeta( rn, x );
+		}
+	}
+	
 	public void keyCheck( char c, int keycode ) {
-		if( c == 'a' || c == 'A' ) {
+		if( c == 'p' || c == 'P' ) {
+			if( c == 'p' ) {
+				circularScale += 0.01;
+			} else {
+				circularScale -= 0.01;
+			}
+		} else if( c == 'x' || c == 'X' ) {
+			if( c == 'x' ) {
+				scaleMeta( root, -0.01 );
+			} else {
+				scaleMeta( root, 0.01 );
+			}
+		} else if( c == 'a' || c == 'A' ) {
 			String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii", "T.unkownchile"};
 			Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
 			treeutil.collapseTreeAdvanced(root, cset);
