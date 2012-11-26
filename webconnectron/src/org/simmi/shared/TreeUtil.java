@@ -472,15 +472,16 @@ public class TreeUtil {
 	};
 	
 	public class Node {
-		String 		name;
-		String		id;
-		String		meta;
-		int			metacount;
+		String 				name;
+		String				id;
+		String				meta;
+		int					metacount;
 		private double		h;
 		private double		h2;
 		private double		bootstrap;
-		String		color;
-		List<Node>	nodes;
+		String				color;
+		List<String>		infolist;
+		List<Node>			nodes;
 		int			leaves = 0;
 		Node		parent;
 		int			comp = 0;
@@ -496,6 +497,10 @@ public class TreeUtil {
 		
 		public boolean isLeaf() {
 			return nodes == null || nodes.size() == 0;
+		}
+		
+		public List<String> getInfoList() {
+			return infolist;
 		}
 		
 		public Node findNode( String id ) {
@@ -711,11 +716,21 @@ public class TreeUtil {
 				if( name != null && name.length() > 0 ) {
 					str += name;
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					if( infolist != null ) {
+						for( String info : infolist ) {
+							str += info;
+						}
+					}
 					String framestr = this.getFrameString();
 					if( framestr != null ) str += "{"+framestr+"}";
 					str += ";"+meta; //"'"+name+";"+meta+"'";
 				} else {
 					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					if( infolist != null ) {
+						for( String info : infolist ) {
+							str += info;
+						}
+					}
 					String framestr = this.getFrameString();
 					if( framestr != null ) str += "{"+framestr+"}";
 					str += ";"+meta; //"'"+meta+"'";
@@ -723,6 +738,11 @@ public class TreeUtil {
 			} else if( name != null && name.length() > 0 ) {
 				str += name;
 				if( color != null && color.length() > 0 ) str += "["+color+"]";
+				if( infolist != null ) {
+					for( String info : infolist ) {
+						str += info;
+					}
+				}
 				String framestr = this.getFrameString();
 				if( framestr != null ) str += "{"+framestr+"}";
 				/*if( fontsize != -1.0 ) {
@@ -806,17 +826,41 @@ public class TreeUtil {
 								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
 							}
 							this.setColor( null );
+							this.infolist.clear();
 						} else {
 							if( si == -1 ) {
 								this.name = newname.substring(0,ci);
-								int ce = newname.indexOf("]",ci+1);
+								int ce = newname.indexOf( "]",ci+1 );
 								this.setColor( newname.substring(ci+1,ce) );
 								this.setFontSize( -1.0 );
+								
+								ci = newname.indexOf( '[', ce+1 );
+								while( ci < si && ci < fi ) {
+									infolist.add( newname.substring(ce+1, ci) );
+									ce = newname.indexOf( ']', ci+1 );
+									infolist.add( newname.substring(ci, ce+1) );
+									
+									ci = newname.indexOf( '[', ce+1 );
+								}
+								int vi = Math.min(si, fi);
+								if( vi > ce+1 ) infolist.add( newname.substring(ce+1, vi) );
 							} else {
 								this.name = newname.substring(0,Math.min(ci, si));
 								int ce = newname.indexOf("]",ci+1);
 								int se = newname.indexOf("}",si+1);
 								this.setColor( newname.substring(ci+1,ce) );
+								
+								ci = newname.indexOf( '[', ce+1 );
+								while( ci < si && ci < fi ) {
+									infolist.add( newname.substring(ce+1, ci) );
+									ce = newname.indexOf( ']', ci+1 );
+									infolist.add( newname.substring(ci, ce+1) );
+									
+									ci = newname.indexOf( '[', ce+1 );
+								}
+								int vi = Math.min(si, fi);
+								if( vi > ce+1 ) infolist.add( newname.substring(ce+1, vi) );
+								
 								String mfstr = newname.substring(si+1,se);
 								String[] mfsplit = mfstr.split(" ");
 								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
@@ -840,6 +884,7 @@ public class TreeUtil {
 					}
 	 				this.setMeta( null );
 					this.setColor( null );
+					this.infolist.clear();
 				}
 			} else {
 				this.name = newname;
@@ -1769,6 +1814,9 @@ public class TreeUtil {
 		String meta = node.getMeta();
 		String name = node.getName() == null ? "" : node.getName();
 		name = node.getColor() == null ? name : (name + "["+node.getColor()+"]");
+		if( node.infolist != null ) {
+			for( String info : node.infolist ) name += info;
+		}
 		name = node.getFrameString() == null ? name : name + "{" + node.getFrameString() + "}";
 		if( meta != null && meta.length() > 0 ) {
 			if( name != null && name.length() > 0 ) {
@@ -1791,6 +1839,9 @@ public class TreeUtil {
 		String meta = node.getMeta();
 		String name = node.getName() == null ? "" : node.getName();
 		name = node.getColor() == null || node.getColor().length() == 0 ? name : (name + "["+node.getColor()+"]");
+		if( node.infolist != null ) {
+			for( String info : node.infolist ) name += info;
+		}
 		name = node.getFrameString() == null || node.getFrameString().length() == 0 ? name : name + "{" + node.getFrameString() + "}";
 		if( meta != null && meta.length() > 0 ) {
 			if( name != null && name.length() > 0 ) {
