@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="/opt/gwt-2.5.0.rc2/gwt-elemental.jar"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/eurofir"/>
+	<classpathentry kind="con" path="com.google.gdt.eclipse.managedapis.MANAGED_API_CONTAINER/fusiontables-v1r11lv1.12.0-beta"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
