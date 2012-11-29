@@ -2630,7 +2630,8 @@ public class Treedraw implements EntryPoint {
 													g2.translate( cx, cy );
 													g2.rotate( a+Math.PI );
 													if( i+1 < infoList.size() && !showbubble ) {
-														g2.setFillStyle( infoList.get(i+1) );
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
 														g2.fillRect( -7+(t++)*fontSize  - (rightalign ? 0.0 : strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
 														g2.setFillStyle( "#000000" );
 													}
@@ -2655,7 +2656,7 @@ public class Treedraw implements EntryPoint {
 											
 											List<String> infoList = resnode.getInfoList();
 											if( infoList != null ) {
-												val += strw;
+												//val += strw;
 												for( int i = 0; i < infoList.size(); i+=2 ) {
 													cx = (w+val*circularScale*Math.cos( a ))/2.0;
 													cy = (w+val*circularScale*Math.sin( a ))/2.0;
@@ -2665,13 +2666,14 @@ public class Treedraw implements EntryPoint {
 													strw = tm.getWidth();
 													
 													g2.translate( cx, cy );
-													g2.rotate( a+Math.PI );
+													g2.rotate( a );
 													if( i+1 < infoList.size() && !showbubble ) {
-														g2.setFillStyle( infoList.get(i+1) );
-														g2.fillRect( -7+(t++)*fontSize - (rightalign ? maxstrw : 0.0), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
+														g2.fillRect( -7+(t++)*fontSize - (rightalign ? 0.0 : -strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 15, nfrmh*1.15 );
 														g2.setFillStyle( "#000000" );
 													}
-													g2.fillText( sstr, rightalign ? -strw : 0.0, nnstrh/2.0 );
+													g2.fillText( sstr, rightalign ? 0.0 : strw, nnstrh/2.0 );
 													g2.rotate( -a );
 													g2.translate( -cx, -cy );
 												
@@ -2747,7 +2749,7 @@ public class Treedraw implements EntryPoint {
 											
 											List<String> infoList = resnode.getInfoList();
 											if( infoList != null ) {
-												val += strw;
+												//val += strw;
 												for( int i = 0; i < infoList.size(); i+=2 ) {
 													cx = (w+val*circularScale*Math.cos( a ))/2.0;
 													cy = (w+val*circularScale*Math.sin( a ))/2.0;
@@ -2759,11 +2761,12 @@ public class Treedraw implements EntryPoint {
 													g2.translate( cx, cy );
 													g2.rotate( a+Math.PI );
 													if( i+1 < infoList.size() && !showbubble ) {
-														g2.setFillStyle( infoList.get(i+1) );
-														g2.fillRect( -7+(t++)*fontSize  - (rightalign ? 0.0 : strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
+														g2.fillRect( -7+(t++)*fontSize  - (rightalign ? strw : 0.0) - 30, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 20, nfrmh*1.15 );
 														g2.setFillStyle( "#000000" );
 													}
-													g2.fillText( sstr, rightalign ? 0.0 : -strw, strh/2.0 );
+													g2.fillText( sstr, (rightalign ? -strw : 0.0) - 10, strh/2.0 );
 													g2.rotate( -a-Math.PI );
 													g2.translate( -cx, -cy );
 												
@@ -2784,7 +2787,8 @@ public class Treedraw implements EntryPoint {
 											
 											List<String> infoList = resnode.getInfoList();
 											if( infoList != null ) {
-												val += strw;
+												double tstrw = strw;
+												//val += strw;
 												for( int i = 0; i < infoList.size(); i+=2 ) {
 													cx = (w+val*circularScale*Math.cos( a ))/2.0;
 													cy = (w+val*circularScale*Math.sin( a ))/2.0;
@@ -2792,15 +2796,17 @@ public class Treedraw implements EntryPoint {
 													String sstr = infoList.get(i);
 													tm = g2.measureText( sstr );
 													strw = tm.getWidth();
+													tstrw += strw;
 													
 													g2.translate( cx, cy );
-													g2.rotate( a+Math.PI );
+													g2.rotate( a );
 													if( i+1 < infoList.size() && !showbubble ) {
-														g2.setFillStyle( infoList.get(i+1) );
-														g2.fillRect( -7+(t++)*fontSize - (rightalign ? maxstrw : 0.0), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
+														g2.fillRect( -7+(t++)*fontSize - (rightalign ? 0.0 : strw) + 5, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 20, nfrmh*1.15 );
 														g2.setFillStyle( "#000000" );
 													}
-													g2.fillText( sstr, rightalign ? -strw : 0.0, nnstrh/2.0 );
+													g2.fillText( sstr, (rightalign ? 0.0 : strw) + 10, nnstrh/2.0 );
 													g2.rotate( -a );
 													g2.translate( -cx, -cy );
 												
