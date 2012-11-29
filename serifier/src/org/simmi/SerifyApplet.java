@@ -1088,7 +1088,7 @@ public class SerifyApplet extends JApplet {
 	public static void joinBlastSets( InputStream is, String write, boolean union, List<Set<String>> total, double evalue ) throws IOException {
 		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
 		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
-			
+		
 		String line = br.readLine();
 		int cnt = 0;
 		while( line != null ) {
@@ -1205,7 +1205,7 @@ public class SerifyApplet extends JApplet {
 		fos.close();
 	}
 	
-	private static void writeClusters( OutputStream os, List<Set<String>> cluster ) throws IOException {
+	private void writeClusters( OutputStream os, List<Set<String>> cluster ) throws IOException {
 		OutputStreamWriter	fos = new OutputStreamWriter( os );
 		for( Set<String> set : cluster ) {
 			fos.write( set.toString()+"\n" );
@@ -1213,7 +1213,7 @@ public class SerifyApplet extends JApplet {
 		fos.close();
 	}
 	
-	public static void blastClusters( final InputStream is, final OutputStream os ) {
+	public void blastClusters( final InputStream is, final OutputStream os ) {
 		final JDialog	dialog = new JDialog();
 		Runnable run = new Runnable() {
 			boolean interrupted = false;
@@ -1253,7 +1253,7 @@ public class SerifyApplet extends JApplet {
 		runProcess( "Blast clusters", run, dialog );
 	}
 	
-	public static List<Set<String>> makeBlastCluster( final InputStream is, final OutputStream os ) {
+	public List<Set<String>> makeBlastCluster( final InputStream is, final OutputStream os ) {
 		List<Set<String>>	total = new ArrayList<Set<String>>();
 		try {
 			Set<String>	species = new TreeSet<String>();
@@ -3796,7 +3796,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				initMaps();
 				Map[] maps = {snaedis1heatmap,snaedis2heatmap,snaedis3heatmap,snaedis4heatmap,snaedis5heatmap,snaedis6heatmap,snaedis7heatmap,snaedis8heatmap};
-				//Map[] maps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
+				Map[] phmaps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
 				Map[] colormaps = {snaedis1colormap,snaedis2colormap,snaedis3colormap,snaedis4colormap,snaedis5colormap,snaedis6colormap,snaedis7colormap,snaedis8colormap};
 				
 				JFileChooser fc = new JFileChooser();
@@ -3826,7 +3826,7 @@ public class SerifyApplet extends JApplet {
 								while( line != null ) {
 									if( line.startsWith(">") ) {
 										//fw.write( line.replace( ">", ">"+s.getName().replace(".fna", "")+"_" )+"\n" );
-										int i = s.getName().indexOf("_thermus2");
+										int i = s.getName().indexOf("_thermus3");
 										if( i == -1 ) i = s.getName().length();
 										String sub = s.getName().substring(0,i);
 										boolean check = false;
@@ -3834,31 +3834,50 @@ public class SerifyApplet extends JApplet {
 										for( Map m : maps ) {
 											if( m.containsKey(sub) ) {
 												double dval = (double)m.get( sub );
-												double tval = (dval-5.0)/4.0;
+												double tval = (dval-50.0)/40.0;
 												
 												int red = (int)(tval*255.0);
 												int green = (int)((1.0-tval)*255.0);
+												int blue = 0;
 												
 												String rstr = Integer.toString(red, 16);
 												String gstr = Integer.toString(green, 16);
+												String bstr = Integer.toString(blue, 16);
 												
-												String allstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr);
+												String allstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
+												
+												
+												Map phmap = phmaps[k];
+												double phval = (double)phmap.get( sub );
+												double tphval = (phval-5.0)/4.0;
+												
+												red = (int)(tphval*255.0);
+												green = 0;
+												blue = (int)((1.0-tphval)*255.0);
+												
+												rstr = Integer.toString(red, 16);
+												gstr = Integer.toString(green, 16);
+												bstr = Integer.toString(blue, 16);
+												
+												String phstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
+
+												
 												
 												Map colormap = colormaps[k];
 												String[] csplit = ((String)colormap.get( sub )).split("\t");
 												
 												red = (int)(Double.parseDouble(csplit[0])*255.0);
 												green = (int)(Double.parseDouble(csplit[1])*255.0);
-												int blue = (int)(Double.parseDouble(csplit[2])*255.0);
+												blue = (int)(Double.parseDouble(csplit[2])*255.0);
 												
 												rstr = Integer.toString(red, 16);
 												gstr = Integer.toString(green, 16);
-												String bstr = Integer.toString(blue, 16);
+												bstr = Integer.toString(blue, 16);
 												
 												String cstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
 												
 												check = true;
-												fw.write( line+"[#"+allstr+"00];"+sub+"[#"+cstr+"]\n" );
+												fw.write( line+"[#"+allstr+"]-----[#"+phstr+"];"+sub+"[#"+cstr+"]\n" );
 												break;
 											}
 											k++;
@@ -5372,6 +5391,11 @@ public class SerifyApplet extends JApplet {
 		return dvals;
 	}
 	
+	Map<String,String>	snaedismap;
+	Map<String,String>	snaediscolormap;
+	Map<String,Double>	snaedisheatmap;
+	Map<String,Double>	snaedisphmap;
+	
 	Map<String,String>	snaedis1map;
 	Map<String,String>	snaedis2map;
 	Map<String,String>	snaedis3map;
@@ -5380,7 +5404,7 @@ public class SerifyApplet extends JApplet {
 	Map<String,String>	snaedis6map;
 	Map<String,String>	snaedis7map;
 	Map<String,String>	snaedis8map;
-	
+
 	Map<String,String>	snaedis1colormap;
 	Map<String,String>	snaedis2colormap;
 	Map<String,String>	snaedis3colormap;
@@ -5800,6 +5824,44 @@ public class SerifyApplet extends JApplet {
 		snaedis8phmap.put( "851_deildartunguhver_vatn", 8.5 );
 		snaedis8phmap.put( "852_deildartunguhver_jardvegur", 8.5 );
 		snaedis8phmap.put( "852_deildartunguhver_vatn", 8.5 );
+		
+		snaedismap = new HashMap<String,String>();
+		snaediscolormap = new HashMap<String,String>();
+		snaedisphmap = new HashMap<String,Double>();
+		snaedisheatmap = new HashMap<String,Double>();
+		
+		Map[] maps = {snaedis1map,snaedis2map,snaedis3map,snaedis4map,snaedis5map,snaedis6map,snaedis7map,snaedis8map};
+		Map[] heatmaps = {snaedis1heatmap,snaedis2heatmap,snaedis3heatmap,snaedis4heatmap,snaedis5heatmap,snaedis6heatmap,snaedis7heatmap,snaedis8heatmap};
+		Map[] phmaps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
+		Map[] colormaps = {snaedis1colormap,snaedis2colormap,snaedis3colormap,snaedis4colormap,snaedis5colormap,snaedis6colormap,snaedis7colormap,snaedis8colormap};
+		
+		for( Map map : maps ) {
+			for( Object key : map.keySet() ) {
+				Object val = map.get(key);
+				snaedismap.put( (String)key, (String)val );
+			}
+		}
+		
+		for( Map map : heatmaps ) {
+			for( Object key : map.keySet() ) {
+				Object val = map.get(key);
+				snaedisheatmap.put( (String)key, (Double)val );
+			}
+		}
+		
+		for( Map map : phmaps ) {
+			for( Object key : map.keySet() ) {
+				Object val = map.get(key);
+				snaedisphmap.put( (String)key, (Double)val );
+			}
+		}
+		
+		for( Map map : colormaps ) {
+			for( Object key : map.keySet() ) {
+				Object val = map.get(key);
+				snaediscolormap.put( (String)key, (String)val );
+			}
+		}
 	}
 	
 	public void initMapFiles() {
@@ -5824,7 +5886,7 @@ public class SerifyApplet extends JApplet {
 	public StringBuilder replaceTreeColors( StringBuilder treestr ) {
 		initMaps();
 		Map[] maps = {snaedis1heatmap,snaedis2heatmap,snaedis3heatmap,snaedis4heatmap,snaedis5heatmap,snaedis6heatmap,snaedis7heatmap,snaedis8heatmap};
-		//Map[] maps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
+		Map[] phmaps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
 		Map[] colormaps = {snaedis1colormap,snaedis2colormap,snaedis3colormap,snaedis4colormap,snaedis5colormap,snaedis6colormap,snaedis7colormap,snaedis8colormap};
 		
 		int countrep = 0;
@@ -5873,7 +5935,7 @@ public class SerifyApplet extends JApplet {
 		return treestr;
 	}
 	
-	public static void pyroSeq() {
+	public void pyroSeq( Map<String,List<Double>>	specmap, Map<String,List<Double>>	specphmap ) {
 		File dir = new File("/home/sigmar/pyro/locs");
 		File[] ff = dir.listFiles( new FilenameFilter() {
 			@Override
@@ -5896,6 +5958,12 @@ public class SerifyApplet extends JApplet {
 			
 			int countmissing = 0;
 			for( File f : ff ) {
+				String loc = f.getName();
+				loc = loc.substring(0, loc.length()-4);
+				
+				double heat = snaedisheatmap.get( loc );
+				double ph = snaedisphmap.get( loc );
+				
 				File nf = new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getName() );
 				List<Set<String>> cluster = makeBlastCluster( new FileInputStream( nf ), null );
@@ -5910,6 +5978,17 @@ public class SerifyApplet extends JApplet {
 							System.err.println( c );
 							countmissing++;
 						} else if( teg.contains( "hermus" ) ) {
+							
+							for( String spec : specmap.keySet() ) {
+								if( teg.contains( spec ) ) {
+									List<Double> dvals = specmap.get(spec);
+									dvals.add( heat );
+									List<Double> phvals = specphmap.get(spec);
+									phvals.add( ph );
+									break;
+								}
+							}
+							
 							if( !tegcount.containsKey( teg ) ) {
 								tegmap.put( c, teg );
 								tegcount.put( teg, 1 );
@@ -5928,7 +6007,7 @@ public class SerifyApplet extends JApplet {
 					}
 				}
 				
-				FileWriter fw = new FileWriter("/home/sigmar/pyro/locs/thermus/"+f.getName().substring(0, f.getName().length()-4)+"_thermus2.fna");
+				FileWriter fw = new FileWriter("/home/sigmar/pyro/locs/thermus/twoperc3/"+f.getName().substring(0, f.getName().length()-4)+"_thermus3.fna");
 				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false );
 				fw.close();
 			}
@@ -5940,21 +6019,111 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public static void main(String[] args) {
-		/*SerifyApplet sa = new SerifyApplet();
+	public void corr() {
+		double meantmp = 0.0;
+		double meanph = 0.0;
+		for( String snaedis : snaedisheatmap.keySet() ) {
+			double temp = snaedisheatmap.get( snaedis );
+			double ph = snaedisphmap.get( snaedis );
+			
+			meantmp += temp;
+			meanph += ph;
+			
+			System.err.println( temp + "  " + ph );
+		}
+		meantmp /= snaedisheatmap.size();
+		meanph /= snaedisphmap.size();
 		
-		try {
-			Path p = Paths.get( "/home/sigmar/flott.tre" );
+		System.err.println( meantmp + "  " + meanph );
+		
+		double vartmp = 0.0;
+		double varph = 0.0;
+		double covar = 0.0;
+		for( String snaedis : snaedisheatmap.keySet() ) {
+			double temp = snaedisheatmap.get( snaedis );
+			double ph = snaedisphmap.get( snaedis );
+			
+			double tmpdev = (temp-meantmp);
+			double phdev = (ph-meanph);
+			
+			vartmp += tmpdev*tmpdev;
+			varph += phdev*phdev;
+			covar += tmpdev*phdev;
+		}
+		
+		double corr = covar/( Math.sqrt(varph)*Math.sqrt(vartmp) );
+		System.err.println( corr );
+	}
+	
+	public static void main(String[] args) {
+		SerifyApplet sa = new SerifyApplet();
+		sa.initMaps();
+		
+		/*try {
+			Path p = Paths.get( "/home/sigmar/thermusmeta.tre" );
 			byte[] bb = Files.readAllBytes( p );
 			StringBuilder str = new StringBuilder( new String( bb ) );
 			str = sa.replaceTreeColors( str );
-			p = Paths.get( "/home/sigmar/flott_new.tre" );
+			p = Paths.get( "/home/sigmar/thermusmeta_new.tre" );
 			Files.write( p, str.toString().getBytes() );
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}*/
 		
-		pyroSeq();
+		Map<String,List<Double>>	specmap = new HashMap<String,List<Double>>();
+		specmap.put( "antranikianii", new ArrayList<Double>() );
+		specmap.put( "arciformis", new ArrayList<Double>() );
+		specmap.put( "brockianus", new ArrayList<Double>() );
+		specmap.put( "igniterrae", new ArrayList<Double>() );
+		specmap.put( "islandicus", new ArrayList<Double>() );
+		specmap.put( "scotoductus", new ArrayList<Double>() );
+		
+		Map<String,List<Double>>	specphmap = new HashMap<String,List<Double>>();
+		specphmap.put( "antranikianii", new ArrayList<Double>() );
+		specphmap.put( "arciformis", new ArrayList<Double>() );
+		specphmap.put( "brockianus", new ArrayList<Double>() );
+		specphmap.put( "igniterrae", new ArrayList<Double>() );
+		specphmap.put( "islandicus", new ArrayList<Double>() );
+		specphmap.put( "scotoductus", new ArrayList<Double>() );
+		
+		//corr
+		//sa.corr();
+		
+		try {
+			File f = new File( "/home/sigmar/union_16.blastout" );
+			List<Set<String>> cluster = sa.makeBlastCluster( new FileInputStream( f ), null );
+			FileOutputStream os = new FileOutputStream( "/home/sigmar/union_16.txt" );
+			sa.writeClusters(os, cluster);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		/*sa.pyroSeq( specmap, specphmap );
+		for( String key : specmap.keySet() ) {
+			List<Double> vals = specmap.get( key );
+			double mean = 0.0;
+			for( double val : vals ) mean += val;
+			mean /= vals.size();
+			
+			double var = 0.0;
+			for( double val : vals ) var += (val-mean)*(val-mean);
+			var /= vals.size();
+			double stdev = Math.sqrt( var );
+			
+			vals = specphmap.get( key );
+			double meanph = 0.0;
+			for( double val : vals ) meanph += val;
+			meanph /= vals.size();
+			
+			double varph = 0.0;
+			for( double val : vals ) varph += (val-meanph)*(val-meanph);
+			varph /= vals.size();
+			double stdevph = Math.sqrt( varph );
+			
+			System.err.println( key + "\t" +mean+"±"+stdev+"\t"+meanph+"±"+stdevph );
+		}*/
 		
 		//mapFiles();
 		
