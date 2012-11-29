@@ -805,6 +805,15 @@ public class TreeUtil {
 			setName( newname, true );
 		}
 		
+		public void addInfo( String info ) {
+			if( infolist == null ) infolist = new ArrayList<String>();
+			infolist.add( info );
+		}
+		
+		public void clearInfo() {
+			if( this.infolist != null ) this.infolist.clear();
+		}
+		
 		public void setName( String newname, boolean parse ) {
 			if( parse ) {
 				if( newname != null ) {
@@ -826,7 +835,7 @@ public class TreeUtil {
 								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
 							}
 							this.setColor( null );
-							this.infolist.clear();
+							clearInfo();
 						} else {
 							if( si == -1 ) {
 								this.name = newname.substring(0,ci);
@@ -835,15 +844,15 @@ public class TreeUtil {
 								this.setFontSize( -1.0 );
 								
 								ci = newname.indexOf( '[', ce+1 );
-								while( ci < si && ci < fi ) {
-									infolist.add( newname.substring(ce+1, ci) );
+								while( ci != -1 ) {
+									addInfo( newname.substring(ce+1, ci) );
 									ce = newname.indexOf( ']', ci+1 );
-									infolist.add( newname.substring(ci, ce+1) );
+									addInfo( newname.substring(ci, ce+1) );
 									
 									ci = newname.indexOf( '[', ce+1 );
 								}
 								int vi = Math.min(si, fi);
-								if( vi > ce+1 ) infolist.add( newname.substring(ce+1, vi) );
+								if( vi > ce+1 ) addInfo( newname.substring(ce+1, vi) );
 							} else {
 								this.name = newname.substring(0,Math.min(ci, si));
 								int ce = newname.indexOf("]",ci+1);
@@ -851,15 +860,15 @@ public class TreeUtil {
 								this.setColor( newname.substring(ci+1,ce) );
 								
 								ci = newname.indexOf( '[', ce+1 );
-								while( ci < si && ci < fi ) {
-									infolist.add( newname.substring(ce+1, ci) );
+								while( ci != -1 && ci < si ) {
+									addInfo( newname.substring(ce+1, ci) );
 									ce = newname.indexOf( ']', ci+1 );
-									infolist.add( newname.substring(ci, ce+1) );
+									addInfo( newname.substring(ci, ce+1) );
 									
 									ci = newname.indexOf( '[', ce+1 );
 								}
 								int vi = Math.min(si, fi);
-								if( vi > ce+1 ) infolist.add( newname.substring(ce+1, vi) );
+								if( vi > ce+1 ) addInfo( newname.substring(ce+1, vi) );
 								
 								String mfstr = newname.substring(si+1,se);
 								String[] mfsplit = mfstr.split(" ");
@@ -884,7 +893,7 @@ public class TreeUtil {
 					}
 	 				this.setMeta( null );
 					this.setColor( null );
-					this.infolist.clear();
+					clearInfo();
 				}
 			} else {
 				this.name = newname;
