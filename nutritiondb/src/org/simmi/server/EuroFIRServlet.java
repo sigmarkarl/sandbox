@@ -319,8 +319,10 @@ public class EuroFIRServlet extends HttpServlet {
 	
 	public static void main(String[] args) {
 		try {
-			FileInputStream fis = new FileInputStream( "/home/sigmar/sandbox/eurofir/src/testrequest3.xml" );
-			fusionTable( fis, new PrintWriter( System.out ) );
+			FileInputStream fis = new FileInputStream( "/u0/matis/eurofir/src/testrequest3.xml" );
+			PrintWriter pw = new PrintWriter( System.out );
+			fusionTable( fis, pw );
+			pw.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
