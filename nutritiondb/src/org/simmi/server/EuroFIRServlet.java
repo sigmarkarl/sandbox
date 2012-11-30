@@ -23,6 +23,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.fusiontables.Fusiontables;
 import com.google.api.services.fusiontables.Fusiontables.Query;
 import com.google.api.services.fusiontables.Fusiontables.Query.SqlGet;
+import com.google.api.services.fusiontables.FusiontablesRequestInitializer;
 import com.google.api.services.fusiontables.model.Sqlresponse;
 import com.matis.eurofir.webservices.Ws.PseudoResult;
 
@@ -37,6 +38,12 @@ public class EuroFIRServlet extends HttpServlet {
 		
 		//pw.println
 	}*/
+	
+	static String apikey = "AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
+	static String componentId = "1V220glQaJXgeWrimZ5gDiyRwhKMNp437ZeAnRNI";
+	static String foodId = "1kVdzllCGHpktvP7jjwVGuQ6M5XF3qUMkBBq9Cn4";
+	static String componentValueId = "1iPhnOf7BlPQSeMz1zsanxA2mqQ2Kv0PYo-BQE9U";
+	static String referenceId = "1qQ34cWDUcgmsms9A3kZ8BuWwOrxf5sdkJ0USJnU";
 	
 	/**
 	 * 
@@ -264,7 +271,8 @@ public class EuroFIRServlet extends HttpServlet {
 		  //.setServiceAccountPrivateKey( pk )
 		  .build();
 	    
-		Fusiontables ft = new Fusiontables.Builder( httpTransport, jsonFactory, credential ).build();
+	    FusiontablesRequestInitializer fri = new FusiontablesRequestInitializer(apikey);
+		Fusiontables ft = new Fusiontables.Builder( httpTransport, jsonFactory, credential ).setFusiontablesRequestInitializer(fri).build();
 		final Query query = ft.query();
 		
 		PseudoResult rs = new PseudoResult() {
@@ -283,7 +291,11 @@ public class EuroFIRServlet extends HttpServlet {
 			@Override
 			public String getString(String col) {
 				if( rows != null && colind.containsKey(col) ) {
-					return (String)rows.get( colind.get( col ) ).get(i);
+					int ci = colind.get( col );
+					if( ci < rows.size() ) {
+						List<Object> lobj = rows.get( ci );
+						if( lobj != null && i < lobj.size() ) return (String)lobj.get(i); 
+					}
 				}
 				return null;
 			}
@@ -292,9 +304,18 @@ public class EuroFIRServlet extends HttpServlet {
 			public void init(String sql) {
 				colind = new HashMap<String,Integer>();
 				try {
+					sql = "select OriginalFoodCode from "+foodId+" where OriginalFoodName like '%appel%'";
+					
 					SqlGet sqlget = query.sqlGet( sql );
 					Sqlresponse sqlresp = sqlget.execute();
 					rows = sqlresp.getRows();
+					
+					if( rows != null ) for( List<Object> lobj : rows ) {
+						for( Object obj : lobj ) {
+							System.err.print( obj.toString() );
+						}
+						System.err.println();
+					}
 					
 					int k = 0;
 					for( String str : sqlresp.getColumns() ) {
@@ -319,7 +340,7 @@ public class EuroFIRServlet extends HttpServlet {
 	
 	public static void main(String[] args) {
 		try {
-			FileInputStream fis = new FileInputStream( "/home/sigmar/sandbox/eurofir/src/testrequest3.xml" );
+			FileInputStream fis = new FileInputStream( "/home/sigmar/matis/eurofir/src/testrequest3.xml" );
 			fusionTable( fis, new PrintWriter( System.out ) );
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

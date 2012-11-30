@@ -2158,7 +2158,7 @@ public class GeneSet extends JApplet {
 			File ff = new File( dir, name );
 			FileInputStream	fis = new FileInputStream( ff );
 			
-			SerifyApplet.joinBlastSets(fis, writeSimplifiedBlast, union, total);
+			SerifyApplet.joinBlastSets(fis, writeSimplifiedBlast, union, total, 0.0);
 		}
 		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total, species);
 
