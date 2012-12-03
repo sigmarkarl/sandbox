@@ -1,5 +1,6 @@
 package org.simmi.server;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -8,8 +9,10 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +28,7 @@ import com.google.api.services.fusiontables.Fusiontables.Query;
 import com.google.api.services.fusiontables.Fusiontables.Query.SqlGet;
 import com.google.api.services.fusiontables.FusiontablesRequestInitializer;
 import com.google.api.services.fusiontables.model.Sqlresponse;
+import com.matis.eurofir.webservices.FDQL;
 import com.matis.eurofir.webservices.Ws.PseudoResult;
 
 public class EuroFIRServlet extends HttpServlet {
@@ -44,6 +48,164 @@ public class EuroFIRServlet extends HttpServlet {
 	static String foodId = "1kVdzllCGHpktvP7jjwVGuQ6M5XF3qUMkBBq9Cn4";
 	static String componentValueId = "1iPhnOf7BlPQSeMz1zsanxA2mqQ2Kv0PYo-BQE9U";
 	static String referenceId = "1qQ34cWDUcgmsms9A3kZ8BuWwOrxf5sdkJ0USJnU";
+	
+	static Map<String,Set<String>>	tableColumnMap = new HashMap<String,Set<String>>();
+	
+	static {
+		Set<String>	foodSet = new HashSet<String>();
+		
+		foodSet.add( "OriginalFoodCode" );
+		foodSet.add( "OriginalFoodName" );
+		foodSet.add( "EnglishFoodName" );
+		foodSet.add( "ScientificFoodName" );
+		foodSet.add( "OtherFoodNames" );
+		foodSet.add( "OriginalFoodGroupCode" );
+		foodSet.add( "FoodGroupIS1" );
+		foodSet.add( "FoodGroupIS2" );
+		foodSet.add( "FoodGroupIS3" );
+		foodSet.add( "CodexFoodStandards" );
+		foodSet.add( "ArticleNumber" );
+		foodSet.add( "E_number" );
+		foodSet.add( "INS_code" );
+		foodSet.add( "LangualCodes" );
+		foodSet.add( "CODEXAdditives" );
+		foodSet.add( "CODEXFood" );
+		foodSet.add( "CODEXContaminants" );
+		foodSet.add( "FAOBalanceSheet" );
+		foodSet.add( "CIAAFood" );
+		foodSet.add( "EuroCode2" );
+		foodSet.add( "AgriculturalConditions" );
+		foodSet.add( "Cuisine" );
+		foodSet.add( "EdiblePortion" );
+		foodSet.add( "WastePortion" );
+		foodSet.add( "NatureofEdiblePortion" );
+		foodSet.add( "NatureofWaste" );
+		foodSet.add( "TypicalServingSize" );
+		foodSet.add( "TypicalWeightperPiece" );
+		foodSet.add( "Colour" );
+		foodSet.add( "FinalPreparation" );
+		foodSet.add( "SpecificGravity" );
+		foodSet.add( "NitrogenProteinFactor" );
+		foodSet.add( "FattyAcidFactor" );
+		foodSet.add( "GenericImage" );
+		foodSet.add( "SpecificImage" );
+		foodSet.add( "Producer" );
+		foodSet.add( "Distributor" );
+		foodSet.add( "Retailer" );
+		foodSet.add( "AreaOfOrigin" );
+		foodSet.add( "AreaOfProcessing" );
+		foodSet.add( "AreaofConsumption" );
+		foodSet.add( "WebPublishReady" );
+		foodSet.add( "ListOfIngredients" );
+		foodSet.add( "Remarks" );
+		foodSet.add( "DateOfGeneration" );
+		foodSet.add( "GeneratedBy" );
+		foodSet.add( "DateOfUpdate" );
+		foodSet.add( "UpdatedBy" );
+		
+		Set<String>	componentSet = new HashSet<String>();
+		
+		componentSet.add( "EuroFIRComponentIdentifier" );
+		componentSet.add( "OriginalComponentCode" );
+		componentSet.add( "OriginalComponentName" );
+		componentSet.add( "EnglishComponentName" );
+		componentSet.add( "Algorithm" );
+		componentSet.add( "Unit" );
+		componentSet.add( "GrunnefniIS" );
+		componentSet.add( "YflIS" );
+		componentSet.add( "UflIS" );
+		componentSet.add( "InndratturIS" );
+		componentSet.add( "FAgroupIS" );
+		componentSet.add( "WebPublishReady" );
+		componentSet.add( "Remarks" );
+		componentSet.add( "DateofGeneration" );
+		componentSet.add( "GeneratedBy" );
+		componentSet.add( "DateOfUpdate" );
+		componentSet.add( "UpdatedBy" );
+		
+		Set<String>	componentValueSet = new HashSet<String>();
+		
+		componentValueSet.add( "OriginalFoodCode" );
+		componentValueSet.add( "OriginalComponentCode" );
+		componentValueSet.add( "SelectedValue" );
+		componentValueSet.add( "Unit" );
+		componentValueSet.add( "Matrixunit" );
+		componentValueSet.add( "ValueType" );
+		componentValueSet.add( "AcquisitionType" );
+		componentValueSet.add( "DateofEvaluation" );
+		componentValueSet.add( "DateofEvaluationDisp" );
+		componentValueSet.add( "N" );
+		componentValueSet.add( "AnalyticalPortionSize" );
+		componentValueSet.add( "NoofAnalyticalPortionReplicates" );
+		componentValueSet.add( "Mean" );
+		componentValueSet.add( "Median" );
+		componentValueSet.add( "Minimum" );
+		componentValueSet.add( "Maximum" );
+		componentValueSet.add( "StandardDeviation" );
+		componentValueSet.add( "StandardError" );
+		componentValueSet.add( "MethodType" );
+		componentValueSet.add( "MethodIndicator" );
+		componentValueSet.add( "MethodParameter" );
+		componentValueSet.add( "MethodFK" );
+		componentValueSet.add( "NoofPrimarySampleUnits" );
+		componentValueSet.add( "SampleFK" );
+		componentValueSet.add( "OriginalReferenceCode" );
+		componentValueSet.add( "QI_Eurofir" );
+		componentValueSet.add( "QualityAssessmentFK" );
+		componentValueSet.add( "SamplingStrategy" );
+		componentValueSet.add( "DateOfAnalysis" );
+		componentValueSet.add( "DateOfAnalysisDisp" );
+		componentValueSet.add( "Remarks" );
+		componentValueSet.add( "DateofGeneration" );
+		componentValueSet.add( "GeneratedBy" );
+		componentValueSet.add( "DateOfUpdate" );
+		componentValueSet.add( "UpdatedBy" );
+		
+		Set<String>	referenceSet = new HashSet<String>();
+		
+		referenceSet.add( "OriginalReferenceCode" );
+		referenceSet.add( "StandardReferenceCode" );
+		referenceSet.add( "AcquisitionType" );
+		referenceSet.add( "ReferenceType" );
+		referenceSet.add( "OrgCitation" );
+		referenceSet.add( "Title" );
+		referenceSet.add( "Authors" );
+		referenceSet.add( "PublicationDate" );
+		referenceSet.add( "Version" );
+		referenceSet.add( "OriginalLanguage" );
+		referenceSet.add( "ISBN" );
+		referenceSet.add( "FirstEditionDate" );
+		referenceSet.add( "EditionNumber" );
+		referenceSet.add( "NumberofPages" );
+		referenceSet.add( "BookTitle" );
+		referenceSet.add( "Editors" );
+		referenceSet.add( "LongJournalName" );
+		referenceSet.add( "AbbreviatedJournalName" );
+		referenceSet.add( "ISSN" );
+		referenceSet.add( "Volume" );
+		referenceSet.add( "Issue" );
+		referenceSet.add( "Pages" );
+		referenceSet.add( "SeriesName" );
+		referenceSet.add( "SeriesNumber" );
+		referenceSet.add( "ReportTitle" );
+		referenceSet.add( "FileFormat" );
+		referenceSet.add( "WWW" );
+		referenceSet.add( "DOI" );
+		referenceSet.add( "PublicationMedium" );
+		referenceSet.add( "OperatingSystem" );
+		referenceSet.add( "Validfrom" );
+		referenceSet.add( "Remarks" );
+		referenceSet.add( "DateOfGeneration" );
+		referenceSet.add( "GeneratedBy" );
+		referenceSet.add( "DateOfUpdate" );
+		referenceSet.add( "UpdatedBy" );
+		referenceSet.add( "Citation" );
+		
+		tableColumnMap.put( "food", foodSet );
+		tableColumnMap.put( "component", componentSet );
+		tableColumnMap.put( "componentValue", componentValueSet );
+		tableColumnMap.put( "reference", referenceSet );
+	};
 	
 	/**
 	 * 
@@ -301,14 +463,23 @@ public class EuroFIRServlet extends HttpServlet {
 			}
 
 			@Override
-			public void init(String sql) {
+			public void init(String fdql) {
 				colind = new HashMap<String,Integer>();
 				try {
-					sql = "select OriginalFoodCode from "+foodId+" where OriginalFoodName like '%appel%'";
+					//String sql = "select OriginalFoodCode from "+foodId+" where OriginalFoodName like '%appel%'";
 					
+					/*String sql = "select * from "+referenceId; //+" where OriginalComponentCode like '%appel%'";
 					SqlGet sqlget = query.sqlGet( sql );
 					Sqlresponse sqlresp = sqlget.execute();
-					rows = sqlresp.getRows();
+					rows = sqlresp.getRows();*/
+					
+					List<String> ls = FDQL.fdqlToSqls( new ByteArrayInputStream( fdql.getBytes() ), tableColumnMap );
+					
+					for( String sql : ls ) {
+						SqlGet sqlget = query.sqlGet( sql );
+						Sqlresponse sqlresp = sqlget.execute();
+						List<List<Object>> rowsObjs = sqlresp.getRows();
+					}
 					
 					if( rows != null ) for( List<Object> lobj : rows ) {
 						for( Object obj : lobj ) {
@@ -317,11 +488,13 @@ public class EuroFIRServlet extends HttpServlet {
 						System.err.println();
 					}
 					
-					int k = 0;
+					/*int k = 0;
 					for( String str : sqlresp.getColumns() ) {
+						System.err.println( str );
+						
 						colind.put(str, k);
 						k++;
-					}
+					}*/
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -341,7 +514,9 @@ public class EuroFIRServlet extends HttpServlet {
 	public static void main(String[] args) {
 		try {
 			FileInputStream fis = new FileInputStream( "/home/sigmar/matis/eurofir/src/testrequest3.xml" );
-			fusionTable( fis, new PrintWriter( System.out ) );
+			PrintWriter pw = new PrintWriter( System.out );
+			fusionTable( fis, pw );
+			pw.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
