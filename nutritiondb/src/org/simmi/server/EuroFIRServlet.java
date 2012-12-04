@@ -201,10 +201,10 @@ public class EuroFIRServlet extends HttpServlet {
 		referenceSet.add( "UpdatedBy" );
 		referenceSet.add( "Citation" );
 		
-		tableColumnMap.put( "food", foodSet );
-		tableColumnMap.put( "component", componentSet );
-		tableColumnMap.put( "componentValue", componentValueSet );
-		tableColumnMap.put( "reference", referenceSet );
+		tableColumnMap.put( "Food", foodSet );
+		tableColumnMap.put( "Component", componentSet );
+		tableColumnMap.put( "ComponentValue", componentValueSet );
+		tableColumnMap.put( "Reference", referenceSet );
 	};
 	
 	/**
@@ -424,6 +424,7 @@ public class EuroFIRServlet extends HttpServlet {
 		HttpTransport httpTransport = new NetHttpTransport();
 	    JsonFactory jsonFactory = new JacksonFactory();
 	    
+	    
 	    GoogleCredential credential = new GoogleCredential.Builder()
 		  .setTransport(httpTransport)
 		  .setJsonFactory(jsonFactory)
@@ -474,6 +475,12 @@ public class EuroFIRServlet extends HttpServlet {
 					rows = sqlresp.getRows();*/
 					
 					List<String> ls = FDQL.fdqlToSqls( new ByteArrayInputStream( fdql.getBytes() ), tableColumnMap );
+					for( int i = 0; i < ls.size(); i++ ) {
+						ls.set( i, ls.get(i).replace("from Food", "from "+foodId) );
+						ls.set( i, ls.get(i).replace("from Component", "from "+componentId) );
+						ls.set( i, ls.get(i).replace("from ComponentValue", "from "+componentValueId) );
+						ls.set( i, ls.get(i).replace("from Reference", "from "+referenceId) );
+					}
 					
 					for( String sql : ls ) {
 						SqlGet sqlget = query.sqlGet( sql );
@@ -513,7 +520,7 @@ public class EuroFIRServlet extends HttpServlet {
 	
 	public static void main(String[] args) {
 		try {
-			FileInputStream fis = new FileInputStream( "/home/sigmar/matis/eurofir/src/testrequest3.xml" );
+			FileInputStream fis = new FileInputStream( "/u0/matis/eurofir/src/testrequest3.xml" );
 			PrintWriter pw = new PrintWriter( System.out );
 			fusionTable( fis, pw );
 			pw.close();
