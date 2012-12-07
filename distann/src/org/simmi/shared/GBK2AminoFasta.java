@@ -1,6 +1,9 @@
 package org.simmi.shared;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -171,38 +174,46 @@ public class GBK2AminoFasta {
 			String trimline = line.trim();
 			//String[] split = trimline.split("[\t ]+");
 			
-			if( trimline.startsWith("CDS ") || trimline.startsWith("gene") ) {
+			if( trimline.startsWith("CDS ") ) { //|| trimline.startsWith("gene ") ) {
 				if( anno != null ) annolist.add( anno );
 				anno = new Anno();
 				anno.spec = filename;
 				String[] split = trimline.split("[\t ]+");
-				if( split[1].startsWith("compl") ) {
-					int iof = split[1].indexOf(")");
-					String substr = split[1].substring(11, iof);
-					String[] nsplit = substr.split("\\.\\.");
-					//if( !nsplit[0].startsWith("join")  ) {
-					char c = nsplit[0].charAt(0);
-					char c2 = nsplit[1].charAt(0);
-					if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
-						anno.start = Integer.parseInt( nsplit[0] );
-						anno.stop = Integer.parseInt( nsplit[1] );
-						anno.comp = true;
+				if( split.length > 1 ) {
+					if( split[1].startsWith("compl") ) {
+						int iof = split[1].indexOf(")");
+						String substr = split[1].substring(11, iof);
+						String[] nsplit = substr.split("\\.\\.");
+						//if( !nsplit[0].startsWith("join")  ) {
+						char c = nsplit[0].charAt(0);
+						char c2 = nsplit[1].charAt(0);
+						if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
+							anno.start = Integer.parseInt( nsplit[0] );
+							anno.stop = Integer.parseInt( nsplit[1] );
+							anno.comp = true;
+						} else {
+							System.err.println( nsplit[0] + " n " + nsplit[1] );
+							anno = null;
+						}
 					} else {
-						System.err.println( nsplit[0] + " n " + nsplit[1] );
-						anno = null;
+						String[] nsplit = split[1].split("\\.\\.");
+						if( nsplit.length > 1 ) {
+							char c = nsplit[0].charAt(0);
+							char c2 = nsplit[1].charAt(0);
+							if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
+								anno.start = Integer.parseInt( nsplit[0] );
+								anno.stop = Integer.parseInt( nsplit[1] );
+								anno.comp = false;
+							} else {
+								System.err.println( nsplit[0] + " n " + nsplit[1] );
+								anno = null;
+							}
+						} else {
+							System.err.println("nono2");
+						}
 					}
 				} else {
-					String[] nsplit = split[1].split("\\.\\.");
-					char c = nsplit[0].charAt(0);
-					char c2 = nsplit[1].charAt(0);
-					if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
-						anno.start = Integer.parseInt( nsplit[0] );
-						anno.stop = Integer.parseInt( nsplit[1] );
-						anno.comp = false;
-					} else {
-						System.err.println( nsplit[0] + " n " + nsplit[1] );
-						anno = null;
-					}
+					System.err.println("nono");
 				}
 			} else if( trimline.startsWith("/product") ) {
 				if( anno != null ) {
@@ -242,7 +253,7 @@ public class GBK2AminoFasta {
 		
 		for( Anno ao : annolist ) {
 			sb.append( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]\n" );
-			String 	val = strbuf.substring(ao.start-1, ao.stop);
+			String 	val = strbuf.substring( Math.max(0, ao.start-1), ao.stop );
 			
 			//System.err.println(val);
 			//String	ami = "";
@@ -263,7 +274,7 @@ public class GBK2AminoFasta {
 			} else {
 				for( int i = 0; i < val.length(); i+=3 ) {
 					//ami += 
-					String first = val.substring(i, i+3).toUpperCase();
+					String first = val.substring( i, Math.min(val.length(), i+3) ).toUpperCase();
 					String str = amimap.get( first );
 					if( str != null ) {
 						if( str.equals("0") || str.equals("1") ) break;
@@ -295,7 +306,7 @@ public class GBK2AminoFasta {
 			for( FTPFile ftpfile : files ) {
 				if( ftpfile.isDirectory() ) {
 					String fname = ftpfile.getName();
-					if( fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
+					if( fname.contains("shimai") ) {//fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
 						System.err.println( "up "+fname );
 						if( !ftp.isConnected() ) {
 							ftp.connect("ftp.ncbi.nih.gov");
@@ -307,14 +318,14 @@ public class GBK2AminoFasta {
 						for( FTPFile newftpfile : newfiles ) {
 							String newfname = newftpfile.getName();
 							System.err.println("trying " + newfname + " in " + fname);
-							if( newfname.endsWith(".fna") ) {
+							if( newfname.endsWith(".gbk") ) {
 								System.err.println("in " + fname);
 								long size = newftpfile.getSize();
 								String fwname;
-								//if( size > 3000000 ) fwname = fname+".gbk";
-								//else fwname = fname+"_p"+(cnt++)+".gbk";
-								if( size > 1500000 ) fwname = fname+".fna";
-								else fwname = fname+"_p"+(cnt++)+".fna";
+								if( size > 3000000 ) fwname = fname+".gbk";
+								else fwname = fname+"_p"+(cnt++)+".gbk";
+								//if( size > 1500000 ) fwname = fname+".fna";
+								//else fwname = fname+"_p"+(cnt++)+".fna";
 								
 								FileWriter fw = new FileWriter( "/home/sigmar/ftpncbi/"+fwname );
 								InputStream is = ftp.retrieveFileStream( newfname );
@@ -440,9 +451,9 @@ public class GBK2AminoFasta {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
-		ftpExtract();
+		//ftpExtract();
 		
-		/*try {
+		try {
 			File file = new File("/home/sigmar/ftpncbi/");
 			File[] ff = file.listFiles();
 			for( File f : ff ) {
@@ -458,8 +469,10 @@ public class GBK2AminoFasta {
 				fr.close();
 				
 				String fname = f.getName();
-				StringBuilder sb = handleText( fname.substring(0, fname.length()-4), filetext.toString() );
-				FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/"+fname.substring(0, fname.length()-4)+".aa" );
+				String fstr = fname.substring(0, fname.length()-4);
+				System.err.println( "about to "+fstr );
+				StringBuilder sb = handleText( fstr, filetext.toString() );
+				FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/"+fstr+".aa" );
 				fw.write( sb.toString() );
 				fw.close();
 			}
@@ -467,6 +480,6 @@ public class GBK2AminoFasta {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
 }

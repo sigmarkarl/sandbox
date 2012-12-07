@@ -5,9 +5,16 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,12 +29,17 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.JsonGenerator;
+import com.google.api.client.json.JsonParser;
+import com.google.api.client.json.JsonToken;
 import com.google.api.services.fusiontables.Fusiontables;
 import com.google.api.services.fusiontables.Fusiontables.Query;
 import com.google.api.services.fusiontables.Fusiontables.Query.SqlGet;
 import com.google.api.services.fusiontables.FusiontablesRequestInitializer;
 import com.google.api.services.fusiontables.model.Sqlresponse;
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedInteger;
+import com.google.common.primitives.UnsignedLong;
 import com.matis.eurofir.webservices.FDQL;
 import com.matis.eurofir.webservices.Ws.PseudoResult;
 
@@ -44,6 +56,7 @@ public class EuroFIRServlet extends HttpServlet {
 	}*/
 	
 	static String apikey = "AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";
+								 //1V220glQaJXgeWrimZ5gDiyRwhKMNp437ZeAnRNI
 	static String componentId = "1V220glQaJXgeWrimZ5gDiyRwhKMNp437ZeAnRNI";
 	static String foodId = "1kVdzllCGHpktvP7jjwVGuQ6M5XF3qUMkBBq9Cn4";
 	static String componentValueId = "1iPhnOf7BlPQSeMz1zsanxA2mqQ2Kv0PYo-BQE9U";
@@ -420,9 +433,300 @@ public class EuroFIRServlet extends HttpServlet {
 		}
 	}*/
 	
+	static class SimJsonParser extends JsonParser {
+
+		  private final org.codehaus.jackson.JsonParser parser;
+		  private final JsonFactory factory;
+
+		  @Override
+		  public JsonFactory getFactory() {
+		    return factory;
+		  }
+
+		  SimJsonParser(JsonFactory factory, org.codehaus.jackson.JsonParser parser) {
+		    this.factory = factory;
+		    this.parser = parser;
+		    parser.configure( org.codehaus.jackson.JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS, true);
+		  }
+
+		  @Override
+		  public void close() throws IOException {
+		    parser.close();
+		  }
+
+		  @Override
+		  public JsonToken nextToken() throws IOException {
+		    return convert(parser.nextToken());
+		  }
+
+		  @Override
+		  public String getCurrentName() throws IOException {
+		    return parser.getCurrentName();
+		  }
+
+		  @Override
+		  public JsonToken getCurrentToken() {
+		    return convert(parser.getCurrentToken());
+		  }
+
+		  @Override
+		  public JsonParser skipChildren() throws IOException {
+		    parser.skipChildren();
+		    return this;
+		  }
+
+		  @Override
+		  public String getText() throws IOException {
+		    return parser.getText();
+		  }
+
+		  @Override
+		  public byte getByteValue() throws IOException {
+		    return parser.getByteValue();
+		  }
+
+		  @Override
+		  public float getFloatValue() throws IOException {
+		    return parser.getFloatValue();
+		  }
+
+		  @Override
+		  public int getIntValue() throws IOException {
+		    return parser.getIntValue();
+		  }
+
+		  @Override
+		  public short getShortValue() throws IOException {
+		    return parser.getShortValue();
+		  }
+
+		  @Override
+		  public BigInteger getBigIntegerValue() throws IOException {
+		    return parser.getBigIntegerValue();
+		  }
+
+		  @Override
+		  public UnsignedInteger getUnsignedIntegerValue() throws IOException {
+		    return UnsignedInteger.valueOf(parser.getLongValue());
+		  }
+
+		  @Override
+		  public UnsignedLong getUnsignedLongValue() throws IOException {
+		    return UnsignedLong.valueOf(parser.getBigIntegerValue());
+		  }
+
+		  @Override
+		  public BigDecimal getDecimalValue() throws IOException {
+			  String text = parser.getText();
+			  //System.err.println( text);
+			  BigDecimal bd = text.equals("NaN") ? new BigDecimal( -1.0 ) : new BigDecimal( text );
+			  return bd;
+		    //return parser.getDecimalValue();
+		  }
+
+		  @Override
+		  public double getDoubleValue() throws IOException {
+		    return parser.getDoubleValue();
+		  }
+
+		  @Override
+		  public long getLongValue() throws IOException {
+		    return parser.getLongValue();
+		  }
+		};
+	
+	static class SimJsonGenerator extends JsonGenerator {
+		  private final org.codehaus.jackson.JsonGenerator generator;
+		  private final JsonFactory factory;
+
+		  @Override
+		  public JsonFactory getFactory() {
+		    return factory;
+		  }
+
+		  SimJsonGenerator(JsonFactory factory, org.codehaus.jackson.JsonGenerator generator) {
+		    this.factory = factory;
+		    this.generator = generator;
+		  }
+
+		  @Override
+		  public void flush() throws IOException {
+		    generator.flush();
+		  }
+
+		  @Override
+		  public void close() throws IOException {
+		    generator.close();
+		  }
+
+		  @Override
+		  public void writeBoolean(boolean state) throws IOException {
+		    generator.writeBoolean(state);
+		  }
+
+		  @Override
+		  public void writeEndArray() throws IOException {
+		    generator.writeEndArray();
+		  }
+
+		  @Override
+		  public void writeEndObject() throws IOException {
+		    generator.writeEndObject();
+		  }
+
+		  @Override
+		  public void writeFieldName(String name) throws IOException {
+		    generator.writeFieldName(name);
+		  }
+
+		  @Override
+		  public void writeNull() throws IOException {
+		    generator.writeNull();
+		  }
+
+		  @Override
+		  public void writeNumber(int v) throws IOException {
+		    generator.writeNumber(v);
+		  }
+
+		  @Override
+		  public void writeNumber(long v) throws IOException {
+		    generator.writeNumber(v);
+		  }
+
+		  @Override
+		  public void writeNumber(BigInteger v) throws IOException {
+		    generator.writeNumber(v);
+		  }
+
+		  @Override
+		  public void writeNumber(UnsignedInteger v) throws IOException {
+		    generator.writeNumber(v.longValue());
+		  }
+
+		  @Override
+		  public void writeNumber(UnsignedLong v) throws IOException {
+		    generator.writeNumber(v.bigIntegerValue());
+		  }
+
+		  @Override
+		  public void writeNumber(double v) throws IOException {
+		    generator.writeNumber(v);
+		  }
+
+		  @Override
+		  public void writeNumber(float v) throws IOException {
+		    generator.writeNumber(v);
+		  }
+
+		  @Override
+		  public void writeNumber(BigDecimal v) throws IOException {
+		    generator.writeNumber(v);
+		  }
+
+		  @Override
+		  public void writeNumber(String encodedValue) throws IOException {
+		    generator.writeNumber(encodedValue);
+		  }
+
+		  @Override
+		  public void writeStartArray() throws IOException {
+		    generator.writeStartArray();
+		  }
+
+		  @Override
+		  public void writeStartObject() throws IOException {
+		    generator.writeStartObject();
+		  }
+
+		  @Override
+		  public void writeString(String value) throws IOException {
+		    generator.writeString(value);
+		  }
+
+		  @Override
+		  public void enablePrettyPrint() throws IOException {
+		    generator.useDefaultPrettyPrinter();
+		  }
+		}
+	
+	static JsonToken convert(org.codehaus.jackson.JsonToken token) {
+	    if (token == null) {
+	      return null;
+	    }
+	    switch (token) {
+	      case END_ARRAY:
+	        return JsonToken.END_ARRAY;
+	      case START_ARRAY:
+	        return JsonToken.START_ARRAY;
+	      case END_OBJECT:
+	        return JsonToken.END_OBJECT;
+	      case START_OBJECT:
+	        return JsonToken.START_OBJECT;
+	      case VALUE_FALSE:
+	        return JsonToken.VALUE_FALSE;
+	      case VALUE_TRUE:
+	        return JsonToken.VALUE_TRUE;
+	      case VALUE_NULL:
+	        return JsonToken.VALUE_NULL;
+	      case VALUE_STRING:
+	        return JsonToken.VALUE_STRING;
+	      case VALUE_NUMBER_FLOAT:
+	        return JsonToken.VALUE_NUMBER_FLOAT;
+	      case VALUE_NUMBER_INT:
+	        return JsonToken.VALUE_NUMBER_INT;
+	      case FIELD_NAME:
+	        return JsonToken.FIELD_NAME;
+	      default:
+	        return JsonToken.NOT_AVAILABLE;
+	    }
+	  }
+	
 	public static void fusionTable( InputStream is, PrintWriter pw ) {
 		HttpTransport httpTransport = new NetHttpTransport();
-	    JsonFactory jsonFactory = new JacksonFactory();
+	    JsonFactory jsonFactory = new JsonFactory() {
+
+	    	private final org.codehaus.jackson.JsonFactory factory = new org.codehaus.jackson.JsonFactory();
+	    	  {
+	    	    // don't auto-close JSON content in order to ensure consistent behavior across JSON factories
+	    	    // TODO(rmistry): Should we disable the JsonGenerator.Feature.AUTO_CLOSE_TARGET feature?
+	    	    factory.configure(org.codehaus.jackson.JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false);
+	    	  }
+	    	  
+	    	  @Override
+	    	  public JsonGenerator createJsonGenerator(OutputStream out, Charset enc) throws IOException {
+	    	    return new SimJsonGenerator( this, factory.createJsonGenerator(out, org.codehaus.jackson.JsonEncoding.UTF8) );
+	    	  }
+
+	    	  @Override
+	    	  public JsonGenerator createJsonGenerator(Writer writer) throws IOException {
+	    	    return new SimJsonGenerator( this, factory.createJsonGenerator(writer) );
+	    	  }
+
+	    	  @Override
+	    	  public JsonParser createJsonParser(Reader reader) throws IOException {
+	    	    Preconditions.checkNotNull(reader);
+	    	    return new SimJsonParser(this, factory.createJsonParser(reader));
+	    	  }
+
+	    	  @Override
+	    	  public JsonParser createJsonParser(InputStream in) throws IOException {
+	    	    Preconditions.checkNotNull(in);
+	    	    return new SimJsonParser(this, factory.createJsonParser(in));
+	    	  }
+
+	    	  @Override
+	    	  public JsonParser createJsonParser(InputStream in, Charset charset) throws IOException {
+	    	    Preconditions.checkNotNull(in);
+	    	    return new SimJsonParser(this, factory.createJsonParser(in));
+	    	  }
+
+	    	  @Override
+	    	  public JsonParser createJsonParser(String value) throws IOException {
+	    	    Preconditions.checkNotNull(value);
+	    	    return new SimJsonParser(this, factory.createJsonParser(value));
+	    	  }
+	    };
 	    
 	    
 	    GoogleCredential credential = new GoogleCredential.Builder()
@@ -453,12 +757,10 @@ public class EuroFIRServlet extends HttpServlet {
 
 			@Override
 			public String getString(String col) {
-				if( rows != null && colind.containsKey(col) ) {
+				if( rows != null && i < rows.size() && colind.containsKey(col) ) {
 					int ci = colind.get( col );
-					if( ci < rows.size() ) {
-						List<Object> lobj = rows.get( ci );
-						if( lobj != null && i < lobj.size() ) return (String)lobj.get(i); 
-					}
+					List<Object> lobj = rows.get( i );
+					if( lobj != null && ci < lobj.size() ) return (String)lobj.get(ci); 
 				}
 				return null;
 			}
@@ -477,22 +779,106 @@ public class EuroFIRServlet extends HttpServlet {
 					List<String> ls = FDQL.fdqlToSqls( new ByteArrayInputStream( fdql.getBytes() ), tableColumnMap );
 					for( int i = 0; i < ls.size(); i++ ) {
 						ls.set( i, ls.get(i).replace("from Food", "from "+foodId) );
-						ls.set( i, ls.get(i).replace("from Component", "from "+componentId) );
+						ls.set( i, ls.get(i).replace("from Component ", "from "+componentId+" ") );
 						ls.set( i, ls.get(i).replace("from ComponentValue", "from "+componentValueId) );
 						ls.set( i, ls.get(i).replace("from Reference", "from "+referenceId) );
 					}
 					
+					List<String>		 		foodColumns = new ArrayList<String>();
+					List<String>		 		compColumns = new ArrayList<String>();
+					//Map<String,Integer> 		compValColumnIndex = new HashMap<String,Integer>();
+					Map<Object,List<Object>>	foodMap = new HashMap<Object,List<Object>>();
+					Map<Object,List<Object>>	compMap = new HashMap<Object,List<Object>>();
 					for( String sql : ls ) {
-						SqlGet sqlget = query.sqlGet( sql );
-						Sqlresponse sqlresp = sqlget.execute();
-						List<List<Object>> rowsObjs = sqlresp.getRows();
+						System.err.println( "about to " + sql );
+						if( sql.contains( foodId ) ) {
+							SqlGet sqlget = query.sqlGet( sql );
+							Sqlresponse sqlresp = sqlget.execute();			
+							List<List<Object>> rowObjs = sqlresp.getRows();
+							
+							foodColumns = sqlresp.getColumns();
+							int ind = foodColumns.indexOf("OriginalFoodCode");
+							for( List<Object> lobj : rowObjs ) {
+								foodMap.put( lobj.get(ind).toString(), lobj );
+							}
+						} else if( sql.contains( componentId ) ) {
+							SqlGet sqlget = query.sqlGet( sql );
+							Sqlresponse sqlresp = sqlget.execute();						
+							List<List<Object>> rowObjs = sqlresp.getRows();
+							
+							compColumns = sqlresp.getColumns();
+							int ind = compColumns.indexOf("OriginalComponentCode");
+							for( List<Object> lobj : rowObjs ) {
+								compMap.put( lobj.get(ind).toString(), lobj );
+							}
+						}
 					}
 					
-					if( rows != null ) for( List<Object> lobj : rows ) {
-						for( Object obj : lobj ) {
-							System.err.print( obj.toString() );
+					for( String sql : ls ) {
+						if( sql.contains( componentValueId ) ) {
+							String foodcond = "OriginalFoodCode in (";
+							for( Object foodcode : foodMap.keySet() ) {
+								if( foodcond.endsWith("(") ) foodcond += "'" + foodcode + "'";
+								else foodcond += ",'" + foodcode + "'";
+							}
+							foodcond += ")";
+							
+							String compcond = "OriginalComponentCode in (";
+							for( Object compcode : compMap.keySet() ) {
+								if( compcond.endsWith("(") ) compcond += "'" + compcode + "'";
+								else compcond += ",'" + compcode + "'";
+							}
+							compcond += ")";
+							
+							String newsql = sql + " where " + foodcond + " and " + compcond;
+							System.err.println( "now to " + newsql );
+							
+							SqlGet sqlget = query.sqlGet( newsql );
+							Sqlresponse sqlresp = sqlget.execute();						
+							rows = sqlresp.getRows();
+							List<String> columnNames = sqlresp.getColumns();
+							
+							int find = columnNames.indexOf("OriginalFoodCode");
+							int cind = columnNames.indexOf("OriginalComponentCode");
+							
+							for( List<Object> lobj : rows ) {
+								if( find > cind ) {
+									Object foodcode = lobj.remove( find );
+									lobj.addAll( foodMap.get( foodcode ) );
+									
+									Object compcode = lobj.remove( cind );
+									lobj.addAll( compMap.get( compcode ) );
+								} else {
+									Object compcode = lobj.remove( cind );
+									lobj.addAll( compMap.get( compcode ) );
+									
+									Object foodcode = lobj.remove( find );
+									lobj.addAll( foodMap.get( foodcode ) );
+								}
+							}
+							
+							if( find > cind ) {
+								Object foodcode = columnNames.remove( find );
+								columnNames.addAll( foodColumns );
+								
+								Object compcode = columnNames.remove( cind );
+								columnNames.addAll( compColumns );
+							} else {
+								Object compcode = columnNames.remove( cind );
+								columnNames.addAll( compColumns );
+								
+								Object foodcode = columnNames.remove( find );
+								columnNames.addAll( foodColumns );
+							}
+							
+							int k = 0;
+							for( String str : columnNames ) {
+								colind.put(str, k);
+								k++;
+							}
+							
+							//rows = rowObjs;
 						}
-						System.err.println();
 					}
 					
 					/*int k = 0;
@@ -520,7 +906,7 @@ public class EuroFIRServlet extends HttpServlet {
 	
 	public static void main(String[] args) {
 		try {
-			FileInputStream fis = new FileInputStream( "/u0/matis/eurofir/src/testrequest3.xml" );
+			FileInputStream fis = new FileInputStream( "/home/sigmar/matis/eurofir/src/testrequest3.xml" );
 			PrintWriter pw = new PrintWriter( System.out );
 			fusionTable( fis, pw );
 			pw.close();
