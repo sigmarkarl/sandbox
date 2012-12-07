@@ -504,13 +504,15 @@ public class GeneSet extends JApplet {
 		if (outfile2 != null)
 			fw = new FileWriter(outfile2);
 
-		BufferedReader br2 = new BufferedReader(rd2);
-		//String line = br.readLine();
-		//System.err.println( line );
-		parseBlast( br2, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, true, true );
-		br2.close();
-		if (fw != null) {
-			fw.close();
+		if( rd2 != null ) {
+			BufferedReader br2 = new BufferedReader(rd2);
+			//String line = br.readLine();
+			//System.err.println( line );
+			parseBlast( br2, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, true, true );
+			br2.close();
+			if (fw != null) {
+				fw.close();
+			}
 		}
 	}
 	
@@ -537,15 +539,20 @@ public class GeneSet extends JApplet {
 				}*/
 				
 				int i = trim.indexOf(".aa", 2);
+				int aaa = 4;
+				if( i == -1 ) {
+					i = 2;
+					aaa = 0;
+				}
 				int i2 = trim.indexOf(' ', i);
 				String id;
 				//boolean addon = i == -1;
 				if( addon ) {
 					int si = trim.indexOf('|');
-					int ei = trim.lastIndexOf('|', i2);
+					int ei = trim.lastIndexOf('|'); //, i2);
 					id = trim.substring(si+1,ei);
 				} else {
-					id = trim.substring(i+4,i2).trim();
+					id = trim.substring(i+aaa,i2).trim();
 				}
 				//String id = i == -1 ? trim.substring(1,i2).trim() : trim.substring(i+4,i2).trim();
 				String desc = trim.substring(i2+1);
@@ -933,6 +940,9 @@ public class GeneSet extends JApplet {
 						
 						String[] split = trim.split("[\t ]+");
 						evalue = split[split.length - 1];
+						if( evalue.length() == 0 ) {
+							System.err.println();
+						}
 						if (fw != null)
 							fw.write(trim + "\n");
 					}
@@ -945,6 +955,9 @@ public class GeneSet extends JApplet {
 						
 						String[] split = trim.split("[\t ]+");
 						evalue = split[split.length - 1];
+						if( evalue.length() == 0 ) {
+							System.err.println();
+						}
 						if (fw != null)
 							fw.write(trim + "\n");
 					}
@@ -6625,7 +6638,7 @@ public class GeneSet extends JApplet {
 					public void actionPerformed(ActionEvent e) {
 						final String fasta = textarea.getText();
 						final SmithWater sw = new SmithWater();
-						final InputStream is = GeneSet.class.getResourceAsStream("/thomas.aa");
+						final InputStream is = GeneSet.class.getResourceAsStream("/allthermus.aa");
 						new Thread() {
 							public void run() {
 								try {
@@ -6705,7 +6718,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 45;
+				return 46;
 			}
 
 			@Override
@@ -6793,12 +6806,14 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 40) {
 					return "T.spRLM";
 				} else if (columnIndex == 41) {
-					return "MT.silvianus";
+					return "T.oshimaiJL2";
 				} else if (columnIndex == 42) {
-					return "MT.ruber";
+					return "MT.silvianus";
 				} else if (columnIndex == 43) {
-					return "M.hydro";
+					return "MT.ruber";
 				} else if (columnIndex == 44) {
+					return "M.hydro";
+				} else if (columnIndex == 45) {
 					return "O.profu";
 				}
 				
@@ -7031,20 +7046,25 @@ public class GeneSet extends JApplet {
 					}
 				} else if (columnIndex == 41) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("mt.silvanus");
+						Teginfo set = gene.species.get("t.oshimai_JL2");
 						return set;
 					}
 				} else if (columnIndex == 42) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("mt.ruber");
+						Teginfo set = gene.species.get("mt.silvanus");
 						return set;
 					}
 				} else if (columnIndex == 43) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("m.hydrothermalis");
+						Teginfo set = gene.species.get("mt.ruber");
 						return set;
 					}
 				} else if (columnIndex == 44) {
+					if (gene.species != null) {
+						Teginfo set = gene.species.get("m.hydrothermalis");
+						return set;
+					}
+				} else if (columnIndex == 45) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("o.profundus");
 						return set;
@@ -7255,7 +7275,7 @@ public class GeneSet extends JApplet {
 						"t.thermophilusJL18", "t.thermophilusHB8", "t.thermophilusHB27", "t.scotoductusSA01", "t.scotoductus4063",
 						"t.scotoductus1572", "t.scotoductus2101", "t.scotoductus2127", "t.scotoductus346",
 						"t.scotoductus252", "t.antranikiani", "t.kawarayensis", "t.brockianus", "t.igniterrae", "t.eggertsoni", 
-						"t.RLM", "t.oshimai", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB_US3_UF1"};
+						"t.RLM", "t.oshimai", "t.oshimai_JL2", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB_US3_UF1"};
 
 				Map<Integer,String>			ups = new HashMap<Integer,String>();
 				Set<Integer>				stuck = new HashSet<Integer>();
@@ -9012,21 +9032,21 @@ public class GeneSet extends JApplet {
 
 	static Map<Set<String>,List<GeneGroup>> ggSpecMap;
 	private static JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
-		InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		/*InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
 		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
 		String line2 = br2.readLine();
-		br2.close();
+		br2.close();*/
 		
 		
 		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
-		InputStream is = GeneSet.class.getResourceAsStream("/thomas.aa");
+		InputStream is = GeneSet.class.getResourceAsStream("/allthermus.aa");
 		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
 		if (is != null)
 			loci2aasequence(new InputStreamReader(is));
 
 		// URL url = new URL("http://192.168.1.69/all.nn");
 		try {
-			is = GeneSet.class.getResourceAsStream("/thomas.nn");
+			is = GeneSet.class.getResourceAsStream("/allthermus.nn");
 			//is = GeneSet.class.getResourceAsStream("/all.nn");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
@@ -9049,8 +9069,8 @@ public class GeneSet extends JApplet {
 		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
 		List<Set<String>> iclusterlist = null; //loadSimpleClusters(new InputStreamReader(is));
 
-		//is = GeneSet.class.getResourceAsStream("/union_cluster.txt");
-		is = GeneSet.class.getResourceAsStream("/thermus_unioncluster.txt");
+		//is = GeneSet.class.getResourceAsStream("/thermus_unioncluster.txt");
+		is = GeneSet.class.getResourceAsStream("/allthermus_unioncluster2.txt");
 		List<Set<String>> uclusterlist = loadSimpleClusters(new InputStreamReader(is));
 
 		Map<String, Gene> refmap = new HashMap<String, Gene>();
@@ -9065,10 +9085,14 @@ public class GeneSet extends JApplet {
 		//is = GeneSet.class.getResourceAsStream("/thermus_nr_short.blastout");
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_short.blastout" );
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
-		is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
+		
+		//is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
+		is = GeneSet.class.getResourceAsStream("/ncbithermus_short.blastout");
+		
+		
 		//InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
 		InputStream nis = GeneSet.class.getResourceAsStream("/exp_short.blastout");
-		panCoreFromNRBlast(new InputStreamReader(is), new InputStreamReader(nis), null, null /*"/u0/sandbox/distann/src/exp_short.blastout"*/, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		panCoreFromNRBlast(new InputStreamReader(is), null/*new InputStreamReader(nis)*/, null/*"/home/sigmar/sandbox/distann/src/ncbithermus_short.blastout"*/, null /*"/u0/sandbox/distann/src/exp_short.blastout"*/, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
 		allgenes.clear();
