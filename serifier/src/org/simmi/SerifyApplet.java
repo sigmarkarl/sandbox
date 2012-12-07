@@ -1141,6 +1141,7 @@ public class SerifyApplet extends JApplet {
 			Set<String>	teg = new HashSet<String>();
 			for( String e : t ) {
 				int ind = e.indexOf('_');
+				if( e.contains("_JL2_") ) ind = e.indexOf('_', ind+1);
 				
 				if( ind != -1 ) {
 					String str = e.substring( 0, ind );
@@ -1167,7 +1168,10 @@ public class SerifyApplet extends JApplet {
 			setmap.add( submap );
 			
 			for( String e : t ) {
-				String str = e.substring( 0, e.indexOf('_') );
+				int ind = e.indexOf('_');
+				if( e.contains("_JL2_") ) ind = e.indexOf('_', ind+1);
+				
+				String str = e.substring( 0, ind );
 				/*if( joinmap.containsKey( str ) ) {
 					str = joinmap.get(str);
 				}*/
@@ -1246,31 +1250,31 @@ public class SerifyApplet extends JApplet {
 				dialog.setVisible( true );
 				
 				if( !interrupted ) {
-					makeBlastCluster( is, os );
+					makeBlastCluster( is, os, true );
 				}
 			}
 		};
 		runProcess( "Blast clusters", run, dialog );
 	}
 	
-	public List<Set<String>> makeBlastCluster( final InputStream is, final OutputStream os ) {
+	public List<Set<String>> makeBlastCluster( final InputStream is, final OutputStream os, boolean clustermap ) {
 		List<Set<String>>	total = new ArrayList<Set<String>>();
 		try {
 			Set<String>	species = new TreeSet<String>();
 			
-			joinBlastSets( is, null, true, total, 0.0 );
-			//joinBlastSetsThermus( is, null, true, total );
-			//Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
+			//joinBlastSets( is, null, true, total, 0.0 );
 			
-			//if( writeSimplifiedCluster != null ) 
+			joinBlastSetsThermus( is, null, true, total );
 			
+			if( clustermap ) {
+				Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
 			
-			// -- writeSimplifiedCluster( os, clusterMap );
-			
-			
-			//writeBlastAnalysis( clusterMap, species );
-			
-			if( os != null ) writeClusters( os, total );
+				//if( writeSimplifiedCluster != null ) 
+				writeSimplifiedCluster( os, clusterMap );
+				//writeBlastAnalysis( clusterMap, species );
+			} else if( os != null ) {
+				writeClusters( os, total );
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -4408,7 +4412,7 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						List<Set<String>> cluster = makeBlastCluster( is, null );
+						List<Set<String>> cluster = makeBlastCluster( is, null, false );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -5946,7 +5950,7 @@ public class SerifyApplet extends JApplet {
 		});
 		
 		try {
-			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 98 );
+			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95 );
 			System.err.println( nameHitMap.size() );
 			
 			for( String key : nameHitMap.keySet() ) {
@@ -5966,7 +5970,7 @@ public class SerifyApplet extends JApplet {
 				
 				File nf = new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getName() );
-				List<Set<String>> cluster = makeBlastCluster( new FileInputStream( nf ), null );
+				List<Set<String>> cluster = makeBlastCluster( new FileInputStream( nf ), null, false );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
@@ -6007,7 +6011,7 @@ public class SerifyApplet extends JApplet {
 					}
 				}
 				
-				FileWriter fw = new FileWriter("/home/sigmar/pyro/locs/thermus/twoperc3/"+f.getName().substring(0, f.getName().length()-4)+"_thermus3.fna");
+				FileWriter fw = new FileWriter("/home/sigmar/pyro/locs/thermus/twoperc4/"+f.getName().substring(0, f.getName().length()-4)+"_thermus3.fna");
 				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false );
 				fw.close();
 			}
@@ -6057,7 +6061,16 @@ public class SerifyApplet extends JApplet {
 	
 	public static void main(String[] args) {
 		SerifyApplet sa = new SerifyApplet();
-		sa.initMaps();
+		
+		try {
+			FileInputStream fis = new FileInputStream( "/scratch/sks17/"+args[0]+".blastout" );
+			FileOutputStream fos = new FileOutputStream( "/scratch/sks17/"+args[0]+"_unioncluster2.txt" );
+			sa.makeBlastCluster(fis, fos, true);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	
+		//sa.initMaps();
 		
 		/*try {
 			Path p = Paths.get( "/home/sigmar/thermusmeta.tre" );
@@ -6068,7 +6081,7 @@ public class SerifyApplet extends JApplet {
 			Files.write( p, str.toString().getBytes() );
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}*/
+		}
 		
 		Map<String,List<Double>>	specmap = new HashMap<String,List<Double>>();
 		specmap.put( "antranikianii", new ArrayList<Double>() );
@@ -6089,16 +6102,16 @@ public class SerifyApplet extends JApplet {
 		//corr
 		//sa.corr();
 		
-		try {
+		/*try {
 			File f = new File( "/home/sigmar/union_16.blastout" );
-			List<Set<String>> cluster = sa.makeBlastCluster( new FileInputStream( f ), null );
+			List<Set<String>> cluster = sa.makeBlastCluster( new FileInputStream( f ), null, false );
 			FileOutputStream os = new FileOutputStream( "/home/sigmar/union_16.txt" );
 			sa.writeClusters(os, cluster);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		/*sa.pyroSeq( specmap, specphmap );
 		for( String key : specmap.keySet() ) {
@@ -6209,14 +6222,6 @@ public class SerifyApplet extends JApplet {
 		}*/
 		
 		/*try {
-			FileInputStream fis = new FileInputStream( "/home/sigmar/thomas/thomas.blastout" );
-			FileOutputStream fos = new FileOutputStream( "/home/sigmar/sandbox/distann/src/thermus_unioncluster.txt" );
-			blastClusters(fis, fos);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		try {
 			List<double[]>	ldmat = new ArrayList<double[]>();
 			File f = new File( "/root/ermermerm/dist/" );
 			File[] ff = f.listFiles( new FilenameFilter() {
