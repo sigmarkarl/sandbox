@@ -77,6 +77,12 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+import elemental.client.Browser;
+import elemental.events.Event;
+import elemental.events.EventListener;
+import elemental.events.MessageEvent;
+import elemental.html.Console;
+
 //import elemental.client.Browser;
 //import elemental.html.Console;
 
@@ -745,30 +751,6 @@ public class Treedraw implements EntryPoint {
 		e.click();
 	}-*/;
 	
-	public native void postParent( String from ) /*-{
-		var s = this;
-		$wnd.from = from;
-		$wnd.handleText = function( str ) {
-			s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( str );
-		}
-	
-		//var s = this;
-		//		$wnd.addEventListener('message',function(event) {
-		//			$wnd.console.log('message received from webfasta');
-		//			if(event.origin == 'http://'+from+'.appspot.com') {
-		//				$wnd.console.log('correct webfasta origin');
-		//				s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( event.data );
-		//			}
-		//		});
-			
-		//var loadHandler = function(event){
-		//	$wnd.console.log('sending message to webfasta');
-		//	event.currentTarget.opener.postMessage('ready','http://webfasta.appspot.com');
-		//}
-		//window.addEventListener('DOMContentLoaded', loadHandler, false);
-		$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
-	}-*/;
-	
 	public void openFileDialog( final int append ) {		
 		final DialogBox	db = new DialogBox();
 		db.setText("Open file ...");
@@ -1226,7 +1208,10 @@ public class Treedraw implements EntryPoint {
 				}
 			}
 		} else if( selectedNode != null ) {
-			if( c == 'c' || c == 'C' ) {
+			if( c == 'f' || c == 'F' ) {
+				treeutil.grisj( selectedNode );
+				root.countLeaves();
+			} else if( c == 'c' || c == 'C' ) {
 				selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
 				root.countLeaves();
 			} else if( c == 'd' || c == 'D' || keycode == KeyCodes.KEY_DELETE ) {
@@ -1307,7 +1292,7 @@ public class Treedraw implements EntryPoint {
 								pp.hide();
 							}
 						} else if( key == KeyCodes.KEY_ESCAPE ) {
-							pp.hide();
+				if( c == 'c' || c == 'C' ) {			pp.hide();
 						} else console( Character.toString( c ) );
 					}
 				});*/
@@ -1347,7 +1332,7 @@ public class Treedraw implements EntryPoint {
 						
 						/*if( treeutil.getNode() != null ) {
 							console( "not null first" );
-							console( "muu " + treeutil.getNode().toString() );
+				if( c == 'c' || c == 'C' ) {			console( "muu " + treeutil.getNode().toString() );
 						} else {
 							console( "null first" );
 						}
@@ -1425,8 +1410,62 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	String 					treetext;
+	int						dim;
+	elemental.html.Window	myPopup;
+	String 					domain = "http://webconnectron.appspot.com";
+	public void showTree( String newtree, int dims ) {
+		treetext = newtree;
+		dim = dims;
+		myPopup = Browser.getWindow().open(domain + "/Webconnectron.html?callback=webconnectron","_blank");
+	};
+	
 	@Override
 	public void onModuleLoad() {
+		final Console console = Browser.getWindow().getConsole();
+		console.log("starting");
+		//Drive d;
+		
+		//var domain = 'http://webconnectron.appspot.com';
+		//var treetext = "";
+		//var dim = 0;
+		//var myPopup;
+		/*function receiveMessage(event) {
+			console.log( 'ready message received' );
+			if (event.origin == "http://webconnectron.appspot.com") {
+				console.log( 'correct origin' );
+				if( treetext.length > 0 ) {
+					myPopup.postMessage(dim+""+treetext,domain);
+				} else {
+					handleText( event.data );
+				}
+	    	} else if(event.origin == 'http://'+from+'.appspot.com') {
+				console.log('correct webfasta origin');
+				handleText( event.data );
+			}
+	  	}
+		window.addEventListener("message", receiveMessage, false);*/
+		
+		final String domain = "http://webconnectron.appspot.com";
+		elemental.html.Window wnd = Browser.getWindow();
+		wnd.addEventListener("message", new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				console.log("stuff");
+				
+				MessageEvent me = (MessageEvent)evt;
+				if( me.getOrigin().equals( domain ) ) {
+					if( treetext.length() > 0 ) {
+						myPopup.postMessage(dim+""+treetext,domain);
+					} else {
+						handleText( (String)me.getData() );
+					}
+		    	} else {
+					handleText( (String)me.getData() );
+				}
+			}
+		}, false);
+		
 		RootPanel	rp = RootPanel.get("canvas");
 		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
@@ -1603,11 +1642,13 @@ public class Treedraw implements EntryPoint {
 			public void onKeyPress(KeyPressEvent event) {
 				char c = event.getCharCode();
 				int keycode = event.getNativeEvent().getKeyCode();
-				if( c == '\r' ) {
+				if( c == '\r' || c == '\n' ) {
 					event.stopPropagation();
 					event.preventDefault();
 				}
-				keyCheck( c, keycode );
+				//if( event.isControlKeyDown() ) {
+					keyCheck( c, keycode );
+				//}
 			}
 		};
 		String useragent = Window.Navigator.getUserAgent();
@@ -2032,35 +2073,17 @@ public class Treedraw implements EntryPoint {
 		}
 		console( Window.Location.getParameterMap().keySet().toString() );
 		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
-			postParent( Window.Location.getParameter("callback") );
+			//String from =  Window.Location.getParameter("callback");
+			console.log( "ok" );
+			elemental.html.Window opener = Browser.getWindow().getOpener();
+			console.log( "next" );
+			String origin = opener.getLocation().getOrigin();
+			console.log( "origin " + origin );
+			opener.postMessage("ready", origin);
 		}
-	}
+	}	
 	
-	public native void showTree( String tree, int dim ) /*-{
-		$wnd.showTree( tree, dim );
-		
-//		$wnd.domain = 'http://127.0.0.1:8888'; //'http://webconnectron.appspot.com';
-//		$wnd.treetext = tree;
-//		$wnd.receiveMessage = function(event) {
-//			$wnd.console.log( $wnd.domain );
-//			$wnd.console.log( 'ready message received' );
-//			if (event.origin == $wnd.domain) { //"http://webconnectron.appspot.com") {
-//				$wnd.console.log( 'correct origin' );
-//				if( $wnd.treetext.length > 0 ) {
-//					$wnd.myPopup.postMessage($wnd.treetext,$wnd.domain);
-//				}
-//			}
-//		}
-//		$wnd.addEventListener("message", $wnd.receiveMessage, false);
-//		$wnd.myPopup = window.open($wnd.domain + '/Webconnectron.html?callback=webconnectron','_blank');
-	}-*/;
-	
-	/*showTree = function( newtree ) {
-		treetext = newtree;
-		myPopup = window.open(domain + '/Treedraw.html?callback=webfasta','_blank');
-	}*/
-	
-	double w;	
+	double w;
 	double h;
 	double dw;
 	double dh;
