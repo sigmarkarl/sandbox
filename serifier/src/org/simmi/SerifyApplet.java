@@ -1262,9 +1262,9 @@ public class SerifyApplet extends JApplet {
 		try {
 			Set<String>	species = new TreeSet<String>();
 			
-			//joinBlastSets( is, null, true, total, 0.0 );
+			joinBlastSets( is, null, true, total, 0.0 );
 			
-			joinBlastSetsThermus( is, null, true, total );
+			//joinBlastSetsThermus( is, null, true, total );
 			
 			if( clustermap ) {
 				Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
@@ -2185,7 +2185,7 @@ public class SerifyApplet extends JApplet {
 		bw.close();
 	}
 	
-	public static Map<String,String> mapNameHit( InputStream blasti, int idfilt ) throws IOException {
+	public static Map<String,String> mapNameHit( InputStream blasti, int idfilt, boolean includePerc ) throws IOException {
 		Map<String,String>	mapHit = new HashMap<String,String>();
 		
 		BufferedReader br = new BufferedReader( new InputStreamReader( blasti ) );
@@ -2229,7 +2229,7 @@ public class SerifyApplet extends JApplet {
 								if( i == -1 ) i = newcurrent.length();
 								newcurrent = newcurrent.substring(i+1);
 								
-								mapHit.put( name, newcurrent );
+								mapHit.put( name, includePerc ? newcurrent+"_"+idstr+"%" : newcurrent );
 							}
 						}
 						
@@ -3829,6 +3829,23 @@ public class SerifyApplet extends JApplet {
 								String line = br.readLine();
 								while( line != null ) {
 									if( line.startsWith(">") ) {
+										int pe = line.indexOf('%');
+										String idstr = null;
+										if( pe != -1 ) {
+											int pi = line.lastIndexOf('_', pe);
+											int perc = Integer.parseInt( line.substring(pi+1, pe) );
+											
+											int red = (int)( (perc-95.0)*200.0/5.0+50.0 );
+											int green = (int)( (perc-95.0)*200.0/5.0+50.0 );
+											int blue = (int)( (perc-95.0)*200.0/5.0+50.0 );
+											
+											String rstr = Integer.toString(red, 16);
+											String gstr = Integer.toString(green, 16);
+											String bstr = Integer.toString(blue, 16);
+											
+											idstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
+										}
+										
 										//fw.write( line.replace( ">", ">"+s.getName().replace(".fna", "")+"_" )+"\n" );
 										int i = s.getName().indexOf("_thermus3");
 										if( i == -1 ) i = s.getName().length();
@@ -3881,7 +3898,8 @@ public class SerifyApplet extends JApplet {
 												String cstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
 												
 												check = true;
-												fw.write( line+"[#"+allstr+"]-----[#"+phstr+"];"+sub+"[#"+cstr+"]\n" );
+												//fw.write( line+"[#"+allstr+"]-----[#"+phstr+"];"+sub+"[#"+cstr+"]\n" );
+												fw.write( line+(idstr != null ? "[#"+idstr+"];" : "")+sub+"[#"+cstr+"]\n" );
 												break;
 											}
 											k++;
@@ -4533,7 +4551,7 @@ public class SerifyApplet extends JApplet {
 									is = new GZIPInputStream( is );
 								}
 								
-								Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s), 0 );
+								Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s), 0, false );
 								System.err.println( nameHitMap.size() );
 								for( String key : nameHitMap.keySet() ) {
 									System.err.println( key + "    " + nameHitMap.get(key) );
@@ -5950,7 +5968,7 @@ public class SerifyApplet extends JApplet {
 		});
 		
 		try {
-			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95 );
+			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, true );
 			System.err.println( nameHitMap.size() );
 			
 			for( String key : nameHitMap.keySet() ) {
@@ -5975,13 +5993,24 @@ public class SerifyApplet extends JApplet {
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
 					Map<String,Integer> tegcount = new HashMap<String,Integer>();
-					Map<String,String> tegmap = new HashMap<String,String>();
+					Map<String,Integer> tegpercmap = new HashMap<String,Integer>();
+					Map<String,String> 	tegmap = new HashMap<String,String>();
 					for( String c : cl ) {
-						String teg = nameHitMap.get(c);
-						if( teg == null ) {
+						String tegperc = nameHitMap.get(c);						
+						if( tegperc == null ) {
 							System.err.println( c );
 							countmissing++;
-						} else if( teg.contains( "hermus" ) ) {
+						} else if( tegperc.contains("Meiothermus") || tegperc.contains("Marinithermus") || tegperc.contains("Oceanithermus") || tegperc.contains( "Thermus" ) ) {
+							String teg;
+							int perc;
+							if( tegperc.endsWith("%") ) {
+								int i = tegperc.lastIndexOf('_');
+								teg = tegperc.substring(0,i);
+								perc = Integer.parseInt( tegperc.substring(i+1, tegperc.length()-1) );
+							} else {
+								teg = tegperc;
+								perc = -1;
+							}
 							
 							for( String spec : specmap.keySet() ) {
 								if( teg.contains( spec ) ) {
@@ -5994,24 +6023,31 @@ public class SerifyApplet extends JApplet {
 							}
 							
 							if( !tegcount.containsKey( teg ) ) {
-								tegmap.put( c, teg );
+								tegmap.put( teg, c );
+								tegpercmap.put( teg, perc );
 								tegcount.put( teg, 1 );
 							} else {
+								if( tegpercmap.get( teg ) < perc ) {
+									tegpercmap.put(teg, perc);
+									tegmap.put( teg, c );
+								}
 								tegcount.put( teg, tegcount.get(teg)+1 );
 							}
 						}
 					}
-					for( String c : tegmap.keySet() ) {
-						String teg = tegmap.get( c );
+					for( String teg : tegmap.keySet() ) {
+						String c = tegmap.get( teg );
+						Integer perc = tegpercmap.get(teg);
 						int count = tegcount.get(teg);
 						if( count > 1 ) {
 							System.err.println( count );
 						}
-						headset.put( c, teg+"_"+count );
+						if( perc != null && perc != -1 ) headset.put( c, teg+"_"+perc+"%_"+count );
+						else headset.put( c, teg+"_"+count );
 					}
 				}
 				
-				FileWriter fw = new FileWriter("/home/sigmar/pyro/locs/thermus/twoperc4/"+f.getName().substring(0, f.getName().length()-4)+"_thermus3.fna");
+				FileWriter fw = new FileWriter("/home/sigmar/pyro/locs/thermus/twoperc5/"+f.getName().substring(0, f.getName().length()-4)+"_thermus3.fna");
 				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false );
 				fw.close();
 			}
@@ -6062,15 +6098,46 @@ public class SerifyApplet extends JApplet {
 	public static void main(String[] args) {
 		SerifyApplet sa = new SerifyApplet();
 		
-		try {
+		/*try {
+			Map<String,String> nameHitMapOld = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, false );
+			Map<String,String> nameHitMapNew = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, true );
+			
+			FileWriter	fw = new FileWriter("/home/sigmar/pyro_sim.fasta");
+			FileReader fr = new FileReader("/home/sigmar/pyro_alignment_new.fasta");
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					int i = line.indexOf("HWB");
+					if( i != -1 ) {
+						int e = line.indexOf('[', i);
+						String id = line.substring(i, e);
+						if( nameHitMapOld.containsKey( id ) ) {
+							String oldstr = nameHitMapOld.get(id).replace(' ', '_');
+							String newstr = nameHitMapNew.get(id).replace(' ', '_');
+							
+							line = line.replace(oldstr, newstr);
+						}
+					}
+				}
+				fw.write( line + "\n" );
+				line = br.readLine();
+			}
+			br.close();
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		/*try {
 			FileInputStream fis = new FileInputStream( "/scratch/sks17/"+args[0]+".blastout" );
 			FileOutputStream fos = new FileOutputStream( "/scratch/sks17/"+args[0]+"_unioncluster2.txt" );
 			sa.makeBlastCluster(fis, fos, true);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		}
+		}*/
 	
-		//sa.initMaps();
+		sa.initMaps();
 		
 		/*try {
 			Path p = Paths.get( "/home/sigmar/thermusmeta.tre" );
@@ -6081,7 +6148,7 @@ public class SerifyApplet extends JApplet {
 			Files.write( p, str.toString().getBytes() );
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}
+		}*/
 		
 		Map<String,List<Double>>	specmap = new HashMap<String,List<Double>>();
 		specmap.put( "antranikianii", new ArrayList<Double>() );
@@ -6113,8 +6180,8 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}*/
 		
-		/*sa.pyroSeq( specmap, specphmap );
-		for( String key : specmap.keySet() ) {
+		sa.pyroSeq( specmap, specphmap );
+		/*for( String key : specmap.keySet() ) {
 			List<Double> vals = specmap.get( key );
 			double mean = 0.0;
 			for( double val : vals ) mean += val;
