@@ -386,6 +386,34 @@ public class TreeUtil {
 		currentNode = node;
 	}
 	
+	public void grisj( Node startNode ) {
+		List<Node> lnodes = startNode.getNodes();
+		if( lnodes != null ) {
+			List<Node>	kvislist = new ArrayList<Node>();
+			for( Node n : lnodes ) {
+				if( !n.isLeaf() ) {
+					kvislist.add( n );
+				}
+			}
+			
+			if( kvislist.size() == 0 ) {
+				Node longestNode = null;
+				double h = -1.0;
+				for( Node n : lnodes ) {
+					if( n.geth() > h ) {
+						h = n.geth();
+						longestNode = n;
+					}
+				}
+				if( longestNode != null ) startNode.removeNode( longestNode );
+			} else {
+				for( Node n : kvislist ) {
+					grisj( n );
+				}
+			}
+		}
+	}
+	
 	public static class NodeSet implements Comparable<NodeSet> {
 		public NodeSet( Set<String> nodes ) {
 			this.nodes = nodes;
