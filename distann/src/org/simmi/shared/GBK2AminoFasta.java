@@ -4,18 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
 
 public class GBK2AminoFasta {
 	public static class Anno {
@@ -295,7 +288,7 @@ public class GBK2AminoFasta {
 		return sb;
 	}
 	
-	public static void ftpExtract() {
+	/*public static void ftpExtract() {
 		FTPClient ftp = new FTPClient();
 		try {
 			ftp.connect("ftp.ncbi.nih.gov");
@@ -415,13 +408,13 @@ public class GBK2AminoFasta {
 						}
 					}
 				}
-			}*/
+			}
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
+	}*/
 	
 	public static void main(String[] args) {
 		
@@ -453,7 +446,7 @@ public class GBK2AminoFasta {
 		}*/
 		//ftpExtract();
 		
-		try {
+		/*try {
 			File file = new File("/home/sigmar/ftpncbi/");
 			File[] ff = file.listFiles();
 			for( File f : ff ) {
@@ -472,14 +465,14 @@ public class GBK2AminoFasta {
 				String fstr = fname.substring(0, fname.length()-4);
 				System.err.println( "about to "+fstr );
 				StringBuilder sb = handleText( fstr, filetext.toString() );
-				FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/"+fstr+".aa" );
-				fw.write( sb.toString() );
-				fw.close();
+				//FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/"+fstr+".aa" );
+				//fw.write( sb.toString() );
+				//fw.close();
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 }
