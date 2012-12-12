@@ -54,6 +54,8 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
@@ -410,6 +412,7 @@ public class Treedraw implements EntryPoint {
 	
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
+		//Browser.getWindow().getConsole().log("erm " + str);
 		if( str != null && str.length() > 1 && !str.startsWith("{") ) {
 			List<Sequence> seqs = currentSeqs;
 			currentSeqs = null;
@@ -717,6 +720,7 @@ public class Treedraw implements EntryPoint {
 					handleTree();
 				}
 			} else {
+				//Browser.getWindow().getConsole().log("what");
 				String tree = str.replaceAll("[\r\n]+", "");
 				setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
 				handleTree();
@@ -1424,6 +1428,13 @@ public class Treedraw implements EntryPoint {
 	public void onModuleLoad() {
 		final Console console = Browser.getWindow().getConsole();
 		console.log("starting");
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
 		//Drive d;
 		
 		//var domain = 'http://webconnectron.appspot.com';
@@ -2076,10 +2087,23 @@ public class Treedraw implements EntryPoint {
 			//String from =  Window.Location.getParameter("callback");
 			console.log( "ok" );
 			elemental.html.Window opener = Browser.getWindow().getOpener();
-			console.log( "next" );
+			opener.postMessage("ready", "*");
+			
+			/*console.log( "next" );
 			String origin = opener.getLocation().getOrigin();
-			console.log( "origin " + origin );
-			opener.postMessage("ready", origin);
+			if( origin != null ) {
+				console.log( "origin " + origin );
+				opener.postMessage("ready", origin);
+			} else {
+				console.log( "callback " + from );
+				from = URL.decode( from );
+				console.log( opener.getLocation().getHref() );
+				if( from.contains("http") ) {
+					opener.postMessage( "ready", from );
+				} else {
+					opener.postMessage( "ready", "http://"+from+".appspot.com" );
+				}
+			}*/
 		}
 	}	
 	
