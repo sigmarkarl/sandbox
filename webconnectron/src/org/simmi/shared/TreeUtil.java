@@ -34,6 +34,20 @@ public class TreeUtil {
 		return ret;
 	}
 	
+	public String getSelectString( Node n ) {
+		String ret = "";
+		if( n.isLeaf() ) {
+			if( n.isSelected() ) ret += n.getName();
+		} else for( Node nn : n.getNodes() ) {
+			String selstr = getSelectString( nn );
+			if( selstr.length() > 0 ) {
+				if( ret.length() == 0 ) ret += getSelectString( nn );
+				else ret += ","+getSelectString( nn );
+			}
+		}
+		return ret;
+	}
+	
 	public void reduceParentSize( Node n ) {
 		List<Node> nodes = n.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
