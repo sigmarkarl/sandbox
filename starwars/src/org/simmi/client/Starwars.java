@@ -10,12 +10,17 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.media.client.Audio;
 import com.google.gwt.typedarrays.client.Float32ArrayNative;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import elemental.client.Browser;
@@ -275,7 +280,7 @@ public class Starwars implements EntryPoint {
             // used later.
             [ "vNormal", "vColor", "vPosition"],
             // The clear color and depth values
-            [ 0, 0, 0.5, 1 ], 10000);
+            [ 0, 0, 0, 1 ], 10000);
 
         // Set some uniform variables for the shaders
         gl.uniform3f(gl.getUniformLocation(program, "lightDir"), 0, 0, 1);
@@ -365,6 +370,31 @@ public class Starwars implements EntryPoint {
         gl.drawElements(gl.TRIANGLES, g.box.numIndices, gl.UNSIGNED_BYTE, 0);
 	}-*/;
 	
+	public void changeText( String text, Canvas canvas ) {
+		Context2d ctx = canvas.getContext2d();
+		ctx.clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight() );
+		String[] split = text.split(" ");
+		Browser.getWindow().getConsole().log(text);
+		int i = 0;
+		int y = 1;
+		String current = split[i];
+		while( i < split.length-1 ) {
+			current += " "+split[++i];
+			double width = ctx.measureText( current ).getWidth();
+			while( i < split.length-1 ) {
+				width = ctx.measureText( current+" "+split[i+1] ).getWidth();
+				if( width < 512 ) {
+					current += " "+split[++i];
+				} else break;
+			}
+			
+			ctx.fillText(current, 10, 42*(y++) );
+			if( i < split.length-1 ) current = split[++i];
+			else current = "";
+		}
+		if( current.length() > 0 ) ctx.fillText(current, 10, 42*(y++) );
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -396,36 +426,20 @@ public class Starwars implements EntryPoint {
 		Console console = Browser.getWindow().getConsole();
 		
 		String text = "Fighting spam is now a community effort. Every post has a Flag button at the lower left. If you hit that to reveal the popup, one of the options is Spam. It's quick and painless. Bonus: if enough people tag something as spam, the post will disappear even without moderator intervention. So don't be bashful. Flag that spam. Don't reply to them, don't copy their posts. Just flag them.";
-		Canvas canvas2d = Canvas.createIfSupported();
+		final Canvas canvas2d = Canvas.createIfSupported();
 		canvas2d.setSize(512+"px", 512+"px");
 		canvas2d.setCoordinateSpaceWidth(512);
 		canvas2d.setCoordinateSpaceHeight(512);
-		CanvasElement canvas2dElement = (CanvasElement)canvas2d.getElement();
-		Context2d ctx = canvas2d.getContext2d();
-		ctx.setFont("32pt Calibri");
-		ctx.setFillStyle("#0000FF");
+		final CanvasElement canvas2dElement = (CanvasElement)canvas2d.getElement();
+		final Context2d ctx = canvas2d.getContext2d();
+		ctx.setFont("24pt Calibri");
+		ctx.setFillStyle("#FFFF00");
 		
-		String[] split = text.split(" ");
-		int i = 0;
-		int y = 1;
-		String current = split[i];
-		while( i < split.length ) {
-			current += " "+split[++i];
-			double width = ctx.measureText( current ).getWidth();
-			while( i < split.length-1 ) {
-				width = ctx.measureText( current+" "+split[i+1] ).getWidth();
-				if( width < 800 ) {
-					current += " "+split[++i];
-				} else break;
-			}
-			
-			ctx.fillText(current, 10, 42*(y++) );
-			current = split[++i];
-		}
+		changeText( text, canvas2d );
 		//CanvasElement	canvas = Browser.getDocument().createCanvasElement();
-		Canvas canvas3d = Canvas.createIfSupported();
+		final Canvas canvas3d = Canvas.createIfSupported();
 		canvas3d.getElement().setId("example");
-		canvas3d.setSize(800+"px", 600+"px");
+		canvas3d.setSize(1280+"px", 720+"px");
 		final CanvasElement canvas3dElement = (CanvasElement)canvas3d.getElement();
 		//canvas.setWidth(800);
 		//canvas.setHeight(600);
@@ -478,11 +492,45 @@ public class Starwars implements EntryPoint {
 		
 		//drawScene( gl, squareVerticesBuffer, shaderProgram, vertexPositionAttribute );
 		drawSceneNative( gl, vertexPositionAttribute, shaderProgram );*/
-		vp.add( canvas3d );
-		root.add( vp );
+		
+		final Audio audio = Audio.createIfSupported();
+		if( audio != null ) {
+			audio.setSrc("");
+		}
 		
 		final JavaScriptObject g = init( gl, texture );
-		final Timer timer = new Timer() {
+		final TextArea ta = new TextArea();
+		final Button	button = new Button("Test");
+		button.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				changeText( ta.getText(), canvas2d );
+				//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, canvas2dElement);
+				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
+				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
+				//gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
+				drawPicture( gl, canvas3dElement, texture, g );
+			}
+		});
+		//vp.setSpacing( 5 );
+		
+		VerticalPanel subvp = new VerticalPanel();
+		subvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		subvp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		
+		HTML	starwars = new HTML( "<h3>Custom StarWars flying text</h3>" );
+		subvp.add( starwars );
+		subvp.add( canvas3d );
+		subvp.add( ta );
+		subvp.add( button );
+		
+		vp.add( subvp );
+		root.add( vp );
+		
+		drawPicture( gl, canvas3dElement, texture, g );
+		
+		/*final Timer timer = new Timer() {
 
 			@Override
 			public void run() {
@@ -490,6 +538,6 @@ public class Starwars implements EntryPoint {
 				//timer.schedule(200);
 			}
 		};
-		timer.schedule(200);
+		timer.schedule(200);*/
 	}
 }

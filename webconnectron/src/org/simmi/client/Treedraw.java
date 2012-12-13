@@ -84,6 +84,13 @@ import elemental.events.Event;
 import elemental.events.EventListener;
 import elemental.events.MessageEvent;
 import elemental.html.Console;
+import elemental.html.DOMFileSystem;
+import elemental.html.Entry;
+import elemental.html.EntryCallback;
+import elemental.html.FileEntry;
+import elemental.html.FileSystemCallback;
+import elemental.html.FileWriter;
+import elemental.html.FileWriterCallback;
 
 //import elemental.client.Browser;
 //import elemental.html.Console;
@@ -1424,6 +1431,55 @@ public class Treedraw implements EntryPoint {
 		myPopup = Browser.getWindow().open(domain + "/Webconnectron.html?callback=webconnectron","_blank");
 	};
 	
+	public String fetchSel() {
+		return treeutil.getSelectString( treeutil.getNode() );
+	}
+	
+	public native void initFuncs() /*-{
+		var s = this;
+		$wnd.fetchSel = function() {
+			return s.@org.simmi.client.Treedraw::fetchSel();
+		}
+	}-*/;
+	
+	public native String atob( String dataurl ) /*-{
+		var d = atob( dataurl );
+		return d;
+	}-*/;
+	
+	public native void createBlobTest( String byteStr, String mimeStr, elemental.html.FileWriter fileWriter, elemental.html.FileEntry fe ) /*-{
+		var blob = new Blob( [ byteStr ], { type : "application/octet-stream" } );
+		var fr = new FileReader();
+		fr.onload = function( e ) {
+			$wnd.console.log('okok'+mimeStr);
+			var ub = new Uint8Array( e.target.result );
+			var bb = new Blob( [ub], {type: mimeStr} );
+			fileWriter.write( bb );
+			$wnd.console.log('okok3');
+			var url = fe.toURL();
+			$wnd.open( url, "tree.png" );
+		}
+		fr.readAsArrayBuffer( blob );
+	}-*/;
+	
+	public native void createBlob( String byteStr, String mimeStr, elemental.html.FileWriter fileWriter, elemental.html.FileEntry fe ) /*-{		
+		var byteArray = new Uint8Array( byteStr.length );
+        for (var i = 0; i < byteStr.length; i++) {
+            byteArray[i] = byteStr.charCodeAt(i) & 0xff;
+        }
+		
+		var blob = new Blob( [ byteArray ], { type : "image/png" } );
+		fileWriter.write( blob );
+		
+		var url = fe.toURL();
+		$wnd.open( url, "tree.png" );
+	}-*/;
+	
+	public native JavaScriptObject createFlags() /*-{
+		var flags = { create : true };
+		return flags;
+	}-*/;
+	
 	@Override
 	public void onModuleLoad() {
 		final Console console = Browser.getWindow().getConsole();
@@ -1435,6 +1491,7 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
+		initFuncs();
 		//Drive d;
 		
 		//var domain = 'http://webconnectron.appspot.com';
@@ -1458,21 +1515,32 @@ public class Treedraw implements EntryPoint {
 		window.addEventListener("message", receiveMessage, false);*/
 		
 		final String domain = "http://webconnectron.appspot.com";
-		elemental.html.Window wnd = Browser.getWindow();
+		final elemental.html.Window wnd = Browser.getWindow();
 		wnd.addEventListener("message", new EventListener() {
 			@Override
-			public void handleEvent(Event evt) {
-				console.log("stuff");
-				
+			public void handleEvent(Event evt) {				
 				MessageEvent me = (MessageEvent)evt;
-				if( me.getOrigin().equals( domain ) ) {
-					if( treetext.length() > 0 ) {
-						myPopup.postMessage(dim+""+treetext,domain);
-					} else {
-						handleText( (String)me.getData() );
+				String dstr = (String)me.getData();
+				
+				console.log("evrev");
+				
+				elemental.html.Window source = myPopup; //me.getSource()
+				if( dstr.equals("fetchsel") ) {
+					String selstr = treeutil.getSelectString( treeutil.getNode() );
+					wnd.getOpener().postMessage( "propagate{"+selstr+"}", "*");
+				} else {
+					if( me.getOrigin().equals( domain ) ) {
+						//Browser.getWindow().getConsole().log("no "+treetext);
+						if( treetext.length() > 0 ) {
+							//Browser.getWindow().getConsole().log("nos "+me.getSource());
+							source.postMessage(dim+""+treetext,"*");
+						} else {
+							handleText( dstr );
+						}
+			    	} else {
+			    		console.log("about "+dstr.length());
+						handleText( dstr );
 					}
-		    	} else {
-					handleText( (String)me.getData() );
 				}
 			}
 		}, false);
@@ -1694,6 +1762,7 @@ public class Treedraw implements EntryPoint {
 		treeAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
+				treeAnchor.setTarget("_blank");
 				treeAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
 			}
 		});
@@ -1701,7 +1770,56 @@ public class Treedraw implements EntryPoint {
 		imageAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				imageAnchor.setHref( canvas.toDataUrl() );
+				imageAnchor.setTarget("_blank");
+				final Console console = Browser.getWindow().getConsole();
+				final String dataurl =  canvas.toDataUrl();
+				final elemental.html.Window wnd = Browser.getWindow();
+				
+				//final Object[] create = {"create", true};
+				//String[] create = {"create", "true"};
+				
+				boolean fail = false;
+				try {
+					wnd.webkitRequestFileSystem(elemental.html.Window.TEMPORARY, dataurl.length(), new FileSystemCallback() {
+						@Override
+						public boolean onFileSystemCallback(DOMFileSystem fileSystem) {
+							console.log("in filesystem");
+							fileSystem.getRoot().getFile("tree.png", createFlags(), new EntryCallback() {
+								@Override
+								public boolean onEntryCallback(Entry entry) {
+									console.log("in file");
+									final FileEntry fe = (FileEntry)entry;
+									fe.createWriter( new FileWriterCallback() {
+										@Override
+										public boolean onFileWriterCallback(FileWriter fileWriter) {
+											console.log("in write");
+											
+											String[] split = dataurl.split(",");
+											String byteString = atob( split[1] );
+										    String mimeString = split[0].split(":")[1].split(";")[0];
+											//String d = dataurl.substring( dataurl.indexOf("base64,") + 7 );
+									        //String decoded = atob(d);
+										    
+											createBlob( byteString, mimeString, fileWriter, fe );
+											
+											//fileWriter.write( bb );
+											//wnd.open( fe.toURL(), "tree.png" );
+											return true;
+										}
+									});
+									return true;
+								}
+							});
+							return true;
+						}
+					});
+				} catch( Exception e ) {
+					fail = true;
+				}
+
+				if( fail ) {
+					imageAnchor.setHref( dataurl );
+				}
 			}
 		});
 		final Anchor	dmAnchor = new Anchor("distance matrix");
