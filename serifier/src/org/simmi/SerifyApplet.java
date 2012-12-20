@@ -30,7 +30,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -2261,11 +2260,18 @@ public class SerifyApplet extends JApplet {
 		return Math.sqrt( ret );
 	}
 	
-	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String filter ) throws IOException {
+	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, Set<String> filter ) throws IOException {
 		return doMapHitStuff(mapHit, is, os, "_", filter);
 	}
 	
-	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String sep, String filter ) throws IOException {
+	public static boolean checkFilter( Collection<String> filter, String maphitstr ) {
+		for( String str : filter ) {
+			if( maphitstr.contains( str ) ) return true;
+		}
+		return false;
+	}
+	
+	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String sep, Collection<String> filter ) throws IOException {
 		int nseq = 0;
 		PrintStream pr = new PrintStream( os );
 		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
@@ -2282,7 +2288,7 @@ public class SerifyApplet extends JApplet {
 					int li = maphitstr.lastIndexOf(';');
 					if( li != -1 ) maphitstr = maphitstr.substring(li+1);
 					
-					if( filter == null || maphitstr.contains(filter) ) {
+					if( filter == null || checkFilter( filter, maphitstr ) ) {
 						nseq++;
 						pr.println( ">" + maphitstr + sep + name ); //+ sep + mapHit.get(name) );
 						include = true;
@@ -4551,14 +4557,15 @@ public class SerifyApplet extends JApplet {
 									is = new GZIPInputStream( is );
 								}
 								
-								Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s), 0, false );
+								Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s), 0, true );
 								System.err.println( nameHitMap.size() );
 								for( String key : nameHitMap.keySet() ) {
 									System.err.println( key + "    " + nameHitMap.get(key) );
 									break;
 								}
 								
-								int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f), null );
+								String[] filter = { "Thermus", "Meiothermus" };
+								int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f), ";", Arrays.asList(filter) );
 								
 								SerifyApplet.this.addSequences(f.getName(), seqs.getType(), f.toURI().toString(), nseq );
 							} catch (URISyntaxException e1) {
@@ -5959,24 +5966,27 @@ public class SerifyApplet extends JApplet {
 	
 	public void pyroSeq( Map<String,List<Double>>	specmap, Map<String,List<Double>>	specphmap ) {
 		File dir = new File("/home/sigmar/pyro/locs");
-		File[] ff = dir.listFiles( new FilenameFilter() {
+		/*File[] ff = dir.listFiles( new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
 				if( name.endsWith(".fna") ) return true;
 				return false;
 			}
-		});
+		});*/
+		
+		File[] ff = { new File("/home/sigmar/all.fa") };
 		
 		try {
-			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, true );
-			System.err.println( nameHitMap.size() );
+			//Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, true );
+			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/all.blastout" ), -1, true );
+			/*System.err.println( nameHitMap.size() );
 			
 			for( String key : nameHitMap.keySet() ) {
 				System.err.println( key + "  " + nameHitMap.get(key) );
 				break;
 			}
 			
-			System.err.println( nameHitMap.get("HWBYD8R03DO0EO") );
+			System.err.println( nameHitMap.get("HWBYD8R03DO0EO") );*/
 			
 			int countmissing = 0;
 			for( File f : ff ) {
@@ -6047,7 +6057,7 @@ public class SerifyApplet extends JApplet {
 					}
 				}
 				
-				FileWriter fw = new FileWriter("/home/sigmar/pyro/locs/thermus/twoperc5/"+f.getName().substring(0, f.getName().length()-4)+"_thermus3.fna");
+				FileWriter fw = new FileWriter("/home/sigmar/ampliconnoise/"+f.getName().substring(0, f.getName().length()-4)+"_thermus.fna");
 				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false );
 				fw.close();
 			}
