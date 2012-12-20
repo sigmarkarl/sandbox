@@ -268,7 +268,7 @@ public class Starwars implements EntryPoint {
 		gl.uniformMatrix4fv( mvUniform, false, mvMatrix );
 	}
 	
-	private native JavaScriptObject init( WebGLRenderingContext gl, WebGLTexture spiritTexture ) /*-{
+	private native JavaScriptObject init( WebGLRenderingContext gl ) /*-{
 		var g = {};
 		
 	    var program = $wnd.simpleSetup(
@@ -283,8 +283,8 @@ public class Starwars implements EntryPoint {
             [ 0, 0, 0, 1 ], 10000);
 
         // Set some uniform variables for the shaders
-        gl.uniform3f(gl.getUniformLocation(program, "lightDir"), 0, 0, 1);
-        gl.uniform1i(gl.getUniformLocation(program, "sampler2d"), 0);
+        //gl.uniform3f(gl.getUniformLocation(program, "lightDir"), 0, 0, 1);
+        //gl.uniform1i(gl.getUniformLocation(program, "sampler2d"), 0);
 
         // Create a box. On return 'gl' contains a 'box' property with
         // the BufferObjects containing the arrays for vertices,
@@ -296,29 +296,27 @@ public class Starwars implements EntryPoint {
 
         // Create some matrices to use later and save their locations in the shaders
         g.mvMatrix = new $wnd.J3DIMatrix4();
-        g.u_normalMatrixLoc = gl.getUniformLocation(program, "u_normalMatrix");
-        g.normalMatrix = new $wnd.J3DIMatrix4();
-        g.u_modelViewProjMatrixLoc =
-        gl.getUniformLocation(program, "u_modelViewProjMatrix");
+        //g.u_normalMatrixLoc = gl.getUniformLocation(program, "u_normalMatrix");
+        //g.normalMatrix = new $wnd.J3DIMatrix4();
+        g.u_modelViewProjMatrixLoc = gl.getUniformLocation(program, "u_modelViewProjMatrix");
         g.mvpMatrix = new $wnd.J3DIMatrix4();
 
         // Enable all of the vertex attribute arrays.
-        gl.enableVertexAttribArray(0);
-        gl.enableVertexAttribArray(1);
-        gl.enableVertexAttribArray(2);
-
-        // Set up all the vertex attributes for vertices, normals and texCoords
-        gl.bindBuffer(gl.ARRAY_BUFFER, g.box.vertexObject);
-        gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, g.box.normalObject);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, g.box.texCoordObject);
-        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
-
-        // Bind the index array
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.box.indexObject);
+//        gl.enableVertexAttribArray(0);
+//        gl.enableVertexAttribArray(1);
+//        gl.enableVertexAttribArray(2);
+//
+//        //Set up all the vertex attributes for vertices, normals and texCoords
+//        gl.bindBuffer(gl.ARRAY_BUFFER, g.box.vertexObject);
+//        gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
+//
+//        gl.bindBuffer(gl.ARRAY_BUFFER, g.box.normalObject);
+//        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+//
+//        gl.bindBuffer(gl.ARRAY_BUFFER, g.box.texCoordObject);
+//        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+//
+//        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.box.indexObject);
         
         return g;
 	}-*/;
@@ -461,32 +459,33 @@ public class Starwars implements EntryPoint {
 		
 		console.log( "texture" );*/
 		
-		final WebGLTexture texture = gl.createTexture();
-		gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+		final WebGLTexture texture = null;//gl.createTexture();
+		/*gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
 		gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, canvas2dElement);
 		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
-		gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
+		gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);*/
 		
 		//drawPicture( gl, canvas3dElement, texture );
 		
 		//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, null);
 		
-		/*WebGLBuffer cubeVerticesTextureCoordBuffer = gl.createBuffer();
-		gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, cubeVerticesTextureCoordBuffer);
-		
-		Float32ArrayNative fa = Float32ArrayNative.create(8);
+		final WebGLBuffer cubeVerticesTextureCoordBuffer = gl.createBuffer();		
+		final Float32ArrayNative fa = Float32ArrayNative.create(12);
 		fa.set(0, 0.0f);
 		fa.set(1, 0.0f);
-		fa.set(2, 1.0f);
-		fa.set(3, 0.0f);
-		fa.set(4, 1.0f);
-		fa.set(5, 1.0f);
-		fa.set(6, 0.0f);
+		fa.set(2, -1.0f);
+		fa.set(3, 1.0f);
+		fa.set(4, 0.0f);
+		fa.set(5, -1.0f);
+		fa.set(6, 1.0f);
 		fa.set(7, 1.0f);
-		gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, (ArrayBuffer)fa.buffer(), WebGLRenderingContext.STATIC_DRAW);
+		fa.set(8, -1.0f);
+		fa.set(9, 0.0f);
+		fa.set(10, 1.0f);
+		fa.set(11, -1.0f);
 		
-		gl.activeTexture(WebGLRenderingContext.TEXTURE0);
+		/*gl.activeTexture(WebGLRenderingContext.TEXTURE0);
 		gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
 		//webgl.uniform1i(webgl.getUniformLocation(shaderProgram, "uSampler"), 0);*
 		
@@ -498,7 +497,7 @@ public class Starwars implements EntryPoint {
 			audio.setSrc("");
 		}
 		
-		final JavaScriptObject g = init( gl, texture );
+		final JavaScriptObject g = init( gl );
 		final TextArea ta = new TextArea();
 		final Button	button = new Button("Test");
 		button.addClickHandler( new ClickHandler() {
@@ -506,11 +505,16 @@ public class Starwars implements EntryPoint {
 			public void onClick(ClickEvent event) {
 				changeText( ta.getText(), canvas2d );
 				//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+				gl.clear( WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT );
 				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, canvas2dElement);
 				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 				//gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
-				drawPicture( gl, canvas3dElement, texture, g );
+				//drawPicture( gl, canvas3dElement, texture, g );
+				
+				gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, cubeVerticesTextureCoordBuffer);
+				gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, (ArrayBuffer)fa.buffer(), WebGLRenderingContext.STATIC_DRAW);
+				gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
 			}
 		});
 		//vp.setSpacing( 5 );
@@ -528,7 +532,17 @@ public class Starwars implements EntryPoint {
 		vp.add( subvp );
 		root.add( vp );
 		
-		drawPicture( gl, canvas3dElement, texture, g );
+		//drawPicture( gl, canvas3dElement, texture, g );
+		reshape( gl, canvas3dElement, g );
+		gl.clear( WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT );
+		
+		gl.enableVertexAttribArray(0);
+		//gl.bindBuffer(gl.ARRAY_BUFFER, g.box.vertexObject);
+		gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, cubeVerticesTextureCoordBuffer);
+		gl.vertexAttribPointer(0, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
+		
+		gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, (ArrayBuffer)fa.buffer(), WebGLRenderingContext.STATIC_DRAW);
+		gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
 		
 		/*final Timer timer = new Timer() {
 

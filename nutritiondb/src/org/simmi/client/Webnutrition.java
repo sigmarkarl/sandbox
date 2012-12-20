@@ -47,17 +47,25 @@ import elemental.client.Browser;
 import elemental.html.Console;
 
 public class Webnutrition implements EntryPoint {
-
 	Console console;
-	
+	Set<Integer>	selset = new HashSet<Integer>();
 	int sortcolumn = 0;
 	public class FoodInfo implements Comparable<FoodInfo> {
 		Object[]	columns;
+		boolean		selected = false;
 		
 		public FoodInfo( String name, String group ) {
 			columns = new Object[ lcolumnwidth.size() ];
 			columns[0] = name;
 			columns[1] = group;
+		}
+		
+		public void setSelected( boolean sel ) {
+			selected = sel;
+		}
+		
+		public boolean isSelected() {
+			return selected;
 		}
 		
 		public Object getSortObject() {
@@ -76,23 +84,34 @@ public class Webnutrition implements EntryPoint {
 		@Override
 		public int compareTo(FoodInfo o) {
 			Object obj = columns[ sortcolumn ];
-			if( obj instanceof String ) {
-				return ((String)obj).compareTo( (String)o.getSortObject() );
-			} else if( obj instanceof Double ) {
-				return ((Double)obj).compareTo( (Double)o.getSortObject() );
+			Object sobj = o == null ? null : o.getSortObject();
+			
+			if( obj != null && sobj != null ) {
+				if( obj instanceof String ) {
+					return ((String)obj).compareTo( (String)sobj );
+				} else if( obj instanceof Double ) {
+					return ((Double)sobj).compareTo( (Double)obj );
+				}
+			} else if( obj == null && sobj != null ) {
+				return 1;
+			} else if( obj != null && sobj == null ) {
+				return -1;
 			}
+					
 			return 0;
 		}
 	};
 	
 	public class Column {
-		public Column( String name, int width, String id ) {
+		public Column( String name, String unit, int width, String id ) {
 			this.name = name;
+			this.unit = unit;
 			this.width = width;
 			this.id = id;
 		}
 		
 		String 	name;
+		String	unit;
 		int		width;
 		String 	id;
 	};
@@ -151,11 +170,11 @@ public class Webnutrition implements EntryPoint {
 
 	
 	public void fetchNutr() {
-		getBinaryResource( "http://127.0.0.1:8888/NUT_DATA_trim.txt" );
+		getBinaryResource( "http://192.168.1.166:8888/NUT_DATA_trim.txt" );
 	}
 	
 	public void fetchNutrRequest() throws RequestException {
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://127.0.0.1:8888/NUT_DATA.txt.bz2.base64" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, "http://192.168.1.166:8888/NUT_DATA.txt.bz2.base64" );
 		//rb.getHeader(header)
 		rb.sendRequest("", new RequestCallback() {
 			@Override
@@ -303,7 +322,7 @@ public class Webnutrition implements EntryPoint {
 						String unitShort = unitstr.substring(1, unitstr.length()-1);
 						String nameShort = namestr.substring(1, namestr.length()-1);
 						
-						Column col = new Column( nameShort, 100, idShort);
+						Column col = new Column( nameShort, unitShort, 60, idShort);
 						lcolumnwidth.add( col );
 						nutrmap.put( idShort, col );
 					}
@@ -389,9 +408,7 @@ public class Webnutrition implements EntryPoint {
 		return lfoodinfo.get(k);
 	}
 	
-	public void drawSection( Context2d context, int xstartLocal, int ystartLocal, int xloc, int yloc, int canvasWidth, int canvasHeight ) {
-		Set<Integer>	selset = new HashSet<Integer>();
-		
+	public void drawSection( Context2d context, int xstartLocal, int ystartLocal, int xloc, int yloc, int canvasWidth, int canvasHeight ) {		
 		//console.log( xstartLocal + "  " + ystartLocal );
 		//int xs = Math.max( 0, ((xstartLocal+xloc)/unitwidth)*unitwidth );
 		int ys = Math.max( 0, ((ystartLocal+yloc)/unitheight)*unitheight );
@@ -429,6 +446,11 @@ public class Webnutrition implements EntryPoint {
 					FoodInfo fi = getFoodInfo(i);
 					//int[]	ann = seq.getAnnotationIndex();
 						
+					if( fi.isSelected() ) {
+						context.setFillStyle("rgba( 100, 100, 155, 0.5 )");
+						context.fillRect(0, yy-ystartLocal, canvasWidth, unitheight );
+						context.setFillStyle("#222222");
+					}
 					if( selset.contains(i) ) {
 						context.setFillStyle("#DDDDFF");
 						context.fillRect(0, ystartLocal, canvasWidth, unitheight );
@@ -511,9 +533,19 @@ public class Webnutrition implements EntryPoint {
 			
 			int w = 0;
 			for( Column c : lcolumnwidth ) {
+				String unit = c.unit == null ? null : "("+c.unit+")";
+				double strw = unit == null ? 0.0 : context.measureText( unit ).getWidth();
+				
+				context.save();
+				context.beginPath();
+				context.rect(w-xstartLocal, 0, c.width-strw-5, columnHeight);
+				context.closePath();
+				context.clip();
 				context.fillRect( w-xstartLocal, 0, 1, columnHeight );
 				context.fillText( c.name, (w+5-xstartLocal), columnHeight-7 );
 				w += c.width;
+				context.restore();
+				if( unit != null ) context.fillText( unit, (w-xstartLocal-strw-2.0), columnHeight-7 );
 			}
 			
 			context.setFillStyle("#EEEEEE");
@@ -561,11 +593,78 @@ public class Webnutrition implements EntryPoint {
 		return w;
 	}
 	
+	final TextBox	filterText = new TextBox();
 	final ListBox	filterCombo = new ListBox();
 	List<Integer>	filtInd = new ArrayList<Integer>();
 	
 	public int getVisibleHeight() {
 		return canvas.getCoordinateSpaceHeight()-(columnHeight+scrollBarHeight);
+	}
+	
+	public void sort() {
+		Collections.sort( lfoodinfo );
+		applyFilter();
+	}
+	
+	public void applyFilter() {
+		String groupfilter = filterCombo.getValue( filterCombo.getSelectedIndex() );
+		String foodfilter = filterText.getValue();
+		filtInd.clear();
+		
+		String groupval = groupfilter.toLowerCase();
+		String foodval = foodfilter.toLowerCase();
+		
+		//if( foodfilter != null ) {
+		int i = 0;
+		for( FoodInfo fi : lfoodinfo ) {
+			String group = (String)fi.valAt(1);
+			group = group.toLowerCase();
+			String food = (String)fi.valAt(0);
+			food = food.toLowerCase();
+			
+			boolean b1 = groupval.length() > 0 && foodval.length() > 0 && group.contains( groupval ) && food.contains( foodval );
+			boolean b2 = groupval.length() == 0 && foodval.length() > 0 && (group.contains( foodval ) || food.contains( foodval ));
+			boolean b3 = groupval.length() > 0 && foodval.length() == 0 && group.contains( groupval );
+			
+			if( food.contains("sweets") ) {
+				console.log( b1 + " " + b2 + " " + b3 );
+				console.log( group + " " + food );
+			}
+			if( b1 || b2 || b3 ) filtInd.add(i);
+			
+			i++;
+		}
+		
+//		String groupfilter = filterCombo.getValue( filterCombo.getSelectedIndex() );
+//		String foodfilter = filterText.getValue();
+//		filtInd.clear();
+//		
+//		if( groupfilter != null ) {
+//			String groupval = groupfilter.toLowerCase();
+//			String foodval = foodfilter.toLowerCase();
+//			
+//			int i = 0;
+//			for( FoodInfo fi : lfoodinfo ) {
+//				String group = (String)fi.valAt(1);
+//				group = group.toLowerCase();
+//				String food = (String)fi.valAt(0);
+//				food = food.toLowerCase();
+//				
+//				boolean b1 = groupval.length() > 0 && foodval.length() > 0 && (group.contains( groupval ) && food.contains( foodval ));
+//				boolean b2 = groupval.length() == 0 && foodval.length() > 0 && (group.contains( foodval ) || food.contains( foodval ));
+//				boolean b3 = groupval.length() > 0 && foodval.length() == 0 && group.contains( groupval );
+//				
+//				if( food.contains("sweets") ) {
+//					console.log( b1 + " " + b2 + " " + b3 );
+//					console.log( group + " " + food );
+//				}
+//				if( b1 || b2 || b3 ) filtInd.add(i);
+//				
+//				//if( group != null && group.toLowerCase().contains( val.toLowerCase() ) ) filtInd.add(i);
+//				//else console.log( fi.valAt(0) );
+//				i++;
+//			}
+//		} else console.log( filterCombo.getSelectedIndex() );
 	}
 	
 	@Override
@@ -598,8 +697,8 @@ public class Webnutrition implements EntryPoint {
 		canvas.setCoordinateSpaceWidth( 1024 );
 		canvas.setCoordinateSpaceHeight( 600 );
 		
-		lcolumnwidth.add( new Column("Food", 300, "0") );
-		lcolumnwidth.add( new Column("Group", 300, "0") );
+		lcolumnwidth.add( new Column("Food", null, 300, "0") );
+		lcolumnwidth.add( new Column("Group", null, 180, "0") );
 		
 		String groupurl = "https://www.googleapis.com/fusiontables/v1/query?sql=SELECT%20*%20FROM%201ysVkwxLAO7U4F-ULp58q4P5DqcD70V_MpiKuJ4U&key=AIzaSyD5RTPW-0W9I9K2u70muKiq-rHXL2qhjzk";		
 		try {
@@ -667,7 +766,7 @@ public class Webnutrition implements EntryPoint {
 				if( mousey < columnHeight ) {
 					int i = 0;
 					int w = lcolumnwidth.get(i).width;
-					while( w < mousex-xstart ) {
+					while( w < mousex+xstart ) {
 						i++;
 						if( i == lcolumnwidth.size() ) {
 							i = -1;
@@ -679,7 +778,7 @@ public class Webnutrition implements EntryPoint {
 					console.log("ok "+i);
 					if( i != -1 ) {
 						sortcolumn = i;	
-						Collections.sort( lfoodinfo );
+						sort();
 					}
 				} else if( mousex > cw-scrollBarWidth || mousey > ch-scrollBarHeight ) {
 					//int xstart = Webfasta.this.xstart;
@@ -700,6 +799,11 @@ public class Webnutrition implements EntryPoint {
 						double ymin2 = (ymin1*(mousey-columnHeight))/(ch-columnHeight-scrollBarHeight);
 						ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
 					}
+				} else {
+					double wherey = ystart+mousey;
+					int indy = (int)(wherey/unitheight);
+					FoodInfo foodinf = lfoodinfo.get(indy);
+					foodinf.setSelected( !foodinf.isSelected() );
 				}
 				draw( canvas.getContext2d(), xstart, ystart );
 			}
@@ -763,54 +867,36 @@ public class Webnutrition implements EntryPoint {
 					draw( canvas.getContext2d(), xstart, ystart );
 				}
 			}
-		});
-		vp.add( canvas );
-		
+		});		
 		HorizontalPanel	filterPanel = new HorizontalPanel();
-		
 		filterCombo.addChangeHandler( new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
-				String val = filterCombo.getValue( filterCombo.getSelectedIndex() );
-				filtInd.clear();
-				
-				if( val != null && val.length() > 0 ) {
-					int i = 0;
-					for( FoodInfo fi : lfoodinfo ) {
-						String group = (String)fi.valAt(1);
-						if( group != null && group.toLowerCase().contains( val.toLowerCase() ) ) filtInd.add(i);
-						//else console.log( fi.valAt(0) );
-						i++;
-					}
-				} else console.log( filterCombo.getSelectedIndex() );
+				applyFilter();
 				
 				ystart = 0;
 				draw( canvas.getContext2d(), xstart, ystart );
 			}
 		});
-		final TextBox	filter = new TextBox();
-		filter.addChangeHandler( new ChangeHandler() {
+		filterText.addChangeHandler( new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
-				String val = filter.getValue();
-				filtInd.clear();
-				
-				if( val.length() > 0 ) {
-					int i = 0;
-					for( FoodInfo fi : lfoodinfo ) {
-						String food = (String)fi.valAt(0);
-						if( food.toLowerCase().contains( val.toLowerCase() ) ) filtInd.add(i);
-						i++;
-					}
-				}
+				applyFilter();
 				
 				ystart = 0;
 				draw( canvas.getContext2d(), xstart, ystart );
 			}
 		});
 		filterPanel.add( filterCombo );
-		filterPanel.add( filter );
-		vp.add( filterPanel );
+		filterPanel.add( filterText );
+		
+		final VerticalPanel	subvp = new VerticalPanel();
+		subvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		subvp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		
+		subvp.add( canvas );
+		subvp.add( filterPanel );
+		vp.add( subvp );
 		
 		rp.add( vp );
 	}
