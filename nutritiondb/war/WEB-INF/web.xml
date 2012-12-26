@@ -28,6 +28,6 @@
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Nutritiondb.jsp</welcome-file>
+    <welcome-file>Webnutrition.html</welcome-file>
   </welcome-file-list>
 </web-app>
