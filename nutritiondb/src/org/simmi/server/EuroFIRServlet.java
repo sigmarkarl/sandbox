@@ -897,11 +897,34 @@ public class EuroFIRServlet extends HttpServlet {
 			public void close() {}
 		};
 		
-		try {
-			com.matis.eurofir.webservices.EuroFIRWebService.parseStream( rs, is, pw );
-		} catch (IOException | SecurityException | IllegalArgumentException | NoSuchAlgorithmException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+		//try {
+			try {
+				com.matis.eurofir.webservices.EuroFIRWebService.parseStream( rs, is, pw );
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		/*} catch (IOException | SecurityException | IllegalArgumentException | NoSuchAlgorithmException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	public static void main(String[] args) {
