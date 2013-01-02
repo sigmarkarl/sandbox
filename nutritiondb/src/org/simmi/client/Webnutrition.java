@@ -469,7 +469,7 @@ public class Webnutrition implements EntryPoint {
 					}
 				}
 				context.restore();
-			} if( w+c.width-next > sub && w-next < sub+canvasWidth-rhs ) { //else if( w+c.width > xstartLocal && w < xstartLocal+(canvasWidth-rhs) ) {
+			} else if( w+c.width-next > sub && w-next < sub+canvasWidth-rhs ) { //else if( w+c.width > xstartLocal && w < xstartLocal+(canvasWidth-rhs) ) {
 				//int x = xs; x < Math.min( getMax(), xe ); x+=unitwidth 
 				
 				//int k = x/unitwidth;
