@@ -5974,11 +5974,11 @@ public class SerifyApplet extends JApplet {
 			}
 		});*/
 		
-		File[] ff = { new File("/home/sigmar/all.fa") };
+		File[] ff = { new File("/u0/all.fa") };
 		
 		try {
 			//Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, true );
-			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/all.blastout" ), -1, true );
+			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/u0/all.blastout" ), -1, true );
 			/*System.err.println( nameHitMap.size() );
 			
 			for( String key : nameHitMap.keySet() ) {
@@ -5990,13 +5990,13 @@ public class SerifyApplet extends JApplet {
 			
 			int countmissing = 0;
 			for( File f : ff ) {
-				String loc = f.getName();
-				loc = loc.substring(0, loc.length()-4);
+				//String loc = f.getName();
+				//loc = loc.substring(0, loc.length()-4);
 				
-				double heat = snaedisheatmap.get( loc );
-				double ph = snaedisphmap.get( loc );
+				//double heat = snaedisheatmap.get( loc );
+				//double ph = snaedisphmap.get( loc );
 				
-				File nf = new File( dir, ""+f.getName()+".blastout" );
+				File nf = new File( "/u0/all.blastout" );//new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getName() );
 				List<Set<String>> cluster = makeBlastCluster( new FileInputStream( nf ), null, false );
 				
@@ -6025,9 +6025,9 @@ public class SerifyApplet extends JApplet {
 							for( String spec : specmap.keySet() ) {
 								if( teg.contains( spec ) ) {
 									List<Double> dvals = specmap.get(spec);
-									dvals.add( heat );
+									//dvals.add( heat );
 									List<Double> phvals = specphmap.get(spec);
-									phvals.add( ph );
+									//phvals.add( ph );
 									break;
 								}
 							}
@@ -6057,7 +6057,7 @@ public class SerifyApplet extends JApplet {
 					}
 				}
 				
-				FileWriter fw = new FileWriter("/home/sigmar/ampliconnoise/"+f.getName().substring(0, f.getName().length()-4)+"_thermus.fna");
+				FileWriter fw = new FileWriter("/u0/ampliconnoise/"+f.getName().substring(0, f.getName().length()-4)+"_thermus.fna");
 				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false );
 				fw.close();
 			}
@@ -6105,8 +6105,57 @@ public class SerifyApplet extends JApplet {
 		System.err.println( corr );
 	}
 	
+	static class erm implements Comparable<erm> {
+		public erm( String prim, int cnt ) {
+			this.primer = prim;
+			this.count = cnt;
+		}
+		
+		String	primer;
+		int		count;
+		
+		@Override
+		public int compareTo(erm o) {
+			return count - o.count;
+		}
+	}
+	
 	public static void main(String[] args) {
-		SerifyApplet sa = new SerifyApplet();
+		File f = new File("/vg454flx/D_2012_10_16_15_31_28_simmi_fullProcessing/1.TCA.454Reads.fna");
+		Map<String,Integer>	mstr = new HashMap<String,Integer>();
+		try {
+			FileReader fr = new FileReader( f );
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			while( line != null ) {
+				if( line.startsWith(">") ) {
+					line = br.readLine();
+					String primer = line.substring(10, 20);
+					if( mstr.containsKey(primer) ) {
+						mstr.put( primer, mstr.get(primer)+1 );
+					} else mstr.put( primer, 1 );
+				}
+				
+				line = br.readLine();
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		List<erm>	erml = new ArrayList<erm>();
+		for( String primer : mstr.keySet() ) {
+			erml.add( new erm( primer, mstr.get(primer) ) );
+			//System.err.println( primer + "  " + mstr.get(primer) );
+		}
+		Collections.sort( erml );
+		
+		for( erm hey : erml ) {
+			System.err.println( hey.primer + "  " + hey.count );
+		}
+		
+		//SerifyApplet sa = new SerifyApplet();
 		
 		/*try {
 			Map<String,String> nameHitMapOld = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, false );
@@ -6147,7 +6196,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}*/
 	
-		sa.initMaps();
+		//sa.initMaps();
 		
 		/*try {
 			Path p = Paths.get( "/home/sigmar/thermusmeta.tre" );
@@ -6190,7 +6239,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}*/
 		
-		sa.pyroSeq( specmap, specphmap );
+		//sa.pyroSeq( specmap, specphmap );
 		/*for( String key : specmap.keySet() ) {
 			List<Double> vals = specmap.get( key );
 			double mean = 0.0;
