@@ -14,13 +14,14 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.typedarrays.client.Float32ArrayNative;
 import com.google.gwt.typedarrays.client.Uint8ArrayNative;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -383,7 +384,7 @@ public class Starwars implements EntryPoint {
         //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE_MINUS_CONSTANT_ALPHA);
         gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.DST_COLOR);
 		
-        offval += 0.1f;
+        offval += 0.05f;
         offset( offval, newy );
 		setBuffers( gl, svb1, nb, tb, ib, true );
 		
@@ -404,9 +405,9 @@ public class Starwars implements EntryPoint {
 		ctx.setFillStyle("#FFFF00");
 		
 		String[] splitn = text.split("\n");
-		int y = 0;
+		int y = 1;
 		for( String spltext : splitn ) {
-			y++;
+			//y++;
 			
 			String[] split = spltext.split(" ");
 			int i = 0;
@@ -441,13 +442,13 @@ public class Starwars implements EntryPoint {
 		canvas.setCoordinateSpaceHeight( sizy );
 		Context2d ctx = canvas.getContext2d();
 		ctx.clearRect(0, 0, 1024, sizy );
-		ctx.setFont("48pt Calibri");
+		ctx.setFont("52pt Calibri");
 		ctx.setFillStyle("#FFFF00");
 		
 		String[] splitn = text.split("\n");
-		int y = 0;
+		int y = 1;
 		for( String spltext : splitn ) {
-			y += 1;
+			//y += 1;
 			String[] split = spltext.split(" ");
 			int i = 0;
 			String current = split[i];
@@ -461,28 +462,33 @@ public class Starwars implements EntryPoint {
 					} else break;
 				}
 				
-				double left = 1004.0-ctx.measureText( current.replace(" ", "") ).getWidth();
 				String[] newspl = current.split("[ ]+");
-				double total = 0.0;
-				for( String newstr : newspl ) {
-					ctx.fillText(newstr, 10+total, 96*y );
-					total += ctx.measureText( newstr ).getWidth()+left/(newspl.length-1);
+				if( i >= split.length-1 ) {
+					ctx.fillText(current, 10, 96*(y++) );
+				} else {
+					double left = 1004.0-ctx.measureText( current.replace(" ", "") ).getWidth();
+					double total = 0.0;
+					for( String newstr : newspl ) {
+						ctx.fillText(newstr, 10+total, 96*y );
+						total += ctx.measureText( newstr ).getWidth()+left/(newspl.length-1);
+					}
+					y++;
 				}
-				y++;
 				
 				if( i < split.length-1 ) current = split[++i];
 				else current = "";
 			}
 			if( current.length() > 0 ) {
-				//ctx.fillText(current, 10, 96*(y++) );
-				double left = 1004.0-ctx.measureText( current.replace(" ", "") ).getWidth();
+				ctx.fillText(current, 10, 96*(y++) );
+				
+				/*double left = 1004.0-ctx.measureText( current.replace(" ", "") ).getWidth();
 				String[] newspl = current.split("[ ]+");
 				double total = 0.0;
 				for( String newstr : newspl ) {
 					ctx.fillText(newstr, 10+total, 96*y );
 					total += ctx.measureText( newstr ).getWidth()+left/(newspl.length-1);
 				}
-				y++;
+				y++;*/
 			}
 		}
 	}
@@ -505,10 +511,18 @@ public class Starwars implements EntryPoint {
 		return e;
 	}-*/;
 	
+	public native String btoa( String str ) /*-{
+		return $wnd.btoa( str );
+	}-*/;
+	
+	public native String atob( String str ) /*-{
+		return $wnd.atob( str );
+	}-*/;
+	
 	RequestAnimationFrameCallback rafc = null;
 	final Float32ArrayNative svfa1 = Float32ArrayNative.create(12);
 	
-	double pi4 = Math.PI/20.0;
+	double pi4 = Math.PI/12.0;
 	float sinv = (float)Math.sin( pi4 );
 	float cosv = (float)Math.cos( pi4 );
 	
@@ -518,46 +532,46 @@ public class Starwars implements EntryPoint {
 		float mul = newy/1024.0f;
 		
 		svfa1.set(0, 10.0f);
-		svfa1.set(1, mul*30.0f*sinv);
-		svfa1.set(2, -50.0f-mul*30.0f*cosv-offval);
+		svfa1.set(1, mul*30.0f*sinv+offval*sinv-7.0f);
+		svfa1.set(2, -50.0f-mul*30.0f*cosv-offval*cosv);
 		svfa1.set(3, -10.0f);
-		svfa1.set(4, mul*30.0f*sinv);
-		svfa1.set(5, -50.0f-mul*30.0f*cosv-offval);
+		svfa1.set(4, mul*30.0f*sinv+offval*sinv-7.0f);
+		svfa1.set(5, -50.0f-mul*30.0f*cosv-offval*cosv);
 		svfa1.set(6, -10.0f);
-		svfa1.set(7, -mul*30.0f*sinv);
-		svfa1.set(8, -50.0f+mul*30.0f*cosv-offval);
+		svfa1.set(7, -mul*30.0f*sinv+offval*sinv-7.0f);
+		svfa1.set(8, -50.0f+mul*30.0f*cosv-offval*cosv);
 		svfa1.set(9, 10.0f);
-		svfa1.set(10, -mul*30.0f*sinv);
-		svfa1.set(11, -50.0f+mul*30.0f*cosv-offval);
+		svfa1.set(10, -mul*30.0f*sinv+offval*sinv-7.0f);
+		svfa1.set(11, -50.0f+mul*30.0f*cosv-offval*cosv);
 	}
 	
 	/**
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
-		final RootPanel	root = RootPanel.get();
+		final RootPanel	root = RootPanel.get("starwars");
 		Style style = root.getElement().getStyle();
 		style.setPadding(0.0, Unit.PX);
 		style.setMargin(0.0, Unit.PX);
 		style.setBorderWidth(0.0, Unit.PX);
 		
-		VerticalPanel	vp = new VerticalPanel();
-		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
-		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
-		vp.setSize("100%", "100%");
+		//VerticalPanel	vp = new VerticalPanel();
+		//vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		//vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		//vp.setSize("100%", "100%");
 		
-		int w = Window.getClientWidth();
-		int h = Window.getClientHeight();
-		root.setSize(w+"px", h+"px");
+		//int w = Window.getClientWidth();
+		//int h = Window.getClientHeight();
+		//root.setSize(w+"px", h+"px");
 		
-		Window.addResizeHandler( new ResizeHandler() {
+		/*Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
 				int w = event.getWidth();
 				int h = event.getHeight();
 				root.setSize(w+"px", h+"px");
 			}
-		});
+		});*/
 		
 		final elemental.html.Window wnd = Browser.getWindow();
 		final Console console = wnd.getConsole();
@@ -569,7 +583,19 @@ public class Starwars implements EntryPoint {
 		final CanvasElement starcanvas2dElement = (CanvasElement)starcanvas2d.getElement();
 		final Context2d starctx = starcanvas2d.getContext2d();
 		
-		String text = "Fighting spam is now a community effort. Every post has a Flag button at the lower left.\nIf you hit that to reveal the popup, one of the options is Spam. It's quick and painless. Bonus: if enough people tag something as spam, the post will disappear even without moderator intervention. So don't be bashful. Flag that spam. Don't reply to them, don't copy their posts. Just flag them.";
+		String text = "Custom StarWars flying text\n"+
+				"Be sure to have WebGL enabled in your Chrome browser. Go to url chrome://flags and enable WebGL if not already enabled.\n"+
+				"Edit text in text area and press Run to change flying text.";
+		
+		boolean change = false;
+		String query = Window.Location.getQueryString();
+		if( query != null & query.contains("flyer") ) {
+			change = true;
+			int i = query.indexOf("flyer");
+			String qs = query.substring(i+6);
+			text = URL.decode( qs );
+		}
+		//String text = "Fighting spam is now a community effort. Every post has a Flag button at the lower left.\nIf you hit that to reveal the popup, one of the options is Spam. It's quick and painless. Bonus: if enough people tag something as spam, the post will disappear even without moderator intervention. So don't be bashful. Flag that spam. Don't reply to them, don't copy their posts. Just flag them.";
 		final Canvas canvas2d = Canvas.createIfSupported();
 		canvas2d.setSize(1024+"px", 1024+"px");
 		canvas2d.setCoordinateSpaceWidth(1024);
@@ -580,6 +606,7 @@ public class Starwars implements EntryPoint {
 		double val = Math.log((double)y) / Math.log(2.0);
 		int newy = (int)Math.pow(2.0, Math.ceil( val ) );
 		this.newy = newy;
+		offval = -newy/36.0f-25.0f;
 		console.log("newy "+ newy);
 		changeText( text, canvas2d, newy );
 		//CanvasElement	canvas = Browser.getDocument().createCanvasElement();
@@ -603,23 +630,11 @@ public class Starwars implements EntryPoint {
 		//gl.enableVertexAttribArray(vertexPositionAttribute);
 		
 		//initBuffersNative( gl );
-		//WebGLBuffer squareVerticesBuffer = initBuffers( gl );
-
-		Image image = new Image("starfield.png");
-		
-		starctx.drawImage( ImageElement.as(image.getElement()), 0.0, 0.0, 512.0, 256.0 );
-		
+		//WebGLBuffer squareVerticesBuffer = initBuffers( gl );		
 		
 		final WebGLTexture texture = gl.createTexture();
 		gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
 		gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, canvas2dElement);
-		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
-		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
-		gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
-
-		final WebGLTexture starfield = gl.createTexture();
-		gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
-		gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, starcanvas2dElement );
 		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 		gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
@@ -729,20 +744,30 @@ public class Starwars implements EntryPoint {
         gl.enableVertexAttribArray(2);
 
         //Set up all the vertex attributes for vertices, normals and texCoords
-		
+        
+        final String url = "http://192.168.1.166:8888/Starwars.html";
+        //final String url = "http://starwarsflyingtext.appspot.com";
+        final Anchor a = new Anchor("Link");
+        
 		final TextArea ta = new TextArea();
-		final Button	button = new Button("Test");
+		if( change ) {
+			a.setHref( url+"?flyer="+URL.encode(text) ); 
+			ta.setText( text );
+		}
+		ta.setSize(945+"px", 120+"px");
+		final Button	button = new Button("Run");
 		button.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				offval = 0.0f;
-				
 				int y = measureText( ta.getText(), canvas2d );
 				double val = Math.log((double)y) / Math.log(2.0);
 				int newy = (int)Math.pow(2.0, Math.ceil( val ) );
 				Starwars.this.newy = newy;
+				offval = -newy/36.0f-25.0f;
 				console.log("newy "+ newy);
-				changeText( ta.getText(), canvas2d, newy );
+				
+				String text = ta.getText();
+				changeText( text, canvas2d, newy );
 				//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
 				gl.clear( WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT );
 				
@@ -752,7 +777,7 @@ public class Starwars implements EntryPoint {
 				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
 				//drawPicture( gl, canvas3dElement, texture, starfield, g );
-				
+				a.setHref( url+"?flyer="+URL.encode(text) );
 				//gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, cubeVerticesTextureCoordBuffer);
 				//gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, (ArrayBuffer)fa.buffer(), WebGLRenderingContext.STATIC_DRAW);
 				//gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
@@ -764,14 +789,49 @@ public class Starwars implements EntryPoint {
 		subvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		subvp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		
-		HTML	starwars = new HTML( "<h3>Custom StarWars flying text</h3>" );
-		subvp.add( starwars );
+		//HTML	starwars = new HTML( "<h1>Custom StarWars flying text</h1>" );
+		//subvp.add( starwars );
+		subvp.getElement().getStyle().setMargin(10.0, Unit.PX);
 		subvp.add( canvas3d );
 		subvp.add( ta );
 		subvp.add( button );
+		subvp.add( a );
 		
-		vp.add( subvp );
-		root.add( vp );
+		final Image image = new Image();
+		Browser.getWindow().getConsole().log("doing");
+		image.addLoadHandler( new LoadHandler() {
+			@Override
+			public void onLoad(LoadEvent event) {
+				Browser.getWindow().getConsole().log("mememe");
+				
+				starctx.drawImage( ImageElement.as(image.getElement()), 0.0, 0.0, 512.0, 256.0 );
+				final WebGLTexture starfield = gl.createTexture();
+				gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
+				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, starcanvas2dElement );
+				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
+				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
+				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
+				
+				drawPicture( gl, canvas3dElement, texture, starfield, g );
+				rafc = new RequestAnimationFrameCallback() {
+					@Override
+					public boolean onRequestAnimationFrameCallback(double time) {
+						drawStuff( gl, g, 0, texture, starfield );
+						if( rafc != null ) wnd.webkitRequestAnimationFrame( rafc );
+						return true;
+					}
+				};
+				wnd.webkitRequestAnimationFrame( rafc );
+			}
+		});
+		image.setVisible( false );
+		image.setUrl("starfield.png");
+		//Image.prefetch("starfield.png");
+		RootPanel tex = RootPanel.get("texture");
+		tex.add( image );		
+		
+		//vp.add( subvp );
+		root.add( subvp );
 		
 		//drawPicture( gl, canvas3dElement, texture, g );
 		/*reshape( gl, canvas3dElement, g );
@@ -784,17 +844,6 @@ public class Starwars implements EntryPoint {
 		
 		gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, (ArrayBuffer)fa.buffer(), WebGLRenderingContext.STATIC_DRAW);*/
 		//gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
-		drawPicture( gl, canvas3dElement, texture, starfield, g );
-		
-		rafc = new RequestAnimationFrameCallback() {
-			@Override
-			public boolean onRequestAnimationFrameCallback(double time) {
-				drawStuff( gl, g, 0, texture, starfield );
-				if( rafc != null ) wnd.webkitRequestAnimationFrame( rafc );
-				return true;
-			}
-		};
-		wnd.webkitRequestAnimationFrame( rafc );
 		
 		/*final Timer timer = new Timer() {
 
