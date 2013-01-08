@@ -94,9 +94,6 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
@@ -2116,7 +2113,7 @@ public class SerifyApplet extends JApplet {
 		return nseq;
 	}
 	
-	public static int trimFasta( BufferedReader br, Writer bw, Object filterset, boolean inverted ) throws IOException {
+	public static int trimFasta( BufferedReader br, Writer bw, Object filterset, boolean inverted, boolean endswith ) throws IOException {
 		int nseq = 0;
 		
 		Set<String> keyset;
@@ -2130,7 +2127,7 @@ public class SerifyApplet extends JApplet {
 				if( inverted ) {
 					seqname = line;
 					for( String f : keyset ) {
-						if( line.contains(f) ) {
+						if( (endswith && line.endsWith(f)) || (!endswith && line.contains(f)) ) {
 							nseq++;
 							seqname = null;
 							break;
@@ -2142,11 +2139,7 @@ public class SerifyApplet extends JApplet {
 				} else {
 					seqname = null;
 					for( String f : keyset ) {
-						if( line.contains(f) ) {
-							if( f.equals("HWBYD8R05F4VSK") ) {
-								System.err.println();
-							}
-							
+						if( (endswith && line.endsWith(f)) || (!endswith && line.contains(f)) ) {
 							Object swap = (filterset instanceof Map) ? ((Map)filterset).get(f) : null;
 							
 							nseq++;
@@ -2366,7 +2359,7 @@ public class SerifyApplet extends JApplet {
 				bw = new BufferedWriter( fw );
 			}
 			
-			nseq += trimFasta( new BufferedReader( new InputStreamReader( is ) ), bw, fset, false );
+			nseq += trimFasta( new BufferedReader( new InputStreamReader( is ) ), bw, fset, false, false );
 		}
 		if( bw != null ) {
 			bw.flush();
@@ -2433,6 +2426,142 @@ public class SerifyApplet extends JApplet {
 			jf.addSequence(seq);
 			if (seq.getAnnotations() != null)
 				Collections.sort(seq.getAnnotations());
+		}
+	}
+	
+	public void blastRename( Sequences seqs, String s, File f ) {
+		try {
+			URI uri = new URI( seqs.getPath() );
+			InputStream is = uri.toURL().openStream();
+			
+			if( seqs.getPath().endsWith(".gz") ) {
+				is = new GZIPInputStream( is );
+			}
+			
+			Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s), 0, true );
+			System.err.println( nameHitMap.size() );
+			for( String key : nameHitMap.keySet() ) {
+				System.err.println( key + "    " + nameHitMap.get(key) );
+				break;
+			}
+			
+			String[] filter = { "Thermus", "Meiothermus" };
+			int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f), ";", Arrays.asList(filter) );
+			
+			SerifyApplet.this.addSequences(f.getName(), seqs.getType(), f.toURI().toString(), nseq );
+		} catch (URISyntaxException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public void fastTreePrepare( List<Sequences> lseqs ) {
+		JavaFasta jf = new JavaFasta( SerifyApplet.this );
+		jf.initDataStructures();
+		
+		for( Sequences seqs : lseqs ) {
+			Map<String,Sequence> contset = new HashMap<String,Sequence>();
+			appendSequenceInJavaFasta( jf, seqs, contset, true );
+		
+			for (String contig : contset.keySet()) {
+				Sequence seq = contset.get(contig);
+				jf.addSequence(seq);
+				if (seq.getAnnotations() != null)
+					Collections.sort(seq.getAnnotations());
+			}
+			jf.selectAll();
+			jf.nameReplace(" ", "_");
+			jf.removeGaps( jf.lseq );
+			
+			String path = seqs.getPath();
+			int i = path.lastIndexOf('.');
+			if( i == -1 ) path += "_fixed";
+			else path = path.substring(0,i)+".fixed"+path.substring(i);
+			
+			i = path.lastIndexOf('/');
+			String fname = path.substring(i+1);
+			
+			try {
+				URI uri = new URI( path );
+				//URL url = uri.toURL();
+				File f = new File( uri );
+				FileWriter osw = new FileWriter( f );
+				//OutputStreamWriter osw = new OutputStreamWriter( url.openConnection().getOutputStream() );
+				jf.writeFasta( jf.lseq, osw );
+				osw.close();
+				
+				SerifyApplet.this.addSequences( fname, path );
+			} catch (URISyntaxException e1) {
+				e1.printStackTrace();
+			} catch (MalformedURLException e1) {
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
+			jf.clearAll();
+		}
+	}
+	
+	public Map<String,String> makeFset( String trim ) throws URISyntaxException, IOException {
+		boolean nofile = false;
+		URL url;
+		try {
+			url = new URL( trim );
+		} catch( Exception exc ) {
+			nofile = true;
+		}
+		Map<String,String> fset = new HashMap<String,String>();
+		if( nofile ) {
+			String[] farray = { trim };
+			for( String str : farray ) {
+				fset.put(str, null);
+			}
+			//fset.addAll( Arrays.asList( farray ) );
+		} else {
+			File fl = new File( new URI(trim) );
+			FileReader fr = new FileReader( fl );
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			if( !trim.contains("454ReadStatus") ) {
+				while( line != null ) {
+					/*if( line.contains("ingletons") ) {
+						fset.add( line.split("[\t ]+")[0] );
+					}*/							
+					String[] split = line.split("\t");
+					if( split.length > 1 ) fset.put( split[0], split[1] );
+					else fset.put( line, null );
+					
+					line = br.readLine();
+				}
+			} else {
+				while( line != null ) {
+					/*if( line.contains("ingletons") ) {
+						fset.add( line.split("[\t ]+")[0] );
+					}*/								
+					if( line.contains("Singleton") ) { 
+						String[] split = line.split("[\t ]+");
+						//if( split.length > 1 ) fset.put( split[0], split[1] );
+						fset.put( split[0], null );
+					}
+					
+					line = br.readLine();
+				}
+			}
+			br.close();
+		}
+		return fset;
+	}
+	
+	public void trim( File dir, String trim ) {
+		try {			
+			Map<String,String> fset = makeFset( trim );
+			totalTrim( dir, fset );
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		} catch (URISyntaxException e1) {
+			e1.printStackTrace();
 		}
 	}
 	
@@ -4213,63 +4342,8 @@ public class SerifyApplet extends JApplet {
 
 						@Override
 						public void windowClosed(WindowEvent e) {
-							try {
-								String trim = spinner.getText();
-								
-								boolean nofile = false;
-								URL url;
-								try {
-									url = new URL( trim );
-								} catch( Exception exc ) {
-									nofile = true;
-								}
-								
-								Map<String,String> fset = new HashMap<String,String>();
-								if( nofile ) {
-									String[] farray = { trim };
-									for( String str : farray ) {
-										fset.put(str, null);
-									}
-									//fset.addAll( Arrays.asList( farray ) );
-								} else {
-									File fl = new File( new URI(trim) );
-									FileReader fr = new FileReader( fl );
-									BufferedReader br = new BufferedReader( fr );
-									String line = br.readLine();
-									if( !trim.contains("454ReadStatus") ) {
-										while( line != null ) {
-											/*if( line.contains("ingletons") ) {
-												fset.add( line.split("[\t ]+")[0] );
-											}*/							
-											String[] split = line.split("\t");
-											if( split.length > 1 ) fset.put( split[0], split[1] );
-											else fset.put( line, null );
-											
-											line = br.readLine();
-										}
-									} else {
-										while( line != null ) {
-											/*if( line.contains("ingletons") ) {
-												fset.add( line.split("[\t ]+")[0] );
-											}*/								
-											if( line.contains("Singleton") ) { 
-												String[] split = line.split("[\t ]+");
-												//if( split.length > 1 ) fset.put( split[0], split[1] );
-												fset.put( split[0], null );
-											}
-											
-											line = br.readLine();
-										}
-									}
-									br.close();
-								}
-								
-								totalTrim( dir, fset );
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							} catch (URISyntaxException e1) {
-								e1.printStackTrace();
-							}
+							String trim = spinner.getText();
+							trim( dir, trim );
 						}
 
 						@Override
@@ -4465,10 +4539,7 @@ public class SerifyApplet extends JApplet {
 		popup.addSeparator();
 		popup.add( new AbstractAction("FastTree prepare") {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( SerifyApplet.this );
-				jf.initDataStructures();
-				
+			public void actionPerformed(ActionEvent e) {				
 				List<Sequences> lseqs = new ArrayList<Sequences>();
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
@@ -4478,48 +4549,7 @@ public class SerifyApplet extends JApplet {
 					lseqs.add( seqs );
 				}
 				
-				for( Sequences seqs : lseqs ) {
-					Map<String,Sequence> contset = new HashMap<String,Sequence>();
-					appendSequenceInJavaFasta( jf, seqs, contset, true );
-				
-					for (String contig : contset.keySet()) {
-						Sequence seq = contset.get(contig);
-						jf.addSequence(seq);
-						if (seq.getAnnotations() != null)
-							Collections.sort(seq.getAnnotations());
-					}
-					jf.selectAll();
-					jf.nameReplace(" ", "_");
-					jf.removeGaps( jf.lseq );
-					
-					String path = seqs.getPath();
-					int i = path.lastIndexOf('.');
-					if( i == -1 ) path += "_fixed";
-					else path = path.substring(0,i)+".fixed"+path.substring(i);
-					
-					i = path.lastIndexOf('/');
-					String fname = path.substring(i+1);
-					
-					try {
-						URI uri = new URI( path );
-						//URL url = uri.toURL();
-						File f = new File( uri );
-						FileWriter osw = new FileWriter( f );
-						//OutputStreamWriter osw = new OutputStreamWriter( url.openConnection().getOutputStream() );
-						jf.writeFasta( jf.lseq, osw );
-						osw.close();
-						
-						SerifyApplet.this.addSequences( fname, path );
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
-					} catch (MalformedURLException e1) {
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					
-					jf.clearAll();
-				}
+				fastTreePrepare( lseqs );
 			}
 		});
 		popup.add( new AbstractAction("Blast rename") {
@@ -4549,30 +4579,7 @@ public class SerifyApplet extends JApplet {
 						}
 					
 						if( s != null ) {
-							try {
-								URI uri = new URI( seqs.getPath() );
-								InputStream is = uri.toURL().openStream();
-								
-								if( seqs.getPath().endsWith(".gz") ) {
-									is = new GZIPInputStream( is );
-								}
-								
-								Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s), 0, true );
-								System.err.println( nameHitMap.size() );
-								for( String key : nameHitMap.keySet() ) {
-									System.err.println( key + "    " + nameHitMap.get(key) );
-									break;
-								}
-								
-								String[] filter = { "Thermus", "Meiothermus" };
-								int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f), ";", Arrays.asList(filter) );
-								
-								SerifyApplet.this.addSequences(f.getName(), seqs.getType(), f.toURI().toString(), nseq );
-							} catch (URISyntaxException e1) {
-								e1.printStackTrace();
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
+							blastRename( seqs, s, f );
 						}
 					}
 				}
@@ -5191,6 +5198,7 @@ public class SerifyApplet extends JApplet {
 					//for( int i = 0; i < lad.size(); i++ ) {}
 				}
 				
+				/**** okokok
 				RealMatrix dmat = new Array2DRowRealMatrix( d );
 				RealMatrix Xmat = new Array2DRowRealMatrix( X );
 				RealMatrix Wmat = new Array2DRowRealMatrix( W );
@@ -5201,11 +5209,12 @@ public class SerifyApplet extends JApplet {
 				RealMatrix XWX = XW.multiply(Xmat);
 				RealMatrix invXX = new LUDecomposition( XWX ).getSolver().getInverse();
 				RealMatrix v = invXX.multiply( XW.multiply(dmat) );
+				******/
 				
-				int i = 0;
+				/*int i = 0;
 				for( Node n : subnodes ) {
 					n.seth( v.getEntry(i++, 0) );
-				}
+				}*/
 			}
 			
 			List<Object[]>	sortlist = new ArrayList<Object[]>();
@@ -6058,7 +6067,7 @@ public class SerifyApplet extends JApplet {
 				}
 				
 				FileWriter fw = new FileWriter("/u0/ampliconnoise/"+f.getName().substring(0, f.getName().length()-4)+"_thermus.fna");
-				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false );
+				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false, false );
 				fw.close();
 			}
 			System.err.println( countmissing );
@@ -6120,8 +6129,88 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
+	public void parse( String[] args ) {
+		int i = Arrays.binarySearch(args, "-in");
+		File inf = null;
+		if( i >= 0 ) {
+			inf = new File( args[i+1] );
+			try {
+				addSequences( inf.getName(), inf.getAbsolutePath() );
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		File outf = null;
+		i = Arrays.binarySearch(args, "-out");
+		if( i >= 0 ) {
+			outf = new File( args[i+1] );
+			//ex
+		}
+		
+		i = Arrays.binarySearch(args, "-trim");
+		if( i >= 0 ) {
+			try {
+				FileWriter fw = new FileWriter(outf);
+				FileReader fr = new FileReader( inf );
+				trimFasta( new BufferedReader(fr), fw, makeFset(args[i+1]), false, false );
+				fr.close();
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		i = Arrays.binarySearch(args, "-ntrim");
+		if( i >= 0 ) {
+			try {
+				FileWriter fw = new FileWriter(outf);
+				FileReader fr = new FileReader( inf );
+				trimFasta( new BufferedReader(fr), fw, makeFset(args[i+1]), true, false );
+				fr.close();
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		i = Arrays.binarySearch(args, "-ntrime");
+		if( i >= 0 ) {
+			try {
+				FileWriter fw = new FileWriter(outf);
+				FileReader fr = new FileReader( inf );
+				trimFasta( new BufferedReader(fr), fw, makeFset(args[i+1]), true, true );
+				fr.close();
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		i = Arrays.binarySearch(args, "-blast");
+		if( i >= 0 ) {
+			blastRename( this.sequences.get(0), args[i+1], outf );
+		}
+		
+		i = Arrays.binarySearch(args, "-ft");
+		if( i >= 0 ) {
+			fastTreePrepare( this.sequences );
+		}
+	}
+	
 	public static void main(String[] args) {
-		File f = new File("/vg454flx/D_2012_10_16_15_31_28_simmi_fullProcessing/1.TCA.454Reads.fna");
+		SerifyApplet sa = new SerifyApplet();
+		sa.parse( args );
+		
+		/*File f = new File("/vg454flx/D_2012_10_16_15_31_28_simmi_fullProcessing/1.TCA.454Reads.fna");
 		Map<String,Integer>	mstr = new HashMap<String,Integer>();
 		try {
 			FileReader fr = new FileReader( f );
@@ -6154,8 +6243,6 @@ public class SerifyApplet extends JApplet {
 		for( erm hey : erml ) {
 			System.err.println( hey.primer + "  " + hey.count );
 		}
-		
-		//SerifyApplet sa = new SerifyApplet();
 		
 		/*try {
 			Map<String,String> nameHitMapOld = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, false );
@@ -6207,7 +6294,7 @@ public class SerifyApplet extends JApplet {
 			Files.write( p, str.toString().getBytes() );
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}*/
+		}*
 		
 		Map<String,List<Double>>	specmap = new HashMap<String,List<Double>>();
 		specmap.put( "antranikianii", new ArrayList<Double>() );

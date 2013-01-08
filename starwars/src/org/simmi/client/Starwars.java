@@ -384,7 +384,7 @@ public class Starwars implements EntryPoint {
         //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE_MINUS_CONSTANT_ALPHA);
         gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.DST_COLOR);
 		
-        offval += 0.05f;
+        offval += 0.07f;
         offset( offval, newy );
 		setBuffers( gl, svb1, nb, tb, ib, true );
 		
@@ -405,9 +405,9 @@ public class Starwars implements EntryPoint {
 		ctx.setFillStyle("#FFFF00");
 		
 		String[] splitn = text.split("\n");
-		int y = 1;
+		int y = 0;
 		for( String spltext : splitn ) {
-			//y++;
+			y++;
 			
 			String[] split = spltext.split(" ");
 			int i = 0;
@@ -425,11 +425,12 @@ public class Starwars implements EntryPoint {
 					} else break;
 				}
 				
-				y++;
-				if( i < split.length-1 ) current = split[++i];
-				else current = "";
+				if( i < split.length-1 ) {
+					y++;
+					current = split[++i];
+				} else current = "";
 			}
-			if( current.length() > 0 ) y++;
+			//if( current.length() > 0 ) y++;
 		}
 		
 		//Browser.getWindow().getConsole().log( "y " + y );
@@ -446,9 +447,9 @@ public class Starwars implements EntryPoint {
 		ctx.setFillStyle("#FFFF00");
 		
 		String[] splitn = text.split("\n");
-		int y = 1;
+		int y = 0;
 		for( String spltext : splitn ) {
-			//y += 1;
+			y++;
 			String[] split = spltext.split(" ");
 			int i = 0;
 			String current = split[i];
@@ -462,10 +463,13 @@ public class Starwars implements EntryPoint {
 					} else break;
 				}
 				
-				String[] newspl = current.split("[ ]+");
-				if( i >= split.length-1 ) {
-					ctx.fillText(current, 10, 96*(y++) );
+				/*if( i >= split.length-1 ) {
+					ctx.fillText(current, 10, 96*y );
 				} else {
+				}*/
+				
+				if( i < split.length-1 ) {
+					String[] newspl = current.split("[ ]+");
 					double left = 1004.0-ctx.measureText( current.replace(" ", "") ).getWidth();
 					double total = 0.0;
 					for( String newstr : newspl ) {
@@ -473,13 +477,15 @@ public class Starwars implements EntryPoint {
 						total += ctx.measureText( newstr ).getWidth()+left/(newspl.length-1);
 					}
 					y++;
+					
+					current = split[++i];
+				} else {
+					ctx.fillText(current, 10, 96*y );
+					current = "";
 				}
-				
-				if( i < split.length-1 ) current = split[++i];
-				else current = "";
 			}
 			if( current.length() > 0 ) {
-				ctx.fillText(current, 10, 96*(y++) );
+				ctx.fillText(current, 10, 96*y );
 				
 				/*double left = 1004.0-ctx.measureText( current.replace(" ", "") ).getWidth();
 				String[] newspl = current.split("[ ]+");
@@ -606,7 +612,7 @@ public class Starwars implements EntryPoint {
 		double val = Math.log((double)y) / Math.log(2.0);
 		int newy = (int)Math.pow(2.0, Math.ceil( val ) );
 		this.newy = newy;
-		offval = -newy/36.0f-25.0f;
+		offval = -newy/36.0f-20.0f;
 		console.log("newy "+ newy);
 		changeText( text, canvas2d, newy );
 		//CanvasElement	canvas = Browser.getDocument().createCanvasElement();
@@ -763,7 +769,7 @@ public class Starwars implements EntryPoint {
 				double val = Math.log((double)y) / Math.log(2.0);
 				int newy = (int)Math.pow(2.0, Math.ceil( val ) );
 				Starwars.this.newy = newy;
-				offval = -newy/36.0f-25.0f;
+				offval = -newy/36.0f-20.0f;
 				console.log("newy "+ newy);
 				
 				String text = ta.getText();
