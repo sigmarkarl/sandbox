@@ -37,7 +37,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -95,6 +94,8 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Sequences;
+import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
@@ -107,17 +108,16 @@ public class SerifyApplet extends JApplet {
 	private static final long serialVersionUID = 1L;
 	
 	JTable				table;
-	List<Sequences>		sequences;
+	Serifier			serifier;
 	String globaluser = null;
 	Container			cnt = null;
 	
 	public SerifyApplet() {
 		super();
+		serifier = new Serifier();
 	}
 	
-	public List<Sequences> initSequences( int rowcount ) {
-		List<Sequences>	seqs = new ArrayList<Sequences>();
-		
+	public List<Sequences> initSequences( int rowcount ) {		
 		try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "getSequences", new Object[] {rowcount == 0} );
@@ -131,7 +131,7 @@ public class SerifyApplet extends JApplet {
 			seqs.add( new Sequences(s[0], s[1], s[2], s[3], Integer.parseInt(s[4]) ) );
 		}*/
 		
-		return seqs;
+		return serifier.getSequencesList();
 	}
 	
 	public String getMachine() {
@@ -563,6 +563,18 @@ public class SerifyApplet extends JApplet {
 		return res;
 	}
 	
+	public Sequences getSequences( int i ) {
+		return serifier.getSequencesList().get(i);
+	}
+	
+	public void removeSequences( Sequences s ) {
+		serifier.getSequencesList().remove( s );
+	}
+	
+	public void removeAllSequences( Set<Sequences> ss ) {
+		serifier.getSequencesList().removeAll( ss );
+	}
+	
 	public void deleteSeqs() {
 		Set<String>	keys = new TreeSet<String>();
 		Set<Sequences>	rselset = new TreeSet<Sequences>();
@@ -570,7 +582,7 @@ public class SerifyApplet extends JApplet {
 		for( int r : rr ) {
 			int ind = table.convertRowIndexToModel( r );
 			if( ind >= 0 ) {
-				Sequences seqs = sequences.get(ind);
+				Sequences seqs = getSequences(ind);
 				rselset.add( seqs );
 				if( seqs.getKey() != null ) keys.add( seqs.getKey() );
 				
@@ -592,21 +604,21 @@ public class SerifyApplet extends JApplet {
 		if( unsucc ) {
 			for( int r : rr ) {
 				int ind = table.convertRowIndexToModel( r );
-				rselset.add( sequences.get(ind) );
+				rselset.add( getSequences(ind) );
 			}
 		}
 		
-		sequences.removeAll( rselset );
+		removeAllSequences( rselset );
 		table.tableChanged( new TableModelEvent(table.getModel()) );
 	}
 	
 	public void deleteSequence( String key ) {
 		Sequences selseq = null;
-		for( Sequences s : sequences ) {
+		for( Sequences s : serifier.getSequencesList() ) {
 			if( key.equals( s.getKey() ) ) selseq = s;
 		}
 		if( selseq != null ) {
-			sequences.remove( selseq );		
+			removeSequences( selseq );		
 			table.tableChanged( new TableModelEvent(table.getModel()) );
 		}
 	}
@@ -2112,55 +2124,7 @@ public class SerifyApplet extends JApplet {
 		
 		return nseq;
 	}
-	
-	public static int trimFasta( BufferedReader br, Writer bw, Object filterset, boolean inverted, boolean endswith ) throws IOException {
-		int nseq = 0;
 		
-		Set<String> keyset;
-		if( filterset instanceof Map ) keyset = (Set<String>)((Map) filterset).keySet();
-		else keyset = (Set<String>)filterset;
-		
-		String line = br.readLine();
-		String seqname = null;
-		while( line != null ) {
-			if( line.startsWith(">") ) {
-				if( inverted ) {
-					seqname = line;
-					for( String f : keyset ) {
-						if( (endswith && line.endsWith(f)) || (!endswith && line.contains(f)) ) {
-							nseq++;
-							seqname = null;
-							break;
-						}
-					}
-					if( seqname != null ) {
-						bw.write( seqname+"\n" );
-					}
-				} else {
-					seqname = null;
-					for( String f : keyset ) {
-						if( (endswith && line.endsWith(f)) || (!endswith && line.contains(f)) ) {
-							Object swap = (filterset instanceof Map) ? ((Map)filterset).get(f) : null;
-							
-							nseq++;
-							if( swap != null ) bw.write( ">"+swap+"_"+f+"\n" );
-							else bw.write( line+"\n" );
-							seqname = line;
-							break;
-						}
-					}
-				}
-			} else if( seqname != null ) {
-				bw.write( line+"\n" );
-			}
-			
-			line = br.readLine();
-		}
-		br.close();
-		
-		return nseq;
-	}
-	
 	public static void cutFasta( BufferedReader br, BufferedWriter bw, char ch ) throws IOException {
 		String line = br.readLine();
 		while( line != null ) {
@@ -2177,71 +2141,6 @@ public class SerifyApplet extends JApplet {
 		bw.close();
 	}
 	
-	public static Map<String,String> mapNameHit( InputStream blasti, int idfilt, boolean includePerc ) throws IOException {
-		Map<String,String>	mapHit = new HashMap<String,String>();
-		
-		BufferedReader br = new BufferedReader( new InputStreamReader( blasti ) );
-		String line = br.readLine();
-		String current;
-		while( line != null ) {
-			String trim = line.trim();
-			if( trim.startsWith("Query=") ) {
-				current = null;
-				String name = trim.substring(6).trim();
-				line = br.readLine();
-				while( line != null ) {
-					while( line != null && (!line.startsWith(">") && !line.contains("No hits") && !line.startsWith("Query=")) ) {
-						line = br.readLine();
-					}
-					if( line != null ) {
-						if( line.startsWith("Query") ) break;
-						
-						if( line.startsWith(">") ) {
-							String newcurrent = line.substring(1).trim();
-							line = br.readLine();
-							while( !line.startsWith("Length") ) {
-								newcurrent += " "+line.trim();
-								line = br.readLine();
-							}
-							
-							line = br.readLine();
-							while( !line.startsWith(" Identities") ) {
-								line = br.readLine();
-							}
-							int idx = line.indexOf('(');
-							int idx2 = line.indexOf("%)", idx+1);
-							String idstr = line.substring(idx+1,idx2);
-							
-							if( Integer.parseInt( idstr ) >= idfilt ) {
-								int i = name.indexOf(' ');
-								if( i == -1 ) i = name.length();
-								name = name.substring(0,i);
-								
-								i = newcurrent.lastIndexOf(';');
-								if( i == -1 ) i = newcurrent.length();
-								newcurrent = newcurrent.substring(i+1);
-								
-								mapHit.put( name, includePerc ? newcurrent+"_"+idstr+"%" : newcurrent );
-							}
-						}
-						
-							/*if( current == null || (current.contains("Uncultured bacterium") && !newcurrent.contains("Uncultured bacterium")) || (current.contains("Uncultured") && !newcurrent.contains("Uncultured")) ) {
-								mapHit.put( name, newcurrent );
-								current = newcurrent;
-							}*/
-						line = br.readLine();
-					}
-				}
-				if( line == null ) break;
-				else if( line.startsWith("Query") ) continue;
-			}
-			line = br.readLine();
-		}
-		br.close();
-		
-		return mapHit;
-	}
-	
 	public static double correlateDistance(double[] dmat1, double[] dmat2) {
 		double ret = 0.0;
 		
@@ -2251,51 +2150,6 @@ public class SerifyApplet extends JApplet {
 		}
 		
 		return Math.sqrt( ret );
-	}
-	
-	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, Set<String> filter ) throws IOException {
-		return doMapHitStuff(mapHit, is, os, "_", filter);
-	}
-	
-	public static boolean checkFilter( Collection<String> filter, String maphitstr ) {
-		for( String str : filter ) {
-			if( maphitstr.contains( str ) ) return true;
-		}
-		return false;
-	}
-	
-	public static int doMapHitStuff( Map<String,String> mapHit, InputStream is, OutputStream os, String sep, Collection<String> filter ) throws IOException {
-		int nseq = 0;
-		PrintStream pr = new PrintStream( os );
-		BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-		String line = br.readLine();
-		boolean include = false;
-		while( line != null ) {
-			if( line.startsWith(">") ) {
-				String name = line.substring(1).trim();
-				int i = name.indexOf(' ');
-				if( i == -1 ) i = name.length();
-				name = name.substring(0,i);
-				if( mapHit.containsKey(name) ) {
-					String maphitstr = mapHit.get(name);
-					int li = maphitstr.lastIndexOf(';');
-					if( li != -1 ) maphitstr = maphitstr.substring(li+1);
-					
-					if( filter == null || checkFilter( filter, maphitstr ) ) {
-						nseq++;
-						pr.println( ">" + maphitstr + sep + name ); //+ sep + mapHit.get(name) );
-						include = true;
-					} else include = false;
-				} else include = false;
-			} else if( include ) {
-				pr.println( line );
-			}
-			line = br.readLine();
-		}
-		br.close();
-		pr.close();
-		
-		return nseq;
 	}
 	
 	public class Anno {
@@ -2328,7 +2182,7 @@ public class SerifyApplet extends JApplet {
 		int[] rr = table.getSelectedRows();
 		for( int r : rr ) {
 			int rrr = table.convertRowIndexToModel( r );
-			final Sequences seqs = sequences.get( rrr );
+			final Sequences seqs = getSequences( rrr );
 			URI uri = new URI( seqs.getPath() );
 			InputStream is = uri.toURL().openStream();
 			
@@ -2359,7 +2213,7 @@ public class SerifyApplet extends JApplet {
 				bw = new BufferedWriter( fw );
 			}
 			
-			nseq += trimFasta( new BufferedReader( new InputStreamReader( is ) ), bw, fset, false, false );
+			nseq += serifier.trimFasta( new BufferedReader( new InputStreamReader( is ) ), bw, fset, false, false );
 		}
 		if( bw != null ) {
 			bw.flush();
@@ -2369,48 +2223,15 @@ public class SerifyApplet extends JApplet {
 		SerifyApplet.this.addSequences(trimname, type, path, nseq);
 	}
 	
-	public void appendSequenceInJavaFasta( JavaFasta jf, Sequences seqs, Map<String,Sequence> contset, boolean namefix ) {
-		StringBuilder	dna = new StringBuilder();
-		try {
-			File inf = new File( new URI(seqs.getPath()) );
-			BufferedReader br = new BufferedReader( new FileReader(inf) );
-			String cont = null;
-			String line = br.readLine();
-			while( line != null ) {
-				if( line.startsWith(">") ) {
-					if( cont != null ) {
-						Sequence seq = new Sequence(cont, dna, jf.mseq);
-						contset.put(cont, seq);
-					}
-					if( /*rr.length == 1*/ namefix ) cont = line.replace( ">", "" );
-					else cont = line.replace( ">", seqs.getName()+"_" );
-					dna = new StringBuilder();
-					//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
-					//nseq++;
-				} else dna.append( line.replace(" ", "") );
-				line = br.readLine();
-			}
-			if( cont != null ) {
-				Sequence seq = new Sequence(cont, dna, jf.mseq);
-				contset.put(cont, seq);
-			}
-			br.close();
-		} catch (URISyntaxException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-	}
-	
 	public void loadSequencesInJavaFasta( JavaFasta jf ) {
 		Map<String, Sequence> contset = new HashMap<String, Sequence>();
 		int[] rr = table.getSelectedRows();
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
-			Sequences seqs = sequences.get(cr);
+			Sequences seqs = getSequences(cr);
 			
 			int nseq = 0;
-			appendSequenceInJavaFasta( jf, seqs, contset, rr.length == 1 );
+			serifier.appendSequenceInJavaFasta( seqs, contset, rr.length == 1 );
 						/*Annotation a = jf.new Annotation(seq, contig, Color.red);
 						a.setStart(tv.start);
 						a.setStop(tv.stop);
@@ -2423,140 +2244,15 @@ public class SerifyApplet extends JApplet {
 
 		for (String contig : contset.keySet()) {
 			Sequence seq = contset.get(contig);
-			jf.addSequence(seq);
+			serifier.addSequence(seq);
 			if (seq.getAnnotations() != null)
 				Collections.sort(seq.getAnnotations());
 		}
 	}
-	
-	public void blastRename( Sequences seqs, String s, File f ) {
-		try {
-			URI uri = new URI( seqs.getPath() );
-			InputStream is = uri.toURL().openStream();
-			
-			if( seqs.getPath().endsWith(".gz") ) {
-				is = new GZIPInputStream( is );
-			}
-			
-			Map<String,String> nameHitMap = mapNameHit( new FileInputStream(s), 0, true );
-			System.err.println( nameHitMap.size() );
-			for( String key : nameHitMap.keySet() ) {
-				System.err.println( key + "    " + nameHitMap.get(key) );
-				break;
-			}
-			
-			String[] filter = { "Thermus", "Meiothermus" };
-			int nseq = doMapHitStuff( nameHitMap, is, new FileOutputStream(f), ";", Arrays.asList(filter) );
-			
-			SerifyApplet.this.addSequences(f.getName(), seqs.getType(), f.toURI().toString(), nseq );
-		} catch (URISyntaxException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-	}
-	
-	public void fastTreePrepare( List<Sequences> lseqs ) {
-		JavaFasta jf = new JavaFasta( SerifyApplet.this );
-		jf.initDataStructures();
 		
-		for( Sequences seqs : lseqs ) {
-			Map<String,Sequence> contset = new HashMap<String,Sequence>();
-			appendSequenceInJavaFasta( jf, seqs, contset, true );
-		
-			for (String contig : contset.keySet()) {
-				Sequence seq = contset.get(contig);
-				jf.addSequence(seq);
-				if (seq.getAnnotations() != null)
-					Collections.sort(seq.getAnnotations());
-			}
-			jf.selectAll();
-			jf.nameReplace(" ", "_");
-			jf.removeGaps( jf.lseq );
-			
-			String path = seqs.getPath();
-			int i = path.lastIndexOf('.');
-			if( i == -1 ) path += "_fixed";
-			else path = path.substring(0,i)+".fixed"+path.substring(i);
-			
-			i = path.lastIndexOf('/');
-			String fname = path.substring(i+1);
-			
-			try {
-				URI uri = new URI( path );
-				//URL url = uri.toURL();
-				File f = new File( uri );
-				FileWriter osw = new FileWriter( f );
-				//OutputStreamWriter osw = new OutputStreamWriter( url.openConnection().getOutputStream() );
-				jf.writeFasta( jf.lseq, osw );
-				osw.close();
-				
-				SerifyApplet.this.addSequences( fname, path );
-			} catch (URISyntaxException e1) {
-				e1.printStackTrace();
-			} catch (MalformedURLException e1) {
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			
-			jf.clearAll();
-		}
-	}
-	
-	public Map<String,String> makeFset( String trim ) throws URISyntaxException, IOException {
-		boolean nofile = false;
-		URL url;
-		try {
-			url = new URL( trim );
-		} catch( Exception exc ) {
-			nofile = true;
-		}
-		Map<String,String> fset = new HashMap<String,String>();
-		if( nofile ) {
-			String[] farray = { trim };
-			for( String str : farray ) {
-				fset.put(str, null);
-			}
-			//fset.addAll( Arrays.asList( farray ) );
-		} else {
-			File fl = new File( new URI(trim) );
-			FileReader fr = new FileReader( fl );
-			BufferedReader br = new BufferedReader( fr );
-			String line = br.readLine();
-			if( !trim.contains("454ReadStatus") ) {
-				while( line != null ) {
-					/*if( line.contains("ingletons") ) {
-						fset.add( line.split("[\t ]+")[0] );
-					}*/							
-					String[] split = line.split("\t");
-					if( split.length > 1 ) fset.put( split[0], split[1] );
-					else fset.put( line, null );
-					
-					line = br.readLine();
-				}
-			} else {
-				while( line != null ) {
-					/*if( line.contains("ingletons") ) {
-						fset.add( line.split("[\t ]+")[0] );
-					}*/								
-					if( line.contains("Singleton") ) { 
-						String[] split = line.split("[\t ]+");
-						//if( split.length > 1 ) fset.put( split[0], split[1] );
-						fset.put( split[0], null );
-					}
-					
-					line = br.readLine();
-				}
-			}
-			br.close();
-		}
-		return fset;
-	}
-	
 	public void trim( File dir, String trim ) {
 		try {			
-			Map<String,String> fset = makeFset( trim );
+			Map<String,String> fset = serifier.makeFset( trim );
 			totalTrim( dir, fset );
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -2598,9 +2294,10 @@ public class SerifyApplet extends JApplet {
 		table = new JTable();
 		//table.setBackground( bgcolor );
 		
-		sequences = initSequences( table.getRowCount() );
+		List<Sequences> sequences = initSequences( table.getRowCount() );
 		initMachines();
 		table.setAutoCreateRowSorter( true );
+		serifier.setSequencesList( sequences );
 		TableModel model = createModel( sequences, Sequences.class );
 		table.setModel( model );
 		
@@ -2843,7 +2540,7 @@ public class SerifyApplet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				final JavaFasta jf = new JavaFasta( SerifyApplet.this );
+				final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier );
 				jf.initGui(frame);
 				loadSequencesInJavaFasta( jf );
 				jf.updateView();
@@ -2872,7 +2569,7 @@ public class SerifyApplet extends JApplet {
 								try {
 									File f = jfc.getSelectedFile();
 									FileWriter fw = new FileWriter( f );
-									jf.writeFasta( jf.lseq, fw );
+									serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
 									fw.close();
 									
 									SerifyApplet.this.addSequences( f.getName(), f.toURI().toURL().toString() );
@@ -3051,7 +2748,7 @@ public class SerifyApplet extends JApplet {
 				}
 				for( int r : rr ) {
 					int i = table.convertRowIndexToModel( r );
-					Sequences s = sequences.get(i);
+					Sequences s = getSequences(i);
 					try {
 						URL url = new URL( s.getPath() );
 						InputStream is = url.openStream();
@@ -3321,7 +3018,7 @@ public class SerifyApplet extends JApplet {
 				}
 				for( int r : rr ) {
 					int i = table.convertRowIndexToModel( r );
-					Sequences s = sequences.get(i);
+					Sequences s = getSequences(i);
 					try {
 						URL url = new URL( s.getPath() );
 						InputStream is = url.openStream();
@@ -3595,7 +3292,7 @@ public class SerifyApplet extends JApplet {
 					int r = table.getSelectedRow();
 					int rr = table.convertRowIndexToModel( r );
 					if( rr >= 0 ) {
-						final Sequences seqs = sequences.get( rr );
+						final Sequences seqs = getSequences( rr );
 						
 						try {
 							URI uri = new URI( seqs.getPath() );
@@ -3613,7 +3310,7 @@ public class SerifyApplet extends JApplet {
 							OutputStream os = new FileOutputStream( file );
 							
 							int nseq = flankingFasta(is, os);
-							addSequences(file.getName(), seqs.type, file.toURI().toURL().toString(), nseq);
+							addSequences(file.getName(), seqs.getType(), file.toURI().toURL().toString(), nseq);
 						} catch (URISyntaxException e1) {
 							e1.printStackTrace();
 						} catch (MalformedURLException e1) {
@@ -3643,7 +3340,7 @@ public class SerifyApplet extends JApplet {
 					for( int r : rr ) {
 						int rear = table.convertRowIndexToModel( r );
 						if( rear >= 0 ) {
-							final Sequences s = sequences.get( rear );
+							final Sequences s = getSequences( rear );
 							final String seqtype = s.getType();
 							String path = s.getPath();
 							
@@ -3933,128 +3630,24 @@ public class SerifyApplet extends JApplet {
 		popup.add( new AbstractAction("Join") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				initMaps();
-				Map[] maps = {snaedis1heatmap,snaedis2heatmap,snaedis3heatmap,snaedis4heatmap,snaedis5heatmap,snaedis6heatmap,snaedis7heatmap,snaedis8heatmap};
-				Map[] phmaps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
-				Map[] colormaps = {snaedis1colormap,snaedis2colormap,snaedis3colormap,snaedis4colormap,snaedis5colormap,snaedis6colormap,snaedis7colormap,snaedis8colormap};
-				
 				JFileChooser fc = new JFileChooser();
 				//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					//if( !f.isDirectory() ) f = f.getParentFile();
 					
-					try {
-						FileWriter fw = new FileWriter( f );
-						int[] rr = table.getSelectedRows();
-						String seqtype = "nucl";
-						String joinname = f.getName();
-						int nseq = 0;
-						for( int r : rr ) {
-							int rear = table.convertRowIndexToModel( r );
-							if( rear >= 0 ) {
-								Sequences s = sequences.get( rear );
-								
-								seqtype = s.getType();
-								//if( joinname == null ) joinname = s.getName();
-								//else joinname += "_"+s.getName();
-								
-								File inf = new File( new URI(s.getPath()) );
-								BufferedReader br = new BufferedReader( new FileReader(inf) );
-								String line = br.readLine();
-								while( line != null ) {
-									if( line.startsWith(">") ) {
-										int pe = line.indexOf('%');
-										String idstr = null;
-										if( pe != -1 ) {
-											int pi = line.lastIndexOf('_', pe);
-											int perc = Integer.parseInt( line.substring(pi+1, pe) );
-											
-											int red = (int)( (perc-95.0)*200.0/5.0+50.0 );
-											int green = (int)( (perc-95.0)*200.0/5.0+50.0 );
-											int blue = (int)( (perc-95.0)*200.0/5.0+50.0 );
-											
-											String rstr = Integer.toString(red, 16);
-											String gstr = Integer.toString(green, 16);
-											String bstr = Integer.toString(blue, 16);
-											
-											idstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
-										}
-										
-										//fw.write( line.replace( ">", ">"+s.getName().replace(".fna", "")+"_" )+"\n" );
-										int i = s.getName().indexOf("_thermus3");
-										if( i == -1 ) i = s.getName().length();
-										String sub = s.getName().substring(0,i);
-										boolean check = false;
-										int k = 0;
-										for( Map m : maps ) {
-											if( m.containsKey(sub) ) {
-												double dval = (double)m.get( sub );
-												double tval = (dval-50.0)/40.0;
-												
-												int red = (int)(tval*255.0);
-												int green = (int)((1.0-tval)*255.0);
-												int blue = 0;
-												
-												String rstr = Integer.toString(red, 16);
-												String gstr = Integer.toString(green, 16);
-												String bstr = Integer.toString(blue, 16);
-												
-												String allstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
-												
-												
-												Map phmap = phmaps[k];
-												double phval = (double)phmap.get( sub );
-												double tphval = (phval-5.0)/4.0;
-												
-												red = (int)(tphval*255.0);
-												green = 0;
-												blue = (int)((1.0-tphval)*255.0);
-												
-												rstr = Integer.toString(red, 16);
-												gstr = Integer.toString(green, 16);
-												bstr = Integer.toString(blue, 16);
-												
-												String phstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
-
-												
-												
-												Map colormap = colormaps[k];
-												String[] csplit = ((String)colormap.get( sub )).split("\t");
-												
-												red = (int)(Double.parseDouble(csplit[0])*255.0);
-												green = (int)(Double.parseDouble(csplit[1])*255.0);
-												blue = (int)(Double.parseDouble(csplit[2])*255.0);
-												
-												rstr = Integer.toString(red, 16);
-												gstr = Integer.toString(green, 16);
-												bstr = Integer.toString(blue, 16);
-												
-												String cstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
-												
-												check = true;
-												//fw.write( line+"[#"+allstr+"]-----[#"+phstr+"];"+sub+"[#"+cstr+"]\n" );
-												fw.write( line+(idstr != null ? "[#"+idstr+"];" : "")+sub+"[#"+cstr+"]\n" );
-												break;
-											}
-											k++;
-										}
-										if( !check ) fw.write( line.replace( ">", ">"+s.getName().replace(".fna", "")+"_" )+"\n" );
-										nseq++;
-									}
-									else fw.write( line+"\n" );
-									line = br.readLine();
-								}
-								br.close();
-							}
+					List<Sequences> lseqs = new ArrayList<Sequences>();
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						int rear = table.convertRowIndexToModel( r );
+						if( rear >= 0 ) {
+							Sequences s = getSequences( rear );
+							lseqs.add( s );
 						}
-						fw.close();
-						
-						SerifyApplet.this.addSequences( joinname, seqtype, f.toURI().toString(), nseq);
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
+					}
+					List<Sequences> retlseqs = serifier.join( f, lseqs );
+					for( Sequences seqs : retlseqs ) {
+						addSequences( seqs );
 					}
 				}
 			}
@@ -4105,7 +3698,7 @@ public class SerifyApplet extends JApplet {
 							for( int r : ra ) {
 								int rr = table.convertRowIndexToModel( r );
 								if( rr >= 0 ) {
-									final Sequences seqs = sequences.get( rr );
+									final Sequences seqs = getSequences( rr );
 									filtit( spin, seqs, dir, SerifyApplet.this );
 								}
 							}
@@ -4156,7 +3749,7 @@ public class SerifyApplet extends JApplet {
 						for( int r : ra ) {
 							int rr = table.convertRowIndexToModel( r );
 							if( rr >= 0 ) {
-								final Sequences seqs = sequences.get( rr );
+								final Sequences seqs = getSequences( rr );
 								tagsplit( tagmap, seqs, dir, SerifyApplet.this );
 							}
 						}
@@ -4210,7 +3803,7 @@ public class SerifyApplet extends JApplet {
 							for( int r : ra ) {
 								int rr = table.convertRowIndexToModel( r );
 								if( rr >= 0 ) {
-									final Sequences seqs = sequences.get( rr );
+									final Sequences seqs = getSequences( rr );
 									splitit( spin, seqs, dir, SerifyApplet.this );
 								}
 							}
@@ -4245,7 +3838,7 @@ public class SerifyApplet extends JApplet {
 					int r = table.getSelectedRow();
 					int rr = table.convertRowIndexToModel( r );
 					if( rr >= 0 ) {
-						final Sequences seqs = sequences.get( rr );
+						final Sequences seqs = getSequences( rr );
 						
 						String val = JOptionPane.showInputDialog("Select character", "_");
 						try {
@@ -4439,7 +4032,7 @@ public class SerifyApplet extends JApplet {
 					
 					Map<String,Map<String,StringBuilder>>	seqmap = new HashMap<String,Map<String,StringBuilder>>();
 					
-					JavaFasta jf = new JavaFasta( SerifyApplet.this );
+					JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier );
 					jf.initDataStructures();
 					
 					int[] rr = table.getSelectedRows();
@@ -4447,16 +4040,16 @@ public class SerifyApplet extends JApplet {
 						String name = (String)table.getValueAt( r, 1 );
 						String path = (String)table.getValueAt( r, 3 );
 						
-						jf.lseq.clear();
+						serifier.lseq.clear();
 						try {
 							URL url = new URL( path );
 							jf.importFile( name, url.openStream() );
-							jf.removeAllGaps( jf.lseq );
+							jf.removeAllGaps( serifier.lseq );
 							int i = path.lastIndexOf('.');
 							if( i == -1 ) i = path.length();
 							URI uri = new URI(path.substring(0, i)+"_unaligned.fasta");
 							File f = new File( uri );
-							jf.writeFasta( jf.lseq, new FileWriter( f ) );
+							serifier.writeFasta( serifier.lseq, new FileWriter( f ), jf.getSelectedRect() );
 						} catch(IOException | URISyntaxException e1) {
 							e1.printStackTrace();
 						}
@@ -4544,12 +4137,19 @@ public class SerifyApplet extends JApplet {
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
-					Sequences seqs = sequences.get(cr);
+					Sequences seqs = getSequences(cr);
 					
 					lseqs.add( seqs );
 				}
 				
-				fastTreePrepare( lseqs );
+				List<Sequences> retlseqs = serifier.fastTreePrepare( lseqs );
+				for( Sequences seqs : retlseqs ) {
+					try {
+						SerifyApplet.this.addSequences(seqs.getName(), seqs.getPath());
+					} catch (URISyntaxException | IOException e1) {
+						e1.printStackTrace();
+					}
+				}
 			}
 		});
 		popup.add( new AbstractAction("Blast rename") {
@@ -4562,7 +4162,7 @@ public class SerifyApplet extends JApplet {
 					if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
 						File f = fc.getSelectedFile();
 						
-						final Sequences seqs = sequences.get( rr );
+						final Sequences seqs = getSequences( rr );
 						String s = null;
 						try {
 							JSObject	jso = JSObject.getWindow(SerifyApplet.this);
@@ -4579,7 +4179,8 @@ public class SerifyApplet extends JApplet {
 						}
 					
 						if( s != null ) {
-							blastRename( seqs, s, f );
+							Sequences ret = serifier.blastRename( seqs, s, f );
+							serifier.addSequences( ret );
 						}
 					}
 				}
@@ -4755,6 +4356,14 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void updateSequences( final String user, final String name, final String type, final String path, final int nseq, final String key ) {
+		Sequences seqs = new Sequences( user, name, type, path, nseq );
+		seqs.setKey( key );
+		serifier.addSequences( seqs );
+		//serifier.sequences.add( seqs );
+		updateSequences(seqs);
+	}
+	
+	public void updateSequences( final Sequences seqs ) {
 		AccessController.doPrivileged( new PrivilegedAction() {
 			@Override
 			public Object run() {
@@ -4762,7 +4371,7 @@ public class SerifyApplet extends JApplet {
 					public void run() {
 						boolean succ = true;
 						try {
-							URL url = new URL( path );
+							URL url = new URL( seqs.getPath() );
 							InputStream is = url.openStream();
 							if( is == null ) succ = false;
 							else is.close();
@@ -4778,9 +4387,6 @@ public class SerifyApplet extends JApplet {
 						}
 						
 						if( succ ) {
-							Sequences seqs = new Sequences( user, name, type, path, nseq );
-							seqs.setKey( key );
-							sequences.add( seqs );
 							table.tableChanged( new TableModelEvent( table.getModel() ) );
 						}
 					}
@@ -4789,6 +4395,20 @@ public class SerifyApplet extends JApplet {
 				return null;
 			}
 		});
+	}
+	
+	public void addSequences( Sequences seqs ) {
+		boolean unsucc = false;
+		try {
+			JSObject js = JSObject.getWindow( SerifyApplet.this );
+			js.call( "addSequences", new Object[] {seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), seqs.getNSeq()} );
+		} catch( Exception e ) {
+			unsucc = true;
+		}
+		
+		if( unsucc ) {
+			updateSequences( seqs );
+		}
 	}
 	
 	private void addSequences( String user, String name, String type, String path, int nseq ) {
@@ -4879,7 +4499,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	private void addSequences( String name, String path ) throws URISyntaxException, IOException {
+	public void addSequences( String name, String path ) throws URISyntaxException, IOException {
 		URL url = new URL(path);
 		InputStream is = url.openStream();
 		if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
@@ -4888,7 +4508,7 @@ public class SerifyApplet extends JApplet {
 		//FileReader	fr = new FileReader( f );
 	}
 	
-	private void addSequences( String name, String type, String path, int nseq ) {
+	public void addSequences( String name, String type, String path, int nseq ) {
 		addSequences( getUser(), name, type, path, nseq );
 	}
 	
@@ -5429,550 +5049,6 @@ public class SerifyApplet extends JApplet {
 		return dvals;
 	}
 	
-	Map<String,String>	snaedismap;
-	Map<String,String>	snaediscolormap;
-	Map<String,Double>	snaedisheatmap;
-	Map<String,Double>	snaedisphmap;
-	
-	Map<String,String>	snaedis1map;
-	Map<String,String>	snaedis2map;
-	Map<String,String>	snaedis3map;
-	Map<String,String>	snaedis4map;
-	Map<String,String>	snaedis5map;
-	Map<String,String>	snaedis6map;
-	Map<String,String>	snaedis7map;
-	Map<String,String>	snaedis8map;
-
-	Map<String,String>	snaedis1colormap;
-	Map<String,String>	snaedis2colormap;
-	Map<String,String>	snaedis3colormap;
-	Map<String,String>	snaedis4colormap;
-	Map<String,String>	snaedis5colormap;
-	Map<String,String>	snaedis6colormap;
-	Map<String,String>	snaedis7colormap;
-	Map<String,String>	snaedis8colormap;
-	
-	Map<String,Double>	snaedis1heatmap;
-	Map<String,Double>	snaedis2heatmap;
-	Map<String,Double>	snaedis3heatmap;
-	Map<String,Double>	snaedis4heatmap;
-	Map<String,Double>	snaedis5heatmap;
-	Map<String,Double>	snaedis6heatmap;
-	Map<String,Double>	snaedis7heatmap;
-	Map<String,Double>	snaedis8heatmap;
-	
-	Map<String,Double>	snaedis1phmap;
-	Map<String,Double>	snaedis2phmap;
-	Map<String,Double>	snaedis3phmap;
-	Map<String,Double>	snaedis4phmap;
-	Map<String,Double>	snaedis5phmap;
-	Map<String,Double>	snaedis6phmap;
-	Map<String,Double>	snaedis7phmap;
-	Map<String,Double>	snaedis8phmap;
-	
-	public void initMaps() {		
-		snaedis1map = new HashMap<String,String>();
-		snaedis1map.put( "770_geysir_north_jardvegur", "ACGAGTGCGT" );
-		snaedis1map.put( "770_geysir_north_vatn", "ACGCTCGACA" );
-		snaedis1map.put( "771_geysir_north_jardvegur", "AGACGCACTC" );
-		snaedis1map.put( "771_geysir_north_vatn", "AGCACTGTAG" );
-		snaedis1map.put( "772_geysir_north_jardvegur", "ATCAGACACG" );
-		snaedis1map.put( "772_geysir_north_vatn", "ATATCGCGAG" );
-		snaedis1map.put( "773_geysir_west_jardvegur", "CGTGTCTCTA" );
-		snaedis1map.put( "773_geysir_west_vatn", "CTCGCGTGTC" );
-		snaedis1map.put( "774_geysir_west_jardvegur", "TGATACGTCT" );
-		snaedis1map.put( "774_geysir_west_vatn", "TCTCTATGCG" );
-		
-		snaedis2map = new HashMap<String,String>();
-		snaedis2map.put( "775_geysir_west_jardvegur", "ACGAGTGCGT" );
-		snaedis2map.put( "775_geysir_west_vatn", "ACGCTCGACA" );
-		snaedis2map.put( "776_geysir_west_jardvegur", "AGACGCACTC" );
-		snaedis2map.put( "776_geysir_west_vatn", "AGCACTGTAG" );
-		snaedis2map.put( "777_fludir_vatn", "ATCAGACACG" );
-		snaedis2map.put( "777_fludir_lifmassi", "ATATCGCGAG" );
-		snaedis2map.put( "778_fludir_jardvegur", "CGTGTCTCTA" );
-		snaedis2map.put( "778_fludir_vatn", "CTCGCGTGTC" );
-		snaedis2map.put( "779_fludir_jardvegur", "TGATACGTCT" );
-		snaedis2map.put( "779_fludir_vatn", "TCTCTATGCG" );
-		
-		snaedis3map = new HashMap<String,String>();
-		snaedis3map.put( "780_fludir_jardvegur", "ACGAGTGCGT" );
-		snaedis3map.put( "780_fludir_vatn", "ACGCTCGACA" );
-		snaedis3map.put( "781_olkelduhals_vatn", "AGACGCACTC" );
-		snaedis3map.put( "781_olkelduhals_lifmassi", "AGCACTGTAG" );
-		snaedis3map.put( "782_olkelduhals_lifmassi", "ATCAGACACG" );
-		snaedis3map.put( "783_olkelduhals_jardvlifm", "ATATCGCGAG" );
-		snaedis3map.put( "783_olkelduhals_vatn", "CGTGTCTCTA" );
-		snaedis3map.put( "808_hrafntinnusker_jardvegur", "CTCGCGTGTC" );
-		snaedis3map.put( "808_hrafntinnusker_vatn", "TGATACGTCT" );
-		snaedis3map.put( "808_hrafntinnusker_lifmassi", "TCTCTATGCG" );
-		
-		snaedis4map = new HashMap<String,String>();
-		snaedis4map.put( "809_hrafntinnusker_jardvegur", "ACGAGTGCGT" );
-		snaedis4map.put( "809_hrafntinnusker_vatn", "ACGCTCGACA" );
-		snaedis4map.put( "809_hrafntinnusker_lifmassi", "AGACGCACTC" );
-		snaedis4map.put( "810_hrafntinnusker_jardvegur", "AGCACTGTAG" );
-		snaedis4map.put( "810_hrafntinnusker_vatn", "ATCAGACACG" );
-		snaedis4map.put( "810_hrafntinnusker_lifmassi", "ATATCGCGAG" );
-		snaedis4map.put( "811_hrafntinnusker_jardvegur", "CGTGTCTCTA" );
-		snaedis4map.put( "811_hrafntinnusker_vatn", "CTCGCGTGTC" );
-		snaedis4map.put( "811_hrafntinnusker_lifmassi", "TGATACGTCT" );
-		snaedis4map.put( "812_hrafntinnusker_jardvegur", "TCTCTATGCG" );
-	
-		snaedis5map = new HashMap<String,String>();
-		snaedis5map.put( "812_hrafntinnusker_vatn", "ACGAGTGCGT" );
-		snaedis5map.put( "813_hrafntinnusker_jardvegur", "ACGCTCGACA" );
-		snaedis5map.put( "813_hrafntinnusker_vatn", "AGACGCACTC" );
-		snaedis5map.put( "814_hrafntinnusker_jardvegur", "AGCACTGTAG" );
-		snaedis5map.put( "814_hrafntinnusker_vatn", "ATCAGACACG" );
-		snaedis5map.put( "815_reykjadalir_jardvegur", "ATATCGCGAG" );
-		snaedis5map.put( "815_reykjadalir_vatn", "CGTGTCTCTA" );
-		snaedis5map.put( "815_reykjadalir_lifmassi", "CTCGCGTGTC" );
-		snaedis5map.put( "816_vondugil_jardvegur", "TGATACGTCT" );
-		snaedis5map.put( "816_vondugil_vatn", "TCTCTATGCG" );
-		
-		snaedis6map = new HashMap<String,String>();
-		snaedis6map.put( "817_vondugil_jardvegur", "ACGAGTGCGT" );
-		snaedis6map.put( "817_vondugil_vatn", "ACGCTCGACA" );
-		snaedis6map.put( "818_vondugil_jardvegur", "AGACGCACTC" );
-		snaedis6map.put( "818_vondugil_vatn", "AGCACTGTAG" );
-		snaedis6map.put( "819_vondugil_jardvegur", "ATCAGACACG" );
-		snaedis6map.put( "819_vondugil_vatn", "ATATCGCGAG" );
-		snaedis6map.put( "820_vondugil_jardvegur", "CGTGTCTCTA" );
-		snaedis6map.put( "820_vondugil_vatn", "CTCGCGTGTC" );
-		snaedis6map.put( "821_vondugil_jardvegur", "TGATACGTCT" );
-		snaedis6map.put( "821_vondugil_vatn", "TCTCTATGCG" );
-		
-		snaedis7map = new HashMap<String,String>();
-		snaedis7map.put( "846_hurdarbak_jardvegur", "ACGAGTGCGT" );
-		snaedis7map.put( "846_hurdarbak_vatn", "ACGCTCGACA" );
-		snaedis7map.put( "846_hurdarbak_lifmassi", "AGACGCACTC" );
-		snaedis7map.put( "847_hurdarbak_jardvegur", "AGCACTGTAG" );
-		snaedis7map.put( "847_hurdarbak_vatn", "ATCAGACACG" );
-		snaedis7map.put( "848_kleppjarnsreykir_jardvegur", "ATATCGCGAG" );
-		snaedis7map.put( "848_kleppjarnsreykir_vatn", "CGTGTCTCTA" );
-		snaedis7map.put( "848_kleppjarnsreykir_lifmassi", "CTCGCGTGTC" );
-		snaedis7map.put( "849_kleppjarnsreykir_jardvegur", "TGATACGTCT" );
-		snaedis7map.put( "849_kleppjarnsreykir_vatn", "TCTCTATGCG" );
-	
-		snaedis8map = new HashMap<String,String>();
-		snaedis8map.put( "849_kleppjarnsreykir_lifmassi", "ACGAGTGCGT" );
-		snaedis8map.put( "850_kleppjarnsreykir_jardvegur", "ACGCTCGACA" );
-		snaedis8map.put( "850_kleppjarnsreykir_vatn", "AGACGCACTC" );
-		snaedis8map.put( "850_kleppjarnsreykir_lifmassi", "AGCACTGTAG" );
-		snaedis8map.put( "851_deildartunguhver_jardvegur", "ATCAGACACG" );
-		snaedis8map.put( "851_deildartunguhver_vatn", "ATATCGCGAG" );
-		snaedis8map.put( "852_deildartunguhver_jardvegur", "CGTGTCTCTA" );
-		snaedis8map.put( "852_deildartunguhver_vatn", "CTCGCGTGTC" );
-		
-		
-		
-		snaedis1colormap = new HashMap<String,String>();
-		snaedis1colormap.put( "770_geysir_north_jardvegur", "0.0\t0.5\t1.0\n" );
-		snaedis1colormap.put( "770_geysir_north_vatn", "0.0\t0.5\t1.0\n" );
-		snaedis1colormap.put( "771_geysir_north_jardvegur", "0.0\t0.5\t1.0\n" );
-		snaedis1colormap.put( "771_geysir_north_vatn", "0.0\t0.5\t1.0\n" );
-		snaedis1colormap.put( "772_geysir_north_jardvegur", "0.0\t0.5\t1.0\n" );
-		snaedis1colormap.put( "772_geysir_north_vatn", "0.0\t0.5\t1.0\n" );
-		snaedis1colormap.put( "773_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
-		snaedis1colormap.put( "773_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
-		snaedis1colormap.put( "774_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
-		snaedis1colormap.put( "774_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
-		
-		snaedis1heatmap = new HashMap<String,Double>();
-		snaedis1heatmap.put( "770_geysir_north_jardvegur", 83.0 );
-		snaedis1heatmap.put( "770_geysir_north_vatn", 83.0 );
-		snaedis1heatmap.put( "771_geysir_north_jardvegur", 72.0 );
-		snaedis1heatmap.put( "771_geysir_north_vatn", 72.0 );
-		snaedis1heatmap.put( "772_geysir_north_jardvegur", 68.5 );
-		snaedis1heatmap.put( "772_geysir_north_vatn", 68.5 );
-		snaedis1heatmap.put( "773_geysir_west_jardvegur", 79.4 );
-		snaedis1heatmap.put( "773_geysir_west_vatn", 79.4 );
-		snaedis1heatmap.put( "774_geysir_west_jardvegur", 88.0 );
-		snaedis1heatmap.put( "774_geysir_west_vatn", 88.0 );
-		
-		snaedis1phmap = new HashMap<String,Double>();
-		snaedis1phmap.put( "770_geysir_north_jardvegur", 6.75 );
-		snaedis1phmap.put( "770_geysir_north_vatn", 6.75 );
-		snaedis1phmap.put( "771_geysir_north_jardvegur", 6.0 );
-		snaedis1phmap.put( "771_geysir_north_vatn", 6.0 );
-		snaedis1phmap.put( "772_geysir_north_jardvegur", 5.0 );
-		snaedis1phmap.put( "772_geysir_north_vatn", 5.0 );
-		snaedis1phmap.put( "773_geysir_west_jardvegur", 9.0 );
-		snaedis1phmap.put( "773_geysir_west_vatn", 9.0 );
-		snaedis1phmap.put( "774_geysir_west_jardvegur", 8.0 );
-		snaedis1phmap.put( "774_geysir_west_vatn", 8.0 );
-		
-		
-		
-		snaedis2colormap = new HashMap<String,String>();
-		snaedis2colormap.put( "775_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
-		snaedis2colormap.put( "775_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
-		snaedis2colormap.put( "776_geysir_west_jardvegur", "0.0\t1.0\t0.5\n" );
-		snaedis2colormap.put( "776_geysir_west_vatn", "0.0\t1.0\t0.5\n" );
-		snaedis2colormap.put( "777_fludir_vatn", "1.0\t0.0\t1.0\n" );
-		snaedis2colormap.put( "777_fludir_lifmassi", "1.0\t0.0\t1.0\n" );
-		snaedis2colormap.put( "778_fludir_jardvegur", "1.0\t0.0\t1.0\n" );
-		snaedis2colormap.put( "778_fludir_vatn", "1.0\t0.0\t1.0\n" );
-		snaedis2colormap.put( "779_fludir_jardvegur", "1.0\t0.0\t1.0\n" );
-		snaedis2colormap.put( "779_fludir_vatn", "1.0\t0.0\t1.0\n" );
-		
-		snaedis2heatmap = new HashMap<String,Double>();
-		snaedis2heatmap.put( "775_geysir_west_jardvegur", 83.0 );
-		snaedis2heatmap.put( "775_geysir_west_vatn", 83.0 );
-		snaedis2heatmap.put( "776_geysir_west_jardvegur", 88.0 );
-		snaedis2heatmap.put( "776_geysir_west_vatn", 88.0 );
-		snaedis2heatmap.put( "777_fludir_vatn", 63.0 );
-		snaedis2heatmap.put( "777_fludir_lifmassi", 63.0 );
-		snaedis2heatmap.put( "778_fludir_jardvegur", 69.4 );
-		snaedis2heatmap.put( "778_fludir_vatn", 69.4 );
-		snaedis2heatmap.put( "779_fludir_jardvegur", 79.1 );
-		snaedis2heatmap.put( "779_fludir_vatn", 79.1 );
-		
-		snaedis2phmap = new HashMap<String,Double>();
-		snaedis2phmap.put( "775_geysir_west_jardvegur", 9.0 );
-		snaedis2phmap.put( "775_geysir_west_vatn", 9.0 );
-		snaedis2phmap.put( "776_geysir_west_jardvegur", 7.0 );
-		snaedis2phmap.put( "776_geysir_west_vatn", 7.0 );
-		snaedis2phmap.put( "777_fludir_vatn", 8.0 );
-		snaedis2phmap.put( "777_fludir_lifmassi", 8.0 );
-		snaedis2phmap.put( "778_fludir_jardvegur", 8.25 );
-		snaedis2phmap.put( "778_fludir_vatn", 8.25 );
-		snaedis2phmap.put( "779_fludir_jardvegur", 8.0 );
-		snaedis2phmap.put( "779_fludir_vatn", 8.0 );
-		
-		
-		
-		snaedis3colormap = new HashMap<String,String>();
-		snaedis3colormap.put( "780_fludir_jardvegur", "1.0\t0.0\t1.0\n" );
-		snaedis3colormap.put( "780_fludir_vatn", "1.0\t0.0\t1.0\n" );
-		snaedis3colormap.put( "781_olkelduhals_vatn", "1.0\t1.0\t0.0\n" );
-		snaedis3colormap.put( "781_olkelduhals_lifmassi", "1.0\t1.0\t0.0\n" );
-		snaedis3colormap.put( "782_olkelduhals_lifmassi", "1.0\t1.0\t0.0\n" );
-		snaedis3colormap.put( "783_olkelduhals_jardvlifm", "1.0\t1.0\t0.0\n" );
-		snaedis3colormap.put( "783_olkelduhals_vatn", "1.0\t1.0\t0.0\n" );
-		snaedis3colormap.put( "808_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
-		snaedis3colormap.put( "808_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
-		snaedis3colormap.put( "808_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
-		
-		snaedis3heatmap = new HashMap<String,Double>();
-		snaedis3heatmap.put( "780_fludir_jardvegur", 87.6 );
-		snaedis3heatmap.put( "780_fludir_vatn", 87.6 );
-		snaedis3heatmap.put( "781_olkelduhals_vatn", 70.0 );
-		snaedis3heatmap.put( "781_olkelduhals_lifmassi", 70.0 );
-		snaedis3heatmap.put( "782_olkelduhals_lifmassi", 60.0 );
-		snaedis3heatmap.put( "783_olkelduhals_jardvlifm", 70.0 );
-		snaedis3heatmap.put( "783_olkelduhals_vatn", 70.0 );
-		snaedis3heatmap.put( "808_hrafntinnusker_jardvegur", 72.0 );
-		snaedis3heatmap.put( "808_hrafntinnusker_vatn", 72.0 );
-		snaedis3heatmap.put( "808_hrafntinnusker_lifmassi", 72.0 );
-		
-		snaedis3phmap = new HashMap<String,Double>();
-		snaedis3phmap.put( "780_fludir_jardvegur", 8.5 );
-		snaedis3phmap.put( "780_fludir_vatn", 8.5 );
-		snaedis3phmap.put( "781_olkelduhals_vatn", 6.5 );
-		snaedis3phmap.put( "781_olkelduhals_lifmassi", 6.5 );
-		snaedis3phmap.put( "782_olkelduhals_lifmassi", 6.5 );
-		snaedis3phmap.put( "783_olkelduhals_jardvlifm", 6.0 );
-		snaedis3phmap.put( "783_olkelduhals_vatn", 6.0 );
-		snaedis3phmap.put( "808_hrafntinnusker_jardvegur", 7.0 );
-		snaedis3phmap.put( "808_hrafntinnusker_vatn", 7.0 );
-		snaedis3phmap.put( "808_hrafntinnusker_lifmassi", 7.0 );
-		
-		
-		
-		snaedis4colormap = new HashMap<String,String>();
-		snaedis4colormap.put( "809_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "809_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "809_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "810_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "810_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "810_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "811_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "811_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "811_hrafntinnusker_lifmassi", "0.0\t0.0\t1.0\n" );
-		snaedis4colormap.put( "812_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
-		
-		snaedis4heatmap = new HashMap<String,Double>();
-		snaedis4heatmap.put( "809_hrafntinnusker_jardvegur", 63.5 );
-		snaedis4heatmap.put( "809_hrafntinnusker_vatn", 63.5 );
-		snaedis4heatmap.put( "809_hrafntinnusker_lifmassi", 63.5 );
-		snaedis4heatmap.put( "810_hrafntinnusker_jardvegur", 68.0 );
-		snaedis4heatmap.put( "810_hrafntinnusker_vatn", 68.0 );
-		snaedis4heatmap.put( "810_hrafntinnusker_lifmassi", 68.0 );
-		snaedis4heatmap.put( "811_hrafntinnusker_jardvegur", 71.1 );
-		snaedis4heatmap.put( "811_hrafntinnusker_vatn", 71.1 );
-		snaedis4heatmap.put( "811_hrafntinnusker_lifmassi", 71.1 );
-		snaedis4heatmap.put( "812_hrafntinnusker_jardvegur", 68.3 );
-		
-		snaedis4phmap = new HashMap<String,Double>();
-		snaedis4phmap.put( "809_hrafntinnusker_jardvegur", 6.0 );
-		snaedis4phmap.put( "809_hrafntinnusker_vatn", 6.0 );
-		snaedis4phmap.put( "809_hrafntinnusker_lifmassi", 6.0 );
-		snaedis4phmap.put( "810_hrafntinnusker_jardvegur", 6.0 );
-		snaedis4phmap.put( "810_hrafntinnusker_vatn", 6.0 );
-		snaedis4phmap.put( "810_hrafntinnusker_lifmassi", 6.0 );
-		snaedis4phmap.put( "811_hrafntinnusker_jardvegur", 7.0 );
-		snaedis4phmap.put( "811_hrafntinnusker_vatn", 7.0 );
-		snaedis4phmap.put( "811_hrafntinnusker_lifmassi", 7.0 );
-		snaedis4phmap.put( "812_hrafntinnusker_jardvegur", 6.0 );
-		
-		
-		
-		snaedis5colormap = new HashMap<String,String>();
-		snaedis5colormap.put( "812_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
-		snaedis5colormap.put( "813_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
-		snaedis5colormap.put( "813_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
-		snaedis5colormap.put( "814_hrafntinnusker_jardvegur", "0.0\t0.0\t1.0\n" );
-		snaedis5colormap.put( "814_hrafntinnusker_vatn", "0.0\t0.0\t1.0\n" );
-		snaedis5colormap.put( "815_reykjadalir_jardvegur", "0.0\t1.0\t0.0\n" );
-		snaedis5colormap.put( "815_reykjadalir_vatn", "0.0\t1.0\t0.0\n" );
-		snaedis5colormap.put( "815_reykjadalir_lifmassi", "0.0\t1.0\t0.0\n" );
-		snaedis5colormap.put( "816_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
-		snaedis5colormap.put( "816_vondugil_vatn", "1.0\t0.0\t0.0\n" );
-	
-		snaedis5heatmap = new HashMap<String,Double>();
-		snaedis5heatmap.put( "812_hrafntinnusker_vatn", 68.3 );
-		snaedis5heatmap.put( "813_hrafntinnusker_jardvegur", 71.5 );
-		snaedis5heatmap.put( "813_hrafntinnusker_vatn", 71.5 );
-		snaedis5heatmap.put( "814_hrafntinnusker_jardvegur", 71.7 );
-		snaedis5heatmap.put( "814_hrafntinnusker_vatn", 71.7 );
-		snaedis5heatmap.put( "815_reykjadalir_jardvegur", 54.0 );
-		snaedis5heatmap.put( "815_reykjadalir_vatn", 54.0 );
-		snaedis5heatmap.put( "815_reykjadalir_lifmassi", 54.0 );
-		snaedis5heatmap.put( "816_vondugil_jardvegur", 78.0 );
-		snaedis5heatmap.put( "816_vondugil_vatn", 78.0 );
-	
-		snaedis5phmap = new HashMap<String,Double>();
-		snaedis5phmap.put( "812_hrafntinnusker_vatn", 6.0 );
-		snaedis5phmap.put( "813_hrafntinnusker_jardvegur", 5.75 );
-		snaedis5phmap.put( "813_hrafntinnusker_vatn", 5.75 );
-		snaedis5phmap.put( "814_hrafntinnusker_jardvegur", 5.0 );
-		snaedis5phmap.put( "814_hrafntinnusker_vatn", 5.0 );
-		snaedis5phmap.put( "815_reykjadalir_jardvegur", 6.0 );
-		snaedis5phmap.put( "815_reykjadalir_vatn", 6.0 );
-		snaedis5phmap.put( "815_reykjadalir_lifmassi", 6.0 );
-		snaedis5phmap.put( "816_vondugil_jardvegur", 9.0 );
-		snaedis5phmap.put( "816_vondugil_vatn", 9.0 );
-		
-		
-		
-		snaedis6colormap = new HashMap<String,String>();
-		snaedis6colormap.put( "817_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "817_vondugil_vatn", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "818_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "818_vondugil_vatn", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "819_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "819_vondugil_vatn", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "820_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "820_vondugil_vatn", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "821_vondugil_jardvegur", "1.0\t0.0\t0.0\n" );
-		snaedis6colormap.put( "821_vondugil_vatn", "1.0\t0.0\t0.0\n" );
-		
-		snaedis6heatmap = new HashMap<String,Double>();
-		snaedis6heatmap.put( "817_vondugil_jardvegur", 75.7 );
-		snaedis6heatmap.put( "817_vondugil_vatn", 75.7 );
-		snaedis6heatmap.put( "818_vondugil_jardvegur", 78.5 );
-		snaedis6heatmap.put( "818_vondugil_vatn", 78.5 );
-		snaedis6heatmap.put( "819_vondugil_jardvegur", 80.5 );
-		snaedis6heatmap.put( "819_vondugil_vatn", 80.5 );
-		snaedis6heatmap.put( "820_vondugil_jardvegur", 71.1 );
-		snaedis6heatmap.put( "820_vondugil_vatn", 71.1 );
-		snaedis6heatmap.put( "821_vondugil_jardvegur", 79.0 );
-		snaedis6heatmap.put( "821_vondugil_vatn", 79.0 );
-	
-		snaedis6phmap = new HashMap<String,Double>();
-		snaedis6phmap.put( "817_vondugil_jardvegur", 9.0 );
-		snaedis6phmap.put( "817_vondugil_vatn", 9.0 );
-		snaedis6phmap.put( "818_vondugil_jardvegur", 8.5 );
-		snaedis6phmap.put( "818_vondugil_vatn", 8.5 );
-		snaedis6phmap.put( "819_vondugil_jardvegur", 8.5 );
-		snaedis6phmap.put( "819_vondugil_vatn", 8.5 );
-		snaedis6phmap.put( "820_vondugil_jardvegur", 7.5 );
-		snaedis6phmap.put( "820_vondugil_vatn", 7.5 );
-		snaedis6phmap.put( "821_vondugil_jardvegur", 6.0 );
-		snaedis6phmap.put( "821_vondugil_vatn", 6.0 );
-		
-		
-		
-		snaedis7colormap = new HashMap<String,String>();
-		snaedis7colormap.put( "846_hurdarbak_jardvegur", "1.0\t0.0\t0.5\n" );
-		snaedis7colormap.put( "846_hurdarbak_vatn", "1.0\t0.0\t0.5\n" );
-		snaedis7colormap.put( "846_hurdarbak_lifmassi", "1.0\t0.0\t0.5\n" );
-		snaedis7colormap.put( "847_hurdarbak_jardvegur", "1.0\t0.0\t0.5\n" );
-		snaedis7colormap.put( "847_hurdarbak_vatn", "1.0\t0.0\t0.5\n" );
-		snaedis7colormap.put( "848_kleppjarnsreykir_jardvegur", "1.0\t0.5\t0.0\n" );
-		snaedis7colormap.put( "848_kleppjarnsreykir_vatn", "1.0\t0.5\t0.0\n" );
-		snaedis7colormap.put( "848_kleppjarnsreykir_lifmassi", "1.0\t0.5\t0.0\n" );
-		snaedis7colormap.put( "849_kleppjarnsreykir_jardvegur", "1.0\t0.5\t0.0\n" );
-		snaedis7colormap.put( "849_kleppjarnsreykir_vatn", "1.0\t0.5\t0.0\n" );
-		
-		snaedis7heatmap = new HashMap<String,Double>();
-		snaedis7heatmap.put( "846_hurdarbak_jardvegur", 80.5 );
-		snaedis7heatmap.put( "846_hurdarbak_vatn", 80.5 );
-		snaedis7heatmap.put( "846_hurdarbak_lifmassi", 80.5 );
-		snaedis7heatmap.put( "847_hurdarbak_jardvegur", 71.5 );
-		snaedis7heatmap.put( "847_hurdarbak_vatn", 71.5 );
-		snaedis7heatmap.put( "848_kleppjarnsreykir_jardvegur", 70.7 );
-		snaedis7heatmap.put( "848_kleppjarnsreykir_vatn", 70.7 );
-		snaedis7heatmap.put( "848_kleppjarnsreykir_lifmassi", 70.7 );
-		snaedis7heatmap.put( "849_kleppjarnsreykir_jardvegur", 76.8 );
-		snaedis7heatmap.put( "849_kleppjarnsreykir_vatn", 76.8 );
-		
-		snaedis7phmap = new HashMap<String,Double>();
-		snaedis7phmap.put( "846_hurdarbak_jardvegur", 8.0 );
-		snaedis7phmap.put( "846_hurdarbak_vatn", 8.0 );
-		snaedis7phmap.put( "846_hurdarbak_lifmassi", 8.0 );
-		snaedis7phmap.put( "847_hurdarbak_jardvegur", 8.0 );
-		snaedis7phmap.put( "847_hurdarbak_vatn", 8.0 );
-		snaedis7phmap.put( "848_kleppjarnsreykir_jardvegur", 8.0 );
-		snaedis7phmap.put( "848_kleppjarnsreykir_vatn", 8.8 );
-		snaedis7phmap.put( "848_kleppjarnsreykir_lifmassi", 8.0 );
-		snaedis7phmap.put( "849_kleppjarnsreykir_jardvegur", 7.5 );
-		snaedis7phmap.put( "849_kleppjarnsreykir_vatn", 7.5 );
-		
-		
-		
-		snaedis8colormap = new HashMap<String,String>();
-		snaedis8colormap.put( "849_kleppjarnsreykir_lifmassi", "1.0\t0.5\t0.0\n" );
-		snaedis8colormap.put( "850_kleppjarnsreykir_jardvegur", "1.0\t0.5\t0.0\n" );
-		snaedis8colormap.put( "850_kleppjarnsreykir_vatn", "1.0\t0.5\t0.0\n" );
-		snaedis8colormap.put( "850_kleppjarnsreykir_lifmassi", "1.0\t0.5\t0.0\n" );
-		snaedis8colormap.put( "851_deildartunguhver_jardvegur", "0.5\t0.0\t0.5\n" );
-		snaedis8colormap.put( "851_deildartunguhver_vatn", "0.5\t0.0\t0.5\n" );
-		snaedis8colormap.put( "852_deildartunguhver_jardvegur", "0.5\t0.0\t0.5\n" );
-		snaedis8colormap.put( "852_deildartunguhver_vatn", "0.5\t0.0\t0.5\n" );
-		
-		snaedis8heatmap = new HashMap<String,Double>();
-		snaedis8heatmap.put( "849_kleppjarnsreykir_lifmassi", 76.8 );
-		snaedis8heatmap.put( "850_kleppjarnsreykir_jardvegur", 65.8 );
-		snaedis8heatmap.put( "850_kleppjarnsreykir_vatn", 65.8 );
-		snaedis8heatmap.put( "850_kleppjarnsreykir_lifmassi", 65.8 );
-		snaedis8heatmap.put( "851_deildartunguhver_jardvegur", 83.3 );
-		snaedis8heatmap.put( "851_deildartunguhver_vatn", 83.3 );
-		snaedis8heatmap.put( "852_deildartunguhver_jardvegur", 86.1 );
-		snaedis8heatmap.put( "852_deildartunguhver_vatn", 86.1 );
-		
-		snaedis8phmap = new HashMap<String,Double>();
-		snaedis8phmap.put( "849_kleppjarnsreykir_lifmassi", 7.5 );
-		snaedis8phmap.put( "850_kleppjarnsreykir_jardvegur", 8.5 );
-		snaedis8phmap.put( "850_kleppjarnsreykir_vatn", 8.5 );
-		snaedis8phmap.put( "850_kleppjarnsreykir_lifmassi", 8.5 );
-		snaedis8phmap.put( "851_deildartunguhver_jardvegur", 8.5 );
-		snaedis8phmap.put( "851_deildartunguhver_vatn", 8.5 );
-		snaedis8phmap.put( "852_deildartunguhver_jardvegur", 8.5 );
-		snaedis8phmap.put( "852_deildartunguhver_vatn", 8.5 );
-		
-		snaedismap = new HashMap<String,String>();
-		snaediscolormap = new HashMap<String,String>();
-		snaedisphmap = new HashMap<String,Double>();
-		snaedisheatmap = new HashMap<String,Double>();
-		
-		Map[] maps = {snaedis1map,snaedis2map,snaedis3map,snaedis4map,snaedis5map,snaedis6map,snaedis7map,snaedis8map};
-		Map[] heatmaps = {snaedis1heatmap,snaedis2heatmap,snaedis3heatmap,snaedis4heatmap,snaedis5heatmap,snaedis6heatmap,snaedis7heatmap,snaedis8heatmap};
-		Map[] phmaps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
-		Map[] colormaps = {snaedis1colormap,snaedis2colormap,snaedis3colormap,snaedis4colormap,snaedis5colormap,snaedis6colormap,snaedis7colormap,snaedis8colormap};
-		
-		for( Map map : maps ) {
-			for( Object key : map.keySet() ) {
-				Object val = map.get(key);
-				snaedismap.put( (String)key, (String)val );
-			}
-		}
-		
-		for( Map map : heatmaps ) {
-			for( Object key : map.keySet() ) {
-				Object val = map.get(key);
-				snaedisheatmap.put( (String)key, (Double)val );
-			}
-		}
-		
-		for( Map map : phmaps ) {
-			for( Object key : map.keySet() ) {
-				Object val = map.get(key);
-				snaedisphmap.put( (String)key, (Double)val );
-			}
-		}
-		
-		for( Map map : colormaps ) {
-			for( Object key : map.keySet() ) {
-				Object val = map.get(key);
-				snaediscolormap.put( (String)key, (String)val );
-			}
-		}
-	}
-	
-	public void initMapFiles() {
-		int i = 0;
-		Map[] maps = {snaedis1map,snaedis2map,snaedis3map,snaedis4map,snaedis5map,snaedis6map,snaedis7map,snaedis8map};
-		for( Map map : maps ) {
-			i++;
-			try {
-				FileWriter fw = new FileWriter( "/home/sigmar/"+i+".map" );
-				for( Object key : map.keySet() ) {
-					String keystr = (String)key;
-					String valstr = (String)map.get( key );
-					fw.write( valstr + "\t" + keystr + "\n" );
-				}
-				fw.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public StringBuilder replaceTreeColors( StringBuilder treestr ) {
-		initMaps();
-		Map[] maps = {snaedis1heatmap,snaedis2heatmap,snaedis3heatmap,snaedis4heatmap,snaedis5heatmap,snaedis6heatmap,snaedis7heatmap,snaedis8heatmap};
-		Map[] phmaps = {snaedis1phmap,snaedis2phmap,snaedis3phmap,snaedis4phmap,snaedis5phmap,snaedis6phmap,snaedis7phmap,snaedis8phmap};
-		Map[] colormaps = {snaedis1colormap,snaedis2colormap,snaedis3colormap,snaedis4colormap,snaedis5colormap,snaedis6colormap,snaedis7colormap,snaedis8colormap};
-		
-		int countrep = 0;
-		int k = 0;
-		for( Map m : maps ) {
-			for( Object keyobj : m.keySet() ) {
-				String key = (String)keyobj;
-				int i = treestr.indexOf( key );
-				while( i != -1 ) {
-					double dval = (double)m.get( key );
-					//double tval = (dval-5.0)/4.0;
-					double tval = (dval-50.0)/40.0;
-					
-					int red = (int)(tval*255.0);
-					int green = 0;
-					int blue = (int)((1.0-tval)*255.0);
-					
-					String rstr = Integer.toString(red, 16);
-					String gstr = Integer.toString(green, 16);
-					String bstr = Integer.toString(blue, 16);
-					
-					String allstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);
-					
-					countrep++;
-					treestr.replace(i-8, i-2, allstr);
-					
-					/*Map colormap = colormaps[k];
-					String[] csplit = ((String)colormap.get( key )).split("\t");
-					
-					red = (int)(Double.parseDouble(csplit[0])*255.0);
-					green = (int)(Double.parseDouble(csplit[1])*255.0);
-					blue = (int)(Double.parseDouble(csplit[2])*255.0);
-					
-					rstr = Integer.toString(red, 16);
-					gstr = Integer.toString(green, 16);
-					bstr = Integer.toString(blue, 16);
-					
-					String cstr = (rstr.length() == 1 ? "0"+rstr : rstr) + (gstr.length() == 1 ? "0"+gstr : gstr) + (bstr.length() == 1 ? "0"+bstr : bstr);*/
-					
-					i = treestr.indexOf( key, i+1 );
-				}
-			}
-			k++;
-		}
-		System.err.println( countrep );
-		return treestr;
-	}
-	
 	public void pyroSeq( Map<String,List<Double>>	specmap, Map<String,List<Double>>	specphmap ) {
 		File dir = new File("/home/sigmar/pyro/locs");
 		/*File[] ff = dir.listFiles( new FilenameFilter() {
@@ -5987,7 +5063,7 @@ public class SerifyApplet extends JApplet {
 		
 		try {
 			//Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, true );
-			Map<String,String> nameHitMap = mapNameHit( new FileInputStream( "/u0/all.blastout" ), -1, true );
+			Map<String,String> nameHitMap = serifier.mapNameHit( new FileInputStream( "/u0/all.blastout" ), -1, true );
 			/*System.err.println( nameHitMap.size() );
 			
 			for( String key : nameHitMap.keySet() ) {
@@ -6067,7 +5143,7 @@ public class SerifyApplet extends JApplet {
 				}
 				
 				FileWriter fw = new FileWriter("/u0/ampliconnoise/"+f.getName().substring(0, f.getName().length()-4)+"_thermus.fna");
-				trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false, false );
+				serifier.trimFasta( new BufferedReader( new FileReader(f) ), fw, headset, false, false );
 				fw.close();
 			}
 			System.err.println( countmissing );
@@ -6076,42 +5152,6 @@ public class SerifyApplet extends JApplet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public void corr() {
-		double meantmp = 0.0;
-		double meanph = 0.0;
-		for( String snaedis : snaedisheatmap.keySet() ) {
-			double temp = snaedisheatmap.get( snaedis );
-			double ph = snaedisphmap.get( snaedis );
-			
-			meantmp += temp;
-			meanph += ph;
-			
-			System.err.println( temp + "  " + ph );
-		}
-		meantmp /= snaedisheatmap.size();
-		meanph /= snaedisphmap.size();
-		
-		System.err.println( meantmp + "  " + meanph );
-		
-		double vartmp = 0.0;
-		double varph = 0.0;
-		double covar = 0.0;
-		for( String snaedis : snaedisheatmap.keySet() ) {
-			double temp = snaedisheatmap.get( snaedis );
-			double ph = snaedisphmap.get( snaedis );
-			
-			double tmpdev = (temp-meantmp);
-			double phdev = (ph-meanph);
-			
-			vartmp += tmpdev*tmpdev;
-			varph += phdev*phdev;
-			covar += tmpdev*phdev;
-		}
-		
-		double corr = covar/( Math.sqrt(varph)*Math.sqrt(vartmp) );
-		System.err.println( corr );
 	}
 	
 	static class erm implements Comparable<erm> {
@@ -6129,86 +5169,9 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void parse( String[] args ) {
-		int i = Arrays.binarySearch(args, "-in");
-		File inf = null;
-		if( i >= 0 ) {
-			inf = new File( args[i+1] );
-			try {
-				addSequences( inf.getName(), inf.getAbsolutePath() );
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		File outf = null;
-		i = Arrays.binarySearch(args, "-out");
-		if( i >= 0 ) {
-			outf = new File( args[i+1] );
-			//ex
-		}
-		
-		i = Arrays.binarySearch(args, "-trim");
-		if( i >= 0 ) {
-			try {
-				FileWriter fw = new FileWriter(outf);
-				FileReader fr = new FileReader( inf );
-				trimFasta( new BufferedReader(fr), fw, makeFset(args[i+1]), false, false );
-				fr.close();
-				fw.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		i = Arrays.binarySearch(args, "-ntrim");
-		if( i >= 0 ) {
-			try {
-				FileWriter fw = new FileWriter(outf);
-				FileReader fr = new FileReader( inf );
-				trimFasta( new BufferedReader(fr), fw, makeFset(args[i+1]), true, false );
-				fr.close();
-				fw.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		i = Arrays.binarySearch(args, "-ntrime");
-		if( i >= 0 ) {
-			try {
-				FileWriter fw = new FileWriter(outf);
-				FileReader fr = new FileReader( inf );
-				trimFasta( new BufferedReader(fr), fw, makeFset(args[i+1]), true, true );
-				fr.close();
-				fw.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		i = Arrays.binarySearch(args, "-blast");
-		if( i >= 0 ) {
-			blastRename( this.sequences.get(0), args[i+1], outf );
-		}
-		
-		i = Arrays.binarySearch(args, "-ft");
-		if( i >= 0 ) {
-			fastTreePrepare( this.sequences );
-		}
-	}
-	
 	public static void main(String[] args) {
 		SerifyApplet sa = new SerifyApplet();
-		sa.parse( args );
+		//sa.parse( args );
 		
 		/*File f = new File("/vg454flx/D_2012_10_16_15_31_28_simmi_fullProcessing/1.TCA.454Reads.fna");
 		Map<String,Integer>	mstr = new HashMap<String,Integer>();
