@@ -97,6 +97,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
@@ -202,7 +203,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	
 	public void replaceTreeText( String tree ) {
 		int seqi = 0;
-		for( Sequence seq : currentjavafasta.lseq ) {
+		for( Sequence seq : currentserifier.lseq ) {
 			String nm = "";
 			String sind = Integer.toString( seqi++ );
 			int m = 0;
@@ -551,7 +552,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						} else cont = line.substring(1);
 					//if( rr.length == 1 ) cont = line.replace( ">", "" );
 					//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = new Sequence( inc, cont, jf.mseq );
+						seq = new Sequence( inc, cont, jf.getSerifier().mseq );
 						
 						Collection<Sequence> specset;
 						if( specMap.containsKey( spec ) ) {
@@ -579,7 +580,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 
 		for (Sequence contig : contset) {
-			jf.addSequence(contig);
+			jf.getSerifier().addSequence(contig);
 			if (contig.getAnnotations() != null)
 				Collections.sort(contig.getAnnotations());
 		}
@@ -622,7 +623,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						seq.setName( cont );
 					}
 					
-					jf.addSequence( seq );
+					jf.getSerifier().addSequence( seq );
 				} else include.add( cacheval );
 			}
 		}
@@ -908,7 +909,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
 				cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 				
-				contset.add( new Sequence( n, cont, new StringBuilder(o.toString()), currentjavafasta.mseq ) );
+				contset.add( new Sequence( n, cont, new StringBuilder(o.toString()), currentserifier.mseq ) );
 			}
 		}
 		
@@ -1024,7 +1025,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 						//if( rr.length == 1 ) cont = line.replace( ">", "" );
 						//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = new Sequence( inc, cont, currentjavafasta.mseq );
+						seq = new Sequence( inc, cont, currentserifier.mseq );
 						//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
 						//nseq++;
 					}
@@ -1046,7 +1047,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 		for (Sequence contig : contset) {
 			contig.checkLengths();
-			currentjavafasta.addSequence(contig);
+			currentserifier.addSequence(contig);
 			if (contig.getAnnotations() != null)
 				Collections.sort(contig.getAnnotations());
 			
@@ -1063,16 +1064,16 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	Runnable runnable = null;
 	public void viewAligned( JavaFasta jf, boolean aligned ) {
 		loadAligned( jf, aligned );
-		Sequence cons = jf.getConsensus();
-		jf.addAnnotation( cons.new Annotation(null,"V1 - 16S rRNA",Color.blue,140,226, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V2 - 16S rRNA",Color.blue,276,438, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V3 - 16S rRNA",Color.blue,646,742, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V4 - 16S rRNA",Color.blue,865,1024, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V5 - 16S rRNA",Color.blue,1217,1309, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V6 - 16S rRNA",Color.blue,1469,1595, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V7 - 16S rRNA",Color.blue,1708,1804, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V8 - 16S rRNA",Color.blue,1894,1956, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V9 - 16S rRNA",Color.blue,2149,2209, jf.mann ) );
+		Sequence cons = jf.getSerifier().getConsensus();
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V1 - 16S rRNA",Color.blue,140,226, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V2 - 16S rRNA",Color.blue,276,438, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V3 - 16S rRNA",Color.blue,646,742, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V4 - 16S rRNA",Color.blue,865,1024, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V5 - 16S rRNA",Color.blue,1217,1309, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V6 - 16S rRNA",Color.blue,1469,1595, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V7 - 16S rRNA",Color.blue,1708,1804, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V8 - 16S rRNA",Color.blue,1894,1956, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V9 - 16S rRNA",Color.blue,2149,2209, jf.getSerifier().mann ) );
 	}
 	
 	public void addSave( JFrame frame, final JavaFasta jf ) {
@@ -1784,6 +1785,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
     
 	Map<String,String>	colmap = new HashMap<String,String>();
 	JavaFasta	currentjavafasta;
+	Serifier	currentserifier;
 	public void init() {
 		updateLof();
 		
@@ -2602,7 +2604,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						
 						double[] ent = null;
 						if( entr ) {
-							ent = Sequence.entropy( currentjavafasta.lseq );
+							ent = Sequence.entropy( currentserifier.lseq );
 						}
 						
 						List<Integer>	idxs = null;
@@ -2610,7 +2612,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							int start = Integer.MIN_VALUE;
 							int end = Integer.MAX_VALUE;
 							
-							for( Sequence seq : currentjavafasta.lseq ) {
+							for( Sequence seq : currentserifier.lseq ) {
 								if( seq.getRealStart() > start ) start = seq.getRealStart();
 								if( seq.getRealStop() < end ) end = seq.getRealStop();
 							}
@@ -2618,7 +2620,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							idxs = new ArrayList<Integer>();
 							for( int x = start; x < end; x++ ) {
 								boolean skip = false;
-								for( Sequence seq : currentjavafasta.lseq ) {
+								for( Sequence seq : currentserifier.lseq ) {
 									char c = seq.charAt( x );
 									if( c != '-' && c != '.' && c == ' ' ) {
 										skip = true;
@@ -2634,8 +2636,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						
 						String tree = "";
 						List<String>	corrInd = currentjavafasta.getNames();
-						double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
-						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
+						double[] corr = new double[ currentserifier.lseq.size()*currentserifier.lseq.size() ];
+						Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, null, false, cantor, ent );
 						TreeUtil	tu = new TreeUtil();
 						
 						Node n = tu.neighborJoin(corr, corrInd, null, false, true);
@@ -2643,7 +2645,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							if( majorule ) {
 								Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
 								for( int i = 0; i < 1000; i++ ) {
-									Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
+									Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, idxs, true, cantor, ent );
 									Node nn = tu.neighborJoin(corr, corrInd, null, false, false);
 									
 									int val = nn.getLeaveNames().size();
@@ -2685,7 +2687,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								tree = n.toStringWoLengths();
 								
 								for( int i = 0; i < 1000; i++ ) {
-									Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
+									Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, idxs, true, cantor, ent );
 									Node nn = tu.neighborJoin(corr, corrInd, null, false, true);
 									tu.arrange( nn, comp );
 									tu.compareTrees( tree, n, nn );
@@ -2742,7 +2744,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				
 				//String tree = extractFasta("/thermales.fasta");
 				//String distm = dist
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				/*Set<String> include = new HashSet<String>();
@@ -2854,10 +2857,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				boolean entr = entropy.isSelected();
 				
 				double[] ent = null;
-				if( entr ) ent = Sequence.entropy( currentjavafasta.lseq );
+				if( entr ) ent = Sequence.entropy( currentserifier.lseq );
 				
-				double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
-				Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
+				double[] corr = new double[ currentserifier.lseq.size()*currentserifier.lseq.size() ];
+				Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, null, false, cantor, ent );
 				List<String>	corrInd = currentjavafasta.getNames();
 				
 				TreeUtil	tu = new TreeUtil();
@@ -2877,7 +2880,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					String tree = n.toStringWoLengths();
 					
 					for( int i = 0; i < 1000; i++ ) {
-						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, true, cantor, ent );
+						Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, null, true, cantor, ent );
 						Node nn = tu.neighborJoin(corr, corrInd, null, false, true);
 						tu.arrange( nn, comp );
 						tu.compareTrees( tree, n, nn );
@@ -2938,7 +2941,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("fasttree", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				loadAligned(jf, true);
@@ -2969,7 +2973,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);	
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				loadAligned(jf, true);
@@ -2982,7 +2988,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				runnable = new Runnable() {
 					@Override
 					public void run() {
-						currentjavafasta.removeGaps( currentjavafasta.getSequences() );
+						currentserifier.removeGaps( currentjavafasta.getSequences() );
 						String phy = currentjavafasta.getPhylip( true );
 						
 						Object[] objs = { "p"+phy };
@@ -2990,7 +2996,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				loadAligned(jf, true);
@@ -3021,7 +3029,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				jf.initDataStructures();
 				loadAligned(jf, true);
 			}
@@ -3033,7 +3043,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				runnable = new Runnable() {
 					@Override
 					public void run() {
-						currentjavafasta.removeGaps( currentjavafasta.getSequences() );
+						currentserifier.removeGaps( currentjavafasta.getSequences() );
 						String phy = currentjavafasta.getPhylip( true );
 						
 						Object[] objs = { "c"+phy };
@@ -3041,7 +3051,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				jf.initDataStructures();
 				loadAligned(jf, true);
 			}
@@ -3058,7 +3070,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		dnamlmenu.add( new AbstractAction("Show conserved species sites") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				final JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				final JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				addSave( frame, jf );
 				frame.setSize(800, 600);
@@ -3072,7 +3085,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("Show variant species sites") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -3085,7 +3099,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View aligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				addSave( frame, jf );
 				frame.setSize(800, 600);
@@ -3105,7 +3120,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View unaligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -3125,7 +3141,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if( currentjavafasta == null ) {
-					currentjavafasta = new JavaFasta( DataTable.this );
+					currentserifier = new Serifier();
+					currentjavafasta = new JavaFasta( DataTable.this, currentserifier );
 					JFrame frame = new JFrame();
 					frame.setSize(800, 600);
 					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
