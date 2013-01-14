@@ -2928,14 +2928,17 @@ public class Treedraw implements EntryPoint {
 													if( i+1 < infoList.size() && !showbubble ) {
 														String colorstr = infoList.get(i+1);
 														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
-														g2.fillRect( -7+(t++)*fontSize  - (rightalign ? strw : 0.0) - 30, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 20, nfrmh*1.15 );
+														g2.fillRect( -7-(t)*strw  - (rightalign ? strw : 0.0) - 0, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 10, nfrmh*1.15 );
 														g2.setFillStyle( "#000000" );
 													}
-													g2.fillText( sstr, (rightalign ? -strw : 0.0) - 10, strh/2.0 );
+													g2.fillText( sstr, -7-(t)*strw + (rightalign ? -strw : 0.0) + 5, strh/2.0 );
 													g2.rotate( -a-Math.PI );
 													g2.translate( -cx, -cy );
 												
+													t++;
 													val += strw;
+													
+													//break;
 												}
 											}
 										} else {
@@ -2951,6 +2954,7 @@ public class Treedraw implements EntryPoint {
 											g2.translate( -cx, -cy );
 											
 											List<String> infoList = resnode.getInfoList();
+											//for( String info : infoList ) console( info );
 											if( infoList != null ) {
 												double tstrw = strw;
 												//val += strw;
@@ -2968,14 +2972,17 @@ public class Treedraw implements EntryPoint {
 													if( i+1 < infoList.size() && !showbubble ) {
 														String colorstr = infoList.get(i+1);
 														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
-														g2.fillRect( -7+(t++)*fontSize - (rightalign ? 0.0 : strw) + 5, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 20, nfrmh*1.15 );
+														g2.fillRect( -7+(t)*strw - (rightalign ? 0.0 : strw) + 5, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 10, nfrmh*1.15 );
 														g2.setFillStyle( "#000000" );
 													}
-													g2.fillText( sstr, (rightalign ? 0.0 : strw) + 10, nnstrh/2.0 );
+													g2.fillText( sstr, -7+(t)*strw + (rightalign ? 0.0 : strw) + 10, nnstrh/2.0 );
 													g2.rotate( -a );
 													g2.translate( -cx, -cy );
 												
+													t++;
 													val += strw;
+													
+													//break;
 												}
 											}
 										}
