@@ -120,6 +120,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequence.Annotation;
+import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.unsigned.JavaFasta;
@@ -8088,7 +8089,9 @@ public class GeneSet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null );
+				
+				Serifier serifier = new Serifier();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -8102,8 +8105,8 @@ public class GeneSet extends JApplet {
 							for (Tegeval tv : stv.tset) {
 								String contig = tv.contshort;
 								StringBuilder dna = tv.seq;
-								Sequence seq = new Sequence( contig, dna, jf.mseq );
-								jf.addSequence(seq);
+								Sequence seq = new Sequence( contig, dna, serifier.mseq );
+								serifier.addSequence(seq);
 							}
 						}
 					}
@@ -8119,7 +8122,9 @@ public class GeneSet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null );
+				
+				Serifier	serifier = new Serifier();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -8133,7 +8138,7 @@ public class GeneSet extends JApplet {
 							for (Tegeval tv : stv.tset) {
 								String contig = tv.cont;
 								StringBuilder dna = tv.seq;
-								Sequence seq = new Sequence( contig, dna, jf.mseq );
+								Sequence seq = new Sequence( contig, dna, serifier.mseq );
 								contset.put( contig, seq );
 								
 								/*String contig = tv.contshort;
@@ -8163,7 +8168,7 @@ public class GeneSet extends JApplet {
 
 				for (String contig : contset.keySet()) {
 					Sequence seq = contset.get(contig);
-					jf.addSequence(seq);
+					serifier.addSequence(seq);
 					if (seq.getAnnotations() != null)
 						Collections.sort(seq.getAnnotations());
 				}
@@ -8406,7 +8411,9 @@ public class GeneSet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null );
+				
+				Serifier serifier = new Serifier();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -8425,19 +8432,19 @@ public class GeneSet extends JApplet {
 								} else {
 									if (GeneSet.contigs.containsKey(contig)) {
 										StringBuilder dna = GeneSet.contigs.get(contig);
-										seq = new Sequence(contig, dna, jf.mseq);
+										seq = new Sequence(contig, dna, serifier.mseq);
 									} else
-										seq = new Sequence(contig, jf.mseq);
+										seq = new Sequence(contig, serifier.mseq);
 									contset.put(contig, seq);
 								}
 
-								Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
+								Annotation a = seq.new Annotation(seq, contig, Color.red, serifier.mann);
 								a.setStart(tv.start);
 								a.setStop(tv.stop);
 								a.setOri(tv.ori);
 								a.setGroup(gg.name);
 								a.setType("gene");
-								jf.addAnnotation(a);
+								serifier.addAnnotation(a);
 								// seq.addAnnotation( new Annotation( seq, ) );
 							}
 						}
@@ -8446,7 +8453,7 @@ public class GeneSet extends JApplet {
 
 				for (String contig : contset.keySet()) {
 					Sequence seq = contset.get(contig);
-					jf.addSequence(seq);
+					serifier.addSequence(seq);
 					if (seq.getAnnotations() != null)
 						Collections.sort(seq.getAnnotations());
 				}
@@ -8461,7 +8468,9 @@ public class GeneSet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null );
+				
+				Serifier serifier = new Serifier();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -8480,9 +8489,9 @@ public class GeneSet extends JApplet {
 								} else {
 									if (GeneSet.contigs.containsKey(contig)) {
 										StringBuilder dna = GeneSet.contigs.get(contig);
-										seq = new Sequence(contig, dna, jf.mseq);
+										seq = new Sequence(contig, dna, serifier.mseq);
 									} else
-										seq = new Sequence(contig, jf.mseq);
+										seq = new Sequence(contig, serifier.mseq);
 
 									contset.put(contig, seq);
 								}
@@ -8508,13 +8517,13 @@ public class GeneSet extends JApplet {
 								String contig = tv.contshort;
 								if (contset.keySet().contains(contig)) {
 									Sequence seq = contset.get(contig);
-									Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
+									Annotation a = seq.new Annotation(seq, contig, Color.red, serifier.mann);
 									a.setStart(tv.start);
 									a.setStop(tv.stop);
 									a.setOri(tv.ori);
 									a.setGroup(g.name);
 									a.setType("gene");
-									jf.addAnnotation(a);
+									serifier.addAnnotation(a);
 								}
 							}
 						}
@@ -8523,7 +8532,7 @@ public class GeneSet extends JApplet {
 
 				for (String contig : contset.keySet()) {
 					Sequence seq = contset.get(contig);
-					jf.addSequence(seq);
+					serifier.addSequence(seq);
 					if (seq.getAnnotations() != null)
 						Collections.sort(seq.getAnnotations());
 				}
