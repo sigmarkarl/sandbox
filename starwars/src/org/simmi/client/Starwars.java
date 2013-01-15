@@ -1,5 +1,8 @@
 package org.simmi.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
@@ -365,28 +368,15 @@ public class Starwars implements EntryPoint {
         g.mvpMatrix.load(g.perspectiveMatrix);
         g.mvpMatrix.multiply(g.mvMatrix);
         g.mvpMatrix.setUniform(gl, g.u_modelViewProjMatrixLoc, false);
-
-      	this.@org.simmi.client.Starwars::drawStuff(Lelemental/html/WebGLRenderingContext;Lcom/google/gwt/core/client/JavaScriptObject;ILelemental/html/WebGLTexture;Lelemental/html/WebGLTexture;)(gl, g, g.box.numIndices, spiritTexture, starfield);
 	}-*/;
 	
 	WebGLBuffer svb1, svb, vb, nb, tb, ib;
 	public void drawStuff( WebGLRenderingContext gl, JavaScriptObject g, int jobj, WebGLTexture spiritTexture, WebGLTexture starfield ) {
-		setBuffers( gl, svb, nb, tb, ib, false );
-		
-		//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
-        gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
-        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
-        
-        
         gl.enable( WebGLRenderingContext.BLEND );
 		//gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
         //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE);
         //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE_MINUS_CONSTANT_ALPHA);
         gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.DST_COLOR);
-		
-        offval += 0.07f;
-        offset( offval, newy );
-		setBuffers( gl, svb1, nb, tb, ib, true );
 		
 		gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
         gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
@@ -437,7 +427,8 @@ public class Starwars implements EntryPoint {
 		return y*96;
 	}
 	
-	public void changeText( String text, Canvas canvas, int sizy ) {
+	public void changeText( WebGLRenderingContext gl, String text, Canvas canvas, /*int sizy,*/ List<WebGLTexture> textures ) {
+		int sizy = 1024;
 		canvas.setSize(1024+"px", sizy+"px");
 		canvas.setCoordinateSpaceWidth(1024);
 		canvas.setCoordinateSpaceHeight( sizy );
@@ -495,6 +486,22 @@ public class Starwars implements EntryPoint {
 					total += ctx.measureText( newstr ).getWidth()+left/(newspl.length-1);
 				}
 				y++;*/
+			}
+			
+			if( y % 5 == 0 ) {
+				int ind = y/5-1;
+				y = 0;
+				
+				if( ind >= textures.size() ) textures.add( gl.createTexture() );
+				WebGLTexture texture = textures.get( ind );
+				
+				gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, (CanvasElement)canvas.getElement());
+				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
+				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
+				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
+				
+				ctx.clearRect(0, 0, 1024, sizy );
 			}
 		}
 	}
@@ -608,13 +615,13 @@ public class Starwars implements EntryPoint {
 		canvas2d.setCoordinateSpaceHeight(1024);
 		final CanvasElement canvas2dElement = (CanvasElement)canvas2d.getElement();
 		
-		int y = measureText( text, canvas2d );
-		double val = Math.log((double)y) / Math.log(2.0);
-		int newy = (int)Math.pow(2.0, Math.ceil( val ) );
-		this.newy = newy;
-		offval = -newy/36.0f-20.0f;
-		console.log("newy "+ newy);
-		changeText( text, canvas2d, newy );
+		//int y = measureText( text, canvas2d );
+		//double val = Math.log((double)y) / Math.log(2.0);
+		//int newy = (int)Math.pow(2.0, Math.ceil( val ) );
+		//this.newy = newy;
+		//offval = -newy/36.0f-20.0f;
+		//console.log("newy "+ newy);
+		
 		//CanvasElement	canvas = Browser.getDocument().createCanvasElement();
 		final Canvas canvas3d = Canvas.createIfSupported();
 		canvas3d.getElement().setId("example");
@@ -638,12 +645,16 @@ public class Starwars implements EntryPoint {
 		//initBuffersNative( gl );
 		//WebGLBuffer squareVerticesBuffer = initBuffers( gl );		
 		
-		final WebGLTexture texture = gl.createTexture();
+		final List<WebGLTexture>	textures = new ArrayList<WebGLTexture>();
+		WebGLTexture texture = gl.createTexture();
 		gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
 		gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, canvas2dElement);
 		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 		gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 		gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
+		textures.add( texture );
+		
+		changeText( gl, text, canvas2d, /*newy,*/ textures );
 	
 //		//drawPicture( gl, canvas3dElement, texture );
 //		
@@ -751,7 +762,7 @@ public class Starwars implements EntryPoint {
 
         //Set up all the vertex attributes for vertices, normals and texCoords
         
-        final String url = "http://192.168.1.166:8888/Starwars.html";
+        final String url = "http://192.168.1.65:8888/Starwars.html";
         //final String url = "http://starwarsflyingtext.appspot.com";
         final Anchor a = new Anchor("Link");
         
@@ -765,23 +776,18 @@ public class Starwars implements EntryPoint {
 		button.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				int y = measureText( ta.getText(), canvas2d );
+				/*int y = measureText( ta.getText(), canvas2d );
 				double val = Math.log((double)y) / Math.log(2.0);
 				int newy = (int)Math.pow(2.0, Math.ceil( val ) );
 				Starwars.this.newy = newy;
 				offval = -newy/36.0f-20.0f;
-				console.log("newy "+ newy);
+				console.log("newy "+ newy);*/
 				
 				String text = ta.getText();
-				changeText( text, canvas2d, newy );
+				changeText( gl, text, canvas2d, /*newy,*/ textures );
 				//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
 				gl.clear( WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT );
 				
-				gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, canvas2dElement);
-				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
-				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
-				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
 				//drawPicture( gl, canvas3dElement, texture, starfield, g );
 				a.setHref( url+"?flyer="+URL.encode(text) );
 				//gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, cubeVerticesTextureCoordBuffer);
@@ -817,12 +823,31 @@ public class Starwars implements EntryPoint {
 				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
+		        
+				drawPicture( gl, canvas3dElement, textures.get(0), starfield, g );
 				
-				drawPicture( gl, canvas3dElement, texture, starfield, g );
+				setBuffers( gl, svb, nb, tb, ib, false );
+		        gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
+		        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
+		        drawStuff( gl, g, 0, textures.get(0), starfield );
+				//drawStuff(Lelemental/html/WebGLRenderingContext;Lcom/google/gwt/core/client/JavaScriptObject;ILelemental/html/WebGLTexture;Lelemental/html/WebGLTexture;)(gl, g, g.box.numIndices, spiritTexture, starfield);
+				
 				rafc = new RequestAnimationFrameCallback() {
 					@Override
 					public boolean onRequestAnimationFrameCallback(double time) {
-						drawStuff( gl, g, 0, texture, starfield );
+						setBuffers( gl, svb, nb, tb, ib, false );
+						//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
+				        gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
+				        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
+						for( WebGLTexture texture : textures ) {
+							offset( offval, newy );
+							setBuffers( gl, svb1, nb, tb, ib, true );
+							
+							drawStuff( gl, g, 0, texture, starfield );
+						}
+						
+						offval += 0.07f;
+						
 						if( rafc != null ) wnd.webkitRequestAnimationFrame( rafc );
 						return true;
 					}
