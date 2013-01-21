@@ -3,6 +3,8 @@ package org.simmi.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import sun.awt.HorizBagLayout;
+
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
@@ -25,6 +27,7 @@ import com.google.gwt.typedarrays.client.Uint8ArrayNative;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -588,11 +591,23 @@ public class Starwars implements EntryPoint {
 	}-*/;
 	
 	public native String btoa( String str ) /*-{
-		return $wnd.btoa( str );
+		var ret = '';
+		try {
+			ret = $wnd.btoa( str );
+		} catch( e ) {
+			
+		}
+		return ret;
 	}-*/;
 	
 	public native String atob( String str ) /*-{
-		return $wnd.atob( str );
+		var ret = '';
+		try {
+			ret = $wnd.atob( str );
+		} catch( e ) {
+			
+		}
+		return ret;
 	}-*/;
 	
 	RequestAnimationFrameCallback rafc = null;
@@ -665,11 +680,17 @@ public class Starwars implements EntryPoint {
 		
 		boolean change = false;
 		String query = Window.Location.getQueryString();
-		if( query != null & query.contains("flyer") ) {
+		if( query != null ) {
 			change = true;
-			int i = query.indexOf("flyer");
-			String qs = query.substring(i+6);
-			text = URL.decode( qs );
+			if( query.contains("bflyer") ) {
+				int i = query.indexOf("bflyer");
+				String qs = query.substring(i+7);
+				text = URL.decode( atob( qs ) );
+			} else if( query.contains("bflyer") ) {
+				int i = query.indexOf("flyer");
+				String qs = query.substring(i+6);
+				text = URL.decode( qs );
+			}
 		}
 		//String text = "Fighting spam is now a community effort. Every post has a Flag button at the lower left.\nIf you hit that to reveal the popup, one of the options is Spam. It's quick and painless. Bonus: if enough people tag something as spam, the post will disappear even without moderator intervention. So don't be bashful. Flag that spam. Don't reply to them, don't copy their posts. Just flag them.";
 		final Canvas canvas2d = Canvas.createIfSupported();
@@ -830,10 +851,12 @@ public class Starwars implements EntryPoint {
         //final String url = "http://192.168.1.65:8888/Starwars.html";
         final String url = "http://starwarsflyingtext.appspot.com";
         final Anchor a = new Anchor("Link");
+        final Anchor b = new Anchor("BLink");
         
 		final TextArea ta = new TextArea();
 		if( change ) {
 			a.setHref( url+"?flyer="+URL.encode(text) ); 
+			b.setHref( url+"?bflyer="+btoa(URL.encode(text)) );
 			ta.setText( text );
 		}
 		ta.setSize(945+"px", 120+"px");
@@ -856,6 +879,7 @@ public class Starwars implements EntryPoint {
 				
 				//drawPicture( gl, canvas3dElement, texture, starfield, g );
 				a.setHref( url+"?flyer="+URL.encode(text) );
+				b.setHref( url+"?bflyer="+btoa( URL.encode(text) ) );
 				//gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, cubeVerticesTextureCoordBuffer);
 				//gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, (ArrayBuffer)fa.buffer(), WebGLRenderingContext.STATIC_DRAW);
 				//gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
@@ -873,7 +897,12 @@ public class Starwars implements EntryPoint {
 		subvp.add( canvas3d );
 		subvp.add( ta );
 		subvp.add( button );
-		subvp.add( a );
+		
+		HorizontalPanel	linkhp = new HorizontalPanel();
+		linkhp.setSpacing(5);
+		linkhp.add( a );
+		linkhp.add( b );
+		subvp.add( linkhp );
 		
 		final Image image = new Image();
 		Browser.getWindow().getConsole().log("doing");
