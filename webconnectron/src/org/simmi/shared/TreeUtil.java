@@ -34,15 +34,15 @@ public class TreeUtil {
 		return ret;
 	}
 	
-	public String getSelectString( Node n ) {
+	public String getSelectString( Node n, boolean meta ) {
 		String ret = "";
 		if( n.isLeaf() ) {
-			if( n.isSelected() ) ret += n.getName();
+			if( n.isSelected() ) ret += n.toStringWoLengths(); //meta ? (n.getMeta() != null ? n.getMeta() : n.getName()) : n.getName();
 		} else for( Node nn : n.getNodes() ) {
-			String selstr = getSelectString( nn );
+			String selstr = getSelectString( nn, meta );
 			if( selstr.length() > 0 ) {
-				if( ret.length() == 0 ) ret += getSelectString( nn );
-				else ret += ","+getSelectString( nn );
+				if( ret.length() == 0 ) ret += getSelectString( nn, meta );
+				else ret += ","+getSelectString( nn, meta );
 			}
 		}
 		return ret;
@@ -66,7 +66,7 @@ public class TreeUtil {
 				propogateSelection(selset, n);
 			}
 		}
-		if( selset.contains( node.getName() ) ) node.setSelected( true );
+		if( node.isLeaf() && selset.contains( node.toStringWoLengths() ) ) node.setSelected( true );
 		//else node.setSelected( false );
 	}
 	
@@ -712,7 +712,9 @@ public class TreeUtil {
 		}
 		
 		public String toStringWoLengths() {
-			String str = "";
+			return generateString( false );
+			
+			/*String str = "";
 			if( nodes.size() > 0 ) {
 				str += "(";
 				int i = 0;
@@ -727,7 +729,7 @@ public class TreeUtil {
 					}
 				} else {
 					str += n1+")";
-				}*/
+				}*
 				for( i = 0; i < nodes.size()-1; i++ ) {
 					str += nodes.get(i).toStringWoLengths()+",";
 				}
@@ -739,18 +741,18 @@ public class TreeUtil {
 				else str += "'"+meta+"'";
 			} else if( name != null && name.length() > 0 ) str += name;
 			
-			return str;
+			return str;*/
 		}
 		
-		public String toString() {
+		public String generateString( boolean wlen ) {
 			String str = "";
 			if( nodes.size() > 0 ) {
 				str += "(";
 				int i = 0;
 				for( i = 0; i < nodes.size()-1; i++ ) {
-					str += nodes.get(i)+",";
+					str += nodes.get(i).generateString(wlen)+",";
 				}
-				str += nodes.get(i)+")";
+				str += nodes.get(i).generateString(wlen)+")";
 			}
 			
 			if( meta != null && meta.length() > 0 ) {
@@ -793,14 +795,15 @@ public class TreeUtil {
 				}*/
 			}
 			
-			//if( h > 0.0 )
-			
-			str += ":"+h;
+			if( wlen ) str += ":"+h;
 			// change: if( color != null && color.length() > 0 ) str += ":"+color;
-			
 			//else str += ":0.0";
 			
 			return str;
+		}
+		
+		public String toString() {
+			return generateString( true );
 		}
 		
 		public List<Node> getNodes() {
@@ -940,6 +943,10 @@ public class TreeUtil {
 			} else {
 				this.name = newname;
 			}
+		}
+		
+		public String getFullname() {
+			return "";
 		}
 		
 		public String getName() {
