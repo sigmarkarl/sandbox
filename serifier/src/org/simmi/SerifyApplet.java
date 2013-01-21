@@ -52,7 +52,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -109,7 +108,7 @@ public class SerifyApplet extends JApplet {
 	
 	JTable				table;
 	Serifier			serifier;
-	String globaluser = null;
+	String 				globaluser = null;
 	Container			cnt = null;
 	
 	public SerifyApplet() {
@@ -208,6 +207,9 @@ public class SerifyApplet extends JApplet {
 						if( rowIndex >= datalist.size() ) {
 							System.err.println( "out of b" );
 						} else {
+							System.err.println( datalist.size() );
+							if( datalist.size() > 0 ) System.err.println( datalist.get(0) );
+							
 							Object obj = datalist.get(rowIndex);
 							//System.err.println( obj );
 							ret = f.get( obj );
@@ -713,127 +715,6 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public static void splitit( int nspin, Sequences seqs, File dir, SerifyApplet applet ) {
-		try {
-			File inf = new File( new URI(seqs.getPath() ) );
-			String name = inf.getName();
-			int ind = name.lastIndexOf('.');
-			
-			String sff = name;
-			String sf2 = "";
-			if( ind != -1 ) {
-				sff = name.substring(0, ind);
-				sf2 = name.substring(ind+1,name.length());
-			}
-			
-			int spin = (int)Math.ceil( (double)seqs.getNSeq()/(double)nspin );
-			
-			int i = 0;
-			FileWriter 		fw = null;
-			File			of = null;
-			FileReader 		fr = new FileReader( inf );
-			BufferedReader 	br = new BufferedReader( fr );
-			String line = br.readLine();
-			while( line != null ) {
-				if( line.startsWith(">") ) {
-					if( i%spin == 0 ) {
-						if( fw != null ) {
-							fw.close();
-							
-							if( applet != null ) {
-								name = of.getName();
-								ind = name.lastIndexOf('.');
-								name = name.substring(0,ind);
-								applet.addSequences(name, seqs.getType(), of.toURI().toString(), spin);
-							}
-						}
-						of = new File( dir, sff + "_" + (i/spin+1) + "." + sf2 );
-						fw = new FileWriter( of );
-					}
-					i++;
-				}
-				fw.write( line+"\n" );
-				
-				line = br.readLine();
-			}
-			br.close();
-			if( fw != null ) {
-				fw.close();
-				if( applet != null ) {
-					name = of.getName();
-					ind = name.lastIndexOf('.');
-					name = name.substring(0,ind);
-					applet.addSequences(name, seqs.getType(), of.toURI().toString(), i%spin);
-				}
-			}									
-		} catch (URISyntaxException e1) {
-			e1.printStackTrace();
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-	}
-	
-	public static void filtit( int nspin, Sequences seqs, File dir, SerifyApplet applet ) {
-		try {
-			File inf = new File( new URI(seqs.getPath() ) );
-			String name = inf.getName();
-			int ind = name.lastIndexOf('.');
-			
-			String sff = name;
-			String sf2 = "";
-			if( ind != -1 ) {
-				sff = name.substring(0, ind);
-				sf2 = name.substring(ind+1,name.length());
-			}
-			
-			//int spin = (int)Math.ceil( (double)seqs.getNSeq()/(double)nspin );
-			
-			StringBuilder 	include = new StringBuilder();
-			String			current = null;
-			int i = 0;
-			
-			File			of = new File( dir, sff + "_lenfilt." + sf2 );
-			FileWriter 		fw = new FileWriter( of );
-			
-			FileReader 		fr = new FileReader( inf );
-			BufferedReader 	br = new BufferedReader( fr );
-			String line = br.readLine();
-			while( line != null ) {
-				if( line.startsWith(">") ) {
-					if( include.length() >= nspin ) {
-						i++;
-						fw.write( current + "\n" );
-						for( int k = 0; k < include.length(); k+=70 ) {
-							fw.write( include.substring(k, Math.min(include.length(), k+70))+"\n" );
-						}
-					}
-					current = line;
-					include.delete(0, include.length());
-				} else include.append( line );
-				
-				line = br.readLine();
-			}
-			br.close();
-			if( fw != null ) {
-				fw.close();
-				if( applet != null ) {
-					name = of.getName();
-					ind = name.lastIndexOf('.');
-					name = name.substring(0,ind);
-					applet.addSequences(name, seqs.getType(), of.toURI().toString(), i);
-				}
-			}									
-		} catch (URISyntaxException e1) {
-			e1.printStackTrace();
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-	}
-	
 	public void getParameters() {
 		JSObject js = JSObject.getWindow( SerifyApplet.this );
 		js.call( "getBlastParameters", new Object[] {} );
@@ -994,237 +875,6 @@ public class SerifyApplet extends JApplet {
 		//infile.delete();
 	}
 	
-	private static void joinSets( Set<String> all, List<Set<String>> total ) {		
-		Set<String> cont = null;
-		Set<Set<String>>	rem = new HashSet<Set<String>>();
-		for( Set<String>	check : total ) {			
-			for( String aval : all ) {
-				if( check.contains(aval) ) {
-					if( cont == null ) {
-						cont = check;
-						check.addAll( all );
-					} else {
-						cont.addAll( check );
-						rem.add( check );
-					}
-					break;
-				}
-			}
-		}
-		
-		for( Set<String> erm : rem ) {
-			int ind = -1;
-			int count = 0;
-			for( Set<String> ok : total ) {
-				if( ok.size() == erm.size() && ok.containsAll(erm) ) {
-					ind = count;
-					break;
-				}
-				count++;
-			}
-			
-			if( ind != -1 ) {
-				total.remove( ind );
-			}
-		}
-		
-		rem.clear();
-		if( cont == null ) {
-			if( total.contains( all ) ) {
-				System.err.println("fuckfuckfuck");
-			}
-			total.add( all );
-		}
-		
-		/*Set<String>	erm = new HashSet<String>();
-		for( Set<String> ss : total ) {
-			for( String s : ss ) {
-				if( erm.contains( s ) ) {
-					break;
-				}
-			}
-			erm.addAll( ss );
-		}*/
-	}
-	
-	public static void joinBlastSetsThermus( InputStream is, String write, boolean union, List<Set<String>> total ) throws IOException {
-		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
-		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
-			
-		String line = br.readLine();
-		int cnt = 0;
-		while( line != null ) {
-			if( line.startsWith("Sequences prod") ) {
-				line = br.readLine();
-				Set<String>	all = new HashSet<String>();
-				while( line != null && !line.startsWith(">") ) {
-					String trim = line.trim();
-					if( trim.startsWith("o.prof") || trim.startsWith("m.hydro") || trim.startsWith("mt.silv") || trim.startsWith("mt.ruber") || trim.startsWith("t.RLM") || trim.startsWith("t.spCCB") || trim.startsWith("t.arci") || trim.startsWith("t.scoto") || trim.startsWith("t.antr") || trim.startsWith("t.aqua") || trim.startsWith("t.t") || trim.startsWith("t.egg") || trim.startsWith("t.island") || trim.startsWith("t.oshi") || trim.startsWith("t.brock") || trim.startsWith("t.fili") || trim.startsWith("t.igni") || trim.startsWith("t.kawa") ) {
-						int millind = trim.indexOf('#');
-						if( millind == -1 ) millind = trim.indexOf('.', 5);
-						String val = trim.substring( 0, millind-1 );
-						if( val.length() < 2 ) {
-							System.err.println();
-						}
-						//int v = val.indexOf("contig");
-						all.add( val.replace(".fna", "") );
-					}
-					line = br.readLine();
-				}
-				
-				//if( fw != null ) fw.write( all.toString()+"\n" );
-				
-				if( union ) joinSets( all, total );
-				//else intersectSets( all, total );
-				
-				if( line == null ) break;
-			}
-			
-			if( cnt++ % 100000 == 0 ) {
-				System.err.println( cnt );
-			}
-			line = br.readLine();
-		}
-		if( fw != null ) {
-			for( Set<String> all : total ) {
-				fw.write( all.toString()+"\n" );
-			}
-			fw.close();
-		}
-	}
-	
-	public static void joinBlastSets( InputStream is, String write, boolean union, List<Set<String>> total, double evalue ) throws IOException {
-		FileWriter fw = write == null ? null : new FileWriter( write ); //new FileWriter("/home/sigmar/blastcluster.txt");
-		BufferedReader	br = new BufferedReader( new InputStreamReader( is ) );
-		
-		String line = br.readLine();
-		int cnt = 0;
-		while( line != null ) {
-			if( line.startsWith("Sequences prod") ) {
-				line = br.readLine();
-				Set<String>	all = new HashSet<String>();
-				while( line != null && !line.startsWith(">") && !line.startsWith("Lambda") && !line.startsWith("Query") && !line.startsWith("Effect") ) {
-					String trim = line.trim();
-					
-					String[] split = trim.split("[\t ]+");
-					//int v = val.indexOf("contig");
-					if( split[0].length() > 0 ) {
-						double val = 100.0;
-						try {
-							val = Double.parseDouble( split[ split.length-1 ] );
-						} catch( Exception e ) {
-							System.err.println( line );
-							e.printStackTrace();
-						}
-						if( val <= evalue ) all.add( split[0] );
-					}
-					
-					line = br.readLine();
-				}
-				
-				if( union ) joinSets( all, total );
-				//else intersectSets( all, total );
-				
-				if( line == null ) break;
-			}
-			
-			/*if( cnt++ % 100000 == 0 ) {
-				System.err.println( cnt );
-			}*/
-			line = br.readLine();
-		}
-		
-		if( fw != null ) {
-			for( Set<String> all : total ) {
-				fw.write( all.toString()+"\n" );
-			}
-			fw.close();
-		}
-	}
-	
-	private static Map<Set<String>,Set<Map<String,Set<String>>>> initCluster( Collection<Set<String>>	total, Set<String> species ) {
-		Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap = new HashMap<Set<String>,Set<Map<String,Set<String>>>>();
-		
-		for( Set<String>	t : total ) {
-			Set<String>	teg = new HashSet<String>();
-			for( String e : t ) {
-				int ind = e.indexOf('_');
-				if( e.contains("_JL2_") ) ind = e.indexOf('_', ind+1);
-				
-				if( ind != -1 ) {
-					String str = e.substring( 0, ind );
-					/*if( joinmap.containsKey( str ) ) {
-						str = joinmap.get(str);
-					}*/
-					teg.add( str );
-					
-					species.add(str);
-				} else {
-					System.err.println("");
-				}
-			}
-			
-			Set<Map<String,Set<String>>>	setmap;
-			if( clusterMap.containsKey( teg ) ) {
-				setmap = clusterMap.get( teg );
-			} else {
-				setmap = new HashSet<Map<String,Set<String>>>();
-				clusterMap.put( teg, setmap );
-			}
-			
-			Map<String,Set<String>>	submap = new HashMap<String,Set<String>>();
-			setmap.add( submap );
-			
-			for( String e : t ) {
-				int ind = e.indexOf('_');
-				if( e.contains("_JL2_") ) ind = e.indexOf('_', ind+1);
-				
-				String str = e.substring( 0, ind );
-				/*if( joinmap.containsKey( str ) ) {
-					str = joinmap.get(str);
-				}*/
-				
-				Set<String>	set;
-				if( submap.containsKey( str ) ) {
-					set = submap.get(str);
-				} else {
-					set = new HashSet<String>();
-					submap.put( str, set );
-				}
-				set.add( e );
-			}
-		}
-		
-		return clusterMap;
-	}
-	
-	private static void writeSimplifiedCluster( OutputStream os, Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap ) throws IOException {
-		OutputStreamWriter	fos = new OutputStreamWriter( os );
-		for( Set<String> set : clusterMap.keySet() ) {
-			Set<Map<String,Set<String>>>	mapset = clusterMap.get( set );
-			fos.write( set.toString()+"\n" );
-			int i = 0;
-			for( Map<String,Set<String>> erm : mapset ) {
-				fos.write((i++)+"\n");
-				
-				for( String erm2 : erm.keySet() ) {
-					Set<String>	erm3 = erm.get(erm2);
-					fos.write("\t"+erm2+"\n");
-					fos.write("\t\t"+erm3.toString()+"\n");
-				}
-			}
-		}
-		fos.close();
-	}
-	
-	private void writeClusters( OutputStream os, List<Set<String>> cluster ) throws IOException {
-		OutputStreamWriter	fos = new OutputStreamWriter( os );
-		for( Set<String> set : cluster ) {
-			fos.write( set.toString()+"\n" );
-		}
-		fos.close();
-	}
-	
 	public void blastClusters( final InputStream is, final OutputStream os ) {
 		final JDialog	dialog = new JDialog();
 		Runnable run = new Runnable() {
@@ -1258,36 +908,11 @@ public class SerifyApplet extends JApplet {
 				dialog.setVisible( true );
 				
 				if( !interrupted ) {
-					makeBlastCluster( is, os, true );
+					serifier.makeBlastCluster( is, os, 0 );
 				}
 			}
 		};
 		runProcess( "Blast clusters", run, dialog );
-	}
-	
-	public List<Set<String>> makeBlastCluster( final InputStream is, final OutputStream os, boolean clustermap ) {
-		List<Set<String>>	total = new ArrayList<Set<String>>();
-		try {
-			Set<String>	species = new TreeSet<String>();
-			
-			joinBlastSets( is, null, true, total, 0.0 );
-			
-			//joinBlastSetsThermus( is, null, true, total );
-			
-			if( clustermap ) {
-				Map<Set<String>,Set<Map<String,Set<String>>>>	clusterMap = initCluster( total, species );
-			
-				//if( writeSimplifiedCluster != null ) 
-				writeSimplifiedCluster( os, clusterMap );
-				//writeBlastAnalysis( clusterMap, species );
-			} else if( os != null ) {
-				writeClusters( os, total );
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return total;
 	}
 	
 	public static class AvgProvider {
@@ -3699,7 +3324,8 @@ public class SerifyApplet extends JApplet {
 								int rr = table.convertRowIndexToModel( r );
 								if( rr >= 0 ) {
 									final Sequences seqs = getSequences( rr );
-									filtit( spin, seqs, dir, SerifyApplet.this );
+									Sequences nseqs = serifier.filtit( spin, seqs, dir );
+									serifier.addSequences( nseqs );
 								}
 							}
 						}
@@ -3804,7 +3430,10 @@ public class SerifyApplet extends JApplet {
 								int rr = table.convertRowIndexToModel( r );
 								if( rr >= 0 ) {
 									final Sequences seqs = getSequences( rr );
-									splitit( spin, seqs, dir, SerifyApplet.this );
+									List<Sequences> lseqs = serifier.splitit( spin, seqs, dir );
+									for( Sequences nseqs : lseqs ) {
+										addSequences( nseqs );
+									}
 								}
 							}
 						}
@@ -4103,7 +3732,7 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						List<Set<String>> cluster = makeBlastCluster( is, null, false );
+						List<Set<String>> cluster = serifier.makeBlastCluster( is, null, 1 );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -4179,7 +3808,7 @@ public class SerifyApplet extends JApplet {
 						}
 					
 						if( s != null ) {
-							Sequences ret = serifier.blastRename( seqs, s, f );
+							Sequences ret = serifier.blastRename( seqs, s, f, false );
 							serifier.addSequences( ret );
 						}
 					}
@@ -5083,7 +4712,7 @@ public class SerifyApplet extends JApplet {
 				
 				File nf = new File( "/u0/all.blastout" );//new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getName() );
-				List<Set<String>> cluster = makeBlastCluster( new FileInputStream( nf ), null, false );
+				List<Set<String>> cluster = serifier.makeBlastCluster( new FileInputStream( nf ), null, 1 );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
