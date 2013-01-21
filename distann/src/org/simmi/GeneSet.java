@@ -359,8 +359,25 @@ public class GeneSet extends JApplet {
 		
 		if( ret.containsKey(val) ) {
 			gene = ret.get(val);
+			//int i = 0;
+			//System.err.println( uclusterlist.size() );
 			for( Set<String>	clusterset : uclusterlist ) {
+				//System.err.println( i++ );
+				/*boolean mugg = false;
+				if( clusterset.size() == 4 ) {
+					int count = 0;
+					for( String s : clusterset ) {
+						if( s.contains("t.oshimai") || s.contains("mt.silvanus") ) count++;
+					}
+					if( count >= 2 ) {
+						System.err.println( clusterset );
+						mugg = true;
+					}
+				}*/
 				if( clusterset.contains( query ) ) {
+					/*if( mugg ) {
+						System.err.println();
+					}*/
 					for( String padd : gene.species.keySet() ) {
 						Teginfo stv = gene.species.get(padd);
 						for( Tegeval tvl : stv.tset ) {
@@ -688,7 +705,7 @@ public class GeneSet extends JApplet {
 				
 				Gene gene;
 				String check = addon ? "_"+aa : val;
-				if (ret.containsKey( check ) ) {
+				if( ret.containsKey( check ) ) {
 					gene = genestuff( uclusterlist, query, desc, teg, check, ret );
 					if( addon ) {
 						gene.name = desc;
@@ -965,6 +982,9 @@ public class GeneSet extends JApplet {
 				}
 			}
 
+			if( cnt % 100 == 0 ) {
+				System.err.println( cnt );
+			}
 			line = br.readLine();
 		}
 	}
@@ -1929,6 +1949,30 @@ public class GeneSet extends JApplet {
 
 		return total;
 	}
+	
+	private static List<Set<String>> loadUClusters(Reader rd) throws IOException {
+		// FileReader fr = new FileReader( file );
+		BufferedReader br = new BufferedReader(rd);
+		String line = br.readLine();
+		List<Set<String>> ret = new ArrayList<Set<String>>();
+		Set<String> prevset = null;
+
+		while (line != null) {
+			String[] split = line.split("[\t ]+");
+			if( line.startsWith("S") ) {
+				prevset = new TreeSet<String>();
+				ret.add(prevset);
+			}
+			if( !line.startsWith("C") && prevset != null ) {
+				prevset.add( split[8] );
+			}
+			
+			line = br.readLine();
+		}
+		br.close();
+
+		return ret;
+	}
 
 	private static List<Set<String>> loadSimpleClusters(Reader rd) throws IOException {
 		// FileReader fr = new FileReader( file );
@@ -2167,12 +2211,13 @@ public class GeneSet extends JApplet {
 
 	public static void clusterFromBlastResults(File dir, String[] stuff, String writeSimplifiedCluster, String writeSimplifiedBlast, boolean union) throws IOException {
 		Set<String> species = new TreeSet<String>();
-		List<Set<String>> total = new ArrayList<Set<String>>(); 
+		List<Set<String>> total = new ArrayList<Set<String>>();
+		Serifier serifier = new Serifier();
 		for( String name : stuff ) {
 			File ff = new File( dir, name );
 			FileInputStream	fis = new FileInputStream( ff );
 			
-			SerifyApplet.joinBlastSets(fis, writeSimplifiedBlast, union, total, 0.0);
+			serifier.joinBlastSets(fis, writeSimplifiedBlast, union, total, 0.0);
 		}
 		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total, species);
 
@@ -6908,7 +6953,7 @@ public class GeneSet extends JApplet {
 					return gene.groupCoverage == 16 && gene.groupCount == 16 ? gene.corr16s : -1;
 				} else if (columnIndex == 18) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.thermSG0_5JP17_16");
+						Teginfo set = gene.species.get("t.thermophilusSG0");
 						return set;
 					}
 				} else if (columnIndex == 19) {
@@ -7037,7 +7082,12 @@ public class GeneSet extends JApplet {
 					}
 				} else if (columnIndex == 39) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.spCCB_US3_UF1");
+						for( String key : gene.species.keySet() ) {
+							if( key.contains("CCB") ) {
+								System.err.println( " erm " + key );
+							}
+						}
+						Teginfo set = gene.species.get("t.spCCB");
 						return set;
 					}
 				} else if (columnIndex == 40) {
@@ -7047,7 +7097,7 @@ public class GeneSet extends JApplet {
 					}
 				} else if (columnIndex == 41) {
 					if (gene.species != null) {
-						Teginfo set = gene.species.get("t.oshimai_JL2");
+						Teginfo set = gene.species.get("t.oshimaiJL2");
 						return set;
 					}
 				} else if (columnIndex == 42) {
@@ -7272,11 +7322,11 @@ public class GeneSet extends JApplet {
 					currentSerify = sa;
 				} else frame = (JFrame)currentSerify.cnt;
 				
-				String[] farr = new String[] {"o.profundus", "mt.silvanus", "mt.ruber", "m.hydrothermalis", "t.thermSG0_5JP17_16", 
+				String[] farr = new String[] {"o.profundus", "mt.silvanus", "mt.ruber", "m.hydrothermalis", "t.thermophilusSG0", 
 						"t.thermophilusJL18", "t.thermophilusHB8", "t.thermophilusHB27", "t.scotoductusSA01", "t.scotoductus4063",
 						"t.scotoductus1572", "t.scotoductus2101", "t.scotoductus2127", "t.scotoductus346",
 						"t.scotoductus252", "t.antranikiani", "t.kawarayensis", "t.brockianus", "t.igniterrae", "t.eggertsoni", 
-						"t.RLM", "t.oshimai", "t.oshimai_JL2", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB_US3_UF1"};
+						"t.RLM", "t.oshimai", "t.oshimaiJL2", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB"};
 
 				Map<Integer,String>			ups = new HashMap<Integer,String>();
 				Set<Integer>				stuck = new HashSet<Integer>();
@@ -7305,6 +7355,11 @@ public class GeneSet extends JApplet {
 						//for (String sp : gg.species.keySet()) {
 						for(String sp : farr) {
 							Teginfo stv = gg.species.get(sp);
+							/*for( String key : gg.species.keySet() ) {
+								if( key.contains("JL2") ) {
+									System.err.println( " erm " + key );
+								}
+							}*/
 							//System.err.println( gg.species.keySet() );
 							if( stv == null ) {
 								System.err.println( sp );
@@ -9079,9 +9134,25 @@ public class GeneSet extends JApplet {
 		List<Set<String>> iclusterlist = null; //loadSimpleClusters(new InputStreamReader(is));
 
 		//is = GeneSet.class.getResourceAsStream("/thermus_unioncluster.txt");
-		is = GeneSet.class.getResourceAsStream("/allthermus_unioncluster2.txt");
-		List<Set<String>> uclusterlist = loadSimpleClusters(new InputStreamReader(is));
+		//is = GeneSet.class.getResourceAsStream("/allthermus_unioncluster2.txt");
+		//is = GeneSet.class.getResourceAsStream("/thomas1.clust");
+		is = GeneSet.class.getResourceAsStream("/allthermus_e5.clust");
+		List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
+		
+		//is = GeneSet.class.getResourceAsStream("/results.uc");
+		//List<Set<String>> uclusterlist = loadUClusters( new InputStreamReader(is) );
 
+		/*System.err.println( uclusterlist.size() );
+		for( Set<String> clust : uclusterlist ) {
+			/*if( clust.size() == 4 ) {
+				for( String s : clust ) {
+					System.err.print( "  " + s );
+				}
+				System.err.println();
+			}// else System.err.println( uclusterlist.size() );
+			if( clust.size() > 10 ) System.err.println( "   " + clust.size() );
+		}*/
+		
 		Map<String, Gene> refmap = new HashMap<String, Gene>();
 		Map<String, String> allgenes = new HashMap<String, String>();
 		Map<String, Set<String>> geneset = new HashMap<String, Set<String>>();
@@ -9114,6 +9185,16 @@ public class GeneSet extends JApplet {
 			// refmap.put(gene.refid, gene);
 			gene.index = genelist.size();
 			genelist.add(gene);
+			
+			/*if( gene.species.size() == 4 ) {
+				if( gene.species.containsKey("t.oshimai") && gene.species.containsKey("mt.silvanus") ) {
+					System.err.println( gene.index );
+					for( String spec : gene.species.keySet() ) {
+						System.err.print( "  " + spec );
+					}
+					System.err.println();
+				}
+			}*/
 
 			/*
 			 * if( gene.species != null ) { for( Set<String> ucluster :
@@ -9142,7 +9223,6 @@ public class GeneSet extends JApplet {
 
 		Map<Set<String>, double[]> corrList = new HashMap<Set<String>, double[]>();
 
-		
 		List<GeneGroup>	ggList = new ArrayList<GeneGroup>();
 		int i = 0;
 		Set<String> ss = new HashSet<String>();

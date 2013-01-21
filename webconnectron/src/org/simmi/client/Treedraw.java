@@ -1432,7 +1432,7 @@ public class Treedraw implements EntryPoint {
 	};
 	
 	public String fetchSel() {
-		return treeutil.getSelectString( treeutil.getNode() );
+		return treeutil.getSelectString( treeutil.getNode(), true );
 	}
 	
 	public native void initFuncs() /*-{
@@ -1526,7 +1526,7 @@ public class Treedraw implements EntryPoint {
 				
 				elemental.html.Window source = myPopup; //me.getSource()
 				if( dstr.equals("fetchsel") ) {
-					String selstr = treeutil.getSelectString( treeutil.getNode() );
+					String selstr = treeutil.getSelectString( treeutil.getNode(), true );
 					wnd.getOpener().postMessage( "propagate{"+selstr+"}", "*");
 				} else {
 					if( me.getOrigin().equals( domain ) ) {
