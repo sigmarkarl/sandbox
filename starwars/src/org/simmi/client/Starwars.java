@@ -941,7 +941,7 @@ public class Starwars implements EntryPoint {
 		image.setUrl("starfield.png");
 		//Image.prefetch("starfield.png");
 		RootPanel tex = RootPanel.get("texture");
-		tex.add( image );		
+		tex.add( image );
 		
 		//vp.add( subvp );
 		root.add( subvp );
