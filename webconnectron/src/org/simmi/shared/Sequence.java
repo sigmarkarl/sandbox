@@ -47,6 +47,10 @@ public class Sequence implements Comparable<Sequence> {
 		this.selected = sel;
 	}
 	
+	public void removeGaps() {
+		
+	}
+	
 	public static String getPhylip( List<Sequence> lseq, boolean numeric ) {
 		StringBuilder out = new StringBuilder();
 		
