@@ -3,8 +3,6 @@ package org.simmi.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import sun.awt.HorizBagLayout;
-
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
@@ -590,7 +588,7 @@ public class Starwars implements EntryPoint {
 		return e;
 	}-*/;
 	
-	public native String btoa( String str ) /*-{
+	/*public native String btoa( String str ) -{
 		var ret = '';
 		try {
 			ret = $wnd.btoa( str );
@@ -598,9 +596,9 @@ public class Starwars implements EntryPoint {
 			
 		}
 		return ret;
-	}-*/;
+	}-;
 	
-	public native String atob( String str ) /*-{
+	public native String atob( String str ) -{
 		var ret = '';
 		try {
 			ret = $wnd.atob( str );
@@ -685,7 +683,12 @@ public class Starwars implements EntryPoint {
 			if( query.contains("bflyer") ) {
 				int i = query.indexOf("bflyer");
 				String qs = query.substring(i+7);
-				text = URL.decode( atob( qs ) );
+				try {
+					String atob = wnd.atob( qs );
+					text = URL.decode( atob );
+				} catch( Exception e ) {
+					text = "";
+				}
 			} else if( query.contains("bflyer") ) {
 				int i = query.indexOf("flyer");
 				String qs = query.substring(i+6);
@@ -855,8 +858,15 @@ public class Starwars implements EntryPoint {
         
 		final TextArea ta = new TextArea();
 		if( change ) {
-			a.setHref( url+"?flyer="+URL.encode(text) ); 
-			b.setHref( url+"?bflyer="+btoa(URL.encode(text)) );
+			a.setHref( url+"?flyer="+URL.encode(text) );
+			try {
+				String btoa = wnd.btoa( URL.encode(text) );
+				int i = btoa.indexOf('=');
+				if( i != -1 ) btoa = btoa.substring(0, i);
+				b.setHref( url+"?bflyer="+btoa );
+			} catch( Exception e ) {
+				b.setHref( url+"?bflyer=" );
+			}
 			ta.setText( text );
 		}
 		ta.setSize(945+"px", 120+"px");
@@ -879,7 +889,14 @@ public class Starwars implements EntryPoint {
 				
 				//drawPicture( gl, canvas3dElement, texture, starfield, g );
 				a.setHref( url+"?flyer="+URL.encode(text) );
-				b.setHref( url+"?bflyer="+btoa( URL.encode(text) ) );
+				try {
+					String btoa = wnd.btoa( URL.encode(text) );
+					int i = btoa.indexOf('=');
+					if( i != -1 ) btoa = btoa.substring(0, i);
+					b.setHref( url+"?bflyer="+btoa );
+				} catch( Exception e) {
+					b.setHref( url+"?bflyer=" );
+				}
 				//gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, cubeVerticesTextureCoordBuffer);
 				//gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, (ArrayBuffer)fa.buffer(), WebGLRenderingContext.STATIC_DRAW);
 				//gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);

@@ -4277,7 +4277,7 @@ public class SerifyApplet extends JApplet {
 		return false;
 	}
 	
-	public static void majorityRuleConsensus( double[] distmat, List<String> corrInd, boolean copybootstrap ) {
+	public void majorityRuleConsensus( double[] distmat, List<String> corrInd, boolean copybootstrap ) {
 		try {
 			Map<String,Node>	alltrees = new TreeMap<String,Node>();
 			TreeUtil treeutil = new TreeUtil();
@@ -4286,7 +4286,8 @@ public class SerifyApplet extends JApplet {
 			
 			
 			//File dir = new File( "/home/sigmar/thermusgenes/aligned/trees/" );
-			File dir = new File( "/root/thermusgenes_transposed/trees/" );
+			//File dir = new File( "/root/thermusgenes_transposed/trees/" );
+			File dir = new File( "/u0/serify/aligned/40genes/trees/" );
 			
 			
 			//File dir = new File( "c:/cygwin/home/simmi/thermusgenes_short/aligned/trees/" );
@@ -4945,7 +4946,7 @@ public class SerifyApplet extends JApplet {
 		
 		//mapFiles();
 		
-		/*try {
+		try {
 			FileReader fr = new FileReader("/home/sigmar/conc_40genes.dst");
 			List<String>	llines = new ArrayList<String>();
 			BufferedReader br = new BufferedReader( fr );
@@ -4965,7 +4966,7 @@ public class SerifyApplet extends JApplet {
 			System.err.println( dvals.length + " " + names.size() );
 			System.err.println( n );
 			
-			majorityRuleConsensus(null, null, true);
+			sa.majorityRuleConsensus(null, null, true);
 			//majorityRuleConsensus(dvals, names);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
