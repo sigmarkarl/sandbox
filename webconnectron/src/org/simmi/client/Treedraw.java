@@ -417,6 +417,10 @@ public class Treedraw implements EntryPoint {
 		return dvals;
 	}
 	
+	public native String createObjectURL( elemental.html.Blob bb ) /*-{
+		return $wnd.URL.createObjectURL( bb );
+	}-*/;
+	
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
 		//Browser.getWindow().getConsole().log("erm " + str);
@@ -1462,6 +1466,16 @@ public class Treedraw implements EntryPoint {
 		fr.readAsArrayBuffer( blob );
 	}-*/;
 	
+	public native elemental.html.Blob createBlob( String byteStr, String mimeStr ) /*-{		
+		var byteArray = new Uint8Array( byteStr.length );
+	    for (var i = 0; i < byteStr.length; i++) {
+	        byteArray[i] = byteStr.charCodeAt(i) & 0xff;
+	    }
+		
+		var blob = new Blob( [ byteArray ], { type : "image/png" } );
+		return blob;
+	}-*/;
+	
 	public native void createBlob( String byteStr, String mimeStr, elemental.html.FileWriter fileWriter, elemental.html.FileEntry fe ) /*-{		
 		var byteArray = new Uint8Array( byteStr.length );
         for (var i = 0; i < byteStr.length; i++) {
@@ -1775,12 +1789,19 @@ public class Treedraw implements EntryPoint {
 				final String dataurl =  canvas.toDataUrl();
 				final elemental.html.Window wnd = Browser.getWindow();
 				
+				String[] split = dataurl.split(",");
+				String byteString = atob( split[1] );
+			    String mimeString = split[0].split(":")[1].split(";")[0];
+				elemental.html.Blob blob = createBlob( byteString, mimeString );
 				//final Object[] create = {"create", true};
 				//String[] create = {"create", "true"};
 				
 				boolean fail = false;
 				try {
-					wnd.webkitRequestFileSystem(elemental.html.Window.TEMPORARY, dataurl.length(), new FileSystemCallback() {
+					String objurl = createObjectURL( blob );
+					wnd.open( objurl, "tree.png" );
+					
+					/*wnd.webkitRequestFileSystem(elemental.html.Window.TEMPORARY, dataurl.length(), new FileSystemCallback() {
 						@Override
 						public boolean onFileSystemCallback(DOMFileSystem fileSystem) {
 							console.log("in filesystem");
@@ -1794,9 +1815,6 @@ public class Treedraw implements EntryPoint {
 										public boolean onFileWriterCallback(FileWriter fileWriter) {
 											console.log("in write");
 											
-											String[] split = dataurl.split(",");
-											String byteString = atob( split[1] );
-										    String mimeString = split[0].split(":")[1].split(";")[0];
 											//String d = dataurl.substring( dataurl.indexOf("base64,") + 7 );
 									        //String decoded = atob(d);
 										    
@@ -1812,7 +1830,7 @@ public class Treedraw implements EntryPoint {
 							});
 							return true;
 						}
-					});
+					});*/
 				} catch( Exception e ) {
 					fail = true;
 				}
