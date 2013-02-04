@@ -634,6 +634,16 @@ public class Starwars implements EntryPoint {
 		svfa1.set(11, -50.0f+mul*30.0f*cosv-offval*cosv);
 	}
 	
+	public native void requestAnimationFrame( WebGLRenderingContext gl, List<WebGLTexture> textures, List<WebGLBuffer> buffers, WebGLTexture starfield, JavaScriptObject g ) /*-{
+		var s = this;
+		var requestAnimationFrame = $wnd.requestAnimationFrame || $wnd.mozRequestAnimationFrame || $wnd.webkitRequestAnimationFrame || $wnd.msRequestAnimationFrame;
+		function step(timestamp) {
+			s.@org.simmi.client.Starwars::animate(Lelemental/html/WebGLRenderingContext;Ljava/util/List;Ljava/util/List;Lelemental/html/WebGLTexture;Lcom/google/gwt/core/client/JavaScriptObject;)( gl, textures, buffers, starfield, g );
+			requestAnimationFrame( step );
+		}
+		requestAnimationFrame( step );
+	}-*/;
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -944,43 +954,17 @@ public class Starwars implements EntryPoint {
 		        drawStuff( gl, g, 0, textures.get(0) );
 				//drawStuff(Lelemental/html/WebGLRenderingContext;Lcom/google/gwt/core/client/JavaScriptObject;ILelemental/html/WebGLTexture;Lelemental/html/WebGLTexture;)(gl, g, g.box.numIndices, spiritTexture, starfield);
 				
-				rafc = new RequestAnimationFrameCallback() {
+				/*rafc = new RequestAnimationFrameCallback() {
 					@Override
 					public boolean onRequestAnimationFrameCallback(double time) {
-						setBuffers( gl, svb, nb, tb, ib, false );
-						//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
-				        gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
-				        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
-				        
-				        gl.enable( WebGLRenderingContext.BLEND );
-						//gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
-				        //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE);
-				        //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE_MINUS_CONSTANT_ALPHA);
-				        gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.DST_COLOR);
+						animate( gl, textures, buffers, starfield, g );
 						
-				        float i = 0.0f;
-				        //WebGLTexture texture = textures.size() > 1 ? textures.get(1) : textures.get(2);
-				        int k = 0;
-						for( WebGLTexture texture : textures ) {
-							//WebGLTexture texture = textures.get(0);
-							//console.log("erm "+ i);
-							
-							offset( offval-i, newy );
-							i += 60.0f;
-							
-							setBuffers( gl, buffers.get(k), nb, tb, ib, true );
-							k++;
-							
-							drawStuff( gl, g, 0, texture );
-						}
-						
-						offval += 0.07f;
-						
-						if( rafc != null ) wnd.webkitRequestAnimationFrame( rafc );
+						if( rafc != null ) requestAnimationFrame( rafc ); //wnd.webkitRequestAnimationFrame( rafc );
 						return true;
 					}
 				};
-				wnd.webkitRequestAnimationFrame( rafc );
+				requestAnimationFrame( rafc ); //wnd.webkitRequestAnimationFrame( rafc );*/
+		        requestAnimationFrame( gl, textures, buffers, starfield, g );
 			}
 		});
 		image.setVisible( false );
@@ -1014,5 +998,36 @@ public class Starwars implements EntryPoint {
 			}
 		};
 		timer.schedule(200);*/
+	}
+	
+	public void animate( WebGLRenderingContext gl, List<WebGLTexture> textures, List<WebGLBuffer> buffers, WebGLTexture starfield, JavaScriptObject g ) {
+		setBuffers( gl, svb, nb, tb, ib, false );
+		//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
+        gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
+        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
+        
+        gl.enable( WebGLRenderingContext.BLEND );
+		//gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
+        //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE);
+        //gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE_MINUS_CONSTANT_ALPHA);
+        gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.DST_COLOR);
+		
+        float i = 0.0f;
+        //WebGLTexture texture = textures.size() > 1 ? textures.get(1) : textures.get(2);
+        int k = 0;
+		for( WebGLTexture texture : textures ) {
+			//WebGLTexture texture = textures.get(0);
+			//console.log("erm "+ i);
+			
+			offset( offval-i, newy );
+			i += 60.0f;
+			
+			setBuffers( gl, buffers.get(k), nb, tb, ib, true );
+			k++;
+			
+			drawStuff( gl, g, 0, texture );
+		}
+		
+		offval += 0.07f;
 	}
 }
