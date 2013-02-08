@@ -117,6 +117,25 @@
 		console.log( cmd );
 		myPopup = window.open(simlabdomain + '/Websimlab.html?callback=thermusgenes','_blank');
 	}
+	
+	blobstuff = function( str, type ) {
+		var aFileParts = [str];
+		var oMyBlob = new Blob(aFileParts, { "type" : type });
+		window.open( window.URL.createObjectURL( oMyBlob ), '_blank' );
+	}
+	
+	blobfetch = function( str, type ) {
+		bbstr = window.atob( str );
+		var rawLength = bbstr.length;
+		var array = new Uint8Array(new ArrayBuffer(rawLength));
+ 
+		for(i = 0; i < rawLength; i++) {
+			array[i] = bbstr.charCodeAt(i);
+		}
+		var aFileParts = [array];
+		var oMyBlob = new Blob(aFileParts, { "type" : type });
+		window.open( window.URL.createObjectURL( oMyBlob ), '_blank' );
+	}
   </script>
     <!--                                           -->
     <!-- This script loads your compiled module.   -->
