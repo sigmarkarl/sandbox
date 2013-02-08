@@ -2016,33 +2016,13 @@ public class SerifyApplet extends JApplet {
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
 					final File f = filechooser.getSelectedFile();
 					try {
-						final Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
-						
+						List<String>	urls = new ArrayList<String>();
 						int[] rr = table.getSelectedRows();
 						for( int r : rr ) {
 							String path = (String)table.getValueAt( r, 3 );
-							URL url = new URL( path );
-							StringBuilder	sb = null;
-							InputStream is = url.openStream();
-							BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
-							String line = br.readLine();
-							while( line != null ) {
-								if( line.startsWith(">") ) {
-									String subline = line.substring(1);
-									if( seqmap.containsKey( subline ) ) {
-										sb = seqmap.get( subline );
-									} else {
-										sb = new StringBuilder();
-										seqmap.put( subline, sb );
-									}
-								} else {
-									if( sb != null ) sb.append( line );
-								}
-								
-								line = br.readLine();
-							}
-							br.close();
+							urls.add( path );
 						}
+						final Map<String,StringBuilder>	seqmap = serifier.concat( urls );
 						
 						JFrame popup = new JFrame();
 						popup.setSize(800, 600);
@@ -2063,10 +2043,7 @@ public class SerifyApplet extends JApplet {
 							}
 							
 							@Override
-							public void removeTableModelListener(TableModelListener l) {
-								// TODO Auto-generated method stub
-								
-							}
+							public void removeTableModelListener(TableModelListener l) {}
 							
 							@Override
 							public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -4287,16 +4264,29 @@ public class SerifyApplet extends JApplet {
 			
 			//File dir = new File( "/home/sigmar/thermusgenes/aligned/trees/" );
 			//File dir = new File( "/root/thermusgenes_transposed/trees/" );
-			File dir = new File( "/u0/serify/aligned/40genes/trees/" );
+			File dir = new File( "/u0/serify/aligned/concrand/trees/" );
+			
+			File guidetreefile = new File( "/u0/guidetree.tre" );
+			FileReader fr = new FileReader( guidetreefile );
+			BufferedReader br = new BufferedReader( fr );
+			StringBuilder sb = new StringBuilder();
+			String line = br.readLine();
+			while( line != null ) {
+				sb.append( line );
+				line = br.readLine();
+			}
+			br.close();
+			Node guidetree = treeutil.parseTreeRecursive( sb.toString(), false );
+			//n.nodeCalcMap( guideMap );
 			
 			
 			//File dir = new File( "c:/cygwin/home/simmi/thermusgenes_short/aligned/trees/" );
 			File[] ff = dir.listFiles();
 			for( File f : ff ) {
-				FileReader fr = new FileReader( f );
-				BufferedReader br = new BufferedReader( fr );
-				StringBuilder sb = new StringBuilder();
-				String line = br.readLine();
+				fr = new FileReader( f );
+				br = new BufferedReader( fr );
+				sb = new StringBuilder();
+				line = br.readLine();
 				while( line != null ) {
 					sb.append( line );
 					line = br.readLine();
@@ -4313,7 +4303,7 @@ public class SerifyApplet extends JApplet {
 				n.nodeCalcMap( nmap );
 			}
 			
-			Node root = DataTable.majoRuleConsensus(treeutil, nmap, copybootstrap);
+			Node root = DataTable.majoRuleConsensus(treeutil, nmap, guidetree, copybootstrap);
 			
 			/*List<NodeSet>	nslist = new ArrayList<NodeSet>();
 			System.err.println( nmap.size() );

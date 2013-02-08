@@ -1,8 +1,9 @@
 package org.simmi.server;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,6 +41,7 @@ import com.google.api.services.fusiontables.model.Sqlresponse;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.matis.eurofir.webservices.FDQL;
 import com.matis.eurofir.webservices.Ws.PseudoResult;
 
@@ -760,7 +762,7 @@ public class EuroFIRServlet extends HttpServlet {
 				if( rows != null && i < rows.size() && colind.containsKey(col) ) {
 					int ci = colind.get( col );
 					List<Object> lobj = rows.get( i );
-					if( lobj != null && ci < lobj.size() ) return (String)lobj.get(ci); 
+					if( lobj != null && ci < lobj.size() ) return lobj.get(ci).toString(); 
 				}
 				return null;
 			}
@@ -779,7 +781,9 @@ public class EuroFIRServlet extends HttpServlet {
 					List<String> ls = FDQL.fdqlToSqls( new ByteArrayInputStream( fdql.getBytes() ), tableColumnMap );
 					for( int i = 0; i < ls.size(); i++ ) {
 						ls.set( i, ls.get(i).replace("from Food", "from "+foodId) );
-						ls.set( i, ls.get(i).replace("from Component ", "from "+componentId+" ") );
+						if( ls.get(i).endsWith("from Component") ) {
+							ls.set( i, ls.get(i).replace("from Component", "from "+componentId) );
+						} else ls.set( i, ls.get(i).replace("from Component ", "from "+componentId+" ") );
 						ls.set( i, ls.get(i).replace("from ComponentValue", "from "+componentValueId) );
 						ls.set( i, ls.get(i).replace("from Reference", "from "+referenceId) );
 					}
@@ -791,48 +795,61 @@ public class EuroFIRServlet extends HttpServlet {
 					Map<Object,List<Object>>	compMap = new HashMap<Object,List<Object>>();
 					for( String sql : ls ) {
 						System.err.println( "about to " + sql );
-						if( sql.contains( foodId ) ) {
-							SqlGet sqlget = query.sqlGet( sql );
-							Sqlresponse sqlresp = sqlget.execute();			
-							List<List<Object>> rowObjs = sqlresp.getRows();
-							
-							foodColumns = sqlresp.getColumns();
-							int ind = foodColumns.indexOf("OriginalFoodCode");
-							for( List<Object> lobj : rowObjs ) {
-								foodMap.put( lobj.get(ind).toString(), lobj );
+						Files.write( sql.getBytes(), new File("/u0/f.txt") );
+						//if( sql.contains("where") ) {
+							if( sql.contains( foodId ) ) {
+								SqlGet sqlget = query.sqlGet( sql );
+								Sqlresponse sqlresp = sqlget.execute();			
+								List<List<Object>> rowObjs = sqlresp.getRows();
+								
+								foodColumns = sqlresp.getColumns();
+								int ind = foodColumns.indexOf("OriginalFoodCode");
+								for( List<Object> lobj : rowObjs ) {
+									foodMap.put( lobj.get(ind).toString(), lobj );
+								}
+							} else if( sql.contains( componentId ) ) {
+								SqlGet sqlget = query.sqlGet( sql );
+								Sqlresponse sqlresp = sqlget.execute();						
+								List<List<Object>> rowObjs = sqlresp.getRows();
+								
+								compColumns = sqlresp.getColumns();
+								int ind = compColumns.indexOf("OriginalComponentCode");
+								for( List<Object> lobj : rowObjs ) {
+									compMap.put( lobj.get(ind).toString(), lobj );
+								}
 							}
-						} else if( sql.contains( componentId ) ) {
-							SqlGet sqlget = query.sqlGet( sql );
-							Sqlresponse sqlresp = sqlget.execute();						
-							List<List<Object>> rowObjs = sqlresp.getRows();
-							
-							compColumns = sqlresp.getColumns();
-							int ind = compColumns.indexOf("OriginalComponentCode");
-							for( List<Object> lobj : rowObjs ) {
-								compMap.put( lobj.get(ind).toString(), lobj );
-							}
-						}
+						//}
 					}
 					
 					for( String sql : ls ) {
 						if( sql.contains( componentValueId ) ) {
-							String foodcond = "OriginalFoodCode in (";
-							for( Object foodcode : foodMap.keySet() ) {
-								if( foodcond.endsWith("(") ) foodcond += "'" + foodcode + "'";
-								else foodcond += ",'" + foodcode + "'";
+							String foodcond = "";
+							String compcond = "";
+							if( sql.contains("where") ) {
+								foodcond = "OriginalFoodCode in (";
+								for( Object foodcode : foodMap.keySet() ) {
+									if( foodcond.endsWith("(") ) foodcond += "'" + foodcode + "'";
+									else foodcond += ",'" + foodcode + "'";
+								}
+								foodcond += ")";
+							
+								compcond = "OriginalComponentCode in (";
+								for( Object compcode : compMap.keySet() ) {
+									if( compcond.endsWith("(") ) compcond += "'" + compcode + "'";
+									else compcond += ",'" + compcode + "'";
+								}
+								compcond += ")";
 							}
-							foodcond += ")";
 							
-							String compcond = "OriginalComponentCode in (";
-							for( Object compcode : compMap.keySet() ) {
-								if( compcond.endsWith("(") ) compcond += "'" + compcode + "'";
-								else compcond += ",'" + compcode + "'";
-							}
-							compcond += ")";
+							String newsql = sql;
+							if( compcond.length() > 0 && foodcond.length() > 0 ) sql += " where " + foodcond + " and " + compcond;
+							else if( compcond.length() > 0 ) sql += " where " + compcond;
+							else if( foodcond.length() > 0 ) sql += " where " + foodcond;
+							newsql += " order by OriginalFoodCode asc";
+							//System.err.println( "now to " + newsql );
 							
-							String newsql = sql + " where " + foodcond + " and " + compcond;
-							System.err.println( "now to " + newsql );
-							
+							//Files.write( newsql.getBytes(), new File("/u0/f.txt") );
+							//System.err.println( newsql );
 							SqlGet sqlget = query.sqlGet( newsql );
 							Sqlresponse sqlresp = sqlget.execute();						
 							rows = sqlresp.getRows();
@@ -901,25 +918,18 @@ public class EuroFIRServlet extends HttpServlet {
 			try {
 				com.matis.eurofir.webservices.EuroFIRWebService.parseStream( rs, is, pw );
 			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		/*} catch (IOException | SecurityException | IllegalArgumentException | NoSuchAlgorithmException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -929,11 +939,16 @@ public class EuroFIRServlet extends HttpServlet {
 	
 	public static void main(String[] args) {
 		try {
-			FileInputStream fis = new FileInputStream( "/home/sigmar/matis/eurofir/src/testrequest3.xml" );
-			PrintWriter pw = new PrintWriter( System.out );
+			FileInputStream fis = new FileInputStream( "/u0/matis/eurofir/src/testrequest4.xml" );
+			//FileWriter fw = new FileWriter( "/u0/barbara.xml" );
+			ByteArrayOutputStream	baos = new ByteArrayOutputStream();
+			PrintWriter pw = new PrintWriter( baos ); //System.out );
 			fusionTable( fis, pw );
 			pw.close();
-		} catch (FileNotFoundException e) {
+			
+			baos.close();
+			Files.write( baos.toByteArray(), new File("/u0/barbara.xml") );
+		} catch ( IOException e ) {
 			e.printStackTrace();
 		}
 	}
