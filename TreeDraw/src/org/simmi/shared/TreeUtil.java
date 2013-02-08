@@ -399,7 +399,7 @@ public class TreeUtil {
 		currentNode = node;
 	}
 	
-	public static class NodeSet implements Comparable<NodeSet> {
+	public class NodeSet implements Comparable<NodeSet> {
 		public NodeSet( Set<String> nodes ) {
 			this.nodes = nodes;
 			//this.count = count;

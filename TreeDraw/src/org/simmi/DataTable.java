@@ -3,6 +3,7 @@ package org.simmi;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Point;
@@ -38,6 +39,9 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -90,6 +94,7 @@ import javax.swing.table.TableRowSorter;
 
 import netscape.javascript.JSObject;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -1560,9 +1565,47 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 	}
 	
-	public void getSpecLoc( List<Object[]> rowList, String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse ) {
+	public void getSpecLoc( List<Object[]> rowList, String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse, boolean erm ) {
 		for( Object[] row : rowList ) {
 			String country = reverse ? (String)row[21] : (String)row[6];
+			if( erm ) {
+				int i = country.indexOf(',');
+				if( i == -1 ) i = country.length(); 
+				country = country.substring(0, i);
+				
+				if( country.contains("Zealand") ) {
+					country = "New Zealand";
+				} else if( country.contains("Hawaii") ) {
+					country = "Hawaii";
+				} else if( country.contains("Murrieta") ) {
+					country = "USA:California";
+				} else if( !country.startsWith("USA") ) {
+					i = country.indexOf(':');
+					if( i == -1 ) i = country.length();
+					country = country.substring(0, i);
+					i = country.indexOf(' ');
+					if( i == -1 ) i = country.length();
+					country = country.substring(0, i);
+				} else {
+					if( country.contains("Gulf") ) {
+						country = "USA:Gulf of Mexico";
+					} else if( country.contains("Mexico") ) {
+						country = "USA:New Mexico";
+					} else if( country.contains("Grass") ) {
+						country = "USA:Nevada";
+					} else if( country.contains("Alvord") || country.contains("OR") ) {
+						country = "USA:Oregon";
+					} else if( country.contains("California") || country.contains("CA") ) {
+						country = "USA:California";
+					} else if( country.contains("Yellowstone") ) {
+						country = "USA:Yellowstone";
+					} else {
+						i = country.indexOf(' ');
+						if( i == -1 ) i = country.length();
+						country = country.substring(0, i);
+					}
+				}
+			}
 			if( country != null && country.length() > 0 ) {
 				String species = (String)row[3];
 				String geocode = reverse ? (String)row[6] : (String)row[21];
@@ -1695,7 +1738,22 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 	}
 	
-	public static Node majoRuleConsensus( TreeUtil tu, Map<Set<String>,NodeSet> nmap, boolean copybootstrap ) {
+	public static void assignSupportValues( Node n, Map<Set<String>,NodeSet> nmap, boolean copybootstrap ) {
+		if( !n.isLeaf() ) {
+			for( Node cn : n.getNodes() ) {
+				assignSupportValues( cn, nmap, copybootstrap );
+			}
+			Set<String> leavenames = n.getLeaveNames();
+			NodeSet ns = nmap.get( leavenames );
+			if( !copybootstrap ) {
+				n.setName( Math.round( (double)(ns.getCount()) / (double)1000.0 ) / 10.0 + "%" );
+			} else {
+				n.setName( Double.toString( Math.round( (ns.getAverageBootstrap()*100.0) )/100.0 ) );
+			}
+		}
+	}
+	
+	public static Node majoRuleConsensus( TreeUtil tu, Map<Set<String>,NodeSet> nmap, Node guideTree, boolean copybootstrap ) {
 		List<NodeSet>	nslist = new ArrayList<NodeSet>();
 		System.err.println( nmap.size() );
 		for( Set<String> nodeset : nmap.keySet() ) {
@@ -1703,70 +1761,79 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			nslist.add( count );
 		}
 		
-		Collections.sort( nslist );
-		int c = 0;
-		for( NodeSet nodeset : nslist ) {
-			System.err.println( nodeset.getCount() + "  " + nodeset.getNodes() + "  " + nodeset.getAverageHeight() + "  " + nodeset.getAverageBootstrap() );
-			c++;
-			if( c > 20 ) break;
-		}
+		//Map<Set<String>,NodeSet>	guideMap = new HashMap<Set<String>,NodeSet>();
+		//guideTree.nodeCalcMap( guideMap );
 		
-		//Map<Set<String>, Node>	nodemap = new HashMap<Set<String>, Node>();
-		Map<String, Node>		leafmap = new HashMap<String, Node>();
-		NodeSet	allnodes = nslist.get(0);
-		int total = allnodes.getCount();
-		Node root = tu.new Node();
-		for( String nname : allnodes.getNodes() ) {
-			Node n = tu.new Node( nname, false );
-			root.addNode(n, 1.0);
-			//n.seth( 1.0 );
-			leafmap.put( nname, n );
-		}
-		
-		for( int i = 1; i < Math.min( nslist.size(), 100 ); i++ ) {
-			NodeSet	allsubnodes = nslist.get(i);
-			Node subroot = tu.new Node();
-			if( !copybootstrap ) {
-				subroot.setName( Math.round( (double)(allsubnodes.getCount()*1000) / (double)total ) / 10.0 + "%" );
-			} else {
-				subroot.setName( Double.toString( Math.round( (allsubnodes.getAverageBootstrap()*100.0) )/100.0 ) );
+		Node root;
+		if( guideTree != null ) {
+			root = guideTree;
+			assignSupportValues( root, nmap, copybootstrap );
+		} else {
+			Collections.sort( nslist );
+			int c = 0;
+			for( NodeSet nodeset : nslist ) {
+				System.err.println( nodeset.getCount() + "  " + nodeset.getNodes() + "  " + nodeset.getAverageHeight() + "  " + nodeset.getAverageBootstrap() );
+				c++;
+				if( c > 20 ) break;
 			}
 			
-			Node vn = tu.getValidNode( allsubnodes.getNodes(), root );
-			if( tu.isValidSet( allsubnodes.getNodes(), vn ) ) {
-				while( allsubnodes.getNodes().size() > 0 ) {
-					for( String nname : allsubnodes.getNodes() ) {
-						Node leaf = leafmap.get( nname );
-						Node newparent = leaf.getParent();
-						Node current = leaf;
-						while( newparent.countLeaves() <= allsubnodes.getNodes().size() ) {
-							current = newparent;
-							newparent = current.getParent();
+			//Map<Set<String>, Node>	nodemap = new HashMap<Set<String>, Node>();
+			Map<String, Node>		leafmap = new HashMap<String, Node>();
+			NodeSet	allnodes = nslist.get(0);
+			int total = allnodes.getCount();
+			root = tu.new Node();
+			for( String nname : allnodes.getNodes() ) {
+				Node n = tu.new Node( nname, false );
+				root.addNode(n, 1.0);
+				//n.seth( 1.0 );
+				leafmap.put( nname, n );
+			}
+			
+			for( int i = 1; i < Math.min( nslist.size(), 100 ); i++ ) {
+				NodeSet	allsubnodes = nslist.get(i);
+				Node subroot = tu.new Node();
+				if( !copybootstrap ) {
+					subroot.setName( Math.round( (double)(allsubnodes.getCount()*1000) / (double)total ) / 10.0 + "%" );
+				} else {
+					subroot.setName( Double.toString( Math.round( (allsubnodes.getAverageBootstrap()*100.0) )/100.0 ) );
+				}
+				
+				Node vn = tu.getValidNode( allsubnodes.getNodes(), root );
+				if( tu.isValidSet( allsubnodes.getNodes(), vn ) ) {
+					while( allsubnodes.getNodes().size() > 0 ) {
+						for( String nname : allsubnodes.getNodes() ) {
+							Node leaf = leafmap.get( nname );
+							Node newparent = leaf.getParent();
+							Node current = leaf;
+							while( newparent.countLeaves() <= allsubnodes.getNodes().size() ) {
+								current = newparent;
+								newparent = current.getParent();
+							}
+							
+							if( allsubnodes.getNodes().containsAll( current.getLeaveNames() ) ) {
+								Node parent = current.getParent();
+								parent.removeNode( current );
+								
+								double h = allsubnodes.getAverageHeight();
+								//double b = allsubnodes.getAverageBootstrap();
+								double lh = allsubnodes.getAverageLeaveHeight(nname);
+								
+								/*subroot.addNode( current, h );
+								if( lh != -1.0 ) parent.addNode( subroot, lh );
+								else parent.addNode( subroot, 1.0 );*/
+								
+								parent.addNode( subroot, h );
+								
+								if( current.isLeaf() && lh != -1.0 ) {
+									System.err.println( "printing "+current.getName() + "  " + lh );
+									subroot.addNode( current, lh );
+								} else subroot.addNode( current, current.geth() );
+							
+								removeNames( allsubnodes.getNodes(), current );
+							} else allsubnodes.getNodes().clear();
+							
+							break;
 						}
-						
-						if( allsubnodes.getNodes().containsAll( current.getLeaveNames() ) ) {
-							Node parent = current.getParent();
-							parent.removeNode( current );
-							
-							double h = allsubnodes.getAverageHeight();
-							//double b = allsubnodes.getAverageBootstrap();
-							double lh = allsubnodes.getAverageLeaveHeight(nname);
-							
-							/*subroot.addNode( current, h );
-							if( lh != -1.0 ) parent.addNode( subroot, lh );
-							else parent.addNode( subroot, 1.0 );*/
-							
-							parent.addNode( subroot, h );
-							
-							if( current.isLeaf() && lh != -1.0 ) {
-								System.err.println( "printing "+current.getName() + "  " + lh );
-								subroot.addNode( current, lh );
-							} else subroot.addNode( current, current.geth() );
-						
-							removeNames( allsubnodes.getNodes(), current );
-						} else allsubnodes.getNodes().clear();
-						
-						break;
 					}
 				}
 			}
@@ -1782,11 +1849,53 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 		set.remove( node.getName() );
 	}
+	
+	public void start() {
+		super.start();
+		System.err.println( "starting..." );
+		//load();
+	}
+	
+	boolean done = false;
+	public boolean load() {
+		boolean succ = true;
+		if( !done ) {
+			try {
+				System.err.println( "bleh3erm" );
+				Object obj = JSObject.class;
+				obj = null;
+				System.err.println( "bleh4" );
+				JSObject erm = (JSObject)obj;
+				System.err.println( "ble2h"+this );
+				JSObject win = JSObject.getWindow(this);
+				System.err.println( "about to run loadData" );
+				win.call("loadData", new Object[] {});
+				win.call("reqSavedSel", new Object[] {});
+				//System.err.println( "done loadData" );
+				//win.call("loadMeta", new Object[] {});
+			} catch( Exception e ) {
+				succ = false;
+				e.printStackTrace();
+			}
+			done = true;
+		}
+		
+		return succ;
+	}
+	
+	byte[] current = null;
+	public byte[] blobFetch() {
+		return current;
+	}
+	
+	public void init() {
+		initGUI( this );
+	}
     
 	Map<String,String>	colmap = new HashMap<String,String>();
 	JavaFasta	currentjavafasta;
 	Serifier	currentserifier;
-	public void init() {
+	public void initGUI( Container cont ) {
 		updateLof();
 		
 		specColors.put("antranikianii", "000088");
@@ -2156,6 +2265,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		});*/
 		
+		System.err.println("ermf");
+		
 		final Set<Integer>	filterset = new HashSet<Integer>();
 		final RowFilter 	filter = new RowFilter() {
 			@Override
@@ -2177,7 +2288,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( int r : rr ) {
 					selectedRowList.add( rowList.get( table.convertRowIndexToModel(r) ) );
 				}
-				getSpecLoc( selectedRowList, specs, specLoc, locSpec, geoLoc, true );
+				getSpecLoc( selectedRowList, specs, specLoc, locSpec, geoLoc, true, false );
 				
 				try {
 					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
@@ -2256,7 +2367,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
 				Map<String,String>				geoLoc = new HashMap<String,String>();
-				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, true );
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, true, false );
 				
 				try {
 					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
@@ -2336,13 +2447,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
+				
+				Map<String,Map<String,Long>>	specSimpLoc = new TreeMap<String,Map<String,Long>>();
+				Map<String,Map<String,Long>>	locSimpSpec = new TreeMap<String,Map<String,Long>>();
+				
 				Map<String,String>				geoLoc = new HashMap<String,String>();
-				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, false );
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, false, false );
+				getSpecLoc( rowList, specs, specSimpLoc, locSimpSpec, geoLoc, false, true );
 				
 				Workbook wb = new XSSFWorkbook();
 				Sheet lSheet = wb.createSheet("Locations");
 				Sheet sSheet = wb.createSheet("Species");
 				Sheet bSheet = wb.createSheet("Boolean");
+				Sheet bsSheet = wb.createSheet("BoolSimple");
 				
 				Row r = lSheet.createRow(0);
 				r.createCell(0).setCellValue("Loction");
@@ -2456,7 +2573,64 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					val++;
 				}
 				
-				FileSaveService fss = null;
+				Map<String,Integer>	specSimpIndex = new HashMap<String,Integer>();
+				r = bsSheet.createRow(0);
+				val = 0;
+				for( String spec : specSimpLoc.keySet() ) {
+					specSimpIndex.put( spec, val );
+					r.createCell(++val).setCellValue( spec );
+				}
+				
+				val = 1;
+				for( String cnt : locSimpSpec.keySet() ) {
+					Map<String,Long> smap = locSimpSpec.get(cnt);
+					
+					r = bsSheet.createRow(val);
+					r.createCell(0).setCellValue(cnt);
+					for( String spec : smap.keySet() ) {
+						long idlencount = smap.get( spec );
+						
+						int idlen = (int)(idlencount&0xFFFFFFFF);
+						int count = (int)(idlencount>>32);
+						
+						int id = (int)(idlen&0xFFFF);
+						int len = (int)(idlen>>16);
+						
+						/*long idlen = smap.get(spec);
+						int id = (int)(idlen&0xFF);
+						int len = (int)(idlen>>32);*/
+						
+						int idx = -1;
+						if( specSimpIndex.containsKey(spec) ) idx = specSimpIndex.get(spec);
+						if( idx != -1 ) {
+							if( id < 97 || len < 900 || (id == 97 &&  len < 900) ) {
+								r.createCell(idx+1).setCellValue( "*" + id + "/" + len+" ("+count+")" );
+							} else {
+								r.createCell(idx+1).setCellValue( id + "/" + len+" ("+count+")" );
+							}
+						}
+					}
+					val++;
+				}
+				
+	        	try {
+	        		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					wb.write( baos );
+					baos.close();
+					
+					byte[] bb = baos.toByteArray();
+					//Files.write( Paths.get( new File("/u0/tmp.xlsx").toURI() ), bb );
+					
+					//String str = baos.toString();
+					String str = Base64.encodeBase64String(bb);
+					current = bb;
+		        	JSObject obj = JSObject.getWindow( DataTable.this );
+		        	obj.call("blobfetch", new Object[] {str,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+	        	 
+				/*FileSaveService fss = null;
 		        FileContents fileContents = null;
 		        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		        OutputStreamWriter	osw = new OutputStreamWriter( baos );
@@ -2490,7 +2664,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			        }
 		    	} catch( IOException ioe ) {
 		    		ioe.printStackTrace();
-		    	}
+		    	}*/
 			}
 		});
 		popup.addSeparator();
@@ -2672,7 +2846,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 									//System.err.println( btree );
 								}
 								
-								n = majoRuleConsensus( tu, nmap, false );
+								n = majoRuleConsensus( tu, nmap, null, false );
 							} else {
 								Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
 									@Override
@@ -3372,27 +3546,17 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		//String res = getThermusFusion();
-		//loadData( res );
-		
-		boolean succ = true;
-		try {
-			JSObject win = JSObject.getWindow(this);
-			System.err.println( "about to run loadData" );
-			win.call("loadData", new Object[] {});
-			win.call("reqSavedSel", new Object[] {});
-			//System.err.println( "done loadData" );
-			//win.call("loadMeta", new Object[] {});
-		} catch( Exception e ) {
-			succ = false;
-		}
-		
-		if( !succ ) {
+		if( cont instanceof JFrame ) {
 			String res = getThermusFusion();
 			loadData( res );
+		} else {
+			if( !load() ) {
+				String res = getThermusFusion();
+				loadData( res );
+			}
 		}
 		
-		this.add( scrollpane );
+		cont.add( scrollpane );
 	}
 	
 	public void showTree( String tree ) {
@@ -3522,6 +3686,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	public static void main(String[] args) {
+		JFrame frame = new JFrame();
+		frame.setSize(800, 600);
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		DataTable	dt = new DataTable();
+		dt.initGUI( frame );
+		frame.setVisible( true );
+	}
+	
+	public static void main_older(String[] args) {
 		try {
 			FileReader fr = new FileReader( "/home/sigmar/Downloads/Thermus_16S_aligned.csv" );
 			BufferedReader br = new BufferedReader( fr );
