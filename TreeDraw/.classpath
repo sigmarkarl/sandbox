@@ -22,5 +22,6 @@
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_09/jre/lib/deploy.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_09/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_09/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="/webfasta/war/commons-codec.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
