@@ -66,7 +66,7 @@ public class TreeUtil {
 				propogateSelection(selset, n);
 			}
 		}
-		if( node.isLeaf() && selset.contains( node.toStringWoLengths() ) ) node.setSelected( true );
+		if( node.isLeaf() && (selset.contains( node.toStringWoLengths() ) || selset.contains( node.getName() )) ) node.setSelected( true );
 		//else node.setSelected( false );
 	}
 	
