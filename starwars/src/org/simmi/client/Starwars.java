@@ -699,10 +699,11 @@ public class Starwars implements EntryPoint {
 				} catch( Exception e ) {
 					text = "";
 				}
-			} else if( query.contains("bflyer") ) {
+			} else if( query.contains("flyer") ) {
 				int i = query.indexOf("flyer");
 				String qs = query.substring(i+6);
 				text = URL.decode( qs );
+				//console.log("text");
 			}
 		}
 		//String text = "Fighting spam is now a community effort. Every post has a Flag button at the lower left.\nIf you hit that to reveal the popup, one of the options is Spam. It's quick and painless. Bonus: if enough people tag something as spam, the post will disappear even without moderator intervention. So don't be bashful. Flag that spam. Don't reply to them, don't copy their posts. Just flag them.";
