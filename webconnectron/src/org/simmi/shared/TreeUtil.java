@@ -1519,6 +1519,14 @@ public class TreeUtil {
 			if( collapse ) {
 				for( Node n : node.nodes ) {
 					String nname = n.getName() != null ? n.getName() : "";
+					String color = n.getColor();
+					if( color != null ) {
+						nname += "["+color+"]";
+					}
+					String frame = n.getFrameString();
+					if( frame != null ) {
+						nname += "{"+frame+"}";
+					}
 					if( collapset == null || collapset.isEmpty() ) {
 						if( test == null ) {
 							test = nname;
@@ -1550,7 +1558,7 @@ public class TreeUtil {
 						if( meta != null && meta.length() > 0 ) {
 							int mi = Integer.parseInt( meta );
 							count += mi;
-						} else count++; 
+						} else count++;
 					} catch( Exception e ) {
 						count++;
 					}
