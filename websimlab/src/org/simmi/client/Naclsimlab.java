@@ -1,5 +1,8 @@
 package org.simmi.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.ImageData;
@@ -34,6 +37,16 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.media.client.Audio;
+import com.google.gwt.typedarrays.client.ArrayBufferViewNative;
+import com.google.gwt.typedarrays.client.Float32ArrayNative;
+import com.google.gwt.typedarrays.client.Float64ArrayNative;
+import com.google.gwt.typedarrays.client.Int16ArrayNative;
+import com.google.gwt.typedarrays.client.Int32ArrayNative;
+import com.google.gwt.typedarrays.client.Int8ArrayNative;
+import com.google.gwt.typedarrays.client.Uint16ArrayNative;
+import com.google.gwt.typedarrays.client.Uint32ArrayNative;
+import com.google.gwt.typedarrays.client.Uint8ArrayNative;
+import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FileUpload;
@@ -47,6 +60,9 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
+
+import elemental.client.Browser;
+import elemental.html.ArrayBuffer;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -99,15 +115,17 @@ public class Naclsimlab implements EntryPoint {
 	public native void save( String type, JavaScriptObject buf ) /*-{
 		var ia = new Int8Array( buf );
 		var b = new Blob( [ia], { "type" : type } );
-		var f = new FileReader();
-		f.onerror = function(e) {
-			$wnd.console.log(e.getMessage());
-		};
-		f.onload = function(e) {
-			var url = e.target.result;
-			$wnd.open( url );
-		};
-		f.readAsDataURL( b );
+		//var f = new FileReader();
+		//f.onerror = function(e) {
+		//	$wnd.console.log(e.getMessage());
+		//};
+		//f.onload = function(e) {
+		//	var url = e.target.result;
+		//	$wnd.open( url );
+		//};
+		//f.readAsDataURL( b );
+		var url = $wnd.URL.createObjectURL( bb );
+		$wnd.open( url );
 	}-*/;
 	
 	public native void savecurrent( String type ) /*-{
@@ -123,6 +141,120 @@ public class Naclsimlab implements EntryPoint {
 		var clamp = new Uint8ClampedArray( buf );
 		id.data.set( clamp );
 	}-*/;
+	
+	public native void postMessage( elemental.html.ArrayBuffer message ) /*-{
+		$wnd.postMessage( message );
+	}-*/;
+		
+	public native void postMessage( com.google.gwt.typedarrays.shared.ArrayBuffer message ) /*-{
+		$wnd.postMessage( message );
+	}-*/;
+	
+	public native void postMessage( JavaScriptObject message ) /*-{
+		$wnd.postMessage( message );
+	}-*/;
+	
+	public native ArrayBuffer getCurrentBuffer() /*-{
+		return $wnd.current.buffer;
+	}-*/;
+	
+	public native String arraybuffer2string( elemental.html.ArrayBuffer buf ) /*-{
+  		return String.fromCharCode.apply(null, new Uint8Array(buf));
+	}-*/;
+	
+	public native String arraybuffer2string( com.google.gwt.typedarrays.shared.ArrayBuffer buf ) /*-{
+		return String.fromCharCode.apply(null, new Uint16Array(buf));
+	}-*/;
+	
+	public native String nativeLoad() /*-{
+		var s = this;
+		$wnd.currentFunc = function( buf ) {
+			try {
+				//if( val.length > 0 ) s.@org.simmi.client.Naclsimlab::loadParse(Ljava/lang/String;)( val );
+				s.@org.simmi.client.Naclsimlab::loadParse(Lelemental/html/ArrayBuffer;)( buf );
+			}  catch( e ) {
+				$wnd.console.log( 'e '+e );
+			}
+		}
+	}-*/;
+	
+	public native String nativeRand() /*-{
+		var s = this;
+		$wnd.currentFunc = function( buf ) {
+			s.@org.simmi.client.Naclsimlab::rand(Lcom/google/gwt/typedarrays/shared/ArrayBuffer;)( buf );
+		}
+	}-*/;
+	
+	public int rand( com.google.gwt.typedarrays.shared.ArrayBuffer ab ) {
+		Float64ArrayNative da = Float64ArrayNative.create( ab );
+		
+		for( int i = 0; i < da.length(); i++ ) {
+			da.set(i, Random.nextDouble());
+		}
+		
+		postMessage( da.buffer() );
+		postMessage( "type "+66 );
+		
+		return 0;
+	}
+	
+	public int loadParse( ArrayBuffer ab ) {
+		//ArrayBuffer ab = getCurrentBuffer();
+		String str = arraybuffer2string( ab );
+		return loadParse( str );
+	}
+		
+	public int loadParse( String str ) {	
+		String[] spl = str.split("\n");
+		String[] nspl = spl[0].split("[\t ]+");
+
+		Browser.getWindow().getConsole().log( "muu " + str );
+		
+		int size = spl.length * nspl.length;
+		//long pval = allocateDouble(size);
+		//data.buffer = pval;
+		//data.type = DOUBLELEN;
+		//data.length = size;
+
+		/*DoubleBuffer dd = buffers.get(pval).asDoubleBuffer();
+		for (String sp : spl) {
+			nspl = sp.split("[\t ]+");
+			for (String nsp : nspl) {
+				double d = 0.0;
+				try {
+					d = Double.parseDouble(nsp);
+				} catch (NumberFormatException e) {
+				}
+				dd.put(d);
+			}
+		}*/
+		//$wnd.current = new Float64Array( size );
+		//$wnd.curstruct = size + (type<<32);
+		//$wnd.console.log( "siztyp " + $wnd.curstruct + "  " + size + "  " + type + " " + (type<<2) );
+		
+		//new Arraybuffer
+		//Float64Array dbuf = new Float64ArrayImpl( size );
+		Float64ArrayNative dbuf = Float64ArrayNative.create(size);
+		int i = 0;
+		for (String sp : spl) {
+			nspl = sp.split("[\t ]+");
+			for (String nsp : nspl) {
+				double d = 0.0;
+				try {
+					d = Double.parseDouble(nsp);
+				} catch (NumberFormatException e) {
+				}
+				dbuf.set(i++,d);
+			}
+		}
+		
+		Browser.getWindow().getConsole().log( "size " + size );
+		
+		postMessage( dbuf.buffer() );
+		postMessage( "type "+66 );
+
+		return 0;
+	}
 	
 	public void subinit() {
 		final RootPanel	rp = RootPanel.get();
@@ -150,6 +282,8 @@ public class Naclsimlab implements EntryPoint {
 		});
 		Style st = file.getElement().getStyle();
 		st.setVisibility( Visibility.HIDDEN );
+		
+		textarea.getElement().setAttribute("wrap", "off");
 		textarea.setSize("728px", "512px");
 		textarea.addDropHandler( new DropHandler() {
 			@Override
@@ -189,15 +323,78 @@ public class Naclsimlab implements EntryPoint {
 				if( cc == '\r' ) {
 					String val = textarea.getText();
 					int i = val.lastIndexOf('\n');
-					String last = "";
+					String lastval = "";
 					if( i != -1 ) {
-						last = val.substring(i+1, val.length());
+						lastval = val.substring(i+1, val.length());
 					} else {
-						last = val.substring(0, val.length());
+						lastval = val.substring(0, val.length());
 					}
+					
+					String last = "";
+					int c = 0;
+					do {
+						last = lastval+" "+last;
+						int ii = lastval.indexOf('"');
+						while( ii != -1 ) {
+							c++;
+							ii = lastval.indexOf('"', ii+1);
+						}
+						
+						int k = val.lastIndexOf('\n', i-1);
+						if( k != -1 ) {
+							lastval = val.substring(k+1, i);
+						} else {
+							lastval = val.substring(0, i);
+							//break;
+						}
+						i = k;
+					} while( c % 2 != 0 );
+					
 					//console( last );
-					if( last.startsWith("fileread") ) {
+					if( last.startsWith("load") ) {
+						List<String>		args = new ArrayList<String>();
+						String[]			fsplit = last.split( "\"" );
+						for( int k = 0; k < fsplit.length; k++ ) {
+							String str = fsplit[ k ];
+							if( k % 2 == 0 ) {
+								String[] 			split = str.split( "[(, )]" );
+								for( String vstr : split ) {
+									args.add( vstr );
+								}
+							} else {
+								//Browser.getWindow().getConsole().log( " eerme" + str );
+								args.add( str );
+							}
+						}
+						
+						if( args.size() > 1 ) {
+							loadParse( args.get(1) );
+						} else nativeLoad();
+						postMessage("current");
+					} else if( last.startsWith("fileread") ) {
 						click( file.getElement() );
+					} else if( last.startsWith("filewrite") ) {
+						String type = "text/plain";
+						String[]	split = last.split( "[(, )]" );
+						if( split.length > 1 ) {
+							type = split[1];
+						}
+						savecurrent( type );
+						
+						/*String[] 			split = last.split( "[(, )]" );
+						String mimeString = "text/plain";
+						if( split.length > 1 ) mimeString = split[1];
+						final elemental.html.Window wnd = Browser.getWindow();
+						
+						//String[] split = dataurl.split(",");
+						//String byteString = atob( split[1] );
+					    //String mimeString = split[0].split(":")[1].split(";")[0];
+						elemental.html.Blob blob = createBlob( byteString, mimeString );
+						
+						String objurl = createObjectURL( blob );
+						wnd.open( objurl, "export" );
+						//filewrite();
+						//Blob blob = new Blob();*/
 					} else if( last.startsWith("image") ) {
 						String[] 			split = last.split( "[(, )]" );
 						if( split.length > 2 ) {
@@ -223,6 +420,34 @@ public class Naclsimlab implements EntryPoint {
 								line( name, pp.getElement(), (int)(Window.getClientWidth()*0.8), (int)(Window.getClientHeight()*0.8), a1, a2 );
 							}
 						});
+					} else if( last.startsWith("scatter") ) {
+						final String[] split = last.split( "[(, )]" );
+						final PopupPanel	pp = new PopupPanel( true );
+						pp.setSize("800px", "600px");
+						pp.setPopupPositionAndShow( new PositionCallback() {
+							@Override
+							public void setPosition(int offsetWidth, int offsetHeight) {
+								pp.setPopupPosition( (int)(Window.getClientWidth()*0.1), (int)(Window.getClientHeight()*0.1) );
+								
+								String[] val;
+								String name = "";
+								if( split.length > 0 ) name = split[1];
+								if( split.length > 1 ) {
+									val = new String[split.length-1];
+									for( int i = 0; i < val.length; i++ ) {
+										val[i] = split[i+1];
+									}
+								} else val = new String[0];
+								//String a1 = "";
+								//if( split.length > 1 ) a1 = split[2];
+								//String a2 = "";
+								//if( split.length > 2 ) a2 = split[3];
+								scatter( name, val, pp.getElement(), (int)(Window.getClientWidth()*0.8), (int)(Window.getClientHeight()*0.8) );
+							}
+						});
+					} else if( last.startsWith("rand") ) {
+						nativeRand();
+						postMessage("current");
 					} else if( last.startsWith("loadimage") ) {
 						String type = "text/plain";
 						String[]	split = last.split( "[(, )]" );
@@ -267,7 +492,7 @@ public class Naclsimlab implements EntryPoint {
 		
 		HorizontalPanel links = new HorizontalPanel();
 		links.setSpacing(10);
-		Anchor jsimlab = new Anchor( "javasimlab ", "http://wensimlab.appspot.com/Javasimlab.html" );
+		Anchor jsimlab = new Anchor( "javasimlab ", "http://websimlab.appspot.com/Javasimlab.html" );
 		links.add( jsimlab );
 		Anchor mail = new Anchor( "| huldaeggerts@gmail.com", "mailto:huldaeggerts@gmail.com" );
 		links.add( mail );
@@ -305,21 +530,22 @@ public class Naclsimlab implements EntryPoint {
 		textarea.setText( textarea.getText()+str );
 	}
 	
-	public native void resize( int size, int type ) /*-{
-		if( type == 8 ) $wnd.current = new Int8Array( size );
-		else if( type == 9 ) $wnd.current = new Uint8Array( size );
-		else if( type == 16 ) $wnd.current = new Int16Array( size );
-		else if( type == 17 ) $wnd.current = new Uint16Array( size );
-		else if( type == 32 ) $wnd.current = new Int32Array( size );
-		else if( type == 33 ) $wnd.current = new Uint32Array( size );
-		else if( type == 34 ) $wnd.current = new Float32Array( size );
-		else if( type == 66 ) $wnd.current = new Float64Array( size );
+	public void resize( int size, int type ) {
+		ArrayBufferViewNative current = null;
+		if( type == 8 ) current = Int8ArrayNative.create( size );
+		else if( type == 9 ) current = Uint8ArrayNative.create( size );
+		else if( type == 16 ) current = Int16ArrayNative.create( size );
+		else if( type == 17 ) current = Uint16ArrayNative.create( size );
+		else if( type == 32 ) current = Int32ArrayNative.create( size );
+		else if( type == 33 ) current = Uint32ArrayNative.create( size );
+		else if( type == 34 ) current = Float32ArrayNative.create( size );
+		else if( type == 66 ) current = Float64ArrayNative.create( size );
 		//$wnd.curstruct = size + (type<<32);
 		//$wnd.console.log( "siztyp " + $wnd.curstruct + "  " + size + "  " + type + " " + (type<<2) );
 		
-		$wnd.postMessage( $wnd.current.buffer );
-		$wnd.postMessage( "type "+type );
-	}-*/;
+		postMessage( current.buffer() );
+		postMessage( "type "+type );
+	};
 	
 	public native void print() /*-{
 		var str = "\n";
@@ -339,6 +565,10 @@ public class Naclsimlab implements EntryPoint {
 	
 	public native void click( JavaScriptObject e ) /*-{
 		e.click();
+	}-*/;
+	
+	public native String createObjectURL( elemental.html.Blob bb ) /*-{
+		return $wnd.URL.createObjectURL( bb );
 	}-*/;
 	
 	public native void loadimage( String type ) /*-{
@@ -519,13 +749,52 @@ public class Naclsimlab implements EntryPoint {
 				arr[i+1] = [i, fa[i]];
 			}
 	        var data = $wnd.google.visualization.arrayToDataTable(arr);
-	        var options = {
-	          title: name
-	        };
+	        var options = {};
+	        options['title'] = name;
 	        options['width'] = width;
 	        options['height'] = height;
 			
 	        var chart = new $wnd.google.visualization.LineChart( popup );
+	        chart.draw(data, options);
+		}
+		$wnd.postMessage( "current" );
+	}-*/;
+	
+	public native void scatter( String name, String[] legend, Element popup, int width, int height ) /*-{
+		$wnd.currentFunc = function( arraybuf ) {
+			var fa = new Float64Array( arraybuf );
+			
+			var len = legend.length == 0 ? fa.length/2 : legend.length;
+			
+			var subarr = [];
+			for( i = 0; i < len; i++ ) {
+				subarr[i] = (i < legend.length) ? legend[i] : '';
+			}
+			var arr = [ subarr ];
+			
+			//var subarr1 = [];
+			//var subarr2 = [];
+			for( i = 0; i < len; i++ ) {
+				for( k = 0; k < len; k++ ) {
+					if( k == 0 ) arr[i+1] = [ fa[2*i] ];
+					else if( k == i+1 ) arr[i+1][k] = fa[2*i+1];
+					else arr[i+1][k] = null;
+				}
+				//subarr1[i] = fa[i];
+				//subarr2[i] = fa[fa.length/2+i];
+			}
+			//arr[1] = subarr1;
+			//arr[2] = subarr2;
+			
+			$wnd.console.log( arr );
+	        var data = $wnd.google.visualization.arrayToDataTable(arr);
+	        
+	        var options = {};
+	        options['title'] = name;
+	        options['width'] = width;
+	        options['height'] = height;
+			
+	        var chart = new $wnd.google.visualization.ScatterChart( popup );
 	        chart.draw(data, options);
 		}
 		$wnd.postMessage( "current" );
