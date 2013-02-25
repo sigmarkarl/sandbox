@@ -23,6 +23,8 @@ import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -34,6 +36,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -170,7 +173,7 @@ public class Webnutrition implements EntryPoint {
 
 	
 	public void fetchNutr() {
-		getBinaryResource( "http://nutritiondb.appspot.com/NUT_DATA_trim.txt" );
+		getBinaryResource( "NUT_DATA_trim.txt" );
 		//getBinaryResource( "http://192.168.1.166:8888/NUT_DATA_trim.txt" );
 	}
 	
@@ -745,23 +748,29 @@ public class Webnutrition implements EntryPoint {
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		
-		int w = 1024;//Window.getClientWidth();
-		int h = 640;//Window.getClientHeight();
-		vp.setSize(w+"px", h+"px");
+		//int w = 1024;//Window.getClientWidth();
+		//int h = 640;//Window.getClientHeight();
+		//vp.setSize(w+"px", h+"px");
+		int w = Window.getClientWidth();
+		vp.setSize("100%", "100%");
 		
-		/*Window.addResizeHandler( new ResizeHandler() {
+		canvas = Canvas.createIfSupported();
+		canvas.setSize((w-175)+"px", "600px");
+		canvas.setCoordinateSpaceWidth( w-175 );
+		canvas.setCoordinateSpaceHeight( 600 );
+		
+		Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
 				int w = event.getWidth();
 				int h = event.getHeight();
-				vp.setSize(w+"px", h+"px");
+				canvas.setSize((w-175)+"px", "600px");
+				canvas.setCoordinateSpaceWidth( w-175 );
+				canvas.setCoordinateSpaceHeight( 600 );
+				draw( canvas.getContext2d(), xstart, ystart );
+				//vp.setSize((w-10)+"px", 640+"px");
 			}
-		});*/
-		
-		canvas = Canvas.createIfSupported();
-		canvas.setSize("1024px", "600px");
-		canvas.setCoordinateSpaceWidth( 1024 );
-		canvas.setCoordinateSpaceHeight( 600 );
+		});
 		
 		lcolumnwidth.add( new Column("Food", null, 300, "0") );
 		lcolumnwidth.add( new Column("Group", null, 180, "0") );
