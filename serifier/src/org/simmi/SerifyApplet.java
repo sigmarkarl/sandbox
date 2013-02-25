@@ -4774,58 +4774,9 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	static class erm implements Comparable<erm> {
-		public erm( String prim, int cnt ) {
-			this.primer = prim;
-			this.count = cnt;
-		}
-		
-		String	primer;
-		int		count;
-		
-		@Override
-		public int compareTo(erm o) {
-			return count - o.count;
-		}
-	}
-	
 	public static void main(String[] args) {
 		SerifyApplet sa = new SerifyApplet();
-		//sa.parse( args );
-		
-		/*File f = new File("/vg454flx/D_2012_10_16_15_31_28_simmi_fullProcessing/1.TCA.454Reads.fna");
-		Map<String,Integer>	mstr = new HashMap<String,Integer>();
-		try {
-			FileReader fr = new FileReader( f );
-			BufferedReader br = new BufferedReader( fr );
-			String line = br.readLine();
-			while( line != null ) {
-				if( line.startsWith(">") ) {
-					line = br.readLine();
-					String primer = line.substring(10, 20);
-					if( mstr.containsKey(primer) ) {
-						mstr.put( primer, mstr.get(primer)+1 );
-					} else mstr.put( primer, 1 );
-				}
-				
-				line = br.readLine();
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		List<erm>	erml = new ArrayList<erm>();
-		for( String primer : mstr.keySet() ) {
-			erml.add( new erm( primer, mstr.get(primer) ) );
-			//System.err.println( primer + "  " + mstr.get(primer) );
-		}
-		Collections.sort( erml );
-		
-		for( erm hey : erml ) {
-			System.err.println( hey.primer + "  " + hey.count );
-		}
+		//sa.parseDistance(len, lines, names)( args );
 		
 		/*try {
 			Map<String,String> nameHitMapOld = mapNameHit( new FileInputStream( "/home/sigmar/snaedis/snaedis.blastout" ), 95, false );
@@ -4936,7 +4887,7 @@ public class SerifyApplet extends JApplet {
 		
 		//mapFiles();
 		
-		try {
+		/*try {
 			FileReader fr = new FileReader("/home/sigmar/conc_40genes.dst");
 			List<String>	llines = new ArrayList<String>();
 			BufferedReader br = new BufferedReader( fr );
