@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -791,8 +792,8 @@ public class EuroFIRServlet extends HttpServlet {
 					List<String>		 		foodColumns = new ArrayList<String>();
 					List<String>		 		compColumns = new ArrayList<String>();
 					//Map<String,Integer> 		compValColumnIndex = new HashMap<String,Integer>();
-					Map<Object,List<Object>>	foodMap = new HashMap<Object,List<Object>>();
-					Map<Object,List<Object>>	compMap = new HashMap<Object,List<Object>>();
+					Map<Object,List<Object>>	foodMap = new TreeMap<Object,List<Object>>();
+					Map<Object,List<Object>>	compMap = new TreeMap<Object,List<Object>>();
 					for( String sql : ls ) {
 						System.err.println( "about to " + sql );
 						Files.write( sql.getBytes(), new File("/u0/f.txt") );
@@ -805,7 +806,8 @@ public class EuroFIRServlet extends HttpServlet {
 								foodColumns = sqlresp.getColumns();
 								int ind = foodColumns.indexOf("OriginalFoodCode");
 								for( List<Object> lobj : rowObjs ) {
-									foodMap.put( lobj.get(ind).toString(), lobj );
+									int val = Integer.parseInt(lobj.get(ind).toString());
+									foodMap.put( val, lobj );
 								}
 							} else if( sql.contains( componentId ) ) {
 								SqlGet sqlget = query.sqlGet( sql );
@@ -815,7 +817,8 @@ public class EuroFIRServlet extends HttpServlet {
 								compColumns = sqlresp.getColumns();
 								int ind = compColumns.indexOf("OriginalComponentCode");
 								for( List<Object> lobj : rowObjs ) {
-									compMap.put( lobj.get(ind).toString(), lobj );
+									int val = Integer.parseInt(lobj.get(ind).toString());
+									compMap.put( val, lobj );
 								}
 							}
 						//}
@@ -860,16 +863,16 @@ public class EuroFIRServlet extends HttpServlet {
 							
 							for( List<Object> lobj : rows ) {
 								if( find > cind ) {
-									Object foodcode = lobj.remove( find );
+									Object foodcode = Integer.parseInt( lobj.remove( find ).toString() );
 									lobj.addAll( foodMap.get( foodcode ) );
 									
-									Object compcode = lobj.remove( cind );
+									Object compcode = Integer.parseInt( lobj.remove( cind ).toString() );
 									lobj.addAll( compMap.get( compcode ) );
 								} else {
-									Object compcode = lobj.remove( cind );
+									Object compcode = Integer.parseInt( lobj.remove( cind ).toString() );
 									lobj.addAll( compMap.get( compcode ) );
 									
-									Object foodcode = lobj.remove( find );
+									Object foodcode = Integer.parseInt( lobj.remove( find ).toString() );
 									lobj.addAll( foodMap.get( foodcode ) );
 								}
 							}
@@ -947,7 +950,7 @@ public class EuroFIRServlet extends HttpServlet {
 			pw.close();
 			
 			baos.close();
-			Files.write( baos.toByteArray(), new File("/u0/barbara.xml") );
+			Files.write( baos.toByteArray(), new File("/u0/barbara_ft.xml") );
 		} catch ( IOException e ) {
 			e.printStackTrace();
 		}

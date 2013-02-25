@@ -3247,7 +3247,7 @@ public class SerifyApplet extends JApplet {
 							lseqs.add( s );
 						}
 					}
-					List<Sequences> retlseqs = serifier.join( f, lseqs );
+					List<Sequences> retlseqs = serifier.join( f, lseqs, true );
 					for( Sequences seqs : retlseqs ) {
 						addSequences( seqs );
 					}
