@@ -8,6 +8,11 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.DialogBox;
@@ -35,8 +40,7 @@ public class Hvaderimatnum implements EntryPoint {
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
-	private final GreetingServiceAsync greetingService = GWT
-			.create(GreetingService.class);
+	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
 	public native int initApplet( final String server ) /*-{
 		$wnd.runApplet = function() {
@@ -52,6 +56,64 @@ public class Hvaderimatnum implements EntryPoint {
 		$wnd.showTable = function( str ) {
 			s.@org.simmi.client.Hvaderimatnum::showTable(Ljava/lang/String;)( str );
 		};
+		
+		$wnd.loadData = function( str ) {
+			s.@org.simmi.client.Hvaderimatnum::loadData(Ljava/lang/String;)( str );
+		};
+	}-*/;
+	
+	public void loadData( String query ) {
+		console("about" + query);
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.GET, query );
+		try {
+			rb.sendRequest( "", new RequestCallback() {
+				@Override
+				public void onResponseReceived(Request request, Response response) {
+					String jsonString = response.getText();
+					console("sko "+jsonString);
+					setAppletInputStream( appletelement, jsonString );
+					
+					/*JSONValue jsval = JSONParser.parseLenient( jsonString );
+					JSONObject jsobj = jsval.isObject();
+					if( jsobj != null ) {
+						JSONArray rows = (JSONArray)jsobj.get("rows");
+						for( int i = 0; i < rows.size(); i++ ) {
+							JSONArray row = (JSONArray)rows.get(i);
+							JSONString id = (JSONString)row.get(0);
+							JSONString groupid = (JSONString)row.get(1);
+							JSONString name = (JSONString)row.get(2);
+							String idstr = id.stringValue();
+							String groupidstr = groupid.stringValue();
+							String namestr = name.stringValue();
+							lfoodinfo.add( new FoodInfo( namestr.substring(1, namestr.length()-1), groupIdMap.get( groupidstr.substring(1, groupidstr.length()-1) ), 0.0 ) );
+							//groupIdMap.put( idstr.substring(1, idstr.length()-1), namestr.substring(1, namestr.length()-1 ) );
+						}
+						draw( canvas.getContext2d(), xstart, ystart );
+					}
+					//console( response.getText() );*/
+				}
+				
+				@Override
+				public void onError(Request request, Throwable exception) {
+					console( "error " + exception.getMessage() );
+				}
+			});
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+		/*greetingService.greetServer( query, new AsyncCallback<String>() {
+			@Override
+			public void onSuccess(String result) {
+				setAppletInputStream( appletelement, result );
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {}
+		});*/
+	}
+	
+	public native void setAppletInputStream( Element ae, String result ) /*-{
+		ae.setInput( result );
 	}-*/;
 	
 	public native void console( String log ) /*-{
@@ -100,6 +162,7 @@ public class Hvaderimatnum implements EntryPoint {
 	DataView	view;
 	Table		table;
 	Options		options;
+	Element		appletelement;
 
 	/**
 	 * This is the entry point method.
@@ -163,12 +226,14 @@ public class Hvaderimatnum implements EntryPoint {
 	    	"var parameters = { jnlp_href:'order.jnlp' };\n"+
 	    	"deployJava.runApplet(attributes, parameters, '1.6');" );*/
 		
-		Element ae = Document.get().createElement("applet");
+		Element ae = Document.get().createElement("object");
+		appletelement = ae;
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
-		ae.setAttribute("codebase", "http://"+server+"/");
-		ae.setAttribute("archive", "isgem.jar,swingx-core-1.6.2.jar,javaws.jar");
-		ae.setAttribute("code", "org.simmi.SortTable");
+		ae.setAttribute("type", "application/x-java-applet");
+		/*ae.setAttribute("codebase", "http://"+server+"/");
+		ae.setAttribute("archive", "food.jar,swingx-all-1.6.3.jar");
+		ae.setAttribute("code", "org.simmi.SortTable");*/
 		ae.setAttribute("id", "isgem");
 		ae.setAttribute("name", "isgem");
 		
