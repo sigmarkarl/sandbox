@@ -4,8 +4,6 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -13,8 +11,12 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+
+import elemental.client.Browser;
+import elemental.events.Event;
+import elemental.events.EventListener;
+import elemental.events.MessageEvent;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -31,6 +33,11 @@ public class Webconnectron implements EntryPoint {
 	 */
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
+	Connectron connectron;
+	public void handleText( String stuff ) {
+		connectron.handleText( stuff );
+	}
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -55,7 +62,7 @@ public class Webconnectron implements EntryPoint {
 		RootPanel.get("connectron").add( vp );*/
 		
 		Window.enableScrolling(false);
-		final RootPanel 	rp = RootPanel.get();
+		final RootPanel 	rp = RootPanel.get( "main" );
 		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
 			public void onContextMenu(ContextMenuEvent event) {
@@ -69,7 +76,7 @@ public class Webconnectron implements EntryPoint {
 		st.setPadding( 0.0, Unit.PX );
 		st.setBorderWidth( 0.0, Unit.PX );
 		
-		int w = Window.getClientWidth();
+		int w = Window.getClientWidth()-160;
 		int h = Window.getClientHeight();
 		//rp.setPixelSize(w, h);
 		rp.setSize(w+"px", h+"px");
@@ -79,15 +86,15 @@ public class Webconnectron implements EntryPoint {
 		hp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		hp.setSize("100%", "100%");
 		
-		final Element ads = Document.get().getElementById("ads");
-		SimplePanel	sp = new SimplePanel();
-		sp.getElement().appendChild( ads );
+		//final Element ads = Document.get().getElementById("ads");
+		//SimplePanel	sp = new SimplePanel();
+		//sp.getElement().appendChild( ads );
 		
-		final Connectron connectron = new Connectron();
+		connectron = new Connectron();
 		hp.add( connectron );
-		hp.add( sp );
+		//hp.add( sp );
 		
-		int ww = w-160;
+		int ww = w;
 		int hh = h-20;
 		connectron.getCanvas().setSize(ww+"px", hh+"px");
 		connectron.getCanvas().setCoordinateSpaceWidth( ww );
@@ -96,7 +103,7 @@ public class Webconnectron implements EntryPoint {
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
-				int w = event.getWidth();
+				int w = event.getWidth()-160;
 				int h = event.getHeight();
 				
 				if( w != oldw && w != olderw && h != oldh && h != olderh ) {
@@ -123,6 +130,33 @@ public class Webconnectron implements EntryPoint {
 		});
 		
 		rp.add( hp );
+		
+		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
+			/*var s = this;
+			$wnd.addEventListener('message',function(event) {
+				$wnd.console.log( event.origin );
+				$wnd.console.log('message received from treedraw');
+				if(event.origin == 'http://'+from+'.appspot.com') {
+					$wnd.console.log('correct treedraw origin');
+					s.@org.simmi.client.Webconnectron::handleText(Ljava/lang/String;)( event.data );
+				}
+			});
+			$wnd.console.log('posting ready');	
+			$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');*/
+		
+			final elemental.html.Window wnd = Browser.getWindow();
+			wnd.addEventListener("message", new EventListener() {
+				@Override
+				public void handleEvent(Event evt) {
+					wnd.getConsole().log("erm");
+					MessageEvent me = (MessageEvent)evt;
+					String text = (String)me.getData();
+					handleText( text );
+				}
+			}, false);
+			wnd.getOpener().postMessage("ready", "*");
+			//postParent( Window.Location.getParameter("callback") );
+		}
 	}
 	int oldw, olderw;
 	int oldh, olderh;

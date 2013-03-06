@@ -9,4 +9,14 @@ public class JSUtil {
 		JSObject win = JSObject.getWindow(applet);
 		win.call( f, objs );
 	}
+	
+	public static void console( Applet applet, String message ) {
+		try {
+			JSObject win = JSObject.getWindow( applet );
+			JSObject con = (JSObject)win.getMember("console");
+			con.call("log", new Object[] {message} );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+	}
 }
