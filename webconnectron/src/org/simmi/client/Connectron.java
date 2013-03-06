@@ -136,13 +136,15 @@ public class Connectron extends VerticalPanel
 		canvas.setFocus( true );
 	}
 	
-	double u = 1000.0;
+	double mincoulombradius = 0.1;
+	//double u = 1000.0;
 	public void spring() {
 		final double damp = 0.97;
 		//final double u = 1000.0;
 		final double gorm = 0.0;
-		final double k = 0.001;
+		final double k = 1.0;
 		
+		double mcr = Math.pow( mincoulombradius, 1.0/3.0 );
 		for( Corp corp : Corp.corpList ) {
 			double fx = 0;
 			double fy = 0;
@@ -153,25 +155,41 @@ public class Connectron extends VerticalPanel
 				double dz = corp.getz() - c.getz();
 				double d = dx*dx + dy*dy + dz*dz;
 				double r = Math.sqrt( d );
-				double r3 = r*r*r;
+				double r2 = r*r;
+				double r3 = r2*r;
 				
-				if( r3 > 0.1 ) {
+				double u = c.getCoulomb();
+				if( r3 > mincoulombradius ) {
 					fx += (u*dx)/r3;
 					fy += (u*dy)/r3;
 					fz += (u*dz)/r3;
+				} else {
+					//fx += (u*dx*mcr)/(r*mincoulombradius);
+					//fy += (u*dy*mcr)/(r*mincoulombradius);
+					//fz += (u*dz*mcr)/(r*mincoulombradius);
 				}
 			}
-			for( Corp c : corp.connections.keySet() ) {
+			for( Corp c : corp.backconnections.keySet() ) {
 				double dx = corp.getx() - c.getx();
 				double dy = corp.gety() - c.gety();
 				double dz = corp.getz() - c.getz();
 				
-				LinkInfo li = corp.connections.get(c);
+				double d = dx*dx + dy*dy + dz*dz;
+				double r = Math.sqrt( d );
+				
+				LinkInfo li = corp.backconnections.get(c);
+				double h = li.getOffset();
 				double st = li.getStrength();
-								
-				fx -= k*st*(dx-gorm);
-				fy -= k*st*(dy-gorm);
-				fz -= k*st*(dz-gorm);
+					//double k = li.getStrength();
+				
+				r = Math.max( r, 0.1 );
+				//if( r > 0.1 ) {
+				double dh = r-h;
+				
+				fx -= k*st*(dx*dh/r-gorm);
+				fy -= k*st*(dy*dh/r-gorm);
+				fz -= k*st*(dz*dh/r-gorm);
+				//}
 			}
 			
 			corp.vx = (corp.vx+fx)*damp;
@@ -390,6 +408,7 @@ public class Connectron extends VerticalPanel
 			cy /= len;
 			cz /= len;
 		}
+		//console( "center update "+len );
 	}
 	
 	double zoomval = 500.0;
@@ -653,14 +672,15 @@ public class Connectron extends VerticalPanel
 	
 	int loc;
 	Random r = new Random();
-	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node, TreeUtil.Node parent ) {
-		int i = node.getName().indexOf("Thermus");
-		Corp corp = new Corp( i > 0 ? node.getName().substring(i) : node.getName() );
+	private Corp recursiveNodeGeneration( List<Corp> corpList, TreeUtil.Node node, TreeUtil.Node parent, int dim ) {
+		//int i = node.getName().indexOf("Thermus");
+		Corp corp = new Corp( node.getName() ); //i > 0 ? node.getName().substring(i) : node.getName() );
+		corp.setCoulomb( 100.0 );
 		corp.setx( 400.0*r.nextDouble() );
 		corp.sety( 400.0*r.nextDouble() );
-		corp.setz( 400.0*r.nextDouble() );
+		corp.setz( dim == 2 ? 0.0 : 400.0*r.nextDouble() );
 		
-		if( node.getName() == null || node.getName().trim().length() == 0 ) {
+		if( (node.getNodes() != null && node.getNodes().size() > 0) || node.getName() == null || node.getName().trim().length() == 0 ) {
 			corp.setSize( 8 );
 		}
 		
@@ -681,32 +701,35 @@ public class Connectron extends VerticalPanel
 		corpList.add( corp );
 		
 		for( TreeUtil.Node n : node.getNodes() ) {
-			Corp c = recursiveNodeGeneration(corpList, n, node);
-			double val = (1.0/( Math.abs( node.geth() )+0.0005 ))/50.0;
-			String strval = Double.toString( node.geth() ); //Math.round(val*100.0)/100.0 );
-			corp.addLink(c, strval, val );
-			c.addLink(corp, strval, val );
+			Corp c = recursiveNodeGeneration(corpList, n, node, dim);
+			//double val = (1.0/( Math.abs( node.geth() )+0.0005 ))/50.0;
+			String strval = Double.toString( n.geth() ); //Math.round(val*100.0)/100.0 );
+			corp.addLink(c, strval, 0.02, 100.0*n.geth() );
+			c.addLink(corp, strval, 0.02, 100.0*n.geth() );
 		}
 		
 		return corp;
 	}
 	
-	public void importFromTree( String text ) {
-		u = 50.0;
+	public void importFromTree( String text, int dim ) {
+		//u = 50.0;
+		this.removeAll();
 		
 		loc = 0;
 		TreeUtil treeutil = new TreeUtil( text, false, null, null, false, null, null, false );
 		TreeUtil.Node resultnode = treeutil.getNode();
 		//Node resultnode = parseTreeRecursive( text, false );
 		
+		if( dim == 2 ) mincoulombradius = 1.0;
 		List<Corp> corpList = new ArrayList<Corp>();
-		recursiveNodeGeneration( corpList, resultnode, null );
+		recursiveNodeGeneration( corpList, resultnode, null, dim );
 		
 		repaint();
 	}
 	
 	public void importFromText( String text ) {
-		u = 50000.0;
+		//u = 50000.0;
+		this.removeAll();
 		
 		String[] split = text.split("\n");
 		String[] species = split[0].split("\t");
@@ -734,7 +757,7 @@ public class Connectron extends VerticalPanel
 					Corp corpDst = corpList.get(x);
 					Corp corpSrc = corpList.get(y);
 					
-					corpSrc.addLink( corpDst, subsplit[x], d );
+					corpSrc.addLink( corpDst, subsplit[x], d, 0.0 );
 				}
 			}
 		}
@@ -742,7 +765,69 @@ public class Connectron extends VerticalPanel
 		repaint();
 	}
 	
-	public void importFromMatrix( final String text ) {
+	public void importFromMatrix( final String text, double scaleval ) {
+		this.removeAll();
+		
+		String[] split = text.split("\n");
+		//String[] persons = split[0].split("\t");
+		
+		List<Corp> corpList = new ArrayList<Corp>();
+		
+		//double mulval = mult.getValue();
+		//double scaleval = scale.getValue();
+		
+		List<String[]>	lines = new ArrayList<String[]>();
+		for( int i = 1; i < split.length; i++ ) {
+			lines.add( split[i].split("\t") );
+		}
+		
+		Random r = new Random();
+		for( String[] spec : lines ) {
+			if( spec.length > 1 ) {
+				Corp corp = new Corp( spec[0] );
+				corp.setCoulomb(100.0);
+				corp.setx( scaleval*r.nextDouble() );
+				corp.sety( scaleval*r.nextDouble() );
+				corp.setz( scaleval*r.nextDouble() );
+				corp.color = "#1111ee";
+				Connectron.this.add( corp );
+				
+				corpList.add( corp );
+			}
+		}
+		
+		int i = 0;
+		for( String[] spec : lines ) {
+			//int y = i-1;
+			//String spec = subsplit[0];
+			Corp corp = corpList.get(i); //new Corp( spec );
+			/*corp.setx( 400.0*r.nextDouble() );
+			corp.sety( 400.0*r.nextDouble() );
+			corp.setz( 400.0*r.nextDouble() );
+			corp.color = "#1111ee";
+			this.add( corp );
+			corpList.add( corp );*/
+			
+			for( int x = 0; x < spec.length-1; x++ ) {
+				double d = Double.parseDouble( spec[x+1] );
+				if( i != x && d > 0.0 ) {
+					//Corp corpDst = corpList.get(x);
+					//Corp corpSrc = corpList.get(y);
+					
+					Corp pcorp = corpList.get(x);
+					corp.addLink( pcorp, d+"", 0.01, 10000.0*d );
+					//pcorp.addLink( corp, subsplit[x], d*mulval );
+				}
+			}
+			i++;
+		}
+		
+		console( "c size: " + corpList.size() );
+		
+		repaint();
+	}
+	
+	public void oldImportFromMatrix( final String text ) {
 		DialogBox	db = new DialogBox( true );
 		
 		Grid		grid = new Grid(3,2);
@@ -766,60 +851,10 @@ public class Connectron extends VerticalPanel
 		db.center();
 		
 		db.addCloseHandler( new CloseHandler<PopupPanel>() {
-			
 			@Override
 			public void onClose(CloseEvent<PopupPanel> event) {
-				u = colomb.getValue();
-				
-				String[] split = text.split("\n");
-				String[] persons = split[0].split("\t");
-				
-				List<Corp> corpList = new ArrayList<Corp>();
-				
-				double mulval = mult.getValue();
-				double scaleval = scale.getValue();
-				Random r = new Random();
-				for( String spec : persons ) {
-					if( spec.length() > 1 ) {
-						Corp corp = new Corp( spec );
-						corp.setx( scaleval*r.nextDouble() );
-						corp.sety( scaleval*r.nextDouble() );
-						corp.setz( scaleval*r.nextDouble() );
-						corp.color = "#1111ee";
-						Connectron.this.add( corp );
-						
-						corpList.add( corp );
-					}
-				}
-				
-				for( int i = 1; i < split.length; i++ ) {
-					String[] subsplit = split[i].split("\t");
-					//int y = i-1;
-					//String spec = subsplit[0];
-					Corp corp = corpList.get(i-1); //new Corp( spec );
-					/*corp.setx( 400.0*r.nextDouble() );
-					corp.sety( 400.0*r.nextDouble() );
-					corp.setz( 400.0*r.nextDouble() );
-					corp.color = "#1111ee";
-					this.add( corp );
-					corpList.add( corp );*/
-					
-					for( int x = 0; x < subsplit.length; x++ ) {
-						double d = Double.parseDouble( subsplit[x] );
-						if( d > 0.0 ) {
-							//Corp corpDst = corpList.get(x);
-							//Corp corpSrc = corpList.get(y);
-							
-							Corp pcorp = corpList.get(x);
-							corp.addLink( pcorp, subsplit[x], d*mulval );
-							//pcorp.addLink( corp, subsplit[x], d*mulval );
-						}
-					}
-				}
-				
-				console( "c size: " + corpList.size() );
-				
-				repaint();
+				//su = colomb.getValue();
+				importFromMatrix(text, scale.getValue());
 			}
 		});
 	}
@@ -1466,7 +1501,14 @@ public class Connectron extends VerticalPanel
 	
 	public void remove( Corp c ) {
 		components.remove( c );
+		c.delete();
 		c.setParent( null );
+	}
+	
+	public void removeAll() {
+		components.clear();
+		Corp.corpList.clear();
+		Corp.corpMap.clear();
 	}
 	
 	public Corp getComponentAt( int pxs, int pys ) {
@@ -1535,7 +1577,7 @@ public class Connectron extends VerticalPanel
 			dsize *= 0.8;
 		} else if( keycode == 190 /*.*/ ) {
 			dsize *= 1.25;
-		} else if( keycode == 32 /* */ ) {
+		} else if( keychar == ' ' /* */ ) {
 			updateCenterOfMass();
 		} else if( linkCorp != null ) {
 			if( keycode == KeyCodes.KEY_DELETE ) {
@@ -1681,11 +1723,15 @@ public class Connectron extends VerticalPanel
 	}
 	
 	public void handleText( String dropstuff ) {
-		if( dropstuff.startsWith("(") ) {
-			importFromTree( dropstuff.replaceAll("[\r\n]+", "") );
+		console( dropstuff.substring( 0, Math.min( 100,dropstuff.length() ) ) );
+		char c = dropstuff.charAt( 0 );
+		if( c >= '0' && c <= '9' && dropstuff.charAt(1) == '(' ) {
+			importFromTree( dropstuff.substring(1).replaceAll("[\r\n]+", ""), c-'0' );
+		} else if( dropstuff.startsWith("(") ) {
+			importFromTree( dropstuff.replaceAll("[\r\n]+", ""), 3 );
 		} else if( dropstuff.startsWith("\t") ) {
-			importFromMatrix( dropstuff );
-		} else importFromText( dropstuff );
+			importFromMatrix( dropstuff, 400.0 );
+		} else if( !dropstuff.startsWith("{") && !dropstuff.startsWith("(") ) importFromText( dropstuff );
 	}
 	
 	public native String handleFiles( Element ie, int append ) /*-{
