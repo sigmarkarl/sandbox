@@ -126,7 +126,7 @@ public class SkifuGraph extends JComponent {
 				val[i] = stuffYou(row, columnNames[i]);
 			}
 			
-			/*if( lang.equals("IS") ) {
+			/*if( lang.startsWith("IS") ) {
 				float f = (17.0f*prt + 17.0f*cbh + 37.0f*fat + 29.0f*alc)*10.0f;
 				float fv = Math.round( f )/100.0f;
 				if( f > 0 ) {
@@ -312,7 +312,7 @@ public class SkifuGraph extends JComponent {
 				g2.drawLine((19*w)/20, h-((1)*h)/25-hh/2, (19*w)/20+hh, h-((1)*h)/25-hh/2+hh);
 				g2.drawLine((19*w)/20, h-((1)*h)/25-hh/2+hh, (19*w)/20+hh, h-((1	)*h)/25-hh/2);
 			}				
-			String str = lang.equals("IS") ? "Afgangur" : "Rest";
+			String str = lang.startsWith("IS") ? "Afgangur" : "Rest";
 			int strw = g2.getFontMetrics().stringWidth(str);
 			g2.drawString(str, (19*w)/20-strw-hh/2, this.getHeight()-((i-6)*this.getHeight())/25+hh/4 );
 		}

@@ -42,8 +42,13 @@
       document.appendText( message_event.data );
     }
     
-    function postMessage( message ) {
-    	simmiModule.postMessage( message );
+    tot = "";
+    function postModuleMessage( message, size ) {
+    	tot += message;
+    	if( tot.length == size ) { 
+    		simmiModule.postMessage( tot );
+    		tot = "";
+    	}
     }
 
     // If the page loads before the Native Client module loads, then set the
@@ -74,6 +79,63 @@
         statusField.innerHTML = statusText;
       }
     }
+    
+    var domain = 'http://webconnectron.appspot.com';
+    var simlabdomain = 'http://websimlab.appspot.com';
+	var treetext = "";
+	var commands = "";
+	var myPopup;
+	function receiveMessage(event) {
+		console.log( 'ready message received' );
+		if (event.origin == "http://webconnectron.appspot.com") {
+			console.log( 'correct origin' );
+			if( treetext.length > 0 ) {
+				myPopup.postMessage(treetext,domain);
+			}
+    	} else if (event.origin == "http://websimlab.appspot.com") {
+			console.log( 'simlab origin' );
+			console.log( commands );
+			if( commands.length > 0 ) {
+				console.log( treetext + " " + treetext.byteLength );
+				myPopup.postMessage(treetext,simlabdomain);
+				//myPopup.postMessage(cmd,simlabdomain);
+			}
+    	}
+  	}
+	window.addEventListener("message", receiveMessage, false);
+	
+	showMatr = function( newmatrix ) {
+		treetext = newmatrix;
+		myPopup = window.open(domain + '/Webconnectron.html?callback=thermusgenes','_blank');
+	}
+	
+	showShannon = function( newshannon, cmd ) {
+		var dbuffer = new Float64Array( newshannon.length );
+		dbuffer.set( newshannon );
+		treetext = dbuffer.buffer;
+		commands = cmd;
+		console.log( cmd );
+		myPopup = window.open(simlabdomain + '/Websimlab.html?callback=thermusgenes','_blank');
+	}
+	
+	blobstuff = function( str, type ) {
+		var aFileParts = [str];
+		var oMyBlob = new Blob(aFileParts, { "type" : type });
+		window.open( window.URL.createObjectURL( oMyBlob ), '_blank' );
+	}
+	
+	blobfetch = function( str, type ) {
+		bbstr = window.atob( str );
+		var rawLength = bbstr.length;
+		var array = new Uint8Array(new ArrayBuffer(rawLength));
+ 
+		for(i = 0; i < rawLength; i++) {
+			array[i] = bbstr.charCodeAt(i);
+		}
+		var aFileParts = [array];
+		var oMyBlob = new Blob(aFileParts, { "type" : type });
+		window.open( window.URL.createObjectURL( oMyBlob ), '_blank' );
+	}
   </script>
     <!--                                           -->
     <!-- This script loads your compiled module.   -->
