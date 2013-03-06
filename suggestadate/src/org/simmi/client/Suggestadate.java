@@ -57,7 +57,6 @@ public class Suggestadate implements EntryPoint {
 	    	if( login == null ) {
 		    	try {
 					$wnd.FB.getLoginStatus( function(response) {
-						$wnd.console.log( "inside login response" );
 						try {
 							if (response.status === 'connected') {
 							    // the user is logged in and has authenticated your
@@ -77,63 +76,58 @@ public class Suggestadate implements EntryPoint {
 							    ths.@org.simmi.client.Suggestadate::setUserId(Ljava/lang/String;)( "" );
 							}
 							$wnd.FB.XFBML.parse();
-						} catch( e ) {
-							$wnd.console.log( "getLoginStatus error" );
-							$wnd.console.log( e );
-						}
+						} catch( e ) {}
 					});
-				} catch( e ) {
-					$wnd.console.log( "gls error" );
-					$wnd.console.log( e );
-				}
+				} catch( e ) {}
 			} else {
-				$wnd.console.log( login );
+				//$wnd.console.log( login );
 				ths.@org.simmi.client.Suggestadate::setUserId(Ljava/lang/String;)( login );
 			}
 	  	};
 	}-*/;
 	
 	public native void console( String s ) /*-{
-		$wnd.console.log( s );
+		if( $wnd.console ) $wnd.console.log( s );
 	}-*/;
 	
-	public native void hehe() /*-{
+	public native void hehe( Anchor anc ) /*-{
 		var ths = this;
 		try {
 			$wnd.FB.api('/me/friends', {fields: 'id,name,link'}, function(response) {
 				for( i = 0; i < response.data.length; i++ ) {
 					var frd = response.data[i];
-					ths.@org.simmi.client.Suggestadate::putFriend(ILjava/lang/String;Ljava/lang/String;)( frd.id, frd.name, frd.link );
+					ths.@org.simmi.client.Suggestadate::putFriend(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( frd.id, frd.name, frd.link );
 				}
-				ths.@org.simmi.client.Suggestadate::showFriendDialog()();
+				ths.@org.simmi.client.Suggestadate::showFriendDialog(Lcom/google/gwt/user/client/ui/Anchor;)( anc );
 			
 			});
 		} catch( e ) {
-			$wnd.console.log( e );
+			if( $wnd.console ) $wnd.console.log( e );
 		}
 	}-*/;
 	
-	Map<String,Integer>	fmap = new TreeMap<String,Integer>();
-	Map<Integer,String>	lmap = new TreeMap<Integer,String>();
-	public void putFriend( int id, String name, String link ) {
-		fmap.put( name, id );
-		lmap.put( id, link );
+	Map<String,Long>	fmap = new TreeMap<String,Long>();
+	Map<Long,String>	lmap = new TreeMap<Long,String>();
+	public void putFriend( String id, String name, String link ) {
+		long lid = Long.parseLong( id );
+		fmap.put( name, lid );
+		lmap.put( lid, link );
 	}
 	
 	HorizontalPanel	hp;
 	Anchor	a1;
 	Anchor	a2;
-	Anchor	currentAnchor;
+	//Anchor	currentAnchor;
 	Button	match;
-	public void showFriendDialog() {
-		final int ia = hp.getWidgetIndex( currentAnchor );
-		hp.remove( currentAnchor );
+	public void showFriendDialog( final Anchor anc ) {
+		final int ia = hp.getWidgetIndex( anc );
+		hp.remove( anc );
 		//PopupPanel pp = new PopupPanel( true );
 		
 		int sel = -1;
 		final ListBox	lb = new ListBox();
 		for( String uname : fmap.keySet() ) {
-			if( uname.equals(currentAnchor.getText()) ) sel = lb.getItemCount();
+			if( uname.equals(anc.getText()) ) sel = lb.getItemCount();
 			lb.addItem( uname );
 		}
 		if( sel != -1 ) lb.setSelectedIndex( sel );
@@ -142,10 +136,10 @@ public class Suggestadate implements EntryPoint {
 			public void onChange(ChangeEvent event) {
 				int i = lb.getSelectedIndex();
 				String name = lb.getItemText( i );
-				currentAnchor.setText( name );
+				anc.setText( name );
 				//currentAnchor.setName( Integer.toString(fmap.get(name)) );
 				hp.remove(lb);
-				hp.insert(currentAnchor, ia);
+				hp.insert(anc, ia);
 				
 				if( match != null && !a1.getText().contains("Friend") && !a2.getText().contains("Friend") ) {
 					match.setEnabled( true );
@@ -171,6 +165,7 @@ public class Suggestadate implements EntryPoint {
 		var ths = this;
 		$wnd.FB.api('/me', function(response) {
 	    	ths.@org.simmi.client.Suggestadate::setUserName(Ljava/lang/String;)( response.name );
+	    	ths.@org.simmi.client.Suggestadate::putFriend(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( response.id, response.name, response.link );
 	    });
 	}-*/;
 	
@@ -184,7 +179,7 @@ public class Suggestadate implements EntryPoint {
 	public native void sendAcceptMessage( String fuid, String body, final int row, final String femail ) /*-{
 		var ths = this;
 		var requestCallback = function(response) {
-	    	$wnd.console.log( response );
+	    	if( $wnd.console ) $wnd.console.log( response );
 	    	ths.@org.simmi.client.Suggestadate::addEmail(ILjava/lang/String;)( row, femail );
 	  	}
 	  
@@ -196,10 +191,10 @@ public class Suggestadate implements EntryPoint {
 	
 	public native void sendMessage( String fuid1, String fuid2, String fname, String body ) /*-{
 		var ths = this;
-		$wnd.console.log( "about to request" );
+		if( $wnd.console ) $wnd.console.log( "about to request" );
 		
 		var requestCallback = function(response) {
-        	$wnd.console.log( response );
+        	if( $wnd.console ) $wnd.console.log( response );
       	}
       
 		$wnd.FB.ui({method: 'apprequests',
@@ -434,13 +429,13 @@ public class Suggestadate implements EntryPoint {
 		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		vp.setSpacing( 5 );
 		
-		final Element ads = Document.get().getElementById("ads");
+		/*final Element ads = Document.get().getElementById("ads");
 		if( ads != null ) {
 			SimplePanel	adspanel = new SimplePanel();
 			ads.removeFromParent();
 			adspanel.getElement().appendChild( ads );
 			vp.add( adspanel );
-		}
+		}*/
 		vp.add( new HTML("<h3>Suggest a date</h3>") );
 		
 		hp = new HorizontalPanel();
@@ -453,9 +448,9 @@ public class Suggestadate implements EntryPoint {
 			@Override
 			public void onClick(ClickEvent event) {
 				if( uid != null && uid.length() > 0 ) {
-					currentAnchor = a1;
-					if( fmap.size() == 0 ) hehe();
-					else showFriendDialog();
+					//currentAnchor = a1;
+					if( fmap.size() <= 1 ) hehe( a1 );
+					else showFriendDialog( a1 );
 				} else showLoginRequestDialog();
 			}
 		});
@@ -464,9 +459,9 @@ public class Suggestadate implements EntryPoint {
 			@Override
 			public void onClick(ClickEvent event) {
 				if( uid != null && uid.length() > 0 ) {
-					currentAnchor = a2;
-					if( fmap.size() == 0 ) hehe();
-					else showFriendDialog();
+					//currentAnchor = a2;
+					if( fmap.size() <= 1 ) hehe( a2 );
+					else showFriendDialog( a2 );
 				} else showLoginRequestDialog();
 			}
 		});
@@ -483,8 +478,8 @@ public class Suggestadate implements EntryPoint {
 			public void onClick(ClickEvent event) {
 				final String u1 = a1.getText();
 				final String u2 = a2.getText();
-				final Integer ui1 = fmap.get(u1);
-				final Integer ui2 = fmap.get(u2);
+				final long ui1 = fmap.get(u1);
+				final long ui2 = fmap.get(u2);
 				final String l1 = lmap.get(ui1);
 				final String l2 = lmap.get(ui2);
 				String date = uname+"\t"+u1+"\t"+u2+"\t"+uid+"\t"+ui1+"\t"+ui2+"\t"+l1+"\t"+l2;
@@ -498,11 +493,9 @@ public class Suggestadate implements EntryPoint {
 
 					@Override
 					public void onSuccess(String result) {
-						if( result.length() > 0 ) {
-							Window.alert("This date has already been suggested");
-						} else {
+						if( result.length() == 0 || Window.confirm("This date has already been suggested. Do you want to suggest it again?") ) {
 							console( "before send" );
-							sendMessage( Integer.toString(ui1), Integer.toString(ui2), u1, "A date has been suggested for you" );
+							sendMessage( Long.toString(ui1), Long.toString(ui2), u1, "A date has been suggested for you" );
 							//sendMessage( Integer.toString(ui2), u2, "Haeho" );
 							console( "message sent" );
 						}

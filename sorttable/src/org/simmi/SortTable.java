@@ -17,7 +17,6 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
@@ -35,6 +34,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -58,13 +60,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.ClipboardService;
-import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
@@ -104,6 +104,13 @@ import javax.swing.table.TableModel;
 
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
+import org.simmi.shared.TreeUtil;
+
+import com.google.gdata.client.GoogleService;
+import com.google.gdata.client.Service.GDataRequest;
+import com.google.gdata.client.Service.GDataRequest.RequestType;
+import com.google.gdata.util.ContentType;
+import com.google.gdata.util.ServiceException;
 
 public class SortTable extends JApplet {
 	/**
@@ -202,7 +209,29 @@ public class SortTable extends JApplet {
 		String unit;
 	}
 	
-	public void inThread( final List<Object[]>	result, final Set<Integer> is ) throws IOException {
+	public String[] intelliSplit( String line, String sep ) {
+		int com = 0;
+		List<String> splitlist = new ArrayList<String>();
+		while( com < line.length() ) {
+			if( line.charAt(com) == '"' ) {
+				int newgus = line.indexOf('"', com+1);
+				splitlist.add( line.substring(com+1, newgus) );
+				
+				int ind = line.indexOf(sep, newgus+1);
+				if( ind == -1 ) ind = line.length();
+				com = ind+1;
+			} else {
+				int newcom = line.indexOf(sep, com);
+				if( newcom == -1 ) newcom = line.length();
+				splitlist.add( line.substring(com, newcom) );
+				com = newcom+1;
+			}
+		}
+		String[] split = splitlist.toArray( new String[0] );
+		return split;
+	}
+	
+	public void inThread( Reader rd, final List<Object[]>	result, final Set<Integer> is, String sep, boolean skipfirst ) throws IOException {
 		int start = -1;
 
 		/*
@@ -229,49 +258,49 @@ public class SortTable extends JApplet {
 		// InputStream inputStream = zipfile.getInputStream(
 		// zipentry );
 
-		InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
-		if (inputStream != null) {
-			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+		if (rd != null) {
+			BufferedReader br = new BufferedReader( rd );
 			//int	linen = 0;
 			String line = br.readLine();
+			if( skipfirst ) line = br.readLine();
 			while (line != null) {
-				String[] split = line.split("\\t");
+				String[] split = intelliSplit( line, sep );
+				//String[] split = line.split( sep );
 
-				if( split.length > 4 ) {
+				if( split.length > 2 ) {
 					int ival = -1;
 					try {
-						ival = Integer.parseInt(split[2]);
+						ival = Integer.parseInt(split[1]);
 					} catch( Exception e ) {
 						
 					}
 					if( ival == -1 ) {
-						System.err.println( split[2] );
+						System.err.println( split[1] );
 					}
 					
 					if( is.contains(ival) ) {
-						if (foodInd.containsKey(split[1])) {
-							start = foodInd.get(split[1]);
-						} else {
-	
-						}
-						Object[] objs = result.get(start + 2);
-						if (split[5].length() > 0) {
-							String replc = split[5].replace(',', '.');
-							replc = replc.replace("<", "");
-							float f = -1.0f;
-							try {
-								f = Float.parseFloat(replc);
-							} catch (Exception e) {
-							}
-							Integer ngroupOffset = ngroupMap.get(split[2]);
-							
-							if( ngroupOffset != null ) {
-								if (f != -1.0f)
-									objs[2 + ngroupOffset] = f;
-								else
-									objs[2 + ngroupOffset] = null;
-							} else {
-								System.err.println();
+						if (foodInd.containsKey(split[0])) {
+							start = foodInd.get(split[0]);
+						
+							Object[] objs = result.get(start + 2);
+							if (split[2].length() > 0) {
+								String replc = split[2].replace(',', '.');
+								replc = replc.replace("<", "");
+								float f = -1.0f;
+								try {
+									f = Float.parseFloat(replc);
+								} catch (Exception e) {
+								}
+								Integer ngroupOffset = ngroupMap.get(split[1]);
+								
+								if( ngroupOffset != null ) {
+									if (f != -1.0f)
+										objs[2 + ngroupOffset] = f;
+									else
+										objs[2 + ngroupOffset] = null;
+								} else {
+									System.err.println();
+								}
 							}
 						}
 					}
@@ -329,29 +358,263 @@ public class SortTable extends JApplet {
 		 */
 		// table.tableChanged( new TableModelEvent( model ) );
 	}
+	
+	String input = null;
+	public void setInput( String input ) {
+		this.input = input;
+	}
+	
+	public Reader run(String query, boolean isUsingEncId) throws IOException, ServiceException, InterruptedException {
+		boolean fail = false;
+		String lowercaseQuery = query.toLowerCase();
+		String encodedQuery = URLEncoder.encode(query, "UTF-8");
+		encodedQuery = encodedQuery.replace("+", "%20");
+		String urlstr = SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId;
+		
+		System.err.println( "uu" );
+		try {
+		   JSUtil.console( SortTable.this, "about to loaddata" + query );
+		   JSUtil.call( SortTable.this, "loadData", new Object[] { urlstr } );
+		   JSUtil.console( SortTable.this, "done loaddata");
+		   
+		   while( input == null ) Thread.sleep(1000);
+		   
+		   JSUtil.console( SortTable.this, "after wait");
+		   
+		   StringReader res = new StringReader( input );
+		   input = null;
+		   return res;
+	   } catch(Exception e) {
+		   fail = true;
+	   }
+	    
+		System.err.println( "fail "+fail );
+	    if( fail ) {	
+		   GDataRequest request = null;
+		   // If the query is a select, describe, or show query, run a GET request.
+		   if (lowercaseQuery.startsWith("select") || lowercaseQuery.startsWith("describe") || lowercaseQuery.startsWith("show")) {
+			   System.err.println("about to get "+urlstr);
+			   
+		     URL url = new URL(urlstr);
+		     System.err.println("what");
+		     try {
+		    	 request = service.getRequestFactory().getRequest(RequestType.QUERY, url, ContentType.TEXT_PLAIN);
+		     } catch( Exception e ) {
+		    	 e.printStackTrace();
+		     }
+		   } else {
+			   System.err.println("about to post");
+			   
+		     // Otherwise, run a POST request.
+		     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
+		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
+		         new ContentType("application/x-www-form-urlencoded"));
+		     OutputStreamWriter writer = new OutputStreamWriter(request.getRequestStream());
+		     writer.append("sql=" + encodedQuery);
+		     writer.flush();
+		   }
+		   
+		   if( request != null ) {
+			   	System.err.println("about to exec");
+		   		request.execute();
+	
+		   		System.err.println("returning");
+		   		return new InputStreamReader( request.getResponseStream() );
+		   }
+	   }
+	    System.err.println("ermermerm");
+	   return null;
+	}
+	
+	private StringBuilder getResultsText(GDataRequest request) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		StringBuilder sb = new StringBuilder();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			sb.append( line + "\n" );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		
+		return sb;
+	}
+	
+	public Map<String, String> isGroup( Reader reader, String sep, boolean skipfirst ) throws IOException {
+		Map<String, String> fgroupMap = new HashMap<String, String>();
+		
+		BufferedReader br = new BufferedReader( reader );
+		String line = br.readLine();
+		
+		if( skipfirst ) line = br.readLine();
+		
+		while (line != null) {
+			while( countOccur( line, '"' ) % 2 != 0 ) line += br.readLine();
+			
+			String[] split = intelliSplit(line, sep);
+			//String[] split = line.split( sep );
+			if (split.length > 1 && split[0].contains(".")) {
+				fgroupMap.put(split[0], split[1]);
+			}
+			line = br.readLine();
+		}
+		
+		return fgroupMap;
+	}
+	
+	public Set<Integer> isComponent( Reader rd, String sep, boolean skipfirst ) throws IOException {
+		Integer[] ii = { 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44, 137, 138 };
+		final Set<Integer> is = new HashSet<Integer>(Arrays.asList(ii));
+		List<String[]> idList = new ArrayList<String[]>();
+		
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+	
+		if( skipfirst ) line = br.readLine();
+		
+		int i = 0;
+		while (line != null) {
+			while( countOccur( line, '"' ) % 2 != 0 ) line += br.readLine();
+			
+			String[] split = intelliSplit(line, sep);
+			//String[] split = line.split( sep );
+			if (split.length > 3 && is.contains(Integer.parseInt(split[1]))) {
+				String sName = null;
+				if (split[3] != null && split[3].length() > 0) {
+					sName = split[3];
+				}
+				String nName = split[2];
+	
+				String[] strs = new String[] { split[1], nName, split[7], sName, split[5] };
+				idList.add(strs);
+				// ngroupMap.put( split[2], i++ );
+	
+				/*
+				 * ngroupList.add( nName ); // + " ("+split[1].substring(1,
+				 * split[1].length()-1)+")" ); ngroupGroups.add( split[8] );
+				 * //List<Object> lobj = nutList.get(i).get(i)
+				 * nutList[0].add( sName ); String mName = split[6];
+				 * nutList[1].add( mName );
+				 */
+			}
+			line = br.readLine();
+		}
+	
+		Collections.sort(idList, new Comparator<String[]>() {
+			public int compare(String[] s1, String[] s2) {
+				return s1[0].compareTo(s2[0]);
+			}
+		});
+		
+		ngroupMap.put( "0200", i++ );
+		ngroupList.add( "Orka" );
+		ngroupGroups.add( "1" );
+		nutList[0].add( "Energy" );
+		nutList[1].add( "kJ" );
+		ngroupMap.put( "0201", i++ );
+		ngroupList.add( "Orka" );
+		ngroupGroups.add( "1" );
+		nutList[0].add( "Energy" );
+		nutList[1].add( "kcal" );
+		for (String[] vals : idList) {
+			ngroupMap.put(vals[0], i++);
+			String cname = vals[1];
+			String group = vals[2];
+			if( group.equals("4") || group.equals("5") ) {
+				cname = cname.split(",")[0];
+			} else {
+				if( group.equals("6") || group.equals("1") ) {
+					if( cname.endsWith("n-3") ) {
+						cname = "Fjölóm. fitus. ómega-3";
+					} else if( cname.endsWith("n-6") ) {
+						cname = "Fjölóm. fitus. ómega-6";
+					} else {
+						cname = cname.replace("cis-", "");
+					}
+				}
+				
+				cname = cname.replace(", alls", "");
+				cname = cname.replace("Trefjaefni", "Trefjar");
+			}
+			ngroupList.add( cname );
+			ngroupGroups.add( group );
+			nutList[0].add(vals[3].trim());
+			nutList[1].add(vals[4].trim());
+		}
+		
+		return is;
+	}
+	
+	public int countOccur( String str, char c ) {
+		int count = 0;
+		
+		for( int i = 0; i < str.length(); i++ ) {
+			if( str.charAt( i ) == c ) count++;
+		}
+		
+		return count;
+	}
+	
+	public void isFood( Reader rd, Map<String,String> fgroupMap, List<Object[]> result, String sep, boolean skipfirst ) throws IOException {
+		int i = 0;
+		int k = 0;
+		
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		
+		if( skipfirst ) line = br.readLine();
+		
+		while (line != null) {
+			while( countOccur( line, '"' ) % 2 != 0 ) {
+				String addline = br.readLine();
+				line += addline;
+			}
+			
+			String[] split = intelliSplit(line, sep);
+			if( split.length > 7 ) {
+				foodInd.put(split[0], k);
+				// foodNameInd.put(split[2], k);
+				k++;
+	
+				String val = split[5];
+				split[5] = fgroupMap.get(val);
+				Object[] array = new Object[2 + ngroupList.size()];
+				array[0] = split[1];
+				array[1] = split[5];
+				for (i = 2; i < array.length; i++) {
+					array[i] = null;
+				}
+				result.add(array);
+				line = br.readLine();
+			} else {
+				System.err.println( line );
+				break;
+			}
+		}
+	}
 
 	List<Object>[] nutList = null;
-	public List<Object[]> parseData( String loc ) throws IOException {
-		Map<String, String> fgroupMap = new HashMap<String, String>();
+	public List<Object[]> parseData( String loc ) throws IOException, ServiceException, InterruptedException {
+		Map<String, String> fgroupMap = null;
 
-		InputStream inputStream;
-		BufferedReader br;
-		String line;
-		if (loc.equals("IS")) {
-			inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			line = br.readLine();
-			while (line != null) {
-				String[] split = line.split("\\t");
-				if (split.length > 1 && split[0].contains(".")) {
-					fgroupMap.put(split[0], split[1]);
-				}
-				line = br.readLine();
+		if( loc.startsWith("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
+			
+			if( service != null ) {
+				Reader rd = run("select * from "+grouptableid, true);
+				fgroupMap = isGroup( rd, ",", true );
+			}
+		} else if (loc.startsWith("IS")) {
+			InputStream inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
+			fgroupMap = isGroup( new InputStreamReader( inputStream, "UTF-8" ), "\t", false );
 		} else {
-			inputStream = this.getClass().getResourceAsStream("FD_GROUP.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			fgroupMap = new HashMap<String, String>();
+			InputStream inputStream = this.getClass().getResourceAsStream("FD_GROUP.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\\^");
 				if (split.length == 2) {
@@ -373,85 +636,23 @@ public class SortTable extends JApplet {
 		ngroupList = new ArrayList<String>();
 		ngroupGroups = new ArrayList<String>();
 
-		Integer[] ii = { 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44, 137, 138 };
-		final Set<Integer> is = new HashSet<Integer>(Arrays.asList(ii));
-
-		List<String[]> idList = new ArrayList<String[]>();
-		if (loc.equals("IS")) {
-			inputStream = this.getClass().getResourceAsStream("/Component.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			line = br.readLine();
-
-			int i = 0;
-			while (line != null) {
-				String[] split = line.split("[\t]");
-				if (split.length > 3 && is.contains(Integer.parseInt(split[2]))) {
-					String sName = null;
-					if (split[4] != null && split[4].length() > 0) {
-						sName = split[4];
-					}
-					String nName = split[3];
-
-					String[] strs = new String[] { split[2], nName, split[8], sName, split[6] };
-					idList.add(strs);
-					// ngroupMap.put( split[2], i++ );
-
-					/*
-					 * ngroupList.add( nName ); // + " ("+split[1].substring(1,
-					 * split[1].length()-1)+")" ); ngroupGroups.add( split[8] );
-					 * //List<Object> lobj = nutList.get(i).get(i)
-					 * nutList[0].add( sName ); String mName = split[6];
-					 * nutList[1].add( mName );
-					 */
-				}
-				line = br.readLine();
+		Set<Integer> is = null;
+		if( loc.startsWith("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
-
-			Collections.sort(idList, new Comparator<String[]>() {
-				public int compare(String[] s1, String[] s2) {
-					return s1[0].compareTo(s2[0]);
-				}
-			});
 			
-			ngroupMap.put( "0200", i++ );
-			ngroupList.add( "Orka" );
-			ngroupGroups.add( "1" );
-			nutList[0].add( "Energy" );
-			nutList[1].add( "kJ" );
-			ngroupMap.put( "0201", i++ );
-			ngroupList.add( "Orka" );
-			ngroupGroups.add( "1" );
-			nutList[0].add( "Energy" );
-			nutList[1].add( "kcal" );
-			for (String[] vals : idList) {
-				ngroupMap.put(vals[0], i++);
-				String cname = vals[1];
-				String group = vals[2];
-				if( group.equals("4") || group.equals("5") ) {
-					cname = cname.split(",")[0];
-				} else {
-					if( group.equals("6") || group.equals("1") ) {
-						if( cname.endsWith("n-3") ) {
-							cname = "Fjölóm. fitus. ómega-3";
-						} else if( cname.endsWith("n-6") ) {
-							cname = "Fjölóm. fitus. ómega-6";
-						} else {
-							cname = cname.replace("cis-", "");
-						}
-					}
-					
-					cname = cname.replace(", alls", "");
-					cname = cname.replace("Trefjaefni", "Trefjar");
-				}
-				ngroupList.add( cname );
-				ngroupGroups.add( group );
-				nutList[0].add(vals[3].trim());
-				nutList[1].add(vals[4].trim());
+			if( service != null ) {
+				Reader rd = run("select * from "+componenttableid, true);
+				is = isComponent( rd, ",", true );
 			}
+		} else if (loc.startsWith("IS")) {
+			InputStream inputStream = this.getClass().getResourceAsStream("/Component.txt");
+			is = isComponent( new InputStreamReader(inputStream, "UTF-8"), "\t", false );
 		} else {
-			inputStream = this.getClass().getResourceAsStream("NUTR_DEF.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			InputStream inputStream = this.getClass().getResourceAsStream("NUTR_DEF.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			int i = 0;
 			while (line != null) {
 				String[] split = line.split("\\^");
@@ -478,34 +679,23 @@ public class SortTable extends JApplet {
 		for (List<Object> l : nutList) {
 			result.add(l.toArray(new Object[0]));
 		}
-
-		int i = 0;
-		int k = 0;
-		if (loc.equals("IS")) {
-			inputStream = this.getClass().getResourceAsStream("/Food.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			line = br.readLine();
-			while (line != null) {
-				String[] split = line.split("\\t");
-				foodInd.put(split[1], k);
-				// foodNameInd.put(split[2], k);
-				k++;
-
-				String val = split[6];
-				split[6] = fgroupMap.get(val);
-				Object[] array = new Object[2 + ngroupList.size()];
-				array[0] = split[2];
-				array[1] = split[6];
-				for (i = 2; i < array.length; i++) {
-					array[i] = null;
-				}
-				result.add(array);
-				line = br.readLine();
+		
+		if( loc.startsWith("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
+			
+			if( service != null ) {
+				Reader rd = run("select * from "+foodtableid+" where WebPublishReady = 'J'", true);
+				isFood( rd, fgroupMap, result, ",", true );
+			}
+		} else if (loc.startsWith("IS")) {
+			InputStream inputStream = this.getClass().getResourceAsStream("/Food.txt");
+			isFood( new InputStreamReader( inputStream, "UTF-8" ), fgroupMap, result, "\t", false );
 		} else {
-			inputStream = this.getClass().getResourceAsStream("FOOD_DES.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			InputStream inputStream = this.getClass().getResourceAsStream("FOOD_DES.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\\^");
 				String val = split[1];
@@ -513,7 +703,7 @@ public class SortTable extends JApplet {
 				Object[] array = new Object[2 + ngroupList.size()];
 				array[0] = split[2].substring(1, split[2].length() - 1);
 				array[1] = split[1];
-				for (i = 2; i < array.length; i++) {
+				for (int i = 2; i < array.length; i++) {
 					array[i] = null;
 				}
 				result.add(array);
@@ -522,7 +712,18 @@ public class SortTable extends JApplet {
 		}
 
 		String prev = "";
-		if (loc.equals("IS")) {
+		if( loc.startsWith("IS_fusion") ) {
+			if( service == null ) {
+				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+			}
+			
+			if( service != null ) {
+				String istr = is.toString();
+				istr = '('+istr.substring(1, istr.length()-1)+')';
+				Reader rd = run("select OriginalFoodCode, OriginalComponentCode, SelectedValue from "+componentvaluetableid+" where OriginalComponentCode in "+istr, true ); //+" and OriginalFoodCode in (select OriginalFoodCode from "+foodtableid+" where WebPublishReady = 'J')", true);
+				inThread( rd, result, is, ",", true );
+			}
+		} else if( loc.startsWith("IS") ) {
 			/*try {
 				new Thread() {
 					public void run() {
@@ -534,17 +735,13 @@ public class SortTable extends JApplet {
 					}
 				}.run();
 			} catch( SecurityException e ) {*/
-				try {
-					inThread( result, is );
-				} catch (IOException ee) {
-					ee.printStackTrace();
-				}
-			//}
+			InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
+			inThread( new InputStreamReader( inputStream, "UTF-8" ), result, is, "\t", false );
 		} else {
 			int start = -1;
-			inputStream = this.getClass().getResourceAsStream("NUT_DATA.txt");
-			br = new BufferedReader(new InputStreamReader(inputStream));
-			line = br.readLine();
+			InputStream inputStream = this.getClass().getResourceAsStream("NUT_DATA.txt");
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\\^");
 				if (!split[0].equals(prev)) {
@@ -669,6 +866,12 @@ public class SortTable extends JApplet {
 			if (!frame.isResizable())
 				frame.setResizable(true);
 		}
+		
+		try {
+			this.getAppletContext().showDocument( new URL("http://www.matis.is/ISGEM/is/hvad-er-i-matnum/leidbeiningar-med-notkun-forritsins/"), "_blank");
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+		}
 
 		this.getContentPane().setBackground(bgcolor);
 		this.setBackground(bgcolor);
@@ -720,7 +923,7 @@ public class SortTable extends JApplet {
 		Collections.sort(stuff, new Comparator<Object[]>() {
 			public int compare(Object[] o1, Object[] o2) {
 				if( o1[0] == null && o2[0] == null ) {
-					if( lang.equals("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+					if( lang.startsWith("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
 					else return ((String) o2[2]).compareToIgnoreCase((String) o1[2]);
 				}
 				else if( o1[0] == null ) return Integer.MIN_VALUE;
@@ -740,6 +943,13 @@ public class SortTable extends JApplet {
 		return result;
 	}
 
+	private static GoogleService service;
+	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private static final String grouptableid = "1VDYeREOR6SvxX7VxiGBHVvUZbw_q1GeSsFsvh3U";
+	private static final String componenttableid = "1V220glQaJXgeWrimZ5gDiyRwhKMNp437ZeAnRNI";
+	private static final String foodtableid = "1kVdzllCGHpktvP7jjwVGuQ6M5XF3qUMkBBq9Cn4";
+	private static final String componentvaluetableid = "1iPhnOf7BlPQSeMz1zsanxA2mqQ2Kv0PYo-BQE9U";
+	
 	public void loadStuff() {
 		lang = "IS";
 		/*
@@ -750,6 +960,7 @@ public class SortTable extends JApplet {
 		//ToolTipManager.sharedInstance().setInitialDelay(100);
 		//ToolTipManager.sharedInstance().setDismissDelay(10000);
 		//ToolTipManager.sharedInstance().setReshowDelay(0);
+		System.err.println("about to load stuff");
 		if (stuff == null) {
 			try {
 				stuff = parseData(lang);
@@ -757,7 +968,7 @@ public class SortTable extends JApplet {
 				Collections.sort(stuff, new Comparator<Object[]>() {
 					public int compare(Object[] o1, Object[] o2) {
 						if( o1[0] == null && o2[0] == null ) {
-							if( lang.equals("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
+							if( lang.startsWith("IS") ) return ((String) o1[2]).compareToIgnoreCase((String) o2[2]);
 							else return ((String) o2[2]).compareToIgnoreCase((String) o1[2]);
 						}
 						else if( o1[0] == null ) return Integer.MIN_VALUE;
@@ -773,6 +984,10 @@ public class SortTable extends JApplet {
 						foodNameInd.put((String) oo[0], i++);
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ServiceException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
@@ -914,38 +1129,7 @@ public class SortTable extends JApplet {
         }
         return sb.toString();
 	}
-	
-	public void copyData(Component source) {
-        TableModel model = table.getModel();
- 
-        String s = makeCopyString();
-        if (s==null || s.trim().length()==0) {
-            JOptionPane.showMessageDialog(this, "There is no data selected!");
-        } else {
-            StringSelection selection = new StringSelection(s);
-            clipboardService.setContents( selection );
-        }
-        
-        if (grabFocus) {
-            source.requestFocus();
-        }
-    }
-	 
-    class CopyAction extends AbstractAction {
-        public CopyAction(String text, ImageIcon icon,
-            String desc, Integer mnemonic) {
-            super(text, icon);
-            putValue(SHORT_DESCRIPTION, desc);
-            putValue(MNEMONIC_KEY, mnemonic);
-        }
- 
-        public void actionPerformed(ActionEvent e) {
-            copyData((Component)e.getSource());
-        }
-    }
 
-    private ClipboardService 	clipboardService;
-    private boolean 			grabFocus = false;
 	public void initGui(String sessionKey, String currentUser) throws IOException, ClassNotFoundException {
 		scrollPane = new JScrollPane();
 		leftScrollPane = new JScrollPane();
@@ -986,15 +1170,13 @@ public class SortTable extends JApplet {
 		};
 		table.setColumnSelectionAllowed(true);
 		
-	    try {  
-	    	clipboardService = (ClipboardService)ServiceManager.lookup("javax.jnlp.ClipboardService");
-	    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );
-            table.getActionMap().put( "copy", action );
-            grabFocus = true;
-	    } catch (Exception e) { 
-	    	e.printStackTrace();
-	    	System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-	    }
+		//if( this.applet != null ) {
+		try {
+			WSUtil.clipboard( this );
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		//}
 	   
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -1468,8 +1650,8 @@ public class SortTable extends JApplet {
 				foodTypes.add((String) objs[1]);
 		}
 
-		final String allfood = lang.equals("IS") ? "Allar fæðutegundir" : "All food groups";
-		final String recipes = lang.equals("IS") ? "Uppskriftir" : "Recipes";
+		final String allfood = lang.startsWith("IS") ? "Allar fæðutegundir" : "All food groups";
+		final String recipes = lang.startsWith("IS") ? "Uppskriftir" : "Recipes";
 		
 		topLeftCombo.addItem(allfood);
 		topLeftCombo.addItem(recipes);
@@ -1554,7 +1736,7 @@ public class SortTable extends JApplet {
 					}
 					g.setColor(Color.gray);
 					
-					String leit = lang.equals("IS") ? "leit í " + (stuff.size()-2) + " fæðutegundum" : "search " + (stuff.size()-2) + " food entries";
+					String leit = lang.startsWith("IS") ? "leit í " + (stuff.size()-2) + " fæðutegundum" : "search " + (stuff.size()-2) + " food entries";
 					int strw = g.getFontMetrics().stringWidth(leit);
 					int x = (this.getWidth() - strw) / 2;
 					g.drawString(leit, x, 20);
@@ -1690,7 +1872,7 @@ public class SortTable extends JApplet {
 			}
 
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				if (lang.equals("IS")) {
+				if (lang.startsWith("IS")) {
 					if (rowIndex == 0)
 						return "Nafn efnis";
 					return "Eining";
@@ -1767,7 +1949,7 @@ public class SortTable extends JApplet {
 			}
 
 			public String getColumnName(int columnIndex) {
-				if (lang.equals("IS")) {
+				if (lang.startsWith("IS")) {
 					if (columnIndex == 0)
 						return "Fæðutegund";
 					else if (columnIndex == 1)
@@ -2264,7 +2446,7 @@ public class SortTable extends JApplet {
 		}
 		
 		JScrollPane help = new JScrollPane( helppane );
-		if (lang.equals("IS")) {
+		if (lang.startsWith("IS")) {
 			tabbedPane.addTab("Hjálp", hlpicon, help);
 			tabbedPane.addTab("Fæða", fodicon, rightSplitPane);
 			tabbedPane.addTab("Næringarefni", helicon, detail);
@@ -2347,7 +2529,7 @@ public class SortTable extends JApplet {
 		 */
 		
 		final JPopupMenu	leftpopup = new JPopupMenu();
-		leftpopup.add( new AbstractAction( lang.equals("IS") ? "Senda fæðutegund í valda uppskrift" : "Put food in selected recipe" ) {
+		leftpopup.add( new AbstractAction( lang.startsWith("IS") ? "Senda fæðutegund í valda uppskrift" : "Put food in selected recipe" ) {
 			public void actionPerformed(ActionEvent e) {
 				String str = "";
 				
@@ -2365,11 +2547,11 @@ public class SortTable extends JApplet {
 			}
 		});
 		
-		String[] sortset = lang.equals("IS") ? 	new String[] {"Alcohol","Dietary fiber","Carbohydrates, total","Protein, total","Water","Ash","Fat, total"} : 
+		String[] sortset = lang.startsWith("IS") ? 	new String[] {"Alcohol","Dietary fiber","Carbohydrates, total","Protein, total","Water","Ash","Fat, total"} : 
 												new String[] {"ALC","FIBTG","CHOCDF","PROCNT","WATER","ASH","FAT"};
 		final Set<String>	sortStuff = new HashSet<String>( Arrays.asList( sortset ) );
 		final JPopupMenu	mainpopup = new JPopupMenu();
-		mainpopup.add( new AbstractAction( lang.equals("IS") ? "Raða fæðutegundum með svipuðu innihaldi" : "Sort food items with similar ingredients" ) {
+		mainpopup.add( new AbstractAction( lang.startsWith("IS") ? "Raða fæðutegundum með svipuðu innihaldi" : "Sort food items with similar ingredients" ) {
 			public void actionPerformed(ActionEvent e) {
 				int r = leftTable.getSelectedRow();
 				final int mi = leftTable.convertRowIndexToModel(r);
@@ -2511,7 +2693,7 @@ public class SortTable extends JApplet {
 		if( xurl != null ) {
 			ImageProducer 	ims = (ImageProducer)xurl.getContent();
 			Image 		img = (ims != null ? this.createImage( ims ).getScaledInstance(16, 16, Image.SCALE_SMOOTH) : null);
-			popup.add( new AbstractAction( lang.equals("IS") ? "Opna val í Excel" : "Open in Excel", img != null ? new ImageIcon(img) : null ) {
+			popup.add( new AbstractAction( lang.startsWith("IS") ? "Opna val í Excel" : "Open in Excel", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent ae) {
 					try {
 						PoiFactory.export(table, topTable, leftTable, SortTable.this);
@@ -2524,8 +2706,82 @@ public class SortTable extends JApplet {
 					}
 				}
 			});
+			popup.add( new AbstractAction( lang.startsWith("IS") ? "Opna tré" : "Open tree", img != null ? new ImageIcon(img) : null ) {
+				public void actionPerformed(ActionEvent ae) {
+					JCheckBox message = new JCheckBox("Sleppa ókláruðum matvælum");
+					JOptionPane.showMessageDialog(SortTable.this, message);
+					
+					List<Integer> lint = new ArrayList<Integer>();
+					int colc = table.getColumnCount();
+					for( int i = 0; i < colc; i++ ) {
+						int val = table.convertColumnIndexToModel(i);
+						if( val >= 2 ) lint.add( val+2 );
+					}
+					
+					TreeUtil tu = new TreeUtil();
+					List<String> corrInd = new ArrayList<String>();					
+					List<Integer> validIndices = new ArrayList<Integer>();
+					for( int i = 2; i < stuff.size(); i++ ) {
+						Object[] objs = stuff.get(i);
+						boolean valid = true;
+						for( int u = 0; u < lint.size(); u++ ) {
+							Object obj = objs[ lint.get(u) ];
+							if( message.isSelected() && obj == null ) {
+								valid = false;
+								break;
+							}
+						}
+						if( valid ) {
+							validIndices.add( i );
+							corrInd.add( ((String)objs[0]).replace(",", "") );
+						}
+					}
+					int len = validIndices.size();
+					double[] corrarr = new double[ len*len ];
+					Arrays.fill(corrarr, 0.0);
+						
+					for( int i = 0; i < validIndices.size(); i++ ) {
+						Object[] obj = stuff.get( validIndices.get(i) );
+						for( int k = i+1; k < validIndices.size(); k++ ) {
+							Object[] obj2 = stuff.get( validIndices.get(k) );
+							
+							double tot = 0.0;
+							for( int y = 0; y < lint.size(); y++ ) {
+								int u = lint.get(y);
+								Float f1 = (Float)obj[u];
+								Float f2 = (Float)obj2[u];
+								
+								if( message.isSelected() ) {
+									double val = f1-f2;
+									tot += val*val;
+								} else {
+									double val;
+									
+									if( f1 != null ) {
+										if( f2 != null ) val = f1-f2;
+										else val = f1;
+									} else {
+										if( f2 != null ) val = f2;
+										else val = 0.0;
+									}
+									
+									tot += val*val;
+								}
+							}
+							tot = Math.sqrt( tot );
+							corrarr[ (i)*len+(k) ] = tot;
+							corrarr[ (k)*len+(i) ] = tot;
+						}
+					}
+					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd, null, true, false);
+					String tree = node.toString();
+					System.err.println("about to call showTree");
+					System.err.println( tree );
+					JSUtil.call( SortTable.this, "showTree",  new Object[] {tree} );
+				}
+			});
 		}
-		table.setComponentPopupMenu( popup );		
+		table.setComponentPopupMenu( popup );	
 		splitPane.setBorder(new EmptyBorder(0, 0, 0, 0));
 		// SortTable.this.add(ed, BorderLayout.SOUTH);
 		splitPane.setDividerLocation(1.0 / 3.0);
