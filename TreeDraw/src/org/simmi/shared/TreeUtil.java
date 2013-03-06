@@ -3,6 +3,8 @@ package org.simmi.shared;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,99 +12,383 @@ import java.util.Map;
 import java.util.Set;
 
 public class TreeUtil {
-	public Node currentNode = null;
+	private Node currentNode = null;
+	String treelabel = null;
 	
-	public void neighborJoin( double[] corrarr, int len, List<String> corrInd ) {
-		List<Node> nodes = new ArrayList<Node>();
-		for( int i = 0; i < len; i++ ) {
-			nodes.add( new Node( corrInd.get(i) ) );
+	public Node removeRoot( Node n ) {
+		Node ret;
+		List<Node> ln = n.getNodes();
+		Node n1 = ln.get( 0 );
+		Node n2 = ln.get( 1 );
+		if( n1.getNodes() != null & n1.getNodes().size() > 0 ) {
+			n1.addNode( n2, n1.geth()+n2.geth() );
+			n1.setParent( null );
+			ret = n1;
+		} else {
+			n2.addNode( n1, n2.geth()+n2.geth() );
+			n2.setParent( null );
+			ret = n2 ;
+		}			
+		ret.countLeaves();
+		
+		return ret;
+	}
+	
+	public Node getParent( Node root, Set<String> leaveNames ) {
+		Set<String> currentLeaveNames = root.getLeaveNames();
+		if( currentLeaveNames.size() >= leaveNames.size() ) {
+			//System.err.println( currentLeaveNames );
+			if( currentLeaveNames.equals( leaveNames ) ) return root;
+			else {
+				for( Node n : root.getNodes() ) {
+					Node par = getParent(n, leaveNames);
+					if( par != null ) return par;
+				}
+			}
+		}
+			
+		return null;
+	}
+	
+	public void reduceParentSize( Node n ) {
+		List<Node> nodes = n.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node node : nodes) {
+				reduceParentSize( node );
+			}
+			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*0.8 );
+			else n.setFontSize( 0.8 );
+		}
+	}
+	
+	public void propogateSelection( Set<String> selset, Node node ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				propogateSelection(selset, n);
+			}
+		}
+		if( selset.contains( node.getName() ) ) node.setSelected( true );
+		//else node.setSelected( false );
+	}
+	
+	public void invertSelectionRecursive( Node root ) {
+		root.setSelected( !root.isSelected() );
+		if( root.getNodes() != null ) for( Node n : root.getNodes() ) {
+			invertSelectionRecursive( n );
+		}
+	}
+	
+	public boolean isChildSelected( Node n ) {
+		if( n.isSelected() ) return true;
+		
+		List<Node> nodes = n.getNodes();
+		if( nodes != null ) {
+			for( Node node : nodes ) {
+				if( isChildSelected(node) ) return true;
+			}
 		}
 		
-		double[] dmat = new double[len*len];
-		double[] u = new double[len];
-		System.arraycopy(corrarr, 0, dmat, 0, len*len);
-		while( len > 2 ) {
-			//System.err.println( "trying " + len + " size is " + nodes.size() );
-			for ( int i = 0; i < len; i++ ) {
-				u[i] = 0;
-				for ( int j = 0; j < len; j++ ) {
-					if( i != j ) {
-						u[i] += dmat[i*len+j];
+		return false;
+	}
+	
+	public boolean retainSelection( Node n ) {
+		if( isChildSelected( n ) ) {
+			List<Node> nodes = n.getNodes();
+			if( nodes != null ) {
+				Node rem = null;
+				List<Node> copy = new ArrayList<Node>(nodes);
+				for( Node node : copy ) {
+					if( retainSelection( node ) ) {
+						rem = node;
 					}
 				}
-				u[i] /= len-2;
-			}
-			
-			int imin = 0;
-			int jmin = 0;
-			double dmin = Double.MAX_VALUE;
-			for ( int i = 0; i < len; i++ ) {
-				for ( int j = 0; j < len; j++ ) {
-					if( i != j ) {
-						double val = dmat[i*len+j] - u[i] - u[j];
-						//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
-						if( val < dmin ) {
-							dmin = val;
-							imin = i;
-							jmin = j;
-						}
-					}
+				if( rem != null ) {
+					rem.getParent().removeNode( rem );
 				}
 			}
-			
-			//System.err.println( dmat[imin*len+jmin] );
-			double vi = (dmat[imin*len+jmin]+u[imin]-u[jmin])/2.0;
-			double vj = (dmat[imin*len+jmin]+u[jmin]-u[imin])/2.0;
-			Node parnode = new Node();
-			parnode.addNode( nodes.get(imin), vi );
-			parnode.addNode( nodes.get(jmin), vj );
-			
-			if( imin > jmin ) {
-				nodes.remove(imin);
-				nodes.remove(jmin);
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	public void setTreeLabel( String label ) {
+		this.treelabel = label;
+	}
+	
+	public String getTreeLabel() {
+		return this.treelabel;
+	}
+	
+	public boolean isRooted() {
+		return currentNode.getNodes().size() == 2;
+	}
+	
+	public void propogateCompare( Node n ) {
+		if( n.getNodes().size() > 0 ) {
+			n.comp++;
+			for( Node nn : n.getNodes() ) {
+				propogateCompare( nn );
+			}
+		}
+	}	
+	
+	public void appendCompare( Node n ) {
+		if( n.getNodes().size() > 0 ) {
+			n.name = ""+n.comp;
+			for( Node nn : n.getNodes() ) {
+				appendCompare( nn );
+			}
+		}
+	}
+	
+	public Node findNode( Node root, String subtree ) {
+		Node ret = null;
+		
+		String rn = root.toStringWoLengths();
+		if( rn.equals(subtree) ) ret = root;
+		else if( rn.length() > subtree.length() ) {
+			for( Node n : root.getNodes() ) {
+				Node nn = findNode( n, subtree );
+				if( nn != null ) {
+					ret = nn;
+					break;
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
+	public void compareTrees( String ns1, Node n1, Node n2 ) {
+		if( n2.getNodes().size() > 1 ) {
+			String ns2 = n2.toStringWoLengths();
+		
+			if( ns1.contains(ns2) ) {
+				Node n = findNode( n1, ns2 );
+				propogateCompare( n );
 			} else {
-				nodes.remove(jmin);
-				nodes.remove(imin);
+				for( Node n : n2.getNodes() ) {
+					compareTrees( ns1, n1, n );
+				}
 			}
-			nodes.add( parnode );
+		}
+	}
+	
+	public void arrange( Node root, Comparator<Node> comparator ) {
+		List<Node> nodes = root.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				arrange( n, comparator );
+			}
+			Collections.sort( nodes, comparator );
+		}
+	}
+	
+	public double[][] lms( double[] distmat, List<String> corrInd, Node toptree ) {
+		int len = corrInd.size();
+		List<Node> nodes = this.getLeaves( toptree );
+		int c = 0;
+		for( String s : corrInd ) {
+			int i = c;
+			while( !s.equals( nodes.get(i).getName() ) ) i++;
 			
-			double[] dmatmp = new double[(len-1)*(len-1)];
-			int k = 0;
-			for( int i = 0; i < len; i++ ) {
-				if( i != imin && i != jmin ) {
-					for( int j = 0; j < len; j++ ) {
-						if( j != imin && j != jmin ) {
-							dmatmp[k++] = dmat[i*len+j];
-						}
-					}
-					k++;
-				}
-			}
-			k = 0;
-			for( int i = 0; i < len; i++ ) {
-				if( i != imin && i != jmin ) {
-					dmatmp[((k++) + 1)*(len-1)-1] = (dmat[imin*len+i] + dmat[jmin*len+i] - dmat[imin*len+jmin])/2.0;
-				}
-			}
-			k = 0;
-			for( int i = 0; i < len; i++ ) {
-				if( i != imin && i != jmin ) {
-					dmatmp[(len-2)*(len-1)+(k++)] = (dmat[i*len+imin] + dmat[i*len+jmin] - dmat[jmin*len+imin])/2.0;
-				}
-			}
-			len--;
-			dmat = dmatmp;
+			Node tnode = nodes.get(c);
+			nodes.set( c, nodes.get(i) );
+			nodes.set( i, tnode );
 			
-			System.err.println( "size is " + nodes.size() );
+			c++;
 		}
 		
-		Node parnode = new Node();
-		parnode.addNode( nodes.get(0), dmat[1] );
-		parnode.addNode( nodes.get(1), dmat[3] );
-		nodes.clear();
+		List<Double> lad = new ArrayList<Double>();
+		for( int y = 0; y < corrInd.size()-1; y++ ) {
+			for( int x = y+1; x < corrInd.size(); x++ ) {
+				lad.add( distmat[y*corrInd.size()+x] );
+			}
+		}
+		double[] d = new double[ lad.size() ];
+		int count = 0;
+		for( double dval : lad ) {
+			d[count++] = dval;
+		}
 		
-		parnode.countLeaves();
-		currentNode = parnode;
+		int nodecount = toptree.countSubnodes();
+		double[][] X = new double[ lad.size() ][ nodecount ];
+		for( int k = 0; k < nodecount; k++ ) {
+			for( int i = 0; i < lad.size(); i++ ) {
+				
+			}
+		}
+		
+		return X;
+	}
+	
+	public Node neighborJoin( double[] corrarr, List<String> corrInd, Node guideTree, boolean rootTree, boolean parseName ) {
+		Node retnode = new Node();
+		try {
+			List<Node> nodes;
+			int len = corrInd.size();
+			if( guideTree != null ) {
+				nodes = this.getLeaves( guideTree );
+				int c = 0;
+				for( String s : corrInd ) {
+					int i = c;
+					while( !s.equals( nodes.get(i).getName() ) ) i++;
+					
+					Node tnode = nodes.get(c);
+					nodes.set( c, nodes.get(i) );
+					nodes.set( i, tnode );
+					
+					c++;
+				}
+			} else {
+				nodes = new ArrayList<Node>();
+				for( String name : corrInd ) {
+					Node n = new Node( name, parseName );
+					nodes.add( n );
+				}
+			}
+			
+			double[] dmat = corrarr; //new double[len*len];
+			double[] u = new double[len];
+			//System.arraycopy(corrarr, 0, dmat, 0, len*len);
+			while( len > 2 ) {
+				//System.err.println( "trying " + len + " size is " + nodes.size() );
+				for ( int i = 0; i < len; i++ ) {
+					u[i] = 0;
+					for ( int j = 0; j < len; j++ ) {
+						if( i != j ) {
+							double dval = dmat[i*len+j];
+							if( Double.isNaN( dval ) ) {
+								System.err.println("erm");
+							}
+							u[i] += dval;
+						}
+					}
+					u[i] /= len-2;
+				}
+				
+				int imin = 0;
+				int jmin = 1;
+				double dmin = Double.MAX_VALUE;
+				
+				if( guideTree == null ) {
+					for ( int i = 0; i < len-1; i++ ) {
+						for ( int j = i+1; j < len; j++ ) {
+							//if( i != j ) {
+								double val = dmat[i*len+j] - u[i] - u[j];
+								//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+								if( val < dmin ) {
+									dmin = val;
+									imin = i;
+									jmin = j;
+								}
+							//}
+						}
+					}
+				} else {
+					for ( int i = 0; i < len-1; i++ ) {
+						for ( int j = i+1; j < len; j++ ) {
+							Node iparent = nodes.get( i ).getParent();
+							Node jparent = nodes.get( j ).getParent();
+							if( iparent == jparent ) {
+								double val = dmat[i*len+j] - u[i] - u[j];
+								//if( dmat[i*len+j] < 50 ) System.err.println("euff " + val + " " + i + " " + j + "  " + dmat[i*len+j] );
+								if( val < dmin ) {
+									dmin = val;
+									imin = i;
+									jmin = j;
+								}
+							}
+						}
+					}
+				}
+				
+				//System.err.println( dmat[imin*len+jmin] );
+				double vi = (dmat[imin*len+jmin]+u[imin]-u[jmin])/2.0;
+				double vj = (dmat[imin*len+jmin]+u[jmin]-u[imin])/2.0;
+				
+				Node parnode;
+				Node nodi = nodes.get( imin );
+				Node nodj = nodes.get( jmin );
+				if( guideTree == null ) {
+					parnode = new Node();
+					parnode.addNode( nodi, vi );
+					parnode.addNode( nodj, vj );
+				} else {
+					parnode = nodi.getParent(); 
+					nodi.seth( vi );
+					nodj.seth( vj );
+				}
+				
+				if( imin > jmin ) {
+					nodes.remove(imin);
+					nodes.remove(jmin);
+				} else {
+					nodes.remove(jmin);
+					nodes.remove(imin);
+				}
+				nodes.add( parnode );
+				
+				double[] dmatmp = new double[(len-1)*(len-1)];
+				int k = 0;
+				//boolean done = false;
+				for( int i = 0; i < len; i++ ) {
+					if( i != imin && i != jmin ) {
+						for( int j = 0; j < len; j++ ) {
+							if( j != imin && j != jmin ) {
+								/*if( k >= dmatmp.length ) {
+									System.err.println();
+								}*/
+								/*if( k >= dmatmp.length ) {
+									System.err.println("ok");
+								}*/
+								dmatmp[k] = dmat[i*len+j];
+								k++;
+							}
+						}
+						
+						k++;
+						
+						//done = true;
+					}
+				}
+				k = 0;
+				for( int i = 0; i < len; i++ ) {
+					if( i != imin && i != jmin ) {
+						dmatmp[((k++) + 1)*(len-1)-1] = (dmat[imin*len+i] + dmat[jmin*len+i] - dmat[imin*len+jmin])/2.0;
+					}
+				}
+				k = 0;
+				for( int i = 0; i < len; i++ ) {
+					if( i != imin && i != jmin ) {
+						dmatmp[(len-2)*(len-1)+(k++)] = (dmat[i*len+imin] + dmat[i*len+jmin] - dmat[jmin*len+imin])/2.0;
+					}
+				}
+				len--;
+				dmat = dmatmp;
+				
+				//System.err.println( "size is " + nodes.size() );
+			}
+			
+			if( rootTree ) {
+				retnode.addNode( nodes.get(0), dmat[1] );
+				retnode.addNode( nodes.get(1), dmat[2] );
+			} else {
+				retnode = nodes.get(0);
+				retnode.seth(0);
+				retnode.setParent( null );
+				retnode.addNode( nodes.get(1), dmat[1]+dmat[2] );
+			}
+			nodes.clear();
+		} catch( Exception e ) {
+			e.printStackTrace();
+			//console( e.getMessage() );
+		}
+		
+		retnode.countLeaves();
+		return retnode;
 	}
 	
 	public Node getNode() {
@@ -113,21 +399,246 @@ public class TreeUtil {
 		currentNode = node;
 	}
 	
+	public class NodeSet implements Comparable<NodeSet> {
+		public NodeSet( Set<String> nodes ) {
+			this.nodes = nodes;
+			//this.count = count;
+		}
+		
+		Set<String>					nodes;
+		Map<String,List<Double>>	leaveHeightMap = new HashMap<String,List<Double>>();
+		//Map<String,List<Double>>	leaveHeightMap = new HashMap<String,List<Double>>();
+		List<Double> 				count = new ArrayList<Double>();
+		List<Double> 				boots = new ArrayList<Double>();
+		
+		public int getCount() {
+			return count.size();
+		}
+		
+		public Set<String> getNodes() {
+			return nodes;
+		}
+		
+		public void addLeaveHeight( String name, double h ) {
+			List<Double>	leaveHeights;
+			if( leaveHeightMap.containsKey(name) ) {
+				leaveHeights = leaveHeightMap.get( name );
+			} else {
+				leaveHeights = new ArrayList<Double>();
+				leaveHeightMap.put(name, leaveHeights);
+			}
+			leaveHeights.add( h );
+		}
+		
+		public double getAverageLeaveHeight( String name ) {
+			if( leaveHeightMap.containsKey( name ) ) {
+				List<Double> dlist = leaveHeightMap.get( name );
+				
+				double avg = 0.0;
+				
+				for( double d : dlist ) {
+					avg += d;
+				}
+				
+				avg /= dlist.size();
+				return avg;
+			}
+			return -1.0;
+		}
+		
+		public void addHeight( double h ) {
+			//if( count == null ) count = new ArrayList<Double>();
+			count.add( h );
+		}
+		
+		public void addBootstrap( double h ) {
+			//if( count == null ) count = new ArrayList<Double>();
+			boots.add( h );
+		}
+		
+		public double getAverageHeight() {
+			double avg = 0.0;
+			
+			for( double d : count ) {
+				avg += d;
+			}
+			
+			avg /= count.size();
+			return avg;
+		}
+		
+		public double getAverageBootstrap() {
+			double avg = 0.0;
+			
+			for( double d : boots ) {
+				avg += d;
+			}
+			
+			avg /= boots.size();
+			return avg;
+		}
+		
+		@Override
+		public int compareTo(NodeSet o) {
+			int val = o.count.size() - count.size();
+			if( val == 0 ) return o.nodes.size() - nodes.size(); 
+			else return val;
+		}
+	};
+	
 	public class Node {
 		String 		name;
+		String		id;
 		String		meta;
 		int			metacount;
 		private double		h;
 		private double		h2;
+		private double		bootstrap;
 		String		color;
 		List<Node>	nodes;
 		int			leaves = 0;
 		Node		parent;
+		int			comp = 0;
+		double		fontsize = -1.0;
+		double		framesize = -1.0;
+		double		frameoffset = -1.0;
 		
 		double		canvasx;
 		double		canvasy;
 		
 		String		collapsed = null;
+		boolean		selected = false;
+		
+		public boolean isLeaf() {
+			return nodes == null || nodes.size() == 0;
+		}
+		
+		public Set<String> getLeaveNames() {
+			Set<String>	ret = new HashSet<String>();
+			
+			List<Node> nodes = this.getNodes();
+			if( nodes != null && nodes.size() > 0 ) {
+				for( Node n : nodes ) {
+					ret.addAll( n.getLeaveNames() );
+				}
+				if( nodes.size() == 1 ) ret.add( this.getName() );
+			} else ret.add( this.getName() );
+			
+			return ret;
+		}
+		
+		public Node findNode( String id ) {
+			if( id.equals( this.id ) ) {
+				return this;
+			} else {
+				for( Node n : this.nodes ) {
+					Node ret = n.findNode( id );
+					if( ret != null ) {
+						return ret;
+					}
+				}
+			}
+			return null;
+		}
+		
+		public Node getOtherChild( Node child ) {
+			if( nodes != null && nodes.size() > 0 ) {
+				int i = nodes.indexOf( child );
+				return i == 0 ? nodes.get(1) : nodes.get(0);
+			}
+			return null;
+		}
+		
+		public Node firstLeaf() {
+			Node res = null;
+			if( nodes == null || nodes.size() == 0 ) {
+				res = this;
+			} else {
+				for( Node subn : nodes ) {
+					res = subn.firstLeaf();
+					break;
+				}
+			}
+			return res;
+		}
+		
+		public Set<String> nodeCalc( List<Set<String>>	ls ) {
+			Set<String>	s = new HashSet<String>();
+			if( nodes == null || nodes.size() == 0 ) {
+				s.add( id );
+			} else {
+				for( Node subn : nodes ) {
+					Set<String> set = subn.nodeCalc( ls );
+					s.addAll( set );
+				}
+				ls.add( s );
+			}
+			return s;
+		}
+		
+		public Set<String> nodeCalcMap( Map<Set<String>,NodeSet>	ls ) {
+			Set<String>	s = new HashSet<String>();
+			if( nodes == null || nodes.size() == 0 ) {
+				s.add( id );
+			} else {
+				for( Node subn : nodes ) {
+					Set<String> set = subn.nodeCalcMap( ls );
+					s.addAll( set );
+				}
+				if( nodes.size() == 1 ) s.add( id );
+				
+				NodeSet	heights;
+				if( ls.containsKey( s ) ) {
+					heights = ls.get( s );
+					//ls.put( s, ls.get(s)+1 );
+				} else {
+					heights = new NodeSet( s );
+					ls.put( s, heights );
+				}
+				for( Node subn : nodes ) {
+					if( subn.isLeaf() ) {
+						//System.err.println( subn.getName() + "  " + subn.geth() );
+						heights.addLeaveHeight( subn.getName(), subn.geth() );
+					}
+				}
+				heights.addHeight( this.geth() );
+				
+				double bt = this.getBootstrap();
+				if( bt > 0.0 ) {
+					/*if( s.size() == 2 && s.contains("t.scotoductusSA01") ) {
+						System.err.println( "bootstrap " + s + "  " + this.getBootstrap() );
+					}*/
+					heights.addBootstrap( bt );
+				} else heights.addBootstrap( 1.0 );
+			}
+			return s;
+		}
+		
+		public Set<String> leafIdSet() {
+			Set<String> lidSet = new HashSet<String>();
+			
+			if( nodes == null || nodes.size() == 0 ) {
+				lidSet.add( id );
+			} else {
+				for( Node subn : nodes ) {
+					lidSet.addAll( subn.leafIdSet() );
+				}
+			}
+			
+			return lidSet;
+		}
+		
+		public String getId() {
+			return id;
+		}
+		
+		public void setSelected( boolean selected ) {
+			this.selected = selected;
+		}
+		
+		public boolean isSelected() {
+			return this.selected;
+		}
 		
 		public boolean isCollapsed() {
 			return collapsed != null;
@@ -146,9 +657,18 @@ public class TreeUtil {
 			metacount = 0;
 		}
 		
+		public Node( String name, boolean parse ) {
+			this();
+			this.setName( name, parse );
+			/*this.name = name;
+			this.id = name;*/
+		}
+		
 		public Node( String name ) {
 			this();
-			this.name = name;
+			this.setName( name, true );
+			/*this.name = name;
+			this.id = name;*/
 		}
 		
 		public void setCanvasLoc( double x, double y ) {
@@ -164,6 +684,10 @@ public class TreeUtil {
 			return canvasy;
 		}
 		
+		public double getBootstrap() {
+			return bootstrap;
+		}
+		
 		public double geth2() {
 			return h2;
 		}
@@ -172,12 +696,47 @@ public class TreeUtil {
 			return h;
 		}
 		
+		public void setBootstrap( double bootstrap ) {
+			this.bootstrap = bootstrap;
+		}
+		
 		public void seth( double h ) {
 			this.h = h;
 		}
 		
 		public void seth2( double h2 ) {
 			this.h2 = h2;
+		}
+		
+		public String toStringWoLengths() {
+			String str = "";
+			if( nodes.size() > 0 ) {
+				str += "(";
+				int i = 0;
+				
+				/*String n1 = nodes.get(0).toStringSortedWoLengths();
+				if( nodes.size() > 1 ) {
+					String n2 = nodes.get(1).toStringSortedWoLengths();
+					if( n1.compareTo( n2 ) > 0 ) {
+						str += n2+","+n1+")";
+					} else {
+						str += n1+","+n2+")";
+					}
+				} else {
+					str += n1+")";
+				}*/
+				for( i = 0; i < nodes.size()-1; i++ ) {
+					str += nodes.get(i).toStringWoLengths()+",";
+				}
+				str += nodes.get(i).toStringWoLengths()+")";
+			}
+			
+			if( meta != null && meta.length() > 0 ) {
+				if( name != null && name.length() > 0 ) str += "'"+name+";"+meta+"'";
+				else str += "'"+meta+"'";
+			} else if( name != null && name.length() > 0 ) str += name;
+			
+			return str;
 		}
 		
 		public String toString() {
@@ -193,13 +752,34 @@ public class TreeUtil {
 			
 			if( meta != null && meta.length() > 0 ) {
 				//System.err.println("muuu " + meta);
-				if( name != null && name.length() > 0 ) str += "'"+name+";"+meta+"'";
-				else str += "'"+meta+"'";
-			} else if( name != null && name.length() > 0 ) str += name;
+				if( name != null && name.length() > 0 ) {
+					str += name;
+					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					String framestr = this.getFrameString();
+					if( framestr != null ) str += "{"+framestr+"}";
+					str += ";"+meta; //"'"+name+";"+meta+"'";
+				} else {
+					if( color != null && color.length() > 0 ) str += "["+color+"]";
+					String framestr = this.getFrameString();
+					if( framestr != null ) str += "{"+framestr+"}";
+					str += ";"+meta; //"'"+meta+"'";
+				}
+			} else if( name != null && name.length() > 0 ) {
+				str += name;
+				if( color != null && color.length() > 0 ) str += "["+color+"]";
+				String framestr = this.getFrameString();
+				if( framestr != null ) str += "{"+framestr+"}";
+				/*if( fontsize != -1.0 ) {
+					if( framesize == -1.0 ) str += "{"+fontsize+"}";
+					else str += "{"+fontsize+" "+framesize+"}";
+				}*/
+			}
 			
 			//if( h > 0.0 )
+			
 			str += ":"+h;
-			if( color != null && color.length() > 0 ) str += ":"+color;
+			// change: if( color != null && color.length() > 0 ) str += ":"+color;
+			
 			//else str += ":0.0";
 			
 			return str;
@@ -210,28 +790,146 @@ public class TreeUtil {
 		}
 		
 		public void addNode( Node node, double h ) {
-			nodes.add( node );
-			node.h = h;
+			if( !nodes.contains( node ) ) {
+				nodes.add( node );
+				node.h = h;
+				node.setParent( this );
+			}
 		}
 		
 		public void removeNode( Node node ) {
 			nodes.remove( node );
+			node.setParent( null );
 			
 			if( nodes.size() == 1 ) {
-				if( this.getParent().getNodes().remove( this ) ) {
+				Node parent = this.getParent();
+				if( parent != null && parent.getNodes().remove( this ) ) {
 					Node thenode = nodes.get(0);
 					thenode.seth( thenode.geth() + this.geth() );
-					this.getParent().getNodes().add( thenode );
+					
+					String hi = thenode.getName();
+					String lo = this.getName();
+					
+					if( hi != null && hi.length() > 0 && lo != null && lo.length() > 0 ) {
+						try {
+							double l = Double.parseDouble( lo );
+							double h = Double.parseDouble( hi );
+							
+							if( l > h ) thenode.setName( lo );
+						} catch( Exception e ) {};
+					}
+					
+					parent.getNodes().add( thenode );
+					thenode.setParent( parent );
 				}
 			}
 		}
 		
 		public void setName( String newname ) {
-			this.name = newname;
+			setName( newname, true );
+		}
+		
+		public void setName( String newname, boolean parse ) {
+			if( parse ) {
+				if( newname != null ) {
+					int fi = newname.indexOf(';');
+					if( fi == -1 ) {
+						int ci = newname.indexOf("[#");
+						int si = newname.indexOf("{");
+						if( ci == -1 ) {
+							if( si == -1 ) {
+								this.setName( newname, false );
+								this.setFontSize( -1.0 );
+							} else {
+								this.setName( newname.substring(0,si), false );
+								int se = newname.indexOf("}",si+1);
+								String mfstr = newname.substring(si+1,se);
+								String[] mfsplit = mfstr.split(" ");
+								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							}
+							this.setColor( null );
+						} else {
+							if( si == -1 ) {
+								this.setName( newname.substring(0,ci), false );
+								int ce = newname.indexOf("]",ci+1);
+								this.setColor( newname.substring(ci+1,ce) );
+								this.setFontSize( -1.0 );
+							} else {
+								this.setName( newname.substring(0,Math.min(ci, si)), false );
+								int ce = newname.indexOf("]",ci+1);
+								int se = newname.indexOf("}",si+1);
+								this.setColor( newname.substring(ci+1,ce) );
+								String mfstr = newname.substring(si+1,se);
+								String[] mfsplit = mfstr.split(" ");
+								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
+								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
+							}
+						}
+						this.id = this.name;
+						this.setMeta( null );
+					} else {
+						this.setName( newname.substring(0,fi) );
+						this.setMeta( newname.substring(fi+1) );
+					}
+				} else {
+					this.setName( newname, false );
+	 				this.setMeta( null );
+					this.setColor( null );
+				}
+			} else {
+				this.name = newname;
+				this.id = newname;
+				try {
+					double val = Double.parseDouble( newname );
+					this.setBootstrap( val );
+				} catch( Exception e ) {
+					
+				}
+			}
 		}
 		
 		public String getName() {
 			return name;
+		}
+		
+		public double getFontSize() {
+			return fontsize;
+		}
+		
+		public double getFrameSize() {
+			return framesize == -1.0 ? fontsize : framesize;
+		}
+		
+		public double getFrameOffset() {
+			return frameoffset;
+		}
+		
+		public String getFrameString() {
+			if( fontsize != -1.0 ) {
+				if( framesize != -1.0 ) {
+					if( frameoffset != -1.0 ) return fontsize+" " + framesize + " " + frameoffset;
+					return fontsize+" "+framesize;
+				} else {
+					return ""+fontsize;
+				}
+			}
+			
+			return null;
+		}
+		
+		public void setFontSize( double fs ) {
+			this.fontsize = fs;
+		}
+		
+		public void setFrameSize( double fs ) {
+			this.framesize = fs;
+		}
+		
+		public void setFrameOffset( double fo ) {
+			this.frameoffset = fo;
 		}
 		
 		public String getMeta() {
@@ -244,6 +942,22 @@ public class TreeUtil {
 		
 		public String getColor() {
 			return color;
+		}
+		
+		public void setColor( String color ) {
+			this.color = color;
+		}
+		
+		public int countSubnodes() {
+			int total = 0;
+			if( !isCollapsed() && nodes != null && nodes.size() > 0 ) {
+				for( Node node : nodes ) {
+					total += node.countLeaves();
+				}
+				total += nodes.size();
+			} else total = 1;
+			
+			return total;
 		}
 		
 		public int countLeaves() {
@@ -270,6 +984,16 @@ public class TreeUtil {
 			return val+1;
 		}
 		
+		public int countParentHeight() {
+			int val = 0;
+			Node parent = this.getParent();
+			while( parent != null ) {
+				val++;
+				parent = parent.getParent();
+			}
+			return val;
+		}
+		
 		public double getHeight() {
 			double h = this.geth();
 			double d = h + ((parent != null) ? parent.getHeight() : 0.0);
@@ -293,6 +1017,121 @@ public class TreeUtil {
 		public void setParent( Node parent ) {
 			this.parent = parent;
 		}
+	}
+	
+	public Node getValidNode( Set<String> s, Node n ) {
+		List<Node> subn = n.getNodes();
+		if( subn != null ) {
+			for( Node sn : subn ) {
+				Set<String> ln = sn.getLeaveNames();
+				if( ln.containsAll( s ) ) {
+					return getValidNode( s, sn );
+				}
+			}
+		}	
+		return n;
+	}
+	
+	public boolean isValidSet( Set<String> s, Node n ) {
+		if( n.countLeaves() > s.size() ) {
+			List<Node> subn = n.getNodes();
+			if( subn != null ) {
+				for( Node sn : subn ) {
+					Set<String> lns = sn.getLeaveNames();
+					int cntcnt = 0;
+					for( String ln : lns ) {
+						if( s.contains(ln) ) cntcnt++;
+					}
+					if( !(cntcnt == 0 || cntcnt == lns.size()) ) {
+						return false; 
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	public Node getConnectingParent( Node leaf1, Node leaf2 ) {
+		Set<Node> ns = new HashSet<Node>();
+		Node parent1 = leaf1.getParent();
+		while( parent1 != null ) {
+			ns.add( parent1 );
+			parent1 = parent1.getParent();
+		}
+		
+		Node parent2 = leaf2.getParent();
+		while( parent2 != null ) {
+			if( ns.contains( parent2 ) ) break;
+			parent2 = parent2.getParent();
+		}
+		
+		return parent2;
+	}
+	
+	public double[] getDistanceMatrix( List<Node> leaves ) {
+		double[] ret = new double[ leaves.size() * leaves.size() ];
+		
+		for( int i = 0; i < leaves.size(); i++ ) {
+			ret[i+i*leaves.size()] = 0.0;
+		}
+		
+		for( int i = 0; i < leaves.size(); i++ ) {
+			for( int k = i+1; k < leaves.size(); k++ ) {
+				Node leaf1 = leaves.get(i);
+				Node leaf2 = leaves.get(k);
+				Node parent = getConnectingParent(leaf1, leaf2);
+				double val = 0.0;
+				
+				Node par = leaf1.getParent();
+				while( par != parent ) {
+					val += leaf1.geth();
+					leaf1 = par;
+					par = leaf1.getParent();
+				}
+				val += leaf1.geth();
+				
+				par = leaf2.getParent();
+				while( par != parent ) {
+					val += leaf2.geth();
+					leaf2 = par;
+					par = leaf2.getParent();
+				}
+				val += leaf2.geth();
+				
+				ret[i+k*leaves.size()] = val;
+				ret[k+i*leaves.size()] = val;
+			}
+		}
+		
+		return ret;
+	}
+	
+	public List<Node> getLeaves( Node node ) {
+		List<Node>	ret = new ArrayList<Node>();
+		
+		List<Node> nodes = node.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			for( Node n : nodes ) {
+				ret.addAll( getLeaves( n ) );
+			}
+		} else ret.add( node );
+		
+		return ret;
+	}
+	
+	public List<Node> getSubNodes( Node node ) {
+		List<Node>	ret = new ArrayList<Node>();
+		
+		List<Node> nodes = node.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				ret.add( n );
+				ret.addAll( getSubNodes( n ) );
+			}
+		}
+		
+		return ret;
 	}
 	
 	public Node findNode( Node old, Node node ) {
@@ -532,6 +1371,10 @@ public class TreeUtil {
 		}
 	}
 	
+	public void setLoc( int newloc ) {
+		this.loc = newloc;
+	}
+	
 	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap, boolean clearParentNodes ) {
 		super();
 		loc = 0;
@@ -577,7 +1420,7 @@ public class TreeUtil {
 				collapseTree( resultnode, collapset, false );
 			}
 			
-			this.currentNode = resultnode;
+			this.setNode( resultnode );
 		} /*else {
 			System.err.println( str );
 		}*/
@@ -585,56 +1428,69 @@ public class TreeUtil {
 	
 	public void collapseTreeAdvanced( Node node, Collection<String> collapset ) {
 		if( node.nodes != null && node.nodes.size() > 0 ) {
+			if( node.nodes.size() == 1 ) {
+				Node parent = node.getParent();
+				if( parent.getNodes().remove( node ) ) {
+					Node thenode = node.nodes.get(0);
+					thenode.seth( thenode.geth() + node.geth() );
+					parent.getNodes().add( thenode );
+				}
+			}
+			
 			for( Node n : node.nodes ) {
 				collapseTreeAdvanced( n, collapset );
 			}
 			
 			String test = null;
 			int count = 0;
+			
 			boolean collapse = node.nodes.size() > 1;
-			for( Node n : node.nodes ) {
-				String nname = n.getName() != null ? n.getName() : "";
-				if( collapset == null || collapset.isEmpty() ) {
-					if( test == null ) {
-						test = nname;
-					} else if( test.length() == 0 || nname.length() == 0 || !(nname.contains(test) || test.contains(nname)) ) {
-						collapse = false;
-						break;
-					}
-				} else {
-					if( test == null ) {
-						for( String s : collapset ) {
-							if( nname.contains(s) ) {
-								test = s;
-								break;
-							}
-						}
-						
+			if( collapse ) {
+				for( Node n : node.nodes ) {
+					String nname = n.getName() != null ? n.getName() : "";
+					if( collapset == null || collapset.isEmpty() ) {
 						if( test == null ) {
-							test = "";
+							test = nname;
+						} else if( test.length() == 0 || nname.length() == 0 || !nname.equals(test) ) { //!(nname.contains(test) || test.contains(nname)) ) {
+							test = test.length() > nname.length() ? test : nname;
+							collapse = false;
+							break;
 						}
-					} else if( !nname.contains(test) ) {
-						collapse = false;
-						break;
+					} else {
+						if( test == null ) {
+							for( String s : collapset ) {
+								if( nname.contains(s) ) {
+									test = s;
+									break;
+								}
+							}
+							
+							if( test == null ) {
+								test = "";
+							}
+						} else if( !nname.contains(test) ) {
+							collapse = false;
+							break;
+						}
 					}
-				}
-				
-				String meta = n.getMeta();
-				try {
-					if( meta != null && meta.length() > 0 ) {
-						int mi = Integer.parseInt( meta );
-						count += mi;
-					} else count++; 
-				} catch( Exception e ) {
-					count++;
+					
+					String meta = n.getMeta();
+					try {
+						if( meta != null && meta.length() > 0 ) {
+							int mi = Integer.parseInt( meta );
+							count += mi;
+						} else count++; 
+					} catch( Exception e ) {
+						count++;
+					}
 				}
 			}
 			
 			if( collapse && (collapset == null || collapset.contains(test)) ) {
 				node.nodes.clear();
 				//node.nodes = null;
-				node.setMeta( Integer.toString(count) );
-				node.setName( test );
+				//node.setMeta( Integer.toString(count) );
+				node.setName( test+";"+Integer.toString(count) );
 			}
 		}
 	}
@@ -657,6 +1513,90 @@ public class TreeUtil {
 				for( Node n : node.nodes ) {
 					collapseTreeSimple( n, collapset );
 				}
+			}
+		}
+	}
+	
+	public void nameParentNodes( Node node ) {
+		if( node.nodes != null && node.nodes.size() > 0 ) {
+			for( Node n : node.nodes ) {
+				nameParentNodes( n );
+			}
+			boolean check = true;
+			String sel = null;
+			String col = null;
+			for( Node n : node.nodes ) {
+				if( n.getName() != null && n.getName().length() > 0 ) {
+					if( sel == null ) {
+						sel = n.getName();
+						col = n.getColor();
+					} else {
+						if( !sel.equals( n.getName() ) ) {
+							check = false;
+							break;
+						}
+					}
+				} else check = false;
+			}
+			if( check ) {
+				for( Node n : node.nodes ) {
+					if( n.nodes != null && n.nodes.size() > 0 ) {
+						n.setName( null );
+					}
+				}
+				String name = (col == null || col.length() == 0) ? sel : sel+"["+col+"]{1.0 3.0 1.00}";
+				node.setName( name );
+			}
+		}
+	}
+	
+	public void nameParentNodesMeta( Node node ) {
+		if( node.nodes != null && node.nodes.size() > 0 ) {
+			for( Node n : node.nodes ) {
+				nameParentNodesMeta( n );
+			}
+			boolean check = true;
+			String sel = null;
+			//String col = null;
+			for( Node n : node.nodes ) {
+				int c1 = n.countMaxHeight();
+				/*if( c1 > 4 && n.getMeta() != null && n.getMeta().contains("aquat") ) {
+					System.err.println();
+				}*/
+				if( n.getMeta() != null && n.getMeta().length() > 0 ) {
+					if( sel == null ) {
+						sel = n.getMeta();
+						int i1 = sel.indexOf('[');
+						if( i1 == -1 ) i1 = sel.length();
+						int i2 = sel.indexOf('{');
+						if( i2 == -1 ) i2 = sel.length();
+						int i = Math.min(i1, i2);
+						sel = sel.substring(0, i);
+						//col = n.getColor();
+					} else {						
+						String nmeta = n.getMeta();
+						int i1 = nmeta.indexOf('[');
+						if( i1 == -1 ) i1 = nmeta.length();
+						int i2 = nmeta.indexOf('{');
+						if( i2 == -1 ) i2 = nmeta.length();
+						int i = Math.min(i1, i2);
+						String str = nmeta.substring(0, i);
+						
+						if( !sel.equals( str ) ) {
+							check = false;
+							break;
+						}
+					}
+				} else check = false;
+			}
+			if( check ) {
+				for( Node n : node.nodes ) {
+					if( n.nodes != null && n.nodes.size() > 0 ) {
+						n.setMeta( "" );
+					}
+				}
+				String meta = sel+"{1.5 2.0 1.10}"; //(col == null || col.length() == 0) ? sel : sel+"["+col+"]";
+				node.setMeta( meta );
 			}
 		}
 	}
@@ -690,11 +1630,11 @@ public class TreeUtil {
 		return ret;
 	}
 	
-	public double reroot( Node oldnode, Node newnode ) {
+	public double rerootRecur( Node oldnode, Node newnode ) {
 		for( Node res : oldnode.nodes ) {
 			double b;
 			if( res == newnode ) b = res.h;
-			else b = reroot( res, newnode );
+			else b = rerootRecur( res, newnode );
 			
 			if( b != -1 ) {
 				res.nodes.add( oldnode );
@@ -705,7 +1645,7 @@ public class TreeUtil {
 				oldnode.h = b;
 				oldnode.nodes.remove( res );
 				
-				currentNode = newnode;
+				setNode( newnode );
 				currentNode.countLeaves();
 				
 				return tmph;
@@ -713,6 +1653,70 @@ public class TreeUtil {
 		}
 		
 		return -1;
+	}
+	
+	public void recursiveReroot() {
+		
+	}
+	
+	public void reroot( Node newnode ) {		
+		rerootRecur(currentNode, newnode);
+		setNode( newnode );
+		currentNode.countLeaves();
+		
+		/*double h = newnode.h;
+		
+		Node formerparent = newnode.getParent();
+		if( formerparent != null ) {
+			Node nextparent = formerparent.getParent();
+			
+			formerparent.nodes.remove( newnode );
+			Node newroot = new Node();
+			newroot.addNode( newnode, h/2.0 );
+			
+			Node child = formerparent;
+			Node parent = nextparent;
+			
+			if( parent == null ) {
+				for( Node nn : child.getNodes() ) {
+					if( nn != child ) {
+				//Node erm = child.getNodes().get(0) == newnode ? child.getNodes().get(1) : child.getNodes().get(0);
+						newroot.addNode(nn, newnode.h+nn.h);
+					}
+				}
+			} else {
+				newroot.addNode( formerparent, h/2.0 );
+			}
+			
+			while( parent != null ) {
+				parent.nodes.remove( child );
+				
+				Node nparent = parent.getParent();
+				if( nparent != null ) {
+					child.addNode(parent, child.h);
+				} else {
+					//child.addNode(parent, child.h);
+					
+					for( Node nn : parent.getNodes() ) {
+						if( nn != child ) {
+						//Node erm = parent.getNodes().get(0) == child ? parent.getNodes().get(1) : parent.getNodes().get(0);
+							child.addNode( nn, child.h+nn.h );
+						}
+					}
+					break;
+				}
+				
+				child = parent;
+				parent = nparent;
+			}
+		
+			//newparent.addNode( formerparent, h/2.0 );
+			//newnode.setParent( newparent );
+			
+			currentNode = newroot;
+			//console( currentNode.nodes.size() );
+			currentNode.countLeaves();
+		}*/
 	}
 	
 	public double getminh2() {
@@ -759,6 +1763,54 @@ public class TreeUtil {
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
 		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null, false );
+	}
+	
+	public void softReplaceNames( Node node, Map<String,String> namesMap ) {
+		List<Node> nodes = node.getNodes();
+		for( String key : namesMap.keySet() ) {
+			//if( node.getName() != null && node.getName().length() > 0 ) 
+			//	System.err.println( "blehehe " + node.getName() );
+			if( node.getName() != null && node.getName().contains( key ) ) {
+				node.name = namesMap.get( key );
+			}
+		}
+			//if( namesMap.containsKey( node.getName() ) ) node.setName( namesMap.get(node.getName()) );
+		for( Node n : nodes ) {
+			softReplaceNames(n, namesMap);
+		}
+	}
+	
+	public void replaceNames( Node node, Map<String,String> namesMap ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes == null || nodes.size() == 0 ) {
+			if( namesMap.containsKey( node.getName() ) ) node.setName( namesMap.get(node.getName()) );
+		} else {
+			for( Node n : nodes ) {
+				replaceNames(n, namesMap);
+			}
+		}
+	}
+	
+	public void swapNamesMeta( Node node ) {
+		List<Node> nodes = node.getNodes();
+		if( nodes != null ) {
+			for( Node n : nodes ) {
+				swapNamesMeta( n );
+			}
+		}
+		String meta = node.getMeta();
+		String name = node.getName() == null ? "" : node.getName();
+		name = node.getColor() == null ? name : (name + "["+node.getColor()+"]");
+		name = node.getFrameString() == null ? name : name + "{" + node.getFrameString() + "}";
+		if( meta != null && meta.length() > 0 ) {
+			if( name != null && name.length() > 0 ) {
+				node.setName( meta+";"+name );
+			} else {
+				node.setName( meta );
+			}
+		} else {
+			node.setName( ";"+name );
+		}
 	}
 	
 	int metacount = 0;
@@ -836,7 +1888,7 @@ public class TreeUtil {
 	double minh2 = Double.MAX_VALUE;
 	double maxh2 = 0.0;
 	int loc;
-	private Node parseTreeRecursive( String str, boolean inverse ) {
+	public Node parseTreeRecursive( String str, boolean inverse ) {
 		Node ret = new Node();
 		Node node = null;
 		while( loc < str.length()-1 && str.charAt(loc) != ')' ) {
@@ -891,13 +1943,31 @@ public class TreeUtil {
 				if( ci != -1 ) {
 					String[] split;
 					int i = code.lastIndexOf("'");
+					String name;
 					if( i > 0 ) {
 						split = code.substring(i, code.length()).split(":");
-						node.name = code.substring(0, i+1);
+						name = code.substring(0, i+1);
 					} else {
 						split = code.split(":");
-						node.name = split[0];	
+						name = split[0];
 					}
+					
+					/*int coli = name.indexOf("[#");
+					if( coli != -1 ) {
+						int ecoli = name.indexOf("]", coli+2);
+						node.color = name.substring(coli+1,ecoli);
+						name = name.substring(0, coli);
+					}
+					
+					int idx = name.indexOf(';');
+					if( idx == -1 ) {
+						node.name = name;
+					} else {
+						node.name = name.substring(0,idx);
+						node.meta = name.substring(idx+1);
+					}
+					node.id = node.name;*/
+					node.setName( name );
 					//extractMeta( node, mapmap );
 					
 					if( split.length > 2 ) {
@@ -924,20 +1994,27 @@ public class TreeUtil {
 								
 							}
 						}
-					} else node.color = null;
+					}// else node.color = null;
 					
 					String dstr = split[1].trim();
-					String dstr2 = "0";
+					/*String dstr2 = "";
 					if( dstr.contains("[") ) {
-						int start = split[1].indexOf('[');
-						int stop = split[1].indexOf(']');
+						int start = dstr.indexOf('[');
+						int stop = dstr.indexOf(']');
 						dstr2 = dstr.substring( start+1, stop );
 						dstr = dstr.substring( 0, start );
-					}
+					}*/
 					
 					try {
 						node.h = Double.parseDouble( dstr );
-						node.h2 = Double.parseDouble( dstr2 );
+						/*if( dstr2.length() > 0 ) {
+							node.h2 = Double.parseDouble( dstr2 );
+							if( node.name == null || node.name.length() == 0 ) {
+								node.setName( dstr2 );
+								/*node.name = dstr2; 
+								node.id = node.name;*
+							}
+						}*/
 					} catch( Exception e ) {
 						System.err.println();
 					}
@@ -948,7 +2025,16 @@ public class TreeUtil {
 					if( node.h2 < minh2 ) minh2 = node.h2;
 					if( node.h2 > maxh2 ) maxh2 = node.h2;
 				} else {
-					node.name = code.replaceAll("'", "");;
+					node.setName( code );
+					/*int idx = code.indexOf(';');
+					if( idx == -1 ) {
+						node.name = code;
+					} else {
+						node.name = code.substring(0,idx);
+						node.meta = code.substring(idx+1);
+					}
+					//node.name = code; //code.replaceAll("'", "");
+					node.id = node.name;*/
 				}
 				loc = end;
 				
@@ -1004,7 +2090,7 @@ public class TreeUtil {
 				//loc = end+1;
 			}
 			
-			while( end < str.length()-1 && n != ',' && n != ';' && n != ')' ) {
+			while( end < str.length()-1 && n != ',' && n != ')' ) {
 				n = str.charAt(++end);
 			}
 			String code = str.substring( loc, end );
@@ -1014,10 +2100,10 @@ public class TreeUtil {
 				int i = code.lastIndexOf("'");
 				if( i > 0 ) {
 					split = code.substring(i, code.length()).split(":");
-					ret.name = code.substring(0, i+1);
+					ret.setName( code.substring(0, i+1) );
 				} else {
 					split = code.split(":");
-					ret.name = split.length > 0 ? split[0] : "";
+					ret.setName( split.length > 0 ? split[0] : "" );
 				}
 				
 				//String[] split = code.split(":");
@@ -1031,25 +2117,30 @@ public class TreeUtil {
 					} catch( Exception e ) {
 						
 					}
-				} else ret.color = null;
+				}// else ret.color = null;
 				String dstr = split.length > 1 ? split[1].trim() : "0";
-				String dstr2 = "0";
+				/*String dstr2 = "";
 				if( dstr.contains("[") ) {
 					int start = split[1].indexOf('[');
 					int stop = split[1].indexOf(']');
 					dstr2 = dstr.substring( start+1, stop );
 					dstr = dstr.substring( 0, start );
-				}
+				}*/
 				try {
 					ret.h = Double.parseDouble( dstr );
-					ret.h2 = Double.parseDouble( dstr2 );
+					/*if( dstr2.length() > 0 ) {
+						ret.h2 = Double.parseDouble( dstr2 );
+						if( ret.name == null || ret.name.length() == 0 ) {
+							ret.setName( dstr2 );
+						}
+					}*/
 				} catch( Exception e ) {}
 				if( ret.h < minh ) minh = ret.h;
 				if( ret.h > maxh ) maxh = ret.h;
 				if( ret.h2 < minh2 ) minh2 = ret.h2;
 				if( ret.h2 > maxh2 ) maxh2 = ret.h2;
 			} else {
-				ret.name = code.replaceAll("'", "");
+				ret.setName( code.replaceAll("'", "") );
 			}
 			loc = end;
 		}
@@ -1066,4 +2157,38 @@ public class TreeUtil {
 		return use;
 	}
 	int cnt = 0;
+
+	public double nDistance(Node node1, Node node2) {
+		double ret = 0.0;
+		
+		List<Set<String>>	nlist1 = new ArrayList<Set<String>>();
+		node1.nodeCalc( nlist1 );
+		
+		List<Set<String>>	nlist2 = new ArrayList<Set<String>>();
+		node2.nodeCalc( nlist2 );
+		
+		for( Set<String> s1 : nlist1 ) {
+			boolean found = false;
+			for( Set<String> s2 : nlist2 ) {
+				if( s1.size() == s2.size() && s1.containsAll( s2 ) ) {
+					found = true;
+					break;
+				}
+			}
+			if( !found ) ret += 1.0;
+		}
+		
+		for( Set<String> s2 : nlist2 ) {
+			boolean found = false;
+			for( Set<String> s1 : nlist1 ) {
+				if( s1.size() == s2.size() && s1.containsAll( s2 ) ) {
+					found = true;
+					break;
+				}
+			}
+			if( !found ) ret += 1.0;
+		}
+		
+		return ret;
+	}
 }

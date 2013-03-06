@@ -238,7 +238,7 @@ public class FacebookTree implements EntryPoint {
 					}
 				}
 			}
-			treeutil.neighborJoin( dvals, len, names );
+			treeutil.neighborJoin( dvals, names, null, true );
 			console( treeutil.getNode().toString() );
 			handleTree( treeutil );
 		} else {
@@ -614,7 +614,7 @@ public class FacebookTree implements EntryPoint {
 						Node newroot = recursiveReroot( root, x, y );
 						if( newroot != null ) {
 							newroot.setParent( null );
-							treeutil.reroot(root, newroot);
+							treeutil.reroot(newroot);
 							root = newroot;
 						}
 						

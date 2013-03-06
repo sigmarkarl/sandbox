@@ -2,8 +2,6 @@ package org.simmi.client;
 
 import java.util.Map;
 
-import org.simmi.shared.Chunk;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
@@ -14,4 +12,8 @@ public interface GreetingServiceAsync {
 	void getThermus( AsyncCallback<Map<String,String>> callback );
 	void saveSel(String name, String val, AsyncCallback<Map<String,String>> callback);
 	void getThermusFusion(AsyncCallback<String> callback);
+	void saveThermusSel(String name, String val, AsyncCallback<Map<String, String>> callback);
+	void saveSeq(Map<String,String> jsonstr, AsyncCallback<String> asyncCallback);
+	void fetchSeq(String include,
+			AsyncCallback<Map<String, String>> asyncCallback);
 }
