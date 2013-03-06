@@ -13,7 +13,6 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -116,6 +115,7 @@ public class Thermus implements EntryPoint {
 		ae.setAttribute("name", "thermusapplet");
 		//ae.setAttribute("codebase", "http://dl.dropbox.com/u/10024658/");
 		ae.setAttribute("codebase", "http://thermusgenes.appspot.com/");
+		//ae.setAttribute("codebase", "http://127.0.0.1:8888/");
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "distann.jnlp");
