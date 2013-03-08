@@ -1497,7 +1497,7 @@ public class TreeUtil {
 		}*/
 	}
 	
-	public void collapseTreeAdvanced( Node node, Collection<String> collapset ) {
+	public void collapseTreeAdvanced( Node node, Collection<String> collapset, boolean simple ) {
 		if( node.nodes != null && node.nodes.size() > 0 ) {
 			if( node.nodes.size() == 1 ) {
 				Node parent = node.getParent();
@@ -1509,7 +1509,7 @@ public class TreeUtil {
 			}
 			
 			for( Node n : node.nodes ) {
-				collapseTreeAdvanced( n, collapset );
+				collapseTreeAdvanced( n, collapset, simple );
 			}
 			
 			String test = null;
@@ -1518,16 +1518,8 @@ public class TreeUtil {
 			boolean collapse = node.nodes.size() > 1;
 			if( collapse ) {
 				for( Node n : node.nodes ) {
-					String nname = n.getName() != null ? n.getName() : "";
-					String color = n.getColor();
-					if( color != null ) {
-						nname += "["+color+"]";
-					}
-					String frame = n.getFrameString();
-					if( frame != null ) {
-						nname += "{"+frame+"}";
-					}
-					if( collapset == null || collapset.isEmpty() ) {
+					if( simple ) {
+						String nname = n.toStringWoLengths();
 						if( test == null ) {
 							test = nname;
 						} else if( test.length() == 0 || nname.length() == 0 || !nname.equals(test) ) { //!(nname.contains(test) || test.contains(nname)) ) {
@@ -1536,31 +1528,50 @@ public class TreeUtil {
 							break;
 						}
 					} else {
-						if( test == null ) {
-							for( String s : collapset ) {
-								if( nname.contains(s) ) {
-									test = s;
-									break;
-								}
-							}
-							
-							if( test == null ) {
-								test = "";
-							}
-						} else if( !nname.contains(test) ) {
-							collapse = false;
-							break;
+						String nname = n.getName() != null ? n.getName() : "";
+						String color = n.getColor();
+						if( color != null ) {
+							nname += "["+color+"]";
 						}
-					}
-					
-					String meta = n.getMeta();
-					try {
-						if( meta != null && meta.length() > 0 ) {
-							int mi = Integer.parseInt( meta );
-							count += mi;
-						} else count++;
-					} catch( Exception e ) {
-						count++;
+						String frame = n.getFrameString();
+						if( frame != null ) {
+							nname += "{"+frame+"}";
+						}
+						if( collapset == null || collapset.isEmpty() ) {
+							if( test == null ) {
+								test = nname;
+							} else if( test.length() == 0 || nname.length() == 0 || !nname.equals(test) ) { //!(nname.contains(test) || test.contains(nname)) ) {
+								test = test.length() > nname.length() ? test : nname;
+								collapse = false;
+								break;
+							}
+						} else {
+							if( test == null ) {
+								for( String s : collapset ) {
+									if( nname.contains(s) ) {
+										test = s;
+										break;
+									}
+								}
+								
+								if( test == null ) {
+									test = "";
+								}
+							} else if( !nname.contains(test) ) {
+								collapse = false;
+								break;
+							}
+						}
+						
+						String meta = n.getMeta();
+						try {
+							if( meta != null && meta.length() > 0 ) {
+								int mi = Integer.parseInt( meta );
+								count += mi;
+							} else count++;
+						} catch( Exception e ) {
+							count++;
+						}
 					}
 				}
 			}
@@ -1569,7 +1580,8 @@ public class TreeUtil {
 				node.nodes.clear();
 				//node.nodes = null;
 				//node.setMeta( Integer.toString(count) );
-				node.setName( test+";"+Integer.toString(count) );
+				if( simple ) node.setName( test );
+				else node.setName( test+";"+Integer.toString(count) );
 			}
 		}
 	}
