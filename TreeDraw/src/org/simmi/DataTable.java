@@ -26,22 +26,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,7 +54,6 @@ import java.util.TreeMap;
 import javax.jnlp.ClipboardService;
 import javax.jnlp.FileContents;
 import javax.jnlp.FileOpenService;
-import javax.jnlp.FileSaveService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
@@ -1160,6 +1154,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						}
 					}
 					
+					cntr = countryShort( cntr );
+					
 					cntr = cntr.replace('_', ' ');
 					int idx = cntr.indexOf('(');
 					if( idx > 0 ) {
@@ -1202,8 +1198,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					for( String key : namesMap.keySet() ) {
 						if( country != null && country.contains(key) ) {
 							country = namesMap.get( key );
+							break;
 						}
 					}
+					
+					country = countryShort( country );
 					
 					if( country != null && country.length() > 0 ) {
 						String color;
@@ -1565,46 +1564,66 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 	}
 	
-	public void getSpecLoc( List<Object[]> rowList, String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse, boolean erm ) {
+	public String countryFuck( String country ) {
+		if( country.contains("Zealand") ) {
+			country = "New Zealand";
+		} else if( country.contains("Hawaii") ) {
+			country = "Hawaii";
+		} else if( country.contains("Murrieta") ) {
+			country = "USA:California";
+		} else if( !country.startsWith("USA") ) {
+			int i = country.indexOf(':');
+			if( i == -1 ) i = country.length();
+			country = country.substring(0, i);
+			i = country.indexOf(' ');
+			if( i == -1 ) i = country.length();
+			country = country.substring(0, i);
+		} else {
+			if( country.contains("Gulf") ) {
+				country = "USA:Gulf of Mexico";
+			} else if( country.contains("Mexico") ) {
+				country = "USA:New Mexico";
+			} else if( country.contains("Grass") ) {
+				country = "USA:Nevada";
+			} else if( country.contains("Alvord") || country.contains("OR") ) {
+				country = "USA:Oregon";
+			} else if( country.contains("California") || country.contains("CA") ) {
+				country = "USA:California";
+			} else if( country.contains("Yellowstone") ) {
+				country = "USA:Yellowstone";
+			} else {
+				int i = country.indexOf(' ');
+				if( i == -1 ) i = country.length();
+				country = country.substring(0, i);
+			}
+		}
+		return country;
+	}
+	
+	public String countryShort( String country ) {
+		 if( country.contains("Azores") ) {
+				country = "Azores";
+		} else if( country.contains("Greece") || country.contains("Turkey") || country.contains("Italy")  || country.contains("Bulgaria") || country.contains("Hungary") || country.contains("Portugal") || country.contains("Switz") ) {
+			country = "Europe";
+		} else if( country.contains("Hawai") ) {
+			country = "Hawaii";
+		} else if( country.contains("USA") || country.contains("Yellowstone") ) {
+			country = "North-America";
+		} /*else if() {
+			
+		}*/
+		return country;
+	}
+	
+	public void getSpecLoc( List<Object[]> rowList, String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse, boolean erm, boolean shorter ) {
 		for( Object[] row : rowList ) {
 			String country = reverse ? (String)row[21] : (String)row[6];
 			if( erm ) {
 				int i = country.indexOf(',');
-				if( i == -1 ) i = country.length(); 
+				if( i == -1 ) i = country.length();
 				country = country.substring(0, i);
-				
-				if( country.contains("Zealand") ) {
-					country = "New Zealand";
-				} else if( country.contains("Hawaii") ) {
-					country = "Hawaii";
-				} else if( country.contains("Murrieta") ) {
-					country = "USA:California";
-				} else if( !country.startsWith("USA") ) {
-					i = country.indexOf(':');
-					if( i == -1 ) i = country.length();
-					country = country.substring(0, i);
-					i = country.indexOf(' ');
-					if( i == -1 ) i = country.length();
-					country = country.substring(0, i);
-				} else {
-					if( country.contains("Gulf") ) {
-						country = "USA:Gulf of Mexico";
-					} else if( country.contains("Mexico") ) {
-						country = "USA:New Mexico";
-					} else if( country.contains("Grass") ) {
-						country = "USA:Nevada";
-					} else if( country.contains("Alvord") || country.contains("OR") ) {
-						country = "USA:Oregon";
-					} else if( country.contains("California") || country.contains("CA") ) {
-						country = "USA:California";
-					} else if( country.contains("Yellowstone") ) {
-						country = "USA:Yellowstone";
-					} else {
-						i = country.indexOf(' ');
-						if( i == -1 ) i = country.length();
-						country = country.substring(0, i);
-					}
-				}
+				country = countryFuck( country );
+				if( shorter ) country = countryShort( country );
 			}
 			if( country != null && country.length() > 0 ) {
 				String species = (String)row[3];
@@ -2288,7 +2307,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( int r : rr ) {
 					selectedRowList.add( rowList.get( table.convertRowIndexToModel(r) ) );
 				}
-				getSpecLoc( selectedRowList, specs, specLoc, locSpec, geoLoc, true, false );
+				getSpecLoc( selectedRowList, specs, specLoc, locSpec, geoLoc, true, false, false );
 				
 				try {
 					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
@@ -2367,7 +2386,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
 				Map<String,String>				geoLoc = new HashMap<String,String>();
-				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, true, false );
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, true, false, false );
 				
 				try {
 					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
@@ -2452,8 +2471,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Map<String,Map<String,Long>>	locSimpSpec = new TreeMap<String,Map<String,Long>>();
 				
 				Map<String,String>				geoLoc = new HashMap<String,String>();
-				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, false, false );
-				getSpecLoc( rowList, specs, specSimpLoc, locSimpSpec, geoLoc, false, true );
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, false, false, false );
+				getSpecLoc( rowList, specs, specSimpLoc, locSimpSpec, geoLoc, false, true, false );
 				
 				Workbook wb = new XSSFWorkbook();
 				Sheet lSheet = wb.createSheet("Locations");
@@ -2813,6 +2832,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						double[] corr = new double[ currentserifier.lseq.size()*currentserifier.lseq.size() ];
 						Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, null, false, cantor, ent );
 						TreeUtil	tu = new TreeUtil();
+						
+						for( String str : corrInd ) {
+							System.err.println( str );
+						}
 						
 						Node n = tu.neighborJoin(corr, corrInd, null, false, true);
 						if( bootstrap ) {
