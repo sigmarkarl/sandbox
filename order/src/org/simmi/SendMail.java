@@ -42,7 +42,7 @@ public class SendMail {
 		
 		String subject = "kosning öryggistrúnaðarmanna Matís 2013 / Matis security council election 2013";
 		String message = "Sæl\n\nÞá er komið að kosningu í öryggistrúnaðarmanna Matís ohf. Vinsamlega notið tengilinn í þessum pósti til að velja þá tvo einstaklinga sem þið viljið sjá starfa að öryggismálum hjá Matís."
-		+ "\n\nÞín kosningaslóð/Election link: http://130.208.252.230:8888/Vote.html?uid="+uid
+		+ "\n\nÞín kosningaslóð/Election link: http://130.208.252.7:8888/Vote.html?uid="+uid
 		+ "\n\nKosningu líkur kl 16:00. Föstudaginn 14.03.2013"
 		+ "\n\n"+content;
 		 
@@ -165,7 +165,7 @@ public class SendMail {
 					"746712447560201329"};*/
 			//Set<String> check = new HashSet<String>( Arrays.asList(bull) );
 			
-			fr = new InputStreamReader( SendMail.class.getResourceAsStream("/newnew.txt") );
+			fr = new InputStreamReader( SendMail.class.getResourceAsStream("/left.txt") );
 			BufferedReader	br = new BufferedReader( fr );
 			String line = br.readLine();
 			while( line != null ) {
@@ -173,9 +173,10 @@ public class SendMail {
 				if( split.length > 2 ) {
 					if( split[1].contains("@") /*&& !check.contains(split[split.length-1])*/ ) {
 						//message( "sigmar@matis.is", split[split.length-1], sb.toString() );
-						message( "jon.h.arnarson@matis.is", split[split.length-1], sb.toString() );
-						//message( split[1], split[split.length-1], sb.toString() );
-						break;
+						//message( "jon.h.arnarson@matis.is", split[split.length-1], sb.toString() );
+						message( split[1], split[split.length-1], sb.toString() );
+						//System.out.println( split[1] + " " + split[split.length-1] );
+						//break;
 					} else System.out.println( split[1] + " " + split[split.length-1] );
 				}
 				
