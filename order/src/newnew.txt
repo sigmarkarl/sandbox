@@ -37,12 +37,12 @@ Heiða Pálmadóttir	heida.palmadottir@matis.is	<img src="http://www.matis.is/me
 Hélène Liette Lauzon	helene.l.lauzon@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Helene_L._Lauzon.jpg">	285980224609375
 Helga Gunnlaugsdóttir	helga.gunnlaugsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Helga_Gunnlaugsdottir.jpg">	100830078125000
 Helgi Sigurjónsson	helgi.sigurjonsson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Helgi_Sigurjonsson.jpg">	627166748046875
-Hilma E. Bakken	hilma.e.bakken@matis.is 		711120605468750
+Hilma E. Bakken	hilma.e.bakken@matis.is		711120605468750
 Hjördís Sigmundsdóttir	hjordis.sigmundsdottir@matis.is		243347167968750
 Hólmfríður Sveinsdóttir	holmfridur.sveinsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Holmfridur_Sveinsdottir.jpg">	475585937500000
 Hörður Guðjón Kristinsson	hordur.g.kristinsson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Hordur_G._Kristinsson.jpg">	248504638671875
 Hrólfur Sigurðsson	hrolfur.sigurdsson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Hrolfur_Sigurdsson.jpg">	151245117187500
-Hrönn Ólína Jörundsdóttir	hronn.o.jorundsdottir	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Hronn_Olina_Jorundsdottir.jpg">	387420654296875
+Hrönn Ólína Jörundsdóttir	hronn.o.jorundsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Hronn_Olina_Jorundsdottir.jpg">	387420654296875
 Inga Freyja Arnardóttir	ingafreyja@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Ingibjorg_R._Thorvaldsdottir.jpg">	519226074218750
 Ingibjörg R. Þorvaldsdóttir	ingibjorg.r.thorvaldsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Irek_Klonowski.jpg">	82702636718750
 Irek Adam Klonowski	irek.klonowski@matis.is		575561523437500
@@ -55,7 +55,7 @@ Jón Trausti Kárason	jontrausti@matis.is	<img src="http://www.matis.is/media/st
 Júlía Björg Sigurbergsdóttir	julia.b.sigurbergsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Julia Sigurbergsdottir.jpg">	478332519531250
 Karl Rúnar Róbertsson	karl.r.robertsson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/KarlRunarRobertsson.jpg">	229736328125000
 Kolbrún Sveinsdóttir	kolbrun.sveinsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Kolbrun.jpg">	916503906250000
-Kristinn Kolbeinsson	kristinn.kolbeinsson	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Kristinn Kolbeinsson.jpg">	433105468750000
+Kristinn Kolbeinsson	kristinn.kolbeinsson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Kristinn Kolbeinsson.jpg">	433105468750000
 Kristinn Ólafsson	kristinn.olafsson@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/Kristinn.jpg">	452941894531250
 Liene Alekse	liene.alekse@matis.is		283508300781250
 Lilja Hulda Auðunsdóttir	lilja.h.audunsdottir@matis.is	<img src="http://www.matis.is/media/stmyndir/matismenn/medium/LiljaHuldaAudunsdottir.jpg">	824218750000000
