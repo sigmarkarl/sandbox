@@ -7322,11 +7322,11 @@ public class GeneSet extends JApplet {
 					currentSerify = sa;
 				} else frame = (JFrame)currentSerify.cnt;
 				
-				String[] farr = new String[] {"o.profundus", "mt.silvanus", "mt.ruber", "m.hydrothermalis", "t.thermophilusSG0", 
+				String[] farr = new String[] {"o.profundus", "mt.silvanus", "mt.ruber", "m.hydrothermalis", "t.thermophilus_SG0_5JP17_16", 
 						"t.thermophilusJL18", "t.thermophilusHB8", "t.thermophilusHB27", "t.scotoductusSA01", "t.scotoductus4063",
 						"t.scotoductus1572", "t.scotoductus2101", "t.scotoductus2127", "t.scotoductus346",
 						"t.scotoductus252", "t.antranikiani", "t.kawarayensis", "t.brockianus", "t.igniterrae", "t.eggertsoni", 
-						"t.RLM", "t.oshimai", "t.oshimaiJL2", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB"};
+						"t.RLM", "t.oshimai_JL2", "t.oshimai", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB"};
 
 				Map<Integer,String>			ups = new HashMap<Integer,String>();
 				Set<Integer>				stuck = new HashSet<Integer>();
@@ -7351,8 +7351,10 @@ public class GeneSet extends JApplet {
 							ups2.put( gg.groupIdx, tlist );
 						}
 						
+						//Set<String>	 specs = new HashSet<String>();
 						//textarea.append(gg.name + ":\n");
 						//for (String sp : gg.species.keySet()) {
+						int count = 0;
 						for(String sp : farr) {
 							Teginfo stv = gg.species.get(sp);
 							/*for( String key : gg.species.keySet() ) {
@@ -7360,21 +7362,32 @@ public class GeneSet extends JApplet {
 									System.err.println( " erm " + key );
 								}
 							}*/
+							/*if( stv == null && gg.species.size() == 28 ) {
+								System.err.println( gg.species );
+								System.err.println( sp );
+							}*/
 							//System.err.println( gg.species.keySet() );
 							if( stv == null ) {
-								System.err.println( sp );
+								//System.err.println( sp );
 							} else {
+								count++;
+								//specs.add( sp );
 								for (Tegeval tv : stv.tset) {
 									tlist.add( tv );
 									/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
 									if (tv.dna != null) {
 										for (int i = 0; i < tv.dna.length(); i += 70) {
-											textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
+											textarea.append(tv.dna.gg.speciessubstring(i, Math.min(i + 70, tv.dna.length())) + "\n");
 										}
 									}*/
 								}
 							}
 						}
+						if( count < gg.species.size() ) {
+							System.err.println( gg.species );
+							System.err.println();
+						}
+						//if( specs.size() < 28 ) System.err.println("mu " + specs);
 					}
 				}
 				
@@ -7384,6 +7397,12 @@ public class GeneSet extends JApplet {
 					List<Tegeval>	tlist = ups2.get(gi);
 					
 					sb.append(name.replace('/', '-') + ":\n");
+					if( tlist.size() < 28 ) {
+						for( Tegeval tv : tlist ) {
+							System.err.println( tv.cont );
+						}
+						System.err.println();
+					}
 					for( Tegeval tv : tlist ) {
 						sb.append(">" + tv.cont.substring(0, tv.cont.indexOf('_')) + "\n");
 						if (tv.seq != null) {
