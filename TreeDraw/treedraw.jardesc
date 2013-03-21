@@ -4,28 +4,22 @@
     <options buildIfNeeded="true" compress="true" descriptionLocation="/TreeDraw/treedraw.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
-    <manifest generateManifest="true" mainClassHandleIdentifier="=TreeDraw/src&lt;org.simmi{TreeDraw.java[TreeDraw" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+    <manifest generateManifest="true" mainClassHandleIdentifier="=TreeDraw/src&lt;org.simmi{DataTable.java[DataTable" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
         <sealing sealJar="false">
             <packagesToSeal/>
             <packagesToUnSeal/>
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/TreeDraw/src/RAxML_10993.ntree"/>
-        <file path="/TreeDraw/src/thermus16S_selected.phb"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
-        <file path="/TreeDraw/src/testskrimsli.phb"/>
         <file path="/TreeDraw/src/therm3.txt"/>
         <file path="/TreeDraw/src/therm2.txt"/>
         <file path="/TreeDraw/src/thermus.ntree"/>
         <file path="/TreeDraw/src/temp.ntree"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
-        <file path="/TreeDraw/src/therm.txt"/>
-        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
-        <file path="/TreeDraw/src/thermus16S_hq.phy_phyml_tree.txt"/>
-        <file path="/TreeDraw/src/lmin900idmin95phyml.tree"/>
-        <file path="/TreeDraw/src/thermus16S_hq.phb"/>
         <file path="/TreeDraw/src/thermaceae_16S_aligned.fasta"/>
+        <file path="/TreeDraw/src/therm.txt"/>
         <file path="/TreeDraw/src/tree6.ntree"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
     </selectedElements>
 </jardesc>
