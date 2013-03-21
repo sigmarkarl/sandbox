@@ -366,9 +366,15 @@ public class SortTable extends JApplet {
 	
 	public Reader run(String query, boolean isUsingEncId) throws IOException, ServiceException, InterruptedException {
 		boolean fail = false;
+		String lowercaseQuery = query.toLowerCase();
+		String encodedQuery = URLEncoder.encode(query, "UTF-8");
+		encodedQuery = encodedQuery.replace("+", "%20");
+		String urlstr = SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId;
+		
+		System.err.println( "uu" );
 		try {
-			JSUtil.console( SortTable.this, "about to loaddata");
-		   JSUtil.call( SortTable.this, "loadData", new Object[] {query} );
+		   JSUtil.console( SortTable.this, "about to loaddata" + query );
+		   JSUtil.call( SortTable.this, "loadData", new Object[] { urlstr } );
 		   JSUtil.console( SortTable.this, "done loaddata");
 		   
 		   while( input == null ) Thread.sleep(1000);
@@ -382,19 +388,23 @@ public class SortTable extends JApplet {
 		   fail = true;
 	   }
 	    
-	    if( fail ) {
-			String lowercaseQuery = query.toLowerCase();
-		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
-	
-		   GDataRequest request;
+		System.err.println( "fail "+fail );
+	    if( fail ) {	
+		   GDataRequest request = null;
 		   // If the query is a select, describe, or show query, run a GET request.
-		   if (lowercaseQuery.startsWith("select") ||
-		       lowercaseQuery.startsWith("describe") ||
-		       lowercaseQuery.startsWith("show")) {
-		     URL url = new URL(SERVICE_URL + "?sql=" + encodedQuery + "&encid=" + isUsingEncId);
-		     request = service.getRequestFactory().getRequest(RequestType.QUERY, url,
-		         ContentType.TEXT_PLAIN);
+		   if (lowercaseQuery.startsWith("select") || lowercaseQuery.startsWith("describe") || lowercaseQuery.startsWith("show")) {
+			   System.err.println("about to get "+urlstr);
+			   
+		     URL url = new URL(urlstr);
+		     System.err.println("what");
+		     try {
+		    	 request = service.getRequestFactory().getRequest(RequestType.QUERY, url, ContentType.TEXT_PLAIN);
+		     } catch( Exception e ) {
+		    	 e.printStackTrace();
+		     }
 		   } else {
+			   System.err.println("about to post");
+			   
 		     // Otherwise, run a POST request.
 		     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
 		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
@@ -403,11 +413,17 @@ public class SortTable extends JApplet {
 		     writer.append("sql=" + encodedQuery);
 		     writer.flush();
 		   }
+		   
+		   if( request != null ) {
+			   	System.err.println("about to exec");
+		   		request.execute();
 	
-		   request.execute();
-	
-		   return new InputStreamReader( request.getResponseStream() );
-	   } else return null;
+		   		System.err.println("returning");
+		   		return new InputStreamReader( request.getResponseStream() );
+		   }
+	   }
+	    System.err.println("ermermerm");
+	   return null;
 	}
 	
 	private StringBuilder getResultsText(GDataRequest request) throws IOException {
@@ -593,7 +609,7 @@ public class SortTable extends JApplet {
 			}
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
-			fgroupMap = isGroup( new InputStreamReader( inputStream ), "\\t", false );
+			fgroupMap = isGroup( new InputStreamReader( inputStream, "UTF-8" ), "\t", false );
 		} else {
 			fgroupMap = new HashMap<String, String>();
 			InputStream inputStream = this.getClass().getResourceAsStream("FD_GROUP.txt");
@@ -632,7 +648,7 @@ public class SortTable extends JApplet {
 			}
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/Component.txt");
-			is = isComponent( new InputStreamReader(inputStream, "UTF-8"), "[\t]", false );
+			is = isComponent( new InputStreamReader(inputStream, "UTF-8"), "\t", false );
 		} else {
 			InputStream inputStream = this.getClass().getResourceAsStream("NUTR_DEF.txt");
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
@@ -675,7 +691,7 @@ public class SortTable extends JApplet {
 			}
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/Food.txt");
-			isFood( new InputStreamReader( inputStream ), fgroupMap, result, "\t", false );
+			isFood( new InputStreamReader( inputStream, "UTF-8" ), fgroupMap, result, "\t", false );
 		} else {
 			InputStream inputStream = this.getClass().getResourceAsStream("FOOD_DES.txt");
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
@@ -720,7 +736,7 @@ public class SortTable extends JApplet {
 				}.run();
 			} catch( SecurityException e ) {*/
 			InputStream inputStream = this.getClass().getResourceAsStream("/result.txt");
-			inThread( new InputStreamReader( inputStream ), result, is, "\\t", false );
+			inThread( new InputStreamReader( inputStream, "UTF-8" ), result, is, "\t", false );
 		} else {
 			int start = -1;
 			InputStream inputStream = this.getClass().getResourceAsStream("NUT_DATA.txt");
@@ -850,6 +866,12 @@ public class SortTable extends JApplet {
 			if (!frame.isResizable())
 				frame.setResizable(true);
 		}
+		
+		try {
+			this.getAppletContext().showDocument( new URL("http://www.matis.is/ISGEM/is/hvad-er-i-matnum/leidbeiningar-med-notkun-forritsins/"), "_blank");
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+		}
 
 		this.getContentPane().setBackground(bgcolor);
 		this.setBackground(bgcolor);
@@ -929,7 +951,7 @@ public class SortTable extends JApplet {
 	private static final String componentvaluetableid = "1iPhnOf7BlPQSeMz1zsanxA2mqQ2Kv0PYo-BQE9U";
 	
 	public void loadStuff() {
-		lang = "IS_fusion";
+		lang = "IS";
 		/*
 		 * String loc = this.getParameter("loc"); if( loc != null ) { lang =
 		 * loc; }
@@ -938,6 +960,7 @@ public class SortTable extends JApplet {
 		//ToolTipManager.sharedInstance().setInitialDelay(100);
 		//ToolTipManager.sharedInstance().setDismissDelay(10000);
 		//ToolTipManager.sharedInstance().setReshowDelay(0);
+		System.err.println("about to load stuff");
 		if (stuff == null) {
 			try {
 				stuff = parseData(lang);
@@ -2750,7 +2773,7 @@ public class SortTable extends JApplet {
 							corrarr[ (k)*len+(i) ] = tot;
 						}
 					}
-					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd);
+					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd, null, true, false);
 					String tree = node.toString();
 					System.err.println("about to call showTree");
 					System.err.println( tree );
