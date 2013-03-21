@@ -3,6 +3,7 @@ package org.simmi;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Point;
@@ -23,14 +24,15 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -51,7 +53,7 @@ import java.util.TreeMap;
 
 import javax.jnlp.ClipboardService;
 import javax.jnlp.FileContents;
-import javax.jnlp.FileSaveService;
+import javax.jnlp.FileOpenService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
@@ -86,6 +88,7 @@ import javax.swing.table.TableRowSorter;
 
 import netscape.javascript.JSObject;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -93,8 +96,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
+import org.simmi.shared.TreeUtil.NodeSet;
 import org.simmi.unsigned.JavaFasta;
 
 import com.google.gdata.client.ClientLoginAccountType;
@@ -126,6 +131,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	Map<String,Sequence>	seqcache = new HashMap<String,Sequence>();
+	String[] specs = {"antranikianii","aquaticus","arciformis","brockianus","eggertsoni","filiformis","igniterrae","islandicus","kawarayensis","oshimai","scotoductus","thermophilus","yunnanensis","rehai","composti","unknownchile"};
+	Map<String,String>	specColors = new HashMap<String,String>();
+	Map<String,String> namesMap = new HashMap<String,String>();
+	//tu.softReplaceNames( n, namesMap );*/
 	
 	public void updateTable( String tabmap ) {
 		try {
@@ -193,7 +202,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	
 	public void replaceTreeText( String tree ) {
 		int seqi = 0;
-		for( Sequence seq : currentjavafasta.lseq ) {
+		for( Sequence seq : currentserifier.lseq ) {
 			String nm = "";
 			String sind = Integer.toString( seqi++ );
 			int m = 0;
@@ -228,60 +237,62 @@ public class DataTable extends JApplet implements ClipboardOwner {
     final Map<String,String>	nameaccmap = new HashMap<String,String>();
     final List<Object[]>		rowList = new ArrayList<Object[]>();
     
+    public static String[] csvSplit( String line ) {
+    	List<String> splitlist = new ArrayList<String>();
+		
+		int first = 0;
+		int last = line.indexOf('"');
+		while( last != -1 ) {
+			if( last > first ) {
+				String sub = line.substring(first, last-1);
+    		//if( sub.length() > 0 ) {
+    			int uno = 0;
+    			int duo = sub.indexOf(',');
+    			while( duo != -1 ) {
+    				splitlist.add( sub.substring(uno, duo) );
+    				uno = duo+1;
+    				duo = sub.indexOf(',', uno);
+    			}
+    			splitlist.add( sub.substring(uno) );
+    		}
+    		first = last+1;
+    		last = line.indexOf('"', first);
+    		
+    		if( last != -1 ) {
+    			String sub = line.substring(first, last);
+    			splitlist.add( sub );
+    		
+    			first = last+2;
+    			last = line.indexOf('"', first);
+    		}
+		}
+		if( first != -1 && first < line.length() ) {
+    		String sub = line.substring(first);
+    		if( sub.length() > 0 ) {
+    			int uno = 0;
+    			int duo = sub.indexOf(',');
+    			while( duo != -1 ) {
+    				splitlist.add( sub.substring(uno, duo) );
+    				uno = duo+1;
+    				duo = sub.indexOf(',', uno);
+    			}
+    			splitlist.add( sub.substring(uno) );
+    		}
+		} else System.err.println("first is not");
+		return splitlist.toArray( new String[0] );
+    }
+    
     public void loadData( String data ) {
     	String[] lines = data.split("\n");
     	List<String> splitlist = new ArrayList<String>();
     	
     	try {
 	    	for( int i = 1; i < lines.length; i++ ) {
-	    		splitlist.clear();
-	    		
-	    		//System.err.println( "uff " + i );
-	    		String line = lines[i];
-	    		int first = 0;
-	    		int last = line.indexOf('"');
-	    		while( last != -1 ) {
-	    			if( last > first ) {
-	    				String sub = line.substring(first, last-1);
-		    		//if( sub.length() > 0 ) {
-		    			int uno = 0;
-		    			int duo = sub.indexOf(',');
-		    			while( duo != -1 ) {
-		    				splitlist.add( sub.substring(uno, duo) );
-		    				uno = duo+1;
-		    				duo = sub.indexOf(',', uno);
-		    			}
-		    			splitlist.add( sub.substring(uno) );
-		    		}
-		    		first = last+1;
-		    		last = line.indexOf('"', first);
-		    		
-		    		if( last != -1 ) {
-		    			String sub = line.substring(first, last);
-		    			splitlist.add( sub );
-		    		
-		    			first = last+2;
-		    			last = line.indexOf('"', first);
-		    		}
-	    		}
-	    		if( first != -1 && first < line.length() ) {
-		    		String sub = line.substring(first);
-		    		if( sub.length() > 0 ) {
-		    			int uno = 0;
-		    			int duo = sub.indexOf(',');
-		    			while( duo != -1 ) {
-		    				splitlist.add( sub.substring(uno, duo) );
-		    				uno = duo+1;
-		    				duo = sub.indexOf(',', uno);
-		    			}
-		    			splitlist.add( sub.substring(uno) );
-		    		}
-	    		} else System.err.println("first is not");
-	    		String[] split = splitlist.toArray( new String[0] ); //lines[i].split(",");
-	    		
+	    		 //lines[i].split(",");
+	    		String[] split = csvSplit( lines[i] );
 	    		if( split.length > 8 ) {
 		    		nameaccmap.put(split[0], split[1]);
-					Object[] strs = new Object[ 22 ];
+					Object[] strs = new Object[ 23 ];
 					
 					int k = 0;
 					for( k = 0; k < split.length; k++ ) {
@@ -310,7 +321,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							} else {
 								strs[k] = null;
 							}
-						} else if( k == 21 ) {
+						} else if( k == 22 ) {
 							strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
 						} else {
 							strs[k] = split[k];
@@ -330,6 +341,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( k == 18 ) strs[k++] = "";
 					if( k == 19 ) strs[k++] = null;
 					if( k == 20 ) strs[k++] = null;
+					if( k == 21 ) strs[k++] = "";
 					strs[k] = true;
 					
 					//Arrays.copyOfRange(split, 1, split.length );
@@ -347,6 +359,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
     
     private static GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
+	private static final String GEOCODE_SERVICE_URL = "http://maps.googleapis.com/maps/api/geocode";
 	private static final String oldtableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	private static final String tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
 	
@@ -378,7 +391,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	public static String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
 		   String lowercaseQuery = query.toLowerCase();
 		   String encodedQuery = URLEncoder.encode(query, "UTF-8");
-
+		  
 		   GDataRequest request;
 		   // If the query is a select, describe, or show query, run a GET request.
 		   if (lowercaseQuery.startsWith("select") ||
@@ -538,7 +551,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						} else cont = line.substring(1);
 					//if( rr.length == 1 ) cont = line.replace( ">", "" );
 					//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = new Sequence( inc, cont, jf.mseq );
+						seq = new Sequence( inc, cont, jf.getSerifier().mseq );
 						
 						Collection<Sequence> specset;
 						if( specMap.containsKey( spec ) ) {
@@ -566,7 +579,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 
 		for (Sequence contig : contset) {
-			jf.addSequence(contig);
+			jf.getSerifier().addSequence(contig);
 			if (contig.getAnnotations() != null)
 				Collections.sort(contig.getAnnotations());
 		}
@@ -589,7 +602,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	public void loadAligned( JavaFasta jf, boolean aligned, Object[] extra ) {
-		List<NameSel> namesel = nameSelection( extra );
+		nameSelection( extra );
 		
 		Set<String>	include = new HashSet<String>();
 		int[] rr = table.getSelectedRows();
@@ -603,17 +616,17 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					
 					Object[] obj = tablemap.get( seq.id );
 					if( obj != null ) {
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( names, metas, obj );
 						String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
-						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+						cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 						seq.setName( cont );
 					}
 					
-					jf.addSequence( seq );
+					jf.getSerifier().addSequence( seq );
 				} else include.add( cacheval );
 			}
 		}
-		if( include.size() > 0 ) loadAligned( jf, aligned, include, namesel );
+		if( include.size() > 0 ) loadAligned( jf, aligned, include, names, metas );
 		else if( runnable != null ) {
 			runnable.run();
 			runnable = null;
@@ -637,7 +650,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		JComponent comp = new JComponent() {};
 		comp.setLayout( new BorderLayout() );
 		JSpinner spin = new JSpinner( new SpinnerNumberModel(5, 1, 10, 1) );
-		JTable	table = nameSelectionComponent();
+		JTable	table = nameSelectionComponent( names );
 		
 		comp.add( table );
 		comp.add( spin, BorderLayout.NORTH );
@@ -648,26 +661,28 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	List<NameSel>		names = new ArrayList<NameSel>();
-	int[] currentRowSelection;
-	public List<NameSel> nameSelection( Object[] extra ) {
-		JTable table = nameSelectionComponent();
-		if( extra == null ) extra = new Object[] {table};
+	List<NameSel>		metas = new ArrayList<NameSel>();
+	int[] 				currentRowSelection;
+	public void nameSelection( Object[] extra ) {
+		JTable table = nameSelectionComponent( names );
+		JTable mtable = nameSelectionComponent( metas );
+		if( extra == null ) extra = new Object[] {table, mtable};
 		else {
 			Object[] oldextra = extra;
-			extra = new Object[ extra.length+1 ];
+			extra = new Object[ extra.length+2 ];
 			extra[0] = table;
+			extra[1] = mtable;
 			for( int i = 0; i < oldextra.length; i++ ) {
-				extra[i+1] = oldextra[ i ];
+				extra[i+2] = oldextra[ i ];
 			}
 		}
 		JOptionPane.showMessageDialog( DataTable.this, extra, "Select names", JOptionPane.PLAIN_MESSAGE );
-		return names;
 	}
 	
-	public JTable nameSelectionComponent() {
+	public JTable nameSelectionComponent( final List<NameSel> names ) {
 		final JTable table = new JTable();
 		table.setDragEnabled( true );
-		String[] nlist = {"Species", "Pubmed", "Country", "Source", "Accession", "Color"};
+		String[] nlist = {"Species", "Pubmed", "Country", "Source", "Accession", "Color", "Country color"};
 		names.clear();
 		for( String name : nlist ) {
 			names.add( new NameSel( name ) );
@@ -735,7 +750,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 								newlist.add( names.get(i) );
 							}
 							names.clear();
-							names = newlist;
+							if( names == DataTable.this.names ) DataTable.this.names = newlist;
+							else DataTable.this.metas = newlist;
 							
 							Point p = support.getDropLocation().getDropPoint();
 							int k = table.rowAtPoint( p );
@@ -815,7 +831,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		return table;
 	}
 	
-	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> iset, List<NameSel> namesel ) {
+	public void loadAligned( JavaFasta jf, boolean aligned, Set<String> iset, List<NameSel> namesel, List<NameSel> metasel ) {
 		/*JCheckBox species = new JCheckBox("Species");
 		JCheckBox country = new JCheckBox("Country");
 		JCheckBox source =s new JCheckBox("Source");
@@ -832,6 +848,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else include.append( ","+is );
 			}
 			this.ns = namesel;
+			this.ms = metasel;
 			String includes = include.toString();
 			win.call( "fetchSeq", new Object[] { includes } );
 		} catch( Exception e ) {
@@ -844,7 +861,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( String is : iset ) {
 					jsono.put(is, (Object)"");
 				}
-				loadSequences( jsono.toString(), aligned, namesel );
+				loadSequences( jsono.toString(), aligned, namesel, metasel );
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -852,9 +869,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	}
 	
 	List<NameSel> ns;
+	List<NameSel> ms;
 	public void loadSequences( String jsonstr ) throws JSONException {
-		loadSequences( jsonstr, true, ns );
+		loadSequences( jsonstr, true, ns, ms );
 		ns = null;
+		ms = null;
 	}
 	
 	public void console( String message ) {
@@ -867,7 +886,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		}
 	}
 	
-	public void loadSequences( String jsonstr, boolean aligned, List<NameSel> namesel ) throws JSONException {
+	public void loadSequences( String jsonstr, boolean aligned, List<NameSel> namesel, List<NameSel> metasel ) throws JSONException {
 		//List<NameSel> namesel = nameSelection( extra );
 		
 		List<Sequence> contset = new ArrayList<Sequence>();
@@ -884,12 +903,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				include.add( n );
 			} else {
 				Object[] obj = tablemap.get(n);
-				String fname = getFastaName( namesel, obj );
+				String fname = getFastaName( namesel, metasel, obj );
 				
 				String cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
-				cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+				cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 				
-				contset.add( new Sequence( n, cont, new StringBuilder(o.toString()), currentjavafasta.mseq ) );
+				contset.add( new Sequence( n, cont, new StringBuilder(o.toString()), currentserifier.mseq ) );
 			}
 		}
 		
@@ -954,7 +973,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					
 					if( inc != null ) {
 						Object[] obj = tablemap.get(inc);
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( namesel, metasel, obj );
 						/*String fname = "";
 						for( NameSel ns : namesel ) {
 							if( ns.isSelected() ) {
@@ -1002,10 +1021,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						if( fname.length() > 1 ) {
 							cont = (Integer)obj[4] >= 900 ? fname : "*"+fname;
 						} else cont = line.substring(1);
-						cont = cont.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "");
+						cont = cont.replace(": ", "-").replace(':', '-').replace(",", "");
 						//if( rr.length == 1 ) cont = line.replace( ">", "" );
 						//else cont = line.replace( ">", seqs.getName()+"_" );
-						seq = new Sequence( inc, cont, currentjavafasta.mseq );
+						seq = new Sequence( inc, cont, currentserifier.mseq );
 						//dna.append( line.replace( ">", ">"+seqs.getName()+"_" )+"\n" );
 						//nseq++;
 					}
@@ -1027,7 +1046,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 		for (Sequence contig : contset) {
 			contig.checkLengths();
-			currentjavafasta.addSequence(contig);
+			currentserifier.addSequence(contig);
 			if (contig.getAnnotations() != null)
 				Collections.sort(contig.getAnnotations());
 			
@@ -1044,16 +1063,16 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	Runnable runnable = null;
 	public void viewAligned( JavaFasta jf, boolean aligned ) {
 		loadAligned( jf, aligned );
-		Sequence cons = jf.getConsensus();
-		jf.addAnnotation( cons.new Annotation(null,"V1 - 16S rRNA",Color.blue,140,226, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V2 - 16S rRNA",Color.blue,276,438, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V3 - 16S rRNA",Color.blue,646,742, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V4 - 16S rRNA",Color.blue,865,1024, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V5 - 16S rRNA",Color.blue,1217,1309, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V6 - 16S rRNA",Color.blue,1469,1595, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V7 - 16S rRNA",Color.blue,1708,1804, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V8 - 16S rRNA",Color.blue,1894,1956, jf.mann ) );
-		jf.addAnnotation( cons.new Annotation(null,"V9 - 16S rRNA",Color.blue,2149,2209, jf.mann ) );
+		Sequence cons = jf.getSerifier().getConsensus();
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V1 - 16S rRNA",Color.blue,140,226, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V2 - 16S rRNA",Color.blue,276,438, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V3 - 16S rRNA",Color.blue,646,742, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V4 - 16S rRNA",Color.blue,865,1024, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V5 - 16S rRNA",Color.blue,1217,1309, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V6 - 16S rRNA",Color.blue,1469,1595, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V7 - 16S rRNA",Color.blue,1708,1804, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V8 - 16S rRNA",Color.blue,1894,1956, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V9 - 16S rRNA",Color.blue,2149,2209, jf.getSerifier().mann ) );
 	}
 	
 	public void addSave( JFrame frame, final JavaFasta jf ) {
@@ -1093,7 +1112,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 	}
 	
-	public String getFastaName( List<NameSel> namesel, Object[] obj ) {
+	public String getFastaName( List<NameSel> namesel, List<NameSel> metasel, Object[] obj ) {
+		String name = getConstructedName( namesel, obj );
+		String meta = getConstructedName( metasel, obj );
+		return meta == null || meta.length() == 0 ? name : name + ";" + meta;
+	}
+	
+	Map<String,String> 	ccol;
+	Random				rand;
+	public String getConstructedName( List<NameSel> namesel, Object[] obj ) {
 		String fname = "";
 		for( NameSel ns : namesel ) {
 			if( ns.isSelected() ) {
@@ -1120,6 +1147,16 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					else fname += "_"+spec;
 				} else if( ns.name.equals("Country") ) {
 					String cntr = (String)obj[6];
+					for( String key : namesMap.keySet() ) {
+						if( cntr != null && cntr.contains(key) ) {
+							cntr = namesMap.get( key );
+							break;
+						}
+					}
+					
+					cntr = countryShort( cntr );
+					
+					cntr = cntr.replace('_', ' ');
 					int idx = cntr.indexOf('(');
 					if( idx > 0 ) {
 						int idx2 = cntr.indexOf(')', idx+1);
@@ -1127,13 +1164,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						cntr = cntr.substring(0, idx) + cntr.substring(idx2+1);
 					}
 					if( fname.length() == 0 ) fname += cntr;
-					else fname += "_"+cntr;
+					else fname += " "+cntr;
 				} else if( ns.name.equals("Source") ) {
 					if( fname.length() == 0 ) fname += obj[7];
 					else fname += "_"+obj[7];
 				} else if( ns.name.equals("Accession") ) {
 					String acc = (String)obj[1];
-					acc = acc.replace("_", "");
+					//acc = acc.replace("_", "");
 					if( fname.length() == 0 ) fname += acc;
 					else fname += "_"+acc;
 				} else if( ns.name.equals("Pubmed") ) {
@@ -1141,13 +1178,53 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( fname.length() == 0 ) fname += pubmed;
 					else fname += "_"+pubmed;
 				} else if( ns.name.equals("Color") ) {
-					String col = (String)obj[18];
+					String spec = (String)obj[3];
+					for( String ss : specs ) {
+						if( spec.contains( ss ) ) {
+							fname += "[#"+specColors.get(ss)+"]";
+							break;
+						}
+					}
+					/*String col = (String)obj[18];
 					//col = col.replace("_", "");
 					//if( fname.length() == 0 ) fname += col;
 					//else 
 					if( colmap.containsKey(col) ) {
 						fname += "["+colmap.get(col)+"]";	
+					}*/
+				} else if( ns.name.equals("Country color") ) {
+					String country = (String)obj[6];
+					
+					for( String key : namesMap.keySet() ) {
+						if( country != null && country.contains(key) ) {
+							country = namesMap.get( key );
+							break;
+						}
 					}
+					
+					country = countryShort( country );
+					
+					if( country != null && country.length() > 0 ) {
+						String color;
+						if( ccol == null ) ccol = new HashMap<String,String>();
+						if( rand == null ) rand = new Random();
+						if( ccol.containsKey(country) ) {
+							color = ccol.get(country);
+						} else {
+							color = "[#"+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+""+Integer.toString(128+rand.nextInt(128), 16)+"]{1.0 2.0 1.0}";
+							ccol.put(country, color);
+						}
+						
+						fname += color;
+					}
+					
+					/*String col = (String)obj[18];
+					//col = col.replace("_", "");
+					//if( fname.length() == 0 ) fname += col;
+					//else 
+					if( colmap.containsKey(col) ) {
+						fname += "["+colmap.get(col)+"]";	
+					}*/
 				}
 			}
 		}
@@ -1162,7 +1239,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Object[] params = new Object[] {species, accession, country, source};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
 		
-		List<NameSel>	namesel = nameSelection( null );
+		nameSelection( null );
 		
 		int start = 0;
 		int stop = -1;
@@ -1261,11 +1338,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							if( fname.length() == 0 ) fname += acc;
 							else fname += "_"+acc;
 						}*/
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( names, metas, obj );
 						
 						if( fname.length() > 1 ) {
 							String startf = (Integer)obj[3] >= 900 ? ">" : ">*";
-							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "")+"\n");
+							sb.append(startf+fname.replace(": ", "-").replace(':', '-').replace(",", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -1302,7 +1379,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		Object[] params = new Object[] {species, accession, country, source};
 		JOptionPane.showMessageDialog(DataTable.this, params, "Select fasta names", JOptionPane.PLAIN_MESSAGE);*/
 		
-		List<NameSel>	namesel = nameSelection( null );
+		nameSelection( null );
 		
 		int start = 0;
 		int stop = -1;
@@ -1401,11 +1478,11 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							if( fname.length() == 0 ) fname += acc;
 							else fname += "_"+acc;
 						}*/
-						String fname = getFastaName( namesel, obj );
+						String fname = getFastaName( names, metas, obj );
 						
 						if( fname.length() > 1 ) {
 							String startf = (Integer)obj[4] >= 900 ? ">" : ">*";
-							sb.append(startf+fname.replace(": ", "-").replace(' ', '_').replace(':', '-').replace(",", "").replace(";", "")+"\n");
+							sb.append(startf+fname.replace(": ", "-").replace(':', '-').replace(",", "")+"\n");
 						} else sb.append( line+"\n" );
 					} else inc = false;
 				} else if( inc ) {
@@ -1441,16 +1518,22 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					int start = sql.indexOf('(')+1;
 					int stop = sql.indexOf(')', start);
 					
-					String innersql = sql.substring(start, stop);
+					String innerstr = sql.substring(start, stop).replace(" ", "").replace(",", "','");
+					innerstr = "('"+innerstr+"')";
+					int sw = sql.indexOf("where");
+					String innersql = "select rowid from "+tableid+" "+sql.substring(sw,start-1)+innerstr; //sql.substring(start, stop);
+					//System.err.println("about to run "+innersql);
 					String result = run( innersql, true );
 					String[] split = result.split("\n");
 					
-					int sw = sql.indexOf("where");
+					System.err.println( sql );
+					
 					String subsql = sql.substring(0, sw);
 					for( int i = 1; i < split.length; i++ ) {
 						String rowid = split[i];
-						System.err.println("about to run "+rowid);
-						run( subsql+"where rowid = '"+rowid+"'", true );
+						String runsql = subsql+"where rowid = '"+rowid+"'";
+						System.err.println("about to run "+runsql);
+						run( runsql, true );
 					}
 				} else {
 					run( sql, true );
@@ -1480,11 +1563,376 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		});
 	}
+	
+	public String countryFuck( String country ) {
+		if( country.contains("Zealand") ) {
+			country = "New Zealand";
+		} else if( country.contains("Hawaii") ) {
+			country = "Hawaii";
+		} else if( country.contains("Murrieta") ) {
+			country = "USA:California";
+		} else if( !country.startsWith("USA") ) {
+			int i = country.indexOf(':');
+			if( i == -1 ) i = country.length();
+			country = country.substring(0, i);
+			i = country.indexOf(' ');
+			if( i == -1 ) i = country.length();
+			country = country.substring(0, i);
+		} else {
+			if( country.contains("Gulf") ) {
+				country = "USA:Gulf of Mexico";
+			} else if( country.contains("Mexico") ) {
+				country = "USA:New Mexico";
+			} else if( country.contains("Grass") ) {
+				country = "USA:Nevada";
+			} else if( country.contains("Alvord") || country.contains("OR") ) {
+				country = "USA:Oregon";
+			} else if( country.contains("California") || country.contains("CA") ) {
+				country = "USA:California";
+			} else if( country.contains("Yellowstone") ) {
+				country = "USA:Yellowstone";
+			} else {
+				int i = country.indexOf(' ');
+				if( i == -1 ) i = country.length();
+				country = country.substring(0, i);
+			}
+		}
+		return country;
+	}
+	
+	public String countryShort( String country ) {
+		 if( country.contains("Azores") ) {
+				country = "Azores";
+		} else if( country.contains("Greece") || country.contains("Turkey") || country.contains("Italy")  || country.contains("Bulgaria") || country.contains("Hungary") || country.contains("Portugal") || country.contains("Switz") ) {
+			country = "Europe";
+		} else if( country.contains("Hawai") ) {
+			country = "Hawaii";
+		} else if( country.contains("USA") || country.contains("Yellowstone") ) {
+			country = "North-America";
+		} /*else if() {
+			
+		}*/
+		return country;
+	}
+	
+	public void getSpecLoc( List<Object[]> rowList, String[] specs, Map<String,Map<String,Long>> specLoc, Map<String,Map<String,Long>> locSpec, Map<String,String> geoLoc, boolean reverse, boolean erm, boolean shorter ) {
+		for( Object[] row : rowList ) {
+			String country = reverse ? (String)row[21] : (String)row[6];
+			if( erm ) {
+				int i = country.indexOf(',');
+				if( i == -1 ) i = country.length();
+				country = country.substring(0, i);
+				country = countryFuck( country );
+				if( shorter ) country = countryShort( country );
+			}
+			if( country != null && country.length() > 0 ) {
+				String species = (String)row[3];
+				String geocode = reverse ? (String)row[6] : (String)row[21];
+				geoLoc.put( country, geocode );
+				
+				String thespec = null;
+				for( String spec : specs ) {
+					if( species.contains(spec) ) {
+						thespec = "T."+spec;
+						break;
+					}
+				}
+				
+				if( thespec != null ) {
+					int len = (Integer)row[4];
+					int id = (Integer)row[5];
+					long idlen = (((long)len)<<16)+id;
+					
+					Map<String,Long> cmap;
+					if( specLoc.containsKey( thespec ) ) {
+						cmap = specLoc.get( thespec );
+					} else {
+						cmap = new TreeMap<String,Long>();
+						specLoc.put( thespec, cmap );
+					}
+					
+					if( cmap.containsKey(country) ) {
+						long oldidlencount = cmap.get(country);
+						
+						int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
+						int oldcount = (int)(oldidlencount>>32);
+						
+						int oldid = (int)(oldidlen&0xFFFF);
+						int oldlen = (int)(oldidlen>>16);
+						
+						if( id > oldid || (id == oldid && len > oldlen) ) {
+							cmap.put( country, idlen+((long)(oldcount+1)<<32) );
+						} else {
+							cmap.put( country, oldidlen+((long)(oldcount+1)<<32) );
+						}
+					} else {
+						cmap.put( country, idlen+(1L<<32) );
+					}
+					
+					Map<String,Long> smap;
+					if( locSpec.containsKey( country ) ) {
+						smap = locSpec.get( country );
+					} else {
+						smap = new TreeMap<String,Long>();
+						locSpec.put( country, smap );
+					}
+					if( smap.containsKey(thespec) ) {
+						long oldidlencount = smap.get( thespec );
+						
+						int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
+						int oldcount = (int)(oldidlencount>>32);
+						
+						int oldid = (int)(oldidlen&0xFFFF);
+						int oldlen = (int)(oldidlen>>16);
+						
+						/*long oldidlen = smap.get(country);
+						int oldid = (int)(oldidlen&0xFFFF);
+						int oldlen = (int)(oldidlen>>32);*/
+						
+						if( id > oldid || (id == oldid && len > oldlen) ) {
+							smap.put( thespec, idlen+((long)(oldcount+1)<<32) );
+						} else {
+							smap.put( thespec, oldidlen+((long)(oldcount+1)<<32) );
+						}
+					} else {
+						smap.put( thespec, idlen+(1L<<32)  );
+					}
+				}
+			}
+		}
+	}
+	
+	public void insertGeocodes() throws IOException, AuthenticationException {
+		service = new GoogleService("fusiontables", "fusiontables.ApiExample");
+		service.setUserCredentials("sigmarkarl@gmail.com", "mul", ClientLoginAccountType.GOOGLE);
+		
+		FileReader fr = new FileReader( "/home/sigmar/Downloads/Thermus_16S_aligned.csv" );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		line = br.readLine();
+		
+		Map<String,Set<String>>		accsetMap = new HashMap<String,Set<String>>();
+		Map<String,String>			accountryMap = new HashMap<String,String>();
+		Map<String,String>			accspecMap = new HashMap<String,String>();
+		//int count = 0;
+		while( line != null ) {
+			String[] split = csvSplit( line ); //line.split(",");
+			String acc = split[1];
+			String spec = split[3];
+			String country = split[6];
+			Set<String>	accset;
+			if( accsetMap.containsKey( country ) ) {
+				accset = accsetMap.get( country );
+			} else {
+				accset = new HashSet<String>();
+				accsetMap.put( country, accset );
+			}
+			accset.add( acc );
+			
+			accountryMap.put( acc, country );
+			accspecMap.put( acc, spec );
+			
+			line = br.readLine();
+		}
+		br.close();
+		
+		Set<String> finished = new HashSet<String>();
+		for( Object[] row : rowList ) {
+			String acc = (String)row[1];
+			if( !finished.contains( acc ) ) {
+				System.err.println("try "+acc);
+				
+				String coord = fetchCoord( acc );
+				String country = accountryMap.get( acc );
+				Set<String> accset = accsetMap.get( country );
+				finished.addAll( accset );
+				String accsetStr = accset.toString();
+				String accsetStr2 = accsetStr.substring(1, accsetStr.length()-1);
+				//String sql = "update table set geocode = '"+coord+"' where acc in ("+accsetStr2+")";
+				String sql = "update table set geocode = '"+coord+"' where acc in ("+accsetStr2+")";
+				runSql( sql );
+				
+				System.err.println("done");
+			}
+		}
+	}
+	
+	public static void assignSupportValues( Node n, Map<Set<String>,NodeSet> nmap, boolean copybootstrap ) {
+		if( !n.isLeaf() ) {
+			for( Node cn : n.getNodes() ) {
+				assignSupportValues( cn, nmap, copybootstrap );
+			}
+			Set<String> leavenames = n.getLeaveNames();
+			NodeSet ns = nmap.get( leavenames );
+			if( !copybootstrap ) {
+				n.setName( Math.round( (double)(ns.getCount()) / (double)1000.0 ) / 10.0 + "%" );
+			} else {
+				n.setName( Double.toString( Math.round( (ns.getAverageBootstrap()*100.0) )/100.0 ) );
+			}
+		}
+	}
+	
+	public static Node majoRuleConsensus( TreeUtil tu, Map<Set<String>,NodeSet> nmap, Node guideTree, boolean copybootstrap ) {
+		List<NodeSet>	nslist = new ArrayList<NodeSet>();
+		System.err.println( nmap.size() );
+		for( Set<String> nodeset : nmap.keySet() ) {
+			NodeSet count = nmap.get( nodeset );
+			nslist.add( count );
+		}
+		
+		//Map<Set<String>,NodeSet>	guideMap = new HashMap<Set<String>,NodeSet>();
+		//guideTree.nodeCalcMap( guideMap );
+		
+		Node root;
+		if( guideTree != null ) {
+			root = guideTree;
+			assignSupportValues( root, nmap, copybootstrap );
+		} else {
+			Collections.sort( nslist );
+			int c = 0;
+			for( NodeSet nodeset : nslist ) {
+				System.err.println( nodeset.getCount() + "  " + nodeset.getNodes() + "  " + nodeset.getAverageHeight() + "  " + nodeset.getAverageBootstrap() );
+				c++;
+				if( c > 20 ) break;
+			}
+			
+			//Map<Set<String>, Node>	nodemap = new HashMap<Set<String>, Node>();
+			Map<String, Node>		leafmap = new HashMap<String, Node>();
+			NodeSet	allnodes = nslist.get(0);
+			int total = allnodes.getCount();
+			root = tu.new Node();
+			for( String nname : allnodes.getNodes() ) {
+				Node n = tu.new Node( nname, false );
+				root.addNode(n, 1.0);
+				//n.seth( 1.0 );
+				leafmap.put( nname, n );
+			}
+			
+			for( int i = 1; i < Math.min( nslist.size(), 100 ); i++ ) {
+				NodeSet	allsubnodes = nslist.get(i);
+				Node subroot = tu.new Node();
+				if( !copybootstrap ) {
+					subroot.setName( Math.round( (double)(allsubnodes.getCount()*1000) / (double)total ) / 10.0 + "%" );
+				} else {
+					subroot.setName( Double.toString( Math.round( (allsubnodes.getAverageBootstrap()*100.0) )/100.0 ) );
+				}
+				
+				Node vn = tu.getValidNode( allsubnodes.getNodes(), root );
+				if( tu.isValidSet( allsubnodes.getNodes(), vn ) ) {
+					while( allsubnodes.getNodes().size() > 0 ) {
+						for( String nname : allsubnodes.getNodes() ) {
+							Node leaf = leafmap.get( nname );
+							Node newparent = leaf.getParent();
+							Node current = leaf;
+							while( newparent.countLeaves() <= allsubnodes.getNodes().size() ) {
+								current = newparent;
+								newparent = current.getParent();
+							}
+							
+							if( allsubnodes.getNodes().containsAll( current.getLeaveNames() ) ) {
+								Node parent = current.getParent();
+								parent.removeNode( current );
+								
+								double h = allsubnodes.getAverageHeight();
+								//double b = allsubnodes.getAverageBootstrap();
+								double lh = allsubnodes.getAverageLeaveHeight(nname);
+								
+								/*subroot.addNode( current, h );
+								if( lh != -1.0 ) parent.addNode( subroot, lh );
+								else parent.addNode( subroot, 1.0 );*/
+								
+								parent.addNode( subroot, h );
+								
+								if( current.isLeaf() && lh != -1.0 ) {
+									System.err.println( "printing "+current.getName() + "  " + lh );
+									subroot.addNode( current, lh );
+								} else subroot.addNode( current, current.geth() );
+							
+								removeNames( allsubnodes.getNodes(), current );
+							} else allsubnodes.getNodes().clear();
+							
+							break;
+						}
+					}
+				}
+			}
+		}
+		
+		return root;
+	}
+	
+	public static void removeNames( Set<String> set, Node node ) {
+		List<Node> subnodes = node.getNodes();
+		if( subnodes != null ) for( Node n : subnodes ) {
+			removeNames(set, n);
+		}
+		set.remove( node.getName() );
+	}
+	
+	public void start() {
+		super.start();
+		System.err.println( "starting..." );
+		//load();
+	}
+	
+	boolean done = false;
+	public boolean load() {
+		boolean succ = true;
+		if( !done ) {
+			try {
+				System.err.println( "bleh3erm" );
+				Object obj = JSObject.class;
+				obj = null;
+				System.err.println( "bleh4" );
+				JSObject erm = (JSObject)obj;
+				System.err.println( "ble2h"+this );
+				JSObject win = JSObject.getWindow(this);
+				System.err.println( "about to run loadData" );
+				win.call("loadData", new Object[] {});
+				win.call("reqSavedSel", new Object[] {});
+				//System.err.println( "done loadData" );
+				//win.call("loadMeta", new Object[] {});
+			} catch( Exception e ) {
+				succ = false;
+				e.printStackTrace();
+			}
+			done = true;
+		}
+		
+		return succ;
+	}
+	
+	byte[] current = null;
+	public byte[] blobFetch() {
+		return current;
+	}
+	
+	public void init() {
+		initGUI( this );
+	}
     
 	Map<String,String>	colmap = new HashMap<String,String>();
 	JavaFasta	currentjavafasta;
-	public void init() {
+	Serifier	currentserifier;
+	public void initGUI( Container cont ) {
 		updateLof();
+		
+		specColors.put("antranikianii", "000088");
+		specColors.put("aquaticus", "FFFF00");
+		specColors.put("arciformis", "888800");
+		specColors.put("brockianus", "00FF00");
+		specColors.put("igniterrae", "008800");
+		specColors.put("eggertsoni", "88FF88");
+		specColors.put("filiformis", "00FFFF");
+		specColors.put("islandicus", "FF8800");
+		specColors.put("kawarayensis", "88FF00");
+		specColors.put("oshimai", "FF00FF");
+		specColors.put("scotoductus", "0000FF");
+		specColors.put("thermophilus", "FF0000");
+		specColors.put("yunnanensis", "8888FF");
+		specColors.put("rehai", "8888FF");
+		specColors.put("composti", "888844");
+		specColors.put("unknownchile", "008888");
 		
 		colmap.put("small_red", "#FF0000");
 		colmap.put("small_green", "#00FF00");
@@ -1499,8 +1947,28 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		colmap.put("small_purple", "#AA22AA");
 		colmap.put("small_black", "#000000");
 		
+		namesMap.put("Chile", "Chile");
+		namesMap.put("Yellowstone", "Yellowstone");
+		namesMap.put("Iceland", "Iceland");
+		namesMap.put("Australia", "Australia");
+		namesMap.put("Oregon", "USA-Oregon");
+		namesMap.put("Nevada", "USA-Nevada");
+		namesMap.put("Washington", "USA-Washington");
+		namesMap.put("California", "USA-California");
+		namesMap.put("Guinea", "Papua New Guinea");
+		namesMap.put("OR", "USA-Oregon");
+		namesMap.put("Fiji", "Fiji");
+		namesMap.put("Italy", "Italy");
+		namesMap.put("India", "India");
+		namesMap.put("New Mexico", "USA-New Mexico");
+		namesMap.put("China", "China");
+		namesMap.put("Japan", "Japan");
+		namesMap.put("Bulgaria", "Bulgaria");
+		namesMap.put("Taiwan", "Taiwan");
+		namesMap.put("New Zealand", "New Zealand");
+		
 		table = new JTable();
-		table.setAutoCreateRowSorter( true );	
+		table.setAutoCreateRowSorter( true );
 		//table.setColumnSelectionAllowed( true );
 		JScrollPane	scrollpane = new JScrollPane( table );
 		tablemap = new HashMap<String,Object[]>();
@@ -1545,7 +2013,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 			@Override
 			public int getColumnCount() {
-				return 22;
+				return 23;
 			}
 
 			@Override
@@ -1571,7 +2039,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else if( columnIndex == 18 ) return "color";
 				else if( columnIndex == 19 ) return "temp";
 				else if( columnIndex == 20 ) return "pH";
-				else if( columnIndex == 21 ) return "valid";
+				else if( columnIndex == 21 ) return "geocode";
+				else if( columnIndex == 22 ) return "valid";
 				//else if( columnIndex == 13 ) return "color";
 				
 				return "";
@@ -1581,7 +2050,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex == 4 || columnIndex == 5 ) return Integer.class;
 				else if( columnIndex == 19 || columnIndex == 20 ) return Double.class;
-				else if( columnIndex == 21 ) return Boolean.class;
+				else if( columnIndex == 22 ) return Boolean.class;
 				return String.class;
 			}
 
@@ -1610,8 +2079,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				Object[] row = rowList.get(rowIndex);
 				row[columnIndex] = aValue;
 				
-				JSObject jso = JSObject.getWindow( DataTable.this );
-				jso.call( "saveMeta", new Object[] {row[1], row[11], row[13]} );
+				try {
+					JSObject jso = JSObject.getWindow( DataTable.this );
+					jso.call( "saveMeta", new Object[] {row[1], row[11], row[13]} );
+				} catch( Exception e ) {
+					
+				}
 			}
 
 			@Override
@@ -1811,6 +2284,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			}
 		});*/
 		
+		System.err.println("ermf");
+		
 		final Set<Integer>	filterset = new HashSet<Integer>();
 		final RowFilter 	filter = new RowFilter() {
 			@Override
@@ -1820,6 +2295,170 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		};
 		updateFilter(table, filter);
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("Export KML") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
+				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
+				Map<String,String>				geoLoc = new HashMap<String,String>();
+				
+				List<Object[]>	selectedRowList = new ArrayList<Object[]>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					selectedRowList.add( rowList.get( table.convertRowIndexToModel(r) ) );
+				}
+				getSpecLoc( selectedRowList, specs, specLoc, locSpec, geoLoc, true, false, false );
+				
+				try {
+					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
+					fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+					fw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+					fw.write("<Document>");
+					
+					for( String coord : locSpec.keySet() ) {
+						String country = geoLoc.get( coord );
+						
+						Map<String,Long>	specMap = locSpec.get( coord );
+						String specsstr = null;
+						
+						String unos = null;
+						String colors = null;
+						String size = "40x40";
+						for( String spec : specMap.keySet() ) {
+							long idlencount = specMap.get(spec);
+							
+							int idlen = (int)(idlencount&0xFFFFFFFF);
+							int count = (int)(idlencount>>32);
+							
+							int id = (int)(idlen&0xFFFF);
+							int len = (int)(idlen>>16);
+							
+							if( specsstr == null ) specsstr = spec + " ("+id+","+len+","+count+")";
+							else specsstr += "," + spec + " ("+id+","+len+","+count+")";
+							
+							if( len > 900 && id > 97 ) size = "50x50";
+							
+							if( unos == null ) {
+								if( len > 900 && id > 97 ) unos = "2";
+								else unos = "1";
+								colors = specColors.get( spec.substring(2) );
+							} else {
+								if( len > 900 && id > 97 ) unos += ",2";
+								else unos += ",1";
+								colors += ","+specColors.get( spec.substring(2) );
+							}
+						}
+						
+						fw.write("<Placemark>\n");
+						fw.write("<name>"+specsstr+"</name>\n");
+						fw.write("<description>"+country+"</description>\n");
+						fw.write("<Style>");
+						fw.write("<IconStyle>");
+						fw.write("<scale>1.0</scale>");
+						fw.write("<Icon>");
+						fw.write("<href>http://chart.apis.google.com/chart?cht=p&amp;chd=t:"+unos+"&amp;chs="+size+"&amp;chf=bg,s,ffffff00&amp;chco="+colors+"</href>");
+						fw.write("</Icon>");
+						fw.write("</IconStyle>");
+						fw.write("</Style>");
+						fw.write("<Point>\n");
+						fw.write("<coordinates>"+coord+"</coordinates>\n");
+						fw.write("</Point>\n");
+						fw.write("</Placemark>\n");
+					}
+					
+					fw.write("</Document>\n");
+					fw.write("</kml>\n");
+					fw.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				/*try {
+					insertGeocodes();
+				} catch (IOException | AuthenticationException e1) {
+					e1.printStackTrace();
+				}*/
+			}
+		});
+		popup.add( new AbstractAction("Export all KML") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
+				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
+				Map<String,String>				geoLoc = new HashMap<String,String>();
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, true, false, false );
+				
+				try {
+					FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
+					fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+					fw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+					fw.write("<Document>");
+					
+					for( String coord : locSpec.keySet() ) {
+						String country = geoLoc.get( coord );
+						
+						Map<String,Long>	specMap = locSpec.get( coord );
+						String specsstr = null;
+						
+						String unos = null;
+						String colors = null;
+						String size = "40x40";
+						for( String spec : specMap.keySet() ) {
+							long idlencount = specMap.get(spec);
+							
+							int idlen = (int)(idlencount&0xFFFFFFFF);
+							int count = (int)(idlencount>>32);
+							
+							int id = (int)(idlen&0xFFFF);
+							int len = (int)(idlen>>16);
+							
+							if( specsstr == null ) specsstr = spec + " ("+id+","+len+","+count+")";
+							else specsstr += "," + spec + " ("+id+","+len+","+count+")";
+							
+							if( len > 900 && id > 97 ) size = "50x50";
+							
+							if( unos == null ) {
+								if( len > 900 && id > 97 ) unos = "2";
+								else unos = "1";
+								colors = specColors.get( spec.substring(2) );
+							} else {
+								if( len > 900 && id > 97 ) unos += ",2";
+								else unos += ",1";
+								colors += ","+specColors.get( spec.substring(2) );
+							}
+						}
+						
+						fw.write("<Placemark>\n");
+						fw.write("<name>"+specsstr+"</name>\n");
+						fw.write("<description>"+country+"</description>\n");
+						fw.write("<Style>");
+						fw.write("<IconStyle>");
+						fw.write("<scale>1.0</scale>");
+						fw.write("<Icon>");
+						fw.write("<href>http://chart.apis.google.com/chart?cht=p&amp;chd=t:"+unos+"&amp;chs="+size+"&amp;chf=bg,s,ffffff00&amp;chco="+colors+"</href>");
+						fw.write("</Icon>");
+						fw.write("</IconStyle>");
+						fw.write("</Style>");
+						fw.write("<Point>\n");
+						fw.write("<coordinates>"+coord+"</coordinates>\n");
+						fw.write("</Point>\n");
+						fw.write("</Placemark>\n");
+					}
+					
+					fw.write("</Document>\n");
+					fw.write("</kml>\n");
+					fw.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				/*try {
+					insertGeocodes();
+				} catch (IOException | AuthenticationException e1) {
+					e1.printStackTrace();
+				}*/
+			}
+		});
 		popup.add( new AbstractAction("Export biogeography report") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1827,85 +2466,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				
 				Map<String,Map<String,Long>>	specLoc = new TreeMap<String,Map<String,Long>>();
 				Map<String,Map<String,Long>>	locSpec = new TreeMap<String,Map<String,Long>>();
-				for( Object[] row : rowList ) {
-					String country = (String)row[6];
-					if( country != null && country.length() > 0 ) {
-						String species = (String)row[3];
-						String thespec = null;
-						for( String spec : specs ) {
-							if( species.contains(spec) ) {
-								thespec = "T."+spec;
-								break;
-							}
-						}
-						
-						if( thespec != null ) {
-							int len = (Integer)row[4];
-							int id = (Integer)row[5];
-							long idlen = (((long)len)<<16)+id;
-							
-							Map<String,Long> cmap;
-							if( specLoc.containsKey( thespec ) ) {
-								cmap = specLoc.get( thespec );
-							} else {
-								cmap = new TreeMap<String,Long>();
-								specLoc.put( thespec, cmap );
-							}
-							
-							if( cmap.containsKey(country) ) {
-								long oldidlencount = cmap.get(country);
-								
-								int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
-								int oldcount = (int)(oldidlencount>>32);
-								
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>16);
-								
-								if( id > oldid || (id == oldid && len > oldlen) ) {
-									cmap.put( country, idlen+((long)(oldcount+1)<<32) );
-								} else {
-									cmap.put( country, oldidlen+((long)(oldcount+1)<<32) );
-								}
-							} else {
-								cmap.put( country, idlen+(1L<<32) );
-							}
-							
-							Map<String,Long> smap;
-							if( locSpec.containsKey( country ) ) {
-								smap = locSpec.get( country );
-							} else {
-								smap = new TreeMap<String,Long>();
-								locSpec.put( country, smap );
-							}
-							if( smap.containsKey(thespec) ) {
-								long oldidlencount = smap.get( thespec );
-								
-								int oldidlen = (int)(oldidlencount&0xFFFFFFFF);
-								int oldcount = (int)(oldidlencount>>32);
-								
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>16);
-								
-								/*long oldidlen = smap.get(country);
-								int oldid = (int)(oldidlen&0xFFFF);
-								int oldlen = (int)(oldidlen>>32);*/
-								
-								if( id > oldid || (id == oldid && len > oldlen) ) {
-									smap.put( thespec, idlen+((long)(oldcount+1)<<32) );
-								} else {
-									smap.put( thespec, oldidlen+((long)(oldcount+1)<<32) );
-								}
-							} else {
-								smap.put( thespec, idlen+(1L<<32)  );
-							}
-						}
-					}
-				}
+				
+				Map<String,Map<String,Long>>	specSimpLoc = new TreeMap<String,Map<String,Long>>();
+				Map<String,Map<String,Long>>	locSimpSpec = new TreeMap<String,Map<String,Long>>();
+				
+				Map<String,String>				geoLoc = new HashMap<String,String>();
+				getSpecLoc( rowList, specs, specLoc, locSpec, geoLoc, false, false, false );
+				getSpecLoc( rowList, specs, specSimpLoc, locSimpSpec, geoLoc, false, true, false );
 				
 				Workbook wb = new XSSFWorkbook();
 				Sheet lSheet = wb.createSheet("Locations");
 				Sheet sSheet = wb.createSheet("Species");
 				Sheet bSheet = wb.createSheet("Boolean");
+				Sheet bsSheet = wb.createSheet("BoolSimple");
 				
 				Row r = lSheet.createRow(0);
 				r.createCell(0).setCellValue("Loction");
@@ -2019,7 +2592,64 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					val++;
 				}
 				
-				FileSaveService fss = null;
+				Map<String,Integer>	specSimpIndex = new HashMap<String,Integer>();
+				r = bsSheet.createRow(0);
+				val = 0;
+				for( String spec : specSimpLoc.keySet() ) {
+					specSimpIndex.put( spec, val );
+					r.createCell(++val).setCellValue( spec );
+				}
+				
+				val = 1;
+				for( String cnt : locSimpSpec.keySet() ) {
+					Map<String,Long> smap = locSimpSpec.get(cnt);
+					
+					r = bsSheet.createRow(val);
+					r.createCell(0).setCellValue(cnt);
+					for( String spec : smap.keySet() ) {
+						long idlencount = smap.get( spec );
+						
+						int idlen = (int)(idlencount&0xFFFFFFFF);
+						int count = (int)(idlencount>>32);
+						
+						int id = (int)(idlen&0xFFFF);
+						int len = (int)(idlen>>16);
+						
+						/*long idlen = smap.get(spec);
+						int id = (int)(idlen&0xFF);
+						int len = (int)(idlen>>32);*/
+						
+						int idx = -1;
+						if( specSimpIndex.containsKey(spec) ) idx = specSimpIndex.get(spec);
+						if( idx != -1 ) {
+							if( id < 97 || len < 900 || (id == 97 &&  len < 900) ) {
+								r.createCell(idx+1).setCellValue( "*" + id + "/" + len+" ("+count+")" );
+							} else {
+								r.createCell(idx+1).setCellValue( id + "/" + len+" ("+count+")" );
+							}
+						}
+					}
+					val++;
+				}
+				
+	        	try {
+	        		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					wb.write( baos );
+					baos.close();
+					
+					byte[] bb = baos.toByteArray();
+					//Files.write( Paths.get( new File("/u0/tmp.xlsx").toURI() ), bb );
+					
+					//String str = baos.toString();
+					String str = Base64.encodeBase64String(bb);
+					current = bb;
+		        	JSObject obj = JSObject.getWindow( DataTable.this );
+		        	obj.call("blobfetch", new Object[] {str,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+	        	 
+				/*FileSaveService fss = null;
 		        FileContents fileContents = null;
 		        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		        OutputStreamWriter	osw = new OutputStreamWriter( baos );
@@ -2053,7 +2683,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			        }
 		    	} catch( IOException ioe ) {
 		    		ioe.printStackTrace();
-		    	}
+		    	}*/
 			}
 		});
 		popup.addSeparator();
@@ -2121,6 +2751,22 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				win.call("saveSel", new Object[] {selname, sb.toString()} );
 			}
 		});
+		popup.add( new AbstractAction("Propogate selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder sb = new StringBuilder();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					Object o = table.getValueAt(r, 1);
+					String val = ((String)o);//.replace("_", "");
+					if( r == rr[0] ) sb.append( val );
+					else sb.append( ","+val );
+				}
+				
+				JSObject win = JSObject.getWindow( DataTable.this );
+				win.call("propSel", new Object[] {sb.toString()} );
+			}
+		});
 		popup.add( selectionMenu );
 		Action action = new CopyAction( "Copy" );
 		popup.add( action );
@@ -2134,9 +2780,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				//final JCheckBox	colors = new JCheckBox("Species colors");
 				final JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
 				final JCheckBox	boots = new JCheckBox("Bootstrap");
+				final JCheckBox	majo = new JCheckBox("Majority-rule consensus from bootstrap replicates");
 				final JCheckBox	entropy = new JCheckBox("Entropy weighting");
 				final JCheckBox	exgaps = new JCheckBox("Exclude gaps");
-				Object[] extraObjs = new Object[] {jukes, boots, exgaps, entropy};
+				Object[] extraObjs = new Object[] {jukes, boots, majo, exgaps, entropy};
 				//JOptionPane.showMessageDialog( DataTable.this, extraObjs );
 				
 				runnable = new Runnable() {
@@ -2144,12 +2791,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						//boolean color = colors.isSelected();
 						boolean cantor = jukes.isSelected();
 						boolean bootstrap = boots.isSelected();
+						boolean majorule = majo.isSelected();
 						boolean entr = entropy.isSelected();
 						boolean exg = exgaps.isSelected();
 						
 						double[] ent = null;
 						if( entr ) {
-							ent = Sequence.entropy( currentjavafasta.lseq );
+							ent = Sequence.entropy( currentserifier.lseq );
 						}
 						
 						List<Integer>	idxs = null;
@@ -2157,7 +2805,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							int start = Integer.MIN_VALUE;
 							int end = Integer.MAX_VALUE;
 							
-							for( Sequence seq : currentjavafasta.lseq ) {
+							for( Sequence seq : currentserifier.lseq ) {
 								if( seq.getRealStart() > start ) start = seq.getRealStart();
 								if( seq.getRealStop() < end ) end = seq.getRealStop();
 							}
@@ -2165,7 +2813,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							idxs = new ArrayList<Integer>();
 							for( int x = start; x < end; x++ ) {
 								boolean skip = false;
-								for( Sequence seq : currentjavafasta.lseq ) {
+								for( Sequence seq : currentserifier.lseq ) {
 									char c = seq.charAt( x );
 									if( c != '-' && c != '.' && c == ' ' ) {
 										skip = true;
@@ -2181,35 +2829,85 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						
 						String tree = "";
 						List<String>	corrInd = currentjavafasta.getNames();
-						double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
-						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
+						double[] corr = new double[ currentserifier.lseq.size()*currentserifier.lseq.size() ];
+						Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, null, false, cantor, ent );
 						TreeUtil	tu = new TreeUtil();
-						Node n = tu.neighborJoin(corr, corrInd, null);
-
-						if( bootstrap ) {
-							Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
-								@Override
-								public int compare(Node o1, Node o2) {
-									String c1 = o1.toStringWoLengths();
-									String c2 = o2.toStringWoLengths();
-									
-									return c1.compareTo( c2 );
-								}
-							};
-							tu.arrange( n, comp );
-							tree = n.toStringWoLengths();
-							
-							for( int i = 0; i < 1000; i++ ) {
-								Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, idxs, true, cantor, ent );
-								Node nn = tu.neighborJoin(corr, corrInd, null);
-								tu.arrange( nn, comp );
-								tu.compareTrees( tree, n, nn );
-								
-								//String btree = nn.toStringWoLengths();
-								//System.err.println( btree );
-							}
-							tu.appendCompare( n );
+						
+						for( String str : corrInd ) {
+							System.err.println( str );
 						}
+						
+						Node n = tu.neighborJoin(corr, corrInd, null, false, true);
+						if( bootstrap ) {
+							if( majorule ) {
+								Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
+								for( int i = 0; i < 1000; i++ ) {
+									Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, idxs, true, cantor, ent );
+									Node nn = tu.neighborJoin(corr, corrInd, null, false, false);
+									
+									int val = nn.getLeaveNames().size();
+									if( val == 16 ) {
+										int nval = nn.getLeaveNames().size();
+										System.err.println( nval );
+									}
+									
+									if( nn.getLeavesCount() != 17 ) {
+										System.err.println("bah " + nn.getLeavesCount());
+									}
+									
+									//String[] sobj = {"mt.ruber", "mt.silvanus", "o.profundus", "m.hydrothermalis"};
+									//Node newnode = tu.getParent( n, new HashSet<String>( Arrays.asList( sobj ) ) );
+									//tu.rerootRecur( n, newnode );
+									
+									tu.setLoc( 0 );
+									nn.nodeCalcMap( nmap );
+									
+									//tu.arrange( nn, comp );
+									//tu.compareTrees( tree, n, nn );
+									
+									//String btree = nn.toStringWoLengths();
+									//System.err.println( btree );
+								}
+								
+								n = majoRuleConsensus( tu, nmap, null, false );
+							} else {
+								Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
+									@Override
+									public int compare(Node o1, Node o2) {
+										String c1 = o1.toStringWoLengths();
+										String c2 = o2.toStringWoLengths();
+										
+										return c1.compareTo( c2 );
+									}
+								};
+								tu.arrange( n, comp );
+								tree = n.toStringWoLengths();
+								
+								for( int i = 0; i < 1000; i++ ) {
+									Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, idxs, true, cantor, ent );
+									Node nn = tu.neighborJoin(corr, corrInd, null, false, true);
+									tu.arrange( nn, comp );
+									tu.compareTrees( tree, n, nn );
+									
+									//String btree = nn.toStringWoLengths();
+									//System.err.println( btree );
+								}
+								tu.appendCompare( n );
+							}
+						}
+						
+						/*Map<String,String> namesMap = new HashMap<String,String>();
+						namesMap.put("Chile", "Chile");
+						namesMap.put("Yellowstone", "Yellowstone");
+						namesMap.put("Iceland", "Iceland");
+						namesMap.put("Australia", "Australia");
+						namesMap.put("Oregon", "Oregon");
+						namesMap.put("China", "China");
+						namesMap.put("Japan", "Japan");
+						namesMap.put("Bulgaria", "Bulgaria");
+						tu.softReplaceNames( n, namesMap );*/
+						//tu.nameParentNodes( n );
+						tu.nameParentNodesMeta( n );
 						tree = n.toString();
 						
 						boolean scc = true;
@@ -2217,6 +2915,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							try {
 								JSObject win = JSObject.getWindow( DataTable.this );
 								Object[] objs = { tree };
+								System.err.println( "fuck you" + tree );
+								console( "sko hey what the fuck" + tree );
 								win.call("showTree", objs);
 							} catch( Exception e1 ) {
 								scc = false;
@@ -2241,7 +2941,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				
 				//String tree = extractFasta("/thermales.fasta");
 				//String distm = dist
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				/*Set<String> include = new HashSet<String>();
@@ -2353,14 +3054,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				boolean entr = entropy.isSelected();
 				
 				double[] ent = null;
-				if( entr ) ent = Sequence.entropy( currentjavafasta.lseq );
+				if( entr ) ent = Sequence.entropy( currentserifier.lseq );
 				
-				double[] corr = new double[ currentjavafasta.lseq.size()*currentjavafasta.lseq.size() ];
-				Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, false, cantor, ent );
+				double[] corr = new double[ currentserifier.lseq.size()*currentserifier.lseq.size() ];
+				Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, null, false, cantor, ent );
 				List<String>	corrInd = currentjavafasta.getNames();
 				
 				TreeUtil	tu = new TreeUtil();
-				Node n = tu.neighborJoin(corr, corrInd, null);
+				Node n = tu.neighborJoin(corr, corrInd, null, false, true);
 				
 				if( bootstrap ) {
 					Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
@@ -2376,8 +3077,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					String tree = n.toStringWoLengths();
 					
 					for( int i = 0; i < 1000; i++ ) {
-						Sequence.distanceMatrixNumeric( currentjavafasta.lseq, corr, null, true, cantor, ent );
-						Node nn = tu.neighborJoin(corr, corrInd, null);
+						Sequence.distanceMatrixNumeric( currentserifier.lseq, corr, null, true, cantor, ent );
+						Node nn = tu.neighborJoin(corr, corrInd, null, false, true);
 						tu.arrange( nn, comp );
 						tu.compareTrees( tree, n, nn );
 						
@@ -2437,7 +3138,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("fasttree", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				loadAligned(jf, true);
@@ -2468,7 +3170,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);	
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				loadAligned(jf, true);
@@ -2481,7 +3185,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				runnable = new Runnable() {
 					@Override
 					public void run() {
-						currentjavafasta.removeGaps( currentjavafasta.getSequences() );
+						currentserifier.removeGaps( currentjavafasta.getSequences() );
 						String phy = currentjavafasta.getPhylip( true );
 						
 						Object[] objs = { "p"+phy };
@@ -2489,7 +3193,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				loadAligned(jf, true);
@@ -2520,7 +3226,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				jf.initDataStructures();
 				loadAligned(jf, true);
 			}
@@ -2532,7 +3240,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				runnable = new Runnable() {
 					@Override
 					public void run() {
-						currentjavafasta.removeGaps( currentjavafasta.getSequences() );
+						currentserifier.removeGaps( currentjavafasta.getSequences() );
 						String phy = currentjavafasta.getPhylip( true );
 						
 						Object[] objs = { "c"+phy };
@@ -2540,7 +3248,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 						win.call("dnapars", objs);
 					}
 				};
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				jf.initDataStructures();
 				loadAligned(jf, true);
 			}
@@ -2557,7 +3267,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		dnamlmenu.add( new AbstractAction("Show conserved species sites") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				final JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				final JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				addSave( frame, jf );
 				frame.setSize(800, 600);
@@ -2571,7 +3282,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("Show variant species sites") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -2584,7 +3296,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View aligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				addSave( frame, jf );
 				frame.setSize(800, 600);
@@ -2604,7 +3317,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		popup.add( new AbstractAction("View unaligned") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JavaFasta jf = new JavaFasta( DataTable.this );
+				currentserifier = new Serifier();
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -2624,7 +3338,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if( currentjavafasta == null ) {
-					currentjavafasta = new JavaFasta( DataTable.this );
+					currentserifier = new Serifier();
+					currentjavafasta = new JavaFasta( DataTable.this, currentserifier );
 					JFrame frame = new JFrame();
 					frame.setSize(800, 600);
 					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -2724,7 +3439,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					int rv = table.convertRowIndexToModel( r );
 					Object[] obj = rowList.get( rv );
 					
-					String name = getFastaName(names, obj);
+					String name = getFastaName(names, metas, obj);
 					if( nameNum.containsKey( name ) ) {
 						int nnum = nameNum.get( name );
 						if( num > nnum ) nameNum.put( name, nnum+1 );
@@ -2742,6 +3457,95 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				for( int r = 0; r < table.getRowCount(); r++ ) {
 					boolean b = (Boolean)table.getValueAt(r, 11);
 					if( b ) table.setRowSelectionInterval(r, r);
+				}
+			}
+		});
+		popup.add( new AbstractAction("Import selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// union_16S.txt
+				
+				FileOpenService fos = null;
+				try {
+		    		fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
+		    	} catch( UnavailableServiceException e1 ) {
+		    		fos = null;
+		    	}
+		    	
+		        Set<String>				selection = new HashSet<String>();
+		        try {
+			        InputStream is = null;
+				    if( fos != null ) {
+				    	FileContents fc = fos.openFileDialog( null, null );
+				    	if( fc != null ) is = fc.getInputStream();
+				    }
+				    
+				    if( is == null ) {
+				    	JFileChooser fc = new JFileChooser();
+				    	if( fc.showOpenDialog( DataTable.this ) == JFileChooser.APPROVE_OPTION ) {
+				    		is = new FileInputStream( fc.getSelectedFile() );
+				    	}
+				    }
+					
+					Reader rd = new InputStreamReader( is );
+					BufferedReader 	br = new BufferedReader( rd );
+					String line = br.readLine();
+					while( line != null ) {
+						String[] split = line.substring(1, line.length()-1).split(",");
+						
+						Map<String,String>		selmap = new HashMap<String,String>();
+						for( String s : split ) {
+							String strim = s.trim();
+							if( tablemap.containsKey(strim) ) {
+								Object[] obj = tablemap.get(strim);
+								int tlen = (Integer)obj[4];
+								String spec = (String)obj[3];
+								String country = (String)obj[6];
+								for( String key : namesMap.keySet() ) {
+									if( country != null && country.contains(key) ) {
+										country = namesMap.get( key );
+										break;
+									}
+								}
+								String specoun = spec+country;
+								
+								if( selmap.containsKey(specoun) ) {
+									String acc = selmap.get(specoun);
+									Object[] subobj = tablemap.get(acc);
+									if( subobj == null ) {
+										System.err.println( tablemap.size() + "  " + acc );
+									} else {
+										int len = (Integer)subobj[4];
+										if( tlen > len ) {
+											selmap.put(specoun, acc);
+										}
+									}
+								} else {
+									selmap.put(specoun, strim);
+								}
+							}
+						}
+						
+						if( selmap.size() > 1 ) selmap.remove("");
+						
+						for( String str : selmap.keySet() ) {
+							String acc = selmap.get( str );
+							selection.add( acc );
+						}
+						//if( sel != null ) selection.add( sel );
+						line = br.readLine();
+					}
+					br.close();
+		        } catch( Exception e1 ) {
+		        	e1.printStackTrace();
+		        }
+				
+				table.removeRowSelectionInterval(0, table.getRowCount()-1);
+				for( int r = 0; r < table.getRowCount(); r++ ) {
+					boolean b = selection.contains( table.getValueAt(r, 1) );
+					if( b ) {
+						table.addRowSelectionInterval(r, r);
+					}
 				}
 			}
 		});
@@ -2765,27 +3569,17 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		//String res = getThermusFusion();
-		//loadData( res );
-		
-		boolean succ = true;
-		try {
-			JSObject win = JSObject.getWindow(this);
-			System.err.println( "about to run loadData" );
-			win.call("loadData", new Object[] {});
-			win.call("reqSavedSel", new Object[] {});
-			//System.err.println( "done loadData" );
-			//win.call("loadMeta", new Object[] {});
-		} catch( Exception e ) {
-			succ = false;
-		}
-		
-		if( !succ ) {
+		if( cont instanceof JFrame ) {
 			String res = getThermusFusion();
 			loadData( res );
+		} else {
+			if( !load() ) {
+				String res = getThermusFusion();
+				loadData( res );
+			}
 		}
 		
-		this.add( scrollpane );
+		cont.add( scrollpane );
 	}
 	
 	public void showTree( String tree ) {
@@ -2816,7 +3610,213 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		int len;
 	};
 	
+	public static StringBuilder exportGeocode( String acc, String country, Map<String,StringBuilder> countryMap ) throws IOException {
+		StringBuilder json = null;
+		if( countryMap.containsKey( country ) ) {
+			json = countryMap.get( country );
+		}
+		
+		if( json == null ) {			
+			json = new StringBuilder();
+			
+			String qcountry = country.replace(": ", " ").replace(":", " ").replace(" ", "+").replace(",+", "+").replace("Antarctica+East+Antarctica+Vostok+Glacier", "Antarctica+Vostok");
+			System.err.println( qcountry );
+			URL url = new URL( GEOCODE_SERVICE_URL + "/json?address="+qcountry+"&sensor=false" );
+			
+			InputStream is = url.openStream();
+			BufferedReader bb = new BufferedReader( new InputStreamReader( is ) );
+			String subline = bb.readLine();
+			while( subline != null ) {
+				json.append( subline + "\n" );
+				subline = bb.readLine();
+			}
+			bb.close();
+			
+			countryMap.put( country, json );
+		}
+		
+		return json;
+	}
+	
+	public static boolean checkValid( String acc ) throws IOException {
+		FileReader fr = new FileReader( "/home/sigmar/geocode/"+acc );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.contains("OVER_QUERY_LIMIT") || line.contains("ZERO_RESULTS") ) return false;
+			line = br.readLine();
+		}
+		br.close();
+		
+		return true;
+	}
+	
+	public static String fetchCoord( String acc ) throws IOException {
+		String ret = null;
+		
+		FileReader fr = new FileReader( "/home/sigmar/geocode/"+acc );
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		while( line != null ) {
+			String trim = line.trim();
+			if( trim.contains("\"location\" : {" ) ) {
+				line = br.readLine();
+				trim = line.trim();
+				String[] ss = trim.split("[\t ]+");
+				String lat = ss[ ss.length-1 ];
+				line = br.readLine();
+				trim = line.trim();
+				ss = trim.split("[\t ]+");
+				String lng = ss[ ss.length-1 ];
+				
+				ret = lng + "," + lat.substring(0,lat.length()-1);
+				//ret = lat + lng;
+				
+				break;
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		return ret;
+	}
+	
+	public static Map<String,StringBuilder> loadCountryMap( Map<String,String> acm ) throws IOException {
+		Map<String,StringBuilder>	ret = new HashMap<String,StringBuilder>();
+		File f = new File( "/home/sigmar/geocode/" );
+		File[] ff = f.listFiles();
+		for( File tf : ff ) {
+			String acc = tf.getName();
+			if( acm.containsKey( acc ) ) {
+				String country = acm.get( acc );
+				
+				if( country != null && country.length() > 2 && !ret.containsKey( country ) ) {
+					StringBuilder json = new StringBuilder();
+					BufferedReader bb = new BufferedReader( new FileReader( tf ) );
+					String subline = bb.readLine();
+					while( subline != null ) {
+						json.append( subline + "\n" );
+						subline = bb.readLine();
+					}
+					bb.close();
+					
+					if( json.indexOf("ZERO_RESULTS") == -1 && json.indexOf("OVER_QUERY_LIMIT") == -1 ) ret.put( country, json );
+					else ret.put( country, null );
+				}
+			}
+		}
+		return ret;
+	}
+	
 	public static void main(String[] args) {
+		JFrame frame = new JFrame();
+		frame.setSize(800, 600);
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		DataTable	dt = new DataTable();
+		dt.initGUI( frame );
+		frame.setVisible( true );
+	}
+	
+	public static void main_older(String[] args) {
+		try {
+			FileReader fr = new FileReader( "/home/sigmar/Downloads/Thermus_16S_aligned.csv" );
+			BufferedReader br = new BufferedReader( fr );
+			String line = br.readLine();
+			line = br.readLine();
+			
+			FileWriter fw = new FileWriter("/home/sigmar/kml.kml");
+			fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+			fw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
+			fw.write("<Document>");
+			Map<String,Set<String>>		accsetMap = new HashMap<String,Set<String>>();
+			Map<String,String>			accountryMap = new HashMap<String,String>();
+			Map<String,String>			accspecMap = new HashMap<String,String>();
+			//int count = 0;
+			while( line != null ) {
+				String[] split = csvSplit( line ); //line.split(",");
+				String acc = split[1];
+				String spec = split[3];
+				String country = split[6];
+				Set<String>	accset;
+				if( accsetMap.containsKey( country ) ) {
+					accset = accsetMap.get( country );
+				} else {
+					accset = new HashSet<String>();
+					accsetMap.put( country, accset );
+				}
+				accset.add( acc );
+				
+				accountryMap.put( acc, country );
+				accspecMap.put( acc, spec );
+				
+				line = br.readLine();
+			}
+			br.close();
+				
+			Map<String,StringBuilder>	countryMap = loadCountryMap( accountryMap );
+			for( String acc : accountryMap.keySet() ) {
+				String country = accountryMap.get( acc );
+				if( country.length() > 2 ) {
+					if( countryMap.get( country ) == null ) {
+					//if( !checkValid( acc ) ) {
+						//int i = country.indexOf(':');
+						//if( i > 0 ) country = country.substring(0,i).trim()+" Gotthard";
+						StringBuilder json = exportGeocode( acc, country, countryMap );
+						if( json.indexOf("ZERO_RESULTS") == -1 && json.indexOf("OVER_QUERY_LIMIT") == -1 ) {
+							System.err.println( "succ: "+acc );
+							System.err.println( "succ: "+country );
+							//System.err.println( "succ: "+json );
+							for( String accs : accsetMap.get(country) ) {
+								//System.err.println( "succsub: "+accs );
+								FileWriter fwo = new FileWriter( "/home/sigmar/geocode/"+accs );
+								fwo.write( json.toString() );
+								fwo.close();
+							}
+						} else {
+							System.err.println( "fail: "+country );
+							System.err.println( "fail: "+json );
+							
+							break;
+						}
+						
+						//break;
+						/*try {
+							Thread.sleep(900);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}*/
+					}
+					//exportGeocode( split[1], split[6], countryMap );
+					String coord = fetchCoord( acc );
+					String spec = accspecMap.get( acc );
+					if( coord != null && coord.length() > 0 ) {
+						fw.write("<Placemark>\n");
+						fw.write("<name>"+spec+"</name>\n");
+						fw.write("<description>"+country+" "+acc+"</description>\n");
+						fw.write("<Point>\n");
+						fw.write("<coordinates>"+coord+"</coordinates>\n");
+						fw.write("</Point>\n");
+						fw.write("</Placemark>\n");
+					}
+				}
+				
+				//System.err.println( split[1] + "  " + split[6] );
+				
+				//count++;
+				
+				//if( count == 50 ) break;
+				//break;
+			}
+			fw.write("</Document>\n");
+			fw.write("</kml>\n");
+			fw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		/*File f = new File("/home/sigmar/sim.newick");
 		try {
 			char[] cbuf = new char[(int)f.length()];
@@ -2834,7 +3834,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
 		
 		try {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
@@ -2848,13 +3848,13 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				String s = split[i];
 				int val = s.indexOf(',');
 				if( val != -1 ) {
-					oldids.put( s.substring(0, val), s.substring(val+1, s.length()) );	
+					oldids.put( s.substring(0, val), s.substring(val+1, s.length()) );
 				} else {
 					oldids.put( s, null );
 				}
 			}
 			/*System.err.println( oldids.size() );
-			System.err.println( oldids.keySet() );*/
+			System.err.println( oldids.keySet() );*
 			
 			ret = run("select acc, rowid from "+tableid+" where len(country) < 2", true);
 			split = ret.split("\n");
@@ -2882,14 +3882,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			/*String ret = run("select rowid from "+tableid+" where name = 'Unl042jm'", true);
 			System.err.println( ret );
 			String[] lines = ret.split("\n");
-			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);*/
+			run("update "+tableid+" set species = 'Thermus antranikianii strain HN3-7 16S ribosomal RNA, partialsequence' where rowid = '"+lines[1]+"'", true);
 		} catch (AuthenticationException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ServiceException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	public static void main_old(String[] args) {

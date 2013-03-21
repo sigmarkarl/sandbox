@@ -2,6 +2,7 @@ package org.simmi;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,6 +19,7 @@ public class Tax {
 		String str = "";
 		
 		//str = "eyjosilva_HM2RNR208JLXW0";
+		//str = "snaedisTCTCTATGCG_HWBYD8R01A4J1X";
 		
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -47,9 +49,14 @@ public class Tax {
 		if( ind != -1 ) {
 			String input = str.substring(ind+1);
 			String[] split = input.split( "," );
+			for( int i = 0; i < split.length; i++ ) {
+				split[i] = split[i].trim();
+			}
 			try {
 				//FileReader 		fr = new FileReader(searchnum+".TCA.454Reads.fna.gz");
-				FileInputStream fis = new FileInputStream( searchnum+".TCA.454Reads.fna.gz" );
+				File f = new File( /*"/var/www/cgi-bin/"+*/searchnum+".TCA.454Reads.fna.gz" );
+				//System.err.println( f.getName() + "  " + split[0] );
+				FileInputStream fis = new FileInputStream( f );
 				GZIPInputStream gis = new GZIPInputStream( fis );
 				InputStreamReader	isr = new InputStreamReader( gis );
 				BufferedReader 	br = new BufferedReader( isr );
@@ -57,17 +64,22 @@ public class Tax {
 				boolean inside = false;
 				while( line != null ) {
 					if( line.startsWith(">") ) {
+						//System.out.println( line );
 						inside = false;
 						for( String s : split ) {
+							//System.out.println( "mumumu " + s );
 							if( line.contains( s ) ) {
 								ret.append( line+"\n" );
 								inside = true;
 								break;
 							}
 						}
-					} else if( inside ) ret.append( line+"\n" );
+					} else if( inside ) {
+						ret.append( line+"\n" );
+					}
 					line = br.readLine();
 				}
+				br.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -77,5 +89,4 @@ public class Tax {
 		
 		System.out.println( ret.toString() );
 	}
-
 }
