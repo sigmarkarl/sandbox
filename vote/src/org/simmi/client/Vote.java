@@ -69,7 +69,8 @@ public class Vote implements EntryPoint {
 		vp.setSize(w+"px", h+"px");
 		//vp.setSize( "100%", "100%" );
 		
-		HTML title = new HTML("Kosning í Starfsmannaráð Matís 2011<br>(veljið þrjá, kosið er jafnóðum og hnappur er valinn. Hægt er að breyta valinu seinna.)");
+		//HTML title = new HTML("Kosning í Starfsmannaráð Matís 2011<br>(veljið þrjá, kosið er jafnóðum og hnappur er valinn. Hægt er að breyta valinu seinna.)");
+		HTML title = new HTML("Kosning öryggistrúnaðarmanna Matís 2013<br>(veljið tvo, kosið er jafnóðum og hnappur er valinn. Hægt er að breyta valinu seinna.)");
 		vp.add( title );
 		vp.add( grid );
 		
@@ -124,7 +125,7 @@ public class Vote implements EntryPoint {
 			}
 		});
 		
-		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "/list.txt" );
+		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, "/newnew.txt" );
 		try {
 			rb.sendRequest("", new RequestCallback() {
 				@Override
@@ -135,7 +136,7 @@ public class Vote implements EntryPoint {
 					Set<String>	set = null;
 					allcheck = new ArrayList<CheckBox>();
 					int i = 0;
-					for( int k = 18; k < lines.length; k++ ) {
+					for( int k = 0; k < lines.length; k++ ) {
 						String name = lines[k];
 						String[] split = name.split("\t");
 						
@@ -159,11 +160,12 @@ public class Vote implements EntryPoint {
 						Style s = cap.getElement().getStyle();
 						s.setFontSize(9.0, Unit.PX);
 						
+						final int fjoldi = 2; //3
 						cap.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
 							@Override
 							public void onValueChange(ValueChangeEvent<Boolean> event) {
 								if( event.getValue() ) {
-									if( checkList.size() == 3 ) {
+									if( checkList.size() == fjoldi ) {
 										CheckBox desel = checkList.remove(0);
 										desel.setValue( false );
 									}

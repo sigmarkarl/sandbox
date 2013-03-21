@@ -21,6 +21,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
+import elemental.client.Browser;
+
 public class ThermusTable implements EntryPoint {	
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
@@ -28,9 +30,24 @@ public class ThermusTable implements EntryPoint {
 		$wnd.console.log( log );
 	}-*/;
 	
+	elemental.html.Window myPopup;
+	public elemental.html.Window windowOpen( String url, String name ) {
+		elemental.html.Window wnd = Browser.getWindow();
+		myPopup = wnd.open( url, name );
+		return myPopup;
+	}
+	
 	public native int initFunctions( Element applet ) /*-{
 		var s = this;
 		
+		$wnd.showTree = function( newtree ) {
+			$wnd.treetext = newtree;
+			$wnd.console.log( "sisim" );
+			$wnd.console.log( newtree );
+			$wnd.myPopup = s.@org.simmi.client.ThermusTable::windowOpen(Ljava/lang/String;Ljava/lang/String;)( $wnd.domain + '/Treedraw.html?callback=thermusgenes','_blank' ); 
+			//window.open(domain + '/Treedraw.html?callback=thermusgenes','_blank');
+		}
+	
 		$wnd.saveMeta = function( acc, country, valid ) {
 			s.@org.simmi.client.ThermusTable::saveMeta(Ljava/lang/String;Ljava/lang/String;Z)( acc, country, valid );
 		};
@@ -45,6 +62,10 @@ public class ThermusTable implements EntryPoint {
 		
 		$wnd.saveSel = function( key, val ) {
 			s.@org.simmi.client.ThermusTable::saveSel(Ljava/lang/String;Ljava/lang/String;)( key, val );
+		};
+		
+		$wnd.propSel = function( sel ) {
+			s.@org.simmi.client.ThermusTable::propSel(Ljava/lang/String;)( sel );
 		};
 		
 		$wnd.saveSeq2 = function( jsonstr ) {
@@ -192,6 +213,10 @@ public class ThermusTable implements EntryPoint {
 				console( caught.getMessage() );
 			}
 		});
+	}
+	
+	public void propSel( String sel ) {
+		if( myPopup != null ) myPopup.postMessage( "propogate{"+sel+"}", "http://webconnectron.appspot.com" );
 	}
 	
 	public void saveSel( String key, String val ) {

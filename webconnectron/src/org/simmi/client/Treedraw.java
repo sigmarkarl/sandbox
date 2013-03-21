@@ -54,6 +54,8 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
@@ -61,7 +63,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -72,12 +73,20 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+
+import elemental.client.Browser;
+import elemental.events.Event;
+import elemental.events.EventListener;
+import elemental.events.MessageEvent;
+import elemental.html.Console;
+
+//import elemental.client.Browser;
+//import elemental.html.Console;
 
 public class Treedraw implements EntryPoint {
 	Canvas				canvas;
@@ -85,11 +94,14 @@ public class Treedraw implements EntryPoint {
 	Node				selectedNode;
 	Node[]				nodearray;
 	private TreeUtil	treeutil;
-	boolean			center = false;
+	boolean				center = false;
 	int					equalHeight = 0;
-	boolean			showscale = true;
-	boolean			showbubble = false;
-	boolean			showlinage = false;
+	boolean				showscale = true;
+	boolean				showbubble = false;
+	boolean				showlinage = false;
+	boolean				showleafnames = true;
+	boolean				rightalign = false;
+	boolean				circular = false;
 	
 	private void setTreeUtil( TreeUtil tu, String val ) {
 		if( this.treeutil != null ) console( "batjong2 " + val );
@@ -122,6 +134,11 @@ public class Treedraw implements EntryPoint {
 		return ret;
 	}
 	
+	double clientscale = 1.0;
+	public int getClientWidth() {
+		return (int)(clientscale*Window.getClientWidth());
+	}
+	
 	double hchunk = 10.0;
 	public void drawTree( TreeUtil treeutil ) {
 		double minh = treeutil.getminh();
@@ -130,7 +147,7 @@ public class Treedraw implements EntryPoint {
 		double minh2 = treeutil.getminh2();
 		double maxh2 = treeutil.getmaxh2();
 		
-		int ww = Window.getClientWidth();
+		int ww = getClientWidth();
 		
 		int leaves = root.getLeavesCount();
 		int levels = root.countMaxHeight();
@@ -142,18 +159,24 @@ public class Treedraw implements EntryPoint {
 		int hsize = (int)(hchunk*leaves);
 		if( treelabel != null ) hsize += 2*hchunk;
 		if( showscale ) hsize += 2*hchunk;
-		canvas.setSize((ww-10)+"px", (hsize+2)+"px");
-		canvas.setCoordinateSpaceWidth( ww-10 );
-		canvas.setCoordinateSpaceHeight( hsize+2 );
+		if( circular ) {
+			canvas.setSize((ww-10)+"px", (ww-10)+"px");
+			canvas.setCoordinateSpaceWidth( ww-10 );
+			canvas.setCoordinateSpaceHeight( ww-10 );
+		} else {
+			canvas.setSize((ww-10)+"px", (hsize+2)+"px");
+			canvas.setCoordinateSpaceWidth( ww-10 );
+			canvas.setCoordinateSpaceHeight( hsize+2 );
+		}
 		
 		boolean vertical = true;
 		//boolean equalHeight = false;
 		
-		Treedraw.this.h = hchunk*leaves;
+		Treedraw.this.h = hchunk*leaves; //circular ? ww-10 : hchunk*leaves;
 		Treedraw.this.w = ww - 10;
 		
 		if( vertical ) {
-			dh = Treedraw.this.h/leaves;
+			dh = hchunk;
 			dw = Treedraw.this.w/levels;
 		} else {
 			dh = Treedraw.this.h/levels;
@@ -173,6 +196,8 @@ public class Treedraw implements EntryPoint {
 		//console( Double.toString(maxh2-minh2) );
 		
 		Context2d ctx = canvas.getContext2d();
+		ctx.setFillStyle("#FFFFFF");
+		ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 		if( hchunk != 10.0 ) {
 			String fontstr = (int)(5.0*Math.log(hchunk))+"px sans-serif";
 			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
@@ -181,12 +206,14 @@ public class Treedraw implements EntryPoint {
 		//console( "leaves " + leaves );
 		//double	maxheightold = root.getMaxHeight();
 		
-		Node node = equalHeight > 0 ? getMaxNameLength( root, ctx, ww-30 ) : getMaxHeight( root, ctx, ww-30, true );
+		Node mnnode = getMaxNameLength( root, ctx );
+		String maxstr = mnnode.getName();
+		Node node = equalHeight > 0 ? mnnode : getMaxHeight( root, ctx, ww-30, showleafnames );
 		if( node != null ) {
 			double gh = getHeight(node);
 			String name = node.getName();
-			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
-			double textwidth = ctx.measureText(name).getWidth();
+			//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			double textwidth = showleafnames ? ctx.measureText(name).getWidth() : 0.0;
 			
 			double mns = 0.0;
 			if( showlinage ) {
@@ -195,19 +222,22 @@ public class Treedraw implements EntryPoint {
 			}
 			double addon = mns;
 			
-			double maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth-mns);
+			double maxheight = 0.0;
+			if( circular ) maxheight = equalHeight > 0 ? ((ww-30)*circularScale-(textwidth)*2.0) : (gh*(ww-30)*circularScale)/((ww-60)*circularScale-(textwidth+mns)*2.0);
+			else maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth-mns);
+			
 			if( equalHeight > 0 ) dw = maxheight/levels;
-					
+			
 			if( vertical ) {
-				drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
+				//drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
 				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
-				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
+				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
 			} else {
 				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0, addon );
 				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon );
-				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon );
+				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
+				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
 			}
 			
 			if( showscale ) {
@@ -250,7 +280,7 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
-	public Node getMaxNameLength( Node root, Context2d ctx, int ww ) {
+	public Node getMaxNameLength( Node root, Context2d ctx ) {
 		List<Node>	leaves = new ArrayList<Node>();
 		recursiveLeavesGet( root, leaves );
 		
@@ -259,7 +289,7 @@ public class Treedraw implements EntryPoint {
 		console( ""+leaves.size() );
 		for( Node node : leaves ) {
 			String name = node.getName();
-			if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+			//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 			TextMetrics tm = ctx.measureText( name );
 			double tw = tm.getWidth();
 			//double h = node.getHeight();
@@ -283,7 +313,7 @@ public class Treedraw implements EntryPoint {
 		if( includetext ) {
 			for( Node node : leaves ) {
 				String name = node.getName();
-				if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+				//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
 				TextMetrics tm = ctx.measureText( name );
 				double tw = tm.getWidth();
 				double h = node.getHeight();
@@ -380,13 +410,37 @@ public class Treedraw implements EntryPoint {
 		return dvals;
 	}
 	
+	public native String createObjectURL( elemental.html.Blob bb ) /*-{
+		return $wnd.URL.createObjectURL( bb );
+	}-*/;
+	
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
+		//Browser.getWindow().getConsole().log("erm " + str);
 		if( str != null && str.length() > 1 && !str.startsWith("{") ) {
 			List<Sequence> seqs = currentSeqs;
 			currentSeqs = null;
 			//TreeUtil	treeutil;
-			if( str.startsWith("#") ) {
+			
+			//elemental.html.Window wnd = Browser.getWindow();
+			//Console cnsl = wnd.getConsole();
+			/*if( cnsl != null ) {
+				cnsl.log( "eitthvad i gangi" );
+			}*/
+			
+			if( str.startsWith("propogate") ) {
+				/*if( cnsl != null ) {
+					cnsl.log( str );
+				}*/
+				
+				int iof = str.indexOf('{');
+				int eof = str.indexOf('}', iof+1);
+				String[] split = str.substring(iof+1, eof).split(",");
+				if( treeutil.getNode() != null ) {
+					treeutil.propogateSelection( new HashSet<String>( Arrays.asList(split) ), treeutil.getNode() );
+					handleTree();
+				}
+			} else if( str.startsWith("#") ) {
 				int i = str.lastIndexOf("tree");
 				if( i != -1 ) {
 					i = str.indexOf('(', i);
@@ -551,7 +605,7 @@ public class Treedraw implements EntryPoint {
 								for( Sequence seq : lseq ) {
 									names.add( seq.getName() );
 								}
-								Node n = treeutil.neighborJoin( dvals, names, null );
+								Node n = treeutil.neighborJoin( dvals, names, null, true );
 								
 								if( bootstrap ) {
 									Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
@@ -568,7 +622,7 @@ public class Treedraw implements EntryPoint {
 									
 									for( int i = 0; i < 100; i++ ) {
 										Sequence.distanceMatrixNumeric( lseq, dvals, idxs, true, cantor, ent );
-										Node nn = treeutil.neighborJoin(dvals, names, null);
+										Node nn = treeutil.neighborJoin(dvals, names, null, true);
 										treeutil.arrange( nn, comp );
 										treeutil.compareTrees( tree, n, nn );
 										
@@ -623,7 +677,7 @@ public class Treedraw implements EntryPoint {
 						yesb.addClickHandler( new ClickHandler() {
 							@Override
 							public void onClick(ClickEvent event) {
-								Node n = treeutil.neighborJoin( dvals, names, root );
+								Node n = treeutil.neighborJoin( dvals, names, root, true );
 								setNode( n );
 								handleTree();
 								
@@ -633,7 +687,7 @@ public class Treedraw implements EntryPoint {
 						nob.addClickHandler( new ClickHandler() {
 							@Override
 							public void onClick(ClickEvent event) {
-								Node n = treeutil.neighborJoin( dvals, names, null );
+								Node n = treeutil.neighborJoin( dvals, names, null, true );
 								setNode( n );
 								handleTree();
 								
@@ -664,12 +718,13 @@ public class Treedraw implements EntryPoint {
 				}
 				
 				if( !b ) {
-					Node n = treeutil.neighborJoin( dvals, names, null );
+					Node n = treeutil.neighborJoin( dvals, names, null, true );
 					setNode( n );
 					//console( treeutil.getNode().toString() );
 					handleTree();
 				}
 			} else {
+				//Browser.getWindow().getConsole().log("what");
 				String tree = str.replaceAll("[\r\n]+", "");
 				setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
 				handleTree();
@@ -702,30 +757,6 @@ public class Treedraw implements EntryPoint {
 	
 	public native void click( JavaScriptObject e ) /*-{
 		e.click();
-	}-*/;
-	
-	public native void postParent( String from ) /*-{
-		var s = this;
-		$wnd.from = from;
-		$wnd.handleText = function( str ) {
-			s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( str );
-		}
-	
-		//var s = this;
-		//		$wnd.addEventListener('message',function(event) {
-		//			$wnd.console.log('message received from webfasta');
-		//			if(event.origin == 'http://'+from+'.appspot.com') {
-		//				$wnd.console.log('correct webfasta origin');
-		//				s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( event.data );
-		//			}
-		//		});
-			
-		//var loadHandler = function(event){
-		//	$wnd.console.log('sending message to webfasta');
-		//	event.currentTarget.opener.postMessage('ready','http://webfasta.appspot.com');
-		//}
-		//window.addEventListener('DOMContentLoaded', loadHandler, false);
-		$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
 	}-*/;
 	
 	public void openFileDialog( final int append ) {		
@@ -970,6 +1001,19 @@ public class Treedraw implements EntryPoint {
 		return string;
 	}-*/;
 	
+	private native String uploadToGoogleDrive( String name, String base64str ) /*-{
+		$wnd.console.log("ermi " + $wnd.sim);
+		if( $wnd.sim == 'simmi' ) {
+			$wnd.console.log("ermi2");
+			
+			var metadata = {
+            	'title': name,
+            	'mimeType': contentType
+            };
+			$wnd.doRequest( base64str, "text/plain", metadata );
+		}
+	}-*/;
+	
 	public void save( String treestr ) {
 		String base64tree = encode( treestr );
 		//String base64tree = new String( Base64.encodeBase64( treestr.getBytes() ) );
@@ -1009,18 +1053,18 @@ public class Treedraw implements EntryPoint {
 			String nname = node.getName();
 			if( harshness == 2 ) {
 				int li = nname.indexOf('_');
-				if( li != -1 ) node.setName( nname.substring(0,li) );
+				if( li != -1 ) node.setName( nname.substring(0,li), false );
 			} else if( harshness == 1 ) {
 				int li = nname.lastIndexOf('-');
 				if( li != -1 ) {
 					if( nname.charAt(li-3) == 'U' && nname.charAt(li-2) == 'S' && nname.charAt(li-1) == 'A' ) {
 						int val = nname.indexOf('_', li+1);
-						node.setName( nname.substring( 0, Math.min(nname.length(), val == -1 ? nname.length() : val) ) );
-					} else node.setName( nname.substring(0,li) );
+						node.setName( nname.substring( 0, Math.min(nname.length(), val == -1 ? nname.length() : val) ), false );
+					} else node.setName( nname.substring(0,li), false );
 				}
 			} else {
 				int li = nname.lastIndexOf('_');
-				if( li != -1 ) node.setName( nname.substring(0,li) );
+				if( li != -1 ) node.setName( nname.substring(0,li), false );
 			}
 		}
 	}
@@ -1088,12 +1132,54 @@ public class Treedraw implements EntryPoint {
 		$wnd.addEventListener('keypress', whatKey, true);
 	}-*/;
 	
+	public void scaleMeta( Node n, double x ) {
+		double frmo = n.getFrameOffset();
+		if( frmo > 0.0 ) n.setFrameOffset( frmo+x );
+		else n.setFrameOffset( 1.0 );
+		for( Node rn : n.getNodes() ) {
+			scaleMeta( rn, x );
+		}
+	}
+	
 	public void keyCheck( char c, int keycode ) {
-		if( c == 'a' || c == 'A' ) {
-			String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii"};
+		if( c == 'p' || c == 'P' ) {
+			if( c == 'p' ) {
+				circularScale += 0.01;
+			} else {
+				circularScale -= 0.01;
+			}
+		} else if( c == 'x' || c == 'X' ) {
+			if( c == 'x' ) {
+				scaleMeta( root, -0.01 );
+			} else {
+				scaleMeta( root, 0.01 );
+			}
+		} else if( c == 'a' || c == 'A' ) {
+			String[] ts = new String[] {"T.unknown", "T.composti", "T.rehai", "T.yunnanensis", "T.kawarayensis", "T.scotoductus", "T.thermophilus", "T.eggertsoni", "T.islandicus", "T.igniterrae", "T.brockianus", "T.aquaticus", "T.oshimai", "T.filiformis", "T.antranikianii", "T.unkownchile"};
 			Collection<String> cset = c == 'A' ? new HashSet<String>( Arrays.asList(ts) ) : null;
-			treeutil.collapseTreeAdvanced(root, cset);
+			treeutil.collapseTreeAdvanced(root, cset, true);
 			root.countLeaves();
+		} else if( c == 't' || c == 'T' ) {
+			if( c == 't' ) treeutil.nameParentNodes( treeutil.getNode() );
+			else treeutil.nameParentNodesMeta( treeutil.getNode() );
+		} else if( c == '*' ) {
+			clientscale *= 1.25;
+		} else if( c == '/' ) {
+			clientscale *= 0.8;
+		} else if( c == '+' ) {
+			hchunk *= 1.25;
+		} else if( c == '-' ) {
+			hchunk *= 0.8;
+		} else if( c == 'y' || c == 'Y' ) {
+			treeutil.reduceParentSize( treeutil.getNode() );
+		} else if( c == 'w' || c == 'W' ) {
+			treeutil.swapNamesMeta( treeutil.getNode() );
+		} else if( c == 'v' || c == 'V' ) {
+			treeutil.replaceNamesMeta( treeutil.getNode() );
+		} else if( c == 'n' || c == 'N' ) {
+			showleafnames = !showleafnames;
+		} else if( c == 'j' || c == 'J' ) {
+			rightalign = !rightalign;
 		} else if( c == 'm' || c == 'M' ) {
 			recursiveMarkings( root );
 			//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
@@ -1134,7 +1220,10 @@ public class Treedraw implements EntryPoint {
 				}
 			}
 		} else if( selectedNode != null ) {
-			if( c == 'c' || c == 'C' ) {
+			if( c == 'f' || c == 'F' ) {
+				treeutil.grisj( selectedNode );
+				root.countLeaves();
+			} else if( c == 'c' || c == 'C' ) {
 				selectedNode.setCollapsed( selectedNode.isCollapsed() ? null : "collapsed" );
 				root.countLeaves();
 			} else if( c == 'd' || c == 'D' || keycode == KeyCodes.KEY_DELETE ) {
@@ -1144,7 +1233,21 @@ public class Treedraw implements EntryPoint {
 				root.countLeaves();
 			} else if( c == 'e' || c == 'E' || c == '\r' ) {				
 				final TextBox	text = new TextBox();
-				text.setText( selectedNode.getName() );
+				
+				String newtext = selectedNode.getColor() == null ? selectedNode.getName() : selectedNode.getName() + "[" + selectedNode.getColor() + "]";
+				if( selectedNode.getInfoList() != null ) {
+					for( String info : selectedNode.getInfoList() ) {
+						newtext += info;
+					}
+				}
+				if( selectedNode.getFontSize() != -1.0 ) {
+					//if( selectedNode.getFrameSize() != -1.0 ) 
+					newtext += "{" + selectedNode.getFrameString() + "}";
+					//else newtext += "{" + selectedNode.getFontSize() + "}";
+				}
+				if( selectedNode.getMeta() != null && selectedNode.getMeta().length() > 0 ) newtext += ";"+selectedNode.getMeta();
+				
+				text.setText( newtext );
 				
 				final PopupPanel	pp = new PopupPanel();
 				pp.add( text );
@@ -1201,7 +1304,7 @@ public class Treedraw implements EntryPoint {
 								pp.hide();
 							}
 						} else if( key == KeyCodes.KEY_ESCAPE ) {
-							pp.hide();
+				if( c == 'c' || c == 'C' ) {			pp.hide();
 						} else console( Character.toString( c ) );
 					}
 				});*/
@@ -1209,13 +1312,16 @@ public class Treedraw implements EntryPoint {
 					@Override
 					public void onClose(CloseEvent<PopupPanel> event) {
 						if( b[0] ) {
-							selectedNode.setName( text.getText() );
+							String name = text.getText();
+							selectedNode.setName( name );	
 							if( treeutil != null ) drawTree( treeutil );
 						}
 					}
 				});
 				
-				text.setText( selectedNode.getName() );
+				//String newtext = selectedNode.getColor() == null ? selectedNode.getName() : selectedNode.getName() + "[" + selectedNode.getColor() + "]";
+				//if( selectedNode.getMeta() != null && selectedNode.getMeta().length() > 0 ) newtext += ";";
+				text.setText( newtext );
 				text.selectAll();
 				//text.setFocus( true );
 				/*selectedNode.getParent().removeNode( selectedNode );
@@ -1231,14 +1337,14 @@ public class Treedraw implements EntryPoint {
 				root.seth( 0.0 );
 				root.seth2( 0.0 );
 			} else if( c == 'i' || c == 'I' ) {
-				invertSelectionRecursive( root );
+				treeutil.invertSelectionRecursive( root );
 			} else if( c == 'r' || c == 'R' ) {
 				if( treeutil != null && selectedNode != null ) {
 					if( !treeutil.isRooted() ) {
 						
 						/*if( treeutil.getNode() != null ) {
 							console( "not null first" );
-							console( "muu " + treeutil.getNode().toString() );
+				if( c == 'c' || c == 'C' ) {			console( "muu " + treeutil.getNode().toString() );
 						} else {
 							console( "null first" );
 						}
@@ -1316,8 +1422,140 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	String 					treetext;
+	int						dim;
+	elemental.html.Window	myPopup;
+	String 					domain = "http://webconnectron.appspot.com";
+	public void showTree( String newtree, int dims ) {
+		treetext = newtree;
+		dim = dims;
+		myPopup = Browser.getWindow().open(domain + "/Webconnectron.html?callback=webconnectron","_blank");
+	};
+	
+	public String fetchSel() {
+		return treeutil.getSelectString( treeutil.getNode(), true );
+	}
+	
+	public native void initFuncs() /*-{
+		var s = this;
+		$wnd.fetchSel = function() {
+			return s.@org.simmi.client.Treedraw::fetchSel();
+		}
+	}-*/;
+	
+	public native String atob( String dataurl ) /*-{
+		var d = atob( dataurl );
+		return d;
+	}-*/;
+	
+	public native void createBlobTest( String byteStr, String mimeStr, elemental.html.FileWriter fileWriter, elemental.html.FileEntry fe ) /*-{
+		var blob = new Blob( [ byteStr ], { type : "application/octet-stream" } );
+		var fr = new FileReader();
+		fr.onload = function( e ) {
+			$wnd.console.log('okok'+mimeStr);
+			var ub = new Uint8Array( e.target.result );
+			var bb = new Blob( [ub], {type: mimeStr} );
+			fileWriter.write( bb );
+			$wnd.console.log('okok3');
+			var url = fe.toURL();
+			$wnd.open( url, "tree.png" );
+		}
+		fr.readAsArrayBuffer( blob );
+	}-*/;
+	
+	public native elemental.html.Blob createBlob( String byteStr, String mimeStr ) /*-{		
+		var byteArray = new Uint8Array( byteStr.length );
+	    for (var i = 0; i < byteStr.length; i++) {
+	        byteArray[i] = byteStr.charCodeAt(i) & 0xff;
+	    }
+		
+		var blob = new Blob( [ byteArray ], { type : "image/png" } );
+		return blob;
+	}-*/;
+	
+	public native void createBlob( String byteStr, String mimeStr, elemental.html.FileWriter fileWriter, elemental.html.FileEntry fe ) /*-{		
+		var byteArray = new Uint8Array( byteStr.length );
+        for (var i = 0; i < byteStr.length; i++) {
+            byteArray[i] = byteStr.charCodeAt(i) & 0xff;
+        }
+		
+		var blob = new Blob( [ byteArray ], { type : "image/png" } );
+		fileWriter.write( blob );
+		
+		var url = fe.toURL();
+		$wnd.open( url, "tree.png" );
+	}-*/;
+	
+	public native JavaScriptObject createFlags() /*-{
+		var flags = { create : true };
+		return flags;
+	}-*/;
+	
 	@Override
 	public void onModuleLoad() {
+		final Console console = Browser.getWindow().getConsole();
+		console.log("starting");
+		
+		Window.addResizeHandler( new ResizeHandler() {
+			@Override
+			public void onResize(ResizeEvent event) {
+				if( treeutil != null ) drawTree( treeutil );
+			}
+		});
+		initFuncs();
+		//Drive d;
+		
+		//var domain = 'http://webconnectron.appspot.com';
+		//var treetext = "";
+		//var dim = 0;
+		//var myPopup;
+		/*function receiveMessage(event) {
+			console.log( 'ready message received' );
+			if (event.origin == "http://webconnectron.appspot.com") {
+				console.log( 'correct origin' );
+				if( treetext.length > 0 ) {
+					myPopup.postMessage(dim+""+treetext,domain);
+				} else {
+					handleText( event.data );
+				}
+	    	} else if(event.origin == 'http://'+from+'.appspot.com') {
+				console.log('correct webfasta origin');
+				handleText( event.data );
+			}
+	  	}
+		window.addEventListener("message", receiveMessage, false);*/
+		
+		final String domain = "http://webconnectron.appspot.com";
+		final elemental.html.Window wnd = Browser.getWindow();
+		wnd.addEventListener("message", new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {				
+				MessageEvent me = (MessageEvent)evt;
+				String dstr = (String)me.getData();
+				
+				console.log("evrev");
+				
+				elemental.html.Window source = myPopup; //me.getSource()
+				if( dstr.equals("fetchsel") ) {
+					String selstr = treeutil.getSelectString( treeutil.getNode(), true );
+					wnd.getOpener().postMessage( "propagate{"+selstr+"}", "*");
+				} else {
+					if( me.getOrigin().equals( domain ) ) {
+						//Browser.getWindow().getConsole().log("no "+treetext);
+						if( treetext.length() > 0 ) {
+							//Browser.getWindow().getConsole().log("nos "+me.getSource());
+							source.postMessage(dim+""+treetext,"*");
+						} else {
+							handleText( dstr );
+						}
+			    	} else {
+			    		console.log("about "+dstr.length());
+						handleText( dstr );
+					}
+				}
+			}
+		}, false);
+		
 		RootPanel	rp = RootPanel.get("canvas");
 		/*rp.addDomHandler( new ContextMenuHandler() {
 			@Override
@@ -1327,7 +1565,7 @@ public class Treedraw implements EntryPoint {
 			}
 		}, ContextMenuEvent.getType());*/
 		
-		popup = new PopupPanel( true );
+		/*popup = new PopupPanel( true );
 		final MenuBar	menu = new MenuBar( true );
 		popup.add( menu );
 		
@@ -1337,7 +1575,7 @@ public class Treedraw implements EntryPoint {
 				save( root.toString() );
 				popup.hide();
 			}
-		});
+		});*/
 		
 		canvas = Canvas.createIfSupported();
 		
@@ -1494,11 +1732,13 @@ public class Treedraw implements EntryPoint {
 			public void onKeyPress(KeyPressEvent event) {
 				char c = event.getCharCode();
 				int keycode = event.getNativeEvent().getKeyCode();
-				if( c == '\r' ) {
+				if( c == '\r' || c == '\n' ) {
 					event.stopPropagation();
 					event.preventDefault();
 				}
-				keyCheck( c, keycode );
+				//if( event.isControlKeyDown() ) {
+					keyCheck( c, keycode );
+				//}
 			}
 		};
 		String useragent = Window.Navigator.getUserAgent();
@@ -1521,10 +1761,19 @@ public class Treedraw implements EntryPoint {
 		tm = context.measureText( str );
 		context.fillText(str, (w-tm.getWidth())/2.0, h/2.0+8.0);
 		
+		final Anchor	driveAnchor = new Anchor("google drive");
+		driveAnchor.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				uploadToGoogleDrive( "treedraw.tree", "data:text/plain;base64,"+encode(root.toString()) );
+				//driveAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
+			}
+		});
 		final Anchor	treeAnchor = new Anchor("tree");
 		treeAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
+				treeAnchor.setTarget("_blank");
 				treeAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
 			}
 		});
@@ -1532,7 +1781,60 @@ public class Treedraw implements EntryPoint {
 		imageAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				imageAnchor.setHref( canvas.toDataUrl() );
+				imageAnchor.setTarget("_blank");
+				final Console console = Browser.getWindow().getConsole();
+				final String dataurl =  canvas.toDataUrl();
+				final elemental.html.Window wnd = Browser.getWindow();
+				
+				String[] split = dataurl.split(",");
+				String byteString = atob( split[1] );
+			    String mimeString = split[0].split(":")[1].split(";")[0];
+				elemental.html.Blob blob = createBlob( byteString, mimeString );
+				//final Object[] create = {"create", true};
+				//String[] create = {"create", "true"};
+				
+				boolean fail = false;
+				try {
+					String objurl = createObjectURL( blob );
+					wnd.open( objurl, "tree.png" );
+					
+					/*wnd.webkitRequestFileSystem(elemental.html.Window.TEMPORARY, dataurl.length(), new FileSystemCallback() {
+						@Override
+						public boolean onFileSystemCallback(DOMFileSystem fileSystem) {
+							console.log("in filesystem");
+							fileSystem.getRoot().getFile("tree.png", createFlags(), new EntryCallback() {
+								@Override
+								public boolean onEntryCallback(Entry entry) {
+									console.log("in file");
+									final FileEntry fe = (FileEntry)entry;
+									fe.createWriter( new FileWriterCallback() {
+										@Override
+										public boolean onFileWriterCallback(FileWriter fileWriter) {
+											console.log("in write");
+											
+											//String d = dataurl.substring( dataurl.indexOf("base64,") + 7 );
+									        //String decoded = atob(d);
+										    
+											createBlob( byteString, mimeString, fileWriter, fe );
+											
+											//fileWriter.write( bb );
+											//wnd.open( fe.toURL(), "tree.png" );
+											return true;
+										}
+									});
+									return true;
+								}
+							});
+							return true;
+						}
+					});*/
+				} catch( Exception e ) {
+					fail = true;
+				}
+
+				if( fail ) {
+					imageAnchor.setHref( dataurl );
+				}
 			}
 		});
 		final Anchor	dmAnchor = new Anchor("distance matrix");
@@ -1641,10 +1943,19 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
+		CheckBox circularCheck = new CheckBox("Circular");
+		circularCheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				circular = event.getValue();
+				drawTree( treeutil );
+			}
+		});
 		cluster.setValue( true );
 		bc.add( bctext );
 		bc.add( branch );
 		bc.add( cluster );
+		bc.add( circularCheck );
 		
 		HorizontalPanel	eqhp = new HorizontalPanel();
 		RadioButton	uselen = new RadioButton("eq", "Use lengths. ");
@@ -1703,21 +2014,8 @@ public class Treedraw implements EntryPoint {
 					
 					newroot.countLeaves();
 				} else if( !v && root.getNodes().size() == 2 ) {
-					List<Node> ln = root.getNodes();
-					Node n1 = ln.get( 0 );
-					Node n2 = ln.get( 1 );
-					if( n1.getNodes() != null & n1.getNodes().size() > 0 ) {
-						n1.addNode( n2, n1.geth()+n2.geth() );
-						n1.setParent( null );
-						treeutil.setNode( n1 );
-					} else {
-						n2.addNode( n1, n2.geth()+n2.geth() );
-						n2.setParent( null );
-						treeutil.setNode( n2 );
-					}
-					root = treeutil.getNode();			
-					
-					root.countLeaves();
+					root = treeutil.removeRoot( treeutil.getNode() );
+					treeutil.setNode( root );
 				}
 				if( treeutil != null ) drawTree( treeutil );
 			}
@@ -1741,6 +2039,9 @@ public class Treedraw implements EntryPoint {
 		html = new HTML("or");
 		hp.add( html );
 		hp.add( dmAnchor );
+		html = new HTML("or to");
+		hp.add( html );
+		hp.add( driveAnchor );
 		
 		html = new HTML(". View in");
 		hp.add( html );
@@ -1837,6 +2138,20 @@ public class Treedraw implements EntryPoint {
 		arrangehp.add( arcs );
 		arrangehp.add( titl );
 		
+		Label	selab = new Label("Selection ");
+		Button	retsel = new Button("retain");
+		retsel.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				treeutil.retainSelection( treeutil.getNode() );
+				treeutil.getNode().countLeaves();
+				drawTree( treeutil );
+			}
+		});
+		HorizontalPanel	selpan = new HorizontalPanel();
+		selpan.add( selab );
+		selpan.add( retsel );
+		
 		HorizontalPanel labhp = new HorizontalPanel();
 		labhp.setSpacing( 5 );
 		CheckBox scalecheck = new CheckBox("Scale");
@@ -1874,7 +2189,7 @@ public class Treedraw implements EntryPoint {
 			@Override
 			public void onValueChange(ValueChangeEvent<Boolean> event) {
 				showlinage = event.getValue();
-				drawTree( treeutil );	
+				drawTree( treeutil );
 			}
 		});
 			
@@ -1885,6 +2200,7 @@ public class Treedraw implements EntryPoint {
 		labhp.add( linagecheck );
 		
 		choicePanel.add( arrangehp );
+		choicePanel.add( selpan );
 		choicePanel.add( bc );
 		choicePanel.add( eqhp );
 		choicePanel.add( labhp );
@@ -1901,42 +2217,30 @@ public class Treedraw implements EntryPoint {
 		}
 		console( Window.Location.getParameterMap().keySet().toString() );
 		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
-			postParent( Window.Location.getParameter("callback") );
+			//String from =  Window.Location.getParameter("callback");
+			console.log( "ok" );
+			elemental.html.Window opener = Browser.getWindow().getOpener();
+			opener.postMessage("ready", "*");
+			
+			/*console.log( "next" );
+			String origin = opener.getLocation().getOrigin();
+			if( origin != null ) {
+				console.log( "origin " + origin );
+				opener.postMessage("ready", origin);
+			} else {
+				console.log( "callback " + from );
+				from = URL.decode( from );
+				console.log( opener.getLocation().getHref() );
+				if( from.contains("http") ) {
+					opener.postMessage( "ready", from );
+				} else {
+					opener.postMessage( "ready", "http://"+from+".appspot.com" );
+				}
+			}*/
 		}
-	}
+	}	
 	
-	public void invertSelectionRecursive( Node root ) {
-		root.setSelected( !root.isSelected() );
-		if( root.getNodes() != null ) for( Node n : root.getNodes() ) {
-			invertSelectionRecursive( n );
-		}
-	}
-	
-	public native void showTree( String tree, int dim ) /*-{
-		$wnd.showTree( tree, dim );
-		
-//		$wnd.domain = 'http://127.0.0.1:8888'; //'http://webconnectron.appspot.com';
-//		$wnd.treetext = tree;
-//		$wnd.receiveMessage = function(event) {
-//			$wnd.console.log( $wnd.domain );
-//			$wnd.console.log( 'ready message received' );
-//			if (event.origin == $wnd.domain) { //"http://webconnectron.appspot.com") {
-//				$wnd.console.log( 'correct origin' );
-//				if( $wnd.treetext.length > 0 ) {
-//					$wnd.myPopup.postMessage($wnd.treetext,$wnd.domain);
-//				}
-//			}
-//		}
-//		$wnd.addEventListener("message", $wnd.receiveMessage, false);
-//		$wnd.myPopup = window.open($wnd.domain + '/Webconnectron.html?callback=webconnectron','_blank');
-	}-*/;
-	
-	/*showTree = function( newtree ) {
-		treetext = newtree;
-		myPopup = window.open(domain + '/Treedraw.html?callback=webfasta','_blank');
-	}*/
-	
-	double w;	
+	double w;
 	double h;
 	double dw;
 	double dh;
@@ -2037,7 +2341,7 @@ public class Treedraw implements EntryPoint {
 		return null;
 	}
 	
-	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon ) {
+	public double drawTreeRecursiveCenter( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon, String maxstr ) {
 		Map<Node,Double>	cmap = new HashMap<Node,Double>();
 		int total = 0;
 		double nyavg = 0.0;
@@ -2076,11 +2380,11 @@ public class Treedraw implements EntryPoint {
 			
 			if( !resnode.isCollapsed() ) {
 				if( vertical ) {
-					double newy = dh*total + drawTreeRecursiveCenter( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon );
+					double newy = dh*total + drawTreeRecursiveCenter( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 					cmap.put( resnode, newy );
 					nyavg += newy;
 				} else {
-					drawTreeRecursiveCenter( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon );
+					drawTreeRecursiveCenter( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 				}
 			} else {
 				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
@@ -2091,8 +2395,13 @@ public class Treedraw implements EntryPoint {
 		}
 		
 		double ret = (node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : dh/2.0;
-		if( vertical ) node.setCanvasLoc( startx, y+ret );
-		else node.setCanvasLoc( x+ret, starty );
+		if( vertical ) {
+			if( circular ) {
+				double a = 2.0*Math.PI*(y+ret)/h;
+				node.setCanvasLoc( (w+startx*circularScale*Math.cos(a))/2.0, (w+startx*circularScale*Math.sin(a))/2.0 );
+			} else node.setCanvasLoc( startx, y+ret );
+			//node.setCanvasLoc( startx, y+ret );
+		} else node.setCanvasLoc( x+ret, starty );
 		total = 0;
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			int nleaves = resnode.getLeavesCount();
@@ -2129,25 +2438,41 @@ public class Treedraw implements EntryPoint {
 			if( resnode.isSelected() ) {
 				g2.setStrokeStyle( "#000000" );
 				g2.setLineWidth( 2.0 );
-			}
-			else {
+			} else {
 				g2.setStrokeStyle( "#333333" );
 				g2.setLineWidth( 1.0 );
 			}
 			g2.beginPath();
 			if( vertical ) {
-				double yfloor = Math.floor(y+newy);
-				g2.moveTo( startx, y+ret );
-				g2.lineTo( startx, yfloor );
-				g2.moveTo( startx, yfloor );
-				g2.lineTo( nx, yfloor );
+				double yfloor = y+newy; //Math.floor(y+newy);
+				
+				if( circular ) {
+					double a1 = (2.0*Math.PI*(y+ret))/h;
+					double a2 = (2.0*Math.PI*(yfloor))/h;
+					
+					g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2, a1 > a2 );
+					/*if( a1 > a2 ) {
+						g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a2, a1 );
+					} else {
+						g2.moveTo( (w+startx*circularScale*Math.cos(a1))/2.0, (w+startx*circularScale*Math.sin(a1))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2 );
+					}*/
+					g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
+					g2.lineTo( (w+nx*circularScale*Math.cos(a2))/2.0, (w+nx*circularScale*Math.sin(a2))/2.0 );
+				} else {
+					g2.moveTo( startx, y+ret );
+					g2.lineTo( startx, yfloor );
+					g2.moveTo( startx, yfloor );
+					g2.lineTo( nx, yfloor );
+				}
 			} else {
 				g2.moveTo( x+startx, starty );
 				g2.lineTo( x+nx, starty );
 				g2.lineTo( x+nx, ny );
 			}
-			g2.closePath();
 			g2.stroke();
+			g2.closePath();
 			
 			if( showbubble ) {
 				String ncolor = resnode.getColor();
@@ -2157,11 +2482,20 @@ public class Treedraw implements EntryPoint {
 					g2.setFillStyle( "#000000" );
 				}
 				
+				double mul = 1.0;
+				if( resnode.getFrameSize() != -1 ) mul = resnode.getFrameSize();
+				double radius = 1.5*mul;
+				if( resnode.getNodes() == null || resnode.getNodes().size() == 0 ) radius = 3.0*mul;
 				g2.beginPath();
-				
 				if( vertical ) {
-					double yfloor = Math.floor(y+newy);
-					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
+					double yfloor = y+newy; //Math.floor(y+newy);
+					
+					if( circular ) {
+						double a = 2.0*Math.PI*yfloor/h;
+						g2.arc( (w+nx*circularScale*Math.cos(a))/2.0, (w+nx*circularScale*Math.sin(a))/2.0, radius, 0.0, 2*Math.PI);
+					} else {
+						g2.arc(nx, yfloor, radius, 0.0, 2*Math.PI);
+					}
 				} else {
 					
 				}
@@ -2171,17 +2505,26 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, Math.floor(newy), addon, mleaves, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, newy /*Math.floor(newy)*/, addon, mleaves, ny, maxstr );
 			total += mleaves;
 		}
 		
 		return ret;
 	}
 	
-	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon ) {
+	public double drawTreeRecursive( Context2d g2, TreeUtil.Node node, double x, double y, double startx, double starty, int equalHeight, boolean noAddHeight, boolean vertical, double maxheight, double addon, String maxstr ) {
 		int total = 0;
-		if( vertical ) node.setCanvasLoc( startx, y+starty );
-		else node.setCanvasLoc( x+startx, starty );
+		
+		//double cirscl = 0.5;
+		//double mdif = maxheight/w;
+		//double cirmul = (cirscl-1.0)/mdif+1.0;
+		double cx = startx*circularScale;
+		if( vertical ) {
+			if( circular ) {
+				double a = 2.0*Math.PI*(y+starty)/h;
+				node.setCanvasLoc( (w+cx*Math.cos(a))/2.0, (w+cx*Math.sin(a))/2.0 );
+			} else node.setCanvasLoc( startx, y+starty );
+		} else node.setCanvasLoc( x+startx, starty );
 		
 		for( TreeUtil.Node resnode : node.getNodes() ) {
 			//String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(strh)+"px sans-serif";
@@ -2222,6 +2565,7 @@ public class Treedraw implements EntryPoint {
 					//ny = 100+(int)(/*starty+*/(h*(node.h+resnode.h-minh))/((maxh-minh)*3.2));
 				}
 			}
+			double cnx = nx*circularScale;
 			
 			//int yoff = starty-k/2;
 			/*System.err.println( resnode.meta );
@@ -2239,9 +2583,9 @@ public class Treedraw implements EntryPoint {
 			
 			if( !resnode.isCollapsed() ) {
 				if( vertical ) {
-					drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon );
+					drawTreeRecursive( g2, resnode, x+w, y+dh*total, nx, (dh*mleaves)/2.0, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 				} else {
-					drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon );
+					drawTreeRecursive( g2, resnode, x+dw*total, y+h, (dw*mleaves)/2.0, /*noAddHeight?starty:*/ny, equalHeight, noAddHeight, vertical, maxheight, addon, maxstr );
 				}
 			} else {
 				if( vertical ) resnode.setCanvasLoc( nx, y+dh*total+(dh*mleaves)/2.0 );
@@ -2262,18 +2606,40 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( vStroke );
 			g2.beginPath();
 			if( vertical ) {
-				double yfloor = Math.floor(y+ny);
-				g2.moveTo( startx, y+starty );
-				g2.lineTo( startx, yfloor );
-				g2.moveTo( startx, yfloor );
-				g2.lineTo( nx, yfloor );
+				double yfloor = y+ny; //Math.floor(y+ny);
+				if( circular ) {
+					double a1 = (2.0*Math.PI*(y+starty))/h;
+					double a2 = (2.0*Math.PI*(yfloor))/h;
+					
+					g2.arc( w/2.0, w/2.0, cx/2.0, a1, a2, a1 > a2 );
+					/*if( a1 > a2 ) {
+						g2.moveTo( (w+startx*circularScale*Math.cos(a2))/2.0, (w+startx*circularScale*Math.sin(a2))/2.0 );
+						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a2, a1 );
+					} else {
+						g2.moveTo( (w+startx*circularScale*Math.cos(a1))/2.0, (w+startx*circularScale*Math.sin(a1))/2.0 );
+						//g2.moveTo( (w+startx*Math.cos(y+starty))/2.0, (w+startx*Math.sin(y+starty))/2.0 );
+						g2.arc( w/2.0, w/2.0, startx*circularScale/2.0, a1, a2 );
+					}*/
+					//g2.closePath();
+					//g2.stroke();
+					//g2.beginPath();
+					g2.moveTo( (w+cx*Math.cos( a2 ))/2.0, (w+cx*Math.sin( a2 ))/2.0 );
+					g2.lineTo( (w+cnx*Math.cos( a2 ))/2.0, (w+cnx*Math.sin( a2 ))/2.0 );
+					//g2.closePath();
+				} else {
+					g2.moveTo( startx, y+starty );
+					g2.lineTo( startx, yfloor );
+					//g2.moveTo( startx, yfloor );
+					g2.lineTo( nx, yfloor );
+				}
 			} else {
 				g2.moveTo( x+startx, starty );
 				g2.lineTo( x+nx, starty );
 				g2.lineTo( x+nx, ny );
 			}
-			g2.closePath();
 			g2.stroke();
+			g2.closePath();
 			
 			if( showbubble ) {
 				String ncolor = resnode.getColor();
@@ -2284,9 +2650,18 @@ public class Treedraw implements EntryPoint {
 				}
 				
 				g2.beginPath();
+				double mul = 1.0;
+				if( resnode.getFrameSize() != -1 ) mul = resnode.getFrameSize();
+				double radius = 1.5*mul;
+				if( resnode.getNodes() == null || resnode.getNodes().size() == 0 ) radius = 3.0*mul;
 				if( vertical ) {
-					double yfloor = Math.floor(y+ny);
-					g2.arc(nx, yfloor, 3.0, 0.0, 2*Math.PI);
+					double yfloor = y+ny; //Math.floor(y+ny);
+					if( circular ) {
+						double a = 2.0*Math.PI*yfloor/h;
+						g2.arc( (w+nx*circularScale*Math.cos(a))/2.0, (w+nx*circularScale*Math.sin(a))/2.0, radius, 0.0, 2*Math.PI);
+					} else {
+						g2.arc(nx, yfloor, radius, 0.0, 2*Math.PI);
+					}
 				} else {
 					
 				}
@@ -2296,139 +2671,442 @@ public class Treedraw implements EntryPoint {
 			//g2.setStroke( hStroke );
 			//g2.setStroke( oldStroke );
 			
-			paintTree( g2, resnode, vertical, x, y, nx, ny, addon, mleaves, ny );
+			paintTree( g2, resnode, vertical, x, y, nx, ny, addon, mleaves, ny, maxstr );
 			total += mleaves;
 		}
 		
 		return /*(node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : */0.0;
 	}
 	
-	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny, double addon, int mleaves, double realny ) {
-		//int k = 12;//w/32;
-		int fontSize = 10;
-		
-		String use = resnode.getName() == null || resnode.getName().length() == 0 ? resnode.getMeta() : resnode.getName();
-		use = resnode.isCollapsed() ? resnode.getCollapsedString() : use;
-		boolean nullNodes = resnode.isCollapsed() || resnode.getNodes() == null || resnode.getNodes().size() == 0;
-		boolean paint = use != null && use.length() > 0;
-		
-		String color = resnode.getColor();
-		if( paint ) {
-			if( nullNodes ) {
-				g2.setFillStyle( "#000000" );
-				//g2.setFont( bFont );
-				
-				String name = resnode.getName();
-				if( resnode.getMeta() != null ) {
-					String meta = resnode.getMeta();
-					name += " ("+meta+")";
-					
-					/*if( meta.contains("T.ign") ) {
-						System.err.println();
+	public void drawSingleMundi( boolean vertical, String use, Context2d g2, Node resnode, String color, double frmh, double frmo, double y, double realny, int mleaves, double addon, double strh, double nstrh ) {
+		if( vertical ) {
+			if( showlinage ) {
+				if( circular ) {
+					/*if( use != null && use.length() > 0 ) {
+						drawMundi( g2, use, color, nstrh, frmh, frmo, y+realny, mleaves, (w-addon*2.0+5)*circularScale, true );
 					}*/
-				}
-				
-				String[] split;
-				if( name == null || name.length() == 0 ) split = resnode.getCollapsedString().split("_");
-				else split = new String[] { name }; //name.split("_");
-				
-				int t = 0;
-				double mstrw = 0;
-				double mstrh = 10;
-				
-				String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(5.0*Math.log(hchunk))+"px sans-serif";
-				if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
-				
-				if( !vertical ) {
-					for( String str : split ) {
-						double strw = g2.measureText( str ).getWidth();
-						mstrw = Math.max( mstrw, strw );
-						/*if( resnode.getColor() != null ) {
-							g2.setFillStyle( resnode.getColor() );
-							g2.fillRect( (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize), strw, mstrh);
-							g2.setFillStyle( "#000000" );
-						}*/
-						g2.fillText(str, (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize) );
-					}
-				} else {
-					for( String str : split ) {
-						/*if( resnode.getColor() != null ) {
-							double strw = g2.measureText( str ).getWidth();
-							g2.setFillStyle( resnode.getColor() );
-							g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+mstrh/2.0-mstrh+1.0, strw+15, mstrh*1.15);
-							g2.setFillStyle( "#000000" );
-						}*/
+					
+					if( resnode.getMeta() != null && resnode.getMeta().length() > 0 ) {
+						String[] metasplit = resnode.getMeta().split("_");
 						
-						boolean it = false;
-						boolean sub = false;
-						boolean sup = false;
-						List<Integer> li = new ArrayList<Integer>();
-						int start = 0;
-						String[] tags = { "<i>", "<sub>", "<sup>", "</i>", "</sub>", "</sup>" };
-						double pos = 0.0;
-						
-						while( start < str.length() ) {
-							li.clear();
+						int k = 0;
+						for( String meta : metasplit ) {
+							int mi = meta.indexOf( "[#" );
+							if( mi == -1 ) mi = meta.length();
+							int fi = meta.indexOf( "{" );
+							if( fi == -1 ) fi = meta.length();
+							String metadata = meta.substring(0,Math.min(mi,fi));
 							
-							for( String tag : tags ) {
-								int ti = str.indexOf(tag, start);
-								if( ti == -1 ) ti = str.length();
+							String metacolor = null;
+							if( mi < meta.length() ) {
+								int me = meta.indexOf(']', mi+1 );
+								metacolor = meta.substring(mi+1,me);
+							}
+							nstrh = strh;
+							double mfrmh = strh;
+							double metafontsize = 1.0;
+							double metaframesize = 1.0;
+							double metaframeoffset = -1.0;
+							if( fi < meta.length() ) {
+								int fe = meta.indexOf('}', fi+1 );
+								String metafontstr = meta.substring(fi+1,fe);
+								String[] mfsplit = metafontstr.split(" ");
 								
-								li.add( ti );
+								metafontsize = Double.parseDouble( mfsplit[0] );
+								nstrh *= metafontsize;
+								
+								if( mfsplit.length > 1 ) {
+									metaframesize = Double.parseDouble( mfsplit[1] );
+									if( metaframesize != -1.0 ) mfrmh *= metaframesize;
+								}
+								if( mfsplit.length > 2 ) metaframeoffset = Double.parseDouble( mfsplit[2] );
 							}
 							
-							int min = Collections.min( li );
-							if( min < str.length() ) {
-								int mini = li.indexOf( min );
-								String tag = tags[mini];
-								
-								fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)( ( (sup || sub) ? 3.0 : 5.0 )*Math.log(hchunk) )+"px sans-serif";
-								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
-								
-								String substr = str.substring(start, min);
-								g2.fillText(substr, nx+4+10+(t)*fontSize+pos, y+ny+mstrh/2.0 );
-								pos += g2.measureText( substr ).getWidth();
-								
-								int next = min+tag.length();
-								start = next;
-								if( tag.equals("<i>") ) it = true;
-								else if( tag.equals("</i>") ) it = false;
-								if( tag.equals("<sup>") ) sup = true;
-								else if( tag.equals("</sup>") ) sup = false;
-								if( tag.equals("<sub>") ) sub = true;
-								else if( tag.equals("</sub>") ) sub = false;
-							} else {
-								fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)( ( (sup || sub) ? 3.0 : 5.0 )*Math.log(hchunk) )+"px sans-serif";
-								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
-								
-								String substr = str.substring(start, str.length());
-								g2.fillText(substr, nx+4+10+(t)*fontSize+pos, y+ny+mstrh/2.0 );
-								start = str.length();
-							}
-						
+							k++;
+							
+							String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)nstrh+"px sans-serif";
+							if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+							drawMundi( g2, metadata, metacolor, nstrh, mfrmh, metaframeoffset, y+realny, mleaves, (w-addon*2.0+5)*circularScale/*+(k*metaframesize*4.0)*/, true );
 						}
 					}
 				}
-				
-				/*int x1 = (int)(x+nx-mstrw/2);
-				int x2 = (int)(x+nx+mstrw/2);
-				int y1 = (int)(ny+4+h/25+(-1)*bFont.getSize());
-				int y2 = (int)(ny+4+h/25+(split.length-1)*bFont.getSize());
-				yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";*/
+			}
+		}
+	}
+	
+	int neveragain = 0;
+	double circularScale = 0.9;
+	public void paintTree( Context2d g2, Node resnode, boolean vertical, double x, double y, double nx, double ny, double addon, int mleaves, double realny, String maxstr ) {
+		//int k = 12;//w/32;
+		int fontSize = 10;
+		
+		String use = resnode.getName();// == null || resnode.getName().length() == 0 ? resnode.getMeta() : resnode.getName();
+		use = resnode.isCollapsed() ? resnode.getCollapsedString() : use;
+		boolean nullNodes = resnode.isCollapsed() || resnode.getNodes() == null || resnode.getNodes().size() == 0;
+		boolean paint = (use != null && use.length() > 0) || (resnode.getMeta() != null && resnode.getMeta().length() > 0);
+		
+		if( paint ) {
+			String color = resnode.getColor(); // == null ? "#FFFFFF" : resnode.getColor();
+			
+			double mhchunk = Math.max( 10.0, hchunk );
+			//double strw = 0;
+			double strh = 5.0*Math.log(mhchunk);
+			double nstrh = resnode.getFontSize() == -1.0 ? strh : resnode.getFontSize()*strh;
+			double frmh = strh;
+			frmh = resnode.getFontSize() == -1.0 ? frmh : resnode.getFrameSize()*frmh;
+			double frmo = resnode.getFrameOffset();
+			
+			if( nullNodes ) {
+				if( showleafnames ) {
+					g2.setFillStyle( "#000000" );
+					//g2.setFont( bFont );
+					
+					String name = resnode.getName();
+					/*if( resnode.getMeta() != null ) {
+						String meta = resnode.getMeta();
+						name += " ("+meta+")";
+						
+						/*if( meta.contains("T.ign") ) {
+							System.err.println();
+						}*
+					}*/
+					
+					String[] split;
+					if( name == null || name.length() == 0 && resnode.getCollapsedString() != null ) split = resnode.getCollapsedString().split("_");
+					else split = new String[] { name }; //name.split("_");
+					
+					int t = 0;
+					//double mstrw = 0;
+					//double mstrh = strh;
+					//double fontscale = resnode.getFontSize();
+					//if( fontscale != -1.0 ) strh *= fontscale;
+					
+					String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)nstrh+"px sans-serif";
+					if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+					
+					if( !vertical ) {
+						for( String str : split ) {
+							TextMetrics tm = g2.measureText( str );
+							double strw = tm.getWidth();
+							//mstrw = Math.max( mstrw, strw );
+							/*if( resnode.getColor() != null ) {
+								g2.setFillStyle( resnode.getColor() );
+								g2.fillRect( (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize), strw, mstrh);
+								g2.setFillStyle( "#000000" );
+							}*/
+							g2.fillText(str, (int)(x+nx-strw/2.0), (int)(ny+4+10+(t++)*fontSize) );
+						}
+					} else {
+						for( String str : split ) {
+							boolean it = false;
+							boolean sub = false;
+							boolean sup = false;
+							List<Integer> li = new ArrayList<Integer>();
+							int start = 0;
+							String[] tags = { "<i>", "<sub>", "<sup>", "</i>", "</sub>", "</sup>" };
+							double pos = 0.0;
+							
+							while( start < str.length() ) {
+								li.clear();
+								
+								for( String tag : tags ) {
+									int ti = str.indexOf(tag, start);
+									if( ti == -1 ) ti = str.length();
+									
+									li.add( ti );
+								}
+								
+								double nnstrh = ( ( (sup || sub) ? 3.0 : 5.0 )*nstrh/5.0 );
+								double nfrmh = ( ( (sup || sub) ? 3.0 : 5.0 )*frmh/5.0 );
+								//if( fontscale != -1.0 ) nnstrh *= fontscale;
+								fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)nnstrh+"px sans-serif";
+								if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+								
+								double maxstrw = g2.measureText( maxstr ).getWidth();
+								
+								int min = Collections.min( li );
+								if( min < str.length() ) {
+									int mini = li.indexOf( min );
+									String tag = tags[mini];
+									
+									String substr = str.substring(start, min);
+									double lx = nx+4.0+10.0+(t)*fontSize+pos;
+									double ly = y+ny;
+									if( circular ) {
+										double a = (2.0*Math.PI*ly)/h;
+										double val = rightalign ? w-addon+10 : lx;
+										double cx = (w+val*circularScale*Math.cos( a ))/2.0;
+										double cy = (w+val*circularScale*Math.sin( a ))/2.0;
+										
+										TextMetrics tm = g2.measureText( substr );
+										double strw = tm.getWidth();
+										if( a > Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+											//u += 0.5*total;
+											g2.translate( cx, cy );
+											g2.rotate( a+Math.PI );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect( -7+(t++)*fontSize  - (rightalign ? 0.0 : strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? 0.0 : -strw, strh/2.0 );
+											g2.rotate( -a-Math.PI );
+											g2.translate( -cx, -cy );
+											
+											List<String> infoList = resnode.getInfoList();
+											if( infoList != null ) {
+												val += strw;
+												for( int i = 0; i < infoList.size(); i+=2 ) {
+													cx = (w+val*circularScale*Math.cos( a ))/2.0;
+													cy = (w+val*circularScale*Math.sin( a ))/2.0;
+													
+													String sstr = infoList.get(i);
+													tm = g2.measureText( sstr );
+													strw = tm.getWidth();
+													
+													g2.translate( cx, cy );
+													g2.rotate( a+Math.PI );
+													if( i+1 < infoList.size() && !showbubble ) {
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
+														g2.fillRect( -7+(t++)*fontSize  - (rightalign ? 0.0 : strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+														g2.setFillStyle( "#000000" );
+													}
+													g2.fillText( sstr, rightalign ? 0.0 : -strw, strh/2.0 );
+													g2.rotate( -a-Math.PI );
+													g2.translate( -cx, -cy );
+												
+													val += strw;
+												}
+											}
+										} else {
+											g2.translate( cx, cy );
+											g2.rotate( a );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect( -7+(t++)*fontSize - (rightalign ? maxstrw : 0.0), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15 );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? -strw : 0.0, nnstrh/2.0 );
+											g2.rotate( -a );
+											g2.translate( -cx, -cy );
+											
+											List<String> infoList = resnode.getInfoList();
+											if( infoList != null ) {
+												//val += strw;
+												for( int i = 0; i < infoList.size(); i+=2 ) {
+													cx = (w+val*circularScale*Math.cos( a ))/2.0;
+													cy = (w+val*circularScale*Math.sin( a ))/2.0;
+													
+													String sstr = infoList.get(i);
+													tm = g2.measureText( sstr );
+													strw = tm.getWidth();
+													
+													g2.translate( cx, cy );
+													g2.rotate( a );
+													if( i+1 < infoList.size() && !showbubble ) {
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
+														g2.fillRect( -7+(t++)*fontSize - (rightalign ? 0.0 : -strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 15, nfrmh*1.15 );
+														g2.setFillStyle( "#000000" );
+													}
+													g2.fillText( sstr, rightalign ? 0.0 : strw, nnstrh/2.0 );
+													g2.rotate( -a );
+													g2.translate( -cx, -cy );
+												
+													val += strw;
+												}
+											}
+										}
+										
+										/*g2.beginPath();
+										g2.moveTo(w/2.0, w/2.0);
+										g2.lineTo(cx, cy);
+										g2.stroke();
+										g2.closePath();*/
+										
+										//g2.fillText(substr, (w+lx*0.8*Math.cos( a ))/2.0, (w+lx*0.8*Math.sin( a ))/2.0 );
+									} else {
+										if( !showbubble && resnode.getColor() != null ) {
+											double strw = g2.measureText( str ).getWidth();
+											g2.setFillStyle( resnode.getColor() );
+											g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+nnstrh/2.0-nnstrh+1.0, strw+15, nnstrh*1.15);
+											g2.setFillStyle( "#000000" );
+										}
+										
+										ly += nnstrh/2.0;
+										if( !rightalign ) {
+											g2.fillText(substr, lx, ly );
+										} else {
+											TextMetrics tm = g2.measureText( substr );
+											double strw = tm.getWidth();
+											g2.fillText(substr, w-addon-strw, ly );
+										}
+									}
+									pos += g2.measureText( substr ).getWidth();
+									
+									int next = min+tag.length();
+									start = next;
+									if( tag.equals("<i>") ) it = true;
+									else if( tag.equals("</i>") ) it = false;
+									if( tag.equals("<sup>") ) sup = true;
+									else if( tag.equals("</sup>") ) sup = false;
+									if( tag.equals("<sub>") ) sub = true;
+									else if( tag.equals("</sub>") ) sub = false;
+								} else {
+									//fontstr = (resnode.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)( ( (sup || sub) ? 3.0 : 5.0 )*Math.log(hchunk) )+"px sans-serif";
+									//if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+									
+									String substr = str.substring(start, str.length());
+									
+									double lx = nx+4+10+(t)*fontSize+pos;
+									double ly = y+ny;
+									if( circular ) {
+										double a = (2.0*Math.PI*ly)/h;
+										double val = rightalign ? w-addon+100 : lx;
+										double cx = (w+val*circularScale*Math.cos( a ))/2.0;
+										double cy = (w+val*circularScale*Math.sin( a ))/2.0;
+										//double cx = (w+val*Math.cos( a ))/2.0;
+										//double cy = (w+val*Math.sin( a ))/2.0;
+										
+										TextMetrics tm = g2.measureText( substr );
+										double strw = tm.getWidth();
+										if( a > Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+											//u += 0.5*total;
+											g2.translate( cx, cy );
+											g2.rotate( a+Math.PI );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect( -7+(t++)*fontSize  - (rightalign ? 0.0 : strw), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15  );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? 0.0 : -strw, nnstrh/2.0 );
+											g2.rotate( -a-Math.PI );
+											g2.translate( -cx, -cy );
+											
+											List<String> infoList = resnode.getInfoList();
+											if( infoList != null ) {
+												//val += strw;
+												for( int i = 0; i < infoList.size(); i+=2 ) {
+													cx = (w+val*circularScale*Math.cos( a ))/2.0;
+													cy = (w+val*circularScale*Math.sin( a ))/2.0;
+													
+													String sstr = infoList.get(i);
+													tm = g2.measureText( sstr );
+													strw = tm.getWidth();
+													
+													g2.translate( cx, cy );
+													g2.rotate( a+Math.PI );
+													if( i+1 < infoList.size() && !showbubble ) {
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
+														g2.fillRect( -7-(t)*strw  - (rightalign ? strw : 0.0) - 0, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 10, nfrmh*1.15 );
+														g2.setFillStyle( "#000000" );
+													}
+													g2.fillText( sstr, -7-(t)*strw + (rightalign ? -strw : 0.0) + 5, strh/2.0 );
+													g2.rotate( -a-Math.PI );
+													g2.translate( -cx, -cy );
+												
+													t++;
+													val += strw;
+													
+													//break;
+												}
+											}
+										} else {
+											g2.translate( cx, cy );
+											g2.rotate( a );
+											if( !showbubble && resnode.getColor() != null ) {
+												g2.setFillStyle( resnode.getColor() );
+												g2.fillRect(-7+(t++)*fontSize  - (rightalign ? maxstrw : 0.0), nfrmh/2.0-nfrmh+1.0, (rightalign ? maxstrw : strw) + 15, nfrmh*1.15  );
+												g2.setFillStyle( "#000000" );
+											}
+											g2.fillText( substr, rightalign ? -strw : 0.0, nnstrh/2.0 );
+											g2.rotate( -a );
+											g2.translate( -cx, -cy );
+											
+											List<String> infoList = resnode.getInfoList();
+											//for( String info : infoList ) console( info );
+											if( infoList != null ) {
+												double tstrw = strw;
+												//val += strw;
+												for( int i = 0; i < infoList.size(); i+=2 ) {
+													cx = (w+val*circularScale*Math.cos( a ))/2.0;
+													cy = (w+val*circularScale*Math.sin( a ))/2.0;
+													
+													String sstr = infoList.get(i);
+													tm = g2.measureText( sstr );
+													strw = tm.getWidth();
+													tstrw += strw;
+													
+													g2.translate( cx, cy );
+													g2.rotate( a );
+													if( i+1 < infoList.size() && !showbubble ) {
+														String colorstr = infoList.get(i+1);
+														g2.setFillStyle( colorstr.substring( 1, colorstr.length()-1 ) );
+														g2.fillRect( -7+(t)*strw - (rightalign ? 0.0 : strw) + 5, nfrmh/2.0-nfrmh+1.0, (rightalign ? strw : strw) + 10, nfrmh*1.15 );
+														g2.setFillStyle( "#000000" );
+													}
+													g2.fillText( sstr, -7+(t)*strw + (rightalign ? 0.0 : strw) + 10, nnstrh/2.0 );
+													g2.rotate( -a );
+													g2.translate( -cx, -cy );
+												
+													t++;
+													val += strw;
+													
+													//break;
+												}
+											}
+										}
+										
+										//double a = (2.0*Math.PI*ly)/h;
+										//g2.fillText(substr, (w+lx*0.8*Math.cos( a ))/2.0, (w+lx*0.8*Math.sin( a ))/2.0 );
+									} else {
+										if( !showbubble && resnode.getColor() != null ) {
+											double strw = g2.measureText( str ).getWidth();
+											g2.setFillStyle( resnode.getColor() );
+											g2.fillRect( nx+4+10+(t++)*fontSize, y+ny+nnstrh/2.0-nnstrh+1.0, strw+15, nnstrh*1.15);
+											g2.setFillStyle( "#000000" );
+										}
+										
+										ly += nnstrh/2.0;
+										if( !rightalign ) {
+											g2.fillText(substr, lx, ly );
+										} else {
+											TextMetrics tm = g2.measureText( substr );
+											double strw = tm.getWidth();
+											g2.fillText(substr, w-addon-strw, ly );
+										}
+									}
+									start = str.length();
+								}
+							
+							}
+						}
+					}
+					
+					/*int x1 = (int)(x+nx-mstrw/2);
+					int x2 = (int)(x+nx+mstrw/2);
+					int y1 = (int)(ny+4+h/25+(-1)*bFont.getSize());
+					int y2 = (int)(ny+4+h/25+(split.length-1)*bFont.getSize());
+					yaml += resnode.name + ": [" + x1 + "," + y1 + "," + x2 + "," + y2 + "]\n";*/
+					
+					//if( neveragain < 450 ) {
+						drawSingleMundi( vertical, use, g2, resnode, color, frmh, frmo, y, realny, mleaves, addon, strh, nstrh );
+						//neveragain++;
+					//}
+				}
 			} else {
 				boolean b = use.length() > 2;
 				
 				if( color != null && color.length() > 0 ) g2.setFillStyle( color );
 				else g2.setFillStyle( "#000000" );
 				
-				double mhchunk = Math.max( 10.0, hchunk );
-				double strw = 0;
-				double strh = 5.0*Math.log(mhchunk);
-				
-				String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)(strh)+"px sans-serif";
+				String fontstr = (resnode.isSelected() ? "bold " : " ")+(int)nstrh+"px sans-serif";
 				if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
 				//String[] split = use.split( "_" );
 				TextMetrics tm;
+				double strw = 0.0;
 				if( b ) {
 					//g2.setFont( lFont );
 					//for( String s : split ) {
@@ -2447,58 +3125,438 @@ public class Treedraw implements EntryPoint {
 				//double strh = Math.max( 10.0, hchunk );//10;
 				
 				if( !showlinage ) {
-					if( vertical ) {
-						g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
-					} else g2.fillRect( x+nx-(5*strw)/8, ny-strh/2.0, (5*strw)/4, strh*1.2 );
-					//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
-					//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
-					g2.setFillStyle( "#ffffff" );
+					if( color != null && color.length() > 0 ) { 
+						g2.setFillStyle( color );
+					
+						if( vertical ) {
+							if( circular ) {
+								double a = 2.0*Math.PI*(y+ny)/h;
+								double cx = (w+nx*circularScale*Math.cos(a))/2.0;
+								double cy = (w+nx*circularScale*Math.sin(a))/2.0;
+								g2.translate( cx, cy );
+								g2.rotate( a );
+								if( color != null && color.length() > 0 ) g2.fillRect( -(5*strw)/8, -(5*strh)/8, (5*strw)/4, strh*1.2 );
+								else {
+									g2.setStrokeStyle("#000000");
+									g2.strokeRect( -(5*strw)/8, -(5*strh)/8, (5*strw)/4, strh*1.2 );
+								}
+								g2.rotate( -a );
+								g2.translate( -cx, -cy );
+							} else g2.fillRect( nx-(5*strw)/8, y+ny-(5*strh)/8, (5*strw)/4, strh*1.2 );
+						} else g2.fillRect( x+nx-(5*strw)/8, ny-strh/2.0, (5*strw)/4, strh*1.2 );
+						//g2.fillRoundRect(startx, starty, width, height, arcWidth, arcHeight)
+						//g2.fillOval( x+nx-k/2, ny-k/2, k, k );
+						g2.setFillStyle( "#000000" );
+					}
 				}
 				
 				//int i = 0;
 				if( vertical ) {
 					if( showlinage ) {
-						g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
-						double hdiff = (dh*(mleaves-1)/2.0);
-						g2.beginPath();
-						g2.moveTo(w-addon+5, y+realny-hdiff);
-						//g2.lineTo(w-addon, ny);
-						g2.lineTo(w-addon+5, y+realny+hdiff);
-						g2.closePath();
-						g2.stroke();
-					} else {
-						if( b ) {
-							//for( String s : split ) {
-								//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-								//i++;
-							//}
-							g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+						if( circular ) {
+							if( use != null && use.length() > 0 ) {
+								drawMundi( g2, use, color, nstrh, frmh, frmo, y+realny, mleaves, (w-addon*2.0+5)*circularScale, false );
+							}
+							
+							if( resnode.getMeta() != null && resnode.getMeta().length() > 0 ) {
+								String[] metasplit = resnode.getMeta().split("_");
+								
+								int k = 0;
+								for( String meta : metasplit ) {
+									int mi = meta.indexOf( "[#" );
+									if( mi == -1 ) mi = meta.length();
+									int fi = meta.indexOf( "{" );
+									if( fi == -1 ) fi = meta.length();
+									String metadata = meta.substring(0,Math.min(mi,fi));
+									
+									String metacolor = null;
+									if( mi < meta.length() ) {
+										int me = meta.indexOf(']', mi+1 );
+										metacolor = meta.substring(mi+1,me);
+									}
+									nstrh = strh;
+									double mfrmh = strh;
+									double metafontsize = 1.0;
+									double metaframesize = 1.0;
+									double metaframeoffset = -1.0;
+									if( fi < meta.length() ) {
+										int fe = meta.indexOf('}', fi+1 );
+										String metafontstr = meta.substring(fi+1,fe);
+										String[] mfsplit = metafontstr.split(" ");
+										
+										metafontsize = Double.parseDouble( mfsplit[0] );
+										nstrh *= metafontsize;
+										
+										if( mfsplit.length > 1 ) {
+											metaframesize = Double.parseDouble( mfsplit[1] );
+											if( metaframesize != -1.0 ) mfrmh *= metaframesize;
+										}
+										if( mfsplit.length > 2 ) metaframeoffset = Double.parseDouble( mfsplit[2] );
+									}
+									
+									k++;
+									
+									fontstr = (resnode.isSelected() ? "bold " : " ")+(int)nstrh+"px sans-serif";
+									if( !fontstr.equals(g2.getFont()) ) g2.setFont( fontstr );
+									drawMundi( g2, metadata, metacolor, nstrh, mfrmh, metaframeoffset, y+realny, mleaves, (w-addon*2.0+5)*circularScale/*+(k*metaframesize*4.0)*/, false );
+								}
+							}
 						} else {
-							//for( String s : split ) {
-								//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
-								//i++;
-							//}
-							g2.fillText(use, nx-strw/2.0, y+ny+strh/2.3 );
+							g2.fillText(use, w-addon+10, y+realny+nstrh/2.3 );
+							double hdiff = (dh*(mleaves-1)/2.0);
+							g2.beginPath();
+							g2.moveTo(w-addon+5, y+realny-hdiff);
+							//g2.lineTo(w-addon, ny);
+							g2.lineTo(w-addon+5, y+realny+hdiff);
+							g2.stroke();
+							g2.closePath();
+						}
+					} else {
+						if( circular ) {
+							double a = 2.0*Math.PI*(y+ny)/h;
+							double cx = (w+nx*circularScale*Math.cos(a))/2.0;
+							double cy = (w+nx*circularScale*Math.sin(a))/2.0;
+							g2.translate( cx, cy );
+							g2.rotate( a );
+							g2.fillText(use, -strw/2.0, nstrh/2.3 );
+							g2.rotate( -a );
+							g2.translate( -cx, -cy );
+						} else {
+							if( color != null && color.length() > 0 ) { 
+								g2.fillText(use, nx-strw/2.0, y+ny+nstrh/2.3 );
+							} else {
+								g2.fillText(use, nx-strw-2.0, y+ny-2.0 );
+							}
+							
+							/*if( b ) {
+								//for( String s : split ) {
+									//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+									//i++;
+								//}
+								g2.fillText(use, nx-strw/2.0, y+ny+nstrh/2.3 );
+							} else {
+								//for( String s : split ) {
+									//g2.fillText(s, nx-strw/2.0, y+ny+strh/2-1-8*(split.length-1)+i*16 );
+									//i++;
+								//}
+								g2.fillText(use, nx-strw/2.0, y+ny+nstrh/2.3 );
+							}*/
 						}
 					}
 				} else {
-					if( b ) {
+					if( color != null && color.length() > 0 ) { 
+						g2.fillText(use, x+nx-strw/2.0, ny+5 );
+					} else {
+						g2.fillText(use, x+nx-strw-2, ny-2 );
+					}
+					
+					/*if( b ) {
 						/*for( String s : split ) {
 							strw = g2.measureText( s ).getWidth();
 							g2.fillText(s, x+nx-strw/2.0, ny+5-8*(split.length-1)+i*16 );
 							i++;
-						}*/
+						}*
 						g2.fillText(use, x+nx-strw/2.0, ny+5 );
 					} else {
 						/*for( String s : split ) {
 							strw = g2.measureText(s).getWidth();
 							g2.fillText(s, x+nx-strw/2.0, ny+6-8*(split.length)+i*16 );
 							i++;
-						}*/
+						}*
 						g2.fillText(use, x+nx-strw/2.0, ny+6 );
-					}
+					}*/
 				}
 			}
 		}
 	}
+	
+	public void drawMundi(Context2d g2, String use, String color, double strh, double frmh, double frmo, double yrealny, int mleaves, double rad, boolean single) {
+		double hdiff = (dh * (mleaves - 1) / 2.0);
+		double a1 = 2.0 * Math.PI * (yrealny - hdiff) / h;
+		double a2 = 2.0 * Math.PI * (yrealny + hdiff) / h;
+
+		if (frmo > 0.0) {
+			rad *= frmo;
+		}
+		if (color != null && color.length() > 0) {
+			g2.setLineWidth(frmh * 1.5);
+			g2.setStrokeStyle(color);
+			// g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
+			// double rad = w-addon+5;
+
+			// g2.fillText(use, cx, cy );
+			// double cy =
+			g2.beginPath();
+
+			// g2.moveTo( (w+cx*circularScale*Math.cos(a1))/2.0,
+			// (w+cx*circularScale*Math.cos(a1))/2.0 );
+			g2.arc(w / 2.0, w / 2.0, rad / 2.0, a1, a2, a1 > a2);
+			// g2.lineTo(w-addon, ny);
+			// g2.lineTo(w-addon+5, y+realny+hdiff);
+			g2.stroke();
+			g2.closePath();
+			g2.setLineWidth(1.0);
+		} else {
+			/*
+			 * g2.setLineWidth( strh*1.5 ); g2.setStrokeStyle( color );
+			 * g2.beginPath(); g2.arc( w/2.0, w/2.0, rad/2.0, a1, a2, a1 > a2 );
+			 * g2.stroke(); g2.closePath();
+			 */
+
+			g2.setLineWidth(1.0);
+			g2.setStrokeStyle("#000000");
+			// g2.setFillStyle("#FFEEEE");
+
+			double cx1i = (w + (rad - frmh * 1.5) * Math.cos(a1)) / 2.0;
+			double cy1i = (w + (rad - frmh * 1.5) * Math.sin(a1)) / 2.0;
+			double cx2i = (w + (rad - frmh * 1.5) * Math.cos(a2)) / 2.0;
+			double cy2i = (w + (rad - frmh * 1.5) * Math.sin(a2)) / 2.0;
+			double cx1o = (w + (rad + frmh * 1.5) * Math.cos(a1)) / 2.0;
+			double cy1o = (w + (rad + frmh * 1.5) * Math.sin(a1)) / 2.0;
+			double cx2o = (w + (rad + frmh * 1.5) * Math.cos(a2)) / 2.0;
+			double cy2o = (w + (rad + frmh * 1.5) * Math.sin(a2)) / 2.0;
+
+			g2.beginPath();
+			// g2.moveTo(cx1i, cy1i);
+			// g2.lineTo(cx1o, cy1o);
+			g2.arc(w / 2.0, w / 2.0, (rad + frmh * 1.5) / 2.0, a1, a2, false);
+			g2.arc(w / 2.0, w / 2.0, (rad - frmh * 1.5) / 2.0, a2, a1, true); // rad+strh);
+			// g2.arcTo(cx2i, cy2i, cx1i, cy1i, rad-strh);
+			// g2.lineTo(cx2i, cy2i);
+			g2.lineTo(cx1o, cy1o);
+			// g2.fill();
+			g2.stroke();
+			g2.closePath();
+		}
+
+		g2.setStrokeStyle("#000000");
+		g2.setFillStyle("#000000");
+		String[] mysplit = use.split("_");
+		String fstr = mysplit[0];
+		String[] newsplit = new String[mysplit.length - 1];
+		for (int i = 1; i < mysplit.length; i++) {
+			newsplit[i - 1] = mysplit[i];
+		}
+		mysplit = newsplit;
+		double a = 2.0 * Math.PI * (yrealny) / h;// (a1+a2)/2.0;
+
+		double fstrw = g2.measureText(fstr).getWidth();
+		double start = 0.0;
+		
+		if( single ) {
+			if (a >= Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+				double am = 2.0 * Math.PI * (yrealny) / h;// (a1+a2)/2.0;
+				double cx = (w + (rad) * Math.cos(am)) / 2.0;
+				double cy = (w + (rad) * Math.sin(am)) / 2.0;
+				g2.translate(cx, cy);
+				g2.rotate(am + Math.PI);
+				g2.fillText( fstr, 0.0, 0.0);
+				g2.rotate(-am - Math.PI);
+				g2.translate(-cx, -cy);
+			} else {
+				double am = 2.0 * Math.PI * (yrealny) / h;// (a1+a2)/2.0;
+				double cx = (w + (rad) * Math.cos(am)) / 2.0;
+				double cy = (w + (rad) * Math.sin(am)) / 2.0;
+				g2.translate(cx, cy);
+				g2.rotate(am);
+				g2.fillText( fstr, 0.0, 0.0);
+				g2.rotate(-am);
+				g2.translate(-cx, -cy);
+			}
+		} else {		
+			if (a >= 0.0 && a < Math.PI) {
+				for (int i = 0; i < fstr.length(); i++) {
+					char c = fstr.charAt(i);
+					double am = 2.0 * Math.PI * (yrealny) / h + 2.0 * (fstrw / 2.0 - start) / rad;// (a1+a2)/2.0;
+					double cx = (w + (rad) * Math.cos(am)) / 2.0;
+					double cy = (w + (rad) * Math.sin(am)) / 2.0;
+					g2.translate(cx, cy);
+					g2.rotate(am - Math.PI / 2.0);
+					g2.fillText(c + "", 0.0, strh / 3.0);
+					g2.rotate(-am + Math.PI / 2.0);
+					g2.translate(-cx, -cy);
+	
+					start = g2.measureText(fstr.substring(0, i + 1)).getWidth();
+				}
+			} else {
+				for (int i = 0; i < fstr.length(); i++) {
+					char c = fstr.charAt(i);
+					double am = 2.0 * Math.PI * (yrealny) / h - 2.0
+							* (fstrw / 2.0 - start) / rad;// (a1+a2)/2.0;
+					double cx = (w + (rad) * Math.cos(am)) / 2.0;
+					double cy = (w + (rad) * Math.sin(am)) / 2.0;
+					g2.translate(cx, cy);
+					g2.rotate(am + Math.PI / 2.0);
+					g2.fillText(c + "", 0.0, strh / 3.0);
+					g2.rotate(-am - Math.PI / 2.0);
+					g2.translate(-cx, -cy);
+	
+					start = g2.measureText(fstr.substring(0, i + 1)).getWidth();
+				}
+		}
+		}
+
+		if (a > Math.PI / 2.0 && a < 3.0 * Math.PI / 2.0) {
+			int k = 0;
+			for (String split : mysplit) {
+				double substrw = g2.measureText(split).getWidth();
+				double am = 2.0 * Math.PI
+						* (yrealny - 0.8 * (mysplit.length - 1) + k * 1.6) / h;// (a1+a2)/2.0;
+				double cx = (w + (rad + 10 + hchunk) * Math.cos(am)) / 2.0;
+				double cy = (w + (rad + 10 + hchunk) * Math.sin(am)) / 2.0;
+				g2.translate(cx, cy);
+				g2.rotate(am + Math.PI);
+				g2.fillText(split, -substrw, 0.0);
+				g2.rotate(-am - Math.PI);
+				g2.translate(-cx, -cy);
+
+				k++;
+			}
+		} else {
+			int k = 0;
+			for (String split : mysplit) {
+				double am = 2.0 * Math.PI
+						* (yrealny - 0.8 * (mysplit.length - 1) + k * 1.6) / h;// (a1+a2)/2.0;
+				double cx = (w + (rad + 10 + hchunk) * Math.cos(am)) / 2.0;
+				double cy = (w + (rad + 10 + hchunk) * Math.sin(am)) / 2.0;
+				g2.translate(cx, cy);
+				g2.rotate(am);
+				g2.fillText(split, 0.0, 0.0);
+				g2.rotate(-am);
+				g2.translate(-cx, -cy);
+
+				k++;
+			}
+		}
+	}
+	
+	/*public void drawMundi( Context2d g2, String use, String color, double strh, double frmh, double frmo, double yrealny, int mleaves, double rad ) {
+		double hdiff = (dh*(mleaves-1)/2.0);
+		double a1 = 2.0*Math.PI*(yrealny-hdiff)/h;
+		double a2 = 2.0*Math.PI*(yrealny+hdiff)/h;
+		
+		if( frmo > 0.0 ) {
+			rad *= frmo;
+		}
+		if( color != null && color.length() > 0 ) {
+			g2.setLineWidth( frmh*1.5 );
+			g2.setStrokeStyle( color );
+			//g2.fillText(use, w-addon+10, y+realny+strh/2.3 );
+			//double rad = w-addon+5;
+			
+			//g2.fillText(use, cx, cy );
+			//double cy = 
+			g2.beginPath();
+			
+			//g2.moveTo( (w+cx*circularScale*Math.cos(a1))/2.0, (w+cx*circularScale*Math.cos(a1))/2.0 );
+			g2.arc( w/2.0, w/2.0, rad/2.0, a1, a2, a1 > a2 );
+			//g2.lineTo(w-addon, ny);
+			//g2.lineTo(w-addon+5, y+realny+hdiff);
+			g2.stroke();
+			g2.closePath();
+			g2.setLineWidth( 1.0 );
+		} else {
+			/*g2.setLineWidth( strh*1.5 );
+			g2.setStrokeStyle( color );
+			g2.beginPath();
+			g2.arc( w/2.0, w/2.0, rad/2.0, a1, a2, a1 > a2 );
+			g2.stroke();
+			g2.closePath();*
+			
+			g2.setLineWidth( 1.0 );
+			g2.setStrokeStyle( "#000000" );
+			//g2.setFillStyle("#FFEEEE");
+			
+			double cx1i = (w+(rad-frmh*1.5)*Math.cos( a1 ))/2.0;
+			double cy1i = (w+(rad-frmh*1.5)*Math.sin( a1 ))/2.0;
+			double cx2i = (w+(rad-frmh*1.5)*Math.cos( a2 ))/2.0;
+			double cy2i = (w+(rad-frmh*1.5)*Math.sin( a2 ))/2.0;
+			double cx1o = (w+(rad+frmh*1.5)*Math.cos( a1 ))/2.0;
+			double cy1o = (w+(rad+frmh*1.5)*Math.sin( a1 ))/2.0;
+			double cx2o = (w+(rad+frmh*1.5)*Math.cos( a2 ))/2.0;
+			double cy2o = (w+(rad+frmh*1.5)*Math.sin( a2 ))/2.0;
+			
+			g2.beginPath();
+			//g2.moveTo(cx1i, cy1i);
+			//g2.lineTo(cx1o, cy1o);
+			g2.arc(w/2.0, w/2.0, (rad+frmh*1.5)/2.0, a1, a2, false);
+			g2.arc(w/2.0, w/2.0, (rad-frmh*1.5)/2.0, a2, a1, true); //rad+strh);
+			//g2.arcTo(cx2i, cy2i, cx1i, cy1i, rad-strh);
+			//g2.lineTo(cx2i, cy2i);
+			g2.lineTo(cx1o, cy1o);
+			//g2.fill();
+			g2.stroke();
+			g2.closePath();
+		}
+		
+		g2.setStrokeStyle( "#000000" );
+		g2.setFillStyle("#000000");
+		String[] mysplit = use.split("_");
+		String fstr = mysplit[0];
+		String[] newsplit = new String[ mysplit.length-1 ];
+		for( int i = 1; i < mysplit.length; i++ ) {
+			newsplit[i-1] = mysplit[i];
+		}
+		mysplit = newsplit;
+		double a = 2.0*Math.PI*(yrealny)/h;//(a1+a2)/2.0;
+		
+		double fstrw = g2.measureText( fstr ).getWidth();
+		double start = 0.0;
+		if( a >= Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+			double am = 2.0*Math.PI*(yrealny)/h-2.0*(fstrw/2.0-start)/rad;//(a1+a2)/2.0;
+			double cx = (w+(rad)*Math.cos(am))/2.0;
+			double cy = (w+(rad)*Math.sin(am))/2.0;
+			
+			g2.translate( cx, cy );
+			double val = Math.PI;
+			g2.rotate( am+val );
+			g2.fillText( fstr+"", 0.0, strh/3.0 );
+			g2.rotate( -am-val );
+			g2.translate( -cx, -cy );
+		} else {
+			double am = 2.0*Math.PI*(yrealny)/h-2.0*(fstrw/2.0-start)/rad;//(a1+a2)/2.0;
+			double cx = (w+(rad)*Math.cos(am))/2.0;
+			double cy = (w+(rad)*Math.sin(am))/2.0;
+			
+			g2.translate( cx, cy );
+			double val = 0.0;
+			g2.rotate( am+val );
+			g2.fillText( fstr+"", 0.0, strh/3.0 );
+			g2.rotate( -am-val );
+			g2.translate( -cx, -cy );
+		}
+		
+		if( a > Math.PI/2.0 && a < 3.0*Math.PI/2.0 ) {
+			int k = 0;
+			for( String split : mysplit ) {
+				double substrw = g2.measureText( split ).getWidth();
+				double am = 2.0*Math.PI*(yrealny-0.8*(mysplit.length-1)+k*1.6)/h;//(a1+a2)/2.0;
+				double cx = (w+(rad+10+hchunk)*Math.cos(am))/2.0;
+				double cy = (w+(rad+10+hchunk)*Math.sin(am))/2.0;
+				g2.translate( cx, cy );
+				double val = Math.PI * rnd.nextDouble();
+				g2.rotate( am+val );
+				//g2.fillText( split, -substrw, 0.0 );
+				g2.rotate( -am-val );
+				g2.translate( -cx, -cy );
+				
+				k++;
+			}
+		} else {
+			int k = 0;
+			for( String split : mysplit ) {
+				double am = 2.0*Math.PI*(yrealny-0.8*(mysplit.length-1)+k*1.6)/h;//(a1+a2)/2.0;
+				double cx = (w+(rad+10+hchunk)*Math.cos(am))/2.0;
+				double cy = (w+(rad+10+hchunk)*Math.sin(am))/2.0;
+				g2.translate( cx, cy );
+				double val = Math.PI * rnd.nextDouble();
+				g2.rotate( am+val );
+				//g2.fillText( split, 0.0, 0.0 );
+				g2.rotate( -am-val );
+				g2.translate( -cx, -cy );
+				
+				k++;
+			}
+		}
+	}*/
 }
