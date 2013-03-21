@@ -2,11 +2,9 @@ package org.simmi.shared;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 public class Sequence implements Comparable<Sequence> {
 	/*public static int						max = 0;
@@ -37,11 +35,28 @@ public class Sequence implements Comparable<Sequence> {
 	public List<Annotation>		annset;
 	public int					index = -1;
 	public boolean				edited = false;
+	public boolean				selected = false;
 	
 	static Random r = new Random();
 	
+	public boolean isSelected() {
+		return selected;
+	}
+	
+	public void setSelected( boolean sel ) {
+		this.selected = sel;
+	}
+	
+	public void removeGaps() {
+		
+	}
+	
 	public static String getPhylip( List<Sequence> lseq, boolean numeric ) {
 		StringBuilder out = new StringBuilder();
+		
+		for( Sequence seq : lseq ) {
+			System.err.println( seq.getName() );
+		}
 		
 		String erm = ""+lseq.size();
 		String seqlen = "";
@@ -54,7 +69,7 @@ public class Sequence implements Comparable<Sequence> {
 		
 		out.append( seqlen+"\n" );
 		
-		Set<String> seqset = new HashSet<String>();
+		Map<String,Integer> seqset = new HashMap<String,Integer>();
 		
 		int u = 0;
 		int count = 0;
@@ -68,17 +83,21 @@ public class Sequence implements Comparable<Sequence> {
 						
 						String subname = seqname.substring(0, m);
 						
-						if( seqset.contains( subname ) ) {
-							if( seqname.length() > 10 ) {
-								subname = seqname.substring( seqname.length()-10, seqname.length() );
-							} else {
-								m = Math.min( seqname.length(), 10-1 );
-								subname = seqname.substring(0,m)+(++count);
-							}
-						}
-						seqset.add( subname );
+						int scount = 1;
+						String newname;
+						if( seqset.containsKey( subname ) ) {
+							scount = seqset.get( subname )+1;
+							//if( seqname.length() > 10 ) {
+							//	subname = seqname.substring( seqname.length()-10, seqname.length() );
+							//} else {
+							String cstr = ""+scount;
+								m = Math.min( seqname.length(), 10-cstr.length() );
+								newname = seqname.substring(0,m)+cstr;
+							//}
+						} else newname = subname;
+						seqset.put( subname, scount );
 						
-						out.append( subname );
+						out.append( newname );
 						while( m < 10 ) {
 							out.append(' ');
 							m++;
@@ -285,6 +304,75 @@ public class Sequence implements Comparable<Sequence> {
 		//return dmat;
 	}
 	
+	public void reverse() {
+		for( int i = 0; i < getLength()/2; i++ ) {
+			char c = sb.charAt(i);
+			sb.setCharAt( i, sb.charAt(getLength()-1-i) );
+			sb.setCharAt( getLength()-1-i, c );
+		}
+	}
+	
+	public final static Map<Character,Character>	complimentMap = new HashMap<Character,Character>();
+	static {
+		complimentMap.put( 'A', 'T' );
+		complimentMap.put( 'T', 'A' );
+		complimentMap.put( 'G', 'C' );
+		complimentMap.put( 'C', 'G' );
+		complimentMap.put( 'a', 't' );
+		complimentMap.put( 't', 'a' );
+		complimentMap.put( 'g', 'c' );
+		complimentMap.put( 'c', 'g' );
+	};
+	
+	public void complement() {
+		for( int i = 0; i < getLength(); i++ ) {
+			char c = sb.charAt(i);
+			sb.setCharAt( i, complimentMap.get(c) );
+		}
+	}
+	
+	public void utReplace() {
+		int i1 = sb.indexOf("T");
+		int i2 = sb.indexOf("U");
+		
+		if( i1 == -1 ) i1 = sb.length();
+		if( i2 == -1 ) i2 = sb.length();
+		
+		while( i1 < sb.length() || i2 < sb.length() ) {
+			while( i1 < i2 ) {
+				sb.setCharAt(i1, 'U');
+				i1 = sb.indexOf("T", i1+1);
+				if( i1 == -1 ) i1 = sb.length();
+			}
+			
+			while( i2 < i1 ) {
+				sb.setCharAt(i2, 'T');
+				i2 = sb.indexOf("U", i2+1);
+				if( i2 == -1 ) i2 = sb.length();
+			}
+		}
+		
+		i1 = sb.indexOf("t");
+		i2 = sb.indexOf("u");
+		
+		if( i1 == -1 ) i1 = sb.length();
+		if( i2 == -1 ) i2 = sb.length();
+		
+		while( i1 < sb.length() || i2 < sb.length() ) {
+			while( i1 < i2 ) {
+				sb.setCharAt(i1, 'u');
+				i1 = sb.indexOf("t", i1+1);
+				if( i1 == -1 ) i1 = sb.length();
+			}
+			
+			while( i2 < i1 ) {
+				sb.setCharAt(i2, 't');
+				i2 = sb.indexOf("u", i2+1);
+				if( i2 == -1 ) i2 = sb.length();
+			}
+		}
+	}
+	
 	public class Annotation implements Comparable<Annotation> {
 		public Sequence			seq;
 		public String			name;
@@ -445,6 +533,15 @@ public class Sequence implements Comparable<Sequence> {
 		int ind = i-start;
 		if( ind >= 0 && ind < sb.length() ) {
 			sb.deleteCharAt(ind);
+			edited = true;
+		}
+	}
+	
+	public void delete( int dstart, int dstop ) {
+		int ind = dstart-start;
+		int end = dstop-start;
+		if( ind >= 0 && end <= sb.length() ) {
+			sb.delete( ind, end );
 			edited = true;
 		}
 	}

@@ -13,6 +13,11 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+import elemental.client.Browser;
+import elemental.events.Event;
+import elemental.events.EventListener;
+import elemental.events.MessageEvent;
+
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
@@ -32,20 +37,6 @@ public class Webconnectron implements EntryPoint {
 	public void handleText( String stuff ) {
 		connectron.handleText( stuff );
 	}
-	
-	public native void postParent( String from ) /*-{
-		var s = this;
-		$wnd.addEventListener('message',function(event) {
-			$wnd.console.log( event.origin );
-			$wnd.console.log('message received from treedraw');
-			if(event.origin == 'http://'+from+'.appspot.com') {
-				$wnd.console.log('correct treedraw origin');
-				s.@org.simmi.client.Webconnectron::handleText(Ljava/lang/String;)( event.data );
-			}
-		});
-		$wnd.console.log('posting ready');	
-		$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');
-	}-*/;
 	
 	/**
 	 * This is the entry point method.
@@ -141,7 +132,30 @@ public class Webconnectron implements EntryPoint {
 		rp.add( hp );
 		
 		if( Window.Location.getParameterMap().keySet().contains("callback") ) {
-			postParent( Window.Location.getParameter("callback") );
+			/*var s = this;
+			$wnd.addEventListener('message',function(event) {
+				$wnd.console.log( event.origin );
+				$wnd.console.log('message received from treedraw');
+				if(event.origin == 'http://'+from+'.appspot.com') {
+					$wnd.console.log('correct treedraw origin');
+					s.@org.simmi.client.Webconnectron::handleText(Ljava/lang/String;)( event.data );
+				}
+			});
+			$wnd.console.log('posting ready');	
+			$wnd.opener.postMessage('ready','http://'+from+'.appspot.com');*/
+		
+			final elemental.html.Window wnd = Browser.getWindow();
+			wnd.addEventListener("message", new EventListener() {
+				@Override
+				public void handleEvent(Event evt) {
+					wnd.getConsole().log("erm");
+					MessageEvent me = (MessageEvent)evt;
+					String text = (String)me.getData();
+					handleText( text );
+				}
+			}, false);
+			wnd.getOpener().postMessage("ready", "*");
+			//postParent( Window.Location.getParameter("callback") );
 		}
 	}
 	int oldw, olderw;

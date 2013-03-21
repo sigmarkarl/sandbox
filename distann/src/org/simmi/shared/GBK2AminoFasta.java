@@ -1,5 +1,9 @@
 package org.simmi.shared;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -163,38 +167,46 @@ public class GBK2AminoFasta {
 			String trimline = line.trim();
 			//String[] split = trimline.split("[\t ]+");
 			
-			if( trimline.startsWith("CDS ") /*|| trimline.startsWith("gene")*/ ) {
+			if( trimline.startsWith("CDS ") ) { //|| trimline.startsWith("gene ") ) {
 				if( anno != null ) annolist.add( anno );
 				anno = new Anno();
 				anno.spec = filename;
 				String[] split = trimline.split("[\t ]+");
-				if( split[1].startsWith("compl") ) {
-					int iof = split[1].indexOf(")");
-					String substr = split[1].substring(11, iof);
-					String[] nsplit = substr.split("\\.\\.");
-					//if( !nsplit[0].startsWith("join")  ) {
-					char c = nsplit[0].charAt(0);
-					char c2 = nsplit[1].charAt(0);
-					if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
-						anno.start = Integer.parseInt( nsplit[0] );
-						anno.stop = Integer.parseInt( nsplit[1] );
-						anno.comp = true;
+				if( split.length > 1 ) {
+					if( split[1].startsWith("compl") ) {
+						int iof = split[1].indexOf(")");
+						String substr = split[1].substring(11, iof);
+						String[] nsplit = substr.split("\\.\\.");
+						//if( !nsplit[0].startsWith("join")  ) {
+						char c = nsplit[0].charAt(0);
+						char c2 = nsplit[1].charAt(0);
+						if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
+							anno.start = Integer.parseInt( nsplit[0] );
+							anno.stop = Integer.parseInt( nsplit[1] );
+							anno.comp = true;
+						} else {
+							System.err.println( nsplit[0] + " n " + nsplit[1] );
+							anno = null;
+						}
 					} else {
-						System.err.println( nsplit[0] + " n " + nsplit[1] );
-						anno = null;
+						String[] nsplit = split[1].split("\\.\\.");
+						if( nsplit.length > 1 ) {
+							char c = nsplit[0].charAt(0);
+							char c2 = nsplit[1].charAt(0);
+							if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
+								anno.start = Integer.parseInt( nsplit[0] );
+								anno.stop = Integer.parseInt( nsplit[1] );
+								anno.comp = false;
+							} else {
+								System.err.println( nsplit[0] + " n " + nsplit[1] );
+								anno = null;
+							}
+						} else {
+							System.err.println("nono2");
+						}
 					}
 				} else {
-					String[] nsplit = split[1].split("\\.\\.");
-					char c = nsplit[0].charAt(0);
-					char c2 = nsplit[1].charAt(0);
-					if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
-						anno.start = Integer.parseInt( nsplit[0] );
-						anno.stop = Integer.parseInt( nsplit[1] );
-						anno.comp = false;
-					} else {
-						System.err.println( nsplit[0] + " n " + nsplit[1] );
-						anno = null;
-					}
+					System.err.println("nono");
 				}
 			} else if( trimline.startsWith("/product") ) {
 				if( anno != null ) {
@@ -234,7 +246,7 @@ public class GBK2AminoFasta {
 		
 		for( Anno ao : annolist ) {
 			sb.append( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]\n" );
-			String 	val = strbuf.substring(ao.start-1, ao.stop);
+			String 	val = strbuf.substring( Math.max(0, ao.start-1), ao.stop );
 			
 			//System.err.println(val);
 			//String	ami = "";
@@ -255,7 +267,7 @@ public class GBK2AminoFasta {
 			} else {
 				for( int i = 0; i < val.length(); i+=3 ) {
 					//ami += 
-					String first = val.substring(i, i+3).toUpperCase();
+					String first = val.substring( i, Math.min(val.length(), i+3) ).toUpperCase();
 					String str = amimap.get( first );
 					if( str != null ) {
 						if( str.equals("0") || str.equals("1") ) break;
@@ -281,12 +293,13 @@ public class GBK2AminoFasta {
 		try {
 			ftp.connect("ftp.ncbi.nih.gov");
 			ftp.login("anonymous", "anonymous");
+			
 			ftp.cwd( "genomes/Bacteria" );
 			FTPFile[] files = ftp.listFiles();
 			for( FTPFile ftpfile : files ) {
 				if( ftpfile.isDirectory() ) {
 					String fname = ftpfile.getName();
-					if( fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
+					if( fname.contains("shimai") ) {//fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
 						System.err.println( "up "+fname );
 						if( !ftp.isConnected() ) {
 							ftp.connect("ftp.ncbi.nih.gov");
@@ -304,6 +317,8 @@ public class GBK2AminoFasta {
 								String fwname;
 								if( size > 3000000 ) fwname = fname+".gbk";
 								else fwname = fname+"_p"+(cnt++)+".gbk";
+								//if( size > 1500000 ) fwname = fname+".fna";
+								//else fwname = fname+"_p"+(cnt++)+".fna";
 								
 								FileWriter fw = new FileWriter( "/home/sigmar/ftpncbi/"+fwname );
 								InputStream is = ftp.retrieveFileStream( newfname );
@@ -329,60 +344,71 @@ public class GBK2AminoFasta {
 				if( ftpfile.isDirectory() ) {
 					String fname = ftpfile.getName();
 					if( fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
+						System.err.println( "erm "+fname );
 						ftp.cwd( "/genomes/Bacteria_DRAFT/"+fname );
 						FTPFile[] newfiles = ftp.listFiles();
-						//int cnt = 1;
+						//amint cnt = 1;
 						for( FTPFile newftpfile : newfiles ) {
 							String newfname = newftpfile.getName();
-							if( newfname.endsWith(".gbk.tgz") ) {
+							if( newfname.endsWith(".fna.tgz") ) {
 								//long size = newftpfile.getSize();
-								/*String fwname;et
-								if( size > 3000000 ) fwname = fname+".gbk";
-								else fwname = fname+"_p"+(cnt++)+".gbk";*
+								//String fwname = "";
+								//if( size > 1500000 ) fwname = fname+".fna";
+								//else fwname = fname+"_p"+(cnt++)+".fna";
 								
 								InputStream is = ftp.retrieveFileStream( newfname );
+								System.err.println( "trying "+newfname + (is == null ? "critical" : "success" ) );
 								//GZIPInputStream gis = new GZIPInputStream( is );
 								
-								byte[] bb = new byte[1024];
-								int r = is.read(bb);
-								FileOutputStream fos = new FileOutputStream( "/home/sigmar/ftpncbi/"+fname.substring(0,fname.length()-4)+".gbk.tgz" );
-								while( r > 0 ) {
-									System.err.println( "reading " + r );
-									fos.write( bb, 0, r );
-									
-									r = is.read(bb);
+								if( is != null ) {
+									byte[] bb = new byte[1024];
+									int r = is.read(bb);
+									FileOutputStream fos = new FileOutputStream( "/home/sigmar/ftpncbi/"+fname.substring(0,fname.length()-4)+".fna.tgz" );
+									while( r > 0 ) {
+										System.err.println( "reading " + r );
+										fos.write( bb, 0, r );
+										
+										r = is.read(bb);
+									}
+									is.close();
+									fos.close();
 								}
-								is.close();
-								fos.close();
 								
-								/*TarInputStream tis = new TarInputStream(gis);
-								TarEntry te = tis.getNextEntry();
+								/*TarInputStream tais = new TarInputStream( new BufferedInputStream(gis) );
+								TarEntry te = tais.getNextEntry();
 								int contig = 1;
+								// (int)te.getSize() ];
+								
 								while( te != null ) {
-									int size = (int)te.getSize();
-									if( size > 0 ) {
-										FileOutputStream fis = new FileOutputStream( "/home/sigmar/ftpncbi/"+fname.substring(0,fname.length()-4)+"_contig"+(contig++)+".gbk" );
-										byte[] bb = new byte[ (int)te.getSize() ];
-										int r = tis.read( bb );
+									//size = te.getSize();
+									//if( size > 0 ) {
+										byte[] bb = new byte[ 2048 ];
+										
+										FileOutputStream fis = new FileOutputStream( "/home/sigmar/ftpncbi/"+fname.substring(0,fname.length())+"_contig"+(contig++)+".gbk" );
+										int r = tais.read( bb );
 										int total = r;
-										while( total < te.getSize() ) {
+										//fis.write( bb, 0, r );
+										//System.err.println( te.getName() + "  " + total + "  " + size );
+										
+										while( r != -1 ) {
 											fis.write( bb, 0, r );
-											r = tis.read( bb );
+											//System.err.println( te.getName() + "  " + total + "  " + size );
+											r = tais.read( bb );
 											total += r;
 										}
 										//IOUtils.copy(tis, fis, (int)ae.getSize());
 										fis.close();
-									}
-									te = tis.getNextEntry();
+									//}
+									te = tais.getNextEntry();
 								}
-								tis.close();
+								tais.close();
 								is.close();*
 								ftp.completePendingCommand();
 							}
 						}
 					}
 				}
-			}*
+			}
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -390,10 +416,37 @@ public class GBK2AminoFasta {
 		}
 	}*/
 	
-	/*public static void main(String[] args) {
+	public static void main(String[] args) {
+		
+		/*try {
+			File f = new File("/home/sigmar/ami57/ami.gb");
+			FileReader fr = new FileReader( f );
+			BufferedReader br = new BufferedReader( fr );
+			StringBuilder filetext = new StringBuilder();
+			String line = br.readLine();
+			while( line != null ) {
+				filetext.append( line+"\n" );
+				line = br.readLine();
+			}
+			br.close();
+			fr.close();
+			
+			StringBuilder sb = handleText("filename.aa", filetext.toString());
+			FileWriter fw = new FileWriter("/home/sigmar/filename.aa");
+			fw.write( sb.toString() );
+			fw.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ftpExtract();
+ catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 		//ftpExtract();
 		
-		try {
+		/*try {
 			File file = new File("/home/sigmar/ftpncbi/");
 			File[] ff = file.listFiles();
 			for( File f : ff ) {
@@ -409,15 +462,17 @@ public class GBK2AminoFasta {
 				fr.close();
 				
 				String fname = f.getName();
-				StringBuilder sb = handleText( fname.substring(0, fname.length()-4), filetext.toString() );
-				FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/"+fname.substring(0, fname.length()-4)+".aa" );
-				fw.write( sb.toString() );
-				fw.close();
+				String fstr = fname.substring(0, fname.length()-4);
+				System.err.println( "about to "+fstr );
+				StringBuilder sb = handleText( fstr, filetext.toString() );
+				//FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/"+fstr+".aa" );
+				//fw.write( sb.toString() );
+				//fw.close();
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}*/
+		}*/
+	}
 }
