@@ -6448,8 +6448,9 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JCheckBox	check = new JCheckBox("Skip core");
-				JCheckBox	align = new JCheckBox("Show aignment");
-				JOptionPane.showMessageDialog( comp, new Object[] {check, align} );
+				JCheckBox	align = new JCheckBox("Show alignment");
+				JCheckBox	output = new JCheckBox("Output fasta");
+				JOptionPane.showMessageDialog( comp, new Object[] {check, align, output} );
 				
 				Set<String>	selspec = getSelspec( applet, new ArrayList( species ) );
 				
@@ -6466,7 +6467,7 @@ public class GeneSet extends JApplet {
 								int total = 0;
 								int count = 0;
 								for( Set<String> specset : clusterMap.keySet() ) {
-									if( !check.isSelected() || containmentCount(specset, selspec) < selspec.size() ) {
+									if( specset.size() > 1 && (!check.isSelected() || containmentCount(specset, selspec) < selspec.size()) ) {
 										boolean b1 = specset.contains(spec1);
 										boolean b2 = specset.contains(spec2);
 										Set<Map<String,Set<String>>>	sm = clusterMap.get( specset );
@@ -6493,9 +6494,13 @@ public class GeneSet extends JApplet {
 					}
 				} else {
 					succ = false;
+					
+					char one = output.isSelected() ? 'A' : '1';
+					char zero = output.isSelected() ? 'C' : '0';
+					
 					Map<String,StringBuilder>	sbmap = new HashMap<String,StringBuilder>();
 					for( Set<String> specset : clusterMap.keySet() ) {
-						if( !check.isSelected() || containmentCount(specset, selspec) < selspec.size() ) {
+						if( specset.size() > 1 && (!check.isSelected() || containmentCount(specset, selspec) < selspec.size()) ) {
 							for( String spec : selspec ) {
 								StringBuilder sb;
 								if( sbmap.containsKey( spec ) ) {
@@ -6507,9 +6512,9 @@ public class GeneSet extends JApplet {
 								
 								Set<Map<String,Set<String>>> cset = clusterMap.get( specset );
 								if( specset.contains( spec ) ) {
-									for( int i = 0; i < cset.size(); i++ ) sb.append('1');
+									for( int i = 0; i < cset.size(); i++ ) sb.append(one);
 								} else {
-									for( int i = 0; i < cset.size(); i++ ) sb.append('0');
+									for( int i = 0; i < cset.size(); i++ ) sb.append(zero);
 								}
 							}
 						}
@@ -6531,7 +6536,21 @@ public class GeneSet extends JApplet {
 						Sequence seq = new Sequence( s, s, sb, null );
 						ls.add( seq );
 					}
-					restext = Sequence.getPhylip( ls, false );
+					if( output.isSelected() ) {
+						Serifier ser = new Serifier();
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						OutputStreamWriter osw = new OutputStreamWriter( baos );
+						try {
+							ser.writeFasta(ls, osw, null);
+							osw.close();
+							baos.close();
+							restext = baos.toString();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					} else {
+						restext = Sequence.getPhylip( ls, false );
+					}
 				}
 				
 				if( !succ ) {
