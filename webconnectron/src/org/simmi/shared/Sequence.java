@@ -331,6 +331,14 @@ public class Sequence implements Comparable<Sequence> {
 		}
 	}
 	
+	public void upperCase() {
+		
+	}
+	
+	public void caseSwap() {
+		
+	}
+	
 	public void utReplace() {
 		int i1 = sb.indexOf("T");
 		int i2 = sb.indexOf("U");
@@ -567,7 +575,7 @@ public class Sequence implements Comparable<Sequence> {
 			return sb.charAt( ind );
 		}
 		
-		return '-';
+		return ' ';
 	}
 	
 	public void checkLengths() {
