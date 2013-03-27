@@ -1929,8 +1929,7 @@ public class Mummy extends JApplet {
 				int strstart = i;
 				int stop = i - 2;
 
-				while (bb.get(i++) != ' ')
-					;
+				while( i < bb.limit() && bb.get(i++) != ' ');
 				int strstop = i - 1;
 
 				int length = stop - start - c;
@@ -1956,7 +1955,7 @@ public class Mummy extends JApplet {
 						retseq.add(seq);
 					}
 				}
-				while (bb.get(i++) != '\n')
+				while ( i < bb.limit() && bb.get(i++) != '\n')
 					;
 				start = i;
 				c = 0;
