@@ -84,6 +84,7 @@ import elemental.events.Event;
 import elemental.events.EventListener;
 import elemental.events.MessageEvent;
 import elemental.html.Console;
+import elemental.html.ImageElement;
 
 //import elemental.client.Browser;
 //import elemental.html.Console;
@@ -411,7 +412,9 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	public native String createObjectURL( elemental.html.Blob bb ) /*-{
-		return $wnd.URL.createObjectURL( bb );
+		var urlstr = $wnd.URL.createObjectURL( bb );
+		$wnd.console.log( urlstr );
+		return urlstr;
 	}-*/;
 	
 	List<Sequence> currentSeqs = null;
@@ -1002,16 +1005,21 @@ public class Treedraw implements EntryPoint {
 	}-*/;
 	
 	private native String uploadToGoogleDrive( String name, String base64str ) /*-{
-		$wnd.console.log("ermi " + $wnd.sim);
-		if( $wnd.sim == 'simmi' ) {
-			$wnd.console.log("ermi2");
-			
-			var metadata = {
-            	'title': name,
-            	'mimeType': contentType
-            };
-			$wnd.doRequest( base64str, "text/plain", metadata );
-		}
+		$wnd.gdname = name;
+		$wnd.gdbase = base64str;
+		$wnd.console.log( 'about to' );
+		$wnd.setTimeout($wnd.checkAuth, 1);
+		
+//		$wnd.console.log("ermi " + $wnd.sim);
+//		if( $wnd.sim == 'simmi' ) {
+//			$wnd.console.log("ermi2");
+//			
+//			var metadata = {
+//            	'title': name,
+//            	'mimeType': contentType
+//            };
+//			$wnd.doRequest( base64str, "text/plain", metadata );
+//		}
 	}-*/;
 	
 	public void save( String treestr ) {
@@ -1123,11 +1131,11 @@ public class Treedraw implements EntryPoint {
 		function whatKey(evt) {
 			var keycode = evt.keyCode;
 			var c = evt.charCode;
-			if( c == 13 ) {
+			if( c == '\r' || c == '\n' ) {
 				evt.stopPropagation();
 				evt.preventDefault();
 			}
-			s.@org.simmi.client.Treedraw::keyCheck(CI)( c, keycode );
+			if( !s.@org.simmi.client.Treedraw::inTextBox ) s.@org.simmi.client.Treedraw::keyCheck(CI)( c, keycode );
 		}
 		$wnd.addEventListener('keypress', whatKey, true);
 	}-*/;
@@ -1141,6 +1149,8 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	boolean	ie = false;
+	boolean inTextBox = false;
 	public void keyCheck( char c, int keycode ) {
 		if( c == 'p' || c == 'P' ) {
 			if( c == 'p' ) {
@@ -1253,14 +1263,26 @@ public class Treedraw implements EntryPoint {
 				pp.add( text );
 				pp.setPopupPosition( (int)selectedNode.getCanvasX(), (int)selectedNode.getCanvasY()+canvas.getAbsoluteTop()-5 );
 				pp.setAutoHideEnabled( true );
+				inTextBox = true;
 				pp.show();
+				
+				pp.addCloseHandler( new CloseHandler<PopupPanel>() {
+					@Override
+					public void onClose(CloseEvent<PopupPanel> event) {
+						inTextBox = false;
+					}
+				});
 				
 				final Boolean[] b = new Boolean[1];
 				b[0] = true;
 				text.addKeyPressHandler( new KeyPressHandler() {
 					@Override
 					public void onKeyPress(KeyPressEvent event) {
+						Browser.getWindow().getConsole().log("textbox key");
+						
 						event.stopPropagation();
+						//event.preventDefault();
+						
 						int c = event.getCharCode();
 						int key = event.getNativeEvent().getKeyCode();
 						if( key == KeyCodes.KEY_ESCAPE ) {
@@ -1274,6 +1296,8 @@ public class Treedraw implements EntryPoint {
 				text.addKeyDownHandler( new KeyDownHandler() {
 					@Override
 					public void onKeyDown(KeyDownEvent event) {
+						Browser.getWindow().getConsole().log("textbox down key");
+						
 						event.stopPropagation();
 					}
 				});
@@ -1328,6 +1352,7 @@ public class Treedraw implements EntryPoint {
 				selectedNode = null;
 				root.countLeaves();*/
 			} else if( c == 's' || c == 'S' ) {
+				Browser.getWindow().getConsole().log("canvas key");
 				//canvas.getContext2d().clearRect(0, 0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 				//Node newroot = recursiveReroot( root, x, y );
 				selectedNode.setParent( null );
@@ -1463,6 +1488,11 @@ public class Treedraw implements EntryPoint {
 		fr.readAsArrayBuffer( blob );
 	}-*/;
 	
+	public native elemental.html.Blob createStringBlob( String byteStr ) /*-{
+		var blob = new Blob( [ byteStr ], { type : "text/plain" } );
+		return blob;
+	}-*/;
+	
 	public native elemental.html.Blob createBlob( String byteStr, String mimeStr ) /*-{		
 		var byteArray = new Uint8Array( byteStr.length );
 	    for (var i = 0; i < byteStr.length; i++) {
@@ -1577,6 +1607,9 @@ public class Treedraw implements EntryPoint {
 			}
 		});*/
 		
+		final FileUpload	file = new FileUpload();
+		file.getElement().setId("fasta");
+		
 		canvas = Canvas.createIfSupported();
 		
 		Style s = rp.getElement().getStyle();
@@ -1637,7 +1670,8 @@ public class Treedraw implements EntryPoint {
 				if( event.isShiftKeyDown() ) {
 					reroot( event.getX(), event.getY() );
 				} else {
-					openFileDialog( 0 );
+					click( file.getElement() );
+					//openFileDialog( 0 );
 				}
 			}
 		});
@@ -1720,12 +1754,6 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
-		canvas.addKeyDownHandler( new KeyDownHandler() {
-			@Override
-			public void onKeyDown(KeyDownEvent event) {
-				console( "ok" );
-			}
-		});
 		
 		KeyPressHandler keypressHandler = new KeyPressHandler() {
 			@Override
@@ -1744,8 +1772,29 @@ public class Treedraw implements EntryPoint {
 		String useragent = Window.Navigator.getUserAgent();
 		console( useragent );
 		if( useragent.contains("MSIE") ) {
+			/*canvas.addKeyDownHandler( new KeyDownHandler() {
+				@Override
+				public void onKeyDown(KeyDownEvent event) {
+					char c = (char)event.getNativeEvent().getCharCode();
+					int keycode = event.getNativeKeyCode();//event.getNativeEvent().getKeyCode();
+					if( c == '\r' || c == '\n' ) {
+						event.stopPropagation();
+						event.preventDefault();
+					}
+					//if( event.isControlKeyDown() ) {
+						keyCheck( c, keycode );
+					//}
+				}
+			});*/
+			ie = true;
 			ieSpec();
 		} else {
+			canvas.addKeyDownHandler( new KeyDownHandler() {
+				@Override
+				public void onKeyDown(KeyDownEvent event) {
+					console( "ok" );
+				}
+			});
 			canvas.addKeyPressHandler( keypressHandler );
 		}
 		
@@ -1765,7 +1814,13 @@ public class Treedraw implements EntryPoint {
 		driveAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				uploadToGoogleDrive( "treedraw.tree", "data:text/plain;base64,"+encode(root.toString()) );
+				Browser.getWindow().getConsole().log("ok");
+				String treestr = root.toString();
+				Browser.getWindow().getConsole().log("enc");
+				String enctre = encode(treestr);
+				Browser.getWindow().getConsole().log("done");
+				//"data:text/plain;base64,"+enctre
+				uploadToGoogleDrive( "treedraw.tree", enctre );
 				//driveAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
 			}
 		});
@@ -1773,15 +1828,37 @@ public class Treedraw implements EntryPoint {
 		treeAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				treeAnchor.setTarget("_blank");
-				treeAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
+				//final Object[] create = {"create", true};
+				//String[] create = {"create", "true"};
+				
+				boolean fail = false;
+				try {
+					if( ie ) {
+						elemental.html.Window w = wnd.open( "tree.html", "tree.png" );
+						elemental.dom.Element el = w.getDocument().getElementById("treetext");
+						el.setInnerText( root.toString() );
+					} else {
+						elemental.html.Blob blob = createStringBlob( root.toString() );
+						String objurl = createObjectURL( blob );
+						wnd.open( objurl, "tree.txt" );
+					}
+				} catch( Exception e ) {
+					Browser.getWindow().getConsole().log("erm "+e.toString());
+					fail = true;
+				}
+
+				if( fail ) {
+					treeAnchor.setTarget("_blank");
+					treeAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
+				}
 			}
 		});
 		final Anchor	imageAnchor = new Anchor("image");
 		imageAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				imageAnchor.setTarget("_blank");
+				imageAnchor.setTarget("");
+				
 				final Console console = Browser.getWindow().getConsole();
 				final String dataurl =  canvas.toDataUrl();
 				final elemental.html.Window wnd = Browser.getWindow();
@@ -1792,11 +1869,20 @@ public class Treedraw implements EntryPoint {
 				elemental.html.Blob blob = createBlob( byteString, mimeString );
 				//final Object[] create = {"create", true};
 				//String[] create = {"create", "true"};
+				Browser.getWindow().getConsole().log( blob );
+				Browser.getWindow().getConsole().log( "gheelhjadfkljaoei" );
 				
 				boolean fail = false;
 				try {
 					String objurl = createObjectURL( blob );
-					wnd.open( objurl, "tree.png" );
+					if( ie ) {
+						elemental.html.Window w = wnd.open( "image.html", "tree.png" );
+						ImageElement imel = (ImageElement)w.getDocument().getElementById("treeimage");
+						imel.setSrc( objurl );
+					} else {
+						wnd.open( objurl, "tree.png" );
+					}
+					//imageAnchor.setHref( objurl );
 					
 					/*wnd.webkitRequestFileSystem(elemental.html.Window.TEMPORARY, dataurl.length(), new FileSystemCallback() {
 						@Override
@@ -1829,10 +1915,12 @@ public class Treedraw implements EntryPoint {
 						}
 					});*/
 				} catch( Exception e ) {
+					Browser.getWindow().getConsole().log("erm "+e.toString());
 					fail = true;
 				}
 
 				if( fail ) {
+					imageAnchor.setTarget("_blank");
 					imageAnchor.setHref( dataurl );
 				}
 			}
@@ -2199,6 +2287,30 @@ public class Treedraw implements EntryPoint {
 		labhp.add( bubblecheck );
 		labhp.add( linagecheck );
 		
+		final FormPanel	form = new FormPanel();
+		form.setAction("/");
+	    form.setEncoding(FormPanel.ENCODING_MULTIPART);
+	    form.setMethod(FormPanel.METHOD_POST);
+		form.add( file );
+		file.addChangeHandler( new ChangeHandler() {
+			@Override
+			public void onChange(ChangeEvent event) {
+				handleFiles( file.getElement(), 0 );
+			}
+		});
+		Button openbutton = new Button("Reload file");
+		openbutton.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				handleFiles( file.getElement(), 0 );
+			}
+		});
+		HorizontalPanel openhp = new HorizontalPanel();
+		openhp.setSpacing(7);
+		openhp.add( form );
+		openhp.add( openbutton );
+		
+		choicePanel.add( openhp );
 		choicePanel.add( arrangehp );
 		choicePanel.add( selpan );
 		choicePanel.add( bc );

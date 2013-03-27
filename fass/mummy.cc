@@ -1,0 +1,307 @@
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <map>
+#include <set>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+class off {
+public:
+	int 	a,b,c;
+	int		r;
+	off( int aa, int bb, int cc, int rr ) : a(aa), b(bb), c(cc), r(rr) {}
+	bool operator< ( const off & o ) const { return a < o.a; }
+};
+
+int gdiff = 2500;
+class coff {
+public:
+	vector<off>	voff;
+	int	best1;
+	int best2;
+	coff() {}
+	int getLength() { return voff.size(); }
+	int valid() {
+		if( voff.size() > 10 ) return true;
+		for( unsigned int i = 0; i < voff.size(); i++ ) {
+			off & o = voff[i];
+			if( o.c > 200 ) return true;
+		}
+		return false;
+	};
+	void ssort() {
+		sort( voff.begin(), voff.end() );
+	}
+	void checkLongestCons() {
+		int ret = 0;
+		int retl = 0;
+
+		int count = 0;
+		int subret = 0;
+		int lastcount = 0;
+		int prev = 0;
+		int aprev = 0;
+		int maxind = 0;
+		int maxval = 0;
+		unsigned int i;
+		for( i = 0; i < voff.size(); i++ ) {
+			off & o = voff[i];
+			int adiff = o.b - prev;
+			int bdiff = o.a - aprev;
+
+			if (o.c > maxval) {
+				maxval = o.c;
+				maxind = i;
+			}
+
+			if (bdiff > 0 && bdiff > adiff - gdiff && bdiff < adiff + gdiff) {
+				count++;
+			} else {
+				if (count > lastcount) {
+					ret = subret;
+					retl = i-1;
+					lastcount = count;
+				}
+				count = 0;
+
+				subret = i;
+			}
+
+			prev = o.b;
+			aprev = o.a;
+		}
+		if (count > lastcount) {
+			ret = subret;
+			retl = i-1;
+			lastcount = count;
+		}
+
+		if (lastcount <= 1) {
+			ret = maxind;
+		}
+
+		best1 = ret;
+		best2 = retl;
+	}
+	off & getStart() {
+		return voff[best1];
+	}
+	off & getStop() {
+		return voff[best2];
+	}
+};
+
+void checkLengths( const char* fname, map<string,int> & m ) {
+	char	bb[2048];
+	int		nval = 0;
+	FILE*	f = fopen( fname, "r" );
+
+	string	name;
+	char* val = fgets( bb, sizeof(bb), f );
+	while( val != NULL ) {
+		//int r = strlen( bb );
+		if( bb[0] == '>' ) {
+			if( name.length() > 0 ) {
+				//printf("size %s %d\n", name.c_str(), nval );
+				m[name] = nval;
+			}
+
+			int i = 0;
+			while( bb[i] != '\n' && bb[i] != ' ' ) i++;
+			bb[i] = '\0';
+			name = &bb[1];
+
+			nval = 0;
+			//bb[12] = '\0';
+			//sscanf( &bb[21], "%d", &nval );
+			//printf("%d\n", nval);
+			//m[ &bb[1] ] = nval;
+
+		} else nval += strlen( val );
+
+		val = fgets( bb, sizeof(bb), f );
+	}
+
+	fclose( f );
+}
+
+int main( int argc, char* argv[] ) {
+	char	buffer[256];
+	int		s1, s2, len;
+	char	current[256];
+	char	temp[256];
+	char	cname[64];
+	//const char*	path = "/home/sigmar/thermus/assembly0/454AllContigs.fna";
+	const char*	path = "/home/sigmar/islandicus/islandicus.fna";
+	const char*	pathall = "/home/sigmar/islandicus/allthermus.fna";
+	//strcpy( current, path );
+
+	int PERC = 80;
+
+	sscanf( argv[argc-1], "%d", &PERC );
+
+	for( int i = 1; i < argc-1; i++ ) {
+		map<string,coff>	offmap;
+		FILE* f = fopen( argv[i], "r" );
+
+		//printf("file: %s\n", argv[i] );
+		map<string,int>	m1;
+		map<string,int> m2;
+
+		//int slen = strlen( argv[i] );
+		//current[29] = argv[i][ slen-2 ];
+		//printf( "%s\n", current );
+		//checkLengths( current, m1 );
+		//current[29] = argv[i][ slen-1 ];
+		//checkLengths( current, m2 );
+
+		checkLengths( path, m1 );
+		checkLengths( pathall, m2 );
+
+		//printf("lencheck success\n" );
+
+		int r = 0;
+		vector<string>	sset;
+		while( fgets( buffer, sizeof(buffer), f ) != NULL ) {
+			if( buffer[0] == '>' ) {
+				map<string,coff>::iterator mit = offmap.begin();
+				while( mit != offmap.end() ) {
+					coff & cff = mit->second;
+					cff.ssort();
+					cff.checkLongestCons();
+
+					//printf("muff\n" );
+					if( cff.valid() ) {
+						string str = mit->first;
+						/*if( strcmp( "contig00049", str.c_str() ) == 0 ) {
+							printf( "erm %d %d\n", cff.best1, cff.best2 );
+						}*/
+						off & o0 = cff.getStart(); //voff[0];
+						off & o1 = cff.getStop(); //voff[cff.voff.size()-1];
+						int astart = o0.a;
+						int astop = o1.a + o1.c;
+						int bstart = o0.b;
+						int bstop = o1.b + o1.c;
+
+						int len2 = m2[ str.c_str() ];
+
+						int i = 2;
+						while( current[i] != '\0' && current[i] != ' ' ) {
+							i++;
+						}
+						char c = current[i];
+						current[i] = '\0';
+						//printf("muff %s\n", &current[2] );
+						int len1 = m1[ &current[2] ];
+						//printf( "blah1 %s\n", current );
+						//printf( "blah2 %s\n", current );
+
+						int perc = 0;
+						for( int i = cff.best1; i <= cff.best2; i++ ) {
+							off & e1 = cff.voff[i];
+							perc += e1.c;
+						}
+
+						//printf("val %s %d %d %d\n", str.c_str(), perc, len1, len2 );
+						if( perc != 0 ) {
+							/*printf("%s %s %d %d %d %d\n", str.c_str(), &current[2], cff.valid(), (int)cff.voff.size(), cff.best1, cff.best2);
+							for( unsigned int i = 0; i < cff.voff.size(); i++ ) {
+								off & o = cff.voff[i];
+								printf("%d\n", o.c);
+							}*/
+
+							current[i] = c;
+
+							int ia1 = (perc*100)/(len2-astart);
+							int ia2 = (perc*100)/(astop);
+
+							bool a1 = ia1 > PERC;
+							bool a2 = ia2 > PERC;
+
+							int ib1 = (perc*100)/(len1-bstart);
+							int ib2 = (perc*100)/(bstop);
+
+							bool b1 = ib1 > PERC;
+							bool b2 = ib2 > PERC;
+
+							int ic1 = (perc*100)/(len1);
+							int ic2 = (perc*100)/(len2);
+
+							bool c1 = ic1 > PERC;
+							bool c2 = ic2 > PERC;
+
+							if( (a1 && b2) || (a2 && b1) ) {
+								/*sprintf( temp, "%d %d %d %d %d", perc, (len2-astart), astop, ia1, ia2 );
+								sset.push_back( temp );
+								sprintf( temp, "%d %d %d %d %d", perc, (len1-bstart), bstop, ib1, ib2 );
+								sset.push_back( temp );*/
+
+								//printf( "%d %d %d %d\n", (int)a1, (int)a2, (int)b1, (int)b2 );
+								if( r == 1 ) {
+									if( len1 >= 100000 ) sprintf( temp, "%s\t(%d)\t%d\t%d\t%s (%d)\t%d\t%d", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+									else sprintf( temp, "%s\t(%d)\t\t%d\t%d\t%s (%d)\t%d\t%d", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+								} else {
+									if( len1 >= 100000 ) sprintf( temp, "%s\t\t(%d)\t%d\t%d\t%s (%d)\t%d\t%d", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+									else sprintf( temp, "%s\t\t(%d)\t\t%d\t%d\t%s (%d)\t%d\t%d", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+								}
+								sset.push_back( temp );
+							} else if( (a1 && a2) || (b1 && b2) ) {
+								if( r == 1 ) {
+									if( len1 >= 100000 ) sprintf( temp, "%s\t(%d)\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+									else sprintf( temp, "%s\t(%d)\t\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+								} else {
+									if( len1 >= 100000 ) sprintf( temp, "%s\t\t(%d)\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+									else sprintf( temp, "%s\t\t(%d)\t\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+								}
+								sset.push_back( temp );
+							} /*else if( c1 || c2 ) {
+								if( r == 1 ) {
+									if( len1 >= 100000 ) sprintf( temp, "%s\t(%d)\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+									else sprintf( temp, "%s\t(%d)\t\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+								} else {
+									if( len1 >= 100000 ) sprintf( temp, "%s\t\t(%d)\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+									else sprintf( temp, "%s\t\t(%d)\t\t%d\t%d\t%s (%d)\t%d\t%d (c)", current, len1, bstart, bstop, str.c_str(), len2, astart, astop );
+								}
+								sset.push_back( temp );
+							}*/
+						}
+					}
+					mit++;
+				}
+
+				//printf("kok\n" );
+				if( strncmp( buffer, current, 13) == 0 ) {
+					r = 1;
+				} else {
+					r = 0;
+				}
+
+				if( !r ) {
+					if( sset.size() > 1 ) {
+						for( vector<string>::iterator it = sset.begin(); it != sset.end(); it++ ) {
+							printf( "%s\n", it->c_str() );
+						}
+					}
+					sset.clear();
+				}
+
+				offmap.clear();
+
+				strcpy( current, buffer );
+				for( unsigned int i = 0; i < sizeof(current); i++ ) {
+					if( current[i] == '\0' ) break;
+					else if( current[i] == '\n' ) current[i] = '\0';
+				}
+			} else {
+				sscanf( buffer, "%s %d %d %d", cname, &s1, &s2, &len );
+				offmap[cname].voff.push_back( off(s1,s2,len,r) );
+			}
+		}
+		fclose( f );
+	}
+
+	return 0;
+}
