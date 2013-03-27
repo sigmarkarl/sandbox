@@ -28,7 +28,7 @@
     <!-- If you add any GWT meta tags, they must   -->
     <!-- be added before this line.                -->
     <!--                                           -->
-    <script src="https://apis.google.com/js/client.js?onload=OnLoadCallback"></script>
+    <!--script src="https://apis.google.com/js/client.js?onload=OnLoadCallback"></script-->
     <script type="text/javascript" language="javascript" src="org.simmi.Treedraw/org.simmi.Treedraw.nocache.js"></script>
      <script type="text/javascript">
       var CLIENT_ID = '204374094326.apps.googleusercontent.com';
@@ -38,8 +38,8 @@
        * Called when the client library is loaded to start the auth flow.
        */
       function handleClientLoad() {
-        console.log("hcl");
-        window.setTimeout(checkAuth, 1);
+        /*console.log("hcl");
+        window.setTimeout(checkAuth, 1);*/
       }
 
       /**
@@ -50,6 +50,7 @@
         gapi.auth.authorize(
             {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true},
             handleAuthResult);
+        console.log("c2");
       }
 
 	  var sim;
@@ -60,14 +61,22 @@
        */
       function handleAuthResult(authResult) {
         console.log("har");
+        //console.log("har"+authResult);
         if (authResult && !authResult.error) {
           // Access token has been successfully retrieved, requests can be sent to the API.
           //var filePicker = document.getElementById('filePicker');
           //filePicker.style.visibility = '';
           //filePicker.onchange = uploadFile;
-          sim = 'simmi';
+          //sim = 'simmi';
+          console.log(gdname);
+          console.log(gdbase);
+          var metadata = {
+          	'title': gdname,
+          	'mimeType': 'text/plain'
+          };
+		  window.doRequest( gdbase, "text/plain", metadata );
         } else {
-        	if( authResult.error ) {
+        	if( authResult && authResult.error ) {
         		console.log( "autherror " + authResult.error );
         	}
           // No access token could be retrieved, force the authorization flow.
@@ -94,7 +103,6 @@
          const delimiter = "\r\n--" + boundary + "\r\n";
          const close_delim = "\r\n--" + boundary + "--";
          
-         console.log("ok sko");
          var multipartRequestBody =
               delimiter +
               'Content-Type: application/json\r\n\r\n' +
@@ -116,7 +124,7 @@
               'body': multipartRequestBody});
           if (!callback) {
             callback = function(file) {
-              console.log(file)
+              window.open( file.webContentLink );
             };
           }
           request.execute(callback);
@@ -143,7 +151,7 @@
         }
       }
     </script>
-    <!--script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script-->
+    <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
     <!--script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -178,11 +186,16 @@
     <iframe src="javascript:''" id="__	gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
     
     <center>
-	<script type="text/javascript"
-	src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
-	</script>
+	<script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js"></script>
 	<p>
-	
+	<g:plusone annotation="inline"></g:plusone>
+	<script type="text/javascript">
+	  (function() {
+	    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+	    po.src = '//apis.google.com/js/plusone.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+	  })();
+	</script>
 	<div id="simad">
 	<b>Try out the new in-browser sequence viewer (<a href="http://webfasta.appspot.com">http://webfasta.appspot.com</a>)</b>
 	</div>
@@ -209,15 +222,6 @@
 	<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
 	<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
 	</form>
-	<br>
-	<g:plusone annotation="inline"></g:plusone>
-	<script type="text/javascript">
-	  (function() {
-	    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-	    po.src = 'apis.google.com/js/plusone.js';
-	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-	  })();
-	</script>
 	<br>
 	<!--iframe src="http://www.facebook.com/plugins/like.php?href=http://webconnectron.appspot.com/TreeDraw.html"
         scrolling="no" frameborder="0"

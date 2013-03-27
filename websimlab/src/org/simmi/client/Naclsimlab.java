@@ -198,6 +198,30 @@ public class Naclsimlab implements EntryPoint {
 		return 0;
 	}
 	
+	public native String nativeShuffle() /*-{
+		var s = this;
+		$wnd.currentFunc = function( buf ) {
+			s.@org.simmi.client.Naclsimlab::shuffle(Lcom/google/gwt/typedarrays/shared/ArrayBuffer;)( buf );
+		}
+	}-*/;
+	
+	public int shuffle( com.google.gwt.typedarrays.shared.ArrayBuffer ab ) {
+		Browser.getWindow().getConsole().log("ermerm");
+		Int32ArrayNative ia = Int32ArrayNative.create( ab );
+		
+		for( int i = 0; i < ia.length(); i++ ) {
+			int k = Random.nextInt(ia.length());
+			int val = ia.get(k);
+			ia.set(k, ia.get(i));
+			ia.set(i, val);
+		}
+		
+		postMessage( ia.buffer() );
+		postMessage( "type "+33 );
+		
+		return 0;
+	}
+	
 	public int loadParse( ArrayBuffer ab ) {
 		//ArrayBuffer ab = getCurrentBuffer();
 		String str = arraybuffer2string( ab );
@@ -447,6 +471,9 @@ public class Naclsimlab implements EntryPoint {
 						});
 					} else if( last.startsWith("rand") ) {
 						nativeRand();
+						postMessage("current");
+					} else if( last.startsWith("shuffle") ) {
+						nativeShuffle();
 						postMessage("current");
 					} else if( last.startsWith("loadimage") ) {
 						String type = "text/plain";
