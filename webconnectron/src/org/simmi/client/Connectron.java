@@ -2,8 +2,10 @@ package org.simmi.client;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -54,10 +56,12 @@ import com.google.gwt.user.client.ui.DoubleBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class Connectron extends VerticalPanel 
@@ -513,7 +517,7 @@ public class Connectron extends VerticalPanel
 	}
 	
 	public void init() {
-		this.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		//this.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		this.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		this.setSize("100%", "100%");
 		
@@ -709,6 +713,220 @@ public class Connectron extends VerticalPanel
 		}
 		
 		return corp;
+	}
+	
+	public void importFrom454ContigGraph( String text, double scaleval ) {
+		String[] split = text.split("\n");
+		
+		Map<String,Corp> corpMap = new HashMap<String,Corp>();
+		Map<String,Integer>	lenMap = new HashMap<String,Integer>();
+		
+		List<String[]>	lines = new ArrayList<String[]>();
+		for( int i = 0; i < split.length; i++ ) {
+			String line = split[i];
+			String[] subsplit = line.split("\t");
+			if( line.startsWith("C") ) lines.add( subsplit );
+			else {
+				String str = subsplit[0];
+				try {
+					Integer.parseInt( str );
+					lenMap.put( str, Integer.parseInt(subsplit[2]) );
+				} catch( Exception e ) {}
+			}
+		}
+		
+		Random r = new Random();
+		for( String[] spec : lines ) {
+			if( spec.length > 1 ) {
+				Corp c1;
+				if( corpMap.containsKey(spec[1]) ) {
+					c1 = corpMap.get( spec[1] );
+				} else {
+					c1 = new Corp( spec[1] );
+					int size = lenMap.get( spec[1] );
+					c1.setSize( Math.log(size/10.0)*5.0 );
+					corpMap.put( spec[1], c1 );
+					Connectron.this.add( c1 );
+				}
+				
+				c1.setCoulomb(0.5);
+				c1.setx( scaleval*r.nextDouble() );
+				c1.sety( scaleval*r.nextDouble() );
+				c1.setz( scaleval*r.nextDouble() );
+				//c1.color = "#1111ee";
+				Connectron.this.add( c1 );
+				
+				Corp c2;
+				if( corpMap.containsKey(spec[3]) ) {
+					c2 = corpMap.get( spec[3] );
+				} else {
+					c2 = new Corp( spec[3] );
+					int size = lenMap.get( spec[3] );
+					c2.setSize( Math.log(size/10.0)*5.0 );
+					corpMap.put( spec[3], c2 );
+					Connectron.this.add( c2 );
+				}
+				c2.setCoulomb(0.5);
+				c2.setx( scaleval*r.nextDouble() );
+				c2.sety( scaleval*r.nextDouble() );
+				c2.setz( scaleval*r.nextDouble() );
+				//c2.color = "#1111ee";
+				
+				boolean col1set = c1.color != null && c1.color.length() > 0;
+				boolean col2set = c2.color != null && c2.color.length() > 0;
+				
+				double tscale = 0.0001;
+				Double ds = Double.parseDouble( spec[5] );
+				if( spec[2].equals("3'") && spec[4].equals("3'") ) {	
+					if( col1set && col2set ) {
+						if( c1.color.equals("#1111ee") ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals("#1111ee") ) {
+							c2.color = "#11ee11";
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = "#1111ee";
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals("#1111ee") ) {
+							c1.color = "#11ee11";
+						} else {
+							c1.color = "#1111ee";
+						}
+					} else {
+						c2.color = "#11ee11";
+						c1.color = "#1111ee";
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				} else if( spec[2].equals("3'") && spec[4].equals("5'") ) {
+					if( col1set && col2set ) {
+						if( c1.color.equals("#1111ee") ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals("#1111ee") ) {
+							c2.color = "#11ee11";
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = "#1111ee";
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals("#1111ee") ) {
+							c1.color = "#11ee11";
+						} else {
+							c1.color = "#1111ee";
+						}
+					} else {
+						c2.color = "#11ee11";
+						c1.color = "#1111ee";
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				} else if( spec[2].equals("5'") && spec[4].equals("3'") ) {
+					if( col1set && col2set ) {
+						if( c1.color.equals("#1111ee") ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals("#1111ee") ) {
+							c2.color = "#11ee11";
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = "#1111ee";
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals("#1111ee") ) {
+							c1.color = "#11ee11";
+						} else {
+							c1.color = "#1111ee";
+						}
+					} else {
+						c2.color = "#11ee11";
+						c1.color = "#1111ee";
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				} else if( spec[2].equals("5'") && spec[4].equals("5'") ) {
+					if( col1set && col2set ) {
+						if( c1.color.equals("#1111ee") ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = "#ee11ee";
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals("#1111ee") ) {
+							c2.color = "#11ee11";
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = "#1111ee";
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals("#1111ee") ) {
+							c1.color = "#11ee11";
+						} else {
+							c1.color = "#1111ee";
+						}
+					} else {
+						c2.color = "#11ee11";
+						c1.color = "#1111ee";
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				}
+				
+				//c1.addLink( c2, spec[5], 0.001*ds, 0.0 );
+				//c2.addLink( c1, spec[5], 0.001*ds, 0.0 );
+			}
+		}
 	}
 	
 	public void importFromTree( String text, int dim ) {
@@ -1095,6 +1313,32 @@ public class Connectron extends VerticalPanel
 		final MenuBar	menu = new MenuBar( true );
 		//popup.add( menu );
 		
+		menu.addItem( "Find node", new Command() {
+			@Override
+			public void execute() {
+				DialogBox	db = new DialogBox( true );
+				db.setTitle("Find node");
+				HorizontalPanel	hp = new HorizontalPanel();
+				final TextBox	tb = new TextBox();
+				tb.addKeyPressHandler( new KeyPressHandler() {
+					@Override
+					public void onKeyPress(KeyPressEvent event) {
+						char c = event.getCharCode();
+						if( c == '\r' ) {
+							String text = tb.getText();
+							for( Corp cp : Connectron.this.getComponents() ) {
+								if( text.equals( cp.getName() ) ) {
+									cp.setSelected( true );
+								}
+							}
+						}
+					}
+				});
+				hp.add( tb );
+				db.add( hp );
+				db.center();
+			}
+		});
 		menu.addItem( "Show/Hide Links", new Command() {
 			@Override
 			public void execute() {
@@ -1272,7 +1516,16 @@ public class Connectron extends VerticalPanel
 		});		
 		//scrollpane.setViewportView( c );
 		
+		final MenuBar filemenu = new MenuBar(true);
+		filemenu.addItem( "Open", new Command() {
+			@Override
+			public void execute() {
+				openFileDialog( 0 );
+			}
+		});
+		
 		MenuBar	menubar = new MenuBar();
+		menubar.addItem("File", filemenu);
 		menubar.addItem("Options", menu);
 		this.add( menubar );
 		this.add( canvas );
@@ -1725,7 +1978,9 @@ public class Connectron extends VerticalPanel
 	public void handleText( String dropstuff ) {
 		console( dropstuff.substring( 0, Math.min( 100,dropstuff.length() ) ) );
 		char c = dropstuff.charAt( 0 );
-		if( c >= '0' && c <= '9' && dropstuff.charAt(1) == '(' ) {
+		if( dropstuff.contains("contig") ) {
+			importFrom454ContigGraph( dropstuff, 400.0 );
+		} else if( c >= '0' && c <= '9' && dropstuff.charAt(1) == '(' ) {
 			importFromTree( dropstuff.substring(1).replaceAll("[\r\n]+", ""), c-'0' );
 		} else if( dropstuff.startsWith("(") ) {
 			importFromTree( dropstuff.replaceAll("[\r\n]+", ""), 3 );
@@ -1742,6 +1997,20 @@ public class Connectron extends VerticalPanel
 			hthis.@org.simmi.client.Connectron::handleText(Ljava/lang/String;)(e.target.result);
 		};
 		reader.onerror = function(e) {
+	  		$wnd.console.log("error", e);
+	  		$wnd.console.log(e.getMessage());
+		};
+		reader.readAsText( file, "utf8" );
+	}-*/;
+	
+	public native void handle454Graph( com.google.gwt.dom.client.InputElement fel ) /*-{
+		var s = this;
+		var file = fel.files(0);
+		var fr = new FileReader();
+		fr.onload = function(e) {
+			hthis.@org.simmi.client.Connectron::handleText(Ljava/lang/String;)(e.target.result);
+		};
+		fr.onerror = function(e) {
 	  		$wnd.console.log("error", e);
 	  		$wnd.console.log(e.getMessage());
 		};
@@ -1771,6 +2040,9 @@ public class Connectron extends VerticalPanel
 		file.addChangeHandler( new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
+				//if( file.getName().equals("454ContigGraph.txt") ) {
+				//	handle454Graph( file.getElement() );
+				//} else 
 				handleFiles( file.getElement(), append );
 				db.hide();
 			}

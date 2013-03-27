@@ -375,9 +375,6 @@ public class GeneSet extends JApplet {
 					}
 				}*/
 				if( clusterset.contains( query ) ) {
-					/*if( mugg ) {
-						System.err.println();
-					}*/
 					for( String padd : gene.species.keySet() ) {
 						Teginfo stv = gene.species.get(padd);
 						for( Tegeval tvl : stv.tset ) {
@@ -385,7 +382,7 @@ public class GeneSet extends JApplet {
 								Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
 								
 								if( newgene == null ) {
-									newgene = new Gene(desc, teg);
+									newgene = new Gene(null, desc, teg);
 									newgene.allids = new HashSet<String>();
 									newgene.species = new HashMap<String, Teginfo>();
 									newgene.refid = gene.refid + " new";
@@ -700,9 +697,7 @@ public class GeneSet extends JApplet {
 					deval = Double.parseDouble(evalue);
 				} catch( Exception e ) {
 					e.printStackTrace();
-				}
-				Tegeval tv = new Tegeval(teg, deval, aa, dn, query, contig, contloc, start, stop, ori);
-				
+				}				
 				Gene gene;
 				String check = addon ? "_"+aa : val;
 				if( ret.containsKey( check ) ) {
@@ -713,7 +708,7 @@ public class GeneSet extends JApplet {
 						gene.allids.remove( check );
 					}
 				} else {
-					gene = new Gene(desc, teg);
+					gene = new Gene(null, desc, teg);
 					gene.allids = new HashSet<String>();
 					gene.species = new HashMap<String, Teginfo>();
 					ret.put(val, gene);
@@ -721,6 +716,8 @@ public class GeneSet extends JApplet {
 				}
 				gene.allids.add(id);
 				set.add(val);
+				
+				Tegeval tv = new Tegeval(gene, teg, deval, aa, dn, query, contig, contloc, start, stop, ori);
 				
 				Teginfo stv;
 				if (!gene.species.containsKey(padda)) {
@@ -814,7 +811,7 @@ public class GeneSet extends JApplet {
 					if (ret.containsKey(aaid)) {
 						gene = ret.get(aaid);
 					} else {
-						gene = new Gene(aaid, padda);
+						gene = new Gene(null, aaid, padda);
 						ret.put(aaid, gene);
 						gene.allids = new HashSet<String>();
 						gene.species = new HashMap<String, Teginfo>();
@@ -871,7 +868,7 @@ public class GeneSet extends JApplet {
 					}*/
 	
 					StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
-					stv.add(new Tegeval(padda, deval, aastr, dn, query, contig, contloc, start, stop, ori));
+					stv.add(new Tegeval(gene, padda, deval, aastr, dn, query, contig, contloc, start, stop, ori));
 					
 					if (!allgenes.containsKey(aaid) || allgenes.get(aaid) == null) {
 						allgenes.put(aaid, "Thermus " + aaid);
@@ -3759,7 +3756,7 @@ public class GeneSet extends JApplet {
 	static boolean locsort = true;
 
 	static class Tegeval implements Comparable<Tegeval> {
-		public Tegeval(String tegund, double evalue, StringBuilder sequence, StringBuilder dnaseq, String contig, String shortcontig, String locontig, int sta, int sto, int orient) {
+		public Tegeval(Gene gene, String tegund, double evalue, StringBuilder sequence, StringBuilder dnaseq, String contig, String shortcontig, String locontig, int sta, int sto, int orient) {
 			teg = tegund;
 			eval = evalue;
 			dna = dnaseq;
@@ -3769,6 +3766,7 @@ public class GeneSet extends JApplet {
 			start = sta;
 			stop = sto;
 			ori = orient;
+			this.gene = gene;
 
 			numCys = 0;
 			setSequence(sequence);
@@ -3785,6 +3783,15 @@ public class GeneSet extends JApplet {
 		int stop;
 		int ori;
 		int numCys;
+		Gene	gene;
+		
+		public void setGene( Gene gene ) {
+			this.gene = gene;
+		}
+		
+		public Gene getGene() {
+			return this.gene;
+		}
 
 		public void setSequence(StringBuilder seq) {
 			if (seq != null) {
@@ -3873,10 +3880,12 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	static class GeneGroup {
+	public static class GeneGroup {
 		Set<Gene>	genes = new HashSet<Gene>();
 		Set<String>	species = new HashSet<String>();
 		int 		groupIndex = -10;
+		int 		groupCount = -1;
+		//int			groupGeneCount;
 		
 		public void addGene( Gene gene ) {
 			genes.add( gene );
@@ -3889,15 +3898,43 @@ public class GeneSet extends JApplet {
 		public GeneGroup( int i ) {
 			this.groupIndex = i;
 		}
+		
+		public int getGroupCoverage() {
+			return this.species.size();
+		}
+		
+		public void setGroupCount( int count ) {
+			this.groupCount = count;
+		}
+		
+		public int getGroupCount() {
+			if( groupCount == -1 ) {
+				int val = 0;
+				for (Gene g : genes) {
+					if (g.species != null) {
+						for (String str : g.species.keySet()) {
+							val += g.species.get(str).tset.size();
+						}
+					}
+				}
+				this.groupCount = val;
+			}
+			return this.groupCount;
+		}
+		
+		public int getGroupGeneCount() {
+			return this.genes.size();//this.groupGeneCount;
+		}
 	};
 	
-	static class Gene {
-		public Gene(String name, String origin) {
+	public static class Gene {
+		public Gene(GeneGroup gg, String name, String origin) {
 			this.name = name;
 			this.origin = origin;
+			this.gg = gg;
 			// this.setAa( aa );
 			
-			groupIdx = -10;
+			//groupIdx = -10;
 		}
 
 		public void setAa(String aa) {
@@ -3908,6 +3945,37 @@ public class GeneSet extends JApplet {
 
 		public String getAa() {
 			return aac;
+		}
+		
+		public void setGeneGroup( GeneGroup gg ) {
+			this.gg = gg;
+			
+			gg.addGene( this );
+			//gg.addSpecies( this.species );	
+		}
+		
+		public GeneGroup getGeneGroup() {
+			return gg;
+		}
+		
+		public int getGroupIndex() {
+			if( gg != null ) return gg.groupIndex;
+			return -10;
+		}
+		
+		public int getGroupCoverage() {
+			if( gg != null ) return gg.getGroupCoverage();
+			return -1;
+		}
+		
+		public int getGroupCount() {
+			if( gg != null ) return gg.getGroupCount();
+			return -1;
+		}
+		
+		public int getGroupGenCount() {
+			if( gg != null ) return gg.getGroupGeneCount();
+			return -1;
 		}
 
 		String name;
@@ -3924,11 +3992,12 @@ public class GeneSet extends JApplet {
 		private String aac;
 		int index;
 
+		GeneGroup	gg;
 		// Set<String> group;
-		int groupGenCount;
-		int groupCoverage;
-		int groupIdx;
-		int groupCount;
+		//int groupGenCount;
+		//int groupCoverage;
+		//int groupIdx;
+		//int groupCount;
 		double corr16s;
 		double[] corrarr;
 
@@ -3953,7 +4022,7 @@ public class GeneSet extends JApplet {
 						genelist = new ArrayList<Gene>();
 						genemap.put(strain, genelist);
 					}
-					genelist.add(new Gene(last, "mool"));
+					genelist.add(new Gene(null, last, "mool"));
 				}
 				last = line + "\n";
 				// aa = "";
@@ -3970,7 +4039,7 @@ public class GeneSet extends JApplet {
 			genelist = new ArrayList<Gene>();
 			genemap.put(strain, genelist);
 		}
-		genelist.add(new Gene(last, "moool"));
+		genelist.add(new Gene(null, last, "moool"));
 		br.close();
 
 		for (String str : genemap.keySet()) {
@@ -3996,7 +4065,7 @@ public class GeneSet extends JApplet {
 		while (line != null) {
 			if (line.startsWith(">")) {
 				if (last != null) {
-					Gene g = new Gene(last, "mool");
+					Gene g = new Gene(null, last, "mool");
 					g.setAa(aa);
 					genelist.add(g);
 				}
@@ -4007,7 +4076,7 @@ public class GeneSet extends JApplet {
 			}
 			line = br.readLine();
 		}
-		Gene g = new Gene(last, "mool");
+		Gene g = new Gene(null, last, "mool");
 		g.setAa(aa);
 		genelist.add(g);
 		br.close();
@@ -6353,7 +6422,7 @@ public class GeneSet extends JApplet {
 		};
 		JButton matrixbutton = new JButton(matrixaction);
 		
-		AbstractAction freqdistaction = new AbstractAction("Frequency distribution") {
+		AbstractAction freqdistaction = new AbstractAction("Freq dist") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFrame f = new JFrame("Genome frequency distribution");
@@ -6549,6 +6618,288 @@ public class GeneSet extends JApplet {
 		};
 		JButton presabsbutton = new JButton( presabsaction );
 		
+		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String>		selspec = getSelspec( applet, new ArrayList<String>( species ) );
+				List<String>	speclist = new ArrayList<String>( selspec );
+				double[] 		mat = new double[selspec.size()*selspec.size()];
+				for( int y = 0; y < speclist.size(); y++ ) {
+					mat[ y*speclist.size()+y ] = 0.0;
+				}
+				
+				for( int y = 0; y < speclist.size(); y++ ) {
+					String spec1 = speclist.get(y);
+					final List<Tegeval> ltv = new ArrayList<Tegeval>();
+					for (Gene g : genelist) {
+						if (g.species != null) {
+							for (String spec : g.species.keySet()) {
+								Teginfo stv = g.species.get(spec);
+								if (stv != null)
+									for (Tegeval tv : stv.tset) {
+										if (spec.equals(spec1)) {
+											ltv.add(tv);
+										}
+										//tv.
+	
+										//int first = tv.cont.indexOf("_");
+										//int sec = tv.cont.indexOf("_", first + 1);
+	
+										//String cname = tv.cont.substring(0, sec);
+										//contigmap.put(cname, new Contig(cname));
+									}
+							}
+							// }
+						}
+					}
+					locsort = true;
+					Collections.sort(ltv);
+					
+					for( int x = y+1; x < speclist.size(); x++ ) {
+						String spec2 = speclist.get(x);
+						
+						final List<Tegeval> subltv = new ArrayList<Tegeval>();
+						for (Gene g : genelist) {
+							if (g.species != null) {
+								for (String spec : g.species.keySet()) {
+									Teginfo stv = g.species.get(spec);
+									if (stv != null)
+										for (Tegeval tv : stv.tset) {
+											if (spec.equals(spec2)) {
+												subltv.add(tv);
+											}
+											//tv.
+		
+											//int first = tv.cont.indexOf("_");
+											//int sec = tv.cont.indexOf("_", first + 1);
+		
+											//String cname = tv.cont.substring(0, sec);
+											//contigmap.put(cname, new Contig(cname));
+										}
+								}
+								// }
+							}
+						}
+						locsort = true;
+						Collections.sort(subltv);
+						
+						int count = 0;
+						for( int i = 0; i < ltv.size()-1; i++ ) {
+							Tegeval tv1 = ltv.get(i);
+							Tegeval tv2 = ltv.get(i+1);
+							
+							GeneGroup gg1 = tv1.getGene().getGeneGroup();
+							GeneGroup gg2 = tv2.getGene().getGeneGroup();
+							
+							for( int k = 0; k < subltv.size()-1; k++ ) {
+								Tegeval subtv1 = subltv.get(k);
+								Tegeval subtv2 = subltv.get(k+1);
+								
+								GeneGroup sgg1 = subtv1.getGene().getGeneGroup();
+								GeneGroup sgg2 = subtv2.getGene().getGeneGroup();
+								
+								if( (sgg1 == gg1 && sgg2 == gg2) || (sgg1 == gg2 && sgg2 == gg1) ) {
+									count++;
+									break;
+								}
+							}
+							
+							/*if( gg1.species.contains(spec2) && gg2.species.contains(spec2) ) {
+								final List<Tegeval> ltv1 = new ArrayList<Tegeval>();
+								for( Gene g : gg1.genes ) {
+									if (g.species != null) {
+										for (String spec : g.species.keySet()) {
+											Teginfo stv = g.species.get(spec);
+											if (stv != null)
+												for (Tegeval tv : stv.tset) {
+													if (spec.equals(spec1)) {
+														ltv1.add(tv);
+													}
+												}
+										}
+									}
+								}
+								final List<Tegeval> ltv2 = new ArrayList<Tegeval>();
+								for( Gene g : gg2.genes ) {
+									if (g.species != null) {
+										for (String spec : g.species.keySet()) {
+											Teginfo stv = g.species.get(spec);
+											if (stv != null)
+												for (Tegeval tv : stv.tset) {
+													if (spec.equals(spec1)) {
+														ltv2.add(tv);
+													}
+												}
+										}
+									}
+								}
+								
+								for( Tegeval tev1 : ltv1 ) {
+									for( Tegeval tev2 : ltv2 ) {
+										System.err.println( tev1.cont + "  " + tev2.cont );
+									}
+								}
+								//Collections.sort(ltv1);
+								//Collections.sort(ltv2);
+							}*/
+						}
+						mat[ y*speclist.size() + x ] = count;
+						mat[ x*speclist.size() + y ] = count;
+					}
+				}
+				
+				System.err.print("\t"+speclist.size());
+				for( int i = 0; i < mat.length; i++ ) {
+					if( i % speclist.size() == 0 ) System.err.print("\n"+speclist.get(i/speclist.size())+"\t"+(mat[i] == 0 ? 0.0 : 2500-mat[i]));
+					else System.err.print("\t"+(mat[i] == 0 ? 0.0 : 2500-mat[i]));
+				}
+				System.err.println();
+				
+				/*				
+				List<Tegeval>	spec1eval = new ArrayList<Tegeval>();
+				List<Tegeval>	spec2eval = new ArrayList<Tegeval>();
+				
+				double[] mat = new double[selspec.size()*selspec.size()];
+				for( int y = 0; y < speclist.size(); y++ ) {
+					String spec1 = speclist.get(y);
+					for( int x = 0; x < speclist.size(); x++ ) {
+						String spec2 = speclist.get(x);
+						if( spec1.equals( spec2 ) ) {
+							mat[y*speclist.size()+x] = 0.0;
+						} else {
+							for( Set<String> specset : ggSpecMap.keySet() ) {
+								boolean b1 = specset.contains(spec1);
+								boolean b2 = specset.contains(spec2);
+								if( b1 && b2 ) {
+									List<GeneGroup> gglist = ggSpecMap.get( specset );
+									Teginfo spec1sel = null;
+									Teginfo sepc2sel = null;
+									for( GeneGroup gg : gglist ) {
+										for( Gene g : gg.genes ) {
+											if( g.species.containsKey(spec1) ) {
+												if( spec1sel != null ) {
+													spec1sel = null;
+													break;
+												} else spec1sel = spec1;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				/*String restext = null;
+				StringBuilder distmat = new StringBuilder();
+				distmat.append("\t"+selspec.size()+"\n");
+				for( String spec1 : selspec ) {
+					distmat.append( spec1 );
+					for( String spec2 : selspec ) {
+						if( spec1.equals(spec2) ) distmat.append( "\t0.0" );
+						else {
+							int total = 0;
+							int count = 0;
+							for( Set<String> specset : clusterMap.keySet() ) {
+								if( !check.isSelected() || containmentCount(specset, selspec) < selspec.size() ) {
+									boolean b1 = specset.contains(spec1);
+									boolean b2 = specset.contains(spec2);
+									Set<Map<String,Set<String>>>	sm = clusterMap.get( specset );
+									if( b1 || b2 ) {
+										total += sm.size();
+										if( b1 && b2 ) count += sm.size();
+									}
+								}/* else {
+									System.err.println("blehbheh");
+								}*
+							}
+							distmat.append( "\t"+(double)(total-count)/(double)total );
+						}
+					}
+					distmat.append("\n");
+				}*/
+				
+				/*Set<String>	emap = null;
+				for( Set<String> gmap : ggSpecMap.keySet() ) {
+					if( emap == null || emap.size() < gmap.size() ) emap = gmap;
+				}
+				List<GeneGroup>	lgg = ggSpecMap.get( emap );
+				List<GeneGroup>	slgg = new ArrayList<GeneGroup>();*/
+				
+				/*for( GeneGroup gg : lgg ) {
+					for( Gene g : gg.genes ) {
+						if( g.groupCoverage == g.groupCount ) {
+							System.err.println( g.groupCount );
+							slgg.add( gg );
+						}
+						
+						break;
+					}
+				}*/
+				
+				//System.err.println( "slgg " + slgg.size() + "  " + lgg.size() );
+				
+				/*Set<String>	selspec = getSelspec( applet, new ArrayList( species ) );
+				StringBuilder distmat = new StringBuilder();
+				distmat.append("\t"+selspec.size()+"\n");
+				for( String spec1 : selspec ) {
+					distmat.append( spec1 );
+					for( String spec2 : selspec ) {
+						if( spec1.equals(spec2) ) distmat.append( "\t0.0" );
+						else {
+							
+							
+							int total = 0;
+							int count = 0;
+							for( Set<String> specset : clusterMap.keySet() ) {
+								System.err.println("asdf");
+								
+								/*if( !check.isSelected() || containmentCount(specset, selspec) < selspec.size() ) {
+									boolean b1 = specset.contains(spec1);
+									boolean b2 = specset.contains(spec2);
+									Set<Map<String,Set<String>>>	sm = clusterMap.get( specset );
+									if( b1 || b2 ) {
+										total += sm.size();
+										if( b1 && b2 ) count += sm.size();
+									}
+								}/* else {
+									System.err.println("blehbheh");
+								}*
+							}
+							distmat.append( "\t"+(double)(total-count)/(double)total );
+						}
+					}
+					distmat.append("\n");
+				}
+				
+				boolean	succ = true;
+				String restext = distmat.toString();
+				
+				//TreeUtil treeutil = new TreeUtil();
+				//treeutil.neighborJoin( newcorr, corrInd, null, true, true );
+				
+				try {
+					JSObject win = JSObject.getWindow( (Applet)comp );
+					win.call("showTree", new Object[] { restext });
+				} catch( Exception e1 ) {
+					succ = false;
+				}
+				
+				if( !succ ) {
+					JFrame f = new JFrame("Shuffle tree");
+					f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+					f.setSize( 800, 600 );
+					
+					JTextArea	ta = new JTextArea();
+					ta.setText( restext );
+					JScrollPane	sp = new JScrollPane(ta);
+					f.add( sp );
+					f.setVisible( true );
+				}*/
+			}
+		};
+		JButton	shuffletreebutton = new JButton( shuffletreeaction );
+		
+		ttopcom.add( shuffletreebutton );
 		ttopcom.add( presabsbutton );
 		ttopcom.add(freqdistbutton);
 		ttopcom.add(matrixbutton);
@@ -6614,7 +6965,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					mynd(genelist, table, "tscotoSA01");
+					mynd(genelist, table, "t.scotoductusSA01");
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -6904,11 +7255,11 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 7) {
 					return gene.species == null ? -1 : gene.species.size();
 				} else if (columnIndex == 8) {
-					return gene.groupIdx;
+					return gene.getGroupIndex();
 				} else if (columnIndex == 9) {
-					return gene.groupCoverage;
+					return gene.getGroupCoverage();
 				} else if (columnIndex == 10) {
-					return gene.groupGenCount;
+					return gene.getGroupGenCount();
 				} else if (columnIndex == 11) {
 					return gene.proximityGroupPreservation;
 				} else if (columnIndex == 12) {
@@ -6920,7 +7271,7 @@ public class GeneSet extends JApplet {
 						return val;
 					}
 				} else if (columnIndex == 13) {
-					return gene.groupCount;
+					return gene.getGroupCount();
 				} else if (columnIndex == 14) {
 					if (gene.species != null) {
 						int max = 0;
@@ -6950,7 +7301,7 @@ public class GeneSet extends JApplet {
 					}
 					return 0;
 				} else if (columnIndex == 17) {
-					return gene.groupCoverage == 16 && gene.groupCount == 16 ? gene.corr16s : -1;
+					return gene.getGroupCoverage() == 16 && gene.getGroupCount() == 16 ? gene.corr16s : -1;
 				} else if (columnIndex == 18) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.thermophilusSG0");
@@ -7337,18 +7688,18 @@ public class GeneSet extends JApplet {
 					Gene gg = genelist.get(cr);
 					if (gg.species != null) {
 						if( gg.genid != null && gg.genid.length() > 0 ) {
-							ups.put( gg.groupIdx, gg.name );
-							stuck.add( gg.groupIdx );
+							ups.put( gg.getGroupIndex(), gg.name );
+							stuck.add( gg.getGroupIndex() );
 						}
-						if( !stuck.contains(gg.groupIdx) ) {
-							if( !ups.containsKey(gg.groupIdx) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.groupIdx, gg.name );
+						if( !stuck.contains(gg.getGroupIndex()) ) {
+							if( !ups.containsKey(gg.getGroupIndex()) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.getGroupIndex(), gg.name );
 						}
 						
 						List<Tegeval>	tlist;
-						if( ups2.containsKey( gg.groupIdx ) ) tlist = ups2.get( gg.groupIdx );
+						if( ups2.containsKey( gg.getGroupIndex() ) ) tlist = ups2.get( gg.getGroupIndex() );
 						else {
 							tlist = new ArrayList<Tegeval>();
-							ups2.put( gg.groupIdx, tlist );
+							ups2.put( gg.getGroupIndex(), tlist );
 						}
 						
 						//Set<String>	 specs = new HashSet<String>();
@@ -7500,18 +7851,18 @@ public class GeneSet extends JApplet {
 					Gene gg = genelist.get(cr);
 					if (gg.species != null) {
 						if( gg.genid != null && gg.genid.length() > 0 ) {
-							ups.put( gg.groupIdx, gg.name );
-							stuck.add( gg.groupIdx );
+							ups.put( gg.getGroupIndex(), gg.name );
+							stuck.add( gg.getGroupIndex() );
 						}
-						if( !stuck.contains(gg.groupIdx) ) {
-							if( !ups.containsKey(gg.groupIdx) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.groupIdx, gg.name );
+						if( !stuck.contains(gg.getGroupIndex()) ) {
+							if( !ups.containsKey(gg.getGroupIndex()) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.getGroupIndex(), gg.name );
 						}
 						
 						List<Tegeval>	tlist;
-						if( ups2.containsKey( gg.groupIdx ) ) tlist = ups2.get( gg.groupIdx );
+						if( ups2.containsKey( gg.getGroupIndex() ) ) tlist = ups2.get( gg.getGroupIndex() );
 						else {
 							tlist = new ArrayList<Tegeval>();
-							ups2.put( gg.groupIdx, tlist );
+							ups2.put( gg.getGroupIndex(), tlist );
 						}
 						
 						//textarea.append(gg.name + ":\n");
@@ -8404,11 +8755,11 @@ public class GeneSet extends JApplet {
 							Gene gg = genelist.get(cr);
 							if (gg.species != null) {
 								FileWriter fw = null;
-								if (lfw.containsKey(gg.groupIdx)) {
-									fw = lfw.get(gg.groupIdx);
+								if (lfw.containsKey(gg.getGroupIndex())) {
+									fw = lfw.get(gg.getGroupIndex());
 								} else {
-									fw = new FileWriter(new File(f, "group_" + gg.groupIdx + ".fasta"));
-									lfw.put(gg.groupIdx, fw);
+									fw = new FileWriter(new File(f, "group_" + gg.getGroupIndex() + ".fasta"));
+									lfw.put(gg.getGroupIndex(), fw);
 								}
 
 								for (String sp : gg.species.keySet()) {
@@ -9286,15 +9637,18 @@ public class GeneSet extends JApplet {
 
 			GeneGroup gg = new GeneGroup( i );
 			ggList.add( gg );
+			gg.addSpecies( ss );
+			gg.setGroupCount( val );
+			//gg.setGroupGeneCount( gs.size() );
 			
 			for (Gene g : gset) {
-				g.groupIdx = i;
+				g.setGeneGroup( gg );
+				/*g.groupIdx = i;
 				g.groupCoverage = ss.size();
 				g.groupGenCount = gs.size();
-				g.groupCount = val;
+				g.groupCount = val;*/
 				
-				gg.addGene( g );
-				gg.addSpecies( ss );
+				//gg.addGene( g );
 			}
 
 			i++;
@@ -9746,17 +10100,19 @@ public class GeneSet extends JApplet {
 	static Map<String, Contig> contigmap = new HashMap<String, Contig>();
 
 	public static void mynd(final List<Gene> genes, final JTable sorting, String species) throws IOException {
-		if (gsplitpane == null) {
+		if (true) { //gsplitpane == null) {
 			final List<Tegeval> ltv = new ArrayList<Tegeval>();
 			for (Gene g : genes) {
 				if (g.species != null) {
+					System.err.println( g.species.keySet() );
 					// for( String sp : g.species.keySet() ) {
 					for (String spec : g.species.keySet()) {
 						Teginfo stv = g.species.get(spec);
 						if (stv != null)
 							for (Tegeval tv : stv.tset) {
-								if (spec.equals(species))
+								if (spec.equals(species)) {
 									ltv.add(tv);
+								}
 
 								int first = tv.cont.indexOf("_");
 								int sec = tv.cont.indexOf("_", first + 1);
