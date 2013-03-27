@@ -518,6 +518,15 @@ public class Corp {
 		//Corp.prop.setBounds( Corp.this.getX()+Corp.this.getWidth()+10, Corp.this.getY(), 400, 300 );
 	}
 	
+	public void setSelected( boolean selected ) {
+		this.selected = selected;
+		selectedList.add( this );
+	}
+	
+	public boolean isSelected() {
+		return this.selected;
+	}
+	
 	public void subselect( Corp c ) {
 		if( !c.selected ) {
 			c.selected = true;

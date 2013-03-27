@@ -3247,7 +3247,7 @@ public class SerifyApplet extends JApplet {
 							lseqs.add( s );
 						}
 					}
-					List<Sequences> retlseqs = serifier.join( f, lseqs, true );
+					List<Sequences> retlseqs = serifier.join( f, lseqs, true, null );
 					for( Sequences seqs : retlseqs ) {
 						addSequences( seqs );
 					}
@@ -3650,7 +3650,7 @@ public class SerifyApplet extends JApplet {
 						try {
 							URL url = new URL( path );
 							jf.importFile( name, url.openStream() );
-							jf.removeAllGaps( serifier.lseq );
+							serifier.removeAllGaps( serifier.lseq );
 							int i = path.lastIndexOf('.');
 							if( i == -1 ) i = path.length();
 							URI uri = new URI(path.substring(0, i)+"_unaligned.fasta");
