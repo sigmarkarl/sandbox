@@ -96,18 +96,31 @@ public:
 
 void checkLengths( const char* fname, map<string,int> & m ) {
 	char	bb[2048];
-	int		nval;
+	int		nval = 0;
 	FILE*	f = fopen( fname, "r" );
 
+	string	name;
 	char* val = fgets( bb, sizeof(bb), f );
 	while( val != NULL ) {
 		//int r = strlen( bb );
 		if( bb[0] == '>' ) {
-			bb[12] = '\0';
-			sscanf( &bb[21], "%d", &nval );
+			if( name.length() > 0 ) {
+				//printf("size %s %d\n", name.c_str(), nval );
+				m[name] = nval;
+			}
+
+			int i = 0;
+			while( bb[i] != '\n' && bb[i] != ' ' ) i++;
+			bb[i] = '\0';
+			name = &bb[1];
+
+			nval = 0;
+			//bb[12] = '\0';
+			//sscanf( &bb[21], "%d", &nval );
 			//printf("%d\n", nval);
-			m[ &bb[1] ] = nval;
-		}
+			//m[ &bb[1] ] = nval;
+
+		} else nval += strlen( val );
 
 		val = fgets( bb, sizeof(bb), f );
 	}
@@ -121,8 +134,10 @@ int main( int argc, char* argv[] ) {
 	char	current[256];
 	char	temp[256];
 	char	cname[64];
-	const char*	path = "/home/sigmar/thermus/assembly0/454AllContigs.fna";
-	strcpy( current, path );
+	//const char*	path = "/home/sigmar/thermus/assembly0/454AllContigs.fna";
+	const char*	path = "/home/sigmar/islandicus/islandicus.fna";
+	const char*	pathall = "/home/sigmar/islandicus/allthermus.fna";
+	//strcpy( current, path );
 
 	int PERC = 80;
 
@@ -132,16 +147,21 @@ int main( int argc, char* argv[] ) {
 		map<string,coff>	offmap;
 		FILE* f = fopen( argv[i], "r" );
 
-		printf("file: %s\n", argv[i] );
+		//printf("file: %s\n", argv[i] );
 		map<string,int>	m1;
 		map<string,int> m2;
 
-		int slen = strlen( argv[i] );
-		current[29] = argv[i][ slen-2 ];
-		printf( "%s\n", current );
-		checkLengths( current, m1 );
-		current[29] = argv[i][ slen-1 ];
-		checkLengths( current, m2 );
+		//int slen = strlen( argv[i] );
+		//current[29] = argv[i][ slen-2 ];
+		//printf( "%s\n", current );
+		//checkLengths( current, m1 );
+		//current[29] = argv[i][ slen-1 ];
+		//checkLengths( current, m2 );
+
+		checkLengths( path, m1 );
+		checkLengths( pathall, m2 );
+
+		//printf("lencheck success\n" );
 
 		int r = 0;
 		vector<string>	sset;
@@ -153,6 +173,7 @@ int main( int argc, char* argv[] ) {
 					cff.ssort();
 					cff.checkLongestCons();
 
+					//printf("muff\n" );
 					if( cff.valid() ) {
 						string str = mit->first;
 						/*if( strcmp( "contig00049", str.c_str() ) == 0 ) {
@@ -165,11 +186,16 @@ int main( int argc, char* argv[] ) {
 						int bstart = o0.b;
 						int bstop = o1.b + o1.c;
 
-						int len2 = m1[ str.c_str() ];
+						int len2 = m2[ str.c_str() ];
 
-						char c = current[13];
-						current[13] = '\0';
-						int len1 = m2[ &current[2] ];
+						int i = 2;
+						while( current[i] != '\0' && current[i] != ' ' ) {
+							i++;
+						}
+						char c = current[i];
+						current[i] = '\0';
+						//printf("muff %s\n", &current[2] );
+						int len1 = m1[ &current[2] ];
 						//printf( "blah1 %s\n", current );
 						//printf( "blah2 %s\n", current );
 
@@ -179,6 +205,7 @@ int main( int argc, char* argv[] ) {
 							perc += e1.c;
 						}
 
+						//printf("val %s %d %d %d\n", str.c_str(), perc, len1, len2 );
 						if( perc != 0 ) {
 							/*printf("%s %s %d %d %d %d\n", str.c_str(), &current[2], cff.valid(), (int)cff.voff.size(), cff.best1, cff.best2);
 							for( unsigned int i = 0; i < cff.voff.size(); i++ ) {
@@ -186,7 +213,7 @@ int main( int argc, char* argv[] ) {
 								printf("%d\n", o.c);
 							}*/
 
-							current[13] = c;
+							current[i] = c;
 
 							int ia1 = (perc*100)/(len2-astart);
 							int ia2 = (perc*100)/(astop);
@@ -245,6 +272,7 @@ int main( int argc, char* argv[] ) {
 					mit++;
 				}
 
+				//printf("kok\n" );
 				if( strncmp( buffer, current, 13) == 0 ) {
 					r = 1;
 				} else {

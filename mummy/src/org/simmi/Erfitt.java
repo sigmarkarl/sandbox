@@ -2,7 +2,6 @@ package org.simmi;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -18,22 +17,23 @@ import org.simmi.Mummy.Sequence;
 
 public class Erfitt {
 	public static List<Sequence> stuff( Mummy mummy ) throws IOException {
-		String[]	seq1s = new String[] {"l3_contig00100", "l3_contig00015", "l3_contig00019", "l3_contig00045", "l3_contig00052", "l3_contig00061", "l3_contig00069", "l3_contig00114"};
-		String[]	seq2s = new String[] {"l8_contig00002"};
+		//String[]	seq1s = new String[] {"l3_contig00100", "l3_contig00015", "l3_contig00019", "l3_contig00045", "l3_contig00052", "l3_contig00061", "l3_contig00069", "l3_contig00114"};
+		//String[]	seq2s = new String[] {"l8_contig00002"};
 		
-		Set<String>	seq1Filter = new HashSet<String>( Arrays.asList( seq1s ) );
-		Set<String>	seq2Filter = new HashSet<String>( Arrays.asList( seq2s ) );
+		//Set<String>	seq1Filter = new HashSet<String>( Arrays.asList( seq1s ) );
+		//Set<String>	seq2Filter = new HashSet<String>( Arrays.asList( seq2s ) );
 		
 		
 		//final List<Sequence> lseq2 = load("/home/sigmar/fass/assembly1/454LargeContigs.fna", "/home/sigmar/fass/assembly2/454LargeContigs.fna", "/home/sigmar/fass/ab12", "/home/sigmar/fass/ab21", "l1_", "l2_");
 		//final List<Sequence> lseq2 = load("/home/sigmar/fass/assembly1/454LargeContigs.fna", "/home/sigmar/fass/assembly4/454LargeContigs.fna", "/home/sigmar/fass/ab14", "/home/sigmar/fass/ab41", "l1_", "l4_");
 		//final List<Sequence> lseq2 = load("/home/sigmar/fass/assembly1/454LargeContigs.fna", "/home/sigmar/fass/assembly6/454LargeContigs.fna", "/home/sigmar/fass/ab16", "/home/sigmar/fass/ab61", "l1_", "l6_", seq1Filter, seq2Filter);
-		final List<Sequence> lseq2 = mummy.load("/home/sigmar/fass/assembly3/454LargeContigs.fna", "/home/sigmar/fass/assembly8/454LargeContigs.fna", "/home/sigmar/fass/ab38", "/home/sigmar/fass/ab83", "l3_", "l8_", seq1Filter, seq2Filter);
+		//final List<Sequence> lseq2 = mummy.load("/home/sigmar/fass/assembly3/454LargeContigs.fna", "/home/sigmar/fass/assembly8/454LargeContigs.fna", "/home/sigmar/fass/ab38", "/home/sigmar/fass/ab83", "l3_", "l8_", seq1Filter, seq2Filter);
+		final List<Sequence> lseq2 = mummy.load("/home/sigmar/islandicus/islandicus.fna", "/home/sigmar/islandicus/mira.fasta", "/home/sigmar/islandicus/ab38", "/home/sigmar/islandicus/ab83", "newbler_", "mira_");
 
 		int countno = 0;
 		List<Coff> coffList = new ArrayList<Coff>();
 		for (Sequence seq : lseq2) {
-			if (seq.name.startsWith("l3_")) {
+			if (seq.name.startsWith("newbler_")) {
 				for (String key : seq.offsetMap.keySet()) {
 					Coff cff = seq.offsetMap.get(key);
 					/*
@@ -57,9 +57,9 @@ public class Erfitt {
 		System.err.println(coffList.size());
 		for (Coff cff : coffList) {
 			if (cff.rc)
-				System.err.println(cff.seq1.name + " Reverse on " + cff.seq2.name + " is " + cff.getAlignCount() + "  " + cff.getAlignLength());
+				System.err.println();//cff.seq1.name + " Reverse on " + cff.seq2.name + " is " + cff.getAlignCount() + "  " + cff.getAlignLength());
 			else
-				System.err.println(cff.seq1.name + " on " + cff.seq2.name + " is " + cff.getAlignCount() + "  " + cff.getAlignLength());
+				System.err.println();//cff.seq1.name + " on " + cff.seq2.name + " is " + cff.getAlignCount() + "  " + cff.getAlignLength());
 		}
 
 		/*
