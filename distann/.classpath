@@ -9,8 +9,8 @@
 	<classpathentry kind="lib" path="/usr/share/java/commons-net.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/oro.jar"/>
 	<classpathentry kind="lib" path="jtar-1.1.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_15/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_15/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_15/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_17/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_17/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_17/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

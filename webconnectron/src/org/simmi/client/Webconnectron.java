@@ -106,9 +106,10 @@ public class Webconnectron implements EntryPoint {
 				int w = event.getWidth()-160;
 				int h = event.getHeight();
 				
-				if( w != oldw && w != olderw && h != oldh && h != olderh ) {
+				if( (w != oldw && w != olderw) || (h != oldh && h != olderh) ) {
 					//rp.setPixelSize( w, h );
 					rp.setSize(w+"px", h+"px");
+					connectron.getCanvas().setSize(w+"px", (h-20)+"px");
 					connectron.getCanvas().setCoordinateSpaceWidth( w );
 					connectron.getCanvas().setCoordinateSpaceHeight( h );
 					
