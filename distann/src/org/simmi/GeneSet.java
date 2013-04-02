@@ -6710,16 +6710,22 @@ public class GeneSet extends JApplet {
 							GeneGroup gg1 = tv1.getGene().getGeneGroup();
 							GeneGroup gg2 = tv2.getGene().getGeneGroup();
 							
-							for( int k = 0; k < subltv.size()-1; k++ ) {
-								Tegeval subtv1 = subltv.get(k);
-								Tegeval subtv2 = subltv.get(k+1);
-								
-								GeneGroup sgg1 = subtv1.getGene().getGeneGroup();
-								GeneGroup sgg2 = subtv2.getGene().getGeneGroup();
-								
-								if( (sgg1 == gg1 && sgg2 == gg2) || (sgg1 == gg2 && sgg2 == gg1) ) {
-									count++;
-									break;
+							if( gg1 == null || gg2 == null ) {
+								System.err.println( tv1 + "   " + tv2 );
+							}
+							
+							if( gg1 != null && gg1.getGroupGeneCount() < 500 && gg2 != null && gg2.getGroupGeneCount() < 500 ) {
+								for( int k = 0; k < subltv.size()-1; k++ ) {
+									Tegeval subtv1 = subltv.get(k);
+									Tegeval subtv2 = subltv.get(k+1);
+									
+									GeneGroup sgg1 = subtv1.getGene().getGeneGroup();
+									GeneGroup sgg2 = subtv2.getGene().getGeneGroup();
+									
+									if( (sgg1 == gg1 && sgg2 == gg2) || (sgg1 == gg2 && sgg2 == gg1) ) {
+										count++;
+										break;
+									}
 								}
 							}
 							
@@ -6769,8 +6775,8 @@ public class GeneSet extends JApplet {
 				
 				System.err.print("\t"+speclist.size());
 				for( int i = 0; i < mat.length; i++ ) {
-					if( i % speclist.size() == 0 ) System.err.print("\n"+speclist.get(i/speclist.size())+"\t"+(mat[i] == 0 ? 0.0 : 2500-mat[i]));
-					else System.err.print("\t"+(mat[i] == 0 ? 0.0 : 2500-mat[i]));
+					if( i % speclist.size() == 0 ) System.err.print("\n"+speclist.get(i/speclist.size())+"\t"+(mat[i] == 0 ? 0.0 : 2100-mat[i]));
+					else System.err.print("\t"+(mat[i] == 0 ? 0.0 : 2100-mat[i]));
 				}
 				System.err.println();
 				
