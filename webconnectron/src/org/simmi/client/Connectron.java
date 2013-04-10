@@ -64,6 +64,8 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+import elemental.client.Browser;
+
 public class Connectron extends VerticalPanel 
 	implements 	DoubleClickHandler, MouseDownHandler, MouseUpHandler, MouseMoveHandler,
 				KeyDownHandler, KeyUpHandler, KeyPressHandler, 
@@ -182,6 +184,29 @@ public class Connectron extends VerticalPanel
 				double r = Math.sqrt( d );
 				
 				LinkInfo li = corp.backconnections.get(c);
+				double h = li.getOffset();
+				double st = li.getStrength();
+					//double k = li.getStrength();
+				
+				r = Math.max( r, 0.1 );
+				//if( r > 0.1 ) {
+				double dh = r-h;
+				
+				fx -= k*st*(dx*dh/r-gorm);
+				fy -= k*st*(dy*dh/r-gorm);
+				fz -= k*st*(dz*dh/r-gorm);
+				//}
+			}
+			
+			for( Corp c : corp.connections.keySet() ) {
+				double dx = corp.getx() - c.getx();
+				double dy = corp.gety() - c.gety();
+				double dz = corp.getz() - c.getz();
+				
+				double d = dx*dx + dy*dy + dz*dz;
+				double r = Math.sqrt( d );
+				
+				LinkInfo li = corp.connections.get(c);
 				double h = li.getOffset();
 				double st = li.getStrength();
 					//double k = li.getStrength();
@@ -718,19 +743,35 @@ public class Connectron extends VerticalPanel
 	public void importFrom454ContigGraph( String text, double scaleval ) {
 		String[] split = text.split("\n");
 		
-		Map<String,Corp> corpMap = new HashMap<String,Corp>();
-		Map<String,Integer>	lenMap = new HashMap<String,Integer>();
+		//Map<String,Corp> corpMap = new HashMap<String,Corp>();
+		//Map<String,Integer>	lenMap = new HashMap<String,Integer>();
+		//Map<String,Double>	covMap = new HashMap<String,Double>();
 		
 		List<String[]>	lines = new ArrayList<String[]>();
 		for( int i = 0; i < split.length; i++ ) {
 			String line = split[i];
 			String[] subsplit = line.split("\t");
 			if( line.startsWith("C") ) lines.add( subsplit );
-			else {
+			else if( line.contains("contig") ) {
 				String str = subsplit[0];
 				try {
 					Integer.parseInt( str );
-					lenMap.put( str, Integer.parseInt(subsplit[2]) );
+					//lenMap.put( str, Integer.parseInt(subsplit[2]) );
+					//covMap.put( str, Double.parseDouble(subsplit[3]) );
+					
+					int size = Integer.parseInt(subsplit[2]);
+					double cov = Double.parseDouble(subsplit[3]);
+					
+					int val = (int)(Math.min(100.0, cov)*255.0/100.0);
+					String cc = Integer.toString(val, 16);
+					if( cc.length() == 1 ) cc = "0"+cc;
+					
+					Browser.getWindow().getConsole().log( "ok "+str );
+					Corp c1 = new Corp( str );
+					c1.setSize( Math.log(size/10.0)*5.0 );
+					c1.subcolor = "#"+cc+cc+cc;
+					//corpMap.put( str, c1 );
+					Connectron.this.add( c1 );
 				} catch( Exception e ) {}
 			}
 		}
@@ -738,35 +779,42 @@ public class Connectron extends VerticalPanel
 		Random r = new Random();
 		for( String[] spec : lines ) {
 			if( spec.length > 1 ) {
-				Corp c1;
-				if( corpMap.containsKey(spec[1]) ) {
-					c1 = corpMap.get( spec[1] );
-				} else {
+				Corp c1 = null;
+				if( Corp.corpMap.containsKey(spec[1]) ) {
+					c1 = Corp.corpMap.get( spec[1] );
+				} /*else {
 					c1 = new Corp( spec[1] );
 					int size = lenMap.get( spec[1] );
+					 cov = lenMap.get( spec[1] );
 					c1.setSize( Math.log(size/10.0)*5.0 );
-					corpMap.put( spec[1], c1 );
+					//corpMap.put( spec[1], c1 );
 					Connectron.this.add( c1 );
-				}
+				}*/
+				/*if( c1 == null ) {
+					for( String key : corpMap.keySet() ) 
+					Browser.getWindow().getConsole().log( "dd " + corpMap.keySet() );
+				}*/
 				
-				c1.setCoulomb(0.5);
+				c1.setCoulomb(50.0);
 				c1.setx( scaleval*r.nextDouble() );
 				c1.sety( scaleval*r.nextDouble() );
 				c1.setz( scaleval*r.nextDouble() );
 				//c1.color = "#1111ee";
 				Connectron.this.add( c1 );
 				
-				Corp c2;
-				if( corpMap.containsKey(spec[3]) ) {
-					c2 = corpMap.get( spec[3] );
-				} else {
+				Corp c2 = null;
+				if( Corp.corpMap.containsKey(spec[3]) ) {
+					c2 = Corp.corpMap.get( spec[3] );
+				}/* else {
 					c2 = new Corp( spec[3] );
 					int size = lenMap.get( spec[3] );
 					c2.setSize( Math.log(size/10.0)*5.0 );
 					corpMap.put( spec[3], c2 );
 					Connectron.this.add( c2 );
-				}
-				c2.setCoulomb(0.5);
+				}*/
+				if( c2 == null ) Browser.getWindow().getConsole().log( "bo2 "+spec[3] );
+				
+				c2.setCoulomb(50.0);
 				c2.setx( scaleval*r.nextDouble() );
 				c2.sety( scaleval*r.nextDouble() );
 				c2.setz( scaleval*r.nextDouble() );
@@ -1524,8 +1572,17 @@ public class Connectron extends VerticalPanel
 			}
 		});
 		
+		final MenuBar viewmenu = new MenuBar(true);
+		viewmenu.addItem( "Swap colors", new Command() {
+			@Override
+			public void execute() {
+				swapAllColors();
+			}
+		});
+		
 		MenuBar	menubar = new MenuBar();
 		menubar.addItem("File", filemenu);
+		menubar.addItem("View", viewmenu);
 		menubar.addItem("Options", menu);
 		this.add( menubar );
 		this.add( canvas );
@@ -1753,9 +1810,14 @@ public class Connectron extends VerticalPanel
 	}
 	
 	public void remove( Corp c ) {
-		components.remove( c );
 		c.delete();
-		c.setParent( null );
+		//c.setParent( null );
+	}
+	
+	public void swapAllColors() {
+		for( Corp c : Corp.corpList ) {
+			c.swapColors();
+		}
 	}
 	
 	public void removeAll() {
@@ -1833,6 +1895,7 @@ public class Connectron extends VerticalPanel
 		} else if( keychar == ' ' /* */ ) {
 			updateCenterOfMass();
 		} else if( linkCorp != null ) {
+			Browser.getWindow().getConsole().log("mu");
 			if( keycode == KeyCodes.KEY_DELETE ) {
 				Set<String>	strset = linkCorp.connections.get( linkCorp2 ).linkTitles;
 				strset.remove( linkCorp.selectedLink );
