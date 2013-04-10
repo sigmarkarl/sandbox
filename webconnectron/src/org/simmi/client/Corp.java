@@ -33,6 +33,7 @@ public class Corp {
 	double					depz;
 	double					coulomb;
 	String					color = "#00FF00";
+	String					subcolor = "#FF0000";
 	
 	List<Image>				images = new ArrayList<Image>();
 	List<String>			imageNames = new ArrayList<String>();
@@ -102,6 +103,12 @@ public class Corp {
 				}
 			}
 		});*/
+	}
+	
+	public void swapColors() {
+		String oldcolor = color;
+		color = subcolor;
+		subcolor = oldcolor;
 	}
 	
 	public void setCoulomb( double coulomb ) {
@@ -341,7 +348,11 @@ public class Corp {
 		deleteSave();
 		
 		Connectron ct = this.getParent();
-		ct.remove( this );
+		
+		ct.components.remove( this );
+		this.setParent( null );
+		
+		//ct.remove( this );
 		Corp crp = corpMap.remove( this.getName().trim() );
 		for( Corp corp : corpList ) {
 			//corp = corpMap.get(name);
