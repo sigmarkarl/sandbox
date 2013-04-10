@@ -518,6 +518,7 @@ public class TreeUtil {
 		String				id;
 		String				meta;
 		int					metacount;
+		String				imgurl;
 		private double		h;
 		private double		h2;
 		private double		bootstrap;
@@ -539,6 +540,18 @@ public class TreeUtil {
 		
 		public boolean isLeaf() {
 			return nodes == null || nodes.size() == 0;
+		}
+		
+		public Node getRoot() {
+			Node root = this;
+			
+			Node parent = root.getParent();
+			while( parent != null ) {
+				root = parent;
+				parent = root.getParent();
+			}
+			
+			return root;
 		}
 		
 		public List<String> getInfoList() {
@@ -1431,6 +1444,24 @@ public class TreeUtil {
 	
 	public TreeUtil() {
 		super();
+	}
+	
+	public void recursiveAdd( String[] list, Node root, int i ) {
+		Node father = new Node( list[i] );
+		Node mother = new Node( list[i+1] );
+		root.addNode(father, 1.0);
+		root.addNode(mother, 1.0);
+		
+		if( i*2+1 < list.length ) recursiveAdd( list, father, i*2 );
+		if( (i+1)*2+1 < list.length ) recursiveAdd( list, mother, (i+1)*2 );
+	}
+	
+	public String parseNodeList( String nodeStr ) {
+		String[] split = nodeStr.split(",");
+		Node n = new Node( split[1] );
+		recursiveAdd( split, n, 2 );
+		this.setNode( n );
+		return n.toString();
 	}
 	
 	public void clearParentNames( Node node ) {
