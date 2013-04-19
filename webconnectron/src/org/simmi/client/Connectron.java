@@ -2,10 +2,8 @@ package org.simmi.client;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -1488,7 +1486,7 @@ public class Connectron extends VerticalPanel
 		menu.addItem( "Flatten", new Command() {
 			@Override
 			public void execute() {
-				double len = Corp.corpList.size();
+				/*double len = Corp.corpList.size();
 				double lcx = 0.0;
 				double lcy = 0.0;
 				double lcz = 0.0;
@@ -1499,7 +1497,12 @@ public class Connectron extends VerticalPanel
 				}
 				lcx /= len;
 				lcy /= len;
-				lcz /= len;
+				lcz /= len;*/
+				
+				for( Corp rel : Corp.corpList ) {
+					Browser.getWindow().getConsole().log( "setz" );
+					rel.setz( 0.0 );
+				}
 			}
 		});
 		/*popup.add( new AbstractAction("Add Corp") {

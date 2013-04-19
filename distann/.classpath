@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_17/jre/lib/deploy.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_17/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_17/jre/lib/plugin.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/spilling"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
