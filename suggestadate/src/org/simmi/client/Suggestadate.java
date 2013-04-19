@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -201,6 +202,7 @@ public class Suggestadate implements EntryPoint {
 	    	message: body,
 	    	to: fuid1+','+fuid2
 	  	}, requestCallback);
+	  	
 //		$wnd.FB.api('/me/feed', 'post', { to: friend, message: body }, function(response) {
 //		  if (!response || response.error) {
 //		    if( !response ) alert('Error occured');
@@ -347,6 +349,11 @@ public class Suggestadate implements EntryPoint {
 								}
 							});
 							grid.setWidget(r, 2, reject);
+							
+							int ui = link.lastIndexOf('/');
+							String ulink = link.substring(ui+1);
+							Image img = new Image("http://graph.facebook.com/"+ulink+"/picture");
+							grid.setWidget(r, 3, img);
 							
 							r++;
 						}
@@ -508,7 +515,8 @@ public class Suggestadate implements EntryPoint {
 		vp.add( new HTML("<h3>Your dates</h3>") );
 	
 		grid = new Grid();
-		grid.resizeColumns(3);
+		grid.setCellSpacing(3);
+		grid.resizeColumns(4);
 		vp.add( grid );
 		vp.add( new HTML("*your date will only know you accepted if he/she self accepts") );
 		vp.add( new HTML("if both accept their emails will show up") );
