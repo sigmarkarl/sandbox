@@ -11,6 +11,10 @@ import java.util.Set;
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Touch;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -23,6 +27,14 @@ import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.dom.client.TouchCancelEvent;
+import com.google.gwt.event.dom.client.TouchCancelHandler;
+import com.google.gwt.event.dom.client.TouchEndEvent;
+import com.google.gwt.event.dom.client.TouchEndHandler;
+import com.google.gwt.event.dom.client.TouchMoveEvent;
+import com.google.gwt.event.dom.client.TouchMoveHandler;
+import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.http.client.Request;
@@ -638,6 +650,9 @@ public class Webnutrition implements EntryPoint {
 	Canvas canvas = null;
 	final Map<String,String>	groupIdMap = new HashMap<String,String>();
 	boolean	mousedown = false;
+	boolean touched = false;
+	boolean	touchmoved = false;
+	boolean touchcontent = false;
 	double	mousex = 0.0;
 	double	mousey = 0.0;
 	boolean					scrollx = false;
@@ -736,27 +751,156 @@ public class Webnutrition implements EntryPoint {
 //		} else console.log( filterCombo.getSelectedIndex() );
 	}
 	
+	public void touchMouseMove( double x, double y ) {
+		double cw = (double)canvas.getCoordinateSpaceWidth();
+		double ch = (double)canvas.getCoordinateSpaceHeight();
+		if( scrollx || scrolly ) {
+			if( scrollx ) {
+				int max = getMax();
+				int rhs = getRowHeaderSize();
+				double xmin1 = max-(cw-scrollBarWidth);
+				double xmin2 = (xmin1*(x-rhs))/(cw-rhs-scrollBarWidth);
+				xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
+			}
+			
+			if( scrolly ) {
+				double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
+				double ymin2 = (ymin1*(y-unitheight))/(ch-columnHeight-scrollBarHeight);
+				ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
+			}
+			draw( canvas.getContext2d(), xstart, ystart );
+		} else {
+			draw( canvas.getContext2d(), Math.max( 0, xstart-(int)(x-mousex) ), Math.max( 0, ystart-(int)(y-mousey) ) );
+			/*int max = getMax();
+			double xmin1 = max-cw;
+			double xmin2 = xstart + (mousex-x);
+			int xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
+			
+			if( xmin2 > xmin1 ) {
+				mousex = mousex+(int)(xmin1-xmin2);
+			}
+			
+			double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
+			double ymin2 = ystart + (mousey-y);
+			int ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
+			
+			if( ymin2 > ymin1 ) {
+				mousey = mousey+(int)(ymin1-ymin2);
+			}*/
+		}
+	}
+	
+	public boolean touchMouseDown( double mousex, double mousey ) {
+		int cw = canvas.getCoordinateSpaceWidth();
+		int ch = canvas.getCoordinateSpaceHeight();
+		
+		if( mousey < columnHeight && mousex <= cw-scrollBarWidth ) {
+			int i = -1;
+			int w = lcolumnwidth.get(0).width;
+			int w2 = w + lcolumnwidth.get(1).width;
+			
+			if( mousex < w ) {
+				i = 0;
+			} else if( mousex < w2 ) {
+				i = 1;
+			} else {
+				i = 2;
+				w = lcolumnwidth.get(i).width;
+				while( w < mousex+xstart-w2 ) {
+					i++;
+					if( i == lcolumnwidth.size() ) {
+						i = -1;
+						break;
+					}
+					w += lcolumnwidth.get(i).width;
+				}
+			}
+			
+			if( i != -1 ) {
+				sortcolumn = i;	
+				sort();
+			}
+		} else if( mousex > cw-scrollBarWidth || mousey > ch-scrollBarHeight ) {
+			//int xstart = Webfasta.this.xstart;
+			if( mousey > ch-scrollBarHeight ) {
+				scrollx = true;
+				
+				int rhs = getRowHeaderSize();
+				int max = getMax();
+				double xmin1 = max-(cw-scrollBarWidth);
+				double xmin2 = (xmin1*(mousex-rhs))/(cw-rhs-scrollBarWidth);
+				xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
+			}
+			
+			//int ystart = Webfasta.this.ystart;
+			if( mousex > cw-scrollBarWidth ) {
+				scrolly = true;
+				
+				double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
+				double ymin2 = (ymin1*(mousey-columnHeight))/(ch-columnHeight-scrollBarHeight);
+				ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
+			}
+		} else return false;
+		
+		return true;
+	}
+	
 	@Override
 	public void onModuleLoad() {
 		elemental.html.Window wnd = Browser.getWindow();
 		console = wnd.getConsole();
 		console.log("starting");
 		
-		RootPanel	rp = RootPanel.get("content");
+		RootPanel	rp = RootPanel.get();
+		RootPanel	contentrp = RootPanel.get("content");
+		RootPanel	menurp = RootPanel.get("menu");
+		
+		final RootPanel	ad1 = RootPanel.get("ad1");
+		final RootPanel	ad2 = RootPanel.get("ad2");
+		
+		final Style ad1style = ad1.getElement().getStyle();
+		final Style ad2style = ad2.getElement().getStyle();
+		
+		Style style = rp.getElement().getStyle();
+		style.setBorderWidth(0.0, Unit.PX);
+		style.setMargin(0.0, Unit.PX);
+		style.setPadding(0.0, Unit.PX);
+		
+		style = contentrp.getElement().getStyle();
+		style.setBorderWidth(0.0, Unit.PX);
+		style.setMargin(0.0, Unit.PX);
+		style.setPadding(0.0, Unit.PX);
 		
 		final VerticalPanel	vp = new VerticalPanel();
-		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		vp.setHorizontalAlignment( VerticalPanel.ALIGN_LEFT );
 		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		
 		//int w = 1024;//Window.getClientWidth();
 		//int h = 640;//Window.getClientHeight();
 		//vp.setSize(w+"px", h+"px");
 		int w = Window.getClientWidth();
+		int h = Window.getClientHeight();
 		vp.setSize("100%", "100%");
 		
+		boolean wmh = w > h;
+		int nw = Math.max( w, 735 ) - (wmh ? 175 : 10);
+		if( wmh ) {
+			ad1style.setDisplay( Display.NONE );
+			ad2style.setDisplay( Display.INLINE );
+			
+			ad1.setHeight( "0%" );
+			ad2.setWidth( "100%" );
+		} else {
+			ad1style.setDisplay( Display.INLINE );
+			ad2style.setDisplay( Display.NONE );
+			
+			ad1.setHeight( "100%" );
+			ad2.setWidth( "0%" );
+		}
+		
 		canvas = Canvas.createIfSupported();
-		canvas.setSize((w-175)+"px", "600px");
-		canvas.setCoordinateSpaceWidth( w-175 );
+		canvas.setSize( nw+"px", "600px");
+		canvas.setCoordinateSpaceWidth( nw );
 		canvas.setCoordinateSpaceHeight( 600 );
 		
 		Window.addResizeHandler( new ResizeHandler() {
@@ -764,11 +908,29 @@ public class Webnutrition implements EntryPoint {
 			public void onResize(ResizeEvent event) {
 				int w = event.getWidth();
 				int h = event.getHeight();
-				canvas.setSize((w-175)+"px", "600px");
-				canvas.setCoordinateSpaceWidth( w-175 );
+				
+				boolean wmh = w > h;
+				int nw = Math.max( w, 735 ) - (wmh ? 175 : 10);
+				Browser.getWindow().getConsole().log( w + "  woah  " + nw);
+				canvas.setSize( nw+"px", "600px" );
+				canvas.setCoordinateSpaceWidth( nw );
 				canvas.setCoordinateSpaceHeight( 600 );
 				draw( canvas.getContext2d(), xstart, ystart );
 				//vp.setSize((w-10)+"px", 640+"px");
+				
+				if( wmh ) {
+					ad1style.setDisplay( Display.NONE );
+					ad2style.setDisplay( Display.INLINE );
+					
+					ad1.setHeight( "0%" );
+					ad2.setWidth( "100%" );
+				} else {
+					ad1style.setDisplay( Display.INLINE );
+					ad2style.setDisplay( Display.NONE );
+					
+					ad1.setHeight( "100%" );
+					ad2.setWidth( "0%" );
+				}
 			}
 		});
 		
@@ -816,6 +978,82 @@ public class Webnutrition implements EntryPoint {
 			e.printStackTrace();
 		}
 		
+		canvas.addTouchCancelHandler( new TouchCancelHandler() {
+
+			@Override
+			public void onTouchCancel(TouchCancelEvent event) {
+				Window.alert("touchend");
+			}
+			
+		});
+		canvas.addTouchEndHandler( new TouchEndHandler() {
+
+			@Override
+			public void onTouchEnd(TouchEndEvent event) {
+				Touch touch = event.getTouches().get(0);
+				int x = touch.getRelativeX( canvas.getElement() );
+				int y = touch.getRelativeY( canvas.getElement() );
+				
+				if( touchcontent ) {
+					if( !touchmoved ) {
+						//touchMouseDown( x, y );
+						double wherey = ystart+mousey-columnHeight;
+						int indy = (int)(wherey/unitheight);
+						FoodInfo foodinf = getFoodInfo( indy );
+						if( foodinf != null ) {
+							for( int i : selset ) {
+								FoodInfo fi = lfoodinfo.get(i); //getFoodInfo(i);
+								if( fi != null ) fi.setSelected( false, i );
+							}
+							foodinf.setSelected( !foodinf.isSelected(), getRealIndex(indy) );
+						}
+					} else {
+						xstart -= x-mousex;
+						ystart -= y-mousey;
+					}
+					draw( canvas.getContext2d(), xstart, ystart );
+				}
+				
+				Window.alert("touchend");
+				
+				//mousedown = false;
+				//scrollx = false;
+				//scrolly = false;
+			}
+		});
+		canvas.addTouchStartHandler( new TouchStartHandler() {
+
+			@Override
+			public void onTouchStart(TouchStartEvent event) {
+				touched = true;
+				touchmoved = false;
+				
+				Touch touch = event.getTouches().get(0);
+				int x = touch.getRelativeX( canvas.getElement() );
+				int y = touch.getRelativeY( canvas.getElement() );
+				touchcontent = !touchMouseDown(x, y);
+				//if( mousey > ch-scrollBarHeight ) scrollx = true;
+				//if( mousex > cw-scrollBarWidth ) scrolly = true;
+				
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		});
+		canvas.addTouchMoveHandler( new TouchMoveHandler() {
+
+			@Override
+			public void onTouchMove(TouchMoveEvent event) {
+				touchmoved = true;
+				event.preventDefault();
+				event.stopPropagation();
+				
+				Touch touch = event.getTouches().get(0);
+				touchMouseMove( touch.getRelativeX( canvas.getElement() ), touch.getRelativeY( canvas.getElement() ) );
+				//draw( canvas.getContext2d(), xstart, ystart );
+			}
+			
+		});
+		
 		canvas.addMouseWheelHandler( new MouseWheelHandler() {
 			@Override
 			public void onMouseWheel(MouseWheelEvent event) {
@@ -831,72 +1069,26 @@ public class Webnutrition implements EntryPoint {
 		canvas.addMouseDownHandler( new MouseDownHandler() {
 			@Override
 			public void onMouseDown(MouseDownEvent event) {
-				mousedown = true;
-				mousex = event.getX();
-				mousey = event.getY();
-				
-				int cw = canvas.getCoordinateSpaceWidth();
-				int ch = canvas.getCoordinateSpaceHeight();
-				
-				if( mousey < columnHeight && mousex <= cw-scrollBarWidth ) {
-					int i = -1;
-					int w = lcolumnwidth.get(0).width;
-					int w2 = w + lcolumnwidth.get(1).width;
-					
-					if( mousex < w ) {
-						i = 0;
-					} else if( mousex < w2 ) {
-						i = 1;
-					} else {
-						i = 2;
-						w = lcolumnwidth.get(i).width;
-						while( w < mousex+xstart-w2 ) {
-							i++;
-							if( i == lcolumnwidth.size() ) {
-								i = -1;
-								break;
+				if( !touched ) {
+					mousedown = true;
+					mousex = event.getX();
+					mousey = event.getY();
+					boolean scrollsort = touchMouseDown( mousex, mousey );
+					if( !scrollsort ) {
+						double wherey = ystart+mousey-columnHeight;
+						int indy = (int)(wherey/unitheight);
+						FoodInfo foodinf = getFoodInfo( indy );
+						if( foodinf != null ) {
+							for( int i : selset ) {
+								FoodInfo fi = lfoodinfo.get(i); //getFoodInfo(i);
+								if( fi != null ) fi.setSelected( false, i );
 							}
-							w += lcolumnwidth.get(i).width;
+							foodinf.setSelected( !foodinf.isSelected(), getRealIndex(indy) );
 						}
 					}
 					
-					if( i != -1 ) {
-						sortcolumn = i;	
-						sort();
-					}
-				} else if( mousex > cw-scrollBarWidth || mousey > ch-scrollBarHeight ) {
-					//int xstart = Webfasta.this.xstart;
-					if( mousey > ch-scrollBarHeight ) {
-						scrollx = true;
-						
-						int rhs = getRowHeaderSize();
-						int max = getMax();
-						double xmin1 = max-(cw-scrollBarWidth);
-						double xmin2 = (xmin1*(mousex-rhs))/(cw-rhs-scrollBarWidth);
-						xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
-					}
-					
-					//int ystart = Webfasta.this.ystart;
-					if( mousex > cw-scrollBarWidth ) {
-						scrolly = true;
-						
-						double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
-						double ymin2 = (ymin1*(mousey-columnHeight))/(ch-columnHeight-scrollBarHeight);
-						ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
-					}
-				} else {
-					double wherey = ystart+mousey-columnHeight;
-					int indy = (int)(wherey/unitheight);
-					FoodInfo foodinf = getFoodInfo( indy );
-					if( foodinf != null ) {
-						for( int i : selset ) {
-							FoodInfo fi = lfoodinfo.get(i); //getFoodInfo(i);
-							if( fi != null ) fi.setSelected( false, i );
-						}
-						foodinf.setSelected( !foodinf.isSelected(), getRealIndex(indy) );
-					}
-				}
-				draw( canvas.getContext2d(), xstart, ystart );
+					draw( canvas.getContext2d(), xstart, ystart );
+				} else touched = false;
 			}
 		});
 		canvas.addMouseOutHandler( new MouseOutHandler() {
@@ -922,45 +1114,14 @@ public class Webnutrition implements EntryPoint {
 					int x = event.getX();
 					int y = event.getY();
 					
-					double cw = (double)canvas.getCoordinateSpaceWidth();
-					double ch = (double)canvas.getCoordinateSpaceHeight();
-					if( scrollx || scrolly ) {
-						if( scrollx ) {
-							int max = getMax();
-							int rhs = getRowHeaderSize();
-							double xmin1 = max-(cw-scrollBarWidth);
-							double xmin2 = (xmin1*(x-rhs))/(cw-rhs-scrollBarWidth);
-							xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
-						}
-						
-						if( scrolly ) {
-							double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
-							double ymin2 = (ymin1*(y-unitheight))/(ch-columnHeight-scrollBarHeight);
-							ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
-						}
-					} else {
-						int max = getMax();
-						double xmin1 = max-cw;
-						double xmin2 = xstart + (mousex-x);
-						int xstart = (int)Math.max( 0.0, Math.min( xmin1, xmin2 ) );
-						
-						if( xmin2 > xmin1 ) {
-							mousex = mousex+(int)(xmin1-xmin2);
-						}
-						
-						double ymin1 = getFoodNumber()*unitheight-(ch-columnHeight-scrollBarHeight);
-						double ymin2 = ystart + (mousey-y);
-						int ystart = (int)Math.max( 0.0, Math.min( ymin1, ymin2 ) );
-						
-						if( ymin2 > ymin1 ) {
-							mousey = mousey+(int)(ymin1-ymin2);
-						}
-					}
+					touchMouseMove( x, y );
 					draw( canvas.getContext2d(), xstart, ystart );
 				}
 			}
 		});		
 		HorizontalPanel	filterPanel = new HorizontalPanel();
+		filterPanel.setHorizontalAlignment( HorizontalPanel.ALIGN_CENTER );
+		filterPanel.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
 		filterPanel.setSpacing( 5 );
 		filterCombo.addChangeHandler( new ChangeHandler() {
 			@Override
@@ -988,11 +1149,16 @@ public class Webnutrition implements EntryPoint {
 		final VerticalPanel	subvp = new VerticalPanel();
 		subvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		subvp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
-		
-		subvp.add( canvas );
+		subvp.setSize("100%", "40px");
+		//subvp.add( canvas );
 		subvp.add( filterPanel );
-		vp.add( subvp );
+		//vp.add( subvp );
+		vp.add( canvas );
 		
-		rp.add( vp );
+		RootPanel emptypanel = RootPanel.get("emptyspace");
+		emptypanel.setHeight("100px");
+		
+		contentrp.add( vp );
+		menurp.add( subvp );
 	}
 }
