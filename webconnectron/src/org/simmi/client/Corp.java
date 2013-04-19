@@ -776,20 +776,24 @@ public class Corp {
 				g.drawImage( ImageElement.as( img.getElement() ), (this.getWidth()-w)/2, 0, w, this.getHeight() );
 			}
 		} else {
-			g.beginPath();
-			g.setFillStyle( color );
-			g.setStrokeStyle( "#000000" );
-			g.arc( this.getWidth()/2, this.getHeight()/2, this.getWidth()/2, 0, 2.0*Math.PI );
-			g.closePath();
-			g.fill();
-			g.stroke();
+			if( this.getWidth() > 0 && this.getHeight() > 0 ) {
+				g.beginPath();
+				g.setFillStyle( color );
+				g.setStrokeStyle( "#000000" );
+				g.arc( this.getWidth()/2, this.getHeight()/2, this.getWidth()/2, 0, 2.0*Math.PI );
+				g.closePath();
+				g.fill();
+				g.stroke();
+			}
 		}
 		
 		if( selected ) {
-			g.setFillStyle( paleColor );
-			g.setStrokeStyle( "#000000" );
-			g.fillRect( 0, 0, this.getWidth(), this.getHeight() );
-			g.strokeRect( 0, 0, this.getWidth(), this.getHeight() );
+			if( this.getWidth() > 0 && this.getHeight() > 0 ) {
+				g.setFillStyle( paleColor );
+				g.setStrokeStyle( "#000000" );
+				g.fillRect( 0, 0, this.getWidth(), this.getHeight() );
+				g.strokeRect( 0, 0, this.getWidth(), this.getHeight() );
+			}
 		}
 	}
 
