@@ -51,7 +51,7 @@ public class DistAnn extends JApplet {
 	JScrollPane	fastapane;
 	JTable		fastatable;
 	TableModel	fastamodel;
-	JPopupMenu	fastamenu;
+	JPopupMenu	fastamenu;	
 	
 	class Fasta {
 		String	name;

@@ -141,7 +141,7 @@ public class Treedraw implements EntryPoint {
 	}
 	
 	double hchunk = 10.0;
-	public void drawTree( TreeUtil treeutil ) {
+	public void drawTree( TreeUtil treeutil ) {		
 		double minh = treeutil.getminh();
 		double maxh = treeutil.getmaxh();
 		
@@ -203,7 +203,11 @@ public class Treedraw implements EntryPoint {
 			String fontstr = (int)(5.0*Math.log(hchunk))+"px sans-serif";
 			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
 		}
-		if( treelabel != null ) ctx.fillText( treelabel, 10, hchunk+2 );
+		if( treelabel != null ) {
+			Browser.getWindow().getConsole().log("erm");
+			ctx.setFillStyle("#000000");
+			ctx.fillText( treelabel, 10, hchunk+2 );
+		}
 		//console( "leaves " + leaves );
 		//double	maxheightold = root.getMaxHeight();
 		
@@ -762,6 +766,7 @@ public class Treedraw implements EntryPoint {
 		e.click();
 	}-*/;
 	
+	TextBox label;
 	public void openFileDialog( final int append ) {		
 		final DialogBox	db = new DialogBox();
 		db.setText("Open file ...");
@@ -788,6 +793,7 @@ public class Treedraw implements EntryPoint {
 		file.addChangeHandler( new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
+				if( label != null ) label.setText( file.getFilename() );
 				handleFiles( file.getElement(), append );
 				db.hide();
 			}
@@ -1524,7 +1530,7 @@ public class Treedraw implements EntryPoint {
 	@Override
 	public void onModuleLoad() {
 		final Console console = Browser.getWindow().getConsole();
-		console.log("starting");
+		console.log("starting5");
 		
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
@@ -2252,7 +2258,7 @@ public class Treedraw implements EntryPoint {
 		});
 		scalecheck.setValue( true );
 		CheckBox labcheck = new CheckBox("Label");
-		final TextBox	label = new TextBox();
+		label = new TextBox();
 		label.setText("A tree");
 		label.setEnabled( false );
 		labcheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
@@ -2295,6 +2301,11 @@ public class Treedraw implements EntryPoint {
 		file.addChangeHandler( new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
+				String filename = file.getFilename();
+				int i = Math.max( filename.lastIndexOf('/'), filename.lastIndexOf('\\') );
+				filename = filename.substring(i+1);
+				i = filename.indexOf('.');
+				if( label != null ) label.setText( filename.substring( 0, i == -1 ? filename.length() : i ) );
 				handleFiles( file.getElement(), 0 );
 			}
 		});
@@ -2790,6 +2801,7 @@ public class Treedraw implements EntryPoint {
 		return /*(node.getNodes() != null && node.getNodes().size() > 0) ? nyavg/node.getNodes().size() : */0.0;
 	}
 	
+	public boolean internalrotate = false;
 	public void drawSingleMundi( boolean vertical, String use, Context2d g2, Node resnode, String color, double frmh, double frmo, double y, double realny, int mleaves, double addon, double strh, double nstrh ) {
 		if( vertical ) {
 			if( showlinage ) {
@@ -3328,10 +3340,11 @@ public class Treedraw implements EntryPoint {
 							double a = 2.0*Math.PI*(y+ny)/h;
 							double cx = (w+nx*circularScale*Math.cos(a))/2.0;
 							double cy = (w+nx*circularScale*Math.sin(a))/2.0;
+							
 							g2.translate( cx, cy );
-							g2.rotate( a );
+							if( internalrotate ) g2.rotate( a );
 							g2.fillText(use, -strw/2.0, nstrh/2.3 );
-							g2.rotate( -a );
+							if( internalrotate ) g2.rotate( -a );
 							g2.translate( -cx, -cy );
 						} else {
 							if( color != null && color.length() > 0 ) { 
