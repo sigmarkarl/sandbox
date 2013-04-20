@@ -1012,17 +1012,17 @@ public class Webnutrition implements EntryPoint {
 							foodinf.setSelected( !foodinf.isSelected(), getRealIndex(indy) );
 						}
 					} else {
-						xstart -= touchx-mousex;
-						ystart -= touchy-mousey;
+						xstart = Math.max( 0, xstart-(int)(touchx-mousex) );
+						ystart = Math.max( 0, ystart-(int)(touchy-mousey) );
 					}
 					draw( canvas.getContext2d(), xstart, ystart );
 				}
 				
-				Window.alert("touchend");
+				//Window.alert("touchend");
 				
-				//mousedown = false;
-				//scrollx = false;
-				//scrolly = false;
+				mousedown = false;
+				scrollx = false;
+				scrolly = false;
 			}
 		});
 		canvas.addTouchStartHandler( new TouchStartHandler() {
@@ -1038,10 +1038,13 @@ public class Webnutrition implements EntryPoint {
 				int x = touch.getRelativeX( canvas.getElement() );
 				int y = touch.getRelativeY( canvas.getElement() );
 				
+				mousex = x;
+				mousey = y;
 				touchx = x;
 				touchy = y;
 				
 				touchcontent = !touchMouseDown(x, y);
+				if( !touchcontent ) draw( canvas.getContext2d(), xstart, ystart );
 				//if( mousey > ch-scrollBarHeight ) scrollx = true;
 				//if( mousex > cw-scrollBarWidth ) scrolly = true;
 				
