@@ -655,6 +655,8 @@ public class Webnutrition implements EntryPoint {
 	boolean touchcontent = false;
 	double	mousex = 0.0;
 	double	mousey = 0.0;
+	double	touchx = 0.0;
+	double	touchy = 0.0;
 	boolean					scrollx = false;
 	boolean					scrolly = false;
 	
@@ -911,7 +913,6 @@ public class Webnutrition implements EntryPoint {
 				
 				boolean wmh = w > h;
 				int nw = Math.max( w, 735 ) - (wmh ? 175 : 10);
-				Browser.getWindow().getConsole().log( w + "  woah  " + nw);
 				canvas.setSize( nw+"px", "600px" );
 				canvas.setCoordinateSpaceWidth( nw );
 				canvas.setCoordinateSpaceHeight( 600 );
@@ -982,7 +983,7 @@ public class Webnutrition implements EntryPoint {
 
 			@Override
 			public void onTouchCancel(TouchCancelEvent event) {
-				Window.alert("touchend");
+				Browser.getWindow().getConsole().log("touchcancel");
 			}
 			
 		});
@@ -990,10 +991,13 @@ public class Webnutrition implements EntryPoint {
 
 			@Override
 			public void onTouchEnd(TouchEndEvent event) {
-				Touch touch = event.getTouches().get(0);
-				int x = touch.getRelativeX( canvas.getElement() );
-				int y = touch.getRelativeY( canvas.getElement() );
+				Browser.getWindow().getConsole().log("touchend");
 				
+				//Touch touch = event.getTouches().get(0);
+				//int x = touch.getRelativeX( canvas.getElement() );
+				//int y = touch.getRelativeY( canvas.getElement() );
+				
+				Browser.getWindow().getConsole().log("touchend2");
 				if( touchcontent ) {
 					if( !touchmoved ) {
 						//touchMouseDown( x, y );
@@ -1008,8 +1012,8 @@ public class Webnutrition implements EntryPoint {
 							foodinf.setSelected( !foodinf.isSelected(), getRealIndex(indy) );
 						}
 					} else {
-						xstart -= x-mousex;
-						ystart -= y-mousey;
+						xstart -= touchx-mousex;
+						ystart -= touchy-mousey;
 					}
 					draw( canvas.getContext2d(), xstart, ystart );
 				}
@@ -1025,12 +1029,18 @@ public class Webnutrition implements EntryPoint {
 
 			@Override
 			public void onTouchStart(TouchStartEvent event) {
+				Browser.getWindow().getConsole().log("touchstart");
+				
 				touched = true;
 				touchmoved = false;
 				
 				Touch touch = event.getTouches().get(0);
 				int x = touch.getRelativeX( canvas.getElement() );
 				int y = touch.getRelativeY( canvas.getElement() );
+				
+				touchx = x;
+				touchy = y;
+				
 				touchcontent = !touchMouseDown(x, y);
 				//if( mousey > ch-scrollBarHeight ) scrollx = true;
 				//if( mousex > cw-scrollBarWidth ) scrolly = true;
@@ -1048,7 +1058,9 @@ public class Webnutrition implements EntryPoint {
 				event.stopPropagation();
 				
 				Touch touch = event.getTouches().get(0);
-				touchMouseMove( touch.getRelativeX( canvas.getElement() ), touch.getRelativeY( canvas.getElement() ) );
+				touchx = touch.getRelativeX( canvas.getElement() );
+				touchy = touch.getRelativeY( canvas.getElement() );
+				touchMouseMove( touchx, touchy );
 				//draw( canvas.getContext2d(), xstart, ystart );
 			}
 			
