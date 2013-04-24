@@ -577,6 +577,10 @@ public class SerifyApplet extends JApplet {
 		serifier.getSequencesList().removeAll( ss );
 	}
 	
+	public void clearSequences() {
+		serifier.getSequencesList().clear();
+	}
+	
 	public void deleteSeqs() {
 		Set<String>	keys = new TreeSet<String>();
 		Set<Sequences>	rselset = new TreeSet<Sequences>();
@@ -4045,33 +4049,73 @@ public class SerifyApplet extends JApplet {
 				File dir = filechooser.getSelectedFile();
 				if( !dir.exists() ) dir.mkdirs();
 				
-				Set<String>	curset = new HashSet<String>();
-				String curname = line.substring( 0, Math.min( 64, line.length()-1 ) ).replace(' ', '_');;
-				curset.add( curname );
+				//Set<String>	curset = new HashSet<String>();
+				int idx = line.indexOf(']');
+				String[] split = null;
+				if( idx >= 0 ) {
+					split = line.substring(1, idx).split(",");
+				}
+				String curname = line.substring( idx+1, Math.min( 128+idx+1, line.length()-1 ) ).replace(' ', '_');;
+				//curset.add( curname );
 				
-				File f = new File( dir, curname+".fasta" );
-				FileWriter	fw = new FileWriter( f );
+				List<FileWriter>	lfw = new ArrayList<FileWriter>();
+				File subdir = new File( dir, "all" );
+				subdir.mkdir();
+				File f = new File( subdir, curname+".fasta" );
+				FileWriter	nfw = new FileWriter( f );
+				lfw.add( nfw );
+				for( String subdirstr : split ) {
+					subdir = new File( dir, subdirstr );
+					subdir.mkdir();
+					f = new File( subdir, curname+".fasta" );
+					FileWriter fw = new FileWriter( f );
+					lfw.add( fw );
+				}
+				
 				line = br.readLine();
 				while( line != null ) {
 					if( line.endsWith(":") ) {
-						fw.close();
+						for( FileWriter tfw : lfw ) tfw.close();
+						lfw.clear();
+						
 						addSequences(curname, f.toURI().toString());
 						
-						int val = 1;
-						curname = line.substring( 0,  Math.min( 64, line.length()-1 ) ).replace(' ', '_');
+						//int val = 1;
+						
+						idx = line.indexOf(']');
+						if( idx >= 0 ) {
+							split = line.substring(1, idx).split(",");
+						}
+						curname = line.substring( idx+1, Math.min( 128+idx+1, line.length()-1 ) ).replace(' ', '_');;
+						//curset.add( curname );
+						//curname = line.substring( 0,  Math.min( 128, line.length()-1 ) ).replace(' ', '_');
 						String newcurname = curname;
-						while( curset.contains(newcurname) ) newcurname = curname+"_"+(val++);
+						//while( curset.contains(newcurname) ) newcurname = curname+"_"+(val++);
 						curname = newcurname;
 						
-						f = new File( dir, curname+".fasta" );
-						fw = new FileWriter( f );
+						//f = new File( dir, curname+".fasta" );
+						//fw = new FileWriter( f );
+						subdir = new File( dir, "all" );
+						subdir.mkdir();
+						f = new File( subdir, curname+".fasta" );
+						nfw = new FileWriter( f );
+						lfw.add( nfw );
+						for( String subdirstr : split ) {
+							subdir = new File( dir, subdirstr );
+							subdir.mkdir();
+							f = new File( subdir, curname+".fasta" );
+							FileWriter fw = new FileWriter( f );
+							lfw.add( fw );
+						}
 					} else {
-						fw.write( line+"\n" );
+						for( FileWriter tfw : lfw ) tfw.write( line+"\n" );
 					}
 					
 					line = br.readLine();
 				}
-				fw.close();
+				for( FileWriter tfw : lfw ) tfw.close();
+				lfw.clear();
+				
 				addSequences( curname, f.toURI().toString() );
 			}
 		} else {

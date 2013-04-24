@@ -637,6 +637,255 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		this.add( scrollpane );
 	}
 	
+	public void importFrom454ContigGraph( String text, double scaleval ) {
+		String[] split = text.split("\n");
+		importFrom454ContigGraph( Arrays.asList(split), scaleval );
+	}
+	
+	public void importFrom454ContigGraph( List<String> split, double scaleval ) {
+		//String[] split = text.split("\n");
+		
+		//Map<String,Corp> corpMap = new HashMap<String,Corp>();
+		//Map<String,Integer>	lenMap = new HashMap<String,Integer>();
+		//Map<String,Double>	covMap = new HashMap<String,Double>();
+		
+		List<String[]>	lines = new ArrayList<String[]>();
+		for( int i = 0; i < split.size(); i++ ) {
+			String line = split.get(i);
+			String[] subsplit = line.split("\t");
+			if( line.startsWith("C") ) lines.add( subsplit );
+			else if( line.contains("contig") ) {
+				String str = subsplit[0];
+				try {
+					Integer.parseInt( str );
+					//lenMap.put( str, Integer.parseInt(subsplit[2]) );
+					//covMap.put( str, Double.parseDouble(subsplit[3]) );
+					
+					int size = Integer.parseInt(subsplit[2]);
+					double cov = Double.parseDouble(subsplit[3]);
+					
+					int val = (int)(Math.min(100.0, cov)*255.0/100.0);
+					String cc = Integer.toString(val, 16);
+					if( cc.length() == 1 ) cc = "0"+cc;
+					
+					Corp c1 = new Corp( str );
+					c1.setSize( Math.log(size/10.0)*5.0 );
+					c1.subcolor = new Color( val, val, val );
+					//corpMap.put( str, c1 );
+					Connectron.this.add( c1 );
+				} catch( Exception e ) {}
+			}
+		}
+		
+		importContigGraph(lines, scaleval);
+	}
+	
+	public void importContigGraph( List<String[]> lines, double scaleval ) {
+		Random r = new Random();
+		for( String[] spec : lines ) {
+			if( spec.length > 1 ) {
+				Corp c1 = null;
+				if( Corp.corpMap.containsKey(spec[1]) ) {
+					c1 = Corp.corpMap.get( spec[1] );
+				} /*else {
+					c1 = new Corp( spec[1] );
+					int size = lenMap.get( spec[1] );
+					 cov = lenMap.get( spec[1] );
+					c1.setSize( Math.log(size/10.0)*5.0 );
+					//corpMap.put( spec[1], c1 );
+					Connectron.this.add( c1 );
+				}*/
+				/*if( c1 == null ) {
+					for( String key : corpMap.keySet() ) 
+					Browser.getWindow().getConsole().log( "dd " + corpMap.keySet() );
+				}*/
+				
+				c1.setCoulomb(50.0);
+				c1.setx( scaleval*r.nextDouble() );
+				c1.sety( scaleval*r.nextDouble() );
+				c1.setz( scaleval*r.nextDouble() );
+				//c1.color = col1111ee;
+				Connectron.this.add( c1 );
+				
+				Corp c2 = null;
+				if( Corp.corpMap.containsKey(spec[3]) ) {
+					c2 = Corp.corpMap.get( spec[3] );
+				}/* else {
+					c2 = new Corp( spec[3] );
+					int size = lenMap.get( spec[3] );
+					c2.setSize( Math.log(size/10.0)*5.0 );
+					corpMap.put( spec[3], c2 );
+					Connectron.this.add( c2 );
+				}*/
+				//if( c2 == null ) Browser.getWindow().getConsole().log( "bo2 "+spec[3] );
+				
+				c2.setCoulomb(50.0);
+				c2.setx( scaleval*r.nextDouble() );
+				c2.sety( scaleval*r.nextDouble() );
+				c2.setz( scaleval*r.nextDouble() );
+				//c2.color = col1111ee;
+				
+				boolean col1set = c1.color != null;
+				boolean col2set = c2.color != null;
+				
+				Color col1111ee = new Color( 0x11, 0x11, 0xEE );
+				Color colee11ee = new Color( 0xEE, 0x11, 0xEE );
+				Color col11ee11 = new Color( 0x11, 0xEE, 0x11 );
+				
+				double tscale = 0.0001;
+				Double ds = Double.parseDouble( spec[5] );
+				if( spec[2].equals("3'") && spec[4].equals("3'") ) {	
+					if( col1set && col2set ) {
+						if( c1.color.equals(col1111ee) ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals(col1111ee) ) {
+							c2.color = col11ee11;
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = col1111ee;
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals(col1111ee) ) {
+							c1.color = col11ee11;
+						} else {
+							c1.color = col1111ee;
+						}
+					} else {
+						c2.color = col11ee11;
+						c1.color = col1111ee;
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				} else if( spec[2].equals("3'") && spec[4].equals("5'") ) {
+					if( col1set && col2set ) {
+						if( c1.color.equals(col1111ee) ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals(col1111ee) ) {
+							c2.color = col11ee11;
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = col1111ee;
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals(col1111ee) ) {
+							c1.color = col11ee11;
+						} else {
+							c1.color = col1111ee;
+						}
+					} else {
+						c2.color = col11ee11;
+						c1.color = col1111ee;
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				} else if( spec[2].equals("5'") && spec[4].equals("3'") ) {
+					if( col1set && col2set ) {
+						if( c1.color.equals(col1111ee) ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals(col1111ee) ) {
+							c2.color = col11ee11;
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = col1111ee;
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals(col1111ee) ) {
+							c1.color = col11ee11;
+						} else {
+							c1.color = col1111ee;
+						}
+					} else {
+						c2.color = col11ee11;
+						c1.color = col1111ee;
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				} else if( spec[2].equals("5'") && spec[4].equals("5'") ) {
+					if( col1set && col2set ) {
+						if( c1.color.equals(col1111ee) ) {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							}
+						} else {
+							if( c1.color.equals(c2.color) ) {
+								c2.color = colee11ee;
+								c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+							} else {
+								c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+							}
+						}
+					} else if( col1set ) {
+						if( c1.color.equals(col1111ee) ) {
+							c2.color = col11ee11;
+							c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+						} else {
+							c2.color = col1111ee;
+							c1.addLink( c2, spec[5], tscale*ds, 0.0 );
+						}
+					} else if( col2set ) {
+						if( c2.color.equals(col1111ee) ) {
+							c1.color = col11ee11;
+						} else {
+							c1.color = col1111ee;
+						}
+					} else {
+						c2.color = col11ee11;
+						c1.color = col1111ee;
+						c2.addLink( c1, spec[5], tscale*ds, 0.0 );
+					}
+				}
+				
+				//c1.addLink( c2, spec[5], 0.001*ds, 0.0 );
+				//c2.addLink( c1, spec[5], 0.001*ds, 0.0 );
+			}
+		}
+	}
+	
 	private void importExcel( InputStream is ) {
 		XSSFWorkbook workbook;
 		try {
@@ -822,7 +1071,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 					Corp corpDst = corpList.get(x);
 					Corp corpSrc = corpList.get(y);
 					
-					corpSrc.addLink( corpDst, subsplit[x], d );
+					corpSrc.addLink( corpDst, subsplit[x], d, 0.0 );
 				}
 			}
 		}
@@ -864,8 +1113,8 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			Corp c = recursiveNodeGeneration(corpList, n);
 			double val = (1.0/( Math.abs( node.geth() )+0.0005 ))/50.0;
 			String strval = Double.toString( node.geth() ); //Math.round(val*100.0)/100.0 );
-			corp.addLink(c, strval, val );
-			c.addLink(corp, strval, val );
+			corp.addLink(c, strval, val, 0.0 );
+			c.addLink(corp, strval, val, 0.0 );
 		}
 		
 		return corp;
@@ -925,8 +1174,8 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 					//Corp corpSrc = corpList.get(y);
 					
 					Corp pcorp = corpList.get(x-1);
-					corp.addLink( pcorp, subsplit[x], d/100.0 );
-					pcorp.addLink( corp, subsplit[x], d/100.0 );
+					corp.addLink( pcorp, subsplit[x], d/100.0, 0.0 );
+					pcorp.addLink( corp, subsplit[x], d/100.0, 0.0 );
 				}
 			}
 		}
