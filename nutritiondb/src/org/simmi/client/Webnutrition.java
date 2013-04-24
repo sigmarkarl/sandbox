@@ -550,6 +550,14 @@ public class Webnutrition implements EntryPoint {
 			return this.getColumnCount();
 		}-*/;
 		
+		public native int getGroupCount() /*-{
+			return this.getGroupCount();
+		}-*/;
+		
+		public native String getGroup( int i ) /*-{
+		 	return this.getGroup( i );
+		}-*/;
+		
 		public native Column getColumn( int i ) /*-{
 			 return this.getColumn( i );
 		}-*/;
@@ -566,6 +574,7 @@ public class Webnutrition implements EntryPoint {
 	NutData nutdata = null;
 	
 	HTML	html = new HTML("bleheheheheh");
+	HTML	html2 = new HTML("blehehehehehu");
 	public void subdrawandroid( Context2d context, int ys, int ye, int xstartLocal, int ystartLocal, int canvasWidth, int canvasHeight ) {
 		int u = contentrp.getWidgetIndex( html );
 		if( u == -1 ) contentrp.add( html );
@@ -1174,6 +1183,18 @@ public class Webnutrition implements EntryPoint {
 			} catch (RequestException e) {
 				e.printStackTrace();
 			}
+		} else {
+			int u = contentrp.getWidgetIndex( html );
+			if( u == -1 ) contentrp.add( html );
+			
+			filterCombo.addItem("");
+			for( int i = 0; i < nutdata.getGroupCount(); i++ ) {
+				String group = nutdata.getGroup(i);
+				filterCombo.addItem( groupIdMap.get(group) );
+			}
+			
+			int u = contentrp.getWidgetIndex( html2 );
+			if( u == -1 ) contentrp.add( html2 );
 		}
 		
 		canvas.addTouchCancelHandler( new TouchCancelHandler() {
