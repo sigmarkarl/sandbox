@@ -12,7 +12,9 @@ import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -64,7 +66,8 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			datastore.delete( key );
 		} else if( !input.contains("\t") ) {
 			Query query = new Query("date");
-			query.addFilter("uid1", FilterOperator.EQUAL, input);
+			Filter filter = new FilterPredicate("uid1", FilterOperator.EQUAL, input);
+			query.setFilter( filter );
 			List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 			for( Entity e : seqsEntities ) {
 				String val = KeyFactory.keyToString(e.getKey())+"\t"+(String)e.getProperty("date2")+"\t"+(String)e.getProperty("link2")+"\t"+(String)e.getProperty("email2")+"\t"+(String)e.getProperty("email1");
@@ -73,7 +76,8 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			}
 			
 			query = new Query("date");
-			query.addFilter("uid2", FilterOperator.EQUAL, input);
+			filter = new FilterPredicate("uid2", FilterOperator.EQUAL, input);
+			query.setFilter( filter );
 			seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 			for( Entity e : seqsEntities ) {
 				String val = KeyFactory.keyToString(e.getKey())+"\t"+(String)e.getProperty("date1")+"\t"+(String)e.getProperty("link1")+"\t"+(String)e.getProperty("email1")+"\t"+(String)e.getProperty("email2");
@@ -91,7 +95,8 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			boolean already = false;
 			
 			Query query = new Query("date");
-			query.addFilter("uid1", FilterOperator.EQUAL, uid1);
+			Filter filter = new FilterPredicate("uid1", FilterOperator.EQUAL, uid1);
+			query.setFilter( filter );
 			List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 			for( Entity e : seqsEntities ) {
 				String nuid2 = (String)e.getProperty("uid2");
@@ -103,7 +108,8 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			
 			if( !already ) {
 				query = new Query("date");
-				query.addFilter("uid2", FilterOperator.EQUAL, uid1);
+				filter = new FilterPredicate("uid2", FilterOperator.EQUAL, uid1);
+				query.setFilter( filter );
 				seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 				for( Entity e : seqsEntities ) {
 					String nuid2 = (String)e.getProperty("uid1");
