@@ -195,6 +195,28 @@ public class Connectron extends VerticalPanel
 				fz -= k*st*(dz*dh/r-gorm);
 				//}
 			}
+			for( Corp c : corp.connections.keySet() ) {
+				double dx = corp.getx() - c.getx();
+				double dy = corp.gety() - c.gety();
+				double dz = corp.getz() - c.getz();
+				
+				double d = dx*dx + dy*dy + dz*dz;
+				double r = Math.sqrt( d );
+				
+				LinkInfo li = corp.connections.get(c);
+				double h = li.getOffset();
+				double st = li.getStrength();
+					//double k = li.getStrength();
+				
+				r = Math.max( r, 0.1 );
+				//if( r > 0.1 ) {
+				double dh = r-h;
+				
+				fx = -k*st*(dx*dh/r-gorm);
+				fy = -k*st*(dy*dh/r-gorm);
+				fz = -k*st*(dz*dh/r-gorm);
+				//}
+			}
 			
 			corp.vx = (corp.vx+fx)*damp;
 			corp.vy = (corp.vy+fy)*damp;
@@ -749,7 +771,7 @@ public class Connectron extends VerticalPanel
 					Connectron.this.add( c1 );
 				}
 				
-				c1.setCoulomb(0.5);
+				c1.setCoulomb(5000.0);
 				c1.setx( scaleval*r.nextDouble() );
 				c1.sety( scaleval*r.nextDouble() );
 				c1.setz( scaleval*r.nextDouble() );
@@ -766,7 +788,7 @@ public class Connectron extends VerticalPanel
 					corpMap.put( spec[3], c2 );
 					Connectron.this.add( c2 );
 				}
-				c2.setCoulomb(0.5);
+				c2.setCoulomb(5000.0);
 				c2.setx( scaleval*r.nextDouble() );
 				c2.sety( scaleval*r.nextDouble() );
 				c2.setz( scaleval*r.nextDouble() );
