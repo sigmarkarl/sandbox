@@ -78,8 +78,10 @@ import javax.jnlp.FileContents;
 import javax.jnlp.FileSaveService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
+import javax.naming.BinaryRefAddr;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
@@ -95,6 +97,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -694,6 +697,10 @@ public class GeneSet extends JApplet {
 				 * nquery = query.substring(0, nq); } else { nquery = query; }
 				 */
 				StringBuilder dn = dnaSearch(query);
+				if( dn == null ) {
+					System.err.println( query );
+					System.err.println();
+				}
 				// System.err.println( "ermm " + ori );
 				double deval = 0.0;
 				try {
@@ -1391,7 +1398,7 @@ public class GeneSet extends JApplet {
 				ac = new StringBuilder();
 				name = line.substring(1).split(" ")[0].replace(".fna","");
 
-				int v = name.indexOf("contig");
+				//int v = name.indexOf("contig");
 			} else
 				ac.append(line.trim() + "");
 			line = br.readLine();
@@ -3786,22 +3793,39 @@ public class GeneSet extends JApplet {
 			ori = orient;
 			this.gene = gene;
 
+			if( dna != null ) gc = (double)gcCount()/(double)dna.length();
+			else gc = -1.0;
+			
 			numCys = 0;
 			setSequence(sequence);
 		}
+		
+		private double gcCount() {
+			int gc = 0;
+			for( int i = 0; i < dna.length(); i++ ) {
+				char c = dna.charAt(i);
+				if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
+			}
+			return gc;
+		}
+		
+		public double getGCPerc() {
+			return gc;
+		}
 
-		String teg;
-		double eval;
-		String cont;
-		String contshort;
-		String contloc;
-		StringBuilder seq;
-		StringBuilder dna;
-		int start;
-		int stop;
-		int ori;
-		int numCys;
-		Gene	gene;
+		double			gc;
+		String 			teg;
+		double 			eval;
+		String 			cont;
+		String 			contshort;
+		String 			contloc;
+		StringBuilder 	seq;
+		StringBuilder 	dna;
+		int 			start;
+		int 			stop;
+		int 			ori;
+		int 			numCys;
+		Gene			gene;
 		
 		public void setGene( Gene gene ) {
 			this.gene = gene;
@@ -3939,6 +3963,37 @@ public class GeneSet extends JApplet {
 			}
 			
 			return ltv;
+		}
+		
+		public double getAvgGCPerc() {
+			double gc = 0.0;
+			int count = 0;
+			for( Gene g : genes ) {
+				for( String spec : g.species.keySet() ) {
+					Teginfo ti = g.species.get(spec);
+					for( Tegeval te : ti.tset ) {
+						gc += te.getGCPerc();
+						count++;
+					}
+				}
+			}
+			return gc/count;
+		}
+		
+		public double getStddevGCPerc( double avggc ) {
+			double gc = 0.0;
+			int count = 0;
+			for( Gene g : genes ) {
+				for( String spec : g.species.keySet() ) {
+					Teginfo ti = g.species.get(spec);
+					for( Tegeval te : ti.tset ) {
+						double val = te.getGCPerc()-avggc;
+						gc += val*val;
+						count++;
+					}
+				}
+			}
+			return Math.sqrt(gc/count);
 		}
 		
 		public Set<Function> getFunctions() {
@@ -4102,6 +4157,33 @@ public class GeneSet extends JApplet {
 		
 		public String getName() {
 			return name;
+		}
+		
+		public double getAvgGCPerc() {
+			double gc = 0.0;
+			int count = 0;
+			for( String spec : species.keySet() ) {
+				Teginfo ti = species.get(spec);
+				for( Tegeval te : ti.tset ) {
+					gc += te.getGCPerc();
+					count++;
+				}
+			}
+			return gc/count;
+		}
+		
+		public double getStddevGCPerc( double avggc ) {
+			double gc = 0.0;
+			int count = 0;
+			for( String spec : species.keySet() ) {
+				Teginfo ti = species.get(spec);
+				for( Tegeval te : ti.tset ) {
+					double val = te.getGCPerc()-avggc;
+					gc += val*val;
+					count++;
+				}
+			}
+			return Math.sqrt(gc/count);
 		}
 
 		String name;
@@ -7533,7 +7615,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 46;
+				return 47;
 			}
 
 			@Override
@@ -7563,72 +7645,74 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 11) {
 					return "Locprev";
 				} else if (columnIndex == 12) {
-					return "# of locus";
+					return "Avg GC%";
 				} else if (columnIndex == 13) {
-					return "# of loc in group";
+					return "# of locus";
 				} else if (columnIndex == 14) {
-					return "max length";
+					return "# of loc in group";
 				} else if (columnIndex == 15) {
-					return "sharing number";
+					return "max length";
 				} else if (columnIndex == 16) {
-					return "# Cyc";
+					return "sharing number";
 				} else if (columnIndex == 17) {
-					return "16S Corr";
+					return "# Cyc";
 				} else if (columnIndex == 18) {
-					return "T.tSG0";
+					return "16S Corr";
 				} else if (columnIndex == 19) {
-					return "T.tJL18";
+					return "T.tSG0";
 				} else if (columnIndex == 20) {
-					return "T.tHB8";
+					return "T.tJL18";
 				} else if (columnIndex == 21) {
-					return "T.tHB27";
+					return "T.tHB8";
 				} else if (columnIndex == 22) {
-					return "T.scotoSA01";
+					return "T.tHB27";
 				} else if (columnIndex == 23) {
-					return "T.aqua";
+					return "T.scotoSA01";
 				} else if (columnIndex == 24) {
-					return "T.eggert";
+					return "T.aqua";
 				} else if (columnIndex == 25) {
-					return "T.island";
+					return "T.eggert";
 				} else if (columnIndex == 26) {
-					return "T.antan";
+					return "T.island";
 				} else if (columnIndex == 27) {
-					return "T.scoto346";
+					return "T.antan";
 				} else if (columnIndex == 28) {
-					return "T.scoto1572";
+					return "T.scoto346";
 				} else if (columnIndex == 29) {
-					return "T.scoto252";
+					return "T.scoto1572";
 				} else if (columnIndex == 30) {
-					return "T.scoto2101";
+					return "T.scoto252";
 				} else if (columnIndex == 31) {
-					return "T.scoto2127";
+					return "T.scoto2101";
 				} else if (columnIndex == 32) {
-					return "T.scoto4063";
+					return "T.scoto2127";
 				} else if (columnIndex == 33) {
-					return "T.oshimai";
+					return "T.scoto4063";
 				} else if (columnIndex == 34) {
-					return "T.brockianus";
+					return "T.oshimai";
 				} else if (columnIndex == 35) {
-					return "T.filiformis";
+					return "T.brockianus";
 				} else if (columnIndex == 36) {
-					return "T.igniterrae";
+					return "T.filiformis";
 				} else if (columnIndex == 37) {
-					return "T.kawarayensis";
+					return "T.igniterrae";
 				} else if (columnIndex == 38) {
-					return "T.arciformis";
+					return "T.kawarayensis";
 				} else if (columnIndex == 39) {
-					return "T.spCCB";
+					return "T.arciformis";
 				} else if (columnIndex == 40) {
-					return "T.spRLM";
+					return "T.spCCB";
 				} else if (columnIndex == 41) {
-					return "T.oshimaiJL2";
+					return "T.spRLM";
 				} else if (columnIndex == 42) {
-					return "MT.silvianus";
+					return "T.oshimaiJL2";
 				} else if (columnIndex == 43) {
-					return "MT.ruber";
+					return "MT.silvianus";
 				} else if (columnIndex == 44) {
-					return "M.hydro";
+					return "MT.ruber";
 				} else if (columnIndex == 45) {
+					return "M.hydro";
+				} else if (columnIndex == 46) {
 					return "O.profu";
 				}
 				
@@ -7637,13 +7721,11 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if (columnIndex == 9)
+				if( columnIndex == 9 || columnIndex == 12 || columnIndex == 18 )
 					return Double.class;
-				else if (columnIndex >= 6 && columnIndex <= 16)
+				else if(columnIndex >= 6 && columnIndex <= 17)
 					return Integer.class;
-				else if (columnIndex == 17)
-					return Double.class;
-				else if (columnIndex >= 18)
+				else if (columnIndex >= 19)
 					return Teginfo.class;
 				return String.class;
 			}
@@ -7681,6 +7763,8 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 11) {
 					return gene.proximityGroupPreservation;
 				} else if (columnIndex == 12) {
+					return gene.getAvgGCPerc();
+				} else if (columnIndex == 13) {
 					if (gene.species != null) {
 						int val = 0;
 						for (String str : gene.species.keySet()) {
@@ -7688,9 +7772,9 @@ public class GeneSet extends JApplet {
 						}
 						return val;
 					}
-				} else if (columnIndex == 13) {
-					return gene.getGroupCount();
 				} else if (columnIndex == 14) {
+					return gene.getGroupCount();
+				} else if (columnIndex == 15) {
 					if (gene.species != null) {
 						int max = 0;
 						for (String str : gene.species.keySet()) {
@@ -7702,11 +7786,11 @@ public class GeneSet extends JApplet {
 						}
 						return max;
 					}
-				} else if (columnIndex == 15) {
+				} else if (columnIndex == 16) {
 					if (gene.species != null) {
 						return specset.get(gene.species.keySet());
 					}
-				} else if (columnIndex == 16) {
+				} else if (columnIndex == 17) {
 					if (gene.species != null) {
 						int max = 0;
 						for (String str : gene.species.keySet()) {
@@ -7718,138 +7802,138 @@ public class GeneSet extends JApplet {
 						return max;
 					}
 					return 0;
-				} else if (columnIndex == 17) {
-					return gene.getGroupCoverage() == 16 && gene.getGroupCount() == 16 ? gene.corr16s : -1;
 				} else if (columnIndex == 18) {
+					return gene.getGroupCoverage() == 28 && gene.getGroupCount() == 28 ? gene.corr16s : -1;
+				} else if (columnIndex == 19) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.thermophilusSG0");
 						return set;
 					}
-				} else if (columnIndex == 19) {
+				} else if (columnIndex == 20) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.thermophilusJL18");
 						return set;
 					}
-				} else if (columnIndex == 20) {
+				} else if (columnIndex == 21) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.thermophilusHB8");
 						return set;
 					}
-				} else if (columnIndex == 21) {
+				} else if (columnIndex == 22) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.thermophilusHB27");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("ttHB27join").iterator().next();
-				} else if (columnIndex == 22) {
+				} else if (columnIndex == 23) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.scotoductusSA01");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("ttaqua").iterator().next();
-				} else if (columnIndex == 23) {
+				} else if (columnIndex == 24) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.aquaticus");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("ttaqua").iterator().next();
-				} else if (columnIndex == 24) {
+				} else if (columnIndex == 25) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.eggertsoni");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("eggertsoni2789").iterator().next();
-				} else if (columnIndex == 25) {
+				} else if (columnIndex == 26) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.islandicus");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("islandicus180610").iterator().next();
-				} else if (columnIndex == 26) {
+				} else if (columnIndex == 27) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.antranikiani");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("antag2120").iterator().next();
-				} else if (columnIndex == 27) {
+				} else if (columnIndex == 28) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.scotoductus346");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto346").iterator().next();
-				} else if (columnIndex == 28) {
+				} else if (columnIndex == 29) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.scotoductus1572");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto1572").iterator().next();
-				} else if (columnIndex == 29) {
+				} else if (columnIndex == 30) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.scotoductus252");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto252").iterator().next();
-				} else if (columnIndex == 30) {
+				} else if (columnIndex == 31) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.scotoductus2101");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto2101").iterator().next();
-				} else if (columnIndex == 31) {
+				} else if (columnIndex == 32) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.scotoductus2127");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto2127").iterator().next();
-				} else if (columnIndex == 32) {
+				} else if (columnIndex == 33) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.scotoductus4063");
 						return set;
 					}
 					// return gene.species == null ? null :
 					// gene.species.get("scoto4063").iterator().next();
-				} else if (columnIndex == 33) {
+				} else if (columnIndex == 34) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.oshimai");
 						return set;
 					}
-				} else if (columnIndex == 34) {
+				} else if (columnIndex == 35) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.brockianus");
 						return set;
 					}
-				} else if (columnIndex == 35) {
+				} else if (columnIndex == 36) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.filiformis");
 						return set;
 					}
-				} else if (columnIndex == 36) {
+				} else if (columnIndex == 37) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.igniterrae");
 						return set;
 					}
-				} else if (columnIndex == 37) {
+				} else if (columnIndex == 38) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.kawarayensis");
 						return set;
 					}
-				} else if (columnIndex == 38) {
+				} else if (columnIndex == 39) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.arciformis");
 						return set;
 					}
-				} else if (columnIndex == 39) {
+				} else if (columnIndex == 40) {
 					if (gene.species != null) {
 						for( String key : gene.species.keySet() ) {
 							if( key.contains("CCB") ) {
@@ -7859,32 +7943,32 @@ public class GeneSet extends JApplet {
 						Teginfo set = gene.species.get("t.spCCB");
 						return set;
 					}
-				} else if (columnIndex == 40) {
+				} else if (columnIndex == 41) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.RLM");
 						return set;
 					}
-				} else if (columnIndex == 41) {
+				} else if (columnIndex == 42) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("t.oshimaiJL2");
 						return set;
 					}
-				} else if (columnIndex == 42) {
+				} else if (columnIndex == 43) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("mt.silvanus");
 						return set;
 					}
-				} else if (columnIndex == 43) {
+				} else if (columnIndex == 44) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("mt.ruber");
 						return set;
 					}
-				} else if (columnIndex == 44) {
+				} else if (columnIndex == 45) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("m.hydrothermalis");
 						return set;
 					}
-				} else if (columnIndex == 45) {
+				} else if (columnIndex == 46) {
 					if (gene.species != null) {
 						Teginfo set = gene.species.get("o.profundus");
 						return set;
@@ -9962,7 +10046,7 @@ public class GeneSet extends JApplet {
 		
 		
 		//InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
-		InputStream nis = GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		InputStream nis = null;//GeneSet.class.getResourceAsStream("/exp_short.blastout");
 		panCoreFromNRBlast(new InputStreamReader(is), null/*new InputStreamReader(nis)*/, null/*"/home/sigmar/sandbox/distann/src/ncbithermus_short.blastout"*/, null /*"/u0/sandbox/distann/src/exp_short.blastout"*/, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
 
 		geneloc.clear();
@@ -10207,7 +10291,7 @@ public class GeneSet extends JApplet {
 			}
 		}
 
-		/*for (Gene gg : genelist) {
+		for (Gene gg : genelist) {
 			if (gg.species != null) {
 				Set<String> ct = new HashSet<String>();
 				for (String sp : gg.species.keySet()) {
@@ -10234,7 +10318,7 @@ public class GeneSet extends JApplet {
 							Teginfo stv = g.species.get(sp);
 							for (Tegeval tv : stv.tset) {
 								if (ct.contains(tv.cont)) {
-									groupIdxSet.add(g.groupIdx);
+									groupIdxSet.add( g.getGroupIndex() );
 									// if( remove ) genefilterset.remove(
 									// g.index );
 									// else genefilterset.add( g.index );
@@ -10246,7 +10330,7 @@ public class GeneSet extends JApplet {
 				}
 				gg.proximityGroupPreservation = Math.ceil(groupIdxSet.size() / 2.0);
 			}
-		}*/
+		}
 		locgene.clear();
 
 		// genemap = idMapping( "/home/sigmar/blastout/nilli.blastout",
@@ -10319,7 +10403,19 @@ public class GeneSet extends JApplet {
 
 		Map<Set<String>, ShareNum> specset = new HashMap<Set<String>, ShareNum>();
 		int sn = 0;
-		for (Gene g : genelist) {
+		/*for (Gene g : genelist) {
+			if (g.species != null) {
+				ShareNum sharenum = null;
+				if (specset.containsKey(g.species.keySet())) {
+					sharenum = specset.get(g.species.keySet());
+					sharenum.numshare++;
+				} else {
+					specset.put(g.species.keySet(), new ShareNum(1, sn++));
+				}
+			}
+		}*/
+		
+		for (GeneGroup gg : allgenegroups) {
 			if (g.species != null) {
 				ShareNum sharenum = null;
 				if (specset.containsKey(g.species.keySet())) {
@@ -10612,12 +10708,18 @@ public class GeneSet extends JApplet {
 	}
 
 	public static void mynd(final List<Gene> genes, final JTable sorting, String species) throws IOException {
+		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
+		final JRadioButton	gcColorScheme = new JRadioButton("GC");
+		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
+		final JRadioButton	cycColorScheme = new JRadioButton("#Cyc");
+		final JRadioButton	lenColorScheme = new JRadioButton("Len");
 		if (true) { //gsplitpane == null) {			
 			List<Tegeval> ltv = loadContigs( genes, species );
 			
 			final int hey = genes.size(); // ltv.get(ltv.size()-1).stop/1000;
 			System.out.println(hey);
 			final JTable rowheader = new JTable();
+				
 			final JComponent c = new JComponent() {
 				Color gr = Color.green;
 				Color dg = Color.green.darker();
@@ -10634,18 +10736,72 @@ public class GeneSet extends JApplet {
 						int r = sorting.convertRowIndexToModel(i);
 						Gene gene = genes.get(r);
 
-						if (sorting.isRowSelected(i)) {
-							if (i % 2 == 0)
-								g.setColor(rd);
-							else
-								g.setColor(dr);
-						} else {
-							if (i % 2 == 0)
-								g.setColor(gr);
-							else
-								g.setColor(dg);
+						if( binaryColorScheme.isSelected() ) {
+							if (sorting.isRowSelected(i)) {
+								if (i % 2 == 0)
+									g.setColor(rd);
+								else
+									g.setColor(dr);
+							} else {
+								if (i % 2 == 0)
+									g.setColor(gr);
+								else
+									g.setColor(dg);
+							}
+						} else if( gcColorScheme.isSelected() ) {
+							if (sorting.isRowSelected(i)) {
+								double gcp = Math.min( Math.max( 0.5, gene.getAvgGCPerc() ), 0.8 );
+								g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
+							} else {
+								double gcp = Math.min( Math.max( 0.5, gene.getAvgGCPerc() ), 0.8 );
+								g.setColor( new Color( (float)(gcp-0.5)/0.3f, (float)(0.8-gcp)/0.3f, 0.0f ) );
+							}
+						} else if( locprevColorScheme.isSelected() ) {
+							if (sorting.isRowSelected(i)) {
+								double locprev = Math.min( 5.0, gene.proximityGroupPreservation );
+								g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
+							} else {
+								double locprev = Math.min( 5.0, gene.proximityGroupPreservation );
+								g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
+							}
+						} else if( cycColorScheme.isSelected() ) {
+							int max = 0;
+							if (gene.species != null) {
+								for (String str : gene.species.keySet()) {
+									Teginfo set = gene.species.get(str);
+									for (Tegeval tv : set.tset) {
+										max = Math.max(max, tv.numCys);
+									}
+								}
+							}
+							
+							if (sorting.isRowSelected(i)) {								
+								//double locprev = max; //Math.min( , max );
+								g.setColor( new Color( 1.0f-(float)max/27.0f, 1.0f, 1.0f ) );
+							} else {
+								g.setColor( new Color( (float)max/27.0f, 0.0f, 0.0f ) );
+							}
+						} else if( lenColorScheme.isSelected() ) {
+							int max = -1;
+							if (gene.species != null) {
+								max = 0;
+								for (String str : gene.species.keySet()) {
+									Teginfo set = gene.species.get(str);
+									for (Tegeval tv : set.tset) {
+										if (tv.seq != null)
+											max = Math.max(max, tv.seq.length());
+									}
+								}
+							}
+							
+							if (sorting.isRowSelected(i)) {								
+								//double locprev = max; //Math.min( , max );
+								g.setColor( new Color( 1.0f-(float)(max-20)/2775.0f, 1.0f, 1.0f ) );
+							} else {
+								g.setColor( new Color( (float)(max-20)/2775.0f, 0.0f, 0.0f ) );
+							}
 						}
-
+						
 						if (gene.species != null) {
 							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
 								String contig = (String) rowheader.getValueAt(y, 0);
@@ -10686,224 +10842,33 @@ public class GeneSet extends JApplet {
 				 * super.setBounds(x, y, hey, rowheader.getHeight()); }
 				 */
 			};
-
-			c.addMouseListener(new MouseAdapter() {
-				Point p;
-
-				public void mousePressed(MouseEvent me) {
-					p = me.getPoint();
-				}
-
-				public void mouseReleased(MouseEvent me) {
-					Point np = me.getPoint();
-
-					if (np.x > p.x) {
-						Rectangle rect = sorting.getCellRect(p.x, 0, false);
-						rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
-						sorting.scrollRectToVisible(rect);
-						sorting.setRowSelectionInterval(p.x, np.x);
-					}
-				}
-			});
-
-			JScrollPane scrollpane = new JScrollPane(c);
-			scrollpane.getViewport().setBackground(Color.white);
-			JScrollPane rowheaderscroll = new JScrollPane();
-			rowheader.setAutoCreateRowSorter(true);
-			rowheader.setModel(new TableModel() {
+			
+			AbstractAction	a = new AbstractAction() {
 				@Override
-				public int getRowCount() {
-					return contigs.size();
-				}
-
-				@Override
-				public int getColumnCount() {
-					return 3;
-				}
-
-				@Override
-				public String getColumnName(int columnIndex) {
-					if (columnIndex == 1)
-						return "species";
-					else if (columnIndex == 2)
-						return "com";
-					return "contig";
-				}
-
-				@Override
-				public Class<?> getColumnClass(int columnIndex) {
-					if (columnIndex == 2)
-						return Integer.class;
-					return String.class;
-				}
-
-				@Override
-				public boolean isCellEditable(int rowIndex, int columnIndex) {
-					return false;
-				}
-
-				@Override
-				public Object getValueAt(int rowIndex, int columnIndex) {
-					if (columnIndex == 2) {
-						Contig c = contigs.get(rowIndex);
-						if (c.count > 0)
-							return (int) ((c.loc) / c.count);
-						return 0;
-					} else if (columnIndex == 1) {
-						Contig c = contigs.get(rowIndex);
-						String cname = c.name;
-						int i = cname.indexOf('_');
-						return cname.substring(0, i);
-					}
-					return contigs.get(rowIndex).name;
-				}
-
-				@Override
-				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-				}
-
-				@Override
-				public void addTableModelListener(TableModelListener l) {
-				}
-
-				@Override
-				public void removeTableModelListener(TableModelListener l) {
-				}
-
-			});
-			scrollpane.setRowHeaderView(rowheader);
-			rowheaderscroll.setViewport(scrollpane.getRowHeader());
-			rowheaderscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-			rowheaderscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-			// scrollpane.setCorner( JScrollPane.UPPER_LEFT_CORNER,
-			// rowheader.getTableHeader() );
-
-			rowheader.getRowSorter().addRowSorterListener(new RowSorterListener() {
-				@Override
-				public void sorterChanged(RowSorterEvent e) {
+				public void actionPerformed(ActionEvent e) {
 					c.repaint();
 				}
-			});
-
-			gsplitpane = new JSplitPane();
-			gsplitpane.setLeftComponent(rowheaderscroll);
-			gsplitpane.setRightComponent(scrollpane);
-
-			JComponent fillup = new JComponent() {
 			};
-			fillup.setPreferredSize(new Dimension(hey, 20));
-			scrollpane.setColumnHeaderView(fillup);
-
-			// JComponent filldown = new JComponent() {};
-			// filldown.setPreferredSize( new Dimension(100,25) );
-			// rowheaderscroll.setCorner( JScrollPane., corner)
-
-			int rh = rowheader.getHeight();
-			if (rh == 0) {
-				rh = rowheader.getRowCount() * rowheader.getRowHeight();
-			}
-			c.setPreferredSize(new Dimension(hey, rh));
-			c.setSize(hey, rh);
-		}
-
-		if (!frame.isVisible()) {
-			frame = new JFrame();
-			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			frame.setSize(800, 600);
-			frame.add(gsplitpane);
-		}
-
-		frame.setVisible(true);
-	}
-	
-	public static void groupMynd(final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting) throws IOException {
-		if (true) { //gsplitpane == null) {			
-			loadContigs( geneGroups );
+			binaryColorScheme.setAction( a );
+			gcColorScheme.setAction( a );
+			locprevColorScheme.setAction( a );
+			cycColorScheme.setAction( a );
+			lenColorScheme.setAction( a );
 			
-			JCheckBox	check = new JCheckBox("All positions");
-			JOptionPane.showInputDialog( check );
-			final boolean allpos = check.isSelected();
+			binaryColorScheme.setText("Binary");
+			gcColorScheme.setText("GC");
+			locprevColorScheme.setText("Loc");
+			cycColorScheme.setText("#Cys");
+			lenColorScheme.setText("Len");
 			
-			final int hey = geneGroups.size(); // ltv.get(ltv.size()-1).stop/1000;
-			System.out.println(hey);
-			final JTable rowheader = new JTable();
-			final JComponent c = new JComponent() {
-				Color gr = Color.green;
-				Color dg = Color.green.darker();
-				Color rd = Color.red;
-				Color dr = Color.red.darker();
-
-				// Color dg = Color.green.darker();
-
-				public void paintComponent(Graphics g) {
-					super.paintComponent(g);
-					
-					Rectangle rc = g.getClipBounds();
-					Set<GeneGroup>	ggset = new HashSet<GeneGroup>();
-					for (int i = (int) rc.getMinX(); i < (int) Math.min(sorting.getRowCount(), rc.getMaxX()); i++) {
-						int r = sorting.convertRowIndexToModel(i);
-						Gene 		gene = genelist.get(r);
-						//GeneGroup genegroup = geneGroups.get(r);
-						GeneGroup 	genegroup = gene.getGeneGroup();
-						if( ggset.add( genegroup ) ) {
-							if( allpos ) ggset.clear();
-							
-							if (sorting.isRowSelected(i)) {
-								if (i % 2 == 0)
-									g.setColor(rd);
-								else
-									g.setColor(dr);
-							} else {
-								if (i % 2 == 0)
-									g.setColor(gr);
-								else
-									g.setColor(dg);
-							}
-	
-							//if (gene.species != null) {
-							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
-								if( y < rowheader.getRowCount() ) {
-									String contig = (String)rowheader.getValueAt(y, 0);
-	
-									int und = contig.indexOf("_");
-									String spec = contig.substring(0, und);
-									if( genegroup.species.contains(spec) ) {
-										List<Tegeval>	ltv = genegroup.getTegevals( spec );
-										//Teginfo stv = gene.species.get(spec);
-										for (Tegeval tv : ltv /*stv.tset*/ ) {
-											if (tv.cont.startsWith(contig)) {
-												g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-					ggset.clear();
-
-					/*
-					 * Color color; int i = 0; for( Tegeval tv : ltv ) { if(
-					 * tv.ori < 0 ) color = Color.red; else color = Color.green;
-					 * 
-					 * if( (++i)%2 == 0 ) { color = color.darker(); }
-					 * g.setColor( color );
-					 * 
-					 * if( (tv.stop-tv.start)/1000 > 100 ) {
-					 * System.out.println("hund"); } g.fillRect(tv.start/1000,
-					 * 0, (tv.stop-tv.start)/10, 20); } System.out.println( i );
-					 */
-				}
-
-				/*
-				 * public Rectangle getBounds() { Rectangle r =
-				 * super.getBounds(); r.width = hey; r.height =
-				 * rowheader.getHeight(); return r; }
-				 * 
-				 * public void setBounds( int x, int y, int w, int h ) {
-				 * super.setBounds(x, y, hey, rowheader.getHeight()); }
-				 */
-			};
+			binaryColorScheme.setSelected( true );
+			
+			ButtonGroup	bg = new ButtonGroup();
+			bg.add( binaryColorScheme );
+			bg.add( gcColorScheme );
+			bg.add( locprevColorScheme );
+			bg.add( cycColorScheme );
+			bg.add( lenColorScheme );
 
 			c.addMouseListener(new MouseAdapter() {
 				Point p;
@@ -11022,12 +10987,317 @@ public class GeneSet extends JApplet {
 			c.setPreferredSize(new Dimension(hey, rh));
 			c.setSize(hey, rh);
 		}
+		
+		JToolBar	toolbar = new JToolBar();
+		toolbar.add( binaryColorScheme );
+		toolbar.add( gcColorScheme );
+		toolbar.add( locprevColorScheme );
+		toolbar.add( cycColorScheme );
+		toolbar.add( lenColorScheme );
+		
+		JComponent panel = new JComponent() {};
+		panel.setLayout( new BorderLayout() );
+		panel.add( toolbar, BorderLayout.NORTH );
+		panel.add( gsplitpane );
 
 		if (!frame.isVisible()) {
 			frame = new JFrame();
 			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			frame.setSize(800, 600);
-			frame.add(gsplitpane);
+			frame.add( panel );
+		}
+
+		frame.setVisible(true);
+	}
+	
+	public static void groupMynd(final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting) throws IOException {
+		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
+		final JRadioButton	gcColorScheme = new JRadioButton("GC");
+		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
+		final JRadioButton	cycColorScheme = new JRadioButton("#Cyc");
+		final JRadioButton	lenColorScheme = new JRadioButton("Len");
+		if (true) { //gsplitpane == null) {			
+			loadContigs( geneGroups );
+			
+			JCheckBox	check = new JCheckBox("All positions");
+			JOptionPane.showMessageDialog( null, check );
+			final boolean allpos = check.isSelected();
+			
+			final int hey = geneGroups.size(); // ltv.get(ltv.size()-1).stop/1000;
+			System.out.println(hey);
+			final JTable rowheader = new JTable();
+			final JComponent c = new JComponent() {
+				Color gr = Color.green;
+				Color dg = Color.green.darker();
+				Color rd = Color.red;
+				Color dr = Color.red.darker();
+
+				// Color dg = Color.green.darker();
+
+				public void paintComponent(Graphics g) {
+					super.paintComponent(g);
+					
+					Rectangle rc = g.getClipBounds();
+					Set<GeneGroup>	ggset = new HashSet<GeneGroup>();
+					for (int i = (int) rc.getMinX(); i < (int) Math.min(sorting.getRowCount(), rc.getMaxX()); i++) {
+						int r = sorting.convertRowIndexToModel(i);
+						Gene 		tgene = genelist.get(r);
+						//GeneGroup genegroup = geneGroups.get(r);
+						GeneGroup 	genegroup = tgene.getGeneGroup();
+						if( ggset.add( genegroup ) ) {
+							if( allpos ) ggset.clear();
+							
+							if( binaryColorScheme.isSelected() ) {
+								if (sorting.isRowSelected(i)) {
+									if (i % 2 == 0)
+										g.setColor(rd);
+									else
+										g.setColor(dr);
+								} else {
+									if (i % 2 == 0)
+										g.setColor(gr);
+									else
+										g.setColor(dg);
+								}
+							} else if( gcColorScheme.isSelected() ) {
+								if (sorting.isRowSelected(i)) {
+									double gcp = Math.min( Math.max( 0.5, genegroup.getAvgGCPerc() ), 0.8 );
+									g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
+								} else {
+									double gcp = Math.min( Math.max( 0.5, genegroup.getAvgGCPerc() ), 0.8 );
+									g.setColor( new Color( (float)(gcp-0.5)/0.3f, (float)(0.8-gcp)/0.3f, 0.0f ) );
+								}
+							} else if( locprevColorScheme.isSelected() ) {
+								if (sorting.isRowSelected(i)) {
+									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+									g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
+								} else {
+									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+									g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
+								}
+							} else if( cycColorScheme.isSelected() ) {
+								if (sorting.isRowSelected(i)) {
+									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+									g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
+								} else {
+									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+									g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
+								}
+							} else if( lenColorScheme.isSelected() ) {
+								if (sorting.isRowSelected(i)) {
+									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+									g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
+								} else {
+									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+									g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
+								}
+							}
+	
+							//if (gene.species != null) {
+							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
+								if( y < rowheader.getRowCount() ) {
+									String contig = (String)rowheader.getValueAt(y, 0);
+	
+									int und = contig.indexOf("_");
+									String spec = contig.substring(0, und);
+									if( genegroup.species.contains(spec) ) {
+										List<Tegeval>	ltv = genegroup.getTegevals( spec );
+										//Teginfo stv = gene.species.get(spec);
+										for (Tegeval tv : ltv /*stv.tset*/ ) {
+											if (tv.cont.startsWith(contig)) {
+												g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					ggset.clear();
+
+					/*
+					 * Color color; int i = 0; for( Tegeval tv : ltv ) { if(
+					 * tv.ori < 0 ) color = Color.red; else color = Color.green;
+					 * 
+					 * if( (++i)%2 == 0 ) { color = color.darker(); }
+					 * g.setColor( color );
+					 * 
+					 * if( (tv.stop-tv.start)/1000 > 100 ) {
+					 * System.out.println("hund"); } g.fillRect(tv.start/1000,
+					 * 0, (tv.stop-tv.start)/10, 20); } System.out.println( i );
+					 */
+				}
+
+				/*
+				 * public Rectangle getBounds() { Rectangle r =
+				 * super.getBounds(); r.width = hey; r.height =
+				 * rowheader.getHeight(); return r; }
+				 * 
+				 * public void setBounds( int x, int y, int w, int h ) {
+				 * super.setBounds(x, y, hey, rowheader.getHeight()); }
+				 */
+			};
+			
+			AbstractAction	a = new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					c.repaint();
+				}
+			};
+			binaryColorScheme.setAction( a );
+			gcColorScheme.setAction( a );
+			locprevColorScheme.setAction( a );
+			cycColorScheme.setAction( a );
+			lenColorScheme.setAction( a );
+			
+			binaryColorScheme.setText("Binary");
+			gcColorScheme.setText("GC");
+			locprevColorScheme.setText("Loc");
+			cycColorScheme.setText("#Cys");
+			lenColorScheme.setText("Len");
+			
+			binaryColorScheme.setSelected( true );
+			
+			ButtonGroup	bg = new ButtonGroup();
+			bg.add( binaryColorScheme );
+			bg.add( gcColorScheme );
+			bg.add( locprevColorScheme );
+			bg.add( cycColorScheme );
+			bg.add( lenColorScheme );
+
+			c.addMouseListener(new MouseAdapter() {
+				Point p;
+
+				public void mousePressed(MouseEvent me) {
+					p = me.getPoint();
+				}
+
+				public void mouseReleased(MouseEvent me) {
+					Point np = me.getPoint();
+
+					if (np.x > p.x) {
+						Rectangle rect = sorting.getCellRect(p.x, 0, false);
+						rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
+						sorting.scrollRectToVisible(rect);
+						sorting.setRowSelectionInterval(p.x, np.x);
+					}
+				}
+			});
+
+			JScrollPane scrollpane = new JScrollPane(c);
+			scrollpane.getViewport().setBackground(Color.white);
+			JScrollPane rowheaderscroll = new JScrollPane();
+			rowheader.setAutoCreateRowSorter(true);
+			rowheader.setModel(new TableModel() {
+				@Override
+				public int getRowCount() {
+					return contigs.size();
+				}
+
+				@Override
+				public int getColumnCount() {
+					return 3;
+				}
+
+				@Override
+				public String getColumnName(int columnIndex) {
+					if (columnIndex == 1)
+						return "species";
+					else if (columnIndex == 2)
+						return "com";
+					return "contig";
+				}
+
+				@Override
+				public Class<?> getColumnClass(int columnIndex) {
+					if (columnIndex == 2)
+						return Integer.class;
+					return String.class;
+				}
+
+				@Override
+				public boolean isCellEditable(int rowIndex, int columnIndex) {
+					return false;
+				}
+
+				@Override
+				public Object getValueAt(int rowIndex, int columnIndex) {
+					if (columnIndex == 2) {
+						Contig c = contigs.get(rowIndex);
+						if (c.count > 0)
+							return (int) ((c.loc) / c.count);
+						return 0;
+					} else if (columnIndex == 1) {
+						Contig c = contigs.get(rowIndex);
+						String cname = c.name;
+						int i = cname.indexOf('_');
+						return cname.substring(0, i);
+					}
+					return contigs.get(rowIndex).name;
+				}
+
+				@Override
+				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+				}
+
+				@Override
+				public void addTableModelListener(TableModelListener l) {
+				}
+
+				@Override
+				public void removeTableModelListener(TableModelListener l) {
+				}
+
+			});
+			scrollpane.setRowHeaderView(rowheader);
+			rowheaderscroll.setViewport(scrollpane.getRowHeader());
+			rowheaderscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+			rowheaderscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+			// scrollpane.setCorner( JScrollPane.UPPER_LEFT_CORNER,
+			// rowheader.getTableHeader() );
+
+			rowheader.getRowSorter().addRowSorterListener(new RowSorterListener() {
+				@Override
+				public void sorterChanged(RowSorterEvent e) {
+					c.repaint();
+				}
+			});
+
+			gsplitpane = new JSplitPane();
+			gsplitpane.setLeftComponent(rowheaderscroll);
+			gsplitpane.setRightComponent(scrollpane);
+
+			JComponent fillup = new JComponent() {};
+			fillup.setPreferredSize(new Dimension(hey, 20));
+			scrollpane.setColumnHeaderView(fillup);
+
+			// JComponent filldown = new JComponent() {};
+			// filldown.setPreferredSize( new Dimension(100,25) );
+			// rowheaderscroll.setCorner( JScrollPane., corner)
+
+			int rh = rowheader.getHeight();
+			if (rh == 0) {
+				rh = rowheader.getRowCount() * rowheader.getRowHeight();
+			}
+			c.setPreferredSize(new Dimension(hey, rh));
+			c.setSize(hey, rh);
+		}
+		
+		JToolBar	toolbar = new JToolBar();
+		toolbar.add( binaryColorScheme );
+		toolbar.add( gcColorScheme );
+		toolbar.add( locprevColorScheme );
+		
+		JComponent panel = new JComponent() {};
+		panel.setLayout( new BorderLayout() );
+		panel.add( toolbar, BorderLayout.NORTH );
+		panel.add( gsplitpane );
+
+		if (!frame.isVisible()) {
+			frame = new JFrame();
+			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			frame.setSize(800, 600);
+			frame.add( panel );
 		}
 
 		frame.setVisible(true);
