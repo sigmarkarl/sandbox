@@ -10416,13 +10416,14 @@ public class GeneSet extends JApplet {
 		}*/
 		
 		for (GeneGroup gg : allgenegroups) {
-			if (g.species != null) {
+			Set<String>	species = gg.getSpecies();
+			if( species != null ) {
 				ShareNum sharenum = null;
-				if (specset.containsKey(g.species.keySet())) {
-					sharenum = specset.get(g.species.keySet());
+				if (specset.containsKey( species ) ) {
+					sharenum = specset.get( species );
 					sharenum.numshare++;
 				} else {
-					specset.put(g.species.keySet(), new ShareNum(1, sn++));
+					specset.put( species, new ShareNum(1, sn++) );
 				}
 			}
 		}
@@ -10713,6 +10714,8 @@ public class GeneSet extends JApplet {
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
 		final JRadioButton	cycColorScheme = new JRadioButton("#Cyc");
 		final JRadioButton	lenColorScheme = new JRadioButton("Len");
+		final JRadioButton	shareColorScheme = new JRadioButton("Sharing");
+		final JRadioButton	groupCoverageColorScheme = new JRadioButton("GroupCoverage");
 		if (true) { //gsplitpane == null) {			
 			List<Tegeval> ltv = loadContigs( genes, species );
 			
@@ -10725,12 +10728,13 @@ public class GeneSet extends JApplet {
 				Color dg = Color.green.darker();
 				Color rd = Color.red;
 				Color dr = Color.red.darker();
-
+				Color altcol = Color.black;
 				// Color dg = Color.green.darker();
 
 				public void paintComponent(Graphics g) {
 					super.paintComponent(g);
 
+					Gene	lastgene = null;
 					Rectangle rc = g.getClipBounds();
 					for (int i = (int) rc.getMinX(); i < (int) Math.min(sorting.getRowCount(), rc.getMaxX()); i++) {
 						int r = sorting.convertRowIndexToModel(i);
@@ -10800,7 +10804,31 @@ public class GeneSet extends JApplet {
 							} else {
 								g.setColor( new Color( (float)(max-20)/2775.0f, 0.0f, 0.0f ) );
 							}
+						} else if( shareColorScheme.isSelected() ) {
+							//if( lastgene == null || !gene.species.keySet().equals( lastgene.species.keySet() ) ) {
+							if( lastgene == null || !gene.getGeneGroup().getSpecies().equals( lastgene.getGeneGroup().getSpecies() ) ) {
+								if( altcol == Color.black ) altcol = Color.red;
+								else altcol = Color.black;
+							}
+							
+							if (sorting.isRowSelected(i)) {								
+								//double locprev = max; //Math.min( , max );
+								g.setColor( altcol );
+							} else {
+								g.setColor( altcol );
+							}
+						} else if( groupCoverageColorScheme.isSelected() ) {
+							int gc = gene.getGroupCoverage();
+							if (sorting.isRowSelected(i)) {								
+								//double locprev = max; //Math.min( , max );
+								if( gc == -1 ) g.setColor( Color.cyan );
+								else g.setColor( new Color( 1.0f-(float)(gc)/28.0f, 0.0f, 0.0f ) );
+							} else {
+								if( gc == -1 ) g.setColor( Color.blue );
+								else g.setColor( new Color( (float)(gene.getGroupCoverage())/28.0f, 0.0f, 0.0f ) );
+							}
 						}
+						lastgene = gene;
 						
 						if (gene.species != null) {
 							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
@@ -10854,12 +10882,16 @@ public class GeneSet extends JApplet {
 			locprevColorScheme.setAction( a );
 			cycColorScheme.setAction( a );
 			lenColorScheme.setAction( a );
+			shareColorScheme.setAction( a );
+			groupCoverageColorScheme.setAction( a );
 			
 			binaryColorScheme.setText("Binary");
 			gcColorScheme.setText("GC");
 			locprevColorScheme.setText("Loc");
 			cycColorScheme.setText("#Cys");
 			lenColorScheme.setText("Len");
+			shareColorScheme.setText("Share");
+			groupCoverageColorScheme.setText("GroupCoverage");
 			
 			binaryColorScheme.setSelected( true );
 			
@@ -10869,6 +10901,8 @@ public class GeneSet extends JApplet {
 			bg.add( locprevColorScheme );
 			bg.add( cycColorScheme );
 			bg.add( lenColorScheme );
+			bg.add( shareColorScheme );
+			bg.add( groupCoverageColorScheme );
 
 			c.addMouseListener(new MouseAdapter() {
 				Point p;
@@ -10994,6 +11028,8 @@ public class GeneSet extends JApplet {
 		toolbar.add( locprevColorScheme );
 		toolbar.add( cycColorScheme );
 		toolbar.add( lenColorScheme );
+		toolbar.add( shareColorScheme );
+		toolbar.add( groupCoverageColorScheme );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
