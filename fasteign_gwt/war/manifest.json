@@ -1,0 +1,13 @@
+{
+  "name": "Fasteignaverð",
+  "description": "Fasteignaverð á Íslandi",
+  "version": "0.1",
+  "manifest_version": 2,
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "permissions": ["webview", "http://fasteignaverd.appspot.com/","http://www.mbl.is/"],
+  "icons": { "16": "fasteign-16.png", "128": "fasteign-128.png" }
+}
