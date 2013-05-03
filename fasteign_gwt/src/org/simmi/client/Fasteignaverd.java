@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import android.webkit.JavascriptInterface;
-
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -336,8 +334,10 @@ public class Fasteignaverd implements EntryPoint {
 	
 	@Override
 	public void onModuleLoad() {
+		Browser.getWindow().getConsole().log("ok");
+		
 		RootPanel	rp = RootPanel.get();
-		final DataGrid<Ibud>	ibudGrid = new DataGrid<Ibud>();
+		//final DataGrid<Ibud>	ibudGrid = new DataGrid<Ibud>();
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
@@ -355,7 +355,7 @@ public class Fasteignaverd implements EntryPoint {
 		vp.add( subvp );
 		subvp.setSpacing(5);
 		
-		ibudGrid.setSize( (w-20)+"px", "600px" );
+		//ibudGrid.setSize( (w-20)+"px", "600px" );
 		
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
@@ -379,7 +379,8 @@ public class Fasteignaverd implements EntryPoint {
 		subvp.add( title );
 		//Label loc = new Label("Veldu svæði:");
 		//subvp.add(loc);
-		final ListBox loccomb = new ListBox();
+		
+		/*final ListBox loccomb = new ListBox();
 		loccomb.setSize("100%", "42px");
 		loccomb.addItem("Veldu svæði");
 		loccomb.addItem("101 Miðbær");
@@ -461,7 +462,8 @@ public class Fasteignaverd implements EntryPoint {
 
 				final String tstr = val;
 				
-				tstr.replace("offset", "offset=" + i)
+				int i = 0;
+				tstr.replace("offset", "offset=" + i);
 				//pgbar.setIndeterminate(true);
 				
 				/*t = new Timer() {
@@ -499,7 +501,7 @@ public class Fasteignaverd implements EntryPoint {
 						}*
 					}
 				};
-				t.start();*/	
+				t.start();*
 			}
 		});
 		subvp.add( leita );
