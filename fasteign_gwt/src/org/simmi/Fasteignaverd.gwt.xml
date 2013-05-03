@@ -10,4 +10,5 @@
     <!--add-linker name="sso" /-->
 	<source path="client" />
 	<source path="shared" />
+	<entry-point class="org.simmi.client.Fasteignaverd"></entry-point>
 </module>
