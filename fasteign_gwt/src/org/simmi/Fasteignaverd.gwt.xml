@@ -9,5 +9,6 @@
     <!--add-linker name="direct_install" /-->
     <!--add-linker name="sso" /-->
 	<source path="client" />
+
 	<entry-point class="org.simmi.client.Fasteignaverd"></entry-point>
 </module>
