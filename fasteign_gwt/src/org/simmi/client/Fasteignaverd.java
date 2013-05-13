@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -17,7 +19,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -227,6 +228,17 @@ public class Fasteignaverd implements EntryPoint {
 		}
 	};
 	
+	public class Fastpack {
+		public native void search( String val ) /*-{
+			this.search( val );
+		}-*/;
+	};
+	
+	Fastpack fastpack;
+	public native Fastpack getFastpack() /*-{
+		return $wnd.fastpack;
+	}-*/;
+	
 	List<Ibud> iblist = new ArrayList<Ibud>();
 	String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
 	//String base = "http://mail.google.com/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
@@ -333,11 +345,12 @@ public class Fasteignaverd implements EntryPoint {
 	Timer t = null;
 	
 	@Override
-	public void onModuleLoad() {
-		Browser.getWindow().getConsole().log("ok");
-		
+	public void onModuleLoad() {	
 		RootPanel	rp = RootPanel.get();
 		//final DataGrid<Ibud>	ibudGrid = new DataGrid<Ibud>();
+		fastpack = getFastpack();
+		
+		Window.enableScrolling( false );
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
@@ -375,12 +388,17 @@ public class Fasteignaverd implements EntryPoint {
 		topcomp.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
 		
 		Label	title = new Label("Fasteignaverð 1.1");
+		//Style style = title.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
+		
 		title.setSize("100%", "42px");
 		subvp.add( title );
 		//Label loc = new Label("Veldu svæði:");
 		//subvp.add(loc);
 		
-		/*final ListBox loccomb = new ListBox();
+		final ListBox loccomb = new ListBox();
+		//style = loccomb.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
 		loccomb.setSize("100%", "42px");
 		loccomb.addItem("Veldu svæði");
 		loccomb.addItem("101 Miðbær");
@@ -412,6 +430,8 @@ public class Fasteignaverd implements EntryPoint {
 		//Label typ = new Label("Veldu tegund:");
 		//subvp.add(typ);
 		final ListBox typcomb = new ListBox();
+		//style = typcomb.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
 		typcomb.setSize("100%", "42px");
 		typcomb.addItem("Veldu tegund");
 		typcomb.addItem("Fjölbýli");
@@ -421,26 +441,41 @@ public class Fasteignaverd implements EntryPoint {
 		subvp.add(typcomb);
 
 		Label big = new Label("Veldu stærð:");
+		//style = big.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
 		//big.setSize("15%", "42px");
 		topcomp.add(big);
 		final IntegerBox bigfield = new IntegerBox();
+		bigfield.setStyleName("test");
+		//style = bigfield.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
+		
 		bigfield.setSize("100%", "42px");
 		bigfield.setValue(100);
 		topcomp.add(bigfield);
 		
 		Label bigdiff = new Label("+/-");
+		//style = bigdiff.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
 		//bigdiff.setSize("5%", "42px");
 		topcomp.add(bigdiff);
 		final IntegerBox bigdifffield = new IntegerBox();
+		bigdifffield.setStyleName("test");
+		//style = bigdifffield.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
+		
 		bigdifffield.setSize("100%", "42px");
 		bigdifffield.setValue(30);
 		topcomp.add(bigdifffield);
 		subvp.add( topcomp );
 		
-		topcomp.setCellWidth(bigfield, "40%");
-		topcomp.setCellWidth(bigdifffield, "40%");
+		topcomp.setCellWidth(bigfield, "30%");
+		topcomp.setCellWidth(bigdifffield, "30%");
 		
 		Button	leita = new Button("Leita");
+		//style = leita.getElement().getStyle();
+		//style.setFontSize(24.0, Unit.PX);
+		
 		leita.setSize("100%", "42px");
 		leita.addClickHandler( new ClickHandler() {
 			@Override
@@ -463,10 +498,10 @@ public class Fasteignaverd implements EntryPoint {
 				final String tstr = val;
 				
 				int i = 0;
-				tstr.replace("offset", "offset=" + i);
+				//tstr.replace("offset", "offset=" + i);
 				//pgbar.setIndeterminate(true);
 				
-				/*t = new Timer() {
+				t = new Timer() {
 					int i = 0;
 					@Override
 					public void run() {
@@ -478,7 +513,7 @@ public class Fasteignaverd implements EntryPoint {
 						}
 					}
 				};
-				t.schedule(0);*/
+				t.schedule(0);
 				/*Thread t = new Thread() {
 					public void run() {
 						calc(tstr);
@@ -501,7 +536,7 @@ public class Fasteignaverd implements EntryPoint {
 						}*
 					}
 				};
-				t.start();*
+				t.start();*/
 			}
 		});
 		subvp.add( leita );
