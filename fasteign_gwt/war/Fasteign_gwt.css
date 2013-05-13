@@ -24,6 +24,37 @@ h1 {
   margin: 5px;
 }
 
+body {background-color:#b0c4de !Important;}
+
+.gwt-VerticalPanel {
+	background-color:#b0c4de !Important;
+}
+
+.gwt-Label {
+	font-family: 'Days One', sans-serif;
+	font-size: 16pt;
+}
+
+.gwt-Button {
+	font-family: 'Days One', sans-serif;
+	font-size: 16pt !Important;
+}
+
+.gwt-ListBox {
+	font-family: 'Days One', sans-serif;
+	font-size: 16pt;
+}
+
+.gwt-TextBox {
+	font-family: 'Days One', sans-serif;
+	font-size: 16pt !Important;
+}
+
+.test {
+	font-family: 'Days One', sans-serif;
+	font-size: 16pt !Important;
+}
+
 .serverResponseLabelError {
   color: red;
 }
