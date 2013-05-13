@@ -2201,7 +2201,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					mapmap.put(name, map);
 				}
 				
-				TreeUtil tu = new TreeUtil( sb.toString(), false, include, mapmap, cbmi.isSelected(), collapset, colormap, true );
+				TreeUtil tu = new TreeUtil();
+				tu.init( sb.toString(), false, include, mapmap, cbmi.isSelected(), collapset, colormap, true  );
 				//return arg0.getReaderForText( this );
 				String str = tu.getNode().toString();
 				return new ByteArrayInputStream( str.getBytes( charset ) );
