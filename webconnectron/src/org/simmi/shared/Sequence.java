@@ -476,6 +476,10 @@ public class Sequence implements Comparable<Sequence> {
 		this.id = id;
 	}
 	
+	public Sequence() {
+		super();
+	}
+	
 	public Sequence( String id, String name, Map<String,Sequence> mseq ) {
 		this( name, mseq );
 		this.id = id;
