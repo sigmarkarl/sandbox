@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import elemental.client.Browser;
+
 public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
@@ -32,6 +34,22 @@ public class TreeUtil {
 		ret.countLeaves();
 		
 		return ret;
+	}
+	
+	public Node getParent( Node root, Set<String> leaveNames ) {
+		Set<String> currentLeaveNames = root.getLeaveNames();
+		if( currentLeaveNames.size() >= leaveNames.size() ) {
+			//System.err.println( currentLeaveNames );
+			if( currentLeaveNames.equals( leaveNames ) ) return root;
+			else {
+				for( Node n : root.getNodes() ) {
+					Node par = getParent(n, leaveNames);
+					if( par != null ) return par;
+				}
+			}
+		}
+			
+		return null;
 	}
 	
 	public String getSelectString( Node n, boolean meta ) {
@@ -318,7 +336,7 @@ public class TreeUtil {
 					parnode.addNode( nodi, vi );
 					parnode.addNode( nodj, vj );
 				} else {
-					parnode = nodi.getParent(); 
+					parnode = nodi.getParent();
 					nodi.seth( vi );
 					nodj.seth( vj );
 				}
@@ -540,6 +558,20 @@ public class TreeUtil {
 		
 		public boolean isLeaf() {
 			return nodes == null || nodes.size() == 0;
+		}
+		
+		public Set<String> getLeaveNames() {
+			Set<String>	ret = new HashSet<String>();
+			
+			List<Node> nodes = this.getNodes();
+			if( nodes != null && nodes.size() > 0 ) {
+				for( Node n : nodes ) {
+					ret.addAll( n.getLeaveNames() );
+				}
+				if( nodes.size() == 1 ) ret.add( this.getName() );
+			} else ret.add( this.getName() );
+			
+			return ret;
 		}
 		
 		public Node getRoot() {
@@ -876,10 +908,10 @@ public class TreeUtil {
 			if( parse ) {
 				if( newname != null ) {
 					int fi = newname.indexOf(';');
-					if( fi == -1 ) {
-						int ci = newname.indexOf("[#");
-						int si = newname.indexOf("{");
-						if( ci == -1 ) {
+					if( fi == -1 ) {						
+						int ci = newname.indexOf("[");
+						//int si = newname.indexOf("{");
+						/*if( ci == -1 ) {
 							if( si == -1 ) {
 								this.name = newname;
 								this.setFontSize( -1.0 );
@@ -894,11 +926,20 @@ public class TreeUtil {
 							}
 							this.setColor( null );
 							clearInfo();
-						} else {
+						} else {*/
+						if( ci >= 0 ) {
+							this.name = newname.substring(0,ci);
+							int ce = newname.indexOf("]",ci+1);
+							String metastr = newname.substring(ci+1,ce);
+							
+							Browser.getWindow().getConsole().log( "erm " + this.name + " " + metastr );
+							
+							/*int coli = metastr.indexOf("#");
+							if( coli >= 0 ) {
+								this.setColor( metastr.substring(coli, coli+7) );
+							}
+							int si = metastr.indexOf("{");
 							if( si == -1 ) {
-								this.name = newname.substring(0,ci);
-								int ce = newname.indexOf( "]",ci+1 );
-								this.setColor( newname.substring(ci+1,ce) );
 								this.setFontSize( -1.0 );
 								
 								ci = newname.indexOf( '[', ce+1 );
@@ -912,10 +953,8 @@ public class TreeUtil {
 								int vi = Math.min(si, fi);
 								if( vi > ce+1 ) addInfo( newname.substring(ce+1, vi) );
 							} else {
-								this.name = newname.substring(0,Math.min(ci, si));
-								int ce = newname.indexOf("]",ci+1);
-								int se = newname.indexOf("}",si+1);
-								this.setColor( newname.substring(ci+1,ce) );
+								//this.name = newname.substring(0,Math.min(ci, si));
+								/*int se = metastr.indexOf("}",si+1);
 								
 								ci = newname.indexOf( '[', ce+1 );
 								while( ci != -1 && ci < si ) {
@@ -932,9 +971,9 @@ public class TreeUtil {
 								String[] mfsplit = mfstr.split(" ");
 								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
 								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
-								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );
-							}
-						}
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );*
+							}*/
+						} else this.name = newname;
 						this.id = this.name;
 						this.setMeta( null );
 					} else {
@@ -955,6 +994,13 @@ public class TreeUtil {
 				}
 			} else {
 				this.name = newname;
+				/*this.id = newname;
+				try {
+					double val = Double.parseDouble( newname );
+					this.setBootstrap( val );
+				} catch( Exception e ) {
+					
+				}*/
 			}
 		}
 		
@@ -1477,8 +1523,8 @@ public class TreeUtil {
 		this.loc = newloc;
 	}
 	
-	public TreeUtil( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap, boolean clearParentNodes ) {
-		super();
+	public void init( String str, boolean inverse, Set<String> include, Map<String,Map<String,String>> mapmap, boolean collapse, Set<String> collapset, Map<String,String> colormap, boolean clearParentNodes ) {
+		//super();
 		loc = 0;
 		//System.err.println( str );
 		if( str != null && str.length() > 0 ) {
@@ -1884,7 +1930,8 @@ public class TreeUtil {
 		StringBuilder sb = new StringBuilder();
 			
 		String str = sb.toString().replaceAll("[\r\n]+", "");
-		TreeUtil treeutil = new TreeUtil( str, inverse, null, null, false, null, null, false );
+		TreeUtil treeutil = new TreeUtil();
+		treeutil.init( str, inverse, null, null, false, null, null, false );
 	}
 	
 	public void softReplaceNames( Node node, Map<String,String> namesMap ) {
@@ -2041,6 +2088,7 @@ public class TreeUtil {
 	public Node parseTreeRecursive( String str, boolean inverse ) {
 		Node ret = new Node();
 		Node node = null;
+		//boolean brakk = false;
 		while( loc < str.length()-1 && str.charAt(loc) != ')' ) {
 			loc++;
 			char c = str.charAt(loc);
@@ -2063,7 +2111,7 @@ public class TreeUtil {
 				char n = str.charAt(end);
 				
 				int si = 0;
-				if( c == '\'' ) {
+				/*if( c == '\'' ) {
 					while( end < str.length()-1 && n != '\'' ) {
 						n = str.charAt(++end);
 					}
@@ -2071,13 +2119,20 @@ public class TreeUtil {
 					//String code = str.substring( loc, end );
 					//node.name = code.replaceAll("'", "");
 					//loc = end+1;
-				}
+				}*/
 				
 				boolean outsvig = true;
+				boolean brakk = n == '[';
 				//while( end < str.length()-1 && n != ',' && n != ')' ) {
-				while( end < str.length()-1 && (n != ',' && n != ')' || !outsvig) ) {
+				while( end < str.length()-1 && ( brakk || (n != ',' && n != ')' || !outsvig) ) ) {
 					n = str.charAt(++end);
-					if( outsvig && n == '(' ) {
+					if( n == '[' ) {
+						brakk = true;
+						//n = str.charAt(++end);
+					} else if( n == ']' ) {
+						brakk = false;
+						//n = str.charAt(++end);
+					} else if( outsvig && n == '(' ) {
 						outsvig = false;
 						n = str.charAt(++end);
 					} else if( !outsvig && n == ')' ) {
@@ -2090,17 +2145,20 @@ public class TreeUtil {
 				
 				String code = str.substring( loc, end );
 				int ci = code.indexOf(":", si);
-				if( ci != -1 ) {
+				if( ci != -1 ) {					
 					String[] split;
-					int i = code.lastIndexOf("'");
+					//int i = code.lastIndexOf("'");
 					String name;
-					if( i > 0 ) {
+					/*if( i > 0 ) {
 						split = code.substring(i, code.length()).split(":");
 						name = code.substring(0, i+1);
 					} else {
 						split = code.split(":");
 						name = split[0];
-					}
+					}*/
+					
+					split = code.split(":");
+					name = split[0];
 					
 					/*int coli = name.indexOf("[#");
 					if( coli != -1 ) {
@@ -2117,6 +2175,7 @@ public class TreeUtil {
 						node.meta = name.substring(idx+1);
 					}
 					node.id = node.name;*/
+					//Browser.getWindow().getConsole().log( "erm " + name );
 					node.setName( name );
 					//extractMeta( node, mapmap );
 					
@@ -2229,7 +2288,7 @@ public class TreeUtil {
 			char n = str.charAt(end);
 			
 			int si = 0;
-			if( n == '\'' ) {
+			/*if( n == '\'' ) {
 				n = str.charAt(++end);
 				while( end < str.length()-1 && n != '\'' ) {
 					n = str.charAt(++end);
@@ -2238,10 +2297,18 @@ public class TreeUtil {
 				//String code = str.substring( loc, end );
 				//node.name = code.replaceAll("'", "");
 				//loc = end+1;
-			}
+			}*/
 			
-			while( end < str.length()-1 && n != ',' && n != ')' ) {
+			boolean brakk = n == '[';
+			while( end < str.length()-1 && ( brakk || (n != ',' && n != ')') ) ) {
 				n = str.charAt(++end);
+				if( n == '[' ) {
+					brakk = true;
+					//n = str.charAt(++end);
+				} else if( n == ']' ) {
+					brakk = false;
+					//n = str.charAt(++end);
+				} 
 			}
 			String code = str.substring( loc, end );
 			int ci = code.indexOf(":", si);
