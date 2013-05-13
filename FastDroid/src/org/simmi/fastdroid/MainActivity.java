@@ -10,10 +10,8 @@ import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
-import android.app.DownloadManager.Request;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.Browser;
 import android.view.Menu;
 import android.view.Window;
 import android.view.WindowManager;
@@ -260,6 +258,7 @@ public class MainActivity extends Activity {
 	};
 	
 	public class Fastpack {
+		@JavascriptInterface
 		public void search() {
 			new searchTask().execute();
 		}
@@ -300,7 +299,7 @@ public class MainActivity extends Activity {
 		
 		Fastpack fastpack = new Fastpack();
 		myWebView.addJavascriptInterface( fastpack, "fastpack" );
-		myWebView.loadUrl("http://192.168.1.66:8893/");
+		myWebView.loadUrl("http://192.168.1.85:8888/");
 	}
 
 	@Override
