@@ -927,7 +927,7 @@ public class TreeUtil {
 							this.setColor( null );
 							clearInfo();
 						} else {*/
-						if( ci > 0 ) {
+						if( ci >= 0 ) {
 							this.name = newname.substring(0,ci);
 							int ce = newname.indexOf("]",ci+1);
 							String metastr = newname.substring(ci+1,ce);
@@ -1898,7 +1898,7 @@ public class TreeUtil {
 	}
 	
 	public static void maintree( String[] args ) throws IOException {					
-		byte[] bb = Files.readAllBytes( Paths.get("c:/sample.tree") ); //"c:/influenza.tree") );
+		byte[] bb = Files.readAllBytes( Paths.get("c:/influenza.tree") ); //"c:/sample.tree") ); //"c:/influenza.tree") );
 		String str = new String( bb );
 		String treestr = null;;
 		
@@ -1913,6 +1913,8 @@ public class TreeUtil {
 		} else treestr = str.replaceAll("[\r\n]+", "");
 		
 		if( treestr != null ) {
+			System.err.println( treestr.substring( treestr.length()-10 ) );
+			
 			TreeUtil treeutil = new TreeUtil();
 			treeutil.init( treestr, false, null, null, false, null, null, false );
 			System.err.println( treeutil.getNode() );
@@ -2293,7 +2295,11 @@ public class TreeUtil {
 					//n = str.charAt(++end);
 				} 
 			}
-			String code = str.substring( loc, end );
+			
+			String code;
+			if( n == ']' ) {
+				code = str.substring( loc, end+1 );
+			} else code = str.substring( loc, end );
 			int ci = code.indexOf(":", si);
 			if( ci != -1 ) {
 				String[] split;
