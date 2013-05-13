@@ -280,7 +280,7 @@ public class TreeUtil {
 						if( i != j ) {
 							double dval = dmat[i*len+j];
 							if( Double.isNaN( dval ) ) {
-								System.err.println("erm");
+								//System.err.println("erm");
 							}
 							u[i] += dval;
 						}
@@ -932,9 +932,9 @@ public class TreeUtil {
 							int ce = newname.indexOf("]",ci+1);
 							String metastr = newname.substring(ci+1,ce);
 							
-							Browser.getWindow().getConsole().log( "erm " + this.name + " " + metastr );
+							//Browser.getWindow().getConsole().log( "erm " + this.name + " " + metastr );
 							
-							/*int coli = metastr.indexOf("#");
+							int coli = metastr.indexOf("#");
 							if( coli >= 0 ) {
 								this.setColor( metastr.substring(coli, coli+7) );
 							}
@@ -944,11 +944,18 @@ public class TreeUtil {
 								
 								ci = newname.indexOf( '[', ce+1 );
 								while( ci != -1 ) {
-									addInfo( newname.substring(ce+1, ci) );
+									String info = newname.substring(ce+1, ci);
+									/*Browser.getWindow().getConsole().log( "bleh "+info + "  " + ce + "  " + ci );
+									Browser.getWindow().getConsole().log( metastr );
+									Browser.getWindow().getConsole().log( this.name );
+									Browser.getWindow().getConsole().log( newname );*/
+									addInfo( info );
 									ce = newname.indexOf( ']', ci+1 );
 									addInfo( newname.substring(ci, ce+1) );
 									
 									ci = newname.indexOf( '[', ce+1 );
+									
+									break;
 								}
 								int vi = Math.min(si, fi);
 								if( vi > ce+1 ) addInfo( newname.substring(ce+1, vi) );
@@ -971,8 +978,8 @@ public class TreeUtil {
 								String[] mfsplit = mfstr.split(" ");
 								this.setFontSize( Double.parseDouble( mfsplit[0] ) );
 								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
-								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );*
-							}*/
+								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );*/
+							}
 						} else this.name = newname;
 						this.id = this.name;
 						this.setMeta( null );
@@ -2310,7 +2317,12 @@ public class TreeUtil {
 					//n = str.charAt(++end);
 				} 
 			}
-			String code = str.substring( loc, end );
+			
+			String code;
+			if( n == ']' ) {
+				code = str.substring( loc, end+1 );
+			} else code = str.substring( loc, end );
+			
 			int ci = code.indexOf(":", si);
 			if( ci != -1 ) {
 				String[] split;
