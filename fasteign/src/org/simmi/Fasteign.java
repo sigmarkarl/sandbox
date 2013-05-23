@@ -566,11 +566,13 @@ public class Fasteign extends JApplet {
 							}
 							Collections.sort(ld);
 
-							if (ld.size() % 2 == 0) {
-								return (ld.get(ld.size() / 2 - 1) + ld.get(ld.size() / 2)) / 2;
-							} else {
+							if( ld.size() > 0 ) {
+								if (ld.size() % 2 == 0) {
+									return (ld.get(ld.size() / 2 - 1) + ld.get(ld.size() / 2)) / 2;
+								}
 								return ld.get(ld.size() / 2);
 							}
+							return 0;
 						}
 					} else {
 						int r = ptable.getRowCount();
@@ -594,11 +596,13 @@ public class Fasteign extends JApplet {
 							}
 							Collections.sort(ld);
 
-							if (ld.size() % 2 == 0) {
-								return (ld.get(ld.size() / 2 - 1) + ld.get(ld.size() / 2)) / 2;
-							} else {
+							if( ld.size() > 0 ) {
+								if (ld.size() % 2 == 0) {
+									return (ld.get(ld.size() / 2 - 1) + ld.get(ld.size() / 2)) / 2;
+								}
 								return ld.get(ld.size() / 2);
 							}
+							return 0;
 						}
 					}
 				}
@@ -1000,8 +1004,8 @@ public class Fasteign extends JApplet {
 
 								if( !mapClick ) {
 									try {
-										JSObject jso = JSObject.getWindow( Fasteign.this );
-										jso.call( "setCenter", new Object[] {val} );
+										//JSObject jso = JSObject.getWindow( Fasteign.this );
+										//jso.call( "setCenter", new Object[] {val} );
 									} catch( Exception ex ) {}
 								}
 							} else {
