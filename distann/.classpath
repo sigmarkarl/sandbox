@@ -12,6 +12,6 @@
 	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="commons-vfs2-2.0.jar"/>
-	<classpathentry kind="lib" path="commons-net.jar"/>
+	<classpathentry kind="lib" path="commons-net-3.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
