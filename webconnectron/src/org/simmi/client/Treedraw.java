@@ -448,7 +448,7 @@ public class Treedraw implements EntryPoint {
 					handleTree();
 				}
 			} else if( str.startsWith("#") ) {
-				int i = str.lastIndexOf("tree");
+				int i = str.lastIndexOf("begin trees");
 				if( i != -1 ) {
 					i = str.indexOf('(', i);
 					int l = str.indexOf(';', i+1);
@@ -467,10 +467,11 @@ public class Treedraw implements EntryPoint {
 					}
 					
 					String tree = str.substring(i, l).replaceAll("[\r\n]+", "");
-					setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
+					TreeUtil treeutil = new TreeUtil();
+					treeutil.init( tree, false, null, null, false, null, null, false );
+					setTreeUtil( treeutil, tree );
 					treeutil.replaceNames( treeutil.getNode(), namemap );
 					handleTree();
-					
 				}
 			} else if( str.startsWith(">") ) {
 				//final TreeUtil 
@@ -652,7 +653,10 @@ public class Treedraw implements EntryPoint {
 				if( i != -1 ) {
 					String treestr = str.substring(i);
 					String tree = treestr.replaceAll("[\r\n]+", "");
-					setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
+					TreeUtil treeutil = new TreeUtil();
+					treeutil.init( tree, false, null, null, false, null, null, false );
+					
+					setTreeUtil( treeutil, str );
 					handleTree();
 				}
 			} else if( !str.startsWith("(") ) {
@@ -733,7 +737,9 @@ public class Treedraw implements EntryPoint {
 			} else {
 				//Browser.getWindow().getConsole().log("what");
 				String tree = str.replaceAll("[\r\n]+", "");
-				setTreeUtil( new TreeUtil( tree, false, null, null, false, null, null, false ), str );
+				TreeUtil	treeutil =  new TreeUtil();
+				treeutil.init( tree, false, null, null, false, null, null, false );
+				setTreeUtil( treeutil, str );
 				handleTree();
 			}
 		}
