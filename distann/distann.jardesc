@@ -11,20 +11,21 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
         <file path="/distann/src/idmapping_short.dat"/>
-        <file path="/distann/src/ncbithermus_short.blastout"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
+        <file path="/distann/src/allthermus.fna"/>
         <file path="/distann/src/allthermus.nn"/>
         <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
         <file path="/distann/src/kegg2go.txt"/>
-        <file path="/distann/src/allthermus_e5.clust"/>
-        <file path="/distann/src/allthermus.aa"/>
+        <file path="/distann/src/allthermus_new.clust"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
+        <file path="/distann/src/allthermus.aa"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
         <file path="/distann/src/go_short.obo"/>
         <file path="/distann/src/gene2refseq_short.txt"/>
         <file path="/distann/src/sp2go_short.txt"/>
         <file path="/distann/src/thermus16S.blastout"/>
+        <file path="/distann/src/thermus_ncbi_short.blastout"/>
         <file path="/distann/src/kegg_pathways"/>
         <file path="/distann/src/gene2go_short.txt"/>
         <file path="/distann/src/all_short.blastout"/>
