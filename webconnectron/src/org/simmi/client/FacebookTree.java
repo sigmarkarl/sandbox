@@ -243,7 +243,8 @@ public class FacebookTree implements EntryPoint {
 			handleTree( treeutil );
 		} else {
 			String tree = str.replaceAll("[\r\n]+", "");
-			TreeUtil	treeutil = new TreeUtil( tree, false, null, null, false, null, null, false );
+			TreeUtil	treeutil = new TreeUtil();
+			treeutil.init( tree, false, null, null, false, null, null, false );
 			handleTree( treeutil );
 		}
 	}
