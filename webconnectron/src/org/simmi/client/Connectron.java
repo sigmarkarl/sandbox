@@ -1001,7 +1001,8 @@ public class Connectron extends VerticalPanel
 		this.removeAll();
 		
 		loc = 0;
-		TreeUtil treeutil = new TreeUtil( text, false, null, null, false, null, null, false );
+		TreeUtil treeutil = new TreeUtil();
+		treeutil.init( text, false, null, null, false, null, null, false );
 		TreeUtil.Node resultnode = treeutil.getNode();
 		//Node resultnode = parseTreeRecursive( text, false );
 		

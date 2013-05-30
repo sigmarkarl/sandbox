@@ -39,9 +39,6 @@ import com.google.api.services.fusiontables.Fusiontables.Query;
 import com.google.api.services.fusiontables.Fusiontables.Query.SqlGet;
 import com.google.api.services.fusiontables.FusiontablesRequestInitializer;
 import com.google.api.services.fusiontables.model.Sqlresponse;
-import com.google.common.base.Preconditions;
-import com.google.common.primitives.UnsignedInteger;
-import com.google.common.primitives.UnsignedLong;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.matis.eurofir.webservices.FDQL;
 import com.matis.eurofir.webservices.Ws.PseudoResult;
@@ -508,7 +505,7 @@ public class EuroFIRServlet extends HttpServlet {
 		    return parser.getBigIntegerValue();
 		  }
 
-		  @Override
+		  /*@Override
 		  public UnsignedInteger getUnsignedIntegerValue() throws IOException {
 		    return UnsignedInteger.valueOf(parser.getLongValue());
 		  }
@@ -516,7 +513,7 @@ public class EuroFIRServlet extends HttpServlet {
 		  @Override
 		  public UnsignedLong getUnsignedLongValue() throws IOException {
 		    return UnsignedLong.valueOf(parser.getBigIntegerValue());
-		  }
+		  }*/
 
 		  @Override
 		  public BigDecimal getDecimalValue() throws IOException {
@@ -602,7 +599,7 @@ public class EuroFIRServlet extends HttpServlet {
 		    generator.writeNumber(v);
 		  }
 
-		  @Override
+		  /*@Override
 		  public void writeNumber(UnsignedInteger v) throws IOException {
 		    generator.writeNumber(v.longValue());
 		  }
@@ -610,7 +607,7 @@ public class EuroFIRServlet extends HttpServlet {
 		  @Override
 		  public void writeNumber(UnsignedLong v) throws IOException {
 		    generator.writeNumber(v.bigIntegerValue());
-		  }
+		  }*/
 
 		  @Override
 		  public void writeNumber(double v) throws IOException {
@@ -706,7 +703,34 @@ public class EuroFIRServlet extends HttpServlet {
 	    	    return new SimJsonGenerator( this, factory.createJsonGenerator(writer) );
 	    	  }
 
-	    	  @Override
+			@Override
+			public JsonParser createJsonParser(InputStream in)
+					throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public JsonParser createJsonParser(InputStream in, Charset charset)
+					throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public JsonParser createJsonParser(String value) throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public JsonParser createJsonParser(Reader reader)
+					throws IOException {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+	    	  /*@Override
 	    	  public JsonParser createJsonParser(Reader reader) throws IOException {
 	    	    Preconditions.checkNotNull(reader);
 	    	    return new SimJsonParser(this, factory.createJsonParser(reader));
@@ -728,7 +752,7 @@ public class EuroFIRServlet extends HttpServlet {
 	    	  public JsonParser createJsonParser(String value) throws IOException {
 	    	    Preconditions.checkNotNull(value);
 	    	    return new SimJsonParser(this, factory.createJsonParser(value));
-	    	  }
+	    	  }*/
 	    };
 	    
 	    
