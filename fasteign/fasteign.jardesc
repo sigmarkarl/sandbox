@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="/home/sigmar/fasteign.jar"/>
+    <jar path="fasteign_gwt/war/fasteign.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/fasteign/fasteign.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
