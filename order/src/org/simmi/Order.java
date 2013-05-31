@@ -1349,7 +1349,7 @@ public class Order extends JApplet {
 	private static class SMTPAuthenticator extends javax.mail.Authenticator {
 	    public PasswordAuthentication getPasswordAuthentication() {
 	        String username = "sigmar";
-	        String password = "mouse.123";
+	        String password = "tintypp.123";
 	        return new PasswordAuthentication(username, password);
 	    }
 	}
@@ -1370,9 +1370,9 @@ public class Order extends JApplet {
 		
 		public void send(){
 			Properties props = new Properties();
-			props.put("mail.smtp.host", "exchange.rf.is");
+			props.put("mail.smtp.host", "postur.matis.is");
 			props.put("mail.smtp.port", "25");
-			props.put("mail.smtp.auth", "true");
+			//props.put("mail.smtp.auth", "true");
 			
 			Authenticator auth = new SMTPAuthenticator();
 			Session mailSession = Session.getDefaultInstance(props, auth);
