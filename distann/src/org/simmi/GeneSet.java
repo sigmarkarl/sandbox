@@ -98,6 +98,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -3775,6 +3776,7 @@ public class GeneSet extends JApplet {
 
 	static class Function {
 		public Function() {}
+		public Function( String go ) { this.go = go; }
 
 		String go;
 		String ec;
@@ -3785,7 +3787,7 @@ public class GeneSet extends JApplet {
 		String desc;
 		Set<String> isa;
 		Set<String> subset;
-		Set<String> geneentries;
+		Set<Gene> geneentries;
 		int index;
 		
 		public String getName() {
@@ -4101,8 +4103,8 @@ public class GeneSet extends JApplet {
 			Set<Function>	funcset = new HashSet<Function>();
 			for( Gene g : genes ) {
 				if( g.funcentries != null && g.funcentries.size() > 0 ) {
-					for( String go : g.funcentries ) {
-						Function f = funcmap.get( go );
+					for( Function f : g.funcentries ) {
+						//Function f = funcmap.get( go );
 						funcset.add( f );
 					}
 				}
@@ -4114,8 +4116,8 @@ public class GeneSet extends JApplet {
 			String ret = "";
 			for( Gene g : genes ) {
 				if( g.funcentries != null && g.funcentries.size() > 0 ) {
-					for( String go : g.funcentries ) {
-						Function f = funcmap.get( go );
+					for( Function f : g.funcentries ) {
+						//Function f = funcmap.get( go );
 						
 						if( allowedFunctions == null || allowedFunctions.contains(f) ) {
 							String name = f.getName().replace('/', '-').replace(",", "");
@@ -4135,8 +4137,8 @@ public class GeneSet extends JApplet {
 			String ret = "";
 			Set<String>	included = new HashSet<String>();
 			for( Gene g : genes ) {
-				if( g.funcentries != null ) for( String go : g.funcentries ) {
-					Function f = funcmap.get( go );
+				if( g.funcentries != null ) for( Function f : g.funcentries ) {
+					//Function f = funcmap.get( go );
 					String namespace = f.getNamespace();
 					//System.err.println( g.getName() + "  " + go );
 					if( !included.contains(namespace) ) {
@@ -4153,6 +4155,14 @@ public class GeneSet extends JApplet {
 			String ret = null;
 			for( Gene g : genes ) {
 				if( ret == null || !(g.getName().contains("unnamed") || g.getName().contains("hypot")) ) ret = g.getName();
+			}
+			return ret;
+		}
+		
+		public String getKeggid() {
+			String ret = null;
+			for( Gene g : genes ) {
+				if( g.keggid != null ) ret = g.keggid;
 			}
 			return ret;
 		}
@@ -4309,7 +4319,7 @@ public class GeneSet extends JApplet {
 		String keggid;
 		String pdbid;
 		String blastspec;
-		Set<String> funcentries;
+		Set<Function> funcentries;
 		Map<String, Teginfo> species;
 		private String aac;
 		int index;
@@ -5890,8 +5900,8 @@ public class GeneSet extends JApplet {
 		return unimap;
 	}
 
-	public static Map<String, Function> funcMapping(Reader rd, Map<String, Gene> genids, String outshort) throws IOException {
-		Map<String, Function> funcmap = new HashMap<String, Function>();
+	public static void funcMapping(Reader rd, Map<String, Gene> genids, String outshort) throws IOException {
+		//Map<String, Function> funcmap = new HashMap<String, Function>();
 
 		FileWriter fw = null;
 		if (outshort != null)
@@ -5905,8 +5915,14 @@ public class GeneSet extends JApplet {
 			if (split.length > 1 && genids.containsKey(split[1])) {
 				Gene gene = genids.get(split[1]);
 				if (gene.funcentries == null)
-					gene.funcentries = new HashSet<String>();
-				gene.funcentries.add(split[2]);
+					gene.funcentries = new HashSet<Function>();
+				
+				Function func;
+				if( !funcmap.containsKey( split[2] ) ) {
+					func = new Function( split[2] );
+					funcmap.put( split[2], func );
+				} else func = funcmap.get( split[2] );
+				gene.funcentries.add( func );
 
 				if (fw != null)
 					fw.write(line + "\n");
@@ -5919,7 +5935,7 @@ public class GeneSet extends JApplet {
 		if (fw != null)
 			fw.close();
 
-		return funcmap;
+		//return funcmap;
 	}
 
 	public static void funcMappingUni(Reader rd, Map<String, Gene> uniids, String outfile) throws IOException {
@@ -5935,12 +5951,17 @@ public class GeneSet extends JApplet {
 			if (split.length > 1 && uniids.containsKey(split[0].trim())) {
 				Gene gene = uniids.get(split[0].trim());
 				if (gene.funcentries == null)
-					gene.funcentries = new HashSet<String>();
+					gene.funcentries = new HashSet<Function>();
+				
 				for (String erm : split[1].trim().split("[\t ]+")) {
-					gene.funcentries.add(erm);
+					Function func;
+					if( !funcmap.containsKey( erm ) ) {
+						func = new Function( erm );
+						funcmap.put( erm, func );
+					} else func = funcmap.get( erm );
+					gene.funcentries.add( func );
 				}
-				if (fw != null)
-					fw.write(line + "\n");
+				if (fw != null) fw.write(line + "\n");
 			}
 
 			line = br.readLine();
@@ -6309,8 +6330,25 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public static Teginfo getGroupTes( GeneGroup gg, String spec ) {
+		Teginfo ti = null;
+		
+		for( Gene g : gg.genes ) {
+			Teginfo sti = g.species.get( spec );
+			if( sti != null ) {
+				ti = sti;
+				break;
+			}
+		}
+		
+		return ti;
+	}
+	
+	static TableModel	defaultModel;
+	static TableModel	groupModel;
+	
 	JComboBox selcomb;
-	static Map<String,Function> funcmap = null;
+	static Map<String,Function> funcmap = new HashMap<String,Function>();
 	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
 			final Map<Set<String>, ShareNum> specset, final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
@@ -7556,6 +7594,21 @@ public class GeneSet extends JApplet {
 		
 		menubar.add( menu );
 		ttopcom.add( menubar );
+		
+		JMenu		view = new JMenu("View");
+		menubar.add( view );
+		view.add( new AbstractAction("Genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				table.setModel( defaultModel );
+			}
+		});
+		view.add( new AbstractAction("Gene Groups") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				table.setModel( groupModel );
+			}
+		});
 		//ttopcom.add( shuffletreebutton );
 		//ttopcom.add( presabsbutton );
 		//ttopcom.add(freqdistbutton);
@@ -7795,7 +7848,273 @@ public class GeneSet extends JApplet {
 		splitpane.setBottomComponent(botcomp);
 		splitpane.setTopComponent(topcomp);
 
-		table.setModel(new TableModel() {
+		groupModel = new TableModel() {
+			@Override
+			public int getRowCount() {
+				return allgenegroups.size();
+			}
+
+			@Override
+			public int getColumnCount() {
+				return 47;
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				if (columnIndex == 0) {
+					return "Desc";
+				} else if (columnIndex == 1) {
+					return "Origin";
+				} else if (columnIndex == 2) {
+					return "Genid";
+				} else if (columnIndex == 3) {
+					return "Refid";
+				} else if (columnIndex == 4) {
+					return "Unid";
+				} else if (columnIndex == 5) {
+					return "Keggid";
+				} else if (columnIndex == 6) {
+					return "Pdbid";
+				} else if (columnIndex == 7) {
+					return "Present in";
+				} else if (columnIndex == 8) {
+					return "Group index";
+				} else if (columnIndex == 9) {
+					return "Group coverage";
+				} else if (columnIndex == 10) {
+					return "Group size";
+				} else if (columnIndex == 11) {
+					return "Locprev";
+				} else if (columnIndex == 12) {
+					return "Avg GC%";
+				} else if (columnIndex == 13) {
+					return "# of locus";
+				} else if (columnIndex == 14) {
+					return "# of loc in group";
+				} else if (columnIndex == 15) {
+					return "max length";
+				} else if (columnIndex == 16) {
+					return "sharing number";
+				} else if (columnIndex == 17) {
+					return "# Cyc";
+				} else if (columnIndex == 18) {
+					return "16S Corr";
+				} else if (columnIndex == 19) {
+					return "T.tSG0";
+				} else if (columnIndex == 20) {
+					return "T.tJL18";
+				} else if (columnIndex == 21) {
+					return "T.tHB8";
+				} else if (columnIndex == 22) {
+					return "T.tHB27";
+				} else if (columnIndex == 23) {
+					return "T.scotoSA01";
+				} else if (columnIndex == 24) {
+					return "T.aqua";
+				} else if (columnIndex == 25) {
+					return "T.eggert";
+				} else if (columnIndex == 26) {
+					return "T.island";
+				} else if (columnIndex == 27) {
+					return "T.antan";
+				} else if (columnIndex == 28) {
+					return "T.scoto346";
+				} else if (columnIndex == 29) {
+					return "T.scoto1572";
+				} else if (columnIndex == 30) {
+					return "T.scoto252";
+				} else if (columnIndex == 31) {
+					return "T.scoto2101";
+				} else if (columnIndex == 32) {
+					return "T.scoto2127";
+				} else if (columnIndex == 33) {
+					return "T.scoto4063";
+				} else if (columnIndex == 34) {
+					return "T.oshimai";
+				} else if (columnIndex == 35) {
+					return "T.brockianus";
+				} else if (columnIndex == 36) {
+					return "T.filiformis";
+				} else if (columnIndex == 37) {
+					return "T.igniterrae";
+				} else if (columnIndex == 38) {
+					return "T.kawarayensis";
+				} else if (columnIndex == 39) {
+					return "T.arciformis";
+				} else if (columnIndex == 40) {
+					return "T.spCCB";
+				} else if (columnIndex == 41) {
+					return "T.spRLM";
+				} else if (columnIndex == 42) {
+					return "T.oshimaiJL2";
+				} else if (columnIndex == 43) {
+					return "MT.silvianus";
+				} else if (columnIndex == 44) {
+					return "MT.ruber";
+				} else if (columnIndex == 45) {
+					return "M.hydro";
+				} else if (columnIndex == 46) {
+					return "O.profu";
+				}
+				
+				return "";
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				if( columnIndex == 9 || columnIndex == 12 || columnIndex == 18 )
+					return Double.class;
+				else if(columnIndex >= 6 && columnIndex <= 17)
+					return Integer.class;
+				else if (columnIndex >= 19)
+					return Teginfo.class;
+				return String.class;
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return false;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				GeneGroup gg = allgenegroups.get(rowIndex);
+				if (columnIndex == 0) {
+					return gg.getCommonName();
+				} else if (columnIndex == 1) {
+					return null;//gene.origin;
+				} else if (columnIndex == 2) {
+					return null;//gene.genid;
+				} else if (columnIndex == 3) {
+					return null;//gene.refid;
+				} else if (columnIndex == 4) {
+					return null;//gene.uniid;
+				} else if (columnIndex == 5) {
+					return gg.getKeggid();
+				} else if (columnIndex == 6) {
+					return null;//gene.pdbid;
+				} else if (columnIndex == 7) {
+					return gg.getSpecies().size();
+				} else if (columnIndex == 8) {
+					return gg.groupIndex;
+				} else if (columnIndex == 9) {
+					return gg.getGroupCoverage();
+				} else if (columnIndex == 10) {
+					return gg.getGroupGeneCount();
+				} else if (columnIndex == 11) {
+					return null;//gene.proximityGroupPreservation;
+				} else if (columnIndex == 12) {
+					return gg.getAvgGCPerc();
+				} else if (columnIndex == 13) {
+					int val = 0;
+					for( Gene gene : gg.genes ) {
+						for (String str : gene.species.keySet()) {
+							val += gene.species.get(str).tset.size();
+						}
+					}
+					return val;
+				} else if (columnIndex == 14) {
+					return gg.getGroupCount();
+				} else if (columnIndex == 15) {
+					int max = 0;
+					for( Gene gene : gg.genes ) {
+						for (String str : gene.species.keySet()) {
+							Teginfo set = gene.species.get(str);
+							for (Tegeval tv : set.tset) {
+								if (tv.seq != null)
+									max = Math.max(max, tv.seq.length());
+							}
+						}
+					}
+					return max;
+				} else if (columnIndex == 16) {
+					return specset.get( gg.getSpecies() );
+				} else if (columnIndex == 17) {
+					int max = 0;
+					for( Gene gene : gg.genes ) {
+						for (String str : gene.species.keySet()) {
+							Teginfo set = gene.species.get(str);
+							for (Tegeval tv : set.tset) {
+								max = Math.max(max, tv.numCys);
+							}
+						}
+					}
+					return max;
+				} else if (columnIndex == 18) {
+					return gg.getGroupCoverage() == 28 && gg.getGroupCount() == 28 ? 0 : -1;
+				} else if (columnIndex == 19) {
+					return getGroupTes( gg, "t.thermophilusSG0" );
+				} else if (columnIndex == 20) {
+					return getGroupTes( gg, "t.thermophilusJL18");
+				} else if (columnIndex == 21) {
+					return getGroupTes( gg, "t.thermophilusHB8");
+				} else if (columnIndex == 22) {
+					return getGroupTes( gg, "t.thermophilusHB27");
+				} else if (columnIndex == 23) {
+					return getGroupTes( gg, "t.scotoductusSA01");
+				} else if (columnIndex == 24) {
+					return getGroupTes( gg, "t.aquaticus");
+				} else if (columnIndex == 25) {
+					return getGroupTes( gg, "t.eggertsoni");
+				} else if (columnIndex == 26) {
+					return getGroupTes( gg, "t.islandicus");
+				} else if (columnIndex == 27) {
+					return getGroupTes( gg, "t.antranikiani");
+				} else if (columnIndex == 28) {
+					return getGroupTes( gg, "t.scotoductus346");
+				} else if (columnIndex == 29) {
+					return getGroupTes( gg, "t.scotoductus1572");
+				} else if (columnIndex == 30) {
+					return getGroupTes( gg, "t.scotoductus252");
+				} else if (columnIndex == 31) {
+					return getGroupTes( gg, "t.scotoductus2101");
+				} else if (columnIndex == 32) {
+					return getGroupTes( gg, "t.scotoductus2127");
+				} else if (columnIndex == 33) {
+					return getGroupTes( gg, "t.scotoductus4063");
+				} else if (columnIndex == 34) {
+					return getGroupTes( gg, "t.oshimai");
+				} else if (columnIndex == 35) {
+					return getGroupTes( gg, "t.brockianus");
+				} else if (columnIndex == 36) {
+					return getGroupTes( gg, "t.filiformis");
+				} else if (columnIndex == 37) {
+					return getGroupTes( gg, "t.igniterrae");
+				} else if (columnIndex == 38) {
+					return getGroupTes( gg, "t.kawarayensis");
+				} else if (columnIndex == 39) {
+					return getGroupTes( gg, "t.arciformis");
+				} else if (columnIndex == 40) {
+					return getGroupTes( gg, "t.spCCB");
+				} else if (columnIndex == 41) {
+					return getGroupTes( gg, "t.RLM");
+				} else if (columnIndex == 42) {
+					return getGroupTes( gg, "t.oshimaiJL2");
+				} else if (columnIndex == 43) {
+					return getGroupTes( gg, "mt.silvanus");
+				} else if (columnIndex == 44) {
+					return getGroupTes( gg, "mt.ruber");
+				} else if (columnIndex == 45) {
+					return getGroupTes( gg, "m.hydrothermalis");
+				} else if (columnIndex == 46) {
+					return getGroupTes( gg, "o.profundus");
+				}
+				return columnIndex >= 11 ? null : "";
+			}
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+			}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {
+			}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {
+			}
+		};
+		defaultModel = new TableModel() {
 			@Override
 			public int getRowCount() {
 				return genelist.size();
@@ -8176,7 +8495,8 @@ public class GeneSet extends JApplet {
 			@Override
 			public void removeTableModelListener(TableModelListener l) {
 			}
-		});
+		};
+		table.setModel( defaultModel );
 
 		/*
 		 * Comparator<Tegeval> wrapMe = new Comparator<Tegeval>() { public int
@@ -8852,8 +9172,8 @@ public class GeneSet extends JApplet {
 				for (Function f : funclist) {
 					if (f.geneentries != null) {
 						Set<String> check = new HashSet<String>();
-						for (String str : f.geneentries) {
-							Gene g = genemap.get(str);
+						for (Gene g : f.geneentries) {
+							//Gene g = genemap.get(str);
 							if (g.species != null) {
 								if (check.isEmpty())
 									check.addAll(g.species.keySet());
@@ -8883,9 +9203,9 @@ public class GeneSet extends JApplet {
 				for (int r : rr) {
 					int fr = ftable.convertRowIndexToModel(r);
 					Function f = funclist.get(fr);
-					Set<String> sset = f.geneentries;
-					for (String s : sset) {
-						Gene g = genemap.get(s);
+					Set<Gene> sset = f.geneentries;
+					for (Gene g : sset) {
+						//Gene g = genemap.get(s);
 						genefilterset.add(g.index);
 					}
 				}
@@ -8905,8 +9225,8 @@ public class GeneSet extends JApplet {
 						int cr = table.convertRowIndexToModel(r);
 						Gene g = genelist.get(cr);
 						if (g.funcentries != null) {
-							for (String go : g.funcentries) {
-								Function f = funcmap.get(go);
+							for( Function f : g.funcentries) {
+								//Function f = funcmap.get(go);
 								int rf = ftable.convertRowIndexToView(f.index);
 								ftable.addRowSelectionInterval(rf, rf);
 							}
@@ -8953,8 +9273,8 @@ public class GeneSet extends JApplet {
 						int cr = table.convertRowIndexToModel(r);
 						Gene g = genelist.get(cr);
 						if (g.funcentries != null) {
-							for (String go : g.funcentries) {
-								Function f = funcmap.get(go);
+							for( Function f : g.funcentries ) {
+								//Function f = funcmap.get(go);
 								// ftable.getRowSorter().convertRowIndexToView(index)
 								// int rf = ftable.convertRowIndexToView(
 								// f.index );
@@ -8984,8 +9304,8 @@ public class GeneSet extends JApplet {
 
 						Function f = funclist.get(cr);
 						if (f.geneentries != null) {
-							for (String ref : f.geneentries) {
-								Gene g = genemap.get(ref);
+							for( Gene g : f.geneentries ) {
+								//Gene g = genemap.get(ref);
 								// int rf = table.convertRowIndexToView( g.index
 								// );
 								// table.addRowSelectionInterval(rf, rf);
@@ -9015,9 +9335,9 @@ public class GeneSet extends JApplet {
 						int cr = ftable.convertRowIndexToModel(r);
 						Function f = funclist.get(cr);
 						if (f.geneentries != null) {
-							for (String ref : f.geneentries) {
-								Gene g = genemap.get(ref);
-								int rf = table.convertRowIndexToView(g.index);
+							for( Gene g : f.geneentries ) {
+								//Gene g = genemap.get(ref);
+								int rf = table.convertRowIndexToView(g.getGroupIndex());
 								table.addRowSelectionInterval(rf, rf);
 							}
 						}
@@ -9154,22 +9474,35 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				filterset.clear();
 				int[] rr = table.getSelectedRows();
-				Set<String> startfunc = null;
+				Set<Function> startfunc = new HashSet<Function>();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					if (gg.funcentries != null) {
-						if (startfunc == null)
-							startfunc = new HashSet<String>(gg.funcentries);
-						else {
-							startfunc.retainAll(gg.funcentries);
+					if( table.getModel() == defaultModel ) {
+						Gene gg = genelist.get(cr);
+						if (gg.funcentries != null) {
+							if( startfunc.isEmpty() ) {
+								startfunc.addAll( gg.funcentries );
+							} else {
+								startfunc.retainAll( gg.funcentries );
+							}
+						}
+							/*if (startfunc == null)
+								startfunc = new HashSet<Function>(gg.funcentries);
+							else {
+								startfunc.retainAll(gg.funcentries);
+							}*/
+					} else {
+						GeneGroup gg = allgenegroups.get(cr);
+						Set<Function> fset = gg.getFunctions();
+						if( startfunc.isEmpty() ) {
+							startfunc.addAll( fset );
+						} else {
+							startfunc.retainAll( fset );
 						}
 					}
 				}
-				if (startfunc != null) {
-					for (String s : startfunc) {
-						filterset.add(funcmap.get(s).index);
-					}
+				for( Function f : funclist ) {
+					filterset.add( f.index );
 				}
 				updateFilter(ftable, filter, null);
 			}
@@ -9179,20 +9512,23 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				filterset.clear();
 				int[] rr = table.getSelectedRows();
-				Set<String> startfunc = null;
+				Set<Function> startfunc = null;
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					if (gg.funcentries != null) {
-						if (startfunc == null)
-							startfunc = new HashSet<String>(gg.funcentries);
-						else {
-							startfunc.addAll(gg.funcentries);
+					if( table.getModel() == defaultModel ) {
+						Gene gg = genelist.get(cr);
+						if (gg.funcentries != null) {
+							for( Function f : gg.funcentries ) {
+								filterset.add( f.index );
+							}
+						}
+					} else {
+						GeneGroup gg = allgenegroups.get(cr);
+						Set<Function> fset = gg.getFunctions();
+						for( Function f : fset ) {
+							filterset.add( f.index );
 						}
 					}
-				}
-				for (String s : startfunc) {
-					filterset.add(funcmap.get(s).index);
 				}
 				updateFilter(ftable, filter, null);
 			}
@@ -9965,9 +10301,7 @@ public class GeneSet extends JApplet {
 	static boolean ftableisselecting = false;
 	static boolean tableisselecting = false;
 
-	private static Map<String, Function> readGoInfo(Reader rd, Map<String, Set<String>> gofilter, String outfile) throws IOException {
-		Map<String, Function> retmap = new HashMap<String, Function>();
-
+	private static void readGoInfo(Reader rd, Map<Function, Set<Gene>> gofilter, String outfile) throws IOException {
 		FileWriter fw = null;
 		if (outfile != null)
 			fw = new FileWriter(outfile);
@@ -9981,17 +10315,20 @@ public class GeneSet extends JApplet {
 		while (line != null) {
 			if (line.startsWith("[Term]")) {
 				on = false;
-				if (f != null && gofilter.containsKey(f.go)) {
-					if (f.geneentries == null)
-						f.geneentries = new HashSet<String>();
-					f.geneentries.addAll(gofilter.get(f.go));
-					retmap.put(f.go, f);
+				if (f != null && gofilter.containsKey(f)) {
+					if (f.geneentries == null) f.geneentries = new HashSet<Gene>();
+					f.geneentries.addAll(gofilter.get(f));
+					//retmap.put(f.go, f);
 				}
-				f = new Function();
+				//f = new Function();
 			} else if (line.startsWith("id:")) {
-				f.go = line.substring(4); // line.indexOf("GO:")+3 );
-
-				if (fw != null && gofilter.containsKey(f.go)) {
+				String go = line.substring(4); // line.indexOf("GO:")+3 );
+				if( !funcmap.containsKey( go ) ) {
+					f = new Function( go );
+					funcmap.put( go, f );
+				} else f = funcmap.get( go );
+				
+				if (fw != null && gofilter.containsKey(f)) {
 					fw.write("[Term]\n");
 					on = true;
 				}
@@ -10011,23 +10348,19 @@ public class GeneSet extends JApplet {
 				}
 			}
 
-			if (on)
-				fw.write(line + "\n");
+			if (on) fw.write(line + "\n");
 
 			line = br.readLine();
 		}
-		if (f != null && gofilter.containsKey(f.go)) {
+		if (f != null && gofilter.containsKey(f)) {
 			if (f.geneentries == null)
-				f.geneentries = new HashSet<String>();
-			f.geneentries.addAll(gofilter.get(f.go));
-			retmap.put(f.go, f);
+				f.geneentries = new HashSet<Gene>();
+			f.geneentries.addAll(gofilter.get(f));
+			//retmap.put(f.go, f);
 		}
 		br.close();
 
-		if (fw != null)
-			fw.close();
-
-		return retmap;
+		if (fw != null) fw.close();
 	}
 
 	public static class ClusterInfo {
@@ -10115,7 +10448,24 @@ public class GeneSet extends JApplet {
 		while( line != null ) {
 			String trim = line.trim();
 			if( trim.startsWith(">") ) {
-				int i = trim.indexOf(' ');
+				int i = trim.indexOf("DIR");
+				int b = trim.lastIndexOf('_', i-2);
+				
+				String loc = trim.substring(b+1, i-1);
+				String cont = trim.substring(6, b).replace(".fna", "");
+				int end = cont.indexOf('_');
+				if( end == -1 ) end = cont.length();
+				String spec = cont.substring(0,end);
+				
+				int bil = trim.indexOf(' ', i+15);
+				String name = trim.substring(i+15, bil);
+				
+				boolean rev = trim.charAt(i+3) == '-';
+				String[] split = loc.split("-");
+				int start = Integer.parseInt( split[0] );
+				int stop = Integer.parseInt( split[1] );
+				
+		/*		int i = trim.indexOf(' ');
 				int k = trim.indexOf('[');
 				
 				String loc = trim.substring(1,i);
@@ -10132,7 +10482,7 @@ public class GeneSet extends JApplet {
 				} else split = loc.split("\\.\\.");
 				
 				int start = Integer.parseInt( split[0] );
-				int stop = Integer.parseInt( split[1] );
+				int stop = Integer.parseInt( split[1] );*/
 				
 				GeneGroup 	gg;
 				Gene 		g = null;
@@ -10149,7 +10499,8 @@ public class GeneSet extends JApplet {
 					ggmap.put( name, gg );
 				}
 				
-				Contig contig = null;
+				Contig contig = contigmap.get( cont );
+				/*Contig contig = null;
 				if( spec.contains("SG0") ) {
 					int us = spec.lastIndexOf('_');
 					us = spec.lastIndexOf('_', us-1);
@@ -10267,7 +10618,7 @@ public class GeneSet extends JApplet {
 						}
 					}
 				}
-				else if( spec.contains("RLM") ) spec = "t.RLM";
+				else if( spec.contains("RLM") ) spec = "t.RLM";*/
 				
 				Tegeval tegeval = new Tegeval( g, spec, 0.0, null, null, null, contig, null, start, stop, rev ? -1 : 1 );
 				g.addTegeval( tegeval );
@@ -10519,8 +10870,8 @@ public class GeneSet extends JApplet {
 			// clustInfoMap.put( cluster, cInfo);
 		}
 		
-		is = GeneSet.class.getResourceAsStream("/rna.fasta");
-		InputStream tis = GeneSet.class.getResourceAsStream("/trna_sub.txt");
+		is = GeneSet.class.getResourceAsStream("/rrna.fasta");
+		InputStream tis = GeneSet.class.getResourceAsStream("/trna.txt"); //GeneSet.class.getResourceAsStream("/trna_sub.txt");
 		Map<String,GeneGroup>	rnamap = loadRnas( new InputStreamReader(is), new InputStreamReader(tis), i );
 		for( String ggname : rnamap.keySet() ) {
 			GeneGroup gg = rnamap.get( ggname );
@@ -10784,18 +11135,18 @@ public class GeneSet extends JApplet {
 		unimap.clear();
 		genmap.clear();
 
-		Map<String, Set<String>> totalgo = new HashMap<String, Set<String>>();
+		Map<Function, Set<Gene>> totalgo = new HashMap<Function, Set<Gene>>();
 		for (Gene g : genelist) {
 			if (g.funcentries != null) {
-				for (String f : g.funcentries) {
-					Set<String> set;
+				for( Function f : g.funcentries) {
+					Set<Gene> set;
 					if (totalgo.containsKey(f)) {
 						set = totalgo.get(f);
 					} else {
-						set = new HashSet<String>();
+						set = new HashSet<Gene>();
 						totalgo.put(f, set);
 					}
-					set.add(g.refid);
+					set.add(g);
 				}
 			}
 		}
@@ -10803,7 +11154,7 @@ public class GeneSet extends JApplet {
 		// FileReader("/home/sigmar/asgard-bio/data/gene_ontology_ext.obo"),
 		// totalgo, "/home/sigmar/workspace/distann/go_short.obo");
 		is = GeneSet.class.getResourceAsStream("/go_short.obo");
-		funcmap = readGoInfo(new InputStreamReader(is), totalgo, null);
+		readGoInfo(new InputStreamReader(is), totalgo, null);
 		List<Function> funclist = new ArrayList<Function>();
 		for (String go : funcmap.keySet()) {
 			Function f = funcmap.get(go);
@@ -11111,12 +11462,15 @@ public class GeneSet extends JApplet {
 						for (Tegeval tv : stv.tset) {
 							//int first = tv.cont.indexOf("_");
 							//int sec = tv.cont.indexOf("_", first + 1);
-							int sec = tv.cont.lastIndexOf('_');
-
-							String cname = tv.cont.substring(0, sec);
-							//System.err.println( cname );
-							if( !contigmap.containsKey( cname ) ) {
-								contigmap.put(cname, tv.getContshort());
+							
+							if( tv.cont != null ) {
+								int sec = tv.cont.lastIndexOf('_');
+	
+								String cname = tv.cont.substring(0, sec);
+								//System.err.println( cname );
+								if( !contigmap.containsKey( cname ) ) {
+									contigmap.put(cname, tv.getContshort());
+								}
 							}
 						}
 				}
@@ -11133,19 +11487,19 @@ public class GeneSet extends JApplet {
 		if( sequenceView.isSelected() ) {			
 			for( int y = 0; y < rowheader.getRowCount(); y++ ) {
 				int r = rowheader.convertRowIndexToModel( y );
-			/*	String species = speclist.get( r );
+				/*	String species = speclist.get( r );
 				for( Gene selectedGene : selectedGenes ) {
 				//for( String species : selectedGene.species.keySet() ) {
 					if( selectedGene.species.containsKey(species) ) {
 						Teginfo ti = selectedGene.species.get( species );
 						for( Tegeval te : ti.tset ) {*/
-			//for( Tegeval te : lte ) {
-				int xoff = 1500;
+				//for( Tegeval te : lte ) {
+				int xoff = 3000;
 				
 				Tegeval te = lte.get(r);
 				Tegeval next = te;
 				//int k = 0;
-				while( next != null && xoff < 2500 ) {						
+				while( next != null && xoff < 5500 ) {					
 					double len = next.getProteinLength()*neighbourscale;											
 					Rectangle rect = new Rectangle(xoff, y * rowheight+2, (int)len, rowheight - 4);
 					
@@ -11155,7 +11509,7 @@ public class GeneSet extends JApplet {
 					next = next.getNext();
 				}
 				
-				xoff = 1500;
+				xoff = 3000;
 				Tegeval prev = te.getPrevious();
 				//int k = 0;
 				while( prev != null && xoff > 5 ) {					
@@ -11169,6 +11523,90 @@ public class GeneSet extends JApplet {
 				}
 				//break;
 			}
+		} else {
+			List<Tegeval>	hteglocal = new ArrayList<Tegeval>( lte );
+			int xoff = 3000;
+			//int k = 0;
+			while( xoff < 5500 ) {
+				int max = 0;
+				for( Tegeval tes : hteglocal ) {
+					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
+					int val = 0;
+					if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
+					if( val > max ) max = val;
+				}
+				
+				for( int y = 0; y < rowheader.getRowCount(); y++ ) {
+					int r = rowheader.convertRowIndexToModel( y );
+					Tegeval te = hteglocal.get(r);
+					Tegeval next = te;
+					
+					if( next != null ) {
+						double len = next.getProteinLength()*neighbourscale;										
+						Rectangle rect = new Rectangle(xoff, y * rowheight+2, (int)len, rowheight - 4);
+						
+						if( rect.contains( p ) ) return next;
+					}
+				}
+				xoff += max+10;
+				
+				for( int i = 0; i < hteglocal.size(); i++ ) {
+					Tegeval te = hteglocal.get(i);
+					if( te != null ) hteglocal.set(i, te.getNext() );
+					//if( te.getLength() > max ) max = te.getLength();
+				}
+			}
+			
+			hteglocal.clear();
+			for( Tegeval te : lte ) {
+				hteglocal.add( te.getPrevious() );
+			}
+			xoff = 3000;
+			//int k = 0;
+			while( xoff > 500 ) {
+				int max = 0;
+				for( Tegeval tes : hteglocal ) {
+					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
+					int val = 0;
+					if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
+					if( val > max ) max = val;
+				}
+				xoff -= max+10;
+				
+				for( int y = 0; y < rowheader.getRowCount(); y++ ) {
+					int r = rowheader.convertRowIndexToModel( y );
+					Tegeval te = hteglocal.get(r);
+					Tegeval next = te;
+					
+					if( next != null ) {
+						double len = next.getProteinLength()*neighbourscale;										
+						Rectangle rect = new Rectangle(xoff, y * rowheight+2, (int)len, rowheight - 4);
+						
+						if( rect.contains( p ) ) return next;
+					}
+				}
+				
+				for( int i = 0; i < hteglocal.size(); i++ ) {
+					Tegeval te = hteglocal.get(i);
+					if( te != null ) hteglocal.set(i, te.getPrevious() );
+					//if( te.getLength() > max ) max = te.getLength();
+				}
+			}
+					
+			/*		xoff = 3000;
+					Tegeval prev = te.getPrevious();
+					//int k = 0;
+					while( prev != null && xoff > 5 ) {					
+						double len = prev.getProteinLength()*neighbourscale;
+						xoff -= len+10;
+						
+						Rectangle rect = new Rectangle(xoff, y * rowheight+2, (int)len, rowheight - 4);
+						if( rect.contains( p ) ) return prev;
+						
+						prev = prev.getPrevious();
+					}
+				}
+			}*/
 		}
 		
 		return null;
@@ -11377,7 +11815,7 @@ public class GeneSet extends JApplet {
 				 */
 			};
 			
-			AbstractAction	a = new AbstractAction() {
+			final AbstractAction	a = new AbstractAction() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					c.repaint();
@@ -11556,6 +11994,7 @@ public class GeneSet extends JApplet {
 	static Tegeval currentTe = null;
 	static Set<Gene> selectedGenes;
 	static List<Tegeval>	hteg;
+	//static int colorscheme = 0;
 	//static List<String>	speclist;
 	public static void neighbourMynd( final Container comp, final List<Gene> genes, final JTable sorting, final Set<Gene> selGenes ) throws IOException {
 		selectedGenes = selGenes;
@@ -11565,8 +12004,31 @@ public class GeneSet extends JApplet {
 		final JButton	zoomIn = new JButton("+");
 		final JButton	zoomOut = new JButton("-");
 		final JButton	recenter = new JButton("Recenter");
+		final JButton	addrelated = new JButton("Add related");
+		final JButton	highrel = new JButton("Highlight related");
 		final JButton	showseqs = new JButton("Show sequences");
 		final JButton	showdnaseqs = new JButton("Show DNA sequences");
+		final JMenuBar	mbr = new JMenuBar();
+		final JMenu		mnu = new JMenu("Colors");
+		final JMenu		mvmnu = new JMenu("Move");
+		final JButton	turn = new JButton("Forward");
+		
+		mbr.add( mnu );
+		mbr.add( mvmnu );
+		final JRadioButtonMenuItem funcol = new JRadioButtonMenuItem("Functions");
+		final JRadioButtonMenuItem gccol = new JRadioButtonMenuItem("GC%");
+		final JRadioButtonMenuItem abucol = new JRadioButtonMenuItem("Abundance");
+		final JRadioButtonMenuItem precol = new JRadioButtonMenuItem("Proximity preservation");
+		
+		ButtonGroup bg = new ButtonGroup();
+		bg.add( funcol );
+		bg.add( gccol );
+		bg.add( abucol );
+		bg.add( precol );
+		mnu.add( funcol );
+		mnu.add( gccol );
+		mnu.add( abucol );
+		mnu.add( precol );
 		if (true) { //gsplitpane == null) {
 			//hteg = loadContigs( genes, null );
 			//hteg.clear();
@@ -11591,8 +12053,8 @@ public class GeneSet extends JApplet {
 			final JTable rowheader = new JTable();
 			
 			final int		nPoints = 6;
-			final int[]	xPoints = new int[ nPoints ];
-			final int[]	yPoints = new int[ nPoints ];
+			final int[]		xPoints = new int[ nPoints ];
+			final int[]		yPoints = new int[ nPoints ];
 			
 			final Map<Set<Function>,Color>	funcMap = new HashMap<Set<Function>,Color>();
 			final Random rand = new Random();
@@ -11608,7 +12070,7 @@ public class GeneSet extends JApplet {
 				public String getToolTipText( MouseEvent me ) {
 					Point p = me.getPoint();
 					Tegeval te = getSelectedTe(p, rowheader, sequenceView, hteg, rowheader.getRowHeight());
-					if( te != null ) return "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+ "<br>" + te.getGene().getGeneGroup().getFunctions() + "</html>";
+					if( te != null ) return "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+ "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
 					return null;
 				}
 				
@@ -11620,10 +12082,10 @@ public class GeneSet extends JApplet {
 					g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 					g.setFont( g.getFont().deriveFont( 8.0f ) );
 					
+					Rectangle clip = this.getVisibleRect(); //g.getClipBounds();
 					if( sequenceView.isSelected() ) {
-						int y = 0;
-						
-						for( int i = 0; i < rowheader.getRowCount(); i++ ) {
+						//int y = 0;
+						for( int i = Math.max(0, clip.y/rowheader.getRowHeight()); i < Math.min( (clip.y+clip.height)/rowheader.getRowHeight()+1, rowheader.getRowCount() ); i++ ) {
 							int r = rowheader.convertRowIndexToModel( i );
 						//	String species = speclist.get( r );
 							//for( String species : selectedGene.species.keySet() ) {
@@ -11646,104 +12108,241 @@ public class GeneSet extends JApplet {
 									for( Tegeval te : ti.tset ) {*/
 						//for( Tegeval te : hteg ) {
 							Tegeval te = hteg.get(r);
-							int xoff = 1500;
+							int xoff = 3000;
 							
-							Tegeval next = te;
-							//int k = 0;
-							while( next != null && xoff <= 2500 ) {
-								String genename = next.getGene().getName();
-								genename = genename.contains("hypothetical") ? "hth-p" : genename;
-								
-								double len = next.getProteinLength()*neighbourscale;
-								g.setColor( Color.green );
-								
-								Gene gene = next.getGene();
-								GeneGroup gg = gene.getGeneGroup();
-								Set<Function> funcset = gg != null ? gg.getFunctions() : null;
-								if( funcset != null && funcset.size() > 0 ) {
-									if( funcMap.containsKey( funcset ) ) {
-										g.setColor( funcMap.get( funcset ) );
-									} else {
-										Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
-										g.setColor( rc );
-										funcMap.put( funcset, rc );
+							if( clip.x+clip.width > xoff ) {
+								Tegeval next = te;
+								//int k = 0;
+								while( next != null && xoff <= 5500 && clip.x+clip.width > xoff ) {
+									double len = next.getProteinLength()*neighbourscale;
+									if( next.getGene() != null ) {
+										String genename = next.getGene().getName();
+										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										
+										if( xoff+len > clip.x ) {
+											if( funcol.isSelected() ) {
+												g.setColor( Color.green );
+												
+												Gene gene = next.getGene();
+												GeneGroup gg = gene.getGeneGroup();
+												Set<Function> funcset = gg != null ? gg.getFunctions() : null;
+												if( funcset != null && funcset.size() > 0 ) {
+													if( funcMap.containsKey( funcset ) ) {
+														g.setColor( funcMap.get( funcset ) );
+													} else {
+														Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+														g.setColor( rc );
+														funcMap.put( funcset, rc );
+													}
+												}
+											} else if( abucol.isSelected() ) {
+												GeneGroup gg = next.getGene().getGeneGroup();
+												int numspec = gg.species.size();
+												float abu = numspec/28.0f;
+												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
+												g.setColor( rc );
+											} else if( precol.isSelected() ) {
+												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+												shanmap.clear();
+												double res = 0.0;
+												
+												List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
+												int total = tegevals.size();
+												for( Tegeval tev : tegevals ) {
+													Tegeval thenext = tev.getNext();
+													GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+													int val = 0;
+													if( shanmap.containsKey(c) ) val = shanmap.get(c);
+													shanmap.put( c, val+1 );
+												}
+												for( GeneGroup c : shanmap.keySet() ) {
+													int val = shanmap.get(c);
+													double p = (double)val/(double)total;
+													res -= p*Math.log(p)/Math.log(2.0);
+												}
+												
+												if( next.getNext() != null ) {
+													tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
+													total = tegevals.size();
+													for( Tegeval tev : tegevals ) {
+														Tegeval thenext = tev.getPrevious();
+														GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+														int val = 0;
+														if( shanmap.containsKey(c) ) val = shanmap.get(c);
+														shanmap.put( c, val+1 );
+													}
+													for( GeneGroup c : shanmap.keySet() ) {
+														int val = shanmap.get(c);
+														double p = (double)val/(double)total;
+														res -= p*Math.log(p)/Math.log(2.0);
+													}
+												}
+												float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
+												Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
+												g.setColor( rc );
+											} else {
+												if( next.gc <= 0 ) {
+													Color rc = new Color( 1.0f, 1.0f, 1.0f );
+													g.setColor( rc );
+												} else {
+													float gc = Math.max( 0.0f, Math.min(((float)next.gc-0.5f)*4.0f, 1.0f) );
+													Color rc = new Color( 1.0f-gc, gc, 1.0f );
+													g.setColor( rc );
+												}
+											}
+											
+											boolean revis = (next.ori == -1) ^ next.getContshort().isReverse();
+											int addon = revis ? -5 : 5;
+											int offset = revis ? 5 : 0;
+											
+											int y = i;
+											xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
+											xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
+											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+											xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+											xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+											g.fillPolygon(xPoints, yPoints, nPoints);
+											g.setColor( next.isSelected() ? Color.black : Color.gray );
+											g.drawPolygon(xPoints, yPoints, nPoints);
+											g.setColor( Color.black );
+											//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
+											
+											int strlen = g.getFontMetrics().stringWidth( genename );
+											while( strlen > len ) {
+												genename = genename.substring(0, genename.length()-1);
+												strlen = g.getFontMetrics().stringWidth( genename );
+											}
+											
+											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+										}
 									}
+									
+									xoff += len+10;
+									next = next.getNext();
 								}
-								
-								xPoints[0] = xoff; yPoints[0] = y * rowheader.getRowHeight()+2;
-								xPoints[1] = xoff+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
-								xPoints[2] = xoff+(int)len+5; yPoints[2] = y * rowheader.getRowHeight()+2+6;
-								xPoints[3] = xoff+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-								xPoints[4] = xoff; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-								xPoints[5] = xoff+5; yPoints[5] = y * rowheader.getRowHeight()+2+6;
-								g.fillPolygon(xPoints, yPoints, nPoints);
-								g.setColor( next.isSelected() ? Color.black : Color.gray );
-								g.drawPolygon(xPoints, yPoints, nPoints);
-								g.setColor( Color.black );
-								//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
-								
-								int strlen = g.getFontMetrics().stringWidth( genename );
-								while( strlen > len ) {
-									genename = genename.substring(0, genename.length()-1);
-									strlen = g.getFontMetrics().stringWidth( genename );
-								}
-								
-								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
-								
-								xoff += len+10;
-								next = next.getNext();
 							}
 							
-							xoff = 1500;
-							Tegeval prev = te != null ? te.getPrevious() : null;
-							//int k = 0;
-							while( prev != null && xoff >= 500 ) {
-								String genename = prev.getGene().getName();
-								genename = genename.contains("hypothetical") ? "hth-p" : genename;
+							xoff = 3000;
+							if( clip.x < xoff ) {
+								Tegeval prev = te != null ? te.getPrevious() : null;
 								
-								double len = prev.getProteinLength()*neighbourscale;
-								xoff -= len+10;
-								
-								g.setColor( Color.green );
-								Gene gene = prev.getGene();
-								GeneGroup gg = gene.getGeneGroup();
-								Set<Function> funcset = gg != null ? gg.getFunctions() : null;
-								if( funcset != null && funcset.size() > 0 ) {
-									if( funcMap.containsKey( funcset ) ) {
-										g.setColor( funcMap.get( funcset ) );
-									} else {
-										Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
-										g.setColor( rc );
-										funcMap.put( funcset, rc );
+								//int k = 0;
+								while( prev != null && xoff >= 500 && clip.x < xoff ) {
+									double len = prev.getProteinLength()*neighbourscale;
+									xoff -= len+10;
+									if( prev.getGene() != null ) {
+										String genename = prev.getGene().getName();
+										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										
+										if( clip.x+clip.width > xoff ) {
+											if( funcol.isSelected() ) {
+												g.setColor( Color.green );
+												Gene gene = prev.getGene();
+												GeneGroup gg = gene.getGeneGroup();
+												Set<Function> funcset = gg != null ? gg.getFunctions() : null;
+												if( funcset != null && funcset.size() > 0 ) {
+													if( funcMap.containsKey( funcset ) ) {
+														g.setColor( funcMap.get( funcset ) );
+													} else {
+														Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+														g.setColor( rc );
+														funcMap.put( funcset, rc );
+													}
+												}
+											} else if( abucol.isSelected() ) {
+												GeneGroup gg = prev.getGene().getGeneGroup();
+												int numspec = gg.species.size();
+												float abu = numspec/28.0f;
+												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
+												g.setColor( rc );
+											} else if( precol.isSelected() ) {
+												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+												shanmap.clear();
+												double res = 0.0;
+												
+												List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
+												int total = tegevals.size();
+												for( Tegeval tev : tegevals ) {
+													Tegeval thenext = tev.getNext();
+													GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+													int val = 0;
+													if( shanmap.containsKey(c) ) val = shanmap.get(c);
+													shanmap.put( c, val+1 );
+												}
+												for( GeneGroup c : shanmap.keySet() ) {
+													int val = shanmap.get(c);
+													double p = (double)val/(double)total;
+													res -= p*Math.log(p)/Math.log(2.0);
+												}
+												
+												if( prev.getNext() != null ) {
+													tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
+													total = tegevals.size();
+													for( Tegeval tev : tegevals ) {
+														Tegeval thenext = tev.getPrevious();
+														GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+														int val = 0;
+														if( shanmap.containsKey(c) ) val = shanmap.get(c);
+														shanmap.put( c, val+1 );
+													}
+													for( GeneGroup c : shanmap.keySet() ) {
+														int val = shanmap.get(c);
+														double p = (double)val/(double)total;
+														res -= p*Math.log(p)/Math.log(2.0);
+													}
+												}
+												
+												float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
+												Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
+												g.setColor( rc );
+											} else {
+												if( prev.gc <= 0 ) {
+													Color rc = new Color( 1.0f, 1.0f, 1.0f );
+													g.setColor( rc );
+												} else {
+													float gc = Math.max( 0.0f, Math.min(((float)prev.gc-0.5f)*4.0f, 1.0f) );
+													Color rc = new Color( 1.0f-gc, gc, 1.0f );
+													g.setColor( rc );
+												}
+											}
+											
+											boolean revis = (prev.ori == -1) ^ prev.getContshort().isReverse();
+											int addon = revis ? -5 : 5;
+											int offset = revis ? 5 : 0;
+											//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
+											int y = i;
+											xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
+											xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
+											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+											xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+											xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+											g.fillPolygon(xPoints, yPoints, nPoints);
+											g.setColor( prev.isSelected() ? Color.black : Color.gray );
+											g.drawPolygon(xPoints, yPoints, nPoints);
+											g.setColor( Color.black );
+											
+											int strlen = g.getFontMetrics().stringWidth( genename );
+											while( strlen > len ) {
+												genename = genename.substring(0, genename.length()-1);
+												strlen = g.getFontMetrics().stringWidth( genename );
+											}
+											g.setColor( Color.black );
+											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+										}
 									}
+									prev = prev.getPrevious();
+									/*if( prev != null ) {
+										len = prev.getProteinLength()*neighbourscale;
+										xoff -= len+10;
+									}*/
 								}
-								//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
-								xPoints[0] = xoff; yPoints[0] = y * rowheader.getRowHeight()+2;
-								xPoints[1] = xoff+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
-								xPoints[2] = xoff+(int)len+5; yPoints[2] = y * rowheader.getRowHeight()+2+6;
-								xPoints[3] = xoff+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-								xPoints[4] = xoff; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-								xPoints[5] = xoff+5; yPoints[5] = y * rowheader.getRowHeight()+2+6;
-								g.fillPolygon(xPoints, yPoints, nPoints);
-								g.setColor( prev.isSelected() ? Color.black : Color.gray );
-								g.drawPolygon(xPoints, yPoints, nPoints);
-								g.setColor( Color.black );
-								
-								int strlen = g.getFontMetrics().stringWidth( genename );
-								while( strlen > len ) {
-									genename = genename.substring(0, genename.length()-1);
-									strlen = g.getFontMetrics().stringWidth( genename );
-								}
-								g.setColor( Color.black );
-								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
-								
-								prev = prev.getPrevious();
 							}
-							y++;
+							//y++;
 						}
 					} else {						
-						/*List<Tegeval>	hteg = new ArrayList<Tegeval>();
-						for( Gene selectedGene : selectedGenes ) {
+						/*for( Gene selectedGene : selectedGenes ) {
 							for( String species : speclist ) {
 								if( selectedGene.species.containsKey(species) ) {
 									Teginfo ti = selectedGene.species.get( species );
@@ -11754,24 +12353,130 @@ public class GeneSet extends JApplet {
 							}
 						}*/
 						
-						int xoff =  1500;
-						while( xoff < 2500 ) {
+						List<Tegeval>	hteglocal = new ArrayList<Tegeval>( hteg );
+						int xoff =  3000;
+						while( xoff < 5500 ) {
 							int max = 0;
-							for( Tegeval te : hteg ) {
-								if( te != null && te.getProteinLength() > max ) max = te.getProteinLength();
+							for( Tegeval tes : hteglocal ) {
+								//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
+								int val = 0;
+								if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
+								if( val > max ) max = val;
 							}
 							
-							int y = 0;
-							for( Tegeval te : hteg ) {
-								g.setColor( Color.black );
-								g.drawLine( 0, y*rowheader.getRowHeight()+8, this.getWidth(), y*rowheader.getRowHeight()+8 );
+							for( int i = Math.max(0, clip.y/rowheader.getRowHeight()); i < Math.min( (clip.y+clip.height)/rowheader.getRowHeight()+1, rowheader.getRowCount() ); i++ ) {
+								int r = rowheader.convertRowIndexToModel( i );
+								Tegeval te = hteglocal.get(r);
+								//int y = 0;
+								//for( Tegeval te : hteglocal ) {
+								//g.setColor( Color.black );
+								//g.drawLine( 0, y*rowheader.getRowHeight()+8, this.getWidth(), y*rowheader.getRowHeight()+8 );
 								
 								if( te != null ) {
-									String genename = te.getGene().getName();
-									genename = genename.contains("hypothetical") ? "hth-p" : genename;
-									
-									double len = te.getProteinLength()*neighbourscale;
-									g.setColor( Color.green );
+									Tegeval next = te;
+									if( te.getGene() != null ) {
+										String genename = te.getGene().getName();
+										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										
+										double len = te.getProteinLength()*neighbourscale;
+										
+										if( clip.x+clip.width > xoff ) {
+											if( funcol.isSelected() ) {
+												g.setColor( Color.green );
+												Gene gene = next.getGene();
+												GeneGroup gg = gene.getGeneGroup();
+												Set<Function> funcset = gg != null ? gg.getFunctions() : null;
+												if( funcset != null && funcset.size() > 0 ) {
+													if( funcMap.containsKey( funcset ) ) {
+														g.setColor( funcMap.get( funcset ) );
+													} else {
+														Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+														g.setColor( rc );
+														funcMap.put( funcset, rc );
+													}
+												}
+											} else if( abucol.isSelected() ) {
+												GeneGroup gg = next.getGene().getGeneGroup();
+												int numspec = gg.species.size();
+												float abu = numspec/28.0f;
+												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
+												g.setColor( rc );
+											} else if( precol.isSelected() ) {
+												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+												shanmap.clear();
+												double res = 0.0;
+												
+												List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
+												int total = tegevals.size();
+												for( Tegeval tev : tegevals ) {
+													Tegeval thenext = tev.getNext();
+													GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+													int val = 0;
+													if( shanmap.containsKey(c) ) val = shanmap.get(c);
+													shanmap.put( c, val+1 );
+												}
+												for( GeneGroup c : shanmap.keySet() ) {
+													int val = shanmap.get(c);
+													double p = (double)val/(double)total;
+													res -= p*Math.log(p)/Math.log(2.0);
+												}
+												
+												if( next.getNext() != null ) {
+													tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
+													total = tegevals.size();
+													for( Tegeval tev : tegevals ) {
+														Tegeval thenext = tev.getPrevious();
+														GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+														int val = 0;
+														if( shanmap.containsKey(c) ) val = shanmap.get(c);
+														shanmap.put( c, val+1 );
+													}
+													for( GeneGroup c : shanmap.keySet() ) {
+														int val = shanmap.get(c);
+														double p = (double)val/(double)total;
+														res -= p*Math.log(p)/Math.log(2.0);
+													}
+												}
+												
+												float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
+												Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
+												g.setColor( rc );
+											} else {
+												if( next.gc <= 0 ) {
+													Color rc = new Color( 1.0f, 1.0f, 1.0f );
+													g.setColor( rc );
+												} else {
+													float gc = Math.max( 0.0f, Math.min(((float)next.gc-0.5f)*4.0f, 1.0f) );
+													Color rc = new Color( 1.0f-gc, gc, 1.0f );
+													g.setColor( rc );
+												}
+											}
+											
+											boolean revis = (next.ori == -1) ^ next.getContshort().isReverse();
+											int addon = revis ? -5 : 5;
+											int offset = revis ? 5 : 0;
+											//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
+											int y = i;
+											xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
+											xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
+											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+											xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+											xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+											g.fillPolygon(xPoints, yPoints, nPoints);
+											g.setColor( next.isSelected() ? Color.black : Color.gray );
+											g.drawPolygon(xPoints, yPoints, nPoints);
+											g.setColor( Color.black );
+											
+											int strlen = g.getFontMetrics().stringWidth( genename );
+											while( strlen > len ) {
+												genename = genename.substring(0, genename.length()-1);
+												strlen = g.getFontMetrics().stringWidth( genename );
+											}
+											g.setColor( Color.black );
+											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+										}
+									/*g.setColor( Color.green );
 									Set<Function> funcset = te.getGene().getGeneGroup().getFunctions();
 									if( funcset != null && funcset.size() > 0 ) {
 										if( funcMap.containsKey( funcset ) ) {
@@ -11781,9 +12486,9 @@ public class GeneSet extends JApplet {
 											g.setColor( rc );
 											funcMap.put( funcset, rc );
 										}
-									}
+									}*/
 									//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
-									xPoints[0] = xoff; yPoints[0] = y * rowheader.getRowHeight()+2;
+									/*xPoints[0] = xoff; yPoints[0] = y * rowheader.getRowHeight()+2;
 									xPoints[1] = xoff+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
 									xPoints[2] = xoff+(int)len+5; yPoints[2] = y * rowheader.getRowHeight()+2+6;
 									xPoints[3] = xoff+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
@@ -11800,19 +12505,27 @@ public class GeneSet extends JApplet {
 										strlen = g.getFontMetrics().stringWidth( genename );
 									}
 									g.setColor( Color.black );
-									g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+									g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );*/
+									}
 								}
-								y++;
+								//y++;
 							}
 							xoff += max+10;
 							
-							for( int i = 0; i < hteg.size(); i++ ) {
-								Tegeval te = hteg.get(i);
-								if( te != null ) hteg.set(i, te.getNext() );
+							for( int i = 0; i < hteglocal.size(); i++ ) {
+								Tegeval te = hteglocal.get(i);
+								if( te != null ) hteglocal.set(i, te.getNext() );
 								//if( te.getLength() > max ) max = te.getLength();
 							}
 						}
 						
+						hteglocal.clear();
+						hteglocal.addAll( hteg );
+						for( int i = 0; i < hteglocal.size(); i++ ) {
+							Tegeval te = hteglocal.get(i);
+							if( te != null ) hteglocal.set(i, te.getPrevious() );
+							//if( te.getLength() > max ) max = te.getLength();
+						}
 						/************* 
 						hteg.clear();
 						hteg = new ArrayList<Tegeval>();
@@ -11827,61 +12540,143 @@ public class GeneSet extends JApplet {
 							}
 						}*****************************/
 						
-						xoff =  1500;
-						while( xoff > 0 ) {
+						xoff =  3000;
+						while( xoff > 500 ) {
 							int max = 0;
-							for( Tegeval te : hteg ) {
-								if( te != null && te.getProteinLength() > max ) max = te.getProteinLength();
+							for( Tegeval te : hteglocal ) {
+								int val = 0;
+								if( te != null ) val = (int)(te.getProteinLength()*neighbourscale);
+								if( val > max ) max = val;
 							}
 							
 							xoff -= max+10;
-							int y = 0;
-							for( Tegeval te : hteg ) {
-								g.setColor( Color.black );
-								g.drawLine( 0, y*rowheader.getRowHeight()+8, this.getWidth(), y*rowheader.getRowHeight()+8 );
+							for( int i = Math.max(0, clip.y/rowheader.getRowHeight()); i < Math.min( (clip.y+clip.height)/rowheader.getRowHeight()+1, rowheader.getRowCount() ); i++ ) {
+								int r = rowheader.convertRowIndexToModel( i );
+								Tegeval te = hteglocal.get(r);
+								//g.setColor( Color.black );
+								//g.drawLine( 0, y*rowheader.getRowHeight()+8, this.getWidth(), y*rowheader.getRowHeight()+8 );
 								
 								if( te != null ) {
-									String genename = te.getGene().getName();
-									genename = genename.contains("hypothetical") ? "hth-p" : genename;
-									
-									int len = te.getProteinLength();
-									g.setColor( Color.green );
-									Set<Function> funcset = te.getGene().getGeneGroup().getFunctions();
-									if( funcset != null && funcset.size() > 0 ) {
-										if( funcMap.containsKey( funcset ) ) {
-											g.setColor( funcMap.get( funcset ) );
-										} else {
-											Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+									Tegeval prev = te;
+									if( te.getGene() != null ) {
+										String genename = te.getGene().getName();
+										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										
+										double len = te.getProteinLength()*neighbourscale;
+										/*g.setColor( Color.green );
+										Set<Function> funcset = te.getGene().getGeneGroup().getFunctions();
+										if( funcset != null && funcset.size() > 0 ) {
+											if( funcMap.containsKey( funcset ) ) {
+												g.setColor( funcMap.get( funcset ) );
+											} else {
+												Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+												g.setColor( rc );
+												funcMap.put( funcset, rc );
+											}
+										}*/
+										
+										int y = i;
+										//g.fillRect(xoff, y * rowheader.getRowHeight()+2, len, rowheader.getRowHeight() - 4);
+										if( funcol.isSelected() ) {
+											g.setColor( Color.green );
+											Gene gene = prev.getGene();
+											GeneGroup gg = gene.getGeneGroup();
+											Set<Function> funcset = gg != null ? gg.getFunctions() : null;
+											if( funcset != null && funcset.size() > 0 ) {
+												if( funcMap.containsKey( funcset ) ) {
+													g.setColor( funcMap.get( funcset ) );
+												} else {
+													Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+													g.setColor( rc );
+													funcMap.put( funcset, rc );
+												}
+											}
+										} else if( abucol.isSelected() ) {
+											GeneGroup gg = prev.getGene().getGeneGroup();
+											int numspec = gg.species.size();
+											float abu = numspec/28.0f;
+											Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 											g.setColor( rc );
-											funcMap.put( funcset, rc );
+										} else if( precol.isSelected() ) {
+											Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+											shanmap.clear();
+											double res = 0.0;
+											
+											List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
+											int total = tegevals.size();
+											for( Tegeval tev : tegevals ) {
+												Tegeval thenext = tev.getNext();
+												GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+												int val = 0;
+												if( shanmap.containsKey(c) ) val = shanmap.get(c);
+												shanmap.put( c, val+1 );
+											}
+											for( GeneGroup c : shanmap.keySet() ) {
+												int val = shanmap.get(c);
+												double p = (double)val/(double)total;
+												res -= p*Math.log(p)/Math.log(2.0);
+											}
+											
+											if( prev.getNext() != null ) {
+												tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
+												total = tegevals.size();
+												for( Tegeval tev : tegevals ) {
+													Tegeval thenext = tev.getPrevious();
+													GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+													int val = 0;
+													if( shanmap.containsKey(c) ) val = shanmap.get(c);
+													shanmap.put( c, val+1 );
+												}
+												for( GeneGroup c : shanmap.keySet() ) {
+													int val = shanmap.get(c);
+													double p = (double)val/(double)total;
+													res -= p*Math.log(p)/Math.log(2.0);
+												}
+											}
+											
+											float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
+											Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
+											g.setColor( rc );
+										} else {
+											if( prev.gc <= 0 ) {
+												Color rc = new Color( 1.0f, 1.0f, 1.0f );
+												g.setColor( rc );
+											} else {
+												float gc = Math.max( 0.0f, Math.min(((float)prev.gc-0.5f)*4.0f, 1.0f) );
+												Color rc = new Color( 1.0f-gc, gc, 1.0f );
+												g.setColor( rc );
+											}
 										}
+										
+										boolean revis = (prev.ori == -1) ^ prev.getContshort().isReverse();
+										int addon = revis ? -5 : 5;
+										int offset = revis ? 5 : 0;
+										//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
+										xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
+										xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
+										xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+										xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+										xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
+										xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+										g.fillPolygon(xPoints, yPoints, nPoints);
+										g.setColor( prev.isSelected() ? Color.black : Color.gray );
+										g.drawPolygon(xPoints, yPoints, nPoints);
+										g.setColor( Color.black );
+										
+										int strlen = g.getFontMetrics().stringWidth( genename );
+										while( strlen > len ) {
+											genename = genename.substring(0, genename.length()-1);
+											strlen = g.getFontMetrics().stringWidth( genename );
+										}
+										g.setColor( Color.black );
+										g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
 									}
-									//g.fillRect(xoff, y * rowheader.getRowHeight()+2, len, rowheader.getRowHeight() - 4);
-									xPoints[0] = xoff; yPoints[0] = y * rowheader.getRowHeight()+2;
-									xPoints[1] = xoff+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
-									xPoints[2] = xoff+(int)len+5; yPoints[2] = y * rowheader.getRowHeight()+2+6;
-									xPoints[3] = xoff+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-									xPoints[4] = xoff; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-									xPoints[5] = xoff+5; yPoints[5] = y * rowheader.getRowHeight()+2+6;
-									g.fillPolygon(xPoints, yPoints, nPoints);
-									g.setColor( te.isSelected() ? Color.black : Color.gray );
-									g.drawPolygon(xPoints, yPoints, nPoints);
-									g.setColor( Color.black );
-									
-									int strlen = g.getFontMetrics().stringWidth( genename );
-									while( strlen > len ) {
-										genename = genename.substring(0, genename.length()-1);
-										strlen = g.getFontMetrics().stringWidth( genename );
-									}
-									g.setColor( Color.black );
-									g.drawString( genename, 5+xoff+(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
 								}
-								y++;
 							}
 							
-							for( int i = 0; i < hteg.size(); i++ ) {
-								Tegeval te = hteg.get(i);
-								if( te != null ) hteg.set( i, te.getPrevious() );
+							for( int i = 0; i < hteglocal.size(); i++ ) {
+								Tegeval te = hteglocal.get(i);
+								if( te != null ) hteglocal.set( i, te.getPrevious() );
 								//if( te.getLength() > max ) max = te.getLength();
 							}
 						}
@@ -11934,6 +12729,102 @@ public class GeneSet extends JApplet {
 			};
 			c.setToolTipText("bleh");
 			
+			final AbstractAction	a = new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					c.repaint();
+				}
+			};
+			funcol.setAction( a );
+			gccol.setAction( a );
+			abucol.setAction( a );
+			precol.setAction( a );
+			
+			funcol.setText("Functions");
+			gccol.setText("GC%");
+			abucol.setText("Abundance");
+			precol.setText("Proximity preservation");
+			
+			turn.setAction( new AbstractAction("Forward") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					System.err.println("hteg " + hteg.size());
+					for( Tegeval te : hteg ) {
+						boolean rev = te.ori == -1 ^ te.getContshort().isReverse();
+						if( rev ) te.getContshort().setReverse( !te.getContshort().isReverse() );
+					}
+					c.repaint();
+				}
+			});
+			mvmnu.add( new AbstractAction("Inject forward") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if( currentTe != null ) {
+						if( currentTe.getContshort().isReverse() ) {
+							Tegeval previous = currentTe.prev;
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							currentTe.setPrevious( te );
+							te.setPrevious( previous );
+						} else {
+							Tegeval next = currentTe.next;
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							te.setPrevious( currentTe );
+							next.setPrevious( te );
+						}
+						c.repaint();
+					}
+				}
+			});
+			mvmnu.add( new AbstractAction("Inject back") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if( currentTe != null ) {
+						if( currentTe.getContshort().isReverse() ) {
+							Tegeval next = currentTe.next;
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							te.setPrevious( currentTe );
+							next.setPrevious( te );
+						} else {
+							Tegeval previous = currentTe.prev;
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							currentTe.setPrevious( te );
+							te.setPrevious( previous );
+						}
+						c.repaint();
+					}
+				}
+			});
+			mvmnu.add( new AbstractAction("Delete forward") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if( currentTe != null ) {
+						if( currentTe.getContshort().isReverse() ) {
+							Tegeval prevprev = currentTe.prev.prev;
+							currentTe.setPrevious( prevprev );
+						} else {
+							Tegeval nextnext = currentTe.next.next;
+							nextnext.setPrevious( currentTe );
+						}
+						c.repaint();
+					}
+				}
+			});
+			mvmnu.add( new AbstractAction("Delete back") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if( currentTe != null ) {
+						if( currentTe.getContshort().isReverse() ) {
+							Tegeval nextnext = currentTe.next.next;
+							nextnext.setPrevious( currentTe );
+						} else {
+							Tegeval prevprev = currentTe.prev.prev;
+							currentTe.setPrevious( prevprev );
+						}
+						c.repaint();
+					}
+				}
+			});
+			
 			zoomIn.setAction( new AbstractAction("+") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -11975,8 +12866,50 @@ public class GeneSet extends JApplet {
 						if (rh == 0) {
 							rh = rowheader.getRowCount() * rowheader.getRowHeight();
 						}
-						c.setPreferredSize( new Dimension(3000, rh) );
-						c.setSize(3000, rh);
+						c.setPreferredSize( new Dimension(6000, rh) );
+						c.setSize(6000, rh);
+						c.repaint();
+					}
+				}
+			});
+			addrelated.setAction( new AbstractAction("Add related") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if( currentTe != null ) {
+						GeneGroup gg = currentTe.getGene().getGeneGroup();
+						List<Tegeval> lte = gg.getTegevals();
+						List<Tegeval> include = new ArrayList<Tegeval>();
+						for( Tegeval te : lte ) {
+							Contig ct = te.getContshort();
+							for( Tegeval ste : hteg ) {
+								if( ste.getContshort() == ct ) {
+									ct = null;
+									break;
+								}
+							}
+							if( ct != null ) include.add( te );
+						}
+						hteg.addAll( include );
+						
+						rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
+						int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
+						if (rh == 0) {
+							rh = rowheader.getRowCount() * rowheader.getRowHeight();
+						}
+						c.setPreferredSize( new Dimension(6000, rh) );
+						c.setSize(6000, rh);
+						c.repaint();
+					}
+				}
+			});
+			highrel.setAction( new AbstractAction("Highlight related") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if( currentTe != null ) {
+						List<Tegeval> lte = currentTe.getGene().getGeneGroup().getTegevals();
+						for( Tegeval te : lte ) {
+							te.setSelected( true );
+						}
 						c.repaint();
 					}
 				}
@@ -11988,12 +12921,6 @@ public class GeneSet extends JApplet {
 				}
 			});
 			
-			AbstractAction	a = new AbstractAction() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					c.repaint();
-				}
-			};
 			sequenceView.setAction( a );
 			blocksView.setAction( a );			
 			sequenceView.setText("Sequence");
@@ -12001,7 +12928,7 @@ public class GeneSet extends JApplet {
 			
 			sequenceView.setSelected( true );
 			
-			ButtonGroup	bg = new ButtonGroup();
+			bg = new ButtonGroup();
 			bg.add( sequenceView );
 			bg.add( blocksView );
 			
@@ -12015,7 +12942,7 @@ public class GeneSet extends JApplet {
 					//System.err.println();
 					if( te != null ) {
 						if( me.getClickCount() == 2 ) {
-							c.setToolTipText( "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+"<br>"+ te.getGene().getGeneGroup().getFunctions() + "</html>" );
+							c.setToolTipText( "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+"<br>"+ te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>" );
 							//c.sett
 						} else {
 							te.setSelected( !te.isSelected() );
@@ -12073,12 +13000,92 @@ public class GeneSet extends JApplet {
 					c.repaint();
 				}
 			});
+			popup.add( new AbstractAction("Delete") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Set<Tegeval>	ste = new HashSet<Tegeval>();
+					int[] rr = rowheader.getSelectedRows();
+					for( int r : rr ) {
+						int i = rowheader.convertRowIndexToModel( r );
+						ste.add( hteg.get(i) );
+					}
+					hteg.removeAll( ste );
+					
+					rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
+					int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
+					if (rh == 0) {
+						rh = rowheader.getRowCount() * rowheader.getRowHeight();
+					}
+					c.setPreferredSize( new Dimension(6000, rh) );
+					c.setSize(6000, rh);
+					c.repaint();
+				}
+			});
+			popup.add( new AbstractAction("Move left") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int[] rr = rowheader.getSelectedRows();
+					for( int r : rr ) {
+						int i = rowheader.convertRowIndexToModel( r );
+						Tegeval te = hteg.get( i );
+						hteg.set( i, te.next == null ? te : te.next );
+					}
+					c.repaint();
+				}
+			});
+			popup.add( new AbstractAction("Move right") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int[] rr = rowheader.getSelectedRows();
+					for( int r : rr ) {
+						int i = rowheader.convertRowIndexToModel( r );
+						Tegeval te = hteg.get( i );
+						hteg.set( i, te.prev == null ? te : te.prev );
+					}
+					c.repaint();
+				}
+			});
 			rowheader.setComponentPopupMenu( popup );
 
 			JScrollPane scrollpane = new JScrollPane(c);
 			scrollpane.getViewport().setBackground(Color.white);
 			JScrollPane rowheaderscroll = new JScrollPane();
 			rowheader.setAutoCreateRowSorter(true);
+			rowheader.addKeyListener( new KeyListener() {
+				@Override
+				public void keyTyped(KeyEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
+						Set<Tegeval>	ste = new HashSet<Tegeval>();
+						int[] rr = rowheader.getSelectedRows();
+						for( int r : rr ) {
+							int i = rowheader.convertRowIndexToModel( r );
+							ste.add( hteg.get(i) );
+						}
+						hteg.removeAll( ste );
+						
+						rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
+						int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
+						if (rh == 0) {
+							rh = rowheader.getRowCount() * rowheader.getRowHeight();
+						}
+						c.setPreferredSize( new Dimension(6000, rh) );
+						c.setSize(6000, rh);
+						c.repaint();
+					}
+				}
+
+				@Override
+				public void keyReleased(KeyEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
 			rowheader.setModel(new TableModel() {
 				@Override
 				public int getRowCount() {
@@ -12087,17 +13094,19 @@ public class GeneSet extends JApplet {
 
 				@Override
 				public int getColumnCount() {
-					return 2;
+					return 3;
 				}
 
 				@Override
 				public String getColumnName(int columnIndex) {
 					if( columnIndex == 1 ) return "Contig";
+					else if( columnIndex == 2 ) return "Length";
 					return "Species";
 				}
 
 				@Override
 				public Class<?> getColumnClass(int columnIndex) {
+					if( columnIndex == 2 ) return Integer.class;
 					return String.class;
 				}
 
@@ -12112,6 +13121,7 @@ public class GeneSet extends JApplet {
 					Tegeval te = hteg.get(rowIndex);
 					if( columnIndex == 0 ) return te.getSpecies();
 					else if( columnIndex == 1 ) return te.getContshort().getName();
+					else if( columnIndex == 2 ) return te.getLength();
 					/*for( Gene selectedGene : selectedGenes ) {
 						if( selectedGene.species.containsKey( species ) ) {
 							Teginfo ti = selectedGene.species.get( species );
@@ -12151,7 +13161,7 @@ public class GeneSet extends JApplet {
 			gsplitpane.setRightComponent(scrollpane);
 
 			JComponent fillup = new JComponent() {};
-			fillup.setPreferredSize(new Dimension(3000, 20));
+			fillup.setPreferredSize(new Dimension(6000, 20));
 			scrollpane.setColumnHeaderView(fillup);
 
 			// JComponent filldown = new JComponent() {};
@@ -12162,8 +13172,8 @@ public class GeneSet extends JApplet {
 			if (rh == 0) {
 				rh = rowheader.getRowCount() * rowheader.getRowHeight();
 			}
-			c.setPreferredSize(new Dimension(3000, rh));
-			c.setSize(3000, rh);
+			c.setPreferredSize(new Dimension(6000, rh));
+			c.setSize(6000, rh);
 		}
 		
 		/*JComponent panel = new JComponent() {};
@@ -12177,8 +13187,12 @@ public class GeneSet extends JApplet {
 		toolbar.add( zoomIn );
 		toolbar.add( zoomOut );
 		toolbar.add( recenter );
+		toolbar.add( addrelated );
+		toolbar.add( highrel );
 		toolbar.add( showseqs );
 		toolbar.add( showdnaseqs );
+		toolbar.add( mbr );
+		toolbar.add( turn );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
@@ -12201,7 +13215,8 @@ public class GeneSet extends JApplet {
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
 		final JRadioButton	cycColorScheme = new JRadioButton("#Cyc");
 		final JRadioButton	lenColorScheme = new JRadioButton("Len");
-		if (true) { //gsplitpane == null) {			
+		final JRadioButton	freqColorScheme = new JRadioButton("Freq");
+		if (true) { //gsplitpane == null) {
 			loadContigs( geneGroups );
 			
 			JCheckBox	check = new JCheckBox("All positions");
@@ -12260,6 +13275,17 @@ public class GeneSet extends JApplet {
 									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
 									g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
 								}
+							} else if( freqColorScheme.isSelected() ) {
+								if (sorting.isRowSelected(i)) {
+									//double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+									//g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
+								} else {
+
+								}
+								
+								double freq = genegroup.species.size()/28;
+								//double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
+								g.setColor( new Color( 1.0f-(float)freq, 1.0f, 1.0f ) );
 							} else if( cycColorScheme.isSelected() ) {
 								if (sorting.isRowSelected(i)) {
 									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
@@ -12334,12 +13360,14 @@ public class GeneSet extends JApplet {
 			locprevColorScheme.setAction( a );
 			cycColorScheme.setAction( a );
 			lenColorScheme.setAction( a );
+			freqColorScheme.setAction( a );
 			
 			binaryColorScheme.setText("Binary");
 			gcColorScheme.setText("GC");
 			locprevColorScheme.setText("Loc");
 			cycColorScheme.setText("#Cys");
 			lenColorScheme.setText("Len");
+			freqColorScheme.setText("Freq");
 			
 			binaryColorScheme.setSelected( true );
 			
@@ -12349,6 +13377,7 @@ public class GeneSet extends JApplet {
 			bg.add( locprevColorScheme );
 			bg.add( cycColorScheme );
 			bg.add( lenColorScheme );
+			bg.add( freqColorScheme );
 
 			c.addMouseListener(new MouseAdapter() {
 				Point p;
@@ -12422,17 +13451,13 @@ public class GeneSet extends JApplet {
 				}
 
 				@Override
-				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-				}
+				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
 
 				@Override
-				public void addTableModelListener(TableModelListener l) {
-				}
+				public void addTableModelListener(TableModelListener l) {}
 
 				@Override
-				public void removeTableModelListener(TableModelListener l) {
-				}
-
+				public void removeTableModelListener(TableModelListener l) {}
 			});
 			scrollpane.setRowHeaderView(rowheader);
 			rowheaderscroll.setViewport(scrollpane.getRowHeader());
@@ -12472,6 +13497,9 @@ public class GeneSet extends JApplet {
 		toolbar.add( binaryColorScheme );
 		toolbar.add( gcColorScheme );
 		toolbar.add( locprevColorScheme );
+		toolbar.add( cycColorScheme );
+		toolbar.add( lenColorScheme );
+		toolbar.add( freqColorScheme );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );

@@ -8,10 +8,10 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="jtar-1.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/spilling"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="commons-vfs2-2.0.jar"/>
 	<classpathentry kind="lib" path="commons-net-3.2.jar"/>
+	<classpathentry kind="lib" path="/u0/jdk1.7.0_09/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/u0/jdk1.7.0_09/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/u0/jdk1.7.0_09/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
