@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -230,7 +228,19 @@ public class Fasteignaverd implements EntryPoint {
 	
 	public class Fastpack {
 		public native void search( String val ) /*-{
-			this.search( val );
+			$wnd.fastpack.search( val );
+		}-*/;
+		
+		public native int getFetchNum() /*-{
+			return $wnd.fastpack.getFetchNum();
+		}-*/;
+		
+		public native int getTotal() /*-{
+			return $wnd.fastpack.getFetchNum();
+		}-*/;
+		
+		public native String getName( int i ) /*-{
+			return $wnd.fastpack.getName( i );
 		}-*/;
 	};
 	
@@ -344,18 +354,31 @@ public class Fasteignaverd implements EntryPoint {
 	
 	Timer t = null;
 	
+	public native void init() /*-{
+		var s = this;
+		$wnd.erm = function( name ) {
+			s.@org.simmi.client.Fasteignaverd::erm(Ljava/lang/String;)( name );
+		};
+	}-*/;
+	
+	public void erm( String name ) {
+		vp.add( new Label(name) );
+	}
+	
+	VerticalPanel	vp;
+	
 	@Override
 	public void onModuleLoad() {	
 		RootPanel	rp = RootPanel.get();
 		//final DataGrid<Ibud>	ibudGrid = new DataGrid<Ibud>();
-		fastpack = getFastpack();
+		fastpack = new Fastpack();
 		
 		Window.enableScrolling( false );
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
 		
-		final VerticalPanel	vp = new VerticalPanel();
+		vp = new VerticalPanel();
 		vp.setSize("100%", h+"px");
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		vp.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
@@ -496,8 +519,19 @@ public class Fasteignaverd implements EntryPoint {
 				val = val.replace("fermetrar_til=", "fermetrar_til=" + (ferm + diff));
 
 				final String tstr = val;
+				fastpack.search( tstr );
 				
-				int i = 0;
+				final Timer t = new Timer() {
+					@Override
+					public void run() {
+						vp.add( new Label( ""+fastpack.getTotal() ) );
+					}
+				};
+				t.scheduleRepeating( 1000 );
+				
+				//tstr.replace("offset", "offset=" + i);
+				
+				/*int i = 0;
 				//tstr.replace("offset", "offset=" + i);
 				//pgbar.setIndeterminate(true);
 				
