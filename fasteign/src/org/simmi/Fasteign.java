@@ -185,7 +185,7 @@ public class Fasteign extends JApplet {
 		}
 	}
 
-	public boolean stuff(String urlstr) throws IOException, InterruptedException {
+	public boolean stuff(String urlstr, TableModelEvent tme, TableModelEvent ptme ) throws IOException, InterruptedException {
 		URL url = new URL(urlstr);
 		InputStream stream = url.openStream();
 
@@ -240,6 +240,10 @@ public class Fasteign extends JApplet {
 	
 						ib.set(i++, sval);
 					}
+					
+					if( jso != null ) jso.call( "codeAddress", new Object[] { ib.nafn } );
+					table.tableChanged( tme );
+					ptable.tableChanged( ptme );
 				}
 				count++;
 			}
@@ -259,12 +263,18 @@ public class Fasteign extends JApplet {
 			// String base =
 			// "http://www.mbl.is/mm/fasteignir/leit.html?simmi;svaedi=108_108&tegund=fjolbyli&fermetrar_fra=70&fermetrar_til=150&herbergi_fra=&herbergi_til=&verd_fra=10&verd_til=40&gata=&lysing=";
 
+			TableModelEvent tme = new TableModelEvent( table.getModel() );
+			TableModelEvent ptme = new TableModelEvent( ptable.getModel() );
+			
 			int i = 0;
 			while (true) {
-				if (!stuff(urlstr.replace("offset", "offset=" + i)))
-					break;
+				if( !stuff( urlstr.replace("offset", "offset=" + i ), tme, ptme ) ) break;
+				
 				i += 25;
 			}
+			
+			table.tableChanged( tme );
+			ptable.tableChanged( ptme );
 
 			for (Ibud ib : iblist) {
 				System.err.println(ib);
@@ -776,9 +786,11 @@ public class Fasteign extends JApplet {
 		mapClick = false;
 	}
 	
+	JSObject	jso = null;
 	public void init() {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+			jso = JSObject.getWindow( Fasteign.this );
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (InstantiationException e) {
@@ -786,6 +798,8 @@ public class Fasteign extends JApplet {
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		} catch (UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		} catch( Exception e ) {
 			e.printStackTrace();
 		}
 
@@ -933,6 +947,11 @@ public class Fasteign extends JApplet {
 				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable );
 			}
 		});
+		ptable.addKeyListener( new KeyAdapter() {
+			public void keyPressed( KeyEvent e ) {
+				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable );
+			}
+		});
 
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
@@ -950,10 +969,8 @@ public class Fasteign extends JApplet {
 								String val = (String)table.getValueAt(r, 0);
 								
 								if( !mapClick ) {
-									try {
-										JSObject jso = JSObject.getWindow( Fasteign.this );
-										jso.call( "setCenter", new Object[] {val} );
-									} catch( Exception ex ) {}
+									//JSObject jso = JSObject.getWindow( Fasteign.this );
+									if( jso != null ) jso.call( "setCenter", new Object[] {val} );
 								}
 							} else {
 								ptable.addRowSelectionInterval(r, r);
@@ -1100,6 +1117,8 @@ public class Fasteign extends JApplet {
 			public void columnSelectionChanged(ListSelectionEvent e) {
 			}
 		});
+		
+		createModels(table, ptable);
 
 		JButton button = new JButton(new AbstractAction("Leita") {
 			@Override
@@ -1123,24 +1142,18 @@ public class Fasteign extends JApplet {
 				pgbar.setIndeterminate(true);
 				Thread t = new Thread() {
 					public void run() {
+						if( jso != null ) jso.call( "clearMarkers", new Object[] {} );
 						calc(tstr);
-						createModels(table, ptable);
 						pgbar.setIndeterminate(false);
-					
-						try {
-							JSObject jso = JSObject.getWindow( Fasteign.this );
-							jso.call( "clearMarkers", new Object[] {} );
-							Set<String>	adset = new HashSet<String>();
-							for( Ibud ib : iblist ) {
-								adset.add( ib.nafn );
-							}
-							
-							for( String address : adset ) {
-								jso.call( "codeAddress", new Object[] { address } );
-							}
-						} catch( Exception e ) {
-							
+						
+						/*Set<String>	adset = new HashSet<String>();
+						for( Ibud ib : iblist ) {
+							adset.add( ib.nafn );
 						}
+						
+						for( String address : adset ) {
+							jso.call( "codeAddress", new Object[] { address } );
+						}*/
 					}
 				};
 				t.start();
