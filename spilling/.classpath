@@ -3,14 +3,14 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_21/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-examples-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-excelant-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-ooxml-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-ooxml-schemas-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-scratchpad-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="/u0/jdk1.7.0_09/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/u0/jdk1.7.0_09/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="/u0/jdk1.7.0_09/jre/lib/javaws.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
