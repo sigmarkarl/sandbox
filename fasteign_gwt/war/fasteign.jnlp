@@ -9,6 +9,9 @@
       <desktop />
   </shortcut>
 </information>
+<security>
+  <all-permissions/>
+</security>
 <offline-allowed/>
 <resources>
   <j2se version="1.6+" />
