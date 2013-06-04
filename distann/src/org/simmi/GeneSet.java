@@ -105,6 +105,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
@@ -744,7 +745,13 @@ public class GeneSet extends JApplet {
 					Contig curcontig = tv.getContshort();
 					boolean bu = precontig.equals( curcontig );
 					//System.err.println( bu + "  " + precontig.toString().equals( curcontig.toString()) + "  " + (precontig == curcontig) );
-					if( bu ) tv.setPrevious( preval );
+					if( bu ) {
+						tv.setPrevious( preval );
+						curcontig.end = tv;
+					} else {
+						curcontig.start = tv;
+						curcontig.end = tv;
+					}
 				}
 				preval = tv;
 				
@@ -10938,7 +10945,7 @@ public class GeneSet extends JApplet {
 								te.setPrevious( prevprev );
 								
 								System.err.println( prevprev.getGene().getName() );
-							}
+							} else contig.start = te;
 						} else {
 							Tegeval prevnext = ste.setNext( te );
 							te.setPrevious( ste );
@@ -10946,8 +10953,11 @@ public class GeneSet extends JApplet {
 								prevnext.setPrevious( te );
 								
 								System.err.println( prevnext.getGene().getName() );
-							}
+							} else contig.end = te;
 						}
+					} else {
+						contig.start = te;
+						contig.end = te;
 					}
 				}
 			}
@@ -11395,6 +11405,11 @@ public class GeneSet extends JApplet {
 	private static void blastAlign(Reader r, String main, String second) {
 		// BufferedReader br = new BufferedReader();
 	}
+	
+	/*static class Connection {
+		Contig	contig;
+		boolean	ori;
+	}*/
 
 	static class Contig implements Comparable<Contig> {
 		public Contig(String name) {
@@ -11410,6 +11425,11 @@ public class GeneSet extends JApplet {
 		
 		public String toString() {
 			return name;
+		}
+		
+		public String getSpec() {
+			int i = name.indexOf('_');
+			return name.substring(0, i);
 		}
 		
 		/*@Override
@@ -11430,6 +11450,73 @@ public class GeneSet extends JApplet {
 		int 			count;
 		StringBuilder	seq;
 		boolean			reverse = false;
+		Contig			next;
+		Contig			prev;
+		Tegeval			start;
+		Tegeval			end;
+		
+		public void setConnection( Contig contig, boolean rev, boolean forw ) {
+			if( forw ) setForwardConnection( contig, rev );
+			else setReverseConnection( contig, rev );
+		}
+		
+		public void setForwardConnection( Contig contig, boolean rev ) {
+			this.next = contig;
+			if( rev ) {
+				contig.next = this;
+				contig.end.setPrevious( this.end );
+				if( this.isReverse() == contig.isReverse() ) {
+					Contig nextc = contig;
+					while( nextc != null ) {
+						nextc.setReverse( !nextc.isReverse() );
+						nextc = nextc.next;
+					}
+				}
+			} else {
+				contig.prev = this;
+				contig.start.setPrevious( this.end );
+				if( this.isReverse() != contig.isReverse() ) {
+					Contig nextc = contig;
+					while( nextc != null ) {
+						nextc.setReverse( !nextc.isReverse() );
+						nextc = nextc.next;
+					}
+				}
+			}
+		}
+		
+		public void setReverseConnection( Contig contig, boolean rev ) {
+			this.prev = contig;
+			if( rev ) {
+				contig.prev = this;
+				this.start.setPrevious( contig.start );
+				if( this.isReverse() == contig.isReverse() ) {
+					Contig nextc = contig;
+					while( nextc != null ) {
+						nextc.setReverse( !nextc.isReverse() );
+						nextc = nextc.prev;
+					}
+				}
+			} else {
+				contig.next = this;
+				this.start.setPrevious( contig.end );
+				if( this.isReverse() != contig.isReverse() ) {
+					Contig nextc = contig;
+					while( nextc != null ) {
+						nextc.setReverse( !nextc.isReverse() );
+						nextc = nextc.prev;
+					}
+				}
+			}
+		}
+		
+		public Contig getNextContig() {
+			return next;
+		}
+		
+		public Contig getPrevContig() {
+			return prev;
+		}
 		
 		public boolean isReverse() {
 			return reverse;
@@ -12220,6 +12307,10 @@ public class GeneSet extends JApplet {
 									
 									xoff += len+10;
 									next = next.getNext();
+									/*if( tev == null ) {
+										Contig nextcontig = next.getContshort().next;
+										nextcontig.
+									} else next = tev;*/
 								}
 							}
 							
@@ -12985,7 +13076,21 @@ public class GeneSet extends JApplet {
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
 						Tegeval te = hteg.get( i );
-						te.getContshort().setReverse( !te.getContshort().isReverse() );
+						Contig contig = te.getContshort();
+						te.getContshort().setReverse( !contig.isReverse() );
+						
+						Contig nextc = contig.next;
+						while( nextc != null ) {
+							nextc.setReverse( !nextc.isReverse() );
+							nextc = nextc.next;
+						}
+						
+						Contig prevc = contig.prev;
+						while( prevc != null ) {
+							prevc.setReverse( !prevc.isReverse() );
+							prevc = prevc.prev;
+						}
+						
 						/*for( Gene selectedGene : selectedGenes ) {
 							String spec = (String)rowheader.getValueAt(r, 0);
 							if( selectedGene.species.containsKey( spec ) ) {
@@ -12997,6 +13102,105 @@ public class GeneSet extends JApplet {
 							}
 						}*/
 					}
+					c.repaint();
+				}
+			});
+			popup.add( new AbstractAction("Connect contig") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int r = rowheader.getSelectedRow();
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					Contig 	cont = te.getContshort();
+					String	spec = cont.getSpec();
+					
+					final List<Contig>	specont = new ArrayList<Contig>();
+					for( String name : contigmap.keySet() ) {
+						Contig c = contigmap.get( name );
+						if( c != cont && spec.equals( c.getSpec() ) ) specont.add( c );
+					}
+					
+					JTable	table = new JTable();
+					table.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+					table.setAutoCreateRowSorter( true );
+					TableModel model = new TableModel() {
+						@Override
+						public int getRowCount() {
+							return specont.size();
+						}
+
+						@Override
+						public int getColumnCount() {
+							return 1;
+						}
+
+						@Override
+						public String getColumnName(int columnIndex) {
+							return "Contig";
+						}
+
+						@Override
+						public Class<?> getColumnClass(int columnIndex) {
+							return String.class;
+						}
+
+						@Override
+						public boolean isCellEditable(int rowIndex, int columnIndex) {
+							return false;
+						}
+
+						@Override
+						public Object getValueAt(int rowIndex, int columnIndex) {
+							return specont.get(rowIndex).name;
+						}
+
+						@Override
+						public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+							
+						}
+
+						@Override
+						public void addTableModelListener(TableModelListener l) {}
+
+						@Override
+						public void removeTableModelListener( TableModelListener l ) {}
+					};
+					table.setModel( model );
+					JScrollPane	scroll = new JScrollPane( table );
+					JCheckBox	reverse = new JCheckBox( "reverse" );
+					JCheckBox	forward = new JCheckBox( "forward" );
+					Object[] message = { scroll, reverse, forward };
+					JOptionPane.showMessageDialog( frame, message, "Select contig", JOptionPane.PLAIN_MESSAGE );
+					
+					r = table.getSelectedRow();
+					i = -1;
+					if( r != -1 ) i = table.convertRowIndexToModel( r );
+					if( i != -1 ) {
+						if( forward.isSelected() ) {
+							Tegeval con = cont.end.next;
+							while( con != null ) {
+								cont = con.getContshort();
+								con = cont.isReverse() ? cont.start.prev : cont.end.next;
+								
+								if( con != null && con.getContshort().equals( cont ) ) {
+									break;
+								}
+							}
+						} else {
+							Tegeval con = cont.start.prev;
+							while( con != null ) {
+								cont = con.getContshort();
+								con = cont.isReverse() ? cont.start.prev : cont.end.next;
+								
+								if( con != null && con.getContshort().equals( cont ) ) {
+									break;
+								}
+							}
+						}
+						
+						cont.setConnection( specont.get(i), reverse.isSelected(), forward.isSelected() );
+					}
+					
 					c.repaint();
 				}
 			});
@@ -13094,19 +13298,21 @@ public class GeneSet extends JApplet {
 
 				@Override
 				public int getColumnCount() {
-					return 3;
+					return 4;
 				}
 
 				@Override
 				public String getColumnName(int columnIndex) {
 					if( columnIndex == 1 ) return "Contig";
 					else if( columnIndex == 2 ) return "Length";
+					else if( columnIndex == 3 ) return "Orientation";
 					return "Species";
 				}
 
 				@Override
 				public Class<?> getColumnClass(int columnIndex) {
 					if( columnIndex == 2 ) return Integer.class;
+					else if( columnIndex == 3 ) return Boolean.class;
 					return String.class;
 				}
 
@@ -13122,6 +13328,7 @@ public class GeneSet extends JApplet {
 					if( columnIndex == 0 ) return te.getSpecies();
 					else if( columnIndex == 1 ) return te.getContshort().getName();
 					else if( columnIndex == 2 ) return te.getLength();
+					else if( columnIndex == 3 ) return te.getContshort().isReverse();
 					/*for( Gene selectedGene : selectedGenes ) {
 						if( selectedGene.species.containsKey( species ) ) {
 							Teginfo ti = selectedGene.species.get( species );
