@@ -12,6 +12,7 @@ import java.util.List;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.Window;
 import android.view.WindowManager;
@@ -131,7 +132,7 @@ public class MainActivity extends Activity {
 		}
 		
 		public boolean equals( Object o ) {
-			return o instanceof Ibud && url.equals( ((Ibud)o).url );
+			return o != null && url!= null && o instanceof Ibud && url.equals( ((Ibud)o).url );
 		}
 
 		public String toString() {
@@ -205,6 +206,8 @@ public class MainActivity extends Activity {
 					
 					Ibud ib = subload( baos.toString() );
 					ib.url = suburlstr;
+					
+					//myWebView.loadUrl("javascript:erm('"+ib.nafn+"')");
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
@@ -259,8 +262,9 @@ public class MainActivity extends Activity {
 	
 	public class Fastpack {
 		@JavascriptInterface
-		public void search() {
-			new searchTask().execute();
+		public void search( String what ) {			
+			int i = 0;
+			new searchTask().execute( what.replace("offset", "offset=" + i) );
 		}
 		
 		@JavascriptInterface
@@ -282,7 +286,14 @@ public class MainActivity extends Activity {
 		public int getTotal() {
 			return total;
 		}
+		
+		@JavascriptInterface
+		public String getName( int i ) {
+			return iblist.get(i).nafn;
+		}
 	};
+	
+	WebView	myWebView;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -292,14 +303,15 @@ public class MainActivity extends Activity {
 	    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_main);
 		
-		WebView myWebView = (WebView) findViewById(R.id.webView1);
+		myWebView = (WebView)findViewById(R.id.webView1);
 		//myWebView.setWebViewClient( new WebViewClient() );
 		WebSettings webSettings = myWebView.getSettings();
 		webSettings.setJavaScriptEnabled(true);
 		
 		Fastpack fastpack = new Fastpack();
 		myWebView.addJavascriptInterface( fastpack, "fastpack" );
-		myWebView.loadUrl("http://192.168.1.85:8888/");
+		Log.i("mu", "ma");
+		myWebView.loadUrl("http://192.168.1.70:8888/Fasteignaverd.html");
 	}
 
 	@Override
