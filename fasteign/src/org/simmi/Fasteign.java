@@ -351,7 +351,7 @@ public class Fasteign extends JApplet {
 		}
 	}
 
-	public void createModels(final JTable table, final JTable ptable) {
+	public void createModels(final JTable table, final JTable ptable, final JTable medtable) {
 		TableModel model = new TableModel() {
 			@Override
 			public void addTableModelListener(TableModelListener l) {
@@ -526,8 +526,7 @@ public class Fasteign extends JApplet {
 		// medtable.tableChanged( new TableModelEvent( medtable.getModel() ) );
 		medtable.setModel(new TableModel() {
 			@Override
-			public void addTableModelListener(TableModelListener l) {
-			}
+			public void addTableModelListener(TableModelListener l) {}
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
@@ -748,7 +747,7 @@ public class Fasteign extends JApplet {
 		}
 	}
 	
-	public void henda( JTable table, JTable ptable ) {
+	public void henda( JTable table, JTable ptable, JTable medtable ) {
 		Set<Ibud> ibs = new HashSet<Ibud>();
 		int[] rr = table.getSelectedRows();
 		for (int r : rr) {
@@ -936,7 +935,7 @@ public class Fasteign extends JApplet {
 		popup.add(new AbstractAction("Henda") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				henda( table, ptable );
+				henda( table, ptable, medtable );
 			}
 		});
 		table.setComponentPopupMenu(popup);
@@ -944,12 +943,12 @@ public class Fasteign extends JApplet {
 		
 		table.addKeyListener( new KeyAdapter() {
 			public void keyPressed( KeyEvent e ) {
-				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable );
+				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable, medtable );
 			}
 		});
 		ptable.addKeyListener( new KeyAdapter() {
 			public void keyPressed( KeyEvent e ) {
-				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable );
+				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable, medtable );
 			}
 		});
 
@@ -1117,8 +1116,6 @@ public class Fasteign extends JApplet {
 			public void columnSelectionChanged(ListSelectionEvent e) {
 			}
 		});
-		
-		createModels(table, ptable);
 
 		JButton button = new JButton(new AbstractAction("Leita") {
 			@Override
@@ -1298,6 +1295,7 @@ public class Fasteign extends JApplet {
 				}
 			}
 		});
+		createModels(table, ptable, medtable);
 
 		// medtable.setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
 		JScrollPane medscroll = new JScrollPane();
