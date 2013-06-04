@@ -2,6 +2,7 @@ package org.simmi;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -40,6 +41,7 @@ import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
@@ -121,6 +123,15 @@ public class Fasteign extends JApplet {
 		int herb;
 		Date dat;
 		String url;
+		boolean	selected = false;
+		
+		public boolean isSelected() {
+			return selected;
+		}
+		
+		public void setSelection( boolean sel ) {
+			selected = sel;
+		}
 
 		public Ibud(String nafn) {
 			this.nafn = nafn;
@@ -184,8 +195,14 @@ public class Fasteign extends JApplet {
 			return nafn + "\t" + verd + "\t" + fastm + "\t" + brunm + "\t" + teg + "\t" + ferm + "\t" + herb + "\t" + dat + "\t" + url;
 		}
 	}
+	
+	/*public void printsel() {
+		for( Ibud ib : iblist ) {
+			if( ib.isSelected() ) System.err.println("sel " + ib.nafn);
+		}
+	}*/
 
-	public boolean stuff(String urlstr, TableModelEvent tme, TableModelEvent ptme ) throws IOException, InterruptedException {
+	public boolean stuff(String urlstr, TableModelEvent tme, TableModelEvent ptme, TableModelEvent mtme ) throws IOException, InterruptedException {
 		URL url = new URL(urlstr);
 		InputStream stream = url.openStream();
 
@@ -242,16 +259,37 @@ public class Fasteign extends JApplet {
 					}
 					
 					if( jso != null ) jso.call( "codeAddress", new Object[] { ib.nafn } );
+					noclear = true;
+					//printsel();
 					table.tableChanged( tme );
 					ptable.tableChanged( ptme );
+					medtable.tableChanged( mtme );
+					reselect();
 				}
 				count++;
 			}
 
-			Thread.sleep(200);
+			//Thread.sleep(200);
 		}
 
 		return count == 25;
+	}
+	
+	boolean noclear = false;
+	public void reselect() {
+		table.clearSelection();
+		int i = 0;
+		for( Ibud ib : iblist ) {
+			int r = table.convertRowIndexToView(i);
+			if( r >= 0 && r < table.getRowCount() && ib.isSelected() ) {
+				//System.err.println("selecting " + r);
+				table.addRowSelectionInterval(r, r);
+			}
+			
+			i++;
+		}
+		
+		noclear = false;
 	}
 
 	public void calc(String urlstr) {
@@ -265,20 +303,24 @@ public class Fasteign extends JApplet {
 
 			TableModelEvent tme = new TableModelEvent( table.getModel() );
 			TableModelEvent ptme = new TableModelEvent( ptable.getModel() );
+			TableModelEvent mtme = new TableModelEvent( medtable.getModel() );
 			
 			int i = 0;
 			while (true) {
-				if( !stuff( urlstr.replace("offset", "offset=" + i ), tme, ptme ) ) break;
+				if( !stuff( urlstr.replace("offset", "offset=" + i ), tme, ptme, mtme ) ) break;
 				
 				i += 25;
 			}
 			
+			noclear = true;
 			table.tableChanged( tme );
 			ptable.tableChanged( ptme );
+			medtable.tableChanged( mtme );
+			reselect();
 
-			for (Ibud ib : iblist) {
+			/*for (Ibud ib : iblist) {
 				System.err.println(ib);
-			}
+			}*/
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -526,8 +568,7 @@ public class Fasteign extends JApplet {
 		// medtable.tableChanged( new TableModelEvent( medtable.getModel() ) );
 		medtable.setModel(new TableModel() {
 			@Override
-			public void addTableModelListener(TableModelListener l) {
-			}
+			public void addTableModelListener(TableModelListener l) {}
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
@@ -588,15 +629,14 @@ public class Fasteign extends JApplet {
 						int r = ptable.getRowCount();
 						if (rowIndex == 0) {
 							double retval = 0.0;
+							int count = r;
 							for (int i = 0; i < r; i++) {
 								double val = (Double) ptable.getValueAt(i, columnIndex);
 								if (val > 0 && val != Double.POSITIVE_INFINITY) {
 									retval += val;
-								} else
-									r--;
+								} else count--;
 							}
-							if (r > 0)
-								return retval / r;
+							if (count > 0) return retval / count;
 						} else {
 							List<Double> ld = new ArrayList<Double>();
 							for (int i = 0; i < r; i++) {
@@ -666,16 +706,13 @@ public class Fasteign extends JApplet {
 			}
 
 			@Override
-			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-			}
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
 
 			@Override
-			public void addTableModelListener(TableModelListener l) {
-			}
+			public void addTableModelListener(TableModelListener l) {}
 
 			@Override
-			public void removeTableModelListener(TableModelListener l) {
-			}
+			public void removeTableModelListener(TableModelListener l) {}
 		});
 	}
 
@@ -787,7 +824,7 @@ public class Fasteign extends JApplet {
 	}
 	
 	JSObject	jso = null;
-	public void init() {
+	public void initGUI( Container cont ) {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 			jso = JSObject.getWindow( Fasteign.this );
@@ -803,14 +840,10 @@ public class Fasteign extends JApplet {
 			e.printStackTrace();
 		}
 
-		this.setBackground(Color.white);
-		this.getContentPane().setBackground(Color.white);
+		cont.setBackground(Color.white);
+		cont.setLayout(new BorderLayout());
 
-		this.setLayout(new BorderLayout());
-
-		JComponent topcomp = new JComponent() {
-
-		};
+		JComponent topcomp = new JComponent() {};
 		topcomp.setLayout(new FlowLayout());
 
 		// JLabel title = new JLabel("Hvað á íbúðin að kosta?");
@@ -891,6 +924,12 @@ public class Fasteign extends JApplet {
 		table = new JTable() {
 			public void setRowSelectionInterval(int r1, int r2) {
 				sel = false;
+				int i = 0;
+				for( Ibud ib : iblist ) {
+					int r = table.convertRowIndexToView(i);
+					iblist.get(i).setSelection( r >= r1 && r <= r2 );
+					i++;
+				}
 				super.setRowSelectionInterval(r1, r2);
 			}
 
@@ -901,18 +940,45 @@ public class Fasteign extends JApplet {
 
 			public void addRowSelectionInterval(int r1, int r2) {
 				sel = false;
+				for( int r = r1; r <= r2; r++ ) {
+					int i = table.convertRowIndexToModel(r);
+					iblist.get(i).setSelection( true );
+				}
 				super.addRowSelectionInterval(r1, r2);
 			}
 
 			public void addColumnSelectionInterval(int c1, int c2) {
 				sel = false;
 				super.addColumnSelectionInterval(c1, c2);
+			}
+			
+			public void removeRowSelectionInterval(int r1, int r2) {
+				sel = false;
+				if( !noclear ) for( int r = r1; r <= r2; r++ ) {
+					int i = ptable.convertRowIndexToModel(r);
+					iblist.get(i).setSelection( false );
+				}
+				super.removeRowSelectionInterval(r1, r2);
+			}
+
+			public void removeColumnSelectionInterval(int c1, int c2) {
+				sel = false;
+				super.removeColumnSelectionInterval(c1, c2);
 			}
 		};
 
 		ptable = new JTable() {
 			public void setRowSelectionInterval(int r1, int r2) {
 				sel = true;
+				int i = 0;
+				for( Ibud ib : iblist ) {
+					int r = ptable.convertRowIndexToView(i);
+					boolean sel = r >= r1 && r <= r2;
+					ib.setSelection( sel );
+					//printsel();
+					//System.err.println( "bool " + sel + "  " + r + "  " + r1 + "  " + r2 );
+					i++;
+				}
 				super.setRowSelectionInterval(r1, r2);
 			}
 
@@ -923,12 +989,30 @@ public class Fasteign extends JApplet {
 
 			public void addRowSelectionInterval(int r1, int r2) {
 				sel = true;
+				for( int r = r1; r <= r2; r++ ) {
+					int i = ptable.convertRowIndexToModel(r);
+					iblist.get(i).setSelection( true );
+				}
 				super.addRowSelectionInterval(r1, r2);
 			}
 
 			public void addColumnSelectionInterval(int c1, int c2) {
 				sel = true;
 				super.addColumnSelectionInterval(c1, c2);
+			}
+			
+			public void removeRowSelectionInterval(int r1, int r2) {
+				sel = true;
+				if( !noclear ) for( int r = r1; r <= r2; r++ ) {
+					int i = ptable.convertRowIndexToModel(r);
+					iblist.get(i).setSelection( false );
+				}
+				super.removeRowSelectionInterval(r1, r2);
+			}
+
+			public void removeColumnSelectionInterval(int c1, int c2) {
+				sel = true;
+				super.removeColumnSelectionInterval(c1, c2);
 			}
 		};
 
@@ -956,12 +1040,14 @@ public class Fasteign extends JApplet {
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
+				//printsel();
+				
 				boolean ss = sel;
 				sel = true;
 				if (ss) {
 					int[] rr = table.getSelectedRows();
-					if (rr.length > 1)
-						medtable.tableChanged(new TableModelEvent(medtable.getModel()));
+					//if (rr.length > 1)
+					medtable.tableChanged(new TableModelEvent(medtable.getModel()));
 					if (rr != null && rr.length > 0) {
 						for (int r : rr) {
 							if (r == rr[0]) {
@@ -1011,8 +1097,8 @@ public class Fasteign extends JApplet {
 				sel = false;
 				if (!ss) {
 					int[] rr = ptable.getSelectedRows();
-					if (rr.length > 1)
-						medtable.tableChanged(new TableModelEvent(medtable.getModel()));
+					//if (rr.length > 1)
+					medtable.tableChanged(new TableModelEvent(medtable.getModel()));
 					if (rr != null && rr.length > 0) {
 						for (int r : rr) {
 							if (r == rr[0]) {
@@ -1117,9 +1203,6 @@ public class Fasteign extends JApplet {
 			public void columnSelectionChanged(ListSelectionEvent e) {
 			}
 		});
-		
-		createModels(table, ptable);
-
 		JButton button = new JButton(new AbstractAction("Leita") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1161,7 +1244,7 @@ public class Fasteign extends JApplet {
 		});
 		topcomp.add(button);
 
-		this.add(topcomp, BorderLayout.NORTH);
+		cont.add(topcomp, BorderLayout.NORTH);
 		// this.add( botcomp, BorderLayout.SOUTH );
 
 		JSplitPane splitpane = new JSplitPane();
@@ -1298,31 +1381,44 @@ public class Fasteign extends JApplet {
 				}
 			}
 		});
+		createModels(table, ptable);
 
 		// medtable.setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
-		JScrollPane medscroll = new JScrollPane();
+		//JScrollPane medscroll = new JScrollPane();
 		// medtable.setTableHeader( null );
 		// medscroll.setPreferredSize( d );
 
-		JComponent comp = new JComponent() {
-		};
+		JComponent comp = new JComponent() {};
 		comp.setLayout(new BorderLayout());
 		comp.add(pricepane);
 		comp.add(medtable, BorderLayout.SOUTH);
 
-		JComponent pcomp = new JComponent() {
-		};
+		JComponent pcomp = new JComponent() {};
 		pcomp.setLayout(new BorderLayout());
 		pcomp.add(scrollpane);
 		pcomp.add(medheadertable, BorderLayout.SOUTH);
 
-		this.add(botcomp, BorderLayout.SOUTH);
-
 		splitpane.setLeftComponent(pcomp);
 		splitpane.setRightComponent(comp);
+		
+		cont.add(botcomp, BorderLayout.SOUTH);
+		cont.add(splitpane);
+	}
 
-		this.add(splitpane);
+	public void init() {
+		this.getContentPane().setBackground(Color.white);
+		initGUI( this );
 
 		// calc();
+	}
+	
+	public static void main(String[] args) {
+		JFrame frame = new JFrame();
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		
+		Fasteign f = new Fasteign();
+		f.initGUI( frame );
+		
+		frame.setVisible( true );
 	}
 }
