@@ -22,12 +22,15 @@
         <file path="/distann/src/allthermus.aa"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
         <file path="/distann/src/go_short.obo"/>
+        <file path="/distann/src/trna.txt"/>
         <file path="/distann/src/gene2refseq_short.txt"/>
         <file path="/distann/src/sp2go_short.txt"/>
         <file path="/distann/src/thermus16S.blastout"/>
+        <file path="/distann/src/trna_sub.txt"/>
         <file path="/distann/src/thermus_ncbi_short.blastout"/>
         <file path="/distann/src/kegg_pathways"/>
         <file path="/distann/src/gene2go_short.txt"/>
+        <file path="/distann/src/rna.fasta"/>
         <file path="/distann/src/all_short.blastout"/>
     </selectedElements>
 </jardesc>
