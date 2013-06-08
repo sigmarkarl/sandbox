@@ -29,6 +29,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10711,6 +10713,7 @@ public class GeneSet extends JApplet {
 		// url = new URL("http://192.168.1.69/all.fsa");
 		try {
 			is = GeneSet.class.getResourceAsStream("/allthermus.fna");
+			//InputStream cois = GeneSet.class.getResourceAsStream("/contigorder.txt");
 			//is = GeneSet.class.getResourceAsStream("/all.fsa");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
 			if (is != null)
@@ -10961,6 +10964,47 @@ public class GeneSet extends JApplet {
 					}
 				}
 			}
+		}
+		
+		is = GeneSet.class.getResourceAsStream("/contigorder.txt");
+		if( is != null ) {
+			BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+			String line = br.readLine();
+			if( line != null ) line = br.readLine();
+			while( line != null ) {
+				Contig prevctg = null;
+				i = 0;
+				int ni1 = line.indexOf('/', i+1);
+				int ni2 = line.indexOf('\\', i+1);
+				ni1 = ni1 == -1 ? line.length() : ni1; 
+				ni2 = ni2 == -1 ? line.length() : ni2;
+				int n = Math.min( ni1, ni2 );
+				while( n != line.length() ) {
+					char c = line.charAt(i);
+					String ctgn = line.substring(i+1, n);
+					Contig ctg = contigmap.get( ctgn );
+					if( c == '\\' ) ctg.setReverse( true );
+					if( prevctg != null ) {
+						prevctg.setConnection( ctg, ctg.isReverse(), !prevctg.isReverse() );
+					}
+					prevctg = ctg;
+					
+					i = n;
+					ni1 = line.indexOf('/', i+1);
+					ni2 = line.indexOf('\\', i+1);
+					ni1 = ni1 == -1 ? line.length() : ni1; 
+					ni2 = ni2 == -1 ? line.length() : ni2;
+					n = Math.min( ni1, ni2 );
+				}
+				char c = line.charAt(i);
+				String ctgn = line.substring(i+1, n);
+				Contig ctg = contigmap.get( ctgn );
+				if( c == '\\' ) ctg.setReverse( true );
+				if( prevctg != null ) prevctg.setConnection( ctg, ctg.isReverse(), !prevctg.isReverse() );
+				
+				line = br.readLine();
+			}
+			br.close();
 		}
 		
 		FileWriter fw = null; // new FileWriter("all_short.blastout");
@@ -11316,6 +11360,59 @@ public class GeneSet extends JApplet {
 		colorCodes[7] = new Color(180, 185, 250);
 		colorCodes[8] = new Color(180, 180, 255);
 	}
+	
+	public static void saveContigOrder() throws IOException {
+		FileWriter fw = new FileWriter("/home/sigmar/sandbox/distann/src/contigorder.txt");
+		fw.write("co\n");
+		Set<Contig>	saved = new HashSet<Contig>();
+		for( String cs : contigmap.keySet() ) {
+			Contig c = contigmap.get( cs );
+			if( !saved.contains( c ) && (c.prev != null || c.next != null) ) {
+				Contig prev = c.isReverse() ? c.next : c.prev;
+				
+				int i = 0;
+				while( prev != null ) {
+					c = prev;
+					prev = c.isReverse() ? c.next : c.prev;
+					
+					if( i > 50 ) {
+						System.err.println();
+					}
+					if( i++ > 100 ) {
+						break;
+					}
+				}
+				
+				i = 0;
+				saved.add( c );
+				fw.write( (c.isReverse() ? "\\" : "/") + c.name );
+				Contig next = c.isReverse() ? c.prev : c.next;
+				while( next != null ) {
+					c = next;
+					saved.add( c );
+					fw.write( (c.isReverse() ? "\\" : "/") + c.name );
+					next = c.isReverse() ? c.prev : c.next;
+					
+					if( i > 50 ) {
+						System.err.println();
+					}
+					if( i++ > 100 ) break;
+				}
+				
+				fw.write("\n");
+			}
+		}
+		fw.close();
+	}
+	
+	public void stop() {
+		super.stop();
+		try {
+			saveContigOrder();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void init(Container comp) {
 		try {
@@ -11457,54 +11554,64 @@ public class GeneSet extends JApplet {
 		
 		public void setConnection( Contig contig, boolean rev, boolean forw ) {
 			if( forw ) setForwardConnection( contig, rev );
-			else setReverseConnection( contig, rev );
+			else setBackwardConnection( contig, rev );
 		}
 		
 		public void setForwardConnection( Contig contig, boolean rev ) {
 			this.next = contig;
 			if( rev ) {
 				contig.next = this;
-				contig.end.setPrevious( this.end );
+				
+				this.end.next = contig.end;
+				contig.end.next = this.end;
+				
 				if( this.isReverse() == contig.isReverse() ) {
 					Contig nextc = contig;
 					while( nextc != null ) {
 						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.next;
+						nextc = nextc.isReverse() ? nextc.prev : nextc.next;
 					}
 				}
 			} else {
 				contig.prev = this;
+				
 				contig.start.setPrevious( this.end );
+				
 				if( this.isReverse() != contig.isReverse() ) {
 					Contig nextc = contig;
 					while( nextc != null ) {
 						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.next;
+						nextc = nextc.isReverse() ? nextc.prev : nextc.next;
 					}
 				}
 			}
 		}
 		
-		public void setReverseConnection( Contig contig, boolean rev ) {
+		public void setBackwardConnection( Contig contig, boolean rev ) {
 			this.prev = contig;
 			if( rev ) {
 				contig.prev = this;
-				this.start.setPrevious( contig.start );
+				
+				this.start.prev = contig.start;
+				contig.start.prev = this.start;
+				
 				if( this.isReverse() == contig.isReverse() ) {
 					Contig nextc = contig;
 					while( nextc != null ) {
 						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.prev;
+						nextc = nextc.isReverse() ? nextc.next : nextc.prev;
 					}
 				}
 			} else {
 				contig.next = this;
+				
 				this.start.setPrevious( contig.end );
+				
 				if( this.isReverse() != contig.isReverse() ) {
 					Contig nextc = contig;
 					while( nextc != null ) {
 						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.prev;
+						nextc = nextc.isReverse() ? nextc.next : nextc.prev;
 					}
 				}
 			}
@@ -13408,6 +13515,34 @@ public class GeneSet extends JApplet {
 
 		if (!frame.isVisible()) {
 			frame = new JFrame();
+			frame.addWindowListener( new WindowListener() {
+				@Override
+				public void windowOpened(WindowEvent e) {}
+				
+				@Override
+				public void windowIconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeiconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeactivated(WindowEvent e) {}
+				
+				@Override
+				public void windowClosing(WindowEvent e) {}
+				
+				@Override
+				public void windowClosed(WindowEvent e) {
+					try {
+						saveContigOrder();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void windowActivated(WindowEvent e) {}
+			});
 			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			frame.setSize(800, 600);
 			frame.add( panel );
