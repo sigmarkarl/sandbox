@@ -28,7 +28,7 @@
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Fasteignaverd.html</welcome-file>
+    <welcome-file>Fasteign_gwt.html</welcome-file>
   </welcome-file-list>
 
 </web-app>
