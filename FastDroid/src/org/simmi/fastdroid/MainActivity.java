@@ -12,7 +12,6 @@ import java.util.List;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.Window;
 import android.view.WindowManager;
@@ -21,8 +20,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 public class MainActivity extends Activity {
-
-	String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
+	//String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&gata=&lysing=";
 	//String base = "http://mail.google.com/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
 	
 	public class Ibud {
@@ -35,6 +33,7 @@ public class MainActivity extends Activity {
 		int herb;
 		Date dat;
 		String url;
+		String imgurl;
 		
 		@JavascriptInterface
 		public String getNafn() {
@@ -80,7 +79,7 @@ public class MainActivity extends Activity {
 			this.nafn = nafn;
 		}
 
-		public Ibud(String nafn, int verd, int fastm, int brunm, String teg, int ferm, int herb, String dat, String url) throws ParseException {
+		public Ibud( String nafn, int verd, int fastm, int brunm, String teg, int ferm, int herb, String dat, String url, String imgurl ) throws ParseException {
 			this.nafn = nafn;
 			this.verd = verd;
 			this.fastm = fastm;
@@ -89,6 +88,7 @@ public class MainActivity extends Activity {
 			this.ferm = ferm;
 			this.herb = herb;
 			this.dat = null;//DateFormat.getDateInstance().parse(dat);
+			this.imgurl = imgurl;
 		}
 
 		public void set(int i, Object obj) {
@@ -145,10 +145,16 @@ public class MainActivity extends Activity {
 	final String h2 = "<h2 style=\"margin-bottom: 0.91em; font-size:1.5em;\">";
 	final String[] buds = { "estate-verd", "estate-fasteignamat", "estate-brunabotamat", "estate-teg_eign", "estate-fermetrar", "estate-fjoldi_herb", "estate-sent_dags" };
 	public Ibud subload( String str ) {
-		int ind = str.indexOf(h2);
-		int stop = str.indexOf("</h2>", ind);
+		int ind = str.indexOf("src=\"/tncache");
+		int stop = str.indexOf(".jpg", ind);
+		
+		String imgurl = "http://www.mbl.is"+str.substring(ind+5, stop+4); 
+		
+		ind = str.indexOf(h2);
+		stop = str.indexOf("</h2>", ind);
 		String ibud = str.substring(ind + h2.length(), stop).trim();
 		Ibud ib = new Ibud(ibud);
+		ib.imgurl = imgurl;
 		if( !iblist.contains(ib) ) {
 			iblist.add(ib);
 			int i = 0;
@@ -204,7 +210,7 @@ public class MainActivity extends Activity {
 					is.close();
 					baos.close();
 					
-					Ibud ib = subload( baos.toString() );
+					Ibud ib = subload( baos.toString("ISO-8859-1") );
 					ib.url = suburlstr;
 					
 					//myWebView.loadUrl("javascript:erm('"+ib.nafn+"')");
@@ -249,7 +255,7 @@ public class MainActivity extends Activity {
 				is.close();
 				baos.close();
 				
-				load( baos.toString() );
+				load( baos.toString("ISO-8859-1") );
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -310,7 +316,6 @@ public class MainActivity extends Activity {
 		
 		Fastpack fastpack = new Fastpack();
 		myWebView.addJavascriptInterface( fastpack, "fastpack" );
-		Log.i("mu", "ma");
 		myWebView.loadUrl("http://192.168.1.70:8888/Fasteignaverd.html");
 	}
 
