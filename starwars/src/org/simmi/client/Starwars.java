@@ -449,8 +449,8 @@ public class Starwars implements EntryPoint {
 				}
 				WebGLTexture texture = textures.get( tind );
 				
-				gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, (CanvasElement)canvas.getElement());
+				gl.bindTexture( WebGLRenderingContext.TEXTURE_2D, texture);
+				gl.texImage2D( WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, (CanvasElement)canvas.getElement());
 				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
@@ -727,7 +727,10 @@ public class Starwars implements EntryPoint {
 		final CanvasElement canvas3dElement = (CanvasElement)canvas3d.getElement();
 		//canvas.setWidth(800);
 		//canvas.setHeight(600);
-		final WebGLRenderingContext gl = (WebGLRenderingContext)canvas3dElement.getContext("experimental-webgl");
+		WebGLRenderingContext webgl = null;
+		webgl = (WebGLRenderingContext)canvas3dElement.getContext("webgl");
+		if( webgl == null ) webgl = (WebGLRenderingContext)canvas3dElement.getContext("expermimental-webgl");
+		final WebGLRenderingContext gl = webgl;
 		
 		/*gl.viewport(0, 0, 800, 600);
 		gl.clearColor(0.3f, 0.2f, 0.2f, 1.0f);
@@ -942,7 +945,7 @@ public class Starwars implements EntryPoint {
 				starctx.drawImage( ImageElement.as(image.getElement()), 0.0, 0.0, 512.0, 256.0 );
 				final WebGLTexture starfield = gl.createTexture();
 				gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
-				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, starcanvas2dElement );
+				gl.texImage2D( WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, starcanvas2dElement );
 				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);

@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import elemental.client.Browser;
-
 public class TreeUtil {
 	private Node currentNode = null;
 	String treelabel = null;
@@ -527,7 +525,9 @@ public class TreeUtil {
 		
 		@Override
 		public int compareTo(NodeSet o) {
-			return o.count.size() - count.size();
+			int val = o.count.size() - count.size();
+			if( val == 0 ) return o.nodes.size() - nodes.size(); 
+			else return val;
 		}
 	};
 	
@@ -1147,7 +1147,7 @@ public class TreeUtil {
 		List<Node> subn = n.getNodes();
 		if( subn != null ) {
 			for( Node sn : subn ) {
-				Set<String> ln = this.getLeaveNames( sn );
+				Set<String> ln = sn.getLeaveNames();
 				if( ln.containsAll( s ) ) {
 					return getValidNode( s, sn );
 				}
@@ -1161,7 +1161,7 @@ public class TreeUtil {
 			List<Node> subn = n.getNodes();
 			if( subn != null ) {
 				for( Node sn : subn ) {
-					Set<String> lns = this.getLeaveNames( sn );
+					Set<String> lns = sn.getLeaveNames();
 					int cntcnt = 0;
 					for( String ln : lns ) {
 						if( s.contains(ln) ) cntcnt++;
@@ -2152,7 +2152,7 @@ public class TreeUtil {
 				
 				String code = str.substring( loc, end );
 				int ci = code.indexOf(":", si);
-				if( ci != -1 ) {					
+				if( ci != -1 ) {
 					String[] split;
 					//int i = code.lastIndexOf("'");
 					String name;
