@@ -2,24 +2,46 @@ package org.simmi.fastdroid;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.ParseException;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.TextView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
 	//String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&gata=&lysing=";
 	//String base = "http://mail.google.com/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
 	
@@ -34,10 +56,24 @@ public class MainActivity extends Activity {
 		Date dat;
 		String url;
 		String imgurl;
+		Drawable img;
 		
 		@JavascriptInterface
 		public String getNafn() {
 			return nafn;
+		}
+		
+		@JavascriptInterface
+		public String getImgUrl() {
+			return imgurl;
+		}
+		
+		public Drawable getImage() {
+			return img;
+		}
+		
+		public void setDrawable( Drawable draw ) {
+			img = draw;
 		}
 
 		@JavascriptInterface
@@ -148,13 +184,32 @@ public class MainActivity extends Activity {
 		int ind = str.indexOf("src=\"/tncache");
 		int stop = str.indexOf(".jpg", ind);
 		
-		String imgurl = "http://www.mbl.is"+str.substring(ind+5, stop+4); 
+		while( stop > ind+100 ) {
+			Log.i("bleh", ind + "  " + stop );
+			
+			ind = str.indexOf("src=\"/tncache", ind+1);
+			stop = str.indexOf(".jpg", ind);
+		}
+		
+		String imgurl = null;
+		if( ind != -1 && stop != -1 ) imgurl = "http://www.mbl.is"+str.substring(ind+5, stop+4); 
 		
 		ind = str.indexOf(h2);
 		stop = str.indexOf("</h2>", ind);
 		String ibud = str.substring(ind + h2.length(), stop).trim();
 		Ibud ib = new Ibud(ibud);
 		ib.imgurl = imgurl;
+		
+		if( imgurl != null ) {
+			try {
+				InputStream is = (InputStream)new URL(imgurl).getContent();
+				ib.setDrawable( Drawable.createFromStream(is, ib.getNafn()) );
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		if( !iblist.contains(ib) ) {
 			iblist.add(ib);
 			int i = 0;
@@ -213,6 +268,7 @@ public class MainActivity extends Activity {
 					Ibud ib = subload( baos.toString("ISO-8859-1") );
 					ib.url = suburlstr;
 					
+					handler.sendEmptyMessage(0);
 					//myWebView.loadUrl("javascript:erm('"+ib.nafn+"')");
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
@@ -299,7 +355,12 @@ public class MainActivity extends Activity {
 		}
 	};
 	
+	CollectionPagerAdapter mDemoCollectionPagerAdapter;
 	WebView	myWebView;
+	ViewPager myPager;
+	static Fastpack	fastpack;
+	Handler	handler;
+	List<LinearLayout>	labels = new ArrayList<LinearLayout>();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -309,14 +370,63 @@ public class MainActivity extends Activity {
 	    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_main);
 		
-		myWebView = (WebView)findViewById(R.id.webView1);
+		mDemoCollectionPagerAdapter = new CollectionPagerAdapter(getSupportFragmentManager());
+	    myPager = (ViewPager) findViewById(R.id.pager);
+	    myPager.setAdapter(mDemoCollectionPagerAdapter);
+	    
+	    handler = new Handler(Looper.getMainLooper()) {
+	        @Override
+	        public void handleMessage(Message msg) {
+	        	//if( labels.size() == fastpack.getFetchNum() ) ;//this.cancel();
+				//else {
+	        		final int c = Color.rgb(220, 220, 255);
+					for( int i = labels.size(); i < fastpack.getFetchNum(); i++ ) {
+						Ibud ib = fastpack.getIbud(i);
+						
+						final LinearLayout llayout = (LinearLayout)otherView.findViewById(R.id.llayout1);
+						LinearLayout hlayout = (LinearLayout)llayout.inflate( llayout.getContext(), R.layout.sub_object, (ViewGroup)llayout );
+						
+						if( hlayout.getChildCount() > 0 ) {
+							LinearLayout ll = (LinearLayout)hlayout.getChildAt( hlayout.getChildCount()-1 );
+							ll.setClickable( true );
+							
+							ll.setOnClickListener( new OnClickListener() {
+								@Override
+								public void onClick(View v) {
+									Drawable background = v.getBackground();
+									v.setBackgroundColor( background == null || Color.WHITE == ((ColorDrawable)v.getBackground()).getColor() ? c : Color.WHITE );
+								}
+							});
+							ImageView iv = (ImageView)ll.getChildAt(0);
+							Drawable drawable = ib.getImage();
+							if( drawable != null ) iv.setImageDrawable( drawable );
+							
+							LinearLayout hl = (LinearLayout)ll.getChildAt(1);
+							TextView tv = (TextView)hl.getChildAt(0);
+							tv.setText( ib.getNafn() );
+							
+							//hlayout.find
+							//final TextView textview = (TextView)hlayout.inflate( hlayout.getContext(), R.layout.textview_object, (ViewGroup)hlayout);
+							//textview.setText( ib.getNafn() );
+							
+							//llayout.addView( hlayout );
+							
+							labels.add( hlayout );
+						}
+					}
+				//}
+	        }
+	    };
+	        
+		//myWebView = (WebView)findViewById(R.id.webView1);
 		//myWebView.setWebViewClient( new WebViewClient() );
-		WebSettings webSettings = myWebView.getSettings();
-		webSettings.setJavaScriptEnabled(true);
 		
-		Fastpack fastpack = new Fastpack();
-		myWebView.addJavascriptInterface( fastpack, "fastpack" );
-		myWebView.loadUrl("http://192.168.1.70:8888/Fasteignaverd.html");
+		//WebSettings webSettings = myWebView.getSettings();
+		//webSettings.setJavaScriptEnabled(true);
+		
+		fastpack = new Fastpack();
+		//myWebView.addJavascriptInterface( fastpack, "fastpack" );
+		//myWebView.loadUrl("http://192.168.1.70:8888/Fasteignaverd.html");
 	}
 
 	@Override
@@ -326,4 +436,102 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
+	public class CollectionPagerAdapter extends FragmentStatePagerAdapter {
+	    public CollectionPagerAdapter(FragmentManager fm) {
+	        super(fm);
+	    }
+
+	    @Override
+	    public Fragment getItem(int i) {
+	        Fragment fragment = new ObjectFragment();
+	        Bundle args = new Bundle();
+	        // Our object is just an integer :-P
+	        args.putInt(ObjectFragment.ARG_OBJECT, i + 1);
+	        fragment.setArguments(args);
+	        return fragment;
+	    }
+
+	    @Override
+	    public int getCount() {
+	        return 2;
+	    }
+
+	    @Override
+	    public CharSequence getPageTitle(int position) {
+	        return "OBJECT " + (position + 1);
+	    }
+	};
+	
+	static View otherView = null;
+	static final String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
+	public static class ObjectFragment extends Fragment {
+	    public static final String ARG_OBJECT = "object";
+
+	    @Override
+	    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+	        // The last two arguments ensure LayoutParams are inflated
+	        // properly.
+	    	Bundle args = getArguments();
+	    	int val = args.getInt(ARG_OBJECT);
+	        View rootView;
+	        if( val == 1 ) {
+	        	rootView = inflater.inflate(R.layout.fragment_collection_object, container, false);
+	        	if( otherView == null ) otherView = inflater.inflate(R.layout.list_object, container, false);
+	        	final LinearLayout llayout = (LinearLayout)otherView.findViewById(R.id.llayout1);
+	        	
+	        	final Spinner spinner1 = (Spinner)rootView.findViewById(R.id.spinner1);
+	        	final Spinner spinner2 = (Spinner)rootView.findViewById(R.id.spinner2);
+	        	
+	        	final EditText edittext1 = (EditText)rootView.findViewById(R.id.editText1);
+	        	final EditText edittext2 = (EditText)rootView.findViewById(R.id.editText2);
+	        	
+	        	Button button = (Button)rootView.findViewById(R.id.button);
+	        	button.setOnClickListener( new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						String loc = spinner1.getSelectedItem().toString();//loccomb.getItemText( loccomb.getSelectedIndex() );
+						String[] split = loc.split(" ");
+						String pnr = split[0];
+						String val = base.replace("svaedi=", "svaedi=" + pnr + "_" + pnr);
+						String teg = spinner2.getSelectedItem().toString();//typcomb.getItemText( typcomb.getSelectedIndex() ).toLowerCase();
+						teg = teg.replace("æ", "ae");
+						teg = teg.replace("ö", "o");
+						teg = teg.replace("ý", "y");
+						val = val.replace("tegund=", "tegund=" + teg);
+						//String diffstr = bigdifffield.getText();
+						int diff = Integer.parseInt( edittext1.getText().toString() ); //bigdifffield.getValue(); //Integer.parseInt(diffstr);
+						int ferm = Integer.parseInt( edittext2.getText().toString() ); //bigfield.getValue(); //Integer.parseInt(bigfield.getText());
+						val = val.replace("fermetrar_fra=", "fermetrar_fra=" + (ferm - diff));
+						val = val.replace("fermetrar_til=", "fermetrar_til=" + (ferm + diff));
+
+						final String tstr = val;
+						
+						//texterm.setText( tstr );
+						//otherView.
+						fastpack.search( tstr );
+					}
+				});
+	        	// Create an ArrayAdapter using the string array and a default spinner layout
+	        	ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(container.getContext(), R.array.loc_array, android.R.layout.simple_spinner_item);
+	        	adapter1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	        	
+	        	ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(container.getContext(), R.array.typ_array, android.R.layout.simple_spinner_item);
+	        	adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	        	// Apply the adapter to the spinner
+	        	spinner1.setAdapter(adapter1);
+	        	spinner2.setAdapter(adapter2);
+	        } else {
+	        	if( otherView == null ) otherView = inflater.inflate(R.layout.list_object, container, false);
+	        	rootView = otherView;
+	        	
+	        	final Spinner sortspinner = (Spinner)rootView.findViewById(R.id.sortspinner);
+	        	ArrayAdapter<CharSequence> sortadapter = ArrayAdapter.createFromResource(container.getContext(), R.array.sort_array, android.R.layout.simple_spinner_item);
+	        	sortadapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	        	
+	        	sortspinner.setAdapter(sortadapter);
+	        }
+	        //((TextView) rootView.findViewById(android.R.id.text1)).setText(Integer.toString(args.getInt(ARG_OBJECT)));
+	        return rootView;
+	    }
+	};
 }
