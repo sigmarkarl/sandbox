@@ -11575,7 +11575,8 @@ public class GeneSet extends JApplet {
 			} else {
 				contig.prev = this;
 				
-				contig.start.setPrevious( this.end );
+				this.end.next = contig.start;
+				contig.start.prev = this.end;
 				
 				if( this.isReverse() != contig.isReverse() ) {
 					Contig nextc = contig;
@@ -11590,12 +11591,12 @@ public class GeneSet extends JApplet {
 		public void setBackwardConnection( Contig contig, boolean rev ) {
 			this.prev = contig;
 			if( rev ) {
-				contig.prev = this;
+				contig.next = this;
 				
-				this.start.prev = contig.start;
-				contig.start.prev = this.start;
+				this.start.prev = contig.end;
+				contig.end.next = this.start;
 				
-				if( this.isReverse() == contig.isReverse() ) {
+				if( this.isReverse() != contig.isReverse() ) {
 					Contig nextc = contig;
 					while( nextc != null ) {
 						nextc.setReverse( !nextc.isReverse() );
@@ -11603,11 +11604,12 @@ public class GeneSet extends JApplet {
 					}
 				}
 			} else {
-				contig.next = this;
+				contig.prev = this;
 				
-				this.start.setPrevious( contig.end );
+				this.start.prev = contig.start;
+				contig.start.prev = this.start;
 				
-				if( this.isReverse() != contig.isReverse() ) {
+				if( this.isReverse() == contig.isReverse() ) {
 					Contig nextc = contig;
 					while( nextc != null ) {
 						nextc.setReverse( !nextc.isReverse() );
@@ -12184,6 +12186,42 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
+	public static void recenter( JTable rowheader, JComponent c ) {
+		selectedGenes = new HashSet<Gene>( currentTe.getGene().getGeneGroup().genes );
+		//hteg = loadContigs( selectedGenes, null );
+		hteg.clear();
+		hteg = new ArrayList<Tegeval>();
+		for( Gene selectedGene : selectedGenes ) {
+			for( String species : selectedGene.species.keySet() ) {
+				Teginfo ti = selectedGene.species.get( species );
+				for( Tegeval te : ti.tset ) {
+					hteg.add( te );
+				}
+			}
+		}
+		/*speclist.clear();
+		for( Gene selectedGene : selectedGenes ) {
+			for( String species : selectedGene.species.keySet() ) {
+				if( !speclist.contains( species ) ) speclist.add( species );
+			}
+		}*/
+		rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
+		int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
+		if (rh == 0) {
+			rh = rowheader.getRowCount() * rowheader.getRowHeight();
+		}
+		c.setPreferredSize( new Dimension(6000, rh) );
+		c.setSize(6000, rh);
+		
+		int i = hteg.indexOf( currentTe );
+		if( i != -1 ) {
+			int r = rowheader.convertRowIndexToView( i );
+			rowheader.setRowSelectionInterval(r, r);
+		}
+		
+		c.repaint();
+	}
+	
 	static double neighbourscale = 1.0;
 	static Tegeval currentTe = null;
 	static Set<Gene> selectedGenes;
@@ -12206,6 +12244,11 @@ public class GeneSet extends JApplet {
 		final JMenu		mnu = new JMenu("Colors");
 		final JMenu		mvmnu = new JMenu("Move");
 		final JButton	turn = new JButton("Forward");
+		
+		final JButton	backTen = new JButton("<<");
+		final JButton	back = new JButton("<");
+		final JButton	forw = new JButton(">");
+		final JButton	forwTen = new JButton(">>");
 		
 		mbr.add( mnu );
 		mbr.add( mvmnu );
@@ -13037,36 +13080,64 @@ public class GeneSet extends JApplet {
 					c.repaint();
 				}
 			});
+			
+			backTen.setAction( new AbstractAction("<<") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int r = rowheader.getSelectedRow();
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					currentTe = te;
+					i = 0;
+					while( currentTe.getPrevious() != null && i < 10 ) {
+						currentTe = currentTe.getPrevious();
+						i++;
+					}
+					recenter( rowheader, c );
+				}
+			});
+			back.setAction( new AbstractAction("<") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int r = rowheader.getSelectedRow();
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					currentTe = te.getPrevious() == null ? te : te.getPrevious();
+					recenter( rowheader, c );
+				}
+			});
+			forw.setAction( new AbstractAction(">") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int r = rowheader.getSelectedRow();
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					currentTe = te.getNext() == null ? te : te.getNext();
+					recenter( rowheader, c );
+					
+				}
+			});
+			forwTen.setAction( new AbstractAction(">>") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int r = rowheader.getSelectedRow();
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					currentTe = te;
+					i = 0;
+					while( currentTe.getNext() != null && i < 10 ) {
+						currentTe = currentTe.getNext();
+						i++;
+					}
+					recenter( rowheader, c );
+				}
+			});
+			
 			recenter.setAction( new AbstractAction("Recenter") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					if( currentTe != null ) {
-						selectedGenes = new HashSet<Gene>( currentTe.getGene().getGeneGroup().genes );
-						//hteg = loadContigs( selectedGenes, null );
-						hteg.clear();
-						hteg = new ArrayList<Tegeval>();
-						for( Gene selectedGene : selectedGenes ) {
-							for( String species : selectedGene.species.keySet() ) {
-								Teginfo ti = selectedGene.species.get( species );
-								for( Tegeval te : ti.tset ) {
-									hteg.add( te );
-								}
-							}
-						}
-						/*speclist.clear();
-						for( Gene selectedGene : selectedGenes ) {
-							for( String species : selectedGene.species.keySet() ) {
-								if( !speclist.contains( species ) ) speclist.add( species );
-							}
-						}*/
-						rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
-						int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
-						if (rh == 0) {
-							rh = rowheader.getRowCount() * rowheader.getRowHeight();
-						}
-						c.setPreferredSize( new Dimension(6000, rh) );
-						c.setSize(6000, rh);
-						c.repaint();
+						recenter( rowheader, c );
 					}
 				}
 			});
@@ -13170,7 +13241,7 @@ public class GeneSet extends JApplet {
 						Rectangle rect = sorting.getCellRect(p.x, 0, false);
 						rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
 						sorting.scrollRectToVisible(rect);
-						sorting.setRowSelectionInterval(p.x, np.x);
+						//sorting.setRowSelectionInterval(p.x, np.x);
 					}
 				}
 			});
@@ -13500,6 +13571,10 @@ public class GeneSet extends JApplet {
 		toolbar.add( blocksView );
 		toolbar.add( zoomIn );
 		toolbar.add( zoomOut );
+		toolbar.add( backTen );
+		toolbar.add( back );
+		toolbar.add( forw );
+		toolbar.add( forwTen );
 		toolbar.add( recenter );
 		toolbar.add( addrelated );
 		toolbar.add( highrel );

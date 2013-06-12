@@ -637,13 +637,13 @@ public class Fasteignaverd implements EntryPoint {
 						else {
 							for( int i = labels.size(); i < fastpack.getTotal(); i++ ) {
 								NatIbud nib = fastpack.getIbud(i);
-								Label label = new Label( ""+nib.getNafn() );
-								//Image img = new Image( nib.getImgUrl(), 0, 0, 50, 50 );
+								Label label = new Label( nib.getNafn() );
+								Image img = new Image( nib.getImgUrl(), 0, 0, 50, 50 );
 								
-								//HorizontalPanel	hp = new HorizontalPanel();
-								//hp.add( img );
-								//hp.add( label );
-								table.add( label );
+								HorizontalPanel	hp = new HorizontalPanel();
+								hp.add( img );
+								hp.add( label );
+								table.add( hp );
 								labels.add( label );
 							}
 						}
