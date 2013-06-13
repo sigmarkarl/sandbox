@@ -11824,11 +11824,13 @@ public class GeneSet extends JApplet {
 
 							//int first = tv.cont.indexOf("_");
 							//int sec = tv.cont.indexOf("_", first + 1);
-							int sec = tv.cont.lastIndexOf('_');
-
-							String cname = tv.cont.substring(0, sec);
-							if( !contigmap.containsKey( cname ) ) {
-								contigmap.put(cname, tv.getContshort());
+							if( tv.cont != null ) {
+								int sec = tv.cont.lastIndexOf('_');
+	
+								String cname = tv.cont.substring(0, sec);
+								if( !contigmap.containsKey( cname ) ) {
+									contigmap.put(cname, tv.getContshort());
+								}
 							}
 						}
 				}
@@ -11856,6 +11858,8 @@ public class GeneSet extends JApplet {
 		final JRadioButton	lenColorScheme = new JRadioButton("Len");
 		final JRadioButton	shareColorScheme = new JRadioButton("Sharing");
 		final JRadioButton	groupCoverageColorScheme = new JRadioButton("GroupCoverage");
+		
+		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {			
 			List<Tegeval> ltv = loadContigs( genes, species );
 			
@@ -11978,8 +11982,9 @@ public class GeneSet extends JApplet {
 								String spec = contig.substring(0, und);
 								if (gene.species.containsKey(spec)) {
 									Teginfo stv = gene.species.get(spec);
+									if( stv != null && stv.tset != null )
 									for (Tegeval tv : stv.tset) {
-										if (tv.cont.startsWith(contig)) {
+										if( tv.cont != null && tv.cont.startsWith(contig)) {
 											g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 										}
 									}
@@ -12142,9 +12147,8 @@ public class GeneSet extends JApplet {
 				}
 			});
 
-			gsplitpane = new JSplitPane();
-			gsplitpane.setLeftComponent(rowheaderscroll);
-			gsplitpane.setRightComponent(scrollpane);
+			splitpane.setLeftComponent(rowheaderscroll);
+			splitpane.setRightComponent(scrollpane);
 
 			JComponent fillup = new JComponent() {};
 			fillup.setPreferredSize(new Dimension(hey, 20));
@@ -12174,14 +12178,13 @@ public class GeneSet extends JApplet {
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
 		panel.add( toolbar, BorderLayout.NORTH );
-		panel.add( gsplitpane );
+		panel.add( splitpane );
 
-		if (!frame.isVisible()) {
-			frame = new JFrame();
-			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			frame.setSize(800, 600);
-			frame.add( panel );
-		}
+		//if (!frame.isVisible()) {
+		frame = new JFrame();
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setSize(800, 600);
+		frame.add( panel );
 
 		frame.setVisible(true);
 	}
@@ -13633,6 +13636,7 @@ public class GeneSet extends JApplet {
 		final JRadioButton	cycColorScheme = new JRadioButton("#Cyc");
 		final JRadioButton	lenColorScheme = new JRadioButton("Len");
 		final JRadioButton	freqColorScheme = new JRadioButton("Freq");
+		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {
 			loadContigs( geneGroups );
 			
@@ -13890,9 +13894,8 @@ public class GeneSet extends JApplet {
 				}
 			});
 
-			gsplitpane = new JSplitPane();
-			gsplitpane.setLeftComponent(rowheaderscroll);
-			gsplitpane.setRightComponent(scrollpane);
+			splitpane.setLeftComponent(rowheaderscroll);
+			splitpane.setRightComponent(scrollpane);
 
 			JComponent fillup = new JComponent() {};
 			fillup.setPreferredSize(new Dimension(hey, 20));
@@ -13923,12 +13926,12 @@ public class GeneSet extends JApplet {
 		panel.add( toolbar, BorderLayout.NORTH );
 		panel.add( gsplitpane );
 
-		if (!frame.isVisible()) {
+		//if (!frame.isVisible()) {
 			frame = new JFrame();
 			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			frame.setSize(800, 600);
 			frame.add( panel );
-		}
+		//}
 
 		frame.setVisible(true);
 	}
