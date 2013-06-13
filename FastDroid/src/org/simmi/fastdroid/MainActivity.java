@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -33,6 +34,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -45,7 +48,7 @@ public class MainActivity extends FragmentActivity {
 	//String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&gata=&lysing=";
 	//String base = "http://mail.google.com/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
 	
-	public class Ibud {
+	public class Ibud implements Comparable<Ibud> {
 		String nafn;
 		int verd;
 		int fastm;
@@ -79,6 +82,16 @@ public class MainActivity extends FragmentActivity {
 		@JavascriptInterface
 		public int getVerd() {
 			return verd;
+		}
+		
+		@JavascriptInterface
+		public double getFermetraverd() {
+			return (double)this.getVerd()/(double)this.getFermetrar();
+		}
+		
+		@JavascriptInterface
+		public double getVerdPFasteignamat() {
+			return (double)this.getVerd()/(double)this.getFasteignamat();
 		}
 		
 		@JavascriptInterface
@@ -174,9 +187,14 @@ public class MainActivity extends FragmentActivity {
 		public String toString() {
 			return nafn + "\t" + verd + "\t" + fastm + "\t" + brunm + "\t" + teg + "\t" + ferm + "\t" + herb + "\t" + dat + "\t" + url;
 		}
+
+		@Override
+		public int compareTo(Ibud another) {
+			return fastpack.compare( this, another );
+		}
 	};
 	
-	List<Ibud> iblist = new ArrayList<Ibud>();
+	static List<Ibud> iblist = new ArrayList<Ibud>();
 	
 	final String h2 = "<h2 style=\"margin-bottom: 0.91em; font-size:1.5em;\">";
 	final String[] buds = { "estate-verd", "estate-fasteignamat", "estate-brunabotamat", "estate-teg_eign", "estate-fermetrar", "estate-fjoldi_herb", "estate-sent_dags" };
@@ -323,10 +341,42 @@ public class MainActivity extends FragmentActivity {
 	};
 	
 	public class Fastpack {
+		int comp = 0;
+		
 		@JavascriptInterface
 		public void search( String what ) {			
 			int i = 0;
 			new searchTask().execute( what.replace("offset", "offset=" + i) );
+		}
+		
+		public int compare( Ibud ib1, Ibud ib2 ) {
+			if( comp == 0 ) return ib1.nafn.compareTo( ib2.nafn );
+			else if( comp == 1 ) return ib1.verd - ib2.verd;
+			else if( comp == 2 ) return ib1.ferm - ib2.ferm;
+			return 0;
+		}
+		
+		@JavascriptInterface
+		public double getAvgFermverd() {
+			double avg = 0.0;
+			for( Ibud ib : iblist ) {
+				avg += ib.getFermetraverd();
+			}
+			return avg/iblist.size();
+		}
+		
+		@JavascriptInterface
+		public double getAvgVerdpFmat() {
+			double avg = 0.0;
+			int i = 0;
+			for( Ibud ib : iblist ) {
+				if( ib.getFasteignamat() > 0 ) {
+					double vpfm = ib.getVerdPFasteignamat();
+					avg += vpfm;
+					i++;
+				}
+			}
+			return Math.round( 100.0*avg/i )/100.0;
 		}
 		
 		@JavascriptInterface
@@ -360,7 +410,8 @@ public class MainActivity extends FragmentActivity {
 	ViewPager myPager;
 	static Fastpack	fastpack;
 	Handler	handler;
-	List<LinearLayout>	labels = new ArrayList<LinearLayout>();
+	static List<LinearLayout>	labels = new ArrayList<LinearLayout>();
+	static final int fcol = Color.rgb(220, 220, 255);
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -379,7 +430,6 @@ public class MainActivity extends FragmentActivity {
 	        public void handleMessage(Message msg) {
 	        	//if( labels.size() == fastpack.getFetchNum() ) ;//this.cancel();
 				//else {
-	        		final int c = Color.rgb(220, 220, 255);
 					for( int i = labels.size(); i < fastpack.getFetchNum(); i++ ) {
 						Ibud ib = fastpack.getIbud(i);
 						
@@ -390,11 +440,12 @@ public class MainActivity extends FragmentActivity {
 							LinearLayout ll = (LinearLayout)hlayout.getChildAt( hlayout.getChildCount()-1 );
 							ll.setClickable( true );
 							
+							ll.setBackgroundColor( Color.WHITE );
 							ll.setOnClickListener( new OnClickListener() {
 								@Override
 								public void onClick(View v) {
 									Drawable background = v.getBackground();
-									v.setBackgroundColor( background == null || Color.WHITE == ((ColorDrawable)v.getBackground()).getColor() ? c : Color.WHITE );
+									v.setBackgroundColor( background == null || Color.WHITE == ((ColorDrawable)v.getBackground()).getColor() ? fcol : Color.WHITE );
 								}
 							});
 							ImageView iv = (ImageView)ll.getChildAt(0);
@@ -405,13 +456,25 @@ public class MainActivity extends FragmentActivity {
 							TextView tv = (TextView)hl.getChildAt(0);
 							tv.setText( ib.getNafn() );
 							
+							if( textsmt != null ) {
+								double avgfmv = fastpack.getAvgFermverd();
+								String dval = Integer.toString( (int)avgfmv );
+								textsmt.setText( "M.fermv: "+dval );
+							}
+							
+							if( textsmt2 != null ) {
+								double avgfmv = fastpack.getAvgVerdpFmat();
+								String dval = Double.toString( avgfmv );
+								textsmt2.setText( "M.verð/fmat: "+dval );
+							}
+							
 							//hlayout.find
 							//final TextView textview = (TextView)hlayout.inflate( hlayout.getContext(), R.layout.textview_object, (ViewGroup)hlayout);
 							//textview.setText( ib.getNafn() );
 							
 							//llayout.addView( hlayout );
 							
-							labels.add( hlayout );
+							labels.add( ll );
 						}
 					}
 				//}
@@ -461,6 +524,9 @@ public class MainActivity extends FragmentActivity {
 	        return "OBJECT " + (position + 1);
 	    }
 	};
+	
+	static TextView	textsmt = null;
+	static TextView	textsmt2 = null;
 	
 	static View otherView = null;
 	static final String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
@@ -524,9 +590,71 @@ public class MainActivity extends FragmentActivity {
 	        	if( otherView == null ) otherView = inflater.inflate(R.layout.list_object, container, false);
 	        	rootView = otherView;
 	        	
+	        	textsmt = (TextView)rootView.findViewById(R.id.textsmt);
+	        	textsmt2 = (TextView)rootView.findViewById(R.id.textsmt2);
+	        	
+	        	Button button = (Button)rootView.findViewById(R.id.deletebutton);
+	        	button.setOnClickListener( new View.OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						List<Ibud>	delist = new ArrayList<Ibud>();
+						List<LinearLayout>	delayout = new ArrayList<LinearLayout>();
+						int i = 0;
+						for( Ibud ib : iblist ) {
+							LinearLayout ll = labels.get( i );
+							//LinearLayout ll = (LinearLayout)hlayout.getChildAt( i );
+							i++;
+
+							Drawable background = ll.getBackground();
+							if( background != null && ((ColorDrawable)background).getColor() == fcol ) {
+								delist.add( ib );
+								delayout.add( ll  );
+							}
+						}
+						
+						for( LinearLayout del : delayout ) {
+							LinearLayout par = (LinearLayout)del.getParent();
+							par.removeView( del );
+						}
+						iblist.removeAll( delist );
+						labels.removeAll( delayout );
+					}
+	        	});
+	        	
 	        	final Spinner sortspinner = (Spinner)rootView.findViewById(R.id.sortspinner);
 	        	ArrayAdapter<CharSequence> sortadapter = ArrayAdapter.createFromResource(container.getContext(), R.array.sort_array, android.R.layout.simple_spinner_item);
 	        	sortadapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	        	
+	        	sortspinner.setOnItemSelectedListener( new OnItemSelectedListener() {
+
+					@Override
+					public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+						fastpack.comp = arg2;
+						Collections.sort( iblist );
+						
+						int i = 0;
+						for( Ibud ib : iblist ) {
+							LinearLayout ll = labels.get( i );
+							//LinearLayout ll = (LinearLayout)hlayout.getChildAt( i );
+							i++;
+							
+							ImageView iv = (ImageView)ll.getChildAt(0);
+							Drawable drawable = ib.getImage();
+							if( drawable != null ) iv.setImageDrawable( drawable );
+							
+							LinearLayout hl = (LinearLayout)ll.getChildAt(1);
+							TextView tv = (TextView)hl.getChildAt(0);
+							tv.setText( ib.getNafn() );
+						}						
+					}
+
+					@Override
+					public void onNothingSelected(AdapterView<?> arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+	        	});
 	        	
 	        	sortspinner.setAdapter(sortadapter);
 	        }
