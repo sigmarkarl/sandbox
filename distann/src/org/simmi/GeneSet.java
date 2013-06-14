@@ -161,40 +161,6 @@ public class GeneSet extends JApplet {
 	// size
 	// sortcoeff
 
-	static class StrSort implements Comparable<StrSort> {
-		double d;
-		String s;
-
-		StrSort(double d, String s) {
-			this.d = d;
-			this.s = s;
-		}
-
-		@Override
-		public int compareTo(StrSort o) {
-			double mis = o.d - d;
-
-			return mis > 0 ? 1 : (mis < 0 ? -1 : 0);
-		}
-	};
-
-	static class Erm implements Comparable<Erm> {
-		double d;
-		char c;
-
-		Erm(double d, char c) {
-			this.d = d;
-			this.c = c;
-		}
-
-		@Override
-		public int compareTo(Erm o) {
-			double mis = d - o.d;
-
-			return mis > 0 ? 1 : (mis < 0 ? -1 : 0);
-		}
-	};
-
 	static List<Erm> uff = new ArrayList<Erm>();
 	static List<Erm> uff2 = new ArrayList<Erm>();
 	static List<Erm> uff3 = new ArrayList<Erm>();
@@ -749,12 +715,13 @@ public class GeneSet extends JApplet {
 					//System.err.println( bu + "  " + precontig.toString().equals( curcontig.toString()) + "  " + (precontig == curcontig) );
 					if( bu ) {
 						tv.setPrevious( preval );
+						tv.setNum( preval.getNum()+1 );
 						curcontig.end = tv;
 					} else {
 						curcontig.start = tv;
 						curcontig.end = tv;
 					}
-				}
+				} else tv.setNum( 0 );
 				preval = tv;
 				
 				Teginfo stv;
@@ -1438,34 +1405,6 @@ public class GeneSet extends JApplet {
 	}
 
 	static Aas aquery = new Aas(null, null, 0, 0, 0);
-
-	public final static class Aas implements Comparable<Aas> {
-		String name;
-		final StringBuilder aas;
-		int start;
-		int stop;
-		int dir;
-
-		public Aas(String name, StringBuilder aas, int start, int stop, int dir) {
-			this.name = name;
-			this.aas = aas;
-			this.start = start;
-			this.stop = stop;
-			this.dir = dir;
-		}
-
-		@Override
-		public final int compareTo(Aas o) {
-			return name.compareTo(o.name);
-		}
-
-		public final String toString() {
-			return name;
-		}
-
-		// public byte[] get( String name ) {
-	};
-
 	// static Aas[] aas;
 	static Map<String, Aas> aas = new HashMap<String, Aas>();
 	static Map<String, StringBuilder> dnaa = new HashMap<String, StringBuilder>();
@@ -3445,26 +3384,6 @@ public class GeneSet extends JApplet {
 		ps.close();
 	}
 
-	static class Pepbindaff implements Comparable<Pepbindaff> {
-		String pep;
-		double aff;
-
-		public Pepbindaff(String pep, String aff) {
-			this.pep = pep;
-			this.aff = Double.parseDouble(aff);
-		}
-
-		public Pepbindaff(String pep, double aff) {
-			this.pep = pep;
-			this.aff = aff;
-		}
-
-		@Override
-		public int compareTo(Pepbindaff o) {
-			return aff > o.aff ? 1 : (aff < o.aff ? -1 : 0);
-		}
-	}
-
 	public static void pearsons(Map<Character, Double> what, List<Pepbindaff> peppi) {
 		double sums[] = new double[peppi.get(0).pep.length()];
 		Arrays.fill(sums, 0.0);
@@ -3782,569 +3701,7 @@ public class GeneSet extends JApplet {
 		}
 		ps.close();
 	}
-
-	static class Function {
-		public Function() {}
-		public Function( String go ) { this.go = go; }
-
-		String go;
-		String ec;
-		String metacyc;
-		String kegg;
-		String name;
-		String namespace;
-		String desc;
-		Set<String> isa;
-		Set<String> subset;
-		Set<Gene> geneentries;
-		int index;
-		
-		public String getName() {
-			return name;
-		}
-		
-		public String getNamespace() {
-			return namespace;
-		}
-		
-		@Override
-		public String toString() {
-			return name;
-		}
-	};
-
-	static boolean locsort = true;
-
-	static class Tegeval implements Comparable<Tegeval> {
-		public Tegeval(Gene gene, String tegund, double evalue, StringBuilder sequence, StringBuilder dnaseq, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
-			teg = tegund;
-			eval = evalue;
-			dna = dnaseq;
-			cont = contig;
-			contshort = shortcontig;
-			contloc = locontig;
-			start = sta;
-			stop = sto;
-			ori = orient;
-			this.gene = gene;
-
-			if( dna != null ) gc = (double)gcCount()/(double)dna.length();
-			else gc = -1.0;
-			
-			numCys = 0;
-			setSequence(sequence);
-		}
-		
-		public String getSpecies() {
-			return teg;
-		}
-		
-		public int getLength() {
-			return stop - start;
-		}
-		
-		public int getProteinLength() {
-			return getLength()/3;
-		}
-		
-		public Contig getContshort() {
-			return contshort;
-		}
-		
-		public String getContloc() {
-			return contloc;
-		}
-		
-		public String getContig() {
-			return cont;
-		}
-		
-		public Tegeval getNext() {
-			if( contshort != null ) return contshort.isReverse() ? prev : next;
-			return null;
-		}
-		
-		public Tegeval getPrevious() {
-			if( contshort != null )return contshort.isReverse() ? next : prev;
-			return null;
-		}
-		
-		public Tegeval setNext( Tegeval next ) {
-			Tegeval old = this.next;
-			this.next = next;
-			return old;
-		}
-		
-		public Tegeval setPrevious( Tegeval prev ) {
-			Tegeval old = this.prev;
-			this.prev = prev;
-			prev.setNext( this );
-			return old;
-		}
-		
-		private double gcCount() {
-			int gc = 0;
-			for( int i = 0; i < dna.length(); i++ ) {
-				char c = dna.charAt(i);
-				if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
-			}
-			return gc;
-		}
-		
-		public double getGCPerc() {
-			return gc;
-		}
-
-		double			gc;
-		String 			teg;
-		double 			eval;
-		String 			cont;
-		Contig 			contshort;
-		String 			contloc;
-		StringBuilder 	seq;
-		StringBuilder 	dna;
-		int 			start;
-		int 			stop;
-		int 			ori;
-		int 			numCys;
-		Gene			gene;
-		Tegeval			next;
-		Tegeval			prev;
-		boolean			selected = false;
-		
-		public boolean isSelected() {
-			return selected;
-		}
-		
-		public void setSelected( boolean sel ) {
-			this.selected = sel;
-		}
-		
-		public void setGene( Gene gene ) {
-			this.gene = gene;
-		}
-		
-		public Gene getGene() {
-			return this.gene;
-		}
-
-		public void setSequence(StringBuilder seq) {
-			if (seq != null) {
-				for (int i = 0; i < seq.length(); i++) {
-					char c = (char) seq.charAt(i);
-					if (c == 'C' || c == 'c')
-						numCys++;
-				}
-				this.seq = seq;
-			}
-		}
-
-		public String toString() {
-			return eval + " " + contloc;
-		}
-
-		@Override
-		public int compareTo(Tegeval o) {
-			if (locsort) {
-				int ret = contshort.compareTo(o.contshort);
-				/*
-				 * if( o.contshort != null || o.contshort.length() < 2 ) { ret =
-				 * contshort.compareTo(o.contshort); } else {
-				 * System.err.println(); }
-				 */
-				return ret == 0 ? start - o.start : ret;
-			} else {
-				int comp = Double.compare(eval, o.eval);
-				return comp == 0 ? teg.compareTo(o.teg) : comp;
-			}
-		}
-	}
-
-	static class NullComparators {
-		static <T> Comparator<T> atEnd(final Comparator<T> comparator) {
-			return new Comparator<T>() {
-
-				public int compare(T o1, T o2) {
-					if (o1 == null && o2 == null) {
-						return 0;
-					}
-
-					if (o1 == null) {
-						return 1;
-					}
-
-					if (o2 == null) {
-						return -1;
-					}
-
-					return comparator.compare(o1, o2);
-				}
-			};
-		}
-
-		static <T> Comparator<T> atBeginning(final Comparator<T> comparator) {
-			return Collections.reverseOrder(atEnd(comparator));
-		}
-	}
-
-	static class Teginfo implements Comparable<Teginfo> {
-		String tegund;
-		Set<Tegeval> tset;
-		Tegeval best;
-
-		public void add(Tegeval tv) {
-			if (tset == null)
-				tset = new HashSet<Tegeval>();
-			tset.add(tv);
-			if (best == null || tv.eval < best.eval)
-				best = tv;
-		}
-
-		public String toString() {
-			String ret = best.toString();
-			for (Tegeval tv : tset) {
-				if (tv != best)
-					ret += " " + tv.toString();
-			}
-			return ret;
-		}
-
-		@Override
-		public int compareTo(Teginfo o) {
-			return best.compareTo(o.best);
-		}
-	}
-
-	public static class GeneGroup {
-		Set<Gene>	genes = new HashSet<Gene>();
-		Set<String>	species = new HashSet<String>();
-		int 		groupIndex = -10;
-		int 		groupCount = -1;
-		//int			groupGeneCount;
-		
-		public List<Tegeval> getTegevals( Set<String> sortspecies ) {
-			List<Tegeval>	ltv = new ArrayList<Tegeval>();
-			
-			for( String sp : sortspecies )
-			/*for( Gene g : genes ) {
-				Teginfo stv = g.species.get(sp);
-				if( stv == null ) {
-					//System.err.println( sp );
-				} else {
-					for (Tegeval tv : stv.tset) {
-						ltv.add( tv );
-					}
-				}
-			}*/
-				ltv.addAll( getTegevals( sp ) );
-			
-			return ltv;
-		}
-		
-		public List<Tegeval> getTegevals( String species ) {
-			List<Tegeval>	ltv = new ArrayList<Tegeval>();
-			
-			for( Gene g : genes ) {
-				Teginfo stv = g.species.get(species);
-				if( stv == null ) {
-					//System.err.println( sp );
-				} else {
-					for (Tegeval tv : stv.tset) {
-						ltv.add( tv );
-					}
-				}
-			}
-			
-			return ltv;
-		}
-		
-		public List<Tegeval> getTegevals() {
-			List<Tegeval>	ltv = new ArrayList<Tegeval>();
-			
-			for( Gene g : genes ) {
-				for( String species : g.species.keySet() ) {
-					Teginfo stv = g.species.get(species);
-					if( stv == null ) {
-						//System.err.println( sp );
-					} else {
-						for (Tegeval tv : stv.tset) {
-							ltv.add( tv );
-						}
-					}
-				}
-			}
-			
-			return ltv;
-		}
-		
-		public double getAvgGCPerc() {
-			double gc = 0.0;
-			int count = 0;
-			for( Gene g : genes ) {
-				for( String spec : g.species.keySet() ) {
-					Teginfo ti = g.species.get(spec);
-					for( Tegeval te : ti.tset ) {
-						gc += te.getGCPerc();
-						count++;
-					}
-				}
-			}
-			return gc/count;
-		}
-		
-		public double getStddevGCPerc( double avggc ) {
-			double gc = 0.0;
-			int count = 0;
-			for( Gene g : genes ) {
-				for( String spec : g.species.keySet() ) {
-					Teginfo ti = g.species.get(spec);
-					for( Tegeval te : ti.tset ) {
-						double val = te.getGCPerc()-avggc;
-						gc += val*val;
-						count++;
-					}
-				}
-			}
-			return Math.sqrt(gc/count);
-		}
-		
-		public Set<Function> getFunctions() {
-			Set<Function>	funcset = new HashSet<Function>();
-			for( Gene g : genes ) {
-				if( g.funcentries != null && g.funcentries.size() > 0 ) {
-					for( Function f : g.funcentries ) {
-						//Function f = funcmap.get( go );
-						funcset.add( f );
-					}
-				}
-			}
-			return funcset;
-		}
-		
-		public String getCommonFunction( boolean breakb, Set<Function> allowedFunctions ) {
-			String ret = "";
-			for( Gene g : genes ) {
-				if( g.funcentries != null && g.funcentries.size() > 0 ) {
-					for( Function f : g.funcentries ) {
-						//Function f = funcmap.get( go );
-						
-						if( allowedFunctions == null || allowedFunctions.contains(f) ) {
-							String name = f.getName().replace('/', '-').replace(",", "");
-								
-							//System.err.println( g.getName() + "  " + go );
-							if( ret.length() == 0 ) ret += name;
-							else ret += ","+name;
-						}
-					}
-					if( breakb ) break;
-				}
-			}
-			return ret;
-		}
-		
-		public String getCommonNamespace() {
-			String ret = "";
-			Set<String>	included = new HashSet<String>();
-			for( Gene g : genes ) {
-				if( g.funcentries != null ) for( Function f : g.funcentries ) {
-					//Function f = funcmap.get( go );
-					String namespace = f.getNamespace();
-					//System.err.println( g.getName() + "  " + go );
-					if( !included.contains(namespace) ) {
-						if( ret.length() == 0 ) ret += namespace;
-						else ret += ","+namespace;
-						included.add(namespace);
-					}
-				}
-			}
-			return ret;
-		}
-		
-		public String getCommonName() {
-			String ret = null;
-			for( Gene g : genes ) {
-				if( ret == null || !(g.getName().contains("unnamed") || g.getName().contains("hypot")) ) ret = g.getName();
-			}
-			return ret;
-		}
-		
-		public String getKeggid() {
-			String ret = null;
-			for( Gene g : genes ) {
-				if( g.keggid != null ) ret = g.keggid;
-			}
-			return ret;
-		}
-		
-		public Set<String> getSpecies() {
-			return species;
-		}
-		
-		public boolean isSingluar() {
-			return this.getGroupCount() == this.getGroupCoverage();
-		}
-		
-		public void addGene( Gene gene ) {
-			if( gene.getGeneGroup() != this ) gene.setGeneGroup( this );
-			else genes.add( gene );
-		}
-		
-		public void addSpecies( Set<String> species ) {
-			this.species.addAll( species );
-		}
-		
-		public GeneGroup( int i ) {
-			this.groupIndex = i;
-		}
-		
-		public int getGroupCoverage() {
-			return this.species.size();
-		}
-		
-		public void setGroupCount( int count ) {
-			this.groupCount = count;
-		}
-		
-		public int getGroupCount() {
-			if( groupCount == -1 ) {
-				int val = 0;
-				for (Gene g : genes) {
-					if (g.species != null) {
-						for (String str : g.species.keySet()) {
-							val += g.species.get(str).tset.size();
-						}
-					}
-				}
-				this.groupCount = val;
-			}
-			return this.groupCount;
-		}
-		
-		public int getGroupGeneCount() {
-			return this.genes.size();//this.groupGeneCount;
-		}
-	};
 	
-	public static class Gene {
-		public Gene(GeneGroup gg, String name, String origin) {
-			this.name = name;
-			this.origin = origin;
-			this.gg = gg;
-			// this.setAa( aa );
-			
-			//groupIdx = -10;
-		}
-
-		public void setAa(String aa) {
-			if (aa != null) {
-				this.aac = aa;
-			}
-		}
-
-		public String getAa() {
-			return aac;
-		}
-		
-		public void setGeneGroup( GeneGroup gg ) {
-			this.gg = gg;
-			
-			gg.addGene( this );
-			//gg.addSpecies( this.species );	
-		}
-		
-		public GeneGroup getGeneGroup() {
-			return gg;
-		}
-		
-		public int getGroupIndex() {
-			if( gg != null ) return gg.groupIndex;
-			return -10;
-		}
-		
-		public int getGroupCoverage() {
-			if( gg != null ) return gg.getGroupCoverage();
-			return -1;
-		}
-		
-		public int getGroupCount() {
-			if( gg != null ) return gg.getGroupCount();
-			return -1;
-		}
-		
-		public int getGroupGenCount() {
-			if( gg != null ) return gg.getGroupGeneCount();
-			return -1;
-		}
-		
-		public String getName() {
-			return name;
-		}
-		
-		public double getAvgGCPerc() {
-			double gc = 0.0;
-			int count = 0;
-			for( String spec : species.keySet() ) {
-				Teginfo ti = species.get(spec);
-				for( Tegeval te : ti.tset ) {
-					gc += te.getGCPerc();
-					count++;
-				}
-			}
-			return gc/count;
-		}
-		
-		public double getStddevGCPerc( double avggc ) {
-			double gc = 0.0;
-			int count = 0;
-			for( String spec : species.keySet() ) {
-				Teginfo ti = species.get(spec);
-				for( Tegeval te : ti.tset ) {
-					double val = te.getGCPerc()-avggc;
-					gc += val*val;
-					count++;
-				}
-			}
-			return Math.sqrt(gc/count);
-		}
-		
-		public void addTegeval( Tegeval tegeval ) {
-			Teginfo ti;
-			if( species == null ) species = new HashMap<String,Teginfo>();
-			if( species.containsKey( tegeval.teg ) ) {
-				ti = species.get( tegeval.teg );
-			} else {
-				ti = new Teginfo();
-				species.put( tegeval.teg, ti );
-			}
-			ti.add( tegeval );
-		}
-
-		String name;
-		String origin;
-		String refid;
-		Set<String> allids;
-		String genid;
-		String uniid;
-		String keggid;
-		String pdbid;
-		String blastspec;
-		Set<Function> funcentries;
-		Map<String, Teginfo> species;
-		private String aac;
-		int index;
-
-		GeneGroup	gg;
-		// Set<String> group;
-		//int groupGenCount;
-		//int groupCoverage;
-		//int groupIdx;
-		//int groupCount;
-		double corr16s;
-		double[] corrarr;
-
-		double proximityGroupPreservation;
-	};
-
 	public static void splitGenes(String dir, String filename) throws IOException {
 		Map<String, List<Gene>> genemap = new HashMap<String, List<Gene>>();
 		File f = new File(dir, filename);
@@ -5041,21 +4398,6 @@ public class GeneSet extends JApplet {
 		bw.flush();
 		fw.close();
 	}
-	
-	public static class HitList implements Comparable<HitList> {
-		List<String>	hitlist;
-		String			group;
-		
-		public HitList( String group, List<String> hitlist ) {
-			this.group = group;
-			this.hitlist = hitlist;
-		}
-		
-		@Override
-		public int compareTo(HitList o) {
-			return o.hitlist.size() - this.hitlist.size();
-		}
-	};
 
 	public static void eyjo( String blast, String filter, String result, int threshold ) throws IOException {
 		Map<String,String>	filtermap = new HashMap<String,String>();
@@ -6654,7 +5996,7 @@ public class GeneSet extends JApplet {
 		checkbox.setAction(new AbstractAction("Sort by location") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				locsort = checkbox.isSelected();
+				Tegeval.locsort = checkbox.isSelected();
 			}
 		});
 		ttopcom.add(checkbox);
@@ -7097,7 +6439,7 @@ public class GeneSet extends JApplet {
 							// }
 						}
 					}
-					locsort = true;
+					Tegeval.locsort = true;
 					Collections.sort(ltv);
 					
 					for( int x = y+1; x < speclist.size(); x++ ) {
@@ -7125,7 +6467,7 @@ public class GeneSet extends JApplet {
 								// }
 							}
 						}
-						locsort = true;
+						Tegeval.locsort = true;
 						Collections.sort(subltv);
 						
 						int count = 0;
@@ -7716,6 +7058,12 @@ public class GeneSet extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
+			}
+		});
+		JButton syntbut = new JButton(new AbstractAction("Synteny") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				syntenyMynd( comp, genelist, table );
 			}
 		});
 		
@@ -11270,30 +10618,6 @@ public class GeneSet extends JApplet {
 		return null;
 	}
 
-	public static class ShareNum implements Comparable<ShareNum> {
-		int numshare;
-		int sharenum;
-
-		public ShareNum(int numshare, int sharenum) {
-			this.numshare = numshare;
-			this.sharenum = sharenum;
-		}
-
-		@Override
-		public int compareTo(ShareNum o) {
-			int ret = numshare - o.numshare;
-
-			if (ret == 0)
-				ret = sharenum - o.sharenum;
-
-			return ret;
-		}
-
-		public String toString() {
-			return Integer.toString(numshare);
-		}
-	};
-
 	private static Map<String, String> koMapping(Reader r, List<Function> funclist, List<Gene> genelist) throws IOException {
 		Map<String, String> ret = new HashMap<String, String>();
 		BufferedReader br = new BufferedReader(r);
@@ -11507,139 +10831,6 @@ public class GeneSet extends JApplet {
 		Contig	contig;
 		boolean	ori;
 	}*/
-
-	static class Contig implements Comparable<Contig> {
-		public Contig(String name) {
-			this.name = name;
-			loc = 0.0;
-			count = 0;
-		}
-		
-		public Contig( String name, StringBuilder sb ) {
-			this( name );
-			seq = sb;
-		}
-		
-		public String toString() {
-			return name;
-		}
-		
-		public String getSpec() {
-			int i = name.indexOf('_');
-			return name.substring(0, i);
-		}
-		
-		/*@Override
-		public boolean equals( Object other ) {
-			return other instanceof Contig && name.equals( ((Contig)other).toString() );
-		}*/
-		
-		public String getName() {
-			return name;
-		}
-		
-		public StringBuilder getSequence() {
-			return seq;
-		}
-
-		String 			name;
-		double 			loc;
-		int 			count;
-		StringBuilder	seq;
-		boolean			reverse = false;
-		Contig			next;
-		Contig			prev;
-		Tegeval			start;
-		Tegeval			end;
-		
-		public void setConnection( Contig contig, boolean rev, boolean forw ) {
-			if( forw ) setForwardConnection( contig, rev );
-			else setBackwardConnection( contig, rev );
-		}
-		
-		public void setForwardConnection( Contig contig, boolean rev ) {
-			this.next = contig;
-			if( rev ) {
-				contig.next = this;
-				
-				this.end.next = contig.end;
-				contig.end.next = this.end;
-				
-				if( this.isReverse() == contig.isReverse() ) {
-					Contig nextc = contig;
-					while( nextc != null ) {
-						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.isReverse() ? nextc.prev : nextc.next;
-					}
-				}
-			} else {
-				contig.prev = this;
-				
-				this.end.next = contig.start;
-				contig.start.prev = this.end;
-				
-				if( this.isReverse() != contig.isReverse() ) {
-					Contig nextc = contig;
-					while( nextc != null ) {
-						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.isReverse() ? nextc.prev : nextc.next;
-					}
-				}
-			}
-		}
-		
-		public void setBackwardConnection( Contig contig, boolean rev ) {
-			this.prev = contig;
-			if( rev ) {
-				contig.next = this;
-				
-				this.start.prev = contig.end;
-				contig.end.next = this.start;
-				
-				if( this.isReverse() != contig.isReverse() ) {
-					Contig nextc = contig;
-					while( nextc != null ) {
-						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.isReverse() ? nextc.next : nextc.prev;
-					}
-				}
-			} else {
-				contig.prev = this;
-				
-				this.start.prev = contig.start;
-				contig.start.prev = this.start;
-				
-				if( this.isReverse() == contig.isReverse() ) {
-					Contig nextc = contig;
-					while( nextc != null ) {
-						nextc.setReverse( !nextc.isReverse() );
-						nextc = nextc.isReverse() ? nextc.next : nextc.prev;
-					}
-				}
-			}
-		}
-		
-		public Contig getNextContig() {
-			return next;
-		}
-		
-		public Contig getPrevContig() {
-			return prev;
-		}
-		
-		public boolean isReverse() {
-			return reverse;
-		}
-		
-		public void setReverse( boolean rev ) {
-			this.reverse = rev;
-		}
-		
-		@Override
-		public int compareTo(Contig o) {
-			return name.compareTo( o.getName() );
-		}
-	}
 
 	static JSplitPane gsplitpane = null;
 
@@ -12223,6 +11414,410 @@ public class GeneSet extends JApplet {
 		}
 		
 		c.repaint();
+	}
+	
+	public static void syntenyMynd( final Container comp, final List<Gene> genes, final JTable sorting ) {
+		final JTable rowheader = new JTable();
+		
+		final Map<Set<Function>,Color>	funcMap = new HashMap<Set<Function>,Color>();
+		final Random rand = new Random();
+		
+		final JComponent c = new JComponent() {
+			Color gr = Color.green;
+			Color dg = Color.green.darker();
+			Color rd = Color.red;
+			Color dr = Color.red.darker();
+			Color altcol = Color.black;
+			// Color dg = Color.green.darker();
+
+			public String getToolTipText( MouseEvent me ) {
+				Point p = me.getPoint();
+				//Tegeval te = getSelectedTe(p, rowheader, sequenceView, hteg, rowheader.getRowHeight());
+				//if( te != null ) return "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+ "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
+				return null;
+			}
+			
+			public void paintComponent( Graphics g ) {
+				super.paintComponent(g);
+				
+				Graphics2D g2 = (Graphics2D)g;
+				g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
+				g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+				g.setFont( g.getFont().deriveFont( 8.0f ) );
+				
+				Rectangle clip = this.getVisibleRect(); //g.getClipBounds();
+			}
+		};
+		c.setToolTipText("bleh");
+		
+		final AbstractAction	a = new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				c.repaint();
+			}
+		};
+		
+		c.addMouseListener(new MouseAdapter() {
+			Point p;
+
+			public void mousePressed(MouseEvent me) {
+				p = me.getPoint();
+			}
+
+			public void mouseReleased(MouseEvent me) {
+				Point np = me.getPoint();
+
+				if (np.x > p.x) {
+					Rectangle rect = sorting.getCellRect(p.x, 0, false);
+					rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
+					sorting.scrollRectToVisible(rect);
+					//sorting.setRowSelectionInterval(p.x, np.x);
+				}
+			}
+		});
+		
+		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Reverse") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = rowheader.getSelectedRows();
+				for( int r : rr ) {
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					Contig contig = te.getContshort();
+					te.getContshort().setReverse( !contig.isReverse() );
+					
+					Contig nextc = contig.next;
+					while( nextc != null ) {
+						nextc.setReverse( !nextc.isReverse() );
+						nextc = nextc.next;
+					}
+					
+					Contig prevc = contig.prev;
+					while( prevc != null ) {
+						prevc.setReverse( !prevc.isReverse() );
+						prevc = prevc.prev;
+					}
+					
+					/*for( Gene selectedGene : selectedGenes ) {
+						String spec = (String)rowheader.getValueAt(r, 0);
+						if( selectedGene.species.containsKey( spec ) ) {
+							Teginfo ti = selectedGene.species.get( spec );
+							for( Tegeval te : ti.tset ) {
+								te.getContshort().setReverse( !te.getContshort().isReverse() );
+								break;
+							}
+						}
+					}*/
+				}
+				c.repaint();
+			}
+		});
+		popup.add( new AbstractAction("Connect contig") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int r = rowheader.getSelectedRow();
+				int i = rowheader.convertRowIndexToModel( r );
+				Tegeval te = hteg.get( i );
+				Contig 	cont = te.getContshort();
+				String	spec = cont.getSpec();
+				
+				final List<Contig>	specont = new ArrayList<Contig>();
+				for( String name : contigmap.keySet() ) {
+					Contig c = contigmap.get( name );
+					if( c != cont && spec.equals( c.getSpec() ) ) specont.add( c );
+				}
+				
+				JTable	table = new JTable();
+				table.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+				table.setAutoCreateRowSorter( true );
+				TableModel model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return specont.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return "Contig";
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return specont.get(rowIndex).name;
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+						
+					}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener( TableModelListener l ) {}
+				};
+				table.setModel( model );
+				JScrollPane	scroll = new JScrollPane( table );
+				JCheckBox	reverse = new JCheckBox( "reverse" );
+				JCheckBox	forward = new JCheckBox( "forward" );
+				Object[] message = { scroll, reverse, forward };
+				JOptionPane.showMessageDialog( frame, message, "Select contig", JOptionPane.PLAIN_MESSAGE );
+				
+				r = table.getSelectedRow();
+				i = -1;
+				if( r != -1 ) i = table.convertRowIndexToModel( r );
+				if( i != -1 ) {
+					if( forward.isSelected() ) {
+						Tegeval con = cont.end.next;
+						while( con != null ) {
+							cont = con.getContshort();
+							con = cont.isReverse() ? cont.start.prev : cont.end.next;
+							
+							if( con != null && con.getContshort().equals( cont ) ) {
+								break;
+							}
+						}
+					} else {
+						Tegeval con = cont.start.prev;
+						while( con != null ) {
+							cont = con.getContshort();
+							con = cont.isReverse() ? cont.start.prev : cont.end.next;
+							
+							if( con != null && con.getContshort().equals( cont ) ) {
+								break;
+							}
+						}
+					}
+					
+					cont.setConnection( specont.get(i), reverse.isSelected(), forward.isSelected() );
+				}
+				
+				c.repaint();
+			}
+		});
+		popup.add( new AbstractAction("Delete") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<Tegeval>	ste = new HashSet<Tegeval>();
+				int[] rr = rowheader.getSelectedRows();
+				for( int r : rr ) {
+					int i = rowheader.convertRowIndexToModel( r );
+					ste.add( hteg.get(i) );
+				}
+				hteg.removeAll( ste );
+				
+				rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
+				int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
+				if (rh == 0) {
+					rh = rowheader.getRowCount() * rowheader.getRowHeight();
+				}
+				c.setPreferredSize( new Dimension(6000, rh) );
+				c.setSize(6000, rh);
+				c.repaint();
+			}
+		});
+		popup.add( new AbstractAction("Move left") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = rowheader.getSelectedRows();
+				for( int r : rr ) {
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					hteg.set( i, te.next == null ? te : te.next );
+				}
+				c.repaint();
+			}
+		});
+		popup.add( new AbstractAction("Move right") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = rowheader.getSelectedRows();
+				for( int r : rr ) {
+					int i = rowheader.convertRowIndexToModel( r );
+					Tegeval te = hteg.get( i );
+					hteg.set( i, te.prev == null ? te : te.prev );
+				}
+				c.repaint();
+			}
+		});
+		rowheader.setComponentPopupMenu( popup );
+
+		JScrollPane scrollpane = new JScrollPane(c);
+		scrollpane.getViewport().setBackground(Color.white);
+		JScrollPane rowheaderscroll = new JScrollPane();
+		rowheader.setAutoCreateRowSorter(true);
+		rowheader.addKeyListener( new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
+					Set<Tegeval>	ste = new HashSet<Tegeval>();
+					int[] rr = rowheader.getSelectedRows();
+					for( int r : rr ) {
+						int i = rowheader.convertRowIndexToModel( r );
+						ste.add( hteg.get(i) );
+					}
+					hteg.removeAll( ste );
+					
+					rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
+					int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
+					if (rh == 0) {
+						rh = rowheader.getRowCount() * rowheader.getRowHeight();
+					}
+					c.setPreferredSize( new Dimension(6000, rh) );
+					c.setSize(6000, rh);
+					c.repaint();
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {}
+		});
+		rowheader.setModel(new TableModel() {
+			@Override
+			public int getRowCount() {
+				return hteg.size();
+			}
+
+			@Override
+			public int getColumnCount() {
+				return 4;
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				if( columnIndex == 1 ) return "Contig";
+				else if( columnIndex == 2 ) return "Length";
+				else if( columnIndex == 3 ) return "Orientation";
+				return "Species";
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				if( columnIndex == 2 ) return Integer.class;
+				else if( columnIndex == 3 ) return Boolean.class;
+				return String.class;
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return false;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				//String species = speclist.get( rowIndex );
+				Tegeval te = hteg.get(rowIndex);
+				if( columnIndex == 0 ) return te.getSpecies();
+				else if( columnIndex == 1 ) return te.getContshort().getName();
+				else if( columnIndex == 2 ) return te.getLength();
+				else if( columnIndex == 3 ) return te.getContshort().isReverse();
+				/*for( Gene selectedGene : selectedGenes ) {
+					if( selectedGene.species.containsKey( species ) ) {
+						Teginfo ti = selectedGene.species.get( species );
+						for( Tegeval te : ti.tset ) {
+							return te.getContshort().getName();
+						}
+					}
+				}*/
+				return null;
+			}
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {}
+		});
+		scrollpane.setRowHeaderView(rowheader);
+		rowheaderscroll.setViewport(scrollpane.getRowHeader());
+		rowheaderscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+		rowheaderscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+		rowheader.getRowSorter().addRowSorterListener(new RowSorterListener() {
+			@Override
+			public void sorterChanged(RowSorterEvent e) {
+				c.repaint();
+			}
+		});
+
+		gsplitpane = new JSplitPane();
+		gsplitpane.setLeftComponent(rowheaderscroll);
+		gsplitpane.setRightComponent(scrollpane);
+
+		JComponent fillup = new JComponent() {};
+		fillup.setPreferredSize(new Dimension(6000, 20));
+		scrollpane.setColumnHeaderView(fillup);
+
+		int rh = rowheader.getHeight();
+		if (rh == 0) {
+			rh = rowheader.getRowCount() * rowheader.getRowHeight();
+		}
+		c.setPreferredSize(new Dimension(6000, rh));
+		c.setSize(6000, rh);
+	
+		JToolBar	toolbar = new JToolBar();
+	
+		JComponent panel = new JComponent() {};
+		panel.setLayout( new BorderLayout() );
+		panel.add( toolbar, BorderLayout.NORTH );
+		panel.add( gsplitpane );
+	
+		frame = new JFrame();
+		frame.addWindowListener( new WindowListener() {
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				try {
+					saveContigOrder();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {}
+		});
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setSize(800, 600);
+		frame.add( panel );
+		frame.setVisible(true);
 	}
 	
 	static double neighbourscale = 1.0;
