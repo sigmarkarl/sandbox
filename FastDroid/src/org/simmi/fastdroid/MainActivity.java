@@ -10,10 +10,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ParseException;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,11 +27,19 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -90,8 +101,14 @@ public class MainActivity extends FragmentActivity {
 		}
 		
 		@JavascriptInterface
+		public double getFermetraverdFasteignamats() {
+			return (double)this.getFasteignamat()/(double)this.getFermetrar();
+		}
+		
+		@JavascriptInterface
 		public double getVerdPFasteignamat() {
-			return (double)this.getVerd()/(double)this.getFasteignamat();
+			if( this.getFasteignamat() > 0 ) return (double)this.getVerd()/(double)this.getFasteignamat();
+			return -1.0;
 		}
 		
 		@JavascriptInterface
@@ -210,7 +227,7 @@ public class MainActivity extends FragmentActivity {
 		}
 		
 		String imgurl = null;
-		if( ind != -1 && stop != -1 ) imgurl = "http://www.mbl.is"+str.substring(ind+5, stop+4); 
+		if( ind != -1 && stop != -1 ) imgurl = "http://www.mbl.is"+str.substring(ind+5, stop+4);
 		
 		ind = str.indexOf(h2);
 		stop = str.indexOf("</h2>", ind);
@@ -230,6 +247,9 @@ public class MainActivity extends FragmentActivity {
 		}
 		if( !iblist.contains(ib) ) {
 			iblist.add(ib);
+			
+			//updateAverage();
+			
 			int i = 0;
 			for (String bud : buds) {
 				ind = str.indexOf(bud);
@@ -244,13 +264,12 @@ public class MainActivity extends FragmentActivity {
 		return ib;
 	}
 	
-	int count;
-	int total = -1;
-	public void load( String str ) {
-		count = 0;
-
+	//int count;
+	//int total = -1;
+	public boolean load( String str ) {
+		int count = 0;
 		String[] vals = str.split("fast-nidurstada clearfix");
-		total = vals.length;
+		//total = vals.length;
 		System.err.println(vals.length);
 		for (String val : vals) {
 			int ind = val.indexOf("<a href=\"");
@@ -309,31 +328,41 @@ public class MainActivity extends FragmentActivity {
 					@Override
 					public void onError(Request request, Throwable exception) {}
 				});*/
+				count++;
 			}
 		}
+		return count == 25;
 	}
 	
 	private class searchTask extends AsyncTask<String,Integer,Long> {
 		@Override
 		protected Long doInBackground(String... arg0) {
-			try {
-				URL	url = new URL( arg0[0] );
-				java.io.InputStream is = url.openStream();
+			int i = 0;
+			while( true ) {
+				boolean b = false;
 				ByteArrayOutputStream	baos = new java.io.ByteArrayOutputStream();
-				byte[] bb = new byte[4096];
-				int r = is.read( bb );
-				while( r > 0 ) {
-					baos.write( bb, 0, r );
-					r = is.read( bb );
+				try {
+					String urlstr = arg0[0].replace("offset", "offset=" + i);
+					URL	url = new URL( urlstr );
+					java.io.InputStream is = url.openStream();
+					byte[] bb = new byte[4096];
+					int r = is.read( bb );
+					while( r > 0 ) {
+						baos.write( bb, 0, r );
+						r = is.read( bb );
+					}
+					is.close();
+					baos.close();
+					
+					b = load( baos.toString("ISO-8859-1") );
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-				is.close();
-				baos.close();
 				
-				load( baos.toString("ISO-8859-1") );
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+				if( !b ) break;
+				i += 25;
 			}
 			
 			return null;
@@ -345,14 +374,15 @@ public class MainActivity extends FragmentActivity {
 		
 		@JavascriptInterface
 		public void search( String what ) {			
-			int i = 0;
-			new searchTask().execute( what.replace("offset", "offset=" + i) );
+			new searchTask().execute( what );
 		}
 		
 		public int compare( Ibud ib1, Ibud ib2 ) {
 			if( comp == 0 ) return ib1.nafn.compareTo( ib2.nafn );
 			else if( comp == 1 ) return ib1.verd - ib2.verd;
-			else if( comp == 2 ) return ib1.ferm - ib2.ferm;
+			else if( comp == 2 ) return (int)(ib1.getFermetraverd() - ib2.getFermetraverd());
+			else if( comp == 3 ) return ib1.getFermetrar() - ib2.getFermetrar();
+			else if( comp == 4 ) return ib1.getHerbergi() - ib2.getHerbergi();
 			return 0;
 		}
 		
@@ -363,6 +393,16 @@ public class MainActivity extends FragmentActivity {
 				avg += ib.getFermetraverd();
 			}
 			return avg/iblist.size();
+		}
+		
+		@JavascriptInterface
+		public double getFermverdStdDev( double avg ) {
+			double tot = 0.0;
+			for( Ibud ib : iblist ) {
+				double val = avg - ib.getFermetraverd();
+				tot += val*val;
+			}
+			return Math.sqrt( tot/iblist.size() );
 		}
 		
 		@JavascriptInterface
@@ -380,6 +420,20 @@ public class MainActivity extends FragmentActivity {
 		}
 		
 		@JavascriptInterface
+		public double getVerdpFmatStdDev( double avg ) {
+			double tot = 0.0;
+			int i = 0;
+			for( Ibud ib : iblist ) {
+				if( ib.getFasteignamat() > 0 ) {
+					double vpfm = avg - ib.getVerdPFasteignamat();
+					tot += vpfm*vpfm;
+					i++;
+				}
+			}
+			return Math.round( 100.0*Math.sqrt( tot/i ) )/100.0;
+		}
+		
+		@JavascriptInterface
 		public int getFetchNum() {
 			return iblist.size();
 		}
@@ -394,10 +448,10 @@ public class MainActivity extends FragmentActivity {
 			return iblist.get(i);
 		}
 		
-		@JavascriptInterface
+		/*@JavascriptInterface
 		public int getTotal() {
 			return total;
-		}
+		}*/
 		
 		@JavascriptInterface
 		public String getName( int i ) {
@@ -405,9 +459,77 @@ public class MainActivity extends FragmentActivity {
 		}
 	};
 	
+	public static void updateAverage() {
+		double ravgfmv = fastpack.getAvgFermverd();
+		double avgfmv = Math.round( 1.0*ravgfmv )/1.0;
+		double stddfmv = Math.round( 1.0*fastpack.getFermverdStdDev( ravgfmv ) )/1.0;
+		
+		double avgvpfm = fastpack.getAvgVerdpFmat();
+		double stddvpfm = fastpack.getVerdpFmatStdDev( avgvpfm );
+		
+		if( textsmt != null ) {
+			//String dval = Integer.toString( (int)avgfmv );
+			textsmt.setText( "M.fermv: "+(int)avgfmv+"±"+(int)stddfmv );
+		}
+		
+		if( textsmt2 != null ) {
+			//String dval = Double.toString( avgfmv );
+			textsmt2.setText( "M.verð/fmat: "+avgvpfm+"±"+stddvpfm );
+		}
+		
+		int i = 0;
+		for( LinearLayout ll : labels ) {
+			Ibud ib = iblist.get( i );
+			//LinearLayout ll = labels.get( i );
+			
+			LinearLayout hl = (LinearLayout)ll.getChildAt(1);
+			
+			TextView tv3 = (TextView)hl.getChildAt(2);
+			
+			String verdstr =  Integer.toString( ib.getVerd() );
+			String fsmstr = Integer.toString( ib.getFasteignamat() );
+			double vpfm = Math.round( 100.0*ib.getVerdPFasteignamat() )/100.0;
+			String str = "Verð: " + verdstr + " / Fasteignamat: " + fsmstr + " = ";
+			String vstr = str + vpfm;
+			
+			SpannableString spstr = new SpannableString( vstr );
+			if( vpfm > avgvpfm+stddvpfm ) spstr.setSpan( new ForegroundColorSpan( Color.RED ), str.length(), vstr.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE );
+			else if( vpfm < avgvpfm-stddvpfm ) spstr.setSpan( new ForegroundColorSpan( Color.BLUE ), str.length(), vstr.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE );
+			
+			tv3.setText( spstr, TextView.BufferType.SPANNABLE );
+			
+			TextView tv4 = (TextView)hl.getChildAt(3);
+			String fmstr = Integer.toString( (int)ib.getFermetraverd() );
+			String ffmstr = Integer.toString( (int)ib.getFermetraverdFasteignamats() );
+			str = "Fermetraverð: " + fmstr + " - Fermv.fasteignamats: " + ffmstr;
+			
+			spstr = new SpannableString( str );
+			if( ib.getFermetraverd() > avgfmv+stddfmv ) spstr.setSpan( new ForegroundColorSpan( Color.RED ), 14, 14+fmstr.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE );
+			else if( ib.getFermetraverd() < avgfmv-stddfmv ) spstr.setSpan( new ForegroundColorSpan( Color.BLUE ), 14, 14+fmstr.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE );
+			//if( ib.getFermetraverdFasteignamats() > avgvpfm+stddvpfm ) spstr.setSpan( new ForegroundColorSpan( Color.RED ), 38+fmstr.length(), str.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE );
+			//else if( ib.getFermetraverdFasteignamats() < avgvpfm-stddvpfm ) spstr.setSpan( new ForegroundColorSpan( Color.BLUE ), 38+fmstr.length(), str.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE );
+			tv4.setText( spstr, TextView.BufferType.SPANNABLE );
+			
+			//LinearLayout ll = (LinearLayout)hlayout.getChildAt( i );
+			i++;
+			
+		}
+	}
+	
+	private static final String HTTPS = "https://";
+	private static final String HTTP = "http://";
+	public static void openBrowser(final Context context, String url) {
+	     if (!url.startsWith(HTTP) && !url.startsWith(HTTPS)) {
+	            url = HTTP + url;
+	     }
+
+	     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+	     context.startActivity(Intent.createChooser(intent, "Chose browser"));
+	}
+	
 	CollectionPagerAdapter mDemoCollectionPagerAdapter;
 	WebView	myWebView;
-	ViewPager myPager;
+	static ViewPager myPager;
 	static Fastpack	fastpack;
 	Handler	handler;
 	static List<LinearLayout>	labels = new ArrayList<LinearLayout>();
@@ -431,13 +553,13 @@ public class MainActivity extends FragmentActivity {
 	        	//if( labels.size() == fastpack.getFetchNum() ) ;//this.cancel();
 				//else {
 					for( int i = labels.size(); i < fastpack.getFetchNum(); i++ ) {
-						Ibud ib = fastpack.getIbud(i);
+						final Ibud ib = fastpack.getIbud(i);
 						
 						final LinearLayout llayout = (LinearLayout)otherView.findViewById(R.id.llayout1);
 						LinearLayout hlayout = (LinearLayout)llayout.inflate( llayout.getContext(), R.layout.sub_object, (ViewGroup)llayout );
 						
 						if( hlayout.getChildCount() > 0 ) {
-							LinearLayout ll = (LinearLayout)hlayout.getChildAt( hlayout.getChildCount()-1 );
+							final LinearLayout ll = (LinearLayout)hlayout.getChildAt( hlayout.getChildCount()-1 );
 							ll.setClickable( true );
 							
 							ll.setBackgroundColor( Color.WHITE );
@@ -454,27 +576,56 @@ public class MainActivity extends FragmentActivity {
 							
 							LinearLayout hl = (LinearLayout)ll.getChildAt(1);
 							TextView tv = (TextView)hl.getChildAt(0);
-							tv.setText( ib.getNafn() );
+							tv.setText( Html.fromHtml( "<b>"+ib.getNafn()+"</b>" ) );
 							
-							if( textsmt != null ) {
-								double avgfmv = fastpack.getAvgFermverd();
-								String dval = Integer.toString( (int)avgfmv );
-								textsmt.setText( "M.fermv: "+dval );
-							}
+							TextView tv2 = (TextView)hl.getChildAt(1);
+							tv2.setText( "Fermetrar: " + ib.getFermetrar() + " / Herbergi: " + ib.getHerbergi() );
 							
-							if( textsmt2 != null ) {
-								double avgfmv = fastpack.getAvgVerdpFmat();
-								String dval = Double.toString( avgfmv );
-								textsmt2.setText( "M.verð/fmat: "+dval );
-							}
+							OnGestureListener gl = new OnGestureListener() {			
+								@Override
+								public boolean onSingleTapUp(MotionEvent e) {
+									return false;
+								}
+								
+								@Override
+								public void onShowPress(MotionEvent e) {}
+								
+								@Override
+								public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+									return false;
+								}
+								
+								@Override
+								public void onLongPress(MotionEvent e) {
+									openBrowser(ll.getContext(), ib.url);
+								}
+								
+								@Override
+								public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+									return false;
+								}
+								
+								@Override
+								public boolean onDown(MotionEvent e) {
+									return false;
+								}
+							};
+							final GestureDetector gestureDetector = new GestureDetector( ll.getContext(), gl );
+							ll.setOnTouchListener( new OnTouchListener() {
+								@Override
+								public boolean onTouch(View v, MotionEvent event) {
+									return gestureDetector.onTouchEvent( event );
+								}
+							});
+							
+							labels.add( ll );
+							updateAverage();
 							
 							//hlayout.find
 							//final TextView textview = (TextView)hlayout.inflate( hlayout.getContext(), R.layout.textview_object, (ViewGroup)hlayout);
 							//textview.setText( ib.getNafn() );
 							
 							//llayout.addView( hlayout );
-							
-							labels.add( ll );
 						}
 					}
 				//}
@@ -529,7 +680,7 @@ public class MainActivity extends FragmentActivity {
 	static TextView	textsmt2 = null;
 	
 	static View otherView = null;
-	static final String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
+	static final String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&gata=&lysing=";
 	public static class ObjectFragment extends Fragment {
 	    public static final String ARG_OBJECT = "object";
 
@@ -563,10 +714,15 @@ public class MainActivity extends FragmentActivity {
 						teg = teg.replace("æ", "ae");
 						teg = teg.replace("ö", "o");
 						teg = teg.replace("ý", "y");
+						
+						if( teg.equals("Fjolbyli") ) teg = "fjolbyli";
+						else if( teg.equals("Einbyli") ) teg = "einbyli";
+						else if( teg.equals("Haeðir") ) teg = "haedir";
+						else teg = "par_radhus";
 						val = val.replace("tegund=", "tegund=" + teg);
 						//String diffstr = bigdifffield.getText();
-						int diff = Integer.parseInt( edittext1.getText().toString() ); //bigdifffield.getValue(); //Integer.parseInt(diffstr);
-						int ferm = Integer.parseInt( edittext2.getText().toString() ); //bigfield.getValue(); //Integer.parseInt(bigfield.getText());
+						int ferm = Integer.parseInt( edittext1.getText().toString() ); //bigdifffield.getValue(); //Integer.parseInt(diffstr);
+						int diff = Integer.parseInt( edittext2.getText().toString() ); //bigfield.getValue(); //Integer.parseInt(bigfield.getText());
 						val = val.replace("fermetrar_fra=", "fermetrar_fra=" + (ferm - diff));
 						val = val.replace("fermetrar_til=", "fermetrar_til=" + (ferm + diff));
 
@@ -575,6 +731,7 @@ public class MainActivity extends FragmentActivity {
 						//texterm.setText( tstr );
 						//otherView.
 						fastpack.search( tstr );
+						myPager.setCurrentItem( 1 );
 					}
 				});
 	        	// Create an ArrayAdapter using the string array and a default spinner layout
@@ -618,6 +775,36 @@ public class MainActivity extends FragmentActivity {
 						}
 						iblist.removeAll( delist );
 						labels.removeAll( delayout );
+						
+						updateAverage();
+					}
+	        	});
+	        	Button delbutton = (Button)rootView.findViewById(R.id.deleteallbutton);
+	        	delbutton.setOnClickListener( new View.OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						List<Ibud>	delist = new ArrayList<Ibud>();
+						List<LinearLayout>	delayout = new ArrayList<LinearLayout>();
+						int i = 0;
+						for( Ibud ib : iblist ) {
+							LinearLayout ll = labels.get( i );
+							//LinearLayout ll = (LinearLayout)hlayout.getChildAt( i );
+							i++;
+
+							//Drawable background = ll.getBackground();
+							//if( background != null && ((ColorDrawable)background).getColor() == fcol ) {
+							delist.add( ib );
+							delayout.add( ll  );
+						}
+						
+						for( LinearLayout del : delayout ) {
+							LinearLayout par = (LinearLayout)del.getParent();
+							par.removeView( del );
+						}
+						iblist.removeAll( delist );
+						labels.removeAll( delayout );
+						
+						updateAverage();
 					}
 	        	});
 	        	
@@ -644,16 +831,18 @@ public class MainActivity extends FragmentActivity {
 							
 							LinearLayout hl = (LinearLayout)ll.getChildAt(1);
 							TextView tv = (TextView)hl.getChildAt(0);
-							tv.setText( ib.getNafn() );
-						}						
+							tv.setText( Html.fromHtml( "<b>"+ib.getNafn()+"</b>" ) );
+							
+							TextView tv2 = (TextView)hl.getChildAt(1);
+							tv2.setText( "Fermetrar: " + ib.getFermetrar() + " / Herbergi: " + ib.getHerbergi() );
+							
+							//labels.add( ll );
+							updateAverage();
+						}
 					}
 
 					@Override
-					public void onNothingSelected(AdapterView<?> arg0) {
-						// TODO Auto-generated method stub
-						
-					}
-					
+					public void onNothingSelected(AdapterView<?> arg0) {}
 	        	});
 	        	
 	        	sortspinner.setAdapter(sortadapter);
