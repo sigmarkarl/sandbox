@@ -1665,7 +1665,6 @@ public class Order extends JApplet {
 		if( !valid ) {
 			try {
 				//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
-				
 				String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 				con = DriverManager.getConnection(connectionUrl);
 			} catch (SQLException e) {
@@ -2530,18 +2529,17 @@ public class Order extends JApplet {
 		final JTextField	tf = new JTextField();
 		tf.getDocument().addDocumentListener(new DocumentListener() {
 			public void changedUpdate(DocumentEvent e) {
-				updateFilter(tf.getText(), 0);
+				updateFilter(tf.getText(), 0, table);
 			}
 
 			public void insertUpdate(DocumentEvent e) {
-				updateFilter(tf.getText(), 1);
+				updateFilter(tf.getText(), 1, table);
 			}
 
 			public void removeUpdate(DocumentEvent e) {
-				updateFilter(tf.getText(), 2);
+				updateFilter(tf.getText(), 2, table);
 			}
 		});
-		c.add( tf );
 		
 		cvorur = new JComponent() {
 			/*public void paintComponent( Graphics g ) {
@@ -2574,6 +2572,7 @@ public class Order extends JApplet {
 			}
 		};
 		cvorur.add( scrollpane );
+		cvorur.add( tf );
 		cvorur.add( ycombo );
 		cvorur.add( combo );
 		cvorur.add( pcombo );
@@ -2607,15 +2606,31 @@ public class Order extends JApplet {
 		cpantanir.add( scrolled );
 		c.add( cpantanir );
 		
+		final JTextField	tfafgreitt = new JTextField();
+		tfafgreitt.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				updateFilter(tfafgreitt.getText(), 0, atable);
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				updateFilter(tfafgreitt.getText(), 1, atable);
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				updateFilter(tfafgreitt.getText(), 2, atable);
+			}
+		});
 		cafgreitt = new JComponent() {
 			public void setBounds( int x, int y, int w, int h ) {
 				super.setBounds(x, y, w, h);
 				
-				ascrollpane.setBounds( (int)(0.00*w), 30, (int)(1.0*w), (int)(1.0*h)-30 );
+				ascrollpane.setBounds( (int)(0.00*w), 30, (int)(1.0*w), (int)(1.0*h)-60 );
+				tfafgreitt.setBounds( (int)(0.00*w), (int)(1.0*h)-30 , (int)(1.00*w), 25 );
 				afgreitt.setBounds( (int)(0.0*w), 0, (int)(1.0*w), 25 );
 			}
 		};
 		cafgreitt.add( ascrollpane );
+		cafgreitt.add( tfafgreitt );
 		cafgreitt.add( afgreitt );
 		cb.add( cafgreitt );
 		
@@ -2705,7 +2720,7 @@ public class Order extends JApplet {
 		this.add( tpane );
 	}
 	
-	public void updateFilter( String filterText, int val ) {
+	public void updateFilter( String filterText, int val, JTable table ) {
 		DefaultRowSorter drs = (DefaultRowSorter)table.getRowSorter();
 		
 		if( filterText.length() > 0 ) drs.setRowFilter( RowFilter.regexFilter( "(?i).*" + filterText + ".*" ) );
