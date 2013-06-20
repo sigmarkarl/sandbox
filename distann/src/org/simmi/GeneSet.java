@@ -6188,7 +6188,157 @@ public class GeneSet extends JApplet {
 				}
 			}
 		};
-		JButton matrixbutton = new JButton(matrixaction);
+		//JButton matrixbutton = new JButton(matrixaction);
+		AbstractAction genexyplotaction = new AbstractAction("Gene XY plot") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String> 	species = speciesFromCluster( clusterMap );
+				final List<String>	specList = new ArrayList<String>( species );
+				
+				TableModel model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return specList.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return null;
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return specList.get( rowIndex );
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+						
+					}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {
+						
+					}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {
+						
+					}
+				};
+				JTable table1 = new JTable( model );
+				JTable table2 = new JTable( model );
+				
+				table1.getSelectionModel().setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+				table2.getSelectionModel().setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+				
+				JScrollPane	scroll1 = new JScrollPane( table1 );
+				JScrollPane	scroll2 = new JScrollPane( table2 );
+				
+				FlowLayout flowlayout = new FlowLayout();
+				JComponent c = new JComponent() {
+					
+				};
+				c.setLayout( flowlayout );
+				
+				c.add( scroll1 );
+				c.add( scroll2 );
+				
+				JOptionPane.showMessageDialog(comp, c);
+				
+				final String spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
+				final String spec2 = (String)table2.getValueAt( table2.getSelectedRow(), 0 );
+				
+				final List<Contig>	spec1Conts = new ArrayList<Contig>();
+				final List<Contig>	spec2Conts = new ArrayList<Contig>();
+				for( String ctname : contigmap.keySet() ) {
+					if( ctname.contains( spec1 ) ) {
+						spec1Conts.add( contigmap.get( ctname ) );
+					}
+					
+					if( ctname.contains( spec2 ) ) {
+						spec2Conts.add( contigmap.get( ctname ) );
+					}
+				}
+				
+				int sum1 = 0;
+				for( Contig ct : spec1Conts ) {
+					sum1 += ct.getGeneCount();
+				}
+				
+				int sum2 = 0;
+				for( Contig ct : spec2Conts ) {
+					sum2 += ct.getGeneCount();
+				}
+				
+				JComponent  drawc = new JComponent() {
+					public void paintComponent( Graphics g ) {
+						super.paintComponent( g );
+						
+						g.setColor( Color.white );
+						g.fillRect( 0, 0, this.getWidth(), this.getHeight() );
+						
+						Graphics2D g2 = (Graphics2D)g;
+						g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+						g.setColor( Color.blue );
+						
+						int count = 0;
+						for( Contig ct : spec1Conts ) {
+							Tegeval val = ct.getFirst();
+							while( val != null ) {
+								List<Tegeval> tv2list = val.getGene().getGeneGroup().getTegevals( spec2 );
+								for( Tegeval tv2 : tv2list ) {
+									int count2 = 0;
+									int k = spec2Conts.indexOf( tv2.contshort );
+									if( k != -1 ) {
+										for( int i = 0; i < k; i++ ) {
+											Contig ct2 = spec2Conts.get( i );
+											count2 += ct2.getGeneCount();
+										}
+										Contig ct2 = spec2Conts.get( k );
+										count2 += (ct2.isReverse() ? ct2.getGeneCount() - tv2.getNum() - 1 : tv2.getNum());
+										
+										g.fillOval(count-1, count2-1, 3, 3);
+									} else {
+										System.err.println();
+									}
+								}
+								
+								val = val.getNext();
+								count++;
+								
+								System.err.println( count );
+							}
+						}
+					}
+				};
+				Dimension dim = new Dimension( sum1, sum2 );
+				drawc.setPreferredSize( dim );
+				drawc.setSize( dim );
+				JScrollPane	drawscroll = new JScrollPane( drawc );
+
+				JFrame frame = new JFrame();
+				frame.add( drawscroll );
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.setVisible( true );
+			}
+		};
 		
 		AbstractAction freqdistaction = new AbstractAction("Freq dist") {
 			@Override
@@ -6279,7 +6429,7 @@ public class GeneSet extends JApplet {
 				f.setVisible( true );
 			}
 		};
-		JButton freqdistbutton = new JButton(freqdistaction);
+		//JButton freqdistbutton = new JButton(freqdistaction);
 		
 		AbstractAction presabsaction = new AbstractAction("Pres-Abs tree") {
 			@Override
@@ -6403,7 +6553,7 @@ public class GeneSet extends JApplet {
 				}
 			}
 		};
-		JButton presabsbutton = new JButton( presabsaction );
+		//JButton presabsbutton = new JButton( presabsaction );
 		
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
 			@Override
@@ -6690,7 +6840,7 @@ public class GeneSet extends JApplet {
 				}*/
 			}
 		};
-		JButton	shuffletreebutton = new JButton( shuffletreeaction );
+		//JButton	shuffletreebutton = new JButton( shuffletreeaction );
 		
 		AbstractAction pancoreaction = new AbstractAction("Pan-core") {
 			@Override
@@ -6940,6 +7090,7 @@ public class GeneSet extends JApplet {
 		menu.add( freqdistaction );
 		menu.add( matrixaction );
 		menu.add( pancoreaction );
+		menu.add( genexyplotaction );
 		menu.add( fetchcoreaction );
 		menu.add( loadcontiggraphaction );
 		
@@ -10296,7 +10447,16 @@ public class GeneSet extends JApplet {
 								te.setPrevious( prevprev );
 								
 								System.err.println( prevprev.getGene().getName() );
-							} else contig.start = te;
+							} else {
+								contig.start = te;
+							}
+							
+							te.setNum( ste.getNum() );
+							Tegeval next = te.getNext();
+							while( next != null ) {
+								next.setNum( next.getPrevious().getNum()+1 );
+								next = next.getNext();
+							}
 						} else {
 							Tegeval prevnext = ste.setNext( te );
 							te.setPrevious( ste );
@@ -10304,11 +10464,21 @@ public class GeneSet extends JApplet {
 								prevnext.setPrevious( te );
 								
 								System.err.println( prevnext.getGene().getName() );
-							} else contig.end = te;
+							} else {
+								contig.end = te;
+							}
+							
+							te.setNum( ste.getNum()+1 );
+							Tegeval next = te.getNext();
+							while( next != null ) {
+								next.setNum( next.getPrevious().getNum()+1 );
+								next = next.getNext();
+							}
 						}
 					} else {
 						contig.start = te;
 						contig.end = te;
+						te.num = 0;
 					}
 				}
 			}
