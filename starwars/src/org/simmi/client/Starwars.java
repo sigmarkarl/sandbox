@@ -24,16 +24,13 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.typedarrays.client.Float32ArrayNative;
 import com.google.gwt.typedarrays.client.Uint8ArrayNative;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 import elemental.client.Browser;
 import elemental.dom.RequestAnimationFrameCallback;

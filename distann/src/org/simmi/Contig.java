@@ -8,7 +8,7 @@ class Contig implements Comparable<Contig> {
 	}
 	
 	public int getGeneCount() {
-		if( end != null ) return end.getNum();
+		if( end != null ) return end.getNum()+1;
 		return 0;
 	}
 	
@@ -37,6 +37,10 @@ class Contig implements Comparable<Contig> {
 	
 	public StringBuilder getSequence() {
 		return seq;
+	}
+	
+	public Tegeval getFirst() {
+		return reverse ? end : start;
 	}
 
 	String 			name;

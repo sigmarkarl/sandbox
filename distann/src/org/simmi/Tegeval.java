@@ -23,13 +23,11 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public int getNum() {
-		// TODO Auto-generated method stub
-		return 0;
+		return num;
 	}
 
 	public void setNum(int i) {
-		// TODO Auto-generated method stub
-		
+		num = i;
 	}
 
 	public String getSpecies() {

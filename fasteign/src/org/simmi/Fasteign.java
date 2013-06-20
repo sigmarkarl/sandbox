@@ -1220,6 +1220,9 @@ public class Fasteign extends JApplet {
 				teg = teg.replace("æ", "ae");
 				teg = teg.replace("ö", "o");
 				teg = teg.replace("ý", "y");
+				teg = teg.replace("ð", "d");
+				teg = teg.replace("ú", "u");
+				teg = teg.replace("parhus/radhus", "par_radhus");
 				val = val.replace("tegund=", "tegund=" + teg);
 				String diffstr = bigdifffield.getText();
 				int diff = Integer.parseInt(diffstr);
