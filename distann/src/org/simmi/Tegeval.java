@@ -1,6 +1,5 @@
 package org.simmi;
 
-
 public class Tegeval implements Comparable<Tegeval> {
 	public Tegeval(Gene gene, String tegund, double evalue, StringBuilder sequence, StringBuilder dnaseq, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
 		teg = tegund;
