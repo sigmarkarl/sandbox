@@ -42,6 +42,18 @@ class Contig implements Comparable<Contig> {
 	public Tegeval getFirst() {
 		return reverse ? end : start;
 	}
+	
+	public Tegeval getIndex( int i ) {
+		Tegeval first = getFirst();
+	
+		int k = 0;
+		while( first != null && k < i ) {
+			first = first.getNext();
+			k++;
+		}
+		
+		return first;
+	}
 
 	String 			name;
 	double 			loc;
