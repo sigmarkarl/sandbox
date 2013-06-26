@@ -10,6 +10,7 @@ public class GeneGroup {
 	Set<String>	species = new HashSet<String>();
 	int 		groupIndex = -10;
 	int 		groupCount = -1;
+	int			index;
 	//int			groupGeneCount;
 	
 	public List<Tegeval> getTegevals( Set<String> sortspecies ) {
@@ -65,6 +66,14 @@ public class GeneGroup {
 		}
 		
 		return ltv;
+	}
+	
+	public void setIndex( int i ) {
+		this.index = i;
+	}
+	
+	public int getIndex() {
+		return index;
 	}
 	
 	public double getAvgGCPerc() {

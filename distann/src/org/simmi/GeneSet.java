@@ -5402,39 +5402,66 @@ public class GeneSet extends JApplet {
 		Set<String> ct = new HashSet<String>();
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
-			Gene gg = genelist.get(cr);
+			
+			GeneGroup gg;
+			if( table.getModel() == groupModel ) {
+				gg = allgenegroups.get( cr );
+			} else {
+				gg = genelist.get(cr).getGeneGroup();
+			}
 			// genefilterset.add( gg.index );
-			if (gg.species != null) {
-				for (String sp : gg.species.keySet()) {
-					Teginfo stv = gg.species.get(sp);
-					for (Tegeval tv : stv.tset) {
-						ct.add(tv.cont);
-						int ind = tv.cont.lastIndexOf("_");
-						int val = Integer.parseInt(tv.cont.substring(ind + 1));
-
-						String next = tv.cont.substring(0, ind + 1) + (val + 1);
-						System.err.println(next);
-						ct.add(next);
-						if (val > 1) {
-							String prev = tv.cont.substring(0, ind + 1) + (val - 1);
-							ct.add(prev);
+			for( Gene g : gg.genes ) {
+				if (g.species != null) {
+					for (String sp : g.species.keySet()) {
+						Teginfo stv = g.species.get(sp);
+						for (Tegeval tv : stv.tset) {
+							ct.add(tv.cont);
+							int ind = tv.cont.lastIndexOf("_");
+							int val = Integer.parseInt(tv.cont.substring(ind + 1));
+	
+							String next = tv.cont.substring(0, ind + 1) + (val + 1);
+							System.err.println(next);
+							ct.add(next);
+							if (val > 1) {
+								String prev = tv.cont.substring(0, ind + 1) + (val - 1);
+								ct.add(prev);
+							}
 						}
 					}
 				}
 			}
 		}
 
-		for (Gene g : genelist) {
-			if (g.species != null) {
-				for (String sp : g.species.keySet()) {
-					Teginfo stv = g.species.get(sp);
-					for (Tegeval tv : stv.tset) {
-						if (ct.contains(tv.cont)) {
-							if (remove)
-								genefilterset.remove(g.index);
-							else
-								genefilterset.add(g.index);
-							break;
+		if( table.getModel() == groupModel ) {
+			for( Gene g : genelist ) {
+				if (g.species != null) {
+					for (String sp : g.species.keySet()) {
+						Teginfo stv = g.species.get(sp);
+						for (Tegeval tv : stv.tset) {
+							if( ct.contains(tv.cont) ) {
+								if (remove)
+									genefilterset.remove(g.getGeneGroup().index);
+								else
+									genefilterset.add(g.getGeneGroup().index);
+								break;
+							}
+						}
+					}
+				}
+			}
+		} else {
+			for( Gene g : genelist ) {
+				if (g.species != null) {
+					for (String sp : g.species.keySet()) {
+						Teginfo stv = g.species.get(sp);
+						for (Tegeval tv : stv.tset) {
+							if( ct.contains(tv.cont) ) {
+								if (remove)
+									genefilterset.remove(g.index);
+								else
+									genefilterset.add(g.index);
+								break;
+							}
 						}
 					}
 				}
@@ -6305,11 +6332,13 @@ public class GeneSet extends JApplet {
 				for( Contig ct : spec1Conts ) {
 					sum1 += ct.getGeneCount();
 				}
+				final int fsum1 = sum1;
 				
 				int sum2 = 0;
 				for( Contig ct : spec2Conts ) {
 					sum2 += ct.getGeneCount();
 				}
+				final int fsum2 = sum2;
 				
 				final JRadioButton	oricolor = new JRadioButton("Orientation");
 				final JRadioButton	gccolor = new JRadioButton("GC%");
@@ -6333,29 +6362,38 @@ public class GeneSet extends JApplet {
 						for( Contig ct : spec1Conts ) {
 							Tegeval val = ct.getFirst();
 							while( val != null ) {
-								List<Tegeval> tv2list = val.getGene().getGeneGroup().getTegevals( spec2 );
-								for( Tegeval tv2 : tv2list ) {
-									int count2 = 0;
-									int k = spec2Conts.indexOf( tv2.contshort );
-									if( k != -1 ) {
-										for( int i = 0; i < k; i++ ) {
-											Contig ct2 = spec2Conts.get( i );
-											count2 += ct2.getGeneCount();
-										}
-										Contig ct2 = spec2Conts.get( k );
-										count2 += (ct2.isReverse() ? ct2.getGeneCount() - tv2.getNum() - 1 : tv2.getNum());
-										
-										if( gccolor.isSelected() ) {
-											double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
-											double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
-											g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
+								GeneGroup gg = val.getGene().getGeneGroup();
+								
+								int a = allgenegroups.indexOf( gg );
+								int l = table.convertRowIndexToView( a );
+									
+								if( l != -1 ) {
+									boolean rs = table.isRowSelected( l );
+									List<Tegeval> tv2list = gg.getTegevals( spec2 );
+									for( Tegeval tv2 : tv2list ) {
+										tv2.setSelected( rs );
+										int count2 = 0;
+										int k = spec2Conts.indexOf( tv2.contshort );
+										if( k != -1 ) {
+											for( int i = 0; i < k; i++ ) {
+												Contig ct2 = spec2Conts.get( i );
+												count2 += ct2.getGeneCount();
+											}
+											Contig ct2 = spec2Conts.get( k );
+											count2 += (ct2.isReverse() ? ct2.getGeneCount() - tv2.getNum() - 1 : tv2.getNum());
+											
+											if( gccolor.isSelected() ) {
+												double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
+												double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
+												g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
+											} else {
+												if( val.isSelected() || tv2.isSelected() ) g.setColor( Color.red );
+												else g.setColor( Color.blue );
+											}
+											g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
 										} else {
-											if( val.isSelected() || tv2.isSelected() ) g.setColor( Color.red );
-											else g.setColor( Color.blue );
+											System.err.println();
 										}
-										g.fillOval(count-1, count2-1, 3, 3);
-									} else {
-										System.err.println();
 									}
 								}
 								
@@ -6400,8 +6438,8 @@ public class GeneSet extends JApplet {
 					public void mouseReleased(MouseEvent e) {
 						Point relmouse = e.getPoint();
 						
-						int xmin = Math.min( mouseSel.x, relmouse.x );
-						int xmax = Math.max( mouseSel.x, relmouse.x );
+						int xmin = Math.min( mouseSel.x, relmouse.x )*fsum1/drawc.getWidth();
+						int xmax = Math.max( mouseSel.x, relmouse.x )*fsum1/drawc.getWidth();
 						for( int x = xmin; x < xmax; x++ ) {
 							int count = 0;
 							Contig tct = null;
@@ -6436,8 +6474,8 @@ public class GeneSet extends JApplet {
 							}
 						}
 						
-						int ymin = Math.min( mouseSel.y, relmouse.y );
-						int ymax = Math.max( mouseSel.y, relmouse.y );
+						int ymin = Math.min( mouseSel.y, relmouse.y )*fsum2/drawc.getHeight();
+						int ymax = Math.max( mouseSel.y, relmouse.y )*fsum2/drawc.getHeight();
 						for( int y = ymin; y < ymax; y++ ) {
 							int count = 0;
 							Contig tct = null;
@@ -6451,7 +6489,12 @@ public class GeneSet extends JApplet {
 							Tegeval te = tct.getIndex( y-count );
 							te.setSelected( true );
 							
-							int i = genelist.indexOf( te.getGene() );
+							int i;
+							if( table.getModel() == groupModel ) {
+								i = allgenegroups.indexOf( te.getGene().getGeneGroup() );
+							} else {
+								i = genelist.indexOf( te.getGene() );
+							}
 							int r = table.convertRowIndexToView(i);
 							if( te.isSelected() ) {
 								currentTe = te;
@@ -6471,14 +6514,10 @@ public class GeneSet extends JApplet {
 					}
 
 					@Override
-					public void mouseEntered(MouseEvent e) {
-						
-					}
+					public void mouseEntered(MouseEvent e) {}
 
 					@Override
-					public void mouseExited(MouseEvent e) {
-						
-					}
+					public void mouseExited(MouseEvent e) {}
 				});
 								
 				Dimension dim = new Dimension( sum1, sum2 );
@@ -6489,6 +6528,22 @@ public class GeneSet extends JApplet {
 				JToolBar	toolbox = new JToolBar();
 				toolbox.add( oricolor );
 				toolbox.add( gccolor );
+				toolbox.add( new AbstractAction("+") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						Dimension	dim = new Dimension( (int)(drawc.getWidth()*1.25), (int)(drawc.getHeight()*1.25) );
+						drawc.setPreferredSize( dim );
+						drawc.setSize( dim );
+					}
+				});
+				toolbox.add( new AbstractAction("-") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						Dimension	dim = new Dimension( (int)(drawc.getWidth()*0.8), (int)(drawc.getHeight()*0.8) );
+						drawc.setPreferredSize( dim );
+						drawc.setSize( dim );
+					}
+				});
 				
 				oricolor.addChangeListener( new ChangeListener() {
 					@Override
@@ -7342,8 +7397,9 @@ public class GeneSet extends JApplet {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				label.setText(table.getRowCount() + "/" + table.getSelectedRowCount());
-				if (gsplitpane != null)
+				for( JSplitPane gsplitpane : splitpaneList ) {
 					gsplitpane.repaint();
+				}
 			}
 		});
 
@@ -8199,34 +8255,34 @@ public class GeneSet extends JApplet {
 		 * NullComparators.atEnd(wrapMe)); }
 		 */
 
-		table.getRowSorter().addRowSorterListener(new RowSorterListener() {
+		table.getRowSorter().addRowSorterListener( new RowSorterListener() {
 			@Override
 			public void sorterChanged(RowSorterEvent e) {
-				if (gsplitpane != null) {
-					for (String cstr : contigmap.keySet()) {
-						Contig c = contigmap.get(cstr);
-						c.count = 0;
-						c.loc = 0.0;
-					}
+				for (String cstr : contigmap.keySet()) {
+					Contig c = contigmap.get(cstr);
+					c.count = 0;
+					c.loc = 0.0;
+				}
 
-					for (Gene g : genelist) {
-						if (g.species != null) {
-							for (String spec : g.species.keySet()) {
-								Teginfo stv = g.species.get(spec);
-								for (Tegeval tv : stv.tset) {
-									// int first = tv.cont.indexOf('_');
-									// int sec = tv.cont.indexOf('_',first+1);
-									Contig cont = tv.getContshort(); // tv.cont.substring(0,sec);
-									if( cont != null && contigmap.containsKey(cont.getName()) ) {
-										Contig c = contigmap.get(cont.getName());
-										c.count++;
-										int val = table.convertRowIndexToView(g.index);
-										c.loc += (double) val;
-									}
+				for (Gene g : genelist) {
+					if (g.species != null) {
+						for (String spec : g.species.keySet()) {
+							Teginfo stv = g.species.get(spec);
+							for (Tegeval tv : stv.tset) {
+								// int first = tv.cont.indexOf('_');
+								// int sec = tv.cont.indexOf('_',first+1);
+								Contig cont = tv.getContshort(); // tv.cont.substring(0,sec);
+								if( cont != null && contigmap.containsKey(cont.getName()) ) {
+									Contig c = contigmap.get(cont.getName());
+									c.count++;
+									int val = table.convertRowIndexToView(g.index);
+									c.loc += (double) val;
 								}
 							}
 						}
 					}
+				}
+				for( JSplitPane gsplitpane : splitpaneList ) {
 					gsplitpane.repaint();
 				}
 			}
@@ -8961,17 +9017,27 @@ public class GeneSet extends JApplet {
 					// ? ftable.getRowCount()-1 : filterset.size()-1 );
 					filterset.clear();
 					int[] rr = table.getSelectedRows();
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						Gene g = genelist.get(cr);
-						if (g.funcentries != null) {
-							for( Function f : g.funcentries ) {
-								//Function f = funcmap.get(go);
-								// ftable.getRowSorter().convertRowIndexToView(index)
-								// int rf = ftable.convertRowIndexToView(
-								// f.index );
+					if( table.getModel() == groupModel ) {
+						for (int r : rr) {
+							int cr = table.convertRowIndexToModel(r);
+							GeneGroup gg = allgenegroups.get(cr);
+							for( Function f : gg.getFunctions() ) {
 								filterset.add(f.index);
-								// ftable.addRowSelectionInterval(rf, rf);
+							}
+						}
+					} else {
+						for (int r : rr) {
+							int cr = table.convertRowIndexToModel(r);
+							Gene g = genelist.get(cr);
+							if (g.funcentries != null) {
+								for( Function f : g.funcentries ) {
+									//Function f = funcmap.get(go);
+									// ftable.getRowSorter().convertRowIndexToView(index)
+									// int rf = ftable.convertRowIndexToView(
+									// f.index );
+									filterset.add(f.index);
+									// ftable.addRowSelectionInterval(rf, rf);
+								}
 							}
 						}
 					}
@@ -8996,12 +9062,18 @@ public class GeneSet extends JApplet {
 
 						Function f = funclist.get(cr);
 						if (f.geneentries != null) {
-							for( Gene g : f.geneentries ) {
-								//Gene g = genemap.get(ref);
-								// int rf = table.convertRowIndexToView( g.index
-								// );
-								// table.addRowSelectionInterval(rf, rf);
-								genefilterset.add(g.index);
+							if( table.getModel() == groupModel ) {
+								for( Gene g : f.geneentries ) {
+									genefilterset.add( g.getGeneGroup().getIndex() );
+								}
+							} else {
+								for( Gene g : f.geneentries ) {
+									//Gene g = genemap.get(ref);
+									// int rf = table.convertRowIndexToView( g.index
+									// );
+									// table.addRowSelectionInterval(rf, rf);
+									genefilterset.add(g.index);
+								}
 							}
 						}
 					}
@@ -9654,6 +9726,23 @@ public class GeneSet extends JApplet {
 				int[] rr = table.getSelectedRows();
 				proxi(table, rr, genelist, genefilterset, false);
 				updateFilter(table, genefilter, label);
+			}
+		});
+		popup.add(new AbstractAction("Select genes in proximity") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				genefilterset.clear();
+				int[] rr = table.getSelectedRows();
+				proxi(table, rr, genelist, genefilterset, false);
+				for( int i : genefilterset ) {
+					int r = table.convertRowIndexToView( i );
+					if( r != -1 ) {
+						table.addRowSelectionInterval( r, r );
+					}
+				}
+				//table.tableChanged( new TableModelEvent( table.getModel() ) );
+				if (label != null) label.setText(table.getRowCount() + "/" + table.getSelectedRowCount());
+				//updateFilter(table, genefilter, label);
 			}
 		});
 		popup.add(new AbstractAction("Add genes in proximity") {
@@ -10598,6 +10687,7 @@ public class GeneSet extends JApplet {
 		}
 		
 		specGroupMap = new HashMap<String,Set<GeneGroup>>();
+		int ind = 0;
 		for( GeneGroup gg : ggList ) {
 			for( String spec : gg.species ) {
 				Set<GeneGroup>	ggset;
@@ -10607,8 +10697,8 @@ public class GeneSet extends JApplet {
 				} else ggset = specGroupMap.get( spec );
 				ggset.add( gg );
 			}
+			gg.setIndex( ind++ );
 		}
-		
 		allgenegroups = ggList;
 		
 		for( String ggname : rnamap.keySet() ) {
@@ -10831,13 +10921,13 @@ public class GeneSet extends JApplet {
 					for (Tegeval tv : stv.tset) {
 						if( tv.cont != null ) {
 							ct.add(tv.cont);
-							int ind = tv.cont.lastIndexOf("_");
-							int val = Integer.parseInt(tv.cont.substring(ind + 1));
+							int idx = tv.cont.lastIndexOf("_");
+							int val = Integer.parseInt(tv.cont.substring(idx + 1));
 	
-							String next = tv.cont.substring(0, ind + 1) + (val + 1);
+							String next = tv.cont.substring(0, idx + 1) + (val + 1);
 							ct.add(next);
 							if (val > 1) {
-								String prev = tv.cont.substring(0, ind + 1) + (val - 1);
+								String prev = tv.cont.substring(0, idx + 1) + (val - 1);
 								ct.add(prev);
 							}
 						}
@@ -11194,7 +11284,7 @@ public class GeneSet extends JApplet {
 		boolean	ori;
 	}*/
 
-	static JSplitPane gsplitpane = null;
+	static List<JSplitPane> 				splitpaneList = new ArrayList<JSplitPane>();
 
 	static JFrame 							frame = new JFrame();
 	static Map<String, Contig> 				contigmap = new HashMap<String, Contig>();
@@ -11866,7 +11956,7 @@ public class GeneSet extends JApplet {
 			public void removeTableModelListener(TableModelListener l) {}
 		};
 		rowheader.setModel( model );
-		rowheader.setRowHeight( 100 );
+		rowheader.setRowHeight( 50 );
 		
 		final JComponent c = new JComponent() {
 			Color gr = Color.green;
@@ -11895,8 +11985,20 @@ public class GeneSet extends JApplet {
 				
 				g.setColor( Color.black );
 				for( int k = 0; k < rowheader.getRowCount(); k++ ) {
-					int h = k*100+50;
-					g.fillRect(0, h, this.getWidth(), 1 );
+					int l = rowheader.convertRowIndexToModel( k );
+					String spec = species.get( l );
+					
+					int h = k*rowheader.getRowHeight()+rowheader.getRowHeight()/2;
+					g.fillRect( 0, h, this.getWidth(), 1 );
+					
+					int loc = 0;
+					List<Contig>	ctlist = speccontigMap.get( spec );
+					for( Contig c : ctlist ) {
+						loc += c.getGeneCount();
+						
+						int nloc = loc*this.getWidth()/3000;
+						g.fillRect( nloc, h-2, 1, 5 );
+					}
 				}
 				
 				g.setColor( Color.blue );
@@ -11911,15 +12013,16 @@ public class GeneSet extends JApplet {
 							List<Tegeval> tvlist = gg.getTegevals( spec1 );
 							
 							if( k < rowheader.getRowCount()-1 ) {
+								int rh2 = rowheader.getRowHeight()/2;
 								for( Tegeval tv : tvlist ) {
 									int m = rowheader.convertRowIndexToModel( k+1 );
 									String spec2 = species.get( m );
 									List<Tegeval> tvlist2 = gg.getTegevals( spec2 );
 									
-									int gind = getGlobalIndex( tv );
+									int gind = getGlobalIndex( tv )*this.getWidth()/3000;
 									for( Tegeval tv2 : tvlist2 ) {
-										int gind2 = getGlobalIndex( tv2 );
-										g.drawLine(gind, k*100+50, gind2, (k+1)*100+50 );
+										int gind2 = getGlobalIndex( tv2 )*this.getWidth()/3000;
+										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
 									}
 								}
 							}
@@ -12008,6 +12111,7 @@ public class GeneSet extends JApplet {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setLeftComponent(rowheaderscroll);
 		splitpane.setRightComponent(scrollpane);
+		splitpaneList.add( splitpane );
 
 		JComponent fillup = new JComponent() {};
 		fillup.setPreferredSize(new Dimension(6000, 20));
@@ -12017,11 +12121,29 @@ public class GeneSet extends JApplet {
 		if (rh == 0) {
 			rh = rowheader.getRowCount() * rowheader.getRowHeight();
 		}
-		c.setPreferredSize(new Dimension(6000, rh));
-		c.setSize(6000, rh);
+		
+		Dimension dim = new Dimension(3000, rh);
+		c.setPreferredSize( dim );
+		c.setSize( dim );
 	
-		JToolBar	toolbar = new JToolBar();
-	
+		final JToolBar	toolbar = new JToolBar();
+		toolbar.add( new AbstractAction("+") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Dimension	dim = new Dimension( (int)(c.getWidth()*1.25), c.getHeight() );
+				c.setPreferredSize( dim );
+				c.setSize( dim );
+			}
+		});
+		toolbar.add( new AbstractAction("-") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Dimension	dim = new Dimension( (int)(c.getWidth()*0.8), c.getHeight() );
+				c.setPreferredSize( dim );
+				c.setSize( dim );
+			}
+		});
+		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
 		panel.add( toolbar, BorderLayout.NORTH );
@@ -13773,7 +13895,7 @@ public class GeneSet extends JApplet {
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
 		panel.add( toolbar, BorderLayout.NORTH );
-		panel.add( gsplitpane );
+		panel.add( splitpane );
 
 		//if (!frame.isVisible()) {
 			frame = new JFrame();
