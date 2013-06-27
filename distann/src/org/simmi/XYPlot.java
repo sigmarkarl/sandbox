@@ -10,6 +10,8 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
@@ -36,6 +38,42 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class XYPlot {
+	static final List<Contig>	spec1Conts = new ArrayList<Contig>();
+	static final List<Contig>	spec2Conts = new ArrayList<Contig>();
+	static int fsum1;
+	static int fsum2;
+	
+	public static void initSpecConts( String spec1, String spec2 ) {
+		spec1Conts.clear();
+		spec2Conts.clear();
+		
+		for( String ctname : GeneSet.contigmap.keySet() ) {
+			if( ctname.contains( spec1 ) ) {
+				spec1Conts.add( GeneSet.contigmap.get( ctname ) );
+			}
+			
+			if( ctname.contains( spec2 ) ) {
+				spec2Conts.add( GeneSet.contigmap.get( ctname ) );
+			}
+		}
+		
+		System.err.println( spec1Conts.size() + "  " + spec2Conts.size() );
+		
+		int sum1 = 0;
+		for( Contig ct : spec1Conts ) {
+			sum1 += ct.getGeneCount();
+		}
+		fsum1 = sum1;
+		
+		int sum2 = 0;
+		for( Contig ct : spec2Conts ) {
+			sum2 += ct.getGeneCount();
+		}
+		fsum2 = sum2;
+		
+		System.err.println( fsum1 + "  " + fsum2 );
+	}
+	
 	static Point	mouseSel;
 	public static void xyPlot( final Container comp, final List<Gene> genelist, final JTable table, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
 		final Set<String> 	specset = GeneSet.speciesFromCluster( clusterMap );
@@ -103,29 +141,7 @@ public class XYPlot {
 		final String spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
 		final String spec2 = (String)table2.getValueAt( table2.getSelectedRow(), 0 );
 		
-		final List<Contig>	spec1Conts = new ArrayList<Contig>();
-		final List<Contig>	spec2Conts = new ArrayList<Contig>();
-		for( String ctname : GeneSet.contigmap.keySet() ) {
-			if( ctname.contains( spec1 ) ) {
-				spec1Conts.add( GeneSet.contigmap.get( ctname ) );
-			}
-			
-			if( ctname.contains( spec2 ) ) {
-				spec2Conts.add( GeneSet.contigmap.get( ctname ) );
-			}
-		}
-		
-		int sum1 = 0;
-		for( Contig ct : spec1Conts ) {
-			sum1 += ct.getGeneCount();
-		}
-		final int fsum1 = sum1;
-		
-		int sum2 = 0;
-		for( Contig ct : spec2Conts ) {
-			sum2 += ct.getGeneCount();
-		}
-		final int fsum2 = sum2;
+		initSpecConts(spec1, spec2);
 		
 		final JRadioButton	oricolor = new JRadioButton("Orientation");
 		final JRadioButton	gccolor = new JRadioButton("GC%");
@@ -179,7 +195,7 @@ public class XYPlot {
 									}
 									g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
 								} else {
-									System.err.println();
+									//System.err.println();
 								}
 							}
 						}
@@ -187,7 +203,7 @@ public class XYPlot {
 						val = val.getNext();
 						count++;
 						
-						System.err.println( count );
+						//System.err.println( count );
 					}
 				}
 			}
@@ -195,9 +211,7 @@ public class XYPlot {
 		
 		drawc.addMouseListener( new MouseListener() {
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				
-			}
+			public void mouseClicked(MouseEvent e) {}
 
 			@Override
 			public void mousePressed(MouseEvent e) {
@@ -307,7 +321,7 @@ public class XYPlot {
 			public void mouseExited(MouseEvent e) {}
 		});
 						
-		Dimension dim = new Dimension( sum1, sum2 );
+		Dimension dim = new Dimension( fsum1, fsum2 );
 		drawc.setPreferredSize( dim );
 		drawc.setSize( dim );
 		JScrollPane	drawscroll = new JScrollPane( drawc );
@@ -332,10 +346,10 @@ public class XYPlot {
 			}
 		});
 		
-		JComboBox<String>	comb1 = new JComboBox<String>();
-		JComboBox<String>	comb2 = new JComboBox<String>();
+		final JComboBox<String>	comb1 = new JComboBox<String>();
+		final JComboBox<String>	comb2 = new JComboBox<String>();
 		
-		ComboBoxModel<String>	cbmodel = new ComboBoxModel<String>() {
+		ComboBoxModel<String>	cbmodel1 = new ComboBoxModel<String>() {
 			String sel;
 			
 			@Override
@@ -368,8 +382,56 @@ public class XYPlot {
 				return sel;
 			}
 		};
-		comb1.setModel( cbmodel );
-		comb2.setModel( cbmodel );
+		comb1.setModel( cbmodel1 );
+		
+		ComboBoxModel<String>	cbmodel2 = new ComboBoxModel<String>() {
+			String sel;
+			
+			@Override
+			public int getSize() {
+				return species.size();
+			}
+
+			@Override
+			public String getElementAt(int index) {
+				return species.get(index);
+			}
+
+			@Override
+			public void addListDataListener(ListDataListener l) {}
+
+			@Override
+			public void removeListDataListener(ListDataListener l) {}
+
+			@Override
+			public void setSelectedItem(Object anItem) {
+				sel = (String)anItem;
+			}
+
+			@Override
+			public Object getSelectedItem() {
+				return sel;
+			}
+		};
+		comb2.setModel( cbmodel2 );
+		
+		comb1.setSelectedItem( spec1 );
+		comb2.setSelectedItem( spec2 );
+		
+		comb1.addItemListener( new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				initSpecConts( (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				drawc.repaint();
+			}
+		});
+		comb2.addItemListener( new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				initSpecConts( (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				drawc.repaint();
+			}
+		});
 		
 		toolbox.add( comb1 );
 		toolbox.add( comb2 );
