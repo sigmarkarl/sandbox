@@ -7021,6 +7021,12 @@ public class GeneSet extends JApplet {
 			}
 			
 		});
+		ButtonGroup	bg = new ButtonGroup();
+		bg.add( gb );
+		bg.add( ggb );
+		
+		gb.setSelected( true );
+		
 		view.add( ggb );
 		
 		//ttopcom.add( shuffletreebutton );
@@ -8467,7 +8473,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 8;
+				return 9;
 			}
 
 			@Override
@@ -8481,12 +8487,14 @@ public class GeneSet extends JApplet {
 				else if (columnIndex == 3)
 					return "KEGG";
 				else if (columnIndex == 4)
-					return "Number of proteins";
+					return "Function coverage";
 				else if (columnIndex == 5)
-					return "Name";
+					return "Number of proteins";
 				else if (columnIndex == 6)
-					return "Namespace";
+					return "Name";
 				else if (columnIndex == 7)
+					return "Namespace";
+				else if (columnIndex == 8)
 					return "Def";
 				return "";
 			}
@@ -8517,10 +8525,12 @@ public class GeneSet extends JApplet {
 				else if (columnIndex == 4)
 					return func.geneentries == null ? 0 : func.geneentries.size();
 				else if (columnIndex == 5)
-					return func.name;
+					return func.geneentries == null ? 0 : func.geneentries.size();
 				else if (columnIndex == 6)
-					return func.namespace;
+					return func.name;
 				else if (columnIndex == 7)
+					return func.namespace;
+				else if (columnIndex == 8)
 					return func.desc;
 				return null;
 			}
