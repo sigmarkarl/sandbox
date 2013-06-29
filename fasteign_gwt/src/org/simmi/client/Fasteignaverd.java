@@ -8,8 +8,17 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.TouchCancelEvent;
+import com.google.gwt.event.dom.client.TouchCancelHandler;
+import com.google.gwt.event.dom.client.TouchEndEvent;
+import com.google.gwt.event.dom.client.TouchEndHandler;
+import com.google.gwt.event.dom.client.TouchMoveEvent;
+import com.google.gwt.event.dom.client.TouchMoveHandler;
+import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.http.client.Request;
@@ -20,11 +29,14 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import elemental.client.Browser;
@@ -71,9 +83,12 @@ public class Fasteignaverd implements EntryPoint {
 		public String getTegund();
 		public Date getDagsetning();
 		public String getUrlString();
+		public String getImgUrl();
 	};
 	
-	public class NatIbud implements Ibud {
+	public final static class NatIbud extends JavaScriptObject implements Ibud {
+		protected NatIbud() {};
+		
 		@Override
 		public native String getNafn() /*-{
 			return this.getNafn();
@@ -82,6 +97,11 @@ public class Fasteignaverd implements EntryPoint {
 		@Override
 		public native int getVerd() /*-{
 			return this.getVerd();
+		}-*/;
+		
+		@Override
+		public native String getImgUrl() /*-{
+			return this.getImgUrl();
 		}-*/;
 
 		@Override
@@ -130,6 +150,11 @@ public class Fasteignaverd implements EntryPoint {
 		int herb;
 		Date dat;
 		String url;
+		String imgurl;
+		
+		public String getImgUrl() {
+			return imgurl;
+		}
 		
 		public String getNafn() {
 			return nafn;
@@ -226,21 +251,31 @@ public class Fasteignaverd implements EntryPoint {
 		}
 	};
 	
-	public class Fastpack {
+	public final static class Fastpack extends JavaScriptObject {
+		protected Fastpack() {};
+		
 		public native void search( String val ) /*-{
-			$wnd.fastpack.search( val );
+			this.search( val );
 		}-*/;
 		
 		public native int getFetchNum() /*-{
-			return $wnd.fastpack.getFetchNum();
+			return this.getFetchNum();
 		}-*/;
 		
 		public native int getTotal() /*-{
-			return $wnd.fastpack.getFetchNum();
+			return this.getFetchNum();
+		}-*/;
+		
+		public native List<Ibud> getIbuds() /*-{
+			return this.getIbuds();
+		}-*/;
+		
+		public native NatIbud getIbud( int i ) /*-{
+			return this.getIbud( i );
 		}-*/;
 		
 		public native String getName( int i ) /*-{
-			return $wnd.fastpack.getName( i );
+			return this.getName( i );
 		}-*/;
 	};
 	
@@ -353,7 +388,6 @@ public class Fasteignaverd implements EntryPoint {
 	}
 	
 	Timer t = null;
-	
 	public native void init() /*-{
 		var s = this;
 		$wnd.erm = function( name ) {
@@ -371,23 +405,90 @@ public class Fasteignaverd implements EntryPoint {
 	public void onModuleLoad() {	
 		RootPanel	rp = RootPanel.get();
 		//final DataGrid<Ibud>	ibudGrid = new DataGrid<Ibud>();
-		fastpack = new Fastpack();
+		fastpack = getFastpack();
 		
 		Window.enableScrolling( false );
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
 		
+		HorizontalPanel	hp = new HorizontalPanel();
+		//hp.setwi
+		hp.setSpacing(0);
+		
+		final VerticalPanel	table = new VerticalPanel();
+		final ScrollPanel	scroll = new ScrollPanel( table );
+		
+		scroll.setSize(w+"px", h+"px");
+		table.setSize(w+"px", "100%");
+		
+		table.add( new Label("fuck") );
+		
 		vp = new VerticalPanel();
-		vp.setSize("100%", h+"px");
+		vp.setSize(w+"px", h+"px");
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		vp.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
+		
+		final FocusPanel	fp = new FocusPanel();
+		fp.setSize(w+"px", h+"px");
+		final FocusPanel	fp2 = new FocusPanel();
+		fp2.setSize(w+"px", h+"px");
+		
+		fp.addTouchStartHandler( new TouchStartHandler() {
+			@Override
+			public void onTouchStart(TouchStartEvent event) {
+				
+			}
+		});
+		fp.addTouchMoveHandler( new TouchMoveHandler() {
+			@Override
+			public void onTouchMove(TouchMoveEvent event) {
+				fp2.getElement().scrollIntoView();
+			}
+		});
+		fp.addTouchEndHandler( new TouchEndHandler() {
+			@Override
+			public void onTouchEnd(TouchEndEvent event) {
+				
+			}
+		});
+		fp.addTouchCancelHandler( new TouchCancelHandler() {
+			@Override
+			public void onTouchCancel(TouchCancelEvent event) {
+				
+			}
+		});
+		fp2.addTouchStartHandler( new TouchStartHandler() {
+			@Override
+			public void onTouchStart(TouchStartEvent event) {
+				
+			}
+		});
+		fp2.addTouchMoveHandler( new TouchMoveHandler() {
+			@Override
+			public void onTouchMove(TouchMoveEvent event) {
+				fp.getElement().scrollIntoView();
+			}
+		});
+		fp2.addTouchEndHandler( new TouchEndHandler() {
+			@Override
+			public void onTouchEnd(TouchEndEvent event) {
+				
+			}
+		});
+		fp2.addTouchCancelHandler( new TouchCancelHandler() {
+			@Override
+			public void onTouchCancel(TouchCancelEvent event) {
+				
+			}
+		});
 		
 		VerticalPanel	subvp = new VerticalPanel();
 		subvp.setWidth("100%");
 		subvp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		subvp.setVerticalAlignment( HorizontalPanel.ALIGN_MIDDLE );
 		
+		fp.add( vp );
 		vp.add( subvp );
 		subvp.setSpacing(5);
 		
@@ -399,7 +500,12 @@ public class Fasteignaverd implements EntryPoint {
 				int w = event.getWidth();
 				int h = event.getHeight();
 				
-				vp.setSize("100%", h+"px");
+				vp.setSize(w+"px", h+"px");
+				fp.setSize(w+"px", h+"px");
+				fp2.setSize(w+"px", h+"px");
+				table.setWidth(w+"px");
+				scroll.setSize(w+"px", h+"px");
+				
 				//int h = event.getHeight();
 				//ibudGrid.setSize( (w-20)+"px", "600px" );
 			}
@@ -503,6 +609,8 @@ public class Fasteignaverd implements EntryPoint {
 		leita.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
+				scroll.getElement().scrollIntoView();
+				
 				String loc = loccomb.getItemText( loccomb.getSelectedIndex() );
 				String[] split = loc.split(" ");
 				String pnr = split[0];
@@ -521,10 +629,24 @@ public class Fasteignaverd implements EntryPoint {
 				final String tstr = val;
 				fastpack.search( tstr );
 				
+				final List<Label>	labels = new ArrayList<Label>();
 				final Timer t = new Timer() {
 					@Override
 					public void run() {
-						vp.add( new Label( ""+fastpack.getTotal() ) );
+						if( labels.size() == fastpack.getFetchNum() ) this.cancel();
+						else {
+							for( int i = labels.size(); i < fastpack.getTotal(); i++ ) {
+								NatIbud nib = fastpack.getIbud(i);
+								Label label = new Label( nib.getNafn() );
+								Image img = new Image( nib.getImgUrl(), 0, 0, 50, 50 );
+								
+								HorizontalPanel	hp = new HorizontalPanel();
+								hp.add( img );
+								hp.add( label );
+								table.add( hp );
+								labels.add( label );
+							}
+						}
 					}
 				};
 				t.scheduleRepeating( 1000 );
@@ -584,7 +706,11 @@ public class Fasteignaverd implements EntryPoint {
 		c.setPreferredSize( new Dimension(100,30) );
 		botcomp.add( c );*/
 		
+		fp2.add( scroll );
+		
 		//vp.add( ibudGrid );
-		rp.add( vp );
+		hp.add( fp );
+		hp.add( fp2 );
+		rp.add( hp );
 	}
 }

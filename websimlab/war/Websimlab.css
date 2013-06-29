@@ -20,6 +20,10 @@ h1 {
   width: 400px;
 }
 
+.gwt-TextArea {
+  width: 400px;
+}
+
 .dialogVPanel {
   margin: 5px;
 }
