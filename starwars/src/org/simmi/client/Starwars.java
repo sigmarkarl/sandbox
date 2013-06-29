@@ -12,6 +12,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -34,6 +35,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import elemental.client.Browser;
 import elemental.dom.RequestAnimationFrameCallback;
 import elemental.html.ArrayBuffer;
+import elemental.html.Blob;
 import elemental.html.CanvasElement;
 import elemental.html.Console;
 import elemental.html.Float32Array;
@@ -449,8 +451,8 @@ public class Starwars implements EntryPoint {
 				}
 				WebGLTexture texture = textures.get( tind );
 				
-				gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, (CanvasElement)canvas.getElement());
+				gl.bindTexture( WebGLRenderingContext.TEXTURE_2D, texture);
+				gl.texImage2D( WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, (CanvasElement)canvas.getElement());
 				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 				//gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
@@ -615,7 +617,7 @@ public class Starwars implements EntryPoint {
 	float sinv = (float)Math.sin( pi4 );
 	float cosv = (float)Math.cos( pi4 );
 	
-	float offval = -60.0f;
+	float offval = -50.0f;
 	float newy = 1024.0f;
 	public void offset( float offval, float newy ) {
 		float mul = newy/1024.0f;
@@ -635,24 +637,85 @@ public class Starwars implements EntryPoint {
 	}
 	
 	public native void requestAnimationFrame( WebGLRenderingContext gl, List<WebGLTexture> textures, List<WebGLBuffer> buffers, WebGLTexture starfield, JavaScriptObject g ) /*-{
+		$wnd.pause = 0;
 		var s = this;
 		var requestAnimationFrame = $wnd.requestAnimationFrame || $wnd.mozRequestAnimationFrame || $wnd.webkitRequestAnimationFrame || $wnd.msRequestAnimationFrame;
 		function step(timestamp) {
 			s.@org.simmi.client.Starwars::animate(Lelemental/html/WebGLRenderingContext;Ljava/util/List;Ljava/util/List;Lelemental/html/WebGLTexture;Lcom/google/gwt/core/client/JavaScriptObject;)( gl, textures, buffers, starfield, g );
-			requestAnimationFrame( step );
+			if( !$wnd.pause ) requestAnimationFrame( step );
 		}
 		requestAnimationFrame( step );
 	}-*/;
 	
-	/**
-	 * This is the entry point method.
-	 */
+	public native JavaScriptObject wham() /*-{
+		//$wnd.pause = 1;
+		var encoder = new $wnd.Whammy.Video(24);
+		return encoder;
+	}-*/;
+	
+	public native void addFrame( JavaScriptObject encoder, com.google.gwt.dom.client.CanvasElement canvas ) /*-{
+		encoder.add( canvas );
+	}-*/;
+	
+	public native Blob compile( JavaScriptObject encoder ) /*-{
+		return encoder.compile();
+	}-*/;
+	
+	public native String createObjectURL( Blob blob ) /*-{
+		return $wnd.URL.createObjectURL( blob );
+	}-*/;
+	
+	String uid;
+	public void setUserId( String val ) {
+		uid = val;
+	}
+	
+	public native void fbInit( String login ) /*-{
+		var ths = this;	    	
+		$wnd.fbAsyncInit = function() {			
+	    	$wnd.FB.init({appId: '508404285869563', status: true, cookie: true, xfbml: true, oauth : true});
+	    	try {
+				$wnd.FB.getLoginStatus( function(response) {
+					try {
+						if (response.status === 'connected') {
+						    var uid = response.authResponse.userID;
+						    var accessToken = response.authResponse.accessToken;
+						    ths.@org.simmi.client.Starwars::setUserId(Ljava/lang/String;)( uid );
+						} else if (response.status === 'not_authorized') {
+							ths.@org.simmi.client.Starwars::setUserId(Ljava/lang/String;)( "" );
+						} else {
+						    ths.@org.simmi.client.Starwars::setUserId(Ljava/lang/String;)( "" );
+						}
+						$wnd.FB.XFBML.parse();
+					} catch( e ) {}
+				});
+			} catch( e ) {}
+	  	};
+	}-*/;
+	
+	public native void sendMessage( String body ) /*-{
+		$wnd.console.log( body );
+		$wnd.console.log( body.length );
+		
+		var requestCallback = function(response) {
+	    	if( $wnd.console ) $wnd.console.log( response );
+	  	}
+	  
+		$wnd.FB.ui({method: 'apprequests',
+	    	message: body
+	  	}, requestCallback);
+	}-*/;
+	
+	final String url = "http://starwarsflyingtext.appspot.com";
+	JavaScriptObject encoder;
 	public void onModuleLoad() {
 		final RootPanel	root = RootPanel.get("starwars");
 		Style style = root.getElement().getStyle();
 		style.setPadding(0.0, Unit.PX);
 		style.setMargin(0.0, Unit.PX);
 		style.setBorderWidth(0.0, Unit.PX);
+		
+		final RootPanel	download = RootPanel.get("download");
 		
 		//VerticalPanel	vp = new VerticalPanel();
 		//vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
@@ -674,6 +737,48 @@ public class Starwars implements EntryPoint {
 		
 		final elemental.html.Window wnd = Browser.getWindow();
 		final Console console = wnd.getConsole();
+		final TextArea ta = new TextArea();
+		
+		String fbuid = null;
+		NodeList<Element> nl = Document.get().getElementsByTagName("meta");
+		for( int i = 0; i < nl.getLength(); i++ ) {
+			Element e = nl.getItem(i);
+			String prop = e.getAttribute("property");
+			if( prop.equals("fbuid") ) {
+				//setUserId( e.getAttribute("content") );
+				fbuid = e.getAttribute("content");
+				break;
+			}
+		}
+		if( fbuid == null ) fbInit( fbuid );
+		else setUserId( fbuid );
+		
+		//Document.get().getElementById("fb-root")
+		RootPanel	facebook = RootPanel.get("fb-root");
+		Button	fbbutton = new Button("Send facebook message");
+		fbbutton.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				String href;
+				String text = ta.getText();
+				try {
+					String btoa = wnd.btoa( URL.encode(text) );
+					int i = btoa.indexOf('=');
+					if( i != -1 ) btoa = btoa.substring(0, i);
+					href = url+"?bflyer="+btoa;
+				} catch( Exception e ) {
+					href = url+"?bflyer=";
+				}
+				sendMessage( href );
+			}
+		});
+		
+		String id = "facebook-jssdk";
+		ScriptElement se = Document.get().createScriptElement();
+		se.setId( id );
+		se.setAttribute("async", "true");
+		se.setSrc("//connect.facebook.net/en_US/all.js");
+		facebook.getElement().appendChild(se);
 		
 		final Canvas starcanvas2d = Canvas.createIfSupported();
 		starcanvas2d.setSize(512+"px", 256+"px");
@@ -725,9 +830,13 @@ public class Starwars implements EntryPoint {
 		canvas3d.getElement().setId("example");
 		canvas3d.setSize(960+"px", 540+"px");
 		final CanvasElement canvas3dElement = (CanvasElement)canvas3d.getElement();
+		canvaselement = canvas3d.getCanvasElement();
 		//canvas.setWidth(800);
 		//canvas.setHeight(600);
-		final WebGLRenderingContext gl = (WebGLRenderingContext)canvas3dElement.getContext("experimental-webgl");
+		WebGLRenderingContext webgl = null;
+		webgl = (WebGLRenderingContext)canvas3dElement.getContext("webgl");
+		if( webgl == null ) webgl = (WebGLRenderingContext)canvas3dElement.getContext("expermimental-webgl");
+		final WebGLRenderingContext gl = webgl;
 		
 		/*gl.viewport(0, 0, 800, 600);
 		gl.clearColor(0.3f, 0.2f, 0.2f, 1.0f);
@@ -863,11 +972,9 @@ public class Starwars implements EntryPoint {
         //Set up all the vertex attributes for vertices, normals and texCoords
         
         //final String url = "http://192.168.1.65:8888/Starwars.html";
-        final String url = "http://starwarsflyingtext.appspot.com";
         final Anchor a = new Anchor("Link");
         final Anchor b = new Anchor("BLink");
         
-		final TextArea ta = new TextArea();
 		if( change ) {
 			a.setHref( url+"?flyer="+URL.encode(text) );
 			try {
@@ -891,7 +998,7 @@ public class Starwars implements EntryPoint {
 				Starwars.this.newy = newy;
 				offval = -newy/36.0f-20.0f;
 				console.log("newy "+ newy);*/
-				offval = -60.0f;
+				offval = -50.0f;
 				
 				String text = ta.getText();
 				changeText( gl, text, canvas2d, /*newy,*/ textures, buffers );
@@ -932,6 +1039,8 @@ public class Starwars implements EntryPoint {
 		linkhp.add( b );
 		subvp.add( linkhp );
 		
+		final WebGLTexture starfield = gl.createTexture();
+		
 		final Image image = new Image();
 		Browser.getWindow().getConsole().log("doing");
 		image.addLoadHandler( new LoadHandler() {
@@ -940,9 +1049,8 @@ public class Starwars implements EntryPoint {
 				Browser.getWindow().getConsole().log("mememe");
 				
 				starctx.drawImage( ImageElement.as(image.getElement()), 0.0, 0.0, 512.0, 256.0 );
-				final WebGLTexture starfield = gl.createTexture();
 				gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
-				gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, starcanvas2dElement );
+				gl.texImage2D( WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGBA, WebGLRenderingContext.RGBA, WebGLRenderingContext.UNSIGNED_BYTE, starcanvas2dElement );
 				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.LINEAR);
 				gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.LINEAR_MIPMAP_NEAREST);
 				gl.generateMipmap(WebGLRenderingContext.TEXTURE_2D);
@@ -974,6 +1082,22 @@ public class Starwars implements EntryPoint {
 		RootPanel tex = RootPanel.get("texture");
 		tex.add( image );
 		
+		danch = new Anchor("Download as movie (be patient)");
+		danch.addClickHandler( new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				danch.setEnabled( false );
+				offval = -50.0f;
+				encoder = wham();
+			}
+		});
+		
+		HorizontalPanel	du = new HorizontalPanel();
+		du.setSpacing( 5 );
+		du.add( danch );
+		//du.add( fbbutton );
+		download.add( du );
+		
 		//vp.add( subvp );
 		root.add( subvp );
 		
@@ -1001,6 +1125,8 @@ public class Starwars implements EntryPoint {
 		timer.schedule(200);*/
 	}
 	
+	Anchor	danch;
+	com.google.gwt.dom.client.CanvasElement canvaselement;
 	public void animate( WebGLRenderingContext gl, List<WebGLTexture> textures, List<WebGLBuffer> buffers, WebGLTexture starfield, JavaScriptObject g ) {
 		setBuffers( gl, svb, nb, tb, ib, false );
 		//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
@@ -1029,6 +1155,25 @@ public class Starwars implements EntryPoint {
 			drawStuff( gl, g, 0, texture );
 		}
 		
-		offval += 0.07f;
+		if( encoder != null ) {
+			//com.google.gwt.dom.client.CanvasElement canvaselement = canvas3d.getCanvasElement();
+			//for( int i = 0; i < 240; i++ ) {
+			//Browser.getWindow().getConsole().log("erm "+i);
+			addFrame( encoder, canvaselement );
+				
+			if( offval > 100.0f ) {
+				Blob blob = compile( encoder );
+				String url = createObjectURL( blob );
+				Window.open( url, "_blank", "" );
+				encoder = null;
+				
+				danch.setText( "Download as movie (Be patient)" );
+				danch.setEnabled( true );
+			} else {
+				int pc = (int)(100*(offval+50.0)/150.0);
+				danch.setText( "Download as movie ("+ pc +"%)" );
+			}
+			offval += 0.1f;
+		} else offval += 0.07f;
 	}
 }

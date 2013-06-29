@@ -4,10 +4,10 @@
 	<inherits name='com.google.gwt.user.User'/>
 	<inherits name='elemental.Elemental'/>
 	<inherits name='com.google.gwt.user.theme.clean.Clean'/>
-	<add-linker name="xsiframe"/>
-	<set-configuration-property name="devModeRedirectEnabled" value="true"/>
+	<!--add-linker name="xsiframe"/-->
+	<!--set-configuration-property name="devModeRedirectEnabled" value="true"/-->
     <!--add-linker name="direct_install" /-->
-    <!--add-linker name="sso" /-->
+    <add-linker name="sso" />
 	<source path="client" />
 	<source path="shared" />
 	<entry-point class="org.simmi.client.Fasteignaverd"></entry-point>
