@@ -307,7 +307,7 @@ public class Naclsimlab implements EntryPoint {
 		Style st = file.getElement().getStyle();
 		st.setVisibility( Visibility.HIDDEN );
 		
-		textarea.getElement().setAttribute("wrap", "off");
+		/*textarea.getElement().setAttribute("wrap", "off");
 		textarea.setSize("728px", "512px");
 		textarea.addDropHandler( new DropHandler() {
 			@Override
@@ -339,12 +339,13 @@ public class Naclsimlab implements EntryPoint {
 		  textarea.addDragLeaveHandler( new DragLeaveHandler() {
 			@Override
 			public void onDragLeave(DragLeaveEvent event) {}
-		  });
-		textarea.addKeyPressHandler( new KeyPressHandler() {
+		  });*/
+		  /*textarea.addKeyPressHandler( new KeyPressHandler() {
 			@Override
 			public void onKeyPress(KeyPressEvent event) {
 				char cc = event.getCharCode();
-				if( cc == '\r' ) {
+				Browser.getWindow().getConsole().log("sko "+cc+ "  " + (int)cc);
+				*if( cc == '\r' ) {
 					String val = textarea.getText();
 					int i = val.lastIndexOf('\n');
 					String lastval = "";
@@ -418,7 +419,7 @@ public class Naclsimlab implements EntryPoint {
 						String objurl = createObjectURL( blob );
 						wnd.open( objurl, "export" );
 						//filewrite();
-						//Blob blob = new Blob();*/
+						//Blob blob = new Blob();*
 					} else if( last.startsWith("image") ) {
 						String[] 			split = last.split( "[(, )]" );
 						if( split.length > 2 ) {
@@ -507,10 +508,14 @@ public class Naclsimlab implements EntryPoint {
 					} else if( last.startsWith("plot") ) {
 						postMessage( "fetch" );
 						//line();
-					} else postMessage( last );
+					} else {
+						//Browser.getWindow().getConsole().log("erm "+last);
+						//postMessage( last );
+						//Browser.getWindow().getConsole().log("erm2 "+last);
+					}
 				}
 			}
-		});
+		});*/
 		
 		SimplePanel	ads = new SimplePanel();
 		Element adsElem = Document.get().getElementById("ads");
@@ -538,12 +543,13 @@ public class Naclsimlab implements EntryPoint {
 		subvp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		
 		vp.add( subvp );
-		fp.add( vp );
+		//fp.add( vp );
 		subvp.add( ads );
 		subvp.add( textarea );
+		subvp.add( new TextArea() );
 		subvp.add( links );
 		subvp.add( file );
-		rp.add( fp );
+		rp.add( vp );
 	}
 	
 	public native void init() /*-{
@@ -554,7 +560,8 @@ public class Naclsimlab implements EntryPoint {
 	}-*/;
 	
 	public void appendText( String str ) {
-		textarea.setText( textarea.getText()+str );
+		//Browser.getWindow().getConsole().log("appending "+str);
+		//textarea.setText( textarea.getText()+str );
 	}
 	
 	public void resize( int size, int type ) {
@@ -827,7 +834,7 @@ public class Naclsimlab implements EntryPoint {
 		$wnd.postMessage( "current" );
 	}-*/;
 	
-	public native String handleFiles( Element ie, int append ) /*-{	
+	public native String handleFiles( Element ie, int append ) /*-{
 		var hthis = this;
 		file = ie.files[0];
 		var reader = new FileReader();

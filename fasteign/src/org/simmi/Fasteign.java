@@ -393,7 +393,7 @@ public class Fasteign extends JApplet {
 		}
 	}
 
-	public void createModels(final JTable table, final JTable ptable) {
+	public void createModels(final JTable table, final JTable ptable, final JTable medtable) {
 		TableModel model = new TableModel() {
 			@Override
 			public void addTableModelListener(TableModelListener l) {
@@ -785,7 +785,7 @@ public class Fasteign extends JApplet {
 		}
 	}
 	
-	public void henda( JTable table, JTable ptable ) {
+	public void henda( JTable table, JTable ptable, JTable medtable ) {
 		Set<Ibud> ibs = new HashSet<Ibud>();
 		int[] rr = table.getSelectedRows();
 		for (int r : rr) {
@@ -801,7 +801,7 @@ public class Fasteign extends JApplet {
 	}
 
 	List<Ibud> iblist = new ArrayList<Ibud>();
-	String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&verd_fra=5&verd_til=100&gata=&lysing=";
+	String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&gata=&lysing=";
 
 	boolean mapClick = false;
 	public void select( String address ) {
@@ -890,11 +890,16 @@ public class Fasteign extends JApplet {
 		JLabel big = new JLabel("Veldu stærð:");
 		topcomp.add(big);
 		final JTextField bigfield = new JTextField("100");
+		Dimension dim = new Dimension(40,30);
+		bigfield.setPreferredSize( dim );
+		bigfield.setSize( dim );
 		topcomp.add(bigfield);
 
 		JLabel bigdiff = new JLabel("+/-");
 		topcomp.add(bigdiff);
 		final JTextField bigdifffield = new JTextField("30");
+		bigdifffield.setPreferredSize( dim );
+		bigdifffield.setSize( dim );
 		topcomp.add(bigdifffield);
 
 		JComponent botcomp = new JComponent() {};
@@ -1020,7 +1025,7 @@ public class Fasteign extends JApplet {
 		popup.add(new AbstractAction("Henda") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				henda( table, ptable );
+				henda( table, ptable, medtable );
 			}
 		});
 		table.setComponentPopupMenu(popup);
@@ -1028,12 +1033,12 @@ public class Fasteign extends JApplet {
 		
 		table.addKeyListener( new KeyAdapter() {
 			public void keyPressed( KeyEvent e ) {
-				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable );
+				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable, medtable );
 			}
 		});
 		ptable.addKeyListener( new KeyAdapter() {
 			public void keyPressed( KeyEvent e ) {
-				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable );
+				if( e.getKeyCode() == KeyEvent.VK_DELETE ) henda( table, ptable, medtable );
 			}
 		});
 
@@ -1203,6 +1208,7 @@ public class Fasteign extends JApplet {
 			public void columnSelectionChanged(ListSelectionEvent e) {
 			}
 		});
+
 		JButton button = new JButton(new AbstractAction("Leita") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1214,6 +1220,9 @@ public class Fasteign extends JApplet {
 				teg = teg.replace("æ", "ae");
 				teg = teg.replace("ö", "o");
 				teg = teg.replace("ý", "y");
+				teg = teg.replace("ð", "d");
+				teg = teg.replace("ú", "u");
+				teg = teg.replace("parhus/radhus", "par_radhus");
 				val = val.replace("tegund=", "tegund=" + teg);
 				String diffstr = bigdifffield.getText();
 				int diff = Integer.parseInt(diffstr);
@@ -1381,7 +1390,7 @@ public class Fasteign extends JApplet {
 				}
 			}
 		});
-		createModels(table, ptable);
+		createModels(table, ptable, medtable);
 
 		// medtable.setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
 		//JScrollPane medscroll = new JScrollPane();
