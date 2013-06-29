@@ -375,18 +375,18 @@ public class GBK2AminoFasta {
 								//if( size > 1500000 ) fwname = fname+".fna";
 								//else fwname = fname+"_p"+(cnt++)+".fna";
 								
-								FileWriter fw = new FileWriter( basesave+fwname );
+								//FileWriter fw = new FileWriter( basesave+fwname );
 								URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
 								InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
 								BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 								String line = br.readLine();
 								while( line != null ) {
-									fw.write( line + "\n" );
+									//fw.write( line + "\n" );
 									line = br.readLine();
 								}
 								is.close();
 								//ftp.completePendingCommand();
-								fw.close();
+								//fw.close();
 								System.err.println("done " + fname);
 							}
 						}
@@ -433,16 +433,16 @@ public class GBK2AminoFasta {
 								String filename = basesave+fname.substring(0,fname.length()-4)+".tar";
 								if( gis != null ) {
 									int r = gis.read(bb);
-									FileOutputStream fos = new FileOutputStream( filename );
+									//appengine out: FileOutputStream fos = new FileOutputStream( filename );
 									while( r > 0 ) {
 										System.err.println( "reading " + r );
-										fos.write( bb, 0, r );
+										//fos.write( bb, 0, r );
 										
 										r = gis.read(bb);
 									}
 									//gis.close();
 									gis.close();
-									fos.close();
+									//fos.close();
 								}
 								
 								//FileSystemManager fsManager = VFS.getManager();
@@ -454,18 +454,18 @@ public class GBK2AminoFasta {
 								int contig = 1;
 								for ( int i = 0; i < children.length; i++ ) {
 									FileObject child = children[i];
-									FileOutputStream fos = new FileOutputStream( basesave+fname.substring(0,fname.length())+"_contig"+(contig++)+"_"+child.getName().getBaseName() );
+									//appengine out: FileOutputStream fos = new FileOutputStream( basesave+fname.substring(0,fname.length())+"_contig"+(contig++)+"_"+child.getName().getBaseName() );
 									FileContent fc = child.getContent();
 									InputStream sis = fc.getInputStream();
 									int r = sis.read( bb );
 									int total = r;
 									
 									while( r != -1 ) {
-										fos.write( bb, 0, r );
+										//fos.write( bb, 0, r );
 										r = sis.read( bb );
 										total += r;
 									}
-									fos.close();
+									//fos.close();
 								}
 								
 								//FileInputStream	fis = new FileInputStream( filename );
@@ -532,18 +532,18 @@ public class GBK2AminoFasta {
 								//if( size > 1500000 ) fwname = fname+".fna";
 								//else fwname = fname+"_p"+(cnt++)+".fna";
 								
-								FileWriter fw = new FileWriter( basesave+fwname );
+								// appengine out: FileWriter fw = new FileWriter( basesave+fwname );
 								URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
 								InputStream is = url.openStream(); //ftp.retrieveFileStream( newfname );
 								BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 								String line = br.readLine();
 								while( line != null ) {
-									fw.write( line + "\n" );
+									//fw.write( line + "\n" );
 									line = br.readLine();
 								}
 								is.close();
 								//ftp.completePendingCommand();
-								fw.close();
+								//fw.close();
 								System.err.println("done " + fname);
 							}
 						}
@@ -610,9 +610,9 @@ public class GBK2AminoFasta {
 				boolean amino = false;
 				String[] annoarray = {"tRNA", "rRNA"};//{"CDS", "tRNA", "rRNA", "mRNA"};
 				StringBuilder sb = handleText( fstr, filetext, amino, Arrays.asList( annoarray ) );
-				FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/nn2/"+fstr+(amino ? ".aa" : ".nn") );
-				fw.write( sb.toString() );
-				fw.close();
+				// appengine out: FileWriter fw = new FileWriter( "/home/sigmar/ncbiaas/nn2/"+fstr+(amino ? ".aa" : ".nn") );
+				//fw.write( sb.toString() );
+				//fw.close();
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

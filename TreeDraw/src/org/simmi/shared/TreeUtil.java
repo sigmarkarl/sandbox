@@ -53,6 +53,20 @@ public class TreeUtil {
 		return null;
 	}
 	
+	public String getSelectString( Node n, boolean meta ) {
+		String ret = "";
+		if( n.isLeaf() ) {
+			if( n.isSelected() ) ret += n.toStringWoLengths(); //meta ? (n.getMeta() != null ? n.getMeta() : n.getName()) : n.getName();
+		} else for( Node nn : n.getNodes() ) {
+			String selstr = getSelectString( nn, meta );
+			if( selstr.length() > 0 ) {
+				if( ret.length() == 0 ) ret += getSelectString( nn, meta );
+				else ret += ","+getSelectString( nn, meta );
+			}
+		}
+		return ret;
+	}
+	
 	public void reduceParentSize( Node n ) {
 		List<Node> nodes = n.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -1572,7 +1586,7 @@ public class TreeUtil {
 		}*/
 	}
 	
-	public void collapseTreeAdvanced( Node node, Collection<String> collapset ) {
+	public void collapseTreeAdvanced( Node node, Collection<String> collapset, boolean simple ) {
 		if( node.nodes != null && node.nodes.size() > 0 ) {
 			if( node.nodes.size() == 1 ) {
 				Node parent = node.getParent();
@@ -1584,7 +1598,7 @@ public class TreeUtil {
 			}
 			
 			for( Node n : node.nodes ) {
-				collapseTreeAdvanced( n, collapset );
+				collapseTreeAdvanced( n, collapset, simple );
 			}
 			
 			String test = null;

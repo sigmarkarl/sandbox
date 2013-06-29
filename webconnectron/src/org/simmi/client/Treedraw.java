@@ -63,6 +63,7 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -2366,6 +2367,10 @@ public class Treedraw implements EntryPoint {
 					opener.postMessage( "ready", "http://"+from+".appspot.com" );
 				}
 			}*/
+		} else if( Window.Location.getParameterMap().keySet().contains("tree") ) {
+			String enctree = Window.Location.getParameter("tree");
+			String tree = URL.decode( enctree );
+			handleText( tree );
 		}
 	}	
 	

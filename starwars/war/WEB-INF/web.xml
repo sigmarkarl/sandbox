@@ -13,7 +13,7 @@
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Starwars.html</welcome-file>
+    <welcome-file>Starwars.jsp</welcome-file>
   </welcome-file-list>
 
   <servlet>
