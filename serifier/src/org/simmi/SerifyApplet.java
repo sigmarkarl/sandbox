@@ -265,16 +265,19 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public File checkProdigalInstall( File dir ) throws IOException {
-		File check = new File( dir, "prodigal.v2_60.windows.exe" );
-		if( !check.exists() ) {
+		File check1 = new File( dir, "prodigal.v2_60.windows.exe" );
+		File check2 = new File( dir, "prodigal.v2_60.linux" );
+		File check;
+		if( !check1.exists() && !check2.exists() ) {
 			check = installProdigal( dir );
-		}
+		} else check = check1.exists() ? check1 : check2;
+		
 		return check;
 	}
 	
 	public void checkInstall( File dir ) throws IOException {
-		File check1 = new File( "/opt/ncbi-blast-2.2.26+/bin/blastp" );
-		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastp.exe" );
+		File check1 = new File( "/opt/ncbi-blast-2.2.28+/bin/blastp" );
+		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
 		if( !check1.exists() && !check2.exists() ) {
 			File f = installBlast( dir );
 		}
@@ -285,9 +288,7 @@ public class SerifyApplet extends JApplet {
 		dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
 		dialog.setSize(400, 300);
 		
-		JComponent comp = new JComponent() {
-			
-		};
+		JComponent comp = new JComponent() {};
 		comp.setLayout( new BorderLayout() );
 		
 		final JTextArea		ta = new JTextArea();
@@ -305,7 +306,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public File installBlast( final File homedir ) throws IOException {
-		final URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.26/ncbi-blast-2.2.26+-win32.exe");
+		final URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/ncbi-blast-2.2.28+-win32.exe");
 		String fileurl = url.getFile();
 		String[] split = fileurl.split("/");
 		
@@ -735,14 +736,14 @@ public class SerifyApplet extends JApplet {
 					System.out.println("run blast in applet");
 					File blastn;
 					File blastp;
-					File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastx.exe" );
+					File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
 					if( !blastx.exists() ) {
-						blastx = new File( "/opt/ncbi-blast-2.2.26+/bin/blastx" );
-						blastn = new File( "/opt/ncbi-blast-2.2.26+/bin/blastn" );
-						blastp = new File( "/opt/ncbi-blast-2.2.26+/bin/blastp" );
+						blastx = new File( "/opt/ncbi-blast-2.2.28+/bin/blastx" );
+						blastn = new File( "/opt/ncbi-blast-2.2.28+/bin/blastn" );
+						blastp = new File( "/opt/ncbi-blast-2.2.28+/bin/blastp" );
 					} else {
-						blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastn.exe" );
-						blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\blastp.exe" );
+						blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
+						blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
 					}
 					if( blastx.exists() ) {
 						JFileChooser fc = new JFileChooser();
@@ -785,8 +786,10 @@ public class SerifyApplet extends JApplet {
 								String queryPathFixed = fixPath( infile.getAbsolutePath() ).trim();
 								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() ).trim();
 								
+								int procs = Runtime.getRuntime().availableProcessors();
+								
 								List<String>	lcmd = new ArrayList<String>();
-								String[] cmds = { blastFile.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed };
+								String[] cmds = { blastFile.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-num_threads", Integer.toString(procs) };
 								String[] exts = extrapar.trim().split("[\t ]+");
 								
 								String[] nxst = { "-out", outPathFixed };
@@ -837,6 +840,9 @@ public class SerifyApplet extends JApplet {
 		split = fname.split("\\.");
 		final String title = split[0];
 		File infile = new File( dir, fname );
+		if( infile.exists() ) {
+			infile = new File( dir, "tmp_"+fname );
+		}
 		
 		FileOutputStream fos = new FileOutputStream( infile );
 		InputStream is = url.openStream();
@@ -865,8 +871,14 @@ public class SerifyApplet extends JApplet {
 				public void run() {
 					if( cont[0] != null ) {
 						System.err.println( cont[0] );
-						addSequences(title, "nucl", outPathD, 50);
-						addSequences(title, "prot", outPathA, 50);
+						try {
+							addSequences(title, new File( outPathD ).toURI().toURL().toString() );
+							addSequences(title, new File( outPathA ).toURI().toURL().toString() );
+						} catch (URISyntaxException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			};
@@ -1875,6 +1887,14 @@ public class SerifyApplet extends JApplet {
 		globaluser = System.getProperty("user.name");
 		
 		try {
+			JSObject js = JSObject.getWindow( SerifyApplet.this );
+			globaluser = (String)js.call("getUser", new Object[] {});
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		
+		
+		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
@@ -2189,8 +2209,8 @@ public class SerifyApplet extends JApplet {
 					
 					checkInstall( dir );
 						
-					File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.26+\\bin\\makeblastdb.exe" );
-					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.26+/bin/makeblastdb" );
+					File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
 					if( makeblastdb.exists() ) {
 						int r = table.getSelectedRow();
 						final String dbtype = (String)table.getValueAt( r, 2 );
@@ -3555,9 +3575,9 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void updateSequences( final Sequences seqs ) {
-		AccessController.doPrivileged( new PrivilegedAction() {
+		AccessController.doPrivileged( new PrivilegedAction<String>() {
 			@Override
-			public Object run() {
+			public String run() {
 				new Thread() {
 					public void run() {
 						boolean succ = true;
@@ -3733,10 +3753,13 @@ public class SerifyApplet extends JApplet {
 	public void addSequences( String name, String path ) throws URISyntaxException, IOException {
 		URL url = new URL(path);
 		InputStream is = url.openStream();
-		if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
-		InputStreamReader isr = new InputStreamReader( is );
-		addSequences( name, isr, path );
-		//FileReader	fr = new FileReader( f );
+		
+		if( is != null ) {
+			if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
+			InputStreamReader isr = new InputStreamReader( is );
+			addSequences( name, isr, path );
+			//FileReader	fr = new FileReader( f );
+		}
 	}
 	
 	public void addSequences( String name, String type, String path, int nseq ) {
@@ -3756,9 +3779,7 @@ public class SerifyApplet extends JApplet {
 		dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
 		dialog.setSize(400, 300);
 		
-		JComponent comp = new JComponent() {
-			
-		};
+		JComponent comp = new JComponent() {};
 		comp.setLayout( new BorderLayout() );
 		
 		final JTextArea		ta = new JTextArea();
@@ -3789,6 +3810,7 @@ public class SerifyApplet extends JApplet {
 			public void run() {
 				try {
 					ProcessBuilder pb = new ProcessBuilder( commands );
+					pb.redirectErrorStream( true );
 					final Process p = pb.start();
 					dialog.addWindowListener( new WindowListener() {
 						
@@ -3827,11 +3849,13 @@ public class SerifyApplet extends JApplet {
 					while( line != null ) {
 						String str = line + "\n";
 						ta.append( str );
-					
+						
 						line = br.readLine();
 					}
 					br.close();
 					is.close();
+					
+					/*System.err.println("hereok");
 					
 					is = p.getErrorStream();
 					br = new BufferedReader( new InputStreamReader(is) );
@@ -3841,10 +3865,14 @@ public class SerifyApplet extends JApplet {
 						String str = line + "\n";
 						ta.append( str );
 						
+						System.err.println("hereerm " + line);
+						
 						line = br.readLine();
 					}
 					br.close();
 					is.close();
+					
+					System.err.println("here");*/
 					
 					String result = ta.getText().trim();
 					if( run != null ) {
@@ -4799,23 +4827,21 @@ public class SerifyApplet extends JApplet {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
-		/*JFrame frame = new JFrame();
+		}*/
+		
+		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		frame.setSize( 800, 600 );
 		
-		SerifyApplet	sa = new SerifyApplet();
-		
-		String[] cmds = new String[] { "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\makeblastdb.exe", "-in", "c:\\\\Documents and settings\\sigmar\\Desktop\\erm.fna", "-out", "c:\\\\Documents and settings\\sigmar\\sim", "-title", "sim" };
+		/*String[] cmds = new String[] { "c:\\\\Program files\\NCBI\\blast-2.2.25+\\bin\\makeblastdb.exe", "-in", "c:\\\\Documents and settings\\sigmar\\Desktop\\erm.fna", "-out", "c:\\\\Documents and settings\\sigmar\\sim", "-title", "sim" };
 		try {
 			String result = sa.runProcessBuilder( "Something", Arrays.asList( cmds ), null, null );
 			System.err.println( result );
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
-		//sa.init( frame );
-		
-		frame.setVisible( true );*/
+		sa.init( frame );
+		frame.setVisible( true );
 	}
 }
