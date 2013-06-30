@@ -42,6 +42,8 @@ public class XYPlot {
 	static final List<Contig>	spec2Conts = new ArrayList<Contig>();
 	static int fsum1;
 	static int fsum2;
+	static String spec1;
+	static String spec2;
 	
 	public static void initSpecConts( String spec1, String spec2 ) {
 		spec1Conts.clear();
@@ -71,7 +73,7 @@ public class XYPlot {
 		}
 		fsum2 = sum2;
 		
-		System.err.println( fsum1 + "  " + fsum2 );
+		//System.err.println( fsum1 + "  " + fsum2 );
 	}
 	
 	static Point	mouseSel;
@@ -138,8 +140,8 @@ public class XYPlot {
 		
 		JOptionPane.showMessageDialog(comp, c);
 		
-		final String spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
-		final String spec2 = (String)table2.getValueAt( table2.getSelectedRow(), 0 );
+		spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
+		spec2 = (String)table2.getValueAt( table2.getSelectedRow(), 0 );
 		
 		initSpecConts(spec1, spec2);
 		
@@ -217,6 +219,7 @@ public class XYPlot {
 			public void mousePressed(MouseEvent e) {
 				mouseSel = e.getPoint();
 				if( e.getClickCount() == 2 ) {
+					//System.err.println( spec1Conts.size() + "  " + spec2Conts.size() );
 					for( Contig ct : spec1Conts ) {
 						Tegeval tv = ct.getFirst();
 						while( tv != null ) {
@@ -232,6 +235,9 @@ public class XYPlot {
 							tv = tv.getNext();
 						}
 					}
+					table.clearSelection();
+					//table.removeRowSelectionInterval(0, table.getRowCount());
+					drawc.repaint();
 				}
 			}
 
@@ -349,44 +355,7 @@ public class XYPlot {
 		final JComboBox<String>	comb1 = new JComboBox<String>();
 		final JComboBox<String>	comb2 = new JComboBox<String>();
 		
-		ComboBoxModel<String>	cbmodel1 = new ComboBoxModel<String>() {
-			String sel;
-			
-			@Override
-			public int getSize() {
-				return species.size();
-			}
-
-			@Override
-			public String getElementAt(int index) {
-				return species.get(index);
-			}
-
-			@Override
-			public void addListDataListener(ListDataListener l) {
-				
-			}
-
-			@Override
-			public void removeListDataListener(ListDataListener l) {
-				
-			}
-
-			@Override
-			public void setSelectedItem(Object anItem) {
-				sel = (String)anItem;
-			}
-
-			@Override
-			public Object getSelectedItem() {
-				return sel;
-			}
-		};
-		comb1.setModel( cbmodel1 );
-		
-		ComboBoxModel<String>	cbmodel2 = new ComboBoxModel<String>() {
-			String sel;
-			
+		ComboBoxModel<String>	cbmodel1 = new ComboBoxModel<String>() {			
 			@Override
 			public int getSize() {
 				return species.size();
@@ -405,12 +374,41 @@ public class XYPlot {
 
 			@Override
 			public void setSelectedItem(Object anItem) {
-				sel = (String)anItem;
+				spec1 = (String)anItem;
 			}
 
 			@Override
 			public Object getSelectedItem() {
-				return sel;
+				return spec1;
+			}
+		};
+		comb1.setModel( cbmodel1 );
+		
+		ComboBoxModel<String>	cbmodel2 = new ComboBoxModel<String>() {			
+			@Override
+			public int getSize() {
+				return species.size();
+			}
+
+			@Override
+			public String getElementAt(int index) {
+				return species.get(index);
+			}
+
+			@Override
+			public void addListDataListener(ListDataListener l) {}
+
+			@Override
+			public void removeListDataListener(ListDataListener l) {}
+
+			@Override
+			public void setSelectedItem(Object anItem) {
+				spec2 = (String)anItem;
+			}
+
+			@Override
+			public Object getSelectedItem() {
+				return spec2;
 			}
 		};
 		comb2.setModel( cbmodel2 );

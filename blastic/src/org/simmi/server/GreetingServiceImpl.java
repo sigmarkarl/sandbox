@@ -17,7 +17,12 @@ import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Text;
+import com.google.appengine.api.users.User;
+import com.google.appengine.api.users.UserService;
+import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -61,15 +66,24 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	public Sequences[] getSequences() {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query("sequences");
-		List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
-		Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
 		
-		int i = 0;
-		for( Entity e : seqsEntities ) {
-			Sequences seqs = new Sequences( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (Long)e.getProperty("num") );
-			seqs.setKey( KeyFactory.keyToString( e.getKey()) );
-			seqsArray[i++] = seqs;
-		}
+		UserService userService = UserServiceFactory.getUserService();
+    	User user = userService.getCurrentUser();
+    	
+    	Sequences[] seqsArray = null;
+    	if( user != null ) {
+			FilterPredicate filter = new FilterPredicate("userid", FilterOperator.EQUAL, user.getUserId());
+			query.setFilter( filter );
+			List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			seqsArray = new Sequences[ seqsEntities.size() ];
+			
+			int i = 0;
+			for( Entity e : seqsEntities ) {
+				Sequences seqs = new Sequences( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (Long)e.getProperty("num") );
+				seqs.setKey( KeyFactory.keyToString( e.getKey()) );
+				seqsArray[i++] = seqs;
+			}
+    	}
 		
 		return seqsArray; //Arrays.asList( seqsArray );
 	}
@@ -78,10 +92,17 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	public String saveSequences(Sequences seqs) {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("sequences");
+		
+		UserService userService = UserServiceFactory.getUserService();
+    	User user = userService.getCurrentUser();
 		//Query query = new Query("sequences");
 		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
-		ent.setProperty("user", seqs.getUser());
+		
+    	if( user != null ) {
+    		ent.setProperty("user", user.getNickname());
+			ent.setProperty("userid", user.getUserId());
+    	}
 		ent.setProperty("name", seqs.getName());
 		ent.setProperty("type", seqs.getType());
 		ent.setProperty("path", seqs.getPath());
@@ -96,15 +117,24 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	public Blast[] getBlastResults() {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query("blast");
-		List<Entity> blEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
-		Blast[] blArray = new Blast[ blEntities.size() ];
 		
-		int i = 0;
-		for( Entity e : blEntities ) {
-			Blast b = new Blast( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), (String)e.getProperty("start"), (String)e.getProperty("end"), (String)e.getProperty("result") );
-			b.setKey( KeyFactory.keyToString( e.getKey() ) );
-			blArray[i++] = b;
-		}
+		Blast[] blArray = null;
+		UserService userService = UserServiceFactory.getUserService();
+    	User user = userService.getCurrentUser();
+		
+    	if( user != null ) {
+	    	FilterPredicate filter = new FilterPredicate("userid", FilterOperator.EQUAL, user.getUserId());
+			query.setFilter( filter );
+			List<Entity> blEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			blArray = new Blast[ blEntities.size() ];
+			
+			int i = 0;
+			for( Entity e : blEntities ) {
+				Blast b = new Blast( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), (String)e.getProperty("start"), (String)e.getProperty("end"), (String)e.getProperty("result") );
+				b.setKey( KeyFactory.keyToString( e.getKey() ) );
+				blArray[i++] = b;
+			}
+    	}
 		
 		return blArray;
 	}
@@ -113,21 +143,31 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	public Database[] getDatabases() {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query("database");
-		List<Entity> dEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
-		Database[] dArray = new Database[ dEntities.size() ];
 		
-		int i = 0;
-		for( Entity e : dEntities ) {
-			String result = "";
-			Object res = e.getProperty("result");
-			if( res == null ) result = "";
-			else if( res instanceof String ) result = (String)res;
-			else if( res instanceof Text ) result = ((Text)res).getValue();
+		Database[] dArray = null;
+		UserService userService = UserServiceFactory.getUserService();
+    	User user = userService.getCurrentUser();
+    	
+    	if( user != null ) {
+			FilterPredicate filter = new FilterPredicate("userid", FilterOperator.EQUAL, user.getUserId());
+			query.setFilter( filter );
 			
-			Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), result );
-			db.setKey( KeyFactory.keyToString( e.getKey() ) );
-			dArray[i++] = db;
-		}
+			List<Entity> dEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
+			dArray = new Database[ dEntities.size() ];
+			
+			int i = 0;
+			for( Entity e : dEntities ) {
+				String result = "";
+				Object res = e.getProperty("result");
+				if( res == null ) result = "";
+				else if( res instanceof String ) result = (String)res;
+				else if( res instanceof Text ) result = ((Text)res).getValue();
+				
+				Database db = new Database( (String)e.getProperty("user"), (String)e.getProperty("name"), (String)e.getProperty("type"), (String)e.getProperty("path"), (String)e.getProperty("machine"), result );
+				db.setKey( KeyFactory.keyToString( e.getKey() ) );
+				dArray[i++] = db;
+			}
+    	}
 		
 		return dArray;
 	}
@@ -136,10 +176,17 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	public String saveDb(Database db) {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("database");
+		
+		UserService userService = UserServiceFactory.getUserService();
+    	User user = userService.getCurrentUser();
 		//Query query = new Query("sequences");
 		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
-		ent.setProperty("user", db.getUser());
+		
+    	if( user != null ) {
+    		ent.setProperty("user", user.getNickname());
+			ent.setProperty("userid", user.getUserId());
+    	}
 		ent.setProperty("name", db.getName());
 		ent.setProperty("type", db.getType());
 		ent.setProperty("path", db.getPath());
@@ -155,10 +202,16 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 	public String saveBlast(Blast b) {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Entity ent = new Entity("blast");
+		
+		UserService userService = UserServiceFactory.getUserService();
+    	User user = userService.getCurrentUser();
 		//Query query = new Query("sequences");
 		//List<Entity> seqsEntities = datastore.prepare( query ).asList(FetchOptions.Builder.withDefaults());
 		//Sequences[] seqsArray = new Sequences[ seqsEntities.size() ];
-		ent.setProperty("user", b.getUser());
+    	if( user != null ) {
+    		ent.setProperty("user", user.getNickname());
+			ent.setProperty("userid", user.getUserId());
+    	}
 		ent.setProperty("name", b.getName());
 		ent.setProperty("type", b.getType());
 		ent.setProperty("path", b.getPath());

@@ -14,6 +14,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DropEvent;
@@ -30,15 +31,18 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DialogBox.Caption;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DoubleBox;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
 import com.google.gwt.visualization.client.DataTable;
 import com.google.gwt.visualization.client.DataView;
@@ -63,7 +67,6 @@ public class Blastic implements EntryPoint {
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
-
 	String user = null;
 	
 	private native String fetchUser() /*-{
@@ -80,7 +83,7 @@ public class Blastic implements EntryPoint {
 	}-*/;
 	
 	private String getUser() {
-		if( user == null ) user = fetchUser();
+		if( user == null ) user = guid;//fetchUser();
 		return user;
 	}
 	
@@ -222,6 +225,10 @@ public class Blastic implements EntryPoint {
 	
 	public native int initFunctions() /*-{
 		var s = this;
+		
+		$wnd.getUser = function( user, name, type, path, machine, result ) {
+			return s.@org.simmi.client.Blastic::getUser()();
+		};
 		
 		$wnd.addDb = function( user, name, type, path, machine, result ) {
 			s.@org.simmi.client.Blastic::addDbInfo(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)( user, name, type, path, machine, result );
@@ -591,11 +598,28 @@ public class Blastic implements EntryPoint {
 	    });
 	}
 	
-	/**
-	 * This is the entry point method.
-	 */
+	String guid;
+	String login;
+	String logout;
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
+		
+		NodeList<com.google.gwt.dom.client.Element> nl = Document.get().getElementsByTagName("meta");
+		int i;
+		for( i = 0; i < nl.getLength(); i++ ) {
+			com.google.gwt.dom.client.Element e = nl.getItem(i);
+			String prop = e.getAttribute("property");
+			
+			if( prop.equals("guid") ) {
+				guid = e.getAttribute("content");
+			} else if( prop.equals("login") ) {
+				login = e.getAttribute("content");
+			} else if( prop.equals("logout") ) {
+				logout = e.getAttribute("content");
+			}
+		}
+		
+		final VerticalPanel	vp = new VerticalPanel();
 		
 		Window.enableScrolling( false );
 		Style st = rp.getElement().getStyle();
@@ -606,9 +630,10 @@ public class Blastic implements EntryPoint {
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
 		rp.setSize((w)+"px", (h)+"px");
+		vp.setSize((w)+"px", (h)+"px");
 		
 		final SplitLayoutPanel	slp = new SplitLayoutPanel();
-		slp.setSize((w)+"px", (h)+"px");
+		slp.setSize((w)+"px", (h-25)+"px");
 		
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
@@ -616,9 +641,10 @@ public class Blastic implements EntryPoint {
 				int w = event.getWidth();
 				int h = event.getHeight();
 				rp.setSize((w)+"px", (h)+"px");
-				slp.setSize((w)+"px", (h)+"px");
+				vp.setSize((w)+"px", (h)+"px");
+				slp.setSize((w)+"px", (h-25)+"px");
 			}
-		});		
+		});
 		initFunctions();
 		
 		//slp.getElement().getStyle().setBorderWidth(3.0, Unit.PX);
@@ -989,7 +1015,16 @@ public class Blastic implements EntryPoint {
 				resizeApplet( ae, event.getWidth()+"px", event.getHeight()+"px" );
 			}
 		});*/
-    	
-		rp.add( slp );
+		
+		HorizontalPanel hp = new HorizontalPanel();
+		if( logout != null && logout.length() > 0 ) {
+			hp.add( new Anchor( "Sign out", logout ) );
+		} else if( login != null && login.length() > 0 ) {
+			hp.add( new Anchor( "Sign in with Google", login ) );
+		}
+		
+		vp.add( slp );
+		vp.add( hp );
+		rp.add( vp );
 	}
 }

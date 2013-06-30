@@ -18,7 +18,7 @@
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Blastic.html</welcome-file>
+    <welcome-file>Blastic.jsp</welcome-file>
   </welcome-file-list>
 
 </web-app>

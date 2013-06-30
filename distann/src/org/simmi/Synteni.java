@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
-import javax.swing.ComboBoxModel;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
@@ -31,7 +29,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
-import javax.swing.event.ListDataListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
 import javax.swing.event.TableModelEvent;
