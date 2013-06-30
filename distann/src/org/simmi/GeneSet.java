@@ -22,6 +22,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -29,7 +31,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
@@ -76,6 +77,15 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.event.EventHandler;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Scene;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebEvent;
+import javafx.scene.web.WebView;
+
 import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
 import javax.jnlp.FileContents;
@@ -114,8 +124,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -4587,6 +4595,72 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	private static Scene createScene( String webp ) {
+        //Group  root  =  new  Group();
+		WebView	wv = new WebView();
+		WebEngine we = wv.getEngine();
+		we.loadContent( webp );
+		
+		final Scene  scene = new  Scene(wv);
+		we.setOnResized(
+	        new EventHandler<WebEvent<Rectangle2D>>() {
+	            public void handle(WebEvent<Rectangle2D> ev) {
+	                Rectangle2D r = ev.getData();
+	                
+	                System.err.println( r.getWidth() + "  " + r.getHeight() );
+	                //stage.setWidth(r.getWidth());
+	                //stage.setHeight(r.getHeight());
+	                scene.getWindow().setWidth( r.getWidth() );
+	                scene.getWindow().setHeight( r.getHeight() );
+	            }
+		 });
+		
+        /*Text  text  =  new  Text();
+        text.setX(40);
+        text.setY(100);
+        text.setFont(new Font(25));
+        text.setText("Welcome JavaFX!");
+        root.getChildren().add(text);*/
+        return (scene);
+    }
+	
+	private static void initAndShowGUI( final String webp ) {
+        // This method is invoked on Swing thread
+        JFrame frame = new JFrame("FX");
+        frame.setSize(800, 600);
+        final JFXPanel fxPanel = new JFXPanel();
+        frame.add(fxPanel);
+        frame.setVisible(true);
+        
+        fxPanel.addComponentListener( new ComponentListener() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				System.err.println( e.getComponent().getWidth() + " c " + e.getComponent().getHeight() );
+			}
+
+			@Override
+			public void componentMoved(ComponentEvent e) {}
+
+			@Override
+			public void componentShown(ComponentEvent e) {}
+
+			@Override
+			public void componentHidden(ComponentEvent e) {}
+        });
+
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                initFX(fxPanel, webp);
+            }
+        });
+    }
+
+    private static void initFX(JFXPanel fxPanel, String webp) {
+        Scene scene = createScene( webp );
+        fxPanel.setScene(scene);
+    }
+	
 	public static void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
 		/*
 		 * String base = "/vg454flx/viggo/viggo/"; int num = 16; int seqcount =
@@ -6254,7 +6328,7 @@ public class GeneSet extends JApplet {
 				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				f.setSize(500, 500);
 
-				final Map<Integer,Integer>	frqmap = new HashMap<Integer,Integer>();
+				final Map<Integer,Integer>	frqmap = new TreeMap<Integer,Integer>();
 				//int i = 0;
 				Set<String> ss = new HashSet<String>();
 				//Set<String> gs = new HashSet<String>();
@@ -6297,7 +6371,38 @@ public class GeneSet extends JApplet {
 					i++;*/
 				}
 				
-				JScrollPane	jsp = new JScrollPane();
+				StringBuilder restext = new StringBuilder();
+				restext.append("['a', ' ']");
+				for( Integer k : frqmap.keySet() ) {
+					int h = frqmap.get( k );
+					restext.append(",\n["+k+", "+h+"]");
+				}
+				
+				final StringBuilder sb = new StringBuilder();
+				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
+				try {
+					int c = is.read();
+					while( c != -1 ) {
+						sb.append( (char)c );
+						c = is.read();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				final String smuck = sb.toString().replace("smuck", restext.toString()).replace("Pan-core genome", "Gene frequency distribution");
+				System.err.println( smuck );
+				//restext.append( smuck );
+				
+				//final String smuck = sb.toString();
+				
+				SwingUtilities.invokeLater(new Runnable() {
+	                 @Override
+	                 public void run() {
+	                     initAndShowGUI( smuck );
+	                 }
+	            });
+				
+				/*JScrollPane	jsp = new JScrollPane();
 				JComponent	comp = new JComponent() {
 					public void paintComponent( Graphics g ) {
 						super.paintComponent(g);
@@ -6333,7 +6438,7 @@ public class GeneSet extends JApplet {
 				comp.setPreferredSize( new Dimension(800,600) );
 				jsp.setViewportView( comp );
 				f.add( jsp );
-				f.setVisible( true );
+				f.setVisible( true );*/
 			}
 		};
 		//JButton freqdistbutton = new JButton(freqdistaction);
@@ -6757,26 +6862,55 @@ public class GeneSet extends JApplet {
 				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
 				Set<GeneGroup>	core = new HashSet<GeneGroup>();
 				StringBuilder	restext = new StringBuilder();
+				restext.append( "['Species', 'Pan', 'Core']" );
 				for( String spec : selspec ) {
-					restext.append( spec );
+					restext.append( ",\n['"+spec+"', " );
 					Set<GeneGroup> ggset = specGroupMap.get( spec );
 					pan.addAll( ggset );
 					if( core.isEmpty() ) core.addAll( ggset );
 					else core.retainAll( ggset );
 					
-					restext.append( "\t"+core.size() );
-					restext.append( "\t"+pan.size()+"\n" );
+					restext.append( core.size()+", " );
+					restext.append( pan.size()+"]" );
 				}
 				
 				JFrame f = new JFrame("Pan-core chart");
 				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 				f.setSize( 800, 600 );
 				
+				final StringBuilder sb = new StringBuilder();
+				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
+				try {
+					int c = is.read();
+					while( c != -1 ) {
+						sb.append( (char)c );
+						c = is.read();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				final String smuck = sb.toString().replace("smuck", restext.toString());
+				
+				restext.append( smuck );
 				JTextArea	ta = new JTextArea();
 				ta.setText( restext.toString() );
 				JScrollPane	sp = new JScrollPane(ta);
 				f.add( sp );
 				f.setVisible( true );
+				
+				SwingUtilities.invokeLater(new Runnable() {
+	                 @Override
+	                 public void run() {
+	                     initAndShowGUI( smuck );
+	                 }
+	            });
+				/*JFXPanel	jfxpanel = new JFXPanel();
+				jfxpanel.add
+				
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.add( jfxpanel );
+				frame.setVisible( true );*/
 			}
 		};
 		
@@ -8501,7 +8635,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if (columnIndex == 4)
+				if( columnIndex == 4 || columnIndex == 5 )
 					return Integer.class;
 				return String.class;
 			}
@@ -8514,23 +8648,23 @@ public class GeneSet extends JApplet {
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
 				Function func = funclist.get(rowIndex);
-				if (columnIndex == 0)
+				if( columnIndex == 0 )
 					return func.go;
-				else if (columnIndex == 1)
+				else if( columnIndex == 1 )
 					return func.ec;
-				else if (columnIndex == 2)
+				else if( columnIndex == 2 )
 					return func.metacyc;
-				else if (columnIndex == 3)
+				else if( columnIndex == 3 )
 					return func.kegg;
-				else if (columnIndex == 4)
-					return func.geneentries == null ? 0 : func.geneentries.size();
-				else if (columnIndex == 5)
-					return func.geneentries == null ? 0 : func.geneentries.size();
-				else if (columnIndex == 6)
+				else if( columnIndex == 4 )
+					return func.getSpeciesCount();
+				else if( columnIndex == 5 )
+					return table.getModel() == groupModel ? func.getGroupSize() : func.getGeneCount();
+				else if( columnIndex == 6 )
 					return func.name;
-				else if (columnIndex == 7)
+				else if( columnIndex == 7 )
 					return func.namespace;
-				else if (columnIndex == 8)
+				else if( columnIndex == 8 )
 					return func.desc;
 				return null;
 			}
@@ -8612,9 +8746,9 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				Set<Integer> res = new HashSet<Integer>();
 				for (Function f : funclist) {
-					if (f.geneentries != null) {
+					if (f.getGeneentries() != null) {
 						Set<String> check = new HashSet<String>();
-						for (Gene g : f.geneentries) {
+						for( Gene g : f.getGeneentries() ) {
 							//Gene g = genemap.get(str);
 							if (g.species != null) {
 								if (check.isEmpty())
@@ -8645,7 +8779,7 @@ public class GeneSet extends JApplet {
 				for (int r : rr) {
 					int fr = ftable.convertRowIndexToModel(r);
 					Function f = funclist.get(fr);
-					Set<Gene> sset = f.geneentries;
+					Set<Gene> sset = f.getGeneentries();
 					for (Gene g : sset) {
 						//Gene g = genemap.get(s);
 						genefilterset.add(g.index);
@@ -8755,13 +8889,13 @@ public class GeneSet extends JApplet {
 						int cr = ftable.convertRowIndexToModel(r);
 
 						Function f = funclist.get(cr);
-						if (f.geneentries != null) {
+						if (f.getGeneentries() != null) {
 							if( table.getModel() == groupModel ) {
-								for( Gene g : f.geneentries ) {
+								for( Gene g : f.getGeneentries() ) {
 									genefilterset.add( g.getGeneGroup().getIndex() );
 								}
 							} else {
-								for( Gene g : f.geneentries ) {
+								for( Gene g : f.getGeneentries() ) {
 									//Gene g = genemap.get(ref);
 									// int rf = table.convertRowIndexToView( g.index
 									// );
@@ -8792,8 +8926,8 @@ public class GeneSet extends JApplet {
 					for (int r : rr) {
 						int cr = ftable.convertRowIndexToModel(r);
 						Function f = funclist.get(cr);
-						if (f.geneentries != null) {
-							for( Gene g : f.geneentries ) {
+						if( f.getGeneentries() != null ) {
+							for( Gene g : f.getGeneentries() ) {
 								//Gene g = genemap.get(ref);
 								int rf = table.convertRowIndexToView(g.getGroupIndex());
 								table.addRowSelectionInterval(rf, rf);
@@ -9799,8 +9933,9 @@ public class GeneSet extends JApplet {
 			if (line.startsWith("[Term]")) {
 				on = false;
 				if (f != null && gofilter.containsKey(f)) {
-					if (f.geneentries == null) f.geneentries = new HashSet<Gene>();
-					f.geneentries.addAll(gofilter.get(f));
+					//if (f.getGeneentries() == null) f.getGeneentries() = new HashSet<Gene>();
+					f.addGeneentries( gofilter.get(f) );
+					//f.addGroupentries(ge)
 					//retmap.put(f.go, f);
 				}
 				//f = new Function();
@@ -9836,9 +9971,7 @@ public class GeneSet extends JApplet {
 			line = br.readLine();
 		}
 		if (f != null && gofilter.containsKey(f)) {
-			if (f.geneentries == null)
-				f.geneentries = new HashSet<Gene>();
-			f.geneentries.addAll(gofilter.get(f));
+			f.addGeneentries(gofilter.get(f));
 			//retmap.put(f.go, f);
 		}
 		br.close();
