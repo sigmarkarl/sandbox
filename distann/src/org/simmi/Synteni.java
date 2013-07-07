@@ -79,7 +79,7 @@ public class Synteni {
 			public void removeTableModelListener(TableModelListener l) {}
 		};
 		rowheader.setModel( model );
-		rowheader.setRowHeight( 50 );
+		rowheader.setRowHeight( 25 );
 		
 		final JComponent c = new JComponent() {
 			Color gr = Color.green;
@@ -124,7 +124,7 @@ public class Synteni {
 					}
 				}
 				
-				g.setColor( Color.blue );
+				//g.setColor( Color.blue );
 				int[] rr = sorting.getSelectedRows();
 				if( sorting.getModel() == GeneSet.groupModel ) {
 					for( int r : rr ) {
@@ -142,9 +142,11 @@ public class Synteni {
 									String spec2 = species.get( m );
 									List<Tegeval> tvlist2 = gg.getTegevals( spec2 );
 									
-									int gind = GeneSet.getGlobalIndex( tv )*this.getWidth()/3000;
+									int gind = GeneSet.getGlobalIndex( tv )*this.getWidth()/3632;
 									for( Tegeval tv2 : tvlist2 ) {
-										int gind2 = GeneSet.getGlobalIndex( tv2 )*this.getWidth()/3000;
+										int gind2 = GeneSet.getGlobalIndex( tv2 )*this.getWidth()/3632;
+										if( tv.ori != tv2.ori ^ tv.getContshort().reverse != tv2.getContshort().reverse ) g.setColor( Color.red );
+										else g.setColor( Color.blue );
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
 									}
 								}

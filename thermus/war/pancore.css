@@ -6,3 +6,7 @@ td {
 	vertical-align : top
 }
 
+@media print {
+	table { page-break-after : always }
+    td.do-not-print {display: none;}
+}
