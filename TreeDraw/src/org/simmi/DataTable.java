@@ -363,15 +363,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	private static final String oldtableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
 	private static final String tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
 	
-	public String getThermusFusion() {
+	public String getThermusFusion() throws IOException {
+		String baseurl = "https://www.googleapis.com/fusiontables/v1/query";
+		String query = URLEncoder.encode( "select * from "+tableid, "UTF-8" );
+		URL url = new URL( baseurl + "?sql="+query + "&alt=csv&key=AIzaSyCxBoPVCLiktcFM6WGAa1C6TQOhLk7MZII" );
+		
 		//System.setProperty(GoogleGDataRequest.DISABLE_COOKIE_HANDLER_PROPERTY, "true");
-		if( service == null ) {
+		/*if( service == null ) {
 			service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			/*try {
 				service.setUserCredentials(email, password, ClientLoginAccountType.GOOGLE);
 			} catch (AuthenticationException e) {
 				e.printStackTrace();
-			}*/
+			}*
 		}
 		
 		if( service != null ) {
@@ -383,9 +387,9 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			} catch (ServiceException e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 		
-		return null;
+		return getResultsText( url.openStream() );
 	}
 	
 	public static String run(String query, boolean isUsingEncId) throws IOException, ServiceException {
@@ -413,6 +417,21 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		   request.execute();
 
 		   return getResultsText(request);
+	}
+	
+	private static String getResultsText( InputStream is ) throws IOException {
+		InputStreamReader inputStreamReader = new InputStreamReader( is );
+		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
+		
+		StringBuilder sb = new StringBuilder();
+		String line = bufferedStreamReader.readLine();
+		while( line != null ) {
+			sb.append( line + "\n" );
+			
+			line = bufferedStreamReader.readLine();
+		}
+		
+		return sb.toString();
 	}
 	
 	private static String getResultsText(GDataRequest request) throws IOException {
@@ -3570,14 +3589,18 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		});
 		table.setComponentPopupMenu( popup );
 		
-		if( cont instanceof JFrame ) {
-			String res = getThermusFusion();
-			loadData( res );
-		} else {
-			if( !load() ) {
+		try {
+			if( cont instanceof JFrame ) {
 				String res = getThermusFusion();
 				loadData( res );
+			} else {
+				if( !load() ) {
+					String res = getThermusFusion();
+					loadData( res );
+				}
 			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 		
 		cont.add( scrollpane );
