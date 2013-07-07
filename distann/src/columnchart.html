@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      
+      var data;
+      var options = {
+          title: 'Gene GC% histogram'
+      };
+      function drawChart() {
+        data = google.visualization.arrayToDataTable([
+          smuck
+        ]);
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+      window.onresize = function() {
+      	var cd = document.getElementById('chart_div')
+      	cd.style.width = window.innerWidth*1.2;
+      	cd.style.height = window.innerHeight*1.2;
+      	var chart = new google.visualization.ColumnChart( cd );
+      	chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="chart_div" style="width: 1920px; height: 1024px;"></div>
+  </body>
+</html>

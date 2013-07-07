@@ -77,6 +77,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -1534,6 +1535,14 @@ public class Treedraw implements EntryPoint {
 		return flags;
 	}-*/;
 	
+	public native void renderSaveToDrive( String id, String objurl, String filename ) /*-{
+		$wnd.gapi.savetodrive.render( id, {
+          src: objurl,
+          filename: filename,
+          sitename: 'Sigmasoft Treedraw'
+        });
+	}-*/;
+	
 	@Override
 	public void onModuleLoad() {
 		final Console console = Browser.getWindow().getConsole();
@@ -1837,7 +1846,10 @@ public class Treedraw implements EntryPoint {
 				//driveAnchor.setHref( "data:text/plain;base64,"+encode(root.toString()) );
 			}
 		});
-		final Anchor	treeAnchor = new Anchor("tree");
+		
+		final SimplePanel	treeToDrive = new SimplePanel();
+		treeToDrive.getElement().setId( "savetreetodrive" );
+		final Anchor		treeAnchor = new Anchor("tree");
 		treeAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1854,6 +1866,9 @@ public class Treedraw implements EntryPoint {
 						elemental.html.Blob blob = createStringBlob( root.toString() );
 						String objurl = createObjectURL( blob );
 						wnd.open( objurl, "tree.txt" );
+						
+						String title = label.getText();
+						renderSaveToDrive( "savetreetodrive", objurl, title == null || title.length() == 0 ? "tree.png" : title+".png" );
 					}
 				} catch( Exception e ) {
 					Browser.getWindow().getConsole().log("erm "+e.toString());
@@ -1866,7 +1881,10 @@ public class Treedraw implements EntryPoint {
 				}
 			}
 		});
-		final Anchor	imageAnchor = new Anchor("image");
+		
+		final SimplePanel	imageToDrive = new SimplePanel();
+		imageToDrive.getElement().setId( "saveimagetodrive" );
+		final Anchor		imageAnchor = new Anchor("image");
 		imageAnchor.addClickHandler( new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1895,6 +1913,9 @@ public class Treedraw implements EntryPoint {
 					} else {
 						wnd.open( objurl, "tree.png" );
 					}
+					
+					String title = label.getText();
+					renderSaveToDrive( "saveimagetodrive", objurl, title == null || title.length() == 0 ? "tree.png" : title+".png" );
 					//imageAnchor.setHref( objurl );
 					
 					/*wnd.webkitRequestFileSystem(elemental.html.Window.TEMPORARY, dataurl.length(), new FileSystemCallback() {
@@ -2134,9 +2155,11 @@ public class Treedraw implements EntryPoint {
 		HTML html = new HTML("Download as");
 		hp.add( html );
 		hp.add( treeAnchor );
+		hp.add( treeToDrive );
 		html = new HTML("or");
 		hp.add( html );
 		hp.add( imageAnchor );
+		hp.add( imageToDrive );
 		html = new HTML("or");
 		hp.add( html );
 		hp.add( dmAnchor );
