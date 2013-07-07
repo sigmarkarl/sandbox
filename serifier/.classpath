@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="/opt/jdk/jre/lib/deploy.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk/jre/lib/javaws.jar"/>
 	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="commons-vfs2-2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

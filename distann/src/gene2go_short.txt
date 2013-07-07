@@ -1,0 +1,28 @@
+7955	566034	GO:0005856	IEA	-	cytoskeleton	-	Component
+10090	625594	GO:0003674	ND	-	molecular_function	-	Function
+10090	625594	GO:0005575	ND	-	cellular_component	-	Component
+10090	625594	GO:0008150	ND	-	biological_process	-	Process
+242507	2678128	GO:0043581	IEP	-	mycelium development	17156450	Process
+242507	2680169	GO:0005575	ND	-	cellular_component	-	Component
+242507	2681140	GO:0004497	IGC	-	monooxygenase activity	17324274	Function
+242507	2681140	GO:0005506	IGC	-	iron ion binding	17324274	Function
+242507	2681140	GO:0006629	RCA	-	lipid metabolic process	-	Process
+242507	2681140	GO:0009055	IGC	-	electron carrier activity	17324274	Function
+242507	2681140	GO:0010181	IGC	-	FMN binding	17324274	Function
+242507	2681140	GO:0016020	IGC	-	membrane	17324274	Component
+242507	2681140	GO:0016491	IGC	-	oxidoreductase activity	17324274	Function
+242507	2681140	GO:0020037	IGC	-	heme binding	17324274	Function
+242507	2681140	GO:0043581	IEP	-	mycelium development	17156450	Process
+242507	2681140	GO:0044271	IEP	-	cellular nitrogen compound biosynthetic process	16731015	Process
+242507	2681140	GO:0046872	IGC	-	metal ion binding	17324274	Function
+243164	3229802	GO:0003677	ISS	-	DNA binding	15637277	Function
+243164	3229802	GO:0008150	ND	-	biological_process	-	Process
+243231	2685513	GO:0003674	ND	-	molecular_function	-	Function
+243231	2685513	GO:0008150	ND	-	biological_process	-	Process
+243231	2688152	GO:0003674	ND	-	molecular_function	-	Function
+243231	2688152	GO:0005575	ND	-	cellular_component	-	Component
+243231	2688152	GO:0008150	ND	-	biological_process	-	Process
+246194	3726324	GO:0003674	ND	-	molecular_function	-	Function
+246194	3726324	GO:0005575	ND	-	cellular_component	-	Component
+246194	3726324	GO:0008150	ND	-	biological_process	-	Process
+246194	3726407	GO:0009055	ISS	-	electron carrier activity	-	Function
