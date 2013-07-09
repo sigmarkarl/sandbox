@@ -13,6 +13,33 @@ public class Gene {
 		
 		//groupIdx = -10;
 	}
+	
+	public int getMaxCyc() {
+		int max = -1;
+		if( species != null ) {
+			for (String str : species.keySet()) {
+				Teginfo set = species.get(str);
+				for (Tegeval tv : set.tset) {
+					max = Math.max(max, tv.numCys);
+				}
+			}
+		}
+		return max;
+	}
+	
+	public int getMaxLength() {
+		int max = -1;
+		if( this.species != null ) {
+			for (String str : this.species.keySet()) {
+				Teginfo set = this.species.get(str);
+				for (Tegeval tv : set.tset) {
+					if (tv.seq != null)
+						max = Math.max(max, tv.seq.length());
+				}
+			}
+		}
+		return max;
+	}
 
 	public void setAa(String aa) {
 		if (aa != null) {
