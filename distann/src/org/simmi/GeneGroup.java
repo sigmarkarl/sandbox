@@ -13,6 +13,22 @@ public class GeneGroup {
 	int			index;
 	//int			groupGeneCount;
 	
+	public int getMaxCyc() {
+		int max = -1;
+		for( Gene g : genes ) {
+			if( g.getMaxCyc() > max ) max = g.getMaxCyc();
+		}
+		return max;
+	}
+	
+	public int getMaxLength() {
+		int max = -1;
+		for( Gene g : genes ) {
+			if( g.getMaxLength() > max ) max = g.getMaxLength();
+		}
+		return max;
+	}
+	
 	public List<Tegeval> getTegevals( Set<String> sortspecies ) {
 		List<Tegeval>	ltv = new ArrayList<Tegeval>();
 		
