@@ -75,8 +75,8 @@ class Contig implements Comparable<Contig> {
 		if( rev ) {
 			contig.next = this;
 			
-			this.end.next = contig.end;
-			contig.end.next = this.end;
+			if( this.end != null ) this.end.next = contig.end;
+			if( contig.end != null ) contig.end.next = this.end;
 			
 			if( this.isReverse() == contig.isReverse() ) {
 				Contig nextc = contig;
@@ -88,8 +88,8 @@ class Contig implements Comparable<Contig> {
 		} else {
 			contig.prev = this;
 			
-			this.end.next = contig.start;
-			contig.start.prev = this.end;
+			if( this.end != null ) this.end.next = contig.start;
+			if( contig.start != null ) contig.start.prev = this.end;
 			
 			if( this.isReverse() != contig.isReverse() ) {
 				Contig nextc = contig;
@@ -107,7 +107,7 @@ class Contig implements Comparable<Contig> {
 			contig.next = this;
 			
 			this.start.prev = contig.end;
-			contig.end.next = this.start;
+			if( contig.end != null ) contig.end.next = this.start;
 			
 			if( this.isReverse() != contig.isReverse() ) {
 				Contig nextc = contig;
@@ -120,7 +120,7 @@ class Contig implements Comparable<Contig> {
 			contig.prev = this;
 			
 			this.start.prev = contig.start;
-			contig.start.prev = this.start;
+			if( contig.start != null ) contig.start.prev = this.start;
 			
 			if( this.isReverse() == contig.isReverse() ) {
 				Contig nextc = contig;
