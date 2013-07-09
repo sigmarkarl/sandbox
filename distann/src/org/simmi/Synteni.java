@@ -202,9 +202,9 @@ public class Synteni {
 					int[] rr = rowheader.getSelectedRows();
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
-						ste.add( GeneSet.hteg.get(i) );
+						ste.add( Neighbour.hteg.get(i) );
 					}
-					GeneSet.hteg.removeAll( ste );
+					Neighbour.hteg.removeAll( ste );
 					
 					rowheader.tableChanged( new TableModelEvent( rowheader.getModel() ) );
 					int rh = rowheader.getRowCount() * rowheader.getRowHeight();//rowheader.getHeight();
