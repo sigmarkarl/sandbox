@@ -101,7 +101,7 @@ public class Tegeval implements Comparable<Tegeval> {
 	int 			stop;
 	int 			ori;
 	int 			numCys;
-	int				num;
+	private int		num;
 	Gene			gene;
 	Tegeval			next;
 	Tegeval			prev;

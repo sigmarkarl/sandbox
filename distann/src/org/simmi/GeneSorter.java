@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
@@ -139,34 +140,16 @@ public class GeneSorter {
 								g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
 							}
 						} else if( cycColorScheme.isSelected() ) {
-							int max = 0;
-							if (gene.species != null) {
-								for (String str : gene.species.keySet()) {
-									Teginfo set = gene.species.get(str);
-									for (Tegeval tv : set.tset) {
-										max = Math.max(max, tv.numCys);
-									}
-								}
-							}
+							int max = gene.getMaxCyc();
 							
-							if (sorting.isRowSelected(i)) {								
+							if (sorting.isRowSelected(i)) {					
 								//double locprev = max; //Math.min( , max );
 								g.setColor( new Color( 1.0f-(float)max/27.0f, 1.0f, 1.0f ) );
 							} else {
 								g.setColor( new Color( (float)max/27.0f, 0.0f, 0.0f ) );
 							}
 						} else if( lenColorScheme.isSelected() ) {
-							int max = -1;
-							if (gene.species != null) {
-								max = 0;
-								for (String str : gene.species.keySet()) {
-									Teginfo set = gene.species.get(str);
-									for (Tegeval tv : set.tset) {
-										if (tv.seq != null)
-											max = Math.max(max, tv.seq.length());
-									}
-								}
-							}
+							int max = gene.getMaxLength();
 							
 							if (sorting.isRowSelected(i)) {								
 								//double locprev = max; //Math.min( , max );
@@ -347,17 +330,13 @@ public class GeneSorter {
 				}
 
 				@Override
-				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-				}
+				public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
 
 				@Override
-				public void addTableModelListener(TableModelListener l) {
-				}
+				public void addTableModelListener(TableModelListener l) {}
 
 				@Override
-				public void removeTableModelListener(TableModelListener l) {
-				}
-
+				public void removeTableModelListener(TableModelListener l) {}
 			});
 			scrollpane.setRowHeaderView(rowheader);
 			rowheaderscroll.setViewport(scrollpane.getRowHeader());
@@ -446,12 +425,13 @@ public class GeneSorter {
 		}
 	}
 	
-	public static void groupMynd(final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final List<Contig> contigs) throws IOException {
+	public static void groupMynd(final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final List<Contig> contigs, final Map<Set<String>, ShareNum> specset) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
 		final JRadioButton	cycColorScheme = new JRadioButton("#Cyc");
 		final JRadioButton	lenColorScheme = new JRadioButton("Len");
+		final JRadioButton	shareColorScheme = new JRadioButton("Sharing");
 		final JRadioButton	freqColorScheme = new JRadioButton("Freq");
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {
@@ -462,7 +442,6 @@ public class GeneSorter {
 			final boolean allpos = check.isSelected();
 			
 			final int hey = geneGroups.size(); // ltv.get(ltv.size()-1).stop/1000;
-			System.out.println(hey);
 			final JTable rowheader = new JTable();
 			final JComponent c = new JComponent() {
 				Color gr = Color.green;
@@ -477,10 +456,36 @@ public class GeneSorter {
 					
 					Rectangle rc = g.getClipBounds();
 					Set<GeneGroup>	ggset = new HashSet<GeneGroup>();
-					for (int i = (int) rc.getMinX(); i < (int) Math.min(sorting.getRowCount(), rc.getMaxX()); i++) {
-						int r = sorting.convertRowIndexToModel(i);
+					
+					Color altcol = Color.darkGray;
+					int prevnumshare = -1;
+					if( shareColorScheme.isSelected() ) {						
+						prevnumshare = -1;
+						for( int i = 0; i < (int) rc.getMinX(); i++ ) {
+							GeneGroup genegroup;
+							Gene 		tgene = null;
+							int r = sorting.convertRowIndexToModel(i);
+							if( sorting.getModel() == GeneSet.groupModel ) {
+								genegroup = GeneSet.allgenegroups.get( r );
+							} else {
+								tgene = genelist.get( r );
+								genegroup = tgene.getGeneGroup();
+							}
+							
+							if( ggset.add( genegroup ) ) {
+								int numshare = specset.get( genegroup.getSpecies() ).numshare;
+								if( numshare != prevnumshare ) {
+									altcol = altcol == Color.lightGray ? Color.darkGray : Color.lightGray;
+								}								
+								prevnumshare = numshare;
+							}
+						}
+					}
+					
+					for( int i = (int) rc.getMinX(); i < (int) Math.min(sorting.getRowCount(), rc.getMaxX()); i++ ) {
 						GeneGroup genegroup;
 						Gene 		tgene = null;
+						int r = sorting.convertRowIndexToModel(i);
 						if( sorting.getModel() == GeneSet.groupModel ) {
 							genegroup = GeneSet.allgenegroups.get( r );
 						} else {
@@ -531,20 +536,40 @@ public class GeneSorter {
 								//double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
 								g.setColor( new Color( 1.0f-(float)freq, 1.0f, 1.0f ) );
 							} else if( cycColorScheme.isSelected() ) {
-								if (sorting.isRowSelected(i)) {
-									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
-									g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
+								int max = genegroup.getMaxCyc();
+								
+								if (sorting.isRowSelected(i)) {								
+									//double locprev = max; //Math.min( , max );
+									g.setColor( new Color( 1.0f-(float)max/27.0f, 1.0f, 1.0f ) );
 								} else {
-									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
-									g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
+									g.setColor( new Color( (float)max/27.0f, 0.0f, 0.0f ) );
 								}
 							} else if( lenColorScheme.isSelected() ) {
-								if (sorting.isRowSelected(i)) {
-									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
-									g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
+								int max = genegroup.getMaxLength();
+								
+								if (sorting.isRowSelected(i)) {								
+									//double locprev = max; //Math.min( , max );
+									g.setColor( new Color( 1.0f-(float)(max+1)/2800.0f, 1.0f, 1.0f ) );
 								} else {
-									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
-									g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
+									g.setColor( new Color( (float)(max+1)/2800.0f, 0.0f, 0.0f ) );
+								}
+							} else if( shareColorScheme.isSelected() ) {
+								if (sorting.isRowSelected(i)) {
+									int numshare = specset.get( genegroup.getSpecies() ).numshare;
+									if( numshare != prevnumshare ) {
+										altcol = altcol == Color.lightGray ? Color.darkGray : Color.lightGray;
+									}
+									g.setColor( altcol );
+									
+									prevnumshare = numshare;
+								} else {
+									int numshare = specset.get( genegroup.getSpecies() ).numshare;
+									if( numshare != prevnumshare ) {
+										altcol = altcol == Color.lightGray ? Color.darkGray : Color.lightGray;
+									}
+									g.setColor( altcol );
+									
+									prevnumshare = numshare;
 								}
 							}
 	
@@ -555,11 +580,14 @@ public class GeneSorter {
 	
 									int und = contig.indexOf("_");
 									String spec = contig.substring(0, und);
-									if( genegroup.species.contains(spec) ) {
+									/*if( genegroup.getCommonName().contains("tRNA-Phe") && spec.contains("SA01") ) {
+										System.err.println();
+									}*/
+									if( genegroup.getSpecies().contains(spec) ) {
 										List<Tegeval>	ltv = genegroup.getTegevals( spec );
 										//Teginfo stv = gene.species.get(spec);
 										for (Tegeval tv : ltv /*stv.tset*/ ) {
-											if (tv.cont.startsWith(contig)) {
+											if( tv.getContshort().getName().startsWith(contig) ) {
 												g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 											}
 										}
@@ -604,6 +632,7 @@ public class GeneSorter {
 			locprevColorScheme.setAction( a );
 			cycColorScheme.setAction( a );
 			lenColorScheme.setAction( a );
+			shareColorScheme.setAction( a );
 			freqColorScheme.setAction( a );
 			
 			binaryColorScheme.setText("Binary");
@@ -611,6 +640,7 @@ public class GeneSorter {
 			locprevColorScheme.setText("Loc");
 			cycColorScheme.setText("#Cys");
 			lenColorScheme.setText("Len");
+			shareColorScheme.setText("Share");
 			freqColorScheme.setText("Freq");
 			
 			binaryColorScheme.setSelected( true );
@@ -621,6 +651,7 @@ public class GeneSorter {
 			bg.add( locprevColorScheme );
 			bg.add( cycColorScheme );
 			bg.add( lenColorScheme );
+			bg.add( shareColorScheme );
 			bg.add( freqColorScheme );
 
 			c.addMouseListener(new MouseAdapter() {
@@ -639,6 +670,8 @@ public class GeneSorter {
 						sorting.scrollRectToVisible(rect);
 						sorting.setRowSelectionInterval(p.x, np.x);
 					}
+					
+					c.repaint();
 				}
 			});
 
@@ -742,6 +775,7 @@ public class GeneSorter {
 		toolbar.add( locprevColorScheme );
 		toolbar.add( cycColorScheme );
 		toolbar.add( lenColorScheme );
+		toolbar.add( shareColorScheme );
 		toolbar.add( freqColorScheme );
 		
 		JComponent panel = new JComponent() {};
