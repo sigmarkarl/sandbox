@@ -1,10 +1,17 @@
 package org.simmi;
 
 public class Tegeval implements Comparable<Tegeval> {
-	public Tegeval(Gene gene, String tegund, double evalue, StringBuilder sequence, StringBuilder dnaseq, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
+	public Tegeval(Gene gene, String tegund, double evalue, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
+		this( contig, shortcontig, locontig, sta, sto, orient );
+		
 		teg = tegund;
 		eval = evalue;
-		dna = dnaseq;
+		this.gene = gene;
+		//dna = dnaseq;
+		//setSequence(sequence);
+	}
+	
+	public Tegeval( String contig, Contig shortcontig, String locontig, int sta, int sto, int orient ) {
 		cont = contig;
 		contshort = shortcontig;
 		contloc = locontig;
@@ -12,13 +19,27 @@ public class Tegeval implements Comparable<Tegeval> {
 		stop = sto;
 		ori = orient;
 		num = -1;
-		this.gene = gene;
+		
+		/*if( shortcontig == null ) {
+			System.err.println();
+		}*/
 
-		if( dna != null ) gc = (double)gcCount()/(double)dna.length();
-		else gc = -1.0;
+		gc = (double)gcCount()/(double)(stop-start);
+		//else gc = -1.0;
 		
 		numCys = 0;
-		setSequence(sequence);
+	}
+	
+	public void setAlignedSequence( StringBuilder alseq ) {
+		seq = alseq;
+	}
+	
+	public void setTegund( String teg ) {
+		this.teg = teg;
+	}
+	
+	public void setEval( double eval ) {
+		this.eval = eval;
 	}
 	
 	public int getNum() {
@@ -31,6 +52,26 @@ public class Tegeval implements Comparable<Tegeval> {
 
 	public String getSpecies() {
 		return teg;
+	}
+	
+	public String getSubstring( int u, int e ) {
+		return contshort.seq.getSubstring(start+u, start+e);
+	}
+	
+	public String getSequence() {
+		return contshort.seq.getSubstring(start, stop);
+	}
+	
+	public StringBuilder getAlignedSequence() {
+		return seq;
+	}
+	
+	public StringBuilder getProteinSubsequence( int u, int e ) {
+		return contshort.seq.getProteinSequence( start+u, start+e, ori );
+	}
+	
+	public StringBuilder getProteinSequence() {
+		return contshort.seq.getProteinSequence( start, stop, ori );
 	}
 	
 	public int getLength() {
@@ -78,8 +119,9 @@ public class Tegeval implements Comparable<Tegeval> {
 	
 	private double gcCount() {
 		int gc = 0;
-		for( int i = 0; i < dna.length(); i++ ) {
-			char c = dna.charAt(i);
+		//for( int i = 0; i < dna.length(); i++ ) {
+		for( int i = start; i < stop; i++ ) {
+			char c = contshort.charAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
 		}
 		return gc;
@@ -96,7 +138,7 @@ public class Tegeval implements Comparable<Tegeval> {
 	Contig 			contshort;
 	String 			contloc;
 	StringBuilder 	seq;
-	StringBuilder 	dna;
+	//StringBuilder 	dna;
 	int 			start;
 	int 			stop;
 	int 			ori;
@@ -123,7 +165,7 @@ public class Tegeval implements Comparable<Tegeval> {
 		return this.gene;
 	}
 
-	public void setSequence(StringBuilder seq) {
+	/*public void setSequence(StringBuilder seq) {
 		if (seq != null) {
 			for (int i = 0; i < seq.length(); i++) {
 				char c = (char) seq.charAt(i);
@@ -132,7 +174,7 @@ public class Tegeval implements Comparable<Tegeval> {
 			}
 			this.seq = seq;
 		}
-	}
+	}*/
 
 	public String toString() {
 		return eval + " " + contloc;
@@ -142,7 +184,7 @@ public class Tegeval implements Comparable<Tegeval> {
 
 	@Override
 	public int compareTo(Tegeval o) {
-		if (locsort) {
+		if( locsort ) {
 			int ret = contshort.compareTo(o.contshort);
 			/*
 			 * if( o.contshort != null || o.contshort.length() < 2 ) { ret =

@@ -33,8 +33,7 @@ public class Gene {
 			for (String str : this.species.keySet()) {
 				Teginfo set = this.species.get(str);
 				for (Tegeval tv : set.tset) {
-					if (tv.seq != null)
-						max = Math.max(max, tv.seq.length());
+					max = Math.max(max, tv.getProteinLength());
 				}
 			}
 		}
