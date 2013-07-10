@@ -322,11 +322,11 @@ public class GeneSorter {
 						return 0;
 					} else if (columnIndex == 1) {
 						Contig c = contigs.get(rowIndex);
-						String cname = c.name;
+						String cname = c.getName();
 						int i = cname.indexOf('_');
 						return cname.substring(0, i);
 					}
-					return contigs.get(rowIndex).name;
+					return contigs.get(rowIndex).getName();
 				}
 
 				@Override
@@ -720,11 +720,11 @@ public class GeneSorter {
 						return 0;
 					} else if (columnIndex == 1) {
 						Contig c = contigs.get(rowIndex);
-						String cname = c.name;
+						String cname = c.getName();
 						int i = cname.indexOf('_');
 						return cname.substring(0, i);
 					}
-					return contigs.get(rowIndex).name;
+					return contigs.get(rowIndex).getName();
 				}
 
 				@Override

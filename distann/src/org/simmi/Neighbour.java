@@ -88,8 +88,8 @@ public class Neighbour {
 		c.repaint();
 	}
 	
-	public static Tegeval getSelectedTe( Point p, JTable rowheader, JRadioButton sequenceView, List<Tegeval> lte, int rowheight ) {
-		if( sequenceView.isSelected() ) {			
+	public static Tegeval getSelectedTe( Point p, JTable rowheader, JRadioButton sequenceView, JRadioButton realView, List<Tegeval> lte, int rowheight ) {
+		if( sequenceView.isSelected() || realView.isSelected() ) {			
 			for( int y = 0; y < rowheader.getRowCount(); y++ ) {
 				int r = rowheader.convertRowIndexToModel( y );
 				/*	String species = speclist.get( r );
@@ -110,7 +110,13 @@ public class Neighbour {
 					
 					if( rect.contains( p ) ) return next;
 					
-					xoff += len+10;
+					Tegeval thenext = next.getNext();
+					int bil = 10;
+					if( thenext != null && realView.isSelected() ) {
+						bil = next.getContshort().isReverse() ? Math.abs( thenext.stop-next.start ) : Math.abs( thenext.start-next.stop );
+						bil = (int)(neighbourscale*bil/3);
+					}
+					xoff += len+bil;
 					next = next.getNext();
 				}
 				
@@ -119,7 +125,14 @@ public class Neighbour {
 				//int k = 0;
 				while( prev != null && xoff > 5 ) {					
 					double len = prev.getProteinLength()*neighbourscale;
-					xoff -= len+10;
+					
+					Tegeval theprev = prev.getPrevious();
+					int bil = 10;
+					if( theprev != null && realView.isSelected() ) {
+						bil = prev.getContshort().isReverse() ? Math.abs( theprev.start-prev.stop ) : Math.abs( theprev.stop-prev.start );
+						bil = (int)(neighbourscale*bil/3);
+					}
+					xoff -= len+bil;
 					
 					Rectangle rect = new Rectangle(xoff, y * rowheight+2, (int)len, rowheight - 4);
 					if( rect.contains( p ) ) return prev;
@@ -308,7 +321,7 @@ public class Neighbour {
 
 				public String getToolTipText( MouseEvent me ) {
 					Point p = me.getPoint();
-					Tegeval te = getSelectedTe(p, rowheader, sequenceView, hteg, rowheader.getRowHeight());
+					Tegeval te = getSelectedTe(p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight());
 					if( te != null ) return "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+ "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
 					return null;
 				}
@@ -514,7 +527,7 @@ public class Neighbour {
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
 											} else if( precol.isSelected() ) {
-												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
 												shanmap.clear();
 												double res = 0.0;
 												
@@ -1021,12 +1034,12 @@ public class Neighbour {
 					if( currentTe != null ) {
 						if( currentTe.getContshort().isReverse() ) {
 							Tegeval previous = currentTe.prev;
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							currentTe.setPrevious( te );
 							te.setPrevious( previous );
 						} else {
 							Tegeval next = currentTe.next;
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							te.setPrevious( currentTe );
 							next.setPrevious( te );
 						}
@@ -1040,12 +1053,12 @@ public class Neighbour {
 					if( currentTe != null ) {
 						if( currentTe.getContshort().isReverse() ) {
 							Tegeval next = currentTe.next;
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							te.setPrevious( currentTe );
 							next.setPrevious( te );
 						} else {
 							Tegeval previous = currentTe.prev;
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, null, null, currentTe.getContshort(), null, 0, 0, 1 );
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							currentTe.setPrevious( te );
 							te.setPrevious( previous );
 						}
@@ -1204,7 +1217,13 @@ public class Neighbour {
 			showseqs.setAction( new AbstractAction("Show sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					GeneSet.showSequences( comp, selectedGenesGroups );
+					GeneSet.showSequences( comp, selectedGenesGroups, false );
+				}
+			});
+			showseqs.setAction( new AbstractAction("Show DNA sequences") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					GeneSet.showSequences( comp, selectedGenesGroups, true );
 				}
 			});
 			
@@ -1228,7 +1247,7 @@ public class Neighbour {
 				public void mousePressed(MouseEvent me) {
 					p = me.getPoint();
 					
-					Tegeval te = getSelectedTe( p, rowheader, sequenceView, hteg, rowheader.getRowHeight() );
+					Tegeval te = getSelectedTe( p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight() );
 					//System.err.println();
 					if( te != null ) {
 						if( me.getClickCount() == 2 ) {
@@ -1355,7 +1374,7 @@ public class Neighbour {
 
 						@Override
 						public Object getValueAt(int rowIndex, int columnIndex) {
-							return specont.get(rowIndex).name;
+							return specont.get(rowIndex).getName();
 						}
 
 						@Override

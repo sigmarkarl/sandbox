@@ -1,6 +1,5 @@
 package org.simmi;
 
-
 public final class Aas implements Comparable<Aas> {
 	String name;
 	final StringBuilder aas;
