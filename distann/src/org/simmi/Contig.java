@@ -1,10 +1,16 @@
 package org.simmi;
 
+import org.simmi.shared.Sequence;
+
 class Contig implements Comparable<Contig> {
 	public Contig(String name) {
-		this.name = name;
+		seq = new Sequence( name, null );
 		loc = 0.0;
 		count = 0;
+	}
+	
+	public char charAt( int i ) {
+		return seq.charAt( i );
 	}
 	
 	public int getGeneCount() {
@@ -14,16 +20,16 @@ class Contig implements Comparable<Contig> {
 	
 	public Contig( String name, StringBuilder sb ) {
 		this( name );
-		seq = sb;
+		seq.setSequenceString( sb );
 	}
 	
 	public String toString() {
-		return name;
+		return seq.getName();
 	}
 	
 	public String getSpec() {
-		int i = name.indexOf('_');
-		return name.substring(0, i);
+		int i = getName().indexOf('_');
+		return getName().substring(0, i);
 	}
 	
 	/*@Override
@@ -32,10 +38,14 @@ class Contig implements Comparable<Contig> {
 	}*/
 	
 	public String getName() {
-		return name;
+		return seq.getName();
 	}
 	
-	public StringBuilder getSequence() {
+	public StringBuilder getSequenceString() {
+		return seq.getStringBuilder();
+	}
+	
+	public Sequence getSequence() {
 		return seq;
 	}
 	
@@ -55,10 +65,9 @@ class Contig implements Comparable<Contig> {
 		return first;
 	}
 
-	String 			name;
 	double 			loc;
 	int 			count;
-	StringBuilder	seq;
+	Sequence		seq;
 	boolean			reverse = false;
 	Contig			next;
 	Contig			prev;
@@ -150,6 +159,6 @@ class Contig implements Comparable<Contig> {
 	
 	@Override
 	public int compareTo(Contig o) {
-		return name.compareTo( o.getName() );
+		return getName().compareTo( o.getName() );
 	}
 }
