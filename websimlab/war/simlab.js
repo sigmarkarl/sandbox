@@ -2,10 +2,14 @@ var current;
 var textarea;
 var ind;
 var fr;
+var acontext;
 
 var init = function() {
 	textarea = document.getElementById('command');
 	fr = document.getElementById('fileread');
+	
+	window.AudioContext = window.AudioContext||window.webkitAudioContext;
+	acontext = new AudioContext();
 
 	fr.onchange = function( e ) {
 		var file = fr.files[0];
@@ -117,7 +121,7 @@ var mul = function( val ) {
 
 var div = function( val ) {
 	for( i = 0; i < current.length; i++ ) {
-		current[i] /= val[i%val.length];
+		current[i] /= val;
 	}
 }
 		
@@ -301,6 +305,15 @@ var trans = function( c, r ) {
 		}
 		l++;
 	}
+}
+
+var play = function() {
+	acontext.decodeAudioData( current.buffer, function(abuffer) {
+		var source = acontext.createBufferSource();
+		source.buffer = abuffer;
+		source.connect( acontext.destination );
+		source.start(0);
+	});
 }
 
 var print = function( val ) {
