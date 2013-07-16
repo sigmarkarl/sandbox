@@ -94,13 +94,11 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPClientConfig;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.provider.ftp.FtpClientFactory;
 import org.simmi.shared.GBK2AminoFasta;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequences;
@@ -883,8 +881,8 @@ public class SerifyApplet extends JApplet {
 					if( cont[0] != null ) {
 						System.err.println( cont[0] );
 						try {
-							addSequences(title, new File( outPathD ).toURI().toURL().toString() );
-							addSequences(title, new File( outPathA ).toURI().toURL().toString() );
+							addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
+							addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
 						} catch (URISyntaxException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
@@ -2038,7 +2036,7 @@ public class SerifyApplet extends JApplet {
 								
 								@Override
 								public void windowClosed(WindowEvent e) {
-									interrupted = true;
+									//interrupted = true;
 								}
 								
 								@Override
@@ -2069,14 +2067,18 @@ public class SerifyApplet extends JApplet {
 											ftp.cwd( subdir+fname );
 											FTPFile[] newfiles = ftp.listFiles();
 											int cnt = 1;
+											
+											Map<String,String>	urimap = new HashMap<String,String>();
 											for( FTPFile newftpfile : newfiles ) {
 												if( interrupted ) break;
 												String newfname = newftpfile.getName();
 												if( newfname.endsWith(".gbk") ) {
 													long size = newftpfile.getSize();
-													String fwname;
-													if( size > 3000000 ) fwname = fname+"_"+newfname;//+".gbk";
-													else fwname = fname+"_p"+(cnt++)+"_"+newfname;//+".gbk";
+													String basename;
+													if( size > 3000000 ) basename = fname;//+".gbk";
+													else basename = fname+"_p"+(cnt++);//+".gbk";
+													
+													String fwname = basename+"_"+newfname;
 													//if( size > 1500000 ) fwname = fname+".fna";
 													//else fwname = fname+"_p"+(cnt++)+".fna";
 													
@@ -2096,13 +2098,14 @@ public class SerifyApplet extends JApplet {
 														fw.close();
 														System.err.println("done " + fname);
 													}
-													
-													try {
-														addSequences( fwname, thefile.toURI().toString() );
-													} catch (URISyntaxException e) {
-														e.printStackTrace();
-													}
+													urimap.put( basename, thefile.toURI().toString() );
 												}
+											}
+											
+											try {
+												addSequences( fname, urimap );
+											} catch (URISyntaxException e) {
+												e.printStackTrace();
 											}
 										}
 									}
@@ -3758,7 +3761,10 @@ public class SerifyApplet extends JApplet {
 						String filelistStr = (String)obj;
 						
 						if( filelistStr.contains("\n>") ) {
-							addSequences(null, new InputStreamReader( new ByteArrayInputStream(filelistStr.getBytes()) ), null);
+							Map<String,Reader>	isrmap = new HashMap<String,Reader>();
+							InputStreamReader isr = new InputStreamReader( new ByteArrayInputStream(filelistStr.getBytes()) );
+							isrmap.put("", isr);
+							addSequences(null, isrmap, null);
 						} else {
 							String[] fileStr = filelistStr.split("\n");
 							
@@ -3905,147 +3911,213 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void addSequences( String name, Reader rd, String path ) throws URISyntaxException, IOException {
+	public void addSequences( String name, Map<String,Reader> rds, String path ) throws URISyntaxException, IOException {
 		String type = "nucl";
 		int nseq = 0;
 		
-		BufferedReader br = new BufferedReader( rd );
-		String line = br.readLine();
+		Map<String,StringBuilder>	gbks = new HashMap<String,StringBuilder>();
+		for( String tag : rds.keySet() ) {
+			Reader rd = rds.get( tag );
+			//String path = paths.get( tag );
+			BufferedReader br = new BufferedReader( rd );
+			String line = br.readLine();
 		
-		if( line != null ) {
-			if( line.endsWith(":") ) {
-				JFileChooser	filechooser = new JFileChooser();
-				filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-					File dir = filechooser.getSelectedFile();
-					if( !dir.exists() ) dir.mkdirs();
-					
-					//Set<String>	curset = new HashSet<String>();
-					int idx = line.indexOf(']');
-					String[] split = null;
-					if( idx >= 0 ) {
-						split = line.substring(1, idx).split(",");
-					}
-					String curname = line.substring( idx+1, Math.min( 128+idx+1, line.length()-1 ) ).replace(' ', '_');;
-					//curset.add( curname );
-					
-					List<FileWriter>	lfw = new ArrayList<FileWriter>();
-					File subdir = new File( dir, "all" );
-					subdir.mkdir();
-					File f = new File( subdir, curname+".fasta" );
-					FileWriter	nfw = new FileWriter( f );
-					lfw.add( nfw );
-					for( String subdirstr : split ) {
-						subdir = new File( dir, subdirstr );
-						subdir.mkdir();
-						f = new File( subdir, curname+".fasta" );
-						FileWriter fw = new FileWriter( f );
-						lfw.add( fw );
-					}
-					
-					line = br.readLine();
-					while( line != null ) {
-						if( line.endsWith(":") ) {
-							for( FileWriter tfw : lfw ) tfw.close();
-							lfw.clear();
-							
-							addSequences( curname, f.toURI().toString() );
-							
-							//int val = 1;
-							
-							idx = line.indexOf(']');
-							if( idx >= 0 ) {
-								split = line.substring(1, idx).split(",");
-							}
-							curname = line.substring( idx+1, Math.min( 128+idx+1, line.length()-1 ) ).replace(' ', '_');;
-							//curset.add( curname );
-							//curname = line.substring( 0,  Math.min( 128, line.length()-1 ) ).replace(' ', '_');
-							String newcurname = curname;
-							//while( curset.contains(newcurname) ) newcurname = curname+"_"+(val++);
-							curname = newcurname;
-							
-							//f = new File( dir, curname+".fasta" );
-							//fw = new FileWriter( f );
-							subdir = new File( dir, "all" );
-							subdir.mkdir();
-							f = new File( subdir, curname+".fasta" );
-							nfw = new FileWriter( f );
-							lfw.add( nfw );
-							for( String subdirstr : split ) {
-								subdir = new File( dir, subdirstr );
-								subdir.mkdir();
-								f = new File( subdir, curname+".fasta" );
-								FileWriter fw = new FileWriter( f );
-								lfw.add( fw );
-							}
-						} else {
-							for( FileWriter tfw : lfw ) tfw.write( line+"\n" );
-						}
-						
-						line = br.readLine();
-					}
-					for( FileWriter tfw : lfw ) tfw.close();
-					lfw.clear();
-					
-					addSequences( curname, f.toURI().toString() );
-				}
-			} else if( line.startsWith(">") ) {
-				if( path == null ) {
+			if( line != null ) {
+				if( line.endsWith(":") ) {
 					JFileChooser	filechooser = new JFileChooser();
 					filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 					if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						File f = filechooser.getSelectedFile();
-						path = f.toURI().toString();
-					}
-				}
-				
-				if( path != null ) {
-					while( line != null ) {
-						if( line.startsWith(">") ) {
-							nseq++;
-							
-							if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
-						} else if( type.equals("nucl") && !line.matches("^[acgtykvrswmunxACGTDYKVRSWMUNX]+$") ) {
-							System.err.println( line );
-							type = "prot";
+						File dir = filechooser.getSelectedFile();
+						if( !dir.exists() ) dir.mkdirs();
+						
+						//Set<String>	curset = new HashSet<String>();
+						int idx = line.indexOf(']');
+						String[] split = null;
+						if( idx >= 0 ) {
+							split = line.substring(1, idx).split(",");
 						}
+						String curname = line.substring( idx+1, Math.min( 128+idx+1, line.length()-1 ) ).replace(' ', '_');;
+						//curset.add( curname );
+						
+						List<FileWriter>	lfw = new ArrayList<FileWriter>();
+						File subdir = new File( dir, "all" );
+						subdir.mkdir();
+						File f = new File( subdir, curname+".fasta" );
+						FileWriter	nfw = new FileWriter( f );
+						lfw.add( nfw );
+						for( String subdirstr : split ) {
+							subdir = new File( dir, subdirstr );
+							subdir.mkdir();
+							f = new File( subdir, curname+".fasta" );
+							FileWriter fw = new FileWriter( f );
+							lfw.add( fw );
+						}
+						
 						line = br.readLine();
+						while( line != null ) {
+							if( line.endsWith(":") ) {
+								for( FileWriter tfw : lfw ) tfw.close();
+								lfw.clear();
+								
+								addSequences( curname, f.toURI().toString() );
+								
+								//int val = 1;
+								
+								idx = line.indexOf(']');
+								if( idx >= 0 ) {
+									split = line.substring(1, idx).split(",");
+								}
+								curname = line.substring( idx+1, Math.min( 128+idx+1, line.length()-1 ) ).replace(' ', '_');;
+								//curset.add( curname );
+								//curname = line.substring( 0,  Math.min( 128, line.length()-1 ) ).replace(' ', '_');
+								String newcurname = curname;
+								//while( curset.contains(newcurname) ) newcurname = curname+"_"+(val++);
+								curname = newcurname;
+								
+								//f = new File( dir, curname+".fasta" );
+								//fw = new FileWriter( f );
+								subdir = new File( dir, "all" );
+								subdir.mkdir();
+								f = new File( subdir, curname+".fasta" );
+								nfw = new FileWriter( f );
+								lfw.add( nfw );
+								for( String subdirstr : split ) {
+									subdir = new File( dir, subdirstr );
+									subdir.mkdir();
+									f = new File( subdir, curname+".fasta" );
+									FileWriter fw = new FileWriter( f );
+									lfw.add( fw );
+								}
+							} else {
+								for( FileWriter tfw : lfw ) tfw.write( line+"\n" );
+							}
+							
+							line = br.readLine();
+						}
+						for( FileWriter tfw : lfw ) tfw.close();
+						lfw.clear();
+						
+						addSequences( curname, f.toURI().toString() );
+					}
+				} else if( line.startsWith(">") ) {
+					if( path == null ) {
+						JFileChooser	filechooser = new JFileChooser();
+						filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+						if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+							File f = filechooser.getSelectedFile();
+							path = f.toURI().toString();
+						}
 					}
 					
-					if( nseq > 0 ) {
-						addSequences(name, type, path, nseq);
-					} else System.err.println( "no sequences in file" );
+					if( path != null ) {
+						while( line != null ) {
+							if( line.startsWith(">") ) {
+								nseq++;
+								
+								if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
+							} else if( type.equals("nucl") && !line.matches("^[acgtykvrswmunxACGTDYKVRSWMUNX]+$") ) {
+								System.err.println( line );
+								type = "prot";
+							}
+							line = br.readLine();
+						}
+						
+						if( nseq > 0 ) {
+							addSequences(name, type, path, nseq);
+						} else System.err.println( "no sequences in file" );
+					}
+				} else {
+					StringBuilder filetext = new StringBuilder();
+					while( line != null ) {
+						filetext.append( line+"\n" );
+						line = br.readLine();
+					}
+					gbks.put(tag, filetext);
+					
+					//boolean amino = true;
+					//String[] annoarray = {"tRNA", "rRNA"};//{"CDS", "tRNA", "rRNA", "mRNA"};
+					//String[] annoarray = {"CDS"};
 				}
-			} else {
-				StringBuilder filetext = new StringBuilder();
-				while( line != null ) {
-					filetext.append( line+"\n" );
-					line = br.readLine();
-				}
-				
-				boolean amino = true;
-				//String[] annoarray = {"tRNA", "rRNA"};//{"CDS", "tRNA", "rRNA", "mRNA"};
-				String[] annoarray = {"CDS"};
-				URI uri = new URI(path+".aa");
-				FileWriter out = new FileWriter( new File( uri ) );
-				GBK2AminoFasta.handleText( name, filetext, amino, Arrays.asList(annoarray), out );
-				out.close();
-				
-				addSequences( name+".aa", uri.toString() );
+				br.close();
 			}
-			br.close();
+		}
+		
+		if( gbks.size() > 0 ) {
+			Map<String,URI>	map = new HashMap<String,URI>();
+			URI firsturi = new URI(path+".fna");
+			FileWriter out = new FileWriter( new File( firsturi ) );
+			
+			URI uri = new URI(path+".aa");
+			//FileWriter out = new FileWriter( new File( uri ) );
+			map.put( "CDS", uri );
+			
+			uri = new URI(path+".trna");
+			//out = new FileWriter( new File( uri ) );
+			map.put( "tRNA", uri );
+			
+			uri = new URI(path+".rrna");
+			//out = new FileWriter( new File( uri ) );
+			map.put( "rRNA", uri );
+			
+			uri = new URI(path+".mrna");
+			//out = new FileWriter( new File( uri ) );
+			map.put( "mRNA", uri );
+			
+			GBK2AminoFasta.handleText( name, gbks, map, out );
+			
+			addSequences( name+firsturi.toString().replace(name, ""), firsturi.toString() );
+			for( String tg : map.keySet() ) {
+				uri = map.get( tg );
+				addSequences( name+uri.toString().replace(name, ""), uri.toString() );
+			}
+		}
+	}
+	
+	public void addSequences( String name, Map<String,String> urimap ) throws URISyntaxException, IOException {
+		try {
+			Map<String,Reader>	isrmap = new HashMap<String,Reader>();
+			for( String tag : urimap.keySet() ) {
+				String path = urimap.get( tag );
+				URL url = new URL( path );
+				InputStream is = url.openStream();
+				
+				if( is != null ) {
+					if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
+					InputStreamReader isr = new InputStreamReader( is );
+					isrmap.put( tag, isr );
+					//FileReader	fr = new FileReader( f );
+				}
+			}
+			
+			String uri = null;
+			for( String ur : urimap.keySet() ) {
+				uri = urimap.get( ur );
+				break;
+			}
+			addSequences( name, isrmap, uri );
+		} catch( Exception e ) {
+			e.printStackTrace();
 		}
 	}
 	
 	public void addSequences( String name, String path ) throws URISyntaxException, IOException {
 		URL url = new URL(path);
-		InputStream is = url.openStream();
-		
-		if( is != null ) {
-			if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
-			InputStreamReader isr = new InputStreamReader( is );
-			addSequences( name, isr, path );
-			//FileReader	fr = new FileReader( f );
+
+		try {
+			InputStream is = url.openStream();
+			
+			if( is != null ) {
+				if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
+				InputStreamReader isr = new InputStreamReader( is );
+				
+				Map<String,Reader>	isrmap = new HashMap<String,Reader>();
+				isrmap.put("", isr);
+				
+				addSequences( name, isrmap, path );
+				//FileReader	fr = new FileReader( f );
+			}
+		} catch( Exception e ) {
+			
 		}
 	}
 	
