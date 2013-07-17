@@ -838,63 +838,66 @@ public class SerifyApplet extends JApplet {
 		});
 	}
 	
-	public void doProdigal( File dir, Container c, File f  ) throws IOException {		
-		int r = table.getSelectedRow();
-		String path = (String)table.getValueAt( r, 3 );
-		URL url = new URL( path );
-		
-		String file = url.getFile();
-		String[] split = file.split("/");
-		String fname = split[ split.length-1 ];
-		split = fname.split("\\.");
-		final String title = split[0];
-		File infile = new File( dir, fname );
-		if( infile.exists() ) {
-			infile = new File( dir, "tmp_"+fname );
-		}
-		
-		FileOutputStream fos = new FileOutputStream( infile );
-		InputStream is = url.openStream();
-		
-		byte[] bb = new byte[100000];
-		r = is.read(bb);
-		while( r > 0 ) {
-			fos.write(bb, 0, r);
-			r = is.read(bb);
-		}
-		is.close();
-		fos.close();
-		
+	public void doProdigal( File dir, Container c, File f ) throws IOException {
 		JFileChooser fc = new JFileChooser();
 		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
 			File selectedfile = fc.getSelectedFile();
 			if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
-			
-			final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
-			final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
-			String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
-			
-			final Object[] cont = new Object[3];
-			Runnable run = new Runnable() {
-				public void run() {
-					if( cont[0] != null ) {
-						System.err.println( cont[0] );
-						try {
-							addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
-							addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
-						} catch (URISyntaxException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
+		
+			int[] rr = table.getSelectedRows();
+			for( int r : rr ) {
+			//int r = table.getSelectedRow();
+				String path = (String)table.getValueAt( r, 3 );
+				URL url = new URL( path );
+				
+				String file = url.getFile();
+				String[] split = file.split("/");
+				String fname = split[ split.length-1 ];
+				split = fname.split("\\.");
+				final String title = split[0];
+				File infile = new File( dir, fname );
+				if( infile.exists() ) {
+					infile = new File( dir, "tmp_"+fname );
+				}
+				
+				FileOutputStream fos = new FileOutputStream( infile );
+				InputStream is = url.openStream();
+				
+				byte[] bb = new byte[100000];
+				r = is.read(bb);
+				while( r > 0 ) {
+					fos.write(bb, 0, r);
+					r = is.read(bb);
+				}
+				is.close();
+				fos.close();
+					
+				final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
+				final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
+				String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
+				
+				final Object[] cont = new Object[3];
+				Runnable run = new Runnable() {
+					public void run() {
+						if( cont[0] != null ) {
+							System.err.println( cont[0] );
+							try {
+								addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
+								addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
+							} catch (URISyntaxException e) {
+								e.printStackTrace();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 						}
 					}
-				}
-			};
-			runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
-			//JSObject js = JSObject.getWindow( SerifyApplet.this );
-			//js = (JSObject)js.getMember("document");
-			//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+				};
+				runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
+					//JSObject js = JSObject.getWindow( SerifyApplet.this );
+					//js = (JSObject)js.getMember("document");
+					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+			}
 		}
 		
 		//infile.delete();
@@ -2010,6 +2013,7 @@ public class SerifyApplet extends JApplet {
 					
 					final String search = JOptionPane.showInputDialog("Filter term");
 					final String basesave =  cd.getAbsolutePath();
+					final String uripath = cd.toURI().toString();
 					
 					final JDialog		dialog = new JDialog();
 					final JProgressBar	pbar = new JProgressBar();
@@ -2098,12 +2102,12 @@ public class SerifyApplet extends JApplet {
 														fw.close();
 														System.err.println("done " + fname);
 													}
-													urimap.put( basename, thefile.toURI().toString() );
+													urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
 												}
 											}
 											
 											try {
-												addSequences( fname, urimap );
+												addSequencesPath( fname, urimap, uripath );
 											} catch (URISyntaxException e) {
 												e.printStackTrace();
 											}
@@ -2123,6 +2127,8 @@ public class SerifyApplet extends JApplet {
 										if( fname.startsWith( search ) ) {
 											ftp.cwd( subdir+fname );
 											FTPFile[] newfiles = ftp.listFiles();
+											
+											Map<String,String>	urimap = new HashMap<String,String>();
 											for( FTPFile newftpfile : newfiles ) {
 												if( interrupted ) break;
 												//String newfname = newftpfile.getName().getBaseName();
@@ -2183,14 +2189,20 @@ public class SerifyApplet extends JApplet {
 															}
 															fos.close();
 														}
+														urimap.put( lfname.substring(0, lfname.length()-4), thefile.toURI().toString() );
 														
-														try {
+														/*try {
 															addSequences( lfname, thefile.toURI().toString() );
 														} catch (URISyntaxException e) {
 															e.printStackTrace();
-														}
+														}*/
 													}
 												}
+											}
+											try {
+												addSequencesPath( fname, urimap, uripath );
+											} catch (URISyntaxException e) {
+												e.printStackTrace();
 											}
 										}
 									}
@@ -2211,6 +2223,8 @@ public class SerifyApplet extends JApplet {
 											ftp.cwd( subdir+fname );
 											FTPFile[] newfiles = ftp.listFiles();
 											int cnt = 1;
+											
+											Map<String,String>	urimap = new HashMap<String,String>();
 											for( FTPFile newftpfile : newfiles ) {
 												if( interrupted ) break;
 												String newfname = newftpfile.getName();
@@ -2235,13 +2249,20 @@ public class SerifyApplet extends JApplet {
 														fw.close();
 														System.err.println("done " + fname);
 													}
+													urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
 													
-													try {
+													/*try {
 														addSequences( fwname, thefile.toURI().toString() );
 													} catch (URISyntaxException e) {
 														e.printStackTrace();
-													}
+													}*/
 												}
+											}
+											
+											try {
+												addSequencesPath( fname, urimap, uripath );
+											} catch (URISyntaxException e) {
+												e.printStackTrace();
 											}
 										}
 									}
@@ -3911,6 +3932,12 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
+	public void addSequences( String name, Reader rd, String path ) throws URISyntaxException, IOException {
+		Map<String,Reader> rds = new HashMap<String,Reader>();
+		rds.put( name, rd );
+		addSequences(name, rds, path);
+	}
+	
 	public void addSequences( String name, Map<String,Reader> rds, String path ) throws URISyntaxException, IOException {
 		String type = "nucl";
 		int nseq = 0;
@@ -4044,57 +4071,58 @@ public class SerifyApplet extends JApplet {
 		
 		if( gbks.size() > 0 ) {
 			Map<String,URI>	map = new HashMap<String,URI>();
-			URI firsturi = new URI(path+".fna");
+			URI firsturi = new URI(path+name+".fna");
 			FileWriter out = new FileWriter( new File( firsturi ) );
 			
-			URI uri = new URI(path+".aa");
+			URI uri = new URI(path+name+".aa");
 			//FileWriter out = new FileWriter( new File( uri ) );
 			map.put( "CDS", uri );
 			
-			uri = new URI(path+".trna");
+			uri = new URI(path+name+".trna");
 			//out = new FileWriter( new File( uri ) );
 			map.put( "tRNA", uri );
 			
-			uri = new URI(path+".rrna");
+			uri = new URI(path+name+".rrna");
 			//out = new FileWriter( new File( uri ) );
 			map.put( "rRNA", uri );
 			
-			uri = new URI(path+".mrna");
+			uri = new URI(path+name+".mrna");
 			//out = new FileWriter( new File( uri ) );
 			map.put( "mRNA", uri );
 			
 			GBK2AminoFasta.handleText( name, gbks, map, out );
 			
-			addSequences( name+firsturi.toString().replace(name, ""), firsturi.toString() );
+			//+firsturi.toString().replace(name, "")
+			addSequences( name+".fna", firsturi.toString() );
 			for( String tg : map.keySet() ) {
 				uri = map.get( tg );
-				addSequences( name+uri.toString().replace(name, ""), uri.toString() );
+				addSequences( name+"."+tg, uri.toString() );
 			}
 		}
 	}
 	
-	public void addSequences( String name, Map<String,String> urimap ) throws URISyntaxException, IOException {
+	public void addSequencesPath( String name, Map<String,String> urimap, String path ) throws URISyntaxException, IOException {
 		try {
 			Map<String,Reader>	isrmap = new HashMap<String,Reader>();
 			for( String tag : urimap.keySet() ) {
-				String path = urimap.get( tag );
-				URL url = new URL( path );
+				String uripath = urimap.get( tag );
+				URL url = new URL( uripath );
 				InputStream is = url.openStream();
 				
 				if( is != null ) {
-					if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
+					if( uripath.endsWith(".gz") ) is = new GZIPInputStream(is);
 					InputStreamReader isr = new InputStreamReader( is );
 					isrmap.put( tag, isr );
 					//FileReader	fr = new FileReader( f );
 				}
 			}
 			
-			String uri = null;
+			/*String uri = null;
 			for( String ur : urimap.keySet() ) {
 				uri = urimap.get( ur );
 				break;
-			}
-			addSequences( name, isrmap, uri );
+			}*/
+			addSequences( name, isrmap, path );
 		} catch( Exception e ) {
 			e.printStackTrace();
 		}
