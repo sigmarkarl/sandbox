@@ -123,6 +123,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
@@ -5382,7 +5383,7 @@ public class GeneSet extends JApplet {
 		return unimap;
 	}
 
-	public static void funcMapping(Reader rd, Map<String, Gene> genids, String outshort) throws IOException {
+	public void funcMapping(Reader rd, Map<String, Gene> genids, String outshort) throws IOException {
 		//Map<String, Function> funcmap = new HashMap<String, Function>();
 
 		FileWriter fw = null;
@@ -5420,7 +5421,7 @@ public class GeneSet extends JApplet {
 		//return funcmap;
 	}
 
-	public static void funcMappingUni(Reader rd, Map<String, Gene> uniids, String outfile) throws IOException {
+	public void funcMappingUni(Reader rd, Map<String, Gene> uniids, String outfile) throws IOException {
 		FileWriter fw = null;
 		if (outfile != null)
 			fw = new FileWriter(outfile);
@@ -5506,7 +5507,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	private static void proxi(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, boolean remove) {
+	private void proxi(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, boolean remove) {
 		Set<String> ct = new HashSet<String>();
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
@@ -5873,20 +5874,42 @@ public class GeneSet extends JApplet {
 		return ti;
 	}
 	
-	static TableModel	defaultModel;
-	static TableModel	groupModel;
+	public JTable getGeneTable() {
+		return table;
+	}
+	
+	public JTable getFunctionTable() {
+		return ftable;
+	}
+	
+	JTable		table;
+	JTable		ftable;
+	TableModel	defaultModel;
+	TableModel	groupModel;
+	
+	//refmap, genelist, funclist, iclusterlist, uclusterlist, specset
+	Map<String, Gene> genemap;
+	List<Gene> genelist = new ArrayList<Gene>();
+	List<Function> funclist = new ArrayList<Function>();
+	List<Set<String>> iclusterlist;
+	List<Set<String>> uclusterlist;
+	Map<Set<String>, ShareNum> specset;
+	
+	Set<String> species = new TreeSet<String>();
+	Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap;
+	BufferedImage bimg;
 	
 	JComboBox selcomb;
-	static Map<String,Function> funcmap = new HashMap<String,Function>();
-	private static JComponent showGeneTable(final Map<String, Gene> genemap, final List<Gene> genelist, 
+	Map<String,Function> funcmap = new HashMap<String,Function>();
+	private JComponent showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
-			final Map<Set<String>, ShareNum> specset, final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
+			final Map<Set<String>, ShareNum> specset,*/ final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
 			final Container comp, final JApplet applet, final JComboBox selcomblocal) throws IOException {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		splitpane.setDividerLocation(400);
 		JScrollPane scrollpane = new JScrollPane();
-		final JTable table = new JTable() {
+		table = new JTable() {
 			public String getToolTipText(MouseEvent me) {
 				Point p = me.getPoint();
 				int r = rowAtPoint(p);
@@ -6094,10 +6117,6 @@ public class GeneSet extends JApplet {
 		table.setAutoCreateRowSorter(true);
 		scrollpane.setViewportView(table);
 
-		final JComboBox combo = new JComboBox();
-		combo.addItem("Select pathway");
-
-		final Map<String, Set<String>> pathwaymap = new TreeMap<String, Set<String>>();
 		Set<String> current = null;
 		InputStream is = GeneSet.class.getResourceAsStream("/kegg_pathways");
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -6116,45 +6135,8 @@ public class GeneSet extends JApplet {
 		}
 		br.close();
 
-		Set<String> allecs = new HashSet<String>();
-		for (Function f : funclist) {
-			if (f.ec != null)
-				allecs.add(f.ec);
-		}
-
-		for (String val : pathwaymap.keySet()) {
-			Set<String> set = pathwaymap.get(val);
-			for (String s : set) {
-				if (allecs.contains(s)) {
-					combo.addItem(val);
-					break;
-				}
-			}
-		}
-
-		final JComboBox specombo = new JComboBox();
-		specombo.addItem("Select blast species");
-
-		Set<String> set = new TreeSet<String>();
-		for (Gene g : genelist) {
-			if (g.species != null) {
-				for (String sp : g.species.keySet()) {
-					Teginfo stv = g.species.get(sp);
-					for (Tegeval tv : stv.tset) {
-						if (tv.eval <= 0.00001 && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
-							set.add(tv.teg);
-					}
-				}
-			}
-		}
-
-		for (String sp : set) {
-			specombo.addItem(sp);
-		}
-
 		final JTextField textfield = new JTextField();
-		JComponent topcomp = new JComponent() {
-		};
+		JComponent topcomp = new JComponent() {};
 		topcomp.setLayout(new BorderLayout());
 		topcomp.add(scrollpane);
 
@@ -6163,13 +6145,31 @@ public class GeneSet extends JApplet {
 		JToolBar topcombo = new JToolBar();
 		// topcombo.
 		// topcombo.setLayout( new FlowLayout() );
+		
+		specombo = new JComboBox<String>();
+		combo = new JComboBox<String>();
+				
+		specombo.addItem("Select blast species");
+		combo.addItem("Select pathway");
 		topcombo.add(combo);
 		topcombo.add(specombo);
 		topcomp.add(topcombo, BorderLayout.SOUTH);
 
-		JComponent ttopcom = new JComponent() {
-		};
+		JComponent ttopcom = new JComponent() {};
 		ttopcom.setLayout(new FlowLayout());
+		
+		final JButton importbutton = new JButton( new AbstractAction("Import") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					importStuff();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		ttopcom.add( importbutton );
+		
 		final JCheckBox checkbox = new JCheckBox();
 		checkbox.setAction(new AbstractAction("Sort by location") {
 			@Override
@@ -6178,10 +6178,6 @@ public class GeneSet extends JApplet {
 			}
 		});
 		ttopcom.add(checkbox);
-
-		final Set<String> species = new TreeSet<String>();
-		final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(uclusterlist, species);
-		final BufferedImage bimg = bmatrix(species, clusterMap);
 
 		AbstractAction matrixaction = new AbstractAction("Relation matrix") {
 			@Override
@@ -6370,7 +6366,7 @@ public class GeneSet extends JApplet {
 		AbstractAction genexyplotaction = new AbstractAction("Gene XY plot") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new XYPlot().xyPlot( comp, genelist, table, clusterMap );
+				new XYPlot().xyPlot( GeneSet.this, comp, genelist, clusterMap );
 			}
 		};
 		
@@ -7396,7 +7392,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					GeneSorter.groupMynd( allgenegroups, genelist, table, contigs, specset );
+					new GeneSorter().groupMynd( GeneSet.this, allgenegroups, genelist, table, contigs, specset );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -7421,7 +7417,7 @@ public class GeneSet extends JApplet {
 							geneset.add( gene.getGeneGroup() );
 						}
 					}
-					Neighbour.neighbourMynd( comp, genelist, table, geneset );
+					new Neighbour().neighbourMynd( GeneSet.this, comp, genelist, geneset );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -7432,7 +7428,7 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				Set<String> species = speciesFromCluster( clusterMap );
 				List<String> specList = new ArrayList<String>( species );
-				Synteni.syntenyMynd( comp, genelist, table, specList );
+				new Synteni().syntenyMynd( GeneSet.this, comp, genelist, specList );
 			}
 		});
 		
@@ -8227,7 +8223,7 @@ public class GeneSet extends JApplet {
 			}
 		});
 
-		final JTable ftable = new JTable() {
+		ftable = new JTable() {
 			public String getToolTipText(MouseEvent me) {
 				Point p = me.getPoint();
 				int r = rowAtPoint(p);
@@ -10094,10 +10090,10 @@ public class GeneSet extends JApplet {
 		updateFilter(table, filter, label);
 	}
 
-	static boolean ftableisselecting = false;
-	static boolean tableisselecting = false;
+	boolean ftableisselecting = false;
+	boolean tableisselecting = false;
 
-	private static void readGoInfo(Reader rd, Map<Function, Set<Gene>> gofilter, String outfile) throws IOException {
+	private void readGoInfo(Reader rd, Map<Function, Set<Gene>> gofilter, String outfile) throws IOException {
 		FileWriter fw = null;
 		if (outfile != null)
 			fw = new FileWriter(outfile);
@@ -10468,16 +10464,15 @@ public class GeneSet extends JApplet {
 		return ggmap;
 	}
 	
+	static JComboBox<String> 						specombo;
+	static JComboBox<String> 						combo;
+	static Map<String, Set<String>> 				pathwaymap = new TreeMap<String, Set<String>>();
 	static List<String> 							corrInd;
 	static List<GeneGroup>							allgenegroups;
 	static Map<Set<String>,List<GeneGroup>> 		ggSpecMap;
 	static Map<String,Set<GeneGroup>>				specGroupMap;
-	private static JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
-		/*InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
-		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
-		String line2 = br2.readLine();
-		br2.close();*/
-		
+	
+	private void importStuff() throws IOException {
 		try {
 			InputStream is = GeneSet.class.getResourceAsStream("/allthermus.fna");
 			//InputStream cois = GeneSet.class.getResourceAsStream("/contigorder.txt");
@@ -10558,7 +10553,6 @@ public class GeneSet extends JApplet {
 		poddur.clear();
 		
 		// Map<String,Gene> refmap = new TreeMap<String,Gene>();
-		List<Gene> genelist = new ArrayList<Gene>();
 		for (String genedesc : refmap.keySet()) {
 			Gene gene = refmap.get(genedesc);
 			// refmap.put(gene.refid, gene);
@@ -11042,7 +11036,6 @@ public class GeneSet extends JApplet {
 		// totalgo, "/home/sigmar/workspace/distann/go_short.obo");
 		is = GeneSet.class.getResourceAsStream("/go_short.obo");
 		readGoInfo(new InputStreamReader(is), totalgo, null);
-		List<Function> funclist = new ArrayList<Function>();
 		for (String go : funcmap.keySet()) {
 			Function f = funcmap.get(go);
 			f.index = funclist.size();
@@ -11059,7 +11052,7 @@ public class GeneSet extends JApplet {
 		 * komap.get(f.ec); } } }
 		 */
 
-		Map<Set<String>, ShareNum> specset = new HashMap<Set<String>, ShareNum>();
+		specset = new HashMap<Set<String>, ShareNum>();
 		int sn = 0;
 		/*for (Gene g : genelist) {
 			if (g.species != null) {
@@ -11085,11 +11078,56 @@ public class GeneSet extends JApplet {
 				}
 			}
 		}
+		
+		Set<String> allecs = new HashSet<String>();
+		for( Function f : funclist ) {
+			if (f.ec != null)
+				allecs.add(f.ec);
+		}
 
+		for (String val : pathwaymap.keySet()) {
+			Set<String> set = pathwaymap.get(val);
+			for (String s : set) {
+				if (allecs.contains(s)) {
+					combo.addItem(val);
+					break;
+				}
+			}
+		}
+
+		Set<String> set = new TreeSet<String>();
+		for (Gene g : genelist) {
+			if (g.species != null) {
+				for (String sp : g.species.keySet()) {
+					Teginfo stv = g.species.get(sp);
+					for (Tegeval tv : stv.tset) {
+						if (tv.eval <= 0.00001 && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
+							set.add(tv.teg);
+					}
+				}
+			}
+		}
+
+		for (String sp : set) {
+			specombo.addItem(sp);
+		}
+		
+		clusterMap = initCluster(uclusterlist, species);
+		bimg = bmatrix(species, clusterMap);
+		
+		table.tableChanged( new TableModelEvent( table.getModel() ) );
+		ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
+	}
+	
+	private JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
+		/*InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
+		String line2 = br2.readLine();
+		br2.close();*/
 		// aas.clear();
 
 		// return new JComponent() {};
-		return showGeneTable(refmap, genelist, funclist, iclusterlist, uclusterlist, specset, null, jb, comp, applet, selcomblocal);// clustInfoMap// );
+		return showGeneTable(null, jb, comp, applet, selcomblocal);// clustInfoMap// );
 	}
 	
 	public static Tegeval check( Contig contig ) {

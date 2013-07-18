@@ -425,7 +425,7 @@ public class GeneSorter {
 		}
 	}
 	
-	public static void groupMynd(final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final List<Contig> contigs, final Map<Set<String>, ShareNum> specset) throws IOException {
+	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final List<Contig> contigs, final Map<Set<String>, ShareNum> specset) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -465,7 +465,7 @@ public class GeneSorter {
 							GeneGroup genegroup;
 							Gene 		tgene = null;
 							int r = sorting.convertRowIndexToModel(i);
-							if( sorting.getModel() == GeneSet.groupModel ) {
+							if( sorting.getModel() == geneset.groupModel ) {
 								genegroup = GeneSet.allgenegroups.get( r );
 							} else {
 								tgene = genelist.get( r );
@@ -486,7 +486,7 @@ public class GeneSorter {
 						GeneGroup genegroup;
 						Gene 		tgene = null;
 						int r = sorting.convertRowIndexToModel(i);
-						if( sorting.getModel() == GeneSet.groupModel ) {
+						if( sorting.getModel() == geneset.groupModel ) {
 							genegroup = GeneSet.allgenegroups.get( r );
 						} else {
 							tgene = genelist.get( r );
