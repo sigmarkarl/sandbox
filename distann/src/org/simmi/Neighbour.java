@@ -88,7 +88,7 @@ public class Neighbour {
 		c.repaint();
 	}
 	
-	public static Tegeval getSelectedTe( Point p, JTable rowheader, JRadioButton sequenceView, JRadioButton realView, List<Tegeval> lte, int rowheight ) {
+	public Tegeval getSelectedTe( Point p, JTable rowheader, JRadioButton sequenceView, JRadioButton realView, List<Tegeval> lte, int rowheight ) {
 		if( sequenceView.isSelected() || realView.isSelected() ) {			
 			for( int y = 0; y < rowheader.getRowCount(); y++ ) {
 				int r = rowheader.convertRowIndexToModel( y );
@@ -236,7 +236,9 @@ public class Neighbour {
 	static List<Tegeval>	hteg;
 	//static int colorscheme = 0;
 	//static List<String>	speclist;
-	public static void neighbourMynd( final Container comp, final List<Gene> genes, final JTable sorting, final Set<GeneGroup> selGenes ) throws IOException {
+	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Set<GeneGroup> selGenes ) throws IOException {
+		final JTable sorting = geneset.getGeneTable();
+		
 		selectedGenesGroups = selGenes;
 		
 		final JRadioButton	sequenceView = new JRadioButton("Sequence");
@@ -1256,7 +1258,7 @@ public class Neighbour {
 						} else {
 							te.setSelected( !te.isSelected() );
 							int i;
-							if( sorting.getModel() == GeneSet.groupModel ) {
+							if( sorting.getModel() == geneset.groupModel ) {
 								i = GeneSet.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genes.indexOf( te.getGene() );
