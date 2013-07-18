@@ -87,7 +87,8 @@ public class XYPlot {
 	Contig	contigx;
 	Contig	contigy;
 	Point	mouseSel;
-	public void xyPlot( final Container comp, final List<Gene> genelist, final JTable table, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
+	public void xyPlot( final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
+		final JTable table = geneset.getGeneTable();
 		final Set<String> 	specset = GeneSet.speciesFromCluster( clusterMap );
 		final List<String>	species = new ArrayList<String>( specset );
 		final List<String>	specList = new ArrayList<String>( species );
@@ -207,7 +208,7 @@ public class XYPlot {
 										g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
 									} else {
 										boolean sel = false;
-										if( table.getModel() == GeneSet.groupModel ) {
+										if( table.getModel() == geneset.groupModel ) {
 											int r = table.convertRowIndexToView( val.getGene().getGeneGroup().index );
 											if( r != -1 ) {
 												sel = table.isRowSelected( r );
@@ -404,7 +405,7 @@ public class XYPlot {
 							te.setSelected( true );
 							
 							int i;
-							if( table.getModel() == GeneSet.groupModel ) {
+							if( table.getModel() == geneset.groupModel ) {
 								i = GeneSet.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genelist.indexOf( te.getGene() );
@@ -444,7 +445,7 @@ public class XYPlot {
 							te.setSelected( true );
 							
 							int i;
-							if( table.getModel() == GeneSet.groupModel ) {
+							if( table.getModel() == geneset.groupModel ) {
 								i = GeneSet.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genelist.indexOf( te.getGene() );

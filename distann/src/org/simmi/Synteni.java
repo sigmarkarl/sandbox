@@ -36,7 +36,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class Synteni {
-	public static void syntenyMynd( final Container comp, final List<Gene> genes, final JTable sorting, final List<String> species ) {
+	public void syntenyMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final List<String> species ) {
+		final JTable sorting = geneset.getGeneTable();
 		final JTable rowheader = new JTable();
 		TableModel model = new TableModel() {
 			@Override
@@ -126,7 +127,7 @@ public class Synteni {
 				
 				//g.setColor( Color.blue );
 				int[] rr = sorting.getSelectedRows();
-				if( sorting.getModel() == GeneSet.groupModel ) {
+				if( sorting.getModel() == geneset.groupModel ) {
 					for( int r : rr ) {
 						int i = sorting.convertRowIndexToModel( r );
 						GeneGroup gg = GeneSet.allgenegroups.get( i );
