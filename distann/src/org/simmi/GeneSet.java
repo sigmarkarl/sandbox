@@ -71,6 +71,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -84,6 +86,7 @@ import javafx.scene.web.WebView;
 import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
 import javax.jnlp.FileContents;
+import javax.jnlp.FileOpenService;
 import javax.jnlp.FileSaveService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
@@ -312,17 +315,6 @@ public class GeneSet extends JApplet {
 		Collections.sort(isoel);
 	}
 
-	private static StringBuilder aaSearch(String query) {
-		/*
-		 * aquery.name = query; int ind = Arrays.binarySearch(aas, aquery); if(
-		 * ind < 0 ) { System.err.println(); } return ind < 0 ? null : aas[ ind
-		 * ].aas;
-		 */
-
-		Tegeval aass = aas.get(query);
-		return aass == null ? null : aass.getProteinSequence();
-	}
-
 	/*private static StringBuilder dnaSearch(String query) {
 		/*
 		 * aquery.name = query; int ind = Arrays.binarySearch(aas, aquery); if(
@@ -335,949 +327,6 @@ public class GeneSet extends JApplet {
 		return null;
 	}*/
 	
-	private static Gene genestuff( List<Set<String>> uclusterlist, String query, String desc, String teg, String val, Map<String,Gene> ret ) {
-		Gene gene = null;
-		
-		if( ret.containsKey(val) ) {
-			gene = ret.get(val);
-			//int i = 0;
-			//System.err.println( uclusterlist.size() );
-			for( Set<String>	clusterset : uclusterlist ) {
-				//System.err.println( i++ );
-				/*boolean mugg = false;
-				if( clusterset.size() == 4 ) {
-					int count = 0;
-					for( String s : clusterset ) {
-						if( s.contains("t.oshimai") || s.contains("mt.silvanus") ) count++;
-					}
-					if( count >= 2 ) {
-						System.err.println( clusterset );
-						mugg = true;
-					}
-				}*/
-				if( clusterset.contains( query ) ) {
-					for( String padd : gene.species.keySet() ) {
-						Teginfo stv = gene.species.get(padd);
-						for( Tegeval tvl : stv.tset ) {
-							if( !clusterset.contains( tvl.cont ) ) {
-								Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
-								
-								if( newgene == null ) {
-									newgene = new Gene(null, desc, teg);
-									newgene.allids = new HashSet<String>();
-									newgene.species = new HashMap<String, Teginfo>();
-									newgene.refid = gene.refid + " new";
-									ret.put( newgene.refid, newgene );
-								}
-								
-								return newgene;
-								
-								//break;
-							}
-						}
-						
-						//if( newgene != gene ) break;
-					}
-					//newgene = genestuff( gene, clusterset, desc, teg, id, ret );
-				}
-			}
-		}
-		
-		return gene;
-	}
-
-	private static void panCoreFromNRBlast(Reader rd, Reader rd2, String outfile, String outfile2, Map<String, Gene> ret, Map<String, String> allgenes, Map<String, Set<String>> geneset, 
-			Map<String, Set<String>> geneloc, Map<String, Gene> locgene, Set<String> poddur, List<Set<String>> uclusterlist ) 
-			throws IOException {
-		FileWriter fw = null;
-		if (outfile != null)
-			fw = new FileWriter(outfile);
-
-		/*
-		 * Set<String> extra = new HashSet<String>();
-		 * 
-		 * extra.add("protein of unknown function DUF820");
-		 * extra.add("ABC transporter ATP-binding protein");
-		 * extra.add("short-chain dehydrogenase/reductase SDR");
-		 * extra.add("two component transcriptional regulator, winged helix family"
-		 * ); extra.add("Tetratricopeptide TPR_2 repeat protein");
-		 * extra.add("extracellular solute-binding protein family 1");
-		 * extra.add("histidine kinase"); extra.add("cytochrome c class I");
-		 * extra.add("NUDIX hydrolase");
-		 * extra.add("GCN5-related N-acetyltransferase");
-		 * extra.add("acyl-CoA dehydrogenase domain protein");
-		 * extra.add("protein of unknown function DUF6 transmembrane");
-		 * extra.add("response regulator receiver protein");
-		 * extra.add("Peptidase M23"); extra.add("glycosyltransferase");
-		 * extra.add("metallophosphoesterase");
-		 * extra.add("ABC transporter permease protein");
-		 * extra.add("UspA domain protein");
-		 * extra.add("transposase, IS605 OrfB family");
-		 * extra.add("methyltransferase");
-		 * extra.add("aminotransferase class I and II");
-		 * extra.add("PilT protein domain protein");
-		 * extra.add("hypothetical protein");
-		 * extra.add("nucleotidyltransferase");
-		 * extra.add("serine/threonine protein kinase");
-		 * extra.add("transcriptional regulator");
-		 * extra.add("ABC-2 type transporter");
-		 * extra.add("AMP-dependent synthetase and ligase");
-		 * extra.add("DNA polymerase beta domain protein region");
-		 * extra.add("ABC transporter-like protein");
-		 * extra.add("Radical SAM domain protein");
-		 * extra.add("Extracellular ligand-binding receptor");
-		 * extra.add("HAD-superfamily hydrolase, subfamily IA, variant 3");
-		 * extra.add("metal dependent hydrolase");
-		 * extra.add("sugar ABC transporter, permease protein");
-		 * extra.add("acetyl-CoA acetyltransferase");
-		 * extra.add("LmbE family protein");
-		 * extra.add("transcriptional repressor");
-		 * extra.add("transposase IS605 OrfB family");
-		 * extra.add("beta-lactamase domain protein");
-		 * extra.add("dehydrogenase"); extra.add("enoyl-CoA hydratase");
-		 * extra.add("metal dependent phosphohydrolase");
-		 * extra.add("two-component response regulator");
-		 * extra.add("ABC transporter, permease protein"); extra.add(
-		 * "alkyl hydroperoxide reductase/ Thiol specific antioxidant/ Mal");
-		 * extra.add("SMC domain protein");
-		 * extra.add("protein of unknown function DUF88");
-		 * extra.add("Roadblock/LC7 family protein");
-		 * extra.add("TetR family transcriptional regulator");
-		 * extra.add("translation initiation factor IF-2");
-		 * extra.add("glycosyl transferase family 2");
-		 * extra.add("Integrase catalytic region");
-		 * extra.add("putative lipoprotein");
-		 * extra.add("tetratricopeptide repeat domain-containing protein");
-		 * extra.add("ABC transporter permease");
-		 * extra.add("conserved domain-containing protein");
-		 * extra.add("MutT/nudix family protein");
-		 * extra.add("sensor histidine kinase");
-		 * extra.add("CBS domain-containing protein");
-		 * extra.add("transporter, major facilitator family");
-		 * extra.add("acyl-CoA dehydrogenase"); extra.add("acetyltransferase");
-		 * extra.add("universal stress protein family");
-		 * extra.add("putative hydrolase");
-		 * extra.add("sugar ABC transporter permease");
-		 * extra.add("ATP-dependent protease La"); extra.add("permease");
-		 * extra.add("metallo-beta-lactamase family protein");
-		 * extra.add("immunogenic protein"); extra.add(
-		 * "leucine-, isoleucine-, valine-, threonine-, and alanine-binding");
-		 * extra.add("branched-chain amino acid ABC transporter permease");
-		 * extra.add("membrane protein"); extra.add("serine protease");
-		 * extra.add
-		 * ("oxidoreductase, short-chain dehydrogenase/reductase family");
-		 * extra.
-		 * add("branched-chain amino acid ABC transporter ATP-binding protein");
-		 * extra.add("cytochrome c-552");
-		 * extra.add("hypothetical protein TaqDRAFT_4901");
-		 * extra.add("putative PIN domain-containing protein");
-		 * extra.add("ATPase"); extra.add("long-chain-fatty-acid--CoA ligase");
-		 * extra.add("thioredoxin"); extra.add("aspartyl-tRNA synthetase");
-		 * extra.add("thioredoxin reductase");
-		 * extra.add("ggdef domain-containing protein");
-		 * extra.add("transposase BAC55317.2");
-		 * extra.add("integrase, catalytic region");
-		 * extra.add("ribose-phosphate pyrophosphokinase");
-		 * extra.add("N-acetyl-gamma-glutamyl-phosphate reductase");
-		 * extra.add("putative oxidoreductase");
-		 * extra.add("glycolate oxidase subunit GlcE");
-		 * extra.add("GntR family transcriptional regulator");
-		 * extra.add("3-oxoacyl-[acyl-carrier-protein] reductase");
-		 * extra.add("PilT protein domain-containing protein");
-		 * extra.add("acetylglutamate kinase");
-		 * extra.add("spermidine/putrescine import ATP-binding protein PotA");
-		 */
-
-		// uclusterlist with avg identity
-		BufferedReader br = new BufferedReader(rd);
-		parseBlast( br, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, false, false );
-		br.close();
-		if (fw != null) {
-			fw.close();
-		}
-		
-		fw = null;
-		if (outfile2 != null)
-			fw = new FileWriter(outfile2);
-
-		if( rd2 != null ) {
-			BufferedReader br2 = new BufferedReader(rd2);
-			//String line = br.readLine();
-			//System.err.println( line );
-			parseBlast( br2, fw, ret, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, true, true );
-			br2.close();
-			if (fw != null) {
-				fw.close();
-			}
-		}
-	}
-	
-	public static void parseBlast( BufferedReader br, FileWriter fw, Map<String, Gene> ret, Map<String, String> allgenes, Map<String, Set<String>> geneset, 
-			Map<String, Set<String>> geneloc, Map<String, Gene> locgene, Set<String> poddur, List<Set<String>> uclusterlist, boolean old, boolean addon ) throws IOException {
-		String query = null;
-		int start = 0;
-		int stop = 0;
-		int ori = 0;
-		String evalue = null;
-		String line = br.readLine();
-		int cnt = 0;
-		Tegeval preval = null;
-		while (line != null) {
-			String trim = line.trim();
-			cnt++;
-			//if (query != null && (trim.startsWith(">ref") || trim.startsWith(">sp") || trim.startsWith(">pdb") || trim.startsWith(">dbj") || trim.startsWith(">gb") || trim.startsWith(">emb") || trim.startsWith(">pir") || trim.startsWith(">tpg"))) {
-			if (query != null && trim.startsWith(">") ) {
-				//String[] split = trim.split("\\|");
-
-				/*line = br.readLine();
-				while( !line.startsWith("Length=") && !line.startsWith("Query=") ) {
-					trim += " "+line.trim();
-					line = br.readLine();
-				}*/
-				
-				int i = trim.indexOf(".aa", 2);
-				int aaa = 4;
-				if( i == -1 ) {
-					i = 2;
-					aaa = 0;
-				}
-				int i2 = trim.indexOf(' ', i);
-				String id;
-				//boolean addon = i == -1;
-				if( addon ) {
-					int si = trim.indexOf('|');
-					int ei = trim.lastIndexOf('|'); //, i2);
-					id = trim.substring(si+1,ei);
-				} else {
-					id = trim.substring(i+aaa,i2).trim();
-				}
-				//String id = i == -1 ? trim.substring(1,i2).trim() : trim.substring(i+4,i2).trim();
-				String desc = trim.substring(i2+1);
-				//String id = split[1];
-				//String desc = split[2];
-				String teg = "";
-
-				int idx = desc.lastIndexOf('[');
-				int idx2 = desc.indexOf(']', idx);
-				String newline = "";
-				if (idx > idx2 || idx == -1) {
-					newline = br.readLine();
-					if (!newline.startsWith("Query=")) {
-						line = line + newline;
-						trim = line.trim();
-
-						i = trim.indexOf(' ', 2);
-						id = trim.substring(2,i);
-						desc = trim.substring(i+1);
-						/*split = trim.split("\\|");
-
-						id = split[1];
-						desc = split[2];*/
-
-						idx = desc.lastIndexOf('[');
-					}
-				}
-
-				if (idx > 0) {
-					teg = desc.substring(idx);
-					desc = desc.substring(0, idx - 1).trim();
-				} else {
-					desc = desc.trim();
-				}
-
-				/*
-				 * if( extra.contains(desc) ||
-				 * desc.equals("conserved hypothetical protein") ||
-				 * desc.equals("transposase") || desc.equals("hydrolase") ||
-				 * desc.equals("ABC transporter related") ||
-				 * desc.equals("transporter") ||
-				 * desc.equals("putative cytoplasmic protein") || desc.equals(
-				 * "binding-protein-dependent transport systems inner membrane component"
-				 * ) || desc.equals("major facilitator superfamily MFS_1") ||
-				 * desc.equals("transposase IS4 family protein") ||
-				 * desc.equals("inner-membrane translocator") ) { desc = desc +
-				 * " " + id; }
-				 */
-
-				/*String[] qsplit = null;
-				if (query != null) {
-					qsplit = query.split("_");
-				}*/
-
-				Set<String> set;
-				//String padda = qsplit[0];
-				int ival = query.indexOf("|");
-				if( ival == -1 ) ival = query.length();
-				int ival2 = query.indexOf("ontig");
-				if( ival2 == -1 ) ival2 = query.length();
-				i = query.lastIndexOf("_", Math.min(ival,ival2) );
-				if( i == -1 ) {
-					System.err.println();
-				}
-				String padda = query.substring(0, i);
-				
-				/*if( padda.startsWith("Ocean") ) padda = "o.profundus";
-				else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
-				else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
-				else if( padda.contains("Ruber") ) padda = "mt.ruber";
-				else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) {
-					padda = "t.thermSG0_5JP17_16";
-				}*/
-				//if( padda.endsWith(".fna") ) padda = padda.substring(0, padda.length()-4);
-				
-				if (geneset.containsKey(padda)) {
-					set = geneset.get(padda);
-				} else {
-					set = new HashSet<String>();
-					System.err.println("new padda " + padda);
-					geneset.put(padda, set);
-				}
-
-				String val = id;
-				// set.add( desc );
-
-				// int first = query.indexOf('_');
-				// int sec = query.indexOf('_', first+1 );
-
-				// System.err.println("contig "+contig);
-
-				//StringBuilder aa = aaSearch(query);
-				/*
-				 * int nq = query.lastIndexOf('_'); int mq =
-				 * query.lastIndexOf('_', nq-1); String nquery; if( mq != -1 ) {
-				 * nquery = query.substring(0, nq); } else { nquery = query; }
-				 */
-				/*StringBuilder dn = dnaSearch(query);
-				if( dn == null ) {
-					System.err.println( query );
-					System.err.println();
-				}*/
-				// System.err.println( "ermm " + ori );
-				double deval = 0.0;
-				try {
-					deval = Double.parseDouble(evalue);
-				} catch( Exception e ) {
-					e.printStackTrace();
-				}				
-				Gene gene;
-				String check = addon ? "_" + aaSearch(query) : val;
-				if( ret.containsKey( check ) ) {
-					gene = genestuff( uclusterlist, query, desc, teg, check, ret );
-					if( addon ) {
-						gene.name = desc;
-						gene.origin = teg;
-						gene.allids.remove( check );
-					}
-				} else {
-					gene = new Gene(null, desc, teg);
-					gene.allids = new HashSet<String>();
-					gene.species = new HashMap<String, Teginfo>();
-					ret.put(val, gene);
-					gene.refid = id;
-				}
-				gene.allids.add(id);
-				set.add(val);
-				
-				//aa, dn
-				Tegeval tv = aas.get( query );//new Tegeval(gene, teg, deval, query, contig, contloc, start, stop, ori);
-				tv.setGene( gene );
-				tv.setTegund( padda );
-				tv.setEval( deval );
-				if( tv == null || tv.ori != ori || tv.start != start || tv.stop != stop ) {
-					System.err.println();
-				}
-				
-				if( preval != null ) {
-					Contig precontig = preval.getContshort();
-					Contig curcontig = tv.getContshort();
-					boolean bu = precontig.equals( curcontig );
-					//System.err.println( bu + "  " + precontig.toString().equals( curcontig.toString()) + "  " + (precontig == curcontig) );
-					if( bu ) {
-						tv.setPrevious( preval );
-						tv.setNum( preval.getNum()+1 );
-						curcontig.end = tv;
-					} else {
-						tv.setNum(0);
-						curcontig.start = tv;
-						curcontig.end = tv;
-					}
-				} else tv.setNum( 0 );
-				preval = tv;
-				
-				Teginfo stv;
-				if (!gene.species.containsKey(padda)) {
-					stv = new Teginfo();
-					gene.species.put(padda, stv);
-				} else {
-					stv = gene.species.get(padda);
-				}
-				
-				if( addon ) {
-					Tegeval rem = null;
-					for( Tegeval te : stv.tset ) {
-						if( te.cont.equals( query ) ) {
-							rem = te;
-							break;
-						}
-					}
-					if( rem != null ) {
-						stv.tset.remove( rem );
-					}
-				}
-				stv.add( tv );
-				// gene.blastspec = teg;
-				/*
-				 * if( gene.species == null ) { gene.species = new
-				 * HashMap<String,Set<Tegeval>>(); }
-				 */
-
-				if (!allgenes.containsKey(val) || allgenes.get(val) == null) {
-					//allgenes.put(val, split.length > 1 ? teg + " " + id : null);
-					allgenes.put(val, teg + " " + id );
-				}
-
-				Set<String> locset = null;
-				if (geneloc.containsKey(val)) {
-					locset = geneloc.get(val);
-				} else {
-					locset = new HashSet<String>();
-					geneloc.put(val, locset);
-				}
-				// locset.add( swapmap.get(name)+"_"+query + " " + evalue );
-				locset.add(query + " " + evalue);
-
-				//int li = query.lastIndexOf('_');
-				//int ln = query.lastIndexOf('_', li-1);
-				//String 	queryshort = query.substring(0, ln)+query.substring(li);
-				locgene.put(query, gene);
-
-				query = null;
-				if (fw != null) {
-					/*
-					 * if( line.lastIndexOf('[') > line.indexOf(']') ) { String
-					 * newline = br.readLine(); line += newline.trim(); }
-					 */
-					fw.write(trim + "\n");
-				}
-
-				if (newline.startsWith("Query=")) {
-					line = newline;
-					continue;
-				}
-			} else if ( trim.contains("No hits")) {
-				if( !addon ) {
-					Gene gene;
-	
-					StringBuilder aa = aaSearch(query);
-					String aaid = "_"+aa;
-					
-					
-					/*String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
-					if( padda.endsWith(".fna") ) padda = padda.substring(0,padda.length()-4);*/
-					
-					String padda;
-					if( query != null ) {
-						int ival = query.indexOf("|");
-						if( ival == -1 ) ival = query.length();
-						int ival2 = query.indexOf("ontig");
-						if( ival2 == -1 ) ival2 = query.length();
-						int i = query.lastIndexOf("_", Math.min(ival,ival2) );
-						padda = query.substring(0, i);
-					} else {
-						padda = "";
-					}
-					
-					/*if( padda.startsWith("Ocean") ) padda = "o.profundus";
-					else if( padda.startsWith("Marin") ) padda = "m.hydrothermalis";
-					else if( padda.contains("Silvanus") ) padda = "mt.silvanus";
-					else if( padda.contains("Ruber") ) padda = "mt.ruber";
-					else if( padda.contains("t.thermophilus_SG0_5JP17_16") ) padda = "t.thermSG0_5JP17_16";*/
-					
-					if (ret.containsKey(aaid)) {
-						gene = ret.get(aaid);
-					} else {
-						gene = new Gene(null, aaid, padda);
-						ret.put(aaid, gene);
-						gene.allids = new HashSet<String>();
-						gene.species = new HashMap<String, Teginfo>();
-						ret.put(aaid, gene);
-						gene.refid = aaid;
-					}
-					gene.allids.add(aaid);
-	
-					if (gene.species == null)
-						gene.species = new HashMap<String, Teginfo>();
-					double deval = -1.0;
-					/*
-					 * try { deval = Double.parseDouble(evalue); } catch( Exception
-					 * e ) { System.err.println("ok"); }
-					 */
-					// gene.species.put( padda, new Tegeval( padda, deval,
-					// aas.get(query), query ) );
-					Teginfo stv;
-					if (!gene.species.containsKey(padda)) {
-						stv = new Teginfo();
-						gene.species.put(padda, stv);
-						
-						System.err.println( "new annars " + padda );
-					} else
-						stv = gene.species.get(padda);
-	
-					String contigstr = null;
-					String contloc = null;
-	
-					/*int first = query.indexOf('_');
-					int sec = query.indexOf('_', first + 1);
-					if (sec != -1) {
-						contig = query.substring(0, sec);
-						contloc = query.substring(first + 1);
-					} else {
-						contig = query;
-						contloc = query.substring(first + 1);
-					}*/
-					
-					int fi = query.indexOf('_');
-					int li = query.lastIndexOf('_');
-					contigstr = query.substring(0, li);
-					contloc = query.substring(fi+1,query.length());
-	
-					//StringBuilder aastr = aaSearch(query);
-					/*int nq = query.lastIndexOf('_');
-					int mq = query.lastIndexOf('_', nq - 1);
-					String nquery;
-					if (mq != -1) {
-						nq = mq;
-						nquery = query.substring(0, nq);
-					} else {
-						nquery = query;
-					}*/
-	
-					Contig contig = contigmap.containsKey( contigstr ) ? contigmap.get( contigstr ) : new Contig( contigstr );
-					//StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
-					
-					Tegeval tv = aas.get( query ); //new Tegeval(gene, padda, deval, query, contig, contloc, start, stop, ori);
-							//new Tegeval(gene, padda, deval, aastr, dn, query, contig, contloc, start, stop, ori);
-					tv.setGene( gene );
-					tv.setTegund( padda );
-					tv.setEval( deval );
-					if( tv == null || tv.ori != tv.ori || tv.start != start || tv.stop != stop ) {
-						System.err.println();
-					}
-					
-					stv.add( tv );
-					
-					if( preval != null ) {
-						Contig precontig = preval.getContshort();
-						Contig curcontig = tv.getContshort();
-						boolean bu = precontig.equals( curcontig );
-						//System.err.println( bu + "  " + precontig.toString().equals( curcontig.toString()) + "  " + (precontig == curcontig) );
-						if( bu ) {
-							tv.setPrevious( preval );
-							tv.setNum( preval.getNum()+1 );
-							curcontig.end = tv;
-						} else {
-							tv.setNum(0);
-							curcontig.start = tv;
-							curcontig.end = tv;
-						}
-					} else tv.setNum( 0 );
-					preval = tv;
-					
-					if (!allgenes.containsKey(aaid) || allgenes.get(aaid) == null) {
-						allgenes.put(aaid, "Thermus " + aaid);
-					}
-	
-					Set<String> locset = null;
-					if (geneloc.containsKey(aaid)) {
-						locset = geneloc.get(aaid);
-					} else {
-						locset = new HashSet<String>();
-						geneloc.put(aaid, locset);
-					}
-					
-					locset.add(query + " -1.0");
-					//int li = query.lastIndexOf('_');
-					//int ln = query.lastIndexOf('_', li-1);
-					//String queryshort = query.substring(0, ln)+query.substring(li);
-					locgene.put(query, gene);
-				}
-
-				if (fw != null)
-					fw.write(line + "\n");
-			} else if (trim.startsWith("Query=")) {
-				// if( trim.)
-				//query = trim.substring(6).trim().split("[ ]+")[0].replace(".fna", "");
-				
-				/*int count = 0;
-				if( query.contains("contig") ) {
-					int k = query.indexOf('_');
-					while( k != -1 ) {
-						k = query.indexOf('_', k+1);
-						count++;
-					}
-				} else if( query.contains("|") && !query.startsWith("mt.") ) {
-					count = 3;
-				}
-				
-				if( count == 3 ) {
-					int li = query.lastIndexOf('_');
-					int ln = query.lastIndexOf('_', li-1);
-					query = query.substring(0, ln)+query.substring(li);
-				}*/
-				
-				String[] split = trim.split("#");
-				if ( split.length > 1 && split.length < 4) {
-					String newline = br.readLine();
-					line = line + newline;
-					trim = line.trim();
-					split = trim.split("#");
-				}
-				query = trim.substring(6).trim().split("[ ]+")[0]; //.replace(".fna", "");
-
-				if (split.length >= 3) {
-					start = Integer.parseInt(split[1].trim());
-					stop = Integer.parseInt(split[2].trim());
-				}
-				if (split.length >= 4) {
-					ori = Integer.parseInt(split[3].trim());
-				}
-				
-				int ival = query.indexOf("|");
-				if( ival == -1 ) ival = query.length();
-				int ival2 = query.indexOf("ontig");
-				if( ival2 == -1 ) ival2 = query.length();
-				int i = query.lastIndexOf("_", Math.min(ival,ival2) );
-				String padda = query.substring(0, i);
-				
-				poddur.add( padda );
-				
-				if (fw != null) {
-					// String[] split = trim.split("#");
-					// if( split.length < 4 ) {
-					// line += br.readLine();
-					// }
-					fw.write(line + "\n");
-				}
-			} else {
-				if( old ) {
-					if (query != null && (trim.startsWith("ref|") || trim.startsWith("sp|") || trim.startsWith("pdb|") || trim.startsWith("dbj|") || trim.startsWith("gb|") || trim.startsWith("emb|") || trim.startsWith("pir|") || trim.startsWith("tpg|"))) {
-						//} else if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
-						//line = br.readLine();
-						//line = br.readLine();
-						trim = line.trim();
-						
-						String[] split = trim.split("[\t ]+");
-						evalue = split[split.length - 1];
-						if( evalue.length() == 0 ) {
-							System.err.println();
-						}
-						if (fw != null)
-							fw.write(trim + "\n");
-					}
-				} else {
-					if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
-						//} else if (query != null /*&& trim.startsWith("Sequences producing")*/ ) {
-						//line = br.readLine();
-						//line = br.readLine();
-						trim = line.trim();
-						
-						String[] split = trim.split("[\t ]+");
-						evalue = split[split.length - 1];
-						if( evalue.length() == 0 ) {
-							System.err.println();
-						}
-						if (fw != null)
-							fw.write(trim + "\n");
-					}
-				}
-			}
-
-			if( cnt % 1000 == 0 ) {
-				System.err.println( cnt );
-			}
-			line = br.readLine();
-		}
-	}
-
-	static Map<String, String> swapmap = new HashMap<String, String>();
-
-	public static Map<String, Gene> panCoreFromNRBlast(String[] names, File dir) throws IOException {
-		Map<String, Gene> ret = new HashMap<String, Gene>();
-
-		Map<String, String> allgenes = new HashMap<String, String>();
-		Map<String, Set<String>> geneset = new HashMap<String, Set<String>>();
-		Map<String, Set<String>> geneloc = new HashMap<String, Set<String>>();
-		Map<String, Gene> locgene = new HashMap<String, Gene>();
-
-		// PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
-		// System.setOut( ps );
-
-		Set<String> poddur = new HashSet<String>();
-		for (String name : names) {
-			File f = new File(dir, name);
-			// FileReader fr = new FileReader( f );
-			panCoreFromNRBlast(new FileReader(f), null, null, null, ret, allgenes, geneset, geneloc, locgene, poddur, null);
-		}
-
-		for (String name : geneset.keySet()) {
-			Set<String> set = geneset.get(name);
-			System.out.println(name + " genes total: " + set.size());
-			geneset.put(name, set);
-		}
-
-		Set<String> allset = new HashSet<String>(allgenes.keySet());
-		for (String name : geneset.keySet()) {
-			Set<String> gset = geneset.get(name);
-			allset.retainAll(gset);
-		}
-		System.out.println("Core genome size: " + allset.size());
-		System.out.println("Pan genome size: " + allgenes.size());
-
-		Set<String> nameset = null;
-
-		for (String gname : allset) {
-			System.out.println(gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname));
-		}
-
-		boolean info = true;
-
-		for (String aname : poddur) {
-			allset = new HashSet<String>(allgenes.keySet());
-			nameset = new HashSet<String>(poddur);
-			nameset.remove(aname);
-			for (String tname : nameset) {
-				allset.removeAll(geneset.get(tname));
-			}
-			// System.err.println( "Genes found only in " + swapmap.get(aname) +
-			// "\t" + allset.size() );
-
-			if (allset.size() > 0)
-				System.out.println("Genes only in " + aname + "\t" + allset.size());
-			if (info) {
-				for (String gname : allset) {
-					System.out.println(gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname));
-				}
-			}
-		}
-
-		for (String aname : poddur) {
-			allset = new HashSet<String>(allgenes.keySet());
-			nameset = new HashSet<String>(poddur);
-			nameset.remove(aname);
-			allset.removeAll(geneset.get(aname));
-			for (String tname : nameset) {
-				allset.retainAll(geneset.get(tname));
-			}
-
-			Set<String> reset = new HashSet<String>();
-			for (String name : nameset) {
-				// reset.add( swapmap.get(name) );
-				reset.add(name);
-			}
-
-			if (allset.size() > 0)
-				System.out.println("Genes only in all of " + reset + "\t" + allset.size());
-			if (info)
-				printflubb(allset, allgenes, geneloc);
-		}
-
-		List<String> poddulist = new ArrayList<String>(poddur);
-		for (int i = 0; i < poddulist.size(); i++) {
-			for (int y = i + 1; y < poddulist.size(); y++) {
-				allset = new HashSet<String>(allgenes.keySet());
-				nameset = new HashSet<String>(poddulist);
-				// nameset.add( names[i] );
-				// nameset.add( names[y] );
-				nameset.remove(poddulist.get(i));
-				nameset.remove(poddulist.get(y));
-
-				allset.removeAll(geneset.get(poddulist.get(i)));
-				allset.removeAll(geneset.get(poddulist.get(y)));
-				for (String tname : nameset) {
-					allset.retainAll(geneset.get(tname));
-				}
-
-				Set<String> reset = new HashSet<String>();
-				// reset.add( swapmap.get(names[i]) );
-				// reset.add( swapmap.get(names[y]) );
-
-				for (String name : nameset) {
-					// reset.add( swapmap.get(name) );
-					reset.add(name);
-				}
-
-				if (allset.size() > 0)
-					System.out.println("Genes only in all of " + reset + "\t" + allset.size());
-				if (info)
-					printflubb(allset, allgenes, geneloc);
-			}
-		}
-
-		for (int i = 0; i < poddulist.size(); i++) {
-			for (int y = i + 1; y < poddulist.size(); y++) {
-				allset = new HashSet<String>(allgenes.keySet());
-				nameset = new HashSet<String>(poddulist);
-				// nameset.add( names[i] );
-				// nameset.add( names[y] );
-				nameset.remove(poddulist.get(i));
-				nameset.remove(poddulist.get(y));
-
-				allset.retainAll(geneset.get(poddulist.get(i)));
-				allset.retainAll(geneset.get(poddulist.get(y)));
-				for (String tname : nameset) {
-					allset.removeAll(geneset.get(tname));
-				}
-
-				Set<String> reset = new HashSet<String>();
-				// reset.add( swapmap.get(names[i]) );
-				// reset.add( swapmap.get(names[y]) );
-				reset.add(poddulist.get(i));
-				reset.add(poddulist.get(y));
-
-				/*
-				 * for( String name : nameset ) { reset.add( swapmap.get(name)
-				 * ); }
-				 */
-
-				if (allset.size() > 0)
-					System.out.println("Genes only in all of " + reset + "\t" + allset.size());
-				if (info)
-					printflubb(allset, allgenes, geneloc);
-			}
-		}
-
-		for (int i = 0; i < poddulist.size(); i++) {
-			for (int y = i + 1; y < poddulist.size(); y++) {
-				for (int k = y + 1; k < poddulist.size(); k++) {
-					allset = flubb(allgenes.keySet(), poddulist, geneset, Arrays.asList(new String[] { poddulist.get(i), poddulist.get(y), poddulist.get(k) }), info, false);
-					if (info)
-						printflubb(allset, allgenes, geneloc);
-
-					allset = flubb(allgenes.keySet(), poddulist, geneset, Arrays.asList(new String[] { poddulist.get(i), poddulist.get(y), poddulist.get(k) }), info, true);
-					if (info)
-						printflubb(allset, allgenes, geneloc);
-				}
-			}
-		}
-
-		for (int i = 0; i < poddulist.size(); i++) {
-			for (int y = i + 1; y < poddulist.size(); y++) {
-				for (int k = y + 1; k < poddulist.size(); k++) {
-					for (int l = k + 1; l < poddulist.size(); l++) {
-						allset = flubb(allgenes.keySet(), poddulist, geneset, Arrays.asList(new String[] { poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l) }), info, false);
-						if (info) {
-							for (String gname : allset) {
-								System.out.println(gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname));
-							}
-						}
-
-						allset = flubb(allgenes.keySet(), poddulist, geneset, Arrays.asList(new String[] { poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l) }), info, true);
-						if (info) {
-							for (String gname : allset) {
-								System.out.println(gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname));
-							}
-						}
-					}
-				}
-			}
-		}
-
-		for (int i = 0; i < poddulist.size(); i++) {
-			for (int y = i + 1; y < poddulist.size(); y++) {
-				for (int k = y + 1; k < poddulist.size(); k++) {
-					for (int l = k + 1; l < poddulist.size(); l++) {
-						for (int m = l + 1; m < poddulist.size(); m++) {
-							allset = flubb(allgenes.keySet(), poddulist, geneset, Arrays.asList(new String[] { poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l), poddulist.get(m) }), info, false);
-							if (info)
-								printflubb(allset, allgenes, geneloc);
-
-							allset = flubb(allgenes.keySet(), poddulist, geneset, Arrays.asList(new String[] { poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l), poddulist.get(m) }), info, true);
-							if (info)
-								printflubb(allset, allgenes, geneloc);
-						}
-					}
-				}
-			}
-		}
-
-		for (int i = 0; i < poddulist.size(); i++) {
-			for (int y = i + 1; y < poddulist.size(); y++) {
-				for (int k = y + 1; k < poddulist.size(); k++) {
-					for (int l = k + 1; l < poddulist.size(); l++) {
-						for (int m = l + 1; m < poddulist.size(); m++) {
-							for (int n = m + 1; n < poddulist.size(); n++) {
-								allset = flubb(allgenes.keySet(), poddulist, geneset, Arrays.asList(new String[] { poddulist.get(i), poddulist.get(y), poddulist.get(k), poddulist.get(l), poddulist.get(m), poddulist.get(n) }), info, false);
-								if (info)
-									printflubb(allset, allgenes, geneloc);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		System.out.println("Unique genes total: " + allgenes.size());
-
-		// ps.close();
-
-		return ret;
-	}
-
-	public static void printflubb(Set<String> allset, Map<String, String> allgenes, Map<String, Set<String>> geneloc) {
-		for (String gname : allset) {
-			System.out.println(gname + "\t" + allgenes.get(gname) + "\t" + geneloc.get(gname));
-		}
-	}
-
-	public static Set<String> flubb(Set<String> allgeneskeyset, List<String> poddulist, Map<String, Set<String>> geneset, Collection<String> rpoddur, boolean info, boolean invert) {
-		Set<String> allset = new HashSet<String>(allgeneskeyset);
-		Set<String> nameset = new HashSet<String>(poddulist);
-		// nameset.add( names[i] );
-		// nameset.add( names[y] );
-
-		nameset.removeAll(rpoddur);
-		// nameset.remove( poddulist.get(i) );
-		// nameset.remove( poddulist.get(y) );
-		// nameset.remove( poddulist.get(k) );
-
-		Set<String> reset = new HashSet<String>();
-		if (invert) {
-			for (String padda : rpoddur) {
-				allset.removeAll(geneset.get(padda));
-			}
-			// allset.removeAll( geneset.get( poddulist.get(i) ) );
-			// allset.removeAll( geneset.get( poddulist.get(y) ) );
-			// allset.removeAll( geneset.get( poddulist.get(k) ) );
-			for (String tname : nameset) {
-				allset.retainAll(geneset.get(tname));
-			}
-
-			for (String name : nameset) {
-				// reset.add( swapmap.get(name) );
-				reset.add(name);
-			}
-		} else {
-			for (String padda : rpoddur) {
-				allset.retainAll(geneset.get(padda));
-			}
-			for (String tname : nameset) {
-				allset.removeAll(geneset.get(tname));
-			}
-			for (String name : rpoddur) {
-				reset.add(name);
-			}
-		}
-
-		/*
-		 * reset.add( swapmap.get(names[i]) ); reset.add( swapmap.get(names[y])
-		 * ); reset.add( swapmap.get(names[k]) );
-		 */
-
-		if (allset.size() > 0)
-			System.out.println("Genes only in all of " + reset + "\t" + allset.size());
-		return allset;
-	}
-
 	public static void recursiveSet(int fin, int val) {
 		if (val < fin) {
 			recursiveSet(fin, val + 1);
@@ -1286,7 +335,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	public static CharSequence trimSubstring(StringBuilder ac, String sb) {
+	public CharSequence trimSubstring(StringBuilder ac, String sb) {
 		int first, last;
 
 		for (first = 0; first < sb.length(); first++)
@@ -1300,7 +349,7 @@ public class GeneSet extends JApplet {
 		return ac.append(sb, first, last);
 	}
 
-	private static void loci2aasequence(Reader rd) throws IOException {
+	private void loci2aasequence(Reader rd, Map<String,Gene> refmap) throws IOException {
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		String name = null;
@@ -1316,6 +365,16 @@ public class GeneSet extends JApplet {
 				if (ac.length() > 0) {
 					String contigstr = null;
 					String contloc = null;
+					
+					String origin;
+					int i = line.indexOf('[');
+					if( i == -1 ) {
+						i = line.indexOf("contig");
+						origin = line.substring(0, i-1);
+					} else {
+						int n = line.indexOf(']', i+1);
+						origin = line.substring(i+1, n);
+					}
 
 					/*if (qsplit.length < 3) {
 						System.err.println();
@@ -1344,17 +403,20 @@ public class GeneSet extends JApplet {
 					Tegeval tv = new Tegeval( name, contig, contloc, start, stop, dir );
 					tv.setAlignedSequence( ac );
 					aas.put( name, tv );
+					
+					Gene gene = new Gene( null, id, name, origin );
+					refmap.put(id, gene);
 					//new Aas(name, ac, start, stop, dir));
 					// aass.add( new Aas(name, ac) );
 				}
 
 				ac = new StringBuilder();
 				String cont = line.substring(1) + "";
-				String[] split = cont.split(" ");
-				name = split[0].replace(".fna","");
-				start = Integer.parseInt(split[2]);
-				stop = Integer.parseInt(split[4]);
-				dir = Integer.parseInt(split[6]);
+				String[] split = cont.split("#");
+				name = split[0].trim().replace(".fna", "");
+				start = Integer.parseInt(split[1].trim());
+				stop = Integer.parseInt(split[2].trim());
+				dir = Integer.parseInt(split[3].trim());
 
 				// int v = name.indexOf("contig");
 				/*
@@ -1362,8 +424,7 @@ public class GeneSet extends JApplet {
 				 * name.indexOf('_', i1+1); name = name.substring(0,i1) +
 				 * name.substring(i2); }
 				 */
-			} else
-				ac.append(line.trim() + "");
+			} else ac.append(line.trim() + "");
 			// else trimSubstring(ac, line);
 			line = br.readLine();
 			// br.re
@@ -1405,6 +466,9 @@ public class GeneSet extends JApplet {
 			if (line.startsWith(">")) {
 				if (ac.length() > 0) {
 					Contig contig = new Contig( name, ac );
+					if( name.contains("eiot") ) {
+						System.err.println( name );
+					}
 					contigmap.put( name, contig );
 					
 					List<Contig>	ctlist;
@@ -1473,7 +537,7 @@ public class GeneSet extends JApplet {
 
 	//static Aas aquery = new Aas(null, null, 0, 0, 0);
 	// static Aas[] aas;
-	static Map<String, Tegeval> aas = new HashMap<String, Tegeval>();
+	Map<String, Tegeval> aas = new HashMap<String, Tegeval>();
 	//static Map<String, StringBuilder> dnaa = new HashMap<String, StringBuilder>();
 	//static Map<String, StringBuilder> contigsmap = new HashMap<String, StringBuilder>();
 
@@ -2189,7 +1253,7 @@ public class GeneSet extends JApplet {
 		fos.close();
 	}
 
-	public static Set<String> speciesFromCluster(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) {
+	public Set<String> speciesFromCluster(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) {
 		Set<String> species = new TreeSet<String>();
 
 		for (Set<String> clustset : clusterMap.keySet()) {
@@ -2199,7 +1263,7 @@ public class GeneSet extends JApplet {
 		return species;
 	}
 
-	public static void func4(File dir, String[] stuff) throws IOException {
+	public void func4(File dir, String[] stuff) throws IOException {
 		// HashMap<Set<String>,Set<Map<String,Set<String>>>> clusterMap = new
 		// HashMap<Set<String>,Set<Map<String,Set<String>>>>();
 		/*
@@ -2237,11 +1301,11 @@ public class GeneSet extends JApplet {
 		writeBlastAnalysis(clusterMap, species);
 	}
 
-	public static void clusterFromSimplifiedBlast(String filename) throws IOException {
+	public void clusterFromSimplifiedBlast(String filename) throws IOException {
 		clusterFromSimplifiedBlast(filename, null);
 	}
 
-	public static void clusterFromSimplifiedBlast(String filename, String writeSimplifiedCluster) throws IOException {
+	public void clusterFromSimplifiedBlast(String filename, String writeSimplifiedCluster) throws IOException {
 		Set<String> species = new TreeSet<String>();
 		List<Set<String>> total = readBlastList(filename); // "/home/sigmar/blastcluster.txt"
 															// );
@@ -2255,11 +1319,11 @@ public class GeneSet extends JApplet {
 		writeBlastAnalysis(clusterMap, species);
 	}
 
-	public static void clusterFromBlastResults(File dir, String[] stuff) throws IOException {
+	public void clusterFromBlastResults(File dir, String[] stuff) throws IOException {
 		clusterFromBlastResults(dir, stuff, null, null, true);
 	}
 
-	public static void clusterFromBlastResults(File dir, String[] stuff, String writeSimplifiedCluster, String writeSimplifiedBlast, boolean union) throws IOException {
+	public void clusterFromBlastResults(File dir, String[] stuff, String writeSimplifiedCluster, String writeSimplifiedBlast, boolean union) throws IOException {
 		Set<String> species = new TreeSet<String>();
 		List<Set<String>> total = new ArrayList<Set<String>>();
 		Serifier serifier = new Serifier();
@@ -2279,7 +1343,7 @@ public class GeneSet extends JApplet {
 		writeBlastAnalysis(clusterMap, species);
 	}
 
-	public static void writeBlastAnalysis(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, Set<String> species) throws IOException {
+	public void writeBlastAnalysis(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, Set<String> species) throws IOException {
 		BufferedImage img = bmatrix(species, clusterMap);
 		ImageIO.write(img, "png", new File("/home/sigmar/mynd.png"));
 
@@ -2330,7 +1394,7 @@ public class GeneSet extends JApplet {
 		 */
 	}
 
-	public static void next(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) throws IOException {
+	public void next(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) throws IOException {
 		for (Set<String> set : clusterMap.keySet()) {
 			Set<Map<String, Set<String>>> setmap = clusterMap.get(set);
 
@@ -2465,7 +1529,7 @@ public class GeneSet extends JApplet {
 		fw.close();
 	}
 
-	private static Map<String, Integer> loadFrequency(Reader r, Set<String> included) throws IOException {
+	private Map<String, Integer> loadFrequency(Reader r, Set<String> included) throws IOException {
 		Map<String, Integer> ret = new HashMap<String, Integer>();
 
 		BufferedReader br = new BufferedReader(r);
@@ -2550,7 +1614,7 @@ public class GeneSet extends JApplet {
 		String str;
 	}
 
-	private static void loci2gene(String base, Reader rd, String outfile, String filtercont, Map<String, Integer> freqmap, Set<String> included) throws IOException {
+	private void loci2gene(String base, Reader rd, String outfile, String filtercont, Map<String, Integer> freqmap, Set<String> included) throws IOException {
 		FileWriter fw = null;
 
 		Map<String, String> giid = new HashMap<String, String>();
@@ -3082,9 +2146,8 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	static Map<String, String> lociMap = new HashMap<String, String>();
-
-	public static void loci2gene(String[] stuff, File dir) throws IOException {
+	Map<String, String> lociMap = new HashMap<String, String>();
+	public void loci2gene(String[] stuff, File dir) throws IOException {
 		// Map<String,String> aas = new HashMap<String,String>();
 		for (String st : stuff) {
 			File ba = new File(dir, st);
@@ -4696,7 +3759,7 @@ public class GeneSet extends JApplet {
         fxPanel.setScene(scene);
     }
 	
-	public static void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
+	public void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
 		/*
 		 * String base = "/vg454flx/viggo/viggo/"; int num = 16; int seqcount =
 		 * 0; Set<String> included = new HashSet<String>(); FileReader fr = new
@@ -6163,7 +5226,7 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					importStuff();
-				} catch (IOException e1) {
+				} catch( IOException | UnavailableServiceException e1 ) {
 					e1.printStackTrace();
 				}
 			}
@@ -10472,9 +9535,55 @@ public class GeneSet extends JApplet {
 	static Map<Set<String>,List<GeneGroup>> 		ggSpecMap;
 	static Map<String,Set<GeneGroup>>				specGroupMap;
 	
-	private void importStuff() throws IOException {
+	private void importStuff() throws IOException, UnavailableServiceException {
+		boolean fail = false;
+		InputStream	is = null;
 		try {
-			InputStream is = GeneSet.class.getResourceAsStream("/allthermus.fna");
+			FileOpenService fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
+			FileContents fc = fos.openFileDialog(null, null);
+			is = fc.getInputStream();
+		} catch( Exception e ) {
+			fail = true;
+		}
+		
+		if( fail ) {
+			JFileChooser fc = new JFileChooser();
+			if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+				is = new FileInputStream( fc.getSelectedFile() );
+			}
+		}
+		
+		ZipInputStream zipm = new ZipInputStream( is );
+		
+		byte[] bb = new byte[1024];
+		Map<String,byte[]>	mop = new HashMap<String,byte[]>();
+		ZipEntry ze = zipm.getNextEntry();
+		
+		while( ze != null ) {
+			int size = (int)ze.getSize();
+			ByteArrayOutputStream baos = new ByteArrayOutputStream( size );			
+			int r = zipm.read( bb );
+			while( r > 0 ) {
+				baos.write( bb, 0, r );
+				r = zipm.read( bb );
+			}
+			baos.close();
+			mop.put( ze.getName(), baos.toByteArray() );
+			ze = zipm.getNextEntry();
+		}
+		
+		Map<String, Gene> refmap = new HashMap<String, Gene>();
+		Map<String, String> allgenes = new HashMap<String, String>();
+		Map<String, Set<String>> geneset = new HashMap<String, Set<String>>();
+		Map<String, Set<String>> geneloc = new HashMap<String, Set<String>>();
+		Set<String> poddur = new HashSet<String>();
+		Map<String, Gene> locgene = new HashMap<String, Gene>();
+		
+		loadcontigs( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.fna") ) ) );
+		loci2aasequence( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.aa") ) ), refmap );
+		List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader( new ByteArrayInputStream( mop.remove("clusters.txt") ) ) );
+		/*try {
+			is = GeneSet.class.getResourceAsStream("/allthermus.fna");
 			//InputStream cois = GeneSet.class.getResourceAsStream("/contigorder.txt");
 			//is = GeneSet.class.getResourceAsStream("/all.fsa");
 			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
@@ -10485,10 +9594,10 @@ public class GeneSet extends JApplet {
 		}
 		
 		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
-		InputStream is = GeneSet.class.getResourceAsStream("/allthermus.aa");
+		is = GeneSet.class.getResourceAsStream("/allthermus.aa");
 		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
 		if (is != null)
-			loci2aasequence(new InputStreamReader(is));
+			loci2aasequence(new InputStreamReader(is));*/
 
 		// URL url = new URL("http://192.168.1.69/all.nn");
 		/*try {
@@ -10503,14 +9612,15 @@ public class GeneSet extends JApplet {
 
 		// url = new URL("http://192.168.1.69/all.fsa");
 
-		is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
-		List<Set<String>> iclusterlist = null; //loadSimpleClusters(new InputStreamReader(is));
+		//is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
+		//List<Set<String>> iclusterlist = null; //loadSimpleClusters(new InputStreamReader(is));
 
 		//is = GeneSet.class.getResourceAsStream("/thermus_unioncluster.txt");
 		//is = GeneSet.class.getResourceAsStream("/allthermus_unioncluster2.txt");
 		//is = GeneSet.class.getResourceAsStream("/thomas1.clust");
-		is = GeneSet.class.getResourceAsStream("/allthermus_new.clust");
-		List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
+		
+		//is = GeneSet.class.getResourceAsStream("/allthermus_new.clust");
+		//List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
 		
 		//is = GeneSet.class.getResourceAsStream("/results.uc");
 		//List<Set<String>> uclusterlist = loadUClusters( new InputStreamReader(is) );
@@ -10525,13 +9635,6 @@ public class GeneSet extends JApplet {
 			}// else System.err.println( uclusterlist.size() );
 			if( clust.size() > 10 ) System.err.println( "   " + clust.size() );
 		}*/
-		
-		Map<String, Gene> refmap = new HashMap<String, Gene>();
-		Map<String, String> allgenes = new HashMap<String, String>();
-		Map<String, Set<String>> geneset = new HashMap<String, Set<String>>();
-		Map<String, Set<String>> geneloc = new HashMap<String, Set<String>>();
-		Set<String> poddur = new HashSet<String>();
-		Map<String, Gene> locgene = new HashMap<String, Gene>();
 
 		//is = GeneSet.class.getResourceAsStream("/thermus_nr.blastout");
 		//panCoreFromNRBlast( new InputStreamReader(is), "c:/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
@@ -10540,12 +9643,13 @@ public class GeneSet extends JApplet {
 		//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
 		
 		//is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
-		//is = GeneSet.class.getResourceAsStream("/ncbithermus_short.blastout");
-		is = GeneSet.class.getResourceAsStream("/thermus_ncbi_short.blastout");
-		
+		//is = GeneSet.class.getResourceAsStream("/ncbithermus_short.blastout");		
 		//InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
+		
+		/*is = GeneSet.class.getResourceAsStream("/thermus_ncbi_short.blastout");
 		InputStream nis = null;//GeneSet.class.getResourceAsStream("/exp_short.blastout");
-		panCoreFromNRBlast(new InputStreamReader(is), null/*new InputStreamReader(nis)*/, null/*"/u0/sandbox/distann/src/thermus_ncbi_short.blastout"*/, null /*"/u0/sandbox/distann/src/exp_short.blastout"*/, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist);
+		Blast blast = new Blast();
+		blast.panCoreFromNRBlast(new InputStreamReader(is), null/*new InputStreamReader(nis)*, null/*"/u0/sandbox/distann/src/thermus_ncbi_short.blastout"*, null /*"/u0/sandbox/distann/src/exp_short.blastout"*, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, aas, contigmap);*/
 
 		geneloc.clear();
 		allgenes.clear();
@@ -10790,6 +9894,14 @@ public class GeneSet extends JApplet {
 					char c = line.charAt(i);
 					String ctgn = line.substring(i+1, n);
 					Contig ctg = contigmap.get( ctgn );
+					
+					if( ctg == null ) {
+						for( String key : contigmap.keySet() ) {
+							if( key.contains("eiot") ) {
+								System.err.println( key );
+							}
+						}
+					}
 					
 					List<Contig> splct = speccontigMap.get( ctg.getSpec() );
 					
@@ -11412,7 +10524,8 @@ public class GeneSet extends JApplet {
 		return count;
 	}
 	
-	private static void init(String[] args) {
+	static Map<String, String> swapmap = new HashMap<String, String>();
+	private void init(String[] args) {
 		String[] stuff = { "scoto346", "scoto2101", "antag2120", "scoto2127", "scoto252", "scoto1572", "scoto4063", "eggertsoni2789", "islandicus180610", "tscotoSA01", "ttHB27join", "ttHB8join", "ttaqua" };
 		String[] stuff2 = { "aa1", "aa2", "aa4", "aa6", "aa7", "aa8" };
 		String[] names = { "aa1.out", "aa2.out", "aa4.out", "aa6.out", "aa7.out", "aa8.out" };
