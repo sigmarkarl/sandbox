@@ -5,10 +5,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class Gene {
-	public Gene(GeneGroup gg, String name, String origin) {
+	public Gene(GeneGroup gg, String id, String name, String origin) {
 		this.name = name;
 		this.origin = origin;
 		this.gg = gg;
+		this.refid = id;
 		// this.setAa( aa );
 		
 		//groupIdx = -10;
