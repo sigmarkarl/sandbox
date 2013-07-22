@@ -89,7 +89,7 @@ public class XYPlot {
 	Point	mouseSel;
 	public void xyPlot( final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
 		final JTable table = geneset.getGeneTable();
-		final Set<String> 	specset = GeneSet.speciesFromCluster( clusterMap );
+		final Set<String> 	specset = geneset.speciesFromCluster( clusterMap );
 		final List<String>	species = new ArrayList<String>( specset );
 		final List<String>	specList = new ArrayList<String>( species );
 		
