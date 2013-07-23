@@ -100,6 +100,24 @@ var flip = function( val ) {
 	}
 }
 
+var diff = function( clen ) {
+	if( clen == null ) clen = current.length;
+	for( k = 0; k < current.length; k+=clen ) {
+		for( i = k+clen-1; i > k; i-- ) {
+			current[i] -= current[i-1];
+		}
+	}
+}
+
+var integ = function( clen ) {
+	if( clen == null ) clen = current.length;
+	for( k = 0; k < length; k+=clen ) {
+		for( i = k+1; i < k+clen; i++ ) {
+			current[i] += current[i-1];
+		}
+	}
+}
+
 var add = function( val ) {
 	if( typeof val == 'number' )
 	for( i = 0; i < current.length; i++ ) {
@@ -337,4 +355,26 @@ var print = function( val ) {
 		}
 	}
 	ind = textarea.value.length;
+}
+
+var readline = require('readline');
+var main = function() {
+	var rl = readline.createInterface({
+		  input: process.stdin,
+		  output: process.stdout
+	});
+	
+	//console.log( "ss" );
+	
+	/*rl.question("d?", function( command ) {
+		console.log( command );
+		//alert( command );
+		//eval( command );
+		
+		rl.close();
+	});*/
+}
+
+if( require.main === module ) {
+    main();
 }
