@@ -178,7 +178,9 @@ public class GeneGroup {
 	public String getCommonName() {
 		String ret = null;
 		for( Gene g : genes ) {
-			if( ret == null || !(g.getName().contains("unnamed") || g.getName().contains("hypot")) ) ret = g.getName();
+			String name = g.getName();
+			if( ret == null ) ret = name;
+			else if( ret.contains("contig") || !(name.contains("unnamed") || name.contains("hypot")) ) ret = g.getName();
 		}
 		return ret;
 	}
