@@ -4,9 +4,10 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/javafasta"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
-	<classpathentry kind="lib" path="/opt/jdk/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/plugin.jar"/>
 	<classpathentry kind="lib" path="commons-vfs2-2.0.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_25/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_25/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_25/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="commons-net-3.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
