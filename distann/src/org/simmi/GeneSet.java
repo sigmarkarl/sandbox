@@ -9535,7 +9535,6 @@ public class GeneSet extends JApplet {
 			} else {
 				gg = new GeneGroup( groupIndex++ );
 				Gene gene = new Gene( gg, name, name, "[Thermus]" );
-				gene.refid = name;
 				g = gene;
 				ggmap.put( name, gg );
 			}
