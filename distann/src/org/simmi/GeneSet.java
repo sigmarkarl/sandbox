@@ -2849,7 +2849,7 @@ public class GeneSet extends JApplet {
 						genelist = new ArrayList<Gene>();
 						genemap.put(strain, genelist);
 					}
-					genelist.add(new Gene(null, last, "mool"));
+					genelist.add(new Gene(null, last, last, "mool"));
 				}
 				last = line + "\n";
 				// aa = "";
@@ -2866,7 +2866,7 @@ public class GeneSet extends JApplet {
 			genelist = new ArrayList<Gene>();
 			genemap.put(strain, genelist);
 		}
-		genelist.add(new Gene(null, last, "moool"));
+		genelist.add(new Gene(null, last, last, "moool"));
 		br.close();
 
 		for (String str : genemap.keySet()) {
@@ -2892,7 +2892,7 @@ public class GeneSet extends JApplet {
 		while (line != null) {
 			if (line.startsWith(">")) {
 				if (last != null) {
-					Gene g = new Gene(null, last, "mool");
+					Gene g = new Gene(null, last, last, "mool");
 					g.setAa(aa);
 					genelist.add(g);
 				}
@@ -2903,7 +2903,7 @@ public class GeneSet extends JApplet {
 			}
 			line = br.readLine();
 		}
-		Gene g = new Gene(null, last, "mool");
+		Gene g = new Gene(null, last, last, "mool");
 		g.setAa(aa);
 		genelist.add(g);
 		br.close();
@@ -9347,8 +9347,7 @@ public class GeneSet extends JApplet {
 					}
 				} else {
 					gg = new GeneGroup( groupIndex++ );
-					Gene gene = new Gene( gg, name, "[Thermus]" );
-					gene.refid = name;
+					Gene gene = new Gene( gg, name, name, "[Thermus]" );
 					g = gene;
 					ggmap.put( name, gg );
 				}
@@ -9509,8 +9508,7 @@ public class GeneSet extends JApplet {
 				}
 			} else {
 				gg = new GeneGroup( groupIndex++ );
-				Gene gene = new Gene( gg, name, "[Thermus]" );
-				gene.refid = name;
+				Gene gene = new Gene( gg, name, name, "[Thermus]" );
 				g = gene;
 				ggmap.put( name, gg );
 			}
