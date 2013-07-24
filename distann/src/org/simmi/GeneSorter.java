@@ -35,7 +35,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class GeneSorter {
-	public static List<Tegeval> loadContigs( Collection<Gene> genes, String species, final List<Contig> contigs ) {
+	public List<Tegeval> loadContigs( Collection<Gene> genes, String species, final List<Contig> contigs, final Map<String,Contig> contigmap ) {
 		final List<Tegeval> ltv = new ArrayList<Tegeval>();
 		for (Gene g : genes) {
 			if (g.species != null) {
@@ -55,8 +55,8 @@ public class GeneSorter {
 								int sec = tv.cont.lastIndexOf('_');
 	
 								String cname = tv.cont.substring(0, sec);
-								if( !GeneSet.contigmap.containsKey( cname ) ) {
-									GeneSet.contigmap.put(cname, tv.getContshort());
+								if( !contigmap.containsKey( cname ) ) {
+									contigmap.put(cname, tv.getContshort());
 								}
 							}
 						}
@@ -69,15 +69,15 @@ public class GeneSorter {
 		// locsort = false;
 
 		contigs.clear();
-		for (String c : GeneSet.contigmap.keySet()) {
-			Contig contig = GeneSet.contigmap.get(c);
+		for (String c : contigmap.keySet()) {
+			Contig contig = contigmap.get(c);
 			contigs.add( contig );
 		}
 		
 		return ltv;
 	}
 
-	public static void mynd(final List<Gene> genes, final JTable sorting, String species, final List<Contig> contigs) throws IOException {
+	public void mynd(final List<Gene> genes, final JTable sorting, String species, final List<Contig> contigs, final Map<String,Contig> contigmap) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -88,7 +88,7 @@ public class GeneSorter {
 		
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {			
-			List<Tegeval> ltv = loadContigs( genes, species, contigs );
+			List<Tegeval> ltv = loadContigs( genes, species, contigs, contigmap );
 			
 			final int hey = genes.size(); // ltv.get(ltv.size()-1).stop/1000;
 			System.out.println(hey);
@@ -317,8 +317,8 @@ public class GeneSorter {
 				public Object getValueAt(int rowIndex, int columnIndex) {
 					if (columnIndex == 2) {
 						Contig c = contigs.get(rowIndex);
-						if (c.count > 0)
-							return (int) ((c.loc) / c.count);
+						//if (c.count > 0)
+						//	return (int) ((c.loc) / c.count);
 						return 0;
 					} else if (columnIndex == 1) {
 						Contig c = contigs.get(rowIndex);
@@ -394,7 +394,7 @@ public class GeneSorter {
 		frame.setVisible(true);
 	}
 	
-	public static void loadContigs( List<GeneGroup> genegroups, List<Contig> contigs ) {
+	public void loadContigs( List<GeneGroup> genegroups, List<Contig> contigs, Map<String,Contig> contigmap ) {
 		for (GeneGroup gg : genegroups) {
 			for( Gene g : gg.genes ) {
 				// for( String sp : g.species.keySet() ) {
@@ -410,8 +410,8 @@ public class GeneSorter {
 	
 								String cname = tv.cont.substring(0, sec);
 								//System.err.println( cname );
-								if( !GeneSet.contigmap.containsKey( cname ) ) {
-									GeneSet.contigmap.put(cname, tv.getContshort());
+								if( !contigmap.containsKey( cname ) ) {
+									contigmap.put(cname, tv.getContshort());
 								}
 							}
 						}
@@ -420,12 +420,12 @@ public class GeneSorter {
 		}
 
 		contigs.clear();
-		for (String c : GeneSet.contigmap.keySet()) {
-			contigs.add( GeneSet.contigmap.get(c) );
+		for (String c : contigmap.keySet()) {
+			contigs.add( contigmap.get(c) );
 		}
 	}
 	
-	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final List<Contig> contigs, final Map<Set<String>, ShareNum> specset) throws IOException {
+	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final List<Contig> contigs, final Map<String,Contig> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -435,7 +435,7 @@ public class GeneSorter {
 		final JRadioButton	freqColorScheme = new JRadioButton("Freq");
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {
-			loadContigs( geneGroups, contigs );
+			loadContigs( geneGroups, contigs, contigmap );
 			
 			JCheckBox	check = new JCheckBox("All positions");
 			JOptionPane.showMessageDialog( null, check );
@@ -715,8 +715,8 @@ public class GeneSorter {
 				public Object getValueAt(int rowIndex, int columnIndex) {
 					if (columnIndex == 2) {
 						Contig c = contigs.get(rowIndex);
-						if (c.count > 0)
-							return (int) ((c.loc) / c.count);
+						//if (c.count > 0)
+						//	return (int) ((c.loc) / c.count);
 						return 0;
 					} else if (columnIndex == 1) {
 						Contig c = contigs.get(rowIndex);
