@@ -30,6 +30,14 @@ public class Tegeval implements Comparable<Tegeval> {
 		numCys = 0;
 	}
 	
+	public String getCommonName() {
+		return gene.getGeneGroup().getCommonName();
+	}
+	
+	public String getCommonFunction() {
+		return gene.getGeneGroup().getCommonFunction(true, null);
+	}
+	
 	public void setAlignedSequence( StringBuilder alseq ) {
 		seq = alseq;
 	}
@@ -177,7 +185,7 @@ public class Tegeval implements Comparable<Tegeval> {
 	}*/
 
 	public String toString() {
-		return eval + " " + contloc;
+		return contloc;
 	}
 	
 	public	static boolean locsort = true;
