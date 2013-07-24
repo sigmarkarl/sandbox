@@ -3,10 +3,10 @@ package org.simmi;
 import org.simmi.shared.Sequence;
 
 class Contig implements Comparable<Contig> {
-	public Contig(String name) {
+	public Contig(String name, int s) {
 		seq = new Sequence( name, null );
 		loc = 0.0;
-		count = 0;
+		size = s;
 	}
 	
 	public char charAt( int i ) {
@@ -19,7 +19,7 @@ class Contig implements Comparable<Contig> {
 	}
 	
 	public Contig( String name, StringBuilder sb ) {
-		this( name );
+		this( name, sb.length() );
 		seq.setSequenceString( sb );
 	}
 	
@@ -27,9 +27,21 @@ class Contig implements Comparable<Contig> {
 		return seq.getName();
 	}
 	
+	public int getLength() {
+		return size;
+	}
+	
 	public String getSpec() {
-		int i = getName().indexOf('_');
-		return getName().substring(0, i);
+		String spec = "";
+		int i = getName().indexOf("uid");
+		if( i == -1 ) {
+			i = getName().indexOf("contig");
+			spec = getName().substring(0, i-1);
+		} else {
+			i = getName().indexOf("_", i+1);
+			spec = getName().substring(0, i);
+		}
+		return spec;
 	}
 	
 	/*@Override
@@ -66,7 +78,7 @@ class Contig implements Comparable<Contig> {
 	}
 
 	double 			loc;
-	int 			count;
+	int 			size;
 	Sequence		seq;
 	boolean			reverse = false;
 	Contig			next;

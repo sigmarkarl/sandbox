@@ -48,7 +48,7 @@ public class XYPlot {
 	String spec1;
 	String spec2;
 	
-	public void initSpecConts( String spec1, String spec2 ) {
+	public void initSpecConts( Map<String,List<Contig>> speccontigMap, String spec1, String spec2 ) {
 		//spec1Conts.clear();
 		//spec2Conts.clear();
 		
@@ -64,8 +64,8 @@ public class XYPlot {
 		}
 		
 		System.err.println( spec1Conts.size() + "  " + spec2Conts.size() );*/
-		spec1Conts = GeneSet.speccontigMap.get( spec1 );
-		spec2Conts = GeneSet.speccontigMap.get( spec2 );
+		spec1Conts = speccontigMap.get( spec1 );
+		spec2Conts = speccontigMap.get( spec2 );
 		
 		int sum1 = 0;
 		for( Contig ct : spec1Conts ) {
@@ -154,7 +154,7 @@ public class XYPlot {
 		spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
 		spec2 = (String)table2.getValueAt( table2.getSelectedRow(), 0 );
 		
-		initSpecConts(spec1, spec2);
+		initSpecConts( geneset.speccontigMap, spec1, spec2 );
 		
 		final JRadioButton	oricolor = new JRadioButton("Orientation");
 		final JRadioButton	gccolor = new JRadioButton("GC%");
@@ -612,14 +612,14 @@ public class XYPlot {
 		comb1.addItemListener( new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				initSpecConts( geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
 				drawc.repaint();
 			}
 		});
 		comb2.addItemListener( new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				initSpecConts( geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
 				drawc.repaint();
 			}
 		});
