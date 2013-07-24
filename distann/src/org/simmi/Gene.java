@@ -89,13 +89,15 @@ public class Gene {
 	public double getAvgGCPerc() {
 		double gc = 0.0;
 		int count = 0;
-		for( String spec : species.keySet() ) {
-			Teginfo ti = species.get(spec);
-			for( Tegeval te : ti.tset ) {
-				gc += te.getGCPerc();
-				count++;
+		if( species != null ) {
+			for( String spec : species.keySet() ) {
+				Teginfo ti = species.get(spec);
+				for( Tegeval te : ti.tset ) {
+					gc += te.getGCPerc();
+					count++;
+				}
 			}
-		}
+		} else count = 1;
 		return gc/count;
 	}
 	

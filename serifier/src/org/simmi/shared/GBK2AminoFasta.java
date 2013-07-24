@@ -34,7 +34,7 @@ public class GBK2AminoFasta {
 		boolean 		comp;
 	};
 	
-	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, FileWriter allout ) throws IOException {
+	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, Writer allout ) throws IOException {
 		List<Anno>	annolist = new ArrayList<Anno>();
 		for( String tag : filetextmap.keySet() ) {
 			StringBuilder filetext = filetextmap.get( tag );
@@ -150,14 +150,14 @@ public class GBK2AminoFasta {
 			}
 		}
 			
-		Map<URI,FileWriter>	urifile = new HashMap<URI,FileWriter>();
+		Map<URI,Writer>	urifile = new HashMap<URI,Writer>();
 		for( Anno ao : annolist ) {
 			StringBuilder	strbuf = ao.contig;
 			URI uri = annoset.get( ao.getType() );
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				FileWriter fw = new FileWriter( new File( uri ) );
+				Writer fw = null;//new FileWriter( new File( uri ) );
 				urifile.put( uri, fw );
 				
 				out = fw;

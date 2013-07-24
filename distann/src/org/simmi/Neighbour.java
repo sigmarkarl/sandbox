@@ -49,7 +49,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class Neighbour {
-	public static void recenter( JTable rowheader, JComponent c ) {
+	public void recenter( JTable rowheader, JComponent c ) {
 		selectedGenesGroups = new HashSet<GeneGroup>();
 		selectedGenesGroups.add( currentTe.getGene().getGeneGroup() );
 		//hteg = loadContigs( selectedGenes, null );
@@ -230,13 +230,13 @@ public class Neighbour {
 		return null;
 	}
 	
-	static double neighbourscale = 1.0;
+	double neighbourscale = 1.0;
 	static Tegeval currentTe = null;
-	static Set<GeneGroup> selectedGenesGroups;
+	Set<GeneGroup> selectedGenesGroups;
 	static List<Tegeval>	hteg;
 	//static int colorscheme = 0;
 	//static List<String>	speclist;
-	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Set<GeneGroup> selGenes ) throws IOException {
+	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Set<GeneGroup> selGenes, final Map<String,Contig> contigmap ) throws IOException {
 		final JTable sorting = geneset.getGeneTable();
 		
 		selectedGenesGroups = selGenes;
@@ -261,6 +261,8 @@ public class Neighbour {
 		final JButton	back = new JButton("<");
 		final JButton	forw = new JButton(">");
 		final JButton	forwTen = new JButton(">>");
+		
+		final JCheckBox		commonname = new JCheckBox("Group names");
 		
 		mbr.add( mnu );
 		mbr.add( mvmnu );
@@ -370,7 +372,7 @@ public class Neighbour {
 								while( next != null && xoff <= 5500 && clip.x+clip.width > xoff ) {
 									double len = next.getProteinLength()*neighbourscale;
 									if( next.getGene() != null ) {
-										String genename = next.getGene().getName();
+										String genename = commonname.isSelected() ? next.getGene().getGeneGroup().getCommonName() : next.getGene().getName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										if( xoff+len > clip.x ) {
@@ -504,7 +506,7 @@ public class Neighbour {
 									xoff -= len + bil;
 									
 									if( prev.getGene() != null ) {
-										String genename = prev.getGene().getName();
+										String genename = commonname.isSelected() ? prev.getGene().getGeneGroup().getCommonName() : prev.getGene().getName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										if( clip.x+clip.width > xoff ) {
@@ -649,7 +651,7 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval next = te;
 									if( te.getGene() != null ) {
-										String genename = te.getGene().getName();
+										String genename = commonname.isSelected() ? te.getGene().getGeneGroup().getCommonName() : te.getGene().getName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										double len = te.getProteinLength()*neighbourscale;
@@ -833,7 +835,7 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval prev = te;
 									if( te.getGene() != null ) {
-										String genename = te.getGene().getName();
+										String genename = commonname.isSelected() ? te.getGene().getGeneGroup().getCommonName() : te.getGene().getName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										double len = te.getProteinLength()*neighbourscale;
@@ -1014,10 +1016,14 @@ public class Neighbour {
 			abucol.setAction( a );
 			precol.setAction( a );
 			
+			commonname.setAction( a );
+			
 			funcol.setText("Functions");
 			gccol.setText("GC%");
 			abucol.setText("Abundance");
 			precol.setText("Proximity preservation");
+			
+			commonname.setText("Group names");
 			
 			turn.setAction( new AbstractAction("Forward") {
 				@Override
@@ -1340,8 +1346,8 @@ public class Neighbour {
 					String	spec = cont.getSpec();
 					
 					final List<Contig>	specont = new ArrayList<Contig>();
-					for( String name : GeneSet.contigmap.keySet() ) {
-						Contig c = GeneSet.contigmap.get( name );
+					for( String name : contigmap.keySet() ) {
+						Contig c = contigmap.get( name );
 						if( c != cont && spec.equals( c.getSpec() ) ) specont.add( c );
 					}
 					
@@ -1510,10 +1516,7 @@ public class Neighbour {
 				}
 
 				@Override
-				public void keyReleased(KeyEvent e) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void keyReleased(KeyEvent e) {}
 			});
 			rowheader.setModel(new TableModel() {
 				@Override
@@ -1629,6 +1632,7 @@ public class Neighbour {
 		toolbar.add( showdnaseqs );
 		toolbar.add( mbr );
 		toolbar.add( turn );
+		toolbar.add( commonname );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
@@ -1654,7 +1658,7 @@ public class Neighbour {
 			@Override
 			public void windowClosed(WindowEvent e) {
 				try {
-					GeneSet.saveContigOrder();
+					geneset.saveContigOrder();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}

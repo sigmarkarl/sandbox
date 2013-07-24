@@ -116,7 +116,7 @@ public class Synteni {
 					g.fillRect( 0, h, this.getWidth(), 1 );
 					
 					int loc = 0;
-					List<Contig>	ctlist = GeneSet.speccontigMap.get( spec );
+					List<Contig>	ctlist = geneset.speccontigMap.get( spec );
 					for( Contig c : ctlist ) {
 						loc += c.getGeneCount();
 						
@@ -143,9 +143,9 @@ public class Synteni {
 									String spec2 = species.get( m );
 									List<Tegeval> tvlist2 = gg.getTegevals( spec2 );
 									
-									int gind = GeneSet.getGlobalIndex( tv )*this.getWidth()/3632;
+									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/3632;
 									for( Tegeval tv2 : tvlist2 ) {
-										int gind2 = GeneSet.getGlobalIndex( tv2 )*this.getWidth()/3632;
+										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/3632;
 										if( tv.ori != tv2.ori ^ tv.getContshort().reverse != tv2.getContshort().reverse ) g.setColor( Color.red );
 										else g.setColor( Color.blue );
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
@@ -237,7 +237,7 @@ public class Synteni {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setLeftComponent(rowheaderscroll);
 		splitpane.setRightComponent(scrollpane);
-		GeneSet.splitpaneList.add( splitpane );
+		geneset.splitpaneList.add( splitpane );
 
 		JComponent fillup = new JComponent() {};
 		fillup.setPreferredSize(new Dimension(6000, 20));
@@ -295,7 +295,7 @@ public class Synteni {
 			@Override
 			public void windowClosed(WindowEvent e) {
 				try {
-					GeneSet.saveContigOrder();
+					geneset.saveContigOrder();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
