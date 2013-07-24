@@ -62,7 +62,8 @@ public class Function {
 		if( groupentries != null ) {
 			if( groupentries.size() <= 1 ) {
 				for( GeneGroup gg : groupentries ) {
-					return gg.getSpecies().size();
+					Set<String> spec = gg != null ? gg.getSpecies() : null;
+					if( spec != null ) return spec.size();
 				}
 			} else {
 				Set<String>	specset = new HashSet<String>();

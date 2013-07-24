@@ -365,7 +365,6 @@ public class Blast {
 					gene.allids = new HashSet<String>();
 					gene.species = new HashMap<String, Teginfo>();
 					ret.put(val, gene);
-					gene.refid = id;
 				}
 				gene.allids.add(id);
 				set.add(val);
@@ -377,7 +376,7 @@ public class Blast {
 					System.err.println();
 				}
                                 
-                                tv.setGene( gene );
+                tv.setGene( gene );
 				tv.setTegund( padda );
 				tv.setEval( deval );
 				
@@ -546,7 +545,7 @@ public class Blast {
 						nquery = query;
 					}*/
 	
-					Contig contig = contigmap.containsKey( contigstr ) ? contigmap.get( contigstr ) : new Contig( contigstr );
+					Contig contig = contigmap.containsKey( contigstr ) ? contigmap.get( contigstr ) : new Contig( contigstr, 0 );
 					//StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
 					
 					Tegeval tv = aas.get( query ); //new Tegeval(gene, padda, deval, query, contig, contloc, start, stop, ori);
