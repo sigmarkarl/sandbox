@@ -834,8 +834,8 @@ public class Starwars implements EntryPoint {
 		//canvas.setWidth(800);
 		//canvas.setHeight(600);
 		WebGLRenderingContext webgl = null;
-		webgl = (WebGLRenderingContext)canvas3dElement.getContext("webgl");
-		if( webgl == null ) webgl = (WebGLRenderingContext)canvas3dElement.getContext("expermimental-webgl");
+		webgl = (WebGLRenderingContext)canvas3dElement.getContext("experimental-webgl");
+		if( webgl == null ) webgl = (WebGLRenderingContext)canvas3dElement.getContext("webgl");
 		final WebGLRenderingContext gl = webgl;
 		
 		/*gl.viewport(0, 0, 800, 600);
