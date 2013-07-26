@@ -9319,10 +9319,9 @@ public class GeneSet extends JApplet {
 		return dret;
 	}
 	
-	public static Map<String,GeneGroup> loadRnas( Reader reader, Reader subread, int groupIndex ) throws IOException {
+	public void loadRrnas( Map<String,GeneGroup>	ggmap, Reader reader, int groupIndex ) throws IOException {
 		//List<Gene> genelist = new ArrayList<Gene>();
 		
-		Map<String,GeneGroup>	ggmap = new HashMap<String,GeneGroup>();
 		BufferedReader 			br = new BufferedReader( reader );
 		String 					line = br.readLine();
 		while( line != null ) {
@@ -9505,10 +9504,12 @@ public class GeneSet extends JApplet {
 			}
 			line = br.readLine();
 		}
-		br.close();
+		//br.close();
+	}
 		
-		br = new BufferedReader( subread );
-		line = br.readLine();
+	public void loadTrnas( Map<String,GeneGroup>	ggmap, Reader reader, int groupIndex ) throws IOException {
+		BufferedReader br = new BufferedReader( reader );
+		String line = br.readLine();
 		while( line != null ) {
 			String[] split = line.split("[\t ]+");
 			String cont = split[0].replace(".fna", "");
@@ -9546,9 +9547,6 @@ public class GeneSet extends JApplet {
 			
 			line = br.readLine();
 		}
-		br.close();
-		
-		return ggmap;
 	}
 	
 	static JComboBox<String> 						specombo;
@@ -9789,9 +9787,11 @@ public class GeneSet extends JApplet {
 				// clustInfoMap.put( cluster, cInfo);
 			}
 			
-			is = GeneSet.class.getResourceAsStream("/rrna.fasta");
-			InputStream tis = GeneSet.class.getResourceAsStream("/trna.txt"); //GeneSet.class.getResourceAsStream("/trna_sub.txt");
-			Map<String,GeneGroup>	rnamap = null;//loadRnas( new InputStreamReader(is), new InputStreamReader(tis), i );
+			Map<String,GeneGroup>	rnamap = new HashMap<String,GeneGroup>();
+			//is = GeneSet.class.getResourceAsStream("/rrna.fasta");
+			//InputStream tis = //GeneSet.class.getResourceAsStream("/trna.txt"); //GeneSet.class.getResourceAsStream("/trna_sub.txt");
+			ZipInputStream zipin = new ZipInputStream( new ByteArrayInputStream(zipm) );
+			loadRrnas( new InputStreamReader(is), new InputStreamReader(tis), i );
 			/*for( String ggname : rnamap.keySet() ) {
 				GeneGroup gg = rnamap.get( ggname );
 				ggList.add( gg );
