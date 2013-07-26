@@ -372,7 +372,8 @@ public class Neighbour {
 								while( next != null && xoff <= 5500 && clip.x+clip.width > xoff ) {
 									double len = next.getProteinLength()*neighbourscale;
 									if( next.getGene() != null ) {
-										String genename = commonname.isSelected() ? next.getGene().getGeneGroup().getCommonName() : next.getGene().getName();
+										String genename = next.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										if( xoff+len > clip.x ) {
@@ -506,7 +507,8 @@ public class Neighbour {
 									xoff -= len + bil;
 									
 									if( prev.getGene() != null ) {
-										String genename = commonname.isSelected() ? prev.getGene().getGeneGroup().getCommonName() : prev.getGene().getName();
+										String genename = prev.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										if( clip.x+clip.width > xoff ) {
@@ -651,7 +653,8 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval next = te;
 									if( te.getGene() != null ) {
-										String genename = commonname.isSelected() ? te.getGene().getGeneGroup().getCommonName() : te.getGene().getName();
+										String genename = next.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										double len = te.getProteinLength()*neighbourscale;
@@ -835,7 +838,8 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval prev = te;
 									if( te.getGene() != null ) {
-										String genename = commonname.isSelected() ? te.getGene().getGeneGroup().getCommonName() : te.getGene().getName();
+										String genename = prev.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										double len = te.getProteinLength()*neighbourscale;
