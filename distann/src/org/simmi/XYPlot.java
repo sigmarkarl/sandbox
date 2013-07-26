@@ -15,6 +15,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,14 +90,14 @@ public class XYPlot {
 	Point	mouseSel;
 	public void xyPlot( final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
 		final JTable table = geneset.getGeneTable();
-		final Set<String> 	specset = geneset.speciesFromCluster( clusterMap );
+		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
 		final List<String>	species = new ArrayList<String>( specset );
-		final List<String>	specList = new ArrayList<String>( species );
+		//final List<String>	specList = new ArrayList<String>( species );
 		
 		TableModel model = new TableModel() {
 			@Override
 			public int getRowCount() {
-				return specList.size();
+				return species.size();
 			}
 
 			@Override
@@ -121,7 +122,7 @@ public class XYPlot {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return specList.get( rowIndex );
+				return species.get( rowIndex );
 			}
 
 			@Override

@@ -20,8 +20,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -73,15 +71,6 @@ import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.event.EventHandler;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.Scene;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebEvent;
-import javafx.scene.web.WebView;
 
 import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
@@ -545,7 +534,7 @@ public class GeneSet extends JApplet {
 
 				//cname = tv.cont.substring(0, sec);
 			} else {
-				//ac.append(line);
+				ac.append(line);
 				size += line.length();
 			}
 			line = br.readLine();
@@ -665,7 +654,7 @@ public class GeneSet extends JApplet {
 		ImageIO.write(img, "png", new File(str));
 	}
 
-	public static BufferedImage bmatrix(Set<String> species, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) {
+	public static BufferedImage bmatrix(Collection<String> species, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) {
 		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2 = (Graphics2D) bi.getGraphics();
 		int mstrw = 0;
@@ -1268,7 +1257,7 @@ public class GeneSet extends JApplet {
 		return clusterMap;
 	}
 
-	private static Map<Set<String>, Set<Map<String, Set<String>>>> initCluster(Collection<Set<String>> total, Set<String> species) {
+	private static Map<Set<String>, Set<Map<String, Set<String>>>> initCluster(Collection<Set<String>> total) {
 		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = new HashMap<Set<String>, Set<Map<String, Set<String>>>>();
 
 		for (Set<String> t : total) {
@@ -1284,7 +1273,7 @@ public class GeneSet extends JApplet {
 				 */
 				teg.add(str);
 
-				species.add(str);
+				//species.add(str);
 			}
 
 			Set<Map<String, Set<String>>> setmap;
@@ -1337,7 +1326,7 @@ public class GeneSet extends JApplet {
 		fos.close();
 	}
 
-	public Set<String> speciesFromCluster(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) {
+	/*public Set<String> speciesFromCluster(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap) {
 		Set<String> species = new TreeSet<String>();
 
 		for (Set<String> clustset : clusterMap.keySet()) {
@@ -1345,7 +1334,7 @@ public class GeneSet extends JApplet {
 		}
 
 		return species;
-	}
+	}*/
 
 	public void func4(File dir, String[] stuff) throws IOException {
 		// HashMap<Set<String>,Set<Map<String,Set<String>>>> clusterMap = new
@@ -1378,11 +1367,15 @@ public class GeneSet extends JApplet {
 
 		// Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap =
 		// initCluster( total, species );
-		Set<String> species = speciesFromCluster(clusterMap);
+		//Set<String> species = speciesFromCluster(clusterMap);
 
 		// writeSimplifiedCluster( "/home/sigmar/burb2.txt", clusterMap );
 
-		writeBlastAnalysis(clusterMap, species);
+		writeBlastAnalysis(clusterMap, specList);
+	}
+	
+	public List<String> getSpecies() {
+		return specList;
 	}
 
 	public void clusterFromSimplifiedBlast(String filename) throws IOException {
@@ -1390,17 +1383,17 @@ public class GeneSet extends JApplet {
 	}
 
 	public void clusterFromSimplifiedBlast(String filename, String writeSimplifiedCluster) throws IOException {
-		Set<String> species = new TreeSet<String>();
+		//Set<String> species = new TreeSet<String>();
 		List<Set<String>> total = readBlastList(filename); // "/home/sigmar/blastcluster.txt"
 															// );
-		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total, species);
+		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total);
 
 		if (writeSimplifiedCluster != null)
 			writeSimplifiedCluster(writeSimplifiedCluster, clusterMap); // "/home/sigmar/burb2.txt",
 																		// clusterMap
 																		// );
 
-		writeBlastAnalysis(clusterMap, species);
+		writeBlastAnalysis(clusterMap, specList);
 	}
 
 	public void clusterFromBlastResults(File dir, String[] stuff) throws IOException {
@@ -1417,17 +1410,17 @@ public class GeneSet extends JApplet {
 			
 			serifier.joinBlastSets(fis, writeSimplifiedBlast, union, total, 0.0);
 		}
-		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total, species);
+		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total);
 
 		if (writeSimplifiedCluster != null)
 			writeSimplifiedCluster(writeSimplifiedCluster, clusterMap); // "/home/sigmar/burb2.txt",
 																		// clusterMap
 																		// );
 
-		writeBlastAnalysis(clusterMap, species);
+		writeBlastAnalysis(clusterMap, specList);
 	}
 
-	public void writeBlastAnalysis(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, Set<String> species) throws IOException {
+	public void writeBlastAnalysis(Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, Collection<String> species) throws IOException {
 		BufferedImage img = bmatrix(species, clusterMap);
 		ImageIO.write(img, "png", new File("/home/sigmar/mynd.png"));
 
@@ -3777,7 +3770,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	private static Scene createScene( String webp ) {
+	/*private static Scene createScene( String webp ) {
         //Group  root  =  new  Group();
 		WebView	wv = new WebView();
 		WebEngine we = wv.getEngine();
@@ -3802,13 +3795,13 @@ public class GeneSet extends JApplet {
         text.setY(100);
         text.setFont(new Font(25));
         text.setText("Welcome JavaFX!");
-        root.getChildren().add(text);*/
+        root.getChildren().add(text);*
         return (scene);
-    }
+    }*/
 	
 	private static void initAndShowGUI( final String webp ) {
         // This method is invoked on Swing thread
-        JFrame frame = new JFrame("FX");
+        /*JFrame frame = new JFrame("FX");
         frame.setSize(800, 600);
         final JFXPanel fxPanel = new JFXPanel();
         frame.add(fxPanel);
@@ -3835,13 +3828,13 @@ public class GeneSet extends JApplet {
             public void run() {
                 initFX(fxPanel, webp);
             }
-        });
+        });*/
     }
 
-    private static void initFX(JFXPanel fxPanel, String webp) {
+    /*private static void initFX(JFXPanel fxPanel, String webp) {
         Scene scene = createScene( webp );
         fxPanel.setScene(scene);
-    }
+    }*/
 	
 	public void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
 		/*
@@ -4875,7 +4868,7 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	public static StringBuilder getSelectedASeqs( JTable table, List<Gene> genelist, JApplet applet, Set<String> species ) {
+	public static StringBuilder getSelectedASeqs( JTable table, List<Gene> genelist, JApplet applet, Collection<String> species ) {
 		StringBuilder sb = new StringBuilder();
 		
 		Set<String> selectedSpecies = getSelspec( applet, new ArrayList( species ) );
@@ -5045,7 +5038,6 @@ public class GeneSet extends JApplet {
 	List<Set<String>> uclusterlist;
 	Map<Set<String>, ShareNum> specset;
 	
-	Set<String> species = new TreeSet<String>();
 	Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap;
 	BufferedImage bimg;
 	
@@ -5349,17 +5341,17 @@ public class GeneSet extends JApplet {
 							StringBuilder ret = new StringBuilder();
 
 							int i = 0;
-							for (String spc : species) {
-								if (++i == species.size())
+							for (String spc : specList) {
+								if (++i == specList.size())
 									ret.append(spc + "\n");
 								else
 									ret.append(spc + "\t");
 							}
 
 							int where = 0;
-							for (String spc1 : species) {
+							for (String spc1 : specList) {
 								int wherex = 0;
-								for (String spc2 : species) {
+								for (String spc2 : specList) {
 									int spc1tot = 0;
 									int spc2tot = 0;
 									int totot = 0;
@@ -5370,7 +5362,7 @@ public class GeneSet extends JApplet {
 									for (Set<String> set : clusterMap.keySet()) {
 										Set<Map<String, Set<String>>> erm = clusterMap.get(set);
 										if (set.contains(spc1)) {
-											if (set.size() < species.size()) {
+											if (set.size() < specList.size()) {
 												spc1totwocore += erm.size();
 												for (Map<String, Set<String>> sm : erm) {
 													Set<String> hset = sm.get(spc1);
@@ -5398,7 +5390,7 @@ public class GeneSet extends JApplet {
 									}
 
 									if (where == wherex) {
-										if (where == species.size() - 1)
+										if (where == specList.size() - 1)
 											ret.append(0 + "\n");
 										else
 											ret.append(0 + "\t");
@@ -5408,7 +5400,7 @@ public class GeneSet extends JApplet {
 										double val = Math.pow(50.0, sval - 0.3) - 1.0;
 										double dval = Math.round(100.0 * (val)) / 100.0;
 
-										if (wherex == species.size() - 1)
+										if (wherex == specList.size() - 1)
 											ret.append(dval + "\n");
 										else
 											ret.append(dval + "\t");
@@ -5755,7 +5747,7 @@ public class GeneSet extends JApplet {
 				JCheckBox	output = new JCheckBox("Output fasta");
 				JOptionPane.showMessageDialog( comp, new Object[] {check, align, output} );
 				
-				Set<String>	selspec = getSelspec( applet, new ArrayList( species ) );
+				Set<String>	selspec = getSelspec( applet, specList );
 				
 				boolean succ = true;
 				String restext = null;
@@ -5874,7 +5866,7 @@ public class GeneSet extends JApplet {
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>		selspec = getSelspec( applet, new ArrayList<String>( species ) );
+				Set<String>		selspec = getSelspec( applet, new ArrayList<String>( specList ) );
 				List<String>	speclist = new ArrayList<String>( selspec );
 				double[] 		mat = new double[selspec.size()*selspec.size()];
 				for( int y = 0; y < speclist.size(); y++ ) {
@@ -6161,7 +6153,7 @@ public class GeneSet extends JApplet {
 		AbstractAction pancoreaction = new AbstractAction("Pan-core") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>	selspec = getSelspec( applet, new ArrayList( species ) );
+				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
 				
 				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
 				Set<GeneGroup>	core = new HashSet<GeneGroup>();
@@ -6221,7 +6213,7 @@ public class GeneSet extends JApplet {
 		AbstractAction fetchcoreaction = new AbstractAction("Fetch core") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>	selspec = getSelspec( applet, new ArrayList( species ) );
+				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
 				
 				JFrame frame = null;
 				if( currentSerify == null ) {
@@ -6576,8 +6568,7 @@ public class GeneSet extends JApplet {
 		JButton syntbut = new JButton(new AbstractAction("Synteny") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String> species = speciesFromCluster( clusterMap );
-				List<String> specList = new ArrayList<String>( species );
+				//Set<String> species = speciesFromCluster( clusterMap );
 				new Synteni().syntenyMynd( GeneSet.this, comp, genelist, specList );
 			}
 		});
@@ -8258,7 +8249,7 @@ public class GeneSet extends JApplet {
 		popup.add(new AbstractAction("Split/Show sequences") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				StringBuilder sb = getSelectedASeqs( table, genelist, applet, species );
+				StringBuilder sb = getSelectedASeqs( table, genelist, applet, specList );
 				if( currentSerify == null ) {
 					JFrame frame = new JFrame();
 					frame.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
@@ -10157,8 +10148,8 @@ public class GeneSet extends JApplet {
 				specombo.addItem(sp);
 			}
 			
-			clusterMap = initCluster(uclusterlist, species);
-			bimg = bmatrix(species, clusterMap);
+			clusterMap = initCluster(uclusterlist);
+			bimg = bmatrix(specList, clusterMap);
 			
 			table.tableChanged( new TableModelEvent( table.getModel() ) );
 			ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
