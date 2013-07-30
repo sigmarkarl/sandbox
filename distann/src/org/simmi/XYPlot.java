@@ -15,6 +15,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +49,7 @@ public class XYPlot {
 	String spec1;
 	String spec2;
 	
-	public void initSpecConts( String spec1, String spec2 ) {
+	public void initSpecConts( Map<String,List<Contig>> speccontigMap, String spec1, String spec2 ) {
 		//spec1Conts.clear();
 		//spec2Conts.clear();
 		
@@ -64,8 +65,8 @@ public class XYPlot {
 		}
 		
 		System.err.println( spec1Conts.size() + "  " + spec2Conts.size() );*/
-		spec1Conts = GeneSet.speccontigMap.get( spec1 );
-		spec2Conts = GeneSet.speccontigMap.get( spec2 );
+		spec1Conts = speccontigMap.get( spec1 );
+		spec2Conts = speccontigMap.get( spec2 );
 		
 		int sum1 = 0;
 		for( Contig ct : spec1Conts ) {
@@ -81,22 +82,22 @@ public class XYPlot {
 		}
 		fsum2 = sum2;
 		
-		//System.err.println( fsum1 + "  " + fsum2 );
+		System.err.println( fsum1 + "  " + fsum2 );
 	}
 	
 	Contig	contigx;
 	Contig	contigy;
 	Point	mouseSel;
 	public void xyPlot( final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
-		final JTable table = geneset.getGeneTable();
-		final Set<String> 	specset = geneset.speciesFromCluster( clusterMap );
-		final List<String>	species = new ArrayList<String>( specset );
-		final List<String>	specList = new ArrayList<String>( species );
+		final JTable 				table = geneset.getGeneTable();
+		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
+		final List<String>			species = new ArrayList<String>( specset );
+		//final List<String>	specList = new ArrayList<String>( species );
 		
 		TableModel model = new TableModel() {
 			@Override
 			public int getRowCount() {
-				return specList.size();
+				return species.size();
 			}
 
 			@Override
@@ -121,7 +122,7 @@ public class XYPlot {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return specList.get( rowIndex );
+				return species.get( rowIndex );
 			}
 
 			@Override
@@ -154,7 +155,7 @@ public class XYPlot {
 		spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
 		spec2 = (String)table2.getValueAt( table2.getSelectedRow(), 0 );
 		
-		initSpecConts(spec1, spec2);
+		initSpecConts( geneset.speccontigMap, spec1, spec2 );
 		
 		final JRadioButton	oricolor = new JRadioButton("Orientation");
 		final JRadioButton	gccolor = new JRadioButton("GC%");
@@ -185,7 +186,9 @@ public class XYPlot {
 						GeneGroup gg = val.getGene().getGeneGroup();
 						
 						int a = GeneSet.allgenegroups.indexOf( gg );
-						int l = table.convertRowIndexToView( a );
+						
+						int l = -1;
+						if( a != -1 ) l = table.convertRowIndexToView( a );
 							
 						if( l != -1 ) {
 							boolean rs = table.isRowSelected( l );
@@ -232,7 +235,14 @@ public class XYPlot {
 							}
 						}
 						
-						val = val.getNext();
+						Tegeval next = val.getNext();
+						if( next != null ) {
+							Contig nextcontig = next.getContshort();
+							if( nextcontig == null || !nextcontig.equals(val.getContshort()) ) {
+								next = null;
+							}
+						}
+						val = next;
 						count++;
 						
 						//System.err.println( count );
@@ -242,6 +252,7 @@ public class XYPlot {
 					if( showgrid.isSelected() ) {
 						g.setColor( Color.gray );
 						int x = (int)(count*this.getWidth()/fsum1);
+						System.err.println( x + "  " + this.getWidth() + " " + fsum1 + "  " + count );
 						g.drawLine( x, 0, x, this.getHeight() );
 					}
 				}
@@ -342,7 +353,7 @@ public class XYPlot {
 					//System.err.println( spec1Conts.size() + "  " + spec2Conts.size() );
 					for( Contig ct : spec1Conts ) {
 						Tegeval tv = ct.getFirst();
-						while( tv != null ) {
+						while( tv != null && tv.getContshort().equals(ct) ) {
 							tv.setSelected( false );
 							tv = tv.getNext();
 						}
@@ -350,7 +361,7 @@ public class XYPlot {
 					
 					for( Contig ct : spec2Conts ) {
 						Tegeval tv = ct.getFirst();
-						while( tv != null ) {
+						while( tv != null && tv.getContshort().equals(ct) ) {
 							tv.setSelected( false );
 							tv = tv.getNext();
 						}
@@ -612,14 +623,14 @@ public class XYPlot {
 		comb1.addItemListener( new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				initSpecConts( geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
 				drawc.repaint();
 			}
 		});
 		comb2.addItemListener( new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				initSpecConts( geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
 				drawc.repaint();
 			}
 		});

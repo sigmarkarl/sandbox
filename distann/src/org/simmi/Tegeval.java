@@ -30,6 +30,14 @@ public class Tegeval implements Comparable<Tegeval> {
 		numCys = 0;
 	}
 	
+	public String getCommonName() {
+		return gene.getGeneGroup().getCommonName();
+	}
+	
+	public String getCommonFunction() {
+		return gene.getGeneGroup().getCommonFunction(true, null);
+	}
+	
 	public void setAlignedSequence( StringBuilder alseq ) {
 		seq = alseq;
 	}
@@ -55,11 +63,11 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public String getSubstring( int u, int e ) {
-		return contshort.seq.getSubstring(start+u, start+e);
+		return contshort.seq.getSubstring(start+u, start+e, ori);
 	}
 	
 	public String getSequence() {
-		return contshort.seq.getSubstring(start, stop);
+		return contshort.seq.getSubstring(start, stop, ori);
 	}
 	
 	public StringBuilder getAlignedSequence() {
@@ -71,7 +79,8 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public StringBuilder getProteinSequence() {
-		return contshort.seq.getProteinSequence( start, stop, ori );
+		StringBuilder ret = contshort.seq.getProteinSequence( start, stop, ori );
+		return ret;
 	}
 	
 	public int getLength() {
@@ -177,10 +186,10 @@ public class Tegeval implements Comparable<Tegeval> {
 	}*/
 
 	public String toString() {
-		return eval + " " + contloc;
+		return contloc;
 	}
 	
-	public	static boolean locsort = true;
+	public static boolean locsort = true;
 
 	@Override
 	public int compareTo(Tegeval o) {

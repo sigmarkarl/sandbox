@@ -11,8 +11,8 @@
 </information>
 <offline-allowed/>
 <resources>
-  <j2se version="1.6+" max-heap-size="1500M"/>
-  <jar href="http://test.matis.is/thermus/distann.jar"/>
+  <j2se version="1.7+" max-heap-size="1000M"/>
+  <jar href="distann.jar"/>
   <extension name="javafasta" href="http://webfasta.appspot.com/javafastacomp.jnlp"/>
 </resources>
 <applet-desc 

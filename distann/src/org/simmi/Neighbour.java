@@ -49,7 +49,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class Neighbour {
-	public static void recenter( JTable rowheader, JComponent c ) {
+	public void recenter( JTable rowheader, JComponent c ) {
 		selectedGenesGroups = new HashSet<GeneGroup>();
 		selectedGenesGroups.add( currentTe.getGene().getGeneGroup() );
 		//hteg = loadContigs( selectedGenes, null );
@@ -230,13 +230,13 @@ public class Neighbour {
 		return null;
 	}
 	
-	static double neighbourscale = 1.0;
+	double neighbourscale = 1.0;
 	static Tegeval currentTe = null;
-	static Set<GeneGroup> selectedGenesGroups;
+	Set<GeneGroup> selectedGenesGroups;
 	static List<Tegeval>	hteg;
 	//static int colorscheme = 0;
 	//static List<String>	speclist;
-	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Set<GeneGroup> selGenes ) throws IOException {
+	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Set<GeneGroup> selGenes, final Map<String,Contig> contigmap ) throws IOException {
 		final JTable sorting = geneset.getGeneTable();
 		
 		selectedGenesGroups = selGenes;
@@ -261,6 +261,8 @@ public class Neighbour {
 		final JButton	back = new JButton("<");
 		final JButton	forw = new JButton(">");
 		final JButton	forwTen = new JButton(">>");
+		
+		final JCheckBox		commonname = new JCheckBox("Group names");
 		
 		mbr.add( mnu );
 		mbr.add( mvmnu );
@@ -324,7 +326,8 @@ public class Neighbour {
 				public String getToolTipText( MouseEvent me ) {
 					Point p = me.getPoint();
 					Tegeval te = getSelectedTe(p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight());
-					if( te != null ) return "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+ "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
+					Gene g = te.getGene();
+					if( te != null ) return "<html>"+(g.getName().equals( g.refid ) ? g.getGeneGroup().getCommonName() : g.getName())+ "<br>" + te.getGene().refid+ "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
 					return null;
 				}
 				
@@ -371,6 +374,7 @@ public class Neighbour {
 									double len = next.getProteinLength()*neighbourscale;
 									if( next.getGene() != null ) {
 										String genename = next.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										if( xoff+len > clip.x ) {
@@ -392,7 +396,7 @@ public class Neighbour {
 											} else if( abucol.isSelected() ) {
 												GeneGroup gg = next.getGene().getGeneGroup();
 												int numspec = gg.species.size();
-												float abu = numspec/28.0f;
+												float abu = numspec/38.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
 											} else if( precol.isSelected() ) {
@@ -505,6 +509,7 @@ public class Neighbour {
 									
 									if( prev.getGene() != null ) {
 										String genename = prev.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										if( clip.x+clip.width > xoff ) {
@@ -525,7 +530,7 @@ public class Neighbour {
 											} else if( abucol.isSelected() ) {
 												GeneGroup gg = prev.getGene().getGeneGroup();
 												int numspec = gg.species.size();
-												float abu = numspec/28.0f;
+												float abu = numspec/38.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
 											} else if( precol.isSelected() ) {
@@ -649,7 +654,8 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval next = te;
 									if( te.getGene() != null ) {
-										String genename = te.getGene().getName();
+										String genename = next.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										double len = te.getProteinLength()*neighbourscale;
@@ -672,7 +678,7 @@ public class Neighbour {
 											} else if( abucol.isSelected() ) {
 												GeneGroup gg = next.getGene().getGeneGroup();
 												int numspec = gg.species.size();
-												float abu = numspec/28.0f;
+												float abu = numspec/38.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
 											} else if( precol.isSelected() ) {
@@ -833,7 +839,8 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval prev = te;
 									if( te.getGene() != null ) {
-										String genename = te.getGene().getName();
+										String genename = prev.getGene().getName();
+										if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getCommonName();
 										genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										double len = te.getProteinLength()*neighbourscale;
@@ -868,7 +875,7 @@ public class Neighbour {
 										} else if( abucol.isSelected() ) {
 											GeneGroup gg = prev.getGene().getGeneGroup();
 											int numspec = gg.species.size();
-											float abu = numspec/28.0f;
+											float abu = numspec/38.0f;
 											Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 											g.setColor( rc );
 										} else if( precol.isSelected() ) {
@@ -1014,10 +1021,14 @@ public class Neighbour {
 			abucol.setAction( a );
 			precol.setAction( a );
 			
+			commonname.setAction( a );
+			
 			funcol.setText("Functions");
 			gccol.setText("GC%");
 			abucol.setText("Abundance");
 			precol.setText("Proximity preservation");
+			
+			commonname.setText("Group names");
 			
 			turn.setAction( new AbstractAction("Forward") {
 				@Override
@@ -1340,8 +1351,8 @@ public class Neighbour {
 					String	spec = cont.getSpec();
 					
 					final List<Contig>	specont = new ArrayList<Contig>();
-					for( String name : GeneSet.contigmap.keySet() ) {
-						Contig c = GeneSet.contigmap.get( name );
+					for( String name : contigmap.keySet() ) {
+						Contig c = contigmap.get( name );
 						if( c != cont && spec.equals( c.getSpec() ) ) specont.add( c );
 					}
 					
@@ -1402,20 +1413,20 @@ public class Neighbour {
 					if( r != -1 ) i = table.convertRowIndexToModel( r );
 					if( i != -1 ) {
 						if( forward.isSelected() ) {
-							Tegeval con = cont.end.next;
+							Tegeval con = cont.getEnd().next;
 							while( con != null ) {
 								cont = con.getContshort();
-								con = cont.isReverse() ? cont.start.prev : cont.end.next;
+								con = cont.isReverse() ? cont.getStart().prev : cont.getEnd().next;
 								
 								if( con != null && con.getContshort().equals( cont ) ) {
 									break;
 								}
 							}
 						} else {
-							Tegeval con = cont.start.prev;
+							Tegeval con = cont.getStart().prev;
 							while( con != null ) {
 								cont = con.getContshort();
-								con = cont.isReverse() ? cont.start.prev : cont.end.next;
+								con = cont.isReverse() ? cont.getStart().prev : cont.getEnd().next;
 								
 								if( con != null && con.getContshort().equals( cont ) ) {
 									break;
@@ -1510,10 +1521,7 @@ public class Neighbour {
 				}
 
 				@Override
-				public void keyReleased(KeyEvent e) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void keyReleased(KeyEvent e) {}
 			});
 			rowheader.setModel(new TableModel() {
 				@Override
@@ -1629,6 +1637,7 @@ public class Neighbour {
 		toolbar.add( showdnaseqs );
 		toolbar.add( mbr );
 		toolbar.add( turn );
+		toolbar.add( commonname );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
@@ -1654,7 +1663,7 @@ public class Neighbour {
 			@Override
 			public void windowClosed(WindowEvent e) {
 				try {
-					GeneSet.saveContigOrder();
+					geneset.saveContigOrder();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
