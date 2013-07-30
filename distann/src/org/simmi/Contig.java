@@ -1,12 +1,34 @@
 package org.simmi;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.simmi.shared.Sequence;
 
 class Contig implements Comparable<Contig> {
-	public Contig(String name) {
+	public Contig(String name, int s) {
 		seq = new Sequence( name, null );
 		loc = 0.0;
-		count = 0;
+		size = s;
+	}
+	
+	public void add( Tegeval tv ) {
+		if( tlist == null ) tlist = new ArrayList<Tegeval>();
+		tlist.add( tv );
+	}
+	
+	public void sortLocs() {
+		if( tlist != null ) {
+			Collections.sort( tlist );
+			int i = 0;
+			Tegeval prev = null;
+			for( Tegeval tv : tlist ) {
+				tv.setNum( i++ );
+				if( prev != null ) tv.setPrevious( prev );
+				prev = tv;
+			}
+		}
 	}
 	
 	public char charAt( int i ) {
@@ -14,12 +36,12 @@ class Contig implements Comparable<Contig> {
 	}
 	
 	public int getGeneCount() {
-		if( end != null ) return end.getNum()+1;
+		if( tlist != null ) return tlist.size();
 		return 0;
 	}
 	
 	public Contig( String name, StringBuilder sb ) {
-		this( name );
+		this( name, sb.length() );
 		seq.setSequenceString( sb );
 	}
 	
@@ -27,9 +49,21 @@ class Contig implements Comparable<Contig> {
 		return seq.getName();
 	}
 	
+	public int getLength() {
+		return size;
+	}
+	
 	public String getSpec() {
-		int i = getName().indexOf('_');
-		return getName().substring(0, i);
+		String spec = "";
+		int i = getName().indexOf("uid");
+		if( i == -1 ) {
+			i = getName().indexOf("contig");
+			spec = getName().substring(0, i-1);
+		} else {
+			i = getName().indexOf("_", i+1);
+			spec = getName().substring(0, i);
+		}
+		return spec;
 	}
 	
 	/*@Override
@@ -50,7 +84,8 @@ class Contig implements Comparable<Contig> {
 	}
 	
 	public Tegeval getFirst() {
-		return reverse ? end : start;
+		if( tlist != null ) return reverse ? tlist.get(tlist.size()-1) : tlist.get(0);
+		return null;
 	}
 	
 	public Tegeval getIndex( int i ) {
@@ -66,13 +101,22 @@ class Contig implements Comparable<Contig> {
 	}
 
 	double 			loc;
-	int 			count;
+	int 			size;
 	Sequence		seq;
 	boolean			reverse = false;
 	Contig			next;
 	Contig			prev;
-	Tegeval			start;
-	Tegeval			end;
+	List<Tegeval>	tlist;
+	
+	public Tegeval getEnd() {
+		if( tlist != null ) return tlist.get( tlist.size()-1 );
+		return null;
+	}
+	
+	public Tegeval getStart() {
+		if( tlist != null ) return tlist.get( 0 );
+		return null;
+	}
 	
 	public void setConnection( Contig contig, boolean rev, boolean forw ) {
 		if( forw ) setForwardConnection( contig, rev );
@@ -84,8 +128,8 @@ class Contig implements Comparable<Contig> {
 		if( rev ) {
 			contig.next = this;
 			
-			if( this.end != null ) this.end.next = contig.end;
-			if( contig.end != null ) contig.end.next = this.end;
+			if( this.getEnd() != null ) this.getEnd().next = contig.getEnd();
+			if( contig.getEnd() != null ) contig.getEnd().next = this.getEnd();
 			
 			if( this.isReverse() == contig.isReverse() ) {
 				Contig nextc = contig;
@@ -97,8 +141,8 @@ class Contig implements Comparable<Contig> {
 		} else {
 			contig.prev = this;
 			
-			if( this.end != null ) this.end.next = contig.start;
-			if( contig.start != null ) contig.start.prev = this.end;
+			if( this.getEnd() != null ) this.getEnd().next = contig.getStart();
+			if( contig.getStart() != null ) contig.getStart().prev = this.getEnd();
 			
 			if( this.isReverse() != contig.isReverse() ) {
 				Contig nextc = contig;
@@ -115,8 +159,8 @@ class Contig implements Comparable<Contig> {
 		if( rev ) {
 			contig.next = this;
 			
-			this.start.prev = contig.end;
-			if( contig.end != null ) contig.end.next = this.start;
+			this.getStart().prev = contig.getEnd();
+			if( contig.getEnd() != null ) contig.getEnd().next = this.getStart();
 			
 			if( this.isReverse() != contig.isReverse() ) {
 				Contig nextc = contig;
@@ -128,8 +172,8 @@ class Contig implements Comparable<Contig> {
 		} else {
 			contig.prev = this;
 			
-			this.start.prev = contig.start;
-			if( contig.start != null ) contig.start.prev = this.start;
+			this.getStart().prev = contig.getStart();
+			if( contig.getStart() != null ) contig.getStart().prev = this.getStart();
 			
 			if( this.isReverse() == contig.isReverse() ) {
 				Contig nextc = contig;
