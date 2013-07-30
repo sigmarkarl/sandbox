@@ -213,7 +213,7 @@ public class Blast {
 		String evalue = null;
 		String line = br.readLine();
 		int cnt = 0;
-		Tegeval preval = null;
+		//Tegeval preval = null;
 		while (line != null) {
 			String trim = line.trim();
 			cnt++;
@@ -365,7 +365,6 @@ public class Blast {
 					gene.allids = new HashSet<String>();
 					gene.species = new HashMap<String, Teginfo>();
 					ret.put(val, gene);
-					gene.refid = id;
 				}
 				gene.allids.add(id);
 				set.add(val);
@@ -377,11 +376,11 @@ public class Blast {
 					System.err.println();
 				}
                                 
-                                tv.setGene( gene );
+                tv.setGene( gene );
 				tv.setTegund( padda );
 				tv.setEval( deval );
 				
-				if( preval != null ) {
+				/*if( preval != null ) {
 					Contig precontig = preval.getContshort();
 					Contig curcontig = tv.getContshort();
 					boolean bu = precontig.equals( curcontig );
@@ -396,7 +395,7 @@ public class Blast {
 						curcontig.end = tv;
 					}
 				} else tv.setNum( 0 );
-				preval = tv;
+				preval = tv;*/
 				
 				Teginfo stv;
 				if (!gene.species.containsKey(padda)) {
@@ -546,7 +545,7 @@ public class Blast {
 						nquery = query;
 					}*/
 	
-					Contig contig = contigmap.containsKey( contigstr ) ? contigmap.get( contigstr ) : new Contig( contigstr );
+					Contig contig = contigmap.containsKey( contigstr ) ? contigmap.get( contigstr ) : new Contig( contigstr, 0 );
 					//StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
 					
 					Tegeval tv = aas.get( query ); //new Tegeval(gene, padda, deval, query, contig, contloc, start, stop, ori);
@@ -560,7 +559,7 @@ public class Blast {
 					
 					stv.add( tv );
 					
-					if( preval != null ) {
+					/*if( preval != null ) {
 						Contig precontig = preval.getContshort();
 						Contig curcontig = tv.getContshort();
 						boolean bu = precontig.equals( curcontig );
@@ -575,7 +574,7 @@ public class Blast {
 							curcontig.end = tv;
 						}
 					} else tv.setNum( 0 );
-					preval = tv;
+					preval = tv;*/
 					
 					if (!allgenes.containsKey(aaid) || allgenes.get(aaid) == null) {
 						allgenes.put(aaid, "Thermus " + aaid);
