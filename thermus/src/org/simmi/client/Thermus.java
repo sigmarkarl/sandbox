@@ -103,6 +103,7 @@ public class Thermus implements EntryPoint {
 				//console( w+" "+h );
 			}
 		});
+		//Browser.getWindow().
 		
 		Element pe = Document.get().createElement("param");
 		pe.setAttribute("name", "jnlp_href");
@@ -119,8 +120,10 @@ public class Thermus implements EntryPoint {
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "distann.jnlp");
-		ae.setAttribute("archive", "http://test.matis.is/thermus/distann.jar");
+		ae.setAttribute("archive", "distann.jar");
 		ae.setAttribute("code", "org.simmi.GeneSet");
+		
+		//initFunctions( applet );
 		
 		rp.getElement().appendChild( ae );
 	}
