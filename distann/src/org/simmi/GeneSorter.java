@@ -35,8 +35,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class GeneSorter {
-	public static List<Tegeval> loadContigs( Collection<Gene> genes, String species, final List<Contig> contigs ) {
-		final List<Tegeval> ltv = new ArrayList<Tegeval>();
+	public List<Contig> loadContigs( Collection<Gene> genes, final Map<String,Contig> contigmap ) {
+		/*final List<Tegeval> ltv = new ArrayList<Tegeval>();
 		for (Gene g : genes) {
 			if (g.species != null) {
 				System.err.println( g.species.keySet() );
@@ -55,8 +55,8 @@ public class GeneSorter {
 								int sec = tv.cont.lastIndexOf('_');
 	
 								String cname = tv.cont.substring(0, sec);
-								if( !GeneSet.contigmap.containsKey( cname ) ) {
-									GeneSet.contigmap.put(cname, tv.getContshort());
+								if( !contigmap.containsKey( cname ) ) {
+									contigmap.put(cname, tv.getContshort());
 								}
 							}
 						}
@@ -66,18 +66,20 @@ public class GeneSorter {
 		}
 		// locsort = true;
 		Collections.sort(ltv);
-		// locsort = false;
+		// locsort = false;*/
 
+		List<Contig> contigs = new ArrayList<Contig>();
 		contigs.clear();
-		for (String c : GeneSet.contigmap.keySet()) {
-			Contig contig = GeneSet.contigmap.get(c);
+		for (String c : contigmap.keySet()) {
+			Contig contig = contigmap.get(c);
 			contigs.add( contig );
 		}
+		return contigs;
 		
-		return ltv;
+		//return ltv;
 	}
 
-	public static void mynd(final List<Gene> genes, final JTable sorting, String species, final List<Contig> contigs) throws IOException {
+	public void mynd(final List<Gene> genes, final JTable sorting, String species, final Map<String,Contig> contigmap) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -88,7 +90,8 @@ public class GeneSorter {
 		
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {			
-			List<Tegeval> ltv = loadContigs( genes, species, contigs );
+			//List<Tegeval> ltv = loadContigs( genes, species, contigs, contigmap );
+			final List<Contig> contigs = loadContigs( genes, contigmap );
 			
 			final int hey = genes.size(); // ltv.get(ltv.size()-1).stop/1000;
 			System.out.println(hey);
@@ -317,8 +320,8 @@ public class GeneSorter {
 				public Object getValueAt(int rowIndex, int columnIndex) {
 					if (columnIndex == 2) {
 						Contig c = contigs.get(rowIndex);
-						if (c.count > 0)
-							return (int) ((c.loc) / c.count);
+						//if (c.count > 0)
+						//	return (int) ((c.loc) / c.count);
 						return 0;
 					} else if (columnIndex == 1) {
 						Contig c = contigs.get(rowIndex);
@@ -394,8 +397,8 @@ public class GeneSorter {
 		frame.setVisible(true);
 	}
 	
-	public static void loadContigs( List<GeneGroup> genegroups, List<Contig> contigs ) {
-		for (GeneGroup gg : genegroups) {
+	public List<Contig> loadContigs( List<GeneGroup> genegroups, Map<String,Contig> contigmap ) {
+		/*for (GeneGroup gg : genegroups) {
 			for( Gene g : gg.genes ) {
 				// for( String sp : g.species.keySet() ) {
 				for (String spec : g.species.keySet()) {
@@ -410,22 +413,24 @@ public class GeneSorter {
 	
 								String cname = tv.cont.substring(0, sec);
 								//System.err.println( cname );
-								if( !GeneSet.contigmap.containsKey( cname ) ) {
-									GeneSet.contigmap.put(cname, tv.getContshort());
+								if( !contigmap.containsKey( cname ) ) {
+									contigmap.put(cname, tv.getContshort());
 								}
 							}
 						}
 				}
 			}
-		}
+		}*/
 
-		contigs.clear();
-		for (String c : GeneSet.contigmap.keySet()) {
-			contigs.add( GeneSet.contigmap.get(c) );
+		List<Contig>	contigs = new ArrayList<Contig>();
+		//contigs.clear();
+		for (String c : contigmap.keySet()) {
+			contigs.add( contigmap.get(c) );
 		}
+		return contigs;
 	}
 	
-	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final List<Contig> contigs, final Map<Set<String>, ShareNum> specset) throws IOException {
+	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final Map<String,Contig> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -435,7 +440,7 @@ public class GeneSorter {
 		final JRadioButton	freqColorScheme = new JRadioButton("Freq");
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {
-			loadContigs( geneGroups, contigs );
+			final List<Contig> contigs = loadContigs( geneGroups, contigmap );
 			
 			JCheckBox	check = new JCheckBox("All positions");
 			JOptionPane.showMessageDialog( null, check );
@@ -578,7 +583,11 @@ public class GeneSorter {
 								if( y < rowheader.getRowCount() ) {
 									String contig = (String)rowheader.getValueAt(y, 0);
 	
-									int und = contig.indexOf("_");
+									int und = contig.indexOf("_contig");
+									if( und == -1 ) {
+										und = contig.indexOf("uid");
+										und = contig.indexOf("_", und+1);
+									}
 									String spec = contig.substring(0, und);
 									/*if( genegroup.getCommonName().contains("tRNA-Phe") && spec.contains("SA01") ) {
 										System.err.println();
@@ -713,18 +722,17 @@ public class GeneSorter {
 
 				@Override
 				public Object getValueAt(int rowIndex, int columnIndex) {
+					Contig c = contigs.get(rowIndex);
 					if (columnIndex == 2) {
-						Contig c = contigs.get(rowIndex);
-						if (c.count > 0)
-							return (int) ((c.loc) / c.count);
-						return 0;
+						//if (c.count > 0)
+						//	return (int) ((c.loc) / c.count);
+						return c.getLength();
 					} else if (columnIndex == 1) {
-						Contig c = contigs.get(rowIndex);
-						String cname = c.getName();
-						int i = cname.indexOf('_');
-						return cname.substring(0, i);
+						//String cname = c.getName();
+						//int i = cname.indexOf('_');
+						return c.getSpec();
 					}
-					return contigs.get(rowIndex).getName();
+					return c.getName();
 				}
 
 				@Override
