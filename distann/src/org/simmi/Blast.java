@@ -48,28 +48,26 @@ public class Blast {
 					}
 				}*/
 				if( clusterset.contains( query ) ) {
-					for( String padd : gene.species.keySet() ) {
-						Teginfo stv = gene.species.get(padd);
-						for( Tegeval tvl : stv.tset ) {
-							if( !clusterset.contains( tvl.cont ) ) {
-								Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
-								
-								if( newgene == null ) {
-									newgene = new Gene(null, gene.refid + " new", desc, teg);
-									newgene.allids = new HashSet<String>();
-									newgene.species = new HashMap<String, Teginfo>();
-									//newgene.refid = gene.refid + " new";
-									ret.put( newgene.refid, newgene );
-								}
-								
-								return newgene;
-								
-								//break;
+					Teginfo stv = gene.teginfo;
+					for( Tegeval tvl : stv.tset ) {
+						if( !clusterset.contains( tvl.cont ) ) {
+							Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
+							
+							if( newgene == null ) {
+								newgene = new Gene(null, gene.refid + " new", desc, teg);
+								newgene.allids = new HashSet<String>();
+								//newgene.species = new HashMap<String, Teginfo>();
+								//newgene.refid = gene.refid + " new";
+								ret.put( newgene.refid, newgene );
 							}
+							
+							return newgene;
+							
+							//break;
 						}
-						
-						//if( newgene != gene ) break;
 					}
+					
+					//if( newgene != gene ) break;
 					//newgene = genestuff( gene, clusterset, desc, teg, id, ret );
 				}
 			}
@@ -363,7 +361,7 @@ public class Blast {
 				} else {
 					gene = new Gene(null, id, desc, teg);
 					gene.allids = new HashSet<String>();
-					gene.species = new HashMap<String, Teginfo>();
+					//gene.species = new HashMap<String, Teginfo>();
 					ret.put(val, gene);
 				}
 				gene.allids.add(id);
@@ -398,11 +396,12 @@ public class Blast {
 				preval = tv;*/
 				
 				Teginfo stv;
-				if (!gene.species.containsKey(padda)) {
+				if (!gene.species.equals(padda)) {
 					stv = new Teginfo();
-					gene.species.put(padda, stv);
+					gene.species = padda;
+					gene.teginfo = stv;
 				} else {
-					stv = gene.species.get(padda);
+					stv = gene.teginfo;
 				}
 				
 				if( addon ) {
@@ -492,14 +491,12 @@ public class Blast {
 						gene = new Gene(null, aaid, aaid, padda);
 						ret.put(aaid, gene);
 						gene.allids = new HashSet<String>();
-						gene.species = new HashMap<String, Teginfo>();
+						//gene.species = new HashMap<String, Teginfo>();
 						ret.put(aaid, gene);
 						gene.refid = aaid;
 					}
 					gene.allids.add(aaid);
 	
-					if (gene.species == null)
-						gene.species = new HashMap<String, Teginfo>();
 					double deval = -1.0;
 					/*
 					 * try { deval = Double.parseDouble(evalue); } catch( Exception
@@ -508,13 +505,15 @@ public class Blast {
 					// gene.species.put( padda, new Tegeval( padda, deval,
 					// aas.get(query), query ) );
 					Teginfo stv;
-					if (!gene.species.containsKey(padda)) {
+					if (!gene.species.equals(padda)) {
 						stv = new Teginfo();
-						gene.species.put(padda, stv);
+						gene.species = padda;
+						gene.teginfo = stv;
 						
 						System.err.println( "new annars " + padda );
-					} else
-						stv = gene.species.get(padda);
+					} else {
+						stv = gene.teginfo;
+					}
 	
 					String contigstr = null;
 					String contloc = null;
