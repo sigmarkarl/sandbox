@@ -111,13 +111,19 @@ public class GBK2AminoFasta {
 					}
 				} else if( trimline.startsWith("/product") ) {
 					if( anno != null ) {
-						anno.name = trimline.substring(10,trimline.length()-1);
+						if( trimline.length() > 10 ) anno.name = trimline.substring(10,trimline.length()-1);
 						//annolist.add( anno );
 						//anno = null;
 					}
 				} else if( trimline.startsWith("/protein_id") ) {
 					if( anno != null ) {
 						anno.id = trimline.substring(13,trimline.length()-1);
+						//annolist.add( anno );
+						//anno = null;
+					}
+				} else if( trimline.startsWith("/locus_tag") ) {
+					if( anno != null ) {
+						anno.id = anno.id == null || anno.id.contains("..") ? trimline.substring(12,trimline.length()-1) : anno.id;
 						//annolist.add( anno );
 						//anno = null;
 					}
@@ -157,7 +163,7 @@ public class GBK2AminoFasta {
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				Writer fw = null;//new FileWriter( new File( uri ) );
+				Writer fw = new FileWriter( new File( uri ) );
 				urifile.put( uri, fw );
 				
 				out = fw;
@@ -167,7 +173,7 @@ public class GBK2AminoFasta {
 			boolean amino = ao.getType().contains("CDS");
 			
 			String end = amino ? " # " + ao.start + " # " + ao.stop + " # " + (ao.comp ? "-1" : "1") + " #\n" : "\n";
-			out.write( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]" + end );
+			if( out != null ) out.write( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]" + end );
 			//strbuf.
 			
 			//System.err.println(val);

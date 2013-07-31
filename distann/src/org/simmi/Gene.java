@@ -21,26 +21,16 @@ public class Gene {
 	
 	public int getMaxCyc() {
 		int max = -1;
-		if( species != null ) {
-			for (String str : species.keySet()) {
-				Teginfo set = species.get(str);
-				for (Tegeval tv : set.tset) {
-					max = Math.max(max, tv.numCys);
-				}
-			}
+		for (Tegeval tv : teginfo.tset) {
+			max = Math.max(max, tv.numCys);
 		}
 		return max;
 	}
 	
 	public int getMaxLength() {
 		int max = -1;
-		if( this.species != null ) {
-			for (String str : this.species.keySet()) {
-				Teginfo set = this.species.get(str);
-				for (Tegeval tv : set.tset) {
-					max = Math.max(max, tv.getProteinLength());
-				}
-			}
+		for (Tegeval tv : teginfo.tset) {
+			max = Math.max(max, tv.getProteinLength());
 		}
 		return max;
 	}
@@ -93,42 +83,35 @@ public class Gene {
 	public double getAvgGCPerc() {
 		double gc = 0.0;
 		int count = 0;
-		if( species != null ) {
-			for( String spec : species.keySet() ) {
-				Teginfo ti = species.get(spec);
-				for( Tegeval te : ti.tset ) {
-					gc += te.getGCPerc();
-					count++;
-				}
-			}
-		} else count = 1;
-		return gc/count;
+		for( Tegeval te : teginfo.tset ) {
+			gc += te.getGCPerc();
+			count++;
+		}
+		return count > 0 ? gc/count : 0;
 	}
 	
 	public double getStddevGCPerc( double avggc ) {
 		double gc = 0.0;
 		int count = 0;
-		for( String spec : species.keySet() ) {
-			Teginfo ti = species.get(spec);
-			for( Tegeval te : ti.tset ) {
-				double val = te.getGCPerc()-avggc;
-				gc += val*val;
-				count++;
-			}
+		for( Tegeval te : teginfo.tset ) {
+			double val = te.getGCPerc()-avggc;
+			gc += val*val;
+			count++;
 		}
 		return Math.sqrt(gc/count);
 	}
 	
 	public void addTegeval( Tegeval tegeval ) {
-		Teginfo ti;
+		/*Teginfo ti;
 		if( species == null ) species = new HashMap<String,Teginfo>();
 		if( species.containsKey( tegeval.teg ) ) {
 			ti = species.get( tegeval.teg );
 		} else {
 			ti = new Teginfo();
 			species.put( tegeval.teg, ti );
-		}
-		ti.add( tegeval );
+		}*/
+		if( teginfo == null ) teginfo = new Teginfo();
+		teginfo.add( tegeval );
 	}
 
 	String name;
@@ -141,7 +124,9 @@ public class Gene {
 	String pdbid;
 	String blastspec;
 	Set<Function> funcentries;
-	Map<String, Teginfo> species;
+	//Map<String, Teginfo> species;
+	String 	species;
+	Teginfo	teginfo;
 	private String aac;
 	int index;
 
