@@ -192,8 +192,8 @@ public class GeneSorter {
 
 								int und = contig.indexOf("_");
 								String spec = contig.substring(0, und);
-								if (gene.species.containsKey(spec)) {
-									Teginfo stv = gene.species.get(spec);
+								if( gene.species.equals(spec) ) {
+									Teginfo stv = gene.teginfo;
 									if( stv != null && stv.tset != null )
 									for (Tegeval tv : stv.tset) {
 										if( tv.cont != null && tv.cont.startsWith(contig)) {

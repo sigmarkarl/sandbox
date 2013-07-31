@@ -421,7 +421,7 @@ public class GeneSet extends JApplet {
 					Gene gene = new Gene( null, id, name, origin );
 					gene.allids = new HashSet<String>();
 					gene.allids.add( id );
-					gene.species = new HashMap<String, Teginfo>();
+					//gene.species = new HashMap<String, Teginfo>();
 					refmap.put(id, gene);
 					
 					tv.setGene( gene );
@@ -429,7 +429,8 @@ public class GeneSet extends JApplet {
 					
 					Teginfo ti = new Teginfo();
 					ti.add( tv );
-					gene.species.put( origin, ti );
+					gene.species = origin;
+					gene.teginfo = ti;
 					
 					/*if( preval != null ) {
 						Contig precontig = preval.getContshort();
@@ -524,7 +525,7 @@ public class GeneSet extends JApplet {
 			Gene gene = new Gene( null, id, name, origin );
 			gene.allids = new HashSet<String>();
 			gene.allids.add( id );
-			gene.species = new HashMap<String, Teginfo>();
+			//gene.species = new HashMap<String, Teginfo>();
 			refmap.put(id, gene);
 			
 			tv.setGene( gene );
@@ -532,7 +533,8 @@ public class GeneSet extends JApplet {
 			
 			Teginfo ti = new Teginfo();
 			ti.add( tv );
-			gene.species.put( origin, ti );
+			gene.species = origin;
+			gene.teginfo = ti;
 		}
 		ac = null;
 		// fw.close();
@@ -4549,9 +4551,9 @@ public class GeneSet extends JApplet {
 		}
 		list.clear();
 
-		br.close();
-		if (ps != null)
-			ps.close();
+		//br.close();
+		//if (ps != null)
+			//ps.close();
 
 		if (!getgeneids) {
 			for (String s : refids.keySet()) {
@@ -4592,7 +4594,7 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		while (line != null) {
 			String[] split = line.split("\t");
-			if (split.length > 1 && genids.containsKey(split[1])) {
+			if( split.length > 1 && genids.containsKey(split[1]) ) {
 				Gene gene = genids.get(split[1]);
 				if (gene.funcentries == null)
 					gene.funcentries = new HashSet<Function>();
@@ -4665,40 +4667,32 @@ public class GeneSet extends JApplet {
 			int cr = table.convertRowIndexToModel(r);
 			Gene gg = genelist.get(cr);
 			// genefilterset.add( gg.index );
-			if (gg.species != null) {
-				for (String sp : gg.species.keySet()) {
-					Teginfo stv = gg.species.get(sp);
-					for (Tegeval tv : stv.tset) {
-						//System.err.println( tv.cont );
-						//int li = tv.cont.lastIndexOf('_');
-						//String tvshort = tv.contshort+tv.cont.substring(li);
-						for (Set<String> uset : uclusterlist) {
-							if (uset.contains(tv.cont)) {
-								ct.addAll(uset);
-								break;
-							}
-						}
+			Teginfo stv = gg.teginfo;
+			for (Tegeval tv : stv.tset) {
+				//System.err.println( tv.cont );
+				//int li = tv.cont.lastIndexOf('_');
+				//String tvshort = tv.contshort+tv.cont.substring(li);
+				for (Set<String> uset : uclusterlist) {
+					if (uset.contains(tv.cont)) {
+						ct.addAll(uset);
+						break;
 					}
 				}
 			}
 		}
 
 		for (Gene g : genelist) {
-			if (g.species != null) {
-				for (String sp : g.species.keySet()) {
-					Teginfo stv = g.species.get(sp);
-					for (Tegeval tv : stv.tset) {
-						//System.err.println( tv.cont );
-						//int li = tv.cont.lastIndexOf('_');
-						//String tvshort = tv.contshort+tv.cont.substring(li);
-						if (ct.contains(tv.cont)) {
-							if (remove)
-								genefilterset.remove(g.index);
-							else
-								genefilterset.add(g.index);
-							break;
-						}
-					}
+			Teginfo stv = g.teginfo;
+			for (Tegeval tv : stv.tset) {
+				//System.err.println( tv.cont );
+				//int li = tv.cont.lastIndexOf('_');
+				//String tvshort = tv.contshort+tv.cont.substring(li);
+				if (ct.contains(tv.cont)) {
+					if (remove)
+						genefilterset.remove(g.index);
+					else
+						genefilterset.add(g.index);
+					break;
 				}
 			}
 		}
@@ -4717,22 +4711,18 @@ public class GeneSet extends JApplet {
 			}
 			// genefilterset.add( gg.index );
 			for( Gene g : gg.genes ) {
-				if (g.species != null) {
-					for (String sp : g.species.keySet()) {
-						Teginfo stv = g.species.get(sp);
-						for (Tegeval tv : stv.tset) {
-							ct.add(tv.cont);
-							int ind = tv.cont.lastIndexOf("_");
-							int val = Integer.parseInt(tv.cont.substring(ind + 1));
-	
-							String next = tv.cont.substring(0, ind + 1) + (val + 1);
-							System.err.println(next);
-							ct.add(next);
-							if (val > 1) {
-								String prev = tv.cont.substring(0, ind + 1) + (val - 1);
-								ct.add(prev);
-							}
-						}
+				Teginfo stv = g.teginfo;
+				for (Tegeval tv : stv.tset) {
+					ct.add(tv.cont);
+					int ind = tv.cont.lastIndexOf("_");
+					int val = Integer.parseInt(tv.cont.substring(ind + 1));
+
+					String next = tv.cont.substring(0, ind + 1) + (val + 1);
+					System.err.println(next);
+					ct.add(next);
+					if (val > 1) {
+						String prev = tv.cont.substring(0, ind + 1) + (val - 1);
+						ct.add(prev);
 					}
 				}
 			}
@@ -4740,35 +4730,27 @@ public class GeneSet extends JApplet {
 
 		if( table.getModel() == groupModel ) {
 			for( Gene g : genelist ) {
-				if (g.species != null) {
-					for (String sp : g.species.keySet()) {
-						Teginfo stv = g.species.get(sp);
-						for (Tegeval tv : stv.tset) {
-							if( ct.contains(tv.cont) ) {
-								if (remove)
-									genefilterset.remove(g.getGeneGroup().index);
-								else
-									genefilterset.add(g.getGeneGroup().index);
-								break;
-							}
-						}
+				Teginfo stv = g.teginfo;
+				for (Tegeval tv : stv.tset) {
+					if( ct.contains(tv.cont) ) {
+						if (remove)
+							genefilterset.remove(g.getGeneGroup().index);
+						else
+							genefilterset.add(g.getGeneGroup().index);
+						break;
 					}
 				}
 			}
 		} else {
 			for( Gene g : genelist ) {
-				if (g.species != null) {
-					for (String sp : g.species.keySet()) {
-						Teginfo stv = g.species.get(sp);
-						for (Tegeval tv : stv.tset) {
-							if( ct.contains(tv.cont) ) {
-								if (remove)
-									genefilterset.remove(g.index);
-								else
-									genefilterset.add(g.index);
-								break;
-							}
-						}
+				Teginfo stv = g.teginfo;
+				for (Tegeval tv : stv.tset) {
+					if( ct.contains(tv.cont) ) {
+						if (remove)
+							genefilterset.remove(g.index);
+						else
+							genefilterset.add(g.index);
+						break;
 					}
 				}
 			}
@@ -4930,28 +4912,26 @@ public class GeneSet extends JApplet {
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
 			Gene gg = genelist.get(cr);
-			if (gg.species != null) {
-				sb.append(gg.name + ":\n");
+			//if (gg.species != null) {
+			sb.append(gg.name + ":\n");
 				//for (String sp : gg.species.keySet()) {
-				for( String sp : selectedSpecies ) {
-					if( gg.species.containsKey(sp) ) {
-						Teginfo stv = gg.species.get(sp);
-						for (Tegeval tv : stv.tset) {
-							sb.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-							StringBuilder protseq = tv.getProteinSequence();
-							for (int i = 0; i < tv.getProteinLength(); i += 70) {
-								int end = Math.min(i + 70, tv.getProteinLength());
-								sb.append( protseq.substring(i, end) + "\n"); // new
-																					// String(
-																					// tv.seq,
-																					// i,
-																					// Math.min(i+70,tv.seq.length())
-																					// )+"\n");
-							}
-							// textarea.append( ">" + tv.cont + " " + tv.teg
-							// + " " + tv.eval + "\n" + tv.seq + "\n" );
-						}
+				//for( String sp : selectedSpecies ) {
+			if( selectedSpecies.contains(species) ) {
+				Teginfo stv = gg.teginfo;
+				for (Tegeval tv : stv.tset) {
+					sb.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+					StringBuilder protseq = tv.getProteinSequence();
+					for (int i = 0; i < tv.getProteinLength(); i += 70) {
+						int end = Math.min(i + 70, tv.getProteinLength());
+						sb.append( protseq.substring(i, end) + "\n"); // new
+																			// String(
+																			// tv.seq,
+																			// i,
+																			// Math.min(i+70,tv.seq.length())
+																			// )+"\n");
 					}
+					// textarea.append( ">" + tv.cont + " " + tv.teg
+					// + " " + tv.eval + "\n" + tv.seq + "\n" );
 				}
 			}
 		}
@@ -4965,16 +4945,14 @@ public class GeneSet extends JApplet {
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
 			Gene gg = genelist.get(cr);
-			if(gg.species != null) {
-				sb.append(gg.name + ":\n");
-				for (String sp : gg.species.keySet()) {
-					Teginfo stv = gg.species.get(sp);
-					for (Tegeval tv : stv.tset) {
-						sb.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-						for (int i = 0; i < tv.getLength(); i += 70) {
-							sb.append( tv.getSubstring(i, Math.min(i + 70, tv.getLength())) + "\n");
-						}
-					}
+			//if(gg.species != null) {
+			sb.append(gg.name + ":\n");
+			//for (String sp : gg.species.keySet()) {
+			Teginfo stv = gg.teginfo;
+			for (Tegeval tv : stv.tset) {
+				sb.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+				for (int i = 0; i < tv.getLength(); i += 70) {
+					sb.append( tv.getSubstring(i, Math.min(i + 70, tv.getLength())) + "\n");
 				}
 			}
 		}
@@ -5061,7 +5039,7 @@ public class GeneSet extends JApplet {
 		Teginfo ti = null;
 		
 		for( Gene g : gg.genes ) {
-			Teginfo sti = g.species.get( spec );
+			Teginfo sti = spec.equals(g.species) ? g.teginfo : null;
 			if( sti != null ) {
 				ti = sti;
 				break;
@@ -5154,19 +5132,19 @@ public class GeneSet extends JApplet {
 							for (int r : rr) {
 								int cr = table.convertRowIndexToModel(r);
 								Gene gg = genelist.get(cr);
-								if (gg.species != null) {
+								//if (gg.species != null) {
 									// ret.append( gg.name + ":\n" );
-									for (String sp : gg.species.keySet()) {
-										Teginfo stv = gg.species.get(sp);
-										for (Tegeval tv : stv.tset) {
-											if (!contigs.containsKey(tv.contshort)) {
-												List<Tegeval> ltv = new ArrayList<Tegeval>();
-												ltv.add(tv);
-												contigs.put(tv.getContshort().getName(), ltv);
-											} else {
-												List<Tegeval> ltv = contigs.get(tv.contshort);
-												ltv.add(tv);
-											}
+									//for (String sp : gg.species.keySet()) {
+								Teginfo stv = gg.teginfo;
+								for (Tegeval tv : stv.tset) {
+									if (!contigs.containsKey(tv.contshort)) {
+										List<Tegeval> ltv = new ArrayList<Tegeval>();
+										ltv.add(tv);
+										contigs.put(tv.getContshort().getName(), ltv);
+									} else {
+										List<Tegeval> ltv = contigs.get(tv.contshort);
+										ltv.add(tv);
+									}
 											/*
 											 * ret.append( ">" + tv.cont + " " +
 											 * tv.teg + " " + tv.eval + "\n" );
@@ -5176,8 +5154,6 @@ public class GeneSet extends JApplet {
 											 * Math.min(i+70,tv.dna.length())
 											 * )+"\n"); } }
 											 */
-										}
-									}
 								}
 							}
 							for (String cont : contigs.keySet()) {
@@ -5566,6 +5542,13 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction compareplotaction = new AbstractAction("Gene compare plot") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new GeneCompare().comparePlot( GeneSet.this, comp, genelist, clusterMap );
+			}
+		};
+		
 		AbstractAction freqdistaction = new AbstractAction("Freq dist") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -5931,24 +5914,20 @@ public class GeneSet extends JApplet {
 					String spec1 = speclist.get(y);
 					final List<Tegeval> ltv = new ArrayList<Tegeval>();
 					for (Gene g : genelist) {
-						if (g.species != null) {
-							for (String spec : g.species.keySet()) {
-								Teginfo stv = g.species.get(spec);
-								if (stv != null)
-									for (Tegeval tv : stv.tset) {
-										if (spec.equals(spec1)) {
-											ltv.add(tv);
-										}
-										//tv.
-	
-										//int first = tv.cont.indexOf("_");
-										//int sec = tv.cont.indexOf("_", first + 1);
-	
-										//String cname = tv.cont.substring(0, sec);
-										//contigmap.put(cname, new Contig(cname));
-									}
+						Teginfo stv = g.teginfo;
+						if (stv != null) {
+							for (Tegeval tv : stv.tset) {
+								if (g.species.equals(spec1)) {
+									ltv.add(tv);
+								}
+								//tv.
+
+								//int first = tv.cont.indexOf("_");
+								//int sec = tv.cont.indexOf("_", first + 1);
+
+								//String cname = tv.cont.substring(0, sec);
+								//contigmap.put(cname, new Contig(cname));
 							}
-							// }
 						}
 					}
 					Tegeval.locsort = true;
@@ -5959,24 +5938,20 @@ public class GeneSet extends JApplet {
 						
 						final List<Tegeval> subltv = new ArrayList<Tegeval>();
 						for (Gene g : genelist) {
-							if (g.species != null) {
-								for (String spec : g.species.keySet()) {
-									Teginfo stv = g.species.get(spec);
-									if (stv != null)
-										for (Tegeval tv : stv.tset) {
-											if (spec.equals(spec2)) {
-												subltv.add(tv);
-											}
-											//tv.
-		
-											//int first = tv.cont.indexOf("_");
-											//int sec = tv.cont.indexOf("_", first + 1);
-		
-											//String cname = tv.cont.substring(0, sec);
-											//contigmap.put(cname, new Contig(cname));
-										}
+							Teginfo stv = g.teginfo;
+							if (stv != null) {
+								for (Tegeval tv : stv.tset) {
+									if(g.species.equals(spec2)) {
+										subltv.add(tv);
+									}
+									//tv.
+
+									//int first = tv.cont.indexOf("_");
+									//int sec = tv.cont.indexOf("_", first + 1);
+
+									//String cname = tv.cont.substring(0, sec);
+									//contigmap.put(cname, new Contig(cname));
 								}
-								// }
 							}
 						}
 						Tegeval.locsort = true;
@@ -6479,6 +6454,7 @@ public class GeneSet extends JApplet {
 		menu.add( matrixaction );
 		menu.add( pancoreaction );
 		menu.add( genexyplotaction );
+		menu.add( compareplotaction );
 		menu.add( fetchcoreaction );
 		menu.add( loadcontiggraphaction );
 		
@@ -6717,23 +6693,19 @@ public class GeneSet extends JApplet {
 									textarea.setText(result);
 
 									for (Gene g : genelist) {
-										if (g.species != null) {
-											for (String teg : g.species.keySet()) {
-												boolean found = false;
-												Teginfo stv = g.species.get(teg);
-												for (Tegeval tv : stv.tset) {
-													if (regnames.contains(tv.cont)) {
-														found = true;
-														break;
-													}
-												}
-												if (found) {
-													int rr = table.convertRowIndexToView(g.index);
-													if (rr != -1)
-														table.addRowSelectionInterval(rr, rr);
-													break;
-												}
+										boolean found = false;
+										Teginfo stv = g.teginfo;
+										for (Tegeval tv : stv.tset) {
+											if (regnames.contains(tv.cont)) {
+												found = true;
+												break;
 											}
+										}
+										if (found) {
+											int rr = table.convertRowIndexToView(g.index);
+											if (rr != -1)
+												table.addRowSelectionInterval(rr, rr);
+											break;
 										}
 									}
 								} catch (IOException e) {
@@ -6930,9 +6902,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 13) {
 					int val = 0;
 					for( Gene gene : gg.genes ) {
-						for (String str : gene.species.keySet()) {
-							val += gene.species.get(str).tset.size();
-						}
+						val += gene.teginfo.tset.size();
 					}
 					return val;
 				} else if (columnIndex == 14) {
@@ -7110,7 +7080,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 6) {
 					return gene.pdbid;
 				} else if (columnIndex == 7) {
-					return gene.species == null ? -1 : gene.species.size();
+					return gene.species == null ? -1 : 1;
 				} else if (columnIndex == 8) {
 					return gene.getGroupIndex();
 				} else if (columnIndex == 9) {
@@ -7122,31 +7092,25 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 12) {
 					return gene.getAvgGCPerc();
 				} else if (columnIndex == 13) {
-					if (gene.species != null) {
-						int val = 0;
-						for (String str : gene.species.keySet()) {
-							val += gene.species.get(str).tset.size();
-						}
-						return val;
-					}
+					/*int val = 0;
+					for (String str : gene.species.keySet()) {
+						val += gene.species.get(str).tset.size();
+					}*/
+					return gene.teginfo.tset.size();
 				} else if (columnIndex == 14) {
 					return gene.getGroupCount();
 				} else if (columnIndex == 15) {
 					return gene.getMaxLength();
 				} else if (columnIndex == 16) {
-					if (gene.species != null) {
-						return specset.get(gene.species.keySet());
-					}
+					return specset.get(gene.getGeneGroup().getSpecies());
 				} else if (columnIndex == 17) {
 					gene.getMaxCyc();
 				} else if (columnIndex == 18) {
 					return gene.getGroupCoverage() == 28 && gene.getGroupCount() == 28 ? gene.corr16s : -1;
 				} else {
-					if (gene.species != null) {
-						String spec = specList.get( columnIndex-19 );
-						Teginfo set = gene.species.get( spec );
-						return set;
-					}
+					String spec = specList.get( columnIndex-19 );
+					Teginfo set = gene.species.equals(spec) ? gene.teginfo : null;
+					return set;
 				}
 				return columnIndex >= 11 ? null : "";
 			}
@@ -7184,20 +7148,16 @@ public class GeneSet extends JApplet {
 				}
 
 				for (Gene g : genelist) {
-					if (g.species != null) {
-						for (String spec : g.species.keySet()) {
-							Teginfo stv = g.species.get(spec);
-							for (Tegeval tv : stv.tset) {
-								// int first = tv.cont.indexOf('_');
-								// int sec = tv.cont.indexOf('_',first+1);
-								Contig cont = tv.getContshort(); // tv.cont.substring(0,sec);
-								if( cont != null && contigmap.containsKey(cont.getName()) ) {
-									Contig c = contigmap.get(cont.getName());
-									//c.count++;
-									int val = table.convertRowIndexToView(g.index);
-									c.loc += (double) val;
-								}
-							}
+					Teginfo stv = g.teginfo;
+					for (Tegeval tv : stv.tset) {
+						// int first = tv.cont.indexOf('_');
+						// int sec = tv.cont.indexOf('_',first+1);
+						Contig cont = tv.getContshort(); // tv.cont.substring(0,sec);
+						if( cont != null && contigmap.containsKey(cont.getName()) ) {
+							Contig c = contigmap.get(cont.getName());
+							//c.count++;
+							int val = table.convertRowIndexToView(g.index);
+							c.loc += (double) val;
 						}
 					}
 				}
@@ -7384,7 +7344,7 @@ public class GeneSet extends JApplet {
 						//for (String sp : gg.species.keySet()) {
 						int count = 0;
 						for(String sp : farr) {
-							Teginfo stv = gg.species.get(sp);
+							Teginfo stv = gg.species.equals(sp) ? gg.teginfo : null;
 							/*for( String key : gg.species.keySet() ) {
 								if( key.contains("JL2") ) {
 									System.err.println( " erm " + key );
@@ -7411,10 +7371,10 @@ public class GeneSet extends JApplet {
 								}
 							}
 						}
-						if( count < gg.species.size() ) {
-							System.err.println( gg.species );
-							System.err.println();
-						}
+						//if( count < gg.species.size() ) {
+						//	System.err.println( gg.species );
+						//	System.err.println();
+						//}
 						//if( specs.size() < 28 ) System.err.println("mu " + specs);
 					}
 				}
@@ -7541,17 +7501,15 @@ public class GeneSet extends JApplet {
 						}
 						
 						//textarea.append(gg.name + ":\n");
-						for (String sp : gg.species.keySet()) {
-							Teginfo stv = gg.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								tlist.add( tv );
-								/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-								if (tv.dna != null) {
-									for (int i = 0; i < tv.dna.length(); i += 70) {
-										textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
-									}
-								}*/
-							}
+						Teginfo stv = gg.teginfo;
+						for (Tegeval tv : stv.tset) {
+							tlist.add( tv );
+							/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+							if (tv.dna != null) {
+								for (int i = 0; i < tv.dna.length(); i += 70) {
+									textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
+								}
+							}*/
 						}
 					}
 				}
@@ -7816,15 +7774,11 @@ public class GeneSet extends JApplet {
 				String sel = (String) e.getItem();
 				genefilterset.clear();
 				for (Gene g : genelist) {
-					if (g.species != null) {
-						for (String sp : g.species.keySet()) {
-							Teginfo stv = g.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								if (sel.equals(tv.teg)) {
-									System.out.println(g.name + " " + sp + " " + sel + "  " + tv.eval);
-									genefilterset.add(g.index);
-								}
-							}
+					Teginfo stv = g.teginfo;
+					for (Tegeval tv : stv.tset) {
+						if (sel.equals(tv.teg)) {
+							//System.out.println(g.name + " " + sp + " " + sel + "  " + tv.eval);
+							genefilterset.add(g.index);
 						}
 					}
 				}
@@ -7837,14 +7791,14 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				Set<Integer> res = new HashSet<Integer>();
 				for (Function f : funclist) {
-					if (f.getGeneentries() != null) {
+					if (f.getGeneGroups() != null) {
 						Set<String> check = new HashSet<String>();
-						for( Gene g : f.getGeneentries() ) {
+						for( GeneGroup g : f.getGeneGroups() ) {
 							//Gene g = genemap.get(str);
 							if (g.species != null) {
 								if (check.isEmpty())
-									check.addAll(g.species.keySet());
-								else if (!(check.size() == g.species.size() && check.containsAll(g.species.keySet()))) {
+									check.addAll(g.species);
+								else if (!(check.size() == g.species.size() && check.containsAll(g.species))) {
 									check.clear();
 									break;
 								}
@@ -8146,14 +8100,15 @@ public class GeneSet extends JApplet {
 				int r = table.getSelectedRow();
 				if (r >= 0) {
 					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					for (Gene g : genelist) {
+					GeneGroup gg = allgenegroups.get(cr);
+					for (GeneGroup g : allgenegroups) {
 						if (gg.species != null && g.species != null) {
-							Set<String> ggset = gg.species.keySet();
-							Set<String> gset = g.species.keySet();
+							Set<String> ggset = gg.species;
+							Set<String> gset = g.species;
 
-							if (gset.size() == ggset.size() && gset.containsAll(ggset))
+							if (gset.size() == ggset.size() && gset.containsAll(ggset)) {
 								genefilterset.add(g.index);
+							}
 						}
 					}
 					updateFilter(table, genefilter, label);
@@ -8241,16 +8196,12 @@ public class GeneSet extends JApplet {
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
-					if (gg.species != null) {
-						for (String sp : gg.species.keySet()) {
-							Teginfo stv = gg.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								String contig = tv.getContshort().getName();
-								StringBuilder aa = tv.getProteinSequence();
-								Sequence seq = new Sequence( contig, aa, serifier.mseq );
-								serifier.addSequence(seq);
-							}
-						}
+					Teginfo stv = gg.teginfo;
+					for (Tegeval tv : stv.tset) {
+						String contig = tv.getContshort().getName();
+						StringBuilder aa = tv.getProteinSequence();
+						Sequence seq = new Sequence( contig, aa, serifier.mseq );
+						serifier.addSequence(seq);
 					}
 				}
 				jf.updateView();
@@ -8468,23 +8419,19 @@ public class GeneSet extends JApplet {
 						for (int r : rr) {
 							int cr = table.convertRowIndexToModel(r);
 							Gene gg = genelist.get(cr);
-							if (gg.species != null) {
-								FileWriter fw = null;
-								if (lfw.containsKey(gg.getGroupIndex())) {
-									fw = lfw.get(gg.getGroupIndex());
-								} else {
-									fw = new FileWriter(new File(f, "group_" + gg.getGroupIndex() + ".fasta"));
-									lfw.put(gg.getGroupIndex(), fw);
-								}
+							FileWriter fw = null;
+							if (lfw.containsKey(gg.getGroupIndex())) {
+								fw = lfw.get(gg.getGroupIndex());
+							} else {
+								fw = new FileWriter(new File(f, "group_" + gg.getGroupIndex() + ".fasta"));
+								lfw.put(gg.getGroupIndex(), fw);
+							}
 
-								for (String sp : gg.species.keySet()) {
-									Teginfo stv = gg.species.get(sp);
-									for( Tegeval tv : stv.tset ) {
-										fw.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-										for (int i = 0; i < tv.getLength(); i += 70) {
-											fw.append( tv.getSubstring(i, Math.min(i + 70, tv.getLength()) ) + "\n");
-										}
-									}
+							Teginfo stv = gg.teginfo;
+							for( Tegeval tv : stv.tset ) {
+								fw.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
+								for (int i = 0; i < tv.getLength(); i += 70) {
+									fw.append( tv.getSubstring(i, Math.min(i + 70, tv.getLength()) ) + "\n");
 								}
 							}
 						}
@@ -8512,13 +8459,9 @@ public class GeneSet extends JApplet {
 						for (int r : rr) {
 							int cr = table.convertRowIndexToModel(r);
 							Gene gg = genelist.get(cr);
-							if (gg.species != null) {
-								for (String sp : gg.species.keySet()) {
-									Teginfo stv = gg.species.get(sp);
-									for (Tegeval tv : stv.tset) {
-										contset.add( tv.getContshort() );
-									}
-								}
+							Teginfo stv = gg.teginfo;
+							for (Tegeval tv : stv.tset) {
+								contset.add( tv.getContshort() );
 							}
 						}
 
@@ -8559,33 +8502,29 @@ public class GeneSet extends JApplet {
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
-					if (gg.species != null) {
-						for (String sp : gg.species.keySet()) {
-							Teginfo stv = gg.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								Sequence seq;
-								Contig contig = tv.getContshort();
-								if (contset.containsKey(contig)) {
-									seq = contset.get(contig);
-								} else {
-									if( contigmap.containsKey(contig) ) {
-										StringBuilder dna = contigmap.get(contig).getSequence().getStringBuilder();
-										seq = new Sequence(contig.getName(), dna, serifier.mseq);
-									} else
-										seq = new Sequence(contig.getName(), serifier.mseq);
-									contset.put(contig, seq);
-								}
-
-								Annotation a = seq.new Annotation(seq, contig.getName(), Color.red, serifier.mann);
-								a.setStart(tv.start);
-								a.setStop(tv.stop);
-								a.setOri(tv.ori);
-								a.setGroup(gg.name);
-								a.setType("gene");
-								serifier.addAnnotation(a);
-								// seq.addAnnotation( new Annotation( seq, ) );
-							}
+					Teginfo stv = gg.teginfo;
+					for (Tegeval tv : stv.tset) {
+						Sequence seq;
+						Contig contig = tv.getContshort();
+						if (contset.containsKey(contig)) {
+							seq = contset.get(contig);
+						} else {
+							if( contigmap.containsKey(contig) ) {
+								StringBuilder dna = contigmap.get(contig).getSequence().getStringBuilder();
+								seq = new Sequence(contig.getName(), dna, serifier.mseq);
+							} else
+								seq = new Sequence(contig.getName(), serifier.mseq);
+							contset.put(contig, seq);
 						}
+
+						Annotation a = seq.new Annotation(seq, contig.getName(), Color.red, serifier.mann);
+						a.setStart(tv.start);
+						a.setStop(tv.stop);
+						a.setOri(tv.ori);
+						a.setGroup(gg.name);
+						a.setType("gene");
+						serifier.addAnnotation(a);
+						// seq.addAnnotation( new Annotation( seq, ) );
 					}
 				}
 
@@ -8655,22 +8594,18 @@ public class GeneSet extends JApplet {
 					int cr = table.convertRowIndexToModel(r);
 					if( table.getModel() == defaultModel ) {
 						Gene g = genelist.get( cr );
-						if (g.species != null) {
-							for (String sp : g.species.keySet()) {
-								Teginfo stv = g.species.get(sp);
-								for (Tegeval tv : stv.tset) {
-									Contig contig = tv.getContshort();
-									contigs.add( contig );
-									Sequence seq = contig.getSequence();
-									Annotation a = seq.new Annotation(seq, contig.getName(), Color.red, serifier.mann);
-									a.setStart(tv.start);
-									a.setStop(tv.stop);
-									a.setOri(tv.ori);
-									a.setGroup(g.name);
-									a.setType("gene");
-									serifier.addAnnotation(a);
-								}
-							}
+						Teginfo stv = g.teginfo;
+						for (Tegeval tv : stv.tset) {
+							Contig contig = tv.getContshort();
+							contigs.add( contig );
+							Sequence seq = contig.getSequence();
+							Annotation a = seq.new Annotation(seq, contig.getName(), Color.red, serifier.mann);
+							a.setStart(tv.start);
+							a.setStop(tv.stop);
+							a.setOri(tv.ori);
+							a.setGroup(g.name);
+							a.setType("gene");
+							serifier.addAnnotation(a);
 						}
 					} else {
 						GeneGroup gg = allgenegroups.get( cr );
@@ -8803,31 +8738,23 @@ public class GeneSet extends JApplet {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
 					// genefilterset.add( gg.index );
-					if (gg.species != null) {
-						for (String sp : gg.species.keySet()) {
-							Teginfo stv = gg.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								for (Set<String> uset : iclusterlist) {
-									if (uset.contains(tv.cont)) {
-										ct.addAll(uset);
-										break;
-									}
-								}
+					Teginfo stv = gg.teginfo;
+					for (Tegeval tv : stv.tset) {
+						for (Set<String> uset : iclusterlist) {
+							if (uset.contains(tv.cont)) {
+								ct.addAll(uset);
+								break;
 							}
 						}
 					}
 				}
 
 				for (Gene g : genelist) {
-					if (g.species != null) {
-						for (String sp : g.species.keySet()) {
-							Teginfo stv = g.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								if (ct.contains(tv.cont)) {
-									genefilterset.add(g.index);
-									break;
-								}
-							}
+					Teginfo stv = g.teginfo;
+					for (Tegeval tv : stv.tset) {
+						if (ct.contains(tv.cont)) {
+							genefilterset.add(g.index);
+							break;
 						}
 					}
 				}
@@ -9134,7 +9061,7 @@ public class GeneSet extends JApplet {
 			f.addGeneentries(gofilter.get(f));
 			//retmap.put(f.go, f);
 		}
-		br.close();
+		//br.close();
 
 		if (fw != null) fw.close();
 	}
@@ -9509,49 +9436,41 @@ public class GeneSet extends JApplet {
 		int count = 0;
 		System.err.println( "blehehe " + genelist.size() );
 		for (Gene gg : genelist) {
-			System.err.println( "blehehe count " + count++ );
-			if (gg.species != null) {
-				Set<String> ct = new HashSet<String>();
-				for (String sp : gg.species.keySet()) {
-					Teginfo stv = gg.species.get(sp);
-					for (Tegeval tv : stv.tset) {
-						if( tv.cont != null ) {
-							ct.add(tv.cont);
-							int idx = tv.cont.lastIndexOf("_");
-							int val = Integer.parseInt(tv.cont.substring(idx + 1));
-	
-							String next = tv.cont.substring(0, idx + 1) + (val + 1);
-							ct.add(next);
-							if (val > 1) {
-								String prev = tv.cont.substring(0, idx + 1) + (val - 1);
-								ct.add(prev);
-							}
-						}
-					}
-				}
+			Set<String> ct = new HashSet<String>();
+			Teginfo stv = gg.teginfo;
+			for (Tegeval tv : stv.tset) {
+				if( tv.cont != null ) {
+					ct.add(tv.cont);
+					int idx = tv.cont.lastIndexOf("_");
+					int val = Integer.parseInt(tv.cont.substring(idx + 1));
 
-				Set<Integer> groupIdxSet = new HashSet<Integer>();
-				for (String cont : ct) {
-					Gene g = locgene.get(cont);
-					if (g != null && g.species != null) {
-						for (String sp : g.species.keySet()) {
-							Teginfo stv = g.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								if (ct.contains(tv.cont)) {
-									groupIdxSet.add( g.getGroupIndex() );
-									// if( remove ) genefilterset.remove(
-									// g.index );
-									// else genefilterset.add( g.index );
-									// break;
-								}
-							}
+					String next = tv.cont.substring(0, idx + 1) + (val + 1);
+					ct.add(next);
+					if (val > 1) {
+						String prev = tv.cont.substring(0, idx + 1) + (val - 1);
+						ct.add(prev);
+					}
+				}
+			}
+
+			Set<Integer> groupIdxSet = new HashSet<Integer>();
+			for (String cont : ct) {
+				Gene g = locgene.get(cont);
+				if (g != null ) {
+					stv = g.teginfo;
+					for (Tegeval tv : stv.tset) {
+						if (ct.contains(tv.cont)) {
+							groupIdxSet.add( g.getGroupIndex() );
+							// if( remove ) genefilterset.remove(
+							// g.index );
+							// else genefilterset.add( g.index );
+							// break;
 						}
 					}
 				}
-				gg.proximityGroupPreservation = Math.ceil(groupIdxSet.size() / 2.0);
 			}
+			gg.proximityGroupPreservation = Math.ceil(groupIdxSet.size() / 2.0);
 		}
-		System.err.println("blehehe");
 		locgene.clear();
 	}
 	
@@ -9812,11 +9731,12 @@ public class GeneSet extends JApplet {
 	
 				int val = 0;
 				for (Gene g : gset) {
-					if (g.species != null) {
+					val += g.teginfo.tset.size();
+					/*if (g.species != null) {
 						for (String str : g.species.keySet()) {
 							val += g.species.get(str).tset.size();
 						}
-					}
+					}*/
 				}
 	
 				int len = 20; //16
@@ -9859,6 +9779,7 @@ public class GeneSet extends JApplet {
 				
 				ze = zipin.getNextEntry();
 			}
+			zipin.close();
 			//loadRrnas( new InputStreamReader(is), new InputStreamReader(tis), i );
 			for( String ggname : rnamap.keySet() ) {
 				GeneGroup gg = rnamap.get( ggname );
@@ -9868,7 +9789,7 @@ public class GeneSet extends JApplet {
 					refmap.put( g.refid, g );
 					genelist.add( g );
 					
-					gg.addSpecies( g.species.keySet() );
+					gg.addSpecies( g.species );
 				}
 			}
 			
@@ -10165,12 +10086,31 @@ public class GeneSet extends JApplet {
 			 * "/home/sigmar/workspace/distann/sp2go_short.txt" );
 			 */
 	
-			is = GeneSet.class.getResourceAsStream("/idmapping_short.dat");
-			Map<String, Gene> unimap = idMapping(new InputStreamReader(is), null, 2, 0, refmap, false);
-			is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt");
-			Map<String, Gene> genmap = idMapping(new InputStreamReader(is), null, 5, 1, refmap, true);
-			is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");
-			funcMapping(new InputStreamReader(is), genmap, null);
+			Map<String, Gene> unimap = null;
+			Map<String, Gene> genmap = null;
+			
+			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+			ze = zipin.getNextEntry();
+			while( ze != null ) {
+				if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, false);
+				else if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
+				
+				ze = zipin.getNextEntry();
+			}
+			zipin.close();
+			
+			/* //is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
+			is = new GZIPInputStream( new FileInputStream("/home/sigmar/idmapping.dat.gz") );
+			Map<String, Gene> unimap = idMapping(new InputStreamReader(is), "/home/sigmar/thermus/idmapping_short.dat", 2, 0, refmap, false);
+			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
+			is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2refseq.gz") );
+			Map<String, Gene> genmap = idMapping(new InputStreamReader(is), "/home/sigmar/thermus/gene2refseq_short.txt", 5, 1, refmap, true);
+			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");*/
+			
+			
+			is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
+			funcMapping(new InputStreamReader(is), genmap, "/home/sigmar/thermus/gene2go_short.txt");
+			
 			is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
 			funcMappingUni(new InputStreamReader(is), unimap, null);
 	
@@ -10192,11 +10132,21 @@ public class GeneSet extends JApplet {
 					}
 				}
 			}
-			// Map<String,Function> funcmap = readGoInfo( new
-			// FileReader("/home/sigmar/asgard-bio/data/gene_ontology_ext.obo"),
-			// totalgo, "/home/sigmar/workspace/distann/go_short.obo");
-			is = GeneSet.class.getResourceAsStream("/go_short.obo");
-			readGoInfo(new InputStreamReader(is), totalgo, null);
+			
+			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+			ze = zipin.getNextEntry();
+			while( ze != null ) {
+				if( ze.getName().equals("go_short.obo") ) readGoInfo( new InputStreamReader(zipin), totalgo, null);
+				
+				ze = zipin.getNextEntry();
+			}
+			zipin.close();
+			//is = GeneSet.class.getResourceAsStream("/gene_ontology_ext.obo");
+			//Map<String,Function> funcmap = 
+			//readGoInfo( new InputStreamReader(is), totalgo, "/home/sigmar/thermus/go_short.obo");
+			
+			//is = GeneSet.class.getResourceAsStream("/go_short.obo");
+			//readGoInfo(new InputStreamReader(is), totalgo, null);
 			for (String go : funcmap.keySet()) {
 				Function f = funcmap.get(go);
 				f.index = funclist.size();
@@ -10258,14 +10208,10 @@ public class GeneSet extends JApplet {
 	
 			Set<String> set = new TreeSet<String>();
 			for (Gene g : genelist) {
-				if (g.species != null) {
-					for (String sp : g.species.keySet()) {
-						Teginfo stv = g.species.get(sp);
-						for (Tegeval tv : stv.tset) {
-							if (tv.eval <= 0.00001 && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
-								set.add(tv.teg);
-						}
-					}
+				Teginfo stv = g.teginfo;
+				for (Tegeval tv : stv.tset) {
+					if (tv.eval <= 0.00001 && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
+						set.add(tv.teg);
 				}
 			}
 	
