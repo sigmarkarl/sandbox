@@ -49,6 +49,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.typedarrays.client.Float32ArrayNative;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -69,16 +70,16 @@ public class Webnutrition implements EntryPoint {
 	public interface FoodInfo extends Comparable<FoodInfo> {
 		public void setSelected( boolean sel, int ind );		
 		public boolean isSelected();
-		public Object getSortObject();
-		public Object valAt( int i );
-		public String stringValAt( int i );
-		public double doubleValAt( int i );
+		public float getSortFloat();
+		public float floatValAt( int i );
 		public int getLength();
 		@Override
 		public int compareTo(FoodInfo o);
-		public Object getColumn( int i );
-		public void setColumn( int i, Object c );
+		public float getColumn( int i );
+		public void setColumn( int i, float c );
 		public String getId();
+		public String getName();
+		public String getGroup();
 	}
 	
 	public static final class AndroidFoodInfo extends JavaScriptObject implements FoodInfo {
@@ -86,27 +87,32 @@ public class Webnutrition implements EntryPoint {
 		
 		public native void setSelected( boolean sel, int ind ) /*-{}-*/;
 		public native boolean isSelected() /*-{ return this.isSelected(); }-*/;
-		public native Object getSortObject() /*-{ return this.getSortObject(); }-*/;
-		public native Object valAt( int i ) /*-{ return this.valAt( i ); }-*/;
-		public native double doubleValAt( int i ) /*-{ return this.doubleValAt( i ); }-*/;
-		public native String stringValAt( int i ) /*-{ return this.stringValAt( i ); }-*/;
+		public native float getSortFloat() /*-{ return this.getSortObject(); }-*/;
+		public native float floatValAt( int i ) /*-{ return this.doubleValAt( i ); }-*/;
 		public native int getLength() /*-{ return this.getLength(); }-*/;
 		@Override
 		public native int compareTo(FoodInfo o) /*-{ return this.compareTo( o ); }-*/;
-		public native Object getColumn( int i ) /*-{ return this.getColumn( i ); }-*/;
-		public native void setColumn( int i, Object c ) /*-{ this.setColumn( i, c ); }-*/;
+		public native float getColumn( int i ) /*-{ return this.getColumn( i ); }-*/;
+		public native void setColumn( int i, float c ) /*-{ this.setColumn( i, c ); }-*/;
 		public native String getId() /*-{ return this.getId(); }-*/;
+		public native String getName() /*-{ return this.getName(); }-*/;
+		public native String getGroup() /*-{ return this.getGroup(); }-*/;
 	}
 	
 	public static class WebFoodInfo implements FoodInfo {
-		Object[]	columns;
-		boolean		selected = false;
-		String		id;
+		String				name;
+		String				group;
+		Float32ArrayNative	columns;
+		boolean				selected = false;
+		String				id;
 		
 		public WebFoodInfo( String id, String name, String group ) {
-			columns = new Object[ lcolumnwidth.size() ];
-			columns[0] = name;
-			columns[1] = group;
+			this.columns = Float32ArrayNative.create( lcolumnwidth.size()-2 ); //new Object[ lcolumnwidth.size() ];
+			for( int i = 0; i < this.columns.length(); i++ ) {
+				this.columns.set(i, -1.0f);
+			}
+			this.name = name;
+			this.group = group;
 			
 			this.id = id;
 		}
@@ -115,12 +121,20 @@ public class Webnutrition implements EntryPoint {
 			return id;
 		}
 		
-		public Object getColumn( int i ) {
-			return columns[i];
+		public String getName() {
+			return name;
 		}
 		
-		public void setColumn( int i, Object o ) {
-			columns[i] = o;
+		public String getGroup() {
+			return group;
+		}
+		
+		public float getColumn( int i ) {
+			return columns.get(i);
+		}
+		
+		public void setColumn( int i, float o ) {
+			columns.set(i, o);
 		}
 		
 		public void setSelected( boolean sel, int ind ) {
@@ -133,35 +147,33 @@ public class Webnutrition implements EntryPoint {
 			return selected;
 		}
 		
-		public Object getSortObject() {
-			return columns[sortcolumn];
+		public float getSortFloat() {
+			//if( sortcolumn == 0 ) return getName();
+			//else if( sortcolumn == 1 ) return getGroup();
+			return columns.get(sortcolumn-2);
 		}
 		
-		public Object valAt( int i ) {
-			if( i < columns.length ) return columns[i];
-			return null;
-		}
-		
-		public double doubleValAt( int i ) {
-			if( i < columns.length ) return (Double)columns[i];
-			return -1.0;
-		}
-		
-		public String stringValAt( int i ) {
-			if( i < columns.length ) return (String)columns[i];
-			return null;
+		public float floatValAt( int i ) {
+			if( i < columns.length() ) return columns.get(i);
+			return -1.0f;
 		}
 		
 		public int getLength() {
-			return columns.length;
+			return columns.length();
 		}
 
 		@Override
 		public int compareTo(FoodInfo o) {
-			Object obj = columns[ sortcolumn ];
-			Object sobj = o == null ? null : o.getSortObject();
+			if( sortcolumn == 0 ) {
+				return getName().compareTo(o.getName());
+			} else if( sortcolumn == 1 ) {
+				return getGroup().compareTo(o.getGroup());
+			}
+			return Float.compare( this.floatValAt(sortcolumn-2), o.floatValAt(sortcolumn-2) );
+			//Object obj = columns[ sortcolumn ];
+			//Object sobj = o == null ? null : o.getSortObject();
 			
-			if( obj != null && sobj != null ) {
+			/*if( obj != null && sobj != null ) {
 				if( obj instanceof String ) {
 					return ((String)obj).compareTo( (String)sobj );
 				} else if( obj instanceof Double ) {
@@ -171,9 +183,9 @@ public class Webnutrition implements EntryPoint {
 				return 1;
 			} else if( obj != null && sobj == null ) {
 				return -1;
-			}
+			}*/
 					
-			return 0;
+			//return 0;
 		}
 	};
 	
@@ -336,7 +348,7 @@ public class Webnutrition implements EntryPoint {
 			
 			String foodShort = text.substring(s, s+5);
 			String nutrShort = text.substring(s+5, s+8);
-			double val = Double.parseDouble( text.substring(s+8,i) );
+			float val = Float.parseFloat( text.substring(s+8,i) );
 			
 			if( foodmap.containsKey( foodShort ) ) {
 				FoodInfo fi = foodmap.get( foodShort );
@@ -388,7 +400,7 @@ public class Webnutrition implements EntryPoint {
 						JSONString value = (JSONString)row.get(2);
 						String foodidstr = foodid.stringValue();
 						String nutridstr = nutrid.stringValue();
-						double val = Double.parseDouble( value.stringValue() );
+						float val = Float.parseFloat( value.stringValue() );
 						
 						String foodShort = foodidstr.substring(1, foodidstr.length()-1);
 						String nutrShort = nutridstr.substring(1, nutridstr.length()-1);
@@ -519,9 +531,7 @@ public class Webnutrition implements EntryPoint {
 			}
 			
 			@Override
-			public void onError(Request request, Throwable exception) {
-				
-			}
+			public void onError(Request request, Throwable exception) {}
 		});
 	}
 	
@@ -635,7 +645,7 @@ public class Webnutrition implements EntryPoint {
 							context.setFillStyle("#222222");
 						}*/
 						
-						String o = fi.stringValAt(k);
+						String o = k == 0 ? fi.getName() : fi.getGroup();
 						if( o != null ) context.fillText(o.toString(), w+5, yy+columnHeight+unitheight-3.0-ystartLocal );
 					}
 				}
@@ -669,8 +679,8 @@ public class Webnutrition implements EntryPoint {
 						}*/
 						
 						try {
-						double o = fi.doubleValAt(k);
-						if( o != 1.0 ) context.fillText( Double.toString(o), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
+							float o = fi.floatValAt(k);
+							if( o != -1.0 ) context.fillText( Float.toString(o), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
 						} catch( Exception e ) {
 							context.fillText( e.getMessage(), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
 						}
@@ -712,7 +722,7 @@ public class Webnutrition implements EntryPoint {
 							context.setFillStyle("#222222");
 						}*/
 						
-						Object o = fi.valAt(k);
+						String o = k == 0 ? fi.getName() : fi.getGroup();
 						if( o != null ) context.fillText(o.toString(), w+5, yy+columnHeight+unitheight-3.0-ystartLocal );
 					}
 				}
@@ -745,8 +755,8 @@ public class Webnutrition implements EntryPoint {
 							context.setFillStyle("#222222");
 						}*/
 						
-						Object o = fi.valAt(k);
-						if( o != null ) context.fillText(o.toString(), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
+						float o = fi.floatValAt(k);
+						if( o != -1.0f ) context.fillText( Float.toString(o), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
 					}
 				}
 				context.restore();
@@ -938,9 +948,9 @@ public class Webnutrition implements EntryPoint {
 		//if( foodfilter != null ) {
 		int i = 0;
 		for( FoodInfo fi : lfoodinfo ) {
-			String group = (String)fi.valAt(1);
+			String group = fi.getGroup();
 			group = group.toLowerCase();
-			String food = (String)fi.valAt(0);
+			String food = fi.getName();
 			food = food.toLowerCase();
 			
 			boolean b1 = groupval.length() > 0 && foodval.length() > 0 && group.contains( groupval ) && food.contains( foodval );
@@ -1121,7 +1131,7 @@ public class Webnutrition implements EntryPoint {
 		vp.setSize("100%", "100%");
 		
 		boolean wmh = w > h;
-		int nw = Math.max( w, 735 ) - (wmh ? 175 : 10);
+		int nw = Math.max( w, 735 ) - (wmh ? 195 : 10);
 		if( wmh ) {
 			ad1style.setDisplay( Display.NONE );
 			ad2style.setDisplay( Display.INLINE );
@@ -1258,7 +1268,6 @@ public class Webnutrition implements EntryPoint {
 			
 		});
 		canvas.addTouchEndHandler( new TouchEndHandler() {
-
 			@Override
 			public void onTouchEnd(TouchEndEvent event) {
 				Browser.getWindow().getConsole().log("touchend");

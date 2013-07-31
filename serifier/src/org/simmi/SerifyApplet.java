@@ -4108,22 +4108,22 @@ public class SerifyApplet extends JApplet {
 		
 		if( gbks.size() > 0 ) {
 			Map<String,URI>	map = new HashMap<String,URI>();
-			URI firsturi = new URI(path+name+".fna");
+			URI firsturi = new URI(path+".fna");
 			FileWriter out = new FileWriter( new File( firsturi ) );
 			
-			URI uri = new URI(path+name+".aa");
+			URI uri = new URI(path+".aa");
 			//FileWriter out = new FileWriter( new File( uri ) );
 			map.put( "CDS", uri );
 			
-			uri = new URI(path+name+".trna");
+			uri = new URI(path+".trna");
 			//out = new FileWriter( new File( uri ) );
 			map.put( "tRNA", uri );
 			
-			uri = new URI(path+name+".rrna");
+			uri = new URI(path+".rrna");
 			//out = new FileWriter( new File( uri ) );
 			map.put( "rRNA", uri );
 			
-			uri = new URI(path+name+".mrna");
+			uri = new URI(path+".mrna");
 			//out = new FileWriter( new File( uri ) );
 			map.put( "mRNA", uri );
 			
@@ -4176,13 +4176,13 @@ public class SerifyApplet extends JApplet {
 				InputStreamReader isr = new InputStreamReader( is );
 				
 				Map<String,Reader>	isrmap = new HashMap<String,Reader>();
-				isrmap.put("", isr);
+				isrmap.put( name.substring(0, name.length()-4), isr);
 				
 				addSequences( name, isrmap, path );
 				//FileReader	fr = new FileReader( f );
 			}
 		} catch( Exception e ) {
-			
+			e.printStackTrace();
 		}
 	}
 	

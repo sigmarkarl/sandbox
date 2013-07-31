@@ -57,11 +57,9 @@ public class Neighbour {
 		hteg = new ArrayList<Tegeval>();
 		for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
 			for( Gene selectedGene : selectedGeneGroup.genes ) {
-				for( String species : selectedGene.species.keySet() ) {
-					Teginfo ti = selectedGene.species.get( species );
-					for( Tegeval te : ti.tset ) {
-						hteg.add( te );
-					}
+				Teginfo ti = selectedGene.teginfo;
+				for( Tegeval te : ti.tset ) {
+					hteg.add( te );
 				}
 			}
 		}
@@ -289,11 +287,9 @@ public class Neighbour {
 			hteg = new ArrayList<Tegeval>();
 			for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
 				for( Gene selectedGene : selectedGeneGroup.genes ) {
-					for( String species : selectedGene.species.keySet() ) {
-						Teginfo ti = selectedGene.species.get( species );
-						for( Tegeval te : ti.tset ) {
-							hteg.add( te );
-						}
+					Teginfo ti = selectedGene.teginfo;
+					for( Tegeval te : ti.tset ) {
+						hteg.add( te );
 					}
 				}
 			}
