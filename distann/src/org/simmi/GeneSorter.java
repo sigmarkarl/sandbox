@@ -128,10 +128,10 @@ public class GeneSorter {
 							}
 						} else if( gcColorScheme.isSelected() ) {
 							if (sorting.isRowSelected(i)) {
-								double gcp = Math.min( Math.max( 0.5, gene.getAvgGCPerc() ), 0.8 );
+								double gcp = Math.min( Math.max( 0.5, gene.getGCPerc() ), 0.8 );
 								g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
 							} else {
-								double gcp = Math.min( Math.max( 0.5, gene.getAvgGCPerc() ), 0.8 );
+								double gcp = Math.min( Math.max( 0.5, gene.getGCPerc() ), 0.8 );
 								g.setColor( new Color( (float)(gcp-0.5)/0.3f, (float)(0.8-gcp)/0.3f, 0.0f ) );
 							}
 						} else if( locprevColorScheme.isSelected() ) {
@@ -193,12 +193,9 @@ public class GeneSorter {
 								int und = contig.indexOf("_");
 								String spec = contig.substring(0, und);
 								if( gene.species.equals(spec) ) {
-									Teginfo stv = gene.teginfo;
-									if( stv != null && stv.tset != null )
-									for (Tegeval tv : stv.tset) {
-										if( tv.cont != null && tv.cont.startsWith(contig)) {
-											g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
-										}
+									Tegeval tv = gene.tegeval;
+									if( tv.cont != null && tv.cont.startsWith(contig)) {
+										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 									}
 								}
 							}

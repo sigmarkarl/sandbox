@@ -48,25 +48,22 @@ public class Blast {
 					}
 				}*/
 				if( clusterset.contains( query ) ) {
-					Teginfo stv = gene.teginfo;
-					for( Tegeval tvl : stv.tset ) {
-						if( !clusterset.contains( tvl.cont ) ) {
-							Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
-							
-							if( newgene == null ) {
-								newgene = new Gene(null, gene.refid + " new", desc, teg);
-								newgene.allids = new HashSet<String>();
-								//newgene.species = new HashMap<String, Teginfo>();
-								//newgene.refid = gene.refid + " new";
-								ret.put( newgene.refid, newgene );
-							}
-							
-							return newgene;
-							
-							//break;
+					Tegeval tvl = gene.tegeval;
+					if( !clusterset.contains( tvl.cont ) ) {
+						Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
+						
+						if( newgene == null ) {
+							newgene = new Gene(null, gene.refid + " new", desc, teg);
+							newgene.allids = new HashSet<String>();
+							//newgene.species = new HashMap<String, Teginfo>();
+							//newgene.refid = gene.refid + " new";
+							ret.put( newgene.refid, newgene );
 						}
+						
+						return newgene;
+						
+						//break;
 					}
-					
 					//if( newgene != gene ) break;
 					//newgene = genestuff( gene, clusterset, desc, teg, id, ret );
 				}
@@ -395,16 +392,16 @@ public class Blast {
 				} else tv.setNum( 0 );
 				preval = tv;*/
 				
-				Teginfo stv;
+				/*Teginfo stv;
 				if (!gene.species.equals(padda)) {
 					stv = new Teginfo();
 					gene.species = padda;
 					gene.teginfo = stv;
 				} else {
 					stv = gene.teginfo;
-				}
+				}*/
 				
-				if( addon ) {
+				/*if( addon ) {
 					Tegeval rem = null;
 					for( Tegeval te : stv.tset ) {
 						if( te.cont.equals( query ) ) {
@@ -415,8 +412,9 @@ public class Blast {
 					if( rem != null ) {
 						stv.tset.remove( rem );
 					}
-				}
-				stv.add( tv );
+				}*/
+				gene.tegeval = tv;
+				//stv.add( tv );
 				// gene.blastspec = teg;
 				/*
 				 * if( gene.species == null ) { gene.species = new
@@ -504,16 +502,16 @@ public class Blast {
 					 */
 					// gene.species.put( padda, new Tegeval( padda, deval,
 					// aas.get(query), query ) );
-					Teginfo stv;
-					if (!gene.species.equals(padda)) {
+					//Tegeval stv;
+					/*if (!gene.species.equals(padda)) {
 						stv = new Teginfo();
 						gene.species = padda;
-						gene.teginfo = stv;
+						gene.tegeval = stv;
 						
 						System.err.println( "new annars " + padda );
 					} else {
-						stv = gene.teginfo;
-					}
+						stv = gene.tegeval;
+					}*/
 	
 					String contigstr = null;
 					String contloc = null;
@@ -556,7 +554,8 @@ public class Blast {
 						System.err.println();
 					}
 					
-					stv.add( tv );
+					gene.tegeval = tv;
+					//stv.add( tv );
 					
 					/*if( preval != null ) {
 						Contig precontig = preval.getContshort();
