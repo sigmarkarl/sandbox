@@ -112,20 +112,20 @@ public class GeneCompare {
 						int scount = 0;
 						for( String spec2 : spec2s ) {
 							if( gg.species.containsKey(spec2) ) {
-                                                            Gene gene2 = gg.getGene( spec2 );
-                                                            Tegeval tv2;
-                                                            for( Tegeval tval : gene2.teginfo.tset ) {
-                                                                tv2 = tval;
-                                                                break;
-                                                            }
-                                                            StringBuilder seq = tv.getAlignedSequence();
-                                                            StringBuilder seq2 = tv2.getAlignedSequence();
+                                Gene gene2 = gg.getGene( spec2 );
+                                Tegeval tv2;
+                                for( Tegeval tval : gene2.teginfo.tset ) {
+                                    tv2 = tval;
+                                    break;
+                                }
+                                StringBuilder seq = tv.getAlignedSequence();
+                                StringBuilder seq2 = tv2.getAlignedSequence();
 								double theta = count*Math.PI*2.0/total;
-                                                                g2.translate( 1024, 1024 );
+								g2.translate( 1024, 1024 );
 								g2.rotate( theta );
 								g2.fillRect( 502+20*(scount++), -1, 20, 3);
 								g2.rotate( -theta );
-                                                                g2.translate( -1024, -1024 );
+                                g2.translate( -1024, -1024 );
 							}
 						}
 						count++;
