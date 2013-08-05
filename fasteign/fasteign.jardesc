@@ -11,8 +11,6 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/fasteign/.classpath"/>
-        <file path="/fasteign/.project"/>
         <javaElement handleIdentifier="=fasteign/src"/>
     </selectedElements>
 </jardesc>

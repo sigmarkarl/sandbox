@@ -4946,7 +4946,7 @@ public class GeneSet extends JApplet {
 		return sb;
 	}
 	
-	private static void assignGain( Node n, Map<Node,List<GeneGroup>> gainMap, PrintStream ps ) {
+	private void assignGain( Node n, Map<Node,List<GeneGroup>> gainMap, PrintStream ps ) {
 		Set<String>	specs = n.getLeaveNames();
 		
 		List<GeneGroup> lgg = ggSpecMap.get( specs );
@@ -4969,7 +4969,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	private static void assignLoss( Node n, Map<Node,List<GeneGroup>> lossMap, PrintStream ps ) {
+	private void assignLoss( Node n, Map<Node,List<GeneGroup>> lossMap, PrintStream ps ) {
 		//Set<String>	specs = n.getLeaveNames();
 		
 		/*List<GeneGroup> lgg = ggSpecMap.get( specs );
@@ -7784,16 +7784,16 @@ public class GeneSet extends JApplet {
 					int fr = ftable.convertRowIndexToModel(r);
 					Function f = funclist.get(fr);
 					if( table.getModel() == groupModel ) {
-						Set<Gene> sset = f.getGeneentries();
-						for (Gene g : sset) {
-							//Gene g = genemap.get(s);
-							genefilterset.add(g.index);
-						}
-					} else {
 						Set<GeneGroup> sset = f.getGeneGroups();
 						for (GeneGroup gg : sset) {
 							//Gene g = genemap.get(s);
 							genefilterset.add(gg.index);
+						}
+					} else {
+						Set<Gene> sset = f.getGeneentries();
+						for (Gene g : sset) {
+							//Gene g = genemap.get(s);
+							genefilterset.add(g.index);
 						}
 					}
 				}
@@ -9415,15 +9415,15 @@ public class GeneSet extends JApplet {
 		locgene.clear();
 	}
 	
-	static JComboBox<String> 						specombo;
-	static JComboBox<String> 						combo;
-	static Map<String, Set<String>> 				pathwaymap = new TreeMap<String, Set<String>>();
-	static List<String> 							corrInd;
-	static List<GeneGroup>							allgenegroups;
-	static Map<Set<String>,List<GeneGroup>> 		ggSpecMap;
-	static Map<String,Set<GeneGroup>>				specGroupMap;
-	List<String>									specList = new ArrayList<String>();
-	byte[] 											zipf;
+	JComboBox<String> 						specombo;
+	JComboBox<String> 						combo;
+	Map<String, Set<String>> 				pathwaymap = new TreeMap<String, Set<String>>();
+	List<String> 							corrInd;
+	List<GeneGroup>							allgenegroups;
+	Map<Set<String>,List<GeneGroup>> 		ggSpecMap;
+	Map<String,Set<GeneGroup>>				specGroupMap;
+	List<String>							specList = new ArrayList<String>();
+	byte[] 									zipf;
 	
 	private void importStuff() throws IOException, UnavailableServiceException {
 		boolean fail = false;
@@ -10168,7 +10168,7 @@ public class GeneSet extends JApplet {
 		return showGeneTable(null, jb, comp, applet, selcomblocal);// clustInfoMap// );
 	}
 	
-	public static Tegeval check( Contig contig ) {
+	public Tegeval check( Contig contig ) {
 		for( GeneGroup sgg : allgenegroups ) {
 			for( Tegeval ste : sgg.getTegevals() ) {
 				if( ste.getContig() != null && ste.getContshort().equals( contig ) ) {

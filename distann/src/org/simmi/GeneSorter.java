@@ -468,7 +468,7 @@ public class GeneSorter {
 							Gene 		tgene = null;
 							int r = sorting.convertRowIndexToModel(i);
 							if( sorting.getModel() == geneset.groupModel ) {
-								genegroup = GeneSet.allgenegroups.get( r );
+								genegroup = geneset.allgenegroups.get( r );
 							} else {
 								tgene = genelist.get( r );
 								genegroup = tgene.getGeneGroup();
@@ -489,7 +489,7 @@ public class GeneSorter {
 						Gene 		tgene = null;
 						int r = sorting.convertRowIndexToModel(i);
 						if( sorting.getModel() == geneset.groupModel ) {
-							genegroup = GeneSet.allgenegroups.get( r );
+							genegroup = geneset.allgenegroups.get( r );
 						} else {
 							tgene = genelist.get( r );
 							genegroup = tgene.getGeneGroup();

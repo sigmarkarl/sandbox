@@ -142,7 +142,7 @@ public class GeneCompare {
 		
 		final BufferedImage bimg = new BufferedImage( 1500, 1500, BufferedImage.TYPE_INT_ARGB );
 		Graphics2D g2 = bimg.createGraphics();
-		draw( g2, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total );
+		draw( g2, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total );
 		
 		JComponent cmp = new JComponent() {
 			public void paintComponent( Graphics g ) {
@@ -232,7 +232,7 @@ public class GeneCompare {
 		frame.setVisible( true );
 	}
 	
-	public void draw( Graphics2D g2, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total ) {
+	public void draw( Graphics2D g2, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total ) {
 		/*g.setColor( Color.black );
 		int count = 0;
 		for( Contig ctg : contigs ) {
@@ -269,10 +269,19 @@ public class GeneCompare {
 			for( Tegeval tv : ctg.tlist ) {
 				StringBuilder seq = tv.getAlignedSequence();
 				GeneGroup gg = tv.getGene().getGeneGroup();
+				
+				int ii = geneset.allgenegroups.indexOf( gg );
+				int r = geneset.table.convertRowIndexToView( ii );
+				boolean rs = geneset.table.isRowSelected( r );
+				
+				/*if( rs ) {
+					System.err.println();
+				}*/
+				
 				int scount = 0;
 				for( String spec2 : spec2s ) {
 					if( gg.species.containsKey(spec2) ) {                                
-                        int tscore = 0;
+						int tscore = 0;
                         for( int i = 0; i < seq.length(); i++ ) {
                         	char c = seq.charAt(i);
                         	String comb = c+""+c;
@@ -300,10 +309,7 @@ public class GeneCompare {
                         }
                         
                         int cval = Math.min( 128, 512-score*512/tscore );
-                        if( cval != 0 ) {
-                        	System.err.println();
-                        }
-                        Color color = new Color( cval, cval, cval );
+                        Color color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
                         g2.setColor( color );
                         
 						double theta = count*Math.PI*2.0/total;
