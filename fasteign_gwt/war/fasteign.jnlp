@@ -14,7 +14,7 @@
 </security>
 <offline-allowed/>
 <resources>
-  <j2se version="1.6+" />
+  <j2se version="1.7+" />
   <jar href="fasteign.jar"/>
   <extension name="poi" href="http://test.matis.is/poi-3.7/poi.jnlp"/>
 </resources>
