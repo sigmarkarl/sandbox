@@ -524,7 +524,7 @@ public class MainActivity extends FragmentActivity {
 	     }
 
 	     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-	     context.startActivity(Intent.createChooser(intent, "Chose browser"));
+	     context.startActivity(Intent.createChooser(intent, "Choose browser"));
 	}
 	
 	CollectionPagerAdapter mDemoCollectionPagerAdapter;
@@ -554,6 +554,7 @@ public class MainActivity extends FragmentActivity {
 				//else {
 					for( int i = labels.size(); i < fastpack.getFetchNum(); i++ ) {
 						final Ibud ib = fastpack.getIbud(i);
+						final int ii = i;
 						
 						final LinearLayout llayout = (LinearLayout)otherView.findViewById(R.id.llayout1);
 						LinearLayout hlayout = (LinearLayout)llayout.inflate( llayout.getContext(), R.layout.sub_object, (ViewGroup)llayout );
@@ -597,7 +598,7 @@ public class MainActivity extends FragmentActivity {
 								
 								@Override
 								public void onLongPress(MotionEvent e) {
-									openBrowser(ll.getContext(), ib.url);
+									openBrowser(ll.getContext(), iblist.get(ii).url);
 								}
 								
 								@Override
@@ -758,15 +759,17 @@ public class MainActivity extends FragmentActivity {
 						List<LinearLayout>	delayout = new ArrayList<LinearLayout>();
 						int i = 0;
 						for( Ibud ib : iblist ) {
-							LinearLayout ll = labels.get( i );
-							//LinearLayout ll = (LinearLayout)hlayout.getChildAt( i );
-							i++;
-
-							Drawable background = ll.getBackground();
-							if( background != null && ((ColorDrawable)background).getColor() == fcol ) {
-								delist.add( ib );
-								delayout.add( ll  );
-							}
+							if( i < labels.size() ) {
+								LinearLayout ll = labels.get( i );
+								//LinearLayout ll = (LinearLayout)hlayout.getChildAt( i );
+								i++;
+	
+								Drawable background = ll.getBackground();
+								if( background != null && ((ColorDrawable)background).getColor() == fcol ) {
+									delist.add( ib );
+									delayout.add( ll  );
+								}
+							} else break;
 						}
 						
 						for( LinearLayout del : delayout ) {
