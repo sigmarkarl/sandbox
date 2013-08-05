@@ -185,7 +185,7 @@ public class XYPlot {
 					while( val != null ) {
 						GeneGroup gg = val.getGene().getGeneGroup();
 						
-						int a = GeneSet.allgenegroups.indexOf( gg );
+						int a = geneset.allgenegroups.indexOf( gg );
 						
 						int l = -1;
 						if( a != -1 ) l = table.convertRowIndexToView( a );
@@ -417,7 +417,7 @@ public class XYPlot {
 							
 							int i;
 							if( table.getModel() == geneset.groupModel ) {
-								i = GeneSet.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genelist.indexOf( te.getGene() );
 							}
@@ -457,7 +457,7 @@ public class XYPlot {
 							
 							int i;
 							if( table.getModel() == geneset.groupModel ) {
-								i = GeneSet.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genelist.indexOf( te.getGene() );
 							}

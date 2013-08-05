@@ -1260,7 +1260,7 @@ public class Neighbour {
 							te.setSelected( !te.isSelected() );
 							int i;
 							if( sorting.getModel() == geneset.groupModel ) {
-								i = GeneSet.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genes.indexOf( te.getGene() );
 							}
