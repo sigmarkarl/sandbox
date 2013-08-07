@@ -52,10 +52,10 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -123,6 +123,7 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.java_websocket.WebSocket;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -132,6 +133,9 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.unsigned.JavaFasta;
+import org.simmi.unsigned.SmithWater;
+
+import flobb.ChatServer;
 
 public class GeneSet extends JApplet {
 	/**
@@ -323,6 +327,8 @@ public class GeneSet extends JApplet {
 		} else {
 
 		}
+		
+		//javax.web
 	}
 
 	public CharSequence trimSubstring(StringBuilder ac, String sb) {
@@ -4149,8 +4155,26 @@ public class GeneSet extends JApplet {
 		
 	}
 
-	public static void main(String[] args) {
+	ChatServer cs;
+	public GeneSet() {
+		super();
 		
+		try {
+			cs = new ChatServer( 8887 ) {
+				@Override
+				public void onMessage( WebSocket conn, String message ) {
+					if( message.contains("ready") ) {
+						cs.sendToAll( cs.message );
+					}
+				}
+			};
+			cs.start();
+		} catch (UnknownHostException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public static void main(String[] args) {		
 		/*String[] stra = {"A", "B", "C", "D"};
 		corrInd = Arrays.asList( stra );
 		double[] dd = { 0.0, 17.0, 21.0, 27.0, 17.0, 0.0, 12.0, 18.0, 21.0, 12.0, 0.0, 14.0, 27.0, 18.0, 14.0, 0.0 };
@@ -4161,7 +4185,7 @@ public class GeneSet extends JApplet {
 		JFrame.EXIT_ON_CLOSE );
 		 
 		frame.setSize(800, 600); 
-		GeneSet gs = new GeneSet(); 
+		GeneSet gs = new GeneSet();
 		gs.init( frame );
 		frame.setVisible( true );
 		 
@@ -4817,35 +4841,30 @@ public class GeneSet extends JApplet {
 		return r;
 	}
 	
-	public static void showAlignedSequences( Component comp, Set<GeneGroup> ggset ) {
+	public void showAlignedSequences( Component comp, List<Sequence> seqs ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
 		Serifier	serifier = new Serifier();
-		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
+		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 		jf.initGui(frame);
 
-		for( GeneGroup ggroup : ggset ) {
-			for( Tegeval tv : ggroup.getTegevals() ) {
-				String contig = tv.getContshort().getName();
-				StringBuilder seqstr = tv.getAlignedSequence();
-				Sequence seq = new Sequence( contig, seqstr, serifier.mseq );
-				serifier.addSequence(seq);
-			}
+		for( Sequence seq : seqs ) {
+			serifier.addSequence( seq );
 		}
 		jf.updateView();
 
 		frame.setVisible(true);
 	}
 	
-	public static void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna ) {
+	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
 		Serifier	serifier = new Serifier();
-		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
+		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 		jf.initGui(frame);
 
 		for( GeneGroup ggroup : ggset ) {
@@ -6652,7 +6671,7 @@ public class GeneSet extends JApplet {
 									for (SmithWater.ALN aln : alns) {
 										if (first == null) {
 											first = aln;
-										} else if (aln.score < 3.0f * (first.score / 4.0f))
+										} else if (aln.getScore() < 3.0f * (first.getScore() / 4.0f))
 											break;
 										result += aln.toString();
 										regnames.add(aln.getShortDestName());
@@ -7237,6 +7256,46 @@ public class GeneSet extends JApplet {
 					ps.close();
 				} catch (FileNotFoundException e1) {
 					e1.printStackTrace();
+				}
+			}
+		});
+		popup.addSeparator();
+		popup.add( new AbstractAction("Concatenate") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<String,Sequence>	smap = new HashMap<String,Sequence>();
+				
+				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+				int[] rr = table.getSelectedRows();
+				if( table.getModel() == groupModel ) {
+					for (int r : rr) {
+						int cr = table.convertRowIndexToModel(r);
+						GeneGroup gg = allgenegroups.get(cr);
+						genegroups.add( gg );
+					}
+				} else {
+					for (int r : rr) {
+						int cr = table.convertRowIndexToModel(r);
+						Gene gg = genelist.get(cr);
+						genegroups.add( gg.getGeneGroup() );
+					}
+				}
+				
+				//List<Sequence>	seqs = new ArrayList<Sequence>();
+				for( GeneGroup ggroup : genegroups ) {
+					for( Tegeval tv : ggroup.getTegevals() ) {
+						String spec = tv.getContshort().getSpec();
+						StringBuilder seqstr = tv.getAlignedSequence();
+						
+						Sequence seq;
+						if( smap.containsKey( spec ) ) {
+							seq = smap.get( spec );
+						} else {
+							seq = new Sequence( spec, null );
+							smap.put( spec, seq );
+						}
+						if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
+					}
 				}
 			}
 		});
@@ -8147,7 +8206,7 @@ public class GeneSet extends JApplet {
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<String, Sequence>();
@@ -8205,7 +8264,18 @@ public class GeneSet extends JApplet {
 						genegroups.add( gg.getGeneGroup() );
 					}
 				}
-				showAlignedSequences( comp, genegroups );
+				
+				List<Sequence>	seqs = new ArrayList<Sequence>();
+				for( GeneGroup ggroup : genegroups ) {
+					for( Tegeval tv : ggroup.getTegevals() ) {
+						String contig = tv.getContshort().getName();
+						StringBuilder seqstr = tv.getAlignedSequence();
+						Sequence seq = new Sequence( contig, seqstr, null );
+						seqs.add(seq);
+					}
+				}
+				
+				showAlignedSequences( comp, seqs );
 			}
 		});
 		popup.add(new AbstractAction("Split/Show sequences") {
@@ -8447,7 +8517,7 @@ public class GeneSet extends JApplet {
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 				jf.initGui(frame);
 
 				Map<Contig, Sequence> contset = new HashMap<Contig, Sequence>();
@@ -8498,7 +8568,7 @@ public class GeneSet extends JApplet {
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier );
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 				jf.initGui(frame);
 
 				//Map<Contig, Sequence> contset = new HashMap<Contig, Sequence>();

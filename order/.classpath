@@ -12,8 +12,8 @@
 	<classpathentry kind="lib" path="smtp.jar"/>
 	<classpathentry kind="lib" path="/pontun/war/sqljdbc4.jar"/>
 	<classpathentry kind="lib" path="/pontun/war/sqljdbc_auth.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_21/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_21/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_21/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
