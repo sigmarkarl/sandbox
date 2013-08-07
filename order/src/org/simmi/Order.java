@@ -1008,8 +1008,8 @@ public class Order extends JApplet {
 	}
 	
 	public void connect() throws SQLException {
-		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
-		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
+		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+		//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 		con = DriverManager.getConnection(connectionUrl);
 	}
 	
@@ -1664,8 +1664,8 @@ public class Order extends JApplet {
 		
 		if( !valid ) {
 			try {
-				//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
-				String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
+				String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;user=simmi;password=mirodc30;";
+				//String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
 				con = DriverManager.getConnection(connectionUrl);
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -2222,7 +2222,7 @@ public class Order extends JApplet {
 						ed.setEditable( false );
 					}
 					
-					String name = (String)ptable.getValueAt(r, 4);
+					String name = (String)ptable.getValueAt(r, 5);
 					String vara = (String)ptable.getValueAt(r, 2);
 					
 					if( vara != null && modelRowMap.containsKey( vara ) ) {
@@ -2910,6 +2910,7 @@ public class Order extends JApplet {
 			
 			if( !b ) {
 				ordlist.add( v );
+				ordmap.put( v.e_Cat, v );
 				
 				int i;
 				String str = null;

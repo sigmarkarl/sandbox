@@ -2962,7 +2962,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				//String tree = extractFasta("/thermales.fasta");
 				//String distm = dist
 				currentserifier = new Serifier();
-				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier );
+				JavaFasta jf = new JavaFasta( DataTable.this, currentserifier, null );
 				currentjavafasta = jf;
 				jf.initDataStructures();
 				/*Set<String> include = new HashSet<String>();

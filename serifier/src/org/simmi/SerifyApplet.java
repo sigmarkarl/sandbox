@@ -2349,13 +2349,14 @@ public class SerifyApplet extends JApplet {
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
 					final File f = filechooser.getSelectedFile();
 					try {
-						List<String>	urls = new ArrayList<String>();
+						List<Reader>	lrd = new ArrayList<Reader>();
 						int[] rr = table.getSelectedRows();
 						for( int r : rr ) {
 							String path = (String)table.getValueAt( r, 3 );
-							urls.add( path );
+							URL url = new URL( path );
+							lrd.add( new InputStreamReader( url.openStream() ) );
 						}
-						final Map<String,StringBuilder>	seqmap = serifier.concat( urls );
+						final Map<String,StringBuilder>	seqmap = serifier.concat( lrd );
 						
 						JFrame popup = new JFrame();
 						popup.setSize(800, 600);
@@ -2475,7 +2476,7 @@ public class SerifyApplet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier );
+				final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
 				jf.initGui(frame);
 				loadSequencesInJavaFasta( jf );
 				jf.updateView();
@@ -3572,7 +3573,7 @@ public class SerifyApplet extends JApplet {
 					
 					Map<String,Map<String,StringBuilder>>	seqmap = new HashMap<String,Map<String,StringBuilder>>();
 					
-					JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier );
+					JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
 					jf.initDataStructures();
 					
 					int[] rr = table.getSelectedRows();
