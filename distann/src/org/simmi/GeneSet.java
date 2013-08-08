@@ -105,6 +105,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
@@ -132,6 +133,7 @@ import org.simmi.shared.Sequence.Annotation;
 import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
+import org.simmi.shared.TreeUtil.NodeSet;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.SmithWater;
 
@@ -4841,18 +4843,57 @@ public class GeneSet extends JApplet {
 		return r;
 	}
 	
-	public void showAlignedSequences( Component comp, List<Sequence> seqs ) {
+	public Serifier getConcatenatedSequences() {
+		Map<String,Sequence>	smap = new HashMap<String,Sequence>();
+		
+		Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+		int[] rr = table.getSelectedRows();
+		if( table.getModel() == groupModel ) {
+			for (int r : rr) {
+				int cr = table.convertRowIndexToModel(r);
+				GeneGroup gg = allgenegroups.get(cr);
+				genegroups.add( gg );
+			}
+		} else {
+			for (int r : rr) {
+				int cr = table.convertRowIndexToModel(r);
+				Gene gg = genelist.get(cr);
+				genegroups.add( gg.getGeneGroup() );
+			}
+		}
+		
+		//List<Sequence>	seqs = new ArrayList<Sequence>();
+		for( GeneGroup ggroup : genegroups ) {
+			for( Tegeval tv : ggroup.getTegevals() ) {
+				String spec = tv.getContshort().getSpec();
+				StringBuilder seqstr = tv.getAlignedSequence();
+				
+				Sequence seq;
+				if( smap.containsKey( spec ) ) {
+					seq = smap.get( spec );
+				} else {
+					seq = new Sequence( spec, null );
+					smap.put( spec, seq );
+				}
+				if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
+			}
+		}
+		
+		Serifier			serifier = new Serifier();
+		for( String spec : smap.keySet() ) {
+			Sequence seq = smap.get( spec );
+			serifier.addSequence( seq );
+		}
+		return serifier;
+	}
+	
+	public void showAlignedSequences( Component comp, Serifier	serifier ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
-		Serifier	serifier = new Serifier();
 		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 		jf.initGui(frame);
-
-		for( Sequence seq : seqs ) {
-			serifier.addSequence( seq );
-		}
 		jf.updateView();
 
 		frame.setVisible(true);
@@ -4973,11 +5014,11 @@ public class GeneSet extends JApplet {
 		
 		ps.println( specs );
 		if( lgg != null ) for( GeneGroup gg : lgg ) {
-			Set<String>	nset = new HashSet<String>();
+			/*Set<String>	nset = new HashSet<String>();
 			for( Gene g : gg.genes ) {
 				nset.add( g.name );
-			}
-			ps.println( "\t" + nset );
+			}*/
+			ps.println( "\t" + gg.getCommonName() );
 		}
 		
 		List<Node> nodes = n.getNodes();
@@ -5026,11 +5067,11 @@ public class GeneSet extends JApplet {
 					if( nnode != node ) {
 						ps.println( nnode.getLeaveNames() );
 						for( GeneGroup gg : lgg ) {
-							Set<String>	nset = new HashSet<String>();
+							/*Set<String>	nset = new HashSet<String>();
 							for( Gene g : gg.genes ) {
 								nset.add( g.name );
-							}
-							ps.println( "\t" + nset );
+							}*/
+							ps.println( "\t" + gg.getCommonName() );
 						}
 						lossMap.put(nnode, lgg);
 					}
@@ -5535,7 +5576,7 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
-		AbstractAction compareplotaction = new AbstractAction("Gene compare plot") {
+		AbstractAction compareplotaction = new AbstractAction("Gene atlas") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -7222,7 +7263,7 @@ public class GeneSet extends JApplet {
 				Map<Node,List<GeneGroup>>	nodeGainMap = new HashMap<Node,List<GeneGroup>>();
 				Map<Node,List<GeneGroup>>	nodeLossMap = new HashMap<Node,List<GeneGroup>>();
 				
-				String treestr = "";
+				/*String treestr = "";
 				JFileChooser fc = new JFileChooser();
 				if( fc.showOpenDialog( applet ) == JFileChooser.APPROVE_OPTION ) {
 					File file = fc.getSelectedFile();
@@ -7232,12 +7273,71 @@ public class GeneSet extends JApplet {
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
+				}*/
+				
+				Serifier 	serifier = getConcatenatedSequences();
+				String 		tree = serifier.getFastTree();
+				
+				TreeUtil 	tu = new TreeUtil();
+				Node 		n = tu.parseTreeRecursive( tree, false );
+				
+				TableModel model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return GeneSet.this.getSpecies().size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return null;
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return GeneSet.this.getSpecies().get( rowIndex );
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				JTable table = new JTable( model );
+				table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+				JScrollPane	scroll = new JScrollPane( table );
+				FlowLayout flowlayout = new FlowLayout();
+				JComponent c = new JComponent() {};
+				c.setLayout( flowlayout );
+				c.add( scroll );
+				JOptionPane.showMessageDialog(comp, c);
+				
+				List<String>	rootgroup = new ArrayList<String>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					rootgroup.add( (String)table.getValueAt(r, 0) );
 				}
 				
-				TreeUtil tu = new TreeUtil();
-				Node n = tu.parseTreeRecursive(treestr, false);
-				String[] sobj = {"mt.ruber", "mt.silvanus", "o.profundus", "m.hydrothermalis"};
-				Node newnode = tu.getParent( n, new HashSet<String>( Arrays.asList( sobj ) ) );
+				//String[] sobj = {"mt.ruber", "mt.silvanus", "o.profundus", "m.hydrothermalis"};
+				Node newnode = tu.getParent( n, new HashSet<String>( rootgroup ) );
 				tu.rerootRecur( n, newnode );
 				
 				File f = new File("/home/sigmar/gain_list.txt");
@@ -7259,11 +7359,30 @@ public class GeneSet extends JApplet {
 				}
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Concatenate") {
+		popup.add( new AbstractAction("Concatenate tree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Map<String,Sequence>	smap = new HashMap<String,Sequence>();
+				Serifier serifier = getConcatenatedSequences();
+				String 				tree = serifier.getFastTree();
+				if( cs.connections().size() > 0 ) {
+		    		cs.sendToAll( tree );
+		    	} else if( Desktop.isDesktopSupported() ) {
+		    		cs.message = tree;
+		    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
+		    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
+					try {
+						Desktop.getDesktop().browse( new URI(uristr) );
+					} catch (IOException | URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+		    	}
+				showAlignedSequences( comp, serifier );
+			}
+		});
+		popup.add( new AbstractAction("Majority rule consensus") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Serifier serifier = new Serifier();
 				
 				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
 				int[] rr = table.getSelectedRows();
@@ -7281,22 +7400,47 @@ public class GeneSet extends JApplet {
 					}
 				}
 				
-				//List<Sequence>	seqs = new ArrayList<Sequence>();
+				TreeUtil treeutil = new TreeUtil();
+				Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
 				for( GeneGroup ggroup : genegroups ) {
+					//List<Sequence>	seqlist = new ArrayList<Sequence>();
+					
 					for( Tegeval tv : ggroup.getTegevals() ) {
 						String spec = tv.getContshort().getSpec();
 						StringBuilder seqstr = tv.getAlignedSequence();
 						
-						Sequence seq;
-						if( smap.containsKey( spec ) ) {
-							seq = smap.get( spec );
-						} else {
-							seq = new Sequence( spec, null );
-							smap.put( spec, seq );
-						}
+						Sequence seq = new Sequence( spec, null );
 						if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
+						serifier.addSequence( seq );						
 					}
+
+					String tree = serifier.getFastTree();
+					Node n = treeutil.parseTreeRecursive( tree, false );
+					treeutil.setLoc( 0 );
+					n.nodeCalcMap( nmap );
 				}
+		    	
+				Node guidetree = null;
+				
+				/*********************************** Serifier serifier = getConcatenatedSequences();
+				String tree = serifier.getFastTree();
+				guidetree = treeutil.parseTreeRecursive( tree, false );*/
+				
+				Node root = DataTable.majoRuleConsensus(treeutil, nmap, guidetree, false);
+				String tree = root.toString();
+				
+				if( cs.connections().size() > 0 ) {
+		    		cs.sendToAll( tree );
+		    	} else if( Desktop.isDesktopSupported() ) {
+		    		cs.message = tree;
+		    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
+		    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
+					try {
+						Desktop.getDesktop().browse( new URI(uristr) );
+					} catch (IOException | URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+		    	}
 			}
 		});
 		popup.addSeparator();
@@ -8265,17 +8409,16 @@ public class GeneSet extends JApplet {
 					}
 				}
 				
-				List<Sequence>	seqs = new ArrayList<Sequence>();
+				Serifier	serifier = new Serifier();
 				for( GeneGroup ggroup : genegroups ) {
 					for( Tegeval tv : ggroup.getTegevals() ) {
 						String contig = tv.getContshort().getName();
 						StringBuilder seqstr = tv.getAlignedSequence();
 						Sequence seq = new Sequence( contig, seqstr, null );
-						seqs.add(seq);
+						serifier.addSequence(seq);
 					}
 				}
-				
-				showAlignedSequences( comp, seqs );
+				showAlignedSequences( comp, serifier );
 			}
 		});
 		popup.add(new AbstractAction("Split/Show sequences") {
