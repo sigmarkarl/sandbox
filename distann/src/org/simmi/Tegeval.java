@@ -1,5 +1,7 @@
 package org.simmi;
 
+import java.awt.Color;
+
 public class Tegeval implements Comparable<Tegeval> {
 	public Tegeval(Gene gene, String tegund, double evalue, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
 		this( contig, shortcontig, locontig, sta, sto, orient );
@@ -138,6 +140,11 @@ public class Tegeval implements Comparable<Tegeval> {
 	
 	public double getGCPerc() {
 		return gc;
+	}
+	
+	public Color getGCColor() {
+		double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
+		return new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f );
 	}
 
 	double			gc;
