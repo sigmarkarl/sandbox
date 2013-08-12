@@ -206,9 +206,10 @@ public class XYPlot {
 									count2 += (ct2.isReverse() ? ct2.getGeneCount() - tv2.getNum() - 1 : tv2.getNum());
 									
 									if( gccolor.isSelected() ) {
-										double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
+										/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
 										double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
-										g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
+										g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );*/
+										g.setColor( tv2.getGCColor() );
 									} else {
 										boolean sel = false;
 										if( table.getModel() == geneset.groupModel ) {
