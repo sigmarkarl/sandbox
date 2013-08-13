@@ -48,6 +48,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -323,7 +324,7 @@ public class GeneSet extends JApplet {
 		return null;
 	}*/
 	
-	public static void recursiveSet(int fin, int val) {		
+	public static void recursiveSet(int fin, int val) {
 		if (val < fin) {
 			recursiveSet(fin, val + 1);
 		} else {
@@ -4721,7 +4722,7 @@ public class GeneSet extends JApplet {
 	}
 
 	private void proxi(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, boolean remove) {
-		Set<String> ct = new HashSet<String>();
+		/*Set<String> ct = new HashSet<String>();
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
 			
@@ -4746,9 +4747,28 @@ public class GeneSet extends JApplet {
 					ct.add(prev);
 				}
 			}
-		}
+		}*/
 
-		if( table.getModel() == groupModel ) {
+		for (int r : rr) {
+			int cr = table.convertRowIndexToModel(r);
+			
+			GeneGroup gg;
+			if( table.getModel() == groupModel ) {
+				gg = allgenegroups.get( cr );
+			} else {
+				gg = genelist.get(cr).getGeneGroup();
+			}
+			
+			genefilterset.add( gg.index );
+			for( Gene g : gg.genes ) {
+				Tegeval next = g.tegeval.getNext();
+				if( next != null ) genefilterset.add( next.getGene().getGeneGroup().index );
+				Tegeval prev = g.tegeval.getPrevious();
+				if( prev != null ) genefilterset.add( prev.getGene().getGeneGroup().index );
+			}
+		}
+		
+		/*if( table.getModel() == groupModel ) {
 			for( Gene g : genelist ) {
 				Tegeval tv = g.tegeval;
 				if( ct.contains(tv.cont) ) {
@@ -4762,15 +4782,15 @@ public class GeneSet extends JApplet {
 		} else {
 			for( Gene g : genelist ) {
 				Tegeval tv = g.tegeval;
-				if( ct.contains(tv.cont) ) {
+				//if( ct.contains(tv.cont) ) {
 					if (remove)
 						genefilterset.remove(g.index);
 					else
 						genefilterset.add(g.index);
 					break;
-				}
+				//}
 			}
-		}
+		}*/
 	}
 	
 	public static Set<String> getSelspec( Component comp, final List<String>	specs ) {		
@@ -5938,6 +5958,76 @@ public class GeneSet extends JApplet {
 		};
 		//JButton presabsbutton = new JButton( presabsaction );
 		
+		AbstractAction	selectsharingaction = new AbstractAction("Select sharing") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final List<String> species = GeneSet.this.getSpecies();
+				TableModel model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return species.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return null;
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return species.get( rowIndex );
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				JTable table = new JTable( model );				
+				table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+				JScrollPane	scroll = new JScrollPane( table );
+				
+				FlowLayout flowlayout = new FlowLayout();
+				JComponent c = new JComponent() {};
+				c.setLayout( flowlayout );
+				c.add( scroll );
+				
+				JOptionPane.showMessageDialog(comp, c);
+				
+				final Set<String>	specs = new HashSet<String>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					String spec = (String)table.getValueAt(r, 0);
+					specs.add( spec );
+				}
+				
+				for( GeneGroup gg : allgenegroups ) {
+					if( specs.containsAll( gg.species.keySet() ) && specs.size() == gg.species.size() ) {
+						int r = GeneSet.this.table.convertRowIndexToView( gg.index );
+						GeneSet.this.table.addRowSelectionInterval( r, r );
+					}
+				}
+			}
+		};
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -6477,6 +6567,7 @@ public class GeneSet extends JApplet {
 		
 		JMenuBar	menubar = new JMenuBar();
 		JMenu		menu = new JMenu("Functions");
+		menu.add( selectsharingaction );
 		menu.add( shuffletreeaction );
 		menu.add( presabsaction );
 		menu.add( freqdistaction );
@@ -6512,7 +6603,7 @@ public class GeneSet extends JApplet {
 		bg.add( gb );
 		bg.add( ggb );
 		
-		gb.setSelected( true );
+		ggb.setSelected( true );
 		
 		view.add( ggb );
 		
@@ -7151,7 +7242,7 @@ public class GeneSet extends JApplet {
 			public void removeTableModelListener(TableModelListener l) {
 			}
 		};
-		table.setModel( defaultModel );
+		table.setModel( groupModel );
 
 		/*
 		 * Comparator<Tegeval> wrapMe = new Comparator<Tegeval>() { public int
@@ -7363,19 +7454,34 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Serifier serifier = getConcatenatedSequences();
-				String 				tree = serifier.getFastTree();
-				if( cs.connections().size() > 0 ) {
-		    		cs.sendToAll( tree );
-		    	} else if( Desktop.isDesktopSupported() ) {
-		    		cs.message = tree;
-		    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
-		    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
-					try {
-						Desktop.getDesktop().browse( new URI(uristr) );
-					} catch (IOException | URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-		    	}
+				
+				boolean succ = true;
+				try {
+					JSObject win = JSObject.getWindow( (Applet)comp );
+					StringWriter sw = new StringWriter();
+					serifier.writeFasta(serifier.lseq, sw, null);
+					sw.close();
+					win.call("fastTree", new Object[] { sw.toString() });
+				} catch( Exception e1 ) {
+					e1.printStackTrace();
+					succ = false;
+				}
+				
+				if( !succ ) {
+					String 				tree = serifier.getFastTree();
+					if( cs.connections().size() > 0 ) {
+			    		cs.sendToAll( tree );
+			    	} else if( Desktop.isDesktopSupported() ) {
+			    		cs.message = tree;
+			    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
+			    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
+						try {
+							Desktop.getDesktop().browse( new URI(uristr) );
+						} catch (IOException | URISyntaxException e1) {
+							e1.printStackTrace();
+						}
+			    	}
+				}
 				showAlignedSequences( comp, serifier );
 			}
 		});
@@ -10253,8 +10359,8 @@ public class GeneSet extends JApplet {
 			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");*/
 			
 			
-			is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
-			funcMapping(new InputStreamReader(is), genmap, "/home/sigmar/thermus/gene2go_short.txt");
+			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
+			//funcMapping(new InputStreamReader(is), genmap, "/home/sigmar/thermus/gene2go_short.txt");
 			
 			is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
 			funcMappingUni(new InputStreamReader(is), unimap, null);
