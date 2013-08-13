@@ -48,111 +48,135 @@ public class GBK2AminoFasta {
 			//if( k == -1 ) k = filename.length();
 			String spec = tag; //filename.substring(0, k);
 			
+			int contignum = 0;
 			StringBuilder	strbuf = new StringBuilder();		
-			while( line != null ) {
-				String trimline = line.trim();
-				//String[] split = trimline.split("[\t ]+");
-				
-				String banno = null;
-				for( String annostr : annoset.keySet() ) {
-					if( trimline.startsWith( annostr+"  " ) ) {
-						banno = annostr;
-						break;
-					}
-				}
-				if( trimline.startsWith("CDS  ") || trimline.startsWith("tRNA  ") || trimline.startsWith("rRNA  ") || trimline.startsWith("mRNA  ") || trimline.startsWith("misc_feature  ") ) {
-					if( anno != null ) {
-						if( anno.id == null || anno.id.length() == 0 ) anno.id = anno.comp ? "comp("+anno.start+".."+anno.stop+")" : anno.start+".."+anno.stop;
-						annolist.add( anno );
-					}
-					anno = null;
-				}
-				if( banno != null ) { //|| trimline.startsWith("gene ") ) {
-					anno = new Anno( banno );
-					anno.contig = strbuf;
+			while( line!= null ) {
+				while( line != null ) {
+					String trimline = line.trim();
+					//String[] split = trimline.split("[\t ]+");
 					
-					anno.spec = spec;
-					String[] split = trimline.split("[\t ]+");
-					if( split.length > 1 ) {
-						if( split[1].startsWith("compl") ) {
-							int iof = split[1].indexOf(")");
-							String substr = split[1].substring(11, iof);
-							String[] nsplit = substr.split("\\.\\.");
-							//if( !nsplit[0].startsWith("join")  ) {
-							char c = nsplit[0].charAt(0);
-							char c2 = nsplit[1].charAt(0);
-							if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
-								anno.start = Integer.parseInt( nsplit[0] );
-								anno.stop = Integer.parseInt( nsplit[1] );
-								anno.comp = true;
-							} else {
-								System.err.println( nsplit[0] + " n " + nsplit[1] );
-								anno = null;
-							}
-						} else {
-							String[] nsplit = split[1].split("\\.\\.");
-							if( nsplit.length > 1 ) {
+					String banno = null;
+					for( String annostr : annoset.keySet() ) {
+						if( trimline.startsWith( annostr+"  " ) ) {
+							banno = annostr;
+							break;
+						}
+					}
+					if( trimline.startsWith("CDS  ") || trimline.startsWith("tRNA  ") || trimline.startsWith("rRNA  ") || trimline.startsWith("mRNA  ") || trimline.startsWith("misc_feature  ") ) {
+						if( anno != null ) {
+							if( anno.id == null || anno.id.length() == 0 ) anno.id = anno.comp ? "comp("+anno.start+".."+anno.stop+")" : anno.start+".."+anno.stop;
+							annolist.add( anno );
+						}
+						anno = null;
+					}
+					if( banno != null ) { //|| trimline.startsWith("gene ") ) {
+						anno = new Anno( banno );
+						anno.contig = strbuf;
+						
+						anno.spec = spec + (contignum > 0 ? "_contig"+(contignum+1) : "");
+						String[] split = trimline.split("[\t ]+");
+						if( split.length > 1 ) {
+							if( split[1].startsWith("compl") ) {
+								int iof = split[1].indexOf(")");
+								String substr = split[1].substring(11, iof);
+								String[] nsplit = substr.split("\\.\\.");
+								//if( !nsplit[0].startsWith("join")  ) {
 								char c = nsplit[0].charAt(0);
 								char c2 = nsplit[1].charAt(0);
 								if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
 									anno.start = Integer.parseInt( nsplit[0] );
 									anno.stop = Integer.parseInt( nsplit[1] );
-									anno.comp = false;
+									anno.comp = true;
 								} else {
 									System.err.println( nsplit[0] + " n " + nsplit[1] );
 									anno = null;
 								}
 							} else {
-								System.err.println("nono2");
+								String[] nsplit = split[1].split("\\.\\.");
+								if( nsplit.length > 1 ) {
+									char c = nsplit[0].charAt(0);
+									char c2 = nsplit[1].charAt(0);
+									if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
+										anno.start = Integer.parseInt( nsplit[0] );
+										anno.stop = Integer.parseInt( nsplit[1] );
+										anno.comp = false;
+									} else {
+										System.err.println( nsplit[0] + " n " + nsplit[1] );
+										anno = null;
+									}
+								} else {
+									System.err.println("nono2");
+								}
 							}
+						} else {
+							System.err.println("nono");
 						}
-					} else {
-						System.err.println("nono");
+					} else if( trimline.startsWith("/product") ) {
+						if( anno != null ) {
+							if( trimline.length() > 10 ) anno.name = trimline.substring(10,trimline.length()-1);
+							//annolist.add( anno );
+							//anno = null;
+						}
+					} else if( trimline.startsWith("/protein_id") ) {
+						if( anno != null ) {
+							anno.id = trimline.substring(13,trimline.length()-1);
+							//annolist.add( anno );
+							//anno = null;
+						}
+					} else if( trimline.startsWith("/locus_tag") ) {
+						if( anno != null ) {
+							if( !anno.getType().equals("tRNA") && !anno.getType().equals("rRNA") && (anno.id == null || anno.id.contains("..") ) ) {
+								anno.id = trimline.substring(12,trimline.length()-1);
+							}
+							//annolist.add( anno );
+							//anno = null;
+						}
+					} else if( trimline.startsWith("ORIGIN") ) {
+						break;
 					}
-				} else if( trimline.startsWith("/product") ) {
-					if( anno != null ) {
-						if( trimline.length() > 10 ) anno.name = trimline.substring(10,trimline.length()-1);
-						//annolist.add( anno );
-						//anno = null;
-					}
-				} else if( trimline.startsWith("/protein_id") ) {
-					if( anno != null ) {
-						anno.id = trimline.substring(13,trimline.length()-1);
-						//annolist.add( anno );
-						//anno = null;
-					}
-				} else if( trimline.startsWith("/locus_tag") ) {
-					if( anno != null ) {
-						anno.id = anno.id == null || anno.id.contains("..") ? trimline.substring(12,trimline.length()-1) : anno.id;
-						//annolist.add( anno );
-						//anno = null;
-					}
-				} else if( trimline.startsWith("ORIGIN") ) {
-					break;
+					
+					int k = filetext.indexOf("\n", ind+1);
+					line = null;
+					if( k > 0 ) line = filetext.substring(ind+1, k);
+					ind = k;
 				}
 				
 				int k = filetext.indexOf("\n", ind+1);
 				line = null;
 				if( k > 0 ) line = filetext.substring(ind+1, k);
 				ind = k;
-			}
-			
-			int k = filetext.indexOf("\n", ind+1);
-			line = null;
-			if( k > 0 ) line = filetext.substring(ind+1, k);
-			ind = k;
-			while( line != null ) {
-				strbuf.append( line.replaceAll("[\t 1234567890/]+", "") );
+				while( line != null && !line.startsWith("//") ) {
+					strbuf.append( line.replaceAll("[\t 1234567890/]+", "") );
+					
+					k = filetext.indexOf("\n", ind+1);
+					line = null;
+					if( k > 0 ) line = filetext.substring(ind+1, k);
+					ind = k;
+				}
 				
-				k = filetext.indexOf("\n", ind+1);
-				line = null;
-				if( k > 0 ) line = filetext.substring(ind+1, k);
-				ind = k;
-			}
-			
-			allout.write( ">" + spec + "\n" );
-			for( int i = 0; i < strbuf.length(); i+= 70 ) {
-				allout.write( strbuf.substring(i, Math.min( strbuf.length(), i+70) ) + "\n" );
+				if( line != null ) {
+					if( contignum == 0 ) {
+						for( Anno a : annolist ) {
+							a.spec += "_contig1";
+						}
+					}
+					
+					contignum++;				
+					
+					k = filetext.indexOf("\n", ind+1);
+					line = null;
+					if( k > 0 ) line = filetext.substring(ind+1, k);
+					ind = k;
+				}
+				
+				if( contignum > 0 && anno != null && anno.spec != null )  anno.spec += "_contig"+contignum;;
+				
+				allout.write( ">" + spec + (contignum > 0 ? "_contig"+contignum+"\n" : "\n") );
+				for( int i = 0; i < strbuf.length(); i+=70 ) {
+					allout.write( strbuf.substring(i, Math.min( strbuf.length(), i+70) ) + "\n" );
+				}
+				
+				strbuf = new StringBuilder();
 			}
 		}
 			
@@ -173,7 +197,11 @@ public class GBK2AminoFasta {
 			boolean amino = ao.getType().contains("CDS");
 			
 			String end = amino ? " # " + ao.start + " # " + ao.stop + " # " + (ao.comp ? "-1" : "1") + " #\n" : "\n";
-			if( out != null ) out.write( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]" + end );
+			if( out != null ) {
+				out.write( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]" + end );
+			} else {
+				System.err.println();
+			}
 			//strbuf.
 			
 			//System.err.println(val);
