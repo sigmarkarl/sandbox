@@ -185,13 +185,13 @@ public class GeneSorter {
 						}
 						lastgene = gene;
 						
-						if (gene.species != null) {
+						if (gene.getSpecies() != null) {
 							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
 								String contig = (String) rowheader.getValueAt(y, 0);
 
 								int und = contig.indexOf("_");
 								String spec = contig.substring(0, und);
-								if( gene.species.equals(spec) ) {
+								if( gene.getSpecies().equals(spec) ) {
 									Tegeval tv = gene.tegeval;
 									if( tv.cont != null && tv.cont.startsWith(contig)) {
 										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
