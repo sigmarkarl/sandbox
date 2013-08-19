@@ -14,6 +14,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -184,7 +185,6 @@ public class XYPlot {
 					Tegeval val = ct.getFirst();
 					while( val != null ) {
 						GeneGroup gg = val.getGene().getGeneGroup();
-						
 						int a = geneset.allgenegroups.indexOf( gg );
 						
 						int l = -1;
@@ -533,6 +533,37 @@ public class XYPlot {
 
 			@Override
 			public void mouseExited(MouseEvent e) {}
+		});
+		drawc.addMouseMotionListener( new MouseMotionListener() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				Point p = e.getPoint();
+				int cnt = 0;
+				Contig selcontx = null;
+				for( Contig c : spec1Conts ) {
+					selcontx = c;
+					cnt += c.getGeneCount();
+					if( p.x < cnt*drawc.getWidth()/fsum1 ) {
+						break;
+					}
+				}
+				cnt = 0;
+				Contig selconty = null;
+				for( Contig c : spec2Conts ) {
+					selconty = c;
+					cnt += c.getGeneCount();
+					if( p.y < cnt*drawc.getHeight()/fsum2 ) {
+						break;
+					}
+				}
+				String ttstr = "<html>"+selcontx + "<br>" + selconty+"</html>";
+				if( !ttstr.equals( drawc.getToolTipText() ) ) drawc.setToolTipText( ttstr );
+			}
+			
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				
+			}
 		});
 						
 		Dimension dim = new Dimension( fsum1, fsum2 );
