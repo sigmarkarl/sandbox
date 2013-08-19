@@ -78,17 +78,26 @@ public class GBK2AminoFasta {
 						if( split.length > 1 ) {
 							if( split[1].startsWith("compl") ) {
 								int iof = split[1].indexOf(")");
-								String substr = split[1].substring(11, iof);
+								while( iof == -1 ) {
+									int k = filetext.indexOf("\n", ind+1);
+									if( ind > 0 ) line = filetext.substring(ind+1, k);
+									ind = k;
+									trimline = trimline+line.trim();
+									split = trimline.split("[\t ]+");
+									iof = split[1].indexOf(")");
+								}
+								int osv = split[1].lastIndexOf('(');
+								String substr = split[1].substring(osv+1, iof);
 								String[] nsplit = substr.split("\\.\\.");
 								//if( !nsplit[0].startsWith("join")  ) {
 								char c = nsplit[0].charAt(0);
-								char c2 = nsplit[1].charAt(0);
+								char c2 = nsplit[nsplit.length-1].charAt(0);
 								if( c >= '0' && c <= '9' && c2 >= '0' && c2 <= '9' ) {
 									anno.start = Integer.parseInt( nsplit[0] );
-									anno.stop = Integer.parseInt( nsplit[1] );
+									anno.stop = Integer.parseInt( nsplit[nsplit.length-1] );
 									anno.comp = true;
 								} else {
-									System.err.println( nsplit[0] + " n " + nsplit[1] );
+									System.err.println( nsplit[0] + " n " + nsplit[nsplit.length-1] );
 									anno = null;
 								}
 							} else {
@@ -187,7 +196,7 @@ public class GBK2AminoFasta {
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				Writer fw = null;//new FileWriter( new File( uri ) );
+				Writer fw = new FileWriter( new File( uri ) );
 				urifile.put( uri, fw );
 				
 				out = fw;
