@@ -5,7 +5,7 @@ import java.util.Set;
 public class Gene {
 	public Gene(GeneGroup gg, String id, String name, String origin) {
 		this.name = name;
-		this.origin = origin;
+		this.species = origin;
 		this.gg = gg;
 		this.refid = id;
 		// this.setAa( aa );
@@ -87,9 +87,13 @@ public class Gene {
 		//if( teginfo == null ) teginfo = new Teginfo();
 		//teginfo.add( tegeval );
 	}
+	
+	public String getSpecies() {
+		return species;
+	}
 
 	String name;
-	String origin;
+	//String origin;
 	String refid;
 	Set<String> allids;
 	String genid;
@@ -99,7 +103,7 @@ public class Gene {
 	String blastspec;
 	Set<Function> funcentries;
 	//Map<String, Teginfo> species;
-	String 	species;
+	private String 	species;
 	Tegeval tegeval;
 	private String aac;
 	int index;
