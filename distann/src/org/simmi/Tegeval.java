@@ -106,16 +106,16 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public Tegeval getNext() {
-		if( contshort != null ) return contshort.isReverse() ? prev : next;
+		if( contshort != null ) return contshort.getNext( this );
 		return null;
 	}
 	
 	public Tegeval getPrevious() {
-		if( contshort != null )return contshort.isReverse() ? next : prev;
+		if( contshort != null ) return contshort.getPrev( this );
 		return null;
 	}
 	
-	public Tegeval setNext( Tegeval next ) {
+	/*public Tegeval setNext( Tegeval next ) {
 		Tegeval old = this.next;
 		this.next = next;
 		return old;
@@ -126,7 +126,7 @@ public class Tegeval implements Comparable<Tegeval> {
 		this.prev = prev;
 		prev.setNext( this );
 		return old;
-	}
+	}*/
 	
 	private double gcCount() {
 		int gc = 0;
@@ -161,8 +161,8 @@ public class Tegeval implements Comparable<Tegeval> {
 	int 			numCys;
 	private int		num;
 	Gene			gene;
-	Tegeval			next;
-	Tegeval			prev;
+	//Tegeval			next;
+	//Tegeval			prev;
 	boolean			selected = false;
 	
 	public boolean isSelected() {

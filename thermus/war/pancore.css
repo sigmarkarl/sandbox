@@ -6,7 +6,12 @@ td {
 	vertical-align : top
 }
 
+.article {
+	-webkit-column-count:2; 
+	-moz-column-count:2; 
+	column-count:2;	
+}
+
 @media print {
-	table { page-break-after : always }
-    td.do-not-print {display: none;}
+    div.do-not-print {display: none;}
 }

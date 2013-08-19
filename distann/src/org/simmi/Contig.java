@@ -7,10 +7,9 @@ import java.util.List;
 import org.simmi.shared.Sequence;
 
 class Contig implements Comparable<Contig> {
-	public Contig(String name, int s) {
+	public Contig(String name ) {
 		seq = new Sequence( name, null );
 		loc = 0.0;
-		size = s;
 	}
 	
 	public void add( Tegeval tv ) {
@@ -18,15 +17,47 @@ class Contig implements Comparable<Contig> {
 		tlist.add( tv );
 	}
 	
+	public void deleteAfter( Tegeval cur ) {
+		int i = tlist.indexOf( cur );
+		if( i != -1 && i < tlist.size() ) {
+			tlist.remove( i+1 );
+		}
+	}
+	
+	public void deleteBefore( Tegeval cur ) {
+		int i = tlist.indexOf( cur );
+		if( i > 0 ) {
+			tlist.remove( i-1 );
+		}
+	}
+	
+	public void injectAfter( Tegeval cur, Tegeval tv ) {
+		int i = tlist.indexOf( cur );
+		if( i != -1 ) {
+			tlist.add(i+1, tv);
+		}
+	}
+	
+	public void injectBefore( Tegeval cur, Tegeval tv ) {
+		int i = tlist.indexOf( cur );
+		if( i != -1 ) {
+			tlist.add( i, tv );
+		}
+	}
+	
+	public List<Tegeval> getTegevalsList() {
+		return tlist;
+	}
+	
 	public void sortLocs() {
 		if( tlist != null ) {
 			Collections.sort( tlist );
 			int i = 0;
-			Tegeval prev = null;
+			//Tegeval prev = null;
 			for( Tegeval tv : tlist ) {
 				tv.setNum( i++ );
-				if( prev != null ) tv.setPrevious( prev );
-				prev = tv;
+				//if( prev != null ) tv.setPrevious( prev );
+				//prev = tv;
 			}
 		}
 	}
@@ -41,7 +72,7 @@ class Contig implements Comparable<Contig> {
 	}
 	
 	public Contig( String name, StringBuilder sb ) {
-		this( name, sb.length() );
+		this( name );
 		seq.setSequenceString( sb );
 	}
 	
@@ -50,7 +81,25 @@ class Contig implements Comparable<Contig> {
 	}
 	
 	public int getLength() {
-		return size;
+		return seq.getLength();
+	}
+	
+	public Tegeval getNext( Tegeval from ) {
+		int i = tlist.indexOf( from );
+		if( i != -1 ) {
+			if( i > 0 && isReverse() ) return tlist.get( i-1 );
+			else if( i < tlist.size()-1 ) return tlist.get( i+1 );
+		}
+		return null;
+	}
+	
+	public Tegeval getPrev( Tegeval from ) {
+		int i = tlist.indexOf( from );
+		if( i != -1 ) {
+			if( i < tlist.size()-1 && isReverse() ) return tlist.get( i+1 );
+			else if( i > 0 ) return tlist.get( i-1 );
+		}
+		return null;
 	}
 	
 	public String getSpec() {
@@ -58,6 +107,9 @@ class Contig implements Comparable<Contig> {
 		int i = getName().indexOf("uid");
 		if( i == -1 ) {
 			i = getName().indexOf("contig");
+			if( i == -1 ) {
+				System.err.println();
+			}
 			spec = getName().substring(0, i-1);
 		} else {
 			i = getName().indexOf("_", i+1);
@@ -128,7 +180,7 @@ class Contig implements Comparable<Contig> {
 		if( rev ) {
 			contig.next = this;
 			
-			if( this.getEnd() != null ) this.getEnd().next = contig.getEnd();
+			/*if( this.getEnd() != null ) this.getEnd().next = contig.getEnd();
 			if( contig.getEnd() != null ) contig.getEnd().next = this.getEnd();
 			
 			if( this.isReverse() == contig.isReverse() ) {
@@ -137,11 +189,11 @@ class Contig implements Comparable<Contig> {
 					nextc.setReverse( !nextc.isReverse() );
 					nextc = nextc.isReverse() ? nextc.prev : nextc.next;
 				}
-			}
+			}*/
 		} else {
 			contig.prev = this;
 			
-			if( this.getEnd() != null ) this.getEnd().next = contig.getStart();
+			/*if( this.getEnd() != null ) this.getEnd().next = contig.getStart();
 			if( contig.getStart() != null ) contig.getStart().prev = this.getEnd();
 			
 			if( this.isReverse() != contig.isReverse() ) {
@@ -150,7 +202,7 @@ class Contig implements Comparable<Contig> {
 					nextc.setReverse( !nextc.isReverse() );
 					nextc = nextc.isReverse() ? nextc.prev : nextc.next;
 				}
-			}
+			}*/
 		}
 	}
 	
@@ -159,7 +211,7 @@ class Contig implements Comparable<Contig> {
 		if( rev ) {
 			contig.next = this;
 			
-			this.getStart().prev = contig.getEnd();
+			/*this.getStart().prev = contig.getEnd();
 			if( contig.getEnd() != null ) contig.getEnd().next = this.getStart();
 			
 			if( this.isReverse() != contig.isReverse() ) {
@@ -168,11 +220,11 @@ class Contig implements Comparable<Contig> {
 					nextc.setReverse( !nextc.isReverse() );
 					nextc = nextc.isReverse() ? nextc.next : nextc.prev;
 				}
-			}
+			}*/
 		} else {
 			contig.prev = this;
 			
-			this.getStart().prev = contig.getStart();
+			/*this.getStart().prev = contig.getStart();
 			if( contig.getStart() != null ) contig.getStart().prev = this.getStart();
 			
 			if( this.isReverse() == contig.isReverse() ) {
@@ -181,7 +233,7 @@ class Contig implements Comparable<Contig> {
 					nextc.setReverse( !nextc.isReverse() );
 					nextc = nextc.isReverse() ? nextc.next : nextc.prev;
 				}
-			}
+			}*/
 		}
 	}
 	
