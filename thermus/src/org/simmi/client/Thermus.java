@@ -8,6 +8,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.json.client.JSONArray;
@@ -104,6 +105,15 @@ public class Thermus implements EntryPoint {
 			}
 		});
 		//Browser.getWindow().
+		Element ft = Document.get().getElementById("fasttree");
+		st = ft.getStyle();
+		st.setHeight(0.0, Unit.PX);
+		st.setWidth(0.0, Unit.PX);
+		st.setBorderWidth(0.0, Unit.PX);
+		st.setPadding(0.0, Unit.PX);
+		st.setMargin(0.0, Unit.PX);
+		st.setVisibility( Visibility.HIDDEN );
+		//st.setDisplay( Display.NONE );
 		
 		Element pe = Document.get().createElement("param");
 		pe.setAttribute("name", "jnlp_href");

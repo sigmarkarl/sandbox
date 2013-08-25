@@ -130,7 +130,7 @@ public class Synteni {
 				if( sorting.getModel() == geneset.groupModel ) {
 					for( int r : rr ) {
 						int i = sorting.convertRowIndexToModel( r );
-						GeneGroup gg = GeneSet.allgenegroups.get( i );
+						GeneGroup gg = geneset.allgenegroups.get( i );
 						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 							int l = rowheader.convertRowIndexToModel( k );
 							String spec1 = species.get( l );
