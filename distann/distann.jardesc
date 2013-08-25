@@ -11,21 +11,17 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
-        <file path="/distann/src/idmapping_short.dat"/>
-        <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
-        <file path="/distann/src/kegg2go.txt"/>
-        <file path="/distann/src/allthermus_new.clust"/>
-        <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
-        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
-        <file path="/distann/src/trna.txt"/>
-        <file path="/distann/src/go_short.obo"/>
-        <file path="/distann/src/gene2refseq_short.txt"/>
         <file path="/distann/src/sp2go_short.txt"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
         <file path="/distann/src/thermus16S.blastout"/>
         <file path="/distann/src/trna_sub.txt"/>
+        <file path="/distann/src/chat.html"/>
+        <file path="/distann/src/chart.html"/>
         <file path="/distann/src/kegg_pathways"/>
+        <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
+        <file path="/distann/src/kegg2go.txt"/>
         <file path="/distann/src/gene2go_short.txt"/>
-        <file path="/distann/src/rna.fasta"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
     </selectedElements>
 </jardesc>

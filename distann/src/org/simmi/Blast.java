@@ -352,7 +352,6 @@ public class Blast {
 					gene = genestuff( uclusterlist, query, desc, teg, check, ret );
 					if( addon ) {
 						gene.name = desc;
-						gene.origin = teg;
 						gene.allids.remove( check );
 					}
 				} else {
@@ -542,7 +541,7 @@ public class Blast {
 						nquery = query;
 					}*/
 	
-					Contig contig = contigmap.containsKey( contigstr ) ? contigmap.get( contigstr ) : new Contig( contigstr, 0 );
+					Contig contig = contigmap.containsKey( contigstr ) ? contigmap.get( contigstr ) : new Contig( contigstr );
 					//StringBuilder dn = dnaSearch( query ); //dnaa.get(nquery);
 					
 					Tegeval tv = aas.get( query ); //new Tegeval(gene, padda, deval, query, contig, contloc, start, stop, ori);
