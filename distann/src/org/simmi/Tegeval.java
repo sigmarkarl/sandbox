@@ -1,5 +1,7 @@
 package org.simmi;
 
+import java.awt.Color;
+
 public class Tegeval implements Comparable<Tegeval> {
 	public Tegeval(Gene gene, String tegund, double evalue, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
 		this( contig, shortcontig, locontig, sta, sto, orient );
@@ -104,16 +106,16 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public Tegeval getNext() {
-		if( contshort != null ) return contshort.isReverse() ? prev : next;
+		if( contshort != null ) return contshort.getNext( this );
 		return null;
 	}
 	
 	public Tegeval getPrevious() {
-		if( contshort != null )return contshort.isReverse() ? next : prev;
+		if( contshort != null ) return contshort.getPrev( this );
 		return null;
 	}
 	
-	public Tegeval setNext( Tegeval next ) {
+	/*public Tegeval setNext( Tegeval next ) {
 		Tegeval old = this.next;
 		this.next = next;
 		return old;
@@ -124,12 +126,12 @@ public class Tegeval implements Comparable<Tegeval> {
 		this.prev = prev;
 		prev.setNext( this );
 		return old;
-	}
+	}*/
 	
 	private double gcCount() {
 		int gc = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
-		for( int i = start; i < stop; i++ ) {
+		if( contshort != null ) for( int i = start; i < stop; i++ ) {
 			char c = contshort.charAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
 		}
@@ -138,6 +140,11 @@ public class Tegeval implements Comparable<Tegeval> {
 	
 	public double getGCPerc() {
 		return gc;
+	}
+	
+	public Color getGCColor() {
+		double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
+		return new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f );
 	}
 
 	double			gc;
@@ -154,8 +161,8 @@ public class Tegeval implements Comparable<Tegeval> {
 	int 			numCys;
 	private int		num;
 	Gene			gene;
-	Tegeval			next;
-	Tegeval			prev;
+	//Tegeval			next;
+	//Tegeval			prev;
 	boolean			selected = false;
 	
 	public boolean isSelected() {
