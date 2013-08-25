@@ -2349,13 +2349,14 @@ public class SerifyApplet extends JApplet {
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
 					final File f = filechooser.getSelectedFile();
 					try {
-						List<String>	urls = new ArrayList<String>();
+						List<Reader>	lrd = new ArrayList<Reader>();
 						int[] rr = table.getSelectedRows();
 						for( int r : rr ) {
 							String path = (String)table.getValueAt( r, 3 );
-							urls.add( path );
+							URL url = new URL( path );
+							lrd.add( new InputStreamReader( url.openStream() ) );
 						}
-						final Map<String,StringBuilder>	seqmap = serifier.concat( urls );
+						final Map<String,StringBuilder>	seqmap = serifier.concat( lrd );
 						
 						JFrame popup = new JFrame();
 						popup.setSize(800, 600);
@@ -2475,7 +2476,7 @@ public class SerifyApplet extends JApplet {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier );
+				final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
 				jf.initGui(frame);
 				loadSequencesInJavaFasta( jf );
 				jf.updateView();
@@ -3572,7 +3573,7 @@ public class SerifyApplet extends JApplet {
 					
 					Map<String,Map<String,StringBuilder>>	seqmap = new HashMap<String,Map<String,StringBuilder>>();
 					
-					JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier );
+					JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
 					jf.initDataStructures();
 					
 					int[] rr = table.getSelectedRows();
@@ -4080,7 +4081,6 @@ public class SerifyApplet extends JApplet {
 								
 								if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
 							} else if( type.equals("nucl") && !line.matches("^[acgtykvrswmunxACGTDYKVRSWMUNX]+$") ) {
-								System.err.println( line );
 								type = "prot";
 							}
 							line = br.readLine();
@@ -4168,21 +4168,32 @@ public class SerifyApplet extends JApplet {
 	public void addSequences( String name, String path ) throws URISyntaxException, IOException {
 		URL url = new URL(path);
 
+		boolean succ = true;
+		InputStream is = null;
 		try {
-			InputStream is = url.openStream();
-			
-			if( is != null ) {
-				if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
-				InputStreamReader isr = new InputStreamReader( is );
-				
-				Map<String,Reader>	isrmap = new HashMap<String,Reader>();
-				isrmap.put( name.substring(0, name.length()-4), isr);
-				
-				addSequences( name, isrmap, path );
-				//FileReader	fr = new FileReader( f );
+			is = url.openStream();
+		} catch( Exception e ) {
+			succ = false;
+			e.printStackTrace();
+		}
+		
+		try {
+			if( !succ ) {
+				is = new FileInputStream( url.getFile() );
 			}
 		} catch( Exception e ) {
 			e.printStackTrace();
+		}
+		
+		if( is != null ) {
+			if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
+			InputStreamReader isr = new InputStreamReader( is );
+			
+			Map<String,Reader>	isrmap = new HashMap<String,Reader>();
+			isrmap.put( name.substring(0, name.length()-4), isr);
+			
+			addSequences( name, isrmap, path );
+			//FileReader	fr = new FileReader( f );
 		}
 	}
 	

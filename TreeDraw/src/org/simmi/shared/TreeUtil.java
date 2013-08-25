@@ -85,7 +85,7 @@ public class TreeUtil {
 				propogateSelection(selset, n);
 			}
 		}
-		if( selset.contains( node.getName() ) ) node.setSelected( true );
+		if( node.isLeaf() && (selset.contains( node.toStringWoLengths() ) || selset.contains( node.getName() )) ) node.setSelected( true );
 		//else node.setSelected( false );
 	}
 	
@@ -642,13 +642,13 @@ public class TreeUtil {
 		public Set<String> nodeCalcMap( Map<Set<String>,NodeSet>	ls ) {
 			Set<String>	s = new HashSet<String>();
 			if( nodes == null || nodes.size() == 0 ) {
-				s.add( id );
+				s.add( id == null ? name : id );
 			} else {
 				for( Node subn : nodes ) {
 					Set<String> set = subn.nodeCalcMap( ls );
 					s.addAll( set );
 				}
-				if( nodes.size() == 1 ) s.add( id );
+				if( nodes.size() == 1 ) s.add( id == null ? name : id );
 				
 				NodeSet	heights;
 				if( ls.containsKey( s ) ) {
@@ -729,7 +729,7 @@ public class TreeUtil {
 		
 		public Node( String name ) {
 			this();
-			this.setName( name, true );
+			this.setName( name );
 			/*this.name = name;
 			this.id = name;*/
 		}
@@ -772,7 +772,9 @@ public class TreeUtil {
 		}
 		
 		public String toStringWoLengths() {
-			String str = "";
+			return generateString( false );
+			
+			/*String str = "";
 			if( nodes.size() > 0 ) {
 				str += "(";
 				int i = 0;
@@ -787,7 +789,7 @@ public class TreeUtil {
 					}
 				} else {
 					str += n1+")";
-				}*/
+				}*
 				for( i = 0; i < nodes.size()-1; i++ ) {
 					str += nodes.get(i).toStringWoLengths()+",";
 				}
@@ -799,7 +801,7 @@ public class TreeUtil {
 				else str += "'"+meta+"'";
 			} else if( name != null && name.length() > 0 ) str += name;
 			
-			return str;
+			return str;*/
 		}
 		
 		public String generateString( boolean wlen ) {
@@ -855,7 +857,6 @@ public class TreeUtil {
 			
 			if( wlen ) str += ":"+h;
 			// change: if( color != null && color.length() > 0 ) str += ":"+color;
-			
 			//else str += ":0.0";
 			
 			return str;
@@ -985,7 +986,7 @@ public class TreeUtil {
 								if( mfsplit.length > 1 ) this.setFrameSize( Double.parseDouble( mfsplit[1] ) );
 								if( mfsplit.length > 2 ) this.setFrameOffset( Double.parseDouble( mfsplit[2] ) );*/
 							}
-						}
+						} else this.name = newname;
 						this.id = this.name;
 						this.setMeta( null );
 					} else {

@@ -12,7 +12,6 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -186,13 +185,13 @@ public class GeneSorter {
 						}
 						lastgene = gene;
 						
-						if (gene.species != null) {
+						if (gene.getSpecies() != null) {
 							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
 								String contig = (String) rowheader.getValueAt(y, 0);
 
 								int und = contig.indexOf("_");
 								String spec = contig.substring(0, und);
-								if( gene.species.equals(spec) ) {
+								if( gene.getSpecies().equals(spec) ) {
 									Tegeval tv = gene.tegeval;
 									if( tv.cont != null && tv.cont.startsWith(contig)) {
 										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
@@ -468,7 +467,7 @@ public class GeneSorter {
 							Gene 		tgene = null;
 							int r = sorting.convertRowIndexToModel(i);
 							if( sorting.getModel() == geneset.groupModel ) {
-								genegroup = GeneSet.allgenegroups.get( r );
+								genegroup = geneset.allgenegroups.get( r );
 							} else {
 								tgene = genelist.get( r );
 								genegroup = tgene.getGeneGroup();
@@ -489,7 +488,7 @@ public class GeneSorter {
 						Gene 		tgene = null;
 						int r = sorting.convertRowIndexToModel(i);
 						if( sorting.getModel() == geneset.groupModel ) {
-							genegroup = GeneSet.allgenegroups.get( r );
+							genegroup = geneset.allgenegroups.get( r );
 						} else {
 							tgene = genelist.get( r );
 							genegroup = tgene.getGeneGroup();
