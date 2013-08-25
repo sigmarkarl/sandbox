@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class GBK2AminoFasta {
 	public static class Anno {
@@ -48,6 +50,7 @@ public class GBK2AminoFasta {
 			//if( k == -1 ) k = filename.length();
 			String spec = tag; //filename.substring(0, k);
 			
+			Set<String>	xref = new TreeSet<String>();
 			int contignum = 0;
 			StringBuilder	strbuf = new StringBuilder();		
 			while( line!= null ) {
@@ -120,9 +123,33 @@ public class GBK2AminoFasta {
 						} else {
 							System.err.println("nono");
 						}
+					} else if( trimline.startsWith("/db_xref") ) {
+						xref.add( trimline.substring(10, trimline.length()-1) );
 					} else if( trimline.startsWith("/product") ) {
 						if( anno != null ) {
-							if( trimline.length() > 10 ) anno.name = trimline.substring(10,trimline.length()-1);
+							if( trimline.length() > 10 ) {								
+								int i = trimline.indexOf('"', 10);
+								while( i == -1 ) {
+									int k = filetext.indexOf("\n", ind+1);
+									line = null;
+									if( k > 0 ) line = filetext.substring(ind+1, k);
+									ind = k;
+									
+									if( line != null ) {
+										trimline += line.trim();
+										i = trimline.indexOf('"', 10);
+									} else i = trimline.length()-1;
+								}
+								anno.name = trimline.substring(10,i);
+								if( xref.size() > 0 ) {
+									anno.name += "(";
+									for( String xr : xref ) {
+										anno.name += xr;
+									}
+									anno.name += ")";
+									xref.clear();
+								}
+							}
 							//annolist.add( anno );
 							//anno = null;
 						}
