@@ -6,6 +6,18 @@ td {
 	vertical-align : top
 }
 
+.iframestuff {
+	text-align: center;
+    -moz-transform: scale(0.5);
+    -moz-transform-origin: 0 0;
+    -o-transform: scale(0.5);
+    -o-transform-origin: 0 0;
+    -webkit-transform: scale(0.5);
+    -webkit-transform-origin: 0 0;
+}
+
+.tab { text-indent:20px }
+
 .article {
 	-webkit-column-count:2; 
 	-moz-column-count:2; 
