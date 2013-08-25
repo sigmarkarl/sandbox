@@ -1,7 +1,6 @@
 package org.simmi;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +54,7 @@ public class GeneGroup {
 		List<Tegeval>	ltv = new ArrayList<Tegeval>();
 		
 		Teginfo genes = species.get( specs );
-		for( Tegeval tv : genes.tset ) {
+		if( genes != null ) for( Tegeval tv : genes.tset ) {
 			ltv.add( tv );
 		}
 		
@@ -189,11 +188,11 @@ public class GeneGroup {
 			genes.add( gene );
 			
 			Teginfo genes;
-			if( species.containsKey( gene.species ) ) {
-				genes = species.get( gene.species );
+			if( species.containsKey( gene.getSpecies() ) ) {
+				genes = species.get( gene.getSpecies() );
 			} else {
 				genes = new Teginfo();
-				species.put( gene.species, genes );
+				species.put( gene.getSpecies(), genes );
 			}
 			genes.add( gene.tegeval );
         }

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE web-app
-    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
-    "http://java.sun.com/dtd/web-app_2_3.dtd">
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
 <web-app>
-  
+  <mime-mapping>
+        <extension>webapp</extension>
+        <mime-type>application/x-web-app-manifest+json</mime-type>
+  </mime-mapping>
+    
   <!-- Servlets -->
   <servlet>
     <servlet-name>greetServlet</servlet-name>
