@@ -87,6 +87,7 @@ import elemental.events.EventListener;
 import elemental.events.MessageEvent;
 import elemental.html.Console;
 import elemental.html.ImageElement;
+import elemental.html.WebSocket;
 
 //import elemental.client.Browser;
 //import elemental.html.Console;
@@ -1536,11 +1537,15 @@ public class Treedraw implements EntryPoint {
 	}-*/;
 	
 	public native void renderSaveToDrive( String id, String objurl, String filename ) /*-{
-		$wnd.gapi.savetodrive.render( id, {
-          src: objurl,
-          filename: filename,
-          sitename: 'Sigmasoft Treedraw'
-        });
+		try {
+			$wnd.gapi.savetodrive.render( id, {
+	          src: objurl,
+	          filename: filename,
+	          sitename: 'Sigmasoft Treedraw'
+	        });
+		} catch( e ) {
+			$wnd.console.log( "savetodrive error " + e );
+		}
 	}-*/;
 	
 	@Override
@@ -2394,8 +2399,25 @@ public class Treedraw implements EntryPoint {
 			String enctree = Window.Location.getParameter("tree");
 			String tree = URL.decode( enctree );
 			handleText( tree );
+		} else if( Window.Location.getParameterMap().keySet().contains("ws") ) {
+			String encws = Window.Location.getParameter("ws");
+			String url = URL.decode( encws );
+			Browser.getWindow().getConsole().log( "wsurl: " + url );
+			newWebSocket( url );
 		}
-	}	
+	}
+	
+	public native WebSocket newWebSocket( String url ) /*-{
+		var s = this;
+		var ws = new WebSocket( "ws://"+url, "protocolOne" );
+		ws.onopen = function( e ) {
+  			ws.send("ready");
+		};
+		ws.onmessage = function( e ) {
+		 	s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( e.data );
+		};	
+		return ws;
+	}-*/;
 	
 	double w;
 	double h;

@@ -1,18 +1,21 @@
 package org.simmi;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class Gene {
 	public Gene(GeneGroup gg, String id, String name, String origin) {
 		this.name = name;
-		this.origin = origin;
+		this.species = origin;
 		this.gg = gg;
 		this.refid = id;
 		// this.setAa( aa );
 		
 		//groupIdx = -10;
+	}
+	
+	public Gene( GeneGroup gg, String id, String name, String origin, String tag ) {
+		this( gg, id, name, origin );
+		this.tag = tag;
 	}
 	
 	public String toString() {
@@ -89,19 +92,25 @@ public class Gene {
 		//if( teginfo == null ) teginfo = new Teginfo();
 		//teginfo.add( tegeval );
 	}
+	
+	public String getSpecies() {
+		return species;
+	}
 
 	String name;
-	String origin;
+	String tag;
+	//String origin;
 	String refid;
 	Set<String> allids;
 	String genid;
 	String uniid;
 	String keggid;
 	String pdbid;
+	String ecid;
 	String blastspec;
 	Set<Function> funcentries;
 	//Map<String, Teginfo> species;
-	String 	species;
+	private String 	species;
 	Tegeval tegeval;
 	private String aac;
 	int index;
