@@ -4081,7 +4081,6 @@ public class SerifyApplet extends JApplet {
 								
 								if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
 							} else if( type.equals("nucl") && !line.matches("^[acgtykvrswmunxACGTDYKVRSWMUNX]+$") ) {
-								System.err.println( line );
 								type = "prot";
 							}
 							line = br.readLine();
@@ -4169,21 +4168,32 @@ public class SerifyApplet extends JApplet {
 	public void addSequences( String name, String path ) throws URISyntaxException, IOException {
 		URL url = new URL(path);
 
+		boolean succ = true;
+		InputStream is = null;
 		try {
-			InputStream is = url.openStream();
-			
-			if( is != null ) {
-				if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
-				InputStreamReader isr = new InputStreamReader( is );
-				
-				Map<String,Reader>	isrmap = new HashMap<String,Reader>();
-				isrmap.put( name.substring(0, name.length()-4), isr);
-				
-				addSequences( name, isrmap, path );
-				//FileReader	fr = new FileReader( f );
+			is = url.openStream();
+		} catch( Exception e ) {
+			succ = false;
+			e.printStackTrace();
+		}
+		
+		try {
+			if( !succ ) {
+				is = new FileInputStream( url.getFile() );
 			}
 		} catch( Exception e ) {
 			e.printStackTrace();
+		}
+		
+		if( is != null ) {
+			if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
+			InputStreamReader isr = new InputStreamReader( is );
+			
+			Map<String,Reader>	isrmap = new HashMap<String,Reader>();
+			isrmap.put( name.substring(0, name.length()-4), isr);
+			
+			addSequences( name, isrmap, path );
+			//FileReader	fr = new FileReader( f );
 		}
 	}
 	

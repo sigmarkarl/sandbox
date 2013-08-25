@@ -131,7 +131,7 @@ public class Tegeval implements Comparable<Tegeval> {
 	private double gcCount() {
 		int gc = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
-		for( int i = start; i < stop; i++ ) {
+		if( contshort != null ) for( int i = start; i < stop; i++ ) {
 			char c = contshort.charAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
 		}
