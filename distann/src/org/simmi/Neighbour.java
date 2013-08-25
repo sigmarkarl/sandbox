@@ -316,8 +316,10 @@ public class Neighbour {
 				public String getToolTipText( MouseEvent me ) {
 					Point p = me.getPoint();
 					Tegeval te = getSelectedTe(p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight());
-					Gene g = te.getGene();
-					if( te != null ) return "<html>"+(g.getName().equals( g.refid ) ? g.getGeneGroup().getCommonName() : g.getName())+ "<br>" + te.getGene().refid+ "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
+					if( te != null ) {
+						Gene g = te.getGene();
+						return "<html>"+(g.getName().equals( g.refid ) ? g.getGeneGroup().getCommonName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
+					}
 					return null;
 				}
 				
@@ -1036,15 +1038,19 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					if( currentTe != null ) {
 						if( currentTe.getContshort().isReverse() ) {
-							Tegeval previous = currentTe.prev;
+							/*Tegeval previous = currentTe.getPrevious();
 							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							currentTe.setPrevious( te );
-							te.setPrevious( previous );
+							te.setPrevious( previous );*/
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+							currentTe.getContshort().injectBefore( currentTe, te );
 						} else {
-							Tegeval next = currentTe.next;
+							/*Tegeval next = currentTe.getNext();
 							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							te.setPrevious( currentTe );
-							next.setPrevious( te );
+							next.setPrevious( te );*/
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+							currentTe.getContshort().injectAfter( currentTe, te );
 						}
 						c.repaint();
 					}
@@ -1055,15 +1061,19 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					if( currentTe != null ) {
 						if( currentTe.getContshort().isReverse() ) {
-							Tegeval next = currentTe.next;
+							/*Tegeval next = currentTe.getNext();
 							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							te.setPrevious( currentTe );
-							next.setPrevious( te );
+							next.setPrevious( te );*/
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+							currentTe.getContshort().injectAfter( currentTe, te );
 						} else {
-							Tegeval previous = currentTe.prev;
+							/*Tegeval previous = currentTe.getPrevious();
 							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
 							currentTe.setPrevious( te );
-							te.setPrevious( previous );
+							te.setPrevious( previous );*/
+							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+							currentTe.getContshort().injectBefore( currentTe, te );
 						}
 						c.repaint();
 					}
@@ -1074,11 +1084,13 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					if( currentTe != null ) {
 						if( currentTe.getContshort().isReverse() ) {
-							Tegeval prevprev = currentTe.prev.prev;
-							currentTe.setPrevious( prevprev );
+							/*Tegeval prevprev = currentTe.prev.prev;
+							currentTe.setPrevious( prevprev );*/
+							currentTe.getContshort().deleteBefore( currentTe );
 						} else {
-							Tegeval nextnext = currentTe.next.next;
-							nextnext.setPrevious( currentTe );
+							/*Tegeval nextnext = currentTe.next.next;
+							nextnext.setPrevious( currentTe );*/
+							currentTe.getContshort().deleteAfter( currentTe );
 						}
 						c.repaint();
 					}
@@ -1089,11 +1101,13 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					if( currentTe != null ) {
 						if( currentTe.getContshort().isReverse() ) {
-							Tegeval nextnext = currentTe.next.next;
-							nextnext.setPrevious( currentTe );
+							/*Tegeval nextnext = currentTe.getNext().getNext();
+							nextnext.setPrevious( currentTe );*/
+							currentTe.getContshort().deleteAfter( currentTe );
 						} else {
-							Tegeval prevprev = currentTe.prev.prev;
-							currentTe.setPrevious( prevprev );
+							/*Tegeval prevprev = currentTe.getPrevious().getPrevious();
+							currentTe.setPrevious( prevprev );*/
+							currentTe.getContshort().deleteBefore( currentTe );
 						}
 						c.repaint();
 					}
@@ -1220,13 +1234,13 @@ public class Neighbour {
 			showseqs.setAction( new AbstractAction("Show sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					GeneSet.showSequences( comp, selectedGenesGroups, false );
+					geneset.showSequences( comp, selectedGenesGroups, false );
 				}
 			});
 			showseqs.setAction( new AbstractAction("Show DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					GeneSet.showSequences( comp, selectedGenesGroups, true );
+					geneset.showSequences( comp, selectedGenesGroups, true );
 				}
 			});
 			
@@ -1260,7 +1274,7 @@ public class Neighbour {
 							te.setSelected( !te.isSelected() );
 							int i;
 							if( sorting.getModel() == geneset.groupModel ) {
-								i = GeneSet.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genes.indexOf( te.getGene() );
 							}
@@ -1403,20 +1417,20 @@ public class Neighbour {
 					if( r != -1 ) i = table.convertRowIndexToModel( r );
 					if( i != -1 ) {
 						if( forward.isSelected() ) {
-							Tegeval con = cont.getEnd().next;
+							Tegeval con = cont.getEnd().getNext();
 							while( con != null ) {
 								cont = con.getContshort();
-								con = cont.isReverse() ? cont.getStart().prev : cont.getEnd().next;
+								con = cont.isReverse() ? cont.getStart().getPrevious() : cont.getEnd().getNext();
 								
 								if( con != null && con.getContshort().equals( cont ) ) {
 									break;
 								}
 							}
 						} else {
-							Tegeval con = cont.getStart().prev;
+							Tegeval con = cont.getStart().getPrevious();
 							while( con != null ) {
 								cont = con.getContshort();
-								con = cont.isReverse() ? cont.getStart().prev : cont.getEnd().next;
+								con = cont.isReverse() ? cont.getStart().getPrevious() : cont.getEnd().getNext();
 								
 								if( con != null && con.getContshort().equals( cont ) ) {
 									break;
@@ -1458,7 +1472,7 @@ public class Neighbour {
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
 						Tegeval te = hteg.get( i );
-						hteg.set( i, te.next == null ? te : te.next );
+						hteg.set( i, te.getNext() == null ? te : te.getNext() );
 					}
 					c.repaint();
 				}
@@ -1470,7 +1484,7 @@ public class Neighbour {
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
 						Tegeval te = hteg.get( i );
-						hteg.set( i, te.prev == null ? te : te.prev );
+						hteg.set( i, te.getPrevious() == null ? te : te.getPrevious() );
 					}
 					c.repaint();
 				}

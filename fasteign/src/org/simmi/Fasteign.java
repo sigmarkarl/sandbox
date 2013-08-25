@@ -851,7 +851,7 @@ public class Fasteign extends JApplet {
 
 		JLabel loc = new JLabel("Veldu svæði:");
 		topcomp.add(loc);
-		final JComboBox loccomb = new JComboBox();
+		final JComboBox<String> loccomb = new JComboBox<String>();
 		loccomb.addItem("101 Miðbær");
 		loccomb.addItem("103 Kringlan/Hvassaleiti");
 		loccomb.addItem("104 Vogar");
@@ -880,7 +880,7 @@ public class Fasteign extends JApplet {
 
 		JLabel typ = new JLabel("Veldu tegund:");
 		topcomp.add(typ);
-		final JComboBox typcomb = new JComboBox();
+		final JComboBox<String> typcomb = new JComboBox<String>();
 		typcomb.addItem("Fjölbýli");
 		typcomb.addItem("Einbýli");
 		typcomb.addItem("Hæðir");
