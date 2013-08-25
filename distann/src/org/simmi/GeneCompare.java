@@ -389,99 +389,101 @@ public class GeneCompare {
 					GeneGroup gg = tv.getGene().getGeneGroup();
 					
 					int ii = geneset.allgenegroups.indexOf( gg );
-					int r = geneset.table.convertRowIndexToView( ii );
-					boolean rs = geneset.table.isRowSelected( r );
-					
-					/*if( rs ) {
-						System.err.println();
-					}*/
-					
-					int scount = 0;
-					for( String spec2 : spec2s ) {
-						if( gg.species.containsKey(spec2) ) {
-							if( synbr > 0 ) {
-								if( prev != null ) {
-									Teginfo gene2s = gg.getGenes( spec2 );
-									Color c = null;
-			                        for( Tegeval tv2 : gene2s.tset ) {
-			                        	GeneGroup fwgg = tv2.getNext() != null ? tv2.getNext().getGene().getGeneGroup() : null;
-			                        	GeneGroup bkgg = tv2.getPrevious() != null ? tv2.getPrevious().getGene().getGeneGroup() : null;
-			                        	
-			                        	if( prev.getGene().getGeneGroup().equals( bkgg ) ) {
-			                        		c = Color.blue;
-			                        	} else if( prev.getGene().getGeneGroup().equals( fwgg ) ) {
-			                        		if( c == null ) c = Color.red;
-			                        	}
-			                        }
-			                        
-			                        if( (synbr < 2 && c != null) || (synbr == 2) ) {
-			                        	if( synbr == 2 ) {
-			                        		if( c == null ) g2.setColor( Color.red );
-			                        		else g2.setColor( Color.lightGray );
-			                        	}
-			                        	else g2.setColor( c );
+					if( ii >= 0 && ii < geneset.table.getRowCount() ) {
+						int r = geneset.table.convertRowIndexToView( ii );
+						boolean rs = geneset.table.isRowSelected( r );
+						
+						/*if( rs ) {
+							System.err.println();
+						}*/
+						
+						int scount = 0;
+						for( String spec2 : spec2s ) {
+							if( gg.species.containsKey(spec2) ) {
+								if( synbr > 0 ) {
+									if( prev != null ) {
+										Teginfo gene2s = gg.getGenes( spec2 );
+										Color c = null;
+				                        for( Tegeval tv2 : gene2s.tset ) {
+				                        	GeneGroup fwgg = tv2.getNext() != null ? tv2.getNext().getGene().getGeneGroup() : null;
+				                        	GeneGroup bkgg = tv2.getPrevious() != null ? tv2.getPrevious().getGene().getGeneGroup() : null;
+				                        	
+				                        	if( prev.getGene().getGeneGroup().equals( bkgg ) ) {
+				                        		c = Color.blue;
+				                        	} else if( prev.getGene().getGeneGroup().equals( fwgg ) ) {
+				                        		if( c == null ) c = Color.red;
+				                        	}
+				                        }
 				                        
-										double theta = count*Math.PI*2.0/total;
-										g2.translate( w/2, h/2 );
-										g2.rotate( theta );
-										g2.fillRect( 250+15*(scount), -1, 15, 3);
-										g2.rotate( -theta );
-					                    g2.translate( -w/2, -h/2 );
-			                        }
-								}
-							} else {
-								Color color = Color.green;
-								if( blosumap != null ) {
-									int tscore = 0;
-			                        for( int i = 0; i < seq.length(); i++ ) {
-			                        	char c = seq.charAt(i);
-			                        	String comb = c+""+c;
-			                        	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
-			                        }
-			                        
-			                        int score = 0;
-			                        Teginfo gene2s = gg.getGenes( spec2 );
-			                        for( Tegeval tv2 : gene2s.tset ) {
-			                            StringBuilder seq2 = tv2.getAlignedSequence();
-			                            
-			                            int sscore = 0;
-			                            for( int i = 0; i < seq.length(); i++ ) {
-			                            	char c = seq.charAt( i );
-			                            	char c2 = seq2.charAt( i );
-			                            	
-			                            	String comb = c+""+c2;
-			                            	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
-			                            }
-			                            if( sscore > score ) score = sscore;
-			                            
-			                            if( seq == seq2 && sscore != tscore ) {
-			                            	System.err.println();
-			                            }
-			                        }
-			                        int cval = Math.min( 128, 512-score*512/tscore );
-			                        color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
+				                        if( (synbr < 2 && c != null) || (synbr == 2) ) {
+				                        	if( synbr == 2 ) {
+				                        		if( c == null ) g2.setColor( Color.red );
+				                        		else g2.setColor( Color.lightGray );
+				                        	}
+				                        	else g2.setColor( c );
+					                        
+											double theta = count*Math.PI*2.0/total;
+											g2.translate( w/2, h/2 );
+											g2.rotate( theta );
+											g2.fillRect( 250+15*(scount), -1, 15, 3);
+											g2.rotate( -theta );
+						                    g2.translate( -w/2, -h/2 );
+				                        }
+									}
 								} else {
-									Teginfo gene2s = gg.getGenes( spec2 );
-			                        for( Tegeval tv2 : gene2s.tset ) {
-			                        	color = tv2.getGCColor();
-			                        	break;
-			                        }
+									Color color = Color.green;
+									if( blosumap != null ) {
+										int tscore = 0;
+				                        for( int i = 0; i < seq.length(); i++ ) {
+				                        	char c = seq.charAt(i);
+				                        	String comb = c+""+c;
+				                        	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
+				                        }
+				                        
+				                        int score = 0;
+				                        Teginfo gene2s = gg.getGenes( spec2 );
+				                        for( Tegeval tv2 : gene2s.tset ) {
+				                            StringBuilder seq2 = tv2.getAlignedSequence();
+				                            
+				                            int sscore = 0;
+				                            for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
+				                            	char c = seq.charAt( i );
+				                            	char c2 = seq2.charAt( i );
+				                            	
+				                            	String comb = c+""+c2;
+				                            	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
+				                            }
+				                            if( sscore > score ) score = sscore;
+				                            
+				                            if( seq == seq2 && sscore != tscore ) {
+				                            	System.err.println();
+				                            }
+				                        }
+				                        int cval = Math.min( 128, 512-score*512/tscore );
+				                        color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
+									} else {
+										Teginfo gene2s = gg.getGenes( spec2 );
+				                        for( Tegeval tv2 : gene2s.tset ) {
+				                        	color = tv2.getGCColor();
+				                        	break;
+				                        }
+									}
+									if( color != null ) g2.setColor( color );
+			                        
+									double theta = count*Math.PI*2.0/total;
+									g2.translate( w/2, h/2 );
+									g2.rotate( theta );
+									g2.fillRect( 250+15*(scount), -1, 15, 3);
+									g2.rotate( -theta );
+				                    g2.translate( -w/2, -h/2 );
 								}
-								if( color != null ) g2.setColor( color );
-		                        
-								double theta = count*Math.PI*2.0/total;
-								g2.translate( w/2, h/2 );
-								g2.rotate( theta );
-								g2.fillRect( 250+15*(scount), -1, 15, 3);
-								g2.rotate( -theta );
-			                    g2.translate( -w/2, -h/2 );
 							}
+							scount++;
 						}
-						scount++;
+						count++;
+						
+						prev = tv;
 					}
-					count++;
-					
-					prev = tv;
 				}
 			
 				g2.setColor( Color.black );

@@ -13,6 +13,11 @@ public class Gene {
 		//groupIdx = -10;
 	}
 	
+	public Gene( GeneGroup gg, String id, String name, String origin, String tag ) {
+		this( gg, id, name, origin );
+		this.tag = tag;
+	}
+	
 	public String toString() {
 		return getName();
 	}
@@ -93,6 +98,7 @@ public class Gene {
 	}
 
 	String name;
+	String tag;
 	//String origin;
 	String refid;
 	Set<String> allids;
@@ -100,6 +106,7 @@ public class Gene {
 	String uniid;
 	String keggid;
 	String pdbid;
+	String ecid;
 	String blastspec;
 	Set<Function> funcentries;
 	//Map<String, Teginfo> species;
