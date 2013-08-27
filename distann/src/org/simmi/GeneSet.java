@@ -4119,7 +4119,7 @@ public class GeneSet extends JApplet {
 	};
 
 	public static void simmi() throws IOException {
-		FileReader fr = new FileReader("/home/sigmar/allbutthermus.blastout");
+		FileReader fr = new FileReader("thermustype.blastout");
 		BufferedReader br = new BufferedReader(fr);
 		String line = br.readLine();
 		String current = null;
@@ -4165,7 +4165,7 @@ public class GeneSet extends JApplet {
 		System.err.println(tegmap.size());
 
 		//int[] iv = { 0, 10, 16, 50, 8, 8, 8, 8, 60, 50, 30, 50, 150, 150, 80, 50 };
-		int[] iv = { 0, 10, 16, 50, 100, 100, 60, 30, 500, 150, 500, 500, 30, 50, 200, 30, 30 };
+		int[] iv = { 0, 10, 16, 50, 100, 100, 60, 30, 500, 150, 500, 500, 30, 50, 200};//, 30, 30 };
 		for (int i = 0; i < iv.length-1; i++) {
 			iv[i] += 1;
 		}
@@ -4175,12 +4175,12 @@ public class GeneSet extends JApplet {
 			isum[i] = isum[i - 1] + iv[i];
 		}
 
-		FileOutputStream fos = new FileOutputStream("/home/sigmar/noname.txt");
+		FileOutputStream fos = new FileOutputStream("noname.txt");
 		PrintStream pos = new PrintStream(fos);
 		//pos.println( "name\tacc\tspecies\tlen\tident\tdoi\tpubmed\tjournal\tauth\tsub_auth\tsub_date\tcountry\tsource\ttemp\tpH" );
-		pos.println( "name\tacc\tfullname\tspecies\tlen\tident\tcountry\tsource\tdoi\tpubmed\tauthor\tjournal\tsub_auth\tsub_date\tlat_lon\tdate\ttitle\tarb\tcolor\ttemp\tpH" );
+		pos.println( "name\tacc\tfullname\tspecies\tlen\tident\tcountry\tsource\tdoi\tpubmed\tauthor\tjournal\tsub_auth\tsub_date\tlat_lon\tdate\ttitle\tcolor\ttemp\tpH" );
 		
-		fr = new FileReader("/home/sigmar/export3.nds");
+		fr = new FileReader("export.nds");
 		br = new BufferedReader(fr);
 		line = br.readLine();
 		while (line != null) {
@@ -4197,9 +4197,9 @@ public class GeneSet extends JApplet {
 			String sub_date = line.substring(isum[10], isum[11]).trim().replace("\"", "");
 			String lat_lon = line.substring(isum[11], isum[12]).trim();
 			String date = line.substring(isum[12], isum[13]).trim();
-			String title = line.substring(isum[13], isum[14]).trim();
-			String length = line.substring(isum[14], isum[15]).trim();
-			String arb = isum.length > 16 && isum[16] <= line.length() ? line.substring(isum[15], isum[16]).trim() : "";
+			String title = line.substring( isum[13], Math.min( isum[14], line.length() ) ).trim();
+			//String length = line.substring(isum[14], isum[15]).trim();
+			//String arb = isum.length > 16 && isum[16] <= line.length() ? line.substring(isum[15], isum[16]).trim() : "";
 			
 			/*String country = line.substring(isum[7], isum[8]).trim();
 			String doi = line.substring(isum[8], isum[9]).trim();
@@ -4214,7 +4214,7 @@ public class GeneSet extends JApplet {
 				// StrId teg = tegmap.get(name);
 				StrId teg = tegmap.remove(name);
 				if( teg.name.contains("Thermus") || teg.name.contains("Meiothermus") || teg.name.contains("Marinithermus") || teg.name.contains("Oceanithermus") || teg.name.contains("Vulcani") ) 
-				pos.println(name + "\t" + acc + "\t" + fullname + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + country + "\t" + source + "\t" + doi + "\t" + pubmed + "\t" + author + "\t" + journal + "\t" + sub_auth + "\t" + sub_date + "\t" + lat_lon + "\t" + date + "\t" + title + "\t" + arb + "\t" + teg.color + "\t\t" );
+				pos.println(name + "\t" + acc + "\t" + fullname + "\t" + teg.name + "\t" + teg.len + "\t" + teg.id + "\t" + country + "\t" + source + "\t" + doi + "\t" + pubmed + "\t" + author + "\t" + journal + "\t" + sub_auth + "\t" + sub_date + "\t" + lat_lon + "\t" + date + "\t" + title /*+ "\t" + arb*/ + "\t" + teg.color + "\t\t" );
 			}
 			// System.err.println( line.substring( isum[7], isum[8] ).trim() );
 
@@ -4229,9 +4229,7 @@ public class GeneSet extends JApplet {
 		fos.close();
 	}
 	
-	public static void dummy() throws IOException {
-		
-	}
+	public static void dummy() throws IOException {}
 
 	ChatServer cs;
 	public GeneSet() {
@@ -4277,7 +4275,7 @@ public class GeneSet extends JApplet {
 		//init( args );
 
 		try {
-			//simmi();
+			simmi();
 			dummy();
 			//SerifyApplet.blastJoin(new FileInputStream("/home/horfrae/peter/stuff.blastout"), System.out);
 
@@ -6192,7 +6190,17 @@ public class GeneSet extends JApplet {
 					for( Contig c : lcont ) {
 						if( c.tlist != null ) {
 							for( Tegeval tv : c.tlist ) {
-								if( tv.getGene().tag != null && tv.getGene().tag.contains("rrna") && (tv.getGene().getName().contains("16S") || tv.getGene().getName().contains("SSU")) ) count++;
+								boolean rrna = tv.getGene().tag != null && tv.getGene().tag.contains("rrna");
+								boolean ssu16s = tv.getGene().getName().contains("16S") || tv.getGene().getName().contains("SSU");
+								
+								if( rrna /*^ ssu16s*/ ) {
+									System.err.println( spec + "  " + tv.getGene().getName() );
+								}
+								
+								if( rrna && ssu16s ) {
+									//System.err.println( spec + " " + tv.getGene().getName() );
+									count++;
+								}
 							}
 							total += c.tlist.size();
 						}
@@ -6292,6 +6300,44 @@ public class GeneSet extends JApplet {
 									if( f.metacyc != null && f.metacyc.length() > 0 ) {
 										count++;
 										break;
+									}
+								}
+							}
+							total += c.tlist.size();
+						}
+						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+							len += tv.getLength();
+						}*/
+					}
+					fw.write( "<td>"+count+"</td>" );
+					double d = (double)count/(double)total;
+					d = Math.round( d*10000.0 )/100.0;
+					fw.write( "<td>"+d+"%</td>" );
+				}
+				fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways</td>");
+				for( String spec : speccontigMap.keySet() ) {
+					List<Contig> lcont = speccontigMap.get(spec);
+					int count = 0;
+					int total = 0;
+					for( Contig c : lcont ) {
+						if( c.tlist != null ) {
+							for( Tegeval tv : c.tlist ) {
+								if( tv.getGene().funcentries != null ) {
+									for( Function f : tv.getGene().funcentries ) {
+										boolean found = false;
+										if( f.kegg != null && f.kegg.length() > 0 ) {
+											count++;
+											found = true;
+										}
+										if( !found && f.isa != null ) for( String nid : f.isa ) {
+											Function nf = funcmap.get( nid );
+											if( nf.kegg != null && nf.kegg.length() > 0 ) {
+												count++;
+												found = true;
+												break;
+											}
+										}
+										if( found ) break;
 									}
 								}
 							}
@@ -9779,6 +9825,18 @@ public class GeneSet extends JApplet {
 				} else if (line.contains("KEGG:")) {
 					f.kegg = line.substring(line.indexOf("KEGG:") + 5);
 				}
+			} else if (line.startsWith("is_a:")) {
+				if (line.contains("GO:")) {
+					String parid = line.substring(6, 6+10);
+					if( f.isa == null ) {
+						f.isa = new HashSet<String>();
+					}
+					f.isa.add( parid );
+					/*if( !funcmap.containsKey( go ) ) {
+						f = new Function( go );
+						funcmap.put( go, f );
+					} else f = funcmap.get( go );*/
+				}
 			}
 
 			if (on) fw.write(line + "\n");
@@ -9915,6 +9973,9 @@ public class GeneSet extends JApplet {
 				} else {
 					gg = new GeneGroup( groupIndex++ );
 					ggmap.put( name, gg );
+				}
+				if( tag.equals("rrna") && name.contains("SSU") ) {
+					System.err.println( "blbhblbhlhblhele " + name + "  " + spec + "  " + tag );
 				}
 				Gene g = new Gene( gg, name, name, spec, tag );
 				
@@ -10872,17 +10933,17 @@ public class GeneSet extends JApplet {
 				}
 			}
 			
-			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+			/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
 			ze = zipin.getNextEntry();
 			while( ze != null ) {
 				if( ze.getName().equals("go_short.obo") ) readGoInfo( new InputStreamReader(zipin), totalgo, null);
 				
 				ze = zipin.getNextEntry();
 			}
-			zipin.close();
-			//is = GeneSet.class.getResourceAsStream("/gene_ontology_ext.obo");
+			zipin.close();*/
+			is = GeneSet.class.getResourceAsStream("/gene_ontology_ext.obo");
 			//Map<String,Function> funcmap = 
-			//readGoInfo( new InputStreamReader(is), totalgo, "/home/sigmar/MAT/go_short.obo");
+			readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
 			
 			//is = GeneSet.class.getResourceAsStream("/go_short.obo");
 			//readGoInfo(new InputStreamReader(is), totalgo, null);
