@@ -11,6 +11,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.ScriptElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,6 +33,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -49,8 +52,7 @@ public class Suggestadate implements EntryPoint {
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
-	private final GreetingServiceAsync greetingService = GWT
-			.create(GreetingService.class);
+	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
 	public native void fbInit() /*-{
 		var ths = this;	    	
@@ -353,10 +355,14 @@ public class Suggestadate implements EntryPoint {
 									@Override
 									public void onClick(ClickEvent event) {
 										DialogBox 		d = new DialogBox();
+										d.setAutoHideEnabled( true );
 										VerticalPanel	vp = new VerticalPanel();
 										vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 										vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
-										d.add( d );
+										d.add( vp );
+										
+										//HorizontalPanel	hp = new HorizontalPanel();
+										//vp.add( hp );
 										
 										LabelElement l3 = DOM.createLabel().cast();
 										l3.setHtmlFor("skulls3");
@@ -409,10 +415,10 @@ public class Suggestadate implements EntryPoint {
 										RadioButton	neutral = new RadioButton("rate");
 										neutral.getElement().setId("neutral");
 										
-										Image		hs0img = new Image("/neutral.png");
+										//Image		hs0img = new Image("/neutral.png");
 										
 										l0.appendChild( neutral.getElement() );
-										l0.appendChild( hs0img.getElement() );
+										//l0.appendChild( hs0img.getElement() );
 										
 										SimplePanel	hs0 = new SimplePanel();
 										hs0.getElement().appendChild( l0 );
@@ -426,8 +432,8 @@ public class Suggestadate implements EntryPoint {
 										
 										Image		h1img = new Image("/heart1.png");
 										
-										lp1.appendChild( neutral.getElement() );
 										lp1.appendChild( h1img.getElement() );
+										lp1.appendChild( heart1.getElement() );
 										
 										SimplePanel	h1 = new SimplePanel();
 										h1.getElement().appendChild( lp1 );
@@ -441,8 +447,8 @@ public class Suggestadate implements EntryPoint {
 										
 										Image		h2img = new Image("/heart2.png");
 										
-										lp2.appendChild( neutral.getElement() );
 										lp2.appendChild( h2img.getElement() );
+										lp2.appendChild( heart2.getElement() );
 										
 										SimplePanel	h2 = new SimplePanel();
 										h2.getElement().appendChild( lp2 );
@@ -456,11 +462,15 @@ public class Suggestadate implements EntryPoint {
 										
 										Image		h3img = new Image("/heart3.png");
 										
-										lp3.appendChild( neutral.getElement() );
 										lp3.appendChild( h3img.getElement() );
+										lp3.appendChild( heart3.getElement() );
 										
 										SimplePanel	h3 = new SimplePanel();
 										h3.getElement().appendChild( lp3 );
+										
+										TextArea ta = new TextArea();
+										ta.setSize("400px", "300px");
+										vp.add( ta );
 										
 										vp.add( s3 );
 										vp.add( s2 );
@@ -512,19 +522,23 @@ public class Suggestadate implements EntryPoint {
 	public void onModuleLoad() {
 		final RootPanel	rp = RootPanel.get();
 		
+		Style st = rp.getElement().getStyle();
+		st.setBorderWidth(0.0, Unit.PX);
+		st.setMargin(0.0, Unit.PX);
+		st.setPadding(0.0, Unit.PX);
 		//Window.enableScrolling( false );
 		int w = Window.getClientWidth();
-		int h = Window.getClientHeight();
+		//int h = Window.getClientHeight();
 		
-		rp.setSize(w+"px", h+"px");
+		rp.setWidth(w+"px"); //, h+"px");
 		
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
 			public void onResize(ResizeEvent event) {
 				int w = event.getWidth();
-				int h = event.getHeight();
+				//int h = event.getHeight();
 				
-				rp.setSize(w+"px", h+"px");
+				rp.setWidth(w+"px");
 			}
 		});
 		
@@ -580,7 +594,7 @@ public class Suggestadate implements EntryPoint {
 			vp.add( adspanel );
 		}*/
 		vp.add( new HTML("<h2>Suggest a date</h2>") );
-		vp.add( new HTML("<h3>Try out the <a href=\"https://play.google.com/store/apps/details?id=com.suggestdroid\">Android app</a></h3>") );
+		vp.add( new HTML("<h3>Try out the <a href=\"https://play.google.com/store/apps/details?id=com.suggestdroid\" target=\"_blank\">Android app</a></h3>") );
 		
 		hp = new HorizontalPanel();
 		hp.setSpacing( 5 );
@@ -654,7 +668,7 @@ public class Suggestadate implements EntryPoint {
 	
 		grid = new Grid();
 		grid.setCellSpacing(3);
-		grid.resizeColumns(4);
+		grid.resizeColumns(5);
 		vp.add( grid );
 		vp.add( new HTML("*your date will only know you accepted if he/she self accepts") );
 		vp.add( new HTML("if both accept their emails will show up") );
