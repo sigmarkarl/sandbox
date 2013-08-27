@@ -310,7 +310,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							} else {
 								strs[k] = null;
 							}
-						} else if( k == 19 || k == 20 ) {
+						} else if( k == 18 || k == 19 ) {
 							String dstr = split[k];
 							if( dstr != null && dstr.length() > 0 ) {
 								try {
@@ -321,7 +321,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 							} else {
 								strs[k] = null;
 							}
-						} else if( k == 22 ) {
+						} else if( k == 21 ) {
 							strs[k] = (split[k] != null && (split[k].equalsIgnoreCase("true") || split[k].equalsIgnoreCase("false")) ? Boolean.parseBoolean( split[k] ) : true);
 						} else {
 							strs[k] = split[k];
@@ -338,10 +338,10 @@ public class DataTable extends JApplet implements ClipboardOwner {
 					if( k == 15 ) strs[k++] = "";
 					if( k == 16 ) strs[k++] = "";
 					if( k == 17 ) strs[k++] = "";
-					if( k == 18 ) strs[k++] = "";
+					if( k == 18 ) strs[k++] = null;
 					if( k == 19 ) strs[k++] = null;
-					if( k == 20 ) strs[k++] = null;
-					if( k == 21 ) strs[k++] = "";
+					if( k == 20 ) strs[k++] = "";
+					//if( k == 21 ) strs[k++] = "";
 					strs[k] = true;
 					
 					//Arrays.copyOfRange(split, 1, split.length );
@@ -361,7 +361,8 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
 	private static final String GEOCODE_SERVICE_URL = "http://maps.googleapis.com/maps/api/geocode";
 	private static final String oldtableid = "1QbELXQViIAszNyg_2NHOO9XcnN_kvaG1TLedqDc";
-	private static final String tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
+	private static final String old2tableid = "1dmyUhlXVEoWHrT-rfAaAHl3vl3lCUvQy3nkuNUw";
+	private static final String tableid = "140P0Wj3l6bciT0ihiGjvP97M_CClVhvPHBkFOek";
 	
 	public String getThermusFusion() throws IOException {
 		String baseurl = "https://www.googleapis.com/fusiontables/v1/query";
@@ -476,7 +477,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		int nseq = 0;
 		
 		Map<String,Collection<Sequence>>	specMap = new HashMap<String,Collection<Sequence>>();
-		InputStream is = DataTable.this.getClass().getResourceAsStream("/thermaceae_16S_aligned.fasta");
+		InputStream is = DataTable.this.getClass().getResourceAsStream("thermus16Ssilva115.fasta"); //"/thermaceae_16S_aligned.fasta");
 		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 		try {
 			String inc = null;
@@ -2032,7 +2033,7 @@ public class DataTable extends JApplet implements ClipboardOwner {
 
 			@Override
 			public int getColumnCount() {
-				return 23;
+				return 22;
 			}
 
 			@Override
@@ -2054,12 +2055,12 @@ public class DataTable extends JApplet implements ClipboardOwner {
 				else if( columnIndex == 14 ) return "lat_lon";
 				else if( columnIndex == 15 ) return "date";
 				else if( columnIndex == 16 ) return "title";
-				else if( columnIndex == 17 ) return "arb";
-				else if( columnIndex == 18 ) return "color";
-				else if( columnIndex == 19 ) return "temp";
-				else if( columnIndex == 20 ) return "pH";
-				else if( columnIndex == 21 ) return "geocode";
-				else if( columnIndex == 22 ) return "valid";
+				//else if( columnIndex == 17 ) return "arb";
+				else if( columnIndex == 17 ) return "color";
+				else if( columnIndex == 18 ) return "temp";
+				else if( columnIndex == 19 ) return "pH";
+				else if( columnIndex == 20 ) return "geocode";
+				else if( columnIndex == 21 ) return "valid";
 				//else if( columnIndex == 13 ) return "color";
 				
 				return "";
@@ -2068,14 +2069,14 @@ public class DataTable extends JApplet implements ClipboardOwner {
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
 				if( columnIndex == 4 || columnIndex == 5 ) return Integer.class;
-				else if( columnIndex == 19 || columnIndex == 20 ) return Double.class;
-				else if( columnIndex == 22 ) return Boolean.class;
+				else if( columnIndex == 18 || columnIndex == 19 ) return Double.class;
+				else if( columnIndex == 21 ) return Boolean.class;
 				return String.class;
 			}
 
 			@Override
 			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				if( columnIndex == 6 || columnIndex == 19 ) return true;
+				if( columnIndex == 6 || columnIndex == 18 ) return true;
 				return false;
 			}
 
