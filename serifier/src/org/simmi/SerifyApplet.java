@@ -5207,7 +5207,7 @@ public class SerifyApplet extends JApplet {
 		
 		//mapFiles();
 		
-		/*try {
+		try {
 			FileReader fr = new FileReader("/home/sigmar/conc_40genes.dst");
 			List<String>	llines = new ArrayList<String>();
 			BufferedReader br = new BufferedReader( fr );
