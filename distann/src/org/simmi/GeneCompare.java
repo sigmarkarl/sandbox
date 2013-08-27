@@ -432,7 +432,7 @@ public class GeneCompare {
 									}
 								} else {
 									Color color = Color.green;
-									if( blosumap != null ) {
+									if( blosumap != null && seq != null ) {
 										int tscore = 0;
 				                        for( int i = 0; i < seq.length(); i++ ) {
 				                        	char c = seq.charAt(i);
