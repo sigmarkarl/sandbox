@@ -168,6 +168,11 @@ public class GBK2AminoFasta {
 							//anno = null;
 						}
 					} else if( trimline.startsWith("ORIGIN") ) {
+						if( anno != null ) {
+							if( anno.id == null || anno.id.length() == 0 ) anno.id = anno.comp ? "comp("+anno.start+".."+anno.stop+")" : anno.start+".."+anno.stop;
+							annolist.add( anno );
+						}
+						anno = null;
 						break;
 					}
 					
@@ -197,7 +202,7 @@ public class GBK2AminoFasta {
 						}
 					}
 					
-					contignum++;				
+					contignum++;
 					
 					k = filetext.indexOf("\n", ind+1);
 					line = null;
@@ -205,7 +210,7 @@ public class GBK2AminoFasta {
 					ind = k;
 				}
 				
-				if( contignum > 0 && anno != null && anno.spec != null )  anno.spec += "_contig"+contignum;;
+				//if( contignum > 0 && anno != null && anno.spec != null ) anno.spec += "_contig"+contignum;;
 				
 				allout.write( ">" + spec + (contignum > 0 ? "_contig"+contignum+"\n" : "\n") );
 				for( int i = 0; i < strbuf.length(); i+=70 ) {
