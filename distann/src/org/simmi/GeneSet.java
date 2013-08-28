@@ -4728,6 +4728,17 @@ public class GeneSet extends JApplet {
 
 		//return funcmap;
 	}
+	
+	public static void funcMappingStatic( Reader rd ) throws IOException {
+		Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
+		BufferedReader br = new BufferedReader(rd);
+		String line = br.readLine();
+		while (line != null) {
+			
+			line = br.readLine();
+		}
+		br.close();
+	}
 
 	public void funcMappingUni(Reader rd, Map<String, Gene> uniids, String outfile) throws IOException {
 		FileWriter fw = null;
