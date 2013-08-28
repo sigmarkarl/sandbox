@@ -6352,7 +6352,7 @@ public class GeneSet extends JApplet {
 										}
 										if( !found && f.isa != null ) for( String nid : f.isa ) {
 											Function nf = funcmap.get( nid );
-											if( nf.kegg != null && nf.kegg.length() > 0 ) {
+											if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
 												count++;
 												found = true;
 												break;
