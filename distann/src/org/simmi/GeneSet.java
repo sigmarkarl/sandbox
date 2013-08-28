@@ -4570,6 +4570,7 @@ public class GeneSet extends JApplet {
 		Map<String, Gene> unimap = new HashMap<String, Gene>();
 		Map<String, String> ref2kegg = new HashMap<String, String>();
 		Map<String, String> ref2pdb = new HashMap<String, String>();
+		Map<String, String> ref2ko = new HashMap<String, String>();
 
 		PrintStream ps = null;
 		if (outfile != null) {
@@ -4594,6 +4595,8 @@ public class GeneSet extends JApplet {
 								ref2kegg.put(spl[0], spl[2]);
 							} else if (sstr.contains("PDB")) {
 								ref2pdb.put(spl[0], spl[2]);
+							} else if (spl[1].contains("KO")) {
+								ref2ko.put(spl[0], spl[2]);
 							}
 						}
 					}
@@ -4639,6 +4642,8 @@ public class GeneSet extends JApplet {
 					ref2kegg.put(spl[0], spl[2]);
 				} else if (sstr.contains("PDB")) {
 					ref2pdb.put(spl[0], spl[2]);
+				} else if (spl[1].contains("KO")) {
+					ref2pdb.put(spl[0], spl[2]);
 				}
 			}
 		}
@@ -4660,15 +4665,19 @@ public class GeneSet extends JApplet {
 				Gene g = refids.get(s);
 				if (g.allids != null)
 					for (String id : g.allids) {
-						if (ref2kegg.containsKey(id)) {
+						if( ref2kegg.containsKey(id) ) {
 							g.keggid = ref2kegg.get(id);
 						}
 
-						if (ref2pdb.containsKey(id)) {
+						if( ref2pdb.containsKey(id) ) {
 							g.pdbid = ref2pdb.get(id);
 						}
+						
+						if( ref2ko.containsKey(id) ) {
+							g.koid = ref2pdb.get(id);
+						}
 
-						if( g.keggid != null && g.pdbid != null )
+						if( g.keggid != null && g.pdbid != null && g.koid != null )
 							break;
 					}
 			}
@@ -6315,16 +6324,16 @@ public class GeneSet extends JApplet {
 					fw.write( "<td>"+d+"%</td>" );
 				}
 				fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
-				for( String spec : speccontigMap.keySet() ) {
+				for( String spec : selspecs) {
 					List<Contig> lcont = speccontigMap.get(spec);
 					int count = 0;
 					int total = 0;
-					for( Contig c : lcont ) {
-						if( c.tlist != null ) {
-							for( Tegeval tv : c.tlist ) {
+					for( Contig ct : lcont ) {
+						if( ct.tlist != null ) {
+							for( Tegeval tv : ct.tlist ) {
 								if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
 							}
-							total += c.tlist.size();
+							total += ct.tlist.size();
 						}
 						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
 							len += tv.getLength();
@@ -6343,7 +6352,7 @@ public class GeneSet extends JApplet {
 					for( Contig ct : lcont ) {
 						if( ct.tlist != null ) {
 							for( Tegeval tv : ct.tlist ) {
-								if( tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0 ) count++;
+								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0 ) count++;
 							}
 							total += ct.tlist.size();
 						}
@@ -6365,6 +6374,14 @@ public class GeneSet extends JApplet {
 						if( ct.tlist != null ) {
 							for( Tegeval tv : ct.tlist ) {
 								if( tv.getGene().ecid != null && tv.getGene().ecid.length() > 0 ) count++;
+								else if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
+									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+										if( f.ec != null && f.ec.length() > 0 ) {
+											count++;
+											break;
+										}
+									}
+								}
 							}
 							total += ct.tlist.size();
 						}
@@ -6385,10 +6402,48 @@ public class GeneSet extends JApplet {
 					for( Contig ct : lcont ) {
 						if( ct.tlist != null ) {
 							for( Tegeval tv : ct.tlist ) {
-								if( tv.getGene().funcentries != null ) for( Function f : tv.getGene().funcentries ) {
+								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
 									if( f.metacyc != null && f.metacyc.length() > 0 ) {
 										count++;
 										break;
+									}
+								}
+							}
+							total += ct.tlist.size();
+						}
+						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+							len += tv.getLength();
+						}*/
+					}
+					fw.write( "<td>"+count+"</td>" );
+					double d = (double)count/(double)total;
+					d = Math.round( d*10000.0 )/100.0;
+					fw.write( "<td>"+d+"%</td>" );
+				}
+				fw.write("</tr><tr><td>Protein coding genes connected to KEGG reactions</td>");
+				for( String spec : selspecs) {
+					List<Contig> lcont = speccontigMap.get(spec);
+					int count = 0;
+					int total = 0;
+					for( Contig ct : lcont ) {
+						if( ct.tlist != null ) {
+							for( Tegeval tv : ct.tlist ) {
+								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
+									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+										boolean found = false;
+										if( f.kegg != null && f.kegg.length() > 0 ) {
+											count++;
+											found = true;
+										}
+										if( !found && f.isa != null ) for( String nid : f.isa ) {
+											Function nf = funcmap.get( nid );
+											if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+												count++;
+												found = true;
+												break;
+											}
+										}
+										if( found ) break;
 									}
 								}
 							}
@@ -6411,22 +6466,58 @@ public class GeneSet extends JApplet {
 					for( Contig ct : lcont ) {
 						if( ct.tlist != null ) {
 							for( Tegeval tv : ct.tlist ) {
-								if( tv.getGene().funcentries != null ) {
-									for( Function f : tv.getGene().funcentries ) {
-										boolean found = false;
-										if( f.kegg != null && f.kegg.length() > 0 ) {
+								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
+									for( Gene g : tv.getGene().getGeneGroup().genes ) {
+										if( g.keggid != null && g.keggid.length() > 0 ) {
 											count++;
-											found = true;
+											break;
 										}
-										if( !found && f.isa != null ) for( String nid : f.isa ) {
+										/*if( !found && f.isa != null ) for( String nid : f.isa ) {
 											Function nf = funcmap.get( nid );
 											if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
 												count++;
 												found = true;
 												break;
 											}
+										}*/
+									}
+								}
+							}
+							total += ct.tlist.size();
+						}
+						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+							len += tv.getLength();
+						}*/
+					}
+					fw.write( "<td>"+count+"</td>" );
+					double d = (double)count/(double)total;
+					d = Math.round( d*10000.0 )/100.0;
+					fw.write( "<td>"+d+"%</td>" );
+				}
+				fw.write("</tr><tr><td>Protein coding genes connected to KEGG Orthology (KO)</td>");
+				for( String spec : selspecs) {
+					List<Contig> lcont = speccontigMap.get(spec);
+					int count = 0;
+					int total = 0;
+					for( Contig ct : lcont ) {
+						if( ct.tlist != null ) {
+							for( Tegeval tv : ct.tlist ) {
+								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
+									if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
+										for( Gene g : tv.getGene().getGeneGroup().genes ) {
+											if( g.koid != null && g.koid.length() > 0 ) {
+												count++;
+												break;
+											}
+											/*if( !found && f.isa != null ) for( String nid : f.isa ) {
+												Function nf = funcmap.get( nid );
+												if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+													count++;
+													found = true;
+													break;
+												}
+											}*/
 										}
-										if( found ) break;
 									}
 								}
 							}
@@ -9913,6 +10004,8 @@ public class GeneSet extends JApplet {
 					f.metacyc = line.substring(line.indexOf("MetaCyc:") + 8);
 				} else if (line.contains("KEGG:")) {
 					f.kegg = line.substring(line.indexOf("KEGG:") + 5);
+				} else if (line.contains("KO:")) {
+					f.ko = line.substring(line.indexOf("KO:") + 3);
 				}
 			} else if (line.startsWith("is_a:")) {
 				if (line.contains("GO:")) {
@@ -10977,17 +11070,18 @@ public class GeneSet extends JApplet {
 			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
 			ze = zipin.getNextEntry();
 			while( ze != null ) {
-				if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, false);
-				else if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
+				/*if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, false);
+				else*/ if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
 				
 				ze = zipin.getNextEntry();
 			}
 			zipin.close();
 			
-			/* //is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
-			is = new GZIPInputStream( new FileInputStream("/home/sigmar/idmapping.dat.gz") );
-			Map<String, Gene> unimap = idMapping(new InputStreamReader(is), "/home/sigmar/thermus/idmapping_short.dat", 2, 0, refmap, false);
-			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
+			//is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
+			//is = new GZIPInputStream( new FileInputStream("/u0/idmapping.dat.gz") );
+			is = new FileInputStream("/u0/idmapping_short.dat");
+			unimap = idMapping(new InputStreamReader(is), null/*"/u0/idmapping_short.dat"*/, 2, 0, refmap, false);
+			/*//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
 			is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2refseq.gz") );
 			Map<String, Gene> genmap = idMapping(new InputStreamReader(is), "/home/sigmar/thermus/gene2refseq_short.txt", 5, 1, refmap, true);
 			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");*/
