@@ -12,6 +12,7 @@ public class Function {
 	String ec;
 	String metacyc;
 	String kegg;
+	String ko;
 	String name;
 	String namespace;
 	String desc;
