@@ -2634,15 +2634,31 @@ public class Order extends JApplet {
 		cafgreitt.add( afgreitt );
 		cb.add( cafgreitt );
 		
+		final JTextField	tfafhent = new JTextField();
+		tfafhent.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				updateFilter(tfafhent.getText(), 0, rtable);
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				updateFilter(tfafhent.getText(), 1, rtable);
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				updateFilter(tfafhent.getText(), 2, rtable);
+			}
+		});
 		cafhent = new JComponent() {
 			public void setBounds( int x, int y, int w, int h ) {
 				super.setBounds(x, y, w, h);
 				
-				rscrollpane.setBounds( (int)(0.00*w), 30, (int)(1.00*w), (int)(1.0*h)-30 );
+				rscrollpane.setBounds( (int)(0.00*w), 30, (int)(1.00*w), (int)(1.0*h)-60 );
+				tfafhent.setBounds( (int)(0.00*w), (int)(1.0*h)-30 , (int)(1.00*w), 25 );
 				afhent.setBounds( (int)(0.0*w), 0, (int)(1.0*w), 25 );
 			}
 		};
 		cafhent.add( rscrollpane );
+		cafhent.add( tfafhent );
 		cafhent.add( afhent );
 		cb.add( cafhent );
 		
