@@ -106,6 +106,7 @@ public class Gene {
 	String uniid;
 	String keggid;
 	String pdbid;
+	String koid;
 	String ecid;
 	String blastspec;
 	Set<Function> funcentries;
