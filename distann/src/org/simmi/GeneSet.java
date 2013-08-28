@@ -6246,6 +6246,27 @@ public class GeneSet extends JApplet {
 					d = Math.round( d*10000.0 )/100.0;
 					fw.write( "<td>"+d+"%</td>" );
 				}
+				fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
+				for( String spec : speccontigMap.keySet() ) {
+					List<Contig> lcont = speccontigMap.get(spec);
+					int count = 0;
+					int total = 0;
+					for( Contig c : lcont ) {
+						if( c.tlist != null ) {
+							for( Tegeval tv : c.tlist ) {
+								if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
+							}
+							total += c.tlist.size();
+						}
+						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+							len += tv.getLength();
+						}*/
+					}
+					fw.write( "<td>"+count+"</td>" );
+					double d = (double)count/(double)total;
+					d = Math.round( d*10000.0 )/100.0;
+					fw.write( "<td>"+d+"%</td>" );
+				}
 				fw.write("</tr><tr><td>Protein coding genes with function prediction</td>");
 				for( String spec : speccontigMap.keySet() ) {
 					List<Contig> lcont = speccontigMap.get(spec);
