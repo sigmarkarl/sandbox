@@ -4730,11 +4730,18 @@ public class GeneSet extends JApplet {
 	}
 	
 	public static void funcMappingStatic( Reader rd ) throws IOException {
-		Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
+		//Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
+		FileWriter fw = new FileWriter("/home/sigmar/sp2go.txt");
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
+		String prev = null;
 		while (line != null) {
-			
+			if( !line.startsWith("!") ) {
+				String[] split = line.split("\t");
+				if( split[1].equals( prev ) ) {
+					
+				} else fw.write( " " + split[3] );
+			}
 			line = br.readLine();
 		}
 		br.close();
