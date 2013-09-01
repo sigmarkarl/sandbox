@@ -46,6 +46,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class GeneCompare {
+	List<Contig> contigs;
+	
 	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) throws IOException {
 		final JTable 				table = geneset.getGeneTable();
 		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
@@ -143,7 +145,7 @@ public class GeneCompare {
 		}
 		br.close();
 		
-		final List<Contig> contigs = geneset.speccontigMap.get( spec1 );
+		contigs = geneset.speccontigMap.get( spec1 );
 		int total = 0;
 		for( Contig ctg : contigs ) {
 			total += ctg.getGeneCount();
@@ -222,7 +224,7 @@ public class GeneCompare {
 			public void itemStateChanged(ItemEvent e) {
 				//spec1 = (String)e.getItem()
 				String spec1 = (String)e.getItem();
-				final List<Contig> contigs = geneset.speccontigMap.get( spec1 );
+				contigs = geneset.speccontigMap.get( spec1 );
 				int total = 0;
 				for( Contig ctg : contigs ) {
 					total += ctg.getGeneCount();
@@ -279,11 +281,17 @@ public class GeneCompare {
 							break;
 						} else loc += c.getGeneCount();
 					}
+					System.err.println( minloc + "  " + maxloc );
 					Contig c = contigs.get(i);
-					for( i = minloc; i < maxloc; i++ ) {
-						Tegeval tv = c.tlist.get(i-loc);
-						int k = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
-						int r = geneset.table.convertRowIndexToView(k);
+					for( int k = minloc; k < maxloc; k++ ) {
+						if( k-loc >= c.getGeneCount() ) {
+							loc += c.getGeneCount();
+							i++;
+							c = contigs.get( i%contigs.size() );
+						}
+						Tegeval tv = c.tlist.get(k-loc);
+						int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
+						int r = geneset.table.convertRowIndexToView(u);
 						geneset.table.addRowSelectionInterval( r, r );
 					}
 				}
@@ -431,35 +439,45 @@ public class GeneCompare {
 									}
 								} else {
 									Color color = Color.green;
-									if( blosumap != null && seq != null ) {
-										int tscore = 0;
-				                        for( int i = 0; i < seq.length(); i++ ) {
-				                        	char c = seq.charAt(i);
-				                        	String comb = c+""+c;
-				                        	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
-				                        }
-				                        
-				                        int score = 0;
-				                        Teginfo gene2s = gg.getGenes( spec2 );
-				                        for( Tegeval tv2 : gene2s.tset ) {
-				                            StringBuilder seq2 = tv2.getAlignedSequence();
-				                            
-				                            int sscore = 0;
-				                            for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
-				                            	char c = seq.charAt( i );
-				                            	char c2 = seq2.charAt( i );
-				                            	
-				                            	String comb = c+""+c2;
-				                            	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
-				                            }
-				                            if( sscore > score ) score = sscore;
-				                            
-				                            if( seq == seq2 && sscore != tscore ) {
-				                            	System.err.println();
-				                            }
-				                        }
-				                        int cval = Math.min( 128, 512-score*512/tscore );
-				                        color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
+									if( blosumap != null ) {
+										if( seq != null ) {
+											int tscore = 0;
+					                        for( int i = 0; i < seq.length(); i++ ) {
+					                        	char c = seq.charAt(i);
+					                        	String comb = c+""+c;
+					                        	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
+					                        }
+					                        
+					                        int score = 0;
+					                        Teginfo gene2s = gg.getGenes( spec2 );
+					                        for( Tegeval tv2 : gene2s.tset ) {
+					                            StringBuilder seq2 = tv2.getAlignedSequence();
+					                            
+					                            int sscore = 0;
+					                            for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
+					                            	char c = seq.charAt( i );
+					                            	char c2 = seq2.charAt( i );
+					                            	
+					                            	String comb = c+""+c2;
+					                            	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
+					                            }
+					                            if( sscore > score ) score = sscore;
+					                            
+					                            if( seq == seq2 && sscore != tscore ) {
+					                            	System.err.println();
+					                            }
+					                        }
+					                        int cval = Math.min( 128, 512-score*512/tscore );
+					                        color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
+										} else {
+											Teginfo gene2s = gg.getGenes( spec2 );
+					                        for( Tegeval tv2 : gene2s.tset ) {
+					                        	if( tv2.getGene().tag != null )
+					                        		color = tv2.getGene().tag.equals("rrna") ? Color.red : Color.blue;
+					                        	else color = Color.green;
+					                        	break;
+					                        }
+										}
 									} else {
 										Teginfo gene2s = gg.getGenes( spec2 );
 				                        for( Tegeval tv2 : gene2s.tset ) {

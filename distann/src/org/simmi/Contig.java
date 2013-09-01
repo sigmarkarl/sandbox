@@ -159,6 +159,7 @@ class Contig implements Comparable<Contig> {
 	Contig			next;
 	Contig			prev;
 	List<Tegeval>	tlist;
+	List<Contig>	partof;
 	
 	public Tegeval getEnd() {
 		if( tlist != null ) return tlist.get( tlist.size()-1 );
@@ -255,6 +256,9 @@ class Contig implements Comparable<Contig> {
 	
 	@Override
 	public int compareTo(Contig o) {
+		if( partof != null ) {
+			return partof.indexOf( this ) - partof.indexOf( o );
+		}
 		return getName().compareTo( o.getName() );
 	}
 }
