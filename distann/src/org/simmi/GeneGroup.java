@@ -162,6 +162,14 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public String getCommonCog( Map<String,String> cogmap ) {
+		String ret = null;
+		for( Gene g : genes ) {
+			if( cogmap.containsKey( g.refid ) ) return cogmap.get( g.refid );
+		}
+		return ret;
+	}
+	
 	public String getKeggid() {
 		String ret = null;
 		for( Gene g : genes ) {
