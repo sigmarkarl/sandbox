@@ -10734,6 +10734,106 @@ public class GeneSet extends JApplet {
 	List<String>							specList = new ArrayList<String>();
 	byte[] 									zipf;
 	
+	private Map<String,String> loadCog() {
+		Map<String,String>	cogmap = new HashMap<String,String>();
+		FileReader fr = new FileReader("/vg454flx/cogthermus.blastout");
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		String id = null;
+		String current;
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				current = line.substring(7);
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					current += line;
+					line = br.readLine();
+				}
+				current = current.trim();
+				
+				String lname = current;
+				int i = lname.lastIndexOf('[');
+				if( i == -1 ) {
+					id = lname;
+				} else {		
+					int n = lname.indexOf(']', i+1);
+					int u = lname.indexOf(' ');
+					id = lname.substring(0, u);
+				}
+
+			} else if( line.startsWith(">") ) {
+				String val = line.substring(1);
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					val += line;
+					line = br.readLine();
+				}
+				val = val.trim();
+				
+				int i = current.lastIndexOf('[');
+				int n = current.indexOf(']', i+1);
+				
+				if( i == -1 || n == -1 ) {
+					n = current.indexOf(" ");
+				}
+				
+				/*if( i == -1 || n == -1 ) {
+					System.err.println( val );
+				}*/
+				
+				String spec = current.substring(i+1, n);
+				
+				int k = spec.indexOf("_contig");
+				if( k == -1 ) {
+					k = spec.indexOf("_uid");
+					k = spec.indexOf('_', k+4);
+				}
+				
+				if( k == -1 ) {
+					k = spec.indexOf('_');
+					k = spec.indexOf('_', k+1);
+				}
+				if( k != -1 ) spec = spec.substring(0, k);
+				if( !spec.contains("_") ) {
+					System.err.println();
+				}
+				
+				i = val.indexOf('[');
+				n = val.indexOf(']', i+1);
+				/*if( i == -1 || n == -1 ) {
+					System.err.println( val );
+				}*/
+				String cog = val.substring(i+1, n);
+				int u = cog.indexOf('/');
+				if( u != -1 ) cog = cog.substring(0, u);
+				String erm = cog.replace("  ", " ");
+				while( !erm.equals( cog ) ) {
+					cog = erm;
+					erm = cog.replace("  ", " ");
+				}
+				cog = cog.trim();
+				
+				Map<String,Integer> cogmap;
+				if( map.containsKey( spec ) ) {
+					cogmap = map.get(spec);
+				} else {
+					cogmap = new HashMap<String,Integer>();
+					map.put( spec, cogmap );
+				}
+				
+				if( cogmap.containsKey( cog ) ) {
+					cogmap.put( cog, cogmap.get(cog)+1 );
+				} else cogmap.put( cog, 1 );
+				
+				all.add( cog );
+			}
+			line = br.readLine();
+		}
+		fr.close();
+		
+		return cogmap;
+	}
+	
 	private void importStuff() throws IOException, UnavailableServiceException {
 		boolean fail = false;
 		InputStream	is = null;
@@ -10807,6 +10907,8 @@ public class GeneSet extends JApplet {
 					ze = zipm.getNextEntry();
 				}
 			}
+			
+			loadCog();
 			
 			//specList = loadcontigs( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.fna") ) ) );			
 			//loci2aasequence( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.aa") ) ), refmap );
