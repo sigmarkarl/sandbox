@@ -163,11 +163,17 @@ public class GeneGroup {
 	}
 	
 	public String getCommonCog( Map<String,String> cogmap ) {
-		String ret = null;
 		for( Gene g : genes ) {
 			if( cogmap.containsKey( g.refid ) ) return cogmap.get( g.refid );
 		}
-		return ret;
+		return null;
+	}
+	
+	public String getCommonEc() {
+		for( Gene g : genes ) {
+			if( g.ecid != null && g.ecid.length() > 0 ) return g.ecid;
+		}
+		return null;
 	}
 	
 	public String getKeggid() {
