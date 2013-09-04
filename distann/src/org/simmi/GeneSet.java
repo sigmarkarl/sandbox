@@ -5207,28 +5207,54 @@ public class GeneSet extends JApplet {
 	
 	public Serifier getConcatenatedSequences() {
 		Map<String,Sequence>	smap = new HashMap<String,Sequence>();
-		
-		Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+		Set<String>				specset = new HashSet<String>();
+		Map<GeneGroup,Integer>	genegroups = new HashMap<GeneGroup,Integer>();
 		int[] rr = table.getSelectedRows();
 		if( table.getModel() == groupModel ) {
 			for (int r : rr) {
 				int cr = table.convertRowIndexToModel(r);
+				int max = 0;
 				GeneGroup gg = allgenegroups.get(cr);
-				genegroups.add( gg );
+				specset.addAll( gg.getSpecies() );
+				
+				for( Tegeval tv : gg.getTegevals() ) {
+					int l = tv.getAlignedSequence().length();
+					if( l > max ) max = l;
+				}
+				genegroups.put( gg, max );
 			}
 		} else {
 			for (int r : rr) {
 				int cr = table.convertRowIndexToModel(r);
-				Gene gg = genelist.get(cr);
-				genegroups.add( gg.getGeneGroup() );
+				Gene g = genelist.get(cr);
+				int max = 0;
+				GeneGroup gg = g.getGeneGroup();
+				specset.addAll( gg.getSpecies() );
+				for( Tegeval tv : gg.getTegevals() ) {
+					int l = tv.getAlignedSequence().length();
+					if( l > max ) max = l;
+				}
+				genegroups.put( gg, max );
 			}
 		}
 		
 		//List<Sequence>	seqs = new ArrayList<Sequence>();
+		/*Map<String>	specset = new HashMap<String,Integer>();
 		for( GeneGroup ggroup : genegroups ) {
+			int max = 0;
 			for( Tegeval tv : ggroup.getTegevals() ) {
-				String spec = tv.getContshort().getSpec();
-				StringBuilder seqstr = tv.getAlignedSequence();
+				int len = tv.getAlignedSequence().length();
+				if( len > max ) {
+					max = len;
+					specset.put( tv.getContshort().getSpec(), max );
+				}
+			}
+		}*/
+		
+		for( GeneGroup ggroup : genegroups.keySet() ) {
+			int len = genegroups.get( ggroup );
+			for( String spec : specset ) {
+				List<Tegeval> ltv = ggroup.getTegevals(spec);
 				
 				Sequence seq;
 				if( smap.containsKey( spec ) ) {
@@ -5237,7 +5263,21 @@ public class GeneSet extends JApplet {
 					seq = new Sequence( spec, null );
 					smap.put( spec, seq );
 				}
-				if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
+				
+				StringBuilder 	seqstr = null;
+				for( Tegeval tv : ltv ) {
+					seqstr = tv.getAlignedSequence();
+					
+					if( seqstr != null && seqstr.length() > 0 ) {
+						break;
+					}
+				}
+				
+				if( seqstr != null && seqstr.length() > 0 ) {
+					seq.append( seqstr );
+				} else {
+					for( int i = 0; i < len; i++ ) seq.append( "-" );
+				}
 			}
 		}
 		
@@ -5716,7 +5756,7 @@ public class GeneSet extends JApplet {
 		
 		
 		
-		FileReader fr = new FileReader("/vg454flx/ko2go.txt");
+		FileReader fr = new FileReader("/home/sigmar/ko2go.txt");
 		br = new BufferedReader( fr );
 		line = br.readLine();
 		while (line != null) {
@@ -7922,7 +7962,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 20+specList.size();
+				return 21+specList.size();
 			}
 
 			@Override
@@ -7942,33 +7982,35 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 6) {
 					return "Pdbid";
 				} else if (columnIndex == 7) {
-					return "Cog";
+					return "EC";
 				} else if (columnIndex == 8) {
-					return "Present in";
+					return "Cog";
 				} else if (columnIndex == 9) {
-					return "Group index";
+					return "Present in";
 				} else if (columnIndex == 10) {
-					return "Group coverage";
+					return "Group index";
 				} else if (columnIndex == 11) {
-					return "Group size";
+					return "Group coverage";
 				} else if (columnIndex == 12) {
-					return "Locprev";
+					return "Group size";
 				} else if (columnIndex == 13) {
-					return "Avg GC%";
+					return "Locprev";
 				} else if (columnIndex == 14) {
-					return "# of locus";
+					return "Avg GC%";
 				} else if (columnIndex == 15) {
-					return "# of loc in group";
+					return "# of locus";
 				} else if (columnIndex == 16) {
-					return "max length";
+					return "# of loc in group";
 				} else if (columnIndex == 17) {
-					return "sharing number";
+					return "max length";
 				} else if (columnIndex == 18) {
-					return "# Cyc";
+					return "sharing number";
 				} else if (columnIndex == 19) {
+					return "# Cyc";
+				} else if (columnIndex == 20) {
 					return "16S Corr";
 				} else {
-					String spec = specList.get( columnIndex - 20 );
+					String spec = specList.get( columnIndex - 21 );
 					if( spec.toLowerCase().contains("thermus") ) {
 						int i = spec.indexOf('_');
 						return spec.substring(i+1, spec.length());
@@ -8037,11 +8079,11 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 10 || columnIndex == 13 || columnIndex == 19 )
+				if( columnIndex == 11 || columnIndex == 14 || columnIndex == 20 )
 					return Double.class;
-				else if(columnIndex == 6 || (columnIndex >= 8 && columnIndex <= 18) )
+				else if(columnIndex == 6 || (columnIndex >= 9 && columnIndex <= 19) )
 					return Integer.class;
-				else if (columnIndex >= 20)
+				else if (columnIndex >= 21)
 					return Teginfo.class;
 				return String.class;
 			}
@@ -8069,33 +8111,35 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 6) {
 					return null;//gene.pdbid;
 				} else if (columnIndex == 7) {
-					return gg.getCommonCog( cogmap );
+					return gg.getCommonEc();
 				} else if (columnIndex == 8) {
-					return gg.getSpecies().size();
+					return gg.getCommonCog( cogmap );
 				} else if (columnIndex == 9) {
-					return gg.groupIndex;
+					return gg.getSpecies().size();
 				} else if (columnIndex == 10) {
-					return gg.getGroupCoverage();
+					return gg.groupIndex;
 				} else if (columnIndex == 11) {
-					return gg.getGroupGeneCount();
+					return gg.getGroupCoverage();
 				} else if (columnIndex == 12) {
-					return null;//gene.proximityGroupPreservation;
+					return gg.getGroupGeneCount();
 				} else if (columnIndex == 13) {
-					return gg.getAvgGCPerc();
+					return null;//gene.proximityGroupPreservation;
 				} else if (columnIndex == 14) {
-					return gg.genes.size();
+					return gg.getAvgGCPerc();
 				} else if (columnIndex == 15) {
-					return gg.getGroupCount();
+					return gg.genes.size();
 				} else if (columnIndex == 16) {
-					return gg.getMaxLength();
+					return gg.getGroupCount();
 				} else if (columnIndex == 17) {
-					return specset.get( gg.getSpecies() );
+					return gg.getMaxLength();
 				} else if (columnIndex == 18) {
-					return gg.getMaxCyc();
+					return specset.get( gg.getSpecies() );
 				} else if (columnIndex == 19) {
+					return gg.getMaxCyc();
+				} else if (columnIndex == 20) {
 					return gg.getGroupCoverage() == 38 && gg.getGroupCount() == 38 ? 0 : -1;
 				} else {
-					String spec = specList.get( columnIndex - 20 );
+					String spec = specList.get( columnIndex - 21 );
 					Teginfo ret = getGroupTes( gg, spec );
 					return ret;
 				}
@@ -10886,7 +10930,7 @@ public class GeneSet extends JApplet {
 	byte[] 									zipf;
 	Map<String,String>						cogmap = new HashMap<String,String>();
 	
-	private Map<String,String> loadCog() {
+	/*private Map<String,String> loadCog() {
 		Map<String,String>	cogmap = new HashMap<String,String>();
 		FileReader fr = new FileReader("/vg454flx/cogthermus.blastout");
 		BufferedReader br = new BufferedReader( fr );
@@ -10931,7 +10975,7 @@ public class GeneSet extends JApplet {
 				
 				/*if( i == -1 || n == -1 ) {
 					System.err.println( val );
-				}*/
+				}*
 				
 				String spec = current.substring(i+1, n);
 				
@@ -10954,7 +10998,7 @@ public class GeneSet extends JApplet {
 				n = val.indexOf(']', i+1);
 				/*if( i == -1 || n == -1 ) {
 					System.err.println( val );
-				}*/
+				}*
 				String cog = val.substring(i+1, n);
 				int u = cog.indexOf('/');
 				if( u != -1 ) cog = cog.substring(0, u);
@@ -10984,7 +11028,7 @@ public class GeneSet extends JApplet {
 		fr.close();
 		
 		return cogmap;
-	}
+	}*/
 	
 	private void importStuff() throws IOException, UnavailableServiceException {
 		boolean fail = false;
@@ -11062,7 +11106,7 @@ public class GeneSet extends JApplet {
 				}
 			}
 			
-			loadCog();
+			//loadCog();
 			
 			//specList = loadcontigs( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.fna") ) ) );			
 			//loci2aasequence( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.aa") ) ), refmap );
