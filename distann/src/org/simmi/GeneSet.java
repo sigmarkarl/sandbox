@@ -363,6 +363,30 @@ public class GeneSet extends JApplet {
 		return ac.append(sb, first, last);
 	}
 	
+	public void loadcazymap( Map<String,String> cazymap, Reader rd ) throws IOException {
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		String id = null;
+		String hit = null;
+		while( line != null ) {
+			if( line.startsWith("Description:") ) {
+				if( hit != null && id != null ) {
+					cazymap.put( id, hit );
+				}
+				id = line.substring( 12, line.length() ).trim();
+				hit = null;
+			} else if( hit == null && line.startsWith(">>") ) {
+				hit = line.substring( 3, line.indexOf('.') );
+			}
+			
+			line = br.readLine();
+		}
+		
+		if( hit != null && id != null ) {
+			cazymap.put( id, hit );
+		}
+	}
+	
 	public Map<String,String> loadcogmap( Reader rd ) throws IOException {
 		Map<String,String>	map = new HashMap<String,String>();
 		
@@ -10885,6 +10909,7 @@ public class GeneSet extends JApplet {
 	List<String>							specList = new ArrayList<String>();
 	byte[] 									zipf;
 	Map<String,String>						cogmap = new HashMap<String,String>();
+	Map<String,String>						cazymap = new HashMap<String,String>();
 	
 	private void importStuff() throws IOException, UnavailableServiceException {
 		boolean fail = false;
@@ -10940,6 +10965,8 @@ public class GeneSet extends JApplet {
 						zcount = 3;
 					} else if( zname.equals("cog.blastout") ) {
 						cogmap = loadcogmap( new InputStreamReader( zipm ) );
+					} else if( zname.endsWith(".cazy") ) {
+						loadcazymap( cazymap, new InputStreamReader( zipm ) );
 					}
 					
 				/*int size = (int)ze.getSize();
