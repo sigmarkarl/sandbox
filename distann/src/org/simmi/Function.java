@@ -69,7 +69,7 @@ public class Function {
 			} else {
 				Set<String>	specset = new HashSet<String>();
 				for( GeneGroup gg : groupentries ) {
-					specset.addAll( gg.getSpecies() );
+					if( gg != null ) specset.addAll( gg.getSpecies() );
 				}
 				return specset.size();
 			}

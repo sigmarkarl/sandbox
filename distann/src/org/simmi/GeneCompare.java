@@ -18,10 +18,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,6 +34,10 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
+import javax.jnlp.FileContents;
+import javax.jnlp.FileSaveService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
@@ -244,10 +252,41 @@ public class GeneCompare {
 		popup.add( new AbstractAction("Save") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				boolean succ = true;
 				try {
 					ImageIO.write(bimg, "png", new File("/home/sigmar/cir.png") );
-				} catch (IOException e1) {
+				} catch(Exception e1) {
+					succ = false;
 					e1.printStackTrace();
+				}
+				
+				if( !succ ) {
+					FileSaveService fss = null;
+			        FileContents fileContents = null;
+			    	 
+			        try {
+			        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				        //OutputStreamWriter	osw = new OutputStreamWriter( baos );
+						ImageIO.write(bimg, "png", baos);
+						baos.close();
+
+				    	try {
+				    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+				    	} catch( UnavailableServiceException e1 ) {
+				    		fss = null;
+				    	}
+				    	 
+				        if (fss != null) {
+				        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
+				            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
+				            bais.close();
+				            OutputStream os = fileContents.getOutputStream(true);
+				            os.write( baos.toByteArray() );
+				            os.close();
+				        }
+			        } catch( Exception e1 ) {
+			        	e1.printStackTrace();
+			        }
 				}
 			}
 		});
