@@ -11,17 +11,19 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/distann/src/sp2go_short.txt"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
-        <file path="/distann/src/thermus16S.blastout"/>
-        <file path="/distann/src/trna_sub.txt"/>
-        <file path="/distann/src/chat.html"/>
-        <file path="/distann/src/chart.html"/>
-        <file path="/distann/src/kegg_pathways"/>
         <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
         <file path="/distann/src/kegg2go.txt"/>
-        <file path="/distann/src/gene2go_short.txt"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
+        <file path="/distann/src/BLOSUM50"/>
+        <file path="/distann/src/sp2go_short.txt"/>
+        <file path="/distann/src/thermus16S.blastout"/>
+        <file path="/distann/src/gene_ontology_ext.obo"/>
+        <file path="/distann/src/trna_sub.txt"/>
+        <file path="/distann/src/chart.html"/>
+        <file path="/distann/src/kegg_pathways"/>
+        <file path="/distann/src/gene2go_short.txt"/>
+        <file path="/distann/src/BLOSUM62"/>
     </selectedElements>
 </jardesc>

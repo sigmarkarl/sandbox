@@ -369,11 +369,14 @@ public class GeneSet extends JApplet {
 		String id = null;
 		String hit = null;
 		while( line != null ) {
-			if( line.startsWith("Description:") ) {
+			if( line.startsWith("Query:") ) {
 				if( hit != null && id != null ) {
 					cazymap.put( id, hit );
 				}
-				id = line.substring( 12, line.length() ).trim();
+				String[] split = line.split("[\t ]+");
+				line = br.readLine();
+				int k = line.lastIndexOf('[');
+				id = line.substring( k+1, line.indexOf(']', k+1) ).trim()+"_"+split[1].trim();
 				hit = null;
 			} else if( hit == null && line.startsWith(">>") ) {
 				hit = line.substring( 3, line.indexOf('.') );
@@ -411,7 +414,11 @@ public class GeneSet extends JApplet {
 					id = lname;
 				} else {
 					int u = lname.indexOf(' ');
+					int k = lname.indexOf(']', i+1);
 					id = lname.substring(0, u);
+					if( id.contains("..") ) {
+						id = lname.substring(i+1, k) + "_" + id;
+					}
 				}
 			} else if( line.startsWith(">") ) {
 				String val = line.substring(1);
@@ -512,6 +519,10 @@ public class GeneSet extends JApplet {
 						contigstr = lname.substring(i+1, n);
 						int u = lname.indexOf(' ');
 						id = lname.substring(0, u);
+						if( id.contains("..") ) {
+							id = lname.substring(i+1, n) + "_" + id;
+						}
+						
 						name = lname.substring(u+1, i).trim();
 						
 						u = contigstr.indexOf("uid");
@@ -686,6 +697,9 @@ public class GeneSet extends JApplet {
 				contigstr = lname.substring(i+1, n);
 				int u = lname.indexOf(' ');
 				id = lname.substring(0, u);
+				if( id.contains("..") ) {
+					id = lname.substring(i+1, n) + "_" + id;
+				}
 				name = lname.substring(u+1, i).trim();
 				
 				u = contigstr.indexOf("uid");
@@ -5780,8 +5794,10 @@ public class GeneSet extends JApplet {
 		
 		
 		
-		FileReader fr = new FileReader("/vg454flx/ko2go.txt");
-		br = new BufferedReader( fr );
+		//FileReader fr = new FileReader("/vg454flx/ko2go.txt");
+		/*is = GeneSet.class.getResourceAsStream("/ko2go.txt");
+		InputStreamReader isr = new InputStreamReader( is );
+		br = new BufferedReader( isr );
 		line = br.readLine();
 		while (line != null) {
 			String[] split = line.split(" = ");
@@ -5793,7 +5809,7 @@ public class GeneSet extends JApplet {
 			ko2go.put( split[0], gos );
 			line = br.readLine();
 		}
-		br.close();
+		br.close();*/
 		
 		
 
@@ -8189,7 +8205,8 @@ public class GeneSet extends JApplet {
 		defaultModel = new TableModel() {
 			@Override
 			public int getRowCount() {
-				return genelist.size();
+				int gs = genelist.size();
+				return gs;
 			}
 
 			@Override
@@ -9318,15 +9335,27 @@ public class GeneSet extends JApplet {
 					int[] rr = table.getSelectedRows();
 					for (int r : rr) {
 						int cr = table.convertRowIndexToModel(r);
-						Gene g = genelist.get(cr);
-						if (g.funcentries != null) {
-							for( Function f : g.funcentries) {
-								//Function f = funcmap.get(go);
+						if( table.getModel() == groupModel ) {
+							GeneGroup gg = allgenegroups.get(cr);
+							for( Function f : gg.getFunctions() ) {
 								try {
 									int rf = ftable.convertRowIndexToView(f.index);
 									if( rf >= 0 && rf < ftable.getRowCount() ) ftable.addRowSelectionInterval(rf, rf);
 								} catch( Exception ex ) {
 									ex.printStackTrace();
+								}
+							}
+						} else {
+							Gene g = genelist.get(cr);
+							if (g.funcentries != null) {
+								for( Function f : g.funcentries) {
+									//Function f = funcmap.get(go);
+									try {
+										int rf = ftable.convertRowIndexToView(f.index);
+										if( rf >= 0 && rf < ftable.getRowCount() ) ftable.addRowSelectionInterval(rf, rf);
+									} catch( Exception ex ) {
+										ex.printStackTrace();
+									}
 								}
 							}
 						}
@@ -11286,10 +11315,13 @@ public class GeneSet extends JApplet {
 					//String spec;
 					int b = cont.lastIndexOf('[');
 					if( b != -1 ) {
+						int u = cont.indexOf(']', b+1);
 						int k = cont.indexOf(' ');
 						gid = cont.substring(0, k);
+						if( gid.contains("..") ) {
+							gid = cont.substring(b+1, u) + "_" + gid;
+						}
 						
-						int u = cont.indexOf(']', b+1);
 						String scont = cont.substring(b+1, u);
 						
 						int l = scont.indexOf("uid");
@@ -11725,6 +11757,19 @@ public class GeneSet extends JApplet {
 				while( ze != null ) {
 					if( ze.getName().equals("sp2go_short.txt") ) {
 						funcMappingUni( new InputStreamReader( zipin ), unimap, null );
+					} else if( ze.getName().equals("ko2go.txt") ) {
+						BufferedReader br = new BufferedReader( new InputStreamReader(zipin) );
+						String line = br.readLine();
+						while (line != null) {
+							String[] split = line.split(" = ");
+							String[] subsplit = split[1].split(" ");
+							Set<String> gos = new HashSet<String>();
+							for( String go : subsplit ) {
+								gos.add( go );
+							}
+							ko2go.put( split[0], gos );
+							line = br.readLine();
+						}
 					}
 					//else if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
 					
