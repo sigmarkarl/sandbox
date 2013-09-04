@@ -169,6 +169,13 @@ public class GeneGroup {
 		return null;
 	}
 	
+	public String getCommonCazy( Map<String,String> cazymap ) {
+		for( Gene g : genes ) {
+			if( cazymap.containsKey( g.refid ) ) return cazymap.get( g.refid );
+		}
+		return null;
+	}
+	
 	public String getCommonEc() {
 		for( Gene g : genes ) {
 			if( g.ecid != null && g.ecid.length() > 0 ) return g.ecid;
