@@ -5780,7 +5780,7 @@ public class GeneSet extends JApplet {
 		
 		
 		
-		FileReader fr = new FileReader("/home/sigmar/ko2go.txt");
+		FileReader fr = new FileReader("/vg454flx/ko2go.txt");
 		br = new BufferedReader( fr );
 		line = br.readLine();
 		while (line != null) {
@@ -7986,7 +7986,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 21+specList.size();
+				return 22+specList.size();
 			}
 
 			@Override
@@ -8010,31 +8010,33 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 8) {
 					return "Cog";
 				} else if (columnIndex == 9) {
-					return "Present in";
+					return "Cazy";
 				} else if (columnIndex == 10) {
-					return "Group index";
+					return "Present in";
 				} else if (columnIndex == 11) {
-					return "Group coverage";
+					return "Group index";
 				} else if (columnIndex == 12) {
-					return "Group size";
+					return "Group coverage";
 				} else if (columnIndex == 13) {
-					return "Locprev";
+					return "Group size";
 				} else if (columnIndex == 14) {
-					return "Avg GC%";
+					return "Locprev";
 				} else if (columnIndex == 15) {
-					return "# of locus";
+					return "Avg GC%";
 				} else if (columnIndex == 16) {
-					return "# of loc in group";
+					return "# of locus";
 				} else if (columnIndex == 17) {
-					return "max length";
+					return "# of loc in group";
 				} else if (columnIndex == 18) {
-					return "sharing number";
+					return "max length";
 				} else if (columnIndex == 19) {
-					return "# Cyc";
+					return "sharing number";
 				} else if (columnIndex == 20) {
+					return "# Cyc";
+				} else if (columnIndex == 21) {
 					return "16S Corr";
 				} else {
-					String spec = specList.get( columnIndex - 21 );
+					String spec = specList.get( columnIndex - 22 );
 					if( spec.toLowerCase().contains("thermus") ) {
 						int i = spec.indexOf('_');
 						return spec.substring(i+1, spec.length());
@@ -8103,11 +8105,11 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 11 || columnIndex == 14 || columnIndex == 20 )
+				if( columnIndex == 12 || columnIndex == 15 || columnIndex == 21 )
 					return Double.class;
-				else if(columnIndex == 6 || (columnIndex >= 9 && columnIndex <= 19) )
+				else if(columnIndex == 6 || (columnIndex >= 10 && columnIndex <= 20) )
 					return Integer.class;
-				else if (columnIndex >= 21)
+				else if (columnIndex >= 22)
 					return Teginfo.class;
 				return String.class;
 			}
@@ -8139,31 +8141,33 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 8) {
 					return gg.getCommonCog( cogmap );
 				} else if (columnIndex == 9) {
-					return gg.getSpecies().size();
+					return gg.getCommonCazy( cazymap );
 				} else if (columnIndex == 10) {
-					return gg.groupIndex;
+					return gg.getSpecies().size();
 				} else if (columnIndex == 11) {
-					return gg.getGroupCoverage();
+					return gg.groupIndex;
 				} else if (columnIndex == 12) {
-					return gg.getGroupGeneCount();
+					return gg.getGroupCoverage();
 				} else if (columnIndex == 13) {
-					return null;//gene.proximityGroupPreservation;
+					return gg.getGroupGeneCount();
 				} else if (columnIndex == 14) {
-					return gg.getAvgGCPerc();
+					return null;//gene.proximityGroupPreservation;
 				} else if (columnIndex == 15) {
-					return gg.genes.size();
+					return gg.getAvgGCPerc();
 				} else if (columnIndex == 16) {
-					return gg.getGroupCount();
+					return gg.genes.size();
 				} else if (columnIndex == 17) {
-					return gg.getMaxLength();
+					return gg.getGroupCount();
 				} else if (columnIndex == 18) {
-					return specset.get( gg.getSpecies() );
+					return gg.getMaxLength();
 				} else if (columnIndex == 19) {
-					return gg.getMaxCyc();
+					return specset.get( gg.getSpecies() );
 				} else if (columnIndex == 20) {
+					return gg.getMaxCyc();
+				} else if (columnIndex == 21) {
 					return gg.getGroupCoverage() == 38 && gg.getGroupCount() == 38 ? 0 : -1;
 				} else {
-					String spec = specList.get( columnIndex - 21 );
+					String spec = specList.get( columnIndex - 22 );
 					Teginfo ret = getGroupTes( gg, spec );
 					return ret;
 				}
