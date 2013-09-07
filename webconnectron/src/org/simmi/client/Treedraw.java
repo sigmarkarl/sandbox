@@ -143,6 +143,7 @@ public class Treedraw implements EntryPoint {
 		return (int)(clientscale*Window.getClientWidth());
 	}
 	
+	double fontscale = 5.0;
 	double hchunk = 10.0;
 	public void drawTree( TreeUtil treeutil ) {		
 		double minh = treeutil.getminh();
@@ -203,7 +204,7 @@ public class Treedraw implements EntryPoint {
 		ctx.setFillStyle("#FFFFFF");
 		ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 		if( hchunk != 10.0 ) {
-			String fontstr = (int)(5.0*Math.log(hchunk))+"px sans-serif";
+			String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
 			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
 		}
 		if( treelabel != null ) {
@@ -1150,7 +1151,7 @@ public class Treedraw implements EntryPoint {
 				evt.stopPropagation();
 				evt.preventDefault();
 			}
-			if( !s.@org.simmi.client.Treedraw::inTextBox ) s.@org.simmi.client.Treedraw::keyCheck(CI)( c, keycode );
+			if( !s.@org.simmi.client.Treedraw::inTextBox ) s.@org.simmi.client.Treedraw::keyCheck(CIZ)( c, keycode, false );
 		}
 		$wnd.addEventListener('keypress', whatKey, true);
 	}-*/;
@@ -1166,7 +1167,8 @@ public class Treedraw implements EntryPoint {
 	
 	boolean	ie = false;
 	boolean inTextBox = false;
-	public void keyCheck( char c, int keycode ) {
+	public void keyCheck( char c, int keycode, boolean alt ) {
+		//boolean shift = (keycode | KeyCodes.KEY_SHIFT) != 0;
 		if( c == 'p' || c == 'P' ) {
 			if( c == 'p' ) {
 				circularScale += 0.01;
@@ -1191,6 +1193,10 @@ public class Treedraw implements EntryPoint {
 			clientscale *= 1.25;
 		} else if( c == '/' ) {
 			clientscale *= 0.8;
+		} else if( c == '_' ) {
+			fontscale *= 1.25;
+		} else if( c == '?' ) {
+			fontscale *= 0.8;
 		} else if( c == '+' ) {
 			hchunk *= 1.25;
 		} else if( c == '-' ) {
@@ -1792,7 +1798,7 @@ public class Treedraw implements EntryPoint {
 					event.preventDefault();
 				}
 				//if( event.isControlKeyDown() ) {
-					keyCheck( c, keycode );
+					keyCheck( c, keycode, event.isShiftKeyDown() );
 				//}
 			}
 		};
@@ -2409,7 +2415,7 @@ public class Treedraw implements EntryPoint {
 	
 	public native WebSocket newWebSocket( String url ) /*-{
 		var s = this;
-		var ws = new WebSocket( "ws://"+url, "protocolOne" );
+		var ws = new WebSocket( "ws://"+url );
 		ws.onopen = function( e ) {
   			ws.send("ready");
 		};
@@ -2930,7 +2936,7 @@ public class Treedraw implements EntryPoint {
 			
 			double mhchunk = Math.max( 10.0, hchunk );
 			//double strw = 0;
-			double strh = 5.0*Math.log(mhchunk);
+			double strh = fontscale*Math.log(mhchunk);
 			double nstrh = resnode.getFontSize() == -1.0 ? strh : resnode.getFontSize()*strh;
 			double frmh = strh;
 			frmh = resnode.getFontSize() == -1.0 ? frmh : resnode.getFrameSize()*frmh;
