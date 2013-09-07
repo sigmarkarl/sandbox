@@ -7,7 +7,9 @@
       
       var data;
       var options = {
-          title: 'Pan-core genome'
+          title: 'Pan-core genome',
+          width: 2400,
+      	  height: 1800
       };
       function drawChart() {
         data = google.visualization.arrayToDataTable([
@@ -19,8 +21,8 @@
       }
       window.onresize = function() {
       	var cd = document.getElementById('chart_div')
-      	cd.style.width = window.innerWidth*1.2;
-      	cd.style.height = window.innerHeight*1.2;
+      	cd.style.width = 2400;
+      	cd.style.height = 1800;
       	var chart = new google.visualization.LineChart( cd );
       	chart.draw(data, options);
       }

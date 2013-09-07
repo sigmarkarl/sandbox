@@ -1,0 +1,401 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Pan genome of the Thermus species</title>
+    <link rel="stylesheet" type="text/css" href="pancore.css">
+    <link href="http://fonts.googleapis.com/css?family=Headland+One|Life+Savers:400,700" rel="stylesheet" type="text/css">
+    <!--script async src="http://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script-->
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawCharts);
+      
+ 	  var gsizeoptions = {
+          title: 'Genome sizes',
+          fontSize: '8'
+      };
+      
+      var data;
+      var options = {
+          title: 'Pan-core genome',
+          fontSize: '8'
+      };
+      var gcoptions = {
+          title: 'Thermus GC percentage',
+          fontSize: '8'
+      };
+      var cogoptions = {
+          title: 'COG groups',
+          fontSize: '8',
+          isStacked: true
+      };
+      function drawCharts() {
+        var cog = google.visualization.arrayToDataTable([
+['Species','3-hydroxymyristoyl','Amino acid transport and metabolism','Carbohydrate transport and metabolism','Cell cycle control, cell division, chromosome partitioning','Cell division and chromosome partitioning','Cell envelope biogenesis, outer membrane','Cell motility and secretion','Cell wall','Chromatin structure and dynamics','Coenzyme transport and metabolism','DNA replication, recombination, and repair','Defense mechanisms','Energy production and conversion','Function unknown','General function prediction only','Inorganic ion transport and metabolism','Intracellular trafficking and secretion','Lipid metabolism','Nucleotide transport and metabolism','Posttranslational modification, protein turnover, chaperones','RNA processing and modification','Replication, recombination, and repair','Secondary metabolites biosynthesis, transport, and catabolism','Signal transduction mechanisms','Transcription','Translation, ribosomal structure and biogenesis','acetolactate synthase, pyruvate dehydrogenase (cytochrome), glyoxylate carboligase, phosphonopyruvate decarboxylase','acyl-carrier-protein'],
+['Thermus_CCB_US3_UF1_uid81197',0,229,95,3,23,76,11,2,2,101,86,42,129,134,230,78,18,72,68,83,0,2,43,68,69,144,3,3],
+['Thermus_RLM_uid156767',0,164,74,4,21,69,7,2,1,93,81,22,112,114,212,58,15,52,53,67,0,3,26,47,62,129,1,3],
+['Thermus_antranikianii_DSM_12462',0,208,105,3,24,70,9,2,2,104,97,24,155,140,258,82,14,72,68,75,0,4,41,69,78,147,2,3],
+['Thermus_antranikianii_MATIS',0,234,99,4,26,70,8,2,2,104,101,24,163,156,282,91,16,74,72,85,0,3,43,70,86,144,1,3],
+['Thermus_aquaticus_Y51MC23_uid55053',0,205,80,4,27,84,8,2,2,108,118,42,122,155,251,75,16,74,66,80,0,2,29,56,74,147,1,3],
+['Thermus_arciformis_MATIS',0,220,101,4,30,73,9,2,2,108,126,43,159,161,272,74,16,72,70,90,0,3,35,76,93,146,1,3],
+['Thermus_brockianus_104',0,218,122,4,22,91,13,2,2,118,96,58,157,149,251,88,14,75,69,81,0,1,39,73,84,147,2,2],
+['Thermus_brockianus_MATIS',0,217,118,4,22,99,13,2,2,115,87,53,152,147,257,85,15,70,70,80,0,2,39,76,81,149,2,2],
+['Thermus_eggertsoni_MATIS',0,214,127,4,25,95,9,2,2,115,103,29,158,158,254,87,18,69,70,82,0,2,39,76,92,149,2,2],
+['Thermus_filiformis_MATIS',1,217,107,4,24,80,11,2,2,107,101,48,134,137,237,77,12,84,70,82,0,2,37,63,85,145,1,3],
+['Thermus_igniterrae_ATCC_700962',0,229,86,3,22,71,13,2,2,107,84,33,146,139,237,79,16,70,71,93,0,3,42,65,70,147,2,3],
+['Thermus_igniterrae_MATIS',0,240,108,4,27,80,11,2,2,123,120,38,161,145,258,90,17,71,71,96,0,2,42,68,74,149,2,3],
+['Thermus_islandicus_DSM_21543',0,233,99,3,27,92,12,2,2,94,102,37,134,143,243,77,13,65,68,83,0,2,33,64,79,146,1,3],
+['Thermus_islandicus_MATIS',0,232,101,4,28,91,12,2,2,95,113,39,136,141,243,78,14,66,68,84,0,2,33,64,80,145,1,3],
+['Thermus_kawarayensis_MATIS',0,216,132,4,25,80,12,2,2,91,116,56,146,159,264,77,19,74,69,88,0,2,36,81,92,150,1,3],
+['Thermus_oshimai',0,222,105,4,24,71,12,2,2,116,92,31,162,146,242,84,15,73,69,86,1,2,42,69,87,142,1,3],
+['Thermus_oshimai_DSM_12092',0,224,96,3,25,69,15,2,2,106,97,32,152,143,243,80,13,76,71,93,1,3,45,68,82,143,1,3],
+['Thermus_oshimai_JL_2_uid178948',0,216,103,4,26,80,12,2,2,116,96,30,143,144,245,80,12,72,71,86,1,3,43,66,87,143,1,2],
+['Thermus_scotoductus_1572',0,229,116,4,31,78,11,2,2,95,126,47,161,156,263,85,23,63,64,88,0,3,32,86,80,147,1,2],
+['Thermus_scotoductus_2101_MATIS',0,240,105,4,21,86,9,2,2,109,100,27,152,154,265,86,18,68,69,84,0,2,40,73,77,148,1,3],
+['Thermus_scotoductus_2127_MATIS',0,215,99,4,22,72,9,2,2,108,89,28,156,146,251,80,21,71,68,81,0,2,39,76,75,147,1,3],
+['Thermus_scotoductus_252',0,185,76,4,29,79,11,2,2,100,132,41,128,133,237,75,18,62,67,81,0,2,29,56,68,150,1,2],
+['Thermus_scotoductus_346',0,196,79,4,19,81,9,2,2,103,88,25,136,143,232,75,16,64,67,80,0,3,33,62,61,150,1,2],
+['Thermus_scotoductus_4063',0,225,99,4,23,82,11,2,2,102,92,37,166,161,255,82,20,69,70,87,0,3,37,81,77,150,1,3],
+['Thermus_scotoductus_DSM_8553',0,186,76,3,28,75,11,2,2,100,125,40,128,131,236,75,17,62,67,81,0,2,27,55,69,148,1,2],
+['Thermus_scotoductus_SA_01_uid62273',0,221,100,4,21,80,9,2,2,102,89,37,164,154,248,83,18,69,69,87,0,3,38,79,78,144,1,3],
+['Thermus_thermophilus_791',0,217,107,4,29,76,14,2,2,113,119,28,149,157,262,86,16,77,66,83,0,3,47,66,89,145,1,3],
+['Thermus_thermophilus_ATCC_33923',0,199,103,4,23,82,12,2,2,110,81,48,137,142,247,83,16,72,65,83,0,3,40,56,69,148,2,2],
+['Thermus_thermophilus_HB27_uid58033',0,191,90,4,22,84,11,2,2,109,95,38,125,139,238,72,16,65,65,78,0,4,36,62,66,145,1,3],
+['Thermus_thermophilus_HB8_uid58223',0,189,97,4,26,82,8,2,2,108,92,35,130,137,244,69,16,67,63,80,0,2,39,54,74,147,1,2],
+['Thermus_thermophilus_JL_18_uid162129',0,210,102,4,27,81,14,2,2,109,102,31,136,145,254,79,18,74,60,78,0,3,46,57,84,145,1,3],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537',0,204,114,3,28,87,11,2,2,108,99,33,140,132,250,73,18,64,62,86,0,3,29,56,83,144,1,3]
+]);
+        var gc = google.visualization.arrayToDataTable([['Species', 'GC%'],
+['Thermus_CCB_US3_UF1_uid81197', 0.6857933419571918],
+['Thermus_RLM_uid156767', 0.682930865167436],
+['Thermus_antranikianii_DSM_12462', 0.647650740133478],
+['Thermus_antranikianii_MATIS', 0.6473595386887304],
+['Thermus_aquaticus_Y51MC23_uid55053', 0.6804528112093399],
+['Thermus_arciformis_MATIS', 0.688090258831198],
+['Thermus_brockianus_104_MATIS', 0.6687108958413016],
+['Thermus_brockianus_MATIS', 0.6685414832886416],
+['Thermus_eggertsoni_MATIS', 0.6694087432770288],
+['Thermus_filiformis_MATIS', 0.6907953518530809],
+['Thermus_igniterrae_ATCC_700962', 0.687945954663625],
+['Thermus_igniterrae_MATIS', 0.6845559360332351],
+['Thermus_islandicus_DSM_21543', 0.6835051546391753],
+['Thermus_islandicus_MATIS', 0.6832089200488446],
+['Thermus_kawarayensis_MATIS', 0.6853595796023861],
+['Thermus_oshimai_DSM_12092', 0.6872475070257953],
+['Thermus_oshimai_JL_2_uid178948', 0.6855578723281983],
+['Thermus_oshimai_MATIS', 0.6867255890183555],
+['Thermus_scotoductus_1572_MATIS', 0.6540326703468785],
+['Thermus_scotoductus_2101_MATIS', 0.6518883501898026],
+['Thermus_scotoductus_2127_MATIS', 0.650390173442968],
+['Thermus_scotoductus_252_MATIS', 0.6485152914785643],
+['Thermus_scotoductus_346_MATIS', 0.6521652008904866],
+['Thermus_scotoductus_4063_MATIS', 0.6488005900565185],
+['Thermus_scotoductus_DSM_8553', 0.6476286510014251],
+['Thermus_scotoductus_SA_01_uid62273', 0.6488880283765274],
+['Thermus_thermophilus_791_MATIS', 0.6896855598369382],
+['Thermus_thermophilus_ATCC_33923', 0.6941570734870478],
+['Thermus_thermophilus_HB27_uid58033', 0.69407261730064],
+['Thermus_thermophilus_HB8_uid58223', 0.6949598687369333],
+['Thermus_thermophilus_JL_18_uid162129', 0.6897796480807472],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537', 0.6861824735468974]
+]);
+      	var gsize = google.visualization.arrayToDataTable([['Species', '# Genes'],
+['Marinithermus_hydrothermalis_DSM_14884_uid65783', 2261],
+['Meiothermus_ruber_DSM_1279_uid198526', 3108],
+['Meiothermus_ruber_DSM_1279_uid46661', 3066],
+['Meiothermus_ruber_H328_uid199487', 3031],
+['Meiothermus_silvanus_DSM_9946_uid49485', 3522],
+['Meiothermus_timidus_DSM_17022_uid199231', 3115],
+['Oceanithermus_profundus_DSM_14977_uid60855', 2423],
+['Thermus_CCB_US3_UF1_uid81197', 2332],
+['Thermus_RLM_uid156767', 2017],
+['Thermus_antranikianii_DSM_12462', 2240],
+['Thermus_antranikianii_MATIS', 2519],
+['Thermus_aquaticus_Y51MC23_uid55053', 2566],
+['Thermus_arciformis_MATIS', 2737],
+['Thermus_brockianus_104_MATIS', 2553],
+['Thermus_brockianus_MATIS', 2561],
+['Thermus_eggertsoni_MATIS', 2671],
+['Thermus_filiformis_MATIS', 2448],
+['Thermus_igniterrae_ATCC_700962', 2262],
+['Thermus_igniterrae_MATIS', 2623],
+['Thermus_islandicus_DSM_21543', 2355],
+['Thermus_islandicus_MATIS', 2496],
+['Thermus_kawarayensis_MATIS', 2694],
+['Thermus_oshimai_DSM_12092', 2336],
+['Thermus_oshimai_JL_2_uid178948', 2477],
+['Thermus_oshimai_MATIS', 2391],
+['Thermus_scotoductus_1572_MATIS', 2635],
+['Thermus_scotoductus_2101_MATIS', 2528],
+['Thermus_scotoductus_2127_MATIS', 2407],
+['Thermus_scotoductus_252_MATIS', 2260],
+['Thermus_scotoductus_346_MATIS', 2118],
+['Thermus_scotoductus_4063_MATIS', 2450],
+['Thermus_scotoductus_DSM_8553', 2176],
+['Thermus_scotoductus_SA_01_uid62273', 2510],
+['Thermus_thermophilus_791_MATIS', 2603],
+['Thermus_thermophilus_ATCC_33923', 2327],
+['Thermus_thermophilus_HB27_uid58033', 2261],
+['Thermus_thermophilus_HB8_uid58223', 2286],
+['Thermus_thermophilus_JL_18_uid162129', 2442],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537', 2389]
+]);
+          data = google.visualization.arrayToDataTable([
+          ['Species', 'Pan', 'Core'],
+['Thermus_CCB_US3_UF1_uid81197', 2028, 2028],
+['Thermus_RLM_uid156767', 1456, 2308],
+['Thermus_antranikianii_DSM_12462', 1366, 2510],
+['Thermus_antranikianii_MATIS', 1351, 2702],
+['Thermus_aquaticus_Y51MC23_uid55053', 1328, 2999],
+['Thermus_arciformis_MATIS', 1312, 3179],
+['Thermus_brockianus_104_MATIS', 1305, 3295],
+['Thermus_brockianus_MATIS', 1303, 3326],
+['Thermus_eggertsoni_MATIS', 1302, 3440],
+['Thermus_filiformis_MATIS', 1274, 3592],
+['Thermus_igniterrae_ATCC_700962', 1272, 3626],
+['Thermus_igniterrae_MATIS', 1272, 3688],
+['Thermus_islandicus_DSM_21543', 1238, 3855],
+['Thermus_islandicus_MATIS', 1238, 3865],
+['Thermus_kawarayensis_MATIS', 1224, 3952],
+['Thermus_oshimai_DSM_12092', 1221, 4022],
+['Thermus_oshimai_JL_2_uid178948', 1219, 4077],
+['Thermus_oshimai_MATIS', 1219, 4114],
+['Thermus_scotoductus_1572_MATIS', 1209, 4199],
+['Thermus_scotoductus_2101_MATIS', 1207, 4236],
+['Thermus_scotoductus_2127_MATIS', 1206, 4302],
+['Thermus_scotoductus_252_MATIS', 1189, 4372],
+['Thermus_scotoductus_346_MATIS', 1186, 4374],
+['Thermus_scotoductus_4063_MATIS', 1185, 4396],
+['Thermus_scotoductus_DSM_8553', 1183, 4401],
+['Thermus_scotoductus_SA_01_uid62273', 1177, 4437],
+['Thermus_thermophilus_791_MATIS', 1169, 4508],
+['Thermus_thermophilus_ATCC_33923', 1167, 4545],
+['Thermus_thermophilus_HB27_uid58033', 1163, 4568],
+['Thermus_thermophilus_HB8_uid58223', 1160, 4586],
+['Thermus_thermophilus_JL_18_uid162129', 1157, 4606],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537', 1151, 4648]
+        ]);
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+        
+        var gsizechart = new google.visualization.BarChart(document.getElementById('gsizechart_div'));
+      	gsizechart.draw(gsize, gsizeoptions);
+      	
+      	var gcchart = new google.visualization.ColumnChart(document.getElementById('gcchart_div'));
+      	gcchart.draw(gc, gcoptions);
+      	
+      	var cogchart = new google.visualization.ColumnChart(document.getElementById('cogchart_div'));
+      	cogchart.draw(cog, cogoptions);
+      }
+      
+      window.onresize = function() {
+      	var cd = document.getElementById('chart_div')
+      	var chart = new google.visualization.LineChart( cd );
+      	chart.draw(data, options);
+      	
+      	cd = document.getElementById('cogchart_div')
+      	chart = new google.visualization.ColumnChart( cd );
+      	chart.draw(cog, cogoptions);
+      	
+      	cd = document.getElementById('gcchart_div')
+      	chart = new google.visualization.ColumnChart( cd );
+      	chart.draw(gc, gcoptions);
+      	
+      	cd = document.getElementById('gsizechart_div')
+      	chart = new google.visualization.ColumnChart( cd );
+      	chart.draw(gsize, gsizeoptions);
+      }
+    </script>
+</head>
+<body style="text-align : justify; font-family: 'Life Savers', cursive; font-size: 12px">
+<!--div style="text-align: center" class="do-not-print">
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-7204381538404733"
+     data-ad-slot="8470040143"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div-->
+<h2>Pan genome of the <i>Thermus</i> species</h2><br>
+</h2>
+<div class="g-plusone" data-annotation="inline" data-width="300"></div>
+<h3><i>Stefánsson, Sigmar K., Björnsdóttir, Snædís, Friðjónsson, Ólafur H., Pétursdóttir, S.P., Hreggviðsson, Guðmundur Ó.</i></h3>
+	<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<div class="article">
+<section>
+<b>Abstract</b>
+<p>
+The phylogenetic relationship between known Thermus species in geographic context was studied. 
+The Thermus genera are a group of thermophilic bacteria residing in hot springs. 
+These special living conditions can be thought of as islands in the ecological sense. 
+Sample locations were compared to environmental variables such as pH and temperature to determine which more influences species diversity, 
+geographic separation or chemical composition in hot springs.
+</p>
+</section>
+<section>
+<b>Introduction</b><p>
+<p>Bacteria of the genus Thermus were first isolated from hot springs in Yellowstone National Park, USA.  These bacteria were described as Thermus aquaticus by Brock and Freeze in 1969.  The species is well recognized as the type strain, YT1, is the source of the Taq polymerase, an enzyme that has been of a great biotechnological importance (Brock, 1997).  Soon after the discovery of T. aquaticus, isolations of similar strains were reported from geothermal areas (Oshima and Imahori 1971; Pask-Hughes and Williams 1977; Kristjansson and Alfredsson 1983; Munster et al 1986) as well as from man-made hot water systems and thermally polluted streams (Ramaley and Hixson 1970; Brock and Boylen 1973; Pask-Hughes and Williams 1975; Degryse et al 1978).  The taxonomic position of Thermus was unknown at this time but a phylogenetic relationship with the genus Deinococcus was later realized (Hensel et al 1986).  The two genera are now classified in a common phylum, “Deinococcus-Thermus” and constitute the type genera of family Thermaceae of order Thermales (da Costa and Rainey 2001) and of family Deinococcaceae of order Deinococcales (Battista and Rainey 2001), respectively.  The order Deinococcales is renowned for the high radiation resistance of some strains and contains both mesophiles and thermophiles whereas all members of the order Thermales are thermophiles.</p>
+<p class="tab">Thermales strains are rod-shaped, non-spore-forming, predominantly heterotrophic and grow by aerobic respiration although other electron acceptors such as nitrate, nitrite, sulfur and metals have been reported (Kieft et al 1999; da Costa and Rainey 2001).  Different temperature optima for growth have been observed within the group.  Thermus strains grow optimally at about 65-75°C (Nobre et al 1996).  A second genus, Meiothermus, was proposed to comprise strains that grow at lower temperatures, optimally at 45-65°C (Nobre et al 1996; Albuquerque et al 2010).  Meiothermus includes the species M. ruber, M. silvanus and M. chliarophilus that were originally described within the genus Thermus.  In recent years, four new genera have been created in family Thermaceae to accommodate representatives that were isolated from differently located deep-sea hydrothermal habitats.  The genera, Marinithermus (Sako et al 2003), Oceanithermus (Miroshnichenko et al 2003a), Rhabdothermus (Steinsbu et al 2011) and Vulcanithermus (Miroshnichenko et al 2003b) encompass thermophilic strains with temperature optima of about 60-70°C.  The new isolates are phenotypically similar to members of Thermus and Meiothermus although some are microaerophilic and growth on molecular hydrogen has been reported for Oceanithermus and Vulcanithermus (Miroshnichenko et al 2003a, 2003b).  Distinctively, the deep-sea strains require salt for growth and grow optimally at about 3% NaCl.</p>
+<p class="tab">Strains of the genus Thermus are highly variable in terms of certain phenotypic characters but do form tight phylogenetic clusters (da Costa and Rainey 2001; Kristjansson and Hreggvidsson 2004; Hreggvidsson et al 2006).  In addition to T. aquaticus the genus currently entails ten validly described species.  These are T. antranikianii (Chung et al 2000), T. arciformis (Zhang et al 2010), T. brockianus (Williams et al 1995), T. composti (Vajna et al 2012), T. filiformis (Hudson et al 1987), T. igniterrae (Chung et al 2000). T. islandicus (Bjornsdottir et al 2009), T. oshimai (Williams et al 1996), T. scotoductus (Kristjansson et al 1994) and T. thermophilus (Manaia et al 1994).  In addition, three proposed species, „T. kawarayensis“ (Kurosawa et al 2005), „T. rehai“ (Lin et al 2002) and „T. yunnanensis“ (Gong et al 2005) have not been validated.  Strains from all these species have been isolated from hydrothermal vents except for the newest member that derives from hot compost (Vajna et al 2012).  Disparate geographical distribution has been observed for Thermus species.  Some appear to be restricted to certain areas, such as T. aquaticus and T. filiformis, which have only been isolated from hot springs in North America and New Zealand, respectively (Brock and Freeze 1969; Hudson et al 1987; da Costa and Rainey 2001).  Others, such as T. brockianus, T. oshimai, T. scotoductus and T. thermophilus have been isolated from differently located sites (Kristjansson et al 1994; Manaia et al 1994; Williams et al 1995, 1996; Hreggvidsson et al 2006).  Geographical isolation and adaptation to certain habitats might have been important for species divergence within Thermus.  Growth in saline environments is, however, the only character that can be clearly related to geographical distribution.  T. thermophilus is the only Thermus species that has been isolated from coastal and marine locations (Kristjansson et al 1986; Manaia and da Costa 1991; Marteinsson et al 1999).  A comparison of Icelandic strains further indicated that pH and conductivity affect Thermus distribution (Hreggvidsson et al 2006).  Habitat preferences within the genus are nevertheless largely unexplained and probably result from subtle physiological differences (Hreggvidsson et al 2011).  We have undertaken extensive sequencing efforts and are currently examining whether indications of adaptive traits in Thermus can be found by comparative genomics.</p>
+<p class="tab">The increasing availability of molecular data allows the examination of microbial biogeography based on environmental distribution of gene sequences.  For this purpose and to expand the knowledge on Thermus distribution, we extracted and reviewed all available 16S rRNA gene sequences that belong to the genus from the SILVA SSUParc database.  Here, we present the global distribution of Thermus based on this data, which derives predominantly from culture-independent studies.  We also present a framework for managing and analyzing such data that could benefit studies of other taxonomic groups.  Furthermore, we relate the emerging picture of Thermus distribution with the taxonomy of the genus and discuss potential new groups.  We also examine phylogenetic relationships by including preliminary whole genome sequence data of several Thermus strains.</p>
+</section>
+<section>
+<b>Preparation of the data</b>
+<p>The strains available online were already annotated. For the MATIS species we used Prodigal 2.6 for gene identification and GenePRIMP for further refinement. All the genes were clustered together using the 50-50 rule and the sequences in each group aligned together using the Muscle multiple sequence aligner.
+The remaining clusters without annotation were blasted against the nr database.</p>
+</section>
+<section>
+<b><i>Thermus</i> genome statistics</b>
+<p>We compare 39 whole genome sequenced strains from the <i>Thermacae</i> family with focus on the <i>Thermus</i> generera. Of those, 32 are <i>Thermus</i> species. 18 of them are sequenced at <a href="http://www.matis.is/">MATIS</a> and are draft genomes. 11 are available from <a href="http://ncbi.nlm.nih.gov">NCBI</a> of which 4 are draft genomes. Also we used 3 draft sequences from the <a href="http://genome.jgi.doe.gov/">Join Genome Institue</a> at DOE.
+The other generas, <i>Meiothermus</i>, <i>Marinithermus</i> and <i>Ocenithermus</i> are kept for phylogenetic tree rooting and comparision. 3 of Meiothermus strains are draft genomes, the other completed, in total 7 strains.
+</p>
+<p>In terms of gene number, there is no notable difference between the <i>Thermus</i> strains, on average around 2400 genes. The genome GC% is lower in the <i>Thermus scotoductus</i> and the closely related <i>Thermus antranikianii</i> (65.0% compared to the average of 68.5% for the other species).
+The <i>Thermus brockianus</i> and <i>Thermus eggertsoni</i> also have similar genome GC% different from the rest (66.9%).
+</p>
+
+<figure style="text-align:center">
+<div id="gsizechart_div" style="width: 100%; height: 40em"></div>
+<figcaption><i>Thermus</i> genome sizes, the average being 2400 genes</figcaption>
+</figure>
+
+<figure style="text-align:center">
+<div id="gcchart_div" style="width: 100%; height: 30em"></div>
+<figcaption><i>Thermus</i> GC%</figcaption>
+</figure>
+
+<table style="font-size: 0.5em"><tr><td>
+Marinithermus_hydrothermalis_DSM_14884_uid65783</td></tr><tr><td>
+Meiothermus_ruber_DSM_1279_uid198526</td></tr><tr><td>
+Meiothermus_ruber_DSM_1279_uid46661</td></tr><tr><td>
+Meiothermus_ruber_H328_uid199487</td></tr><tr><td>
+Meiothermus_silvanus_DSM_9946_uid49485</td></tr><tr><td>
+Meiothermus_timidus_DSM_17022_uid199231</td></tr><tr><td>
+Oceanithermus_profundus_DSM_14977_uid60855</td></tr><tr><td>
+Thermus_CCB_US3_UF1_uid81197</td></tr><tr><td>
+Thermus_RLM_uid156767</td></tr><tr><td>
+Thermus_antranikianii_DSM_12462</td></tr><tr><td>
+Thermus_antranikianii_MATIS</td></tr><tr><td>
+Thermus_aquaticus_Y51MC23_uid55053</td></tr><tr><td>
+Thermus_arciformis_MATIS</td></tr><tr><td>
+Thermus_brockianus_104_MATIS</td></tr><tr><td>
+Thermus_brockianus_MATIS</td></tr><tr><td>
+Thermus_eggertsoni_MATIS</td></tr><tr><td>
+Thermus_filiformis_MATIS</td></tr><tr><td>
+Thermus_igniterrae_ATCC_700962</td></tr><tr><td>
+Thermus_igniterrae_MATIS</td></tr><tr><td>
+Thermus_islandicus_DSM_21543</td></tr><tr><td>
+Thermus_islandicus_MATIS</td></tr><tr><td>
+Thermus_kawarayensis_MATIS</td></tr><tr><td>
+Thermus_oshimai_DSM_12092</td></tr><tr><td>
+Thermus_oshimai_JL_2_uid178948</td></tr><tr><td>
+Thermus_oshimai_MATIS</td></tr><tr><td>
+Thermus_scotoductus_1572_MATIS</td></tr><tr><td>
+Thermus_scotoductus_2101_MATIS</td></tr><tr><td>
+Thermus_scotoductus_2127_MATIS</td></tr><tr><td>
+Thermus_scotoductus_252_MATIS</td></tr><tr><td>
+Thermus_scotoductus_346_MATIS</td></tr><tr><td>
+Thermus_scotoductus_4063_MATIS</td></tr><tr><td>
+Thermus_scotoductus_DSM_8553</td></tr><tr><td>
+Thermus_scotoductus_SA_01_uid62273</td></tr><tr><td>
+Thermus_thermophilus_791_MATIS</td></tr><tr><td>
+Thermus_thermophilus_ATCC_33923</td></tr><tr><td>
+Thermus_thermophilus_HB27_uid58033</td></tr><tr><td>
+Thermus_thermophilus_HB8_uid58223</td></tr><tr><td>
+Thermus_thermophilus_JL_18_uid162129</td></tr><tr><td>
+Thermus_thermophilus_SG0_5JP17_16_uid159537</td></tr>
+</table>
+
+<p>The <i>Thermus</i> species are similar in terms of functional annotions. The small groups, Defence mechanism and Secondary metabolism COG groups, being the most variable.</p>
+<figure style="text-align:center">
+<div id="cogchart_div" style="width: 100%; height: 50em"></div>
+<figcaption><i>Thermus</i> COG chart</figcaption>
+</figure>
+
+</section><section>
+<b><i>Thermus</i> pan-core genome</b>
+<p>Using all the genes from the 32 whole genomes sequenced <i>Thermus</i> strains, the pan genome is close to 4600 genes.
+The core genome is around 1100 genes.</p>
+<figure style="text-align:center">
+<div id="chart_div" style="width: 100%; height: 30em"></div>
+<!--img src="pancorethermus.png" width="100%" /> -->
+<figcaption>A phylogenetic tree based on 16S rRNA</figcaption>
+</figure>
+
+</section>
+<section>
+<b>Phylogeny of the <i>Thermus</i> species</b>
+<p>The phylogeny of the Thermus species varies depending in which genes are used in constructing the phylogeny.
+We compare the conventioal 16S rRNA phylogeny to multiple gene phylogenies.</p>  
+<figure style="text-align:center">
+<img src="16Stree.png" width="100%" />
+<figcaption>A phylogenetic tree based on 16S rRNA</figcaption>
+</figure>
+
+<p>To select the phylogenetically most relevant genes we draw genome atlas with <i>Thermus thermophilus HB8</i> as the reference species.</p>
+<figure style="text-align:center">
+<img src="tthb8atlas.png" width="100%" />
+<figcaption>A Genome relation atlas with <i>Thermus thermophilus HB8</i> as a reference</figcaption>
+</figure>
+
+<figure style="text-align:center">
+<img src="tthb8synt.png" width="100%" />
+<figcaption>A genome syteni atlas with <i>Thermus thermophilus HB8</i> as a reference</figcaption>
+</figure>
+
+<p>Eyeballing the genome relation atlas shows the New Zealandic <i>Thermus filiformis</i> is distantly related to other <i>Thermuses</i> (the light greyish circle in the middle of the atlas). 
+Contraty to the 16S tree the <i>Thermus arciformis</i> and <i>Thermus kawarayensis</i> to a lesser extent are genomewise more related to the <i>Thermus thermophilus</i> than to <i>Thermus islandicus</i> (the darkish lines on either side of the <i>Thermus filiformis</i>)</p>
+<p>There are two areas both highly preserved in terms of synteni and mutation. The darkish arc pointing north in the Genome relation atlas is a cluster of 34 ribosomal genes (50S and 30S) and preserved throughout the <i>Thermacaea</i> family. 
+Evidently from the accompanying synteni atlas the cluster is also preserved in terms of synteni. Concatenating these genes reveals a slightly different phylogeny than the 16S one.
+For comparison we compare this with the 40 genes deemed to be the most phylogenetically relevant at <a href="http://mltreemap.org/">mlTreeMap</a></p>
+
+<figure style="text-align:center">
+<img src="concribo.png" width="100%" />
+<figcaption>A phylogenetic tree based on 16S rRNA</figcaption>
+</figure>
+
+<p>The other higly preserved cluster is a set of 14 NADH genes. It is an arc pointing east (and slightly south). These non ribosomal genes reveal a phylogeny more in line with what seen in the atlas. The <i>Thermus thermophilus</i> cluster merges with the cluster containing the <i>Thermus arciformis</i> and <i>Thermus kawarayensis</i></p>
+
+<figure style="text-align:center">
+<img src="concNADH.png" width="100%" />
+<figcaption>A phylogenetic tree based on concatenated genes from a NADH cluster</figcaption>
+</figure>
+</section>
+
+<section>
+<b>Genome synteni in <i>Thermus</i> species</b>
+<p>We create a phylogenetic tree based on synteni. A distance matrix is created based on breakpoint count and neighbour joining algorithm used to construct the tree. 
+Although perhaps not very reliable, this tree complies remarkably well to the ribosomal multiple gene tree.</p> 
+<figure style="text-align:center">
+<img src="syntree2.png" width="100%" />
+<figcaption>A phylogenetic tree based genome synteni</figcaption>
+</figure>
+<p>Apart from those used to construct the phylogeny the genome synteni atlas reveals a few more areas with a preserved synteni in the <i>Thermus</i> species. 
+Most notable are the UDP-N-acetylmuramate with a family of cell division proteins (arc facing west in the <i>Thermus thermophilus HB8</i> genome synteni atlas) and a cluster of Sulfur oxidation and cytochrome c proteins, 
+although missing from the <i>Thermus scotoductus</i> typestrain (252_MATIS, DSM_8553) and <i>Thermus sp. RLM</i>. 
+These strains are both lab strains which could explain their lack of Sulfur oxidizing ability.</p>
+</section>
+<section>
+<b>Presence and absense of genes in <i>Thermus</i> lineages</b>
+<p>Gene uptake and loss seems to follow phyloenetic paths.</p>
+</section>
+<section>
+<b>Phage related genes in the <i>Thermus</i> species</b>
+<p>The NCBI database contains five Thermus phages, the IN93, P23_45, P23_77, P74_26 and phyIS40. 
+The genes from the P23_77 and the related IN93 are present in three icelandic strains, the <i>Thermus scotoductis 2127</i>, <i>Thermus oshimai</i> and <i>Thermus brockianus</i>. 
+Also they are present in the <i>Thermus sp. RLM</i> and all the <i>Meithermus species</i> to some extent. This could indicate these species share a common niche.</p>
+</section>
+<section>
+<b>Metabolism in the <i>Thermus</i> species</b>
+<p>Nitrate resipratory ability is highly conserved but seems to be missing from <i>Thermus aquaticus</i>, <i>Thermus islandicus</i>, <i>Thermus filiformis</i> and Malasian <i>Thermus sp. CCB</i>. Also lacking the ability to asdf Nitrate are the <i>Thermus thermophilus HB8, HB27</i> and <i>ATCC</i> and the two islandic <i>Thermus scotoductus 346</i> and <i>2101</i></p>
+</section>
+
+</div>
+</body>
+</html>

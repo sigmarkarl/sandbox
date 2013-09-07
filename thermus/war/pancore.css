@@ -6,6 +6,10 @@ td {
 	vertical-align : top
 }
 
+figure {
+	margin : 5%
+}
+
 .iframestuff {
 	text-align: center;
     -moz-transform: scale(0.5);
