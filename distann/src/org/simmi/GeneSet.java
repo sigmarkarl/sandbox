@@ -8,6 +8,7 @@ import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -29,6 +30,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -4078,14 +4080,68 @@ public class GeneSet extends JApplet {
         // This method is invoked on Swing thread
         JFrame frame = new JFrame("FX");
         frame.setSize(800, 600);
-        final JFXPanel fxPanel = new JFXPanel();
-        frame.add(fxPanel);
+        
+        final Dimension dim = new Dimension(1920*2, 1024*2);
+        final BufferedImage bimg = new BufferedImage(dim.width,dim.height,BufferedImage.TYPE_INT_ARGB);
+		final Graphics2D g2 = bimg.createGraphics();
+        
+		final JFXPanel fxPanel = new JFXPanel() {
+        	public void paintComponent( Graphics g ) {
+        		super.paintComponent( g );
+        	}
+        };
+        fxPanel.addMouseListener( new MouseListener() {
+			
+			@Override
+			public void mouseReleased(MouseEvent e) {}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+				fxPanel.setPreferredSize( dim );
+		        fxPanel.setSize( dim );
+		        fxPanel.invalidate();
+		        fxPanel.revalidate();
+		        fxPanel.repaint();
+		        
+				fxPanel.paint( g2 );
+				try {
+					ImageIO.write( bimg, "png", new File("/home/sigmar/erm.png") );
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {}
+		});
+        
+        fxPanel.setPreferredSize( dim );
+        fxPanel.setSize( dim );
+        JScrollPane	scroll = new JScrollPane( fxPanel );
+        frame.add( scroll );
         frame.setVisible(true);
         
         fxPanel.addComponentListener( new ComponentListener() {
 			@Override
 			public void componentResized(ComponentEvent e) {
+				int w = e.getComponent().getWidth();
+				int h = e.getComponent().getHeight();
+				
 				System.err.println( e.getComponent().getWidth() + " c " + e.getComponent().getHeight() );
+				BufferedImage bimg = new BufferedImage(w,h,BufferedImage.TYPE_INT_ARGB);
+				Graphics2D g2 = bimg.createGraphics();
+				fxPanel.print( g2 );
+				try {
+					ImageIO.write( bimg, "png", new File("/home/sigmar/erm.png") );
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 
 			@Override
@@ -4410,113 +4466,6 @@ public class GeneSet extends JApplet {
 		//init( args );
 
 		try {
-			Set<String>							all = new TreeSet<String>();
-			Map<String, Map<String,Integer>> 	map = new TreeMap<String, Map<String,Integer>>();
-			FileReader fr = new FileReader("/vg454flx/cogthermus.blastout");
-			BufferedReader br = new BufferedReader( fr );
-			String line = br.readLine();
-			String current = null;
-			while( line != null ) {
-				if( line.startsWith("Query=") ) {
-					current = line.substring(7);
-					line = br.readLine();
-					while( !line.startsWith("Length") ) {
-						current += line;
-						line = br.readLine();
-					}
-					current = current.trim();
-				} else if( line.startsWith(">") ) {
-					String val = line.substring(1);
-					line = br.readLine();
-					while( !line.startsWith("Length") ) {
-						val += line;
-						line = br.readLine();
-					}
-					val = val.trim();
-					
-					int i = current.lastIndexOf('[');
-					int n = current.indexOf(']', i+1);
-					
-					if( i == -1 || n == -1 ) {
-						n = current.indexOf(" ");
-					}
-					
-					/*if( i == -1 || n == -1 ) {
-						System.err.println( val );
-					}*/
-					
-					String spec = current.substring(i+1, n);
-					
-					int k = spec.indexOf("_contig");
-					if( k == -1 ) {
-						k = spec.indexOf("_uid");
-						k = spec.indexOf('_', k+4);
-					}
-					
-					if( k == -1 ) {
-						k = spec.indexOf('_');
-						k = spec.indexOf('_', k+1);
-					}
-					if( k != -1 ) spec = spec.substring(0, k);
-					if( !spec.contains("_") ) {
-						System.err.println();
-					}
-					
-					i = val.indexOf('[');
-					n = val.indexOf(']', i+1);
-					/*if( i == -1 || n == -1 ) {
-						System.err.println( val );
-					}*/
-					String cog = val.substring(i+1, n);
-					int u = cog.indexOf('/');
-					if( u != -1 ) cog = cog.substring(0, u);
-					String erm = cog.replace("  ", " ");
-					while( !erm.equals( cog ) ) {
-						cog = erm;
-						erm = cog.replace("  ", " ");
-					}
-					cog = cog.trim();
-					
-					Map<String,Integer> cogmap;
-					if( map.containsKey( spec ) ) {
-						cogmap = map.get(spec);
-					} else {
-						cogmap = new HashMap<String,Integer>();
-						map.put( spec, cogmap );
-					}
-					
-					if( cogmap.containsKey( cog ) ) {
-						cogmap.put( cog, cogmap.get(cog)+1 );
-					} else cogmap.put( cog, 1 );
-					
-					all.add( cog );
-				}
-				line = br.readLine();
-			}
-			fr.close();
-			
-			FileWriter fw = new FileWriter("/vg454flx/okthermus.txt");
-			for( String s : map.keySet() ) {
-				fw.write("\t"+s);
-			}
-			fw.write("\ntotal");
-			for( String s : map.keySet() ) {
-				int total = 0;
-				Map<String,Integer> cm = map.get( s );
-				for( String ss : all ) {
-					if( cm.containsKey( ss ) ) total += cm.get(ss);
-				}
-				fw.write("\t"+total);
-			}
-			for( String cog : all ) {
-				fw.write( "\n"+cog );
-				for( String spec : map.keySet() ) {
-					Map<String,Integer> cm = map.get( spec );
-					if( cm.containsKey( cog ) ) fw.write( "\t" + cm.get( cog )  );
-					else fw.write( "\t" + 0  );
-				}
-			}
-			fw.close();
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
 			/*FileInputStream fi = new FileInputStream( "/vg454flx/gene_association.goa_uniprot.gz" );
 			GZIPInputStream gi = new GZIPInputStream( fi );
@@ -5228,7 +5177,7 @@ public class GeneSet extends JApplet {
 		});
 		Object[] ctls = new Object[] { scroll };
 		JOptionPane.showMessageDialog( comp, ctls );
-		Set<String>	selspec = new HashSet<String>();
+		Set<String>	selspec = new TreeSet<String>();
 		for( int i = 0; i < table.getRowCount(); i++ ) {
 			if( (Boolean)table.getValueAt(i, 0) ) selspec.add( (String)table.getValueAt(i, 1) );
 		}
@@ -7480,12 +7429,12 @@ public class GeneSet extends JApplet {
 				f.add( sp );
 				f.setVisible( true );
 				
-				SwingUtilities.invokeLater(new Runnable() {
+				/*SwingUtilities.invokeLater(new Runnable() {
 	                 @Override
 	                 public void run() {
 	                     initAndShowGUI( smuck );
 	                 }
-	            });
+	            });*/
 				/*JFXPanel	jfxpanel = new JFXPanel();
 				jfxpanel.add
 				
@@ -7493,6 +7442,300 @@ public class GeneSet extends JApplet {
 				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 				frame.add( jfxpanel );
 				frame.setVisible( true );*/
+			}
+		};
+		
+		AbstractAction genomesizeaction = new AbstractAction("Genome size") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
+				
+				StringBuilder	restext = new StringBuilder();
+				restext.append( "['Species', 'Size']" );
+				for( String spec : selspec ) {
+					restext.append( ",\n['"+spec+"', " );
+					
+					List<Contig> lcont = speccontigMap.get(spec);
+					int total = 0;
+					for( Contig ct : lcont ) {
+						if( ct.tlist != null ) total += ct.tlist.size();
+						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+							len += tv.getLength();
+						}*/
+					}
+					//Set<GeneGroup> ggset = specGroupMap.get( spec );
+					//pan.addAll( ggset );
+					//if( core.isEmpty() ) core.addAll( ggset );
+					//else core.retainAll( ggset );
+					
+					//restext.append( core.size()+", " );
+					restext.append( total+"]" );
+				}
+				
+				JFrame f = new JFrame("Genome size chart");
+				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				f.setSize( 800, 600 );
+				
+				/*final StringBuilder sb = new StringBuilder();
+				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
+				try {
+					int c = is.read();
+					while( c != -1 ) {
+						sb.append( (char)c );
+						c = is.read();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				final String smuck = sb.toString().replace("smuck", restext.toString());*/
+				
+				//restext.append( restext.toString() );
+				JTextArea	ta = new JTextArea();
+				ta.setText( restext.toString() );
+				JScrollPane	sp = new JScrollPane(ta);
+				f.add( sp );
+				f.setVisible( true );
+				
+				/*SwingUtilities.invokeLater(new Runnable() {
+	                 @Override
+	                 public void run() {
+	                     initAndShowGUI( smuck );
+	                 }
+	            });*/
+				/*JFXPanel	jfxpanel = new JFXPanel();
+				jfxpanel.add
+				
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.add( jfxpanel );
+				frame.setVisible( true );*/
+			}
+		};
+		
+		AbstractAction gcaction = new AbstractAction("GC% chart data") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
+				StringBuilder	restext = new StringBuilder();
+				restext.append( "['Species', 'Size']" );
+				for( String spec : selspec ) {
+					restext.append( ",\n['"+spec+"', " );
+					
+					List<Contig> lcont = speccontigMap.get(spec);
+					int len = 0;
+					int total = 0;
+					for( Contig ct : lcont ) {
+						total += ct.getLength();
+						len += ct.seq.getGCCount();
+						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+							len += tv.getLength();
+						}*/
+					}
+					double d = (double)len/(double)total;
+					//d = Math.round( d*10000.0 )/100.0;
+					//Set<GeneGroup> ggset = specGroupMap.get( spec );
+					//pan.addAll( ggset );
+					//if( core.isEmpty() ) core.addAll( ggset );
+					//else core.retainAll( ggset );
+					
+					//restext.append( core.size()+", " );
+					restext.append( d+"]" );
+				}
+				
+				JFrame f = new JFrame("GC% chart");
+				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				f.setSize( 800, 600 );
+				
+				/*final StringBuilder sb = new StringBuilder();
+				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
+				try {
+					int c = is.read();
+					while( c != -1 ) {
+						sb.append( (char)c );
+						c = is.read();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				final String smuck = sb.toString().replace("smuck", restext.toString());*/
+				
+				//restext.append( restext.toString() );
+				JTextArea	ta = new JTextArea();
+				ta.setText( restext.toString() );
+				JScrollPane	sp = new JScrollPane(ta);
+				f.add( sp );
+				f.setVisible( true );
+				
+				/*SwingUtilities.invokeLater(new Runnable() {
+	                 @Override
+	                 public void run() {
+	                     initAndShowGUI( smuck );
+	                 }
+	            });*/
+				/*JFXPanel	jfxpanel = new JFXPanel();
+				jfxpanel.add
+				
+				JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.add( jfxpanel );
+				frame.setVisible( true );*/
+			}
+		};
+		
+		AbstractAction cogaction = new AbstractAction("COG chart data") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<String,String>							all = new TreeMap<String,String>();
+				Map<String, Map<String,Integer>> 	map = new TreeMap<String, Map<String,Integer>>();
+				
+				try {
+					ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
+					ZipEntry ze = zipm.getNextEntry();
+					while( ze != null ) {
+						String zname = ze.getName();
+						if( zname.equals("cog.blastout") ) {
+							InputStreamReader isr = new InputStreamReader( zipm );
+							BufferedReader br = new BufferedReader( isr );
+							String line = br.readLine();
+							String current = null;
+							while( line != null ) {
+								if( line.startsWith("Query=") ) {
+									current = line.substring(7);
+									line = br.readLine();
+									while( !line.startsWith("Length") ) {
+										current += line;
+										line = br.readLine();
+									}
+									current = current.trim();
+								} else if( line.startsWith(">") ) {
+									String val = line.substring(1);
+									line = br.readLine();
+									while( !line.startsWith("Length") ) {
+										val += line;
+										line = br.readLine();
+									}
+									val = val.trim();
+									
+									int i = current.lastIndexOf('[');
+									int n = current.indexOf(']', i+1);
+									
+									if( i == -1 || n == -1 ) {
+										n = current.indexOf(" ");
+									}
+									
+									String spec = current.substring(i+1, n);
+									
+									int k = spec.indexOf("_contig");
+									if( k == -1 ) {
+										k = spec.indexOf("_uid");
+										k = spec.indexOf('_', k+4);
+									}
+									
+									if( k == -1 ) {
+										k = spec.indexOf('_');
+										k = spec.indexOf('_', k+1);
+									}
+									if( k != -1 ) spec = spec.substring(0, k);
+									if( !spec.contains("_") ) {
+										System.err.println();
+									}
+									
+									i = val.indexOf('[');
+									n = val.indexOf(']', i+1);
+									String cog = val.substring(i+1, n);
+									int u = cog.indexOf('/');
+									if( u != -1 ) cog = cog.substring(0, u);
+									String erm = cog.replace("  ", " ");
+									while( !erm.equals( cog ) ) {
+										cog = erm;
+										erm = cog.replace("  ", " ");
+									}
+									cog = cog.trim();
+									String coglong = cog;
+									
+									int ki = coglong.indexOf(' ');
+									ki = ki == -1 ? coglong.length() : ki;
+									int ui = coglong.indexOf(',');
+									ui = ui == -1 ? coglong.length() : ui;
+									int ci = coglong.indexOf('-');
+									ci = ci == -1 ? coglong.length() : ci;
+									
+									if( ui != -1 && ui < ki ) {
+										ki = ui;
+									}
+									if( ci != -1 && ci < ki ) {
+										ki = ci;
+									}
+									if( coglong.startsWith("Cell") ) {
+										if( ki != -1 ) {
+											ki = coglong.indexOf(' ', ki+1);
+										}
+									}					
+									ki = ki == -1 ? coglong.length() : ki;
+									cog = coglong.substring(0,ki);
+									
+									Map<String,Integer> cogmap;
+									if( map.containsKey( spec ) ) {
+										cogmap = map.get(spec);
+									} else {
+										cogmap = new HashMap<String,Integer>();
+										map.put( spec, cogmap );
+									}
+									
+									if( cogmap.containsKey( cog ) ) {
+										cogmap.put( cog, cogmap.get(cog)+1 );
+									} else cogmap.put( cog, 1 );
+									
+									all.put( cog, coglong );
+								}
+								line = br.readLine();
+							}
+							
+							StringWriter fw = new StringWriter();
+							fw.write( "['Species" );
+							for( String cog : all.keySet() ) {
+								String coglong = all.get( cog );
+								fw.write("','"+coglong);
+							}
+							fw.write("'],\n");
+							for( String s : map.keySet() ) {
+								int total = 0;
+								fw.write( "['"+s+"'" );
+								Map<String,Integer> cm = map.get( s );
+								for( String cog : all.keySet() ) {
+									int val = 0;
+									if( cm.containsKey( cog ) ) val = cm.get(cog);
+									fw.write(","+val);
+								}
+								fw.write("],\n");
+							}
+							/*for( String cog : all ) {
+								fw.write( "\n"+cog );
+								for( String spec : map.keySet() ) {
+									Map<String,Integer> cm = map.get( spec );
+									if( cm.containsKey( cog ) ) fw.write( "\t" + cm.get( cog )  );
+									else fw.write( "\t" + 0  );
+								}
+							}*/
+							fw.close();
+							
+							JFrame f = new JFrame("GC% chart");
+							f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+							f.setSize( 800, 600 );
+							
+							JTextArea	ta = new JTextArea();
+							ta.setText( fw.toString() );
+							JScrollPane	sp = new JScrollPane(ta);
+							f.add( sp );
+							f.setVisible( true );
+							
+							break;
+						}
+						ze = zipm.getNextEntry();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		};
 		
@@ -7712,6 +7955,9 @@ public class GeneSet extends JApplet {
 		menu.add( gcpaction );
 		menu.add( matrixaction );
 		menu.add( pancoreaction );
+		menu.add( genomesizeaction );
+		menu.add( gcaction );
+		menu.add( cogaction );
 		menu.add( genexyplotaction );
 		menu.add( compareplotaction );
 		menu.add( fetchcoreaction );
