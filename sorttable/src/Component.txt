@@ -1,0 +1,147 @@
+F15:0I	0054	C 15:0 iso	C 15 iso	null	g	null	6
+F20:2CN6	0076	C 20:2 n-6	C 20:2 c 11,14	null	g	null	6
+x	0135	Aðrar cis-einómettaðar fitus.	Other cis monounsat. fa.	null	g	null	6
+[F18:1CISR]	0066	C 18:1 n-x	C 18:1 c x	null	g	null	6
+FAUN	0092	Ógreindar fitusýrur	Unknown fatty acids	null	g	null	6
+F22:4CN6	0086	C 22:4 n-6	C 22:4 c 7,10,13,16	null	g	null	6
+FATRN	0008	trans-Fitusýrur	trans-Fatty acids	null	g	null	1
+NITRA	0139	Nítrat NO3	Nitrate NO3	null	mg	null	7
+F16:1CN9	0114	C 16:1 n-9	C 16:1 c 7	null	g	null	6
+F20:1CN9	0074	C 20:1 n-9	C 20:1 c 11	null	g	null	6
+CAFFN	0145	Koffín	Caffeine	null	mg	null	null
+FAUN	0096	Aðrar óþekktar fitusýrur	Other unknown fatty acids	null	g	null	6
+VITB6	0028	B6-vítamín	Vitamin B6	null	mg	null	3
+x	0119	C 17:1	C 17:1	null	g	null	6
+F18:0	0062	C 18:0	C 18:0	null	g	null	6
+FE	0038	Járn, Fe	Iron, Fe	null	mg	null	5
+FASAT	0003	Mettaðar fitusýrur	Saturated fatty acids	null	g	null	1
+VITE	0021	E-vítamín, a-TJ	Vitamin E, alpha-TE	null	mg	null	2
+x	0136	Aðrar cis-fjölómettaðar fitus.	Other cis polyunsat. fa.	null	g	null	6
+F24:0	0088	C 24:0	C 24:0	null	g	null	6
+VITB12	0031	B12-vítamín	Viamin B12	null	ug	null	3
+NI	0100	Nikkel, Ni	Nickel, Ni	null	ug	null	5
+F20:0	0073	C 20:0	C 20:0	null	g	null	6
+F20:3CN3	0078	C 20:3 n-3	C 20:3 c 11,14,17	null	g	null	6
+CHORL	0009	Kólesteról	Cholesterol	null	mg	null	1
+F10:0	0049	C 10:0	C 10:0	null	g	null	6
+RIBF	0024	B2-vítamín, ríbóflavín	Vitamin B2	null	mg	null	3
+F18:2CON	0070	C 18:2 conj B	C 18:2 conj B	null	g	null	6
+[FAPUCIS]	0005	cis-Fjölómettaðar fitus.	cis-Polyunsatureded fatty acid	null	g	null	1
+[F14:1CN5+F15:0]	0053	C 14:1 n-5 + C 15:0	C 14:1 c 9 / C 15:0	null	g	null	6
+F18:1CN9	0064	C 18:1 n-9	C 18:1 c 9	null	g	null	6
+F16:1CN5	0113	C 16:1 n-5	C 16:1 c 11	null	g	null	6
+F22:5CN3	0098	C 22:5 n-3	C 22:5 c 7,10,13,16,19	null	g	null	6
+ACESK	0146	Asesúlfam K	Acesulfame potassium	null	mg	null	null
+NIAEQ	0025	Níasín-jafngildi	Niacin equivalents	null	mg	null	3
+PB	0102	Blý, Pb	Lead, Pb	null	ug	null	5
+[F20:2TN6]	0075	C 20:2 n-6 trans	C 20:2 t 11,14	null	g	null	6
+x	0120	C 18:1 n-5	C 18:1 c 13	null	g	null	6
+RETOL	0018	Retinol	Retinol	null	ug	null	2
+VITD	0020	D-vítamín	Vitamin D	null	ug	null	2
+F6:0	0106	C 6:0	C 6:0	null	g	null	6
+x	0133	C 22:1 n-11	C 22:1 c 11	null	g	null	6
+F26:0	0091	C 26:0	C 26:0	null	g	null	6
+VITC	0032	C-vítamín	Vitamin C	null	mg	null	3
+F10:1	0107	C 10:1	C 10:1	null	g	null	6
+ID	0041	Joð, I	Iodine, I	null	ug	null	5
+F22:3CN3	0085	C 22:3 n-3	C 22:3 c 13,16,19	null	g	null	6
+[FACISXR]	0094	Aðrar cis ómettaðar fitus	Other cis unsaturated fa	null	g	null	6
+F17:0I	0060	C 17:0 iso	C 17 iso	null	g	null	6
+FOL	0029	Fólat, alls	Folate, total	null	ug	null	3
+x	0126	C 20:1 n-7	C 20:1 c 13	null	g	null	6
+MN	0042	Mangan, Mn	Manganese, Mn	null	mg	null	5
+x	0128	C 20:3	C 20:3	null	g	null	6
+AS	0104	Arsen, As	Arsenic, As	null	ug	null	5
+F15:0	0110	C 15:0	C 15:0	null	g	null	6
+NA	0036	Natríum, Na	Sodium, Na	null	mg	null	4
+F12:1	0108	C 12:1	C 12:1	null	g	null	6
+TRP	0027	Tryptófan	Tryptophan	null	mg	null	3
+x	0134	C 22:5 n-6	C 22:5 c 4,7,10,13,16	null	g	null	6
+SUGAR	0011	Sykrur	Sugars	null	g	null	1
+x	0124	C 20:1 n-11	C 20:1 c 9	null	g	null	6
+FOLFRE	0030	Óbundið fólat	Free folate	null	ug	null	3
+CR	0043	Króm, Cr	Chromium, Cr	null	ug	null	5
+F18:3CN3	0072	C 18:3 n-3	C 18:3 c 9, 12,15	null	g	null	6
+CD	0101	Kadmín, Cd	Cadmium, Cd	null	ug	null	5
+F20:5CN3	0080	C 20:5 n-3	C 20:5 c 5,8,11,14,17	null	g	null	6
+[C18:4N3]	0097	C 18:4 n-3	C 18:4		g	null	6
+ZN	0039	Zink, Zn	Zinc, Zn	null	mg	null	5
+STARCH	0141	Sterkja	Starch	null	g	null	1
+SUGAD	0012	Viðbættur sykur	Added sugar	null	g	null	1
+F22:6CN3	0087	C 22:6 n-3	C 22:6 c4,7,10,13,16,19	null	g	null	6
+FASATXR	0093	Aðrar mettaðar fitusýrur	Other saturated fatty acids	null	g	null	6
+x	0117	C 16:4 n-1	C 16:4 c 6,9,12,15	null	g	null	6
+F4:0	0105	C 4:0	C 4:0	null	g	null	6
+F18:2TN	0067	C 18:2 trans	C 18:2 t	null	g	null	6
+MO	0045	Molýbden, Mo	Molybdenum, Mo	null	ug	null	5
+[FATR]	0095	Aðrar trans-fitusýrur	Other trans fatty acids	null	g	null	6
+F18:2CN6	0068	C 18:2 n-6	C 18:2 c 9,12	null	g	null	6
+F14:1TN5	0052	C 14:1 n-5 trans	C 14:1 t 9	null	g	null	6
+[F2-6:0]	0047	C 2:0 - C 6:0	C 2:0 - C 6:0	null	g	null	6
+FAPUN3	0138	cis-Fjölóm. fitus. n-3	cis-Polyunsatureded f.a. n-3	null	g	null	1
+F22:2CN6	0084	C 22:2 n-6	C 22:2 c 13,16	null	g	null	6
+x	0115	C 16:2 n-4	C 16:2 c 9,12	null	g	null	6
+MG	0035	Magnesíum, Mg	Magnesium, Mg	null	mg	null	4
+F18:2CON	0069	C 18:2 conj A	C 18:2 conj A	null	g	null	6
+CHOT	0010	Kolvetni, alls	Carbohydrates, total	null	g	K	1
+F12:0	0050	C 12:0	C 12:0	null	g	null	6
+F16:1	0112	C 16:1	C 16:1	null	g	null	6
+SE	0044	Selen, Se	Selenium, Se	null	ug	null	5
+FIBT	0013	Trefjaefni	Dietary fiber	null	g	T	1
+F15:1	0111	C 15:1	C 15:1	null	g	null	6
+HG	0103	Kvikasilfur, Hg	Mercury, Hg	null	ug	null	5
+K	0037	Kalíum, K	Potassium, K	null	mg	null	4
+x	0118	C 16:4 n-3	C 16:4 c 4,7,10,13	null	g	null	6
+F17:0AI	0061	C 17:0 anteiso	C 17 anteiso	null	g	null	6
+x	0131	C 22:1 n-7	C 22:1 c 15	null	g	null	6
+F20:3CN6	0077	C 20:3 n-6	C 20:3 c 8,11,14	null	g	null	6
+[F25:0]	0090	C 25:0	C 25:0	null	g	null	6
+TOCPHA	0022	Alfa-tókóferól	Alpha-Tocopherol	null	mg	null	2
+x	0147	Tárín	Taurine	null	mg	null	null
+F14:1CN5	0109	C 14:1 n-5	C 14:1 c 9	null	g	null	6
+[FACIS]	0007	cis-Fitusýrur	cis-Fatty acids	null	g	null	1
+ASH	0015	Steinefni, alls	Ash	null	g	S	1
+F15:0AI	0055	C 15:0 anteiso	C 15 anteiso	null	g	null	6
+CA	0033	Kalk, Ca	Calcium, Ca	null	mg	null	4
+CARTB	0019	Beta-karótín	Beta-carotene	null	ug	null	2
+FAMSCIS	0004	cis-Einómettaðar fitus.	cis-Monounsaturated fatty acid	null	g	null	1
+NIA	0026	Níasín	Niacin	null	mg	null	3
+WATER	0016	Vatn	Water	null	g	V	1
+x	0116	C 16:3 n-3	C 16:3 c 7,10,13	null	g	null	6
+x	0127	C 20:1 trans	C 20:1 t	null	g	null	6
+PROT	0001	Prótein, alls	Protein, total		g	P	1
+F18:1TRS	0063	C 18:1 trans	C 18:1 t	null	g	null	6
+CU	0040	Kopar, Cu	Copper, Cu	null	mg	null	5
+F17:0	0059	C 17:0	C 17:0	null	g	null	6
+[F18:3TN+F20.1T]	0071	C 18:3 trans + C 20:1 trans	C 18:3 t + C 20:1 t	null	g	null	6
+F16:0	0056	C 16:0	C 16:0	null	g	null	6
+F18:1	0099	C 18:1	C 18:1	null	g	null	6
+FAPUN3FI	0006	cis-Fjölóm. f. n-3 langar	cis-Polyunsat. f.a. n-3 long	null	g	null	1
+x	0121	C 18:3 n-6	C 18:3 c 6,9,12	null	g	null	6
+x	0125	C 20:1	C 20:1	null	g	null	6
+x	0130	C 22:1	C 22:1	null	g	null	6
+NITRI	0140	Nítrít NO2	Nitrite NO2	null	mg	null	7
+F22:0	0081	C 22:0	C 22:0	null	g	null	6
+F24:1CN9	0089	C 24:1 n-9	C 24:1 c 15	null	g	null	6
+FAT	0002	Fita, alls	Fat, total		g	F	1
+VITA	0017	A-vítamín, RJ	Vitamin A, RE	null	ug	null	2
+F16:1CN7	0058	C 16:1 n-7	C 16:1 c 9	null	g	null	6
+x	0142	Beta-glúkanar	Beta-glucans	null	g	null	1
+x	0122	C 18:3 trans	C 18:3 t	null	g	null	6
+F20:4CN6	0079	C 20:4 n-6	C 20:4 c 5,8,11,14	null	g	null	6
+F14:0	0051	C 14:0	C 14:0	null	g	null	6
+F18:1CN7	0065	C 18:1 n-7	C 18:1 c 11	null	g	null	6
+THIA	0023	B1-vítamín, þíamín	Vitamin B1	null	mg	null	3
+P	0034	Fosfór, P	Phosphorus, P	null	mg	null	4
+F8:0	0048	C 8:0	C 8:0	null	g	null	6
+[F22:1TN9]	0082	C 22:1 trans	C 22:1 t	null	g	null	6
+ALC	0014	Alkóhól	Alcohol	null	g	A	1
+x	0129	C 20:4 n-3	C 20:4 c 8,11,14,17	null	g	null	6
+ASPM	0144	Aspartam	Aspartam	null	mg	null	null
+F16:1TN7	0057	C 16:1 n-7 trans	C 16:1 t 9	null	g	null	6
+FAPUN6	0137	cis-Fjölóm. fitus. n-6	cis-Polyunsatureded f.a. n-6	null	g	null	1
+x	0132	C 22:1 n-9	C 22:1 c 13	null	g	null	6
+x	0123	C 19:0	C 19:0	null	g	null	6
+FD	0046	Flúor, F	Fluoride, F	null	mg	null	5
+F22:1CIS	0083	C 22:1	C 22:1 c	null	g	null	6
+PANTAC	0143	Pantóþenat	Pantothenate	null	mg	null	null
