@@ -87,6 +87,7 @@ import elemental.events.EventListener;
 import elemental.events.MessageEvent;
 import elemental.html.Console;
 import elemental.html.ImageElement;
+import elemental.html.WebSocket;
 
 //import elemental.client.Browser;
 //import elemental.html.Console;
@@ -142,6 +143,7 @@ public class Treedraw implements EntryPoint {
 		return (int)(clientscale*Window.getClientWidth());
 	}
 	
+	double fontscale = 5.0;
 	double hchunk = 10.0;
 	public void drawTree( TreeUtil treeutil ) {		
 		double minh = treeutil.getminh();
@@ -202,7 +204,7 @@ public class Treedraw implements EntryPoint {
 		ctx.setFillStyle("#FFFFFF");
 		ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
 		if( hchunk != 10.0 ) {
-			String fontstr = (int)(5.0*Math.log(hchunk))+"px sans-serif";
+			String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
 			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
 		}
 		if( treelabel != null ) {
@@ -1149,7 +1151,7 @@ public class Treedraw implements EntryPoint {
 				evt.stopPropagation();
 				evt.preventDefault();
 			}
-			if( !s.@org.simmi.client.Treedraw::inTextBox ) s.@org.simmi.client.Treedraw::keyCheck(CI)( c, keycode );
+			if( !s.@org.simmi.client.Treedraw::inTextBox ) s.@org.simmi.client.Treedraw::keyCheck(CIZ)( c, keycode, false );
 		}
 		$wnd.addEventListener('keypress', whatKey, true);
 	}-*/;
@@ -1165,7 +1167,8 @@ public class Treedraw implements EntryPoint {
 	
 	boolean	ie = false;
 	boolean inTextBox = false;
-	public void keyCheck( char c, int keycode ) {
+	public void keyCheck( char c, int keycode, boolean alt ) {
+		//boolean shift = (keycode | KeyCodes.KEY_SHIFT) != 0;
 		if( c == 'p' || c == 'P' ) {
 			if( c == 'p' ) {
 				circularScale += 0.01;
@@ -1190,6 +1193,10 @@ public class Treedraw implements EntryPoint {
 			clientscale *= 1.25;
 		} else if( c == '/' ) {
 			clientscale *= 0.8;
+		} else if( c == '_' ) {
+			fontscale *= 1.25;
+		} else if( c == '?' ) {
+			fontscale *= 0.8;
 		} else if( c == '+' ) {
 			hchunk *= 1.25;
 		} else if( c == '-' ) {
@@ -1536,11 +1543,15 @@ public class Treedraw implements EntryPoint {
 	}-*/;
 	
 	public native void renderSaveToDrive( String id, String objurl, String filename ) /*-{
-		$wnd.gapi.savetodrive.render( id, {
-          src: objurl,
-          filename: filename,
-          sitename: 'Sigmasoft Treedraw'
-        });
+		try {
+			$wnd.gapi.savetodrive.render( id, {
+	          src: objurl,
+	          filename: filename,
+	          sitename: 'Sigmasoft Treedraw'
+	        });
+		} catch( e ) {
+			$wnd.console.log( "savetodrive error " + e );
+		}
 	}-*/;
 	
 	@Override
@@ -1787,7 +1798,7 @@ public class Treedraw implements EntryPoint {
 					event.preventDefault();
 				}
 				//if( event.isControlKeyDown() ) {
-					keyCheck( c, keycode );
+					keyCheck( c, keycode, event.isShiftKeyDown() );
 				//}
 			}
 		};
@@ -2394,8 +2405,25 @@ public class Treedraw implements EntryPoint {
 			String enctree = Window.Location.getParameter("tree");
 			String tree = URL.decode( enctree );
 			handleText( tree );
+		} else if( Window.Location.getParameterMap().keySet().contains("ws") ) {
+			String encws = Window.Location.getParameter("ws");
+			String url = URL.decode( encws );
+			Browser.getWindow().getConsole().log( "wsurl: " + url );
+			newWebSocket( url );
 		}
-	}	
+	}
+	
+	public native WebSocket newWebSocket( String url ) /*-{
+		var s = this;
+		var ws = new WebSocket( "ws://"+url );
+		ws.onopen = function( e ) {
+  			ws.send("ready");
+		};
+		ws.onmessage = function( e ) {
+		 	s.@org.simmi.client.Treedraw::handleText(Ljava/lang/String;)( e.data );
+		};	
+		return ws;
+	}-*/;
 	
 	double w;
 	double h;
@@ -2908,7 +2936,7 @@ public class Treedraw implements EntryPoint {
 			
 			double mhchunk = Math.max( 10.0, hchunk );
 			//double strw = 0;
-			double strh = 5.0*Math.log(mhchunk);
+			double strh = fontscale*Math.log(mhchunk);
 			double nstrh = resnode.getFontSize() == -1.0 ? strh : resnode.getFontSize()*strh;
 			double frmh = strh;
 			frmh = resnode.getFontSize() == -1.0 ? frmh : resnode.getFrameSize()*frmh;

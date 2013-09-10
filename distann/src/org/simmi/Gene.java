@@ -1,43 +1,33 @@
 package org.simmi;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class Gene {
-	public Gene(GeneGroup gg, String name, String origin) {
+	public Gene(GeneGroup gg, String id, String name, String origin) {
 		this.name = name;
-		this.origin = origin;
+		this.species = origin;
 		this.gg = gg;
+		this.refid = id;
 		// this.setAa( aa );
 		
 		//groupIdx = -10;
 	}
 	
+	public Gene( GeneGroup gg, String id, String name, String origin, String tag ) {
+		this( gg, id, name, origin );
+		this.tag = tag;
+	}
+	
+	public String toString() {
+		return getName();
+	}
+	
 	public int getMaxCyc() {
-		int max = -1;
-		if( species != null ) {
-			for (String str : species.keySet()) {
-				Teginfo set = species.get(str);
-				for (Tegeval tv : set.tset) {
-					max = Math.max(max, tv.numCys);
-				}
-			}
-		}
-		return max;
+		return tegeval.numCys;
 	}
 	
 	public int getMaxLength() {
-		int max = -1;
-		if( this.species != null ) {
-			for (String str : this.species.keySet()) {
-				Teginfo set = this.species.get(str);
-				for (Tegeval tv : set.tset) {
-					max = Math.max(max, tv.getProteinLength());
-				}
-			}
-		}
-		return max;
+		return tegeval.getProteinLength();
 	}
 
 	public void setAa(String aa) {
@@ -85,56 +75,44 @@ public class Gene {
 		return name;
 	}
 	
-	public double getAvgGCPerc() {
-		double gc = 0.0;
-		int count = 0;
-		for( String spec : species.keySet() ) {
-			Teginfo ti = species.get(spec);
-			for( Tegeval te : ti.tset ) {
-				gc += te.getGCPerc();
-				count++;
-			}
-		}
-		return gc/count;
+	public double getGCPerc() {
+		return tegeval.getGCPerc();
 	}
 	
-	public double getStddevGCPerc( double avggc ) {
-		double gc = 0.0;
-		int count = 0;
-		for( String spec : species.keySet() ) {
-			Teginfo ti = species.get(spec);
-			for( Tegeval te : ti.tset ) {
-				double val = te.getGCPerc()-avggc;
-				gc += val*val;
-				count++;
-			}
-		}
-		return Math.sqrt(gc/count);
-	}
-	
-	public void addTegeval( Tegeval tegeval ) {
-		Teginfo ti;
+	public void setTegeval( Tegeval tegeval ) {
+		/*Teginfo ti;
 		if( species == null ) species = new HashMap<String,Teginfo>();
 		if( species.containsKey( tegeval.teg ) ) {
 			ti = species.get( tegeval.teg );
 		} else {
 			ti = new Teginfo();
 			species.put( tegeval.teg, ti );
-		}
-		ti.add( tegeval );
+		}*/
+		this.tegeval = tegeval;
+		//if( teginfo == null ) teginfo = new Teginfo();
+		//teginfo.add( tegeval );
+	}
+	
+	public String getSpecies() {
+		return species;
 	}
 
 	String name;
-	String origin;
+	String tag;
+	//String origin;
 	String refid;
 	Set<String> allids;
 	String genid;
 	String uniid;
 	String keggid;
 	String pdbid;
+	String koid;
+	String ecid;
 	String blastspec;
 	Set<Function> funcentries;
-	Map<String, Teginfo> species;
+	//Map<String, Teginfo> species;
+	private String 	species;
+	Tegeval tegeval;
 	private String aac;
 	int index;
 

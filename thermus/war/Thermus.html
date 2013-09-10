@@ -59,9 +59,28 @@
   	}
 	window.addEventListener("message", receiveMessage, false);
 	
-	showTree = function( newtree ) {
+	var domain = 'http://webconnectron.appspot.com/';
+	function handleMessage(message_event) {
+	  treetext = message_event.data;
+	  //window.console.log( treestr );
+      //var treeenc = encodeURIComponent( treestr );
+      myPopup = window.open( domain + '/Treedraw.html?callback=thermusgenes', '_blank' );
+      //window.open(domain + '/Treedraw.html?tree=' + treeenc,'_blank');
+    }
+    
+    function now() {
+      var fasttree = document.getElementById('fasttree');
+      fasttree.addEventListener('message', handleMessage, true);
+    }
+    
+	function showTree( newtree ) {
 		treetext = newtree;
 		myPopup = window.open(domain + '/Treedraw.html?callback=thermusgenes','_blank');
+	}
+	
+	function fastTree( treestr ) {
+		var fasttree = document.getElementById('fasttree');
+		fasttree.postMessage( 'f'+treestr );
 	}
 	</script>
   </head>
@@ -79,5 +98,11 @@
         in order for this application to display correctly.
       </div>
     </noscript>
+    
+    <embed name="nacl_module" style="visibility:hidden" onload="now()"
+       	id="fasttree"
+       	width=0 height=0
+       	src="fasttree.nmf"
+       	type="application/x-nacl" />
   </body>
 </html>

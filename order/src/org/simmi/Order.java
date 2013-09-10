@@ -978,7 +978,7 @@ public class Order extends JApplet {
 		}
 		
 		Integer i = modelRowMap.get( order.Cat );
-		if( i != null && i >= 0 ) {
+		if( i != null && i >= 0 && i < ordlist.size() ) {
 			Vara v = ordlist.get(i);
 			v._lastUnit = order.e_Mælieining;
 			updateVara( v );
@@ -2222,12 +2222,12 @@ public class Order extends JApplet {
 						ed.setEditable( false );
 					}
 					
-					String name = (String)ptable.getValueAt(r, 4);
+					String name = (String)ptable.getValueAt(r, 5);
 					String vara = (String)ptable.getValueAt(r, 2);
 					
 					if( vara != null && modelRowMap.containsKey( vara ) ) {
 						int nr = modelRowMap.get( vara );
-						if( nr != -1 ) {
+						if( nr != -1 && nr < table.getRowCount() ) {
 							nr = table.convertRowIndexToView( nr );
 							if( nr >= 0 && nr < table.getRowCount() ) {
 								table.setRowSelectionInterval( nr, nr );
@@ -2634,15 +2634,31 @@ public class Order extends JApplet {
 		cafgreitt.add( afgreitt );
 		cb.add( cafgreitt );
 		
+		final JTextField	tfafhent = new JTextField();
+		tfafhent.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				updateFilter(tfafhent.getText(), 0, rtable);
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				updateFilter(tfafhent.getText(), 1, rtable);
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				updateFilter(tfafhent.getText(), 2, rtable);
+			}
+		});
 		cafhent = new JComponent() {
 			public void setBounds( int x, int y, int w, int h ) {
 				super.setBounds(x, y, w, h);
 				
-				rscrollpane.setBounds( (int)(0.00*w), 30, (int)(1.00*w), (int)(1.0*h)-30 );
+				rscrollpane.setBounds( (int)(0.00*w), 30, (int)(1.00*w), (int)(1.0*h)-60 );
+				tfafhent.setBounds( (int)(0.00*w), (int)(1.0*h)-30 , (int)(1.00*w), 25 );
 				afhent.setBounds( (int)(0.0*w), 0, (int)(1.0*w), 25 );
 			}
 		};
 		cafhent.add( rscrollpane );
+		cafhent.add( tfafhent );
 		cafhent.add( afhent );
 		cb.add( cafhent );
 		
@@ -2910,6 +2926,7 @@ public class Order extends JApplet {
 			
 			if( !b ) {
 				ordlist.add( v );
+				ordmap.put( v.e_Cat, v );
 				
 				int i;
 				String str = null;

@@ -12,6 +12,7 @@ public class Function {
 	String ec;
 	String metacyc;
 	String kegg;
+	String ko;
 	String name;
 	String namespace;
 	String desc;
@@ -62,12 +63,13 @@ public class Function {
 		if( groupentries != null ) {
 			if( groupentries.size() <= 1 ) {
 				for( GeneGroup gg : groupentries ) {
-					return gg.getSpecies().size();
+					Set<String> spec = gg != null ? gg.getSpecies() : null;
+					if( spec != null ) return spec.size();
 				}
 			} else {
 				Set<String>	specset = new HashSet<String>();
 				for( GeneGroup gg : groupentries ) {
-					specset.addAll( gg.getSpecies() );
+					if( gg != null ) specset.addAll( gg.getSpecies() );
 				}
 				return specset.size();
 			}
