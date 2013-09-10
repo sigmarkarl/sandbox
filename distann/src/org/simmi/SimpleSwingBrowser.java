@@ -1,47 +1,27 @@
 package org.simmi;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker.State;
-import javafx.embed.swing.JFXPanel;
-import javafx.event.EventHandler;
-import javafx.scene.Scene;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebEvent;
-import javafx.scene.web.WebView;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+
 public class SimpleSwingBrowser implements Runnable {
-    private JFXPanel jfxPanel;
-    private WebEngine engine;
+    /*private JFXPanel jfxPanel;
+    private WebEngine engine;*/
 
     private JFrame frame = new JFrame();
-    private JPanel panel = new JPanel(new BorderLayout());
+    /*private JPanel panel = new JPanel(new BorderLayout());
     private JLabel lblStatus = new JLabel();
 
     private JButton btnGo = new JButton("Go");
     private JTextField txtURL = new JTextField();
-    private JProgressBar progressBar = new JProgressBar();
+    private JProgressBar progressBar = new JProgressBar();*/
 
     private void initComponents() {
-        jfxPanel = new JFXPanel();
+        /*jfxPanel = new JFXPanel();
 
         createScene();
 
@@ -72,10 +52,10 @@ public class SimpleSwingBrowser implements Runnable {
         panel.add(jfxPanel, BorderLayout.CENTER);
         panel.add(statusBar, BorderLayout.SOUTH);
 
-        frame.getContentPane().add(panel);
+        frame.getContentPane().add(panel);*/
     }
 
-    private void createScene() {
+    /*private void createScene() {
 
         Platform.runLater(new Runnable() {
             @Override public void run() {
@@ -150,10 +130,10 @@ public class SimpleSwingBrowser implements Runnable {
                 jfxPanel.setScene(new Scene(view));
             }
         });
-    }
+    }*/
 
     public void loadURL(final String url) {
-        Platform.runLater(new Runnable() {
+        /*Platform.runLater(new Runnable() {
             @Override public void run() {
                 String tmp = toURL(url);
 
@@ -163,7 +143,7 @@ public class SimpleSwingBrowser implements Runnable {
 
                 engine.load(tmp);
             }
-        });
+        });*/
     }
 
     private static String toURL(String str) {
@@ -175,7 +155,6 @@ public class SimpleSwingBrowser implements Runnable {
     }
 
     @Override public void run() {
-
         frame.setPreferredSize(new Dimension(1024, 600));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

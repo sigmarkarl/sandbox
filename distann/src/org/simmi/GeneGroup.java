@@ -1,16 +1,18 @@
 package org.simmi;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class GeneGroup {
-	Set<Gene>	genes = new HashSet<Gene>();
-	Set<String>	species = new HashSet<String>();
-	int 		groupIndex = -10;
-	int 		groupCount = -1;
-	int			index;
+	Set<Gene>           	genes = new HashSet<Gene>();
+	Map<String, Teginfo>  	species = new HashMap<String, Teginfo>();
+	int                 	groupIndex = -10;
+	int                 	groupCount = -1;
+	int						index;
 	//int			groupGeneCount;
 	
 	public int getMaxCyc() {
@@ -48,18 +50,12 @@ public class GeneGroup {
 		return ltv;
 	}
 	
-	public List<Tegeval> getTegevals( String species ) {
+	public List<Tegeval> getTegevals( String specs ) {
 		List<Tegeval>	ltv = new ArrayList<Tegeval>();
 		
-		for( Gene g : genes ) {
-			Teginfo stv = g.species.get(species);
-			if( stv == null ) {
-				//System.err.println( sp );
-			} else {
-				for (Tegeval tv : stv.tset) {
-					ltv.add( tv );
-				}
-			}
+		Teginfo genes = species.get( specs );
+		if( genes != null ) for( Tegeval tv : genes.tset ) {
+			ltv.add( tv );
 		}
 		
 		return ltv;
@@ -69,16 +65,7 @@ public class GeneGroup {
 		List<Tegeval>	ltv = new ArrayList<Tegeval>();
 		
 		for( Gene g : genes ) {
-			for( String species : g.species.keySet() ) {
-				Teginfo stv = g.species.get(species);
-				if( stv == null ) {
-					//System.err.println( sp );
-				} else {
-					for (Tegeval tv : stv.tset) {
-						ltv.add( tv );
-					}
-				}
-			}
+			ltv.add( g.tegeval );
 		}
 		
 		return ltv;
@@ -96,13 +83,8 @@ public class GeneGroup {
 		double gc = 0.0;
 		int count = 0;
 		for( Gene g : genes ) {
-			for( String spec : g.species.keySet() ) {
-				Teginfo ti = g.species.get(spec);
-				for( Tegeval te : ti.tset ) {
-					gc += te.getGCPerc();
-					count++;
-				}
-			}
+			gc += g.tegeval.getGCPerc();
+			count++;
 		}
 		return gc/count;
 	}
@@ -111,14 +93,9 @@ public class GeneGroup {
 		double gc = 0.0;
 		int count = 0;
 		for( Gene g : genes ) {
-			for( String spec : g.species.keySet() ) {
-				Teginfo ti = g.species.get(spec);
-				for( Tegeval te : ti.tset ) {
-					double val = te.getGCPerc()-avggc;
-					gc += val*val;
-					count++;
-				}
-			}
+			double val = g.tegeval.getGCPerc()-avggc;
+			gc += val*val;
+			count++;
 		}
 		return Math.sqrt(gc/count);
 	}
@@ -178,9 +155,32 @@ public class GeneGroup {
 	public String getCommonName() {
 		String ret = null;
 		for( Gene g : genes ) {
-			if( ret == null || !(g.getName().contains("unnamed") || g.getName().contains("hypot")) ) ret = g.getName();
+			String name = g.getName();
+			if( ret == null ) ret = name;
+			else if( ret.contains("contig") || !(name.contains("contig") || name.contains("unnamed") || name.contains("hypot")) ) ret = name;
 		}
 		return ret;
+	}
+	
+	public String getCommonCog( Map<String,String> cogmap ) {
+		for( Gene g : genes ) {
+			if( cogmap.containsKey( g.refid ) ) return cogmap.get( g.refid );
+		}
+		return null;
+	}
+	
+	public String getCommonCazy( Map<String,String> cazymap ) {
+		for( Gene g : genes ) {
+			if( cazymap.containsKey( g.refid ) ) return cazymap.get( g.refid );
+		}
+		return null;
+	}
+	
+	public String getCommonEc() {
+		for( Gene g : genes ) {
+			if( g.ecid != null && g.ecid.length() > 0 ) return g.ecid;
+		}
+		return null;
 	}
 	
 	public String getKeggid() {
@@ -192,21 +192,40 @@ public class GeneGroup {
 	}
 	
 	public Set<String> getSpecies() {
-		return species;
+		return species.keySet();
 	}
 	
 	public boolean isSingluar() {
 		return this.getGroupCount() == this.getGroupCoverage();
 	}
+        
+    public Teginfo getGenes( String spec ) {
+        return species.get( spec );
+    }
 	
 	public void addGene( Gene gene ) {
 		if( gene.getGeneGroup() != this ) gene.setGeneGroup( this );
-		else genes.add( gene );
+		else {
+			genes.add( gene );
+			
+			Teginfo genes;
+			if( species.containsKey( gene.getSpecies() ) ) {
+				genes = species.get( gene.getSpecies() );
+			} else {
+				genes = new Teginfo();
+				species.put( gene.getSpecies(), genes );
+			}
+			genes.add( gene.tegeval );
+        }
+	}
+	
+	/*public void addSpecies( String species ) {
+		this.species.add( species );
 	}
 	
 	public void addSpecies( Set<String> species ) {
 		this.species.addAll( species );
-	}
+	}*/
 	
 	public GeneGroup( int i ) {
 		this.groupIndex = i;
@@ -222,15 +241,7 @@ public class GeneGroup {
 	
 	public int getGroupCount() {
 		if( groupCount == -1 ) {
-			int val = 0;
-			for (Gene g : genes) {
-				if (g.species != null) {
-					for (String str : g.species.keySet()) {
-						val += g.species.get(str).tset.size();
-					}
-				}
-			}
-			this.groupCount = val;
+			this.groupCount = genes.size();
 		}
 		return this.groupCount;
 	}
