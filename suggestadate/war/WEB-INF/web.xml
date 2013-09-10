@@ -4,7 +4,10 @@
               http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5"
          xmlns="http://java.sun.com/xml/ns/javaee">
-
+  <mime-mapping>
+        <extension>webapp</extension>
+        <mime-type>application/x-web-app-manifest+json</mime-type>
+  </mime-mapping>
   <!-- Servlets -->
   <servlet>
     <servlet-name>greetServlet</servlet-name>
