@@ -712,6 +712,13 @@ public class TreeUtil {
 			metacount = 0;
 		}
 		
+		public Node( String name, boolean parse ) {
+			this();
+			this.setName( name, parse );
+			/*this.name = name;
+			this.id = name;*/
+		}
+		
 		public Node( String name ) {
 			this();
 			this.setName( name );
@@ -931,8 +938,6 @@ public class TreeUtil {
 							this.name = newname.substring(0,ci);
 							int ce = newname.indexOf("]",ci+1);
 							String metastr = newname.substring(ci+1,ce);
-							
-							//Browser.getWindow().getConsole().log( "erm " + this.name + " " + metastr );
 							
 							int coli = metastr.indexOf("#");
 							if( coli >= 0 ) {
@@ -2095,7 +2100,6 @@ public class TreeUtil {
 	public Node parseTreeRecursive( String str, boolean inverse ) {
 		Node ret = new Node();
 		Node node = null;
-		//boolean brakk = false;
 		while( loc < str.length()-1 && str.charAt(loc) != ')' ) {
 			loc++;
 			char c = str.charAt(loc);
@@ -2182,7 +2186,6 @@ public class TreeUtil {
 						node.meta = name.substring(idx+1);
 					}
 					node.id = node.name;*/
-					//Browser.getWindow().getConsole().log( "erm " + name );
 					node.setName( name );
 					//extractMeta( node, mapmap );
 					
@@ -2322,7 +2325,6 @@ public class TreeUtil {
 			if( n == ']' ) {
 				code = str.substring( loc, end+1 );
 			} else code = str.substring( loc, end );
-			
 			int ci = code.indexOf(":", si);
 			if( ci != -1 ) {
 				String[] split;

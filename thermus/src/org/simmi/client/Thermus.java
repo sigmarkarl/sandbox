@@ -8,6 +8,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.json.client.JSONArray;
@@ -103,6 +104,16 @@ public class Thermus implements EntryPoint {
 				//console( w+" "+h );
 			}
 		});
+		//Browser.getWindow().
+		Element ft = Document.get().getElementById("fasttree");
+		st = ft.getStyle();
+		st.setHeight(0.0, Unit.PX);
+		st.setWidth(0.0, Unit.PX);
+		st.setBorderWidth(0.0, Unit.PX);
+		st.setPadding(0.0, Unit.PX);
+		st.setMargin(0.0, Unit.PX);
+		st.setVisibility( Visibility.HIDDEN );
+		//st.setDisplay( Display.NONE );
 		
 		Element pe = Document.get().createElement("param");
 		pe.setAttribute("name", "jnlp_href");
@@ -119,8 +130,10 @@ public class Thermus implements EntryPoint {
 		ae.setAttribute("width", "100%");
 		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "distann.jnlp");
-		ae.setAttribute("archive", "http://test.matis.is/thermus/distann.jar");
+		ae.setAttribute("archive", "distann.jar");
 		ae.setAttribute("code", "org.simmi.GeneSet");
+		
+		//initFunctions( applet );
 		
 		rp.getElement().appendChild( ae );
 	}
