@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.simmi.GeneSet.Cog;
+
 public class GeneGroup {
 	Set<Gene>           	genes = new HashSet<Gene>();
 	Map<String, Teginfo>  	species = new HashMap<String, Teginfo>();
@@ -162,7 +164,7 @@ public class GeneGroup {
 		return ret;
 	}
 	
-	public String getCommonCog( Map<String,String> cogmap ) {
+	public Cog getCommonCog( Map<String,Cog> cogmap ) {
 		for( Gene g : genes ) {
 			if( cogmap.containsKey( g.refid ) ) return cogmap.get( g.refid );
 		}
