@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,8 +52,40 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.simmi.shared.Sequence;
+
 public class GeneCompare {
 	List<Contig> contigs;
+	
+	public static Map<String,Integer> getBlosumMap() throws IOException {
+		Map<String,Integer> blosumap = new HashMap<String,Integer>();
+		InputStream is = GeneCompare.class.getResourceAsStream("/BLOSUM62");
+		InputStreamReader 	ir = new InputStreamReader( is );
+		BufferedReader		br = new BufferedReader( ir );
+		String[] abet = null;
+		//int i = 0;
+		String line = br.readLine();
+		while( line != null ) {
+			if( line.charAt(0) != '#' ) {
+				String[] split = line.trim().split("[ ]+");
+				char chr = line.charAt(0);
+				if( chr == ' ' ) {
+					abet = split;
+					abet[abet.length-1] = "-";
+				} else {
+					if( chr == '*' ) chr = '-';
+					int k = 0;
+					for( String a : abet ) {
+						blosumap.put( chr+a, Integer.parseInt(split[++k]) );
+					}
+				}
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		return blosumap;
+	}
 	
 	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) throws IOException {
 		final JTable 				table = geneset.getGeneTable();
@@ -127,31 +158,7 @@ public class GeneCompare {
 			spec2s.add( spec2 );
 		}
 		
-		final Map<String,Integer>	blosumap = new HashMap<String,Integer>();
-		InputStream is = GeneCompare.class.getResourceAsStream("/BLOSUM62");
-		InputStreamReader 	ir = new InputStreamReader( is );
-		BufferedReader		br = new BufferedReader( ir );
-		String[] abet = null;
-		//int i = 0;
-		String line = br.readLine();
-		while( line != null ) {
-			if( line.charAt(0) != '#' ) {
-				String[] split = line.trim().split("[ ]+");
-				char chr = line.charAt(0);
-				if( chr == ' ' ) {
-					abet = split;
-					abet[abet.length-1] = "-";
-				} else {
-					if( chr == '*' ) chr = '-';
-					int k = 0;
-					for( String a : abet ) {
-						blosumap.put( chr+a, Integer.parseInt(split[++k]) );
-					}
-				}
-			}
-			line = br.readLine();
-		}
-		br.close();
+		final Map<String,Integer>	blosumap = getBlosumMap();
 		
 		contigs = geneset.speccontigMap.get( spec1 );
 		int total = 0;
@@ -393,6 +400,50 @@ public class GeneCompare {
 		draw( g2, spec1, geneset, w, h, contigs, spec2s, blosumap, total, 0 );
 	}
 	
+	public static Color blosumColor( StringBuilder seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap, boolean rs ) {
+		Color color = Color.green;
+		if( seq != null ) {
+			int tscore = 0;
+            for( int i = 0; i < seq.length(); i++ ) {
+            	char c = seq.charAt(i);
+            	String comb = c+""+c;
+            	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
+            }
+            
+            int score = 0;
+            Teginfo gene2s = gg.getGenes( spec2 );
+            for( Tegeval tv2 : gene2s.tset ) {
+                StringBuilder seq2 = tv2.getAlignedSequence();
+                
+                int sscore = 0;
+                for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
+                	char c = seq.charAt( i );
+                	char c2 = seq2.charAt( i );
+                	
+                	String comb = c+""+c2;
+                	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
+                }
+                if( sscore > score ) score = sscore;
+                
+                if( seq == seq2 && sscore != tscore ) {
+                	System.err.println();
+                }
+            }
+            int cval = Math.min( 192, 512-score*512/tscore );
+            color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
+		} else {
+			Teginfo gene2s = gg.getGenes( spec2 );
+            for( Tegeval tv2 : gene2s.tset ) {
+            	if( tv2.getGene().tag != null )
+            		color = tv2.getGene().tag.equals("rrna") ? Color.red : Color.blue;
+            	else color = Color.green;
+            	break;
+            }
+		}
+		
+		return color;
+	}
+	
 	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int synbr ) {
 		/*g.setColor( Color.black );
 		int count = 0;
@@ -479,44 +530,7 @@ public class GeneCompare {
 								} else {
 									Color color = Color.green;
 									if( blosumap != null ) {
-										if( seq != null ) {
-											int tscore = 0;
-					                        for( int i = 0; i < seq.length(); i++ ) {
-					                        	char c = seq.charAt(i);
-					                        	String comb = c+""+c;
-					                        	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
-					                        }
-					                        
-					                        int score = 0;
-					                        Teginfo gene2s = gg.getGenes( spec2 );
-					                        for( Tegeval tv2 : gene2s.tset ) {
-					                            StringBuilder seq2 = tv2.getAlignedSequence();
-					                            
-					                            int sscore = 0;
-					                            for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
-					                            	char c = seq.charAt( i );
-					                            	char c2 = seq2.charAt( i );
-					                            	
-					                            	String comb = c+""+c2;
-					                            	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
-					                            }
-					                            if( sscore > score ) score = sscore;
-					                            
-					                            if( seq == seq2 && sscore != tscore ) {
-					                            	System.err.println();
-					                            }
-					                        }
-					                        int cval = Math.min( 128, 512-score*512/tscore );
-					                        color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
-										} else {
-											Teginfo gene2s = gg.getGenes( spec2 );
-					                        for( Tegeval tv2 : gene2s.tset ) {
-					                        	if( tv2.getGene().tag != null )
-					                        		color = tv2.getGene().tag.equals("rrna") ? Color.red : Color.blue;
-					                        	else color = Color.green;
-					                        	break;
-					                        }
-										}
+										color = blosumColor(seq, spec2, gg, blosumap, rs);
 									} else {
 										Teginfo gene2s = gg.getGenes( spec2 );
 				                        for( Tegeval tv2 : gene2s.tset ) {

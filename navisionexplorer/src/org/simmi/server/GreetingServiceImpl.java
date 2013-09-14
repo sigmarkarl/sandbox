@@ -99,4 +99,21 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 		}*/
 		return persons;
 	}
+
+	@Override
+	public String getFrystilager() {
+		String ret = null;
+		
+		String connectionUrl = "jdbc:sqlserver://navision.rf.is:1433;databaseName=order;integratedSecurity=true;";
+		try {
+			Connection con = DriverManager.getConnection(connectionUrl);
+			
+			String sql = "select * from .[dbo].Frystilager";
+			con.prepareStatement(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return ret;
+	}
 }
