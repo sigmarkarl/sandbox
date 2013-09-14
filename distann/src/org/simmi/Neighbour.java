@@ -258,23 +258,29 @@ public class Neighbour {
 		final JButton	forwTen = new JButton(">>");
 		
 		final JCheckBox		commonname = new JCheckBox("Group names");
+		final JCheckBox		noname = new JCheckBox("No names");
 		
 		mbr.add( mnu );
 		mbr.add( mvmnu );
 		final JRadioButtonMenuItem funcol = new JRadioButtonMenuItem("Functions");
 		final JRadioButtonMenuItem gccol = new JRadioButtonMenuItem("GC%");
 		final JRadioButtonMenuItem abucol = new JRadioButtonMenuItem("Abundance");
+		final JRadioButtonMenuItem relcol = new JRadioButtonMenuItem("Relation");
 		final JRadioButtonMenuItem precol = new JRadioButtonMenuItem("Proximity preservation");
 		
 		ButtonGroup bg = new ButtonGroup();
 		bg.add( funcol );
 		bg.add( gccol );
 		bg.add( abucol );
+		bg.add( relcol );
 		bg.add( precol );
 		mnu.add( funcol );
 		mnu.add( gccol );
 		mnu.add( abucol );
+		mnu.add( relcol );
 		mnu.add( precol );
+		
+		final Map<String,Integer> blosumap = GeneCompare.getBlosumMap();
 		
 		final JFrame frame = new JFrame();
 		JSplitPane splitpane = new JSplitPane();
@@ -387,12 +393,28 @@ public class Neighbour {
 												}
 											} else if( abucol.isSelected() ) {
 												GeneGroup gg = next.getGene().getGeneGroup();
-												int numspec = gg.species.size();
-												float abu = numspec/38.0f;
+												int numspec = Math.min( gg.species.size(), 39 );
+												float abu = numspec/39.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
+											} else if( relcol.isSelected() ) {
+												int 		rs = rowheader.getSelectedRow();
+												if( rs >= 0 && rs < rowheader.getRowCount() ) {
+													String 		spec = (String)rowheader.getValueAt(rs, 0);
+													
+													//StringBuilder seq = next.seq;
+													Color rc = Color.green;
+													GeneGroup gg = next.getGene().getGeneGroup();
+													List<Tegeval> ltv = gg.getTegevals( spec );
+													if( ltv != null && ltv.size() > 0 ) {
+														rc = GeneCompare.blosumColor( ltv.get(0).seq, next.getSpecies(), gg, blosumap, false );
+													} else {
+														rc = Color.white;
+													}
+													if( rc != null ) g.setColor( rc );
+												}
 											} else if( precol.isSelected() ) {
-												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
 												shanmap.clear();
 												double res = 0.0;
 												
@@ -464,7 +486,11 @@ public class Neighbour {
 												strlen = g.getFontMetrics().stringWidth( genename );
 											}
 											
-											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+											if( !noname.isSelected() ) {
+												if( relcol.isSelected() ) g.setColor( Color.white );
+												else g.setColor( Color.black );
+												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+											}
 										}
 									}
 									
@@ -521,10 +547,24 @@ public class Neighbour {
 												}
 											} else if( abucol.isSelected() ) {
 												GeneGroup gg = prev.getGene().getGeneGroup();
-												int numspec = gg.species.size();
-												float abu = numspec/38.0f;
+												int numspec = Math.min( 39, gg.species.size() );
+												float abu = numspec/39.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
+											} else if( relcol.isSelected() ) {
+												int 		rs = rowheader.getSelectedRow();
+												String 		spec = (String)rowheader.getValueAt(rs, 0);
+												
+												//StringBuilder seq = next.seq;
+												Color rc = Color.green;
+												GeneGroup gg = prev.getGene().getGeneGroup();
+												List<Tegeval> ltv = gg.getTegevals( spec );
+												if( ltv != null && ltv.size() > 0 ) {
+													rc = GeneCompare.blosumColor( ltv.get(0).seq, prev.getSpecies(), gg, blosumap, false );
+												} else {
+													rc = Color.white;
+												}
+												if( rc != null ) g.setColor( rc );
 											} else if( precol.isSelected() ) {
 												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
 												shanmap.clear();
@@ -597,8 +637,12 @@ public class Neighbour {
 												genename = genename.substring(0, genename.length()-1);
 												strlen = g.getFontMetrics().stringWidth( genename );
 											}
-											g.setColor( Color.black );
-											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+											
+											if( !noname.isSelected() ) {
+												if( relcol.isSelected() ) g.setColor( Color.white );
+												else g.setColor( Color.black );
+												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+											}
 										}
 									}
 									prev = theprev;
@@ -669,10 +713,24 @@ public class Neighbour {
 												}
 											} else if( abucol.isSelected() ) {
 												GeneGroup gg = next.getGene().getGeneGroup();
-												int numspec = gg.species.size();
-												float abu = numspec/38.0f;
+												int numspec = Math.min( 39, gg.species.size() );
+												float abu = numspec/39.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
+											} else if( relcol.isSelected() ) {
+												int 		rs = rowheader.getSelectedRow();
+												String 		spec = (String)rowheader.getValueAt(rs, 0);
+												
+												//StringBuilder seq = next.seq;
+												Color rc = Color.green;
+												GeneGroup gg = next.getGene().getGeneGroup();
+												List<Tegeval> ltv = gg.getTegevals( spec );
+												if( ltv != null && ltv.size() > 0 ) {
+													rc = GeneCompare.blosumColor( ltv.get(0).seq, next.getSpecies(), gg, blosumap, false );
+												} else {
+													rc = Color.white;
+												}
+												if( rc != null ) g.setColor( rc );
 											} else if( precol.isSelected() ) {
 												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
 												shanmap.clear();
@@ -745,8 +803,12 @@ public class Neighbour {
 												genename = genename.substring(0, genename.length()-1);
 												strlen = g.getFontMetrics().stringWidth( genename );
 											}
-											g.setColor( Color.black );
-											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+											
+											if( !noname.isSelected() ) {
+												if( relcol.isSelected() ) g.setColor( Color.white );
+												else g.setColor( Color.black );
+												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+											}
 										}
 									/*g.setColor( Color.green );
 									Set<Function> funcset = te.getGene().getGeneGroup().getFunctions();
@@ -866,8 +928,8 @@ public class Neighbour {
 											}
 										} else if( abucol.isSelected() ) {
 											GeneGroup gg = prev.getGene().getGeneGroup();
-											int numspec = gg.species.size();
-											float abu = numspec/38.0f;
+											int numspec = Math.min( 39, gg.species.size() );
+											float abu = numspec/39.0f;
 											Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 											g.setColor( rc );
 										} else if( precol.isSelected() ) {
@@ -941,8 +1003,12 @@ public class Neighbour {
 											genename = genename.substring(0, genename.length()-1);
 											strlen = g.getFontMetrics().stringWidth( genename );
 										}
-										g.setColor( Color.black );
-										g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+										
+										if( !noname.isSelected() ) {
+											if( relcol.isSelected() ) g.setColor( Color.white );
+											g.setColor( Color.black );
+											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+										}
 									}
 								}
 							}
@@ -1014,6 +1080,7 @@ public class Neighbour {
 			precol.setAction( a );
 			
 			commonname.setAction( a );
+			noname.setAction( a );
 			
 			funcol.setText("Functions");
 			gccol.setText("GC%");
@@ -1021,6 +1088,7 @@ public class Neighbour {
 			precol.setText("Proximity preservation");
 			
 			commonname.setText("Group names");
+			noname.setText( "No names" );
 			
 			turn.setAction( new AbstractAction("Forward") {
 				@Override
@@ -1642,6 +1710,7 @@ public class Neighbour {
 		toolbar.add( mbr );
 		toolbar.add( turn );
 		toolbar.add( commonname );
+		toolbar.add( noname );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
