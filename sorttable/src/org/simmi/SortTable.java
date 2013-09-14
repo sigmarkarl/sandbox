@@ -28,7 +28,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageProducer;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -464,6 +463,8 @@ public class SortTable extends JApplet {
 	}
 	
 	public Set<Integer> isComponent( Reader rd, String sep, boolean skipfirst ) throws IOException {
+		System.err.println("eeeeerm ----------------------------------------------------------------------------------------");
+		
 		Integer[] ii = { 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44, 137, 138 };
 		final Set<Integer> is = new HashSet<Integer>(Arrays.asList(ii));
 		List<String[]> idList = new ArrayList<String[]>();
@@ -1049,10 +1050,14 @@ public class SortTable extends JApplet {
 						int l = urlstr.length();
 						String c = urlstr.substring(l - 1, l);
 						int v = -1;
-						try {
-							v = Integer.parseInt(c);
-						} catch (Exception e) {
-							e.printStackTrace();
+						
+						char chr = c.charAt(0);
+						if( chr >= '0' && chr <= '9' ) {
+							try {
+								v = Integer.parseInt(c);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 						}
 
 						if (v >= 0 && v < 8) {
@@ -1581,18 +1586,22 @@ public class SortTable extends JApplet {
 		try {
 			codeBase = SortTable.this.getCodeBase();
 		} catch (Exception e) {}
+		
+		System.err.println("codebase " + codeBase);
 
 		if (codeBase == null) {
 			Image img = null;
 
-			try {
+			InputStream is = SortTable.class.getResourceAsStream("/matis.png");
+			img = ImageIO.read( is );
+			/*try {
 				URL url = new URL("http://test.matis.is/isgem/Matis_logo.jpg");
 				img = ImageIO.read(url.openStream());
 			} catch (MalformedURLException e2) {
 				e2.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
+			}*/
 
 			matisLogo = img;
 		} else {
@@ -2381,28 +2390,28 @@ public class SortTable extends JApplet {
 
 		int size = 16;
 		try {
-			URL url = SortTable.this.getClass().getResource("/food.png");
+			InputStream url = SortTable.this.getClass().getResourceAsStream("/food.png");
 			if (url != null)
 				fodicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-			url = SortTable.this.getClass().getResource("/sams.png");
+			url = SortTable.this.getClass().getResourceAsStream("/sams.png");
 			if (url != null)
 				samicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-			url = SortTable.this.getClass().getResource("/helix.png");
+			url = SortTable.this.getClass().getResourceAsStream("/helix.png");
 			if (url != null)
 				helicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-			url = SortTable.this.getClass().getResource("/rds.png");
+			url = SortTable.this.getClass().getResourceAsStream("/rds.png");
 			if (url != null)
 				rdsicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-			url = SortTable.this.getClass().getResource("/mat.png");
+			url = SortTable.this.getClass().getResourceAsStream("/mat.png");
 			if (url != null)
 				maticon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-			url = SortTable.this.getClass().getResource("/uppsk.png");
+			url = SortTable.this.getClass().getResourceAsStream("/uppsk.png");
 			if (url != null)
 				uppicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-			url = SortTable.this.getClass().getResource("/vinir.png");
+			url = SortTable.this.getClass().getResourceAsStream("/vinir.png");
 			if (url != null)
 				vinicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-			url = SortTable.this.getClass().getResource("/help.png");
+			url = SortTable.this.getClass().getResourceAsStream("/help.png");
 			if (url != null)
 				hlpicon = new ImageIcon(ImageIO.read(url).getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 		} catch (IOException e2) {
@@ -2689,10 +2698,11 @@ public class SortTable extends JApplet {
 		});
 		
 		JPopupMenu		popup = new JPopupMenu();
-		URL				xurl = this.getClass().getResource("/xlsx.png");
-		if( xurl != null ) {
-			ImageProducer 	ims = (ImageProducer)xurl.getContent();
-			Image 		img = (ims != null ? this.createImage( ims ).getScaledInstance(16, 16, Image.SCALE_SMOOTH) : null);
+		InputStream is = this.getClass().getResourceAsStream("/xlsx.png");
+		if( is != null ) {
+			//ImageProducer 	ims = (ImageProducer)xurl.getContent();
+			BufferedImage bimg = ImageIO.read(is);
+			Image 		img = bimg.getScaledInstance(16, 16, Image.SCALE_SMOOTH);
 			popup.add( new AbstractAction( lang.startsWith("IS") ? "Opna val í Excel" : "Open in Excel", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent ae) {
 					try {

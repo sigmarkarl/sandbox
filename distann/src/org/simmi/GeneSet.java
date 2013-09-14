@@ -392,8 +392,8 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	public Map<String,String> loadcogmap( Reader rd ) throws IOException {
-		Map<String,String>	map = new HashMap<String,String>();
+	public Map<String,Cog> loadcogmap( Reader rd ) throws IOException {
+		Map<String,Cog>	map = new HashMap<String,Cog>();
 		
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
@@ -474,7 +474,11 @@ public class GeneSet extends JApplet {
 				}
 				cog = cog.trim();
 				
-				map.put( id, cog );
+				int ci = val.indexOf(" COG");
+				int ce = val.indexOf(',', ci+1);
+				String cogid = val.substring(ci+1, ce);
+				
+				map.put( id, new Cog( cogid, cog ) );
 			}
 			line = br.readLine();
 		}
@@ -4496,6 +4500,20 @@ public class GeneSet extends JApplet {
 			fw.close();*/
 			
 			//simmi();
+			
+			Map<String,String>							all = new TreeMap<String,String>();
+			Map<String, Map<String,Integer>> 			map = new TreeMap<String, Map<String,Integer>>();
+			
+			FileReader fw = new FileReader("/home/sigmar/meta/cogmeta14.blastout");
+			gs.cogCalc( "MET14", fw, all, map );
+			fw.close();
+			fw = new FileReader("/home/sigmar/meta/cogmeta567.blastout");
+			gs.cogCalc( "MET567", fw, all, map );
+			fw.close();
+			
+			StringWriter sw = gs.writeCog( all, map );
+			System.out.println( sw );
+			
 			dummy();
 			//SerifyApplet.blastJoin(new FileInputStream("/home/horfrae/peter/stuff.blastout"), System.out);
 
@@ -5251,13 +5269,18 @@ public class GeneSet extends JApplet {
 					smap.put( spec, seq );
 				}
 				
+				int max = 0;
 				StringBuilder 	seqstr = null;
-				for( Tegeval tv : ltv ) {
-					seqstr = tv.getAlignedSequence();
-					
-					if( seqstr != null && seqstr.length() > 0 ) {
-						break;
+				for( Tegeval tv : ltv ) {					
+					int seqlen = tv.getLength();
+					if( seqlen > max ) {
+						seqstr = tv.getAlignedSequence();
+						max = seqlen;
 					}
+					
+					/*if( seqstr != null && seqstr.length() > 0 ) {
+						break;
+					}*/
 				}
 				
 				if( seqstr != null && seqstr.length() > 0 ) {
@@ -5396,6 +5419,160 @@ public class GeneSet extends JApplet {
 		}
 		
 		return sb;
+	}
+	
+	public void cogCalc( String filename, Reader isr, Map<String,String> all, Map<String,Map<String,Integer>> map ) throws IOException {		
+		BufferedReader br = new BufferedReader( isr );
+		String line = br.readLine();
+		String current = null;
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				current = line.substring(7);
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					current += line;
+					line = br.readLine();
+				}
+				current = current.trim();
+			} else if( line.startsWith(">") ) {
+				String val = line.substring(1);
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					val += line;
+					line = br.readLine();
+				}
+				val = val.trim();
+				
+				String spec;
+				if( filename != null ) {
+					spec = filename;
+				} else {
+					int i = current.lastIndexOf('[');
+					int n = current.indexOf(']', i+1);
+					
+					if( i == -1 || n == -1 ) {
+						n = current.indexOf(" ");
+					}
+					
+					spec = current.substring(i+1, n);
+					
+					int k = spec.indexOf("_contig");
+					if( k == -1 ) {
+						k = spec.indexOf("_uid");
+						k = spec.indexOf('_', k+4);
+					}
+					
+					if( k == -1 ) {
+						k = spec.indexOf('_');
+						k = spec.indexOf('_', k+1);
+					}
+					if( k != -1 ) spec = spec.substring(0, k);
+					if( !spec.contains("_") ) {
+						System.err.println();
+					}
+				}
+				
+				int i = val.indexOf('[');
+				int n = val.indexOf(']', i+1);
+				String cog = val.substring(i+1, n);
+				int u = cog.indexOf('/');
+				if( u != -1 ) cog = cog.substring(0, u);
+				String erm = cog.replace("  ", " ");
+				while( !erm.equals( cog ) ) {
+					cog = erm;
+					erm = cog.replace("  ", " ");
+				}
+				cog = cog.trim();
+				String coglong = cog;
+				
+				int ki = coglong.indexOf(' ');
+				ki = ki == -1 ? coglong.length() : ki;
+				int ui = coglong.indexOf(',');
+				ui = ui == -1 ? coglong.length() : ui;
+				int ci = coglong.indexOf('-');
+				ci = ci == -1 ? coglong.length() : ci;
+				
+				if( ui != -1 && ui < ki ) {
+					ki = ui;
+				}
+				if( ci != -1 && ci < ki ) {
+					ki = ci;
+				}
+				if( coglong.startsWith("Cell") ) {
+					if( ki != -1 ) {
+						ki = coglong.indexOf(' ', ki+1);
+					}
+				}					
+				ki = ki == -1 ? coglong.length() : ki;
+				cog = coglong.substring(0,ki);
+				
+				Map<String,Integer> cogmap;
+				if( map.containsKey( spec ) ) {
+					cogmap = map.get(spec);
+				} else {
+					cogmap = new HashMap<String,Integer>();
+					map.put( spec, cogmap );
+				}
+				
+				if( cogmap.containsKey( cog ) ) {
+					cogmap.put( cog, cogmap.get(cog)+1 );
+				} else cogmap.put( cog, 1 );
+				
+				all.put( cog, coglong );
+			}
+			line = br.readLine();
+		}
+	}
+	
+	public StringWriter writeCog( Map<String,String> all, Map<String,Map<String,Integer>> map ) throws IOException {
+		StringWriter fw = new StringWriter();
+		fw.write( "['Species" );
+		for( String cog : all.keySet() ) {
+			String coglong = all.get( cog );
+			fw.write("','"+coglong);
+		}
+		fw.write("'],\n");
+		for( String s : map.keySet() ) {
+			int total = 0;
+			fw.write( "['"+s+"'" );
+			Map<String,Integer> cm = map.get( s );
+			for( String cog : all.keySet() ) {
+				int val = 0;
+				if( cm.containsKey( cog ) ) val = cm.get(cog);
+				fw.write(","+val);
+			}
+			fw.write("],\n");
+		}
+		
+		fw.write( "Species" );
+		for( String cog : all.keySet() ) {
+			String coglong = all.get( cog );
+			fw.write("\t"+coglong);
+		}
+		for( String s : map.keySet() ) {
+			int total = 0;
+			fw.write( "\n"+s );
+			Map<String,Integer> cm = map.get( s );
+			for( String cog : all.keySet() ) {
+				int val = 0;
+				if( cm.containsKey( cog ) ) val = cm.get(cog);
+				fw.write("\t"+val);
+			}
+			//fw.write("\n");
+		}
+		
+		/*for( String cog : all ) {
+			fw.write( "\n"+cog );
+			for( String spec : map.keySet() ) {
+				Map<String,Integer> cm = map.get( spec );
+				if( cm.containsKey( cog ) ) fw.write( "\t" + cm.get( cog )  );
+				else fw.write( "\t" + 0  );
+			}
+		}*/
+		
+		fw.close();
+		
+		return fw;
 	}
 	
 	private void assignGain( Node n, Map<Node,List<GeneGroup>> gainMap, PrintStream ps ) {
@@ -6710,6 +6887,34 @@ public class GeneSet extends JApplet {
 					d = Math.round( d*10000.0 )/100.0;
 					fw.write( "<td>"+d+"%</td>" );
 				}
+				fw.write("</tr><tr><td>Protein coding genes with COG function prediction</td>");
+				for( String spec : selspecs) {
+					List<Contig> lcont = speccontigMap.get(spec);
+					int count = 0;
+					int total = 0;
+					for( Contig ct : lcont ) {
+						if( ct.tlist != null ) {
+							for( Tegeval tv : ct.tlist ) {
+								Cog cog = cogmap.get( tv.getGene().refid );
+								if( cog != null ) count++;
+								/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+									if( f.metacyc != null && f.metacyc.length() > 0 ) {
+										count++;
+										break;
+									}
+								}*/
+							}
+							total += ct.tlist.size();
+						}
+						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+							len += tv.getLength();
+						}*/
+					}
+					fw.write( "<td>"+count+"</td>" );
+					double d = (double)count/(double)total;
+					d = Math.round( d*10000.0 )/100.0;
+					fw.write( "<td>"+d+"%</td>" );
+				}
 				fw.write("</tr><tr><td>Protein coding genes connected to MetaCyc pathways</td>");
 				for( String spec : selspecs) {
 					List<Contig> lcont = speccontigMap.get(spec);
@@ -7512,6 +7717,70 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction mltreemapaction = new AbstractAction("mlTreeMap genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String>	mltreemap = new HashSet<String>();
+				mltreemap.add( "COG0012" );
+				mltreemap.add( "COG0016" );
+				mltreemap.add( "COG0018" );
+				mltreemap.add( "COG0048" );
+				mltreemap.add( "COG0049" );
+				mltreemap.add( "COG0052" );
+				mltreemap.add( "COG0080" );
+				mltreemap.add( "COG0081" );
+				mltreemap.add( "COG0085" );
+				mltreemap.add( "COG0087" );
+				
+				mltreemap.add( "COG0088" );
+				mltreemap.add( "COG0090" );
+				mltreemap.add( "COG0091" );
+				mltreemap.add( "COG0092" );
+				mltreemap.add( "COG0093" );
+				mltreemap.add( "COG0094" );
+				mltreemap.add( "COG0096" );
+				mltreemap.add( "COG0097" );
+				mltreemap.add( "COG0098" );
+				mltreemap.add( "COG0099" );
+				
+				mltreemap.add( "COG0100" );
+				mltreemap.add( "COG0102" );
+				mltreemap.add( "COG0103" );
+				mltreemap.add( "COG0124" );
+				mltreemap.add( "COG0172" );
+				mltreemap.add( "COG0184" );
+				mltreemap.add( "COG0185" );
+				mltreemap.add( "COG0186" );
+				mltreemap.add( "COG0197" );
+				mltreemap.add( "COG0200" );
+				
+				mltreemap.add( "COG0201" );
+				mltreemap.add( "COG0202" );
+				mltreemap.add( "COG0215" );
+				mltreemap.add( "COG0256" );
+				mltreemap.add( "COG0495" );
+				mltreemap.add( "COG0522" );
+				mltreemap.add( "COG0525" );
+				mltreemap.add( "COG0533" );
+				mltreemap.add( "COG0541" );
+				mltreemap.add( "COG0552" );
+				
+				for( String refid : cogmap.keySet() ) {				
+					Cog cog = cogmap.get( refid );
+					if( mltreemap.contains( cog.id ) ) {
+						Gene g = genemap.get(refid);
+						if( g != null ) {
+							GeneGroup gg = g.getGeneGroup();
+							int i = allgenegroups.indexOf( gg );
+							int r = -1;
+							if( i != -1 ) r = table.convertRowIndexToView( i );
+							if( r != -1 ) table.addRowSelectionInterval( r, r );
+						}
+					}
+				}
+			}
+		};
+		
 		AbstractAction gcaction = new AbstractAction("GC% chart data") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -7584,10 +7853,7 @@ public class GeneSet extends JApplet {
 		
 		AbstractAction cogaction = new AbstractAction("COG chart data") {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				Map<String,String>							all = new TreeMap<String,String>();
-				Map<String, Map<String,Integer>> 	map = new TreeMap<String, Map<String,Integer>>();
-				
+			public void actionPerformed(ActionEvent e) {				
 				try {
 					ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
 					ZipEntry ze = zipm.getNextEntry();
@@ -7595,129 +7861,11 @@ public class GeneSet extends JApplet {
 						String zname = ze.getName();
 						if( zname.equals("cog.blastout") ) {
 							InputStreamReader isr = new InputStreamReader( zipm );
-							BufferedReader br = new BufferedReader( isr );
-							String line = br.readLine();
-							String current = null;
-							while( line != null ) {
-								if( line.startsWith("Query=") ) {
-									current = line.substring(7);
-									line = br.readLine();
-									while( !line.startsWith("Length") ) {
-										current += line;
-										line = br.readLine();
-									}
-									current = current.trim();
-								} else if( line.startsWith(">") ) {
-									String val = line.substring(1);
-									line = br.readLine();
-									while( !line.startsWith("Length") ) {
-										val += line;
-										line = br.readLine();
-									}
-									val = val.trim();
-									
-									int i = current.lastIndexOf('[');
-									int n = current.indexOf(']', i+1);
-									
-									if( i == -1 || n == -1 ) {
-										n = current.indexOf(" ");
-									}
-									
-									String spec = current.substring(i+1, n);
-									
-									int k = spec.indexOf("_contig");
-									if( k == -1 ) {
-										k = spec.indexOf("_uid");
-										k = spec.indexOf('_', k+4);
-									}
-									
-									if( k == -1 ) {
-										k = spec.indexOf('_');
-										k = spec.indexOf('_', k+1);
-									}
-									if( k != -1 ) spec = spec.substring(0, k);
-									if( !spec.contains("_") ) {
-										System.err.println();
-									}
-									
-									i = val.indexOf('[');
-									n = val.indexOf(']', i+1);
-									String cog = val.substring(i+1, n);
-									int u = cog.indexOf('/');
-									if( u != -1 ) cog = cog.substring(0, u);
-									String erm = cog.replace("  ", " ");
-									while( !erm.equals( cog ) ) {
-										cog = erm;
-										erm = cog.replace("  ", " ");
-									}
-									cog = cog.trim();
-									String coglong = cog;
-									
-									int ki = coglong.indexOf(' ');
-									ki = ki == -1 ? coglong.length() : ki;
-									int ui = coglong.indexOf(',');
-									ui = ui == -1 ? coglong.length() : ui;
-									int ci = coglong.indexOf('-');
-									ci = ci == -1 ? coglong.length() : ci;
-									
-									if( ui != -1 && ui < ki ) {
-										ki = ui;
-									}
-									if( ci != -1 && ci < ki ) {
-										ki = ci;
-									}
-									if( coglong.startsWith("Cell") ) {
-										if( ki != -1 ) {
-											ki = coglong.indexOf(' ', ki+1);
-										}
-									}					
-									ki = ki == -1 ? coglong.length() : ki;
-									cog = coglong.substring(0,ki);
-									
-									Map<String,Integer> cogmap;
-									if( map.containsKey( spec ) ) {
-										cogmap = map.get(spec);
-									} else {
-										cogmap = new HashMap<String,Integer>();
-										map.put( spec, cogmap );
-									}
-									
-									if( cogmap.containsKey( cog ) ) {
-										cogmap.put( cog, cogmap.get(cog)+1 );
-									} else cogmap.put( cog, 1 );
-									
-									all.put( cog, coglong );
-								}
-								line = br.readLine();
-							}
-							
-							StringWriter fw = new StringWriter();
-							fw.write( "['Species" );
-							for( String cog : all.keySet() ) {
-								String coglong = all.get( cog );
-								fw.write("','"+coglong);
-							}
-							fw.write("'],\n");
-							for( String s : map.keySet() ) {
-								int total = 0;
-								fw.write( "['"+s+"'" );
-								Map<String,Integer> cm = map.get( s );
-								for( String cog : all.keySet() ) {
-									int val = 0;
-									if( cm.containsKey( cog ) ) val = cm.get(cog);
-									fw.write(","+val);
-								}
-								fw.write("],\n");
-							}
-							/*for( String cog : all ) {
-								fw.write( "\n"+cog );
-								for( String spec : map.keySet() ) {
-									Map<String,Integer> cm = map.get( spec );
-									if( cm.containsKey( cog ) ) fw.write( "\t" + cm.get( cog )  );
-									else fw.write( "\t" + 0  );
-								}
-							}*/
-							fw.close();
+
+							Map<String,String>							all = new TreeMap<String,String>();
+							Map<String, Map<String,Integer>> 			map = new TreeMap<String, Map<String,Integer>>();
+							cogCalc( null, isr, all, map );
+							StringWriter fw = writeCog( all, map );
 							
 							JFrame f = new JFrame("GC% chart");
 							f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
@@ -7957,6 +8105,7 @@ public class GeneSet extends JApplet {
 		menu.add( pancoreaction );
 		menu.add( genomesizeaction );
 		menu.add( gcaction );
+		menu.add( mltreemapaction );
 		menu.add( cogaction );
 		menu.add( genexyplotaction );
 		menu.add( compareplotaction );
@@ -8401,7 +8550,8 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 7) {
 					return gg.getCommonEc();
 				} else if (columnIndex == 8) {
-					return gg.getCommonCog( cogmap );
+					Cog cog = gg.getCommonCog( cogmap );
+					return cog != null ? cog.name + " " + cog.id : null;
 				} else if (columnIndex == 9) {
 					return gg.getCommonCazy( cazymap );
 				} else if (columnIndex == 10) {
@@ -11219,6 +11369,16 @@ public class GeneSet extends JApplet {
 		locgene.clear();
 	}
 	
+	public class Cog {
+		public Cog( String id, String name ) {
+			this.id = id;
+			this.name = name;
+		}
+		
+		public String	id;
+		public String	name;
+	}
+	
 	Map<String, Set<String>> 				ko2go = new TreeMap<String, Set<String>>();
 	
 	JComboBox<String> 						specombo;
@@ -11231,7 +11391,7 @@ public class GeneSet extends JApplet {
 	Map<String,Set<GeneGroup>>				specGroupMap;
 	List<String>							specList = new ArrayList<String>();
 	byte[] 									zipf;
-	Map<String,String>						cogmap = new HashMap<String,String>();
+	Map<String,Cog>							cogmap = new HashMap<String,Cog>();
 	Map<String,String>						cazymap = new HashMap<String,String>();
 	
 	/*private Map<String,String> loadCog() {
@@ -11411,6 +11571,7 @@ public class GeneSet extends JApplet {
 					ze = zipm.getNextEntry();
 				}
 			}
+			genemap = refmap;
 			
 			//loadCog();
 			
