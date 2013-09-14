@@ -675,9 +675,16 @@ public class FriendsPanel extends SimSplitPane {
 		
 		Object[]	me = null;
 		if( friendList.size() > 0 ) me = friendList.get(0);
-		URL url = this.getClass().getResource("/re.png");
-		ImageIcon icon = new ImageIcon( url );
-		ImageIcon imic = null;
+		InputStream is = this.getClass().getResourceAsStream("/re.png");
+		try {
+			Image img = ImageIO.read( is );
+			ImageIcon icon = new ImageIcon( img );
+			mypanel = new MyPanel( img, icon, lang );
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+
+		/*ImageIcon imic = null;
 		if( me != null && me.length > 5 ) imic = (ImageIcon)me[5];
 		Image		img = null;
 		if( imic != null ) img = imic.getImage();
@@ -689,8 +696,7 @@ public class FriendsPanel extends SimSplitPane {
 			g2.dispose();
 			
 			img = bimg;
-		}
-		mypanel = new MyPanel( img, icon, lang );		
+		}*/
 		table.addMouseListener( new MouseAdapter() {
 			public void mousePressed( MouseEvent me ) {
 				if( me.getClickCount() == 2 ) {
