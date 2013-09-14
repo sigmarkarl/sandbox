@@ -11,7 +11,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
 public class WSUtil {
@@ -27,11 +26,10 @@ public class WSUtil {
             copyData((Component)e.getSource());
         }
     }
-	
 
 	static boolean grabFocus = false;
 	public static void copyData(Component source) {
-        TableModel model = sorttable.table.getModel();
+        //TableModel model = sorttable.table.getModel();
  
         String s = sorttable.makeCopyString();
         if (s==null || s.trim().length()==0) {
@@ -48,6 +46,8 @@ public class WSUtil {
 	
 	public static Object clipboardService;
 	public static void clipboard( SortTable sorttable ) {
+		System.err.println( "clipity clipclip .........................................................................................................................." );
+		WSUtil.sorttable = sorttable;
 		try {
 	    	clipboardService = ServiceManager.lookup("javax.jnlp.ClipboardService");
 	    	Action action = new CopyAction( "Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL+KeyEvent.VK_C) );

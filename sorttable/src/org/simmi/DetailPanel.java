@@ -12,17 +12,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageProducer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
 import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
@@ -252,9 +252,10 @@ public class DetailPanel extends SimSplitPane {
 		final JScrollPane	detailScroll = new JScrollPane();
 		detailScroll.getViewport().setBackground( Color.white );
 		
-		URL url = this.getClass().getResource("/re.png");
+		InputStream is = this.getClass().getResourceAsStream("/re.png");
 		//bi = ImageIO.read( url );
-		ImageIcon icon = new ImageIcon( url );
+		Image img = ImageIO.read( is );
+		ImageIcon icon = new ImageIcon( img );
 		final JButton	button = new JButton( icon );
 		button.addActionListener( new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -732,10 +733,11 @@ public class DetailPanel extends SimSplitPane {
 		}
 		
 		popup.addSeparator();
-		URL				xurl = this.getClass().getResource("/xlsx.png");
-		if( xurl != null ) {
-			ImageProducer 	ims = (ImageProducer)xurl.getContent();
-			Image 		img = (ims != null ? this.createImage( ims ).getScaledInstance(16, 16, Image.SCALE_SMOOTH) : null);
+		is = this.getClass().getResourceAsStream("/xlsx.png");
+		if( is != null ) {
+			//ImageProducer 	ims = (ImageProducer)xurl.getContent();
+			BufferedImage bimg = ImageIO.read(is);
+			img = bimg.getScaledInstance(16, 16, Image.SCALE_SMOOTH);
 			popup.add( new AbstractAction(lang.startsWith("IS") ? "Opna val í Excel" : "Open selection in Excel", img != null ? new ImageIcon(img) : null ) {
 				public void actionPerformed(ActionEvent e) {
 					try {
