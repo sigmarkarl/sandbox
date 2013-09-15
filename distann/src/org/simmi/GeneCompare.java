@@ -52,8 +52,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-import org.simmi.shared.Sequence;
-
 public class GeneCompare {
 	List<Contig> contigs;
 	
@@ -174,11 +172,13 @@ public class GeneCompare {
 		final JRadioButton	gccol = new JRadioButton("GC color");
 		final JRadioButton	syntcol = new JRadioButton("Synteni color");
 		final JRadioButton	brcol = new JRadioButton("Breakpoint color");
+		final JRadioButton	syntgrad = new JRadioButton("Synteni gradient");
 		ButtonGroup		bg = new ButtonGroup();
 		bg.add( relcol );
 		bg.add( gccol );
 		bg.add( syntcol );
 		bg.add( brcol );
+		bg.add( syntgrad );
 		
 		final JComboBox<String>	specombo = new JComboBox<String>();
 		for( String spec : specset ) specombo.addItem( spec );
@@ -231,6 +231,18 @@ public class GeneCompare {
 					total += ctg.getGeneCount();
 				}
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, 2 );
+			}
+		});
+		syntgrad.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String spec1 = (String)specombo.getSelectedItem();
+				final List<Contig> contigs = geneset.speccontigMap.get( spec1 );
+				int total = 0;
+				for( Contig ctg : contigs ) {
+					total += ctg.getGeneCount();
+				}
+				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, -1 );
 			}
 		});
 		
@@ -383,6 +395,7 @@ public class GeneCompare {
 		toolbar.add( gccol );
 		toolbar.add( syntcol );
 		toolbar.add( brcol );
+		toolbar.add( syntgrad );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
@@ -494,10 +507,55 @@ public class GeneCompare {
 							System.err.println();
 						}*/
 						
+						double ratio = (double)count/(double)total;
+						
 						int scount = 0;
 						for( String spec2 : spec2s ) {
 							if( gg.species.containsKey(spec2) ) {
-								if( synbr > 0 ) {
+								if( synbr == -1 ) {
+									final List<Contig> contigs2 = geneset.speccontigMap.get( spec2 );
+									int total2 = 0;
+									for( Contig ctg2 : contigs2 ) {
+										total2 += ctg2.getGeneCount();
+									}
+									double ratio2 = -1.0;
+									Teginfo gene2s = gg.getGenes( spec2 );
+									for( Tegeval tv2 : gene2s.tset ) {
+										int count2 = 0;
+										for( Contig ctg2 : contigs2 ) {
+											if( ctg2.tlist != null ) {
+												int idx = ctg2.tlist.indexOf( tv2 );
+												if( idx == -1 ) {
+													count2 += ctg2.getGeneCount();
+												} else {
+													count2 += idx;
+													break;
+												}
+											}
+										}
+										double rat2 = (double)count2/(double)total2;
+										 
+										if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
+										//ratio2 = rat2;
+										//break;
+									}
+									
+									//float green = (float)(1.0-ratio2);
+									if( ratio2 < 0.5 ) {
+										Color c = new Color(0,(float)(ratio2*2.0),1.0f);
+										g2.setColor( c );
+									} else {
+										Color c = new Color(0,1.0f,(float)((1.0-ratio2)*2.0));
+										g2.setColor( c );
+									}
+									
+									double theta = count*Math.PI*2.0/total;
+									g2.translate( w/2, h/2 );
+									g2.rotate( theta );
+									g2.fillRect( 250+15*(scount), -1, 15, 3);
+									g2.rotate( -theta );
+				                    g2.translate( -w/2, -h/2 );
+								} else if( synbr > 0 ) {
 									if( prev != null ) {
 										Teginfo gene2s = gg.getGenes( spec2 );
 										Color c = null;
