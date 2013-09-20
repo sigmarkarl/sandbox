@@ -111,7 +111,7 @@ var diff = function( clen ) {
 
 var integ = function( clen ) {
 	if( clen == null ) clen = current.length;
-	for( k = 0; k < length; k+=clen ) {
+	for( k = 0; k < current.length; k+=clen ) {
 		for( i = k+1; i < k+clen; i++ ) {
 			current[i] += current[i-1];
 		}
@@ -133,7 +133,7 @@ var sub = function( val ) {
 
 var mul = function( val ) {
 	for( i = 0; i < current.length; i++ ) {
-		curretn[i] *= val[i%val.length];
+		current[i] *= val[i%val.length];
 	}
 }
 
@@ -182,6 +182,70 @@ var idx = function() {
 var rnd = function() {
 	for( i = 0; i < current.length; i++ ) {
 		current[i] = Math.random();
+	}
+}
+
+var gcd = function( a, b ) {
+	if( b == 0 ) return a;
+	else return gcd( b, a%b );
+}
+
+var matmul = function( mul, val ) {
+	if( val == null ) val = gcd( current.length, mul.length );
+	//int length = (data.length/val)*(mul.length/val);
+	//printf( "%d\n", val );
+	var retc = (mul.length/val);
+	var retr = (current.length/val);
+	var size = retc*retr;
+	var ret;
+	
+	if( typeof current == 'Int8Array' ) ret = new Int8Array( size );
+	else if( typeof current == 'Int16Array' ) ret = new Int16Array( size );
+	else if( typeof current == 'Int32Array' ) ret = new Int32Array( size );
+	else if( typeof current == 'Float32Array' ) ret = new Float32Array( size );
+	else if( typeof current == 'Float64Array' ) ret = new Float64Array( size );
+	else ret = new Float64Array( size );
+	
+	//T* ret = new T[retlen];
+	//memset( ret, 0, sizeof( T )*retlen );
+	for( r = 0; r < retr; r++ ) {
+		var rretc = r*retc;
+		for( c = 0; c < retc; c++ ) {
+			var reti = rretc+c;
+			var rval = r*val;
+			for( i = 0; i < val; i++ ) {
+				ret[reti] += current[rval+i]*mul[i*retc+c];
+			}
+		}
+	}
+	current = ret;
+}
+
+var sum = function( chunk ) {
+	if( chunk == null ) chunk = current.length;
+	
+	var size = current.length/chunk;
+	if( typeof current == 'Int8Array' ) ret = new Int8Array( size );
+	else if( typeof current == 'Int16Array' ) ret = new Int16Array( size );
+	else if( typeof current == 'Int32Array' ) ret = new Int32Array( size );
+	else if( typeof current == 'Float32Array' ) ret = new Float32Array( size );
+	else if( typeof current == 'Float64Array' ) ret = new Float64Array( size );
+	else ret = new Float64Array( size );
+	
+	for( i = 0; i < current.length; i+=chunk ) {
+		var ri = i/chunk;
+		for( k = i; k < i+chunk; k++ ) {
+			ret[ri] += current[k];
+		}
+	}
+	current = ret;
+}
+
+var avg = function( chunk ) {
+	if( chunk == null ) chunk = current.length;
+	sum( chunk );
+	for( k = 0; k < current.length; k++ ) {
+		current[k] /= chunk;
 	}
 }
 

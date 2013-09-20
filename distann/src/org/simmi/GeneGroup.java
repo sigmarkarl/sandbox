@@ -178,6 +178,13 @@ public class GeneGroup {
 		return null;
 	}
 	
+	public String getCommonKO() {
+		for( Gene g : genes ) {
+			if( g.koid != null && g.koid.length() > 0 ) return g.koid;
+		}
+		return null;
+	}
+	
 	public String getCommonEc() {
 		for( Gene g : genes ) {
 			if( g.ecid != null && g.ecid.length() > 0 ) return g.ecid;
