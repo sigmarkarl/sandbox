@@ -17,7 +17,8 @@ public class NavTest {
 	public static void main(String[] args) {
 		try {
 			BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
-			String sql = br.readLine();
+			String sql = "select f.[Ábyrgðaraðilli] from [vdb].[dbo].[Frystilager] f"; 
+			//br.readLine();
 			
 			//System.out.println("Content-type: text/plain\n");
 			if( sql != null && sql.length() > 0 ) {
@@ -45,9 +46,9 @@ public class NavTest {
 			e2.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
+		} /*catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 
 }
