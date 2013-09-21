@@ -4803,6 +4803,22 @@ public class GeneSet extends JApplet {
 
 		return idMapping(new FileReader(idfile), outfile, ind, secind, refids, getgeneids);
 	}
+	
+	public static Map<String,String> ko2nameMapping( InputStreamReader id ) throws IOException {
+		Map<String,String>	ko2name = new HashMap<String,String>();
+		
+		BufferedReader br = new BufferedReader( id );
+		String line = br.readLine();
+		while (line != null) {
+			String[] split = line.split("\t");
+			if( split.length > 1 ) ko2name.put( split[0], split[1] );
+			
+			line = br.readLine();
+		}
+		//br.close();
+		
+		return ko2name;
+	}
 
 	public static Map<String, Gene> idMapping(Reader rd, String outfile, int ind, int secind, Map<String, Gene> refids, boolean getgeneids) throws IOException {
 		Map<String, Gene> unimap = new HashMap<String, Gene>();
@@ -8411,7 +8427,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 23+specList.size();
+				return 24+specList.size();
 			}
 
 			@Override
@@ -8431,39 +8447,41 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 6) {
 					return "KO";
 				} else if (columnIndex == 7) {
-					return "Pdbid";
+					return "KO name";
 				} else if (columnIndex == 8) {
-					return "EC";
+					return "Pdbid";
 				} else if (columnIndex == 9) {
-					return "Cog";
+					return "EC";
 				} else if (columnIndex == 10) {
-					return "Cazy";
+					return "Cog";
 				} else if (columnIndex == 11) {
-					return "Present in";
+					return "Cazy";
 				} else if (columnIndex == 12) {
-					return "Group index";
+					return "Present in";
 				} else if (columnIndex == 13) {
-					return "Group coverage";
+					return "Group index";
 				} else if (columnIndex == 14) {
-					return "Group size";
+					return "Group coverage";
 				} else if (columnIndex == 15) {
-					return "Locprev";
+					return "Group size";
 				} else if (columnIndex == 16) {
-					return "Avg GC%";
+					return "Locprev";
 				} else if (columnIndex == 17) {
-					return "# of locus";
+					return "Avg GC%";
 				} else if (columnIndex == 18) {
-					return "# of loc in group";
+					return "# of locus";
 				} else if (columnIndex == 19) {
-					return "max length";
+					return "# of loc in group";
 				} else if (columnIndex == 20) {
-					return "sharing number";
+					return "max length";
 				} else if (columnIndex == 21) {
-					return "# Cyc";
+					return "sharing number";
 				} else if (columnIndex == 22) {
+					return "# Cyc";
+				} else if (columnIndex == 23) {
 					return "16S Corr";
 				} else {
-					String spec = specList.get( columnIndex - 23 );
+					String spec = specList.get( columnIndex - 24 );
 					if( spec.toLowerCase().contains("thermus") ) {
 						int i = spec.indexOf('_');
 						return spec.substring(i+1, spec.length());
@@ -8532,11 +8550,11 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 13 || columnIndex == 16 || columnIndex == 22 )
+				if( columnIndex == 14 || columnIndex == 17 || columnIndex == 23 )
 					return Double.class;
-				else if(columnIndex == 7 || (columnIndex >= 11 && columnIndex <= 21) )
+				else if(columnIndex == 8 || (columnIndex >= 12 && columnIndex <= 23) )
 					return Integer.class;
-				else if (columnIndex >= 23)
+				else if (columnIndex >= 24)
 					return Teginfo.class;
 				return String.class;
 			}
@@ -8564,40 +8582,42 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 6) {
 					return gg.getCommonKO();
 				} else if (columnIndex == 7) {
-					return null;//gene.pdbid;
+					return ko2name.get( gg.getCommonKO() );
 				} else if (columnIndex == 8) {
-					return gg.getCommonEc();
+					return null;//gene.pdbid;
 				} else if (columnIndex == 9) {
+					return gg.getCommonEc();
+				} else if (columnIndex == 10) {
 					Cog cog = gg.getCommonCog( cogmap );
 					return cog != null ? cog.name + " " + cog.id : null;
-				} else if (columnIndex == 10) {
-					return gg.getCommonCazy( cazymap );
 				} else if (columnIndex == 11) {
-					return gg.getSpecies().size();
+					return gg.getCommonCazy( cazymap );
 				} else if (columnIndex == 12) {
-					return gg.groupIndex;
+					return gg.getSpecies().size();
 				} else if (columnIndex == 13) {
-					return gg.getGroupCoverage();
+					return gg.groupIndex;
 				} else if (columnIndex == 14) {
-					return gg.getGroupGeneCount();
+					return gg.getGroupCoverage();
 				} else if (columnIndex == 15) {
-					return null;//gene.proximityGroupPreservation;
+					return gg.getGroupGeneCount();
 				} else if (columnIndex == 16) {
-					return gg.getAvgGCPerc();
+					return null;//gene.proximityGroupPreservation;
 				} else if (columnIndex == 17) {
-					return gg.genes.size();
+					return gg.getAvgGCPerc();
 				} else if (columnIndex == 18) {
-					return gg.getGroupCount();
+					return gg.genes.size();
 				} else if (columnIndex == 19) {
-					return gg.getMaxLength();
+					return gg.getGroupCount();
 				} else if (columnIndex == 20) {
-					return specset.get( gg.getSpecies() );
+					return gg.getMaxLength();
 				} else if (columnIndex == 21) {
-					return gg.getMaxCyc();
+					return specset.get( gg.getSpecies() );
 				} else if (columnIndex == 22) {
+					return gg.getMaxCyc();
+				} else if (columnIndex == 23) {
 					return gg.getGroupCoverage() == 39 && gg.getGroupCount() == 39 ? 0 : -1;
 				} else {
-					String spec = specList.get( columnIndex - 23 );
+					String spec = specList.get( columnIndex - 24 );
 					Teginfo ret = getGroupTes( gg, spec );
 					return ret;
 				}
@@ -8608,12 +8628,10 @@ public class GeneSet extends JApplet {
 			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
 
 			@Override
-			public void addTableModelListener(TableModelListener l) {
-			}
+			public void addTableModelListener(TableModelListener l) {}
 
 			@Override
-			public void removeTableModelListener(TableModelListener l) {
-			}
+			public void removeTableModelListener(TableModelListener l) {}
 		};
 		defaultModel = new TableModel() {
 			@Override
@@ -8986,6 +9004,7 @@ public class GeneSet extends JApplet {
 				
 				try {
 					Map<String,String>	ko2name = new HashMap<String,String>();
+					int cnt = 0;
 					for( String koid : koids ) {
 						URL url = new URL("http://www.kegg.jp/dbget-bin/www_bget?ko:"+koid);
 						InputStream is = url.openStream();
@@ -9002,16 +9021,20 @@ public class GeneSet extends JApplet {
 						if( i != -1 ) {
 							int k = sb.indexOf(":hidden\">");
 							if( k != -1 ) {
-								ko2name.put( koid, sb.substring(k+9, sb.indexOf("<br>", k) ) );
+								String koname = sb.substring(k+9, sb.indexOf("<br>", k) );
+								ko2name.put( koid, koname );
+								
+								System.err.println( koid + "\t" + koname );
 							}
 						}
 						
-						System.err.println( ko2name.size() + " " + koids.size() );
+						//System.err.println( ko2name.size() + " " + koids.size() );
+						//if( cnt++ > 20 ) break;
 					}
 					
-					FileWriter fw = new FileWriter("/tmp/ko2name.txt");
+					FileWriter fw = new FileWriter("/tmp/ko2name2.txt");
 					for( String koid : ko2name.keySet() ) {
-						fw.write( koid + "\t" + ko2name.get(koid) );
+						fw.write( koid + "\t" + ko2name.get(koid) + "\n" );
 					}
 					fw.close();
 				} catch (IOException e1) {
@@ -11555,6 +11578,8 @@ public class GeneSet extends JApplet {
 		return cogmap;
 	}*/
 	
+	Map<String,String>	ko2name;
+	
 	private void importStuff() throws IOException, UnavailableServiceException {
 		boolean fail = false;
 		InputStream	is = null;
@@ -12199,6 +12224,7 @@ public class GeneSet extends JApplet {
 			while( ze != null ) {
 				if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, false);
 				else if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
+				else if( ze.getName().equals("ko2name.txt") ) ko2name = ko2nameMapping( new InputStreamReader(zipin) );
 				
 				ze = zipin.getNextEntry();
 			}
