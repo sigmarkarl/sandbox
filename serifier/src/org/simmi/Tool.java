@@ -8,12 +8,46 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Tool {
+	public static void mu() throws IOException {
+		FileReader fr = new FileReader("/vg454flx/Metagenome_5_6_7_control_7.2013/seqc_on_orig.blastout");
+		BufferedReader br = new BufferedReader( fr );
+		String line = br.readLine();
+		int matchcount = 0;
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				line = br.readLine();
+				while( !line.startsWith("Length=") ) {
+					line = br.readLine();
+				}
+				int flen = Integer.parseInt( line.substring(7) );
+				line = br.readLine();
+				while( line != null && !line.startsWith("Length=") && !line.startsWith("Query=") ) {
+					line = br.readLine();
+				}
+				if( line != null && line.startsWith("Length") ) {
+					int nlen = Integer.parseInt( line.substring(7) );
+					if( Math.abs( nlen-flen ) < 10 ) matchcount++;
+				} else continue;
+			}
+			line = br.readLine();
+		}
+		br.close();
+		
+		System.err.println( "match " + matchcount );
+	}
+	
 	public static void main(String[] args) {
+		try {
+			mu();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
 		Set<String>	set1 = new HashSet<String>();
 		Set<String>	set2 = new HashSet<String>();
 		
 		try {
-			FileReader fr1 = new FileReader("/home/sigmar/sim.txt");
+			FileReader fr1 = new FileReader("/virtual/cont.txt");
 			BufferedReader br1 = new BufferedReader( fr1 );
 			String line = br1.readLine();
 			while( line != null ) {
@@ -22,7 +56,7 @@ public class Tool {
 			}
 			fr1.close();
 			
-			FileReader fr2 = new FileReader("/home/sigmar/sims.txt");
+			FileReader fr2 = new FileReader("/virtual/orig.txt");
 			BufferedReader br2 = new BufferedReader( fr2 );
 			line = br2.readLine();
 			while( line != null ) {
