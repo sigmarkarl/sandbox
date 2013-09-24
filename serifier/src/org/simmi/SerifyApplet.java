@@ -2108,23 +2108,26 @@ public class SerifyApplet extends JApplet {
 												FTPFile[] newfiles = ftp.listFiles();
 												int cnt = 1;
 												
-												Map<String,String>	urimap = new HashMap<String,String>();
-												for( FTPFile newftpfile : newfiles ) {
-													if( interrupted ) break;
-													String newfname = newftpfile.getName();
-													if( newfname.endsWith(".gbk") ) {
-														long size = newftpfile.getSize();
-														String basename;
-														if( size > 3000000 ) basename = fname;//+".gbk";
-														else basename = fname+"_p"+(cnt++);//+".gbk";
+												File thefile = new File( basesave, fname );
+												if( !thefile.exists() ) {
+													FileWriter fw = new FileWriter( thefile );
+													
+													for( FTPFile newftpfile : newfiles ) {
+														if( interrupted ) break;
 														
-														String fwname = basename+"_"+newfname;
-														//if( size > 1500000 ) fwname = fname+".fna";
-														//else fwname = fname+"_p"+(cnt++)+".fna";
+														if( newftpfile != newfiles[0] ) fw.write("//\n");
 														
-														File thefile = new File( basesave, fwname );
-														if( !thefile.exists() ) {
-															FileWriter fw = new FileWriter( thefile );
+														String newfname = newftpfile.getName();
+														if( newfname.endsWith(".gbk") ) {
+															//long size = newftpfile.getSize();
+															String basename = fname;
+															//if( size > 3000000 ) basename = fname;//+".gbk";
+															//else basename = fname+"_p"+(cnt++);//+".gbk";
+															
+															//String fwname = basename+"_"+newfname;
+															//if( size > 1500000 ) fwname = fname+".fna";
+															//else fwname = fname+"_p"+(cnt++)+".fna";
+															
 															URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
 															InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
 															BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
@@ -2135,14 +2138,15 @@ public class SerifyApplet extends JApplet {
 															}
 															is.close();
 															//ftp.completePendingCommand();
-															fw.close();
-															System.err.println("done " + fname);
+															//System.err.println("done " + fname);
 														}
-														urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
 													}
+													fw.close();
 												}
 												
 												try {
+													Map<String,String>	urimap = new HashMap<String,String>();
+													urimap.put( fname.substring(0, fname.length()-4), thefile.toURI().toString() );
 													addSequencesPath( fname, urimap, uripath );
 												} catch (URISyntaxException e) {
 													e.printStackTrace();
@@ -2164,78 +2168,83 @@ public class SerifyApplet extends JApplet {
 												ftp.cwd( subdir+fname );
 												FTPFile[] newfiles = ftp.listFiles();
 												
-												Map<String,String>	urimap = new HashMap<String,String>();
-												for( FTPFile newftpfile : newfiles ) {
-													if( interrupted ) break;
-													//String newfname = newftpfile.getName().getBaseName();
-													String newfname = newftpfile.getName();
-													if( newfname.endsWith("scaffold.gbk.tgz") ) {
-														//long size = newftpfile.getSize();
-														//String fwname = "";
-														//if( size > 1500000 ) fwname = fname+".fna";
-														//else fwname = fname+"_p"+(cnt++)+".fna";
+												File thefile = new File( basesave, fname );
+												if( !thefile.exists() ) {
+													FileOutputStream fos = new FileOutputStream( thefile );
+													
+													for( FTPFile newftpfile : newfiles ) {
+														if( interrupted ) break;
 														
-														//InputStream is = newftpfile.getContent().getInputStream();
-														URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-														InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
-														System.err.println( "trying "+newfname + (is == null ? "critical" : "success" ) );
-														//InputStream gis = is;
-														GZIPInputStream gis = new GZIPInputStream( is );
-														
-														File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
-														if( !file.exists() && gis != null ) {
-															int r = gis.read(bb);
-															FileOutputStream fos = new FileOutputStream( file );
-															while( r > 0 ) {
-																System.err.println( "reading " + r );
-																fos.write( bb, 0, r );
-																
-																r = gis.read(bb);
-															}
-															gis.close();
-															fos.close();
-														}
-														
-														//FileSystemManager fsManager = VFS.getManager();
-														FileObject jarFile = fsManager.resolveFile( "tar://"+file.getAbsolutePath() );
-	
-														// List the children of the Jar file
-														FileObject[] children = jarFile.getChildren();
-														//System.out.println( "Children of " + jarFile.getName().getURI() );
-														int contig = 1;
-														for ( int i = 0; i < children.length; i++ ) {
-															FileObject child = children[i];
+														if( newftpfile != newfiles[0] ) fos.write( "//\n".getBytes() );
+														//String newfname = newftpfile.getName().getBaseName();
+														String newfname = newftpfile.getName();
+														if( newfname.endsWith("scaffold.gbk.tgz") ) {
+															//long size = newftpfile.getSize();
+															//String fwname = "";
+															//if( size > 1500000 ) fwname = fname+".fna";
+															//else fwname = fname+"_p"+(cnt++)+".fna";
 															
-															String childname = child.getName().getBaseName();
-															//int k = childname.indexOf(".gbk");
-															//if( k == -1 ) k = childname.length();
-															String lfname = fname+"_contig"+(contig++)+"_"+childname;
-															File thefile = new File( basesave, lfname );
-															if( !thefile.exists() ) {
-																FileOutputStream fos = new FileOutputStream( thefile );
+															//InputStream is = newftpfile.getContent().getInputStream();
+															URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+															InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+															System.err.println( "trying "+newfname + (is == null ? "critical" : "success" ) );
+															//InputStream gis = is;
+															GZIPInputStream gis = new GZIPInputStream( is );
+															
+															File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
+															if( !file.exists() && gis != null ) {
+																int r = gis.read(bb);
+																FileOutputStream tfos = new FileOutputStream( file );
+																while( r > 0 ) {
+																	System.err.println( "reading " + r );
+																	tfos.write( bb, 0, r );
+																	
+																	r = gis.read(bb);
+																}
+																gis.close();
+																tfos.close();
+															}
+															
+															//FileSystemManager fsManager = VFS.getManager();
+															FileObject jarFile = fsManager.resolveFile( "tar://"+file.getAbsolutePath() );
+		
+															// List the children of the Jar file
+															FileObject[] children = jarFile.getChildren();
+															//System.out.println( "Children of " + jarFile.getName().getURI() );
+															//int contig = 1;
+															for ( int i = 0; i < children.length; i++ ) {
+																FileObject child = children[i];
+																
+																if( i > 0 ) fos.write( "//\n".getBytes() );
+																//String childname = child.getName().getBaseName();
+																//int k = childname.indexOf(".gbk");
+																//if( k == -1 ) k = childname.length();
+																//String lfname = fname+"_contig"+(contig++)+"_"+childname;
 																FileContent fc = child.getContent();
 																InputStream sis = fc.getInputStream();
 																int r = sis.read( bb );
-																int total = r;
+																//int total = r;
 																
 																while( r != -1 ) {
 																	fos.write( bb, 0, r );
 																	r = sis.read( bb );
-																	total += r;
+																	//total += r;
 																}
-																fos.close();
+																
+																/*try {
+																	addSequences( lfname, thefile.toURI().toString() );
+																} catch (URISyntaxException e) {
+																	e.printStackTrace();
+																}*/
 															}
-															urimap.put( lfname.substring(0, lfname.length()-4), thefile.toURI().toString() );
-															
-															/*try {
-																addSequences( lfname, thefile.toURI().toString() );
-															} catch (URISyntaxException e) {
-																e.printStackTrace();
-															}*/
 														}
 													}
+													fos.close();
 												}
+												
 												try {
+													Map<String,String>	urimap = new HashMap<String,String>();
+													urimap.put( fname.substring(0, fname.length()-4), thefile.toURI().toString() );
 													addSequencesPath( fname, urimap, uripath );
 												} catch (URISyntaxException e) {
 													e.printStackTrace();
