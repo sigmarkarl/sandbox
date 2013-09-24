@@ -40,9 +40,12 @@ public class GBK2AminoFasta {
 		List<Anno>	annolist = new ArrayList<Anno>();
 		for( String tag : filetextmap.keySet() ) {
 			StringBuilder filetext = filetextmap.get( tag );
+			String locus = null;
 			int ind = filetext.indexOf("\n");
 			String line = null;
-			if( ind > 0 ) line = filetext.substring(0, ind);
+			if( ind > 0 ) {
+				line = filetext.substring(0, ind);
+			}
 			
 			Anno		anno = null;
 			
@@ -51,11 +54,15 @@ public class GBK2AminoFasta {
 			String spec = tag; //filename.substring(0, k);
 			
 			Set<String>	xref = new TreeSet<String>();
-			int contignum = 0;
+			//int contignum = 0;
 			StringBuilder	strbuf = new StringBuilder();		
 			while( line!= null ) {
 				while( line != null ) {
 					String trimline = line.trim();
+					
+					if( trimline.startsWith("LOCUS") ) {
+						locus = trimline.split("[ \t]+")[1];
+					}
 					//String[] split = trimline.split("[\t ]+");
 					
 					String banno = null;
@@ -76,7 +83,9 @@ public class GBK2AminoFasta {
 						anno = new Anno( banno );
 						anno.contig = strbuf;
 						
-						anno.spec = spec + (contignum > 0 ? "_contig"+(contignum+1) : "");
+						//anno.spec = spec + (contignum > 0 ? "_contig"+(contignum+1) : "");
+						anno.spec = spec + "_"+locus;
+						
 						String[] split = trimline.split("[\t ]+");
 						if( split.length > 1 ) {
 							if( split[1].startsWith("compl") ) {
@@ -178,13 +187,17 @@ public class GBK2AminoFasta {
 					
 					int k = filetext.indexOf("\n", ind+1);
 					line = null;
-					if( k > 0 ) line = filetext.substring(ind+1, k);
+					if( k > 0 ) {
+						line = filetext.substring(ind+1, k);
+					}
 					ind = k;
 				}
 				
 				int k = filetext.indexOf("\n", ind+1);
 				line = null;
-				if( k > 0 ) line = filetext.substring(ind+1, k);
+				if( k > 0 ) {
+					line = filetext.substring(ind+1, k);
+				}
 				ind = k;
 				while( line != null && !line.startsWith("//") ) {
 					strbuf.append( line.replaceAll("[\t 1234567890/]+", "") );
@@ -196,23 +209,26 @@ public class GBK2AminoFasta {
 				}
 				
 				if( line != null ) {
-					if( contignum == 0 ) {
+					/*if( contignum == 0 ) {
 						for( Anno a : annolist ) {
 							a.spec += "_contig1";
 						}
-					}
+					}*/
 					
-					contignum++;
+					//contignum++;
 					
 					k = filetext.indexOf("\n", ind+1);
 					line = null;
-					if( k > 0 ) line = filetext.substring(ind+1, k);
+					if( k > 0 ) {
+						line = filetext.substring(ind+1, k);
+					}
 					ind = k;
 				}
 				
 				//if( contignum > 0 && anno != null && anno.spec != null ) anno.spec += "_contig"+contignum;;
 				
-				allout.write( ">" + spec + (contignum > 0 ? "_contig"+contignum+"\n" : "\n") );
+				//allout.write( ">" + spec + (contignum > 0 ? "_contig"+contignum+"\n" : "\n") );
+				allout.write( ">" + spec + "_" + locus + "\n" );
 				for( int i = 0; i < strbuf.length(); i+=70 ) {
 					allout.write( strbuf.substring(i, Math.min( strbuf.length(), i+70) ) + "\n" );
 				}
