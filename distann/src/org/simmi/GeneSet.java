@@ -580,43 +580,58 @@ public class GeneSet extends JApplet {
 					
 					contig.add( tv );
 					
-					Gene gene = new Gene( null, id, name, origin );
-					gene.allids = new HashSet<String>();
-					gene.allids.add( id );
-					int ec = name.indexOf("(EC");
-					if( ec != -1 ) {
-						int ecc = name.indexOf(')', ec+1);
-						if( ecc == -1 ) ecc = name.length();
-						if( ecc > ec+3 ) {
-							gene.ecid = name.substring(ec+3, ecc).trim();
-						} else {
-							System.err.println();
+					String idstr = null;
+					int ids = name.lastIndexOf('(');
+					if( ids != -1 ) {
+						int eds = name.indexOf(')', ids+1);
+						if( eds != -1 ) {
+							idstr = name.substring(ids+1,eds);
+							name = name.substring(0, ids);
 						}
 					}
 					
-					int go = name.indexOf("GO:");
-					while( go != -1 ) {
-						int ngo = name.indexOf("GO:", go+1);
-						
-						if (gene.funcentries == null)
-							gene.funcentries = new HashSet<Function>();
-						
-						String goid;
-						if( ngo != -1 ) goid = name.substring(go, ngo);
-						else {
-							int ni = go+10;//Math.minname.indexOf(')', go+1);
-							goid = name.substring( go, ni );
+					Gene gene = new Gene( null, id, name, origin );
+					gene.setIdStr( idstr );
+					gene.allids = new HashSet<String>();
+					gene.allids.add( id );
+					if( idstr != null ) {
+						int ec = idstr.indexOf("EC");
+						if( ec != -1 ) {
+							//int ecc = name.indexOf(')', ec+1);
+							//if( ecc == -1 ) ecc = name.length();
+							gene.ecid = idstr.substring(ec+2).trim();
+							
+							/*if( ecc > ec+3 ) {
+								gene.ecid = name.substring(ec+3, ecc).trim();
+							} else {
+								System.err.println();
+							}*/
 						}
-						Function func;
-						if( funcmap.containsKey( goid ) ) {
-							func = funcmap.get( goid );
-						} else {
-							func = new Function( goid );
-							funcmap.put( goid, func );
+					
+						int go = idstr.indexOf("GO:");
+						while( go != -1 ) {
+							int ngo = idstr.indexOf("GO:", go+1);
+							
+							if (gene.funcentries == null)
+								gene.funcentries = new HashSet<Function>();
+							
+							String goid;
+							if( ngo != -1 ) goid = idstr.substring(go, ngo);
+							else {
+								int ni = go+10;//Math.minname.indexOf(')', go+1);
+								goid = idstr.substring( go, ni );
+							}
+							Function func;
+							if( funcmap.containsKey( goid ) ) {
+								func = funcmap.get( goid );
+							} else {
+								func = new Function( goid );
+								funcmap.put( goid, func );
+							}
+							gene.funcentries.add( func );
+							
+							go = ngo;
 						}
-						gene.funcentries.add( func );
-						
-						go = ngo;
 					}
 					//gene.species = new HashMap<String, Teginfo>();
 					refmap.put(id, gene);
@@ -8582,7 +8597,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 6) {
 					return gg.getCommonKO();
 				} else if (columnIndex == 7) {
-					return ko2name.get( gg.getCommonKO() );
+					return ko2name != null ? ko2name.get( gg.getCommonKO() ) : null;
 				} else if (columnIndex == 8) {
 					return null;//gene.pdbid;
 				} else if (columnIndex == 9) {
@@ -11170,6 +11185,16 @@ public class GeneSet extends JApplet {
 				int start = Integer.parseInt( split[0] );
 				int stop = Integer.parseInt( split[1] );
 				
+				String idstr = null;
+				int ids = name.lastIndexOf('(');
+				if( ids != -1 ) {
+					int eds = name.indexOf(')', ids+1);
+					if( eds != -1 ) {
+						idstr = name.substring(ids+1,eds);
+						name = name.substring(0, ids);
+					}
+				}
+				
 				GeneGroup 	gg;
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
@@ -11178,6 +11203,7 @@ public class GeneSet extends JApplet {
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, name, name, spec, tag );
+				g.setIdStr( idstr );
 				
 				Contig contig = contigmap.get( cont );
 				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(1,trim.length()-1), contig, contshort, start, stop, rev ? -1 : 1 );
@@ -11623,10 +11649,10 @@ public class GeneSet extends JApplet {
 				ZipEntry ze = zipm.getNextEntry();
 				while( ze != null ) {
 					String zname = ze.getName();
-					if( zcount == 0 && zname.equals("allthermus.fna") ) {
+					if( zcount == 0 && (zname.equals("allthermus.fna") || zname.equals("allglobus.fna")) ) {
 						specList = loadcontigs( new InputStreamReader( zipm ) );
 						zcount = 1;
-					} else if( zcount == 1 && (zname.equals("allthermus_aligned.fsa") || zname.equals("allthermus_aligned.aa")) ) {
+					} else if( zcount == 1 && (zname.equals("allthermus_aligned.fsa") || zname.equals("allthermus_aligned.aa") || zname.equals("allglobus_aligned.aa")) ) {
 						loci2aasequence( new InputStreamReader( zipm ), refmap );
 						zcount = 2;
 					} else if( zcount == 2 && zname.equals("clusters.txt") ) {
@@ -11885,8 +11911,8 @@ public class GeneSet extends JApplet {
 			while( ze != null ) {
 				if( ze.getName().equals("trnas.txt") ) i  = loadTrnas( rnamap, new InputStreamReader( zipin ), i );
 				else if( ze.getName().equals("rrnas.fasta") ) i = loadRrnas( rnamap, new InputStreamReader( zipin ), i );
-				else if( ze.getName().equals("allthermus.trna") ) i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "trna" );
-				else if( ze.getName().equals("allthermus.rrna") ) i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "rrna" );
+				else if( ze.getName().equals("allthermus.trna") || ze.getName().equals("allglobus.trna") ) i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "trna" );
+				else if( ze.getName().equals("allthermus.rrna") || ze.getName().equals("allglobus.rrna") ) i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "rrna" );
 				
 				ze = zipin.getNextEntry();
 			}
