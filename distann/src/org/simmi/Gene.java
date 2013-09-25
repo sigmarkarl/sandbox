@@ -18,6 +18,10 @@ public class Gene {
 		this.tag = tag;
 	}
 	
+	public void setIdStr( String idstr ) {
+		this.idstr = idstr;
+	}
+	
 	public String toString() {
 		return getName();
 	}
@@ -101,6 +105,7 @@ public class Gene {
 	String tag;
 	//String origin;
 	String refid;
+	String idstr;
 	Set<String> allids;
 	String genid;
 	String uniid;
