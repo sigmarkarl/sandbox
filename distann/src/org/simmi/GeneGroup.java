@@ -185,6 +185,17 @@ public class GeneGroup {
 		return null;
 	}
 	
+	public String getCommonSymbol() {
+		String sel = null;
+		for( Gene g : genes ) {
+			if( sel == null || (g.koname != null && g.koname.length() > 0 && g.koname.length() < 7 && (sel.length() >= 7 || g.koname.length() > sel.length())) ) {
+				//if( sel != null && sel.contains("dnaA") ) System.err.println( sel + "   " + g.koname );
+				sel = g.koname;
+			}
+		}
+		return sel;
+	}
+	
 	public String getCommonEc() {
 		for( Gene g : genes ) {
 			if( g.ecid != null && g.ecid.length() > 0 ) return g.ecid;

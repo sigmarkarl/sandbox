@@ -52,6 +52,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import netscape.javascript.JSObject;
+
+import org.apache.commons.codec.binary.Base64;
+
 public class GeneCompare {
 	List<Contig> contigs;
 	
@@ -85,11 +89,13 @@ public class GeneCompare {
 		return blosumap;
 	}
 	
+	int total = 0;
 	int ptotal = 0;
-	public int selectContigs( Container comp, String spec1, GeneSet geneset ) {
+	public void selectContigs( Container comp, String spec1, GeneSet geneset ) {
 		final List<Contig> lcont = geneset.speccontigMap.get( spec1 );
 		
 		ptotal = 0;
+		total = 0;
 		JTable cseltable = new JTable();
 		cseltable.setModel( new TableModel() {
 			@Override
@@ -135,7 +141,6 @@ public class GeneCompare {
 		JScrollPane	sp = new JScrollPane( cseltable );
 		JOptionPane.showMessageDialog(comp, sp);
 		contigs = new ArrayList<Contig>();
-		int total = 0;
 		for( int r : cseltable.getSelectedRows() ) {
 			int i = cseltable.convertRowIndexToModel(r);
 			Contig ctg = lcont.get( i );
@@ -156,9 +161,14 @@ public class GeneCompare {
 			ptotal = total - chromosome.getGeneCount();
 			total = chromosome.getGeneCount();
 		}
-		
-		return total;
 	}
+	
+	JRadioButton	relcol;
+	JRadioButton	gccol;
+	JRadioButton	syntcol;
+	JRadioButton	brcol;
+	JRadioButton	syntgrad;
+	JRadioButton	isyntgrad;
 	
 	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) throws IOException {
 		final JTable 				table = geneset.getGeneTable();
@@ -233,18 +243,18 @@ public class GeneCompare {
 		
 		final Map<String,Integer>	blosumap = getBlosumMap();
 		
-		int total = selectContigs(comp, spec1, geneset);
+		selectContigs(comp, spec1, geneset);
 		
 		final BufferedImage bimg = new BufferedImage( 2048, 2048, BufferedImage.TYPE_INT_ARGB );
 		final Graphics2D g2 = bimg.createGraphics();
 		draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
 		
-		final JRadioButton	relcol = new JRadioButton("Rel color");
-		final JRadioButton	gccol = new JRadioButton("GC color");
-		final JRadioButton	syntcol = new JRadioButton("Synteni color");
-		final JRadioButton	brcol = new JRadioButton("Breakpoint color");
-		final JRadioButton	syntgrad = new JRadioButton("Synteni gradient");
-		final JRadioButton	isyntgrad = new JRadioButton("Inverted synteni gradient");
+		relcol = new JRadioButton("Rel color");
+		gccol = new JRadioButton("GC color");
+		syntcol = new JRadioButton("Synteni color");
+		brcol = new JRadioButton("Breakpoint color");
+		syntgrad = new JRadioButton("Synteni gradient");
+		isyntgrad = new JRadioButton("Inverted synteni gradient");
 		ButtonGroup		bg = new ButtonGroup();
 		bg.add( relcol );
 		bg.add( gccol );
@@ -258,52 +268,66 @@ public class GeneCompare {
 		
 		specombo.setSelectedItem( spec1 );
 		
+		final JComponent cmp = new JComponent() {
+			public void paintComponent( Graphics g ) {
+				Graphics2D g2 = (Graphics2D)g;
+				//draw( g2 );
+				g2.drawImage(bimg, 0, 0, this);
+			}
+		};
+		
 		relcol.addActionListener( new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
-				int total = selectContigs( comp, spec1, geneset );
+				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
+				cmp.repaint();
 			}
 		});
 		gccol.addActionListener( new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
-				int total = selectContigs( comp, spec1, geneset );
+				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+				cmp.repaint();
 			}
 		});
 		syntcol.addActionListener( new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
-				int total = selectContigs( comp, spec1, geneset );
+				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
+				cmp.repaint();
 			}
 		});
 		brcol.addActionListener( new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
-				int total = selectContigs( comp, spec1, geneset );
+				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
+				cmp.repaint();
 			}
 		});
 		syntgrad.addActionListener( new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
-				int total = selectContigs( comp, spec1, geneset );
+				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
+				cmp.repaint();
 			}
 		});
 		isyntgrad.addActionListener( new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
-				int total = selectContigs( comp, spec1, geneset );
+				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
+				cmp.repaint();
 			}
 		});
 		
@@ -312,18 +336,12 @@ public class GeneCompare {
 			public void itemStateChanged(ItemEvent e) {
 				//spec1 = (String)e.getItem()
 				String spec1 = (String)specombo.getSelectedItem();
-				int total = selectContigs( comp, spec1, geneset );
+				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, relcol.isSelected() ? blosumap : null, total, ptotal );
+				cmp.repaint();
 			}
 		});
 		
-		JComponent cmp = new JComponent() {
-			public void paintComponent( Graphics g ) {
-				Graphics2D g2 = (Graphics2D)g;
-				//draw( g2 );
-				g2.drawImage(bimg, 0, 0, this);
-			}
-		};
 		JPopupMenu popup = new JPopupMenu();
 		popup.add( new AbstractAction("Save") {
 			@Override
@@ -331,6 +349,19 @@ public class GeneCompare {
 				boolean succ = true;
 				try {
 					ImageIO.write(bimg, "png", new File("/home/sigmar/cir.png") );
+				} catch(Exception e1) {
+					succ = false;
+					e1.printStackTrace();
+				}
+				
+				try {
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					ImageIO.write(bimg, "png", baos);
+					baos.close();
+					String b64str = Base64.encodeBase64String( baos.toByteArray() );
+					
+					JSObject window = JSObject.getWindow(geneset);
+					window.call( "string2Blob", new Object[] {b64str, "image/png"} );
 				} catch(Exception e1) {
 					succ = false;
 					e1.printStackTrace();
@@ -431,6 +462,63 @@ public class GeneCompare {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				p = e.getPoint();
+				
+				if( e.getClickCount() == 2 ) {
+					double dx = p.x-bimg.getWidth()/2;
+					double dy = p.y-bimg.getHeight()/2;
+					
+					double t = Math.atan2( dy, dx );
+					double rad = Math.sqrt( dx*dx + dy*dy );
+					
+					if( t < 0 ) t += Math.PI*2.0;
+					int mloc = (int)(t*size/(2*Math.PI));
+					
+					int ind = (int)((rad-250.0)/15.0);
+					if( ind >= 0 && ind < spec2s.size() ) {
+						String spec = spec2s.get( ind );
+						
+						int i = 0;
+						int loc = 0;
+						for( i = 0; i < contigs.size(); i++ ) {
+							Contig c = contigs.get(i);
+							if( loc + c.getGeneCount() > mloc ) {
+								break;
+							} else loc += c.getGeneCount();
+						}
+						Contig c = contigs.get(i);
+						if( mloc-loc < c.getGeneCount() ) {
+							//loc += c.getGeneCount();
+							c = contigs.get( i%contigs.size() );
+							Tegeval tv = c.tlist.get(mloc-loc);
+							Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+							
+							Contig ct = ti.best.getContshort();
+							ct.setReverse( !ct.isReverse() );
+						}
+					}
+					
+					if( relcol.isSelected() ) {
+						String spec1 = (String)specombo.getSelectedItem();
+						draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
+					} else if( gccol.isSelected() ) {
+						String spec1 = (String)specombo.getSelectedItem();
+						draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+					} else if( syntcol.isSelected() ) {
+						String spec1 = (String)specombo.getSelectedItem();
+						draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
+					} else if( brcol.isSelected() ) {
+						String spec1 = (String)specombo.getSelectedItem();
+						draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
+					} else if( syntgrad.isSelected() ) {
+						String spec1 = (String)specombo.getSelectedItem();
+						draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
+					} else if( isyntgrad.isSelected() ) {
+						String spec1 = (String)specombo.getSelectedItem();
+						draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
+					}
+					
+					cmp.repaint();
+				}
 			}
 			
 			@Override
@@ -752,6 +840,7 @@ public class GeneCompare {
 															if( idx == -1 ) {
 																count2 += ctg2.getGeneCount();
 															} else {
+																//ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : 
 																count2 += idx;
 																break;
 															}
@@ -759,7 +848,7 @@ public class GeneCompare {
 													}
 													double prat2 = (double)count2/(double)ptotal2;
 													if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
-												} else count2 = idx;
+												} else count2 = chromosome.isReverse() ? chromosome.getGeneCount() - idx - 1 : idx;
 											}
 										} else {
 											for( Contig ctg2 : contigs2 ) {
@@ -822,7 +911,7 @@ public class GeneCompare {
 										} else if( ratio2 < 5.0/6.0 ) {
 											Color c = new Color(1.0f,0.0f,(float)((ratio2-4.0/6.0)*6.0));
 											g2.setColor( c );
-										} else {
+										} else if( ratio2 <= 1.0 ) {
 											Color c = new Color((float)((1.0-ratio2)*6.0),0.0f,1.0f);
 											g2.setColor( c );
 										}
