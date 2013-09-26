@@ -78,15 +78,6 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.event.EventHandler;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.Scene;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebEvent;
-import javafx.scene.web.WebView;
-
 import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
 import javax.jnlp.FileContents;
@@ -138,6 +129,7 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -1007,7 +999,11 @@ public class GeneSet extends JApplet {
 							spc1totwoc += erm.size();
 							for (Map<String, Set<String>> sm : erm) {
 								Set<String> hset = sm.get(spc1);
-								tototwoc += hset.size();
+								if( hset != null ) {
+									tototwoc += hset.size();
+								} else {
+									System.err.println();
+								}
 							}
 
 							if (set.contains(spc2)) {
@@ -1021,7 +1017,7 @@ public class GeneSet extends JApplet {
 						spc1tot += erm.size();
 						for (Map<String, Set<String>> sm : erm) {
 							Set<String> hset = sm.get(spc1);
-							totot += hset.size();
+							if( hset != null ) totot += hset.size();
 						}
 
 						if (set.contains(spc2)) {
@@ -1085,7 +1081,7 @@ public class GeneSet extends JApplet {
 							spc1totwocore += erm.size();
 							for (Map<String, Set<String>> sm : erm) {
 								Set<String> hset = sm.get(spc1);
-								tototwocore += hset.size();
+								if( hset != null ) tototwocore += hset.size();
 							}
 
 							if (set.contains(spc2)) {
@@ -1099,7 +1095,7 @@ public class GeneSet extends JApplet {
 						spc1tot += erm.size();
 						for (Map<String, Set<String>> sm : erm) {
 							Set<String> hset = sm.get(spc1);
-							totot += hset.size();
+							if( hset != null ) totot += hset.size();
 						}
 
 						if (set.contains(spc2)) {
@@ -1557,14 +1553,24 @@ public class GeneSet extends JApplet {
 		for (Set<String> t : total) {
 			Set<String> teg = new HashSet<String>();
 			for (String e : t) {
-				int i =  e.indexOf('_');
+				int i =  e.lastIndexOf('[');
 				if( i != -1 ) {
-					String str = e.substring(0, i);
+					String str = e.substring(i+1, e.indexOf(']', i+1));
+					
+					String spec;
+					int u = str.indexOf("uid");
+					if( u == -1 ) {
+						u = str.indexOf("contig");
+						spec = str.substring( 0, u-1 );
+					} else {
+						int l = str.indexOf('_', u+1);
+						spec = str.substring( 0, l );
+					}
 					/*
 					 * if( joinmap.containsKey( str ) ) { str = joinmap.get(str); }
 					 */
-					teg.add(str);					
-				} else System.err.println();
+					teg.add(spec);				
+				}
 
 				//species.add(str);
 			}
@@ -1581,19 +1587,31 @@ public class GeneSet extends JApplet {
 			setmap.add(submap);
 
 			for (String e : t) {
-				int i = e.indexOf('_');
+				//int i = e.indexOf('_');
+				int i =  e.lastIndexOf('[');
 				if( i != -1 ) {
-					String str = e.substring(0,i);
+					//String str = e.substring(0,i);
+					String str = e.substring(i+1, e.indexOf(']', i+1));
 					/*
 					 * if( joinmap.containsKey( str ) ) { str = joinmap.get(str); }
 					 */
+					
+					String spec;
+					int u = str.indexOf("uid");
+					if( u == -1 ) {
+						u = str.indexOf("contig");
+						spec = str.substring( 0, u-1 );
+					} else {
+						int l = str.indexOf('_', u+1);
+						spec = str.substring( 0, l );
+					}
 	
 					Set<String> set;
-					if (submap.containsKey(str)) {
-						set = submap.get(str);
+					if (submap.containsKey(spec)) {
+						set = submap.get(spec);
 					} else {
 						set = new HashSet<String>();
-						submap.put(str, set);
+						submap.put(spec, set);
 					}
 					set.add(e);
 				}
@@ -4066,7 +4084,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	private static Scene createScene( String webp ) {
+	/*private static Scene createScene( String webp ) {
         //Group  root  =  new  Group();
 		WebView	wv = new WebView();
 		WebEngine we = wv.getEngine();
@@ -4091,9 +4109,9 @@ public class GeneSet extends JApplet {
         text.setY(100);
         text.setFont(new Font(25));
         text.setText("Welcome JavaFX!");
-        root.getChildren().add(text);*/
+        root.getChildren().add(text);*
         return (scene);
-    }
+    }*/
 	
 	private static void initAndShowGUI( final String webp ) {
         // This method is invoked on Swing thread
@@ -4104,7 +4122,7 @@ public class GeneSet extends JApplet {
         final BufferedImage bimg = new BufferedImage(dim.width,dim.height,BufferedImage.TYPE_INT_ARGB);
 		final Graphics2D g2 = bimg.createGraphics();
         
-		final JFXPanel fxPanel = new JFXPanel() {
+		/*final JFXPanel fxPanel = new JFXPanel() {
         	public void paintComponent( Graphics g ) {
         		super.paintComponent( g );
         	}
@@ -4178,13 +4196,13 @@ public class GeneSet extends JApplet {
             public void run() {
                 initFX(fxPanel, webp);
             }
-        });
+        });*/
     }
 
-    private static void initFX(JFXPanel fxPanel, String webp) {
+    /*private static void initFX(JFXPanel fxPanel, String webp) {
         Scene scene = createScene( webp );
         fxPanel.setScene(scene);
-    }
+    }*/
 	
 	public void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
 		/*
@@ -4486,9 +4504,9 @@ public class GeneSet extends JApplet {
 
 		try {
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
-			/*FileInputStream fi = new FileInputStream( "/vg454flx/gene_association.goa_uniprot.gz" );
-			GZIPInputStream gi = new GZIPInputStream( fi );
-			funcMappingStatic( new InputStreamReader( gi ) );*/
+			//FileInputStream fi = new FileInputStream( "/home/sigmar/gene_association.goa_uniprot.gz" );
+			//GZIPInputStream gi = new GZIPInputStream( fi );
+			//funcMappingStatic( new InputStreamReader( gi ) );
 			
 			/*Map<String,String>	sp2ko = new HashMap<String,String>();
 			FileReader fr = new FileReader("/vg454flx/sp2ko.txt");
@@ -4516,7 +4534,7 @@ public class GeneSet extends JApplet {
 			
 			//simmi();
 			
-			Map<String,String>							all = new TreeMap<String,String>();
+			/*Map<String,String>							all = new TreeMap<String,String>();
 			Map<String, Map<String,Integer>> 			map = new TreeMap<String, Map<String,Integer>>();
 			
 			FileReader fw = new FileReader("/home/sigmar/meta/cogmeta14.blastout");
@@ -4527,7 +4545,7 @@ public class GeneSet extends JApplet {
 			fw.close();
 			
 			StringWriter sw = gs.writeCog( all, map );
-			System.out.println( sw );
+			System.out.println( sw );*/
 			
 			dummy();
 			//SerifyApplet.blastJoin(new FileInputStream("/home/horfrae/peter/stuff.blastout"), System.out);
@@ -4886,6 +4904,11 @@ public class GeneSet extends JApplet {
 					if (getgeneids) {
 						gene.genid = split[secind];
 						unimap.put(gene.genid, gene);
+						if( split.length > 15 ) {
+							gene.koname = split[15];
+							
+							if( gene.koname.startsWith("dna") ) System.err.println( gene.koname );
+						}
 					} else {
 						gene.uniid = split[secind];
 						unimap.put(gene.uniid, gene);
@@ -5000,7 +5023,7 @@ public class GeneSet extends JApplet {
 	
 	public static void funcMappingStatic( Reader rd ) throws IOException {
 		//Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
-		FileWriter fw = new FileWriter("/u0/sp2go.txt");
+		FileWriter fw = new FileWriter("/home/sigmar/sp2go.txt");
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		String prev = null;
@@ -5568,8 +5591,9 @@ public class GeneSet extends JApplet {
 			String coglong = all.get( cog );
 			fw.write("','"+coglong);
 		}
-		fw.write("'],\n");
+		fw.write("']");
 		for( String s : map.keySet() ) {
+			fw.write(",\n");
 			int total = 0;
 			fw.write( "['"+s+"'" );
 			Map<String,Integer> cm = map.get( s );
@@ -5578,10 +5602,10 @@ public class GeneSet extends JApplet {
 				if( cm.containsKey( cog ) ) val = cm.get(cog);
 				fw.write(","+val);
 			}
-			fw.write("],\n");
+			fw.write("]");
 		}
 		
-		fw.write( "Species" );
+		/*fw.write( "Species" );
 		for( String cog : all.keySet() ) {
 			String coglong = all.get( cog );
 			fw.write("\t"+coglong);
@@ -6404,17 +6428,56 @@ public class GeneSet extends JApplet {
 					e1.printStackTrace();
 				}
 				final String smuck = sb.toString().replace("smuck", restext.toString());
-				System.err.println( smuck );
+				
+				String b64str = Base64.encodeBase64String( smuck.getBytes() );
+				JSObject window = null;
+				try {
+					window = JSObject.getWindow( GeneSet.this );
+				} catch( Exception exc ) {
+					exc.printStackTrace();
+				}
+				
+				if( window != null ) {
+					boolean succ = true;
+					try {
+						window.call("string2Blob", new Object[] {b64str,"text/html"});
+					} catch( Exception exc ) {
+						succ = false;
+						exc.printStackTrace();
+					}
+				
+					if( succ == false ) {
+						try {
+							window.setMember("b64str", b64str);
+							window.eval("var binary = atob(b64str)");
+							window.eval("var i = binary.length");
+							window.eval("var view = new Uint8Array(i)");
+						    window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+							window.eval("var b = new Blob( [view], { \"type\" : \"text\\/html\" } );");
+							window.eval("open( URL.createObjectURL(b), '_blank' )");
+						} catch( Exception exc ) {
+							exc.printStackTrace();
+						}
+					}
+				}
+				/*try { 
+					JSObject window = JSObject.getWindow( GeneSet.this );
+					window.call("string2Blob", new Object[] {b64str,"text/html"});
+				} catch( Exception exc ) {
+					exc.printStackTrace();
+				}*/
+				
+				//System.err.println( smuck );
 				//restext.append( smuck );
 				
 				//final String smuck = sb.toString();
 				
-				SwingUtilities.invokeLater(new Runnable() {
+				/*SwingUtilities.invokeLater(new Runnable() {
 	                 @Override
 	                 public void run() {
 	                     initAndShowGUI( smuck );
 	                 }
-	            });
+	            });*/
 				
 				/*JScrollPane	jsp = new JScrollPane();
 				JComponent	comp = new JComponent() {
@@ -7196,7 +7259,38 @@ public class GeneSet extends JApplet {
 				}
 				fw.write("</tr></table></body></html>");
 				
-				boolean succ = true;
+				String b64str = Base64.encodeBase64String( fw.toString().getBytes() );
+				JSObject window = null;
+				try {
+					window = JSObject.getWindow( GeneSet.this );
+				} catch( Exception exc ) {
+					exc.printStackTrace();
+				}
+				
+				if( window != null ) {
+					boolean succ = true;
+					try {
+						window.call("string2Blob", new Object[] {b64str,"text/html"});
+					} catch( Exception exc ) {
+						succ = false;
+						exc.printStackTrace();
+					}
+				
+					if( succ == false ) {
+						try {
+							window.setMember("b64str", b64str);
+							window.eval("var binary = atob(b64str)");
+							window.eval("var i = binary.length");
+							window.eval("var view = new Uint8Array(i)");
+						    window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+							window.eval("var b = new Blob( [view], { \"type\" : \"text\\/html\" } );");
+							window.eval("open( URL.createObjectURL(b), '_blank' )");
+						} catch( Exception exc ) {
+							exc.printStackTrace();
+						}
+					}
+				}
+				/*boolean succ = true;
 				try {					
 					FileWriter fww = new FileWriter( "/var/www/html/genstat.html" );
 					fww.write( fw.toString() );
@@ -7217,7 +7311,7 @@ public class GeneSet extends JApplet {
 		                     initAndShowGUI( fw.toString() );
 		                 }
 		            });
-				}
+				}*/
 			}
 		};
 		AbstractAction	selectsharingaction = new AbstractAction("Select sharing") {
@@ -7671,6 +7765,38 @@ public class GeneSet extends JApplet {
 				}
 				final String smuck = sb.toString().replace("smuck", restext.toString());
 				
+				String b64str = Base64.encodeBase64String( smuck.getBytes() );
+				JSObject window = null;
+				try {
+					window = JSObject.getWindow( GeneSet.this );
+				} catch( Exception exc ) {
+					exc.printStackTrace();
+				}
+				
+				if( window != null ) {
+					boolean succ = true;
+					try {
+						window.call("string2Blob", new Object[] {b64str,"text/html"});
+					} catch( Exception exc ) {
+						succ = false;
+						exc.printStackTrace();
+					}
+				
+					if( succ == false ) {
+						try {
+							window.setMember("b64str", b64str);
+							window.eval("var binary = atob(b64str)");
+							window.eval("var i = binary.length");
+							window.eval("var view = new Uint8Array(i)");
+						    window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+							window.eval("var b = new Blob( [view], { \"type\" : \"text\\/html\" } );");
+							window.eval("open( URL.createObjectURL(b), '_blank' )");
+						} catch( Exception exc ) {
+							exc.printStackTrace();
+						}
+					}
+				}
+				
 				restext.append( smuck );
 				JTextArea	ta = new JTextArea();
 				ta.setText( restext.toString() );
@@ -7855,11 +7981,7 @@ public class GeneSet extends JApplet {
 					restext.append( d+"]" );
 				}
 				
-				JFrame f = new JFrame("GC% chart");
-				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-				f.setSize( 800, 600 );
-				
-				/*final StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
 				try {
 					int c = is.read();
@@ -7870,7 +7992,55 @@ public class GeneSet extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-				final String smuck = sb.toString().replace("smuck", restext.toString());*/
+				final String smuck = sb.toString().replace("smuck", restext.toString());
+				String b64str = Base64.encodeBase64String( smuck.getBytes() );
+				JSObject window = null;
+				try {
+					window = JSObject.getWindow( GeneSet.this );
+				} catch( Exception exc ) {
+					exc.printStackTrace();
+				}
+				
+				if( window != null ) {
+					boolean succ = true;
+					try {
+						window.call("string2Blob", new Object[] {b64str,"text/html"});
+					} catch( Exception exc ) {
+						succ = false;
+						exc.printStackTrace();
+					}
+				
+					if( succ == false ) {
+						try {
+							window.setMember("b64str", b64str);
+							window.eval("var binary = atob(b64str)");
+							window.eval("var i = binary.length");
+							window.eval("var view = new Uint8Array(i)");
+						    window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+							window.eval("var b = new Blob( [view], { \"type\" : \"text\\/html\" } );");
+							window.eval("open( URL.createObjectURL(b), '_blank' )");
+						} catch( Exception exc ) {
+							exc.printStackTrace();
+						}
+					}
+				}
+				
+				/*JFrame f = new JFrame("GC% chart");
+				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				f.setSize( 800, 600 );
+				
+				final StringBuilder sb = new StringBuilder();
+				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
+				try {
+					int c = is.read();
+					while( c != -1 ) {
+						sb.append( (char)c );
+						c = is.read();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				final String smuck = sb.toString().replace("smuck", restext.toString());
 				
 				//restext.append( restext.toString() );
 				JTextArea	ta = new JTextArea();
@@ -7911,7 +8081,51 @@ public class GeneSet extends JApplet {
 							cogCalc( null, isr, all, map );
 							StringWriter fw = writeCog( all, map );
 							
-							JFrame f = new JFrame("GC% chart");
+							final StringBuilder sb = new StringBuilder();
+							InputStream is = GeneSet.class.getResourceAsStream("/cogchart.html");
+							try {
+								int c = is.read();
+								while( c != -1 ) {
+									sb.append( (char)c );
+									c = is.read();
+								}
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+							final String smuck = sb.toString().replace("smuck", fw.toString());
+							
+							String b64str = Base64.encodeBase64String( smuck.getBytes() );
+							JSObject window = null;
+							try {
+								window = JSObject.getWindow( GeneSet.this );
+							} catch( Exception exc ) {
+								exc.printStackTrace();
+							}
+							
+							if( window != null ) {
+								boolean succ = true;
+								try {
+									window.call("string2Blob", new Object[] {b64str,"text/html"});
+								} catch( Exception exc ) {
+									succ = false;
+									exc.printStackTrace();
+								}
+							
+								if( succ == false ) {
+									try {
+										window.setMember("b64str", b64str);
+										window.eval("var binary = atob(b64str)");
+										window.eval("var i = binary.length");
+										window.eval("var view = new Uint8Array(i)");
+									    window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+										window.eval("var b = new Blob( [view], { \"type\" : \"text\\/html\" } );");
+										window.eval("open( URL.createObjectURL(b), '_blank' )");
+									} catch( Exception exc ) {
+										exc.printStackTrace();
+									}
+								}
+							}
+							/*JFrame f = new JFrame("GC% chart");
 							f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 							f.setSize( 800, 600 );
 							
@@ -7919,7 +8133,7 @@ public class GeneSet extends JApplet {
 							ta.setText( fw.toString() );
 							JScrollPane	sp = new JScrollPane(ta);
 							f.add( sp );
-							f.setVisible( true );
+							f.setVisible( true );*/
 							
 							break;
 						}
@@ -8053,9 +8267,9 @@ public class GeneSet extends JApplet {
 				
 				try {
 					String fastaStr = sb.toString();
-					FileWriter fw = new FileWriter("/root/erm.fasta");
+					/*FileWriter fw = new FileWriter("/root/erm.fasta");
 					fw.write( fastaStr );
-					fw.close();
+					fw.close();*/
 					
 					currentSerify.addSequences("uh", new StringReader( fastaStr ), "/");
 				} catch (URISyntaxException | IOException e1) {
@@ -8597,7 +8811,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 6) {
 					return gg.getCommonKO();
 				} else if (columnIndex == 7) {
-					return ko2name != null ? ko2name.get( gg.getCommonKO() ) : null;
+					return gg.getCommonSymbol(); //ko2name != null ? ko2name.get( gg.getCommonKO() ) : null;
 				} else if (columnIndex == 8) {
 					return null;//gene.pdbid;
 				} else if (columnIndex == 9) {
@@ -12257,15 +12471,15 @@ public class GeneSet extends JApplet {
 			zipin.close();
 			
 			//is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
-			//is = new GZIPInputStream( new FileInputStream("/u0/idmapping.dat.gz") );
+			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/idmapping.dat.gz") );
 			
 			//is = new FileInputStream("/u0/idmapping_short.dat");
-			//unimap = idMapping(new InputStreamReader(is), null/*"/u0/idmapping_short.dat"*/, 2, 0, refmap, false);
+			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/stuff/idmapping_short.dat", 2, 0, refmap, false);
 			
-			/*//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
-			is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2refseq.gz") );
-			Map<String, Gene> genmap = idMapping(new InputStreamReader(is), "/home/sigmar/thermus/gene2refseq_short.txt", 5, 1, refmap, true);
-			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");*/
+			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
+			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2refseq.gz") );
+			//genmap = idMapping(new InputStreamReader(is), "/home/sigmar/stuff/gene2refseq_short.txt", 5, 1, refmap, true);
+			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");
 			
 			
 			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
@@ -12297,8 +12511,8 @@ public class GeneSet extends JApplet {
 				}
 				zipin.close();
 				//is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
-				//is = new GZIPInputStream( new FileInputStream( "/vg454flx/sp2go.txt.gz" ) );
-				//funcMappingUni(new InputStreamReader(is), unimap, null);
+				//is = new GZIPInputStream( new FileInputStream( "/home/sigmar/sp2go.txt.gz" ) );
+				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
 				unimap.clear();
 			}
 			if( genmap != null ) genmap.clear();

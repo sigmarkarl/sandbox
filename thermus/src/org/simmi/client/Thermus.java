@@ -17,6 +17,10 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+
+import elemental.html.Blob;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -42,10 +46,52 @@ public class Thermus implements EntryPoint {
 		$wnd.saveSel = function( name, val ) {
 			s.@org.simmi.client.Thermus::saveSel(Ljava/lang/String;Ljava/lang/String;)( name, val );
 		};
+		
+		$wnd.string2Blob = function( str, mime ) {
+			var b = s.@org.simmi.client.Thermus::string2Blob(Ljava/lang/String;Ljava/lang/String;)( str, mime );
+			$wnd.open( $wnd.URL.createObjectURL(b), '_blank' );
+		};
 	}-*/;
 	
 	public native void fillSelSaveInApplet( Element e, String json ) /*-{
 		e.fillSelectionSave( json );
+	}-*/;
+	
+	public native String getObjectUrl( Blob blob ) /*-{
+		return $wnd.URL.createObjectURL( blob );
+	}-*/;
+	
+	public native Blob str2Blob( String str, String mime ) /*-{
+		var b = new Blob( str, { "type" : "text\/plain" } );
+		var f = new FileReader();
+	    f.onload = function(e) {
+	        callback(e.target.result);
+	    }
+	    f.readAsArrayBuffer( b );
+	}-*/;
+	
+	public native Blob string2Blob( String str, String mime ) /*-{
+		var binary = $wnd.atob( str );
+	    var i = binary.length;
+	    var view = new Uint8Array(i);
+	    
+	    while(i--) {
+	    	view[i] = binary.charCodeAt(i);
+		}
+	    
+	    return new Blob( [view], { "type" : mime } );
+	}-*/;
+	
+	public native Blob datauri2Blob( String dataURL, String mime ) /*-{
+		binary = $wnd.atob( dataURL.substr( dataURL.indexOf(',') + 1 ) );
+	    i = binary.length;
+	    view = new Uint8Array(i);
+	    
+	    while (i--) {
+	    	view[i] = binary.charCodeAt(i);
+		}
+	    
+	    return new Blob( [view], { "type" : mime } );
 	}-*/;
 	
 	public void saveSel( String name, String val ) {
@@ -125,16 +171,27 @@ public class Thermus implements EntryPoint {
 		ae.setAttribute("id", "thermusapplet");
 		ae.setAttribute("name", "thermusapplet");
 		//ae.setAttribute("codebase", "http://dl.dropbox.com/u/10024658/");
+		
 		ae.setAttribute("codebase", "http://thermusgenes.appspot.com/");
 		//ae.setAttribute("codebase", "http://127.0.0.1:8888/");
-		ae.setAttribute("width", "100%");
-		ae.setAttribute("height", "100%");
+		
+		ae.setAttribute("width", "1024px");
+		ae.setAttribute("height", "600px");
 		ae.setAttribute("jnlp_href", "distann.jnlp");
 		ae.setAttribute("archive", "distann.jar");
 		ae.setAttribute("code", "org.simmi.GeneSet");
 		
 		//initFunctions( applet );
 		
-		rp.getElement().appendChild( ae );
+		VerticalPanel	vp = new VerticalPanel();
+		vp.setSize("100%", "100%");
+		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
+		
+		SimplePanel sp = new SimplePanel();
+		sp.getElement().appendChild( ae );
+		
+		vp.add( sp );
+		rp.add( vp );
 	}
 }

@@ -251,6 +251,11 @@ public class GBK2AminoFasta {
 			} else {
 				out = urifile.get( uri );
 			}
+			
+			/*if( out == null ) {
+				System.err.println();
+			}*/
+			
 			boolean amino = ao.getType().contains("CDS");
 			
 			String end = amino ? " # " + ao.start + " # " + ao.stop + " # " + (ao.comp ? "-1" : "1") + " #\n" : "\n";
@@ -275,8 +280,8 @@ public class GBK2AminoFasta {
 						String str = Sequence.amimap.get( second );
 						if( str != null ) {
 							if( str.equals("0") || str.equals("1") ) break;
-							else out.write( str );//+ " " + t + " " );
-							if( (++t % 60) == 0 ) out.write("\n");
+							else if( out != null ) out.write( str );//+ " " + t + " " );
+							if( (++t % 60) == 0 && out != null ) out.write("\n");
 						}
 					}
 				} else {
@@ -286,8 +291,8 @@ public class GBK2AminoFasta {
 						String str = Sequence.amimap.get( first );
 						if( str != null ) {
 							if( str.equals("0") || str.equals("1") ) break;
-							else out.write( str );//+ " " + t + " " );
-							if( (++t % 60) == 0 ) out.write("\n");
+							else if( out != null ) out.write( str );//+ " " + t + " " );
+							if( (++t % 60) == 0 && out != null ) out.write("\n");
 						}
 					}
 				}
@@ -297,25 +302,25 @@ public class GBK2AminoFasta {
 						char c = strbuf.charAt(i);
 						Character bigc = Sequence.rc.get( Character.toUpperCase( c ) );
 						if( bigc == null ) System.err.println( "blerr " + c );
-						out.write( bigc != null ? bigc : c );
-						if( (++t % 60) == 0 ) out.write("\n");
+						if( out != null ) out.write( bigc != null ? bigc : c );
+						if( (++t % 60) == 0 && out != null ) out.write("\n");
 					}
 				} else {
 					for( int i = ao.start; i < ao.stop; i+=60 ) {
 						int start = i;
 						int stop = Math.min( ao.stop, i+60 );
 						String str = strbuf.substring( start, stop );
-						out.write( str.toUpperCase() + (str.length() == 60 ? "\n" : "") );
+						if( out != null ) out.write( str.toUpperCase() + (str.length() == 60 ? "\n" : "") );
 					}
 				}
 			}
-			out.write("\n");
+			if( out != null ) out.write("\n");
 			//if( c++ > 10 ) break;
 		}
 		
 		for( URI uri : urifile.keySet() ) {
 			Writer w = urifile.get( uri );
-			w.close();
+			if( w != null ) w.close();
 		}
 		allout.close();
 			//String encoded = encode( sb.toString() );
