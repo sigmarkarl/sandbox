@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Pan-Core / Comparative genomomics exercise</title>
+<link rel="stylesheet" type="text/css" href="pancore.css">
+<link href="http://fonts.googleapis.com/css?family=Headland+One|Life+Savers:400,700" rel="stylesheet" type="text/css">
+</head>
+<body style="text-align : justify; font-family: 'Life Savers', cursive; font-size: 24px">
+<div>
+<h3>Pan-Core / Comparative genomomics exercise</h3>
+<a href="mailto@sigmarkarl@gmail.com">sigmarkarl@gmail.com</a>
+</div>
+<div class="article">
+<section>
+<b>Data preparation</b>
+<p>
+Data was prepared as described in the <a href="/pancore.html">manual</a>. 
+The preparation is a bit of a hassle so we have prepared few sets of microbial genomes for you.
+Download one from here: <a href="http:130.208.181.105/allthermus.zip"><i>Thermus</i> species</a>, <a href="http:130.208.181.105/allglobus.zip"><i>Archaeoglobus, Ferroglobus</i></a> or <a href="http:130.208.181.105/allmat.zip">Unkown</a>.  
+</p><p>
+In short, Genbank files with genome annotations are fetched from <a href="http://www.ncbi.nlm.nih.gov/">NCBI</a> (or from somewhere else). 
+The genes are blasted all against all (requires computing power) and then clustered together according to the 50-50 rule (can be changed).
+The 50-50 rule groups together genes which have 50% similarity in at least 50% of the length.
+</p><p>
+The resulting clusters are mapped to several databases, such as: <a href="http://geneontology.org">Gene ontology</a>, 
+COG and pFam for functional annotation and <a href="http://kegg.jp">KEGG</a> for metabolic pathway analysis.
+</p>
+</section>
+<section>
+<h3>Software</h3>
+<p>
+We use a Java applet based software to generate all kinds of comparative genomics images. 
+The software is available at <a href="http://thermusgenes.appspot.com/">http://thermusgenes.appspot.com/</a> 
+Make sure <a href="http://java.oracle.com/">Java</a> is installed on your computer.
+</p>
+<p>
+After running the software from the site, 
+press the "Import" button (top-left) and select your downloaded genome zip-file.
+</p>
+<figure style="text-align:center">
+<img src="mainscreen.png" width="100%" />
+<figcaption>Screenshot from the Pan-Core genomics applet</figcaption>
+</figure>
+<p>
+To get a feeling for the scale of the genomes and number of species we draw a Pan-core chart. 
+Go to the "Functions" menu and select "Pan-core", a chart should pop-up.
+</p>
+<figure style="text-align:center">
+<img src="pancore.png" width="100%" />
+<figcaption>A standard Pan-core plot</figcaption>
+</figure>
+<p>
+You can also draw a "Relation matrix" (also from the functions menu). 
+The blue squares show the number of genes in the genomes (with or without duplications)
+</p>
+<figure style="text-align:center">
+<img src="rmatrix.png" width="100%" />
+<figcaption>A relation matrix</figcaption>
+</figure>
+</section>
+<section>
+<h3>Assignments</h3>
+The pan genome is all genes in all species. The core genome is all the genes which occur in every species.
+Ok, just read about it on <a href="http://en.wikipedia.org/wiki/Pan-genome">Wikipedia</a>.
+<p>   
+<b>(1) How many species are there in the set and what are the core genome size and the pan genome size (the numbers in the gray box in the relation-matrix)?</b>
+</p>
+Type "16S" or "SSU" to filter the gene table to locate the 16S rRNA. 
+Select the genes from the top table, right click and press "Show DNA sequences" from the popup menu. 
+The popup-window is a minor sequence editor.
+</section>
+</div>
+</body>
+</html>

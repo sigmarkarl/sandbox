@@ -11,10 +11,12 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/distann/src/columnchart.html"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
         <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
         <file path="/distann/src/kegg2go.txt"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
+        <file path="/distann/src/cogchart.html"/>
         <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
         <file path="/distann/src/BLOSUM50"/>
         <file path="/distann/src/sp2go_short.txt"/>
