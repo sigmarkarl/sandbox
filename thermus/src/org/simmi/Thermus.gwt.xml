@@ -3,6 +3,7 @@
   <!-- Inherit the core Web Toolkit stuff.                        -->
   <inherits name='com.google.gwt.user.User'/>
   <inherits name='com.google.gwt.json.JSON'/>
+  <inherits name='elemental.Elemental'/>
 
   <!-- Inherit the default GWT style sheet.  You can change       -->
   <!-- the theme of your GWT application by uncommenting          -->
@@ -11,7 +12,8 @@
   <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
   <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
 
-  <!-- Other module inherits                                      -->
+  <add-linker name="xsiframe" />
+  <set-configuration-property name="devModeRedirectEnabled" value="true" />
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='org.simmi.client.Thermus'/>

@@ -2011,7 +2011,13 @@ public class SerifyApplet extends JApplet {
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
 					File cd = filechooser.getSelectedFile();
 					
-					final String search = JOptionPane.showInputDialog("Filter term");
+					final JCheckBox	whole = new JCheckBox("whole");
+					whole.setSelected( true );
+					final JCheckBox	draft = new JCheckBox("draft");
+					draft.setSelected( true );
+					final JCheckBox	phage = new JCheckBox("phage");
+					phage.setSelected( true );
+					final String search = JOptionPane.showInputDialog(new Object[] {whole, draft, phage,"Filter term"});
 					final String basesave =  cd.getAbsolutePath();
 					final String uripath = cd.toURI().toString();
 					
@@ -2092,222 +2098,228 @@ public class SerifyApplet extends JApplet {
 										e.printStackTrace();
 									}
 									//FTPFile[] files = ftp.listFiles();
-								} else {
-									String subdir = "/genomes/Bacteria/";
-									ftp.cwd( subdir );
-									FTPFile[] files = ftp.listFiles();
-									for( FTPFile ftpfile : files ) {
-										if( interrupted ) break;
-										if( ftpfile.isDirectory() ) {
-											String fname = ftpfile.getName();
-											if( fname.startsWith( search ) ) {
-												if( !ftp.isConnected() ) {
-													ftp.connect("ftp.ncbi.nih.gov");
-													ftp.login("anonymous", "");
-												}
-												ftp.cwd( subdir+fname );
-												FTPFile[] newfiles = ftp.listFiles();
-												//int cnt = 1;
-												
-												File thefile = new File( basesave, fname+".gbk" );
-												if( !thefile.exists() ) {
-													FileWriter fw = new FileWriter( thefile );
-													
-													for( FTPFile newftpfile : newfiles ) {
-														if( interrupted ) break;
-														
-														String newfname = newftpfile.getName();
-														if( newfname.endsWith(".gbk") ) {
-															//if( newftpfile != newfiles[0] ) fw.write("//\n");
-															//long size = newftpfile.getSize();
-															//String basename = fname;
-															//if( size > 3000000 ) basename = fname;//+".gbk";
-															//else basename = fname+"_p"+(cnt++);//+".gbk";
-															
-															//String fwname = basename+"_"+newfname;
-															//if( size > 1500000 ) fwname = fname+".fna";
-															//else fwname = fname+"_p"+(cnt++)+".fna";
-															
-															URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-															InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
-															BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-															String line = br.readLine();
-															while( line != null ) {
-																fw.write( line + "\n" );
-																line = br.readLine();
-															}
-															is.close();
-															//ftp.completePendingCommand();
-															//System.err.println("done " + fname);
-														}
+								} else {									
+									if( whole.isSelected() ) {
+										String subdir = "/genomes/Bacteria/";
+										ftp.cwd( subdir );
+										FTPFile[] files = ftp.listFiles();
+										for( FTPFile ftpfile : files ) {
+											if( interrupted ) break;
+											if( ftpfile.isDirectory() ) {
+												String fname = ftpfile.getName();
+												if( fname.startsWith( search ) ) {
+													if( !ftp.isConnected() ) {
+														ftp.connect("ftp.ncbi.nih.gov");
+														ftp.login("anonymous", "");
 													}
-													fw.close();
-												}
-												
-												try {
-													Map<String,String>	urimap = new HashMap<String,String>();
-													urimap.put( fname, thefile.toURI().toString() );
-													addSequencesPath( fname, urimap, thefile.toURI().toString() );
-												} catch (URISyntaxException e) {
-													e.printStackTrace();
+													ftp.cwd( subdir+fname );
+													FTPFile[] newfiles = ftp.listFiles();
+													//int cnt = 1;
+													
+													File thefile = new File( basesave, fname+".gbk" );
+													if( !thefile.exists() ) {
+														FileWriter fw = new FileWriter( thefile );
+														
+														for( FTPFile newftpfile : newfiles ) {
+															if( interrupted ) break;
+															
+															String newfname = newftpfile.getName();
+															if( newfname.endsWith(".gbk") ) {
+																//if( newftpfile != newfiles[0] ) fw.write("//\n");
+																//long size = newftpfile.getSize();
+																//String basename = fname;
+																//if( size > 3000000 ) basename = fname;//+".gbk";
+																//else basename = fname+"_p"+(cnt++);//+".gbk";
+																
+																//String fwname = basename+"_"+newfname;
+																//if( size > 1500000 ) fwname = fname+".fna";
+																//else fwname = fname+"_p"+(cnt++)+".fna";
+																
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+																BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+																String line = br.readLine();
+																while( line != null ) {
+																	fw.write( line + "\n" );
+																	line = br.readLine();
+																}
+																is.close();
+																//ftp.completePendingCommand();
+																//System.err.println("done " + fname);
+															}
+														}
+														fw.close();
+													}
+													
+													try {
+														Map<String,String>	urimap = new HashMap<String,String>();
+														urimap.put( fname, thefile.toURI().toString() );
+														addSequencesPath( fname, urimap, thefile.toURI().toString() );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
+													}
 												}
 											}
 										}
 									}
 									
-									subdir = "/genomes/Bacteria_DRAFT/";
-									FileSystemManager fsManager = VFS.getManager();
-									byte[] bb = new byte[30000000];
-									ftp.cwd( subdir );
-									FTPFile[] files2 = ftp.listFiles();
-									for( FTPFile ftpfile : files2 ) {
-										if( interrupted ) break;
-										if( ftpfile.isDirectory() ) {
-											String fname = ftpfile.getName();
-											if( fname.startsWith( search ) ) {
-												ftp.cwd( subdir+fname );
-												FTPFile[] newfiles = ftp.listFiles();
-												
-												File thefile = new File( basesave, fname+".gbk" );
-												if( !thefile.exists() ) {
-													FileOutputStream fos = new FileOutputStream( thefile );
+									if( draft.isSelected() ) {
+										String subdir = "/genomes/Bacteria_DRAFT/";
+										FileSystemManager fsManager = VFS.getManager();
+										byte[] bb = new byte[30000000];
+										ftp.cwd( subdir );
+										FTPFile[] files2 = ftp.listFiles();
+										for( FTPFile ftpfile : files2 ) {
+											if( interrupted ) break;
+											if( ftpfile.isDirectory() ) {
+												String fname = ftpfile.getName();
+												if( fname.startsWith( search ) ) {
+													ftp.cwd( subdir+fname );
+													FTPFile[] newfiles = ftp.listFiles();
 													
-													for( FTPFile newftpfile : newfiles ) {
-														if( interrupted ) break;
+													File thefile = new File( basesave, fname+".gbk" );
+													if( !thefile.exists() ) {
+														FileOutputStream fos = new FileOutputStream( thefile );
 														
-														//String newfname = newftpfile.getName().getBaseName();
-														String newfname = newftpfile.getName();
-														if( newfname.endsWith("scaffold.gbk.tgz") ) {
-															//if( newftpfile != newfiles[0] ) fos.write( "//\n".getBytes() );
-															//long size = newftpfile.getSize();
-															//String fwname = "";
-															//if( size > 1500000 ) fwname = fname+".fna";
-															//else fwname = fname+"_p"+(cnt++)+".fna";
+														for( FTPFile newftpfile : newfiles ) {
+															if( interrupted ) break;
 															
-															//InputStream is = newftpfile.getContent().getInputStream();
-															URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-															InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
-															System.err.println( "trying "+newfname + (is == null ? "critical" : "success" ) );
-															//InputStream gis = is;
-															GZIPInputStream gis = new GZIPInputStream( is );
-															
-															File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
-															if( !file.exists() && gis != null ) {
-																int r = gis.read(bb);
-																FileOutputStream tfos = new FileOutputStream( file );
-																while( r > 0 ) {
-																	System.err.println( "reading " + r );
-																	tfos.write( bb, 0, r );
+															//String newfname = newftpfile.getName().getBaseName();
+															String newfname = newftpfile.getName();
+															if( newfname.endsWith("scaffold.gbk.tgz") ) {
+																//if( newftpfile != newfiles[0] ) fos.write( "//\n".getBytes() );
+																//long size = newftpfile.getSize();
+																//String fwname = "";
+																//if( size > 1500000 ) fwname = fname+".fna";
+																//else fwname = fname+"_p"+(cnt++)+".fna";
+																
+																//InputStream is = newftpfile.getContent().getInputStream();
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+																System.err.println( "trying "+newfname + (is == null ? "critical" : "success" ) );
+																//InputStream gis = is;
+																GZIPInputStream gis = new GZIPInputStream( is );
+																
+																File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
+																if( !file.exists() && gis != null ) {
+																	int r = gis.read(bb);
+																	FileOutputStream tfos = new FileOutputStream( file );
+																	while( r > 0 ) {
+																		System.err.println( "reading " + r );
+																		tfos.write( bb, 0, r );
+																		
+																		r = gis.read(bb);
+																	}
+																	gis.close();
+																	tfos.close();
+																}
+																
+																//FileSystemManager fsManager = VFS.getManager();
+																FileObject jarFile = fsManager.resolveFile( "tar://"+file.getAbsolutePath() );
+			
+																// List the children of the Jar file
+																FileObject[] children = jarFile.getChildren();
+																//System.out.println( "Children of " + jarFile.getName().getURI() );
+																//int contig = 1;
+																for ( int i = 0; i < children.length; i++ ) {
+																	FileObject child = children[i];
 																	
-																	r = gis.read(bb);
+																	//if( i > 0 ) fos.write( "//\n".getBytes() );
+																	//String childname = child.getName().getBaseName();
+																	//int k = childname.indexOf(".gbk");
+																	//if( k == -1 ) k = childname.length();
+																	//String lfname = fname+"_contig"+(contig++)+"_"+childname;
+																	FileContent fc = child.getContent();
+																	InputStream sis = fc.getInputStream();
+																	int r = sis.read( bb );
+																	//int total = r;
+																	
+																	while( r != -1 ) {
+																		fos.write( bb, 0, r );
+																		r = sis.read( bb );
+																		//total += r;
+																	}
+																	
+																	/*try {
+																		addSequences( lfname, thefile.toURI().toString() );
+																	} catch (URISyntaxException e) {
+																		e.printStackTrace();
+																	}*/
 																}
-																gis.close();
-																tfos.close();
-															}
-															
-															//FileSystemManager fsManager = VFS.getManager();
-															FileObject jarFile = fsManager.resolveFile( "tar://"+file.getAbsolutePath() );
-		
-															// List the children of the Jar file
-															FileObject[] children = jarFile.getChildren();
-															//System.out.println( "Children of " + jarFile.getName().getURI() );
-															//int contig = 1;
-															for ( int i = 0; i < children.length; i++ ) {
-																FileObject child = children[i];
-																
-																//if( i > 0 ) fos.write( "//\n".getBytes() );
-																//String childname = child.getName().getBaseName();
-																//int k = childname.indexOf(".gbk");
-																//if( k == -1 ) k = childname.length();
-																//String lfname = fname+"_contig"+(contig++)+"_"+childname;
-																FileContent fc = child.getContent();
-																InputStream sis = fc.getInputStream();
-																int r = sis.read( bb );
-																//int total = r;
-																
-																while( r != -1 ) {
-																	fos.write( bb, 0, r );
-																	r = sis.read( bb );
-																	//total += r;
-																}
-																
-																/*try {
-																	addSequences( lfname, thefile.toURI().toString() );
-																} catch (URISyntaxException e) {
-																	e.printStackTrace();
-																}*/
 															}
 														}
+														fos.close();
 													}
-													fos.close();
-												}
-												
-												try {
-													Map<String,String>	urimap = new HashMap<String,String>();
-													urimap.put( fname, thefile.toURI().toString() );
-													addSequencesPath( fname, urimap, thefile.toURI().toString() );
-												} catch (URISyntaxException e) {
-													e.printStackTrace();
+													
+													try {
+														Map<String,String>	urimap = new HashMap<String,String>();
+														urimap.put( fname, thefile.toURI().toString() );
+														addSequencesPath( fname, urimap, thefile.toURI().toString() );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
+													}
 												}
 											}
 										}
 									}
 									
-									subdir = "/genomes/Viruses/";
-									ftp.cwd( subdir );
-									FTPFile[] files3 = ftp.listFiles();
-									for( FTPFile ftpfile : files3 ) {
-										if( interrupted ) break;
-										if( ftpfile.isDirectory() ) {
-											String fname = ftpfile.getName();
-											if( fname.startsWith( search ) ) {//fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
-												if( !ftp.isConnected() ) {
-													ftp.connect("ftp.ncbi.nih.gov");
-													ftp.login("anonymous", "anonymous");
-												}
-												ftp.cwd( subdir+fname );
-												FTPFile[] newfiles = ftp.listFiles();
-												int cnt = 1;
-												
-												Map<String,String>	urimap = new HashMap<String,String>();
-												for( FTPFile newftpfile : newfiles ) {
-													if( interrupted ) break;
-													String newfname = newftpfile.getName();
-													System.err.println("trying " + newfname + " in " + fname);
-													if( newfname.endsWith(".gbk") ) {
-														System.err.println("in " + fname);
-														long size = newftpfile.getSize();
-														String fwname = fname+"_"+newfname;
-														
-														File thefile = new File( basesave, fwname );
-														if( !thefile.exists() ) {
-															FileWriter fw = new FileWriter( thefile );
-															URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-															InputStream is = url.openStream(); //ftp.retrieveFileStream( newfname );
-															BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-															String line = br.readLine();
-															while( line != null ) {
-																fw.write( line + "\n" );
-																line = br.readLine();
-															}
-															is.close();
-															fw.close();
-															System.err.println("done " + fname);
-														}
-														urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
-														
-														/*try {
-															addSequences( fwname, thefile.toURI().toString() );
-														} catch (URISyntaxException e) {
-															e.printStackTrace();
-														}*/
+									if( phage.isSelected() ) {
+										String subdir = "/genomes/Viruses/";
+										ftp.cwd( subdir );
+										FTPFile[] files3 = ftp.listFiles();
+										for( FTPFile ftpfile : files3 ) {
+											if( interrupted ) break;
+											if( ftpfile.isDirectory() ) {
+												String fname = ftpfile.getName();
+												if( fname.startsWith( search ) ) {//fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
+													if( !ftp.isConnected() ) {
+														ftp.connect("ftp.ncbi.nih.gov");
+														ftp.login("anonymous", "anonymous");
 													}
-												}
-												
-												try {
-													addSequencesPath( fname, urimap, uripath );
-												} catch (URISyntaxException e) {
-													e.printStackTrace();
+													ftp.cwd( subdir+fname );
+													FTPFile[] newfiles = ftp.listFiles();
+													int cnt = 1;
+													
+													Map<String,String>	urimap = new HashMap<String,String>();
+													for( FTPFile newftpfile : newfiles ) {
+														if( interrupted ) break;
+														String newfname = newftpfile.getName();
+														System.err.println("trying " + newfname + " in " + fname);
+														if( newfname.endsWith(".gbk") ) {
+															System.err.println("in " + fname);
+															long size = newftpfile.getSize();
+															String fwname = fname+"_"+newfname;
+															
+															File thefile = new File( basesave, fwname );
+															if( !thefile.exists() ) {
+																FileWriter fw = new FileWriter( thefile );
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream(); //ftp.retrieveFileStream( newfname );
+																BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+																String line = br.readLine();
+																while( line != null ) {
+																	fw.write( line + "\n" );
+																	line = br.readLine();
+																}
+																is.close();
+																fw.close();
+																System.err.println("done " + fname);
+															}
+															urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
+															
+															/*try {
+																addSequences( fwname, thefile.toURI().toString() );
+															} catch (URISyntaxException e) {
+																e.printStackTrace();
+															}*/
+														}
+													}
+													
+													try {
+														addSequencesPath( fname, urimap, uripath );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
+													}
 												}
 											}
 										}
