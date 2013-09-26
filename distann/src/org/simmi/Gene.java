@@ -112,6 +112,7 @@ public class Gene {
 	String keggid;
 	String pdbid;
 	String koid;
+	String koname;
 	String ecid;
 	String blastspec;
 	Set<Function> funcentries;
