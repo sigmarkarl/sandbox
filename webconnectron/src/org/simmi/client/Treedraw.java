@@ -769,7 +769,7 @@ public class Treedraw implements EntryPoint {
 	public void setNode( Node n ) {
 		if( n == null ) console( "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeermmmmmmmmmmmmmmmmmmmmmmmmmmm" );
 		else console( "fjorulalli " + n.toString() );
-		treeutil.setNode( n );
+		if( n.toString().indexOf("bow_data") == -1 ) treeutil.setNode( n );
 	}
 	
 	public native void click( JavaScriptObject e ) /*-{

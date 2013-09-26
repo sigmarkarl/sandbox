@@ -17,5 +17,6 @@
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-ooxml-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-ooxml-schemas-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-scratchpad-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="commons-codec-1.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
