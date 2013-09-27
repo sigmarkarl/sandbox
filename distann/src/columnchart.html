@@ -23,6 +23,8 @@
       	var cd = document.getElementById('chart_div')
       	cd.style.width = window.innerWidth;
       	cd.style.height = window.innerHeight;
+      	options.width = window.innerWidth;
+      	options.height = window.innerHeight;
       	var chart = new google.visualization.ColumnChart( cd );
       	chart.draw(data, options);
       }

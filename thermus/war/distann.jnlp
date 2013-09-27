@@ -11,7 +11,7 @@
 </information>
 <offline-allowed/>
 <resources>
-  <j2se version="1.7+" max-heap-size="2000m"/>
+  <j2se version="1.7+" max-heap-size="1500m"/>
   <!--jfx:javafx-runtime version="2.0+"/-->
   <jar href="distann.jar"/>
   <jar href="commons-codec-1.8.jar"/>
