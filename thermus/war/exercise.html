@@ -17,7 +17,7 @@
 <p>
 Data was prepared as described in the <a href="/pancore.html">manual</a>. 
 The preparation is a bit of a hassle so we have prepared few sets of microbial genomes for you.
-Download one from here: <a href="http:130.208.181.105/allthermus.zip"><i>Thermus</i> species</a>, <a href="http:130.208.181.105/allglobus.zip"><i>Archaeoglobus, Ferroglobus</i></a> or <a href="http:130.208.181.105/allmat.zip">Unkown</a>.  
+Download one from here: <a href="http://130.208.181.105/allthermus.zip"><i>Thermus</i> species</a>, <a href="http://130.208.181.105/allspiro.zip"><i>Spirochaeta</i> species</a>, <a href="http://130.208.181.105/allglobus.zip"><i>Archaeoglobus, Ferroglobus</i></a> or <a href="http://130.208.181.105/allmat.zip">Unkown</a>.  
 </p><p>
 In short, Genbank files with genome annotations are fetched from <a href="http://www.ncbi.nlm.nih.gov/">NCBI</a> (or from somewhere else). 
 The genes are blasted all against all (requires computing power) and then clustered together according to the 50-50 rule (can be changed).
@@ -66,9 +66,83 @@ Ok, just read about it on <a href="http://en.wikipedia.org/wiki/Pan-genome">Wiki
 <p>   
 <b>(1) How many species are there in the set and what are the core genome size and the pan genome size (the numbers in the gray box in the relation-matrix)?</b>
 </p>
-Type "16S" or "SSU" to filter the gene table to locate the 16S rRNA. 
+Type "16S" or "SSU" to filter the gene table to locate the 16S rRNA.
 Select the genes from the top table, right click and press "Show DNA sequences" from the popup menu. 
-The popup-window is a minor sequence editor.
+The popup-window is a minor sequence editor. Save the sequences in the editor to a file	by right clicking and selecting "Export".
+Copy the Fasta formated text to an online multiple sequence aligner (such as <a href="http://www.ebi.ac.uk/Tools/msa/muscle/">muscle</a>).
+Go back to the sequence editor, delete the old sequences (select and press Del) and import a file with the aligned ones.
+If you are using Chrome browser you can create a maximum liklihood phylogenetic tree by running "Draw ML tree" in the popup menu. 
+Otherwise just use the "Draw tree" method for a simple Neighbour joining tree or use an online phylogenetic calculation services such as <a href="http://www.phylogeny.fr/version2_cgi/one_task.cgi?task_type=phyml">Phylogeny.fr</a>
+You can draw the tree using the online phylogenetic tree drawing site <a href="http://webconnectron.appspot.com/Treedraw.html">Treedraw</a>. 
+Simply drag drop the resulting tree in Newick text format on the canvas.
+<p>
+<b>(2) Draw the 16S rRNA phylogenetic tree</b>
+</p>
+<figure style="text-align:center">
+<img src="16Stree.png" width="100%" />
+<figcaption>A 16S rRNA tree for the <i>Thermus</i> strains could look something like this</figcaption>
+</figure>
+<p>
+In the functions menu select "Gene atlas".
+Select a reference species in the left table and multiple species to draw in the right one. 
+Next select the chromosome (contig or plasmid) to use.
+Selecting the GC% color button show an genome atlas of GC%. 
+Can you see which ones are possibly related from the GC%?
+</p>
+<p>
+With the genome atlas view open we now look for areas with conserved synteni (non-shuffled gene order). 
+In the functions menu select "Gene atlas". 
+When the image pops up select the "Breakpoint synteni" radio button.
+</p>
+<p><i>The genome-atlases are missing a legend for now. The lanes are species in the same order as they occur in the species selection table.</i></p>
+<figure style="text-align:center">
+<img src="tthb8synt.png" width="100%" />
+<figcaption>A genome syteni atlas with <i>Thermus thermophilus HB8</i> as a reference. The gray area facing north is highly conserved in terms of synteni.</figcaption>
+</figure>
+<p>
+Look for conserved areas. You can also check the "Rel" button to see how related the genes are in the area (darker areas less divergent).
+Press-drag the area you spot, the genes should now be selected in the gene list. You can use "Crop to selection" in the table popup-menu to only show the selected genes.
+</p>
+<p>
+<b>(3) What kind of genes are in the preseved areas?</b>
+</p>
+<p>
+Look for the columns "Present in" and "Group size" in the gene table. 
+Of the selected genes, now only select the ones where these columns show the same number, preferrably the number of species. 
+You can sort the table according to these column by pressing the column header.
+Now you can make a concatenated genes phylogenetic tree from these selected genes by running "Concatenate tree" from the popup menu. 
+</p>
+<p>
+<b>(4) Show the concatenated genes phylogenetic tree and compare with the 16S, do they differ a lot?</b>
+</p>
+<p>
+Now run "Recomb tree" from the "Functions" menu. 
+You get a phylogenetic tree based on synteni information (instead of sequence similarities).
+</p>
+<p>
+<b>(5) Does the topology of the synteni phylogenetic tree differ from the others (16S rRNA, concatenated genes)?</b>
+</p>
+<p>
+Now run the "Genome statistics" from the "Functions" menu.
+</p>
+<p>
+<b>(6) What is the average GC% in the species? Do some strains differ?</b>
+</p>
+<p>
+Draw the "COG chart" from the "Functions" menu. 
+This charts show what kind of genes are present in the genomes.
+</p>
+<figure style="text-align:center">
+<img src="spiro_cog.png" width="100%" />
+<figcaption>Functional groups (COG) from <i>Spirochaeta</i> strains. The termite hindgut bacterium <i>Spirochaeta coccoides</i>, although with the smallest genome has double the number of Cell division and chromosome partitioning genes than other species of the genus</figcaption>
+</figure>
+<p>
+Search for "flagella" and "S-layer" in the gene filter/search box. 
+By scrolling to the right in the gene table you can see which strains contain specific genes (colored green).
+</p>
+<p>
+<b>(7) Which bacterias are (possibly) able to move, containing flagellar genes. Which have a possible sessile lifestyle (S-layer)?</b>
+</p>
 </section>
 </div>
 </body>
