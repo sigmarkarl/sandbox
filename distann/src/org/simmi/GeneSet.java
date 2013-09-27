@@ -124,6 +124,7 @@ import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 
@@ -1553,6 +1554,10 @@ public class GeneSet extends JApplet {
 		for (Set<String> t : total) {
 			Set<String> teg = new HashSet<String>();
 			for (String e : t) {
+				if( e.contains("timi") ) {
+					System.err.println("e");
+				}
+				
 				int i =  e.lastIndexOf('[');
 				if( i != -1 ) {
 					String str = e.substring(i+1, e.indexOf(']', i+1));
@@ -1569,7 +1574,12 @@ public class GeneSet extends JApplet {
 					/*
 					 * if( joinmap.containsKey( str ) ) { str = joinmap.get(str); }
 					 */
-					teg.add(spec);				
+					teg.add(spec);	
+				} else {
+					i = e.indexOf("contig");
+					String spec = e.substring(0, i-1);
+					
+					teg.add(spec);
 				}
 
 				//species.add(str);
@@ -1606,6 +1616,18 @@ public class GeneSet extends JApplet {
 						spec = str.substring( 0, l );
 					}
 	
+					Set<String> set;
+					if (submap.containsKey(spec)) {
+						set = submap.get(spec);
+					} else {
+						set = new HashSet<String>();
+						submap.put(spec, set);
+					}
+					set.add(e);
+				} else {
+					i = e.indexOf("contig");
+					String spec = e.substring(0, i-1);
+					
 					Set<String> set;
 					if (submap.containsKey(spec)) {
 						set = submap.get(spec);
@@ -5725,6 +5747,7 @@ public class GeneSet extends JApplet {
 	
 	JTable		table;
 	JTable		ftable;
+	TableModel	ftablemodel;
 	TableModel	defaultModel;
 	TableModel	groupModel;
 	
@@ -7442,17 +7465,18 @@ public class GeneSet extends JApplet {
 				}
 				sb.append( "\n" );
 				
+				String 				tree = sb.toString();
+				
 				boolean succ = true;
 				try {
 					JSObject win = JSObject.getWindow( (Applet)comp );
-					win.call("fastTree", new Object[] { sb.toString() });
+					win.call("showTree", new Object[] { tree });
 				} catch( Exception e1 ) {
 					e1.printStackTrace();
 					succ = false;
 				}
 				
 				if( !succ ) {
-					String 				tree = sb.toString();
 					if( cs.connections().size() > 0 ) {
 			    		cs.sendToAll( tree );
 			    	} else if( Desktop.isDesktopSupported() ) {
@@ -7847,7 +7871,38 @@ public class GeneSet extends JApplet {
 					restext.append( total+"]" );
 				}
 				
-				JFrame f = new JFrame("Genome size chart");
+				final StringBuilder sb = new StringBuilder();
+				InputStream is = GeneSet.class.getResourceAsStream("/genomesizechart.html");
+				try {
+					int c = is.read();
+					while( c != -1 ) {
+						sb.append( (char)c );
+						c = is.read();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				final String smuck = sb.toString().replace("smuck", restext.toString());
+				
+				//String b64str = Base64.encodeBase64String( smuck.getBytes() );
+				JSObject window = null;
+				try {
+					window = JSObject.getWindow( GeneSet.this );
+				} catch( Exception exc ) {
+					exc.printStackTrace();
+				}
+				
+				if( window != null ) {				
+					try {
+						window.setMember("str", smuck);
+						window.eval("var b = new Blob( [str], { \"type\" : \"text\\/html\" } );");
+						window.eval("open( URL.createObjectURL(b), '_blank' )");
+					} catch( Exception exc ) {
+						exc.printStackTrace();
+					}
+				}
+				
+				/*JFrame f = new JFrame("Genome size chart");
 				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 				f.setSize( 800, 600 );
 				
@@ -7862,7 +7917,7 @@ public class GeneSet extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-				final String smuck = sb.toString().replace("smuck", restext.toString());*/
+				final String smuck = sb.toString().replace("smuck", restext.toString());
 				
 				//restext.append( restext.toString() );
 				JTextArea	ta = new JTextArea();
@@ -8651,7 +8706,7 @@ public class GeneSet extends JApplet {
 		groupModel = new TableModel() {
 			@Override
 			public int getRowCount() {
-				return allgenegroups.size();
+				return allgenegroups == null ? 0 : allgenegroups.size();
 			}
 
 			@Override
@@ -9064,8 +9119,8 @@ public class GeneSet extends JApplet {
 			public void removeTableModelListener(TableModelListener l) {
 			}
 		};
-		//table.setModel( groupModel );
-		table.setModel( defaultModel );
+		table.setModel( groupModel );
+		//table.setModel( defaultModel );
 
 		/*
 		 * Comparator<Tegeval> wrapMe = new Comparator<Tegeval>() { public int
@@ -9085,16 +9140,18 @@ public class GeneSet extends JApplet {
 					c.loc = 0.0;
 				}
 
-				for (Gene g : genelist) {
-					Tegeval tv = g.tegeval;
-						// int first = tv.cont.indexOf('_');
-						// int sec = tv.cont.indexOf('_',first+1);
-					Contig cont = tv.getContshort(); // tv.cont.substring(0,sec);
-					if( cont != null && contigmap.containsKey(cont.getName()) ) {
-						Contig c = contigmap.get(cont.getName());
-						//c.count++;
-						int val = table.convertRowIndexToView(g.index);
-						c.loc += (double) val;
+				if( table.getModel() == defaultModel ) {
+					for (Gene g : genelist) {
+						Tegeval tv = g.tegeval;
+							// int first = tv.cont.indexOf('_');
+							// int sec = tv.cont.indexOf('_',first+1);
+						Contig cont = tv.getContshort(); // tv.cont.substring(0,sec);
+						if( cont != null && contigmap.containsKey(cont.getName()) ) {
+							Contig c = contigmap.get(cont.getName());
+							//c.count++;
+							int val = table.convertRowIndexToView(g.index);
+							c.loc += (double) val;
+						}
 					}
 				}
 				for( JSplitPane gsplitpane : splitpaneList ) {
@@ -9842,7 +9899,7 @@ public class GeneSet extends JApplet {
 		table.setComponentPopupMenu(popup);
 
 		ftable.setAutoCreateRowSorter(true);
-		ftable.setModel(new TableModel() {
+		ftablemodel = new TableModel() {
 			@Override
 			public int getRowCount() {
 				return funclist.size();
@@ -9923,7 +9980,8 @@ public class GeneSet extends JApplet {
 			@Override
 			public void removeTableModelListener(TableModelListener l) {
 			}
-		});
+		};
+		ftable.setModel( ftablemodel );
 		fscrollpane.setViewportView(ftable);
 
 		final Set<Integer> filterset = new HashSet<Integer>();
@@ -12474,11 +12532,11 @@ public class GeneSet extends JApplet {
 			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/idmapping.dat.gz") );
 			
 			//is = new FileInputStream("/u0/idmapping_short.dat");
-			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/stuff/idmapping_short.dat", 2, 0, refmap, false);
+			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/spiro/thermus/idmapping_short.dat", 2, 0, refmap, false);
 			
 			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
 			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2refseq.gz") );
-			//genmap = idMapping(new InputStreamReader(is), "/home/sigmar/stuff/gene2refseq_short.txt", 5, 1, refmap, true);
+			//genmap = idMapping(new InputStreamReader(is), "/home/sigmar/spiro/thermus/gene2refseq_short.txt", 5, 1, refmap, true);
 			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");
 			
 			
@@ -12512,7 +12570,7 @@ public class GeneSet extends JApplet {
 				zipin.close();
 				//is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
 				//is = new GZIPInputStream( new FileInputStream( "/home/sigmar/sp2go.txt.gz" ) );
-				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
+				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/spiro/thermus/sp2go_short.txt");
 				unimap.clear();
 			}
 			if( genmap != null ) genmap.clear();
@@ -12620,8 +12678,28 @@ public class GeneSet extends JApplet {
 			clusterMap = initCluster(uclusterlist);
 			bimg = bmatrix(specList, clusterMap);
 			
-			table.tableChanged( new TableModelEvent( table.getModel() ) );
-			ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
+			//table.tableChanged( new TableModelEvent( table.getModel() ) );
+			//ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
+			TableModel nullmodel = new AbstractTableModel() {
+				@Override
+				public Object getValueAt(int rowIndex, int columnIndex) {
+					return null;
+				}
+				
+				@Override
+				public int getRowCount() {
+					return 0;
+				}
+				
+				@Override
+				public int getColumnCount() {
+					return 0;
+				}
+			};
+			table.setModel( nullmodel );
+			ftable.setModel( nullmodel );
+			table.setModel( groupModel );
+			ftable.setModel( ftablemodel );
 		}
 	}
 	
