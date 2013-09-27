@@ -189,6 +189,7 @@ public class Thermus implements EntryPoint {
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		
 		SimplePanel sp = new SimplePanel();
+		sp.setSize("100%", "100%");
 		sp.getElement().appendChild( ae );
 		
 		vp.add( sp );
