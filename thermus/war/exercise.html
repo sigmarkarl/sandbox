@@ -134,15 +134,47 @@ This charts show what kind of genes are present in the genomes.
 </p>
 <figure style="text-align:center">
 <img src="spiro_cog.png" width="100%" />
-<figcaption>Functional groups (COG) from <i>Spirochaeta</i> strains. The termite hindgut bacterium <i>Spirochaeta coccoides</i>, although with the smallest genome has double the number of Cell division and chromosome partitioning genes than other species of the genus</figcaption>
+<figcaption>Functional groups (COG) from <i>Spirochaeta</i> strains. 
+The termite hindgut bacterium <i>Spirochaeta coccoides</i>, 
+although with the smallest genome has double the number of 
+Cell division and chromosome partitioning (purple) genes than other species of the genus.
+Also, transcriptional genes seem more frequent in the <i>Spirocheata buddy</i> strain than in some others.
+</figcaption>
 </figure>
 <p>
 Search for "flagella" and "S-layer" in the gene filter/search box. 
 By scrolling to the right in the gene table you can see which strains contain specific genes (colored green).
 </p>
 <p>
-<b>(7) Which bacterias are (possibly) able to move, containing flagellar genes. Which have a possible sessile lifestyle (S-layer)?</b>
+<b>(7) Which bacteria strains have (possibly) the ability to move, containing flagellar genes. Which have a possible sessile lifestyle (S-layer)?</b>
 </p>
+<p>
+<b>(8) If you have the <i>Thermus</i> data, look for GO id GO:0009411 (UV response) in the function table and see which strains are deeply submerged and which ones live on the surface.
+In the <i>Spirochaeta</i> data you can search for rod-shape determining proteins to see which strains are potentially rod-shaped.
+Look for cytoskeletal proteins and the strains containing them.
+</b>
+</p>
+<p>
+Select a pathway from the combo box below the gene table. 
+Fetch some common pathway (such as Vitamin B6).
+Sort the function table with the "Function coverage" column. 
+Double-click some GO-ids to show genes with that annotation in the gene table. Gather some KO-ids.
+Now go to <a href="http://pathways.embl.de">iPath2</a>. 
+Press the "customize" button. You can paste your KO-ids (or EC-isd) in the "element selection" window.
+For example "E6.3.4.15 #ff0000", "K00831 #0000ff", the latter "#" string being the color you want to use to highlight the pathway.
+</p>
+<p>
+Look for the "chromosomal replication initiator protein" (dnaA). This protein signals the start of the DNA replication.
+Highlight it and do a "Genome atlas". Be careful to press esc on the gene table before to un-crop it. THe gene atlas only shows the genes visible in the table.
+Select some interesting strains, like all the <i>Spirochaeta</i> or the <i>Thermus thermophiluses</i>.
+Press the "Synteni gradient" button. Now you see a rainbow colored circles indicating the genome order compared to the reference strain.
+</p>
+<figure style="text-align:center">
+<img src="syntrainbow.png" width="100%" />
+<figcaption>
+Synteni gradient image from <i>Thermus</i>.
+</figcaption>
+</figure>
 </section>
 </div>
 </body>
