@@ -8,7 +8,6 @@ import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -21,8 +20,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -30,7 +27,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -61,6 +57,8 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -122,7 +120,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
-import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -146,6 +143,7 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
+import org.simmi.signed.NativeRun;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.SmithWater;
 
@@ -1553,11 +1551,7 @@ public class GeneSet extends JApplet {
 
 		for (Set<String> t : total) {
 			Set<String> teg = new HashSet<String>();
-			for (String e : t) {
-				if( e.contains("timi") ) {
-					System.err.println("e");
-				}
-				
+			for (String e : t) {				
 				int i =  e.lastIndexOf('[');
 				if( i != -1 ) {
 					String str = e.substring(i+1, e.indexOf(']', i+1));
@@ -4842,7 +4836,7 @@ public class GeneSet extends JApplet {
 		System.err.println(faset.size());
 	}
 
-	public static Map<String, Gene> idMapping(String blastfile, String idfile, String outfile, int ind, int secind, boolean getgeneids) throws IOException {
+	public static Map<String, Gene> idMapping(String blastfile, String idfile, String outfile, int ind, int secind, Map<String,Gene> genmap) throws IOException {
 		Map<String, Gene> refids = new HashMap<String, Gene>();
 		FileReader fr = new FileReader(blastfile);
 		BufferedReader br = new BufferedReader(fr);
@@ -4856,7 +4850,7 @@ public class GeneSet extends JApplet {
 		}
 		fr.close();
 
-		return idMapping(new FileReader(idfile), outfile, ind, secind, refids, getgeneids);
+		return idMapping(new FileReader(idfile), outfile, ind, secind, refids, genmap);
 	}
 	
 	public static Map<String,String> ko2nameMapping( InputStreamReader id ) throws IOException {
@@ -4875,7 +4869,7 @@ public class GeneSet extends JApplet {
 		return ko2name;
 	}
 
-	public static Map<String, Gene> idMapping(Reader rd, String outfile, int ind, int secind, Map<String, Gene> refids, boolean getgeneids) throws IOException {
+	public static Map<String, Gene> idMapping( Reader rd, String outfile, int ind, int secind, Map<String, Gene> refids, Map<String, Gene> genmap ) throws IOException {
 		Map<String, Gene> unimap = new HashMap<String, Gene>();
 		Map<String, String> ref2kegg = new HashMap<String, String>();
 		Map<String, String> ref2pdb = new HashMap<String, String>();
@@ -4897,7 +4891,7 @@ public class GeneSet extends JApplet {
 			String[] split = line.split("\t");
 			if (split.length > ind) {
 				if (!split[secind].equals(last)) {
-					if (tone && !getgeneids) {
+					if (tone && genmap != null) {
 						for (String sstr : list) {
 							String[] spl = sstr.split("\t");
 							if (sstr.contains("KEGG")) {
@@ -4920,26 +4914,47 @@ public class GeneSet extends JApplet {
 				}
 				list.add(line);
 
-				String refid = split[ind];
-				if (refids.containsKey(refid)) {
-					Gene gene = refids.get(refid);
-					if (getgeneids) {
+				if( genmap != null ) {
+					if( split[1].startsWith("RefSeq") ) {
+						String refid = split[ind];
+						if( refids.containsKey(refid) ) {
+							Gene gene = refids.get(refid);
+							gene.uniid = split[secind];
+							unimap.put(gene.uniid, gene);
+							
+							gene.allids.add(split[secind]);
+							tone = true;
+						}
+					} else if( split[1].equals("GI") ) {
+						String genid = split[ind];
+						if( genmap.containsKey(genid) ) {
+							Gene gene = genmap.get(genid);
+							gene.uniid = split[secind];
+							unimap.put(gene.uniid, gene);
+							
+							gene.allids.add(split[secind]);
+							tone = true;
+						}
+					}
+					
+				} else {
+					String refid = split[ind];
+					if( refids.containsKey(refid) ) {
+						Gene gene = refids.get(refid);
 						gene.genid = split[secind];
 						unimap.put(gene.genid, gene);
 						if( split.length > 15 ) {
 							gene.koname = split[15];
-							
-							if( gene.koname.startsWith("dna") ) System.err.println( gene.koname );
+							//if( gene.koname.startsWith("dna") ) System.err.println( gene.koname );
 						}
-					} else {
-						gene.uniid = split[secind];
-						unimap.put(gene.uniid, gene);
+						
+						gene.allids.add(split[secind]);
+						tone = true;
 					}
+					
 					/*if( gene.allids == null ) {
 						System.err.println();
 					}*/
-					gene.allids.add(split[secind]);
-					tone = true;
 				}
 			}
 
@@ -4949,7 +4964,7 @@ public class GeneSet extends JApplet {
 			line = br.readLine();
 		}
 
-		if (tone && !getgeneids) {
+		if (tone && genmap != null) {
 			for (String sstr : list) {
 				String[] spl = sstr.split("\t");
 				if (sstr.contains("KEGG")) {
@@ -4974,7 +4989,7 @@ public class GeneSet extends JApplet {
 		//if (ps != null)
 			//ps.close();
 
-		if (!getgeneids) {
+		if ( genmap != null ) {
 			for (String s : refids.keySet()) {
 				Gene g = refids.get(s);
 				if (g.allids != null)
@@ -7752,6 +7767,80 @@ public class GeneSet extends JApplet {
 		};
 		//JButton	shuffletreebutton = new JButton( shuffletreeaction );
 		
+		AbstractAction koexportaction = new AbstractAction("Export KOs") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				try {					
+					int[] rr = table.getSelectedRows();
+					Set<String> ids = new HashSet<String>();
+					for( int r : rr ) {
+						String ko = (String)table.getValueAt(r, 6);
+						if( ko != null ) ids.add( ko );
+						String ec = (String)table.getValueAt(r, 9);
+						if( ec != null ) ids.add( "E"+ec.replace(":", "") );
+						String cog = (String)table.getValueAt(r, 10);
+						if( cog != null ) ids.add( cog.substring( cog.lastIndexOf(' ')+1 ) );
+						
+							
+						int i = table.convertRowIndexToModel(r);
+						if( i != -1 ) {
+							GeneGroup gg = allgenegroups.get(i);
+							for( Function f : gg.getFunctions() ) {
+								if( f.ec != null && f.ec.length() > 1 ) ids.add( "E"+f.ec );
+							}
+						}
+						
+					}
+					
+					FileWriter tmp = new FileWriter("/tmp/kolist.txt");
+					for( String id : ids ) {
+						tmp.write( id + " #0000ff\n" );
+					}
+					tmp.close();
+					
+					Desktop.getDesktop().browse( new URI("file:///tmp/kolist.txt") );
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				} catch (URISyntaxException e1) {
+					e1.printStackTrace();
+				}
+			}
+		};
+		
+		AbstractAction blastaction = new AbstractAction("Blast") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				AccessController.doPrivileged( new PrivilegedAction<String>() {
+					@Override
+					public String run() {
+						NativeRun nrun = new NativeRun();
+						
+						final Object[] cont = new Object[3];
+						Runnable run = new Runnable() {
+							@Override
+							public void run() {
+								
+							}
+						};
+						
+						File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+						if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
+						if( makeblastdb.exists() ) {
+							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
+							try {
+								nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						return "";
+					}
+				});
+			}
+		};
+		
 		AbstractAction pancoreaction = new AbstractAction("Pan-core") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -8215,10 +8304,10 @@ public class GeneSet extends JApplet {
 					sa.init( frame );
 					//frame.add( )
 					currentSerify = sa;
-				} else {
+				} /*else {
 					currentSerify.clearSequences();
 					frame = (JFrame)currentSerify.cnt;
-				}
+				}*/
 
 				//Map<Integer,String>			ups = new HashMap<Integer,String>();
 				//Set<Integer>				stuck = new HashSet<Integer>();
@@ -8416,6 +8505,8 @@ public class GeneSet extends JApplet {
 		menu.add( gcpaction );
 		menu.add( matrixaction );
 		menu.add( pancoreaction );
+		menu.add( blastaction );
+		menu.add( koexportaction );
 		menu.add( genomesizeaction );
 		menu.add( gcaction );
 		menu.add( mltreemapaction );
@@ -9560,7 +9651,7 @@ public class GeneSet extends JApplet {
 					sa.init( frame );
 					//frame.add( )
 					currentSerify = sa;
-				} else frame = (JFrame)currentSerify.cnt;
+				}/* else frame = (JFrame)currentSerify.cnt;*/
 				
 				String[] farr = new String[] {"o.profundus", "mt.silvanus", "mt.ruber", "m.hydrothermalis", "t.thermophilus_SG0_5JP17_16", 
 						"t.thermophilusJL18", "t.thermophilusHB8", "t.thermophilusHB27", "t.scotoductusSA01", "t.scotoductus4063",
@@ -12520,8 +12611,16 @@ public class GeneSet extends JApplet {
 			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
 			ze = zipin.getNextEntry();
 			while( ze != null ) {
-				if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, false);
-				else if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
+				if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, genmap);
+				
+				ze = zipin.getNextEntry();
+			}
+			zipin.close();
+			
+			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+			ze = zipin.getNextEntry();
+			while( ze != null ) {
+				if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, genmap);
 				else if( ze.getName().equals("ko2name.txt") ) ko2name = ko2nameMapping( new InputStreamReader(zipin) );
 				
 				ze = zipin.getNextEntry();
@@ -12532,7 +12631,7 @@ public class GeneSet extends JApplet {
 			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/idmapping.dat.gz") );
 			
 			//is = new FileInputStream("/u0/idmapping_short.dat");
-			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/spiro/thermus/idmapping_short.dat", 2, 0, refmap, false);
+			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/stuff/idmapping_short.dat", 2, 0, refmap, genmap);
 			
 			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
 			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2refseq.gz") );
