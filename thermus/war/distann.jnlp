@@ -17,6 +17,7 @@
   <jar href="commons-codec-1.8.jar"/>
   <extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/>
   <extension name="javafasta" href="http://webfasta.appspot.com/javafastacomp.jnlp"/>
+  <extension name="serifier" href="http://funblastic.appspot.com/serifycomp.jnlp"/>
 </resources>
 <applet-desc 
 	name="Distann"
