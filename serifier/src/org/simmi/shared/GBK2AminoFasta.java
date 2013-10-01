@@ -244,7 +244,7 @@ public class GBK2AminoFasta {
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				Writer fw = null;//new FileWriter( new File( uri ) );
+				Writer fw = new FileWriter( new File( uri ) );
 				urifile.put( uri, fw );
 				
 				out = fw;
