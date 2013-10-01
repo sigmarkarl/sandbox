@@ -1,6 +1,5 @@
 package org.simmi;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Desktop;
@@ -22,7 +21,6 @@ import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -80,7 +78,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
@@ -106,6 +103,7 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
+import org.simmi.signed.NativeRun;
 import org.simmi.unsigned.JavaFasta;
 
 public class SerifyApplet extends JApplet {
@@ -117,11 +115,12 @@ public class SerifyApplet extends JApplet {
 	JTable				table;
 	Serifier			serifier;
 	String 				globaluser = null;
-	Container			cnt = null;
+	NativeRun			nrun = new NativeRun();
 	
 	public SerifyApplet() {
 		super();
 		serifier = new Serifier();
+		nrun = new NativeRun();
 	}
 	
 	public List<Sequences> initSequences( int rowcount ) {		
@@ -272,237 +271,6 @@ public class SerifyApplet extends JApplet {
 		System.err.println( log );
 	}
 	
-	public File checkProdigalInstall( File dir ) throws IOException {
-		File check1 = new File( dir, "prodigal.v2_60.windows.exe" );
-		File check2 = new File( dir, "prodigal.v2_60.linux" );
-		File check;
-		if( !check1.exists() && !check2.exists() ) {
-			check = installProdigal( dir );
-		} else check = check1.exists() ? check1 : check2;
-		
-		return check;
-	}
-	
-	public void checkInstall( File dir ) throws IOException {
-		File check1 = new File( "/opt/ncbi-blast-2.2.28+/bin/blastp" );
-		File check2 = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
-		if( !check1.exists() && !check2.exists() ) {
-			File f = installBlast( dir );
-		}
-	}
-	
-	public static void runProcess( String title, Runnable run, JDialog dialog, JProgressBar pbar ) {
-		dialog.setTitle( title );
-		dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-		dialog.setSize(400, 300);
-		
-		JComponent comp = new JComponent() {};
-		comp.setLayout( new BorderLayout() );
-		
-		final JTextArea		ta = new JTextArea();
-		ta.setEditable( false );
-		final JScrollPane	sp = new JScrollPane( ta );
-		
-		dialog.add( comp );
-		comp.add( pbar, BorderLayout.NORTH );
-		comp.add( sp, BorderLayout.CENTER );
-		pbar.setIndeterminate( true );
-		
-		Thread thread = new Thread( run );
-		thread.start();
-	}
-	
-	public File installBlast( final File homedir ) throws IOException {
-		final URL url = new URL("ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/ncbi-blast-2.2.28+-win32.exe");
-		String fileurl = url.getFile();
-		String[] split = fileurl.split("/");
-		
-		final File f = new File( homedir, split[split.length-1] );
-		final ByteArrayOutputStream	baos = new ByteArrayOutputStream();
-		final byte[] bb = new byte[100000];
-		if( !f.exists() ) {
-			final JDialog		dialog = new JDialog();
-			final JProgressBar	pbar = new JProgressBar();
-			Runnable run = new Runnable() {
-				boolean interrupted = false;
-				
-				public void run() {
-					dialog.addWindowListener( new WindowListener() {
-						@Override
-						public void windowOpened(WindowEvent e) {}
-						
-						@Override
-						public void windowIconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeiconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeactivated(WindowEvent e) {}
-						
-						@Override
-						public void windowClosing(WindowEvent e) {}
-						
-						@Override
-						public void windowClosed(WindowEvent e) {
-							interrupted = true;
-						}
-						
-						@Override
-						public void windowActivated(WindowEvent e) {}
-					});
-					dialog.setVisible( true );
-
-					try {
-						InputStream is = url.openStream();
-						int r = is.read(bb);
-						while( r > 0 && !interrupted ) {
-							baos.write( bb, 0, r );
-							r = is.read( bb );
-						}
-						is.close();
-						//f.mkdirs();
-						
-						if( !interrupted ) {
-							FileOutputStream fos = new FileOutputStream( f );
-							fos.write( baos.toByteArray() );
-							fos.close();
-							baos.close();
-							
-							byte[] bb = new byte[100000];
-							
-							String path = f.getAbsolutePath();
-							//String[] cmds = new String[] { "wine", path };
-							ProcessBuilder pb = new ProcessBuilder( path );
-							pb.directory( homedir );
-							Process p = pb.start();
-							
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							is = p.getInputStream();
-							r = is.read(bb);
-							while( r > 0 ) {
-								baos.write( bb, 0, r );
-								r = is.read( bb );
-							}
-							is.close();
-							
-							is = p.getErrorStream();
-							r = is.read(bb);
-							while( r > 0 ) {
-								baos.write( bb, 0, r );
-								r = is.read( bb );
-							}
-							is.close();
-							
-							System.out.println( "erm " + baos.toString() );
-							baos.close();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			runProcess( "Downloading blast...", run, dialog, pbar );
-		}
-		
-		return f;
-	}
-	
-	public File installProdigal( final File homedir ) throws IOException {
-		final URL url = new URL("http://prodigal.googlecode.com/files/prodigal.v2_60.windows.exe");
-		String fileurl = url.getFile();
-		String[] split = fileurl.split("/");
-		
-		final File f = new File( homedir, split[split.length-1] );
-		if( !f.exists() ) {
-			final JDialog dialog;
-			Window window = SwingUtilities.windowForComponent(cnt);
-			if( window != null ) dialog = new JDialog( window );
-			else dialog = new JDialog();
-			final JProgressBar	pbar = new JProgressBar();
-			
-			Runnable run = new Runnable() {
-				boolean interrupted = false;
-				
-				public void run() {
-					dialog.addWindowListener( new WindowListener() {
-						@Override
-						public void windowOpened(WindowEvent e) {}
-						
-						@Override
-						public void windowIconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeiconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeactivated(WindowEvent e) {}
-						
-						@Override
-						public void windowClosing(WindowEvent e) {}
-						
-						@Override
-						public void windowClosed(WindowEvent e) {
-							interrupted = true;
-						}
-						
-						@Override
-						public void windowActivated(WindowEvent e) {}
-					});
-					dialog.setVisible( true );
-					
-					try {
-						byte[] bb = new byte[100000];
-						ByteArrayOutputStream	baos = new ByteArrayOutputStream();
-						InputStream is = url.openStream();
-						int r = is.read(bb);
-						while( r > 0 ) {
-							baos.write( bb, 0, r );
-							r = is.read( bb );
-						}
-						is.close();
-						//f.mkdirs();
-						FileOutputStream fos = new FileOutputStream( f );
-						fos.write( baos.toByteArray() );
-						fos.close();
-						baos.close();
-						
-						doProdigal(homedir, SerifyApplet.this.cnt, f);
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			};
-			runProcess( "Downloading Prodigal ...", run, dialog, pbar );
-			
-			/*JProgressBar pb = new JProgressBar();
-			pb.setIndeterminate( true );
-			
-			dialog.setTitle("Downloading Prodigal ...");
-			dialog.add( pb );
-			dialog.setVisible( true );
-			
-			InputStream is = url.openStream();
-			int r = is.read(bb);
-			while( r > 0 ) {
-				baos.write( bb, 0, r );
-				r = is.read( bb );
-			}
-			is.close();
-			//f.mkdirs();
-			FileOutputStream fos = new FileOutputStream( f );
-			fos.write( baos.toByteArray() );
-			fos.close();
-			baos.close();
-			
-			dialog.setVisible( false );*/
-			
-			return null;
-		}
-		
-		return f;
-	}
-	
 	public void init() {
 		try {
 			JSObject jso = JSObject.getWindow( this );
@@ -553,26 +321,6 @@ public class SerifyApplet extends JApplet {
 				return null;
 			}
 		});
-	}
-	
-	public String fixPath( String path ) {
-		String[] split = path.split("\\\\");
-		String res = "";
-		for( String s : split ) {
-			if( s == split[0] ) res += s;
-			else if( s.contains(" ") ) {
-				s = s.replace(" ", "");
-				if( s.length() > 8 ) {
-					res += "\\"+s.substring(0, 6)+"~1";
-				} else {
-					res += "\\"+s;
-				}
-			} else {
-				res += "\\"+s;
-			}
-		}
-		
-		return res;
 	}
 	
 	public Sequences getSequences( int i ) {
@@ -757,11 +505,11 @@ public class SerifyApplet extends JApplet {
 					if( blastx.exists() ) {
 						JFileChooser fc = new JFileChooser();
 						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-						if( fc.showSaveDialog( SerifyApplet.this.cnt ) == JFileChooser.APPROVE_OPTION ) {
+						if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 							File selectedfile = fc.getSelectedFile();
 							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
 						
-							String dbPathFixed = fixPath( dbPath );
+							String dbPathFixed = nrun.fixPath( dbPath );
 							int[] rr = table.getSelectedRows();
 							for( int r : rr ) {
 								String path = (String)table.getValueAt( r, 3 );
@@ -792,8 +540,8 @@ public class SerifyApplet extends JApplet {
 								is.close();
 								fos.close();
 						
-								String queryPathFixed = fixPath( infile.getAbsolutePath() ).trim();
-								final String outPathFixed = fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() ).trim();
+								String queryPathFixed = nrun.fixPath( infile.getAbsolutePath() ).trim();
+								final String outPathFixed = nrun.fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() ).trim();
 								
 								int procs = Runtime.getRuntime().availableProcessors();
 								
@@ -824,7 +572,7 @@ public class SerifyApplet extends JApplet {
 									System.err.println(cmd);
 								}
 								Thread.sleep(10000);*/
-								runProcessBuilder( "Performing blast", lcmd, run, cont );
+								nrun.runProcessBuilder( "Performing blast", lcmd, run, cont );
 							}
 						}
 					} else System.err.println( "no blast installed" );
@@ -836,71 +584,6 @@ public class SerifyApplet extends JApplet {
 			}
 			
 		});
-	}
-	
-	public void doProdigal( File dir, Container c, File f ) throws IOException {
-		JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-			File selectedfile = fc.getSelectedFile();
-			if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
-		
-			int[] rr = table.getSelectedRows();
-			for( int r : rr ) {
-			//int r = table.getSelectedRow();
-				String path = (String)table.getValueAt( r, 3 );
-				URL url = new URL( path );
-				
-				String file = url.getFile();
-				String[] split = file.split("/");
-				String fname = split[ split.length-1 ];
-				split = fname.split("\\.");
-				final String title = split[0];
-				File infile = new File( dir, fname );
-				if( infile.exists() ) {
-					infile = new File( dir, "tmp_"+fname );
-				}
-				
-				FileOutputStream fos = new FileOutputStream( infile );
-				InputStream is = url.openStream();
-				
-				byte[] bb = new byte[100000];
-				r = is.read(bb);
-				while( r > 0 ) {
-					fos.write(bb, 0, r);
-					r = is.read(bb);
-				}
-				is.close();
-				fos.close();
-					
-				final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
-				final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
-				String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
-				
-				final Object[] cont = new Object[3];
-				Runnable run = new Runnable() {
-					public void run() {
-						if( cont[0] != null ) {
-							System.err.println( cont[0] );
-							try {
-								addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
-								addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
-							} catch (URISyntaxException e) {
-								e.printStackTrace();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					}
-				};
-				runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
-					//JSObject js = JSObject.getWindow( SerifyApplet.this );
-					//js = (JSObject)js.getMember("document");
-					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
-			}
-		}
-		
-		//infile.delete();
 	}
 	
 	public void blastClusters( final InputStream is, final OutputStream os ) {
@@ -941,7 +624,7 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		};
-		runProcess( "Blast clusters", run, dialog, pbar );
+		nrun.runProcess( "Blast clusters", run, dialog, pbar );
 	}
 	
 	public static class AvgProvider {
@@ -1896,7 +1579,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void init( final Container c ) {
-		this.cnt = c;
+		nrun.cnt = c;
 		globaluser = System.getProperty("user.name");
 		
 		try {
@@ -2335,7 +2018,7 @@ public class SerifyApplet extends JApplet {
 							pbar.setEnabled( false );
 						}
 					};					
-					runProcess("NCBI Fetch", run, dialog, pbar);
+					nrun.runProcess("NCBI Fetch", run, dialog, pbar);
 				}
 			}
 		});
@@ -2558,66 +2241,67 @@ public class SerifyApplet extends JApplet {
 					String userhome = System.getProperty("user.home");	
 					File dir = new File( userhome );
 					
-					checkInstall( dir );
+					nrun.checkInstall( dir );
 						
-					File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
-					if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
-					if( makeblastdb.exists() ) {
-						int r = table.getSelectedRow();
-						final String dbtype = (String)table.getValueAt( r, 2 );
-						final String path = (String)table.getValueAt( r, 3 );
-						URL url = new URL( path );
-						
-						String file = url.getFile();
-						String[] split = file.split("/");
-						String fname = split[ split.length-1 ];
-						split = fname.split("\\.");
-						final String title = split[0]; 
-						final File infile = new File( dir, "tmp_"+fname );
-						
-						FileOutputStream fos = new FileOutputStream( infile );
-						InputStream is = url.openStream();
-						
-						byte[] bb = new byte[100000];
+					int r = table.getSelectedRow();
+					final String dbtype = (String)table.getValueAt( r, 2 );
+					final String path = (String)table.getValueAt( r, 3 );
+					URL url = new URL( path );
+					
+					String file = url.getFile();
+					String[] split = file.split("/");
+					String fname = split[ split.length-1 ];
+					split = fname.split("\\.");
+					final String title = split[0]; 
+					final File infile = new File( dir, "tmp_"+fname );
+					
+					FileOutputStream fos = new FileOutputStream( infile );
+					InputStream is = url.openStream();
+					
+					byte[] bb = new byte[100000];
+					r = is.read(bb);
+					while( r > 0 ) {
+						fos.write(bb, 0, r);
 						r = is.read(bb);
-						while( r > 0 ) {
-							fos.write(bb, 0, r);
-							r = is.read(bb);
-						}
-						is.close();
-						fos.close();
+					}
+					is.close();
+					fos.close();
+					
+					JFileChooser fc = new JFileChooser();
+					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
+						File selectedfile = fc.getSelectedFile();
+						if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
 						
-						JFileChooser fc = new JFileChooser();
-						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-						if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-							File selectedfile = fc.getSelectedFile();
-							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
-							
-							final String outPath = fixPath( new File( selectedfile, title ).getAbsolutePath() );
-							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-title", title, "-dbtype", dbtype, "-out", outPath };
-							
-							final Object[] cont = new Object[3];
-							Runnable run = new Runnable() {
-								public void run() {
+						final String outPath = nrun.fixPath( new File( selectedfile, title ).getAbsolutePath() );
+						final Object[] cont = new Object[3];
+						Runnable run = new Runnable() {
+							public void run() {
+								if( cont[0] != null ) {
+									infile.delete();
+								
 									if( cont[0] != null ) {
-										infile.delete();
+										JSObject js = JSObject.getWindow( SerifyApplet.this );
+										//js = (JSObject)js.getMember("document");
 									
-										if( cont[0] != null ) {
-											JSObject js = JSObject.getWindow( SerifyApplet.this );
-											//js = (JSObject)js.getMember("document");
-										
-											String machineinfo = getMachine();
-											String[] split = machineinfo.split("\t");
-											js.call( "addDb", new Object[] {getUser(), title, dbtype, outPath, split[0], cont[1]} );
-										}
+										String machineinfo = getMachine();
+										String[] split = machineinfo.split("\t");
+										js.call( "addDb", new Object[] {getUser(), title, dbtype, outPath, split[0], cont[1]} );
 									}
 								}
-							};
-							runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
-						}
+							}
+						};
 						
-						//infile.delete();
-					} else System.err.println( "no blast installed" );
+						File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+						if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
+						if( makeblastdb.exists() ) {
+							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( infile.getAbsolutePath() ), "-title", title, "-dbtype", dbtype, "-out", outPath };
+							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
+						}
+					}
+					
+					//infile.delete();
+					//} else System.err.println( "no blast installed" );
 				} catch (MalformedURLException e1) {
 					e1.printStackTrace();
 				} catch (IOException e2) {
@@ -2651,7 +2335,7 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 					
-					final String outPath = fixPath( selectedfile.getParentFile().getAbsolutePath()+System.getProperty("file.separator")+title );
+					final String outPath = nrun.fixPath( selectedfile.getParentFile().getAbsolutePath()+System.getProperty("file.separator")+title );
 					//String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
 					
 					JSObject js = JSObject.getWindow( SerifyApplet.this );
@@ -2670,7 +2354,7 @@ public class SerifyApplet extends JApplet {
 					String userhome = System.getProperty("user.home");
 					File dir = new File( userhome );
 					
-					checkInstall( dir );
+					nrun.checkInstall( dir );
 						
 					getParameters();					
 					//infile.delete();
@@ -2768,7 +2452,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
@@ -2824,11 +2508,19 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
+					List<String> urls = new ArrayList<String>();
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						//int r = table.getSelectedRow();
+						String path = (String)table.getValueAt( r, 3 );
+						urls.add( path );
+					}
+					
 					String userhome = System.getProperty("user.home");	
 					File dir = new File( userhome );
-					File f = checkProdigalInstall( dir );
+					File f = nrun.checkProdigalInstall( dir, urls );
 					if( f != null && f.exists() ) {
-						doProdigal( dir, c, f );
+						nrun.doProdigal( dir, c, f, urls );
 					} else System.err.println( "no blast installed" );
 				} catch (MalformedURLException e1) {
 					e1.printStackTrace();
@@ -2842,7 +2534,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
@@ -2886,7 +2578,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.exists() ) f.mkdirs();
 					else if( !f.isDirectory() ) f = f.getParentFile();
@@ -2925,7 +2617,7 @@ public class SerifyApplet extends JApplet {
 								is.close();
 								fos.close();
 						
-								String inputPathFixed = fixPath( infile.getAbsolutePath() ).trim();
+								String inputPathFixed = nrun.fixPath( infile.getAbsolutePath() ).trim();
 								final String newname = s.getName()+"_aligned";
 								String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
 								final String newurl = new File( newpath ).toURI().toString();
@@ -2945,7 +2637,7 @@ public class SerifyApplet extends JApplet {
 									String[] cmds = {"clustalo", "-i "+inputPathFixed, "-o "+newpath};
 									cmdarr = Arrays.asList( cmds );
 								}
-								runProcessBuilder("Clustal alignment", cmdarr, run, cont);
+								nrun.runProcessBuilder("Clustal alignment", cmdarr, run, cont);
 							} catch (IOException e1) {
 								e1.printStackTrace();
 							}
@@ -3190,7 +2882,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					//if( !f.isDirectory() ) f = f.getParentFile();
 					
@@ -3215,7 +2907,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
@@ -3223,7 +2915,7 @@ public class SerifyApplet extends JApplet {
 					spinner.setValue( 500 ); //seqs.getNSeq() );
 					spinner.setPreferredSize( new Dimension(100,25) );
 					final JDialog dl;
-					Window window = SwingUtilities.windowForComponent(cnt);
+					Window window = SwingUtilities.windowForComponent(nrun.cnt);
 					if( window != null ) dl = new JDialog( window );
 					else dl = new JDialog();
 					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
@@ -3284,13 +2976,13 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
 					
 					fc.setFileSelectionMode( JFileChooser.FILES_ONLY );
-					if( fc.showOpenDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					if( fc.showOpenDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 						File fo = fc.getSelectedFile();
 						Path pt = Paths.get( fo.toURI() );
 						Map<String,String>	tagmap = new HashMap<String,String>();
@@ -3321,7 +3013,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
@@ -3329,7 +3021,7 @@ public class SerifyApplet extends JApplet {
 					spinner.setValue( 1 ); //seqs.getNSeq() );
 					spinner.setPreferredSize( new Dimension(100,25) );
 					final JDialog dl;
-					Window window = SwingUtilities.windowForComponent(cnt);
+					Window window = SwingUtilities.windowForComponent(nrun.cnt);
 					if( window != null ) dl = new JDialog( window );
 					else dl = new JDialog();
 					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
@@ -3392,7 +3084,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f1 = fc.getSelectedFile();
 					if( !f1.isDirectory() ) f1 = f1.getParentFile();
 					final File dir = f1;
@@ -3446,7 +3138,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f1 = fc.getSelectedFile();
 					if( !f1.isDirectory() ) f1 = f1.getParentFile();
 					final File dir = f1;
@@ -3456,14 +3148,12 @@ public class SerifyApplet extends JApplet {
 					spinner.setPreferredSize( new Dimension(600,25) );
 
 					final JDialog dl;
-					Window window = SwingUtilities.windowForComponent(cnt);
+					Window window = SwingUtilities.windowForComponent(nrun.cnt);
 					if( window != null ) dl = new JDialog( window );
 					else dl = new JDialog();
 					
 					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-					JComponent c = new JComponent() {
-						
-					};
+					JComponent c = new JComponent() {};
 					c.setLayout( new FlowLayout() );
 					dl.setTitle("Filter sequences");
 					JButton browse = new JButton( new AbstractAction("Browse") {
@@ -3523,7 +3213,7 @@ public class SerifyApplet extends JApplet {
 				try {
 					JFileChooser fc = new JFileChooser();
 					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 						File f1 = fc.getSelectedFile();
 						if( !f1.isDirectory() ) f1 = f1.getParentFile();
 						final File dir = f1;
@@ -3587,7 +3277,7 @@ public class SerifyApplet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f1 = fc.getSelectedFile();
 					if( !f1.isDirectory() ) f1 = f1.getParentFile();
 					final File dir = f1;
@@ -3627,7 +3317,7 @@ public class SerifyApplet extends JApplet {
 				String s = (String)jso.call("getSelectedBlast", new Object[] {} );
 				
 				JFileChooser fc = new JFileChooser();
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
 						blastJoin( new FileInputStream(s), new PrintStream(new FileOutputStream(f)) );
@@ -3653,7 +3343,7 @@ public class SerifyApplet extends JApplet {
 				
 				JFileChooser fc = new JFileChooser();
 				if( is == null ) {
-					if( fc.showOpenDialog(cnt) == JFileChooser.APPROVE_OPTION ) {
+					if( fc.showOpenDialog(nrun.cnt) == JFileChooser.APPROVE_OPTION ) {
 						try {
 							is = new FileInputStream( fc.getSelectedFile() );
 						} catch (FileNotFoundException e1) {
@@ -3662,7 +3352,7 @@ public class SerifyApplet extends JApplet {
 					}
 				}
 				
-				if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
 						List<Set<String>> cluster = serifier.makeBlastCluster( is, null, 1 );
@@ -3721,7 +3411,7 @@ public class SerifyApplet extends JApplet {
 				int rr = table.convertRowIndexToModel( r );
 				if( rr >= 0 ) {
 					JFileChooser fc = new JFileChooser();
-					if( fc.showSaveDialog( cnt ) == JFileChooser.APPROVE_OPTION ) {
+					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 						File f = fc.getSelectedFile();
 						
 						final Sequences seqs = getSequences( rr );
@@ -4224,132 +3914,6 @@ public class SerifyApplet extends JApplet {
 	
 	public String getUser() {
 		return globaluser;
-	}
-	
-	public String runProcessBuilder( String title, final List<String> commands, final Runnable run, final Object[] cont ) throws IOException {
-		//System.err.println( pb.toString() );
-		//pb.directory( dir );
-		
-		final JDialog	dialog = new JDialog();
-		dialog.setTitle( title );
-		dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-		dialog.setSize(400, 300);
-		
-		JComponent comp = new JComponent() {};
-		comp.setLayout( new BorderLayout() );
-		
-		final JTextArea		ta = new JTextArea();
-		for( String cmd : commands ) {
-			ta.append(cmd+" ");
-		}
-		ta.append("\n");
-		
-		ta.setEditable( false );
-		final JScrollPane	sp = new JScrollPane( ta );
-		final JProgressBar	pbar = new JProgressBar();
-		
-		dialog.add( comp );
-		comp.add( pbar, BorderLayout.NORTH );
-		comp.add( sp, BorderLayout.CENTER );
-		pbar.setIndeterminate( true );
-		
-		System.err.println( "about to run" );
-		for( String c : commands ) {
-			System.err.print( c+" " );
-		}
-		System.err.println();
-		
-		Runnable runnable = new Runnable() {
-			boolean interupted = false;
-			
-			@Override
-			public void run() {
-				try {
-					ProcessBuilder pb = new ProcessBuilder( commands );
-					pb.redirectErrorStream( true );
-					final Process p = pb.start();
-					dialog.addWindowListener( new WindowListener() {
-						
-						@Override
-						public void windowOpened(WindowEvent e) {}
-						
-						@Override
-						public void windowIconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeiconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeactivated(WindowEvent e) {}
-						
-						@Override
-						public void windowClosing(WindowEvent e) {}
-						
-						@Override
-						public void windowClosed(WindowEvent e) {
-							if( p != null ) {
-								interupted = true;
-								p.destroy();
-								//tt.interrupt();
-							}
-						}
-						
-						@Override
-						public void windowActivated(WindowEvent e) {}
-					});
-					dialog.setVisible( true );
-					
-					InputStream is = p.getInputStream();
-					BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-					String line = br.readLine();
-					while( line != null ) {
-						String str = line + "\n";
-						ta.append( str );
-						
-						line = br.readLine();
-					}
-					br.close();
-					is.close();
-					
-					/*System.err.println("hereok");
-					
-					is = p.getErrorStream();
-					br = new BufferedReader( new InputStreamReader(is) );
-					
-					line = br.readLine();
-					while( line != null ) {
-						String str = line + "\n";
-						ta.append( str );
-						
-						System.err.println("hereerm " + line);
-						
-						line = br.readLine();
-					}
-					br.close();
-					is.close();
-					
-					System.err.println("here");*/
-					
-					String result = ta.getText().trim();
-					if( run != null ) {
-						cont[0] = interupted ? null : ""; 
-						cont[1] = result;
-						cont[2] = new Date( System.currentTimeMillis() ).toString();
-						run.run();
-					}
-					
-					pbar.setIndeterminate( false );
-					pbar.setEnabled( false );
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		};
-		final Thread trd = new Thread( runnable );
-		trd.start();
-		
-		//dialog.setVisible( false );
-		return "";
 	}
 	
 	public static boolean inPath( Node leaf, Node n ) {
@@ -5228,7 +4792,7 @@ public class SerifyApplet extends JApplet {
 		
 		//mapFiles();
 		
-		try {
+		/*try {
 			FileReader fr = new FileReader("/home/sigmar/conc_40genes.dst");
 			List<String>	llines = new ArrayList<String>();
 			BufferedReader br = new BufferedReader( fr );
@@ -5254,7 +4818,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		/*try {
 			Map<String,String> mstr = mapNameHit( new FileInputStream("/u0/viggo_nt_10.blastout") );
