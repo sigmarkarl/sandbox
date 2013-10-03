@@ -126,7 +126,7 @@ public class Thermus implements EntryPoint {
 	public void onModuleLoad() {
 		initFunctions();
 		
-		final RootPanel rp = RootPanel.get();
+		final RootPanel rp = RootPanel.get("content");
 		//final RootPanel thermus = RootPanel.get("thermus");
 		
 		Style st = rp.getElement().getStyle();
@@ -175,8 +175,8 @@ public class Thermus implements EntryPoint {
 		ae.setAttribute("codebase", "http://thermusgenes.appspot.com/");
 		//ae.setAttribute("codebase", "http://127.0.0.1:8888/");
 		
-		ae.setAttribute("width", "1024px");
-		ae.setAttribute("height", "600px");
+		ae.setAttribute("width", "100%");
+		ae.setAttribute("height", "100%");
 		ae.setAttribute("jnlp_href", "distann.jnlp");
 		ae.setAttribute("archive", "distann.jar");
 		ae.setAttribute("code", "org.simmi.GeneSet");
@@ -185,7 +185,7 @@ public class Thermus implements EntryPoint {
 		
 		VerticalPanel	vp = new VerticalPanel();
 		vp.setSize("100%", "100%");
-		vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
+		//vp.setVerticalAlignment( VerticalPanel.ALIGN_MIDDLE );
 		vp.setHorizontalAlignment( VerticalPanel.ALIGN_CENTER );
 		
 		SimplePanel sp = new SimplePanel();
