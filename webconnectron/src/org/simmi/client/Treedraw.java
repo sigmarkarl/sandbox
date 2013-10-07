@@ -109,6 +109,7 @@ public class Treedraw implements EntryPoint {
 	
 	private void setTreeUtil( TreeUtil tu, String val ) {
 		if( this.treeutil != null ) console( "batjong2 " + val );
+		else console( "batjong2333333333333333333333333333333333333333333333333333 " + val );
 		this.treeutil = tu;
 	}
 	
@@ -427,8 +428,8 @@ public class Treedraw implements EntryPoint {
 	
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
-		//Browser.getWindow().getConsole().log("erm " + str);
-		if( str != null && str.length() > 1 && !str.startsWith("{") ) {
+		Browser.getWindow().getConsole().log("erm " + str);
+		if( str != null && str.length() > 1 && !str.startsWith("{") && !str.startsWith("\"") ) {
 			List<Sequence> seqs = currentSeqs;
 			currentSeqs = null;
 			//TreeUtil	treeutil;
@@ -1386,11 +1387,13 @@ public class Treedraw implements EntryPoint {
 				treeutil.invertSelectionRecursive( root );
 			} else if( c == 'r' || c == 'R' ) {
 				if( treeutil != null && selectedNode != null ) {
+					Browser.getWindow().getConsole().log("ermerm");
 					if( !treeutil.isRooted() ) {
-						
+						Browser.getWindow().getConsole().log("sermerm");
 						/*if( treeutil.getNode() != null ) {
 							console( "not null first" );
-				if( c == 'c' || c == 'C' ) {			console( "muu " + treeutil.getNode().toString() );
+							if( c == 'c' || c == 'C' ) {			
+							console( "muu " + treeutil.getNode().toString() );
 						} else {
 							console( "null first" );
 						}
@@ -1409,6 +1412,7 @@ public class Treedraw implements EntryPoint {
 						selectedNode.setParent( null );
 						treeutil.reroot( selectedNode );
 					} else {
+						Browser.getWindow().getConsole().log("ermerms");
 						Node selparent = selectedNode.getParent();
 						if( selparent != null ) {
 							double h2 = selectedNode.geth()/2.0;
