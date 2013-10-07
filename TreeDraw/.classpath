@@ -17,8 +17,8 @@
 	<classpathentry kind="lib" path="/poi/poi-3.9/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/lib/log4j-1.2.13.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk1.7.0_25/jre/lib/plugin.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_40/jre/lib/deploy.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_40/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/opt/jdk1.7.0_40/jre/lib/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
