@@ -7358,9 +7358,11 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				JRadioButton panbtn = new JRadioButton("Pan");
 				JRadioButton corebtn = new JRadioButton("Core");
+				JRadioButton blehbtn = new JRadioButton("Bleh");
 				ButtonGroup	bg = new ButtonGroup();
 				bg.add( panbtn );
 				bg.add( corebtn );
+				bg.add( blehbtn );
 				corebtn.setSelected( true );
 				//Object[] objs = new Object[] { panbtn, corebtn };
 				//JOptionPane.showMessageDialog( GeneSet.this, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
@@ -7416,6 +7418,7 @@ public class GeneSet extends JApplet {
 				c.add( scroll );
 				c.add( panbtn );
 				c.add( corebtn );
+				c.add( blehbtn );
 				
 				JOptionPane.showMessageDialog(comp, c);
 				
@@ -7427,7 +7430,14 @@ public class GeneSet extends JApplet {
 				}
 				
 				for( GeneGroup gg : allgenegroups ) {
-					if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
+					if( blehbtn.isSelected() ) {
+						Set<String> ss = new HashSet<String>( gg.species.keySet() );
+						ss.removeAll( specs );
+						if( ss.size() == 0 ) {
+							int r = GeneSet.this.table.convertRowIndexToView( gg.index );
+							GeneSet.this.table.addRowSelectionInterval( r, r );
+						}
+					} else if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
 						int r = GeneSet.this.table.convertRowIndexToView( gg.index );
 						GeneSet.this.table.addRowSelectionInterval( r, r );
 					}
@@ -9618,7 +9628,7 @@ public class GeneSet extends JApplet {
 						} catch (IOException | URISyntaxException e1) {
 							e1.printStackTrace();
 						}
-			    	}
+			    	} else System.err.println( tree );
 				}
 				showAlignedSequences( comp, serifier );
 			}
@@ -9655,7 +9665,7 @@ public class GeneSet extends JApplet {
 						
 						Sequence seq = new Sequence( spec, null );
 						if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
-						serifier.addSequence( seq );						
+						serifier.addSequence( seq );			
 					}
 
 					String tree = serifier.getFastTree();
