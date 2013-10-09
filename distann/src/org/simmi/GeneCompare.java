@@ -348,7 +348,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				boolean succ = true;
 				try {
-					ImageIO.write(bimg, "png", new File("/home/sigmar/cir.png") );
+					ImageIO.write(bimg, "png", new File("c:/cir.png") );
 				} catch(Exception e1) {
 					succ = false;
 					e1.printStackTrace();
