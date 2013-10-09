@@ -1181,6 +1181,31 @@ public class Neighbour {
 					}
 				}
 			});
+			mvmnu.addSeparator();
+			mvmnu.add( new AbstractAction("Align forward") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Map<String,Integer>	spind = new HashMap<String,Integer>();
+					Map<String,Contig>  ctind = new HashMap<String,Contig>();
+					
+					for( GeneGroup gg : selectedGenesGroups ) {
+						for( String sp : gg.species.keySet() ) {
+							Teginfo ti = gg.species.get( sp );
+							
+							Contig ct = ti.best.contshort;
+							ctind.put( sp, ct );
+							spind.put( sp, ct.tlist.indexOf( ti.best ) );
+						}
+					}
+					
+					for( int i = 1; i < 20; i++ ) {
+						for( String spec : ctind.keySet() ) {
+							Contig ct = ctind.get( spec );
+							//ct.tlist.
+						}
+					}
+				}
+			});
 			
 			zoomIn.setAction( new AbstractAction("+") {
 				@Override
