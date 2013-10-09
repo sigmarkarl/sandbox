@@ -428,7 +428,7 @@ public class Treedraw implements EntryPoint {
 	
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
-		Browser.getWindow().getConsole().log("erm " + str);
+		//Browser.getWindow().getConsole().log("erm " + str);
 		if( str != null && str.length() > 1 && !str.startsWith("{") && !str.startsWith("\"") ) {
 			List<Sequence> seqs = currentSeqs;
 			currentSeqs = null;
@@ -1169,6 +1169,7 @@ public class Treedraw implements EntryPoint {
 	boolean	ie = false;
 	boolean inTextBox = false;
 	public void keyCheck( char c, int keycode, boolean alt ) {
+		Browser.getWindow().getConsole().log("ermuf");
 		//boolean shift = (keycode | KeyCodes.KEY_SHIFT) != 0;
 		if( c == 'p' || c == 'P' ) {
 			if( c == 'p' ) {
@@ -1561,7 +1562,6 @@ public class Treedraw implements EntryPoint {
 	@Override
 	public void onModuleLoad() {
 		final Console console = Browser.getWindow().getConsole();
-		console.log("starting5");
 		
 		Window.addResizeHandler( new ResizeHandler() {
 			@Override
@@ -1714,7 +1714,7 @@ public class Treedraw implements EntryPoint {
 		});
 		canvas.addMouseDownHandler( new MouseDownHandler() {
 			@Override
-			public void onMouseDown(MouseDownEvent event) {
+			public void onMouseDown(MouseDownEvent event) {				
 				int x = event.getX();
 				int y = event.getY();
 				
@@ -1807,8 +1807,8 @@ public class Treedraw implements EntryPoint {
 			}
 		};
 		String useragent = Window.Navigator.getUserAgent();
-		console( useragent );
-		if( useragent.contains("MSIE") ) {
+		console( "USERAGENT " + useragent );
+		if( useragent.contains("MSIE") || useragent.contains(".NET") ) {
 			/*canvas.addKeyDownHandler( new KeyDownHandler() {
 				@Override
 				public void onKeyDown(KeyDownEvent event) {
