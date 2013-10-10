@@ -8336,7 +8336,7 @@ public class GeneSet extends JApplet {
 							}
 							final String smuck = sb.toString().replace("smuck", fw.toString());
 							
-							String b64str = Base64.encodeBase64String( smuck.getBytes() );
+							//String b64str = Base64.encodeBase64String( smuck.getBytes() );
 							JSObject window = null;
 							try {
 								window = JSObject.getWindow( GeneSet.this );
@@ -8345,37 +8345,38 @@ public class GeneSet extends JApplet {
 							}
 							
 							if( window != null ) {
-								boolean succ = true;
 								try {
-									window.call("string2Blob", new Object[] {b64str,"text/html"});
+									window.setMember("smuck", smuck);
+									//window.eval("var binary = atob(b64str)");
+									//window.eval("var i = binary.length");
+									//window.eval("var view = new Uint8Array(i)");
+								    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+									window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
+									window.eval("open( URL.createObjectURL(b), '_blank' )");
 								} catch( Exception exc ) {
-									succ = false;
 									exc.printStackTrace();
 								}
-							
-								if( succ == false ) {
-									try {
-										window.setMember("b64str", b64str);
-										window.eval("var binary = atob(b64str)");
-										window.eval("var i = binary.length");
-										window.eval("var view = new Uint8Array(i)");
-									    window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-										window.eval("var b = new Blob( [view], { \"type\" : \"text\\/html\" } );");
-										window.eval("open( URL.createObjectURL(b), '_blank' )");
-									} catch( Exception exc ) {
-										exc.printStackTrace();
-									}
+							} else if( Desktop.isDesktopSupported() ) {
+								FileWriter fwr = new FileWriter("/tmp/chart.html");
+								fwr.write( smuck );
+								fwr.close();
+								
+								try {
+									Desktop.getDesktop().browse( new URI("/tmp/chart.html") );
+								} catch (URISyntaxException e1) {
+									e1.printStackTrace();
 								}
+							} else {
+								JFrame f = new JFrame("GC% chart");
+								f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+								f.setSize( 800, 600 );
+								
+								JTextArea	ta = new JTextArea();
+								ta.setText( fw.toString() );
+								JScrollPane	sp = new JScrollPane(ta);
+								f.add( sp );
+								f.setVisible( true );
 							}
-							/*JFrame f = new JFrame("GC% chart");
-							f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-							f.setSize( 800, 600 );
-							
-							JTextArea	ta = new JTextArea();
-							ta.setText( fw.toString() );
-							JScrollPane	sp = new JScrollPane(ta);
-							f.add( sp );
-							f.setVisible( true );*/
 							
 							break;
 						}
