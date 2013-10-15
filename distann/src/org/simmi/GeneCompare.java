@@ -94,6 +94,8 @@ public class GeneCompare {
 	public void selectContigs( Container comp, String spec1, GeneSet geneset ) {
 		final List<Contig> lcont = geneset.speccontigMap.get( spec1 );
 		
+		System.err.println( lcont.size() );
+		
 		ptotal = 0;
 		total = 0;
 		JTable cseltable = new JTable();
@@ -348,7 +350,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				boolean succ = true;
 				try {
-					ImageIO.write(bimg, "png", new File("c:/cir.png") );
+					ImageIO.write(bimg, "png", new File("/tmp/cir.png") );
 				} catch(Exception e1) {
 					succ = false;
 					e1.printStackTrace();
@@ -1042,7 +1044,7 @@ public class GeneCompare {
 				g2.translate( w/2, h/2 );
 				g2.rotate( theta );
 				int x = 250+15*spec2s.size();
-				g2.drawLine( x, 0, x+45, 0);
+				g2.drawLine( x, 0, x+15, 0);
 				g2.rotate( -theta );
 	            g2.translate( -w/2, -h/2 );
 			}

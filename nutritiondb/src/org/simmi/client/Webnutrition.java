@@ -154,8 +154,9 @@ public class Webnutrition implements EntryPoint {
 		}
 		
 		public float floatValAt( int i ) {
-			if( i < columns.length() ) return columns.get(i);
-			return -1.0f;
+			float ret = -1.0f;
+			if( i < columns.length() ) ret = columns.get(i);
+			return ret;
 		}
 		
 		public int getLength() {
@@ -281,17 +282,26 @@ public class Webnutrition implements EntryPoint {
 		  var arrayBuffer = oReq.response; // Note: not oReq.responseText
 		  if (arrayBuffer) {
 		  	var view = new Uint8Array( arrayBuffer );
+		  	
+		  	$wnd.console.log( "about to unzip" );
+	  		$wnd.zip = new $wnd.Zlib.Unzip( view );
+	  		var filenames = $wnd.zip.getFilenames();
+		    for( var fkey in filenames ) {		    
+		    	var filename = filenames[fkey];
+				var array = $wnd.zip.decompress( filename );
+				var text = new Uint8Array( array );
+				var blob = new Blob([text], {type: "text/plain"});
+			  	var reader = new FileReader();
+			  	reader.onload = function( ev ) {
+					ths.@org.simmi.client.Webnutrition::fetchNutrFromText(Ljava/lang/String;Z)( ev.target.result, false );
+		  		};
+		  		reader.readAsText( blob );
+				break;
+		    }
+	  		//$wnd.console.log( "done unzipping" );
+		  	
 		  	//var blob = new Blob([view], {type: "application/x-bzip2"});
-		  	var blob = new Blob([view], {type: "text/plan"});
-		  	var reader = new FileReader();
-		  	reader.onload = function( ev ) {
-		  		$wnd.console.log( "about to unzip" );
-		  		var unzip = ev.target.result; //$wnd.ArchUtils.bz2.decode( ev.target.result );
-		  		$wnd.console.log( "done unzipping" );
-		  		ths.@org.simmi.client.Webnutrition::fetchNutrFromText(Ljava/lang/String;Z)( unzip, false );
-		  		//( $wnd.ArchUtils.bz2.decode( ev.target.result ) );
-		  	};
-		  	reader.readAsBinaryString( blob );
+		  	//reader.readAsBinaryString( blob );
 		    //var byteArray = new Uint8Array(arrayBuffer);
 		    //for (var i = 0; i < byteArray.byteLength; i++) {
 		    // do something with each byte in the array
@@ -303,7 +313,7 @@ public class Webnutrition implements EntryPoint {
 
 	
 	public void fetchNutr() {
-		getBinaryResource( "NUT_DATA_trim.txt" );
+		getBinaryResource( "NUT_DATA_trim.zip" );
 		//getBinaryResource( "http://192.168.1.166:8888/NUT_DATA_trim.txt" );
 	}
 	
@@ -354,7 +364,7 @@ public class Webnutrition implements EntryPoint {
 				FoodInfo fi = foodmap.get( foodShort );
 				
 				int ind = lcolumnwidth.indexOf( nutrmap.get( nutrShort ) );
-				fi.setColumn( ind, val );
+				fi.setColumn( ind-2, val );
 			} else {
 				console.log( foodShort );
 				for( String key : foodmap.keySet() ) {
@@ -408,7 +418,7 @@ public class Webnutrition implements EntryPoint {
 							FoodInfo fi = foodmap.get( foodShort );
 							
 							int ind = lcolumnwidth.indexOf( nutrmap.get( nutrShort ) );
-							fi.setColumn( ind, val );
+							fi.setColumn( ind-2, val );
 						} else {
 							for( String key : foodmap.keySet() ) {
 								console.log("uff" + key);
@@ -735,7 +745,7 @@ public class Webnutrition implements EntryPoint {
 				//Math.max( k>1 ? rhs : 0,w-sub)
 				context.save();
 				context.beginPath();
-				context.rect( Math.max( rhs, w-xstartLocal ), 0, c.getWidth(), canvas.getCoordinateSpaceHeight());
+				context.rect( Math.max( rhs, w-xstartLocal ), 0, c.getWidth(), canvas.getCoordinateSpaceHeight() );
 				context.clip();
 				for( int y = ys; y < ye; y+=unitheight ) {
 					int i = y/unitheight;
@@ -755,8 +765,8 @@ public class Webnutrition implements EntryPoint {
 							context.setFillStyle("#222222");
 						}*/
 						
-						float o = fi.floatValAt(k);
-						if( o != -1.0f ) context.fillText( Float.toString(o), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
+						float o = fi.floatValAt(k-2);
+						if( o != -1.0f ) context.fillText( Float.toString( Math.round(o*100.0f)/100.0f ), w+5-xstartLocal, yy+columnHeight+unitheight-3.0-ystartLocal );
 					}
 				}
 				context.restore();
@@ -932,7 +942,8 @@ public class Webnutrition implements EntryPoint {
 	}
 	
 	public void sort() {
-		Collections.sort( lfoodinfo );
+		if( sortcolumn >= 2 ) Collections.sort( lfoodinfo, Collections.reverseOrder() );
+		else Collections.sort( lfoodinfo );
 		applyFilter();
 	}
 	
