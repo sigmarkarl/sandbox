@@ -479,10 +479,12 @@ public class GeneSet extends JApplet {
 		return map;
 	}
 
+	Set<String>	mu = new HashSet<String>();
 	private void loci2aasequence(Reader rd, Map<String,Gene> refmap) throws IOException {
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		String lname = null;
+		String prevline = null;
 		StringBuilder ac = new StringBuilder();
 		int start = 0;
 		int stop = -1;
@@ -512,7 +514,7 @@ public class GeneSet extends JApplet {
 						contloc = lname.substring(i, lname.length());
 						name = lname;
 						id = lname;
-					} else {		
+					} else {
 						int n = lname.indexOf(']', i+1);
 						contigstr = lname.substring(i+1, n);
 						int u = lname.indexOf(' ');
@@ -534,11 +536,22 @@ public class GeneSet extends JApplet {
 							origin = contigstr.substring(0, n);
 							contloc = n < contigstr.length() ? contigstr.substring(n+1) : "";
 						}
+						
+						if( id.contains("YP_445980") ) {
+							System.err.println( id );
+						}
+						
+						if( prevline != null ) {
+							i = prevline.lastIndexOf('#');
+							if( i != -1 ) {
+								u = prevline.indexOf(';', i+1);
+								if( u != -1 ) {
+									id = prevline.substring(u+1, prevline.length());
+									mu.add( id );
+								}
+							}
+						}
 					}
-
-					/*if (qsplit.length < 3) {
-						System.err.println();
-					}*/
 					
 						//i = query.indexOf('_', i);
 						//String[] qsplit = query.substring(i+5).split("_");
@@ -626,7 +639,9 @@ public class GeneSet extends JApplet {
 						}
 					}
 					//gene.species = new HashMap<String, Teginfo>();
-					refmap.put(id, gene);
+					if( refmap.put(id, gene) != null ) {
+						System.err.println();
+					}
 					
 					tv.setGene( gene );
 					tv.setTegund( origin );
@@ -661,6 +676,7 @@ public class GeneSet extends JApplet {
 				String cont = line.substring(1) + "";
 				String[] split = cont.split("#");
 				lname = split[0].trim().replace(".fna", "");
+				prevline = line;
 				
 				boolean succ = false;
 				int i = 0;
@@ -726,6 +742,16 @@ public class GeneSet extends JApplet {
 					origin = contigstr.substring(0, n);
 					contloc = n < contigstr.length() ? contigstr.substring(n+1) : "";
 				}
+				
+				if( prevline != null ) {
+					i = prevline.lastIndexOf('#');
+					if( i != -1 ) {
+						u = prevline.indexOf(';', i+1);
+						if( u != -1 ) {
+							id = prevline.substring(u+1, prevline.length());
+						}
+					}
+				}
 			}
 
 			//int fi = lname.indexOf('_');
@@ -768,6 +794,8 @@ public class GeneSet extends JApplet {
 		 * System.gc();
 		 */
 
+		System.err.println( refmap.size() );
+		System.err.println();
 		// Arrays.sort( aas );
 	}
 	
@@ -839,7 +867,7 @@ public class GeneSet extends JApplet {
 			}
 			ctlist.add( contig );
 			contig.partof = ctlist;
-		}		
+		}
 		return new ArrayList<String>( speccontigMap.keySet() );
 	}
 
@@ -1460,9 +1488,14 @@ public class GeneSet extends JApplet {
 					int s = 1;
 					int i = trimline.indexOf('#');
 					while( i != -1 ) {
-						trset.add( trimline.substring(s, i).trim() );
-						
 						int k = trimline.indexOf(',', i+1);
+						int u = trimline.indexOf(';', i+1);
+						if( u > 0 && trimline.charAt(u-1) == '#' && ( u < k || k == -1 ) ) {
+						//if( u == i+1 ) {
+							String loc =  trimline.substring(u+1, k == -1 ? trimline.length()-1: k).trim();
+							trset.add( loc );
+						} else trset.add( trimline.substring(s, i).trim() );
+					
 						if( k == -1 ) {
 							i = -1;
 						} else {
@@ -1569,7 +1602,7 @@ public class GeneSet extends JApplet {
 					/*
 					 * if( joinmap.containsKey( str ) ) { str = joinmap.get(str); }
 					 */
-					teg.add(spec);	
+					teg.add(spec);
 				} else {
 					i = e.indexOf("contig");
 					String spec = e.substring(0, i-1);
@@ -8332,11 +8365,19 @@ public class GeneSet extends JApplet {
 							}
 							
 							if( window != null ) {
+<<<<<<< HEAD
 								/*boolean succ = true;
+=======
+>>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
 								try {
-									window.call("string2Blob", new Object[] {b64str,"text/html"});
+									window.setMember("smuck", smuck);
+									//window.eval("var binary = atob(b64str)");
+									//window.eval("var i = binary.length");
+									//window.eval("var view = new Uint8Array(i)");
+								    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+									window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
+									window.eval("open( URL.createObjectURL(b), '_blank' )");
 								} catch( Exception exc ) {
-									succ = false;
 									exc.printStackTrace();
 								}*/
 								try {
@@ -8352,6 +8393,7 @@ public class GeneSet extends JApplet {
 									exc.printStackTrace();
 								}
 							} else if( Desktop.isDesktopSupported() ) {
+<<<<<<< HEAD
 								try {
 									FileWriter fwr = new FileWriter("c:/smuck.html");
 									fwr.write( smuck );
@@ -8359,17 +8401,28 @@ public class GeneSet extends JApplet {
 									Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
 								} catch( Exception exc ) {
 									exc.printStackTrace();
+=======
+								FileWriter fwr = new FileWriter("/tmp/chart.html");
+								fwr.write( smuck );
+								fwr.close();
+								
+								try {
+									Desktop.getDesktop().browse( new URI("/tmp/chart.html") );
+								} catch (URISyntaxException e1) {
+									e1.printStackTrace();
+>>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
 								}
+							} else {
+								JFrame f = new JFrame("GC% chart");
+								f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+								f.setSize( 800, 600 );
+								
+								JTextArea	ta = new JTextArea();
+								ta.setText( fw.toString() );
+								JScrollPane	sp = new JScrollPane(ta);
+								f.add( sp );
+								f.setVisible( true );
 							}
-							/*JFrame f = new JFrame("GC% chart");
-							f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-							f.setSize( 800, 600 );
-							
-							JTextArea	ta = new JTextArea();
-							ta.setText( fw.toString() );
-							JScrollPane	sp = new JScrollPane(ta);
-							f.add( sp );
-							f.setVisible( true );*/
 							
 							break;
 						}
@@ -12110,10 +12163,10 @@ public class GeneSet extends JApplet {
 				ZipEntry ze = zipm.getNextEntry();
 				while( ze != null ) {
 					String zname = ze.getName();
-					if( zcount == 0 && (zname.equals("allthermus.fna") || zname.equals("allglobus.fna")) ) {
+					if( zcount == 0 && (zname.equals("allthermus.fna") || zname.equals("allglobus.fna") || zname.equals("allrhodo.fna")) ) {
 						specList = loadcontigs( new InputStreamReader( zipm ) );
 						zcount = 1;
-					} else if( zcount == 1 && (zname.equals("allthermus_aligned.fsa") || zname.equals("allthermus_aligned.aa") || zname.equals("allglobus_aligned.aa")) ) {
+					} else if( zcount == 1 && (zname.equals("allthermus_aligned.fsa") || zname.equals("allthermus_aligned.aa") || zname.equals("allglobus_aligned.aa") || zname.equals("allrhodo_aligned.aa")) ) {
 						loci2aasequence( new InputStreamReader( zipm ), refmap );
 						zcount = 2;
 					} else if( zcount == 2 && zname.equals("clusters.txt") ) {
@@ -12291,15 +12344,26 @@ public class GeneSet extends JApplet {
 	
 				Set<Gene> gset = new HashSet<Gene>();
 				for( String cont : cluster ) {					
-					String gid;
+					String gid = null;
 					//String spec;
 					int b = cont.lastIndexOf('[');
 					if( b != -1 ) {
 						int u = cont.indexOf(']', b+1);
 						int k = cont.indexOf(' ');
-						gid = cont.substring(0, k);
-						if( gid.contains("..") ) {
-							gid = cont.substring(b+1, u) + "_" + gid;
+						
+						int n = cont.lastIndexOf('#');
+						if( n != -1 ) {
+							int m = cont.lastIndexOf(';', n+1);
+							if( m != -1 ) {
+								gid = cont.substring(m+1);
+							}
+						}
+						
+						if( gid == null ) {
+							gid = cont.substring(0, k);
+							if( gid.contains("..") ) {
+								gid = cont.substring(b+1, u) + "_" + gid;
+							}
 						}
 						
 						String scont = cont.substring(b+1, u);
@@ -12330,6 +12394,12 @@ public class GeneSet extends JApplet {
 					if (g != null) {
 						gs.add(g.refid);
 						gset.add(g);
+					} else {
+						if( mu.contains( gid ) ) {
+							System.err.println("e");
+						} else {
+							System.err.println("r");
+						}
 					}
 				}
 	
