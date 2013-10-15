@@ -14,9 +14,9 @@
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-ooxml-schemas-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/poi-scratchpad-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="commons-codec-1.8.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_40/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_40/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_40/jre/lib/plugin.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0_40/jre/lib/jfxrt.jar"/>
+	<classpathentry kind="lib" path="/jdk/deploy.jar"/>
+	<classpathentry kind="lib" path="/jdk/plugin.jar"/>
+	<classpathentry kind="lib" path="/jdk/javaws.jar"/>
+	<classpathentry kind="lib" path="/jdk/jfxrt.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
