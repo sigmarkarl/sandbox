@@ -143,8 +143,8 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public Color getGCColor() {
-		double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
-		return new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f );
+		double gcp = Math.min( Math.max( 0.35, gc ), 0.55 );
+		return new Color( (float)(0.55-gcp)/0.2f, (float)(gcp-0.35)/0.2f, 1.0f );
 	}
 
 	double			gc;

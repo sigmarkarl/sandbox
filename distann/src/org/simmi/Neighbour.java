@@ -18,6 +18,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -225,6 +226,107 @@ public class Neighbour {
 		return null;
 	}
 	
+	public void injectForward( JComponent c ) {
+		if( currentTe != null ) {
+			if( currentTe.getContshort().isReverse() ) {
+				/*Tegeval previous = currentTe.getPrevious();
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				currentTe.setPrevious( te );
+				te.setPrevious( previous );*/
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				currentTe.getContshort().injectBefore( currentTe, te );
+			} else {
+				/*Tegeval next = currentTe.getNext();
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				te.setPrevious( currentTe );
+				next.setPrevious( te );*/
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				currentTe.getContshort().injectAfter( currentTe, te );
+			}
+			c.repaint();
+		}
+	}
+	
+	public void injectBack( JComponent c ) {
+		if( currentTe != null ) {
+			if( currentTe.getContshort().isReverse() ) {
+				/*Tegeval next = currentTe.getNext();
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				te.setPrevious( currentTe );
+				next.setPrevious( te );*/
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				currentTe.getContshort().injectAfter( currentTe, te );
+			} else {
+				/*Tegeval previous = currentTe.getPrevious();
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				currentTe.setPrevious( te );
+				te.setPrevious( previous );*/
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				currentTe.getContshort().injectBefore( currentTe, te );
+			}
+			c.repaint();
+		}
+	}
+	
+	public void deleteForward( JComponent c ) {
+		if( currentTe != null ) {
+			if( currentTe.getContshort().isReverse() ) {
+				/*Tegeval prevprev = currentTe.prev.prev;
+				currentTe.setPrevious( prevprev );*/
+				currentTe.getContshort().deleteBefore( currentTe );
+			} else {
+				/*Tegeval nextnext = currentTe.next.next;
+				nextnext.setPrevious( currentTe );*/
+				currentTe.getContshort().deleteAfter( currentTe );
+			}
+			c.repaint();
+		}
+	}
+	
+	public void deleteBack( JComponent c ) {
+		if( currentTe != null ) {
+			if( currentTe.getContshort().isReverse() ) {
+				/*Tegeval nextnext = currentTe.getNext().getNext();
+				nextnext.setPrevious( currentTe );*/
+				currentTe.getContshort().deleteAfter( currentTe );
+			} else {
+				/*Tegeval prevprev = currentTe.getPrevious().getPrevious();
+				currentTe.setPrevious( prevprev );*/
+				currentTe.getContshort().deleteBefore( currentTe );
+			}
+			c.repaint();
+		}
+	}
+	
+	int total = 0;
+	int ptotal = 0;
+	public void initContigs( String spec1, GeneSet geneset ) {
+		if( spec1 != null && geneset.speccontigMap.containsKey( spec1 ) ) {
+			final List<Contig> lcont = geneset.speccontigMap.get( spec1 );
+			
+			ptotal = 0;
+			total = 0;
+			//List<Contig> contigs = new ArrayList<Contig>();
+			for( Contig ctg : lcont ) {
+				total += ctg.getGeneCount();
+			}
+			
+			if( lcont.size() <= 3 ) {
+				int max = 0;
+				Contig chromosome = null;
+				for( Contig ctg : lcont ) {
+					if( ctg.getGeneCount() > max ) {
+						max = ctg.getGeneCount();
+						chromosome = ctg;
+					}
+				}
+				
+				ptotal = total - chromosome.getGeneCount();
+				total = chromosome.getGeneCount();
+			}
+		}
+	}
+	
 	double neighbourscale = 1.0;
 	static Tegeval currentTe = null;
 	Set<GeneGroup> selectedGenesGroups;
@@ -266,6 +368,7 @@ public class Neighbour {
 		final JRadioButtonMenuItem gccol = new JRadioButtonMenuItem("GC%");
 		final JRadioButtonMenuItem abucol = new JRadioButtonMenuItem("Abundance");
 		final JRadioButtonMenuItem relcol = new JRadioButtonMenuItem("Relation");
+		final JRadioButtonMenuItem sgradcol = new JRadioButtonMenuItem("Synteni gradient");
 		final JRadioButtonMenuItem precol = new JRadioButtonMenuItem("Proximity preservation");
 		
 		ButtonGroup bg = new ButtonGroup();
@@ -273,11 +376,13 @@ public class Neighbour {
 		bg.add( gccol );
 		bg.add( abucol );
 		bg.add( relcol );
+		bg.add( sgradcol );
 		bg.add( precol );
 		mnu.add( funcol );
 		mnu.add( gccol );
 		mnu.add( abucol );
 		mnu.add( relcol );
+		mnu.add( sgradcol );
 		mnu.add( precol );
 		
 		final Map<String,Integer> blosumap = GeneCompare.getBlosumMap();
@@ -331,6 +436,35 @@ public class Neighbour {
 				
 				public void paintComponent( Graphics g ) {
 					super.paintComponent(g);
+					
+					Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
+					for( GeneGroup gg : selectedGenesGroups ) {
+						for( String spec2 : gg.getSpecies() ) {
+							final Collection<Contig> contigs2 = geneset.speccontigMap.get( spec2 );
+							Teginfo gene2s = gg.getGenes( spec2 );
+							for( Tegeval tv2 : gene2s.tset ) {
+								int count2 = 0;
+								for( Contig ctg2 : contigs2 ) {
+									if( ctg2.tlist != null ) {
+										int idx = ctg2.tlist.indexOf( tv2 );
+										if( idx == -1 ) {
+											count2 += ctg2.getGeneCount();
+										} else {
+											count2 += idx;
+											break;
+										}
+									}
+								}
+								offsetMap.put(spec2, count2);
+							}
+						}
+						break;
+					}
+					
+					String spec1 = null;
+					int 		rs = rowheader.getSelectedRow();
+					if( rs >= 0 && rs < rowheader.getRowCount() ) spec1 = (String)rowheader.getValueAt(rs, 0);
+					initContigs( spec1, geneset );
 					
 					Graphics2D g2 = (Graphics2D)g;
 					g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
@@ -398,16 +532,56 @@ public class Neighbour {
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
 											} else if( relcol.isSelected() ) {
-												int 		rs = rowheader.getSelectedRow();
-												if( rs >= 0 && rs < rowheader.getRowCount() ) {
-													String 		spec = (String)rowheader.getValueAt(rs, 0);
+												if( spec1 != null ) {
 													
 													//StringBuilder seq = next.seq;
 													Color rc = Color.green;
 													GeneGroup gg = next.getGene().getGeneGroup();
-													List<Tegeval> ltv = gg.getTegevals( spec );
+													List<Tegeval> ltv = gg.getTegevals( spec1 );
 													if( ltv != null && ltv.size() > 0 ) {
 														rc = GeneCompare.blosumColor( ltv.get(0).seq, next.getSpecies(), gg, blosumap, false );
+													} else {
+														rc = Color.white;
+													}
+													if( rc != null ) g.setColor( rc );
+												}
+											} else if( sgradcol.isSelected() ) {
+												if( spec1 != null ) {													
+													//StringBuilder seq = next.seq;
+													Color rc = Color.black;
+													GeneGroup gg = next.getGene().getGeneGroup();
+													List<Tegeval> ltv = gg.getTegevals( spec1 );
+													if( ltv != null && ltv.size() > 0 ) {
+														//String spec2 = next.getSpecies();
+														final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+														
+														/*double ratio = 0.0;
+														double pratio = 0.0;
+														if( ptotal > 0 ) {
+															if( ctg.getGeneCount() == total ) {
+																int val = count - offset;
+																if( val < 0 ) val = total + (count-offset);
+																
+																ratio = (double)(val-current)/(double)total;
+															} else {
+																if( count - total >= 0 ) {
+																	pratio = (double)(count-total)/(double)ptotal;
+																} else {
+																	pratio = (double)(count)/(double)ptotal;
+																}
+															}
+														} else {
+															int val = count - offset;
+															if( val < 0 ) val = total + (count-offset);
+															
+															ratio = (double)val/(double)total;
+														}*/
+														
+														//int offset2 = 0;
+														//if( offsetMap.containsKey( spec2 ) ) offset2 = offsetMap.get(spec2);
+														//rc = GeneCompare.gradientColor( spec1, spec2, contigs2, 0.0, 0.0, offset2, gg );
+														double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+														rc = GeneCompare.invertedGradientColor( ratio );
 													} else {
 														rc = Color.white;
 													}
@@ -500,6 +674,11 @@ public class Neighbour {
 										bil = next.getContshort().isReverse() ? Math.abs( thenext.stop-next.start ) : Math.abs( thenext.start-next.stop );
 										bil = (int)(neighbourscale*bil/3);
 									}
+									
+									if( thenext != null && thenext.getNext() == next ) {
+										thenext = null;
+									}
+									
 									xoff += len + bil;
 									next = thenext;
 									/*if( tev == null ) {
@@ -523,6 +702,11 @@ public class Neighbour {
 										bil = prev.getContshort().isReverse() ? Math.abs( theprev.start-prev.stop ) : Math.abs( theprev.stop-prev.start );
 										bil = (int)(neighbourscale*bil/3);
 									}
+									
+									if( theprev != null && theprev.getPrevious() == prev ) {
+										theprev = null;
+									}
+									
 									xoff -= len + bil;
 									
 									if( prev.getGene() != null ) {
@@ -551,20 +735,32 @@ public class Neighbour {
 												float abu = numspec/39.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
-											} else if( relcol.isSelected() ) {
-												int 		rs = rowheader.getSelectedRow();
-												String 		spec = (String)rowheader.getValueAt(rs, 0);
-												
+											} else if( relcol.isSelected() ) {												
 												//StringBuilder seq = next.seq;
 												Color rc = Color.green;
 												GeneGroup gg = prev.getGene().getGeneGroup();
-												List<Tegeval> ltv = gg.getTegevals( spec );
+												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
 													rc = GeneCompare.blosumColor( ltv.get(0).seq, prev.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
-												if( rc != null ) g.setColor( rc );
+												if( rc != null ) g.setColor( rc );												
+											} else if( sgradcol.isSelected() ) {
+												if( spec1 != null ) {													
+													//StringBuilder seq = next.seq;
+													Color rc = Color.black;
+													GeneGroup gg = prev.getGene().getGeneGroup();
+													List<Tegeval> ltv = gg.getTegevals( spec1 );
+													if( ltv != null && ltv.size() > 0 ) {
+														final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+														double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+														rc = GeneCompare.invertedGradientColor( ratio );
+													} else {
+														rc = Color.white;
+													}
+													if( rc != null ) g.setColor( rc );
+												}
 											} else if( precol.isSelected() ) {
 												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
 												shanmap.clear();
@@ -718,19 +914,31 @@ public class Neighbour {
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
 											} else if( relcol.isSelected() ) {
-												int 		rs = rowheader.getSelectedRow();
-												String 		spec = (String)rowheader.getValueAt(rs, 0);
-												
 												//StringBuilder seq = next.seq;
 												Color rc = Color.green;
 												GeneGroup gg = next.getGene().getGeneGroup();
-												List<Tegeval> ltv = gg.getTegevals( spec );
+												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
 													rc = GeneCompare.blosumColor( ltv.get(0).seq, next.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
 												if( rc != null ) g.setColor( rc );
+											} else if( sgradcol.isSelected() ) {
+												if( spec1 != null ) {													
+													//StringBuilder seq = next.seq;
+													Color rc = Color.black;
+													GeneGroup gg = next.getGene().getGeneGroup();
+													List<Tegeval> ltv = gg.getTegevals( spec1 );
+													if( ltv != null && ltv.size() > 0 ) {
+														final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+														double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+														rc = GeneCompare.invertedGradientColor( ratio );
+													} else {
+														rc = Color.white;
+													}
+													if( rc != null ) g.setColor( rc );
+												}
 											} else if( precol.isSelected() ) {
 												Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
 												shanmap.clear();
@@ -740,7 +948,7 @@ public class Neighbour {
 												int total = tegevals.size();
 												for( Tegeval tev : tegevals ) {
 													Tegeval thenext = tev.getNext();
-													GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+													GeneGroup c = thenext == null ? null : (thenext.getGene() != null ? thenext.getGene().getGeneGroup() : null);
 													int val = 0;
 													if( shanmap.containsKey(c) ) val = shanmap.get(c);
 													shanmap.put( c, val+1 );
@@ -1068,6 +1276,31 @@ public class Neighbour {
 			};
 			c.setToolTipText("bleh");
 			
+			c.addKeyListener( new KeyListener() {
+				@Override
+				public void keyTyped(KeyEvent e) {
+					
+				}
+				
+				@Override
+				public void keyReleased(KeyEvent e) {
+					
+				}
+				
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if( e.getKeyCode() == KeyEvent.VK_SPACE ) {
+						injectBack( c );
+					} else if( e.getKeyCode() == KeyEvent.VK_TAB ) {
+						injectForward( c );
+					}  else if( e.getKeyCode() == KeyEvent.VK_BACK_SPACE ) {
+						deleteBack( c );
+					}  else if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
+						deleteForward( c );
+					}
+				}
+			});
+			
 			final AbstractAction	a = new AbstractAction() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -1104,81 +1337,25 @@ public class Neighbour {
 			mvmnu.add( new AbstractAction("Inject forward") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					if( currentTe != null ) {
-						if( currentTe.getContshort().isReverse() ) {
-							/*Tegeval previous = currentTe.getPrevious();
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							currentTe.setPrevious( te );
-							te.setPrevious( previous );*/
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							currentTe.getContshort().injectBefore( currentTe, te );
-						} else {
-							/*Tegeval next = currentTe.getNext();
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							te.setPrevious( currentTe );
-							next.setPrevious( te );*/
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							currentTe.getContshort().injectAfter( currentTe, te );
-						}
-						c.repaint();
-					}
+					injectForward( c );
 				}
 			});
 			mvmnu.add( new AbstractAction("Inject back") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					if( currentTe != null ) {
-						if( currentTe.getContshort().isReverse() ) {
-							/*Tegeval next = currentTe.getNext();
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							te.setPrevious( currentTe );
-							next.setPrevious( te );*/
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							currentTe.getContshort().injectAfter( currentTe, te );
-						} else {
-							/*Tegeval previous = currentTe.getPrevious();
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							currentTe.setPrevious( te );
-							te.setPrevious( previous );*/
-							Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-							currentTe.getContshort().injectBefore( currentTe, te );
-						}
-						c.repaint();
-					}
+					injectBack( c );
 				}
 			});
 			mvmnu.add( new AbstractAction("Delete forward") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					if( currentTe != null ) {
-						if( currentTe.getContshort().isReverse() ) {
-							/*Tegeval prevprev = currentTe.prev.prev;
-							currentTe.setPrevious( prevprev );*/
-							currentTe.getContshort().deleteBefore( currentTe );
-						} else {
-							/*Tegeval nextnext = currentTe.next.next;
-							nextnext.setPrevious( currentTe );*/
-							currentTe.getContshort().deleteAfter( currentTe );
-						}
-						c.repaint();
-					}
+					deleteForward( c );
 				}
 			});
 			mvmnu.add( new AbstractAction("Delete back") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					if( currentTe != null ) {
-						if( currentTe.getContshort().isReverse() ) {
-							/*Tegeval nextnext = currentTe.getNext().getNext();
-							nextnext.setPrevious( currentTe );*/
-							currentTe.getContshort().deleteAfter( currentTe );
-						} else {
-							/*Tegeval prevprev = currentTe.getPrevious().getPrevious();
-							currentTe.setPrevious( prevprev );*/
-							currentTe.getContshort().deleteBefore( currentTe );
-						}
-						c.repaint();
-					}
+					deleteBack( c );
 				}
 			});
 			mvmnu.addSeparator();
@@ -1356,6 +1533,7 @@ public class Neighbour {
 
 				public void mousePressed(MouseEvent me) {
 					p = me.getPoint();
+					c.requestFocus();
 					
 					Tegeval te = getSelectedTe( p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight() );
 					//System.err.println();
