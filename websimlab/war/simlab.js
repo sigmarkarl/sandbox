@@ -74,15 +74,16 @@ function line( title, xdata ) {
 }
 
 var welcome = function() {
-	echo( '\nWelcome to Simlab 1.0' );
+	echo( 'Welcome to Simlab 1.0\n' );
 }
 
 var echo = function( str ) {
-	textarea.value = textarea.value + str;
+	process.stdout.write( str );
+	//console.log( str );
+	//textarea.value = textarea.value + str;
 }
 
 var flip = function( val ) {
-	window.console.log( flip.length );
 	if( typeof val == 'undefined' ) {
 		for( i = 0; i < current.length/2; i++ ) {
 			var tmp = current[i];
@@ -249,6 +250,17 @@ var avg = function( chunk ) {
 	}
 }
 
+var type = function( t ) {
+	if( t == 66 ) current = new Float64Array( 0 );
+	else if( t == 34 ) current = new Float32Array( 0 );
+	else if( t == 33 ) current = new Int32Array( 0 );
+	else if( t == 32 ) current = new Uint32Array( 0 );
+	else if( t == 17 ) current = new Int16Array( 0 );
+	else if( t == 16 ) current = new Uint16Array( 0 );
+	else if( t == 9 ) current = new Int8Array( 0 );
+	else if( t == 8 ) current = new Uint8Array( 0 );
+}
+
 var resize = function( size ) {
 	if( typeof size != 'number' ) size = size[0];
 
@@ -411,32 +423,31 @@ var print = function( val ) {
 	var ncount = 0;
 	var next = 0;
 	for( i = 0; i < current.length; i++ ) {
-		if( i == next ) {
-			textarea.value = textarea.value + '\n' + current[i];
-			next += val[(ncount++)%val.length];
-		} else {
-			textarea.value = textarea.value + '\t' +current[i];	
-		}
+		echo( current[i]+'\t' );
 	}
-	ind = textarea.value.length;
+	echo( '\n' );
 }
 
 var readline = require('readline');
+
+var parse = function( rl ) {
+	rl.question("", function( command ) {
+		if( command.indexOf('quit') == 0 ) rl.close(); 
+		else {
+			eval( command );
+			parse( rl );
+		}
+	});
+}
+
 var main = function() {
 	var rl = readline.createInterface({
 		  input: process.stdin,
 		  output: process.stdout
 	});
 	
-	//console.log( "ss" );
-	
-	/*rl.question("d?", function( command ) {
-		console.log( command );
-		//alert( command );
-		//eval( command );
-		
-		rl.close();
-	});*/
+	welcome();
+	parse( rl );
 }
 
 if( require.main === module ) {
