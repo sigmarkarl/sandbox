@@ -649,6 +649,177 @@ public class GeneCompare {
 		return color;
 	}
 	
+	public static Color gradientColor( String spec1, String spec2, Collection<Contig> contigs2, double ratio, double pratio, int offset2, GeneGroup gg ) {
+		Contig chromosome = null;
+		int total2 = 0;
+		int ptotal2 = 0;
+		
+		for( Contig ctg2 : contigs2 ) {
+			total2 += ctg2.getGeneCount();
+		}
+		
+		int chromstart = 0;
+		if( contigs2.size() <= 3 ) {
+			int max = 0;
+			int ccount = 0;
+			for( Contig ctg2 : contigs2 ) {
+				if( ctg2.getGeneCount() > max ) {
+					chromosome = ctg2;
+					chromstart = ccount;
+					max = ctg2.getGeneCount();
+				}
+				ccount += ctg2.getGeneCount();
+			}
+			
+			ptotal2 = total2 - max;
+			total2 = max;
+		}
+		
+		double ratio2 = -1.0;
+		double pratio2 = -1.0;
+		Teginfo gene2s = gg.getGenes( spec2 );
+		for( Tegeval tv2 : gene2s.tset ) {
+			int count2 = 0;
+			
+			if( chromosome != null ) {
+				if( chromosome.tlist != null ) {
+					int idx = chromosome.tlist.indexOf( tv2 );
+					if( idx == -1 ) {
+						for( Contig ctg2 : contigs2 ) {
+							if( ctg2 != chromosome && ctg2.tlist != null ) {
+								idx = ctg2.tlist.indexOf( tv2 );
+								if( idx == -1 ) {
+									count2 += ctg2.getGeneCount();
+								} else {
+									count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx; 
+									//count2 += idx;
+									break;
+								}
+							}
+						}
+						double prat2 = (double)count2/(double)ptotal2;
+						if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
+					} else count2 = chromosome.isReverse() ? chromosome.getGeneCount() - idx - 1 : idx;
+				}
+			} else {
+				for( Contig ctg2 : contigs2 ) {
+					if( ctg2.tlist != null ) {
+						int idx = ctg2.tlist.indexOf( tv2 );
+						if( idx == -1 ) {
+							count2 += ctg2.getGeneCount();
+						} else {
+							count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+							break;
+						}
+					}
+				}
+			}
+			
+			int val2 = count2 - (offset2-chromstart);
+			if( val2 < 0 ) val2 = total2 + val2;
+			
+			double rat2 = (double)val2/(double)total2;
+			
+			if( rat2 > 1.0f || rat2 < 0.0f ) {
+				System.err.println("");
+			}
+			
+			if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
+			//ratio2 = rat2;
+			//break;
+		}
+		
+		//float green = (float)(1.0-ratio2);
+		/*if( ratio2 < 0.5 ) {
+			Color c = new Color(0,(float)(ratio2*2.0),1.0f);
+			g2.setColor( c );
+		} else {
+			Color c = new Color(0,1.0f,(float)((1.0-ratio2)*2.0));
+			g2.setColor( c );
+		}*/
+		
+		Color c = Color.red;
+		if( pratio2 != -1.0 ) {
+			float val = (float)(5.0f*pratio2/6.0f);
+			if( val >= 0.0f && val <= 1.0f ) {
+				c = new Color(val,val,val);
+			}
+		} else {
+			if( ratio2 < 1.0/6.0 ) {
+				c = new Color(0.0f,(float)(ratio2*6.0),1.0f);
+			} else if( ratio2 < 2.0/6.0 ) {
+				c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio2)*6.0));
+			} else if( ratio2 < 3.0/6.0 ) {
+				c = new Color((float)((ratio2-2.0/6.0)*6.0),1.0f,0.0f);
+			} else if( ratio2 < 4.0/6.0 ) {
+				c = new Color(1.0f,(float)((4.0/6.0-ratio2)*6.0),0.0f);
+			} else if( ratio2 < 5.0/6.0 ) {
+				c = new Color(1.0f,0.0f,(float)((ratio2-4.0/6.0)*6.0));
+			} else if( ratio2 <= 1.0 ) {
+				c = new Color((float)((1.0-ratio2)*6.0),0.0f,1.0f);
+			}
+		}
+		
+		return c;
+	}
+	
+	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+		int total2 = 0;
+		for( Contig ctg2 : contigs2 ) {
+			total2 += ctg2.getGeneCount();
+		}
+		double ratio2 = -1.0;
+		Teginfo gene2s = gg.getGenes( spec2 );
+		for( Tegeval tv2 : gene2s.tset ) {
+			int count2 = 0;
+			for( Contig ctg2 : contigs2 ) {
+				if( ctg2.tlist != null ) {
+					int idx = ctg2.tlist.indexOf( tv2 );
+					if( idx == -1 ) {
+						count2 += ctg2.getGeneCount();
+					} else {
+						count2 += idx;
+						break;
+					}
+				}
+			}
+			double rat2 = (double)count2/(double)total2;
+			 
+			if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
+			//ratio2 = rat2;
+			//break;
+		}
+		return ratio2;
+	}
+	
+	public static Color invertedGradientColor( double ratio ) {		
+		//float green = (float)(1.0-ratio2);
+		/*if( ratio2 < 0.5 ) {
+			Color c = new Color(0,(float)(ratio2*2.0),1.0f);
+			g2.setColor( c );
+		} else {
+			Color c = new Color(0,1.0f,(float)((1.0-ratio2)*2.0));
+			g2.setColor( c );
+		}*/
+		
+		Color c = Color.black;
+		if( ratio < 1.0/6.0 ) {
+			c = new Color(0.0f,(float)(ratio*6.0),1.0f);
+		} else if( ratio < 2.0/6.0 ) {
+			c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio)*6.0));
+		} else if( ratio < 3.0/6.0 ) {
+			c = new Color((float)((ratio-2.0/6.0)*6.0),1.0f,0.0f);
+		} else if( ratio < 4.0/6.0 ) {
+			c = new Color(1.0f,(float)((4.0/6.0-ratio)*6.0),0.0f);
+		} else if( ratio < 5.0/6.0 ) {
+			c = new Color(1.0f,0.0f,(float)((ratio-4.0/6.0)*6.0));
+		} else {
+			c = new Color((float)((1.0-ratio)*6.0),0.0f,1.0f);
+		}
+		
+		return c;
+	}
+	
 	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal, int synbr ) {
 		/*g.setColor( Color.black );
 		int count = 0;
@@ -763,60 +934,10 @@ public class GeneCompare {
 								if( offsetMap.containsKey( spec2 ) ) offset2 = offsetMap.get(spec2);
 								if( synbr == -2 ) {
 									final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
-									int total2 = 0;
-									for( Contig ctg2 : contigs2 ) {
-										total2 += ctg2.getGeneCount();
-									}
-									double ratio2 = -1.0;
-									Teginfo gene2s = gg.getGenes( spec2 );
-									for( Tegeval tv2 : gene2s.tset ) {
-										int count2 = 0;
-										for( Contig ctg2 : contigs2 ) {
-											if( ctg2.tlist != null ) {
-												int idx = ctg2.tlist.indexOf( tv2 );
-												if( idx == -1 ) {
-													count2 += ctg2.getGeneCount();
-												} else {
-													count2 += idx;
-													break;
-												}
-											}
-										}
-										double rat2 = (double)count2/(double)total2;
-										 
-										if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
-										//ratio2 = rat2;
-										//break;
-									}
 									
-									//float green = (float)(1.0-ratio2);
-									/*if( ratio2 < 0.5 ) {
-										Color c = new Color(0,(float)(ratio2*2.0),1.0f);
-										g2.setColor( c );
-									} else {
-										Color c = new Color(0,1.0f,(float)((1.0-ratio2)*2.0));
-										g2.setColor( c );
-									}*/
-									
-									if( ratio < 1.0/6.0 ) {
-										Color c = new Color(0.0f,(float)(ratio*6.0),1.0f);
-										g2.setColor( c );
-									} else if( ratio < 2.0/6.0 ) {
-										Color c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio)*6.0));
-										g2.setColor( c );
-									} else if( ratio < 3.0/6.0 ) {
-										Color c = new Color((float)((ratio-2.0/6.0)*6.0),1.0f,0.0f);
-										g2.setColor( c );
-									} else if( ratio < 4.0/6.0 ) {
-										Color c = new Color(1.0f,(float)((4.0/6.0-ratio)*6.0),0.0f);
-										g2.setColor( c );
-									} else if( ratio < 5.0/6.0 ) {
-										Color c = new Color(1.0f,0.0f,(float)((ratio-4.0/6.0)*6.0));
-										g2.setColor( c );
-									} else {
-										Color c = new Color((float)((1.0-ratio)*6.0),0.0f,1.0f);
-										g2.setColor( c );
-									}
+									double ratio2 = invertedGradientRatio( spec2, contigs2, ratio, gg );
+									Color c = invertedGradientColor( ratio );
+									g2.setColor( c );
 									
 									if( ratio2 != -1.0 ) {
 										double theta = ratio2*Math.PI*2.0;
@@ -828,124 +949,8 @@ public class GeneCompare {
 									}
 								} else if( synbr == -1 ) {
 									final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
-									
-									Contig chromosome = null;
-									int total2 = 0;
-									int ptotal2 = 0;
-									
-									for( Contig ctg2 : contigs2 ) {
-										total2 += ctg2.getGeneCount();
-									}
-									
-									int chromstart = 0;
-									if( contigs2.size() <= 3 ) {
-										int max = 0;
-										int ccount = 0;
-										for( Contig ctg2 : contigs2 ) {
-											if( ctg2.getGeneCount() > max ) {
-												chromosome = ctg2;
-												chromstart = ccount;
-												max = ctg2.getGeneCount();
-											}
-											ccount += ctg2.getGeneCount();
-										}
-										
-										ptotal2 = total2 - max;
-										total2 = max;
-									}
-									
-									double ratio2 = -1.0;
-									double pratio2 = -1.0;
-									Teginfo gene2s = gg.getGenes( spec2 );
-									for( Tegeval tv2 : gene2s.tset ) {
-										int count2 = 0;
-										
-										if( chromosome != null ) {
-											if( chromosome.tlist != null ) {
-												int idx = chromosome.tlist.indexOf( tv2 );
-												if( idx == -1 ) {
-													for( Contig ctg2 : contigs2 ) {
-														if( ctg2 != chromosome && ctg2.tlist != null ) {
-															idx = ctg2.tlist.indexOf( tv2 );
-															if( idx == -1 ) {
-																count2 += ctg2.getGeneCount();
-															} else {
-																count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx; 
-																//count2 += idx;
-																break;
-															}
-														}
-													}
-													double prat2 = (double)count2/(double)ptotal2;
-													if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
-												} else count2 = chromosome.isReverse() ? chromosome.getGeneCount() - idx - 1 : idx;
-											}
-										} else {
-											for( Contig ctg2 : contigs2 ) {
-												if( ctg2.tlist != null ) {
-													int idx = ctg2.tlist.indexOf( tv2 );
-													if( idx == -1 ) {
-														count2 += ctg2.getGeneCount();
-													} else {
-														count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
-														break;
-													}
-												}
-											}
-										}
-										
-										int val2 = count2 - (offset2-chromstart);
-										if( val2 < 0 ) val2 = total2 + val2;
-										
-										double rat2 = (double)val2/(double)total2;
-										
-										if( rat2 > 1.0f || rat2 < 0.0f ) {
-											System.err.println("");
-										}
-										
-										if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
-										//ratio2 = rat2;
-										//break;
-									}
-									
-									//float green = (float)(1.0-ratio2);
-									/*if( ratio2 < 0.5 ) {
-										Color c = new Color(0,(float)(ratio2*2.0),1.0f);
-										g2.setColor( c );
-									} else {
-										Color c = new Color(0,1.0f,(float)((1.0-ratio2)*2.0));
-										g2.setColor( c );
-									}*/
-									
-									if( pratio2 != -1.0 ) {
-										float val = (float)(5.0f*pratio2/6.0f);
-										if( val >= 0.0f && val <= 1.0f ) {
-											Color c = new Color(val,val,val);
-											g2.setColor( c );
-										} else {
-											g2.setColor( Color.red );
-										}
-									} else {
-										if( ratio2 < 1.0/6.0 ) {
-											Color c = new Color(0.0f,(float)(ratio2*6.0),1.0f);
-											g2.setColor( c );
-										} else if( ratio2 < 2.0/6.0 ) {
-											Color c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio2)*6.0));
-											g2.setColor( c );
-										} else if( ratio2 < 3.0/6.0 ) {
-											Color c = new Color((float)((ratio2-2.0/6.0)*6.0),1.0f,0.0f);
-											g2.setColor( c );
-										} else if( ratio2 < 4.0/6.0 ) {
-											Color c = new Color(1.0f,(float)((4.0/6.0-ratio2)*6.0),0.0f);
-											g2.setColor( c );
-										} else if( ratio2 < 5.0/6.0 ) {
-											Color c = new Color(1.0f,0.0f,(float)((ratio2-4.0/6.0)*6.0));
-											g2.setColor( c );
-										} else if( ratio2 <= 1.0 ) {
-											Color c = new Color((float)((1.0-ratio2)*6.0),0.0f,1.0f);
-											g2.setColor( c );
-										}
-									}
+									Color c = gradientColor( spec1, spec2, contigs2, ratio, pratio, offset2, gg );
+									g2.setColor( c );
 									
 									double theta = count*Math.PI*2.0/(total+ptotal);
 									g2.translate( w/2, h/2 );
