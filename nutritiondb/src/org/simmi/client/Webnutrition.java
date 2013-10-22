@@ -286,7 +286,7 @@ public class Webnutrition implements EntryPoint {
 		  	$wnd.console.log( "about to unzip" );
 	  		$wnd.zip = new $wnd.Zlib.Unzip( view );
 	  		var filenames = $wnd.zip.getFilenames();
-		    for( var fkey in filenames ) {		    
+		    for( var fkey in filenames ) {
 		    	var filename = filenames[fkey];
 				var array = $wnd.zip.decompress( filename );
 				var text = new Uint8Array( array );
