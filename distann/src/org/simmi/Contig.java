@@ -19,16 +19,15 @@ class Contig implements Comparable<Contig> {
 	
 	public void deleteAfter( Tegeval cur ) {
 		int i = tlist.indexOf( cur );
-		if( i != -1 && i < tlist.size() ) {
+		if( i != -1 && i < tlist.size() && tlist.get(i+1).getGene() == null ) {
 			tlist.remove( i+1 );
 		}
 	}
 	
 	public void deleteBefore( Tegeval cur ) {
 		int i = tlist.indexOf( cur );
-		if( i > 0 ) {
+		if( i > 0 && tlist.get(i-1).getGene() == null )
 			tlist.remove( i-1 );
-		}
 	}
 	
 	public void injectAfter( Tegeval cur, Tegeval tv ) {
