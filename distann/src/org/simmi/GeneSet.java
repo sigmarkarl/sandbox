@@ -144,7 +144,6 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
-import org.simmi.signed.NativeRun;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.SmithWater;
 
@@ -7932,7 +7931,7 @@ public class GeneSet extends JApplet {
 				AccessController.doPrivileged( new PrivilegedAction<String>() {
 					@Override
 					public String run() {
-						NativeRun nrun = new NativeRun();
+						//NativeRun nrun = new NativeRun();
 						
 						final Object[] cont = new Object[3];
 						Runnable run = new Runnable() {
@@ -7945,12 +7944,12 @@ public class GeneSet extends JApplet {
 						File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 						if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
 						if( makeblastdb.exists() ) {
-							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
+							/*String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
 							try {
 								nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
 							} catch (IOException e) {
 								e.printStackTrace();
-							}
+							}*/
 						}
 						
 						return "";
@@ -8365,10 +8364,7 @@ public class GeneSet extends JApplet {
 							}
 							
 							if( window != null ) {
-<<<<<<< HEAD
 								/*boolean succ = true;
-=======
->>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
 								try {
 									window.setMember("smuck", smuck);
 									//window.eval("var binary = atob(b64str)");
@@ -8393,7 +8389,6 @@ public class GeneSet extends JApplet {
 									exc.printStackTrace();
 								}
 							} else if( Desktop.isDesktopSupported() ) {
-<<<<<<< HEAD
 								try {
 									FileWriter fwr = new FileWriter("c:/smuck.html");
 									fwr.write( smuck );
@@ -8401,16 +8396,6 @@ public class GeneSet extends JApplet {
 									Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
 								} catch( Exception exc ) {
 									exc.printStackTrace();
-=======
-								FileWriter fwr = new FileWriter("/tmp/chart.html");
-								fwr.write( smuck );
-								fwr.close();
-								
-								try {
-									Desktop.getDesktop().browse( new URI("/tmp/chart.html") );
-								} catch (URISyntaxException e1) {
-									e1.printStackTrace();
->>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
 								}
 							} else {
 								JFrame f = new JFrame("GC% chart");
