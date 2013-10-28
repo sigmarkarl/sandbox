@@ -1,6 +1,6 @@
 <!DOCTYPE html><html><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<title>Pan-core and functional genome navigator</title>
+<title>Pan-core gene and function navigator</title>
     <link rel="stylesheet" type="text/css" href="pancore.css">
     <link href="http://fonts.googleapis.com/css?family=Headland+One|Life+Savers:400,700" rel="stylesheet" type="text/css">
     <script async src="http://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -15,7 +15,7 @@
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
 </div>
-<h2>Pan-core and functional genome navigator</h2><div class="g-plusone" data-annotation="inline" data-width="300"></div>
+<h2>Pan-core gene and function navigator</h2><div class="g-plusone" data-annotation="inline" data-width="300"></div>
 <h3><i>Sigmar Karl Stefánsson</i></h3>
 	<script type="text/javascript">
   (function() {
@@ -27,10 +27,12 @@
 <div class="article">
 
 <h3>Introduction</h3>
-We present a comparative genomics software suite for navigating and comparing the genomes of multiple related microbial species. The package is written in Java and is accessible on the web as a Java applet on the URL <a href="http://thermusgenes.appspot.com/">http://thermusgenes.appspot.com/</a>. <p>
+We present a comparative genomics software suite for navigating and comparing the genomes of multiple related microbial species. 
+The package is written in Java and is accessible on the web as a Java applet on the URL <a href="http://thermusgenes.appspot.com/">http://thermusgenes.appspot.com/</a>. <p>
+You can try out the software with already prepared data, such as from <a href="allspiro.zip"><i>Spirochaeta</i></a> sequences.
 <figure style="text-align:center">
 <img src="mainscreen.png" width="90%" />
-<figcaption>The PanCoreNav mainscreen</figcaption>
+<figcaption>The PanNavigator mainscreen</figcaption>
 </figure>
 The mainscreen is split into two main tables, the <b>gene table</b> on top and the <b>function table</b> below. The tables are linked so be double clicking on an entry the relevant row in the other table is highlighted.
 A search textbox accompanies both tables for easy search and filtering.<p>
@@ -47,7 +49,7 @@ The 50-50 rule is used to group the genes together. That is, at least 50% of the
 <figcaption>A screenshot from the funblastic site</figcaption>
 </figure><p>
 Now you have a new list of protein fasta files containing the all the sequences of a gene group. These files represent the pan genome. The subset of these files with the maximum number of sequences is the core genome. 
-To be able to concatenate and make phylogenetic trees these need to be aligned. Funblastic gives you two options, alignment with muscle or clustalw. Now you should have all the files needed for import to the PanCoreNav software, 
+To be able to concatenate and make phylogenetic trees these need to be aligned. Funblastic gives you two options, alignment with muscle or clustalw. Now you should have all the files needed for import to the PanNavigator software, 
 one nucleotide fasta file containing the contigs from all the microbial organism under investigation and a protein fasta file for each of the genes.
 <p>All the results, for the alignment, clustering and annotation are kept in fasta format for readability and portability.
 
@@ -87,19 +89,19 @@ The 'XY plot' function in the Functions menu draw a dotplot between two selected
 By filtering the gene table in the main screen it is possible to select which genes are visible in the XY plot. For example by sorting the gene table by '# locus' you can filter out genes with multiple copies (such as transposons). <p> The XY plot offers different color schemes. For example colors can be selected by the gene GC content or the gene total abundance to help spotting genetic islands. <p>
 Selection in the XY view propogates to the gene table (use double click to unselect).
 <p><b>Synteny view</b><p>
-The PanCoreNav software genome alignment is based on the genes. The synteny view shows the position of the genes in relation to other species.
+The PanNavigator software genome alignment is based on the genes. The synteny view shows the position of the genes in relation to other species.
 <figure style="text-align:center">
 <img src="synteni.png" width="90%" />
-<figcaption>Synteni plot showing the selection of the possibly highly expressed 'metal dependent phosphohydrolase' in <i>Thermus</i> species</figcaption>
+<figcaption>Synteny plot showing the selection of the possibly highly expressed 'metal dependent phosphohydrolase' in <i>Thermus</i> species</figcaption>
 </figure><p>
 Selecting one gene in the gene table and visualizing in the synteny viewer gives an indication of gene expression level if there are multiple copies of the genes (paralogs).
-The synteni view is also useful in spotting which genes lie adjacent to each other as it is linked to selection in the gene table
+The synteny view is also useful in spotting which genes lie adjacent to each other as it is linked to selection in the gene table
 <figure style="text-align:center">
 <img src="synteny.png" width="90%" />
 <figcaption>Single (or few) gene synteny plot</figcaption>
 </figure><p>
 <b>Sorting in the Gene table</b><p>
-The gene table is number of useful columns to sort by. In the synteni example above we saw a gene with multiple copies. Sorting by '# locus' enables you to filter out those genes.
+The gene table is number of useful columns to sort by. In the synteny example above we saw a gene with multiple copies. Sorting by '# locus' enables you to filter out those genes.
 <p><i>Sharing number</i><p>
 Each permutation of gene sharing is given a number, so by sorting by 'Sharing number' groups together genes who are shared by the same species. 
 
