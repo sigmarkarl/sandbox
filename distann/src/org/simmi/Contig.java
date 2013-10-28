@@ -61,6 +61,10 @@ class Contig implements Comparable<Contig> {
 		}
 	}
 	
+	public char revCompCharAt( int i ) {
+		return seq.revCompCharAt( i );
+	}
+	
 	public char charAt( int i ) {
 		return seq.charAt( i );
 	}
