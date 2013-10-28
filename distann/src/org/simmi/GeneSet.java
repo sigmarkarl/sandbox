@@ -7566,6 +7566,7 @@ public class GeneSet extends JApplet {
 						} catch (IOException | URISyntaxException e1) {
 							e1.printStackTrace();
 						}
+						System.err.println( tree );
 			    	}
 				}
 				
@@ -8376,6 +8377,7 @@ public class GeneSet extends JApplet {
 								} catch( Exception exc ) {
 									exc.printStackTrace();
 								}*/
+
 								try {
 									window.setMember("smuck", smuck);
 									
