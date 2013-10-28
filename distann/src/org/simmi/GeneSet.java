@@ -7567,6 +7567,7 @@ public class GeneSet extends JApplet {
 						} catch (IOException | URISyntaxException e1) {
 							e1.printStackTrace();
 						}
+						System.err.println( tree );
 			    	}
 				}
 				
@@ -8365,21 +8366,6 @@ public class GeneSet extends JApplet {
 							}
 							
 							if( window != null ) {
-<<<<<<< HEAD
-								/*boolean succ = true;
-=======
->>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
-								try {
-									window.setMember("smuck", smuck);
-									//window.eval("var binary = atob(b64str)");
-									//window.eval("var i = binary.length");
-									//window.eval("var view = new Uint8Array(i)");
-								    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-									window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-									window.eval("open( URL.createObjectURL(b), '_blank' )");
-								} catch( Exception exc ) {
-									exc.printStackTrace();
-								}*/
 								try {
 									window.setMember("smuck", smuck);
 									
@@ -8393,7 +8379,6 @@ public class GeneSet extends JApplet {
 									exc.printStackTrace();
 								}
 							} else if( Desktop.isDesktopSupported() ) {
-<<<<<<< HEAD
 								try {
 									FileWriter fwr = new FileWriter("c:/smuck.html");
 									fwr.write( smuck );
@@ -8401,16 +8386,6 @@ public class GeneSet extends JApplet {
 									Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
 								} catch( Exception exc ) {
 									exc.printStackTrace();
-=======
-								FileWriter fwr = new FileWriter("/tmp/chart.html");
-								fwr.write( smuck );
-								fwr.close();
-								
-								try {
-									Desktop.getDesktop().browse( new URI("/tmp/chart.html") );
-								} catch (URISyntaxException e1) {
-									e1.printStackTrace();
->>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
 								}
 							} else {
 								JFrame f = new JFrame("GC% chart");
