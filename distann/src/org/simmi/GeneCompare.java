@@ -42,9 +42,11 @@ import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButton;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
@@ -165,12 +167,14 @@ public class GeneCompare {
 		}
 	}
 	
-	JRadioButton	relcol;
-	JRadioButton	gccol;
-	JRadioButton	syntcol;
-	JRadioButton	brcol;
-	JRadioButton	syntgrad;
-	JRadioButton	isyntgrad;
+	JRadioButtonMenuItem	relcol;
+	JRadioButtonMenuItem	oricol;
+	JRadioButtonMenuItem	gccol;
+	JRadioButtonMenuItem	gcskewcol;
+	JRadioButtonMenuItem	syntcol;
+	JRadioButtonMenuItem	brcol;
+	JRadioButtonMenuItem	syntgrad;
+	JRadioButtonMenuItem	isyntgrad;
 	
 	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) throws IOException {
 		final JTable 				table = geneset.getGeneTable();
@@ -251,15 +255,19 @@ public class GeneCompare {
 		final Graphics2D g2 = bimg.createGraphics();
 		draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
 		
-		relcol = new JRadioButton("Rel color");
-		gccol = new JRadioButton("GC color");
-		syntcol = new JRadioButton("Synteni color");
-		brcol = new JRadioButton("Breakpoint color");
-		syntgrad = new JRadioButton("Synteni gradient");
-		isyntgrad = new JRadioButton("Inverted synteni gradient");
+		relcol = new JRadioButtonMenuItem("Rel color");
+		oricol = new JRadioButtonMenuItem("Ori color");
+		gccol = new JRadioButtonMenuItem("GC color");
+		gcskewcol = new JRadioButtonMenuItem("GC skew color");
+		syntcol = new JRadioButtonMenuItem("Synteni color");
+		brcol = new JRadioButtonMenuItem("Breakpoint color");
+		syntgrad = new JRadioButtonMenuItem("Synteni gradient");
+		isyntgrad = new JRadioButtonMenuItem("Inverted synteni gradient");
 		ButtonGroup		bg = new ButtonGroup();
 		bg.add( relcol );
+		bg.add( oricol );
 		bg.add( gccol );
+		bg.add( gcskewcol );
 		bg.add( syntcol );
 		bg.add( brcol );
 		bg.add( syntgrad );
@@ -287,7 +295,25 @@ public class GeneCompare {
 				cmp.repaint();
 			}
 		});
+		oricol.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String spec1 = (String)specombo.getSelectedItem();
+				//int total = selectContigs( comp, spec1, geneset );
+				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -10 );
+				cmp.repaint();
+			}
+		});
 		gccol.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String spec1 = (String)specombo.getSelectedItem();
+				//int total = selectContigs( comp, spec1, geneset );
+				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+				cmp.repaint();
+			}
+		});
+		gcskewcol.addActionListener( new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
@@ -477,6 +503,9 @@ public class GeneCompare {
 						} else if( gccol.isSelected() ) {
 							String spec1 = (String)specombo.getSelectedItem();
 							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+						} else if( gcskewcol.isSelected() ) {
+							String spec1 = (String)specombo.getSelectedItem();
+							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 						} else if( syntcol.isSelected() ) {
 							String spec1 = (String)specombo.getSelectedItem();
 							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
@@ -489,6 +518,9 @@ public class GeneCompare {
 						} else if( isyntgrad.isSelected() ) {
 							String spec1 = (String)specombo.getSelectedItem();
 							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
+						} else if( oricol.isSelected() ) {
+							String spec1 = (String)specombo.getSelectedItem();
+							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -10 );
 						}
 						
 						cmp.repaint();
@@ -580,18 +612,26 @@ public class GeneCompare {
 		cmp.setSize( dim );
 		JScrollPane	scrollpane = new JScrollPane( cmp );
 		
-		JToolBar	toolbar = new JToolBar();
-		toolbar.add( specombo );
+		JToolBar	tb = new JToolBar();
+		tb.add( specombo );
+		
+		JMenu		toolbar = new JMenu("Color");
 		toolbar.add( relcol );
+		toolbar.add( oricol );
 		toolbar.add( gccol );
+		toolbar.add( gcskewcol );
 		toolbar.add( syntcol );
 		toolbar.add( brcol );
 		toolbar.add( syntgrad );
 		toolbar.add( isyntgrad );
 		
+		JMenuBar	mbr = new JMenuBar();
+		mbr.add( toolbar );
+		tb.add( mbr );
+		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
-		panel.add( toolbar, BorderLayout.NORTH );
+		panel.add( tb, BorderLayout.NORTH );
 		panel.add( scrollpane );
 		
 		JFrame frame = new JFrame();
@@ -932,7 +972,24 @@ public class GeneCompare {
 							if( gg.species.containsKey(spec2) ) {
 								int offset2 = 0;
 								if( offsetMap.containsKey( spec2 ) ) offset2 = offsetMap.get(spec2);
-								if( synbr == -2 ) {
+								if( synbr == -10 ) {
+									//final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
+									
+									Teginfo gene2s = gg.getGenes( spec2 );
+			                        for( Tegeval tv2 : gene2s.tset ) {
+			                        	g2.setColor( tv2.ori == -1 ? Color.red : Color.blue );
+			                        	break;
+			                        }
+									//double ratio2 = invertedGradientRatio( spec2, contigs2, ratio, gg );
+									//Color c = invertedGradientColor( ratio );
+									
+			                        double theta = count*Math.PI*2.0/(total+ptotal);
+									g2.translate( w/2, h/2 );
+									g2.rotate( theta );
+									g2.fillRect( 250+15*(scount), -1, 15, 3);
+									g2.rotate( -theta );
+				                    g2.translate( -w/2, -h/2 );
+								} else if( synbr == -2 ) {
 									final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
 									
 									double ratio2 = invertedGradientRatio( spec2, contigs2, ratio, gg );
@@ -1003,6 +1060,12 @@ public class GeneCompare {
 									Color color = Color.green;
 									if( blosumap != null ) {
 										color = blosumColor(seq, spec2, gg, blosumap, rs);
+									} else if( gcskewcol.isSelected() ) {
+										Teginfo gene2s = gg.getGenes( spec2 );
+				                        for( Tegeval tv2 : gene2s.tset ) {
+				                        	color = tv2.getGCSkewColor();
+				                        	break;
+				                        }
 									} else {
 										Teginfo gene2s = gg.getGenes( spec2 );
 				                        for( Tegeval tv2 : gene2s.tset ) {

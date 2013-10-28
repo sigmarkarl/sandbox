@@ -21,6 +21,7 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.CanvasElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -85,6 +86,7 @@ import elemental.client.Browser;
 import elemental.events.Event;
 import elemental.events.EventListener;
 import elemental.events.MessageEvent;
+import elemental.html.Blob;
 import elemental.html.Console;
 import elemental.html.ImageElement;
 import elemental.html.WebSocket;
@@ -429,7 +431,7 @@ public class Treedraw implements EntryPoint {
 	List<Sequence> currentSeqs = null;
 	public void handleText( String str ) {
 		//Browser.getWindow().getConsole().log("erm " + str);
-		if( str != null && str.length() > 1 && !str.startsWith("{") && !str.startsWith("\"") ) {
+		if( str != null && str.length() > 1 && !str.startsWith("{") && !str.startsWith("\"") && !str.startsWith("!") ) {
 			List<Sequence> seqs = currentSeqs;
 			currentSeqs = null;
 			//TreeUtil	treeutil;
@@ -1166,6 +1168,7 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	boolean oldie = false;
 	boolean	ie = false;
 	boolean inTextBox = false;
 	public void keyCheck( char c, int keycode, boolean alt ) {
@@ -1519,6 +1522,17 @@ public class Treedraw implements EntryPoint {
 		return blob;
 	}-*/;
 	
+	public native elemental.html.Blob getCanvasBlob( CanvasElement canvas ) /*-{
+		var blob;
+		//console.log('e' + canvas.toBlob + ' ' + canvas.msToBlob );
+		if( typeof canvas.msToBlob !== 'undefined' ) {
+			blob = canvas.msToBlob();
+		} else if( typeof canvas.toBlob !== 'undefined' ) {
+			blob = canvas.toBlob();
+		}
+		return blob;
+	}-*/;
+	
 	public native elemental.html.Blob createBlob( String byteStr, String mimeStr ) /*-{		
 		var byteArray = new Uint8Array( byteStr.length );
 	    for (var i = 0; i < byteStr.length; i++) {
@@ -1545,6 +1559,10 @@ public class Treedraw implements EntryPoint {
 	public native JavaScriptObject createFlags() /*-{
 		var flags = { create : true };
 		return flags;
+	}-*/;
+	
+	public native void saveOrOpenBlob( Blob blob, String name ) /*-{
+		navigator.msSaveOrOpenBlob( blob, name );
 	}-*/;
 	
 	public native void renderSaveToDrive( String id, String objurl, String filename ) /*-{
@@ -1808,7 +1826,7 @@ public class Treedraw implements EntryPoint {
 		};
 		String useragent = Window.Navigator.getUserAgent();
 		console( "USERAGENT " + useragent );
-		if( useragent.contains("MSIE") || useragent.contains(".NET") ) {
+		if( useragent.contains("MSIE") ) {
 			/*canvas.addKeyDownHandler( new KeyDownHandler() {
 				@Override
 				public void onKeyDown(KeyDownEvent event) {
@@ -1823,6 +1841,9 @@ public class Treedraw implements EntryPoint {
 					//}
 				}
 			});*/
+			oldie = true;
+			ieSpec();
+		} else if( useragent.contains(".NET") ) {
 			ie = true;
 			ieSpec();
 		} else {
@@ -1873,12 +1894,13 @@ public class Treedraw implements EntryPoint {
 				
 				boolean fail = false;
 				try {
-					if( ie ) {
-						elemental.html.Window w = wnd.open( "tree.html", "tree.png" );
-						elemental.dom.Element el = w.getDocument().getElementById("treetext");
-						el.setInnerText( root.toString() );
+					elemental.html.Blob blob = createStringBlob( root.toString() );
+					if( oldie || ie ) {
+						saveOrOpenBlob( blob, "tree.txt" );
+						//elemental.html.Window w = wnd.open( "tree.txt", "tree.txt" );
+						//elemental.dom.Element el = w.getDocument().getElementById("treetext");
+						//el.setInnerText( root.toString() );
 					} else {
-						elemental.html.Blob blob = createStringBlob( root.toString() );
 						String objurl = createObjectURL( blob );
 						wnd.open( objurl, "tree.txt" );
 						
@@ -1905,32 +1927,30 @@ public class Treedraw implements EntryPoint {
 			public void onClick(ClickEvent event) {
 				imageAnchor.setTarget("");
 				
-				final Console console = Browser.getWindow().getConsole();
-				final String dataurl =  canvas.toDataUrl();
-				final elemental.html.Window wnd = Browser.getWindow();
-				
-				String[] split = dataurl.split(",");
-				String byteString = atob( split[1] );
-			    String mimeString = split[0].split(":")[1].split(";")[0];
-				elemental.html.Blob blob = createBlob( byteString, mimeString );
-				//final Object[] create = {"create", true};
-				//String[] create = {"create", "true"};
-				Browser.getWindow().getConsole().log( blob );
-				Browser.getWindow().getConsole().log( "gheelhjadfkljaoei" );
+				elemental.html.Blob blob = getCanvasBlob( canvas.getCanvasElement() );
+				final String dataurl;
+				if( blob == null ) {
+					dataurl =  canvas.toDataUrl();
+					
+					String[] split = dataurl.split(",");
+					String byteString = atob( split[1] );
+				    String mimeString = split[0].split(":")[1].split(";")[0];
+					blob = createBlob( byteString, mimeString );
+					//final Object[] create = {"create", true};
+					//String[] create = {"create", "true"};
+					Browser.getWindow().getConsole().log("erme");
+				} else dataurl = createObjectURL( blob );
 				
 				boolean fail = false;
 				try {
-					String objurl = createObjectURL( blob );
-					if( ie ) {
-						elemental.html.Window w = wnd.open( "image.html", "tree.png" );
-						ImageElement imel = (ImageElement)w.getDocument().getElementById("treeimage");
-						imel.setSrc( objurl );
+					if( oldie || ie ) {
+						saveOrOpenBlob(  blob, "tree.png" );
 					} else {
-						wnd.open( objurl, "tree.png" );
+						wnd.open( dataurl, "tree.png" );
 					}
 					
 					String title = label.getText();
-					renderSaveToDrive( "saveimagetodrive", objurl, title == null || title.length() == 0 ? "tree.png" : title+".png" );
+					renderSaveToDrive( "saveimagetodrive", dataurl, title == null || title.length() == 0 ? "tree.png" : title+".png" );
 					//imageAnchor.setHref( objurl );
 					
 					/*wnd.webkitRequestFileSystem(elemental.html.Window.TEMPORARY, dataurl.length(), new FileSystemCallback() {
@@ -1990,7 +2010,30 @@ public class Treedraw implements EntryPoint {
 					}
 					dmsb.append( "\t"+d[i] );
 				}
-				dmAnchor.setHref( "data:text/plain;base64,"+encode( dmsb.toString() ) );
+				
+				boolean fail = false;
+				try {
+					elemental.html.Blob blob = createStringBlob( dmsb.toString() );
+					if( oldie || ie ) {
+						saveOrOpenBlob( blob, "mat.txt" );
+					} else {
+						String objurl = createObjectURL( blob );
+						wnd.open( objurl, "mat.txt" );
+						
+						String title = label.getText();
+						renderSaveToDrive( "savetreetodrive", objurl, title == null || title.length() == 0 ? "mat.txt" : title+".txt" );
+					}
+				} catch( Exception e ) {
+					Browser.getWindow().getConsole().log("erm "+e.toString());
+					fail = true;
+				}
+
+				if( fail ) {
+					dmAnchor.setTarget("_blank");
+					dmAnchor.setHref( "data:text/plain;base64,"+encode(dmsb.toString()) );
+				}
+				
+				//dmAnchor.setHref( "data:text/plain;base64,"+encode( dmsb.toString() ) );
 			}
 		});
 		
