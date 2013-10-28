@@ -27,6 +27,7 @@ public class Tegeval implements Comparable<Tegeval> {
 		}*/
 
 		gc = (double)gcCount()/(double)(stop-start);
+		gcskew = gcSkew();
 		//else gc = -1.0;
 		
 		numCys = 0;
@@ -128,11 +129,24 @@ public class Tegeval implements Comparable<Tegeval> {
 		return old;
 	}*/
 	
+	private double gcSkew() {
+		int g = 0;
+		int c = 0;
+		//for( int i = 0; i < dna.length(); i++ ) {
+		if( contshort != null ) for( int i = start; i < stop; i++ ) {
+			char n = this.ori == -1 ? contshort.revCompCharAt(i) : contshort.charAt(i);
+			if( n == 'g' || n == 'G' ) g++;
+			else if( n == 'c' || n == 'C' ) c++;
+		}
+		double gc = g+c;
+		return gc == 0 ? gc : (g-c)/gc;
+	}
+	
 	private double gcCount() {
 		int gc = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
 		if( contshort != null ) for( int i = start; i < stop; i++ ) {
-			char c = contshort.charAt(i);
+			char c = this.ori == -1 ? contshort.revCompCharAt(i) : contshort.charAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
 		}
 		return gc;
@@ -142,12 +156,25 @@ public class Tegeval implements Comparable<Tegeval> {
 		return gc;
 	}
 	
+	public double getGCSkew() {
+		return gcskew;
+	}
+	
 	public Color getGCColor() {
-		double gcp = Math.min( Math.max( 0.35, gc ), 0.55 );
-		return new Color( (float)(0.55-gcp)/0.2f, (float)(gcp-0.35)/0.2f, 1.0f );
+		double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
+		return new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f );
+		
+		/*double gcp = Math.min( Math.max( 0.35, gc ), 0.55 );
+		return new Color( (float)(0.55-gcp)/0.2f, (float)(gcp-0.35)/0.2f, 1.0f );*/
+	}
+	
+	public Color getGCSkewColor() {
+		//if( ori == 1 ) return new Color( 1.0f, 1.0f, 1.0f );
+		return new Color( (float)Math.min( 1.0, Math.max( 0.0, 0.5+5.0*gcskew ) ), 0.5f, (float)Math.min( 1.0, Math.max( 0.0, 0.5-5.0*gcskew ) ) );
 	}
 
 	double			gc;
+	double			gcskew;
 	String 			teg;
 	double 			eval;
 	String 			cont;
