@@ -25,9 +25,89 @@ import com.google.gwt.visualization.client.visualizations.Table.Options;
 import elemental.client.Browser;
 
 public class Frystilager implements EntryPoint {
-
 	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 	private final String serverUrl = "http://130.208.252.7/cgi-bin/lubbi";
+	
+	public native boolean ie( String url ) /*-{
+		var s = this;
+		console.log('buck');
+		if (typeof XDomainRequest != "undefined") {
+			console.log('succ');
+			var xhr = new XDomainRequest();
+    		xhr.open('POST', url);
+			xhr.onload = function() {
+				var responseText = xhr.responseText;
+				s.@org.simmi.client.Frystilager::updateTable(Ljava/lang/String;)( responseText );
+			};
+			xhr.onerror = function() {
+				console.log('There was an error!');
+			};
+			xhr.send();
+			
+			return true;
+		}
+		return false;
+	}-*/;
+	
+	public void updateTable( String str ) {
+		String[] split = str.split("\n");
+		
+		//DateFormat df = new SimpleDateFormat( "yyyy-MM-DD hh:mm:ss.z" );
+		
+		int r = 0;
+		for( String spl : split ) {
+			String[] subsplit = spl.split("\t");
+			if( subsplit.length > 2 ) {
+				String ab = subsplit[0].trim();
+				String simi = subsplit[1];
+				String verkn = subsplit[2];
+				String lota = subsplit[3];
+				String klefi = subsplit[4];
+				String golf = subsplit[5];
+				String rekki = subsplit[6];
+				String hilla = subsplit[7];
+				String dags = subsplit[8];
+				String kassaf = subsplit[9];
+				String kjot = subsplit[10];
+				String fiskur = subsplit[11];
+				String annad = subsplit[12];
+				
+				data.addRow();
+				data.setValue(r, 0, ab);
+				data.setValue(r, 1, simi);
+				data.setValue(r, 2, verkn);
+				data.setValue(r, 3, lota);
+				data.setValue(r, 4, klefi);
+				data.setValue(r, 5, golf);
+				
+				int rekkn = -1;
+				try {
+					rekkn = Integer.parseInt(rekki);
+				} catch( Exception e ) {
+					
+				}
+				data.setValue(r, 6, rekkn );
+				data.setValue(r, 7, hilla);
+			
+				//DateTimeFormat.getFormat( "yyyy-MM-DD hh:mm:ss.z" ).parse( dags )
+				data.setValue(r, 8, dags );
+				
+				int kassn = -1;
+				try {
+					kassn = Integer.parseInt(kassaf);
+				} catch( Exception e ) {
+					
+				}
+				data.setValue(r, 9, kassn );
+				data.setValue(r, 10, kjot);
+				data.setValue(r, 11, fiskur);
+				data.setValue(r, 12, annad);
+				r++;
+			}
+		}
+	}
+	
+	DataTable data;
 	
 	@Override
 	public void onModuleLoad() {
@@ -61,7 +141,7 @@ public class Frystilager implements EntryPoint {
 		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {		    	  
-				final DataTable data = DataTable.create();
+				data = DataTable.create();
 		    	  
 				data.addColumn( ColumnType.STRING,"Ábyrgðaraðili" );
 				data.addColumn( ColumnType.STRING,"Sími" );
@@ -93,81 +173,28 @@ public class Frystilager implements EntryPoint {
 		    	  
 		    	subvp.add( table );
 		    	  
-		    	RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
-		  		try {
-		  			String sql = "select f.[Ábyrgðaraðili], f.[Sími], f.[Verknúmer], f.[Lota], f.[Klefi], f.[Gólf], f.[Rekki], f.[Hilla], f.[Dagsetning], f.[Kassafjöldi], f.[Kjöt], f.[Fiskur], f.[Annað] from [vdb].[dbo].[Frystilager] f";
-		  			rb.sendRequest(sql, new RequestCallback() {
-		  				@Override
-		  				public void onResponseReceived(Request request, Response response) {
-		  					String str = response.getText();
-		  					String[] split = str.split("\n");
-		  					
-		  					//DateFormat df = new SimpleDateFormat( "yyyy-MM-DD hh:mm:ss.z" );
-		  					
-		  					int r = 0;
-		  					for( String spl : split ) {
-		  						String[] subsplit = spl.split("\t");
-		  						if( subsplit.length > 2 ) {
-		  							String ab = subsplit[0].trim();
-		  							String simi = subsplit[1];
-		  							String verkn = subsplit[2];
-		  							String lota = subsplit[3];
-		  							String klefi = subsplit[4];
-		  							String golf = subsplit[5];
-		  							String rekki = subsplit[6];
-		  							String hilla = subsplit[7];
-		  							String dags = subsplit[8];
-		  							String kassaf = subsplit[9];
-		  							String kjot = subsplit[10];
-		  							String fiskur = subsplit[11];
-		  							String annad = subsplit[12];
-		  							
-		  							data.addRow();
-		  							data.setValue(r, 0, ab);
-		  							data.setValue(r, 1, simi);
-		  							data.setValue(r, 2, verkn);
-		  							data.setValue(r, 3, lota);
-		  							data.setValue(r, 4, klefi);
-		  							data.setValue(r, 5, golf);
-		  							
-		  							int rekkn = -1;
-		  							try {
-		  								rekkn = Integer.parseInt(rekki);
-		  							} catch( Exception e ) {
-		  								
-		  							}
-		  							data.setValue(r, 6, rekkn );
-		  							data.setValue(r, 7, hilla);
-									
-		  							//DateTimeFormat.getFormat( "yyyy-MM-DD hh:mm:ss.z" ).parse( dags )
-		  							data.setValue(r, 8, dags );
-		  							
-		  							int kassn = -1;
-		  							try {
-		  								kassn = Integer.parseInt(kassaf);
-		  							} catch( Exception e ) {
-		  								
-		  							}
-		  							data.setValue(r, 9, kassn );
-		  							data.setValue(r, 10, kjot);
-		  							data.setValue(r, 11, fiskur);
-		  							data.setValue(r, 12, annad);
-		  							r++;
-		  						}
-		  					}
-		  					
-		  					DataView view = DataView.create( data );
-							table.draw( view, options );
-		  				}
-		  				
-		  				@Override
-		  				public void onError(Request request, Throwable exception) {
-		  					Browser.getWindow().getConsole().log( exception.getMessage() );
-		  				}
-		  			});
-		  		} catch (RequestException e) {
-		  			e.printStackTrace();
-		  		}	  		
+		    	if( !ie( serverUrl ) ) {
+			    	RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
+			  		try {
+			  			String sql = "select f.[Ábyrgðaraðili], f.[Sími], f.[Verknúmer], f.[Lota], f.[Klefi], f.[Gólf], f.[Rekki], f.[Hilla], f.[Dagsetning], f.[Kassafjöldi], f.[Kjöt], f.[Fiskur], f.[Annað] from [vdb].[dbo].[Frystilager] f";
+			  			rb.sendRequest(sql, new RequestCallback() {
+			  				@Override
+			  				public void onResponseReceived(Request request, Response response) {
+			  					updateTable( response.getText() );
+			  					
+			  					DataView view = DataView.create( data );
+								table.draw( view, options );
+			  				}
+			  				
+			  				@Override
+			  				public void onError(Request request, Throwable exception) {
+			  					Browser.getWindow().getConsole().log( exception.getMessage() );
+			  				}
+			  			});
+			  		} catch (RequestException e) {
+			  			e.printStackTrace();
+			  		}
+		    	}
 		    }
 		};
 		VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);

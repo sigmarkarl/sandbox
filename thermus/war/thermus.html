@@ -1,112 +1,47 @@
-<!doctype html>
-<!-- The DOCTYPE declaration above will set the    -->
-<!-- browser's rendering engine into               -->
-<!-- "Standards Mode". Replacing this declaration  -->
-<!-- with a "Quirks Mode" doctype may lead to some -->
-<!-- differences in layout.                        -->
-
-<html>
-  <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-
-    <!--                                                               -->
-    <!-- Consider inlining CSS to reduce the number of requested files -->
-    <!--                                                               -->
-    <link type="text/css" rel="stylesheet" href="Thermus.css">
-
-    <!--                                           -->
-    <!-- Any title is fine                         -->
-    <!--                                           -->
-    <title>Thermus gene navigator</title>
-    <meta property="og:title" content="Thermus gene navigator" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="http://thermusgenes.appspot.com/" />
-    <meta property="og:image" content="http://fasteignaverd.appspot.com/ndb.png" />
-    
-    <!--                                           -->
-    <!-- This script loads your compiled module.   -->
-    <!-- If you add any GWT meta tags, they must   -->
-    <!-- be added before this line.                -->
-    <!--                                           -->
-    <!--script type="text/javascript" language="javascript" src="http://www.java.com/js/deployJava.js"></script-->
-    <script type="text/javascript" language="javascript" src="thermus/thermus.nocache.js"></script>
-    <script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-21191374-1']);	
-  _gaq.push(['_trackPageview']);
-
+<!DOCTYPE html><html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Phylogeography of the Thermus species</title>
+    <link rel="stylesheet" type="text/css" href="pancore.css">
+    <link href="http://fonts.googleapis.com/css?family=Headland+One|Life+Savers:400,700" rel="stylesheet" type="text/css">
+    <script async src="http://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+</head>
+<body style="text-align : justify; font-family: 'Life Savers', cursive; font-size: 12px">
+<div style="text-align: center" class="do-not-print">
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-7204381538404733"
+     data-ad-slot="8470040143"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+<h2>Phylogeography of the Thermus species</h2><br>
+</h2>
+<div class="g-plusone" data-annotation="inline" data-width="300"></div>
+<h3><i>Stefánsson, Sigmar K., Björnsdóttir, Snædís, Friðjónsson, Ólafur H., Pétursson, S.P., Hreggviðsson, Guðmundur Ó.</i></h3>
+	<script type="text/javascript">
   (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
   })();
-
-	</script>
-	
-	<script>
-	var domain = 'http://webconnectron.appspot.com';
-	var treetext = "";
-	var myPopup;
-	function receiveMessage(event) {
-		console.log( 'ready message received' );
-		if (event.origin == "http://webconnectron.appspot.com") {
-			console.log( 'correct origin' );
-			if( treetext.length > 0 ) {
-				myPopup.postMessage(treetext,domain);
-			}
-    	}
-  	}
-	window.addEventListener("message", receiveMessage, false);
-	
-	var domain = 'http://webconnectron.appspot.com/';
-	function handleMessage(message_event) {
-	  treetext = message_event.data;
-	  //window.console.log( treestr );
-      //var treeenc = encodeURIComponent( treestr );
-      myPopup = window.open( domain + '/Treedraw.html?callback=thermusgenes', '_blank' );
-      //window.open(domain + '/Treedraw.html?tree=' + treeenc,'_blank');
-    }
-    
-    function now() {
-      var fasttree = document.getElementById('fasttree');
-      fasttree.addEventListener('message', handleMessage, true);
-    }
-    
-	function showTree( newtree ) {
-		treetext = newtree;
-		myPopup = window.open(domain + '/Treedraw.html?callback=thermusgenes','_blank');
-	}
-	
-	function fastTree( treestr ) {
-		var fasttree = document.getElementById('fasttree');
-		fasttree.postMessage( 'f'+treestr );
-	}
-	</script>
-  </head>
-
-  <!--                                           -->
-  <!-- The body can have arbitrary html, or      -->
-  <!-- you can leave the body empty if you want  -->
-  <!-- to create a completely dynamic UI.        -->
-  <!--                                           -->
-  <body>    
-    <!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
-    <noscript>
-      <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
-        Your web browser must have JavaScript enabled
-        in order for this application to display correctly.
-      </div>
-    </noscript>
-    
-    <div id="content">
-    
-    </div>
-    
-    <embed name="nacl_module" style="visibility:hidden" onload="now()"
-       	id="fasttree"
-       	width=0 height=0
-       	src="fasttree.nmf"
-       	type="application/x-nacl" />
-  </body>
+</script>
+<div class="article">
+<b>Abstract</b><p>
+The phylogenetic relationship between known Thermus species in geographic context was studied. 
+The Thermus genera are a group of thermophilic bacteria residing in hot springs. 
+These special living conditions can be thought of as islands in the ecological sense. 
+Sample locations were compared to environmental variables such as pH and temperature to determine which more influences species diversity, 
+geographic separation or chemical composition in hot springs.<p>
+<b>Introduction</b><p>
+<p>Bacteria of the genus Thermus were first isolated from hot springs in Yellowstone National Park, USA.  These bacteria were described as Thermus aquaticus by Brock and Freeze in 1969.  The species is well recognized as the type strain, YT1, is the source of the Taq polymerase, an enzyme that has been of a great biotechnological importance (Brock, 1997).  Soon after the discovery of T. aquaticus, isolations of similar strains were reported from geothermal areas (Oshima and Imahori 1971; Pask-Hughes and Williams 1977; Kristjansson and Alfredsson 1983; Munster et al 1986) as well as from man-made hot water systems and thermally polluted streams (Ramaley and Hixson 1970; Brock and Boylen 1973; Pask-Hughes and Williams 1975; Degryse et al 1978).  The taxonomic position of Thermus was unknown at this time but a phylogenetic relationship with the genus Deinococcus was later realized (Hensel et al 1986).  The two genera are now classified in a common phylum, “Deinococcus-Thermus” and constitute the type genera of family Thermaceae of order Thermales (da Costa and Rainey 2001) and of family Deinococcaceae of order Deinococcales (Battista and Rainey 2001), respectively.  The order Deinococcales is renowned for the high radiation resistance of some strains and contains both mesophiles and thermophiles whereas all members of the order Thermales are thermophiles.</p>
+<p class="tab">Thermales strains are rod-shaped, non-spore-forming, predominantly heterotrophic and grow by aerobic respiration although other electron acceptors such as nitrate, nitrite, sulfur and metals have been reported (Kieft et al 1999; da Costa and Rainey 2001).  Different temperature optima for growth have been observed within the group.  Thermus strains grow optimally at about 65-75°C (Nobre et al 1996).  A second genus, Meiothermus, was proposed to comprise strains that grow at lower temperatures, optimally at 45-65°C (Nobre et al 1996; Albuquerque et al 2010).  Meiothermus includes the species M. ruber, M. silvanus and M. chliarophilus that were originally described within the genus Thermus.  In recent years, four new genera have been created in family Thermaceae to accommodate representatives that were isolated from differently located deep-sea hydrothermal habitats.  The genera, Marinithermus (Sako et al 2003), Oceanithermus (Miroshnichenko et al 2003a), Rhabdothermus (Steinsbu et al 2011) and Vulcanithermus (Miroshnichenko et al 2003b) encompass thermophilic strains with temperature optima of about 60-70°C.  The new isolates are phenotypically similar to members of Thermus and Meiothermus although some are microaerophilic and growth on molecular hydrogen has been reported for Oceanithermus and Vulcanithermus (Miroshnichenko et al 2003a, 2003b).  Distinctively, the deep-sea strains require salt for growth and grow optimally at about 3% NaCl.</p>
+<p class="tab">Strains of the genus Thermus are highly variable in terms of certain phenotypic characters but do form tight phylogenetic clusters (da Costa and Rainey 2001; Kristjansson and Hreggvidsson 2004; Hreggvidsson et al 2006).  In addition to T. aquaticus the genus currently entails ten validly described species.  These are T. antranikianii (Chung et al 2000), T. arciformis (Zhang et al 2010), T. brockianus (Williams et al 1995), T. composti (Vajna et al 2012), T. filiformis (Hudson et al 1987), T. igniterrae (Chung et al 2000). T. islandicus (Bjornsdottir et al 2009), T. oshimai (Williams et al 1996), T. scotoductus (Kristjansson et al 1994) and T. thermophilus (Manaia et al 1994).  In addition, three proposed species, „T. kawarayensis“ (Kurosawa et al 2005), „T. rehai“ (Lin et al 2002) and „T. yunnanensis“ (Gong et al 2005) have not been validated.  Strains from all these species have been isolated from hydrothermal vents except for the newest member that derives from hot compost (Vajna et al 2012).  Disparate geographical distribution has been observed for Thermus species.  Some appear to be restricted to certain areas, such as T. aquaticus and T. filiformis, which have only been isolated from hot springs in North America and New Zealand, respectively (Brock and Freeze 1969; Hudson et al 1987; da Costa and Rainey 2001).  Others, such as T. brockianus, T. oshimai, T. scotoductus and T. thermophilus have been isolated from differently located sites (Kristjansson et al 1994; Manaia et al 1994; Williams et al 1995, 1996; Hreggvidsson et al 2006).  Geographical isolation and adaptation to certain habitats might have been important for species divergence within Thermus.  Growth in saline environments is, however, the only character that can be clearly related to geographical distribution.  T. thermophilus is the only Thermus species that has been isolated from coastal and marine locations (Kristjansson et al 1986; Manaia and da Costa 1991; Marteinsson et al 1999).  A comparison of Icelandic strains further indicated that pH and conductivity affect Thermus distribution (Hreggvidsson et al 2006).  Habitat preferences within the genus are nevertheless largely unexplained and probably result from subtle physiological differences (Hreggvidsson et al 2011).  We have undertaken extensive sequencing efforts and are currently examining whether indications of adaptive traits in Thermus can be found by comparative genomics.</p>
+<p class="tab">The increasing availability of molecular data allows the examination of microbial biogeography based on environmental distribution of gene sequences.  For this purpose and to expand the knowledge on Thermus distribution, we extracted and reviewed all available 16S rRNA gene sequences that belong to the genus from the SILVA SSUParc database.  Here, we present the global distribution of Thermus based on this data, which derives predominantly from culture-independent studies.  We also present a framework for managing and analyzing such data that could benefit studies of other taxonomic groups.  Furthermore, we relate the emerging picture of Thermus distribution with the taxonomy of the genus and discuss potential new groups.  We also examine phylogenetic relationships by including preliminary whole genome sequence data of several Thermus strains.</p>
+</div>
+<div class="iframestuff">
+<p><iframe src="http://mapsengine.google.com/map/embed?mid=zStqDu6vp_gE.k4JyZ0OkT9qY" width="1000mm" height="360mm"></iframe></p>
+</div>
+<p><iframe width="500" height="300" scrolling="no" frameborder="no" src="https://www.google.com/fusiontables/embedviz?q=select+col6+from+1B8DeXOKu8ZGWpIvNchLc-LzdtwO6oywNVvOSEAQ&amp;viz=MAP&amp;h=false&amp;lat=28.185794673619508&amp;lng=23.326621899999953&amp;t=1&amp;z=2&amp;l=col6&amp;y=2&amp;tmplt=2&amp;hml=GEOCODABLE"></iframe></p>
+</body>
 </html>
