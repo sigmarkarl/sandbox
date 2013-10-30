@@ -1551,6 +1551,7 @@ public class Neighbour {
 			
 			final JMenuItem	showseqs = new JMenuItem("Sequences");
 			final JMenuItem	showdnaseqs = new JMenuItem("DNA sequences");
+			final JMenuItem	showselectedseqs = new JMenuItem("Selected sequences");
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -1563,8 +1564,25 @@ public class Neighbour {
 					geneset.showSequences( comp, selectedGenesGroups, true );
 				}
 			});
+			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Set<Tegeval>	tset = new HashSet<Tegeval>();
+					for( GeneGroup gg : selectedGenesGroups ) {
+						List<Tegeval> ltv = gg.getTegevals();
+						for( Tegeval tv : ltv ) {
+							for( Tegeval tv2 : tv.getContshort().tlist ) {
+								if( tv2.isSelected() ) tset.add( tv2 );
+							}
+						}
+					}
+					geneset.showSelectedSequences( comp, tset, false );
+				}
+			});
 			seqsmenu.add( showseqs );
-			seqsmenu.add( showdnaseqs );			
+			seqsmenu.add( showdnaseqs );
+			seqsmenu.addSeparator();
+			seqsmenu.add( showselectedseqs );
 			
 			sequenceView.setAction( a );
 			blocksView.setAction( a );
