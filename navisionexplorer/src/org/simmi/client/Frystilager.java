@@ -111,7 +111,7 @@ public class Frystilager implements EntryPoint {
 	
 	@Override
 	public void onModuleLoad() {
-		final RootPanel rp = RootPanel.get();
+		final RootPanel rp = RootPanel.get("content");
 		
 		int w = Window.getClientWidth();
 		int h = Window.getClientHeight();
