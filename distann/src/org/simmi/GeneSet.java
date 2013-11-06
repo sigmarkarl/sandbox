@@ -505,6 +505,9 @@ public class GeneSet extends JApplet {
 					int i = lname.lastIndexOf('[');
 					if( i == -1 ) {
 						i = lname.indexOf("contig");
+						if( i == -1 ) {
+							i = lname.indexOf("scaffold");
+						}
 						int u = lname.lastIndexOf('_');
 						if( u == -1 ) {
 							System.err.println();
@@ -528,6 +531,7 @@ public class GeneSet extends JApplet {
 						u = contigstr.indexOf("uid");
 						if( u == -1 ) {
 							u = contigstr.indexOf("contig");
+							if( u == -1 ) u = contigstr.indexOf("scaffold");
 							origin = contigstr.substring(0, u-1);
 							contloc = contigstr.substring(u, contigstr.length());
 						} else {
@@ -715,6 +719,7 @@ public class GeneSet extends JApplet {
 			int i = lname.lastIndexOf('[');
 			if( i == -1 ) {
 				i = lname.indexOf("contig");
+				if( i == -1 ) i = lname.indexOf("scaffold");
 				int u = lname.lastIndexOf('_');
 				contigstr = lname.substring(0, u);
 				origin = lname.substring(0, i-1);
@@ -734,6 +739,7 @@ public class GeneSet extends JApplet {
 				u = contigstr.indexOf("uid");
 				if( u == -1 ) {
 					u = contigstr.indexOf("contig");
+					if( u == -1 ) u = contigstr.indexOf("scaffold");
 					origin = contigstr.substring(0, u-1);
 					contloc = contigstr.substring(u, contigstr.length());
 				} else {
@@ -1605,6 +1611,7 @@ public class GeneSet extends JApplet {
 					teg.add(spec);
 				} else {
 					i = e.indexOf("contig");
+					if( i == -1 ) i = e.indexOf("scaffold");
 					String spec = e.substring(0, i-1);
 					
 					teg.add(spec);
@@ -1638,6 +1645,7 @@ public class GeneSet extends JApplet {
 					int u = str.indexOf("uid");
 					if( u == -1 ) {
 						u = str.indexOf("contig");
+						if( u == -1 ) u = str.indexOf("scaffold");
 						spec = str.substring( 0, u-1 );
 					} else {
 						int l = str.indexOf('_', u+1);
@@ -1654,6 +1662,7 @@ public class GeneSet extends JApplet {
 					set.add(e);
 				} else {
 					i = e.indexOf("contig");
+					if( i == -1 ) i = e.indexOf("scaffold");
 					String spec = e.substring(0, i-1);
 					
 					Set<String> set;
@@ -12520,7 +12529,7 @@ public class GeneSet extends JApplet {
 	
 			corrInd = new ArrayList<String>();
 			is = GeneSet.class.getResourceAsStream("/thermus16S.blastout");
-			double[] corr16sArray = load16SCorrelation(new InputStreamReader(is), corrInd);
+			double[] corr16sArray = is == null ? new double[0] : load16SCorrelation(new InputStreamReader(is), corrInd);
 	
 			Collections.sort(uclusterlist, new Comparator<Set<String>>() {
 				@Override
@@ -13074,7 +13083,7 @@ public class GeneSet extends JApplet {
 			zipin.close();*/
 			is = GeneSet.class.getResourceAsStream("/gene_ontology_ext.obo");
 			//Map<String,Function> funcmap = 
-			readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
+			if( is != null ) readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
 			
 			//is = GeneSet.class.getResourceAsStream("/go_short.obo");
 			//readGoInfo(new InputStreamReader(is), totalgo, null);
