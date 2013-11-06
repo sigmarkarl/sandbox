@@ -8,6 +8,7 @@ import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
@@ -8363,6 +8364,12 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
 				
+				GeneGroup	gg = null;
+				int r = table.getSelectedRow();
+				int i = -1;
+				if( r != -1 ) i = table.convertRowIndexToModel( r );
+				if( i != -1 ) gg = allgenegroups.get( i );
+				
 				TableModel model = new TableModel() {
 					@Override
 					public int getRowCount() {
@@ -8424,8 +8431,74 @@ public class GeneSet extends JApplet {
 					}
 				};
 				
-				int row = table.getSelectedRow();
-				String selspec = (String)table.getValueAt( row, 0 );
+				JPopupMenu popup = new JPopupMenu();
+				popup.add( new AbstractAction("Save") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						boolean succ = true;
+						try {
+							ImageIO.write(bimg, "png", new File("c:/cir.png") );
+						} catch(Exception e1) {
+							succ = false;
+							e1.printStackTrace();
+						}
+						
+						try {
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							ImageIO.write(bimg, "png", baos);
+							baos.close();
+							String b64str = Base64.encodeBase64String( baos.toByteArray() );
+							
+							JSObject window = JSObject.getWindow( GeneSet.this );
+							window.call( "string2Blob", new Object[] {b64str, "image/png"} );
+						} catch(Exception e1) {
+							succ = false;
+							e1.printStackTrace();
+						}
+						
+						if( !succ ) {
+							FileSaveService fss = null;
+					        FileContents fileContents = null;
+					    	 
+					        try {
+					        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						        //OutputStreamWriter	osw = new OutputStreamWriter( baos );
+								ImageIO.write(bimg, "png", baos);
+								baos.close();
+
+						    	try {
+						    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+						    	} catch( UnavailableServiceException e1 ) {
+						    		fss = null;
+						    	}
+						    	 
+						        if (fss != null) {
+						        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
+						            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
+						            bais.close();
+						            OutputStream os = fileContents.getOutputStream(true);
+						            os.write( baos.toByteArray() );
+						            os.close();
+						        }
+					        } catch( Exception e1 ) {
+					        	e1.printStackTrace();
+					        }
+						}
+					}
+				});
+				c.setComponentPopupMenu( popup );
+				
+				Dimension dim = new Dimension(1024, 1024);
+				c.setPreferredSize( dim );
+				c.setSize( dim );
+				scroll = new JScrollPane( c );
+				JFrame frame = new JFrame("GC skew");
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.setSize(800, 600);
+				frame.add( scroll );
+				
+				r = table.getSelectedRow();
+				String selspec = (String)table.getValueAt( r, 0 );
 				final List<Contig>	clist = speccontigMap.get( selspec );
 				
 				model = new TableModel() {
@@ -8482,41 +8555,90 @@ public class GeneSet extends JApplet {
 				
 				List<Contig> selclist = new ArrayList<Contig>();
 				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					int i = table.convertRowIndexToModel( r );
+				for( int row : rr ) {
+					i = table.convertRowIndexToModel( row );
 					selclist.add( clist.get(i) );
 				}
 				
 				int size = 0;
-				Graphics g2 = (Graphics2D)bimg.getGraphics();
+				Graphics2D g2 = bimg.createGraphics();
+				g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 				for( Contig ctg : selclist ) {
 					size += ctg.getLength();
 				}
+				g2.setColor( Color.white );
+				g2.fillRect( 0, 0, 1024, 1024 );
 				
+				int total = 0;
 				for( Contig ctg : selclist ) {
-					for( int i = 0; i < ctg.getLength(); i+=200 ) {
-						
+					if( gg != null ) {
+						for( Tegeval tv : gg.getTegevals() ) {
+							if( tv.getContshort() == ctg ) {					
+								i = tv.start;
+								
+								int x1 = (int)(512.0+(384.0-100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+								int y1 = (int)(512.0+(384.0-100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+								int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+								int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+								
+								g2.setColor( Color.black );
+								g2.drawLine(x1, y1, x2, y2);
+							}
+						}
+					}
+					
+					for( i = 0; i < ctg.getLength(); i+=500 ) {
 						int gcount = 0;
 						int ccount = 0;
-						for( int k = i; k < Math.min( ctg.getLength(), i+200 ); k++ ) {
-							char chr = ctg.seq.charAt(k);
+						int acount = 0;
+						int tcount = 0;
+						for( int k = i; k < Math.min( ctg.getLength(), i+10000 ); k++ ) {
+							char chr = k-5000 < 0 ? ctg.seq.charAt( ctg.seq.getLength()+(k-5000) ) : ctg.seq.charAt(k-5000);
 							if( chr == 'g' || chr == 'G' ) gcount++;
 							else if( chr == 'c' || chr == 'C' ) ccount++;
+							else if( chr == 'a' || chr == 'A' ) acount++;
+							else if( chr == 't' || chr == 'T' ) tcount++;
 						}
 						
-						double gcskew = (gcount-ccount)/(double)(gcount+ccount);
+						if( gcount > 0 || ccount > 0 ) {
+							double gcskew = (gcount-ccount)/(double)(gcount+ccount);
+							
+							int x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							int y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							int x2 = (int)(512.0+(384.0+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							int y2 = (int)(512.0+(384.0+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							
+							if( gcskew >= 0 ) g2.setColor( Color.blue );
+							else g2.setColor( Color.red );
+							g2.drawLine(x1, y1, x2, y2);
+						}
 						
+						if( acount > 0 || tcount > 0 ) {
+							double atskew = (acount-tcount)/(double)(acount+tcount);
+							
+							int x1 = (int)(512.0+(300.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							int y1 = (int)(512.0+(300.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							int x2 = (int)(512.0+(300.0+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							int y2 = (int)(512.0+(300.0+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							
+							if( atskew >= 0 ) g2.setColor( Color.blue );
+							else g2.setColor( Color.red );
+							g2.drawLine(x1, y1, x2, y2);
+						}
 					}
+					total += ctg.getLength();
 				}
 				
-				Dimension dim = new Dimension(1024, 1024);
-				c.setPreferredSize( dim );
-				c.setSize( dim );
-				frame.add( c );
-				
-				JFrame frame = new JFrame("GC skew");
-				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-				frame.setSize(800, 600);
+				g2.setColor( Color.black );
+				g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
+				String[] specsplit = selspec.split("_");
+				int k = 0;
+				for( String spec : specsplit ) {
+					int strw = g2.getFontMetrics().stringWidth( spec );
+					g2.drawString( spec, (1024-strw)/2, 1024/2 - specsplit.length*32/2 + 32 + k*32 );
+					k++;
+				}
+								
 				frame.setVisible( true );
 			}
 		};
