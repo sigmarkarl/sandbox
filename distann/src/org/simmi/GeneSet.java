@@ -8,6 +8,7 @@ import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -144,7 +145,6 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
-import org.simmi.signed.NativeRun;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.SmithWater;
 
@@ -5464,6 +5464,36 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
+	public void showSelectedSequences( Component comp, Set<Tegeval> tset, boolean dna ) {
+		JFrame frame = new JFrame();
+		frame.setSize(800, 600);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		Serifier	serifier = new Serifier();
+		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+		jf.initGui(frame);
+
+		for( Tegeval tv : tset ) {
+			Contig cont = tv.getContshort();
+			if( cont != null ) {
+				String contig = cont.getSpec();//tv.getContig();
+				StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
+				Sequence seq = new Sequence( contig, seqstr, serifier.mseq );
+				serifier.addSequence(seq);
+			}
+		}
+
+		/*for( String contig : contset.keySet() ) {
+			Sequence seq = contset.get(contig);
+			serifier.addSequence(seq);
+			if (seq.getAnnotations() != null)
+				Collections.sort(seq.getAnnotations());
+		}*/
+		jf.updateView();
+
+		frame.setVisible(true);
+	}
+	
 	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
@@ -7567,6 +7597,7 @@ public class GeneSet extends JApplet {
 						} catch (IOException | URISyntaxException e1) {
 							e1.printStackTrace();
 						}
+						System.err.println( tree );
 			    	}
 				}
 				
@@ -7932,7 +7963,7 @@ public class GeneSet extends JApplet {
 				AccessController.doPrivileged( new PrivilegedAction<String>() {
 					@Override
 					public String run() {
-						NativeRun nrun = new NativeRun();
+						//NativeRun nrun = new NativeRun();
 						
 						final Object[] cont = new Object[3];
 						Runnable run = new Runnable() {
@@ -7945,12 +7976,12 @@ public class GeneSet extends JApplet {
 						File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 						if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
 						if( makeblastdb.exists() ) {
-							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
+							/*String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
 							try {
 								nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
 							} catch (IOException e) {
 								e.printStackTrace();
-							}
+							}*/
 						}
 						
 						return "";
@@ -8327,9 +8358,172 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction gcskewaction = new AbstractAction("GC skew chart") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
+				
+				TableModel model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return species.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return null;
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return species.get( rowIndex );
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				JTable table = new JTable( model );
+				
+				//table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+				JScrollPane	scroll = new JScrollPane( table );
+				
+				FlowLayout flowlayout = new FlowLayout();
+				JComponent c = new JComponent() {};
+				c.setLayout( flowlayout );
+				c.add( scroll );
+				
+				JOptionPane.showMessageDialog(comp, c);
+				
+				final BufferedImage bimg = new BufferedImage( 1024, 1024, BufferedImage.TYPE_INT_ARGB );
+				c = new JComponent() {
+					public void paintComponent( Graphics g ) {
+						super.paintComponent( g );
+						
+						g.drawImage( bimg, 0, 0, this );
+					}
+				};
+				
+				int row = table.getSelectedRow();
+				String selspec = (String)table.getValueAt( row, 0 );
+				final List<Contig>	clist = speccontigMap.get( selspec );
+				
+				model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return clist.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return null;
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return Contig.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return clist.get( rowIndex );
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				table = new JTable( model );
+				table.setAutoCreateRowSorter( true );
+				
+				table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+				scroll = new JScrollPane( table );
+				
+				flowlayout = new FlowLayout();
+				c = new JComponent() {};
+				c.setLayout( flowlayout );
+				c.add( scroll );
+				JOptionPane.showMessageDialog(comp, c);
+				
+				List<Contig> selclist = new ArrayList<Contig>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int i = table.convertRowIndexToModel( r );
+					selclist.add( clist.get(i) );
+				}
+				
+				int size = 0;
+				Graphics g2 = (Graphics2D)bimg.getGraphics();
+				for( Contig ctg : selclist ) {
+					size += ctg.getLength();
+				}
+				
+				for( Contig ctg : selclist ) {
+					for( int i = 0; i < ctg.getLength(); i+=200 ) {
+						
+						int gcount = 0;
+						int ccount = 0;
+						for( int k = i; k < Math.min( ctg.getLength(), i+200 ); k++ ) {
+							char chr = ctg.seq.charAt(k);
+							if( chr == 'g' || chr == 'G' ) gcount++;
+							else if( chr == 'c' || chr == 'C' ) ccount++;
+						}
+						
+						double gcskew = (gcount-ccount)/(double)(gcount+ccount);
+						
+					}
+				}
+				
+				Dimension dim = new Dimension(1024, 1024);
+				c.setPreferredSize( dim );
+				c.setSize( dim );
+				frame.add( c );
+				
+				JFrame frame = new JFrame("GC skew");
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.setSize(800, 600);
+				frame.setVisible( true );
+			}
+		};
+		
 		AbstractAction cogaction = new AbstractAction("COG chart data") {
 			@Override
-			public void actionPerformed(ActionEvent e) {				
+			public void actionPerformed(ActionEvent e) {
 				try {
 					ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
 					ZipEntry ze = zipm.getNextEntry();
@@ -8365,10 +8559,7 @@ public class GeneSet extends JApplet {
 							}
 							
 							if( window != null ) {
-<<<<<<< HEAD
 								/*boolean succ = true;
-=======
->>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
 								try {
 									window.setMember("smuck", smuck);
 									//window.eval("var binary = atob(b64str)");
@@ -8380,6 +8571,7 @@ public class GeneSet extends JApplet {
 								} catch( Exception exc ) {
 									exc.printStackTrace();
 								}*/
+
 								try {
 									window.setMember("smuck", smuck);
 									
@@ -8393,7 +8585,6 @@ public class GeneSet extends JApplet {
 									exc.printStackTrace();
 								}
 							} else if( Desktop.isDesktopSupported() ) {
-<<<<<<< HEAD
 								try {
 									FileWriter fwr = new FileWriter("c:/smuck.html");
 									fwr.write( smuck );
@@ -8401,16 +8592,6 @@ public class GeneSet extends JApplet {
 									Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
 								} catch( Exception exc ) {
 									exc.printStackTrace();
-=======
-								FileWriter fwr = new FileWriter("/tmp/chart.html");
-								fwr.write( smuck );
-								fwr.close();
-								
-								try {
-									Desktop.getDesktop().browse( new URI("/tmp/chart.html") );
-								} catch (URISyntaxException e1) {
-									e1.printStackTrace();
->>>>>>> b0f6cf084a089e918b5c17514ae1c36e858969b1
 								}
 							} else {
 								JFrame f = new JFrame("GC% chart");
@@ -8640,6 +8821,28 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction selectflankingaction = new AbstractAction("Select flanking") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<GeneGroup>	ggset = new HashSet<GeneGroup>();
+				for( String str : contigmap.keySet() ) {
+					Contig c = contigmap.get( str );
+					
+					if( c != null && c.tlist != null && c.tlist.size() > 0 ) {
+						ggset.add( c.tlist.get( 0 ).getGene().getGeneGroup() );
+						ggset.add( c.tlist.get( c.tlist.size()-1 ).getGene().getGeneGroup() );
+					}
+				}
+				
+				for( GeneGroup gg : ggset ) {
+					int i = allgenegroups.indexOf( gg );
+					int r = -1;
+					if( i != -1 ) r = table.convertRowIndexToView( i );
+					if( r != -1 ) table.addRowSelectionInterval( r, r );
+				}
+			}
+		};
+		
 		JMenuBar	menubar = new JMenuBar();
 		JMenu		menu = new JMenu("Functions");
 		menu.add( genomestataction );
@@ -8654,6 +8857,7 @@ public class GeneSet extends JApplet {
 		menu.add( koexportaction );
 		menu.add( genomesizeaction );
 		menu.add( gcaction );
+		menu.add( gcskewaction );
 		menu.add( mltreemapaction );
 		menu.add( cogaction );
 		menu.add( genexyplotaction );
@@ -8661,6 +8865,7 @@ public class GeneSet extends JApplet {
 		menu.add( codregaction );
 		menu.add( fetchcoreaction );
 		menu.add( loadcontiggraphaction );
+		menu.add( selectflankingaction );
 		
 		menubar.add( menu );
 		ttopcom.add( menubar );
