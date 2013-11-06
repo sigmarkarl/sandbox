@@ -497,17 +497,17 @@ public class Fasteign extends JApplet {
 			public String getColumnName(int columnIndex) {
 				switch (columnIndex) {
 				case 0:
-					return "Verð";
+					return "VerÃ°";
 				case 1:
 					return "Fasteignamat";
 				case 2:
-					return "Brunabótamat";
+					return "BrunabÃ³tamat";
 				case 3:
-					return "Fermetraverð";
+					return "FermetraverÃ°";
 				case 4:
-					return "Fermetraverð fasteignamats";
+					return "FermetraverÃ° fasteignamats";
 				case 5:
-					return "Verð/fasteignamat";
+					return "VerÃ°/fasteignamat";
 				default:
 					return "";
 				}
@@ -687,7 +687,7 @@ public class Fasteign extends JApplet {
 
 			@Override
 			public String getColumnName(int columnIndex) {
-				return "Reiknað";
+				return "ReiknaÃ°";
 			}
 
 			@Override
@@ -702,7 +702,7 @@ public class Fasteign extends JApplet {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return rowIndex == 0 ? "Meðaltal" : "Miðgildi";
+				return rowIndex == 0 ? "MeÃ°altal" : "MiÃ°gildi";
 			}
 
 			@Override
@@ -726,11 +726,11 @@ public class Fasteign extends JApplet {
 		XSSFCell cell = row.createCell(c++);
 		cell.setCellValue("Nafn");
 		cell = row.createCell(c++);
-		cell.setCellValue("Verð");
+		cell.setCellValue("VerÃ°");
 		cell = row.createCell(c++);
 		cell.setCellValue("Fasteignamat");
 		cell = row.createCell(c++);
-		cell.setCellValue("Brunabótamat");
+		cell.setCellValue("BrunabÃ³tamat");
 		cell = row.createCell(c++);
 		cell.setCellValue("Tegund");
 		cell = row.createCell(c++);
@@ -740,7 +740,7 @@ public class Fasteign extends JApplet {
 		cell = row.createCell(c++);
 		cell.setCellValue("Dagsetning");
 		cell = row.createCell(c++);
-		cell.setCellValue("Slóð");
+		cell.setCellValue("SlÃ³Ã°");
 		for (Ibud ib : iblist) {
 			row = sheet.createRow(i++);
 			c = 0;
@@ -846,48 +846,48 @@ public class Fasteign extends JApplet {
 		JComponent topcomp = new JComponent() {};
 		topcomp.setLayout(new FlowLayout());
 
-		// JLabel title = new JLabel("Hvað á íbúðin að kosta?");
+		// JLabel title = new JLabel("HvaÃ° Ã¡ Ã­bÃºÃ°in aÃ° kosta?");
 		// topcomp.add(title);
 
-		JLabel loc = new JLabel("Veldu svæði:");
+		JLabel loc = new JLabel("Veldu svÃ¦Ã°i:");
 		topcomp.add(loc);
 		final JComboBox<String> loccomb = new JComboBox<String>();
-		loccomb.addItem("101 Miðbær");
+		loccomb.addItem("101 MiÃ°bÃ¦r");
 		loccomb.addItem("103 Kringlan/Hvassaleiti");
 		loccomb.addItem("104 Vogar");
-		loccomb.addItem("105 Austurbær");
-		loccomb.addItem("107 Vesturbær");
-		loccomb.addItem("108 Austurbær");
+		loccomb.addItem("105 AusturbÃ¦r");
+		loccomb.addItem("107 VesturbÃ¦r");
+		loccomb.addItem("108 AusturbÃ¦r");
 		loccomb.addItem("109 Bakkar/Seljahverfi");
-		loccomb.addItem("110 Árbær/Selás");
-		loccomb.addItem("111 Berg/Hólar/Fell");
+		loccomb.addItem("110 Ã�rbÃ¦r/SelÃ¡s");
+		loccomb.addItem("111 Berg/HÃ³lar/Fell");
 		loccomb.addItem("112 Grafarvogur");
 		loccomb.addItem("113 Grafarholt");
 		loccomb.addItem("116 Kjalarnes");
 		loccomb.addItem("170 Seltjarnarnes");
 		loccomb.addItem("190 Vogar");
-		loccomb.addItem("110 Árbær/Selás");
-		loccomb.addItem("200 Kópavogur");
-		loccomb.addItem("201 Kópavogur");
-		loccomb.addItem("202 Kópavogur");
-		loccomb.addItem("203 Kópavogur");
-		loccomb.addItem("210 Garðabær");
-		loccomb.addItem("211 Garðabær (Arnarnes)");
-		loccomb.addItem("220 Hafnarfjörður");
-		loccomb.addItem("221 Hafnarfjörður");
-		loccomb.addItem("225 Álftanes");
+		loccomb.addItem("110 Ã�rbÃ¦r/SelÃ¡s");
+		loccomb.addItem("200 KÃ³pavogur");
+		loccomb.addItem("201 KÃ³pavogur");
+		loccomb.addItem("202 KÃ³pavogur");
+		loccomb.addItem("203 KÃ³pavogur");
+		loccomb.addItem("210 GarÃ°abÃ¦r");
+		loccomb.addItem("211 GarÃ°abÃ¦r (Arnarnes)");
+		loccomb.addItem("220 HafnarfjÃ¶rÃ°ur");
+		loccomb.addItem("221 HafnarfjÃ¶rÃ°ur");
+		loccomb.addItem("225 Ã�lftanes");
 		topcomp.add(loccomb);
 
 		JLabel typ = new JLabel("Veldu tegund:");
 		topcomp.add(typ);
 		final JComboBox<String> typcomb = new JComboBox<String>();
-		typcomb.addItem("Fjölbýli");
-		typcomb.addItem("Einbýli");
-		typcomb.addItem("Hæðir");
-		typcomb.addItem("Parhús/Raðhús");
+		typcomb.addItem("FjÃ¶lbÃ½li");
+		typcomb.addItem("EinbÃ½li");
+		typcomb.addItem("HÃ¦Ã°ir");
+		typcomb.addItem("ParhÃºs/RaÃ°hÃºs");
 		topcomp.add(typcomb);
 
-		JLabel big = new JLabel("Veldu stærð:");
+		JLabel big = new JLabel("Veldu stÃ¦rÃ°:");
 		topcomp.add(big);
 		final JTextField bigfield = new JTextField("100");
 		Dimension dim = new Dimension(40,30);
@@ -921,9 +921,9 @@ public class Fasteign extends JApplet {
 				}
 			}
 		});
-		excelbutton.setToolTipText("Opna töflu í Excel");
+		excelbutton.setToolTipText("Opna tÃ¶flu Ã­ Excel");
 		excelbutton.setIcon(new ImageIcon(xlimg.getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
-		botcomp.add( new JLabel("Opna töflu í Excel") );
+		botcomp.add( new JLabel("Opna tÃ¶flu Ã­ Excel") );
 		botcomp.add(excelbutton);
 
 		table = new JTable() {
@@ -1217,11 +1217,11 @@ public class Fasteign extends JApplet {
 				String pnr = split[0];
 				String val = base.replace("svaedi=", "svaedi=" + pnr + "_" + pnr);
 				String teg = typcomb.getSelectedItem().toString().toLowerCase();
-				teg = teg.replace("æ", "ae");
-				teg = teg.replace("ö", "o");
-				teg = teg.replace("ý", "y");
-				teg = teg.replace("ð", "d");
-				teg = teg.replace("ú", "u");
+				teg = teg.replace("Ã¦", "ae");
+				teg = teg.replace("Ã¶", "o");
+				teg = teg.replace("Ã½", "y");
+				teg = teg.replace("Ã°", "d");
+				teg = teg.replace("Ãº", "u");
 				teg = teg.replace("parhus/radhus", "par_radhus");
 				val = val.replace("tegund=", "tegund=" + teg);
 				String diffstr = bigdifffield.getText();

@@ -34,6 +34,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
@@ -347,9 +348,9 @@ public class Neighbour {
 		final JButton	recenter = new JButton("Recenter");
 		final JButton	addrelated = new JButton("Add related");
 		final JButton	highrel = new JButton("Highlight related");
-		final JButton	showseqs = new JButton("Show sequences");
-		final JButton	showdnaseqs = new JButton("Show DNA sequences");
+		
 		final JMenuBar	mbr = new JMenuBar();
+		final JMenu		seqsmenu = new JMenu("Show");
 		final JMenu		mnu = new JMenu("Colors");
 		final JMenu		mvmnu = new JMenu("Move");
 		final JButton	turn = new JButton("Forward");
@@ -362,24 +363,28 @@ public class Neighbour {
 		final JCheckBox		commonname = new JCheckBox("Group names");
 		final JCheckBox		noname = new JCheckBox("No names");
 		
+		mbr.add( seqsmenu );
 		mbr.add( mnu );
 		mbr.add( mvmnu );
 		final JRadioButtonMenuItem funcol = new JRadioButtonMenuItem("Functions");
 		final JRadioButtonMenuItem gccol = new JRadioButtonMenuItem("GC%");
+		final JRadioButtonMenuItem gcskewcol = new JRadioButtonMenuItem("GC skew");
 		final JRadioButtonMenuItem abucol = new JRadioButtonMenuItem("Abundance");
 		final JRadioButtonMenuItem relcol = new JRadioButtonMenuItem("Relation");
-		final JRadioButtonMenuItem sgradcol = new JRadioButtonMenuItem("Synteni gradient");
+		final JRadioButtonMenuItem sgradcol = new JRadioButtonMenuItem("Synteny gradient");
 		final JRadioButtonMenuItem precol = new JRadioButtonMenuItem("Proximity preservation");
 		
 		ButtonGroup bg = new ButtonGroup();
 		bg.add( funcol );
 		bg.add( gccol );
+		bg.add( gcskewcol );
 		bg.add( abucol );
 		bg.add( relcol );
 		bg.add( sgradcol );
 		bg.add( precol );
 		mnu.add( funcol );
 		mnu.add( gccol );
+		mnu.add( gcskewcol );
 		mnu.add( abucol );
 		mnu.add( relcol );
 		mnu.add( sgradcol );
@@ -626,15 +631,18 @@ public class Neighbour {
 												float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
 												Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
 												g.setColor( rc );
+											} else if( gcskewcol.isSelected() ) {
+												g.setColor( next.getGCSkewColor() );
 											} else {
-												if( next.getGCPerc() <= 0 ) {
+												g.setColor( next.getGCColor() );
+												/*if( next.getGCPerc() <= 0 ) {
 													Color rc = new Color( 1.0f, 1.0f, 1.0f );
 													g.setColor( rc );
 												} else {
 													float gc = Math.max( 0.0f, Math.min(((float)next.getGCPerc()-0.5f)*4.0f, 1.0f) );
 													Color rc = new Color( 1.0f-gc, gc, 1.0f );
 													g.setColor( rc );
-												}
+												}*/
 											}
 											
 											boolean revis = (next.ori == -1) ^ next.getContshort().isReverse();
@@ -801,15 +809,18 @@ public class Neighbour {
 												float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
 												Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
 												g.setColor( rc );
+											} else if( gcskewcol.isSelected() ) {
+												g.setColor( prev.getGCSkewColor() );
 											} else {
-												if( prev.getGCPerc() <= 0 ) {
+												g.setColor( prev.getGCColor() );
+												/*if( prev.getGCPerc() <= 0 ) {
 													Color rc = new Color( 1.0f, 1.0f, 1.0f );
 													g.setColor( rc );
 												} else {
 													float gc = Math.max( 0.0f, Math.min(((float)prev.getGCPerc()-0.5f)*4.0f, 1.0f) );
 													Color rc = new Color( 1.0f-gc, gc, 1.0f );
 													g.setColor( rc );
-												}
+												}*/
 											}
 											
 											boolean revis = (prev.ori == -1) ^ prev.getContshort().isReverse();
@@ -878,6 +889,7 @@ public class Neighbour {
 							for( int i = Math.max(0, clip.y/rowheader.getRowHeight()); i < Math.min( (clip.y+clip.height)/rowheader.getRowHeight()+1, rowheader.getRowCount() ); i++ ) {
 								int r = rowheader.convertRowIndexToModel( i );
 								Tegeval te = hteglocal.get(r);
+								
 								//int y = 0;
 								//for( Tegeval te : hteglocal ) {
 								//g.setColor( Color.black );
@@ -979,15 +991,18 @@ public class Neighbour {
 												float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
 												Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
 												g.setColor( rc );
+											} else if( gcskewcol.isSelected() ) {
+												g.setColor( next.getGCSkewColor() );
 											} else {
-												if( next.getGCPerc() <= 0 ) {
+												g.setColor( next.getGCColor() );
+												/*if( next.getGCPerc() <= 0 ) {
 													Color rc = new Color( 1.0f, 1.0f, 1.0f );
 													g.setColor( rc );
 												} else {
 													float gc = Math.max( 0.0f, Math.min(((float)next.getGCPerc()-0.5f)*4.0f, 1.0f) );
 													Color rc = new Color( 1.0f-gc, gc, 1.0f );
 													g.setColor( rc );
-												}
+												}*/
 											}
 											
 											boolean revis = (next.ori == -1) ^ next.getContshort().isReverse();
@@ -1056,7 +1071,13 @@ public class Neighbour {
 							
 							for( int i = 0; i < hteglocal.size(); i++ ) {
 								Tegeval te = hteglocal.get(i);
-								if( te != null ) hteglocal.set(i, te.getNext() );
+								if( te != null ) {
+									Tegeval thenext = te.getNext();
+									if( thenext != null && thenext.getNext() == te ) {
+										thenext = null;
+									}
+									hteglocal.set(i, thenext);
+								}
 								//if( te.getLength() > max ) max = te.getLength();
 							}
 						}
@@ -1140,6 +1161,21 @@ public class Neighbour {
 											float abu = numspec/39.0f;
 											Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 											g.setColor( rc );
+										} else if( sgradcol.isSelected() ) {
+											if( spec1 != null ) {													
+												//StringBuilder seq = next.seq;
+												Color rc = Color.black;
+												GeneGroup gg = prev.getGene().getGeneGroup();
+												List<Tegeval> ltv = gg.getTegevals( spec1 );
+												if( ltv != null && ltv.size() > 0 ) {
+													final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+													double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+													rc = GeneCompare.invertedGradientColor( ratio );
+												} else {
+													rc = Color.white;
+												}
+												if( rc != null ) g.setColor( rc );
+											}
 										} else if( precol.isSelected() ) {
 											Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
 											shanmap.clear();
@@ -1180,15 +1216,18 @@ public class Neighbour {
 											float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
 											Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
 											g.setColor( rc );
+										} else if( gcskewcol.isSelected() ) {
+											g.setColor( prev.getGCSkewColor() );
 										} else {
-											if( prev.getGCPerc() <= 0 ) {
+											g.setColor( prev.getGCColor() );
+											/*if( prev.getGCPerc() <= 0 ) {
 												Color rc = new Color( 1.0f, 1.0f, 1.0f );
 												g.setColor( rc );
 											} else {
 												float gc = Math.max( 0.0f, Math.min(((float)prev.getGCPerc()-0.5f)*4.0f, 1.0f) );
 												Color rc = new Color( 1.0f-gc, gc, 1.0f );
 												g.setColor( rc );
-											}
+											}*/
 										}
 										
 										boolean revis = (prev.ori == -1) ^ prev.getContshort().isReverse();
@@ -1223,7 +1262,13 @@ public class Neighbour {
 							
 							for( int i = 0; i < hteglocal.size(); i++ ) {
 								Tegeval te = hteglocal.get(i);
-								if( te != null ) hteglocal.set( i, te.getPrevious() );
+								if( te != null ) {
+									Tegeval theprev = te.getPrevious();
+									if( theprev != null && theprev.getPrevious() == te ) {
+										theprev = null;
+									}
+									hteglocal.set( i, theprev );
+								}
 								//if( te.getLength() > max ) max = te.getLength();
 							}
 						}
@@ -1309,6 +1354,7 @@ public class Neighbour {
 			};
 			funcol.setAction( a );
 			gccol.setAction( a );
+			gcskewcol.setAction( a );
 			abucol.setAction( a );
 			precol.setAction( a );
 			
@@ -1317,6 +1363,7 @@ public class Neighbour {
 			
 			funcol.setText("Functions");
 			gccol.setText("GC%");
+			gcskewcol.setText("GC skew");
 			abucol.setText("Abundance");
 			precol.setText("Proximity preservation");
 			
@@ -1501,18 +1548,49 @@ public class Neighbour {
 					}
 				}
 			});
-			showseqs.setAction( new AbstractAction("Show sequences") {
+			
+			final JMenuItem	showseqs = new JMenuItem("Sequences");
+			final JMenuItem	showdnaseqs = new JMenuItem("DNA sequences");
+<<<<<<< HEAD
+=======
+			final JMenuItem	showselectedseqs = new JMenuItem("Selected sequences");
+>>>>>>> 45d94e3f360815e3e70671902e194e9e9ac90bc5
+			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					geneset.showSequences( comp, selectedGenesGroups, false );
 				}
 			});
-			showseqs.setAction( new AbstractAction("Show DNA sequences") {
+			showdnaseqs.setAction( new AbstractAction("DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					geneset.showSequences( comp, selectedGenesGroups, true );
 				}
 			});
+<<<<<<< HEAD
+			seqsmenu.add( showseqs );
+			seqsmenu.add( showdnaseqs );			
+=======
+			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Set<Tegeval>	tset = new HashSet<Tegeval>();
+					for( GeneGroup gg : selectedGenesGroups ) {
+						List<Tegeval> ltv = gg.getTegevals();
+						for( Tegeval tv : ltv ) {
+							for( Tegeval tv2 : tv.getContshort().tlist ) {
+								if( tv2.isSelected() ) tset.add( tv2 );
+							}
+						}
+					}
+					geneset.showSelectedSequences( comp, tset, false );
+				}
+			});
+			seqsmenu.add( showseqs );
+			seqsmenu.add( showdnaseqs );
+			seqsmenu.addSeparator();
+			seqsmenu.add( showselectedseqs );
+>>>>>>> 45d94e3f360815e3e70671902e194e9e9ac90bc5
 			
 			sequenceView.setAction( a );
 			blocksView.setAction( a );
@@ -1908,8 +1986,6 @@ public class Neighbour {
 		toolbar.add( recenter );
 		toolbar.add( addrelated );
 		toolbar.add( highrel );
-		toolbar.add( showseqs );
-		toolbar.add( showdnaseqs );
 		toolbar.add( mbr );
 		toolbar.add( turn );
 		toolbar.add( commonname );
