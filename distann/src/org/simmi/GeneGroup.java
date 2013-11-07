@@ -159,7 +159,7 @@ public class GeneGroup {
 		for( Gene g : genes ) {
 			String name = g.getName();
 			if( ret == null ) ret = name;
-			else if( ret.contains("contig") || !(name.contains("contig") || name.contains("unnamed") || name.contains("hypot")) ) ret = name;
+			else if( (ret.contains("contig") || ret.contains("scaffold")) || !(name.contains("contig") || name.contains("scaffold") || name.contains("unnamed") || name.contains("hypot")) ) ret = name;
 		}
 		return ret;
 	}
