@@ -111,7 +111,7 @@ class Contig implements Comparable<Contig> {
 		if( i == -1 ) {
 			i = getName().indexOf("contig");
 			if( i == -1 ) {
-				System.err.println();
+				i = getName().indexOf("scaffold");
 			}
 			spec = getName().substring(0, i-1);
 		} else {
