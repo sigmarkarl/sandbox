@@ -8590,11 +8590,18 @@ public class GeneSet extends JApplet {
 								int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
 								int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
 								
-								g2.setColor( Color.black );
+								g2.setColor( Color.green );
 								g2.drawLine(x1, y1, x2, y2);
 							}
 						}
 					}
+					
+					int x1 = (int)(512.0+(384.0-100.0)*Math.cos( (total)*2.0*Math.PI/size ));
+					int y1 = (int)(512.0+(384.0-100.0)*Math.sin( (total)*2.0*Math.PI/size ));
+					int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (total)*2.0*Math.PI/size ));
+					int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (total)*2.0*Math.PI/size ));
+					g2.setColor( Color.black );
+					g2.drawLine(x1, y1, x2, y2);
 					
 					for( i = 0; i < ctg.getLength(); i+=500 ) {
 						int gcount = 0;
@@ -8612,10 +8619,10 @@ public class GeneSet extends JApplet {
 						if( gcount > 0 || ccount > 0 ) {
 							double gcskew = (gcount-ccount)/(double)(gcount+ccount);
 							
-							int x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							int y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-							int x2 = (int)(512.0+(384.0+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							int y2 = (int)(512.0+(384.0+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							x2 = (int)(512.0+(384.0+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							y2 = (int)(512.0+(384.0+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
 							
 							if( gcskew >= 0 ) g2.setColor( Color.blue );
 							else g2.setColor( Color.red );
@@ -8625,10 +8632,10 @@ public class GeneSet extends JApplet {
 						if( acount > 0 || tcount > 0 ) {
 							double atskew = (acount-tcount)/(double)(acount+tcount);
 							
-							int x1 = (int)(512.0+(300.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							int y1 = (int)(512.0+(300.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-							int x2 = (int)(512.0+(300.0+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							int y2 = (int)(512.0+(300.0+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							x1 = (int)(512.0+(300.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							y1 = (int)(512.0+(300.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+							x2 = (int)(512.0+(300.0+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+							y2 = (int)(512.0+(300.0+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
 							
 							if( atskew >= 0 ) g2.setColor( Color.blue );
 							else g2.setColor( Color.red );
