@@ -29,6 +29,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -486,7 +487,7 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		String lname = null;
 		String prevline = null;
-		StringBuilder ac = new StringBuilder();
+		Sequence ac = new Sequence( null, null );
 		int start = 0;
 		int stop = -1;
 		int dir = 0;
@@ -496,7 +497,7 @@ public class GeneSet extends JApplet {
 		//Tegeval preval = null;
 		while (line != null) {
 			if (line.startsWith(">")) {
-				if (ac.length() > 0) {
+				if (ac.getLength() > 0) {
 					String contigstr = null;
 					String contloc = null;
 					
@@ -677,7 +678,7 @@ public class GeneSet extends JApplet {
 					// aass.add( new Aas(name, ac) );
 				}
 
-				ac = new StringBuilder();
+				ac = new Sequence( null, null );
 				String cont = line.substring(1) + "";
 				String[] split = cont.split("#");
 				lname = split[0].trim().replace(".fna", "");
@@ -710,7 +711,7 @@ public class GeneSet extends JApplet {
 			// br.re
 		}
 
-		if (ac.length() > 0) {
+		if (ac.getLength() > 0) {
 			String contigstr = null;
 			String contloc = null;
 			
@@ -5386,7 +5387,7 @@ public class GeneSet extends JApplet {
 				specset.addAll( gg.getSpecies() );
 				
 				for( Tegeval tv : gg.getTegevals() ) {
-					int l = tv.getAlignedSequence().length();
+					int l = tv.getAlignedSequence().getLength();
 					if( l > max ) max = l;
 				}
 				genegroups.put( gg, max );
@@ -5399,7 +5400,7 @@ public class GeneSet extends JApplet {
 				GeneGroup gg = g.getGeneGroup();
 				specset.addAll( gg.getSpecies() );
 				for( Tegeval tv : gg.getTegevals() ) {
-					int l = tv.getAlignedSequence().length();
+					int l = tv.getAlignedSequence().getLength();
 					if( l > max ) max = l;
 				}
 				genegroups.put( gg, max );
@@ -5437,7 +5438,7 @@ public class GeneSet extends JApplet {
 				for( Tegeval tv : ltv ) {					
 					int seqlen = tv.getLength();
 					if( seqlen > max ) {
-						seqstr = tv.getAlignedSequence();
+						seqstr = tv.getAlignedSequence().getStringBuilder();
 						max = seqlen;
 					}
 					
@@ -8373,11 +8374,13 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
 				
-				GeneGroup	gg = null;
+				final GeneGroup	gg;
 				int r = table.getSelectedRow();
 				int i = -1;
 				if( r != -1 ) i = table.convertRowIndexToModel( r );
-				if( i != -1 ) gg = allgenegroups.get( i );
+				if( i != -1 ) {
+					gg = allgenegroups.get( i );
+				} else gg = null;
 				
 				TableModel model = new TableModel() {
 					@Override
@@ -8425,77 +8428,20 @@ public class GeneSet extends JApplet {
 				JScrollPane	scroll = new JScrollPane( table );
 				
 				FlowLayout flowlayout = new FlowLayout();
-				JComponent c = new JComponent() {};
-				c.setLayout( flowlayout );
-				c.add( scroll );
+				JComponent c1 = new JComponent() {};
+				c1.setLayout( flowlayout );
+				c1.add( scroll );
 				
-				JOptionPane.showMessageDialog(comp, c);
+				JOptionPane.showMessageDialog(comp, c1);
 				
 				final BufferedImage bimg = new BufferedImage( 1024, 1024, BufferedImage.TYPE_INT_ARGB );
-				c = new JComponent() {
+				final JComponent c = new JComponent() {
 					public void paintComponent( Graphics g ) {
 						super.paintComponent( g );
 						
 						g.drawImage( bimg, 0, 0, this );
 					}
 				};
-				
-				JPopupMenu popup = new JPopupMenu();
-				popup.add( new AbstractAction("Save") {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						boolean succ = true;
-						try {
-							ImageIO.write(bimg, "png", new File("c:/cir.png") );
-						} catch(Exception e1) {
-							succ = false;
-							e1.printStackTrace();
-						}
-						
-						try {
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							ImageIO.write(bimg, "png", baos);
-							baos.close();
-							String b64str = Base64.encodeBase64String( baos.toByteArray() );
-							
-							JSObject window = JSObject.getWindow( GeneSet.this );
-							window.call( "string2Blob", new Object[] {b64str, "image/png"} );
-						} catch(Exception e1) {
-							succ = false;
-							e1.printStackTrace();
-						}
-						
-						if( !succ ) {
-							FileSaveService fss = null;
-					        FileContents fileContents = null;
-					    	 
-					        try {
-					        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						        //OutputStreamWriter	osw = new OutputStreamWriter( baos );
-								ImageIO.write(bimg, "png", baos);
-								baos.close();
-
-						    	try {
-						    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
-						    	} catch( UnavailableServiceException e1 ) {
-						    		fss = null;
-						    	}
-						    	 
-						        if (fss != null) {
-						        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
-						            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
-						            bais.close();
-						            OutputStream os = fileContents.getOutputStream(true);
-						            os.write( baos.toByteArray() );
-						            os.close();
-						        }
-					        } catch( Exception e1 ) {
-					        	e1.printStackTrace();
-					        }
-						}
-					}
-				});
-				c.setComponentPopupMenu( popup );
 				
 				Dimension dim = new Dimension(1024, 1024);
 				c.setPreferredSize( dim );
@@ -8507,7 +8453,7 @@ public class GeneSet extends JApplet {
 				frame.add( scroll );
 				
 				r = table.getSelectedRow();
-				String selspec = (String)table.getValueAt( r, 0 );
+				final String selspec = (String)table.getValueAt( r, 0 );
 				final List<Contig>	clist = speccontigMap.get( selspec );
 				
 				model = new TableModel() {
@@ -8557,12 +8503,12 @@ public class GeneSet extends JApplet {
 				scroll = new JScrollPane( table );
 				
 				flowlayout = new FlowLayout();
-				c = new JComponent() {};
-				c.setLayout( flowlayout );
-				c.add( scroll );
-				JOptionPane.showMessageDialog(comp, c);
+				JComponent c2 = new JComponent() {};
+				c2.setLayout( flowlayout );
+				c2.add( scroll );
+				JOptionPane.showMessageDialog(comp, c2);
 				
-				List<Contig> selclist = new ArrayList<Contig>();
+				final List<Contig> selclist = new ArrayList<Contig>();
 				int[] rr = table.getSelectedRows();
 				for( int row : rr ) {
 					i = table.convertRowIndexToModel( row );
@@ -8570,7 +8516,7 @@ public class GeneSet extends JApplet {
 				}
 				
 				int size = 0;
-				Graphics2D g2 = bimg.createGraphics();
+				final Graphics2D g2 = bimg.createGraphics();
 				g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 				for( Contig ctg : selclist ) {
 					size += ctg.getLength();
@@ -8578,83 +8524,140 @@ public class GeneSet extends JApplet {
 				g2.setColor( Color.white );
 				g2.fillRect( 0, 0, 1024, 1024 );
 				
-				int total = 0;
-				for( Contig ctg : selclist ) {
-					if( gg != null ) {
-						for( Tegeval tv : gg.getTegevals() ) {
-							if( tv.getContshort() == ctg ) {					
-								i = tv.start;
-								
-								int x1 = (int)(512.0+(384.0-100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-								int y1 = (int)(512.0+(384.0-100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-								int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-								int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-								
-								g2.setColor( Color.green );
-								g2.drawLine(x1, y1, x2, y2);
-							}
-						}
-					}
-					
-					int x1 = (int)(512.0+(384.0-100.0)*Math.cos( (total)*2.0*Math.PI/size ));
-					int y1 = (int)(512.0+(384.0-100.0)*Math.sin( (total)*2.0*Math.PI/size ));
-					int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (total)*2.0*Math.PI/size ));
-					int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (total)*2.0*Math.PI/size ));
-					g2.setColor( Color.black );
-					g2.drawLine(x1, y1, x2, y2);
-					
-					for( i = 0; i < ctg.getLength(); i+=500 ) {
-						int gcount = 0;
-						int ccount = 0;
-						int acount = 0;
-						int tcount = 0;
-						for( int k = i; k < Math.min( ctg.getLength(), i+10000 ); k++ ) {
-							char chr = k-5000 < 0 ? ctg.seq.charAt( ctg.seq.getLength()+(k-5000) ) : ctg.seq.charAt(k-5000);
-							if( chr == 'g' || chr == 'G' ) gcount++;
-							else if( chr == 'c' || chr == 'C' ) ccount++;
-							else if( chr == 'a' || chr == 'A' ) acount++;
-							else if( chr == 't' || chr == 'T' ) tcount++;
-						}
-						
-						if( gcount > 0 || ccount > 0 ) {
-							double gcskew = (gcount-ccount)/(double)(gcount+ccount);
-							
-							x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-							x2 = (int)(512.0+(384.0+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							y2 = (int)(512.0+(384.0+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-							
-							if( gcskew >= 0 ) g2.setColor( Color.blue );
-							else g2.setColor( Color.red );
-							g2.drawLine(x1, y1, x2, y2);
-						}
-						
-						if( acount > 0 || tcount > 0 ) {
-							double atskew = (acount-tcount)/(double)(acount+tcount);
-							
-							x1 = (int)(512.0+(300.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							y1 = (int)(512.0+(300.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-							x2 = (int)(512.0+(300.0+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-							y2 = (int)(512.0+(300.0+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-							
-							if( atskew >= 0 ) g2.setColor( Color.blue );
-							else g2.setColor( Color.red );
-							g2.drawLine(x1, y1, x2, y2);
-						}
-					}
-					total += ctg.getLength();
-				}
+				final int fsize = size;
 				
-				g2.setColor( Color.black );
-				g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
-				String[] specsplit = selspec.split("_");
-				int k = 0;
-				for( String spec : specsplit ) {
-					int strw = g2.getFontMetrics().stringWidth( spec );
-					g2.drawString( spec, (1024-strw)/2, 1024/2 - specsplit.length*32/2 + 32 + k*32 );
-					k++;
-				}
-								
+				JPopupMenu popup = new JPopupMenu();
+				popup.add( new AbstractAction("Repaint") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						repaintGCSkew(selclist, g2, fsize, gg, selspec);
+					}
+				});
+				popup.addSeparator();
+				popup.add( new AbstractAction("Save") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						boolean succ = true;
+						try {
+							ImageIO.write(bimg, "png", new File("c:/cir.png") );
+						} catch(Exception e1) {
+							succ = false;
+							e1.printStackTrace();
+						}
+						
+						try {
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							ImageIO.write(bimg, "png", baos);
+							baos.close();
+							String b64str = Base64.encodeBase64String( baos.toByteArray() );
+							
+							JSObject window = JSObject.getWindow( GeneSet.this );
+							window.call( "string2Blob", new Object[] {b64str, "image/png"} );
+						} catch(Exception e1) {
+							succ = false;
+							e1.printStackTrace();
+						}
+						
+						if( !succ ) {
+							FileSaveService fss = null;
+					        FileContents fileContents = null;
+					    	 
+					        try {
+					        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						        //OutputStreamWriter	osw = new OutputStreamWriter( baos );
+								ImageIO.write(bimg, "png", baos);
+								baos.close();
+
+						    	try {
+						    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+						    	} catch( UnavailableServiceException e1 ) {
+						    		fss = null;
+						    	}
+						    	 
+						        if( fss != null ) {
+						        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
+						            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
+						            bais.close();
+						            OutputStream os = fileContents.getOutputStream(true);
+						            os.write( baos.toByteArray() );
+						            os.close();
+						        }
+					        } catch( Exception e1 ) {
+					        	e1.printStackTrace();
+					        }
+						}
+					}
+				});
+				c.setComponentPopupMenu( popup );
+				
+				c.addMouseListener( new MouseListener() {
+					int x;
+					int y;
+					Contig sctg;
+					
+					@Override
+					public void mouseReleased(MouseEvent e) {
+						if( sctg != null ) {
+							int rx = e.getX();
+							int ry = e.getY();
+							
+							double horn = Math.atan2( (double)(512-ry), (double)(512-rx) )+Math.PI;
+							int val = (int)( (double)(horn*fsize)/(double)(2*Math.PI) );
+							
+							int tot = 0;
+							Contig sctg2 = null;
+							for( Contig ctg : selclist ) {
+								if( tot > val ) break;
+								tot += ctg.getLength();
+								sctg2 = ctg;
+							}
+							
+							int i = selclist.indexOf( sctg2 );
+							selclist.remove( sctg );
+							selclist.add( i, sctg );
+							
+							i = clist.indexOf( sctg2 );
+							clist.remove( sctg );
+							clist.add( i, sctg );
+							
+							repaintGCSkew(selclist, g2, fsize, gg, selspec);
+							c.repaint();
+						}
+					}
+					
+					@Override
+					public void mousePressed(MouseEvent e) {
+						x = e.getX();
+						y = e.getY();
+						
+						double horn = Math.atan2( (double)(512-y), (double)(512-x) )+Math.PI;
+						int val = (int)( (double)(horn*fsize)/(double)(2*Math.PI) );
+						
+						int tot = 0;
+						for( Contig ctg : selclist ) {
+							if( tot > val ) break;
+							tot += ctg.getLength();
+							sctg = ctg;
+						}
+						
+						if( e.getClickCount() == 2 ) {							
+							sctg.setReverse( !sctg.isReverse() );
+							repaintGCSkew(selclist, g2, fsize, gg, selspec);
+							c.repaint();
+						}
+					}
+					
+					@Override
+					public void mouseExited(MouseEvent e) {}
+					
+					@Override
+					public void mouseEntered(MouseEvent e) {}
+					
+					@Override
+					public void mouseClicked(MouseEvent e) {}
+				});
+				
+				repaintGCSkew( selclist, g2, size, gg, selspec );				
 				frame.setVisible( true );
 			}
 		};
@@ -8981,6 +8984,87 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction showcontigsaction = new AbstractAction("Show contigs") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final List<Contig>	allcontigs = new ArrayList<Contig>();
+				for( String spec : speccontigMap.keySet() ) {
+					List<Contig>	ctgs = speccontigMap.get( spec );
+					allcontigs.addAll( ctgs );
+				}
+				
+				TableModel model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return allcontigs.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return "Contig";
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return allcontigs.get( rowIndex ).getName();
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				JTable table = new JTable( model );
+				table.setAutoCreateRowSorter( true );
+				table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+				JScrollPane	scroll = new JScrollPane( table );
+				
+				FlowLayout flowlayout = new FlowLayout();
+				JComponent c1 = new JComponent() {};
+				c1.setLayout( flowlayout );
+				c1.add( scroll );
+				
+				JOptionPane.showMessageDialog(comp, c1);
+				
+				JFrame frame = new JFrame();
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				
+				Serifier serifier = new Serifier();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+				jf.initGui(frame);
+
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int i = table.convertRowIndexToModel( r );
+					Contig ctg = allcontigs.get( i );
+					serifier.addSequence( ctg.seq );
+				}
+				
+				jf.updateView();
+				frame.setVisible(true);
+			}
+		};
+		
 		JMenuBar	menubar = new JMenuBar();
 		JMenu		menu = new JMenu("Functions");
 		menu.add( genomestataction );
@@ -9004,6 +9088,7 @@ public class GeneSet extends JApplet {
 		menu.add( fetchcoreaction );
 		menu.add( loadcontiggraphaction );
 		menu.add( selectflankingaction );
+		menu.add( showcontigsaction );
 		
 		menubar.add( menu );
 		ttopcom.add( menubar );
@@ -10079,10 +10164,10 @@ public class GeneSet extends JApplet {
 					
 					for( Tegeval tv : ggroup.getTegevals() ) {
 						String spec = tv.getContshort().getSpec();
-						StringBuilder seqstr = tv.getAlignedSequence();
+						Sequence seq = tv.getAlignedSequence();
 						
-						Sequence seq = new Sequence( spec, null );
-						if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
+						//Sequence seq = new Sequence( spec, null );
+						//if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
 						serifier.addSequence( seq );			
 					}
 
@@ -11102,8 +11187,8 @@ public class GeneSet extends JApplet {
 				for( GeneGroup ggroup : genegroups ) {
 					for( Tegeval tv : ggroup.getTegevals() ) {
 						String contig = tv.getContshort().getName();
-						StringBuilder seqstr = tv.getAlignedSequence();
-						Sequence seq = new Sequence( contig, seqstr, null );
+						Sequence seq = tv.getAlignedSequence();
+						//Sequence seq = new Sequence( contig, seqstr, null );
 						serifier.addSequence(seq);
 					}
 				}
@@ -11803,6 +11888,108 @@ public class GeneSet extends JApplet {
 		 */
 
 		return splitpane;
+	}
+	
+	public void repaintGCSkew( List<Contig> selclist, Graphics2D g2, int size, GeneGroup gg, String selspec ) {
+		g2.setColor( Color.white );
+		g2.fillRect(0, 0, 1024, 1024);
+		g2.setFont( g2.getFont().deriveFont(10.0f) );
+		int total = 0;
+		for( Contig ctg : selclist ) {
+			//Contig ctg = clist.get( u );
+			if( gg != null ) {
+				for( Tegeval tv : gg.getTegevals() ) {
+					if( tv.getContshort() == ctg ) {					
+						int i = tv.start;
+						
+						int x1 = (int)(512.0+(384.0-100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+						int y1 = (int)(512.0+(384.0-100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+						int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+						int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+						
+						g2.setColor( Color.green );
+						g2.drawLine(x1, y1, x2, y2);
+					}
+				}
+			}
+			
+			double horn = total*2.0*Math.PI/size;
+			double horn2 = (total+ctg.getLength())*2.0*Math.PI/size;
+			
+			int x1 = (int)(512.0+(384.0-100.0)*Math.cos( horn ));
+			int y1 = (int)(512.0+(384.0-100.0)*Math.sin( horn ));
+			int x2 = (int)(512.0+(384.0+100.0)*Math.cos( horn ));
+			int y2 = (int)(512.0+(384.0+100.0)*Math.sin( horn ));
+			g2.setColor( Color.black );
+			g2.drawLine(x1, y1, x2, y2);
+			
+			int xoff = (int)(512.0+(384.0+100.0)*Math.cos( horn2 ));
+			int yoff = (int)(512.0+(384.0+100.0)*Math.sin( horn2 ));
+			if( horn < Math.PI ) {
+				g2.translate( x2, y2 );
+				g2.rotate(horn+Math.PI/2.0);
+				g2.drawString(ctg.getName(), 0, 0);
+				g2.rotate(-horn-Math.PI/2.0);
+				g2.translate( -x2, -y2 );
+			} else {
+				g2.translate( xoff, yoff );
+				g2.rotate(horn2+Math.PI/2.0);
+				g2.drawString(ctg.getName(), -g2.getFontMetrics().stringWidth(ctg.getName()), 0);
+				g2.rotate(-horn2-Math.PI/2.0);
+				g2.translate( -xoff, -yoff );
+			}
+			
+			for( int i = 0; i < ctg.getLength(); i+=500 ) {
+				int gcount = 0;
+				int ccount = 0;
+				int acount = 0;
+				int tcount = 0;
+				for( int k = i; k < Math.min( ctg.getLength(), i+10000 ); k++ ) {
+					char chr = k-5000 < 0 ? ctg.charAt( ctg.getLength()+(k-5000) ) : ctg.charAt(k-5000);
+					if( chr == 'g' || chr == 'G' ) gcount++;
+					else if( chr == 'c' || chr == 'C' ) ccount++;
+					else if( chr == 'a' || chr == 'A' ) acount++;
+					else if( chr == 't' || chr == 'T' ) tcount++;
+				}
+				
+				if( gcount > 0 || ccount > 0 ) {
+					double gcskew = (gcount-ccount)/(double)(gcount+ccount);
+					
+					x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+					x2 = (int)(512.0+(384.0+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y2 = (int)(512.0+(384.0+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+					
+					if( gcskew >= 0 ) g2.setColor( Color.blue );
+					else g2.setColor( Color.red );
+					g2.drawLine(x1, y1, x2, y2);
+				}
+				
+				if( acount > 0 || tcount > 0 ) {
+					double atskew = (acount-tcount)/(double)(acount+tcount);
+					
+					x1 = (int)(512.0+(300.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y1 = (int)(512.0+(300.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+					x2 = (int)(512.0+(300.0+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y2 = (int)(512.0+(300.0+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+					
+					if( atskew >= 0 ) g2.setColor( Color.blue );
+					else g2.setColor( Color.red );
+					g2.drawLine(x1, y1, x2, y2);
+				}
+			}
+			total += ctg.getLength();
+		}
+		
+		g2.setColor( Color.black );
+		g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
+		String[] specsplit = selspec.split("_");
+		int k = 0;
+		for( String spec : specsplit ) {
+			int strw = g2.getFontMetrics().stringWidth( spec );
+			g2.drawString( spec, (1024-strw)/2, 1024/2 - specsplit.length*32/2 + 32 + k*32 );
+			k++;
+		}
 	}
 
 	static ClipboardService clipboardService;
