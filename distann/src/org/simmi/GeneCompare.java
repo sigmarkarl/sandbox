@@ -57,6 +57,7 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.apache.commons.codec.binary.Base64;
+import org.simmi.shared.Sequence;
 
 public class GeneCompare {
 	List<Contig> contigs;
@@ -656,11 +657,11 @@ public class GeneCompare {
 		draw( g2, spec1, geneset, w, h, contigs, spec2s, blosumap, total, ptotal, 0 );
 	}
 	
-	public static Color blosumColor( StringBuilder seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap, boolean rs ) {
+	public static Color blosumColor( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap, boolean rs ) {
 		Color color = Color.green;
 		if( seq != null ) {
 			int tscore = 0;
-            for( int i = 0; i < seq.length(); i++ ) {
+            for( int i = 0; i < seq.getLength(); i++ ) {
             	char c = seq.charAt(i);
             	String comb = c+""+c;
             	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
@@ -669,10 +670,10 @@ public class GeneCompare {
             int score = 0;
             Teginfo gene2s = gg.getGenes( spec2 );
             for( Tegeval tv2 : gene2s.tset ) {
-                StringBuilder seq2 = tv2.getAlignedSequence().getStringBuilder();
+                Sequence seq2 = tv2.getAlignedSequence();
                 
                 int sscore = 0;
-                for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
+                for( int i = 0; i < Math.min( seq.getLength(), seq2.getLength() ); i++ ) {
                 	char c = seq.charAt( i );
                 	char c2 = seq2.charAt( i );
                 	
@@ -941,7 +942,7 @@ public class GeneCompare {
 			if( ctg.tlist != null ) {
 				current = count;
 				for( Tegeval tv : ctg.tlist ) {
-					StringBuilder seq = tv.getAlignedSequence().getStringBuilder();
+					Sequence seq = tv.getAlignedSequence();
 					GeneGroup gg = tv.getGene().getGeneGroup();
 					
 					int ii = geneset.allgenegroups.indexOf( gg );
