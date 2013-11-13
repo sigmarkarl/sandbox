@@ -2,6 +2,8 @@ package org.simmi;
 
 import java.awt.Color;
 
+import org.simmi.shared.Sequence;
+
 public class Tegeval implements Comparable<Tegeval> {
 	public Tegeval(Gene gene, String tegund, double evalue, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
 		this( contig, shortcontig, locontig, sta, sto, orient );
@@ -41,7 +43,7 @@ public class Tegeval implements Comparable<Tegeval> {
 		return gene.getGeneGroup().getCommonFunction(true, null);
 	}
 	
-	public void setAlignedSequence( StringBuilder alseq ) {
+	public void setAlignedSequence( Sequence alseq ) {
 		seq = alseq;
 	}
 	
@@ -73,7 +75,7 @@ public class Tegeval implements Comparable<Tegeval> {
 		return contshort.seq.getSubstring(start, stop, ori);
 	}
 	
-	public StringBuilder getAlignedSequence() {
+	public Sequence getAlignedSequence() {
 		return seq;
 	}
 	
@@ -134,7 +136,7 @@ public class Tegeval implements Comparable<Tegeval> {
 		int c = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
 		if( contshort != null ) for( int i = start; i < stop; i++ ) {
-			char n = this.ori == -1 ? contshort.revCompCharAt(i) : contshort.charAt(i);
+			char n = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ contshort.charAt(i);
 			if( n == 'g' || n == 'G' ) g++;
 			else if( n == 'c' || n == 'C' ) c++;
 		}
@@ -146,7 +148,7 @@ public class Tegeval implements Comparable<Tegeval> {
 		int gc = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
 		if( contshort != null ) for( int i = start; i < stop; i++ ) {
-			char c = this.ori == -1 ? contshort.revCompCharAt(i) : contshort.charAt(i);
+			char c = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ contshort.charAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
 		}
 		return gc;
@@ -180,7 +182,7 @@ public class Tegeval implements Comparable<Tegeval> {
 	String 			cont;
 	Contig 			contshort;
 	String 			contloc;
-	StringBuilder 	seq;
+	Sequence	 	seq;
 	//StringBuilder 	dna;
 	int 			start;
 	int 			stop;
