@@ -1737,7 +1737,8 @@ public class SerifyApplet extends JApplet {
 							});
 							dialog.setVisible( true );
 							
-							String ftpsite = "ftp.ncbi.nih.gov";
+							//String ftpsite = "ftp.rhnet.is";
+							String ftpsite = "ftp.ncbi.nlm.nih.gov";
 							//FTPClientConfig ftpcc = new FTPClientConfig();
 							FTPClient ftp = new FTPClient();
 							try {
