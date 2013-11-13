@@ -3,32 +3,16 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="loc"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/usr/share/java/httpclient.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/httpcore.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/httpcore-nio.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/signpost-commonshttp4.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/signpost-core.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
-	<classpathentry kind="lib" path="/usr/share/java/json_simple.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/httpmime.jar"/>
-	<classpathentry kind="lib" path="/pontun/war/sqljdbc4.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/ooxml-lib/dom4j-1.6.1.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/ooxml-lib/stax-api-1.0.1.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/ooxml-lib/xmlbeans-2.3.0.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/poi-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/poi-examples-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/poi-excelant-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/poi-ooxml-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/poi-ooxml-schemas-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/poi-scratchpad-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/lib/commons-codec-1.5.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/lib/commons-logging-1.1.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/lib/junit-3.8.1.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.9/lib/log4j-1.2.13.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk/jre/lib/plugin.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk/jre/lib/javaws.jar"/>
-	<classpathentry kind="lib" path="/opt/jdk/jre/lib/deploy.jar"/>
-	<classpathentry kind="lib" path="/opt/gdata/java/lib/gdata-core-1.0.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/swingx.jar"/>
+	<classpathentry kind="lib" path="/jdk/deploy.jar"/>
+	<classpathentry kind="lib" path="/jdk/javaws.jar"/>
+	<classpathentry kind="lib" path="/jdk/plugin.jar"/>
+	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-3.10-beta2-20130904.jar"/>
+	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-examples-3.10-beta2-20130904.jar"/>
+	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-excelant-3.10-beta2-20130904.jar"/>
+	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-ooxml-3.10-beta2-20130904.jar"/>
+	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-ooxml-schemas-3.10-beta2-20130904.jar"/>
+	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-scratchpad-3.10-beta2-20130904.jar"/>
+	<classpathentry kind="lib" path="/hvaderimatnum/war/swingx-all-1.6.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
