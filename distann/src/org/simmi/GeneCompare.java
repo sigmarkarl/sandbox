@@ -371,6 +371,13 @@ public class GeneCompare {
 		});
 		
 		JPopupMenu popup = new JPopupMenu();
+		popup.add( new AbstractAction("Repaint") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				repaintCompare(g2, bimg, spec2s, specombo, geneset, blosumap, cmp);
+			}
+		});
+		popup.addSeparator();
 		popup.add( new AbstractAction("Save") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -497,33 +504,7 @@ public class GeneCompare {
 							}
 						}
 						
-						if( relcol.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
-						} else if( gccol.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
-						} else if( gcskewcol.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
-						} else if( syntcol.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
-						} else if( brcol.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
-						} else if( syntgrad.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
-						} else if( isyntgrad.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
-						} else if( oricol.isSelected() ) {
-							String spec1 = (String)specombo.getSelectedItem();
-							draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -10 );
-						}
-						
-						cmp.repaint();
+						repaintCompare( g2, bimg, spec2s, specombo, geneset, blosumap, cmp );
 					} else {						
 						double t1 = Math.atan2( dy, dx );
 						double t2 = Math.atan2( ndy, ndx );
@@ -641,6 +622,36 @@ public class GeneCompare {
 		frame.setVisible( true );
 	}
 	
+	public void repaintCompare( Graphics2D g2, BufferedImage bimg, List<String> spec2s, JComboBox<String> specombo, GeneSet geneset, Map<String,Integer> blosumap, JComponent cmp ) {
+		if( relcol.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
+		} else if( gccol.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+		} else if( gcskewcol.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+		} else if( syntcol.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
+		} else if( brcol.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
+		} else if( syntgrad.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
+		} else if( isyntgrad.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
+		} else if( oricol.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -10 );
+		}
+		
+		cmp.repaint();
+	}
+	
 	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal ) {
 		draw( g2, spec1, geneset, w, h, contigs, spec2s, blosumap, total, ptotal, 0 );
 	}
@@ -658,7 +669,7 @@ public class GeneCompare {
             int score = 0;
             Teginfo gene2s = gg.getGenes( spec2 );
             for( Tegeval tv2 : gene2s.tset ) {
-                StringBuilder seq2 = tv2.getAlignedSequence();
+                StringBuilder seq2 = tv2.getAlignedSequence().getStringBuilder();
                 
                 int sscore = 0;
                 for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
@@ -818,7 +829,7 @@ public class GeneCompare {
 					if( idx == -1 ) {
 						count2 += ctg2.getGeneCount();
 					} else {
-						count2 += idx;
+						count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx; 
 						break;
 					}
 				}
@@ -930,7 +941,7 @@ public class GeneCompare {
 			if( ctg.tlist != null ) {
 				current = count;
 				for( Tegeval tv : ctg.tlist ) {
-					StringBuilder seq = tv.getAlignedSequence();
+					StringBuilder seq = tv.getAlignedSequence().getStringBuilder();
 					GeneGroup gg = tv.getGene().getGeneGroup();
 					
 					int ii = geneset.allgenegroups.indexOf( gg );

@@ -61,12 +61,12 @@ class Contig implements Comparable<Contig> {
 		}
 	}
 	
-	public char revCompCharAt( int i ) {
+	/*public char revCompCharAt( int i ) {
 		return seq.revCompCharAt( i );
-	}
+	}*/
 	
 	public char charAt( int i ) {
-		return seq.charAt( i );
+		return reverse ? seq.revCompCharAt( i ) : seq.charAt( i );
 	}
 	
 	public int getGeneCount() {
