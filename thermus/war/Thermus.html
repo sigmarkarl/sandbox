@@ -1,0 +1,112 @@
+<!doctype html>
+<!-- The DOCTYPE declaration above will set the    -->
+<!-- browser's rendering engine into               -->
+<!-- "Standards Mode". Replacing this declaration  -->
+<!-- with a "Quirks Mode" doctype may lead to some -->
+<!-- differences in layout.                        -->
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <!--                                                               -->
+    <!-- Consider inlining CSS to reduce the number of requested files -->
+    <!--                                                               -->
+    <link type="text/css" rel="stylesheet" href="Thermus.css">
+
+    <!--                                           -->
+    <!-- Any title is fine                         -->
+    <!--                                           -->
+    <title>Thermus gene navigator</title>
+    <meta property="og:title" content="Thermus gene navigator" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="http://thermusgenes.appspot.com/" />
+    <meta property="og:image" content="http://fasteignaverd.appspot.com/ndb.png" />
+    
+    <!--                                           -->
+    <!-- This script loads your compiled module.   -->
+    <!-- If you add any GWT meta tags, they must   -->
+    <!-- be added before this line.                -->
+    <!--                                           -->
+    <!--script type="text/javascript" language="javascript" src="http://www.java.com/js/deployJava.js"></script-->
+    <script type="text/javascript" language="javascript" src="thermus/thermus.nocache.js"></script>
+    <script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-21191374-1']);	
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+	</script>
+	
+	<script>
+	var domain = 'http://webconnectron.appspot.com';
+	var treetext = "";
+	var myPopup;
+	function receiveMessage(event) {
+		console.log( 'ready message received' );
+		if (event.origin == "http://webconnectron.appspot.com") {
+			console.log( 'correct origin' );
+			if( treetext.length > 0 ) {
+				myPopup.postMessage(treetext,domain);
+			}
+    	}
+  	}
+	window.addEventListener("message", receiveMessage, false);
+	
+	var domain = 'http://webconnectron.appspot.com/';
+	function handleMessage(message_event) {
+	  treetext = message_event.data;
+	  //window.console.log( treestr );
+      //var treeenc = encodeURIComponent( treestr );
+      myPopup = window.open( domain + '/Treedraw.html?callback=thermusgenes', '_blank' );
+      //window.open(domain + '/Treedraw.html?tree=' + treeenc,'_blank');
+    }
+    
+    function now() {
+      var fasttree = document.getElementById('fasttree');
+      fasttree.addEventListener('message', handleMessage, true);
+    }
+    
+	function showTree( newtree ) {
+		treetext = newtree;
+		myPopup = window.open(domain + '/Treedraw.html?callback=thermusgenes','_blank');
+	}
+	
+	function fastTree( treestr ) {
+		var fasttree = document.getElementById('fasttree');
+		fasttree.postMessage( 'f'+treestr );
+	}
+	</script>
+  </head>
+
+  <!--                                           -->
+  <!-- The body can have arbitrary html, or      -->
+  <!-- you can leave the body empty if you want  -->
+  <!-- to create a completely dynamic UI.        -->
+  <!--                                           -->
+  <body>    
+    <!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+    <noscript>
+      <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        Your web browser must have JavaScript enabled
+        in order for this application to display correctly.
+      </div>
+    </noscript>
+    
+    <div id="content">
+    
+    </div>
+    
+    <embed name="nacl_module" style="visibility:hidden" onload="now()"
+       	id="fasttree"
+       	width=0 height=0
+       	src="fasttree.nmf"
+       	type="application/x-nacl" />
+  </body>
+</html>
