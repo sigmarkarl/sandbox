@@ -105,12 +105,6 @@ import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
 import org.simmi.shared.TreeUtil;
 
-import com.google.gdata.client.GoogleService;
-import com.google.gdata.client.Service.GDataRequest;
-import com.google.gdata.client.Service.GDataRequest.RequestType;
-import com.google.gdata.util.ContentType;
-import com.google.gdata.util.ServiceException;
-
 public class SortTable extends JApplet {
 	/**
 	 *
@@ -363,7 +357,7 @@ public class SortTable extends JApplet {
 		this.input = input;
 	}
 	
-	public Reader run(String query, boolean isUsingEncId) throws IOException, ServiceException, InterruptedException {
+	public Reader run(String query, boolean isUsingEncId) throws IOException, InterruptedException {
 		boolean fail = false;
 		String lowercaseQuery = query.toLowerCase();
 		String encodedQuery = URLEncoder.encode(query, "UTF-8");
@@ -389,7 +383,7 @@ public class SortTable extends JApplet {
 	    
 		System.err.println( "fail "+fail );
 	    if( fail ) {	
-		   GDataRequest request = null;
+		   /*GDataRequest request = null;
 		   // If the query is a select, describe, or show query, run a GET request.
 		   if (lowercaseQuery.startsWith("select") || lowercaseQuery.startsWith("describe") || lowercaseQuery.startsWith("show")) {
 			   System.err.println("about to get "+urlstr);
@@ -406,8 +400,7 @@ public class SortTable extends JApplet {
 			   
 		     // Otherwise, run a POST request.
 		     URL url = new URL(SERVICE_URL + "?encid=" + isUsingEncId);
-		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url,
-		         new ContentType("application/x-www-form-urlencoded"));
+		     request = service.getRequestFactory().getRequest(RequestType.INSERT, url, new ContentType("application/x-www-form-urlencoded"));
 		     OutputStreamWriter writer = new OutputStreamWriter(request.getRequestStream());
 		     writer.append("sql=" + encodedQuery);
 		     writer.flush();
@@ -419,13 +412,13 @@ public class SortTable extends JApplet {
 	
 		   		System.err.println("returning");
 		   		return new InputStreamReader( request.getResponseStream() );
-		   }
+		   }*/
 	   }
 	    System.err.println("ermermerm");
 	   return null;
 	}
 	
-	private StringBuilder getResultsText(GDataRequest request) throws IOException {
+	/*private StringBuilder getResultsText(GDataRequest request) throws IOException {
 		InputStreamReader inputStreamReader = new InputStreamReader(request.getResponseStream());
 		BufferedReader bufferedStreamReader = new BufferedReader(inputStreamReader);
 		
@@ -438,7 +431,7 @@ public class SortTable extends JApplet {
 		}
 		
 		return sb;
-	}
+	}*/
 	
 	public Map<String, String> isGroup( Reader reader, String sep, boolean skipfirst ) throws IOException {
 		Map<String, String> fgroupMap = new HashMap<String, String>();
@@ -596,18 +589,18 @@ public class SortTable extends JApplet {
 	}
 
 	List<Object>[] nutList = null;
-	public List<Object[]> parseData( String loc ) throws IOException, ServiceException, InterruptedException {
+	public List<Object[]> parseData( String loc ) throws IOException, InterruptedException {
 		Map<String, String> fgroupMap = null;
 
 		if( loc.startsWith("IS_fusion") ) {
-			if( service == null ) {
+			/*if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
 			if( service != null ) {
 				Reader rd = run("select * from "+grouptableid, true);
 				fgroupMap = isGroup( rd, ",", true );
-			}
+			}*/
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/thsGroups.txt");
 			fgroupMap = isGroup( new InputStreamReader( inputStream, "UTF-8" ), "\t", false );
@@ -639,14 +632,14 @@ public class SortTable extends JApplet {
 
 		Set<Integer> is = null;
 		if( loc.startsWith("IS_fusion") ) {
-			if( service == null ) {
+			/*if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
 			if( service != null ) {
 				Reader rd = run("select * from "+componenttableid, true);
 				is = isComponent( rd, ",", true );
-			}
+			}*/
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/Component.txt");
 			is = isComponent( new InputStreamReader(inputStream, "UTF-8"), "\t", false );
@@ -682,14 +675,14 @@ public class SortTable extends JApplet {
 		}
 		
 		if( loc.startsWith("IS_fusion") ) {
-			if( service == null ) {
+			/*if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
 			if( service != null ) {
 				Reader rd = run("select * from "+foodtableid+" where WebPublishReady = 'J'", true);
 				isFood( rd, fgroupMap, result, ",", true );
-			}
+			}*/
 		} else if (loc.startsWith("IS")) {
 			InputStream inputStream = this.getClass().getResourceAsStream("/Food.txt");
 			isFood( new InputStreamReader( inputStream, "UTF-8" ), fgroupMap, result, "\t", false );
@@ -714,7 +707,7 @@ public class SortTable extends JApplet {
 
 		String prev = "";
 		if( loc.startsWith("IS_fusion") ) {
-			if( service == null ) {
+			/*if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 			}
 			
@@ -723,7 +716,7 @@ public class SortTable extends JApplet {
 				istr = '('+istr.substring(1, istr.length()-1)+')';
 				Reader rd = run("select OriginalFoodCode, OriginalComponentCode, SelectedValue from "+componentvaluetableid+" where OriginalComponentCode in "+istr, true ); //+" and OriginalFoodCode in (select OriginalFoodCode from "+foodtableid+" where WebPublishReady = 'J')", true);
 				inThread( rd, result, is, ",", true );
-			}
+			}*/
 		} else if( loc.startsWith("IS") ) {
 			/*try {
 				new Thread() {
@@ -944,7 +937,7 @@ public class SortTable extends JApplet {
 		return result;
 	}
 
-	private static GoogleService service;
+	//private static GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
 	private static final String grouptableid = "1VDYeREOR6SvxX7VxiGBHVvUZbw_q1GeSsFsvh3U";
 	private static final String componenttableid = "1V220glQaJXgeWrimZ5gDiyRwhKMNp437ZeAnRNI";
@@ -985,8 +978,6 @@ public class SortTable extends JApplet {
 						foodNameInd.put((String) oo[0], i++);
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ServiceException e) {
 				e.printStackTrace();
 			} catch (InterruptedException e) {
 				e.printStackTrace();

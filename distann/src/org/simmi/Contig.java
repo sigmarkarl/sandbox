@@ -61,12 +61,12 @@ class Contig implements Comparable<Contig> {
 		}
 	}
 	
-	public char revCompCharAt( int i ) {
+	/*public char revCompCharAt( int i ) {
 		return seq.revCompCharAt( i );
-	}
+	}*/
 	
 	public char charAt( int i ) {
-		return seq.charAt( i );
+		return reverse ? seq.revCompCharAt( i ) : seq.charAt( i );
 	}
 	
 	public int getGeneCount() {
@@ -111,7 +111,7 @@ class Contig implements Comparable<Contig> {
 		if( i == -1 ) {
 			i = getName().indexOf("contig");
 			if( i == -1 ) {
-				System.err.println();
+				i = getName().indexOf("scaffold");
 			}
 			spec = getName().substring(0, i-1);
 		} else {
