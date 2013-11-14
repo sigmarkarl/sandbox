@@ -124,6 +124,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -8984,6 +8985,192 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction showflankingaction = new AbstractAction("Show flanking") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final List<String>			specs = new ArrayList<String>( speccontigMap.keySet() );
+				final JTable				stable = new JTable();
+				stable.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+				final TableModel					stablemodel = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return specs.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return "Species";
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						if( rowIndex >= 0 && rowIndex < specs.size() ) return specs.get(rowIndex);
+						return null;
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {
+						
+					}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				stable.setModel( stablemodel );
+				
+				final JTable				ctable = new JTable();
+				final TableModel			ctablemodel = new TableModel() {
+					@Override
+					public int getRowCount() {
+						int 			r = stable.getSelectedRow();
+						String 			spec = (String)stable.getValueAt(r, 0);
+						if( spec != null ) {
+							List<Contig>	contigs = speccontigMap.get( spec );
+							return contigs.size();
+						}
+						return 0;
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return "Contigs";
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						int 		r = stable.getSelectedRow();
+						String 		spec = (String)stable.getValueAt(r, 0);
+						List<Contig>	contigs = speccontigMap.get( spec );
+						return contigs.get(rowIndex);
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				ctable.setModel( ctablemodel );
+				
+				JScrollPane	sscrollpane = new JScrollPane( stable );
+				JScrollPane	cscrollpane = new JScrollPane( ctable );
+				
+				FlowLayout flowlayout = new FlowLayout();
+				JComponent c = new JComponent() {};
+				c.setLayout( flowlayout );
+				c.add( sscrollpane );
+				c.add( cscrollpane );
+				
+				JCheckBox	check = new JCheckBox("Genes");
+				c.add( check );
+				
+				stable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
+					@Override
+					public void valueChanged(ListSelectionEvent e) {
+						ctable.tableChanged( new TableModelEvent( ctablemodel ) );
+					}
+				});
+				
+				JOptionPane.showMessageDialog(GeneSet.this, c);
+				
+				int 			r = stable.getSelectedRow();
+				String 			spec = (String)stable.getValueAt(r, 0);
+				if( spec != null ) {
+					List<Contig>	contigs = speccontigMap.get( spec );
+					int[] rr = ctable.getSelectedRows();
+					
+					JFrame frame = new JFrame();
+					frame.setSize(800, 600);
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+					
+					if( check.isSelected() ) {
+						JTextArea	text = new JTextArea();
+						for( int row : rr ) {
+							int i = ctable.convertRowIndexToModel( row );
+							Contig ctg = contigs.get( i );
+							if( ctg.tlist != null ) {
+								if( ctg.isReverse() ) text.append( ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + "\n" );
+								else {
+									
+									if( ctg.tlist.size() > 3 ) {
+										String n0 = ctg.tlist.get(0).getGene().getGeneGroup().getCommonName();
+										String n1 = ctg.tlist.get(1).getGene().getGeneGroup().getCommonName();
+										String n_2 = ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName();
+										String n_1 = ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName();
+										
+										text.append( n0 + " -- " + n1 + " -- " + ctg.getName() + " -- " + n_2 + " -- " + n_1 + "\n" );
+									} else if( ctg.tlist.size() > 1 ) text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + "\n" );
+									else if( ctg.tlist.size() == 1 ) text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + "\n" );
+								}
+							}
+						}
+						frame.add( text );
+					} else {
+						Serifier serifier = new Serifier();
+						JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+						jf.initGui(frame);
+	
+						for( int row : rr ) {
+							int i = ctable.convertRowIndexToModel( row );
+							Contig ctg = contigs.get( i );
+							Sequence seq = new Sequence(ctg.getName(), null);
+							if( ctg.getLength() <= 200 ) {
+								seq.append( ctg.seq.sb );
+							} else {
+								seq.append( ctg.seq.sb.substring(0, 100) );
+								seq.append( "-----" );
+								seq.append( ctg.seq.sb.substring(ctg.getLength()-100, ctg.getLength()) );
+							}
+							if( ctg.isReverse() ) {
+								seq.reverse();
+								seq.complement();
+							}
+							serifier.addSequence( seq );
+						}
+						
+						jf.updateView();
+					}
+					frame.setVisible(true);
+				}
+			}
+		};
+		
 		AbstractAction showcontigsaction = new AbstractAction("Show contigs") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -9088,6 +9275,7 @@ public class GeneSet extends JApplet {
 		menu.add( fetchcoreaction );
 		menu.add( loadcontiggraphaction );
 		menu.add( selectflankingaction );
+		menu.add( showflankingaction );
 		menu.add( showcontigsaction );
 		
 		menubar.add( menu );
