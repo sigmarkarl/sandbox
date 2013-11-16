@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -174,6 +175,7 @@ public class GeneCompare {
 	JRadioButtonMenuItem	gcskewcol;
 	JRadioButtonMenuItem	syntcol;
 	JRadioButtonMenuItem	brcol;
+	JRadioButtonMenuItem	gapcol;
 	JRadioButtonMenuItem	syntgrad;
 	JRadioButtonMenuItem	isyntgrad;
 	
@@ -262,6 +264,7 @@ public class GeneCompare {
 		gcskewcol = new JRadioButtonMenuItem("GC skew color");
 		syntcol = new JRadioButtonMenuItem("Synteni color");
 		brcol = new JRadioButtonMenuItem("Breakpoint color");
+		gapcol = new JRadioButtonMenuItem("Gap color");
 		syntgrad = new JRadioButtonMenuItem("Synteni gradient");
 		isyntgrad = new JRadioButtonMenuItem("Inverted synteni gradient");
 		ButtonGroup		bg = new ButtonGroup();
@@ -271,6 +274,7 @@ public class GeneCompare {
 		bg.add( gcskewcol );
 		bg.add( syntcol );
 		bg.add( brcol );
+		bg.add( gapcol );
 		bg.add( syntgrad );
 		bg.add( isyntgrad );
 		
@@ -338,6 +342,15 @@ public class GeneCompare {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
 				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
+				cmp.repaint();
+			}
+		});
+		gapcol.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String spec1 = (String)specombo.getSelectedItem();
+				//int total = selectContigs( comp, spec1, geneset );
+				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 				cmp.repaint();
 			}
 		});
@@ -539,18 +552,29 @@ public class GeneCompare {
 								c = contigs.get( i%contigs.size() );
 							}
 							Tegeval tv = c.tlist.get(k-loc);
-							int r;
-							if( geneset.table.getModel() == geneset.groupModel ) {
-								int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
-								r = geneset.table.convertRowIndexToView(u);
-								geneset.table.addRowSelectionInterval( r, r );
+							if( e.isShiftDown() ) {
+								Set<GeneGroup>	gset = new HashSet<GeneGroup>();
+								gset.add( tv.getGene().getGeneGroup() );
+								try {
+									new Neighbour().neighbourMynd( geneset, comp, genelist, gset, geneset.contigmap );
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+								break;
 							} else {
-								String spec = spec2s.get( (int)((rad-250.0)/15.0) );
-								Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
-								for( Tegeval te : ti.tset ) {
-									int u = geneset.genelist.indexOf( te.getGene() );
+								int r;
+								if( geneset.table.getModel() == geneset.groupModel ) {
+									int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
 									r = geneset.table.convertRowIndexToView(u);
 									geneset.table.addRowSelectionInterval( r, r );
+								} else {
+									String spec = spec2s.get( (int)((rad-250.0)/15.0) );
+									Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+									for( Tegeval te : ti.tset ) {
+										int u = geneset.genelist.indexOf( te.getGene() );
+										r = geneset.table.convertRowIndexToView(u);
+										geneset.table.addRowSelectionInterval( r, r );
+									}
 								}
 							}
 						}
@@ -604,6 +628,7 @@ public class GeneCompare {
 		toolbar.add( gcskewcol );
 		toolbar.add( syntcol );
 		toolbar.add( brcol );
+		toolbar.add( gapcol );
 		toolbar.add( syntgrad );
 		toolbar.add( isyntgrad );
 		
@@ -639,6 +664,9 @@ public class GeneCompare {
 		} else if( brcol.isSelected() ) {
 			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
+		} else if( gapcol.isSelected() ) {
+			String spec1 = (String)specombo.getSelectedItem();
+			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 		} else if( syntgrad.isSelected() ) {
 			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
@@ -1076,6 +1104,12 @@ public class GeneCompare {
 										Teginfo gene2s = gg.getGenes( spec2 );
 				                        for( Tegeval tv2 : gene2s.tset ) {
 				                        	color = tv2.getGCSkewColor();
+				                        	break;
+				                        }
+									} else if( gapcol.isSelected() ) {
+										Teginfo gene2s = gg.getGenes( spec2 );
+				                        for( Tegeval tv2 : gene2s.tset ) {
+				                        	color = tv2.getFlankingGapColor();
 				                        	break;
 				                        }
 									} else {
