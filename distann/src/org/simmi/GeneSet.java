@@ -587,6 +587,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					Tegeval tv = new Tegeval( lname, contig, contloc, start, stop, dir );
+					ac.setName( lname );
 					tv.setAlignedSequence( ac );
 					aas.put( lname, tv );
 					
@@ -5476,6 +5477,30 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
+	public void showSomeSequences( Component comp, List<Sequence> lseq ) {
+		JFrame frame = new JFrame();
+		frame.setSize(800, 600);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		Serifier	serifier = new Serifier();
+		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+		jf.initGui(frame);
+
+		for( Sequence seq : lseq ) {
+			serifier.addSequence(seq);
+		}
+
+		/*for( String contig : contset.keySet() ) {
+			Sequence seq = contset.get(contig);
+			serifier.addSequence(seq);
+			if (seq.getAnnotations() != null)
+				Collections.sort(seq.getAnnotations());
+		}*/
+		jf.updateView();
+
+		frame.setVisible(true);
+	}
+	
 	public void showSelectedSequences( Component comp, Set<Tegeval> tset, boolean dna ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
@@ -9027,9 +9052,7 @@ public class GeneSet extends JApplet {
 					public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
 
 					@Override
-					public void addTableModelListener(TableModelListener l) {
-						
-					}
+					public void addTableModelListener(TableModelListener l) {}
 
 					@Override
 					public void removeTableModelListener(TableModelListener l) {}
@@ -9125,8 +9148,9 @@ public class GeneSet extends JApplet {
 							int i = ctable.convertRowIndexToModel( row );
 							Contig ctg = contigs.get( i );
 							if( ctg.tlist != null ) {
-								if( ctg.isReverse() ) text.append( ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + "\n" );
-								else {
+								if( ctg.isReverse() ) {
+									text.append( ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + "\n" );
+								} else {
 									
 									if( ctg.tlist.size() > 3 ) {
 										String n0 = ctg.tlist.get(0).getGene().getGeneGroup().getCommonName();
@@ -9136,7 +9160,9 @@ public class GeneSet extends JApplet {
 										
 										text.append( n0 + " -- " + n1 + " -- " + ctg.getName() + " -- " + n_2 + " -- " + n_1 + "\n" );
 									} else if( ctg.tlist.size() > 1 ) text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + "\n" );
-									else if( ctg.tlist.size() == 1 ) text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + "\n" );
+									else if( ctg.tlist.size() == 1 ) {
+										text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + "\n" );
+									}
 								}
 							}
 						}
@@ -9252,6 +9278,31 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction showunresolved = new AbstractAction("Show unresolved genes") {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JFrame frame = new JFrame();
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				
+				Serifier serifier = new Serifier();
+				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+				jf.initGui(frame);
+				
+				for( GeneGroup gg : allgenegroups ) {
+					String commonName = gg.getCommonName();
+					if( commonName != null && (commonName.contains("contig") || commonName.contains("scaffold")) ) {
+						Tegeval tv = gg.getLongestSequence();
+						Sequence seq = tv.getAlignedSequence();
+						seq.removeGaps();
+						serifier.addSequence( seq );
+					}
+				}
+				jf.updateView();
+				frame.setVisible( true );
+			}
+		};
+		
 		JMenuBar	menubar = new JMenuBar();
 		JMenu		menu = new JMenu("Functions");
 		menu.add( genomestataction );
@@ -9277,6 +9328,7 @@ public class GeneSet extends JApplet {
 		menu.add( selectflankingaction );
 		menu.add( showflankingaction );
 		menu.add( showcontigsaction );
+		menu.add( showunresolved );
 		
 		menubar.add( menu );
 		ttopcom.add( menubar );
@@ -13988,7 +14040,7 @@ public class GeneSet extends JApplet {
 	List<JSplitPane> 				splitpaneList = new ArrayList<JSplitPane>();
 
 	JFrame 							frame = new JFrame();
-	Map<String, Contig> 			contigmap = new TreeMap<String, Contig>();
+	public Map<String, Contig> 			contigmap = new TreeMap<String, Contig>();
 	Map<String, List<Contig>>		speccontigMap = new TreeMap<String, List<Contig>>();
 	//Map<Contig, List<Tegeval>>		contigLocMap = new HashMap<Contig, List<Tegeval>>();
 	//static final List<Tegeval> 	ltv = new ArrayList<Tegeval>();
