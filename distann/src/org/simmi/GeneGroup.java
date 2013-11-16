@@ -33,6 +33,19 @@ public class GeneGroup {
 		return max;
 	}
 	
+	public Tegeval getLongestSequence() {
+		int max = 0;
+		Tegeval seltv = null;
+		for( Gene g : genes ) {
+			int unalen = g.tegeval.getAlignedSequence().getUnalignedLength();
+			if( unalen > max ) {
+				seltv = g.tegeval;
+				max = unalen;
+			}
+		}
+		return seltv;
+	}
+	
 	public List<Tegeval> getTegevals( Set<String> sortspecies ) {
 		List<Tegeval>	ltv = new ArrayList<Tegeval>();
 		

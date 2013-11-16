@@ -174,6 +174,51 @@ public class Tegeval implements Comparable<Tegeval> {
 		//if( ori == 1 ) return new Color( 1.0f, 1.0f, 1.0f );
 		return new Color( (float)Math.min( 1.0, Math.max( 0.0, 0.5+5.0*gcskew ) ), 0.5f, (float)Math.min( 1.0, Math.max( 0.0, 0.5-5.0*gcskew ) ) );
 	}
+	
+	public Color getFlankingGapColor() {
+		//if( ori == 1 ) return new Color( 1.0f, 1.0f, 1.0f );
+		
+		int i = contshort.tlist.indexOf(this);
+		if( i == 0 || i == contshort.tlist.size()-1 ) return Color.blue;
+		else if( unresolvedGap() > 0 ) return Color.red;
+		return Color.lightGray;
+	}
+	
+	public int unresolvedGap() {
+		int ret = 0;
+		int i = contshort.tlist.indexOf(this);
+		if( i == 0 ) {
+			Tegeval tv = contshort.tlist.get(i);
+			for( int m = 0; m < tv.start; m++ ) {
+				char c = contshort.seq.charAt(m);
+				if( c == 'n' || c == 'N' ) ret |= 1;
+			}
+		} else {
+			Tegeval tv = contshort.tlist.get(i);
+			Tegeval tvp = contshort.tlist.get(i-1);
+			for( int m = tvp.stop; m < tv.start; m++ ) {
+				char c = contshort.seq.charAt(m);
+				if( c == 'n' || c == 'N' ) ret |= 1;
+			}
+		}
+		
+		if( i == contshort.tlist.size()-1 ) {
+			Tegeval tv = contshort.tlist.get(i);
+			for( int m = tv.stop; m < contshort.seq.getLength(); m++ ) {
+				char c = contshort.seq.charAt(m);
+				if( c == 'n' || c == 'N' ) ret |= 2;
+			}
+		} else {
+			Tegeval tv = contshort.tlist.get(i);
+			Tegeval tvn = contshort.tlist.get(i+1);
+			for( int m = tv.stop; m < tvn.start; m++ ) {
+				char c = contshort.seq.charAt(m);
+				if( c == 'n' || c == 'N' ) ret |= 2;
+			}
+		}
+		
+		return ret;
+	}
 
 	double			gc;
 	double			gcskew;
