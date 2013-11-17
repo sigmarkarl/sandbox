@@ -488,7 +488,8 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		String lname = null;
 		String prevline = null;
-		Sequence ac = new Sequence( null, null );
+		//Sequence ac = new Sequence( null, null );
+		Tegeval tv = new Tegeval();
 		int start = 0;
 		int stop = -1;
 		int dir = 0;
@@ -498,7 +499,7 @@ public class GeneSet extends JApplet {
 		//Tegeval preval = null;
 		while (line != null) {
 			if (line.startsWith(">")) {
-				if (ac.getLength() > 0) {
+				if (tv.getSequenceLength() > 0) {
 					String contigstr = null;
 					String contloc = null;
 					
@@ -586,9 +587,9 @@ public class GeneSet extends JApplet {
 						 contig = new Contig( contigstr );
 					}
 					
-					Tegeval tv = new Tegeval( lname, contig, contloc, start, stop, dir );
-					ac.setName( lname );
-					tv.setAlignedSequence( ac );
+					tv.init( lname, contig, contloc, start, stop, dir );
+					//ac.setName( lname );
+					//tv.setAlignedSequence( ac );
 					aas.put( lname, tv );
 					
 					contig.add( tv );
@@ -680,7 +681,7 @@ public class GeneSet extends JApplet {
 					// aass.add( new Aas(name, ac) );
 				}
 
-				ac = new Sequence( null, null );
+				tv = new Tegeval();
 				String cont = line.substring(1) + "";
 				String[] split = cont.split("#");
 				lname = split[0].trim().replace(".fna", "");
@@ -707,13 +708,13 @@ public class GeneSet extends JApplet {
 				 * name.indexOf('_', i1+1); name = name.substring(0,i1) +
 				 * name.substring(i2); }
 				 */
-			} else ac.append(line.trim() + "");
+			} else tv.append(line.trim() + "");
 			// else trimSubstring(ac, line);
 			line = br.readLine();
 			// br.re
 		}
 
-		if (ac.getLength() > 0) {
+		if (tv.getSequenceLength() > 0) {
 			String contigstr = null;
 			String contloc = null;
 			
@@ -775,8 +776,8 @@ public class GeneSet extends JApplet {
 			} else {
 				 contig = new Contig( contigstr );
 			}
-			Tegeval tv = new Tegeval( lname, contig, contloc, start, stop, dir );
-			tv.setAlignedSequence( ac );
+			tv.init( lname, contig, contloc, start, stop, dir );
+			//tv.setAlignedSequence( ac );
 			aas.put(lname, tv );
 			
 			contig.add( tv );
@@ -795,7 +796,7 @@ public class GeneSet extends JApplet {
 			//ti.add( tv );
 			gene.tegeval = tv;;
 		}
-		ac = null;
+		tv = null;
 		// fw.close();
 
 		/*
@@ -6913,7 +6914,7 @@ public class GeneSet extends JApplet {
 					int total = 0;
 					for( Contig ct : lcont ) {
 						total += ct.getLength();
-						len += ct.seq.getGCCount();
+						len += ct.getGCCount();
 						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
 							len += tv.getLength();
 						}*/
@@ -8300,7 +8301,7 @@ public class GeneSet extends JApplet {
 					int total = 0;
 					for( Contig ct : lcont ) {
 						total += ct.getLength();
-						len += ct.seq.getGCCount();
+						len += ct.getGCCount();
 						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
 							len += tv.getLength();
 						}*/
@@ -9177,11 +9178,11 @@ public class GeneSet extends JApplet {
 							Contig ctg = contigs.get( i );
 							Sequence seq = new Sequence(ctg.getName(), null);
 							if( ctg.getLength() <= 200 ) {
-								seq.append( ctg.seq.sb );
+								seq.append( ctg.sb );
 							} else {
-								seq.append( ctg.seq.sb.substring(0, 100) );
+								seq.append( ctg.sb.substring(0, 100) );
 								seq.append( "-----" );
-								seq.append( ctg.seq.sb.substring(ctg.getLength()-100, ctg.getLength()) );
+								seq.append( ctg.sb.substring(ctg.getLength()-100, ctg.getLength()) );
 							}
 							if( ctg.isReverse() ) {
 								seq.reverse();
@@ -9270,7 +9271,7 @@ public class GeneSet extends JApplet {
 				for( int r : rr ) {
 					int i = table.convertRowIndexToModel( r );
 					Contig ctg = allcontigs.get( i );
-					serifier.addSequence( ctg.seq );
+					serifier.addSequence( ctg );
 				}
 				
 				jf.updateView();
@@ -11649,7 +11650,7 @@ public class GeneSet extends JApplet {
 						for (Contig contig : contset) {
 							fw.append(">" + contig + "\n");
 							if (contigmap.containsKey(contig)) {
-								StringBuilder dna = contigmap.get(contig).getSequence().getStringBuilder();
+								StringBuilder dna = contigmap.get(contig).getStringBuilder();
 								for (int i = 0; i < dna.length(); i += 70) {
 									fw.append(dna.substring(i, Math.min(i + 70, dna.length())) + "\n");
 								}
@@ -11689,7 +11690,7 @@ public class GeneSet extends JApplet {
 						seq = contset.get(contig);
 					} else {
 						if( contigmap.containsKey(contig) ) {
-							StringBuilder dna = contigmap.get(contig).getSequence().getStringBuilder();
+							StringBuilder dna = contigmap.get(contig).getStringBuilder();
 							seq = new Sequence(contig.getName(), dna, serifier.mseq);
 						} else
 							seq = new Sequence(contig.getName(), serifier.mseq);
@@ -11775,8 +11776,7 @@ public class GeneSet extends JApplet {
 						Tegeval tv = g.tegeval;
 						Contig contig = tv.getContshort();
 						contigs.add( contig );
-						Sequence seq = contig.getSequence();
-						Annotation a = seq.new Annotation(seq, contig.getName(), Color.red, serifier.mann);
+						Annotation a = contig.new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 						a.setStart(tv.start);
 						a.setStop(tv.stop);
 						a.setOri(tv.ori);
@@ -11787,9 +11787,8 @@ public class GeneSet extends JApplet {
 						GeneGroup gg = allgenegroups.get( cr );
 						for( Tegeval tv : gg.getTegevals() ) {
 							Contig contig = tv.getContshort();
-							contigs.add( contig );
-							Sequence seq = contig.getSequence();
-							Annotation a = seq.new Annotation(seq, contig.getName(), Color.red, serifier.mann);
+							contigs.add( contig );							
+							Annotation a = contig.new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 							a.setStart(tv.start);
 							a.setStop(tv.stop);
 							a.setOri(tv.ori);
@@ -11805,11 +11804,10 @@ public class GeneSet extends JApplet {
 						//for (String sp : g.species.keySet()) {
 				}
 
-				for( Contig contig : contigs ) {
-					Sequence seq = contig.getSequence();
-					serifier.addSequence(seq);
-					if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());
+				for( Contig contig : contigs ) {;
+					serifier.addSequence( contig );
+					if(contig.getAnnotations() != null)
+						Collections.sort(contig.getAnnotations());
 				}
 				jf.updateView();
 
