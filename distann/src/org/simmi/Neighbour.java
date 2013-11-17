@@ -556,7 +556,7 @@ public class Neighbour {
 													GeneGroup gg = next.getGene().getGeneGroup();
 													List<Tegeval> ltv = gg.getTegevals( spec1 );
 													if( ltv != null && ltv.size() > 0 ) {
-														rc = GeneCompare.blosumColor( ltv.get(0).seq, next.getSpecies(), gg, blosumap, false );
+														rc = GeneCompare.blosumColor( ltv.get(0), next.getSpecies(), gg, blosumap, false );
 													} else {
 														rc = Color.white;
 													}
@@ -796,7 +796,7 @@ public class Neighbour {
 												GeneGroup gg = prev.getGene().getGeneGroup();
 												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
-													rc = GeneCompare.blosumColor( ltv.get(0).seq, prev.getSpecies(), gg, blosumap, false );
+													rc = GeneCompare.blosumColor( ltv.get(0), prev.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
@@ -995,7 +995,7 @@ public class Neighbour {
 												GeneGroup gg = next.getGene().getGeneGroup();
 												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
-													rc = GeneCompare.blosumColor( ltv.get(0).seq, next.getSpecies(), gg, blosumap, false );
+													rc = GeneCompare.blosumColor( ltv.get(0), next.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
@@ -1740,7 +1740,7 @@ public class Neighbour {
 									
 									if( stop > start && start >= 0 && stop < tv2.getContshort().getLength() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
-										seq.append( prev.getContshort().seq.sb.substring(start, stop) );
+										seq.append( prev.getContshort().sb.substring(start, stop) );
 										lseq.add( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == -1 ) {
@@ -1749,7 +1749,7 @@ public class Neighbour {
 									
 									if( stop > start && start >= 0 && stop < tv2.getContshort().getLength() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
-										seq.append( tv2.getContshort().seq.sb.substring(start, stop) );
+										seq.append( tv2.getContshort().sb.substring(start, stop) );
 										lseq.add( seq );
 									}
 								}
@@ -1943,20 +1943,20 @@ public class Neighbour {
 					if( r != -1 ) i = table.convertRowIndexToModel( r );
 					if( i != -1 ) {
 						if( forward.isSelected() ) {
-							Tegeval con = cont.getEnd().getNext();
+							Tegeval con = cont.getEndTegeval().getNext();
 							while( con != null ) {
 								cont = con.getContshort();
-								con = cont.isReverse() ? cont.getStart().getPrevious() : cont.getEnd().getNext();
+								con = cont.isReverse() ? cont.getStartTegeval().getPrevious() : cont.getEndTegeval().getNext();
 								
 								if( con != null && con.getContshort().equals( cont ) ) {
 									break;
 								}
 							}
 						} else {
-							Tegeval con = cont.getStart().getPrevious();
+							Tegeval con = cont.getStartTegeval().getPrevious();
 							while( con != null ) {
 								cont = con.getContshort();
-								con = cont.isReverse() ? cont.getStart().getPrevious() : cont.getEnd().getNext();
+								con = cont.isReverse() ? cont.getStartTegeval().getPrevious() : cont.getEndTegeval().getNext();
 								
 								if( con != null && con.getContshort().equals( cont ) ) {
 									break;
