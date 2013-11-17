@@ -174,6 +174,17 @@ public class GeneGroup {
 			if( ret == null ) ret = name;
 			else if( (ret.contains("contig") || ret.contains("scaffold")) || !(name.contains("contig") || name.contains("scaffold") || name.contains("unnamed") || name.contains("hypot")) ) ret = name;
 		}
+		
+		/*if( ret == null || ret.length() == 0 ) {
+			System.err.println();
+			
+			for( Gene g : genes ) {
+				String name = g.getName();
+				if( ret == null ) ret = name;
+				else if( (ret.contains("contig") || ret.contains("scaffold")) || !(name.contains("contig") || name.contains("scaffold") || name.contains("unnamed") || name.contains("hypot")) ) ret = name;
+			}
+		}*/
+		
 		return ret;
 	}
 	
