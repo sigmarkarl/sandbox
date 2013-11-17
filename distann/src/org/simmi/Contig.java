@@ -6,9 +6,9 @@ import java.util.List;
 
 import org.simmi.shared.Sequence;
 
-class Contig implements Comparable<Contig> {
+public class Contig extends Sequence {
 	public Contig(String name ) {
-		seq = new Sequence( name, null );
+		super( name, null );
 		loc = 0.0;
 	}
 	
@@ -66,7 +66,7 @@ class Contig implements Comparable<Contig> {
 	}*/
 	
 	public char charAt( int i ) {
-		return reverse ? seq.revCompCharAt( i ) : seq.charAt( i );
+		return reverse ? super.revCompCharAt( i ) : super.charAt( i );
 	}
 	
 	public int getGeneCount() {
@@ -76,15 +76,7 @@ class Contig implements Comparable<Contig> {
 	
 	public Contig( String name, StringBuilder sb ) {
 		this( name );
-		seq.setSequenceString( sb );
-	}
-	
-	public String toString() {
-		return seq.getName();
-	}
-	
-	public int getLength() {
-		return seq.getLength();
+		setSequenceString( sb );
 	}
 	
 	public Tegeval getNext( Tegeval from ) {
@@ -126,16 +118,8 @@ class Contig implements Comparable<Contig> {
 		return other instanceof Contig && name.equals( ((Contig)other).toString() );
 	}*/
 	
-	public String getName() {
-		return seq.getName();
-	}
-	
 	public StringBuilder getSequenceString() {
-		return seq.getStringBuilder();
-	}
-	
-	public Sequence getSequence() {
-		return seq;
+		return getStringBuilder();
 	}
 	
 	public Tegeval getFirst() {
@@ -157,19 +141,19 @@ class Contig implements Comparable<Contig> {
 
 	double 			loc;
 	int 			size;
-	Sequence		seq;
+	//Sequence		seq;
 	boolean			reverse = false;
 	Contig			next;
 	Contig			prev;
 	List<Tegeval>	tlist;
 	List<Contig>	partof;
 	
-	public Tegeval getEnd() {
+	public Tegeval getEndTegeval() {
 		if( tlist != null ) return tlist.get( tlist.size()-1 );
 		return null;
 	}
 	
-	public Tegeval getStart() {
+	public Tegeval getStartTegeval() {
 		if( tlist != null ) return tlist.get( 0 );
 		return null;
 	}
@@ -258,7 +242,7 @@ class Contig implements Comparable<Contig> {
 	}
 	
 	@Override
-	public int compareTo(Contig o) {
+	public int compareTo(Sequence o) {
 		if( partof != null ) {
 			return partof.indexOf( this ) - partof.indexOf( o );
 		}

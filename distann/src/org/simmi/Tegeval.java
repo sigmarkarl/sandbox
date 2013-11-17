@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import org.simmi.shared.Sequence;
 
-public class Tegeval implements Comparable<Tegeval> {
+public class Tegeval extends Sequence {
 	public Tegeval(Gene gene, String tegund, double evalue, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
 		this( contig, shortcontig, locontig, sta, sto, orient );
 		
@@ -16,6 +16,14 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public Tegeval( String contig, Contig shortcontig, String locontig, int sta, int sto, int orient ) {
+		init( contig, shortcontig, locontig, sta, sto, orient );
+	}
+	
+	public Tegeval() {
+		super();
+	}
+	
+	public void init( String contig, Contig shortcontig, String locontig, int sta, int sto, int orient ) {
 		cont = contig;
 		contshort = shortcontig;
 		contloc = locontig;
@@ -44,7 +52,7 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public void setAlignedSequence( Sequence alseq ) {
-		seq = alseq;
+		//this.sb = alseq;
 	}
 	
 	public void setTegund( String teg ) {
@@ -68,28 +76,32 @@ public class Tegeval implements Comparable<Tegeval> {
 	}
 	
 	public String getSubstring( int u, int e ) {
-		return contshort.seq.getSubstring(start+u, start+e, ori);
+		return contshort.getSubstring(start+u, start+e, ori);
 	}
 	
 	public String getSequence() {
-		return contshort.seq.getSubstring(start, stop, ori);
+		return contshort.getSubstring(start, stop, ori);
 	}
 	
 	public Sequence getAlignedSequence() {
-		return seq;
+		return this;
 	}
 	
 	public StringBuilder getProteinSubsequence( int u, int e ) {
-		return contshort.seq.getProteinSequence( start+u, start+e, ori );
+		return contshort.getProteinSequence( start+u, start+e, ori );
 	}
 	
 	public StringBuilder getProteinSequence() {
-		StringBuilder ret = contshort.seq.getProteinSequence( start, stop, ori );
+		StringBuilder ret = contshort.getProteinSequence( start, stop, ori );
 		return ret;
 	}
 	
 	public int getLength() {
 		return stop - start;
+	}
+	
+	public int getSequenceLength() {
+		return super.getLength();
 	}
 	
 	public int getProteinLength() {
@@ -190,29 +202,29 @@ public class Tegeval implements Comparable<Tegeval> {
 		if( i == 0 ) {
 			Tegeval tv = contshort.tlist.get(i);
 			for( int m = 0; m < tv.start; m++ ) {
-				char c = contshort.seq.charAt(m);
+				char c = contshort.charAt(m);
 				if( c == 'n' || c == 'N' ) ret |= 1;
 			}
 		} else {
 			Tegeval tv = contshort.tlist.get(i);
 			Tegeval tvp = contshort.tlist.get(i-1);
 			for( int m = tvp.stop; m < tv.start; m++ ) {
-				char c = contshort.seq.charAt(m);
+				char c = contshort.charAt(m);
 				if( c == 'n' || c == 'N' ) ret |= 1;
 			}
 		}
 		
 		if( i == contshort.tlist.size()-1 ) {
 			Tegeval tv = contshort.tlist.get(i);
-			for( int m = tv.stop; m < contshort.seq.getLength(); m++ ) {
-				char c = contshort.seq.charAt(m);
+			for( int m = tv.stop; m < contshort.getLength(); m++ ) {
+				char c = contshort.charAt(m);
 				if( c == 'n' || c == 'N' ) ret |= 2;
 			}
 		} else {
 			Tegeval tv = contshort.tlist.get(i);
 			Tegeval tvn = contshort.tlist.get(i+1);
 			for( int m = tv.stop; m < tvn.start; m++ ) {
-				char c = contshort.seq.charAt(m);
+				char c = contshort.charAt(m);
 				if( c == 'n' || c == 'N' ) ret |= 2;
 			}
 		}
@@ -227,7 +239,7 @@ public class Tegeval implements Comparable<Tegeval> {
 	String 			cont;
 	Contig 			contshort;
 	String 			contloc;
-	Sequence	 	seq;
+	//Sequence	 	seq;
 	//StringBuilder 	dna;
 	int 			start;
 	int 			stop;
@@ -273,18 +285,21 @@ public class Tegeval implements Comparable<Tegeval> {
 	public static boolean locsort = true;
 
 	@Override
-	public int compareTo(Tegeval o) {
-		if( locsort ) {
-			int ret = contshort.compareTo(o.contshort);
-			/*
-			 * if( o.contshort != null || o.contshort.length() < 2 ) { ret =
-			 * contshort.compareTo(o.contshort); } else {
-			 * System.err.println(); }
-			 */
-			return ret == 0 ? start - o.start : ret;
-		} else {
-			int comp = Double.compare(eval, o.eval);
-			return comp == 0 ? teg.compareTo(o.teg) : comp;
-		}
+	public int compareTo(Sequence o) {
+		if( o instanceof Tegeval ) {
+			Tegeval tv = (Tegeval)o;
+			if( locsort ) {
+				int ret = contshort.compareTo(tv.contshort);
+				/*
+				 * if( o.contshort != null || o.contshort.length() < 2 ) { ret =
+				 * contshort.compareTo(o.contshort); } else {
+				 * System.err.println(); }
+				 */
+				return ret == 0 ? start - o.start : ret;
+			} else {
+				int comp = Double.compare(eval, tv.eval);
+				return comp == 0 ? teg.compareTo(tv.teg) : comp;
+			}
+		} else return super.compareTo(o);
 	}
 }
