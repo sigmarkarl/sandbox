@@ -482,6 +482,42 @@ public class GeneSet extends JApplet {
 		return map;
 	}
 
+	public Map<String,String> loadunresolvedmap( Reader rd ) throws IOException {
+		Map<String,String>	map = new HashMap<String,String>();
+		
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		String current = null;
+		String id = null;
+		while( line != null ) {
+			if( line.startsWith("Query=") ) {
+				current = line.substring(7);
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					current += line;
+					line = br.readLine();
+				}
+				current = current.trim();
+				id = current;
+			} else if( line.startsWith(">") ) {
+				String val = line.substring(1);
+				line = br.readLine();
+				while( !line.startsWith("Length") ) {
+					val += line;
+					line = br.readLine();
+				}
+				val = val.trim();
+				int n = val.indexOf(']');
+				
+				map.put( id, val.substring(0, n+1) );
+			}
+			line = br.readLine();
+		}
+		//fr.close();
+		
+		return map;
+	}
+	
 	Set<String>	mu = new HashSet<String>();
 	private void loci2aasequence(Reader rd, Map<String,Gene> refmap) throws IOException {
 		BufferedReader br = new BufferedReader(rd);
@@ -545,10 +581,6 @@ public class GeneSet extends JApplet {
 							contloc = n < contigstr.length() ? contigstr.substring(n+1) : "";
 						}
 						
-						if( id.contains("YP_445980") ) {
-							System.err.println( id );
-						}
-						
 						if( prevline != null ) {
 							i = prevline.lastIndexOf('#');
 							if( i != -1 ) {
@@ -604,10 +636,23 @@ public class GeneSet extends JApplet {
 						}
 					}
 					
+					String newid = id;
+					if( unresolvedmap.containsKey(id) ) {
+						String map = unresolvedmap.get(id);
+						int f = map.indexOf('|');
+						int l = map.indexOf('|', f+1);
+						int n = map.indexOf('[', l+1);
+						int e = map.indexOf(']', n+1);
+						if( l != -1 ) newid = map.substring(f+1,l);
+						if( n != -1 ) name = map.substring(l+1,n).trim();
+						if( e != -1 ) origin = map.substring(n+1,e).trim();
+					}
+					
 					Gene gene = new Gene( null, id, name, origin );
+					gene.refid = newid;
 					gene.setIdStr( idstr );
 					gene.allids = new HashSet<String>();
-					gene.allids.add( id );
+					gene.allids.add( newid );
 					if( idstr != null ) {
 						int ec = idstr.indexOf("EC");
 						if( ec != -1 ) {
@@ -783,9 +828,22 @@ public class GeneSet extends JApplet {
 			contig.add( tv );
 			// aass.add( new Aas(name, ac, start, stop, dir) );
 			
+			String newid = id;
+			if( unresolvedmap.containsKey(id) ) {
+				String map = unresolvedmap.get(id);
+				int f = map.indexOf('|');
+				int l = map.indexOf('|', f+1);
+				int n = map.indexOf('[', l+1);
+				int e = map.indexOf(']', n+1);
+				if( l != -1 ) newid = map.substring(f+1,l);
+				if( n != -1 ) name = map.substring(l+1,n).trim();
+				if( e != -1 ) origin = map.substring(n+1,e).trim();
+			}
+			
 			Gene gene = new Gene( null, id, name, origin );
+			gene.refid = newid;
 			gene.allids = new HashSet<String>();
-			gene.allids.add( id );
+			gene.allids.add( newid );
 			//gene.species = new HashMap<String, Teginfo>();
 			refmap.put(id, gene);
 			
@@ -794,7 +852,7 @@ public class GeneSet extends JApplet {
 			
 			//Teginfo ti = new Teginfo();
 			//ti.add( tv );
-			gene.tegeval = tv;;
+			gene.tegeval = tv;
 		}
 		tv = null;
 		// fw.close();
@@ -12784,6 +12842,7 @@ public class GeneSet extends JApplet {
 	List<String>							specList = new ArrayList<String>();
 	byte[] 									zipf;
 	Map<String,Cog>							cogmap = new HashMap<String,Cog>();
+	Map<String,String>						unresolvedmap = new HashMap<String,String>();
 	Map<String,String>						cazymap = new HashMap<String,String>();
 	
 	/*private Map<String,String> loadCog() {
@@ -12924,11 +12983,20 @@ public class GeneSet extends JApplet {
 			Set<String> poddur = new HashSet<String>();
 			Map<String, Gene> locgene = new HashMap<String, Gene>();
 			
+			ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
+			ZipEntry ze = zipm.getNextEntry();
+			while( ze != null ) {
+				String zname = ze.getName();
+				if( zname.equals("unresolved.blastout") ) {
+					unresolvedmap = loadunresolvedmap( new InputStreamReader( zipm ) );
+				}
+				ze = zipm.getNextEntry();
+			}
 			//List<Set<String>> uclusterlist = null;
 			int zcount = 0;
 			while( zcount < 3 ) {
-				ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
-				ZipEntry ze = zipm.getNextEntry();
+				zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
+				ze = zipm.getNextEntry();
 				while( ze != null ) {
 					String zname = ze.getName();
 					if( zcount == 0 && (zname.equals("allthermus.fna") || zname.equals("allglobus.fna") || zname.equals("allrhodo.fna")) ) {
@@ -13206,7 +13274,7 @@ public class GeneSet extends JApplet {
 			//is = GeneSet.class.getResourceAsStream("/rrna.fasta");
 			//InputStream tis = //GeneSet.class.getResourceAsStream("/trna.txt"); //GeneSet.class.getResourceAsStream("/trna_sub.txt");
 			ZipInputStream zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-			ZipEntry ze = zipin.getNextEntry();
+			ze = zipin.getNextEntry();
 			while( ze != null ) {
 				if( ze.getName().equals("trnas.txt") ) i  = loadTrnas( rnamap, new InputStreamReader( zipin ), i );
 				else if( ze.getName().equals("rrnas.fasta") ) i = loadRrnas( rnamap, new InputStreamReader( zipin ), i );
