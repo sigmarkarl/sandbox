@@ -8,6 +8,7 @@ public class Gene {
 		this.species = origin;
 		this.gg = gg;
 		this.refid = id;
+		this.id = id;
 		// this.setAa( aa );
 		
 		//groupIdx = -10;
@@ -104,6 +105,7 @@ public class Gene {
 	String name;
 	String tag;
 	//String origin;
+	String id;
 	String refid;
 	String idstr;
 	Set<String> allids;
