@@ -22,7 +22,7 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.typedarrays.client.Float32ArrayNative;
-import com.google.gwt.typedarrays.client.Uint8ArrayNative;
+import com.google.gwt.typedarrays.client.Int16ArrayNative;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -376,7 +376,7 @@ public class Starwars implements EntryPoint {
 	WebGLBuffer svb1, svb, vb, nb, tb, ib;
 	public void drawStuff( WebGLRenderingContext gl, JavaScriptObject g, int jobj, WebGLTexture spiritTexture ) {
 		gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
-        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
+        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_SHORT, 0);
         
         //gl.enable( WebGLRenderingContext.BLEND );
 		//gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
@@ -924,7 +924,7 @@ public class Starwars implements EntryPoint {
 		tfa.set(6, 1.0f);
 		tfa.set(7, 0.0f);
 	
-		final Uint8ArrayNative ifa = Uint8ArrayNative.create(6);
+		final Int16ArrayNative ifa = Int16ArrayNative.create(6);
 		ifa.set(0, 0);
 		ifa.set(1, 1);
 		ifa.set(2, 2);
@@ -1059,7 +1059,7 @@ public class Starwars implements EntryPoint {
 				
 				setBuffers( gl, svb, nb, tb, ib, false );
 		        gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
-		        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
+		        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_SHORT, 0);
 		        drawStuff( gl, g, 0, textures.get(0) );
 				//drawStuff(Lelemental/html/WebGLRenderingContext;Lcom/google/gwt/core/client/JavaScriptObject;ILelemental/html/WebGLTexture;Lelemental/html/WebGLTexture;)(gl, g, g.box.numIndices, spiritTexture, starfield);
 				
@@ -1131,7 +1131,7 @@ public class Starwars implements EntryPoint {
 		setBuffers( gl, svb, nb, tb, ib, false );
 		//gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, spiritTexture);
         gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, starfield);
-        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_BYTE, 0);
+        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, WebGLRenderingContext.UNSIGNED_SHORT, 0);
         
         gl.enable( WebGLRenderingContext.BLEND );
 		//gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
