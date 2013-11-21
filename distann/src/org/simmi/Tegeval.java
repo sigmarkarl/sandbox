@@ -101,7 +101,7 @@ public class Tegeval extends Sequence {
 	}
 	
 	public int getSequenceLength() {
-		return super.getLength();
+		return super.length();
 	}
 	
 	public int getProteinLength() {
@@ -216,7 +216,7 @@ public class Tegeval extends Sequence {
 		
 		if( i == contshort.tlist.size()-1 ) {
 			Tegeval tv = contshort.tlist.get(i);
-			for( int m = tv.stop; m < contshort.getLength(); m++ ) {
+			for( int m = tv.stop; m < contshort.length(); m++ ) {
 				char c = contshort.charAt(m);
 				if( c == 'n' || c == 'N' ) ret |= 2;
 			}
@@ -295,7 +295,7 @@ public class Tegeval extends Sequence {
 				 * contshort.compareTo(o.contshort); } else {
 				 * System.err.println(); }
 				 */
-				return ret == 0 ? start - o.start : ret;
+				return ret == 0 ? start - tv.start : ret;
 			} else {
 				int comp = Double.compare(eval, tv.eval);
 				return comp == 0 ? teg.compareTo(tv.teg) : comp;

@@ -722,7 +722,7 @@ public class GeneSorter {
 					if (columnIndex == 2) {
 						//if (c.count > 0)
 						//	return (int) ((c.loc) / c.count);
-						return c.getLength();
+						return c.length();
 					} else if (columnIndex == 1) {
 						//String cname = c.getName();
 						//int i = cname.indexOf('_');
