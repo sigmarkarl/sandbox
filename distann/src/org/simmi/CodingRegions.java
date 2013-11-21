@@ -124,7 +124,7 @@ public class CodingRegions {
 		
 		int total = 0;
 		for( Contig ctg : contigs ) {
-			total += ctg.getLength();
+			total += ctg.length();
 		}
 		System.err.println( total );
 		
@@ -158,7 +158,7 @@ public class CodingRegions {
 				g2.rotate( -theta );
 	            g2.translate( -w/2, -h/2 );
 			}
-			count += ctg.getLength();
+			count += ctg.length();
 		}
 		
 		g2.setColor( Color.black );

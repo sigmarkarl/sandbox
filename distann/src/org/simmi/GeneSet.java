@@ -624,6 +624,7 @@ public class GeneSet extends JApplet {
 					//tv.setAlignedSequence( ac );
 					aas.put( lname, tv );
 					
+					//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
 					contig.add( tv );
 					
 					String idstr = null;
@@ -693,9 +694,8 @@ public class GeneSet extends JApplet {
 						}
 					}
 					//gene.species = new HashMap<String, Teginfo>();
-					if( refmap.put(id, gene) != null ) {
-						System.err.println();
-					}
+					if( newid.equals(id) ) refmap.put( newid, gene );
+					refmap.put(id, gene);
 					
 					tv.setGene( gene );
 					tv.setTegund( origin );
@@ -845,6 +845,7 @@ public class GeneSet extends JApplet {
 			gene.allids = new HashSet<String>();
 			gene.allids.add( newid );
 			//gene.species = new HashMap<String, Teginfo>();
+			if( newid.equals(id) ) refmap.put( newid, gene );
 			refmap.put(id, gene);
 			
 			tv.setGene( gene );
@@ -5448,7 +5449,7 @@ public class GeneSet extends JApplet {
 				specset.addAll( gg.getSpecies() );
 				
 				for( Tegeval tv : gg.getTegevals() ) {
-					int l = tv.getAlignedSequence().getLength();
+					int l = tv.getAlignedSequence().length();
 					if( l > max ) max = l;
 				}
 				genegroups.put( gg, max );
@@ -5461,7 +5462,7 @@ public class GeneSet extends JApplet {
 				GeneGroup gg = g.getGeneGroup();
 				specset.addAll( gg.getSpecies() );
 				for( Tegeval tv : gg.getTegevals() ) {
-					int l = tv.getAlignedSequence().getLength();
+					int l = tv.getAlignedSequence().length();
 					if( l > max ) max = l;
 				}
 				genegroups.put( gg, max );
@@ -6466,6 +6467,13 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction syntenygradientaction = new AbstractAction("Synteny gradient") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new SyntGrad().syntGrad( GeneSet.this );
+			}
+		};
+		
 		AbstractAction codregaction = new AbstractAction("Coding regions") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -6944,7 +6952,7 @@ public class GeneSet extends JApplet {
 					List<Contig> lcont = speccontigMap.get(spec);
 					int len = 0;
 					for( Contig ct : lcont ) {
-						len += ct.getLength();
+						len += ct.length();
 					}
 					fw.write( "<td>"+len+"</td>" );
 					fw.write( "<td>100%</td>" );
@@ -6955,7 +6963,7 @@ public class GeneSet extends JApplet {
 					int len = 0;
 					int total = 0;
 					for( Contig ct : lcont ) {
-						total += ct.getLength();
+						total += ct.length();
 						if( ct.tlist != null ) for( Tegeval tv : ct.tlist ) {
 							len += tv.getLength();
 						}
@@ -6971,7 +6979,7 @@ public class GeneSet extends JApplet {
 					int len = 0;
 					int total = 0;
 					for( Contig ct : lcont ) {
-						total += ct.getLength();
+						total += ct.length();
 						len += ct.getGCCount();
 						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
 							len += tv.getLength();
@@ -8358,7 +8366,7 @@ public class GeneSet extends JApplet {
 					int len = 0;
 					int total = 0;
 					for( Contig ct : lcont ) {
-						total += ct.getLength();
+						total += ct.length();
 						len += ct.getGCCount();
 						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
 							len += tv.getLength();
@@ -8604,7 +8612,7 @@ public class GeneSet extends JApplet {
 				final Graphics2D g2 = bimg.createGraphics();
 				g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 				for( Contig ctg : selclist ) {
-					size += ctg.getLength();
+					size += ctg.length();
 				}
 				g2.setColor( Color.white );
 				g2.fillRect( 0, 0, 1024, 1024 );
@@ -8693,7 +8701,7 @@ public class GeneSet extends JApplet {
 							Contig sctg2 = null;
 							for( Contig ctg : selclist ) {
 								if( tot > val ) break;
-								tot += ctg.getLength();
+								tot += ctg.length();
 								sctg2 = ctg;
 							}
 							
@@ -8721,7 +8729,7 @@ public class GeneSet extends JApplet {
 						int tot = 0;
 						for( Contig ctg : selclist ) {
 							if( tot > val ) break;
-							tot += ctg.getLength();
+							tot += ctg.length();
 							sctg = ctg;
 						}
 						
@@ -9235,12 +9243,12 @@ public class GeneSet extends JApplet {
 							int i = ctable.convertRowIndexToModel( row );
 							Contig ctg = contigs.get( i );
 							Sequence seq = new Sequence(ctg.getName(), null);
-							if( ctg.getLength() <= 200 ) {
+							if( ctg.length() <= 200 ) {
 								seq.append( ctg.sb );
 							} else {
 								seq.append( ctg.sb.substring(0, 100) );
 								seq.append( "-----" );
-								seq.append( ctg.sb.substring(ctg.getLength()-100, ctg.getLength()) );
+								seq.append( ctg.sb.substring(ctg.length()-100, ctg.length()) );
 							}
 							if( ctg.isReverse() ) {
 								seq.reverse();
@@ -9381,6 +9389,7 @@ public class GeneSet extends JApplet {
 		menu.add( cogaction );
 		menu.add( genexyplotaction );
 		menu.add( compareplotaction );
+		menu.add( syntenygradientaction );
 		menu.add( codregaction );
 		menu.add( fetchcoreaction );
 		menu.add( loadcontiggraphaction );
@@ -12210,7 +12219,7 @@ public class GeneSet extends JApplet {
 			}
 			
 			double horn = total*2.0*Math.PI/size;
-			double horn2 = (total+ctg.getLength())*2.0*Math.PI/size;
+			double horn2 = (total+ctg.length())*2.0*Math.PI/size;
 			
 			int x1 = (int)(512.0+(384.0-100.0)*Math.cos( horn ));
 			int y1 = (int)(512.0+(384.0-100.0)*Math.sin( horn ));
@@ -12235,13 +12244,13 @@ public class GeneSet extends JApplet {
 				g2.translate( -xoff, -yoff );
 			}
 			
-			for( int i = 0; i < ctg.getLength(); i+=500 ) {
+			for( int i = 0; i < ctg.length(); i+=500 ) {
 				int gcount = 0;
 				int ccount = 0;
 				int acount = 0;
 				int tcount = 0;
-				for( int k = i; k < Math.min( ctg.getLength(), i+10000 ); k++ ) {
-					char chr = k-5000 < 0 ? ctg.charAt( ctg.getLength()+(k-5000) ) : ctg.charAt(k-5000);
+				for( int k = i; k < Math.min( ctg.length(), i+10000 ); k++ ) {
+					char chr = k-5000 < 0 ? ctg.charAt( ctg.length()+(k-5000) ) : ctg.charAt(k-5000);
 					if( chr == 'g' || chr == 'G' ) gcount++;
 					else if( chr == 'c' || chr == 'C' ) ccount++;
 					else if( chr == 'a' || chr == 'A' ) acount++;
@@ -12274,7 +12283,7 @@ public class GeneSet extends JApplet {
 					g2.drawLine(x1, y1, x2, y2);
 				}
 			}
-			total += ctg.getLength();
+			total += ctg.length();
 		}
 		
 		g2.setColor( Color.black );

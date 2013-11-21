@@ -116,7 +116,20 @@ public class Neighbour {
 						bil = (int)(neighbourscale*bil/3);
 					}
 					xoff += len+bil;
-					next = next.getNext();
+					
+					if( thenext == null ) {
+						int k = next.getContshort().partof.indexOf( next.getContshort() );
+						k = (k+1)%next.getContshort().partof.size();
+						Contig c = next.getContshort().partof.get(k);
+						while( c.tlist == null || c.tlist.size() == 0 ) {
+							k = (k+1)%next.getContshort().partof.size();
+							c = next.getContshort().partof.get(k);
+						}
+						if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+						else thenext = c.tlist.get(0);
+					}
+					
+					next = thenext;
 				}
 				
 				Tegeval prev = te.getPrevious();
@@ -446,7 +459,8 @@ public class Neighbour {
 					Tegeval te = getSelectedTe(p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight());
 					if( te != null ) {
 						Gene g = te.getGene();
-						return "<html>"+(g.getName().equals( g.refid ) ? g.getGeneGroup().getCommonName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
+						GeneGroup gg = g.getGeneGroup();
+						if( gg != null ) return "<html>"+(g.getName().equals( g.refid ) ? gg.getCommonName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
 					}
 					return null;
 				}
@@ -458,21 +472,23 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						for( String spec2 : gg.getSpecies() ) {
 							final Collection<Contig> contigs2 = geneset.speccontigMap.get( spec2 );
-							Teginfo gene2s = gg.getGenes( spec2 );
-							for( Tegeval tv2 : gene2s.tset ) {
-								int count2 = 0;
-								for( Contig ctg2 : contigs2 ) {
-									if( ctg2.tlist != null ) {
-										int idx = ctg2.tlist.indexOf( tv2 );
-										if( idx == -1 ) {
-											count2 += ctg2.getGeneCount();
-										} else {
-											count2 += idx;
-											break;
+							if( contigs2 != null ) {
+								Teginfo gene2s = gg.getGenes( spec2 );
+								for( Tegeval tv2 : gene2s.tset ) {
+									int count2 = 0;
+									for( Contig ctg2 : contigs2 ) {
+										if( ctg2.tlist != null ) {
+											int idx = ctg2.tlist.indexOf( tv2 );
+											if( idx == -1 ) {
+												count2 += ctg2.getGeneCount();
+											} else {
+												count2 += idx;
+												break;
+											}
 										}
 									}
+									offsetMap.put(spec2, count2);
 								}
-								offsetMap.put(spec2, count2);
 							}
 						}
 						break;
@@ -521,16 +537,18 @@ public class Neighbour {
 								//int k = 0;
 								while( next != null && xoff <= 5500 && clip.x+clip.width > xoff ) {
 									double len = next.getProteinLength()*neighbourscale;
-									if( next.getGene() != null ) {
-										String genename = next.getGene().getName();
-										if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
-										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+									Gene gene = next.getGene();
+									if( gene != null ) {
+										String genename = gene.getName();
+										if( commonname.isSelected() && (genename == null || genename.contains("_")) ) {
+											GeneGroup gg = gene.getGeneGroup();
+											if( gg != null ) genename = gg.getCommonName();
+										}
+										if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;
 										
 										if( xoff+len > clip.x ) {
 											if( funcol.isSelected() ) {
 												g.setColor( Color.green );
-												
-												Gene gene = next.getGene();
 												GeneGroup gg = gene.getGeneGroup();
 												Set<Function> funcset = gg != null ? gg.getFunctions() : null;
 												if( funcset != null && funcset.size() > 0 ) {
@@ -709,12 +727,27 @@ public class Neighbour {
 									Tegeval thenext = next.getNext();
 									int bil = 10;
 									if( thenext != null && realView.isSelected() ) {
-										if( next.getGene().getGeneGroup().getCommonName().contains("Elongation") && next.getSpecies().contains("antranik") ) {
+										/*if( next.getGene().getGeneGroup().getCommonName().contains("Elongation") && next.getSpecies().contains("antranik") ) {
 											System.err.println();
-										}
+										}*/
 										
 										bil = next.getContshort().isReverse() ? Math.abs( thenext.stop-next.start ) : Math.abs( thenext.start-next.stop );
 										bil = (int)(neighbourscale*bil/3);
+									}
+									
+									if( thenext == null ) {
+										int k = next.getContshort().partof.indexOf( next.getContshort() );
+										k = (k+1)%next.getContshort().partof.size();
+										Contig c = next.getContshort().partof.get(k);
+										while( c.tlist == null || c.tlist.size() == 0 ) {
+											k = (k+1)%next.getContshort().partof.size();
+											c = next.getContshort().partof.get(k);
+										}
+										if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+										else thenext = c.tlist.get(0);
+										
+										g.setColor( Color.black );
+										g.fillRect(xPoints[2]+8, yPoints[2]-7, 3, 15);
 									}
 									
 									if( thenext != null && thenext.getNext() == next ) {
@@ -740,7 +773,7 @@ public class Neighbour {
 									//bil = Math.abs( theprev.stop-prev.start );
 									bil = (int)(neighbourscale*bil/3);
 									
-									if( prev.getContshort().getSpec().contains("2127") ) System.err.println( bil );
+									//if( prev.getContshort().getSpec().contains("2127") ) System.err.println( bil );
 									//xoff -= bil;
 								}
 								
@@ -764,15 +797,18 @@ public class Neighbour {
 										theprev = null;
 									}
 									
-									if( prev.getGene() != null ) {
+									Gene gene = prev.getGene();
+									if( gene != null ) {
 										String genename = prev.getGene().getName();
-										if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getCommonName();
-										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										if( commonname.isSelected() && genename.contains("_") ) {
+											GeneGroup gg = prev.getGene().getGeneGroup();
+											if( gg != null ) genename = gg.getCommonName();
+										}
+										genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;
 										
 										if( clip.x+clip.width > xoff ) {
 											if( funcol.isSelected() ) {
 												g.setColor( Color.green );
-												Gene gene = prev.getGene();
 												GeneGroup gg = gene.getGeneGroup();
 												Set<Function> funcset = gg != null ? gg.getFunctions() : null;
 												if( funcset != null && funcset.size() > 0 ) {
@@ -1437,7 +1473,7 @@ public class Neighbour {
 			turn.setAction( new AbstractAction("Forward") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					System.err.println("hteg " + hteg.size());
+					//System.err.println("hteg " + hteg.size());
 					for( Tegeval te : hteg ) {
 						boolean rev = te.ori == -1 ^ te.getContshort().isReverse();
 						if( rev ) te.getContshort().setReverse( !te.getContshort().isReverse() );
@@ -1521,12 +1557,12 @@ public class Neighbour {
 							int k = tv.getContshort().tlist.indexOf( tv );
 							for( int i = k+1; i < tv.getContshort().tlist.size(); i++ ) {
 								Tegeval tv2 = tv.getContshort().tlist.get(i);
+								currentTe = tv2;
 								if( tv2.unresolvedGap() > 0 ) {
-									currentTe = tv2;
-									recenter( rowheader, c );
 									break;
 								}
 							}
+							recenter( rowheader, c );
 						}
 					}
 					c.repaint();
@@ -1543,12 +1579,12 @@ public class Neighbour {
 							int k = tv.getContshort().tlist.indexOf( tv );
 							for( int i = k-1; i >= 0; i-- ) {
 								Tegeval tv2 = tv.getContshort().tlist.get(i);
+								currentTe = tv2;
 								if( tv2.unresolvedGap() > 0 ) {
-									currentTe = tv2;
-									recenter( rowheader, c );
 									break;
 								}
 							}
+							recenter( rowheader, c );
 						}
 					}
 					c.repaint();
@@ -1678,6 +1714,7 @@ public class Neighbour {
 			final JMenuItem	showselectedseqs = new JMenuItem("Selected sequences");
 			final JMenuItem	showselecteddnaseqs = new JMenuItem("Selected DNA sequences");
 			final JMenuItem	showflankingseqs = new JMenuItem("Show flanking sequences");
+			final JMenuItem	showbackflankingseqs = new JMenuItem("Show back flanking sequences");
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -1738,7 +1775,7 @@ public class Neighbour {
 									int start = prev.stop;
 									int stop = tv2.start;
 									
-									if( stop > start && start >= 0 && stop < tv2.getContshort().getLength() ) {
+									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
 										seq.append( prev.getContshort().sb.substring(start, stop) );
 										lseq.add( seq );
@@ -1747,7 +1784,49 @@ public class Neighbour {
 									int start = prev.stop;
 									int stop = tv2.start;
 									
-									if( stop > start && start >= 0 && stop < tv2.getContshort().getLength() ) {
+									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
+										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
+										seq.append( tv2.getContshort().sb.substring(start, stop) );
+										lseq.add( seq );
+									}
+								}
+								
+								//prevprev = prev;
+								prev = tv2;
+							}
+						}
+					}
+					geneset.showSomeSequences( comp, lseq );
+				}
+			});
+			showbackflankingseqs.setAction( new AbstractAction("Show back flanking sequences") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					List<Sequence> lseq = new ArrayList<Sequence>();
+					for( GeneGroup gg : selectedGenesGroups ) {
+						List<Tegeval> ltv = gg.getTegevals();
+						for( Tegeval tv : ltv ) {
+							Tegeval prev = null;
+							//Tegeval prevprev = null;
+							for( Tegeval tv2 : tv.getContshort().tlist ) {
+								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getCommonName().contains("Elongation") ) {
+									System.err.println();
+								}*/
+								
+								if( prev != null && prev.isSelected() && prev.ori == -1 ) {
+									int start = prev.stop;
+									int stop = tv2.start;
+									
+									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
+										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
+										seq.append( prev.getContshort().sb.substring(start, stop) );
+										lseq.add( seq );
+									}
+								} else if( tv2 != null && tv2.isSelected() && tv2.ori == 1 ) {
+									int start = prev.stop;
+									int stop = tv2.start;
+									
+									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
 										seq.append( tv2.getContshort().sb.substring(start, stop) );
 										lseq.add( seq );
@@ -1768,6 +1847,7 @@ public class Neighbour {
 			seqsmenu.add( showselectedseqs );
 			seqsmenu.add( showselecteddnaseqs );
 			seqsmenu.add( showflankingseqs );
+			seqsmenu.add( showbackflankingseqs );
 			
 			sequenceView.setAction( a );
 			blocksView.setAction( a );
@@ -1804,17 +1884,19 @@ public class Neighbour {
 							} else {
 								i = genes.indexOf( te.getGene() );
 							}
-							int r = sorting.convertRowIndexToView(i);
-							if( te.isSelected() ) {
-								currentTe = te;
-								if( r >= 0 && r < sorting.getRowCount() ) {
-									sorting.addRowSelectionInterval(r, r);
-									sorting.scrollRectToVisible( sorting.getCellRect(r, 0, false) );
-								}
-							} else {
-								if( r >= 0 && r < sorting.getRowCount() ) {
-									sorting.removeRowSelectionInterval(r, r);
-									sorting.scrollRectToVisible( sorting.getCellRect(r, 0, false) );
+							if( i != -1 ) {
+								int r = sorting.convertRowIndexToView(i);
+								if( te.isSelected() ) {
+									currentTe = te;
+									if( r >= 0 && r < sorting.getRowCount() ) {
+										sorting.addRowSelectionInterval(r, r);
+										sorting.scrollRectToVisible( sorting.getCellRect(r, 0, false) );
+									}
+								} else {
+									if( r >= 0 && r < sorting.getRowCount() ) {
+										sorting.removeRowSelectionInterval(r, r);
+										sorting.scrollRectToVisible( sorting.getCellRect(r, 0, false) );
+									}
 								}
 							}
 							c.repaint();
