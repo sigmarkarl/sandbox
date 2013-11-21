@@ -1964,8 +1964,30 @@ public class SerifyApplet extends JApplet {
 													FTPFile[] newfiles = ftp.listFiles();
 													int cnt = 1;
 													
-													Map<String,String>	urimap = new HashMap<String,String>();
-													for( FTPFile newftpfile : newfiles ) {
+													File thefile = new File( basesave, fname+".gbk" );
+													if( !thefile.exists() ) {
+														FileWriter fw = new FileWriter( thefile );
+														
+														for( FTPFile newftpfile : newfiles ) {
+															if( interrupted ) break;
+															
+															String newfname = newftpfile.getName();
+															if( newfname.endsWith(".gbk") ) {
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+																BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+																String line = br.readLine();
+																while( line != null ) {
+																	fw.write( line + "\n" );
+																	line = br.readLine();
+																}
+																is.close();
+															}
+														}
+														fw.close();
+													}
+													
+													/*for( FTPFile newftpfile : newfiles ) {
 														if( interrupted ) break;
 														String newfname = newftpfile.getName();
 														System.err.println("trying " + newfname + " in " + fname);
@@ -1995,15 +2017,22 @@ public class SerifyApplet extends JApplet {
 																addSequences( fwname, thefile.toURI().toString() );
 															} catch (URISyntaxException e) {
 																e.printStackTrace();
-															}*/
+															}*
 														}
-													}
+													}*/
 													
 													try {
-														addSequencesPath( fname, urimap, uripath );
+														Map<String,String>	urimap = new HashMap<String,String>();
+														urimap.put( fname, thefile.toURI().toString() );
+														addSequencesPath( fname, urimap, thefile.toURI().toString() );
 													} catch (URISyntaxException e) {
 														e.printStackTrace();
 													}
+													/*try {
+														addSequencesPath( fname, urimap, uripath );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
+													}*/
 												}
 											}
 										}

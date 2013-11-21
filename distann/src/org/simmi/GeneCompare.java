@@ -689,7 +689,7 @@ public class GeneCompare {
 		Color color = Color.green;
 		if( seq != null ) {
 			int tscore = 0;
-            for( int i = 0; i < seq.getLength(); i++ ) {
+            for( int i = 0; i < seq.length(); i++ ) {
             	char c = seq.charAt(i);
             	String comb = c+""+c;
             	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
@@ -701,7 +701,7 @@ public class GeneCompare {
                 Sequence seq2 = tv2.getAlignedSequence();
                 
                 int sscore = 0;
-                for( int i = 0; i < Math.min( seq.getLength(), seq2.getLength() ); i++ ) {
+                for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
                 	char c = seq.charAt( i );
                 	char c2 = seq2.charAt( i );
                 	
@@ -714,7 +714,7 @@ public class GeneCompare {
                 	System.err.println();
                 }
             }
-            int cval = Math.min( 192, 512-score*512/tscore );
+            int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
             color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
 		} else {
 			Teginfo gene2s = gg.getGenes( spec2 );
