@@ -82,8 +82,11 @@ public class Contig extends Sequence {
 	public Tegeval getNext( Tegeval from ) {
 		int i = tlist.indexOf( from );
 		if( i != -1 ) {
-			if( i > 0 && isReverse() ) return tlist.get( i-1 );
-			else if( i < tlist.size()-1 ) return tlist.get( i+1 );
+			if( isReverse() ) {
+				if( i > 0 ) return tlist.get( i-1 );
+			} else {
+				 if( i < tlist.size()-1 ) return tlist.get( i+1 );
+			}
 		}
 		return null;
 	}
@@ -91,8 +94,11 @@ public class Contig extends Sequence {
 	public Tegeval getPrev( Tegeval from ) {
 		int i = tlist.indexOf( from );
 		if( i != -1 ) {
-			if( i < tlist.size()-1 && isReverse() ) return tlist.get( i+1 );
-			else if( i > 0 ) return tlist.get( i-1 );
+			if( isReverse() ) {
+				if( i < tlist.size()-1  ) return tlist.get( i+1 );
+			} else {
+				if( i > 0 ) return tlist.get( i-1 );
+			}
 		}
 		return null;
 	}
@@ -123,7 +129,12 @@ public class Contig extends Sequence {
 	}
 	
 	public Tegeval getFirst() {
-		if( tlist != null ) return reverse ? tlist.get(tlist.size()-1) : tlist.get(0);
+		if( tlist != null ) return isReverse() ? tlist.get(tlist.size()-1) : tlist.get(0);
+		return null;
+	}
+	
+	public Tegeval getLast() {
+		if( tlist != null ) return isReverse() ? tlist.get(0) : tlist.get(tlist.size()-1);
 		return null;
 	}
 	
