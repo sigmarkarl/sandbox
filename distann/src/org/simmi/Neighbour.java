@@ -125,8 +125,9 @@ public class Neighbour {
 							k = (k+1)%next.getContshort().partof.size();
 							c = next.getContshort().partof.get(k);
 						}
-						if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-						else thenext = c.tlist.get(0);
+						thenext = c.getFirst();
+						//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+						//else thenext = c.tlist.get(0);
 					}
 					
 					next = thenext;
@@ -157,7 +158,22 @@ public class Neighbour {
 					Rectangle rect = new Rectangle(xoff, y * rowheight+2, (int)len, rowheight - 4);
 					if( rect.contains( p ) ) return prev;
 					
-					prev = prev.getPrevious();
+					if( theprev == null ) {
+						Contig prevcontig = prev.getContshort();
+						List<Contig> partof = prevcontig.partof;;
+						int k = partof.indexOf( prevcontig );
+						k--;
+						if( k < 0 ) k = partof.size()-1;
+						Contig c = partof.get(k);
+						while( c.tlist == null || c.tlist.size() == 0 ) {
+							k--;
+							if( k < 0 ) k = partof.size()-1;
+							c = partof.get(k);
+						}
+						theprev = c.getLast();
+					}
+					
+					prev = theprev;
 				}
 				//break;
 			}
@@ -743,16 +759,17 @@ public class Neighbour {
 											k = (k+1)%next.getContshort().partof.size();
 											c = next.getContshort().partof.get(k);
 										}
-										if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-										else thenext = c.tlist.get(0);
+										thenext = c.getFirst();
+										//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+										//else thenext = c.tlist.get(0);
 										
 										g.setColor( Color.black );
 										g.fillRect(xPoints[2]+8, yPoints[2]-7, 3, 15);
 									}
 									
-									if( thenext != null && thenext.getNext() == next ) {
+									/*if( thenext != null && thenext.getNext() == next ) {
 										thenext = null;
-									}
+									}*/
 									
 									xoff += len + bil;
 									next = thenext;
@@ -793,9 +810,9 @@ public class Neighbour {
 										bil = (int)(neighbourscale*bil/3);
 									}
 									
-									if( theprev != null && theprev.getPrevious() == prev ) {
+									/*if( theprev != null && theprev.getPrevious() == prev ) {
 										theprev = null;
-									}
+									}*/
 									
 									Gene gene = prev.getGene();
 									if( gene != null ) {
@@ -948,6 +965,24 @@ public class Neighbour {
 												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
 											}
 										}
+									}
+									
+									if( theprev == null ) {
+										Contig prevcont = prev.getContshort();
+										List<Contig> partof = prevcont.partof;
+										int k = partof.indexOf( prevcont );
+										k--;
+										if( k < 0 ) k = partof.size()-1;
+										Contig c = partof.get(k);
+										while( c.tlist == null || c.tlist.size() == 0 ) {
+											k--;
+											if( k < 0 ) k = partof.size()-1;
+											c = partof.get(k);
+										}
+										theprev = c.getLast();
+										
+										g.setColor( Color.black );
+										g.fillRect(xPoints[2]+8, yPoints[2]-7, 3, 15);
 									}
 									
 									prev = theprev;
