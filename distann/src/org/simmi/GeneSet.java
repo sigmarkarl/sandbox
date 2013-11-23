@@ -646,7 +646,7 @@ public class GeneSet extends JApplet {
 						int e = map.indexOf(']', n+1);
 						if( l != -1 ) newid = map.substring(f+1,l);
 						if( n != -1 ) name = map.substring(l+1,n).trim();
-						if( e != -1 ) origin = map.substring(n+1,e).trim();
+						//if( e != -1 ) origin = map.substring(n+1,e).trim();
 					}
 					
 					Gene gene = new Gene( null, id, name, origin );
@@ -837,7 +837,7 @@ public class GeneSet extends JApplet {
 				int e = map.indexOf(']', n+1);
 				if( l != -1 ) newid = map.substring(f+1,l);
 				if( n != -1 ) name = map.substring(l+1,n).trim();
-				if( e != -1 ) origin = map.substring(n+1,e).trim();
+				//if( e != -1 ) origin = map.substring(n+1,e).trim();
 			}
 			
 			Gene gene = new Gene( null, id, name, origin );
@@ -1664,6 +1664,9 @@ public class GeneSet extends JApplet {
 					int u = str.indexOf("uid");
 					if( u == -1 ) {
 						u = str.indexOf("contig");
+						if( u == -1 ) {
+							u = str.indexOf("scaffold");
+						}
 						spec = str.substring( 0, u-1 );
 					} else {
 						int l = str.indexOf('_', u+1);
@@ -8106,9 +8109,11 @@ public class GeneSet extends JApplet {
 				for( String spec : selspec ) {
 					restext.append( ",\n['"+spec+"', " );
 					Set<GeneGroup> ggset = specGroupMap.get( spec );
-					pan.addAll( ggset );
-					if( core.isEmpty() ) core.addAll( ggset );
-					else core.retainAll( ggset );
+					if( ggset != null ) {
+						pan.addAll( ggset );
+						if( core.isEmpty() ) core.addAll( ggset );
+						else core.retainAll( ggset );
+					}
 					
 					restext.append( core.size()+", " );
 					restext.append( pan.size()+"]" );
@@ -12514,6 +12519,9 @@ public class GeneSet extends JApplet {
 				int u = cont.indexOf("uid");
 				if( u == -1 ) {
 					u = cont.indexOf("contig");
+					if( u == -1 ) {
+						u = cont.indexOf("scaffold");
+					}
 					spec = cont.substring( 0, u-1 );
 					contshort = cont.substring( u, cont.length() );
 				} else {
