@@ -209,6 +209,13 @@ public class GeneGroup {
 		return null;
 	}
 	
+	public String getCommonRefId() {
+		for( Gene g : genes ) {
+			if( g.refid != null && g.refid.length() > 0 ) return g.refid;
+		}
+		return null;
+	}
+	
 	public String getCommonSymbol() {
 		String sel = null;
 		for( Gene g : genes ) {
@@ -242,7 +249,7 @@ public class GeneGroup {
 	public boolean isSingluar() {
 		return this.getGroupCount() == this.getGroupCoverage();
 	}
-        
+    
     public Teginfo getGenes( String spec ) {
         return species.get( spec );
     }
