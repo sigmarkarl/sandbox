@@ -142,6 +142,21 @@ public class Neighbour {
 					//if( prev.getContshort().getSpec().contains("2127") ) System.err.println( "bl " + bil );
 				}
 				
+				if( prev == null ) {
+					Contig prevcontig = te.getContshort();
+					List<Contig> partof = prevcontig.partof;;
+					int k = partof.indexOf( prevcontig );
+					k--;
+					if( k < 0 ) k = partof.size()-1;
+					Contig c = partof.get(k);
+					while( c.tlist == null || c.tlist.size() == 0 ) {
+						k--;
+						if( k < 0 ) k = partof.size()-1;
+						c = partof.get(k);
+					}
+					prev = c.getLast();
+				}
+				
 				xoff = 3000;
 				//int k = 0;
 				while( prev != null && xoff > 5 ) {					
@@ -160,6 +175,11 @@ public class Neighbour {
 					
 					if( theprev == null ) {
 						Contig prevcontig = prev.getContshort();
+						
+						/*System.err.println( prevcontig.getSpec() );
+						if( prevcontig.getSpec().contains("eggertsoni") ) {
+							System.err.println();
+						}*/
 						List<Contig> partof = prevcontig.partof;;
 						int k = partof.indexOf( prevcontig );
 						k--;
@@ -725,7 +745,8 @@ public class Neighbour {
 												}*/
 											}
 											
-											boolean revis = (next.ori == -1) ^ next.getContshort().isReverse();
+											Contig ncont = next.getContshort();
+											boolean revis = (next.ori == -1) ^ (ncont != null && ncont.isReverse());
 											int addon = revis ? -5 : 5;
 											int offset = revis ? 5 : 0;
 											
@@ -786,19 +807,22 @@ public class Neighbour {
 									}
 									
 									if( thenext == null ) {
-										int k = next.getContshort().partof.indexOf( next.getContshort() );
-										k = (k+1)%next.getContshort().partof.size();
-										Contig c = next.getContshort().partof.get(k);
-										while( c.tlist == null || c.tlist.size() == 0 ) {
-											k = (k+1)%next.getContshort().partof.size();
-											c = next.getContshort().partof.get(k);
+										Contig ncont = next.getContshort();
+										if( ncont != null ) {
+											int k = ncont.partof.indexOf( ncont );
+											k = (k+1)%ncont.partof.size();
+											Contig c = ncont.partof.get(k);
+											while( c.tlist == null || c.tlist.size() == 0 ) {
+												k = (k+1)%ncont.partof.size();
+												c = ncont.partof.get(k);
+											}
+											thenext = c.getFirst();
+											//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+											//else thenext = c.tlist.get(0);
+											
+											g.setColor( Color.black );
+											g.fillRect(xPoints[2], yPoints[2]-7, 3, 15);
 										}
-										thenext = c.getFirst();
-										//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-										//else thenext = c.tlist.get(0);
-										
-										g.setColor( Color.black );
-										g.fillRect(xPoints[2]+8, yPoints[2]-7, 3, 15);
 									}
 									
 									/*if( thenext != null && thenext.getNext() == next ) {
@@ -818,6 +842,29 @@ public class Neighbour {
 							if( clip.x < xoff ) {
 								Tegeval prev = te != null ? te.getPrevious() : null;
 
+								if( prev == null ) {
+									Contig prevcont = te.getContshort();
+									if( prevcont != null ) {
+										List<Contig> partof = prevcont.partof;
+										int k = partof.indexOf( prevcont );
+										k--;
+										if( k < 0 ) k = partof.size()-1;
+										Contig c = partof.get(k);
+										while( c.tlist == null || c.tlist.size() == 0 ) {
+											k--;
+											if( k < 0 ) k = partof.size()-1;
+											c = partof.get(k);
+										}
+										prev = c.getLast();
+										
+										int xp = xoff;
+										int yp = i * rowheader.getRowHeight()+2+6;
+										
+										g.setColor( Color.black );
+										g.fillRect(xp+8, yp-7, 3, 15);
+									}
+								}
+								
 								int bil = 10;
 								if( prev != null && realView.isSelected() ) {
 									bil = prev.getContshort().isReverse() ? Math.abs( prev.start-te.stop ) : Math.abs( prev.stop-te.start );
