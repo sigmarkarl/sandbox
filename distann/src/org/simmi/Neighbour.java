@@ -206,7 +206,23 @@ public class Neighbour {
 				
 				for( int i = 0; i < hteglocal.size(); i++ ) {
 					Tegeval te = hteglocal.get(i);
-					if( te != null ) hteglocal.set(i, te.getNext() );
+					if( te != null ) {
+						Tegeval thenext = te.getNext();
+						if( thenext == null ) {
+							Contig cont = te.getContshort();
+							int k = cont.partof.indexOf( cont );
+							k = (k+1)%cont.partof.size();
+							Contig c = cont.partof.get(k);
+							while( c.tlist == null || c.tlist.size() == 0 ) {
+								k = (k+1)%cont.partof.size();
+								c = cont.partof.get(k);
+							}
+							thenext = c.getFirst();
+							//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+							//else thenext = c.tlist.get(0);
+						}
+						hteglocal.set( i, thenext );
+					}
 					//if( te.getLength() > max ) max = te.getLength();
 				}
 			}
@@ -242,7 +258,25 @@ public class Neighbour {
 				
 				for( int i = 0; i < hteglocal.size(); i++ ) {
 					Tegeval te = hteglocal.get(i);
-					if( te != null ) hteglocal.set(i, te.getPrevious() );
+					if( te != null ) {
+						Tegeval theprev = te.getPrevious();
+						if( theprev == null ) {
+							Contig prevcont = te.getContshort();
+							List<Contig> partof = prevcont.partof;
+							int k = partof.indexOf( prevcont );
+							k--;
+							if( k < 0 ) k = partof.size()-1;
+							Contig c = partof.get(k);
+							while( c.tlist == null || c.tlist.size() == 0 ) {
+								k--;
+								if( k < 0 ) k = partof.size()-1;
+								c = partof.get(k);
+							}
+							theprev = c.getLast();
+						}
+						
+						hteglocal.set( i, theprev );
+					}
 					//if( te.getLength() > max ) max = te.getLength();
 				}
 			}
@@ -1072,7 +1106,7 @@ public class Neighbour {
 												}
 												if( rc != null ) g.setColor( rc );
 											} else if( sgradcol.isSelected() ) {
-												if( spec1 != null ) {													
+												if( spec1 != null ) {								
 													//StringBuilder seq = next.seq;
 													Color rc = Color.black;
 													GeneGroup gg = next.getGene().getGeneGroup();
@@ -1208,9 +1242,26 @@ public class Neighbour {
 								Tegeval te = hteglocal.get(i);
 								if( te != null ) {
 									Tegeval thenext = te.getNext();
-									if( thenext != null && thenext.getNext() == te ) {
-										thenext = null;
+									if( thenext == null ) {
+										Contig cont = te.getContshort();
+										int k = cont.partof.indexOf( cont );
+										k = (k+1)%cont.partof.size();
+										Contig c = cont.partof.get(k);
+										while( c.tlist == null || c.tlist.size() == 0 ) {
+											k = (k+1)%cont.partof.size();
+											c = cont.partof.get(k);
+										}
+										thenext = c.getFirst();
+										//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+										//else thenext = c.tlist.get(0);
+										
+										int r = rowheader.convertRowIndexToView( i );
+										g.setColor( Color.black );
+										g.fillRect(xoff-10, r*rowheader.getRowHeight()+2, 3, 15);
 									}
+									/*if( thenext != null && thenext.getNext() == te ) {
+										thenext = null;
+									}*/
 									hteglocal.set(i, thenext);
 								}
 								//if( te.getLength() > max ) max = te.getLength();
@@ -1399,9 +1450,29 @@ public class Neighbour {
 								Tegeval te = hteglocal.get(i);
 								if( te != null ) {
 									Tegeval theprev = te.getPrevious();
-									if( theprev != null && theprev.getPrevious() == te ) {
-										theprev = null;
+									
+									if( theprev == null ) {
+										Contig prevcont = te.getContshort();
+										List<Contig> partof = prevcont.partof;
+										int k = partof.indexOf( prevcont );
+										k--;
+										if( k < 0 ) k = partof.size()-1;
+										Contig c = partof.get(k);
+										while( c.tlist == null || c.tlist.size() == 0 ) {
+											k--;
+											if( k < 0 ) k = partof.size()-1;
+											c = partof.get(k);
+										}
+										theprev = c.getLast();
+										
+										int r = rowheader.convertRowIndexToView( i );
+										g.setColor( Color.black );
+										g.fillRect(xoff-10, r*rowheader.getRowHeight()+2, 3, 15);
 									}
+									
+									/*if( theprev != null && theprev.getPrevious() == te ) {
+										theprev = null;
+									}*/
 									hteglocal.set( i, theprev );
 								}
 								//if( te.getLength() > max ) max = te.getLength();
