@@ -506,10 +506,19 @@ public class GeneSet extends JApplet {
 					val += line;
 					line = br.readLine();
 				}
-				val = val.trim();
-				int n = val.indexOf(']');
 				
-				map.put( id, val.substring(0, n+1) );
+				line = br.readLine();
+				line = br.readLine();
+				int e = line.indexOf("Expect =");
+				int n = line.indexOf(',', e);
+				double eval = Double.parseDouble( line.substring(e+9, n).trim() );
+				
+				if( eval < 1e-5 ) {
+					val = val.trim();
+					n = val.indexOf(']');
+				
+					map.put( id, val.substring(0, n+1) );
+				}
 			}
 			line = br.readLine();
 		}
@@ -645,7 +654,7 @@ public class GeneSet extends JApplet {
 						int n = map.indexOf('[', l+1);
 						int e = map.indexOf(']', n+1);
 						if( l != -1 ) newid = map.substring(f+1,l);
-						if( n != -1 ) name = map.substring(l+1,n).trim();
+						//if( n != -1 ) name = map.substring(l+1,n).trim();
 						//if( e != -1 ) origin = map.substring(n+1,e).trim();
 					}
 					
@@ -694,7 +703,7 @@ public class GeneSet extends JApplet {
 						}
 					}
 					//gene.species = new HashMap<String, Teginfo>();
-					if( newid.equals(id) ) refmap.put( newid, gene );
+					if( !newid.equals(id) ) refmap.put( newid, gene );
 					refmap.put(id, gene);
 					
 					tv.setGene( gene );
@@ -836,7 +845,7 @@ public class GeneSet extends JApplet {
 				int n = map.indexOf('[', l+1);
 				int e = map.indexOf(']', n+1);
 				if( l != -1 ) newid = map.substring(f+1,l);
-				if( n != -1 ) name = map.substring(l+1,n).trim();
+				//if( n != -1 ) name = map.substring(l+1,n).trim();
 				//if( e != -1 ) origin = map.substring(n+1,e).trim();
 			}
 			
@@ -845,7 +854,7 @@ public class GeneSet extends JApplet {
 			gene.allids = new HashSet<String>();
 			gene.allids.add( newid );
 			//gene.species = new HashMap<String, Teginfo>();
-			if( newid.equals(id) ) refmap.put( newid, gene );
+			if( !newid.equals(id) ) refmap.put( newid, gene );
 			refmap.put(id, gene);
 			
 			tv.setGene( gene );
@@ -4630,9 +4639,9 @@ public class GeneSet extends JApplet {
 
 		try {
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
-			//FileInputStream fi = new FileInputStream( "/home/sigmar/gene_association.goa_uniprot.gz" );
-			//GZIPInputStream gi = new GZIPInputStream( fi );
-			//funcMappingStatic( new InputStreamReader( gi ) );
+			FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
+			GZIPInputStream gi = new GZIPInputStream( fi );
+			funcMappingStatic( new InputStreamReader( gi ) );
 			
 			/*Map<String,String>	sp2ko = new HashMap<String,String>();
 			FileReader fr = new FileReader("/vg454flx/sp2ko.txt");
@@ -9366,8 +9375,11 @@ public class GeneSet extends JApplet {
 					if( commonName != null && (commonName.contains("contig") || commonName.contains("scaffold")) ) {
 						Tegeval tv = gg.getLongestSequence();
 						Sequence seq = tv.getAlignedSequence();
+						seq.name = commonName;
 						seq.removeGaps();
-						serifier.addSequence( seq );
+						if( seq.sb.indexOf("X") == -1 ) {
+							serifier.addSequence( seq );
+						}
 					}
 				}
 				jf.updateView();
@@ -9837,7 +9849,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 2) {
 					return null;//gene.genid;
 				} else if (columnIndex == 3) {
-					return null;//gene.refid;
+					return gg.getCommonRefId();
 				} else if (columnIndex == 4) {
 					return null;//gene.uniid;
 				} else if (columnIndex == 5) {
@@ -10300,7 +10312,7 @@ public class GeneSet extends JApplet {
 						//if( cnt++ > 20 ) break;
 					}
 					
-					FileWriter fw = new FileWriter("c:/ko2name.txt");
+					FileWriter fw = new FileWriter("/home/sigmar/ko2name.txt");
 					for( String koid : ko2name.keySet() ) {
 						fw.write( koid + "\t" + ko2name.get(koid) + "\n" );
 					}
@@ -13640,6 +13652,13 @@ public class GeneSet extends JApplet {
 			}
 			zipin.close();
 			
+			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
+			//is = new GZIPInputStream( new FileInputStream("/data/gene2refseq.gz") );
+			//genmap = idMapping(new InputStreamReader(is), "/home/sigmar/gene2refseq_short.txt", 5, 1, refmap, genmap, gimap);
+			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");
+			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
+			//funcMapping(new InputStreamReader(is), genmap, "/home/sigmar/thermus/gene2go_short.txt");
+			
 			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
 			ze = zipin.getNextEntry();
 			while( ze != null ) {
@@ -13651,19 +13670,9 @@ public class GeneSet extends JApplet {
 			zipin.close();
 			
 			//is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
-			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/idmapping.dat.gz") );
-			
+			//is = new GZIPInputStream( new FileInputStream("/data/idmapping.dat.gz") );
 			//is = new FileInputStream("/u0/idmapping_short.dat");
-			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/stuff/idmapping_short.dat", 2, 0, refmap, genmap);
-			
-			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt"); // ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/
-			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2refseq.gz") );
-			//genmap = idMapping(new InputStreamReader(is), "/home/sigmar/spiro/thermus/gene2refseq_short.txt", 5, 1, refmap, true);
-			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");
-			
-			
-			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
-			//funcMapping(new InputStreamReader(is), genmap, "/home/sigmar/thermus/gene2go_short.txt");
+			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/idmapping_short.dat", 2, 0, refmap, genmap, gimap);
 			
 			if( unimap != null ) {
 				zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
@@ -13691,8 +13700,8 @@ public class GeneSet extends JApplet {
 				}
 				zipin.close();
 				//is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
-				//is = new GZIPInputStream( new FileInputStream( "/home/sigmar/sp2go.txt.gz" ) );
-				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/spiro/thermus/sp2go_short.txt");
+				//is = new GZIPInputStream( new FileInputStream( "/data/sp2go.txt.gz" ) );
+				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
 				unimap.clear();
 			}
 			if( genmap != null ) genmap.clear();
@@ -13733,8 +13742,6 @@ public class GeneSet extends JApplet {
 				funclist.add(f);
 			}
 			totalgo.clear();
-			
-			
 			
 			Map<String,String>	jgiGeneMap = new HashMap<String,String>();
 			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
