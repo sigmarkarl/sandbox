@@ -198,6 +198,11 @@ public class Tegeval extends Sequence {
 	
 	public int unresolvedGap() {
 		int ret = 0;
+		
+		if( contshort == null ) {
+			System.err.println();
+		}
+		
 		int i = contshort.tlist.indexOf(this);
 		if( i == 0 ) {
 			Tegeval tv = contshort.tlist.get(i);
