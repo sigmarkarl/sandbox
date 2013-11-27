@@ -129,7 +129,7 @@ public class SyntGrad {
 								List<Double> ratios = new ArrayList<Double>();
 								if( o1.tlist != null ) {
 									for( Tegeval tv : o1.tlist ) {
-										double val = invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup());
+										double val = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
 								}
@@ -139,7 +139,7 @@ public class SyntGrad {
 								ratios = new ArrayList<Double>();
 								if( o2.tlist != null ) {
 									for( Tegeval tv : o2.tlist ) {
-										double val = invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup());
+										double val = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
 								}
@@ -155,8 +155,8 @@ public class SyntGrad {
 							while( tv != null ) {
 								Tegeval next = c.getNext( tv );
 								if( next != null ) {
-									double val1 = invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup());
-									double val2 = invertedGradientRatio(spec1, contigs1, -1.0, next.getGene().getGeneGroup());
+									double val1 = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
+									double val2 = next.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, next.getGene().getGeneGroup()) : -1;
 									
 									if( val1 != -1.0 && val2 != -1.0 ) dvals.add( val2-val1 );
 								}
@@ -219,7 +219,7 @@ public class SyntGrad {
 			for( Contig c : scontigs ) {
 				Tegeval tv = c.getFirst();
 				while( tv != null ) {
-					GeneGroup gg = tv.getGene().getGeneGroup();
+					GeneGroup gg = tv.getGene() != null ? tv.getGene().getGeneGroup() : null;
 					if( gg != null ) {
 						double r = 2.0*Math.PI*(double)tvn/(double)total;
 						double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
