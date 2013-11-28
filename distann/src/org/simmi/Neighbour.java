@@ -19,6 +19,7 @@ import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1558,7 +1559,13 @@ public class Neighbour {
 					//System.err.println("hteg " + hteg.size());
 					for( Tegeval te : hteg ) {
 						boolean rev = te.ori == -1 ^ te.getContshort().isReverse();
-						if( rev ) te.getContshort().setReverse( !te.getContshort().isReverse() );
+						if( rev ) {
+							List<Contig>	partof = te.getContshort().partof;
+							for( Contig ctg : partof ) {
+								ctg.setReverse( ctg.isReverse() );
+							}
+							Collections.reverse( partof );
+						}
 					}
 					c.repaint();
 				}
