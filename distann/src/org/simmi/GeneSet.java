@@ -12779,6 +12779,7 @@ public class GeneSet extends JApplet {
 			String cont = split[0].replace(".fna", "");
 			String name = "tRNA-"+split[4];
 			int end = cont.indexOf("_contig");
+			if( end == -1 ) end = cont.indexOf("_scaffold");
 			String spec = cont.substring(0, end);
 			int start = Integer.parseInt( split[2] );
 			int stop = Integer.parseInt( split[3] );
