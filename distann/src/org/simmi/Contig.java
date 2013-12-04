@@ -48,6 +48,10 @@ public class Contig extends Sequence {
 		return tlist;
 	}
 	
+	public boolean isChromosome() {
+		return this.length() > 1500000;
+	}
+	
 	public void sortLocs() {
 		if( tlist != null ) {
 			Collections.sort( tlist );
