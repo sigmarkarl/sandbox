@@ -175,6 +175,7 @@ public class Tegeval extends Sequence {
 	}
 	
 	public Color getGCColor() {
+		if( isDirty() ) return Color.red;
 		double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
 		return new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f );
 		
@@ -187,35 +188,58 @@ public class Tegeval extends Sequence {
 		return new Color( (float)Math.min( 1.0, Math.max( 0.0, 0.5+5.0*gcskew ) ), 0.5f, (float)Math.min( 1.0, Math.max( 0.0, 0.5-5.0*gcskew ) ) );
 	}
 	
-	public Color getFlankingGapColor() {
+	public Color getBackFlankingGapColor() {
 		//if( ori == 1 ) return new Color( 1.0f, 1.0f, 1.0f );
 		
-		int i = contshort.tlist.indexOf(this);
-		if( i == 0 || i == contshort.tlist.size()-1 ) return Color.blue;
-		else if( unresolvedGap() > 0 ) return Color.red;
-		return Color.lightGray;
+		//int i = contshort.tlist.indexOf(this);
+		//if( i == 0 || i == contshort.tlist.size()-1 ) return Color.blue;
+		//else if( unresolvedGap() > 0 ) return Color.red;
+		return backgap ? Color.red : Color.lightGray;
 	}
 	
-	public int unresolvedGap() {
-		int ret = 0;
+	public Color getFrontFlankingGapColor() {
+		//if( ori == 1 ) return new Color( 1.0f, 1.0f, 1.0f );
 		
-		if( contshort == null ) {
-			System.err.println();
+		//int i = contshort.tlist.indexOf(this);
+		//if( i == 0 || i == contshort.tlist.size()-1 ) return Color.blue;
+		//else if( unresolvedGap() > 0 ) return Color.red;
+		return frontgap ? Color.red : Color.lightGray;
+	}
+	
+	public void unresolvedGap( int i ) {
+		//int ret = 0;
+		
+		if( this.getGene().id.startsWith("t") ) {
+			if( this.getGene().id.contains("thermophilus791_scaffold00005_42") ) {
+				System.err.println();
+			}
 		}
 		
-		int i = contshort.tlist.indexOf(this);
+		//int i = contshort.tlist.indexOf(this);
 		if( i == 0 ) {
 			Tegeval tv = contshort.tlist.get(i);
 			for( int m = 0; m < tv.start; m++ ) {
 				char c = contshort.charAt(m);
-				if( c == 'n' || c == 'N' ) ret |= 1;
+				if( c == 'n' || c == 'N' ) {
+					//ret |= 1;
+					if( this.ori == -1 ) frontgap = true;
+					else backgap = true;
+					
+					break;
+				}
 			}
 		} else {
 			Tegeval tv = contshort.tlist.get(i);
 			Tegeval tvp = contshort.tlist.get(i-1);
 			for( int m = tvp.stop; m < tv.start; m++ ) {
 				char c = contshort.charAt(m);
-				if( c == 'n' || c == 'N' ) ret |= 1;
+				if( c == 'n' || c == 'N' ) {
+					//ret |= 1;
+					if( this.ori == -1 ) frontgap = true;
+					else backgap = true;
+					
+					break;
+				}
 			}
 		}
 		
@@ -223,18 +247,34 @@ public class Tegeval extends Sequence {
 			Tegeval tv = contshort.tlist.get(i);
 			for( int m = tv.stop; m < contshort.length(); m++ ) {
 				char c = contshort.charAt(m);
-				if( c == 'n' || c == 'N' ) ret |= 2;
+				if( c == 'n' || c == 'N' ) {
+					//ret |= 2;
+					if( this.ori == -1 ) backgap = true;
+					else frontgap = true;
+					
+					break;
+				}
 			}
 		} else {
 			Tegeval tv = contshort.tlist.get(i);
 			Tegeval tvn = contshort.tlist.get(i+1);
 			for( int m = tv.stop; m < tvn.start; m++ ) {
 				char c = contshort.charAt(m);
-				if( c == 'n' || c == 'N' ) ret |= 2;
+				if( c == 'n' || c == 'N' ) {
+					//ret |= 2;
+					if( this.ori == -1 ) backgap = true;
+					else frontgap = true;
+					
+					break;
+				}
 			}
 		}
 		
-		return ret;
+		//return ret;
+	}
+	
+	public boolean isDirty() {
+		return dirty;
 	}
 
 	double			gc;
@@ -255,6 +295,11 @@ public class Tegeval extends Sequence {
 	//Tegeval			next;
 	//Tegeval			prev;
 	boolean			selected = false;
+	
+	boolean			dirty = false;
+	boolean			backgap = false;
+	boolean			frontgap = false;
+	//boolean			
 	
 	public boolean isSelected() {
 		return selected;

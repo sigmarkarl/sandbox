@@ -9,6 +9,9 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -16,6 +19,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,12 +49,15 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
+import javax.swing.TransferHandler;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
+import org.apache.poi.poifs.storage.SmallDocumentBlockList;
 import org.simmi.shared.Sequence;
 
 public class Neighbour {
@@ -119,14 +126,19 @@ public class Neighbour {
 					xoff += len+bil;
 					
 					if( thenext == null ) {
-						int k = next.getContshort().partof.indexOf( next.getContshort() );
-						k = (k+1)%next.getContshort().partof.size();
-						Contig c = next.getContshort().partof.get(k);
-						while( c.tlist == null || c.tlist.size() == 0 ) {
-							k = (k+1)%next.getContshort().partof.size();
-							c = next.getContshort().partof.get(k);
+						Contig ncont = next.getContshort();
+						if( ncont.isChromosome() ) {
+							thenext = ncont.getFirst();
+						} else {
+						int k = ncont.partof.indexOf( next.getContshort() );
+							k = (k+1)%ncont.partof.size();
+							Contig c = ncont.partof.get(k);
+							while( c.tlist == null || c.tlist.size() == 0 ) {
+								k = (k+1)%ncont.partof.size();
+								c = ncont.partof.get(k);
+							}
+							thenext = c.getFirst();
 						}
-						thenext = c.getFirst();
 						//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
 						//else thenext = c.tlist.get(0);
 					}
@@ -145,17 +157,21 @@ public class Neighbour {
 				
 				if( prev == null ) {
 					Contig prevcontig = te.getContshort();
-					List<Contig> partof = prevcontig.partof;;
-					int k = partof.indexOf( prevcontig );
-					k--;
-					if( k < 0 ) k = partof.size()-1;
-					Contig c = partof.get(k);
-					while( c.tlist == null || c.tlist.size() == 0 ) {
+					if( prevcontig.isChromosome() ) {
+						prev = prevcontig.getLast();
+					} else {
+						List<Contig> partof = prevcontig.partof;;
+						int k = partof.indexOf( prevcontig );
 						k--;
 						if( k < 0 ) k = partof.size()-1;
-						c = partof.get(k);
+						Contig c = partof.get(k);
+						while( c.tlist == null || c.tlist.size() == 0 ) {
+							k--;
+							if( k < 0 ) k = partof.size()-1;
+							c = partof.get(k);
+						}
+						prev = c.getLast();
 					}
-					prev = c.getLast();
 				}
 				
 				xoff = 3000;
@@ -181,17 +197,21 @@ public class Neighbour {
 						if( prevcontig.getSpec().contains("eggertsoni") ) {
 							System.err.println();
 						}*/
-						List<Contig> partof = prevcontig.partof;;
-						int k = partof.indexOf( prevcontig );
-						k--;
-						if( k < 0 ) k = partof.size()-1;
-						Contig c = partof.get(k);
-						while( c.tlist == null || c.tlist.size() == 0 ) {
+						if( prevcontig.isChromosome() ) {
+							theprev = prevcontig.getLast();
+						} else {
+							List<Contig> partof = prevcontig.partof;;
+							int k = partof.indexOf( prevcontig );
 							k--;
 							if( k < 0 ) k = partof.size()-1;
-							c = partof.get(k);
+							Contig c = partof.get(k);
+							while( c.tlist == null || c.tlist.size() == 0 ) {
+								k--;
+								if( k < 0 ) k = partof.size()-1;
+								c = partof.get(k);
+							}
+							theprev = c.getLast();
 						}
-						theprev = c.getLast();
 					}
 					
 					prev = theprev;
@@ -393,6 +413,8 @@ public class Neighbour {
 		}
 	}
 	
+	double rowheight;
+	double fsize;
 	int total = 0;
 	int ptotal = 0;
 	public void initContigs( String spec1, GeneSet geneset ) {
@@ -458,6 +480,9 @@ public class Neighbour {
 		final JCheckBox		commonname = new JCheckBox("Group names");
 		final JCheckBox		noname = new JCheckBox("No names");
 		
+		final JButton	smallerRows = new JButton("^");
+		final JButton	largerRows = new JButton("v");
+		
 		mbr.add( seqsmenu );
 		mbr.add( mnu );
 		mbr.add( mvmnu );
@@ -509,6 +534,7 @@ public class Neighbour {
 			
 			//final int hey = genes.size(); // ltv.get(ltv.size()-1).stop/1000;
 			final JTable rowheader = new JTable();
+			rowheight = rowheader.getRowHeight();
 			
 			final int		nPoints = 6;
 			final int[]		xPoints = new int[ nPoints ];
@@ -538,6 +564,8 @@ public class Neighbour {
 				
 				public void paintComponent( Graphics g ) {
 					super.paintComponent(g);
+					
+					g.setFont( g.getFont().deriveFont((float)fsize) );
 					
 					Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
 					for( GeneGroup gg : selectedGenesGroups ) {
@@ -573,7 +601,7 @@ public class Neighbour {
 					Graphics2D g2 = (Graphics2D)g;
 					g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 					g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-					g.setFont( g.getFont().deriveFont( 8.0f ) );
+					//g.setFont( g.getFont().deriveFont( 8.0f ) );
 					
 					Rectangle clip = this.getVisibleRect(); //g.getClipBounds();
 					if( sequenceView.isSelected() || realView.isSelected() ) {
@@ -656,7 +684,12 @@ public class Neighbour {
 													//StringBuilder seq = next.seq;
 													Color rc = Color.black;
 													GeneGroup gg = next.getGene().getGeneGroup();
-													List<Tegeval> ltv = gg.getTegevals( spec1 );
+													List<Tegeval> ltv = null;
+													if( gg != null ) {
+														ltv = gg.getTegevals( spec1 );
+													} else {
+														System.err.println();
+													}
 													if( ltv != null && ltv.size() > 0 ) {
 														//String spec2 = next.getSpecies();
 														final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
@@ -754,15 +787,15 @@ public class Neighbour {
 											int y = i;
 											xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
 											xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
-											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 											xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
 											xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 											g.fillPolygon(xPoints, yPoints, nPoints);
 											g.setColor( next.isSelected() ? Color.black : Color.gray );
 											g.drawPolygon(xPoints, yPoints, nPoints);
 									
-											int gap = next.unresolvedGap();
+											/*int gap = next.unresolvedGap();
 											g.setColor( Color.red );
 											if( (gap & 1) > 0 ) {
 												//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
@@ -773,11 +806,29 @@ public class Neighbour {
 												//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 												if( !next.getContshort().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 												else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-											}
-											/*if( fc != Color.lightGray ) {
-												g.setColor( fc );
-												g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 											}*/
+											
+											Color fc = next.getFrontFlankingGapColor();
+											if( fc == Color.red ) {
+												g.setColor( fc );
+												int val = (int)(rowheader.getRowHeight()-4)/2;
+												if( revis ) {
+													g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+												} else {
+													g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
+												}
+											}
+											
+											Color bc = next.getBackFlankingGapColor();
+											if( bc == Color.red ) {
+												g.setColor( bc );
+												int val = (int)(rowheader.getRowHeight()-4)/2;
+												if( revis ) {
+													g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
+												} else {
+													g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+												}
+											}
 											
 											g.setColor( Color.black );
 											//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
@@ -810,19 +861,23 @@ public class Neighbour {
 									if( thenext == null ) {
 										Contig ncont = next.getContshort();
 										if( ncont != null ) {
-											int k = ncont.partof.indexOf( ncont );
-											k = (k+1)%ncont.partof.size();
-											Contig c = ncont.partof.get(k);
-											while( c.tlist == null || c.tlist.size() == 0 ) {
+											if( ncont.isChromosome() ) {
+												thenext = ncont.getFirst();
+											} else {
+												int k = ncont.partof.indexOf( ncont );
 												k = (k+1)%ncont.partof.size();
-												c = ncont.partof.get(k);
+												Contig c = ncont.partof.get(k);
+												while( c.tlist == null || c.tlist.size() == 0 ) {
+													k = (k+1)%ncont.partof.size();
+													c = ncont.partof.get(k);
+												}
+												thenext = c.getFirst();
+												//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
+												//else thenext = c.tlist.get(0);
 											}
-											thenext = c.getFirst();
-											//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-											//else thenext = c.tlist.get(0);
 											
 											g.setColor( Color.black );
-											g.fillRect(xPoints[2], yPoints[2]-7, 3, 15);
+											g.fillRect(xPoints[2]+5, yPoints[2]-7, 3, rowheader.getRowHeight()-4);
 										}
 									}
 									
@@ -843,29 +898,6 @@ public class Neighbour {
 							if( clip.x < xoff ) {
 								Tegeval prev = te != null ? te.getPrevious() : null;
 
-								if( prev == null ) {
-									Contig prevcont = te.getContshort();
-									if( prevcont != null ) {
-										List<Contig> partof = prevcont.partof;
-										int k = partof.indexOf( prevcont );
-										k--;
-										if( k < 0 ) k = partof.size()-1;
-										Contig c = partof.get(k);
-										while( c.tlist == null || c.tlist.size() == 0 ) {
-											k--;
-											if( k < 0 ) k = partof.size()-1;
-											c = partof.get(k);
-										}
-										prev = c.getLast();
-										
-										int xp = xoff;
-										int yp = i * rowheader.getRowHeight()+2+6;
-										
-										g.setColor( Color.black );
-										g.fillRect(xp+8, yp-7, 3, 15);
-									}
-								}
-								
 								int bil = 10;
 								if( prev != null && realView.isSelected() ) {
 									bil = prev.getContshort().isReverse() ? Math.abs( prev.start-te.stop ) : Math.abs( prev.stop-te.start );
@@ -874,6 +906,33 @@ public class Neighbour {
 									
 									//if( prev.getContshort().getSpec().contains("2127") ) System.err.println( bil );
 									//xoff -= bil;
+								}
+								
+								if( prev == null ) {
+									Contig prevcont = te.getContshort();
+									if( prevcont != null ) {
+										if( prevcont.isChromosome() ) {
+											prev = prevcont.getLast();
+										} else {
+											List<Contig> partof = prevcont.partof;
+											int k = partof.indexOf( prevcont );
+											k--;
+											if( k < 0 ) k = partof.size()-1;
+											Contig c = partof.get(k);
+											while( c.tlist == null || c.tlist.size() == 0 ) {
+												k--;
+												if( k < 0 ) k = partof.size()-1;
+												c = partof.get(k);
+											}
+											prev = c.getLast();
+										}
+										
+										int xp = xoff;
+										int yp = i * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
+										
+										g.setColor( Color.black );
+										g.fillRect(xp-5, yp-7, 3, rowheader.getRowHeight()-4);
+									}
 								}
 								
 								//int k = 0;
@@ -941,13 +1000,15 @@ public class Neighbour {
 													//StringBuilder seq = next.seq;
 													Color rc = Color.black;
 													GeneGroup gg = prev.getGene().getGeneGroup();
-													List<Tegeval> ltv = gg.getTegevals( spec1 );
-													if( ltv != null && ltv.size() > 0 ) {
-														final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
-														double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
-														rc = GeneCompare.invertedGradientColor( ratio );
-													} else {
-														rc = Color.white;
+													if( gg != null ) {
+														List<Tegeval> ltv = gg.getTegevals( spec1 );
+														if( ltv != null && ltv.size() > 0 ) {
+															final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+															double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+															rc = GeneCompare.invertedGradientColor( ratio );
+														} else {
+															rc = Color.white;
+														}
 													}
 													if( rc != null ) g.setColor( rc );
 												}
@@ -1012,15 +1073,15 @@ public class Neighbour {
 											int y = i;
 											xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
 											xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
-											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 											xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
 											xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 											g.fillPolygon(xPoints, yPoints, nPoints);
 											g.setColor( prev.isSelected() ? Color.black : Color.gray );
 											g.drawPolygon(xPoints, yPoints, nPoints);
 											
-											int gap = prev.unresolvedGap();
+											/*int gap = prev.unresolvedGap();
 											g.setColor( Color.red );
 											if( (gap & 1) > 0 ) {
 												//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
@@ -1031,6 +1092,28 @@ public class Neighbour {
 												//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 												if( !prev.getContshort().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 												else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+											}*/
+											
+											Color fc = prev.getFrontFlankingGapColor();
+											if( fc != Color.lightGray ) {
+												g.setColor( fc );
+												int val = (int)(rowheader.getRowHeight()-4)/2;
+												if( revis ) {
+													g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+												} else {
+													g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
+												}
+											}
+											
+											Color bc = prev.getBackFlankingGapColor();
+											if( bc != Color.lightGray ) {
+												g.setColor( bc );
+												int val = (int)(rowheader.getRowHeight()-4)/2;
+												if( revis ) {
+													g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
+												} else {
+													g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+												}
 											}
 											
 											g.setColor( Color.black );
@@ -1051,20 +1134,24 @@ public class Neighbour {
 									
 									if( theprev == null ) {
 										Contig prevcont = prev.getContshort();
-										List<Contig> partof = prevcont.partof;
-										int k = partof.indexOf( prevcont );
-										k--;
-										if( k < 0 ) k = partof.size()-1;
-										Contig c = partof.get(k);
-										while( c.tlist == null || c.tlist.size() == 0 ) {
+										if( prevcont.isChromosome() ) {
+											theprev = prevcont.getLast();
+										} else {
+											List<Contig> partof = prevcont.partof;
+											int k = partof.indexOf( prevcont );
 											k--;
 											if( k < 0 ) k = partof.size()-1;
-											c = partof.get(k);
+											Contig c = partof.get(k);
+											while( c.tlist == null || c.tlist.size() == 0 ) {
+												k--;
+												if( k < 0 ) k = partof.size()-1;
+												c = partof.get(k);
+											}
+											theprev = c.getLast();
 										}
-										theprev = c.getLast();
 										
 										g.setColor( Color.black );
-										g.fillRect(xPoints[2]+8, yPoints[2]-7, 3, 15);
+										g.fillRect(xPoints[0]-5, yPoints[2]-7, 3, rowheader.getRowHeight()-4);
 									}
 									
 									prev = theprev;
@@ -1229,10 +1316,10 @@ public class Neighbour {
 											int y = i;
 											xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
 											xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
-											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+											xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 											xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
 											xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+											xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 											g.fillPolygon(xPoints, yPoints, nPoints);
 											g.setColor( next.isSelected() ? Color.black : Color.gray );
 											g.drawPolygon(xPoints, yPoints, nPoints);
@@ -1305,7 +1392,7 @@ public class Neighbour {
 										
 										int r = rowheader.convertRowIndexToView( i );
 										g.setColor( Color.black );
-										g.fillRect(xoff-10, r*rowheader.getRowHeight()+2, 3, 15);
+										g.fillRect(xoff-10, r*rowheader.getRowHeight()+2, 3, rowheader.getRowHeight()-4);
 									}
 									/*if( thenext != null && thenext.getNext() == te ) {
 										thenext = null;
@@ -1470,10 +1557,10 @@ public class Neighbour {
 										//g.fillRect(xoff, y * rowheader.getRowHeight()+2, (int)len, rowheader.getRowHeight() - 4);
 										xPoints[0] = xoff+offset; yPoints[0] = y * rowheader.getRowHeight()+2;
 										xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheader.getRowHeight()+2;
-										xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+6;
+										xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 										xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
 										xPoints[4] = xoff+offset; yPoints[4] = y * rowheader.getRowHeight()+2+rowheader.getRowHeight()-4;
-										xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+6;
+										xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheader.getRowHeight()+2+(rowheader.getRowHeight()-4)/2;
 										g.fillPolygon(xPoints, yPoints, nPoints);
 										g.setColor( prev.isSelected() ? Color.black : Color.gray );
 										g.drawPolygon(xPoints, yPoints, nPoints);
@@ -1515,7 +1602,7 @@ public class Neighbour {
 										
 										int r = rowheader.convertRowIndexToView( i );
 										g.setColor( Color.black );
-										g.fillRect(xoff-10, r*rowheader.getRowHeight()+2, 3, 15);
+										g.fillRect(xoff-10, r*rowheader.getRowHeight()+2, 3, rowheader.getRowHeight()-4);
 									}
 									
 									/*if( theprev != null && theprev.getPrevious() == te ) {
@@ -1577,14 +1664,10 @@ public class Neighbour {
 			
 			c.addKeyListener( new KeyListener() {
 				@Override
-				public void keyTyped(KeyEvent e) {
-					
-				}
+				public void keyTyped(KeyEvent e) {}
 				
 				@Override
-				public void keyReleased(KeyEvent e) {
-					
-				}
+				public void keyReleased(KeyEvent e) {}
 				
 				@Override
 				public void keyPressed(KeyEvent e) {
@@ -1599,6 +1682,7 @@ public class Neighbour {
 					}
 				}
 			});
+			fsize = 8.0;//c.getFont().getSize();
 			
 			final AbstractAction	a = new AbstractAction() {
 				@Override
@@ -1624,6 +1708,28 @@ public class Neighbour {
 			commonname.setText("Group names");
 			noname.setText( "No names" );
 			
+			smallerRows.addActionListener( new AbstractAction("^") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					rowheight *= 0.8;
+					rowheader.setRowHeight( (int)rowheight );
+					fsize *= 0.8;
+					c.setFont( c.getFont().deriveFont((int)fsize) );
+					c.repaint();
+				}
+			});
+			
+			largerRows.addActionListener( new AbstractAction("v") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					rowheight *= 1.25;
+					rowheader.setRowHeight( (int)rowheight );
+					fsize *=1.25;
+					c.setFont( c.getFont().deriveFont((int)fsize) );
+					c.repaint();
+				}
+			});
+			
 			turn.setAction( new AbstractAction("Forward") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -1633,7 +1739,7 @@ public class Neighbour {
 						if( rev ) {
 							List<Contig>	partof = te.getContshort().partof;
 							for( Contig ctg : partof ) {
-								ctg.setReverse( ctg.isReverse() );
+								ctg.setReverse( !ctg.isReverse() );
 							}
 							Collections.reverse( partof );
 						}
@@ -1718,7 +1824,7 @@ public class Neighbour {
 							for( int i = k+1; i < tv.getContshort().tlist.size(); i++ ) {
 								Tegeval tv2 = tv.getContshort().tlist.get(i);
 								currentTe = tv2;
-								if( tv2.unresolvedGap() > 0 ) {
+								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
 								}
 							}
@@ -1740,11 +1846,72 @@ public class Neighbour {
 							for( int i = k-1; i >= 0; i-- ) {
 								Tegeval tv2 = tv.getContshort().tlist.get(i);
 								currentTe = tv2;
-								if( tv2.unresolvedGap() > 0 ) {
+								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
 								}
+								/*if( tv2.unresolvedGap() > 0 ) {
+									break;
+								}*/
 							}
 							recenter( rowheader, c );
+						}
+					}
+					c.repaint();
+				}
+			});
+			selmnu.addSeparator();
+			selmnu.add( new AbstractAction("Next scaffold") {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					int r = rowheader.getSelectedRow();
+					String spec = (String)rowheader.getValueAt( r, 0 );
+					for( GeneGroup gg : selectedGenesGroups ) {
+						Teginfo ti = gg.species.get( spec );
+						for( Tegeval tv : ti.tset ) {
+							//currentTe = tv.getContshort().getLast();
+							Contig cont = tv.getContshort();
+							int k = cont.partof.indexOf(tv.getContshort());
+							/*if( cont.isReverse() ) {
+								k = (k-1);
+								if( k < 0 ) k = tv.getContshort().partof.size()-1;
+							} else {*/
+								k = (k+1)%cont.partof.size();
+							//}
+							currentTe = cont.partof.get(k).getFirst();
+							
+							/*for( int i = k+1; i < tv.getContshort().tlist.size(); i++ ) {
+								Tegeval tv2 = tv.getContshort().tlist.get(i);
+								currentTe = tv2;
+								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
+									break;
+								}
+							}*/
+							recenter( rowheader, c );
+							break;
+						}
+					}
+					c.repaint();
+				}
+			});
+			selmnu.add( new AbstractAction("Previous scaffold") {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					int r = rowheader.getSelectedRow();
+					String spec = (String)rowheader.getValueAt( r, 0 );
+					for( GeneGroup gg : selectedGenesGroups ) {
+						Teginfo ti = gg.species.get( spec );
+						for( Tegeval tv : ti.tset ) {
+							Contig cont = tv.getContshort();
+							int k = cont.partof.indexOf( cont );
+							//if( cont.isReverse() ) {
+								k = (k-1);
+								if( k < 0 ) k = cont.partof.size()-1;
+							/*} else {
+								k = (k+1)%cont.partof.size();
+							}*/
+							currentTe = cont.partof.get(k).getLast();
+							recenter( rowheader, c );
+							break;
 						}
 					}
 					c.repaint();
@@ -1941,7 +2108,7 @@ public class Neighbour {
 										lseq.add( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == -1 ) {
-									int start = prev.stop;
+									int start = prev != null ? prev.stop : 0;
 									int stop = tv2.start;
 									
 									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
@@ -2263,12 +2430,10 @@ public class Neighbour {
 			scrollpane.getViewport().setBackground(Color.white);
 			JScrollPane rowheaderscroll = new JScrollPane();
 			rowheader.setAutoCreateRowSorter(true);
+			rowheader.setDragEnabled( true );
 			rowheader.addKeyListener( new KeyListener() {
 				@Override
-				public void keyTyped(KeyEvent e) {
-					// TODO Auto-generated method stub
-					
-				}
+				public void keyTyped(KeyEvent e) {}
 
 				@Override
 				public void keyPressed(KeyEvent e) {
@@ -2367,6 +2532,124 @@ public class Neighbour {
 					c.repaint();
 				}
 			});
+			
+			DataFlavor tdf = null;
+			try {
+				tdf = new DataFlavor( DataFlavor.javaJVMLocalObjectMimeType );
+			} catch (ClassNotFoundException e1) {
+				e1.printStackTrace();
+			}
+			final DataFlavor ndf = tdf;
+			final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();
+			final String charset = df.getParameter("charset");
+			final Transferable transferable = new Transferable() {
+				@Override
+				public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {					
+					if( arg0.equals( ndf ) ) {
+						int[] rr = currentRowSelection; //table.getSelectedRows();
+						List<Sequence>	selseq = new ArrayList<Sequence>( rr.length );
+						for( int r : rr ) {
+							int i = rowheader.convertRowIndexToModel(r);
+							selseq.add( hteg.get(i) );
+						}
+						return selseq;
+					} else {
+						String ret = "";//makeCopyString();
+						for( int r = 0; r < rowheader.getRowCount(); r++ ) {
+							Object o = rowheader.getValueAt(r, 0);
+							if( o != null ) {
+								ret += o.toString();
+							} else {
+								ret += "";
+							}
+							for( int c = 1; c < rowheader.getColumnCount(); c++ ) {
+								o = rowheader.getValueAt(r, c);
+								if( o != null ) {
+									ret += "\t"+o.toString();
+								} else {
+									ret += "\t";
+								}
+							}
+							ret += "\n";
+						}
+						//return arg0.getReaderForText( this );
+						return new ByteArrayInputStream( ret.getBytes( charset ) );
+					}
+					//return ret;
+				}
+
+				@Override
+				public DataFlavor[] getTransferDataFlavors() {
+					return new DataFlavor[] { df, ndf };
+				}
+
+				@Override
+				public boolean isDataFlavorSupported(DataFlavor arg0) {
+					if( arg0.equals(df) || arg0.equals(ndf) ) {
+						return true;
+					}
+					return false;
+				}
+			};
+			
+			TransferHandler th = new TransferHandler() {
+				private static final long serialVersionUID = 1L;
+				
+				public int getSourceActions(JComponent c) {
+					return TransferHandler.COPY_OR_MOVE;
+				}
+
+				public boolean canImport(TransferHandler.TransferSupport support) {					
+					return true;
+				}
+
+				protected Transferable createTransferable(JComponent c) {
+					currentRowSelection = rowheader.getSelectedRows();
+					return transferable;
+				}
+
+				public boolean importData(TransferHandler.TransferSupport support) {
+					try {
+						System.err.println( rowheader.getSelectedRows().length );
+						
+						if( support.isDataFlavorSupported( ndf ) ) {						
+							Object obj = support.getTransferable().getTransferData( ndf );
+							List<Tegeval>	seqs = (ArrayList<Tegeval>)obj;
+							
+							List<Tegeval> newlist = new ArrayList<Tegeval>( hteg.size() );
+							for( int r = 0; r < rowheader.getRowCount(); r++ ) {
+								int i = rowheader.convertRowIndexToModel(r);
+								newlist.add( hteg.get(i) );
+							}
+							hteg.clear();
+							hteg = newlist;
+							
+							Point p = support.getDropLocation().getDropPoint();
+							int k = rowheader.rowAtPoint( p );
+							
+							hteg.removeAll( seqs );
+							for( Tegeval tv : seqs ) {
+								hteg.add(k++, tv);
+							}
+							
+							TableRowSorter<TableModel>	trs = (TableRowSorter<TableModel>)rowheader.getRowSorter();
+							trs.setSortKeys( null );
+							
+							rowheader.tableChanged( new TableModelEvent( rowheader.getModel()) );
+							c.repaint();
+							
+							return true;
+						}
+					} catch (UnsupportedFlavorException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					return false;
+				}
+			};
+			rowheaderscroll.setTransferHandler( th );
+			rowheader.setTransferHandler( th );
 
 			splitpane.setLeftComponent(rowheaderscroll);
 			splitpane.setRightComponent(scrollpane);
@@ -2409,6 +2692,8 @@ public class Neighbour {
 		toolbar.add( turn );
 		toolbar.add( commonname );
 		toolbar.add( noname );
+		toolbar.add( smallerRows );
+		toolbar.add( largerRows );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
@@ -2449,4 +2734,5 @@ public class Neighbour {
 
 		frame.setVisible(true);
 	}
+	int[]	currentRowSelection;
 }
