@@ -117,6 +117,14 @@ public class SyntGrad {
 			}
 		};
 		JPopupMenu	popup = new JPopupMenu();
+		popup.add( new AbstractAction("Repaint") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				drawImage( geneset, g2, spec1, contigs1, spec2s );
+				c.repaint();
+			}
+		});
+		popup.addSeparator();
 		popup.add( new AbstractAction("Sort contigs") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
