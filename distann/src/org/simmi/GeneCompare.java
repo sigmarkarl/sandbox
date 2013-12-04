@@ -18,26 +18,23 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.FileContents;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
@@ -59,6 +56,7 @@ import netscape.javascript.JSObject;
 
 import org.apache.commons.codec.binary.Base64;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Serifier;
 
 public class GeneCompare {
 	List<Contig> contigs;
@@ -409,15 +407,17 @@ public class GeneCompare {
 					baos.close();
 					String b64str = Base64.encodeBase64String( baos.toByteArray() );
 					
-					JSObject window = JSObject.getWindow(geneset);
-					window.call( "string2Blob", new Object[] {b64str, "image/png"} );
+					JSObject window;
+					
+					//JSObject window = JSObject.getWindow(geneset);
+					//window.call( "string2Blob", new Object[] {b64str, "image/png"} );
 				} catch(Exception e1) {
 					succ = false;
 					e1.printStackTrace();
 				}
 				
 				if( !succ ) {
-					FileSaveService fss = null;
+					/*FileSaveService fss = null;
 			        FileContents fileContents = null;
 			    	 
 			        try {
@@ -442,7 +442,7 @@ public class GeneCompare {
 				        }
 			        } catch( Exception e1 ) {
 			        	e1.printStackTrace();
-			        }
+			        }*/
 				}
 			}
 		});
@@ -545,35 +545,48 @@ public class GeneCompare {
 						System.err.println( minloc + "  " + maxloc );
 						Contig c = contigs.get(i);
 						
-						for( int k = minloc; k < maxloc; k++ ) {
-							if( k-loc >= c.getGeneCount() ) {
-								loc += c.getGeneCount();
-								i++;
-								c = contigs.get( i%contigs.size() );
-							}
-							Tegeval tv = c.tlist.get(k-loc);
-							if( e.isShiftDown() ) {
-								Set<GeneGroup>	gset = new HashSet<GeneGroup>();
-								gset.add( tv.getGene().getGeneGroup() );
-								try {
-									new Neighbour().neighbourMynd( geneset, comp, genelist, gset, geneset.contigmap );
-								} catch (IOException e1) {
-									e1.printStackTrace();
+						if( e.isAltDown() ) {
+							Tegeval tv1 = c.tlist.get(minloc-loc);
+							Tegeval tv2 = c.tlist.get(maxloc-loc);
+							
+							int from = Math.min( tv1.start, tv2.start );
+							int to = Math.max( tv1.stop, tv2.stop );
+							String seqstr = c.getSubstring( from, to, 1 );
+						
+							Sequence seq = new Sequence("phage_"+from+"_"+to, null);
+							seq.append( seqstr );
+							geneset.showSomeSequences( geneset, Arrays.asList( new Sequence[] {seq} ) );
+						} else {
+							for( int k = minloc; k < maxloc; k++ ) {
+								if( k-loc >= c.getGeneCount() ) {
+									loc += c.getGeneCount();
+									i++;
+									c = contigs.get( i%contigs.size() );
 								}
-								break;
-							} else {
-								int r;
-								if( geneset.table.getModel() == geneset.groupModel ) {
-									int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
-									r = geneset.table.convertRowIndexToView(u);
-									geneset.table.addRowSelectionInterval( r, r );
+								Tegeval tv = c.tlist.get(k-loc);
+								if( e.isShiftDown() ) {
+									Set<GeneGroup>	gset = new HashSet<GeneGroup>();
+									gset.add( tv.getGene().getGeneGroup() );
+									try {
+										new Neighbour().neighbourMynd( geneset, comp, genelist, gset, geneset.contigmap );
+									} catch (IOException e1) {
+										e1.printStackTrace();
+									}
+									break;
 								} else {
-									String spec = spec2s.get( (int)((rad-250.0)/15.0) );
-									Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
-									for( Tegeval te : ti.tset ) {
-										int u = geneset.genelist.indexOf( te.getGene() );
+									int r;
+									if( geneset.table.getModel() == geneset.groupModel ) {
+										int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
 										r = geneset.table.convertRowIndexToView(u);
 										geneset.table.addRowSelectionInterval( r, r );
+									} else {
+										String spec = spec2s.get( (int)((rad-250.0)/15.0) );
+										Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+										for( Tegeval te : ti.tset ) {
+											int u = geneset.genelist.indexOf( te.getGene() );
+											r = geneset.table.convertRowIndexToView(u);
+											geneset.table.addRowSelectionInterval( r, r );
+										}
 									}
 								}
 							}
@@ -824,7 +837,7 @@ public class GeneCompare {
 			if( val >= 0.0f && val <= 1.0f ) {
 				c = new Color(val,val,val);
 			}
-		} else {
+		} else if( ratio2 >= 0 ) {
 			if( ratio2 < 1.0/6.0 ) {
 				c = new Color(0.0f,(float)(ratio2*6.0),1.0f);
 			} else if( ratio2 < 2.0/6.0 ) {
@@ -1109,7 +1122,7 @@ public class GeneCompare {
 									} else if( gapcol.isSelected() ) {
 										Teginfo gene2s = gg.getGenes( spec2 );
 				                        for( Tegeval tv2 : gene2s.tset ) {
-				                        	color = tv2.getFlankingGapColor();
+				                        	color = tv2.getFrontFlankingGapColor();
 				                        	break;
 				                        }
 									} else {
@@ -1160,7 +1173,14 @@ public class GeneCompare {
 		}
 		g2.setColor( Color.black );
 		g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
-		String[] specsplit = spec1.split("_");
+		String[] specsplit;
+		if( spec1.contains("hermus") ) specsplit = spec1.split("_");
+		else {
+			Matcher m = Pattern.compile("\\d").matcher(spec1); 
+			int firstDigitLocation = m.find() ? m.start() : 0;
+			if( firstDigitLocation == 0 ) specsplit = new String[] {"Thermus", spec1};
+			else specsplit = new String[] {"Thermus", spec1.substring(0,firstDigitLocation), spec1.substring(firstDigitLocation)};
+		}
 		int k = 0;
 		for( String spec : specsplit ) {
 			int strw = g2.getFontMetrics().stringWidth( spec );
