@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="/jdk/jdk8/deploy.jar"/>
+	<classpathentry kind="lib" path="/jdk/jdk8/javaws.jar"/>
+	<classpathentry kind="lib" path="/jdk/jdk8/plugin.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/javafasta"/>
 	<classpathentry kind="lib" path="gdata-client-1.0.jar"/>
 	<classpathentry kind="lib" path="gdata-client-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="gdata-core-1.0.jar"/>
 	<classpathentry kind="lib" path="google-collect-1.0-rc1.jar"/>
-	<classpathentry kind="lib" path="/jdk/deploy.jar"/>
-	<classpathentry kind="lib" path="/jdk/javaws.jar"/>
-	<classpathentry kind="lib" path="/jdk/plugin.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/lib/commons-codec-1.5.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/lib/junit-4.11.jar"/>

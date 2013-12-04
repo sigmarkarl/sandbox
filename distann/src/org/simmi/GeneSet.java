@@ -75,6 +75,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -709,6 +711,8 @@ public class GeneSet extends JApplet {
 					tv.setGene( gene );
 					tv.setTegund( origin );
 					
+					//tv.unresolvedGap();
+					
 					//Teginfo ti = new Teginfo();
 					//ti.add( tv );
 					gene.tegeval = tv;
@@ -762,7 +766,11 @@ public class GeneSet extends JApplet {
 				 * name.indexOf('_', i1+1); name = name.substring(0,i1) +
 				 * name.substring(i2); }
 				 */
-			} else tv.append(line.trim() + "");
+			} else {
+				String str = line.trim();
+				if( str.contains("X") ) tv.dirty = true;
+				tv.append( str );
+			}
 			// else trimSubstring(ac, line);
 			line = br.readLine();
 			// br.re
@@ -7502,7 +7510,7 @@ public class GeneSet extends JApplet {
 				JSObject window = null;
 				try {
 					window = JSObject.getWindow( GeneSet.this );
-				} catch( Exception exc ) {
+				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
 				
@@ -8637,6 +8645,73 @@ public class GeneSet extends JApplet {
 				popup.add( new AbstractAction("Repaint") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
+						repaintGCSkew(selclist, g2, fsize, gg, selspec);
+					}
+				});
+				popup.add( new AbstractAction("Auto invert") {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						Map<Contig,Double>	val = new HashMap<Contig,Double>();
+						int total = 0;
+						//boolean[] boo = new boolean[ selclist.size() ];
+						//Arrays.fill(boo, false);
+						for( Contig ctg : selclist ) {
+							for( int i = 0; i < ctg.length(); i+=500 ) {
+								int gcount = 0;
+								int ccount = 0;
+								int acount = 0;
+								int tcount = 0;
+								for( int k = i; k < Math.min( ctg.length(), i+10000 ); k++ ) {
+									char chr = k-5000 < 0 ? ctg.charAt( ctg.length()+(k-5000) ) : ctg.charAt(k-5000);
+									if( chr == 'g' || chr == 'G' ) gcount++;
+									else if( chr == 'c' || chr == 'C' ) ccount++;
+									else if( chr == 'a' || chr == 'A' ) acount++;
+									else if( chr == 't' || chr == 'T' ) tcount++;
+								}
+								
+								if( gcount > 0 || ccount > 0 ) {
+									double gcskew = (gcount-ccount)/(double)(gcount+ccount);
+									if( val.containsKey( ctg ) ) {
+										val.put( ctg, val.get(ctg)+gcskew );
+									} else {
+										val.put( ctg, gcskew );
+									}
+								}
+								
+								if( acount > 0 || tcount > 0 ) {
+									double atskew = (acount-tcount)/(double)(acount+tcount);
+								}
+							}
+							total += ctg.length();
+						}
+						
+						double min = Double.MAX_VALUE;
+						int mini = 0;
+						for( int i = 0; i < Math.pow(2.0, selclist.size()); i++ ) {
+							double dval = 0.0;
+							int k = 0;
+							for( Contig ctg : selclist ) {
+								double calc = 0.0;
+								if( val.containsKey(ctg) ) calc = val.get(ctg);//*ctg.length();
+								else {
+									System.err.println();
+								}
+								if( (i & (1 << k)) > 0 ) dval -= calc;
+								else dval += calc;
+								k++;
+							}
+							if( Math.abs( dval ) < min ) {
+								min = Math.abs( dval );
+								mini = i;
+							}
+						}
+						
+						int i = 0;
+						for( Contig ctg : selclist ) {
+							if( (mini & (1 << i)) > 0 ) ctg.setReverse( !ctg.isReverse() );
+							i++;
+						}
+						
 						repaintGCSkew(selclist, g2, fsize, gg, selspec);
 					}
 				});
@@ -12217,6 +12292,9 @@ public class GeneSet extends JApplet {
 		g2.fillRect(0, 0, 1024, 1024);
 		g2.setFont( g2.getFont().deriveFont(10.0f) );
 		int total = 0;
+		int g = 0;
+		int c = 0;
+		double gcstotal = 0.0;
 		for( Contig ctg : selclist ) {
 			//Contig ctg = clist.get( u );
 			if( gg != null ) {
@@ -12262,20 +12340,34 @@ public class GeneSet extends JApplet {
 			}
 			
 			for( int i = 0; i < ctg.length(); i+=500 ) {
+				for( int k = i; k < Math.min( ctg.length(), i+500 ); k++ ) {
+					char chr = ctg.charAt( k );
+					if( chr == 'g' || chr == 'G' ) {
+						g++;
+					} else if( chr == 'c' || chr == 'C' ) {
+						c++;
+					}
+				}
+				
 				int gcount = 0;
 				int ccount = 0;
 				int acount = 0;
 				int tcount = 0;
 				for( int k = i; k < Math.min( ctg.length(), i+10000 ); k++ ) {
 					char chr = k-5000 < 0 ? ctg.charAt( ctg.length()+(k-5000) ) : ctg.charAt(k-5000);
-					if( chr == 'g' || chr == 'G' ) gcount++;
-					else if( chr == 'c' || chr == 'C' ) ccount++;
+					if( chr == 'g' || chr == 'G' ) {
+						gcount++;
+					} else if( chr == 'c' || chr == 'C' ) {
+						ccount++;
+					}
 					else if( chr == 'a' || chr == 'A' ) acount++;
 					else if( chr == 't' || chr == 'T' ) tcount++;
 				}
 				
 				if( gcount > 0 || ccount > 0 ) {
 					double gcskew = (gcount-ccount)/(double)(gcount+ccount);
+					
+					gcstotal += gcskew;
 					
 					x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
 					y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
@@ -12305,13 +12397,26 @@ public class GeneSet extends JApplet {
 		
 		g2.setColor( Color.black );
 		g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
-		String[] specsplit = selspec.split("_");
+		String[] specsplit; // = selspec.split("_");
+		
+		if( selspec.contains("hermus") ) specsplit = selspec.split("_");
+		else {
+			Matcher m = Pattern.compile("\\d").matcher(selspec); 
+			int firstDigitLocation = m.find() ? m.start() : 0;
+			if( firstDigitLocation == 0 ) specsplit = new String[] {"Thermus", selspec};
+			else specsplit = new String[] {"Thermus", selspec.substring(0,firstDigitLocation), selspec.substring(firstDigitLocation)};
+		}
+		
 		int k = 0;
 		for( String spec : specsplit ) {
 			int strw = g2.getFontMetrics().stringWidth( spec );
 			g2.drawString( spec, (1024-strw)/2, 1024/2 - specsplit.length*32/2 + 32 + k*32 );
 			k++;
 		}
+		
+		/*double gcs = gcstotal/total; //(g-c)/(g+c);
+		String gcstr = Double.toString( Math.round( gcs*1000000.0 ) );
+		g2.drawString( gcstr+"ppm", 768, 512 );*/
 	}
 
 	static ClipboardService clipboardService;
@@ -12564,6 +12669,14 @@ public class GeneSet extends JApplet {
 					}
 				}
 				
+				if( tag.contains("rrna") ) {
+					String namel = name.toLowerCase();
+					if( namel.contains("23s") || namel.contains("lsu") ) name = "23S rRNA";
+					else if( namel.contains("16s") || namel.contains("ssu") ) name = "16S rRNA";
+					else if( namel.contains("5s") || namel.contains("tsu") ) name = "5S rRNA";
+					//name = namel;
+				}
+				
 				GeneGroup 	gg;
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
@@ -12599,11 +12712,18 @@ public class GeneSet extends JApplet {
 				String loc = trim.substring(b+1, i-1);
 				String cont = trim.substring(6, b).replace(".fna", "");
 				int end = cont.indexOf("_contig");
+				if( end == -1 ) end = cont.indexOf("_scaffold");
 				if( end == -1 ) end = cont.length();
 				String spec = cont.substring(0,end);
 				
 				int bil = trim.indexOf(' ', i+15);
 				String name = trim.substring(i+15, bil);
+				
+				String namel = name.toLowerCase();
+				if( namel.contains("23s") || namel.contains("lsu") ) name = "23S rRNA";
+				else if( namel.contains("16s") || namel.contains("ssu") ) name = "16S rRNA";
+				else if( namel.contains("5s") || namel.contains("tsu") ) name = "5S rRNA";
+				//name = namel;
 				
 				boolean rev = trim.charAt(i+3) == '-';
 				String[] split = loc.split("-");
@@ -13306,10 +13426,15 @@ public class GeneSet extends JApplet {
 			ZipInputStream zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
 			ze = zipin.getNextEntry();
 			while( ze != null ) {
-				if( ze.getName().equals("trnas.txt") ) i  = loadTrnas( rnamap, new InputStreamReader( zipin ), i );
-				else if( ze.getName().equals("rrnas.fasta") ) i = loadRrnas( rnamap, new InputStreamReader( zipin ), i );
-				else if( ze.getName().equals("allthermus.trna") || ze.getName().equals("allglobus.trna") ) i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "trna" );
-				else if( ze.getName().equals("allthermus.rrna") || ze.getName().equals("allglobus.rrna") ) i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "rrna" );
+				if( ze.getName().equals("trnas.txt") ) {
+					i  = loadTrnas( rnamap, new InputStreamReader( zipin ), i );
+				} else if( ze.getName().equals("rrnas.fasta") ) {
+					i = loadRrnas( rnamap, new InputStreamReader( zipin ), i );
+				} else if( ze.getName().equals("allthermus.trna") || ze.getName().equals("allglobus.trna") ) {
+					i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "trna" );
+				} else if( ze.getName().equals("allthermus.rrna") || ze.getName().equals("allglobus.rrna") ) {
+					i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "rrna" );
+				}
 				
 				ze = zipin.getNextEntry();
 			}
@@ -13431,7 +13556,17 @@ public class GeneSet extends JApplet {
 			}
 			sortLoci();
 			
-			System.err.println();
+			for( String spec : speccontigMap.keySet() ) {
+				System.err.println( spec );
+				List<Contig> ctgs = speccontigMap.get( spec );
+				for( Contig c : ctgs ) {
+					System.err.println( c );
+					int im = 0;
+					if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+						tv.unresolvedGap( im++ );
+					}
+				}
+			}
 			
 			for( String ggname : rnamap.keySet() ) {
 				GeneGroup gg = rnamap.get( ggname );
@@ -13668,6 +13803,30 @@ public class GeneSet extends JApplet {
 				ze = zipin.getNextEntry();
 			}
 			zipin.close();
+			
+			if( !ko2name.isEmpty() ) {
+				for( Gene g : genelist ) {
+					if( ko2name.containsKey( g.koid ) ) {
+						String name = ko2name.get( g.koid );
+						if( name.startsWith("E") ) {
+							int k = name.indexOf(',');
+							if( k == -1 ) k = name.length(); 
+							else ko2name.put( g.koid, name.substring(k+1).trim() );
+							g.ecid = name.substring(1, k);
+						} else if( name.contains(",") ) {
+							if( name.charAt(1) >= 'A' && name.charAt(1) <= 'Z' ) {
+								String[] split = name.split(",");
+								String newname = "";
+								for( int m = 1; m < split.length; m++ ) {
+									newname += split[m].trim()+", ";
+								}
+								newname += split[0];
+								ko2name.put( g.koid, newname );
+							}
+						}
+					}
+				}
+			}
 			
 			//is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
 			//is = new GZIPInputStream( new FileInputStream("/data/idmapping.dat.gz") );
@@ -14075,7 +14234,7 @@ public class GeneSet extends JApplet {
 		if( comp instanceof Applet )
 			try {
 				((GeneSet)comp).saveSel( null, null);
-			} catch (Exception e1) {
+			} catch ( NoSuchMethodError | Exception e1 ) {
 				e1.printStackTrace();
 			}
 		
@@ -14088,7 +14247,7 @@ public class GeneSet extends JApplet {
 		System.gc();
 	}
 	
-	public void saveSel( String name, String val) throws Exception {
+	public void saveSel( String name, String val) throws Exception, NoSuchMethodError {
 		JSObject jso = JSObject.getWindow( this );
 		jso.call("saveSel", new Object[] { name, val });
 	}
