@@ -172,7 +172,7 @@ public class GeneGroup {
 		for( Gene g : genes ) {
 			String name = g.getName();
 			if( ret == null ) ret = name;
-			else if( (ret.contains("contig") || ret.contains("scaffold")) || !(name.contains("contig") || name.contains("scaffold") || name.contains("unnamed") || name.contains("hypot")) ) ret = name;
+			else if( ((ret.contains("contig") || ret.contains("scaffold")) && !ret.contains(":")) || !(name.contains("contig") || name.contains("scaffold") || name.contains("unnamed") || name.contains("hypot")) ) ret = name;
 		}
 		
 		/*if( ret == null || ret.length() == 0 ) {
@@ -210,10 +210,11 @@ public class GeneGroup {
 	}
 	
 	public String getCommonRefId() {
+		String ret = null;
 		for( Gene g : genes ) {
-			if( g.refid != null && g.refid.length() > 0 ) return g.refid;
+			if( ret == null || (g.refid != null && g.refid.length() > 0 && !g.refid.contains("scaffold") && !g.refid.contains("contig")) ) ret = g.refid;
 		}
-		return null;
+		return ret;
 	}
 	
 	public String getCommonSymbol() {
