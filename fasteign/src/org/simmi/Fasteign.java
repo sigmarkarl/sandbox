@@ -21,17 +21,12 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -74,6 +69,11 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class Fasteign extends JApplet {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	MySorter currentSorter;
 	Image 	xlimg;
 	JTable	medtable;
@@ -82,127 +82,13 @@ public class Fasteign extends JApplet {
 	JTable	ptable;
 	boolean	sel = false;
 	boolean	msel = false;
-
-	static Map<String, Integer> mmap = new HashMap<String, Integer>();
-
-	static {
-		mmap.put("Janúar", 1);
-		mmap.put("Febrúar", 2);
-		mmap.put("Mars", 3);
-		mmap.put("Apríl", 4);
-		mmap.put("Maí", 5);
-		mmap.put("Júní", 6);
-		mmap.put("Júlí", 7);
-		mmap.put("Ágúst", 8);
-		mmap.put("September", 9);
-		mmap.put("Október", 10);
-		mmap.put("Nóvember", 11);
-		mmap.put("Desember", 12);
-
-		mmap.put("janúar", 1);
-		mmap.put("febrúar", 2);
-		mmap.put("mars", 3);
-		mmap.put("apríl", 4);
-		mmap.put("maí", 5);
-		mmap.put("júní", 6);
-		mmap.put("júlí", 7);
-		mmap.put("ágúst", 8);
-		mmap.put("september", 9);
-		mmap.put("október", 10);
-		mmap.put("nóvember", 11);
-		mmap.put("desember", 12);
-	}
-
-	class Ibud {
-		String nafn;
-		int verd;
-		int fastm;
-		int brunm;
-		String teg;
-		int ferm;
-		int herb;
-		Date dat;
-		String url;
-		boolean	selected = false;
-		
-		public boolean isSelected() {
-			return selected;
-		}
-		
-		public void setSelection( boolean sel ) {
-			selected = sel;
-		}
-
-		public Ibud(String nafn) {
-			this.nafn = nafn;
-		}
-
-		public Ibud(String nafn, int verd, int fastm, int brunm, String teg, int ferm, int herb, String dat, String url) throws ParseException {
-			this.nafn = nafn;
-			this.verd = verd;
-			this.fastm = fastm;
-			this.brunm = brunm;
-			this.teg = teg;
-			this.ferm = ferm;
-			this.herb = herb;
-			this.dat = DateFormat.getDateInstance().parse(dat);
-		}
-
-		public void set(int i, Object obj) {
-			try {
-				if (obj instanceof String) {
-					String val = obj.toString();
-					val = val.replaceAll("\\.", "");
-					if (i == 0)
-						verd = Integer.parseInt(val);
-					else if (i == 1)
-						fastm = Integer.parseInt(val);
-					else if (i == 2)
-						brunm = Integer.parseInt(val);
-					else if (i == 3)
-						teg = val;
-					else if (i == 4)
-						ferm = Integer.parseInt(val);
-					else if (i == 5)
-						herb = Integer.parseInt(val);
-					else if (i == 6) {
-						String[] split = val.split(" ");
-						if (split.length >= 3 && mmap.containsKey(split[1])) {
-							int year = Integer.parseInt(split[2]);
-							int month = mmap.get(split[1]);
-							int day = Integer.parseInt(split[0]);
-							Calendar cal = Calendar.getInstance();
-							cal.set(year, month - 1, day);
-							dat = cal.getTime();
-						}
-
-					}
-				} // else dat = (Date)obj;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		public String getUrlString() {
-			return url;
-		}
-		
-		public boolean equals( Object o ) {
-			return o instanceof Ibud && url.equals( ((Ibud)o).url );
-		}
-
-		public String toString() {
-			return nafn + "\t" + verd + "\t" + fastm + "\t" + brunm + "\t" + teg + "\t" + ferm + "\t" + herb + "\t" + dat + "\t" + url;
-		}
-	}
-	
 	/*public void printsel() {
 		for( Ibud ib : iblist ) {
 			if( ib.isSelected() ) System.err.println("sel " + ib.nafn);
 		}
 	}*/
 
-	public boolean stuff(String urlstr, TableModelEvent tme, TableModelEvent ptme, TableModelEvent mtme ) throws IOException, InterruptedException {
+	public boolean stuff( String urlstr ) throws IOException, InterruptedException {
 		URL url = new URL(urlstr);
 		InputStream stream = url.openStream();
 
@@ -261,10 +147,7 @@ public class Fasteign extends JApplet {
 					if( jso != null ) jso.call( "codeAddress", new Object[] { ib.nafn } );
 					noclear = true;
 					//printsel();
-					table.tableChanged( tme );
-					ptable.tableChanged( ptme );
-					medtable.tableChanged( mtme );
-					reselect();
+					refreshTables();
 				}
 				count++;
 			}
@@ -273,6 +156,21 @@ public class Fasteign extends JApplet {
 		}
 
 		return count == 25;
+	}
+	
+	TableModelEvent tme;
+	TableModelEvent ptme;
+	TableModelEvent mtme;	
+	public void refreshTables() {
+		if( tme == null ) {
+			tme = new TableModelEvent( table.getModel() );
+			ptme = new TableModelEvent( ptable.getModel() );
+			mtme = new TableModelEvent( medtable.getModel() );
+		}
+		table.tableChanged( tme );
+		ptable.tableChanged( ptme );
+		medtable.tableChanged( mtme );
+		reselect();
 	}
 	
 	boolean noclear = false;
@@ -300,23 +198,16 @@ public class Fasteign extends JApplet {
 			// "http://www.mbl.is/mm/fasteignir/leit.html?simmi;svaedi=200_200&svaedi=201_201&svaedi=202_202&svaedi=203_203&tegund=fjolbyli&fermetrar_fra=70&fermetrar_til=150&herbergi_fra=&herbergi_til=&verd_fra=10&verd_til=40&gata=&lysing=";
 			// String base =
 			// "http://www.mbl.is/mm/fasteignir/leit.html?simmi;svaedi=108_108&tegund=fjolbyli&fermetrar_fra=70&fermetrar_til=150&herbergi_fra=&herbergi_til=&verd_fra=10&verd_til=40&gata=&lysing=";
-
-			TableModelEvent tme = new TableModelEvent( table.getModel() );
-			TableModelEvent ptme = new TableModelEvent( ptable.getModel() );
-			TableModelEvent mtme = new TableModelEvent( medtable.getModel() );
 			
 			int i = 0;
 			while (true) {
-				if( !stuff( urlstr.replace("offset", "offset=" + i ), tme, ptme, mtme ) ) break;
+				if( !stuff( urlstr.replace("offset", "offset=" + i ) ) ) break;
 				
 				i += 25;
 			}
 			
 			noclear = true;
-			table.tableChanged( tme );
-			ptable.tableChanged( ptme );
-			medtable.tableChanged( mtme );
-			reselect();
+			refreshTables();
 
 			/*for (Ibud ib : iblist) {
 				System.err.println(ib);
@@ -497,17 +388,17 @@ public class Fasteign extends JApplet {
 			public String getColumnName(int columnIndex) {
 				switch (columnIndex) {
 				case 0:
-					return "VerÃ°";
+					return "Verð";
 				case 1:
 					return "Fasteignamat";
 				case 2:
-					return "BrunabÃ³tamat";
+					return "Brunabótamat";
 				case 3:
-					return "FermetraverÃ°";
+					return "Fermetraverð";
 				case 4:
-					return "FermetraverÃ° fasteignamats";
+					return "Fermetraverð fasteignamats";
 				case 5:
-					return "VerÃ°/fasteignamat";
+					return "Verð/fasteignamat";
 				default:
 					return "";
 				}
@@ -687,7 +578,7 @@ public class Fasteign extends JApplet {
 
 			@Override
 			public String getColumnName(int columnIndex) {
-				return "ReiknaÃ°";
+				return "Reiknað";
 			}
 
 			@Override
@@ -702,7 +593,7 @@ public class Fasteign extends JApplet {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return rowIndex == 0 ? "MeÃ°altal" : "MiÃ°gildi";
+				return rowIndex == 0 ? "Meðaltal" : "Miðgildi";
 			}
 
 			@Override
@@ -726,11 +617,11 @@ public class Fasteign extends JApplet {
 		XSSFCell cell = row.createCell(c++);
 		cell.setCellValue("Nafn");
 		cell = row.createCell(c++);
-		cell.setCellValue("VerÃ°");
+		cell.setCellValue("Verð");
 		cell = row.createCell(c++);
 		cell.setCellValue("Fasteignamat");
 		cell = row.createCell(c++);
-		cell.setCellValue("BrunabÃ³tamat");
+		cell.setCellValue("Brunabótamat");
 		cell = row.createCell(c++);
 		cell.setCellValue("Tegund");
 		cell = row.createCell(c++);
@@ -740,7 +631,7 @@ public class Fasteign extends JApplet {
 		cell = row.createCell(c++);
 		cell.setCellValue("Dagsetning");
 		cell = row.createCell(c++);
-		cell.setCellValue("SlÃ³Ã°");
+		cell.setCellValue("Slóð");
 		for (Ibud ib : iblist) {
 			row = sheet.createRow(i++);
 			c = 0;
@@ -827,7 +718,7 @@ public class Fasteign extends JApplet {
 	public void initGUI( Container cont ) {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
-			jso = JSObject.getWindow( Fasteign.this );
+			//jso = JSObject.getWindow( Fasteign.this );
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (InstantiationException e) {
@@ -849,45 +740,44 @@ public class Fasteign extends JApplet {
 		// JLabel title = new JLabel("HvaÃ° Ã¡ Ã­bÃºÃ°in aÃ° kosta?");
 		// topcomp.add(title);
 
-		JLabel loc = new JLabel("Veldu svÃ¦Ã°i:");
+		JLabel loc = new JLabel("Veldu svæði:");
 		topcomp.add(loc);
 		final JComboBox<String> loccomb = new JComboBox<String>();
-		loccomb.addItem("101 MiÃ°bÃ¦r");
+		loccomb.addItem("101 Miðbær");
 		loccomb.addItem("103 Kringlan/Hvassaleiti");
 		loccomb.addItem("104 Vogar");
-		loccomb.addItem("105 AusturbÃ¦r");
-		loccomb.addItem("107 VesturbÃ¦r");
-		loccomb.addItem("108 AusturbÃ¦r");
+		loccomb.addItem("105 Austurbær");
+		loccomb.addItem("107 Vesturbær");
+		loccomb.addItem("108 Austurbær");
 		loccomb.addItem("109 Bakkar/Seljahverfi");
-		loccomb.addItem("110 Ã�rbÃ¦r/SelÃ¡s");
-		loccomb.addItem("111 Berg/HÃ³lar/Fell");
+		loccomb.addItem("110 Árbær/Selás");
+		loccomb.addItem("111 Berg/Hólar/Fell");
 		loccomb.addItem("112 Grafarvogur");
 		loccomb.addItem("113 Grafarholt");
 		loccomb.addItem("116 Kjalarnes");
 		loccomb.addItem("170 Seltjarnarnes");
 		loccomb.addItem("190 Vogar");
-		loccomb.addItem("110 Ã�rbÃ¦r/SelÃ¡s");
-		loccomb.addItem("200 KÃ³pavogur");
-		loccomb.addItem("201 KÃ³pavogur");
-		loccomb.addItem("202 KÃ³pavogur");
-		loccomb.addItem("203 KÃ³pavogur");
-		loccomb.addItem("210 GarÃ°abÃ¦r");
-		loccomb.addItem("211 GarÃ°abÃ¦r (Arnarnes)");
-		loccomb.addItem("220 HafnarfjÃ¶rÃ°ur");
-		loccomb.addItem("221 HafnarfjÃ¶rÃ°ur");
-		loccomb.addItem("225 Ã�lftanes");
+		loccomb.addItem("200 Kópavogur");
+		loccomb.addItem("201 Kópavogur");
+		loccomb.addItem("202 Kópavogur");
+		loccomb.addItem("203 Kópavogur");
+		loccomb.addItem("210 Garðabær");
+		loccomb.addItem("211 Garðabær (Arnarnes)");
+		loccomb.addItem("220 Hafnarfjörður");
+		loccomb.addItem("221 Hafnarfjörður");
+		loccomb.addItem("225 Álftanes");
 		topcomp.add(loccomb);
 
 		JLabel typ = new JLabel("Veldu tegund:");
 		topcomp.add(typ);
 		final JComboBox<String> typcomb = new JComboBox<String>();
-		typcomb.addItem("FjÃ¶lbÃ½li");
-		typcomb.addItem("EinbÃ½li");
-		typcomb.addItem("HÃ¦Ã°ir");
-		typcomb.addItem("ParhÃºs/RaÃ°hÃºs");
+		typcomb.addItem("Fjölbýli");
+		typcomb.addItem("Einbýli");
+		typcomb.addItem("Hæðir");
+		typcomb.addItem("Parhús/Raðhús");
 		topcomp.add(typcomb);
 
-		JLabel big = new JLabel("Veldu stÃ¦rÃ°:");
+		JLabel big = new JLabel("Veldu stærð:");
 		topcomp.add(big);
 		final JTextField bigfield = new JTextField("100");
 		Dimension dim = new Dimension(40,30);
@@ -921,9 +811,9 @@ public class Fasteign extends JApplet {
 				}
 			}
 		});
-		excelbutton.setToolTipText("Opna tÃ¶flu Ã­ Excel");
+		excelbutton.setToolTipText("Opna töflu í Excel");
 		excelbutton.setIcon(new ImageIcon(xlimg.getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
-		botcomp.add( new JLabel("Opna tÃ¶flu Ã­ Excel") );
+		botcomp.add( new JLabel("Opna töflu í Excel") );
 		botcomp.add(excelbutton);
 
 		table = new JTable() {
@@ -1202,11 +1092,9 @@ public class Fasteign extends JApplet {
 				medtable.moveColumn(e.getFromIndex(), e.getToIndex());
 			}
 
-			public void columnRemoved(TableColumnModelEvent e) {
-			}
+			public void columnRemoved(TableColumnModelEvent e) {}
 
-			public void columnSelectionChanged(ListSelectionEvent e) {
-			}
+			public void columnSelectionChanged(ListSelectionEvent e) {}
 		});
 
 		JButton button = new JButton(new AbstractAction("Leita") {
@@ -1217,11 +1105,11 @@ public class Fasteign extends JApplet {
 				String pnr = split[0];
 				String val = base.replace("svaedi=", "svaedi=" + pnr + "_" + pnr);
 				String teg = typcomb.getSelectedItem().toString().toLowerCase();
-				teg = teg.replace("Ã¦", "ae");
-				teg = teg.replace("Ã¶", "o");
-				teg = teg.replace("Ã½", "y");
-				teg = teg.replace("Ã°", "d");
-				teg = teg.replace("Ãº", "u");
+				teg = teg.replace("æ", "ae");
+				teg = teg.replace("ó", "o");
+				teg = teg.replace("ý", "y");
+				teg = teg.replace("ð", "d");
+				teg = teg.replace("ú", "u");
 				teg = teg.replace("parhus/radhus", "par_radhus");
 				val = val.replace("tegund=", "tegund=" + teg);
 				String diffstr = bigdifffield.getText();
