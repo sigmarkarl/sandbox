@@ -44,6 +44,10 @@ public class Contig extends Sequence {
 		}
 	}
 	
+	public boolean isPlasmid() {
+		return plasmid;
+	}
+	
 	public List<Tegeval> getTegevalsList() {
 		return tlist;
 	}
@@ -162,6 +166,7 @@ public class Contig extends Sequence {
 	Contig			prev;
 	List<Tegeval>	tlist;
 	List<Contig>	partof;
+	boolean			plasmid;
 	
 	public Tegeval getEndTegeval() {
 		if( tlist != null ) return tlist.get( tlist.size()-1 );
