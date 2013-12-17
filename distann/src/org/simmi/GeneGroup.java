@@ -167,6 +167,19 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public String getCommonOrigin() {
+		String ret = null;
+		for( Gene g : genes ) {
+			String name = g.getSpecies();
+			if( ret == null ) {
+				ret = name;
+				break;
+			}
+		}
+		
+		return ret;
+	}
+	
 	public String getCommonName() {
 		String ret = null;
 		for( Gene g : genes ) {
