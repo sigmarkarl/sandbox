@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -49,6 +50,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
@@ -88,6 +91,16 @@ public class GeneCompare {
 		br.close();
 		
 		return blosumap;
+	}
+	
+	public void rearrangeContigs( String spec1, GeneSet geneset ) {
+		final List<Contig> lcont = geneset.speccontigMap.get( spec1 );
+		
+		List<Contig> newcontigs = new ArrayList<Contig>();
+		for( Contig c : lcont ) {
+			if( contigs.contains( c ) ) newcontigs.add( c );
+		}
+		contigs = newcontigs;
 	}
 	
 	int total = 0;
@@ -176,6 +189,8 @@ public class GeneCompare {
 	JRadioButtonMenuItem	gapcol;
 	JRadioButtonMenuItem	syntgrad;
 	JRadioButtonMenuItem	isyntgrad;
+	
+	JCheckBox				contiglanes;
 	
 	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) throws IOException {
 		final JTable 				table = geneset.getGeneTable();
@@ -649,6 +664,15 @@ public class GeneCompare {
 		mbr.add( toolbar );
 		tb.add( mbr );
 		
+		contiglanes = new JCheckBox("Show contig lanes");
+		contiglanes.addChangeListener( new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				repaintCompare(g2, bimg, spec2s, specombo, geneset, blosumap, cmp);
+			}
+		});
+		tb.add( contiglanes );
+		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
 		panel.add( tb, BorderLayout.NORTH );
@@ -662,32 +686,25 @@ public class GeneCompare {
 	}
 	
 	public void repaintCompare( Graphics2D g2, BufferedImage bimg, List<String> spec2s, JComboBox<String> specombo, GeneSet geneset, Map<String,Integer> blosumap, JComponent cmp ) {
+		String spec1 = (String)specombo.getSelectedItem();
+		rearrangeContigs(spec1, geneset);
 		if( relcol.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
 		} else if( gccol.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 		} else if( gcskewcol.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 		} else if( syntcol.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
 		} else if( brcol.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
 		} else if( gapcol.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 		} else if( syntgrad.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
 		} else if( isyntgrad.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
 		} else if( oricol.isSelected() ) {
-			String spec1 = (String)specombo.getSelectedItem();
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -10 );
 		}
 		
@@ -698,12 +715,14 @@ public class GeneCompare {
 		draw( g2, spec1, geneset, w, h, contigs, spec2s, blosumap, total, ptotal, 0 );
 	}
 	
-	public static Color blosumColor( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap, boolean rs ) {
-		Color color = Color.green;
+	public static double blosumVal( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap ) {
+		double ret = 0.0;
 		if( seq != null ) {
 			int tscore = 0;
             for( int i = 0; i < seq.length(); i++ ) {
-            	char c = seq.charAt(i);
+            	char lc = seq.charAt(i);
+            	char c = Character.toUpperCase( lc );
+            	//if( )
             	String comb = c+""+c;
             	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
             }
@@ -715,8 +734,48 @@ public class GeneCompare {
                 
                 int sscore = 0;
                 for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
-                	char c = seq.charAt( i );
-                	char c2 = seq2.charAt( i );
+                	char lc = seq.charAt( i );
+                	char c = Character.toUpperCase( lc );
+                	char lc2 = seq2.charAt( i );
+                	char c2 = Character.toUpperCase( lc2 );
+                	
+                	String comb = c+""+c2;
+                	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
+                }
+                if( sscore > score ) score = sscore;
+                
+                if( seq == seq2 && sscore != tscore ) {
+                	System.err.println();
+                }
+            }
+            ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
+		}
+		return ret;
+	}
+	
+	public static Color blosumColor( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap, boolean rs ) {
+		Color color = Color.green;
+		if( seq != null ) {
+			int tscore = 0;
+            for( int i = 0; i < seq.length(); i++ ) {
+            	char lc = seq.charAt(i);
+            	char c = Character.toUpperCase( lc );
+            	//if( )
+            	String comb = c+""+c;
+            	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
+            }
+            
+            int score = 0;
+            Teginfo gene2s = gg.getGenes( spec2 );
+            for( Tegeval tv2 : gene2s.tset ) {
+                Sequence seq2 = tv2.getAlignedSequence();
+                
+                int sscore = 0;
+                for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
+                	char lc = seq.charAt( i );
+                	char c = Character.toUpperCase( lc );
+                	char lc2 = seq2.charAt( i );
+                	char c2 = Character.toUpperCase( lc2 );
                 	
                 	String comb = c+""+c2;
                 	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
@@ -742,7 +801,8 @@ public class GeneCompare {
 		return color;
 	}
 	
-	public static Color gradientColor( String spec1, String spec2, Collection<Contig> contigs2, double ratio, double pratio, int offset2, GeneGroup gg ) {
+	static int ctgoff = 0;
+	public static Color gradientColor( String spec1, String spec2, List<Contig> contigs2, double ratio, double pratio, int offset2, GeneGroup gg, boolean contiglanes ) {
 		//Contig chromosome = null;
 		int total2 = 0;
 		int ptotal2 = 0;
@@ -783,11 +843,11 @@ public class GeneCompare {
 		double pratio2 = -1.0;
 		Teginfo gene2s = gg.getGenes( spec2 );
 		
+		Contig hit = null;
 		for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			
 			if( ptotal2 > 0 ) {
-				Contig hit = null;
 				for( Contig ctg2 : contigs2 ) {
 					int idx = ctg2.tlist.indexOf( tv2 );
 					if( idx != -1 ) {
@@ -818,6 +878,7 @@ public class GeneCompare {
 								count2 += c2.getGeneCount();
 							} else {
 								count2 += c2.isReverse() ? c2.getGeneCount() - idx - 1 : idx;
+								hit = c2;
 								break;
 							}
 						}
@@ -851,6 +912,7 @@ public class GeneCompare {
 							count2 += ctg2.getGeneCount();
 						} else {
 							count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+							hit = ctg2;
 							break;
 						}
 					}
@@ -877,6 +939,8 @@ public class GeneCompare {
 			//break;
 		}
 		
+		if( contiglanes && !spec1.equals(spec2) ) ctgoff = contigs2.indexOf( hit );
+		
 		/*if( spec1.equals(spec2) && gene2s.tset.size() > 2 && pratio == 0 && ratio != ratio2 ) {
 			System.err.println( "raterm " + ratio + "  " + ratio2 );
 		}*/
@@ -892,9 +956,13 @@ public class GeneCompare {
 		
 		Color c = Color.RED;
 		if( pratio2 != -1.0 && (pratio != 0.0 || !spec1.equals(spec2)) ) {
-			float val = (float)(5.0f*pratio2/6.0f);
+			float val = (float)(9.0f*pratio2/10.0f);
 			if( val >= 0.0f && val <= 1.0f ) {
-				c = new Color(val,val,val);
+				if( val > 9.0f/20.0f ) {
+					c = new Color(18.0f/10.0f-val*2.0f,18.0f/10.0f-2.0f*val,18.0f/10.0f-2.0f*val);
+				} else {
+					c = new Color(val*2.0f,val*2.0f,val*2.0f);
+				}
 			}
 			//System.err.println( pratio + "  " + pratio2 );
 		} else if( ratio2 >= 0 ) {
@@ -976,6 +1044,7 @@ public class GeneCompare {
 	}
 	
 	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal, int synbr ) {
+		boolean contiglanesb = contiglanes != null && contiglanes.isSelected();
 		/*g.setColor( Color.black );
 		int count = 0;
 		for( Contig ctg : contigs ) {
@@ -1072,12 +1141,19 @@ public class GeneCompare {
 					}
 				}
 			
-				g2.setColor( Color.black );
 				double theta = count*Math.PI*2.0/(total+ptotal);
 				g2.translate( w/2, h/2 );
 				g2.rotate( theta );
-				int x = 250+15*spec2s.size();
-				g2.drawLine( x, 0, x+15, 0);
+				int x;
+				if( !contiglanesb ) {
+					g2.setColor( Color.black );
+					x = 250+15*spec2s.size();
+					g2.drawLine( x, 0, x+15, 0);
+				} else {
+					g2.setColor( Color.darkGray );
+					x = 135;
+					g2.drawLine( x, 0, x+1000, 0);
+				}
 				g2.rotate( -theta );
 	            g2.translate( -w/2, -h/2 );
 			}
@@ -1132,6 +1208,7 @@ public class GeneCompare {
 			System.err.println();
 		}*/
 		
+		boolean contiglanesb = contiglanes != null && contiglanes.isSelected();
 		int offset = 0;
 		if( offsetMap.containsKey(spec1) ) offset = offsetMap.get(spec1);
 		
@@ -1184,6 +1261,8 @@ public class GeneCompare {
 		
 		int scount = 0;
 		for( String spec2 : spec2s ) {
+			boolean speceq = spec1.equals(spec2);
+			final List<Contig> contigs2 = speceq ? contigs : geneset.speccontigMap.get( spec2 );
 			if( gg.species.containsKey(spec2) ) {
 				int offset2 = 0;
 				if( offsetMap.containsKey( spec2 ) ) offset2 = offsetMap.get(spec2);
@@ -1204,9 +1283,7 @@ public class GeneCompare {
 					g2.fillRect( 250+15*(scount), -1, 15, 3);
 					g2.rotate( -theta );
                     g2.translate( -w/2, -h/2 );
-				} else if( synbr == -2 ) {
-					final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
-					
+				} else if( synbr == -2 ) {					
 					double ratio2 = invertedGradientRatio( spec2, contigs2, ratio, gg );
 					Color c = invertedGradientColor( ratio );
 					g2.setColor( c );
@@ -1220,15 +1297,16 @@ public class GeneCompare {
 	                    g2.translate( -w/2, -h/2 );
 					}
 				} else if( synbr == -1 ) {
-					final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
 					//System.err.println( ratio );
-					Color c = gradientColor( spec1, spec2, contigs2, ratio, pratio, offset2, gg );
+					ctgoff = 0;
+					Color c = gradientColor( spec1, spec2, contigs2, ratio, pratio, offset2, gg, contiglanesb );
 					g2.setColor( c );
 					
 					double theta = count*Math.PI*2.0/(total+ptotal);
 					g2.translate( w/2, h/2 );
 					g2.rotate( theta );
-					g2.fillRect( 250+15*(scount), -1, 15, 3);
+					if( contiglanesb ) g2.fillRect( 150+15*(scount)+15*ctgoff, -1, 15, 2);
+					else g2.fillRect( 250+15*(scount), -1, 15, 3);
 					g2.rotate( -theta );
                     g2.translate( -w/2, -h/2 );
                     
@@ -1238,7 +1316,7 @@ public class GeneCompare {
                     	theta = count*Math.PI*2.0/(total+ptotal);
 						g2.translate( w/2, h/2 );
 						g2.rotate( theta );
-						g2.fillRect( 200, 0, 15, 1);
+						g2.fillRect( contiglanesb ? 100 : 200, 0, 7, 1 );
 						g2.rotate( -theta );
 	                    g2.translate( -w/2, -h/2 );
                     }
@@ -1316,7 +1394,9 @@ public class GeneCompare {
                     }
 				}
 			}
-			scount++;
+			if( !speceq && contiglanesb ) {
+				scount += contigs2.size();
+			} else scount++;
 		}
 	}
 }
