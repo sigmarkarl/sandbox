@@ -30,8 +30,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -54,7 +52,6 @@ import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -86,12 +83,19 @@ import java.util.zip.ZipInputStream;
 
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Background;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
@@ -4281,7 +4285,7 @@ public class GeneSet extends JApplet {
 	
 	static Scene scene = null;
 	JFrame	fxframe = null;
-	private static Scene createScene( double[] xdata, double[] ydata ) {
+	private static Scene createScene( String[] names, double[] xdata, double[] ydata ) {
         final NumberAxis xAxis = new NumberAxis(-0.5, 0.5, 0.025);
         final NumberAxis yAxis = new NumberAxis(-0.5, 0.5, 0.025);    
         final ScatterChart<Number,Number> sc = new ScatterChart<Number,Number>(xAxis,yAxis);
@@ -4292,13 +4296,48 @@ public class GeneSet extends JApplet {
         XYChart.Series series1 = new XYChart.Series();
         series1.setName("PCA");
         for( int i = 0; i < xdata.length; i++ ) {
-        	series1.getData().add( new XYChart.Data( xdata[i], ydata[i] ) );
+        	XYChart.Data d = new XYChart.Data( xdata[i], ydata[i] );
+        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
+        	series1.getData().add( d );
         }
  
         sc.getData().addAll(series1);
         if( scene == null ) {
         	scene = new Scene( sc );
         } else scene.setRoot( sc );
+        
+        for (XYChart.Series<Number, Number> s : sc.getData()) {
+        	int i = 0;
+            for (XYChart.Data<Number, Number> d : s.getData()) {
+                Tooltip.install( d.getNode(), new Tooltip( names[i++] ) );
+            }
+        }
+        
+        sc.setBackground( Background.EMPTY );
+        
+        final ContextMenu menu = new ContextMenu();
+        MenuItem mi = new MenuItem();
+        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
+			@Override
+			public void handle(javafx.event.ActionEvent arg0) {
+				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
+				try {
+					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("c:/fximg.png"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+        menu.getItems().add( mi );
+        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
+        	 @Override
+             public void handle(javafx.scene.input.MouseEvent event) {
+               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
+                 menu.show(sc, event.getScreenX(), event.getScreenY());
+               }
+             }
+        });
+        
         return scene;
     }
 	
@@ -4422,8 +4461,8 @@ public class GeneSet extends JApplet {
         fxPanel.setScene(scene);
     }
     
-    private static void initFXChart( JFXPanel fxPanel, double[] xdata, double[] ydata ) {
-        Scene scene = createScene( xdata, ydata );
+    private static void initFXChart( JFXPanel fxPanel, String[] names, double[] xdata, double[] ydata ) {
+        Scene scene = createScene( names, xdata, ydata );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
 	
@@ -5536,7 +5575,7 @@ public class GeneSet extends JApplet {
 		return r;
 	}
 	
-	public Serifier getConcatenatedSequences() {
+	public Serifier getConcatenatedSequencesMaxLength() {
 		Map<String,Sequence>	smap = new HashMap<String,Sequence>();
 		Set<String>				specset = new HashSet<String>();
 		Map<GeneGroup,Integer>	genegroups = new HashMap<GeneGroup,Integer>();
@@ -5630,6 +5669,142 @@ public class GeneSet extends JApplet {
 		for( String spec : smap.keySet() ) {
 			Sequence seq = smap.get( spec );
 			serifier.addSequence( seq );
+		}
+		return serifier;
+	}
+	
+	public Serifier getConcatenatedSequences() {
+		Map<String,Set<Sequence>>	smap = new HashMap<String,Set<Sequence>>();
+		Set<String>				specset = new HashSet<String>();
+		Map<GeneGroup,Integer>	genegroups = new HashMap<GeneGroup,Integer>();
+		int[] rr = table.getSelectedRows();
+		if( table.getModel() == groupModel ) {
+			for (int r : rr) {
+				int cr = table.convertRowIndexToModel(r);
+				int max = 0;
+				GeneGroup gg = allgenegroups.get(cr);
+				specset.addAll( gg.getSpecies() );
+				
+				for( Tegeval tv : gg.getTegevals() ) {
+					int l = tv.getAlignedSequence().length();
+					if( l > max ) max = l;
+				}
+				genegroups.put( gg, max );
+			}
+		} else {
+			for (int r : rr) {
+				int cr = table.convertRowIndexToModel(r);
+				Gene g = genelist.get(cr);
+				int max = 0;
+				GeneGroup gg = g.getGeneGroup();
+				specset.addAll( gg.getSpecies() );
+				for( Tegeval tv : gg.getTegevals() ) {
+					int l = tv.getAlignedSequence().length();
+					if( l > max ) max = l;
+				}
+				genegroups.put( gg, max );
+			}
+		}
+		
+		//List<Sequence>	seqs = new ArrayList<Sequence>();
+		/*Map<String>	specset = new HashMap<String,Integer>();
+		for( GeneGroup ggroup : genegroups ) {
+			int max = 0;
+			for( Tegeval tv : ggroup.getTegevals() ) {
+				int len = tv.getAlignedSequence().length();
+				if( len > max ) {
+					max = len;
+					specset.put( tv.getContshort().getSpec(), max );
+				}
+			}
+		}*/
+		
+		for( GeneGroup ggroup : genegroups.keySet() ) {
+			int len = genegroups.get( ggroup );
+			for( String selspec : specset ) {			
+				List<Tegeval> ltv = ggroup.getTegevals(selspec);
+				
+				String spec;
+				if( selspec.contains("hermus") ) spec = selspec;
+				else {
+					Matcher m = Pattern.compile("\\d").matcher(selspec); 
+					int firstDigitLocation = m.find() ? m.start() : 0;
+					if( firstDigitLocation == 0 ) spec = "Thermus_" + selspec;
+					else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
+				}
+				
+				Set<Sequence> seqs;
+				if( smap.containsKey( spec ) ) {
+					seqs = smap.get( spec );
+					Set<Sequence> addseqs = new HashSet<Sequence>();
+					for( Sequence seq : seqs ) {
+						if( ltv != null && ltv.size() > 0 ) {
+							boolean first = true;
+							for( Tegeval tv : ltv ) {
+								Sequence tseq;
+								if( !first ) {
+									tseq = new Sequence( spec, null );
+									addseqs.add( tseq );
+									tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+								} else tseq = seq;
+								
+								//seqs.add( tseq );
+								
+								StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+								if( seqstr != null && seqstr.length() > 0 ) {
+									tseq.append( seqstr );
+								} else {
+									for( int i = 0; i < len; i++ ) tseq.append( "-" );
+								}
+								first = false;
+							}
+						} else {
+							for( int i = 0; i < len; i++ ) seq.append( "-" );
+						}
+					}
+					seqs.addAll( addseqs );
+				} else {					
+					seqs = new HashSet<Sequence>();
+					
+					if( ltv != null && ltv.size() > 0 ) {
+						for( Tegeval tv : ltv ) {
+							Sequence seq = new Sequence( spec, null );
+							seqs.add( seq );
+							
+							StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+							if( seqstr != null && seqstr.length() > 0 ) {
+								seq.append( seqstr );
+							} else {
+								for( int i = 0; i < len; i++ ) seq.append( "-" );
+							}
+						}
+					} else {
+						Sequence tseq = new Sequence( spec, null );
+						seqs.add( tseq );
+						for( int i = 0; i < len; i++ ) tseq.append( "-" );
+					}
+					/*for( Tegeval tv : ltv ) {
+						Sequence seq = new Sequence( spec, null );
+						seqs.add( seq );
+						
+						StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+						if( seqstr != null && seqstr.length() > 0 ) {
+							seq.append( seqstr );
+						} else {
+							for( int i = 0; i < len; i++ ) seq.append( "-" );
+						}
+					}*/
+					smap.put( spec, seqs );
+				}
+			}
+		}
+		
+		Serifier			serifier = new Serifier();
+		for( String spec : smap.keySet() ) {
+			Set<Sequence> seqs = smap.get( spec );
+			for( Sequence seq : seqs ) {
+				serifier.addSequence( seq );
+			}
 		}
 		return serifier;
 	}
@@ -9638,6 +9813,7 @@ public class GeneSet extends JApplet {
 				final double[] b0;
 				final double[] b1;
 				final double[] b2;
+				final String[] names;
 				if( blosumap != null ) {
 					int[] rr = table.getSelectedRows();
 					
@@ -9652,13 +9828,16 @@ public class GeneSet extends JApplet {
 					PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();
 					pca.setup(samplesize, rr.length);
 					Map<GeneGroup,double[]>	valmap = new HashMap<GeneGroup,double[]>();
+					names = new String[ rr.length ];
 					for( int k = 0; k < rr.length; k++ ) {
 						int i = table.convertRowIndexToModel( rr[k] );
 						gg = allgenegroups.get(i);
+						names[k] = gg.getCommonName();
 						
 						double[] sdb = new double[ samplesize ];
 						
 						int u = 0;
+						double norm = 0.0;
 						for( int m = 0; m < speclist.size()-1; m++ ) {
 							String  spec1 = speclist.get( m );
 							Teginfo ti = gg.species.get( spec1 );
@@ -9666,10 +9845,15 @@ public class GeneSet extends JApplet {
 								String spec2 = speclist.get( n );
 								double val = GeneCompare.blosumVal(ti.best, spec2, gg, blosumap);
 								sdb[u++] = val;
+								norm += val*val;
 							}
 						}
-						valmap.put( gg, sdb );
 						
+						norm = Math.sqrt( norm );
+						for( int v = 0; v < samplesize; v++ ) {
+							sdb[v] /= norm;
+						}
+						valmap.put( gg, sdb );
 						//pca.addSample( sdb );
 					}
 					
@@ -9704,7 +9888,16 @@ public class GeneSet extends JApplet {
 					b0 = null;
 					b1 = null;
 					b2 = null;
+					names = null;
 				}
+				
+				/*JFXPanel fxpanel = new JFXPanel();
+				Platform.runLater( new Runnable() {
+					@Override
+					public void run() {
+						new ChartApp( names, b0, b1 );
+					}
+				});*/
 				
 				SwingUtilities.invokeLater( new Runnable() {
 					@Override
@@ -9720,103 +9913,103 @@ public class GeneSet extends JApplet {
 							Platform.runLater(new Runnable() {
 				                 @Override
 				                 public void run() {
-				                     initFXChart( fxpanel, b2, b1 );
+				                     initFXChart( fxpanel, names, b0, b1 );
 				                 }
 				            });
 						} else {
 							Platform.runLater(new Runnable() {
 				                 @Override
 				                 public void run() {
-				                     initFXChart( null, b2, b1 );
+				                     initFXChart( null, names, b0, b1 );
 				                 }
 				            });
 						}						
-						//double[] sdb1 = new double[ (speclist.size()-1)*(speclist.size())/2 ];
-						//double[] sdb2 = new double[ sdb1.length ];
-						
-						/*for( int k = 0; k < rr.length-1; k++ ) {
-							int i = table.convertRowIndexToModel( rr[k] );
-							GeneGroup gg1 = allgenegroups.get(i);
-							double[] sdb1 = valmap.get(gg1);
-							
-							/*int v = 0;
-							for( int m = 0; m < speclist.size()-1; m++ ) {
-								String  spec1 = speclist.get( m );
-								Teginfo ti = gg1.species.get( spec1 );
-								for( int n = m+1; n < speclist.size(); n++ ) {
-									String spec2 = speclist.get( n );
-									//Teginfo ti2 = gg1.species.get( spec2 );
-									sdb1[v++] = GeneCompare.blosumVal(ti.best, spec2, gg1, blosumap);
-								}
-							}*
-							
-							for( int l = k+1; l < rr.length; l++ ) {
-								int i1 = table.convertRowIndexToModel( rr[l] );
-								GeneGroup gg2 = allgenegroups.get(i1);
-								double[] sdb2 = valmap.get(gg2);
-								
-								double val = 0.0;
-								for( int x = 0; x < sdb1.length; x++ ) {
-									double diff = sdb1[x]-sdb2[x];
-									val += diff*diff;
-								}
-								val = Math.sqrt( val );
-								
-								mat[k*rr.length+l] = val;
-								mat[l*rr.length+k] = val;
-							}
-						}
-						
-						/*List<String>	genenames = new ArrayList<String>();
-						StringBuilder 	sb = new StringBuilder();
-						sb.append( "\t"+rr.length );
-						for( int i = 0; i < mat.length; i++ ) {
-							if( i % rr.length == 0 ) {
-								int r = i / rr.length;
-								int v = table.convertRowIndexToModel(rr[r]);
-								gg = allgenegroups.get(v);
-								genenames.add( gg.getCommonName().replace(",", "").replace("(", "").replace(")", "").replace(":", "") );
-								sb.append( "\n" + gg.getCommonName() + "\t" + mat[i] );
-							} else sb.append( "\t" + mat[i] );
-						}
-						sb.append("\n");
-						
-						JTextArea	ta = new JTextArea();
-						frame.add( ta );
-						ta.setText( sb.toString() );
-						
-						TreeUtil tu = new TreeUtil();
-						Node n = tu.neighborJoin(mat, genenames, null, false, false);
-						
-						String tree = n.toString();
-						
-						boolean succ = true;
-						try {
-							JSObject win = JSObject.getWindow( GeneSet.this );
-							win.call("fastTree", new Object[] { tree });
-						} catch( NoSuchMethodError | Exception e1 ) {
-							e1.printStackTrace();
-							succ = false;
-						}
-						
-						if( !succ ) {
-							if( cs.connections().size() > 0 ) {
-					    		cs.sendToAll( tree );
-					    	} else if( Desktop.isDesktopSupported() ) {
-					    		cs.message = tree;
-					    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
-					    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
-								try {
-									Desktop.getDesktop().browse( new URI(uristr) );
-								} catch (IOException | URISyntaxException e1) {
-									e1.printStackTrace();
-								}
-					    	}
-						}*/
-						
 						fxframe.setVisible( true );
 					}
 				});
+				
+				//double[] sdb1 = new double[ (speclist.size()-1)*(speclist.size())/2 ];
+				//double[] sdb2 = new double[ sdb1.length ];
+				
+				/*for( int k = 0; k < rr.length-1; k++ ) {
+					int i = table.convertRowIndexToModel( rr[k] );
+					GeneGroup gg1 = allgenegroups.get(i);
+					double[] sdb1 = valmap.get(gg1);
+					
+					/*int v = 0;
+					for( int m = 0; m < speclist.size()-1; m++ ) {
+						String  spec1 = speclist.get( m );
+						Teginfo ti = gg1.species.get( spec1 );
+						for( int n = m+1; n < speclist.size(); n++ ) {
+							String spec2 = speclist.get( n );
+							//Teginfo ti2 = gg1.species.get( spec2 );
+							sdb1[v++] = GeneCompare.blosumVal(ti.best, spec2, gg1, blosumap);
+						}
+					}*
+					
+					for( int l = k+1; l < rr.length; l++ ) {
+						int i1 = table.convertRowIndexToModel( rr[l] );
+						GeneGroup gg2 = allgenegroups.get(i1);
+						double[] sdb2 = valmap.get(gg2);
+						
+						double val = 0.0;
+						for( int x = 0; x < sdb1.length; x++ ) {
+							double diff = sdb1[x]-sdb2[x];
+							val += diff*diff;
+						}
+						val = Math.sqrt( val );
+						
+						mat[k*rr.length+l] = val;
+						mat[l*rr.length+k] = val;
+					}
+				}
+				
+				/*List<String>	genenames = new ArrayList<String>();
+				StringBuilder 	sb = new StringBuilder();
+				sb.append( "\t"+rr.length );
+				for( int i = 0; i < mat.length; i++ ) {
+					if( i % rr.length == 0 ) {
+						int r = i / rr.length;
+						int v = table.convertRowIndexToModel(rr[r]);
+						gg = allgenegroups.get(v);
+						genenames.add( gg.getCommonName().replace(",", "").replace("(", "").replace(")", "").replace(":", "") );
+						sb.append( "\n" + gg.getCommonName() + "\t" + mat[i] );
+					} else sb.append( "\t" + mat[i] );
+				}
+				sb.append("\n");
+				
+				JTextArea	ta = new JTextArea();
+				frame.add( ta );
+				ta.setText( sb.toString() );
+				
+				TreeUtil tu = new TreeUtil();
+				Node n = tu.neighborJoin(mat, genenames, null, false, false);
+				
+				String tree = n.toString();
+				
+				boolean succ = true;
+				try {
+					JSObject win = JSObject.getWindow( GeneSet.this );
+					win.call("fastTree", new Object[] { tree });
+				} catch( NoSuchMethodError | Exception e1 ) {
+					e1.printStackTrace();
+					succ = false;
+				}
+				
+				if( !succ ) {
+					if( cs.connections().size() > 0 ) {
+			    		cs.sendToAll( tree );
+			    	} else if( Desktop.isDesktopSupported() ) {
+			    		cs.message = tree;
+			    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
+			    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
+						try {
+							Desktop.getDesktop().browse( new URI(uristr) );
+						} catch (IOException | URISyntaxException e1) {
+							e1.printStackTrace();
+						}
+			    	}
+				}*/
 			}
 		};
 		
