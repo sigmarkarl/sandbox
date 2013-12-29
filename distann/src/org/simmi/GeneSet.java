@@ -6254,6 +6254,7 @@ public class GeneSet extends JApplet {
 	BufferedImage bimg;
 	
 	JComboBox selcomb;
+	JComboBox syncolorcomb = new JComboBox();
 	Map<String,Function> funcmap = new HashMap<String,Function>();
 	private JComponent showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
@@ -6434,7 +6435,20 @@ public class GeneSet extends JApplet {
 				if( value == null ) {
 					label.setBackground(Color.white);
 				} else {
-					if( value instanceof Teginfo ) {
+					String spec = (String)syncolorcomb.getSelectedItem();
+					if( spec.length() > 0 ) {
+						List<Contig> contigs = speccontigMap.get( spec );
+						if( value instanceof Teginfo ) {
+							Teginfo ti = (Teginfo)value;
+							label.setBackground( Color.green );
+							for( Tegeval tv : ti.tset ) {
+								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+								label.setBackground( GeneCompare.invertedGradientColor( ratio ) );
+								break;
+								//GeneCompare.gradientColor();
+							}
+						}
+					} else if( value instanceof Teginfo ) {
 						Teginfo ti = (Teginfo)value;
 						label.setBackground( Color.green );
 						for( Tegeval tv : ti.tset ) {
@@ -10122,6 +10136,16 @@ public class GeneSet extends JApplet {
 			}
 		});
 		ttopcom.add(selcomblocal);
+		
+		
+		/*syncolorcomb.addItemListener( new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				String spec = (String)syncolorcomb.getSelectedItem();
+				//if( spec.length() > 0 )
+			}
+		});*/
+		ttopcom.add( syncolorcomb );
 		topcomp.add(ttopcom, BorderLayout.NORTH);
 
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -10311,6 +10335,43 @@ public class GeneSet extends JApplet {
 			}
 		});
 		botcombo.add(swsearch);
+		
+		Action blastsearchaction = new AbstractAction("Blast") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.getSelectedFile();
+					try {
+						FileReader fr = new FileReader( f );
+						BufferedReader br = new BufferedReader( fr );
+						String line = br.readLine();
+						while( line != null ) {
+							if( line.startsWith("> ") ) {
+								int i = line.indexOf(' ', 2);
+								String id = line.substring(2, i);
+								
+								Gene g = genemap.get( id );
+								if( g != null ) {
+									i = allgenegroups.indexOf( g.getGeneGroup() );
+									if( i != -1 ) {
+										int r = table.convertRowIndexToView( i );
+										table.addRowSelectionInterval(r, r);
+									}
+								}
+							}
+							line = br.readLine();
+						}
+						fr.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		JButton blastb = new JButton( blastsearchaction );
+		botcombo.add( blastb );
+		
 		botcombo.add(jb);
 
 		// botcombo.add( sbutt );
@@ -13770,6 +13831,12 @@ public class GeneSet extends JApplet {
 			}
 			genemap = refmap;
 			
+			//syncolorcomb = new JComboBox();
+			syncolorcomb.removeAllItems();
+			syncolorcomb.addItem("");
+			for( String spec : speccontigMap.keySet() ) {
+				syncolorcomb.addItem( spec );
+			}
 			//loadCog();
 			
 			//specList = loadcontigs( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.fna") ) ) );			
