@@ -661,8 +661,8 @@ public class Neighbour {
 												}
 											} else if( abucol.isSelected() ) {
 												GeneGroup gg = next.getGene().getGeneGroup();
-												int numspec = Math.min( gg.species.size(), 39 );
-												float abu = numspec/39.0f;
+												int numspec = (gg != null && gg.species != null) ? Math.min( gg.species.size(), 37 ) : 0;
+												float abu = numspec/37.0f;
 												Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 												g.setColor( rc );
 											} else if( relcol.isSelected() ) {
