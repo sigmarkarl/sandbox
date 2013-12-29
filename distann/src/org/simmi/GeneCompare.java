@@ -993,7 +993,7 @@ public class GeneCompare {
 		}
 		double ratio2 = -1.0;
 		Teginfo gene2s = gg.getGenes( spec2 );
-		for( Tegeval tv2 : gene2s.tset ) {
+		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
 				if( ctg2.tlist != null ) {
@@ -1025,19 +1025,21 @@ public class GeneCompare {
 			g2.setColor( c );
 		}*/
 		
-		Color c = Color.black;
-		if( ratio < 1.0/6.0 ) {
-			c = new Color(0.0f,(float)(ratio*6.0),1.0f);
-		} else if( ratio < 2.0/6.0 ) {
-			c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio)*6.0));
-		} else if( ratio < 3.0/6.0 ) {
-			c = new Color((float)((ratio-2.0/6.0)*6.0),1.0f,0.0f);
-		} else if( ratio < 4.0/6.0 ) {
-			c = new Color(1.0f,(float)((4.0/6.0-ratio)*6.0),0.0f);
-		} else if( ratio < 5.0/6.0 ) {
-			c = new Color(1.0f,0.0f,(float)((ratio-4.0/6.0)*6.0));
-		} else {
-			c = new Color((float)((1.0-ratio)*6.0),0.0f,1.0f);
+		Color c = Color.white;
+		if( ratio >= 0.0 ) {
+			if( ratio < 1.0/6.0 ) {
+				c = new Color(0.0f,(float)(ratio*6.0),1.0f);
+			} else if( ratio < 2.0/6.0 ) {
+				c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio)*6.0));
+			} else if( ratio < 3.0/6.0 ) {
+				c = new Color((float)((ratio-2.0/6.0)*6.0),1.0f,0.0f);
+			} else if( ratio < 4.0/6.0 ) {
+				c = new Color(1.0f,(float)((4.0/6.0-ratio)*6.0),0.0f);
+			} else if( ratio < 5.0/6.0 ) {
+				c = new Color(1.0f,0.0f,(float)((ratio-4.0/6.0)*6.0));
+			} else if( ratio <= 1.0 ) {
+				c = new Color((float)((1.0-ratio)*6.0),0.0f,1.0f);
+			}
 		}
 		
 		return c;
