@@ -294,6 +294,8 @@ public class Fasteign extends JApplet {
 			public Class<?> getColumnClass(int columnIndex) {
 				if (columnIndex == 0)
 					return String.class;
+				else if (columnIndex == 1)
+					return Double.class;
 				else if (columnIndex == 3)
 					return Date.class;
 				return Integer.class;
@@ -413,17 +415,17 @@ public class Fasteign extends JApplet {
 			public Object getValueAt(int rowIndex, int columnIndex) {
 				Ibud ib = iblist.get(rowIndex);
 				if (columnIndex == 0) {
-					return (double) ib.verd;
+					return (double) ib.getVerd();
 				} else if (columnIndex == 1) {
-					return (double) ib.fastm;
+					return (double) ib.getFasteignaMat();
 				} else if (columnIndex == 2) {
-					return (double) ib.brunm;
+					return (double) ib.getBrunabotaMat();
 				} else if (columnIndex == 3) {
-					return (double) ib.verd / (double) ib.ferm;
+					return (double) ib.getVerd() / (double) ib.getFermetrar();
 				} else if (columnIndex == 4) {
-					return (double) ib.fastm / (double) ib.ferm;
+					return (double) ib.getFasteignaMat() / (double) ib.getFermetrar();
 				} else if (columnIndex == 5) {
-					return (double) ib.verd / (double) ib.fastm;
+					return (double) ib.getVerd() / (double) ib.getFasteignaMat();
 				}
 
 				return null;
@@ -636,19 +638,19 @@ public class Fasteign extends JApplet {
 			row = sheet.createRow(i++);
 			c = 0;
 			cell = row.createCell(c++);
-			cell.setCellValue(ib.nafn);
+			cell.setCellValue(ib.getNafn());
 			cell = row.createCell(c++);
-			cell.setCellValue(ib.verd);
+			cell.setCellValue(ib.getVerd());
 			cell = row.createCell(c++);
-			cell.setCellValue(ib.fastm);
+			cell.setCellValue(ib.getFasteignaMat());
 			cell = row.createCell(c++);
-			cell.setCellValue(ib.brunm);
+			cell.setCellValue(ib.getBrunabotaMat());
 			cell = row.createCell(c++);
-			cell.setCellValue(ib.teg);
+			cell.setCellValue(ib.getTegund());
 			cell = row.createCell(c++);
-			cell.setCellValue(ib.ferm);
+			cell.setCellValue(ib.getFermetrar());
 			cell = row.createCell(c++);
-			cell.setCellValue(ib.herb);
+			cell.setCellValue(ib.getHerbergi());
 			cell = row.createCell(c++);
 			cell.setCellValue(ib.dat.toString());
 			cell = row.createCell(c++);
