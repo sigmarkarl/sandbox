@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -22,10 +24,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.v4.app.Fragment;
+import android.support.v13.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.Html;
 import android.text.Spannable;
@@ -44,7 +44,9 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
@@ -54,6 +56,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+
 
 public class MainActivity extends FragmentActivity {
 	//String base = "http://www.mbl.is/mm/fasteignir/leit.html?offset;svaedi=&tegund=&fermetrar_fra=&fermetrar_til=&herbergi_fra=&herbergi_til=&gata=&lysing=";
@@ -543,7 +546,7 @@ public class MainActivity extends FragmentActivity {
 	    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_main);
 		
-		mDemoCollectionPagerAdapter = new CollectionPagerAdapter(getSupportFragmentManager());
+		mDemoCollectionPagerAdapter = new CollectionPagerAdapter(getFragmentManager());
 	    myPager = (ViewPager) findViewById(R.id.pager);
 	    myPager.setAdapter(mDemoCollectionPagerAdapter);
 	    
@@ -686,7 +689,7 @@ public class MainActivity extends FragmentActivity {
 	    public static final String ARG_OBJECT = "object";
 
 	    @Override
-	    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+	    public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
 	        // The last two arguments ensure LayoutParams are inflated
 	        // properly.
 	    	Bundle args = getArguments();
@@ -707,32 +710,45 @@ public class MainActivity extends FragmentActivity {
 	        	button.setOnClickListener( new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						String loc = spinner1.getSelectedItem().toString();//loccomb.getItemText( loccomb.getSelectedIndex() );
-						String[] split = loc.split(" ");
-						String pnr = split[0];
-						String val = base.replace("svaedi=", "svaedi=" + pnr + "_" + pnr);
-						String teg = spinner2.getSelectedItem().toString();//typcomb.getItemText( typcomb.getSelectedIndex() ).toLowerCase();
-						teg = teg.replace("æ", "ae");
-						teg = teg.replace("ö", "o");
-						teg = teg.replace("ý", "y");
-						
-						if( teg.equals("Fjolbyli") ) teg = "fjolbyli";
-						else if( teg.equals("Einbyli") ) teg = "einbyli";
-						else if( teg.equals("Haeðir") ) teg = "haedir";
-						else teg = "par_radhus";
-						val = val.replace("tegund=", "tegund=" + teg);
-						//String diffstr = bigdifffield.getText();
-						int ferm = Integer.parseInt( edittext1.getText().toString() ); //bigdifffield.getValue(); //Integer.parseInt(diffstr);
-						int diff = Integer.parseInt( edittext2.getText().toString() ); //bigfield.getValue(); //Integer.parseInt(bigfield.getText());
-						val = val.replace("fermetrar_fra=", "fermetrar_fra=" + (ferm - diff));
-						val = val.replace("fermetrar_til=", "fermetrar_til=" + (ferm + diff));
+						WebView wv = new WebView( container.getContext() );
+						WebViewClient wvc = new WebViewClient() {
+							@Override
+							public void onPageFinished( WebView view, String url ) {
+								super.onPageFinished(view, url);
+								
+								String loc = spinner1.getSelectedItem().toString();//loccomb.getItemText( loccomb.getSelectedIndex() );
+								String[] split = loc.split(" ");
+								String pnr = split[0];
+								String val = base.replace("svaedi=", "svaedi=" + pnr + "_" + pnr);
+								String teg = spinner2.getSelectedItem().toString();//typcomb.getItemText( typcomb.getSelectedIndex() ).toLowerCase();
+								teg = teg.replace("æ", "ae");
+								teg = teg.replace("ö", "o");
+								teg = teg.replace("ý", "y");
+								
+								if( teg.equals("Fjolbyli") ) teg = "fjolbyli";
+								else if( teg.equals("Einbyli") ) teg = "einbyli";
+								else if( teg.equals("Haeðir") ) teg = "haedir";
+								else teg = "par_radhus";
+								val = val.replace("tegund=", "tegund=" + teg);
+								//String diffstr = bigdifffield.getText();
+								int ferm = Integer.parseInt( edittext1.getText().toString() ); //bigdifffield.getValue(); //Integer.parseInt(diffstr);
+								int diff = Integer.parseInt( edittext2.getText().toString() ); //bigfield.getValue(); //Integer.parseInt(bigfield.getText());
+								val = val.replace("fermetrar_fra=", "fermetrar_fra=" + (ferm - diff));
+								val = val.replace("fermetrar_til=", "fermetrar_til=" + (ferm + diff));
 
-						final String tstr = val;
+								final String tstr = val;
+								
+								//texterm.setText( tstr );
+								//otherView.
+								fastpack.search( tstr );
+								myPager.setCurrentItem( 1 );
+							}
+						};
+						wv.setWebViewClient( wvc );
+						WebSettings ws = wv.getSettings();
+						ws.setJavaScriptEnabled( true );
 						
-						//texterm.setText( tstr );
-						//otherView.
-						fastpack.search( tstr );
-						myPager.setCurrentItem( 1 );
+						wv.loadUrl("http://www.mbl.is/fasteignir");
 					}
 				});
 	        	// Create an ArrayAdapter using the string array and a default spinner layout
