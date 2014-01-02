@@ -28,7 +28,6 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -60,13 +59,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-
 import netscape.javascript.JSObject;
-
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class Fasteign extends JApplet {
 	/**
@@ -610,7 +603,7 @@ public class Fasteign extends JApplet {
 	}
 
 	public void excelExport() throws IOException {
-		File f = File.createTempFile("tmp", ".xlsx");
+		/*File f = File.createTempFile("tmp", ".xlsx");
 		XSSFWorkbook wb = new XSSFWorkbook();
 		XSSFSheet sheet = wb.createSheet("Fasteignir");
 		int i = 0;
@@ -657,7 +650,7 @@ public class Fasteign extends JApplet {
 			cell.setCellValue(ib.url);
 		}
 		wb.write(new FileOutputStream(f));
-		Desktop.getDesktop().open(f);
+		Desktop.getDesktop().open(f);*/
 	}
 
 	public Fasteign() {
