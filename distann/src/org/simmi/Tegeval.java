@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import org.simmi.shared.Sequence;
 
-public class Tegeval extends Sequence {
+public class Tegeval extends Sequence implements Teg {
 	public Tegeval(Gene gene, String tegund, double evalue, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
 		this( contig, shortcontig, locontig, sta, sto, orient );
 		
@@ -329,13 +329,13 @@ public class Tegeval extends Sequence {
 	}*/
 
 	public String toString() {
-		return contloc;
+		return this.contloc;
 	}
 	
 	public static boolean locsort = true;
 
 	@Override
-	public int compareTo(Sequence o) {
+	public int compareTo(Object o) {
 		if( o instanceof Tegeval ) {
 			Tegeval tv = (Tegeval)o;
 			if( locsort ) {
@@ -350,6 +350,29 @@ public class Tegeval extends Sequence {
 				int comp = Double.compare(eval, tv.eval);
 				return comp == 0 ? teg.compareTo(tv.teg) : comp;
 			}
-		} else return super.compareTo(o);
+		} else if( o instanceof Teginfo ) {
+			return 1;
+		} else {
+			return super.compareTo(o);
+		}
 	}
+	
+	/*public int compareTo(Tegeval tv) {
+		if( locsort ) {
+			int ret = contshort.compareTo(tv.contshort);
+			/*
+			 * if( o.contshort != null || o.contshort.length() < 2 ) { ret =
+			 * contshort.compareTo(o.contshort); } else {
+			 * System.err.println(); }
+			 *
+			return ret == 0 ? start - tv.start : ret;
+		} else {
+			int comp = Double.compare(eval, tv.eval);
+			return comp == 0 ? teg.compareTo(tv.teg) : comp;
+		}
+	}
+	
+	public int compareTo(Teginfo ti) {
+		return 1;
+	}*/
 }
