@@ -6428,7 +6428,9 @@ public class GeneSet extends JApplet {
 			e2.printStackTrace();
 		}
 
-		table.setDefaultRenderer(Teginfo.class, new DefaultTableCellRenderer() {
+		final Color darkgreen = new Color( 0, 128, 0 );
+		final Color darkred = new Color( 128, 0, 0 );
+		table.setDefaultRenderer(Teg.class, new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 				Component label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -6450,16 +6452,27 @@ public class GeneSet extends JApplet {
 						}
 					} else if( value instanceof Teginfo ) {
 						Teginfo ti = (Teginfo)value;
-						label.setBackground( Color.green );
+						if( ti.tset.size() > 1 ) label.setBackground( darkgreen );
+						else label.setBackground( Color.green );
 						for( Tegeval tv : ti.tset ) {
 							if( tv.getContshort().isPlasmid() ) {
-								label.setBackground( Color.red );
+								if( ti.tset.size() > 1 ) label.setBackground( darkred );
+								else label.setBackground( Color.red );
 								break;
 							}
 						}
 					} else {
 						Tegeval tv = (Tegeval)value;
-						label.setBackground( Color.green );
+						Gene g = tv.getGene();
+						GeneGroup gg = g.getGeneGroup();
+						Teginfo ti = gg.species.get( g.getSpecies() );
+						if( tv.getContshort().isPlasmid() ) {
+							if( ti.tset.size() > 1 ) label.setBackground( darkred );
+							else label.setBackground( Color.red );
+						} else {
+							if( ti.tset.size() > 1 ) label.setBackground( darkgreen );
+							else label.setBackground( Color.green );
+						}
 					}
 					// label.setText( value.toString() );
 					/*if (colorCodes[0] == null)
@@ -10518,7 +10531,7 @@ public class GeneSet extends JApplet {
 				else if(columnIndex == 9 || (columnIndex >= 13 && columnIndex <= 24) )
 					return Integer.class;
 				else if (columnIndex >= 25)
-					return Teginfo.class;
+					return Teg.class;
 				return String.class;
 			}
 
@@ -10733,7 +10746,7 @@ public class GeneSet extends JApplet {
 				else if(columnIndex >= 10 && columnIndex <= 21)
 					return Integer.class;
 				else if (columnIndex >= 23)
-					return Teginfo.class;
+					return Teg.class;
 				return String.class;
 			}
 
@@ -10776,7 +10789,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 10) {
 					return gene.ecid;
 				} else if (columnIndex == 11) {
-					return gene.getSpecies() == null ? -1 : 1;
+					return gene.getGeneGroup().getSpecies().size();
 				} else if (columnIndex == 12) {
 					return gene.getGroupIndex();
 				} else if (columnIndex == 13) {
@@ -10811,6 +10824,9 @@ public class GeneSet extends JApplet {
 					String spec = specList.get( columnIndex-23 );
 					//Teginfo set = gene.species.equals(spec) ? gene.teginfo : null;
 					if( gene.getSpecies().equals( spec ) ) return gene.tegeval;
+					else {
+						return gene.getGeneGroup().species.get( spec );
+					}
 				}
 				return columnIndex >= 14 ? null : "";
 			}
