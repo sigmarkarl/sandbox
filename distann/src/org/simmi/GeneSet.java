@@ -6254,7 +6254,7 @@ public class GeneSet extends JApplet {
 	BufferedImage bimg;
 	
 	JComboBox selcomb;
-	JComboBox syncolorcomb = new JComboBox();
+	JComboBox syncolorcomb;
 	Map<String,Function> funcmap = new HashMap<String,Function>();
 	private JComponent showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
@@ -6449,6 +6449,10 @@ public class GeneSet extends JApplet {
 								break;
 								//GeneCompare.gradientColor();
 							}
+						} else if( value instanceof Tegeval ) {
+							Tegeval tv = (Tegeval)value;
+							double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+							label.setBackground( GeneCompare.invertedGradientColor( ratio ) );
 						}
 					} else if( value instanceof Teginfo ) {
 						Teginfo ti = (Teginfo)value;
@@ -14873,7 +14877,8 @@ public class GeneSet extends JApplet {
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
-		selcomb = new JComboBox();
+		selcomb = new JComboBox<String>();
+		syncolorcomb = new JComboBox<String>();
 		
 		setColors();
 
