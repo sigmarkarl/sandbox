@@ -3,7 +3,7 @@ package org.simmi;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Teginfo implements Comparable<Teginfo> {
+public class Teginfo implements Teg {
 	String tegund;
 	Set<Tegeval> tset;
 	Tegeval best;
@@ -26,7 +26,8 @@ public class Teginfo implements Comparable<Teginfo> {
 	}
 
 	@Override
-	public int compareTo(Teginfo o) {
-		return best.compareTo(o.best);
+	public int compareTo(Object o) {
+		if( o instanceof Teginfo ) return best.compareTo(((Teginfo)o).best);
+		return -1;
 	}
 }
