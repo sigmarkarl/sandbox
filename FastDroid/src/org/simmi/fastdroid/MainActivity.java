@@ -10,6 +10,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
@@ -710,7 +717,24 @@ public class MainActivity extends FragmentActivity {
 	        	button.setOnClickListener( new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						WebView wv = new WebView( container.getContext() );
+						DocumentBuilderFactory 	builderFactory = DocumentBuilderFactory.newInstance();
+				        DocumentBuilder 		builder = null;
+				        Document 				myDoc = null;
+				        try {
+				            builder = builderFactory.newDocumentBuilder();
+				        } catch (ParserConfigurationException e) {
+				            e.printStackTrace();
+				        }
+				        try {
+				            myDoc = builder.parse("");
+				        } catch( Exception e ) {
+				        	
+				        }
+				        
+				        Node n = myDoc.getElementById("ok");
+				        
+				        
+						final WebView wv = new WebView( container.getContext() );
 						WebViewClient wvc = new WebViewClient() {
 							@Override
 							public void onPageFinished( WebView view, String url ) {
