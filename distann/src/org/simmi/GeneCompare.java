@@ -956,17 +956,18 @@ public class GeneCompare {
 		
 		Color c = Color.RED;
 		if( pratio2 != -1.0 && (pratio != 0.0 || !spec1.equals(spec2)) ) {
-			float val = (float)(9.0f*pratio2/10.0f);
+			c = gradientGrayscaleColor( pratio2 );
+			/*float val = (float)(9.0f*pratio2/10.0f);
 			if( val >= 0.0f && val <= 1.0f ) {
 				if( val > 9.0f/20.0f ) {
 					c = new Color(18.0f/10.0f-val*2.0f,18.0f/10.0f-2.0f*val,18.0f/10.0f-2.0f*val);
 				} else {
 					c = new Color(val*2.0f,val*2.0f,val*2.0f);
 				}
-			}
+			}*/
 			//System.err.println( pratio + "  " + pratio2 );
 		} else if( ratio2 >= 0 ) {
-			if( ratio2 < 1.0/6.0 ) {
+			/*if( ratio2 < 1.0/6.0 ) {
 				c = new Color(0.0f,(float)(ratio2*6.0),1.0f);
 			} else if( ratio2 < 2.0/6.0 ) {
 				c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio2)*6.0));
@@ -980,23 +981,24 @@ public class GeneCompare {
 				c = new Color((float)((1.0-ratio2)*6.0),0.0f,1.0f);
 			} else {
 				System.err.println();
-			}
+			}*/
+			c = gradientColor( ratio2 );
 		}
 		
 		return c;
 	}
 	
-	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+	public static double invertedGradientPlasmidRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
 		int total2 = 0;
 		for( Contig ctg2 : contigs2 ) {
-			if( !ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
+			if( ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
 		}
 		double ratio2 = -1.0;
 		Teginfo gene2s = gg.getGenes( spec2 );
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
-				if( ctg2.tlist != null ) {
+				if( ctg2.isPlasmid() && ctg2.tlist != null ) {
 					int idx = ctg2.tlist.indexOf( tv2 );
 					if( idx == -1 ) {
 						count2 += ctg2.getGeneCount();
@@ -1015,7 +1017,66 @@ public class GeneCompare {
 		return ratio2;
 	}
 	
-	public static Color invertedGradientGrayscaleColor( double ratio ) {		
+	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+		int total2 = 0;
+		for( Contig ctg2 : contigs2 ) {
+			if( !ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
+		}
+		double ratio2 = -1.0;
+		Teginfo gene2s = gg.getGenes( spec2 );
+		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
+			int count2 = 0;
+			for( Contig ctg2 : contigs2 ) {
+				if( ctg2.tlist != null ) {
+					int idx = ctg2.tlist.indexOf( tv2 );
+					if( idx == -1 ) {
+						count2 += ctg2.getGeneCount();
+					} else {
+						if( ctg2.isPlasmid() ) return -1;
+						count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+						break;
+					}
+				}
+			}
+			double rat2 = (double)count2/(double)total2;
+			 
+			if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
+			//ratio2 = rat2;
+			//break;
+		}
+		return ratio2;
+	}
+	
+	public static double invertedGradientTotalRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+		int total2 = 0;
+		for( Contig ctg2 : contigs2 ) {
+			total2 += ctg2.getGeneCount();
+		}
+		double ratio2 = -1.0;
+		Teginfo gene2s = gg.getGenes( spec2 );
+		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
+			int count2 = 0;
+			for( Contig ctg2 : contigs2 ) {
+				if( ctg2.tlist != null ) {
+					int idx = ctg2.tlist.indexOf( tv2 );
+					if( idx == -1 ) {
+						count2 += ctg2.getGeneCount();
+					} else {
+						count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+						break;
+					}
+				}
+			}
+			double rat2 = (double)count2/(double)total2;
+			 
+			if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
+			//ratio2 = rat2;
+			//break;
+		}
+		return ratio2;
+	}
+	
+	public static Color gradientGrayscaleColor( double ratio ) {		
 		//float green = (float)(1.0-ratio2);
 		/*if( ratio2 < 0.5 ) {
 			Color c = new Color(0,(float)(ratio2*2.0),1.0f);
@@ -1026,8 +1087,8 @@ public class GeneCompare {
 		}*/
 		
 		Color c = Color.white;
-		if( pratio2 != -1.0 && (pratio != 0.0 || !spec1.equals(spec2)) ) {
-			float val = (float)(9.0f*pratio2/10.0f);
+		if( ratio >= 0.0 ) {
+			float val = (float)(9.0f*ratio/10.0f);
 			if( val >= 0.0f && val <= 1.0f ) {
 				if( val > 9.0f/20.0f ) {
 					c = new Color(18.0f/10.0f-val*2.0f,18.0f/10.0f-2.0f*val,18.0f/10.0f-2.0f*val);
@@ -1035,26 +1096,12 @@ public class GeneCompare {
 					c = new Color(val*2.0f,val*2.0f,val*2.0f);
 				}
 			}
-		if( ratio >= 0.0 ) {
-			if( ratio < 1.0/6.0 ) {
-				c = new Color(0.0f,(float)(ratio*6.0),1.0f);
-			} else if( ratio < 2.0/6.0 ) {
-				c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio)*6.0));
-			} else if( ratio < 3.0/6.0 ) {
-				c = new Color((float)((ratio-2.0/6.0)*6.0),1.0f,0.0f);
-			} else if( ratio < 4.0/6.0 ) {
-				c = new Color(1.0f,(float)((4.0/6.0-ratio)*6.0),0.0f);
-			} else if( ratio < 5.0/6.0 ) {
-				c = new Color(1.0f,0.0f,(float)((ratio-4.0/6.0)*6.0));
-			} else if( ratio <= 1.0 ) {
-				c = new Color((float)((1.0-ratio)*6.0),0.0f,1.0f);
-			}
 		}
 		
 		return c;
 	}
 	
-	public static Color invertedGradientColor( double ratio ) {		
+	public static Color gradientColor( double ratio ) {		
 		//float green = (float)(1.0-ratio2);
 		/*if( ratio2 < 0.5 ) {
 			Color c = new Color(0,(float)(ratio2*2.0),1.0f);
@@ -1291,6 +1338,7 @@ public class GeneCompare {
 		
 		double ratio = 0.0;
 		double pratio = 0.0;
+		double tratio = 0.0;
 		if( ptotal > 0 ) {
 			if( !ctg.isPlasmid() ) {
 				int val = count - offset;
@@ -1330,6 +1378,8 @@ public class GeneCompare {
 			ratio = (double)val/(double)total;
 		}
 		
+		tratio = (double)(count - offset)/(double)(total + ptotal);
+		
 		/*if( ratio == 0.0 ) {
 			System.err.println();
 		}*/
@@ -1361,10 +1411,17 @@ public class GeneCompare {
 					g2.rotate( -theta );
                     g2.translate( -w/2, -h/2 );
 				} else if( synbr == -2 ) {
-					double ratio2 = invertedGradientRatio( spec2, contigs2, ratio, gg );
-					Color c = invertedGradientColor( ratio );
+					Color c;
+					if( ptotal > 0 ) {
+						//double pratio2 = invertedGradientPlasmidRatio( spec2, contigs2, pratio, gg );
+						c = gradientGrayscaleColor( pratio );
+					} else {
+						//double ratio2 = invertedGradientRatio( spec2, contigs2, ratio, gg );
+						c = gradientColor( ratio );
+					}
 					g2.setColor( c );
 					
+					double ratio2 = invertedGradientTotalRatio( spec2, contigs2, tratio, gg );
 					if( ratio2 != -1.0 ) {
 						double theta = ratio2*Math.PI*2.0;
 						g2.translate( w/2, h/2 );
