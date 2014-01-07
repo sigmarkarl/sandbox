@@ -8517,7 +8517,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
-				
+				final String[] names = selspec.
 				
 				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
 				Set<GeneGroup>	core = new HashSet<GeneGroup>();
