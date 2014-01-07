@@ -329,7 +329,7 @@ public class Tegeval extends Sequence implements Teg {
 	}*/
 
 	public String toString() {
-		return this.contloc;
+		return ori == -1 ? "-" + this.contloc : this.contloc;
 	}
 	
 	public static boolean locsort = true;
