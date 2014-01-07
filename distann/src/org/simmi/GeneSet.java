@@ -88,8 +88,10 @@ import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
+import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -4341,6 +4343,69 @@ public class GeneSet extends JApplet {
         return scene;
     }
 	
+	private static Scene createStackedBarChartScene( String[] names, double[] xdata ) {
+        final CategoryAxis xAxis = new CategoryAxis();
+        final NumberAxis yAxis = new NumberAxis();    
+        final StackedBarChart<String,Number> sc = new StackedBarChart<String,Number>(xAxis,yAxis);
+        xAxis.setLabel("");
+        yAxis.setLabel("");
+        sc.setTitle("Pan-core genome");
+       
+        XYChart.Series<String,Number> core = new XYChart.Series<String,Number>();
+        core.setName("Core");
+        for( int i = 0; i < xdata.length; i++ ) {
+        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], xdata[i] );
+        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
+        	core.getData().add( d );
+        }
+        XYChart.Series<String,Number> pan = new XYChart.Series<String,Number>();
+        pan.setName("Pan");
+        for( int i = 0; i < xdata.length; i++ ) {
+        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], xdata[i] );
+        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
+        	pan.getData().add( d );
+        }
+ 
+        sc.getData().addAll(core, pan);
+        if( scene == null ) {
+        	scene = new Scene( sc );
+        } else scene.setRoot( sc );
+        
+        /*for (XYChart.Series<Number, Number> s : sc.getData()) {
+        	int i = 0;
+            for (XYChart.Data<Number, Number> d : s.getData()) {
+                Tooltip.install( d.getNode(), new Tooltip( names[i++] ) );
+            }
+        }*/
+        
+        sc.setBackground( Background.EMPTY );
+        
+        final ContextMenu menu = new ContextMenu();
+        MenuItem mi = new MenuItem();
+        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
+			@Override
+			public void handle(javafx.event.ActionEvent arg0) {
+				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
+				try {
+					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("c:/fximg.png"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+        menu.getItems().add( mi );
+        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
+        	 @Override
+             public void handle(javafx.scene.input.MouseEvent event) {
+               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
+                 menu.show(sc, event.getScreenX(), event.getScreenY());
+               }
+             }
+        });
+        
+        return scene;
+    }
+	
 	private static Scene createScene( String webp ) {
         //Group  root  =  new  Group();
 		WebView	wv = new WebView();
@@ -6445,14 +6510,32 @@ public class GeneSet extends JApplet {
 							label.setBackground( Color.green );
 							for( Tegeval tv : ti.tset ) {
 								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
-								label.setBackground( GeneCompare.invertedGradientColor( ratio ) );
+								if( ratio == -1 ) {
+									ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+									label.setForeground( Color.white );
+								} else {
+									label.setBackground( GeneCompare.gradientColor( ratio ) );
+									label.setForeground( Color.black );
+								}
 								break;
 								//GeneCompare.gradientColor();
 							}
 						} else if( value instanceof Tegeval ) {
 							Tegeval tv = (Tegeval)value;
+							
 							double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
-							label.setBackground( GeneCompare.invertedGradientColor( ratio ) );
+							if( ratio == -1 ) {
+								ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+								label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+								label.setForeground( Color.white );
+							} else {
+								label.setBackground( GeneCompare.gradientColor( ratio ) );
+								label.setForeground( Color.black );
+							}
+							
+							/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+							label.setBackground( GeneCompare.gradientColor( ratio ) );*/
 						}
 					} else if( value instanceof Teginfo ) {
 						Teginfo ti = (Teginfo)value;
@@ -8435,6 +8518,7 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
 				
+				
 				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
 				Set<GeneGroup>	core = new HashSet<GeneGroup>();
 				StringBuilder	restext = new StringBuilder();
@@ -8473,7 +8557,7 @@ public class GeneSet extends JApplet {
 				JSObject window = null;
 				try {
 					window = JSObject.getWindow( GeneSet.this );
-				} catch( Exception exc ) {
+				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
 				
@@ -8495,14 +8579,42 @@ public class GeneSet extends JApplet {
 						exc.printStackTrace();
 					}
 				} else if( Desktop.isDesktopSupported() ) {
-					try {
+					SwingUtilities.invokeLater( new Runnable() {
+						@Override
+						public void run() {
+							if( fxframe == null ) {
+								fxframe = new JFrame("Pan-core");
+								fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+								fxframe.setSize(800, 600);
+								
+								final JFXPanel	fxpanel = new JFXPanel();
+								fxframe.add( fxpanel );
+								
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                     initStackedBarChart( fxpanel, names, b0 );
+					                 }
+					            });
+							} else {
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                     initStackedBarChart( null, names, b0 );
+					                 }
+					            });
+							}						
+							fxframe.setVisible( true );
+						}
+					});
+					/*try {
 						FileWriter fw = new FileWriter("c:/smuck.html");
 						fw.write( smuck );
 						fw.close();
 						Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
 					} catch( Exception exc ) {
 						exc.printStackTrace();
-					}
+					}*/
 				}
 				//}
 				
@@ -10827,8 +10939,9 @@ public class GeneSet extends JApplet {
 				} else {
 					String spec = specList.get( columnIndex-23 );
 					//Teginfo set = gene.species.equals(spec) ? gene.teginfo : null;
-					if( gene.getSpecies().equals( spec ) ) return gene.tegeval;
-					else {
+					if( gene.getSpecies().equals( spec ) ) {
+						return gene.tegeval;
+					} else {
 						return gene.getGeneGroup().species.get( spec );
 					}
 				}
