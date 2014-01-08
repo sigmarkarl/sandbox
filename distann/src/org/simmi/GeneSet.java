@@ -82,6 +82,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
@@ -4343,25 +4344,31 @@ public class GeneSet extends JApplet {
         return scene;
     }
 	
-	private static Scene createStackedBarChartScene( String[] names, double[] xdata ) {
-        final CategoryAxis xAxis = new CategoryAxis();
-        final NumberAxis yAxis = new NumberAxis();    
+	private static Scene createStackedBarChartScene( String[] names, int[] xdata, int[] ydata ) {
+        final CategoryAxis 	xAxis = new CategoryAxis();
+        final NumberAxis 	yAxis = new NumberAxis();
+        
+        xAxis.setTickLabelRotation( 90.0 );
+        
+        xAxis.setCategories( FXCollections.<String>observableArrayList( Arrays.asList(names) ) );
+        //yAxis.
+        
         final StackedBarChart<String,Number> sc = new StackedBarChart<String,Number>(xAxis,yAxis);
         xAxis.setLabel("");
         yAxis.setLabel("");
         sc.setTitle("Pan-core genome");
        
         XYChart.Series<String,Number> core = new XYChart.Series<String,Number>();
-        core.setName("Core");
+        core.setName("Core: " + xdata[xdata.length-1] );
         for( int i = 0; i < xdata.length; i++ ) {
         	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], xdata[i] );
         	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
         	core.getData().add( d );
         }
         XYChart.Series<String,Number> pan = new XYChart.Series<String,Number>();
-        pan.setName("Pan");
-        for( int i = 0; i < xdata.length; i++ ) {
-        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], xdata[i] );
+        pan.setName("Pan: " + ydata[ydata.length-1] );
+        for( int i = 0; i < ydata.length; i++ ) {
+        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], ydata[i]-xdata[i] );
         	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
         	pan.getData().add( d );
         }
@@ -4528,6 +4535,11 @@ public class GeneSet extends JApplet {
     
     private static void initFXChart( JFXPanel fxPanel, String[] names, double[] xdata, double[] ydata ) {
         Scene scene = createScene( names, xdata, ydata );
+        if( fxPanel != null ) fxPanel.setScene(scene);
+    }
+    
+    private static void initStackedBarChart( JFXPanel fxPanel, String[] names, int[] xdata, int[] ydata ) {
+        Scene scene = createStackedBarChartScene( names, xdata, ydata );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
 	
@@ -8517,23 +8529,43 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
-				final String[] names = selspec.
-				
+				final String[] names = selspec.toArray( new String[0] );
+				final int[] b0 = new int[ names.length ];
+				final int[] b1 = new int[ names.length ];
+						
 				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
 				Set<GeneGroup>	core = new HashSet<GeneGroup>();
 				StringBuilder	restext = new StringBuilder();
 				restext.append( "['Species', 'Pan', 'Core']" );
-				for( String spec : selspec ) {
+				
+				int i = 0;
+				for( String spec : names ) {
 					restext.append( ",\n['"+spec+"', " );
 					Set<GeneGroup> ggset = specGroupMap.get( spec );
+					
+					Set<GeneGroup> theset = new HashSet<GeneGroup>();
+					for( GeneGroup gg : ggset ) {
+						for( Gene g : gg.genes ) {
+							if( g.getMaxLength() >= 100 ) {
+								theset.add( gg );
+								break;
+							}
+						}
+					}
+					
 					if( ggset != null ) {
-						pan.addAll( ggset );
-						if( core.isEmpty() ) core.addAll( ggset );
-						else core.retainAll( ggset );
+						pan.addAll( theset );
+						if( core.isEmpty() ) core.addAll( theset );
+						else core.retainAll( theset );
 					}
 					
 					restext.append( core.size()+", " );
 					restext.append( pan.size()+"]" );
+					
+					b0[i] = core.size();
+					b1[i] = pan.size();
+					
+					i++;
 				}
 				
 				JFrame f = new JFrame("Pan-core chart");
@@ -8593,14 +8625,14 @@ public class GeneSet extends JApplet {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                     initStackedBarChart( fxpanel, names, b0 );
+					                     initStackedBarChart( fxpanel, names, b0, b1 );
 					                 }
 					            });
 							} else {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                     initStackedBarChart( null, names, b0 );
+					                     initStackedBarChart( null, names, b0, b1 );
 					                 }
 					            });
 							}						
@@ -14589,7 +14621,7 @@ public class GeneSet extends JApplet {
 			}
 			zipin.close();
 			
-			if( !ko2name.isEmpty() ) {
+			if( ko2name != null && !ko2name.isEmpty() ) {
 				for( Gene g : genelist ) {
 					if( ko2name.containsKey( g.koid ) ) {
 						String name = ko2name.get( g.koid );
