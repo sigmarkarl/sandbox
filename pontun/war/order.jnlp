@@ -18,7 +18,7 @@
   <jar href="order.jar"/>
   <extension name="sqljdbc" href="sqljdbc.jnlp"/>
   <extension name="javamail" href="mail.jnlp"/>
-  <extension name="poi" href="http://test.matis.is/poi-3.7/poi.jnlp"/>
+  <extension name="poi" href="poi.jnlp"/>
 </resources>
 <resources os="Windows" arch="x86">
 	<nativelib href = "sqljdbc4_x86.jar" />

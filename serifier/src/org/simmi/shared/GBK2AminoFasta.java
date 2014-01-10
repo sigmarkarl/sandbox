@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ public class GBK2AminoFasta {
 		}
 		
 		String 			name;
+		String			gene;
 		String			id;
 		String			spec;
 		String 			type;
@@ -36,7 +38,7 @@ public class GBK2AminoFasta {
 		boolean 		comp;
 	};
 	
-	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, Writer allout ) throws IOException {
+	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, Writer allout, String path ) throws IOException {
 		List<Anno>	annolist = new ArrayList<Anno>();
 		for( String tag : filetextmap.keySet() ) {
 			StringBuilder filetext = filetextmap.get( tag );
@@ -198,6 +200,14 @@ public class GBK2AminoFasta {
 							//annolist.add( anno );
 							//anno = null;
 						}
+					} else if( trimline.startsWith("/gene=") ) {
+						if( anno != null ) {
+							anno.gene = trimline.substring(7,trimline.length()-1);
+						}
+					} else if( trimline.startsWith("/gene_synonym") ) {
+						if( anno != null ) {
+							anno.gene = trimline.substring(15,trimline.length()-1);
+						}
 					} else if( trimline.startsWith("/locus_tag") ) {
 						if( anno != null ) {
 							if( !anno.getType().equals("tRNA") && !anno.getType().equals("rRNA") && (anno.id == null || anno.id.contains("..") ) ) {
@@ -266,7 +276,8 @@ public class GBK2AminoFasta {
 				strbuf = new StringBuilder();
 			}
 		}
-			
+		
+		Map<String,String> nameMap = new HashMap<String,String>();
 		Map<URI,Writer>	urifile = new HashMap<URI,Writer>();
 		for( Anno ao : annolist ) {
 			StringBuilder	strbuf = ao.contig;
@@ -287,6 +298,7 @@ public class GBK2AminoFasta {
 			}*/
 			
 			boolean amino = ao.getType().contains("CDS");
+			if( ao.id != null && ao.gene != null && !ao.id.contains("..") ) nameMap.put(ao.id, ao.gene);
 			
 			String end = amino ? " # " + ao.start + " # " + ao.stop + " # " + (ao.comp ? "-1" : "1") + " #\n" : "\n";
 			if( out != null ) {
@@ -346,6 +358,18 @@ public class GBK2AminoFasta {
 			}
 			if( out != null ) out.write("\n");
 			//if( c++ > 10 ) break;
+		}
+		
+		try {
+			File f = new File( new URI(path+".namemap") );
+			FileWriter mfw = new FileWriter( f );
+			for( String a : nameMap.keySet() ) {
+				String gene = nameMap.get(a);
+				mfw.write( a + "\t" + gene + "\n" );
+			}
+			mfw.close();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
 		}
 		
 		for( URI uri : urifile.keySet() ) {

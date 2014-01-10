@@ -15,6 +15,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
@@ -505,6 +506,20 @@ public class GeneSet extends JApplet {
 		
 		return map;
 	}
+	
+	public Map<String,String> loadnamemap( Reader rd ) throws IOException {
+		Map<String,String>	map = new HashMap<String,String>();
+		
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		while( line != null ) {
+			String[] split = line.split("\t");
+			map.put( split[0], split[1] );
+			line = br.readLine();
+		}
+		
+		return map;
+	}
 
 	public Map<String,String> loadunresolvedmap( Reader rd ) throws IOException {
 		Map<String,String>	map = new HashMap<String,String>();
@@ -522,7 +537,9 @@ public class GeneSet extends JApplet {
 					line = br.readLine();
 				}
 				current = current.trim();
-				id = current;
+				int i = current.indexOf(' ');
+				if( i == -1 ) i = current.length();
+				id = current.substring(0, i);
 			} else if( line.startsWith(">") ) {
 				String val = line.substring(1);
 				line = br.readLine();
@@ -672,6 +689,7 @@ public class GeneSet extends JApplet {
 					
 					String addname = "";
 					String newid = id;
+					String neworigin = origin;
 					if( unresolvedmap.containsKey(id) ) {
 						String map = unresolvedmap.get(id);
 						int f = map.indexOf('|');
@@ -680,10 +698,11 @@ public class GeneSet extends JApplet {
 						int e = map.indexOf(']', n+1);
 						if( l != -1 ) newid = map.substring(f+1,l);
 						if( n != -1 ) addname = ":" + map.substring(l+1,n).trim();
-						if( e != -1 ) origin = map.substring(n+1,e).trim();
+						if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 					}
 					
-					Gene gene = new Gene( null, id, name+addname, origin );
+					String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
+					Gene gene = new Gene( null, id, newname, origin );
 					gene.refid = newid;
 					gene.setIdStr( idstr );
 					gene.allids = new HashSet<String>();
@@ -870,6 +889,7 @@ public class GeneSet extends JApplet {
 			
 			String addname = "";
 			String newid = id;
+			String neworigin = origin;
 			if( unresolvedmap.containsKey(id) ) {
 				String map = unresolvedmap.get(id);
 				int f = map.indexOf('|');
@@ -878,10 +898,11 @@ public class GeneSet extends JApplet {
 				int e = map.indexOf(']', n+1);
 				if( l != -1 ) newid = map.substring(f+1,l);
 				if( n != -1 ) addname = ":" + map.substring(l+1,n).trim();
-				if( e != -1 ) origin = map.substring(n+1,e).trim();
+				if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 			}
 			
-			Gene gene = new Gene( null, id, name+addname, origin );
+			String newname = addname.length() == 0 ? name : addname.substring(1);
+			Gene gene = new Gene( null, id, newname, origin );
 			gene.refid = newid;
 			gene.allids = new HashSet<String>();
 			gene.allids.add( newid );
@@ -1755,7 +1776,7 @@ public class GeneSet extends JApplet {
 				} else {
 					i = e.indexOf("contig");
 					if( i == -1 ) i = e.indexOf("scaffold");
-					String spec = e.substring(0, i-1);
+					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
 					
 					teg.add(spec);
 				}
@@ -1806,7 +1827,7 @@ public class GeneSet extends JApplet {
 				} else {
 					i = e.indexOf("contig");
 					if( i == -1 ) i = e.indexOf("scaffold");
-					String spec = e.substring(0, i-1);
+					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
 					
 					Set<String> set;
 					if (submap.containsKey(spec)) {
@@ -4413,6 +4434,61 @@ public class GeneSet extends JApplet {
         return scene;
     }
 	
+	private static Scene createBarChartScene( String[] names, XYChart.Series<String,Number> data ) {
+        final CategoryAxis 	xAxis = new CategoryAxis();
+        final NumberAxis 	yAxis = new NumberAxis( 0.6, 0.7, 0.01);
+        //yAxis.set
+        
+        xAxis.setTickLabelRotation( 90.0 );
+        
+        xAxis.setCategories( FXCollections.<String>observableArrayList( Arrays.asList(names) ) );
+        //yAxis.
+        
+        final StackedBarChart<String,Number> sc = new StackedBarChart<String,Number>(xAxis,yAxis);
+        xAxis.setLabel("");
+        yAxis.setLabel("");
+        sc.setTitle("GC%");
+ 
+        sc.getData().addAll(data);
+        if( scene == null ) {
+        	scene = new Scene( sc );
+        } else scene.setRoot( sc );
+        
+        /*for (XYChart.Series<Number, Number> s : sc.getData()) {
+        	int i = 0;
+            for (XYChart.Data<Number, Number> d : s.getData()) {
+                Tooltip.install( d.getNode(), new Tooltip( names[i++] ) );
+            }
+        }*/
+        
+        sc.setBackground( Background.EMPTY );
+        
+        final ContextMenu menu = new ContextMenu();
+        MenuItem mi = new MenuItem();
+        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
+			@Override
+			public void handle(javafx.event.ActionEvent arg0) {
+				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
+				try {
+					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("c:/fximg.png"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+        menu.getItems().add( mi );
+        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
+        	 @Override
+             public void handle(javafx.scene.input.MouseEvent event) {
+               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
+                 menu.show(sc, event.getScreenX(), event.getScreenY());
+               }
+             }
+        });
+        
+        return scene;
+    }
+	
 	private static Scene createScene( String webp ) {
         //Group  root  =  new  Group();
 		WebView	wv = new WebView();
@@ -4540,6 +4616,32 @@ public class GeneSet extends JApplet {
     
     private static void initStackedBarChart( JFXPanel fxPanel, String[] names, int[] xdata, int[] ydata ) {
         Scene scene = createStackedBarChartScene( names, xdata, ydata );
+        if( fxPanel != null ) fxPanel.setScene(scene);
+    }
+    
+    private static void initBarChart( JFXPanel fxPanel, String[] names, int[] xdata ) {
+    	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
+        //core.setName("Core: " + xdata[xdata.length-1] );
+        for( int i = 0; i < xdata.length; i++ ) {
+        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], xdata[i] );
+        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
+        	data.getData().add( d );
+        }
+        
+        Scene scene = createBarChartScene( names, data );
+        if( fxPanel != null ) fxPanel.setScene(scene);
+    }
+    
+    private static void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata ) {
+    	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
+        //core.setName("Core: " + xdata[xdata.length-1] );
+        for( int i = 0; i < xdata.length; i++ ) {
+        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], xdata[i] );
+        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
+        	data.getData().add( d );
+        }
+        
+    	Scene scene = createBarChartScene( names, data );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
 	
@@ -5276,7 +5378,7 @@ public class GeneSet extends JApplet {
 						String genid = split[secind];
 						gene.genid = genid;
 						unimap.put(genid, gene);
-						if( split.length > 15 ) {
+						if( gene.koname == null || gene.koname.length() == 0 && split.length > 15 ) {
 							gene.koname = split[15];
 							//if( gene.koname.startsWith("dna") ) System.err.println( gene.koname );
 						}
@@ -5464,7 +5566,7 @@ public class GeneSet extends JApplet {
 			fw.close();
 	}
 
-	public static void updateFilter(JTable table, RowFilter filter, JLabel label) {
+	public void updateFilter(JTable table, RowFilter filter, JLabel label) {
 		DefaultRowSorter<TableModel, Integer> rowsorter = (DefaultRowSorter<TableModel, Integer>) table.getRowSorter();
 		rowsorter.setRowFilter(filter);
 		if (label != null)
@@ -5952,6 +6054,16 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
+	String nameFix( String selspec ) {
+		if( selspec.contains("hermus") ) return selspec;
+		else {
+			Matcher m = Pattern.compile("\\d").matcher(selspec); 
+			int firstDigitLocation = m.find() ? m.start() : 0;
+			if( firstDigitLocation == 0 ) return "Thermus_" + selspec;
+			else return "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
+		}
+	}
+	
 	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
@@ -5970,14 +6082,7 @@ public class GeneSet extends JApplet {
 				Contig cont = tv.getContshort();
 				if( cont != null ) {
 					String selspec = cont.getSpec();//tv.getContig();
-					String spec;
-					if( selspec.contains("hermus") ) spec = selspec;
-					else {
-						Matcher m = Pattern.compile("\\d").matcher(selspec); 
-						int firstDigitLocation = m.find() ? m.start() : 0;
-						if( firstDigitLocation == 0 ) spec = "Thermus_" + selspec;
-						else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
-					}
+					String spec = nameFix( selspec );
 					
 					StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
 					Sequence seq = new Sequence( spec, seqstr, serifier.mseq );
@@ -6658,7 +6763,17 @@ public class GeneSet extends JApplet {
 		topcomp.add(scrollpane);
 
 		final JLabel label = new JLabel();
-		textfield.setPreferredSize(new Dimension(500, 25));
+		textfield.setPreferredSize(new Dimension(350, 25));
+		
+		final JRadioButton	search = new JRadioButton("Search");
+		final JRadioButton	filter = new JRadioButton("Filter");
+		
+		ButtonGroup bgsf = new ButtonGroup();
+		bgsf.add( search );
+		bgsf.add( filter );
+		
+		filter.setSelected( true );
+		
 		JToolBar topcombo = new JToolBar();
 		// topcombo.
 		// topcombo.setLayout( new FlowLayout() );
@@ -7068,35 +7183,35 @@ public class GeneSet extends JApplet {
 					}
 				}
 				
-				StringBuilder restext = new StringBuilder();
-				restext.append("['a', ' ']");
-				for( Integer k : frqmap.keySet() ) {
-					int h = frqmap.get( k );
-					restext.append(",\n["+(k*bil/50.0+min)+", "+h+"]");
-				}
-				
-				final StringBuilder sb = new StringBuilder();
-				InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
-				try {
-					int c = is.read();
-					while( c != -1 ) {
-						sb.append( (char)c );
-						c = is.read();
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				final String smuck = sb.toString().replace("smuck", restext.toString());
-				
-				String b64str = Base64.encodeBase64String( smuck.getBytes() );
 				JSObject window = null;
 				try {
 					window = JSObject.getWindow( GeneSet.this );
-				} catch( Exception exc ) {
+				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
 				
 				if( window != null ) {
+					StringBuilder restext = new StringBuilder();
+					restext.append("['a', ' ']");
+					for( Integer k : frqmap.keySet() ) {
+						int h = frqmap.get( k );
+						restext.append(",\n["+(k*bil/50.0+min)+", "+h+"]");
+					}
+					
+					final StringBuilder sb = new StringBuilder();
+					InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
+					try {
+						int c = is.read();
+						while( c != -1 ) {
+							sb.append( (char)c );
+							c = is.read();
+						}
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					final String smuck = sb.toString().replace("smuck", restext.toString());
+					String b64str = Base64.encodeBase64String( smuck.getBytes() );
+					
 					boolean succ = true;
 					try {
 						window.call("string2Blob", new Object[] {b64str,"text/html"});
@@ -7118,6 +7233,54 @@ public class GeneSet extends JApplet {
 							exc.printStackTrace();
 						}
 					}
+				} else if( Desktop.isDesktopSupported() ) {
+					final String[] 	names = new String[ frqmap.size() ];
+					final int[]		vals = new int[ names.length ];
+					int i = 0;
+					for( Integer k : frqmap.keySet() ) {
+						int h = frqmap.get( k );
+						names[i] = ""+(k*bil/50.0+min);
+						vals[i] = h;
+						
+						i++;
+					}
+					
+					SwingUtilities.invokeLater( new Runnable() {
+						@Override
+						public void run() {
+							if( fxframe == null ) {
+								fxframe = new JFrame("Pan-core");
+								fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+								fxframe.setSize(800, 600);
+								
+								final JFXPanel	fxpanel = new JFXPanel();
+								fxframe.add( fxpanel );
+								
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                     initBarChart( fxpanel, names, vals );
+					                 }
+					            });
+							} else {
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                     initBarChart( null, names, vals );
+					                 }
+					            });
+							}						
+							fxframe.setVisible( true );
+						}
+					});
+					/*try {
+						FileWriter fw = new FileWriter("c:/smuck.html");
+						fw.write( smuck );
+						fw.close();
+						Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
+					} catch( Exception exc ) {
+						exc.printStackTrace();
+					}*/
 				}
 				/*try { 
 					JSObject window = JSObject.getWindow( GeneSet.this );
@@ -8565,6 +8728,15 @@ public class GeneSet extends JApplet {
 					b0[i] = core.size();
 					b1[i] = pan.size();
 					
+					String name = names[i];
+					if( name.contains("hermus") ) names[i] = name.substring( 0, name.lastIndexOf('_') );
+					else {
+						Matcher m = Pattern.compile("\\d").matcher(name); 
+						int firstDigitLocation = m.find() ? m.start() : 0;
+						if( firstDigitLocation == 0 ) names[i] = "Thermus_" + name;
+						else names[i] = "Thermus_" + name.substring(0,firstDigitLocation) + "_" + name.substring(firstDigitLocation);
+					}
+					
 					i++;
 				}
 				
@@ -8717,7 +8889,7 @@ public class GeneSet extends JApplet {
 				JSObject window = null;
 				try {
 					window = JSObject.getWindow( GeneSet.this );
-				} catch( Exception exc ) {
+				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
 				
@@ -8835,12 +9007,46 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction sevenaction = new AbstractAction("7 housekeeping genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String>	mltreemap = new HashSet<String>();
+				mltreemap.add( "fusA" );
+				mltreemap.add( "ileS" );
+				mltreemap.add( "leuS" );
+				mltreemap.add( "lepA" );
+				mltreemap.add( "pyrG" );
+				mltreemap.add( "recA" );
+				mltreemap.add( "recG" );
+				
+				for( Gene g : genelist ) {
+					String koname = g.koname;
+					if( koname != null && koname.length() > 0 ) {
+						for( String gn : mltreemap ) {
+							if( koname.contains(gn) ) {
+								GeneGroup gg = g.getGeneGroup();
+								int i = allgenegroups.indexOf( gg );
+								int r = -1;
+								if( i != -1 ) r = table.convertRowIndexToView( i );
+								if( r != -1 ) table.addRowSelectionInterval( r, r );
+								
+								break;
+							}
+						}
+					}
+				}
+			}
+		};
+		
 		AbstractAction gcaction = new AbstractAction("GC% chart data") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
+				final String[] names = selspec.toArray( new String[0] );
+				final double[] vals = new double[ names.length ];
 				StringBuilder	restext = new StringBuilder();
 				restext.append( "['Species', 'Size']" );
+				int i = 0;
 				for( String spec : selspec ) {
 					restext.append( ",\n['"+spec+"', " );
 					
@@ -8855,6 +9061,18 @@ public class GeneSet extends JApplet {
 						}*/
 					}
 					double d = (double)len/(double)total;
+					
+					vals[ i ] = d;
+					
+					String name = names[i];
+					if( name.contains("hermus") ) names[i] = name.substring( 0, name.lastIndexOf('_') );
+					else {
+						Matcher m = Pattern.compile("\\d").matcher(name); 
+						int firstDigitLocation = m.find() ? m.start() : 0;
+						if( firstDigitLocation == 0 ) names[i] = "Thermus_" + name;
+						else names[i] = "Thermus_" + name.substring(0,firstDigitLocation) + "_" + name.substring(firstDigitLocation);
+					}
+					i++;
 					//d = Math.round( d*10000.0 )/100.0;
 					//Set<GeneGroup> ggset = specGroupMap.get( spec );
 					//pan.addAll( ggset );
@@ -8865,27 +9083,27 @@ public class GeneSet extends JApplet {
 					restext.append( d+"]" );
 				}
 				
-				final StringBuilder sb = new StringBuilder();
-				InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
-				try {
-					int c = is.read();
-					while( c != -1 ) {
-						sb.append( (char)c );
-						c = is.read();
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				final String smuck = sb.toString().replace("smuck", restext.toString());
-				//String b64str = Base64.encodeBase64String( smuck.getBytes() );
 				JSObject window = null;
 				try {
 					window = JSObject.getWindow( GeneSet.this );
-				} catch( Exception exc ) {
+				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
 				
-				if( window != null ) {				
+				if( window != null ) {
+					final StringBuilder sb = new StringBuilder();
+					InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
+					try {
+						int c = is.read();
+						while( c != -1 ) {
+							sb.append( (char)c );
+							c = is.read();
+						}
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					final String smuck = sb.toString().replace("smuck", restext.toString());
+					//String b64str = Base64.encodeBase64String( smuck.getBytes() );
 					try {
 						window.setMember("smuck", smuck);
 						window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
@@ -8894,14 +9112,42 @@ public class GeneSet extends JApplet {
 						exc.printStackTrace();
 					}
 				} else if( Desktop.isDesktopSupported() ) {
-					try {
+					SwingUtilities.invokeLater( new Runnable() {
+						@Override
+						public void run() {
+							if( fxframe == null ) {
+								fxframe = new JFrame("Pan-core");
+								fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+								fxframe.setSize(800, 600);
+								
+								final JFXPanel	fxpanel = new JFXPanel();
+								fxframe.add( fxpanel );
+								
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                	 initBarChart( fxpanel, names, vals );
+					                 }
+					            });
+							} else {
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                	 initBarChart( null, names, vals );
+					                 }
+					            });
+							}						
+							fxframe.setVisible( true );
+						}
+					});
+					/*try {
 						FileWriter fw = new FileWriter("c:/smuck.html");
 						fw.write( smuck );
 						fw.close();
 						Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
 					} catch( Exception exc ) {
 						exc.printStackTrace();
-					}
+					}*/
 				}
 				
 				JFrame f = new JFrame("GC% chart");
@@ -10204,6 +10450,7 @@ public class GeneSet extends JApplet {
 		menu.add( gcaction );
 		menu.add( gcskewaction );
 		menu.add( mltreemapaction );
+		menu.add( sevenaction );
 		menu.add( cogaction );
 		menu.add( genexyplotaction );
 		menu.add( compareplotaction );
@@ -10251,6 +10498,8 @@ public class GeneSet extends JApplet {
 		//ttopcom.add(matrixbutton);
 		
 		ttopcom.add(textfield);
+		ttopcom.add(search);
+		ttopcom.add(filter);
 		ttopcom.add(label);
 
 		AbstractAction saveselAction = new AbstractAction("Save selection") {
@@ -11858,13 +12107,13 @@ public class GeneSet extends JApplet {
 		final Set<Integer> filterset = new HashSet<Integer>();
 		final Set<Integer> genefilterset = new HashSet<Integer>();
 
-		final RowFilter filter = new RowFilter() {
+		final RowFilter rowfilter = new RowFilter() {
 			@Override
 			public boolean include(Entry entry) {
 				return filterset.isEmpty() || filterset.contains(entry.getIdentifier());
 			}
 		};
-		updateFilter(ftable, filter, null);
+		updateFilter(ftable, rowfilter, null);
 
 		final RowFilter genefilter = new RowFilter() {
 			@Override
@@ -11887,7 +12136,7 @@ public class GeneSet extends JApplet {
 						}
 					}
 				}
-				updateFilter(ftable, filter, null);
+				updateFilter(ftable, rowfilter, null);
 			}
 		});
 
@@ -11933,7 +12182,7 @@ public class GeneSet extends JApplet {
 				for (int i : res) {
 					filterset.add(i);
 				}
-				updateFilter(ftable, filter, null);
+				updateFilter(ftable, rowfilter, null);
 			}
 		});
 		fpopup.addSeparator();
@@ -12007,7 +12256,7 @@ public class GeneSet extends JApplet {
 			public void keyPressed(KeyEvent ke) {
 				if (ke.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					filterset.clear();
-					updateFilter(ftable, filter, null);
+					updateFilter(ftable, rowfilter, null);
 				}
 			}
 		});
@@ -12059,7 +12308,7 @@ public class GeneSet extends JApplet {
 							}
 						}
 					}
-					updateFilter(ftable, filter, null);
+					updateFilter(ftable, rowfilter, null);
 					// ftable.sorterChanged( new RowSorterEvent(
 					// ftable.getRowSorter() ) );
 					// ftable.tableChanged( new TableModelEvent(
@@ -12130,31 +12379,122 @@ public class GeneSet extends JApplet {
 		});
 
 		textfield.getDocument().addDocumentListener(new DocumentListener() {
+			int i = 0;
 			public void changedUpdate(DocumentEvent e) {
-				updateFilter(0, textfield.getText(), table, genefilter, genefilterset, 0, label);
+				String text = textfield.getText().toLowerCase();
+				if( filter.isSelected() ) updateFilter(0, text, table, genefilter, genefilterset, 0, label);
+				else {
+					int v = i+1;
+					if( table.getModel() == defaultModel ) {
+						while( v != i ) {
+							Gene g = genelist.get(v);
+							String name = g.getGeneGroup().getCommonName();
+							if( name.toLowerCase().contains( text ) ) {
+								int r = table.convertRowIndexToView(v);
+								Rectangle rect = table.getCellRect(r, 0, true);
+								table.scrollRectToVisible( rect );
+								break;
+							}
+							v = (v+1)%genelist.size();
+						}
+						i = v;
+					} else {
+						int i = 0;
+						for( GeneGroup gg : allgenegroups ) {
+							String name = gg.getCommonName();
+							if( name.toLowerCase().contains( text ) ) {
+								int r = table.convertRowIndexToView(i);
+								Rectangle rect = table.getCellRect(r, 0, true);
+								table.scrollRectToVisible( rect );
+								break;
+							}
+							i++;
+						}
+					}
+				}
 			}
 
 			public void insertUpdate(DocumentEvent e) {
-				updateFilter(1, textfield.getText(), table, genefilter, genefilterset, 0, label);
+				String text = textfield.getText().toLowerCase();
+				if( filter.isSelected() ) updateFilter(1, text, table, genefilter, genefilterset, 0, label);
+				else {
+					int v = i+1;
+					if( table.getModel() == defaultModel ) {
+						while( v != i ) {
+							Gene g = genelist.get(v);
+							String name = g.getGeneGroup().getCommonName();
+							if( name.toLowerCase().contains( text ) ) {
+								System.err.println( "muhu "+v);
+								int r = table.convertRowIndexToView(v);
+								Rectangle rect = table.getCellRect(r, 0, true);
+								table.scrollRectToVisible( rect );
+								break;
+							}
+							v = (v+1)%genelist.size();
+						}
+						i = v;
+					} else {
+						int i = 0;
+						for( GeneGroup gg : allgenegroups ) {
+							String name = gg.getCommonName();
+							if( name.toLowerCase().contains( text ) ) {
+								int r = table.convertRowIndexToView(i);
+								Rectangle rect = table.getCellRect(r, 0, true);
+								table.scrollRectToVisible( rect );
+								break;
+							}
+							i++;
+						}
+					}
+				}
 			}
 
 			public void removeUpdate(DocumentEvent e) {
-				updateFilter(2, textfield.getText(), table, genefilter, genefilterset, 0, label);
+				String text = textfield.getText().toLowerCase();
+				if( filter.isSelected() ) updateFilter(2, text, table, genefilter, genefilterset, 0, label);
+				else {
+					int v = i+1;
+					if( table.getModel() == defaultModel ) {
+						while( v != i ) {
+							Gene g = genelist.get(v);
+							String name = g.getGeneGroup().getCommonName();
+							if( name.toLowerCase().contains( text ) ) {
+								int r = table.convertRowIndexToView(v);
+								Rectangle rect = table.getCellRect(r, 0, true);
+								table.scrollRectToVisible( rect );
+								break;
+							}
+							v = (v+1)%genelist.size();
+						}
+						i = v;
+					} else {
+						int i = 0;
+						for( GeneGroup gg : allgenegroups ) {
+							String name = gg.getCommonName();
+							if( name.toLowerCase().contains( text ) ) {
+								int r = table.convertRowIndexToView(i);
+								Rectangle rect = table.getCellRect(r, 0, true);
+								table.scrollRectToVisible( rect );
+								break;
+							}
+							i++;
+						}
+					}
+				}
 			}
 		});
 
 		ftextfield.getDocument().addDocumentListener(new DocumentListener() {
-
 			public void changedUpdate(DocumentEvent e) {
-				updateFilter(0, ftextfield.getText(), ftable, filter, filterset, 6, null);
+				updateFilter(0, ftextfield.getText(), ftable, rowfilter, filterset, 6, null);
 			}
 
 			public void insertUpdate(DocumentEvent e) {
-				updateFilter(1, ftextfield.getText(), ftable, filter, filterset, 6, null);
+				updateFilter(1, ftextfield.getText(), ftable, rowfilter, filterset, 6, null);
 			}
 
 			public void removeUpdate(DocumentEvent e) {
-				updateFilter(2, ftextfield.getText(), ftable, filter, filterset, 6, null);
+				updateFilter(2, ftextfield.getText(), ftable, rowfilter, filterset, 6, null);
 			}
 		});
 		popup.add(new AbstractAction("KEGG gene lookup") {
@@ -12287,7 +12627,7 @@ public class GeneSet extends JApplet {
 				for( Function f : funclist ) {
 					filterset.add( f.index );
 				}
-				updateFilter(ftable, filter, null);
+				updateFilter(ftable, rowfilter, null);
 			}
 		});
 		popup.add(new AbstractAction("Show all functions") {
@@ -12313,7 +12653,7 @@ public class GeneSet extends JApplet {
 						}
 					}
 				}
-				updateFilter(ftable, filter, null);
+				updateFilter(ftable, rowfilter, null);
 			}
 		});
 		popup.addSeparator();
@@ -12388,14 +12728,14 @@ public class GeneSet extends JApplet {
 				for( GeneGroup ggroup : genegroups ) {
 					for( Tegeval tv : ggroup.getTegevals() ) {
 						String selspec = tv.getContshort().getSpec();//tv.getContig();
-						String spec;
-						if( selspec.contains("hermus") ) spec = selspec;
+						String spec = nameFix( selspec );
+						/*if( selspec.contains("hermus") ) spec = selspec;
 						else {
 							Matcher m = Pattern.compile("\\d").matcher(selspec); 
 							int firstDigitLocation = m.find() ? m.start() : 0;
 							if( firstDigitLocation == 0 ) spec = "Thermus_" + selspec;
 							else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
-						}
+						}*/
 						
 						Sequence seq = tv.getAlignedSequence();
 						seq.setName( spec );
@@ -13261,9 +13601,8 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	public static void updateFilter(int val, String str, JTable table, RowFilter filter, Set<Integer> filterset, int ind, JLabel label) {
+	public void updateFilter(int val, String ustr, JTable table, RowFilter filter, Set<Integer> filterset, int ind, JLabel label) {
 		filterset.clear();
-		String ustr = str.toLowerCase();
 		TableModel model = table.getModel();
 		for (int r = 0; r < model.getRowCount(); r++) {
 			String vstr = (String)model.getValueAt(r, ind);
@@ -13804,6 +14143,7 @@ public class GeneSet extends JApplet {
 	byte[] 									zipf;
 	Map<String,Cog>							cogmap = new HashMap<String,Cog>();
 	Map<String,String>						unresolvedmap = new HashMap<String,String>();
+	Map<String,String>						namemap = new HashMap<String,String>();
 	Map<String,String>						cazymap = new HashMap<String,String>();
 	
 	/*private Map<String,String> loadCog() {
@@ -13950,6 +14290,8 @@ public class GeneSet extends JApplet {
 				String zname = ze.getName();
 				if( zname.equals("unresolved.blastout") ) {
 					unresolvedmap = loadunresolvedmap( new InputStreamReader( zipm ) );
+				} else if( zname.equals("namemap.txt") ) {
+					namemap = loadnamemap( new InputStreamReader( zipm ) );
 				}
 				ze = zipm.getNextEntry();
 			}
@@ -14088,6 +14430,9 @@ public class GeneSet extends JApplet {
 			// Map<String,Gene> refmap = new TreeMap<String,Gene>();
 			for (String genedesc : refmap.keySet()) {
 				Gene gene = refmap.get(genedesc);
+				if( namemap.containsKey(genedesc) ) {
+					gene.koname = namemap.get( genedesc );
+				}
 				// refmap.put(gene.refid, gene);
 				gene.index = genelist.size();
 				genelist.add(gene);
