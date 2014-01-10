@@ -127,7 +127,7 @@ public class SerifyApplet extends JApplet {
 		try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "getSequences", new Object[] {rowcount == 0} );
-		} catch( Exception e ) {
+		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
 		/*String[] split = seqsStr.split("\n");
@@ -167,7 +167,7 @@ public class SerifyApplet extends JApplet {
 		try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "initMachines", new Object[] {hostname, procs} );
-		} catch( Exception e ) {
+		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
 	}
@@ -1585,7 +1585,7 @@ public class SerifyApplet extends JApplet {
 		try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			globaluser = (String)js.call("getUser", new Object[] {});
-		} catch( Exception e ) {
+		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
 		
@@ -2467,7 +2467,7 @@ public class SerifyApplet extends JApplet {
 						}
 						
 						try {
-							serifier.genbankFromNR( s, blastFile, f );
+							serifier.genbankFromNR( s, blastFile, f, false );
 						} catch (MalformedURLException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
@@ -3702,7 +3702,7 @@ public class SerifyApplet extends JApplet {
 		try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "addSequences", new Object[] {user, name, type, path, nseq} );
-		} catch( Exception e ) {
+		} catch( NoSuchMethodError | Exception e ) {
 			unsucc = true;
 		}
 		
@@ -3868,7 +3868,10 @@ public class SerifyApplet extends JApplet {
 			//out = new FileWriter( new File( uri ) );
 			map.put( "mRNA", uri );
 			
-			GBK2AminoFasta.handleText( name, gbks, map, out );
+			/*uri = new URI(path+".namemap");
+			map.put( "nameMap", uri );*/
+			
+			GBK2AminoFasta.handleText( name, gbks, map, out, path );
 			
 			//+firsturi.toString().replace(name, "")
 			addSequences( name+".fna", firsturi.toString() );
