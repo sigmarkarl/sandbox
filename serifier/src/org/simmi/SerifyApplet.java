@@ -482,100 +482,104 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
+	public static void blastRun( NativeRun nrun, String dbPath, String dbType, String extrapar, JTable table ) throws IOException {
+		String userhome = System.getProperty("user.home");
+		File dir = new File( userhome );
+		
+		System.out.println("run blast in applet");
+		File blastn;
+		File blastp;
+		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
+		if( !blastx.exists() ) {
+			blastx = new File( "/opt/ncbi-blast-2.2.28+/bin/blastx" );
+			blastn = new File( "/opt/ncbi-blast-2.2.28+/bin/blastn" );
+			blastp = new File( "/opt/ncbi-blast-2.2.28+/bin/blastp" );
+		} else {
+			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
+			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
+		}
+		if( blastx.exists() ) {
+			JFileChooser fc = new JFileChooser();
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				File selectedfile = fc.getSelectedFile();
+				if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+			
+				String dbPathFixed = nrun.fixPath( dbPath );
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					String path = (String)table.getValueAt( r, 3 );
+					String type = (String)table.getValueAt( r, 2 );
+					
+					//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
+					File blastFile = dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+					
+					URL url = new URL( path );
+					
+					String file = url.getFile();
+					String[] split = file.split("/");
+					String fname = split[ split.length-1 ];
+					split = fname.split("\\.");
+					final String title = split[0];
+					
+					final File infile = new File( dir, "tmp_"+fname );
+					
+					FileOutputStream fos = new FileOutputStream( infile );
+					InputStream is = url.openStream();
+					
+					byte[] bb = new byte[100000];
+					r = is.read(bb);
+					while( r > 0 ) {
+						fos.write(bb, 0, r);
+						r = is.read(bb);
+					}
+					is.close();
+					fos.close();
+			
+					String queryPathFixed = nrun.fixPath( infile.getAbsolutePath() ).trim();
+					final String outPathFixed = nrun.fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() ).trim();
+					
+					int procs = Runtime.getRuntime().availableProcessors();
+					
+					List<String>	lcmd = new ArrayList<String>();
+					String[] cmds = { blastFile.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-num_threads", Integer.toString(procs) };
+					String[] exts = extrapar.trim().split("[\t ]+");
+					
+					String[] nxst = { "-out", outPathFixed };
+					lcmd.addAll( Arrays.asList(cmds) );
+					if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+					lcmd.addAll( Arrays.asList(nxst) );
+					
+					final String start = new Date( System.currentTimeMillis() ).toString();								
+					final Object[] cont = new Object[3];
+					Runnable run = new Runnable() {
+						public void run() {										
+							infile.delete();
+							//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
+							if( cont[0] != null ) {
+								// ok JSObject js = JSObject.getWindow( SerifyApplet.this );
+								//  String machineinfo = getMachine();
+								//  String[] split = machineinfo.split("\t");
+								//  js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
+							}
+						}
+					};
+					/*for( String cmd : lcmd ) {
+						System.err.println(cmd);
+					}
+					Thread.sleep(10000);*/
+					nrun.runProcessBuilder( "Performing blast", lcmd, run, cont );
+				}
+			}
+		} else System.err.println( "no blast installed" );
+	}
+	
 	public void runBlastInApplet( final String extrapar, final String dbPath, final String dbType ) {
 		AccessController.doPrivileged( new PrivilegedAction<Object>() {
 			@Override
 			public Object run() {
 				try {
-					String userhome = System.getProperty("user.home");
-					File dir = new File( userhome );
-					
-					System.out.println("run blast in applet");
-					File blastn;
-					File blastp;
-					File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
-					if( !blastx.exists() ) {
-						blastx = new File( "/opt/ncbi-blast-2.2.28+/bin/blastx" );
-						blastn = new File( "/opt/ncbi-blast-2.2.28+/bin/blastn" );
-						blastp = new File( "/opt/ncbi-blast-2.2.28+/bin/blastp" );
-					} else {
-						blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
-						blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
-					}
-					if( blastx.exists() ) {
-						JFileChooser fc = new JFileChooser();
-						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-						if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-							File selectedfile = fc.getSelectedFile();
-							if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
-						
-							String dbPathFixed = nrun.fixPath( dbPath );
-							int[] rr = table.getSelectedRows();
-							for( int r : rr ) {
-								String path = (String)table.getValueAt( r, 3 );
-								String type = (String)table.getValueAt( r, 2 );
-								
-								//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
-								File blastFile = dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
-								
-								URL url = new URL( path );
-								
-								String file = url.getFile();
-								String[] split = file.split("/");
-								String fname = split[ split.length-1 ];
-								split = fname.split("\\.");
-								final String title = split[0];
-								
-								final File infile = new File( dir, "tmp_"+fname );
-								
-								FileOutputStream fos = new FileOutputStream( infile );
-								InputStream is = url.openStream();
-								
-								byte[] bb = new byte[100000];
-								r = is.read(bb);
-								while( r > 0 ) {
-									fos.write(bb, 0, r);
-									r = is.read(bb);
-								}
-								is.close();
-								fos.close();
-						
-								String queryPathFixed = nrun.fixPath( infile.getAbsolutePath() ).trim();
-								final String outPathFixed = nrun.fixPath( new File( selectedfile, title+".blastout" ).getAbsolutePath() ).trim();
-								
-								int procs = Runtime.getRuntime().availableProcessors();
-								
-								List<String>	lcmd = new ArrayList<String>();
-								String[] cmds = { blastFile.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-num_threads", Integer.toString(procs) };
-								String[] exts = extrapar.trim().split("[\t ]+");
-								
-								String[] nxst = { "-out", outPathFixed };
-								lcmd.addAll( Arrays.asList(cmds) );
-								if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
-								lcmd.addAll( Arrays.asList(nxst) );
-								
-								final String start = new Date( System.currentTimeMillis() ).toString();								
-								final Object[] cont = new Object[3];
-								Runnable run = new Runnable() {
-									public void run() {										
-										infile.delete();
-										//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
-										if( cont[0] != null ) {
-											JSObject js = JSObject.getWindow( SerifyApplet.this );
-											String machineinfo = getMachine();
-											String[] split = machineinfo.split("\t");
-											js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
-										}
-									}
-								};
-								/*for( String cmd : lcmd ) {
-									System.err.println(cmd);
-								}
-								Thread.sleep(10000);*/
-								nrun.runProcessBuilder( "Performing blast", lcmd, run, cont );
-							}
-						}
-					} else System.err.println( "no blast installed" );
+					blastRun( nrun, dbPath, dbType, extrapar, table );
 				} catch( Exception e ) {
 					e.printStackTrace();
 				}
