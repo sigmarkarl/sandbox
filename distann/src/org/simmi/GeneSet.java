@@ -60,6 +60,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -87,6 +88,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.BarChart;
@@ -4368,7 +4370,7 @@ public class GeneSet extends JApplet {
         return scene;
     }
 	
-	private static Scene createStackedBarChartScene( Map<String,String> all, Map<String,Map<String,Integer>> map ) {
+	private static Scene createStackedBarChartScene( Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
         final CategoryAxis 	xAxis = new CategoryAxis();
         final NumberAxis 	yAxis = new NumberAxis();
         
@@ -4378,9 +4380,10 @@ public class GeneSet extends JApplet {
         //yAxis.
         
         final StackedBarChart<String,Number> sc = new StackedBarChart<String,Number>(xAxis,yAxis);
+        sc.setLegendSide( Side.RIGHT );
         xAxis.setLabel("");
         yAxis.setLabel("");
-        sc.setTitle("Pan-core genome");
+        sc.setTitle("COG catogories");
         
         //Font f = sc.getXAxis().settic
         //sc.setStyle( "-fx-font-size: 2.4em;" );
@@ -4388,19 +4391,34 @@ public class GeneSet extends JApplet {
         sc.getXAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
         sc.getYAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
        
+        Map<String,Integer> countmap = new HashMap<String,Integer>();
+        for( String spec : map.keySet() ) {
+        	Map<String,Integer> submap = map.get(spec);
+        	int total = 0;
+        	for( String f : submap.keySet() ) {
+        		total += submap.get(f);
+        	}
+        	countmap.put( spec, total );
+        }
+        
         for( String flock : all.keySet() ) {
         	//Map<String,Integer> submap = map.get( spec );
         	String longname = all.get(flock);
 	        XYChart.Series<String,Number> core = new XYChart.Series<String,Number>();
-	        core.setName( longname );
+	        int i = longname.indexOf(',', 50);
+	        if( i == -1 ) i = longname.length();
+	        core.setName( longname.substring(0,i) );
 	        for( String spec : map.keySet() ) {
 	        	Map<String,Integer> submap = map.get(spec);
 	        	//int last = 0;
 	        	//for( String f : submap.keySet() ) {
-	        	int ival = submap.containsKey(flock) ? submap.get( flock ) : 0;
-	        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( spec, ival );
-	        	//Tooltip.install( d.getNode(), new Tooltip( flock ) );
-	        	core.getData().add( d );
+	        	if( submap.containsKey(flock) ) {
+	        		int total = countmap.get(spec);
+		        	int ival = submap.get( flock );
+		        	XYChart.Data<String,Number> d = uniform ?  new XYChart.Data<String,Number>( spec, (double)ival/(double)total ) : new XYChart.Data<String,Number>( spec, ival );
+		        	//Tooltip.install( d.getNode(), new Tooltip( flock ) );
+		        	core.getData().add( d );
+	        	}
 	        	
 		        //last = last+ival;
 	        }
@@ -4731,8 +4749,8 @@ public class GeneSet extends JApplet {
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    private static void initStackedBarChart( JFXPanel fxPanel, Map<String,String> all, Map<String,Map<String,Integer>> map ) {
-        Scene scene = createStackedBarChartScene( all, map );
+    private static void initStackedBarChart( JFXPanel fxPanel, Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
+        Scene scene = createStackedBarChartScene( all, map, uniform );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
@@ -5814,11 +5832,11 @@ public class GeneSet extends JApplet {
 		}*/
 	}
 	
-	public Set<String> getSelspec( Component comp, final List<String>	specs ) {
+	/*public Set<String> getSelspec( Component comp, final List<String>	specs ) {
 		return getSelspec( comp, specs, null );
-	}
+	}*/
 	
-	public Set<String> getSelspec( Component comp, final List<String>	specs, final JCheckBox contigs ) {
+	public Set<String> getSelspec( Component comp, final List<String>	specs, final JCheckBox ... contigs ) {
 		final JTable	table = new JTable();
 		JScrollPane	scroll = new JScrollPane( table );
 		table.setAutoCreateRowSorter( true );
@@ -5905,18 +5923,21 @@ public class GeneSet extends JApplet {
 			public void removeTableModelListener(TableModelListener l) {}
 		};
 		table.setModel( specmodel );
-		contigs.addChangeListener( new ChangeListener() {
+		
+		if( contigs.length > 0 ) contigs[0].addChangeListener( new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				if( contigs != null && contigs.isSelected() ) table.setModel( contigmodel );
+				if( contigs[0] != null && contigs[0].isSelected() ) table.setModel( contigmodel );
 				else table.setModel( specmodel );
 			}
 		});
-		Object[] ctls = new Object[] { scroll, contigs };
-		Object[] ctls2 = new Object[] { scroll };
 		
-		if( contigs != null ) JOptionPane.showMessageDialog( comp, ctls );
-		else JOptionPane.showMessageDialog( comp, ctls2 );
+		Object[] ctls = new Object[] { scroll, contigs };
+		//Object[] ctls2 = new Object[] { scroll };
+		
+		//if( contigs != null ) 
+		JOptionPane.showMessageDialog( comp, ctls );
+		//else JOptionPane.showMessageDialog( comp, ctls2 );
 		Set<String>	selspec = new TreeSet<String>();
 		for( int i = 0; i < table.getRowCount(); i++ ) {
 			if( table.isRowSelected(i) ) selspec.add( (String)table.getValueAt(i, 0) );
@@ -6354,7 +6375,7 @@ public class GeneSet extends JApplet {
 		return sb;
 	}
 	
-	public void cogCalc( String filename, Reader isr, Map<String,String> all, Map<String,Map<String,Integer>> map, Set<String> selspec ) throws IOException {		
+	public void cogCalc( String filename, Reader isr, Map<String,String> all, Map<String,Map<String,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
 		BufferedReader br = new BufferedReader( isr );
 		String line = br.readLine();
 		String current = null;
@@ -6392,6 +6413,35 @@ public class GeneSet extends JApplet {
 					for( String nspec : selspec ) {
 						if( specval.contains( nspec ) ) {
 							spec = nspec;
+							
+							String name = null;//names[i];
+							if( contigs ) {
+								if( nspec.contains("hermus") ) name = nspec;
+								else {
+									Matcher m = Pattern.compile("\\d").matcher(nspec); 
+									int firstDigitLocation = m.find() ? m.start() : 0;
+									if( firstDigitLocation == 0 ) name = "Thermus_" + nspec;
+									else name = "Thermus_" + nspec.substring(0,firstDigitLocation) + "_" + nspec.substring(firstDigitLocation);
+								}
+								
+								int k = name.indexOf("contig");
+								if( k == -1 ) k = name.indexOf("scaffold");
+								if( k == -1 ) {
+									name = spec;
+								} else {
+									name = name.substring(k);						
+								}
+							} else {
+								if( nspec.contains("hermus") ) name = nspec.substring( 0, nspec.lastIndexOf('_') );
+								else {
+									Matcher m = Pattern.compile("\\d").matcher(nspec); 
+									int firstDigitLocation = m.find() ? m.start() : 0;
+									if( firstDigitLocation == 0 ) name = "Thermus_" + nspec;
+									else name = "Thermus_" + nspec.substring(0,firstDigitLocation) + "_" + nspec.substring(firstDigitLocation);
+								}
+							}
+							
+							spec = name;
 							break;
 						}
 					}
@@ -6606,7 +6656,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	int searchi = 0;
-	public int searchTable( JTable table, String text, int i, boolean back ) {
+	public int searchTable( JTable table, String text, int i, boolean back, int column ) {
 		int v;
 		if( back ) {
 			v = i-1;
@@ -6617,7 +6667,7 @@ public class GeneSet extends JApplet {
 				int m = table.convertRowIndexToModel(v);
 				if( m != -1 ) {
 					Gene g = genelist.get(m);
-					String name = g.getGeneGroup().getCommonName();
+					String name = column == 7 || column == 8 ? g.getGeneGroup().getCommonSymbol() + ", " + g.getGeneGroup().getCommonKOName( ko2name ) : g.getGeneGroup().getCommonName();
 					if( name.toLowerCase().contains( text ) ) {
 						//int r = table.convertRowIndexToView(v);
 						Rectangle rect = table.getCellRect(v, 0, true);
@@ -9855,10 +9905,11 @@ public class GeneSet extends JApplet {
 							InputStreamReader isr = new InputStreamReader( zipm );
 
 							final JCheckBox	contigs = new JCheckBox("Show contigs");
-							Set<String>	selspec = getSelspec( applet, new ArrayList( specList ), contigs );
+							final JCheckBox	uniform = new JCheckBox("Uniform");
+							Set<String>	selspec = getSelspec( applet, new ArrayList( specList ), contigs, uniform );
 							final Map<String,String>					all = new TreeMap<String,String>();
 							final Map<String, Map<String,Integer>> 		map = new TreeMap<String, Map<String,Integer>>();
-							cogCalc( null, isr, all, map, selspec );
+							cogCalc( null, isr, all, map, selspec, contigs.isSelected() );
 							StringWriter fw = writeCog( all, map );
 							
 							final StringBuilder sb = new StringBuilder();
@@ -9932,14 +9983,14 @@ public class GeneSet extends JApplet {
 											Platform.runLater(new Runnable() {
 								                 @Override
 								                 public void run() {
-								                     initStackedBarChart( fxpanel, all, map );
+								                     initStackedBarChart( fxpanel, all, map, uniform.isSelected() );
 								                 }
 								            });
 										} else {
 											Platform.runLater(new Runnable() {
 								                 @Override
 								                 public void run() {
-								                     initStackedBarChart( null, all, map );
+								                     initStackedBarChart( null, all, map, uniform.isSelected() );
 								                 }
 								            });
 										}						
@@ -11065,9 +11116,40 @@ public class GeneSet extends JApplet {
 		Action blastsearchaction = new AbstractAction("Blast") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				String dbname = null;
+				
+				try {
+					ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
+					ZipEntry ze = zipm.getNextEntry();
+					while( ze != null ) {
+						String zname = ze.getName();
+						if( zname.endsWith(".phr") || zname.endsWith(".pin") || zname.endsWith(".psq") ) {
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							byte[] bb = new byte[1024];
+							int r = zipm.read( bb );
+							while( r > 0 ) {
+								baos.write(bb, 0, r);
+								r = zipm.read( bb );
+							}
+							Files.write( new File("c:/"+zname).toPath(), baos.toByteArray(), StandardOpenOption.CREATE);
+							//unresolvedmap = loadunresolvedmap( new InputStreamReader( zipm ) );
+							
+							dbname = zname.substring(0, zname.length()-4);
+						}
+						ze = zipm.getNextEntry();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
 				final JTextArea ta = new JTextArea();
 				JScrollPane sp = new JScrollPane( ta );
-				Object[] objs = new Object[] { sp };
+				Dimension dim = new Dimension( 400, 300 );
+				sp.setSize( dim );
+				sp.setPreferredSize( dim );
+				JTextField	tf = new JTextField();
+				tf.setText( "0.00001" );
+				Object[] objs = new Object[] { sp, tf };
 				JOptionPane.showMessageDialog(GeneSet.this, objs);
 				
 				File blastn;
@@ -11085,7 +11167,7 @@ public class GeneSet extends JApplet {
 				File blastFile = blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
 				
 				int procs = Runtime.getRuntime().availableProcessors();
-				String[] cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "c:/allthermus.aa", "-num_threads", Integer.toString(procs) };
+				String[] cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "c:/"+dbname, "-evalue", tf.getText(), "-num_threads", Integer.toString(procs) };
 				List<String>	lcmd = new ArrayList<String>( Arrays.asList(cmds) );
 				//String[] exts = extrapar.trim().split("[\t ]+");
 				
@@ -11546,15 +11628,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 7) {
 					return gene.getGeneGroup().getCommonSymbol();
 				} else if (columnIndex == 8) {
-					GeneGroup gg = gene.getGeneGroup();
-					String ret = ko2name != null ? ko2name.get( gg.getCommonKO() ) : null;
-					if( ret == null ) {
-						String symbol = gg.getCommonSymbol();
-						if( symbol != null ) {
-							if( symbol.length() <= 5 ) ret = symbol;
-						}
-					}
-					return ret;
+					return gene.getGeneGroup().getCommonKOName( ko2name );
 				} else if (columnIndex == 9) {
 					return gene.pdbid;
 				} else if (columnIndex == 10) {
@@ -12764,7 +12838,7 @@ public class GeneSet extends JApplet {
 			public void keyPressed(KeyEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( e.getKeyCode() == KeyEvent.VK_ENTER ) {
-					searchi = searchTable( table, text, searchi, e.isAltDown() );
+					searchi = searchTable( table, text, searchi, e.isAltDown(), searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
 				}
 			}
 		});
@@ -12776,7 +12850,7 @@ public class GeneSet extends JApplet {
 					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, 7, 8, label);
 					else updateFilter(0, text, table, genefilter, genefilterset, 0, 0, label);
 				} else {
-					searchi = searchTable( table, text, 0, false );
+					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
 				}
 			}
 
@@ -12786,7 +12860,7 @@ public class GeneSet extends JApplet {
 					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(1, text, table, genefilter, genefilterset, 7, 8, label);
 					else updateFilter(1, text, table, genefilter, genefilterset, 0, 0, label);
 				} else {
-					searchi = searchTable( table, text, 0, false );
+					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
 				}
 			}
 
@@ -12796,7 +12870,7 @@ public class GeneSet extends JApplet {
 					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(2, text, table, genefilter, genefilterset, 7, 8, label);
 					else updateFilter(2, text, table, genefilter, genefilterset, 0, 0, label);
 				} else {
-					searchi = searchTable( table, text, 0, false );
+					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
 				}
 			}
 		});
