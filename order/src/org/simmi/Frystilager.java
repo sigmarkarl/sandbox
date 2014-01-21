@@ -294,7 +294,9 @@ public class Frystilager extends JApplet {
 			connect();
 			lagerlist = loadLager();
 			//valid = con.isValid(2);
-		} catch (SQLException | IOException e) {
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} catch(IOException e) {
 			e.printStackTrace();
 		}
 		
