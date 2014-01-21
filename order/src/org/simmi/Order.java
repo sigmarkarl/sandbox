@@ -2,6 +2,7 @@ package org.simmi;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -18,15 +19,19 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -1117,11 +1122,15 @@ public class Order extends JApplet {
 		if( filter == null || filter.equals("4") || filter.equals("6") ) vcombo.addItem( "Rannsókn 1. hæð - 412(50%) & 612(50%)" );
 		if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "Rannsókn 2. hæð - 412(60%), 112(30%) & 212(10%)" );
 		
-		try {
-			JSObject js = JSObject.getWindow( this );
-			js.call("getAllVerk", new Object[] {});
-		} catch( Exception e ) {
-			e.printStackTrace();
+		if( this.isActive() ) {
+			try {
+				JSObject js = JSObject.getWindow( this );
+				js.call("getAllVerk", new Object[] {});
+			} catch( NoSuchMethodError e ) {
+				e.printStackTrace();
+			} catch( Exception e ) {
+				e.printStackTrace();
+			}
 		}
 		//if( filter == null || filter.equals("1") || filter.equals("2") || filter.equals("4") ) vcombo.addItem( "60% 40000412, 30% 10000112, 10% 20000212" );
 	}
@@ -1483,6 +1492,10 @@ public class Order extends JApplet {
 	}
 	
 	public void init() {
+		initGUI( this );
+	}
+	
+	public void initGUI( final Container cont ) {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 		} catch (ClassNotFoundException e) {
@@ -1519,13 +1532,13 @@ public class Order extends JApplet {
 		ascrollpane.getViewport().setBackground( Color.white );
 		kscrollpane.getViewport().setBackground( Color.white );
 		
-		Window window = SwingUtilities.windowForComponent(this);
+		Window window = SwingUtilities.windowForComponent(cont);
 		if (window instanceof JFrame) {
 			JFrame frame = (JFrame)window;
 			if (!frame.isResizable()) frame.setResizable(true);
 		}
 		
-		Frame f = (Frame)SwingUtilities.getAncestorOfClass( Frame.class, Order.this );
+		Frame f = (Frame)SwingUtilities.getAncestorOfClass( Frame.class, cont );
 		if( f != null ) {
 			d = new VDialog( f );
 		} else {
@@ -1748,7 +1761,7 @@ public class Order extends JApplet {
 				fillExcel( sheets, tables );
 				try {
 					JFileChooser filechooser = new JFileChooser();
-					if( filechooser.showSaveDialog( Order.this ) == JFileChooser.APPROVE_OPTION ) {
+					if( filechooser.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
 						File xlsxFile = filechooser.getSelectedFile();
 						workbook.write( new FileOutputStream( xlsxFile ) );
 					} else {
@@ -1889,7 +1902,7 @@ public class Order extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				BDialog bd = new BDialog();
-				bd.setLocationRelativeTo( Order.this );
+				bd.setLocationRelativeTo( cont );
 				bd.setVisible( true );
 			}
 		};
@@ -1970,7 +1983,7 @@ public class Order extends JApplet {
 			}
 		};
 
-		this.setBackground( bg );
+		cont.setBackground( bg );
 		this.getContentPane().setBackground( bg );
 		
 		ycombo.addItem("Allir");
@@ -2734,7 +2747,7 @@ public class Order extends JApplet {
 			}
 		});
 		
-		this.add( tpane );
+		cont.add( tpane );
 	}
 	
 	public void updateFilter( String filterText, int val, JTable table ) {
@@ -3029,7 +3042,52 @@ public class Order extends JApplet {
 	}
 	
 	public static void main(String[] args) {
+		String userhome = System.getProperty("user.home");
+		System.setProperty("java.library.path", userhome);
+		
+		JFrame	frame = new JFrame();
+		frame.setSize(800, 600);
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		frame.getContentPane().setBackground( Color.white );
+		
+		Order order = new Order();
+		
 		try {
+			Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
+			fieldSysPath.setAccessible( true );
+			fieldSysPath.set( null, null );
+			
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			byte[] bb = new byte[2048];
+			InputStream is = order.getClass().getResourceAsStream("/windows_x64/sqljdbc_auth.dll");
+			int r = is.read(bb);
+			while( r > 0 ) {
+				baos.write(bb, 0, r);
+				r = is.read( bb );
+			}
+			is.close();
+			Path path = Paths.get( userhome );
+			Path subpath = path.resolve("sqljdbc_auth.dll");
+			Files.write( subpath, baos.toByteArray(), StandardOpenOption.CREATE );
+			String strpath = subpath.toAbsolutePath().toString();
+			System.err.println( "writing " + strpath );
+			System.load( strpath );
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		
+		order.initGUI( frame );
+		
+		frame.setVisible( true );
+		/*try {
 			InputStream			is = Order.class.getResourceAsStream("/orders.txt");
 			InputStreamReader 	ir = new InputStreamReader( is, "UTF-8" );
 			BufferedReader		br = new BufferedReader( ir );
@@ -3058,6 +3116,6 @@ public class Order extends JApplet {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 }
