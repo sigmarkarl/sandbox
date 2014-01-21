@@ -111,13 +111,34 @@ public class Contig extends Sequence {
 		return null;
 	}
 	
+	public static int specCheck( String str ) {
+		int i = str.indexOf("uid");
+		if( i == -1 ) {
+			i = str.indexOf("NMX");
+		}
+		if( i == -1 ) {
+			i = str.indexOf("33923_K677DRAFT");
+		}
+		if( i == -1 ) {
+			i = str.indexOf("H328");
+		}
+		if( i == -1 ) {
+			i = str.indexOf("Tb_T");
+		}
+		return i;
+	}
+	
 	public String getSpec() {
 		String spec = "";
-		int i = getName().indexOf("uid");
+		int i = specCheck( getName() );
+		
 		if( i == -1 ) {
 			i = getName().indexOf("contig");
 			if( i == -1 ) {
 				i = getName().indexOf("scaffold");
+			}
+			if( i == -1 ) {
+				System.err.println( getName() );
 			}
 			spec = getName().substring(0, i-1);
 		} else {

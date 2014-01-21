@@ -275,7 +275,7 @@ public class SerifyApplet extends JApplet {
 		try {
 			JSObject jso = JSObject.getWindow( this );
 			final JSObject con = (JSObject)jso.getMember("console");
-		} catch( Exception e ) {
+		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
 		
@@ -361,7 +361,7 @@ public class SerifyApplet extends JApplet {
 			for( String key : keys ) {
 				js.call( "deleteSequenceKey", new Object[] {key} );
 			}
-		} catch( Exception e1 ) {
+		} catch( NoSuchMethodError | Exception e1 ) {
 			unsucc = true;
 		}
 		
@@ -1551,7 +1551,7 @@ public class SerifyApplet extends JApplet {
 			int cr = table.convertRowIndexToModel(r);
 			Sequences seqs = getSequences(cr);
 			
-			int nseq = 0;
+			//int nseq = 0;
 			serifier.appendSequenceInJavaFasta( seqs, contset, rr.length == 1 );
 						/*Annotation a = jf.new Annotation(seq, contig, Color.red);
 						a.setStart(tv.start);
@@ -1565,14 +1565,14 @@ public class SerifyApplet extends JApplet {
 
 		for (String contig : contset.keySet()) {
 			Sequence seq = contset.get(contig);
-			serifier.addSequence(seq);
+			//serifier.addSequence(seq);
 			if (seq.getAnnotations() != null)
 				Collections.sort(seq.getAnnotations());
 		}
 	}
 		
 	public void trim( File dir, String trim ) {
-		try {			
+		try {
 			Map<String,String> fset = serifier.makeFset( trim );
 			totalTrim( dir, fset );
 		} catch (IOException e1) {
@@ -1580,6 +1580,57 @@ public class SerifyApplet extends JApplet {
 		} catch (URISyntaxException e1) {
 			e1.printStackTrace();
 		}
+	}
+	
+	public void load() {
+		JFrame frame = new JFrame();
+		frame.setSize(800, 600);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
+		jf.initGui(frame);
+		serifier.clearAll();
+		loadSequencesInJavaFasta( jf );
+		jf.updateView();
+
+		frame.addWindowListener( new WindowListener() {
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				if( jf.isEdited() && JOptionPane.showConfirmDialog( SerifyApplet.this, "Do you wan't to save?" ) == JOptionPane.YES_OPTION ) {
+					JFileChooser jfc = new JFileChooser();
+					if( jfc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+						try {
+							File f = jfc.getSelectedFile();
+							FileWriter fw = new FileWriter( f );
+							serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
+							fw.close();
+							
+							SerifyApplet.this.addSequences( f.getName(), f.toURI().toURL().toString() );
+						} catch (IOException | URISyntaxException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {}
+		});
+		frame.setVisible(true);
 	}
 	
 	public void init( final Container c ) {
@@ -1592,7 +1643,6 @@ public class SerifyApplet extends JApplet {
 		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
-		
 		
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -1648,8 +1698,20 @@ public class SerifyApplet extends JApplet {
 		table.addMouseListener( new MouseAdapter() {
 			public void mousePressed( MouseEvent me ) {
 				if( me.getClickCount() == 2 ) {
-					int r = table.getSelectedRow();
+					load();
+					
+					/*int r = table.getSelectedRow();
 					String path = (String)table.getValueAt( r, 3 );
+					
+					JFrame frame = new JFrame();
+					frame.setSize(800, 600);
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+					
+					JavaFasta jf = new JavaFasta( c instanceof JApplet ? (JApplet)c : null, serifier, null );
+					jf.initGui(frame);
+					jf.updateView();
+
+					frame.setVisible(true);
 					
 					/*try {
 						SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
@@ -1657,7 +1719,7 @@ public class SerifyApplet extends JApplet {
 						e.printStackTrace();
 					}*/
 					
-					browse( path );
+					//browse( path );
 				}
 			}
 		});
@@ -2211,53 +2273,7 @@ public class SerifyApplet extends JApplet {
 		popup.add( new AbstractAction("View sequences") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
-				jf.initGui(frame);
-				loadSequencesInJavaFasta( jf );
-				jf.updateView();
-
-				frame.addWindowListener( new WindowListener() {
-					@Override
-					public void windowOpened(WindowEvent e) {}
-					
-					@Override
-					public void windowIconified(WindowEvent e) {}
-					
-					@Override
-					public void windowDeiconified(WindowEvent e) {}
-					
-					@Override
-					public void windowDeactivated(WindowEvent e) {}
-					
-					@Override
-					public void windowClosing(WindowEvent e) {}
-					
-					@Override
-					public void windowClosed(WindowEvent e) {
-						if( JOptionPane.showConfirmDialog( SerifyApplet.this, "Do you wan't to save?" ) == JOptionPane.YES_OPTION ) {
-							JFileChooser jfc = new JFileChooser();
-							if( jfc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-								try {
-									File f = jfc.getSelectedFile();
-									FileWriter fw = new FileWriter( f );
-									serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
-									fw.close();
-									
-									SerifyApplet.this.addSequences( f.getName(), f.toURI().toURL().toString() );
-								} catch (IOException | URISyntaxException e1) {
-									e1.printStackTrace();
-								}
-							}
-						}
-					}
-					
-					@Override
-					public void windowActivated(WindowEvent e) {}
-				});
-				frame.setVisible(true);
+				load();
 			}
 		});
 		popup.addSeparator();
