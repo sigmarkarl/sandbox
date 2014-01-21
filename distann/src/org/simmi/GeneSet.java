@@ -10678,8 +10678,7 @@ public class GeneSet extends JApplet {
 		JButton swsearch = new JButton(new AbstractAction("SW Search") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JComponent c = new JComponent() {
-				};
+				JComponent c = new JComponent() {};
 				final JProgressBar pb = new JProgressBar();
 				final JTextArea textarea = new JTextArea();
 				JButton searchbut = new JButton(new AbstractAction("Blast") {
