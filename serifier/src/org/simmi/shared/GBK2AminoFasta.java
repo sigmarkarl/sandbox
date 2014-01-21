@@ -145,7 +145,9 @@ public class GBK2AminoFasta {
 									}
 								}
 							} else {
-								String[] nsplit = split[1].split("\\.\\.");
+								String[] nsplit;
+								if( split[1].startsWith("<") ) nsplit = split[1].substring(1).split("\\.\\.");
+								else nsplit = split[1].split("\\.\\.");
 								if( nsplit.length > 1 ) {
 									char c = nsplit[0].charAt(0);
 									char c2 = nsplit[1].charAt(0);
@@ -159,6 +161,7 @@ public class GBK2AminoFasta {
 									}
 								} else {
 									System.err.println("nono2");
+									anno = null;
 								}
 							}
 						} else {
