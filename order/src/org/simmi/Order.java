@@ -3059,7 +3059,7 @@ public class Order extends JApplet {
 			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			byte[] bb = new byte[2048];
-			InputStream is = order.getClass().getResourceAsStream("/windows_x64/sqljdbc_auth.dll");
+			InputStream is = System.getProperty("sun.arch.data.model").contains("64") ? order.getClass().getResourceAsStream("/windows_x64/sqljdbc_auth.dll") : order.getClass().getResourceAsStream("/windows_x86/sqljdbc_auth.dll");
 			int r = is.read(bb);
 			while( r > 0 ) {
 				baos.write(bb, 0, r);
