@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -480,9 +481,7 @@ public class GeneCompare {
 					double dx = p.x-bimg.getWidth()/2;
 					double dy = p.y-bimg.getHeight()/2;
 					
-					if( doubleclicked ) {
-						System.err.println("ermermerm ");
-						
+					if( doubleclicked ) {						
 						double t = Math.atan2( dy, dx );
 						double rad = Math.sqrt( dx*dx + dy*dy );
 						
@@ -557,7 +556,6 @@ public class GeneCompare {
 								break;
 							} else loc += c.getGeneCount();
 						}
-						System.err.println( minloc + "  " + maxloc );
 						Contig c = contigs.get(i);
 						
 						if( e.isAltDown() ) {
@@ -597,11 +595,15 @@ public class GeneCompare {
 									} else {
 										String spec = spec2s.get( (int)((rad-250.0)/15.0) );
 										Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+										int selr = -1;
 										for( Tegeval te : ti.tset ) {
 											int u = geneset.genelist.indexOf( te.getGene() );
 											r = geneset.table.convertRowIndexToView(u);
+											if( selr == -1 ) selr = r;
 											geneset.table.addRowSelectionInterval( r, r );
 										}
+										Rectangle rect = geneset.table.getCellRect(selr, 0, true);
+										geneset.table.scrollRectToVisible(rect);
 									}
 								}
 							}
@@ -755,7 +757,7 @@ public class GeneCompare {
 	
 	public static Color blosumColor( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap, boolean rs ) {
 		Color color = Color.green;
-		if( seq != null ) {
+		if( seq != null && seq.length() > 0 ) {
 			int tscore = 0;
             for( int i = 0; i < seq.length(); i++ ) {
             	char lc = seq.charAt(i);
@@ -764,6 +766,10 @@ public class GeneCompare {
             	String comb = c+""+c;
             	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
             }
+            
+            /*if( gg.getCommonName().contains("tRNA-Ile") ) {
+            	System.err.println(gg.getCommonName());
+            }*/
             
             int score = 0;
             Teginfo gene2s = gg.getGenes( spec2 );
@@ -783,7 +789,7 @@ public class GeneCompare {
                 if( sscore > score ) score = sscore;
                 
                 if( seq == seq2 && sscore != tscore ) {
-                	System.err.println();
+                	//System.err.println();
                 }
             }
             int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
@@ -849,10 +855,12 @@ public class GeneCompare {
 			
 			if( ptotal2 > 0 ) {
 				for( Contig ctg2 : contigs2 ) {
-					int idx = ctg2.tlist.indexOf( tv2 );
-					if( idx != -1 ) {
-						hit = ctg2;
-						break;
+					if( ctg2.tlist != null ) {
+						int idx = ctg2.tlist.indexOf( tv2 );
+						if( idx != -1 ) {
+							hit = ctg2;
+							break;
+						}
 					}
 				}
 				
