@@ -154,6 +154,33 @@ public class Synteni {
 							}
 						}
 					}
+				} else {
+					for( int r : rr ) {
+						int i = sorting.convertRowIndexToModel( r );
+						Gene gene = geneset.genelist.get( i );
+						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
+							int l = rowheader.convertRowIndexToModel( k );
+							String spec1 = species.get( l );
+							List<Tegeval> tvlist = gene.getGeneGroup().getTegevals( spec1 );
+							
+							if( k < rowheader.getRowCount()-1 ) {
+								int rh2 = rowheader.getRowHeight()/2;
+								for( Tegeval tv : tvlist ) {
+									int m = rowheader.convertRowIndexToModel( k+1 );
+									String spec2 = species.get( m );
+									List<Tegeval> tvlist2 = gene.getGeneGroup().getTegevals( spec2 );
+									
+									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/3632;
+									for( Tegeval tv2 : tvlist2 ) {
+										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/3632;
+										if( tv.ori != tv2.ori ^ tv.getContshort().reverse != tv2.getContshort().reverse ) g.setColor( Color.red );
+										else g.setColor( Color.blue );
+										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		};
