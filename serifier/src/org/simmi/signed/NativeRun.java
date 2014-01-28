@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -205,7 +206,7 @@ public class NativeRun {
 		//infile.delete();
 	}
 	
-	public String runProcessBuilder( String title, final List<String> commands, final Runnable run, final Object[] cont ) throws IOException {
+	public String runProcessBuilder( String title, @SuppressWarnings("rawtypes") final List commandsList, final Runnable run, final Object[] cont ) throws IOException {
 		//System.err.println( pb.toString() );
 		//pb.directory( dir );
 		
@@ -218,11 +219,18 @@ public class NativeRun {
 		comp.setLayout( new BorderLayout() );
 		
 		final JTextArea		ta = new JTextArea();
-		for( String cmd : commands ) {
-			ta.append(cmd+" ");
+		for( Object commands : commandsList ) {
+			if( commands instanceof List ) {
+				for( Object cmd : (List)commands ) {
+					ta.append(cmd+" ");
+				}
+				ta.append("\n");
+			} else {
+				ta.append(commands+" ");
+			}
 		}
 		ta.append("\n");
-		
+	
 		ta.setEditable( false );
 		final JScrollPane	sp = new JScrollPane( ta );
 		final JProgressBar	pbar = new JProgressBar();
@@ -233,8 +241,15 @@ public class NativeRun {
 		pbar.setIndeterminate( true );
 		
 		System.err.println( "about to run" );
-		for( String c : commands ) {
-			System.err.print( c+" " );
+		for( Object commands : commandsList ) {
+			if( commands instanceof List ) {
+				for( Object c : (List)commands ) {
+					System.err.print( c+" " );
+				}
+				System.err.println();
+			} else {
+				System.err.print( commands+" " );
+			}
 		}
 		System.err.println();
 		
@@ -244,51 +259,56 @@ public class NativeRun {
 			@Override
 			public void run() {
 				try {
-					ProcessBuilder pb = new ProcessBuilder( commands );
-					pb.redirectErrorStream( true );
-					final Process p = pb.start();
-					dialog.addWindowListener( new WindowListener() {
-						
-						@Override
-						public void windowOpened(WindowEvent e) {}
-						
-						@Override
-						public void windowIconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeiconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeactivated(WindowEvent e) {}
-						
-						@Override
-						public void windowClosing(WindowEvent e) {}
-						
-						@Override
-						public void windowClosed(WindowEvent e) {
-							if( p != null ) {
-								interupted = true;
-								p.destroy();
-								//tt.interrupt();
+					for( Object commands : commandsList ) {
+						boolean blist = commands instanceof List;
+						ProcessBuilder pb = new ProcessBuilder( blist ? (List)commands : commandsList );
+						pb.redirectErrorStream( true );
+						final Process p = pb.start();
+						dialog.addWindowListener( new WindowListener() {
+							
+							@Override
+							public void windowOpened(WindowEvent e) {}
+							
+							@Override
+							public void windowIconified(WindowEvent e) {}
+							
+							@Override
+							public void windowDeiconified(WindowEvent e) {}
+							
+							@Override
+							public void windowDeactivated(WindowEvent e) {}
+							
+							@Override
+							public void windowClosing(WindowEvent e) {}
+							
+							@Override
+							public void windowClosed(WindowEvent e) {
+								if( p != null ) {
+									interupted = true;
+									p.destroy();
+									//tt.interrupt();
+								}
 							}
+							
+							@Override
+							public void windowActivated(WindowEvent e) {}
+						});
+						dialog.setVisible( true );
+						
+						InputStream is = p.getInputStream();
+						BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+						String line = br.readLine();
+						while( line != null ) {
+							String str = line + "\n";
+							ta.append( str );
+							
+							line = br.readLine();
 						}
+						br.close();
+						is.close();
 						
-						@Override
-						public void windowActivated(WindowEvent e) {}
-					});
-					dialog.setVisible( true );
-					
-					InputStream is = p.getInputStream();
-					BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-					String line = br.readLine();
-					while( line != null ) {
-						String str = line + "\n";
-						ta.append( str );
-						
-						line = br.readLine();
+						if( !blist ) break;
 					}
-					br.close();
-					is.close();
 					
 					/*System.err.println("hereok");
 					
