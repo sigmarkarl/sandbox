@@ -15,8 +15,5 @@
 	<classpathentry kind="lib" path="/poi/poi-3.9/ooxml-lib/stax-api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.9/ooxml-lib/xmlbeans-2.3.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/jdk/deploy.jar"/>
-	<classpathentry kind="lib" path="/jdk/javaws.jar"/>
-	<classpathentry kind="lib" path="/jdk/plugin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
