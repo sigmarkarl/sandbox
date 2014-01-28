@@ -123,6 +123,11 @@ public class Gene {
 	Tegeval tegeval;
 	private String aac;
 	int index;
+	String	designation;
+	
+	public boolean isPhage() {
+		return designation != null && designation.contains("phage");
+	}
 
 	GeneGroup	gg;
 	// Set<String> group;
