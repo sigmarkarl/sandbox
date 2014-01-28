@@ -1586,7 +1586,6 @@ public class SortTable extends JApplet {
 			InputStream is = SortTable.class.getResourceAsStream("/matis.png");
 			img = ImageIO.read( is );
 			/*try {
-				URL url = new URL("http://test.matis.is/isgem/Matis_logo.jpg");
 				img = ImageIO.read(url.openStream());
 			} catch (MalformedURLException e2) {
 				e2.printStackTrace();
@@ -1757,7 +1756,7 @@ public class SortTable extends JApplet {
 		FriendsPanel fp = new FriendsPanel(sessionKey, currentUser, lang);
 		friendsPanel = fp;
 
-		try {
+		/*try {
 			URL url = new URL("http://test.matis.is");
 			URLConnection uc = url.openConnection();
 			uc.setDefaultUseCaches(true);
@@ -1766,7 +1765,7 @@ public class SortTable extends JApplet {
 			e2.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 
 		RdsPanel rdsPanel = new RdsPanel(fp, SortTable.this);
 
