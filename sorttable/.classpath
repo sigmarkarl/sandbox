@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="loc"/>
+	<classpathentry kind="lib" path="/jdk/plugin.jar"/>
 	<classpathentry kind="lib" path="/jdk/deploy.jar"/>
 	<classpathentry kind="lib" path="/jdk/javaws.jar"/>
-	<classpathentry kind="lib" path="/jdk/plugin.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-3.10-beta2-20130904.jar"/>
