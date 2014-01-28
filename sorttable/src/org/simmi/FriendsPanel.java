@@ -53,7 +53,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 
-import org.netbeans.saas.RestConnection;
 import org.netbeans.saas.RestResponse;
 
 public class FriendsPanel extends SimSplitPane {
