@@ -149,6 +149,22 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public boolean isOnAnyPlasmid() {
+		for( Gene g : genes ) {
+			if( g.tegeval.getContshort().isPlasmid() ) return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean isInAnyPhage() {
+		for( Gene g : genes ) {
+			if( g.isPhage() ) return true;
+		}
+		
+		return false;
+	}
+	
 	public String getCommonNamespace() {
 		String ret = "";
 		Set<String>	included = new HashSet<String>();
