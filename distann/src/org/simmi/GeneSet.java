@@ -60,16 +60,11 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -88,8 +83,6 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -635,6 +628,7 @@ public class GeneSet extends JApplet {
 						if( u == -1 ) {
 							u = contigstr.indexOf("contig");
 							if( u == -1 ) u = contigstr.indexOf("scaffold");
+							if( u == -1 ) u = contigstr.lastIndexOf('_');
 							origin = contigstr.substring(0, u-1);
 							contloc = contigstr.substring(u, contigstr.length());
 						} else {
@@ -716,7 +710,7 @@ public class GeneSet extends JApplet {
 					
 					String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 					Gene gene = new Gene( null, id, newname, origin );
-					gene.designation = designations.get( id );
+					gene.designation = designations != null ? designations.get( id ) : null;
 					gene.refid = newid;
 					gene.setIdStr( idstr );
 					gene.allids = new HashSet<String>();
@@ -845,6 +839,7 @@ public class GeneSet extends JApplet {
 			if( i == -1 ) {
 				i = lname.indexOf("contig");
 				if( i == -1 ) i = lname.indexOf("scaffold");
+				if( i == -1 ) i = lname.lastIndexOf('_');
 				int u = lname.lastIndexOf('_');
 				contigstr = lname.substring(0, u);
 				origin = lname.substring(0, i-1);
@@ -866,6 +861,7 @@ public class GeneSet extends JApplet {
 				if( u == -1 ) {
 					u = contigstr.indexOf("contig");
 					if( u == -1 ) u = contigstr.indexOf("scaffold");
+					if( u == -1 ) u = contigstr.lastIndexOf('_');
 					origin = contigstr.substring(0, u-1);
 					contloc = contigstr.substring(u, contigstr.length());
 				} else {
@@ -920,7 +916,7 @@ public class GeneSet extends JApplet {
 			
 			String newname = addname.length() == 0 ? name : addname.substring(1);
 			Gene gene = new Gene( null, id, newname, origin );
-			gene.designation = designations.get( id );
+			gene.designation = designations != null ? designations.get( id ) : null;
 			gene.refid = newid;
 			gene.allids = new HashSet<String>();
 			gene.allids.add( newid );
@@ -1974,6 +1970,9 @@ public class GeneSet extends JApplet {
 						if( u == -1 ) {
 							u = str.indexOf("scaffold");
 						}
+						if( u == -1 ) {
+							u = str.lastIndexOf('_');
+						}
 						spec = str.substring( 0, u-1 );
 					} else {
 						int l = str.indexOf('_', u+1);
@@ -1986,6 +1985,7 @@ public class GeneSet extends JApplet {
 				} else {
 					i = e.indexOf("contig");
 					if( i == -1 ) i = e.indexOf("scaffold");
+					if( i == -1 ) i = e.lastIndexOf('_');
 					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
 					
 					teg.add(spec);
@@ -2021,6 +2021,7 @@ public class GeneSet extends JApplet {
 					if( u == -1 ) {
 						u = str.indexOf("contig");
 						if( u == -1 ) u = str.indexOf("scaffold");
+						if( u == -1 ) u = str.lastIndexOf('_');
 						spec = str.substring( 0, u-1 );
 					} else {
 						int l = str.indexOf('_', u+1);
@@ -2038,6 +2039,7 @@ public class GeneSet extends JApplet {
 				} else {
 					i = e.indexOf("contig");
 					if( i == -1 ) i = e.indexOf("scaffold");
+					if( i == -1 ) i = e.lastIndexOf('_');
 					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
 					
 					Set<String> set;
@@ -6733,6 +6735,7 @@ public class GeneSet extends JApplet {
 								
 								int k = name.indexOf("contig");
 								if( k == -1 ) k = name.indexOf("scaffold");
+								if( k == -1 ) k = name.lastIndexOf('_');
 								if( k == -1 ) {
 									name = spec;
 								} else {
@@ -9859,6 +9862,7 @@ public class GeneSet extends JApplet {
 					if( contigs.isSelected() ) {
 						int k = spec.indexOf("contig");
 						if( k == -1 ) k = spec.indexOf("scaffold");
+						if( k == -1 ) k = spec.lastIndexOf('_');
 						if( k == -1 ) {
 							names[i] = spec;
 							scaffspec = spec;
@@ -11575,15 +11579,15 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				String dbname = null;
 				
-				try {
+				/*try {
 					Map<String,String> env = new HashMap<String,String>();
 					Path path = zipfile.toPath();
 					String uristr = "jar:" + path.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					zipuri = URI.create( uristr /*.replace("file://", "file:")* );
 					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 					
 					final PathMatcher pm = zipfilesystem.getPathMatcher("*.p??");
-					/*for( Path p : zipfilesystem.getRootDirectories() ) {
+					for( Path p : zipfilesystem.getRootDirectories() ) {
 						Files.walkFileTree( p, new SimpleFileVisitor<Path>() {
 							@Override
 							public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -11625,10 +11629,10 @@ public class GeneSet extends JApplet {
 							dbname = zname.substring(0, zname.length()-4);
 						}
 						ze = zipm.getNextEntry();
-					}*/
+					}*
 				} catch (IOException e1) {
 					e1.printStackTrace();
-				}
+				}*/
 				
 				final JTextArea ta = new JTextArea();
 				JScrollPane sp = new JScrollPane( ta );
@@ -11642,26 +11646,76 @@ public class GeneSet extends JApplet {
 				
 				File blastn;
 				File blastp;
+				File makeblastdb;
 				File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
 				if( !blastx.exists() ) {
-					blastx = new File( "/opt/ncbi-blast-2.2.28+/bin/blastx" );
-					blastn = new File( "/opt/ncbi-blast-2.2.28+/bin/blastn" );
-					blastp = new File( "/opt/ncbi-blast-2.2.28+/bin/blastp" );
+					blastx = new File( "/opt/ncbi-blast-2.2.29+/bin/blastx" );
+					blastn = new File( "/opt/ncbi-blast-2.2.29+/bin/blastn" );
+					blastp = new File( "/opt/ncbi-blast-2.2.29+/bin/blastp" );
+					
+					makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
 				} else {
 					blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
 					blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
+					
+					makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 				}
 				
-				File blastFile = blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
-				
 				int procs = Runtime.getRuntime().availableProcessors();
-				String[] cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "c:/"+dbname, "-evalue", tf.getText(), "-num_threads", Integer.toString(procs) };
-				List<String>	lcmd = new ArrayList<String>( Arrays.asList(cmds) );
-				//String[] exts = extrapar.trim().split("[\t ]+");
+				String[] mcmds = { makeblastdb.getAbsolutePath(), "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
+				List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
 				
-				ProcessBuilder pb = new ProcessBuilder( lcmd );
-				pb.redirectErrorStream( true );
+				final ProcessBuilder mpb = new ProcessBuilder( lcmd );
+				mpb.redirectErrorStream( true );
 				try {
+					final Process mp = mpb.start();
+					
+					new Thread() {
+						public void run() {
+							try {
+								OutputStream pos = mp.getOutputStream();
+								for( Gene g : genelist ) {
+									pos.write( (">" + g.id + "\n").getBytes() );
+									StringBuilder sb = g.tegeval.getProteinSequence();
+									for( int i = 0; i < sb.length(); i+=70 ) {
+										pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
+									}
+									pos.write( '\n' );
+								}
+								pos.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}.run();
+					
+					new Thread() {
+						public void run() {
+							try {
+								InputStream pin = mp.getInputStream();
+								InputStreamReader rdr = new InputStreamReader( pin );
+								//FileReader fr = new FileReader( new File("c:/dot.blastout") );
+								BufferedReader br = new BufferedReader( rdr );
+								String line = br.readLine();
+								while( line != null ) {
+									System.out.println( line );
+									line = br.readLine();
+								}
+								pin.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}.run();
+					
+					File blastFile = blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+					
+					String[] 		cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", tf.getText(), "-num_threads", Integer.toString(procs) };
+					lcmd = new ArrayList<String>( Arrays.asList(cmds) );
+					//String[] exts = extrapar.trim().split("[\t ]+");
+					
+					ProcessBuilder pb = new ProcessBuilder( lcmd );
+					pb.redirectErrorStream( true );
 					final Process p = pb.start();
 				
 					final Thread t = new Thread() {
@@ -11690,14 +11744,23 @@ public class GeneSet extends JApplet {
 								while( line != null ) {
 									if( line.startsWith("> ") ) {
 										int i = line.indexOf(' ', 2);
+										if( i == -1 ) i = line.length();
 										String id = line.substring(2, i);
 										
 										Gene g = genemap.get( id );
 										if( g != null ) {
-											i = allgenegroups.indexOf( g.getGeneGroup() );
-											if( i != -1 ) {
-												int r = table.convertRowIndexToView( i );
-												table.addRowSelectionInterval(r, r);
+											if( table.getModel() == groupModel ) {
+												i = allgenegroups.indexOf( g.getGeneGroup() );
+												if( i != -1 ) {
+													int r = table.convertRowIndexToView( i );
+													table.addRowSelectionInterval(r, r);
+												}
+											} else {
+												i = genelist.indexOf( g );
+												if( i != -1 ) {
+													int r = table.convertRowIndexToView( i );
+													table.addRowSelectionInterval(r, r);
+												}
 											}
 										}
 									}
@@ -14788,6 +14851,9 @@ public class GeneSet extends JApplet {
 					u = cont.indexOf("contig");
 					if( u == -1 ) {
 						u = cont.indexOf("scaffold");
+					}
+					if( u == -1 ) {
+						u = cont.lastIndexOf('_');
 					}
 					spec = cont.substring( 0, u-1 );
 					contshort = cont.substring( u, cont.length() );
