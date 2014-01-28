@@ -38,7 +38,7 @@ public class GBK2AminoFasta {
 		boolean 		comp;
 	};
 	
-	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, Writer allout, String path ) throws IOException {
+	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, Writer allout, String path, String replace ) throws IOException {
 		List<Anno>	annolist = new ArrayList<Anno>();
 		for( String tag : filetextmap.keySet() ) {
 			StringBuilder filetext = filetextmap.get( tag );
@@ -53,7 +53,7 @@ public class GBK2AminoFasta {
 			
 			//int k = filename.indexOf('.');
 			//if( k == -1 ) k = filename.length();
-			String spec = tag; //filename.substring(0, k);
+			String spec = replace != null ? replace : tag; //filename.substring(0, k);
 			
 			Set<String>	xref = new TreeSet<String>();
 			//int contignum = 0;
@@ -86,7 +86,7 @@ public class GBK2AminoFasta {
 						anno.contig = strbuf;
 						
 						//anno.spec = spec + (contignum > 0 ? "_contig"+(contignum+1) : "");
-						anno.spec = spec + "_"+locus;
+						anno.spec = spec+ "_"+locus;
 						
 						String[] split = trimline.split("[\t ]+");
 						if( split.length > 1 ) {
@@ -305,9 +305,12 @@ public class GBK2AminoFasta {
 			
 			String end = amino ? " # " + ao.start + " # " + ao.stop + " # " + (ao.comp ? "-1" : "1") + " #\n" : "\n";
 			if( out != null ) {
+				/*if( replace != null ) {
+					String rep = replace + ao.spec.substring( ao.spec.indexOf('_') );
+					out.write( ">"+ao.id + " " + ao.name + " [" + rep + "]" + end );
+				} else {*/
 				out.write( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]" + end );
-			} else {
-				System.err.println();
+				//}
 			}
 			//strbuf.
 			
