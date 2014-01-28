@@ -78,6 +78,14 @@ public class GeneSorter {
 		//return ltv;
 	}
 
+	final Color gr = Color.green;
+	final Color dg = Color.green.darker();
+	final Color rd = Color.red;
+	final Color dr = Color.red.darker();
+	final Color bl = Color.blue;
+	final Color db = Color.blue.darker();
+	final Color mg = Color.magenta;
+	final Color dm = Color.magenta.darker();
 	public void mynd(final List<Gene> genes, final JTable sorting, String species, final Map<String,Contig> contigmap) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
@@ -97,10 +105,6 @@ public class GeneSorter {
 			final JTable rowheader = new JTable();
 				
 			final JComponent c = new JComponent() {
-				Color gr = Color.green;
-				Color dg = Color.green.darker();
-				Color rd = Color.red;
-				Color dr = Color.red.darker();
 				Color altcol = Color.black;
 				// Color dg = Color.green.darker();
 
@@ -120,10 +124,21 @@ public class GeneSorter {
 								else
 									g.setColor(dr);
 							} else {
-								if (i % 2 == 0)
+								boolean phage = gene.isPhage();
+								boolean plasmid = gene.tegeval.getContshort().isPlasmid();
+								if( phage && plasmid ) {
+									g.setColor(mg);
+								} else if( phage ) {
+									g.setColor(bl);
+								} else if( plasmid ) {
+									g.setColor(rd);
+								} else {
+									g.setColor(gr);
+								}
+								/*if (i % 2 == 0)
 									g.setColor(gr);
 								else
-									g.setColor(dg);
+									g.setColor(dg);*/
 							}
 						} else if( gcColorScheme.isSelected() ) {
 							if (sorting.isRowSelected(i)) {
@@ -445,11 +460,6 @@ public class GeneSorter {
 			final int hey = geneGroups.size(); // ltv.get(ltv.size()-1).stop/1000;
 			final JTable rowheader = new JTable();
 			final JComponent c = new JComponent() {
-				Color gr = Color.green;
-				Color dg = Color.green.darker();
-				Color rd = Color.red;
-				Color dr = Color.red.darker();
-
 				// Color dg = Color.green.darker();
 
 				public void paintComponent(Graphics g) {
@@ -504,10 +514,29 @@ public class GeneSorter {
 									else
 										g.setColor(dr);
 								} else {
-									if (i % 2 == 0)
+									boolean phage;
+									boolean plasmid;
+									if( tgene != null ) {
+										phage = tgene.isPhage();
+										plasmid = tgene.tegeval.getContshort().isPlasmid();
+									} else {
+										phage = genegroup.isInAnyPhage();
+										plasmid = genegroup.isOnAnyPlasmid();
+									}
+									
+									if( phage && plasmid ) {
+										g.setColor(mg);
+									} else if( phage ) {
+										g.setColor(bl);
+									} else if( plasmid ) {
+										g.setColor(rd);
+									} else {
+										g.setColor(gr);
+									}
+									/*if (i % 2 == 0)
 										g.setColor(gr);
 									else
-										g.setColor(dg);
+										g.setColor(dg);*/
 								}
 							} else if( gcColorScheme.isSelected() ) {
 								if (sorting.isRowSelected(i)) {
