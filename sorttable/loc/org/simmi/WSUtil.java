@@ -11,7 +11,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-import javax.swing.table.TableModel;
 
 public class WSUtil {
 	static SortTable	sorttable;
