@@ -5662,6 +5662,7 @@ public class GeneSet extends JApplet {
 	
 	public static void funcMappingStatic( Reader rd ) throws IOException {
 		//Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
+		Map<String,String>	symbolmap = new HashMap<String,String>();
 		FileWriter fw = new FileWriter("/home/sigmar/sp2go.txt");
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
@@ -5671,7 +5672,9 @@ public class GeneSet extends JApplet {
 				String[] split = line.split("\t");
 				if( split.length > 4 ) {
 					String id = split[1];
+					String sm = split[2];
 					String go = split[4];
+					symbolmap.put(id, sm);
 					if( go.startsWith("GO:") ) {
 						if( !id.equals( prev ) ) {
 							if( prev == null ) fw.write( id + " = " + go );
@@ -5684,6 +5687,13 @@ public class GeneSet extends JApplet {
 			line = br.readLine();
 		}
 		br.close();
+		fw.close();
+		
+		fw = new FileWriter( "/home/sigmar/smap.txt" );
+		for( String id : symbolmap.keySet() ) {
+			String sm = symbolmap.get( id );
+			fw.write(id + "\t" + sm + "\n");
+		}
 		fw.close();
 	}
 
