@@ -6416,7 +6416,7 @@ public class GeneSet extends JApplet {
 								}
 							} else {
 								for( Tegeval tv : ltv ) {
-									if( tv.getContshort().getName().equals(loc) ) {
+									if( loc == null || tv.getContshort().getName().equals(loc) ) {
 										Sequence tseq;
 										if( !first ) {
 											tseq = new Sequence( spec, null );
@@ -6438,7 +6438,7 @@ public class GeneSet extends JApplet {
 										for( Sequence sseq : seqs.keySet() ) {
 											String sloc = seqs.get( sseq );
 											
-											if( tv.getContshort().getName().equals(sloc) ) {
+											if( sloc == null || tv.getContshort().getName().equals(sloc) ) {
 												check = true;
 												break;
 											}
@@ -6450,10 +6450,22 @@ public class GeneSet extends JApplet {
 												tseq = new Sequence( spec, null );
 												addseqs.put( tseq, loc );
 												tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-											} else tseq = seq;
+											} else {
+												tseq = new Sequence( spec, null );
+												addseqs.put( tseq, loc );
+												for( int i = 0; i < len; i++ ) tseq.append( "-" );
+												//tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+												
+												//tseq = seq;
+											}
 											
+											//for( int i = 0; i < len; i++ ) tseq.append( "-" );
+										}/* else {
+											Sequence tseq = new Sequence( spec, null );
 											for( int i = 0; i < len; i++ ) tseq.append( "-" );
-										}
+											addseqs.put( tseq, loc );
+											tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+										}*/
 									}
 								}
 								
@@ -11860,7 +11872,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 25+specList.size();
+				return 26+specList.size();
 			}
 
 			@Override
@@ -11888,35 +11900,37 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 10) {
 					return "EC";
 				} else if (columnIndex == 11) {
-					return "Cog";
+					return "Cog name";
 				} else if (columnIndex == 12) {
-					return "Cazy";
+					return "Cog";
 				} else if (columnIndex == 13) {
-					return "Present in";
+					return "Cazy";
 				} else if (columnIndex == 14) {
-					return "Group index";
+					return "Present in";
 				} else if (columnIndex == 15) {
-					return "Group coverage";
+					return "Group index";
 				} else if (columnIndex == 16) {
-					return "Group size";
+					return "Group coverage";
 				} else if (columnIndex == 17) {
-					return "Locprev";
+					return "Group size";
 				} else if (columnIndex == 18) {
-					return "Avg GC%";
+					return "Locprev";
 				} else if (columnIndex == 19) {
-					return "# of locus";
+					return "Avg GC%";
 				} else if (columnIndex == 20) {
-					return "# of loc in group";
+					return "# of locus";
 				} else if (columnIndex == 21) {
-					return "max length";
+					return "# of loc in group";
 				} else if (columnIndex == 22) {
-					return "sharing number";
+					return "max length";
 				} else if (columnIndex == 23) {
-					return "# Cyc";
+					return "sharing number";
 				} else if (columnIndex == 24) {
+					return "# Cyc";
+				} else if (columnIndex == 25) {
 					return "16S Corr";
 				} else {
-					String spec = specList.get( columnIndex - 25 );
+					String spec = specList.get( columnIndex - 26 );
 					if( spec.toLowerCase().contains("thermus") ) {
 						int i = spec.indexOf('_');
 						return spec.substring(i+1, spec.length());
@@ -11985,11 +11999,11 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 15 || columnIndex == 18 || columnIndex == 24 )
+				if( columnIndex == 16 || columnIndex == 17 || columnIndex == 25 )
 					return Double.class;
-				else if(columnIndex == 9 || (columnIndex >= 13 && columnIndex <= 24) )
+				else if(columnIndex == 9 || (columnIndex >= 14 && columnIndex <= 25) )
 					return Integer.class;
-				else if (columnIndex >= 25)
+				else if (columnIndex >= 26)
 					return Teg.class;
 				return String.class;
 			}
@@ -12033,35 +12047,38 @@ public class GeneSet extends JApplet {
 					return gg.getCommonEc();
 				} else if (columnIndex == 11) {
 					Cog cog = gg.getCommonCog( cogmap );
-					return cog != null ? cog.name + " " + cog.id : null;
+					return cog != null ? cog.name : null;
 				} else if (columnIndex == 12) {
-					return gg.getCommonCazy( cazymap );
+					Cog cog = gg.getCommonCog( cogmap );
+					return cog != null ? cog.id : null;
 				} else if (columnIndex == 13) {
-					return gg.getSpecies().size();
+					return gg.getCommonCazy( cazymap );
 				} else if (columnIndex == 14) {
-					return gg.groupIndex;
+					return gg.getSpecies().size();
 				} else if (columnIndex == 15) {
-					return gg.getGroupCoverage();
+					return gg.groupIndex;
 				} else if (columnIndex == 16) {
-					return gg.getGroupGeneCount();
+					return gg.getGroupCoverage();
 				} else if (columnIndex == 17) {
-					return null;//gene.proximityGroupPreservation;
+					return gg.getGroupGeneCount();
 				} else if (columnIndex == 18) {
-					return gg.getAvgGCPerc();
+					return null;//gene.proximityGroupPreservation;
 				} else if (columnIndex == 19) {
-					return gg.genes.size();
+					return gg.getAvgGCPerc();
 				} else if (columnIndex == 20) {
-					return gg.getGroupCount();
+					return gg.genes.size();
 				} else if (columnIndex == 21) {
-					return gg.getMaxLength();
+					return gg.getGroupCount();
 				} else if (columnIndex == 22) {
-					return specset.get( gg.getSpecies() );
+					return gg.getMaxLength();
 				} else if (columnIndex == 23) {
-					return gg.getMaxCyc();
+					return specset.get( gg.getSpecies() );
 				} else if (columnIndex == 24) {
+					return gg.getMaxCyc();
+				} else if (columnIndex == 25) {
 					return gg.getGroupCoverage() == 39 && gg.getGroupCount() == 39 ? 0 : -1;
 				} else {
-					String spec = specList.get( columnIndex - 25 );
+					String spec = specList.get( columnIndex - 26 );
 					Teginfo ret = getGroupTes( gg, spec );
 					return ret;
 				}
