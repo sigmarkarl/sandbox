@@ -49,9 +49,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -5621,7 +5623,7 @@ public class GeneSet extends JApplet {
 		System.err.println(faset.size());
 	}
 
-	public static Map<String, Gene> idMapping(String blastfile, String idfile, String outfile, int ind, int secind, Map<String,Gene> genmap, Map<String,Gene> gimap) throws IOException {
+	public static Map<String, Gene> idMapping(String blastfile, String idfile, Writer outfile, int ind, int secind, Map<String,Gene> genmap, Map<String,Gene> gimap) throws IOException {
 		Map<String, Gene> refids = new HashMap<String, Gene>();
 		FileReader fr = new FileReader(blastfile);
 		BufferedReader br = new BufferedReader(fr);
@@ -5688,17 +5690,23 @@ public class GeneSet extends JApplet {
 		return ko2name;
 	}
 
-	public static Map<String, Gene> idMapping( Reader rd, String outfile, int ind, int secind, Map<String, Gene> refids, Map<String, Gene> genmap, Map<String,Gene> gimap ) throws IOException {
+	public static Map<String, Gene> idMapping( Reader rd, Writer ps, int ind, int secind, Map<String, Gene> refids, Map<String, Gene> genmap, Map<String,Gene> gimap ) throws IOException {
 		Map<String, Gene> unimap = new HashMap<String, Gene>();
 		Map<String, String> ref2kegg = new HashMap<String, String>();
 		Map<String, String> ref2pdb = new HashMap<String, String>();
 		Map<String, String> ref2ko = new HashMap<String, String>();
+		Map<String, String> ref2cog = new HashMap<String, String>();
 
-		PrintStream ps = null;
+		/*PrintWriter ps = null;
+		if( out != null ) {
+			ps = new PrintWriter( out );
+		}*/
+		
+		/*PrintStream ps = null;
 		if (outfile != null) {
 			ps = new PrintStream(outfile);
 			System.setOut(ps);
-		}
+		}*/
 
 		List<String> list = new ArrayList<String>();
 		boolean tone = false;
@@ -5719,13 +5727,15 @@ public class GeneSet extends JApplet {
 								ref2pdb.put(spl[0], spl[2]);
 							} else if (spl[1].contains("KO")) {
 								ref2ko.put(spl[0], spl[2]);
+							} else if (spl[1].contains("eggNOG")) {
+								ref2cog.put(spl[0], spl[2]);
 							}
 						}
 					}
 
 					if (ps != null && tone) {
 						for (String sstr : list) {
-							System.out.println(sstr);
+							ps.write(sstr+"\n");
 						}
 						tone = false;
 					}
@@ -5810,21 +5820,20 @@ public class GeneSet extends JApplet {
 						System.err.println();
 					}
 					ref2ko.put(spl[0], spl[2]);
+				} else if (spl[1].contains("eggNOG")) {
+					ref2cog.put(spl[0], spl[2]);
 				}
 			}
 		}
 
 		if (ps != null && tone) {
 			for (String sstr : list) {
-				System.out.println(sstr);
+				ps.write(sstr+"\n");
 			}
 			tone = false;
 		}
 		list.clear();
-
 		//br.close();
-		//if (ps != null)
-			//ps.close();
 
 		if ( genmap != null ) {
 			for (String s : refids.keySet()) {
@@ -5846,8 +5855,13 @@ public class GeneSet extends JApplet {
 							}
 							g.koid = koid;
 						}
+						
+						if( ref2cog.containsKey(id) ) {
+							String cogid = ref2cog.get(id);
+							g.cog = new Cog( cogid, null );
+						}
 
-						if( g.keggid != null && g.pdbid != null && g.koid != null )
+						if( g.keggid != null && g.pdbid != null && g.koid != null && g.cog != null )
 							break;
 					}
 			}
@@ -11271,8 +11285,40 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		AbstractAction	importidmappingaction = new AbstractAction("Import idmapping") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					try {
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
+						Path path = zipfile.toPath();
+						String uristr = "jar:" + path.toUri();
+						zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+						
+						Path nf = zipfilesystem.getPath("/idmapping_short.dat");
+						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+						
+						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+						if( unimap != null ) unimap.clear();
+						unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+						
+						bw.close();
+						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+						zipfilesystem.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		
 		JMenuBar	menubar = new JMenuBar();
 		JMenu		menu = new JMenu("Functions");
+		menu.add( importidmappingaction );
+		menu.addSeparator();
 		menu.add( genomestataction );
 		menu.add( selectsharingaction );
 		menu.add( shuffletreeaction );
@@ -11965,7 +12011,7 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 3) {
 					return gg.getCommonRefId();
 				} else if (columnIndex == 4) {
-					return null;//gene.uniid;
+					return gg.getCommonUnId();
 				} else if (columnIndex == 5) {
 					return gg.getKeggid();
 				} else if (columnIndex == 6) {
@@ -15194,16 +15240,6 @@ public class GeneSet extends JApplet {
 		locgene.clear();
 	}
 	
-	public class Cog {
-		public Cog( String id, String name ) {
-			this.id = id;
-			this.name = name;
-		}
-		
-		public String	id;
-		public String	name;
-	}
-	
 	Map<String, Set<String>> 				ko2go = new TreeMap<String, Set<String>>();
 	
 	JComboBox<String> 						specombo;
@@ -15321,6 +15357,17 @@ public class GeneSet extends JApplet {
 		return cogmap;
 	}*/
 	
+	Map<String, Gene> 			refmap = new HashMap<String, Gene>();
+	Map<String, Gene> 			genmap = new HashMap<String, Gene>();
+	Map<String, Gene> 			unimap = new HashMap<String, Gene>();
+	Map<String, Gene> 			gimap = new HashMap<String, Gene>();
+	
+	Map<String, String> 		allgenes = new HashMap<String, String>();
+	Map<String, Set<String>> 	geneset = new HashMap<String, Set<String>>();
+	Map<String, Set<String>> 	geneloc = new HashMap<String, Set<String>>();
+	Set<String> 				poddur = new HashSet<String>();
+	Map<String, Gene> 			locgene = new HashMap<String, Gene>();
+	
 	File		zipfile;
 	FileSystem	zipfilesystem;
 	URI			zipuri;
@@ -15356,13 +15403,6 @@ public class GeneSet extends JApplet {
 		}
 		baos.close();
 		zipf = baos.toByteArray();*/
-			
-		Map<String, Gene> refmap = new HashMap<String, Gene>();
-		Map<String, String> allgenes = new HashMap<String, String>();
-		Map<String, Set<String>> geneset = new HashMap<String, Set<String>>();
-		Map<String, Set<String>> geneloc = new HashMap<String, Set<String>>();
-		Set<String> poddur = new HashSet<String>();
-		Map<String, Gene> locgene = new HashMap<String, Gene>();
 		
 		/*ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
 		ZipEntry ze = zipm.getNextEntry();
@@ -16067,9 +16107,9 @@ public class GeneSet extends JApplet {
 		 * "/home/sigmar/workspace/distann/sp2go_short.txt" );
 		 */
 
-		Map<String, Gene> unimap = null;
-		Map<String, Gene> genmap = null;
-		Map<String, Gene> gimap = new HashMap<String,Gene>();
+		//Map<String, Gene> unimap = null;
+		//Map<String, Gene> genmap = null;
+		//Map<String, Gene> gimap = new HashMap<String,Gene>();
 		
 		nf = zipfilesystem.getPath("/gene2refseq_short.txt");
 		if( Files.exists( nf ) ) genmap = idMapping(new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), null, 5, 1, refmap, genmap, gimap);
