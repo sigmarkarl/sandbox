@@ -108,6 +108,7 @@ public class Gene {
 	String id;
 	String refid;
 	String idstr;
+	Cog cog;
 	Set<String> allids;
 	String genid;
 	String uniid;
