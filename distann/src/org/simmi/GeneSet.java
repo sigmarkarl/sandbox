@@ -16458,7 +16458,27 @@ public class GeneSet extends JApplet {
 	}
 
 	public void saveContigOrder() throws IOException {
-		FileWriter fw = new FileWriter("/home/sigmar/sandbox/distann/src/contigorder.txt");
+		Map<String,String> env = new HashMap<String,String>();
+		env.put("create", "true");
+		Path path = zipfile.toPath();
+		String uristr = "jar:" + path.toUri();
+		zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+		zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+
+		Path nf = zipfilesystem.getPath("/contigorder.txt");
+		//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+		BufferedWriter bf = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+		for( String spec : speccontigMap.keySet() ) {
+			List<Contig>	lct = speccontigMap.get( spec );
+			for( Contig ct : lct ) {
+				bf.write( (ct.isReverse() ? "\\" : "/")+ct.getName() );
+			}
+			bf.write("\n");
+		}
+		bf.close();
+		zipfilesystem.close();
+		
+		/*FileWriter fw = new FileWriter("/home/sigmar/sandbox/distann/src/contigorder.txt");
 		fw.write("co\n");
 		for( String spec : speccontigMap.keySet() ) {
 			List<Contig>	lct = speccontigMap.get( spec );
@@ -16466,7 +16486,7 @@ public class GeneSet extends JApplet {
 				fw.write( (ct.isReverse() ? "\\" : "/")+ct.getName() );
 			}
 			fw.write("\n");
-		}
+		}*/
 		
 		//Set<Contig>	saved = new HashSet<Contig>();
 		/*for( String cs : GeneSet.contigmap.keySet() ) {
@@ -16506,7 +16526,7 @@ public class GeneSet extends JApplet {
 				fw.write("\n");
 			}
 		}*/
-		fw.close();
+		//fw.close();
 	}
 	
 	public void stop() {
