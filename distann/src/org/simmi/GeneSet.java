@@ -49,7 +49,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -6283,7 +6282,7 @@ public class GeneSet extends JApplet {
 				String spec;
 				if( selspec.contains("hermus") ) spec = selspec;
 				else {
-					Matcher m = Pattern.compile("\\d").matcher(selspec); 
+					Matcher m = Pattern.compile("\\d").matcher(selspec);
 					int firstDigitLocation = m.find() ? m.start() : 0;
 					if( firstDigitLocation == 0 ) spec = "Thermus_" + selspec;
 					else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
@@ -6299,7 +6298,7 @@ public class GeneSet extends JApplet {
 				
 				int max = 0;
 				StringBuilder 	seqstr = null;
-				for( Tegeval tv : ltv ) {					
+				for( Tegeval tv : ltv ) {
 					int seqlen = tv.getLength();
 					if( seqlen > max ) {
 						seqstr = tv.getAlignedSequence().getStringBuilder();
@@ -6330,7 +6329,7 @@ public class GeneSet extends JApplet {
 	public Serifier getConcatenatedSequences( boolean proximityJoin ) {
 		Map<String,Map<Sequence,String>>	smap = new HashMap<String,Map<Sequence,String>>();
 		Set<String>							specset = new HashSet<String>();
-		Map<GeneGroup,Integer>	genegroups = new HashMap<GeneGroup,Integer>();
+		Map<GeneGroup,Integer>				genegroups = new HashMap<GeneGroup,Integer>();
 		int[] rr = table.getSelectedRows();
 		if( table.getModel() == groupModel ) {
 			for (int r : rr) {
@@ -6387,15 +6386,16 @@ public class GeneSet extends JApplet {
 					else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
 				}*/
 				
-				Map<Sequence,String> seqs;
-				if( smap.containsKey( spec ) ) {
-					seqs = smap.get( spec );
-					Map<Sequence,String> addseqs = new HashMap<Sequence,String>();
-					for( Sequence seq : seqs.keySet() ) {
-						String loc = seqs.get( seq );
-						boolean first = true;
-						if( ltv != null && ltv.size() > 0 ) {
-							if( !proximityJoin ) {
+				if( !proximityJoin ) {
+					Map<Sequence,String> seqs;
+					if( smap.containsKey( spec ) ) {
+						seqs = smap.get( spec );
+						Map<Sequence,String> addseqs = new HashMap<Sequence,String>();
+					
+						for( Sequence seq : seqs.keySet() ) {
+							String loc = seqs.get( seq );
+							boolean first = true;
+							if( ltv != null && ltv.size() > 0 ) {
 								for( Tegeval tv : ltv ) {
 									Sequence tseq;
 									if( !first ) {
@@ -6414,59 +6414,94 @@ public class GeneSet extends JApplet {
 									}
 									first = false;
 								}
+							} else /*if( first )*/ {
+								for( int i = 0; i < len; i++ ) seq.append( "-" );
+							}
+						}
+						seqs.putAll( addseqs );
+					} else {
+						seqs = new HashMap<Sequence,String>();
+						
+						if( ltv != null && ltv.size() > 0 ) {
+							for( Tegeval tv : ltv ) {
+								Sequence seq = new Sequence( spec, null );
+								seqs.put( seq, tv.getContshort().getName() );
+								
+								StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+								if( seqstr != null && seqstr.length() > 0 ) {
+									seq.append( seqstr );
+								} else {
+									for( int i = 0; i < len; i++ ) seq.append( "-" );
+								}
+							}
+						} else {
+							Sequence tseq = new Sequence( spec, null );
+							seqs.put( tseq, null );
+							for( int i = 0; i < len; i++ ) tseq.append( "-" );
+						}
+						/*for( Tegeval tv : ltv ) {
+							Sequence seq = new Sequence( spec, null );
+							seqs.add( seq );
+							
+							StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+							if( seqstr != null && seqstr.length() > 0 ) {
+								seq.append( seqstr );
 							} else {
-								for( Tegeval tv : ltv ) {
-									if( loc == null || tv.getContshort().getName().equals(loc) ) {
+								for( int i = 0; i < len; i++ ) seq.append( "-" );
+							}
+						}*/
+						smap.put( spec, seqs );
+					}
+				} else {
+					Map<Sequence,String> seqs;
+					if( smap.containsKey( spec ) ) {
+						seqs = smap.get( spec );
+						Map<Sequence,String> addseqs = new HashMap<Sequence,String>();
+					
+						for( Tegeval tv : ltv ) {
+							for( Sequence seq : seqs.keySet() ) {
+								String loc = seqs.get( seq );
+								if( loc == null || tv.getContshort().getName().equals(loc) ) {									
+									StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+									if( seqstr != null && seqstr.length() > 0 ) {
+										seq.append( seqstr );
+									} else {
+										for( int i = 0; i < len; i++ ) seq.append( "-" );
+									}
+									addseqs.put( seq, loc == null ? tv.getContshort().getName() : loc );
+								} else {
+									boolean check = false;
+									for( Sequence sseq : seqs.keySet() ) {
+										String sloc = seqs.get( sseq );
+										
+										if( sloc == null || tv.getContshort().getName().equals(sloc) ) {
+											check = true;
+											break;
+										}
+									}
+									
+									if( !check ) {
 										Sequence tseq;
 										if( !first ) {
 											tseq = new Sequence( spec, null );
 											addseqs.put( tseq, loc );
 											tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-										} else tseq = seq;
-										
-										StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
-										if( seqstr != null && seqstr.length() > 0 ) {
-											tseq.append( seqstr );
 										} else {
-											for( int i = 0; i < len; i++ ) tseq.append( "-" );
-										}
-										first = false;
-										
-										//first = false;
-									} else {
-										boolean check = false;
-										for( Sequence sseq : seqs.keySet() ) {
-											String sloc = seqs.get( sseq );
-											
-											if( sloc == null || tv.getContshort().getName().equals(sloc) ) {
-												check = true;
-												break;
-											}
-										}
-										
-										if( !check ) {
-											Sequence tseq;
-											if( !first ) {
-												tseq = new Sequence( spec, null );
-												addseqs.put( tseq, loc );
-												tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-											} else {
-												tseq = new Sequence( spec, null );
-												addseqs.put( tseq, loc );
-												for( int i = 0; i < len; i++ ) tseq.append( "-" );
-												//tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-												
-												//tseq = seq;
-											}
-											
-											//for( int i = 0; i < len; i++ ) tseq.append( "-" );
-										}/* else {
-											Sequence tseq = new Sequence( spec, null );
-											for( int i = 0; i < len; i++ ) tseq.append( "-" );
+											tseq = new Sequence( spec, null );
 											addseqs.put( tseq, loc );
-											tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-										}*/
-									}
+											for( int i = 0; i < len; i++ ) tseq.append( "-" );
+											//tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+											
+											//tseq = seq;
+										}
+										
+										//for( int i = 0; i < len; i++ ) tseq.append( "-" );
+									}/* else {
+										Sequence tseq = new Sequence( spec, null );
+										for( int i = 0; i < len; i++ ) tseq.append( "-" );
+										addseqs.put( tseq, loc );
+										tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+									}*/
 								}
 								
 								/*if( first ) {
@@ -6480,43 +6515,29 @@ public class GeneSet extends JApplet {
 									for( int i = 0; i < len; i++ ) tseq.append( "-" );
 								}*/
 							}
-						} else /*if( first )*/ {
-							for( int i = 0; i < len; i++ ) seq.append( "-" );
 						}
-					}
-					seqs.putAll( addseqs );
-				} else {					
-					seqs = new HashMap<Sequence,String>();
-					
-					if( ltv != null && ltv.size() > 0 ) {
-						for( Tegeval tv : ltv ) {
-							Sequence seq = new Sequence( spec, null );
-							seqs.put( seq, tv.getContshort().getName() );
-							
-							StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
-							if( seqstr != null && seqstr.length() > 0 ) {
-								seq.append( seqstr );
-							} else {
-								for( int i = 0; i < len; i++ ) seq.append( "-" );
-							}
-						}
+						seqs.putAll( addseqs );
 					} else {
-						Sequence tseq = new Sequence( spec, null );
-						seqs.put( tseq, null );
-						for( int i = 0; i < len; i++ ) tseq.append( "-" );
-					}
-					/*for( Tegeval tv : ltv ) {
-						Sequence seq = new Sequence( spec, null );
-						seqs.add( seq );
-						
-						StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
-						if( seqstr != null && seqstr.length() > 0 ) {
-							seq.append( seqstr );
+						seqs = new HashMap<Sequence,String>();
+						if( ltv != null && ltv.size() > 0 ) {
+							for( Tegeval tv : ltv ) {
+								Sequence seq = new Sequence( spec, null );
+								seqs.put( seq, tv.getContshort().getName() );
+								
+								StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+								if( seqstr != null && seqstr.length() > 0 ) {
+									seq.append( seqstr );
+								} else {
+									for( int i = 0; i < len; i++ ) seq.append( "-" );
+								}
+							}
 						} else {
-							for( int i = 0; i < len; i++ ) seq.append( "-" );
+							Sequence tseq = new Sequence( spec, null );
+							seqs.put( tseq, null );
+							for( int i = 0; i < len; i++ ) tseq.append( "-" );
 						}
-					}*/
-					smap.put( spec, seqs );
+						smap.put( spec, seqs );
+					}
 				}
 			}
 		}
@@ -6599,7 +6620,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	String nameFix( String selspec ) {
-		if( selspec.contains("hermus") ) return selspec;
+		if( selspec.contains("hermus") ) return selspec.substring(0,selspec.lastIndexOf('_'));
 		else {
 			Matcher m = Pattern.compile("\\d").matcher(selspec); 
 			int firstDigitLocation = m.find() ? m.start() : 0;
@@ -6671,7 +6692,7 @@ public class GeneSet extends JApplet {
 	public StringBuilder getSelectedASeqs( JTable table, List<Gene> genelist, JApplet applet, Collection<String> species ) {
 		StringBuilder sb = new StringBuilder();
 		
-		Set<String> selectedSpecies = getSelspec( applet, new ArrayList( species ) );
+		Set<String> selectedSpecies = getSelspec( applet, new ArrayList<String>( species ) );
 		int[] rr = table.getSelectedRows();
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
@@ -15930,8 +15951,10 @@ public class GeneSet extends JApplet {
 			}*/
 		}
 		
-		is = GeneSet.class.getResourceAsStream("/contigorder.txt");
-		if( is != null ) {
+		nf = zipfilesystem.getPath("/contigorder.txt");
+		//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+		if( Files.exists( nf ) ) {
+			is = Files.newInputStream(nf, StandardOpenOption.READ);
 			BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
 			String line = br.readLine();
 			if( line != null ) line = br.readLine();
@@ -16589,7 +16612,7 @@ public class GeneSet extends JApplet {
 	public void stop() {
 		super.stop();
 		try {
-			saveContigOrder();
+			if( zipfile != null ) saveContigOrder();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
