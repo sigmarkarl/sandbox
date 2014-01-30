@@ -6458,19 +6458,36 @@ public class GeneSet extends JApplet {
 						seqs = smap.get( spec );
 						Map<Sequence,String> addseqs = new HashMap<Sequence,String>();
 					
-						for( Tegeval tv : ltv ) {
-							for( Sequence seq : seqs.keySet() ) {
-								String loc = seqs.get( seq );
+						for( Sequence seq : seqs.keySet() ) {
+							String loc = seqs.get( seq );
+							boolean first = true;
+							for( Tegeval tv : ltv ) {
 								if( loc == null || tv.getContshort().getName().equals(loc) ) {									
+									Sequence tseq;
+									if( !first ) {
+										tseq = new Sequence( spec, null );
+										addseqs.put( tseq, loc );
+										tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+									} else tseq = seq;
 									StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
 									if( seqstr != null && seqstr.length() > 0 ) {
-										seq.append( seqstr );
+										tseq.append( seqstr );
 									} else {
-										for( int i = 0; i < len; i++ ) seq.append( "-" );
+										for( int i = 0; i < len; i++ ) tseq.append( "-" );
 									}
+									first = false;
 									addseqs.put( seq, loc == null ? tv.getContshort().getName() : loc );
-								} else {
-									boolean check = false;
+								}
+							}
+						}
+						
+						for( Sequence seq : seqs.keySet() ) {
+							if( !addseqs.containsKey( seq ) ) {
+								for( int i = 0; i < len; i++ ) seq.append( "-" );
+								addseqs.put( seq, seqs.get(seq) );
+							}
+							
+									/*boolean check = false;
 									for( Sequence sseq : seqs.keySet() ) {
 										String sloc = seqs.get( sseq );
 										
@@ -6501,8 +6518,8 @@ public class GeneSet extends JApplet {
 										for( int i = 0; i < len; i++ ) tseq.append( "-" );
 										addseqs.put( tseq, loc );
 										tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-									}*/
-								}
+									}
+								}*/
 								
 								/*if( first ) {
 									Sequence tseq;
@@ -6514,7 +6531,6 @@ public class GeneSet extends JApplet {
 									
 									for( int i = 0; i < len; i++ ) tseq.append( "-" );
 								}*/
-							}
 						}
 						seqs.putAll( addseqs );
 					} else {
