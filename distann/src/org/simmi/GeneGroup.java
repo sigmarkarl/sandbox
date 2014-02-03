@@ -258,6 +258,31 @@ public class GeneGroup {
 	public String getCommonSymbol() {
 		Set<String> s = new HashSet<String>();
 		for( Gene g : genes ) {
+			if( g.symbol != null ) s.add( g.symbol );
+		}
+		if( s.isEmpty() ) return null;
+		else {
+			String remstr = "";
+			while( remstr != null ) {
+				remstr = null;
+				if( s.size() > 1 ) {
+					for( String str : s ) {
+						if( str.length() >= 7 ) {
+							remstr = str;
+							break;
+						}
+					}
+					s.remove( remstr );
+				}
+			}
+			String ret = s.toString();
+			return ret.substring(1, ret.length()-1 );
+		}
+	}
+	
+	public String getCommonKSymbol() {
+		Set<String> s = new HashSet<String>();
+		for( Gene g : genes ) {
 			//if( g.koname != null && g.koname.length() > 0 && g.koname.length() < 7 ) {
 					//if( sel == null || (g.koname != null && g.koname.length() > 0 && g.koname.length() < 7 && (sel.length() >= 7 || g.koname.length() > sel.length())) ) {
 					//if( sel != null && sel.contains("dnaA") ) System.err.println( sel + "   " + g.koname );
