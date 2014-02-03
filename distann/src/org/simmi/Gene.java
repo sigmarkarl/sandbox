@@ -103,11 +103,13 @@ public class Gene {
 	}
 
 	String name;
+	String symbol;
 	String tag;
 	//String origin;
 	String id;
 	String refid;
 	String idstr;
+	Cog cog;
 	Set<String> allids;
 	String genid;
 	String uniid;
