@@ -103,6 +103,7 @@ public class Gene {
 	}
 
 	String name;
+	String symbol;
 	String tag;
 	//String origin;
 	String id;
