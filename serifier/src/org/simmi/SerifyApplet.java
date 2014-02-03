@@ -47,6 +47,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -390,8 +391,8 @@ public class SerifyApplet extends JApplet {
 	
 	public static void tagsplit( Map<String,String> tagmap, Sequences seqs, File dir, SerifyApplet applet ) {
 		try {
-			File inf = new File( new URI(seqs.getPath() ) );
-			String name = inf.getName();
+			//File inf = new File( new URI(seqs.getPath() ) );
+			String name = seqs.getPath().getName(0).toString(); //inf.getName();
 			int ind = name.lastIndexOf('.');
 			
 			String sff = name;
@@ -401,15 +402,15 @@ public class SerifyApplet extends JApplet {
 				sf2 = name.substring(ind+1,name.length());
 			}
 			
-			Map<String,String>		urlmap = new HashMap<String,String>();
+			Map<String,Path>		urlmap = new HashMap<String,Path>();
 			Map<String,FileWriter> fwmap = new HashMap<String,FileWriter>();
 			StringBuilder			include = new StringBuilder();
 			int i = 0;
 			String			current = null;
 			//FileWriter 		fw = null;
 			//File			of = null;
-			FileReader 		fr = new FileReader( inf );
-			BufferedReader 	br = new BufferedReader( fr );
+			//FileReader 		fr = new FileReader( inf );
+			BufferedReader 	br = Files.newBufferedReader( seqs.getPath() );
 			String line = br.readLine();
 			while( line != null ) {
 				if( line.startsWith(">") ) {
@@ -425,7 +426,7 @@ public class SerifyApplet extends JApplet {
 									File of = new File( dir, tagname+".fna" );
 									fw = new FileWriter( of );
 									fwmap.put( key, fw );
-									urlmap.put( key, of.toURI().toString() );
+									urlmap.put( key, of.toPath() );
 								}
 								fw.write( current + "\n" + all );
 								break;
@@ -452,7 +453,7 @@ public class SerifyApplet extends JApplet {
 						File of = new File( dir, tagname+".fna" );
 						fw = new FileWriter( of );
 						fwmap.put( key, fw );
-						urlmap.put( key, of.toURI().toString() );
+						urlmap.put( key, of.toPath() );
 					}
 					fw.write( current + "\n" + all );
 					break;
@@ -1506,7 +1507,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void totalTrim( File dir, Object fset ) throws URISyntaxException, MalformedURLException, IOException {
-		String path = null;
+		Path path = null;
 		String type = null;
 		String trimname = null;
 		
@@ -1516,16 +1517,14 @@ public class SerifyApplet extends JApplet {
 		for( int r : rr ) {
 			int rrr = table.convertRowIndexToModel( r );
 			final Sequences seqs = getSequences( rrr );
-			URI uri = new URI( seqs.getPath() );
-			InputStream is = uri.toURL().openStream();
+			InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 			
 			if( seqs.getPath().endsWith(".gz") ) {
 				is = new GZIPInputStream( is );
 			}
 			
 			if( bw == null ) {
-				URL url = uri.toURL();
-				String urlstr = url.toString();
+				String urlstr = path.toString();
 				String[] erm = urlstr.split("\\/");
 				String name = erm[ erm.length-1 ];
 				int ind = name.lastIndexOf('.');
@@ -1539,7 +1538,7 @@ public class SerifyApplet extends JApplet {
 				
 				trimname = sff+"_trimmed";
 				File f = new File( dir, trimname+"."+sf2 );
-				path = f.toURI().toString();
+				path = f.toPath();
 				type = seqs.getType();
 				FileWriter fw = new FileWriter(f);
 				
@@ -1631,7 +1630,7 @@ public class SerifyApplet extends JApplet {
 							serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
 							fw.close();
 							
-							SerifyApplet.this.addSequences( f.getName(), f.toURI().toURL().toString(), null );
+							SerifyApplet.this.addSequences( f.getName(), f.toPath(), null );
 						} catch (IOException | URISyntaxException e1) {
 							e1.printStackTrace();
 						}
@@ -1794,7 +1793,7 @@ public class SerifyApplet extends JApplet {
 					}
 					
 					final String basesave =  cd.getAbsolutePath();
-					final String uripath = cd.toURI().toString();
+					final Path uripath = cd.toPath();
 					//final String replace = subsplit.length > 1 && subsplit[1].length() > 0 ? subsplit[1] : null;
 					
 					final JDialog		dialog = new JDialog();
@@ -1871,8 +1870,8 @@ public class SerifyApplet extends JApplet {
 										}
 										
 										try {
-											Map<String,String>	urimap = new HashMap<String,String>();
-											urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
+											Map<String,Path>	urimap = new HashMap<String,Path>();
+											urimap.put( fwname.substring(0, fwname.length()-4), thefile.toPath() );
 											addSequencesPath( fwname, urimap, uripath, replace );
 										} catch (URISyntaxException e) {
 											e.printStackTrace();
@@ -1932,9 +1931,9 @@ public class SerifyApplet extends JApplet {
 														}
 														
 														try {
-															Map<String,String>	urimap = new HashMap<String,String>();
-															urimap.put( fname, thefile.toURI().toString() );
-															addSequencesPath( fname, urimap, thefile.toURI().toString(), replace );
+															Map<String,Path>	urimap = new HashMap<String,Path>();
+															urimap.put( fname, thefile.toPath() );
+															addSequencesPath( fname, urimap, thefile.toPath(), replace );
 														} catch (URISyntaxException e) {
 															e.printStackTrace();
 														}
@@ -2032,9 +2031,9 @@ public class SerifyApplet extends JApplet {
 														}
 														
 														try {
-															Map<String,String>	urimap = new HashMap<String,String>();
-															urimap.put( fname, thefile.toURI().toString() );
-															addSequencesPath( fname, urimap, thefile.toURI().toString(), replace );
+															Map<String,Path>	urimap = new HashMap<String,Path>();
+															urimap.put( fname, thefile.toPath() );
+															addSequencesPath( fname, urimap, thefile.toPath(), replace );
 														} catch (URISyntaxException e) {
 															e.printStackTrace();
 														}
@@ -2118,9 +2117,9 @@ public class SerifyApplet extends JApplet {
 														}*/
 														
 														try {
-															Map<String,String>	urimap = new HashMap<String,String>();
-															urimap.put( fname, thefile.toURI().toString() );
-															addSequencesPath( fname, urimap, thefile.toURI().toString(), replace );
+															Map<String,Path>	urimap = new HashMap<String,Path>();
+															urimap.put( fname, thefile.toPath() );
+															addSequencesPath( fname, urimap, thefile.toPath(), replace );
 														} catch (URISyntaxException e) {
 															e.printStackTrace();
 														}
@@ -2162,7 +2161,7 @@ public class SerifyApplet extends JApplet {
 					if( path != null ) {
 						try {
 							for( File f : filechooser.getSelectedFiles() ) {
-								addSequences( f.getName(), path+f.getName(), null );
+								addSequences( f.getName(), f.toPath(), null );
 							}
 						} catch (URISyntaxException e1) {
 							e1.printStackTrace();
@@ -2286,7 +2285,7 @@ public class SerifyApplet extends JApplet {
 									}
 									fw.close();
 									
-									addSequences( f.getName(), f.toURI().toString(), null );
+									addSequences( f.getName(), f.toPath(), null );
 								} catch (IOException | URISyntaxException e1) {
 									e1.printStackTrace();
 								}
@@ -2507,7 +2506,7 @@ public class SerifyApplet extends JApplet {
 					int i = table.getSelectedRow();
 					Sequences seqs = serifier.getSequencesList().get(i);
 					
-					String filepath = Paths.get( URI.create(seqs.getPath()) ).toAbsolutePath().toString();
+					String filepath = seqs.getPath().toAbsolutePath().toString();
 					runBlastInApplet( tf.getText(), filepath, seqs.getType() ); //db.getText().contains(".p") ? "prot" : "nucl" );
 				}
 			}
@@ -2692,8 +2691,7 @@ public class SerifyApplet extends JApplet {
 						final Sequences seqs = getSequences( rr );
 						
 						try {
-							URI uri = new URI( seqs.getPath() );
-							InputStream is = uri.toURL().openStream();
+							InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 							
 							String fname = seqs.getName();
 							String endn = ".fasta";
@@ -2707,9 +2705,7 @@ public class SerifyApplet extends JApplet {
 							OutputStream os = new FileOutputStream( file );
 							
 							int nseq = flankingFasta(is, os);
-							addSequences(file.getName(), seqs.getType(), file.toURI().toURL().toString(), nseq);
-						} catch (URISyntaxException e1) {
-							e1.printStackTrace();
+							addSequences(file.getName(), seqs.getType(), file.toPath(), nseq);
 						} catch (MalformedURLException e1) {
 							e1.printStackTrace();
 						} catch (IOException e1) {
@@ -2739,12 +2735,9 @@ public class SerifyApplet extends JApplet {
 						if( rear >= 0 ) {
 							final Sequences s = getSequences( rear );
 							final String seqtype = s.getType();
-							String path = s.getPath();
 							
-							try {
-								URL url = new URL( path );
-								
-								String file = url.getFile();
+							try {								
+								String file = s.getPath().getFileName().toString();
 								String[] split = file.split("/");
 								String fname = split[ split.length-1 ];
 								split = fname.split("\\.");
@@ -2753,7 +2746,7 @@ public class SerifyApplet extends JApplet {
 								final File infile = new File( f, "tmp_"+fname );
 								
 								FileOutputStream fos = new FileOutputStream( infile );
-								InputStream is = url.openStream();
+								InputStream is = Files.newInputStream( s.getPath(), StandardOpenOption.READ );
 								
 								byte[] bb = new byte[100000];
 								r = is.read(bb);
@@ -2767,7 +2760,7 @@ public class SerifyApplet extends JApplet {
 								String inputPathFixed = nrun.fixPath( infile.getAbsolutePath() ).trim();
 								final String newname = s.getName()+"_aligned";
 								String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
-								final String newurl = new File( newpath ).toURI().toString();
+								final Path newurl = new File( newpath ).toPath();
 								final Object[] cont = new Object[3];
 								Runnable run = new Runnable() {
 									public void run() {										
@@ -3268,15 +3261,16 @@ public class SerifyApplet extends JApplet {
 						
 						String val = JOptionPane.showInputDialog("Select character", "_");
 						try {
-							URI uri = new URI( seqs.getPath() );
-							InputStream is = uri.toURL().openStream();
+							//URI uri = new URI( seqs.getPath() );
+							//seqs.getPath().toUri();
+							InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 							
 							if( seqs.getPath().endsWith(".gz") ) {
 								is = new GZIPInputStream( is );
 							}
 							
-							URL url = uri.toURL();
-							String urlstr = url.toString();
+							//URL url = uri.toURL();
+							String urlstr = seqs.getPath().toUri().toString();
 							String[] erm = urlstr.split("\\/");
 							String name = erm[ erm.length-1 ];
 							int ind = name.lastIndexOf('.');
@@ -3293,9 +3287,7 @@ public class SerifyApplet extends JApplet {
 							FileWriter fw = new FileWriter(f);
 							
 							cutFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), val.charAt(0) );
-							SerifyApplet.this.addSequences( trimname, seqs.getType(), f.toURI().toString(), seqs.getNSeq() );
-						} catch (URISyntaxException e1) {
-							e1.printStackTrace();
+							SerifyApplet.this.addSequences( trimname, seqs.getType(), f.toPath(), seqs.getNSeq() );
 						} catch (MalformedURLException e1) {
 							e1.printStackTrace();
 						} catch (IOException e1) {
@@ -3694,7 +3686,7 @@ public class SerifyApplet extends JApplet {
 					if( obj != null && obj instanceof List ) {
 						List<File> lf = (List<File>)obj;
 						for( File f : lf ) {
-							addSequences( f.getName(), f.toURI().toString(), null );
+							addSequences( f.getName(), f.toPath(), null );
 						}
 					} else if( obj instanceof Image ) {
 						
@@ -3712,10 +3704,10 @@ public class SerifyApplet extends JApplet {
 							
 							System.err.println( filelistStr );
 							for( String fileName : fileStr ) {
-								String val = fileName.trim();
+								Path val = Paths.get( fileName );
 								//File f = new File( new URI( fileName ) );
-								String[] split = val.split("/");
-								addSequences( split[ split.length-1 ], val, null );
+								//String[] split = val.split("/");
+								addSequences( val.getFileName().toString()/*split[ split.length-1 ]*/, val, null );
 							}
 						}
 					} else if( obj instanceof Reader ) {
@@ -3735,9 +3727,9 @@ public class SerifyApplet extends JApplet {
 						String[] fileStr = filelistStr.split("\n");
 						
 						for( String fileName : fileStr ) {
-							String val = fileName.trim();
-							String[] split = val.split("/");
-							addSequences( split[ split.length-1 ], val.trim(), null );
+							Path val = Paths.get( fileName.trim() );
+							//String[] split = val.split("/");
+							addSequences( val.getFileName().toString(), val, null );
 						}
 					} else if( obj instanceof InputStream ) {
 						System.err.println("InputStream");
@@ -3756,9 +3748,9 @@ public class SerifyApplet extends JApplet {
 						String[] fileStr = filelistStr.split("\n");
 						
 						for( String fileName : fileStr ) {
-							String val = fileName.trim();
-							String[] split = val.split("/");
-							addSequences( split[ split.length-1 ], val, null );
+							Path val = Paths.get( fileName.trim() );
+							//String[] split = val.split("/");
+							addSequences( val.getFileName().toString(), val, null );
 						}
 					}
 				} catch (IOException e) {
@@ -3782,7 +3774,7 @@ public class SerifyApplet extends JApplet {
 		super.update( g );
 	}
 	
-	public void updateSequences( final String user, final String name, final String type, final String path, final int nseq, final String key ) {
+	public void updateSequences( final String user, final String name, final String type, final Path path, final int nseq, final String key ) {
 		Sequences seqs = new Sequences( user, name, type, path, nseq );
 		seqs.setKey( key );
 		serifier.addSequences( seqs );
@@ -3798,8 +3790,7 @@ public class SerifyApplet extends JApplet {
 					public void run() {
 						boolean succ = true;
 						try {
-							URL url = new URL( seqs.getPath() );
-							InputStream is = url.openStream();
+							InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 							if( is == null ) succ = false;
 							else is.close();
 						} catch (MalformedURLException e) {
@@ -3839,7 +3830,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	private void addSequences( String user, String name, String type, String path, int nseq ) {
+	private void addSequences( String user, String name, String type, Path path, int nseq ) {
 		boolean unsucc = false;
 		try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
@@ -3853,13 +3844,13 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void addSequences( String name, Reader rd, String path, String replace ) throws URISyntaxException, IOException {
+	public void addSequences( String name, Reader rd, Path path, String replace ) throws URISyntaxException, IOException {
 		Map<String,Reader> rds = new HashMap<String,Reader>();
 		rds.put( name, rd );
 		addSequences(name, rds, path, replace);
 	}
 	
-	public void addSequences( String name, Map<String,Reader> rds, String path, String replace ) throws URISyntaxException, IOException {
+	public void addSequences( String name, Map<String,Reader> rds, Path path, String replace ) throws URISyntaxException, IOException {
 		String type = "nucl";
 		int nseq = 0;
 		
@@ -3907,7 +3898,7 @@ public class SerifyApplet extends JApplet {
 								for( FileWriter tfw : lfw ) tfw.close();
 								lfw.clear();
 								
-								addSequences( curname, f.toURI().toString(), replace );
+								addSequences( curname, f.toPath(), replace );
 								
 								//int val = 1;
 								
@@ -3945,7 +3936,7 @@ public class SerifyApplet extends JApplet {
 						for( FileWriter tfw : lfw ) tfw.close();
 						lfw.clear();
 						
-						addSequences( curname, f.toURI().toString(), replace );
+						addSequences( curname, f.toPath(), replace );
 					}
 				} else if( line.startsWith(">") ) {
 					if( path == null ) {
@@ -3953,7 +3944,7 @@ public class SerifyApplet extends JApplet {
 						filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 						if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
 							File f = filechooser.getSelectedFile();
-							path = f.toURI().toString();
+							path = f.toPath();
 						}
 					}
 					
@@ -3990,23 +3981,23 @@ public class SerifyApplet extends JApplet {
 		}
 		
 		if( gbks.size() > 0 ) {
-			Map<String,URI>	map = new HashMap<String,URI>();
-			URI firsturi = new URI(path+".fna");
-			FileWriter out = new FileWriter( new File( firsturi ) );
+			Map<String,Path>	map = new HashMap<String,Path>();
+			Path firsturi = Paths.get( new URI(path+".fna") );
+			BufferedWriter out = Files.newBufferedWriter( firsturi, StandardOpenOption.WRITE );
 			
-			URI uri = new URI(path+".aa");
+			Path uri = Paths.get( new URI(path+".aa") );
 			//FileWriter out = new FileWriter( new File( uri ) );
 			map.put( "CDS", uri );
 			
-			uri = new URI(path+".trna");
+			uri = Paths.get( new URI(path+".trna") );
 			//out = new FileWriter( new File( uri ) );
 			map.put( "tRNA", uri );
 			
-			uri = new URI(path+".rrna");
+			uri = Paths.get( new URI(path+".rrna") );
 			//out = new FileWriter( new File( uri ) );
 			map.put( "rRNA", uri );
 			
-			uri = new URI(path+".mrna");
+			uri = Paths.get( new URI(path+".mrna") );
 			//out = new FileWriter( new File( uri ) );
 			map.put( "mRNA", uri );
 			
@@ -4016,21 +4007,20 @@ public class SerifyApplet extends JApplet {
 			GBK2AminoFasta.handleText( name, gbks, map, out, path, replace );
 			
 			//+firsturi.toString().replace(name, "")
-			addSequences( name+".fna", firsturi.toString(), null );
+			addSequences( name+".fna", firsturi, null );
 			for( String tg : map.keySet() ) {
 				uri = map.get( tg );
-				addSequences( name+"."+tg, uri.toString(), null );
+				addSequences( name+"."+tg, uri, null );
 			}
 		}
 	}
 	
-	public void addSequencesPath( String name, Map<String,String> urimap, String path, String replace ) throws URISyntaxException, IOException {
+	public void addSequencesPath( String name, Map<String,Path> urimap, Path path, String replace ) throws URISyntaxException, IOException {
 		try {
 			Map<String,Reader>	isrmap = new HashMap<String,Reader>();
 			for( String tag : urimap.keySet() ) {
-				String uripath = urimap.get( tag );
-				URL url = new URL( uripath );
-				InputStream is = url.openStream();
+				Path uripath = urimap.get( tag );
+				InputStream is = Files.newInputStream( uripath, StandardOpenOption.READ );
 				
 				if( is != null ) {
 					if( uripath.endsWith(".gz") ) is = new GZIPInputStream(is);
@@ -4053,23 +4043,15 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void addSequences( String name, String path, String replace ) throws URISyntaxException, IOException {
-		URL url = new URL(path);
+	public void addSequences( String name, Path path, String replace ) throws URISyntaxException, IOException {
+		//URI uri = path.toUri();
 
-		boolean succ = true;
+		//boolean succ = true;
 		InputStream is = null;
 		try {
-			is = url.openStream();
+			is = Files.newInputStream( path, StandardOpenOption.READ );
 		} catch( Exception e ) {
-			succ = false;
-			e.printStackTrace();
-		}
-		
-		try {
-			if( !succ ) {
-				is = new FileInputStream( url.getFile() );
-			}
-		} catch( Exception e ) {
+			//succ = false;
 			e.printStackTrace();
 		}
 		
@@ -4085,7 +4067,7 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void addSequences( String name, String type, String path, int nseq ) {
+	public void addSequences( String name, String type, Path path, int nseq ) {
 		addSequences( getUser(), name, type, path, nseq );
 	}
 	
@@ -4673,7 +4655,7 @@ public class SerifyApplet extends JApplet {
 								System.err.println("done " + fname);
 								
 								try {
-									addSequences( fwname, basesave+fwname, replace );
+									addSequences( fwname, Paths.get( basesave, fwname ), replace );
 								} catch (URISyntaxException e) {
 									e.printStackTrace();
 								}
@@ -4756,7 +4738,7 @@ public class SerifyApplet extends JApplet {
 									fos.close();
 									
 									try {
-										addSequences( fname, basesave+fname, replace );
+										addSequences( fname, Paths.get(basesave,fname), replace );
 									} catch (URISyntaxException e) {
 										e.printStackTrace();
 									}
@@ -4841,7 +4823,7 @@ public class SerifyApplet extends JApplet {
 								System.err.println("done " + fname);
 								
 								try {
-									addSequences( fwname, basesave+fwname, replace );
+									addSequences( fwname, Paths.get(basesave,fwname), replace );
 								} catch (URISyntaxException e) {
 									e.printStackTrace();
 								}
