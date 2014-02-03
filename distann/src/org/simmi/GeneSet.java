@@ -11632,7 +11632,7 @@ public class GeneSet extends JApplet {
 					Path genespath = zipfilesystem.getPath("/allthermus_aligned.aa");
 					
 					sa.addSequences("contigs.txt", contigspath, null);
-					sa.addSequences("genes.txt", contigspath, null);
+					sa.addSequences("genes.txt", genespath, null);
 				} catch (IOException | URISyntaxException e1) {
 					try {
 						zipfilesystem.close();
