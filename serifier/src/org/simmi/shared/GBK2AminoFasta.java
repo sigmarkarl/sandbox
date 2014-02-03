@@ -10,6 +10,9 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +41,7 @@ public class GBK2AminoFasta {
 		boolean 		comp;
 	};
 	
-	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, Writer allout, String path, String replace ) throws IOException {
+	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,Path> annoset, Writer allout, Path path, String replace ) throws IOException {
 		List<Anno>	annolist = new ArrayList<Anno>();
 		for( String tag : filetextmap.keySet() ) {
 			StringBuilder filetext = filetextmap.get( tag );
@@ -281,14 +284,14 @@ public class GBK2AminoFasta {
 		}
 		
 		Map<String,String> nameMap = new HashMap<String,String>();
-		Map<URI,Writer>	urifile = new HashMap<URI,Writer>();
+		Map<Path,Writer>	urifile = new HashMap<Path,Writer>();
 		for( Anno ao : annolist ) {
 			StringBuilder	strbuf = ao.contig;
-			URI uri = annoset.get( ao.getType() );
+			Path uri = annoset.get( ao.getType() );
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				Writer fw = new FileWriter( new File( uri ) );
+				Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.WRITE);
 				urifile.put( uri, fw );
 				
 				out = fw;
@@ -378,7 +381,7 @@ public class GBK2AminoFasta {
 			e.printStackTrace();
 		}
 		
-		for( URI uri : urifile.keySet() ) {
+		for( Path uri : urifile.keySet() ) {
 			Writer w = urifile.get( uri );
 			if( w != null ) w.close();
 		}
