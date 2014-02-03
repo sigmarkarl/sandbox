@@ -223,10 +223,10 @@ public class SerifyApplet extends JApplet {
 							//System.err.println( obj );
 							ret = f.get( obj );
 							
-							if( ret != null && ret.getClass() != f.getType() ) {
-								//System.err.println( ret.getClass() + "  " + f.getType() );
+							/*if( ret != null && !ret.getClass().isInstance(f.getType()) ) {
+								System.err.println( ret.getClass() + "  " + f.getType() );
 								ret = null;
-							}
+							}*/
 						}
 					}
 				} catch (IllegalArgumentException e) {
@@ -2179,12 +2179,12 @@ public class SerifyApplet extends JApplet {
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
 					final File f = filechooser.getSelectedFile();
 					try {
-						List<Reader>	lrd = new ArrayList<Reader>();
+						List<BufferedReader>	lrd = new ArrayList<BufferedReader>();
 						int[] rr = table.getSelectedRows();
 						for( int r : rr ) {
-							String path = (String)table.getValueAt( r, 3 );
-							URL url = new URL( path );
-							lrd.add( new InputStreamReader( url.openStream() ) );
+							Path path = (Path)table.getValueAt( r, 3 );
+							//URL url = new URL( path );
+							lrd.add( Files.newBufferedReader( path, Charset.defaultCharset() ) );
 						}
 						final Map<String,StringBuilder>	seqmap = serifier.concat( lrd );
 						
