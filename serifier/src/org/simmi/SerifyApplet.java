@@ -1790,6 +1790,7 @@ public class SerifyApplet extends JApplet {
 					for( String strsearch : split ) {
 						String[] subsplit = strsearch.split("\t");
 						if( subsplit.length > 1 ) searchmap.put( subsplit[0], subsplit[1] );
+						else searchmap.put( strsearch, null );
 					}
 					
 					final String basesave =  cd.getAbsolutePath();
