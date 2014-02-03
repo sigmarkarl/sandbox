@@ -30,6 +30,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10951,7 +10953,7 @@ public class GeneSet extends JApplet {
 					fw.write( fastaStr );
 					fw.close();*/
 					
-					currentSerify.addSequences("uh", new StringReader( fastaStr ), "/", null);
+					currentSerify.addSequences("uh", new StringReader( fastaStr ), Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
 				}
@@ -11617,6 +11619,81 @@ public class GeneSet extends JApplet {
 				SerifyApplet	sa = new SerifyApplet();
 				sa.init( frame );
 				//frame.add(topcomp)
+				
+				try {
+					Map<String,String> env = new HashMap<String,String>();
+					env.put("create", "true");
+					Path path = zipfile.toPath();
+					String uristr = "jar:" + path.toUri();
+					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					
+					Path contigspath = zipfilesystem.getPath("/allthermus.fna");
+					Path genespath = zipfilesystem.getPath("/allthermus_aligned.aa");
+					
+					sa.addSequences("contigs.txt", contigspath, null);
+					sa.addSequences("genes.txt", contigspath, null);
+				} catch (IOException | URISyntaxException e1) {
+					try {
+						zipfilesystem.close();
+					} catch (IOException e2) {
+						e2.printStackTrace();
+					}
+					e1.printStackTrace();
+				}
+				
+				//BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+				
+				//InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+				//uni2symbol(new InputStreamReader(is), bw, unimap);
+				
+				//bw.close();
+				//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+				
+				frame.addWindowListener( new WindowListener() {
+					
+					@Override
+					public void windowOpened(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowIconified(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowDeiconified(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowDeactivated(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowClosing(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public void windowClosed(WindowEvent e) {
+						try {
+							zipfilesystem.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+					
+					@Override
+					public void windowActivated(WindowEvent e) {}
+				});
 				
 				frame.setVisible( true );
 			}
@@ -13118,7 +13195,7 @@ public class GeneSet extends JApplet {
 				}
 				
 				try {
-					currentSerify.addSequences("uh", new StringReader( sb.toString() ), "/", null);
+					currentSerify.addSequences("uh", new StringReader( sb.toString() ), Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
 				}
@@ -14050,7 +14127,7 @@ public class GeneSet extends JApplet {
 				}
 				
 				try {
-					currentSerify.addSequences("uh", new StringReader( sb.toString() ), "/", null);
+					currentSerify.addSequences("uh", new StringReader( sb.toString() ), Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
 				}
