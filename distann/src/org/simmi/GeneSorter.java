@@ -78,7 +78,15 @@ public class GeneSorter {
 		//return ltv;
 	}
 
-	public void mynd(final List<Gene> genes, final JTable sorting, String species, final Map<String,Contig> contigmap) throws IOException {
+	final Color gr = Color.lightGray;
+	final Color dg = Color.gray;
+	final Color rd = Color.red;
+	final Color dr = new Color(196,0,0);
+	final Color bl = Color.blue;
+	final Color db = new Color(0,0,196);
+	final Color mg = Color.magenta;
+	final Color dm = new Color(196,0,196);
+	public void mynd(GeneSet geneset, final List<Gene> genes, final JTable sorting, String species, final Map<String,Contig> contigmap) throws IOException {
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -97,10 +105,6 @@ public class GeneSorter {
 			final JTable rowheader = new JTable();
 				
 			final JComponent c = new JComponent() {
-				Color gr = Color.green;
-				Color dg = Color.green.darker();
-				Color rd = Color.red;
-				Color dr = Color.red.darker();
 				Color altcol = Color.black;
 				// Color dg = Color.green.darker();
 
@@ -120,10 +124,28 @@ public class GeneSorter {
 								else
 									g.setColor(dr);
 							} else {
-								if (i % 2 == 0)
+								boolean phage = gene.isPhage();
+								boolean plasmid = gene.tegeval.getContshort().isPlasmid();
+								
+								GeneGroup gg = gene.getGeneGroup();
+								Teginfo ti = gg.species.get( gene.getSpecies() );
+								if( phage && plasmid ) {
+									if( ti.tset.size() > 2 ) g.setColor(dm);
+									else g.setColor(mg);
+								} else if( phage ) {
+									if( ti.tset.size() > 2 ) g.setColor(bl);
+									else g.setColor(db);
+								} else if( plasmid ) {
+									if( ti.tset.size() > 2 ) g.setColor(dr);
+									else g.setColor(rd);
+								} else {
+									if( ti.tset.size() > 2 ) g.setColor(dg);
+									else g.setColor(gr);
+								}
+								/*if (i % 2 == 0)
 									g.setColor(gr);
 								else
-									g.setColor(dg);
+									g.setColor(dg);*/
 							}
 						} else if( gcColorScheme.isSelected() ) {
 							if (sorting.isRowSelected(i)) {
@@ -442,14 +464,9 @@ public class GeneSorter {
 			JOptionPane.showMessageDialog( null, check );
 			final boolean allpos = check.isSelected();
 			
-			final int hey = geneGroups.size(); // ltv.get(ltv.size()-1).stop/1000;
+			final int hey = sorting.getModel() == geneset.groupModel ? geneGroups.size() : genelist.size(); // ltv.get(ltv.size()-1).stop/1000;
 			final JTable rowheader = new JTable();
 			final JComponent c = new JComponent() {
-				Color gr = Color.green;
-				Color dg = Color.green.darker();
-				Color rd = Color.red;
-				Color dr = Color.red.darker();
-
 				// Color dg = Color.green.darker();
 
 				public void paintComponent(Graphics g) {
@@ -504,10 +521,47 @@ public class GeneSorter {
 									else
 										g.setColor(dr);
 								} else {
-									if (i % 2 == 0)
+									boolean phage;
+									boolean plasmid;
+									if( tgene != null ) {
+										phage = tgene.isPhage();
+										plasmid = tgene.tegeval.getContshort().isPlasmid();
+									} else {
+										phage = genegroup.isInAnyPhage();
+										plasmid = genegroup.isOnAnyPlasmid();
+									}
+									
+									if( tgene != null ) {
+										GeneGroup gg = tgene.getGeneGroup();
+										Teginfo ti = gg.species.get( tgene.getSpecies() );
+										if( phage && plasmid ) {
+											if( ti.tset.size() > 2 ) g.setColor(dm);
+											else g.setColor(mg);
+										} else if( phage ) {
+											if( ti.tset.size() > 2 ) g.setColor(bl);
+											else g.setColor(db);
+										} else if( plasmid ) {
+											if( ti.tset.size() > 2 ) g.setColor(dr);
+											else g.setColor(rd);
+										} else {
+											if( ti.tset.size() > 2 ) g.setColor(dg);
+											else g.setColor(gr);
+										}
+									} else {
+										if( phage && plasmid ) {
+											g.setColor(mg);
+										} else if( phage ) {
+											g.setColor(bl);
+										} else if( plasmid ) {
+											g.setColor(rd);
+										} else {
+											g.setColor(gr);
+										}
+									}
+									/*if (i % 2 == 0)
 										g.setColor(gr);
 									else
-										g.setColor(dg);
+										g.setColor(dg);*/
 								}
 							} else if( gcColorScheme.isSelected() ) {
 								if (sorting.isRowSelected(i)) {
