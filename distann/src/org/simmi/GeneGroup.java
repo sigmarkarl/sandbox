@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.simmi.GeneSet.Cog;
-
 public class GeneGroup {
 	Set<Gene>           	genes = new HashSet<Gene>();
 	Map<String, Teginfo>  	species = new HashMap<String, Teginfo>();
@@ -149,6 +147,22 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public boolean isOnAnyPlasmid() {
+		for( Gene g : genes ) {
+			if( g.tegeval.getContshort().isPlasmid() ) return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean isInAnyPhage() {
+		for( Gene g : genes ) {
+			if( g.isPhage() ) return true;
+		}
+		
+		return false;
+	}
+	
 	public String getCommonNamespace() {
 		String ret = "";
 		Set<String>	included = new HashSet<String>();
@@ -203,6 +217,9 @@ public class GeneGroup {
 	
 	public Cog getCommonCog( Map<String,Cog> cogmap ) {
 		for( Gene g : genes ) {
+			if( g.cog != null ) return g.cog;
+		}
+		for( Gene g : genes ) {
 			if( cogmap.containsKey( g.refid ) ) return cogmap.get( g.refid );
 		}
 		return null;
@@ -230,7 +247,40 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public String getCommonUnId() {
+		String ret = null;
+		for( Gene g : genes ) {
+			if( ret == null || (g.uniid != null && g.uniid.length() > 0) ) ret = g.uniid;
+		}
+		return ret;
+	}
+	
 	public String getCommonSymbol() {
+		Set<String> s = new HashSet<String>();
+		for( Gene g : genes ) {
+			if( g.symbol != null ) s.add( g.symbol );
+		}
+		if( s.isEmpty() ) return null;
+		else {
+			String remstr = "";
+			while( remstr != null ) {
+				remstr = null;
+				if( s.size() > 1 ) {
+					for( String str : s ) {
+						if( str.length() >= 7 ) {
+							remstr = str;
+							break;
+						}
+					}
+					s.remove( remstr );
+				}
+			}
+			String ret = s.toString();
+			return ret.substring(1, ret.length()-1 );
+		}
+	}
+	
+	public String getCommonKSymbol() {
 		Set<String> s = new HashSet<String>();
 		for( Gene g : genes ) {
 			//if( g.koname != null && g.koname.length() > 0 && g.koname.length() < 7 ) {
