@@ -1645,6 +1645,15 @@ public class SerifyApplet extends JApplet {
 		frame.setVisible(true);
 	}
 	
+	/*
+	ACDK	Clostridium_sp-7-2-43FAA
+	AWST	Clostridium_sp-KLE-1755
+	AVKD	Clostridium_difficile-DA00256
+	ACIO	Clostridium_hathewayi-DSM-13479
+	
+	-evalue 0.00001 -num_alignments 1 -num_descriptions 1
+	*/
+	
 	public void init( final Container c ) {
 		nrun.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -1789,7 +1798,9 @@ public class SerifyApplet extends JApplet {
 					String[] split = searchstr.split("\n");
 					for( String strsearch : split ) {
 						String[] subsplit = strsearch.split("\t");
-						if( subsplit.length > 1 ) searchmap.put( subsplit[0], subsplit[1] );
+						if( subsplit.length > 1 ) {
+							searchmap.put( subsplit[0], subsplit[1] );
+						}
 					}
 					
 					final String basesave =  cd.getAbsolutePath();
