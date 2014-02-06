@@ -8536,7 +8536,10 @@ public class GeneSet extends JApplet {
 				fw.write("<html><head></head><body><table border=1>");
 				fw.write("<tr><td>Species</td>");
 				for( String spec : selspecs) {
-					fw.write( "<td colspan=2>"+spec+"</td>" );
+					int i = spec.indexOf('_');
+					if( i == -1 ) i = spec.length();
+					String specstr = spec.substring(0, i);
+					fw.write( "<td colspan=2>"+specstr+"</td>" );
 				}
 				fw.write("</tr><tr><td></td>");
 				for( String spec : selspecs) {
@@ -9107,10 +9110,10 @@ public class GeneSet extends JApplet {
 					}
 				} else if( Desktop.isDesktopSupported() ) {
 					try {					
-						FileWriter fww = new FileWriter( "c:/genstat.html" );
+						FileWriter fww = new FileWriter( "/Users/sigmar/genstat.html" );
 						fww.write( fw.toString() );
 						fww.close();
-						Desktop.getDesktop().browse( new URI("file://c:/genstat.html") );
+						Desktop.getDesktop().browse( new URI("file:///Users/sigmar/genstat.html") );
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					} catch (URISyntaxException e1) {
