@@ -440,8 +440,11 @@ public class GeneSet extends JApplet {
 				
 				int i = lname.lastIndexOf('[');
 				if( i == -1 ) {
-					i = lname.indexOf("contig");
-					id = lname;
+					//i = lname.indexOf("contig");
+					//if( i == -1 ) i = lname.indexOf("scaffold");
+					
+					int u = lname.indexOf(' ');
+					id = lname.substring(0,u);
 				} else {
 					int u = lname.indexOf(' ');
 					int k = lname.indexOf(']', i+1);
@@ -506,6 +509,7 @@ public class GeneSet extends JApplet {
 				int ce = val.indexOf(',', ci+1);
 				String cogid = val.substring(ci+1, ce);
 				
+				cogidmap.put(cogid, cog);
 				map.put( id, new Cog( cogid, cog ) );
 			}
 			line = br.readLine();
@@ -4581,7 +4585,16 @@ public class GeneSet extends JApplet {
         return scene;
     }
 	
-	private static Scene createStackedBarChartScene( Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
+	private Scene createWebPageScene( String webp ) {
+		
+		/*if( scene == null ) {
+        	scene = new Scene( sc );
+        } else scene.setRoot( sc );*/
+		
+		return scene;
+	}
+	
+	private Scene createStackedBarChartScene( Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
         final CategoryAxis 	xAxis = new CategoryAxis();
         final NumberAxis 	yAxis = new NumberAxis();
         
@@ -4845,7 +4858,7 @@ public class GeneSet extends JApplet {
         return scene;
     }
 	
-	private static Scene createScene( String webp ) {
+	private Scene createScene( String webp ) {
         //Group  root  =  new  Group();
 		WebView	wv = new WebView();
 		WebEngine we = wv.getEngine();
@@ -4874,7 +4887,7 @@ public class GeneSet extends JApplet {
         return (scene);
     }
 	
-	private static void initAndShowGUI( final String webp ) {
+	private void initAndShowGUI( final String webp ) {
         // This method is invoked on Swing thread
         JFrame frame = new JFrame("FX");
         frame.setSize(800, 600);
@@ -4960,27 +4973,32 @@ public class GeneSet extends JApplet {
         });*/
     }
 
-    private static void initFX(JFXPanel fxPanel, String webp) {
+    private void initFX(JFXPanel fxPanel, String webp) {
         Scene scene = createScene( webp );
         fxPanel.setScene(scene);
     }
     
-    private static void initFXChart( JFXPanel fxPanel, String[] names, double[] xdata, double[] ydata ) {
+    private void initFXChart( JFXPanel fxPanel, String[] names, double[] xdata, double[] ydata ) {
         Scene scene = createScene( names, xdata, ydata );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    private static void initStackedBarChart( JFXPanel fxPanel, Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
+    private void initWebPage( JFXPanel fxPanel, String webp ) {
+        Scene scene = createScene( webp );
+        if( fxPanel != null ) fxPanel.setScene(scene);
+    }
+    
+    private void initStackedBarChart( JFXPanel fxPanel, Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
         Scene scene = createStackedBarChartScene( all, map, uniform );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    private static void initStackedBarChart( JFXPanel fxPanel, List<StackBarData> lsbd, String[] categories ) {
+    private void initStackedBarChart( JFXPanel fxPanel, List<StackBarData> lsbd, String[] categories ) {
         Scene scene = createStackedBarChartScene( lsbd, categories );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    private static void initBarChart( JFXPanel fxPanel, String[] names, int[] xdata, String xTitle, String yTitle ) {
+    private void initBarChart( JFXPanel fxPanel, String[] names, int[] xdata, String xTitle, String yTitle ) {
     	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
         //core.setName("Core: " + xdata[xdata.length-1] );
         for( int i = 0; i < xdata.length; i++ ) {
@@ -4993,7 +5011,7 @@ public class GeneSet extends JApplet {
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    private static void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata, String xTitle, String yTitle ) {
+    private void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata, String xTitle, String yTitle ) {
     	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
         //core.setName("Core: " + xdata[xdata.length-1] );
         for( int i = 0; i < xdata.length; i++ ) {
@@ -6819,8 +6837,7 @@ public class GeneSet extends JApplet {
 		return sb;
 	}
 	
-	public void cogCalc( String filename, Reader isr, Map<String,String> all, Map<String,Map<String,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
-		BufferedReader br = new BufferedReader( isr );
+	public void cogCalc( String filename, BufferedReader br, Map<String,String> all, Map<String,Map<String,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
 		String line = br.readLine();
 		String current = null;
 		while( line != null ) {
@@ -6860,13 +6877,14 @@ public class GeneSet extends JApplet {
 							
 							String name = null;//names[i];
 							if( contigs ) {
-								if( nspec.contains("hermus") ) name = nspec;
+								name = nspec;
+								/*if( nspec.contains("hermus") ) name = nspec;
 								else {
 									Matcher m = Pattern.compile("\\d").matcher(nspec); 
 									int firstDigitLocation = m.find() ? m.start() : 0;
 									if( firstDigitLocation == 0 ) name = "Thermus_" + nspec;
 									else name = "Thermus_" + nspec.substring(0,firstDigitLocation) + "_" + nspec.substring(firstDigitLocation);
-								}
+								}*/
 								
 								int k = name.indexOf("contig");
 								if( k == -1 ) k = name.indexOf("scaffold");
@@ -6877,13 +6895,16 @@ public class GeneSet extends JApplet {
 									name = name.substring(k);						
 								}
 							} else {
-								if( nspec.contains("hermus") ) name = nspec.substring( 0, nspec.lastIndexOf('_') );
+								int k = nspec.lastIndexOf('_');
+								if( k == -1 ) k = nspec.length(); 
+								name = nspec.substring( 0, k );
+								/*if( nspec.contains("hermus") ) name = nspec.substring( 0, nspec.lastIndexOf('_') );
 								else {
 									Matcher m = Pattern.compile("\\d").matcher(nspec); 
 									int firstDigitLocation = m.find() ? m.start() : 0;
 									if( firstDigitLocation == 0 ) name = "Thermus_" + nspec;
 									else name = "Thermus_" + nspec.substring(0,firstDigitLocation) + "_" + nspec.substring(firstDigitLocation);
-								}
+								}*/
 							}
 							
 							spec = name;
@@ -8515,7 +8536,10 @@ public class GeneSet extends JApplet {
 				fw.write("<html><head></head><body><table border=1>");
 				fw.write("<tr><td>Species</td>");
 				for( String spec : selspecs) {
-					fw.write( "<td colspan=2>"+spec+"</td>" );
+					int i = spec.indexOf('_');
+					if( i == -1 ) i = spec.length();
+					String specstr = spec.substring(0, i);
+					fw.write( "<td colspan=2>"+specstr+"</td>" );
 				}
 				fw.write("</tr><tr><td></td>");
 				for( String spec : selspecs) {
@@ -8805,8 +8829,11 @@ public class GeneSet extends JApplet {
 					for( Contig ct : lcont ) {
 						if( ct.tlist != null ) {
 							for( Tegeval tv : ct.tlist ) {
-								Cog cog = cogmap.get( tv.getGene().refid );
-								if( cog != null ) count++;
+								Cog cog = cogmap.get( tv.getGene().id );
+								if( cog != null ) {
+									System.err.println( cog.id + "  " + count );
+									count++;
+								}
 								/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
 									if( f.metacyc != null && f.metacyc.length() > 0 ) {
 										count++;
@@ -9083,10 +9110,10 @@ public class GeneSet extends JApplet {
 					}
 				} else if( Desktop.isDesktopSupported() ) {
 					try {					
-						FileWriter fww = new FileWriter( "c:/genstat.html" );
+						FileWriter fww = new FileWriter( "/Users/sigmar/genstat.html" );
 						fww.write( fw.toString() );
 						fww.close();
-						Desktop.getDesktop().browse( new URI("file://c:/genstat.html") );
+						Desktop.getDesktop().browse( new URI("file:///Users/sigmar/genstat.html") );
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					} catch (URISyntaxException e1) {
@@ -10704,126 +10731,158 @@ public class GeneSet extends JApplet {
 		AbstractAction cogaction = new AbstractAction("COG chart data") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				/*try {
-					ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
-					ZipEntry ze = zipm.getNextEntry();
+				try {
+					Map<String,String> env = new HashMap<String,String>();
+					//env.put("create", "true");
+					Path path = zipfile.toPath();
+					String uristr = "jar:" + path.toUri();
+					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 					
-					while( ze != null ) {
-						String zname = ze.getName();
-						if( zname.equals("cog.blastout") ) {
-							InputStreamReader isr = new InputStreamReader( zipm );
+					Path nf = zipfilesystem.getPath("/cog.blastout");
+					
+					//InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+					//uni2symbol(new InputStreamReader(is), bw, unimap);
+					
+					//bw.close();
+					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
 
-							final JCheckBox	contigs = new JCheckBox("Show contigs");
-							final JCheckBox	uniform = new JCheckBox("Uniform");
-							Set<String>	selspec = getSelspec( applet, new ArrayList( specList ), contigs, uniform );
-							final Map<String,String>					all = new TreeMap<String,String>();
-							final Map<String, Map<String,Integer>> 		map = new TreeMap<String, Map<String,Integer>>();
-							cogCalc( null, isr, all, map, selspec, contigs.isSelected() );
-							StringWriter fw = writeCog( all, map );
+					BufferedReader br = Files.newBufferedReader(nf);
+					final JCheckBox	contigs = new JCheckBox("Show contigs");
+					final JCheckBox	uniform = new JCheckBox("Uniform");
+					Set<String>	selspec = getSelspec( applet, new ArrayList( specList ), contigs, uniform );
+					final Map<String,String>					all = new TreeMap<String,String>();
+					final Map<String, Map<String,Integer>> 		map = new TreeMap<String, Map<String,Integer>>();
+					cogCalc( null, br, all, map, selspec, contigs.isSelected() );
+					StringWriter fw = writeCog( all, map );
+					
+					final StringBuilder sb = new StringBuilder();
+					InputStream is = GeneSet.class.getResourceAsStream("/cogchart.html");
+					try {
+						int c = is.read();
+						while( c != -1 ) {
+							sb.append( (char)c );
+							c = is.read();
+						}
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					final String smuck = sb.toString().replace("smuck", fw.toString());
+					
+					//String b64str = Base64.encodeBase64String( smuck.getBytes() );
+					/*JSObject window = null;
+					try {
+						window = JSObject.getWindow( GeneSet.this );
+					} catch( NoSuchMethodError | Exception exc ) {
+						exc.printStackTrace();
+					}*/
+					
+					boolean web = true;
+						
+					if( web ) {
+						if( fxframe == null ) {
+							fxframe = new JFrame("COG");
+							fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+							fxframe.setSize(800, 600);
 							
-							final StringBuilder sb = new StringBuilder();
-							InputStream is = GeneSet.class.getResourceAsStream("/cogchart.html");
-							try {
-								int c = is.read();
-								while( c != -1 ) {
-									sb.append( (char)c );
-									c = is.read();
-								}
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-							final String smuck = sb.toString().replace("smuck", fw.toString());
+							final JFXPanel	fxpanel = new JFXPanel();
+							fxframe.add( fxpanel );
 							
-							//String b64str = Base64.encodeBase64String( smuck.getBytes() );
-							JSObject window = null;
+							Platform.runLater(new Runnable() {
+				                 @Override
+				                 public void run() {
+				                     initWebPage( fxpanel, smuck );
+				                 }
+				            });
+						} else {
+							Platform.runLater(new Runnable() {
+				                 @Override
+				                 public void run() {
+				                     initWebPage( null, smuck );
+				                 }
+				            });
+						}						
+						fxframe.setVisible( true );
+						
+						/*boolean succ = true;
+						try {
+							window.setMember("smuck", smuck);
+							//window.eval("var binary = atob(b64str)");
+							//window.eval("var i = binary.length");
+							//window.eval("var view = new Uint8Array(i)");
+						    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+							window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
+							window.eval("open( URL.createObjectURL(b), '_blank' )");
+						} catch( Exception exc ) {
+							exc.printStackTrace();
+						}*
+
+						try {
+							window.setMember("smuck", smuck);
+							
+							//window.eval("var binary = atob(b64str)");
+							//window.eval("var i = binary.length");
+							//window.eval("var view = new Uint8Array(i)");
+						    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+							window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
+							window.eval("open( URL.createObjectURL(b), '_blank' )");
+						} catch( Exception exc ) {
+							exc.printStackTrace();
+						}*/
+						
+						if( Desktop.isDesktopSupported() ) {
 							try {
-								window = JSObject.getWindow( GeneSet.this );
-							} catch( NoSuchMethodError | Exception exc ) {
+								FileWriter fwr = new FileWriter("c:/smuck.html");
+								fwr.write( smuck );
+								fwr.close();
+								Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
+							} catch( Exception exc ) {
 								exc.printStackTrace();
 							}
-							
-							if( window != null ) {
-								/*boolean succ = true;
-								try {
-									window.setMember("smuck", smuck);
-									//window.eval("var binary = atob(b64str)");
-									//window.eval("var i = binary.length");
-									//window.eval("var view = new Uint8Array(i)");
-								    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-									window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-									window.eval("open( URL.createObjectURL(b), '_blank' )");
-								} catch( Exception exc ) {
-									exc.printStackTrace();
-								}*
-
-								try {
-									window.setMember("smuck", smuck);
-									
-									//window.eval("var binary = atob(b64str)");
-									//window.eval("var i = binary.length");
-									//window.eval("var view = new Uint8Array(i)");
-								    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-									window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-									window.eval("open( URL.createObjectURL(b), '_blank' )");
-								} catch( Exception exc ) {
-									exc.printStackTrace();
-								}
-							/*} else if( Desktop.isDesktopSupported() ) {
-								try {
-									FileWriter fwr = new FileWriter("c:/smuck.html");
-									fwr.write( smuck );
-									fwr.close();
-									Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
-								} catch( Exception exc ) {
-									exc.printStackTrace();
-								}*
-							} else {
-								SwingUtilities.invokeLater( new Runnable() {
-									@Override
-									public void run() {
-										if( fxframe == null ) {
-											fxframe = new JFrame("Pan-core");
-											fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-											fxframe.setSize(800, 600);
-											
-											final JFXPanel	fxpanel = new JFXPanel();
-											fxframe.add( fxpanel );
-											
-											Platform.runLater(new Runnable() {
-								                 @Override
-								                 public void run() {
-								                     initStackedBarChart( fxpanel, all, map, uniform.isSelected() );
-								                 }
-								            });
-										} else {
-											Platform.runLater(new Runnable() {
-								                 @Override
-								                 public void run() {
-								                     initStackedBarChart( null, all, map, uniform.isSelected() );
-								                 }
-								            });
-										}						
-										fxframe.setVisible( true );
-									}
-								});
-								/*JFrame f = new JFrame("GC% chart");
-								f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-								f.setSize( 800, 600 );
-								
-								JTextArea	ta = new JTextArea();
-								ta.setText( fw.toString() );
-								JScrollPane	sp = new JScrollPane(ta);
-								f.add( sp );
-								f.setVisible( true );*
-							}
-							
-							break;
 						}
-						ze = zipm.getNextEntry();
+					} else {
+						SwingUtilities.invokeLater( new Runnable() {
+							@Override
+							public void run() {
+								if( fxframe == null ) {
+									fxframe = new JFrame("COG");
+									fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+									fxframe.setSize(800, 600);
+									
+									final JFXPanel	fxpanel = new JFXPanel();
+									fxframe.add( fxpanel );
+									
+									Platform.runLater(new Runnable() {
+						                 @Override
+						                 public void run() {
+						                     initStackedBarChart( fxpanel, all, map, uniform.isSelected() );
+						                 }
+						            });
+								} else {
+									Platform.runLater(new Runnable() {
+						                 @Override
+						                 public void run() {
+						                     initStackedBarChart( null, all, map, uniform.isSelected() );
+						                 }
+						            });
+								}						
+								fxframe.setVisible( true );
+							}
+						});
+						/*JFrame f = new JFrame("GC% chart");
+						f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+						f.setSize( 800, 600 );
+						
+						JTextArea	ta = new JTextArea();
+						ta.setText( fw.toString() );
+						JScrollPane	sp = new JScrollPane(ta);
+						f.add( sp );
+						f.setVisible( true );*/
 					}
+					zipfilesystem.close();
 				} catch (IOException e1) {
 					e1.printStackTrace();
-				}*/
+				}
 			}
 		};
 		
@@ -12285,7 +12344,11 @@ public class GeneSet extends JApplet {
 					return gg.getCommonEc();
 				} else if (columnIndex == 12) {
 					Cog cog = gg.getCommonCog( cogmap );
-					return cog != null ? cog.name : null;
+					if( cog != null ) {
+						if( cog.name == null ) cog.name = cogidmap.get( cog.id );
+						return cog.name;
+					}
+					return null;
 				} else if (columnIndex == 13) {
 					Cog cog = gg.getCommonCog( cogmap );
 					return cog != null ? cog.id : null;
@@ -15512,6 +15575,7 @@ public class GeneSet extends JApplet {
 	List<String>							specList = new ArrayList<String>();
 	//byte[] 									zipf;
 	Map<String,Cog>							cogmap = new HashMap<String,Cog>();
+	Map<String,String>						cogidmap = new HashMap<String,String>();
 	Map<String,String>						unresolvedmap = new HashMap<String,String>();
 	Map<String,String>						namemap = new HashMap<String,String>();
 	Map<String,String>						cazymap = new HashMap<String,String>();
