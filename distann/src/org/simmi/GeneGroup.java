@@ -217,10 +217,10 @@ public class GeneGroup {
 	
 	public Cog getCommonCog( Map<String,Cog> cogmap ) {
 		for( Gene g : genes ) {
-			if( g.cog != null ) return g.cog;
+			if( cogmap.containsKey( g.id ) ) return cogmap.get( g.id );
 		}
 		for( Gene g : genes ) {
-			if( cogmap.containsKey( g.refid ) ) return cogmap.get( g.refid );
+			if( g.cog != null ) return g.cog;
 		}
 		return null;
 	}
