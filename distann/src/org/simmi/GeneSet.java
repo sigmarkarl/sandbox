@@ -4788,9 +4788,9 @@ public class GeneSet extends JApplet {
         return scene;
     }
 	
-	private static Scene createBarChartScene( String[] names, XYChart.Series<String,Number> data, String xTitle, String yTitle ) {
+	private static Scene createBarChartScene( String[] names, XYChart.Series<String,Number> data, String xTitle, String yTitle, double start, double stop, double step, String title ) {
         final CategoryAxis 	xAxis = new CategoryAxis();
-        final NumberAxis 	yAxis = new NumberAxis( 0.6, 0.7, 0.02 );
+        final NumberAxis 	yAxis = new NumberAxis( start, stop, step ); // 0.6, 0.7, 0.02
         //yAxis.set
         
         /*yAxis.setTickLabelFormatter( new StringConverter<Number>() {
@@ -4813,7 +4813,7 @@ public class GeneSet extends JApplet {
         final BarChart<String,Number> sc = new BarChart<String,Number>(xAxis,yAxis);
         xAxis.setLabel( xTitle );
         yAxis.setLabel( yTitle );
-        sc.setTitle("GC%");
+        sc.setTitle( title );
         
         xAxis.setStyle("-fx-tick-label-font-size: 1.4em;");
         yAxis.setStyle("-fx-tick-label-font-size: 1.4em;");
@@ -4998,7 +4998,7 @@ public class GeneSet extends JApplet {
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    private void initBarChart( JFXPanel fxPanel, String[] names, int[] xdata, String xTitle, String yTitle ) {
+    private void initBarChart( JFXPanel fxPanel, String[] names, int[] xdata, String xTitle, String yTitle, double start, double stop, double step, String title ) {
     	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
         //core.setName("Core: " + xdata[xdata.length-1] );
         for( int i = 0; i < xdata.length; i++ ) {
@@ -5007,11 +5007,11 @@ public class GeneSet extends JApplet {
         	data.getData().add( d );
         }
         
-        Scene scene = createBarChartScene( names, data, xTitle, yTitle );
+        Scene scene = createBarChartScene( names, data, xTitle, yTitle, start, stop, step, title );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    private void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata, String xTitle, String yTitle ) {
+    private void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata, String xTitle, String yTitle, double start, double stop, double step, String title ) {
     	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
         //core.setName("Core: " + xdata[xdata.length-1] );
         for( int i = 0; i < xdata.length; i++ ) {
@@ -5022,7 +5022,7 @@ public class GeneSet extends JApplet {
         	data.getData().add( d );
         }
         
-    	Scene scene = createBarChartScene( names, data, xTitle, yTitle );
+    	Scene scene = createBarChartScene( names, data, xTitle, yTitle, start, stop, step, title );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
 	
@@ -6420,9 +6420,10 @@ public class GeneSet extends JApplet {
 			}
 		}*/
 		
+		Map<String,Set<Tegeval>>	donetvs = new HashMap<String,Set<Tegeval>>();
 		for( GeneGroup ggroup : genegroups.keySet() ) {
 			int len = genegroups.get( ggroup );
-			for( String spec : specset ) {			
+			for( String spec : specset ) {
 				List<Tegeval> ltv = ggroup.getTegevals(spec);
 				
 				/*if( selspec.contains("hermus") ) spec = selspec;
@@ -6500,7 +6501,16 @@ public class GeneSet extends JApplet {
 						smap.put( spec, seqs );
 					}
 				} else {
-					Map<Sequence,String> seqs;
+					Map<Sequence,String> 		seqs;
+					
+					Set<Tegeval>	tvals;
+					if( donetvs.containsKey(spec) ) {
+						tvals = donetvs.get( spec );
+					} else {
+						tvals = new HashSet<Tegeval>();
+						donetvs.put( spec, tvals );
+					}
+					
 					if( smap.containsKey( spec ) ) {
 						seqs = smap.get( spec );
 						Map<Sequence,String> 	addseqs = new HashMap<Sequence,String>();
@@ -6510,22 +6520,24 @@ public class GeneSet extends JApplet {
 							String loc = seqs.get( seq );
 							boolean first = true;
 							for( Tegeval tv : ltv ) {
-								if( loc == null || tv.getContshort().getName().equals(loc) ) {
-									accountedfor.add( tv );
-									Sequence tseq;
-									if( !first ) {
-										tseq = new Sequence( nameFix( spec ), null );
-										tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-									} else tseq = seq;
-									StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
-									if( seqstr != null && seqstr.length() > 0 ) {
-										tseq.append( seqstr );
-									} else {
-										for( int i = 0; i < len; i++ ) tseq.append( "-" );
+								//if( tvals.add( tv ) ) {
+									if( loc == null || tv.getContshort().getName().equals(loc) ) {
+										accountedfor.add( tv );
+										Sequence tseq;
+										if( !first ) {
+											tseq = new Sequence( nameFix( spec ), null );
+											tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+										} else tseq = seq;
+										StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+										if( seqstr != null && seqstr.length() > 0 ) {
+											tseq.append( seqstr );
+										} else {
+											for( int i = 0; i < len; i++ ) tseq.append( "-" );
+										}
+										first = false;
+										addseqs.put( tseq, loc == null ? tv.getContshort().getName() : loc );
 									}
-									first = false;
-									addseqs.put( seq, loc == null ? tv.getContshort().getName() : loc );
-								}
+								//}
 							}
 						}
 						
@@ -6587,33 +6599,37 @@ public class GeneSet extends JApplet {
 						}
 						
 						for( Tegeval tv : ltv ) {
-							if( !accountedfor.contains(tv) ) {
-								Sequence tseq = new Sequence( nameFix(spec), null );
-								for( int i = 0; i < seq.length()-len; i++ ) tseq.append( "-" );
-								StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
-								if( seqstr != null && seqstr.length() > 0 ) {
-									tseq.append( seqstr );
-								} else {
-									for( int i = 0; i < len; i++ ) tseq.append( "-" );
+							//if( tvals.add( tv ) ) {
+								if( !accountedfor.contains(tv) ) {
+									Sequence tseq = new Sequence( nameFix(spec), null );
+									for( int i = 0; i < seq.length()-len; i++ ) tseq.append( "-" );
+									StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+									if( seqstr != null && seqstr.length() > 0 ) {
+										tseq.append( seqstr );
+									} else {
+										for( int i = 0; i < len; i++ ) tseq.append( "-" );
+									}
+									//tseq.append( seq.sb.subSequence(0, seq.length()-len) );
+									addseqs.put( tseq, tv.getContshort().getName() );
 								}
-								//tseq.append( seq.sb.subSequence(0, seq.length()-len) );
-								addseqs.put( tseq, tv.getContshort().getName() );
-							}
+							//}
 						}
 						seqs.putAll( addseqs );
 					} else {
 						seqs = new HashMap<Sequence,String>();
 						if( ltv != null && ltv.size() > 0 ) {
 							for( Tegeval tv : ltv ) {
-								Sequence seq = new Sequence( nameFix(spec), null );
-								seqs.put( seq, tv.getContshort().getName() );
-								
-								StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
-								if( seqstr != null && seqstr.length() > 0 ) {
-									seq.append( seqstr );
-								} else {
-									for( int i = 0; i < len; i++ ) seq.append( "-" );
-								}
+								//if( tvals.add( tv ) ) {
+									Sequence seq = new Sequence( nameFix(spec), null );
+									seqs.put( seq, tv.getContshort().getName() );
+									
+									StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+									if( seqstr != null && seqstr.length() > 0 ) {
+										seq.append( seqstr );
+									} else {
+										for( int i = 0; i < len; i++ ) seq.append( "-" );
+									}
+								//}
 							}
 						} else {
 							Sequence tseq = new Sequence( nameFix(spec), null );
@@ -6705,14 +6721,19 @@ public class GeneSet extends JApplet {
 	
 	String nameFix( String selspec ) {
 		if( selspec.contains("hermus") ) {
-			int i = selspec.indexOf('_');
+			int i = selspec.indexOf("_uid");
 			if( i != -1 ) {
-				i = selspec.indexOf('_', i+1);
+				return selspec.substring(0,i);
+			} else {
+				i = selspec.indexOf('_');
 				if( i != -1 ) {
 					i = selspec.indexOf('_', i+1);
 					if( i != -1 ) {
-						i = selspec.lastIndexOf('_', i+1);
-						if( i != -1 ) return selspec.substring(0, i);
+						i = selspec.indexOf('_', i+1);
+						if( i != -1 ) {
+							i = selspec.lastIndexOf('_', i+1);
+							if( i != -1 ) return selspec.substring(0, i);
+						}
 					}
 				}
 			}
@@ -7128,7 +7149,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	int searchi = 0;
-	public int searchTable( JTable table, String text, int i, boolean back, int column ) {
+	public int searchTable( JTable table, String text, int i, boolean back, int ... columns ) {
 		int v;
 		if( back ) {
 			v = i-1;
@@ -7136,39 +7157,49 @@ public class GeneSet extends JApplet {
 		} else v = (i+1)%table.getRowCount();
 		if( table.getModel() == defaultModel ) {
 			while( v != i ) {
-				int m = table.convertRowIndexToModel(v);
-				if( m != -1 ) {
-					Gene g = genelist.get(m);
-					String name = column == 7 || column == 8 ? g.getGeneGroup().getCommonSymbol() + ", " + g.getGeneGroup().getCommonKOName( ko2name ) : g.getGeneGroup().getCommonName();
-					if( name.toLowerCase().contains( text ) ) {
-						//int r = table.convertRowIndexToView(v);
-						Rectangle rect = table.getCellRect(v, 0, true);
-						table.scrollRectToVisible( rect );
-						break;
-					}
-					if( back ) {
-						v--;
-						if( v == -1 ) v = table.getRowCount()-1;
-					} else v = (v+1)%table.getRowCount();
-				} else break;
+				//int m = table.convertRowIndexToModel(v);
+				//if( m != -1 ) {
+					//Gene g = genelist.get(m);
+					//String name = column == 7 || column[0] == 8 ? g.getGeneGroup().getCommonSymbol() + ", " + g.getGeneGroup().getCommonKOName( ko2name ) + ", " +  : g.getGeneGroup().getCommonName();
+					
+				String name = "";
+				for( int k : columns ) name += table.getValueAt(v, k);
+				
+				if( name.toLowerCase().contains( text ) ) {
+					//int r = table.convertRowIndexToView(v);
+					Rectangle rect = table.getCellRect(v, 0, true);
+					table.scrollRectToVisible( rect );
+					break;
+				}
+				if( back ) {
+					v--;
+					if( v == -1 ) v = table.getRowCount()-1;
+				} else v = (v+1)%table.getRowCount();
+					
+				//} else break;
 			}
 		} else {
 			while( v != i ) {
-				int m = table.convertRowIndexToModel(v);
-				if( m != -1 ) {
-					GeneGroup gg = allgenegroups.get(m);
-					String name = gg.getCommonName();
-					if( name.toLowerCase().contains( text ) ) {
-						//int r = table.convertRowIndexToView(i);
-						Rectangle rect = table.getCellRect(v, 0, true);
-						table.scrollRectToVisible( rect );
-						break;
-					}
-					if( back ) {
-						v--;
-						if( v == -1 ) v = table.getRowCount()-1;
-					} else v = (v+1)%table.getRowCount();
-				} else break;
+				//int m = table.convertRowIndexToModel(v);
+				//if( m != -1 ) {
+					
+				//GeneGroup gg = allgenegroups.get(m);
+				//String name = gg.getCommonName();
+				String name = "";
+				for( int k : columns ) name += table.getValueAt(v, k);
+				
+				if( name.toLowerCase().contains( text ) ) {
+					//int r = table.convertRowIndexToView(i);
+					Rectangle rect = table.getCellRect(v, 0, true);
+					table.scrollRectToVisible( rect );
+					break;
+				}
+				if( back ) {
+					v--;
+					if( v == -1 ) v = table.getRowCount()-1;
+				} else v = (v+1)%table.getRowCount();
+				
+				//} else break;
 			}
 		}
 		return v;
@@ -8261,14 +8292,14 @@ public class GeneSet extends JApplet {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                     initBarChart( fxpanel, names, vals, xTitle, yTitle );
+					                     initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
 					                 }
 					            });
 							} else {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                     initBarChart( null, names, vals, xTitle, yTitle );
+					                     initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
 					                 }
 					            });
 							}						
@@ -9967,7 +9998,155 @@ public class GeneSet extends JApplet {
 		AbstractAction genomesizeaction = new AbstractAction("Genome size") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
+				final JCheckBox	contigs = new JCheckBox("Show contigs");
+				Set<String>	selspec = getSelspec( applet, new ArrayList( specList ), contigs );
+				StringBuilder	restext = new StringBuilder();
+				
+				Map<String,Integer>	map = new TreeMap<String,Integer>();
+				
+				int tmax = 0;
+				restext.append( "['Species', 'Size']" );
+				for( String spec : selspec ) {
+					restext.append( ",\n['"+spec+"', " );
+					
+					//int len = 0;
+					int total = 0;
+					
+					if( contigs.isSelected() ) {
+						Contig ct = contigmap.get( spec );
+						total = ct.length();
+						//len = ct.getGCCount();
+					} else {
+						List<Contig> lcont = speccontigMap.get(spec);
+						for( Contig ct : lcont ) {
+							total += ct.length();
+							//len += ct.getGCCount();
+						}
+					}
+					
+					tmax = Math.max( tmax, total );
+					//double d = (double)len/(double)total;					
+					String name = null;//names[i];
+					if( contigs.isSelected() ) {
+						if( spec.contains("hermus") ) name = spec;
+						else {
+							Matcher m = Pattern.compile("\\d").matcher(spec); 
+							int firstDigitLocation = m.find() ? m.start() : 0;
+							if( firstDigitLocation == 0 ) name = "Thermus_" + spec;
+							else name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
+						}
+					} else {
+						if( spec.contains("hermus") ) name = spec.substring( 0, spec.lastIndexOf('_') );
+						else {
+							Matcher m = Pattern.compile("\\d").matcher(spec); 
+							int firstDigitLocation = m.find() ? m.start() : 0;
+							if( firstDigitLocation == 0 ) name = "Thermus_" + spec;
+							else name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
+						}
+					}
+					
+					map.put( name, total );
+					restext.append( total+"]" );
+				}
+				
+				final int max = tmax;
+				final String[] names = new String[ map.size() ];
+				final double[] vals = new double[ map.size() ];
+				
+				String scaffspec = null;
+				int i = 0;
+				for( String spec : map.keySet() ) {
+					if( contigs.isSelected() ) {
+						int k = spec.indexOf("contig");
+						if( k == -1 ) k = spec.indexOf("scaffold");
+						if( k == -1 ) k = spec.lastIndexOf('_');
+						if( k == -1 ) {
+							names[i] = spec;
+							scaffspec = spec;
+						} else {
+							names[i] = spec.substring(k);						
+							scaffspec = spec.substring(0, k-1);
+						}
+					} else names[i] = spec;
+					vals[i] = map.get( spec );
+					i++;
+				}
+				
+				final String xTitle = scaffspec != null ? "Scaffolds/Contigs" : "Species";
+				final String yTitle = scaffspec != null ? scaffspec + " contig size" : "Genome size";
+				
+				JSObject window = null;
+				try {
+					window = JSObject.getWindow( GeneSet.this );
+				} catch( NoSuchMethodError | Exception exc ) {
+					exc.printStackTrace();
+				}
+				
+				if( window != null ) {
+					final StringBuilder sb = new StringBuilder();
+					InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
+					try {
+						int c = is.read();
+						while( c != -1 ) {
+							sb.append( (char)c );
+							c = is.read();
+						}
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					final String smuck = sb.toString().replace("smuck", restext.toString());
+					//String b64str = Base64.encodeBase64String( smuck.getBytes() );
+					try {
+						window.setMember("smuck", smuck);
+						window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
+						window.eval("open( URL.createObjectURL(b), '_blank' )");
+					} catch( Exception exc ) {
+						exc.printStackTrace();
+					}
+				} else if( Desktop.isDesktopSupported() ) {
+					SwingUtilities.invokeLater( new Runnable() {
+						@Override
+						public void run() {
+							if( fxframe == null ) {
+								fxframe = new JFrame("Pan-core");
+								fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+								fxframe.setSize(800, 600);
+								
+								final JFXPanel	fxpanel = new JFXPanel();
+								fxframe.add( fxpanel );
+								
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                	 initBarChart( fxpanel, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Contig sizes" : "Genome sizes" );
+					                 }
+					            });
+							} else {
+								Platform.runLater(new Runnable() {
+					                 @Override
+					                 public void run() {
+					                	 initBarChart( null, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Contig sizes" : "Genome sizes" );
+					                 }
+					            });
+							}						
+							fxframe.setVisible( true );
+						}
+					});
+				}
+				
+				JFrame f = new JFrame("GC% chart");
+				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				f.setSize( 800, 600 );
+				
+				JTextArea	ta = new JTextArea();
+				ta.setText( restext.toString() );
+				JScrollPane	sp = new JScrollPane(ta);
+				f.add( sp );
+				f.setVisible( true );
+				
+				
+				
+				/*Set<String>	selspec = getSelspec( applet, new ArrayList( specList ) );
 				
 				StringBuilder	restext = new StringBuilder();
 				restext.append( "['Species', 'Size']" );
@@ -9980,7 +10159,7 @@ public class GeneSet extends JApplet {
 						if( ct.tlist != null ) total += ct.tlist.size();
 						/*if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
 							len += tv.getLength();
-						}*/
+						}*
 					}
 					//Set<GeneGroup> ggset = specGroupMap.get( spec );
 					//pan.addAll( ggset );
@@ -10293,14 +10472,14 @@ public class GeneSet extends JApplet {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                	 initBarChart( fxpanel, names, vals, xTitle, yTitle );
+					                	 initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
 					                 }
 					            });
 							} else {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                	 initBarChart( null, names, vals, xTitle, yTitle );
+					                	 initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
 					                 }
 					            });
 							}						
@@ -13850,8 +14029,11 @@ public class GeneSet extends JApplet {
 						if( f.getGeneentries() != null ) {
 							for( Gene g : f.getGeneentries() ) {
 								//Gene g = genemap.get(ref);
-								int rf = table.convertRowIndexToView(g.getGroupIndex());
-								table.addRowSelectionInterval(rf, rf);
+								int i = g.getGroupIndex();
+								if( i >= 0 && i <= table.getRowCount() ) {
+									int rf = table.convertRowIndexToView(i);
+									table.addRowSelectionInterval(rf, rf);
+								}
 							}
 						}
 					}
@@ -13871,7 +14053,7 @@ public class GeneSet extends JApplet {
 			public void keyPressed(KeyEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( e.getKeyCode() == KeyEvent.VK_ENTER ) {
-					searchi = searchTable( table, text, searchi, e.isAltDown(), searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
+					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, searchi, e.isAltDown(), 7, 8, 9 ) : searchTable( table, text, searchi, e.isAltDown(), 0 );
 				}
 			}
 		});
@@ -13880,28 +14062,28 @@ public class GeneSet extends JApplet {
 			public void changedUpdate(DocumentEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, 7, 8, label);
-					else updateFilter(0, text, table, genefilter, genefilterset, 0, 0, label);
+					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 7, 8, 9 );
+					else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
 				} else {
-					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
+					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 7, 8, 9 ) : searchTable( table, text, 0, false, 0 );
 				}
 			}
 
 			public void insertUpdate(DocumentEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(1, text, table, genefilter, genefilterset, 7, 8, label);
-					else updateFilter(1, text, table, genefilter, genefilterset, 0, 0, label);
+					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(1, text, table, genefilter, genefilterset, label, 7, 8, 9);
+					else updateFilter(1, text, table, genefilter, genefilterset, label, 0);
 				} else {
-					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
+					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 7, 8, 9 ) : searchTable( table, text, 0, false, 0 );
 				}
 			}
 
 			public void removeUpdate(DocumentEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(2, text, table, genefilter, genefilterset, 7, 8, label);
-					else updateFilter(2, text, table, genefilter, genefilterset, 0, 0, label);
+					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(2, text, table, genefilter, genefilterset, label, 7, 8, 9 );
+					else updateFilter(2, text, table, genefilter, genefilterset, label, 0);
 				} else {
 					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
 				}
@@ -13910,15 +14092,15 @@ public class GeneSet extends JApplet {
 
 		ftextfield.getDocument().addDocumentListener(new DocumentListener() {
 			public void changedUpdate(DocumentEvent e) {
-				updateFilter(0, ftextfield.getText(), ftable, rowfilter, filterset, 6, 6, null);
+				updateFilter(0, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
 			}
 
 			public void insertUpdate(DocumentEvent e) {
-				updateFilter(1, ftextfield.getText(), ftable, rowfilter, filterset, 6, 6, null);
+				updateFilter(1, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
 			}
 
 			public void removeUpdate(DocumentEvent e) {
-				updateFilter(2, ftextfield.getText(), ftable, rowfilter, filterset, 6, 6, null);
+				updateFilter(2, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
 			}
 		});
 		popup.add(new AbstractAction("KEGG gene lookup") {
@@ -15025,24 +15207,17 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	public void updateFilter(int val, String ustr, JTable table, RowFilter filter, Set<Integer> filterset, int ind, int ind2, JLabel label) {
+	public void updateFilter(int val, String ustr, JTable table, RowFilter filter, Set<Integer> filterset, JLabel label, int ... ind ) {
 		filterset.clear();
 		TableModel model = table.getModel();
-		if( ind == ind2 ) {
-			for (int r = 0; r < model.getRowCount(); r++) {
-				String vstr = (String)model.getValueAt(r, ind);
+		for (int r = 0; r < model.getRowCount(); r++) {
+			for( int i = 0; i < ind.length; i++ ) {
+				String vstr = (String)model.getValueAt(r, ind[i]);
 				String s = vstr != null ? vstr.toLowerCase() : null;
-				if (s != null && s.contains(ustr))
+				
+				if( (s != null && s.contains(ustr)) ) {
 					filterset.add(r);
-			}
-		} else {
-			for (int r = 0; r < model.getRowCount(); r++) {
-				String vstr = (String)model.getValueAt(r, ind);
-				String vstr2 = (String)model.getValueAt(r, ind2);
-				String s = vstr != null ? vstr.toLowerCase() : null;
-				String s2 = vstr2 != null ? vstr2.toLowerCase() : null;
-				if( (s != null && s.contains(ustr)) || (s2 != null && s2.contains(ustr))) {
-					filterset.add(r);
+					break;
 				}
 			}
 		}

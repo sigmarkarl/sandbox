@@ -493,7 +493,7 @@ public class GeneSorter {
 							if( ggset.add( genegroup ) ) {
 								int numshare = specset.get( genegroup.getSpecies() ).numshare;
 								if( numshare != prevnumshare ) {
-									altcol = altcol == Color.lightGray ? Color.darkGray : Color.lightGray;
+									altcol = altcol == Color.lightGray ? Color.gray : Color.lightGray;
 								}								
 								prevnumshare = numshare;
 							}
@@ -646,8 +646,55 @@ public class GeneSorter {
 										List<Tegeval>	ltv = genegroup.getTegevals( spec );
 										//Teginfo stv = gene.species.get(spec);
 										for (Tegeval tv : ltv /*stv.tset*/ ) {
+											if( binaryColorScheme.isSelected() ) {
+												if (sorting.isRowSelected(i)) {
+													if (i % 2 == 0)
+														g.setColor(rd);
+													else
+														g.setColor(dr);
+												} else {
+													boolean phage;
+													boolean plasmid;
+													phage = tv.getGene().isPhage();
+													plasmid = tv.getContshort().isPlasmid();
+													
+													if( tgene != null ) {
+														GeneGroup gg = tgene.getGeneGroup();
+														Teginfo ti = gg.species.get( tgene.getSpecies() );
+														if( phage && plasmid ) {
+															if( ti.tset.size() > 2 ) g.setColor(dm);
+															else g.setColor(mg);
+														} else if( phage ) {
+															if( ti.tset.size() > 2 ) g.setColor(bl);
+															else g.setColor(db);
+														} else if( plasmid ) {
+															if( ti.tset.size() > 2 ) g.setColor(dr);
+															else g.setColor(rd);
+														} else {
+															if( ti.tset.size() > 2 ) g.setColor(dg);
+															else g.setColor(gr);
+														}
+													} else {
+														if( phage && plasmid ) {
+															g.setColor(mg);
+														} else if( phage ) {
+															g.setColor(bl);
+														} else if( plasmid ) {
+															g.setColor(rd);
+														} else {
+															g.setColor(gr);
+														}
+													}
+													/*if (i % 2 == 0)
+														g.setColor(gr);
+													else
+														g.setColor(dg);*/
+												}
+											}
+											
 											if( tv.getContshort().getName().startsWith(contig) ) {
 												g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
+												break;
 											}
 										}
 									}
