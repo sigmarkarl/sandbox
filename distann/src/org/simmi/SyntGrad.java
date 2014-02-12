@@ -32,7 +32,8 @@ import javax.swing.table.TableModel;
 public class SyntGrad {
 	public void syntGrad( final GeneSet geneset ) {
 		final JTable 				table = geneset.getGeneTable();
-		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
+		//final Collection<String> 	specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
+		final Collection<String>	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
 		final List<String>			species = new ArrayList<String>( specset );
 		
 		TableModel model = new TableModel() {
@@ -63,7 +64,7 @@ public class SyntGrad {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return species.get( rowIndex );
+				return geneset.nameFix( species.get( rowIndex ) );
 			}
 
 			@Override
@@ -93,12 +94,13 @@ public class SyntGrad {
 		
 		JOptionPane.showMessageDialog(geneset, cmp);
 		
-		final String 		spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
+		final String 		spec1 = species.get( table1.convertRowIndexToModel( table1.getSelectedRow() )); //(String)table1.getValueAt( table1.getSelectedRow(), 0 );
 		final List<Contig>	contigs1 = geneset.speccontigMap.get( spec1 );
 		final List<String>	spec2s = new ArrayList<String>();
 		int[] rr = table2.getSelectedRows();
 		for( int r : rr ) {
-			String spec2 = (String)table2.getValueAt(r, 0);
+			//String spec2 = (String)table2.getValueAt(r, 0);
+			String spec2 = species.get( table2.convertRowIndexToModel(r) );
 			spec2s.add( spec2 );
 		}
 		
@@ -218,6 +220,9 @@ public class SyntGrad {
 		g2.fillRect( 0, 0, 2048, 2048 );
 		for( String spec : spec2s ) {
 			List<Contig> scontigs = geneset.speccontigMap.get( spec );
+			if( scontigs == null ) {
+				System.err.println("er");
+			}
 			int total = 0;
 			for( Contig c : scontigs ) {
 				total += c.getGeneCount();
