@@ -6247,7 +6247,7 @@ public class GeneSet extends JApplet {
 		};
 		table.setModel( specmodel );
 		
-		if( contigs.length > 0 ) contigs[0].addChangeListener( new ChangeListener() {
+		if( contigs != null && contigs.length > 0 ) contigs[0].addChangeListener( new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				if( contigs[0] != null && contigs[0].isSelected() ) table.setModel( contigmodel );
@@ -6720,7 +6720,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	String nameFix( String selspec ) {
-		if( selspec.contains("hermus") ) {
+		if( selspec.contains("hermus") ) {			
 			int i = selspec.indexOf("_uid");
 			if( i != -1 ) {
 				return selspec.substring(0,i);
@@ -7592,7 +7592,6 @@ public class GeneSet extends JApplet {
 							try {
 								url = new URL((String) obj);
 								Image image = ImageIO.read(url);
-
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -7624,11 +7623,62 @@ public class GeneSet extends JApplet {
 				} else {
 					String spec = (String)syncolorcomb.getSelectedItem();
 					if( spec.length() > 0 ) {
-						List<Contig> contigs = speccontigMap.get( spec );
-						if( value instanceof Teginfo ) {
-							Teginfo ti = (Teginfo)value;
-							label.setBackground( Color.green );
-							for( Tegeval tv : ti.tset ) {
+						if( spec.equals("All") ) {
+							if( value instanceof Teginfo ) {
+								Teginfo ti = (Teginfo)value;
+								label.setBackground( Color.green );
+								for( Tegeval tv : ti.tset ) {
+									String tspec = tv.getGene().getSpecies();
+									List<Contig> scontigs = speccontigMap.get( tspec );
+									
+									double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, tv.getGene().getGeneGroup());
+									if( ratio == -1 ) {
+										ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, tv.getGene().getGeneGroup());
+										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+										label.setForeground( Color.white );
+									} else {
+										label.setBackground( GeneCompare.gradientColor( ratio ) );
+										label.setForeground( Color.black );
+									}
+									break;
+									//GeneCompare.gradientColor();
+								}
+							} else if( value instanceof Tegeval ) {
+								Tegeval tv = (Tegeval)value;
+								String tspec = tv.getGene().getSpecies();
+								List<Contig> scontigs = speccontigMap.get( tspec );
+								
+								double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, tv.getGene().getGeneGroup());
+								if( ratio == -1 ) {
+									ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, tv.getGene().getGeneGroup());
+									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+									label.setForeground( Color.white );
+								} else {
+									label.setBackground( GeneCompare.gradientColor( ratio ) );
+									label.setForeground( Color.black );
+								}
+							}
+						} else {
+							List<Contig> contigs = speccontigMap.get( spec );
+							if( value instanceof Teginfo ) {
+								Teginfo ti = (Teginfo)value;
+								label.setBackground( Color.green );
+								for( Tegeval tv : ti.tset ) {
+									double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+									if( ratio == -1 ) {
+										ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+										label.setForeground( Color.white );
+									} else {
+										label.setBackground( GeneCompare.gradientColor( ratio ) );
+										label.setForeground( Color.black );
+									}
+									break;
+									//GeneCompare.gradientColor();
+								}
+							} else if( value instanceof Tegeval ) {
+								Tegeval tv = (Tegeval)value;
+								
 								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
 								if( ratio == -1 ) {
 									ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
@@ -7638,24 +7688,10 @@ public class GeneSet extends JApplet {
 									label.setBackground( GeneCompare.gradientColor( ratio ) );
 									label.setForeground( Color.black );
 								}
-								break;
-								//GeneCompare.gradientColor();
+								
+								/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+								label.setBackground( GeneCompare.gradientColor( ratio ) );*/
 							}
-						} else if( value instanceof Tegeval ) {
-							Tegeval tv = (Tegeval)value;
-							
-							double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
-							if( ratio == -1 ) {
-								ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
-								label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-								label.setForeground( Color.white );
-							} else {
-								label.setBackground( GeneCompare.gradientColor( ratio ) );
-								label.setForeground( Color.black );
-							}
-							
-							/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
-							label.setBackground( GeneCompare.gradientColor( ratio ) );*/
 						}
 					} else if( value instanceof Teginfo ) {
 						Teginfo ti = (Teginfo)value;						
@@ -12191,7 +12227,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//Set<String> species = speciesFromCluster( clusterMap );
-				new Synteni().syntenyMynd( GeneSet.this, comp, genelist, specList );
+				new Synteni().syntenyMynd( GeneSet.this, comp, genelist );
 			}
 		});
 		
@@ -16000,6 +16036,7 @@ public class GeneSet extends JApplet {
 		for( String spec : speccontigMap.keySet() ) {
 			syncolorcomb.addItem( spec );
 		}
+		syncolorcomb.addItem("All");
 		//loadCog();
 		
 		//specList = loadcontigs( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.fna") ) ) );			
