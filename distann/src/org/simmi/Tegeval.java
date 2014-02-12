@@ -36,7 +36,7 @@ public class Tegeval extends Sequence implements Teg {
 			System.err.println();
 		}*/
 
-		gc = (double)gcCount()/(double)(stop-start);
+		gc = gcPerc(); //(double)gcCount()/(double)(stop-start);
 		gcskew = gcSkew();
 		//else gc = -1.0;
 		
@@ -156,14 +156,16 @@ public class Tegeval extends Sequence implements Teg {
 		return gc == 0 ? gc : (g-c)/gc;
 	}
 	
-	private double gcCount() {
+	private double gcPerc() {
 		int gc = 0;
+		int total = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
 		if( contshort != null ) for( int i = start; i < stop; i++ ) {
 			char c = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ contshort.charAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
+			if( c != '-' && c != 'x' || c != 'X' ) total++;
 		}
-		return gc;
+		return (double)gc/(double)total;
 	}
 	
 	public double getGCPerc() {
