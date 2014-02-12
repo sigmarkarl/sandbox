@@ -125,6 +125,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -7860,15 +7861,6 @@ public class GeneSet extends JApplet {
 			}
 		});
 		ttopcom.add( importbutton );
-		
-		final JCheckBox checkbox = new JCheckBox();
-		checkbox.setAction(new AbstractAction("Sort by location") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Tegeval.locsort = checkbox.isSelected();
-			}
-		});
-		ttopcom.add(checkbox);
 
 		AbstractAction matrixaction = new AbstractAction("Relation matrix") {
 			@Override
@@ -12036,12 +12028,43 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
+		final JCheckBoxMenuItem checkbox = new JCheckBoxMenuItem();
+		checkbox.setAction(new AbstractAction("Sort by location") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Tegeval.locsort = checkbox.isSelected();
+			}
+		});
+		AbstractAction saveselAction = new AbstractAction("Save selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = table.getSelectedRows();
+				if( rr.length > 0 ) {
+					String val = Integer.toString( table.convertRowIndexToModel(rr[0]) );
+					for( int i = 1; i < rr.length; i++ ) {
+						val += ","+table.convertRowIndexToModel(rr[i]);
+					}
+					String selname = JOptionPane.showInputDialog("Selection name");
+					if( comp instanceof Applet ) {
+						try {
+							((GeneSet)comp).saveSel( selname, val);
+						} catch (Exception e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+		};
+		
 		JMenuBar	menubar = new JMenuBar();
 		JMenu		menu = new JMenu("Functions");
 		menu.add( importidmappingaction );
 		menu.add( importgenesymbolaction );
 		menu.add( fetchaction );
 		menu.add( blast2action );
+		menu.addSeparator();
+		menu.add( checkbox );
+		menu.add( saveselAction );
 		menu.addSeparator();
 		menu.add( genomestataction );
 		menu.add( selectsharingaction );
@@ -12108,29 +12131,6 @@ public class GeneSet extends JApplet {
 		ttopcom.add(search);
 		ttopcom.add(filter);
 		ttopcom.add(label);
-
-		AbstractAction saveselAction = new AbstractAction("Save selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				if( rr.length > 0 ) {
-					String val = Integer.toString( table.convertRowIndexToModel(rr[0]) );
-					for( int i = 1; i < rr.length; i++ ) {
-						val += ","+table.convertRowIndexToModel(rr[i]);
-					}
-					String selname = JOptionPane.showInputDialog("Selection name");
-					if( comp instanceof Applet ) {
-						try {
-							((GeneSet)comp).saveSel( selname, val);
-						} catch (Exception e1) {
-							e1.printStackTrace();
-						}
-					}
-				}
-			}
-		};
-		JButton saveselButt = new JButton(saveselAction);
-		ttopcom.add(saveselButt);
 
 		selcomblocal.addItemListener( new ItemListener() {
 			@Override
@@ -12619,7 +12619,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 24+specList.size();
+				return 26+specList.size();
 			}
 
 			@Override
@@ -12649,31 +12649,35 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 11) {
 					return "ecid";
 				} else if (columnIndex == 12) {
-					return "Present in";
+					return "COG";
 				} else if (columnIndex == 13) {
-					return "Group index";
+					return "COG name";
 				} else if (columnIndex == 14) {
-					return "Group coverage";
+					return "Present in";
 				} else if (columnIndex == 15) {
-					return "Group size";
+					return "Group index";
 				} else if (columnIndex == 16) {
-					return "Locprev";
+					return "Group coverage";
 				} else if (columnIndex == 17) {
-					return "Avg GC%";
+					return "Group size";
 				} else if (columnIndex == 18) {
-					return "# of locus";
+					return "Locprev";
 				} else if (columnIndex == 19) {
-					return "# of loc in group";
+					return "Avg GC%";
 				} else if (columnIndex == 20) {
-					return "max length";
+					return "# of locus";
 				} else if (columnIndex == 21) {
-					return "sharing number";
+					return "# of loc in group";
 				} else if (columnIndex == 22) {
-					return "# Cyc";
+					return "max length";
 				} else if (columnIndex == 23) {
+					return "sharing number";
+				} else if (columnIndex == 24) {
+					return "# Cyc";
+				} else if (columnIndex == 25) {
 					return "16S Corr";
 				} else {
-					return specList.get( columnIndex - 24 );
+					return specList.get( columnIndex - 26 );
 				} /*else if (columnIndex == 19) {
 					return "T.tSG0";
 				} else if (columnIndex == 20) {
@@ -12735,11 +12739,11 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 14 || columnIndex == 17 || columnIndex == 23 )
+				if( columnIndex == 16 || columnIndex == 19 || columnIndex == 25 )
 					return Double.class;
-				else if(columnIndex >= 11 && columnIndex <= 22)
+				else if(columnIndex >= 13 && columnIndex <= 24)
 					return Integer.class;
-				else if (columnIndex >= 24)
+				else if (columnIndex >= 26)
 					return Teg.class;
 				return String.class;
 			}
@@ -12777,39 +12781,47 @@ public class GeneSet extends JApplet {
 				} else if (columnIndex == 11) {
 					return gene.ecid;
 				} else if (columnIndex == 12) {
-					return gene.getGeneGroup().getSpecies().size();
+					Cog cog = gene.getGeneGroup() != null ? gene.getGeneGroup().getCommonCog( cogmap ) : null;
+					if( cog != null ) return cog.id;
+					return null;
 				} else if (columnIndex == 13) {
-					return gene.getGroupIndex();
+					Cog cog = gene.getGeneGroup() != null ? gene.getGeneGroup().getCommonCog( cogmap ) : null;
+					if( cog != null ) return cog.name;
+					return null;
 				} else if (columnIndex == 14) {
-					return gene.getGroupCoverage();
+					return gene.getGeneGroup().getSpecies().size();
 				} else if (columnIndex == 15) {
-					return gene.getGroupGenCount();
+					return gene.getGroupIndex();
 				} else if (columnIndex == 16) {
-					return gene.proximityGroupPreservation;
+					return gene.getGroupCoverage();
 				} else if (columnIndex == 17) {
-					return gene.getGCPerc();
+					return gene.getGroupGenCount();
 				} else if (columnIndex == 18) {
+					return gene.proximityGroupPreservation;
+				} else if (columnIndex == 19) {
+					return gene.getGCPerc();
+				} else if (columnIndex == 20) {
 					/*int val = 0;
 					for (String str : gene.species.keySet()) {
 						val += gene.species.get(str).tset.size();
 					}*/
 					return 1;
-				} else if (columnIndex == 19) {
-					return gene.getGroupCount();
-				} else if (columnIndex == 20) {
-					return gene.getMaxLength();
 				} else if (columnIndex == 21) {
+					return gene.getGroupCount();
+				} else if (columnIndex == 22) {
+					return gene.getMaxLength();
+				} else if (columnIndex == 23) {
 					GeneGroup gg = gene.getGeneGroup();
 					if( gg != null && gg.getSpecies() != null ) {
 						return specset.get( gg.getSpecies() );
 					}
 					return null;
-				} else if (columnIndex == 22) {
+				} else if (columnIndex == 24) {
 					gene.getMaxCyc();
-				} else if (columnIndex == 23) {
+				} else if (columnIndex == 25) {
 					return gene.getGroupCoverage() == 35 && gene.getGroupCount() == 35 ? gene.corr16s : -1;
 				} else {
-					String spec = specList.get( columnIndex-24 );
+					String spec = specList.get( columnIndex-26 );
 					//Teginfo set = gene.species.equals(spec) ? gene.teginfo : null;
 					if( gene.getSpecies().equals( spec ) ) {
 						return gene.tegeval;
@@ -12817,7 +12829,7 @@ public class GeneSet extends JApplet {
 						return gene.getGeneGroup().species.get( spec );
 					}
 				}
-				return columnIndex >= 15 ? null : "";
+				return columnIndex >= 17 ? null : "";
 			}
 
 			@Override
@@ -16789,7 +16801,9 @@ public class GeneSet extends JApplet {
 		zipin.close();*/
 		is = GeneSet.class.getResourceAsStream("/gene_ontology_ext.obo");
 		//Map<String,Function> funcmap = 
-		if( is != null ) readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
+		if( is != null ) {
+			readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
+		}
 		
 		//is = GeneSet.class.getResourceAsStream("/go_short.obo");
 		//readGoInfo(new InputStreamReader(is), totalgo, null);
