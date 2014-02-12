@@ -1061,6 +1061,10 @@ public class GeneCompare {
 			total2 += ctg2.getGeneCount();
 		}
 		double ratio2 = -1.0;
+		
+		if( gg == null || spec2 == null ) {
+			System.err.println("ermermermermerm");
+		}
 		Teginfo gene2s = gg.getGenes( spec2 );
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
