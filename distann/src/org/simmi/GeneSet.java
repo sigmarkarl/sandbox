@@ -9276,7 +9276,7 @@ public class GeneSet extends JApplet {
 						}
 					} else if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
 						int r = GeneSet.this.table.convertRowIndexToView( gg.index );
-						GeneSet.this.table.addRowSelectionInterval( r, r );
+						if( r != -1 ) GeneSet.this.table.addRowSelectionInterval( r, r );
 					}
 				}
 			}
@@ -11919,34 +11919,19 @@ public class GeneSet extends JApplet {
 				frame.addWindowListener( new WindowListener() {
 					
 					@Override
-					public void windowOpened(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowOpened(WindowEvent e) {}
 					
 					@Override
-					public void windowIconified(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowIconified(WindowEvent e) {}
 					
 					@Override
-					public void windowDeiconified(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowDeiconified(WindowEvent e) {}
 					
 					@Override
-					public void windowDeactivated(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowDeactivated(WindowEvent e) {}
 					
 					@Override
-					public void windowClosing(WindowEvent e) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void windowClosing(WindowEvent e) {}
 					
 					@Override
 					public void windowClosed(WindowEvent e) {
@@ -11962,6 +11947,13 @@ public class GeneSet extends JApplet {
 				});
 				
 				frame.setVisible( true );
+			}
+		};
+		AbstractAction	sharenumaction = new AbstractAction("Update share numbers") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String> specs = getSelspec(GeneSet.this, specList, null);
+				updateShareNum(specs);
 			}
 		};
 		AbstractAction	blast2action = new AbstractAction("Blast") {
@@ -12062,6 +12054,7 @@ public class GeneSet extends JApplet {
 		menu.add( importgenesymbolaction );
 		menu.add( fetchaction );
 		menu.add( blast2action );
+		menu.add( sharenumaction );
 		menu.addSeparator();
 		menu.add( checkbox );
 		menu.add( saveselAction );
@@ -12192,7 +12185,7 @@ public class GeneSet extends JApplet {
 				try {
 					//if( gb.isSelected() ) new GeneSorter().mynd( GeneSet.this, genelist, table, null, contigmap );
 					//else 
-					new GeneSorter().groupMynd( GeneSet.this, allgenegroups, genelist, table, contigmap, specset );
+					new GeneSorter().groupMynd( GeneSet.this, allgenegroups, specList, genelist, table, contigmap, specset );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -14191,6 +14184,24 @@ public class GeneSet extends JApplet {
 				updateFilter(table, genefilter, label);
 			}
 		});
+		popup.add(new AbstractAction("Crop to inverted selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				genefilterset.clear();
+				int[] rr = table.getSelectedRows();
+				Set<Integer> iset = new HashSet<Integer>();
+				for( int r : rr ) {
+					iset.add( r );
+				}
+				for (int r = 0; r < table.getRowCount(); r++) {
+					if( !iset.contains(r) ) {
+						int mr = table.convertRowIndexToModel(r);
+						genefilterset.add(mr);
+					}
+				}
+				updateFilter(table, genefilter, label);
+			}
+		});
 		popup.add(new AbstractAction("Remove selection") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -14218,11 +14229,17 @@ public class GeneSet extends JApplet {
 			public void actionPerformed(ActionEvent e) {
 				// genefilterset.clear();
 				int[] rr = table.getSelectedRows();
+				Set<Integer> iset = new HashSet<Integer>();
+				for( int r : rr ) {
+					iset.add( r );
+				}
+				table.clearSelection();
 				for (int r = 0; r < table.getRowCount(); r++) {
-					if (table.isRowSelected(r))
+					if( !iset.contains(r) ) table.addRowSelectionInterval(r, r);
+					/*if (table.isRowSelected(r))
 						table.removeRowSelectionInterval(r, r);
 					else
-						table.addRowSelectionInterval(r, r);
+						table.addRowSelectionInterval(r, r);*/
 				}
 			}
 		});
@@ -16848,32 +16865,7 @@ public class GeneSet extends JApplet {
 		 * komap.get(f.ec); } } }
 		 */
 
-		specset = new HashMap<Set<String>, ShareNum>();
-		int sn = 0;
-		/*for (Gene g : genelist) {
-			if (g.species != null) {
-				ShareNum sharenum = null;
-				if (specset.containsKey(g.species.keySet())) {
-					sharenum = specset.get(g.species.keySet());
-					sharenum.numshare++;
-				} else {
-					specset.put(g.species.keySet(), new ShareNum(1, sn++));
-				}
-			}
-		}*/
-		
-		for (GeneGroup gg : allgenegroups) {
-			Set<String>	species = gg.getSpecies();
-			if( species != null ) {
-				ShareNum sharenum = null;
-				if (specset.containsKey( species ) ) {
-					sharenum = specset.get( species );
-					sharenum.numshare++;
-				} else {
-					specset.put( species, new ShareNum(1, sn++) );
-				}
-			}
-		}
+		updateShareNum( specList );
 		
 		Set<String> allecs = new HashSet<String>();
 		for( Function f : funclist ) {
@@ -16926,6 +16918,44 @@ public class GeneSet extends JApplet {
 		ftable.setModel( nullmodel );
 		table.setModel( groupModel );
 		ftable.setModel( ftablemodel );
+	}
+	
+	private void updateShareNum( Collection<String> specs ) {
+		if( specset != null ) specset.clear();
+		else specset = new HashMap<Set<String>, ShareNum>();
+		
+		int sn = 0;
+		/*for (Gene g : genelist) {
+			if (g.species != null) {
+				ShareNum sharenum = null;
+				if (specset.containsKey(g.species.keySet())) {
+					sharenum = specset.get(g.species.keySet());
+					sharenum.numshare++;
+				} else {
+					specset.put(g.species.keySet(), new ShareNum(1, sn++));
+				}
+			}
+		}*/
+		Map<Set<String>, ShareNum> subset = new HashMap<Set<String>, ShareNum>();
+		
+		for (GeneGroup gg : allgenegroups) {
+			Set<String>	species = gg.getSpecies();
+			Set<String>	tmpspec = new HashSet<String>( species );
+			tmpspec.retainAll( specs );
+			
+			if( species != null ) {
+				ShareNum sharenum = null;
+				if (subset.containsKey( tmpspec ) ) {
+					sharenum = subset.get( tmpspec );
+					if( !specset.containsKey( species ) ) specset.put(species, sharenum);
+					sharenum.numshare++;
+				} else {
+					sharenum = new ShareNum(1, sn++);
+					specset.put( species, sharenum );
+					subset.put( tmpspec, sharenum );
+				}
+			}
+		}
 	}
 	
 	private void jgiGene2KO(InputStreamReader inputStreamReader, Map<String, String> jgiGeneMap, Map<String, Gene> refmap) throws IOException {
