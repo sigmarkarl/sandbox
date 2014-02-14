@@ -7,6 +7,7 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -30,6 +31,7 @@ import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
@@ -86,7 +88,9 @@ public class GeneSorter {
 	final Color db = new Color(0,0,196);
 	final Color mg = Color.magenta;
 	final Color dm = new Color(196,0,196);
-	public void mynd(GeneSet geneset, final List<Gene> genes, final JTable sorting, String species, final Map<String,Contig> contigmap) throws IOException {
+	public void mynd(GeneSet geneset, final List<Gene> genes, final List<String> speclist, final JTable sorting, String species, final Map<String,Contig> contigmap) throws IOException {
+		final JCheckBox	collapsed = new JCheckBox("Collapsed");
+		
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -95,6 +99,7 @@ public class GeneSorter {
 		final JRadioButton	shareColorScheme = new JRadioButton("Sharing");
 		final JRadioButton	groupCoverageColorScheme = new JRadioButton("GroupCoverage");
 		
+		final JTable rowheader = new JTable();
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {			
 			//List<Tegeval> ltv = loadContigs( genes, species, contigs, contigmap );
@@ -102,7 +107,6 @@ public class GeneSorter {
 			
 			final int hey = genes.size(); // ltv.get(ltv.size()-1).stop/1000;
 			System.out.println(hey);
-			final JTable rowheader = new JTable();
 				
 			final JComponent c = new JComponent() {
 				Color altcol = Color.black;
@@ -208,7 +212,17 @@ public class GeneSorter {
 						lastgene = gene;
 						
 						if (gene.getSpecies() != null) {
-							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
+							if( collapsed.isSelected() ) {
+								for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
+									String spec = speclist.get(y);
+									if( gene.getSpecies().equals(spec) ) {
+										Tegeval tv = gene.tegeval;
+										//if( tv.cont != null && tv.cont.startsWith(contig)) {
+										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
+										//}
+									}
+								}
+							} else for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
 								String contig = (String) rowheader.getValueAt(y, 0);
 
 								int und = contig.indexOf("_");
@@ -305,26 +319,34 @@ public class GeneSorter {
 			rowheader.setModel(new TableModel() {
 				@Override
 				public int getRowCount() {
+					if( collapsed.isSelected() ) return speclist.size();
 					return contigs.size();
 				}
 
 				@Override
 				public int getColumnCount() {
-					return 3;
+					return collapsed.isSelected() ? 2 : 3;
 				}
 
 				@Override
 				public String getColumnName(int columnIndex) {
-					if (columnIndex == 1)
-						return "species";
-					else if (columnIndex == 2)
-						return "com";
-					return "contig";
+					if( collapsed.isSelected() ) {
+						if( columnIndex == 1 ) {
+							return "com";
+						}
+					} else {
+						if (columnIndex == 0)
+							return "contig";
+						else if (columnIndex == 2)
+							return "com";
+					}
+					return "species";
 				}
 
 				@Override
 				public Class<?> getColumnClass(int columnIndex) {
-					if (columnIndex == 2)
+					boolean c = collapsed.isSelected();
+					if (columnIndex == 2 && !c || (c && columnIndex == 1) )
 						return Integer.class;
 					return String.class;
 				}
@@ -336,18 +358,26 @@ public class GeneSorter {
 
 				@Override
 				public Object getValueAt(int rowIndex, int columnIndex) {
-					if (columnIndex == 2) {
-						Contig c = contigs.get(rowIndex);
-						//if (c.count > 0)
-						//	return (int) ((c.loc) / c.count);
-						return 0;
-					} else if (columnIndex == 1) {
-						Contig c = contigs.get(rowIndex);
-						String cname = c.getName();
-						int i = cname.indexOf('_');
-						return cname.substring(0, i);
+					boolean c = collapsed.isSelected();
+					if( c ) {
+						if (columnIndex == 1) {
+							return 0;
+						}
+						return speclist.get(rowIndex);
+					} else {
+						if (columnIndex == 2) {
+							Contig ctg = contigs.get(rowIndex);
+							//if (c.count > 0)
+							//	return (int) ((c.loc) / c.count);
+							return 0;
+						} else if (columnIndex == 1) {
+							Contig ctg = contigs.get(rowIndex);
+							String cname = ctg.getName();
+							int i = cname.indexOf('_');
+							return cname.substring(0, i);
+						}
+						return contigs.get(rowIndex).getName();
 					}
-					return contigs.get(rowIndex).getName();
 				}
 
 				@Override
@@ -401,6 +431,16 @@ public class GeneSorter {
 		toolbar.add( shareColorScheme );
 		toolbar.add( groupCoverageColorScheme );
 		
+		collapsed.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				TableModel model = rowheader.getModel();
+				rowheader.setModel( null );
+				rowheader.setModel( model );
+			}
+		});
+		toolbar.add( collapsed );
+		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
 		panel.add( toolbar, BorderLayout.NORTH );
@@ -448,7 +488,9 @@ public class GeneSorter {
 		return contigs;
 	}
 	
-	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<Gene> genelist, final JTable sorting, final Map<String,Contig> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
+	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<String> speclist, final List<Gene> genelist, final JTable sorting, final Map<String,Contig> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
+		final JCheckBox	collapsed = new JCheckBox("Collapsed");
+		
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
 		final JRadioButton	gcColorScheme = new JRadioButton("GC");
 		final JRadioButton	locprevColorScheme = new JRadioButton("Loc");
@@ -456,6 +498,8 @@ public class GeneSorter {
 		final JRadioButton	lenColorScheme = new JRadioButton("Len");
 		final JRadioButton	shareColorScheme = new JRadioButton("Sharing");
 		final JRadioButton	freqColorScheme = new JRadioButton("Freq");
+		
+		final JTable rowheader = new JTable();
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {
 			final List<Contig> contigs = loadContigs( geneGroups, contigmap );
@@ -465,7 +509,6 @@ public class GeneSorter {
 			final boolean allpos = check.isSelected();
 			
 			final int hey = sorting.getModel() == geneset.groupModel ? geneGroups.size() : genelist.size(); // ltv.get(ltv.size()-1).stop/1000;
-			final JTable rowheader = new JTable();
 			final JComponent c = new JComponent() {
 				// Color dg = Color.green.darker();
 
@@ -629,7 +672,19 @@ public class GeneSorter {
 							}
 	
 							//if (gene.species != null) {
-							for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
+							if( collapsed.isSelected() ) {
+								for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
+									if( y < speclist.size() ) {
+										String spec = speclist.get(y);
+										if( genegroup.getSpecies().contains(spec) ) {
+											//Tegeval tv = gene.tegeval;
+											//if( tv.cont != null && tv.cont.startsWith(contig)) {
+											g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
+											//}
+										}
+									}
+								}
+							} else for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
 								if( y < rowheader.getRowCount() ) {
 									String contig = (String)rowheader.getValueAt(y, 0);
 	
@@ -785,29 +840,38 @@ public class GeneSorter {
 			scrollpane.getViewport().setBackground(Color.white);
 			JScrollPane rowheaderscroll = new JScrollPane();
 			rowheader.setAutoCreateRowSorter(true);
+			
 			rowheader.setModel(new TableModel() {
 				@Override
 				public int getRowCount() {
+					if( collapsed.isSelected() ) return speclist.size();
 					return contigs.size();
 				}
 
 				@Override
 				public int getColumnCount() {
-					return 3;
+					return collapsed.isSelected() ? 2 : 3;
 				}
 
 				@Override
 				public String getColumnName(int columnIndex) {
-					if (columnIndex == 1)
-						return "species";
-					else if (columnIndex == 2)
-						return "com";
-					return "contig";
+					if( collapsed.isSelected() ) {
+						if( columnIndex == 1 ) {
+							return "com";
+						}
+					} else {
+						if (columnIndex == 0)
+							return "contig";
+						else if (columnIndex == 2)
+							return "com";
+					}
+					return "species";
 				}
 
 				@Override
 				public Class<?> getColumnClass(int columnIndex) {
-					if (columnIndex == 2)
+					boolean c = collapsed.isSelected();
+					if (columnIndex == 2 && !c || (c && columnIndex == 1) )
 						return Integer.class;
 					return String.class;
 				}
@@ -819,17 +883,25 @@ public class GeneSorter {
 
 				@Override
 				public Object getValueAt(int rowIndex, int columnIndex) {
-					Contig c = contigs.get(rowIndex);
-					if (columnIndex == 2) {
-						//if (c.count > 0)
-						//	return (int) ((c.loc) / c.count);
-						return c.length();
-					} else if (columnIndex == 1) {
-						//String cname = c.getName();
-						//int i = cname.indexOf('_');
-						return c.getSpec();
+					boolean c = collapsed.isSelected();
+					if( c ) {
+						if (columnIndex == 1) {
+							return 0;
+						}
+						return speclist.get(rowIndex);
+					} else {
+						Contig ctg = contigs.get(rowIndex);
+						if (columnIndex == 2) {
+							//if (c.count > 0)
+							//	return (int) ((c.loc) / c.count);
+							return ctg.length();
+						} else if (columnIndex == 1) {
+							//String cname = c.getName();
+							//int i = cname.indexOf('_');
+							return ctg.getSpec();
+						}
+						return ctg.getName();
 					}
-					return c.getName();
 				}
 
 				@Override
@@ -882,6 +954,22 @@ public class GeneSorter {
 		toolbar.add( lenColorScheme );
 		toolbar.add( shareColorScheme );
 		toolbar.add( freqColorScheme );
+		
+		collapsed.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				TableModel model = rowheader.getModel();
+				/*rowheader.setModel( null );
+				rowheader.setModel( model );
+				
+				TableColumnModel columnModel = rowheader.getColumnModel();
+				rowheader.setColumnModel( null );
+				rowheader.setColumnModel(columnModel);*/
+				
+				rowheader.tableChanged( new TableModelEvent( model ) );
+			}
+		});
+		toolbar.add( collapsed );
 		
 		JComponent panel = new JComponent() {};
 		panel.setLayout( new BorderLayout() );
