@@ -291,7 +291,7 @@ public class GBK2AminoFasta {
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.WRITE);
+				Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.CREATE);
 				urifile.put( uri, fw );
 				
 				out = fw;
@@ -369,17 +369,14 @@ public class GBK2AminoFasta {
 			//if( c++ > 10 ) break;
 		}
 		
-		try {
-			File f = new File( new URI(path+".namemap") );
-			FileWriter mfw = new FileWriter( f );
-			for( String a : nameMap.keySet() ) {
-				String gene = nameMap.get(a);
-				mfw.write( a + "\t" + gene + "\n" );
-			}
-			mfw.close();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+		Path p = path.getParent().resolve(path.getFileName()+".namemap"); //new File( new URI(path+".namemap") );
+		//FileWriter mfw = new FileWriter( f );
+		Writer mfw = Files.newBufferedWriter( p );
+		for( String a : nameMap.keySet() ) {
+			String gene = nameMap.get(a);
+			mfw.write( a + "\t" + gene + "\n" );
 		}
+		mfw.close();
 		
 		for( Path uri : urifile.keySet() ) {
 			Writer w = urifile.get( uri );
