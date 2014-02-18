@@ -11,6 +11,9 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author sigmar
@@ -19,10 +22,17 @@ public class DistannFX extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        SwingNode swing = new SwingNode();
+        final SwingNode swing = new SwingNode();
 
         GeneSet gs = new GeneSet();
-        swing.setContent(null);
+        final JPanel panel = new JPanel();
+        gs.init( panel );
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+            	swing.setContent( panel );
+            }
+        });
         StackPane root = new StackPane();
         root.getChildren().add(swing);
 
