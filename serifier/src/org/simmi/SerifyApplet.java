@@ -1652,6 +1652,15 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	FileSystem fs = null;
+	/*
+	ACDK	Clostridium_sp-7-2-43FAA
+	AWST	Clostridium_sp-KLE-1755
+	AVKD	Clostridium_difficile-DA00256
+	ACIO	Clostridium_hathewayi-DSM-13479
+	
+	-evalue 0.00001 -num_alignments 1 -num_descriptions 1
+	*/
+	
 	public void init( final Container c ) {
 		nrun.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -1784,6 +1793,32 @@ public class SerifyApplet extends JApplet {
 				} else {
 					cd = fs.getPath("/");
 				}
+					
+					/*final JCheckBox	whole = new JCheckBox("whole");
+					whole.setSelected( true );
+					final JCheckBox	draft = new JCheckBox("draft");
+					draft.setSelected( true );
+					final JCheckBox	phage = new JCheckBox("phage");
+					phage.setSelected( true );
+					final JTextArea ta = new JTextArea();
+					JScrollPane	sp = new JScrollPane( ta );
+					Dimension dim = new Dimension(400,300);
+					sp.setPreferredSize( dim );
+					sp.setSize( dim );
+					JOptionPane.showMessageDialog(c, new Object[] {whole, draft, phage,"Filter term",sp});
+					final Map<String,String> searchmap = new HashMap<String,String>();
+					String searchstr = ta.getText();
+					String[] split = searchstr.split("\n");
+					for( String strsearch : split ) {
+						String[] subsplit = strsearch.split("\t");
+						
+						if( subsplit.length > 1 ) searchmap.put( subsplit[0], subsplit[1] );
+						else searchmap.put( strsearch, null );
+					}
+					
+					final String basesave =  cd.getAbsolutePath();
+					final Path uripath = cd.toPath();*/
+					//final String replace = subsplit.length > 1 && subsplit[1].length() > 0 ? subsplit[1] : null;
 					
 				final JCheckBox	whole = new JCheckBox("whole");
 				whole.setSelected( true );
