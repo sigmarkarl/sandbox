@@ -5317,9 +5317,10 @@ public class GeneSet extends JApplet {
 
 		try {
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
-			FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
-			GZIPInputStream gi = new GZIPInputStream( fi );
-			funcMappingStatic( new InputStreamReader( gi ) );
+			
+	//		FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
+	//		GZIPInputStream gi = new GZIPInputStream( fi );
+	//		funcMappingStatic( new InputStreamReader( gi ) );
 			
 			/*Map<String,String>	sp2ko = new HashMap<String,String>();
 			FileReader fr = new FileReader("/vg454flx/sp2ko.txt");
@@ -7839,7 +7840,202 @@ public class GeneSet extends JApplet {
 
 		JComponent ttopcom = new JComponent() {};
 		ttopcom.setLayout(new FlowLayout());
-				
+
+/*				frame.setVisible( true );
+			}
+		};
+		AbstractAction	sharenumaction = new AbstractAction("Update share numbers") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String> specs = getSelspec(GeneSet.this, specList, null);
+				updateShareNum(specs);
+			}
+		};
+		AbstractAction	importgenesymbolaction = new AbstractAction("Import gene symbols") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					try {
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
+						Path path = zipfile.toPath();
+						String uristr = "jar:" + path.toUri();
+						zipuri = URI.create( uristr /*.replace("file://", "file:")* );
+						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+						
+						Path nf = zipfilesystem.getPath("/smap_short.txt");
+						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+						
+						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+						uni2symbol(new InputStreamReader(is), bw, unimap);
+						
+						bw.close();
+						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+						zipfilesystem.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		
+		AbstractAction	functionmappingaction = new AbstractAction("Function mapping") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					try {
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
+						Path path = zipfile.toPath();
+						String uristr = "jar:" + path.toUri();
+						zipuri = URI.create( uristr /*.replace("file://", "file:")* );
+						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+						
+						Path nf = zipfilesystem.getPath("/sp2go_short.txt");
+						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+						
+						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+						if( unimap != null ) unimap.clear();
+						//unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+						funcMappingUni( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), unimap, null );
+						
+						bw.close();
+						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+						zipfilesystem.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		AbstractAction	importidmappingaction = new AbstractAction("Id mapping") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					try {
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
+						Path path = zipfile.toPath();
+						String uristr = "jar:" + path.toUri();
+						zipuri = URI.create( uristr /*.replace("file://", "file:")/ );
+						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+						
+						Path nf = zipfilesystem.getPath("/idmapping_short.dat");
+						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+						
+						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+						if( unimap != null ) unimap.clear();
+						unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+						
+						bw.close();
+						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+						zipfilesystem.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		
+		final JCheckBoxMenuItem checkbox = new JCheckBoxMenuItem();
+		checkbox.setAction(new AbstractAction("Sort by location") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Tegeval.locsort = checkbox.isSelected();
+			}
+		});
+		AbstractAction saveselAction = new AbstractAction("Save selection") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = table.getSelectedRows();
+				if( rr.length > 0 ) {
+					String val = Integer.toString( table.convertRowIndexToModel(rr[0]) );
+					for( int i = 1; i < rr.length; i++ ) {
+						val += ","+table.convertRowIndexToModel(rr[i]);
+					}
+					String selname = JOptionPane.showInputDialog("Selection name");
+					if( comp instanceof Applet ) {
+						try {
+							((GeneSet)comp).saveSel( selname, val);
+						} catch (Exception e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			}
+		};
+		
+		JMenuBar	menubar = new JMenuBar();
+		JMenu		menu = new JMenu("Functions");
+		menu.add( importidmappingaction );
+		menu.add( functionmappingaction );
+		menu.add( importgenesymbolaction );
+		menu.add( fetchaction );
+		menu.add( blast2action );
+		menu.add( sharenumaction );
+		menu.addSeparator();
+		menu.add( checkbox );
+		menu.add( saveselAction );
+		menu.addSeparator();
+		menu.add( genomestataction );
+		menu.add( selectsharingaction );
+		menu.add( shuffletreeaction );
+		menu.add( presabsaction );
+		menu.add( freqdistaction );
+		menu.add( gcpaction );
+		menu.add( matrixaction );
+		menu.add( pancoreaction );
+		menu.add( blastaction );
+		menu.add( koexportaction );
+		menu.add( genomesizeaction );
+		menu.add( gcaction );
+		menu.add( gcskewaction );
+		menu.add( mltreemapaction );
+		menu.add( sevenaction );
+		menu.add( cogaction );
+		menu.add( genexyplotaction );
+		menu.add( compareplotaction );
+		menu.add( syntenygradientaction );
+		menu.add( codregaction );
+		menu.add( fetchcoreaction );
+		menu.add( loadcontiggraphaction );
+		menu.add( selectflankingaction );
+		menu.add( showflankingaction );
+		menu.add( showcontigsaction );
+		menu.add( showunresolved );
+		menu.add( genephyl );
+		
+		menubar.add( menu );
+		ttopcom.add( menubar );
+		
+		JMenu		view = new JMenu("View");
+		menubar.add( view );
+		
+		gb = new JRadioButtonMenuItem( new AbstractAction("Genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				table.setModel( defaultModel );
+			}
+		});
+		view.add( gb );
+		ggb = new JRadioButtonMenuItem( new AbstractAction("Gene groups") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				table.setModel( groupModel );
+			}
+			
+		});
+		ButtonGroup	bg = new ButtonGroup();
+		bg.add( gb );
+		bg.add( ggb );
+		
+		ggb.setSelected( true );
+		
+		view.add( ggb );*/
+		
 		//ttopcom.add( shuffletreebutton );
 		//ttopcom.add( presabsbutton );
 		//ttopcom.add(freqdistbutton);
@@ -11447,6 +11643,9 @@ public class GeneSet extends JApplet {
 			String name = "tRNA-"+split[4];
 			int end = cont.indexOf("_contig");
 			if( end == -1 ) end = cont.indexOf("_scaffold");
+			if( end == -1 ) {
+				System.err.println();
+			}
 			String spec = cont.substring(0, end);
 			int start = Integer.parseInt( split[2] );
 			int stop = Integer.parseInt( split[3] );
@@ -13215,7 +13414,7 @@ public class GeneSet extends JApplet {
 			}
 		});
 		view.addSeparator();
-		ActionCollection.addAll( view, specList, clusterMap, GeneSet.this, speccontigMap, genelist, table, allgenegroups, comp, cs );
+		ActionCollection.addAll( view, specList, clusterMap, GeneSet.this, speccontigMap, genelist, table, allgenegroups, comp, cs, contigmap );
 		
 		JMenu		help = new JMenu("Help");
 		help.add( new AbstractAction("About") {
