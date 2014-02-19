@@ -1,9 +1,17 @@
 package org.simmi;
 
+import java.awt.Color;
+import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -19,6 +27,7 @@ import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -286,9 +295,13 @@ public class Frystilager extends JApplet {
 		}*/
 	}
 	
+	public void init() {
+		initGUI( this );
+	}
+	
 	List<Lager>			lagerlist = new ArrayList<Lager>();
 	Map<Long,Lager>		lagermap = new HashMap<Long,Lager>();
-	public void init() {
+	public void initGUI( Container cont ) {
 		//boolean valid = false;
 		try {
 			connect();
@@ -375,6 +388,54 @@ public class Frystilager extends JApplet {
 		table.setModel( model );
 		scrollpane = new JScrollPane( table );
 		
-		this.add( scrollpane );
+		cont.add( scrollpane );
+	}
+	
+	public static void main(String[] args) {
+		String userhome = System.getProperty("user.home");
+		System.setProperty("java.library.path", userhome);
+		
+		JFrame	frame = new JFrame();
+		frame.setSize(800, 600);
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		frame.getContentPane().setBackground( Color.white );
+		
+		Frystilager flager = new Frystilager();
+		
+		try {
+			Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
+			fieldSysPath.setAccessible( true );
+			fieldSysPath.set( null, null );
+			
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			byte[] bb = new byte[2048];
+			InputStream is = System.getProperty("sun.arch.data.model").contains("64") ? flager.getClass().getResourceAsStream("/windows_x64/sqljdbc_auth.dll") : flager.getClass().getResourceAsStream("/windows_x86/sqljdbc_auth.dll");
+			int r = is.read(bb);
+			while( r > 0 ) {
+				baos.write(bb, 0, r);
+				r = is.read( bb );
+			}
+			is.close();
+			Path path = Paths.get( userhome );
+			Path subpath = path.resolve("sqljdbc_auth.dll");
+			Files.write( subpath, baos.toByteArray(), StandardOpenOption.CREATE );
+			String strpath = subpath.toAbsolutePath().toString();
+			System.err.println( "writing " + strpath );
+			System.load( strpath );
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		
+		flager.initGUI( frame );
+		
+		frame.setVisible( true );
 	}
 }
