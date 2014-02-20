@@ -12,8 +12,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -259,55 +262,107 @@ public class NativeRun {
 			@Override
 			public void run() {
 				try {
+					Path input = null;
+					Path output = null;
+					Path workingdir = null;
 					for( Object commands : commandsList ) {
-						boolean blist = commands instanceof List;
-						ProcessBuilder pb = new ProcessBuilder( blist ? (List)commands : commandsList );
-						pb.redirectErrorStream( true );
-						final Process p = pb.start();
-						dialog.addWindowListener( new WindowListener() {
+						if( commands instanceof Path[] ) {
+							Path[] pp = (Path[])commands;
+							input = pp[0];
+							output = pp[1];
+							workingdir = pp[2];
+						} else {
+							boolean blist = commands instanceof List;
+							List<String> lcmd = blist ? (List)commands : commandsList;
+							for( String s : lcmd ) {
+								System.err.println( s );
+							}
+							ProcessBuilder pb = new ProcessBuilder( lcmd );
+							if( workingdir != null ) {
+								System.err.println( "blblblbl " + workingdir.toFile() );
+								pb.directory( workingdir.toFile() );
+							}
+							pb.redirectErrorStream( true );
+							final Process p = pb.start();
+							dialog.addWindowListener( new WindowListener() {
+								
+								@Override
+								public void windowOpened(WindowEvent e) {}
+								
+								@Override
+								public void windowIconified(WindowEvent e) {}
+								
+								@Override
+								public void windowDeiconified(WindowEvent e) {}
+								
+								@Override
+								public void windowDeactivated(WindowEvent e) {}
+								
+								@Override
+								public void windowClosing(WindowEvent e) {}
+								
+								@Override
+								public void windowClosed(WindowEvent e) {
+									if( p != null ) {
+										interupted = true;
+										p.destroy();
+										//tt.interrupt();
+									}
+								}
+								
+								@Override
+								public void windowActivated(WindowEvent e) {}
+							});
+							dialog.setVisible( true );
 							
-							@Override
-							public void windowOpened(WindowEvent e) {}
+							if( input != null ) {
+								final Path inp = input;
+								new Thread() {
+									public void run() {
+										try {
+											OutputStream os = p.getOutputStream();
+											//os.write( "simmi".getBytes() );
+											Files.copy(inp, os);
+											os.close();
+										} catch( Exception e ) {
+											e.printStackTrace();
+										}
+									}
+								}.start();
+							}
 							
-							@Override
-							public void windowIconified(WindowEvent e) {}
-							
-							@Override
-							public void windowDeiconified(WindowEvent e) {}
-							
-							@Override
-							public void windowDeactivated(WindowEvent e) {}
-							
-							@Override
-							public void windowClosing(WindowEvent e) {}
-							
-							@Override
-							public void windowClosed(WindowEvent e) {
-								if( p != null ) {
-									interupted = true;
-									p.destroy();
-									//tt.interrupt();
+							if( output != null ) {
+								try {
+									InputStream is = p.getInputStream();
+									Files.copy(is, output, StandardCopyOption.REPLACE_EXISTING);
+									is.close();
+								} catch( Exception e ) {
+									e.printStackTrace();
+								}
+							} else {
+								try {
+									InputStream is = p.getInputStream();
+									BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+									String line = br.readLine();
+									while( line != null ) {
+										String str = line + "\n";
+										ta.append( str );
+										
+										line = br.readLine();
+									}
+									br.close();
+									is.close();
+								} catch( Exception e ) {
+									e.printStackTrace();
 								}
 							}
 							
-							@Override
-							public void windowActivated(WindowEvent e) {}
-						});
-						dialog.setVisible( true );
-						
-						InputStream is = p.getInputStream();
-						BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-						String line = br.readLine();
-						while( line != null ) {
-							String str = line + "\n";
-							ta.append( str );
+							input = null;
+							output = null;
+							workingdir = null;
 							
-							line = br.readLine();
+							if( !blist ) break;
 						}
-						br.close();
-						is.close();
-						
-						if( !blist ) break;
 					}
 					
 					/*System.err.println("hereok");

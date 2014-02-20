@@ -45,10 +45,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.file.CopyOption;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -490,11 +492,11 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
-	public static void blastRun( NativeRun nrun, String dbPath, String dbType, String extrapar, JTable table ) throws IOException {
+	public static void blastRun( NativeRun nrun, Path dbPath, String dbType, String extrapar, JTable table ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		File dir = new File( userhome );
 		
-		System.out.println("run blast in applet");
+		/*System.out.println("run blast in applet");
 		File blastn;
 		File blastp;
 		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
@@ -506,95 +508,109 @@ public class SerifyApplet extends JApplet {
 			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
 			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
 		}
-		if( blastx.exists() ) {
-			String dbPathFixed = nrun.fixPath( dbPath );			
-			JFileChooser fc = new JFileChooser();
-			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-				File selectedfile = fc.getSelectedFile();
-				if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+		if( blastx.exists() ) {*/
+		//String dbPathFixed = nrun.fixPath( dbPath );		
+		JFileChooser fc = new JFileChooser();
+		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+		if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+			File selectedfile = fc.getSelectedFile();
+			if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+		
+			List<Object>	lscmd = new ArrayList<Object>();
+			//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+			//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
+			//if( makeblastdb.exists() ) {
+				//nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), null, null );
 			
-				List<List<String>>	lscmd = new ArrayList<List<String>>();
-				File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
-				if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
-				if( makeblastdb.exists() ) {
-					String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", dbPathFixed, "-dbtype", dbType };
-					//nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), null, null );
-					lscmd.add( Arrays.asList( cmds ) );
-				}
+			//Path dbPathFixed = dbPath.getParent().resolve(dbPath.getFileName().toString()+".blastout");
+			
+			
+			String[] cmds = new String[] { "/usr/local/ncbi/blast/bin/makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			lscmd.add( new Path[] { dbPath, null, selectedfile.toPath() } );
+			lscmd.add( Arrays.asList( cmds ) );
+			
+			
+			//}
+			
+			int[] rr = table.getSelectedRows();
+			for( int r : rr ) {
+				Path	path = (Path)table.getValueAt( r, 3 );
+				String type = (String)table.getValueAt( r, 2 );
 				
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					String path = (String)table.getValueAt( r, 3 );
-					String type = (String)table.getValueAt( r, 2 );
-					
-					//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
-					File blastFile = dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
-					
-					/*URL url = new URL( path );
-					String file = url.getFile();
-					String[] split = file.split("/");
-					String fname = split[ split.length-1 ];
-					split = fname.split("\\.");
-					final String title = split[0];
-					
-					final File infile = new File( dir, "tmp_"+fname );
-					
-					FileOutputStream fos = new FileOutputStream( infile );
-					InputStream is = url.openStream();
-					
-					byte[] bb = new byte[100000];
+				//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
+				String blastFile = dbType.equals("prot") ? type.equals("prot") ? "blastp" : "blastx" : "blastn";
+				
+				/*URL url = new URL( path );
+				String file = url.getFile();
+				String[] split = file.split("/");
+				String fname = split[ split.length-1 ];
+				split = fname.split("\\.");
+				final String title = split[0];
+				
+				final File infile = new File( dir, "tmp_"+fname );
+				
+				FileOutputStream fos = new FileOutputStream( infile );
+				InputStream is = url.openStream();
+				
+				byte[] bb = new byte[100000];
+				r = is.read(bb);
+				while( r > 0 ) {
+					fos.write(bb, 0, r);
 					r = is.read(bb);
-					while( r > 0 ) {
-						fos.write(bb, 0, r);
-						r = is.read(bb);
-					}
-					is.close();
-					fos.close();*/
-			
-					Path p = Paths.get( URI.create(path) );
-					
-					String queryPathFixed = nrun.fixPath( p.toAbsolutePath().toString() ).trim();
-					final String outPathFixed = nrun.fixPath( new File( selectedfile, p.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
-					
-					int procs = Runtime.getRuntime().availableProcessors();
-					
-					List<String>	lcmd = new ArrayList<String>();
-					String[] cmds = { blastFile.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-num_threads", Integer.toString(procs) };
-					String[] exts = extrapar.trim().split("[\t ]+");
-					
-					String[] nxst = { "-out", outPathFixed };
-					lcmd.addAll( Arrays.asList(cmds) );
-					if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
-					lcmd.addAll( Arrays.asList(nxst) );
-					
-					lscmd.add( lcmd );
 				}
+				is.close();
+				fos.close();*/
+		
+				//Path p = Paths.get( URI.create(path) );
 				
-				final String start = new Date( System.currentTimeMillis() ).toString();								
-				final Object[] cont = new Object[3];
-				Runnable run = new Runnable() {
-					public void run() {										
-						//infile.delete();
-						//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
-						if( cont[0] != null ) {
-							// ok JSObject js = JSObject.getWindow( SerifyApplet.this );
-							//  String machineinfo = getMachine();
-							//  String[] split = machineinfo.split("\t");
-							//  js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
-						}
-					}
-				};
-				/*for( String cmd : lcmd ) {
-					System.err.println(cmd);
-				}
-				Thread.sleep(10000);*/
-				nrun.runProcessBuilder( "Performing blast", lscmd, run, cont );
+				//String queryPathFixed = nrun.fixPath( path.toAbsolutePath().toString() ).trim();
+				
+				//InputStream input = Files.newInputStream(path, StandardOpenOption.READ);
+				
+				//Path p = selectedfile.toPath();
+				Path res = selectedfile.toPath().resolve(path.getFileName().toString()+".blastout");
+				//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
+				//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
+				
+				int procs = Runtime.getRuntime().availableProcessors();
+				
+				List<String>	lcmd = new ArrayList<String>();
+				String[] bcmds = { "/usr/local/ncbi/blast/bin/"+blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				String[] exts = extrapar.trim().split("[\t ]+");
+				
+				//String[] nxst = { "-out", outPathFixed };
+				lcmd.addAll( Arrays.asList(bcmds) );
+				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+				//lcmd.addAll( Arrays.asList(nxst) );
+				
+				lscmd.add( new Path[] {path, res, selectedfile.toPath()} );
+				lscmd.add( lcmd );
 			}
-		} else System.err.println( "no blast installed" );
+			
+			final String start = new Date( System.currentTimeMillis() ).toString();								
+			final Object[] cont = new Object[3];
+			Runnable run = new Runnable() {
+				public void run() {										
+					//infile.delete();
+					//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
+					if( cont[0] != null ) {
+						// ok JSObject js = JSObject.getWindow( SerifyApplet.this );
+						//  String machineinfo = getMachine();
+						//  String[] split = machineinfo.split("\t");
+						//  js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
+					}
+				}
+			};
+			/*for( String cmd : lcmd ) {
+				System.err.println(cmd);
+			}
+			Thread.sleep(10000);*/
+			nrun.runProcessBuilder( "Performing blast", lscmd, run, cont );
+		}
+		//} else System.err.println( "no blast installed" );
 	}
 	
-	public void runBlastInApplet( final String extrapar, final String dbPath, final String dbType ) {
+	public void runBlastInApplet( final String extrapar, final Path dbPath, final String dbType ) {
 		AccessController.doPrivileged( new PrivilegedAction<Object>() {
 			@Override
 			public Object run() {
@@ -2206,19 +2222,19 @@ public class SerifyApplet extends JApplet {
 				JFileChooser	filechooser = new JFileChooser();
 				filechooser.setMultiSelectionEnabled( true );
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-					File cd = filechooser.getCurrentDirectory();
-					String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
+					//File cd = filechooser.getCurrentDirectory();
+					//String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
 					
-					if( path != null ) {
-						try {
-							for( File f : filechooser.getSelectedFiles() ) {
-								addSequences( f.getName(), f.toPath(), null );
-							}
-						} catch (URISyntaxException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
+					try {
+						for( File f : filechooser.getSelectedFiles() ) {
+							Path dest = fs.getPath(f.getName());
+							Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
+							addSequences( f.getName(), dest, null );
 						}
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
 					}
 				}
 			}
@@ -2486,23 +2502,19 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				boolean success = false;
-				try {
+				/*try {
 					String userhome = System.getProperty("user.home");
 					File dir = new File( userhome );
 					
-					nrun.checkInstall( dir );
+					//nrun.checkInstall( dir );
 						
-					JSObject js = JSObject.getWindow( SerifyApplet.this );
-					getParameters( js );
+					//JSObject js = JSObject.getWindow( SerifyApplet.this );
+					//getParameters( js );
 					success = true;
 					//infile.delete();
 				} catch (NoSuchMethodError e0) {
 					e0.printStackTrace();
-				} catch (MalformedURLException e1) {
-					e1.printStackTrace();
-				} catch (IOException e2) {
-					e2.printStackTrace();
-				}
+				}*/
 				if( !success ) {
 					TableModel model = new TableModel() {
 						@Override
@@ -2543,7 +2555,6 @@ public class SerifyApplet extends JApplet {
 
 						@Override
 						public void removeTableModelListener(TableModelListener l) {}
-						
 					};
 					JTable	table = new JTable( model );
 					JScrollPane pane = new JScrollPane( table );
@@ -2557,16 +2568,14 @@ public class SerifyApplet extends JApplet {
 					int i = table.getSelectedRow();
 					Sequences seqs = serifier.getSequencesList().get(i);
 					
-					String filepath = seqs.getPath().toAbsolutePath().toString();
+					Path filepath = seqs.getPath();
 					runBlastInApplet( tf.getText(), filepath, seqs.getType() ); //db.getText().contains(".p") ? "prot" : "nucl" );
 				}
 			}
 		});
 		popup.add( new AbstractAction("tBlast") {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-			}
+			public void actionPerformed(ActionEvent e) {}
 		});
 		popup.addSeparator();
 		popup.add( new AbstractAction("Genbank from blast") {
@@ -3071,50 +3080,58 @@ public class SerifyApplet extends JApplet {
 		popup.add( new AbstractAction("Append") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					//if( !f.isDirectory() ) f = f.getParentFile();
+				Path dest = null;
+				if( fs == null ) {
+					JFileChooser fc = new JFileChooser();
+					//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+						File f = fc.getSelectedFile();
+						dest = f.toPath();
+						//if( !f.isDirectory() ) f = f.getParentFile();
+					}
+				} else dest = fs.getPath("/joined.aa");
 					
-					List<Sequences> lseqs = new ArrayList<Sequences>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						int rear = table.convertRowIndexToModel( r );
-						if( rear >= 0 ) {
-							Sequences s = getSequences( rear );
-							lseqs.add( s );
-						}
+				List<Sequences> lseqs = new ArrayList<Sequences>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int rear = table.convertRowIndexToModel( r );
+					if( rear >= 0 ) {
+						Sequences s = getSequences( rear );
+						lseqs.add( s );
 					}
-					List<Sequences> retlseqs = serifier.join( f, lseqs, true, null, false );
-					for( Sequences seqs : retlseqs ) {
-						addSequences( seqs );
-					}
+				}
+				List<Sequences> retlseqs = serifier.join( dest, lseqs, true, null, false );
+				for( Sequences seqs : retlseqs ) {
+					addSequences( seqs );
 				}
 			}
 		});
 		popup.add( new AbstractAction("Join") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					//if( !f.isDirectory() ) f = f.getParentFile();
+				Path dest = null;
+				if( fs == null ) {
+					JFileChooser fc = new JFileChooser();
+					//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+						File f = fc.getSelectedFile();
+						dest = f.toPath();
+						//if( !f.isDirectory() ) f = f.getParentFile();
+					}
+				} else dest = fs.getPath("/joined.aa");
 					
 					List<Sequences> lseqs = new ArrayList<Sequences>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						int rear = table.convertRowIndexToModel( r );
-						if( rear >= 0 ) {
-							Sequences s = getSequences( rear );
-							lseqs.add( s );
-						}
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int rear = table.convertRowIndexToModel( r );
+					if( rear >= 0 ) {
+						Sequences s = getSequences( rear );
+						lseqs.add( s );
 					}
-					List<Sequences> retlseqs = serifier.join( f, lseqs, true, null, true );
-					for( Sequences seqs : retlseqs ) {
-						addSequences( seqs );
-					}
+				}
+				List<Sequences> retlseqs = serifier.join( dest, lseqs, true, null, true );
+				for( Sequences seqs : retlseqs ) {
+					addSequences( seqs );
 				}
 			}
 		});
