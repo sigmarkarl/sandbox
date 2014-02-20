@@ -95,7 +95,10 @@ import org.simmi.unsigned.JavaFasta;
 import flobb.ChatServer;
 
 public class ActionCollection {
-	public static void addAll( JMenu menu, final List<String> specList, final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, final List<Gene> genelist, final JTable table, final List<GeneGroup> allgenegroups, final Container comp, final ChatServer cs, final Map<String,Contig> contigmap ) {
+	public static void addAll( JMenu menu, final List<String> specList, 
+			final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, 
+			final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, 
+			final JTable table, final Container comp, final ChatServer cs ) {
 		AbstractAction matrixaction = new AbstractAction("Relation matrix") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -290,7 +293,7 @@ public class ActionCollection {
 		AbstractAction genexyplotaction = new AbstractAction("Gene XY plot") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new XYPlot().xyPlot( geneset, comp, genelist, clusterMap );
+				new XYPlot().xyPlot( geneset, comp, geneset.genelist, clusterMap );
 			}
 		};
 		
@@ -298,7 +301,7 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					new GeneCompare().comparePlot( geneset, comp, genelist, clusterMap );
+					new GeneCompare().comparePlot( geneset, comp, geneset.genelist, clusterMap );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -455,7 +458,7 @@ public class ActionCollection {
 				
 				double min = Double.MAX_VALUE;
 				double max = 0.0;
-				for( GeneGroup gg : allgenegroups ) {
+				for( GeneGroup gg : geneset.allgenegroups ) {
 					double val = gg.getAvgGCPerc();
 					if( val > 0.0 ) {
 						if( val > max ) max = val;
@@ -464,7 +467,7 @@ public class ActionCollection {
 				}
 				
 				double bil = max - min;
-				for( GeneGroup gg : allgenegroups ) {
+				for( GeneGroup gg : geneset.allgenegroups ) {
 					double val = gg.getAvgGCPerc();
 					
 					if( val > 0.0 ) {
@@ -1500,7 +1503,7 @@ public class ActionCollection {
 					specs.add( spec );
 				}
 				
-				for( GeneGroup gg : allgenegroups ) {
+				for( GeneGroup gg : geneset.allgenegroups ) {
 					if( blehbtn.isSelected() ) {
 						Set<String> ss = new HashSet<String>( gg.species.keySet() );
 						ss.removeAll( specs );
@@ -1901,7 +1904,7 @@ public class ActionCollection {
 					if( gibtn.isSelected() ) {
 						int i = table.convertRowIndexToModel(r);
 						if( i != -1 ) {
-							GeneGroup gg = allgenegroups.get(i);
+							GeneGroup gg = geneset.allgenegroups.get(i);
 							for( Gene g : gg.genes ) {
 								if( g.genid != null ) {
 									System.err.println( g.genid );
@@ -1917,7 +1920,7 @@ public class ActionCollection {
 					if( ecbtn.isSelected() ) {
 						int i = table.convertRowIndexToModel(r);
 						if( i != -1 ) {
-							GeneGroup gg = allgenegroups.get(i);
+							GeneGroup gg = geneset.allgenegroups.get(i);
 							for( Function f : gg.getFunctions() ) {
 								if( f.ec != null && f.ec.length() > 1 ) ids.add( "E"+f.ec );
 							}
@@ -2278,7 +2281,7 @@ public class ActionCollection {
 					int total = 0;
 					
 					if( contigs.isSelected() ) {
-						Contig ct = contigmap.get( spec );
+						Contig ct = geneset.contigmap.get( spec );
 						total = ct.length();
 						//len = ct.getGCCount();
 					} else {
@@ -2560,7 +2563,7 @@ public class ActionCollection {
 						Gene g = geneset.genemap.get(refid);
 						if( g != null ) {
 							GeneGroup gg = g.getGeneGroup();
-							int i = allgenegroups.indexOf( gg );
+							int i = geneset.allgenegroups.indexOf( gg );
 							int r = -1;
 							if( i != -1 ) r = table.convertRowIndexToView( i );
 							if( r != -1 ) table.addRowSelectionInterval( r, r );
@@ -2582,13 +2585,13 @@ public class ActionCollection {
 				mltreemap.add( "recA" );
 				mltreemap.add( "recG" );
 				
-				for( Gene g : genelist ) {
+				for( Gene g : geneset.genelist ) {
 					String koname = g.koname;
 					if( koname != null && koname.length() > 0 ) {
 						for( String gn : mltreemap ) {
 							if( koname.contains(gn) ) {
 								GeneGroup gg = g.getGeneGroup();
-								int i = allgenegroups.indexOf( gg );
+								int i = geneset.allgenegroups.indexOf( gg );
 								int r = -1;
 								if( i != -1 ) r = table.convertRowIndexToView( i );
 								if( r != -1 ) table.addRowSelectionInterval( r, r );
@@ -2619,7 +2622,7 @@ public class ActionCollection {
 					int total = 0;
 					
 					if( contigs.isSelected() ) {
-						Contig ct = contigmap.get( spec );
+						Contig ct = geneset.contigmap.get( spec );
 						total = ct.length();
 						len = ct.getGCCount();
 					} else {
@@ -2811,7 +2814,7 @@ public class ActionCollection {
 				int i = -1;
 				if( r != -1 ) i = table.convertRowIndexToModel( r );
 				if( i != -1 ) {
-					gg = allgenegroups.get( i );
+					gg = geneset.allgenegroups.get( i );
 				} else gg = null;
 				
 				TableModel model = new TableModel() {
@@ -3352,7 +3355,7 @@ public class ActionCollection {
 				//Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
 				//int[] rr = table.getSelectedRows();
 				List<GeneGroup>	includedGroups = new ArrayList<GeneGroup>();
-				for( GeneGroup genegroup : allgenegroups ) {
+				for( GeneGroup genegroup : geneset.allgenegroups ) {
 					//int cr = table.convertRowIndexToModel(r);
 					//Gene gg = genelist.get(cr);
 					if( genegroup.isSingluar() && genegroup.getSpecies().containsAll(selspec) ) {
@@ -3512,7 +3515,7 @@ public class ActionCollection {
 						for( Corp c : Corp.corpList ) {
 							if( c.connections.size() > 1 && c.backconnections.size() > 1 ) {
 								System.err.println( c.getName() );
-								System.err.println( "cm " + contigmap.size() );
+								System.err.println( "cm " + geneset.contigmap.size() );
 							}
 						}
 						
@@ -3537,8 +3540,8 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Set<GeneGroup>	ggset = new HashSet<GeneGroup>();
-				for( String str : contigmap.keySet() ) {
-					Contig c = contigmap.get( str );
+				for( String str : geneset.contigmap.keySet() ) {
+					Contig c = geneset.contigmap.get( str );
 					
 					if( c != null && c.tlist != null && c.tlist.size() > 0 ) {
 						ggset.add( c.tlist.get( 0 ).getGene().getGeneGroup() );
@@ -3547,7 +3550,7 @@ public class ActionCollection {
 				}
 				
 				for( GeneGroup gg : ggset ) {
-					int i = allgenegroups.indexOf( gg );
+					int i = geneset.allgenegroups.indexOf( gg );
 					int r = -1;
 					if( i != -1 ) r = table.convertRowIndexToView( i );
 					if( r != -1 ) table.addRowSelectionInterval( r, r );
@@ -3879,7 +3882,7 @@ public class ActionCollection {
 				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 				jf.initGui(frame);
 				
-				for( GeneGroup gg : allgenegroups ) {
+				for( GeneGroup gg : geneset.allgenegroups ) {
 					String commonName = gg.getCommonName();
 					if( commonName != null && (commonName.contains("contig") || commonName.contains("scaffold")) ) {
 						Tegeval tv = gg.getLongestSequence();
@@ -3917,7 +3920,7 @@ public class ActionCollection {
 					Arrays.fill( mat, 0.0 );
 					
 					int selr = table.convertRowIndexToModel( rr[0] );
-					GeneGroup gg = allgenegroups.get(selr);
+					GeneGroup gg = geneset.allgenegroups.get(selr);
 					List<String>	speclist = new ArrayList<String>( gg.species.keySet() );
 					
 					int samplesize = (speclist.size()-1)*(speclist.size())/2;
@@ -3927,7 +3930,7 @@ public class ActionCollection {
 					names = new String[ rr.length ];
 					for( int k = 0; k < rr.length; k++ ) {
 						int i = table.convertRowIndexToModel( rr[k] );
-						gg = allgenegroups.get(i);
+						gg = geneset.allgenegroups.get(i);
 						names[k] = gg.getCommonName();
 						
 						double[] sdb = new double[ samplesize ];

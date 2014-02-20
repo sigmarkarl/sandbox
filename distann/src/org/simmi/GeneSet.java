@@ -718,7 +718,16 @@ public class GeneSet extends JApplet {
 						if( ec != -1 ) {
 							//int ecc = name.indexOf(')', ec+1);
 							//if( ecc == -1 ) ecc = name.length();
-							gene.ecid = idstr.substring(ec+2).trim();
+							int k = ec+2;
+							char c = idstr.charAt(k);
+							while( (c >= '0' && c <= '9') || c == '.' ) {
+								c = idstr.charAt( k++ );
+								if( k == idstr.length() ) {
+									k++;
+									break;
+								}
+							}
+							gene.ecid = idstr.substring(ec+2, k-1).trim();
 							
 							/*if( ecc > ec+3 ) {
 								gene.ecid = name.substring(ec+3, ecc).trim();
@@ -5989,13 +5998,9 @@ public class GeneSet extends JApplet {
 		fw.close();
 	}
 
-	public void funcMappingUni(Reader rd, Map<String, Gene> uniids, String outfile) throws IOException {
-		FileWriter fw = null;
-		if (outfile != null)
-			fw = new FileWriter(outfile);
-
+	public void funcMappingUni(BufferedReader br, Map<String, Gene> uniids, BufferedWriter bw ) throws IOException {
 		// FileReader fr = new FileReader( sp2go );
-		BufferedReader br = new BufferedReader(rd);
+		//BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		while (line != null) {
 			String[] split = line.split("=");
@@ -6012,15 +6017,12 @@ public class GeneSet extends JApplet {
 					} else func = funcmap.get( erm );
 					gene.funcentries.add( func );
 				}
-				if (fw != null) fw.write(line + "\n");
+				if (bw != null) bw.write(line + "\n");
 			}
 
 			line = br.readLine();
 		}
 		//br.close();
-
-		if (fw != null)
-			fw.close();
 	}
 
 	public void updateFilter(JTable table, RowFilter filter, JLabel label) {
@@ -7880,36 +7882,6 @@ public class GeneSet extends JApplet {
 			}
 		};
 		
-		AbstractAction	functionmappingaction = new AbstractAction("Function mapping") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						Path path = zipfile.toPath();
-						String uristr = "jar:" + path.toUri();
-						zipuri = URI.create( uristr /*.replace("file://", "file:")* );
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						
-						Path nf = zipfilesystem.getPath("/sp2go_short.txt");
-						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-						
-						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-						if( unimap != null ) unimap.clear();
-						//unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-						funcMappingUni( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), unimap, null );
-						
-						bw.close();
-						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-						zipfilesystem.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		};
 		AbstractAction	importidmappingaction = new AbstractAction("Id mapping") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -11928,7 +11900,7 @@ public class GeneSet extends JApplet {
 				Files.list(root).filter( new Predicate<Path>() {
 					@Override
 					public boolean test(Path t) {
-						return t.getFileName().endsWith(".fna") && !t.getFileName().equals("allthermus.fna");
+						return t.getFileName().toString().endsWith(".fna") && !t.getFileName().equals("allthermus.fna");
 					}
 				}).forEach( new Consumer<Path>() {
 					@Override
@@ -12738,7 +12710,7 @@ public class GeneSet extends JApplet {
 				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
 				
 				nf = zipfilesystem.getPath("/sp2go_short.txt");
-				if( Files.exists( nf ) ) funcMappingUni( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), unimap, null );
+				if( Files.exists( nf ) ) funcMappingUni( new BufferedReader( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) )), unimap, null );
 				nf = zipfilesystem.getPath("/ko2go.txt");
 				if( Files.exists(nf) ) {
 					BufferedReader br = new BufferedReader( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
@@ -13140,15 +13112,28 @@ public class GeneSet extends JApplet {
 			zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
 			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 			
-			SerifyApplet	sa = new SerifyApplet( zipfilesystem );
+			final SerifyApplet	sa = new SerifyApplet( zipfilesystem );
 			sa.init( frame );
 			
-			Path contigspath = zipfilesystem.getPath("/allthermus.fna");
-			Path genespath = zipfilesystem.getPath("/allthermus_aligned.aa");
-			
-			if( Files.exists( contigspath ) ) sa.addSequences("contigs.txt", contigspath, null);
-			if( Files.exists( genespath ) ) sa.addSequences("genes.txt", genespath, null);
-		} catch (IOException | URISyntaxException e1) {
+			for( Path root : zipfilesystem.getRootDirectories() ) {
+				Files.list(root).filter( new Predicate<Path>() {
+					@Override
+					public boolean test(Path t) {
+						String fname = t.getFileName().toString();
+						return /*fname.endsWith(".gbk") || */fname.endsWith(".fna") || fname.endsWith(".fsa") || fname.endsWith(".fa") || fname.endsWith(".fasta") || fname.endsWith(".aa") || fname.endsWith(".nn") || fname.endsWith(".trna") || fname.endsWith(".rrna");
+					}
+				}).forEach( new Consumer<Path>() {
+					@Override
+					public void accept(Path t) {
+						try {
+							sa.addSequences(t.getFileName().toString(), t, null);
+						} catch (URISyntaxException | IOException e) {
+							e.printStackTrace();
+						}
+					}
+				});;
+			}
+		} catch (IOException e1) {
 			try {
 				zipfilesystem.close();
 			} catch (IOException e2) {
@@ -13281,6 +13266,12 @@ public class GeneSet extends JApplet {
 				updateShareNum(specs);
 			}
 		};
+		AbstractAction	importgeneclusteringaction = new AbstractAction("Import gene clustering") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+			}
+		};
 		AbstractAction	importgenesymbolaction = new AbstractAction("Import gene symbols") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -13299,6 +13290,36 @@ public class GeneSet extends JApplet {
 						
 						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
 						uni2symbol(new InputStreamReader(is), bw, unimap);
+						
+						bw.close();
+						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+						zipfilesystem.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		AbstractAction	functionmappingaction = new AbstractAction("Function mapping") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					try {
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
+						//Path path = zipfile.toPath();
+						String uristr = "jar:" + zippath.toUri();
+						zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+						
+						Path nf = zipfilesystem.getPath("/sp2go_short.txt");
+						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+						
+						BufferedReader br = new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) ) ) );
+						if( unimap != null ) unimap.clear();
+						//unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+						funcMappingUni( br, unimap, bw );
 						
 						bw.close();
 						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
@@ -13340,6 +13361,7 @@ public class GeneSet extends JApplet {
 		};
 		edit.add( sharenumaction );
 		edit.add( importgenesymbolaction );
+		edit.add( functionmappingaction );
 		edit.add( importidmappingaction );
 		
 		JMenu		view = new JMenu("View");
@@ -13414,7 +13436,7 @@ public class GeneSet extends JApplet {
 			}
 		});
 		view.addSeparator();
-		ActionCollection.addAll( view, specList, clusterMap, GeneSet.this, speccontigMap, genelist, table, allgenegroups, comp, cs, contigmap );
+		ActionCollection.addAll( view, specList, clusterMap, GeneSet.this, speccontigMap, table, comp, cs );
 		
 		JMenu		help = new JMenu("Help");
 		help.add( new AbstractAction("About") {
