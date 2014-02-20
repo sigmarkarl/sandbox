@@ -28,33 +28,82 @@
 
 <h3>Introduction</h3>
 We present a comparative genomics software suite for navigating and comparing the genomes of multiple related microbial species. 
-The package is written in Java and is accessible on the web as a Java applet on the URL <a href="http://thermusgenes.appspot.com/">http://thermusgenes.appspot.com/</a>. <p>
+The package is written in Java and the runnable jar file is accessible on the web from the URL: 
+<a href="http://thermusgenes.appspot.com/">http://thermusgenes.appspot.com/compgen.jar</a>. <p>
+
 You can try out the software with already prepared data, such as from <a href="allspiro.zip"><i>Spirochaeta</i></a> sequences.
 <figure style="text-align:center">
 <img src="mainscreen.png" width="90%" />
-<figcaption>The PanNavigator mainscreen</figcaption>
+<figcaption>The CompGen mainscreen</figcaption>
 </figure>
 The mainscreen is split into two main tables, the <b>gene table</b> on top and the <b>function table</b> below. The tables are linked so be double clicking on an entry the relevant row in the other table is highlighted.
 A search textbox accompanies both tables for easy search and filtering.<p>
+
 <h3>Prepare your data</h3>
+
+The projects are stored in zip files. You can either open a pre-existing project or create a new one with the File -> Open or New functions. 
+Use the File -> Import Genomes function to import genomes into your project.<p>
+The right clicking in the Import Genomes window gives you a popupmenu with importing options and actions on fasta files.
+Double-clicking on a fasta file in the table opens the sequences in a sequence viewer.
+<p>
+Genome annotations can be very time consuming / CPU intensive. 
+If you have already annotated your genomes you can skip these steps and drag-drop genbank annotation files into the table 
+(from the <a href="http://rast.nmpdr.org/">RAST</a> annotatino pipeline for instance). 
+They will be split into corresponding fasta files. 
+Also it is possible to fetch genbank files directly form NCBI ftp site according to some search term using "NCBI fetch" function.
+<p>
+The 50-50 rule is used to group the genes together. 
+That is, at least 50% of the sequence length must have at least 50% sequence identity.
+<p>
 You will need fasta files containing the contigs of each of your species (or whichever level you would like to explore, we will refer to species hereafter) 
-and named after the species. These file are drag-dropped into a special online fasta manipulator software <a href="http://funblastic.appspot.com/">http://funblastic.appspot.com/</a>. 
+and named after the species. 
+These file can be drag-dropped into the Import Genomes window.
+<p>
 Here you join the fasta files for each species into one, inserting the name of the species in front of the contig name. 
-Highlight all the fasta files you want to join and select "Join" from the right click popup menu. Now highligh only the result file, which should have the ending "_joined.*". 
-<p><cite href="http://prodigal.google.com">The Prodigal</cite> software is used for gene finding. From the same popupmenu run the function "Prodigal". When the progress bar stops you should have two new fasta files containing the name of the original file along with "prodigal" and ".fsa" for protein fasta file and ".fna" for nucletide fasta results file. <p> Now we need to find out which genes are related to each other. You select the amino acid genes fasta file, the one with the ending ".fsa" and run "Create database" from the popup menu. This creates a blast database from you fasta file and inserts it into the blast database table on the right.<p>
-Genome annotations can be very time consuming / CPU intensive. If you have already annotated your genomes you can skip these steps and drag-drop genbank annotation files into the table (from <a href="http://rast.nmpdr.org/">RAST</a> annotatino pipeline for instance). They will be split into corresponding fasta files. Also it is possible to fetch genbank files directly form NCBI ftp site according to some search term using "NCBI fetch" function.<p>
-The 50-50 rule is used to group the genes together. That is, at least 50% of the sequence length must have at least 50% sequence identity.
+Highlight all the fasta files you want to join and select "Join" from the right click popup menu. 
+Now highligh only the result file, which should have the ending "_joined.*".
+<p>
+The <a href="http://prodigal.google.com">Prodigal</a> software is used for gene finding. The software needs to be in the PATH environment variable.
+From the popupmenu run the function "Prodigal". 
+When the progress bar stops you should have two new fasta files containing the name of the original file along with "prodigal" and a ".fsa" ending for protein fasta file and ".fna" for nucletide fasta results file. 
+<p>
 <figure style="text-align:center">
 <img src="funblastic.png" width="90%" />
-<figcaption>A screenshot from the funblastic site</figcaption>
+<figcaption>A screenshot from the Import Genomes window</figcaption>
 </figure><p>
-Now you have a new list of protein fasta files containing the all the sequences of a gene group. These files represent the pan genome. The subset of these files with the maximum number of sequences is the core genome. 
-To be able to concatenate and make phylogenetic trees these need to be aligned. Funblastic gives you two options, alignment with muscle or clustalw. Now you should have all the files needed for import to the PanNavigator software, 
+<b>Gene clustering</b>
+<p>
+Now we need to find out which genes are related to each other. 
+You select the amino acid genes fasta file, the one with the ending ".fsa" and run "Create database" from the popup menu. 
+This creates a blast database from you fasta file and inserts it into the blast database table on the right.
+<p>
+Now you have a new list of protein fasta files containing the all the sequences of a gene group. These files represent the pan genome. 
+The subset of these files with the maximum number of sequences is the core genome. 
+To be able to concatenate and make phylogenetic trees these need to be aligned. 
+The Import Genomes windows gives you two options, alignment with muscle or clustalw. Again this executables need to be in path.
+Now you should have all the files needed for the Panavigator/CompGen software, 
 one nucleotide fasta file containing the contigs from all the microbial organism under investigation and a protein fasta file for each of the genes.
-<p>All the results, for the alignment, clustering and annotation are kept in fasta format for readability and portability.
+<p
+All the results, for the alignment, clustering and annotation are kept in fasta format for readability and portability.
+<p>
+Closing the Import Genomes windows saves the imported sequneces into the project zip file.
 
  <h3>Basic functionality</h3>
-    <b>Relation matrix</b><p>
+ <b>Selecting in the Gene table</b>
+ Use the search text field to filter the table according to gene names. 
+ The View -> [Select sharing] function enables you to select genes according to their presense/absense in the strains.
+ The function gives you thress options. 
+ The [core] shows the genes that are unique to the selected species and part of their core genome. 
+ The [pan] option gives the core genome for the selected strains. 
+ The [bleh] option gives the pan genome of the selected strains, excluding genes present in strains not selected.
+ The invert option gives you the inverted selection.
+ <p>
+ The Sharing number column numbers each gene presense permutation. 
+ To change the set of strains used use the command [Update sharing number]
+ <p>
+ Double-clicking a row in the Gene table opens the corresponding sequences in the Sequence Viewer.
+ 
+<b>Relation matrix</b><p>
 The 'Relation matrix' in the Functions menu gives you an image showing number of related genes between all species.
 <figure style="text-align:center">
 <img src="rel.png" width="90%" />
@@ -85,7 +134,8 @@ The 'XY plot' function in the Functions menu draw a dotplot between two selected
 <img src="xy1.png" width="45%" />
 <img src="xy2.png" width="45%" />
 <figcaption>Genome XY plot (before and after filtering the Gene table)</figcaption>
-</figure><p>
+</figure>
+<p>
 By filtering the gene table in the main screen it is possible to select which genes are visible in the XY plot. For example by sorting the gene table by '# locus' you can filter out genes with multiple copies (such as transposons). <p> The XY plot offers different color schemes. For example colors can be selected by the gene GC content or the gene total abundance to help spotting genetic islands. <p>
 Selection in the XY view propogates to the gene table (use double click to unselect).
 <p><b>Synteny view</b><p>
@@ -119,7 +169,9 @@ Each permutation of gene sharing is given a number, so by sorting by 'Sharing nu
 
 <div>
 <h3>Genome atlas</h3>
-The gene atlas uses one genome as a reference and shows the presense or absense of the genes (in that order) in other species. The genes are colored by default by resemblance. Also it is possible to color by GC content.
+The genome atlas can use one genome as a reference and shows the presense or absense of the genes (in that order) in other species. 
+Without a reference the genes are ordered accoring to the table. The genes are colored by default by resemblance.
+Also it is possible to color by GC content.
 This view can be used to spot highly preserved areas or areas with high variability.
 <figure style="text-align:center">
 <img src="scotoductusSA01.png" width="45%" />
@@ -134,7 +186,8 @@ The <i>Thermus scotoductus</i> strains have more resemblance with the strains fr
 The dark area in all the genome atlases represents a highly preserved locus containing mostly 50S and 30S related genes. 
 The single unrelated <i>Thermus</i> species (the lightgray strip) in all the resemblance atlases is the <i>Thermus filiformis</i> from New Zealand</figcaption>
 </figure><p> 
-  <h3>Gene viewer</h3>
+ 
+<h3>Gene viewer</h3>
 Pressing the "Neighborhood" button in the bottom row gives you a view of the gene neighbourhood for each species. You can manually align the genes (on genome level, not on sequence level) by using ... function. Different color schemes show possible horizontal gene transfer events or genomic islands.<p>
 <figure style="text-align:center">
 <img src="genes.png" width="90%" />
@@ -143,7 +196,7 @@ Pressing the "Neighborhood" button in the bottom row gives you a view of the gen
 The blocks view is for gene level alignment. Checking the "Show in-betweens" show the length of the areas between the genes (annotations) non-annotated areas indicating possible sequences of interest like repeast or CRISP sequences.<p>
 
 <b>Gene sorter</b><p>
-The gene sorter view can be useful when manually connecting contigs. Also usig the different color schemes it is easy to spot genomic islands.
+The gene sorter view can be useful when manually connecting contigs. Also using the different color schemes it is easy to spot genomic islands.
 <figure style="text-align:center">
 <img src="genesorter.png" width="90%" />
 <figcaption>Gene sorter view. The 'Sharing number' color scheme shown here shows alternating colors when the permutation of sharing among species changes. The three red arrows show possible usecases of the gene sorter view. By selecting the large highly preserved area the <b>genetable</b> shows that it contains mostly RNA genes. Other arrow shows how shifting to GC% color scheme, the region which is apparent in some <i>Thermus scotoductus</i> but missing in other has different GC% than the surroundings. This indicates that the region could be a chunk of horizontally transferred genes. As to be expected, looking at the gene table, they are mostly hypothetical genes. The top arrow gives an indication of how contigs can be connected in related species (although this method can never be 100% accurate)</figcaption>
