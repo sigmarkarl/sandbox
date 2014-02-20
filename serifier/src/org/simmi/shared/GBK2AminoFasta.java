@@ -172,6 +172,9 @@ public class GBK2AminoFasta {
 						}
 					} else if( trimline.startsWith("/db_xref") ) {
 						xref.add( trimline.substring(10, trimline.length()-1) );
+					} else if( trimline.startsWith("/EC_number") ) {
+						String ec = "EC"+trimline.substring(12, trimline.length()-1);
+						xref.add( ec );
 					} else if( trimline.startsWith("/product") ) {
 						if( anno != null ) {
 							if( trimline.length() > 10 ) {								
