@@ -626,7 +626,7 @@ public class SerifyApplet extends JApplet {
 		});
 	}
 	
-	public void blastClusters( final InputStream is, final OutputStream os ) {
+	public void blastClusters( final BufferedReader is, final BufferedWriter os ) {
 		final JDialog		dialog = new JDialog();
 		final JProgressBar	pbar = new JProgressBar();
 		Runnable run = new Runnable() {
@@ -3587,7 +3587,7 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						List<Set<String>> cluster = serifier.makeBlastCluster( is, null, 1 );
+						List<Set<String>> cluster = serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1 );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -4601,9 +4601,9 @@ public class SerifyApplet extends JApplet {
 				//double heat = snaedisheatmap.get( loc );
 				//double ph = snaedisphmap.get( loc );
 				
-				File nf = new File( "/u0/all.blastout" );//new File( dir, ""+f.getName()+".blastout" );
-				System.err.println( "about to parse " + nf.getName() );
-				List<Set<String>> cluster = serifier.makeBlastCluster( new FileInputStream( nf ), null, 1 );
+				Path nf = new File( "/u0/all.blastout" ).toPath();//new File( dir, ""+f.getName()+".blastout" );
+				System.err.println( "about to parse " + nf.getFileName() );
+				List<Set<String>> cluster = serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1 );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
