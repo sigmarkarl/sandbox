@@ -168,6 +168,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequence.Annotation;
+import org.simmi.shared.Sequences;
 import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
@@ -675,6 +676,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					tv.init( lname, contig, contloc, start, stop, dir );
+					tv.name = lname;
 					//ac.setName( lname );
 					//tv.setAlignedSequence( ac );
 					aas.put( lname, tv );
@@ -901,6 +903,7 @@ public class GeneSet extends JApplet {
 				 contig = new Contig( contigstr );
 			}
 			tv.init( lname, contig, contloc, start, stop, dir );
+			tv.name = lname;
 			//tv.setAlignedSequence( ac );
 			aas.put(lname, tv );
 			
@@ -1079,7 +1082,7 @@ public class GeneSet extends JApplet {
 
 	//static Aas aquery = new Aas(null, null, 0, 0, 0);
 	// static Aas[] aas;
-	Map<String, Tegeval> aas = new HashMap<String, Tegeval>();
+	Map<String, Sequence> aas = new HashMap<String, Sequence>();
 	//static Map<String, StringBuilder> dnaa = new HashMap<String, StringBuilder>();
 	//static Map<String, StringBuilder> contigsmap = new HashMap<String, StringBuilder>();
 
@@ -2153,18 +2156,19 @@ public class GeneSet extends JApplet {
 		writeBlastAnalysis(clusterMap, specList);
 	}
 
-	public void clusterFromBlastResults(File dir, String[] stuff) throws IOException {
+	public void clusterFromBlastResults(Path dir, String[] stuff) throws IOException {
 		clusterFromBlastResults(dir, stuff, null, null, true);
 	}
 
-	public void clusterFromBlastResults(File dir, String[] stuff, String writeSimplifiedCluster, String writeSimplifiedBlast, boolean union) throws IOException {
+	public void clusterFromBlastResults(Path dir, String[] stuff, String writeSimplifiedCluster, String writeSimplifiedBlast, boolean union) throws IOException {
 		Set<String> species = new TreeSet<String>();
 		List<Set<String>> total = new ArrayList<Set<String>>();
 		Serifier serifier = new Serifier();
 		for( String name : stuff ) {
-			File ff = new File( dir, name );
-			FileInputStream	fis = new FileInputStream( ff );
-			
+			//File ff = new File( dir, name );
+			//FileInputStream	fis = new FileInputStream( ff );
+			Path ff = dir.resolve(name);
+			BufferedReader fis = Files.newBufferedReader( ff );
 			serifier.joinBlastSets(fis, writeSimplifiedBlast, union, total, 0.0);
 		}
 		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total);
@@ -2295,7 +2299,7 @@ public class GeneSet extends JApplet {
 								for (String loci : sout) {
 									String gene = lociMap.get(loci);
 									if (gene == null) {
-										StringBuilder aa = aas.get(loci).getProteinSequence();
+										StringBuilder aa = ((Tegeval)aas.get(loci)).getProteinSequence();
 										gene = aa.toString();
 									}
 
@@ -2338,7 +2342,7 @@ public class GeneSet extends JApplet {
 					for (String gene : genes) {
 						String aa = lociMap.get(gene);
 
-						StringBuilder aastr = aas.get(gene).getProteinSequence();
+						StringBuilder aastr = ((Tegeval)aas.get(gene)).getProteinSequence();
 						if (aa == null) {
 							aa = "Not found\t" + aastr;
 						}
@@ -13269,7 +13273,29 @@ public class GeneSet extends JApplet {
 		AbstractAction	importgeneclusteringaction = new AbstractAction("Import gene clustering") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					Path p = fc.getSelectedFile().toPath();
+					Serifier s = new Serifier();
+					//s.mseq = aas;
+					for( String gk : refmap.keySet() ) {
+						Gene g = refmap.get( gk );
+						s.mseq.put(gk, g.tegeval);
+					}
+					//Sequences seqs = new Sequences(user, name, type, path, nseq)
+					try {
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
+						String uristr = "jar:" + zippath.toUri();
+						zipuri = URI.create( uristr );
+						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
+						zipfilesystem.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					
+				}
 			}
 		};
 		AbstractAction	importgenesymbolaction = new AbstractAction("Import gene symbols") {
@@ -13360,6 +13386,7 @@ public class GeneSet extends JApplet {
 			}
 		};
 		edit.add( sharenumaction );
+		edit.add( importgeneclusteringaction );
 		edit.add( importgenesymbolaction );
 		edit.add( functionmappingaction );
 		edit.add( importidmappingaction );
@@ -13620,7 +13647,7 @@ public class GeneSet extends JApplet {
 			// loci2gene( nrblastres, dir );
 			//clusterFromBlastResults(new File("/home/horfrae/workspace/distann/src"), new String[] { "all.blastout" }, "/home/horfrae/union_cluster.txt", "/home/horfrae/simblastcluster.txt", true);
 			
-			clusterFromBlastResults(new File("/home/sigmar/"), new String[] { "thermus_join.blastout" }, "/home/sigmar/thermus_cluster.txt", "/home/sigmar/simblastcluster.txt", true);
+			clusterFromBlastResults(new File("/home/sigmar/").toPath(), new String[] { "thermus_join.blastout" }, "/home/sigmar/thermus_cluster.txt", "/home/sigmar/simblastcluster.txt", true);
 			
 			// clusterFromBlastResults( new File("/home/sigmar/thermus/"), new
 			// String[] {"all.blastout"}, "/home/sigmar/intersect_cluster.txt",
