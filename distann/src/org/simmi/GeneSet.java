@@ -718,7 +718,7 @@ public class GeneSet extends JApplet {
 						if( ec != -1 ) {
 							//int ecc = name.indexOf(')', ec+1);
 							//if( ecc == -1 ) ecc = name.length();
-							int k = ec+2;
+							int k = ec+3;
 							char c = idstr.charAt(k);
 							while( (c >= '0' && c <= '9') || c == '.' ) {
 								c = idstr.charAt( k++ );

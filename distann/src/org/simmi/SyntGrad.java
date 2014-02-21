@@ -94,8 +94,9 @@ public class SyntGrad {
 		
 		JOptionPane.showMessageDialog(geneset, cmp);
 		
-		final String 		spec1 = species.get( table1.convertRowIndexToModel( table1.getSelectedRow() )); //(String)table1.getValueAt( table1.getSelectedRow(), 0 );
-		final List<Contig>	contigs1 = geneset.speccontigMap.get( spec1 );
+		int sr = table1.getSelectedRow();
+		final String 		spec1 = sr != -1 ? species.get( table1.convertRowIndexToModel( sr )) : null; //(String)table1.getValueAt( table1.getSelectedRow(), 0 );
+		final List<Contig>	contigs1 = spec1 != null ? geneset.speccontigMap.get( spec1 ) : null;
 		final List<String>	spec2s = new ArrayList<String>();
 		int[] rr = table2.getSelectedRows();
 		for( int r : rr ) {
@@ -220,9 +221,7 @@ public class SyntGrad {
 		g2.fillRect( 0, 0, 2048, 2048 );
 		for( String spec : spec2s ) {
 			List<Contig> scontigs = geneset.speccontigMap.get( spec );
-			if( scontigs == null ) {
-				System.err.println("er");
-			}
+			
 			int total = 0;
 			for( Contig c : scontigs ) {
 				total += c.getGeneCount();
@@ -235,15 +234,19 @@ public class SyntGrad {
 					GeneGroup gg = tv.getGene() != null ? tv.getGene().getGeneGroup() : null;
 					if( gg != null ) {
 						double r = 2.0*Math.PI*(double)tvn/(double)total;
-						double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
-						if( ratio >= 0.0 ) {
-							g2.translate(1024, 1024);
-							g2.rotate( r );
-							g2.setColor( invertedGradientColor( ratio ) );						
-							g2.drawLine(rad, 0, rad+24, 0);
-							g2.rotate( -r );
-							g2.translate(-1024, -1024);
+						g2.translate(1024, 1024);
+						g2.rotate( r );
+						if( spec1 != null ) {
+							double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
+							if( ratio >= 0.0 ) {
+								g2.setColor( invertedGradientColor( ratio ) );						
+							}
+						} else {
+							g2.setColor( Color.green );						
 						}
+						g2.drawLine(rad, 0, rad+24, 0);
+						g2.rotate( -r );
+						g2.translate(-1024, -1024);
 					}
 					tvn++;
 					tv = c.getNext( tv );
@@ -260,14 +263,16 @@ public class SyntGrad {
 			rad += 24;
 		}
 		
-		g2.setColor( Color.black );
-		g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
-		String[] specsplit = spec1.split("_");
-		int k = 0;
-		for( String spec : specsplit ) {
-			int strw = g2.getFontMetrics().stringWidth( spec );
-			g2.drawString( spec, 1024-strw/2, 1024 - specsplit.length*32/2 + 32 + k*32 );
-			k++;
+		if( spec1 != null ) {
+			g2.setColor( Color.black );
+			g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
+			String[] specsplit = spec1.split("_");
+			int k = 0;
+			for( String spec : specsplit ) {
+				int strw = g2.getFontMetrics().stringWidth( spec );
+				g2.drawString( spec, 1024-strw/2, 1024 - specsplit.length*32/2 + 32 + k*32 );
+				k++;
+			}
 		}
 	}
 	
