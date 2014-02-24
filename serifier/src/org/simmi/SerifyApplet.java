@@ -361,6 +361,11 @@ public class SerifyApplet extends JApplet {
 				rselset.add( seqs );
 				if( seqs.getKey() != null ) keys.add( seqs.getKey() );
 				
+				try {
+					Files.delete( seqs.getPath() );
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				//sequences.remove( ind );
 				//table.tableChanged( new TableModelEvent(table.getModel()) );
 			}
@@ -2227,7 +2232,7 @@ public class SerifyApplet extends JApplet {
 					
 					try {
 						for( File f : filechooser.getSelectedFiles() ) {
-							Path dest = fs.getPath(f.getName());
+							Path dest = fs.getPath("/"+f.getName());
 							Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
 							addSequences( f.getName(), dest, null );
 						}
