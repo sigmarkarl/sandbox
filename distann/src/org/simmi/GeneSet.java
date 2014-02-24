@@ -168,7 +168,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequence.Annotation;
-import org.simmi.shared.Sequences;
 import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
@@ -390,18 +389,36 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		String id = null;
 		String hit = null;
+		String evalue = null;
 		while( line != null ) {
 			if( line.startsWith("Query:") ) {
 				if( hit != null && id != null ) {
 					cazymap.put( id, hit );
 				}
 				String[] split = line.split("[\t ]+");
-				line = br.readLine();
-				int k = line.lastIndexOf('[');
-				id = line.substring( k+1, line.indexOf(']', k+1) ).trim()+"_"+split[1].trim();
+				
+				//line = br.readLine();
+				//int k = line.lastIndexOf('[');
+				id = split[1]; //line.substring( k+1, line.indexOf(']', k+1) ).trim()+"_"+split[1].trim();
+				
+				if( id.contains("..") ) {
+					line = br.readLine();
+					int k = line.indexOf('[');
+					int u = line.indexOf(']',k+1);
+					String spec = line.substring(k+1,u);
+					id = spec+"_"+id;
+				}
+				
 				hit = null;
+				evalue = null;
+			} else if( hit == null && line.trim().startsWith("E-value") ) {
+				line = br.readLine();
+				line = br.readLine().trim();
+				if( line.startsWith("--") ) line = br.readLine().trim();
+				String[] split = line.split("[ ]+");
+				evalue = split[0];
 			} else if( hit == null && line.startsWith(">>") ) {
-				hit = line.substring( 3, line.indexOf('.') );
+				hit = line.substring( 3, line.indexOf('.') ) + "("+evalue+")";
 			}
 			
 			line = br.readLine();
@@ -676,7 +693,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					tv.init( lname, contig, contloc, start, stop, dir );
-					tv.name = lname;
+					tv.name = prevline.substring(1);
 					//ac.setName( lname );
 					//tv.setAlignedSequence( ac );
 					aas.put( lname, tv );
@@ -903,7 +920,7 @@ public class GeneSet extends JApplet {
 				 contig = new Contig( contigstr );
 			}
 			tv.init( lname, contig, contloc, start, stop, dir );
-			tv.name = lname;
+			tv.name = prevline.substring(1);
 			//tv.setAlignedSequence( ac );
 			aas.put(lname, tv );
 			
@@ -6744,7 +6761,7 @@ public class GeneSet extends JApplet {
 		return selspec;
 	}
 	
-	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna ) {
+	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -6762,11 +6779,18 @@ public class GeneSet extends JApplet {
 				Contig cont = tv.getContshort();
 				if( cont != null ) {
 					String selspec = cont.getSpec();//tv.getContig();
-					String spec = nameFix( selspec );
-					
-					StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
-					Sequence seq = new Sequence( spec, seqstr, serifier.mseq );
-					serifier.addSequence(seq);
+					if( specs == null || specs.contains(selspec ) ) {
+						//String spec = nameFix( selspec );
+						
+						StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
+						String name = tv.getGene().id;
+						String cazy = tv.getGene().getGeneGroup().getCommonCazy(cazymap);
+						String ec = tv.getGene().getGeneGroup().getCommonEc();
+						if( cazy != null ) name += " " + cazy;
+						if( ec != null ) name += " " + ec;
+						Sequence seq = new Sequence( name, seqstr, serifier.mseq );
+						serifier.addSequence(seq);
+					}
 				}
 				//contset.put( contig, seq );
 				
@@ -10262,7 +10286,9 @@ public class GeneSet extends JApplet {
 						genegroups.add( gg.getGeneGroup() );
 					}
 				}
-				showSequences( comp, genegroups, false );
+				Set<String>	specs = null;
+				if( rr.length > 1 ) specs = getSelspec(comp, specList, null);
+				showSequences( comp, genegroups, false, specs );
 			}
 		});
 		popup.add(new AbstractAction("Show aligned sequences") {
@@ -10414,7 +10440,9 @@ public class GeneSet extends JApplet {
 						genegroups.add( gg.getGeneGroup() );
 					}
 				}
-				showSequences( comp, genegroups, true );
+				Set<String> specs = null;
+				if( rr.length > 1 ) specs = getSelspec( comp, specList, null );
+				showSequences( comp, genegroups, true, specs );
 				
 				/*StringBuilder sb = getSelectedSeqs( table, genelist );
 				
@@ -11899,55 +11927,59 @@ public class GeneSet extends JApplet {
 			
 			nf = zipfilesystem.getPath("/allthermus.fna");
 			if( Files.exists( nf ) ) specList = loadcontigs( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), "" );
-			
-			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						return t.getFileName().toString().endsWith(".fna") && !t.getFileName().equals("allthermus.fna");
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						try {
-							String filename = t.getFileName().toString().replace(".fna", "");
-							specList = loadcontigs( new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), "" );
-						} catch (IOException e) {
-							e.printStackTrace();
+			else {
+				for( Path root : zipfilesystem.getRootDirectories() ) {
+					Files.list(root).filter( new Predicate<Path>() {
+						@Override
+						public boolean test(Path t) {
+							return t.getFileName().toString().endsWith(".fna") && !t.getFileName().equals("allthermus.fna");
 						}
-					}
-				});
+					}).forEach( new Consumer<Path>() {
+						@Override
+						public void accept(Path t) {
+							try {
+								String filename = t.getFileName().toString().replace(".fna", "");
+								specList = loadcontigs( new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), "" );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
+				}
 			}
 			
 			nf = zipfilesystem.getPath("/allthermus_aligned.aa");
 			if( Files.exists( nf ) ) loci2aasequence( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), refmap, designations, "" );
-			
-			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						boolean b = t.getFileName().toString().endsWith(".aa") && !t.getFileName().toString().contains("allthermus");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								String filename = t.getFileName().toString().replace(".fna", "");
-								loci2aasequence( new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), refmap, designations, filename );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
+			else {
+				for( Path root : zipfilesystem.getRootDirectories() ) {
+					Files.list(root).filter( new Predicate<Path>() {
+						@Override
+						public boolean test(Path t) {
+							String filename = t.getFileName().toString();
+							System.err.println("filename " + filename);
+							boolean b = filename.endsWith(".aa") && !filename.contains("allthermus");
+							return b;
+						}
+					}).forEach( new Consumer<Path>() {
+						@Override
+						public void accept(Path t) {
+							if( Files.exists( t ) )
+								try {
+									String filename = t.getFileName().toString().replace(".fna", "");
+									loci2aasequence( new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), refmap, designations, filename );
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+						}
+					});
+				}
 			}
 			
 			nf = zipfilesystem.getPath("/clusters.txt");
 			if( Files.exists( nf ) ) uclusterlist = loadSimpleClusters( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
 			nf = zipfilesystem.getPath("/cog.blastout");
 			if( Files.exists( nf ) ) cogmap = loadcogmap( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
-			nf = zipfilesystem.getPath("/.cazy");
+			nf = zipfilesystem.getPath("/cazy");
 			if( Files.exists( nf ) ) loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
 				
 			/*int zcount = 0;
@@ -13326,6 +13358,20 @@ public class GeneSet extends JApplet {
 				}
 			}
 		};
+		AbstractAction	importcazyaction = new AbstractAction("Import Cazy") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					try {
+						BufferedReader rd = Files.newBufferedReader(fc.getSelectedFile().toPath());
+						loadcazymap(cazymap, rd);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
 		AbstractAction	functionmappingaction = new AbstractAction("Function mapping") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -13388,6 +13434,7 @@ public class GeneSet extends JApplet {
 		edit.add( sharenumaction );
 		edit.add( importgeneclusteringaction );
 		edit.add( importgenesymbolaction );
+		edit.add( importcazyaction );
 		edit.add( functionmappingaction );
 		edit.add( importidmappingaction );
 		
