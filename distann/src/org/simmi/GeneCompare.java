@@ -1585,8 +1585,8 @@ public class GeneCompare {
 							if( ti.tset.size() > 1 ) color = darkred;
 							else color = Color.red;
 						} else {
-							if( ti.tset.size() > 1 ) color = darkgreen;
-							else color = Color.green;
+							if( ti.tset.size() > 1 ) color = Color.gray;
+							else color = Color.lightGray;
 						}
 					}
 					if( color != null ) g2.setColor( color );
