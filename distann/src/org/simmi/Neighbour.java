@@ -2060,13 +2060,13 @@ public class Neighbour {
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					geneset.showSequences( comp, selectedGenesGroups, false );
+					geneset.showSequences( comp, selectedGenesGroups, false, null );
 				}
 			});
 			showdnaseqs.setAction( new AbstractAction("DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					geneset.showSequences( comp, selectedGenesGroups, true );
+					geneset.showSequences( comp, selectedGenesGroups, true, null );
 				}
 			});
 			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
