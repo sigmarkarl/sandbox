@@ -150,6 +150,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -166,8 +167,10 @@ import org.java_websocket.WebSocket;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.simmi.shared.Annotation;
+import org.simmi.shared.GBK2AminoFasta.Anno;
 import org.simmi.shared.Sequence;
-import org.simmi.shared.Sequence.Annotation;
+import org.simmi.shared.Sequences;
 import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
@@ -587,6 +590,31 @@ public class GeneSet extends JApplet {
 		//fr.close();
 		
 		return map;
+	}
+	
+	public String getGeneName( String selectedItem, Gene gene ) {
+		if( selectedItem.equals("Default names") ) {
+			String genename = gene.getName();
+			//if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
+			return genename.contains("hypothetical") ? "hth-p" : genename;
+		} else if( selectedItem.equals("Group names") ) {
+			String genename = gene.getGeneGroup().getCommonName();
+			//if( genename.contains("_") ) genename = gene.getGeneGroup().getCommonName();
+			return genename.contains("hypothetical") ? "hth-p" : genename;
+		} else if( selectedItem.equals("Species") ) {
+			gene.getSpecies();
+		} else if( selectedItem.equals("Ids") ) {
+			return gene.id;
+		} else if( selectedItem.equals("Refids") ) {
+			return gene.refid;
+		} else if( selectedItem.equals("Cog") ) {
+			Cog cog = gene.getGeneGroup().getCommonCog(cogmap);
+			if( cog != null ) return cog.id;
+		} else if( selectedItem.equals("Cazy") ) {
+			String cazy = gene.getGeneGroup().getCommonCazy(cazymap);
+			if( cazy != null ) return cazy;
+		}
+		return "";
 	}
 	
 	Set<String>	mu = new HashSet<String>();
@@ -4621,7 +4649,11 @@ public class GeneSet extends JApplet {
         
         xAxis.setTickLabelRotation( 90.0 );
         
-        xAxis.setCategories( FXCollections.<String>observableArrayList( new ArrayList<String>( map.keySet() ) ) );
+        List<String> speclist = new ArrayList<String>();
+        for( String spec : map.keySet() ) {
+        	speclist.add( nameFix(spec) );
+        }
+        xAxis.setCategories( FXCollections.<String>observableArrayList( speclist ) );
         //yAxis.
         
         final StackedBarChart<String,Number> sc = new StackedBarChart<String,Number>(xAxis,yAxis);
@@ -4660,7 +4692,8 @@ public class GeneSet extends JApplet {
 	        	if( submap.containsKey(flock) ) {
 	        		int total = countmap.get(spec);
 		        	int ival = submap.get( flock );
-		        	XYChart.Data<String,Number> d = uniform ?  new XYChart.Data<String,Number>( spec, (double)ival/(double)total ) : new XYChart.Data<String,Number>( spec, ival );
+		        	String fixspec = nameFix(spec);
+		        	XYChart.Data<String,Number> d = uniform ?  new XYChart.Data<String,Number>( fixspec, (double)ival/(double)total ) : new XYChart.Data<String,Number>( fixspec, ival );
 		        	//Tooltip.install( d.getNode(), new Tooltip( flock ) );
 		        	core.getData().add( d );
 	        	}
@@ -6170,6 +6203,144 @@ public class GeneSet extends JApplet {
 		}*/
 	}
 	
+	public List<Contig> getSelspecContigs( List<JComponent> complist ) {
+		List<Contig>				contigs = null;
+		final List<String>			specs = new ArrayList<String>( speccontigMap.keySet() );
+		final JTable				stable = new JTable();
+		stable.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+		final TableModel					stablemodel = new TableModel() {
+			@Override
+			public int getRowCount() {
+				return specs.size();
+			}
+
+			@Override
+			public int getColumnCount() {
+				return 1;
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				return "Species";
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				return String.class;
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return false;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				if( rowIndex >= 0 && rowIndex < specs.size() ) return specs.get(rowIndex);
+				return null;
+			}
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {}
+		};
+		stable.setModel( stablemodel );
+		
+		final JTable				ctable = new JTable();
+		final TableModel			ctablemodel = new TableModel() {
+			@Override
+			public int getRowCount() {
+				int 			r = stable.getSelectedRow();
+				String 			spec = (String)stable.getValueAt(r, 0);
+				if( spec != null ) {
+					List<Contig>	contigs = speccontigMap.get( spec );
+					return contigs.size();
+				}
+				return 0;
+			}
+
+			@Override
+			public int getColumnCount() {
+				return 1;
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				return "Contigs";
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				return String.class;
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return false;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				int 		r = stable.getSelectedRow();
+				String 		spec = (String)stable.getValueAt(r, 0);
+				List<Contig>	contigs = speccontigMap.get( spec );
+				return contigs.get(rowIndex);
+			}
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {}
+		};
+		ctable.setModel( ctablemodel );
+		
+		JScrollPane	sscrollpane = new JScrollPane( stable );
+		JScrollPane	cscrollpane = new JScrollPane( ctable );
+		
+		FlowLayout flowlayout = new FlowLayout();
+		JComponent c = new JComponent() {};
+		c.setLayout( flowlayout );
+		c.add( sscrollpane );
+		c.add( cscrollpane );
+		
+		if( complist != null ) {
+			for( JComponent comp : complist ) {
+				c.add( comp );
+			}
+		}
+		
+		stable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				ctable.tableChanged( new TableModelEvent( ctablemodel ) );
+			}
+		});
+		JOptionPane.showMessageDialog(this, c);
+		
+		int 			sr = stable.getSelectedRow();
+		String 			spec = (String)stable.getValueAt(sr, 0);
+		if( spec != null ) {
+			List<Contig> ctgs = speccontigMap.get( spec );
+			int[] rr = ctable.getSelectedRows();
+			contigs = new ArrayList<Contig>();
+			for( int r : rr ) {
+				int i = ctable.convertRowIndexToModel(r);
+				contigs.add( ctgs.get(i) );
+			}
+		}
+		
+		return contigs;
+	}
+	
 	/*public Set<String> getSelspec( Component comp, final List<String>	specs ) {
 		return getSelspec( comp, specs, null );
 	}*/
@@ -6704,7 +6875,7 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	public void showSelectedSequences( Component comp, Set<Tegeval> tset, boolean dna ) {
+	public void showSelectedSequences( Component comp, Set<Tegeval> tset, boolean dna, String names ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -6718,7 +6889,7 @@ public class GeneSet extends JApplet {
 			if( cont != null ) {
 				String contig = cont.getSpec();//tv.getContig();
 				StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
-				Sequence seq = new Sequence( contig, seqstr, serifier.mseq );
+				Sequence seq = new Sequence( getGeneName(names, tv.getGene()), seqstr, serifier.mseq );
 				serifier.addSequence(seq);
 			}
 		}
@@ -6735,7 +6906,8 @@ public class GeneSet extends JApplet {
 	}
 	
 	String nameFix( String selspec ) {
-		if( selspec.contains("hermus") ) {			
+		if( selspec.contains("Rhodothermus_") ) {
+			selspec = selspec.replace("Rhodothermus_", "R.");
 			int i = selspec.indexOf("_uid");
 			if( i != -1 ) {
 				return selspec.substring(0,i);
@@ -6752,6 +6924,25 @@ public class GeneSet extends JApplet {
 					}
 				}
 			}
+		} else if( selspec.contains("hermus") ) {			
+			int i = selspec.indexOf("_uid");
+			if( i != -1 ) {
+				return selspec.substring(0,i);
+			} else {
+				i = selspec.indexOf('_');
+				if( i != -1 ) {
+					i = selspec.indexOf('_', i+1);
+					if( i != -1 ) {
+						i = selspec.indexOf('_', i+1);
+						if( i != -1 ) {
+							i = selspec.lastIndexOf('_', i+1);
+							if( i != -1 ) return selspec.substring(0, i);
+						}
+					}
+				}
+			}
+		} else if( selspec.contains("GenBank") || selspec.contains("MAT") ) {
+			
 		} else {
 			Matcher m = Pattern.compile("\\d").matcher(selspec); 
 			int firstDigitLocation = m.find() ? m.start() : 0;
@@ -10595,7 +10786,7 @@ public class GeneSet extends JApplet {
 						contset.put(contig, seq);
 					}
 
-					Annotation a = seq.new Annotation(seq, contig.getName(), Color.red, serifier.mann);
+					Annotation a = new Annotation(seq, contig.getName(), Color.red, serifier.mann);
 					a.setStart(tv.start);
 					a.setStop(tv.stop);
 					a.setOri(tv.ori);
@@ -10674,7 +10865,7 @@ public class GeneSet extends JApplet {
 						Tegeval tv = g.tegeval;
 						Contig contig = tv.getContshort();
 						contigs.add( contig );
-						Annotation a = contig.new Annotation(contig, contig.getName(), Color.red, serifier.mann);
+						Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 						a.setStart(tv.start);
 						a.setStop(tv.stop);
 						a.setOri(tv.ori);
@@ -10686,7 +10877,7 @@ public class GeneSet extends JApplet {
 						for( Tegeval tv : gg.getTegevals() ) {
 							Contig contig = tv.getContshort();
 							contigs.add( contig );							
-							Annotation a = contig.new Annotation(contig, contig.getName(), Color.red, serifier.mann);
+							Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 							a.setStart(tv.start);
 							a.setStop(tv.stop);
 							a.setOri(tv.ori);
@@ -13133,6 +13324,39 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public void exportGenomes() {
+		JCheckBox	joincontigs = new JCheckBox();
+		JComponent[] comps = new JComponent[] { joincontigs };
+		List<Contig> contigs = getSelspecContigs( Arrays.asList( comps ) );
+		
+		Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
+		Serifier serifier = new Serifier();
+		for( Contig c : contigs ) {
+			serifier.addSequence(c);
+			serifier.mseq.put(c.getName(), c);
+			
+			List<Annotation> lann = new ArrayList<Annotation>();
+			for( Tegeval tv : c.tlist ) {
+				Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori == -1, tv.getGene().getName() );
+				String cazy = tv.getGene().getGeneGroup().getCommonCazy(cazymap);
+				if( cazy != null ) anno.addDbRef( "CAZY:"+cazy );
+				lann.add( anno );
+			}
+			mapan.put( c.getName(), lann );
+		}
+		Sequences s = new Sequences(null,contigs.get(0).getSpec(),"nucl",null,contigs.size());
+		//serifier.addSequences(seqs);
+		
+		JFileChooser filechooser = new JFileChooser();
+		if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
+			try {
+				serifier.writeGenebank( filechooser.getSelectedFile(), joincontigs.isSelected(), s, mapan);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public void fetchGenomes() {
 		JFrame frame = new JFrame("Fetch genomes");
 		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
@@ -13284,7 +13508,7 @@ public class GeneSet extends JApplet {
 		file.add( new AbstractAction("Export genomes") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
+				exportGenomes();
 			}
 		});
 		file.addSeparator();
@@ -13510,7 +13734,7 @@ public class GeneSet extends JApplet {
 			}
 		});
 		view.addSeparator();
-		ActionCollection.addAll( view, specList, clusterMap, GeneSet.this, speccontigMap, table, comp, cs );
+		ActionCollection.addAll( view, clusterMap, GeneSet.this, speccontigMap, table, comp, cs );
 		
 		JMenu		help = new JMenu("Help");
 		help.add( new AbstractAction("About") {
