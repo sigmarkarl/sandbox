@@ -504,7 +504,7 @@ public class SyntGrad {
 			total2 += ctg2.getGeneCount();
 		}
 		double ratio2 = -1.0;
-		Teginfo gene2s = gg.getGenes( spec2 );
+		Teginfo gene2s = gg != null ? gg.getGenes( spec2 ) : null;
 		if( gene2s != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
