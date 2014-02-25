@@ -18,8 +18,6 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import oauth.signpost.OAuth;
-
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 public class DbSave {
