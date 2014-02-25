@@ -95,7 +95,7 @@ import org.simmi.unsigned.JavaFasta;
 import flobb.ChatServer;
 
 public class ActionCollection {
-	public static void addAll( JMenu menu, final List<String> specList, 
+	public static void addAll( JMenu menu, 
 			final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, 
 			final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, 
 			final JTable table, final Container comp, final ChatServer cs ) {
@@ -107,7 +107,7 @@ public class ActionCollection {
 				JOptionPane.showMessageDialog( geneset, descombo );
 				String val = descombo.getSelectedItem().toString();
 				
-				geneset.bimg = geneset.bmatrix( specList, geneset.clusterMap, val );
+				geneset.bimg = geneset.bmatrix( geneset.specList, geneset.clusterMap, val );
 				
 				JFrame f = new JFrame("Relation matrix");
 				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -126,17 +126,17 @@ public class ActionCollection {
 							StringBuilder ret = new StringBuilder();
 
 							int i = 0;
-							for (String spc : specList) {
-								if (++i == specList.size())
+							for (String spc : geneset.specList) {
+								if (++i == geneset.specList.size())
 									ret.append(spc + "\n");
 								else
 									ret.append(spc + "\t");
 							}
 
 							int where = 0;
-							for (String spc1 : specList) {
+							for (String spc1 : geneset.specList) {
 								int wherex = 0;
-								for (String spc2 : specList) {
+								for (String spc2 : geneset.specList) {
 									int spc1tot = 0;
 									int spc2tot = 0;
 									int totot = 0;
@@ -147,7 +147,7 @@ public class ActionCollection {
 									for (Set<String> set : clusterMap.keySet()) {
 										Set<Map<String, Set<String>>> erm = clusterMap.get(set);
 										if (set.contains(spc1)) {
-											if (set.size() < specList.size()) {
+											if (set.size() < geneset.specList.size()) {
 												spc1totwocore += erm.size();
 												for (Map<String, Set<String>> sm : erm) {
 													Set<String> hset = sm.get(spc1);
@@ -175,7 +175,7 @@ public class ActionCollection {
 									}
 
 									if (where == wherex) {
-										if (where == specList.size() - 1)
+										if (where == geneset.specList.size() - 1)
 											ret.append(0 + "\n");
 										else
 											ret.append(0 + "\t");
@@ -185,7 +185,7 @@ public class ActionCollection {
 										double val = Math.pow(50.0, sval - 0.3) - 1.0;
 										double dval = Math.round(100.0 * (val)) / 100.0;
 
-										if (wherex == specList.size() - 1)
+										if (wherex == geneset.specList.size() - 1)
 											ret.append(dval + "\n");
 										else
 											ret.append(dval + "\t");
@@ -647,7 +647,7 @@ public class ActionCollection {
 				JCheckBox	output = new JCheckBox("Output fasta");
 				JOptionPane.showMessageDialog( comp, new Object[] {check, align, output} );
 				
-				Set<String>	selspec = geneset.getSelspec( geneset, specList );
+				Set<String>	selspec = geneset.getSelspec( geneset, geneset.specList );
 				
 				boolean succ = true;
 				String restext = null;
@@ -1521,7 +1521,7 @@ public class ActionCollection {
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>		selspec = geneset.getSelspec( geneset, new ArrayList<String>( specList ) );
+				Set<String>		selspec = geneset.getSelspec( geneset, new ArrayList<String>( geneset.specList ) );
 				List<String>	speclist = new ArrayList<String>( selspec );
 				double[] 		mat = new double[selspec.size()*selspec.size()];
 				for( int y = 0; y < speclist.size(); y++ ) {
@@ -2071,7 +2071,7 @@ public class ActionCollection {
 		AbstractAction pancoreaction = new AbstractAction("Pan-core") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( specList ) );
+				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ) );
 				final List<StackBarData>	lsbd = new ArrayList<StackBarData>();
 						
 				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
@@ -2082,15 +2082,17 @@ public class ActionCollection {
 				final String[] categories = { "Core: ", "Accessory: " };
 				
 				for( String spec : selspec ) {
+					String newspec = geneset.nameFix( spec );
 					StackBarData sbd = geneset.new StackBarData();
 					sbd.oname = spec;
-					if( spec.contains("hermus") ) sbd.name = spec.substring( 0, spec.lastIndexOf('_') );
+					sbd.name = newspec;
+					/*if( spec.contains("hermus") ) sbd.name = spec.substring( 0, spec.lastIndexOf('_') );
 					else {
 						Matcher m = Pattern.compile("\\d").matcher(spec);
 						int firstDigitLocation = m.find() ? m.start() : 0;
 						if( firstDigitLocation == 0 ) sbd.name = "Thermus_" + spec;
 						else sbd.name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
-					}
+					}*/
 					lsbd.add( sbd );
 				}
 				
@@ -2267,7 +2269,7 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final JCheckBox	contigs = new JCheckBox("Show contigs");
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( specList ), contigs );
+				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs );
 				StringBuilder	restext = new StringBuilder();
 				
 				Map<String,Integer>	map = new TreeMap<String,Integer>();
@@ -2608,7 +2610,7 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final JCheckBox	contigs = new JCheckBox("Show contigs");
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( specList ), contigs );
+				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs );
 				StringBuilder	restext = new StringBuilder();
 				
 				Map<String,Double>	map = new TreeMap<String,Double>();
@@ -3194,24 +3196,28 @@ public class ActionCollection {
 					BufferedReader br = Files.newBufferedReader(nf);
 					final JCheckBox	contigs = new JCheckBox("Show contigs");
 					final JCheckBox	uniform = new JCheckBox("Uniform");
-					Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( specList ), contigs, uniform );
+					Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs, uniform );
 					final Map<String,String>					all = new TreeMap<String,String>();
 					final Map<String, Map<String,Integer>> 		map = new TreeMap<String, Map<String,Integer>>();
 					geneset.cogCalc( null, br, all, map, selspec, contigs.isSelected() );
 					StringWriter fw = geneset.writeCog( all, map );
 					
+					String stxt = "";
 					final StringBuilder sb = new StringBuilder();
 					InputStream is = GeneSet.class.getResourceAsStream("/cogchart.html");
-					try {
-						int c = is.read();
-						while( c != -1 ) {
-							sb.append( (char)c );
-							c = is.read();
+					if( is != null ) {
+						try {
+							int c = is.read();
+							while( c != -1 ) {
+								sb.append( (char)c );
+								c = is.read();
+							}
+						} catch (IOException e1) {
+							e1.printStackTrace();
 						}
-					} catch (IOException e1) {
-						e1.printStackTrace();
+						stxt = sb.toString().replace("smuck", fw.toString());
 					}
-					final String smuck = sb.toString().replace("smuck", fw.toString());
+					final String smuck = stxt;
 					
 					//String b64str = Base64.encodeBase64String( smuck.getBytes() );
 					/*JSObject window = null;
@@ -3221,7 +3227,7 @@ public class ActionCollection {
 						exc.printStackTrace();
 					}*/
 					
-					boolean web = true;
+					boolean web = false;
 						
 					if( web ) {
 						if( geneset.fxframe == null ) {
@@ -3333,7 +3339,7 @@ public class ActionCollection {
 		AbstractAction fetchcoreaction = new AbstractAction("Fetch core") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( specList ) );
+				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ) );
 				
 				JFrame frame = null;
 				if( geneset.currentSerify == null ) {
@@ -3561,115 +3567,10 @@ public class ActionCollection {
 		AbstractAction showflankingaction = new AbstractAction("Show flanking") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				final List<String>			specs = new ArrayList<String>( speccontigMap.keySet() );
-				final JTable				stable = new JTable();
-				stable.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
-				final TableModel					stablemodel = new TableModel() {
-					@Override
-					public int getRowCount() {
-						return specs.size();
-					}
-
-					@Override
-					public int getColumnCount() {
-						return 1;
-					}
-
-					@Override
-					public String getColumnName(int columnIndex) {
-						return "Species";
-					}
-
-					@Override
-					public Class<?> getColumnClass(int columnIndex) {
-						return String.class;
-					}
-
-					@Override
-					public boolean isCellEditable(int rowIndex, int columnIndex) {
-						return false;
-					}
-
-					@Override
-					public Object getValueAt(int rowIndex, int columnIndex) {
-						if( rowIndex >= 0 && rowIndex < specs.size() ) return specs.get(rowIndex);
-						return null;
-					}
-
-					@Override
-					public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
-
-					@Override
-					public void addTableModelListener(TableModelListener l) {}
-
-					@Override
-					public void removeTableModelListener(TableModelListener l) {}
-				};
-				stable.setModel( stablemodel );
-				
-				final JTable				ctable = new JTable();
-				final TableModel			ctablemodel = new TableModel() {
-					@Override
-					public int getRowCount() {
-						int 			r = stable.getSelectedRow();
-						String 			spec = (String)stable.getValueAt(r, 0);
-						if( spec != null ) {
-							List<Contig>	contigs = speccontigMap.get( spec );
-							return contigs.size();
-						}
-						return 0;
-					}
-
-					@Override
-					public int getColumnCount() {
-						return 1;
-					}
-
-					@Override
-					public String getColumnName(int columnIndex) {
-						return "Contigs";
-					}
-
-					@Override
-					public Class<?> getColumnClass(int columnIndex) {
-						return String.class;
-					}
-
-					@Override
-					public boolean isCellEditable(int rowIndex, int columnIndex) {
-						return false;
-					}
-
-					@Override
-					public Object getValueAt(int rowIndex, int columnIndex) {
-						int 		r = stable.getSelectedRow();
-						String 		spec = (String)stable.getValueAt(r, 0);
-						List<Contig>	contigs = speccontigMap.get( spec );
-						return contigs.get(rowIndex);
-					}
-
-					@Override
-					public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
-
-					@Override
-					public void addTableModelListener(TableModelListener l) {}
-
-					@Override
-					public void removeTableModelListener(TableModelListener l) {}
-				};
-				ctable.setModel( ctablemodel );
-				
-				JScrollPane	sscrollpane = new JScrollPane( stable );
-				JScrollPane	cscrollpane = new JScrollPane( ctable );
-				
-				FlowLayout flowlayout = new FlowLayout();
-				JComponent c = new JComponent() {};
-				c.setLayout( flowlayout );
-				c.add( sscrollpane );
-				c.add( cscrollpane );
+				List<JComponent> complist = new ArrayList<JComponent>();
 				
 				JCheckBox	check = new JCheckBox("Genes");
-				c.add( check );
+				complist.add( check );
 				
 				JRadioButton gaps = new JRadioButton("Gaps");
 				JRadioButton ctgs = new JRadioButton("Contigs");
@@ -3677,116 +3578,103 @@ public class ActionCollection {
 				bg.add( gaps );
 				bg.add( ctgs );
 				
-				c.add( gaps );
-				c.add( ctgs );
+				complist.add( gaps );
+				complist.add( ctgs );
 				
 				ctgs.setSelected( true );
 				
-				stable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
-					@Override
-					public void valueChanged(ListSelectionEvent e) {
-						ctable.tableChanged( new TableModelEvent( ctablemodel ) );
-					}
-				});
+				List<Contig> contigs = geneset.getSelspecContigs( complist );
+				//int[] rr = ctable.getSelectedRows();
 				
-				JOptionPane.showMessageDialog(geneset, c);
+				JFrame frame = new JFrame();
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				
-				int 			r = stable.getSelectedRow();
-				String 			spec = (String)stable.getValueAt(r, 0);
-				if( spec != null ) {
-					List<Contig>	contigs = speccontigMap.get( spec );
-					int[] rr = ctable.getSelectedRows();
-					
-					JFrame frame = new JFrame();
-					frame.setSize(800, 600);
-					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-					
-					if( check.isSelected() ) {
-						JTextArea	text = new JTextArea();
-						for( int row : rr ) {
-							int i = ctable.convertRowIndexToModel( row );
-							Contig ctg = contigs.get( i );
-							if( ctg.tlist != null ) {
-								if( ctg.isReverse() ) {
-									text.append( ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + "\n" );
-								} else {
+				if( check.isSelected() ) {
+					JTextArea	text = new JTextArea();
+					for( Contig ctg : contigs ) {
+						//int i = ctable.convertRowIndexToModel( row );
+						//Contig ctg = contigs.get( i );
+						if( ctg.tlist != null ) {
+							if( ctg.isReverse() ) {
+								text.append( ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(1).getGene().getGeneGroup().getCommonName() + " -- " + ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + "\n" );
+							} else {
+								
+								if( ctg.tlist.size() > 3 ) {
+									String n0 = ctg.tlist.get(0).getGene().getGeneGroup().getCommonName();
+									String n1 = ctg.tlist.get(1).getGene().getGeneGroup().getCommonName();
+									String n_2 = ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName();
+									String n_1 = ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName();
 									
-									if( ctg.tlist.size() > 3 ) {
-										String n0 = ctg.tlist.get(0).getGene().getGeneGroup().getCommonName();
-										String n1 = ctg.tlist.get(1).getGene().getGeneGroup().getCommonName();
-										String n_2 = ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName();
-										String n_1 = ctg.tlist.get(ctg.tlist.size()-2).getGene().getGeneGroup().getCommonName();
-										
-										text.append( n0 + " -- " + n1 + " -- " + ctg.getName() + " -- " + n_2 + " -- " + n_1 + "\n" );
-									} else if( ctg.tlist.size() > 1 ) text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + "\n" );
-									else if( ctg.tlist.size() == 1 ) {
-										text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + "\n" );
-									}
+									text.append( n0 + " -- " + n1 + " -- " + ctg.getName() + " -- " + n_2 + " -- " + n_1 + "\n" );
+								} else if( ctg.tlist.size() > 1 ) text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ctg.tlist.get(ctg.tlist.size()-1).getGene().getGeneGroup().getCommonName() + "\n" );
+								else if( ctg.tlist.size() == 1 ) {
+									text.append( ctg.tlist.get(0).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + "\n" );
 								}
 							}
 						}
-						frame.add( text );
-					} else {
-						Serifier serifier = new Serifier();
-						JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-						jf.initGui(frame);
-	
-						if( gaps.isSelected() ) {
-							for( int row : rr ) {
-								int i = ctable.convertRowIndexToModel( row );
-								Contig ctg = contigs.get( i );
-								
-								List<Integer> starts = new ArrayList<Integer>();
-								List<Integer> stops = new ArrayList<Integer>();
-								
-								int started = -1;
-								for( int k = 0; k < ctg.length(); k++ ) {
-									char b = ctg.charAt(k);
-									if( b == 'n' || b == 'N' ) {
-										if( started == -1 ) started = k;
-									} else if( started != -1 ) {
-										starts.add( started );
-										stops.add( k );
-										started = -1;
-									}
-								}
-								
-								for( int k = 0; k < starts.size(); k++ ) {
-									int start = starts.get(k);
-									int stop = stops.get(k);
-									
-									Sequence seq = new Sequence(ctg.getName()+"_"+start+"_"+stop, null);
-									seq.append( ctg.sb.substring( Math.max(0, start-100), start ) );
-									seq.append( "-----" );
-									seq.append( ctg.sb.substring( stop, Math.min(stop+100, ctg.length()) ) );
-									
-									serifier.addSequence( seq );
+					}
+					frame.add( text );
+				} else {
+					Serifier serifier = new Serifier();
+					JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+					jf.initGui(frame);
+
+					if( gaps.isSelected() ) {
+						for( Contig ctg : contigs ) {
+							//int i = ctable.convertRowIndexToModel( row );
+							//Contig ctg = contigs.get( i );
+							
+							List<Integer> starts = new ArrayList<Integer>();
+							List<Integer> stops = new ArrayList<Integer>();
+							
+							int started = -1;
+							for( int k = 0; k < ctg.length(); k++ ) {
+								char b = ctg.charAt(k);
+								if( b == 'n' || b == 'N' ) {
+									if( started == -1 ) started = k;
+								} else if( started != -1 ) {
+									starts.add( started );
+									stops.add( k );
+									started = -1;
 								}
 							}
-						} else {
-							for( int row : rr ) {
-								int i = ctable.convertRowIndexToModel( row );
-								Contig ctg = contigs.get( i );
-								Sequence seq = new Sequence(ctg.getName(), null);
-								if( ctg.length() <= 200 ) {
-									seq.append( ctg.sb );
-								} else {
-									seq.append( ctg.sb.substring(0, 100) );
-									seq.append( "-----" );
-									seq.append( ctg.sb.substring(ctg.length()-100, ctg.length()) );
-								}
-								if( ctg.isReverse() ) {
-									seq.reverse();
-									seq.complement();
-								}
+							
+							for( int k = 0; k < starts.size(); k++ ) {
+								int start = starts.get(k);
+								int stop = stops.get(k);
+								
+								Sequence seq = new Sequence(ctg.getName()+"_"+start+"_"+stop, null);
+								seq.append( ctg.sb.substring( Math.max(0, start-100), start ) );
+								seq.append( "-----" );
+								seq.append( ctg.sb.substring( stop, Math.min(stop+100, ctg.length()) ) );
+								
 								serifier.addSequence( seq );
 							}
 						}
-						
-						jf.updateView();
+					} else {
+						for( Contig ctg : contigs ) {
+							//int i = ctable.convertRowIndexToModel( row );
+							//Contig ctg = contigs.get( i );
+							Sequence seq = new Sequence(ctg.getName(), null);
+							if( ctg.length() <= 200 ) {
+								seq.append( ctg.sb );
+							} else {
+								seq.append( ctg.sb.substring(0, 100) );
+								seq.append( "-----" );
+								seq.append( ctg.sb.substring(ctg.length()-100, ctg.length()) );
+							}
+							if( ctg.isReverse() ) {
+								seq.reverse();
+								seq.complement();
+							}
+							serifier.addSequence( seq );
+						}
 					}
-					frame.setVisible(true);
+					
+					jf.updateView();
 				}
+				frame.setVisible(true);
 			}
 		};
 		

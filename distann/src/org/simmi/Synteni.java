@@ -229,7 +229,7 @@ public class Synteni {
 									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/FASTI;
 									for( Tegeval tv2 : tvlist2 ) {
 										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/FASTI;
-										if( tv.ori != tv2.ori ^ tv.getContshort().reverse != tv2.getContshort().reverse ) g.setColor( Color.red );
+										if( tv.ori != tv2.ori ^ tv.getContshort().isReverse() != tv2.getContshort().isReverse() ) g.setColor( Color.red );
 										else g.setColor( Color.blue );
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
 									}
@@ -259,7 +259,7 @@ public class Synteni {
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind, k*rowheader.getRowHeight()+rh2+5 );
 									} else for( Tegeval tv2 : tvlist2 ) {
 										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/FASTI;
-										if( tv.ori != tv2.ori ^ tv.getContshort().reverse != tv2.getContshort().reverse ) g.setColor( Color.red );
+										if( tv.ori != tv2.ori ^ tv.getContshort().isReverse() != tv2.getContshort().isReverse() ) g.setColor( Color.red );
 										else g.setColor( Color.blue );
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
 									}
