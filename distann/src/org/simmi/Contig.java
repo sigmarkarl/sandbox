@@ -74,7 +74,7 @@ public class Contig extends Sequence {
 	}*/
 	
 	public char charAt( int i ) {
-		return reverse ? super.revCompCharAt( i ) : super.charAt( i );
+		return revcomp == -1 ? super.revCompCharAt( i ) : super.charAt( i );
 	}
 	
 	public int getGeneCount() {
@@ -183,7 +183,7 @@ public class Contig extends Sequence {
 	double 			loc;
 	int 			size;
 	//Sequence		seq;
-	boolean			reverse = false;
+	//boolean			reverse = false;
 	Contig			next;
 	Contig			prev;
 	List<Tegeval>	tlist;
@@ -276,11 +276,11 @@ public class Contig extends Sequence {
 	}
 	
 	public boolean isReverse() {
-		return reverse;
+		return revcomp == -1;
 	}
 	
 	public void setReverse( boolean rev ) {
-		this.reverse = rev;
+		revcomp = rev ? -1 : 1;
 	}
 	
 	@Override
