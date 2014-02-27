@@ -168,7 +168,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Annotation;
-import org.simmi.shared.GBK2AminoFasta.Anno;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequences;
 import org.simmi.shared.Serifier;
@@ -6203,7 +6202,7 @@ public class GeneSet extends JApplet {
 		}*/
 	}
 	
-	public List<Contig> getSelspecContigs( List<JComponent> complist ) {
+	public List<Contig> getSelspecContigs( List<JComponent> complist, final String ... selspec ) {
 		List<Contig>				contigs = null;
 		final List<String>			specs = new ArrayList<String>( speccontigMap.keySet() );
 		final JTable				stable = new JTable();
@@ -6252,11 +6251,12 @@ public class GeneSet extends JApplet {
 		stable.setModel( stablemodel );
 		
 		final JTable				ctable = new JTable();
+		ctable.setAutoCreateRowSorter( true );
 		final TableModel			ctablemodel = new TableModel() {
 			@Override
 			public int getRowCount() {
 				int 			r = stable.getSelectedRow();
-				String 			spec = (String)stable.getValueAt(r, 0);
+				String 			spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(r, 0);
 				if( spec != null ) {
 					List<Contig>	contigs = speccontigMap.get( spec );
 					return contigs.size();
@@ -6276,7 +6276,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				return String.class;
+				return Contig.class;
 			}
 
 			@Override
@@ -6287,7 +6287,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
 				int 		r = stable.getSelectedRow();
-				String 		spec = (String)stable.getValueAt(r, 0);
+				String 		spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(r, 0);
 				List<Contig>	contigs = speccontigMap.get( spec );
 				return contigs.get(rowIndex);
 			}
@@ -6309,7 +6309,7 @@ public class GeneSet extends JApplet {
 		FlowLayout flowlayout = new FlowLayout();
 		JComponent c = new JComponent() {};
 		c.setLayout( flowlayout );
-		c.add( sscrollpane );
+		if( selspec.length == 0 ) c.add( sscrollpane );
 		c.add( cscrollpane );
 		
 		if( complist != null ) {
@@ -6327,7 +6327,7 @@ public class GeneSet extends JApplet {
 		JOptionPane.showMessageDialog(this, c);
 		
 		int 			sr = stable.getSelectedRow();
-		String 			spec = (String)stable.getValueAt(sr, 0);
+		String 			spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(sr, 0);
 		if( spec != null ) {
 			List<Contig> ctgs = speccontigMap.get( spec );
 			int[] rr = ctable.getSelectedRows();
@@ -12469,7 +12469,7 @@ public class GeneSet extends JApplet {
 				}
 			}
 			
-			Map<String,GeneGroup>	rnamap = new HashMap<String,GeneGroup>();
+			final Map<String,GeneGroup>	rnamap = new HashMap<String,GeneGroup>();
 			//is = GeneSet.class.getResourceAsStream("/rrna.fasta");
 			//InputStream tis = //GeneSet.class.getResourceAsStream("/trna.txt"); //GeneSet.class.getResourceAsStream("/trna_sub.txt");
 			/*ZipInputStream zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
@@ -12494,10 +12494,58 @@ public class GeneSet extends JApplet {
 			if( Files.exists( nf ) ) i  = loadTrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
 			nf = zipfilesystem.getPath("/rrnas.txt");
 			if( Files.exists( nf ) ) i = loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
+			
 			nf = zipfilesystem.getPath("/allthermus.trna");
 			if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "trna" );
+			else {
+				for( Path root : zipfilesystem.getRootDirectories() ) {
+					Files.list(root).filter( new Predicate<Path>() {
+						@Override
+						public boolean test(Path t) {
+							String filename = t.getFileName().toString();
+							//System.err.println("filename " + filename);
+							boolean b = filename.endsWith(".trna") && !filename.contains("allthermus");
+							return b;
+						}
+					}).forEach( new Consumer<Path>() {
+						@Override
+						public void accept(Path t) {
+							if( Files.exists( t ) )
+								try {
+									loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "trna" );
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+						}
+					});
+				}
+			}
+			
 			nf = zipfilesystem.getPath("/allthermus.rrna");
 			if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "rrna" );
+			else {
+				for( Path root : zipfilesystem.getRootDirectories() ) {
+					Files.list(root).filter( new Predicate<Path>() {
+						@Override
+						public boolean test(Path t) {
+							String filename = t.getFileName().toString();
+							//System.err.println("filename " + filename);
+							boolean b = filename.endsWith(".rrna") && !filename.contains("allthermus");
+							return b;
+						}
+					}).forEach( new Consumer<Path>() {
+						@Override
+						public void accept(Path t) {
+							if( Files.exists( t ) )
+								try {
+									loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "rrna" );
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+						}
+					});
+				}
+			}
 			//zipfilesystem.close();
 			
 			//loadRrnas( new InputStreamReader(is), new InputStreamReader(tis), i );
@@ -13325,7 +13373,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	public void exportGenomes() {
-		JCheckBox	joincontigs = new JCheckBox();
+		JCheckBox	joincontigs = new JCheckBox("Join contigs");
 		JComponent[] comps = new JComponent[] { joincontigs };
 		List<Contig> contigs = getSelspecContigs( Arrays.asList( comps ) );
 		
@@ -13350,7 +13398,7 @@ public class GeneSet extends JApplet {
 		JFileChooser filechooser = new JFileChooser();
 		if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
 			try {
-				serifier.writeGenebank( filechooser.getSelectedFile(), joincontigs.isSelected(), s, mapan);
+				serifier.writeGenebank( filechooser.getSelectedFile(), !joincontigs.isSelected(), s, mapan);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

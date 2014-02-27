@@ -1331,8 +1331,8 @@ public class GeneCompare {
 					g2.setFont( oldfont );
 				}
 				
-				String specstr;
-				if( spec.contains("hermus") ) {
+				String specstr = geneset.nameFix( spec );
+				/*if( spec.contains("hermus") ) {
 					int u = spec.indexOf("_uid");
 					if( u == -1 ) u = spec.length();
 					specstr = spec.substring(0, u);
@@ -1341,7 +1341,7 @@ public class GeneCompare {
 					int firstDigitLocation = m.find() ? m.start() : 0;
 					if( firstDigitLocation == 0 ) specstr = "Thermus_"+spec;
 					else specstr = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
-				}
+				}*/
 				
 				if( specstr.length() > 30 ) specstr = specstr.substring(0, specstr.lastIndexOf('_'));
 				
