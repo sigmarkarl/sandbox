@@ -1794,6 +1794,36 @@ public class Neighbour {
 					c.repaint();
 				}
 			});
+			
+			mvmnu.add( new AbstractAction("Connect contig")  {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					List<Contig> contigs = geneset.getSelspecContigs(null, currentTe.getSpecies());
+					if( contigs.size() > 0 ) {
+						Contig sctg = contigs.get(0);
+						
+						Contig ctg = currentTe.getContshort();
+						int i = ctg.partof.indexOf( ctg );
+						int k = ctg.tlist.indexOf( currentTe );
+						
+						if( k == 0 || ctg.isReverse() ) {
+							ctg.partof.remove( sctg );
+							ctg.partof.add(i, sctg);
+						} else if( k == ctg.tlist.size()-1 || !ctg.isReverse() ) {
+							ctg.partof.remove( sctg );
+							ctg.partof.add(i+1, sctg);
+						}
+					}
+				}
+			});
+			mvmnu.add( new AbstractAction("Reverse contig")  {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Contig ctg = currentTe.getContshort();
+					ctg.setReverse( !ctg.isReverse() );
+				}
+			});
+			mvmnu.addSeparator();
 			mvmnu.add( new AbstractAction("Inject forward") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
