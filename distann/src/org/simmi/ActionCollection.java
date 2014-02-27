@@ -832,9 +832,9 @@ public class ActionCollection {
 				fw.write("<html><head></head><body><table border=1>");
 				fw.write("<tr><td>Species</td>");
 				for( String spec : selspecs) {
-					int i = spec.indexOf('_');
-					if( i == -1 ) i = spec.length();
-					String specstr = spec.substring(0, i);
+					//int i = spec.indexOf('_');
+					//if( i == -1 ) i = spec.length();
+					String specstr = geneset.nameFix( spec ); //spec.substring(0, i);
 					fw.write( "<td colspan=2>"+specstr+"</td>" );
 				}
 				fw.write("</tr><tr><td></td>");
