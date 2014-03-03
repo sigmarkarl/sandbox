@@ -1518,6 +1518,21 @@ public class ActionCollection {
 				}
 			}
 		};
+		AbstractAction	selectdirtyaction = new AbstractAction("Select dirty") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if( geneset.table.getModel() == geneset.groupModel ) {
+					int i = 0;
+					for( GeneGroup gg : geneset.allgenegroups ) {
+						if( gg.containsDirty() ) {
+							int r = geneset.table.convertRowIndexToView( i );
+							if( r != -1 ) geneset.table.addRowSelectionInterval( r, r );
+						}
+						i++;
+					}
+				}
+			}
+		};
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -4032,6 +4047,7 @@ public class ActionCollection {
 		menu.addSeparator();
 		menu.add( genomestataction );
 		menu.add( selectsharingaction );
+		menu.add( selectdirtyaction );
 		menu.add( shuffletreeaction );
 		menu.add( presabsaction );
 		menu.add( freqdistaction );
