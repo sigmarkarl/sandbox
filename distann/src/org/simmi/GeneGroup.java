@@ -15,6 +15,13 @@ public class GeneGroup {
 	int						index;
 	//int			groupGeneCount;
 	
+	public boolean containsDirty() {
+		for( Gene g : genes ) {
+			if( g.tegeval.isDirty() ) return true;
+		}
+		return false;
+	}
+	
 	public int getMaxCyc() {
 		int max = -1;
 		for( Gene g : genes ) {

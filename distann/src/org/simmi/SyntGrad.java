@@ -202,7 +202,7 @@ public class SyntGrad {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ImageIO.write(bi, "png", new File("/tmp/out.png"));
+					ImageIO.write(bi, "png", new File("c:/out.png"));
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
