@@ -16,9 +16,8 @@
     <url-pattern>/hvaderimatnum/greet</url-pattern>
   </servlet-mapping>
   
-  <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Hvaderimatnum.html</welcome-file>
+    <welcome-file>sorttable.html</welcome-file>
   </welcome-file-list>
 
 </web-app>

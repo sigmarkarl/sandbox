@@ -2,23 +2,13 @@ package org.simmi;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 public class DbSave {
 	//private static final String MAC_NAME = "HmacSHA1";
@@ -88,7 +78,7 @@ public class DbSave {
 			else paramstr += "&" + par + "=" + parameters.get(par);
 		}
 		
-		String keyString = OAuth.percentEncode("9or8lsn165d44qv") + '&' + OAuth.percentEncode(tokensecret);
+		/*String keyString = OAuth.percentEncode("9or8lsn165d44qv") + '&' + OAuth.percentEncode(tokensecret);
         byte[] keyBytes = keyString.getBytes(OAuth.ENCODING);
 
         String MAC_NAME = "HmacSHA1";
@@ -137,7 +127,7 @@ public class DbSave {
 		int clen = cont.length()+contents.length;
 		
 		httpConnection.setRequestProperty("Content-Length", ""+clen);
-		httpConnection.setRequestProperty("Accept", "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2" );
+		httpConnection.setRequestProperty("Accept", "text/html, image/gif, image/jpeg, *; q=.2, ; q=.2" );
 		httpConnection.setRequestProperty("Connection", "keep-alive");
 		httpConnection.setRequestProperty("Expect", "100-Continue");
 		
@@ -161,6 +151,6 @@ public class DbSave {
 		System.out.println( s );
 		System.out.println( httpConnection.getResponseCode() );
 		
-		httpConnection.disconnect();
+		httpConnection.disconnect();*/
     }
 }
