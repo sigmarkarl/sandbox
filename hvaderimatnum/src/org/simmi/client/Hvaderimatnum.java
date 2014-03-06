@@ -17,13 +17,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.visualization.client.AbstractDataTable.ColumnType;
-import com.google.gwt.visualization.client.DataTable;
-import com.google.gwt.visualization.client.DataView;
-import com.google.gwt.visualization.client.VisualizationUtils;
-import com.google.gwt.visualization.client.events.SelectHandler;
-import com.google.gwt.visualization.client.visualizations.Table;
-import com.google.gwt.visualization.client.visualizations.Table.Options;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -129,7 +122,7 @@ public class Hvaderimatnum implements EntryPoint {
 		db.getCaption().setText("Copy data");
 		db.setSize(800+"px", 600+"px");
 		
-		data = DataTable.create();
+		/*data = DataTable.create();
 		String[] split = str.split("\n");
 		String[] subs = split[0].split("\t");
 		
@@ -151,17 +144,17 @@ public class Hvaderimatnum implements EntryPoint {
 		view = DataView.create( data );
 		table.draw( view, options );
 		
-		db.add( table );
+		db.add( table );*/
 		
 		console("muu");
 		db.center();
 		console("done");
 	}
 	
-	DataTable	data;
-	DataView	view;
-	Table		table;
-	Options		options;
+	//DataTable	data;
+	//DataView	view;
+	//Table		table;
+	//Options		options;
 	Element		appletelement;
 
 	/**
@@ -192,7 +185,7 @@ public class Hvaderimatnum implements EntryPoint {
 			}
 		});
 		
-		Runnable onLoadCallback = new Runnable() {
+		/*Runnable onLoadCallback = new Runnable() {
 			public void run() {
 				data = DataTable.create();
 		    	//data.addColumn( ColumnType.STRING, "Starfsmaður");
@@ -214,7 +207,7 @@ public class Hvaderimatnum implements EntryPoint {
 		    	});
 			}	
 	    };
-	    VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);
+	    VisualizationUtils.loadVisualizationApi(onLoadCallback, Table.PACKAGE);*/
 		
 		//ScriptElement se = Document.get().createScriptElement();
 		/*Style scriptstyle = se.getStyle();

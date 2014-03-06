@@ -290,31 +290,6 @@ public class ActionCollection {
 			}
 		};
 		//JButton matrixbutton = new JButton(matrixaction);
-		AbstractAction genexyplotaction = new AbstractAction("Gene XY plot") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new XYPlot().xyPlot( geneset, comp, geneset.genelist, clusterMap );
-			}
-		};
-		
-		AbstractAction compareplotaction = new AbstractAction("Gene atlas") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					new GeneCompare().comparePlot( geneset, comp, geneset.genelist, clusterMap );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		};
-		
-		AbstractAction syntenygradientaction = new AbstractAction("Synteny gradient") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new SyntGrad().syntGrad( geneset );
-			}
-		};
-		
 		AbstractAction codregaction = new AbstractAction("Coding regions") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1425,112 +1400,6 @@ public class ActionCollection {
 		                 }
 		            });
 				}*/
-			}
-		};
-		AbstractAction	selectsharingaction = new AbstractAction("Select sharing") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JRadioButton panbtn = new JRadioButton("Pan");
-				JRadioButton corebtn = new JRadioButton("Core");
-				JRadioButton blehbtn = new JRadioButton("Bleh");
-				ButtonGroup	bg = new ButtonGroup();
-				bg.add( panbtn );
-				bg.add( corebtn );
-				bg.add( blehbtn );
-				corebtn.setSelected( true );
-				//Object[] objs = new Object[] { panbtn, corebtn };
-				//JOptionPane.showMessageDialog( geneset, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
-				
-				final List<String> species = geneset.getSpecies();
-				TableModel model = new TableModel() {
-					@Override
-					public int getRowCount() {
-						return species.size();
-					}
-
-					@Override
-					public int getColumnCount() {
-						return 1;
-					}
-
-					@Override
-					public String getColumnName(int columnIndex) {
-						return null;
-					}
-
-					@Override
-					public Class<?> getColumnClass(int columnIndex) {
-						return String.class;
-					}
-
-					@Override
-					public boolean isCellEditable(int rowIndex, int columnIndex) {
-						return false;
-					}
-
-					@Override
-					public Object getValueAt(int rowIndex, int columnIndex) {
-						return species.get( rowIndex );
-					}
-
-					@Override
-					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-					@Override
-					public void addTableModelListener(TableModelListener l) {}
-
-					@Override
-					public void removeTableModelListener(TableModelListener l) {}
-				};
-				JTable table = new JTable( model );
-				table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-				JScrollPane	scroll = new JScrollPane( table );
-				
-				FlowLayout flowlayout = new FlowLayout();
-				JComponent c = new JComponent() {};
-				c.setLayout( flowlayout );
-				c.add( scroll );
-				c.add( panbtn );
-				c.add( corebtn );
-				c.add( blehbtn );
-				
-				JOptionPane.showMessageDialog(comp, c);
-				
-				final Set<String>	specs = new HashSet<String>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					String spec = (String)table.getValueAt(r, 0);
-					specs.add( spec );
-				}
-				
-				for( GeneGroup gg : geneset.allgenegroups ) {
-					if( blehbtn.isSelected() ) {
-						Set<String> ss = new HashSet<String>( gg.species.keySet() );
-						ss.removeAll( specs );
-						if( ss.size() == 0 ) {
-							int r = geneset.table.convertRowIndexToView( gg.index );
-							geneset.table.addRowSelectionInterval( r, r );
-						}
-					} else if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
-						int r = geneset.table.convertRowIndexToView( gg.index );
-						if( r != -1 ) geneset.table.addRowSelectionInterval( r, r );
-					}
-				}
-			}
-		};
-		AbstractAction	selectdirtyaction = new AbstractAction("Select dirty") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if( geneset.table.getModel() == geneset.groupModel ) {
-					int i = 0;
-					for( GeneGroup gg : geneset.allgenegroups ) {
-						if( gg.containsDirty() ) {
-							int r = geneset.table.convertRowIndexToView( i );
-							if( r != -1 ) geneset.table.addRowSelectionInterval( r, r );
-						}
-						i++;
-					}
-				}
 			}
 		};
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
@@ -3242,7 +3111,7 @@ public class ActionCollection {
 						exc.printStackTrace();
 					}*/
 					
-					boolean web = false;
+					boolean web = true;
 						
 					if( web ) {
 						if( geneset.fxframe == null ) {
@@ -3297,10 +3166,10 @@ public class ActionCollection {
 						
 						if( Desktop.isDesktopSupported() ) {
 							try {
-								FileWriter fwr = new FileWriter("c:/smuck.html");
+								FileWriter fwr = new FileWriter("/Users/sigmar/smuck.html");
 								fwr.write( smuck );
 								fwr.close();
-								Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
+								Desktop.getDesktop().browse( new URI("file:///Users/sigmar/smuck.html") );
 							} catch( Exception exc ) {
 								exc.printStackTrace();
 							}
@@ -4021,33 +3890,10 @@ public class ActionCollection {
 				Tegeval.locsort = checkbox.isSelected();
 			}
 		});
-		AbstractAction saveselAction = new AbstractAction("Save selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				if( rr.length > 0 ) {
-					String val = Integer.toString( table.convertRowIndexToModel(rr[0]) );
-					for( int i = 1; i < rr.length; i++ ) {
-						val += ","+table.convertRowIndexToModel(rr[i]);
-					}
-					String selname = JOptionPane.showInputDialog("Selection name");
-					if( comp instanceof Applet ) {
-						try {
-							((GeneSet)comp).saveSel( selname, val);
-						} catch (Exception e1) {
-							e1.printStackTrace();
-						}
-					}
-				}
-			}
-		};
 		
 		menu.add( checkbox );
-		menu.add( saveselAction );
 		menu.addSeparator();
 		menu.add( genomestataction );
-		menu.add( selectsharingaction );
-		menu.add( selectdirtyaction );
 		menu.add( shuffletreeaction );
 		menu.add( presabsaction );
 		menu.add( freqdistaction );
@@ -4062,9 +3908,6 @@ public class ActionCollection {
 		menu.add( mltreemapaction );
 		menu.add( sevenaction );
 		menu.add( cogaction );
-		menu.add( genexyplotaction );
-		menu.add( compareplotaction );
-		menu.add( syntenygradientaction );
 		menu.add( codregaction );
 		menu.add( fetchcoreaction );
 		menu.add( loadcontiggraphaction );
