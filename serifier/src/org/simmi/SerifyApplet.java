@@ -2648,7 +2648,7 @@ public class SerifyApplet extends JApplet {
 						}
 						
 						try {
-							serifier.genbankFromNR( s, blastFile, f, false );
+							serifier.genbankFromNR( s, blastFile.toPath(), f, false );
 						} catch (MalformedURLException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
