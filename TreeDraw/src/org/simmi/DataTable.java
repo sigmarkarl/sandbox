@@ -1901,19 +1901,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		boolean succ = true;
 		if( !done ) {
 			try {
-				System.err.println( "bleh3erm" );
+				//System.err.println( "bleh3erm" );
 				Object obj = JSObject.class;
 				obj = null;
-				System.err.println( "bleh4" );
+				//System.err.println( "bleh4" );
 				JSObject erm = (JSObject)obj;
-				System.err.println( "ble2h"+this );
+				//System.err.println( "ble2h"+this );
 				JSObject win = JSObject.getWindow(this);
-				System.err.println( "about to run loadData" );
+				//System.err.println( "about to run loadData" );
 				win.call("loadData", new Object[] {});
 				win.call("reqSavedSel", new Object[] {});
 				//System.err.println( "done loadData" );
 				//win.call("loadMeta", new Object[] {});
-			} catch( Exception e ) {
+			} catch( NoSuchMethodError | Exception e ) {
 				succ = false;
 				e.printStackTrace();
 			}
