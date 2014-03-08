@@ -1768,25 +1768,25 @@ public class ActionCollection {
 				JOptionPane.showMessageDialog( geneset, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
 				
 				Set<String> ids = new HashSet<String>();
-				int[] rr = table.getSelectedRows();
+				int[] rr = geneset.table.getSelectedRows();
 				for( int r : rr ) {
 					if( kobtn.isSelected() ) {
-						String ko = (String)table.getValueAt(r, 6);
+						String ko = (String)geneset.table.getValueAt(r, 6);
 						if( ko != null ) ids.add( ko );
 					}
 					
 					if( ecbtn.isSelected() ) {
-						String ec = (String)table.getValueAt(r, 10);
+						String ec = (String)geneset.table.getValueAt(r, 10);
 						if( ec != null ) ids.add( "E"+ec.replace(":", "") );
 					}
 					
 					if( cogbtn.isSelected() ) {
-						String cog = (String)table.getValueAt(r, 11);
+						String cog = (String)geneset.table.getValueAt(r, 11);
 						if( cog != null ) ids.add( cog.substring( cog.lastIndexOf(' ')+1 ) );
 					}
 					
 					if( gibtn.isSelected() ) {
-						int i = table.convertRowIndexToModel(r);
+						int i = geneset.table.convertRowIndexToModel(r);
 						if( i != -1 ) {
 							GeneGroup gg = geneset.allgenegroups.get(i);
 							for( Gene g : gg.genes ) {
@@ -1802,7 +1802,7 @@ public class ActionCollection {
 					}
 					
 					if( ecbtn.isSelected() ) {
-						int i = table.convertRowIndexToModel(r);
+						int i = geneset.table.convertRowIndexToModel(r);
 						if( i != -1 ) {
 							GeneGroup gg = geneset.allgenegroups.get(i);
 							for( Function f : gg.getFunctions() ) {
@@ -1847,7 +1847,7 @@ public class ActionCollection {
 					}
 				} else {
 					try {
-						FileWriter tmpf = new FileWriter("c:/kolist.txt");
+						FileWriter tmpf = new FileWriter("/Users/sigmar/kolist.txt");
 						if( colorstr != null && colorstr.length() > 0 ) {
 							for( String id : ids ) {
 								tmpf.write( id + " " + colorstr + "\n" );
@@ -1859,7 +1859,7 @@ public class ActionCollection {
 						}
 						tmpf.close();
 						
-						Desktop.getDesktop().browse( new URI("file://c:/kolist.txt") );
+						Desktop.getDesktop().browse( new URI("file:///Users/sigmar/kolist.txt") );
 					} catch( Exception e1 ) {
 						e1.printStackTrace();
 					}
@@ -3082,9 +3082,13 @@ public class ActionCollection {
 					final JCheckBox	uniform = new JCheckBox("Uniform");
 					Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs, uniform );
 					final Map<String,String>					all = new TreeMap<String,String>();
-					final Map<String, Map<String,Integer>> 		map = new TreeMap<String, Map<String,Integer>>();
-					geneset.cogCalc( null, br, all, map, selspec, contigs.isSelected() );
-					StringWriter fw = geneset.writeCog( all, map );
+					final Map<String, Map<Character,Integer>> 	map = new TreeMap<String, Map<Character,Integer>>();
+					geneset.cogCalc( null, br, map, selspec, contigs.isSelected() );
+					StringWriter fw = geneset.writeCog( map );
+					String repl = fw.toString();
+					
+					fw = geneset.writeSimpleCog( map );
+					String stuff = fw.toString();
 					
 					String stxt = "";
 					final StringBuilder sb = new StringBuilder();
@@ -3099,7 +3103,7 @@ public class ActionCollection {
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
-						stxt = sb.toString().replace("smuck", fw.toString());
+						stxt = sb.toString().replace("smuck", repl);
 					}
 					final String smuck = stxt;
 					
@@ -3162,7 +3166,7 @@ public class ActionCollection {
 							window.eval("open( URL.createObjectURL(b), '_blank' )");
 						} catch( Exception exc ) {
 							exc.printStackTrace();
-						}*/
+						}
 						
 						if( Desktop.isDesktopSupported() ) {
 							try {
@@ -3173,7 +3177,7 @@ public class ActionCollection {
 							} catch( Exception exc ) {
 								exc.printStackTrace();
 							}
-						}
+						}*/
 					} else {
 						SwingUtilities.invokeLater( new Runnable() {
 							@Override
@@ -3203,17 +3207,18 @@ public class ActionCollection {
 								geneset.fxframe.setVisible( true );
 							}
 						});
-						/*JFrame f = new JFrame("GC% chart");
-						f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-						f.setSize( 800, 600 );
-						
-						JTextArea	ta = new JTextArea();
-						ta.setText( fw.toString() );
-						JScrollPane	sp = new JScrollPane(ta);
-						f.add( sp );
-						f.setVisible( true );*/
 					}
 					geneset.zipfilesystem.close();
+					
+					JFrame f = new JFrame("GC% chart");
+					f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+					f.setSize( 800, 600 );
+					
+					JTextArea	ta = new JTextArea();
+					ta.setText( repl + "\n" + stuff );
+					JScrollPane	sp = new JScrollPane(ta);
+					f.add( sp );
+					f.setVisible( true );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -3333,7 +3338,7 @@ public class ActionCollection {
 						System.err.println();
 					}*/
 					for( Tegeval tv : tlist ) {
-						sb.append(">" + tv.cont.substring(0, tv.cont.indexOf('_')) + "\n");
+						sb.append(">" + tv.name.substring(0, tv.name.indexOf('_')) + "\n");
 						for (int i = 0; i < tv.getProteinLength(); i += 70) {
 							sb.append( tv.getProteinSubsequence(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
 						}
@@ -3714,7 +3719,7 @@ public class ActionCollection {
 							Teginfo ti = gg.species.get( spec1 );
 							for( int n = m+1; n < speclist.size(); n++ ) {
 								String spec2 = speclist.get( n );
-								double val = GeneCompare.blosumVal(ti.best, spec2, gg, blosumap);
+								double val = GeneCompare.blosumVal(ti.best.alignedsequence, spec2, gg, blosumap);
 								sdb[u++] = val;
 								norm += val*val;
 							}
