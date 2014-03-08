@@ -49,7 +49,7 @@ public class Blast {
 				}*/
 				if( clusterset.contains( query ) ) {
 					Tegeval tvl = gene.tegeval;
-					if( !clusterset.contains( tvl.cont ) ) {
+					if( !clusterset.contains( tvl.name ) ) {
 						Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
 						
 						if( newgene == null ) {
