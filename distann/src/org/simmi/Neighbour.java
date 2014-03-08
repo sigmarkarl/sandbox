@@ -677,7 +677,7 @@ public class Neighbour {
 													GeneGroup gg = next.getGene().getGeneGroup();
 													List<Tegeval> ltv = gg.getTegevals( spec1 );
 													if( ltv != null && ltv.size() > 0 ) {
-														rc = GeneCompare.blosumColor( ltv.get(0), next.getSpecies(), gg, blosumap, false );
+														rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, next.getSpecies(), gg, blosumap, false );
 													} else {
 														rc = Color.white;
 													}
@@ -999,7 +999,7 @@ public class Neighbour {
 												GeneGroup gg = prev.getGene().getGeneGroup();
 												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
-													rc = GeneCompare.blosumColor( ltv.get(0), prev.getSpecies(), gg, blosumap, false );
+													rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, prev.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
@@ -1259,7 +1259,7 @@ public class Neighbour {
 												GeneGroup gg = next.getGene().getGeneGroup();
 												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
-													rc = GeneCompare.blosumColor( ltv.get(0), next.getSpecies(), gg, blosumap, false );
+													rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, next.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
@@ -1859,7 +1859,7 @@ public class Neighbour {
 						for( String sp : gg.species.keySet() ) {
 							Teginfo ti = gg.species.get( sp );
 							
-							Contig ct = ti.best.contshort;
+							Contig ct = ti.best.getContshort();
 							ctind.put( sp, ct );
 							spind.put( sp, ct.tlist.indexOf( ti.best ) );
 						}
@@ -2627,7 +2627,7 @@ public class Neighbour {
 						List<Sequence>	selseq = new ArrayList<Sequence>( rr.length );
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel(r);
-							selseq.add( hteg.get(i) );
+							selseq.add( hteg.get(i).alignedsequence );
 						}
 						return selseq;
 					} else {

@@ -4,6 +4,7 @@ import java.util.Set;
 
 public class Gene {
 	public Gene(GeneGroup gg, String id, String name, String origin) {
+		//super();
 		this.name = name;
 		this.species = origin;
 		this.gg = gg;
