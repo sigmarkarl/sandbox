@@ -2,9 +2,10 @@ package org.simmi;
 
 import java.awt.Color;
 
+import org.simmi.shared.Annotation;
 import org.simmi.shared.Sequence;
 
-public class Tegeval extends Sequence implements Teg {
+public class Tegeval extends Annotation implements Teg {
 	public Tegeval(Gene gene, String tegund, double evalue, String contig, Contig shortcontig, String locontig, int sta, int sto, int orient) {
 		this( contig, shortcontig, locontig, sta, sto, orient );
 		
@@ -16,6 +17,7 @@ public class Tegeval extends Sequence implements Teg {
 	}
 	
 	public Tegeval( String contig, Contig shortcontig, String locontig, int sta, int sto, int orient ) {
+		super(shortcontig,contig,null,sta,sto,orient,null);
 		init( contig, shortcontig, locontig, sta, sto, orient );
 	}
 	
@@ -23,9 +25,14 @@ public class Tegeval extends Sequence implements Teg {
 		super();
 	}
 	
+	public void append( String a ) {
+		if( alignedsequence == null ) alignedsequence = new Sequence();
+		alignedsequence.append( a );
+	}
+	
 	public void init( String contig, Contig shortcontig, String locontig, int sta, int sto, int orient ) {
-		cont = contig;
-		contshort = shortcontig;
+		name = contig;
+		seq = shortcontig;
 		contloc = locontig;
 		start = sta;
 		stop = sto;
@@ -76,23 +83,23 @@ public class Tegeval extends Sequence implements Teg {
 	}
 	
 	public String getSubstring( int u, int e ) {
-		return contshort.getSubstring(start+u, start+e, ori);
+		return seq.getSubstring(start+u, start+e, ori);
 	}
 	
 	public String getSequence() {
-		return contshort.getSubstring(start, stop, ori);
+		return seq.getSubstring(start, stop, ori);
 	}
 	
 	public Sequence getAlignedSequence() {
-		return this;
+		return alignedsequence;
 	}
 	
 	public StringBuilder getProteinSubsequence( int u, int e ) {
-		return contshort.getProteinSequence( start+u, start+e, ori );
+		return seq.getProteinSequence( start+u, start+e, ori );
 	}
 	
 	public StringBuilder getProteinSequence() {
-		StringBuilder ret = contshort.getProteinSequence( start, stop, ori );
+		StringBuilder ret = getProteinSequence();
 		return ret;
 	}
 	
@@ -101,7 +108,7 @@ public class Tegeval extends Sequence implements Teg {
 	}
 	
 	public int getSequenceLength() {
-		return super.length();
+		return alignedsequence == null ? 0 : alignedsequence.length();
 	}
 	
 	public int getProteinLength() {
@@ -109,7 +116,7 @@ public class Tegeval extends Sequence implements Teg {
 	}
 	
 	public Contig getContshort() {
-		return contshort;
+		return (Contig)seq;
 	}
 	
 	public String getContloc() {
@@ -117,16 +124,16 @@ public class Tegeval extends Sequence implements Teg {
 	}
 	
 	public String getContig() {
-		return cont;
+		return name;
 	}
 	
 	public Tegeval getNext() {
-		if( contshort != null ) return contshort.getNext( this );
+		if( seq != null ) return getContshort().getNext( this );
 		return null;
 	}
 	
 	public Tegeval getPrevious() {
-		if( contshort != null ) return contshort.getPrev( this );
+		if( seq != null ) return getContshort().getPrev( this );
 		return null;
 	}
 	
@@ -147,8 +154,8 @@ public class Tegeval extends Sequence implements Teg {
 		int g = 0;
 		int c = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
-		if( contshort != null ) for( int i = start; i < stop; i++ ) {
-			char n = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ contshort.charAt(i);
+		if( seq != null ) for( int i = start; i < stop; i++ ) {
+			char n = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ seq.charAt(i);
 			if( n == 'g' || n == 'G' ) g++;
 			else if( n == 'c' || n == 'C' ) c++;
 		}
@@ -160,8 +167,8 @@ public class Tegeval extends Sequence implements Teg {
 		int gc = 0;
 		int total = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
-		if( contshort != null ) for( int i = start; i < stop; i++ ) {
-			char c = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ contshort.charAt(i);
+		if( seq != null ) for( int i = start; i < stop; i++ ) {
+			char c = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ seq.charAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
 			if( c != '-' && c != 'x' || c != 'X' ) total++;
 		}
@@ -219,9 +226,9 @@ public class Tegeval extends Sequence implements Teg {
 		
 		//int i = contshort.tlist.indexOf(this);
 		if( i == 0 ) {
-			Tegeval tv = contshort.tlist.get(i);
+			Tegeval tv = getContshort().tlist.get(i);
 			for( int m = 0; m < tv.start; m++ ) {
-				char c = contshort.charAt(m);
+				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 1;
 					if( this.ori == -1 ) frontgap = true;
@@ -231,10 +238,10 @@ public class Tegeval extends Sequence implements Teg {
 				}
 			}
 		} else {
-			Tegeval tv = contshort.tlist.get(i);
-			Tegeval tvp = contshort.tlist.get(i-1);
+			Tegeval tv = getContshort().tlist.get(i);
+			Tegeval tvp = getContshort().tlist.get(i-1);
 			for( int m = tvp.stop; m < tv.start; m++ ) {
-				char c = contshort.charAt(m);
+				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 1;
 					if( this.ori == -1 ) frontgap = true;
@@ -245,10 +252,10 @@ public class Tegeval extends Sequence implements Teg {
 			}
 		}
 		
-		if( i == contshort.tlist.size()-1 ) {
-			Tegeval tv = contshort.tlist.get(i);
-			for( int m = tv.stop; m < contshort.length(); m++ ) {
-				char c = contshort.charAt(m);
+		if( i == getContshort().tlist.size()-1 ) {
+			Tegeval tv = getContshort().tlist.get(i);
+			for( int m = tv.stop; m < seq.length(); m++ ) {
+				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 2;
 					if( this.ori == -1 ) backgap = true;
@@ -258,10 +265,10 @@ public class Tegeval extends Sequence implements Teg {
 				}
 			}
 		} else {
-			Tegeval tv = contshort.tlist.get(i);
-			Tegeval tvn = contshort.tlist.get(i+1);
+			Tegeval tv = getContshort().tlist.get(i);
+			Tegeval tvn = getContshort().tlist.get(i+1);
 			for( int m = tv.stop; m < tvn.start; m++ ) {
-				char c = contshort.charAt(m);
+				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 2;
 					if( this.ori == -1 ) backgap = true;
@@ -279,18 +286,15 @@ public class Tegeval extends Sequence implements Teg {
 		return dirty;
 	}
 
+	Sequence		alignedsequence;
 	double			gc;
 	double			gcskew;
 	String 			teg;
 	double 			eval;
-	String 			cont;
-	Contig 			contshort;
+	//Contig 			contshort;
 	String 			contloc;
 	//Sequence	 	seq;
 	//StringBuilder 	dna;
-	int 			start;
-	int 			stop;
-	int 			ori;
 	int 			numCys;
 	private int		num;
 	Gene			gene;
@@ -341,13 +345,13 @@ public class Tegeval extends Sequence implements Teg {
 		if( o instanceof Tegeval ) {
 			Tegeval tv = (Tegeval)o;
 			if( locsort ) {
-				int ret = contshort.compareTo(tv.contshort);
+				int ret = getContshort().compareTo(tv.getContshort());
 				/*
 				 * if( o.contshort != null || o.contshort.length() < 2 ) { ret =
 				 * contshort.compareTo(o.contshort); } else {
 				 * System.err.println(); }
 				 */
-				return ret == 0 ? start - tv.start : ret;
+				return ret == 0 ? super.compareTo(o) : ret;
 			} else {
 				int comp = Double.compare(eval, tv.eval);
 				return comp == 0 ? teg.compareTo(tv.teg) : comp;

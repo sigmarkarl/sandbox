@@ -284,10 +284,10 @@ public class Contig extends Sequence {
 	}
 	
 	@Override
-	public int compareTo(Object o) {
+	public int compareTo(Sequence o) {
 		if( partof != null ) {
 			return partof.indexOf( this ) - partof.indexOf( o );
 		}
-		return getName().compareTo( ((Sequence)o).getName() );
+		return getName().compareTo( o.getName() );
 	}
 }
