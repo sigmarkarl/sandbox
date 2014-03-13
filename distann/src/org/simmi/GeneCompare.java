@@ -32,8 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -731,6 +729,100 @@ public class GeneCompare {
 	
 	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal ) {
 		draw( g2, spec1, geneset, w, h, contigs, spec2s, blosumap, total, ptotal, 0 );
+	}
+	
+	public static double blosumVal( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap ) {
+		double ret = 0.0;
+		int tscore = 0;
+		
+		int startcheck = 0;
+		int start = -1;
+		int stopcheck = 0;
+		int stop = -1;
+		for( int i = 0; i < seq1.length(); i++ ) {
+			if( seq1.charAt(i) != '-' ) {
+				startcheck |= 1;
+			}
+			if( seq2.charAt(i) != '-' ) {
+				startcheck |= 2;
+			}
+			
+			if( start == -1 && startcheck == 3 ) {
+				start = i;
+				break;
+			}
+		}
+		
+		for( int i = seq1.length()-1; i >= 0; i-- ) {
+			if( seq1.charAt(i) != '-' ) {
+				stopcheck |= 1;
+			}
+			if( seq2.charAt(i) != '-' ) {
+				stopcheck |= 2;
+			}
+			
+			if( stop == -1 && stopcheck == 3 ) {
+				stop = i+1;
+				break;
+			}
+		}
+		
+        for( int i = start; i < stop; i++ ) {
+        	char lc = seq1.charAt(i);
+        	char c = Character.toUpperCase( lc );
+        	//if( )
+        	String comb = c+""+c;
+        	if( blosumap.containsKey(comb) ) tscore += blosumap.get(comb);
+        }
+        
+        int score = 0;
+        for( int i = start; i < stop; i++ ) {
+        	char lc = seq1.charAt( i );
+        	char c = Character.toUpperCase( lc );
+        	char lc2 = seq2.charAt( i );
+        	char c2 = Character.toUpperCase( lc2 );
+        	
+        	String comb = c+""+c2;
+        	if( blosumap.containsKey(comb) ) score += blosumap.get(comb);
+        }
+        
+        if( score > tscore ) {
+        	System.err.println("ff");
+        	
+        	System.err.println( seq1.sb.substring(start, stop) );
+        	System.err.println( seq2.sb.substring(start, stop) );
+        	/*tscore = 0;
+        	for( int i = start; i < stop; i++ ) {
+            	char lc = seq1.charAt(i);
+            	char c = Character.toUpperCase( lc );
+            	//if( )
+            	String comb = c+""+c;
+            	if( blosumap.containsKey(comb) ) {
+            		double val = blosumap.get(comb);
+            		System.err.println( comb + " " + val );
+            		tscore += val;
+            	}
+            }
+            
+            score = 0;
+            for( int i = start; i < stop; i++ ) {
+            	char lc = seq1.charAt( i );
+            	char c = Character.toUpperCase( lc );
+            	char lc2 = seq2.charAt( i );
+            	char c2 = Character.toUpperCase( lc2 );
+            	
+            	String comb = c+""+c2;
+            	if( blosumap.containsKey(comb) ) {
+            		double val = blosumap.get(comb);
+            		System.err.println( comb + " " + val );
+            		score += val;
+            	}
+            }*/
+            System.err.println();
+        }
+        
+        ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
+		return ret;
 	}
 	
 	public static double blosumVal( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap ) {
