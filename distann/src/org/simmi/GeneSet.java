@@ -87,7 +87,6 @@ import javafx.collections.FXCollections;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
-import javafx.geometry.Rectangle2D;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
@@ -104,7 +103,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 
 import javax.imageio.ImageIO;
@@ -1200,22 +1198,195 @@ public class GeneSet extends JApplet {
 
 		ImageIO.write(img, "png", new File(str));
 	}
-
-	public BufferedImage bmatrix(Collection<String> species1, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, String designation) {
-		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+	
+	public BufferedImage animatrix( Collection<String> species1, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, String designation ) {
+		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = (Graphics2D) bi.getGraphics();
 		int mstrw = 0;
 		
-		Set<String> specset = new TreeSet<String>();
+		Collection<String> specset = species1;
 		if( designation.length() > 0 ) {
+			specset = new TreeSet<String>();
 			for( Gene g : genelist ) {
 				if( g.designation != null && g.designation.equals( designation ) ) {
 					specset.add( g.getSpecies() );
 				}
 			}
+		}
+		
+		for (String spec : specset) {
+			String spc = nameFix( spec );
+			int tstrw = g2.getFontMetrics().stringWidth(spc);
+			if (tstrw > mstrw)
+				mstrw = tstrw;
+		}
+
+		int sss = mstrw + 72 * specset.size() + 10 + 72;
+		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_ARGB);
+		g2 = (Graphics2D) bi.getGraphics();
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g2.setColor(Color.white);
+		g2.fillRect(0, 0, sss, sss);
+		
+		Set<String>	d1 = new HashSet<String>();
+		Set<String>	d2 = new HashSet<String>();
+		
+		try {
+			Map<String, Integer> blosumap = GeneCompare.getBlosumMap();
+			int where = 0;
+			for (String spec1 : specset) {
+				int wherex = 0;
+				
+				String spc1 = nameFix( spec1 );
+				int strw = g2.getFontMetrics().stringWidth(spc1);
+				
+				g2.setColor(Color.black);
+				g2.drawString(spc1, mstrw - strw, mstrw + 47 + where * 72);
+				g2.rotate(Math.PI / 2.0, mstrw + 47 + where * 72, mstrw - strw);
+				g2.drawString(spc1, mstrw + 47 + where * 72, mstrw - strw);
+				g2.rotate(-Math.PI / 2.0, mstrw + 47 + where * 72, mstrw - strw);
+				//String spc1 = nameFix( spec1 );
+				for (String spec2 : specset) {
+					if( where != wherex ) {
+						int totalscore = 0;
+						int totaltscore = 1;
+						for( GeneGroup gg : allgenegroups ) {
+							if( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2) ) {
+								Teginfo ti1 = gg.species.get(spec1);
+								Teginfo ti2 = gg.species.get(spec2);
+								//if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
+									//double bval = 0.0;
+								
+								int score = 0;
+								int tscore = 1;
+								for( Tegeval tv1 : ti1.tset ) {
+									for( Tegeval tv2 : ti2.tset ) {
+										Sequence seq1 = tv1.alignedsequence;
+										Sequence seq2 = tv2.alignedsequence;
+										if( seq1 != null && seq2 != null ) {
+											int mest = 0;
+											int tmest = 0;
+											//bval = Math.max( GeneCompare.blosumVal(tv1.alignedsequence, tv2.alignedsequence, blosumap), bval );
+											
+											//public static double blosumVal( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap ) {
+											int startcheck = 0;
+											int start = -1;
+											int stopcheck = 0;
+											int stop = -1;
+											for( int i = 0; i < seq1.length(); i++ ) {
+												if( seq1.charAt(i) != '-' ) {
+													startcheck |= 1;
+												}
+												if( seq2.charAt(i) != '-' ) {
+													startcheck |= 2;
+												}
+												
+												if( start == -1 && startcheck == 3 ) {
+													start = i;
+													break;
+												}
+											}
+											
+											for( int i = seq1.length()-1; i >= 0; i-- ) {
+												if( seq1.charAt(i) != '-' ) {
+													stopcheck |= 1;
+												}
+												if( seq2.charAt(i) != '-' ) {
+													stopcheck |= 2;
+												}
+												
+												if( stop == -1 && stopcheck == 3 ) {
+													stop = i+1;
+													break;
+												}
+											}
+											//count += stop-start;
+											
+									        for( int i = start; i < stop; i++ ) {
+									        	char lc = seq1.charAt(i);
+									        	char c = Character.toUpperCase( lc );
+									        	//if( )
+									        	String comb = c+""+c;
+									        	if( blosumap.containsKey(comb) ) tmest += blosumap.get(comb);
+									        }
+									        
+									        for( int i = start; i < stop; i++ ) {
+									        	char lc = seq1.charAt( i );
+									        	char c = Character.toUpperCase( lc );
+									        	char lc2 = seq2.charAt( i );
+									        	char c2 = Character.toUpperCase( lc2 );
+									        	
+									        	String comb = c+""+c2;
+									        	if( blosumap.containsKey(comb) ) mest += blosumap.get(comb);
+									        }
+									        
+									        double tani = (double)mest/(double)tmest;
+									        if( tani > (double)score/(double)tscore ) {
+									        	score = mest;
+									        	tscore = tmest;
+									        }
+									        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
+											//return ret;
+										}
+										//if( where == 0 ) d1.add( gg.getCommonName() );
+										//else d2.add( gg.getCommonName() );
+									}
+								}
+								totalscore += score;
+								totaltscore += tscore;
+									
+									/*if( bval > 0 ) {
+										ani += bval;
+										count++;
+									}*/
+								//}
+							}
+						}
+						double ani = (double)totalscore/(double)totaltscore;
+						float cval = Math.min( 0.9f, Math.max( 0.0f,10.0f - (float)(10.0*ani) ) );
+						System.err.println( cval + "  " + ani );
+						Color color = new Color( cval, cval, cval );
+						g2.setColor( color );
+						g2.fillRoundRect(mstrw + 10 + wherex * 72, mstrw + 10 + where * 72, 64, 64, 16, 16);
+						
+						g2.setColor( Color.white );
+						String str = String.format("%.1f%s", (float) (ani * 100.0), "%");
+						int nstrw = g2.getFontMetrics().stringWidth(str);
+						g2.drawString(str, mstrw + 42 + wherex * 72 - nstrw / 2, mstrw + 47 + where * 72 + 15);
+					}
+					wherex++;
+				}
+				where++;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		System.err.println( d1.size() + "  " + d2.size() );
+		if( d1.size() > d2.size() ) {
+			d1.removeAll( d2 );
+			System.err.println( d1.size() );
 		} else {
-			for (String spc : species1) {
-				specset.add( spc );
+			d2.removeAll( d1 );
+			System.err.println( d2.size() );
+		}
+		
+		return bi;
+	}
+
+	public BufferedImage bmatrix(Collection<String> species1, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, String designation) {
+		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = (Graphics2D) bi.getGraphics();
+		int mstrw = 0;
+		
+		Collection<String> specset = species1;
+		if( designation.length() > 0 ) {
+			specset = new TreeSet<String>();
+			for( Gene g : genelist ) {
+				if( g.designation != null && g.designation.equals( designation ) ) {
+					specset.add( g.getSpecies() );
+				}
 			}
 		}
 		
@@ -1226,7 +1397,7 @@ public class GeneSet extends JApplet {
 		}
 
 		int sss = mstrw + 72 * specset.size() + 10 + 72;
-		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_RGB);
+		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_ARGB);
 		g2 = (Graphics2D) bi.getGraphics();
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
