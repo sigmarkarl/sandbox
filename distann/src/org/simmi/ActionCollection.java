@@ -78,9 +78,6 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
@@ -103,11 +100,14 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JComboBox<String>	descombo = new JComboBox<String>( geneset.deset.toArray( new String[geneset.deset.size()] ) );
+				JCheckBox			anicheck = new JCheckBox("ANImatrix");
 				descombo.insertItemAt("", 0);
-				JOptionPane.showMessageDialog( geneset, descombo );
+				descombo.setSelectedIndex( 0 );
+				JOptionPane.showMessageDialog( geneset, new Object[] { descombo, anicheck } );
 				String val = descombo.getSelectedItem().toString();
 				
-				geneset.bimg = geneset.bmatrix( geneset.specList, geneset.clusterMap, val );
+				Set<String> species = geneset.getSelspec( geneset, geneset.specList );
+				geneset.bimg = anicheck.isSelected() ? geneset.animatrix( species, geneset.clusterMap, val ) : geneset.bmatrix( species, geneset.clusterMap, val );
 				
 				JFrame f = new JFrame("Relation matrix");
 				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
