@@ -94,13 +94,22 @@ public class Cog {
 		//cogchar.put( "acetolactate synthase, pyruvate dehydrogenase (cytochrome), glyoxylate carboligase, phosphonopyruvate decarboxylase", 'Æ' );
 	}
 	
-	public Cog( String id, Character symbol, String name ) {
+	public Cog( String id, Character symbol, String name, String annotation ) {
 		this.id = id;
 		this.symbol = symbol;
 		this.name = name;
+		if( annotation != null ) {
+			int i = annotation.indexOf(',');
+			if( i != -1 && i <= 5 ) {
+				this.genesymbol = annotation.substring(0,i);
+				this.annotation = annotation.substring(i+1);
+			} else this.annotation = annotation;
+		}
 	}
 	
 	public String	id;
 	public Character symbol;
+	public String	annotation;
+	public String	genesymbol;
 	public String	name;
 }
