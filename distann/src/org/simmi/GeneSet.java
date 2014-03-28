@@ -11,6 +11,8 @@ import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -84,7 +86,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
@@ -102,7 +103,6 @@ import javafx.scene.chart.ScatterChart;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -110,7 +110,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
@@ -136,6 +135,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
@@ -13321,7 +13321,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//fxpanel.setScene( null );
-				Platform.runLater(new Runnable() {
+				/*Platform.runLater(new Runnable() {
 		            @Override
 		            public void run() {
 		            	Label label1 = new Label("Id:");
@@ -13344,8 +13344,45 @@ public class GeneSet extends JApplet {
 						
 						fxpanel.setScene( fxs );
 		            }
-				});
-				JOptionPane.showMessageDialog(comp, new Object[] {fxpanel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );
+				});*/
+				
+				JPanel panel = new JPanel();
+				GridBagLayout grid = new GridBagLayout();
+				GridBagConstraints c = new GridBagConstraints();
+				panel.setLayout( grid );
+				
+				JLabel label1 = new JLabel("Id:");
+				JTextField tb1 = new JTextField("0.5");
+				JLabel label2 = new JLabel("Len:");
+				JTextField tb2 = new JTextField("0.5");
+				
+				Dimension d = new Dimension( 300, 30 );
+				JTextField epar = new JTextField();
+				epar.setSize( d );
+				epar.setPreferredSize( d );
+				
+				c.fill = GridBagConstraints.HORIZONTAL;
+				c.gridwidth = 1;
+				c.gridheight = 1;
+				
+				c.gridx = 0;
+				c.gridy = 0;
+				panel.add( label1, c );
+				c.gridx = 1;
+				c.gridy = 0;
+				panel.add( tb1, c );
+				c.gridx = 0;
+				c.gridy = 1;
+				panel.add( label2, c );
+				c.gridx = 1;
+				c.gridy = 1;
+				panel.add( tb2, c );
+				c.gridx = 0;
+				c.gridy = 2;
+				c.gridwidth = 2;
+				panel.add( epar, c );
+				
+				JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );
 				
 				if( tb1 != null ) {
 					float id = Float.parseFloat( tb1.getText() );
