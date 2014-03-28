@@ -20,6 +20,10 @@ public class Gene {
 		this.tag = tag;
 	}
 	
+	public Contig getContig() {
+		return tegeval.getContshort();
+	}
+	
 	public void setIdStr( String idstr ) {
 		this.idstr = idstr;
 	}

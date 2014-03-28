@@ -344,6 +344,10 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public int size() {
+		return genes.size();
+	}
+	
 	public Set<String> getSpecies() {
 		return species.keySet();
 	}
