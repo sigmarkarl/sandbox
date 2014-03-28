@@ -45,7 +45,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.nio.file.CopyOption;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -497,9 +496,10 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
-	public static void blastRun( NativeRun nrun, Path dbPath, String dbType, String extrapar, JTable table ) throws IOException {
+	public static void blastRun( NativeRun nrun, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
 		String userhome = System.getProperty("user.home");
-		File dir = new File( userhome );
+		Path selectedpath = null;
+		if( homedir ) selectedpath = new File( userhome ).toPath();
 		
 		/*System.out.println("run blast in applet");
 		File blastn;
@@ -514,12 +514,15 @@ public class SerifyApplet extends JApplet {
 			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
 		}
 		if( blastx.exists() ) {*/
-		//String dbPathFixed = nrun.fixPath( dbPath );		
-		JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-			File selectedfile = fc.getSelectedFile();
-			if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+		//String dbPathFixed = nrun.fixPath( dbPath );	
+		else {
+			JFileChooser fc = new JFileChooser();
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				selectedpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) selectedpath = selectedpath.getParent();
+			}
+		}
 		
 			List<Object>	lscmd = new ArrayList<Object>();
 			//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
@@ -529,58 +532,86 @@ public class SerifyApplet extends JApplet {
 			
 			//Path dbPathFixed = dbPath.getParent().resolve(dbPath.getFileName().toString()+".blastout");
 			
+			JFileChooser fc = new JFileChooser();
+			Path blastpath = null;
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showOpenDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				blastpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) blastpath = blastpath.getParent();
+			}
 			
-			String[] cmds = new String[] { "/usr/local/ncbi/blast/bin/makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
-			lscmd.add( new Path[] { dbPath, null, selectedfile.toPath() } );
+			
+			String[] cmds = new String[] { "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			lscmd.add( new Path[] { dbPath, null, selectedpath } );
 			lscmd.add( Arrays.asList( cmds ) );
-			
-			
 			//}
 			
-			int[] rr = table.getSelectedRows();
-			for( int r : rr ) {
-				Path	path = (Path)table.getValueAt( r, 3 );
-				String type = (String)table.getValueAt( r, 2 );
-				
-				//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
-				String blastFile = dbType.equals("prot") ? type.equals("prot") ? "blastp" : "blastx" : "blastn";
-				
-				/*URL url = new URL( path );
-				String file = url.getFile();
-				String[] split = file.split("/");
-				String fname = split[ split.length-1 ];
-				split = fname.split("\\.");
-				final String title = split[0];
-				
-				final File infile = new File( dir, "tmp_"+fname );
-				
-				FileOutputStream fos = new FileOutputStream( infile );
-				InputStream is = url.openStream();
-				
-				byte[] bb = new byte[100000];
-				r = is.read(bb);
-				while( r > 0 ) {
-					fos.write(bb, 0, r);
+			if( table != null ) {
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					Path	path = (Path)table.getValueAt( r, 3 );
+					String type = (String)table.getValueAt( r, 2 );
+					
+					//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
+					String blastFile = dbType.equals("prot") ? type.equals("prot") ? "blastp" : "blastx" : "blastn";
+					
+					/*URL url = new URL( path );
+					String file = url.getFile();
+					String[] split = file.split("/");
+					String fname = split[ split.length-1 ];
+					split = fname.split("\\.");
+					final String title = split[0];
+					
+					final File infile = new File( dir, "tmp_"+fname );
+					
+					FileOutputStream fos = new FileOutputStream( infile );
+					InputStream is = url.openStream();
+					
+					byte[] bb = new byte[100000];
 					r = is.read(bb);
+					while( r > 0 ) {
+						fos.write(bb, 0, r);
+						r = is.read(bb);
+					}
+					is.close();
+					fos.close();*/
+			
+					//Path p = Paths.get( URI.create(path) );
+					
+					//String queryPathFixed = nrun.fixPath( path.toAbsolutePath().toString() ).trim();
+					
+					//InputStream input = Files.newInputStream(path, StandardOpenOption.READ);
+					
+					//Path p = selectedfile.toPath();
+					Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
+					//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
+					//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
+					
+					int procs = Runtime.getRuntime().availableProcessors();
+					
+					List<String>	lcmd = new ArrayList<String>();
+					String[] bcmds = { blastpath.resolve( blastFile ).toString(), "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+					String[] exts = extrapar.trim().split("[\t ]+");
+					
+					//String[] nxst = { "-out", outPathFixed };
+					lcmd.addAll( Arrays.asList(bcmds) );
+					if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+					//lcmd.addAll( Arrays.asList(nxst) );
+					
+					lscmd.add( new Path[] {path, res, selectedpath} );
+					lscmd.add( lcmd );
 				}
-				is.close();
-				fos.close();*/
-		
-				//Path p = Paths.get( URI.create(path) );
+			} else {
+				//Path res = Files.createTempFile("all", "blastout"); 
+				Path res = selectedpath.resolve( "tmp.blastout" ); //path.getFileName().toString()+".blastout");
 				
-				//String queryPathFixed = nrun.fixPath( path.toAbsolutePath().toString() ).trim();
-				
-				//InputStream input = Files.newInputStream(path, StandardOpenOption.READ);
-				
-				//Path p = selectedfile.toPath();
-				Path res = selectedfile.toPath().resolve(path.getFileName().toString()+".blastout");
 				//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
 				//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
 				
 				int procs = Runtime.getRuntime().availableProcessors();
 				
 				List<String>	lcmd = new ArrayList<String>();
-				String[] bcmds = { "/usr/local/ncbi/blast/bin/"+blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				String[] bcmds = { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
 				String[] exts = extrapar.trim().split("[\t ]+");
 				
 				//String[] nxst = { "-out", outPathFixed };
@@ -588,7 +619,7 @@ public class SerifyApplet extends JApplet {
 				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
 				//lcmd.addAll( Arrays.asList(nxst) );
 				
-				lscmd.add( new Path[] {path, res, selectedfile.toPath()} );
+				lscmd.add( new Path[] {dbPath, res, selectedpath} );
 				lscmd.add( lcmd );
 			}
 			
@@ -611,7 +642,7 @@ public class SerifyApplet extends JApplet {
 			}
 			Thread.sleep(10000);*/
 			nrun.runProcessBuilder( "Performing blast", lscmd, run, cont );
-		}
+		//}
 		//} else System.err.println( "no blast installed" );
 	}
 	
@@ -620,7 +651,7 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public Object run() {
 				try {
-					blastRun( nrun, dbPath, dbType, extrapar, table );
+					blastRun( nrun, dbPath, dbType, extrapar, table, false );
 				} catch( Exception e ) {
 					e.printStackTrace();
 				}
@@ -665,7 +696,11 @@ public class SerifyApplet extends JApplet {
 				dialog.setVisible( true );
 				
 				if( !interrupted ) {
-					serifier.makeBlastCluster( is, os, 0 );
+					try {
+						serifier.makeBlastCluster( is, os, 0 );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 				}
 			}
 		};
@@ -1682,6 +1717,77 @@ public class SerifyApplet extends JApplet {
 	-evalue 0.00001 -num_alignments 1 -num_descriptions 1
 	*/
 	
+	public void doProdigal( Path dir, Container c, final Path fs, List<Path> urls ) throws IOException {
+		JFileChooser fc = new JFileChooser();
+		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
+			Path selectedfile = fc.getSelectedFile().toPath();
+			if( !Files.isDirectory(selectedfile) ) selectedfile = selectedfile.getParent();
+		
+			for( Path path : urls ) {
+				//URL url = path.toUri().toURL();
+				
+				String file = path.getFileName().toString();
+				String[] split = file.split("/");
+				String fname = split[ split.length-1 ];
+				split = fname.split("\\.");
+				final String title = split[0];
+				Path infile = dir.resolve( fname ); //new File( dir, fname );
+				if( Files.exists(infile) ) {
+					infile = dir.resolve( "tmp_"+fname );
+				}
+				
+				//FileOutputStream fos = new FileOutputStream( infile );
+				Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );
+				/*InputStream is = url.openStream();
+				byte[] bb = new byte[100000];
+				int r = is.read(bb);
+				while( r > 0 ) {
+					fos.write(bb, 0, r);
+					r = is.read(bb);
+				}
+				is.close();
+				fos.close();*/
+				
+				final Path pathD = selectedfile.resolve( title+".prodigal.fna" );
+				final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
+				final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
+				final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
+				String[] cmds = new String[] { "prodigal", "-i", NativeRun.fixPath( infile.toAbsolutePath().toString() ), "-a", outPathA, "-d", outPathD };
+				
+				final Object[] cont = new Object[3];
+				Runnable run = new Runnable() {
+					public void run() {
+						if( cont[0] != null ) {
+							System.err.println( cont[0] );
+							
+							try {
+								Files.copy(pathA, fs.resolve( title+".prodigal.fsa") );
+								addSequences( title+".aa", pathA, null );
+							} catch (IOException | URISyntaxException e) {
+								e.printStackTrace();
+							}
+							/*try {
+								addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
+								addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
+							} catch (URISyntaxException e) {
+								e.printStackTrace();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}*/
+						}
+					}
+				};
+				nrun.runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
+					//JSObject js = JSObject.getWindow( SerifyApplet.this );
+					//js = (JSObject)js.getMember("document");
+					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+			}
+		}
+		
+		//infile.delete();
+	}
+	
 	public void init( final Container c ) {
 		nrun.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -1814,6 +1920,9 @@ public class SerifyApplet extends JApplet {
 				} else {
 					cd = fs.getPath("/");
 				}
+				
+				String userhome = System.getProperty("user.home");	
+				final Path uhome = Paths.get(userhome);
 					
 					/*final JCheckBox	whole = new JCheckBox("whole");
 					whole.setSelected( true );
@@ -1903,10 +2012,11 @@ public class SerifyApplet extends JApplet {
 						String ftpsite = "ftp.ncbi.nlm.nih.gov";
 						//FTPClientConfig ftpcc = new FTPClientConfig();
 						FTPClient ftp = new FTPClient();
+						ftp.setControlEncoding("UTF-8");
 						try {
 							ftp.connect( ftpsite );
-							//ftp.enterLocalPassiveMode();
-							ftp.login("anonymous", "");
+							ftp.enterLocalPassiveMode();
+							ftp.login("anonymous", "sigmarkarl@gmail.com");
 							
 							for( String search : searchmap.keySet() ) {
 								String replace = searchmap.get(search);
@@ -1952,9 +2062,15 @@ public class SerifyApplet extends JApplet {
 									if( whole.isSelected() ) {
 										String subdir = "/genomes/Bacteria/";
 										ftp.cwd( subdir );
+										//System.err.println("here11");
 										FTPFile[] files = ftp.listFiles();
+										//System.err.println("jojojo22 " + files.length);
 										for( FTPFile ftpfile : files ) {
-											if( interrupted ) break;
+											if( interrupted ) {
+												//System.err.println("jojojo2");
+												break;
+											}
+											//System.err.println("here");
 											if( ftpfile.isDirectory() ) {
 												String fname = ftpfile.getName();
 												if( fname.startsWith( search ) ) {
@@ -1971,8 +2087,12 @@ public class SerifyApplet extends JApplet {
 													if( !Files.exists(thefile) ) {
 														Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
 														
+														//System.err.println("here2");
 														for( FTPFile newftpfile : newfiles ) {
-															if( interrupted ) break;
+															if( interrupted ) {
+																//System.err.println("jojojo");
+																break;
+															}
 															
 															String newfname = newftpfile.getName();
 															if( newfname.endsWith(".gbk") ) {
@@ -2030,7 +2150,7 @@ public class SerifyApplet extends JApplet {
 													
 													Path thefile = cd.resolve(fname+".gbk");
 													if( !Files.exists(thefile) ) {
-														OutputStream fos = Files.newOutputStream( thefile, StandardOpenOption.WRITE );
+														final OutputStream fos = Files.newOutputStream( thefile, StandardOpenOption.CREATE );
 														
 														for( FTPFile newftpfile : newfiles ) {
 															if( interrupted ) break;
@@ -2052,10 +2172,10 @@ public class SerifyApplet extends JApplet {
 																GZIPInputStream gis = new GZIPInputStream( is );
 																
 																//File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
-																Path file = cd.resolve(fname.substring(0,fname.length()-4)+".tar");
+																Path file = uhome.resolve("temp.tar"); //Files.createTempFile("erm", ".tar"); //cd.resolve(fname.substring(0,fname.length()-4)+".tar");
 																if( !Files.exists(file) && gis != null ) {
 																	int r = gis.read(bb);
-																	OutputStream tfos = Files.newOutputStream( file, StandardOpenOption.WRITE );
+																	OutputStream tfos = Files.newOutputStream( file, StandardOpenOption.CREATE );
 																	while( r > 0 ) {
 																		System.err.println( "reading " + r );
 																		tfos.write( bb, 0, r );
@@ -2067,12 +2187,41 @@ public class SerifyApplet extends JApplet {
 																}
 																
 																//FileSystemManager fsManager = VFS.getManager();
-																FileObject jarFile = fsManager.resolveFile( "tar://"+file.toAbsolutePath() );
+																//String pp = "tar:"+file.toString();//.replace("file://", "tar://");
+																
+																//Map<String,String> env = new HashMap<String,String>();
+																//env.put("create", "true");
+																String uristr = "tar:" + file.toUri();
+																//URI taruri = URI.create( uristr /*.replace("file://", "file:")*/ );
+																//FileSystem tarfilesystem = FileSystems.newFileSystem( taruri, env );
+																
+																FileObject jarFile = fsManager.resolveFile(uristr);
 			
 																// List the children of the Jar file
 																FileObject[] children = jarFile.getChildren();
 																//System.out.println( "Children of " + jarFile.getName().getURI() );
 																//int contig = 1;
+																
+																/*for( Path root : tarfilesystem.getRootDirectories() ) {
+																	Files.list(root).filter( new Predicate<Path>() {
+																		@Override
+																		public boolean test(Path t) {
+																			//String fname = t.getFileName().toString();
+																			return true;
+																		}
+																	}).forEach( new Consumer<Path>() {
+																		@Override
+																		public void accept(Path t) {
+																			try {
+																				Files.copy(t, fos);
+																				//sa.addSequences(t.getFileName().toString(), t, null);
+																			} catch (IOException e) {
+																				e.printStackTrace();
+																			}
+																		}
+																	});;
+																}*/
+																
 																for ( int i = 0; i < children.length; i++ ) {
 																	FileObject child = children[i];
 																	
@@ -2091,12 +2240,6 @@ public class SerifyApplet extends JApplet {
 																		r = sis.read( bb );
 																		//total += r;
 																	}
-																	
-																	/*try {
-																		addSequences( lfname, thefile.toURI().toString() );
-																	} catch (URISyntaxException e) {
-																		e.printStackTrace();
-																	}*/
 																}
 															}
 														}
@@ -2719,20 +2862,25 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					List<String> urls = new ArrayList<String>();
+					List<Path> urls = new ArrayList<Path>();
 					int[] rr = table.getSelectedRows();
 					for( int r : rr ) {
 						//int r = table.getSelectedRow();
-						String path = (String)table.getValueAt( r, 3 );
+						Path path = (Path)table.getValueAt( r, 3 );
 						urls.add( path );
 					}
 					
 					String userhome = System.getProperty("user.home");	
-					File dir = new File( userhome );
-					File f = nrun.checkProdigalInstall( dir, urls );
-					if( f != null && f.exists() ) {
-						nrun.doProdigal( dir, c, f, urls );
-					} else System.err.println( "no blast installed" );
+					Path dir = Paths.get( userhome );
+					//File f = nrun.checkProdigalInstall( dir, urls );
+					//if( f != null && f.exists() ) {
+					Path root = null;
+					for( Path p: fs.getRootDirectories() ) {
+						root = p;
+						break;
+					}
+					doProdigal( dir, c, root, urls );
+					//} else System.err.println( "no prodigal installed" );
 				} catch (MalformedURLException e1) {
 					e1.printStackTrace();
 				} catch (IOException e2) {
