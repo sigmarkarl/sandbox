@@ -16,7 +16,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -31,9 +30,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -96,199 +93,6 @@ public class ActionCollection {
 			final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, 
 			final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, 
 			final JTable table, final Container comp, final ChatServer cs ) {
-		AbstractAction matrixaction = new AbstractAction("Relation matrix") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComboBox<String>	descombo = new JComboBox<String>( geneset.deset.toArray( new String[geneset.deset.size()] ) );
-				JCheckBox			anicheck = new JCheckBox("ANImatrix");
-				descombo.insertItemAt("", 0);
-				descombo.setSelectedIndex( 0 );
-				JOptionPane.showMessageDialog( geneset, new Object[] { descombo, anicheck } );
-				String val = descombo.getSelectedItem().toString();
-				
-				Set<String> species = geneset.getSelspec( geneset, geneset.specList );
-				geneset.bimg = anicheck.isSelected() ? geneset.animatrix( species, geneset.clusterMap, val ) : geneset.bmatrix( species, geneset.clusterMap, val );
-				
-				JFrame f = new JFrame("Relation matrix");
-				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				f.setSize(500, 500);
-
-				/*
-				 * { public void paintComponent( Graphics g ) {
-				 * super.paintComponent(g); g.drawImage(bimg, 0, 0, this); } };
-				 */
-
-				try {
-					final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
-					final Transferable transferable = new Transferable() {
-						@Override
-						public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-							StringBuilder ret = new StringBuilder();
-
-							int i = 0;
-							for (String spc : geneset.specList) {
-								if (++i == geneset.specList.size())
-									ret.append(spc + "\n");
-								else
-									ret.append(spc + "\t");
-							}
-
-							int where = 0;
-							for (String spc1 : geneset.specList) {
-								int wherex = 0;
-								for (String spc2 : geneset.specList) {
-									int spc1tot = 0;
-									int spc2tot = 0;
-									int totot = 0;
-
-									int spc1totwocore = 0;
-									int spc2totwocore = 0;
-									int tototwocore = 0;
-									for (Set<String> set : clusterMap.keySet()) {
-										Set<Map<String, Set<String>>> erm = clusterMap.get(set);
-										if (set.contains(spc1)) {
-											if (set.size() < geneset.specList.size()) {
-												spc1totwocore += erm.size();
-												for (Map<String, Set<String>> sm : erm) {
-													Set<String> hset = sm.get(spc1);
-													tototwocore += hset.size();
-												}
-
-												if (set.contains(spc2)) {
-													spc2totwocore += erm.size();
-												}
-
-												if (spc2totwocore > spc1totwocore)
-													System.err.println("okoko " + spc1totwocore + " " + spc2totwocore);
-											}
-
-											spc1tot += erm.size();
-											for (Map<String, Set<String>> sm : erm) {
-												Set<String> hset = sm.get(spc1);
-												totot += hset.size();
-											}
-
-											if (set.contains(spc2)) {
-												spc2tot += erm.size();
-											}
-										}
-									}
-
-									if (where == wherex) {
-										if (where == geneset.specList.size() - 1)
-											ret.append(0 + "\n");
-										else
-											ret.append(0 + "\t");
-									} else {
-										double hlut = (double) spc2totwocore / (double) spc1totwocore;
-										double sval = hlut; // 1.0/( 1.1-hlut );
-										double val = Math.pow(50.0, sval - 0.3) - 1.0;
-										double dval = Math.round(100.0 * (val)) / 100.0;
-
-										if (wherex == geneset.specList.size() - 1)
-											ret.append(dval + "\n");
-										else
-											ret.append(dval + "\t");
-									}
-									wherex++;
-								}
-								where++;
-							}
-
-							return new ByteArrayInputStream(ret.toString().getBytes());
-						}
-
-						@Override
-						public DataFlavor[] getTransferDataFlavors() {
-							return new DataFlavor[] { df };
-						}
-
-						@Override
-						public boolean isDataFlavorSupported(DataFlavor arg0) {
-							if (arg0.equals(df)) {
-								return true;
-							}
-							return false;
-						}
-					};
-					final TransferComponent comp = new TransferComponent(geneset.bimg, transferable);
-
-					TransferHandler th = new TransferHandler() {
-						private static final long serialVersionUID = 1L;
-
-						public int getSourceActions(JComponent c) {
-							return TransferHandler.COPY_OR_MOVE;
-						}
-
-						public boolean canImport(TransferHandler.TransferSupport support) {
-							return false;
-						}
-
-						protected Transferable createTransferable(JComponent c) {
-							return transferable;
-						}
-
-						public boolean importData(TransferHandler.TransferSupport support) {
-							return true;
-						}
-					};
-					comp.setTransferHandler(th);
-
-					comp.setEnabled(true);
-					JScrollPane fsc = new JScrollPane(comp);
-					comp.setPreferredSize(new Dimension(geneset.bimg.getWidth(), geneset.bimg.getHeight()));
-
-					JPopupMenu	popup = new JPopupMenu();
-					popup.add( new AbstractAction("Save image") {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							FileSaveService fss = null;
-					        FileContents fileContents = null;
-					    	 
-					        try {
-					        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						        OutputStreamWriter	osw = new OutputStreamWriter( baos );
-								ImageIO.write(geneset.bimg, "png", baos);
-								baos.close();
-
-						    	try {
-						    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
-						    	} catch( UnavailableServiceException e1 ) {
-						    		fss = null;
-						    	}
-						    	 
-						        if (fss != null) {
-						        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
-						            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
-						            bais.close();
-						            OutputStream os = fileContents.getOutputStream(true);
-						            os.write( baos.toByteArray() );
-						            os.close();
-						        } else {
-						        	JFileChooser jfc = new JFileChooser();
-						        	if( jfc.showSaveDialog( geneset ) == JFileChooser.APPROVE_OPTION ) {
-						        		 File f = jfc.getSelectedFile();
-						        		 FileOutputStream fos = new FileOutputStream( f );
-						        		 fos.write( baos.toByteArray() );
-						        		 fos.close();
-						        		 
-						        		 Desktop.getDesktop().browse( f.toURI() );
-						        	}
-						        }
-							} catch (IOException e2) {
-								e2.printStackTrace();
-							}
-						}
-					});
-					comp.setComponentPopupMenu( popup );
-					
-					f.add(fsc);
-					f.setVisible(true);
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
-			}
-		};
 		//JButton matrixbutton = new JButton(matrixaction);
 		AbstractAction codregaction = new AbstractAction("Coding regions") {
 			@Override
@@ -3058,15 +2862,282 @@ public class ActionCollection {
 			}
 		};
 		
+		//Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), null );
+		
+		AbstractAction totalcogaction = new AbstractAction("COG total") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JCheckBox cb = new JCheckBox("Plasmid");
+				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), cb );
+				
+				char nohit = '*';
+				final Map<Character,Integer>	mip = new HashMap<Character,Integer>();
+				final Map<Character,Integer>	map = new HashMap<Character,Integer>();
+				if( geneset.table.getModel() == geneset.groupModel ) {
+					for( int r = 0; r < geneset.table.getRowCount(); r++ ) {
+						int i = geneset.table.convertRowIndexToModel(r);
+						if( i >= 0 && i < geneset.allgenegroups.size() ) {
+							GeneGroup gg = geneset.allgenegroups.get(i);
+							Cog cog = gg.getCommonCog(geneset.cogmap);
+							if( cog != null /*&& includedCogs.contains(cog.symbol)*/ ) {
+								if( cb.isSelected() ) {
+									Set<String> tmp = new HashSet<String>( gg.species.keySet() );
+									tmp.retainAll( selspec );
+									
+									if( tmp.size() > 0 ) {
+										int total = gg.size();
+										int p = 0;
+										for( Gene g : gg.genes ) {
+											if( g.getContig().isPlasmid() ) p++;
+										}
+										
+										if( gg.isOnAnyPlasmid() ) { //(float)p/(float)total > 0.9 ) { //gg.isOnAnyPlasmid() ) {
+											int k = 0;
+											if( mip.containsKey( cog.symbol ) ) k = mip.get(cog.symbol);
+											mip.put( cog.symbol, k+1 );
+										} else {
+											int k = 0;
+											if( map.containsKey( cog.symbol ) ) k = map.get(cog.symbol);
+											map.put( cog.symbol, k+1 );
+										}
+									}
+								} else {
+									if( gg.species.keySet().containsAll(selspec) ) {
+										int k = 0;
+										if( map.containsKey( cog.symbol ) ) k = map.get(cog.symbol);
+										map.put( cog.symbol, k+1 );
+									} else {
+										Set<String> tmp = new HashSet<String>( gg.species.keySet() );
+										tmp.removeAll( selspec );
+										
+										if( tmp.size() < gg.species.size() ) {
+											int k = 0;
+											if( mip.containsKey( cog.symbol ) ) k = mip.get(cog.symbol);
+											mip.put( cog.symbol, k+1 );
+										}
+									}
+								}
+								/*for( String spec : selspec ) {
+									if( gg.species.containsKey( spec ) ) {
+										Teginfo ti = gg.species.get( spec );
+										for( Tegeval tv : ti.tset ) {
+											Map<Character,Integer> submap;
+											/*if( contigs ) {
+												if( map.containsKey( tv.contloc ) ) {
+													
+												}
+											} else {*
+												int val = 0;
+												if( map.containsKey( tv.getSpecies() ) ) {
+													submap = map.get( tv.getSpecies() );
+													if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
+												} else {
+													submap = new HashMap<Character,Integer>();
+													map.put(spec, submap);
+												}
+												submap.put( cog.symbol, val+1 );
+											//}
+										}
+									}
+								}*/
+							} else {
+								if( cb.isSelected() ) {
+									Set<String> tmp = new HashSet<String>( gg.species.keySet() );
+									tmp.retainAll( selspec );
+									
+									if( tmp.size() > 0 ) {
+										int total = gg.size();
+										int p = 0;
+										for( Gene g : gg.genes ) {
+											if( g.getContig().isPlasmid() ) p++;
+										}
+										
+										if( gg.isOnAnyPlasmid() ) { //(float)p/(float)total > 0.9 ) { //gg.isOnAnyPlasmid() ) {
+											int k = 0;
+											if( mip.containsKey( nohit ) ) k = mip.get(nohit);
+											mip.put( nohit, k+1 );
+										} else {
+											int k = 0;
+											if( map.containsKey( nohit ) ) k = map.get(nohit);
+											map.put( nohit, k+1 );
+										}
+									}
+								} else {
+									if( gg.species.keySet().containsAll(selspec) ) {
+										int k = 0;
+										if( map.containsKey( nohit ) ) k = map.get(nohit);
+										map.put( nohit, k+1 );
+									} else {
+										Set<String> tmp = new HashSet<String>( gg.species.keySet() );
+										tmp.removeAll( selspec );
+										
+										if( tmp.size() < gg.species.size() ) {
+											int k = 0;
+											if( mip.containsKey( nohit ) ) k = mip.get(nohit);
+											mip.put( nohit, k+1 );
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				//Character last = null;
+				StringBuilder sb = new StringBuilder();
+				for( String s : Cog.coggroups.keySet() ) {
+					Set<Character> sc = Cog.coggroups.get(s);
+					if( s.contains("METABOLISM") ) {
+						for( Character c : sc ) {
+							sb.append( "\t"+Cog.charcog.get(c) );
+						}
+					} else {
+						sb.append( "\t"+s );
+						if( sc.contains('V') ) {
+							sb.append( "\tDefence mechanism" );
+						}
+					}
+					//last = c;
+				}
+				sb.append( "\tNo hit" );
+				
+				if( cb.isSelected() ) sb.append( "\nChromosome" );
+				else sb.append( "\nCore" );
+				
+				int mit = 0;
+				int mat = 0;
+				for( String s : Cog.coggroups.keySet() ) {
+					Set<Character> sc = Cog.coggroups.get(s);
+					if( s.contains("METABOLISM") ) {
+						for( Character c : sc ) {
+							int count = 0;
+							if( map.containsKey(c) ) {
+								int val = map.get(c);
+								count = val;
+								//if( c.equals(last) ) sb.append("\n");
+								//sb.append("\t");
+								mat += val;
+							}
+							sb.append("\t"+count);
+						}
+					} else {
+						int count = 0;
+						for( Character c : sc ) {
+							if( !c.equals('V') && map.containsKey(c) ) {
+								int val = map.get(c);
+								count += val;
+								//if( c.equals(last) ) sb.append("\n");
+								//sb.append("\t");
+								mat += val;
+							}
+						}
+						sb.append( "\t"+count );
+						
+						if( sc.contains('V') ) {
+							count = 0;
+							if( map.containsKey('V') ) {
+								int val = map.get('V');
+								count += val;
+							}
+							sb.append( "\t"+count );
+						}
+					}
+				}
+				int count = 0;
+				if( map.containsKey(nohit) ) count = map.get( nohit );
+				sb.append( "\t"+count );
+				
+				if( cb.isSelected() ) sb.append( "\nPlasmid" );
+				else sb.append( "\nAccessory" );
+				
+				for( String s : Cog.coggroups.keySet() ) {
+					Set<Character> sc = Cog.coggroups.get(s);
+					if( s.contains("METABOLISM") ) {
+						for( Character c : sc ) {
+							count = 0;
+							if( mip.containsKey(c) ) {
+								int val = mip.get(c);
+								count = val;
+								mit += val;
+							}
+							sb.append("\t"+count);
+						}
+					} else {
+						count = 0;
+						for( Character c : sc ) {
+							if( !c.equals('V') && mip.containsKey(c) ) {
+								int val = mip.get(c);
+								count += val;
+								mit += val;
+							}
+						}
+						sb.append( "\t"+count );
+						
+						if( sc.contains('V') ) {
+							count = 0;
+							if( mip.containsKey('V') ) {
+								int val = mip.get('V');
+								count += val;
+							}
+							sb.append( "\t"+count );
+						}
+					}
+				}
+				count = 0;
+				if( mip.containsKey(nohit) ) count = mip.get( nohit );
+				sb.append( "\t"+count );
+				sb.append( "\n" );
+				System.err.println( "map size " + mat + " mip size " + mit );
+				
+				SwingUtilities.invokeLater( new Runnable() {
+					@Override
+					public void run() {
+						if( geneset.fxframe == null ) {
+							geneset.fxframe = new JFrame("COG");
+							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+							geneset.fxframe.setSize(800, 600);
+							
+							final JFXPanel	fxpanel = new JFXPanel();
+							geneset.fxframe.add( fxpanel );
+							
+							Platform.runLater(new Runnable() {
+				                 @Override
+				                 public void run() {
+				                     geneset.initDualPieChart( fxpanel, map, mip );
+				                 }
+				            });
+						} else {
+							Platform.runLater(new Runnable() {
+				                 @Override
+				                 public void run() {
+				                     geneset.initDualPieChart( null, map, mip );
+				                 }
+				            });
+						}						
+						geneset.fxframe.setVisible( true );
+					}
+				});
+				
+				JFrame f = new JFrame("GC% chart");
+				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				f.setSize( 800, 600 );
+				
+				JTextArea	ta = new JTextArea();
+				ta.setText( sb.toString() );
+				JScrollPane	sp = new JScrollPane(ta);
+				f.add( sp );
+				f.setVisible( true );
+			}
+		};
 		AbstractAction cogaction = new AbstractAction("COG chart data") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					Map<String,String> env = new HashMap<String,String>();
+					/*Map<String,String> env = new HashMap<String,String>();
 					//env.put("create", "true");
 					//Path path = zipfile.toPath();
 					String uristr = "jar:" + geneset.zippath.toUri();
-					geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")* );
 					geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 					
 					Path nf = geneset.zipfilesystem.getPath("/cog.blastout");
@@ -3077,14 +3148,72 @@ public class ActionCollection {
 					//bw.close();
 					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
 
-					BufferedReader br = Files.newBufferedReader(nf);
+					BufferedReader br = Files.newBufferedReader(nf);*/
 					final JCheckBox	contigs = new JCheckBox("Show contigs");
 					final JCheckBox	uniform = new JCheckBox("Uniform");
 					Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs, uniform );
+					
+					final List<Character> coglist = new ArrayList<Character>( Cog.charcog.keySet() );
+					HashSet<Character>	includedCogs = new HashSet<Character>();
+					JTable cogtable = new JTable();
+					cogtable.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+					TableModel cogmodel = new TableModel() {
+						@Override
+						public int getRowCount() {
+							return coglist.size();
+						}
+
+						@Override
+						public int getColumnCount() {
+							return 2;
+						}
+
+						@Override
+						public String getColumnName(int columnIndex) {
+							if( columnIndex == 0 ) return "Symbol";
+							else return "Name";
+						}
+
+						@Override
+						public Class<?> getColumnClass(int columnIndex) {
+							return String.class;
+						}
+
+						@Override
+						public boolean isCellEditable(int rowIndex, int columnIndex) {
+							return false;
+						}
+
+						@Override
+						public Object getValueAt(int rowIndex, int columnIndex) {
+							Character c = coglist.get( rowIndex);
+							if( columnIndex == 0 ) return c.toString();
+							else return Cog.charcog.get( c );
+						}
+
+						@Override
+						public void setValueAt(Object aValue, int rowIndex,int columnIndex) {}
+
+						@Override
+						public void addTableModelListener(TableModelListener l) {}
+
+						@Override
+						public void removeTableModelListener(TableModelListener l) {}
+						
+					};
+					cogtable.setModel( cogmodel );
+					JScrollPane cogscroll = new JScrollPane( cogtable );
+					JOptionPane.showMessageDialog( geneset, cogscroll );
+					
+					int[] rr = cogtable.getSelectedRows();
+					for( int r : rr ) {
+						includedCogs.add( coglist.get(r) );
+					}
+					
 					final Map<String,String>					all = new TreeMap<String,String>();
 					final Map<String, Map<Character,Integer>> 	map = new TreeMap<String, Map<Character,Integer>>();
-					geneset.cogCalc( null, br, map, selspec, contigs.isSelected() );
-					StringWriter fw = geneset.writeCog( map );
+					geneset.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
+					StringWriter fw = geneset.writeCog( map, includedCogs );
 					String repl = fw.toString();
 					
 					fw = geneset.writeSimpleCog( map );
@@ -3903,7 +4032,7 @@ public class ActionCollection {
 		menu.add( presabsaction );
 		menu.add( freqdistaction );
 		menu.add( gcpaction );
-		menu.add( matrixaction );
+		//menu.add( matrixaction );
 		menu.add( pancoreaction );
 		menu.add( blastaction );
 		menu.add( koexportaction );
@@ -3912,6 +4041,7 @@ public class ActionCollection {
 		menu.add( gcskewaction );
 		menu.add( mltreemapaction );
 		menu.add( sevenaction );
+		menu.add( totalcogaction );
 		menu.add( cogaction );
 		menu.add( codregaction );
 		menu.add( fetchcoreaction );
