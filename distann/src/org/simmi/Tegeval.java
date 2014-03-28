@@ -26,12 +26,16 @@ public class Tegeval extends Annotation implements Teg {
 	}
 	
 	public void append( String a ) {
-		if( alignedsequence == null ) alignedsequence = new Sequence();
+		if( alignedsequence == null ) alignedsequence = new Sequence( name + " # " + start + " # " + stop + " # " + ori, null );
 		alignedsequence.append( a );
 	}
 	
 	public void init( String contig, Contig shortcontig, String locontig, int sta, int sto, int orient ) {
 		name = contig;
+		if( alignedsequence != null ) {
+			String seqname = name + " # " + sta + " # " + sto + " # " + orient;
+			alignedsequence.name = seqname;
+		}
 		seq = shortcontig;
 		contloc = locontig;
 		start = sta;
@@ -99,7 +103,7 @@ public class Tegeval extends Annotation implements Teg {
 	}
 	
 	public StringBuilder getProteinSequence() {
-		StringBuilder ret = getProteinSequence();
+		StringBuilder ret = seq.getProteinSequence( start, stop, ori );
 		return ret;
 	}
 	
