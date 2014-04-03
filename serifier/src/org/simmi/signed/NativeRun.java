@@ -202,7 +202,7 @@ public class NativeRun {
 			@Override
 			public void run() {
 				try {
-					Path input = null;
+					Object input = null;
 					Path output = null;
 					Path workingdir = null;
 					for( Object commands : commandsList ) {
@@ -211,20 +211,25 @@ public class NativeRun {
 							input = pp[0];
 							output = pp[1];
 							workingdir = pp[2];
+						} else if( commands instanceof Object[] ) {
+							Object[] pp = (Object[])commands;
+							input = pp[0];
+							output = (Path)pp[1];
+							workingdir = (Path)pp[2];
 						} else {
 							boolean blist = commands instanceof List;
 							List<String> lcmd = blist ? (List)commands : commandsList;
-							for( String s : lcmd ) {
+							/*for( String s : lcmd ) {
 								System.err.println( s );
-							}
+							}*/
 							ProcessBuilder pb = new ProcessBuilder( lcmd );
 							//pb.environment().putAll( System.getenv() );
-							System.err.println( pb.environment() );
+							//System.err.println( pb.environment() );
 							if( workingdir != null ) {
 								//System.err.println( "blblblbl " + workingdir.toFile() );
 								pb.directory( workingdir.toFile() );
 							}
-							pb.redirectErrorStream( true );
+							//pb.redirectErrorStream( true );
 							final Process p = pb.start();
 							dialog.addWindowListener( new WindowListener() {
 								
@@ -258,29 +263,57 @@ public class NativeRun {
 							dialog.setVisible( true );
 							
 							if( input != null ) {
-								final Path inp = input;
-								new Thread() {
-									public void run() {
-										try {
-											OutputStream os = p.getOutputStream();
-											//os.write( "simmi".getBytes() );
-											Files.copy(inp, os);
-											os.close();
-										} catch( Exception e ) {
-											e.printStackTrace();
+								if( input instanceof Path ) {
+									final Path inp = (Path)input;
+									new Thread() {
+										public void run() {
+											try {
+												OutputStream os = p.getOutputStream();
+												//os.write( "simmi".getBytes() );
+												Files.copy(inp, os);
+												os.close();
+											} catch( Exception e ) {
+												e.printStackTrace();
+											}
 										}
-									}
-								}.start();
+									}.start();
+								} else {
+									final byte[] binput = (byte[])input;
+									new Thread() {
+										public void run() {
+											try {
+												OutputStream os = p.getOutputStream();
+												os.write( binput );
+												os.close();
+											} catch( Exception e ) {
+												e.printStackTrace();
+											}
+										}
+									}.start();
+								}
 							}
 							
 							if( output != null ) {
-								try {
-									InputStream is = p.getInputStream();
-									Files.copy(is, output, StandardCopyOption.REPLACE_EXISTING);
-									is.close();
-								} catch( Exception e ) {
-									e.printStackTrace();
-								}
+								//if( output instanceof Path ) {
+									Path outp = (Path)output;
+									try {
+										InputStream is = p.getInputStream();
+										Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
+										is.close();
+									} catch( Exception e ) {
+										e.printStackTrace();
+									}
+								/*} else {
+									final byte[] bout = (byte[])output;
+									
+									try {
+										InputStream is = p.getInputStream();
+										is.read( outp );
+										is.close();
+									} catch( Exception e ) {
+										e.printStackTrace();
+									}
+								}*/
 							} else {
 								try {
 									InputStream is = p.getInputStream();
