@@ -64,13 +64,13 @@ public class TreeUtil {
 		return ret;
 	}
 	
-	public void reduceParentSize( Node n ) {
+	public void reduceParentSize( Node n, double scale ) {
 		List<Node> nodes = n.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
 			for( Node node : nodes) {
-				reduceParentSize( node );
+				reduceParentSize( node, scale );
 			}
-			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*0.8 );
+			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*scale );
 			else n.setFontSize( 0.8 );
 		}
 	}

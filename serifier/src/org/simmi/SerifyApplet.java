@@ -2970,7 +2970,7 @@ public class SerifyApplet extends JApplet {
 								is.close();
 								fos.close();
 						
-								String inputPathFixed = nrun.fixPath( infile.getAbsolutePath() ).trim();
+								String inputPathFixed = NativeRun.fixPath( infile.getAbsolutePath() ).trim();
 								final String newname = s.getName()+"_aligned";
 								String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
 								final Path newurl = new File( newpath ).toPath();
