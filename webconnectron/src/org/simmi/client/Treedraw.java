@@ -1,8 +1,5 @@
 package org.simmi.client;
 
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1393,6 +1390,16 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	public void recursiveNonLeaveFontResize( Node root, double scale ) {
+		List<Node> nodes = root.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			root.setFontSize( root.getFontSize()*scale );
+			for( Node newnode : nodes ) {
+				recursiveNonLeaveFontResize( newnode, scale );
+			}
+		}
+	}
+	
 	public void omitLast( Node node, int harshness ) {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -1530,7 +1537,11 @@ public class Treedraw implements EntryPoint {
 		} else if( c == '-' ) {
 			hchunk *= 0.8;
 		} else if( c == 'y' || c == 'Y' ) {
-			treeutil.reduceParentSize( treeutil.getNode() );
+			if( c == 'y' ) {
+				treeutil.reduceParentSize( treeutil.getNode(), 0.8 );
+			} else {
+				treeutil.reduceParentSize( treeutil.getNode(), 1.25 );
+			}
 		} else if( c == 'w' || c == 'W' ) {
 			treeutil.swapNamesMeta( treeutil.getNode() );
 		} else if( c == 'v' || c == 'V' ) {
@@ -1557,6 +1568,12 @@ public class Treedraw implements EntryPoint {
 			omitLast( selectedNode != null ? selectedNode : root, 1 );
 		} else if( c == 'k' || c == 'K' ) {
 			omitLast( selectedNode != null ? selectedNode : root, 0 );
+		} else if( c == 'h' || c == 'H' ) {
+			if( c == 'h' ) {
+				recursiveNonLeaveFontResize( root, 0.8 );
+			} else {
+				recursiveNonLeaveFontResize( root, 1.25 );
+			}
 		} else if( c == 'g' || c == 'G' ) {
 			if( treeutil != null && root != null ) {
 				List<Node> nn = root.getNodes();
@@ -3888,16 +3905,20 @@ public class Treedraw implements EntryPoint {
 			double cy2o = (w + (rad + frmh * 1.5) * Math.sin(a2)) / 2.0;
 
 			g2.beginPath();
-			// g2.moveTo(cx1i, cy1i);
+			//g2.moveTo(cx1o, cy1o);
 			// g2.lineTo(cx1o, cy1o);
 			g2.arc(w / 2.0, w / 2.0, (rad + frmh * 1.5) / 2.0, a1, a2, false);
+			//g2.closePath();
+			g2.stroke();
+			//g2.stroke();
+			g2.beginPath();
 			g2.arc(w / 2.0, w / 2.0, (rad - frmh * 1.5) / 2.0, a2, a1, true); // rad+strh);
 			// g2.arcTo(cx2i, cy2i, cx1i, cy1i, rad-strh);
 			// g2.lineTo(cx2i, cy2i);
-			g2.lineTo(cx1o, cy1o);
+			//g2.lineTo(cx1o, cy1o);
 			// g2.fill();
 			g2.stroke();
-			g2.closePath();
+			//g2.closePath();
 		}
 
 		g2.setStrokeStyle("#000000");
@@ -3934,7 +3955,7 @@ public class Treedraw implements EntryPoint {
 				g2.rotate(-am);
 				g2.translate(-cx, -cy);
 			}
-		} else {		
+		} else {
 			if (a >= 0.0 && a < Math.PI) {
 				for (int i = 0; i < fstr.length(); i++) {
 					char c = fstr.charAt(i);

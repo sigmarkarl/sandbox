@@ -2065,9 +2065,9 @@ public class GeneSet extends JApplet {
 		return ret;
 	}
 
-	private static List<Set<String>> loadSimpleClusters(Reader rd) throws IOException {
+	private static List<Set<String>> loadSimpleClusters(BufferedReader br) throws IOException {
 		// FileReader fr = new FileReader( file );
-		BufferedReader br = new BufferedReader(rd);
+		//BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		List<Set<String>> ret = new ArrayList<Set<String>>();
 		Set<String> prevset = null;
@@ -5771,6 +5771,9 @@ public class GeneSet extends JApplet {
 		//init( args );
 
 		try {
+			//List<Set<String>> sc = loadSimpleClusters( Files.newBufferedReader( Paths.get("/Users/sigmar/clusters.txt") ) );
+			//System.err.println( sc.size() );
+				
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
 			
 	//		FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
@@ -11895,11 +11898,11 @@ public class GeneSet extends JApplet {
 			//}
 			
 			nf = zipfilesystem.getPath("/clusters.txt");
-			if( Files.exists( nf ) ) uclusterlist = loadSimpleClusters( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+			if( Files.exists( nf ) ) uclusterlist = loadSimpleClusters( Files.newBufferedReader(nf) );
 			nf = zipfilesystem.getPath("/cog.blastout");
-			if( Files.exists( nf ) ) cogmap = loadcogmap( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+			if( Files.exists( nf ) ) cogmap = loadcogmap( Files.newBufferedReader(nf) );
 			nf = zipfilesystem.getPath("/cazy");
-			if( Files.exists( nf ) ) loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+			if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
 				
 			/*int zcount = 0;
 			while( zcount < 3 ) {
@@ -13100,6 +13103,33 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public void exportProteinSequences() {
+		JFileChooser filechooser = new JFileChooser();
+		if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
+			try {
+				Path dbPath = filechooser.getSelectedFile().toPath();
+				BufferedWriter bw = Files.newBufferedWriter(dbPath);
+				for( Gene g : genelist ) {
+					if( g.tag == null ) {
+						g.getFasta( bw );
+						/*StringBuilder sb = g.tegeval.getProteinSequence();
+						if( sb.toString().contains("0") ) {
+							System.err.println( g.id );
+						}
+						bw.append(">" + g.id + "\n");
+						for (int i = 0; i < sb.length(); i += 70) {
+							bw.append( sb.substring(i, Math.min(i + 70, sb.length())) + "\n");
+						}*/
+					}
+				}
+				bw.close();
+				//serifier.writeGenebank( filechooser.getSelectedFile(), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public void exportGenomes() {
 		JCheckBox	joincontigs = new JCheckBox("Join contigs");
 		JCheckBox	translations = new JCheckBox("Include translations");
@@ -13310,6 +13340,13 @@ public class GeneSet extends JApplet {
 			}
 		});
 		file.addSeparator();
+		file.add( new AbstractAction("Export protein sequences") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exportProteinSequences();
+			}
+		});
+		file.addSeparator();
 		file.add( new AbstractAction("Quit") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -13397,9 +13434,10 @@ public class GeneSet extends JApplet {
 						Path dbPath = Files.createTempFile("all", ".fsa");
 						BufferedWriter bw = Files.newBufferedWriter(dbPath);
 						for( Gene g : genelist ) {
+							StringBuilder gs = g.tegeval.getProteinSequence();
 							bw.append(">" + g.id + "\n");
-							for (int i = 0; i < g.tegeval.getProteinLength(); i += 70) {
-								bw.append( g.tegeval.getProteinSubsequence(i, Math.min(i + 70, g.tegeval.getProteinLength() )) + "\n");
+							for (int i = 0; i < gs.length(); i += 70) {
+								bw.append( gs.substring(i, Math.min(i + 70, gs.length() )) + "\n");
 							}
 						}
 						bw.close();
@@ -13408,6 +13446,59 @@ public class GeneSet extends JApplet {
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
+				}
+			}
+		};
+		AbstractAction	alignclusters = new AbstractAction("Align clusters") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					Map<String,String> env = new HashMap<String,String>();
+					env.put("create", "true");
+					String uristr = "jar:" + zippath.toUri();
+					zipuri = URI.create( uristr );
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
+					Path aldir = zipfilesystem.getPath("aligned");
+					final Path aligneddir = Files.exists( aldir ) ? aldir : Files.createDirectory( aldir );
+					
+					NativeRun nrun = new NativeRun();
+					Runnable run = new Runnable() {
+						@Override
+						public void run() {
+							try {
+								zipfilesystem.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					};
+					Object[] cont = new Object[3];
+					
+					//int i = 0;
+					List commandsList = new ArrayList();
+					for( GeneGroup gg : allgenegroups ) {
+						/*if( gg.size() > 1 ) {
+							System.err.println( gg.size() );
+						}*/
+						String fasta = gg.getFasta();
+						String[] cmds = new String[] {"muscle"};
+						Object[] paths = new Object[] {fasta.getBytes(), aligneddir.resolve(gg.getCommonId()+".aa"), null};
+						commandsList.add( paths );
+						commandsList.add( Arrays.asList(cmds) );
+						
+						//if( i++ > 5000 ) break;
+					}
+					nrun.runProcessBuilder("Running muscle", commandsList, run, cont);
+				} catch (IOException e1) {
+					if( zipfilesystem != null ) {
+						try {
+							zipfilesystem.close();
+						} catch (IOException e2) {
+							e2.printStackTrace();
+						}
+					}
+					e1.printStackTrace();
 				}
 			}
 		};
@@ -13450,7 +13541,6 @@ public class GeneSet extends JApplet {
 						}
 						e1.printStackTrace();
 					}
-					
 				}
 			}
 		};
@@ -13557,6 +13647,7 @@ public class GeneSet extends JApplet {
 		};
 		
 		edit.add( clustergenes );
+		edit.add( alignclusters );
 		edit.addSeparator();
 		edit.add( sharenumaction );
 		edit.add( importgeneclusteringaction );
@@ -13757,9 +13848,10 @@ public class GeneSet extends JApplet {
 						System.err.println();
 					}
 					for( Tegeval tv : tlist ) {
+						StringBuilder ps = tv.getProteinSequence();
 						sb.append(">" + tv.name.substring(0, tv.name.indexOf('_')) + "\n");
-						for (int i = 0; i < tv.getProteinLength(); i += 70) {
-							sb.append( tv.getProteinSubsequence(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
+						for (int i = 0; i < ps.length(); i += 70) {
+							sb.append( ps.substring(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
 						}
 					}
 				}
