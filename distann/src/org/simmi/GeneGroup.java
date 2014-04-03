@@ -1,5 +1,7 @@
 package org.simmi;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +22,14 @@ public class GeneGroup {
 			if( g.tegeval.isDirty() ) return true;
 		}
 		return false;
+	}
+	
+	public String getFasta() throws IOException {
+		StringWriter sb = new StringWriter();
+		for( Gene g : genes ) {
+			g.getFasta( sb );
+		}
+		return sb.toString();
 	}
 	
 	public int getMaxCyc() {
@@ -198,6 +208,16 @@ public class GeneGroup {
 			}
 		}
 		
+		return ret;
+	}
+	
+	public String getCommonId() {
+		String ret = null;
+		for( Gene g : genes ) {
+			String id = g.getId();
+			if( ret == null ) ret = id;
+			else if( ((ret.contains("contig") || ret.contains("scaffold")) && !ret.contains(":")) || !(id.contains("contig") || id.contains("scaffold") || id.contains("unnamed") || id.contains("hypot")) ) ret = id;
+		}
 		return ret;
 	}
 	
