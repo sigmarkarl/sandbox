@@ -12,8 +12,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -29,13 +34,13 @@ import javax.swing.SwingUtilities;
 public class NativeRun {
 	public Container			cnt = null;
 	
-	public File checkProdigalInstall( File dir, List<String> urls ) throws IOException {
-		File check1 = new File( dir, "prodigal.v2_60.windows.exe" );
-		File check2 = new File( dir, "prodigal.v2_60.linux" );
-		File check;
-		if( !check1.exists() && !check2.exists() ) {
+	public Path checkProdigalInstall( Path dir, List<Path> urls ) throws IOException, URISyntaxException {
+		Path check1 = dir.resolve( "prodigal.v2_60.windows.exe" );
+		Path check2 = dir.resolve( "prodigal.v2_60.linux" );
+		Path check;
+		if( !Files.exists(check1) && !Files.exists(check2) ) {
 			check = installProdigal( dir, urls );
-		} else check = check1.exists() ? check1 : check2;
+		} else check = Files.exists(check1) ? check1 : check2;
 		
 		return check;
 	}
@@ -144,68 +149,6 @@ public class NativeRun {
 		return f;
 	}
 	
-	public void doProdigal( File dir, Container c, File f, List<String> urls ) throws IOException {
-		JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-			File selectedfile = fc.getSelectedFile();
-			if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
-		
-			for( String path : urls ) {
-				URL url = new URL( path );
-				
-				String file = url.getFile();
-				String[] split = file.split("/");
-				String fname = split[ split.length-1 ];
-				split = fname.split("\\.");
-				final String title = split[0];
-				File infile = new File( dir, fname );
-				if( infile.exists() ) {
-					infile = new File( dir, "tmp_"+fname );
-				}
-				
-				FileOutputStream fos = new FileOutputStream( infile );
-				InputStream is = url.openStream();
-				
-				byte[] bb = new byte[100000];
-				int r = is.read(bb);
-				while( r > 0 ) {
-					fos.write(bb, 0, r);
-					r = is.read(bb);
-				}
-				is.close();
-				fos.close();
-					
-				final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
-				final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
-				String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
-				
-				final Object[] cont = new Object[3];
-				Runnable run = new Runnable() {
-					public void run() {
-						if( cont[0] != null ) {
-							System.err.println( cont[0] );
-							/*try {
-								addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
-								addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
-							} catch (URISyntaxException e) {
-								e.printStackTrace();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}*/
-						}
-					}
-				};
-				runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
-					//JSObject js = JSObject.getWindow( SerifyApplet.this );
-					//js = (JSObject)js.getMember("document");
-					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
-			}
-		}
-		
-		//infile.delete();
-	}
-	
 	public String runProcessBuilder( String title, @SuppressWarnings("rawtypes") final List commandsList, final Runnable run, final Object[] cont ) throws IOException {
 		//System.err.println( pb.toString() );
 		//pb.directory( dir );
@@ -259,55 +202,142 @@ public class NativeRun {
 			@Override
 			public void run() {
 				try {
+					Object input = null;
+					Path output = null;
+					Path workingdir = null;
 					for( Object commands : commandsList ) {
-						boolean blist = commands instanceof List;
-						ProcessBuilder pb = new ProcessBuilder( blist ? (List)commands : commandsList );
-						pb.redirectErrorStream( true );
-						final Process p = pb.start();
-						dialog.addWindowListener( new WindowListener() {
+						if( commands instanceof Path[] ) {
+							Path[] pp = (Path[])commands;
+							input = pp[0];
+							output = pp[1];
+							workingdir = pp[2];
+						} else if( commands instanceof Object[] ) {
+							Object[] pp = (Object[])commands;
+							input = pp[0];
+							output = (Path)pp[1];
+							workingdir = (Path)pp[2];
+						} else {
+							boolean blist = commands instanceof List;
+							List<String> lcmd = blist ? (List)commands : commandsList;
+							/*for( String s : lcmd ) {
+								System.err.println( s );
+							}*/
+							ProcessBuilder pb = new ProcessBuilder( lcmd );
+							//pb.environment().putAll( System.getenv() );
+							//System.err.println( pb.environment() );
+							if( workingdir != null ) {
+								//System.err.println( "blblblbl " + workingdir.toFile() );
+								pb.directory( workingdir.toFile() );
+							}
+							//pb.redirectErrorStream( true );
+							final Process p = pb.start();
+							dialog.addWindowListener( new WindowListener() {
+								
+								@Override
+								public void windowOpened(WindowEvent e) {}
+								
+								@Override
+								public void windowIconified(WindowEvent e) {}
+								
+								@Override
+								public void windowDeiconified(WindowEvent e) {}
+								
+								@Override
+								public void windowDeactivated(WindowEvent e) {}
+								
+								@Override
+								public void windowClosing(WindowEvent e) {}
+								
+								@Override
+								public void windowClosed(WindowEvent e) {
+									if( p != null ) {
+										interupted = true;
+										p.destroy();
+										//tt.interrupt();
+									}
+								}
+								
+								@Override
+								public void windowActivated(WindowEvent e) {}
+							});
+							dialog.setVisible( true );
 							
-							@Override
-							public void windowOpened(WindowEvent e) {}
-							
-							@Override
-							public void windowIconified(WindowEvent e) {}
-							
-							@Override
-							public void windowDeiconified(WindowEvent e) {}
-							
-							@Override
-							public void windowDeactivated(WindowEvent e) {}
-							
-							@Override
-							public void windowClosing(WindowEvent e) {}
-							
-							@Override
-							public void windowClosed(WindowEvent e) {
-								if( p != null ) {
-									interupted = true;
-									p.destroy();
-									//tt.interrupt();
+							if( input != null ) {
+								if( input instanceof Path ) {
+									final Path inp = (Path)input;
+									new Thread() {
+										public void run() {
+											try {
+												OutputStream os = p.getOutputStream();
+												//os.write( "simmi".getBytes() );
+												Files.copy(inp, os);
+												os.close();
+											} catch( Exception e ) {
+												e.printStackTrace();
+											}
+										}
+									}.start();
+								} else {
+									final byte[] binput = (byte[])input;
+									new Thread() {
+										public void run() {
+											try {
+												OutputStream os = p.getOutputStream();
+												os.write( binput );
+												os.close();
+											} catch( Exception e ) {
+												e.printStackTrace();
+											}
+										}
+									}.start();
 								}
 							}
 							
-							@Override
-							public void windowActivated(WindowEvent e) {}
-						});
-						dialog.setVisible( true );
-						
-						InputStream is = p.getInputStream();
-						BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-						String line = br.readLine();
-						while( line != null ) {
-							String str = line + "\n";
-							ta.append( str );
+							if( output != null ) {
+								//if( output instanceof Path ) {
+									Path outp = (Path)output;
+									try {
+										InputStream is = p.getInputStream();
+										Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
+										is.close();
+									} catch( Exception e ) {
+										e.printStackTrace();
+									}
+								/*} else {
+									final byte[] bout = (byte[])output;
+									
+									try {
+										InputStream is = p.getInputStream();
+										is.read( outp );
+										is.close();
+									} catch( Exception e ) {
+										e.printStackTrace();
+									}
+								}*/
+							} else {
+								try {
+									InputStream is = p.getInputStream();
+									BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+									String line = br.readLine();
+									while( line != null ) {
+										String str = line + "\n";
+										ta.append( str );
+										
+										line = br.readLine();
+									}
+									br.close();
+									is.close();
+								} catch( Exception e ) {
+									e.printStackTrace();
+								}
+							}
 							
-							line = br.readLine();
+							input = null;
+							output = null;
+							workingdir = null;
+							
+							if( !blist ) break;
 						}
-						br.close();
-						is.close();
-						
-						if( !blist ) break;
 					}
 					
 					/*System.err.println("hereok");
@@ -351,7 +381,7 @@ public class NativeRun {
 		return "";
 	}
 	
-	public String fixPath( String path ) {
+	public static String fixPath( String path ) {
 		String[] split = path.split("\\\\");
 		String res = "";
 		for( String s : split ) {
@@ -371,13 +401,13 @@ public class NativeRun {
 		return res;
 	}
 	
-	public File installProdigal( final File homedir, final List<String> urls ) throws IOException {
-		final URL url = new URL("http://prodigal.googlecode.com/files/prodigal.v2_60.windows.exe");
-		String fileurl = url.getFile();
+	public Path installProdigal( final Path homedir, final List<Path> urls ) throws IOException, URISyntaxException {
+		final Path url = Paths.get( new URL("http://prodigal.googlecode.com/files/prodigal.v2_60.windows.exe").toURI() );
+		String fileurl = url.getFileName().toString();
 		String[] split = fileurl.split("/");
 		
-		final File f = new File( homedir, split[split.length-1] );
-		if( !f.exists() ) {
+		final Path f = homedir.resolve( split[split.length-1] );
+		if( !Files.exists(f) ) {
 			final JDialog dialog;
 			Window window = SwingUtilities.windowForComponent(cnt);
 			if( window != null ) dialog = new JDialog( window );
@@ -415,7 +445,7 @@ public class NativeRun {
 					dialog.setVisible( true );
 					
 					try {
-						byte[] bb = new byte[100000];
+						/*byte[] bb = new byte[100000];
 						ByteArrayOutputStream	baos = new ByteArrayOutputStream();
 						InputStream is = url.openStream();
 						int r = is.read(bb);
@@ -428,9 +458,11 @@ public class NativeRun {
 						FileOutputStream fos = new FileOutputStream( f );
 						fos.write( baos.toByteArray() );
 						fos.close();
-						baos.close();
+						baos.close();*/
 						
-						doProdigal(homedir, NativeRun.this.cnt, f, urls);
+						Files.copy( url, f );
+						
+						// ermermerm doProdigal(homedir, NativeRun.this.cnt, f, urls);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}

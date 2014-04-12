@@ -40,7 +40,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -102,7 +101,7 @@ import javax.swing.table.TableModel;
 
 import org.simmi.RecipePanel.Recipe;
 import org.simmi.RecipePanel.RecipeIngredient;
-import org.simmi.shared.TreeUtil;
+//import org.simmi.shared.TreeUtil;
 
 public class SortTable extends JApplet {
 	/**
@@ -2717,7 +2716,7 @@ public class SortTable extends JApplet {
 						if( val >= 2 ) lint.add( val+2 );
 					}
 					
-					TreeUtil tu = new TreeUtil();
+					//TreeUtil tu = new TreeUtil();
 					List<String> corrInd = new ArrayList<String>();					
 					List<Integer> validIndices = new ArrayList<Integer>();
 					for( int i = 2; i < stuff.size(); i++ ) {
@@ -2772,8 +2771,8 @@ public class SortTable extends JApplet {
 							corrarr[ (k)*len+(i) ] = tot;
 						}
 					}
-					TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd, null, true, false);
-					String tree = node.toString();
+					//TreeUtil.Node node = tu.neighborJoin(corrarr, corrInd, null, true, false);
+					String tree = "";//node.toString();
 					System.err.println("about to call showTree");
 					System.err.println( tree );
 					JSUtil.call( SortTable.this, "showTree",  new Object[] {tree} );

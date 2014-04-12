@@ -4,12 +4,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -172,6 +170,9 @@ public class GBK2AminoFasta {
 						}
 					} else if( trimline.startsWith("/db_xref") ) {
 						xref.add( trimline.substring(10, trimline.length()-1) );
+					} else if( trimline.startsWith("/EC_number") ) {
+						String ec = "EC"+trimline.substring(12, trimline.length()-1);
+						xref.add( ec );
 					} else if( trimline.startsWith("/product") ) {
 						if( anno != null ) {
 							if( trimline.length() > 10 ) {								
@@ -291,7 +292,7 @@ public class GBK2AminoFasta {
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.WRITE);
+				Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.CREATE);
 				urifile.put( uri, fw );
 				
 				out = fw;
@@ -369,17 +370,14 @@ public class GBK2AminoFasta {
 			//if( c++ > 10 ) break;
 		}
 		
-		try {
-			File f = new File( new URI(path+".namemap") );
-			FileWriter mfw = new FileWriter( f );
-			for( String a : nameMap.keySet() ) {
-				String gene = nameMap.get(a);
-				mfw.write( a + "\t" + gene + "\n" );
-			}
-			mfw.close();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+		Path p = path.getParent().resolve(path.getFileName()+".namemap"); //new File( new URI(path+".namemap") );
+		//FileWriter mfw = new FileWriter( f );
+		Writer mfw = Files.newBufferedWriter( p );
+		for( String a : nameMap.keySet() ) {
+			String gene = nameMap.get(a);
+			mfw.write( a + "\t" + gene + "\n" );
 		}
+		mfw.close();
 		
 		for( Path uri : urifile.keySet() ) {
 			Writer w = urifile.get( uri );

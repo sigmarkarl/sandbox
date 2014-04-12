@@ -75,6 +75,7 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -88,7 +89,6 @@ import elemental.events.EventListener;
 import elemental.events.MessageEvent;
 import elemental.html.Blob;
 import elemental.html.Console;
-import elemental.html.ImageElement;
 import elemental.html.WebSocket;
 
 //import elemental.client.Browser;
@@ -108,6 +108,7 @@ public class Treedraw implements EntryPoint {
 	boolean				showleafnames = true;
 	boolean				rightalign = false;
 	boolean				circular = false;
+	boolean				radial = false;
 	
 	private void setTreeUtil( TreeUtil tu, String val ) {
 		if( this.treeutil != null ) console( "batjong2 " + val );
@@ -146,131 +147,450 @@ public class Treedraw implements EntryPoint {
 		return (int)(clientscale*Window.getClientWidth());
 	}
 	
+	int count = 0;
+	private double spread = 0.0;
+	private double[] bounds = new double[4];
+	private double[] lbounds = new double[4];
+	public double[] constructNode(Context2d ctx, TreeUtil tree, Node node, double angleStart,
+			double angleFinish, double xPosition, double yPosition,
+			double length, boolean nodraw) {
+		final double branchAngle = (angleStart + angleFinish) / 2.0;
+
+		final double directionX = Math.cos(branchAngle);
+		final double directionY = Math.sin(branchAngle);
+		double[] nodePoint = new double[] { xPosition + (length * directionX), yPosition + (length * directionY) };
+		
+		double x0 = nodePoint[0];
+		double y0 = nodePoint[1];
+
+		if( !node.isLeaf() ) {
+		//if (!tree.isExternal(node)) {
+
+			// Not too clear how to do hilighting for radial trees so leave it
+			// out...
+			// if (hilightAttributeName != null &&
+			// node.getAttribute(hilightAttributeName) != null) {
+			// constructHilight(tree, node, angleStart, angleFinish, xPosition,
+			// yPosition, length, cache);
+			// }
+
+			//node.get
+			List<Node> children = node.getNodes(); //tree.getChildren(node);
+			int[] leafCounts = new int[children.size()];
+			int sumLeafCount = 0;
+
+			int i = 0;
+			for (Node child : children) {
+				leafCounts[i] = child.countLeaves(); //jebl.evolution.trees.Utils.getExternalNodeCount(tree, child);
+				sumLeafCount += leafCounts[i];
+				i++;
+			}
+			
+			//Browser.getWindow().getConsole().log( "s " + sumLeafCount );
+
+			double span = (angleFinish - angleStart);
+
+			if( !node.isRoot() ) {
+			//if (!tree.isRoot(node)) {
+				span *= 1.0 + (spread / 10.0);
+				angleStart = branchAngle - (span / 2.0);
+				angleFinish = branchAngle + (span / 2.0);
+			}
+
+			double a2 = angleStart;
+
+			//Browser.getWindow().getConsole().log( "erm " + angleStart + "  " + angleFinish );
+			
+			boolean rotate = false;
+			/*if (node.getAttribute("!rotate") != null && ((Boolean) node.getAttribute("!rotate"))) {
+				rotate = true;
+			}*/
+			for (i = 0; i < children.size(); ++i) {
+				int index = i;
+				if (rotate) {
+					index = children.size() - i - 1;
+				}
+
+				Node child = children.get(index);
+
+				final double childLength = child.getLength();
+				double a1 = a2;
+				a2 = a1 + (span * leafCounts[index] / sumLeafCount);
+				double[] childPoint = constructNode( ctx, tree, child, a1, a2, nodePoint[0], nodePoint[1], childLength, nodraw);
+				double x1 = childPoint[0];
+				double y1 = childPoint[1];
+				//Line2D branchLine = new Line2D.Double(childPoint.getX(), childPoint.getY(), nodePoint.getX(), nodePoint.getY());
+
+				Object[] colouring = null;//new Object[] {}; //null;
+				/*if (branchColouringAttribute != null) {
+					colouring = (Object[]) child.getAttribute(branchColouringAttribute);
+				}*/
+				if (colouring != null) {
+					// If there is a colouring, then we break the path up into
+					// segments. This should allow use to iterate along the
+					// segments
+					// and colour them as we draw them.
+
+					//double nodeHeight = tree.getHeight(node);
+					//double childHeight = tree.getHeight(child);
+					//GeneralPath branchPath = new GeneralPath();
+
+					// to help this, we are going to draw the branch backwards
+					ctx.beginPath();
+					ctx.moveTo(x1, y1);
+					float interval = 0.0F;
+					for (int j = 0; j < colouring.length - 1; j += 2) {
+						// float height = ((Number)colouring[j+1]).floatValue();
+						// float p = (height - childHeight) / (nodeHeight -
+						// childHeight);
+						interval += ((Number) colouring[j + 1]).floatValue();
+						double p = interval / childLength; //(nodeHeight - childHeight);
+						double x = x1 + ((x0 - x1) * p);
+						double y = y1 + ((y0 - y1) * p);
+						ctx.lineTo(x, y);
+					}
+					ctx.lineTo(x0, y0);
+					ctx.closePath();
+					ctx.stroke();
+
+					// add the branchPath to the map of branch paths
+					//cache.branchPaths.put(child, branchPath);
+
+				} else {
+					// add the branchLine to the map of branch paths
+					//cache.branchPaths.put(child, branchLine);
+					if( nodraw ) {
+						if( x1 < bounds[0] ) bounds[0] = x1;
+						if( x1 > bounds[2] ) bounds[2] = x1;
+						if( y1 < bounds[1] ) bounds[1] = y1;
+						if( y1 > bounds[3] ) bounds[3] = y1;
+						
+						if( x0 < bounds[0] ) bounds[0] = x0;
+						if( x0 > bounds[2] ) bounds[2] = x0;
+						if( y0 < bounds[1] ) bounds[1] = y0;
+						if( y0 > bounds[3] ) bounds[3] = y0;
+					} else {
+						double xscale = (canvas.getCoordinateSpaceWidth()-10.0-(lbounds[2]-lbounds[0]))/(bounds[2]-bounds[0]);
+						//double yscale = (canvas.getCoordinateSpaceHeight()-10.0-(lbounds[3]-lbounds[1]))/(bounds[3]-bounds[1]);
+						//double scale = Math.min(xscale, yscale);
+						double xoffset = 5.0-lbounds[0]-bounds[0]*xscale;
+						double yoffset = 5.0-lbounds[1]-bounds[1]*xscale;
+						
+						double xx1 = xscale*x1 + xoffset;
+						double yy1 = xscale*y1 + yoffset;
+						
+						double xx2 = xscale*x0 + xoffset;
+						double yy2 = xscale*y0 + yoffset;
+						
+						ctx.setStrokeStyle("#000000");
+						ctx.beginPath();
+						ctx.moveTo(xx1,yy1);
+						ctx.lineTo(xx2,yy2);
+						ctx.closePath();
+						ctx.stroke();
+					}
+				}
+
+				//cache.branchLabelPaths.put(child, (Line2D) branchLine.clone());
+			}
+
+			/*double[] nodeLabelPoint = new double[] { xPosition
+					+ ((length + 1.0) * directionX), yPosition
+					+ ((length + 1.0) * directionY) };
+
+			/*Line2D nodeLabelPath = new Line2D.Double(nodePoint, nodeLabelPoint);
+			cache.nodeLabelPaths.put(node, nodeLabelPath);*
+			
+			double x1 = 100.0*nodePoint[0] + 300.0;
+			double y1 = 100.0*nodePoint[1] + 300.0;
+			
+			double x2 = 100.0*nodeLabelPoint[0] + 300.0;
+			double y2 = 100.0*nodeLabelPoint[1] + 300.0;
+			
+			ctx.setStrokeStyle("#00FF00");
+			ctx.beginPath();
+			ctx.moveTo(x1,y1);
+			ctx.lineTo(x2,y2);
+			ctx.closePath();
+			ctx.stroke();*/
+
+		} else {
+			double x1 = xPosition + ((length + 1.0) * directionX);
+			double y1 = yPosition + ((length + 1.0) * directionY);
+			if( nodraw ) {
+				ctx.setFillStyle("#000000");
+				double horn = Math.atan2( y1-y0, x1-x0 );
+				
+				String name = node.getName();
+				TextMetrics tm = ctx.measureText( name );
+				double strlen = tm.getWidth();
+				/*if( Math.abs(horn) > Math.PI/2.0 ) {
+					horn += Math.PI;
+				}*/
+				double x = strlen*Math.cos( horn );
+				double y = strlen*Math.sin( horn );
+				
+				if( x < lbounds[0] ) lbounds[0] = x;
+				if( x > lbounds[2] ) lbounds[2] = x;
+				if( y < lbounds[1] ) lbounds[1] = y;
+				if( y > lbounds[3] ) lbounds[3] = y;
+			} else {
+				ctx.setFillStyle("#000000");
+				String name = node.getName();
+				
+				double xscale = (canvas.getCoordinateSpaceWidth()-10.0-(lbounds[2]-lbounds[0]))/(bounds[2]-bounds[0]);
+				//double yscale = (canvas.getCoordinateSpaceHeight()-10.0-(lbounds[3]-lbounds[1]))/(bounds[3]-bounds[1]);
+				//double scale = Math.min(xscale, yscale);
+				double xoffset = 5.0-lbounds[0]-bounds[0]*xscale;
+				double yoffset = 5.0-lbounds[1]-bounds[1]*xscale;
+				
+				double xx1 = xscale*x1 + xoffset;
+				double yy1 = xscale*y1 + yoffset;
+				
+				double xx2 = xscale*x0 + xoffset;
+				double yy2 = xscale*y0 + yoffset;
+				
+				double horn = Math.atan2( y0-y1, x0-x1 );
+				
+				TextMetrics tm = ctx.measureText( name );
+				double strlen = tm.getWidth();
+				if( Math.abs(horn) > Math.PI/2.0 ) {
+					horn += Math.PI;
+					
+					ctx.translate(xx2, yy2);
+					ctx.rotate( horn );
+					ctx.fillText( name, 3.0, 3.0);
+					ctx.rotate( -horn );
+					ctx.translate(-xx2, -yy2);
+				} else {
+					ctx.translate(xx2, yy2);
+					ctx.rotate( horn );
+					ctx.fillText( name, -strlen-3.0, 3.0 );
+					ctx.rotate( -horn );
+					ctx.translate(-xx2, -yy2);
+				}
+			}
+			
+			/*double[] taxonPoint = new double[] { xPosition + (length + 1.0) * directionX, yPosition + (length + 1.0) * directionY };
+			/*Point2D taxonPoint = new Point2D.Double(xPosition
+					+ ((length + 1.0) * directionX), yPosition
+					+ ((length + 1.0) * directionY));
+
+			Line2D taxonLabelPath = new Line2D.Double(nodePoint, taxonPoint);
+			cache.tipLabelPaths.put(node, taxonLabelPath);*
+			
+			double x1 = 100.0*nodePoint[0] + 300.0;
+			double y1 = 100.0*nodePoint[1] + 300.0;
+			
+			double x2 = 100.0*taxonPoint[0] + 300.0;
+			double y2 = 100.0*taxonPoint[1] + 300.0;
+			
+			ctx.setStrokeStyle("#0000FF");
+			ctx.beginPath();
+			ctx.moveTo(x1,y1);
+			ctx.lineTo(x2,y2);
+			ctx.closePath();
+			ctx.stroke();*/
+		}
+
+		/*Point2D nodeShapePoint = new Point2D.Double(xPosition
+				+ ((length - 1.0) * directionX), yPosition
+				+ ((length - 1.0) * directionY));
+		Line2D nodeShapePath = new Line2D.Double(nodePoint, nodeShapePoint);
+		cache.nodeShapePaths.put(node, nodeShapePath);
+
+		// add the node point to the map of node points
+		cache.nodePoints.put(node, nodePoint);*
+		
+		double[] nodeShapePoint = new double[] {xPosition + (length - 1.0) * directionX, yPosition + (length - 1.0) * directionY };
+		
+		double x1 = 100.0*nodePoint[0] + 300.0;
+		double y1 = 100.0*nodePoint[1] + 300.0;
+		
+		double x2 = 100.0*nodeShapePoint[0] + 300.0;
+		double y2 = 100.0*nodeShapePoint[1] + 300.0;
+		
+		ctx.setStrokeStyle("#FFFF00");
+		ctx.beginPath();
+		ctx.moveTo(x1,y1);
+		ctx.lineTo(x2,y2);
+		ctx.closePath();
+		ctx.stroke();*/
+
+		return nodePoint;
+	}
+	
 	double fontscale = 5.0;
 	double hchunk = 10.0;
-	public void drawTree( TreeUtil treeutil ) {		
-		double minh = treeutil.getminh();
-		double maxh = treeutil.getmaxh();
-		
-		double minh2 = treeutil.getminh2();
-		double maxh2 = treeutil.getmaxh2();
-		
+	public void drawTree( TreeUtil treeutil ) {
 		int ww = getClientWidth();
-		
-		int leaves = root.getLeavesCount();
-		int levels = root.countMaxHeight();
-		
-		nodearray = new Node[ leaves ];
-		
-		String treelabel = treeutil.getTreeLabel();
-		
-		int hsize = (int)(hchunk*leaves);
-		if( treelabel != null ) hsize += 2*hchunk;
-		if( showscale ) hsize += 2*hchunk;
-		if( circular ) {
-			canvas.setSize((ww-10)+"px", (ww-10)+"px");
-			canvas.setCoordinateSpaceWidth( ww-10 );
-			canvas.setCoordinateSpaceHeight( ww-10 );
-		} else {
-			canvas.setSize((ww-10)+"px", (hsize+2)+"px");
-			canvas.setCoordinateSpaceWidth( ww-10 );
-			canvas.setCoordinateSpaceHeight( hsize+2 );
-		}
-		
-		boolean vertical = true;
-		//boolean equalHeight = false;
-		
-		Treedraw.this.h = hchunk*leaves; //circular ? ww-10 : hchunk*leaves;
-		Treedraw.this.w = ww - 10;
-		
-		if( vertical ) {
-			dh = hchunk;
-			dw = Treedraw.this.w/levels;
-		} else {
-			dh = Treedraw.this.h/levels;
-			dw = Treedraw.this.w/leaves;
-		}
-		
-		int starty = 10; //h/25;
-		int startx = 10; //w/25;
-		//GradientPaint shadeColor = createGradient( color, ny-k/2, h );
-		//drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
-		
-		ci = 0;
-		//g2.setFont( dFont );
-		
-		//console( Double.toString( maxheight ) );
-		//console( Double.toString( maxh-minh ) );
-		//console( Double.toString(maxh2-minh2) );
-		
-		Context2d ctx = canvas.getContext2d();
-		ctx.setFillStyle("#FFFFFF");
-		ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
-		if( hchunk != 10.0 ) {
-			String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
-			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
-		}
-		if( treelabel != null ) {
-			Browser.getWindow().getConsole().log("erm");
-			ctx.setFillStyle("#000000");
-			ctx.fillText( treelabel, 10, hchunk+2 );
-		}
-		//console( "leaves " + leaves );
-		//double	maxheightold = root.getMaxHeight();
-		
-		Node mnnode = getMaxNameLength( root, ctx );
-		String maxstr = mnnode.getName();
-		Node node = equalHeight > 0 ? mnnode : getMaxHeight( root, ctx, ww-30, showleafnames );
-		if( node != null ) {
-			double gh = getHeight(node);
-			String name = node.getName();
-			//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
-			double textwidth = showleafnames ? ctx.measureText(name).getWidth() : 0.0;
-			
-			double mns = 0.0;
-			if( showlinage ) {
-				double ml = getMaxInternalNameLength( root, ctx );
-				mns = ml+30;
+		if( radial ) {
+			if( treeutil != null ) {
+				Node root = treeutil.getNode();
+				//Browser.getWindow().getConsole().log("heyhey");
+				count = 0;
+				
+				Context2d ctx = canvas.getContext2d();
+				
+				bounds[0] = Double.MAX_VALUE;
+				bounds[1] = Double.MAX_VALUE;
+				bounds[2] = Double.NEGATIVE_INFINITY;
+				bounds[3] = Double.NEGATIVE_INFINITY;
+				
+				lbounds[0] = Double.MAX_VALUE;
+				lbounds[1] = Double.MAX_VALUE;
+				lbounds[2] = Double.NEGATIVE_INFINITY;
+				lbounds[3] = Double.NEGATIVE_INFINITY;
+				
+				if( hchunk != 10.0 ) {
+					String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
+					if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
+				}
+				
+				constructNode( ctx, treeutil, root, 0.0, Math.PI * 2, 0.0, 0.0, 0.0, true );
+				
+				double xscale = (canvas.getCoordinateSpaceWidth()-10.0-(lbounds[2]-lbounds[0]))/(bounds[2]-bounds[0]);
+				//double yscale = (canvas.getCoordinateSpaceHeight()-10.0-(lbounds[3]-lbounds[1]))/(bounds[3]-bounds[1]);
+				//double scale = Math.min(xscale, yscale);
+				double xoffset = 5.0-lbounds[0]-bounds[0]*xscale;
+				double yoffset = 5.0-lbounds[1]-bounds[1]*xscale;
+				
+				int hval = (int)((bounds[3]-bounds[1])*xscale+(lbounds[3]-lbounds[1])+10);
+				canvas.setSize((ww-10)+"px", hval+"px");
+				canvas.setCoordinateSpaceWidth( ww-10 );
+				canvas.setCoordinateSpaceHeight( hval );
+				
+				if( hchunk != 10.0 ) {
+					String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
+					if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
+				}
+				
+				ctx.setFillStyle("#FFFFFF");
+				ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+				ctx.setStrokeStyle("#000000");
+				constructNode( ctx, treeutil, root, 0.0, Math.PI * 2, 0.0, 0.0, 0.0, false );
 			}
-			double addon = mns;
+		} else {
+			/*double minh = treeutil.getminh();
+			double maxh = treeutil.getmaxh();
 			
-			double maxheight = 0.0;
-			if( circular ) maxheight = equalHeight > 0 ? ((ww-30)*circularScale-(textwidth)*2.0) : (gh*(ww-30)*circularScale)/((ww-60)*circularScale-(textwidth+mns)*2.0);
-			else maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth-mns);
+			double minh2 = treeutil.getminh2();
+			double maxh2 = treeutil.getmaxh2();*/
 			
-			if( equalHeight > 0 ) dw = maxheight/levels;
+			int leaves = root.getLeavesCount();
+			int levels = root.countMaxHeight();
+			
+			nodearray = new Node[ leaves ];
+			
+			String treelabel = treeutil.getTreeLabel();
+			
+			int hsize = (int)(hchunk*leaves);
+			if( treelabel != null ) hsize += 2*hchunk;
+			if( showscale ) hsize += 2*hchunk;
+			if( circular ) {
+				canvas.setSize((ww-10)+"px", (ww-10)+"px");
+				canvas.setCoordinateSpaceWidth( ww-10 );
+				canvas.setCoordinateSpaceHeight( ww-10 );
+			} else {
+				canvas.setSize((ww-10)+"px", (hsize+2)+"px");
+				canvas.setCoordinateSpaceWidth( ww-10 );
+				canvas.setCoordinateSpaceHeight( hsize+2 );
+			}
+			
+			boolean vertical = true;
+			//boolean equalHeight = false;
+			
+			Treedraw.this.h = hchunk*leaves; //circular ? ww-10 : hchunk*leaves;
+			Treedraw.this.w = ww - 10;
 			
 			if( vertical ) {
-				//drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
-				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
-				else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
+				dh = hchunk;
+				dw = Treedraw.this.w/levels;
 			} else {
-				drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0, addon );
-				ci = 0;
-				if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
-				else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
+				dh = Treedraw.this.h/levels;
+				dw = Treedraw.this.w/leaves;
 			}
 			
-			if( showscale ) {
-				Node n = getMaxHeight( root, ctx, ww, false );
-				double h = n.getHeight();
-				double wh = n.getCanvasX()-10;
-				double ch = canvas.getCoordinateSpaceHeight();
+			int starty = 10; //h/25;
+			int startx = 10; //w/25;
+			//GradientPaint shadeColor = createGradient( color, ny-k/2, h );
+			//drawFramesRecursive( g2, resultnode, 0, 0, w/2, starty, paint ? shadeColor : null, leaves, equalHeight );
+			
+			ci = 0;
+			//g2.setFont( dFont );
+			
+			//console( Double.toString( maxheight ) );
+			//console( Double.toString( maxh-minh ) );
+			//console( Double.toString(maxh2-minh2) );
+			
+			Context2d ctx = canvas.getContext2d();
+			ctx.setFillStyle("#FFFFFF");
+			ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
+			if( hchunk != 10.0 ) {
+				String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
+				if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
+			}
+			if( treelabel != null ) {
+				ctx.setFillStyle("#000000");
+				ctx.fillText( treelabel, 10, hchunk+2 );
+			}
+			//console( "leaves " + leaves );
+			//double	maxheightold = root.getMaxHeight();
+			
+			Node mnnode = getMaxNameLength( root, ctx );
+			String maxstr = mnnode.getName();
+			Node node = equalHeight > 0 ? mnnode : getMaxHeight( root, ctx, ww-30, showleafnames );
+			if( node != null ) {
+				double gh = getHeight(node);
+				String name = node.getName();
+				//if( node.getMeta() != null ) name += " ("+node.getMeta()+")";
+				double textwidth = showleafnames ? ctx.measureText(name).getWidth() : 0.0;
 				
-				double nh = Math.pow( 10.0, Math.floor( Math.log10( h/5.0 ) ) );
-				double nwh = wh*nh/h;
+				double mns = 0.0;
+				if( showlinage ) {
+					double ml = getMaxInternalNameLength( root, ctx );
+					mns = ml+30;
+				}
+				double addon = mns;
 				
-				ctx.beginPath();
-				ctx.moveTo(10, ch );
-				ctx.lineTo(10, ch-5 );
-				ctx.lineTo(10+nwh, ch-5 );
-				ctx.lineTo(10+nwh, ch );
-				ctx.stroke();
-				ctx.closePath();
-				String htext = ""+nh;
-				double sw = ctx.measureText( htext ).getWidth();
-				ctx.fillText( htext, 10+(nwh-sw)/2.0, ch-8 );
+				double maxheight = 0.0;
+				if( circular ) maxheight = equalHeight > 0 ? ((ww-30)*circularScale-(textwidth)*2.0) : (gh*(ww-30)*circularScale)/((ww-60)*circularScale-(textwidth+mns)*2.0);
+				else maxheight = equalHeight > 0 ? (ww-30-textwidth) : (gh*(ww-30))/(ww-60-textwidth-mns);
+				
+				if( equalHeight > 0 ) dw = maxheight/levels;
+				
+				if( vertical ) {
+					//drawFramesRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, 0, addon );
+					ci = 0;
+					if( center ) drawTreeRecursiveCenter( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
+					else drawTreeRecursive( ctx, root, 0, treelabel == null ? 0 : hchunk*2, startx, Treedraw.this.h/2, equalHeight, false, vertical, maxheight, addon, maxstr );
+				} else {
+					drawFramesRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, 0, addon );
+					ci = 0;
+					if( center ) drawTreeRecursiveCenter( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
+					else drawTreeRecursive( ctx, root, 0, 0, Treedraw.this.w/2, starty, equalHeight, false, vertical, maxheight, addon, maxstr );
+				}
+				
+				if( showscale ) {
+					Node n = getMaxHeight( root, ctx, ww, false );
+					double h = n.getHeight();
+					double wh = n.getCanvasX()-10;
+					double ch = canvas.getCoordinateSpaceHeight();
+					
+					double nh = Math.pow( 10.0, Math.floor( Math.log10( h/5.0 ) ) );
+					double nwh = wh*nh/h;
+					
+					ctx.beginPath();
+					ctx.moveTo(10, ch );
+					ctx.lineTo(10, ch-5 );
+					ctx.lineTo(10+nwh, ch-5 );
+					ctx.lineTo(10+nwh, ch );
+					ctx.stroke();
+					ctx.closePath();
+					String htext = ""+nh;
+					double sw = ctx.measureText( htext ).getWidth();
+					ctx.fillText( htext, 10+(nwh-sw)/2.0, ch-8 );
+				}
 			}
 		}
 	}
@@ -1070,6 +1390,16 @@ public class Treedraw implements EntryPoint {
 		}
 	}
 	
+	public void recursiveNonLeaveFontResize( Node root, double scale ) {
+		List<Node> nodes = root.getNodes();
+		if( nodes != null && nodes.size() > 0 ) {
+			root.setFontSize( root.getFontSize()*scale );
+			for( Node newnode : nodes ) {
+				recursiveNonLeaveFontResize( newnode, scale );
+			}
+		}
+	}
+	
 	public void omitLast( Node node, int harshness ) {
 		List<Node> nodes = node.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
@@ -1207,7 +1537,11 @@ public class Treedraw implements EntryPoint {
 		} else if( c == '-' ) {
 			hchunk *= 0.8;
 		} else if( c == 'y' || c == 'Y' ) {
-			treeutil.reduceParentSize( treeutil.getNode() );
+			if( c == 'y' ) {
+				treeutil.reduceParentSize( treeutil.getNode(), 0.8 );
+			} else {
+				treeutil.reduceParentSize( treeutil.getNode(), 1.25 );
+			}
 		} else if( c == 'w' || c == 'W' ) {
 			treeutil.swapNamesMeta( treeutil.getNode() );
 		} else if( c == 'v' || c == 'V' ) {
@@ -1234,6 +1568,12 @@ public class Treedraw implements EntryPoint {
 			omitLast( selectedNode != null ? selectedNode : root, 1 );
 		} else if( c == 'k' || c == 'K' ) {
 			omitLast( selectedNode != null ? selectedNode : root, 0 );
+		} else if( c == 'h' || c == 'H' ) {
+			if( c == 'h' ) {
+				recursiveNonLeaveFontResize( root, 0.8 );
+			} else {
+				recursiveNonLeaveFontResize( root, 1.25 );
+			}
 		} else if( c == 'g' || c == 'G' ) {
 			if( treeutil != null && root != null ) {
 				List<Node> nn = root.getNodes();
@@ -2123,14 +2463,28 @@ public class Treedraw implements EntryPoint {
 				if( treeutil != null ) drawTree( treeutil );
 			}
 		});
-		CheckBox circularCheck = new CheckBox("Circular");
-		circularCheck.addValueChangeHandler( new ValueChangeHandler<Boolean>() {
+		
+		final ListBox circularCheck = new ListBox();
+		circularCheck.addItem("Default");
+		circularCheck.addItem("Circular");
+		circularCheck.addItem("Radial");
+		circularCheck.addChangeHandler( new ChangeHandler() {
 			@Override
-			public void onValueChange(ValueChangeEvent<Boolean> event) {
-				circular = event.getValue();
+			public void onChange(ChangeEvent event) {
+				String sel = circularCheck.getItemText( circularCheck.getSelectedIndex() );
+				circular = sel.equals("Circular");
+				radial = sel.equals("Radial");
+				
 				drawTree( treeutil );
 			}
 		});
+		/*circularCheck.addValueChangeHandler( new ValueChangeHandler<String>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				circular = event.getValue();
+				drawTree( treeutil );
+			}
+		});*/
 		cluster.setValue( true );
 		bc.add( bctext );
 		bc.add( branch );
@@ -3551,16 +3905,20 @@ public class Treedraw implements EntryPoint {
 			double cy2o = (w + (rad + frmh * 1.5) * Math.sin(a2)) / 2.0;
 
 			g2.beginPath();
-			// g2.moveTo(cx1i, cy1i);
+			//g2.moveTo(cx1o, cy1o);
 			// g2.lineTo(cx1o, cy1o);
 			g2.arc(w / 2.0, w / 2.0, (rad + frmh * 1.5) / 2.0, a1, a2, false);
+			//g2.closePath();
+			g2.stroke();
+			//g2.stroke();
+			g2.beginPath();
 			g2.arc(w / 2.0, w / 2.0, (rad - frmh * 1.5) / 2.0, a2, a1, true); // rad+strh);
 			// g2.arcTo(cx2i, cy2i, cx1i, cy1i, rad-strh);
 			// g2.lineTo(cx2i, cy2i);
-			g2.lineTo(cx1o, cy1o);
+			//g2.lineTo(cx1o, cy1o);
 			// g2.fill();
 			g2.stroke();
-			g2.closePath();
+			//g2.closePath();
 		}
 
 		g2.setStrokeStyle("#000000");
@@ -3597,7 +3955,7 @@ public class Treedraw implements EntryPoint {
 				g2.rotate(-am);
 				g2.translate(-cx, -cy);
 			}
-		} else {		
+		} else {
 			if (a >= 0.0 && a < Math.PI) {
 				for (int i = 0; i < fstr.length(); i++) {
 					char c = fstr.charAt(i);

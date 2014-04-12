@@ -95,6 +95,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.simmi.shared.Annotation;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
@@ -1084,15 +1085,15 @@ public class DataTable extends JApplet implements ClipboardOwner {
 	public void viewAligned( JavaFasta jf, boolean aligned ) {
 		loadAligned( jf, aligned );
 		Sequence cons = jf.getSerifier().getConsensus();
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V1 - 16S rRNA",Color.blue,140,226, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V2 - 16S rRNA",Color.blue,276,438, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V3 - 16S rRNA",Color.blue,646,742, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V4 - 16S rRNA",Color.blue,865,1024, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V5 - 16S rRNA",Color.blue,1217,1309, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V6 - 16S rRNA",Color.blue,1469,1595, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V7 - 16S rRNA",Color.blue,1708,1804, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V8 - 16S rRNA",Color.blue,1894,1956, jf.getSerifier().mann ) );
-		jf.getSerifier().addAnnotation( cons.new Annotation(null,"V9 - 16S rRNA",Color.blue,2149,2209, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V1 - 16S rRNA",Color.blue,140,226,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V2 - 16S rRNA",Color.blue,276,438,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V3 - 16S rRNA",Color.blue,646,742,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V4 - 16S rRNA",Color.blue,865,1024,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V5 - 16S rRNA",Color.blue,1217,1309,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V6 - 16S rRNA",Color.blue,1469,1595,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V7 - 16S rRNA",Color.blue,1708,1804,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V8 - 16S rRNA",Color.blue,1894,1956,1, jf.getSerifier().mann ) );
+		jf.getSerifier().addAnnotation( new Annotation(null,"V9 - 16S rRNA",Color.blue,2149,2209,1, jf.getSerifier().mann ) );
 	}
 	
 	public void addSave( JFrame frame, final JavaFasta jf ) {
@@ -1900,19 +1901,19 @@ public class DataTable extends JApplet implements ClipboardOwner {
 		boolean succ = true;
 		if( !done ) {
 			try {
-				System.err.println( "bleh3erm" );
+				//System.err.println( "bleh3erm" );
 				Object obj = JSObject.class;
 				obj = null;
-				System.err.println( "bleh4" );
+				//System.err.println( "bleh4" );
 				JSObject erm = (JSObject)obj;
-				System.err.println( "ble2h"+this );
+				//System.err.println( "ble2h"+this );
 				JSObject win = JSObject.getWindow(this);
-				System.err.println( "about to run loadData" );
+				//System.err.println( "about to run loadData" );
 				win.call("loadData", new Object[] {});
 				win.call("reqSavedSel", new Object[] {});
 				//System.err.println( "done loadData" );
 				//win.call("loadMeta", new Object[] {});
-			} catch( Exception e ) {
+			} catch( NoSuchMethodError | Exception e ) {
 				succ = false;
 				e.printStackTrace();
 			}
