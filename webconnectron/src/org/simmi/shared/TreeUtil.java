@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class TreeUtil {
-	private Node currentNode = null;
+	Node currentNode = null;
 	String treelabel = null;
 	
 	public Node removeRoot( Node n ) {
@@ -64,13 +64,13 @@ public class TreeUtil {
 		return ret;
 	}
 	
-	public void reduceParentSize( Node n ) {
+	public void reduceParentSize( Node n, double scale ) {
 		List<Node> nodes = n.getNodes();
 		if( nodes != null && nodes.size() > 0 ) {
 			for( Node node : nodes) {
-				reduceParentSize( node );
+				reduceParentSize( node, scale );
 			}
-			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*0.8 );
+			if( n.getFontSize() != -1.0 && n.getFontSize() != 0.0 ) n.setFontSize( n.getFontSize()*scale );
 			else n.setFontSize( 0.8 );
 		}
 	}
@@ -537,9 +537,9 @@ public class TreeUtil {
 		String				meta;
 		int					metacount;
 		String				imgurl;
-		private double		h;
-		private double		h2;
-		private double		bootstrap;
+		double		h;
+		double		h2;
+		double		bootstrap;
 		String				color;
 		List<String>		infolist;
 		List<Node>			nodes;
@@ -558,6 +558,14 @@ public class TreeUtil {
 		
 		public boolean isLeaf() {
 			return nodes == null || nodes.size() == 0;
+		}
+		
+		public boolean isExternal() {
+			return isLeaf();
+		}
+		
+		public boolean isRoot() {
+			return getParent() == null;
 		}
 		
 		public Set<String> getLeaveNames() {
@@ -1121,6 +1129,10 @@ public class TreeUtil {
 				parent = parent.getParent();
 			}
 			return val;
+		}
+		
+		public double getLength() {
+			return geth();
 		}
 		
 		public double getHeight() {

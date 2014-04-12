@@ -198,7 +198,7 @@ public class XYPlot {
 									for( Tegeval tv2 : tv2list ) {
 										tv2.setSelected( rs );
 										int count2 = 0;
-										int k = spec2Conts.indexOf( tv2.contshort );
+										int k = spec2Conts.indexOf( tv2.getContshort() );
 										if( k != -1 ) {
 											for( int i = 0; i < k; i++ ) {
 												Contig ct2 = spec2Conts.get( i );
@@ -262,7 +262,7 @@ public class XYPlot {
 									for( Tegeval tv2 : tv2list ) {
 										tv2.setSelected( rs );
 										int count2 = 0;
-										int k = spec2Conts.indexOf( tv2.contshort );
+										int k = spec2Conts.indexOf( tv2.getContshort() );
 										if( k != -1 ) {
 											for( int i = 0; i < k; i++ ) {
 												Contig ct2 = spec2Conts.get( i );
