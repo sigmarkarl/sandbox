@@ -1,9 +1,13 @@
 package org.simmi;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Set;
 
 public class Gene {
 	public Gene(GeneGroup gg, String id, String name, String origin) {
+		//super();
 		this.name = name;
 		this.species = origin;
 		this.gg = gg;
@@ -17,6 +21,28 @@ public class Gene {
 	public Gene( GeneGroup gg, String id, String name, String origin, String tag ) {
 		this( gg, id, name, origin );
 		this.tag = tag;
+	}
+	
+	public void getFasta( Writer w ) throws IOException {
+		StringBuilder ps = tegeval.getProteinSequence();
+		w.append(">" + this.tegeval.name + "\n"); //this.getId() + " " + this.getName() + (this.idstr != null ? " (" + this.idstr + ") [" : " [") + this.tegeval.name + "]" +" # " + this.tegeval.start + " # " + this.tegeval.stop + " # " + this.tegeval.ori + " #" + "\n");
+		for (int i = 0; i < ps.length(); i += 70) {
+			w.append( ps.substring(i, Math.min(i + 70, ps.length())) + "\n");
+		}
+	}
+	
+	public String getFasta() {
+		StringWriter sb = new StringWriter();
+		try {
+			getFasta( sb );
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return sb.toString();
+	}
+	
+	public Contig getContig() {
+		return tegeval.getContshort();
 	}
 	
 	public void setIdStr( String idstr ) {
@@ -78,6 +104,10 @@ public class Gene {
 	
 	public String getName() {
 		return name;
+	}
+	
+	public String getId() {
+		return id;
 	}
 	
 	public double getGCPerc() {

@@ -1,13 +1,19 @@
 package org.simmi;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -15,21 +21,26 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class SyntGrad {
+	JCheckBox	contcheck = new JCheckBox("Show contig lines");
 	public void syntGrad( final GeneSet geneset ) {
 		final JTable 				table = geneset.getGeneTable();
 		//final Collection<String> 	specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
@@ -94,8 +105,9 @@ public class SyntGrad {
 		
 		JOptionPane.showMessageDialog(geneset, cmp);
 		
-		final String 		spec1 = species.get( table1.convertRowIndexToModel( table1.getSelectedRow() )); //(String)table1.getValueAt( table1.getSelectedRow(), 0 );
-		final List<Contig>	contigs1 = geneset.speccontigMap.get( spec1 );
+		int sr = table1.getSelectedRow();
+		final String 		spec1 = sr != -1 ? species.get( table1.convertRowIndexToModel( sr )) : null; //(String)table1.getValueAt( table1.getSelectedRow(), 0 );
+		final List<Contig>	contigs1 = spec1 != null ? geneset.speccontigMap.get( spec1 ) : null;
 		final List<String>	spec2s = new ArrayList<String>();
 		int[] rr = table2.getSelectedRows();
 		for( int r : rr ) {
@@ -107,6 +119,7 @@ public class SyntGrad {
 		final BufferedImage bi = new BufferedImage( 2048, 2048, BufferedImage.TYPE_INT_ARGB );
 		
 		final Graphics2D g2 = bi.createGraphics();
+		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		
 		drawImage( geneset, g2, spec1, contigs1, spec2s );
@@ -189,13 +202,198 @@ public class SyntGrad {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ImageIO.write(bi, "png", new File("/tmp/out.png"));
+					ImageIO.write(bi, "png", new File("c:/out.png"));
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
 			}
 		});
 		c.setComponentPopupMenu( popup );
+		
+		c.addMouseListener( new MouseListener() {
+			Point p;
+			boolean doubleclicked = false;
+			
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				Container comp = geneset;
+				Point np = e.getPoint();
+				if( p != null ) {
+					doubleclicked = doubleclicked || e.getClickCount() == 2;
+					
+					double ndx = np.x-bi.getWidth()/2;
+					double ndy = np.y-bi.getHeight()/2;
+					
+					double dx = p.x-bi.getWidth()/2;
+					double dy = p.y-bi.getHeight()/2;
+					
+					if( doubleclicked ) {						
+						/*double t = Math.atan2( dy, dx );
+						double rad = Math.sqrt( dx*dx + dy*dy );
+						
+						double nt = Math.atan2( ndy, ndx );
+						double nrad = Math.sqrt( ndx*ndx + ndy*ndy );
+						
+						if( t < 0 ) t += Math.PI*2.0;
+						int mloc = (int)(t*size/(2*Math.PI));
+						
+						if( nt < 0 ) nt += Math.PI*2.0;
+						int nloc = (int)(nt*size/(2*Math.PI));
+						
+						int ind = (int)((rad-250.0)/15.0);
+						if( ind >= 0 && ind < spec2s.size() ) {
+							String spec = spec2s.get( ind );
+							
+							int i = 0;
+							int loc = 0;
+							for( i = 0; i < contigs.size(); i++ ) {
+								Contig c = contigs.get(i);
+								if( loc + c.getGeneCount() > mloc ) {
+									break;
+								} else loc += c.getGeneCount();
+							}
+							Contig c = contigs.get(i);
+							
+							if( mloc-loc < c.getGeneCount() ) {
+								//loc += c.getGeneCount();
+								//c = contigs.get( i%contigs.size() );
+								Tegeval tv = c.tlist.get(mloc-loc);
+								Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+								
+								if( ti != null && ti.best != null ) {
+									Contig ct1 = ti.best.getContshort();
+									
+									tv = c.tlist.get(nloc-loc);
+									ti = tv.getGene().getGeneGroup().getGenes(spec);
+									Contig ct2 = ti.best.getContshort();
+									
+									if( ct1 == ct2 ) ct1.setReverse( !ct1.isReverse() );
+									else {
+										List<Contig> conts2 = geneset.speccontigMap.get(spec);
+										int k2 = conts2.indexOf( ct2 );
+										conts2.remove( ct1 );
+										conts2.add(k2, ct1);
+									}
+								}
+							}
+						}
+						
+						//repaintCompare( g2, bi, spec2s, specombo, geneset, blosumap, cmp );*/
+					} else {						
+						double t1 = Math.atan2( dy, dx );
+						double t2 = Math.atan2( ndy, ndx );
+						
+						double rad = Math.sqrt( dx*dx + dy*dy );
+						
+						int ind = (int)((rad-250.0)/15.0);
+						String spec = ind >= 0 && ind < spec2s.size() ? spec2s.get( ind ) : null;
+						
+						if( t1 < 0 ) t1 += Math.PI*2.0;
+						if( t2 < 0 ) t2 += Math.PI*2.0;
+						
+						if( spec != null ) {
+							List<Contig> contigs = geneset.speccontigMap.get( spec );
+							int total = 0;
+							for( Contig c : contigs ) {
+								total += c.getGeneCount();
+							}
+							
+							int loc1 = (int)(t1*total/(2*Math.PI));
+							int loc2 = (int)(t2*total/(2*Math.PI));
+							
+							int minloc = Math.min( loc1, loc2 );
+							int maxloc = Math.max( loc1, loc2 );
+							
+							int i = 0;
+							int loc = 0;
+							Contig c = null;
+							if( contigs != null ) {
+								for( i = 0; i < contigs.size(); i++ ) {
+									c = contigs.get(i);
+									if( loc + c.getGeneCount() > minloc ) {
+										break;
+									} else loc += c.getGeneCount();
+								}
+								//c = contigs.get(i);
+							}
+							
+							if( e.isAltDown() ) {
+								/*Tegeval tv1 = c.tlist.get(minloc-loc);
+								Tegeval tv2 = c.tlist.get(maxloc-loc);
+								
+								int from = Math.min( tv1.start, tv2.start );
+								int to = Math.max( tv1.stop, tv2.stop );
+								String seqstr = c.getSubstring( from, to, 1 );
+							
+								Sequence seq = new Sequence("phage_"+from+"_"+to, null);
+								seq.append( seqstr );
+								geneset.showSomeSequences( geneset, Arrays.asList( new Sequence[] {seq} ) );*/
+							} else {
+								geneset.table.clearSelection();
+								if( c == null ) {
+									for( int k = minloc; k < maxloc; k++ ) {
+										geneset.table.addRowSelectionInterval(k, k);
+									}
+								} else for( int k = minloc; k < maxloc; k++ ) {
+									if( k-loc >= c.getGeneCount() ) {
+										loc += c.getGeneCount();
+										i++;
+										c = contigs.get( i%contigs.size() );
+									}
+									Tegeval tv = c.isReverse() ? c.tlist.get( c.tlist.size()-1-(k-loc) ) : c.tlist.get(k-loc);
+									if( e.isShiftDown() ) {
+										Set<GeneGroup>	gset = new HashSet<GeneGroup>();
+										gset.add( tv.getGene().getGeneGroup() );
+										try {
+											new Neighbour().neighbourMynd( geneset, comp, geneset.genelist, gset, geneset.contigmap );
+										} catch (IOException e1) {
+											e1.printStackTrace();
+										}
+										break;
+									} else {
+										int r;
+										if( geneset.table.getModel() == geneset.groupModel ) {
+											int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
+											r = geneset.table.convertRowIndexToView(u);
+											geneset.table.addRowSelectionInterval( r, r );
+										} else {
+											Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+											int selr = -1;
+											for( Tegeval te : ti.tset ) {
+												int u = geneset.genelist.indexOf( te.getGene() );
+												r = geneset.table.convertRowIndexToView(u);
+												if( selr == -1 ) selr = r;
+												geneset.table.addRowSelectionInterval( r, r );
+											}
+											Rectangle rect = geneset.table.getCellRect(selr, 0, true);
+											geneset.table.scrollRectToVisible(rect);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				doubleclicked = false;
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+				p = e.getPoint();
+				doubleclicked = e.getClickCount() == 2; 
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				p = e.getPoint();
+			}
+		});
 		
 		Dimension dim = new Dimension( 2048, 2048 );
 		c.setPreferredSize( dim );
@@ -207,7 +405,11 @@ public class SyntGrad {
 		panel.add( tb, BorderLayout.NORTH );
 		panel.add( scrollpane );*/
 		
+		JToolBar toolbar = new JToolBar();
+		toolbar.add( contcheck );
+		
 		JFrame frame = new JFrame();
+		frame.add( toolbar, BorderLayout.NORTH );
 		frame.add( scrollpane );
 		frame.setSize( dim );
 		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
@@ -215,14 +417,18 @@ public class SyntGrad {
 	}
 	
 	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s ) {
+		int w = 2048;
+		int h = 2048;
+		
+		int w2 = w/2;
+		int h2 = h/2;
+		
 		int rad = 250;
 		g2.setColor( Color.white );
-		g2.fillRect( 0, 0, 2048, 2048 );
+		g2.fillRect( 0, 0, w, h );
 		for( String spec : spec2s ) {
 			List<Contig> scontigs = geneset.speccontigMap.get( spec );
-			if( scontigs == null ) {
-				System.err.println("er");
-			}
+			
 			int total = 0;
 			for( Contig c : scontigs ) {
 				total += c.getGeneCount();
@@ -232,44 +438,128 @@ public class SyntGrad {
 			for( Contig c : scontigs ) {
 				Tegeval tv = c.getFirst();
 				while( tv != null ) {
-					GeneGroup gg = tv.getGene() != null ? tv.getGene().getGeneGroup() : null;
-					if( gg != null ) {
-						double r = 2.0*Math.PI*(double)tvn/(double)total;
-						double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
-						if( ratio >= 0.0 ) {
-							g2.translate(1024, 1024);
-							g2.rotate( r );
-							g2.setColor( invertedGradientColor( ratio ) );						
-							g2.drawLine(rad, 0, rad+24, 0);
-							g2.rotate( -r );
-							g2.translate(-1024, -1024);
+					Gene gene = tv.getGene();
+					GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
+					double r = 2.0*Math.PI*(double)tvn/(double)total;
+					
+					boolean visible = false;
+					if( spec1 != null ) {
+						if( gg != null ) {
+							visible = true;
+							double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
+							if( ratio >= 0.0 ) {
+								g2.setColor( invertedGradientColor( ratio ) );						
+							}
+						} else g2.setColor( Color.white );
+					} else {
+						boolean phage = gene.isPhage();
+						boolean plasmid = tv.getContshort().isPlasmid();
+						
+						int count = 1;
+						if( gg != null ) {
+							Teginfo ti = gg.getGenes( gene.getSpecies() );
+							count = ti.tset.size();
+							
+							int i = geneset.allgenegroups.indexOf(gg);
+							if( i != -1 ) {
+								int rv = geneset.table.convertRowIndexToView(i);
+								if( rv != -1 ) {
+									visible = geneset.table.isRowSelected( rv );
+								}
+							}
 						}
+						
+						Color color = Color.white;
+						if( phage && plasmid ) {
+							if( count > 1 ) color = darkmag;
+							else color = Color.magenta;
+						} else if( phage ) {
+							if( count > 1 ) color = darkblue;
+							else color = Color.blue;
+						} else if( plasmid ) {
+							if( count > 1 ) color = darkred;
+							else color = Color.red;
+						} else {
+							if( count > 1 ) color = Color.gray;
+							else color = Color.lightGray;
+						}
+						g2.setColor( color );
 					}
+					
+					if( visible ) {
+						g2.translate(w2, h2);
+						g2.rotate( r );
+						g2.fillRect(rad, -1, 15, 3);
+						//g2.drawLine(rad, 0, rad+15, 0);
+						g2.rotate( -r );
+						g2.translate(-w2, -h2);
+					}
+					
 					tvn++;
 					tv = c.getNext( tv );
 				}
-				double r = 2.0*Math.PI*(double)tvn/(double)total;
-				g2.translate(1024, 1024);
-				g2.rotate( r );
-				g2.setColor( Color.black );
-				g2.drawLine(rad, 0, rad+100, 0);
-				g2.rotate( -r );
-				g2.translate(-1024, -1024);
+				
+				if( contcheck.isSelected() ) {
+					double r = 2.0*Math.PI*(double)tvn/(double)total;
+					g2.translate(w2, h2);
+					g2.rotate( r );
+					g2.setColor( Color.black );
+					g2.drawLine(rad, 0, rad+100, 0);
+					g2.rotate( -r );
+					g2.translate(-w2, -h2);
+				}
 			}
 			
-			rad += 24;
+			rad += 15;
 		}
 		
 		g2.setColor( Color.black );
-		g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
-		String[] specsplit = spec1.split("_");
+		Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont( spec2s.size() > 10 ? 11.0f : 21.0f );
+		int val = spec2s.size() > 10 ? 12 : 23;
+		g2.setFont( oldfont );
 		int k = 0;
-		for( String spec : specsplit ) {
-			int strw = g2.getFontMetrics().stringWidth( spec );
-			g2.drawString( spec, 1024-strw/2, 1024 - specsplit.length*32/2 + 32 + k*32 );
+		for( String spec : spec2s ) {
+			if( spec.equals(spec1) ) {
+				g2.setFont( oldfont.deriveFont(Font.BOLD | Font.ITALIC) );
+			} else {
+				g2.setFont( oldfont );
+			}
+			
+			String specstr = geneset.nameFix( spec );
+			/*if( spec.contains("hermus") ) {
+				int u = spec.indexOf("_uid");
+				if( u == -1 ) u = spec.length();
+				specstr = spec.substring(0, u);
+			} else {
+				Matcher m = Pattern.compile("\\d").matcher(spec); 
+				int firstDigitLocation = m.find() ? m.start() : 0;
+				if( firstDigitLocation == 0 ) specstr = "Thermus_"+spec;
+				else specstr = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
+			}*/
+			
+			if( specstr.length() > 30 ) specstr = specstr.substring(0, specstr.lastIndexOf('_'));
+			
+			int strw = g2.getFontMetrics().stringWidth( specstr );
+			g2.drawString( specstr, (w-strw)/2, h/2 - spec2s.size()*val/2 + val + k*val );
 			k++;
 		}
+		
+		/*if( spec1 != null ) {
+			g2.setColor( Color.black );
+			g2.setFont( g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f) );
+			String[] specsplit = spec1.split("_");
+			int k = 0;
+			for( String spec : specsplit ) {
+				int strw = g2.getFontMetrics().stringWidth( spec );
+				g2.drawString( spec, 1024-strw/2, 1024 - specsplit.length*32/2 + 32 + k*32 );
+				k++;
+			}
+		}*/
 	}
+	final Color darkgreen = new Color( 0, 128, 0 );
+	final Color darkred = new Color( 128, 0, 0 );
+	final Color darkblue = new Color( 0, 0, 128 );
+	final Color darkmag = new Color( 128, 0, 128 );
 	
 	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
 		int total2 = 0;
@@ -277,7 +567,7 @@ public class SyntGrad {
 			total2 += ctg2.getGeneCount();
 		}
 		double ratio2 = -1.0;
-		Teginfo gene2s = gg.getGenes( spec2 );
+		Teginfo gene2s = gg != null ? gg.getGenes( spec2 ) : null;
 		if( gene2s != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
