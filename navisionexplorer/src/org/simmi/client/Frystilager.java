@@ -12,6 +12,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -138,6 +139,11 @@ public class Frystilager implements EntryPoint {
 		subvp.setSize( "100%", "100%" );
 		
 		subvp.add( new Label("Frystilager Matís") );
+		
+		HTML html = new HTML("Þessi síða virkar einungis í nýjum vöfrum (Chrome, Firefox og Internet Explorer 11)");
+		subvp.add( html );
+		html = new HTML( "Halið niður forritinu til að skrá færslur: <a href='https://www.dropbox.com/s/ttf09z6yu594wjm/frystilager.jar'>frystilager.jar</a>" );
+		subvp.add( html );
 		
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {		    	  

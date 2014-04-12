@@ -19,9 +19,9 @@ public class CazyParse {
 		BufferedReader br = new BufferedReader( fr );
 		String line = br.readLine();
 		while( line != null ) {
-			if( line.startsWith("Query=") ) {
+			if( line.startsWith("Query=") || line.startsWith("Query:") ) {
 				String next = br.readLine();
-				while( !next.startsWith("Length") ) {
+				while( next != null && !next.startsWith("Length") && !next.startsWith("Description:") ) {
 					line += next;
 					next = br.readLine();
 				}
@@ -29,7 +29,11 @@ public class CazyParse {
 				int i = line.lastIndexOf('[');
 				if( i != -1 ) {
 					String cont = line.substring( i+1, line.indexOf(']',i+1) );
-					spec = cont.substring(0, cont.indexOf('_', cont.indexOf('_')+1));
+					if( cont.contains("=") ) {
+						spec = "YL1";
+					} else {
+						spec = cont.substring(0, cont.indexOf('_', cont.indexOf('_')+1));
+					}
 				} else spec = f.getName();
 			} else if( line.startsWith(">") ) {
 				int i = line.indexOf('|');
@@ -55,6 +59,47 @@ public class CazyParse {
 							//break;
 						}
 					}
+				} else {
+					String id = line.substring( 2 ).trim();
+					if( cazymap.size() == 0 ) {
+						int idx = id.indexOf('.');
+						if( idx == -1 ) idx = id.length();
+						id = id.substring(0,idx);
+						allcazy.add( id );
+						
+						Map<String,Integer>	ctmap;
+						if( specmap.containsKey( spec ) ) {
+							ctmap = specmap.get( spec );
+						} else {
+							ctmap = new HashMap<String,Integer>();
+							specmap.put(spec, ctmap);
+						}
+						
+						if( ctmap.containsKey(id) ) {
+							ctmap.put(id, ctmap.get(id)+1 );
+						} else ctmap.put(id, 1);
+					} else {
+						for( String key : cazymap.keySet() ) {
+							Set<String> set = cazymap.get(key);
+							if( set.contains(id) ) {
+								allcazy.add( key );
+								
+								Map<String,Integer>	ctmap;
+								if( specmap.containsKey( spec ) ) {
+									ctmap = specmap.get( spec );
+								} else {
+									ctmap = new HashMap<String,Integer>();
+									specmap.put(spec, ctmap);
+								}
+								
+								if( ctmap.containsKey(key) ) {
+									ctmap.put(key, ctmap.get(key)+1 );
+								} else ctmap.put(key, 1);
+								
+								//break;
+							}
+						}
+					}
 				}
 			}
 			
@@ -74,7 +119,7 @@ public class CazyParse {
 		
 		Map<String,Set<String>>	cazymap = new HashMap<String,Set<String>>();
 		try {
-			for( File tf : ff ) {
+			if( ff != null ) for( File tf : ff ) {
 				String fname = tf.getName();
 				String id = fname.substring( 0, fname.length()-4 );
 				Set<String> cazyset = new HashSet<String>();
@@ -94,12 +139,12 @@ public class CazyParse {
 			Set<String>						allcazy = new TreeSet<String>();
 			Map<String,Map<String,Integer>>	specmap = new HashMap<String,Map<String,Integer>>();	
 			
-			f = new File("/home/sigmar/meta/metacazy14.blastout");
+			f = new File("/Users/sigmar/cazy");
 			cazyParse( f, cazymap, allcazy, specmap );
-			f = new File("/home/sigmar/meta/metacazy567.blastout");
-			cazyParse( f, cazymap, allcazy, specmap );
+			//f = new File("/home/sigmar/meta/metacazy567.blastout");
+			//cazyParse( f, cazymap, allcazy, specmap );
 			
-			FileWriter fw = new FileWriter("/home/sigmar/meta/cazy.res");
+			FileWriter fw = new FileWriter("/Users/sigmar/cazy.res");
 			for( String cazyid : allcazy ) {
 				fw.write("\t"+cazyid);
 			}
