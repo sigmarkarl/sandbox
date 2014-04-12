@@ -35,6 +35,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -44,9 +45,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -118,6 +121,11 @@ public class SerifyApplet extends JApplet {
 	Serifier			serifier;
 	String 				globaluser = null;
 	NativeRun			nrun = new NativeRun();
+	
+	public SerifyApplet( FileSystem fs ) {
+		this();
+		this.fs = fs;
+	}
 	
 	public SerifyApplet() {
 		super();
@@ -352,6 +360,11 @@ public class SerifyApplet extends JApplet {
 				rselset.add( seqs );
 				if( seqs.getKey() != null ) keys.add( seqs.getKey() );
 				
+				try {
+					Files.delete( seqs.getPath() );
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				//sequences.remove( ind );
 				//table.tableChanged( new TableModelEvent(table.getModel()) );
 			}
@@ -483,11 +496,12 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
-	public static void blastRun( NativeRun nrun, String dbPath, String dbType, String extrapar, JTable table ) throws IOException {
+	public static void blastRun( NativeRun nrun, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
 		String userhome = System.getProperty("user.home");
-		File dir = new File( userhome );
+		Path selectedpath = null;
+		if( homedir ) selectedpath = new File( userhome ).toPath();
 		
-		System.out.println("run blast in applet");
+		/*System.out.println("run blast in applet");
 		File blastn;
 		File blastp;
 		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
@@ -499,30 +513,47 @@ public class SerifyApplet extends JApplet {
 			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
 			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
 		}
-		if( blastx.exists() ) {
-			String dbPathFixed = nrun.fixPath( dbPath );			
+		if( blastx.exists() ) {*/
+		//String dbPathFixed = nrun.fixPath( dbPath );	
+		else {
 			JFileChooser fc = new JFileChooser();
 			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-				File selectedfile = fc.getSelectedFile();
-				if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+				selectedpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) selectedpath = selectedpath.getParent();
+			}
+		}
+		
+			List<Object>	lscmd = new ArrayList<Object>();
+			//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+			//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
+			//if( makeblastdb.exists() ) {
+				//nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), null, null );
 			
-				List<List<String>>	lscmd = new ArrayList<List<String>>();
-				File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
-				if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
-				if( makeblastdb.exists() ) {
-					String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", dbPathFixed, "-dbtype", dbType };
-					//nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), null, null );
-					lscmd.add( Arrays.asList( cmds ) );
-				}
-				
+			//Path dbPathFixed = dbPath.getParent().resolve(dbPath.getFileName().toString()+".blastout");
+			
+			JFileChooser fc = new JFileChooser();
+			Path blastpath = null;
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showOpenDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				blastpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) blastpath = blastpath.getParent();
+			}
+			
+			
+			String[] cmds = new String[] { "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			lscmd.add( new Path[] { dbPath, null, selectedpath } );
+			lscmd.add( Arrays.asList( cmds ) );
+			//}
+			
+			if( table != null ) {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
-					String path = (String)table.getValueAt( r, 3 );
+					Path	path = (Path)table.getValueAt( r, 3 );
 					String type = (String)table.getValueAt( r, 2 );
 					
 					//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
-					File blastFile = dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+					String blastFile = dbType.equals("prot") ? type.equals("prot") ? "blastp" : "blastx" : "blastn";
 					
 					/*URL url = new URL( path );
 					String file = url.getFile();
@@ -545,54 +576,82 @@ public class SerifyApplet extends JApplet {
 					is.close();
 					fos.close();*/
 			
-					Path p = Paths.get( URI.create(path) );
+					//Path p = Paths.get( URI.create(path) );
 					
-					String queryPathFixed = nrun.fixPath( p.toAbsolutePath().toString() ).trim();
-					final String outPathFixed = nrun.fixPath( new File( selectedfile, p.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
+					//String queryPathFixed = nrun.fixPath( path.toAbsolutePath().toString() ).trim();
+					
+					//InputStream input = Files.newInputStream(path, StandardOpenOption.READ);
+					
+					//Path p = selectedfile.toPath();
+					Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
+					//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
+					//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
 					
 					int procs = Runtime.getRuntime().availableProcessors();
 					
 					List<String>	lcmd = new ArrayList<String>();
-					String[] cmds = { blastFile.getAbsolutePath(), "-query", queryPathFixed, "-db", dbPathFixed, "-num_threads", Integer.toString(procs) };
+					String[] bcmds = { blastpath.resolve( blastFile ).toString(), "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
 					String[] exts = extrapar.trim().split("[\t ]+");
 					
-					String[] nxst = { "-out", outPathFixed };
-					lcmd.addAll( Arrays.asList(cmds) );
+					//String[] nxst = { "-out", outPathFixed };
+					lcmd.addAll( Arrays.asList(bcmds) );
 					if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
-					lcmd.addAll( Arrays.asList(nxst) );
+					//lcmd.addAll( Arrays.asList(nxst) );
 					
+					lscmd.add( new Path[] {path, res, selectedpath} );
 					lscmd.add( lcmd );
 				}
+			} else {
+				//Path res = Files.createTempFile("all", "blastout"); 
+				Path res = selectedpath.resolve( "tmp.blastout" ); //path.getFileName().toString()+".blastout");
 				
-				final String start = new Date( System.currentTimeMillis() ).toString();								
-				final Object[] cont = new Object[3];
-				Runnable run = new Runnable() {
-					public void run() {										
-						//infile.delete();
-						//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
-						if( cont[0] != null ) {
-							// ok JSObject js = JSObject.getWindow( SerifyApplet.this );
-							//  String machineinfo = getMachine();
-							//  String[] split = machineinfo.split("\t");
-							//  js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
-						}
-					}
-				};
-				/*for( String cmd : lcmd ) {
-					System.err.println(cmd);
-				}
-				Thread.sleep(10000);*/
-				nrun.runProcessBuilder( "Performing blast", lscmd, run, cont );
+				//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
+				//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
+				
+				int procs = Runtime.getRuntime().availableProcessors();
+				
+				List<String>	lcmd = new ArrayList<String>();
+				String[] bcmds = { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				String[] exts = extrapar.trim().split("[\t ]+");
+				
+				//String[] nxst = { "-out", outPathFixed };
+				lcmd.addAll( Arrays.asList(bcmds) );
+				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+				//lcmd.addAll( Arrays.asList(nxst) );
+				
+				lscmd.add( new Path[] {dbPath, res, selectedpath} );
+				lscmd.add( lcmd );
 			}
-		} else System.err.println( "no blast installed" );
+			
+			final String start = new Date( System.currentTimeMillis() ).toString();								
+			final Object[] cont = new Object[3];
+			Runnable run = new Runnable() {
+				public void run() {										
+					//infile.delete();
+					//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
+					if( cont[0] != null ) {
+						// ok JSObject js = JSObject.getWindow( SerifyApplet.this );
+						//  String machineinfo = getMachine();
+						//  String[] split = machineinfo.split("\t");
+						//  js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
+					}
+				}
+			};
+			/*for( String cmd : lcmd ) {
+				System.err.println(cmd);
+			}
+			Thread.sleep(10000);*/
+			nrun.runProcessBuilder( "Performing blast", lscmd, run, cont );
+		//}
+		//} else System.err.println( "no blast installed" );
 	}
 	
-	public void runBlastInApplet( final String extrapar, final String dbPath, final String dbType ) {
+	public void runBlastInApplet( final String extrapar, final Path dbPath, final String dbType ) {
 		AccessController.doPrivileged( new PrivilegedAction<Object>() {
 			@Override
 			public Object run() {
 				try {
-					blastRun( nrun, dbPath, dbType, extrapar, table );
+					blastRun( nrun, dbPath, dbType, extrapar, table, false );
 				} catch( Exception e ) {
 					e.printStackTrace();
 				}
@@ -603,7 +662,7 @@ public class SerifyApplet extends JApplet {
 		});
 	}
 	
-	public void blastClusters( final InputStream is, final OutputStream os ) {
+	public void blastClusters( final BufferedReader is, final BufferedWriter os ) {
 		final JDialog		dialog = new JDialog();
 		final JProgressBar	pbar = new JProgressBar();
 		Runnable run = new Runnable() {
@@ -637,7 +696,11 @@ public class SerifyApplet extends JApplet {
 				dialog.setVisible( true );
 				
 				if( !interrupted ) {
-					serifier.makeBlastCluster( is, os, 0 );
+					try {
+						serifier.makeBlastCluster( is, os, 0 );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 				}
 			}
 		};
@@ -1644,6 +1707,87 @@ public class SerifyApplet extends JApplet {
 		frame.setVisible(true);
 	}
 	
+	FileSystem fs = null;
+	/*
+	ACDK	Clostridium_sp-7-2-43FAA
+	AWST	Clostridium_sp-KLE-1755
+	AVKD	Clostridium_difficile-DA00256
+	ACIO	Clostridium_hathewayi-DSM-13479
+	
+	-evalue 0.00001 -num_alignments 1 -num_descriptions 1
+	*/
+	
+	public void doProdigal( Path dir, Container c, final Path fs, List<Path> urls ) throws IOException {
+		JFileChooser fc = new JFileChooser();
+		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
+			Path selectedfile = fc.getSelectedFile().toPath();
+			if( !Files.isDirectory(selectedfile) ) selectedfile = selectedfile.getParent();
+		
+			for( Path path : urls ) {
+				//URL url = path.toUri().toURL();
+				
+				String file = path.getFileName().toString();
+				String[] split = file.split("/");
+				String fname = split[ split.length-1 ];
+				split = fname.split("\\.");
+				final String title = split[0];
+				Path infile = dir.resolve( fname ); //new File( dir, fname );
+				if( Files.exists(infile) ) {
+					infile = dir.resolve( "tmp_"+fname );
+				}
+				
+				//FileOutputStream fos = new FileOutputStream( infile );
+				Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );
+				/*InputStream is = url.openStream();
+				byte[] bb = new byte[100000];
+				int r = is.read(bb);
+				while( r > 0 ) {
+					fos.write(bb, 0, r);
+					r = is.read(bb);
+				}
+				is.close();
+				fos.close();*/
+				
+				final Path pathD = selectedfile.resolve( title+".prodigal.fna" );
+				final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
+				final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
+				final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
+				String[] cmds = new String[] { "prodigal", "-i", NativeRun.fixPath( infile.toAbsolutePath().toString() ), "-a", outPathA, "-d", outPathD };
+				
+				final Object[] cont = new Object[3];
+				Runnable run = new Runnable() {
+					public void run() {
+						if( cont[0] != null ) {
+							System.err.println( cont[0] );
+							
+							try {
+								Files.copy(pathA, fs.resolve( title+".prodigal.fsa") );
+								addSequences( title+".aa", pathA, null );
+							} catch (IOException | URISyntaxException e) {
+								e.printStackTrace();
+							}
+							/*try {
+								addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
+								addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
+							} catch (URISyntaxException e) {
+								e.printStackTrace();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}*/
+						}
+					}
+				};
+				nrun.runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
+					//JSObject js = JSObject.getWindow( SerifyApplet.this );
+					//js = (JSObject)js.getMember("document");
+					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+			}
+		}
+		
+		//infile.delete();
+	}
+	
 	public void init( final Container c ) {
 		nrun.cnt = c;
 		globaluser = System.getProperty("user.name");
@@ -1766,12 +1910,21 @@ public class SerifyApplet extends JApplet {
 		popup.add( new AbstractAction("NCBI Fetch") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser	filechooser = new JFileChooser();
-				filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-					File cd = filechooser.getSelectedFile();
+				final Path cd;
+				if( fs == null ) {
+					JFileChooser	filechooser = new JFileChooser();
+					filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+						cd = filechooser.getSelectedFile().toPath();
+					} else cd = null;
+				} else {
+					cd = fs.getPath("/");
+				}
+				
+				String userhome = System.getProperty("user.home");	
+				final Path uhome = Paths.get(userhome);
 					
-					final JCheckBox	whole = new JCheckBox("whole");
+					/*final JCheckBox	whole = new JCheckBox("whole");
 					whole.setSelected( true );
 					final JCheckBox	draft = new JCheckBox("draft");
 					draft.setSelected( true );
@@ -1788,364 +1941,426 @@ public class SerifyApplet extends JApplet {
 					String[] split = searchstr.split("\n");
 					for( String strsearch : split ) {
 						String[] subsplit = strsearch.split("\t");
+						
 						if( subsplit.length > 1 ) searchmap.put( subsplit[0], subsplit[1] );
 						else searchmap.put( strsearch, null );
 					}
 					
 					final String basesave =  cd.getAbsolutePath();
-					final Path uripath = cd.toPath();
+					final Path uripath = cd.toPath();*/
 					//final String replace = subsplit.length > 1 && subsplit[1].length() > 0 ? subsplit[1] : null;
 					
-					final JDialog		dialog = new JDialog();
-					final JProgressBar	pbar = new JProgressBar();
-					
-					Runnable run = new Runnable() {
-						boolean interrupted = false;
-						
-						public void run() {
-							dialog.addWindowListener( new WindowListener() {
-								@Override
-								public void windowOpened(WindowEvent e) {}
-								
-								@Override
-								public void windowIconified(WindowEvent e) {}
-								
-								@Override
-								public void windowDeiconified(WindowEvent e) {}
-								
-								@Override
-								public void windowDeactivated(WindowEvent e) {}
-								
-								@Override
-								public void windowClosing(WindowEvent e) {}
-								
-								@Override
-								public void windowClosed(WindowEvent e) {
-									//interrupted = true;
-								}
-								
-								@Override
-								public void windowActivated(WindowEvent e) {}
-							});
-							dialog.setVisible( true );
-							
-							//String ftpsite = "ftp.rhnet.is";
-							String ftpsite = "ftp.ncbi.nlm.nih.gov";
-							//FTPClientConfig ftpcc = new FTPClientConfig();
-							FTPClient ftp = new FTPClient();
-							try {
-								ftp.connect( ftpsite );
-								//ftp.enterLocalPassiveMode();
-								ftp.login("anonymous", "");
-								
-								for( String search : searchmap.keySet() ) {
-									String replace = searchmap.get(search);
-									replace = replace == null || replace.length() == 0 ? null : replace;
-									if( search.length() == 4 ) {
-										String subdir = "/genbank/wgs/";
-										ftp.cwd( subdir );
-										String fwname = search+".gbk";
-										
-										String filename = "wgs."+search+".1.gbff.gz";
-										/*File gfile = new File(basesave, fwname+".gz");
-										FileOutputStream fos = new FileOutputStream( gfile );
-										ftp.retrieveFile("wgs."+search+".1.fsa_nt.gz",fos);
-										fos.close();*/
-										
-										File thefile = new File( basesave, fwname );
-										if( !thefile.exists() ) {
-											FileWriter fw = new FileWriter( thefile );
-											URL url = new URL( "ftp://"+ftpsite+subdir+filename );
-											InputStream is = new GZIPInputStream( url.openStream() );//ftp.retrieveFileStream( newfname );
-											BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-											String line = br.readLine();
-											while( line != null ) {
-												fw.write( line + "\n" );
-												line = br.readLine();
-											}
-											br.close();
-											is.close();
-											//ftp.completePendingCommand();
-											fw.close();
-										}
-										
-										try {
-											Map<String,Path>	urimap = new HashMap<String,Path>();
-											urimap.put( fwname.substring(0, fwname.length()-4), thefile.toPath() );
-											addSequencesPath( fwname, urimap, uripath, replace );
-										} catch (URISyntaxException e) {
-											e.printStackTrace();
-										}
-										//FTPFile[] files = ftp.listFiles();
-									} else {									
-										if( whole.isSelected() ) {
-											String subdir = "/genomes/Bacteria/";
-											ftp.cwd( subdir );
-											FTPFile[] files = ftp.listFiles();
-											for( FTPFile ftpfile : files ) {
-												if( interrupted ) break;
-												if( ftpfile.isDirectory() ) {
-													String fname = ftpfile.getName();
-													if( fname.startsWith( search ) ) {
-														if( !ftp.isConnected() ) {
-															ftp.connect("ftp.ncbi.nih.gov");
-															ftp.login("anonymous", "");
-														}
-														ftp.cwd( subdir+fname );
-														FTPFile[] newfiles = ftp.listFiles();
-														//int cnt = 1;
-														
-														File thefile = new File( basesave, fname+".gbk" );
-														if( !thefile.exists() ) {
-															FileWriter fw = new FileWriter( thefile );
-															
-															for( FTPFile newftpfile : newfiles ) {
-																if( interrupted ) break;
-																
-																String newfname = newftpfile.getName();
-																if( newfname.endsWith(".gbk") ) {
-																	//if( newftpfile != newfiles[0] ) fw.write("//\n");
-																	//long size = newftpfile.getSize();
-																	//String basename = fname;
-																	//if( size > 3000000 ) basename = fname;//+".gbk";
-																	//else basename = fname+"_p"+(cnt++);//+".gbk";
-																	
-																	//String fwname = basename+"_"+newfname;
-																	//if( size > 1500000 ) fwname = fname+".fna";
-																	//else fwname = fname+"_p"+(cnt++)+".fna";
-																	
-																	URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-																	InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
-																	BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-																	String line = br.readLine();
-																	while( line != null ) {
-																		fw.write( line + "\n" );
-																		line = br.readLine();
-																	}
-																	is.close();
-																	//ftp.completePendingCommand();
-																	//System.err.println("done " + fname);
-																}
-															}
-															fw.close();
-														}
-														
-														try {
-															Map<String,Path>	urimap = new HashMap<String,Path>();
-															urimap.put( fname, thefile.toPath() );
-															addSequencesPath( fname, urimap, thefile.toPath(), replace );
-														} catch (URISyntaxException e) {
-															e.printStackTrace();
-														}
-													}
-												}
-											}
-										}
-										
-										if( draft.isSelected() ) {
-											String subdir = "/genomes/Bacteria_DRAFT/";
-											FileSystemManager fsManager = VFS.getManager();
-											byte[] bb = new byte[30000000];
-											ftp.cwd( subdir );
-											FTPFile[] files2 = ftp.listFiles();
-											for( FTPFile ftpfile : files2 ) {
-												if( interrupted ) break;
-												if( ftpfile.isDirectory() ) {
-													String fname = ftpfile.getName();
-													if( fname.startsWith( search ) ) {
-														ftp.cwd( subdir+fname );
-														FTPFile[] newfiles = ftp.listFiles();
-														
-														File thefile = new File( basesave, fname+".gbk" );
-														if( !thefile.exists() ) {
-															FileOutputStream fos = new FileOutputStream( thefile );
-															
-															for( FTPFile newftpfile : newfiles ) {
-																if( interrupted ) break;
-																
-																//String newfname = newftpfile.getName().getBaseName();
-																String newfname = newftpfile.getName();
-																if( newfname.endsWith("scaffold.gbk.tgz") ) {
-																	//if( newftpfile != newfiles[0] ) fos.write( "//\n".getBytes() );
-																	//long size = newftpfile.getSize();
-																	//String fwname = "";
-																	//if( size > 1500000 ) fwname = fname+".fna";
-																	//else fwname = fname+"_p"+(cnt++)+".fna";
-																	
-																	//InputStream is = newftpfile.getContent().getInputStream();
-																	URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-																	InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
-																	System.err.println( "trying "+newfname + (is == null ? "critical" : "success" ) );
-																	//InputStream gis = is;
-																	GZIPInputStream gis = new GZIPInputStream( is );
-																	
-																	File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
-																	if( !file.exists() && gis != null ) {
-																		int r = gis.read(bb);
-																		FileOutputStream tfos = new FileOutputStream( file );
-																		while( r > 0 ) {
-																			System.err.println( "reading " + r );
-																			tfos.write( bb, 0, r );
-																			
-																			r = gis.read(bb);
-																		}
-																		gis.close();
-																		tfos.close();
-																	}
-																	
-																	//FileSystemManager fsManager = VFS.getManager();
-																	FileObject jarFile = fsManager.resolveFile( "tar://"+file.getAbsolutePath() );
+				final JCheckBox	whole = new JCheckBox("whole");
+				whole.setSelected( true );
+				final JCheckBox	draft = new JCheckBox("draft");
+				draft.setSelected( true );
+				final JCheckBox	phage = new JCheckBox("phage");
+				phage.setSelected( true );
+				final JTextArea ta = new JTextArea();
+				JScrollPane	sp = new JScrollPane( ta );
+				Dimension dim = new Dimension(400,300);
+				sp.setPreferredSize( dim );
+				sp.setSize( dim );
+				JOptionPane.showMessageDialog(c, new Object[] {whole, draft, phage,"Filter term",sp});
+				final Map<String,String> searchmap = new HashMap<String,String>();
+				String searchstr = ta.getText();
+				String[] split = searchstr.split("\n");
+				for( String strsearch : split ) {
+					String[] subsplit = strsearch.split("\t");
+					if( subsplit.length > 1 ) searchmap.put( subsplit[0], subsplit[1] );
+					else searchmap.put( strsearch, null );
+				}
 				
-																	// List the children of the Jar file
-																	FileObject[] children = jarFile.getChildren();
-																	//System.out.println( "Children of " + jarFile.getName().getURI() );
-																	//int contig = 1;
-																	for ( int i = 0; i < children.length; i++ ) {
-																		FileObject child = children[i];
-																		
-																		//if( i > 0 ) fos.write( "//\n".getBytes() );
-																		//String childname = child.getName().getBaseName();
-																		//int k = childname.indexOf(".gbk");
-																		//if( k == -1 ) k = childname.length();
-																		//String lfname = fname+"_contig"+(contig++)+"_"+childname;
-																		FileContent fc = child.getContent();
-																		InputStream sis = fc.getInputStream();
-																		int r = sis.read( bb );
-																		//int total = r;
-																		
-																		while( r != -1 ) {
-																			fos.write( bb, 0, r );
-																			r = sis.read( bb );
-																			//total += r;
-																		}
-																		
-																		/*try {
-																			addSequences( lfname, thefile.toURI().toString() );
-																		} catch (URISyntaxException e) {
-																			e.printStackTrace();
-																		}*/
-																	}
-																}
-															}
-															fos.close();
-														}
-														
-														try {
-															Map<String,Path>	urimap = new HashMap<String,Path>();
-															urimap.put( fname, thefile.toPath() );
-															addSequencesPath( fname, urimap, thefile.toPath(), replace );
-														} catch (URISyntaxException e) {
-															e.printStackTrace();
-														}
-													}
-												}
-											}
+				//final String basesave =  cd.toAbsolutePath().toString();
+				//final Path uripath = cd;
+				//final String replace = subsplit.length > 1 && subsplit[1].length() > 0 ? subsplit[1] : null;
+				
+				final JDialog		dialog = new JDialog();
+				final JProgressBar	pbar = new JProgressBar();
+				
+				Runnable run = new Runnable() {
+					boolean interrupted = false;
+					
+					public void run() {
+						dialog.addWindowListener( new WindowListener() {
+							@Override
+							public void windowOpened(WindowEvent e) {}
+							
+							@Override
+							public void windowIconified(WindowEvent e) {}
+							
+							@Override
+							public void windowDeiconified(WindowEvent e) {}
+							
+							@Override
+							public void windowDeactivated(WindowEvent e) {}
+							
+							@Override
+							public void windowClosing(WindowEvent e) {}
+							
+							@Override
+							public void windowClosed(WindowEvent e) {
+								//interrupted = true;
+							}
+							
+							@Override
+							public void windowActivated(WindowEvent e) {}
+						});
+						dialog.setVisible( true );
+						
+						//String ftpsite = "ftp.rhnet.is";
+						String ftpsite = "ftp.ncbi.nlm.nih.gov";
+						//FTPClientConfig ftpcc = new FTPClientConfig();
+						FTPClient ftp = new FTPClient();
+						ftp.setControlEncoding("UTF-8");
+						try {
+							ftp.connect( ftpsite );
+							ftp.enterLocalPassiveMode();
+							ftp.login("anonymous", "sigmarkarl@gmail.com");
+							
+							for( String search : searchmap.keySet() ) {
+								String replace = searchmap.get(search);
+								replace = replace == null || replace.length() == 0 ? null : replace;
+								if( search.length() == 4 ) {
+									String subdir = "/genbank/wgs/";
+									ftp.cwd( subdir );
+									String fwname = search+".gbk";
+									
+									String filename = "wgs."+search+".1.gbff.gz";
+									/*File gfile = new File(basesave, fwname+".gz");
+									FileOutputStream fos = new FileOutputStream( gfile );
+									ftp.retrieveFile("wgs."+search+".1.fsa_nt.gz",fos);
+									fos.close();*/
+									
+									Path thefile = cd.resolve( fwname ); //new File( basesave, fwname );
+									if( !Files.exists( thefile ) ) {
+										//FileWriter fw = new FileWriter( thefile );
+										Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.WRITE );
+										URL url = new URL( "ftp://"+ftpsite+subdir+filename );
+										InputStream is = new GZIPInputStream( url.openStream() );//ftp.retrieveFileStream( newfname );
+										BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+										String line = br.readLine();
+										while( line != null ) {
+											fw.write( line + "\n" );
+											line = br.readLine();
 										}
-										
-										if( phage.isSelected() ) {
-											String subdir = "/genomes/Viruses/";
-											ftp.cwd( subdir );
-											FTPFile[] files3 = ftp.listFiles();
-											for( FTPFile ftpfile : files3 ) {
-												if( interrupted ) break;
-												if( ftpfile.isDirectory() ) {
-													String fname = ftpfile.getName();
-													if( fname.startsWith( search ) ) {//fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
-														if( !ftp.isConnected() ) {
-															ftp.connect("ftp.ncbi.nih.gov");
-															ftp.login("anonymous", "anonymous");
-														}
-														ftp.cwd( subdir+fname );
-														FTPFile[] newfiles = ftp.listFiles();
-														int cnt = 1;
+										br.close();
+										is.close();
+										//ftp.completePendingCommand();
+										fw.close();
+									}
+									
+									try {
+										Map<String,Path>	urimap = new HashMap<String,Path>();
+										urimap.put( fwname.substring(0, fwname.length()-4), thefile );
+										addSequencesPath( fwname, urimap, cd, replace );
+									} catch (URISyntaxException e) {
+										e.printStackTrace();
+									}
+									//FTPFile[] files = ftp.listFiles();
+								} else {									
+									if( whole.isSelected() ) {
+										String subdir = "/genomes/Bacteria/";
+										ftp.cwd( subdir );
+										//System.err.println("here11");
+										FTPFile[] files = ftp.listFiles();
+										//System.err.println("jojojo22 " + files.length);
+										for( FTPFile ftpfile : files ) {
+											if( interrupted ) {
+												//System.err.println("jojojo2");
+												break;
+											}
+											//System.err.println("here");
+											if( ftpfile.isDirectory() ) {
+												String fname = ftpfile.getName();
+												if( fname.startsWith( search ) ) {
+													if( !ftp.isConnected() ) {
+														ftp.connect("ftp.ncbi.nih.gov");
+														ftp.login("anonymous", "");
+													}
+													ftp.cwd( subdir+fname );
+													FTPFile[] newfiles = ftp.listFiles();
+													//int cnt = 1;
+													
+													//File thefile = new File( basesave, fname+".gbk" );
+													Path thefile = cd.resolve(fname+".gbk");
+													if( !Files.exists(thefile) ) {
+														Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
 														
-														File thefile = new File( basesave, fname+".gbk" );
-														if( !thefile.exists() ) {
-															FileWriter fw = new FileWriter( thefile );
+														//System.err.println("here2");
+														for( FTPFile newftpfile : newfiles ) {
+															if( interrupted ) {
+																//System.err.println("jojojo");
+																break;
+															}
 															
-															for( FTPFile newftpfile : newfiles ) {
-																if( interrupted ) break;
-																
-																String newfname = newftpfile.getName();
-																if( newfname.endsWith(".gbk") ) {
-																	URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-																	InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
-																	BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-																	String line = br.readLine();
-																	while( line != null ) {
-																		fw.write( line + "\n" );
-																		line = br.readLine();
-																	}
-																	is.close();
-																}
-															}
-															fw.close();
-														}
-														
-														/*for( FTPFile newftpfile : newfiles ) {
-															if( interrupted ) break;
 															String newfname = newftpfile.getName();
-															System.err.println("trying " + newfname + " in " + fname);
 															if( newfname.endsWith(".gbk") ) {
-																System.err.println("in " + fname);
-																long size = newftpfile.getSize();
-																String fwname = fname+"_"+newfname;
+																//if( newftpfile != newfiles[0] ) fw.write("//\n");
+																//long size = newftpfile.getSize();
+																//String basename = fname;
+																//if( size > 3000000 ) basename = fname;//+".gbk";
+																//else basename = fname+"_p"+(cnt++);//+".gbk";
 																
-																File thefile = new File( basesave, fwname );
-																if( !thefile.exists() ) {
-																	FileWriter fw = new FileWriter( thefile );
-																	URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
-																	InputStream is = url.openStream(); //ftp.retrieveFileStream( newfname );
-																	BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-																	String line = br.readLine();
-																	while( line != null ) {
-																		fw.write( line + "\n" );
-																		line = br.readLine();
-																	}
-																	is.close();
-																	fw.close();
-																	System.err.println("done " + fname);
+																//String fwname = basename+"_"+newfname;
+																//if( size > 1500000 ) fwname = fname+".fna";
+																//else fwname = fname+"_p"+(cnt++)+".fna";
+																
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+																BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+																String line = br.readLine();
+																while( line != null ) {
+																	fw.write( line + "\n" );
+																	line = br.readLine();
 																}
-																urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
-																
-																/*try {
-																	addSequences( fwname, thefile.toURI().toString() );
-																} catch (URISyntaxException e) {
-																	e.printStackTrace();
-																}*
+																is.close();
+																//ftp.completePendingCommand();
+																//System.err.println("done " + fname);
 															}
-														}*/
-														
-														try {
-															Map<String,Path>	urimap = new HashMap<String,Path>();
-															urimap.put( fname, thefile.toPath() );
-															addSequencesPath( fname, urimap, thefile.toPath(), replace );
-														} catch (URISyntaxException e) {
-															e.printStackTrace();
 														}
-														/*try {
-															addSequencesPath( fname, urimap, uripath );
-														} catch (URISyntaxException e) {
-															e.printStackTrace();
-														}*/
+														fw.close();
+													}
+													
+													try {
+														Map<String,Path>	urimap = new HashMap<String,Path>();
+														urimap.put( fname, thefile );
+														addSequencesPath( fname, urimap, thefile, replace );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
 													}
 												}
 											}
 										}
 									}
+									
+									if( draft.isSelected() ) {
+										String subdir = "/genomes/Bacteria_DRAFT/";
+										FileSystemManager fsManager = VFS.getManager();
+										byte[] bb = new byte[30000000];
+										ftp.cwd( subdir );
+										FTPFile[] files2 = ftp.listFiles();
+										for( FTPFile ftpfile : files2 ) {
+											if( interrupted ) break;
+											if( ftpfile.isDirectory() ) {
+												String fname = ftpfile.getName();
+												if( fname.startsWith( search ) ) {
+													ftp.cwd( subdir+fname );
+													FTPFile[] newfiles = ftp.listFiles();
+													
+													Path thefile = cd.resolve(fname+".gbk");
+													if( !Files.exists(thefile) ) {
+														final OutputStream fos = Files.newOutputStream( thefile, StandardOpenOption.CREATE );
+														
+														for( FTPFile newftpfile : newfiles ) {
+															if( interrupted ) break;
+															
+															//String newfname = newftpfile.getName().getBaseName();
+															String newfname = newftpfile.getName();
+															if( newfname.endsWith("scaffold.gbk.tgz") ) {
+																//if( newftpfile != newfiles[0] ) fos.write( "//\n".getBytes() );
+																//long size = newftpfile.getSize();
+																//String fwname = "";
+																//if( size > 1500000 ) fwname = fname+".fna";
+																//else fwname = fname+"_p"+(cnt++)+".fna";
+																
+																//InputStream is = newftpfile.getContent().getInputStream();
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+																System.err.println( "trying "+newfname + (is == null ? "critical" : "success" ) );
+																//InputStream gis = is;
+																GZIPInputStream gis = new GZIPInputStream( is );
+																
+																//File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
+																Path file = uhome.resolve("temp.tar"); //Files.createTempFile("erm", ".tar"); //cd.resolve(fname.substring(0,fname.length()-4)+".tar");
+																if( !Files.exists(file) && gis != null ) {
+																	int r = gis.read(bb);
+																	OutputStream tfos = Files.newOutputStream( file, StandardOpenOption.CREATE );
+																	while( r > 0 ) {
+																		System.err.println( "reading " + r );
+																		tfos.write( bb, 0, r );
+																		
+																		r = gis.read(bb);
+																	}
+																	gis.close();
+																	tfos.close();
+																}
+																
+																//FileSystemManager fsManager = VFS.getManager();
+																//String pp = "tar:"+file.toString();//.replace("file://", "tar://");
+																
+																//Map<String,String> env = new HashMap<String,String>();
+																//env.put("create", "true");
+																String uristr = "tar:" + file.toUri();
+																//URI taruri = URI.create( uristr /*.replace("file://", "file:")*/ );
+																//FileSystem tarfilesystem = FileSystems.newFileSystem( taruri, env );
+																
+																FileObject jarFile = fsManager.resolveFile(uristr);
+			
+																// List the children of the Jar file
+																FileObject[] children = jarFile.getChildren();
+																//System.out.println( "Children of " + jarFile.getName().getURI() );
+																//int contig = 1;
+																
+																/*for( Path root : tarfilesystem.getRootDirectories() ) {
+																	Files.list(root).filter( new Predicate<Path>() {
+																		@Override
+																		public boolean test(Path t) {
+																			//String fname = t.getFileName().toString();
+																			return true;
+																		}
+																	}).forEach( new Consumer<Path>() {
+																		@Override
+																		public void accept(Path t) {
+																			try {
+																				Files.copy(t, fos);
+																				//sa.addSequences(t.getFileName().toString(), t, null);
+																			} catch (IOException e) {
+																				e.printStackTrace();
+																			}
+																		}
+																	});;
+																}*/
+																
+																for ( int i = 0; i < children.length; i++ ) {
+																	FileObject child = children[i];
+																	
+																	//if( i > 0 ) fos.write( "//\n".getBytes() );
+																	//String childname = child.getName().getBaseName();
+																	//int k = childname.indexOf(".gbk");
+																	//if( k == -1 ) k = childname.length();
+																	//String lfname = fname+"_contig"+(contig++)+"_"+childname;
+																	FileContent fc = child.getContent();
+																	InputStream sis = fc.getInputStream();
+																	int r = sis.read( bb );
+																	//int total = r;
+																	
+																	while( r != -1 ) {
+																		fos.write( bb, 0, r );
+																		r = sis.read( bb );
+																		//total += r;
+																	}
+																}
+															}
+														}
+														fos.close();
+													}
+													
+													try {
+														Map<String,Path>	urimap = new HashMap<String,Path>();
+														urimap.put( fname, thefile );
+														addSequencesPath( fname, urimap, thefile, replace );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
+													}
+												}
+											}
+										}
+									}
+									
+									if( phage.isSelected() ) {
+										String subdir = "/genomes/Viruses/";
+										ftp.cwd( subdir );
+										FTPFile[] files3 = ftp.listFiles();
+										for( FTPFile ftpfile : files3 ) {
+											if( interrupted ) break;
+											if( ftpfile.isDirectory() ) {
+												String fname = ftpfile.getName();
+												if( fname.startsWith( search ) ) {//fname.startsWith("Thermus") || fname.startsWith("Meiothermus") || fname.startsWith("Marinithermus") || fname.startsWith("Oceanithermus") ) {
+													if( !ftp.isConnected() ) {
+														ftp.connect("ftp.ncbi.nih.gov");
+														ftp.login("anonymous", "anonymous");
+													}
+													ftp.cwd( subdir+fname );
+													FTPFile[] newfiles = ftp.listFiles();
+													int cnt = 1;
+													
+													Path thefile = cd.resolve(fname+".gbk");
+													if( !Files.exists(thefile) ) {
+														Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.WRITE );
+														
+														for( FTPFile newftpfile : newfiles ) {
+															if( interrupted ) break;
+															
+															String newfname = newftpfile.getName();
+															if( newfname.endsWith(".gbk") ) {
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+																BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+																String line = br.readLine();
+																while( line != null ) {
+																	fw.write( line + "\n" );
+																	line = br.readLine();
+																}
+																is.close();
+															}
+														}
+														fw.close();
+													}
+													
+													/*for( FTPFile newftpfile : newfiles ) {
+														if( interrupted ) break;
+														String newfname = newftpfile.getName();
+														System.err.println("trying " + newfname + " in " + fname);
+														if( newfname.endsWith(".gbk") ) {
+															System.err.println("in " + fname);
+															long size = newftpfile.getSize();
+															String fwname = fname+"_"+newfname;
+															
+															File thefile = new File( basesave, fwname );
+															if( !thefile.exists() ) {
+																FileWriter fw = new FileWriter( thefile );
+																URL url = new URL( "ftp://"+ftpsite+subdir+fname+"/"+newfname );
+																InputStream is = url.openStream(); //ftp.retrieveFileStream( newfname );
+																BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+																String line = br.readLine();
+																while( line != null ) {
+																	fw.write( line + "\n" );
+																	line = br.readLine();
+																}
+																is.close();
+																fw.close();
+																System.err.println("done " + fname);
+															}
+															urimap.put( fwname.substring(0, fwname.length()-4), thefile.toURI().toString() );
+															
+															/*try {
+																addSequences( fwname, thefile.toURI().toString() );
+															} catch (URISyntaxException e) {
+																e.printStackTrace();
+															}*
+														}
+													}*/
+													
+													try {
+														Map<String,Path>	urimap = new HashMap<String,Path>();
+														urimap.put( fname, thefile );
+														addSequencesPath( fname, urimap, thefile, replace );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
+													}
+													/*try {
+														addSequencesPath( fname, urimap, uripath );
+													} catch (URISyntaxException e) {
+														e.printStackTrace();
+													}*/
+												}
+											}
+										}
+									}
 								}
-							} catch (SocketException e) {
-								e.printStackTrace();
-							} catch (IOException e) {
-								e.printStackTrace();
 							}
-							
-							pbar.setIndeterminate( false );
-							pbar.setEnabled( false );
+						} catch (SocketException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
-					};					
-					nrun.runProcess("NCBI Fetch", run, dialog, pbar);
-				}
+						
+						pbar.setIndeterminate( false );
+						pbar.setEnabled( false );
+					}
+				};					
+				nrun.runProcess("NCBI Fetch", run, dialog, pbar);
 			}
 		});
 		popup.addSeparator();
@@ -2155,19 +2370,19 @@ public class SerifyApplet extends JApplet {
 				JFileChooser	filechooser = new JFileChooser();
 				filechooser.setMultiSelectionEnabled( true );
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-					File cd = filechooser.getCurrentDirectory();
-					String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
+					//File cd = filechooser.getCurrentDirectory();
+					//String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
 					
-					if( path != null ) {
-						try {
-							for( File f : filechooser.getSelectedFiles() ) {
-								addSequences( f.getName(), f.toPath(), null );
-							}
-						} catch (URISyntaxException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
+					try {
+						for( File f : filechooser.getSelectedFiles() ) {
+							Path dest = fs.getPath("/"+f.getName());
+							Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
+							addSequences( f.getName(), dest, null );
 						}
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
 					}
 				}
 			}
@@ -2435,23 +2650,19 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				boolean success = false;
-				try {
+				/*try {
 					String userhome = System.getProperty("user.home");
 					File dir = new File( userhome );
 					
-					nrun.checkInstall( dir );
+					//nrun.checkInstall( dir );
 						
-					JSObject js = JSObject.getWindow( SerifyApplet.this );
-					getParameters( js );
+					//JSObject js = JSObject.getWindow( SerifyApplet.this );
+					//getParameters( js );
 					success = true;
 					//infile.delete();
 				} catch (NoSuchMethodError e0) {
 					e0.printStackTrace();
-				} catch (MalformedURLException e1) {
-					e1.printStackTrace();
-				} catch (IOException e2) {
-					e2.printStackTrace();
-				}
+				}*/
 				if( !success ) {
 					TableModel model = new TableModel() {
 						@Override
@@ -2492,7 +2703,6 @@ public class SerifyApplet extends JApplet {
 
 						@Override
 						public void removeTableModelListener(TableModelListener l) {}
-						
 					};
 					JTable	table = new JTable( model );
 					JScrollPane pane = new JScrollPane( table );
@@ -2506,16 +2716,14 @@ public class SerifyApplet extends JApplet {
 					int i = table.getSelectedRow();
 					Sequences seqs = serifier.getSequencesList().get(i);
 					
-					String filepath = seqs.getPath().toAbsolutePath().toString();
+					Path filepath = seqs.getPath();
 					runBlastInApplet( tf.getText(), filepath, seqs.getType() ); //db.getText().contains(".p") ? "prot" : "nucl" );
 				}
 			}
 		});
 		popup.add( new AbstractAction("tBlast") {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-			}
+			public void actionPerformed(ActionEvent e) {}
 		});
 		popup.addSeparator();
 		popup.add( new AbstractAction("Genbank from blast") {
@@ -2583,7 +2791,7 @@ public class SerifyApplet extends JApplet {
 						}
 						
 						try {
-							serifier.genbankFromNR( s, blastFile, f, false );
+							serifier.genbankFromNR( s, blastFile.toPath(), f, false );
 						} catch (MalformedURLException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
@@ -2654,20 +2862,25 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					List<String> urls = new ArrayList<String>();
+					List<Path> urls = new ArrayList<Path>();
 					int[] rr = table.getSelectedRows();
 					for( int r : rr ) {
 						//int r = table.getSelectedRow();
-						String path = (String)table.getValueAt( r, 3 );
+						Path path = (Path)table.getValueAt( r, 3 );
 						urls.add( path );
 					}
 					
 					String userhome = System.getProperty("user.home");	
-					File dir = new File( userhome );
-					File f = nrun.checkProdigalInstall( dir, urls );
-					if( f != null && f.exists() ) {
-						nrun.doProdigal( dir, c, f, urls );
-					} else System.err.println( "no blast installed" );
+					Path dir = Paths.get( userhome );
+					//File f = nrun.checkProdigalInstall( dir, urls );
+					//if( f != null && f.exists() ) {
+					Path root = null;
+					for( Path p: fs.getRootDirectories() ) {
+						root = p;
+						break;
+					}
+					doProdigal( dir, c, root, urls );
+					//} else System.err.println( "no prodigal installed" );
 				} catch (MalformedURLException e1) {
 					e1.printStackTrace();
 				} catch (IOException e2) {
@@ -2757,7 +2970,7 @@ public class SerifyApplet extends JApplet {
 								is.close();
 								fos.close();
 						
-								String inputPathFixed = nrun.fixPath( infile.getAbsolutePath() ).trim();
+								String inputPathFixed = NativeRun.fixPath( infile.getAbsolutePath() ).trim();
 								final String newname = s.getName()+"_aligned";
 								String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
 								final Path newurl = new File( newpath ).toPath();
@@ -3020,50 +3233,58 @@ public class SerifyApplet extends JApplet {
 		popup.add( new AbstractAction("Append") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					//if( !f.isDirectory() ) f = f.getParentFile();
+				Path dest = null;
+				if( fs == null ) {
+					JFileChooser fc = new JFileChooser();
+					//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+						File f = fc.getSelectedFile();
+						dest = f.toPath();
+						//if( !f.isDirectory() ) f = f.getParentFile();
+					}
+				} else dest = fs.getPath("/joined.aa");
 					
-					List<Sequences> lseqs = new ArrayList<Sequences>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						int rear = table.convertRowIndexToModel( r );
-						if( rear >= 0 ) {
-							Sequences s = getSequences( rear );
-							lseqs.add( s );
-						}
+				List<Sequences> lseqs = new ArrayList<Sequences>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int rear = table.convertRowIndexToModel( r );
+					if( rear >= 0 ) {
+						Sequences s = getSequences( rear );
+						lseqs.add( s );
 					}
-					List<Sequences> retlseqs = serifier.join( f, lseqs, true, null, false );
-					for( Sequences seqs : retlseqs ) {
-						addSequences( seqs );
-					}
+				}
+				List<Sequences> retlseqs = serifier.join( dest, lseqs, true, null, false );
+				for( Sequences seqs : retlseqs ) {
+					addSequences( seqs );
 				}
 			}
 		});
 		popup.add( new AbstractAction("Join") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					//if( !f.isDirectory() ) f = f.getParentFile();
+				Path dest = null;
+				if( fs == null ) {
+					JFileChooser fc = new JFileChooser();
+					//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+						File f = fc.getSelectedFile();
+						dest = f.toPath();
+						//if( !f.isDirectory() ) f = f.getParentFile();
+					}
+				} else dest = fs.getPath("/joined.aa");
 					
 					List<Sequences> lseqs = new ArrayList<Sequences>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						int rear = table.convertRowIndexToModel( r );
-						if( rear >= 0 ) {
-							Sequences s = getSequences( rear );
-							lseqs.add( s );
-						}
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int rear = table.convertRowIndexToModel( r );
+					if( rear >= 0 ) {
+						Sequences s = getSequences( rear );
+						lseqs.add( s );
 					}
-					List<Sequences> retlseqs = serifier.join( f, lseqs, true, null, true );
-					for( Sequences seqs : retlseqs ) {
-						addSequences( seqs );
-					}
+				}
+				List<Sequences> retlseqs = serifier.join( dest, lseqs, true, null, true );
+				for( Sequences seqs : retlseqs ) {
+					addSequences( seqs );
 				}
 			}
 		});
@@ -3519,7 +3740,7 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						List<Set<String>> cluster = serifier.makeBlastCluster( is, null, 1 );
+						List<Set<String>> cluster = serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1 );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -3982,22 +4203,22 @@ public class SerifyApplet extends JApplet {
 		
 		if( gbks.size() > 0 ) {
 			Map<String,Path>	map = new HashMap<String,Path>();
-			Path firsturi = Paths.get( new URI(path+".fna") );
-			BufferedWriter out = Files.newBufferedWriter( firsturi, StandardOpenOption.WRITE );
+			Path firsturi = path.getParent().resolve( path.getFileName()+".fna" ); //Paths.get( new URI(path+".fna") );
+			BufferedWriter out = Files.newBufferedWriter( firsturi, StandardOpenOption.CREATE );
 			
-			Path uri = Paths.get( new URI(path+".aa") );
+			Path uri = path.getParent().resolve( path.getFileName()+".aa" );
 			//FileWriter out = new FileWriter( new File( uri ) );
 			map.put( "CDS", uri );
 			
-			uri = Paths.get( new URI(path+".trna") );
+			uri = path.getParent().resolve( path.getFileName()+".trna" );
 			//out = new FileWriter( new File( uri ) );
 			map.put( "tRNA", uri );
 			
-			uri = Paths.get( new URI(path+".rrna") );
+			uri = path.getParent().resolve( path.getFileName()+".rrna" );
 			//out = new FileWriter( new File( uri ) );
 			map.put( "rRNA", uri );
 			
-			uri = Paths.get( new URI(path+".mrna") );
+			uri = path.getParent().resolve( path.getFileName()+".mrna" );
 			//out = new FileWriter( new File( uri ) );
 			map.put( "mRNA", uri );
 			
@@ -4533,9 +4754,9 @@ public class SerifyApplet extends JApplet {
 				//double heat = snaedisheatmap.get( loc );
 				//double ph = snaedisphmap.get( loc );
 				
-				File nf = new File( "/u0/all.blastout" );//new File( dir, ""+f.getName()+".blastout" );
-				System.err.println( "about to parse " + nf.getName() );
-				List<Set<String>> cluster = serifier.makeBlastCluster( new FileInputStream( nf ), null, 1 );
+				Path nf = new File( "/u0/all.blastout" ).toPath();//new File( dir, ""+f.getName()+".blastout" );
+				System.err.println( "about to parse " + nf.getFileName() );
+				List<Set<String>> cluster = serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1 );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
