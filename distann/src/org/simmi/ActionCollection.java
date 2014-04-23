@@ -3810,7 +3810,7 @@ public class ActionCollection {
 			public void actionPerformed(ActionEvent e) {
 				Map<String, Integer> blosumap = null;
 				try {
-					blosumap = GeneCompare.getBlosumMap();
+					blosumap = JavaFasta.getBlosumMap();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
