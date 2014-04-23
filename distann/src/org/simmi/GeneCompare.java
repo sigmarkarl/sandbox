@@ -18,12 +18,9 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,39 +55,10 @@ import netscape.javascript.JSObject;
 
 import org.apache.commons.codec.binary.Base64;
 import org.simmi.shared.Sequence;
+import org.simmi.unsigned.JavaFasta;
 
 public class GeneCompare {
 	List<Contig> contigs;
-	
-	public static Map<String,Integer> getBlosumMap() throws IOException {
-		Map<String,Integer> blosumap = new HashMap<String,Integer>();
-		InputStream is = GeneCompare.class.getResourceAsStream("/BLOSUM62");
-		InputStreamReader 	ir = new InputStreamReader( is );
-		BufferedReader		br = new BufferedReader( ir );
-		String[] abet = null;
-		//int i = 0;
-		String line = br.readLine();
-		while( line != null ) {
-			if( line.charAt(0) != '#' ) {
-				String[] split = line.trim().split("[ ]+");
-				char chr = line.charAt(0);
-				if( chr == ' ' ) {
-					abet = split;
-					abet[abet.length-1] = "-";
-				} else {
-					if( chr == '*' ) chr = '-';
-					int k = 0;
-					for( String a : abet ) {
-						blosumap.put( chr+a, Integer.parseInt(split[++k]) );
-					}
-				}
-			}
-			line = br.readLine();
-		}
-		br.close();
-		
-		return blosumap;
-	}
 	
 	public void rearrangeContigs( String spec1, GeneSet geneset ) {
 		if( spec1 != null && geneset.speccontigMap.containsKey( spec1 ) ) {
@@ -265,7 +233,7 @@ public class GeneCompare {
 			spec2s.add( spec2 );
 		}
 		
-		final Map<String,Integer>	blosumap = getBlosumMap();
+		final Map<String,Integer>	blosumap = JavaFasta.getBlosumMap();
 		
 		if( spec1 != null ) {
 			selectContigs(comp, spec1, geneset);
