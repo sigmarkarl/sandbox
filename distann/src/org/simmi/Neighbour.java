@@ -61,6 +61,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.simmi.shared.Sequence;
+import org.simmi.unsigned.JavaFasta;
 
 public class Neighbour {
 	public void recenter( JTable rowheader, JComponent c ) {
@@ -514,7 +515,7 @@ public class Neighbour {
 		mnu.add( sgradcol );
 		mnu.add( precol );
 		
-		final Map<String,Integer> blosumap = GeneCompare.getBlosumMap();
+		final Map<String,Integer> blosumap = JavaFasta.getBlosumMap();
 		
 		final JFrame frame = new JFrame();
 		JSplitPane splitpane = new JSplitPane();

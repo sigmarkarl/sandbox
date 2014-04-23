@@ -560,6 +560,20 @@ public class TreeUtil {
 			return nodes == null || nodes.size() == 0;
 		}
 		
+		public List<String> traverse() {
+			List<String>	ret = new ArrayList<String>();
+			
+			List<Node> nodes = this.getNodes();
+			if( nodes != null && nodes.size() > 0 ) {
+				for( Node n : nodes ) {
+					ret.addAll( n.traverse() );
+				}
+				if( nodes.size() == 1 ) ret.add( this.getName() );
+			} else ret.add( this.getName() );
+			
+			return ret;
+		}
+		
 		public Set<String> getLeaveNames() {
 			Set<String>	ret = new HashSet<String>();
 			
