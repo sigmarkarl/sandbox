@@ -1,32 +1,17 @@
 package org.simmi;
 
 import java.applet.Applet;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 
-import javax.jnlp.FileContents;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.ServiceManager;
-//import javax.jnlp.UnavailableServiceException;
-import javax.swing.JFileChooser;
 import javax.swing.JTable;
-
-import netscape.javascript.JSObject;
-
+//import javax.jnlp.UnavailableServiceException;
 /*import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.DetailPanel.PercStr;*/
-
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 public class PoiFactory {
 	/**

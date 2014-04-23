@@ -603,7 +603,7 @@ public class SerifyApplet extends JApplet {
 				}
 			} else {
 				//Path res = Files.createTempFile("all", "blastout"); 
-				Path res = selectedpath.resolve( "tmp.blastout" ); //path.getFileName().toString()+".blastout");
+				Path res = selectedpath.resolve( "tmp.blastout.gz" ); //path.getFileName().toString()+".blastout");
 				
 				//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
 				//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
@@ -641,7 +641,7 @@ public class SerifyApplet extends JApplet {
 				System.err.println(cmd);
 			}
 			Thread.sleep(10000);*/
-			nrun.runProcessBuilder( "Performing blast", lscmd, run, cont );
+			nrun.runProcessBuilder( "Performing blast", lscmd, run, cont, false );
 		//}
 		//} else System.err.println( "no blast installed" );
 	}
@@ -1778,7 +1778,7 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				};
-				nrun.runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
+				nrun.runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont, false );
 					//JSObject js = JSObject.getWindow( SerifyApplet.this );
 					//js = (JSObject)js.getMember("document");
 					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
@@ -2595,7 +2595,7 @@ public class SerifyApplet extends JApplet {
 						if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
 						if( makeblastdb.exists() ) {
 							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( infile.getAbsolutePath() ), "-title", title, "-dbtype", dbtype, "-out", outPath };
-							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
+							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont, false );
 						}
 					}
 					
@@ -2990,7 +2990,7 @@ public class SerifyApplet extends JApplet {
 									String[] cmds = {"clustalo", "-i "+inputPathFixed, "-o "+newpath};
 									cmdarr = Arrays.asList( cmds );
 								}
-								nrun.runProcessBuilder("Clustal alignment", cmdarr, run, cont);
+								nrun.runProcessBuilder("Clustal alignment", cmdarr, run, cont, false);
 							} catch (IOException e1) {
 								e1.printStackTrace();
 							}
@@ -3081,7 +3081,7 @@ public class SerifyApplet extends JApplet {
 				}
 				
 				double[] dd = new double[ lseq.size()*lseq.size() ];
-				Sequence.distanceMatrixNumeric(lseq, dd, idxs, bootstrap, cantor, null);
+				Sequence.distanceMatrixNumeric(lseq, dd, idxs, bootstrap, cantor, null, null);
 				
 				StringBuilder tree = new StringBuilder();
 				tree.append( "\t"+lseq.size()+"\n" );
@@ -3155,7 +3155,7 @@ public class SerifyApplet extends JApplet {
 						double[] dmat = new double[ lseq.size()*lseq.size() ];
 						ldmat.add( dmat );
 						
-						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
+						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null, null);
 					}
 					
 					if( ldmat.size() == rr.length ) {
@@ -4594,7 +4594,7 @@ public class SerifyApplet extends JApplet {
 							break;
 						}*/
 						double[] dmat = new double[ lseq.size()*lseq.size() ];
-						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null);
+						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null, null);
 						
 						n = treeutil.neighborJoin(dmat, corrInd, null, false, true);
 					} else {
