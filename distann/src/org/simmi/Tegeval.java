@@ -127,7 +127,7 @@ public class Tegeval extends Annotation implements Teg {
 		return contloc;
 	}
 	
-	public String getContig() {
+	public String getContigName() {
 		return name;
 	}
 	

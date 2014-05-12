@@ -317,11 +317,19 @@ public class Treedraw implements EntryPoint {
 		} else {
 			double x1 = xPosition + ((length + 1.0) * directionX);
 			double y1 = yPosition + ((length + 1.0) * directionY);
+			
+			String name = node.getName();
+			
+			boolean it = name.contains("<i>");
+			name = name.replace("<i>", "").replace("</i>", "");
+			
+			String fontstr = (node.isSelected() ? "bold" : "")+(it ? " italic " : " ")+(int)(fontscale*Math.log(hchunk))+"px sans-serif";
+			if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
+			
 			if( nodraw ) {
 				ctx.setFillStyle("#000000");
 				double horn = Math.atan2( y1-y0, x1-x0 );
 				
-				String name = node.getName();
 				TextMetrics tm = ctx.measureText( name );
 				double strlen = tm.getWidth();
 				/*if( Math.abs(horn) > Math.PI/2.0 ) {
@@ -336,7 +344,6 @@ public class Treedraw implements EntryPoint {
 				if( y > lbounds[3] ) lbounds[3] = y;
 			} else {
 				ctx.setFillStyle("#000000");
-				String name = node.getName();
 				
 				double xscale = (canvas.getCoordinateSpaceWidth()-10.0-(lbounds[2]-lbounds[0]))/(bounds[2]-bounds[0]);
 				//double yscale = (canvas.getCoordinateSpaceHeight()-10.0-(lbounds[3]-lbounds[1]))/(bounds[3]-bounds[1]);
@@ -442,11 +449,6 @@ public class Treedraw implements EntryPoint {
 				lbounds[2] = Double.NEGATIVE_INFINITY;
 				lbounds[3] = Double.NEGATIVE_INFINITY;
 				
-				if( hchunk != 10.0 ) {
-					String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
-					if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
-				}
-				
 				constructNode( ctx, treeutil, root, 0.0, Math.PI * 2, 0.0, 0.0, 0.0, true );
 				
 				double xscale = (canvas.getCoordinateSpaceWidth()-10.0-(lbounds[2]-lbounds[0]))/(bounds[2]-bounds[0]);
@@ -460,10 +462,10 @@ public class Treedraw implements EntryPoint {
 				canvas.setCoordinateSpaceWidth( ww-10 );
 				canvas.setCoordinateSpaceHeight( hval );
 				
-				if( hchunk != 10.0 ) {
+				/*if( hchunk != 10.0 ) {
 					String fontstr = (int)(fontscale*Math.log(hchunk))+"px sans-serif";
 					if( !fontstr.equals(ctx.getFont()) ) ctx.setFont( fontstr );
-				}
+				}*/
 				
 				ctx.setFillStyle("#FFFFFF");
 				ctx.fillRect(0.0, 0.0, canvas.getCoordinateSpaceWidth(), canvas.getCoordinateSpaceHeight());
