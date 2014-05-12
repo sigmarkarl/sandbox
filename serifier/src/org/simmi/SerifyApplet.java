@@ -4363,7 +4363,7 @@ public class SerifyApplet extends JApplet {
 			for( Set<String> nodeset : nmap.keySet() ) {
 				NodeSet count = nmap.get( nodeset );
 				nslist.add( count );
-			}
+			}s
 			
 			Collections.sort( nslist );
 			int c = 0;
@@ -5168,7 +5168,7 @@ public class SerifyApplet extends JApplet {
 			varph /= vals.size();
 			double stdevph = Math.sqrt( varph );
 			
-			System.err.println( key + "\t" +mean+"±"+stdev+"\t"+meanph+"±"+stdevph );
+			System.err.println( key + "\t" +mean+"��"+stdev+"\t"+meanph+"��"+stdevph );
 		}*/
 		
 		//mapFiles();
