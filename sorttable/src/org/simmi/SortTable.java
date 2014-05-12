@@ -1165,11 +1165,11 @@ public class SortTable extends JApplet {
 		table.setColumnSelectionAllowed(true);
 		
 		//if( this.applet != null ) {
-		try {
+		/*try {
 			WSUtil.clipboard( this );
 		} catch( Exception e ) {
 			e.printStackTrace();
-		}
+		}*/
 		//}
 	   
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {

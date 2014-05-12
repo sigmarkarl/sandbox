@@ -19,13 +19,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.zip.GZIPInputStream;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -149,7 +150,244 @@ public class NativeRun {
 		return f;
 	}
 	
-	public String runProcessBuilder( String title, @SuppressWarnings("rawtypes") final List commandsList, final Runnable run, final Object[] cont ) throws IOException {
+	public boolean startProcess( Object commands, List<Object> commandsList, Path workingdir, Object input, Object output, JTextArea ta, boolean paralell ) {
+		//Object commands = commandsList.get( w );
+		boolean blist = commands instanceof List;
+		List<String> lcmd = blist ? (List)commands : commandsList;
+		/*for( String s : lcmd ) {
+			System.err.println( s );
+		}*/
+		
+		//System.err.println( "mumu " + lcmd );
+		
+		ProcessBuilder pb = new ProcessBuilder( lcmd );
+		//pb.environment().putAll( System.getenv() );
+		//System.err.println( pb.environment() );
+		if( workingdir != null ) {
+			//System.err.println( "blblblbl " + workingdir.toFile() );
+			pb.directory( workingdir.toFile() );
+		}
+		//pb.redirectErrorStream( true );
+		try {
+			final Process p = pb.start();
+			
+			if( input != null ) {
+				if( input instanceof Path ) {
+					final Path inp = (Path)input;
+					new Thread() {
+						public void run() {
+							try {
+								OutputStream os = p.getOutputStream();
+								//os.write( "simmi".getBytes() );
+								Files.copy(inp, os);
+								os.close();
+							} catch( Exception e ) {
+								e.printStackTrace();
+							}
+						}
+					}.start();
+				} else {
+					final byte[] binput = (byte[])input;
+					new Thread() {
+						public void run() {
+							try {
+								OutputStream os = p.getOutputStream();
+								os.write( binput );
+								os.close();
+							} catch( Exception e ) {
+								e.printStackTrace();
+							}
+						}
+					}.start();
+				}
+			}
+			
+			new Thread() {
+				public void run() {
+					try {
+						InputStream os = p.getErrorStream();
+						while( os.read() != -1 ) ;
+						//os.write( binput );
+						os.close();
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+				}
+			}.start();
+			
+			if( output != null ) {
+				//if( output instanceof Path ) {
+					Path outp = (Path)output;
+					try {
+						InputStream is = p.getInputStream();
+						if( outp.getFileName().toString().endsWith(".gz") ) is = new GZIPInputStream( is );
+						Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
+						is.close();
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+				/*} else {
+					final byte[] bout = (byte[])output;
+					
+					try {
+						InputStream is = p.getInputStream();
+						is.read( outp );
+						is.close();
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+				}*/
+			} else {
+				try {
+					InputStream is = p.getInputStream();
+					BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+					String line = br.readLine();
+					while( line != null ) {
+						String str = line + "\n";
+						ta.append( str );
+						
+						line = br.readLine();
+					}
+					br.close();
+					is.close();
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}
+			
+			//p.
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		return blist;
+		
+		/*boolean blist = commands instanceof List;
+		List<String> lcmd = blist ? (List)commands : commandsList;
+		/*for( String s : lcmd ) {
+			System.err.println( s );
+		}*
+		ProcessBuilder pb = new ProcessBuilder( lcmd );
+		//pb.environment().putAll( System.getenv() );
+		//System.err.println( pb.environment() );
+		if( workingdir != null ) {
+			//System.err.println( "blblblbl " + workingdir.toFile() );
+			pb.directory( workingdir.toFile() );
+		}
+		//pb.redirectErrorStream( true );
+		final Process p = pb.start();
+		dialog.addWindowListener( new WindowListener() {
+			
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				if( p != null ) {
+					interupted = true;
+					p.destroy();
+					//tt.interrupt();
+				}
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {}
+		});
+		dialog.setVisible( true );
+		
+		if( input != null ) {
+			if( input instanceof Path ) {
+				final Path inp = (Path)input;
+				new Thread() {
+					public void run() {
+						try {
+							OutputStream os = p.getOutputStream();
+							//os.write( "simmi".getBytes() );
+							Files.copy(inp, os);
+							os.close();
+						} catch( Exception e ) {
+							e.printStackTrace();
+						}
+					}
+				}.start();
+			} else {
+				final byte[] binput = (byte[])input;
+				new Thread() {
+					public void run() {
+						try {
+							OutputStream os = p.getOutputStream();
+							os.write( binput );
+							os.close();
+						} catch( Exception e ) {
+							e.printStackTrace();
+						}
+					}
+				}.start();
+			}
+		}
+		
+		if( output != null ) {
+			//if( output instanceof Path ) {
+				Path outp = (Path)output;
+				try {
+					InputStream is = p.getInputStream();
+					if( outp.getFileName().toString().endsWith(".gz") ) is = new GZIPInputStream( is );
+					Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
+					is.close();
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			/*} else {
+				final byte[] bout = (byte[])output;
+				
+				try {
+					InputStream is = p.getInputStream();
+					is.read( outp );
+					is.close();
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}*
+		} else {
+			try {
+				InputStream is = p.getInputStream();
+				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+				String line = br.readLine();
+				while( line != null ) {
+					String str = line + "\n";
+					ta.append( str );
+					
+					line = br.readLine();
+				}
+				br.close();
+				is.close();
+			} catch( Exception e ) {
+				e.printStackTrace();
+			}
+		}*/
+	}
+	
+	int tcount;
+	int ttotal;
+	int where = 0;
+	int waiting = 0;
+	boolean ginterupted = false;
+	Object inp = null;
+	Path outp = null;
+	Path wdir = null;
+	public String runProcessBuilder( String title, @SuppressWarnings("rawtypes") final List commandsList, final Runnable run, final Object[] cont, boolean paralell ) throws IOException {
 		//System.err.println( pb.toString() );
 		//pb.directory( dir );
 		
@@ -196,148 +434,111 @@ public class NativeRun {
 		}
 		System.err.println();
 		
-		Runnable runnable = new Runnable() {
-			boolean interupted = false;
+		if( paralell ) {
+			//where = 0;
+			final int ncpu = Runtime.getRuntime().availableProcessors();
 			
-			@Override
-			public void run() {
-				try {
-					Object input = null;
-					Path output = null;
-					Path workingdir = null;
+			final ExecutorService es = Executors.newFixedThreadPool( ncpu );
+			//int usedCpus = 0;
+
+			dialog.addWindowListener( new WindowListener() {
+				
+				@Override
+				public void windowOpened(WindowEvent e) {}
+				
+				@Override
+				public void windowIconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeiconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeactivated(WindowEvent e) {}
+				
+				@Override
+				public void windowClosing(WindowEvent e) {}
+				
+				@Override
+				public void windowClosed(WindowEvent e) {
+					es.shutdownNow();
+				}
+				
+				@Override
+				public void windowActivated(WindowEvent e) {}
+			});
+			dialog.setVisible( true );
+			
+			for( final Object commands : commandsList ) {
+				//final Object commands = commandsList.get( where );
+				if( commands instanceof Path[] ) {
+					Path[] pp = (Path[])commands;
+					inp = pp[0];
+					outp = pp[1];
+					wdir = pp[2];
+				} else if( commands instanceof Object[] ) {
+					Object[] pp = (Object[])commands;
+					inp = pp[0];
+					outp = (Path)pp[1];
+					wdir = (Path)pp[2];
+				} else {
+					ttotal++;
+					
+					final Object input = inp;
+					final Object output = outp;
+					final Path workingdir = wdir;
+					
+					inp = null;
+					outp = null;
+					wdir = null;
+				
+					final Runnable runnable = new Runnable() {
+						@Override
+						public void run() {
+							startProcess( commands, commandsList, workingdir, input, output, ta, true );
+							
+							if( ++tcount == ttotal ) {
+								pbar.setIndeterminate( false );
+								pbar.setEnabled( false );
+							}
+						}
+					};
+					es.execute( runnable );
+				}
+			}
+			es.shutdown();
+			//es.
+		} else {
+			Runnable runnable = new Runnable() {
+				boolean interupted = false;
+				
+				@Override
+				public void run() {
+					where = 0;
 					for( Object commands : commandsList ) {
 						if( commands instanceof Path[] ) {
 							Path[] pp = (Path[])commands;
-							input = pp[0];
-							output = pp[1];
-							workingdir = pp[2];
+							inp = pp[0];
+							outp = pp[1];
+							wdir = pp[2];
 						} else if( commands instanceof Object[] ) {
 							Object[] pp = (Object[])commands;
-							input = pp[0];
-							output = (Path)pp[1];
-							workingdir = (Path)pp[2];
+							inp = pp[0];
+							outp = (Path)pp[1];
+							wdir = (Path)pp[2];
 						} else {
-							boolean blist = commands instanceof List;
-							List<String> lcmd = blist ? (List)commands : commandsList;
-							/*for( String s : lcmd ) {
-								System.err.println( s );
-							}*/
-							ProcessBuilder pb = new ProcessBuilder( lcmd );
-							//pb.environment().putAll( System.getenv() );
-							//System.err.println( pb.environment() );
-							if( workingdir != null ) {
-								//System.err.println( "blblblbl " + workingdir.toFile() );
-								pb.directory( workingdir.toFile() );
-							}
-							//pb.redirectErrorStream( true );
-							final Process p = pb.start();
-							dialog.addWindowListener( new WindowListener() {
-								
-								@Override
-								public void windowOpened(WindowEvent e) {}
-								
-								@Override
-								public void windowIconified(WindowEvent e) {}
-								
-								@Override
-								public void windowDeiconified(WindowEvent e) {}
-								
-								@Override
-								public void windowDeactivated(WindowEvent e) {}
-								
-								@Override
-								public void windowClosing(WindowEvent e) {}
-								
-								@Override
-								public void windowClosed(WindowEvent e) {
-									if( p != null ) {
-										interupted = true;
-										p.destroy();
-										//tt.interrupt();
-									}
-								}
-								
-								@Override
-								public void windowActivated(WindowEvent e) {}
-							});
-							dialog.setVisible( true );
+							final Object input = inp;
+							final Object output = outp;
+							final Path workingdir = wdir;
 							
-							if( input != null ) {
-								if( input instanceof Path ) {
-									final Path inp = (Path)input;
-									new Thread() {
-										public void run() {
-											try {
-												OutputStream os = p.getOutputStream();
-												//os.write( "simmi".getBytes() );
-												Files.copy(inp, os);
-												os.close();
-											} catch( Exception e ) {
-												e.printStackTrace();
-											}
-										}
-									}.start();
-								} else {
-									final byte[] binput = (byte[])input;
-									new Thread() {
-										public void run() {
-											try {
-												OutputStream os = p.getOutputStream();
-												os.write( binput );
-												os.close();
-											} catch( Exception e ) {
-												e.printStackTrace();
-											}
-										}
-									}.start();
-								}
-							}
+							inp = null;
+							outp = null;
+							wdir = null;
 							
-							if( output != null ) {
-								//if( output instanceof Path ) {
-									Path outp = (Path)output;
-									try {
-										InputStream is = p.getInputStream();
-										Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
-										is.close();
-									} catch( Exception e ) {
-										e.printStackTrace();
-									}
-								/*} else {
-									final byte[] bout = (byte[])output;
-									
-									try {
-										InputStream is = p.getInputStream();
-										is.read( outp );
-										is.close();
-									} catch( Exception e ) {
-										e.printStackTrace();
-									}
-								}*/
-							} else {
-								try {
-									InputStream is = p.getInputStream();
-									BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-									String line = br.readLine();
-									while( line != null ) {
-										String str = line + "\n";
-										ta.append( str );
-										
-										line = br.readLine();
-									}
-									br.close();
-									is.close();
-								} catch( Exception e ) {
-									e.printStackTrace();
-								}
-							}
-							
-							input = null;
-							output = null;
-							workingdir = null;
+							boolean blist = startProcess( where, commandsList, workingdir, input, output, ta, false );
 							
 							if( !blist ) break;
 						}
+						where++;
 					}
 					
 					/*System.err.println("hereok");
@@ -361,7 +562,7 @@ public class NativeRun {
 					
 					String result = ta.getText().trim();
 					if( run != null ) {
-						cont[0] = interupted ? null : ""; 
+						cont[0] = interupted ? null : "";
 						cont[1] = result;
 						cont[2] = new Date( System.currentTimeMillis() ).toString();
 						run.run();
@@ -369,13 +570,11 @@ public class NativeRun {
 					
 					pbar.setIndeterminate( false );
 					pbar.setEnabled( false );
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
-			}
-		};
-		final Thread trd = new Thread( runnable );
-		trd.start();
+			};
+			final Thread trd = new Thread( runnable );
+			trd.start();
+		}
 		
 		//dialog.setVisible( false );
 		return "";
