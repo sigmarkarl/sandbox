@@ -13391,10 +13391,12 @@ public class GeneSet extends JApplet {
 						Path dbPath = Files.createTempFile("all", ".fsa");
 						BufferedWriter bw = Files.newBufferedWriter(dbPath);
 						for( Gene g : genelist ) {
-							StringBuilder gs = g.tegeval.getProteinSequence();
-							bw.append(">" + g.id + "\n");
-							for (int i = 0; i < gs.length(); i += 70) {
-								bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+							if( g.tag == null ) {
+								StringBuilder gs = g.tegeval.getProteinSequence();
+								bw.append(">" + g.id + "\n");
+								for (int i = 0; i < gs.length(); i += 70) {
+									bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+								}
 							}
 						}
 						bw.close();
@@ -13482,6 +13484,47 @@ public class GeneSet extends JApplet {
 		AbstractAction	importgeneclusteringaction = new AbstractAction("Import gene clustering") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				JPanel panel = new JPanel();
+				GridBagLayout grid = new GridBagLayout();
+				GridBagConstraints c = new GridBagConstraints();
+				panel.setLayout( grid );
+				
+				JLabel label1 = new JLabel("Id:");
+				JTextField tb1 = new JTextField("0.5");
+				JLabel label2 = new JLabel("Len:");
+				JTextField tb2 = new JTextField("0.5");
+				
+				Dimension d = new Dimension( 300, 30 );
+				JTextField epar = new JTextField();
+				epar.setSize( d );
+				epar.setPreferredSize( d );
+				
+				c.fill = GridBagConstraints.HORIZONTAL;
+				c.gridwidth = 1;
+				c.gridheight = 1;
+				
+				c.gridx = 0;
+				c.gridy = 0;
+				panel.add( label1, c );
+				c.gridx = 1;
+				c.gridy = 0;
+				panel.add( tb1, c );
+				c.gridx = 0;
+				c.gridy = 1;
+				panel.add( label2, c );
+				c.gridx = 1;
+				c.gridy = 1;
+				panel.add( tb2, c );
+				c.gridx = 0;
+				c.gridy = 2;
+				c.gridwidth = 2;
+				panel.add( epar, c );
+				
+				JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );
+				
+				float id = Float.parseFloat( tb1.getText() );
+				float len = Float.parseFloat( tb2.getText() );
+				
 				JFileChooser fc = new JFileChooser();
 				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
 					Path p = fc.getSelectedFile().toPath();
@@ -13499,7 +13542,7 @@ public class GeneSet extends JApplet {
 						String uristr = "jar:" + zippath.toUri();
 						zipuri = URI.create( uristr );
 						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
+						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len);
 						zipfilesystem.close();
 					} catch (IOException e1) {
 						if( zipfilesystem != null ) {
