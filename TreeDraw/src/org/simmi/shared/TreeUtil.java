@@ -1,5 +1,6 @@
 package org.simmi.shared;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -1927,7 +1928,7 @@ public class TreeUtil {
 	}
 	
 	public static void maintree( String[] args ) throws IOException {					
-		byte[] bb = Files.readAllBytes( Paths.get("c:/influenza.tree") ); //"c:/sample.tree") ); //"c:/influenza.tree") );
+		byte[] bb = Files.readAllBytes( Paths.get("/Users/sigmar/777.tre") ); //"c:/sample.tree") ); //"c:/influenza.tree") );
 		String str = new String( bb );
 		String treestr = null;;
 		
@@ -1942,11 +1943,33 @@ public class TreeUtil {
 		} else treestr = str.replaceAll("[\r\n]+", "");
 		
 		if( treestr != null ) {
-			System.err.println( treestr.substring( treestr.length()-10 ) );
+			//System.err.println( treestr.substring( treestr.length()-10 ) );
 			
 			TreeUtil treeutil = new TreeUtil();
 			treeutil.init( treestr, false, null, null, false, null, null, false );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
+			treeutil.grisj( treeutil.getNode() );
+			System.err.println( treeutil.getNode().toString().length() );
 			System.err.println( treeutil.getNode() );
+			
 		}
 	}
 	

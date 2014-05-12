@@ -178,6 +178,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Erm;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequences;
 import org.simmi.shared.Serifier;
@@ -199,167 +200,8 @@ public class GeneSet extends JApplet {
 	 * @param args
 	 * @throws IOException
 	 */
-
-	static Map<Character, Character> 	sidechainpolarity = new HashMap<Character, Character>();
-	static Map<Character, Integer> 		sidechaincharge = new HashMap<Character, Integer>();
-	static Map<Character, Double> 		hydropathyindex = new HashMap<Character, Double>();
-	static Map<Character, Double> 		aamass = new HashMap<Character, Double>();
-	static Map<Character, Double> 		isoelectricpoint = new HashMap<Character, Double>();
-
-	static Color[] colorCodes = new Color[9];
+	
 	static SerifyApplet currentSerify = null;
-
-	// abundance
-	// aliphatic - aromatic
-	// size
-	// sortcoeff
-
-	static List<Erm> uff = new ArrayList<Erm>();
-	static List<Erm> uff2 = new ArrayList<Erm>();
-	static List<Erm> uff3 = new ArrayList<Erm>();
-	static List<Erm> mass = new ArrayList<Erm>();
-	static List<Erm> isoel = new ArrayList<Erm>();
-
-	static {
-		sidechainpolarity.put('A', 'n');
-		sidechainpolarity.put('R', 'p');
-		sidechainpolarity.put('N', 'p');
-		sidechainpolarity.put('D', 'p');
-		sidechainpolarity.put('C', 'n');
-		sidechainpolarity.put('E', 'p');
-		sidechainpolarity.put('Q', 'p');
-		sidechainpolarity.put('G', 'n');
-		sidechainpolarity.put('H', 'p');
-		sidechainpolarity.put('I', 'n');
-		sidechainpolarity.put('L', 'n');
-		sidechainpolarity.put('K', 'p');
-		sidechainpolarity.put('M', 'n');
-		sidechainpolarity.put('F', 'n');
-		sidechainpolarity.put('P', 'n');
-		sidechainpolarity.put('S', 'p');
-		sidechainpolarity.put('T', 'p');
-		sidechainpolarity.put('W', 'n');
-		sidechainpolarity.put('Y', 'p');
-		sidechainpolarity.put('V', 'n');
-
-		sidechaincharge.put('A', 0);
-		sidechaincharge.put('R', 1);
-		sidechaincharge.put('N', 0);
-		sidechaincharge.put('D', -1);
-		sidechaincharge.put('C', 0);
-		sidechaincharge.put('E', -1);
-		sidechaincharge.put('Q', 0);
-		sidechaincharge.put('G', 0);
-		sidechaincharge.put('H', 0);
-		sidechaincharge.put('I', 0);
-		sidechaincharge.put('L', 0);
-		sidechaincharge.put('K', 1);
-		sidechaincharge.put('M', 0);
-		sidechaincharge.put('F', 0);
-		sidechaincharge.put('P', 0);
-		sidechaincharge.put('S', 0);
-		sidechaincharge.put('T', 0);
-		sidechaincharge.put('W', 0);
-		sidechaincharge.put('Y', 0);
-		sidechaincharge.put('V', 0);
-
-		hydropathyindex.put('A', 1.8);
-		hydropathyindex.put('R', -4.5);
-		hydropathyindex.put('N', -3.5);
-		hydropathyindex.put('D', -3.5);
-		hydropathyindex.put('C', 2.5);
-		hydropathyindex.put('E', -3.5);
-		hydropathyindex.put('Q', -3.5);
-		hydropathyindex.put('G', -0.4);
-		hydropathyindex.put('H', -3.2);
-		hydropathyindex.put('I', 4.5);
-		hydropathyindex.put('L', 3.8);
-		hydropathyindex.put('K', -3.9);
-		hydropathyindex.put('M', 1.9);
-		hydropathyindex.put('F', 2.8);
-		hydropathyindex.put('P', -1.6);
-		hydropathyindex.put('S', -0.8);
-		hydropathyindex.put('T', -0.7);
-		hydropathyindex.put('W', -0.9);
-		hydropathyindex.put('Y', -1.3);
-		hydropathyindex.put('V', 4.2);
-
-		aamass.put('A', 89.09404);
-		aamass.put('C', 121.15404);
-		aamass.put('D', 133.10384);
-		aamass.put('E', 147.13074);
-		aamass.put('F', 165.19184);
-		aamass.put('G', 75.06714);
-		aamass.put('H', 155.15634);
-		aamass.put('I', 131.17464);
-		aamass.put('K', 146.18934);
-		aamass.put('L', 131.17464);
-		aamass.put('M', 149.20784);
-		aamass.put('N', 132.11904);
-		aamass.put('O', 100.0);
-		aamass.put('P', 115.13194);
-		aamass.put('Q', 146.14594);
-		aamass.put('R', 174.20274);
-		aamass.put('S', 105.09344);
-		aamass.put('T', 119.12034);
-		aamass.put('U', 168.053);
-		aamass.put('V', 117.14784);
-		aamass.put('W', 204.22844);
-		aamass.put('Y', 181.19124);
-
-		isoelectricpoint.put('A', 6.01);
-		isoelectricpoint.put('C', 5.05);
-		isoelectricpoint.put('D', 2.85);
-		isoelectricpoint.put('E', 3.15);
-		isoelectricpoint.put('F', 5.49);
-		isoelectricpoint.put('G', 6.06);
-		isoelectricpoint.put('H', 7.6);
-		isoelectricpoint.put('I', 6.05);
-		isoelectricpoint.put('K', 9.6);
-		isoelectricpoint.put('L', 6.01);
-		isoelectricpoint.put('M', 5.74);
-		isoelectricpoint.put('N', 5.41);
-		isoelectricpoint.put('O', 21.0);
-		isoelectricpoint.put('P', 6.3);
-		isoelectricpoint.put('Q', 5.65);
-		isoelectricpoint.put('R', 10.76);
-		isoelectricpoint.put('S', 5.68);
-		isoelectricpoint.put('T', 5.6);
-		isoelectricpoint.put('U', 20.0);
-		isoelectricpoint.put('V', 6.0);
-		isoelectricpoint.put('W', 5.89);
-		isoelectricpoint.put('Y', 5.64);
-
-		for (char c : hydropathyindex.keySet()) {
-			double d = hydropathyindex.get(c);
-			uff.add(new Erm(d, c));
-		}
-		Collections.sort(uff);
-
-		for (char c : sidechainpolarity.keySet()) {
-			double d = sidechainpolarity.get(c);
-			uff2.add(new Erm(d, c));
-		}
-		Collections.sort(uff2);
-
-		for (char c : sidechaincharge.keySet()) {
-			double d = sidechaincharge.get(c);
-			uff3.add(new Erm(d, c));
-		}
-		Collections.sort(uff3);
-
-		for (char c : aamass.keySet()) {
-			double d = aamass.get(c);
-			mass.add(new Erm(d, c));
-		}
-		Collections.sort(mass);
-
-		for (char c : isoelectricpoint.keySet()) {
-			double d = isoelectricpoint.get(c);
-			isoel.add(new Erm(d, c));
-		}
-		Collections.sort(isoel);
-	}
 
 	/*private static StringBuilder dnaSearch(String query) {
 		/*
@@ -613,7 +455,7 @@ public class GeneSet extends JApplet {
 			//if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
 			return genename.contains("hypothetical") ? "hth-p" : genename;
 		} else if( selectedItem.equals("Group names") ) {
-			String genename = gene.getGeneGroup().getCommonName();
+			String genename = gene.getGeneGroup() != null ? gene.getGeneGroup().getCommonName() : "";
 			//if( genename.contains("_") ) genename = gene.getGeneGroup().getCommonName();
 			return genename.contains("hypothetical") ? "hth-p" : genename;
 		} else if( selectedItem.equals("Species") ) {
@@ -3325,10 +3167,10 @@ public class GeneSet extends JApplet {
 		double dt = 0.0;
 		Set<String> notfound = new HashSet<String>();
 		Set<String> notfound2 = new HashSet<String>();
-		for (int i = 0; i < Math.pow(uff.size(), val); i++) {
+		for (int i = 0; i < Math.pow(Sequence.uff.size(), val); i++) {
 			String e = "";
 			for (int k = 0; k < val; k++) {
-				e += uff.get((i / (int) Math.pow(uff.size(), val - (k + 1))) % uff.size()).c;
+				e += Sequence.uff.get((i / (int) Math.pow(Sequence.uff.size(), val - (k + 1))) % Sequence.uff.size()).c;
 			}
 
 			if (aa1map.containsKey(e) || aa2map.containsKey(e)) {
@@ -3416,7 +3258,7 @@ public class GeneSet extends JApplet {
 		}
 		br.close();
 
-		for (Erm e : isoel) {
+		for (Erm e : Sequence.isoel) {
 			char c = e.c;
 			if (aa1map.containsKey(c)) {
 				System.err.println(e.d + "\t" + c + "\t" + (aa1map.get(c) / (double) t1) + "\t" + (aa2map.containsKey(c) ? (aa2map.get(c) / (double) t2) : "-"));
@@ -11114,6 +10956,29 @@ public class GeneSet extends JApplet {
 				}
 			}
 		}
+		
+		if( filterset.isEmpty() ) {
+			int i = 0;
+			if( table.getModel() == groupModel ) {
+				for( GeneGroup gg : allgenegroups ) {
+					for( Gene g : gg.genes ) {
+						if( g.refid.toLowerCase().contains(ustr) ) {
+							filterset.add(i);
+							break;
+						}
+					}
+					i++;
+				}
+			} else {
+				for( Gene g : genelist ) {
+					if( g.refid.toLowerCase().contains(ustr) ) {
+						filterset.add(i);
+					}
+					i++;
+				}
+			}
+		}
+		
 		updateFilter(table, filter, label);
 	}
 
@@ -13068,15 +12933,15 @@ public class GeneSet extends JApplet {
 	}
 
 	private static void setColors() {
-		colorCodes[0] = new Color(180, 255, 180);
-		colorCodes[1] = new Color(180, 245, 190);
-		colorCodes[2] = new Color(180, 235, 200);
-		colorCodes[3] = new Color(180, 225, 210);
-		colorCodes[4] = new Color(180, 215, 220);
-		colorCodes[5] = new Color(180, 205, 230);
-		colorCodes[6] = new Color(180, 195, 240);
-		colorCodes[7] = new Color(180, 185, 250);
-		colorCodes[8] = new Color(180, 180, 255);
+		Sequence.colorCodes[0] = new Color(180, 255, 180);
+		Sequence.colorCodes[1] = new Color(180, 245, 190);
+		Sequence.colorCodes[2] = new Color(180, 235, 200);
+		Sequence.colorCodes[3] = new Color(180, 225, 210);
+		Sequence.colorCodes[4] = new Color(180, 215, 220);
+		Sequence.colorCodes[5] = new Color(180, 205, 230);
+		Sequence.colorCodes[6] = new Color(180, 195, 240);
+		Sequence.colorCodes[7] = new Color(180, 185, 250);
+		Sequence.colorCodes[8] = new Color(180, 180, 255);
 	}
 
 	public void saveContigOrder() throws IOException {
