@@ -5,7 +5,6 @@
 	<classpathentry kind="lib" path="/jdk/jdk8/javaws.jar"/>
 	<classpathentry kind="lib" path="/jdk/jdk8/plugin.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/javafasta"/>
 	<classpathentry kind="lib" path="gdata-client-1.0.jar"/>
 	<classpathentry kind="lib" path="gdata-client-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="gdata-core-1.0.jar"/>
