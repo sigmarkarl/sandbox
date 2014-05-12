@@ -532,13 +532,13 @@ public class SerifyApplet extends JApplet {
 			
 			//Path dbPathFixed = dbPath.getParent().resolve(dbPath.getFileName().toString()+".blastout");
 			
-			JFileChooser fc = new JFileChooser();
+			/*JFileChooser fc = new JFileChooser();
 			Path blastpath = null;
 			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 			if( fc.showOpenDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 				blastpath = fc.getSelectedFile().toPath();
 				if( !Files.isDirectory(selectedpath) ) blastpath = blastpath.getParent();
-			}
+			}*/
 			
 			
 			String[] cmds = new String[] { "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
@@ -550,7 +550,7 @@ public class SerifyApplet extends JApplet {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					Path	path = (Path)table.getValueAt( r, 3 );
-					String type = (String)table.getValueAt( r, 2 );
+					String 	type = (String)table.getValueAt( r, 2 );
 					
 					//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
 					String blastFile = dbType.equals("prot") ? type.equals("prot") ? "blastp" : "blastx" : "blastn";
@@ -590,7 +590,7 @@ public class SerifyApplet extends JApplet {
 					int procs = Runtime.getRuntime().availableProcessors();
 					
 					List<String>	lcmd = new ArrayList<String>();
-					String[] bcmds = { blastpath.resolve( blastFile ).toString(), "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+					String[] bcmds = { blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
 					String[] exts = extrapar.trim().split("[\t ]+");
 					
 					//String[] nxst = { "-out", outPathFixed };
