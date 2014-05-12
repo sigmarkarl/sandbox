@@ -60,6 +60,10 @@ public class Gene {
 	public int getMaxLength() {
 		return tegeval.getProteinLength();
 	}
+	
+	public String getTag() {
+		return tag;
+	}
 
 	public void setAa(String aa) {
 		if (aa != null) {

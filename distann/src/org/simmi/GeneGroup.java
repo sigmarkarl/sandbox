@@ -2,6 +2,7 @@ package org.simmi;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +31,12 @@ public class GeneGroup {
 			g.getFasta( sb );
 		}
 		return sb.toString();
+	}
+	
+	public void getFasta( Writer w ) throws IOException {
+		for( Gene g : genes ) {
+			g.getFasta( w );
+		}
 	}
 	
 	public int getMaxCyc() {
@@ -211,6 +218,14 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public String getCommonTag() {
+		for( Gene g : genes ) {
+			String tag = g.getTag();
+			if( tag != null ) return tag;
+		}
+		return null;
+	}
+	
 	public String getCommonId() {
 		String ret = null;
 		for( Gene g : genes ) {
@@ -270,6 +285,10 @@ public class GeneGroup {
 		String ret = null;
 		for( Gene g : genes ) {
 			if( ret == null || (g.refid != null && g.refid.length() > 0 && !g.refid.contains("scaffold") && !g.refid.contains("contig")) ) ret = g.refid;
+			
+			if( this.getIndex() == 4049 ) {
+				System.err.println( g.refid + "  " + g.getSpecies() );
+			}
 		}
 		return ret;
 	}
