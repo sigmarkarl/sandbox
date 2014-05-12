@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class Tool {
 	public static void mu() throws IOException {
-		FileReader fr = new FileReader("/vg454flx/Metagenome_5_6_7_control_7.2013/seqc_on_orig.blastout");
+		FileReader fr = new FileReader("/home/olafur/YL_shotgun_seqcap_16.02.2014/assembly/yl_ylnew.blastout");
 		BufferedReader br = new BufferedReader( fr );
 		String line = br.readLine();
 		int matchcount = 0;
@@ -47,7 +47,7 @@ public class Tool {
 		Set<String>	set2 = new HashSet<String>();
 		
 		try {
-			FileReader fr1 = new FileReader("/virtual/cont.txt");
+			FileReader fr1 = new FileReader("/home/olafur/SeqCap_urvinnsla/seqcapcontrol.txt");
 			BufferedReader br1 = new BufferedReader( fr1 );
 			String line = br1.readLine();
 			while( line != null ) {
@@ -56,7 +56,7 @@ public class Tool {
 			}
 			fr1.close();
 			
-			FileReader fr2 = new FileReader("/virtual/orig.txt");
+			FileReader fr2 = new FileReader("/home/olafur/SeqCap_urvinnsla/seqcap.txt");
 			BufferedReader br2 = new BufferedReader( fr2 );
 			line = br2.readLine();
 			while( line != null ) {
