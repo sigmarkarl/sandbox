@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -153,7 +153,7 @@ public class NativeRun {
 	public boolean startProcess( Object commands, List<Object> commandsList, Path workingdir, Object input, Object output, JTextArea ta, boolean paralell ) {
 		//Object commands = commandsList.get( w );
 		boolean blist = commands instanceof List;
-		List<String> lcmd = blist ? (List)commands : commandsList;
+		List<String> lcmd = (List)(blist ? commands : commandsList.get((Integer)commands));
 		/*for( String s : lcmd ) {
 			System.err.println( s );
 		}*/
@@ -220,8 +220,18 @@ public class NativeRun {
 					Path outp = (Path)output;
 					try {
 						InputStream is = p.getInputStream();
-						if( outp.getFileName().toString().endsWith(".gz") ) is = new GZIPInputStream( is );
-						Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
+						if( outp.getFileName().toString().endsWith(".gz") ) {
+							OutputStream os = Files.newOutputStream( outp );
+							GZIPOutputStream gos = new GZIPOutputStream( os );
+							
+							int b = is.read();
+							while( b != -1 ) {
+								gos.write(b);
+								b = is.read();
+							}
+							gos.close();
+							os.close();
+						} else Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
 						is.close();
 					} catch( Exception e ) {
 						e.printStackTrace();
@@ -536,10 +546,11 @@ public class NativeRun {
 							
 							boolean blist = startProcess( where, commandsList, workingdir, input, output, ta, false );
 							
-							if( !blist ) break;
+							//if( !blist ) break;
 						}
 						where++;
 					}
+					//dialog.setVisible( true );
 					
 					/*System.err.println("hereok");
 					
@@ -573,6 +584,33 @@ public class NativeRun {
 				}
 			};
 			final Thread trd = new Thread( runnable );
+			
+			dialog.addWindowListener( new WindowListener() {	
+				@Override
+				public void windowOpened(WindowEvent e) {}
+				
+				@Override
+				public void windowIconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeiconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeactivated(WindowEvent e) {}
+				
+				@Override
+				public void windowClosing(WindowEvent e) {}
+				
+				@Override
+				public void windowClosed(WindowEvent e) {
+					trd.interrupt();
+				}
+				
+				@Override
+				public void windowActivated(WindowEvent e) {}
+			});
+			dialog.setVisible( true );
+			
 			trd.start();
 		}
 		
