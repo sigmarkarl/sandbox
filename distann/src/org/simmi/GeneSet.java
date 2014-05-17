@@ -9656,7 +9656,7 @@ public class GeneSet extends JApplet {
 				}*/
 				
 				Serifier 	serifier = getConcatenatedSequences( false );
-				String 		tree = serifier.getFastTree();
+				String 		tree = serifier.getFastTree( serifier.lseq );
 				
 				TreeUtil 	tu = new TreeUtil();
 				Node 		n = tu.parseTreeRecursive( tree, false );
@@ -9812,7 +9812,7 @@ public class GeneSet extends JApplet {
 						serifier.addSequence( seq );			
 					}
 
-					String tree = serifier.getFastTree();
+					String tree = serifier.getFastTree( serifier.lseq );
 					Node n = treeutil.parseTreeRecursive( tree, false );
 					treeutil.setLoc( 0 );
 					n.nodeCalcMap( nmap );
