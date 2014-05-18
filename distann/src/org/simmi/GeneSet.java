@@ -474,6 +474,192 @@ public class GeneSet extends JApplet {
 		return "";
 	}
 	
+	private void loci2aaseq( List<Set<String>> lclust ) {
+		for( Set<String> clust : lclust ) {
+			for( String line : clust ) {
+				Tegeval tv = new Tegeval();
+				String cont = line.substring(1) + "";
+				String[] split = cont.split("#");
+				String lname = split[0].trim().replace(".fna", "");
+				//prevline = line;
+				int start = 0;
+				int stop = -1;
+				int dir = 0;
+				
+				boolean succ = false;
+				int i = 0;
+				while( !succ && i+3 < split.length ) {
+					succ = true;
+					try {
+						start = Integer.parseInt(split[i+1].trim());
+						stop = Integer.parseInt(split[i+2].trim());
+						dir = Integer.parseInt(split[i+3].trim());
+					} catch( Exception e ) {
+						succ = false;
+						lname += split[i+1];
+						e.printStackTrace();
+					}
+					i++;
+				}
+				
+				String contigstr = null;
+				String contloc = null;
+				
+				String origin;
+				String id;
+				String name;
+				i = lname.lastIndexOf('[');
+				if( i == -1 ) {
+					i = lname.indexOf("contig");
+					if( i == -1 ) {
+						i = lname.indexOf("scaffold");
+					}
+					int u = lname.lastIndexOf('_');
+					if( u == -1 ) {
+						System.err.println();
+					}
+					contigstr = lname.substring(0, u);
+					origin = lname.substring(0, i-1);
+					contloc = lname.substring(i, lname.length());
+					name = lname;
+					id = lname;
+				} else {
+					int n = lname.indexOf(']', i+1);
+					contigstr = lname.substring(i+1, n);
+					int u = lname.indexOf(' ');
+					id = lname.substring(0, u);
+					if( id.contains("..") ) {
+						id = lname.substring(i+1, n) + "_" + id;
+					}
+					
+					name = lname.substring(u+1, i).trim();
+					
+					u = Contig.specCheck( contigstr );
+					
+					if( u == -1 ) {
+						u = contigstr.indexOf("contig");
+						if( u == -1 ) u = contigstr.indexOf("scaffold");
+						if( u == -1 ) u = contigstr.lastIndexOf('_');
+						origin = contigstr.substring(0, u-1);
+						contloc = contigstr.substring(u, contigstr.length());
+					} else {
+						n = contigstr.indexOf("_", u+1);
+						if( n == -1 ) n = contigstr.length();
+						origin = contigstr.substring(0, n);
+						contloc = n < contigstr.length() ? contigstr.substring(n+1) : "";
+					}
+					
+					if( line != null ) {
+						i = line.lastIndexOf('#');
+						if( i != -1 ) {
+							u = line.indexOf(';', i+1);
+							if( u != -1 ) {
+								id = line.substring(u+1, line.length());
+								mu.add( id );
+							}
+						}
+					}
+				}
+				
+				Contig contig;
+				if( contigmap.containsKey( contigstr ) ) {
+					contig = contigmap.get( contigstr );
+				} else {
+					 contig = new Contig( contigstr );
+				}
+				
+				tv.init( lname, contig, contloc, start, stop, dir );
+				tv.name = line.substring(1);
+				//ac.setName( lname );
+				//tv.setAlignedSequence( ac );
+				aas.put( lname, tv );
+				
+				//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
+				contig.add( tv );
+				
+				String idstr = null;
+				int ids = name.lastIndexOf('(');
+				if( ids != -1 ) {
+					int eds = name.indexOf(')', ids+1);
+					if( eds != -1 ) {
+						idstr = name.substring(ids+1,eds);
+						name = name.substring(0, ids);
+					}
+				}
+				
+				String addname = "";
+				String newid = id;
+				String neworigin = origin;
+				if( unresolvedmap.containsKey(id) ) {
+					String map = unresolvedmap.get(id);
+					int f = map.indexOf('|');
+					int l = map.indexOf('|', f+1);
+					int n = map.indexOf('[', l+1);
+					int e = map.indexOf(']', n+1);
+					if( l != -1 ) newid = map.substring(f+1,l);
+					if( n != -1 ) addname = ":" + map.substring(l+1,n).trim();
+					if( e != -1 ) neworigin = map.substring(n+1,e).trim();
+				}
+				
+				String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
+				Gene gene = new Gene( null, id, newname, origin );
+				gene.designation = designations != null ? designations.get( id ) : null;
+				gene.refid = newid;
+				gene.setIdStr( idstr );
+				gene.allids = new HashSet<String>();
+				gene.allids.add( newid );
+				if( idstr != null ) {
+					int ec = idstr.indexOf("EC");
+					if( ec != -1 ) {
+						//int ecc = name.indexOf(')', ec+1);
+						//if( ecc == -1 ) ecc = name.length();
+						int k = ec+3;
+						char c = idstr.charAt(k);
+						while( (c >= '0' && c <= '9') || c == '.' ) {
+							c = idstr.charAt( k++ );
+							if( k == idstr.length() ) {
+								k++;
+								break;
+							}
+						}
+						gene.ecid = idstr.substring(ec+2, k-1).trim();
+					}
+				
+					int go = idstr.indexOf("GO:");
+					while( go != -1 ) {
+						int ngo = idstr.indexOf("GO:", go+1);
+						
+						if (gene.funcentries == null)
+							gene.funcentries = new HashSet<Function>();
+						
+						String goid;
+						if( ngo != -1 ) goid = idstr.substring(go, ngo);
+						else {
+							int ni = go+10;//Math.minname.indexOf(')', go+1);
+							goid = idstr.substring( go, ni );
+						}
+						Function func;
+						if( funcmap.containsKey( goid ) ) {
+							func = funcmap.get( goid );
+						} else {
+							func = new Function( goid );
+							funcmap.put( goid, func );
+						}
+						gene.funcentries.add( func );
+						
+						go = ngo;
+					}
+				}
+				refmap.put( id, gene );
+				
+				tv.setGene( gene );
+				tv.setTegund( origin );
+				
+				gene.tegeval = tv;
+			}
+		}
+	}
+	
 	Set<String>	mu = new HashSet<String>();
 	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
 		//BufferedReader br = new BufferedReader(rd);
@@ -6455,9 +6641,15 @@ public class GeneSet extends JApplet {
 			genefilterset.add( gg.index );
 			for( Gene g : gg.genes ) {
 				Tegeval next = g.tegeval.getNext();
-				if( next != null ) genefilterset.add( next.getGene().getGeneGroup().index );
+				if( next != null ) {
+					GeneGroup ngg = next.getGene().getGeneGroup();
+					if( ngg != null ) genefilterset.add( ngg.index );
+				}
 				Tegeval prev = g.tegeval.getPrevious();
-				if( prev != null ) genefilterset.add( prev.getGene().getGeneGroup().index );
+				if( prev != null ) {
+					GeneGroup pgg = prev.getGene().getGeneGroup();
+					if( pgg != null ) genefilterset.add( pgg.index );
+				}
 			}
 		}
 		
@@ -11813,7 +12005,12 @@ public class GeneSet extends JApplet {
 			//}
 			
 			nf = zipfilesystem.getPath("/clusters.txt");
-			if( Files.exists( nf ) ) uclusterlist = loadSimpleClusters( Files.newBufferedReader(nf) );
+			if( Files.exists( nf ) ) {
+				uclusterlist = loadSimpleClusters( Files.newBufferedReader(nf) );
+				if( refmap.size() == 0 ) {
+					loci2aaseq( uclusterlist );
+				}
+			}
 			nf = zipfilesystem.getPath("/cog.blastout");
 			if( Files.exists( nf ) ) cogmap = loadcogmap( Files.newBufferedReader(nf) );
 			nf = zipfilesystem.getPath("/cazy");
@@ -13418,7 +13615,7 @@ public class GeneSet extends JApplet {
 					zipuri = URI.create( uristr );
 					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 					//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
-					Path aldir = Paths.get("/Users/sigmar/aligned/"); //zipfilesystem.getPath("aligned");
+					Path aldir = zipfilesystem.getPath("aligned");
 					final Path aligneddir = Files.exists( aldir ) ? aldir : Files.createDirectory( aldir );
 					
 					NativeRun nrun = new NativeRun();
@@ -13439,11 +13636,18 @@ public class GeneSet extends JApplet {
 					
 					Collection<GeneGroup> ggset;
 					int[] rr = table.getSelectedRows();
-					if( rr.length == 0 ) ggset = allgenegroups;
-					else {
-						ggset = new HashSet<GeneGroup>();
+					ggset = new HashSet<GeneGroup>();
+					if( rr.length == 0 ) {
+						for( GeneGroup gg : allgenegroups ) {
+							//GeneGroup gg = allgenegroups.get(table.convertRowIndexToModel(r));
+							//gg.getCommonTag()
+							if( gg != null && gg.getCommonTag() == null && gg.size() > 1 ) ggset.add( gg );
+						}
+					} else {
 						for( int r : rr ) {
-							ggset.add( allgenegroups.get(table.convertRowIndexToModel(r) ));
+							GeneGroup gg = allgenegroups.get(table.convertRowIndexToModel(r));
+							//gg.getCommonTag()
+							if( gg != null && gg.getCommonTag() == null && gg.size() > 1 ) ggset.add( gg );
 						}
 					}
 					
