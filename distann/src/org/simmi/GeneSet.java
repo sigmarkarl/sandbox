@@ -474,11 +474,11 @@ public class GeneSet extends JApplet {
 		return "";
 	}
 	
-	private void loci2aaseq( List<Set<String>> lclust ) {
+	private void loci2aaseq( List<Set<String>> lclust, Map<String,Gene> refmap, Map<String,String> designations ) {
 		for( Set<String> clust : lclust ) {
 			for( String line : clust ) {
 				Tegeval tv = new Tegeval();
-				String cont = line.substring(1) + "";
+				String cont = line;
 				String[] split = cont.split("#");
 				String lname = split[0].trim().replace(".fna", "");
 				//prevline = line;
@@ -569,7 +569,7 @@ public class GeneSet extends JApplet {
 				}
 				
 				tv.init( lname, contig, contloc, start, stop, dir );
-				tv.name = line.substring(1);
+				tv.name = line;
 				//ac.setName( lname );
 				//tv.setAlignedSequence( ac );
 				aas.put( lname, tv );
@@ -2182,7 +2182,7 @@ public class GeneSet extends JApplet {
 						//if( u == i+1 ) {
 							String loc =  trimline.substring(u+1, k == -1 ? trimline.length()-1: k).trim();
 							trset.add( loc );
-						} else trset.add( trimline.substring(s, i).trim() );
+						} else trset.add( trimline.substring(s, /*i*/k == -1 ? trimline.length()-1: k).trim() );
 					
 						if( k == -1 ) {
 							i = -1;
@@ -12008,7 +12008,7 @@ public class GeneSet extends JApplet {
 			if( Files.exists( nf ) ) {
 				uclusterlist = loadSimpleClusters( Files.newBufferedReader(nf) );
 				if( refmap.size() == 0 ) {
-					loci2aaseq( uclusterlist );
+					loci2aaseq( uclusterlist, refmap, designations );
 				}
 			}
 			nf = zipfilesystem.getPath("/cog.blastout");
@@ -12206,16 +12206,10 @@ public class GeneSet extends JApplet {
 				if( cluster.size() == 1 ) {
 					String s = "";
 					for( String u : cluster ) s = u;
-					if( s.contains("ilva") ) {
-						System.err.println();
-					}
 				}
 	
 				Set<Gene> gset = new HashSet<Gene>();
 				for( String cont : cluster ) {
-					if( i == 4049 ) {
-						System.err.println();
-					}
 					String gid = null;
 					//String spec;
 					int b = cont.lastIndexOf('[');
@@ -12223,13 +12217,13 @@ public class GeneSet extends JApplet {
 						int u = cont.indexOf(']', b+1);
 						int k = cont.indexOf(' ');
 						
-						int n = cont.lastIndexOf('#');
+						/*int n = cont.lastIndexOf('#');
 						if( n != -1 ) {
 							int m = cont.lastIndexOf(';', n+1);
 							if( m != -1 ) {
 								gid = cont.substring(m+1);
 							}
-						}
+						}*/
 						
 						if( gid == null ) {
 							gid = cont.substring(0, k);
@@ -12253,10 +12247,11 @@ public class GeneSet extends JApplet {
 							//spec = scont.substring(0, m);
 						}
 					} else {
-						//int k = cont.indexOf('#');
-						gid = cont;//cont.substring(0, k).trim();
+						int k = cont.indexOf('#');
+						if( k == -1 ) k = cont.length();
+						gid = cont.substring(0, k).trim();
 						
-						int k = cont.indexOf("contig");
+						//int k = cont.indexOf("contig");
 						//spec = cont.substring(0, k-1);
 					}
 					//String[] split = cont.split("_");
@@ -12269,9 +12264,9 @@ public class GeneSet extends JApplet {
 						gset.add(g);
 					} else {
 						if( mu.contains( gid ) ) {
-							System.err.println("e");
+							System.err.println("e " + gid);
 						} else {
-							System.err.println("r");
+							System.err.println("r " + gid);
 						}
 					}
 				}
@@ -12289,9 +12284,6 @@ public class GeneSet extends JApplet {
 				//gg.setGroupGeneCount( gs.size() );
 				
 				for (Gene g : gset) {
-					if( i == 4049 ) {
-						System.err.println( "bleh " + g.getSpecies() );
-					}
 					g.setGeneGroup( gg );
 					/*g.groupIdx = i;
 					g.groupCoverage = ss.size();
