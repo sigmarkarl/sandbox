@@ -471,6 +471,17 @@ public class NativeRun {
 				@Override
 				public void windowClosed(WindowEvent e) {
 					es.shutdownNow();
+					
+					String result = ta.getText().trim();
+					if( run != null ) {
+						cont[0] = null;
+						cont[1] = result;
+						cont[2] = new Date( System.currentTimeMillis() ).toString();
+						run.run();
+					}
+					
+					pbar.setIndeterminate( false );
+					pbar.setEnabled( false );
 				}
 				
 				@Override
@@ -507,6 +518,14 @@ public class NativeRun {
 							startProcess( commands, commandsList, workingdir, input, output, ta, true );
 							
 							if( ++tcount == ttotal ) {
+								String result = ta.getText().trim();
+								if( run != null ) {
+									cont[0] = null;
+									cont[1] = result;
+									cont[2] = new Date( System.currentTimeMillis() ).toString();
+									run.run();
+								}
+								
 								pbar.setIndeterminate( false );
 								pbar.setEnabled( false );
 							}
