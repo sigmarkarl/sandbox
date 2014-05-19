@@ -476,6 +476,9 @@ public class GeneSet extends JApplet {
 	
 	private void loci2aaseq( List<Set<String>> lclust, Map<String,Gene> refmap, Map<String,String> designations ) {
 		for( Set<String> clust : lclust ) {
+			if( clust.size() == 1 ) {
+				System.err.println();
+			}
 			for( String line : clust ) {
 				Tegeval tv = new Tegeval();
 				String cont = line;
