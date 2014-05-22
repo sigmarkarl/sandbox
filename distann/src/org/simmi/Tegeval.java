@@ -230,7 +230,7 @@ public class Tegeval extends Annotation implements Teg {
 		
 		//int i = contshort.tlist.indexOf(this);
 		if( i == 0 ) {
-			Tegeval tv = getContshort().tlist.get(i);
+			Tegeval tv = (Tegeval)getContshort().annset.get(i);
 			for( int m = 0; m < tv.start; m++ ) {
 				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
@@ -242,8 +242,8 @@ public class Tegeval extends Annotation implements Teg {
 				}
 			}
 		} else {
-			Tegeval tv = getContshort().tlist.get(i);
-			Tegeval tvp = getContshort().tlist.get(i-1);
+			Tegeval tv = (Tegeval)getContshort().annset.get(i);
+			Tegeval tvp = (Tegeval)getContshort().annset.get(i-1);
 			for( int m = tvp.stop; m < tv.start; m++ ) {
 				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
@@ -256,8 +256,8 @@ public class Tegeval extends Annotation implements Teg {
 			}
 		}
 		
-		if( i == getContshort().tlist.size()-1 ) {
-			Tegeval tv = getContshort().tlist.get(i);
+		if( i == getContshort().annset.size()-1 ) {
+			Tegeval tv = (Tegeval)getContshort().annset.get(i);
 			for( int m = tv.stop; m < seq.length(); m++ ) {
 				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
@@ -269,8 +269,8 @@ public class Tegeval extends Annotation implements Teg {
 				}
 			}
 		} else {
-			Tegeval tv = getContshort().tlist.get(i);
-			Tegeval tvn = getContshort().tlist.get(i+1);
+			Tegeval tv = (Tegeval)getContshort().annset.get(i);
+			Tegeval tvn = (Tegeval)getContshort().annset.get(i+1);
 			for( int m = tv.stop; m < tvn.start; m++ ) {
 				char c = seq.charAt(m);
 				if( c == 'n' || c == 'N' ) {
