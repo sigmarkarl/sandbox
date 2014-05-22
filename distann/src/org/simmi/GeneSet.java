@@ -476,9 +476,6 @@ public class GeneSet extends JApplet {
 	
 	private void loci2aaseq( List<Set<String>> lclust, Map<String,Gene> refmap, Map<String,String> designations ) {
 		for( Set<String> clust : lclust ) {
-			if( clust.size() == 1 ) {
-				System.err.println();
-			}
 			for( String line : clust ) {
 				String cont = line;
 				String[] split = cont.split("#");
@@ -761,22 +758,6 @@ public class GeneSet extends JApplet {
 						contloc = qsplit[0] + "_" + qsplit[1];
 					}*/
 					
-					Contig contig;
-					if( contigmap.containsKey( contigstr ) ) {
-						contig = contigmap.get( contigstr );
-					} else {
-						 contig = new Contig( contigstr );
-					}
-					
-					tv.init( lname, contig, contloc, start, stop, dir );
-					tv.name = prevline.substring(1);
-					//ac.setName( lname );
-					//tv.setAlignedSequence( ac );
-					aas.put( lname, tv );
-					
-					//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
-					contig.add( tv );
-					
 					String idstr = null;
 					int ids = name.lastIndexOf('(');
 					if( ids != -1 ) {
@@ -801,96 +782,114 @@ public class GeneSet extends JApplet {
 						if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 					}
 					
-					String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
-					Gene gene = new Gene( null, id, newname, origin );
-					gene.designation = designations != null ? designations.get( id ) : null;
-					gene.refid = newid;
-					gene.setIdStr( idstr );
-					gene.allids = new HashSet<String>();
-					gene.allids.add( newid );
-					if( idstr != null ) {
-						int ec = idstr.indexOf("EC");
-						if( ec != -1 ) {
-							//int ecc = name.indexOf(')', ec+1);
-							//if( ecc == -1 ) ecc = name.length();
-							int k = ec+3;
-							char c = idstr.charAt(k);
-							while( (c >= '0' && c <= '9') || c == '.' ) {
-								c = idstr.charAt( k++ );
-								if( k == idstr.length() ) {
-									k++;
-									break;
-								}
-							}
-							gene.ecid = idstr.substring(ec+2, k-1).trim();
-							
-							/*if( ecc > ec+3 ) {
-								gene.ecid = name.substring(ec+3, ecc).trim();
-							} else {
-								System.err.println();
-							}*/
-						}
-					
-						int go = idstr.indexOf("GO:");
-						while( go != -1 ) {
-							int ngo = idstr.indexOf("GO:", go+1);
-							
-							if (gene.funcentries == null)
-								gene.funcentries = new HashSet<Function>();
-							
-							String goid;
-							if( ngo != -1 ) goid = idstr.substring(go, ngo);
-							else {
-								int ni = go+10;//Math.minname.indexOf(')', go+1);
-								goid = idstr.substring( go, ni );
-							}
-							Function func;
-							if( funcmap.containsKey( goid ) ) {
-								func = funcmap.get( goid );
-							} else {
-								func = new Function( goid );
-								funcmap.put( goid, func );
-							}
-							gene.funcentries.add( func );
-							
-							go = ngo;
-						}
-					}
-					//gene.species = new HashMap<String, Teginfo>();
-					
-					//if( !newid.equals(id) ) 
-					//refmap.put( newid, gene );
-					refmap.put( id, gene );
-					
-					tv.setGene( gene );
-					tv.setTegund( origin );
-					
-					//tv.unresolvedGap();
-					
-					//Teginfo ti = new Teginfo();
-					//ti.add( tv );
-					gene.tegeval = tv;
-					
-					/*if( preval != null ) {
-						Contig precontig = preval.getContshort();
-						Contig curcontig = tv.getContshort();
-						boolean bu = precontig.equals( curcontig );
-						//System.err.println( bu + "  " + precontig.toString().equals( curcontig.toString()) + "  " + (precontig == curcontig) );
-						if( bu ) {
-							tv.setPrevious( preval );
-							tv.setNum( preval.getNum()+1 );
-							curcontig.end = tv;
+					if( !refmap.containsKey(id) ) {
+						Contig contig;
+						if( contigmap.containsKey( contigstr ) ) {
+							contig = contigmap.get( contigstr );
 						} else {
-							tv.setNum(0);
-							curcontig.start = tv;
-							curcontig.end = tv;
+							 contig = new Contig( contigstr );
 						}
-					} else tv.setNum( 0 );
-					preval = tv;*/
-					
-					
-					//new Aas(name, ac, start, stop, dir));
-					// aass.add( new Aas(name, ac) );
+						
+						tv.init( lname, contig, contloc, start, stop, dir );
+						tv.name = prevline.substring(1);
+						//ac.setName( lname );
+						//tv.setAlignedSequence( ac );
+						aas.put( lname, tv );
+						
+						//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
+						contig.add( tv );
+						
+						String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
+						Gene gene = new Gene( null, id, newname, origin );
+						gene.designation = designations != null ? designations.get( id ) : null;
+						gene.refid = newid;
+						gene.setIdStr( idstr );
+						gene.allids = new HashSet<String>();
+						gene.allids.add( newid );
+						if( idstr != null ) {
+							int ec = idstr.indexOf("EC");
+							if( ec != -1 ) {
+								//int ecc = name.indexOf(')', ec+1);
+								//if( ecc == -1 ) ecc = name.length();
+								int k = ec+3;
+								char c = idstr.charAt(k);
+								while( (c >= '0' && c <= '9') || c == '.' ) {
+									c = idstr.charAt( k++ );
+									if( k == idstr.length() ) {
+										k++;
+										break;
+									}
+								}
+								gene.ecid = idstr.substring(ec+2, k-1).trim();
+								
+								/*if( ecc > ec+3 ) {
+									gene.ecid = name.substring(ec+3, ecc).trim();
+								} else {
+									System.err.println();
+								}*/
+							}
+						
+							int go = idstr.indexOf("GO:");
+							while( go != -1 ) {
+								int ngo = idstr.indexOf("GO:", go+1);
+								
+								if (gene.funcentries == null)
+									gene.funcentries = new HashSet<Function>();
+								
+								String goid;
+								if( ngo != -1 ) goid = idstr.substring(go, ngo);
+								else {
+									int ni = go+10;//Math.minname.indexOf(')', go+1);
+									goid = idstr.substring( go, ni );
+								}
+								Function func;
+								if( funcmap.containsKey( goid ) ) {
+									func = funcmap.get( goid );
+								} else {
+									func = new Function( goid );
+									funcmap.put( goid, func );
+								}
+								gene.funcentries.add( func );
+								
+								go = ngo;
+							}
+						}
+						//gene.species = new HashMap<String, Teginfo>();
+						
+						//if( !newid.equals(id) ) 
+						//refmap.put( newid, gene );
+						refmap.put( id, gene );
+						
+						tv.setGene( gene );
+						tv.setTegund( origin );
+						
+						//tv.unresolvedGap();
+						
+						//Teginfo ti = new Teginfo();
+						//ti.add( tv );
+						gene.tegeval = tv;
+						
+						/*if( preval != null ) {
+							Contig precontig = preval.getContshort();
+							Contig curcontig = tv.getContshort();
+							boolean bu = precontig.equals( curcontig );
+							//System.err.println( bu + "  " + precontig.toString().equals( curcontig.toString()) + "  " + (precontig == curcontig) );
+							if( bu ) {
+								tv.setPrevious( preval );
+								tv.setNum( preval.getNum()+1 );
+								curcontig.end = tv;
+							} else {
+								tv.setNum(0);
+								curcontig.start = tv;
+								curcontig.end = tv;
+							}
+						} else tv.setNum( 0 );
+						preval = tv;*/
+						
+						
+						//new Aas(name, ac, start, stop, dir));
+						// aass.add( new Aas(name, ac) );
+					}
 				}
 
 				tv = new Tegeval();
@@ -989,20 +988,6 @@ public class GeneSet extends JApplet {
 			//contigstr = lname.substring(0, li);
 			//contloc = lname.substring(fi+1,lname.length());//qsplit[0] + "_" + qsplit[1 + k]; // query.substring(first+1,sec);
 			
-			Contig contig;
-			if( contigmap.containsKey( contigstr ) ) {
-				contig = contigmap.get( contigstr );
-			} else {
-				 contig = new Contig( contigstr );
-			}
-			tv.init( lname, contig, contloc, start, stop, dir );
-			tv.name = prevline.substring(1);
-			//tv.setAlignedSequence( ac );
-			aas.put(lname, tv );
-			
-			contig.add( tv );
-			// aass.add( new Aas(name, ac, start, stop, dir) );
-			
 			String addname = "";
 			String newid = id;
 			String neworigin = origin;
@@ -1017,24 +1002,40 @@ public class GeneSet extends JApplet {
 				if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 			}
 			
-			String newname = addname.length() == 0 ? name : addname.substring(1);
-			Gene gene = new Gene( null, id, newname, origin );
-			gene.designation = designations != null ? designations.get( id ) : null;
-			gene.refid = newid;
-			gene.allids = new HashSet<String>();
-			gene.allids.add( newid );
-			//gene.species = new HashMap<String, Teginfo>();
-			
-			//if( !newid.equals(id) ) 
-			//refmap.put( newid, gene );
-			refmap.put(id, gene);
-			
-			tv.setGene( gene );
-			tv.setTegund( origin );
-			
-			//Teginfo ti = new Teginfo();
-			//ti.add( tv );
-			gene.tegeval = tv;
+			if( !refmap.containsKey(id) ) {
+				Contig contig;
+				if( contigmap.containsKey( contigstr ) ) {
+					contig = contigmap.get( contigstr );
+				} else {
+					 contig = new Contig( contigstr );
+				}
+				tv.init( lname, contig, contloc, start, stop, dir );
+				tv.name = prevline.substring(1);
+				//tv.setAlignedSequence( ac );
+				aas.put(lname, tv );
+				
+				contig.add( tv );
+				// aass.add( new Aas(name, ac, start, stop, dir) );
+				
+				String newname = addname.length() == 0 ? name : addname.substring(1);
+				Gene gene = new Gene( null, id, newname, origin );
+				gene.designation = designations != null ? designations.get( id ) : null;
+				gene.refid = newid;
+				gene.allids = new HashSet<String>();
+				gene.allids.add( newid );
+				//gene.species = new HashMap<String, Teginfo>();
+				
+				//if( !newid.equals(id) ) 
+				//refmap.put( newid, gene );
+				refmap.put(id, gene);
+				
+				tv.setGene( gene );
+				tv.setTegund( origin );
+				
+				//Teginfo ti = new Teginfo();
+				//ti.add( tv );
+				gene.tegeval = tv;
+			}
 		}
 		tv = null;
 		// fw.close();
@@ -6632,7 +6633,7 @@ public class GeneSet extends JApplet {
 				}
 			}
 		}*/
-
+		
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
 			
@@ -6647,13 +6648,45 @@ public class GeneSet extends JApplet {
 			for( Gene g : gg.genes ) {
 				Tegeval next = g.tegeval.getNext();
 				if( next != null ) {
+					
+					/*Gene n = next.getGene();
+					int k = this.genelist.indexOf(n);
+					System.err.println( k );
+					
+					n = g.tegeval.gene;
+					k = this.genelist.indexOf(n);
+					System.err.println( k );*/
+					
 					GeneGroup ngg = next.getGene().getGeneGroup();
 					if( ngg != null ) genefilterset.add( ngg.index );
+					/*else {
+						int tot = 0;
+						int mot = 0;
+						for( String cstr : contigmap.keySet() ) {
+							Contig ctg = contigmap.get( cstr );
+							if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
+								Gene gn = tv.getGene();
+								
+								if( tv == next ) {
+									System.err.println( gn );
+								}
+								
+								if( gn.getGeneGroup() != null ) {
+									tot++;
+								} else mot++;
+							}
+						}
+						System.err.println( tot + "  " + mot );
+						System.err.println();
+					}*/
 				}
 				Tegeval prev = g.tegeval.getPrevious();
 				if( prev != null ) {
 					GeneGroup pgg = prev.getGene().getGeneGroup();
 					if( pgg != null ) genefilterset.add( pgg.index );
+					else {
+						System.err.println();
+					}
 				}
 			}
 		}
@@ -12009,6 +12042,29 @@ public class GeneSet extends JApplet {
 			}
 			//}
 			
+			/*int tot = 0;
+			int mot = 0;
+			for( String cstr : contigmap.keySet() ) {
+				Contig ctg = contigmap.get( cstr );
+				if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
+					Gene gn = tv.getGene();
+					
+					if( gn.getGeneGroup() != null ) {
+						tot++;
+					} else mot++;
+				}
+			}
+			System.err.println( tot + "  " + mot );
+			tot = 0;
+			mot = 0;
+			for( Gene gn : genelist ) {	
+				if( gn.getGeneGroup() != null ) {
+					tot++;
+				} else mot++;
+			}
+			System.err.println( tot + "  " + mot );
+			System.err.println();*/
+			
 			nf = zipfilesystem.getPath("/clusters.txt");
 			if( Files.exists( nf ) ) {
 				uclusterlist = loadSimpleClusters( Files.newBufferedReader(nf) );
@@ -12203,15 +12259,17 @@ public class GeneSet extends JApplet {
 			List<GeneGroup>	ggList = new ArrayList<GeneGroup>();
 			int i = 0;
 			//Set<String> ss = new HashSet<String>();
-			Set<String> gs = new HashSet<String>();
+			Set<String> gs = new HashSet<String>();	
+			
+			int countclust = 0;
 			if( uclusterlist != null ) for (Set<String> cluster : uclusterlist) {
 				//ss.clear();
 				gs.clear();
 				
-				if( cluster.size() == 1 ) {
+				/*if( cluster.size() == 1 ) {
 					String s = "";
 					for( String u : cluster ) s = u;
-				}
+				}*/
 	
 				Set<Gene> gset = new HashSet<Gene>();
 				for( String cont : cluster ) {
@@ -12267,6 +12325,7 @@ public class GeneSet extends JApplet {
 					if (g != null) {
 						gs.add(g.refid);
 						gset.add(g);
+						countclust++;
 					} else {
 						if( mu.contains( gid ) ) {
 							System.err.println("e " + gid);
@@ -12311,6 +12370,14 @@ public class GeneSet extends JApplet {
 					g.setGeneGroup( gg );
 				}
 			}
+			System.err.println( countclust + "  " + genelist.size() );
+			int me = 0;
+			int mu = 0;
+			for( Gene g : genelist ) {
+				if( g.getGeneGroup() != null ) me++;
+				else mu++;
+			}
+			System.err.println( me + "  " + mu );
 			
 			final Map<String,GeneGroup>	rnamap = new HashMap<String,GeneGroup>();
 			//is = GeneSet.class.getResourceAsStream("/rrna.fasta");
@@ -12436,6 +12503,12 @@ public class GeneSet extends JApplet {
 			}
 			allgenegroups = ggList;
 			
+			for( Gene g : genelist ) {
+				if( g.getGeneGroup() != null ) me++;
+				else mu++;
+			}
+			System.err.println( me + " agargargargarg " + mu );
+			
 			if( rnamap != null ) for( String ggname : rnamap.keySet() ) {
 				GeneGroup gg = rnamap.get( ggname );
 				List<Tegeval> tegevals = gg.getTegevals();
@@ -12518,8 +12591,8 @@ public class GeneSet extends JApplet {
 				for( Contig c : ctgs ) {
 					System.err.println( c );
 					int im = 0;
-					if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
-						tv.unresolvedGap( im++ );
+					if( c.annset != null ) for( Annotation tv : c.annset ) {
+						((Tegeval)tv).unresolvedGap( im++ );
 					}
 				}
 			}
@@ -12665,7 +12738,7 @@ public class GeneSet extends JApplet {
 				line = br.readLine();
 			}
 			br.close();
-			// if( fw != null ) fw.close();*/
+			// if( fw != null ) fw.close();*/		
 	
 			double davg = 1.0 / corr16sArray.length;
 			for (Set<String> cluster : corrList.keySet()) {
@@ -12977,6 +13050,14 @@ public class GeneSet extends JApplet {
 			ftable.setModel( nullmodel );
 			table.setModel( groupModel );
 			ftable.setModel( ftablemodel );
+			
+			me = 0;
+			mu = 0;
+			for( Gene g : genelist ) {
+				if( g.getGeneGroup() != null ) me++;
+				else mu++;
+			}
+			System.err.println( me + "  " + mu );
 		}
 	}
 	
@@ -13288,7 +13369,8 @@ public class GeneSet extends JApplet {
 			serifier.mseq.put(c.getName(), c);
 			
 			List<Annotation> lann = new ArrayList<Annotation>();
-			if( c.tlist != null ) for( Tegeval tv : c.tlist ) {
+			if( c.annset != null ) for( Annotation ann : c.annset ) {
+				Tegeval tv = (Tegeval)ann;
 				Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, tv.getGene().getName() );
 				anno.type = "gene";
 				GeneGroup gg = tv.getGene().getGeneGroup();
@@ -14291,6 +14373,10 @@ public class GeneSet extends JApplet {
 							seq.setName( spec );
 							//Sequence seq = new Sequence( contig, seqstr, null );
 							serifier.addSequence(seq);
+						} else {
+							StringBuilder sb = tv.getProteinSequence();
+							Sequence sseq = new Sequence( spec, sb, serifier.mseq );
+							serifier.addSequence( sseq );
 						}
 					}
 				}
@@ -14547,9 +14633,9 @@ public class GeneSet extends JApplet {
 					int cr = table.convertRowIndexToModel(r);
 					Gene gg = genelist.get(cr);
 					Tegeval tv = gg.tegeval;
-					Sequence seq;
+					/*Sequence seq;
 					Contig contig = tv.getContshort();
-					if (contset.containsKey(contig)) {
+					/*if (contset.containsKey(contig)) {
 						seq = contset.get(contig);
 					} else {
 						if( contigmap.containsKey(contig) ) {
@@ -14560,13 +14646,13 @@ public class GeneSet extends JApplet {
 						contset.put(contig, seq);
 					}
 
-					Annotation a = new Annotation(seq, contig.getName(), Color.red, serifier.mann);
+					Annotation a = new Annotation(contig, contig.getName(), Color.green, serifier.mann);
 					a.setStart(tv.start);
 					a.setStop(tv.stop);
 					a.setOri(tv.ori);
 					a.setGroup(gg.name);
-					a.setType("gene");
-					serifier.addAnnotation(a);
+					a.setType("gene");*/
+					serifier.addAnnotation( tv );
 					// seq.addAnnotation( new Annotation( seq, ) );
 				}
 
