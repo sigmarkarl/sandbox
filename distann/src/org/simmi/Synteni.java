@@ -137,8 +137,8 @@ public class Synteni {
 					g.fillRect( 0, h, this.getWidth(), 1 );
 					
 					int loc = 0;
-					List<Contig>	ctlist = geneset.speccontigMap.get( spec );
-					for( Contig c : ctlist ) {
+					List<Contig>	cannset = geneset.speccontigMap.get( spec );
+					for( Contig c : cannset ) {
 						loc += c.getGeneCount();
 						
 						int nloc = loc*this.getWidth()/FASTI;
@@ -148,7 +148,7 @@ public class Synteni {
 				
 				String selsyn = (String)geneset.syncolorcomb.getSelectedItem();
 				if( selsyn != null && selsyn.length() > 0 ) {
-					List<Contig> sctlist = geneset.speccontigMap.get(selsyn);
+					List<Contig> scannset = geneset.speccontigMap.get(selsyn);
 					for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 						int l = rowheader.convertRowIndexToModel( k );
 						String spec = selspec.get( l );
@@ -156,18 +156,18 @@ public class Synteni {
 						int h = k*rowheader.getRowHeight()+rowheader.getRowHeight()/2;
 						
 						int loc = 0;
-						List<Contig>	ctlist = geneset.speccontigMap.get( spec );
-						for( Contig c : ctlist ) {
-							if( c.tlist != null ) {
+						List<Contig>	cannset = geneset.speccontigMap.get( spec );
+						for( Contig c : cannset ) {
+							if( c.annset != null ) {
 								if( c.isReverse() ) {
-									for( int i = c.tlist.size()-1; i >= 0; i-- ) {
-										Tegeval tv = c.tlist.get(i);
+									for( int i = c.annset.size()-1; i >= 0; i-- ) {
+										Tegeval tv = (Tegeval)c.annset.get(i);
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										
 										if( gg != null ) {
-											int nloc = geneset.getGlobalIndex(tv)*this.getWidth()/FASTI; //(loc+(c.tlist.size()-i-1))*this.getWidth()/FASTI;
+											int nloc = geneset.getGlobalIndex(tv)*this.getWidth()/FASTI; //(loc+(c.annset.size()-i-1))*this.getWidth()/FASTI;
 											
-											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, sctlist, -1.0, tv.getGene().getGeneGroup() );
+											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, scannset, -1.0, tv.getGene().getGeneGroup() );
 											if( ratio2 != -1 ) {
 												g.setColor( GeneCompare.gradientColor( ratio2 ) );
 												g.fillRect(nloc, h-6, 1, 4);
@@ -175,14 +175,14 @@ public class Synteni {
 										}
 									}
 								} else {
-									for( int i = 0; i < c.tlist.size(); i++ ) {
-										Tegeval tv = c.tlist.get(i);
+									for( int i = 0; i < c.annset.size(); i++ ) {
+										Tegeval tv = (Tegeval)c.annset.get(i);
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										
 										if( gg != null ) {
 											int nloc = geneset.getGlobalIndex(tv)*this.getWidth()/FASTI; //int nloc = (loc+i)*this.getWidth()/FASTI;
 											
-											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, sctlist, -1.0, gg );
+											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, scannset, -1.0, gg );
 											
 											/*String symb = gg.getCommonSymbol();
 											if( symb != null && symb.contains("polA1") ) {
