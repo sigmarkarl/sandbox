@@ -12,7 +12,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -23,6 +22,8 @@ import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+
+import org.simmi.shared.Annotation;
 
 public class CodingRegions {
 	public void coderegPlot( GeneSet geneset, Container comp ) {
@@ -130,8 +131,8 @@ public class CodingRegions {
 		
 		int count = 0;
 		for( Contig ctg : contigs ) {
-			if( ctg.tlist != null ) {
-				for( Tegeval tv : ctg.tlist ) {						
+			if( ctg.annset != null ) {
+				for( Annotation tv : ctg.annset ) {						
 					//double theta = count*Math.PI*2.0/total;
 					double theta = (count+(tv.stop+tv.start)/2.0)*Math.PI*2.0/total;
 					double theta1 = (count+tv.start)*Math.PI*2.0/total;
