@@ -39,6 +39,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.simmi.shared.Annotation;
+
 public class SyntGrad {
 	JCheckBox	contcheck = new JCheckBox("Show contig lines");
 	public void syntGrad( final GeneSet geneset ) {
@@ -150,8 +152,9 @@ public class SyntGrad {
 							@Override
 							public int compare(Contig o1, Contig o2) {
 								List<Double> ratios = new ArrayList<Double>();
-								if( o1.tlist != null ) {
-									for( Tegeval tv : o1.tlist ) {
+								if( o1.annset != null ) {
+									for( Annotation ann : o1.annset ) {
+										Tegeval tv = (Tegeval)ann;
 										double val = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
@@ -160,8 +163,9 @@ public class SyntGrad {
 								double r1 = ratios.size() > 0 ? ratios.get( ratios.size()/2 ) : 0;
 								
 								ratios = new ArrayList<Double>();
-								if( o2.tlist != null ) {
-									for( Tegeval tv : o2.tlist ) {
+								if( o2.annset != null ) {
+									for( Annotation ann : o2.annset ) {
+										Tegeval tv = (Tegeval)ann;
 										double val = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
@@ -257,13 +261,13 @@ public class SyntGrad {
 							if( mloc-loc < c.getGeneCount() ) {
 								//loc += c.getGeneCount();
 								//c = contigs.get( i%contigs.size() );
-								Tegeval tv = c.tlist.get(mloc-loc);
+								Tegeval tv = c.annset.get(mloc-loc);
 								Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
 								
 								if( ti != null && ti.best != null ) {
 									Contig ct1 = ti.best.getContshort();
 									
-									tv = c.tlist.get(nloc-loc);
+									tv = c.annset.get(nloc-loc);
 									ti = tv.getGene().getGeneGroup().getGenes(spec);
 									Contig ct2 = ti.best.getContshort();
 									
@@ -318,8 +322,8 @@ public class SyntGrad {
 							}
 							
 							if( e.isAltDown() ) {
-								/*Tegeval tv1 = c.tlist.get(minloc-loc);
-								Tegeval tv2 = c.tlist.get(maxloc-loc);
+								/*Tegeval tv1 = c.annset.get(minloc-loc);
+								Tegeval tv2 = c.annset.get(maxloc-loc);
 								
 								int from = Math.min( tv1.start, tv2.start );
 								int to = Math.max( tv1.stop, tv2.stop );
@@ -340,7 +344,7 @@ public class SyntGrad {
 										i++;
 										c = contigs.get( i%contigs.size() );
 									}
-									Tegeval tv = c.isReverse() ? c.tlist.get( c.tlist.size()-1-(k-loc) ) : c.tlist.get(k-loc);
+									Tegeval tv = (Tegeval)(c.isReverse() ? c.annset.get( c.annset.size()-1-(k-loc) ) : c.annset.get(k-loc));
 									if( e.isShiftDown() ) {
 										Set<GeneGroup>	gset = new HashSet<GeneGroup>();
 										gset.add( tv.getGene().getGeneGroup() );
@@ -571,8 +575,8 @@ public class SyntGrad {
 		if( gene2s != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
-				if( ctg2.tlist != null ) {
-					int idx = ctg2.tlist.indexOf( tv2 );
+				if( ctg2.annset != null ) {
+					int idx = ctg2.annset.indexOf( tv2 );
 					if( idx == -1 ) {
 						count2 += ctg2.getGeneCount();
 					} else {

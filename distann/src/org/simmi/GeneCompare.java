@@ -54,6 +54,7 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.apache.commons.codec.binary.Base64;
+import org.simmi.shared.Annotation;
 import org.simmi.shared.Sequence;
 import org.simmi.unsigned.JavaFasta;
 
@@ -485,13 +486,13 @@ public class GeneCompare {
 							if( mloc-loc < c.getGeneCount() ) {
 								//loc += c.getGeneCount();
 								//c = contigs.get( i%contigs.size() );
-								Tegeval tv = c.tlist.get(mloc-loc);
+								Tegeval tv = (Tegeval)c.annset.get(mloc-loc);
 								Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
 								
 								if( ti != null && ti.best != null ) {
 									Contig ct1 = ti.best.getContshort();
 									
-									tv = c.tlist.get(nloc-loc);
+									tv = (Tegeval)c.annset.get(nloc-loc);
 									ti = tv.getGene().getGeneGroup().getGenes(spec);
 									Contig ct2 = ti.best.getContshort();
 									
@@ -536,8 +537,8 @@ public class GeneCompare {
 						}
 						
 						if( e.isAltDown() ) {
-							Tegeval tv1 = c.tlist.get(minloc-loc);
-							Tegeval tv2 = c.tlist.get(maxloc-loc);
+							Tegeval tv1 = (Tegeval)c.annset.get(minloc-loc);
+							Tegeval tv2 = (Tegeval)c.annset.get(maxloc-loc);
 							
 							int from = Math.min( tv1.start, tv2.start );
 							int to = Math.max( tv1.stop, tv2.stop );
@@ -558,7 +559,7 @@ public class GeneCompare {
 									i++;
 									c = contigs.get( i%contigs.size() );
 								}
-								Tegeval tv = c.isReverse() ? c.tlist.get( c.tlist.size()-1-(k-loc) ) : c.tlist.get(k-loc);
+								Tegeval tv = (Tegeval)(c.isReverse() ? c.annset.get( c.annset.size()-1-(k-loc) ) : c.annset.get(k-loc));
 								if( e.isShiftDown() ) {
 									Set<GeneGroup>	gset = new HashSet<GeneGroup>();
 									gset.add( tv.getGene().getGeneGroup() );
@@ -931,8 +932,8 @@ public class GeneCompare {
 			
 			if( ptotal2 > 0 ) {
 				for( Contig ctg2 : contigs2 ) {
-					if( ctg2.tlist != null ) {
-						int idx = ctg2.tlist.indexOf( tv2 );
+					if( ctg2.annset != null ) {
+						int idx = ctg2.annset.indexOf( tv2 );
 						if( idx != -1 ) {
 							hit = ctg2;
 							break;
@@ -942,8 +943,8 @@ public class GeneCompare {
 				
 				if( hit != null && hit.isPlasmid() ) {
 					for( Contig c2 : contigs2 ) {
-						if( c2.isPlasmid() && c2.tlist != null ) {
-							int idx = c2.tlist.indexOf( tv2 );
+						if( c2.isPlasmid() && c2.annset != null ) {
+							int idx = c2.annset.indexOf( tv2 );
 							if( idx == -1 ) {
 								count2 += c2.getGeneCount();
 							} else {
@@ -956,8 +957,8 @@ public class GeneCompare {
 					if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
 				} else {
 					for( Contig c2 : contigs2 ) {
-						if( c2.tlist != null ) {
-							int idx = c2.tlist.indexOf( tv2 );
+						if( c2.annset != null ) {
+							int idx = c2.annset.indexOf( tv2 );
 							if( idx == -1 ) {
 								count2 += c2.getGeneCount();
 							} else {
@@ -969,12 +970,12 @@ public class GeneCompare {
 					}
 				}
 				
-				/*if( chromosome.tlist != null ) {
-					int idx = chromosome.tlist.indexOf( tv2 );
+				/*if( chromosome.annset != null ) {
+					int idx = chromosome.annset.indexOf( tv2 );
 					if( idx == -1 ) {
 						for( Contig ctg2 : contigs2 ) {
-							if( ctg2 != chromosome && ctg2.tlist != null ) {
-								idx = ctg2.tlist.indexOf( tv2 );
+							if( ctg2 != chromosome && ctg2.annset != null ) {
+								idx = ctg2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
 									count2 += ctg2.getGeneCount();
 								} else {
@@ -990,8 +991,8 @@ public class GeneCompare {
 				}*/
 			} else {
 				for( Contig ctg2 : contigs2 ) {
-					if( ctg2.tlist != null ) {
-						int idx = ctg2.tlist.indexOf( tv2 );
+					if( ctg2.annset != null ) {
+						int idx = ctg2.annset.indexOf( tv2 );
 						if( idx == -1 ) {
 							count2 += ctg2.getGeneCount();
 						} else {
@@ -1082,8 +1083,8 @@ public class GeneCompare {
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
-				if( ctg2.isPlasmid() && ctg2.tlist != null ) {
-					int idx = ctg2.tlist.indexOf( tv2 );
+				if( ctg2.isPlasmid() && ctg2.annset != null ) {
+					int idx = ctg2.annset.indexOf( tv2 );
 					if( idx == -1 ) {
 						count2 += ctg2.getGeneCount();
 					} else {
@@ -1111,8 +1112,8 @@ public class GeneCompare {
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
-				if( ctg2.tlist != null ) {
-					int idx = ctg2.tlist.indexOf( tv2 );
+				if( ctg2.annset != null ) {
+					int idx = ctg2.annset.indexOf( tv2 );
 					if( idx == -1 ) {
 						count2 += ctg2.getGeneCount();
 					} else {
@@ -1145,8 +1146,8 @@ public class GeneCompare {
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
-				if( ctg2.tlist != null ) {
-					int idx = ctg2.tlist.indexOf( tv2 );
+				if( ctg2.annset != null ) {
+					int idx = ctg2.annset.indexOf( tv2 );
 					if( idx == -1 ) {
 						count2 += ctg2.getGeneCount();
 					} else {
@@ -1224,7 +1225,7 @@ public class GeneCompare {
 		/*g.setColor( Color.black );
 		int count = 0;
 		for( Contig ctg : contigs ) {
-			for( Tegeval tv : ctg.tlist ) {
+			for( Tegeval tv : ctg.annset ) {
 				GeneGroup gg = tv.getGene().getGeneGroup();
 				int scount = 0;
 				for( String spec2 : spec2s ) {
@@ -1276,8 +1277,8 @@ public class GeneCompare {
 							for( Tegeval tv2 : gene2s.tset ) {
 								int count2 = 0;
 								for( Contig ctg2 : contigs2 ) {
-									if( ctg2.tlist != null ) {
-										int idx = ctg2.tlist.indexOf( tv2 );
+									if( ctg2.annset != null ) {
+										int idx = ctg2.annset.indexOf( tv2 );
 										if( idx == -1 ) {
 											count2 += ctg2.getGeneCount();
 										} else {
@@ -1301,8 +1302,8 @@ public class GeneCompare {
 							for( Tegeval tv2 : gene2s.tset ) {
 								int count2 = 0;
 								for( Contig ctg2 : contigs2 ) {
-									if( ctg2.tlist != null ) {
-										int idx = ctg2.tlist.indexOf( tv2 );
+									if( ctg2.annset != null ) {
+										int idx = ctg2.annset.indexOf( tv2 );
 										if( idx == -1 ) {
 											count2 += ctg2.getGeneCount();
 										} else {
@@ -1323,11 +1324,11 @@ public class GeneCompare {
 			int current = 0;
 			for( Contig ctg : contigs ) {
 				Tegeval prev = null;
-				if( ctg.tlist != null ) {
+				if( ctg.annset != null ) {
 					current = count;
 					if( ctg.isReverse() ) {
-						for( int i = ctg.tlist.size()-1; i >= 0; i-- ) {
-							Tegeval tv = ctg.tlist.get( i );
+						for( int i = ctg.annset.size()-1; i >= 0; i-- ) {
+							Tegeval tv = (Tegeval)ctg.annset.get( i );
 							Sequence seq = tv.getAlignedSequence();
 							GeneGroup gg = tv.getGene().getGeneGroup();
 							
@@ -1339,7 +1340,8 @@ public class GeneCompare {
 							}
 						}
 					} else {
-						for( Tegeval tv : ctg.tlist ) {
+						for( Annotation ann : ctg.annset ) {
+							Tegeval tv = (Tegeval)ann;
 							Sequence seq = tv.getAlignedSequence();
 							GeneGroup gg = tv.getGene().getGeneGroup();
 							
