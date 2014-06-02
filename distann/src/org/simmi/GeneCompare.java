@@ -709,10 +709,10 @@ public class GeneCompare {
 		int stopcheck = 0;
 		int stop = -1;
 		for( int i = 0; i < seq1.length(); i++ ) {
-			if( seq1.charAt(i) != '-' ) {
+			if( seq1.getCharAt(i) != '-' ) {
 				startcheck |= 1;
 			}
-			if( seq2.charAt(i) != '-' ) {
+			if( seq2.getCharAt(i) != '-' ) {
 				startcheck |= 2;
 			}
 			
@@ -723,10 +723,10 @@ public class GeneCompare {
 		}
 		
 		for( int i = seq1.length()-1; i >= 0; i-- ) {
-			if( seq1.charAt(i) != '-' ) {
+			if( seq1.getCharAt(i) != '-' ) {
 				stopcheck |= 1;
 			}
-			if( seq2.charAt(i) != '-' ) {
+			if( seq2.getCharAt(i) != '-' ) {
 				stopcheck |= 2;
 			}
 			
@@ -737,7 +737,7 @@ public class GeneCompare {
 		}
 		
         for( int i = start; i < stop; i++ ) {
-        	char lc = seq1.charAt(i);
+        	char lc = seq1.getCharAt(i);
         	char c = Character.toUpperCase( lc );
         	//if( )
         	String comb = c+""+c;
@@ -746,9 +746,9 @@ public class GeneCompare {
         
         int score = 0;
         for( int i = start; i < stop; i++ ) {
-        	char lc = seq1.charAt( i );
+        	char lc = seq1.getCharAt( i );
         	char c = Character.toUpperCase( lc );
-        	char lc2 = seq2.charAt( i );
+        	char lc2 = seq2.getCharAt( i );
         	char c2 = Character.toUpperCase( lc2 );
         	
         	String comb = c+""+c2;
@@ -799,7 +799,7 @@ public class GeneCompare {
 		if( seq != null ) {
 			int tscore = 0;
             for( int i = 0; i < seq.length(); i++ ) {
-            	char lc = seq.charAt(i);
+            	char lc = seq.getCharAt(i);
             	char c = Character.toUpperCase( lc );
             	//if( )
             	String comb = c+""+c;
@@ -813,9 +813,9 @@ public class GeneCompare {
                 
                 int sscore = 0;
                 for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
-                	char lc = seq.charAt( i );
+                	char lc = seq.getCharAt( i );
                 	char c = Character.toUpperCase( lc );
-                	char lc2 = seq2.charAt( i );
+                	char lc2 = seq2.getCharAt( i );
                 	char c2 = Character.toUpperCase( lc2 );
                 	
                 	String comb = c+""+c2;
@@ -837,7 +837,7 @@ public class GeneCompare {
 		if( seq != null && seq.length() > 0 ) {
 			int tscore = 0;
             for( int i = 0; i < seq.length(); i++ ) {
-            	char lc = seq.charAt(i);
+            	char lc = seq.getCharAt(i);
             	char c = Character.toUpperCase( lc );
             	//if( )
             	String comb = c+""+c;
@@ -855,9 +855,9 @@ public class GeneCompare {
                 
                 int sscore = 0;
                 for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
-                	char lc = seq.charAt( i );
+                	char lc = seq.getCharAt( i );
                 	char c = Character.toUpperCase( lc );
-                	char lc2 = seq2.charAt( i );
+                	char lc2 = seq2.getCharAt( i );
                 	char c2 = Character.toUpperCase( lc2 );
                 	
                 	String comb = c+""+c2;
@@ -874,8 +874,8 @@ public class GeneCompare {
 		} else {
 			Teginfo gene2s = gg.getGenes( spec2 );
             for( Tegeval tv2 : gene2s.tset ) {
-            	if( tv2.getGene().tag != null )
-            		color = tv2.getGene().tag.equals("rrna") ? Color.red : Color.blue;
+            	if( tv2.getGene().getTag() != null && !tv2.getGene().getTag().equalsIgnoreCase("gene") )
+            		color = tv2.getGene().getTag().equals("rrna") ? Color.red : Color.blue;
             	else color = Color.green;
             	break;
             }
