@@ -159,7 +159,7 @@ public class Tegeval extends Annotation implements Teg {
 		int c = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
 		if( seq != null ) for( int i = start; i < stop; i++ ) {
-			char n = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ seq.charAt(i);
+			char n = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ seq.getCharAt(i);
 			if( n == 'g' || n == 'G' ) g++;
 			else if( n == 'c' || n == 'C' ) c++;
 		}
@@ -172,7 +172,7 @@ public class Tegeval extends Annotation implements Teg {
 		int total = 0;
 		//for( int i = 0; i < dna.length(); i++ ) {
 		if( seq != null ) for( int i = start; i < stop; i++ ) {
-			char c = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ seq.charAt(i);
+			char c = /*this.ori == -1 ? contshort.revCompCharAt(i) :*/ seq.getCharAt(i);
 			if( c == 'g' || c == 'G' || c == 'c' || c == 'C' ) gc++;
 			if( c != '-' && c != 'x' || c != 'X' ) total++;
 		}
@@ -232,7 +232,7 @@ public class Tegeval extends Annotation implements Teg {
 		if( i == 0 ) {
 			Tegeval tv = (Tegeval)getContshort().annset.get(i);
 			for( int m = 0; m < tv.start; m++ ) {
-				char c = seq.charAt(m);
+				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 1;
 					if( this.ori == -1 ) frontgap = true;
@@ -245,7 +245,7 @@ public class Tegeval extends Annotation implements Teg {
 			Tegeval tv = (Tegeval)getContshort().annset.get(i);
 			Tegeval tvp = (Tegeval)getContshort().annset.get(i-1);
 			for( int m = tvp.stop; m < tv.start; m++ ) {
-				char c = seq.charAt(m);
+				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 1;
 					if( this.ori == -1 ) frontgap = true;
@@ -259,7 +259,7 @@ public class Tegeval extends Annotation implements Teg {
 		if( i == getContshort().annset.size()-1 ) {
 			Tegeval tv = (Tegeval)getContshort().annset.get(i);
 			for( int m = tv.stop; m < seq.length(); m++ ) {
-				char c = seq.charAt(m);
+				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 2;
 					if( this.ori == -1 ) backgap = true;
@@ -272,7 +272,7 @@ public class Tegeval extends Annotation implements Teg {
 			Tegeval tv = (Tegeval)getContshort().annset.get(i);
 			Tegeval tvn = (Tegeval)getContshort().annset.get(i+1);
 			for( int m = tv.stop; m < tvn.start; m++ ) {
-				char c = seq.charAt(m);
+				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
 					//ret |= 2;
 					if( this.ori == -1 ) backgap = true;

@@ -3067,7 +3067,7 @@ public class SerifyApplet extends JApplet {
 						int i;
 						boolean skip = false;
 						for( Sequence seq : lseq ) {
-							char c = seq.charAt( x );
+							char c = seq.getCharAt( x );
 							if( c != '-' && c != '.' && c == ' ' ) {
 								skip = true;
 								break;
