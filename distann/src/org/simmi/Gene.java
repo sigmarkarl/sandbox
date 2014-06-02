@@ -18,10 +18,10 @@ public class Gene {
 		//groupIdx = -10;
 	}
 	
-	public Gene( GeneGroup gg, String id, String name, String origin, String tag ) {
+	/*public Gene( GeneGroup gg, String id, String name, String origin, String tag ) {
 		this( gg, id, name, origin );
-		this.tag = tag;
-	}
+		this.tegeval.type = tag;
+	}*/
 	
 	public void getFasta( Writer w ) throws IOException {
 		StringBuilder ps = tegeval.getProteinSequence();
@@ -62,7 +62,7 @@ public class Gene {
 	}
 	
 	public String getTag() {
-		return tag;
+		return tegeval.type;
 	}
 
 	public void setAa(String aa) {
@@ -138,7 +138,7 @@ public class Gene {
 
 	String name;
 	String symbol;
-	String tag;
+	//String tag;
 	//String origin;
 	String id;
 	String refid;
