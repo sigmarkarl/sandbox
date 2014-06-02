@@ -15,7 +15,8 @@ public class Contig extends Sequence {
 	
 	public void add( Tegeval tv ) {
 		if( annset == null ) annset = new ArrayList<Annotation>();
-		annset.add( tv );
+		addAnnotation( tv );
+		//annset.add( tv );
 	}
 	
 	public void deleteAfter( Tegeval cur ) {
@@ -73,10 +74,6 @@ public class Contig extends Sequence {
 	/*public char revCompCharAt( int i ) {
 		return seq.revCompCharAt( i );
 	}*/
-	
-	public char charAt( int i ) {
-		return revcomp == -1 ? super.revCompCharAt( i ) : super.charAt( i );
-	}
 	
 	public int getGeneCount() {
 		if( annset != null ) return annset.size();
@@ -274,14 +271,6 @@ public class Contig extends Sequence {
 	
 	public Contig getPrevContig() {
 		return prev;
-	}
-	
-	public boolean isReverse() {
-		return revcomp == -1;
-	}
-	
-	public void setReverse( boolean rev ) {
-		revcomp = rev ? -1 : 1;
 	}
 	
 	@Override

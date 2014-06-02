@@ -1318,10 +1318,10 @@ public class GeneSet extends JApplet {
 											int stopcheck = 0;
 											int stop = -1;
 											for( int i = 0; i < seq1.length(); i++ ) {
-												if( seq1.charAt(i) != '-' ) {
+												if( seq1.getCharAt(i) != '-' ) {
 													startcheck |= 1;
 												}
-												if( seq2.charAt(i) != '-' ) {
+												if( seq2.getCharAt(i) != '-' ) {
 													startcheck |= 2;
 												}
 												
@@ -1332,10 +1332,10 @@ public class GeneSet extends JApplet {
 											}
 											
 											for( int i = seq1.length()-1; i >= 0; i-- ) {
-												if( seq1.charAt(i) != '-' ) {
+												if( seq1.getCharAt(i) != '-' ) {
 													stopcheck |= 1;
 												}
-												if( seq2.charAt(i) != '-' ) {
+												if( seq2.getCharAt(i) != '-' ) {
 													stopcheck |= 2;
 												}
 												
@@ -1347,7 +1347,7 @@ public class GeneSet extends JApplet {
 											//count += stop-start;
 											
 									        for( int i = start; i < stop; i++ ) {
-									        	char lc = seq1.charAt(i);
+									        	char lc = seq1.getCharAt(i);
 									        	char c = Character.toUpperCase( lc );
 									        	//if( )
 									        	String comb = c+""+c;
@@ -1355,9 +1355,9 @@ public class GeneSet extends JApplet {
 									        }
 									        
 									        for( int i = start; i < stop; i++ ) {
-									        	char lc = seq1.charAt( i );
+									        	char lc = seq1.getCharAt( i );
 									        	char c = Character.toUpperCase( lc );
-									        	char lc2 = seq2.charAt( i );
+									        	char lc2 = seq2.getCharAt( i );
 									        	char c2 = Character.toUpperCase( lc2 );
 									        	
 									        	String comb = c+""+c2;
@@ -5807,6 +5807,10 @@ public class GeneSet extends JApplet {
 	
 	public static void dummy() throws IOException {}
 
+	interface RunnableResult {
+		public void run( String res );
+	};
+	
 	ChatServer cs;
 	public GeneSet() {
 		super();
@@ -5815,7 +5819,15 @@ public class GeneSet extends JApplet {
 			cs = new ChatServer( 8887 ) {
 				@Override
 				public void onMessage( WebSocket conn, String message ) {
-					if( message.contains("ready") ) {
+					//System.err.println( message );
+					if( message.startsWith(">") ) {
+						final RunnableResult run = new RunnableResult() {
+							public void run( String res ) {
+								cs.sendToAll( res );
+							}
+						};
+						doBlast( message, "0.00001", false, run );
+					} else if( message.contains("ready") ) {
 						cs.sendToAll( cs.message );
 					}
 				}
@@ -8040,6 +8052,168 @@ public class GeneSet extends JApplet {
 		return v;
 	}
 	
+	public void doBlast( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr ) {
+		File blastn;
+		File blastp;
+		File makeblastdb;
+		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
+		if( !blastx.exists() ) {
+			blastx = new File( "/opt/ncbi-blast-2.2.29+/bin/blastx" );
+			if( !blastx.exists() ) {
+				blastx = new File( "/usr/local/ncbi/blast/bin/blastx" );
+				blastn = new File( "/usr/local/ncbi/blast/bin/blastn" );
+				blastp = new File( "/usr/local/ncbi/blast/bin/blastp" );
+				
+				makeblastdb = new File( "/usr/local/ncbi/blast/bin/makeblastdb" );
+			} else {
+				blastn = new File( "/opt/ncbi-blast-2.2.29+/bin/blastn" );
+				blastp = new File( "/opt/ncbi-blast-2.2.29+/bin/blastp" );
+				
+				makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
+			}
+		} else {
+			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
+			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
+			
+			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+		}
+		
+		int procs = Runtime.getRuntime().availableProcessors();
+		String[] mcmds = { makeblastdb.getAbsolutePath(), "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
+		List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
+		
+		final ProcessBuilder mpb = new ProcessBuilder( lcmd );
+		mpb.redirectErrorStream( true );
+		try {
+			final Process mp = mpb.start();
+			
+			new Thread() {
+				public void run() {
+					try {
+						OutputStream pos = mp.getOutputStream();
+						for( Gene g : genelist ) {
+							if( g.getTag() == null || g.getTag().length() == 0 ) {
+								GeneGroup gg = g.getGeneGroup();
+							
+								if( gg != null ) {
+									if( ids ) pos.write( (">" + g.id + "\n").getBytes() );
+									else pos.write( (">" + g.name + "\n").getBytes() );
+									StringBuilder sb = g.tegeval.getProteinSequence();
+									for( int i = 0; i < sb.length(); i+=70 ) {
+										pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
+									}
+									pos.write( '\n' );
+								}
+							}
+						}
+						pos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}.run();
+			
+			new Thread() {
+				public void run() {
+					try {
+						InputStream pin = mp.getInputStream();
+						InputStreamReader rdr = new InputStreamReader( pin );
+						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
+						BufferedReader br = new BufferedReader( rdr );
+						String line = br.readLine();
+						while( line != null ) {
+							System.out.println( line );
+							line = br.readLine();
+						}
+						pin.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}.run();
+			
+			File blastFile = blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+			
+			String[] 		cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
+			//String[] exts = extrapar.trim().split("[\t ]+");
+			
+			ProcessBuilder pb = new ProcessBuilder( lcmd );
+			pb.redirectErrorStream( true );
+			final Process p = pb.start();
+		
+			final Thread t = new Thread() {
+				public void run() {
+					try {
+						OutputStream pos = p.getOutputStream();
+						pos.write( fasta.getBytes() );
+						pos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			t.start();
+			
+			final Thread t2 = new Thread() {
+				public void run() {
+					try {
+						System.err.println("WHY NOT");
+						InputStreamReader rdr = new InputStreamReader( p.getInputStream() );
+						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
+						
+						String res = "";
+						BufferedReader br = new BufferedReader( rdr );
+						String line = br.readLine();
+						while( line != null ) {
+							if( rr != null ) {
+								rr.run( line+"\n" );
+								//res += line+"\n";
+							}
+							
+							if( line.startsWith("> ") ) {
+								int i = line.indexOf(' ', 2);
+								if( i == -1 ) i = line.length();
+								String id = line.substring(2, i);
+								
+								Gene g = genemap.get( id );
+								if( g != null ) {
+									if( table.getModel() == groupModel ) {
+										i = allgenegroups.indexOf( g.getGeneGroup() );
+										if( i != -1 ) {
+											int r = table.convertRowIndexToView( i );
+											table.addRowSelectionInterval(r, r);
+										}
+									} else {
+										i = genelist.indexOf( g );
+										if( i != -1 ) {
+											int r = table.convertRowIndexToView( i );
+											table.addRowSelectionInterval(r, r);
+										}
+									}
+								}
+							}
+							line = br.readLine();
+						}
+						br.close();
+						//System.err.println("wn done");
+						p.destroy();
+						
+						/*if( rr != null ) {
+							rr.run( res );
+						}*/
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			t2.start();
+			//fr.close();
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+	}
+	
 	public void blast() {
 		String dbname = null;
 		
@@ -8108,146 +8282,7 @@ public class GeneSet extends JApplet {
 		Object[] objs = new Object[] { sp, tf };
 		JOptionPane.showMessageDialog(GeneSet.this, objs);
 		
-		File blastn;
-		File blastp;
-		File makeblastdb;
-		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
-		if( !blastx.exists() ) {
-			blastx = new File( "/opt/ncbi-blast-2.2.29+/bin/blastx" );
-			blastn = new File( "/opt/ncbi-blast-2.2.29+/bin/blastn" );
-			blastp = new File( "/opt/ncbi-blast-2.2.29+/bin/blastp" );
-			
-			makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
-		} else {
-			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
-			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
-			
-			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
-		}
-		
-		int procs = Runtime.getRuntime().availableProcessors();
-		String[] mcmds = { makeblastdb.getAbsolutePath(), "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
-		List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
-		
-		final ProcessBuilder mpb = new ProcessBuilder( lcmd );
-		mpb.redirectErrorStream( true );
-		try {
-			final Process mp = mpb.start();
-			
-			new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = mp.getOutputStream();
-						for( Gene g : genelist ) {
-							pos.write( (">" + g.id + "\n").getBytes() );
-							StringBuilder sb = g.tegeval.getProteinSequence();
-							for( int i = 0; i < sb.length(); i+=70 ) {
-								pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
-							}
-							pos.write( '\n' );
-						}
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}.run();
-			
-			new Thread() {
-				public void run() {
-					try {
-						InputStream pin = mp.getInputStream();
-						InputStreamReader rdr = new InputStreamReader( pin );
-						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
-						BufferedReader br = new BufferedReader( rdr );
-						String line = br.readLine();
-						while( line != null ) {
-							System.out.println( line );
-							line = br.readLine();
-						}
-						pin.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}.run();
-			
-			File blastFile = blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
-			
-			String[] 		cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", tf.getText(), "-num_threads", Integer.toString(procs) };
-			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
-			//String[] exts = extrapar.trim().split("[\t ]+");
-			
-			ProcessBuilder pb = new ProcessBuilder( lcmd );
-			pb.redirectErrorStream( true );
-			final Process p = pb.start();
-		
-			final Thread t = new Thread() {
-				public void run() {
-					try {
-						System.err.println("WHY");
-						String text = ta.getText();
-						OutputStream pos = p.getOutputStream();
-						pos.write( text.getBytes() );
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			t.start();
-			
-			final Thread t2 = new Thread() {
-				public void run() {
-					try {
-						System.err.println("WHY NOT");
-						InputStreamReader rdr = new InputStreamReader( p.getInputStream() );
-						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
-						BufferedReader br = new BufferedReader( rdr );
-						String line = br.readLine();
-						while( line != null ) {
-							if( line.startsWith("> ") ) {
-								int i = line.indexOf(' ', 2);
-								if( i == -1 ) i = line.length();
-								String id = line.substring(2, i);
-								
-								Gene g = genemap.get( id );
-								if( g != null ) {
-									if( table.getModel() == groupModel ) {
-										i = allgenegroups.indexOf( g.getGeneGroup() );
-										if( i != -1 ) {
-											int r = table.convertRowIndexToView( i );
-											table.addRowSelectionInterval(r, r);
-										}
-									} else {
-										i = genelist.indexOf( g );
-										if( i != -1 ) {
-											int r = table.convertRowIndexToView( i );
-											table.addRowSelectionInterval(r, r);
-										}
-									}
-								}
-							}
-							line = br.readLine();
-						}
-						br.close();
-						System.err.println("wn done");
-						p.destroy();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			t2.start();
-			//fr.close();
-		} catch (IOException e2) {
-			e2.printStackTrace();
-		}
-		
-		System.err.println("e");
-		//JFileChooser fc = new JFileChooser();
-		//if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-		//	File f = fc.getSelectedFile();
+		doBlast( ta.getText(), tf.getText(), true, null );
 	}
 	
 	JRadioButtonMenuItem	gb;
@@ -11063,7 +11098,7 @@ public class GeneSet extends JApplet {
 			
 			for( int i = 0; i < ctg.length(); i+=500 ) {
 				for( int k = i; k < Math.min( ctg.length(), i+500 ); k++ ) {
-					char chr = ctg.charAt( k );
+					char chr = ctg.getCharAt( k );
 					if( chr == 'g' || chr == 'G' ) {
 						g++;
 					} else if( chr == 'c' || chr == 'C' ) {
@@ -11076,7 +11111,7 @@ public class GeneSet extends JApplet {
 				int acount = 0;
 				int tcount = 0;
 				for( int k = i; k < Math.min( ctg.length(), i+10000 ); k++ ) {
-					char chr = k-5000 < 0 ? ctg.charAt( ctg.length()+(k-5000) ) : ctg.charAt(k-5000);
+					char chr = k-5000 < 0 ? ctg.getCharAt( ctg.length()+(k-5000) ) : ctg.getCharAt(k-5000);
 					if( chr == 'g' || chr == 'G' ) {
 						gcount++;
 					} else if( chr == 'c' || chr == 'C' ) {
@@ -11437,11 +11472,12 @@ public class GeneSet extends JApplet {
 					gg = new GeneGroup( groupIndex++ );
 					ggmap.put( name, gg );
 				}
-				Gene g = new Gene( gg, name, name, spec, tag );
+				Gene g = new Gene( gg, name, name, spec );
 				g.setIdStr( idstr );
 				
 				Contig contig = contigmap.get( cont );
 				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(1,trim.length()-1), contig, contshort, start, stop, rev ? -1 : 1 );
+				tegeval.type = tag;
 				g.setTegeval( tegeval );
 				gg.addGene( g );
 			}
@@ -11509,7 +11545,7 @@ public class GeneSet extends JApplet {
 					gg = new GeneGroup( groupIndex++ );
 					ggmap.put( name, gg );
 				}
-				Gene g = new Gene( gg, cont+"_"+loc, name, spec, "rrna" );
+				Gene g = new Gene( gg, cont+"_"+loc, name, spec );
 				
 				Contig contig = contigmap.get( cont );
 				/*Contig contig = null;
@@ -11634,6 +11670,7 @@ public class GeneSet extends JApplet {
 				else if( spec.contains("RLM") ) spec = "t.RLM";*/
 				
 				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(6, i+4), contig, loc, start, stop, rev ? -1 : 1 );
+				tegeval.type = "rrna";
 				g.setTegeval( tegeval );
 				gg.addGene( g );
 			}
@@ -11674,10 +11711,11 @@ public class GeneSet extends JApplet {
 				gg = new GeneGroup( groupIndex++ );
 				ggmap.put( name, gg );
 			}
-			Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec, "trna" );
+			Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
 			
 			Contig contig = contigmap.get( cont );
 			Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
+			tegeval.type = "trna";
 			g.setTegeval( tegeval );
 			gg.addGene( g );
 			
@@ -12509,11 +12547,11 @@ public class GeneSet extends JApplet {
 			}
 			System.err.println( me + " agargargargarg " + mu );
 			
-			if( rnamap != null ) for( String ggname : rnamap.keySet() ) {
+			/*if( rnamap != null ) for( String ggname : rnamap.keySet() ) {
 				GeneGroup gg = rnamap.get( ggname );
 				List<Tegeval> tegevals = gg.getTegevals();
 				
-				for( Tegeval te : tegevals ) {
+				/*for( Tegeval te : tegevals ) {
 					Contig contig = te.getContshort();
 										
 					//if( contig.getName().contains("antrani") && contig.getName().contains("contig00006") ) {
@@ -12579,10 +12617,10 @@ public class GeneSet extends JApplet {
 							contig.start = te;
 							contig.end = te;
 							te.setNum( 0 );
-						}*/
+						}*
 					}
-				}
-			}
+				}*
+			}*/
 			sortLoci();
 			
 			for( String spec : speccontigMap.keySet() ) {
@@ -12591,7 +12629,7 @@ public class GeneSet extends JApplet {
 				for( Contig c : ctgs ) {
 					System.err.println( c );
 					int im = 0;
-					if( c.annset != null ) for( Annotation tv : c.annset ) {
+					if( c.getAnnotations() != null ) for( Annotation tv : c.getAnnotations() ) {
 						((Tegeval)tv).unresolvedGap( im++ );
 					}
 				}
@@ -13307,7 +13345,7 @@ public class GeneSet extends JApplet {
 				Path dbPath = filechooser.getSelectedFile().toPath();
 				BufferedWriter bw = Files.newBufferedWriter(dbPath);
 				for( Gene g : genelist ) {
-					if( g.tag == null ) {
+					if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
 						g.getFasta( bw );
 						/*StringBuilder sb = g.tegeval.getProteinSequence();
 						if( sb.toString().contains("0") ) {
@@ -13369,7 +13407,7 @@ public class GeneSet extends JApplet {
 			serifier.mseq.put(c.getName(), c);
 			
 			List<Annotation> lann = new ArrayList<Annotation>();
-			if( c.annset != null ) for( Annotation ann : c.annset ) {
+			if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
 				Tegeval tv = (Tegeval)ann;
 				Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, tv.getGene().getName() );
 				anno.type = "gene";
@@ -13667,7 +13705,7 @@ public class GeneSet extends JApplet {
 						Path dbPath = Files.createTempFile("all", ".fsa");
 						BufferedWriter bw = Files.newBufferedWriter(dbPath);
 						for( Gene g : genelist ) {
-							if( g.tag == null ) {
+							if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
 								StringBuilder gs = g.tegeval.getProteinSequence();
 								bw.append(">" + g.id + "\n");
 								for (int i = 0; i < gs.length(); i += 70) {
@@ -14616,7 +14654,7 @@ public class GeneSet extends JApplet {
 			}
 		});
 		sequencemenu.addSeparator();
-		sequencemenu.add(new AbstractAction("View selection") {
+		sequencemenu.add(new AbstractAction("View selected range") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFrame frame = new JFrame();
@@ -14627,12 +14665,27 @@ public class GeneSet extends JApplet {
 				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 				jf.initGui(frame);
 
-				Map<Contig, Sequence> contset = new HashMap<Contig, Sequence>();
+				Set<Contig> contset = new HashSet<Contig>();
+				Set<Tegeval> tvset = new HashSet<Tegeval>();
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					Tegeval tv = gg.tegeval;
+					if( table.getModel() == defaultModel ) {
+						Gene gg = genelist.get(cr);
+						Tegeval tv = gg.tegeval;
+						tvset.add( tv );
+						//serifier.addAnnotation( tv );
+						contset.add( tv.getContshort() );
+					} else {
+						GeneGroup gg = allgenegroups.get(cr);
+						for( Tegeval tv : gg.getTegevals() ) {
+							tv.color = Color.red;
+							tvset.add( tv );
+							Contig contig = tv.getContshort();
+							contset.add( contig );							
+							//serifier.addAnnotation( tv );
+						}
+					}
 					/*Sequence seq;
 					Contig contig = tv.getContshort();
 					/*if (contset.containsKey(contig)) {
@@ -14652,15 +14705,36 @@ public class GeneSet extends JApplet {
 					a.setOri(tv.ori);
 					a.setGroup(gg.name);
 					a.setType("gene");*/
-					serifier.addAnnotation( tv );
 					// seq.addAnnotation( new Annotation( seq, ) );
 				}
 
-				for (Contig contig : contset.keySet()) {
-					Sequence seq = contset.get(contig);
-					serifier.addSequence(seq);
-					if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());
+				for (Contig contig : contset) {
+					int start = Integer.MAX_VALUE;
+					int stop = Integer.MIN_VALUE;
+					for( Tegeval tv : tvset ) {
+						if( contig == tv.seq ) {
+							start = Math.min(start, tv.start);
+							stop = Math.max(stop, tv.stop);
+						}
+					}
+					Sequence newseq = new Sequence( contig.name, new StringBuilder(contig.getSubstring(start, stop, 1)), serifier.mseq);
+					if( contig.isReverse() ) {
+						newseq.reverse();
+						newseq.complement();
+					}
+					
+					serifier.addSequence( newseq );
+					for( Tegeval tv : tvset ) {
+						if( contig == tv.seq ) {
+							newseq.addAnnotation( tv );
+						}
+						serifier.addAnnotation(tv);
+					}
+					/*for( Annotation ann : contig.getAnnotations() ) {
+						serifier.addAnnotation( ann );
+					}*/
+					/*if (seq.getAnnotations() != null)
+						Collections.sort(seq.getAnnotations());*/
 				}
 				jf.updateView();
 
@@ -14723,27 +14797,31 @@ public class GeneSet extends JApplet {
 					if( table.getModel() == defaultModel ) {
 						Gene g = genelist.get( cr );
 						Tegeval tv = g.tegeval;
+						tv.color = Color.red;
 						Contig contig = tv.getContshort();
+						contig.offset = -tv.start;
 						contigs.add( contig );
-						Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
+						/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 						a.setStart(tv.start);
 						a.setStop(tv.stop);
 						a.setOri(tv.ori);
 						a.setGroup(g.name);
-						a.setType("gene");
-						serifier.addAnnotation(a);
+						a.setType("gene");*/
+						//serifier.addAnnotation( tv );
 					} else {
 						GeneGroup gg = allgenegroups.get( cr );
 						for( Tegeval tv : gg.getTegevals() ) {
+							tv.color = Color.red;
 							Contig contig = tv.getContshort();
-							contigs.add( contig );							
-							Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
+							contig.offset = -tv.start;
+							contigs.add( contig );					
+							/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 							a.setStart(tv.start);
 							a.setStop(tv.stop);
 							a.setOri(tv.ori);
 							a.setGroup(gg.getCommonName());
-							a.setType("gene");
-							serifier.addAnnotation(a);
+							a.setType("gene");*/
+							//serifier.addAnnotation( tv );
 						}
 						
 					}
@@ -14753,10 +14831,14 @@ public class GeneSet extends JApplet {
 						//for (String sp : g.species.keySet()) {
 				}
 
-				for( Contig contig : contigs ) {;
+				for( Contig contig : contigs ) {
+					for( Annotation ann : contig.getAnnotations() ) {
+						serifier.addAnnotation( ann );
+					}
+					
 					serifier.addSequence( contig );
-					if(contig.getAnnotations() != null)
-						Collections.sort(contig.getAnnotations());
+					//if(contig.getAnnotations() != null)
+					//	Collections.sort(contig.getAnnotations());
 				}
 				jf.updateView();
 
@@ -15044,10 +15126,10 @@ public class GeneSet extends JApplet {
 													int stopcheck = 0;
 													int stop = -1;
 													for( int i = 0; i < seq1.length(); i++ ) {
-														if( seq1.charAt(i) != '-' ) {
+														if( seq1.getCharAt(i) != '-' ) {
 															startcheck |= 1;
 														}
-														if( seq2.charAt(i) != '-' ) {
+														if( seq2.getCharAt(i) != '-' ) {
 															startcheck |= 2;
 														}
 														
@@ -15058,10 +15140,10 @@ public class GeneSet extends JApplet {
 													}
 													
 													for( int i = seq1.length()-1; i >= 0; i-- ) {
-														if( seq1.charAt(i) != '-' ) {
+														if( seq1.getCharAt(i) != '-' ) {
 															stopcheck |= 1;
 														}
-														if( seq2.charAt(i) != '-' ) {
+														if( seq2.getCharAt(i) != '-' ) {
 															stopcheck |= 2;
 														}
 														
@@ -15073,7 +15155,7 @@ public class GeneSet extends JApplet {
 													//count += stop-start;
 													
 											        for( int i = start; i < stop; i++ ) {
-											        	char lc = seq1.charAt(i);
+											        	char lc = seq1.getCharAt(i);
 											        	char c = Character.toUpperCase( lc );
 											        	//if( )
 											        	String comb = c+""+c;
@@ -15081,9 +15163,9 @@ public class GeneSet extends JApplet {
 											        }
 											        
 											        for( int i = start; i < stop; i++ ) {
-											        	char lc = seq1.charAt( i );
+											        	char lc = seq1.getCharAt( i );
 											        	char c = Character.toUpperCase( lc );
-											        	char lc2 = seq2.charAt( i );
+											        	char lc2 = seq2.getCharAt( i );
 											        	char c2 = Character.toUpperCase( lc2 );
 											        	
 											        	String comb = c+""+c2;

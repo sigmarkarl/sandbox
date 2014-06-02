@@ -686,8 +686,7 @@ public class ActionCollection {
 					for( Contig ct : lcont ) {
 						if( ct.annset != null ) {
 							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().tag == null || tv.getGene().tag.length() == 0 ) count++;
+								if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) count++;
 							}
 							total += ct.annset.size();
 						}
@@ -705,8 +704,7 @@ public class ActionCollection {
 					for( Contig ct : lcont ) {
 						if( ct.annset != null ) {
 							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().tag != null && tv.getGene().tag.contains("rna") ) count++;
+								if( ann.type != null && ann.type.contains("rna") ) count++;
 							}
 							total += ct.annset.size();
 						}
@@ -724,8 +722,7 @@ public class ActionCollection {
 					for( Contig ct : lcont ) {
 						if( ct.annset != null ) {
 							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().tag != null && tv.getGene().tag.contains("rrna") ) count++;
+								if( ann.type != null && ann.type.contains("rrna") ) count++;
 							}
 							total += ct.annset.size();
 						}
@@ -745,7 +742,7 @@ public class ActionCollection {
 							for( Annotation ann : ct.annset ) {
 								Tegeval tv = (Tegeval)ann;
 								String lowername = tv.getGene().getName().toLowerCase();
-								if( tv.getGene().tag != null && tv.getGene().tag.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")) ) count++;
+								if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")) ) count++;
 							}
 							total += ct.annset.size();
 						}
@@ -764,7 +761,7 @@ public class ActionCollection {
 						if( ct.annset != null ) {
 							for( Annotation ann : ct.annset ) {
 								Tegeval tv = (Tegeval)ann;
-								boolean rrna = tv.getGene().tag != null && tv.getGene().tag.contains("rrna");
+								boolean rrna = ann.type != null && ann.type.contains("rrna");
 								String lowername = tv.getGene().getName().toLowerCase();
 								boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
 								
@@ -795,7 +792,7 @@ public class ActionCollection {
 							for( Annotation ann : ct.annset ) {
 								Tegeval tv = (Tegeval)ann;
 								String lowername = tv.getGene().getName().toLowerCase();
-								if( tv.getGene().tag != null && tv.getGene().tag.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu")) ) {
+								if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu")) ) {
 									//System.err.println( "eeeerm: "+tv.getSpecies() );
 									count++;
 								}
@@ -816,8 +813,7 @@ public class ActionCollection {
 					for( Contig ct : lcont ) {
 						if( ct.annset != null ) {
 							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().tag != null && tv.getGene().tag.contains("trna") ) count++;
+								if( ann.type != null && ann.type.contains("trna") ) count++;
 							}
 							total += ct.annset.size();
 						}
@@ -2683,7 +2679,7 @@ public class ActionCollection {
 								int acount = 0;
 								int tcount = 0;
 								for( int k = i; k < Math.min( ctg.length(), i+10000 ); k++ ) {
-									char chr = k-5000 < 0 ? ctg.charAt( ctg.length()+(k-5000) ) : ctg.charAt(k-5000);
+									char chr = k-5000 < 0 ? ctg.getCharAt( ctg.length()+(k-5000) ) : ctg.getCharAt(k-5000);
 									if( chr == 'g' || chr == 'G' ) gcount++;
 									else if( chr == 'c' || chr == 'C' ) ccount++;
 									else if( chr == 'a' || chr == 'A' ) acount++;
@@ -3666,7 +3662,7 @@ public class ActionCollection {
 							
 							int started = -1;
 							for( int k = 0; k < ctg.length(); k++ ) {
-								char b = ctg.charAt(k);
+								char b = ctg.getCharAt(k);
 								if( b == 'n' || b == 'N' ) {
 									if( started == -1 ) started = k;
 								} else if( started != -1 ) {
