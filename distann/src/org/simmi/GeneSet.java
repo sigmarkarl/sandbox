@@ -5636,7 +5636,7 @@ public class GeneSet extends JApplet {
 		}
 		fr.close();
 
-		return idMapping(new FileReader(idfile), outfile, ind, secind, refids, genmap, gimap);
+		return idMapping(new BufferedReader(new FileReader(idfile)), outfile, ind, secind, refids, genmap, gimap);
 	}
 	
 	public Map<String,String> loadDesignations( InputStreamReader id, Set<String> deset ) throws IOException {
@@ -5717,7 +5717,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 
-	public Map<String, Gene> idMapping( Reader rd, Writer ps, int ind, int secind, Map<String, Gene> refids, Map<String, Gene> genmap, Map<String,Gene> gimap ) throws IOException {
+	public Map<String, Gene> idMapping( BufferedReader br, Writer ps, int ind, int secind, Map<String, Gene> refids, Map<String, Gene> genmap, Map<String,Gene> gimap ) throws IOException {
 		Map<String, Gene> 	unimap = new HashMap<String, Gene>();
 		Map<String, String> ref2kegg = new HashMap<String, String>();
 		Map<String, String> ref2pdb = new HashMap<String, String>();
@@ -5738,7 +5738,6 @@ public class GeneSet extends JApplet {
 		List<String> list = new ArrayList<String>();
 		boolean tone = false;
 		// FileReader fr = new FileReader(idfile);
-		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		String last = "";
 		while (line != null) {
@@ -11673,7 +11672,36 @@ public class GeneSet extends JApplet {
 						
 						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
 						if( unimap != null ) unimap.clear();
-						unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+						unimap = idMapping(new BufferedReader(new InputStreamReader(is)), bw, 2, 0, refmap, genmap, gimap);
+						
+						bw.close();
+						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+						zipfilesystem.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		AbstractAction	importgeneidsaction = new AbstractAction("Import gene ids") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+					try {
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
+						Path path = zipfile.toPath();
+						String uristr = "jar:" + path.toUri();
+						zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+						
+						Path nf = zipfilesystem.getPath("/gene2refseq_short.txt");
+						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+						
+						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+						if( unimap != null ) unimap.clear();
+						genmap = idMapping(new BufferedReader(new InputStreamReader(is)), bw, 5, 1, refmap, genmap, gimap);
 						
 						bw.close();
 						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
@@ -11688,6 +11716,7 @@ public class GeneSet extends JApplet {
 		JMenuBar	menubar = new JMenuBar();
 		JMenu		menu = new JMenu("Functions");
 		menu.add( importidmappingaction );
+		menu.add( importgeneidsaction );
 		menu.add( importgenesymbolaction );
 		menu.add( fetchaction );
 		menu.add( blast2action );
@@ -16296,7 +16325,7 @@ public class GeneSet extends JApplet {
 		//Map<String, Gene> gimap = new HashMap<String,Gene>();
 		
 		nf = zipfilesystem.getPath("/gene2refseq_short.txt");
-		if( Files.exists( nf ) ) genmap = idMapping(new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), null, 5, 1, refmap, genmap, gimap);
+		if( Files.exists( nf ) ) genmap = idMapping(Files.newBufferedReader(nf), null, 5, 1, refmap, genmap, gimap);
 		//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
 		
 		/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
@@ -16326,7 +16355,7 @@ public class GeneSet extends JApplet {
 		zipin.close();*/
 		
 		nf = zipfilesystem.getPath("/idmapping_short.dat");
-		if( Files.exists( nf ) ) unimap = idMapping(new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), null, 2, 0, refmap, genmap, gimap);
+		if( Files.exists( nf ) ) unimap = idMapping(Files.newBufferedReader(nf), null, 2, 0, refmap, genmap, gimap);
 		nf = zipfilesystem.getPath("/smap_short.txt");
 		if( Files.exists( nf ) && !unimap.isEmpty() ) loadSmap( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), unimap );
 		nf = zipfilesystem.getPath("/ko2name.txt");
