@@ -8097,7 +8097,18 @@ public class GeneSet extends JApplet {
 							
 								if( gg != null ) {
 									if( ids ) pos.write( (">" + g.id + "\n").getBytes() );
-									else pos.write( (">" + g.name + "\n").getBytes() );
+									else {
+										String addstr = "";
+										Cog cog = gg.getCommonCog( cogmap );
+										String cazy = gg.getCommonCazy( cazymap );
+										if( cog != null ) addstr += "_"+cog.id;
+										if( cazy != null ) {
+											if( addstr.length() > 0 ) addstr += cazy;
+											addstr += "_"+cazy;
+										}
+										if( addstr.length() > 0 ) addstr += "_";
+										pos.write( (">" + g.name + addstr + "[" + g.id + "]\n").getBytes() );
+									}
 									StringBuilder sb = g.tegeval.getProteinSequence();
 									for( int i = 0; i < sb.length(); i+=70 ) {
 										pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
