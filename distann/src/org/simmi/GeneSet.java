@@ -838,20 +838,36 @@ public class GeneSet extends JApplet {
 								if (gene.funcentries == null)
 									gene.funcentries = new HashSet<Function>();
 								
-								String goid;
+								String goid = null;
 								if( ngo != -1 ) goid = idstr.substring(go, ngo);
 								else {
-									int ni = go+10;//Math.minname.indexOf(')', go+1);
-									goid = idstr.substring( go, ni );
+									int ni = go+3;
+									while( ni < go+10 && ni < idstr.length() && idstr.charAt(ni) >= '0' && idstr.charAt(ni) <= '9' ) {
+										ni++;
+									}
+									//int ni = go+10;//Math.minname.indexOf(')', go+1);
+									if( ni <= idstr.length() ) {
+										goid = idstr.substring( go, ni );
+									}
+									
+									while( goid.length() < 10 ) {
+										/*if( goid.length() < 4 ) {
+											System.err.println();
+										}*/
+										goid = "GO:0"+goid.substring(3);
+									}
 								}
-								Function func;
-								if( funcmap.containsKey( goid ) ) {
-									func = funcmap.get( goid );
-								} else {
-									func = new Function( goid );
-									funcmap.put( goid, func );
+								
+								if( goid != null ) {
+									Function func;
+									if( funcmap.containsKey( goid ) ) {
+										func = funcmap.get( goid );
+									} else {
+										func = new Function( goid );
+										funcmap.put( goid, func );
+									}
+									gene.funcentries.add( func );
 								}
-								gene.funcentries.add( func );
 								
 								go = ngo;
 							}
