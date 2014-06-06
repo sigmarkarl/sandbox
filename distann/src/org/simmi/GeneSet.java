@@ -5856,20 +5856,25 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	public static void main(String[] args) {		
-		/*String[] stra = {"A", "B", "C", "D"};
-		corrInd = Arrays.asList( stra );
-		double[] dd = { 0.0, 17.0, 21.0, 27.0, 17.0, 0.0, 12.0, 18.0, 21.0, 12.0, 0.0, 14.0, 27.0, 18.0, 14.0, 0.0 };
-		TreeUtil treeutil = new TreeUtil();
-		treeutil.neighborJoin( dd, 4, corrInd );*/
+	public static void main(String[] args) {
+		if( args.length == 0 ) {
 		
-		JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
-		JFrame.EXIT_ON_CLOSE );
-		 
-		frame.setSize(800, 600); 
-		GeneSet gs = new GeneSet();
-		gs.init( frame );
-		frame.setVisible( true );
+			/*String[] stra = {"A", "B", "C", "D"};
+			corrInd = Arrays.asList( stra );
+			double[] dd = { 0.0, 17.0, 21.0, 27.0, 17.0, 0.0, 12.0, 18.0, 21.0, 12.0, 0.0, 14.0, 27.0, 18.0, 14.0, 0.0 };
+			TreeUtil treeutil = new TreeUtil();
+			treeutil.neighborJoin( dd, 4, corrInd );*/
+			
+			JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
+			JFrame.EXIT_ON_CLOSE );
+			 
+			frame.setSize(800, 600); 
+			GeneSet gs = new GeneSet();
+			gs.init( frame );
+			frame.setVisible( true );
+		} else {
+			Serifier.main(args);
+		}
 		 
 
 		// System.err.println( Runtime.getRuntime().availableProcessors() );
@@ -13885,6 +13890,12 @@ public class GeneSet extends JApplet {
 						if( g.tegeval.alignedsequence != null ) System.err.println( g.tegeval.alignedsequence.name );
 						s.mseq.put(gk, g.tegeval.alignedsequence);
 					}
+					
+					Map<String,String>	idspec = new HashMap<String,String>();
+					for( String idstr : refmap.keySet() ) {
+						Gene gene = refmap.get( idstr );
+						idspec.put(idstr, gene.getSpecies());
+					}
 					//Sequences seqs = new Sequences(user, name, type, path, nseq)
 					try {
 						Map<String,String> env = new HashMap<String,String>();
@@ -13892,7 +13903,7 @@ public class GeneSet extends JApplet {
 						String uristr = "jar:" + zippath.toUri();
 						zipuri = URI.create( uristr );
 						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len);
+						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len, idspec);
 						zipfilesystem.close();
 					} catch (IOException e1) {
 						if( zipfilesystem != null ) {
