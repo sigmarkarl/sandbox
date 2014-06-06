@@ -697,7 +697,7 @@ public class SerifyApplet extends JApplet {
 				
 				if( !interrupted ) {
 					try {
-						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f );
+						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f, null );
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
@@ -3740,7 +3740,7 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						List<Set<String>> cluster = serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f );
+						List<Set<String>> cluster = serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f, null );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -4756,7 +4756,7 @@ public class SerifyApplet extends JApplet {
 				
 				Path nf = new File( "/u0/all.blastout" ).toPath();//new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getFileName() );
-				List<Set<String>> cluster = serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f );
+				List<Set<String>> cluster = serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f, null );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
