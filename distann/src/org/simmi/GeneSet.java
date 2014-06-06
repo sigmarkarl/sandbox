@@ -63,6 +63,7 @@ import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -615,15 +616,17 @@ public class GeneSet extends JApplet {
 							//int ecc = name.indexOf(')', ec+1);
 							//if( ecc == -1 ) ecc = name.length();
 							int k = ec+3;
-							char c = idstr.charAt(k);
-							while( (c >= '0' && c <= '9') || c == '.' ) {
-								c = idstr.charAt( k++ );
-								if( k == idstr.length() ) {
-									k++;
-									break;
+							if( k < idstr.length() ) {
+								char c = idstr.charAt(k);
+								while( (c >= '0' && c <= '9') || c == '.' ) {
+									c = idstr.charAt( k++ );
+									if( k == idstr.length() ) {
+										k++;
+										break;
+									}
 								}
+								gene.ecid = idstr.substring(ec+2, k-1).trim();
 							}
-							gene.ecid = idstr.substring(ec+2, k-1).trim();
 						}
 					
 						int go = idstr.indexOf("GO:");
@@ -13131,6 +13134,14 @@ public class GeneSet extends JApplet {
 			}
 			System.err.println( me + "  " + mu );
 		}
+		
+		File idf = new File("/home/sigmar/idspec.txt");
+		BufferedWriter bw = new BufferedWriter( new FileWriter(idf) ); //Files.newBufferedWriter(idf.toPath(), OpenOption.);
+		for( String id : refmap.keySet() ) {
+			Gene g = refmap.get(id);
+			bw.write( id + "\t" + g.getSpecies() + "\n" );
+		}
+		bw.close();
 	}
 	
 	private void updateShareNum( Collection<String> specs ) {
@@ -13809,7 +13820,7 @@ public class GeneSet extends JApplet {
 							System.err.println( gg.size() );
 						}*/
 						String fasta = gg.getFasta();
-						String[] cmds = new String[] {"muscle"};
+						String[] cmds = new String[] {"/usr/bin/muscle"};
 						Object[] paths = new Object[] {fasta.getBytes(), aligneddir.resolve(gg.getCommonId()+".aa"), null};
 						commandsList.add( paths );
 						commandsList.add( Arrays.asList(cmds) );
