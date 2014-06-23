@@ -536,9 +536,7 @@ public class GeneSet extends JApplet {
 					u = Contig.specCheck( contigstr );
 					
 					if( u == -1 ) {
-						u = contigstr.indexOf("contig");
-						if( u == -1 ) u = contigstr.indexOf("scaffold");
-						if( u == -1 ) u = contigstr.lastIndexOf('_');
+						u = contigIndex( contigstr );
 						origin = contigstr.substring(0, u-1);
 						contloc = contigstr.substring(u, contigstr.length());
 					} else {
@@ -667,6 +665,13 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public static int contigIndex( String lname ) {
+		int i = lname.indexOf("contig");
+		if( i == -1 ) i = lname.indexOf("scaffold");
+		if( i == -1 ) i = lname.lastIndexOf('_')+1;
+		return i;
+	}
+	
 	Set<String>	mu = new HashSet<String>();
 	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
 		//BufferedReader br = new BufferedReader(rd);
@@ -720,9 +725,10 @@ public class GeneSet extends JApplet {
 						u = Contig.specCheck( contigstr );
 						
 						if( u == -1 ) {
-							u = contigstr.indexOf("contig");
+							/*u = contigstr.indexOf("contig");
 							if( u == -1 ) u = contigstr.indexOf("scaffold");
-							if( u == -1 ) u = contigstr.lastIndexOf('_');
+							if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
+							u = contigIndex( contigstr );
 							origin = contigstr.substring(0, u-1);
 							contloc = contigstr.substring(u, contigstr.length());
 						} else {
@@ -961,9 +967,7 @@ public class GeneSet extends JApplet {
 			String name;
 			int i = lname.lastIndexOf('[');
 			if( i == -1 ) {
-				i = lname.indexOf("contig");
-				if( i == -1 ) i = lname.indexOf("scaffold");
-				if( i == -1 ) i = lname.lastIndexOf('_');
+				i = contigIndex( lname );
 				int u = lname.lastIndexOf('_');
 				contigstr = lname.substring(0, u);
 				origin = lname.substring(0, i-1);
@@ -983,9 +987,10 @@ public class GeneSet extends JApplet {
 				u = Contig.specCheck( contigstr );
 				
 				if( u == -1 ) {
-					u = contigstr.indexOf("contig");
+					u = contigIndex( contigstr );
+					/*u = contigstr.indexOf("contig");
 					if( u == -1 ) u = contigstr.indexOf("scaffold");
-					if( u == -1 ) u = contigstr.lastIndexOf('_');
+					if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
 					origin = contigstr.substring(0, u-1);
 					contloc = contigstr.substring(u, contigstr.length());
 				} else {
@@ -2311,13 +2316,7 @@ public class GeneSet extends JApplet {
 					int u = Contig.specCheck( str );
 					
 					if( u == -1 ) {
-						u = str.indexOf("contig");
-						if( u == -1 ) {
-							u = str.indexOf("scaffold");
-						}
-						if( u == -1 ) {
-							u = str.lastIndexOf('_');
-						}
+						u = contigIndex(str);
 						spec = str.substring( 0, u-1 );
 					} else {
 						int l = str.indexOf('_', u+1);
@@ -2328,9 +2327,10 @@ public class GeneSet extends JApplet {
 					 */
 					teg.add(spec);
 				} else {
-					i = e.indexOf("contig");
+					i = contigIndex(e);
+					/*i = e.indexOf("contig");
 					if( i == -1 ) i = e.indexOf("scaffold");
-					if( i == -1 ) i = e.lastIndexOf('_');
+					if( i == -1 ) i = e.lastIndexOf('_')+1;*/
 					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
 					
 					teg.add(spec);
@@ -2364,9 +2364,7 @@ public class GeneSet extends JApplet {
 					int u = Contig.specCheck( str );
 					
 					if( u == -1 ) {
-						u = str.indexOf("contig");
-						if( u == -1 ) u = str.indexOf("scaffold");
-						if( u == -1 ) u = str.lastIndexOf('_');
+						u = contigIndex( str );
 						spec = str.substring( 0, u-1 );
 					} else {
 						int l = str.indexOf('_', u+1);
@@ -2382,9 +2380,7 @@ public class GeneSet extends JApplet {
 					}
 					set.add(e);
 				} else {
-					i = e.indexOf("contig");
-					if( i == -1 ) i = e.indexOf("scaffold");
-					if( i == -1 ) i = e.lastIndexOf('_');
+					i = contigIndex(e);
 					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
 					
 					Set<String> set;
@@ -7747,9 +7743,7 @@ public class GeneSet extends JApplet {
 									else name = "Thermus_" + nspec.substring(0,firstDigitLocation) + "_" + nspec.substring(firstDigitLocation);
 								}*/
 								
-								int k = name.indexOf("contig");
-								if( k == -1 ) k = name.indexOf("scaffold");
-								if( k == -1 ) k = name.lastIndexOf('_');
+								int k = contigIndex(name);
 								if( k == -1 ) {
 									name = spec;
 								} else {
@@ -11476,13 +11470,7 @@ public class GeneSet extends JApplet {
 				int u = Contig.specCheck( cont );
 				
 				if( u == -1 ) {
-					u = cont.indexOf("contig");
-					if( u == -1 ) {
-						u = cont.indexOf("scaffold");
-					}
-					if( u == -1 ) {
-						u = cont.lastIndexOf('_');
-					}
+					u = contigIndex(cont);
 					spec = cont.substring( 0, u-1 );
 					contshort = cont.substring( u, cont.length() );
 				} else {
@@ -14015,7 +14003,7 @@ public class GeneSet extends JApplet {
 						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len, idspec, cluster);
 						
 						System.err.println( cluster.get(0) );
-						System.err.println( uclusterlist.get(0) );
+						if( uclusterlist != null ) System.err.println( uclusterlist.get(0) );
 						
 						zipfilesystem.close();
 					} catch (IOException e1) {
