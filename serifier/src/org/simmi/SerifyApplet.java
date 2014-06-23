@@ -496,7 +496,7 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
-	public static void blastRun( NativeRun nrun, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
+	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
 		if( homedir ) selectedpath = new File( userhome ).toPath();
@@ -619,14 +619,14 @@ public class SerifyApplet extends JApplet {
 				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
 				//lcmd.addAll( Arrays.asList(nxst) );
 				
-				lscmd.add( new Path[] {dbPath, res, selectedpath} );
+				lscmd.add( new Path[] {queryPath, res, selectedpath} );
 				lscmd.add( lcmd );
 			}
 			
 			final String start = new Date( System.currentTimeMillis() ).toString();								
 			final Object[] cont = new Object[3];
 			Runnable run = new Runnable() {
-				public void run() {										
+				public void run() {					
 					//infile.delete();
 					//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
 					if( cont[0] != null ) {
@@ -651,7 +651,7 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public Object run() {
 				try {
-					blastRun( nrun, dbPath, dbType, extrapar, table, false );
+					blastRun( nrun, dbPath, dbPath, dbType, extrapar, table, false );
 				} catch( Exception e ) {
 					e.printStackTrace();
 				}
@@ -697,7 +697,8 @@ public class SerifyApplet extends JApplet {
 				
 				if( !interrupted ) {
 					try {
-						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f, null );
+						List<Set<String>> total = new ArrayList<Set<String>>();
+						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f, null, total );
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
@@ -2791,7 +2792,7 @@ public class SerifyApplet extends JApplet {
 						}
 						
 						try {
-							serifier.genbankFromNR( s, blastFile.toPath(), f, false );
+							serifier.genbankFromNR( s, blastFile.toPath(), f.toPath(), false );
 						} catch (MalformedURLException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
@@ -3740,7 +3741,8 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						List<Set<String>> cluster = serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f, null );
+						List<Set<String>> cluster = new ArrayList<Set<String>>();
+						serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f, null, cluster );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -4756,7 +4758,8 @@ public class SerifyApplet extends JApplet {
 				
 				Path nf = new File( "/u0/all.blastout" ).toPath();//new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getFileName() );
-				List<Set<String>> cluster = serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f, null );
+				List<Set<String>> cluster = new ArrayList<Set<String>>();
+				serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f, null, cluster );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
