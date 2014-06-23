@@ -116,16 +116,21 @@ public class GBK2AminoFasta {
 									anno = null;
 								}
 							} else if( split[1].startsWith("join") ) {
-								int iof = split[1].indexOf(")");
+								int iof = split[1].lastIndexOf(")");
 								while( iof == -1 ) {
 									int k = filetext.indexOf("\n", ind+1);
 									if( ind > 0 ) line = filetext.substring(ind+1, k);
 									ind = k;
 									trimline = trimline+line.trim();
 									split = trimline.split("[\t ]+");
-									iof = split[1].indexOf(")");
+									iof = split[1].lastIndexOf(")");
 								}
-								int osv = split[1].lastIndexOf('(');
+								int osv = split[1].indexOf('(');
+								
+								if( iof < osv+1 ) {
+									System.err.println();
+								}
+								
 								String substr = split[1].substring(osv+1, iof);
 								String[] sepstr = substr.split(",");
 								
@@ -144,6 +149,10 @@ public class GBK2AminoFasta {
 										System.err.println( nsplit[0] + " n " + nsplit[nsplit.length-1] );
 										anno = null;
 									}
+								}
+								
+								if( anno != null && anno.stop-anno.start > 10000 ) {
+									System.err.println();
 								}
 							} else {
 								String[] nsplit;
@@ -324,7 +333,14 @@ public class GBK2AminoFasta {
 				
 				int t = 0;
 				if( amino ) {
-					String 	val = strbuf.substring( Math.max(0, ao.start-1), ao.stop );
+					int sstart = Math.max(0, ao.start-1);
+					int sstop = Math.min( ao.stop, strbuf.length() );
+					
+					/*if( !(sstart >= 0 && sstop <= strbuf.length()) ) {
+						System.err.println();
+					}*/
+					
+					String 	val = strbuf.substring( sstart, sstop );
 					if( ao.comp ) {
 						for( int i = val.length()-3; i >= 0; i-=3 ) {
 							//ami += 
