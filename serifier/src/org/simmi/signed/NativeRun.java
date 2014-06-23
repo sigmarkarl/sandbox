@@ -150,7 +150,7 @@ public class NativeRun {
 		return f;
 	}
 	
-	public boolean startProcess( Object commands, List<Object> commandsList, Path workingdir, Object input, Object output, JTextArea ta, boolean paralell ) {
+	public boolean startProcess( Object commands, List<Object> commandsList, Path workingdir, Object input, Object output, final JTextArea ta, boolean paralell ) {
 		//Object commands = commandsList.get( w );
 		boolean blist = commands instanceof List;
 		List<String> lcmd = (List)(blist ? commands : commandsList.get((Integer)commands));
@@ -161,7 +161,9 @@ public class NativeRun {
 		//System.err.println( "mumu " + lcmd );
 		
 		ProcessBuilder pb = new ProcessBuilder( lcmd );
-		//pb.environment().putAll( System.getenv() );
+		pb.environment().putAll( System.getenv() );
+		pb.environment().put("PYTHONPATH", "/Users/sigmar/antiSMASH2/python/Lib/site-packages");
+		pb.environment().put("PATH", pb.environment().get("PATH")+":/Users/sigmar/antiSMASH2/exec");
 		//System.err.println( pb.environment() );
 		if( workingdir != null ) {
 			//System.err.println( "blblblbl " + workingdir.toFile() );
@@ -206,8 +208,16 @@ public class NativeRun {
 				public void run() {
 					try {
 						InputStream os = p.getErrorStream();
-						while( os.read() != -1 ) ;
-						//os.write( binput );
+						BufferedReader br = new BufferedReader( new InputStreamReader(os) );
+						String line = br.readLine();
+						while( line != null ) {
+							//while( os.read() != -1 ) ;
+							//os.write( binput );
+							String str = line + "\n";
+							ta.append( str );
+							
+							line = br.readLine();
+						}
 						os.close();
 					} catch( Exception e ) {
 						e.printStackTrace();

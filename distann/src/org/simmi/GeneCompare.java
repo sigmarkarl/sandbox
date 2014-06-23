@@ -1373,7 +1373,7 @@ public class GeneCompare {
 			}
 			g2.setColor( Color.black );
 			
-			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(21.0f);
+			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(12.0f);
 			g2.setFont( oldfont );
 			//String[] specsplit = ;
 			/*if( spec1.contains("hermus") ) specsplit = spec1.split("_");
@@ -1408,7 +1408,7 @@ public class GeneCompare {
 				if( specstr.length() > 30 ) specstr = specstr.substring(0, specstr.lastIndexOf('_'));
 				
 				int strw = g2.getFontMetrics().stringWidth( specstr );
-				g2.drawString( specstr, (w-strw)/2, h/2 - spec2s.size()*23/2 + 23 + k*23 );
+				g2.drawString( specstr.replace("T.", ""), (w-strw)/2, h/2 - spec2s.size()*14/2 + 14 + k*14 );
 				k++;
 			}
 		}
@@ -1484,6 +1484,8 @@ public class GeneCompare {
 		}*/
 		
 		//System.err.println( ratio );
+		
+		//final ExecutorService es = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 		
 		int scount = 0;
 		for( String spec2 : spec2s ) {
