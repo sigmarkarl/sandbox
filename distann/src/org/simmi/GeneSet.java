@@ -689,6 +689,9 @@ public class GeneSet extends JApplet {
 		//Tegeval preval = null;
 		while (line != null) {
 			if (line.startsWith(">")) {
+				/*if( line.contains("MAT4609") ) {
+					System.err.println();
+				}*/
 				if (tv.getSequenceLength() > 0) {
 					String contigstr = null;
 					String contloc = null;
@@ -5841,13 +5844,67 @@ public class GeneSet extends JApplet {
 					//System.err.println( message );
 					if( message.startsWith(">") ) {
 						final RunnableResult run = new RunnableResult() {
-							public void run( String res ) {
-								cs.sendToAll( res );
+							public void run( String resl ) {
+								BufferedReader br = new BufferedReader( new StringReader( resl ) );
+								
+								StringBuilder sb = new StringBuilder();
+								try {
+									String line = br.readLine();
+									while( line != null ) {
+										/*if( rr != null ) {
+											rr.run( line+"\n" );
+											//res += line+"\n";
+										}*/
+										
+										if( line.startsWith("> ") ) {
+											int i = line.indexOf(' ', 2);
+											if( i == -1 ) i = line.length();
+											String id = line.substring(2, i);
+											
+											Gene g = genemap.get( id );
+											if( g != null ) {
+												GeneGroup gg = g.getGeneGroup();
+												sb.append( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\t" + gg.getSpecies() + "\n" );
+											}
+										}
+										line = br.readLine();
+									}
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+								if( sb.length() > 0 ) {
+									System.err.println("sending " + sb.toString());
+									cs.sendToAll( sb.toString() );
+								}
+								//cs.sendToAll( res );
 							}
 						};
-						doBlast( message, "0.00001", false, run );
+						doBlast( message, "0.00001", true, run );
 					} else if( message.contains("ready") ) {
-						cs.sendToAll( cs.message );
+						cs.sendToAll( "simmi" ); //cs.message );
+					} else if( message.contains("query") ) {
+						StringBuilder sb = new StringBuilder();
+						int i = 0;
+						for( Gene g : genelist ) {
+							GeneGroup gg = g.getGeneGroup();
+							sb.append( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\n" );
+						
+							if( i++ > 10 ) break;
+						}
+						cs.sendToAll( sb.toString() );
+					} else if( message.contains("request:") ) {
+						String idlist = message.substring(8).trim();
+						String[] split = idlist.split(",");
+						StringBuilder sb = new StringBuilder();
+						for( String id : split ) {
+							Gene g = refmap.get(id);
+							try {
+								g.getFasta( sb );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						cs.sendToAll( sb.toString() );
 					}
 				}
 			};
