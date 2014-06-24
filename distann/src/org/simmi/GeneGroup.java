@@ -150,6 +150,27 @@ public class GeneGroup {
 		return funcset;
 	}
 	
+	public String getCommonGO( boolean breakb, Set<Function> allowedFunctions ) {
+		String ret = "";
+		for( Gene g : genes ) {
+			if( g.funcentries != null && g.funcentries.size() > 0 ) {
+				for( Function f : g.funcentries ) {
+					//Function f = funcmap.get( go );
+					
+					if( allowedFunctions == null || allowedFunctions.contains(f) ) {
+						String name = f.go; //getName().replace('/', '-').replace(",", "");
+							
+						//System.err.println( g.getName() + "  " + go );
+						if( ret.length() == 0 ) ret += name;
+						else ret += ","+name;
+					}
+				}
+				if( breakb ) break;
+			}
+		}
+		return ret;
+	}
+	
 	public String getCommonFunction( boolean breakb, Set<Function> allowedFunctions ) {
 		String ret = "";
 		for( Gene g : genes ) {
