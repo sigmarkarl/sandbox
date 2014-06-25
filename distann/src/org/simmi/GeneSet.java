@@ -5898,10 +5898,12 @@ public class GeneSet extends JApplet {
 						StringBuilder sb = new StringBuilder();
 						for( String id : split ) {
 							Gene g = refmap.get(id);
-							try {
-								g.getFasta( sb );
-							} catch (IOException e) {
-								e.printStackTrace();
+							if( g != null ) {
+								try {
+									g.getFasta( sb );
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
 							}
 						}
 						cs.sendToAll( sb.toString() );
