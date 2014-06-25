@@ -69,6 +69,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -5839,59 +5840,80 @@ public class GeneSet extends JApplet {
 		
 		try {
 			cs = new ChatServer( 8887 ) {
+				String evalstr = "0.00001";
 				@Override
 				public void onMessage( WebSocket conn, String message ) {
 					//System.err.println( message );
 					if( message.startsWith(">") ) {
 						final RunnableResult run = new RunnableResult() {
 							public void run( String resl ) {
-								BufferedReader br = new BufferedReader( new StringReader( resl ) );
-								
-								StringBuilder sb = new StringBuilder();
-								try {
+								//BufferedReader br = new BufferedReader( new StringReader( resl ) );
+								/*try {
 									String line = br.readLine();
 									while( line != null ) {
 										/*if( rr != null ) {
 											rr.run( line+"\n" );
 											//res += line+"\n";
-										}*/
+										}*
 										
+										String res = line+"\n";
 										if( line.startsWith("> ") ) {
 											int i = line.indexOf(' ', 2);
 											if( i == -1 ) i = line.length();
 											String id = line.substring(2, i);
 											
-											Gene g = genemap.get( id );
-											if( g != null ) {
-												GeneGroup gg = g.getGeneGroup();
-												sb.append( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\t" + gg.getSpecies() + "\n" );
-											}
-										}
-										line = br.readLine();
+											/*line = br.readLine();
+											while( line != null && !line.startsWith("Query=") && !line.startsWith(">") ) {
+												res += line+"\n";
+												line = br.readLine();
+											}*/
+									
+								if( resl.equals("close") ) cs.sendToAll(resl);
+								else {
+									byte[] bb = Base64.getEncoder().encode(resl.getBytes());
+												
+									int i = resl.indexOf(' ', 2);
+									int k = resl.indexOf('\n', 2);
+									if( i == -1 ) i = resl.length();
+									if( k == -1 ) k = resl.length();
+									
+									i = Math.min(i, k);
+									
+									String id = resl.substring(2, i);
+									Gene g = genemap.get( id );
+									if( g != null ) {
+										GeneGroup gg = g.getGeneGroup();
+										cs.sendToAll( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n" );
 									}
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-								if( sb.length() > 0 ) {
-									System.err.println("sending " + sb.toString());
-									cs.sendToAll( sb.toString() );
 								}
 								//cs.sendToAll( res );
 							}
 						};
-						doBlast( message, "0.00001", true, run );
+						doBlast( message, evalstr, true, run );
 					} else if( message.contains("ready") ) {
 						cs.sendToAll( "simmi" ); //cs.message );
-					} else if( message.contains("query") ) {
+					} else if( message.contains("query:") ) {
 						StringBuilder sb = new StringBuilder();
-						int i = 0;
+						//int i = 0;
+						
+						String querystr = message.substring(6);
 						for( Gene g : genelist ) {
+							String gref = g.name;
+							if( gref.toLowerCase().contains(querystr) ) {
+								GeneGroup gg = g.getGeneGroup();
+								sb.append( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\t" + g.getSpecies() + "\n" );
+							}
+						}
+						/*for( Gene g : genelist ) {
 							GeneGroup gg = g.getGeneGroup();
 							sb.append( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\n" );
 						
 							if( i++ > 10 ) break;
+						}*/
+						if( sb.length() > 0 ) {
+							cs.sendToAll( sb.toString() );
+							cs.sendToAll( "close" );
 						}
-						cs.sendToAll( sb.toString() );
 					} else if( message.contains("request:") ) {
 						String idlist = message.substring(8).trim();
 						String[] split = idlist.split(",");
@@ -5905,6 +5927,8 @@ public class GeneSet extends JApplet {
 							}
 						}
 						cs.sendToAll( sb.toString() );
+					} else if( message.contains("evalue:") ) {
+						evalstr = message.substring(7).trim();
 					}
 				}
 			};
@@ -8267,11 +8291,6 @@ public class GeneSet extends JApplet {
 						BufferedReader br = new BufferedReader( rdr );
 						String line = br.readLine();
 						while( line != null ) {
-							if( rr != null ) {
-								rr.run( line+"\n" );
-								//res += line+"\n";
-							}
-							
 							if( line.startsWith("> ") ) {
 								int i = line.indexOf(' ', 2);
 								if( i == -1 ) i = line.length();
@@ -8281,24 +8300,36 @@ public class GeneSet extends JApplet {
 								if( g != null ) {
 									if( table.getModel() == groupModel ) {
 										i = allgenegroups.indexOf( g.getGeneGroup() );
-										if( i != -1 ) {
+										if( i != -1 && i < table.getRowCount() ) {
 											int r = table.convertRowIndexToView( i );
 											table.addRowSelectionInterval(r, r);
 										}
 									} else {
 										i = genelist.indexOf( g );
-										if( i != -1 ) {
+										if( i != -1 && i < table.getRowCount() ) {
 											int r = table.convertRowIndexToView( i );
 											table.addRowSelectionInterval(r, r);
 										}
 									}
 								}
-							}
-							line = br.readLine();
+								
+								String stuff = line+"\n";
+								line = br.readLine();
+								while( line != null && !line.startsWith("Query=") && !line.startsWith("> ") ) {
+									stuff += line+"\n";
+									line = br.readLine();
+								}
+								if( rr != null ) {
+									rr.run( stuff );
+									//res += line+"\n";
+								}
+							} else line = br.readLine();
 						}
 						br.close();
 						//System.err.println("wn done");
 						p.destroy();
+						
+						rr.run("close");
 						
 						/*if( rr != null ) {
 							rr.run( res );
