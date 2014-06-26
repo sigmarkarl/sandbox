@@ -78,6 +78,14 @@ public class GBK2AminoFasta {
 					if( trimline.startsWith("CDS  ") || trimline.startsWith("tRNA  ") || trimline.startsWith("rRNA  ") || trimline.startsWith("mRNA  ") || trimline.startsWith("misc_feature  ") ) {
 						if( anno != null ) {
 							if( anno.id == null || anno.id.length() == 0 ) anno.id = anno.comp ? "comp("+anno.start+".."+anno.stop+")" : anno.start+".."+anno.stop;
+							if( xref.size() > 0 ) {
+								anno.name += "(";
+								for( String xr : xref ) {
+									anno.name += xr;
+								}
+								anno.name += ")";
+								xref.clear();
+							}
 							annolist.add( anno );
 						}
 						anno = null;
@@ -198,13 +206,9 @@ public class GBK2AminoFasta {
 									} else i = trimline.length()-1;
 								}
 								anno.name = trimline.substring(10,i);
-								if( xref.size() > 0 ) {
-									anno.name += "(";
-									for( String xr : xref ) {
-										anno.name += xr;
-									}
-									anno.name += ")";
-									xref.clear();
+								int ecind = anno.name.indexOf("(EC");
+								if( ecind != -1 ) {
+									anno.name = anno.name.substring(0,ecind).trim();
 								}
 							}
 							//annolist.add( anno );
@@ -235,6 +239,14 @@ public class GBK2AminoFasta {
 					} else if( trimline.startsWith("ORIGIN") ) {
 						if( anno != null ) {
 							if( anno.id == null || anno.id.length() == 0 ) anno.id = anno.comp ? "comp("+anno.start+".."+anno.stop+")" : anno.start+".."+anno.stop;
+							if( xref.size() > 0 ) {
+								anno.name += "(";
+								for( String xr : xref ) {
+									anno.name += xr;
+								}
+								anno.name += ")";
+								xref.clear();
+							}
 							annolist.add( anno );
 						}
 						anno = null;
