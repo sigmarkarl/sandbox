@@ -46,6 +46,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -125,12 +126,15 @@ public class SerifyApplet extends JApplet {
 	public SerifyApplet( FileSystem fs ) {
 		this();
 		this.fs = fs;
+		this.root = fs.getPath("/");
 	}
 	
 	public SerifyApplet() {
 		super();
 		serifier = new Serifier();
 		nrun = new NativeRun();
+		fs = FileSystems.getDefault();
+		root = fs.getPath( System.getProperty("user.home") );
 	}
 	
 	public List<Sequences> initSequences( int rowcount ) {		
@@ -288,6 +292,10 @@ public class SerifyApplet extends JApplet {
 		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
+		
+		//fs = FileSystems.getDefault();
+		//root = fs.getPath( System.getProperty("user.home") );
+		//fs.
 		
 		/*OutputStream o = new OutputStream() {
 			Object[]	objs = {""};
@@ -1708,7 +1716,8 @@ public class SerifyApplet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	FileSystem fs = null;
+	FileSystem 	fs = null;
+	Path		root = null;
 	/*
 	ACDK	Clostridium_sp-7-2-43FAA
 	AWST	Clostridium_sp-KLE-1755
@@ -2376,7 +2385,7 @@ public class SerifyApplet extends JApplet {
 					
 					try {
 						for( File f : filechooser.getSelectedFiles() ) {
-							Path dest = fs.getPath("/"+f.getName());
+							Path dest = root.resolve(f.getName());
 							Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
 							addSequences( f.getName(), dest, null );
 						}
