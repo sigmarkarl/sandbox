@@ -260,9 +260,11 @@ public class GeneSet extends JApplet {
 				if( id.contains("..") ) {
 					line = br.readLine();
 					int k = line.indexOf('[');
-					int u = line.indexOf(']',k+1);
-					String spec = line.substring(k+1,u);
-					id = spec+"_"+id;
+					if( k != -1 ) {
+						int u = line.indexOf(']',k+1);
+						String spec = line.substring(k+1,u);
+						id = spec+"_"+id;
+					} //else id = 
 				}
 				
 				hit = null;
@@ -309,6 +311,7 @@ public class GeneSet extends JApplet {
 					//if( i == -1 ) i = lname.indexOf("scaffold");
 					
 					int u = lname.indexOf(' ');
+					if( u == -1 ) u = lname.length();
 					id = lname.substring(0,u);
 				} else {
 					int u = lname.indexOf(' ');
@@ -332,6 +335,7 @@ public class GeneSet extends JApplet {
 				
 				if( i == -1 || n == -1 ) {
 					n = current.indexOf(" ");
+					if( n == -1 ) n = current.length();
 				}
 				
 				/*if( i == -1 || n == -1 ) {
@@ -5922,7 +5926,7 @@ public class GeneSet extends JApplet {
 							Gene g = refmap.get(id);
 							if( g != null ) {
 								try {
-									g.getFasta( sb );
+									g.getFasta( sb, false );
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
@@ -8172,7 +8176,7 @@ public class GeneSet extends JApplet {
 		File blastn;
 		File blastp;
 		File makeblastdb;
-		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastx.exe" );
+		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastx.exe" );
 		if( !blastx.exists() ) {
 			blastx = new File( "/opt/ncbi-blast-2.2.29+/bin/blastx" );
 			if( !blastx.exists() ) {
@@ -8188,10 +8192,10 @@ public class GeneSet extends JApplet {
 				makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
 			}
 		} else {
-			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastn.exe" );
-			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\blastp.exe" );
+			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastn.exe" );
+			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastp.exe" );
 			
-			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\makeblastdb.exe" );
 		}
 		
 		int procs = Runtime.getRuntime().availableProcessors();
@@ -8238,7 +8242,7 @@ public class GeneSet extends JApplet {
 						e.printStackTrace();
 					}
 				}
-			}.run();
+			}.start();
 			
 			new Thread() {
 				public void run() {
@@ -13499,7 +13503,7 @@ public class GeneSet extends JApplet {
 				BufferedWriter bw = Files.newBufferedWriter(dbPath);
 				for( Gene g : genelist ) {
 					if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-						g.getFasta( bw );
+						g.getFasta( bw, true );
 						/*StringBuilder sb = g.tegeval.getProteinSequence();
 						if( sb.toString().contains("0") ) {
 							System.err.println( g.id );
@@ -13528,7 +13532,7 @@ public class GeneSet extends JApplet {
 					if( gg != null && gg.getCommonTag() == null ) {
 						Path file = dbPath.resolve( gg.getCommonId()+".aa" );
 						BufferedWriter bw = Files.newBufferedWriter( file );
-						gg.getFasta( bw );
+						gg.getFasta( bw, true );
 						bw.close();
 						/*StringBuilder sb = g.tegeval.getProteinSequence();
 						if( sb.toString().contains("0") ) {
@@ -13983,7 +13987,7 @@ public class GeneSet extends JApplet {
 						/*if( gg.size() > 1 ) {
 							System.err.println( gg.size() );
 						}*/
-						String fasta = gg.getFasta();
+						String fasta = gg.getFasta( true );
 						String[] cmds = new String[] {"/usr/bin/muscle"};
 						Object[] paths = new Object[] {fasta.getBytes(), aligneddir.resolve(gg.getCommonId()+".aa"), null};
 						commandsList.add( paths );
