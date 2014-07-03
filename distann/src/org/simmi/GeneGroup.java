@@ -4,15 +4,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class GeneGroup {
 	Set<Gene>           	genes = new HashSet<Gene>();
-	Map<String, Teginfo>  	species = new HashMap<String, Teginfo>();
+	Map<String, Teginfo>  	species = new TreeMap<String, Teginfo>();
 	int                 	groupIndex = -10;
 	int                 	groupCount = -1;
 	int						index;
