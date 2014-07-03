@@ -77,6 +77,8 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
@@ -85,6 +87,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -1916,7 +1919,23 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		
-		JPopupMenu	popup = new JPopupMenu();
+		JMenu popup = new JMenu("File");
+		if( c instanceof JFrame ) {
+			JFrame fr = (JFrame)c;
+			JMenuBar mb = new JMenuBar();
+			//c
+			//popup.get
+			//menu.add(popup);
+			mb.add( popup );
+			fr.setJMenuBar(mb);
+		} else if( c instanceof JApplet ) {
+			JApplet ap = (JApplet)c;
+			JMenuBar mb = new JMenuBar();
+			mb.add( popup );
+			ap.setJMenuBar( mb );
+		}
+		
+		
 		popup.add( new AbstractAction("NCBI Fetch") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1931,7 +1950,7 @@ public class SerifyApplet extends JApplet {
 					cd = fs.getPath("/");
 				}
 				
-				String userhome = System.getProperty("user.home");	
+				String userhome = System.getProperty("user.home");
 				final Path uhome = Paths.get(userhome);
 					
 					/*final JCheckBox	whole = new JCheckBox("whole");
@@ -3835,9 +3854,9 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		
-		table.setComponentPopupMenu( popup );
+		//table.setComponentPopupMenu( popup );
 		JScrollPane	scrollpane = new JScrollPane( table );
-		scrollpane.setComponentPopupMenu( popup );
+		//scrollpane.setComponentPopupMenu( popup );
 		scrollpane.setBackground( bgcolor );
 		scrollpane.getViewport().setBackground( bgcolor );
 		scrollpane.setTransferHandler( new TransferHandler() {
