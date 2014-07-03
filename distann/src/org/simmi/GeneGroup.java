@@ -25,17 +25,17 @@ public class GeneGroup {
 		return false;
 	}
 	
-	public String getFasta() throws IOException {
+	public String getFasta( boolean id ) throws IOException {
 		StringWriter sb = new StringWriter();
 		for( Gene g : genes ) {
-			g.getFasta( sb );
+			g.getFasta( sb, id );
 		}
 		return sb.toString();
 	}
 	
-	public void getFasta( Writer w ) throws IOException {
+	public void getFasta( Writer w, boolean id ) throws IOException {
 		for( Gene g : genes ) {
-			g.getFasta( w );
+			g.getFasta( w, id );
 		}
 	}
 	
