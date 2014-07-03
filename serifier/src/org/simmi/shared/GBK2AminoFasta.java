@@ -206,7 +206,7 @@ public class GBK2AminoFasta {
 									} else i = trimline.length()-1;
 								}
 								anno.name = trimline.substring(10,i);
-								int ecind = anno.name.indexOf("(EC");
+								int ecind = Math.min( anno.name.indexOf("(EC"), anno.name.indexOf("(COG") );
 								if( ecind != -1 ) {
 									anno.name = anno.name.substring(0,ecind).trim();
 								}
