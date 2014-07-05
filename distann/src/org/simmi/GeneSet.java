@@ -532,8 +532,10 @@ public class GeneSet extends JApplet {
 					contigstr = lname.substring(i+1, n);
 					int u = lname.indexOf(' ');
 					id = lname.substring(0, u);
+					
+					String spec = lname.substring(i+1, n);
 					if( id.contains("..") ) {
-						id = lname.substring(i+1, n) + "_" + id;
+						id = spec + "_" + id;
 					}
 					
 					name = lname.substring(u+1, i).trim();
