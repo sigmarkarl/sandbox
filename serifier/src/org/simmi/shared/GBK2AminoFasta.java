@@ -86,6 +86,11 @@ public class GBK2AminoFasta {
 								anno.name += ")";
 								xref.clear();
 							}
+							
+							/*if( anno.spec.contains("MAT4699") || anno.spec.contains("MAT4721") || anno.spec.contains("MAT4725") || anno.spec.contains("MAT4726") ) {
+								anno.start--;
+								anno.stop--;
+							}*/
 							annolist.add( anno );
 						}
 						anno = null;
@@ -95,7 +100,7 @@ public class GBK2AminoFasta {
 						anno.contig = strbuf;
 						
 						//anno.spec = spec + (contignum > 0 ? "_contig"+(contignum+1) : "");
-						anno.spec = spec+ "_"+locus;
+						anno.spec = locus.contains(spec) ? locus : spec+ "_"+locus;
 						
 						String[] split = trimline.split("[\t ]+");
 						if( split.length > 1 ) {
@@ -206,7 +211,7 @@ public class GBK2AminoFasta {
 									} else i = trimline.length()-1;
 								}
 								anno.name = trimline.substring(10,i);
-								int ecind = Math.min( anno.name.indexOf("(EC"), anno.name.indexOf("(COG") );
+								int ecind = Math.max( anno.name.indexOf("(EC"), anno.name.indexOf("(COG") );
 								if( ecind != -1 ) {
 									anno.name = anno.name.substring(0,ecind).trim();
 								}
@@ -247,6 +252,11 @@ public class GBK2AminoFasta {
 								anno.name += ")";
 								xref.clear();
 							}
+							
+							/*if( anno.spec.contains("MAT4699") || anno.spec.contains("MAT4721") || anno.spec.contains("MAT4725") || anno.spec.contains("MAT4726") ) {
+								anno.start--;
+								anno.stop--;
+							}*/
 							annolist.add( anno );
 						}
 						anno = null;
@@ -296,7 +306,8 @@ public class GBK2AminoFasta {
 				//if( contignum > 0 && anno != null && anno.spec != null ) anno.spec += "_contig"+contignum;;
 				
 				//allout.write( ">" + spec + (contignum > 0 ? "_contig"+contignum+"\n" : "\n") );
-				allout.write( ">" + spec + "_" + locus + "\n" );
+				if( locus.contains(spec) ) allout.write( ">" + locus + "\n" );
+				else allout.write( ">" + spec + "_" + locus + "\n" );
 				for( int i = 0; i < strbuf.length(); i+=70 ) {
 					allout.write( strbuf.substring(i, Math.min( strbuf.length(), i+70) ) + "\n" );
 				}
