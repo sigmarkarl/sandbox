@@ -5889,7 +5889,24 @@ public class GeneSet extends JApplet {
 									Gene g = genemap.get( id );
 									if( g != null ) {
 										GeneGroup gg = g.getGeneGroup();
-										cs.sendToAll( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n" );
+										
+										String ec = gg.getCommonEc();
+										Set<String> kegg = new TreeSet<String>();
+										
+										for( String pathw : pathwaymap.keySet() ) {
+											Set<String> ecs = pathwaymap.get( pathw );
+											int u = pathw.lastIndexOf(' ');
+											if( ecs.contains(ec) ) kegg.add( pathw.substring(u) + "=" + pathw.substring(0,u).replace(",", "") );
+										}
+										
+										Cog cog = gg.getCommonCog(cogmap);
+										String cogid = cog != null ? cog.id : null;
+										String symbol = gg.getCommonSymbol();
+										if( cog != null && symbol == null ) symbol = cog.genesymbol;
+										
+										String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\n";
+										//String old =  g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(false, true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n";
+										cs.sendToAll( seqstr );
 									}
 								}
 								//cs.sendToAll( res );
@@ -5903,11 +5920,56 @@ public class GeneSet extends JApplet {
 						//int i = 0;
 						
 						String querystr = message.substring(6);
+						String[] sp = querystr.split(",");
+						Set<String> str = new HashSet<String>( Arrays.asList(sp) );
 						for( Gene g : genelist ) {
 							String gref = g.name;
-							if( gref.toLowerCase().contains(querystr) ) {
+							
+							boolean cont = false;
+							for( String sval : str ) {
+								cont = gref.toLowerCase().contains(sval);
+							}
+							if( cont ) {
+								
 								GeneGroup gg = g.getGeneGroup();
-								sb.append( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\t" + g.getSpecies() + "\n" );
+								String ec = gg.getCommonEc();
+								Set<String> kegg = new TreeSet<String>();
+								
+								for( String pathw : pathwaymap.keySet() ) {
+									Set<String> ecs = pathwaymap.get( pathw );
+									int k = pathw.lastIndexOf(' ');
+									if( ecs.contains(ec) ) kegg.add( pathw.substring(k) + "=" + pathw.substring(0,k).replace(",", "") );
+								}
+								
+								Cog cog = gg.getCommonCog(cogmap);
+								String cogid = cog != null ? cog.id : null;
+								String symbol = gg.getCommonSymbol();
+								if( cog != null && symbol == null ) symbol = cog.genesymbol;
+								String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\n";
+								sb.append( seqstr );
+							} else {
+								String cazy = cazymap.get( g.refid );
+								if( cazy != null ) {
+									String ec = g.getGeneGroup().getCommonEc();
+									String kegg = null;
+									
+									for( String pathw : pathwaymap.keySet() ) {
+										Set<String> ecs = pathwaymap.get( pathw );
+										if( ecs.contains(ec) ) kegg = pathw.substring(pathw.lastIndexOf(' '));
+									}
+									
+									int i = cazy.indexOf('(');
+									if( i == -1 ) i = cazy.length();
+									cazy = cazy.substring(0,i);
+									if( str.contains(cazy) ) {
+										GeneGroup gg = g.getGeneGroup();
+										Cog cog = gg.getCommonCog(cogmap);
+										String cogid = cog != null ? cog.id : null;
+										String symbol = gg.getCommonSymbol();
+										if( cog != null && symbol == null ) symbol = cog.genesymbol;
+										sb.append( g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\n" );
+									}
+								}
 							}
 						}
 						/*for( Gene g : genelist ) {
@@ -5937,6 +5999,25 @@ public class GeneSet extends JApplet {
 						cs.sendToAll( sb.toString() );
 					} else if( message.contains("evalue:") ) {
 						evalstr = message.substring(7).trim();
+					} else if( message.contains("cazy:") ) {
+						Set<String> cz = new TreeSet<String>();
+						for( Gene g : genelist ) {
+							String cazy = cazymap.get( g.refid );
+							if( cazy != null ) {
+								int i = cazy.indexOf('(');
+								if( i == -1 ) i = cazy.length();
+								cazy = cazy.substring(0,i);
+								cz.add( cazy );
+							}
+						}
+						
+						StringBuilder sb = new StringBuilder();
+						sb.append("cazy:");
+						for( String cazy : cz ) {
+							if( sb.length() == 0 ) sb.append( cazy );
+							else sb.append( ","+cazy );
+						}
+						cs.sendToAll( sb.toString() );
 					}
 				}
 			};
@@ -8823,8 +8904,6 @@ public class GeneSet extends JApplet {
 			line = br.readLine();
 		}
 		br.close();
-		
-		
 		
 		//FileReader fr = new FileReader("/vg454flx/ko2go.txt");
 		/*is = GeneSet.class.getResourceAsStream("/ko2go.txt");

@@ -150,8 +150,9 @@ public class GeneGroup {
 		return funcset;
 	}
 	
-	public String getCommonGO( boolean breakb, Set<Function> allowedFunctions ) {
+	public String getCommonGO( boolean breakb, boolean withinfo, Set<Function> allowedFunctions ) {
 		String ret = "";
+		Set<String> already = new HashSet<String>();
 		for( Gene g : genes ) {
 			if( g.funcentries != null && g.funcentries.size() > 0 ) {
 				for( Function f : g.funcentries ) {
@@ -159,10 +160,13 @@ public class GeneGroup {
 					
 					if( allowedFunctions == null || allowedFunctions.contains(f) ) {
 						String name = f.go; //getName().replace('/', '-').replace(",", "");
+						if( withinfo ) name += "-"+f.name.replace(",", "");
 							
 						//System.err.println( g.getName() + "  " + go );
-						if( ret.length() == 0 ) ret += name;
-						else ret += ","+name;
+						if( ret.length() == 0 ) ret = name;
+						else if( !already.contains(name) ) ret += ","+name;
+						
+						already.add( name );
 					}
 				}
 				if( breakb ) break;
@@ -327,8 +331,9 @@ public class GeneGroup {
 		for( Gene g : genes ) {
 			if( g.symbol != null ) s.add( g.symbol );
 		}
-		if( s.isEmpty() ) return null;
-		else {
+		if( s.isEmpty() ) {
+			return null;
+		} else {
 			String remstr = "";
 			while( remstr != null ) {
 				remstr = null;
