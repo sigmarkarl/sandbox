@@ -667,6 +667,9 @@ public class GeneSet extends JApplet {
 					tv.setTegund( origin );
 					
 					gene.tegeval = tv;
+				} else {
+					Gene g = refmap.get(id);
+					g.name = name;
 				}
 			}
 		}
@@ -5915,6 +5918,37 @@ public class GeneSet extends JApplet {
 						doBlast( message, evalstr, true, run );
 					} else if( message.contains("ready") ) {
 						cs.sendToAll( "simmi" ); //cs.message );
+					} else if( message.contains("tree:") ) {
+						String querystr = message.substring(5);
+						String[] sp = querystr.split(",");
+						Set<String> str = new HashSet<String>( Arrays.asList(sp) );
+						
+						int max = 0;
+						Set<String>							specset = new HashSet<String>();
+						Map<GeneGroup,Integer>				genegroups = new HashMap<GeneGroup,Integer>();
+						for( Gene g : genelist ) {
+							if( str.contains(g.refid) ) {
+								GeneGroup gg = g.getGeneGroup();
+								specset.addAll( gg.getSpecies() );
+								for( Tegeval tv : gg.getTegevals() ) {
+									Sequence alseq = tv.getAlignedSequence();
+									if( alseq == null ) {
+										StringBuilder sb = tv.getProteinSequence();
+										int l = sb.length();
+										if( l > max ) max = l;
+									} else {
+										int l = alseq.length();
+										if( l > max ) max = l;
+									}
+								}
+								genegroups.put( gg, max );
+							}
+						}
+						
+						Serifier serifier = getConcatenatedSequences(false, genegroups, specset);
+						String tree = serifier.getFastTree( serifier.lseq );
+						cs.sendToAll( tree );
+						//Serifier serifier = getConcatenatedSequences( false );
 					} else if( message.contains("query:") ) {
 						StringBuilder sb = new StringBuilder();
 						//int i = 0;
@@ -5927,10 +5961,9 @@ public class GeneSet extends JApplet {
 							
 							boolean cont = false;
 							for( String sval : str ) {
-								cont = gref.toLowerCase().contains(sval);
+								cont = gref.toLowerCase().contains(sval.toLowerCase());
 							}
 							if( cont ) {
-								
 								GeneGroup gg = g.getGeneGroup();
 								String ec = gg.getCommonEc();
 								Set<String> kegg = new TreeSet<String>();
@@ -7292,7 +7325,6 @@ public class GeneSet extends JApplet {
 	}
 	
 	public Serifier getConcatenatedSequences( boolean proximityJoin ) {
-		Map<String,Map<Sequence,String>>	smap = new HashMap<String,Map<Sequence,String>>();
 		Set<String>							specset = new HashSet<String>();
 		Map<GeneGroup,Integer>				genegroups = new HashMap<GeneGroup,Integer>();
 		int[] rr = table.getSelectedRows();
@@ -7324,6 +7356,11 @@ public class GeneSet extends JApplet {
 				genegroups.put( gg, max );
 			}
 		}
+		return getConcatenatedSequences(proximityJoin, genegroups, specset);
+	}
+	
+	public Serifier getConcatenatedSequences( boolean proximityJoin, Map<GeneGroup,Integer> genegroups, Set<String> specset ) {
+		Map<String,Map<Sequence,String>>	smap = new HashMap<String,Map<Sequence,String>>();
 		
 		//List<Sequence>	seqs = new ArrayList<Sequence>();
 		/*Map<String>	specset = new HashMap<String,Integer>();
