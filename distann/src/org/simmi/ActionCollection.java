@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,6 +90,7 @@ public class ActionCollection {
 			final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, 
 			final JTable table, final Container comp, final ChatServer cs ) {
 		//JButton matrixbutton = new JButton(matrixaction);
+		
 		AbstractAction codregaction = new AbstractAction("Coding regions") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1558,6 +1560,26 @@ public class ActionCollection {
 			}
 		};
 		//JButton	shuffletreebutton = new JButton( shuffletreeaction );
+		
+		AbstractAction cazyexportaction = new AbstractAction("Export cazy ids") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String> cz = new TreeSet<String>();
+				for( Gene g : geneset.genelist ) {
+					String cazy = geneset.cazymap.get( g.refid );
+					if( cazy != null ) {
+						int i = cazy.indexOf('(');
+						if( i == -1 ) i = cazy.length();
+						cazy = cazy.substring(0,i);
+						cz.add( cazy );
+					}
+				}
+				
+				for( String cazy : cz ) {
+					System.err.println( cazy );
+				}
+			}
+		};
 		
 		AbstractAction koexportaction = new AbstractAction("Export pathway ids") {
 			@Override
@@ -4050,6 +4072,7 @@ public class ActionCollection {
 		menu.add( pancoreaction );
 		menu.add( blastaction );
 		menu.add( koexportaction );
+		menu.add( cazyexportaction );
 		menu.add( genomesizeaction );
 		menu.add( gcaction );
 		menu.add( gcskewaction );
