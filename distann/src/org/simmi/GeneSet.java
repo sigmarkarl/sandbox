@@ -5946,6 +5946,7 @@ public class GeneSet extends JApplet {
 						}
 						
 						Serifier serifier = getConcatenatedSequences(false, genegroups, specset);
+						serifier.renameDuplicates();
 						String tree = serifier.getFastTree( serifier.lseq );
 						cs.sendToAll( tree );
 						//Serifier serifier = getConcatenatedSequences( false );
