@@ -669,7 +669,71 @@ public class GeneSet extends JApplet {
 					gene.tegeval = tv;
 				} else {
 					Gene g = refmap.get(id);
+					
+					Contig contig;
+					if( contigmap.containsKey( contigstr ) ) {
+						contig = contigmap.get( contigstr );
+					} else {
+						 contig = new Contig( contigstr );
+					}
+					
+					g.tegeval.init( lname, contig, contloc, start, stop, dir );
+					g.tegeval.name = line;
+					//ac.setName( lname );
+					//tv.setAlignedSequence( ac );
+					aas.put( lname, g.tegeval );
 					g.name = name;
+					g.id = id;
+					
+					g.designation = designations != null ? designations.get( id ) : null;
+					g.refid = newid;
+					g.setIdStr( idstr );
+					g.allids = new HashSet<String>();
+					g.allids.add( newid );
+					if( idstr != null ) {
+						int ec = idstr.indexOf("EC");
+						if( ec != -1 ) {
+							//int ecc = name.indexOf(')', ec+1);
+							//if( ecc == -1 ) ecc = name.length();
+							int k = ec+3;
+							if( k < idstr.length() ) {
+								char c = idstr.charAt(k);
+								while( (c >= '0' && c <= '9') || c == '.' ) {
+									c = idstr.charAt( k++ );
+									if( k == idstr.length() ) {
+										k++;
+										break;
+									}
+								}
+								g.ecid = idstr.substring(ec+2, k-1).trim();
+							}
+						}
+					
+						int go = idstr.indexOf("GO:");
+						while( go != -1 ) {
+							int ngo = idstr.indexOf("GO:", go+1);
+							
+							if (g.funcentries == null)
+								g.funcentries = new HashSet<Function>();
+							
+							String goid;
+							if( ngo != -1 ) goid = idstr.substring(go, ngo);
+							else {
+								int ni = go+10;//Math.minname.indexOf(')', go+1);
+								goid = idstr.substring( go, ni );
+							}
+							Function func;
+							if( funcmap.containsKey( goid ) ) {
+								func = funcmap.get( goid );
+							} else {
+								func = new Function( goid );
+								funcmap.put( goid, func );
+							}
+							g.funcentries.add( func );
+							
+							go = ngo;
+						}
+					}
 				}
 			}
 		}
