@@ -85,6 +85,95 @@ import org.simmi.unsigned.JavaFasta;
 import flobb.ChatServer;
 
 public class ActionCollection {
+	public static StringBuilder panCore( GeneSet geneset, Set<String> selspec, final String[] categories, final List<StackBarData>	lsbd ) {
+		Set<GeneGroup>	pan = new HashSet<GeneGroup>();
+		Set<GeneGroup>	core = new HashSet<GeneGroup>();
+		StringBuilder	restext = new StringBuilder();
+		restext.append( "[" );
+		restext.append( "['Species', 'Pan', 'Core']" );
+		
+		for( String spec : selspec ) {
+			String newspec = geneset.nameFix( spec );
+			StackBarData sbd = geneset.new StackBarData();
+			sbd.oname = spec;
+			sbd.name = newspec;
+			/*if( spec.contains("hermus") ) sbd.name = spec.substring( 0, spec.lastIndexOf('_') );
+			else {
+				Matcher m = Pattern.compile("\\d").matcher(spec);
+				int firstDigitLocation = m.find() ? m.start() : 0;
+				if( firstDigitLocation == 0 ) sbd.name = "Thermus_" + spec;
+				else sbd.name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
+			}*/
+			lsbd.add( sbd );
+		}
+		
+		Collections.sort( lsbd, new Comparator<StackBarData>() {
+			@Override
+			public int compare(StackBarData o1, StackBarData o2) {
+				return o1.name.compareTo( o2.name );
+			}
+		});
+		
+		boolean avg = false;
+		if( avg ) {
+			for( int i = 0; i < lsbd.size(); i++ ) {
+				for( int k = i; k < lsbd.size(); k++ ) {
+					StackBarData 	sbd = lsbd.get(i);
+					String spec = 	sbd.oname;
+					Set<GeneGroup> 	ggset = geneset.specGroupMap.get( spec );
+					
+					if( ggset != null ) {
+						Set<GeneGroup> 	theset = new HashSet<GeneGroup>();
+						for( GeneGroup gg : ggset ) {
+							for( Gene g : gg.genes ) {
+								if( g.getMaxLength() >= 100 ) {
+									theset.add( gg );
+									break;
+								}
+							}
+						}
+					
+						pan.addAll( theset );
+						if( core.isEmpty() ) core.addAll( theset );
+						else core.retainAll( theset );
+					}
+				}
+			}
+		} else {
+			for( int i = 0; i < lsbd.size(); i++ ) {
+				StackBarData sbd = lsbd.get(i);
+				String spec = sbd.oname;
+				
+				restext.append( ",\n['"+spec+"', " );
+				Set<GeneGroup> ggset = geneset.specGroupMap.get( spec );
+				
+				Set<GeneGroup> theset = new HashSet<GeneGroup>();
+				for( GeneGroup gg : ggset ) {
+					for( Gene g : gg.genes ) {
+						if( g.getMaxLength() >= 100 ) {
+							theset.add( gg );
+							break;
+						}
+					}
+				}
+				
+				if( ggset != null ) {
+					pan.addAll( theset );
+					if( core.isEmpty() ) core.addAll( theset );
+					else core.retainAll( theset );
+				}
+				
+				restext.append( core.size()+", " );
+				restext.append( pan.size()+"]" );
+				
+				sbd.b.put( "Core: ", core.size() );
+				sbd.b.put( "Accessory: ", pan.size()-core.size() );
+			}
+		}
+		restext.append( "]" );
+		return restext;
+	}
+	
 	public static void addAll( JMenu menu, 
 			final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, 
 			final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, 
@@ -1789,93 +1878,10 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ) );
-				final List<StackBarData>	lsbd = new ArrayList<StackBarData>();
-						
-				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
-				Set<GeneGroup>	core = new HashSet<GeneGroup>();
-				StringBuilder	restext = new StringBuilder();
-				restext.append( "['Species', 'Pan', 'Core']" );
 				
 				final String[] categories = { "Core: ", "Accessory: " };
-				
-				for( String spec : selspec ) {
-					String newspec = geneset.nameFix( spec );
-					StackBarData sbd = geneset.new StackBarData();
-					sbd.oname = spec;
-					sbd.name = newspec;
-					/*if( spec.contains("hermus") ) sbd.name = spec.substring( 0, spec.lastIndexOf('_') );
-					else {
-						Matcher m = Pattern.compile("\\d").matcher(spec);
-						int firstDigitLocation = m.find() ? m.start() : 0;
-						if( firstDigitLocation == 0 ) sbd.name = "Thermus_" + spec;
-						else sbd.name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
-					}*/
-					lsbd.add( sbd );
-				}
-				
-				Collections.sort( lsbd, new Comparator<StackBarData>() {
-					@Override
-					public int compare(StackBarData o1, StackBarData o2) {
-						return o1.name.compareTo( o2.name );
-					}
-				});
-				
-				boolean avg = false;
-				if( avg ) {
-					for( int i = 0; i < lsbd.size(); i++ ) {
-						for( int k = i; k < lsbd.size(); k++ ) {
-							StackBarData 	sbd = lsbd.get(i);
-							String spec = 	sbd.oname;
-							Set<GeneGroup> 	ggset = geneset.specGroupMap.get( spec );
-							
-							if( ggset != null ) {
-								Set<GeneGroup> 	theset = new HashSet<GeneGroup>();
-								for( GeneGroup gg : ggset ) {
-									for( Gene g : gg.genes ) {
-										if( g.getMaxLength() >= 100 ) {
-											theset.add( gg );
-											break;
-										}
-									}
-								}
-							
-								pan.addAll( theset );
-								if( core.isEmpty() ) core.addAll( theset );
-								else core.retainAll( theset );
-							}
-						}
-					}
-				} else {
-					for( int i = 0; i < lsbd.size(); i++ ) {
-						StackBarData sbd = lsbd.get(i);
-						String spec = sbd.oname;
-						
-						restext.append( ",\n['"+spec+"', " );
-						Set<GeneGroup> ggset = geneset.specGroupMap.get( spec );
-						
-						Set<GeneGroup> theset = new HashSet<GeneGroup>();
-						for( GeneGroup gg : ggset ) {
-							for( Gene g : gg.genes ) {
-								if( g.getMaxLength() >= 100 ) {
-									theset.add( gg );
-									break;
-								}
-							}
-						}
-						
-						if( ggset != null ) {
-							pan.addAll( theset );
-							if( core.isEmpty() ) core.addAll( theset );
-							else core.retainAll( theset );
-						}
-						
-						restext.append( core.size()+", " );
-						restext.append( pan.size()+"]" );
-						
-						sbd.b.put( "Core: ", core.size() );
-						sbd.b.put( "Accessory: ", pan.size()-core.size() );
-					}
-				}
+				final List<StackBarData> lsbd = new ArrayList<StackBarData>();
+				StringBuilder restext = panCore( geneset, selspec, categories, lsbd );
 				
 				JFrame f = new JFrame("Pan-core chart");
 				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
