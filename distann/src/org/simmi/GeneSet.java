@@ -1359,7 +1359,7 @@ public class GeneSet extends JApplet {
 		int mstrw = 0;
 		
 		List<String> specset;// = new ArrayList<String>(species1);
-		if( designation.length() > 0 ) {
+		if( designation != null && designation.length() > 0 ) {
 			Set<String> sset = new TreeSet<String>();
 			for( Gene g : genelist ) {
 				if( g.designation != null && g.designation.equals( designation ) ) {
@@ -1546,7 +1546,7 @@ public class GeneSet extends JApplet {
 					int wx = corrInd.indexOf( spec2 );
 					double ani = 1.0-matrix[ w*specset.size()+wx ];
 					
-					float cval = Math.min( 0.9f, Math.max( 0.0f,4.2f - (float)(4.2*ani) ) );
+					float cval = Math.min( 0.9f, Math.max( 0.0f, 1.2f - (float)(1.2*ani) ) );
 					System.err.println( cval + "  " + ani );
 					Color color = new Color( cval, cval, cval );
 					g2.setColor( color );
@@ -5982,6 +5982,47 @@ public class GeneSet extends JApplet {
 						doBlast( message, evalstr, true, run );
 					} else if( message.contains("ready") ) {
 						cs.sendToAll( "simmi" ); //cs.message );
+					} else if( message.contains("cogchart:") ) {
+						//Set<String> species = getSelspec( GeneSet.this, specList );
+						Set<String> selspec = new HashSet<String>( specList );
+						
+						Set<Character> includedCogs = Cog.charcog.keySet();
+						final Map<String,String>					all = new TreeMap<String,String>();
+						final Map<String, Map<Character,Integer>> 	map = new TreeMap<String, Map<Character,Integer>>();
+						try {
+							GeneSet.this.cogCalc( null, includedCogs, map, selspec, false );
+							StringWriter fw = GeneSet.this.writeCog( map, includedCogs );
+							//String repl = fw.toString();
+							
+							//final String smuck = sb.toString().replace("smuck", restext.toString());
+							cs.sendToAll( fw.toString() );
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}else if( message.contains("pancore:") ) {
+						//Set<String> species = getSelspec( GeneSet.this, specList );
+						Set<String> selspec = new HashSet<String>( specList );
+						
+						final String[] categories = { "Core: ", "Accessory: " };
+						final List<StackBarData> lsbd = new ArrayList<StackBarData>();
+						StringBuilder restext = ActionCollection.panCore( GeneSet.this, selspec, categories, lsbd );
+						
+						//final String smuck = sb.toString().replace("smuck", restext.toString());
+						cs.sendToAll( restext.toString() );
+					} else if( message.contains("anim:") ) {
+						//Set<String> species = getSelspec( GeneSet.this, specList );
+						Set<String> species = new HashSet<String>( specList );
+						BufferedImage bimg = animatrix( species, clusterMap, null, allgenegroups );
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						try {
+							ImageIO.write(bimg, "png", baos);
+							baos.close();
+							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
+							cs.sendToAll(str);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					} else if( message.contains("tree:") ) {
 						String querystr = message.substring(5);
 						String[] sp = querystr.split(",");
@@ -8153,6 +8194,7 @@ public class GeneSet extends JApplet {
 	
 	public StringWriter writeCog( Map<String,Map<Character,Integer>> map, Set<Character> includedCogs ) throws IOException {
 		StringWriter fw = new StringWriter();
+		fw.write("[");
 		fw.write( "['Species" );
 		for( Character cogchar : includedCogs ) {
 			String coglong = Cog.charcog.get( cogchar );
@@ -8175,6 +8217,7 @@ public class GeneSet extends JApplet {
 			}
 			fw.write("]");
 		}
+		fw.write("]");
 		
 		/*fw.write( "Species" );
 		for( String cog : all.keySet() ) {
