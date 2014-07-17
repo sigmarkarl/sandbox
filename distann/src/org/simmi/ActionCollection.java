@@ -3850,12 +3850,7 @@ public class ActionCollection {
 		AbstractAction	genephyl = new AbstractAction("Gene phylogeny") {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Map<String, Integer> blosumap = null;
-				try {
-					blosumap = JavaFasta.getBlosumMap();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+				Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
 				
 				final double[] b0;
 				final double[] b1;
