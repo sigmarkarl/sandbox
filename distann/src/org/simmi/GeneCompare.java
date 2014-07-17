@@ -564,7 +564,7 @@ public class GeneCompare {
 									Set<GeneGroup>	gset = new HashSet<GeneGroup>();
 									gset.add( tv.getGene().getGeneGroup() );
 									try {
-										new Neighbour().neighbourMynd( geneset, comp, genelist, gset, geneset.contigmap );
+										new Neighbour( gset ).neighbourMynd( geneset, comp, genelist, geneset.contigmap );
 									} catch (IOException e1) {
 										e1.printStackTrace();
 									}

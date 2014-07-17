@@ -1388,118 +1388,114 @@ public class GeneSet extends JApplet {
 		Set<String>	d2 = new HashSet<String>();
 		
 		double[] matrix = new double[ specset.size()*specset.size() ];
-		try {
-			Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
-			int where = 0;
-			for (String spec1 : specset) {
-				int wherex = 0;
-				
-				//String spc1 = nameFix( spec1 );
-				for (String spec2 : specset) {
-					if( where != wherex ) {
-						int totalscore = 0;
-						int totaltscore = 1;
-						for( GeneGroup gg : allgg ) {
-							if( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2) ) {
-								Teginfo ti1 = gg.species.get(spec1);
-								Teginfo ti2 = gg.species.get(spec2);
-								//if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
-									//double bval = 0.0;
-								
-								int score = 0;
-								int tscore = 1;
-								for( Tegeval tv1 : ti1.tset ) {
-									for( Tegeval tv2 : ti2.tset ) {
-										Sequence seq1 = tv1.alignedsequence;
-										Sequence seq2 = tv2.alignedsequence;
-										if( seq1 != null && seq2 != null ) {
-											int mest = 0;
-											int tmest = 0;
-											//bval = Math.max( GeneCompare.blosumVal(tv1.alignedsequence, tv2.alignedsequence, blosumap), bval );
-											
-											//public static double blosumVal( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap ) {
-											int startcheck = 0;
-											int start = -1;
-											int stopcheck = 0;
-											int stop = -1;
-											for( int i = 0; i < seq1.length(); i++ ) {
-												if( seq1.getCharAt(i) != '-' ) {
-													startcheck |= 1;
-												}
-												if( seq2.getCharAt(i) != '-' ) {
-													startcheck |= 2;
-												}
-												
-												if( start == -1 && startcheck == 3 ) {
-													start = i;
-													break;
-												}
+		Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
+		int where = 0;
+		for (String spec1 : specset) {
+			int wherex = 0;
+			
+			//String spc1 = nameFix( spec1 );
+			for (String spec2 : specset) {
+				if( where != wherex ) {
+					int totalscore = 0;
+					int totaltscore = 1;
+					for( GeneGroup gg : allgg ) {
+						if( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2) ) {
+							Teginfo ti1 = gg.species.get(spec1);
+							Teginfo ti2 = gg.species.get(spec2);
+							//if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
+								//double bval = 0.0;
+							
+							int score = 0;
+							int tscore = 1;
+							for( Tegeval tv1 : ti1.tset ) {
+								for( Tegeval tv2 : ti2.tset ) {
+									Sequence seq1 = tv1.alignedsequence;
+									Sequence seq2 = tv2.alignedsequence;
+									if( seq1 != null && seq2 != null ) {
+										int mest = 0;
+										int tmest = 0;
+										//bval = Math.max( GeneCompare.blosumVal(tv1.alignedsequence, tv2.alignedsequence, blosumap), bval );
+										
+										//public static double blosumVal( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap ) {
+										int startcheck = 0;
+										int start = -1;
+										int stopcheck = 0;
+										int stop = -1;
+										for( int i = 0; i < seq1.length(); i++ ) {
+											if( seq1.getCharAt(i) != '-' ) {
+												startcheck |= 1;
+											}
+											if( seq2.getCharAt(i) != '-' ) {
+												startcheck |= 2;
 											}
 											
-											for( int i = seq1.length()-1; i >= 0; i-- ) {
-												if( seq1.getCharAt(i) != '-' ) {
-													stopcheck |= 1;
-												}
-												if( seq2.getCharAt(i) != '-' ) {
-													stopcheck |= 2;
-												}
-												
-												if( stop == -1 && stopcheck == 3 ) {
-													stop = i+1;
-													break;
-												}
+											if( start == -1 && startcheck == 3 ) {
+												start = i;
+												break;
 											}
-											//count += stop-start;
-											
-									        for( int i = start; i < stop; i++ ) {
-									        	char lc = seq1.getCharAt(i);
-									        	char c = Character.toUpperCase( lc );
-									        	//if( )
-									        	String comb = c+""+c;
-									        	if( blosumap.containsKey(comb) ) tmest += blosumap.get(comb);
-									        }
-									        
-									        for( int i = start; i < stop; i++ ) {
-									        	char lc = seq1.getCharAt( i );
-									        	char c = Character.toUpperCase( lc );
-									        	char lc2 = seq2.getCharAt( i );
-									        	char c2 = Character.toUpperCase( lc2 );
-									        	
-									        	String comb = c+""+c2;
-									        	if( blosumap.containsKey(comb) ) mest += blosumap.get(comb);
-									        }
-									        
-									        double tani = (double)mest/(double)tmest;
-									        if( tani > (double)score/(double)tscore ) {
-									        	score = mest;
-									        	tscore = tmest;
-									        }
-									        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
-											//return ret;
 										}
-										//if( where == 0 ) d1.add( gg.getCommonName() );
-										//else d2.add( gg.getCommonName() );
+										
+										for( int i = seq1.length()-1; i >= 0; i-- ) {
+											if( seq1.getCharAt(i) != '-' ) {
+												stopcheck |= 1;
+											}
+											if( seq2.getCharAt(i) != '-' ) {
+												stopcheck |= 2;
+											}
+											
+											if( stop == -1 && stopcheck == 3 ) {
+												stop = i+1;
+												break;
+											}
+										}
+										//count += stop-start;
+										
+								        for( int i = start; i < stop; i++ ) {
+								        	char lc = seq1.getCharAt(i);
+								        	char c = Character.toUpperCase( lc );
+								        	//if( )
+								        	String comb = c+""+c;
+								        	if( blosumap.containsKey(comb) ) tmest += blosumap.get(comb);
+								        }
+								        
+								        for( int i = start; i < stop; i++ ) {
+								        	char lc = seq1.getCharAt( i );
+								        	char c = Character.toUpperCase( lc );
+								        	char lc2 = seq2.getCharAt( i );
+								        	char c2 = Character.toUpperCase( lc2 );
+								        	
+								        	String comb = c+""+c2;
+								        	if( blosumap.containsKey(comb) ) mest += blosumap.get(comb);
+								        }
+								        
+								        double tani = (double)mest/(double)tmest;
+								        if( tani > (double)score/(double)tscore ) {
+								        	score = mest;
+								        	tscore = tmest;
+								        }
+								        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
+										//return ret;
 									}
+									//if( where == 0 ) d1.add( gg.getCommonName() );
+									//else d2.add( gg.getCommonName() );
 								}
-								totalscore += score;
-								totaltscore += tscore;
-									
-									/*if( bval > 0 ) {
-										ani += bval;
-										count++;
-									}*/
-								//}
 							}
+							totalscore += score;
+							totaltscore += tscore;
+								
+								/*if( bval > 0 ) {
+									ani += bval;
+									count++;
+								}*/
+							//}
 						}
-						double ani = (double)totalscore/(double)totaltscore;
-						matrix[ where*specset.size()+wherex ] = 1.0-ani;
 					}
-					wherex++;
+					double ani = (double)totalscore/(double)totaltscore;
+					matrix[ where*specset.size()+wherex ] = 1.0-ani;
 				}
-				where++;
+				wherex++;
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+			where++;
 		}
 		
 		TreeUtil tu = new TreeUtil();
@@ -1527,7 +1523,7 @@ public class GeneSet extends JApplet {
 		System.err.println( "ordind " + ordInd );
 		System.err.println( "tree " + n );
 	
-		int where = 0;
+		where = 0;
 		for (String spec1 : ordInd) {
 			int wherex = 0;
 			int w = corrInd.indexOf( spec1 );
@@ -6022,6 +6018,30 @@ public class GeneSet extends JApplet {
 							cs.sendToAll(str);
 						} catch (IOException e) {
 							e.printStackTrace();
+						}
+					} else if( message.contains("neigh:") ) {
+						//Set<String> species = getSelspec( GeneSet.this, specList );
+						//Set<String> species = new HashSet<String>( specList );
+						
+						String trim = message.substring(6).trim();
+						Gene g = refmap.get( trim );
+						GeneGroup[] gg = { g.getGeneGroup() };
+						
+						Neighbour nb = new Neighbour( new HashSet<GeneGroup>( Arrays.asList(gg) ) );
+						nb.forward();
+						nb.setZoomLevel( 0.3 );
+						nb.names.setSelectedItem("Default names");
+						BufferedImage bimg = nb.getImage( GeneSet.this, 50, 6000 );
+						try {
+							//nb.neighbourMynd( GeneSet.this, (Container)comp, genelist, new HashSet<GeneGroup>( Arrays.asList(gg) ), contigmap );
+							//BufferedImage bimg = animatrix( species, clusterMap, null, allgenegroups );
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							ImageIO.write(bimg, "png", baos);
+							baos.close();
+							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
+							cs.sendToAll(str);
+						} catch (IOException e1) {
+							e1.printStackTrace();
 						}
 					} else if( message.contains("tree:") ) {
 						String querystr = message.substring(5);
@@ -15550,128 +15570,125 @@ public class GeneSet extends JApplet {
 				}
 				if( allgg.isEmpty() ) allgg = allgenegroups;
 				
-				try {
-					Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
+				Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
+				
+				double[] corrarr = new double[ speclist.size()*speclist.size() ];
+				int where = 0;
+				for (String spec1 : speclist) {
+					int wherex = 0;
 					
-					double[] corrarr = new double[ speclist.size()*speclist.size() ];
-					int where = 0;
-					for (String spec1 : speclist) {
-						int wherex = 0;
-						
-						String spc1 = nameFix( spec1 );
-						
-						//String spc1 = nameFix( spec1 );
-						for (String spec2 : speclist) {
-							if( where != wherex ) {
-								int totalscore = 0;
-								int totaltscore = 1;
-								for( GeneGroup gg : allgg ) {
-									if( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2) ) {
-										Teginfo ti1 = gg.species.get(spec1);
-										Teginfo ti2 = gg.species.get(spec2);
-										//if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
-											//double bval = 0.0;
-										
-										int score = 0;
-										int tscore = 1;
-										for( Tegeval tv1 : ti1.tset ) {
-											for( Tegeval tv2 : ti2.tset ) {
-												Sequence seq1 = tv1.alignedsequence;
-												Sequence seq2 = tv2.alignedsequence;
-												if( seq1 != null && seq2 != null ) {
-													int mest = 0;
-													int tmest = 0;
-													
-													int startcheck = 0;
-													int start = -1;
-													int stopcheck = 0;
-													int stop = -1;
-													for( int i = 0; i < seq1.length(); i++ ) {
-														if( seq1.getCharAt(i) != '-' ) {
-															startcheck |= 1;
-														}
-														if( seq2.getCharAt(i) != '-' ) {
-															startcheck |= 2;
-														}
-														
-														if( start == -1 && startcheck == 3 ) {
-															start = i;
-															break;
-														}
+					String spc1 = nameFix( spec1 );
+					
+					//String spc1 = nameFix( spec1 );
+					for (String spec2 : speclist) {
+						if( where != wherex ) {
+							int totalscore = 0;
+							int totaltscore = 1;
+							for( GeneGroup gg : allgg ) {
+								if( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2) ) {
+									Teginfo ti1 = gg.species.get(spec1);
+									Teginfo ti2 = gg.species.get(spec2);
+									//if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
+										//double bval = 0.0;
+									
+									int score = 0;
+									int tscore = 1;
+									for( Tegeval tv1 : ti1.tset ) {
+										for( Tegeval tv2 : ti2.tset ) {
+											Sequence seq1 = tv1.alignedsequence;
+											Sequence seq2 = tv2.alignedsequence;
+											if( seq1 != null && seq2 != null ) {
+												int mest = 0;
+												int tmest = 0;
+												
+												int startcheck = 0;
+												int start = -1;
+												int stopcheck = 0;
+												int stop = -1;
+												for( int i = 0; i < seq1.length(); i++ ) {
+													if( seq1.getCharAt(i) != '-' ) {
+														startcheck |= 1;
+													}
+													if( seq2.getCharAt(i) != '-' ) {
+														startcheck |= 2;
 													}
 													
-													for( int i = seq1.length()-1; i >= 0; i-- ) {
-														if( seq1.getCharAt(i) != '-' ) {
-															stopcheck |= 1;
-														}
-														if( seq2.getCharAt(i) != '-' ) {
-															stopcheck |= 2;
-														}
-														
-														if( stop == -1 && stopcheck == 3 ) {
-															stop = i+1;
-															break;
-														}
+													if( start == -1 && startcheck == 3 ) {
+														start = i;
+														break;
 													}
-													//count += stop-start;
-													
-											        for( int i = start; i < stop; i++ ) {
-											        	char lc = seq1.getCharAt(i);
-											        	char c = Character.toUpperCase( lc );
-											        	//if( )
-											        	String comb = c+""+c;
-											        	if( blosumap.containsKey(comb) ) tmest += blosumap.get(comb);
-											        }
-											        
-											        for( int i = start; i < stop; i++ ) {
-											        	char lc = seq1.getCharAt( i );
-											        	char c = Character.toUpperCase( lc );
-											        	char lc2 = seq2.getCharAt( i );
-											        	char c2 = Character.toUpperCase( lc2 );
-											        	
-											        	String comb = c+""+c2;
-											        	if( blosumap.containsKey(comb) ) mest += blosumap.get(comb);
-											        }
-											        
-											        double tani = (double)mest/(double)tmest;
-											        if( tani > (double)score/(double)tscore ) {
-											        	score = mest;
-											        	tscore = tmest;
-											        }
-											        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
-													//return ret;
 												}
-												//if( where == 0 ) d1.add( gg.getCommonName() );
-												//else d2.add( gg.getCommonName() );
+												
+												for( int i = seq1.length()-1; i >= 0; i-- ) {
+													if( seq1.getCharAt(i) != '-' ) {
+														stopcheck |= 1;
+													}
+													if( seq2.getCharAt(i) != '-' ) {
+														stopcheck |= 2;
+													}
+													
+													if( stop == -1 && stopcheck == 3 ) {
+														stop = i+1;
+														break;
+													}
+												}
+												//count += stop-start;
+												
+										        for( int i = start; i < stop; i++ ) {
+										        	char lc = seq1.getCharAt(i);
+										        	char c = Character.toUpperCase( lc );
+										        	//if( )
+										        	String comb = c+""+c;
+										        	if( blosumap.containsKey(comb) ) tmest += blosumap.get(comb);
+										        }
+										        
+										        for( int i = start; i < stop; i++ ) {
+										        	char lc = seq1.getCharAt( i );
+										        	char c = Character.toUpperCase( lc );
+										        	char lc2 = seq2.getCharAt( i );
+										        	char c2 = Character.toUpperCase( lc2 );
+										        	
+										        	String comb = c+""+c2;
+										        	if( blosumap.containsKey(comb) ) mest += blosumap.get(comb);
+										        }
+										        
+										        double tani = (double)mest/(double)tmest;
+										        if( tani > (double)score/(double)tscore ) {
+										        	score = mest;
+										        	tscore = tmest;
+										        }
+										        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
+												//return ret;
 											}
+											//if( where == 0 ) d1.add( gg.getCommonName() );
+											//else d2.add( gg.getCommonName() );
 										}
-										totalscore += score;
-										totaltscore += tscore;
-											
-											/*if( bval > 0 ) {
-												ani += bval;
-												count++;
-											}*/
-										//}
 									}
+									totalscore += score;
+									totaltscore += tscore;
+										
+										/*if( bval > 0 ) {
+											ani += bval;
+											count++;
+										}*/
+									//}
 								}
-								double ani = (double)(totaltscore-totalscore)/(double)totaltscore;
-								corrarr[ where*speclist.size()+wherex ] = ani;
 							}
-							wherex++;
+							double ani = (double)(totaltscore-totalscore)/(double)totaltscore;
+							corrarr[ where*speclist.size()+wherex ] = ani;
 						}
-						where++;
+						wherex++;
 					}
-					TreeUtil tu = new TreeUtil();
-					corrInd.clear();
-					for( String spec : speclist ) {
-						corrInd.add( nameFix( spec ) );
-					}
-					Node n = tu.neighborJoin(corrarr, corrInd, null, false, false);
-					System.err.println( n );
-				} catch (IOException e1) {
-					e1.printStackTrace();
+					where++;
 				}
+				TreeUtil tu = new TreeUtil();
+				corrInd.clear();
+				for( String spec : speclist ) {
+					corrInd.add( nameFix( spec ) );
+				}
+				Node n = tu.neighborJoin(corrarr, corrInd, null, false, false);
+				System.err.println( n );
+			
 			}
 		};
 		windowmenu.add( matrixaction );
@@ -15695,7 +15712,7 @@ public class GeneSet extends JApplet {
 							geneset.add( gene.getGeneGroup() );
 						}
 					}
-					new Neighbour().neighbourMynd( GeneSet.this, comp, genelist, geneset, contigmap );
+					new Neighbour( geneset ).neighbourMynd( GeneSet.this, comp, genelist, contigmap );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
