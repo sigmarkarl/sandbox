@@ -42,6 +42,8 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.simmi.shared.Annotation;
+
 public class XYPlot {
 	List<Contig>	spec1Conts = new ArrayList<Contig>();
 	List<Contig>	spec2Conts = new ArrayList<Contig>();
@@ -182,10 +184,10 @@ public class XYPlot {
 				int count = 0;
 				for( Contig ct : spec1Conts ) {
 					int ermcount = 0;
-					if( ct.tlist != null ) {
+					if( ct.annset != null ) {
 						if( ct.isReverse() ) {
-							for( int u = ct.tlist.size()-1; u >= 0; u-- ) {
-								Tegeval val = ct.tlist.get( u );
+							for( int u = ct.annset.size()-1; u >= 0; u-- ) {
+								Tegeval val = (Tegeval)ct.annset.get( u );
 								GeneGroup gg = val.getGene().getGeneGroup();
 								int a = geneset.allgenegroups.indexOf( gg );
 								
@@ -198,7 +200,7 @@ public class XYPlot {
 									for( Tegeval tv2 : tv2list ) {
 										tv2.setSelected( rs );
 										int count2 = 0;
-										int k = spec2Conts.indexOf( tv2.contshort );
+										int k = spec2Conts.indexOf( tv2.getContshort() );
 										if( k != -1 ) {
 											for( int i = 0; i < k; i++ ) {
 												Contig ct2 = spec2Conts.get( i );
@@ -249,7 +251,8 @@ public class XYPlot {
 								count++;
 							}
 						} else {
-							for( Tegeval val : ct.tlist ) {
+							for( Annotation ann : ct.annset ) {
+								Tegeval val = (Tegeval)ann;
 								GeneGroup gg = val.getGene().getGeneGroup();
 								int a = geneset.allgenegroups.indexOf( gg );
 								
@@ -262,7 +265,7 @@ public class XYPlot {
 									for( Tegeval tv2 : tv2list ) {
 										tv2.setSelected( rs );
 										int count2 = 0;
-										int k = spec2Conts.indexOf( tv2.contshort );
+										int k = spec2Conts.indexOf( tv2.getContshort() );
 										if( k != -1 ) {
 											for( int i = 0; i < k; i++ ) {
 												Contig ct2 = spec2Conts.get( i );

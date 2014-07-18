@@ -4,19 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 
 import org.simmi.client.GreetingService;
 
-import com.google.gdata.client.GoogleService;
-import com.google.gdata.client.Service.GDataRequest;
-import com.google.gdata.client.Service.GDataRequest.RequestType;
-import com.google.gdata.util.ContentType;
-import com.google.gdata.util.ServiceException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -24,14 +14,14 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  */
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements GreetingService {
-	private GoogleService service;
+	//private GoogleService service;
 	private static final String SERVICE_URL = "https://www.google.com/fusiontables/api/query";
 	private static final boolean isUsingEncId = true;
 	
 	public String greetServer(String query) {
 		String res = "";
 	
-		try {
+		/*try {
 			if( service == null ) {
 				service = new GoogleService("fusiontables", "fusiontables.ApiExample");
 				service.setConnectTimeout(0);
@@ -68,7 +58,7 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
 			e.printStackTrace();
 		} catch (ServiceException e) {
 			e.printStackTrace();
-		}
+		}*/
 	
 		  return res;
 	}

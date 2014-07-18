@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.simmi.shared.Annotation;
 import org.simmi.shared.Sequence;
 
 public class Contig extends Sequence {
@@ -13,34 +14,35 @@ public class Contig extends Sequence {
 	}
 	
 	public void add( Tegeval tv ) {
-		if( tlist == null ) tlist = new ArrayList<Tegeval>();
-		tlist.add( tv );
+		if( annset == null ) annset = new ArrayList<Annotation>();
+		addAnnotation( tv );
+		//annset.add( tv );
 	}
 	
 	public void deleteAfter( Tegeval cur ) {
-		int i = tlist.indexOf( cur );
-		if( i != -1 && i < tlist.size() && tlist.get(i+1).getGene() == null ) {
-			tlist.remove( i+1 );
+		int i = annset.indexOf( cur );
+		if( i != -1 && i < annset.size() && ((Tegeval)annset.get(i+1)).getGene() == null ) {
+			annset.remove( i+1 );
 		}
 	}
 	
 	public void deleteBefore( Tegeval cur ) {
-		int i = tlist.indexOf( cur );
-		if( i > 0 && tlist.get(i-1).getGene() == null )
-			tlist.remove( i-1 );
+		int i = annset.indexOf( cur );
+		if( i > 0 && ((Tegeval)annset.get(i-1)).getGene() == null )
+			annset.remove( i-1 );
 	}
 	
 	public void injectAfter( Tegeval cur, Tegeval tv ) {
-		int i = tlist.indexOf( cur );
+		int i = annset.indexOf( cur );
 		if( i != -1 ) {
-			tlist.add(i+1, tv);
+			annset.add(i+1, tv);
 		}
 	}
 	
 	public void injectBefore( Tegeval cur, Tegeval tv ) {
-		int i = tlist.indexOf( cur );
+		int i = annset.indexOf( cur );
 		if( i != -1 ) {
-			tlist.add( i, tv );
+			annset.add( i, tv );
 		}
 	}
 	
@@ -48,8 +50,8 @@ public class Contig extends Sequence {
 		return plasmid;
 	}
 	
-	public List<Tegeval> getTegevalsList() {
-		return tlist;
+	public List<Annotation> getTegevalsList() {
+		return annset;
 	}
 	
 	public boolean isChromosome() {
@@ -57,12 +59,12 @@ public class Contig extends Sequence {
 	}
 	
 	public void sortLocs() {
-		if( tlist != null ) {
-			Collections.sort( tlist );
+		if( annset != null ) {
+			Collections.sort( annset );
 			int i = 0;
 			//Tegeval prev = null;
-			for( Tegeval tv : tlist ) {
-				tv.setNum( i++ );
+			for( Annotation tv : annset ) {
+				((Tegeval)tv).setNum( i++ );
 				//if( prev != null ) tv.setPrevious( prev );
 				//prev = tv;
 			}
@@ -73,12 +75,8 @@ public class Contig extends Sequence {
 		return seq.revCompCharAt( i );
 	}*/
 	
-	public char charAt( int i ) {
-		return reverse ? super.revCompCharAt( i ) : super.charAt( i );
-	}
-	
 	public int getGeneCount() {
-		if( tlist != null ) return tlist.size();
+		if( annset != null ) return annset.size();
 		return 0;
 	}
 	
@@ -88,24 +86,24 @@ public class Contig extends Sequence {
 	}
 	
 	public Tegeval getNext( Tegeval from ) {
-		int i = tlist.indexOf( from );
+		int i = annset.indexOf( from );
 		if( i != -1 ) {
 			if( isReverse() ) {
-				if( i > 0 ) return tlist.get( i-1 );
+				if( i > 0 ) return (Tegeval)annset.get( i-1 );
 			} else {
-				 if( i < tlist.size()-1 ) return tlist.get( i+1 );
+				 if( i < annset.size()-1 ) return (Tegeval)annset.get( i+1 );
 			}
 		}
 		return null;
 	}
 	
 	public Tegeval getPrev( Tegeval from ) {
-		int i = tlist.indexOf( from );
+		int i = annset.indexOf( from );
 		if( i != -1 ) {
 			if( isReverse() ) {
-				if( i < tlist.size()-1  ) return tlist.get( i+1 );
+				if( i < annset.size()-1  ) return (Tegeval)annset.get( i+1 );
 			} else {
-				if( i > 0 ) return tlist.get( i-1 );
+				if( i > 0 ) return (Tegeval)annset.get( i-1 );
 			}
 		}
 		return null;
@@ -159,12 +157,12 @@ public class Contig extends Sequence {
 	}
 	
 	public Tegeval getFirst() {
-		if( tlist != null ) return isReverse() ? tlist.get(tlist.size()-1) : tlist.get(0);
+		if( annset != null ) return (Tegeval)(isReverse() ? annset.get(annset.size()-1) : annset.get(0));
 		return null;
 	}
 	
 	public Tegeval getLast() {
-		if( tlist != null ) return isReverse() ? tlist.get(0) : tlist.get(tlist.size()-1);
+		if( annset != null ) return (Tegeval)(isReverse() ? annset.get(0) : annset.get(annset.size()-1));
 		return null;
 	}
 	
@@ -183,20 +181,20 @@ public class Contig extends Sequence {
 	double 			loc;
 	int 			size;
 	//Sequence		seq;
-	boolean			reverse = false;
+	//boolean			reverse = false;
 	Contig			next;
 	Contig			prev;
-	List<Tegeval>	tlist;
+	//List<Tegeval>	annset;
 	List<Contig>	partof;
 	boolean			plasmid;
 	
 	public Tegeval getEndTegeval() {
-		if( tlist != null ) return tlist.get( tlist.size()-1 );
+		if( annset != null ) return (Tegeval)annset.get( annset.size()-1 );
 		return null;
 	}
 	
 	public Tegeval getStartTegeval() {
-		if( tlist != null ) return tlist.get( 0 );
+		if( annset != null ) return (Tegeval)annset.get( 0 );
 		return null;
 	}
 	
@@ -275,19 +273,11 @@ public class Contig extends Sequence {
 		return prev;
 	}
 	
-	public boolean isReverse() {
-		return reverse;
-	}
-	
-	public void setReverse( boolean rev ) {
-		this.reverse = rev;
-	}
-	
 	@Override
-	public int compareTo(Object o) {
+	public int compareTo(Sequence o) {
 		if( partof != null ) {
 			return partof.indexOf( this ) - partof.indexOf( o );
 		}
-		return getName().compareTo( ((Sequence)o).getName() );
+		return getName().compareTo( o.getName() );
 	}
 }
