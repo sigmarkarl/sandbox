@@ -46,6 +46,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -76,6 +77,8 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
@@ -84,6 +87,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -125,12 +129,15 @@ public class SerifyApplet extends JApplet {
 	public SerifyApplet( FileSystem fs ) {
 		this();
 		this.fs = fs;
+		this.root = fs.getPath("/");
 	}
 	
 	public SerifyApplet() {
 		super();
 		serifier = new Serifier();
 		nrun = new NativeRun();
+		fs = FileSystems.getDefault();
+		root = fs.getPath( System.getProperty("user.home") );
 	}
 	
 	public List<Sequences> initSequences( int rowcount ) {		
@@ -288,6 +295,10 @@ public class SerifyApplet extends JApplet {
 		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
+		
+		//fs = FileSystems.getDefault();
+		//root = fs.getPath( System.getProperty("user.home") );
+		//fs.
 		
 		/*OutputStream o = new OutputStream() {
 			Object[]	objs = {""};
@@ -496,7 +507,7 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
-	public static void blastRun( NativeRun nrun, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
+	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
 		if( homedir ) selectedpath = new File( userhome ).toPath();
@@ -619,14 +630,14 @@ public class SerifyApplet extends JApplet {
 				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
 				//lcmd.addAll( Arrays.asList(nxst) );
 				
-				lscmd.add( new Path[] {dbPath, res, selectedpath} );
+				lscmd.add( new Path[] {queryPath, res, selectedpath} );
 				lscmd.add( lcmd );
 			}
 			
 			final String start = new Date( System.currentTimeMillis() ).toString();								
 			final Object[] cont = new Object[3];
 			Runnable run = new Runnable() {
-				public void run() {										
+				public void run() {					
 					//infile.delete();
 					//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
 					if( cont[0] != null ) {
@@ -651,7 +662,7 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public Object run() {
 				try {
-					blastRun( nrun, dbPath, dbType, extrapar, table, false );
+					blastRun( nrun, dbPath, dbPath, dbType, extrapar, table, false );
 				} catch( Exception e ) {
 					e.printStackTrace();
 				}
@@ -697,7 +708,8 @@ public class SerifyApplet extends JApplet {
 				
 				if( !interrupted ) {
 					try {
-						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f );
+						List<Set<String>> total = new ArrayList<Set<String>>();
+						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f, null, total );
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
@@ -1707,7 +1719,8 @@ public class SerifyApplet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	FileSystem fs = null;
+	FileSystem 	fs = null;
+	Path		root = null;
 	/*
 	ACDK	Clostridium_sp-7-2-43FAA
 	AWST	Clostridium_sp-KLE-1755
@@ -1906,7 +1919,23 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		
-		JPopupMenu	popup = new JPopupMenu();
+		JMenu popup = new JMenu("File");
+		if( c instanceof JFrame ) {
+			JFrame fr = (JFrame)c;
+			JMenuBar mb = new JMenuBar();
+			//c
+			//popup.get
+			//menu.add(popup);
+			mb.add( popup );
+			fr.setJMenuBar(mb);
+		} else if( c instanceof JApplet ) {
+			JApplet ap = (JApplet)c;
+			JMenuBar mb = new JMenuBar();
+			mb.add( popup );
+			ap.setJMenuBar( mb );
+		}
+		
+		
 		popup.add( new AbstractAction("NCBI Fetch") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1921,7 +1950,7 @@ public class SerifyApplet extends JApplet {
 					cd = fs.getPath("/");
 				}
 				
-				String userhome = System.getProperty("user.home");	
+				String userhome = System.getProperty("user.home");
 				final Path uhome = Paths.get(userhome);
 					
 					/*final JCheckBox	whole = new JCheckBox("whole");
@@ -2375,7 +2404,7 @@ public class SerifyApplet extends JApplet {
 					
 					try {
 						for( File f : filechooser.getSelectedFiles() ) {
-							Path dest = fs.getPath("/"+f.getName());
+							Path dest = root.resolve(f.getName());
 							Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
 							addSequences( f.getName(), dest, null );
 						}
@@ -2791,7 +2820,7 @@ public class SerifyApplet extends JApplet {
 						}
 						
 						try {
-							serifier.genbankFromNR( s, blastFile.toPath(), f, false );
+							serifier.genbankFromNR( s, blastFile.toPath(), f.toPath(), false );
 						} catch (MalformedURLException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
@@ -3740,7 +3769,8 @@ public class SerifyApplet extends JApplet {
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					try {
-						List<Set<String>> cluster = serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f );
+						List<Set<String>> cluster = new ArrayList<Set<String>>();
+						serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f, null, cluster );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -3824,9 +3854,9 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		
-		table.setComponentPopupMenu( popup );
+		//table.setComponentPopupMenu( popup );
 		JScrollPane	scrollpane = new JScrollPane( table );
-		scrollpane.setComponentPopupMenu( popup );
+		//scrollpane.setComponentPopupMenu( popup );
 		scrollpane.setBackground( bgcolor );
 		scrollpane.getViewport().setBackground( bgcolor );
 		scrollpane.setTransferHandler( new TransferHandler() {
@@ -4756,7 +4786,8 @@ public class SerifyApplet extends JApplet {
 				
 				Path nf = new File( "/u0/all.blastout" ).toPath();//new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getFileName() );
-				List<Set<String>> cluster = serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f );
+				List<Set<String>> cluster = new ArrayList<Set<String>>();
+				serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f, null, cluster );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {

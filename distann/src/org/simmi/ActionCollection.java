@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,11 +85,101 @@ import org.simmi.unsigned.JavaFasta;
 import flobb.ChatServer;
 
 public class ActionCollection {
+	public static StringBuilder panCore( GeneSet geneset, Set<String> selspec, final String[] categories, final List<StackBarData>	lsbd ) {
+		Set<GeneGroup>	pan = new HashSet<GeneGroup>();
+		Set<GeneGroup>	core = new HashSet<GeneGroup>();
+		StringBuilder	restext = new StringBuilder();
+		restext.append( "[" );
+		restext.append( "['Species', 'Pan', 'Core']" );
+		
+		for( String spec : selspec ) {
+			String newspec = geneset.nameFix( spec );
+			StackBarData sbd = geneset.new StackBarData();
+			sbd.oname = spec;
+			sbd.name = newspec;
+			/*if( spec.contains("hermus") ) sbd.name = spec.substring( 0, spec.lastIndexOf('_') );
+			else {
+				Matcher m = Pattern.compile("\\d").matcher(spec);
+				int firstDigitLocation = m.find() ? m.start() : 0;
+				if( firstDigitLocation == 0 ) sbd.name = "Thermus_" + spec;
+				else sbd.name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
+			}*/
+			lsbd.add( sbd );
+		}
+		
+		Collections.sort( lsbd, new Comparator<StackBarData>() {
+			@Override
+			public int compare(StackBarData o1, StackBarData o2) {
+				return o1.name.compareTo( o2.name );
+			}
+		});
+		
+		boolean avg = false;
+		if( avg ) {
+			for( int i = 0; i < lsbd.size(); i++ ) {
+				for( int k = i; k < lsbd.size(); k++ ) {
+					StackBarData 	sbd = lsbd.get(i);
+					String spec = 	sbd.oname;
+					Set<GeneGroup> 	ggset = geneset.specGroupMap.get( spec );
+					
+					if( ggset != null ) {
+						Set<GeneGroup> 	theset = new HashSet<GeneGroup>();
+						for( GeneGroup gg : ggset ) {
+							for( Gene g : gg.genes ) {
+								if( g.getMaxLength() >= 100 ) {
+									theset.add( gg );
+									break;
+								}
+							}
+						}
+					
+						pan.addAll( theset );
+						if( core.isEmpty() ) core.addAll( theset );
+						else core.retainAll( theset );
+					}
+				}
+			}
+		} else {
+			for( int i = 0; i < lsbd.size(); i++ ) {
+				StackBarData sbd = lsbd.get(i);
+				String spec = sbd.oname;
+				
+				restext.append( ",\n['"+spec+"', " );
+				Set<GeneGroup> ggset = geneset.specGroupMap.get( spec );
+				
+				Set<GeneGroup> theset = new HashSet<GeneGroup>();
+				for( GeneGroup gg : ggset ) {
+					for( Gene g : gg.genes ) {
+						if( g.getMaxLength() >= 100 ) {
+							theset.add( gg );
+							break;
+						}
+					}
+				}
+				
+				if( ggset != null ) {
+					pan.addAll( theset );
+					if( core.isEmpty() ) core.addAll( theset );
+					else core.retainAll( theset );
+				}
+				
+				restext.append( core.size()+", " );
+				restext.append( pan.size()+"]" );
+				
+				sbd.b.put( "Core: ", core.size() );
+				sbd.b.put( "Accessory: ", pan.size()-core.size() );
+			}
+		}
+		restext.append( "]" );
+		return restext;
+	}
+	
 	public static void addAll( JMenu menu, 
 			final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, 
 			final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, 
 			final JTable table, final Container comp, final ChatServer cs ) {
 		//JButton matrixbutton = new JButton(matrixaction);
+		
 		AbstractAction codregaction = new AbstractAction("Coding regions") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1559,6 +1650,26 @@ public class ActionCollection {
 		};
 		//JButton	shuffletreebutton = new JButton( shuffletreeaction );
 		
+		AbstractAction cazyexportaction = new AbstractAction("Export cazy ids") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String> cz = new TreeSet<String>();
+				for( Gene g : geneset.genelist ) {
+					String cazy = geneset.cazymap.get( g.refid );
+					if( cazy != null ) {
+						int i = cazy.indexOf('(');
+						if( i == -1 ) i = cazy.length();
+						cazy = cazy.substring(0,i);
+						cz.add( cazy );
+					}
+				}
+				
+				for( String cazy : cz ) {
+					System.err.println( cazy );
+				}
+			}
+		};
+		
 		AbstractAction koexportaction = new AbstractAction("Export pathway ids") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1767,93 +1878,10 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ) );
-				final List<StackBarData>	lsbd = new ArrayList<StackBarData>();
-						
-				Set<GeneGroup>	pan = new HashSet<GeneGroup>();
-				Set<GeneGroup>	core = new HashSet<GeneGroup>();
-				StringBuilder	restext = new StringBuilder();
-				restext.append( "['Species', 'Pan', 'Core']" );
 				
 				final String[] categories = { "Core: ", "Accessory: " };
-				
-				for( String spec : selspec ) {
-					String newspec = geneset.nameFix( spec );
-					StackBarData sbd = geneset.new StackBarData();
-					sbd.oname = spec;
-					sbd.name = newspec;
-					/*if( spec.contains("hermus") ) sbd.name = spec.substring( 0, spec.lastIndexOf('_') );
-					else {
-						Matcher m = Pattern.compile("\\d").matcher(spec);
-						int firstDigitLocation = m.find() ? m.start() : 0;
-						if( firstDigitLocation == 0 ) sbd.name = "Thermus_" + spec;
-						else sbd.name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
-					}*/
-					lsbd.add( sbd );
-				}
-				
-				Collections.sort( lsbd, new Comparator<StackBarData>() {
-					@Override
-					public int compare(StackBarData o1, StackBarData o2) {
-						return o1.name.compareTo( o2.name );
-					}
-				});
-				
-				boolean avg = false;
-				if( avg ) {
-					for( int i = 0; i < lsbd.size(); i++ ) {
-						for( int k = i; k < lsbd.size(); k++ ) {
-							StackBarData 	sbd = lsbd.get(i);
-							String spec = 	sbd.oname;
-							Set<GeneGroup> 	ggset = geneset.specGroupMap.get( spec );
-							
-							if( ggset != null ) {
-								Set<GeneGroup> 	theset = new HashSet<GeneGroup>();
-								for( GeneGroup gg : ggset ) {
-									for( Gene g : gg.genes ) {
-										if( g.getMaxLength() >= 100 ) {
-											theset.add( gg );
-											break;
-										}
-									}
-								}
-							
-								pan.addAll( theset );
-								if( core.isEmpty() ) core.addAll( theset );
-								else core.retainAll( theset );
-							}
-						}
-					}
-				} else {
-					for( int i = 0; i < lsbd.size(); i++ ) {
-						StackBarData sbd = lsbd.get(i);
-						String spec = sbd.oname;
-						
-						restext.append( ",\n['"+spec+"', " );
-						Set<GeneGroup> ggset = geneset.specGroupMap.get( spec );
-						
-						Set<GeneGroup> theset = new HashSet<GeneGroup>();
-						for( GeneGroup gg : ggset ) {
-							for( Gene g : gg.genes ) {
-								if( g.getMaxLength() >= 100 ) {
-									theset.add( gg );
-									break;
-								}
-							}
-						}
-						
-						if( ggset != null ) {
-							pan.addAll( theset );
-							if( core.isEmpty() ) core.addAll( theset );
-							else core.retainAll( theset );
-						}
-						
-						restext.append( core.size()+", " );
-						restext.append( pan.size()+"]" );
-						
-						sbd.b.put( "Core: ", core.size() );
-						sbd.b.put( "Accessory: ", pan.size()-core.size() );
-					}
-				}
+				final List<StackBarData> lsbd = new ArrayList<StackBarData>();
+				StringBuilder restext = panCore( geneset, selspec, categories, lsbd );
 				
 				JFrame f = new JFrame("Pan-core chart");
 				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
@@ -3822,12 +3850,7 @@ public class ActionCollection {
 		AbstractAction	genephyl = new AbstractAction("Gene phylogeny") {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Map<String, Integer> blosumap = null;
-				try {
-					blosumap = JavaFasta.getBlosumMap();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+				Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
 				
 				final double[] b0;
 				final double[] b1;
@@ -4050,6 +4073,7 @@ public class ActionCollection {
 		menu.add( pancoreaction );
 		menu.add( blastaction );
 		menu.add( koexportaction );
+		menu.add( cazyexportaction );
 		menu.add( genomesizeaction );
 		menu.add( gcaction );
 		menu.add( gcskewaction );
