@@ -1,6 +1,5 @@
 package org.simmi;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,7 +13,6 @@ public class Contig extends Sequence {
 	}
 	
 	public void add( Tegeval tv ) {
-		if( annset == null ) annset = new ArrayList<Annotation>();
 		addAnnotation( tv );
 		//annset.add( tv );
 	}
