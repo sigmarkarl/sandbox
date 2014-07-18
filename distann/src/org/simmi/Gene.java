@@ -2,7 +2,6 @@ package org.simmi;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Set;
 
 public class Gene {
@@ -23,18 +22,19 @@ public class Gene {
 		this.tegeval.type = tag;
 	}*/
 	
-	public void getFasta( Writer w ) throws IOException {
+	public void getFasta( Appendable w, boolean id ) throws IOException {
 		StringBuilder ps = tegeval.getProteinSequence();
-		w.append(">" + this.tegeval.name + "\n"); //this.getId() + " " + this.getName() + (this.idstr != null ? " (" + this.idstr + ") [" : " [") + this.tegeval.name + "]" +" # " + this.tegeval.start + " # " + this.tegeval.stop + " # " + this.tegeval.ori + " #" + "\n");
+		if( id ) w.append(">" + this.getId() + "\n");
+		else w.append(">" + this.tegeval.name + "\n"); //this.getId() + " " + this.getName() + (this.idstr != null ? " (" + this.idstr + ") [" : " [") + this.tegeval.name + "]" +" # " + this.tegeval.start + " # " + this.tegeval.stop + " # " + this.tegeval.ori + " #" + "\n");
 		for (int i = 0; i < ps.length(); i += 70) {
 			w.append( ps.substring(i, Math.min(i + 70, ps.length())) + "\n");
 		}
 	}
 	
-	public String getFasta() {
+	public String getFasta( boolean id ) {
 		StringWriter sb = new StringWriter();
 		try {
-			getFasta( sb );
+			getFasta( sb, id );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -4,15 +4,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class GeneGroup {
 	Set<Gene>           	genes = new HashSet<Gene>();
-	Map<String, Teginfo>  	species = new HashMap<String, Teginfo>();
+	Map<String, Teginfo>  	species = new TreeMap<String, Teginfo>();
 	int                 	groupIndex = -10;
 	int                 	groupCount = -1;
 	int						index;
@@ -25,17 +25,17 @@ public class GeneGroup {
 		return false;
 	}
 	
-	public String getFasta() throws IOException {
+	public String getFasta( boolean id ) throws IOException {
 		StringWriter sb = new StringWriter();
 		for( Gene g : genes ) {
-			g.getFasta( sb );
+			g.getFasta( sb, id );
 		}
 		return sb.toString();
 	}
 	
-	public void getFasta( Writer w ) throws IOException {
+	public void getFasta( Writer w, boolean id ) throws IOException {
 		for( Gene g : genes ) {
-			g.getFasta( w );
+			g.getFasta( w, id );
 		}
 	}
 	
@@ -148,6 +148,31 @@ public class GeneGroup {
 			}
 		}
 		return funcset;
+	}
+	
+	public String getCommonGO( boolean breakb, boolean withinfo, Set<Function> allowedFunctions ) {
+		String ret = "";
+		Set<String> already = new HashSet<String>();
+		for( Gene g : genes ) {
+			if( g.funcentries != null && g.funcentries.size() > 0 ) {
+				for( Function f : g.funcentries ) {
+					//Function f = funcmap.get( go );
+					
+					if( allowedFunctions == null || allowedFunctions.contains(f) ) {
+						String name = f.go; //getName().replace('/', '-').replace(",", "");
+						if( withinfo ) name += "-"+f.name.replace(",", "");
+							
+						//System.err.println( g.getName() + "  " + go );
+						if( ret.length() == 0 ) ret = name;
+						else if( !already.contains(name) ) ret += ","+name;
+						
+						already.add( name );
+					}
+				}
+				if( breakb ) break;
+			}
+		}
+		return ret;
 	}
 	
 	public String getCommonFunction( boolean breakb, Set<Function> allowedFunctions ) {
@@ -306,8 +331,9 @@ public class GeneGroup {
 		for( Gene g : genes ) {
 			if( g.symbol != null ) s.add( g.symbol );
 		}
-		if( s.isEmpty() ) return null;
-		else {
+		if( s.isEmpty() ) {
+			return null;
+		} else {
 			String remstr = "";
 			while( remstr != null ) {
 				remstr = null;
