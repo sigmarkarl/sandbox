@@ -1251,9 +1251,15 @@ public class GeneCompare {
 		
 		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
-        g2.setBackground( Color.white );
+        g2.setBackground( Color.red );
 		g2.clearRect( 0, 0, w, h );
 		g2.setColor( Color.black );
+		
+		g2.setColor( Color.black );
+		g2.drawString("blbhbleh", 100, 100);
+		g2.fillRect(10, 10, 100, 100);
+		
+		
 		if( spec1 == null ) {
 			int rowcount = geneset.table.getRowCount();
 			for( int r = 0; r < rowcount; r++ ) {
@@ -1411,6 +1417,10 @@ public class GeneCompare {
 				g2.drawString( specstr.replace("T.", ""), (w-strw)/2, h/2 - spec2s.size()*14/2 + 14 + k*14 );
 				k++;
 			}
+			
+			g2.setColor( Color.black );
+			g2.drawString("blbhbleh", 100, 100);
+			g2.fillRect(10, 10, 100, 100);
 		}
 	}
 	
