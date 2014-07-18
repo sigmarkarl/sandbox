@@ -349,7 +349,7 @@ public class SyntGrad {
 										Set<GeneGroup>	gset = new HashSet<GeneGroup>();
 										gset.add( tv.getGene().getGeneGroup() );
 										try {
-											new Neighbour().neighbourMynd( geneset, comp, geneset.genelist, gset, geneset.contigmap );
+											new Neighbour( gset ).neighbourMynd( geneset, comp, geneset.genelist, geneset.contigmap );
 										} catch (IOException e1) {
 											e1.printStackTrace();
 										}

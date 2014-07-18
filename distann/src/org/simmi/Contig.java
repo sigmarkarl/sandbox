@@ -136,7 +136,7 @@ public class Contig extends Sequence {
 				i = getName().indexOf("scaffold");
 			}
 			if( i == -1 ) {
-				i = getName().lastIndexOf('_');
+				i = getName().lastIndexOf('_')+1;
 				System.err.println( getName() );
 			}
 			spec = getName().substring(0, i-1);
