@@ -78,6 +78,19 @@ public class GBK2AminoFasta {
 					if( trimline.startsWith("CDS  ") || trimline.startsWith("tRNA  ") || trimline.startsWith("rRNA  ") || trimline.startsWith("mRNA  ") || trimline.startsWith("misc_feature  ") ) {
 						if( anno != null ) {
 							if( anno.id == null || anno.id.length() == 0 ) anno.id = anno.comp ? "comp("+anno.start+".."+anno.stop+")" : anno.start+".."+anno.stop;
+							if( xref.size() > 0 ) {
+								anno.name += "(";
+								for( String xr : xref ) {
+									anno.name += xr;
+								}
+								anno.name += ")";
+								xref.clear();
+							}
+							
+							/*if( anno.spec.contains("MAT4699") || anno.spec.contains("MAT4721") || anno.spec.contains("MAT4725") || anno.spec.contains("MAT4726") ) {
+								anno.start--;
+								anno.stop--;
+							}*/
 							annolist.add( anno );
 						}
 						anno = null;
@@ -87,7 +100,7 @@ public class GBK2AminoFasta {
 						anno.contig = strbuf;
 						
 						//anno.spec = spec + (contignum > 0 ? "_contig"+(contignum+1) : "");
-						anno.spec = spec+ "_"+locus;
+						anno.spec = locus.contains(spec) ? locus : spec+ "_"+locus;
 						
 						String[] split = trimline.split("[\t ]+");
 						if( split.length > 1 ) {
@@ -116,16 +129,21 @@ public class GBK2AminoFasta {
 									anno = null;
 								}
 							} else if( split[1].startsWith("join") ) {
-								int iof = split[1].indexOf(")");
+								int iof = split[1].lastIndexOf(")");
 								while( iof == -1 ) {
 									int k = filetext.indexOf("\n", ind+1);
 									if( ind > 0 ) line = filetext.substring(ind+1, k);
 									ind = k;
 									trimline = trimline+line.trim();
 									split = trimline.split("[\t ]+");
-									iof = split[1].indexOf(")");
+									iof = split[1].lastIndexOf(")");
 								}
-								int osv = split[1].lastIndexOf('(');
+								int osv = split[1].indexOf('(');
+								
+								if( iof < osv+1 ) {
+									System.err.println();
+								}
+								
 								String substr = split[1].substring(osv+1, iof);
 								String[] sepstr = substr.split(",");
 								
@@ -144,6 +162,10 @@ public class GBK2AminoFasta {
 										System.err.println( nsplit[0] + " n " + nsplit[nsplit.length-1] );
 										anno = null;
 									}
+								}
+								
+								if( anno != null && anno.stop-anno.start > 10000 ) {
+									System.err.println();
 								}
 							} else {
 								String[] nsplit;
@@ -189,13 +211,9 @@ public class GBK2AminoFasta {
 									} else i = trimline.length()-1;
 								}
 								anno.name = trimline.substring(10,i);
-								if( xref.size() > 0 ) {
-									anno.name += "(";
-									for( String xr : xref ) {
-										anno.name += xr;
-									}
-									anno.name += ")";
-									xref.clear();
+								int ecind = Math.max( anno.name.indexOf("(EC"), anno.name.indexOf("(COG") );
+								if( ecind != -1 ) {
+									anno.name = anno.name.substring(0,ecind).trim();
 								}
 							}
 							//annolist.add( anno );
@@ -226,6 +244,19 @@ public class GBK2AminoFasta {
 					} else if( trimline.startsWith("ORIGIN") ) {
 						if( anno != null ) {
 							if( anno.id == null || anno.id.length() == 0 ) anno.id = anno.comp ? "comp("+anno.start+".."+anno.stop+")" : anno.start+".."+anno.stop;
+							if( xref.size() > 0 ) {
+								anno.name += "(";
+								for( String xr : xref ) {
+									anno.name += xr;
+								}
+								anno.name += ")";
+								xref.clear();
+							}
+							
+							/*if( anno.spec.contains("MAT4699") || anno.spec.contains("MAT4721") || anno.spec.contains("MAT4725") || anno.spec.contains("MAT4726") ) {
+								anno.start--;
+								anno.stop--;
+							}*/
 							annolist.add( anno );
 						}
 						anno = null;
@@ -275,7 +306,8 @@ public class GBK2AminoFasta {
 				//if( contignum > 0 && anno != null && anno.spec != null ) anno.spec += "_contig"+contignum;;
 				
 				//allout.write( ">" + spec + (contignum > 0 ? "_contig"+contignum+"\n" : "\n") );
-				allout.write( ">" + spec + "_" + locus + "\n" );
+				if( locus.contains(spec) ) allout.write( ">" + locus + "\n" );
+				else allout.write( ">" + spec + "_" + locus + "\n" );
 				for( int i = 0; i < strbuf.length(); i+=70 ) {
 					allout.write( strbuf.substring(i, Math.min( strbuf.length(), i+70) ) + "\n" );
 				}
@@ -287,87 +319,96 @@ public class GBK2AminoFasta {
 		Map<String,String> nameMap = new HashMap<String,String>();
 		Map<Path,Writer>	urifile = new HashMap<Path,Writer>();
 		for( Anno ao : annolist ) {
-			StringBuilder	strbuf = ao.contig;
-			Path uri = annoset.get( ao.getType() );
-			
-			Writer out;
-			if( !urifile.containsKey( uri ) ) {
-				Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.CREATE);
-				urifile.put( uri, fw );
+			if( ao.name != null ) {
+				StringBuilder	strbuf = ao.contig;
+				Path uri = annoset.get( ao.getType() );
 				
-				out = fw;
-			} else {
-				out = urifile.get( uri );
-			}
-			
-			/*if( out == null ) {
-				System.err.println();
-			}*/
-			
-			boolean amino = ao.getType().contains("CDS");
-			if( ao.id != null && ao.gene != null && !ao.id.contains("..") ) nameMap.put(ao.id, ao.gene);
-			
-			String end = amino ? " # " + ao.start + " # " + ao.stop + " # " + (ao.comp ? "-1" : "1") + " #\n" : "\n";
-			if( out != null ) {
-				/*if( replace != null ) {
-					String rep = replace + ao.spec.substring( ao.spec.indexOf('_') );
-					out.write( ">"+ao.id + " " + ao.name + " [" + rep + "]" + end );
-				} else {*/
-				out.write( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]" + end );
-				//}
-			}
-			//strbuf.
-			
-			//System.err.println(val);
-			//String	ami = "";
-			
-			int t = 0;
-			if( amino ) {
-				String 	val = strbuf.substring( Math.max(0, ao.start-1), ao.stop );
-				if( ao.comp ) {
-					for( int i = val.length()-3; i >= 0; i-=3 ) {
-						//ami += 
-						String first = val.substring(i, i+3).toUpperCase();
-						String second = Sequence.revcom.get( first );
-						String str = Sequence.amimap.get( second );
-						if( str != null ) {
-							if( str.equals("0") || str.equals("1") ) break;
-							else if( out != null ) out.write( str );//+ " " + t + " " );
-							if( (++t % 60) == 0 && out != null ) out.write("\n");
+				Writer out;
+				if( !urifile.containsKey( uri ) ) {
+					Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.CREATE);
+					urifile.put( uri, fw );
+					
+					out = fw;
+				} else {
+					out = urifile.get( uri );
+				}
+				
+				/*if( out == null ) {
+					System.err.println();
+				}*/
+				
+				boolean amino = ao.getType().contains("CDS");
+				if( ao.id != null && ao.gene != null && !ao.id.contains("..") ) nameMap.put(ao.id, ao.gene);
+				
+				String end = amino ? " # " + ao.start + " # " + ao.stop + " # " + (ao.comp ? "-1" : "1") + " #\n" : "\n";
+				if( out != null ) {
+					/*if( replace != null ) {
+						String rep = replace + ao.spec.substring( ao.spec.indexOf('_') );
+						out.write( ">"+ao.id + " " + ao.name + " [" + rep + "]" + end );
+					} else {*/
+					out.write( ">"+ao.id + " " + ao.name + " [" + ao.spec + "]" + end );
+					//}
+				}
+				//strbuf.
+				
+				//System.err.println(val);
+				//String	ami = "";
+				
+				int t = 0;
+				if( amino ) {
+					int sstart = Math.max(0, ao.start-1);
+					int sstop = Math.min( ao.stop, strbuf.length() );
+					
+					/*if( !(sstart >= 0 && sstop <= strbuf.length()) ) {
+						System.err.println();
+					}*/
+					
+					String 	val = strbuf.substring( sstart, sstop );
+					if( ao.comp ) {
+						for( int i = val.length()-3; i >= 0; i-=3 ) {
+							//ami += 
+							String first = val.substring(i, i+3).toUpperCase();
+							String second = Sequence.revcom.get( first );
+							String str = Sequence.amimap.get( second );
+							if( str != null ) {
+								if( str.equals("0") || str.equals("1") ) break;
+								else if( out != null ) out.write( str );//+ " " + t + " " );
+								if( (++t % 60) == 0 && out != null ) out.write("\n");
+							}
+						}
+					} else {
+						for( int i = 0; i < val.length(); i+=3 ) {
+							//ami += 
+							String first = val.substring( i, Math.min(val.length(), i+3) ).toUpperCase();
+							String str = Sequence.amimap.get( first );
+							if( str != null ) {
+								if( str.equals("0") || str.equals("1") ) break;
+								else if( out != null ) out.write( str );//+ " " + t + " " );
+								if( (++t % 60) == 0 && out != null ) out.write("\n");
+							}
 						}
 					}
 				} else {
-					for( int i = 0; i < val.length(); i+=3 ) {
-						//ami += 
-						String first = val.substring( i, Math.min(val.length(), i+3) ).toUpperCase();
-						String str = Sequence.amimap.get( first );
-						if( str != null ) {
-							if( str.equals("0") || str.equals("1") ) break;
-							else if( out != null ) out.write( str );//+ " " + t + " " );
+					if( ao.comp ) {
+						for( int i = ao.stop-1; i >= ao.start; i-- ) {
+							char c = strbuf.charAt(i);
+							Character bigc = Sequence.rc.get( Character.toUpperCase( c ) );
+							if( bigc == null ) System.err.println( "blerr " + c );
+							if( out != null ) out.write( bigc != null ? bigc : c );
 							if( (++t % 60) == 0 && out != null ) out.write("\n");
+						}
+					} else {
+						for( int i = ao.start; i < ao.stop; i+=60 ) {
+							int start = i;
+							int stop = Math.min( ao.stop, i+60 );
+							String str = strbuf.substring( start, stop );
+							if( out != null ) out.write( str.toUpperCase() + (str.length() == 60 ? "\n" : "") );
 						}
 					}
 				}
-			} else {
-				if( ao.comp ) {
-					for( int i = ao.stop-1; i >= ao.start; i-- ) {
-						char c = strbuf.charAt(i);
-						Character bigc = Sequence.rc.get( Character.toUpperCase( c ) );
-						if( bigc == null ) System.err.println( "blerr " + c );
-						if( out != null ) out.write( bigc != null ? bigc : c );
-						if( (++t % 60) == 0 && out != null ) out.write("\n");
-					}
-				} else {
-					for( int i = ao.start; i < ao.stop; i+=60 ) {
-						int start = i;
-						int stop = Math.min( ao.stop, i+60 );
-						String str = strbuf.substring( start, stop );
-						if( out != null ) out.write( str.toUpperCase() + (str.length() == 60 ? "\n" : "") );
-					}
-				}
+				if( out != null ) out.write("\n");
+				//if( c++ > 10 ) break;
 			}
-			if( out != null ) out.write("\n");
-			//if( c++ > 10 ) break;
 		}
 		
 		Path p = path.getParent().resolve(path.getFileName()+".namemap"); //new File( new URI(path+".namemap") );
