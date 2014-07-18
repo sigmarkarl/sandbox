@@ -4,12 +4,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +39,7 @@ public class GBK2AminoFasta {
 		boolean 		comp;
 	};
 	
-	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,URI> annoset, Writer allout, String path, String replace ) throws IOException {
+	public static void handleText( String filename, Map<String,StringBuilder> filetextmap, Map<String,Path> annoset, Writer allout, Path path, String replace ) throws IOException {
 		List<Anno>	annolist = new ArrayList<Anno>();
 		for( String tag : filetextmap.keySet() ) {
 			StringBuilder filetext = filetextmap.get( tag );
@@ -169,6 +170,9 @@ public class GBK2AminoFasta {
 						}
 					} else if( trimline.startsWith("/db_xref") ) {
 						xref.add( trimline.substring(10, trimline.length()-1) );
+					} else if( trimline.startsWith("/EC_number") ) {
+						String ec = "EC"+trimline.substring(12, trimline.length()-1);
+						xref.add( ec );
 					} else if( trimline.startsWith("/product") ) {
 						if( anno != null ) {
 							if( trimline.length() > 10 ) {								
@@ -281,14 +285,14 @@ public class GBK2AminoFasta {
 		}
 		
 		Map<String,String> nameMap = new HashMap<String,String>();
-		Map<URI,Writer>	urifile = new HashMap<URI,Writer>();
+		Map<Path,Writer>	urifile = new HashMap<Path,Writer>();
 		for( Anno ao : annolist ) {
 			StringBuilder	strbuf = ao.contig;
-			URI uri = annoset.get( ao.getType() );
+			Path uri = annoset.get( ao.getType() );
 			
 			Writer out;
 			if( !urifile.containsKey( uri ) ) {
-				Writer fw = new FileWriter( new File( uri ) );
+				Writer fw = Files.newBufferedWriter(uri, StandardOpenOption.CREATE);
 				urifile.put( uri, fw );
 				
 				out = fw;
@@ -366,19 +370,16 @@ public class GBK2AminoFasta {
 			//if( c++ > 10 ) break;
 		}
 		
-		try {
-			File f = new File( new URI(path+".namemap") );
-			FileWriter mfw = new FileWriter( f );
-			for( String a : nameMap.keySet() ) {
-				String gene = nameMap.get(a);
-				mfw.write( a + "\t" + gene + "\n" );
-			}
-			mfw.close();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+		Path p = path.getParent().resolve(path.getFileName()+".namemap"); //new File( new URI(path+".namemap") );
+		//FileWriter mfw = new FileWriter( f );
+		Writer mfw = Files.newBufferedWriter( p );
+		for( String a : nameMap.keySet() ) {
+			String gene = nameMap.get(a);
+			mfw.write( a + "\t" + gene + "\n" );
 		}
+		mfw.close();
 		
-		for( URI uri : urifile.keySet() ) {
+		for( Path uri : urifile.keySet() ) {
 			Writer w = urifile.get( uri );
 			if( w != null ) w.close();
 		}

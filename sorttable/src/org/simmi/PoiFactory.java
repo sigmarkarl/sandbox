@@ -1,32 +1,17 @@
 package org.simmi;
 
 import java.applet.Applet;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 
-import javax.jnlp.FileContents;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.ServiceManager;
-//import javax.jnlp.UnavailableServiceException;
-import javax.swing.JFileChooser;
 import javax.swing.JTable;
-
-import netscape.javascript.JSObject;
-
-import org.apache.poi.ss.usermodel.Cell;
+//import javax.jnlp.UnavailableServiceException;
+/*import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.simmi.DetailPanel.PercStr;
-
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import org.simmi.DetailPanel.PercStr;*/
 
 public class PoiFactory {
 	/**
@@ -146,17 +131,17 @@ public class PoiFactory {
 	}
 	
 	public void dummy() throws IOException {
-		File tmp = File.createTempFile("tmp_", ".xlsx");
+		/*File tmp = File.createTempFile("tmp_", ".xlsx");
 		Workbook	wb = new XSSFWorkbook();
 		Sheet		sh = wb.createSheet("ISGEM");
 		wb.write( new FileOutputStream( tmp ) );
 		System.err.println( tmp.getName() );
-		CompatUtilities.browse( tmp.toURI() );
+		CompatUtilities.browse( tmp.toURI() );*/
 	}
 	
 	public static void export( JTable table, JTable topTable, JTable leftTable, Applet applet ) throws FileNotFoundException, IOException {
 		//File tmp = File.createTempFile("tmp_", ".xlsx");
-		Workbook	wb = new XSSFWorkbook();
+		/*Workbook	wb = new XSSFWorkbook();
 		Sheet		sh = wb.createSheet("ISGEM");
 		Row			rw1 = sh.createRow(0);
 		Row			rw2 = sh.createRow(1);
@@ -247,8 +232,8 @@ public class PoiFactory {
 				Desktop.getDesktop().browse( new URI("file://c:/temp/export.xlsx") );
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
-			}*/
-	    }      
+			}*
+	    }      */
         
         //js.call("open", new Object[] {datauri});
 	        
@@ -262,7 +247,7 @@ public class PoiFactory {
 
 	public static void run2( JTable detailTable, JTable leftTable ) throws FileNotFoundException, IOException {
 		//File tmp = File.createTempFile("tmp_", ".xlsx");
-		Workbook	wb = new XSSFWorkbook();
+		/*Workbook	wb = new XSSFWorkbook();
 		Sheet		sh = wb.createSheet("ISGEM");
 		
 		int rsel = leftTable.getSelectedRow();
@@ -335,6 +320,6 @@ public class PoiFactory {
 	    } 
 		//wb.write( new FileOutputStream( tmp ) );
 		//System.err.println( tmp.getName() );
-		//CompatUtilities.browse( tmp.toURI() );
+		//CompatUtilities.browse( tmp.toURI() );*/
 	}
 }
