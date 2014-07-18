@@ -13,6 +13,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -35,6 +37,7 @@ import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -57,8 +60,9 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import org.apache.poi.poifs.storage.SmallDocumentBlockList;
+import org.simmi.shared.Annotation;
 import org.simmi.shared.Sequence;
+import org.simmi.unsigned.JavaFasta;
 
 public class Neighbour {
 	public void recenter( JTable rowheader, JComponent c ) {
@@ -133,14 +137,14 @@ public class Neighbour {
 						int k = ncont.partof.indexOf( next.getContshort() );
 							k = (k+1)%ncont.partof.size();
 							Contig c = ncont.partof.get(k);
-							while( c.tlist == null || c.tlist.size() == 0 ) {
+							while( c.annset == null || c.annset.size() == 0 ) {
 								k = (k+1)%ncont.partof.size();
 								c = ncont.partof.get(k);
 							}
 							thenext = c.getFirst();
 						}
-						//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-						//else thenext = c.tlist.get(0);
+						//if( c.isReverse() ) thenext = c.annset.get( c.annset.size()-1 );
+						//else thenext = c.annset.get(0);
 					}
 					
 					next = thenext;
@@ -165,7 +169,7 @@ public class Neighbour {
 						k--;
 						if( k < 0 ) k = partof.size()-1;
 						Contig c = partof.get(k);
-						while( c.tlist == null || c.tlist.size() == 0 ) {
+						while( c.annset == null || c.annset.size() == 0 ) {
 							k--;
 							if( k < 0 ) k = partof.size()-1;
 							c = partof.get(k);
@@ -205,7 +209,7 @@ public class Neighbour {
 							k--;
 							if( k < 0 ) k = partof.size()-1;
 							Contig c = partof.get(k);
-							while( c.tlist == null || c.tlist.size() == 0 ) {
+							while( c.annset == null || c.annset.size() == 0 ) {
 								k--;
 								if( k < 0 ) k = partof.size()-1;
 								c = partof.get(k);
@@ -254,13 +258,13 @@ public class Neighbour {
 							int k = cont.partof.indexOf( cont );
 							k = (k+1)%cont.partof.size();
 							Contig c = cont.partof.get(k);
-							while( c.tlist == null || c.tlist.size() == 0 ) {
+							while( c.annset == null || c.annset.size() == 0 ) {
 								k = (k+1)%cont.partof.size();
 								c = cont.partof.get(k);
 							}
 							thenext = c.getFirst();
-							//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-							//else thenext = c.tlist.get(0);
+							//if( c.isReverse() ) thenext = c.annset.get( c.annset.size()-1 );
+							//else thenext = c.annset.get(0);
 						}
 						hteglocal.set( i, thenext );
 					}
@@ -308,7 +312,7 @@ public class Neighbour {
 							k--;
 							if( k < 0 ) k = partof.size()-1;
 							Contig c = partof.get(k);
-							while( c.tlist == null || c.tlist.size() == 0 ) {
+							while( c.annset == null || c.annset.size() == 0 ) {
 								k--;
 								if( k < 0 ) k = partof.size()-1;
 								c = partof.get(k);
@@ -477,8 +481,9 @@ public class Neighbour {
 		final JButton	forw = new JButton(">");
 		final JButton	forwTen = new JButton(">>");
 		
-		final JCheckBox		commonname = new JCheckBox("Group names");
-		final JCheckBox		noname = new JCheckBox("No names");
+		final JComboBox<String>			names = new JComboBox<String>();
+		//final JCheckBox		commonname = new JCheckBox("Group names");
+		//final JCheckBox		noname = new JCheckBox("No names");
 		
 		final JButton	smallerRows = new JButton("^");
 		final JButton	largerRows = new JButton("v");
@@ -511,7 +516,7 @@ public class Neighbour {
 		mnu.add( sgradcol );
 		mnu.add( precol );
 		
-		final Map<String,Integer> blosumap = GeneCompare.getBlosumMap();
+		final Map<String,Integer> blosumap = JavaFasta.getBlosumMap();
 		
 		final JFrame frame = new JFrame();
 		JSplitPane splitpane = new JSplitPane();
@@ -576,8 +581,8 @@ public class Neighbour {
 								for( Tegeval tv2 : gene2s.tset ) {
 									int count2 = 0;
 									for( Contig ctg2 : contigs2 ) {
-										if( ctg2.tlist != null ) {
-											int idx = ctg2.tlist.indexOf( tv2 );
+										if( ctg2.annset != null ) {
+											int idx = ctg2.annset.indexOf( tv2 );
 											if( idx == -1 ) {
 												count2 += ctg2.getGeneCount();
 											} else {
@@ -638,12 +643,13 @@ public class Neighbour {
 									double len = next.getProteinLength()*neighbourscale;
 									Gene gene = next.getGene();
 									if( gene != null ) {
-										String genename = gene.getName();
+										/*String genename = gene.getName();
 										if( commonname.isSelected() && (genename == null || genename.contains("_")) ) {
 											GeneGroup gg = gene.getGeneGroup();
 											if( gg != null ) genename = gg.getCommonName();
 										}
-										if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
+										String genename = geneset.getGeneName(names.getSelectedItem().toString(), gene);
 										
 										if( xoff+len > clip.x ) {
 											if( funcol.isSelected() ) {
@@ -673,7 +679,7 @@ public class Neighbour {
 													GeneGroup gg = next.getGene().getGeneGroup();
 													List<Tegeval> ltv = gg.getTegevals( spec1 );
 													if( ltv != null && ltv.size() > 0 ) {
-														rc = GeneCompare.blosumColor( ltv.get(0), next.getSpecies(), gg, blosumap, false );
+														rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, next.getSpecies(), gg, blosumap, false );
 													} else {
 														rc = Color.white;
 													}
@@ -843,10 +849,10 @@ public class Neighbour {
 												strlen = g.getFontMetrics().stringWidth( genename );
 											}
 											
-											if( !noname.isSelected() ) {
+											if( names.getSelectedIndex() != 0 ) {
 												if( relcol.isSelected() ) g.setColor( Color.white );
 												else g.setColor( Color.black );
-												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-(int)(rowheader.getRowHeight()*0.3) );
 											}
 										}
 									}
@@ -871,13 +877,13 @@ public class Neighbour {
 												int k = ncont.partof.indexOf( ncont );
 												k = (k+1)%ncont.partof.size();
 												Contig c = ncont.partof.get(k);
-												while( c.tlist == null || c.tlist.size() == 0 ) {
+												while( c.annset == null || c.annset.size() == 0 ) {
 													k = (k+1)%ncont.partof.size();
 													c = ncont.partof.get(k);
 												}
 												thenext = c.getFirst();
-												//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-												//else thenext = c.tlist.get(0);
+												//if( c.isReverse() ) thenext = c.annset.get( c.annset.size()-1 );
+												//else thenext = c.annset.get(0);
 											}
 											
 											g.setColor( Color.black );
@@ -923,7 +929,7 @@ public class Neighbour {
 											k--;
 											if( k < 0 ) k = partof.size()-1;
 											Contig c = partof.get(k);
-											while( c.tlist == null || c.tlist.size() == 0 ) {
+											while( c.annset == null || c.annset.size() == 0 ) {
 												k--;
 												if( k < 0 ) k = partof.size()-1;
 												c = partof.get(k);
@@ -961,12 +967,13 @@ public class Neighbour {
 									
 									Gene gene = prev.getGene();
 									if( gene != null ) {
-										String genename = prev.getGene().getName();
+										/*String genename = prev.getGene().getName();
 										if( commonname.isSelected() && genename.contains("_") ) {
 											GeneGroup gg = prev.getGene().getGeneGroup();
 											if( gg != null ) genename = gg.getCommonName();
 										}
-										genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;
+										genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;*/
+										String genename = geneset.getGeneName(names.getSelectedItem().toString(), prev.getGene());
 										
 										if( clip.x+clip.width > xoff ) {
 											if( funcol.isSelected() ) {
@@ -994,7 +1001,7 @@ public class Neighbour {
 												GeneGroup gg = prev.getGene().getGeneGroup();
 												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
-													rc = GeneCompare.blosumColor( ltv.get(0), prev.getSpecies(), gg, blosumap, false );
+													rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, prev.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
@@ -1132,10 +1139,10 @@ public class Neighbour {
 												strlen = g.getFontMetrics().stringWidth( genename );
 											}
 											
-											if( !noname.isSelected() ) {
+											if( names.getSelectedIndex() != 0 ) {
 												if( relcol.isSelected() ) g.setColor( Color.white );
 												else g.setColor( Color.black );
-												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-(int)(rowheader.getRowHeight()*0.3) );
 											}
 										}
 									}
@@ -1150,7 +1157,7 @@ public class Neighbour {
 											k--;
 											if( k < 0 ) k = partof.size()-1;
 											Contig c = partof.get(k);
-											while( c.tlist == null || c.tlist.size() == 0 ) {
+											while( c.annset == null || c.annset.size() == 0 ) {
 												k--;
 												if( k < 0 ) k = partof.size()-1;
 												c = partof.get(k);
@@ -1210,9 +1217,20 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval next = te;
 									if( te.getGene() != null ) {
-										String genename = next.getGene().getName();
-										if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
-										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										String genename = geneset.getGeneName(names.getSelectedItem().toString(), next.getGene());
+										/*if( names.getSelectedItem().equals("Default names") ) {
+											genename = next.getGene().getName();
+											//if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
+											genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										} else if( names.getSelectedItem().equals("Group names") ) {
+											genename = next.getGene().getName();
+											if( genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
+											genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										} else if( names.getSelectedItem().equals("Cog") ) {
+											genename = next.getGene().getGeneGroup().getCommonCog(geneset.cogmap).id;
+										} else if( names.getSelectedItem().equals("Cazy") ) {
+											genename = next.getGene().getGeneGroup().getCommonCazy(geneset.cazymap);
+										}*/
 										
 										double len = te.getProteinLength()*neighbourscale;
 										
@@ -1243,7 +1261,7 @@ public class Neighbour {
 												GeneGroup gg = next.getGene().getGeneGroup();
 												List<Tegeval> ltv = gg.getTegevals( spec1 );
 												if( ltv != null && ltv.size() > 0 ) {
-													rc = GeneCompare.blosumColor( ltv.get(0), next.getSpecies(), gg, blosumap, false );
+													rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, next.getSpecies(), gg, blosumap, false );
 												} else {
 													rc = Color.white;
 												}
@@ -1343,10 +1361,10 @@ public class Neighbour {
 												strlen = g.getFontMetrics().stringWidth( genename );
 											}
 											
-											if( !noname.isSelected() ) {
+											if( names.getSelectedIndex() != 0 ) {
 												if( relcol.isSelected() ) g.setColor( Color.white );
 												else g.setColor( Color.black );
-												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+												g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-(int)(rowheader.getRowHeight()*0.3) );
 											}
 										}
 									/*g.setColor( Color.green );
@@ -1394,13 +1412,13 @@ public class Neighbour {
 										int k = cont.partof.indexOf( cont );
 										k = (k+1)%cont.partof.size();
 										Contig c = cont.partof.get(k);
-										while( c.tlist == null || c.tlist.size() == 0 ) {
+										while( c.annset == null || c.annset.size() == 0 ) {
 											k = (k+1)%cont.partof.size();
 											c = cont.partof.get(k);
 										}
 										thenext = c.getFirst();
-										//if( c.isReverse() ) thenext = c.tlist.get( c.tlist.size()-1 );
-										//else thenext = c.tlist.get(0);
+										//if( c.isReverse() ) thenext = c.annset.get( c.annset.size()-1 );
+										//else thenext = c.annset.get(0);
 										
 										int r = rowheader.convertRowIndexToView( i );
 										g.setColor( Color.black );
@@ -1455,9 +1473,10 @@ public class Neighbour {
 								if( te != null ) {
 									Tegeval prev = te;
 									if( te.getGene() != null ) {
-										String genename = prev.getGene().getName();
+										String genename = geneset.getGeneName( names.getSelectedItem().toString(), prev.getGene() );
+										/*String genename = prev.getGene().getName();
 										if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getCommonName();
-										genename = genename.contains("hypothetical") ? "hth-p" : genename;
+										genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
 										
 										double len = te.getProteinLength()*neighbourscale;
 										/*g.setColor( Color.green );
@@ -1587,10 +1606,10 @@ public class Neighbour {
 											strlen = g.getFontMetrics().stringWidth( genename );
 										}
 										
-										if( !noname.isSelected() ) {
+										if( names.getSelectedIndex() != 0 ) {
 											if( relcol.isSelected() ) g.setColor( Color.white );
 											g.setColor( Color.black );
-											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-5 );
+											g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheader.getRowHeight()-(int)(rowheader.getRowHeight()*0.3) );
 										}
 									}
 								}
@@ -1608,7 +1627,7 @@ public class Neighbour {
 										k--;
 										if( k < 0 ) k = partof.size()-1;
 										Contig c = partof.get(k);
-										while( c.tlist == null || c.tlist.size() == 0 ) {
+										while( c.annset == null || c.annset.size() == 0 ) {
 											k--;
 											if( k < 0 ) k = partof.size()-1;
 											c = partof.get(k);
@@ -1711,8 +1730,15 @@ public class Neighbour {
 			abucol.setAction( a );
 			precol.setAction( a );
 			
-			commonname.setAction( a );
-			noname.setAction( a );
+			names.addItemListener( new ItemListener() {
+				@Override
+				public void itemStateChanged(ItemEvent e) {
+					c.repaint();
+				}
+			});
+			
+			//commonname.setAction( a );
+			//noname.setAction( a );
 			
 			funcol.setText("Functions");
 			gccol.setText("GC%");
@@ -1720,8 +1746,16 @@ public class Neighbour {
 			abucol.setText("Abundance");
 			precol.setText("Proximity preservation");
 			
-			commonname.setText("Group names");
-			noname.setText( "No names" );
+			//commonname.setText("Group names");
+			//noname.setText( "No names" );
+			
+			names.addItem("No names");
+			names.addItem("Default names");
+			names.addItem("Group names");
+			names.addItem("Refids");
+			names.addItem("Ids");
+			names.addItem("Cog");
+			names.addItem("Cazy");
 			
 			smallerRows.addActionListener( new AbstractAction("^") {
 				@Override
@@ -1762,6 +1796,36 @@ public class Neighbour {
 					c.repaint();
 				}
 			});
+			
+			mvmnu.add( new AbstractAction("Connect contig")  {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					List<Contig> contigs = geneset.getSelspecContigs(null, currentTe.getSpecies());
+					if( contigs.size() > 0 ) {
+						Contig sctg = contigs.get(0);
+						
+						Contig ctg = currentTe.getContshort();
+						int i = ctg.partof.indexOf( ctg );
+						int k = ctg.annset.indexOf( currentTe );
+						
+						if( k == 0 || ctg.isReverse() ) {
+							ctg.partof.remove( sctg );
+							ctg.partof.add(i, sctg);
+						} else if( k == ctg.annset.size()-1 || !ctg.isReverse() ) {
+							ctg.partof.remove( sctg );
+							ctg.partof.add(i+1, sctg);
+						}
+					}
+				}
+			});
+			mvmnu.add( new AbstractAction("Reverse contig")  {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Contig ctg = currentTe.getContshort();
+					ctg.setReverse( !ctg.isReverse() );
+				}
+			});
+			mvmnu.addSeparator();
 			mvmnu.add( new AbstractAction("Inject forward") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -1797,16 +1861,16 @@ public class Neighbour {
 						for( String sp : gg.species.keySet() ) {
 							Teginfo ti = gg.species.get( sp );
 							
-							Contig ct = ti.best.contshort;
+							Contig ct = ti.best.getContshort();
 							ctind.put( sp, ct );
-							spind.put( sp, ct.tlist.indexOf( ti.best ) );
+							spind.put( sp, ct.annset.indexOf( ti.best ) );
 						}
 					}
 					
 					for( int i = 1; i < 20; i++ ) {
 						for( String spec : ctind.keySet() ) {
 							Contig ct = ctind.get( spec );
-							//ct.tlist.
+							//ct.annset.
 						}
 					}
 				}
@@ -1818,7 +1882,8 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
-							for( Tegeval tv2 : tv.getContshort().tlist ) {
+							for( Annotation ann : tv.getContshort().annset ) {
+								Tegeval tv2 = (Tegeval)ann;
 								tv2.selected = false;
 							}
 						}
@@ -1835,9 +1900,9 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
 						for( Tegeval tv : ti.tset ) {
-							int k = tv.getContshort().tlist.indexOf( tv );
-							for( int i = k+1; i < tv.getContshort().tlist.size(); i++ ) {
-								Tegeval tv2 = tv.getContshort().tlist.get(i);
+							int k = tv.getContshort().annset.indexOf( tv );
+							for( int i = k+1; i < tv.getContshort().annset.size(); i++ ) {
+								Tegeval tv2 = (Tegeval)tv.getContshort().annset.get(i);
 								currentTe = tv2;
 								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
@@ -1857,9 +1922,9 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
 						for( Tegeval tv : ti.tset ) {
-							int k = tv.getContshort().tlist.indexOf( tv );
+							int k = tv.getContshort().annset.indexOf( tv );
 							for( int i = k-1; i >= 0; i-- ) {
-								Tegeval tv2 = tv.getContshort().tlist.get(i);
+								Tegeval tv2 = (Tegeval)tv.getContshort().annset.get(i);
 								currentTe = tv2;
 								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
@@ -1894,8 +1959,8 @@ public class Neighbour {
 							//}
 							currentTe = cont.partof.get(k).getFirst();
 							
-							/*for( int i = k+1; i < tv.getContshort().tlist.size(); i++ ) {
-								Tegeval tv2 = tv.getContshort().tlist.get(i);
+							/*for( int i = k+1; i < tv.getContshort().annset.size(); i++ ) {
+								Tegeval tv2 = tv.getContshort().annset.get(i);
 								currentTe = tv2;
 								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
@@ -2060,13 +2125,13 @@ public class Neighbour {
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					geneset.showSequences( comp, selectedGenesGroups, false );
+					geneset.showSequences( comp, selectedGenesGroups, false, null );
 				}
 			});
 			showdnaseqs.setAction( new AbstractAction("DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					geneset.showSequences( comp, selectedGenesGroups, true );
+					geneset.showSequences( comp, selectedGenesGroups, true, null );
 				}
 			});
 			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
@@ -2076,12 +2141,13 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
-							for( Tegeval tv2 : tv.getContshort().tlist ) {
+							for( Annotation ann : tv.getContshort().annset ) {
+								Tegeval tv2 = (Tegeval)ann;
 								if( tv2.isSelected() ) tset.add( tv2 );
 							}
 						}
 					}
-					geneset.showSelectedSequences( comp, tset, false );
+					geneset.showSelectedSequences( comp, tset, false, names.getSelectedItem().toString() );
 				}
 			});
 			showselecteddnaseqs.setAction( new AbstractAction("Selected DNA sequences") {
@@ -2091,12 +2157,13 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
-							for( Tegeval tv2 : tv.getContshort().tlist ) {
+							for( Annotation ann : tv.getContshort().annset ) {
+								Tegeval tv2 = (Tegeval)ann;
 								if( tv2.isSelected() ) tset.add( tv2 );
 							}
 						}
 					}
-					geneset.showSelectedSequences( comp, tset, true );
+					geneset.showSelectedSequences( comp, tset, true, names.getSelectedItem().toString() );
 				}
 			});
 			showflankingseqs.setAction( new AbstractAction("Show flanking sequences") {
@@ -2108,7 +2175,8 @@ public class Neighbour {
 						for( Tegeval tv : ltv ) {
 							Tegeval prev = null;
 							//Tegeval prevprev = null;
-							for( Tegeval tv2 : tv.getContshort().tlist ) {
+							for( Annotation ann : tv.getContshort().annset ) {
+								Tegeval tv2 = (Tegeval)ann;
 								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getCommonName().contains("Elongation") ) {
 									System.err.println();
 								}*/
@@ -2150,7 +2218,8 @@ public class Neighbour {
 						for( Tegeval tv : ltv ) {
 							Tegeval prev = null;
 							//Tegeval prevprev = null;
-							for( Tegeval tv2 : tv.getContshort().tlist ) {
+							for( Annotation ann : tv.getContshort().annset ) {
+								Tegeval tv2 = (Tegeval)ann;
 								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getCommonName().contains("Elongation") ) {
 									System.err.println();
 								}*/
@@ -2249,7 +2318,7 @@ public class Neighbour {
 				public void mouseReleased(MouseEvent me) {
 					Point np = me.getPoint();
 
-					if (np.x > p.x) {
+					if (p != null && np.x > p.x) {
 						Rectangle rect = sorting.getCellRect(p.x, 0, false);
 						rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
 						sorting.scrollRectToVisible(rect);
@@ -2565,7 +2634,7 @@ public class Neighbour {
 						List<Sequence>	selseq = new ArrayList<Sequence>( rr.length );
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel(r);
-							selseq.add( hteg.get(i) );
+							selseq.add( hteg.get(i).alignedsequence );
 						}
 						return selseq;
 					} else {
@@ -2705,8 +2774,8 @@ public class Neighbour {
 		toolbar.add( highrel );
 		toolbar.add( mbr );
 		toolbar.add( turn );
-		toolbar.add( commonname );
-		toolbar.add( noname );
+		toolbar.add( names );
+		//toolbar.add( noname );
 		toolbar.add( smallerRows );
 		toolbar.add( largerRows );
 		
