@@ -12,15 +12,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -29,13 +35,13 @@ import javax.swing.SwingUtilities;
 public class NativeRun {
 	public Container			cnt = null;
 	
-	public File checkProdigalInstall( File dir, List<String> urls ) throws IOException {
-		File check1 = new File( dir, "prodigal.v2_60.windows.exe" );
-		File check2 = new File( dir, "prodigal.v2_60.linux" );
-		File check;
-		if( !check1.exists() && !check2.exists() ) {
+	public Path checkProdigalInstall( Path dir, List<Path> urls ) throws IOException, URISyntaxException {
+		Path check1 = dir.resolve( "prodigal.v2_60.windows.exe" );
+		Path check2 = dir.resolve( "prodigal.v2_60.linux" );
+		Path check;
+		if( !Files.exists(check1) && !Files.exists(check2) ) {
 			check = installProdigal( dir, urls );
-		} else check = check1.exists() ? check1 : check2;
+		} else check = Files.exists(check1) ? check1 : check2;
 		
 		return check;
 	}
@@ -144,69 +150,254 @@ public class NativeRun {
 		return f;
 	}
 	
-	public void doProdigal( File dir, Container c, File f, List<String> urls ) throws IOException {
-		JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-			File selectedfile = fc.getSelectedFile();
-			if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
+	public boolean startProcess( Object commands, List<Object> commandsList, Path workingdir, Object input, Object output, JTextArea ta, boolean paralell ) {
+		//Object commands = commandsList.get( w );
+		boolean blist = commands instanceof List;
+		List<String> lcmd = (List)(blist ? commands : commandsList.get((Integer)commands));
+		/*for( String s : lcmd ) {
+			System.err.println( s );
+		}*/
 		
-			for( String path : urls ) {
-				URL url = new URL( path );
-				
-				String file = url.getFile();
-				String[] split = file.split("/");
-				String fname = split[ split.length-1 ];
-				split = fname.split("\\.");
-				final String title = split[0];
-				File infile = new File( dir, fname );
-				if( infile.exists() ) {
-					infile = new File( dir, "tmp_"+fname );
+		//System.err.println( "mumu " + lcmd );
+		
+		ProcessBuilder pb = new ProcessBuilder( lcmd );
+		//pb.environment().putAll( System.getenv() );
+		//System.err.println( pb.environment() );
+		if( workingdir != null ) {
+			//System.err.println( "blblblbl " + workingdir.toFile() );
+			pb.directory( workingdir.toFile() );
+		}
+		//pb.redirectErrorStream( true );
+		try {
+			final Process p = pb.start();
+			
+			if( input != null ) {
+				if( input instanceof Path ) {
+					final Path inp = (Path)input;
+					new Thread() {
+						public void run() {
+							try {
+								OutputStream os = p.getOutputStream();
+								//os.write( "simmi".getBytes() );
+								Files.copy(inp, os);
+								os.close();
+							} catch( Exception e ) {
+								e.printStackTrace();
+							}
+						}
+					}.start();
+				} else {
+					final byte[] binput = (byte[])input;
+					new Thread() {
+						public void run() {
+							try {
+								OutputStream os = p.getOutputStream();
+								os.write( binput );
+								os.close();
+							} catch( Exception e ) {
+								e.printStackTrace();
+							}
+						}
+					}.start();
 				}
-				
-				FileOutputStream fos = new FileOutputStream( infile );
-				InputStream is = url.openStream();
-				
-				byte[] bb = new byte[100000];
-				int r = is.read(bb);
-				while( r > 0 ) {
-					fos.write(bb, 0, r);
-					r = is.read(bb);
+			}
+			
+			new Thread() {
+				public void run() {
+					try {
+						InputStream os = p.getErrorStream();
+						while( os.read() != -1 ) ;
+						//os.write( binput );
+						os.close();
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
 				}
-				is.close();
-				fos.close();
+			}.start();
+			
+			if( output != null ) {
+				//if( output instanceof Path ) {
+					Path outp = (Path)output;
+					try {
+						InputStream is = p.getInputStream();
+						if( outp.getFileName().toString().endsWith(".gz") ) {
+							OutputStream os = Files.newOutputStream( outp );
+							GZIPOutputStream gos = new GZIPOutputStream( os );
+							
+							int b = is.read();
+							while( b != -1 ) {
+								gos.write(b);
+								b = is.read();
+							}
+							gos.close();
+							os.close();
+						} else Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
+						is.close();
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+				/*} else {
+					final byte[] bout = (byte[])output;
 					
-				final String outPathD = fixPath( new File( selectedfile, title+".prodigal.fna" ).getAbsolutePath() );
-				final String outPathA = fixPath( new File( selectedfile, title+".prodigal.fsa" ).getAbsolutePath() );
-				String[] cmds = new String[] { f.getAbsolutePath(), "-i", fixPath( infile.getAbsolutePath() ), "-a", outPathA, "-d", outPathD };
-				
-				final Object[] cont = new Object[3];
-				Runnable run = new Runnable() {
+					try {
+						InputStream is = p.getInputStream();
+						is.read( outp );
+						is.close();
+					} catch( Exception e ) {
+						e.printStackTrace();
+					}
+				}*/
+			} else {
+				try {
+					InputStream is = p.getInputStream();
+					BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+					String line = br.readLine();
+					while( line != null ) {
+						String str = line + "\n";
+						ta.append( str );
+						
+						line = br.readLine();
+					}
+					br.close();
+					is.close();
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}
+			
+			//p.
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		return blist;
+		
+		/*boolean blist = commands instanceof List;
+		List<String> lcmd = blist ? (List)commands : commandsList;
+		/*for( String s : lcmd ) {
+			System.err.println( s );
+		}*
+		ProcessBuilder pb = new ProcessBuilder( lcmd );
+		//pb.environment().putAll( System.getenv() );
+		//System.err.println( pb.environment() );
+		if( workingdir != null ) {
+			//System.err.println( "blblblbl " + workingdir.toFile() );
+			pb.directory( workingdir.toFile() );
+		}
+		//pb.redirectErrorStream( true );
+		final Process p = pb.start();
+		dialog.addWindowListener( new WindowListener() {
+			
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				if( p != null ) {
+					interupted = true;
+					p.destroy();
+					//tt.interrupt();
+				}
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {}
+		});
+		dialog.setVisible( true );
+		
+		if( input != null ) {
+			if( input instanceof Path ) {
+				final Path inp = (Path)input;
+				new Thread() {
 					public void run() {
-						if( cont[0] != null ) {
-							System.err.println( cont[0] );
-							/*try {
-								addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
-								addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
-							} catch (URISyntaxException e) {
-								e.printStackTrace();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}*/
+						try {
+							OutputStream os = p.getOutputStream();
+							//os.write( "simmi".getBytes() );
+							Files.copy(inp, os);
+							os.close();
+						} catch( Exception e ) {
+							e.printStackTrace();
 						}
 					}
-				};
-				runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont );
-					//JSObject js = JSObject.getWindow( SerifyApplet.this );
-					//js = (JSObject)js.getMember("document");
-					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+				}.start();
+			} else {
+				final byte[] binput = (byte[])input;
+				new Thread() {
+					public void run() {
+						try {
+							OutputStream os = p.getOutputStream();
+							os.write( binput );
+							os.close();
+						} catch( Exception e ) {
+							e.printStackTrace();
+						}
+					}
+				}.start();
 			}
 		}
 		
-		//infile.delete();
+		if( output != null ) {
+			//if( output instanceof Path ) {
+				Path outp = (Path)output;
+				try {
+					InputStream is = p.getInputStream();
+					if( outp.getFileName().toString().endsWith(".gz") ) is = new GZIPInputStream( is );
+					Files.copy(is, outp, StandardCopyOption.REPLACE_EXISTING);
+					is.close();
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			/*} else {
+				final byte[] bout = (byte[])output;
+				
+				try {
+					InputStream is = p.getInputStream();
+					is.read( outp );
+					is.close();
+				} catch( Exception e ) {
+					e.printStackTrace();
+				}
+			}*
+		} else {
+			try {
+				InputStream is = p.getInputStream();
+				BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+				String line = br.readLine();
+				while( line != null ) {
+					String str = line + "\n";
+					ta.append( str );
+					
+					line = br.readLine();
+				}
+				br.close();
+				is.close();
+			} catch( Exception e ) {
+				e.printStackTrace();
+			}
+		}*/
 	}
 	
-	public String runProcessBuilder( String title, @SuppressWarnings("rawtypes") final List commandsList, final Runnable run, final Object[] cont ) throws IOException {
+	int tcount;
+	int ttotal;
+	int where = 0;
+	int waiting = 0;
+	boolean ginterupted = false;
+	Object inp = null;
+	Path outp = null;
+	Path wdir = null;
+	public String runProcessBuilder( String title, @SuppressWarnings("rawtypes") final List commandsList, final Runnable run, final Object[] cont, boolean paralell ) throws IOException {
 		//System.err.println( pb.toString() );
 		//pb.directory( dir );
 		
@@ -253,62 +444,134 @@ public class NativeRun {
 		}
 		System.err.println();
 		
-		Runnable runnable = new Runnable() {
-			boolean interupted = false;
+		if( paralell ) {
+			//where = 0;
+			final int ncpu = Runtime.getRuntime().availableProcessors();
 			
-			@Override
-			public void run() {
-				try {
-					for( Object commands : commandsList ) {
-						boolean blist = commands instanceof List;
-						ProcessBuilder pb = new ProcessBuilder( blist ? (List)commands : commandsList );
-						pb.redirectErrorStream( true );
-						final Process p = pb.start();
-						dialog.addWindowListener( new WindowListener() {
-							
-							@Override
-							public void windowOpened(WindowEvent e) {}
-							
-							@Override
-							public void windowIconified(WindowEvent e) {}
-							
-							@Override
-							public void windowDeiconified(WindowEvent e) {}
-							
-							@Override
-							public void windowDeactivated(WindowEvent e) {}
-							
-							@Override
-							public void windowClosing(WindowEvent e) {}
-							
-							@Override
-							public void windowClosed(WindowEvent e) {
-								if( p != null ) {
-									interupted = true;
-									p.destroy();
-									//tt.interrupt();
-								}
-							}
-							
-							@Override
-							public void windowActivated(WindowEvent e) {}
-						});
-						dialog.setVisible( true );
-						
-						InputStream is = p.getInputStream();
-						BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-						String line = br.readLine();
-						while( line != null ) {
-							String str = line + "\n";
-							ta.append( str );
-							
-							line = br.readLine();
+			final ExecutorService es = Executors.newFixedThreadPool( ncpu );
+			//int usedCpus = 0;
+
+			dialog.addWindowListener( new WindowListener() {
+				
+				@Override
+				public void windowOpened(WindowEvent e) {}
+				
+				@Override
+				public void windowIconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeiconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeactivated(WindowEvent e) {}
+				
+				@Override
+				public void windowClosing(WindowEvent e) {}
+				
+				@Override
+				public void windowClosed(WindowEvent e) {
+					es.shutdownNow();
+					
+					if( pbar.isEnabled() ) {
+						String result = ta.getText().trim();
+						if( run != null ) {
+							cont[0] = null;
+							cont[1] = result;
+							cont[2] = new Date( System.currentTimeMillis() ).toString();
+							run.run();
 						}
-						br.close();
-						is.close();
 						
-						if( !blist ) break;
+						pbar.setIndeterminate( false );
+						pbar.setEnabled( false );
 					}
+				}
+				
+				@Override
+				public void windowActivated(WindowEvent e) {}
+			});
+			dialog.setVisible( true );
+			
+			for( final Object commands : commandsList ) {
+				//final Object commands = commandsList.get( where );
+				if( commands instanceof Path[] ) {
+					Path[] pp = (Path[])commands;
+					inp = pp[0];
+					outp = pp[1];
+					wdir = pp[2];
+				} else if( commands instanceof Object[] ) {
+					Object[] pp = (Object[])commands;
+					inp = pp[0];
+					outp = (Path)pp[1];
+					wdir = (Path)pp[2];
+				} else {
+					ttotal++;
+					
+					final Object input = inp;
+					final Object output = outp;
+					final Path workingdir = wdir;
+					
+					inp = null;
+					outp = null;
+					wdir = null;
+				
+					final Runnable runnable = new Runnable() {
+						@Override
+						public void run() {
+							startProcess( commands, commandsList, workingdir, input, output, ta, true );
+							
+							if( ++tcount == ttotal ) {
+								String result = ta.getText().trim();
+								if( run != null ) {
+									cont[0] = null;
+									cont[1] = result;
+									cont[2] = new Date( System.currentTimeMillis() ).toString();
+									run.run();
+								}
+								
+								pbar.setIndeterminate( false );
+								pbar.setEnabled( false );
+							}
+						}
+					};
+					es.execute( runnable );
+				}
+			}
+			es.shutdown();
+			//es.
+		} else {
+			Runnable runnable = new Runnable() {
+				boolean interupted = false;
+				
+				@Override
+				public void run() {
+					where = 0;
+					for( Object commands : commandsList ) {
+						if( commands instanceof Path[] ) {
+							Path[] pp = (Path[])commands;
+							inp = pp[0];
+							outp = pp[1];
+							wdir = pp[2];
+						} else if( commands instanceof Object[] ) {
+							Object[] pp = (Object[])commands;
+							inp = pp[0];
+							outp = (Path)pp[1];
+							wdir = (Path)pp[2];
+						} else {
+							final Object input = inp;
+							final Object output = outp;
+							final Path workingdir = wdir;
+							
+							inp = null;
+							outp = null;
+							wdir = null;
+							
+							boolean blist = startProcess( where, commandsList, workingdir, input, output, ta, false );
+							
+							//if( !blist ) break;
+						}
+						where++;
+					}
+					//dialog.setVisible( true );
 					
 					/*System.err.println("hereok");
 					
@@ -331,7 +594,7 @@ public class NativeRun {
 					
 					String result = ta.getText().trim();
 					if( run != null ) {
-						cont[0] = interupted ? null : ""; 
+						cont[0] = interupted ? null : "";
 						cont[1] = result;
 						cont[2] = new Date( System.currentTimeMillis() ).toString();
 						run.run();
@@ -339,19 +602,44 @@ public class NativeRun {
 					
 					pbar.setIndeterminate( false );
 					pbar.setEnabled( false );
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
-			}
-		};
-		final Thread trd = new Thread( runnable );
-		trd.start();
+			};
+			final Thread trd = new Thread( runnable );
+			
+			dialog.addWindowListener( new WindowListener() {	
+				@Override
+				public void windowOpened(WindowEvent e) {}
+				
+				@Override
+				public void windowIconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeiconified(WindowEvent e) {}
+				
+				@Override
+				public void windowDeactivated(WindowEvent e) {}
+				
+				@Override
+				public void windowClosing(WindowEvent e) {}
+				
+				@Override
+				public void windowClosed(WindowEvent e) {
+					trd.interrupt();
+				}
+				
+				@Override
+				public void windowActivated(WindowEvent e) {}
+			});
+			dialog.setVisible( true );
+			
+			trd.start();
+		}
 		
 		//dialog.setVisible( false );
 		return "";
 	}
 	
-	public String fixPath( String path ) {
+	public static String fixPath( String path ) {
 		String[] split = path.split("\\\\");
 		String res = "";
 		for( String s : split ) {
@@ -371,13 +659,13 @@ public class NativeRun {
 		return res;
 	}
 	
-	public File installProdigal( final File homedir, final List<String> urls ) throws IOException {
-		final URL url = new URL("http://prodigal.googlecode.com/files/prodigal.v2_60.windows.exe");
-		String fileurl = url.getFile();
+	public Path installProdigal( final Path homedir, final List<Path> urls ) throws IOException, URISyntaxException {
+		final Path url = Paths.get( new URL("http://prodigal.googlecode.com/files/prodigal.v2_60.windows.exe").toURI() );
+		String fileurl = url.getFileName().toString();
 		String[] split = fileurl.split("/");
 		
-		final File f = new File( homedir, split[split.length-1] );
-		if( !f.exists() ) {
+		final Path f = homedir.resolve( split[split.length-1] );
+		if( !Files.exists(f) ) {
 			final JDialog dialog;
 			Window window = SwingUtilities.windowForComponent(cnt);
 			if( window != null ) dialog = new JDialog( window );
@@ -415,7 +703,7 @@ public class NativeRun {
 					dialog.setVisible( true );
 					
 					try {
-						byte[] bb = new byte[100000];
+						/*byte[] bb = new byte[100000];
 						ByteArrayOutputStream	baos = new ByteArrayOutputStream();
 						InputStream is = url.openStream();
 						int r = is.read(bb);
@@ -428,9 +716,11 @@ public class NativeRun {
 						FileOutputStream fos = new FileOutputStream( f );
 						fos.write( baos.toByteArray() );
 						fos.close();
-						baos.close();
+						baos.close();*/
 						
-						doProdigal(homedir, NativeRun.this.cnt, f, urls);
+						Files.copy( url, f );
+						
+						// ermermerm doProdigal(homedir, NativeRun.this.cnt, f, urls);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
