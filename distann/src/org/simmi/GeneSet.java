@@ -592,6 +592,10 @@ public class GeneSet extends JApplet {
 					System.err.println();
 				}
 				
+				if( contigstr.contains("MAT4696_contig00270") ) {
+					System.err.println();
+				}
+				
 				if( !refmap.containsKey(id) ) {
 					Tegeval tv = new Tegeval();
 					Contig contig;
@@ -868,6 +872,10 @@ public class GeneSet extends JApplet {
 						if( l != -1 ) newid = map.substring(f+1,l);
 						if( n != -1 ) addname = ":" + map.substring(l+1,n).trim();
 						if( e != -1 ) neworigin = map.substring(n+1,e).trim();
+					}
+					
+					if( contigstr.contains("MAT4696_contig00270") ) {
+						System.err.println();
 					}
 					
 					if( !refmap.containsKey(id) ) {
@@ -5993,7 +6001,6 @@ public class GeneSet extends JApplet {
 							//final String smuck = sb.toString().replace("smuck", restext.toString());
 							cs.sendToAll( fw.toString() );
 						} catch (IOException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}else if( message.contains("pancore:") ) {
@@ -6010,6 +6017,33 @@ public class GeneSet extends JApplet {
 						//Set<String> species = getSelspec( GeneSet.this, specList );
 						Set<String> species = new HashSet<String>( specList );
 						BufferedImage bimg = animatrix( species, clusterMap, null, allgenegroups );
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						try {
+							ImageIO.write(bimg, "png", baos);
+							baos.close();
+							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
+							cs.sendToAll(str);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					} else if( message.contains("geneatlas:") ) {
+						String spec1 = message.substring(10);
+						GeneCompare gc = new GeneCompare(); //comparePlot( GeneSet.this, comp, genelist, clusterMap );
+						final BufferedImage bimg = new BufferedImage( 2048, 2048, BufferedImage.TYPE_INT_ARGB );
+						final Graphics2D g2 = bimg.createGraphics();
+						final Map<String,Integer>	blosumap = JavaFasta.getBlosumMap();
+						
+						List<Contig> clist = speccontigMap.get(spec1);
+						int total = 0;
+						int ptotal = 0;
+						for( Contig ctg : clist ) {
+							if( ctg.isPlasmid() ) ptotal += ctg.getGeneCount();
+							else total += ctg.getGeneCount();
+						}
+						
+						gc.draw(g2, spec1, GeneSet.this, 2048, 2048, clist, specList, blosumap, total, ptotal);
+						g2.dispose();
+						
 						ByteArrayOutputStream baos = new ByteArrayOutputStream();
 						try {
 							ImageIO.write(bimg, "png", baos);
@@ -12507,6 +12541,21 @@ public class GeneSet extends JApplet {
 			nf = zipfilesystem.getPath("/cazy");
 			if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
 				
+			
+			
+			/*for( String cstr : contigmap.keySet() ) {
+				Contig c = contigmap.get(cstr);
+				if( c.annset != null ) for( Annotation a : c.annset ) {
+					if( cstr.contains("00270") ) {
+						System.err.println( a.name );
+					}
+				}
+			}
+			System.err.println();*/
+			
+			
+			
+			
 			/*int zcount = 0;
 			while( zcount < 3 ) {
 				zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
@@ -12903,6 +12952,22 @@ public class GeneSet extends JApplet {
 					//gg.addSpecies( g.species );
 				}
 			}
+			
+			
+			
+			/*for( String cstr : contigmap.keySet() ) {
+				Contig c = contigmap.get(cstr);
+				if( c.annset != null ) for( Annotation a : c.annset ) {
+					if( cstr.contains("00270") ) {
+						System.err.println( a.name );
+					}
+				}
+			}
+			System.err.println();*/
+			
+			
+			
+			
 			
 			ggSpecMap = new HashMap<Set<String>,List<GeneGroup>>();
 			for( GeneGroup gg : ggList ) {
