@@ -91,7 +91,7 @@ public class FriendsPanel extends SimSplitPane {
                     {"v", v}
                 });
 
-        RestConnection conn = new RestConnection(
+        /*RestConnection conn = new RestConnection(
                 "http://api.facebook.com/restserver.php",
                 new String[][]{
                     {"method", method},
@@ -99,8 +99,8 @@ public class FriendsPanel extends SimSplitPane {
                     {"sig", sig},
                     {"v", v}
                 });
-        String result = conn.get().getDataAsString();
-
+        String result = conn.get().getDataAsString();*/
+        String result = "";
         try {
             token = result.substring(result.indexOf("<auth_createToken_response"),
                     result.indexOf("</auth_createToken_response>"));
@@ -147,7 +147,7 @@ public class FriendsPanel extends SimSplitPane {
 	                        {"auth_token", token}
 	                    });
 	
-	            RestConnection conn = new RestConnection(
+	            /*RestConnection conn = new RestConnection(
 	                    "http://api.facebook.com/restserver.php",
 	                    new String[][]{
 	                        {"method", method},
@@ -157,7 +157,7 @@ public class FriendsPanel extends SimSplitPane {
 	                        {"auth_token", token}
 	                    });
 	
-	            String result = conn.get().getDataAsString();
+	            String result = ""; //conn.get().getDataAsString();
 	
 	            try {
 	                sessionKey = result.substring(result.indexOf("<session_key>") + 13,
@@ -166,10 +166,10 @@ public class FriendsPanel extends SimSplitPane {
 	                currentUserId = result.substring(result.indexOf("<uid>") + 5,
 	                        result.indexOf("</uid>"));
 	                /*sessionSecret = result.substring(result.indexOf("<secret>") + 8,
-	                    result.indexOf("</secret>"));*/
+	                    result.indexOf("</secret>"));*
 	            } catch (Exception ex) {
 	                throw new IOException("Failed to get session key and secret: " + result);
-	            }
+	            }*/
             }
         }
     }
@@ -272,14 +272,14 @@ public class FriendsPanel extends SimSplitPane {
 			sig = sign( new String[][]{{"api_key", apiKey}, {"session_key", sessionKey}, {"call_id", callId}, {"v", v},  {"uids", uids}, {"fields", fields}, {"format", format}, {"method", method}});
 			String[][] pathParams = new String[][]{};
 	        String[][] queryParams = new String[][]{{"api_key", "" + apiKey + ""}, {"session_key", sessionKey}, {"call_id", callId}, {"sig", sig}, {"v", v},  {"uids", uids}, {"fields", fields}, {"format", format}, {"method", method}};
-	        RestConnection conn = new RestConnection("http://api.facebook.com/restserver.php", pathParams, queryParams);
-	        sleep(1000);
-	        rr = conn.get(null);
+	        //RestConnection conn = new RestConnection("http://api.facebook.com/restserver.php", pathParams, queryParams);
+	        //sleep(1000);
+	        //rr = conn.get(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		return rr.getDataAsString();
+		return "";//rr.getDataAsString();
 	}
 	
 	private static void sleep(long millis) {
@@ -303,13 +303,13 @@ public class FriendsPanel extends SimSplitPane {
 				sig = sign( new String[][]{{"api_key", apiKey}, {"session_key", sessionKey}, {"call_id", callId}, {"v", version}, {"format", format}, {"flid", flid}, {"method", method}});
 				String[][] pathParams = new String[][]{};
 		        String[][] queryParams = new String[][]{{"api_key", "" + apiKey + ""}, {"session_key", sessionKey}, {"call_id", callId}, {"sig", sig}, {"v", version}, {"format", format}, {"flid", flid}, {"method", method}};
-		        RestConnection conn = new RestConnection("http://api.facebook.com/restserver.php", pathParams, queryParams);
-		        sleep(1000);
-		        rr = conn.get(null);
+		        //RestConnection conn = new RestConnection("http://api.facebook.com/restserver.php", pathParams, queryParams);
+		        //sleep(1000);
+		        //rr = conn.get(null);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			String res = rr.getDataAsString();
+			String res = "";//rr.getDataAsString();
 			
 			if( !res.contains("error_response" ) ) {
 				String uds = res.substring( res.indexOf("<uid>")+5 ).replace("</uid>\n  <uid>", ",");

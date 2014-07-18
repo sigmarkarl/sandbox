@@ -17,11 +17,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
@@ -36,13 +38,32 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 public class Synteni {
-	public void syntenyMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final List<String> species ) {
+	final int FASTI = 3632;
+	
+	public void syntenyMynd( final GeneSet geneset, final Container comp, final List<Gene> genes ) {
+		Set<String>	tspecies = new HashSet<String>();
 		final JTable sorting = geneset.getGeneTable();
+		int[] rr = sorting.getSelectedRows();
+		if( sorting.getModel() == geneset.groupModel ) {
+			for( int r : rr ) {
+				int i = sorting.convertRowIndexToModel( r );
+				GeneGroup gg = geneset.allgenegroups.get( i );
+				tspecies.addAll( gg.getSpecies() );
+			}
+		} else {
+			for( int r : rr ) {
+				int i = sorting.convertRowIndexToModel( r );
+				GeneGroup gg = genes.get(i).getGeneGroup();
+				tspecies.addAll( gg.getSpecies() );
+			}
+		}
+		
+		final List<String>	selspec = new ArrayList( geneset.getSelspec( geneset, new ArrayList<String>(tspecies), (JCheckBox[])null) );
 		final JTable rowheader = new JTable();
 		TableModel model = new TableModel() {
 			@Override
 			public int getRowCount() {
-				return species.size();
+				return selspec.size();
 			}
 
 			@Override
@@ -67,7 +88,7 @@ public class Synteni {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return species.get( rowIndex );
+				return geneset.nameFix( selspec.get( rowIndex ) );
 			}
 
 			@Override
@@ -110,18 +131,80 @@ public class Synteni {
 				g.setColor( Color.black );
 				for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 					int l = rowheader.convertRowIndexToModel( k );
-					String spec = species.get( l );
+					String spec = selspec.get( l );
 					
 					int h = k*rowheader.getRowHeight()+rowheader.getRowHeight()/2;
 					g.fillRect( 0, h, this.getWidth(), 1 );
 					
 					int loc = 0;
-					List<Contig>	ctlist = geneset.speccontigMap.get( spec );
-					for( Contig c : ctlist ) {
+					List<Contig>	cannset = geneset.speccontigMap.get( spec );
+					for( Contig c : cannset ) {
 						loc += c.getGeneCount();
 						
-						int nloc = loc*this.getWidth()/3000;
+						int nloc = loc*this.getWidth()/FASTI;
 						g.fillRect( nloc, h-2, 1, 5 );
+					}
+				}
+				
+				String selsyn = (String)geneset.syncolorcomb.getSelectedItem();
+				if( selsyn != null && selsyn.length() > 0 ) {
+					List<Contig> scannset = geneset.speccontigMap.get(selsyn);
+					for( int k = 0; k < rowheader.getRowCount(); k++ ) {
+						int l = rowheader.convertRowIndexToModel( k );
+						String spec = selspec.get( l );
+						
+						int h = k*rowheader.getRowHeight()+rowheader.getRowHeight()/2;
+						
+						int loc = 0;
+						List<Contig>	cannset = geneset.speccontigMap.get( spec );
+						for( Contig c : cannset ) {
+							if( c.annset != null ) {
+								if( c.isReverse() ) {
+									for( int i = c.annset.size()-1; i >= 0; i-- ) {
+										Tegeval tv = (Tegeval)c.annset.get(i);
+										GeneGroup gg = tv.getGene().getGeneGroup();
+										
+										if( gg != null ) {
+											int nloc = geneset.getGlobalIndex(tv)*this.getWidth()/FASTI; //(loc+(c.annset.size()-i-1))*this.getWidth()/FASTI;
+											
+											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, scannset, -1.0, tv.getGene().getGeneGroup() );
+											if( ratio2 != -1 ) {
+												g.setColor( GeneCompare.gradientColor( ratio2 ) );
+												g.fillRect(nloc, h-6, 1, 4);
+											}
+										}
+									}
+								} else {
+									for( int i = 0; i < c.annset.size(); i++ ) {
+										Tegeval tv = (Tegeval)c.annset.get(i);
+										GeneGroup gg = tv.getGene().getGeneGroup();
+										
+										if( gg != null ) {
+											int nloc = geneset.getGlobalIndex(tv)*this.getWidth()/FASTI; //int nloc = (loc+i)*this.getWidth()/FASTI;
+											
+											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, scannset, -1.0, gg );
+											
+											/*String symb = gg.getCommonSymbol();
+											if( symb != null && symb.contains("polA1") ) {
+												System.err.println( spec + " " + ratio2 );
+												
+												g.setColor( GeneCompare.gradientColor( ratio2 ) );
+												g.fillRect(nloc, h-6, 10, 10);
+											}*/
+											
+											if( ratio2 != -1 ) {
+												g.setColor( GeneCompare.gradientColor( ratio2 ) );
+												g.fillRect(nloc, h-6, 1, 4);
+											}
+										}
+									}
+								}
+								loc += c.getGeneCount();
+								
+								//int nloc = loc*this.getWidth()/3000;
+								//g.fillRect( nloc, h-2, 1, 5 );
+							}
+						}
 					}
 				}
 				
@@ -133,20 +216,20 @@ public class Synteni {
 						GeneGroup gg = geneset.allgenegroups.get( i );
 						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 							int l = rowheader.convertRowIndexToModel( k );
-							String spec1 = species.get( l );
+							String spec1 = selspec.get( l );
 							List<Tegeval> tvlist = gg.getTegevals( spec1 );
 							
 							if( k < rowheader.getRowCount()-1 ) {
 								int rh2 = rowheader.getRowHeight()/2;
 								for( Tegeval tv : tvlist ) {
 									int m = rowheader.convertRowIndexToModel( k+1 );
-									String spec2 = species.get( m );
+									String spec2 = selspec.get( m );
 									List<Tegeval> tvlist2 = gg.getTegevals( spec2 );
 									
-									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/3632;
+									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/FASTI;
 									for( Tegeval tv2 : tvlist2 ) {
-										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/3632;
-										if( tv.ori != tv2.ori ^ tv.getContshort().reverse != tv2.getContshort().reverse ) g.setColor( Color.red );
+										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/FASTI;
+										if( tv.ori != tv2.ori ^ tv.getContshort().isReverse() != tv2.getContshort().isReverse() ) g.setColor( Color.red );
 										else g.setColor( Color.blue );
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
 									}
@@ -160,20 +243,23 @@ public class Synteni {
 						Gene gene = geneset.genelist.get( i );
 						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 							int l = rowheader.convertRowIndexToModel( k );
-							String spec1 = species.get( l );
+							String spec1 = selspec.get( l );
 							List<Tegeval> tvlist = gene.getGeneGroup().getTegevals( spec1 );
 							
 							if( k < rowheader.getRowCount()-1 ) {
 								int rh2 = rowheader.getRowHeight()/2;
 								for( Tegeval tv : tvlist ) {
 									int m = rowheader.convertRowIndexToModel( k+1 );
-									String spec2 = species.get( m );
+									String spec2 = selspec.get( m );
 									List<Tegeval> tvlist2 = gene.getGeneGroup().getTegevals( spec2 );
 									
-									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/3632;
-									for( Tegeval tv2 : tvlist2 ) {
-										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/3632;
-										if( tv.ori != tv2.ori ^ tv.getContshort().reverse != tv2.getContshort().reverse ) g.setColor( Color.red );
+									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/FASTI;
+									if( tvlist2.isEmpty() ) {
+										g.setColor( Color.blue );
+										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind, k*rowheader.getRowHeight()+rh2+5 );
+									} else for( Tegeval tv2 : tvlist2 ) {
+										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/FASTI;
+										if( tv.ori != tv2.ori ^ tv.getContshort().isReverse() != tv2.getContshort().isReverse() ) g.setColor( Color.red );
 										else g.setColor( Color.blue );
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind2, (k+1)*rowheader.getRowHeight()+rh2 );
 									}

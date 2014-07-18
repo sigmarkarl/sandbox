@@ -1,5 +1,8 @@
 package org.simmi;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +17,27 @@ public class GeneGroup {
 	int                 	groupCount = -1;
 	int						index;
 	//int			groupGeneCount;
+	
+	public boolean containsDirty() {
+		for( Gene g : genes ) {
+			if( g.tegeval.isDirty() ) return true;
+		}
+		return false;
+	}
+	
+	public String getFasta() throws IOException {
+		StringWriter sb = new StringWriter();
+		for( Gene g : genes ) {
+			g.getFasta( sb );
+		}
+		return sb.toString();
+	}
+	
+	public void getFasta( Writer w ) throws IOException {
+		for( Gene g : genes ) {
+			g.getFasta( w );
+		}
+	}
 	
 	public int getMaxCyc() {
 		int max = -1;
@@ -194,6 +218,24 @@ public class GeneGroup {
 		return ret;
 	}
 	
+	public String getCommonTag() {
+		for( Gene g : genes ) {
+			String tag = g.getTag();
+			if( tag != null ) return tag;
+		}
+		return null;
+	}
+	
+	public String getCommonId() {
+		String ret = null;
+		for( Gene g : genes ) {
+			String id = g.getId();
+			if( ret == null ) ret = id;
+			else if( ((ret.contains("contig") || ret.contains("scaffold")) && !ret.contains(":")) || !(id.contains("contig") || id.contains("scaffold") || id.contains("unnamed") || id.contains("hypot")) ) ret = id;
+		}
+		return ret;
+	}
+	
 	public String getCommonName() {
 		String ret = null;
 		for( Gene g : genes ) {
@@ -217,10 +259,10 @@ public class GeneGroup {
 	
 	public Cog getCommonCog( Map<String,Cog> cogmap ) {
 		for( Gene g : genes ) {
-			if( g.cog != null ) return g.cog;
+			if( cogmap.containsKey( g.id ) ) return cogmap.get( g.id );
 		}
 		for( Gene g : genes ) {
-			if( cogmap.containsKey( g.refid ) ) return cogmap.get( g.refid );
+			if( g.cog != null ) return g.cog;
 		}
 		return null;
 	}
@@ -243,6 +285,10 @@ public class GeneGroup {
 		String ret = null;
 		for( Gene g : genes ) {
 			if( ret == null || (g.refid != null && g.refid.length() > 0 && !g.refid.contains("scaffold") && !g.refid.contains("contig")) ) ret = g.refid;
+			
+			if( this.getIndex() == 4049 ) {
+				System.err.println( g.refid + "  " + g.getSpecies() );
+			}
 		}
 		return ret;
 	}
@@ -335,6 +381,10 @@ public class GeneGroup {
 			if( g.keggid != null ) ret = g.keggid;
 		}
 		return ret;
+	}
+	
+	public int size() {
+		return genes.size();
 	}
 	
 	public Set<String> getSpecies() {
