@@ -499,8 +499,19 @@ public class SyntGrad {
 						g2.translate(-w2, -h2);
 					}
 					
+					Tegeval prev = tv;
+					
 					tvn++;
 					tv = c.getNext( tv );
+					
+					if( tv != null && tv.start == prev.start ) {
+						System.err.println( tv.name + "   " + prev.name );
+						System.err.println();
+					}
+					
+					/*if( tv == c.getFirst() ) {
+						break;
+					}*/
 				}
 				
 				if( contcheck.isSelected() ) {
