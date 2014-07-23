@@ -1359,8 +1359,12 @@ public class GeneCompare {
 							}
 						}
 					}
+					
+					g2.setColor( Color.magenta );
+					g2.drawString("blbhbleh", 100, 100);
+					g2.fillRect(10, 10, 100, 100);
 				
-					double theta = count*Math.PI*2.0/(total+ptotal);
+					/*double theta = count*Math.PI*2.0/(total+ptotal);
 					g2.translate( w/2, h/2 );
 					g2.rotate( theta );
 					int x;
@@ -1374,7 +1378,7 @@ public class GeneCompare {
 						g2.drawLine( x, 0, x+1000, 0);
 					}
 					g2.rotate( -theta );
-		            g2.translate( -w/2, -h/2 );
+		            g2.translate( -w/2, -h/2 );*/
 				}
 			}
 			g2.setColor( Color.black );
@@ -1417,10 +1421,6 @@ public class GeneCompare {
 				g2.drawString( specstr.replace("T.", ""), (w-strw)/2, h/2 - spec2s.size()*14/2 + 14 + k*14 );
 				k++;
 			}
-			
-			g2.setColor( Color.black );
-			g2.drawString("blbhbleh", 100, 100);
-			g2.fillRect(10, 10, 100, 100);
 		}
 	}
 	
