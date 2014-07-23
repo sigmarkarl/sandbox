@@ -6003,7 +6003,7 @@ public class GeneSet extends JApplet {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-					}else if( message.contains("pancore:") ) {
+					} else if( message.contains("pancore:") ) {
 						//Set<String> species = getSelspec( GeneSet.this, specList );
 						Set<String> selspec = new HashSet<String>( specList );
 						
