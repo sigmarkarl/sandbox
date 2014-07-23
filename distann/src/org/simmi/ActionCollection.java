@@ -3847,6 +3847,9 @@ public class ActionCollection {
 			}
 		};
 		
+		//PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();
+		//pca.
+		
 		AbstractAction	genephyl = new AbstractAction("Gene phylogeny") {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -3857,12 +3860,12 @@ public class ActionCollection {
 				final double[] b2;
 				final String[] names;
 				if( blosumap != null ) {
-					int[] rr = table.getSelectedRows();
+					int[] rr = geneset.table.getSelectedRows();
 					
 					double[] mat = new double[ rr.length*rr.length ];
 					Arrays.fill( mat, 0.0 );
 					
-					int selr = table.convertRowIndexToModel( rr[0] );
+					int selr = geneset.table.convertRowIndexToModel( rr[0] );
 					GeneGroup gg = geneset.allgenegroups.get(selr);
 					List<String>	speclist = new ArrayList<String>( gg.species.keySet() );
 					
@@ -3872,7 +3875,7 @@ public class ActionCollection {
 					Map<GeneGroup,double[]>	valmap = new HashMap<GeneGroup,double[]>();
 					names = new String[ rr.length ];
 					for( int k = 0; k < rr.length; k++ ) {
-						int i = table.convertRowIndexToModel( rr[k] );
+						int i = geneset.table.convertRowIndexToModel( rr[k] );
 						gg = geneset.allgenegroups.get(i);
 						names[k] = gg.getCommonName();
 						
