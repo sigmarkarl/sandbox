@@ -1251,21 +1251,13 @@ public class GeneCompare {
 		
 		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
-        g2.setBackground( Color.red );
-		g2.clearRect( 0, 0, w, h );
-		g2.setColor( Color.black );
-		
-		g2.setColor( Color.black );
-		g2.drawString("blbhbleh", 100, 100);
-		g2.fillRect(10, 10, 100, 100);
-		
 		
 		if( spec1 == null ) {
 			int rowcount = geneset.table.getRowCount();
 			for( int r = 0; r < rowcount; r++ ) {
 				int i = geneset.table.convertRowIndexToModel(r);
 				GeneGroup gg = geneset.allgenegroups.get( i );
-				subDraw(g2, null, null, geneset, spec1, r, null, null, rowcount, spec2s, synbr, w, h, blosumap, i, gg, null);
+				subDraw(g2, null, null, geneset, spec1, r, null, null, rowcount, spec2s, synbr, w, h, blosumap, i, gg, null, total, ptotal);
 			}
 		} else {
 			Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
@@ -1340,7 +1332,7 @@ public class GeneCompare {
 							
 							int ii = geneset.allgenegroups.indexOf( gg );
 							if( ii >= 0 && ii < geneset.table.getRowCount() ) {
-								subDraw( g2, tv, prev, geneset, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq );
+								subDraw( g2, tv, prev, geneset, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq, total, ptotal );
 								count++;
 								prev = tv;
 							}
@@ -1353,16 +1345,12 @@ public class GeneCompare {
 							
 							int ii = geneset.allgenegroups.indexOf( gg );
 							if( ii >= 0 && ii < geneset.table.getRowCount() ) {
-								subDraw( g2, tv, prev, geneset, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq );
+								subDraw( g2, tv, prev, geneset, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq, total, ptotal );
 								count++;
 								prev = tv;
 							}
 						}
 					}
-					
-					g2.setColor( Color.magenta );
-					g2.drawString("blbhbleh", 100, 100);
-					g2.fillRect(10, 10, 100, 100);
 				
 					/*double theta = count*Math.PI*2.0/(total+ptotal);
 					g2.translate( w/2, h/2 );
@@ -1424,7 +1412,7 @@ public class GeneCompare {
 		}
 	}
 	
-	public void subDraw( Graphics2D g2, Tegeval tv, Tegeval prev, GeneSet geneset, String spec1, int count, Map<String,Integer> offsetMap, Contig ctg, int r, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, int ii, GeneGroup gg, Sequence seq ) {
+	public void subDraw( Graphics2D g2, Tegeval tv, Tegeval prev, GeneSet geneset, String spec1, int count, Map<String,Integer> offsetMap, Contig ctg, int r, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, int ii, GeneGroup gg, Sequence seq, int total, int ptotal ) {
 		boolean rs = false;
 		if( geneset.table.getModel() == geneset.groupModel ) {
 			r = geneset.table.convertRowIndexToView( ii );
