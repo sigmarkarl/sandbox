@@ -78,6 +78,7 @@ import netscape.javascript.JSObject;
 import org.apache.commons.codec.binary.Base64;
 import org.simmi.GeneSet.StackBarData;
 import org.simmi.shared.Annotation;
+import org.simmi.shared.PrincipleComponentAnalysis;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Serifier;
 import org.simmi.unsigned.JavaFasta;
