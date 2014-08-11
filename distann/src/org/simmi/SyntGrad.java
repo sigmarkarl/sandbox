@@ -118,13 +118,15 @@ public class SyntGrad {
 			spec2s.add( spec2 );
 		}
 		
-		final BufferedImage bi = new BufferedImage( 2048, 2048, BufferedImage.TYPE_INT_ARGB );
+		int w = 1024;
+		int h = 1024;
+		final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		
 		final Graphics2D g2 = bi.createGraphics();
 		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		
-		drawImage( geneset, g2, spec1, contigs1, spec2s );
+		drawImage( geneset, g2, spec1, contigs1, spec2s, w, h );
 		
 		final JComponent c = new JComponent() {
 			public void paintComponent( Graphics g ) {
@@ -137,7 +139,7 @@ public class SyntGrad {
 		popup.add( new AbstractAction("Repaint") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				drawImage( geneset, g2, spec1, contigs1, spec2s );
+				drawImage( geneset, g2, spec1, contigs1, spec2s, w, h );
 				c.repaint();
 			}
 		});
@@ -198,7 +200,7 @@ public class SyntGrad {
 						}
 					}
 				}
-				drawImage( geneset, g2, spec1, contigs1, spec2s );
+				drawImage( geneset, g2, spec1, contigs1, spec2s, w, h );
 				c.repaint();
 			}
 		});
@@ -420,10 +422,7 @@ public class SyntGrad {
 		frame.setVisible( true );
 	}
 	
-	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s ) {
-		int w = 2048;
-		int h = 2048;
-		
+	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s, int w, int h ) {
 		int w2 = w/2;
 		int h2 = h/2;
 		
@@ -506,7 +505,9 @@ public class SyntGrad {
 					
 					if( tv != null && tv.start == prev.start ) {
 						System.err.println( tv.name + "   " + prev.name );
-						System.err.println();
+						System.err.println( tv == prev );
+						
+						break;
 					}
 					
 					/*if( tv == c.getFirst() ) {
