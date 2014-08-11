@@ -5914,7 +5914,7 @@ public class GeneSet extends JApplet {
 	
 	public BufferedImage gatest( String spec1 ) {
 		GeneCompare gc = new GeneCompare(); //comparePlot( GeneSet.this, comp, genelist, clusterMap );
-		final BufferedImage bimg = new BufferedImage( 2048, 2048, BufferedImage.TYPE_INT_ARGB );
+		final BufferedImage bimg = new BufferedImage( 1024, 1024, BufferedImage.TYPE_INT_ARGB );
 		final Graphics2D g2 = bimg.createGraphics();
 		final Map<String,Integer>	blosumap = JavaFasta.getBlosumMap();
 		
@@ -5926,22 +5926,8 @@ public class GeneSet extends JApplet {
 			else total += ctg.getGeneCount();
 		}
 		
-		gc.draw(g2, spec1, GeneSet.this, 2048, 2048, clist, specList, blosumap, total, ptotal);
+		gc.draw(g2, spec1, GeneSet.this, 1024, 1024, clist, specList, blosumap, total, ptotal);
 		g2.dispose();
-		
-		final JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-		frame.setSize(800, 600);
-		
-		final JComponent c = new JComponent() {
-			public void paintComponent( Graphics g ) {
-				g.drawImage(bimg, 0, 0, frame);
-			}
-		};
-		c.setPreferredSize( new Dimension(bimg.getWidth(), bimg.getHeight()) );
-		JScrollPane	scrollpane = new JScrollPane( c );
-		frame.add( scrollpane );
-		frame.setVisible( true );
 		
 		return bimg;
 	}
@@ -5953,6 +5939,8 @@ public class GeneSet extends JApplet {
 		try {
 			cs = new ChatServer( 8887 ) {
 				String evalstr = "0.00001";
+				Set<String> specset = new HashSet<String>();
+				
 				@Override
 				public void onMessage( WebSocket conn, String message ) {
 					//System.err.println( message );
@@ -5993,7 +5981,7 @@ public class GeneSet extends JApplet {
 									
 									String id = resl.substring(2, i);
 									Gene g = genemap.get( id );
-									if( g != null ) {
+									if( g != null && (specset.isEmpty() || specset.contains(g.getSpecies())) ) {
 										GeneGroup gg = g.getGeneGroup();
 										
 										String ec = gg.getCommonEc();
@@ -6074,6 +6062,31 @@ public class GeneSet extends JApplet {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
+					} else if( message.contains("syntgrad:") ) {
+						String spec1 = message.substring(9);
+						
+						int w = 1024;
+						int h = 1024;
+						
+						SyntGrad sg = new SyntGrad();
+						final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
+						
+						final Graphics2D g2 = bi.createGraphics();
+						g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
+						g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+						
+						List<Contig> clist = speccontigMap.get(spec1);
+						sg.drawImage( GeneSet.this, g2, spec1, clist, specList, w, h );
+						
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						try {
+							ImageIO.write(bi, "png", baos);
+							baos.close();
+							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
+							cs.sendToAll(str);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					} else if( message.contains("neigh:") ) {
 						//Set<String> species = getSelspec( GeneSet.this, specList );
 						//Set<String> species = new HashSet<String>( specList );
@@ -6134,77 +6147,87 @@ public class GeneSet extends JApplet {
 						StringBuilder sb = new StringBuilder();
 						//int i = 0;
 						
-						String querystr = message.substring(6);
+						Set<String> specset = new HashSet<String>();
+						int indsp = message.indexOf("spec:");
+						if( indsp == -1 ) indsp = message.length();
+						else {
+							String[] specspl = message.substring( indsp+5, message.length() ).split(",");
+							specset.addAll( Arrays.asList( specspl ) );
+						}
+						
+						String querystr = message.substring(6, indsp);
 						String[] sp = querystr.split(",");
 						Set<String> str = new HashSet<String>( Arrays.asList(sp) );
 						for( Gene g : genelist ) {
-							String gref = g.name;
-							GeneGroup gg = g.getGeneGroup();
-							String ec = gg.getCommonEc();
-							
-							boolean cont = false;
-							for( String sval : str ) {
-								if( sval.startsWith("EC") ) {
-									String ecstr = sval.substring(2).trim();
-									if( ecstr.equals(ec) ) cont = true; 
-								} else {
-									cont = gref.toLowerCase().contains(sval.toLowerCase());
-									for( String pathw : pathwaymap.keySet() ) {
-										//int k = pathw.lastIndexOf(' ');
-										String pname = pathw.replace(",", "");
-										if( sval.equals( pname ) ) {
-											Set<String> ecs = pathwaymap.get( pathw );
-											if( ecs.contains(ec) ) {
-												cont = true;
+							if( specset.isEmpty() || specset.contains(g.getSpecies()) ) {
+								String gref = g.name;
+								GeneGroup gg = g.getGeneGroup();
+								String ec = gg.getCommonEc();
+								
+								boolean cont = false;
+								for( String sval : str ) {
+									if( sval.startsWith("EC") ) {
+										String ecstr = sval.substring(2).trim();
+										if( ecstr.equals(ec) ) cont = true; 
+									} else {
+										cont = gref.toLowerCase().contains(sval.toLowerCase());
+										for( String pathw : pathwaymap.keySet() ) {
+											//int k = pathw.lastIndexOf(' ');
+											String pname = pathw.replace(",", "");
+											if( sval.equals( pname ) ) {
+												Set<String> ecs = pathwaymap.get( pathw );
+												if( ecs.contains(ec) ) {
+													cont = true;
+												}
 											}
+											
 										}
-										
 									}
+									
+									if( cont ) break;
 								}
 								
-								if( cont ) break;
-							}
-							
-							//boolean keggcont = false;
-							//for( String kc : )
-							
-							if( cont ) {
-								Set<String> kegg = new TreeSet<String>();
+								//boolean keggcont = false;
+								//for( String kc : )
 								
-								for( String pathw : pathwaymap.keySet() ) {
-									Set<String> ecs = pathwaymap.get( pathw );
-									int k = pathw.lastIndexOf(' ');
-									if( ecs.contains(ec) ) kegg.add( pathw.substring(k) + "=" + pathw.substring(0,k).replace(",", "") );
-								}
-								
-								Cog cog = gg.getCommonCog(cogmap);
-								String cogid = cog != null ? cog.id : null;
-								String symbol = gg.getCommonSymbol();
-								String go = gg.getCommonGO(false, true, null);
-								if( cog != null && symbol == null ) symbol = cog.genesymbol;
-								String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + go + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n";
-								sb.append( seqstr );
-							} else {
-								String cazy = cazymap.get( g.refid );
-								if( cazy != null ) {
-									//String ec = g.getGeneGroup().getCommonEc();
-									String kegg = null;
+								if( cont ) {
+									Set<String> kegg = new TreeSet<String>();
 									
 									for( String pathw : pathwaymap.keySet() ) {
 										Set<String> ecs = pathwaymap.get( pathw );
-										if( ecs.contains(ec) ) kegg = pathw.substring(pathw.lastIndexOf(' '));
+										int k = pathw.lastIndexOf(' ');
+										if( ecs.contains(ec) ) kegg.add( pathw.substring(k) + "=" + pathw.substring(0,k).replace(",", "") );
 									}
 									
-									int i = cazy.indexOf('(');
-									if( i == -1 ) i = cazy.length();
-									cazy = cazy.substring(0,i);
-									if( str.contains(cazy) ) {
-										//GeneGroup gg = g.getGeneGroup();
-										Cog cog = gg.getCommonCog(cogmap);
-										String cogid = cog != null ? cog.id : null;
-										String symbol = gg.getCommonSymbol();
-										if( cog != null && symbol == null ) symbol = cog.genesymbol;
-										sb.append( g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n" );
+									Cog cog = gg.getCommonCog(cogmap);
+									String cogid = cog != null ? cog.id : null;
+									String symbol = gg.getCommonSymbol();
+									String go = gg.getCommonGO(false, true, null);
+									if( cog != null && symbol == null ) symbol = cog.genesymbol;
+									String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + go + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n";
+									sb.append( seqstr );
+								} else {
+									String cazy = cazymap.get( g.refid );
+									if( cazy != null ) {
+										//String ec = g.getGeneGroup().getCommonEc();
+										String kegg = null;
+										
+										for( String pathw : pathwaymap.keySet() ) {
+											Set<String> ecs = pathwaymap.get( pathw );
+											if( ecs.contains(ec) ) kegg = pathw.substring(pathw.lastIndexOf(' '));
+										}
+										
+										int i = cazy.indexOf('(');
+										if( i == -1 ) i = cazy.length();
+										cazy = cazy.substring(0,i);
+										if( str.contains(cazy) ) {
+											//GeneGroup gg = g.getGeneGroup();
+											Cog cog = gg.getCommonCog(cogmap);
+											String cogid = cog != null ? cog.id : null;
+											String symbol = gg.getCommonSymbol();
+											if( cog != null && symbol == null ) symbol = cog.genesymbol;
+											sb.append( g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n" );
+										}
 									}
 								}
 							}
@@ -6235,7 +6258,14 @@ public class GeneSet extends JApplet {
 						}
 						cs.sendToAll( sb.toString() );
 					} else if( message.contains("evalue:") ) {
-						evalstr = message.substring(7).trim();
+						specset.clear();
+						int sind = message.indexOf("spec:");
+						if( sind == -1 ) sind = message.length();
+						else {
+							String[] specspl = message.substring(sind+5,message.length()).split(",");
+							specset.addAll( Arrays.asList(specspl) );
+						}
+						evalstr = message.substring(7,sind).trim();
 					} else if( message.contains("cazy:") ) {
 						Set<String> cz = new TreeSet<String>();
 						for( Gene g : genelist ) {
@@ -15853,13 +15883,27 @@ public class GeneSet extends JApplet {
 		AbstractAction compareplotaction = new AbstractAction("Gene atlas") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				/*try {
+				try {
 					new GeneCompare().comparePlot( GeneSet.this, comp, genelist, clusterMap );
 				} catch (IOException e1) {
 					e1.printStackTrace();
-				}*/
+				}
 				
-				gatest("MAT4726");
+				/*gatest("MAT4726");
+				
+				final JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.setSize(800, 600);
+				
+				final JComponent c = new JComponent() {
+					public void paintComponent( Graphics g ) {
+						g.drawImage(bimg, 0, 0, frame);
+					}
+				};
+				c.setPreferredSize( new Dimension(bimg.getWidth(), bimg.getHeight()) );
+				JScrollPane	scrollpane = new JScrollPane( c );
+				frame.add( scrollpane );
+				frame.setVisible( true );*/
 			}
 		};
 		windowmenu.add( compareplotaction );
