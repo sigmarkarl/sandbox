@@ -833,7 +833,7 @@ public class GeneCompare {
 	}
 	
 	public static Color blosumColor( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap, boolean rs ) {
-		Color color = Color.green;
+		Color color = Color.red;
 		if( seq != null && seq.length() > 0 ) {
 			int tscore = 0;
             for( int i = 0; i < seq.length(); i++ ) {
@@ -876,7 +876,7 @@ public class GeneCompare {
             for( Tegeval tv2 : gene2s.tset ) {
             	if( tv2.getGene().getTag() != null && !tv2.getGene().getTag().equalsIgnoreCase("gene") )
             		color = tv2.getGene().getTag().equals("rrna") ? Color.red : Color.blue;
-            	else color = Color.green;
+            	else color = Color.black;
             	break;
             }
 		}
@@ -1604,7 +1604,7 @@ public class GeneCompare {
                         }
 					}
 				} else {
-					Color color = Color.green;
+					Color color = Color.red;
 					if( spec1 != null ) {
 						if( blosumap != null ) {
 							color = blosumColor(seq, spec2, gg, blosumap, rs);
