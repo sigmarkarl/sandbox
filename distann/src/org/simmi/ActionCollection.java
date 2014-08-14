@@ -96,8 +96,10 @@ public class ActionCollection {
 		for( String spec : selspec ) {
 			String newspec = geneset.nameFix( spec );
 			StackBarData sbd = geneset.new StackBarData();
+			int i = newspec.indexOf('_');
+			if( i == -1 ) i = newspec.length();
 			sbd.oname = spec;
-			sbd.name = newspec;
+			sbd.name = newspec;//.substring(0,i);
 			/*if( spec.contains("hermus") ) sbd.name = spec.substring( 0, spec.lastIndexOf('_') );
 			else {
 				Matcher m = Pattern.compile("\\d").matcher(spec);
