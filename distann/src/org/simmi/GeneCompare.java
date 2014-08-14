@@ -1222,6 +1222,9 @@ public class GeneCompare {
 	
 	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal, int synbr ) {
 		boolean contiglanesb = contiglanes != null && contiglanes.isSelected();
+		
+		g2.setBackground( Color.white );
+		g2.clearRect(0, 0, w, h);
 		/*g.setColor( Color.black );
 		int count = 0;
 		for( Contig ctg : contigs ) {
@@ -1258,6 +1261,50 @@ public class GeneCompare {
 				int i = geneset.table.convertRowIndexToModel(r);
 				GeneGroup gg = geneset.allgenegroups.get( i );
 				subDraw(g2, null, null, geneset, spec1, r, null, null, rowcount, spec2s, synbr, w, h, blosumap, i, gg, null, total, ptotal);
+			}
+			
+			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(12.0f);
+			g2.setFont( oldfont );
+			int k = 0;
+			for( String spec : spec2s ) {
+				g2.translate( w/2, h/2 );
+				
+				g2.setColor( Color.lightGray );
+				int r = 250 + 15 + k*15;
+				g2.drawOval( -r, -r, 2*r, 2*r );
+				
+				g2.translate( -w/2, -h/2 );
+				
+				k++;
+			}
+			k = 0;
+			for( String spec : spec2s ) {
+				if( spec.equals(spec1) ) {
+					g2.setFont( oldfont.deriveFont(Font.BOLD | Font.ITALIC) );
+				} else {
+					g2.setFont( oldfont );
+				}
+				
+				String specstr = geneset.nameFix( spec );
+				if( specstr.length() > 30 ) specstr = specstr.substring(0, specstr.lastIndexOf('_'));
+				
+				int strw = g2.getFontMetrics().stringWidth( specstr );
+				g2.translate( w/2, h/2 );
+				
+				/*g2.setColor( Color.lightGray );
+				int r = 250 + 15 + k*15;
+				g2.drawOval( -r, -r, 2*r, 2*r );*/
+				
+				g2.rotate( Math.PI/2.0 );
+				//-spec2s.size()*14/2
+				g2.setColor( Color.white );
+				g2.fillRect(-strw, -250-15-k*15 - 3, strw+1, 20);
+				g2.setColor( Color.black );
+				g2.drawString( specstr.replace("T.", ""), -strw+5, -250 - k*15 - 2 );
+				g2.rotate( -Math.PI/2.0 );
+				g2.translate( -w/2, -h/2 );
+				
+				k++;
 			}
 		} else {
 			Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
