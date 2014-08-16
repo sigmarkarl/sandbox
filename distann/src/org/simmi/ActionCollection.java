@@ -32,6 +32,8 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -75,7 +77,6 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
-import org.apache.commons.codec.binary.Base64;
 import org.simmi.GeneSet.StackBarData;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.PrincipleComponentAnalysis;
@@ -175,6 +176,578 @@ public class ActionCollection {
 		}
 		restext.append( "]" );
 		return restext;
+	}
+	
+	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Contig>> speccontigMap ) {
+		final StringWriter fw = new StringWriter();
+		fw.write("<html><head></head><body><table border=1>");
+		fw.write("<tr><td>Species</td>");
+		for( String spec : selspecs) {
+			//int i = spec.indexOf('_');
+			//if( i == -1 ) i = spec.length();
+			String specstr = geneset.nameFix( spec ); //spec.substring(0, i);
+			fw.write( "<td colspan=2>"+specstr+"</td>" );
+		}
+		fw.write("</tr><tr><td></td>");
+		for( String spec : selspecs) {
+			fw.write( "<td>Number</td>" );
+			fw.write( "<td>% of total</td>" );
+		}
+		fw.write("</tr><tr><td>DNA, total number of bases</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int len = 0;
+			for( Contig ct : lcont ) {
+				len += ct.length();
+			}
+			fw.write( "<td>"+len+"</td>" );
+			fw.write( "<td>100%</td>" );
+		}
+		fw.write("</tr><tr><td>DNA coding number of bases</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int len = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				total += ct.length();
+				if( ct.annset != null ) for( Annotation ann : ct.annset ) {
+					len += ann.getLength();
+				}
+			}
+			fw.write( "<td>"+len+"</td>" );
+			double d = (double)len/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>DNA, G+C number of bases</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int len = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				total += ct.length();
+				len += ct.getGCCount();
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+len+"</td>" );
+			double d = (double)len/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>DNA contigs</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			fw.write( "<td>"+lcont.size()+"</td>" );
+			fw.write( "<td>100%</td>" );
+		}
+		fw.write("</tr><tr><td>Genes total number</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) total += ct.annset.size();
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+total+"</td>" );
+			fw.write( "<td>100%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) count++;
+					}
+					total += ct.annset.size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>RNA genes</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						if( ann.type != null && ann.type.contains("rna") ) count++;
+					}
+					total += ct.annset.size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>rRNA genes</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						if( ann.type != null && ann.type.contains("rrna") ) count++;
+					}
+					total += ct.annset.size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>5S rRNA</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						String lowername = tv.getGene().getName().toLowerCase();
+						if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")) ) count++;
+					}
+					total += ct.annset.size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>16S rRNA</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						boolean rrna = ann.type != null && ann.type.contains("rrna");
+						String lowername = tv.getGene().getName().toLowerCase();
+						boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
+						
+						if( rrna /*^ ssu16s*/ ) {
+							System.err.println( "16S erm: " + spec + "  " + tv.getGene().getName() + " bbo " + ssu16s );
+						}
+						
+						if( rrna && ssu16s ) {
+							//System.err.println( spec + " " + tv.getGene().getName() );
+							count++;
+						}
+					}
+					total += ct.annset.size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>23S rRNA</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						String lowername = tv.getGene().getName().toLowerCase();
+						if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu")) ) {
+							//System.err.println( "eeeerm: "+tv.getSpecies() );
+							count++;
+						}
+					}
+					total += ct.annset.size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>tRNA genes</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						if( ann.type != null && ann.type.contains("trna") ) count++;
+					}
+					total += ct.annset.size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes with function prediction</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0 ) count++;
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes with enzymes</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().ecid != null && tv.getGene().ecid.length() > 0 ) count++;
+						else if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
+							for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+								if( f.ec != null && f.ec.length() > 0 ) {
+									count++;
+									break;
+								}
+							}
+						}
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes with COG function prediction</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						Cog cog = geneset.cogmap.get( tv.getGene().id );
+						if( cog != null ) {
+							System.err.println( cog.id + "  " + count );
+							count++;
+						}
+						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+							if( f.metacyc != null && f.metacyc.length() > 0 ) {
+								count++;
+								break;
+							}
+						}*/
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes connected to MetaCyc pathways</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+							if( f.metacyc != null && f.metacyc.length() > 0 ) {
+								count++;
+								break;
+							}
+						}
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes connected to KEGG reactions</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
+							for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+								boolean found = false;
+								if( f.kegg != null && f.kegg.length() > 0 ) {
+									count++;
+									found = true;
+								}
+								if( !found && f.isa != null ) for( String nid : f.isa ) {
+									Function nf = geneset.funcmap.get( nid );
+									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+										count++;
+										found = true;
+										break;
+									}
+								}
+								if( found ) break;
+							}
+						}
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
+							boolean found = false;
+							for( Gene g : tv.getGene().getGeneGroup().genes ) {
+								
+								if( g.koid != null && g.koid.length() > 0 ) {
+									for( String pw : geneset.pathwaykomap.keySet() ) {
+										Set<String> s = geneset.pathwaykomap.get( pw );
+										if( s.contains( g.koid ) ) {
+											found = true;
+											break;
+										}
+									}
+								}
+								
+								if( !found ) {
+									if( g.ecid != null && g.ecid.length() > 0 ) {
+										for( String pw : geneset.pathwaymap.keySet() ) {
+											Set<String> s = geneset.pathwaymap.get( pw );
+											if( s.contains( g.ecid ) ) {
+												found = true;
+												break;
+											}
+										}
+									}
+								}
+								
+								if( found ) break;
+								/*if( !found && f.isa != null ) for( String nid : f.isa ) {
+									Function nf = funcmap.get( nid );
+									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+										count++;
+										found = true;
+										break;
+									}
+								}*/
+							}
+							
+							if( !found ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+								/*boolean found = false;
+								if( f.kegg != null && f.kegg.length() > 0 ) {
+									count++;
+									found = true;
+								}
+								if( !found && f.isa != null ) for( String nid : f.isa ) {
+									Function nf = funcmap.get( nid );
+									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+										count++;
+										found = true;
+										break;
+									}
+								}*/
+								
+								if( f.ko != null && f.ko.length() > 0 ) {
+									for( String pw : geneset.pathwaykomap.keySet() ) {
+										Set<String> s = geneset.pathwaykomap.get( pw );
+										if( s.contains( f.ko ) ) {
+											found = true;
+											break;
+										}
+									}
+								}
+								
+								if( !found ) {
+									if( f.ec != null && f.ec.length() > 0 ) {
+										for( String pw : geneset.pathwaymap.keySet() ) {
+											Set<String> s = geneset.pathwaymap.get( pw );
+											if( s.contains( f.ec ) ) {
+												found = true;
+												break;
+											}
+										}
+									}
+								}										
+								if( found ) break;
+							}
+							
+							if( found ) count++;
+						}
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr><tr><td>Protein coding genes connected to KEGG Orthology (KO)</td>");
+		for( String spec : selspecs) {
+			List<Contig> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			for( Contig ct : lcont ) {
+				if( ct.annset != null ) {
+					for( Annotation ann : ct.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
+							if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
+								boolean found = false;
+								for( Gene g : tv.getGene().getGeneGroup().genes ) {
+									if( g.koid != null && g.koid.length() > 0 ) {
+										found = true;
+										break;
+									}
+									
+									if( g.funcentries != null && !found ) {
+										for( Function f : g.funcentries ) {
+											if( f.ko != null && f.ko.length() > 0 ) {
+												found = true;
+												break;
+											}
+										}
+									}
+									/*if( !found && f.isa != null ) for( String nid : f.isa ) {
+										Function nf = funcmap.get( nid );
+										if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+											count++;
+											found = true;
+											break;
+										}
+									}*/
+									
+									if( found ) break;
+								}
+								
+								if( !found ) {
+									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {												
+										if( f.ko != null && f.ko.length() > 0 ) {
+											found = true;
+											break;
+										}
+									}
+								}
+								
+								if( !found ) {
+									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+										for( String ko : geneset.ko2go.keySet() ) {
+											Set<String> gos = geneset.ko2go.get(ko);
+											if( gos.contains( f.go ) ) {
+												found = true;
+												break;
+											}
+										}
+									}
+								}
+								
+								if( found ) count++;
+							}
+						}
+					}
+					total += ct.annset.size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+		}
+		fw.write("</tr></table></body></html>");
+		
+		return fw.toString();
 	}
 	
 	public static void addAll( JMenu menu, 
@@ -376,7 +949,7 @@ public class ActionCollection {
 						e1.printStackTrace();
 					}
 					final String smuck = sb.toString().replace("smuck", restext.toString());
-					String b64str = Base64.encodeBase64String( smuck.getBytes() );
+					String b64str = Base64.getEncoder().encodeToString( smuck.getBytes() );
 					
 					boolean succ = true;
 					try {
@@ -696,573 +1269,7 @@ public class ActionCollection {
 					selspecs.add( spec );
 				}
 				
-				final StringWriter fw = new StringWriter();
-				fw.write("<html><head></head><body><table border=1>");
-				fw.write("<tr><td>Species</td>");
-				for( String spec : selspecs) {
-					//int i = spec.indexOf('_');
-					//if( i == -1 ) i = spec.length();
-					String specstr = geneset.nameFix( spec ); //spec.substring(0, i);
-					fw.write( "<td colspan=2>"+specstr+"</td>" );
-				}
-				fw.write("</tr><tr><td></td>");
-				for( String spec : selspecs) {
-					fw.write( "<td>Number</td>" );
-					fw.write( "<td>% of total</td>" );
-				}
-				fw.write("</tr><tr><td>DNA, total number of bases</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int len = 0;
-					for( Contig ct : lcont ) {
-						len += ct.length();
-					}
-					fw.write( "<td>"+len+"</td>" );
-					fw.write( "<td>100%</td>" );
-				}
-				fw.write("</tr><tr><td>DNA coding number of bases</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int len = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						total += ct.length();
-						if( ct.annset != null ) for( Annotation ann : ct.annset ) {
-							len += ann.getLength();
-						}
-					}
-					fw.write( "<td>"+len+"</td>" );
-					double d = (double)len/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>DNA, G+C number of bases</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int len = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						total += ct.length();
-						len += ct.getGCCount();
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+len+"</td>" );
-					double d = (double)len/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>DNA contigs</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					fw.write( "<td>"+lcont.size()+"</td>" );
-					fw.write( "<td>100%</td>" );
-				}
-				fw.write("</tr><tr><td>Genes total number</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) total += ct.annset.size();
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+total+"</td>" );
-					fw.write( "<td>100%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) count++;
-							}
-							total += ct.annset.size();
-						}
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>RNA genes</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								if( ann.type != null && ann.type.contains("rna") ) count++;
-							}
-							total += ct.annset.size();
-						}
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>rRNA genes</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								if( ann.type != null && ann.type.contains("rrna") ) count++;
-							}
-							total += ct.annset.size();
-						}
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>5S rRNA</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								String lowername = tv.getGene().getName().toLowerCase();
-								if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")) ) count++;
-							}
-							total += ct.annset.size();
-						}
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>16S rRNA</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								boolean rrna = ann.type != null && ann.type.contains("rrna");
-								String lowername = tv.getGene().getName().toLowerCase();
-								boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
-								
-								if( rrna /*^ ssu16s*/ ) {
-									System.err.println( "16S erm: " + spec + "  " + tv.getGene().getName() + " bbo " + ssu16s );
-								}
-								
-								if( rrna && ssu16s ) {
-									//System.err.println( spec + " " + tv.getGene().getName() );
-									count++;
-								}
-							}
-							total += ct.annset.size();
-						}
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>23S rRNA</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								String lowername = tv.getGene().getName().toLowerCase();
-								if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu")) ) {
-									//System.err.println( "eeeerm: "+tv.getSpecies() );
-									count++;
-								}
-							}
-							total += ct.annset.size();
-						}
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>tRNA genes</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								if( ann.type != null && ann.type.contains("trna") ) count++;
-							}
-							total += ct.annset.size();
-						}
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes with function prediction</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0 ) count++;
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes with enzymes</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().ecid != null && tv.getGene().ecid.length() > 0 ) count++;
-								else if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
-									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-										if( f.ec != null && f.ec.length() > 0 ) {
-											count++;
-											break;
-										}
-									}
-								}
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes with COG function prediction</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								Cog cog = geneset.cogmap.get( tv.getGene().id );
-								if( cog != null ) {
-									System.err.println( cog.id + "  " + count );
-									count++;
-								}
-								/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-									if( f.metacyc != null && f.metacyc.length() > 0 ) {
-										count++;
-										break;
-									}
-								}*/
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes connected to MetaCyc pathways</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-									if( f.metacyc != null && f.metacyc.length() > 0 ) {
-										count++;
-										break;
-									}
-								}
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes connected to KEGG reactions</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
-									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-										boolean found = false;
-										if( f.kegg != null && f.kegg.length() > 0 ) {
-											count++;
-											found = true;
-										}
-										if( !found && f.isa != null ) for( String nid : f.isa ) {
-											Function nf = geneset.funcmap.get( nid );
-											if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
-												count++;
-												found = true;
-												break;
-											}
-										}
-										if( found ) break;
-									}
-								}
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
-									boolean found = false;
-									for( Gene g : tv.getGene().getGeneGroup().genes ) {
-										
-										if( g.koid != null && g.koid.length() > 0 ) {
-											for( String pw : geneset.pathwaykomap.keySet() ) {
-												Set<String> s = geneset.pathwaykomap.get( pw );
-												if( s.contains( g.koid ) ) {
-													found = true;
-													break;
-												}
-											}
-										}
-										
-										if( !found ) {
-											if( g.ecid != null && g.ecid.length() > 0 ) {
-												for( String pw : geneset.pathwaymap.keySet() ) {
-													Set<String> s = geneset.pathwaymap.get( pw );
-													if( s.contains( g.ecid ) ) {
-														found = true;
-														break;
-													}
-												}
-											}
-										}
-										
-										if( found ) break;
-										/*if( !found && f.isa != null ) for( String nid : f.isa ) {
-											Function nf = funcmap.get( nid );
-											if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
-												count++;
-												found = true;
-												break;
-											}
-										}*/
-									}
-									
-									if( !found ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-										/*boolean found = false;
-										if( f.kegg != null && f.kegg.length() > 0 ) {
-											count++;
-											found = true;
-										}
-										if( !found && f.isa != null ) for( String nid : f.isa ) {
-											Function nf = funcmap.get( nid );
-											if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
-												count++;
-												found = true;
-												break;
-											}
-										}*/
-										
-										if( f.ko != null && f.ko.length() > 0 ) {
-											for( String pw : geneset.pathwaykomap.keySet() ) {
-												Set<String> s = geneset.pathwaykomap.get( pw );
-												if( s.contains( f.ko ) ) {
-													found = true;
-													break;
-												}
-											}
-										}
-										
-										if( !found ) {
-											if( f.ec != null && f.ec.length() > 0 ) {
-												for( String pw : geneset.pathwaymap.keySet() ) {
-													Set<String> s = geneset.pathwaymap.get( pw );
-													if( s.contains( f.ec ) ) {
-														found = true;
-														break;
-													}
-												}
-											}
-										}										
-										if( found ) break;
-									}
-									
-									if( found ) count++;
-								}
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr><tr><td>Protein coding genes connected to KEGG Orthology (KO)</td>");
-				for( String spec : selspecs) {
-					List<Contig> lcont = speccontigMap.get(spec);
-					int count = 0;
-					int total = 0;
-					for( Contig ct : lcont ) {
-						if( ct.annset != null ) {
-							for( Annotation ann : ct.annset ) {
-								Tegeval tv = (Tegeval)ann;
-								if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
-									if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
-										boolean found = false;
-										for( Gene g : tv.getGene().getGeneGroup().genes ) {
-											if( g.koid != null && g.koid.length() > 0 ) {
-												found = true;
-												break;
-											}
-											
-											if( g.funcentries != null && !found ) {
-												for( Function f : g.funcentries ) {
-													if( f.ko != null && f.ko.length() > 0 ) {
-														found = true;
-														break;
-													}
-												}
-											}
-											/*if( !found && f.isa != null ) for( String nid : f.isa ) {
-												Function nf = funcmap.get( nid );
-												if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
-													count++;
-													found = true;
-													break;
-												}
-											}*/
-											
-											if( found ) break;
-										}
-										
-										if( !found ) {
-											for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {												
-												if( f.ko != null && f.ko.length() > 0 ) {
-													found = true;
-													break;
-												}
-											}
-										}
-										
-										if( !found ) {
-											for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-												for( String ko : geneset.ko2go.keySet() ) {
-													Set<String> gos = geneset.ko2go.get(ko);
-													if( gos.contains( f.go ) ) {
-														found = true;
-														break;
-													}
-												}
-											}
-										}
-										
-										if( found ) count++;
-									}
-								}
-							}
-							total += ct.annset.size();
-						}
-						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
-							len += tv.getLength();
-						}*/
-					}
-					fw.write( "<td>"+count+"</td>" );
-					double d = (double)count/(double)total;
-					d = Math.round( d*10000.0 )/100.0;
-					fw.write( "<td>"+d+"%</td>" );
-				}
-				fw.write("</tr></table></body></html>");
+				String htmlstr = htmlTable( geneset, selspecs, speccontigMap );
 				
 				JSObject window = null;
 				try {
@@ -1273,7 +1280,7 @@ public class ActionCollection {
 				
 				if( window != null ) {
 					try {
-						window.setMember("smuck", fw.toString());
+						window.setMember("smuck", htmlstr);
 						//window.eval("var binary = atob(b64str)");
 						//window.eval("var i = binary.length");
 						//window.eval("var view = new Uint8Array(i)");
@@ -1286,7 +1293,7 @@ public class ActionCollection {
 				} else if( Desktop.isDesktopSupported() ) {
 					try {					
 						FileWriter fww = new FileWriter( "/Users/sigmar/genstat.html" );
-						fww.write( fw.toString() );
+						fww.write( htmlstr );
 						fww.close();
 						Desktop.getDesktop().browse( new URI("file:///Users/sigmar/genstat.html") );
 					} catch (IOException e1) {
@@ -2787,7 +2794,7 @@ public class ActionCollection {
 							ByteArrayOutputStream baos = new ByteArrayOutputStream();
 							ImageIO.write(bimg, "png", baos);
 							baos.close();
-							String b64str = Base64.encodeBase64String( baos.toByteArray() );
+							String b64str = Base64.getEncoder().encodeToString( baos.toByteArray() );
 							
 							JSObject window = JSObject.getWindow( geneset );
 							window.call( "string2Blob", new Object[] {b64str, "image/png"} );
