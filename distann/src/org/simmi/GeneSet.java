@@ -5935,15 +5935,19 @@ public class GeneSet extends JApplet {
 		final Graphics2D g2 = bimg.createGraphics();
 		final Map<String,Integer>	blosumap = JavaFasta.getBlosumMap();
 		
-		List<Contig> clist = speccontigMap.get(spec1);
-		int total = 0;
-		int ptotal = 0;
-		for( Contig ctg : clist ) {
-			if( ctg.isPlasmid() ) ptotal += ctg.getGeneCount();
-			else total += ctg.getGeneCount();
-		}
+		if( spec1 != null && spec1.length() > 0 ) {
+			List<Contig> clist = speccontigMap.get(spec1);
+			int total = 0;
+			int ptotal = 0;
+			for( Contig ctg : clist ) {
+				if( ctg.isPlasmid() ) ptotal += ctg.getGeneCount();
+				else total += ctg.getGeneCount();
+			}
 		
-		gc.draw(g2, spec1, GeneSet.this, 1024, 1024, clist, specList, blosumap, total, ptotal);
+			gc.draw(g2, spec1, GeneSet.this, 1024, 1024, clist, specList, blosumap, total, ptotal);
+		} else {
+			gc.draw(g2, null, GeneSet.this, 1024, 1024, null, specList, blosumap, table.getRowCount(), 0 );
+		}
 		g2.dispose();
 		
 		return bimg;
@@ -6092,8 +6096,10 @@ public class GeneSet extends JApplet {
 						g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 						g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 						
-						List<Contig> clist = speccontigMap.get(spec1);
-						sg.drawImage( GeneSet.this, g2, spec1, clist, specList, w, h );
+						if( spec1 != null && spec1.length() > 0 ) {
+							List<Contig> clist = speccontigMap.get(spec1);
+							sg.drawImage( GeneSet.this, g2, spec1, clist, specList, w, h );
+						} else sg.drawImage( GeneSet.this, g2, null, null, specList, w, h );
 						
 						ByteArrayOutputStream baos = new ByteArrayOutputStream();
 						try {
@@ -10913,7 +10919,7 @@ public class GeneSet extends JApplet {
 					Function f = funclist.get(fr);
 					if( table.getModel() == groupModel ) {
 						Set<GeneGroup> sset = f.getGeneGroups();
-						for (GeneGroup gg : sset) {
+						if( sset != null ) for (GeneGroup gg : sset) {
 							//Gene g = genemap.get(s);
 							genefilterset.add(gg.index);
 						}
@@ -15975,7 +15981,7 @@ public class GeneSet extends JApplet {
 		AbstractAction syntenygradientaction = new AbstractAction("Synteny gradient") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new SyntGrad().syntGrad( GeneSet.this );
+				new SyntGrad().syntGrad( GeneSet.this, 2048, 2048 );
 			}
 		};
 		windowmenu.add( syntenygradientaction );
@@ -16324,7 +16330,7 @@ public class GeneSet extends JApplet {
 						ss.removeAll( specs );
 						if( ss.size() == 0 ) {
 							int r = GeneSet.this.table.convertRowIndexToView( gg.index );
-							GeneSet.this.table.addRowSelectionInterval( r, r );
+							if( r >= 0 && r < GeneSet.this.table.getRowCount() ) GeneSet.this.table.addRowSelectionInterval( r, r );
 						}
 					} else if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
 						int r = GeneSet.this.table.convertRowIndexToView( gg.index );
