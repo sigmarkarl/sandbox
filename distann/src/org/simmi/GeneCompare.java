@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,7 +54,6 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
-import org.apache.commons.codec.binary.Base64;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Sequence;
 import org.simmi.unsigned.JavaFasta;
@@ -268,9 +268,12 @@ public class GeneCompare {
 		bg.add( isyntgrad );
 		
 		final JComboBox<String>	specombo = new JComboBox<String>();
+		specombo.addItem("");
 		for( String spec : specset ) specombo.addItem( spec );
+		//specombo.addItem("All");
 		
-		specombo.setSelectedItem( spec1 );
+		if( spec1 != null ) specombo.setSelectedItem( spec1 );
+		//specombo.setSelectedItem( "" );
 		
 		final JComponent cmp = new JComponent() {
 			public void paintComponent( Graphics g ) {
@@ -396,7 +399,7 @@ public class GeneCompare {
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();
 					ImageIO.write(bimg, "png", baos);
 					baos.close();
-					String b64str = Base64.encodeBase64String( baos.toByteArray() );
+					String b64str = Base64.getEncoder().encodeToString( baos.toByteArray() );
 					
 					JSObject window;
 					
@@ -1675,27 +1678,103 @@ public class GeneCompare {
 	                        }
 						}
 					} else {
-						boolean phage = false;//gg.isInAnyPhage();
-						boolean plasmid = false;//gg.isOnAnyPlasmid();
-						
-						Teginfo ti = gg.getGenes( spec2 );
-						for( Tegeval tv2 : ti.tset ) {
-                        	phage |= tv2.getGene().isPhage();
-                        	plasmid |= tv2.getContshort().isPlasmid();
-                        }
-						
-						if( phage && plasmid ) {
-							if( ti.tset.size() > 1 ) color = darkmag;
-							else color = Color.magenta;
-						} else if( phage ) {
-							if( ti.tset.size() > 1 ) color = darkblue;
-							else color = Color.blue;
-						} else if( plasmid ) {
-							if( ti.tset.size() > 1 ) color = darkred;
-							else color = Color.red;
+						String spec = (String)geneset.syncolorcomb.getSelectedItem();
+						if( spec.length() > 0 ) {
+							if( spec.equals("All") ) {
+								Teginfo value = gg.getGenes( spec2 );
+								//if( value instanceof Teginfo ) {
+									Teginfo ti = (Teginfo)value;
+									for( Tegeval tvv : ti.tset ) {
+										String tspec = tvv.getGene().getSpecies();
+										List<Contig> scontigs = geneset.speccontigMap.get( tspec );
+										
+										ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, tvv.getGene().getGeneGroup());
+										if( ratio == -1 ) {
+											ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, tvv.getGene().getGeneGroup());
+											color = GeneCompare.gradientGrayscaleColor( ratio );
+											//label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+											//label.setForeground( Color.white );
+										} else {
+											color = GeneCompare.gradientColor( ratio );
+											//label.setBackground( GeneCompare.gradientColor( ratio ) );
+											//label.setForeground( Color.black );
+										}
+										break;
+										//GeneCompare.gradientColor();
+									}
+								/*} else if( value instanceof Tegeval ) {
+									Tegeval tv = (Tegeval)value;
+									String tspec = tv.getGene().getSpecies();
+									List<Contig> scontigs = geneset.speccontigMap.get( tspec );
+									
+									ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, tv.getGene().getGeneGroup());
+									if( ratio == -1 ) {
+										ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, tv.getGene().getGeneGroup());
+										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+										label.setForeground( Color.white );
+									} else {
+										label.setBackground( GeneCompare.gradientColor( ratio ) );
+										label.setForeground( Color.black );
+									}
+								}*/
+							} /*else {
+								List<Contig> contigs = geneset.speccontigMap.get( spec );
+								if( value instanceof Teginfo ) {
+									Teginfo ti = (Teginfo)value;
+									label.setBackground( Color.green );
+									for( Tegeval tv : ti.tset ) {
+										double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+										if( ratio == -1 ) {
+											ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+											label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+											label.setForeground( Color.white );
+										} else {
+											label.setBackground( GeneCompare.gradientColor( ratio ) );
+											label.setForeground( Color.black );
+										}
+										break;
+										//GeneCompare.gradientColor();
+									}
+								} else if( value instanceof Tegeval ) {
+									Tegeval tv = (Tegeval)value;
+									
+									ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+									if( ratio == -1 ) {
+										ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+										label.setForeground( Color.white );
+									} else {
+										label.setBackground( GeneCompare.gradientColor( ratio ) );
+										label.setForeground( Color.black );
+									}
+									
+									/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+									label.setBackground( GeneCompare.gradientColor( ratio ) );*
+								}
+							}*/
 						} else {
-							if( ti.tset.size() > 1 ) color = Color.gray;
-							else color = Color.lightGray;
+							boolean phage = false;//gg.isInAnyPhage();
+							boolean plasmid = false;//gg.isOnAnyPlasmid();
+							
+							Teginfo ti = gg.getGenes( spec2 );
+							for( Tegeval tv2 : ti.tset ) {
+	                        	phage |= tv2.getGene().isPhage();
+	                        	plasmid |= tv2.getContshort().isPlasmid();
+	                        }
+							
+							if( phage && plasmid ) {
+								if( ti.tset.size() > 1 ) color = darkmag;
+								else color = Color.magenta;
+							} else if( phage ) {
+								if( ti.tset.size() > 1 ) color = darkblue;
+								else color = Color.blue;
+							} else if( plasmid ) {
+								if( ti.tset.size() > 1 ) color = darkred;
+								else color = Color.red;
+							} else {
+								if( ti.tset.size() > 1 ) color = Color.gray;
+								else color = Color.lightGray;
+							}
 						}
 					}
 					if( color != null ) g2.setColor( color );
