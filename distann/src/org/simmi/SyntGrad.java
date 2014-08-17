@@ -118,8 +118,8 @@ public class SyntGrad {
 			spec2s.add( spec2 );
 		}
 		
-		int w = 1024;
-		int h = 1024;
+		final int w = 1024;
+		final int h = 1024;
 		final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		
 		final Graphics2D g2 = bi.createGraphics();
