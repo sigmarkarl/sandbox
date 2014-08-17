@@ -6055,7 +6055,7 @@ public class GeneSet extends JApplet {
 						
 						ByteArrayOutputStream baos = new ByteArrayOutputStream();
 						try {
-							ImageIO.write(bimg, "png", baos);
+							ImageIO.write(bimg, "jpg", baos);
 							baos.close();
 							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
 							cs.sendToAll(str);
