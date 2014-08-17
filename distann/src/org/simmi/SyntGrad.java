@@ -43,7 +43,9 @@ import org.simmi.shared.Annotation;
 
 public class SyntGrad {
 	JCheckBox	contcheck = new JCheckBox("Show contig lines");
-	public void syntGrad( final GeneSet geneset ) {
+	JCheckBox	vischeck = new JCheckBox("Table visibility");
+	JCheckBox	syntcol = new JCheckBox("Table order color");
+	public void syntGrad( final GeneSet geneset, final int w, final int h ) {
 		final JTable 				table = geneset.getGeneTable();
 		//final Collection<String> 	specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
 		final Collection<String>	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
@@ -117,9 +119,7 @@ public class SyntGrad {
 			String spec2 = species.get( table2.convertRowIndexToModel(r) );
 			spec2s.add( spec2 );
 		}
-		
-		final int w = 1024;
-		final int h = 1024;
+
 		final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		
 		final Graphics2D g2 = bi.createGraphics();
@@ -208,7 +208,7 @@ public class SyntGrad {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ImageIO.write(bi, "png", new File("c:/out.png"));
+					ImageIO.write(bi, "png", new File("/Users/sigmar/synt.png"));
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -361,7 +361,7 @@ public class SyntGrad {
 										if( geneset.table.getModel() == geneset.groupModel ) {
 											int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
 											r = geneset.table.convertRowIndexToView(u);
-											geneset.table.addRowSelectionInterval( r, r );
+											if( r >= 0 && r < geneset.table.getRowCount() ) geneset.table.addRowSelectionInterval( r, r );
 										} else {
 											Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
 											int selr = -1;
@@ -369,7 +369,7 @@ public class SyntGrad {
 												int u = geneset.genelist.indexOf( te.getGene() );
 												r = geneset.table.convertRowIndexToView(u);
 												if( selr == -1 ) selr = r;
-												geneset.table.addRowSelectionInterval( r, r );
+												if( r >= 0 && r < geneset.table.getRowCount() ) geneset.table.addRowSelectionInterval( r, r );
 											}
 											Rectangle rect = geneset.table.getCellRect(selr, 0, true);
 											geneset.table.scrollRectToVisible(rect);
@@ -413,6 +413,8 @@ public class SyntGrad {
 		
 		JToolBar toolbar = new JToolBar();
 		toolbar.add( contcheck );
+		toolbar.add( vischeck );
+		toolbar.add( syntcol );
 		
 		JFrame frame = new JFrame();
 		frame.add( toolbar, BorderLayout.NORTH );
@@ -458,6 +460,7 @@ public class SyntGrad {
 						boolean phage = gene.isPhage();
 						boolean plasmid = tv.getContshort().isPlasmid();
 						
+						Color color = Color.white;
 						int count = 1;
 						if( gg != null ) {
 							Teginfo ti = gg.getGenes( gene.getSpecies() );
@@ -466,25 +469,32 @@ public class SyntGrad {
 							int i = geneset.allgenegroups.indexOf(gg);
 							if( i != -1 ) {
 								int rv = geneset.table.convertRowIndexToView(i);
-								if( rv != -1 ) {
-									visible = geneset.table.isRowSelected( rv );
+								if( rv >= 0 && rv < geneset.table.getRowCount() ) {
+									visible = true; //geneset.table.isRowSelected( rv );
+									
+									if( syntcol.isSelected() ) {
+										//double ratio = (double)gg.index/(double)geneset.allgenegroups.size(); 
+										double ratio = (double)rv/(double)geneset.table.getRowCount();
+										color = GeneCompare.gradientColor(ratio);
+									}
 								}
 							}
 						}
 						
-						Color color = Color.white;
-						if( phage && plasmid ) {
-							if( count > 1 ) color = darkmag;
-							else color = Color.magenta;
-						} else if( phage ) {
-							if( count > 1 ) color = darkblue;
-							else color = Color.blue;
-						} else if( plasmid ) {
-							if( count > 1 ) color = darkred;
-							else color = Color.red;
-						} else {
-							if( count > 1 ) color = Color.gray;
-							else color = Color.lightGray;
+						if( !syntcol.isSelected() ) {
+							if( phage && plasmid ) {
+								if( count > 1 ) color = darkmag;
+								else color = Color.magenta;
+							} else if( phage ) {
+								if( count > 1 ) color = darkblue;
+								else color = Color.blue;
+							} else if( plasmid ) {
+								if( count > 1 ) color = darkred;
+								else color = Color.red;
+							} else {
+								if( count > 1 ) color = Color.gray;
+								else color = Color.lightGray;
+							}
 						}
 						g2.setColor( color );
 					}
