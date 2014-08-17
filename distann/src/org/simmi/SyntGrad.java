@@ -45,7 +45,7 @@ public class SyntGrad {
 	JCheckBox	contcheck = new JCheckBox("Show contig lines");
 	JCheckBox	vischeck = new JCheckBox("Table visibility");
 	JCheckBox	syntcol = new JCheckBox("Table order color");
-	public void syntGrad( final GeneSet geneset, int w, int h ) {
+	public void syntGrad( final GeneSet geneset, final int w, final int h ) {
 		final JTable 				table = geneset.getGeneTable();
 		//final Collection<String> 	specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
 		final Collection<String>	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
@@ -119,7 +119,7 @@ public class SyntGrad {
 			String spec2 = species.get( table2.convertRowIndexToModel(r) );
 			spec2s.add( spec2 );
 		}
-		
+
 		final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		
 		final Graphics2D g2 = bi.createGraphics();
