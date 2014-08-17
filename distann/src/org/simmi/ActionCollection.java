@@ -178,10 +178,10 @@ public class ActionCollection {
 		return restext;
 	}
 	
-	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Contig>> speccontigMap ) {
+	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Contig>> speccontigMap, boolean withHtml ) {
 		final StringWriter fw = new StringWriter();
-		fw.write("<html><head></head><body><table border=1>");
-		fw.write("<tr><td>Species</td>");
+		if( withHtml ) fw.write("<html><head></head><body>");
+		fw.write("<table border=1><tr><td>Species</td>");
 		for( String spec : selspecs) {
 			//int i = spec.indexOf('_');
 			//if( i == -1 ) i = spec.length();
@@ -197,6 +197,7 @@ public class ActionCollection {
 		for( String spec : selspecs) {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int len = 0;
+			if( lcont != null )
 			for( Contig ct : lcont ) {
 				len += ct.length();
 			}
@@ -208,7 +209,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int len = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				total += ct.length();
 				if( ct.annset != null ) for( Annotation ann : ct.annset ) {
 					len += ann.getLength();
@@ -224,7 +225,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int len = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				total += ct.length();
 				len += ct.getGCCount();
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
@@ -239,14 +240,15 @@ public class ActionCollection {
 		fw.write("</tr><tr><td>DNA contigs</td>");
 		for( String spec : selspecs) {
 			List<Contig> lcont = speccontigMap.get(spec);
-			fw.write( "<td>"+lcont.size()+"</td>" );
+			int size = lcont != null ? lcont.size() : 0;
+			fw.write( "<td>"+size+"</td>" );
 			fw.write( "<td>100%</td>" );
 		}
 		fw.write("</tr><tr><td>Genes total number</td>");
 		for( String spec : selspecs) {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) total += ct.annset.size();
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -260,7 +262,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) count++;
@@ -278,7 +280,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						if( ann.type != null && ann.type.contains("rna") ) count++;
@@ -296,7 +298,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						if( ann.type != null && ann.type.contains("rrna") ) count++;
@@ -314,7 +316,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -334,7 +336,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -364,7 +366,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -387,7 +389,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						if( ann.type != null && ann.type.contains("trna") ) count++;
@@ -405,7 +407,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -427,7 +429,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -449,7 +451,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -479,7 +481,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -511,7 +513,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -538,7 +540,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -577,7 +579,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -676,7 +678,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			for( Contig ct : lcont ) {
+			if( lcont != null ) for( Contig ct : lcont ) {
 				if( ct.annset != null ) {
 					for( Annotation ann : ct.annset ) {
 						Tegeval tv = (Tegeval)ann;
@@ -745,7 +747,8 @@ public class ActionCollection {
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
 		}
-		fw.write("</tr></table></body></html>");
+		fw.write("</tr></table>" );
+		if( withHtml ) fw.write("</body></html>");
 		
 		return fw.toString();
 	}
@@ -1269,7 +1272,7 @@ public class ActionCollection {
 					selspecs.add( spec );
 				}
 				
-				String htmlstr = htmlTable( geneset, selspecs, speccontigMap );
+				String htmlstr = htmlTable( geneset, selspecs, speccontigMap, true );
 				
 				JSObject window = null;
 				try {
