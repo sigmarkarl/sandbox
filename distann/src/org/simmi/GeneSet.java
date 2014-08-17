@@ -1380,7 +1380,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	public BufferedImage animatrix( Collection<String> species1, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, String designation, Collection<GeneGroup> allgg ) {
-		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2 = (Graphics2D) bi.getGraphics();
 		int mstrw = 0;
 		
@@ -1403,7 +1403,7 @@ public class GeneSet extends JApplet {
 		}
 
 		int sss = mstrw + 72 * specset.size() + 10 + 72;
-		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_ARGB);
+		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_RGB);
 		g2 = (Graphics2D) bi.getGraphics();
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -1597,7 +1597,7 @@ public class GeneSet extends JApplet {
 	}
 
 	public BufferedImage bmatrix(Collection<String> species1, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, String designation) {
-		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2 = (Graphics2D) bi.getGraphics();
 		int mstrw = 0;
 		
@@ -1618,7 +1618,7 @@ public class GeneSet extends JApplet {
 		}
 
 		int sss = mstrw + 72 * specset.size() + 10 + 72;
-		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_ARGB);
+		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_RGB);
 		g2 = (Graphics2D) bi.getGraphics();
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -5931,7 +5931,7 @@ public class GeneSet extends JApplet {
 	
 	public BufferedImage gatest( String spec1 ) {
 		GeneCompare gc = new GeneCompare(); //comparePlot( GeneSet.this, comp, genelist, clusterMap );
-		final BufferedImage bimg = new BufferedImage( 1024, 1024, BufferedImage.TYPE_INT_ARGB );
+		final BufferedImage bimg = new BufferedImage( 1024, 1024, BufferedImage.TYPE_INT_RGB );
 		final Graphics2D g2 = bimg.createGraphics();
 		final Map<String,Integer>	blosumap = JavaFasta.getBlosumMap();
 		
@@ -6170,7 +6170,7 @@ public class GeneSet extends JApplet {
 						int h = 1024;
 						
 						SyntGrad sg = new SyntGrad();
-						final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
+						final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_RGB );
 						
 						final Graphics2D g2 = bi.createGraphics();
 						g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
