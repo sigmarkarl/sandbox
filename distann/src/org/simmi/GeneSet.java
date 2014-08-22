@@ -1564,11 +1564,11 @@ public class GeneSet extends JApplet {
 			//String spc1 = nameFix( spec1 );
 			for (String spec2 : ordInd) {
 				if( where != wherex ) {
-					
 					int wx = corrInd.indexOf( spec2 );
 					double ani = 1.0-matrix[ w*specset.size()+wx ];
 					
-					float cval = Math.min( 0.9f, Math.max( 0.0f, 1.2f - (float)(1.2*ani) ) );
+					float cval = Math.min( 0.9f, Math.max( 0.0f,4.2f - (float)(4.2*ani) ) );
+					//float cval = Math.min( 0.9f, Math.max( 0.0f, 1.2f - (float)(1.2*ani) ) );
 					System.err.println( cval + "  " + ani );
 					Color color = new Color( cval, cval, cval );
 					g2.setColor( color );
@@ -8234,6 +8234,11 @@ public class GeneSet extends JApplet {
 	
 	public void cogCalc( String filename, Set<Character> includedCogs, Map<String,Map<Character,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
 		if( table.getModel() == groupModel ) {
+			for( String spec : selspec ) {
+				Map<Character,Integer>	submap = new HashMap<Character,Integer>();
+				map.put(spec, submap);
+			}
+			
 			for( int r = 0; r < table.getRowCount(); r++ ) {
 				int i = table.convertRowIndexToModel(r);
 				if( i >= 0 && i < allgenegroups.size() ) {
@@ -8251,13 +8256,13 @@ public class GeneSet extends JApplet {
 										}
 									} else {
 										int val = 0;
-										if( map.containsKey( tv.getSpecies() ) ) {
+										//if( map.containsKey( tv.getSpecies() ) ) {
 											submap = map.get( tv.getSpecies() );
 											if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
-										} else {
+										/*} else {
 											submap = new HashMap<Character,Integer>();
 											map.put(spec, submap);
-										}
+										}*/
 										submap.put( cog.symbol, val+1 );
 									}
 								}
@@ -8471,7 +8476,7 @@ public class GeneSet extends JApplet {
 		for( String s : map.keySet() ) {
 			fw.write(",\n");
 			int total = 0;
-			fw.write( "['"+s+"'" );
+			fw.write( "['"+nameFix(s)+"'" );
 			Map<Character,Integer> cm = map.get( s );
 			for( Character cogchar : includedCogs ) {
 				int val = 0;
