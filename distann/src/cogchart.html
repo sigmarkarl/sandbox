@@ -14,9 +14,9 @@
           isStacked: true
       };
       function drawChart() {
-        data = google.visualization.arrayToDataTable([
+        data = google.visualization.arrayToDataTable(
           smuck
-        ]);
+        );
 
         var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
         chart.draw(data, options);
