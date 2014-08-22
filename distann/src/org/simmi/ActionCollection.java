@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -3259,7 +3260,7 @@ public class ActionCollection {
 					}
 					
 					final Map<String,String>					all = new TreeMap<String,String>();
-					final Map<String, Map<Character,Integer>> 	map = new TreeMap<String, Map<Character,Integer>>();
+					final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap<String, Map<Character,Integer>>();
 					geneset.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
 					StringWriter fw = geneset.writeCog( map, includedCogs );
 					String repl = fw.toString();
@@ -3343,7 +3344,7 @@ public class ActionCollection {
 							window.eval("open( URL.createObjectURL(b), '_blank' )");
 						} catch( Exception exc ) {
 							exc.printStackTrace();
-						}
+						}*/
 						
 						if( Desktop.isDesktopSupported() ) {
 							try {
@@ -3354,7 +3355,7 @@ public class ActionCollection {
 							} catch( Exception exc ) {
 								exc.printStackTrace();
 							}
-						}*/
+						}
 					} else {
 						SwingUtilities.invokeLater( new Runnable() {
 							@Override
