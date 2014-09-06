@@ -132,12 +132,14 @@ public class Tegeval extends Annotation implements Teg {
 	}
 	
 	public Tegeval getNext() {
-		if( seq != null ) return getContshort().getNext( this );
+		if( seq != null ) 
+			return getContshort().getNext( this );
 		return null;
 	}
 	
 	public Tegeval getPrevious() {
-		if( seq != null ) return getContshort().getPrev( this );
+		if( seq != null ) 
+			return getContshort().getPrev( this );
 		return null;
 	}
 	
@@ -230,7 +232,7 @@ public class Tegeval extends Annotation implements Teg {
 		
 		//int i = contshort.tlist.indexOf(this);
 		if( i == 0 ) {
-			Tegeval tv = (Tegeval)getContshort().annset.get(i);
+			Tegeval tv = (Tegeval)getContshort().getAnnotation(i);
 			for( int m = 0; m < tv.start; m++ ) {
 				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
@@ -242,8 +244,8 @@ public class Tegeval extends Annotation implements Teg {
 				}
 			}
 		} else {
-			Tegeval tv = (Tegeval)getContshort().annset.get(i);
-			Tegeval tvp = (Tegeval)getContshort().annset.get(i-1);
+			Tegeval tv = (Tegeval)getContshort().getAnnotation(i);
+			Tegeval tvp = (Tegeval)getContshort().getAnnotation(i-1);
 			for( int m = tvp.stop; m < tv.start; m++ ) {
 				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
@@ -256,8 +258,8 @@ public class Tegeval extends Annotation implements Teg {
 			}
 		}
 		
-		if( i == getContshort().annset.size()-1 ) {
-			Tegeval tv = (Tegeval)getContshort().annset.get(i);
+		if( i == getContshort().getAnnotations().size()-1 ) {
+			Tegeval tv = (Tegeval)getContshort().getAnnotation(i);
 			for( int m = tv.stop; m < seq.length(); m++ ) {
 				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
@@ -269,8 +271,8 @@ public class Tegeval extends Annotation implements Teg {
 				}
 			}
 		} else {
-			Tegeval tv = (Tegeval)getContshort().annset.get(i);
-			Tegeval tvn = (Tegeval)getContshort().annset.get(i+1);
+			Tegeval tv = (Tegeval)getContshort().getAnnotation(i);
+			Tegeval tvn = (Tegeval)getContshort().getAnnotation(i+1);
 			for( int m = tv.stop; m < tvn.start; m++ ) {
 				char c = seq.getCharAt(m);
 				if( c == 'n' || c == 'N' ) {
