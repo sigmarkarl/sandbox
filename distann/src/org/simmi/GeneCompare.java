@@ -162,7 +162,7 @@ public class GeneCompare {
 	
 	JCheckBox				contiglanes;
 	
-	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) throws IOException {
+	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap, int w, int h ) throws IOException {
 		final JTable 				table = geneset.getGeneTable();
 		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
 		final List<String>			species = new ArrayList<String>( specset );
@@ -243,7 +243,7 @@ public class GeneCompare {
 			ptotal = 0;
 		}
 		
-		final BufferedImage bimg = new BufferedImage( 2048, 2048, BufferedImage.TYPE_INT_ARGB );
+		final BufferedImage bimg = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		final Graphics2D g2 = bimg.createGraphics();
 		draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
 		
@@ -472,7 +472,7 @@ public class GeneCompare {
 						if( nt < 0 ) nt += Math.PI*2.0;
 						int nloc = (int)(nt*size/(2*Math.PI));
 						
-						int ind = (int)((rad-250.0)/15.0);
+						int ind = (int)((rad-500.0)/30.0);
 						if( ind >= 0 && ind < spec2s.size() ) {
 							String spec = spec2s.get( ind );
 							
@@ -579,7 +579,7 @@ public class GeneCompare {
 										r = geneset.table.convertRowIndexToView(u);
 										geneset.table.addRowSelectionInterval( r, r );
 									} else {
-										String spec = spec2s.get( (int)((rad-250.0)/15.0) );
+										String spec = spec2s.get( (int)((rad-500.0)/30.0) );
 										Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
 										int selr = -1;
 										for( Tegeval te : ti.tset ) {
@@ -629,7 +629,7 @@ public class GeneCompare {
 			}
 		});*/
 		
-		Dimension dim = new Dimension( 2048, 2048 );
+		Dimension dim = new Dimension( w, h );
 		cmp.setPreferredSize( dim );
 		cmp.setSize( dim );
 		JScrollPane	scrollpane = new JScrollPane( cmp );
@@ -1266,14 +1266,14 @@ public class GeneCompare {
 				subDraw(g2, null, null, geneset, spec1, r, null, null, rowcount, spec2s, synbr, w, h, blosumap, i, gg, null, total, ptotal);
 			}
 			
-			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(12.0f);
+			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f);
 			g2.setFont( oldfont );
 			int k = 0;
 			for( String spec : spec2s ) {
 				g2.translate( w/2, h/2 );
 				
 				g2.setColor( Color.lightGray );
-				int r = 250 + 15 + k*15;
+				int r = 500 + 30 + k*30;
 				g2.drawOval( -r, -r, 2*r, 2*r );
 				
 				g2.translate( -w/2, -h/2 );
@@ -1301,9 +1301,9 @@ public class GeneCompare {
 				g2.rotate( Math.PI/2.0 );
 				//-spec2s.size()*14/2
 				g2.setColor( Color.white );
-				g2.fillRect(-strw, -250-15-k*15 - 3, strw+1, 20);
+				g2.fillRect(-strw, -500-30-k*30 - 3, strw+1, 40);
 				g2.setColor( Color.black );
-				g2.drawString( specstr.replace("T.", ""), -strw+5, -250 - k*15 - 2 );
+				g2.drawString( specstr.replace("T.", ""), -strw+5, -500 - k*30 - 2 );
 				g2.rotate( -Math.PI/2.0 );
 				g2.translate( -w/2, -h/2 );
 				
@@ -1388,7 +1388,7 @@ public class GeneCompare {
 							}
 						}
 					} else {
-						for( Annotation ann : ctg.annset ) {
+						for( Annotation ann : ctg.getAnnotations() ) {
 							Tegeval tv = (Tegeval)ann;
 							Sequence seq = tv.getAlignedSequence();
 							GeneGroup gg = tv.getGene().getGeneGroup();
@@ -1421,7 +1421,7 @@ public class GeneCompare {
 			}
 			g2.setColor( Color.black );
 			
-			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(12.0f);
+			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f);
 			g2.setFont( oldfont );
 			//String[] specsplit = ;
 			/*if( spec1.contains("hermus") ) specsplit = spec1.split("_");
@@ -1456,7 +1456,7 @@ public class GeneCompare {
 				if( specstr.length() > 30 ) specstr = specstr.substring(0, specstr.lastIndexOf('_'));
 				
 				int strw = g2.getFontMetrics().stringWidth( specstr );
-				g2.drawString( specstr.replace("T.", ""), (w-strw)/2, h/2 - spec2s.size()*14/2 + 14 + k*14 );
+				g2.drawString( specstr/*.replace("T.", "")*/, (w-strw)/2, h/2 - spec2s.size()*36/2 + 36 + k*36 );
 				k++;
 			}
 		}
@@ -1559,7 +1559,7 @@ public class GeneCompare {
                     double theta = count*Math.PI*2.0/(total+ptotal);
 					g2.translate( w/2, h/2 );
 					g2.rotate( theta );
-					g2.fillRect( 250+15*(scount), -1, 15, 3);
+					g2.fillRect( 500+30*(scount), -1, 30, 3);
 					g2.rotate( -theta );
                     g2.translate( -w/2, -h/2 );
 				} else if( synbr == -2 ) {
@@ -1575,7 +1575,7 @@ public class GeneCompare {
 						double theta = count*Math.PI*2.0/(total+ptotal);
 						g2.translate( w/2, h/2 );
 						g2.rotate( theta );
-						g2.fillRect( 250+15*(scount), -1, 15, 3);
+						g2.fillRect( 500+30*(scount), -1, 30, 3);
 						g2.rotate( -theta );
 	                    g2.translate( -w/2, -h/2 );
 					} else {
@@ -1594,7 +1594,7 @@ public class GeneCompare {
 							double theta = ratio2*Math.PI*2.0;
 							g2.translate( w/2, h/2 );
 							g2.rotate( theta );
-							g2.fillRect( 250+15*(scount), -1, 15, 3);
+							g2.fillRect( 500+30*(scount), -1, 30, 3);
 							g2.rotate( -theta );
 		                    g2.translate( -w/2, -h/2 );
 						}
@@ -1608,8 +1608,8 @@ public class GeneCompare {
 					double theta = count*Math.PI*2.0/(total+ptotal);
 					g2.translate( w/2, h/2 );
 					g2.rotate( theta );
-					if( contiglanesb ) g2.fillRect( 150+15*(scount)+15*ctgoff, -1, 15, 2);
-					else g2.fillRect( 250+15*(scount), -1, 15, 3);
+					if( contiglanesb ) g2.fillRect( 300+30*(scount)+30*ctgoff, -1, 30, 2);
+					else g2.fillRect( 500+30*(scount), -1, 30, 3);
 					g2.rotate( -theta );
                     g2.translate( -w/2, -h/2 );
                     
@@ -1619,7 +1619,7 @@ public class GeneCompare {
                     	theta = count*Math.PI*2.0/(total+ptotal);
 						g2.translate( w/2, h/2 );
 						g2.rotate( theta );
-						g2.fillRect( contiglanesb ? 100 : 200, 0, 7, 1 );
+						g2.fillRect( contiglanesb ? 200 : 400, 0, 15, 1 );
 						g2.rotate( -theta );
 	                    g2.translate( -w/2, -h/2 );
                     }
@@ -1648,7 +1648,7 @@ public class GeneCompare {
 							double theta = count*Math.PI*2.0/(total+ptotal);
 							g2.translate( w/2, h/2 );
 							g2.rotate( theta );
-							g2.fillRect( 250+15*(scount), -1, 15, 3);
+							g2.fillRect( 500+30*(scount), -1, 30, 3);
 							g2.rotate( -theta );
 		                    g2.translate( -w/2, -h/2 );
                         }
@@ -1782,7 +1782,7 @@ public class GeneCompare {
 					double theta = count*Math.PI*2.0/(total+ptotal);
 					g2.translate( w/2, h/2 );
 					g2.rotate( theta );
-					g2.fillRect( 250+15*(scount), -1, 15, 3);
+					g2.fillRect( 500+30*(scount), -1, 30, 3);
 					g2.rotate( -theta );
                     g2.translate( -w/2, -h/2 );
                     
@@ -1792,7 +1792,7 @@ public class GeneCompare {
                     	theta = count*Math.PI*2.0/(total+ptotal);
 						g2.translate( w/2, h/2 );
 						g2.rotate( theta );
-						g2.fillRect( 200, 0, 15, 1);
+						g2.fillRect( 400, 0, 30, 1);
 						g2.rotate( -theta );
 	                    g2.translate( -w/2, -h/2 );
                     }

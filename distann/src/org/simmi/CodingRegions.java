@@ -131,8 +131,8 @@ public class CodingRegions {
 		
 		int count = 0;
 		for( Contig ctg : contigs ) {
-			if( ctg.annset != null ) {
-				for( Annotation tv : ctg.annset ) {						
+			if( ctg.getAnnotations() != null ) {
+				for( Annotation tv : ctg.getAnnotations() ) {						
 					//double theta = count*Math.PI*2.0/total;
 					double theta = (count+(tv.stop+tv.start)/2.0)*Math.PI*2.0/total;
 					double theta1 = (count+tv.start)*Math.PI*2.0/total;
