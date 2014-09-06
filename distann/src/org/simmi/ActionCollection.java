@@ -212,7 +212,7 @@ public class ActionCollection {
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
 				total += ct.length();
-				if( ct.annset != null ) for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) for( Annotation ann : ct.getAnnotations() ) {
 					len += ann.getLength();
 				}
 			}
@@ -250,7 +250,7 @@ public class ActionCollection {
 			List<Contig> lcont = speccontigMap.get(spec);
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) total += ct.annset.size();
+				if( ct.getAnnotations() != null ) total += ct.getAnnotations().size();
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
 				}*/
@@ -264,11 +264,11 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) count++;
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 			}
 			fw.write( "<td>"+count+"</td>" );
@@ -282,11 +282,11 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type != null && ann.type.contains("rna") ) count++;
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 			}
 			fw.write( "<td>"+count+"</td>" );
@@ -300,11 +300,11 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type != null && ann.type.contains("rrna") ) count++;
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 			}
 			fw.write( "<td>"+count+"</td>" );
@@ -318,13 +318,13 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						String lowername = tv.getGene().getName().toLowerCase();
 						if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")) ) count++;
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 			}
 			fw.write( "<td>"+count+"</td>" );
@@ -338,8 +338,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						boolean rrna = ann.type != null && ann.type.contains("rrna");
 						String lowername = tv.getGene().getName().toLowerCase();
@@ -354,7 +354,7 @@ public class ActionCollection {
 							count++;
 						}
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 			}
 			fw.write( "<td>"+count+"</td>" );
@@ -368,8 +368,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						String lowername = tv.getGene().getName().toLowerCase();
 						if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu")) ) {
@@ -377,7 +377,7 @@ public class ActionCollection {
 							count++;
 						}
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 			}
 			fw.write( "<td>"+count+"</td>" );
@@ -391,11 +391,11 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type != null && ann.type.contains("trna") ) count++;
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 			}
 			fw.write( "<td>"+count+"</td>" );
@@ -409,12 +409,12 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -431,12 +431,12 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0 ) count++;
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -453,8 +453,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( tv.getGene().ecid != null && tv.getGene().ecid.length() > 0 ) count++;
 						else if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
@@ -466,7 +466,7 @@ public class ActionCollection {
 							}
 						}
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -483,8 +483,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						Cog cog = geneset.cogmap.get( tv.getGene().id );
 						if( cog != null ) {
@@ -498,7 +498,7 @@ public class ActionCollection {
 							}
 						}*/
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -515,8 +515,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
 							if( f.metacyc != null && f.metacyc.length() > 0 ) {
@@ -525,7 +525,7 @@ public class ActionCollection {
 							}
 						}
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -542,8 +542,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
 							for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
@@ -564,7 +564,7 @@ public class ActionCollection {
 							}
 						}
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -581,8 +581,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
 							boolean found = false;
@@ -663,7 +663,7 @@ public class ActionCollection {
 							if( found ) count++;
 						}
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -680,8 +680,8 @@ public class ActionCollection {
 			int count = 0;
 			int total = 0;
 			if( lcont != null ) for( Contig ct : lcont ) {
-				if( ct.annset != null ) {
-					for( Annotation ann : ct.annset ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
 							if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
@@ -737,7 +737,7 @@ public class ActionCollection {
 							}
 						}
 					}
-					total += ct.annset.size();
+					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -2163,7 +2163,7 @@ public class ActionCollection {
 					List<Contig> lcont = speccontigMap.get(spec);
 					int total = 0;
 					for( Contig ct : lcont ) {
-						if( ct.annset != null ) total += ct.annset.size();
+						if( ct.getAnnotations() != null ) total += ct.getAnnotations().size();
 						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 							len += tv.getLength();
 						}*
@@ -3616,9 +3616,9 @@ public class ActionCollection {
 				for( String str : geneset.contigmap.keySet() ) {
 					Contig c = geneset.contigmap.get( str );
 					
-					if( c != null && c.annset != null && c.annset.size() > 0 ) {
-						ggset.add( ((Tegeval)c.annset.get( 0 )).getGene().getGeneGroup() );
-						ggset.add( ((Tegeval)c.annset.get( c.annset.size()-1 )).getGene().getGeneGroup() );
+					if( c != null && c.getAnnotations() != null && c.getAnnotations().size() > 0 ) {
+						ggset.add( ((Tegeval)c.getAnnotation( 0 )).getGene().getGeneGroup() );
+						ggset.add( ((Tegeval)c.getAnnotation( c.getAnnotations().size()-1 )).getGene().getGeneGroup() );
 					}
 				}
 				
@@ -3662,27 +3662,27 @@ public class ActionCollection {
 					for( Contig ctg : contigs ) {
 						//int i = ctable.convertRowIndexToModel( row );
 						//Contig ctg = contigs.get( i );
-						if( ctg.annset != null ) {
+						if( ctg.getAnnotations() != null ) {
 							if( ctg.isReverse() ) {
-								Tegeval tv0 = (Tegeval)ctg.annset.get(0);
-								Tegeval tv1 = (Tegeval)ctg.annset.get(1);
+								Tegeval tv0 = (Tegeval)ctg.getAnnotation(0);
+								Tegeval tv1 = (Tegeval)ctg.getAnnotation(1);
 								
-								Tegeval tv = (Tegeval)ctg.annset.get(ctg.annset.size()-1);
-								Tegeval tv2 = (Tegeval)ctg.annset.get(ctg.annset.size()-2);
+								Tegeval tv = (Tegeval)ctg.getAnnotation(ctg.getAnnotations().size()-1);
+								Tegeval tv2 = (Tegeval)ctg.getAnnotation(ctg.getAnnotations().size()-2);
 								text.append( tv.getGene().getGeneGroup().getCommonName() + " -- " + tv2.getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + tv1.getGene().getGeneGroup().getCommonName() + " -- " + tv0.getGene().getGeneGroup().getCommonName() + "\n" );
 							} else {
 								
-								if( ctg.annset.size() > 3 ) {
-									String n0 = ((Tegeval)ctg.annset.get(0)).getGene().getGeneGroup().getCommonName();
-									String n1 = ((Tegeval)ctg.annset.get(1)).getGene().getGeneGroup().getCommonName();
-									String n_2 = ((Tegeval)ctg.annset.get(ctg.annset.size()-1)).getGene().getGeneGroup().getCommonName();
-									String n_1 = ((Tegeval)ctg.annset.get(ctg.annset.size()-2)).getGene().getGeneGroup().getCommonName();
+								if( ctg.getAnnotations().size() > 3 ) {
+									String n0 = ((Tegeval)ctg.getAnnotation(0)).getGene().getGeneGroup().getCommonName();
+									String n1 = ((Tegeval)ctg.getAnnotation(1)).getGene().getGeneGroup().getCommonName();
+									String n_2 = ((Tegeval)ctg.getAnnotation(ctg.getAnnotations().size()-1)).getGene().getGeneGroup().getCommonName();
+									String n_1 = ((Tegeval)ctg.getAnnotation(ctg.getAnnotations().size()-2)).getGene().getGeneGroup().getCommonName();
 									
 									text.append( n0 + " -- " + n1 + " -- " + ctg.getName() + " -- " + n_2 + " -- " + n_1 + "\n" );
-								} else if( ctg.annset.size() > 1 ) {
-									text.append( ((Tegeval)ctg.annset.get(0)).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ((Tegeval)ctg.annset.get(ctg.annset.size()-1)).getGene().getGeneGroup().getCommonName() + "\n" );
-								} else if( ctg.annset.size() == 1 ) {
-									Tegeval tv = (Tegeval)ctg.annset.get(0);
+								} else if( ctg.getAnnotations().size() > 1 ) {
+									text.append( ((Tegeval)ctg.getAnnotation(0)).getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + " -- " + ((Tegeval)ctg.getAnnotation(ctg.getAnnotations().size()-1)).getGene().getGeneGroup().getCommonName() + "\n" );
+								} else if( ctg.getAnnotations().size() == 1 ) {
+									Tegeval tv = (Tegeval)ctg.getAnnotation(0);
 									text.append( tv.getGene().getGeneGroup().getCommonName() + " -- " + ctg.getName() + "\n" );
 								}
 							}

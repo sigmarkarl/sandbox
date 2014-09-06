@@ -6,20 +6,20 @@
 <style>
 	caption { font-size: 80%; caption-side: bottom; }
 	figcaption { font-size: 64%; caption-side: bottom; }
-	table { font-size:80%; border-bottom: solid 1px black; border-collapse: collapse; }
+	table { border-spacing: 0; cellpadding: 0; cellspacing: 0; padding-left: 0; padding-right: 0; padding-bottom: 0; padding-top: 0; margin-left: 0; margin-right: 0; margin-bottom: 0; margin-top: 0 }
 	thead { border-bottom: solid 2px black; border-collapse: collapse; }
 	#footer ul li { display: inline; padding-left: 0.5em; }
-	figcaption { font-size: 16px; }
+	figcaption { font-size: 32px; }
 </style>
 </head>
-<body style="padding: 0; margin: 0; text-align : justify; font-family: 'Life Savers', cursive; font-size: 16px">
+<body style="font-family:'Myriad'; padding: 0; margin: 0; text-align : justify; font-size: 32px">
 <header>
 <img src="header.png" width="100%"></img>
 </header>
 <div style="margin-top: 0; margin-left: 1cm; margin-right: 1cm;">
 
 <div style="text-align:center">
-<h1 style="margin-top: 0.1cm; margin-bottom:0.1cm;">Comparative genomics software</h1>
+<h1 style="margin-top: 1cm; margin-bottom:0.1cm;">ComGen software for comparative genomics</h1>
 <h3><i>Sigmar Karl Stefánsson<sup>1,2</sup>, Snædís Björnsdóttir<sup>1,2</sup>, Ólafur H. Friðjónsson<sup>1</sup>, Sólveig Pétursdóttir<sup>1</sup>, Guðmundur Ó. Hreggviðsson<sup>1,2</sup></i></h3>
 <h5>1 Matís ltd. Vínlandsleið 12, 113 Reykjavík, Iceland; 2 Faculty of Life and Environmental Sciences, University of Iceland, Sturlugata 7, 101 Reykjavík Iceland</h5>
 </div>
@@ -39,31 +39,45 @@ The software is written in Java and is downloadable as such. It also has a web i
 	column-count:2;
 	page-break-before:avoid;">
 
-<div style="background: #eeeeee; padding: 0.5em;">
+<div style="padding: 0.5em;">
 <h3 style="margin: 0;">Main screen</h3>
 <figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
-<img src="mainscreen.png" width="60%" />
-<img src="seqview.png" width="39%"></img>
+<table>
+<tr>
+<td width=50%><img src="mainscreen2.png" width="100%"></img></td>
+<td><img src="seqview.png" width="100%"></img></td>
+</tr><tr>
+<td colspan=2><img src="neighb.png" width="100%"></td>
+</tr>
+</table>
 <figcaption style="text-align: justify; margin-bottom: 0.5em">
 The main screen is split into two tables, the above gene table and the below function table. 
 The tables are linked and double-clicking on an entry highlights the corresponding row in the other table. 
 A search textbox accompanies both tables for easy search and filtering. 
-The sequence editor supports different color coding, multiple sequence alignment and the generation of phylogenetic trees</figcaption>
+The function table allows for the selection of specific metabolic pathways. The resulting selection can consequently be viewed in a gene atlas.
+The sequence editor supports different color coding, multiple sequence alignment and the generation of phylogenetic trees.
+The gene aligner view shows the difference of small scale regions between strains.
+</figcaption>
 </figure>
 </div>
 
 <div style="background: #ffffff; padding: 0.5em;">
 <h3 style="margin: 0;">Genetic islands</h3>
 <figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
-<img src="permut.png" width="49%" />
-<img src="synt.png" width="50%" />
+<table>
+<tr>
+<td><img src="permut.png" width="100%" /></td>
+<td><img src="synt.png" width="100%" /></td>
+</tr>
+</table>
 <figcaption style="text-align: justify; margin-bottom: 0.5em">
 The gene permutation atlas is used to view sharing of genes between strains. 
 The core genome has been removed and the genes are ordered according to the size of each permutation group.
 The image to the right shows that the largest group of unique genes within the genus <i>Thermus</i> is observed in <i>Thermus filiformis</i>.
 The largest group of genes shared between more than one strain is a prophage found in <i>Thermus brockianus</i> and "Thermus eggertssonii".
 The synteny colors shows the relative gene locations.
-The image to the left shows the same genes in their correct order for each species, which reveals genetic islands as lanes in the circle.
+The image to the right shows the same genes in their correct order for each species, which reveals genetic islands as lanes in the circle.
+Prophage genes are colored blue and plasmid genes are colored red.
 </figcaption>
 </figure>
 </div>
@@ -74,16 +88,22 @@ The image to the left shows the same genes in their correct order for each speci
 <img src="pancore_thermus.png" width="49%" />
 <img src="cog_thermus.png" width="50%" />
 <figcaption style="text-align: justify; margin-bottom: 0.5em">
-The software generates basic comparative genome statistics such as a pan-core graphs, COG-groups and genome size column plots.
+Genomes inserted into the software are automatically annotated. 
+The genes are grouped together using criteria fitting the data, such as the 50-50 rule for inter-genus genomes. 
+The results are stored in an easily portable zip formatted file.
+The software supports automatic and manual connection of contigs based on comparative data.
+The software generates basic comparative genome statistics such as a pan-core graphs, GC%, GC skew, COG-groups and genome size column plots.
 </figcaption>
 </figure>
 </div>
 
-<div style="background: #eeeeee; padding: 0.5em;">
+<div style="padding: 0.5em;">
 <h3 style="margin: 0;">Synteny gradients</h3>
 <figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
-<img src="contord.png" width="49%" />
-<img src="syntgrad2.png" width="50%" />
+<table><tr>
+<td width="50%"><img src="contord_hires.png" width="100%" /></td>
+<td width="50%"><img src="syntgrad_hires.png" width="100%" /></td>
+</tr></table>
 <figcaption style="text-align: justify; margin-bottom: 0.5em">
 The synteny gradient colors are used to visualize genome rearrangements. 
 Plassmids are shown in grayscale.
@@ -98,8 +118,16 @@ The inverted areas could reveal errors in the published genomes. The smaller cas
 <div style="background: #ffffff; padding: 0.5em;">
 <h3 style="margin: 0;">Phylogeny</h3>
 <figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
-<img src="anim.png" width="49%" />
-<img src="concribo.png" width="50%" />
+<table>
+<tr>
+<td width="50%"><img src="anim.png" width="100%" /></td>
+<td><img src="concribo.png" width="100%" /></td>
+</tr>
+<tr>
+<td width="50%"><img src="heattree.png" width="100%" /></td>
+<td><img src="xy2.png" width="100%" /></td>
+</tr>
+</table>
 <figcaption style="text-align: justify; margin-bottom: 0.5em">
 Multiple genes within and between genomes are compared using phylogenetic methods such as sequence concatenation and majority rule consensus.
 Gene duplication sites are used to support the prediction for rooting phylogenetic trees.
@@ -107,16 +135,34 @@ The ANI matrix shows the average nucleotide identity between all species in a ph
 The ANI matrix shows that bacterial species are not always clearly defined.
 An ANI value of 90% was calculated for two strains of <i>Thermus aquaticus</i> 
 while ANI values of at least 95% were calculated for strains that belonged to <i>Thermus antranikianii</i> and <i>Thermus scotoductus</i>.
+The phylogenetic tree viewer supports circular and radial trees and color coded nodes. The web link is http://webconnectron.appspot.com/Treedraw.html
 </figcaption>
 </figure>
 </div>
-
 </div>
 
 </div>
 <footer id="footer" style="text-align: center; border-top: solid; border-color: #004499;">
-  <h5 style="margin: 0; margin-top: 1em; color: #004499">Analysis and Consulting | Biotechnology and biomolecules | Food Safety, Environment and Genetics | Innovation and Consumers | Value Chain, Processing and Aquaculture</h4>
-  <h6 style="margin: 0; margin-top: 0.5em; color: #00aadd"><ul><li>Matís ohf.</li><li>&bull;</li><li>Vínlandsleið 12</li><li>&bull;</li><li>113 Reykjavík</li><li>&bull;</li><li>Iceland</li><li>&bull;</li><li>Tel +354 422 5000</li><li>&bull;</li><li>Fax +354 422 5001</li><li>&bull;</li><li><a href="mailto:matis@matis.is">matis@matis.is</a></li><li>&bull;</li><li><a href="http://www.matis.is">www.matis.is</a></li></ul></h5>
+  <h3 style="margin: 0; margin-top: 1em; color: #004499">
+  <ul>
+  <li>Analysis and Consulting</li><li>|</li>
+  <li>Biotechnology and biomolecules</li><li>|</li>
+  <li>Food Safety, Environment and Genetics</li><li>|</li>
+  <li>Innovation and Consumers</li><li>|</li>
+  <li>Value Chain, Processing and Aquaculture</li>
+  </h3>
+  <h4 style="margin: 0; margin-top: 0.5em; color: #00aadd">
+  <ul>
+  <li>Matís ohf.</li><li>&bull;</li>
+  <li>Vínlandsleið 12</li><li>&bull;</li>
+  <li>113 Reykjavík</li><li>&bull;</li>
+  <li>Iceland</li><li>&bull;</li>
+  <li>Tel +354 422 5000</li><li>&bull;</li>
+  <li>Fax +354 422 5001</li><li>&bull;</li>
+  <li><a href="mailto:matis@matis.is">matis@matis.is</a></li><li>&bull;</li>
+  <li><a href="http://www.matis.is">www.matis.is</a></li>
+  </ul>
+  </h4>
 </footer>
 </body>
 </html>

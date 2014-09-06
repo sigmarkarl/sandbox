@@ -14,7 +14,7 @@ public class Contig extends Sequence {
 	
 	public void add( Tegeval tv ) {
 		addAnnotation( tv );
-		//annset.add( tv );
+		//addAnnotation( tv );
 	}
 	
 	public void deleteAfter( Tegeval cur ) {
@@ -33,14 +33,14 @@ public class Contig extends Sequence {
 	public void injectAfter( Tegeval cur, Tegeval tv ) {
 		int i = annset.indexOf( cur );
 		if( i != -1 ) {
-			annset.add(i+1, tv);
+			addAnnotation(i+1, tv);
 		}
 	}
 	
 	public void injectBefore( Tegeval cur, Tegeval tv ) {
 		int i = annset.indexOf( cur );
 		if( i != -1 ) {
-			annset.add( i, tv );
+			addAnnotation( i, tv );
 		}
 	}
 	
@@ -89,9 +89,15 @@ public class Contig extends Sequence {
 			if( isReverse() ) {
 				if( i > 0 ) return (Tegeval)annset.get( i-1 );
 			} else {
-				 if( i < annset.size()-1 ) return (Tegeval)annset.get( i+1 );
+				 if( i < annset.size()-1 ) {
+					 Tegeval ret = (Tegeval)annset.get( i+1 );
+					 return ret;
+				 }
 			}
 		}
+		//if( from.getGene().getSpecies().contains("140") ) {
+		//	System.err.println( from.getGene().getSpecies() + " bobbou " + from.getGene() );
+		//}
 		return null;
 	}
 	
@@ -104,6 +110,7 @@ public class Contig extends Sequence {
 				if( i > 0 ) return (Tegeval)annset.get( i-1 );
 			}
 		}
+		System.err.println( from.getGene().getSpecies() + "  " + from.getGene() );
 		return null;
 	}
 	
