@@ -7218,7 +7218,7 @@ public class GeneSet extends JApplet {
 		System.err.println( genefilterset.size() + "  " + ct.size() );
 	}
 
-	private void proxi(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, boolean remove) {
+	private void proxi(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, boolean remove, boolean onlygenes) {
 		/*Set<String> ct = new HashSet<String>();
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
@@ -7249,55 +7249,74 @@ public class GeneSet extends JApplet {
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
 			
+			Gene gene = null;
 			GeneGroup gg;
 			if( table.getModel() == groupModel ) {
 				gg = allgenegroups.get( cr );
 			} else {
-				gg = genelist.get(cr).getGeneGroup();
+				gene = genelist.get(cr);
+				gg = gene.getGeneGroup();
 			}
 			
-			genefilterset.add( gg.index );
-			for( Gene g : gg.genes ) {
-				Tegeval next = g.tegeval.getNext();
+			if( onlygenes ) {
+				genefilterset.add( gene.index );
+				Tegeval next = gene.tegeval.getNext();
 				if( next != null ) {
-					
-					/*Gene n = next.getGene();
-					int k = this.genelist.indexOf(n);
-					System.err.println( k );
-					
-					n = g.tegeval.gene;
-					k = this.genelist.indexOf(n);
-					System.err.println( k );*/
-					
-					GeneGroup ngg = next.getGene().getGeneGroup();
-					if( ngg != null ) genefilterset.add( ngg.index );
-					/*else {
-						int tot = 0;
-						int mot = 0;
-						for( String cstr : contigmap.keySet() ) {
-							Contig ctg = contigmap.get( cstr );
-							if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
-								Gene gn = tv.getGene();
-								
-								if( tv == next ) {
-									System.err.println( gn );
-								}
-								
-								if( gn.getGeneGroup() != null ) {
-									tot++;
-								} else mot++;
-							}
-						}
-						System.err.println( tot + "  " + mot );
-						System.err.println();
-					}*/
+					Gene ng = next.getGene();
+					if( ng != null ) genefilterset.add( ng.index );
 				}
-				Tegeval prev = g.tegeval.getPrevious();
+				Tegeval prev = gene.tegeval.getPrevious();
 				if( prev != null ) {
-					GeneGroup pgg = prev.getGene().getGeneGroup();
-					if( pgg != null ) genefilterset.add( pgg.index );
+					Gene pg = prev.getGene();
+					if( pg != null ) genefilterset.add( pg.index );
 					else {
 						System.err.println();
+					}
+				}
+			} else {
+				genefilterset.add( gg.index );
+				for( Gene g : gg.genes ) {
+					Tegeval next = g.tegeval.getNext();
+					if( next != null ) {
+						
+						/*Gene n = next.getGene();
+						int k = this.genelist.indexOf(n);
+						System.err.println( k );
+						
+						n = g.tegeval.gene;
+						k = this.genelist.indexOf(n);
+						System.err.println( k );*/
+						
+						GeneGroup ngg = next.getGene().getGeneGroup();
+						if( ngg != null ) genefilterset.add( ngg.index );
+						/*else {
+							int tot = 0;
+							int mot = 0;
+							for( String cstr : contigmap.keySet() ) {
+								Contig ctg = contigmap.get( cstr );
+								if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
+									Gene gn = tv.getGene();
+									
+									if( tv == next ) {
+										System.err.println( gn );
+									}
+									
+									if( gn.getGeneGroup() != null ) {
+										tot++;
+									} else mot++;
+								}
+							}
+							System.err.println( tot + "  " + mot );
+							System.err.println();
+						}*/
+					}
+					Tegeval prev = g.tegeval.getPrevious();
+					if( prev != null ) {
+						GeneGroup pgg = prev.getGene().getGeneGroup();
+						if( pgg != null ) genefilterset.add( pgg.index );
+						else {
+							System.err.println();
+						}
 					}
 				}
 			}
@@ -11376,21 +11395,21 @@ public class GeneSet extends JApplet {
 			}
 		});
 		popup.addSeparator();
-		popup.add(new AbstractAction("Show genes in proximity") {
+		popup.add(new AbstractAction("Show gene groups in proximity") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				genefilterset.clear();
 				int[] rr = table.getSelectedRows();
-				proxi(table, rr, genelist, genefilterset, false);
+				proxi(table, rr, genelist, genefilterset, false, false);
 				updateFilter(table, genefilter, label);
 			}
 		});
-		popup.add(new AbstractAction("Select genes in proximity") {
+		popup.add(new AbstractAction("Select gene groups in proximity") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				genefilterset.clear();
 				int[] rr = table.getSelectedRows();
-				proxi(table, rr, genelist, genefilterset, false);
+				proxi(table, rr, genelist, genefilterset, false, false);
 				for( int i : genefilterset ) {
 					int r = table.convertRowIndexToView( i );
 					if( r != -1 ) {
@@ -11402,15 +11421,32 @@ public class GeneSet extends JApplet {
 				//updateFilter(table, genefilter, label);
 			}
 		});
-		popup.add(new AbstractAction("Add genes in proximity") {
+		popup.add(new AbstractAction("Select genes in proximity") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				genefilterset.clear();
+				int[] rr = table.getSelectedRows();
+				proxi(table, rr, genelist, genefilterset, false, true);
+				for( int i : genefilterset ) {
+					int r = table.convertRowIndexToView( i );
+					if( r != -1 ) {
+						table.addRowSelectionInterval( r, r );
+					}
+				}
+				//table.tableChanged( new TableModelEvent( table.getModel() ) );
+				if (label != null) label.setText(table.getRowCount() + "/" + table.getSelectedRowCount());
+				//updateFilter(table, genefilter, label);
+			}
+		});
+		popup.add(new AbstractAction("Add gene groups in proximity") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int[] rr = table.getSelectedRows();
-				proxi(table, rr, genelist, genefilterset, false);
+				proxi(table, rr, genelist, genefilterset, false, false);
 				updateFilter(table, genefilter, label);
 			}
 		});
-		popup.add(new AbstractAction("Remove genes in proximity") {
+		popup.add(new AbstractAction("Remove gene groups in proximity") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int[] rr = table.getSelectedRows();
@@ -11423,7 +11459,7 @@ public class GeneSet extends JApplet {
 							genefilterset.add(i);
 					}
 				}
-				proxi(table, rr, genelist, genefilterset, true);
+				proxi(table, rr, genelist, genefilterset, true, false);
 				updateFilter(table, genefilter, label);
 			}
 		});
@@ -16059,7 +16095,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					new GeneCompare().comparePlot( GeneSet.this, comp, genelist, clusterMap );
+					new GeneCompare().comparePlot( GeneSet.this, comp, genelist, clusterMap, 4096, 4096 );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -16086,7 +16122,21 @@ public class GeneSet extends JApplet {
 		AbstractAction syntenygradientaction = new AbstractAction("Synteny gradient") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new SyntGrad().syntGrad( GeneSet.this, 2048, 2048 );
+				Set<String> presel = new HashSet<String>();
+				if( table.getModel() == defaultModel ) {
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						int i = table.convertRowIndexToModel(r);
+						presel.addAll( genelist.get(i).getGeneGroup().getSpecies() );
+					}
+				} else {
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						int i = table.convertRowIndexToModel(r);
+						presel.addAll( allgenegroups.get(i).getSpecies() );
+					}
+				}
+				new SyntGrad().syntGrad( GeneSet.this, 2048, 2048, presel );
 			}
 		};
 		windowmenu.add( syntenygradientaction );
@@ -16349,6 +16399,52 @@ public class GeneSet extends JApplet {
 						int r = table.convertRowIndexToView(gg.index);
 						table.addRowSelectionInterval(r, r);
 					}
+				}
+			}
+		});
+		select.add(new AbstractAction("Select plasmid genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				for( GeneGroup gg : allgenegroups ) {
+					if( gg.isOnAnyPlasmid() ) {
+						int r = table.convertRowIndexToView(gg.index);
+						table.addRowSelectionInterval(r, r);
+					}
+					/*int cnt = 0;
+					for( String spec : gg.species.keySet() ) {
+						Teginfo ti = gg.species.get( spec );
+						if( ti.tset.size() == 3 ) {
+							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
+							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) && (ta.get(1).getNext() == ta.get(2) || ta.get(1).getPrevious() == ta.get(2))) cnt++;
+						}
+					}
+					if( (float)cnt / (float)gg.species.size() > 0.7 ) {
+						int r = table.convertRowIndexToView(gg.index);
+						table.addRowSelectionInterval(r, r);
+					}*/
+				}
+			}
+		});
+		select.add(new AbstractAction("Select phage genes") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				for( GeneGroup gg : allgenegroups ) {
+					if( gg.isInAnyPhage() ) {
+						int r = table.convertRowIndexToView(gg.index);
+						table.addRowSelectionInterval(r, r);
+					}
+					/*int cnt = 0;
+					for( String spec : gg.species.keySet() ) {
+						Teginfo ti = gg.species.get( spec );
+						if( ti.tset.size() == 3 ) {
+							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
+							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) && (ta.get(1).getNext() == ta.get(2) || ta.get(1).getPrevious() == ta.get(2))) cnt++;
+						}
+					}
+					if( (float)cnt / (float)gg.species.size() > 0.7 ) {
+						int r = table.convertRowIndexToView(gg.index);
+						table.addRowSelectionInterval(r, r);
+					}*/
 				}
 			}
 		});
