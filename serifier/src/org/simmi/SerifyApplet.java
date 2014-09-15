@@ -1766,7 +1766,13 @@ public class SerifyApplet extends JApplet {
 				final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
 				final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
 				final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
-				String[] cmds = new String[] { "prodigal", "-i", NativeRun.fixPath( infile.toAbsolutePath().toString() ), "-a", outPathA, "-d", outPathD };
+				//NativeRun.fixPath( infile.toAbsolutePath().toString() )
+				String[] cmds = new String[] { "prodigal", "-a", outPathA }; //"-d", outPathD };
+				
+				List<Object>	lscmd = new ArrayList<Object>();
+				//String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+				lscmd.add( new Path[] { infile, null, dir } );
+				lscmd.add( Arrays.asList( cmds ) );
 				
 				final Object[] cont = new Object[3];
 				Runnable run = new Runnable() {
@@ -1791,7 +1797,7 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				};
-				nrun.runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont, false );
+				nrun.runProcessBuilder( "Running prodigal", lscmd, run, cont, false );
 					//JSObject js = JSObject.getWindow( SerifyApplet.this );
 					//js = (JSObject)js.getMember("document");
 					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
@@ -2064,7 +2070,7 @@ public class SerifyApplet extends JApplet {
 									Path thefile = cd.resolve( fwname ); //new File( basesave, fwname );
 									if( !Files.exists( thefile ) ) {
 										//FileWriter fw = new FileWriter( thefile );
-										Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.WRITE );
+										Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
 										URL url = new URL( "ftp://"+ftpsite+subdir+filename );
 										InputStream is = new GZIPInputStream( url.openStream() );//ftp.retrieveFileStream( newfname );
 										BufferedReader br = new BufferedReader( new InputStreamReader( is ) );

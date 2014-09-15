@@ -144,7 +144,9 @@ public class Contig extends Sequence {
 				i = getName().lastIndexOf('_')+1;
 				System.err.println( getName() );
 			}
-			spec = getName().substring(0, i-1);
+			if( i <= 0 ) {
+				spec = getName().substring(0,4);
+			} else spec = getName().substring(0, i-1);
 		} else {
 			i = getName().indexOf("_", i+1);
 			spec = getName().substring(0, i);
