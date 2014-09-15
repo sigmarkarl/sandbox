@@ -142,9 +142,13 @@ public class Contig extends Sequence {
 			}
 			if( i == -1 ) {
 				i = getName().lastIndexOf('_')+1;
-				System.err.println( getName() );
+				//System.err.println( getName() );
+				//if( i != -1 ) 
+				spec = getName().substring(0, i-1);
+				//else spec = getName();
+			} else {
+				spec = getName();
 			}
-			spec = getName().substring(0, i-1);
 		} else {
 			i = getName().indexOf("_", i+1);
 			spec = getName().substring(0, i);
