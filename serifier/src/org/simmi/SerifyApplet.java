@@ -2064,7 +2064,7 @@ public class SerifyApplet extends JApplet {
 									Path thefile = cd.resolve( fwname ); //new File( basesave, fwname );
 									if( !Files.exists( thefile ) ) {
 										//FileWriter fw = new FileWriter( thefile );
-										Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.WRITE );
+										Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
 										URL url = new URL( "ftp://"+ftpsite+subdir+filename );
 										InputStream is = new GZIPInputStream( url.openStream() );//ftp.retrieveFileStream( newfname );
 										BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
@@ -5199,7 +5199,7 @@ public class SerifyApplet extends JApplet {
 			varph /= vals.size();
 			double stdevph = Math.sqrt( varph );
 			
-			System.err.println( key + "\t" +mean+"��"+stdev+"\t"+meanph+"��"+stdevph );
+			System.err.println( key + "\t" +mean+"������"+stdev+"\t"+meanph+"������"+stdevph );
 		}*/
 		
 		//mapFiles();
