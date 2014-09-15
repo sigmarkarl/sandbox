@@ -536,6 +536,7 @@ public class GeneSet extends JApplet {
 					if( i == -1 ) {
 						i = lname.indexOf("scaffold");
 					}
+					if( i == -1 ) i = 5;
 					int u = lname.lastIndexOf('_');
 					if( u == -1 ) {
 						System.err.println();
@@ -765,6 +766,7 @@ public class GeneSet extends JApplet {
 		int i = lname.indexOf("contig");
 		if( i == -1 ) i = lname.indexOf("scaffold");
 		if( i == -1 ) i = lname.lastIndexOf('_')+1;
+		if( i <= 0 ) i = 5;
 		return i;
 	}
 	
@@ -801,6 +803,7 @@ public class GeneSet extends JApplet {
 						if( i == -1 ) {
 							i = lname.indexOf("scaffold");
 						}
+						if( i == -1 ) i = 5;
 						int u = lname.lastIndexOf('_');
 						if( u == -1 ) {
 							System.err.println();
@@ -12726,41 +12729,41 @@ public class GeneSet extends JApplet {
 							}
 					}
 				});
-			} else {
-				nf = zipfilesystem.getPath("/allthermus_aligned.aa");
-				if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
-				//else {
-				
-				/*for( String id : refmap.keySet() ) {
-					Gene g = refmap.get( id );
-					if( g.getSpecies().contains("MAT4685") ) {
-						System.err.println();
-					}
-				}*/
-				
-				for( Path root : zipfilesystem.getRootDirectories() ) {
-					Files.list(root).filter( new Predicate<Path>() {
-						@Override
-						public boolean test(Path t) {
-							String filename = t.getFileName().toString();
-							System.err.println("filename " + filename);
-							boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
-							return b;
-						}
-					}).forEach( new Consumer<Path>() {
-						@Override
-						public void accept(Path t) {
-							if( Files.exists( t ) )
-								try {
-									String filename = t.getFileName().toString().replace(".fna", "");
-									loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-						}
-					});
+			}// else {
+			nf = zipfilesystem.getPath("/allthermus_aligned.aa");
+			if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
+			//else {
+			
+			/*for( String id : refmap.keySet() ) {
+				Gene g = refmap.get( id );
+				if( g.getSpecies().contains("MAT4685") ) {
+					System.err.println();
 				}
+			}*/
+			
+			for( Path root : zipfilesystem.getRootDirectories() ) {
+				Files.list(root).filter( new Predicate<Path>() {
+					@Override
+					public boolean test(Path t) {
+						String filename = t.getFileName().toString();
+						System.err.println("filename " + filename);
+						boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
+						return b;
+					}
+				}).forEach( new Consumer<Path>() {
+					@Override
+					public void accept(Path t) {
+						if( Files.exists( t ) )
+							try {
+								String filename = t.getFileName().toString().replace(".fna", "");
+								loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+					}
+				});
 			}
+			//}
 			//}
 			
 			/*int tot = 0;
@@ -13799,7 +13802,7 @@ public class GeneSet extends JApplet {
 			System.err.println( me + "  " + mu );
 		}
 		
-		File idf = new File("/home/sigmar/idspec.txt");
+		File idf = new File("/Users/sigmar/idspec.txt");
 		BufferedWriter bw = new BufferedWriter( new FileWriter(idf) ); //Files.newBufferedWriter(idf.toPath(), OpenOption.);
 		for( String id : refmap.keySet() ) {
 			Gene g = refmap.get(id);
@@ -14410,7 +14413,7 @@ public class GeneSet extends JApplet {
 				GridBagConstraints c = new GridBagConstraints();
 				panel.setLayout( grid );
 				
-				JLabel label1 = new JLabel("Id:");
+				/*JLabel label1 = new JLabel("Id:");
 				JTextField tb1 = new JTextField("0.5");
 				JLabel label2 = new JLabel("Len:");
 				JTextField tb2 = new JTextField("0.5");
@@ -14441,16 +14444,16 @@ public class GeneSet extends JApplet {
 				c.gridwidth = 2;
 				panel.add( epar, c );
 				
-				JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );
+				JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );*/
 				
-				if( tb1 != null ) {
+				/*if( tb1 != null ) {
 					float id = Float.parseFloat( tb1.getText() );
 					float len = Float.parseFloat( tb2.getText() );
 					String expar = epar.getText();
 					
 					tb1 = null;
 					tb2 = null;
-					epar = null;
+					epar = null;*/
 					
 					try {
 						Set<String> species = getSelspec(null, getSpecies(), null);
@@ -14480,11 +14483,11 @@ public class GeneSet extends JApplet {
 						bw.close();
 						qbw.close();
 						NativeRun nrun = new NativeRun();
-						SerifyApplet.blastRun(nrun, queryPath, dbPath, "prot", expar, null, true);
+						SerifyApplet.blastRun(nrun, queryPath, dbPath, "prot", "", null, true);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
-				}
+				//}
 			}
 		};
 		AbstractAction	alignclusters = new AbstractAction("Align clusters") {

@@ -149,6 +149,9 @@ public class Contig extends Sequence {
 			} else {
 				spec = getName();
 			}
+			if( i <= 0 ) {
+				spec = getName().substring(0,4);
+			} else spec = getName().substring(0, i-1);
 		} else {
 			i = getName().indexOf("_", i+1);
 			spec = getName().substring(0, i);
