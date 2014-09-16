@@ -40,6 +40,11 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Contig;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Tegeval;
+import org.simmi.shared.Teginfo;
 
 public class SyntGrad {
 	JCheckBox	contcheck = new JCheckBox("Show contig lines");
