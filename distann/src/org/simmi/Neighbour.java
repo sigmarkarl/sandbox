@@ -62,7 +62,13 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Contig;
+import org.simmi.shared.Function;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Tegeval;
+import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
 
 public class Neighbour {
