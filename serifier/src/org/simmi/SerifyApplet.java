@@ -5300,7 +5300,7 @@ public class SerifyApplet extends JApplet {
 			varph /= vals.size();
 			double stdevph = Math.sqrt( varph );
 			
-			System.err.println( key + "\t" +mean+"��"+stdev+"\t"+meanph+"��"+stdevph );
+			System.err.println( key + "\t" +mean+"������"+stdev+"\t"+meanph+"������"+stdevph );
 		}*/
 		
 		//mapFiles();
