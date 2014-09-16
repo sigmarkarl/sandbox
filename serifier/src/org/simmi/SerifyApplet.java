@@ -21,6 +21,7 @@ import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,12 +38,18 @@ import java.io.PrintStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.HttpCookie;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
@@ -69,6 +76,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JButton;
@@ -80,14 +88,12 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -1941,7 +1947,96 @@ public class SerifyApplet extends JApplet {
 			ap.setJMenuBar( mb );
 		}
 		
-		
+		popup.add( new AbstractAction("JGI Fetch") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					CookieManager cm = new CookieManager( null, CookiePolicy.ACCEPT_ALL );
+					CookieHandler.setDefault( cm );
+					
+					URL loginurl = new URL("https://signon.jgi.doe.gov/signon/create");
+					
+					HttpsURLConnection hu = (HttpsURLConnection)loginurl.openConnection();
+					hu.setRequestMethod("POST");
+					hu.setRequestProperty("login", "sigmarkarl@gmail.com");
+					hu.setRequestProperty("password", "drsmorc.311");
+					hu.setDoOutput( true );
+					hu.setDoInput( true );
+					
+					//hu.connect();
+					
+					OutputStream os = hu.getOutputStream();
+					os.write( "login=sigmarkarl@gmail.com&password=drsmorc.311".getBytes() );
+					os.close();
+					
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					InputStream is = hu.getInputStream();
+					int r = is.read();
+					while( r != -1 ) {
+						baos.write( r );
+						r = is.read();
+					}
+					is.close();
+					
+					baos.close();
+					System.err.println( baos.toString() );
+					
+					Map<String, List<String>> headerFields = hu.getHeaderFields();
+					String cookiesHeader = hu.getHeaderField("Set-Cookie");
+					
+					/*if(cookiesHeader != null) {
+					    for (String cookie : cookiesHeader) {
+					      HttpCookie.parse(cookie).get(0);
+					      cm.getCookieStore().add(null,cc);
+					    }               
+					}*/
+					
+					List<HttpCookie> lhc = cm.getCookieStore().getCookies();
+					for( HttpCookie hc : lhc ) {
+						System.err.println( hc );
+					}
+					
+					URL fetchurl = new URL("http://genome.jgi.doe.gov/ext-api/downloads/get-directory?organism=ThescoKI2");
+					HttpURLConnection hu2 = (HttpURLConnection)fetchurl.openConnection();
+					
+					/*String cstr = "";
+					for( String hc : cookiesHeader ) { //HttpCookie hc : cm.getCookieStore().getCookies() ) {
+						if( cstr == null ) cstr = hc;
+						else cstr += ","+hc;
+					}
+					
+					hu2.setRequestProperty("Cookie", cstr);*/
+					is = hu2.getInputStream();
+					baos = new ByteArrayOutputStream();
+					r = is.read();
+					while( r != -1 ) {
+						baos.write( r );
+						r = is.read();
+					}
+					is.close();
+					baos.close();
+					
+					String xml = baos.toString();
+					int k = xml.lastIndexOf("url=\"");
+					int u = xml.indexOf("\"", k+5);
+					
+					String subs = xml.substring(k+5, u);
+					
+					URL downloadurl = new URL("http://genome.jgi.doe.gov" + subs);
+					URLConnection uc = downloadurl.openConnection();
+					//Path p = Paths.get( downloadurl.toURI() );
+					
+					Path target = Paths.get("/Users/sigmar/stuff.tar.gz");
+					Files.copy(uc.getInputStream(), target);
+					//System.err.println( baos.toString() );
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 		popup.add( new AbstractAction("NCBI Fetch") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
