@@ -55,7 +55,12 @@ import javax.swing.table.TableModel;
 import netscape.javascript.JSObject;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Contig;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Tegeval;
+import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
 
 public class GeneCompare {
@@ -856,20 +861,24 @@ public class GeneCompare {
             for( Tegeval tv2 : gene2s.tset ) {
                 Sequence seq2 = tv2.getAlignedSequence();
                 
-                int sscore = 0;
-                for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
-                	char lc = seq.getCharAt( i );
-                	char c = Character.toUpperCase( lc );
-                	char lc2 = seq2.getCharAt( i );
-                	char c2 = Character.toUpperCase( lc2 );
-                	
-                	String comb = c+""+c2;
-                	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
-                }
-                if( sscore > score ) score = sscore;
-                
-                if( seq == seq2 && sscore != tscore ) {
-                	//System.err.println();
+                if( seq == null || seq2 == null ) {
+                	System.err.println();	
+                } else {
+	                int sscore = 0;
+	                for( int i = 0; i < Math.min( seq.length(), seq2.length() ); i++ ) {
+	                	char lc = seq.getCharAt( i );
+	                	char c = Character.toUpperCase( lc );
+	                	char lc2 = seq2.getCharAt( i );
+	                	char c2 = Character.toUpperCase( lc2 );
+	                	
+	                	String comb = c+""+c2;
+	                	if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
+	                }
+	                if( sscore > score ) score = sscore;
+	                
+	                if( seq == seq2 && sscore != tscore ) {
+	                	//System.err.println();
+	                }
                 }
             }
             int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );

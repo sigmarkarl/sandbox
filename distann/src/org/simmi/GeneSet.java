@@ -180,10 +180,18 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Cog;
+import org.simmi.shared.Contig;
 import org.simmi.shared.Erm;
+import org.simmi.shared.Function;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Sequences;
 import org.simmi.shared.Serifier;
+import org.simmi.shared.Teg;
+import org.simmi.shared.Tegeval;
+import org.simmi.shared.Teginfo;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
@@ -548,6 +556,9 @@ public class GeneSet extends JApplet {
 					id = lname;
 				} else {
 					int n = lname.indexOf(']', i+1);
+					if( n < 0 || n > lname.length() ) {
+						System.err.println();
+					}
 					contigstr = lname.substring(i+1, n);
 					int u = lname.indexOf(' ');
 					id = lname.substring(0, u);
@@ -562,7 +573,7 @@ public class GeneSet extends JApplet {
 					u = Contig.specCheck( contigstr );
 					
 					if( u == -1 ) {
-						u = contigIndex( contigstr );
+						u = Serifier.contigIndex( contigstr );
 						origin = contigstr.substring(0, u-1);
 						contloc = contigstr.substring(u, contigstr.length());
 					} else {
@@ -762,14 +773,6 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	public static int contigIndex( String lname ) {
-		int i = lname.indexOf("contig");
-		if( i == -1 ) i = lname.indexOf("scaffold");
-		if( i == -1 ) i = lname.lastIndexOf('_')+1;
-		if( i <= 0 ) i = 5;
-		return i;
-	}
-	
 	Set<String>	mu = new HashSet<String>();
 	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
 		//BufferedReader br = new BufferedReader(rd);
@@ -830,7 +833,7 @@ public class GeneSet extends JApplet {
 							/*u = contigstr.indexOf("contig");
 							if( u == -1 ) u = contigstr.indexOf("scaffold");
 							if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
-							u = contigIndex( contigstr );
+							u = Serifier.contigIndex( contigstr );
 							origin = contigstr.substring(0, u-1);
 							contloc = contigstr.substring(u, contigstr.length());
 						} else {
@@ -1073,7 +1076,7 @@ public class GeneSet extends JApplet {
 			String name;
 			int i = lname.lastIndexOf('[');
 			if( i == -1 ) {
-				i = contigIndex( lname );
+				i = Serifier.contigIndex( lname );
 				int u = lname.lastIndexOf('_');
 				contigstr = lname.substring(0, u);
 				origin = lname.substring(0, i-1);
@@ -1093,7 +1096,7 @@ public class GeneSet extends JApplet {
 				u = Contig.specCheck( contigstr );
 				
 				if( u == -1 ) {
-					u = contigIndex( contigstr );
+					u = Serifier.contigIndex( contigstr );
 					/*u = contigstr.indexOf("contig");
 					if( u == -1 ) u = contigstr.indexOf("scaffold");
 					if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
@@ -2328,8 +2331,12 @@ public class GeneSet extends JApplet {
 						}
 					}
 					
-					if (prevset != null)
+					if (prevset != null) {
+						if( trset.isEmpty() ) {
+							System.err.println();
+						}
 						prevset.addAll(trset);
+					}
 					// ret.add( trset );
 				}
 			}
@@ -2400,102 +2407,6 @@ public class GeneSet extends JApplet {
 		br.close();
 
 		System.err.println("hohoho " + trall.size() + "  " + tralli.size());
-
-		return clusterMap;
-	}
-
-	private static Map<Set<String>, Set<Map<String, Set<String>>>> initCluster(Collection<Set<String>> total) {
-		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = new HashMap<Set<String>, Set<Map<String, Set<String>>>>();
-
-		for (Set<String> t : total) {
-			Set<String> teg = new HashSet<String>();
-			for (String e : t) {				
-				int i =  e.lastIndexOf('[');
-				if( i != -1 ) {
-					String str = e.substring(i+1, e.indexOf(']', i+1));
-					
-					String spec;
-					int u = Contig.specCheck( str );
-					
-					if( u == -1 ) {
-						u = contigIndex(str);
-						spec = str.substring( 0, u-1 );
-					} else {
-						int l = str.indexOf('_', u+1);
-						spec = str.substring( 0, l );
-					}
-					/*
-					 * if( joinmap.containsKey( str ) ) { str = joinmap.get(str); }
-					 */
-					teg.add(spec);
-				} else {
-					i = contigIndex(e);
-					/*i = e.indexOf("contig");
-					if( i == -1 ) i = e.indexOf("scaffold");
-					if( i == -1 ) i = e.lastIndexOf('_')+1;*/
-					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
-					
-					teg.add(spec);
-				}
-
-				//species.add(str);
-			}
-
-			Set<Map<String, Set<String>>> setmap;
-			if (clusterMap.containsKey(teg)) {
-				setmap = clusterMap.get(teg);
-			} else {
-				setmap = new HashSet<Map<String, Set<String>>>();
-				clusterMap.put(teg, setmap);
-			}
-
-			Map<String, Set<String>> submap = new HashMap<String, Set<String>>();
-			setmap.add(submap);
-
-			for (String e : t) {
-				//int i = e.indexOf('_');
-				int i =  e.lastIndexOf('[');
-				if( i != -1 ) {
-					//String str = e.substring(0,i);
-					String str = e.substring(i+1, e.indexOf(']', i+1));
-					/*
-					 * if( joinmap.containsKey( str ) ) { str = joinmap.get(str); }
-					 */
-					
-					String spec;
-					int u = Contig.specCheck( str );
-					
-					if( u == -1 ) {
-						u = contigIndex( str );
-						spec = str.substring( 0, u-1 );
-					} else {
-						int l = str.indexOf('_', u+1);
-						spec = str.substring( 0, l );
-					}
-	
-					Set<String> set;
-					if (submap.containsKey(spec)) {
-						set = submap.get(spec);
-					} else {
-						set = new HashSet<String>();
-						submap.put(spec, set);
-					}
-					set.add(e);
-				} else {
-					i = contigIndex(e);
-					String spec = i == -1 ? "Unknown" : e.substring(0, i-1);
-					
-					Set<String> set;
-					if (submap.containsKey(spec)) {
-						set = submap.get(spec);
-					} else {
-						set = new HashSet<String>();
-						submap.put(spec, set);
-					}
-					set.add(e);
-				}
-			}
-		}
 
 		return clusterMap;
 	}
@@ -2579,7 +2490,7 @@ public class GeneSet extends JApplet {
 		//Set<String> species = new TreeSet<String>();
 		List<Set<String>> total = readBlastList(filename); // "/home/sigmar/blastcluster.txt"
 															// );
-		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total);
+		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = Serifier.initClusterNew(total, null, null);
 
 		if (writeSimplifiedCluster != null)
 			writeSimplifiedCluster(writeSimplifiedCluster, clusterMap); // "/home/sigmar/burb2.txt",
@@ -2604,7 +2515,7 @@ public class GeneSet extends JApplet {
 			BufferedReader fis = Files.newBufferedReader( ff );
 			serifier.joinBlastSets(fis, writeSimplifiedBlast, union, total, 0.0);
 		}
-		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total);
+		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = Serifier.initClusterNew(total, null, null);
 
 		if (writeSimplifiedCluster != null)
 			writeSimplifiedCluster(writeSimplifiedCluster, clusterMap); // "/home/sigmar/burb2.txt",
@@ -8350,7 +8261,7 @@ public class GeneSet extends JApplet {
 									else name = "Thermus_" + nspec.substring(0,firstDigitLocation) + "_" + nspec.substring(firstDigitLocation);
 								}*/
 								
-								int k = contigIndex(name);
+								int k = Serifier.contigIndex(name);
 								if( k == -1 ) {
 									name = spec;
 								} else {
@@ -12104,7 +12015,7 @@ public class GeneSet extends JApplet {
 				int u = Contig.specCheck( cont );
 				
 				if( u == -1 ) {
-					u = contigIndex(cont);
+					u = Serifier.contigIndex(cont);
 					spec = cont.substring( 0, u-1 );
 					contshort = cont.substring( u, cont.length() );
 				} else {
@@ -12448,7 +12359,7 @@ public class GeneSet extends JApplet {
 	Map<String, Set<String>> 				pathwaymap = new TreeMap<String, Set<String>>();
 	Map<String, Set<String>> 				pathwaykomap = new TreeMap<String, Set<String>>();
 	List<String> 							corrInd;
-	List<GeneGroup>							allgenegroups;
+	public List<GeneGroup>							allgenegroups;
 	Map<Set<String>,List<GeneGroup>> 		ggSpecMap;
 	Map<String,Set<GeneGroup>>				specGroupMap;
 	List<String>							specList = new ArrayList<String>();
@@ -13086,6 +12997,9 @@ public class GeneSet extends JApplet {
 				gg.setGroupCount( val );
 				//gg.setGroupGeneCount( gs.size() );
 				
+				if( gset.size() == 0 ) {
+					System.err.println();
+				}
 				for (Gene g : gset) {
 					g.setGeneGroup( gg );
 					/*g.groupIdx = i;
@@ -13245,6 +13159,10 @@ public class GeneSet extends JApplet {
 			specGroupMap = new HashMap<String,Set<GeneGroup>>();
 			int ind = 0;
 			for( GeneGroup gg : ggList ) {
+				/*if( gg.genes.size() == 0 ) {
+					System.err.println();
+				}*/
+				
 				for( String spec : gg.species.keySet() ) {
 					Set<GeneGroup>	ggset;
 					if( !specGroupMap.containsKey( spec ) ) {
@@ -13784,7 +13702,12 @@ public class GeneSet extends JApplet {
 				specombo.addItem(sp);
 			}
 			
-			if( uclusterlist != null ) clusterMap = initCluster(uclusterlist);
+			if( uclusterlist != null ) clusterMap = Serifier.initClusterNew(uclusterlist, null, null);
+			
+			System.err.println( "meem " + uclusterlist.size() );
+			for( Set<String> ss : clusterMap.keySet() ) {
+				System.err.println( ss.size() );
+			}
 			
 			//table.tableChanged( new TableModelEvent( table.getModel() ) );
 			//ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
@@ -14461,7 +14384,7 @@ public class GeneSet extends JApplet {
 						Path queryPath = Files.createTempFile("all", ".fsa");
 						BufferedWriter qbw = Files.newBufferedWriter(queryPath);
 						
-						Path dbPath = Files.createTempFile("all", ".fsa");
+						Path dbPath = Files.createTempFile("db", ".fsa");
 						BufferedWriter bw = Files.newBufferedWriter(dbPath);
 						for( Gene g : genelist ) {
 							if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
@@ -14627,6 +14550,10 @@ public class GeneSet extends JApplet {
 					
 					Map<String,String>	idspec = new HashMap<String,String>();
 					for( String idstr : refmap.keySet() ) {
+						if( idstr.contains(" ") ) {
+							System.err.println( "coooonnnnnni " + idstr );
+						}
+						
 						Gene gene = refmap.get( idstr );
 						idspec.put(idstr, gene.getSpecies());
 					}
@@ -14638,18 +14565,29 @@ public class GeneSet extends JApplet {
 						zipuri = URI.create( uristr );
 						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 						
-						List<Set<String>> cluster = new ArrayList<Set<String>>();
+						List<Set<String>> cluster = new ArrayList<Set<String>>( uclusterlist );
 						/*for( Set<String> specs : clusterMap.keySet() ) {
 							Set<Map<String,Set<String>>> uset = clusterMap.get( specs );
 							for( Map<String,Set<String>> umap : uset ) {
 								for( String val : umap.keySet() ) {
 									Set<String> sset = umap.get(val);
+									
+									/*Set<String> ss = new HashSet<String>();
+									for( String str : sset ) {
+										int k = str.indexOf(' ');
+										if( k == -1 ) k = str.length();
+										ss.add( str.substring(0,k) );
+										/*if( str.contains(" ") ) {
+											System.err.println( "coooonnnnnni2 " + str );
+										}*
+									}*
 									cluster.add( sset );
 								}
 							}
 						}*/
 						
-						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len, idspec, cluster);
+						//p = null;
+						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len, idspec, cluster, refmap);
 						
 						System.err.println( cluster.get(0) );
 						if( uclusterlist != null ) System.err.println( uclusterlist.get(0) );
