@@ -24,6 +24,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Contig;
 
 public class CodingRegions {
 	public void coderegPlot( GeneSet geneset, Container comp ) {
