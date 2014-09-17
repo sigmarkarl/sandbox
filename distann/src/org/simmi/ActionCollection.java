@@ -80,9 +80,16 @@ import netscape.javascript.JSObject;
 
 import org.simmi.GeneSet.StackBarData;
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Cog;
+import org.simmi.shared.Contig;
+import org.simmi.shared.Function;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
 import org.simmi.shared.PrincipleComponentAnalysis;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Serifier;
+import org.simmi.shared.Tegeval;
+import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
 
 import flobb.ChatServer;
