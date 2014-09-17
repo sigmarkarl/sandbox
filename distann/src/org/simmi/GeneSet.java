@@ -556,6 +556,9 @@ public class GeneSet extends JApplet {
 					id = lname;
 				} else {
 					int n = lname.indexOf(']', i+1);
+					if( n < 0 || n > lname.length() ) {
+						System.err.println();
+					}
 					contigstr = lname.substring(i+1, n);
 					int u = lname.indexOf(' ');
 					id = lname.substring(0, u);
@@ -2487,7 +2490,7 @@ public class GeneSet extends JApplet {
 		//Set<String> species = new TreeSet<String>();
 		List<Set<String>> total = readBlastList(filename); // "/home/sigmar/blastcluster.txt"
 															// );
-		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total);
+		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = Serifier.initClusterNew(total, null, null);
 
 		if (writeSimplifiedCluster != null)
 			writeSimplifiedCluster(writeSimplifiedCluster, clusterMap); // "/home/sigmar/burb2.txt",
@@ -2512,7 +2515,7 @@ public class GeneSet extends JApplet {
 			BufferedReader fis = Files.newBufferedReader( ff );
 			serifier.joinBlastSets(fis, writeSimplifiedBlast, union, total, 0.0);
 		}
-		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = initCluster(total);
+		Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap = Serifier.initClusterNew(total, null, null);
 
 		if (writeSimplifiedCluster != null)
 			writeSimplifiedCluster(writeSimplifiedCluster, clusterMap); // "/home/sigmar/burb2.txt",
@@ -13699,7 +13702,12 @@ public class GeneSet extends JApplet {
 				specombo.addItem(sp);
 			}
 			
-			if( uclusterlist != null ) clusterMap = initCluster(uclusterlist);
+			if( uclusterlist != null ) clusterMap = Serifier.initClusterNew(uclusterlist, null, null);
+			
+			System.err.println( "meem " + uclusterlist.size() );
+			for( Set<String> ss : clusterMap.keySet() ) {
+				System.err.println( ss.size() );
+			}
 			
 			//table.tableChanged( new TableModelEvent( table.getModel() ) );
 			//ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
@@ -14557,8 +14565,8 @@ public class GeneSet extends JApplet {
 						zipuri = URI.create( uristr );
 						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 						
-						List<Set<String>> cluster = new ArrayList<Set<String>>();
-						for( Set<String> specs : clusterMap.keySet() ) {
+						List<Set<String>> cluster = new ArrayList<Set<String>>( uclusterlist );
+						/*for( Set<String> specs : clusterMap.keySet() ) {
 							Set<Map<String,Set<String>>> uset = clusterMap.get( specs );
 							for( Map<String,Set<String>> umap : uset ) {
 								for( String val : umap.keySet() ) {
@@ -14572,14 +14580,14 @@ public class GeneSet extends JApplet {
 										/*if( str.contains(" ") ) {
 											System.err.println( "coooonnnnnni2 " + str );
 										}*
-									}*/
+									}*
 									cluster.add( sset );
 								}
 							}
-						}
+						}*/
 						
-						p = null;
-						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len, idspec, cluster);
+						//p = null;
+						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len, idspec, cluster, refmap);
 						
 						System.err.println( cluster.get(0) );
 						if( uclusterlist != null ) System.err.println( uclusterlist.get(0) );
