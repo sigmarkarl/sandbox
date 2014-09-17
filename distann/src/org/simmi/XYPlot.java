@@ -43,6 +43,10 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Contig;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Tegeval;
 
 public class XYPlot {
 	List<Contig>	spec1Conts = new ArrayList<Contig>();
