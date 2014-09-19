@@ -2169,6 +2169,7 @@ public class Neighbour {
 			final JMenuItem	showselecteddnaseqs = new JMenuItem("Selected DNA sequences");
 			final JMenuItem	showflankingseqs = new JMenuItem("Show flanking sequences");
 			final JMenuItem	showbackflankingseqs = new JMenuItem("Show back flanking sequences");
+			final JMenuItem	showareaseqs = new JMenuItem("Show area");
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -2299,6 +2300,25 @@ public class Neighbour {
 					geneset.showSomeSequences( comp, lseq );
 				}
 			});
+			showareaseqs.setAction( new AbstractAction("Show area") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					
+					List<Sequence> lseq = new ArrayList<Sequence>();
+					for( GeneGroup gg : selectedGenesGroups ) {
+						List<Tegeval> ltv = gg.getTegevals();
+						for( Tegeval tv : ltv ) {
+							//int start = Math.max( 0, tv.start-3000 );
+							//int stop = Math.min( tv.getContshort().sb.length(), tv.stop+3000 );
+							Sequence seq = new Sequence( tv.getSpecies(), null );
+							seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
+							lseq.add( seq );
+						}
+					}
+					geneset.showSomeSequences( comp, lseq );
+				}
+			});
+			
 			seqsmenu.add( showseqs );
 			seqsmenu.add( showdnaseqs );
 			seqsmenu.addSeparator();
@@ -2306,6 +2326,8 @@ public class Neighbour {
 			seqsmenu.add( showselecteddnaseqs );
 			seqsmenu.add( showflankingseqs );
 			seqsmenu.add( showbackflankingseqs );
+			seqsmenu.addSeparator();
+			seqsmenu.add( showareaseqs );
 			
 			sequenceView.setAction( a );
 			blocksView.setAction( a );
