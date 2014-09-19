@@ -204,6 +204,11 @@ public class ActionCollection {
 		fw.write("</tr><tr><td>DNA, total number of bases</td>");
 		for( String spec : selspecs) {
 			List<Contig> lcont = speccontigMap.get(spec);
+			
+			for( Contig c : lcont ) {
+				System.err.println( c );
+			}
+			
 			int len = 0;
 			if( lcont != null )
 			for( Contig ct : lcont ) {
