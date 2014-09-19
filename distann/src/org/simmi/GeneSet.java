@@ -380,9 +380,6 @@ public class GeneSet extends JApplet {
 					k = spec.indexOf('_', k+1);
 				}
 				if( k != -1 ) spec = spec.substring(0, k);
-				if( !spec.contains("_") ) {
-					System.err.println();
-				}
 				
 				i = val.indexOf('[');
 				n = val.indexOf(']', i+1);
@@ -506,8 +503,15 @@ public class GeneSet extends JApplet {
 	}
 	
 	private void loci2aaseq( List<Set<String>> lclust, Map<String,Gene> refmap, Map<String,String> designations ) {
+		System.err.println( lclust.size() );
+		int count = 0;
+		
 		for( Set<String> clust : lclust ) {
 			for( String line : clust ) {
+				if( line.contains("scotoductus2101_scaffold00007") ) {
+					count++;
+				}
+				
 				String cont = line;
 				String[] split = cont.split("#");
 				String lname = split[0].trim().replace(".fna", "");
@@ -544,11 +548,9 @@ public class GeneSet extends JApplet {
 					if( i == -1 ) {
 						i = lname.indexOf("scaffold");
 					}
-					if( i == -1 ) i = 5;
+					if( i == -1 && lname.length() > 5 && lname.startsWith("J") && lname.charAt(4) == '0' ) i = 5;
 					int u = lname.lastIndexOf('_');
-					if( u == -1 ) {
-						System.err.println();
-					}
+					
 					contigstr = lname.substring(0, u);
 					origin = lname.substring(0, i-1);
 					contloc = lname.substring(i, lname.length());
@@ -556,9 +558,9 @@ public class GeneSet extends JApplet {
 					id = lname;
 				} else {
 					int n = lname.indexOf(']', i+1);
-					if( n < 0 || n > lname.length() ) {
+					/*if( n < 0 || n > lname.length() ) {
 						System.err.println();
-					}
+					}*/
 					contigstr = lname.substring(i+1, n);
 					int u = lname.indexOf(' ');
 					id = lname.substring(0, u);
@@ -618,12 +620,8 @@ public class GeneSet extends JApplet {
 					if( n != -1 ) addname = ":" + map.substring(l+1,n).trim();
 					if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 				} else {
-					System.err.print( id );
-					System.err.println();
-				}
-				
-				if( contigstr.contains("MAT4696_contig00270") ) {
-					System.err.println();
+					//System.err.print( id );
+					//System.err.println();
 				}
 				
 				if( !refmap.containsKey(id) ) {
@@ -712,7 +710,8 @@ public class GeneSet extends JApplet {
 					}
 					
 					g.tegeval.init( lname, contig, contloc, start, stop, dir );
-					g.tegeval.name = line;
+					contig.add( g.tegeval );
+					//g.tegeval.name = line;
 					//ac.setName( lname );
 					//tv.setAlignedSequence( ac );
 					aas.put( lname, g.tegeval );
@@ -771,6 +770,8 @@ public class GeneSet extends JApplet {
 				}
 			}
 		}
+		System.err.println( count );
+		System.err.println();
 	}
 	
 	Set<String>	mu = new HashSet<String>();
@@ -797,7 +798,7 @@ public class GeneSet extends JApplet {
 					String contigstr = null;
 					String contloc = null;
 					
-					String origin;
+					String origin = null;
 					String id;
 					String name;
 					int i = lname.lastIndexOf('[');
@@ -806,14 +807,13 @@ public class GeneSet extends JApplet {
 						if( i == -1 ) {
 							i = lname.indexOf("scaffold");
 						}
-						if( i == -1 ) i = 5;
+						//if( i == -1 ) i = 5;
 						int u = lname.lastIndexOf('_');
-						if( u == -1 ) {
-							System.err.println();
+						if( u != -1 ) contigstr = lname.substring(0, u);
+						if( i != -1 ) {
+							origin = lname.substring(0, i-1);
+							contloc = lname.substring(i, lname.length());
 						}
-						contigstr = lname.substring(0, u);
-						origin = lname.substring(0, i-1);
-						contloc = lname.substring(i, lname.length());
 						name = lname;
 						id = lname;
 					} else {
@@ -898,16 +898,18 @@ public class GeneSet extends JApplet {
 						if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 					}
 					
-					if( contigstr.contains("MAT4696_contig00270") ) {
+					/*if( contigstr.contains("MAT4696_contig00270") ) {
 						System.err.println();
-					}
+					}*/
 					
 					if( !refmap.containsKey(id) ) {
-						Contig contig;
-						if( contigmap.containsKey( contigstr ) ) {
-							contig = contigmap.get( contigstr );
-						} else {
-							 contig = new Contig( contigstr );
+						Contig contig = null;
+						if( contigstr != null ) {
+							if( contigmap.containsKey( contigstr ) ) {
+								contig = contigmap.get( contigstr );
+							} else {
+								 contig = new Contig( contigstr );
+							}
 						}
 						
 						tv.init( lname, contig, contloc, start, stop, dir );
@@ -917,7 +919,7 @@ public class GeneSet extends JApplet {
 						aas.put( lname, tv );
 						
 						//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
-						contig.add( tv );
+						if( contig != null ) contig.add( tv );
 						
 						String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 						Gene gene = new Gene( null, id, newname, origin );
@@ -1034,6 +1036,11 @@ public class GeneSet extends JApplet {
 				String cont = line.substring(1) + "";
 				String[] split = cont.split("#");
 				lname = split[0].trim().replace(".fna", "");
+				
+				/*if( !lname.contains("_") ) {
+					System.err.println();
+				}*/
+				
 				prevline = line;
 				
 				boolean succ = false;
@@ -1071,16 +1078,21 @@ public class GeneSet extends JApplet {
 			String contigstr = null;
 			String contloc = null;
 			
-			String origin;
+			String origin = null;
 			String id;
 			String name;
 			int i = lname.lastIndexOf('[');
 			if( i == -1 ) {
 				i = Serifier.contigIndex( lname );
 				int u = lname.lastIndexOf('_');
-				contigstr = lname.substring(0, u);
-				origin = lname.substring(0, i-1);
-				contloc = lname.substring(i, lname.length());
+				if( u != -1 ) contigstr = lname.substring(0, u);
+				if( i > 0 ) {
+					origin = lname.substring(0, i-1);
+					contloc = lname.substring(i, lname.length());
+				}/* else {
+					System.err.println( lname );
+					System.err.println();
+				}*/
 				name = lname;
 				id = lname;
 			} else {
@@ -1140,18 +1152,20 @@ public class GeneSet extends JApplet {
 			}
 			
 			if( !refmap.containsKey(id) ) {
-				Contig contig;
-				if( contigmap.containsKey( contigstr ) ) {
-					contig = contigmap.get( contigstr );
-				} else {
-					 contig = new Contig( contigstr );
+				Contig contig = null;
+				if( contigstr != null ) {
+					if( contigmap.containsKey( contigstr ) ) {
+						contig = contigmap.get( contigstr );
+					} else {
+						 contig = new Contig( contigstr );
+					}
 				}
 				tv.init( lname, contig, contloc, start, stop, dir );
 				tv.name = prevline.substring(1);
 				//tv.setAlignedSequence( ac );
 				aas.put(lname, tv );
 				
-				contig.add( tv );
+				if( contig != null ) contig.add( tv );
 				// aass.add( new Aas(name, ac, start, stop, dir) );
 				
 				String newname = addname.length() == 0 ? name : addname.substring(1);
@@ -1183,8 +1197,8 @@ public class GeneSet extends JApplet {
 		 * System.gc();
 		 */
 
-		System.err.println( refmap.size() );
-		System.err.println();
+		//System.err.println( refmap.size() );
+		//System.err.println();
 		// Arrays.sort( aas );
 	}
 	
@@ -1205,7 +1219,6 @@ public class GeneSet extends JApplet {
 			if (line.startsWith(">")) {				
 				if( size > 0 ) {
 					Contig contig = new Contig( name, ac );
-					contigmap.put( name, contig );
 					
 					String spec = contig.getSpec();
 					List<Contig>	ctlist;
@@ -1215,8 +1228,19 @@ public class GeneSet extends JApplet {
 						ctlist = new ArrayList<Contig>();
 						speccontigMap.put( spec, ctlist );
 					}
-					ctlist.add( contig );
-					contig.partof = ctlist;
+					
+					boolean cont = false;
+					for( Contig c : ctlist ) {
+						if( c.name.equals(name) ) {
+							cont = true;
+							break;
+						}
+					}
+					if( !cont ) {
+						contigmap.put( name, contig );
+						ctlist.add( contig );
+						contig.partof = ctlist;
+					}
 				}
 
 				ac = new StringBuilder();
@@ -1250,14 +1274,25 @@ public class GeneSet extends JApplet {
 				ctlist = new ArrayList<Contig>();
 				speccontigMap.put( spec, ctlist );
 			}
-			ctlist.add( contig );
-			contig.partof = ctlist;
+			
+			boolean cont = false;
+			for( Contig c : ctlist ) {
+				if( c.name.equals(name) ) {
+					cont = true;
+					break;
+				}
+			}
+			if( !cont ) {
+				contigmap.put( name, contig );
+				ctlist.add( contig );
+				contig.partof = ctlist;
+			}
 		}
 		
 		for( String spec : speccontigMap.keySet() ) {
 			List<Contig> ctg = speccontigMap.get(spec);
 			
-			System.err.println( spec + " " + ctg.size() );
+			//System.err.println( spec + " " + ctg.size() );
 			
 			if( ctg.size() < 4 && ctg.size() > 1 ) {
 				Contig chrom = null;
@@ -1749,9 +1784,9 @@ public class GeneSet extends JApplet {
 									Set<String> hset = sm.get(spec1);
 									if( hset != null ) {
 										tototwoc += hset.size();
-									} else {
+									}/* else {
 										System.err.println();
-									}
+									}*/
 								}
 
 								if (set.contains(spec2)) {
@@ -2332,9 +2367,9 @@ public class GeneSet extends JApplet {
 					}
 					
 					if (prevset != null) {
-						if( trset.isEmpty() ) {
+						/*if( trset.isEmpty() ) {
 							System.err.println();
-						}
+						}*/
 						prevset.addAll(trset);
 					}
 					// ret.add( trset );
@@ -2553,11 +2588,11 @@ public class GeneSet extends JApplet {
 		}
 
 		Collections.sort(sortmap);
-		for (StrSort ss : sortmap) {
+		/*for (StrSort ss : sortmap) {
 			System.err.println(ss.s);
 		}
 		System.err.println();
-		System.err.println();
+		System.err.println();*/
 
 		next(clusterMap);
 
@@ -12624,7 +12659,7 @@ public class GeneSet extends JApplet {
 					@Override
 					public boolean test(Path t) {
 						String filename = t.getFileName().toString();
-						System.err.println("filename " + filename);
+						//System.err.println("filename " + filename);
 						boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
 						return b;
 					}
@@ -12657,7 +12692,7 @@ public class GeneSet extends JApplet {
 					@Override
 					public boolean test(Path t) {
 						String filename = t.getFileName().toString();
-						System.err.println("filename " + filename);
+						//System.err.println("filename " + filename);
 						boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
 						return b;
 					}
@@ -13171,10 +13206,10 @@ public class GeneSet extends JApplet {
 					} else ggset = specGroupMap.get( spec );
 					ggset.add( gg );
 				}
-				if( ind == 4049 ) {
+				/*if( ind == 4049 ) {
 					System.err.println( gg.species.keySet() );
 					System.err.println();
-				}
+				}*/
 				gg.setIndex( ind++ );
 			}
 			allgenegroups = ggList;
@@ -13285,6 +13320,12 @@ public class GeneSet extends JApplet {
 				}*/
 			}
 			
+			System.err.println("starting ......................................");
+			for( String str : speccontigMap.keySet() ) {
+				List<Contig> cts = speccontigMap.get(str);
+				System.err.println( str + "  " + cts.size() );
+			}
+			
 			nf = zipfilesystem.getPath("/contigorder.txt");
 			//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
 			if( Files.exists( nf ) ) {
@@ -13306,7 +13347,9 @@ public class GeneSet extends JApplet {
 						Contig ctg = contigmap.get( ctgn );
 						
 						if( ctg != null ) {
-							List<Contig> splct = speccontigMap.get( ctg.getSpec() );
+							String spec = ctg.getSpec();
+							
+							List<Contig> splct = speccontigMap.get( spec );
 							
 							if( c == '\\' ) ctg.setReverse( true );
 							if( prevctg != null ) {
@@ -13356,6 +13399,13 @@ public class GeneSet extends JApplet {
 				}
 				br.close();
 			}
+			
+			System.err.println("starting ......................................");
+			for( String str : speccontigMap.keySet() ) {
+				List<Contig> cts = speccontigMap.get(str);
+				System.err.println( str + "  " + cts.size() );
+			}
+			System.err.println("ending ......................................");
 			
 			/*FileWriter fw = null; // new FileWriter("all_short.blastout");
 			//is = GeneSet.class.getResourceAsStream("/all_short.blastout");
@@ -13702,13 +13752,7 @@ public class GeneSet extends JApplet {
 				specombo.addItem(sp);
 			}
 			
-			if( uclusterlist != null ) clusterMap = Serifier.initClusterNew(uclusterlist, null, null);
-			
-			System.err.println( "meem " + uclusterlist.size() );
-			for( Set<String> ss : clusterMap.keySet() ) {
-				System.err.println( ss.size() );
-			}
-			
+			if( uclusterlist != null ) clusterMap = Serifier.initClusterNew(uclusterlist, null, null);	
 			//table.tableChanged( new TableModelEvent( table.getModel() ) );
 			//ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
 			table.setModel( nullmodel );
