@@ -2407,7 +2407,7 @@ public class SerifyApplet extends JApplet {
 													
 													Path thefile = cd.resolve(fname+".gbk");
 													if( !Files.exists(thefile) ) {
-														Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.WRITE );
+														Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
 														
 														for( FTPFile newftpfile : newfiles ) {
 															if( interrupted ) break;
