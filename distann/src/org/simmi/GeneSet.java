@@ -14609,7 +14609,7 @@ public class GeneSet extends JApplet {
 						zipuri = URI.create( uristr );
 						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 						
-						List<Set<String>> cluster = new ArrayList<Set<String>>( uclusterlist );
+						List<Set<String>> cluster = uclusterlist == null ? new ArrayList<Set<String>>() : new ArrayList<Set<String>>( uclusterlist );
 						/*for( Set<String> specs : clusterMap.keySet() ) {
 							Set<Map<String,Set<String>>> uset = clusterMap.get( specs );
 							for( Map<String,Set<String>> umap : uset ) {
