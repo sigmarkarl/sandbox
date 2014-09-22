@@ -442,7 +442,7 @@ public class SyntGrad {
 	}
 	
 	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s, int w, int h ) {
-		drawImage(geneset, g2, spec1, contigs1, spec2s, w, h, 3.0);
+		drawImage(geneset, g2, spec1, contigs1, spec2s, w, h, 1.0);
 	}
 	
 	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s, int w, int h, double radscale ) {
