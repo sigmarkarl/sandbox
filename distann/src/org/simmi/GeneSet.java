@@ -835,6 +835,9 @@ public class GeneSet extends JApplet {
 							if( u == -1 ) u = contigstr.indexOf("scaffold");
 							if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
 							u = Serifier.contigIndex( contigstr );
+							if( u == 0 ) {
+								System.err.println();
+							}
 							origin = contigstr.substring(0, u-1);
 							contloc = contigstr.substring(u, contigstr.length());
 						} else {
