@@ -2561,9 +2561,9 @@ public class ActionCollection {
 				final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
 				
 				final GeneGroup	gg;
-				int r = table.getSelectedRow();
+				int r = geneset.table.getSelectedRow();
 				int i = -1;
-				if( r != -1 ) i = table.convertRowIndexToModel( r );
+				if( r != -1 ) i = geneset.table.convertRowIndexToModel( r );
 				if( i != -1 ) {
 					gg = geneset.allgenegroups.get( i );
 				} else gg = null;
