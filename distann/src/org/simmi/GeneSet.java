@@ -1608,8 +1608,8 @@ public class GeneSet extends JApplet {
 					int wx = corrInd.indexOf( spec2 );
 					double ani = 1.0-matrix[ w*specset.size()+wx ];
 					
-					float cval = Math.min( 0.9f, Math.max( 0.0f,4.2f - (float)(4.2*ani) ) );
-					//float cval = Math.min( 0.9f, Math.max( 0.0f, 1.2f - (float)(1.2*ani) ) );
+					//float cval = Math.min( 0.9f, Math.max( 0.0f,4.2f - (float)(4.2*ani) ) );
+					float cval = Math.min( 0.9f, Math.max( 0.0f, 1.2f - (float)(1.2*ani) ) );
 					System.err.println( cval + "  " + ani );
 					Color color = new Color( cval, cval, cval );
 					g2.setColor( color );
@@ -8022,63 +8022,67 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
+	boolean isthermus = false;
 	String nameFix( String selspec ) {
 		String ret = selspec;
-		if( selspec.contains("Rhodothermus_") ) {
-			selspec = selspec.replace("Rhodothermus_", "R.");
-			int i = selspec.indexOf("_uid");
-			if( i != -1 ) {
-				ret = selspec.substring(0,i);
-			} else {
-				i = selspec.indexOf('_');
+		if( isthermus ) {
+			if( selspec.contains("Rhodothermus_") ) {
+				selspec = selspec.replace("Rhodothermus_", "R.");
+				int i = selspec.indexOf("_uid");
 				if( i != -1 ) {
-					i = selspec.indexOf('_', i+1);
+					ret = selspec.substring(0,i);
+				} else {
+					i = selspec.indexOf('_');
 					if( i != -1 ) {
 						i = selspec.indexOf('_', i+1);
 						if( i != -1 ) {
-							i = selspec.lastIndexOf('_', i+1);
-							if( i != -1 ) ret = selspec.substring(0, i);
+							i = selspec.indexOf('_', i+1);
+							if( i != -1 ) {
+								i = selspec.lastIndexOf('_', i+1);
+								if( i != -1 ) ret = selspec.substring(0, i);
+							}
 						}
 					}
 				}
-			}
-		} else if( selspec.contains("hermus") ) {			
-			int i = selspec.indexOf("_uid");
-			if( i != -1 ) {
-				ret = selspec.substring(0,i);
-			} else if(selspec.contains("DSM")) {
-				int k = selspec.indexOf("DSM");
-				k = selspec.indexOf('_', k+4);
-				if( k == -1 ) k = selspec.length();
-				ret = selspec.substring(0,k);
-			} else {
-				
-				if( selspec.equals("Thermus_4884") ) ret = "Thermus_aquaticus_4884";
-				else if( selspec.equals("Thermus_2121") ) ret = "Thermus_scotoductus_2121";
-				
-				i = selspec.indexOf('_');
+			} else if( selspec.contains("hermus") ) {			
+				int i = selspec.indexOf("_uid");
 				if( i != -1 ) {
-					i = selspec.indexOf('_', i+1);
+					ret = selspec.substring(0,i);
+				} else if(selspec.contains("DSM")) {
+					int k = selspec.indexOf("DSM");
+					k = selspec.indexOf('_', k+4);
+					if( k == -1 ) k = selspec.length();
+					ret = selspec.substring(0,k);
+				} else {
+					
+					if( selspec.equals("Thermus_4884") ) ret = "Thermus_aquaticus_4884";
+					else if( selspec.equals("Thermus_2121") ) ret = "Thermus_scotoductus_2121";
+					
+					i = selspec.indexOf('_');
 					if( i != -1 ) {
 						i = selspec.indexOf('_', i+1);
 						if( i != -1 ) {
-							i = selspec.lastIndexOf('_', i+1);
-							if( i != -1 ) ret = selspec.substring(0, i);
+							i = selspec.indexOf('_', i+1);
+							if( i != -1 ) {
+								i = selspec.lastIndexOf('_', i+1);
+								if( i != -1 ) ret = selspec.substring(0, i);
+							}
 						}
 					}
 				}
+			} else if( selspec.contains("GenBank") || selspec.contains("MAT") ) {
+				
+			} else {
+				if( selspec.contains("islandicus") ) ret = "Thermus_islandicus_3838";
+				
+				Matcher m = Pattern.compile("\\d").matcher(selspec); 
+				int firstDigitLocation = m.find() ? m.start() : 0;
+				if( firstDigitLocation == 0 ) ret = "Thermus_" + selspec;
+				else ret = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
 			}
-		} else if( selspec.contains("GenBank") || selspec.contains("MAT") ) {
-			
-		} else {
-			if( selspec.contains("islandicus") ) ret = "Thermus_islandicus_3838";
-			
-			Matcher m = Pattern.compile("\\d").matcher(selspec); 
-			int firstDigitLocation = m.find() ? m.start() : 0;
-			if( firstDigitLocation == 0 ) ret = "Thermus_" + selspec;
-			else ret = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
+			return ret.replace("Thermus_", "T.");
 		}
-		return ret.replace("Thermus_", "T.");
+		return ret;
 	}
 	
 	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs ) {
@@ -14751,6 +14755,40 @@ public class GeneSet extends JApplet {
 				}
 			}
 		};
+		AbstractAction	cogblastaction = new AbstractAction("Cog blast") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					Set<String> species = getSelspec(null, getSpecies(), null);
+					
+					StringBuilder sb = new StringBuilder();
+					Path dbPath = Paths.get("/data/Cog");
+					for( Gene g : genelist ) {
+						if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
+							if( species.contains( g.getSpecies() ) ) {
+								StringBuilder gs = g.tegeval.getProteinSequence();
+								sb.append(">" + g.id + "\n");
+								for (int i = 0; i < gs.length(); i += 70) {
+									sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+								}
+							}
+						}
+					}
+					
+					Map<String,String> env = new HashMap<String,String>();
+					env.put("create", "true");
+					String uristr = "jar:" + zippath.toUri();
+					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					Path resPath = zipfilesystem.getPath("/cog.blastout");
+					
+					NativeRun nrun = new NativeRun();
+					SerifyApplet.rpsBlastRun(nrun, sb, dbPath, resPath, "prot", "", null, true, zipfilesystem);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		};
 		
 		edit.add( clustergenes );
 		edit.add( alignclusters );
@@ -14761,6 +14799,8 @@ public class GeneSet extends JApplet {
 		edit.add( importcazyaction );
 		edit.add( functionmappingaction );
 		edit.add( importidmappingaction );
+		edit.addSeparator();
+		edit.add( cogblastaction );
 		
 		JMenu		view = new JMenu("View");
 		gb = new JRadioButtonMenuItem( new AbstractAction("Genes") {
