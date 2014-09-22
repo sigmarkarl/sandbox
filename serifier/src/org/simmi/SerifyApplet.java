@@ -110,6 +110,7 @@ import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
 import org.simmi.shared.GBK2AminoFasta;
 import org.simmi.shared.Sequence;
@@ -2146,14 +2147,17 @@ public class SerifyApplet extends JApplet {
 				whole.setSelected( true );
 				final JCheckBox	draft = new JCheckBox("draft");
 				draft.setSelected( true );
+				final JCheckBox	plasmid = new JCheckBox("plasmid");
+				plasmid.setSelected( true );
 				final JCheckBox	phage = new JCheckBox("phage");
 				phage.setSelected( true );
+				
 				final JTextArea ta = new JTextArea();
 				JScrollPane	sp = new JScrollPane( ta );
 				Dimension dim = new Dimension(400,300);
 				sp.setPreferredSize( dim );
 				sp.setSize( dim );
-				JOptionPane.showMessageDialog(c, new Object[] {whole, draft, phage,"Filter term",sp});
+				JOptionPane.showMessageDialog(c, new Object[] {whole, draft, plasmid, phage, "Filter term",sp});
 				final Map<String,String> searchmap = new HashMap<String,String>();
 				String searchstr = ta.getText();
 				String[] split = searchstr.split("\n");
@@ -2328,7 +2332,6 @@ public class SerifyApplet extends JApplet {
 									
 									if( draft.isSelected() ) {
 										String subdir = "/genomes/Bacteria_DRAFT/";
-										FileSystemManager fsManager = VFS.getManager();
 										byte[] bb = new byte[30000000];
 										ftp.cwd( subdir );
 										FTPFile[] files2 = ftp.listFiles();
@@ -2364,10 +2367,10 @@ public class SerifyApplet extends JApplet {
 																GZIPInputStream gis = new GZIPInputStream( is );
 																
 																//File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
-																Path file = uhome.resolve("temp.tar"); //Files.createTempFile("erm", ".tar"); //cd.resolve(fname.substring(0,fname.length()-4)+".tar");
-																if( !Files.exists(file) && gis != null ) {
+																Path file = /*uhome.resolve("temp.tar");*/ Files.createTempFile("erm", ".tar"); //cd.resolve(fname.substring(0,fname.length()-4)+".tar");
+																if( gis != null ) {
 																	int r = gis.read(bb);
-																	OutputStream tfos = Files.newOutputStream( file, StandardOpenOption.CREATE );
+																	OutputStream tfos = Files.exists(file) ? Files.newOutputStream( file, StandardOpenOption.TRUNCATE_EXISTING ) : Files.newOutputStream( file, StandardOpenOption.CREATE );
 																	while( r > 0 ) {
 																		System.err.println( "reading " + r );
 																		tfos.write( bb, 0, r );
@@ -2386,8 +2389,9 @@ public class SerifyApplet extends JApplet {
 																String uristr = "tar:" + file.toUri();
 																//URI taruri = URI.create( uristr /*.replace("file://", "file:")*/ );
 																//FileSystem tarfilesystem = FileSystems.newFileSystem( taruri, env );
-																
+																FileSystemManager fsManager = VFS.getManager();
 																FileObject jarFile = fsManager.resolveFile(uristr);
+																//jarFile.
 			
 																// List the children of the Jar file
 																FileObject[] children = jarFile.getChildren();
@@ -2432,7 +2436,12 @@ public class SerifyApplet extends JApplet {
 																		r = sis.read( bb );
 																		//total += r;
 																	}
+																	sis.close();
 																}
+																
+																Files.delete( file );
+																
+																//fsManager.getFilesCache().clear( jarFile.getFileSystem() );
 															}
 														}
 														fos.close();
@@ -2445,6 +2454,56 @@ public class SerifyApplet extends JApplet {
 													} catch (URISyntaxException e) {
 														e.printStackTrace();
 													}
+												}
+											}
+										}
+									}
+									
+									if( plasmid.isSelected() ) {
+										String subdir = "/genomes/Plasmids/gbk/";
+										ftp.cwd( subdir );
+										FTPFile[] files = ftp.listFiles();
+										for( FTPFile ftpfile : files ) {
+											if( interrupted ) {
+												break;
+											}
+											//System.err.println("here");
+											//if( ftpfile.isDirectory() ) {
+											String fname = ftpfile.getName();
+											if( fname.contains( search ) ) {
+												if( !ftp.isConnected() ) {
+													ftp.connect("ftp.ncbi.nih.gov");
+													ftp.login("anonymous", "");
+												}
+												//ftp.cwd( subdir+fname );
+												//FTPFile[] newfiles = ftp.listFiles();
+												//int cnt = 1;
+												
+												//File thefile = new File( basesave, fname+".gbk" );
+												Path thefile = cd.resolve(fname+".gbk");
+												if( !Files.exists(thefile) ) {
+													Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
+														
+													if( fname.endsWith(".gbk") ) {
+														URL url = new URL( "ftp://"+ftpsite+subdir+"/"+fname );
+														InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+														BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+														String line = br.readLine();
+														while( line != null ) {
+															fw.write( line + "\n" );
+															line = br.readLine();
+														}
+														is.close();
+													}
+													fw.close();
+												}
+												
+												try {
+													Map<String,Path>	urimap = new HashMap<String,Path>();
+													urimap.put( fname, thefile );
+													addSequencesPath( fname, urimap, thefile, replace );
+												} catch (URISyntaxException e) {
+													e.printStackTrace();
 												}
 											}
 										}
