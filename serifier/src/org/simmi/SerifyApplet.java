@@ -513,6 +513,68 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
+	public static void rpsBlastRun( NativeRun nrun, StringBuilder query, Path dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs ) throws IOException {
+		String userhome = System.getProperty("user.home");
+		Path selectedpath = null;
+		if( homedir ) selectedpath = new File( userhome ).toPath();
+		else {
+			JFileChooser fc = new JFileChooser();
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				selectedpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) selectedpath = selectedpath.getParent();
+			}
+		}
+		
+		List<Object>	lscmd = new ArrayList<Object>();
+		if( table != null ) {
+			int[] rr = table.getSelectedRows();
+			for( int r : rr ) {
+				Path	path = (Path)table.getValueAt( r, 3 );
+				String blastFile = "rpsblast+";
+				Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
+				int procs = Runtime.getRuntime().availableProcessors();
+				
+				List<String>	lcmd = new ArrayList<String>();
+				String[] bcmds = { blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				String[] exts = extrapar.trim().split("[\t ]+");
+				
+				lcmd.addAll( Arrays.asList(bcmds) );
+				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+				
+				lscmd.add( new Path[] {path, res, selectedpath} );
+				lscmd.add( lcmd );
+			}
+		} else {
+			int procs = Runtime.getRuntime().availableProcessors();
+			
+			List<String>	lcmd = new ArrayList<String>();
+			String[] bcmds = { "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			String[] exts = extrapar.trim().split("[\t ]+");
+			
+			lcmd.addAll( Arrays.asList(bcmds) );
+			if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+			
+			lscmd.add( new Object[] {query.toString().getBytes(), resPath, selectedpath} );
+			lscmd.add( lcmd );
+		}
+		
+		final Object[] cont = new Object[3];
+		Runnable run = new Runnable() {
+			public void run() {					
+				if( cont[0] != null ) {
+					
+				}
+				try {
+					fs.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		nrun.runProcessBuilder( "Performing blast", lscmd, run, cont, false );
+	}
+	
 	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;

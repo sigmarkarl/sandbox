@@ -1312,7 +1312,7 @@ public class GeneCompare {
 				g2.setColor( Color.white );
 				g2.fillRect(-strw, -500-30-k*30 - 3, strw+1, 40);
 				g2.setColor( Color.black );
-				g2.drawString( specstr.replace("T.", ""), -strw+5, -500 - k*30 - 2 );
+				g2.drawString( specstr/*.replace("T.", "")*/, -strw+5, -500 - k*30 - 2 );
 				g2.rotate( -Math.PI/2.0 );
 				g2.translate( -w/2, -h/2 );
 				
