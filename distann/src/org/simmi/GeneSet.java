@@ -14783,7 +14783,7 @@ public class GeneSet extends JApplet {
 					Path resPath = zipfilesystem.getPath("/cog.blastout");
 					
 					NativeRun nrun = new NativeRun();
-					SerifyApplet.rpsBlastRun(nrun, sb, dbPath, resPath, "prot", "", null, true, zipfilesystem);
+					SerifyApplet.rpsBlastRun(nrun, sb, dbPath, resPath, "", null, true, zipfilesystem);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
