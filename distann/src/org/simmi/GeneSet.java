@@ -810,6 +810,7 @@ public class GeneSet extends JApplet {
 						//if( i == -1 ) i = 5;
 						int u = lname.lastIndexOf('_');
 						if( u != -1 ) contigstr = lname.substring(0, u);
+						
 						if( i != -1 ) {
 							origin = lname.substring(0, i-1);
 							contloc = lname.substring(i, lname.length());
@@ -834,6 +835,9 @@ public class GeneSet extends JApplet {
 							if( u == -1 ) u = contigstr.indexOf("scaffold");
 							if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
 							u = Serifier.contigIndex( contigstr );
+							if( u == 0 ) {
+								System.err.println();
+							}
 							origin = contigstr.substring(0, u-1);
 							contloc = contigstr.substring(u, contigstr.length());
 						} else {
@@ -1083,7 +1087,11 @@ public class GeneSet extends JApplet {
 			String name;
 			int i = lname.lastIndexOf('[');
 			if( i == -1 ) {
-				i = Serifier.contigIndex( lname );
+				i = lname.indexOf("contig");
+				if( i == -1 ) {
+					i = lname.indexOf("scaffold");
+				}
+				//i = Serifier.contigIndex( lname );
 				int u = lname.lastIndexOf('_');
 				if( u != -1 ) contigstr = lname.substring(0, u);
 				if( i > 0 ) {
@@ -5980,6 +5988,8 @@ public class GeneSet extends JApplet {
 					} else if( message.contains("ready") ) {
 						cs.sendToAll( "simmi" ); //cs.message );
 					} else if( message.contains("cogchart:") ) {
+						boolean uniform = false;
+						if( message.substring(0).contains("uniform") ) uniform = true;
 						//Set<String> species = getSelspec( GeneSet.this, specList );
 						Set<String> selspec = new HashSet<String>( specList );
 						
@@ -5988,7 +5998,7 @@ public class GeneSet extends JApplet {
 						final Map<String, Map<Character,Integer>> 	map = new TreeMap<String, Map<Character,Integer>>();
 						try {
 							GeneSet.this.cogCalc( null, includedCogs, map, selspec, false );
-							StringWriter fw = GeneSet.this.writeCog( map, includedCogs );
+							StringWriter fw = GeneSet.this.writeCog( map, includedCogs, uniform );
 							//String repl = fw.toString();
 							
 							//final String smuck = sb.toString().replace("smuck", restext.toString());
@@ -8436,7 +8446,7 @@ public class GeneSet extends JApplet {
 		return fw;
 	}
 	
-	public StringWriter writeCog( Map<String,Map<Character,Integer>> map, Set<Character> includedCogs ) throws IOException {
+	public StringWriter writeCog( Map<String,Map<Character,Integer>> map, Set<Character> includedCogs, boolean uniform ) throws IOException {
 		StringWriter fw = new StringWriter();
 		fw.write("[");
 		fw.write( "['Species" );
@@ -8445,9 +8455,24 @@ public class GeneSet extends JApplet {
 			fw.write("','"+coglong);
 		}
 		fw.write("']");
+		
+		Map<String,Integer> totmap = new HashMap<String,Integer>();
+		for( String s : map.keySet() ) {
+			int total = 0;
+			Map<Character,Integer> cm = map.get( s );
+			for( Character cogchar : includedCogs ) {
+				int val = 0;
+				if( cm.containsKey( cogchar ) ) {
+					val = cm.get(cogchar);
+				}
+				total += val;
+			}
+			totmap.put( s, total );
+		}
+		
 		for( String s : map.keySet() ) {
 			fw.write(",\n");
-			int total = 0;
+			int total = totmap.get( s );
 			fw.write( "['"+nameFix(s)+"'" );
 			Map<Character,Integer> cm = map.get( s );
 			for( Character cogchar : includedCogs ) {
@@ -8457,7 +8482,12 @@ public class GeneSet extends JApplet {
 				if( cm.containsKey( cogchar ) ) {
 					val = cm.get(cogchar);
 				}// else val = -1;
-				fw.write(","+val);
+				
+				if( uniform ) {
+					fw.write(","+((double)val/(double)total));
+				} else {
+					fw.write(","+val);
+				}
 			}
 			fw.write("]");
 		}
@@ -8569,8 +8599,10 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	public Teginfo getGroupTes( GeneGroup gg, String spec ) {		
-		return gg.species.get( spec );
+	public Teginfo getGroupTes( GeneGroup gg, String spec ) {
+		Teginfo teginfo = gg.species.get( spec );
+		//System.err.println( gg.species + "  " + teginfo + "  " + spec );
+		return teginfo;
 	}
 	
 	public JTable getGeneTable() {

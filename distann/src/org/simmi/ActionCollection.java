@@ -3274,7 +3274,7 @@ public class ActionCollection {
 					final Map<String,String>					all = new TreeMap<String,String>();
 					final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap<String, Map<Character,Integer>>();
 					geneset.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
-					StringWriter fw = geneset.writeCog( map, includedCogs );
+					StringWriter fw = geneset.writeCog( map, includedCogs, uniform.isSelected() );
 					String repl = fw.toString();
 					
 					fw = geneset.writeSimpleCog( map );
