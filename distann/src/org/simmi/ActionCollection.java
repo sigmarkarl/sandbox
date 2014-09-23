@@ -99,8 +99,6 @@ public class ActionCollection {
 		Set<GeneGroup>	pan = new HashSet<GeneGroup>();
 		Set<GeneGroup>	core = new HashSet<GeneGroup>();
 		StringBuilder	restext = new StringBuilder();
-		restext.append( "[" );
-		restext.append( "['Species', 'Pan', 'Core']" );
 		
 		for( String spec : selspec ) {
 			String newspec = geneset.nameFix( spec );
@@ -152,11 +150,12 @@ public class ActionCollection {
 				}
 			}
 		} else {
+			//restext.append( "['Species', 'Pan: "+pan+"', 'Core: "+core+"']" );
 			for( int i = 0; i < lsbd.size(); i++ ) {
 				StackBarData sbd = lsbd.get(i);
 				String spec = sbd.oname;
 				
-				restext.append( ",\n['"+spec+"', " );
+				restext.append( ",\n['"+sbd.name+"', " );
 				Set<GeneGroup> ggset = geneset.specGroupMap.get( spec );
 				
 				Set<GeneGroup> theset = new HashSet<GeneGroup>();
@@ -176,13 +175,13 @@ public class ActionCollection {
 				}
 				
 				restext.append( core.size()+", " );
-				restext.append( pan.size()+"]" );
+				restext.append( (pan.size()-core.size())+"]" );
 				
 				sbd.b.put( "Core: ", core.size() );
 				sbd.b.put( "Accessory: ", pan.size()-core.size() );
 			}
+			restext.insert( 0, "['Species', 'Pan: "+pan.size()+"', 'Core: "+core.size()+"']" );
 		}
-		restext.append( "]" );
 		return restext;
 	}
 	
@@ -2367,7 +2366,7 @@ public class ActionCollection {
 				restext.append( "['Species', 'Size']" );
 				//int i = 0;
 				for( String spec : selspec ) {
-					restext.append( ",\n['"+spec+"', " );
+					restext.append( ",\n['"+geneset.nameFix(spec)+"', " );
 					
 					int len = 0;
 					int total = 0;
@@ -2400,13 +2399,14 @@ public class ActionCollection {
 							else name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
 						}
 					} else {
-						if( spec.contains("hermus") ) name = spec.substring( 0, spec.lastIndexOf('_') );
+						/*if( spec.contains("hermus") ) name = spec.substring( 0, spec.lastIndexOf('_') );
 						else {
 							Matcher m = Pattern.compile("\\d").matcher(spec); 
 							int firstDigitLocation = m.find() ? m.start() : 0;
 							if( firstDigitLocation == 0 ) name = "Thermus_" + spec;
 							else name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
-						}
+						}*/
+						name = geneset.nameFix(spec);
 					}
 					
 					map.put( name, d );
