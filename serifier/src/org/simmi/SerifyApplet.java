@@ -550,7 +550,7 @@ public class SerifyApplet extends JApplet {
 			int procs = Runtime.getRuntime().availableProcessors();
 			
 			List<String>	lcmd = new ArrayList<String>();
-			String[] bcmds = { "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			String[] bcmds = { "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.toString(), "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
 			String[] exts = extrapar.trim().split("[\t ]+");
 			
 			lcmd.addAll( Arrays.asList(bcmds) );
