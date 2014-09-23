@@ -8032,7 +8032,7 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	boolean isthermus = false;
+	boolean isthermus = true;
 	String nameFix( String selspec ) {
 		String ret = selspec;
 		if( isthermus ) {
@@ -8080,6 +8080,11 @@ public class GeneSet extends JApplet {
 						}
 					}
 				}
+			} else if( (selspec.charAt(0) == 'J' || selspec.charAt(0) == 'A') && (selspec.length() == 4 || selspec.charAt(4) == '0') ) {
+				if( selspec.startsWith("JQNC") ) ret = "Thermus_caliditerrae";
+				if( selspec.startsWith("JQMV") ) ret = "Thermus_sp._YIM_77409";
+				if( selspec.startsWith("JQLK") ) ret = "Thermus_tengchongensis";
+				if( selspec.startsWith("JQLJ") ) ret = "Thermus_scotoductus_KI2";
 			} else if( selspec.contains("GenBank") || selspec.contains("MAT") ) {
 				
 			} else {
@@ -12162,6 +12167,7 @@ public class GeneSet extends JApplet {
 				String cont = trim.substring(6, b).replace(".fna", "");
 				int end = cont.indexOf("_contig");
 				if( end == -1 ) end = cont.indexOf("_scaffold");
+				if( end == -1 && cont.charAt(0) == 'J' && cont.charAt(4) == '0' ) end = 4;
 				if( end == -1 ) end = cont.length();
 				String spec = cont.substring(0,end);
 				
