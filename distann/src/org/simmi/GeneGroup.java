@@ -160,7 +160,7 @@ public class GeneGroup {
 					
 					if( allowedFunctions == null || allowedFunctions.contains(f) ) {
 						String name = f.go; //getName().replace('/', '-').replace(",", "");
-						if( withinfo ) name += "-"+f.name.replace(",", "");
+						if( withinfo && f.name != null ) name += "-"+f.name.replace(",", "");
 							
 						//System.err.println( g.getName() + "  " + go );
 						if( ret.length() == 0 ) ret = name;
