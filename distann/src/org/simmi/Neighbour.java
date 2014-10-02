@@ -2305,11 +2305,22 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					
 					List<Sequence> lseq = new ArrayList<Sequence>();
-					for( GeneGroup gg : selectedGenesGroups ) {
-						List<Tegeval> ltv = gg.getTegevals();
-						for( Tegeval tv : ltv ) {
-							//int start = Math.max( 0, tv.start-3000 );
-							//int stop = Math.min( tv.getContshort().sb.length(), tv.stop+3000 );
+					int[] rr = rowheader.getSelectedRows();
+					if( rr == null || rr.length == 0 ) {
+						for( GeneGroup gg : selectedGenesGroups ) {
+							List<Tegeval> ltv = gg.getTegevals();
+							for( Tegeval tv : ltv ) {
+								//int start = Math.max( 0, tv.start-3000 );
+								//int stop = Math.min( tv.getContshort().sb.length(), tv.stop+3000 );
+								Sequence seq = new Sequence( tv.getSpecies(), null );
+								seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
+								lseq.add( seq );
+							}
+						}
+					} else {
+						for( int r : rr ) {
+							int i = rowheader.convertRowIndexToModel(r);
+							Tegeval tv = hteg.get(i);
 							Sequence seq = new Sequence( tv.getSpecies(), null );
 							seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
 							lseq.add( seq );
