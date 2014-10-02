@@ -15,6 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.simmi.shared.Contig;
+import org.simmi.shared.Gene;
+import org.simmi.shared.Tegeval;
+
 public class Blast {
 	private StringBuilder aaSearch(String query, Map<String,Tegeval> aas) {
 		/*

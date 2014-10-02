@@ -21,6 +21,7 @@ import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,12 +38,18 @@ import java.io.PrintStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.HttpCookie;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
@@ -69,6 +76,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JButton;
@@ -80,14 +88,12 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -104,6 +110,7 @@ import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
 import org.simmi.shared.GBK2AminoFasta;
 import org.simmi.shared.Sequence;
@@ -507,6 +514,68 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
+	public static void rpsBlastRun( NativeRun nrun, StringBuilder query, Path dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs ) throws IOException {
+		String userhome = System.getProperty("user.home");
+		Path selectedpath = null;
+		if( homedir ) selectedpath = new File( userhome ).toPath();
+		else {
+			JFileChooser fc = new JFileChooser();
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				selectedpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) selectedpath = selectedpath.getParent();
+			}
+		}
+		
+		List<Object>	lscmd = new ArrayList<Object>();
+		if( table != null ) {
+			int[] rr = table.getSelectedRows();
+			for( int r : rr ) {
+				Path	path = (Path)table.getValueAt( r, 3 );
+				String blastFile = "rpsblast+";
+				Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
+				int procs = Runtime.getRuntime().availableProcessors();
+				
+				List<String>	lcmd = new ArrayList<String>();
+				String[] bcmds = { blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				String[] exts = extrapar.trim().split("[\t ]+");
+				
+				lcmd.addAll( Arrays.asList(bcmds) );
+				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+				
+				lscmd.add( new Path[] {path, res, selectedpath} );
+				lscmd.add( lcmd );
+			}
+		} else {
+			int procs = Runtime.getRuntime().availableProcessors();
+			
+			List<String>	lcmd = new ArrayList<String>();
+			String[] bcmds = { "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.toString(), "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			String[] exts = extrapar.trim().split("[\t ]+");
+			
+			lcmd.addAll( Arrays.asList(bcmds) );
+			if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+			
+			lscmd.add( new Object[] {query.toString().getBytes(), resPath, selectedpath} );
+			lscmd.add( lcmd );
+		}
+		
+		final Object[] cont = new Object[3];
+		Runnable run = new Runnable() {
+			public void run() {					
+				if( cont[0] != null ) {
+					
+				}
+				try {
+					fs.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		nrun.runProcessBuilder( "Performing blast", lscmd, run, cont, false );
+	}
+	
 	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
@@ -709,7 +778,7 @@ public class SerifyApplet extends JApplet {
 				if( !interrupted ) {
 					try {
 						List<Set<String>> total = new ArrayList<Set<String>>();
-						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f, null, total );
+						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f, null, total, null );
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
@@ -1766,7 +1835,13 @@ public class SerifyApplet extends JApplet {
 				final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
 				final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
 				final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
-				String[] cmds = new String[] { "prodigal", "-i", NativeRun.fixPath( infile.toAbsolutePath().toString() ), "-a", outPathA, "-d", outPathD };
+				//NativeRun.fixPath( infile.toAbsolutePath().toString() )
+				String[] cmds = new String[] { "prodigal", "-a", outPathA }; //"-d", outPathD };
+				
+				List<Object>	lscmd = new ArrayList<Object>();
+				//String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+				lscmd.add( new Path[] { infile, null, dir } );
+				lscmd.add( Arrays.asList( cmds ) );
 				
 				final Object[] cont = new Object[3];
 				Runnable run = new Runnable() {
@@ -1791,7 +1866,7 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				};
-				nrun.runProcessBuilder( "Running prodigal", Arrays.asList( cmds ), run, cont, false );
+				nrun.runProcessBuilder( "Running prodigal", lscmd, run, cont, false );
 					//JSObject js = JSObject.getWindow( SerifyApplet.this );
 					//js = (JSObject)js.getMember("document");
 					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
@@ -1935,7 +2010,96 @@ public class SerifyApplet extends JApplet {
 			ap.setJMenuBar( mb );
 		}
 		
-		
+		popup.add( new AbstractAction("JGI Fetch") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					CookieManager cm = new CookieManager( null, CookiePolicy.ACCEPT_ALL );
+					CookieHandler.setDefault( cm );
+					
+					URL loginurl = new URL("https://signon.jgi.doe.gov/signon/create");
+					
+					HttpsURLConnection hu = (HttpsURLConnection)loginurl.openConnection();
+					hu.setRequestMethod("POST");
+					hu.setRequestProperty("login", "sigmarkarl@gmail.com");
+					hu.setRequestProperty("password", "drsmorc.311");
+					hu.setDoOutput( true );
+					hu.setDoInput( true );
+					
+					//hu.connect();
+					
+					OutputStream os = hu.getOutputStream();
+					os.write( "login=sigmarkarl@gmail.com&password=drsmorc.311".getBytes() );
+					os.close();
+					
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					InputStream is = hu.getInputStream();
+					int r = is.read();
+					while( r != -1 ) {
+						baos.write( r );
+						r = is.read();
+					}
+					is.close();
+					
+					baos.close();
+					System.err.println( baos.toString() );
+					
+					Map<String, List<String>> headerFields = hu.getHeaderFields();
+					String cookiesHeader = hu.getHeaderField("Set-Cookie");
+					
+					/*if(cookiesHeader != null) {
+					    for (String cookie : cookiesHeader) {
+					      HttpCookie.parse(cookie).get(0);
+					      cm.getCookieStore().add(null,cc);
+					    }               
+					}*/
+					
+					List<HttpCookie> lhc = cm.getCookieStore().getCookies();
+					for( HttpCookie hc : lhc ) {
+						System.err.println( hc );
+					}
+					
+					URL fetchurl = new URL("http://genome.jgi.doe.gov/ext-api/downloads/get-directory?organism=ThescoKI2");
+					HttpURLConnection hu2 = (HttpURLConnection)fetchurl.openConnection();
+					
+					/*String cstr = "";
+					for( String hc : cookiesHeader ) { //HttpCookie hc : cm.getCookieStore().getCookies() ) {
+						if( cstr == null ) cstr = hc;
+						else cstr += ","+hc;
+					}
+					
+					hu2.setRequestProperty("Cookie", cstr);*/
+					is = hu2.getInputStream();
+					baos = new ByteArrayOutputStream();
+					r = is.read();
+					while( r != -1 ) {
+						baos.write( r );
+						r = is.read();
+					}
+					is.close();
+					baos.close();
+					
+					String xml = baos.toString();
+					int k = xml.lastIndexOf("url=\"");
+					int u = xml.indexOf("\"", k+5);
+					
+					String subs = xml.substring(k+5, u);
+					
+					URL downloadurl = new URL("http://genome.jgi.doe.gov" + subs);
+					URLConnection uc = downloadurl.openConnection();
+					//Path p = Paths.get( downloadurl.toURI() );
+					
+					Path target = Paths.get("/Users/sigmar/stuff.tar.gz");
+					Files.copy(uc.getInputStream(), target);
+					//System.err.println( baos.toString() );
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 		popup.add( new AbstractAction("NCBI Fetch") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1983,14 +2147,17 @@ public class SerifyApplet extends JApplet {
 				whole.setSelected( true );
 				final JCheckBox	draft = new JCheckBox("draft");
 				draft.setSelected( true );
+				final JCheckBox	plasmid = new JCheckBox("plasmid");
+				plasmid.setSelected( true );
 				final JCheckBox	phage = new JCheckBox("phage");
 				phage.setSelected( true );
+				
 				final JTextArea ta = new JTextArea();
 				JScrollPane	sp = new JScrollPane( ta );
 				Dimension dim = new Dimension(400,300);
 				sp.setPreferredSize( dim );
 				sp.setSize( dim );
-				JOptionPane.showMessageDialog(c, new Object[] {whole, draft, phage,"Filter term",sp});
+				JOptionPane.showMessageDialog(c, new Object[] {whole, draft, plasmid, phage, "Filter term",sp});
 				final Map<String,String> searchmap = new HashMap<String,String>();
 				String searchstr = ta.getText();
 				String[] split = searchstr.split("\n");
@@ -2064,7 +2231,7 @@ public class SerifyApplet extends JApplet {
 									Path thefile = cd.resolve( fwname ); //new File( basesave, fwname );
 									if( !Files.exists( thefile ) ) {
 										//FileWriter fw = new FileWriter( thefile );
-										Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.WRITE );
+										Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
 										URL url = new URL( "ftp://"+ftpsite+subdir+filename );
 										InputStream is = new GZIPInputStream( url.openStream() );//ftp.retrieveFileStream( newfname );
 										BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
@@ -2165,7 +2332,6 @@ public class SerifyApplet extends JApplet {
 									
 									if( draft.isSelected() ) {
 										String subdir = "/genomes/Bacteria_DRAFT/";
-										FileSystemManager fsManager = VFS.getManager();
 										byte[] bb = new byte[30000000];
 										ftp.cwd( subdir );
 										FTPFile[] files2 = ftp.listFiles();
@@ -2201,10 +2367,10 @@ public class SerifyApplet extends JApplet {
 																GZIPInputStream gis = new GZIPInputStream( is );
 																
 																//File file = new File( basesave, fname.substring(0,fname.length()-4)+".tar" );
-																Path file = uhome.resolve("temp.tar"); //Files.createTempFile("erm", ".tar"); //cd.resolve(fname.substring(0,fname.length()-4)+".tar");
-																if( !Files.exists(file) && gis != null ) {
+																Path file = /*uhome.resolve("temp.tar");*/ Files.createTempFile("erm", ".tar"); //cd.resolve(fname.substring(0,fname.length()-4)+".tar");
+																if( gis != null ) {
 																	int r = gis.read(bb);
-																	OutputStream tfos = Files.newOutputStream( file, StandardOpenOption.CREATE );
+																	OutputStream tfos = Files.exists(file) ? Files.newOutputStream( file, StandardOpenOption.TRUNCATE_EXISTING ) : Files.newOutputStream( file, StandardOpenOption.CREATE );
 																	while( r > 0 ) {
 																		System.err.println( "reading " + r );
 																		tfos.write( bb, 0, r );
@@ -2223,8 +2389,9 @@ public class SerifyApplet extends JApplet {
 																String uristr = "tar:" + file.toUri();
 																//URI taruri = URI.create( uristr /*.replace("file://", "file:")*/ );
 																//FileSystem tarfilesystem = FileSystems.newFileSystem( taruri, env );
-																
+																FileSystemManager fsManager = VFS.getManager();
 																FileObject jarFile = fsManager.resolveFile(uristr);
+																//jarFile.
 			
 																// List the children of the Jar file
 																FileObject[] children = jarFile.getChildren();
@@ -2269,7 +2436,12 @@ public class SerifyApplet extends JApplet {
 																		r = sis.read( bb );
 																		//total += r;
 																	}
+																	sis.close();
 																}
+																
+																Files.delete( file );
+																
+																//fsManager.getFilesCache().clear( jarFile.getFileSystem() );
 															}
 														}
 														fos.close();
@@ -2282,6 +2454,56 @@ public class SerifyApplet extends JApplet {
 													} catch (URISyntaxException e) {
 														e.printStackTrace();
 													}
+												}
+											}
+										}
+									}
+									
+									if( plasmid.isSelected() ) {
+										String subdir = "/genomes/Plasmids/gbk/";
+										ftp.cwd( subdir );
+										FTPFile[] files = ftp.listFiles();
+										for( FTPFile ftpfile : files ) {
+											if( interrupted ) {
+												break;
+											}
+											//System.err.println("here");
+											//if( ftpfile.isDirectory() ) {
+											String fname = ftpfile.getName();
+											if( fname.contains( search ) ) {
+												if( !ftp.isConnected() ) {
+													ftp.connect("ftp.ncbi.nih.gov");
+													ftp.login("anonymous", "");
+												}
+												//ftp.cwd( subdir+fname );
+												//FTPFile[] newfiles = ftp.listFiles();
+												//int cnt = 1;
+												
+												//File thefile = new File( basesave, fname+".gbk" );
+												Path thefile = cd.resolve(fname+".gbk");
+												if( !Files.exists(thefile) ) {
+													Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
+														
+													if( fname.endsWith(".gbk") ) {
+														URL url = new URL( "ftp://"+ftpsite+subdir+"/"+fname );
+														InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+														BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+														String line = br.readLine();
+														while( line != null ) {
+															fw.write( line + "\n" );
+															line = br.readLine();
+														}
+														is.close();
+													}
+													fw.close();
+												}
+												
+												try {
+													Map<String,Path>	urimap = new HashMap<String,Path>();
+													urimap.put( fname, thefile );
+													addSequencesPath( fname, urimap, thefile, replace );
+												} catch (URISyntaxException e) {
+													e.printStackTrace();
 												}
 											}
 										}
@@ -2306,7 +2528,7 @@ public class SerifyApplet extends JApplet {
 													
 													Path thefile = cd.resolve(fname+".gbk");
 													if( !Files.exists(thefile) ) {
-														Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.WRITE );
+														Writer fw = Files.newBufferedWriter( thefile, StandardOpenOption.CREATE );
 														
 														for( FTPFile newftpfile : newfiles ) {
 															if( interrupted ) break;
@@ -3770,7 +3992,7 @@ public class SerifyApplet extends JApplet {
 					File f = fc.getSelectedFile();
 					try {
 						List<Set<String>> cluster = new ArrayList<Set<String>>();
-						serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f, null, cluster );
+						serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f, null, cluster, null );
 						
 						Set<String> headset = new HashSet<String>();
 						for( Set<String> cl : cluster ) {
@@ -4787,7 +5009,7 @@ public class SerifyApplet extends JApplet {
 				Path nf = new File( "/u0/all.blastout" ).toPath();//new File( dir, ""+f.getName()+".blastout" );
 				System.err.println( "about to parse " + nf.getFileName() );
 				List<Set<String>> cluster = new ArrayList<Set<String>>();
-				serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f, null, cluster );
+				serifier.makeBlastCluster( Files.newBufferedReader(nf), null, 1, 0.5f, 0.5f, null, cluster, null );
 				
 				Map<String,String> headset = new HashMap<String,String>();
 				for( Set<String> cl : cluster ) {
@@ -5199,7 +5421,7 @@ public class SerifyApplet extends JApplet {
 			varph /= vals.size();
 			double stdevph = Math.sqrt( varph );
 			
-			System.err.println( key + "\t" +mean+"��"+stdev+"\t"+meanph+"��"+stdevph );
+			System.err.println( key + "\t" +mean+"������"+stdev+"\t"+meanph+"������"+stdevph );
 		}*/
 		
 		//mapFiles();

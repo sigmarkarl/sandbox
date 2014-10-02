@@ -62,7 +62,13 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Contig;
+import org.simmi.shared.Function;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Tegeval;
+import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
 
 public class Neighbour {
@@ -278,6 +284,7 @@ public class Neighbour {
 							//if( c.isReverse() ) thenext = c.annset.get( c.annset.size()-1 );
 							//else thenext = c.annset.get(0);
 						}
+						//System.err.println( "nexterm " + thenext.name + "  " + te.name + "  " + te.start + "  " + thenext.start );
 						hteglocal.set( i, thenext );
 					}
 					//if( te.getLength() > max ) max = te.getLength();
@@ -288,7 +295,7 @@ public class Neighbour {
 			for( Tegeval te : lte ) {
 				hteglocal.add( te.getPrevious() );
 			}
-			xoff = 3000;
+			xoff = 3000;	
 			//int k = 0;
 			while( xoff > 500 ) {
 				int max = 0;
@@ -324,7 +331,7 @@ public class Neighbour {
 							k--;
 							if( k < 0 ) k = partof.size()-1;
 							Contig c = partof.get(k);
-							while( c.annset == null || c.annset.size() == 0 ) {
+							while( c.getAnnotations() == null || c.getAnnotations().size() == 0 ) {
 								k--;
 								if( k < 0 ) k = partof.size()-1;
 								c = partof.get(k);
@@ -332,6 +339,7 @@ public class Neighbour {
 							theprev = c.getLast();
 						}
 						
+						//System.err.println( theprev.name );
 						hteglocal.set( i, theprev );
 					}
 					//if( te.getLength() > max ) max = te.getLength();
@@ -1329,6 +1337,10 @@ public class Neighbour {
 						/*if( thenext != null && thenext.getNext() == te ) {
 							thenext = null;
 						}*/
+						/*System.err.println( "next " + thenext.name + "  " + te.name + "  " + te.start + "  " + thenext.start );
+						if( te.start == 0 ) {
+							System.err.println();
+						}*/
 						hteglocal.set(i, thenext);
 					}
 					//if( te.getLength() > max ) max = te.getLength();
@@ -1339,7 +1351,9 @@ public class Neighbour {
 			hteglocal.addAll( hteg );
 			for( int i = 0; i < hteglocal.size(); i++ ) {
 				Tegeval te = hteglocal.get(i);
-				if( te != null ) hteglocal.set(i, te.getPrevious() );
+				if( te != null ) {
+					hteglocal.set(i, te.getPrevious() );
+				}
 				//if( te.getLength() > max ) max = te.getLength();
 			}
 			/************* 
@@ -1544,6 +1558,7 @@ public class Neighbour {
 						/*if( theprev != null && theprev.getPrevious() == te ) {
 							theprev = null;
 						}*/
+						//System.err.println( theprev.name + "  " + te.name + "  " + te.start + "  " + theprev.start );
 						hteglocal.set( i, theprev );
 					}
 					//if( te.getLength() > max ) max = te.getLength();
@@ -2154,6 +2169,7 @@ public class Neighbour {
 			final JMenuItem	showselecteddnaseqs = new JMenuItem("Selected DNA sequences");
 			final JMenuItem	showflankingseqs = new JMenuItem("Show flanking sequences");
 			final JMenuItem	showbackflankingseqs = new JMenuItem("Show back flanking sequences");
+			final JMenuItem	showareaseqs = new JMenuItem("Show area");
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -2284,6 +2300,36 @@ public class Neighbour {
 					geneset.showSomeSequences( comp, lseq );
 				}
 			});
+			showareaseqs.setAction( new AbstractAction("Show area") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					
+					List<Sequence> lseq = new ArrayList<Sequence>();
+					int[] rr = rowheader.getSelectedRows();
+					if( rr == null || rr.length == 0 ) {
+						for( GeneGroup gg : selectedGenesGroups ) {
+							List<Tegeval> ltv = gg.getTegevals();
+							for( Tegeval tv : ltv ) {
+								//int start = Math.max( 0, tv.start-3000 );
+								//int stop = Math.min( tv.getContshort().sb.length(), tv.stop+3000 );
+								Sequence seq = new Sequence( tv.getSpecies(), null );
+								seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
+								lseq.add( seq );
+							}
+						}
+					} else {
+						for( int r : rr ) {
+							int i = rowheader.convertRowIndexToModel(r);
+							Tegeval tv = hteg.get(i);
+							Sequence seq = new Sequence( tv.getSpecies(), null );
+							seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
+							lseq.add( seq );
+						}
+					}
+					geneset.showSomeSequences( comp, lseq );
+				}
+			});
+			
 			seqsmenu.add( showseqs );
 			seqsmenu.add( showdnaseqs );
 			seqsmenu.addSeparator();
@@ -2291,6 +2337,8 @@ public class Neighbour {
 			seqsmenu.add( showselecteddnaseqs );
 			seqsmenu.add( showflankingseqs );
 			seqsmenu.add( showbackflankingseqs );
+			seqsmenu.addSeparator();
+			seqsmenu.add( showareaseqs );
 			
 			sequenceView.setAction( a );
 			blocksView.setAction( a );
