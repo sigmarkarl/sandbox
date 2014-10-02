@@ -6427,9 +6427,9 @@ public class GeneSet extends JApplet {
 				
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
 			
-			FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
-			GZIPInputStream gi = new GZIPInputStream( fi );
-			funcMappingStatic( new InputStreamReader( gi ) );
+	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
+	//GZIPInputStream gi = new GZIPInputStream( fi );
+	//funcMappingStatic( new InputStreamReader( gi ) );
 			
 			/*Map<String,String>	sp2ko = new HashMap<String,String>();
 			FileReader fr = new FileReader("/vg454flx/sp2ko.txt");
@@ -8085,6 +8085,13 @@ public class GeneSet extends JApplet {
 				if( selspec.startsWith("JQMV") ) ret = "Thermus_sp._YIM_77409";
 				if( selspec.startsWith("JQLK") ) ret = "Thermus_tengchongensis";
 				if( selspec.startsWith("JQLJ") ) ret = "Thermus_scotoductus_KI2";
+				
+				if( selspec.startsWith("AUIW") ) ret = "Thermus_antranikianii_DSM_12462";
+				if( selspec.startsWith("ATXJ") ) ret = "Thermus_islandicus_DSM_21543";
+				if( selspec.startsWith("ATNI") ) ret = "Thermus_sp._NMX2";
+				if( selspec.startsWith("ARLD") ) ret = "Thermus_scotoductus_DSM_8553";
+				if( selspec.startsWith("AQOS") ) ret = "Thermus_thermophilus_ATCC_33923";
+				
 			} else if( selspec.contains("GenBank") || selspec.contains("MAT") ) {
 				
 			} else {
@@ -10458,7 +10465,11 @@ public class GeneSet extends JApplet {
 					int i = table.convertRowIndexToModel( r );
 					Gene g = genelist.get(i);
 					g.designation = val;
-					designations.put( g.id, val );
+					if( g.id != null ) {
+						designations.put( g.id, val );
+					} else {
+						System.err.println( g.refid );
+					}
 					//ta.append( g.tegeval.id + "\n" );
 				}
 				
@@ -12599,7 +12610,7 @@ public class GeneSet extends JApplet {
 	FileSystem	zipfilesystem;
 	URI			zipuri;
 	Map<String,String>	ko2name;
-	Map<String,String>	designations;
+	Map<String,String>	designations = new HashMap<String,String>();
 	Set<String>			deset = new HashSet<String>();
 	private void importStuff() throws IOException, UnavailableServiceException {
 		boolean fail = true;
@@ -15575,10 +15586,11 @@ public class GeneSet extends JApplet {
 					
 					serifier.addSequence( newseq );
 					for( Tegeval tv : tvset ) {
+						Annotation newann = new Annotation(newseq, tv.start-start, tv.stop-start, tv.ori, tv.name);
 						if( contig == tv.seq ) {
-							newseq.addAnnotation( tv );
+							newseq.addAnnotation( newann );
 						}
-						serifier.addAnnotation(tv);
+						serifier.addAnnotation(newann);
 					}
 					/*for( Annotation ann : contig.getAnnotations() ) {
 						serifier.addAnnotation( ann );
