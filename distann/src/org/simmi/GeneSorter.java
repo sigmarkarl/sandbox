@@ -35,6 +35,12 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.simmi.shared.Contig;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Tegeval;
+import org.simmi.shared.Teginfo;
+
 public class GeneSorter {
 	public List<Contig> loadContigs( Collection<Gene> genes, final Map<String,Contig> contigmap ) {
 		/*final List<Tegeval> ltv = new ArrayList<Tegeval>();

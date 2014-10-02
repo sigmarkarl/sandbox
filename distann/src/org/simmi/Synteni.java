@@ -37,6 +37,11 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.simmi.shared.Contig;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Tegeval;
+
 public class Synteni {
 	final int FASTI = 3632;
 	
@@ -158,10 +163,10 @@ public class Synteni {
 						int loc = 0;
 						List<Contig>	cannset = geneset.speccontigMap.get( spec );
 						for( Contig c : cannset ) {
-							if( c.annset != null ) {
+							if( c.getAnnotations() != null ) {
 								if( c.isReverse() ) {
-									for( int i = c.annset.size()-1; i >= 0; i-- ) {
-										Tegeval tv = (Tegeval)c.annset.get(i);
+									for( int i = c.getAnnotations().size()-1; i >= 0; i-- ) {
+										Tegeval tv = (Tegeval)c.getAnnotation(i);
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										
 										if( gg != null ) {
@@ -175,8 +180,8 @@ public class Synteni {
 										}
 									}
 								} else {
-									for( int i = 0; i < c.annset.size(); i++ ) {
-										Tegeval tv = (Tegeval)c.annset.get(i);
+									for( int i = 0; i < c.getAnnotations().size(); i++ ) {
+										Tegeval tv = (Tegeval)c.getAnnotation(i);
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										
 										if( gg != null ) {
