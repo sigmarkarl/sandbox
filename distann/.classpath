@@ -10,7 +10,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/spilling"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/poi"/>
-	<classpathentry kind="lib" path="commons-codec-1.8.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/lib/junit-4.11.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/lib/log4j-1.2.13.jar"/>
