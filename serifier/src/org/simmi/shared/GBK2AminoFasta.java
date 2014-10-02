@@ -369,9 +369,9 @@ public class GBK2AminoFasta {
 							//ami += 
 							String first = val.substring(i, i+3).toUpperCase();
 							String second = Sequence.revcom.get( first );
-							String str = Sequence.amimap.get( second );
+							Character str = Sequence.amimap.get( second );
 							if( str != null ) {
-								if( str.equals("0") || str.equals("1") ) break;
+								if( str.equals('0') || str.equals('1') ) break;
 								else if( out != null ) out.write( str );//+ " " + t + " " );
 								if( (++t % 60) == 0 && out != null ) out.write("\n");
 							}
@@ -380,9 +380,9 @@ public class GBK2AminoFasta {
 						for( int i = 0; i < val.length(); i+=3 ) {
 							//ami += 
 							String first = val.substring( i, Math.min(val.length(), i+3) ).toUpperCase();
-							String str = Sequence.amimap.get( first );
+							Character str = Sequence.amimap.get( first );
 							if( str != null ) {
-								if( str.equals("0") || str.equals("1") ) break;
+								if( str.equals('0') || str.equals('1') ) break;
 								else if( out != null ) out.write( str );//+ " " + t + " " );
 								if( (++t % 60) == 0 && out != null ) out.write("\n");
 							}
