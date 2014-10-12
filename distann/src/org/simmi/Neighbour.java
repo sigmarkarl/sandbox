@@ -67,6 +67,7 @@ import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Serifier;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
@@ -1687,7 +1688,10 @@ public class Neighbour {
 					if( te != null ) {
 						Gene g = te.getGene();
 						GeneGroup gg = g.getGeneGroup();
-						if( gg != null ) return "<html>"+(g.getName().equals( g.refid ) ? gg.getCommonName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>";
+						if( gg != null ) return "<html>"+
+											//(g.getName().equals( g.refid ) ? gg.getCommonName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
+											gg.getCommonName() + "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
+											+ "</html>";
 					}
 					return null;
 				}
@@ -2217,7 +2221,7 @@ public class Neighbour {
 			showflankingseqs.setAction( new AbstractAction("Show flanking sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					List<Sequence> lseq = new ArrayList<Sequence>();
+					Serifier serifier = new Serifier();
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
@@ -2236,7 +2240,7 @@ public class Neighbour {
 									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
 										seq.append( prev.getContshort().sb.substring(start, stop) );
-										lseq.add( seq );
+										serifier.addSequence( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == -1 ) {
 									int start = prev != null ? prev.stop : 0;
@@ -2245,7 +2249,7 @@ public class Neighbour {
 									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
 										seq.append( tv2.getContshort().sb.substring(start, stop) );
-										lseq.add( seq );
+										serifier.addSequence( seq );
 									}
 								}
 								
@@ -2254,13 +2258,13 @@ public class Neighbour {
 							}
 						}
 					}
-					geneset.showSomeSequences( comp, lseq );
+					geneset.showSomeSequences( comp, serifier );
 				}
 			});
 			showbackflankingseqs.setAction( new AbstractAction("Show back flanking sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					List<Sequence> lseq = new ArrayList<Sequence>();
+					Serifier serifier = new Serifier();
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
@@ -2279,7 +2283,7 @@ public class Neighbour {
 									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
 										seq.append( prev.getContshort().sb.substring(start, stop) );
-										lseq.add( seq );
+										serifier.addSequence( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == 1 ) {
 									int start = prev.stop;
@@ -2288,7 +2292,7 @@ public class Neighbour {
 									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
 										seq.append( tv2.getContshort().sb.substring(start, stop) );
-										lseq.add( seq );
+										serifier.addSequence( seq );
 									}
 								}
 								
@@ -2297,15 +2301,19 @@ public class Neighbour {
 							}
 						}
 					}
-					geneset.showSomeSequences( comp, lseq );
+					geneset.showSomeSequences( comp, serifier );
 				}
 			});
 			showareaseqs.setAction( new AbstractAction("Show area") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					
+					Serifier serifier = new Serifier();
 					List<Sequence> lseq = new ArrayList<Sequence>();
 					int[] rr = rowheader.getSelectedRows();
+					
+					int upph = -4000;
+					int endh = 6000;
+					
 					if( rr == null || rr.length == 0 ) {
 						for( GeneGroup gg : selectedGenesGroups ) {
 							List<Tegeval> ltv = gg.getTegevals();
@@ -2313,8 +2321,91 @@ public class Neighbour {
 								//int start = Math.max( 0, tv.start-3000 );
 								//int stop = Math.min( tv.getContshort().sb.length(), tv.stop+3000 );
 								Sequence seq = new Sequence( tv.getSpecies(), null );
-								seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
-								lseq.add( seq );
+								String str = tv.ori == -1 ? tv.getSubstring(-endh-tv.start+tv.stop-1, -upph-tv.start+tv.stop-1) : tv.getSubstring(upph, endh);
+								seq.append( str ); //tv.getLength()+3000) );
+								
+								int offset = 0;
+								if( str.length() < endh-upph ) {
+									offset = endh-upph-str.length();
+									offset = -offset;
+								}
+								//if( tv.ori == -1 ) {
+									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, tv.name);
+									newann.color = Color.gray;
+									seq.addAnnotation( newann );
+									serifier.addAnnotation(newann);
+									
+									Color color = Color.lightGray;
+									Tegeval ntev = tv.getNext();
+									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
+										if( tv.ori == -1 ) {
+											int bil = ntev.stop-tv.start;
+											int len = tv.stop-tv.start;
+											
+											int start = -upph+offset+len-bil;
+											int nlen = ntev.stop-ntev.start;
+											newann = new Annotation(seq, start, start+nlen, 1, ntev.name);
+										} else {
+											int bil = ntev.start-tv.start;
+											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, ntev.name);
+										}
+										
+										newann.color = color;
+										seq.addAnnotation( newann );
+										serifier.addAnnotation(newann);
+										
+										ntev = ntev.getNext();
+										if( color == Color.lightGray ) color = Color.gray;
+										else color = Color.lightGray;
+									}
+									
+									color = Color.lightGray;
+									ntev = tv.getPrevious();
+									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
+										if( tv.ori == -1 ) {
+											int bil = ntev.stop-tv.start;
+											int len = tv.stop-tv.start;
+											int start = -upph+offset+len-bil;
+											int nlen = ntev.stop-ntev.start;
+											newann = new Annotation(seq, start, start+nlen, 1, ntev.name);
+										} else {
+											int bil = ntev.start-tv.start;
+											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, ntev.name);
+										}
+										newann.color = color;
+										seq.addAnnotation( newann );
+										serifier.addAnnotation(newann);
+										
+										ntev = ntev.getPrevious();
+										if( color == Color.lightGray ) color = Color.gray;
+										else color = Color.lightGray;
+									}
+								/*} else {
+									Annotation newann = new Annotation(seq, 3000, 3000+tv.stop-tv.start, 1, tv.name);
+									seq.addAnnotation( newann );
+									serifier.addAnnotation(newann);
+									
+									Tegeval ntev = tv.getNext();
+									while( ntev != null && ntev.start-tv.start < 5000 && ntev.stop-tv.start > -3000 ) {
+										int bil = ntev.start-tv.start;
+										newann = new Annotation(seq, 3000+bil, 3000+bil+ntev.stop-ntev.start, 1, ntev.name);
+										seq.addAnnotation( newann );
+										serifier.addAnnotation(newann);
+										
+										ntev = ntev.getNext();
+									}
+									
+									ntev = tv.getPrevious();
+									while( ntev != null && ntev.start-tv.start < 5000 && ntev.stop-tv.start > -3000 ) {
+										int bil = ntev.start-tv.start;
+										newann = new Annotation(seq, 3000+bil, 3000+bil+ntev.stop-ntev.start, 1, ntev.name);
+										seq.addAnnotation( newann );
+										serifier.addAnnotation(newann);
+										
+										ntev = ntev.getPrevious();
+									}
+								}*/
+								serifier.addSequence( seq );
 							}
 						}
 					} else {
@@ -2323,10 +2414,10 @@ public class Neighbour {
 							Tegeval tv = hteg.get(i);
 							Sequence seq = new Sequence( tv.getSpecies(), null );
 							seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
-							lseq.add( seq );
+							serifier.addSequence( seq );
 						}
 					}
-					geneset.showSomeSequences( comp, lseq );
+					geneset.showSomeSequences( comp, serifier );
 				}
 			});
 			

@@ -110,7 +110,6 @@ import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
 import org.simmi.shared.GBK2AminoFasta;
 import org.simmi.shared.Sequence;
@@ -119,8 +118,8 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
-import org.simmi.signed.NativeRun;
 import org.simmi.unsigned.JavaFasta;
+import org.simmi.unsigned.NativeRun;
 
 public class SerifyApplet extends JApplet {
 	/**
