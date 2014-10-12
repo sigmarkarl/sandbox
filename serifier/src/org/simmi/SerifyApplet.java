@@ -4476,7 +4476,7 @@ public class SerifyApplet extends JApplet {
 			/*uri = new URI(path+".namemap");
 			map.put( "nameMap", uri );*/
 			
-			GBK2AminoFasta.handleText( name, gbks, map, out, path, replace );
+			GBK2AminoFasta.handleText( gbks, map, out, path, replace );
 			
 			//+firsturi.toString().replace(name, "")
 			addSequences( name+".fna", firsturi, null );
