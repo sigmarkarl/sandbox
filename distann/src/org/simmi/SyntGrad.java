@@ -204,13 +204,16 @@ public class SyntGrad {
 									double val1 = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
 									double val2 = next.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, next.getGene().getGeneGroup()) : -1;
 									
-									if( val1 != -1.0 && val2 != -1.0 ) dvals.add( val2-val1 );
+									if( val1 != -1.0 && val2 != -1.0 ) {
+										dvals.add( val2-val1 );
+									}
 								}
 								tv = next;
 							}
 							if( dvals.size() > 0 ) {
 								Collections.sort( dvals );
-								if( dvals.get( dvals.size()/2 ) < 0 ) {
+								double rev = dvals.get( dvals.size()/2 );
+								if( rev < 0 ) {
 									c.setReverse( !c.isReverse() );
 								}
 							}
@@ -445,6 +448,79 @@ public class SyntGrad {
 		drawImage(geneset, g2, spec1, contigs1, spec2s, w, h, 1.0);
 	}
 	
+	public void doTv( GeneSet geneset, Graphics2D g2, Tegeval tv, int tvn, int total, String spec1, List<Contig> contigs1, int w2, int h2, int rad, double radscale ) {
+		Gene gene = tv.getGene();
+		GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
+		double r = 2.0*Math.PI*(double)tvn/(double)total;
+		
+		boolean visible = false;
+		if( spec1 != null ) {
+			if( gg != null ) {
+				visible = true;
+				double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
+				if( ratio >= 0.0 ) {
+					g2.setColor( invertedGradientColor( ratio ) );	
+				}
+			} else g2.setColor( Color.white );
+		} else {
+			boolean phage = gene.isPhage();
+			boolean plasmid = tv.getContshort().isPlasmid();
+			
+			Color color = Color.white;
+			int count = 1;
+			if( gg != null ) {
+				Teginfo ti = gg.getGenes( gene.getSpecies() );
+				count = ti.tset.size();
+				
+				int i = 0;
+				if( geneset.table.getModel() == geneset.defaultModel ) {
+					i = geneset.genelist.indexOf(gene);
+				} else {
+					i = geneset.allgenegroups.indexOf(gg);
+				}
+				
+				if( i != -1 ) {
+					int rv = geneset.table.convertRowIndexToView(i);
+					if( rv >= 0 && rv < geneset.table.getRowCount() ) {
+						visible = true; //geneset.table.isRowSelected( rv );
+						
+						if( syntcol.isSelected() ) {
+							//double ratio = (double)gg.index/(double)geneset.allgenegroups.size(); 
+							double ratio = (double)rv/(double)geneset.table.getRowCount();
+							color = GeneCompare.gradientColor(ratio);
+						}
+					}
+				}
+			}
+			
+			if( !syntcol.isSelected() ) {
+				if( phage && plasmid ) {
+					if( count > 1 ) color = darkmag;
+					else color = Color.magenta;
+				} else if( phage ) {
+					if( count > 1 ) color = darkblue;
+					else color = Color.blue;
+				} else if( plasmid ) {
+					if( count > 1 ) color = darkred;
+					else color = Color.red;
+				} else {
+					if( count > 1 ) color = Color.gray;
+					else color = Color.lightGray;
+				}
+			}
+			g2.setColor( color );
+		}
+		
+		if( visible ) {
+			g2.translate(w2, h2);
+			g2.rotate( r*radscale );
+			g2.fillRect(rad, -1, 15, 3);
+			//g2.drawLine(rad, 0, rad+15, 0);
+			g2.rotate( -r*radscale );
+			g2.translate(-w2, -h2);
+		}
+	}
+	
 	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s, int w, int h, double radscale ) {
 		int w2 = w/2;
 		int h2 = h/2;
@@ -461,108 +537,153 @@ public class SyntGrad {
 			}
 			
 			int tvn = 0;
-			for( Contig c : scontigs ) {
-				Tegeval tv = c.getFirst();
-				while( tv != null ) {
-					Gene gene = tv.getGene();
-					GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
-					double r = 2.0*Math.PI*(double)tvn/(double)total;
+			
+			boolean succ = false;
+			int rr = geneset.table.getSelectedRow();
+			if( rr != -1 ) {
+				int i = geneset.table.convertRowIndexToModel(rr);
+				GeneGroup gg = geneset.allgenegroups.get(i);
+				Teginfo t = gg.getGenes(spec);
+				if( t != null ) {
+					succ = true;
 					
-					boolean visible = false;
-					if( spec1 != null ) {
-						if( gg != null ) {
-							visible = true;
-							double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
-							if( ratio >= 0.0 ) {
-								g2.setColor( invertedGradientColor( ratio ) );						
+					int ci = 0;
+					int k = -1;
+					Tegeval te = t.best;
+					/*if( te == null ) {
+						for( Tegeval tv : t.tset ) {
+							te = tv;
+							if( te != null ) break;
+						}
+					}*/
+					
+					if( te != null ) {
+						for( Contig c : scontigs ) {
+							if( c.annset != null ) k = c.indexOf( te );
+							if( k != -1 ) {
+								break;
 							}
-						} else g2.setColor( Color.white );
-					} else {
-						boolean phage = gene.isPhage();
-						boolean plasmid = tv.getContshort().isPlasmid();
+							ci++;
+						}
 						
-						Color color = Color.white;
-						int count = 1;
-						if( gg != null ) {
-							Teginfo ti = gg.getGenes( gene.getSpecies() );
-							count = ti.tset.size();
-							
-							int i = 0;
-							if( geneset.table.getModel() == geneset.defaultModel ) {
-								i = geneset.genelist.indexOf(gene);
-							} else {
-								i = geneset.allgenegroups.indexOf(gg);
-							}
-							
-							if( i != -1 ) {
-								int rv = geneset.table.convertRowIndexToView(i);
-								if( rv >= 0 && rv < geneset.table.getRowCount() ) {
-									visible = true; //geneset.table.isRowSelected( rv );
-									
-									if( syntcol.isSelected() ) {
-										//double ratio = (double)gg.index/(double)geneset.allgenegroups.size(); 
-										double ratio = (double)rv/(double)geneset.table.getRowCount();
-										color = GeneCompare.gradientColor(ratio);
+						for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
+							int cii = cci%scontigs.size();
+							Contig c = scontigs.get(cii);
+							if( cii == ci ) {
+								Tegeval tv = (Tegeval)c.getAnnotation(k);
+								if( cci == ci ) {
+									while( tv != null ) {
+										doTv( geneset, g2, tv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+										Tegeval prev = tv;
+										
+										tvn++;
+										tv = c.getNext(tv);
+										
+										if( tv != null && tv.start == prev.start ) {
+											System.err.println( tv.name + "   " + prev.name );
+											System.err.println( tv == prev );
+											
+											break;
+										}
+									}
+								} else {
+									Tegeval ftv = c.getFirst();
+									while( ftv != tv ) {
+										doTv( geneset, g2, ftv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+										Tegeval prev = ftv;
+										
+										tvn++;
+										ftv = c.getNext( ftv );
+										
+										if( ftv != null && ftv.start == prev.start ) {
+											System.err.println( ftv.name + "   " + prev.name );
+											System.err.println( ftv == prev );
+											
+											break;
+										}
 									}
 								}
-							}
-						}
-						
-						if( !syntcol.isSelected() ) {
-							if( phage && plasmid ) {
-								if( count > 1 ) color = darkmag;
-								else color = Color.magenta;
-							} else if( phage ) {
-								if( count > 1 ) color = darkblue;
-								else color = Color.blue;
-							} else if( plasmid ) {
-								if( count > 1 ) color = darkred;
-								else color = Color.red;
 							} else {
-								if( count > 1 ) color = Color.gray;
-								else color = Color.lightGray;
+								Tegeval tv = c.getFirst();
+								while( tv != null ) {
+									doTv( geneset, g2, tv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+									
+									Tegeval prev = tv;
+									
+									tvn++;
+									tv = c.getNext( tv );
+									
+									if( tv != null && tv.start == prev.start ) {
+										System.err.println( tv.name + "   " + prev.name );
+										System.err.println( tv == prev );
+										
+										break;
+									}
+									
+									/*if( tv == c.getFirst() ) {
+										break;
+									}*/
+								}
 							}
+							
+							if( contcheck.isSelected() ) {
+								double r = 2.0*Math.PI*(double)tvn/(double)total;
+								g2.translate(w2, h2);
+								g2.rotate( r );
+								g2.setColor( Color.black );
+								g2.drawLine(rad, 0, rad+100, 0);
+								g2.rotate( -r );
+								g2.translate(-w2, -h2);
+							}
+							
+							/*Tegeval prev = tv;
+							
+							if( tv != null && tv.start == prev.start ) {
+								System.err.println( tv.name + "   " + prev.name );
+								System.err.println( tv == prev );
+								
+								break;
+							}*/
 						}
-						g2.setColor( color );
 					}
-					
-					if( visible ) {
-						g2.translate(w2, h2);
-						g2.rotate( r*radscale );
-						g2.fillRect(rad, -1, 15, 3);
-						//g2.drawLine(rad, 0, rad+15, 0);
-						g2.rotate( -r*radscale );
-						g2.translate(-w2, -h2);
-					}
-					
-					Tegeval prev = tv;
-					
-					tvn++;
-					tv = c.getNext( tv );
-					
-					if( tv != null && tv.start == prev.start ) {
-						System.err.println( tv.name + "   " + prev.name );
-						System.err.println( tv == prev );
-						
-						break;
-					}
-					
-					/*if( tv == c.getFirst() ) {
-						break;
-					}*/
-				}
-				
-				if( contcheck.isSelected() ) {
-					double r = 2.0*Math.PI*(double)tvn/(double)total;
-					g2.translate(w2, h2);
-					g2.rotate( r );
-					g2.setColor( Color.black );
-					g2.drawLine(rad, 0, rad+100, 0);
-					g2.rotate( -r );
-					g2.translate(-w2, -h2);
 				}
 			}
 			
+			if( !succ ) {
+				for( Contig c : scontigs ) {
+					Tegeval tv = c.getFirst();
+					while( tv != null ) {
+						doTv( geneset, g2, tv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+						
+						Tegeval prev = tv;
+						
+						tvn++;
+						tv = c.getNext( tv );
+						
+						if( tv != null && tv.start == prev.start ) {
+							System.err.println( tv.name + "   " + prev.name );
+							System.err.println( tv == prev );
+							
+							break;
+						}
+						
+						/*if( tv == c.getFirst() ) {
+							break;
+						}*/
+					}
+					
+					if( contcheck.isSelected() ) {
+						double r = 2.0*Math.PI*(double)tvn/(double)total;
+						g2.translate(w2, h2);
+						g2.rotate( r );
+						g2.setColor( Color.black );
+						g2.drawLine(rad, 0, rad+100, 0);
+						g2.rotate( -r );
+						g2.translate(-w2, -h2);
+					}
+				}
+			}
+				
 			rad += 15;
 		}
 		
