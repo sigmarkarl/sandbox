@@ -59,6 +59,7 @@ import org.simmi.shared.Contig;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Serifier;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
@@ -556,9 +557,11 @@ public class GeneCompare {
 								int to = Math.max( tv1.stop, tv2.stop );
 								String seqstr = c.getSubstring( from, to, 1 );
 							
+								Serifier serifier = new Serifier();
 								Sequence seq = new Sequence("phage_"+from+"_"+to, null);
 								seq.append( seqstr );
-								geneset.showSomeSequences( geneset, Arrays.asList( new Sequence[] {seq} ) );
+								serifier.addSequence( seq );
+								geneset.showSomeSequences( geneset, serifier );
 							} else {
 								if( c == null ) {
 									geneset.table.clearSelection();
