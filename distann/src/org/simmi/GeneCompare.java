@@ -59,6 +59,7 @@ import org.simmi.shared.Contig;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.Serifier;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
@@ -200,7 +201,7 @@ public class GeneCompare {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return species.get( rowIndex );
+				return geneset.nameFix( species.get( rowIndex ) );
 			}
 
 			@Override
@@ -231,11 +232,14 @@ public class GeneCompare {
 		JOptionPane.showMessageDialog(comp, c);
 		
 		int rsel = table1.getSelectedRow();
-		String spec1 = rsel != -1 ? (String)table1.getValueAt( rsel, 0 ) : null;
+		//String spec1 = rsel != -1 ? (String)table1.getValueAt( rsel, 0 ) : null;
+		int i = table1.convertRowIndexToModel(rsel);
+		String spec1 = rsel != -1 ? species.get( i ) : null;
 		final List<String>	spec2s = new ArrayList<String>();
 		int[] rr = table2.getSelectedRows();
 		for( int r : rr ) {
-			String spec2 = (String)table2.getValueAt(r, 0);
+			i = table2.convertRowIndexToModel(r);
+			String spec2 = species.get(i); //(String)table2.getValueAt(r, 0);
 			spec2s.add( spec2 );
 		}
 		
@@ -284,7 +288,7 @@ public class GeneCompare {
 			public void paintComponent( Graphics g ) {
 				Graphics2D g2 = (Graphics2D)g;
 				//draw( g2 );
-				g2.drawImage(bimg, 0, 0, this);
+				g2.drawImage(bimg, 0, 0, bimg.getWidth()/2, bimg.getHeight()/2, 0, 0, bimg.getWidth(), bimg.getHeight(), this);
 			}
 		};
 		
@@ -454,147 +458,151 @@ public class GeneCompare {
 			
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				Point np = e.getPoint();
-				if( p != null ) {
-					doubleclicked = doubleclicked || e.getClickCount() == 2;
-					
-					double ndx = np.x-bimg.getWidth()/2;
-					double ndy = np.y-bimg.getHeight()/2;
-					
-					double dx = p.x-bimg.getWidth()/2;
-					double dy = p.y-bimg.getHeight()/2;
-					
-					if( doubleclicked ) {						
-						double t = Math.atan2( dy, dx );
-						double rad = Math.sqrt( dx*dx + dy*dy );
+				if( e.getButton() == MouseEvent.BUTTON1 ) {
+					Point np = e.getPoint();
+					if( p != null ) {
+						doubleclicked = doubleclicked || e.getClickCount() == 2;
 						
-						double nt = Math.atan2( ndy, ndx );
-						double nrad = Math.sqrt( ndx*ndx + ndy*ndy );
+						double ndx = np.x-bimg.getWidth()/2;
+						double ndy = np.y-bimg.getHeight()/2;
 						
-						if( t < 0 ) t += Math.PI*2.0;
-						int mloc = (int)(t*size/(2*Math.PI));
+						double dx = p.x-bimg.getWidth()/2;
+						double dy = p.y-bimg.getHeight()/2;
 						
-						if( nt < 0 ) nt += Math.PI*2.0;
-						int nloc = (int)(nt*size/(2*Math.PI));
-						
-						int ind = (int)((rad-500.0)/30.0);
-						if( ind >= 0 && ind < spec2s.size() ) {
-							String spec = spec2s.get( ind );
+						if( doubleclicked ) {						
+							double t = Math.atan2( dy, dx );
+							double rad = Math.sqrt( dx*dx + dy*dy );
+							
+							double nt = Math.atan2( ndy, ndx );
+							double nrad = Math.sqrt( ndx*ndx + ndy*ndy );
+							
+							if( t < 0 ) t += Math.PI*2.0;
+							int mloc = (int)(t*size/(2*Math.PI));
+							
+							if( nt < 0 ) nt += Math.PI*2.0;
+							int nloc = (int)(nt*size/(2*Math.PI));
+							
+							int ind = (int)((rad-500.0)/30.0);
+							if( ind >= 0 && ind < spec2s.size() ) {
+								String spec = spec2s.get( ind );
+								
+								int i = 0;
+								int loc = 0;
+								for( i = 0; i < contigs.size(); i++ ) {
+									Contig c = contigs.get(i);
+									if( loc + c.getGeneCount() > mloc ) {
+										break;
+									} else loc += c.getGeneCount();
+								}
+								Contig c = contigs.get(i);
+								
+								if( mloc-loc < c.getGeneCount() ) {
+									//loc += c.getGeneCount();
+									//c = contigs.get( i%contigs.size() );
+									Tegeval tv = (Tegeval)c.annset.get(mloc-loc);
+									Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+									
+									if( ti != null && ti.best != null ) {
+										Contig ct1 = ti.best.getContshort();
+										
+										tv = (Tegeval)c.annset.get(nloc-loc);
+										ti = tv.getGene().getGeneGroup().getGenes(spec);
+										Contig ct2 = ti.best.getContshort();
+										
+										if( ct1 == ct2 ) ct1.setReverse( !ct1.isReverse() );
+										else {
+											List<Contig> conts2 = geneset.speccontigMap.get(spec);
+											int k2 = conts2.indexOf( ct2 );
+											conts2.remove( ct1 );
+											conts2.add(k2, ct1);
+										}
+									}
+								}
+							}
+							
+							repaintCompare( g2, bimg, spec2s, specombo, geneset, blosumap, cmp );
+						} else {						
+							double t1 = Math.atan2( dy, dx );
+							double t2 = Math.atan2( ndy, ndx );
+							
+							double rad = Math.sqrt( dx*dx + dy*dy );
+							
+							if( t1 < 0 ) t1 += Math.PI*2.0;
+							if( t2 < 0 ) t2 += Math.PI*2.0;
+							
+							int loc1 = (int)(t1*size/(2*Math.PI));
+							int loc2 = (int)(t2*size/(2*Math.PI));
+							
+							int minloc = Math.min( loc1, loc2 );
+							int maxloc = Math.max( loc1, loc2 );
 							
 							int i = 0;
 							int loc = 0;
-							for( i = 0; i < contigs.size(); i++ ) {
-								Contig c = contigs.get(i);
-								if( loc + c.getGeneCount() > mloc ) {
-									break;
-								} else loc += c.getGeneCount();
+							Contig c = null;
+							if( contigs != null ) {
+								for( i = 0; i < contigs.size(); i++ ) {
+									c = contigs.get(i);
+									if( loc + c.getGeneCount() > minloc ) {
+										break;
+									} else loc += c.getGeneCount();
+								}
+								//c = contigs.get(i);
 							}
-							Contig c = contigs.get(i);
 							
-							if( mloc-loc < c.getGeneCount() ) {
-								//loc += c.getGeneCount();
-								//c = contigs.get( i%contigs.size() );
-								Tegeval tv = (Tegeval)c.annset.get(mloc-loc);
-								Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+							if( e.isAltDown() ) {
+								Tegeval tv1 = (Tegeval)c.annset.get(minloc-loc);
+								Tegeval tv2 = (Tegeval)c.annset.get(maxloc-loc);
 								
-								if( ti != null && ti.best != null ) {
-									Contig ct1 = ti.best.getContshort();
-									
-									tv = (Tegeval)c.annset.get(nloc-loc);
-									ti = tv.getGene().getGeneGroup().getGenes(spec);
-									Contig ct2 = ti.best.getContshort();
-									
-									if( ct1 == ct2 ) ct1.setReverse( !ct1.isReverse() );
-									else {
-										List<Contig> conts2 = geneset.speccontigMap.get(spec);
-										int k2 = conts2.indexOf( ct2 );
-										conts2.remove( ct1 );
-										conts2.add(k2, ct1);
-									}
-								}
-							}
-						}
-						
-						repaintCompare( g2, bimg, spec2s, specombo, geneset, blosumap, cmp );
-					} else {						
-						double t1 = Math.atan2( dy, dx );
-						double t2 = Math.atan2( ndy, ndx );
-						
-						double rad = Math.sqrt( dx*dx + dy*dy );
-						
-						if( t1 < 0 ) t1 += Math.PI*2.0;
-						if( t2 < 0 ) t2 += Math.PI*2.0;
-						
-						int loc1 = (int)(t1*size/(2*Math.PI));
-						int loc2 = (int)(t2*size/(2*Math.PI));
-						
-						int minloc = Math.min( loc1, loc2 );
-						int maxloc = Math.max( loc1, loc2 );
-						
-						int i = 0;
-						int loc = 0;
-						Contig c = null;
-						if( contigs != null ) {
-							for( i = 0; i < contigs.size(); i++ ) {
-								c = contigs.get(i);
-								if( loc + c.getGeneCount() > minloc ) {
-									break;
-								} else loc += c.getGeneCount();
-							}
-							//c = contigs.get(i);
-						}
-						
-						if( e.isAltDown() ) {
-							Tegeval tv1 = (Tegeval)c.annset.get(minloc-loc);
-							Tegeval tv2 = (Tegeval)c.annset.get(maxloc-loc);
+								int from = Math.min( tv1.start, tv2.start );
+								int to = Math.max( tv1.stop, tv2.stop );
+								String seqstr = c.getSubstring( from, to, 1 );
 							
-							int from = Math.min( tv1.start, tv2.start );
-							int to = Math.max( tv1.stop, tv2.stop );
-							String seqstr = c.getSubstring( from, to, 1 );
-						
-							Sequence seq = new Sequence("phage_"+from+"_"+to, null);
-							seq.append( seqstr );
-							geneset.showSomeSequences( geneset, Arrays.asList( new Sequence[] {seq} ) );
-						} else {
-							if( c == null ) {
-								geneset.table.clearSelection();
-								for( int k = minloc; k < maxloc; k++ ) {
-									geneset.table.addRowSelectionInterval(k, k);
-								}
-							} else for( int k = minloc; k < maxloc; k++ ) {
-								if( k-loc >= c.getGeneCount() ) {
-									loc += c.getGeneCount();
-									i++;
-									c = contigs.get( i%contigs.size() );
-								}
-								Tegeval tv = (Tegeval)(c.isReverse() ? c.annset.get( c.annset.size()-1-(k-loc) ) : c.annset.get(k-loc));
-								if( e.isShiftDown() ) {
-									Set<GeneGroup>	gset = new HashSet<GeneGroup>();
-									gset.add( tv.getGene().getGeneGroup() );
-									try {
-										new Neighbour( gset ).neighbourMynd( geneset, comp, genelist, geneset.contigmap );
-									} catch (IOException e1) {
-										e1.printStackTrace();
+								Serifier serifier = new Serifier();
+								Sequence seq = new Sequence("phage_"+from+"_"+to, null);
+								seq.append( seqstr );
+								serifier.addSequence( seq );
+								geneset.showSomeSequences( geneset, serifier );
+							} else {
+								if( c == null ) {
+									geneset.table.clearSelection();
+									for( int k = minloc; k < maxloc; k++ ) {
+										geneset.table.addRowSelectionInterval(k, k);
 									}
-									break;
-								} else {
-									int r;
-									if( geneset.table.getModel() == geneset.groupModel ) {
-										int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
-										r = geneset.table.convertRowIndexToView(u);
-										geneset.table.addRowSelectionInterval( r, r );
-									} else {
-										String spec = spec2s.get( (int)((rad-500.0)/30.0) );
-										Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
-										int selr = -1;
-										for( Tegeval te : ti.tset ) {
-											int u = geneset.genelist.indexOf( te.getGene() );
-											r = geneset.table.convertRowIndexToView(u);
-											if( selr == -1 ) selr = r;
-											geneset.table.addRowSelectionInterval( r, r );
+								} else for( int k = minloc; k < maxloc; k++ ) {
+									if( k-loc >= c.getGeneCount() ) {
+										loc += c.getGeneCount();
+										i++;
+										c = contigs.get( i%contigs.size() );
+									}
+									Tegeval tv = (Tegeval)(c.isReverse() ? c.annset.get( c.annset.size()-1-(k-loc) ) : c.annset.get(k-loc));
+									if( e.isShiftDown() ) {
+										Set<GeneGroup>	gset = new HashSet<GeneGroup>();
+										gset.add( tv.getGene().getGeneGroup() );
+										try {
+											new Neighbour( gset ).neighbourMynd( geneset, comp, genelist, geneset.contigmap );
+										} catch (IOException e1) {
+											e1.printStackTrace();
 										}
-										Rectangle rect = geneset.table.getCellRect(selr, 0, true);
-										geneset.table.scrollRectToVisible(rect);
+										break;
+									} else {
+										int r;
+										if( geneset.table.getModel() == geneset.groupModel ) {
+											int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
+											r = geneset.table.convertRowIndexToView(u);
+											geneset.table.addRowSelectionInterval( r, r );
+										} else {
+											String spec = spec2s.get( (int)((rad-500.0)/30.0) );
+											Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+											int selr = -1;
+											for( Tegeval te : ti.tset ) {
+												int u = geneset.genelist.indexOf( te.getGene() );
+												r = geneset.table.convertRowIndexToView(u);
+												if( selr == -1 ) selr = r;
+												geneset.table.addRowSelectionInterval( r, r );
+											}
+											Rectangle rect = geneset.table.getCellRect(selr, 0, true);
+											geneset.table.scrollRectToVisible(rect);
+										}
 									}
 								}
 							}
@@ -634,7 +642,7 @@ public class GeneCompare {
 			}
 		});*/
 		
-		Dimension dim = new Dimension( w, h );
+		Dimension dim = new Dimension( w/2, h/2 );
 		cmp.setPreferredSize( dim );
 		cmp.setSize( dim );
 		JScrollPane	scrollpane = new JScrollPane( cmp );
