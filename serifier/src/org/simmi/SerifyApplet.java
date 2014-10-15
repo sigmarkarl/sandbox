@@ -110,7 +110,6 @@ import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
 import org.simmi.shared.GBK2AminoFasta;
 import org.simmi.shared.Sequence;
@@ -119,8 +118,8 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
-import org.simmi.signed.NativeRun;
 import org.simmi.unsigned.JavaFasta;
+import org.simmi.unsigned.NativeRun;
 
 public class SerifyApplet extends JApplet {
 	/**
@@ -4477,7 +4476,7 @@ public class SerifyApplet extends JApplet {
 			/*uri = new URI(path+".namemap");
 			map.put( "nameMap", uri );*/
 			
-			GBK2AminoFasta.handleText( name, gbks, map, out, path, replace );
+			GBK2AminoFasta.handleText( gbks, map, out, path, replace );
 			
 			//+firsturi.toString().replace(name, "")
 			addSequences( name+".fna", firsturi, null );
