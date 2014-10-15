@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pan genome of the Thermus species</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<link href="https://fonts.googleapis.com/css?family=Headland+One|Life+Savers:400,700" rel="stylesheet" type="text/css">
+<style>
+	caption { font-size: 80%; caption-side: bottom; }
+	figcaption { font-size: 64%; caption-side: bottom; }
+	
+	table { font-size:80%; border-bottom: solid 1px black; border-collapse: collapse; }
+	thead { border-bottom: solid 2px black; border-collapse: collapse; }
+	
+	#footer ul li { display: inline; padding-left: 0.5em; }
+	figcaption { font-size: 14px; }
+</style>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      
+      var gcdata;
+      var pcdata;
+      var gcoptions = {
+          title: 'GC%',
+          hAxis: {slantedText:true, slantedTextAngle:90},
+          chartArea: {  width: "90%", height: "40%" },
+          fontSize: '9',
+          height: 400,
+      };
+      var pcoptions = {
+          title: 'Pan-core genome',
+          fontSize: '9',
+          chartArea: {  width: "70%" },
+          height: 400,
+          isStacked: true
+      };
+      var freqdata;
+      var freqoptions = {
+          title: 'Gene frequency distribution',
+      	  height: 400
+      };
+      var cogdata;
+      var cogoptions = {
+          title: 'COG groups',
+          fontSize: '9',
+          height: 600,
+          isStacked: true
+      };
+      
+      function drawChart() {
+        pcdata = google.visualization.arrayToDataTable([
+          ['Species', 'Pan: 3826', 'Core: 1290'],
+['T.CCB_US3_UF1', 1979, 0],
+['T.antranikianii_DSM_12462', 1669, 576],
+['T.aquaticus_Y51MC23', 1592, 975],
+['T.arciformis_4241', 1555, 1231],
+['T.brockianus_1003', 1535, 1394],
+['T.caliditerrae', 1445, 1537],
+['T.eggertsoni_2789', 1441, 1628],
+['T.filiformis_947', 1418, 1808],
+['T.igniterrae_ATCC', 1414, 1846],
+['T.islandicus_DSM_21543', 1369, 2065],
+['T.kawarayensis_3799', 1357, 2173],
+['T.oshimai_DSM_12092', 1353, 2239],
+['T.scotoductus_SA_01', 1337, 2349],
+['T.sp._YIM_77409', 1317, 2387],
+['T.tengchongensis', 1316, 2475],
+['T.thermophilus_HB8', 1290, 2536]
+        ]);
+        
+        gcdata = google.visualization.arrayToDataTable([
+          ['Species', 'Size'],
+['T.scotoductus_2101', 0.640313895280372],
+['T.scotoductus_SA_01', 0.6488880283765274],
+['T.scotoductus_4063', 0.6488080397507467],
+['T.scotoductus_346', 0.6351715128265759],
+['T.scotoductus_DSM_8553', 0.6476286510014251],
+['T.scotoductus_252', 0.6486405487269662],
+['T.spNMX', 0.6525786743978411],
+['T.scotoductus_2127', 0.6379747148858881],
+['T.scotoductus_1572', 0.6370519957071292],
+['T.scotoductus_KI2', 0.654700372746676],
+['T.scotoductus_2121', 0.6505403206806574],
+['T.tengchongensis', 0.6640201005809593],
+['T.sp._YIM_77409', 0.6744001795585544],
+['T.antranikianii_DSM_12462', 0.647650740133478],
+['T.antranikianii_2120', 0.6294524775548797],
+['T.igniterrae_2137', 0.6633804279017508],
+['T.igniterrae_ATCC', 0.687945954663625],
+['T.caliditerrae', 0.6722089126167546],
+['T.CCB_US3_UF1', 0.6857933419571918],
+['T.aquaticus_Y51MC23', 0.6804528112093399],
+['T.aquaticus_4884', 0.6802222230921161],
+['T.islandicus', 0.6833083850433352],
+['T.islandicus_DSM_21543', 0.6835051546391753],
+['T.kawarayensis_3799', 0.6810525918718076],
+['T.arciformis_4241', 0.6733156212462788],
+['T.eggertsoni_2789', 0.6652295902840953],
+['T.brockianus_338', 0.6687941826560834],
+['T.brockianus_140', 0.6645518889104697],
+['T.brockianus_1003', 0.6683728076702979],
+['T.brockianus_Tb', 0.6676003054227028],
+['T.oshimai_220', 0.6842325623401436],
+['T.oshimai_JL_2', 0.6855578723281983],
+['T.oshimai_DSM_12092', 0.6872475070257953],
+['T.thermophilus_SG0_5JP17_16', 0.6861824735468974],
+['T.RLM', 0.682930865167436],
+['T.thermophilus_791', 0.6780975436964728],
+['T.thermophilus_HB8', 0.6949598687369333],
+['T.thermophilus_HB27', 0.69407261730064],
+['T.thermophilus_ATCC', 0.6941570734870478],
+['T.thermophilus_JL_18', 0.6897796480807472],
+['T.filiformis_947', 0.6791340991416086],
+['Marinithermus_hydrothermalis_DSM_14884', 0.6807581813061797],
+['Oceanithermus_profundus_DSM_14977', 0.6981475354928953],
+['Meiothermus_silvanus_DSM_9946', 0.6271530326850668],
+['Meiothermus_timidus_DSM_17022', 0.6530416582566191],
+['Meiothermus_ruber_H328', 0.6341936222572172],
+['Meiothermus_ruber_DSM_1279', 0.6338220151080342],
+['Meiothermus_ruber_DSM_1279', 0.6338438273719377]
+        ]);
+        
+        cogdata = google.visualization.arrayToDataTable(
+          [['Species','RNA processing and modification','Chromatin structure and dynamics','Energy production and conversion','Cell cycle control, cell division, chromosome partitioning','Amino acid transport and metabolism','Nucleotide transport and metabolism','Carbohydrate transport and metabolism','Coenzyme transport and metabolism','Lipid transport and metabolism','Translation, ribosomal structure and biogenesis','Transcription','Replication, recombination and repair','Cell wall/membrane/envelope biogenesis','Cell motility','Post-translational modification, protein turnover, and chaperones','Inorganic ion transport and metabolism','Secondary metabolites biosynthesis, transport, and catabolism','General function prediction only','Function unknown','Signal transduction mechanisms','Intracellular trafficking, secretion, and vesicular transport','Defense mechanisms','Extracellular structures','Nuclear structure','Cytoskeleton'],
+['T.scotoductus_2101',0.0015600624024961,0.001170046801872075,0.07722308892355695,0.012090483619344774,0.10920436817472699,0.029641185647425898,0.05343213728549142,0.05031201248049922,0.0327613104524181,0.0717628705148206,0.033931357254290175,0.05499219968798752,0.04407176287051482,0.01014040561622465,0.041731669266770674,0.05343213728549142,0.01950078003120125,0.1294851794071763,0.11193447737909516,0.040171606864274574,0.0124804992199688,0.00858034321372855,0.0,3.90015600624025E-4,0.0],
+['T.scotoductus_SA_01',0.0011516314779270633,0.0019193857965451055,0.08023032629558541,0.011132437619961612,0.10211132437619962,0.029942418426103647,0.050287907869481764,0.046065259117082535,0.03262955854126679,0.06679462571976967,0.03301343570057581,0.056813819577735125,0.04644913627639156,0.010748560460652591,0.04376199616122841,0.05412667946257198,0.019577735124760076,0.13128598848368522,0.11055662188099807,0.04452975047984645,0.013435700575815739,0.013435700575815739,0.0,0.0,0.0],
+['T.scotoductus_346',0.0013736263736263737,0.0013736263736263737,0.07509157509157509,0.01282051282051282,0.1043956043956044,0.03388278388278388,0.044413919413919416,0.0521978021978022,0.035256410256410256,0.0815018315018315,0.028388278388278388,0.050824175824175824,0.048534798534798536,0.01098901098901099,0.04395604395604396,0.054945054945054944,0.018315018315018316,0.13232600732600733,0.10393772893772894,0.04212454212454213,0.011904761904761904,0.011446886446886446,0.0,0.0,0.0],
+['T.scotoductus_DSM_8553',0.001713796058269066,0.0012853470437017994,0.07112253641816624,0.012853470437017995,0.09554413024850043,0.032133676092544985,0.043273350471293916,0.049700085689802914,0.03299057412167952,0.07540702656383891,0.030848329048843187,0.07326478149100257,0.04712939160239932,0.013281919451585262,0.04155955441302485,0.050556983718937444,0.015852613538988862,0.14095972579263066,0.09682947729220223,0.04498714652956298,0.011996572407883462,0.016709511568123392,0.0,0.0,0.0],
+['T.spNMX',0.0024650780608052587,0.0016433853738701725,0.08052588331963846,0.01314708299096138,0.10147904683648315,0.029580936729663106,0.04601479046836483,0.05217748562037798,0.03451109285127362,0.07395234182415776,0.0419063270336894,0.05464256368118324,0.04149548069022186,0.010682004930156122,0.04272801972062449,0.050534100246507806,0.01684470008216927,0.13557929334428923,0.10887428101889893,0.0390304026294166,0.01191454396055875,0.010271158586688579,0.0,0.0,0.0],
+['T.scotoductus_2127',0.0016129032258064516,0.0016129032258064516,0.08266129032258064,0.012096774193548387,0.10403225806451613,0.03064516129032258,0.04959677419354839,0.05,0.03508064516129032,0.06975806451612904,0.03387096774193549,0.05040322580645161,0.04112903225806452,0.008467741935483872,0.044758064516129036,0.053629032258064514,0.018548387096774192,0.13185483870967743,0.11088709677419355,0.043548387096774194,0.01532258064516129,0.010483870967741936,0.0,0.0,0.0],
+['T.scotoductus_1572',0.0021321961620469083,0.0010660980810234541,0.07533759772565743,0.015280739161336177,0.10270078180525942,0.029495380241648897,0.055081734186211796,0.04299928926794598,0.029495380241648897,0.0650319829424307,0.035181236673773986,0.06965174129353234,0.03909026297085998,0.010305614783226724,0.04371002132196162,0.05152807391613362,0.016346837242359632,0.12864250177683015,0.10909737029140014,0.0433546552949538,0.016346837242359632,0.01812366737739872,0.0,0.0,0.0],
+['T.scotoductus_KI2',0.0019312475859405175,7.72499034376207E-4,0.0664349169563538,0.011587485515643106,0.10505986867516416,0.028968713789107765,0.05716492854383932,0.05330243337195829,0.030127462340672075,0.06488991888760139,0.03785245268443414,0.06875241405948243,0.040942448821938975,0.022402471996910003,0.03630745461568173,0.050212437234453455,0.01429123213595983,0.12553109308613364,0.0988798764001545,0.061027423715720355,0.013518733101583623,0.009656237929702587,0.0,0.0,3.862495171881035E-4],
+['T.scotoductus_2121',0.0015885623510722795,0.0015885623510722795,0.0818109610802224,0.012311358220810167,0.10246227164416204,0.03057982525814138,0.0488482922954726,0.05003971405877681,0.03494837172359015,0.06949960285941223,0.03335980937251787,0.051628276409849086,0.04169976171564734,0.007942811755361398,0.044876886417791896,0.052819698173153296,0.019459888800635424,0.13224781572676728,0.10921366163621922,0.04567116759332804,0.014297061159650517,0.013105639396346307,0.0,0.0,0.0],
+['T.tengchongensis',0.0018910741301059002,0.0018910741301059002,0.07337367624810892,0.0132375189107413,0.09379727685325265,0.030257186081694403,0.04878971255673222,0.048411497730711045,0.030257186081694403,0.06429652042360061,0.042738275340393345,0.060514372163388806,0.04046898638426626,0.01059001512859304,0.04046898638426626,0.05143721633888049,0.01399394856278366,0.14334341906202724,0.10325264750378214,0.055597579425113466,0.014750378214826021,0.01664145234493192,0.0,0.0,0.0],
+['T.sp._YIM_77409',0.0022007042253521128,0.0044014084507042256,0.07526408450704225,0.014964788732394365,0.0994718309859155,0.03301056338028169,0.04665492957746479,0.04841549295774648,0.030809859154929578,0.07086267605633803,0.03873239436619718,0.06029929577464789,0.04357394366197183,0.01056338028169014,0.0409330985915493,0.04841549295774648,0.016285211267605633,0.136443661971831,0.10651408450704225,0.04401408450704225,0.01584507042253521,0.01232394366197183,0.0,0.0,0.0],
+['T.antranikianii_DSM_12462',0.0021177467174925877,0.0012706480304955528,0.08132147395171538,0.011859381617958492,0.10546378653113088,0.03218975010588734,0.052096569250317665,0.04913172384582804,0.03600169419737399,0.07412113511224058,0.036848792884371026,0.05633206268530284,0.04066073697585769,0.016518424396442185,0.03981363828886065,0.05082592121982211,0.021601016518424398,0.13680643795002118,0.09741634900465904,0.036848792884371026,0.011012282930961457,0.009741634900465904,0.0,0.0,0.0],
+['T.antranikianii_2120',0.0023631350925561244,0.0011815675462780622,0.07995273729814888,0.012997243009058685,0.10752264671130367,0.0291453328081922,0.05041354864119732,0.044899566758566364,0.03387160299330445,0.06971248523040567,0.03623473808586058,0.05474596297755022,0.04214257581725089,0.01260338716029933,0.04056715242221347,0.052776683733753445,0.020874359984245767,0.14415124064592358,0.10476565576998818,0.0385978731784167,0.01063410791650256,0.009452540370224497,0.0,0.0,3.9385584875935406E-4],
+['T.igniterrae_2137',0.0015267175572519084,0.0011450381679389313,0.0751908396946565,0.012977099236641221,0.10572519083969466,0.03206106870229008,0.05267175572519084,0.0549618320610687,0.03358778625954199,0.06908396946564886,0.03549618320610687,0.05648854961832061,0.04122137404580153,0.012213740458015267,0.04732824427480916,0.05458015267175573,0.02099236641221374,0.13244274809160306,0.09618320610687023,0.038931297709923665,0.012213740458015267,0.012977099236641221,0.0,0.0,0.0],
+['T.igniterrae_ATCC',0.0016488046166529267,0.001236603462489695,0.07914262159934048,0.010305028854080791,0.11005770816158285,0.03338829348722176,0.04451772464962902,0.04905193734542457,0.03503709810387469,0.08367683429513603,0.03297609233305853,0.05399835119538335,0.039159109645507006,0.010717230008244023,0.04905193734542457,0.05605935696619951,0.021022258862324814,0.13107996702390767,0.09439406430338004,0.03957131079967024,0.011953833470733718,0.011953833470733718,0.0,0.0,0.0],
+['T.caliditerrae',0.0017897091722595079,0.0022371364653243847,0.0738255033557047,0.012080536912751677,0.10335570469798658,0.03355704697986577,0.04429530201342282,0.050559284116331094,0.031767337807606266,0.07293064876957495,0.03445190156599553,0.05727069351230425,0.04116331096196868,0.011633109619686801,0.04519015659955257,0.049664429530201344,0.017897091722595078,0.14093959731543623,0.10469798657718121,0.04429530201342282,0.012080536912751677,0.014317673378076063,0.0,0.0,0.0],
+['T.CCB_US3_UF1',0.00125997480050399,0.0016799664006719867,0.0734985300293994,0.01007979840403192,0.11465770684586309,0.031919361612767747,0.0503989920201596,0.05081898362032759,0.03569928601427971,0.07307853842923141,0.034019319613607726,0.044519109617807646,0.04031919361612768,0.01763964720705586,0.04325913481730365,0.0499790004199916,0.023099538009239817,0.13313733725325494,0.10163796724065519,0.036539269214615706,0.013439731205375893,0.01889962200755985,0.0,0.0,4.1999160016799666E-4],
+['T.aquaticus_Y51MC23',0.0030383592859855677,0.001139384732244588,0.06912267375617166,0.013292821876186859,0.10026585643752374,0.030763387770603876,0.041777440182301555,0.04823395366502089,0.03266236232434486,0.07102164830991264,0.03873908089631599,0.06912267375617166,0.0474743638435245,0.01139384732244588,0.03873908089631599,0.05165210786175465,0.01633118116217243,0.1416635017090771,0.10976072920622863,0.03456133687808583,0.012153437143942271,0.016710976072920623,0.0,0.0,3.7979491074819596E-4],
+['T.aquaticus_4884',0.0011614401858304297,0.001548586914440573,0.07239643825009678,0.014711575687185443,0.09330236159504453,0.030197444831591175,0.05962059620596206,0.04684475416182733,0.0313588850174216,0.06852497096399536,0.037553232675183894,0.051877661633759196,0.04336043360433604,0.011614401858304297,0.04336043360433604,0.05613627564847077,0.01548586914440573,0.1397599690282617,0.11072396438250097,0.04490902051877662,0.011227255129694155,0.014324428958575301,0.0,0.0,0.0],
+['T.islandicus_DSM_21543',7.987220447284345E-4,7.987220447284345E-4,0.06988817891373802,0.013178913738019169,0.11182108626198083,0.03154952076677316,0.054712460063897767,0.04552715654952077,0.03154952076677316,0.07148562300319489,0.03634185303514377,0.06789137380191693,0.0463258785942492,0.011980830670926517,0.04233226837060703,0.04792332268370607,0.018370607028753993,0.13258785942492013,0.09664536741214058,0.039936102236421724,0.011980830670926517,0.01597444089456869,0.0,3.9936102236421724E-4,0.0],
+['T.kawarayensis_3799',0.002162162162162162,0.0014414414414414415,0.07207207207207207,0.011531531531531532,0.09801801801801802,0.02810810810810811,0.058738738738738736,0.04216216216216216,0.03351351351351351,0.06774774774774775,0.04108108108108108,0.06486486486486487,0.04036036036036036,0.011531531531531532,0.04108108108108108,0.043243243243243246,0.016216216216216217,0.13225225225225226,0.11531531531531532,0.043963963963963966,0.013693693693693694,0.020900900900900903,0.0,0.0,0.0],
+['T.arciformis_4241',0.002911208151382824,0.001819505094614265,0.07423580786026202,0.013464337700145561,0.10080058224163027,0.03165938864628821,0.04985443959243086,0.04512372634643377,0.03056768558951965,0.06950509461426492,0.040756914119359534,0.05967976710334789,0.03893740902474527,0.010553129548762736,0.04294032023289665,0.04475982532751092,0.017467248908296942,0.13901018922852984,0.11317321688500728,0.0425764192139738,0.013464337700145561,0.016739446870451237,0.0,0.0,0.0],
+['T.eggertsoni_2789',0.0025575447570332483,0.0014614541468761417,0.07964925100474973,0.010960906101571063,0.09755206430398246,0.02959444647424187,0.05736207526488856,0.05078553160394592,0.03215199123127512,0.06576543660942638,0.0401899890390939,0.05370843989769821,0.04786262331019364,0.012422360248447204,0.0401899890390939,0.05224698575082207,0.018998903909389842,0.1318962367555718,0.11289733284618195,0.03836317135549872,0.01351845085860431,0.009499451954694921,0.0,0.0,3.6536353671903543E-4],
+['T.brockianus_338',0.0019083969465648854,0.0015267175572519084,0.08091603053435115,0.012977099236641221,0.10229007633587786,0.03206106870229008,0.052290076335877865,0.05114503816793893,0.03358778625954199,0.06679389312977099,0.0366412213740458,0.05305343511450382,0.05343511450381679,0.009541984732824428,0.04007633587786259,0.05,0.01984732824427481,0.12748091603053435,0.10190839694656488,0.03969465648854962,0.012977099236641221,0.019465648854961833,0.0,0.0,3.816793893129771E-4],
+['T.brockianus_140',0.0019230769230769232,0.0015384615384615385,0.07961538461538462,0.010769230769230769,0.10115384615384615,0.031153846153846153,0.052307692307692305,0.04961538461538462,0.03538461538461538,0.06846153846153846,0.03653846153846154,0.05307692307692308,0.047692307692307694,0.01,0.04,0.05076923076923077,0.020384615384615383,0.12884615384615383,0.10615384615384615,0.04,0.014615384615384615,0.019615384615384614,0.0,0.0,3.846153846153846E-4],
+['T.brockianus_1003',0.0023006134969325155,0.0015337423312883436,0.07975460122699386,0.01111963190184049,0.10084355828220859,0.03067484662576687,0.053297546012269936,0.05099693251533742,0.03374233128834356,0.06633435582822086,0.03719325153374233,0.05061349693251534,0.04984662576687116,0.010352760736196318,0.040260736196319015,0.05099693251533742,0.019938650306748466,0.12615030674846625,0.10889570552147239,0.041794478527607364,0.012269938650306749,0.019938650306748466,0.0,0.0,0.0011503067484662577],
+['T.oshimai_220',0.0016070711128967456,0.002008838891120932,0.08356769787063077,0.013660104459622338,0.10606669345118522,0.03214142225793491,0.05182804339092005,0.05142627561269586,0.03495379670550422,0.07030936118923263,0.04057854560064283,0.0502209722780233,0.038971474487746086,0.01124949779027722,0.04218561671353958,0.05343511450381679,0.021695460024106068,0.1305745279228606,0.10204901566894335,0.038569706709521895,0.01245480112494978,0.010445962233828847,0.0,0.0,0.0],
+['T.oshimai_JL_2',0.0023594180102241447,0.0015729453401494297,0.07196224931183641,0.012976799056232795,0.10342115611482501,0.03224537947306331,0.049941014549744395,0.051120723554856466,0.0342115611482501,0.06920959496657492,0.03853716083366103,0.059378686590640974,0.04482894219425875,0.01219032638615808,0.04364923318914668,0.049941014549744395,0.020841525756979944,0.13645300825796303,0.10656704679512387,0.03578450648839953,0.01101061738104601,0.009044435705859222,0.0,0.0,0.0027526543452615023],
+['T.oshimai_DSM_12092',0.0016339869281045752,0.0016339869281045752,0.07761437908496732,0.01184640522875817,0.10866013071895425,0.03349673202614379,0.049019607843137254,0.04616013071895425,0.03676470588235294,0.07066993464052287,0.04003267973856209,0.05024509803921569,0.03880718954248366,0.013888888888888888,0.04656862745098039,0.0494281045751634,0.022058823529411766,0.13848039215686275,0.09926470588235294,0.041666666666666664,0.01184640522875817,0.010212418300653595,0.0,0.0,0.0],
+['T.thermophilus_SG0_5JP17_16',0.002837454398054317,8.107012565869477E-4,0.0774219700040535,0.012160518848804215,0.09890555330360762,0.02959059586542359,0.05634373733279287,0.05026347790839076,0.032022699635184435,0.07093635995135793,0.04094041345764086,0.053911633563032024,0.04945277665180381,0.014187271990271585,0.04539927036886907,0.04945277665180381,0.014997973246858533,0.1378192136197811,0.09890555330360762,0.03891366031617349,0.012971220105391163,0.011755168220510741,0.0,0.0,0.0],
+['T.thermophilus_791',0.0030337504740235114,0.0015168752370117557,0.08001516875237012,0.012893439514599925,0.09821767159651118,0.02844141069397042,0.04702313234736443,0.048919226393629126,0.034888130451270385,0.06560485400075844,0.037163443306788016,0.06105422828972317,0.043989381873340914,0.015168752370117557,0.04057641259006447,0.048919226393629126,0.022373909745923397,0.1334850208570345,0.11224876753886993,0.04057641259006447,0.012135001896094046,0.011376564277588168,0.0,0.0,3.792188092529389E-4],
+['T.thermophilus_HB8',0.001762114537444934,8.81057268722467E-4,0.0762114537444934,0.013215859030837005,0.0973568281938326,0.030837004405286344,0.05110132158590308,0.051541850220264314,0.03612334801762115,0.07488986784140969,0.03788546255506608,0.050220264317180616,0.044933920704845816,0.014096916299559472,0.040969162995594714,0.05066079295154185,0.02158590308370044,0.1370044052863436,0.10792951541850221,0.033920704845814977,0.011013215859030838,0.015859030837004406,0.0,0.0,0.0],
+['T.thermophilus_HB27',0.002178649237472767,8.714596949891067E-4,0.07712418300653595,0.012200435729847494,0.09891067538126362,0.030065359477124184,0.048366013071895426,0.05315904139433551,0.03572984749455338,0.07494553376906318,0.03355119825708061,0.05577342047930283,0.04618736383442266,0.013071895424836602,0.04183006535947712,0.0514161220043573,0.0196078431372549,0.13507625272331156,0.10108932461873639,0.04226579520697168,0.011764705882352941,0.014814814814814815,0.0,0.0,0.0],
+['T.thermophilus_ATCC',0.00209819555182543,8.39278220730172E-4,0.07637431808644565,0.01174989509022241,0.0994544691565254,0.030214015946286196,0.049937054133445236,0.052035249685270665,0.03692824171212757,0.07343684431389005,0.03566932438103231,0.052035249685270665,0.04406210658833403,0.013008812421317666,0.03986571548468317,0.04867813680234998,0.021821233738984473,0.13386487620646245,0.10742761225346202,0.0360889634913974,0.01174989509022241,0.022660511959714646,0.0,0.0,0.0],
+['T.thermophilus_JL_18',0.0023847376788553257,0.0011923688394276629,0.075516693163752,0.012718600953895072,0.10095389507154214,0.029411764705882353,0.05047694753577107,0.05047694753577107,0.03577106518282989,0.07154213036565978,0.03815580286168521,0.054848966613672494,0.0417329093799682,0.016693163751987282,0.04213036565977742,0.0492845786963434,0.023052464228934817,0.13672496025437203,0.10453100158982512,0.03616852146263911,0.013910969793322734,0.01192368839427663,0.0,0.0,3.97456279809221E-4],
+['T.filiformis_947',0.0016187778227438284,0.0028328611898017,0.06920275192229866,0.01254552812626467,0.10643464184540671,0.03156616754350466,0.04937272359368677,0.04856333468231485,0.036017806556050184,0.0708215297450425,0.03763658437879401,0.05746661270740591,0.046539862403885066,0.008093889113719142,0.04896802913800081,0.04815864022662889,0.019830028328611898,0.1311210036422501,0.10400647511129098,0.03520841764467827,0.014569000404694455,0.01942533387292594,0.0,0.0,0.0]]
+        );
+        
+        freqdata = google.visualization.arrayToDataTable([
+          ['a', ' '],
+[1, 4324],
+[2, 1167],
+[3, 673],
+[4, 205],
+[5, 182],
+[6, 134],
+[7, 117],
+[8, 110],
+[9, 117],
+[10, 78],
+[11, 63],
+[12, 58],
+[13, 63],
+[14, 69],
+[15, 41],
+[16, 36],
+[17, 26],
+[18, 29],
+[19, 41],
+[20, 29],
+[21, 35],
+[22, 29],
+[23, 38],
+[24, 28],
+[25, 22],
+[26, 20],
+[27, 21],
+[28, 23],
+[29, 27],
+[30, 32],
+[31, 84],
+[32, 45],
+[33, 64],
+[34, 174],
+[35, 199],
+[36, 612],
+[37, 295],
+[38, 36],
+[39, 38],
+[40, 13],
+[41, 19],
+[42, 5],
+[43, 4],
+[44, 3],
+[45, 4],
+[46, 2],
+[47, 2],
+[49, 4],
+[50, 2],
+[51, 2],
+[52, 1],
+[53, 1],
+[57, 1],
+[61, 1],
+[63, 1],
+[77, 1],
+[84, 1],
+[86, 1],
+[119, 1]
+        ]);
+
+        var pcchart = new google.visualization.ColumnChart(document.getElementById('pc_chart_div'));
+        pcchart.draw(pcdata, pcoptions);
+        
+        var gcchart = new google.visualization.ColumnChart(document.getElementById('gc_chart_div'));
+        gcchart.draw(gcdata, gcoptions);
+        
+        var freqchart = new google.visualization.LineChart(document.getElementById('freq_chart_div'));
+        freqchart.draw(freqdata, freqoptions);
+        
+        var cogchart = new google.visualization.ColumnChart(document.getElementById('cog_chart_div'));
+        cogchart.draw(cogdata, cogoptions);
+      }
+      window.onresize = function() {
+        var pcchart = new google.visualization.ColumnChart(document.getElementById('pc_chart_div'));
+        var gcchart = new google.visualization.ColumnChart(document.getElementById('gc_chart_div'));
+        var freqchart = new google.visualization.LineChart(document.getElementById('freq_chart_div'));
+        var cogchart = new google.visualization.ColumnChart(document.getElementById('cog_chart_div'));
+        
+      	pcchart.draw(pcdata, pcoptions);
+      	gcchart.draw(gcdata, gcoptions);
+      	freqchart.draw(freqdata, freqoptions);
+      	cogchart.draw(cogdata, cogoptions);
+      }
+    </script>
+</head>
+<body style="font-family:'Life Savers', cursive; padding: 0; margin: 0; text-align : justify; font-size: 18px">
+<header>
+<!--img src="header.png" width="100%"></img-->
+</header>
+<div style="margin-top: 0; margin-left: 0.5cm; margin-right: 0.5cm;">
+<h2>Thermus</h2>
+<h3><i>Stefánsson, Sigmar K., Björnsdóttir, Snædís, Friðjónsson, Ólafur H., Pétursdóttir, S.P., Hreggviðsson, Guðmundur Ó.</i></h3>
+<p><i>Thermus</i> bacteria are common inhabitants of neutral and alkaline hot springs worldwide. 
+They are thermophiles that grow optimally at around 65-70°C (Table 1), usually by aerobic 
+respiration and as consumers of organic matter (da Costa et al. 2001a).  
+The genus Thermus now entails 13 validly described species (Table 1) and belongs to the 
+<i>Thermaceae</i> family of the phylum <i>Deinococcus-Thermus</i> (da Costa et al. 2001b, Weisburg et al. 1989).
+A second genus, <i>Meiothermus</i> was created in the same family to comprise strains that often
+coexist with those of <i>Thermus</i> in terrestrial hot springs, albeit having lower temperature optima for growth (Nobre et al 1996).  
+In recent years, four additional genera were created to accommodate further <i>Thermaceae</i>
+representatives isolated from deep-sea hydrothermal habitats, <i>Marinithermus</i> (Sako et al. 2003), 
+<i>Oceanithermus</i> (Miroshnichenko et al 2003a), <i>Rhabdothermus</i> (Steinsbu et al 2011) and <i>Vulcanithermus</i> (Miroshnichenko et al 2003b).
+All encompass thermophilic strains that are phenotypically similar to those of <i>Thermus</i> and <i>Meiothermus</i>
+although requiring salt for growth. <i>Thermus thermophilus</i> is the only <i>Thermus</i> species 
+that grows in marine environments (Manaia et al 1994).
+</p>
+
+<p>
+<div style="-webkit-column-count:2;
+	-moz-column-count:2; 
+	column-count:2;">
+It is also the most thermophilic of the <i>Thermus</i> species and the sole member that exhibits growth at over 80°C (Table 1).
+Indications for the adaptation of Thermus bacteria to growth at elevated temperatures were 
+found when the genomic sequence of <i>T. thermophilus HB27</i> (Henne et al. 2004) was compared 
+to that of the related but mesophilic <i>Deinococcus radiodurans</i> (Omelchenko et al. 2005).  
+Reconstruction analysis of evolutionary events suggested that T. thermophilus acquired many 
+genes from thermophilic archaea and bacteria after the divergence from the last common ancestor with 
+D. radiodurans. Likewise, numerous foreign genes were detected in the genome of 
+<i>Thermus scotoductus SA-01</i>, many of them derived from thermophiles (Gounder et al. 2011).
+Horizontal gene transfer therefore seems to have contributed significantly to evolution within 
+Thermus and to the adaptation to life at elevated temperatures.  The observed gene flux might 
+be attributed to the direct uptake of genetic material as this ability has been experimentally 
+demonstrated for both <i>T. scotoductus SA-01</i> and <i>T. thermophilus HB27</i> (Gounder et al. 2011, Koyama et al. 1986). 
+The transformation system of the latter strain has been investigated in detail and a model devised (Averhoff 2009). 
+The DNA uptake is highly efficient in <i>T. thermophilus HB27</i> and of a particularly broad 
+substrate specificity (Schwarzenlander and Averhoff 2006, Koyama et al. 1986). 
+Efficient gene transfer seems to provide T. thermophilus with a selective advantage.  
+Genes conferring nitrate reduction and thus the capacity for anaerobic growth are among 
+those shown to pass between strains through both transformation and an unknown mechanism 
+of conjugation (Alvarez et al 2011, Ramirez-Arcos et al 1998). The capacity is, however, 
+easily lost during passage at laboratory conditions (Alvarez et al. 2014).  Interestingly, 
+the respective nitrate reductase gene cluster appears to be transiently present on a megaplasmid 
+that was suggested as a reservoir for nonessential adaptive traits and shown to harbor numerous 
+horizontally transferred genes (Cesar et al. 2011, Brüggeman and Chen 2006, Omelchenko et al. 2005). 
+In fact, genomic rearrangements between strains HB27 and HB8 were mainly found in this megaplasmid (Brüggeman and Chen 2006).
+The difference in gene content was mainly related to metabolic functions and proposed to reflect adaptations to different niches.  
+Thermus species are phenotypically similar and their descriptions are predominantly based 
+on rRNA sequence comparisons and DNA-DNA reassociation values. 
+The composition of fatty acids and slight differences in the utilization of carbon sources 
+support the descriptions although both traits are highly variable within Thermus species (Hreggvidsson et al. 2006, Balkwill et al. 2004, Chung et al. 2000).
+In fact, no phenotypic character was attributed to the taxonomic status of Icelandic Thermus strains, except for the salt tolerance of T. thermophilus (Hreggvidsson et al. 2006). 
+Furthermore, relationships were not found between the taxonomic status and the temperature measured where the isolates derived from. 
+However, <i>Thermus igniterrae</i> and <i>Thermus brockianus</i> were generally isolated from more alkaline 
+hot springs while <i>T. scotoductus</i> derived from neutral hot springs.  Habitat preferences of 
+Thermus species within hot springs are nevertheless largely unexplained.  
+Adaptation and species divergence within the genus has presumably been affected by geographic isolation. 
+Thermus filiformis has only been isolated in New Zealand and differs in morphology from other 
+Thermus species by being filamentous instead of rod-shaped (Hudson et al. 1987).  
+Thermus aquaticus is another species that appears to be endemic and confined to thermal 
+sites in North-America (Hreggvidsson et al. 2012).  Conversely, global distribution has 
+been observed for several other Thermus species, including <i>T. thermophilus</i>, <i>T. oshimai</i>, <i>T. brockianus</i> and <i>T. scotoductus</i>.
+Genetic diversity varies within Thermus species, even within those widely distributed (Hreggvidsson et al. 2012, 2006). 
+Low diversity was detected in <i>T. brockianus</i> while sublineages possibly representing ecologically 
+different populations were observed in <i>T. scotoductus</i>.  Indeed, adaptation to a unique habitat 
+is exhibited by <i>T. socoductus strain SA-01</i>, which was isolated from fissure water in a 
+South-African gold-mine at a depth of 3.2 km (van Heerden et al. 2008, Balkwill et al. 2004, Kieft et al. 1999). 
+The strain can reduce a variety of metals and grows at oligotrophic conditions (Gounder et al. 2011). 
+Gene flow, confined habitats and local adaptations are therefore among factors that appear to have 
+influenced the genetic diversity and divergence within the genus <i>Thermus</i>.
+We performed extensive comparative genomics and defined both the core and dispensible genomes 
+for <i>Thermus</i> as the latter has been suggested to hold clues to bacterial niche adaptations (Tettelin et al. 2008).
+We analysed published genome sequences and sequenced those of 18 additional Thermus strains, 
+many of which derived from diverse hot springs in Iceland (Table 2). 
+Representatives of all Thermus species valdily described prior to the year 2012 were included 
+in the analysis as well as members of <i>Meiothermus</i>, <i>Marinithermus</i> and <i>Vulcanithermus</i>. 
+Overall, the study included over 30 genome sequences and the results therefore give insight 
+into the genetic structure and evolution within the genus as well as within individual <i>Thermus</i> species.  
+</div>
+</p>
+
+<p>
+<table style="margin-left:auto; margin-right:auto">
+<caption>Table 1.  Thermus species.  Validly described species are represented by type strains.  Two proposed species used in this work are included. </caption>
+<colgroup>
+    <col span="1" style="font-style:italic">
+</colgroup>
+<thead style=""><tr>
+<th>	Species </th><th> ID </th><th>	T opt (&degC) </th><th>	T range (&degC) </th><th>	pH range </th><th>	Habitat </th><th>	Country of origin </th><th>	Reference </th>
+</tr></thead>
+<tr><td>T. antranikianii DSM 12462T</td><td> Y18411</td><td>	70 </td><td> 	50-80 </td><td>	5,5-9,5 </td><td>	Hot spring</td><td> 	Iceland </td><td>	Chung et al. 2000 </td></tr>
+<tr><td>T. aquaticus ATCC 25104T</td><td> L09663</td><td> 	70 </td><td> 	40-79 </td><td>	6,0-9,5 </td><td>	Hot spring </td><td>	USA </td><td>	Brock and Freeze 1969 </td></tr>
+<tr><td>T. arciformis JCM 15153T </td><td> EU247889</td><td>	70</td><td>  	40-77 </td><td>	6,0-9,5 </td><td>	Hot spring</td><td> 	China </td><td>	Zhang et al. 2010 </td></tr>
+<tr><td>T. brockianus NCIMB 12676T </td><td> Y18409</td><td>	70 	</td><td> - <80 </td><td>	NR </td><td>	Hot spring</td><td> 	USA </td><td>	Williams et al. 1995; Da Costa et al. 2001 </td></tr>
+<tr><td>T. caliditerrae DSM 25901T </td><td> KC852873</td><td>	65 </td><td> 	50-70 </td><td>	6,0-8,0 </td><td>	Hot sediment</td><td> 	China </td><td>	Ming et al. 2013 </td></tr>
+<tr><td>T. composti DSM 21686T </td><td> EU701067</td><td>	65-75 </td><td> 	40-80</td><td> 	5,0-9,0 </td><td>	Hot compost </td><td>	Hungary </td><td>	Vajna et al. 2012 </td></tr>
+<tr><td>T. filiformis ATCC 43280T </td><td> L09667</td><td>	73 </td><td> 	37-80 </td><td>	6,0-8,6 </td><td>	Hot spring </td><td>	New Zealand </td><td>	Hudson et al. 1987 </td></tr>
+<tr><td>T. igniterrae DSM 12459T </td><td> Y18406</td><td>	65 </td><td> 	45 - <80 </td><td>	5,5-9,5 </td><td>	Hot spring </td><td>	Iceland </td><td>	Chung et al. 2000 </td></tr>
+<tr><td>T. islandicus DSM 21543T </td><td> EU753247</td><td>	65 </td><td> 	45-79 </td><td>	5,5-10,5 </td><td>	Hot springv </td><td>	Iceland </td><td>	Bjornsdottir et al. 2009 </td></tr>
+<tr><td>T. oshimai NCIMB 13400T </td><td> Y18416</td><td>	70 </td><td>	- <80 </td><td>	NR </td><td>	Hot spring </td><td>	Portugal </td><td>	Williams et al. 1996; Da Costa et al. 2001 </td></tr>
+<tr><td>T. scotoductus DSM 8553T </td><td> AF032127</td><td>	65 </td><td> 	42-73 </td><td>	6,0-8,0 </td><td>	Hot tap water </td><td>	Iceland </td><td>	Kristjansson et al. 1994 </td></tr>
+<tr><td>T. tengchongensis KCTC 32025T </td><td> JX112365</td><td>	65</td><td>  	55-75 </td><td>	6,0-8,0 </td><td>	Hot soil </td><td>	China </td><td>	Yu et al. 2013 </td></tr>
+<tr><td>T. thermophilus ATCC 27634T </td><td> M26923</td><td>	65-72 </td><td> 	47-85 </td><td>	5,0-9,5 </td><td>	Hot spring </td><td>	Japan</td><td> 	Oshima and Imahori 1974; Manaia et al. 1994 </td></tr>
+<tr><td>"T. eggertssoni" MAT 2789 </td><td> </td><td>	70</td><td>  	40-78 </td><td>	4,9-9,8 </td><td>	Hot spring</td><td> 	Iceland </td><td>	Hreggvidsson et al. 2006; 2012 </td></tr>
+<tr><td>"T. kawarayensis" DSM 16200 </td><td> </td><td>	68</td><td>  	40-73 </td><td>	5,8-8,9 </td><td>	Hot spring </td><td>	Japan </td><td>	Kurosawa et al. 2005 </td></tr>
+</table>
+</p>
+
+<div style="-webkit-column-count:2;
+	-moz-column-count:2; 
+	column-count:2;">
+<b>Sequencing</b>
+<p>The software accompanying the 454 machine, version 2.9, was used for processing of the raw data. 
+Newbler v. 2.9 was used to assemble the sequences. 
+Prodigal gene prediction software version 2.60 was used to find potential genes in the sequences. 
+RNAmmer standalone version 1.2 was used to predict 5S/16S/23S rRNA sequences. 
+tRNAscan v. 1.4 was used to scan for tRNA sequences. 
+NCBI blast+ version 2.29 was used for blast processing such as rpsblast against the NCBI CDD cog and pfam databases, 
+for reciprocal blast for gene clustering, ANI calculations and for blasting unknown genes against the NCBI nr database. 
+The genes were clustered using the 50-50 rule implemented in the homemade ComGen software version 1.0. 
+The 50-50 rule groups together genes with at least 50% sequence identity in at least 50% of their length. 
+The ANI/AAI calculations are also implemented in the ComGen software. 
+The ComGen software automatically fixes some gene prediction errors and annotations by comparing genes in clusters. 
+The genes clusters were annotated with annotation of genes from known species in NCBI and JGI, with the JGI version preceding. 
+Genes or gene clusters not clustered with known genes were then blasted against the NCBI nr database. 
+Phylogeny calculations were done using neighbour joining and majority rule consensus tree algorithms implemented in the ComGen software. 
+FastTree v. 2.1.7 was used for fast maximum likelihood phylogeny calculations. 
+All trees were drawn using the web based phylogentic tree drawing software available at 
+<a href="http://webconnectron.appspot.com/Treedraw.html">http://webconnectron.appspot.com/Treedraw.html</a></p>
+
+<div style="-webkit-column-span: all; -moz-column-span: all; column-span: all;">
+<p>
+<table style="margin-left:auto; margin-right:auto;">
+<caption>Table 2.  Genome sequences included in the comparative analysis.</caption>
+<thead>
+<tr>
+	 	<th></th><th>Isolation site</th><th></th> 	 	 	 	 	</tr> <tr>
+<tr><th>Strain </th><th>	T  (°C) </th><th>	pH </th><th>	Habitat </th><th>	Country </th><th>	Source of genome sequence </th><th>	Status </th></tr>
+</thead>
+<tr><td>Thermus antranikianii_DSM_12462 </td><td>	</td><td></td><td></td><td> 	 	 	 	JGI (G584DRAFT) </td><td>	Draft (33) </td></tr>
+<tr><td>Thermus antranikianii_2120 </td><td>	90 </td><td>	8.5 </td><td>	 	Iceland </td><td>	Matís </td><td>	Draft (68*) </td></tr>
+<tr><td>Thermus aquaticus_Y51MC23	</td><td> 70</td><td>7.5-7.8</td><td>	 </td><td>	 	 	NCBI (55053) </td><td>	Draft (22) </td></tr>
+<tr><td>Thermus arciformis_4241 </td><td>	80 </td><td>	6.7 	</td><td> 	China </td><td>	Matís </td><td>	Draft (130) </td></tr>
+<tr><td>Thermus brockianus_1003 </td><td>	 </td><td></td><td></td><td>	 	 	 	Matís </td><td>	Draft (24) </td></tr>
+<tr><td>Thermus brockianus_140 	 </td><td>	 </td><td></td><td></td><td>	 	 	Matís </td><td>	Draft (28*) </td></tr>
+<tr><td>Thermus brockianus_338 </td><td>	90 </td><td>	9.2 	</td><td> 	Iceland </td><td>	Matís </td><td>	Draft (70) </td></tr>
+<tr><td>Thermus brockianus_Tb 	</td><td> </td><td></td><td></td><td>	 	 	 	JGI (Tb) </td><td>	Draft (130) </td></tr>
+<tr><td>Thermus filiformis_947 </td><td>	82 </td><td>	7.3 </td><td>	 	New Zealand </td><td>	Matís </td><td>	Draft (54*) </td></tr>
+<tr><td>Thermus igniterrae_2137 </td><td>	84 </td><td>	9.7 </td><td> 		Iceland </td><td>	Matís </td><td>	Draft (96*) </td></tr>
+<tr><td>Thermus igniterrae_ATCC_700962	</td><td> 	</td><td></td><td></td><td> 	 	 	NCBI (199080)</td><td> 	Draft (74) </td></tr>
+<tr><td>Thermus islandicus_DSM_21543 </td><td>	66-74 </td><td>	6.0 </td><td>	 	Iceland </td><td>	JGI (H531DRAFT) </td><td>	Draft (67) </td></tr>
+<tr><td>Thermus islandicus_DSM_21543 </td><td>	66-74 </td><td>	6.0 </td><td>	 	Iceland </td><td>	Matís (3838) </td><td>	Draft (148) </td></tr>
+<tr><td>Thermus oshimai_220 </td><td>	78</td><td> 	6.8 </td><td>	 	Iceland </td><td>	Matís </td><td>	Draft (27*) </td></tr>
+<tr><td>Thermus oshimai_DSM_12092</td><td>	 	</td><td></td><td></td><td> 	 	 	NCBI (199299) </td><td>	Draft (24) </td></tr>
+<tr><td>Thermus oshimai_JL_2	</td><td> 	</td><td></td><td></td><td> 	 	 	NCBI (178948) </td><td>	Closed (3) </td></tr>
+<tr><td>Thermus scotoductus_1572 </td><td>	67 </td><td>	6.7 </td><td>	 	Iceland </td><td>	Matís </td><td>	Draft (214*) </td></tr>
+<tr><td>Thermus scotoductus_2101 </td><td>	84 </td><td>	6.8 </td><td>	 	Iceland </td><td>	Matís </td><td>	Draft (116*) </td></tr>
+<tr><td>Thermus scotoductus_2127 </td><td>	60-70 </td><td>	5.5 </td><td>	 	Iceland </td><td>	Matís </td><td>	Draft (34*) </td></tr>
+<tr><td>Thermus scotoductus_DSM_8553 </td><td>	70-80 </td><td>	7-8 </td><td>	 	Iceland </td><td>	Matís (252) </td><td>	Draft (218)</td></tr> 
+<tr><td>Thermus scotoductus_346 </td><td>	62-90 </td><td>	9.0 </td><td>	 	Iceland </td><td>	Matís </td><td>	Draft (42*) </td></tr>
+<tr><td>Thermus scotoductus_SA_01 </td><td>	60 </td><td>	NR 	</td><td> 	South Africa </td><td>	Matís (4063) </td><td>	Draft (74) </td></tr>
+<tr><td>Thermus scotoductus_DSM_8553 </td><td>	 </td><td></td><td></td><td>	 	 	 	JGI (F604DRAFT) </td><td>	Draft (84) </td></tr>
+<tr><td>Thermus scotoductus_SA_01 </td><td>	60</td><td> 	NR 	</td><td> 	</td><td> 	NCBI (62273) </td><td>	Closed (2) </td></tr>
+<tr><td>Thermus spNMX 	 	 </td><td></td><td></td><td></td><td>	NCBI (168338) 	 </td><td>	 	Draft (132) </td></tr>
+<tr><td>Thermus thermophilus_ATCC_33923	</td><td> </td><td></td><td></td><td>	 	 	 	JGI (?) </td><td>	Draft (112) </td></tr>
+<tr><td>Thermus thermophilus_HB27	</td><td> 	 	</td><td></td><td></td><td> 	 	NCBI (58033) </td><td>	Closed (2) </td></tr>
+<tr><td>Thermus thermophilus_HB8 	</td><td> 	 	</td><td></td><td></td><td> 	 	NCBI (58223) </td><td>	Closed (3) </td></tr>
+<tr><td>Thermus thermophilus_JL_18	</td><td> 	 	 </td><td></td><td></td><td>	 	NCBI (162129) </td><td>	Closed (3) </td></tr>
+<tr><td>Thermus thermophilus_SG0_5JP17_16	</td><td> </td><td></td><td></td><td>	 	 	 	NCBI (159537) </td><td>	Closed(2) </td></tr>
+<tr><td>Thermus thermophilus_791 </td><td>	 	</td><td></td><td></td><td> 	 	 	Matís </td><td>	Draft (54*) </td></tr>
+<tr><td>Thermus eggertssoni_2789 </td><td>	70-85 </td><td>	8.2-8.7 </td><td>	 	Iceland </td><td>	Matís </td><td>	Draft (20*) </td></tr>
+<tr><td>Thermus kawarayensis_3799 </td><td>	63 </td><td>	7.5 </td><td>	 	Japan </td><td>	Matís </td><td>	Draft (80*) </td></tr>
+<tr><td>Thermus CCB_US3_UF1	 	</td><td> 	</td><td></td><td></td><td> 	 	NCBI (81197) </td><td>	Closed (2) </td></tr>
+<tr><td>Thermus RLM </td><td>	 </td><td></td><td></td><td>	 	 	 	NCBI (156767) </td><td>	Draft (17) </td></tr>
+<tr><td>Marinithermus hydrothermalis_DSM_14884	</td><td> 	</td><td></td><td></td><td> 	 	 	NCBI (65783) </td><td>	Closed (1) </td></tr>
+<tr><td>Meiothermus ruber_DSM_1279 	</td><td> 	</td><td></td><td></td><td> 	 	 	NCBI (198526) </td><td>	Closed (1) </td></tr>
+<tr><td>Meiothermus ruber_DSM_1279 	</td><td> 	</td><td></td><td></td><td> 	 	 	NCBI (46661) </td><td>	Closed (1) </td></tr>
+<tr><td>Meiothermus ruber_H328	</td><td> 	 	</td><td></td><td></td><td> 	 	NCBI (199487) </td><td>	Draft (4) </td></tr>
+<tr><td>Meiothermus silvanus_DSM_9946	</td><td> 	</td><td></td><td></td><td> 	 	 	NCBI (49485) </td><td>	Closed (3) </td></tr>
+<tr><td>Meiothermus timidus_DSM_17022	</td><td> 	</td><td></td><td></td><td> 	 	 	NCBI (199231) </td><td>	Draft (17) </td></tr>
+<tr><td>Oceanithermus profundus_DSM_14977	</td><td> 	</td><td></td><td></td><td> 	 	NCBI (60855) </td><td>	Closed (2) </td></tr>
+</table>
+</p>
+</div>
+ 	 
+<b>General statistics</b>
+<p>
+We compare 42 whole genome sequenced strains from the <i>Thermacae</i> family with focus on the <i>Thermus</i> generera. 
+Of those, 32 are <i>Thermus</i> species, 18 of which are sequenced at MATIS and are draft genomes. 
+11 are available from NCBI of which 4 are draft genomes. Also we used 3 draft sequences from Thermus strains from the Joint Genome Institue at DOE. 
+The other generas, <i>Meiothermus</i>, <i>Marinithermus</i> and <i>Ocenithermus</i> are kept for phylogenetic tree rooting, comparision and evaluation of gene origin. 
+3 of <i>Meiothermus</i> strains are draft genomes, the other completed, in total 7 strains. 
+In terms of gene number, there is no notable difference between the <i>Thermus</i> strains, which on average is around 2400 genes. 
+<i>Oceanithermus</i> and <i>Marinithermus</i> genomes are also in that range whereas <i>Meiothermus</i> has genomes with over 3000 genes.
+</p>	 	 	 	 
+<figure style="text-align:center">
+<img src="anim.png" width="100%" ></img>
+<!--div id="gsizechart_div" style="width: 100%; height: 40em"></div-->
+<figcaption><i>Thermus</i> genome sizes, the average being 2400 genes</figcaption>
+</figure>
+<figure style="text-align:center">
+<img src="16Sthermus.png" width="100%" />
+<!--div id="gsizechart_div" style="width: 100%; height: 40em"></div-->
+<figcaption><i>Thermus</i> genome sizes, the average being 2400 genes</figcaption>
+</figure>
+<p>
+Skipping small genes (&lt;100 nt) the pan genome of 32 Thermus species is around 4000 OG‘s. The core genome counts around 1100 OG‘s. 
+Although in general the pan genome grows more with the addition of new species, 
+in some cases a growth within species underlines the plastisitic of the Thermus genomes.
+</p>
+<figure style="text-align:center">
+<div id="pc_chart_div"></div>
+<figcaption>GC% in <i>Thermacae</i></figcaption>
+</figure>
+<p>The GC% of Thermus scotoductus species and the related <i>Thermus antranikianii</i> is less than 65% and considderably lower than in other 
+<i>Thermus</i> species which is most cases is more than 68%. The <i>Thermus brockianus/eggertsoni</i> clade has GC% value in the range of 66-67%. 
+The highest GC% was in the <i>Thermus thermophilus</i> strains which is some cases is over 69%. <i>Thermus scotoductus</i> strains have lower optimal --- temperature. 
+The icelandic strains have lower GC% than the foreign ones in the cases of <i>Thermus igniterrae</i> and <i>Thermus antranikianii</i>. 
+The non-UV/phytone (yellow pigmentation) <i>Themus scotoductus</i> strains also have higher GC% than other strains, &lt;64% compared to &lt;65%.
+</p>
+<figure style="-webkit-column-span: all; -moz-column-span: all; column-span: all; text-align:center">
+<div id="gc_chart_div"></div>
+<figcaption>GC% in <i>Thermacae</i></figcaption>
+</figure>
+<p>
+The COG categories have even distribution among the <i>Thermus</i> strains with around 20% of the genomes with no or unknown COG function (large gray and purple areas). 
+The most variability is in the small groups. The <i>Thermus kawarayensis</i>, filiformis and brockianus strains have most number of genes designated as defense mechanism genes. 
+The <i>Thermus islandicus</i> species have the larges groups containing cell motility and segregation genes. 
+The lab strains <i>Thermus sp. RLM</i> and the <i>Thermus scotoductus</i> typestrain (252, DSM) have more cell division and chromosome partiioning genes than other strain.
+</p>
+<figure style="text-align:center">
+<div id="cog_chart_div"></div>
+<figcaption>COG groups</figcaption>
+</figure>
+<figure style="text-align:center">
+<div id="freq_chart_div"></div>
+<figcaption>Gene frequency</figcaption>
+</figure>
+
+<figure style="text-align:center">
+<img src="pancoresets.png" width="100%" />
+<figcaption>Gene frequency</figcaption>
+</figure>
+
+<figure style="text-align:center">
+<img src="gainloss.png" width="100%" />
+<figcaption>Gene frequency</figcaption>
+</figure>
+
+<figure style="text-align:center">
+<img src="pancore_cog.png" width="100%" />
+<figcaption>Gene frequency</figcaption>
+</figure>
+</div>
+
+
+
+
+
+
+
+
+
+
+<p>Alvarez L, Bricio C, Blesa A, Hidalgo A, Berenguer J: Transferable denitrification capability of Thermus thermophilus. Appl Environ Microbiol 2014, 80:19-28.</p>
+<p>Alvarez L, Bricio C, Gomez MJ, Berenguer J: Lateral transfer of the denitrification pathway genes among Thermus thermophilus strains. Appl Environ Microbiol 2011, 77:1352-1358.</p>
+<p>Averhoff B: Shuffling genes around in hot environment: the unique DNA transporter of Thermus thermophilus. FEMS Microbiol Rev 2009, 33: 611-626.</p>
+<p>Balkwill DL, Kieft TL, Tsukuda T, Kostandarithes HM, Onstott TC, Macnaughton S, Bownas J, Fredrickson JK: Identification of iron-reducing Thermus strains as Thermus scotoductus. Extremophiles 2004, 8:37-44.</p>
+<p>Bjornsdottir SH, Petursdottir SK, Hreggvidsson GO, Skirnisdottir S, Hjorleifsdottir S, Arnfinnsson J, Kristjansson JK: Thermus islandicus sp. nov., a mixotrophic sulfur-oxidizing bacterium isolated from the Torfajokull geothermal area. Int J Syst Evol Microbiol 2009, 59:2962-2966.</p>
+<p>Brock TD, Freeze H: Thermus aquaticus gen. n. and sp. n.., a non-sporulating extreme thermophile. J Bacteriol 1969, 98:289-297.</p>
+<p>Brüggeman H, Chen C: Comparative genomics of Thermus thermophilus: plasticity of the megaplasmid and its contribution to a thermophilic lifestyle. J Biotechnol 2006, 124:654-661.</p>
+<p>Cesar CE, Alvarez L, Bricio C, van Heerden E, Littauer D, Berenguer J: Unconventional lateral gene transfer in extreme thermophilic bacteria. Int Microbiol 2011, 14:187-199.</p>
+<p>Chung AP, Rainey FA, Valente M, Nobre MF, da Costa MS: Thermus igniterrae sp. nov. and Thermus antranikianii sp. nov., two new species from Iceland. Int J Syst Evol Microbiol 2000, 50:209-217.</p>
+<p>da Costa MS, Nobre MF, Rainey FA: Genus I. Thermus. In Bergey´s Manual of Systematic Bacteriology. Volume 1. 2nd edition.  Edited by Boone DR, Castenholz RW, Garrity GM. New York: Springer, 2001a:404-414.</p>
+<p>da Costa MS, Rainey FA: Family I. Thermaceae fam. nov. In Bergey´s Manual of Systematic Bacteriology. Volume 1. 2nd edition.  Edited by Boone DR, Castenholz RW, Garrity GM. New York: Springer, 2001b:403-404.</p>
+<p>van Heerden E, Opperman DJ, Bester AP, Van Marwijk J, Cason ED, Littauer D, Piater LA, Onstott TC: Metabolic promiscuity from the deep subsurface: a story of survival or superiority. Proc SPE 7097, Instruments, Methods, and Missions for Astrobiology XI,70970S.</p>
+<p>Henne A, Brüggeman H, Raasch C, Wiezer A, Hartsch T, Liesegang H, Johann A, Lienard J, Goh O, Martinez-Arias R, Jacobi C, Starkuviene V, Schlenczeck S, Dencker S, Huber R, Klenk HP, Kramer W, Merkl R, Gottschalk G, Fritz HJ: The genome sequence of the extreme thermophile Thermus thermophilus. Nat Biotechnol 2004, 22:547-553.</p>
+<p>Hreggvidsson GO, Petursdottir SK, Bjornsdottir SH, Fridjonsson OH: Microbial speciation in the geothermal ecosystem. In Adaptation of microbial life to environmental extremes. Edited by Stan Lotter H, Fendrihan S. Wien: Springer, 2012:37-67.</p>
+<p>Hreggvidsson GO, Skirnisdottir S, Smit B, Hjorleifsdottir S, Marteinsson VTh, Petursdottir S, Kristjansson JK: Polyphasic analysis of Thermus isolates from geothermal areas in Iceland. Extremophiles 2006, 10:563-575.</p>
+<p>Hudson JA, Morgan HW, Daniel RM: Thermus filiformis sp. nov., a filamentous caldoactive bacterium. Int J Syst Bacteriol 1987, 37:431-436.</p>
+<p>Kieft TL, Fredrickson JK, Onstott TC, Gorby YA, Kostandarithes HM, Bailey TJ, Kennedy DW, Li SW, Plymale AE, Spadoni CM, Gray MS: Dissimilatory reduction of Fe(III) and other electron acceptors by a Thermus isolate. Appl Environ Microbiol 1999, 65:1214-1221.</p>
+<p>Koyama Y, Hoshino T, Tomizuka N, Furukawa K: Genetic transformation of the extreme thermophile Thermus thermophilus and of other Thermus spp. J Bacteriol 1986, 166:338-340.</p>
+<p>Kristjansson JK, Hjorleifsdottir S, Marteinsson VTh, Alfredsson GA: Thermus scotoductus, sp. nov., a pigment-producing thermophilic bacterium from hot tap water in Iceland and including Thermus sp. X-1.  Syst Appl Microbiol 1994, 17:44-50.</p>
+<p>Kurosawa N, Itoh YH, Itoh T: Thermus kawarayensis sp. nov., a new member of the genus Thermus, isolated from Japanese hot springs. Extremophiles 9:81-84.</p>
+<p>Manaia CM, Hoste B, Guitierrez MC, Gillis M, Ventosa A, Kersters K, da Costa M: Halotolerant Thermus strains from marine and terrrestrial hot springs belong to Thermus thermophilus (ex Oshima and Imahori, 1974) nom. rev. emend. System Appl Microbiol 1994, 17:526-532.</p>
+<p>Ming H, Yin YR, Li S, Nie GX, Yu TT, Zhou EM, Liu L, Dong L, Li WJ: Thermus caliditerrae sp. nov., a novel thermophilic species isolated from a geothermal area. Int J Syst Evol Microbiol 2014, 64:650-656.</p>
+<p>Miroshnichenko ML, L´Haridon S, Jeanthon C, Antipov AN, Kostrikina NA, Tindall BJ, Schumann P, Spring S, Stackebrandt E, Bonch-Osmolovskaya EA: Oceanithermus profundus gen. nov., sp. nov., a thermophilic, microaerophilic, facultatively chemolithoheterotrophic bacterium from a deep-sea hydrothermal vent. Int J Syst Evol Microbiol 2003a, 53:747-752.</p>
+<p>Miroshnichenko ML, L´Haridon S, Nercessian O, Antipov AN, Kostrikina NA, Tindall BJ, Schumann P, Spring S, Stackebrandt E, Bonch-Osmolovskaya EA, Jeanthon C: Vulcanithermus mediatlanticus gen. nov., sp. nov., a novel member of the family Thermaceae from a deep-sea hot vent. Int J Syst Evol Microbiol 2003b, 53:1143-1148.</p>
+<p>Nobre MF, Trüper HG, da Costa MS: Transfer of Thermus ruber (Loginova et al. 1984), Thermus silvanus (Tenreiro et al. 1995), and Thermus chliarophilus (Tenreio et al. 1995) to Meiothermus gen. nov. as Meiothermus ruber comb. nov., Meiothermus silvanus comb. nov., and Meiothermus chliarophilus comb. nov., respectively, and emendation of the genus Thermus. Int J Syst Bacteriol 1996, 46:604-606.</p>
+<p>Omelchenko M, Wolf YI, Gaidamakova EK, Matrosova VY, Vasilenko A, Zhai M, Daly MJ, Koonin EV, Makarova KS: Comparative genomics of Thermus thermophilus and Deinococcus radiodurans: divergent routes of adaptation to thermophily and radiation resistance.  BMC Evol Biol 2005, 5:57.</p>
+<p>Oshima T, Imahori K: Description of Thermus thermophilus (Yoshida and Oshima) comb. nov., a nonsporulating thermophilic bacterium from a Japanese thermal spa. Int J Syst Bacteriol 1974, 24:102-112.</p>
+<p>Ramirez-Arcos S, Fernandez-Herrero LA, Marin I, Berenguer J: Anaerobic growth, a property horizontally transferred by an Hfr-like mechanism among extreme thermophiles. J Bacteriol 1998, 180:3137-3143.</p>
+<p>Sako Y, Nakagawa S., Takai K, Horikoshi K: Marinithermus hydrothermalis gen. nov., sp. nov., a strictly aerobic, thermophilic bacterium from a deep-sea hydrothermal vent chimney. Int J Syst Evol Microbiol 2003, 53:59-65.</p>
+<p>Steinsbu BO, Tindall BJ, Torsvik VL, Thorseth IH, Daae FL, Pedersen RB: Rhabdothermus arcticus gen. nov., sp. nov., a member of the family Thermaceae isolated from a hydrothermal vent chimney in the Soria Moria vent field on the Arctic Mid-Ocean Ridge. Int J Syst Evol Microbiol 2011, 61:2197-2204.</p>
+<p>Tettelin H, Riley D, Cattuto C, Medini D: Comparative genomics: the bacterial pan-genome.  Curr Opin Microbiol 2008, 12:472-477.</p>
+<p>Vajna B, Kanizsai S, Kéki Z, Márialigeti K, Schumann P, Tóth EM: Thermus composti sp. nov., isolated from oyster mushroom compost. Int J Syst Evol Microbiol 2012, 62:1486-1490.  </p>
+<p>Weisburg WG, Giovannoni SJ, Woese CR: The Deinococcus-Thermus phylum and the effect of rRNA compostion on phylogenetic tree construction. Syst Appl Microbiol 1989, 11:128-134.</p>
+<p>Williams RAD, Smith KE, Welch SG, Micallef H, Sharp RJ: DNA relatedness of Thermus strains, description of Thermus brockianus sp. nov., and proposal to reestablish Thermus thermophilus (Oshima and Imahori). Int J Syst Bacteriol 1995, 45:495-499.</p>
+<p>Williams RAD, Smith KE, Welch SG, Micallef J: Thermus oshimai sp. nov., isolated from hot springs in Portugal, Iceland, and the Azores, and comment on the concept of a limited geographical distribution of Thermus species. Int J Syst Bacteriol 1996, 46:403-408.</p>
+<p>Zhang XQ, Ying Y, Ye Y, Xu XW, Zhu XF, Wu M: Thermus arciformis sp. nov., a thermophilic species from a geothermal area. Int J Syst Evol Microbiol 2010, 60:834-839.</p>
+<p>Yu TT, Yao JC, Ming H, Yin YR, Zhou EM, Liu MJ, Tang SK, Li WJ: Thermus tengchongensis sp. nov., isolated from a geothermally heated soil sample in Tengchong, Yunnan, south-west China. Antonie van Leeuwenhoek 2013, 103:513-518.</p>
+</div>
+</body>
