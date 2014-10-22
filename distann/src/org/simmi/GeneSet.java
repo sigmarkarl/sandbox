@@ -6433,6 +6433,9 @@ public class GeneSet extends JApplet {
 				
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
 			
+	/*FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
+	GZIPInputStream gi = new GZIPInputStream( fi );
+	funcMappingStatic( new InputStreamReader( gi ) );*/
 	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
 	//GZIPInputStream gi = new GZIPInputStream( fi );
 	//funcMappingStatic( new InputStreamReader( gi ) );
@@ -14700,7 +14703,7 @@ public class GeneSet extends JApplet {
 						bw.close();
 						qbw.close();
 						NativeRun nrun = new NativeRun();
-						SerifyApplet.blastRun(nrun, queryPath, dbPath, "prot", "", null, true);
+						SerifyApplet.blastRun(nrun, queryPath, dbPath, "prot", "-evalue 0.00001", null, true);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
