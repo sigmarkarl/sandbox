@@ -16,6 +16,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,6 +80,12 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
+import org.apache.poi.ss.formula.functions.T;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.GeneSet.StackBarData;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Cog;
@@ -1326,6 +1334,77 @@ public class ActionCollection {
 		                 }
 		            });
 				}*/
+			}
+		};
+		AbstractAction	seqstat = new AbstractAction("Sequence statistics") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Workbook workbook = new XSSFWorkbook();
+				Sheet sheet = workbook.createSheet("genome");
+				
+				List<Row>	rows = new ArrayList<Row>();
+				
+				int i = 0;
+				Row row = sheet.createRow(0);
+				Row row1 = sheet.createRow(1);
+				for( String spc : geneset.specList ) {
+					Cell cell = row.createCell(i);
+					cell.setCellValue(spc);
+					cell = row.createCell(i+1);
+					cell.setCellValue("length");
+					cell = row.createCell(i+2);
+					cell.setCellValue("genes");
+					cell = row.createCell(i+3);
+					cell.setCellValue("subcontigs");
+					cell = row.createCell(i+4);
+					cell.setCellValue("plasmid");
+					
+					int k = 0;
+					List<Contig> sctg = geneset.speccontigMap.get(spc);
+					
+					cell = row1.createCell(i);
+					cell.setCellValue( sctg.size() );
+					
+					Collections.sort( sctg, new Comparator<Contig>() {
+						@Override
+						public int compare(Contig o1, Contig o2) {
+							return o2.length() - o1.length();
+						}
+					});
+					
+					for( Contig ctg : sctg ) {
+						Row nrow;
+						if( k >= rows.size() ) {
+							nrow = sheet.createRow(k+2);
+							rows.add( nrow );
+						} else {
+							nrow = rows.get(k);
+						}
+						Cell ctname = nrow.createCell(i);
+						ctname.setCellValue( ctg.getName() );
+						Cell ctlen = nrow.createCell(i+1);
+						ctlen.setCellValue( ctg.length() );
+						Cell ctgen = nrow.createCell(i+2);
+						ctgen.setCellValue( ctg.getGeneCount() );
+						Cell ctctg = nrow.createCell(i+3);
+						ctctg.setCellValue( ctg.getNumberOfSubContigs() );
+						Cell ctpla = nrow.createCell(i+4);
+						ctpla.setCellValue( ctg.isPlasmid() );
+						k++;
+					}
+					
+					i+=5;
+				}
+				
+				try {
+					workbook.write( new FileOutputStream("/Users/sigmar/wb.xlsx") );
+				} catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		};
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
@@ -4094,6 +4173,7 @@ public class ActionCollection {
 		menu.add( checkbox );
 		menu.addSeparator();
 		menu.add( genomestataction );
+		menu.add( seqstat );
 		menu.add( shuffletreeaction );
 		menu.add( presabsaction );
 		menu.add( freqdistaction );
