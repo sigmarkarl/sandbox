@@ -636,10 +636,11 @@ public class Neighbour {
 											//int offset2 = 0;
 											//if( offsetMap.containsKey( spec2 ) ) offset2 = offsetMap.get(spec2);
 											//rc = GeneCompare.gradientColor( spec1, spec2, contigs2, 0.0, 0.0, offset2, gg );
-											double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+											Teginfo gene2s = gg.getGenes(spec1);
+											double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, gene2s, -1.0, gg);
 											//rc = GeneCompare.invertedGradientColor( ratio );
 											if( ratio == -1 ) {
-												ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
+												ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, gene2s, -1.0, gg);
 												rc = GeneCompare.gradientGrayscaleColor( ratio );
 											} else rc = GeneCompare.gradientColor( ratio );
 										} else {
@@ -926,10 +927,12 @@ public class Neighbour {
 											List<Tegeval> ltv = gg.getTegevals( spec1 );
 											if( ltv != null && ltv.size() > 0 ) {
 												final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
-												double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+												
+												Teginfo gene2s = gg.getGenes(spec1);
+												double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, gene2s, -1.0, gg);
 												//rc = GeneCompare.invertedGradientColor( ratio );
 												if( ratio == -1 ) {
-													ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
+													ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, gene2s, -1.0, gg);
 													rc = GeneCompare.gradientGrayscaleColor( ratio );
 												} else rc = GeneCompare.gradientColor( ratio );
 											} else {
@@ -1185,10 +1188,12 @@ public class Neighbour {
 										List<Tegeval> ltv = gg.getTegevals( spec1 );
 										if( ltv != null && ltv.size() > 0 ) {
 											final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
-											double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+											
+											Teginfo gene2s = gg.getGenes(spec1);
+											double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, gene2s, -1.0, gg);
 											//rc = GeneCompare.invertedGradientColor( ratio );
 											if( ratio == -1 ) {
-												ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
+												ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, gene2s, -1.0, gg);
 												rc = GeneCompare.gradientGrayscaleColor( ratio );
 											} else rc = GeneCompare.gradientColor( ratio );
 										} else {
@@ -1438,9 +1443,10 @@ public class Neighbour {
 									List<Tegeval> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
 										final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
-										double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg);
+										Teginfo gene2s = gg.getGenes(spec1);
+										double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, gene2s, -1.0, gg);
 										if( ratio == -1 ) {
-											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
+											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, gene2s, -1.0, gg);
 											rc = GeneCompare.gradientGrayscaleColor( ratio );
 										} else rc = GeneCompare.gradientColor( ratio );
 									} else {

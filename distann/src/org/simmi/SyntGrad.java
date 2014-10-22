@@ -12,6 +12,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -27,6 +28,7 @@ import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -48,8 +50,12 @@ import org.simmi.shared.Teginfo;
 
 public class SyntGrad {
 	JCheckBox	contcheck = new JCheckBox("Show contig lines");
+	JCheckBox	selcheck = new JCheckBox("Show lines for selection");
 	JCheckBox	vischeck = new JCheckBox("Table visibility");
 	JCheckBox	syntcol = new JCheckBox("Table order color");
+	JCheckBox	homol = new JCheckBox("Show homologs");
+	JButton		repaint = new JButton("Repaint");
+	
 	public void syntGrad( final GeneSet geneset, final int w, final int h, Set<String> presel ) {
 		final JTable 				table = geneset.getGeneTable();
 		//final Collection<String> 	specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
@@ -174,7 +180,9 @@ public class SyntGrad {
 								if( o1.getAnnotations() != null ) {
 									for( Annotation ann : o1.getAnnotations() ) {
 										Tegeval tv = (Tegeval)ann;
-										double val = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
+										GeneGroup gg = tv.getGene().getGeneGroup();
+										Teginfo gene2s = gg.getGenes( spec1 );
+										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
 								}
@@ -185,7 +193,9 @@ public class SyntGrad {
 								if( o2.getAnnotations() != null ) {
 									for( Annotation ann : o2.getAnnotations() ) {
 										Tegeval tv = (Tegeval)ann;
-										double val = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
+										GeneGroup gg = tv.getGene().getGeneGroup();
+										Teginfo gene2s = gg.getGenes( spec1 );
+										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
 								}
@@ -201,8 +211,10 @@ public class SyntGrad {
 							while( tv != null ) {
 								Tegeval next = c.getNext( tv );
 								if( next != null ) {
-									double val1 = tv.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, tv.getGene().getGeneGroup()) : -1;
-									double val2 = next.getGene() != null ? invertedGradientRatio(spec1, contigs1, -1.0, next.getGene().getGeneGroup()) : -1;
+									GeneGroup gg = tv.getGene().getGeneGroup();
+									Teginfo gene2s = gg.getGenes( spec1 );
+									double val1 = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
+									double val2 = next.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
 									
 									if( val1 != -1.0 && val2 != -1.0 ) {
 										dvals.add( val2-val1 );
@@ -433,8 +445,19 @@ public class SyntGrad {
 		
 		JToolBar toolbar = new JToolBar();
 		toolbar.add( contcheck );
+		toolbar.add( selcheck );
 		toolbar.add( vischeck );
 		toolbar.add( syntcol );
+		toolbar.add( homol );
+		toolbar.add( repaint );
+		
+		repaint.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				drawImage( geneset, g2, spec1, contigs1, spec2s, w, h );
+				c.repaint();
+			}
+		});
 		
 		JFrame frame = new JFrame();
 		frame.add( toolbar, BorderLayout.NORTH );
@@ -448,24 +471,52 @@ public class SyntGrad {
 		drawImage(geneset, g2, spec1, contigs1, spec2s, w, h, 1.0);
 	}
 	
-	public void doTv( GeneSet geneset, Graphics2D g2, Tegeval tv, int tvn, int total, String spec1, List<Contig> contigs1, int w2, int h2, int rad, double radscale ) {
+	public void doTv( GeneSet geneset, Graphics2D g2, Tegeval tv, int tvn, int total, int ptvn, int ptotal, String spec1, List<Contig> contigs1, int w2, int h2, int rad, double radscale ) {
 		Gene gene = tv.getGene();
+		boolean phage = gene.isPhage();
+		boolean plasmid = tv.getContshort().isPlasmid();
+		
 		GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
-		double r = 2.0*Math.PI*(double)tvn/(double)total;
+		double r = (double)tvn/(double)total;
+		double pr = (double)ptvn/(double)ptotal;
+		double tr = (double)(tvn)/(double)(total+ptotal);
+		double ptr = (double)(total+ptvn)/(double)(total+ptotal);
+		
+		//Gene sgene = gg.s
 		
 		boolean visible = false;
 		if( spec1 != null ) {
 			if( gg != null ) {
+				Teginfo gene2s = gg.getGenes( spec1 );
 				visible = true;
-				double ratio = invertedGradientRatio( spec1, contigs1, r, gg );
-				if( ratio >= 0.0 ) {
-					g2.setColor( invertedGradientColor( ratio ) );	
+				
+				boolean inplasmid = false;
+				if( gene2s != null && gene2s.tset != null ) for( Tegeval tee : gene2s.tset ) {
+					if( tee.getContshort().isPlasmid() ) {
+						inplasmid = true;
+						break;
+					}
 				}
-			} else g2.setColor( Color.white );
+				
+				double ratio;
+				if( inplasmid ) {
+					ratio = GeneCompare.invertedGradientPlasmidRatio( spec1, contigs1, gene2s, pr, gg );
+				} else {
+					ratio = GeneCompare.invertedGradientRatio( spec1, contigs1, gene2s, r, gg );
+				}
+				
+				if( ratio >= 0.0 ) {
+					Color color = inplasmid ? GeneCompare.gradientGrayscaleColor( ratio ) : GeneCompare.gradientColor( ratio );
+					g2.setColor( color );
+				} else {
+					//System.err.println( "kukur " + ratio + " " + r );
+					g2.setColor( Color.white );
+				}
+			} else {
+				//System.err.println( "labbi ");
+				g2.setColor( Color.white );
+			}
 		} else {
-			boolean phage = gene.isPhage();
-			boolean plasmid = tv.getContshort().isPlasmid();
-			
 			Color color = Color.white;
 			int count = 1;
 			if( gg != null ) {
@@ -512,12 +563,106 @@ public class SyntGrad {
 		}
 		
 		if( visible ) {
+			double rr = 2.0*Math.PI*( plasmid ? ptr : tr );
+			
 			g2.translate(w2, h2);
-			g2.rotate( r*radscale );
+			g2.rotate( rr*radscale );
 			g2.fillRect(rad, -1, 15, 3);
 			//g2.drawLine(rad, 0, rad+15, 0);
-			g2.rotate( -r*radscale );
+			g2.rotate( -rr*radscale );
 			g2.translate(-w2, -h2);
+			
+			if( selcheck.isSelected() ) {
+				int i = 0;
+				if( geneset.table.getModel() == geneset.defaultModel ) {
+					i = geneset.genelist.indexOf(gene);
+				} else {
+					i = geneset.allgenegroups.indexOf(gg);
+				}
+				
+				if( i != -1 ) {
+					int rv = geneset.table.convertRowIndexToView(i);
+					if( rv >= 0 && rv < geneset.table.getRowCount() ) {
+						if( geneset.table.isRowSelected( rv ) ) {
+							g2.translate(w2, h2);
+							g2.rotate( rr );
+							g2.setColor( Color.magenta );
+							g2.drawLine(rad+15, 0, rad+100, 0);
+							g2.rotate( -rr );
+							g2.translate(-w2, -h2);
+						}
+					}
+				}
+			}
+			
+			if( homol.isSelected() ) {
+				if( gg != null ) {
+					Teginfo ti = gg.getGenes(spec1);
+					if( true ) {
+					//if( tv.getContshort().isPlasmid() ) {
+					//if( ti.tset.size() > 23 ) {
+					//if( ti.tset.size() > 1 && ti.tset.size() < 4 ) {
+						//System.err.println( "tiname " + rr + " " + ti.tset.size() + "  " + ti.best.name );
+						
+						g2.setColor( Color.black );
+						for( Tegeval te : ti.tset ) {
+							if( te != tv ) {
+								g2.translate(w2, h2);
+								
+								tvn = 0;
+								ptvn = 0;
+								
+								double rrr = 0.0; //= 2.0*Math.PI*( plasmid ? ptr : tr );
+								if( te.getContshort().isPlasmid() ) {
+									for( Contig c : contigs1 ) {
+										if( c.isPlasmid() ) {
+											if( c.annset != null ) {
+												int k = c.indexOf( te );
+												if( k != -1 ) {
+													ptvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+													break;
+												}
+											}
+											ptvn += c.getGeneCount();
+										}
+									}
+									//rrr = 2*Math.PI*(double)(tvn)/(double)(total+ptotal);
+									rrr = 2.0*Math.PI*(double)(total+ptvn)/(double)(total+ptotal);
+								} else {
+									for( Contig c : contigs1 ) {
+										if( !c.isPlasmid() ) {
+											if( c.annset != null ) {
+												int k = c.indexOf( te );
+												if( k != -1 ) {
+													tvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+													break;
+												}
+											}
+											tvn += c.getGeneCount();
+										}
+									}
+									rrr = 2.0*Math.PI*(double)(tvn)/(double)(total+ptotal);
+									//rrr = 2*Math.PI*(double)(total+ptvn)/(double)(total+ptotal);
+								}
+								
+								//System.err.println( "rrr " + rrr );
+								//rrr = Math.PI/2.0;
+								double cs2 = Math.cos( rrr );
+								double sn2 = Math.sin( rrr );
+								double cs = Math.cos( rr );
+								double sn = Math.sin( rr );
+								int x1 = (int)(250*cs);
+								int y1 = (int)(250*sn);
+								int x2 = (int)(250*cs2);
+								int y2 = (int)(250*sn2);
+								g2.drawLine(x1, y1, x2, y2);
+								
+								g2.translate(-w2, -h2);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	
@@ -531,25 +676,38 @@ public class SyntGrad {
 		for( String spec : spec2s ) {
 			List<Contig> scontigs = geneset.speccontigMap.get( spec );
 			
+			int ptotal = 0;
 			int total = 0;
 			for( Contig c : scontigs ) {
-				total += c.getGeneCount();
+				if( c.isPlasmid() ) ptotal += c.getGeneCount();
+				else total += c.getGeneCount();
 			}
 			
 			int tvn = 0;
+			int ptvn = 0;
 			
 			boolean succ = false;
 			int rr = geneset.table.getSelectedRow();
 			if( rr != -1 ) {
+				Tegeval te = null;
 				int i = geneset.table.convertRowIndexToModel(rr);
-				GeneGroup gg = geneset.allgenegroups.get(i);
-				Teginfo t = gg.getGenes(spec);
-				if( t != null ) {
+				if( geneset.table.getModel() == geneset.defaultModel ) {
+					Gene gene = geneset.genelist.get(i);
+					te = gene.tegeval;
+				} else {
+					GeneGroup gg = geneset.allgenegroups.get(i);
+					Teginfo t = gg.getGenes(spec);
+					if( t != null ) {
+						te = t.best;
+					}
+				}
+				
+				if( te != null ) {
 					succ = true;
 					
 					int ci = 0;
 					int k = -1;
-					Tegeval te = t.best;
+					//Tegeval te = t.best;
 					/*if( te == null ) {
 						for( Tegeval tv : t.tset ) {
 							te = tv;
@@ -558,12 +716,40 @@ public class SyntGrad {
 					}*/
 					
 					if( te != null ) {
-						for( Contig c : scontigs ) {
-							if( c.annset != null ) k = c.indexOf( te );
-							if( k != -1 ) {
-								break;
+						if( te.getContshort().isPlasmid() ) {
+							for( Contig c : scontigs ) {
+								if( c.isPlasmid() ) {
+									if( c.annset != null ) {
+										k = c.indexOf( te );
+										if( k != -1 ) {
+											ptvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+											break;
+										}
+									}
+									/*if( k != -1 ) {
+										break;
+									}*/
+									ptvn += c.getGeneCount();
+								}
+								ci++;
 							}
-							ci++;
+						} else {
+							for( Contig c : scontigs ) {
+								if( !c.isPlasmid() ) {
+									if( c.annset != null ) {
+										k = c.indexOf( te );
+										if( k != -1 ) {
+											tvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+											break;
+										}
+									}
+									/*if( k != -1 ) {
+										break;
+									}*/
+									tvn += c.getGeneCount();
+								}
+								ci++;
+							}
 						}
 						
 						for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
@@ -573,10 +759,15 @@ public class SyntGrad {
 								Tegeval tv = (Tegeval)c.getAnnotation(k);
 								if( cci == ci ) {
 									while( tv != null ) {
-										doTv( geneset, g2, tv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+										doTv( geneset, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 										Tegeval prev = tv;
 										
-										tvn++;
+										boolean plas = tv.getContshort().isPlasmid();
+										if( plas ) {
+											ptvn = (ptvn+1)%ptotal;
+										} else {
+											tvn = (tvn+1)%total;
+										}
 										tv = c.getNext(tv);
 										
 										if( tv != null && tv.start == prev.start ) {
@@ -589,10 +780,15 @@ public class SyntGrad {
 								} else {
 									Tegeval ftv = c.getFirst();
 									while( ftv != tv ) {
-										doTv( geneset, g2, ftv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+										doTv( geneset, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 										Tegeval prev = ftv;
 										
-										tvn++;
+										boolean plas = tv.getContshort().isPlasmid();
+										if( plas ) {
+											ptvn = (ptvn+1)%ptotal;
+										} else {
+											tvn = (tvn+1)%total;
+										}
 										ftv = c.getNext( ftv );
 										
 										if( ftv != null && ftv.start == prev.start ) {
@@ -606,11 +802,16 @@ public class SyntGrad {
 							} else {
 								Tegeval tv = c.getFirst();
 								while( tv != null ) {
-									doTv( geneset, g2, tv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+									doTv( geneset, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 									
 									Tegeval prev = tv;
 									
-									tvn++;
+									boolean plas = tv.getContshort().isPlasmid();
+									if( plas ) {
+										ptvn = (ptvn+1)%ptotal;
+									} else {
+										tvn = (tvn+1)%total;
+									}
 									tv = c.getNext( tv );
 									
 									if( tv != null && tv.start == prev.start ) {
@@ -627,7 +828,7 @@ public class SyntGrad {
 							}
 							
 							if( contcheck.isSelected() ) {
-								double r = 2.0*Math.PI*(double)tvn/(double)total;
+								double r = 2.0*Math.PI*( (c.isPlasmid() ? (double)(total+ptvn) : (double)tvn)/(double)(ptotal+total) );
 								g2.translate(w2, h2);
 								g2.rotate( r );
 								g2.setColor( Color.black );
@@ -650,14 +851,21 @@ public class SyntGrad {
 			}
 			
 			if( !succ ) {
+				//System.err.println("packkki .................................................");
 				for( Contig c : scontigs ) {
 					Tegeval tv = c.getFirst();
 					while( tv != null ) {
-						doTv( geneset, g2, tv, tvn, total, spec1, contigs1, w2, h2, rad, radscale );
+						doTv( geneset, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 						
 						Tegeval prev = tv;
 						
-						tvn++;
+						boolean plas = tv.getContshort().isPlasmid();
+						if( plas ) {
+							ptvn = (ptvn+1)%ptotal;
+						} else {
+							tvn = (tvn+1)%total;
+						}
+						
 						tv = c.getNext( tv );
 						
 						if( tv != null && tv.start == prev.start ) {
@@ -673,7 +881,7 @@ public class SyntGrad {
 					}
 					
 					if( contcheck.isSelected() ) {
-						double r = 2.0*Math.PI*(double)tvn/(double)total;
+						double r = 2.0*Math.PI*( (c.isPlasmid() ? (double)(total+ptvn) : (double)tvn)/(double)(ptotal+total) );
 						g2.translate(w2, h2);
 						g2.rotate( r );
 						g2.setColor( Color.black );
@@ -735,7 +943,7 @@ public class SyntGrad {
 	final Color darkblue = new Color( 0, 0, 128 );
 	final Color darkmag = new Color( 128, 0, 128 );
 	
-	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+	/*public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
 		int total2 = 0;
 		for( Contig ctg2 : contigs2 ) {
 			total2 += ctg2.getGeneCount();
@@ -761,6 +969,11 @@ public class SyntGrad {
 			//ratio2 = rat2;
 			//break;
 		}
+		
+		if( ratio2 == -1.0 ) {
+			System.err.println( ratio2 + "  " + ratio );
+		}
+		
 		return ratio2;
 	}
 	
@@ -772,7 +985,7 @@ public class SyntGrad {
 		} else {
 			Color c = new Color(0,1.0f,(float)((1.0-ratio2)*2.0));
 			g2.setColor( c );
-		}*/
+		}*
 		
 		Color c = Color.black;
 		if( ratio < 1.0/6.0 ) {
@@ -790,5 +1003,5 @@ public class SyntGrad {
 		}
 		
 		return c;
-	}
+	}*/
 }
