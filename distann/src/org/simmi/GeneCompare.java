@@ -1093,13 +1093,12 @@ public class GeneCompare {
 		return c;
 	}
 	
-	public static double invertedGradientPlasmidRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+	public static double invertedGradientPlasmidRatio( String spec2, Collection<Contig> contigs2, Teginfo gene2s, double ratio, GeneGroup gg ) {
 		int total2 = 0;
 		for( Contig ctg2 : contigs2 ) {
 			if( ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
 		}
 		double ratio2 = -1.0;
-		Teginfo gene2s = gg.getGenes( spec2 );
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
@@ -1122,22 +1121,21 @@ public class GeneCompare {
 		return ratio2;
 	}
 	
-	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, Teginfo gene2s, double ratio, GeneGroup gg ) {
 		int total2 = 0;
 		for( Contig ctg2 : contigs2 ) {
 			if( !ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
 		}
 		double ratio2 = -1.0;
-		Teginfo gene2s = gg.getGenes( spec2 );
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
-				if( ctg2.annset != null ) {
+				if( ctg2.annset != null && !ctg2.isPlasmid() ) {
 					int idx = ctg2.annset.indexOf( tv2 );
 					if( idx == -1 ) {
 						count2 += ctg2.getGeneCount();
 					} else {
-						if( ctg2.isPlasmid() ) return -1;
+						//if( ctg2.isPlasmid() ) return -1;
 						count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
 						break;
 					}
@@ -1149,20 +1147,21 @@ public class GeneCompare {
 			//ratio2 = rat2;
 			//break;
 		}
+		
+		//System.err.println( "bbbbbb " + ratio2 );
+		/*if( ratio2 == -1.0 ) {
+			System.err.println();
+		}*/
+		
 		return ratio2;
 	}
 	
-	public static double invertedGradientTotalRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+	public static double invertedGradientTotalRatio( String spec2, Collection<Contig> contigs2, Teginfo gene2s, double ratio, GeneGroup gg ) {
 		int total2 = 0;
 		for( Contig ctg2 : contigs2 ) {
 			total2 += ctg2.getGeneCount();
 		}
 		double ratio2 = -1.0;
-		
-		if( gg == null || spec2 == null ) {
-			System.err.println("ermermermermerm");
-		}
-		Teginfo gene2s = gg.getGenes( spec2 );
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Contig ctg2 : contigs2 ) {
@@ -1235,7 +1234,9 @@ public class GeneCompare {
 			} else if( ratio <= 1.0 ) {
 				c = new Color((float)((1.0-ratio)*6.0),0.0f,1.0f);
 			}
-		}
+		} /*else if( ratio > 1.0 ) {
+			c = Color.red;
+		}*/
 		
 		return c;
 	}
@@ -1581,9 +1582,9 @@ public class GeneCompare {
                     g2.translate( -w/2, -h/2 );
 				} else if( synbr == -2 ) {
 					if( spec1 == null ) {
-						ratio = GeneCompare.invertedGradientRatio(spec2, contigs2, -1.0, gg);
+						ratio = GeneCompare.invertedGradientRatio(spec2, contigs2, gg.getGenes(spec2), -1.0, gg);
 						if( ratio == -1 ) {
-							ratio = GeneCompare.invertedGradientPlasmidRatio(spec2, contigs2, -1.0, gg);
+							ratio = GeneCompare.invertedGradientPlasmidRatio(spec2, contigs2, gg.getGenes(spec2), -1.0, gg);
 							g2.setColor( GeneCompare.gradientGrayscaleColor( ratio ) );
 						} else {
 							g2.setColor( GeneCompare.gradientColor( ratio ) );
@@ -1606,7 +1607,7 @@ public class GeneCompare {
 						}
 						g2.setColor( c );
 						
-						double ratio2 = invertedGradientTotalRatio( spec2, contigs2, tratio, gg );
+						double ratio2 = invertedGradientTotalRatio( spec2, contigs2, gg.getGenes(spec2), tratio, gg );
 						if( ratio2 != -1.0 ) {
 							double theta = ratio2*Math.PI*2.0;
 							g2.translate( w/2, h/2 );
@@ -1705,9 +1706,11 @@ public class GeneCompare {
 										String tspec = tvv.getGene().getSpecies();
 										List<Contig> scontigs = geneset.speccontigMap.get( tspec );
 										
-										ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, tvv.getGene().getGeneGroup());
+										GeneGroup ggg = tvv.getGene().getGeneGroup();
+										Teginfo gene2s = ggg.getGenes(tspec);
+										ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, gene2s, -1.0, ggg);
 										if( ratio == -1 ) {
-											ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, tvv.getGene().getGeneGroup());
+											ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, gene2s, -1.0, ggg);
 											color = GeneCompare.gradientGrayscaleColor( ratio );
 											//label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
 											//label.setForeground( Color.white );
