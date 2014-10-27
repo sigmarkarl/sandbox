@@ -181,8 +181,7 @@ public class SyntGrad {
 									for( Annotation ann : o1.getAnnotations() ) {
 										Tegeval tv = (Tegeval)ann;
 										GeneGroup gg = tv.getGene().getGeneGroup();
-										Teginfo gene2s = gg.getGenes( spec1 );
-										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
+										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
 								}
@@ -194,8 +193,7 @@ public class SyntGrad {
 									for( Annotation ann : o2.getAnnotations() ) {
 										Tegeval tv = (Tegeval)ann;
 										GeneGroup gg = tv.getGene().getGeneGroup();
-										Teginfo gene2s = gg.getGenes( spec1 );
-										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
+										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
 										if( val != -1 ) ratios.add( val );
 									}
 								}
@@ -212,9 +210,8 @@ public class SyntGrad {
 								Tegeval next = c.getNext( tv );
 								if( next != null ) {
 									GeneGroup gg = tv.getGene().getGeneGroup();
-									Teginfo gene2s = gg.getGenes( spec1 );
-									double val1 = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
-									double val2 = next.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, gene2s, -1.0, gg) : -1;
+									double val1 = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
+									double val2 = next.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
 									
 									if( val1 != -1.0 && val2 != -1.0 ) {
 										dvals.add( val2-val1 );
@@ -500,9 +497,9 @@ public class SyntGrad {
 				
 				double ratio;
 				if( inplasmid ) {
-					ratio = GeneCompare.invertedGradientPlasmidRatio( spec1, contigs1, gene2s, pr, gg );
+					ratio = GeneCompare.invertedGradientPlasmidRatio( spec1, contigs1, pr, gg );
 				} else {
-					ratio = GeneCompare.invertedGradientRatio( spec1, contigs1, gene2s, r, gg );
+					ratio = GeneCompare.invertedGradientRatio( spec1, contigs1, r, gg, tv );
 				}
 				
 				if( ratio >= 0.0 ) {
@@ -584,6 +581,7 @@ public class SyntGrad {
 					int rv = geneset.table.convertRowIndexToView(i);
 					if( rv >= 0 && rv < geneset.table.getRowCount() ) {
 						if( geneset.table.isRowSelected( rv ) ) {
+							g2.setColor( Color.black );
 							g2.translate(w2, h2);
 							g2.rotate( rr );
 							g2.setColor( Color.magenta );
