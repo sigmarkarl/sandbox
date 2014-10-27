@@ -1347,9 +1347,11 @@ public class ActionCollection {
 				int i = 0;
 				Row row = sheet.createRow(0);
 				Row row1 = sheet.createRow(1);
-				for( String spc : geneset.specList ) {
+				
+				Set<String> specs = geneset.getSelspec(geneset, geneset.specList);
+				for( String spc : specs ) {
 					Cell cell = row.createCell(i);
-					cell.setCellValue(spc);
+					cell.setCellValue( geneset.nameFix(spc) );
 					cell = row.createCell(i+1);
 					cell.setCellValue("length");
 					cell = row.createCell(i+2);
@@ -1358,6 +1360,8 @@ public class ActionCollection {
 					cell.setCellValue("subcontigs");
 					cell = row.createCell(i+4);
 					cell.setCellValue("plasmid");
+					cell = row.createCell(i+5);
+					cell.setCellValue("GC%");
 					
 					int k = 0;
 					List<Contig> sctg = geneset.speccontigMap.get(spc);
@@ -1390,19 +1394,19 @@ public class ActionCollection {
 						ctctg.setCellValue( ctg.getNumberOfSubContigs() );
 						Cell ctpla = nrow.createCell(i+4);
 						ctpla.setCellValue( ctg.isPlasmid() );
+						Cell ctgcp = nrow.createCell(i+5);
+						ctgcp.setCellValue( ctg.getGCP() );
 						k++;
 					}
 					
-					i+=5;
+					i+=6;
 				}
 				
 				try {
 					workbook.write( new FileOutputStream("/Users/sigmar/wb.xlsx") );
 				} catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
