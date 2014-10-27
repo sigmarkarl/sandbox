@@ -7772,7 +7772,7 @@ public class GeneSet extends JApplet {
 									StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
 									if( seqstr != null && seqstr.length() > 0 ) {
 										if( seqstr.length() != len ) {
-											System.err.println( "        bleh " + spec + "  " + seqstr.length() + "   " + ggroup.size() + "  " + ggroup.getCommonName() + "  " + ggroup.getIndex() );
+											//System.err.println( "        bleh " + spec + "  " + seqstr.length() + "   " + ggroup.size() + "  " + ggroup.getCommonName() + "  " + ggroup.getIndex() );
 											for( Gene g : ggroup.genes ) {
 												System.err.println( g.getSpecies() + "  " + g.tegeval.getAlignedSequence().length() + "   " + g.id);
 											}
@@ -9373,9 +9373,9 @@ public class GeneSet extends JApplet {
 									String tspec = tv.getGene().getSpecies();
 									List<Contig> scontigs = speccontigMap.get( tspec );
 									GeneGroup gg = tv.getGene().getGeneGroup();
-									double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, gg.getGenes(tspec), -1.0, gg);
+									double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
 									if( ratio == -1 ) {
-										ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, gg.getGenes(tspec), -1.0, gg);
+										ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
 										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
 										label.setForeground( Color.white );
 									} else {
@@ -9390,9 +9390,9 @@ public class GeneSet extends JApplet {
 								String tspec = tv.getGene().getSpecies();
 								List<Contig> scontigs = speccontigMap.get( tspec );
 								GeneGroup gg = tv.getGene().getGeneGroup();
-								double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, gg.getGenes(tspec), -1.0, gg);
+								double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
 								if( ratio == -1 ) {
-									ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, gg.getGenes(tspec), -1.0, gg);
+									ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
 									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
 									label.setForeground( Color.white );
 								} else {
@@ -9403,34 +9403,134 @@ public class GeneSet extends JApplet {
 						} else {
 							List<Contig> contigs = speccontigMap.get( spec );
 							if( value instanceof Teginfo ) {
-								Teginfo ti = (Teginfo)value;
+								//Teginfo ti = (Teginfo)value;
 								label.setBackground( Color.green );
-								for( Tegeval tv : ti.tset ) {
-									GeneGroup gg = tv.getGene().getGeneGroup();
-									double ratio = GeneCompare.invertedGradientRatio(spec, contigs, gg.getGenes(spec), -1.0, gg);
-									if( ratio == -1 ) {
-										ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, gg.getGenes(spec), -1.0, gg);
-										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-										label.setForeground( Color.white );
-									} else {
-										label.setBackground( GeneCompare.gradientColor( ratio ) );
-										label.setForeground( Color.black );
-									}
-									break;
-									//GeneCompare.gradientColor();
+								
+								//GeneGroup 	gg = ti.best.getGene().getGeneGroup();
+								//Teginfo		gene2s = gg.getGenes(spec);
+								//double ratio = -1.0;
+								int msimcount = 0;
+								
+								GeneGroup gg = null;
+								Tegeval tv = null;
+								Tegeval tv2 = null;
+								if( table.getModel() == defaultModel ) {
+									int i = table.convertRowIndexToModel(row);
+									Gene g = genelist.get(i);
+									gg = g.getGeneGroup();
+									tv2 = g.tegeval;
 								}
-							} else if( value instanceof Tegeval ) {
-								Tegeval tv = (Tegeval)value;
-								GeneGroup gg = tv.getGene().getGeneGroup();
-								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, gg.getGenes(spec),-1.0, gg);
+								
+								if( gg != null ) {
+									Teginfo		gene2s = gg.getGenes(spec);
+									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
+										int simcount = 0;
+										
+										Tegeval n = tv1.getNext();
+										Tegeval p = tv1.getPrevious();
+										Tegeval n2 = tv2.getNext();
+										Tegeval p2 = tv2.getPrevious();
+										
+										if( n != null ) {
+											GeneGroup ngg = n.getGene().getGeneGroup();
+											if( n2 != null ) {
+												if( ngg == n2.getGene().getGeneGroup() ) simcount++;
+											}
+											
+											if( p2 != null ) {
+												if( ngg == p2.getGene().getGeneGroup() ) simcount++;
+											}
+										}
+										
+										if( p != null ) {
+											GeneGroup pgg = p.getGene().getGeneGroup();
+											if( n2 != null ) {
+												if( pgg == n2.getGene().getGeneGroup() ) simcount++;
+											}
+											
+											if( p2 != null ) {
+												if( pgg == p2.getGene().getGeneGroup() ) simcount++;
+											}
+										}
+										
+										//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+										if( simcount >= msimcount ) {
+											tv = tv1;
+											msimcount = simcount;
+										}
+										
+										//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+										//GeneCompare.gradientColor();
+									}
+								}
+								
+								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv);
 								if( ratio == -1 ) {
-									ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, gg.getGenes(spec), -1.0, gg);
+									if( gg != null ) ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
 									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-									label.setForeground( Color.white );
+									label.setForeground( Color.black );
 								} else {
 									label.setBackground( GeneCompare.gradientColor( ratio ) );
 									label.setForeground( Color.black );
 								}
+							} else if( value instanceof Tegeval ) {
+								Tegeval tv = (Tegeval)value;
+								Tegeval tv2 = null;
+								GeneGroup gg = tv.getGene().getGeneGroup();
+								int msimcount = 0;
+								if( gg != null ) {
+									Teginfo		gene2s = gg.getGenes(spec);
+									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
+										int simcount = 0;
+										
+										Tegeval n = tv1.getNext();
+										Tegeval p = tv1.getPrevious();
+										Tegeval n2 = tv.getNext();
+										Tegeval p2 = tv.getPrevious();
+										
+										if( n != null ) {
+											GeneGroup ngg = n.getGene().getGeneGroup();
+											if( n2 != null ) {
+												if( ngg == n2.getGene().getGeneGroup() ) simcount++;
+											}
+											
+											if( p2 != null ) {
+												if( ngg == p2.getGene().getGeneGroup() ) simcount++;
+											}
+										}
+										
+										if( p != null ) {
+											GeneGroup pgg = p.getGene().getGeneGroup();
+											if( n2 != null ) {
+												if( pgg == n2.getGene().getGeneGroup() ) simcount++;
+											}
+											
+											if( p2 != null ) {
+												if( pgg == p2.getGene().getGeneGroup() ) simcount++;
+											}
+										}
+										
+										//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+										if( simcount >= msimcount ) {
+											tv2 = tv1;
+											msimcount = simcount;
+										}
+										
+										//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+										//GeneCompare.gradientColor();
+									}
+								}
+								//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv2);
+								if( ratio == -1 ) {
+									ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
+									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+									label.setForeground( Color.black );
+								} else {
+									label.setBackground( GeneCompare.gradientColor( ratio ) );
+									label.setForeground( Color.black );
+								}
+								
 								
 								/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
 								label.setBackground( GeneCompare.gradientColor( ratio ) );*/
@@ -16543,6 +16643,169 @@ public class GeneSet extends JApplet {
 		});
 		
 		JMenu		select = new JMenu("Select");
+		AbstractAction breakpointselAction = new AbstractAction("Select breakpoints") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String spec = (String)syncolorcomb.getSelectedItem();
+				
+				int rr = 0;
+				for( Gene g : genelist ) {
+					if( !spec.equals( g.getSpecies() ) && g.getSpecies().contains("eggert") ) {
+						Tegeval tv2 = g.tegeval;
+						Tegeval n2 = tv2.getNext();
+						Tegeval p2 = tv2.getPrevious();
+						
+						GeneGroup gg = g.getGeneGroup();
+						
+						if( gg.getCommonName().contains("rhodane") ) {
+							System.err.println();
+						}
+						
+						Teginfo ti = gg.getGenes( spec );
+						int msimcount = 0;
+						if( ti != null ) {
+							for( Tegeval tv1 : ti.tset ) {
+								int simcount = 0;
+								
+								Tegeval n = tv1.getNext();
+								Tegeval p = tv1.getPrevious();
+								
+								GeneGroup ggg = tv1.getGene().getGeneGroup();
+								if( n2 != null ) {
+									if( ggg == n2.getGene().getGeneGroup() ) {
+										simcount++;
+									}
+									
+									Tegeval nn2 = n2.getNext();
+									if( nn2 != null ) {
+										if( ggg == nn2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+									}
+								}
+								
+								if( p2 != null ) {
+									if( ggg == p2.getGene().getGeneGroup() ) {
+										simcount++;
+									}
+									
+									Tegeval pp2 = p2.getPrevious();
+									if( pp2 != null ) {
+										if( ggg == pp2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+									}
+								}
+								
+								if( n != null ) {
+									GeneGroup ngg = n.getGene().getGeneGroup();
+								
+									if( ngg == tv2.getGene().getGeneGroup() ) {
+										simcount++;
+									}
+									
+									if( n2 != null ) {
+										if( ngg == n2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+									}
+									
+									if( p2 != null ) {
+										if( ngg == p2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+									}
+									
+									Tegeval nn = n.getNext();
+									if( nn != null ) {
+										ngg = nn.getGene().getGeneGroup();
+										
+										if( ngg == tv2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+										
+										if( n2 != null ) {
+											if( ngg == n2.getGene().getGeneGroup() ) {
+												simcount++;
+											}
+										}
+										
+										if( p2 != null ) {
+											if( ngg == p2.getGene().getGeneGroup() ) {
+												simcount++;
+											}
+										}
+									}
+								}
+								
+								if( p != null ) {
+									GeneGroup pgg = p.getGene().getGeneGroup();
+									
+									if( pgg == tv2.getGene().getGeneGroup() ) {
+										simcount++;
+									}
+									
+									if( n2 != null ) {
+										if( pgg == n2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+									}
+									
+									if( p2 != null ) {
+										if( pgg == p2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+									}
+									
+									Tegeval pp = p.getPrevious();
+									if( pp != null ) {
+										pgg = pp.getGene().getGeneGroup();
+										
+										if( pgg == tv2.getGene().getGeneGroup() ) {
+											simcount++;
+										}
+										
+										if( n2 != null ) {
+											if( pgg == n2.getGene().getGeneGroup() ) {
+												simcount++;
+											}
+										}
+										
+										if( p2 != null ) {
+											if( pgg == p2.getGene().getGeneGroup() ) {
+												simcount++;
+											}
+										}
+									}
+								}
+								
+								//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+								if( simcount >= msimcount ) {
+									//tv = tv1;
+									msimcount = simcount;
+								}
+								
+								//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+								//GeneCompare.gradientColor();
+							}
+							
+							if( msimcount < 2 ) {
+								int i = table.convertRowIndexToView(g.index);
+								table.addRowSelectionInterval(i, i);
+							}
+						}
+					}
+					rr++;
+				}
+				/*List<Contig> contigs = speccontigMap.get( spec );
+				for( Contig c : contigs ) {
+					for( Annotation ann : c.annset ) {
+						Tegeval tv = (Tegeval)ann;
+						
+					}
+				}*/
+			}
+		};
 		AbstractAction saveselAction = new AbstractAction("Save selection") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -16563,6 +16826,7 @@ public class GeneSet extends JApplet {
 				}
 			}
 		};
+		select.add( breakpointselAction );
 		select.add( saveselAction );
 		select.addSeparator();
 		select.add(new AbstractAction("Show all") {
