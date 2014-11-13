@@ -269,7 +269,7 @@ public class Navisionexplorer implements EntryPoint {
 	public void loadAllJobs( final List<Job> jlist ) {
 		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
-			String sql = "select j.[Description], j.[No_] from [MATIS].[dbo].[Matís ohf_$Job] j";
+			String sql = "select j.[Description], j.[No_] from [MATIS].[dbo].[MatÃ­s ohf_$Job] j";
 			rb.sendRequest(sql, new RequestCallback() {
 				@Override
 				public void onResponseReceived(Request request, Response response) {
@@ -300,7 +300,7 @@ public class Navisionexplorer implements EntryPoint {
 	public void loadAllVerks( final List<Verk> vlist ) {
 		RequestBuilder rb = new RequestBuilder( RequestBuilder.POST, serverUrl );
 		try {
-			String sql = "select v.[Heiti verks (isl)], v.[Verknúmer], v.[Svið] from [vdb].[dbo].[Verkefnalisti] v";
+			String sql = "select v.[Heiti verks (isl)], v.[VerknÃºmer], v.[SviÃ°] from [vdb].[dbo].[Verkefnalisti] v";
 			rb.sendRequest(sql, new RequestCallback() {
 				@Override
 				public void onResponseReceived(Request request, Response response) {
@@ -368,7 +368,7 @@ public class Navisionexplorer implements EntryPoint {
 		
 		String aftstr = aftdate == null ? null : (aftdate.getYear()+1900) + "-" + (aftdate.getMonth()+1) + "-" + aftdate.getDate();
 		String befstr = befdate == null ? null : (befdate.getYear()+1900) + "-" + (befdate.getMonth()+1) + "-" + befdate.getDate();
-		String sql = "select j.[Description], sum(jle.[Quantity]) from [MATIS].[dbo].[Matís ohf_$Job] j, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where j.[No_] = jle.[Job No_] and jle.[No_] in ('";
+		String sql = "select j.[Description], sum(jle.[Quantity]) from [MATIS].[dbo].[MatÃ­s ohf_$Job] j, [MATIS].[dbo].[MatÃ­s ohf_$Job Ledger Entry] jle where j.[No_] = jle.[Job No_] and jle.[No_] in ('";
 		for( String p : set ) {
 			sql += p;
 		}
@@ -427,7 +427,7 @@ public class Navisionexplorer implements EntryPoint {
 		
 		String aftstr = aftdate == null ? null : (aftdate.getYear()+1900) + "-" + (aftdate.getMonth()+1) + "-" + aftdate.getDate();
 		String befstr = befdate == null ? null : (befdate.getYear()+1900) + "-" + (befdate.getMonth()+1) + "-" + befdate.getDate();
-		String sql = "select p.[Name], sum(jle.[Quantity]) from [MATIS].[dbo].[User] p, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where p.[User ID] = jle.[No_] and jle.[Job No_] in ('";
+		String sql = "select p.[Name], sum(jle.[Quantity]) from [MATIS].[dbo].[User] p, [MATIS].[dbo].[MatÃ­s ohf_$Job Ledger Entry] jle where p.[User ID] = jle.[No_] and jle.[Job No_] in ('";
 		for( String p : set ) {
 			sql += p;
 		}
@@ -482,7 +482,7 @@ public class Navisionexplorer implements EntryPoint {
 	}
 	
 	public void loadVerks( final Collection<String>	set, final String vname ) {
-		String sql = "select v.[Nafn], v.[Hlutur Matís] from [vdb].[dbo].[Fjármögnun] f where v.[Verknúmer] ('";
+		String sql = "select v.[Nafn], v.[Hlutur MatÃ­s] from [vdb].[dbo].[FjÃ¡rmÃ¶gnun] f where v.[VerknÃºmer] ('";
 		for( String v : set ) {
 			sql += v;
 		}
@@ -599,7 +599,7 @@ public class Navisionexplorer implements EntryPoint {
 		context.clearRect(0, 0, w, h);
 		
 		double dtot = Math.round( total*100.0 )/100.0;
-		context.fillText(verkname + " (" + dtot + " krónur)", 10, 30);
+		context.fillText(verkname + " (" + dtot + " krÃ³nur)", 10, 30);
 		
 		int c = 0;
 		double k = 0.0;
@@ -709,7 +709,7 @@ public class Navisionexplorer implements EntryPoint {
 		context.clearRect(0, 0, w, h);
 		
 		double dtot = Math.round( total*100.0 )/100.0;
-		context.fillText(pname + " (" + dtot + " klukkutímar)", 10, 30);
+		context.fillText(pname + " (" + dtot + " klukkutÃ­mar)", 10, 30);
 		
 		int c = 0;
 		double k = 0.0;
@@ -811,7 +811,7 @@ public class Navisionexplorer implements EntryPoint {
 		
 		String aftstr = aftdate == null ? null : (aftdate.getYear()+1900) + "-" + (aftdate.getMonth()+1) + "-" + aftdate.getDate();
 		String befstr = befdate == null ? null : (befdate.getYear()+1900) + "-" + (befdate.getMonth()+1) + "-" + befdate.getDate();
-		String sql = "select j.[Description], jle.[No_], sum(jle.[Quantity]) from [MATIS].[dbo].[Matís ohf_$Job] j, [MATIS].[dbo].[Matís ohf_$Job Ledger Entry] jle where j.[No_] = jle.[Job No_] and jle.[No_] in ('";
+		String sql = "select j.[Description], jle.[No_], sum(jle.[Quantity]) from [MATIS].[dbo].[MatÃ­s ohf_$Job] j, [MATIS].[dbo].[MatÃ­s ohf_$Job Ledger Entry] jle where j.[No_] = jle.[Job No_] and jle.[No_] in ('";
 		
 		boolean first = true;
 		for( String p : set ) {
@@ -1075,7 +1075,7 @@ public class Navisionexplorer implements EntryPoint {
 		
 		dlp.addNorth( toolbar, 30 );
 		
-		tlp.add( slp, "Tími" );
+		tlp.add( slp, "TÃ­mi" );
 		tlp.add( m_slp, "Peningar" );
 		
 		dlp.add( tlp );
@@ -1226,7 +1226,7 @@ public class Navisionexplorer implements EntryPoint {
 		Runnable onLoadCallback = new Runnable() {
 			public void run() {
 				data = DataTable.create();
-		    	data.addColumn( ColumnType.STRING, "Starfsmaður");
+		    	data.addColumn( ColumnType.STRING, "StarfsmaÃ°ur");
 		    	data.addColumn( ColumnType.STRING, "Kennitala");
 		    	  
 		    	options = Options.create();
@@ -1255,8 +1255,8 @@ public class Navisionexplorer implements EntryPoint {
 		    	
 		    	mdata = DataTable.create();
 		    	mdata.addColumn( ColumnType.STRING, "Verkefni");
-		    	mdata.addColumn( ColumnType.STRING, "Verknúmer");
-		    	mdata.addColumn( ColumnType.STRING, "Svið");
+		    	mdata.addColumn( ColumnType.STRING, "VerknÃºmer");
+		    	mdata.addColumn( ColumnType.STRING, "SviÃ°");
 		    	  
 		    	moptions = Options.create();
 		    	moptions.setWidth("100%");
