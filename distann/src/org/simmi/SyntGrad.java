@@ -42,9 +42,10 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
-import org.simmi.shared.Contig;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 
@@ -134,7 +135,7 @@ public class SyntGrad {
 		
 		int sr = table1.getSelectedRow();
 		final String 		spec1 = sr != -1 ? species.get( table1.convertRowIndexToModel( sr )) : null; //(String)table1.getValueAt( table1.getSelectedRow(), 0 );
-		final List<Contig>	contigs1 = spec1 != null ? geneset.speccontigMap.get( spec1 ) : null;
+		final List<Sequence>	contigs1 = spec1 != null ? geneset.speccontigMap.get( spec1 ) : null;
 		final List<String>	spec2s = new ArrayList<String>();
 		int[] rr = table2.getSelectedRows();
 		for( int r : rr ) {
@@ -172,10 +173,10 @@ public class SyntGrad {
 			public void actionPerformed(ActionEvent e) {
 				for( String spec : spec2s ) {
 					if( !spec.equals(spec1) ) {
-						List<Contig> scontigs = geneset.speccontigMap.get( spec );
-						Collections.sort( scontigs, new Comparator<Contig>() {
+						List<Sequence> scontigs = geneset.speccontigMap.get( spec );
+						Collections.sort( scontigs, new Comparator<Sequence>() {
 							@Override
-							public int compare(Contig o1, Contig o2) {
+							public int compare(Sequence o1, Sequence o2) {
 								List<Double> ratios = new ArrayList<Double>();
 								if( o1.getAnnotations() != null ) {
 									for( Annotation ann : o1.getAnnotations() ) {
@@ -203,15 +204,17 @@ public class SyntGrad {
 								return Double.compare(r1, r2);
 							}
 						});
-						for( Contig c : scontigs ) {
+						for( Sequence c : scontigs ) {
 							List<Double>	dvals = new ArrayList<Double>();
-							Tegeval tv = c.getFirst();
+							Annotation tv = c.getFirst();
 							while( tv != null ) {
-								Tegeval next = c.getNext( tv );
+								Annotation next = c.getNext( tv );
 								if( next != null ) {
-									GeneGroup gg = tv.getGene().getGeneGroup();
-									double val1 = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
-									double val2 = next.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
+									Gene gene = null;
+									if( tv instanceof Tegeval ) gene = ((Tegeval)tv).getGene();
+									GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
+									double val1 = gene != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
+									double val2 = (next instanceof Tegeval && ((Tegeval)next).getGene() != null) ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
 									
 									if( val1 != -1.0 && val2 != -1.0 ) {
 										dvals.add( val2-val1 );
@@ -282,29 +285,29 @@ public class SyntGrad {
 							int i = 0;
 							int loc = 0;
 							for( i = 0; i < contigs.size(); i++ ) {
-								Contig c = contigs.get(i);
-								if( loc + c.getGeneCount() > mloc ) {
+								Sequence c = contigs.get(i);
+								if( loc + c.getAnnotationCount() > mloc ) {
 									break;
-								} else loc += c.getGeneCount();
+								} else loc += c.getAnnotationCount();
 							}
-							Contig c = contigs.get(i);
+							Sequence c = contigs.get(i);
 							
-							if( mloc-loc < c.getGeneCount() ) {
-								//loc += c.getGeneCount();
+							if( mloc-loc < c.getAnnotationCount() ) {
+								//loc += c.getAnnotationCount();
 								//c = contigs.get( i%contigs.size() );
 								Tegeval tv = c.annset.get(mloc-loc);
 								Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
 								
 								if( ti != null && ti.best != null ) {
-									Contig ct1 = ti.best.getContshort();
+									Sequence ct1 = ti.best.getContshort();
 									
 									tv = c.annset.get(nloc-loc);
 									ti = tv.getGene().getGeneGroup().getGenes(spec);
-									Contig ct2 = ti.best.getContshort();
+									Sequence ct2 = ti.best.getContshort();
 									
 									if( ct1 == ct2 ) ct1.setReverse( !ct1.isReverse() );
 									else {
-										List<Contig> conts2 = geneset.speccontigMap.get(spec);
+										List<Sequence> conts2 = geneset.speccontigMap.get(spec);
 										int k2 = conts2.indexOf( ct2 );
 										conts2.remove( ct1 );
 										conts2.add(k2, ct1);
@@ -327,10 +330,10 @@ public class SyntGrad {
 						if( t2 < 0 ) t2 += Math.PI*2.0;
 						
 						if( spec != null ) {
-							List<Contig> contigs = geneset.speccontigMap.get( spec );
+							List<Sequence> contigs = geneset.speccontigMap.get( spec );
 							int total = 0;
-							for( Contig c : contigs ) {
-								total += c.getGeneCount();
+							for( Sequence c : contigs ) {
+								total += c.getAnnotationCount();
 							}
 							
 							int loc1 = (int)(t1*total/(2*Math.PI));
@@ -341,13 +344,13 @@ public class SyntGrad {
 							
 							int i = 0;
 							int loc = 0;
-							Contig c = null;
+							Sequence c = null;
 							if( contigs != null ) {
 								for( i = 0; i < contigs.size(); i++ ) {
 									c = contigs.get(i);
-									if( loc + c.getGeneCount() > minloc ) {
+									if( loc + c.getAnnotationCount() > minloc ) {
 										break;
-									} else loc += c.getGeneCount();
+									} else loc += c.getAnnotationCount();
 								}
 								//c = contigs.get(i);
 							}
@@ -370,8 +373,8 @@ public class SyntGrad {
 										geneset.table.addRowSelectionInterval(k, k);
 									}
 								} else for( int k = minloc; k < maxloc; k++ ) {
-									if( k-loc >= c.getGeneCount() ) {
-										loc += c.getGeneCount();
+									if( k-loc >= c.getAnnotationCount() ) {
+										loc += c.getAnnotationCount();
 										i++;
 										c = contigs.get( i%contigs.size() );
 									}
@@ -464,14 +467,14 @@ public class SyntGrad {
 		frame.setVisible( true );
 	}
 	
-	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s, int w, int h ) {
+	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Sequence> contigs1, List<String> spec2s, int w, int h ) {
 		drawImage(geneset, g2, spec1, contigs1, spec2s, w, h, 1.0);
 	}
 	
-	public void doTv( GeneSet geneset, Graphics2D g2, Tegeval tv, int tvn, int total, int ptvn, int ptotal, String spec1, List<Contig> contigs1, int w2, int h2, int rad, double radscale ) {
+	public void doTv( GeneSet geneset, Graphics2D g2, Annotation tv, int tvn, int total, int ptvn, int ptotal, String spec1, List<Sequence> contigs1, int w2, int h2, int rad, double radscale ) {
 		Gene gene = tv.getGene();
-		boolean phage = gene.isPhage();
-		boolean plasmid = tv.getContshort().isPlasmid();
+		boolean phage = gene != null ? gene.isPhage() : false;
+		boolean plasmid = tv.getContig().isPlasmid();
 		
 		GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
 		double r = (double)tvn/(double)total;
@@ -612,31 +615,31 @@ public class SyntGrad {
 								
 								double rrr = 0.0; //= 2.0*Math.PI*( plasmid ? ptr : tr );
 								if( te.getContshort().isPlasmid() ) {
-									for( Contig c : contigs1 ) {
+									for( Sequence c : contigs1 ) {
 										if( c.isPlasmid() ) {
 											if( c.annset != null ) {
 												int k = c.indexOf( te );
 												if( k != -1 ) {
-													ptvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+													ptvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
 													break;
 												}
 											}
-											ptvn += c.getGeneCount();
+											ptvn += c.getAnnotationCount();
 										}
 									}
 									//rrr = 2*Math.PI*(double)(tvn)/(double)(total+ptotal);
 									rrr = 2.0*Math.PI*(double)(total+ptvn)/(double)(total+ptotal);
 								} else {
-									for( Contig c : contigs1 ) {
+									for( Sequence c : contigs1 ) {
 										if( !c.isPlasmid() ) {
 											if( c.annset != null ) {
 												int k = c.indexOf( te );
 												if( k != -1 ) {
-													tvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+													tvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
 													break;
 												}
 											}
-											tvn += c.getGeneCount();
+											tvn += c.getAnnotationCount();
 										}
 									}
 									rrr = 2.0*Math.PI*(double)(tvn)/(double)(total+ptotal);
@@ -664,7 +667,7 @@ public class SyntGrad {
 		}
 	}
 	
-	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Contig> contigs1, List<String> spec2s, int w, int h, double radscale ) {
+	public void drawImage( GeneSet geneset, Graphics2D g2, String spec1, List<Sequence> contigs1, List<String> spec2s, int w, int h, double radscale ) {
 		int w2 = w/2;
 		int h2 = h/2;
 		
@@ -672,13 +675,13 @@ public class SyntGrad {
 		g2.setColor( Color.white );
 		g2.fillRect( 0, 0, w, h );
 		for( String spec : spec2s ) {
-			List<Contig> scontigs = geneset.speccontigMap.get( spec );
+			List<Sequence> scontigs = geneset.speccontigMap.get( spec );
 			
 			int ptotal = 0;
 			int total = 0;
-			for( Contig c : scontigs ) {
-				if( c.isPlasmid() ) ptotal += c.getGeneCount();
-				else total += c.getGeneCount();
+			for( Sequence c : scontigs ) {
+				if( c.isPlasmid() ) ptotal += c.getAnnotationCount();
+				else total += c.getAnnotationCount();
 			}
 			
 			int tvn = 0;
@@ -715,36 +718,36 @@ public class SyntGrad {
 					
 					if( te != null ) {
 						if( te.getContshort().isPlasmid() ) {
-							for( Contig c : scontigs ) {
+							for( Sequence c : scontigs ) {
 								if( c.isPlasmid() ) {
 									if( c.annset != null ) {
 										k = c.indexOf( te );
 										if( k != -1 ) {
-											ptvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+											ptvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
 											break;
 										}
 									}
 									/*if( k != -1 ) {
 										break;
 									}*/
-									ptvn += c.getGeneCount();
+									ptvn += c.getAnnotationCount();
 								}
 								ci++;
 							}
 						} else {
-							for( Contig c : scontigs ) {
+							for( Sequence c : scontigs ) {
 								if( !c.isPlasmid() ) {
 									if( c.annset != null ) {
 										k = c.indexOf( te );
 										if( k != -1 ) {
-											tvn += c.isReverse() ? c.getGeneCount() - k - 1 : k;
+											tvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
 											break;
 										}
 									}
 									/*if( k != -1 ) {
 										break;
 									}*/
-									tvn += c.getGeneCount();
+									tvn += c.getAnnotationCount();
 								}
 								ci++;
 							}
@@ -752,15 +755,15 @@ public class SyntGrad {
 						
 						for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
 							int cii = cci%scontigs.size();
-							Contig c = scontigs.get(cii);
+							Sequence c = scontigs.get(cii);
 							if( cii == ci ) {
-								Tegeval tv = (Tegeval)c.getAnnotation(k);
+								Annotation tv = c.getAnnotation(k);
 								if( cci == ci ) {
 									while( tv != null ) {
 										doTv( geneset, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
-										Tegeval prev = tv;
+										Annotation prev = tv;
 										
-										boolean plas = tv.getContshort().isPlasmid();
+										boolean plas = tv.getContig().isPlasmid();
 										if( plas ) {
 											ptvn = (ptvn+1)%ptotal;
 										} else {
@@ -776,12 +779,12 @@ public class SyntGrad {
 										}
 									}
 								} else {
-									Tegeval ftv = c.getFirst();
+									Annotation ftv = c.getFirst();
 									while( ftv != tv ) {
 										doTv( geneset, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
-										Tegeval prev = ftv;
+										Annotation prev = ftv;
 										
-										boolean plas = tv.getContshort().isPlasmid();
+										boolean plas = tv.getContig().isPlasmid();
 										if( plas ) {
 											ptvn = (ptvn+1)%ptotal;
 										} else {
@@ -798,13 +801,13 @@ public class SyntGrad {
 									}
 								}
 							} else {
-								Tegeval tv = c.getFirst();
+								Annotation tv = c.getFirst();
 								while( tv != null ) {
 									doTv( geneset, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 									
-									Tegeval prev = tv;
+									Annotation prev = tv;
 									
-									boolean plas = tv.getContshort().isPlasmid();
+									boolean plas = tv.getContig().isPlasmid();
 									if( plas ) {
 										ptvn = (ptvn+1)%ptotal;
 									} else {
@@ -850,14 +853,14 @@ public class SyntGrad {
 			
 			if( !succ ) {
 				//System.err.println("packkki .................................................");
-				for( Contig c : scontigs ) {
-					Tegeval tv = c.getFirst();
+				for( Sequence c : scontigs ) {
+					Annotation tv = c.getFirst();
 					while( tv != null ) {
 						doTv( geneset, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 						
-						Tegeval prev = tv;
+						Annotation prev = tv;
 						
-						boolean plas = tv.getContshort().isPlasmid();
+						boolean plas = tv.getContig().isPlasmid();
 						if( plas ) {
 							ptvn = (ptvn+1)%ptotal;
 						} else {
@@ -941,22 +944,22 @@ public class SyntGrad {
 	final Color darkblue = new Color( 0, 0, 128 );
 	final Color darkmag = new Color( 128, 0, 128 );
 	
-	/*public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+	/*public static double invertedGradientRatio( String spec2, Collection<Sequence> contigs2, double ratio, GeneGroup gg ) {
 		int total2 = 0;
-		for( Contig ctg2 : contigs2 ) {
-			total2 += ctg2.getGeneCount();
+		for( Sequence ctg2 : contigs2 ) {
+			total2 += ctg2.getAnnotationCount();
 		}
 		double ratio2 = -1.0;
 		Teginfo gene2s = gg != null ? gg.getGenes( spec2 ) : null;
 		if( gene2s != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
-			for( Contig ctg2 : contigs2 ) {
+			for( Sequence ctg2 : contigs2 ) {
 				if( ctg2.getAnnotations() != null ) {
 					int idx = ctg2.getAnnotations().indexOf( tv2 );
 					if( idx == -1 ) {
-						count2 += ctg2.getGeneCount();
+						count2 += ctg2.getAnnotationCount();
 					} else {
-						count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx; 
+						count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx; 
 						break;
 					}
 				}

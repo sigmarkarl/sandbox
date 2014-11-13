@@ -62,7 +62,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.simmi.shared.Annotation;
-import org.simmi.shared.Contig;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -76,7 +76,7 @@ public class Neighbour {
 	public Neighbour( Set<GeneGroup> sgg ) {
 		selectedGenesGroups = sgg;
 		
-		hteg = new ArrayList<Tegeval>();
+		hteg = new ArrayList<Annotation>();
 		for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
 			for( Gene selectedGene : selectedGeneGroup.genes ) {
 				hteg.add( selectedGene.tegeval );
@@ -89,7 +89,7 @@ public class Neighbour {
 		selectedGenesGroups.add( currentTe.getGene().getGeneGroup() );
 		//hteg = loadContigs( selectedGenes, null );
 		hteg.clear();
-		hteg = new ArrayList<Tegeval>();
+		hteg = new ArrayList<Annotation>();
 		for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
 			for( Gene selectedGene : selectedGeneGroup.genes ) {
 				hteg.add( selectedGene.tegeval );
@@ -118,7 +118,7 @@ public class Neighbour {
 		c.repaint();
 	}
 	
-	public Tegeval getSelectedTe( Point p, JTable rowheader, JRadioButton sequenceView, JRadioButton realView, List<Tegeval> lte, int rowheight ) {
+	public Annotation getSelectedTe( Point p, JTable rowheader, JRadioButton sequenceView, JRadioButton realView, List<Annotation> lte, int rowheight ) {
 		if( sequenceView.isSelected() || realView.isSelected() ) {			
 			for( int y = 0; y < rowheader.getRowCount(); y++ ) {
 				int r = rowheader.convertRowIndexToModel( y );
@@ -131,8 +131,8 @@ public class Neighbour {
 				//for( Tegeval te : lte ) {
 				int xoff = 3000;
 				
-				Tegeval te = lte.get(r);
-				Tegeval next = te;
+				Annotation te = lte.get(r);
+				Annotation next = te;
 				//int k = 0;
 				while( next != null && xoff < 5500 ) {					
 					double len = next.getProteinLength()*neighbourscale;											
@@ -140,22 +140,22 @@ public class Neighbour {
 					
 					if( rect.contains( p ) ) return next;
 					
-					Tegeval thenext = next.getNext();
+					Annotation thenext = next.getNext();
 					int bil = 10;
 					if( thenext != null && realView.isSelected() ) {
-						bil = next.getContshort().isReverse() ? Math.abs( thenext.stop-next.start ) : Math.abs( thenext.start-next.stop );
+						bil = next.getContig().isReverse() ? Math.abs( thenext.stop-next.start ) : Math.abs( thenext.start-next.stop );
 						bil = (int)(neighbourscale*bil/3);
 					}
 					xoff += len+bil;
 					
 					if( thenext == null ) {
-						Contig ncont = next.getContshort();
+						Sequence ncont = next.getContig();
 						if( ncont.isChromosome() ) {
 							thenext = ncont.getFirst();
 						} else {
-						int k = ncont.partof.indexOf( next.getContshort() );
+						int k = ncont.partof.indexOf( next.getContig() );
 							k = (k+1)%ncont.partof.size();
-							Contig c = ncont.partof.get(k);
+							Sequence c = ncont.partof.get(k);
 							while( c.annset == null || c.annset.size() == 0 ) {
 								k = (k+1)%ncont.partof.size();
 								c = ncont.partof.get(k);
@@ -169,25 +169,25 @@ public class Neighbour {
 					next = thenext;
 				}
 				
-				Tegeval prev = te.getPrevious();
+				Annotation prev = te.getPrevious();
 				int bil = 10;
 				if( prev != null && realView.isSelected() ) {
-					bil = prev.getContshort().isReverse() ? Math.abs( prev.start-te.stop ) : Math.abs( prev.stop-te.start );
+					bil = prev.getContig().isReverse() ? Math.abs( prev.start-te.stop ) : Math.abs( prev.stop-te.start );
 					bil = (int)(neighbourscale*bil/3);
 					
-					//if( prev.getContshort().getSpec().contains("2127") ) System.err.println( "bl " + bil );
+					//if( prev.getContig().getSpec().contains("2127") ) System.err.println( "bl " + bil );
 				}
 				
 				if( prev == null ) {
-					Contig prevcontig = te.getContshort();
+					Sequence prevcontig = te.getContig();
 					if( prevcontig.isChromosome() ) {
 						prev = prevcontig.getLast();
 					} else {
-						List<Contig> partof = prevcontig.partof;;
+						List<Sequence> partof = prevcontig.partof;;
 						int k = partof.indexOf( prevcontig );
 						k--;
 						if( k < 0 ) k = partof.size()-1;
-						Contig c = partof.get(k);
+						Sequence c = partof.get(k);
 						while( c.annset == null || c.annset.size() == 0 ) {
 							k--;
 							if( k < 0 ) k = partof.size()-1;
@@ -202,11 +202,11 @@ public class Neighbour {
 				while( prev != null && xoff > 5 ) {					
 					double len = prev.getProteinLength()*neighbourscale;
 					
-					Tegeval theprev = prev.getPrevious();
+					Annotation theprev = prev.getPrevious();
 					xoff -= len+bil;
 					bil = 10;
 					if( theprev != null && realView.isSelected() ) {
-						bil = prev.getContshort().isReverse() ? Math.abs( theprev.start-prev.stop ) : Math.abs( theprev.stop-prev.start );
+						bil = prev.getContig().isReverse() ? Math.abs( theprev.start-prev.stop ) : Math.abs( theprev.stop-prev.start );
 						bil = (int)(neighbourscale*bil/3);
 					}
 					
@@ -214,7 +214,7 @@ public class Neighbour {
 					if( rect.contains( p ) ) return prev;
 					
 					if( theprev == null ) {
-						Contig prevcontig = prev.getContshort();
+						Sequence prevcontig = prev.getContig();
 						
 						/*System.err.println( prevcontig.getSpec() );
 						if( prevcontig.getSpec().contains("eggertsoni") ) {
@@ -223,11 +223,11 @@ public class Neighbour {
 						if( prevcontig.isChromosome() ) {
 							theprev = prevcontig.getLast();
 						} else {
-							List<Contig> partof = prevcontig.partof;;
+							List<Sequence> partof = prevcontig.partof;;
 							int k = partof.indexOf( prevcontig );
 							k--;
 							if( k < 0 ) k = partof.size()-1;
-							Contig c = partof.get(k);
+							Sequence c = partof.get(k);
 							while( c.annset == null || c.annset.size() == 0 ) {
 								k--;
 								if( k < 0 ) k = partof.size()-1;
@@ -242,12 +242,12 @@ public class Neighbour {
 				//break;
 			}
 		} else {
-			List<Tegeval>	hteglocal = new ArrayList<Tegeval>( lte );
+			List<Annotation>	hteglocal = new ArrayList<Annotation>( lte );
 			int xoff = 3000;
 			//int k = 0;
 			while( xoff < 5500 ) {
 				int max = 0;
-				for( Tegeval tes : hteglocal ) {
+				for( Annotation tes : hteglocal ) {
 					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
 					int val = 0;
 					if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
@@ -256,8 +256,8 @@ public class Neighbour {
 				
 				for( int y = 0; y < rowheader.getRowCount(); y++ ) {
 					int r = rowheader.convertRowIndexToModel( y );
-					Tegeval te = hteglocal.get(r);
-					Tegeval next = te;
+					Annotation te = hteglocal.get(r);
+					Annotation next = te;
 					
 					if( next != null ) {
 						double len = next.getProteinLength()*neighbourscale;										
@@ -269,14 +269,14 @@ public class Neighbour {
 				xoff += max+10;
 				
 				for( int i = 0; i < hteglocal.size(); i++ ) {
-					Tegeval te = hteglocal.get(i);
+					Annotation te = hteglocal.get(i);
 					if( te != null ) {
-						Tegeval thenext = te.getNext();
+						Annotation thenext = te.getNext();
 						if( thenext == null ) {
-							Contig cont = te.getContshort();
+							Sequence cont = te.getContig();
 							int k = cont.partof.indexOf( cont );
 							k = (k+1)%cont.partof.size();
-							Contig c = cont.partof.get(k);
+							Sequence c = cont.partof.get(k);
 							while( c.annset == null || c.annset.size() == 0 ) {
 								k = (k+1)%cont.partof.size();
 								c = cont.partof.get(k);
@@ -293,14 +293,14 @@ public class Neighbour {
 			}
 			
 			hteglocal.clear();
-			for( Tegeval te : lte ) {
+			for( Annotation te : lte ) {
 				hteglocal.add( te.getPrevious() );
 			}
 			xoff = 3000;	
 			//int k = 0;
 			while( xoff > 500 ) {
 				int max = 0;
-				for( Tegeval tes : hteglocal ) {
+				for( Annotation tes : hteglocal ) {
 					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
 					int val = 0;
 					if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
@@ -310,8 +310,8 @@ public class Neighbour {
 				
 				for( int y = 0; y < rowheader.getRowCount(); y++ ) {
 					int r = rowheader.convertRowIndexToModel( y );
-					Tegeval te = hteglocal.get(r);
-					Tegeval next = te;
+					Annotation te = hteglocal.get(r);
+					Annotation next = te;
 					
 					if( next != null ) {
 						double len = next.getProteinLength()*neighbourscale;										
@@ -322,16 +322,16 @@ public class Neighbour {
 				}
 				
 				for( int i = 0; i < hteglocal.size(); i++ ) {
-					Tegeval te = hteglocal.get(i);
+					Annotation te = hteglocal.get(i);
 					if( te != null ) {
-						Tegeval theprev = te.getPrevious();
+						Annotation theprev = te.getPrevious();
 						if( theprev == null ) {
-							Contig prevcont = te.getContshort();
-							List<Contig> partof = prevcont.partof;
+							Sequence prevcont = te.getContig();
+							List<Sequence> partof = prevcont.partof;
 							int k = partof.indexOf( prevcont );
 							k--;
 							if( k < 0 ) k = partof.size()-1;
-							Contig c = partof.get(k);
+							Sequence c = partof.get(k);
 							while( c.getAnnotations() == null || c.getAnnotations().size() == 0 ) {
 								k--;
 								if( k < 0 ) k = partof.size()-1;
@@ -368,20 +368,20 @@ public class Neighbour {
 	
 	public void injectForward( JComponent c ) {
 		if( currentTe != null ) {
-			if( currentTe.getContshort().isReverse() ) {
+			if( currentTe.getContig().isReverse() ) {
 				/*Tegeval previous = currentTe.getPrevious();
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-				currentTe.getContshort().injectBefore( currentTe, te );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				currentTe.getContig().injectBefore( currentTe, te );
 			} else {
 				/*Tegeval next = currentTe.getNext();
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-				currentTe.getContshort().injectAfter( currentTe, te );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				currentTe.getContig().injectAfter( currentTe, te );
 			}
 			c.repaint();
 		}
@@ -389,20 +389,20 @@ public class Neighbour {
 	
 	public void injectBack( JComponent c ) {
 		if( currentTe != null ) {
-			if( currentTe.getContshort().isReverse() ) {
+			if( currentTe.getContig().isReverse() ) {
 				/*Tegeval next = currentTe.getNext();
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-				currentTe.getContshort().injectAfter( currentTe, te );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				currentTe.getContig().injectAfter( currentTe, te );
 			} else {
 				/*Tegeval previous = currentTe.getPrevious();
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContshort(), null, 0, 0, 1 );
-				currentTe.getContshort().injectBefore( currentTe, te );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				currentTe.getContig().injectBefore( currentTe, te );
 			}
 			c.repaint();
 		}
@@ -410,14 +410,14 @@ public class Neighbour {
 	
 	public void deleteForward( JComponent c ) {
 		if( currentTe != null ) {
-			if( currentTe.getContshort().isReverse() ) {
+			if( currentTe.getContig().isReverse() ) {
 				/*Tegeval prevprev = currentTe.prev.prev;
 				currentTe.setPrevious( prevprev );*/
-				currentTe.getContshort().deleteBefore( currentTe );
+				currentTe.getContig().deleteBefore( currentTe );
 			} else {
 				/*Tegeval nextnext = currentTe.next.next;
 				nextnext.setPrevious( currentTe );*/
-				currentTe.getContshort().deleteAfter( currentTe );
+				currentTe.getContig().deleteAfter( currentTe );
 			}
 			c.repaint();
 		}
@@ -425,14 +425,14 @@ public class Neighbour {
 	
 	public void deleteBack( JComponent c ) {
 		if( currentTe != null ) {
-			if( currentTe.getContshort().isReverse() ) {
+			if( currentTe.getContig().isReverse() ) {
 				/*Tegeval nextnext = currentTe.getNext().getNext();
 				nextnext.setPrevious( currentTe );*/
-				currentTe.getContshort().deleteAfter( currentTe );
+				currentTe.getContig().deleteAfter( currentTe );
 			} else {
 				/*Tegeval prevprev = currentTe.getPrevious().getPrevious();
 				currentTe.setPrevious( prevprev );*/
-				currentTe.getContshort().deleteBefore( currentTe );
+				currentTe.getContig().deleteBefore( currentTe );
 			}
 			c.repaint();
 		}
@@ -444,27 +444,27 @@ public class Neighbour {
 	int ptotal = 0;
 	public void initContigs( String spec1, GeneSet geneset ) {
 		if( spec1 != null && geneset.speccontigMap.containsKey( spec1 ) ) {
-			final List<Contig> lcont = geneset.speccontigMap.get( spec1 );
+			final List<Sequence> lcont = geneset.speccontigMap.get( spec1 );
 			
 			ptotal = 0;
 			total = 0;
-			//List<Contig> contigs = new ArrayList<Contig>();
-			for( Contig ctg : lcont ) {
-				total += ctg.getGeneCount();
+			//List<Sequence> contigs = new ArrayList<Sequence>();
+			for( Sequence ctg : lcont ) {
+				total += ctg.getAnnotationCount();
 			}
 			
 			if( lcont.size() <= 3 ) {
 				int max = 0;
-				Contig chromosome = null;
-				for( Contig ctg : lcont ) {
-					if( ctg.getGeneCount() > max ) {
-						max = ctg.getGeneCount();
+				Sequence chromosome = null;
+				for( Sequence ctg : lcont ) {
+					if( ctg.getAnnotationCount() > max ) {
+						max = ctg.getAnnotationCount();
 						chromosome = ctg;
 					}
 				}
 				
-				ptotal = total - chromosome.getGeneCount();
-				total = chromosome.getGeneCount();
+				ptotal = total - chromosome.getAnnotationCount();
+				total = chromosome.getAnnotationCount();
 			}
 		}
 	}
@@ -492,16 +492,16 @@ public class Neighbour {
 		Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
 		for( GeneGroup gg : selectedGenesGroups ) {
 			for( String spec2 : gg.getSpecies() ) {
-				final Collection<Contig> contigs2 = geneset.speccontigMap.get( spec2 );
+				final Collection<Sequence> contigs2 = geneset.speccontigMap.get( spec2 );
 				if( contigs2 != null ) {
 					Teginfo gene2s = gg.getGenes( spec2 );
 					for( Tegeval tv2 : gene2s.tset ) {
 						int count2 = 0;
-						for( Contig ctg2 : contigs2 ) {
+						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
-									count2 += ctg2.getGeneCount();
+									count2 += ctg2.getAnnotationCount();
 								} else {
 									count2 += idx;
 									break;
@@ -544,11 +544,11 @@ public class Neighbour {
 						Teginfo ti = selectedGene.species.get( species );
 						for( Tegeval te : ti.tset ) {*/
 			//for( Tegeval te : hteg ) {
-				Tegeval te = hteg.get(r);
+				Annotation te = hteg.get(r);
 				int xoff = 3000;
 				
 				if( clip.x+clip.width > xoff ) {
-					Tegeval next = te;
+					Annotation next = te;
 					//int k = 0;
 					while( next != null && xoff <= 5500 && clip.x+clip.width > xoff ) {
 						double len = next.getProteinLength()*neighbourscale;
@@ -609,12 +609,12 @@ public class Neighbour {
 										}
 										if( ltv != null && ltv.size() > 0 ) {
 											//String spec2 = next.getSpecies();
-											final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+											final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 											
 											/*double ratio = 0.0;
 											double pratio = 0.0;
 											if( ptotal > 0 ) {
-												if( ctg.getGeneCount() == total ) {
+												if( ctg.getAnnotationCount() == total ) {
 													int val = count - offset;
 													if( val < 0 ) val = total + (count-offset);
 													
@@ -655,7 +655,7 @@ public class Neighbour {
 									List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
 									int total = tegevals.size();
 									for( Tegeval tev : tegevals ) {
-										Tegeval thenext = tev.getNext();
+										Annotation thenext = tev.getNext();
 										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -671,7 +671,7 @@ public class Neighbour {
 										tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
 										total = tegevals.size();
 										for( Tegeval tev : tegevals ) {
-											Tegeval thenext = tev.getPrevious();
+											Annotation thenext = tev.getPrevious();
 											GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 											int val = 0;
 											if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -700,7 +700,7 @@ public class Neighbour {
 									}*/
 								}
 								
-								Contig ncont = next.getContshort();
+								Sequence ncont = next.getContig();
 								boolean revis = (next.ori == -1) ^ (ncont != null && ncont.isReverse());
 								int addon = revis ? -5 : 5;
 								int offset = revis ? 5 : 0;
@@ -720,12 +720,12 @@ public class Neighbour {
 								g.setColor( Color.red );
 								if( (gap & 1) > 0 ) {
 									//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-									if( !next.getContshort().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+									if( !next.getContig().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
 									else g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 								}
 								if( (gap & 2) > 0 ) {
 									//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-									if( !next.getContshort().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+									if( !next.getContig().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 									else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
 								}*/
 								
@@ -768,26 +768,26 @@ public class Neighbour {
 							}
 						}
 						
-						Tegeval thenext = next.getNext();
+						Annotation thenext = next.getNext();
 						int bil = 10;
 						if( thenext != null && realView.isSelected() ) {
 							/*if( next.getGene().getGeneGroup().getCommonName().contains("Elongation") && next.getSpecies().contains("antranik") ) {
 								System.err.println();
 							}*/
 							
-							bil = next.getContshort().isReverse() ? Math.abs( thenext.stop-next.start ) : Math.abs( thenext.start-next.stop );
+							bil = next.getContig().isReverse() ? Math.abs( thenext.stop-next.start ) : Math.abs( thenext.start-next.stop );
 							bil = (int)(neighbourscale*bil/3);
 						}
 						
 						if( thenext == null ) {
-							Contig ncont = next.getContshort();
+							Sequence ncont = next.getContig();
 							if( ncont != null ) {
 								if( ncont.isChromosome() ) {
 									thenext = ncont.getFirst();
 								} else {
 									int k = ncont.partof.indexOf( ncont );
 									k = (k+1)%ncont.partof.size();
-									Contig c = ncont.partof.get(k);
+									Sequence c = ncont.partof.get(k);
 									while( c.annset == null || c.annset.size() == 0 ) {
 										k = (k+1)%ncont.partof.size();
 										c = ncont.partof.get(k);
@@ -809,7 +809,7 @@ public class Neighbour {
 						xoff += len + bil;
 						next = thenext;
 						/*if( tev == null ) {
-							Contig nextcontig = next.getContshort().next;
+							Sequence nextcontig = next.getContig().next;
 							nextcontig.
 						} else next = tev;*/
 					}
@@ -817,29 +817,29 @@ public class Neighbour {
 				
 				xoff = 3000;
 				if( clip.x < xoff ) {
-					Tegeval prev = te != null ? te.getPrevious() : null;
+					Annotation prev = te != null ? te.getPrevious() : null;
 
 					int bil = 10;
 					if( prev != null && realView.isSelected() ) {
-						bil = prev.getContshort().isReverse() ? Math.abs( prev.start-te.stop ) : Math.abs( prev.stop-te.start );
+						bil = prev.getContig().isReverse() ? Math.abs( prev.start-te.stop ) : Math.abs( prev.stop-te.start );
 						//bil = Math.abs( theprev.stop-prev.start );
 						bil = (int)(neighbourscale*bil/3);
 						
-						//if( prev.getContshort().getSpec().contains("2127") ) System.err.println( bil );
+						//if( prev.getContig().getSpec().contains("2127") ) System.err.println( bil );
 						//xoff -= bil;
 					}
 					
 					if( prev == null ) {
-						Contig prevcont = te.getContshort();
+						Sequence prevcont = te.getContig();
 						if( prevcont != null ) {
 							if( prevcont.isChromosome() ) {
 								prev = prevcont.getLast();
 							} else {
-								List<Contig> partof = prevcont.partof;
+								List<Sequence> partof = prevcont.partof;
 								int k = partof.indexOf( prevcont );
 								k--;
 								if( k < 0 ) k = partof.size()-1;
-								Contig c = partof.get(k);
+								Sequence c = partof.get(k);
 								while( c.annset == null || c.annset.size() == 0 ) {
 									k--;
 									if( k < 0 ) k = partof.size()-1;
@@ -860,14 +860,14 @@ public class Neighbour {
 					while( prev != null && xoff >= 500 && clip.x < xoff ) {
 						double len = prev.getProteinLength()*neighbourscale;
 						xoff -= len+bil;
-						Tegeval theprev = prev.getPrevious();
+						Annotation theprev = prev.getPrevious();
 						bil = 10;
 						if( theprev != null && realView.isSelected() ) {
 							/*if( prev.getGene().getGeneGroup().getCommonName().contains("Elongation") && prev.getSpecies().contains("antranik") ) {
 								System.err.println();
 							}*/
 							
-							bil = prev.getContshort().isReverse() ? Math.abs( theprev.start-prev.stop ) : Math.abs( theprev.stop-prev.start );
+							bil = prev.getContig().isReverse() ? Math.abs( theprev.start-prev.stop ) : Math.abs( theprev.stop-prev.start );
 							//bil = Math.abs( theprev.stop-prev.start );
 							bil = (int)(neighbourscale*bil/3);
 						}
@@ -925,7 +925,7 @@ public class Neighbour {
 										if( gg != null ) {
 											List<Tegeval> ltv = gg.getTegevals( spec1 );
 											if( ltv != null && ltv.size() > 0 ) {
-												final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+												final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 												
 												double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, prev);
 												//rc = GeneCompare.invertedGradientColor( ratio );
@@ -947,7 +947,7 @@ public class Neighbour {
 									List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
 									int total = tegevals.size();
 									for( Tegeval tev : tegevals ) {
-										Tegeval thenext = tev.getNext();
+										Annotation thenext = tev.getNext();
 										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -962,8 +962,8 @@ public class Neighbour {
 									if( prev.getNext() != null ) {
 										tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
 										total = tegevals.size();
-										for( Tegeval tev : tegevals ) {
-											Tegeval thenext = tev.getPrevious();
+										for( Annotation tev : tegevals ) {
+											Annotation thenext = tev.getPrevious();
 											GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 											int val = 0;
 											if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -993,7 +993,7 @@ public class Neighbour {
 									}*/
 								}
 								
-								boolean revis = (prev.ori == -1) ^ prev.getContshort().isReverse();
+								boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
 								int addon = revis ? -5 : 5;
 								int offset = revis ? 5 : 0;
 								//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
@@ -1012,12 +1012,12 @@ public class Neighbour {
 								g.setColor( Color.red );
 								if( (gap & 1) > 0 ) {
 									//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-									if( !prev.getContshort().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+									if( !prev.getContig().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
 									else g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 								}
 								if( (gap & 2) > 0 ) {
 									//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-									if( !prev.getContshort().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+									if( !prev.getContig().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
 									else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
 								}*/
 								
@@ -1060,15 +1060,15 @@ public class Neighbour {
 						}
 						
 						if( theprev == null ) {
-							Contig prevcont = prev.getContshort();
+							Sequence prevcont = prev.getContig();
 							if( prevcont.isChromosome() ) {
 								theprev = prevcont.getLast();
 							} else {
-								List<Contig> partof = prevcont.partof;
+								List<Sequence> partof = prevcont.partof;
 								int k = partof.indexOf( prevcont );
 								k--;
 								if( k < 0 ) k = partof.size()-1;
-								Contig c = partof.get(k);
+								Sequence c = partof.get(k);
 								while( c.annset == null || c.annset.size() == 0 ) {
 									k--;
 									if( k < 0 ) k = partof.size()-1;
@@ -1106,11 +1106,11 @@ public class Neighbour {
 				}
 			}*/
 			
-			List<Tegeval>	hteglocal = new ArrayList<Tegeval>( hteg );
+			List<Annotation>	hteglocal = new ArrayList<Annotation>( hteg );
 			int xoff =  3000;
 			while( xoff < 5500 ) {
 				int max = 0;
-				for( Tegeval tes : hteglocal ) {
+				for( Annotation tes : hteglocal ) {
 					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
 					int val = 0;
 					if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
@@ -1119,7 +1119,7 @@ public class Neighbour {
 				
 				for( int i = Math.max(0, clip.y/rowheight); i < Math.min( (clip.y+clip.height)/rowheight+1, rowcount ); i++ ) {
 					int r = rowheader.getRowCount() == 0 ? i : rowheader.convertRowIndexToModel( i );
-					Tegeval te = hteglocal.get(r);
+					Annotation te = hteglocal.get(r);
 					
 					//int y = 0;
 					//for( Tegeval te : hteglocal ) {
@@ -1127,7 +1127,7 @@ public class Neighbour {
 					//g.drawLine( 0, y*rowheight+8, this.getWidth(), y*rowheight+8 );
 					
 					if( te != null ) {
-						Tegeval next = te;
+						Annotation next = te;
 						if( te.getGene() != null ) {
 							String genename = geneset.getGeneName(showNames, next.getGene());
 							/*if( names.getSelectedItem().equals("Default names") ) {
@@ -1185,7 +1185,7 @@ public class Neighbour {
 										GeneGroup gg = next.getGene().getGeneGroup();
 										List<Tegeval> ltv = gg.getTegevals( spec1 );
 										if( ltv != null && ltv.size() > 0 ) {
-											final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+											final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 											
 											double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, next);
 											//rc = GeneCompare.invertedGradientColor( ratio );
@@ -1205,8 +1205,8 @@ public class Neighbour {
 									
 									List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
 									int total = tegevals.size();
-									for( Tegeval tev : tegevals ) {
-										Tegeval thenext = tev.getNext();
+									for( Annotation tev : tegevals ) {
+										Annotation thenext = tev.getNext();
 										GeneGroup c = thenext == null ? null : (thenext.getGene() != null ? thenext.getGene().getGeneGroup() : null);
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -1221,8 +1221,8 @@ public class Neighbour {
 									if( next.getNext() != null ) {
 										tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
 										total = tegevals.size();
-										for( Tegeval tev : tegevals ) {
-											Tegeval thenext = tev.getPrevious();
+										for( Annotation tev : tegevals ) {
+											Annotation thenext = tev.getPrevious();
 											GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 											int val = 0;
 											if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -1252,7 +1252,7 @@ public class Neighbour {
 									}*/
 								}
 								
-								boolean revis = (next.ori == -1) ^ next.getContshort().isReverse();
+								boolean revis = (next.ori == -1) ^ next.getContig().isReverse();
 								int addon = revis ? -5 : 5;
 								int offset = revis ? 5 : 0;
 								//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
@@ -1317,14 +1317,14 @@ public class Neighbour {
 				xoff += max+10;
 				
 				for( int i = 0; i < hteglocal.size(); i++ ) {
-					Tegeval te = hteglocal.get(i);
+					Annotation te = hteglocal.get(i);
 					if( te != null ) {
-						Tegeval thenext = te.getNext();
+						Annotation thenext = te.getNext();
 						if( thenext == null ) {
-							Contig cont = te.getContshort();
+							Sequence cont = te.getContig();
 							int k = cont.partof.indexOf( cont );
 							k = (k+1)%cont.partof.size();
-							Contig c = cont.partof.get(k);
+							Sequence c = cont.partof.get(k);
 							while( c.annset == null || c.annset.size() == 0 ) {
 								k = (k+1)%cont.partof.size();
 								c = cont.partof.get(k);
@@ -1353,7 +1353,7 @@ public class Neighbour {
 			hteglocal.clear();
 			hteglocal.addAll( hteg );
 			for( int i = 0; i < hteglocal.size(); i++ ) {
-				Tegeval te = hteglocal.get(i);
+				Annotation te = hteglocal.get(i);
 				if( te != null ) {
 					hteglocal.set(i, te.getPrevious() );
 				}
@@ -1376,7 +1376,7 @@ public class Neighbour {
 			xoff =  3000;
 			while( xoff > 500 ) {
 				int max = 0;
-				for( Tegeval te : hteglocal ) {
+				for( Annotation te : hteglocal ) {
 					int val = 0;
 					if( te != null ) val = (int)(te.getProteinLength()*neighbourscale);
 					if( val > max ) max = val;
@@ -1385,12 +1385,12 @@ public class Neighbour {
 				xoff -= max+10;
 				for( int i = Math.max(0, clip.y/rowheight); i < Math.min( (clip.y+clip.height)/rowheight+1, rowcount ); i++ ) {
 					int r = rowheader.getRowCount() == 0 ? i : rowheader.convertRowIndexToModel( i );
-					Tegeval te = hteglocal.get(r);
+					Annotation te = hteglocal.get(r);
 					//g.setColor( Color.black );
 					//g.drawLine( 0, y*rowheight+8, this.getWidth(), y*rowheight+8 );
 					
 					if( te != null ) {
-						Tegeval prev = te;
+						Annotation prev = te;
 						if( te.getGene() != null ) {
 							String genename = geneset.getGeneName( showNames, prev.getGene() );
 							/*String genename = prev.getGene().getName();
@@ -1439,7 +1439,7 @@ public class Neighbour {
 									GeneGroup gg = prev.getGene().getGeneGroup();
 									List<Tegeval> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
-										final Collection<Contig> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+										final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 										double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, prev);
 										if( ratio == -1 ) {
 											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
@@ -1458,7 +1458,7 @@ public class Neighbour {
 								List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
 								int total = tegevals.size();
 								for( Tegeval tev : tegevals ) {
-									Tegeval thenext = tev.getNext();
+									Annotation thenext = tev.getNext();
 									GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 									int val = 0;
 									if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -1474,7 +1474,7 @@ public class Neighbour {
 									tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
 									total = tegevals.size();
 									for( Tegeval tev : tegevals ) {
-										Tegeval thenext = tev.getPrevious();
+										Annotation thenext = tev.getPrevious();
 										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -1504,7 +1504,7 @@ public class Neighbour {
 								}*/
 							}
 							
-							boolean revis = (prev.ori == -1) ^ prev.getContshort().isReverse();
+							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
 							int addon = revis ? -5 : 5;
 							int offset = revis ? 5 : 0;
 							//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
@@ -1535,17 +1535,17 @@ public class Neighbour {
 				}
 				
 				for( int i = 0; i < hteglocal.size(); i++ ) {
-					Tegeval te = hteglocal.get(i);
+					Annotation te = hteglocal.get(i);
 					if( te != null ) {
-						Tegeval theprev = te.getPrevious();
+						Annotation theprev = te.getPrevious();
 						
 						if( theprev == null ) {
-							Contig prevcont = te.getContshort();
-							List<Contig> partof = prevcont.partof;
+							Sequence prevcont = te.getContig();
+							List<Sequence> partof = prevcont.partof;
 							int k = partof.indexOf( prevcont );
 							k--;
 							if( k < 0 ) k = partof.size()-1;
-							Contig c = partof.get(k);
+							Sequence c = partof.get(k);
 							while( c.annset == null || c.annset.size() == 0 ) {
 								k--;
 								if( k < 0 ) k = partof.size()-1;
@@ -1571,11 +1571,11 @@ public class Neighbour {
 	}
 	
 	public void forward() {
-		for( Tegeval te : hteg ) {
-			boolean rev = te.ori == -1 ^ te.getContshort().isReverse();
+		for( Annotation te : hteg ) {
+			boolean rev = te.ori == -1 ^ te.getContig().isReverse();
 			if( rev ) {
-				List<Contig>	partof = te.getContshort().partof;
-				for( Contig ctg : partof ) {
+				List<Sequence>	partof = te.getContig().partof;
+				for( Sequence ctg : partof ) {
 					ctg.setReverse( !ctg.isReverse() );
 				}
 				Collections.reverse( partof );
@@ -1607,12 +1607,12 @@ public class Neighbour {
 	public final JComboBox<String>			names = new JComboBox<String>();
 	JComponent c;
 	double neighbourscale = 1.0;
-	static Tegeval currentTe = null;
+	static Annotation currentTe = null;
 	Set<GeneGroup> selectedGenesGroups;
-	static List<Tegeval>	hteg;
+	static List<Annotation>	hteg;
 	//static int colorscheme = 0;
 	//static List<String>	speclist;
-	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Map<String,Contig> contigmap ) throws IOException {
+	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Map<String,Sequence> contigmap ) throws IOException {
 		final JTable sorting = geneset.getGeneTable();
 		
 		final JButton	zoomIn = new JButton("+");
@@ -1686,7 +1686,7 @@ public class Neighbour {
 
 				public String getToolTipText( MouseEvent me ) {
 					Point p = me.getPoint();
-					Tegeval te = getSelectedTe(p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight());
+					Annotation te = getSelectedTe(p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight());
 					if( te != null ) {
 						Gene g = te.getGene();
 						GeneGroup gg = g.getGeneGroup();
@@ -1853,11 +1853,11 @@ public class Neighbour {
 			mvmnu.add( new AbstractAction("Connect contig")  {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					List<Contig> contigs = geneset.getSelspecContigs(null, currentTe.getSpecies());
+					List<Sequence> contigs = geneset.getSelspecContigs(null, currentTe.getSpecies());
 					if( contigs.size() > 0 ) {
-						Contig sctg = contigs.get(0);
+						Sequence sctg = contigs.get(0);
 						
-						Contig ctg = currentTe.getContshort();
+						Sequence ctg = currentTe.getContig();
 						int i = ctg.partof.indexOf( ctg );
 						int k = ctg.annset.indexOf( currentTe );
 						
@@ -1874,7 +1874,7 @@ public class Neighbour {
 			mvmnu.add( new AbstractAction("Reverse contig")  {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					Contig ctg = currentTe.getContshort();
+					Sequence ctg = currentTe.getContig();
 					ctg.setReverse( !ctg.isReverse() );
 				}
 			});
@@ -1908,13 +1908,13 @@ public class Neighbour {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					Map<String,Integer>	spind = new HashMap<String,Integer>();
-					Map<String,Contig>  ctind = new HashMap<String,Contig>();
+					Map<String,Sequence>  ctind = new HashMap<String,Sequence>();
 					
 					for( GeneGroup gg : selectedGenesGroups ) {
 						for( String sp : gg.species.keySet() ) {
 							Teginfo ti = gg.species.get( sp );
 							
-							Contig ct = ti.best.getContshort();
+							Sequence ct = ti.best.getContig();
 							ctind.put( sp, ct );
 							spind.put( sp, ct.annset.indexOf( ti.best ) );
 						}
@@ -1922,7 +1922,7 @@ public class Neighbour {
 					
 					for( int i = 1; i < 20; i++ ) {
 						for( String spec : ctind.keySet() ) {
-							Contig ct = ctind.get( spec );
+							Sequence ct = ctind.get( spec );
 							//ct.annset.
 						}
 					}
@@ -1935,7 +1935,7 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
-							for( Annotation ann : tv.getContshort().annset ) {
+							for( Annotation ann : tv.getContig().annset ) {
 								Tegeval tv2 = (Tegeval)ann;
 								tv2.selected = false;
 							}
@@ -1953,9 +1953,9 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
 						for( Tegeval tv : ti.tset ) {
-							int k = tv.getContshort().annset.indexOf( tv );
-							for( int i = k+1; i < tv.getContshort().annset.size(); i++ ) {
-								Tegeval tv2 = (Tegeval)tv.getContshort().annset.get(i);
+							int k = tv.getContig().annset.indexOf( tv );
+							for( int i = k+1; i < tv.getContig().annset.size(); i++ ) {
+								Tegeval tv2 = (Tegeval)tv.getContig().annset.get(i);
 								currentTe = tv2;
 								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
@@ -1975,9 +1975,9 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
 						for( Tegeval tv : ti.tset ) {
-							int k = tv.getContshort().annset.indexOf( tv );
+							int k = tv.getContig().annset.indexOf( tv );
 							for( int i = k-1; i >= 0; i-- ) {
-								Tegeval tv2 = (Tegeval)tv.getContshort().annset.get(i);
+								Tegeval tv2 = (Tegeval)tv.getContig().annset.get(i);
 								currentTe = tv2;
 								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
@@ -2001,19 +2001,19 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
 						for( Tegeval tv : ti.tset ) {
-							//currentTe = tv.getContshort().getLast();
-							Contig cont = tv.getContshort();
-							int k = cont.partof.indexOf(tv.getContshort());
+							//currentTe = tv.getContig().getLast();
+							Sequence cont = tv.getContig();
+							int k = cont.partof.indexOf(tv.getContig());
 							/*if( cont.isReverse() ) {
 								k = (k-1);
-								if( k < 0 ) k = tv.getContshort().partof.size()-1;
+								if( k < 0 ) k = tv.getContig().partof.size()-1;
 							} else {*/
 								k = (k+1)%cont.partof.size();
 							//}
 							currentTe = cont.partof.get(k).getFirst();
 							
-							/*for( int i = k+1; i < tv.getContshort().annset.size(); i++ ) {
-								Tegeval tv2 = tv.getContshort().annset.get(i);
+							/*for( int i = k+1; i < tv.getContig().annset.size(); i++ ) {
+								Tegeval tv2 = tv.getContig().annset.get(i);
 								currentTe = tv2;
 								if( tv2.isDirty() || tv2.backgap || tv2.frontgap ) {
 									break;
@@ -2034,7 +2034,7 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
 						for( Tegeval tv : ti.tset ) {
-							Contig cont = tv.getContshort();
+							Sequence cont = tv.getContig();
 							int k = cont.partof.indexOf( cont );
 							//if( cont.isReverse() ) {
 								k = (k-1);
@@ -2071,7 +2071,7 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					int r = rowheader.getSelectedRow();
 					int i = rowheader.convertRowIndexToModel( r );
-					Tegeval te = hteg.get( i );
+					Annotation te = hteg.get( i );
 					currentTe = te;
 					i = 0;
 					while( currentTe.getPrevious() != null && i < 10 ) {
@@ -2086,7 +2086,7 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					int r = rowheader.getSelectedRow();
 					int i = rowheader.convertRowIndexToModel( r );
-					Tegeval te = hteg.get( i );
+					Annotation te = hteg.get( i );
 					currentTe = te.getPrevious() == null ? te : te.getPrevious();
 					recenter( rowheader, c );
 				}
@@ -2096,7 +2096,7 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					int r = rowheader.getSelectedRow();
 					int i = rowheader.convertRowIndexToModel( r );
-					Tegeval te = hteg.get( i );
+					Annotation te = hteg.get( i );
 					currentTe = te.getNext() == null ? te : te.getNext();
 					recenter( rowheader, c );
 					
@@ -2107,7 +2107,7 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					int r = rowheader.getSelectedRow();
 					int i = rowheader.convertRowIndexToModel( r );
-					Tegeval te = hteg.get( i );
+					Annotation te = hteg.get( i );
 					currentTe = te;
 					i = 0;
 					while( currentTe.getNext() != null && i < 10 ) {
@@ -2134,9 +2134,9 @@ public class Neighbour {
 						List<Tegeval> lte = gg.getTegevals();
 						List<Tegeval> include = new ArrayList<Tegeval>();
 						for( Tegeval te : lte ) {
-							Contig ct = te.getContshort();
-							for( Tegeval ste : hteg ) {
-								if( ste.getContshort() == ct ) {
+							Sequence ct = te.getContig();
+							for( Annotation ste : hteg ) {
+								if( ste.getContig() == ct ) {
 									ct = null;
 									break;
 								}
@@ -2195,7 +2195,7 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
-							for( Annotation ann : tv.getContshort().annset ) {
+							for( Annotation ann : tv.getContig().annset ) {
 								Tegeval tv2 = (Tegeval)ann;
 								if( tv2.isSelected() ) tset.add( tv2 );
 							}
@@ -2211,7 +2211,7 @@ public class Neighbour {
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
-							for( Annotation ann : tv.getContshort().annset ) {
+							for( Annotation ann : tv.getContig().annset ) {
 								Tegeval tv2 = (Tegeval)ann;
 								if( tv2.isSelected() ) tset.add( tv2 );
 							}
@@ -2229,7 +2229,7 @@ public class Neighbour {
 						for( Tegeval tv : ltv ) {
 							Tegeval prev = null;
 							//Tegeval prevprev = null;
-							for( Annotation ann : tv.getContshort().annset ) {
+							for( Annotation ann : tv.getContig().annset ) {
 								Tegeval tv2 = (Tegeval)ann;
 								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getCommonName().contains("Elongation") ) {
 									System.err.println();
@@ -2239,18 +2239,18 @@ public class Neighbour {
 									int start = prev.stop;
 									int stop = tv2.start;
 									
-									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
+									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
-										seq.append( prev.getContshort().sb.substring(start, stop) );
+										seq.append( prev.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == -1 ) {
 									int start = prev != null ? prev.stop : 0;
 									int stop = tv2.start;
 									
-									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
+									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
-										seq.append( tv2.getContshort().sb.substring(start, stop) );
+										seq.append( tv2.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								}
@@ -2272,7 +2272,7 @@ public class Neighbour {
 						for( Tegeval tv : ltv ) {
 							Tegeval prev = null;
 							//Tegeval prevprev = null;
-							for( Annotation ann : tv.getContshort().annset ) {
+							for( Annotation ann : tv.getContig().annset ) {
 								Tegeval tv2 = (Tegeval)ann;
 								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getCommonName().contains("Elongation") ) {
 									System.err.println();
@@ -2282,18 +2282,18 @@ public class Neighbour {
 									int start = prev.stop;
 									int stop = tv2.start;
 									
-									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
+									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
-										seq.append( prev.getContshort().sb.substring(start, stop) );
+										seq.append( prev.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == 1 ) {
 									int start = prev.stop;
 									int stop = tv2.start;
 									
-									if( stop > start && start >= 0 && stop < tv2.getContshort().length() ) {
+									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
-										seq.append( tv2.getContshort().sb.substring(start, stop) );
+										seq.append( tv2.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								}
@@ -2321,7 +2321,7 @@ public class Neighbour {
 							List<Tegeval> ltv = gg.getTegevals();
 							for( Tegeval tv : ltv ) {
 								//int start = Math.max( 0, tv.start-3000 );
-								//int stop = Math.min( tv.getContshort().sb.length(), tv.stop+3000 );
+								//int stop = Math.min( tv.getContig().sb.length(), tv.stop+3000 );
 								Sequence seq = new Sequence( tv.getSpecies(), null );
 								String str = tv.ori == -1 ? tv.getSubstring(-endh-tv.start+tv.stop-1, -upph-tv.start+tv.stop-1) : tv.getSubstring(upph, endh);
 								seq.append( str ); //tv.getLength()+3000) );
@@ -2338,7 +2338,7 @@ public class Neighbour {
 									serifier.addAnnotation(newann);
 									
 									Color color = Color.lightGray;
-									Tegeval ntev = tv.getNext();
+									Annotation ntev = tv.getNext();
 									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
 										if( tv.ori == -1 ) {
 											int bil = ntev.stop-tv.start;
@@ -2413,8 +2413,8 @@ public class Neighbour {
 					} else {
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel(r);
-							Tegeval tv = hteg.get(i);
-							Sequence seq = new Sequence( tv.getSpecies(), null );
+							Annotation tv = hteg.get(i);
+							Sequence seq = new Sequence( ((Tegeval)tv).getSpecies(), null );
 							seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
 							serifier.addSequence( seq );
 						}
@@ -2454,7 +2454,7 @@ public class Neighbour {
 					p = me.getPoint();
 					c.requestFocus();
 					
-					Tegeval te = getSelectedTe( p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight() );
+					Annotation te = getSelectedTe( p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight() );
 					//System.err.println();
 					if( te != null ) {
 						if( me.getClickCount() == 2 ) {
@@ -2507,17 +2507,17 @@ public class Neighbour {
 					int[] rr = rowheader.getSelectedRows();
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
-						Tegeval te = hteg.get( i );
-						Contig contig = te.getContshort();
-						te.getContshort().setReverse( !contig.isReverse() );
+						Annotation te = hteg.get( i );
+						Sequence contig = te.getContig();
+						contig.setReverse( !contig.isReverse() );
 						
-						Contig nextc = contig.next;
+						Sequence nextc = contig.next;
 						while( nextc != null ) {
 							nextc.setReverse( !nextc.isReverse() );
 							nextc = nextc.next;
 						}
 						
-						Contig prevc = contig.prev;
+						Sequence prevc = contig.prev;
 						while( prevc != null ) {
 							prevc.setReverse( !prevc.isReverse() );
 							prevc = prevc.prev;
@@ -2528,7 +2528,7 @@ public class Neighbour {
 							if( selectedGene.species.containsKey( spec ) ) {
 								Teginfo ti = selectedGene.species.get( spec );
 								for( Tegeval te : ti.tset ) {
-									te.getContshort().setReverse( !te.getContshort().isReverse() );
+									te.getContig().setReverse( !te.getContig().isReverse() );
 									break;
 								}
 							}
@@ -2542,13 +2542,13 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					int r = rowheader.getSelectedRow();
 					int i = rowheader.convertRowIndexToModel( r );
-					Tegeval te = hteg.get( i );
-					Contig 	cont = te.getContshort();
-					String	spec = cont.getSpec();
+					Annotation te = hteg.get( i );
+					Sequence 	cont = te.getContig();
+					String		spec = cont.getSpec();
 					
-					final List<Contig>	specont = new ArrayList<Contig>();
+					final List<Sequence>	specont = new ArrayList<Sequence>();
 					for( String name : contigmap.keySet() ) {
-						Contig c = contigmap.get( name );
+						Sequence c = contigmap.get( name );
 						if( c != cont && spec.equals( c.getSpec() ) ) specont.add( c );
 					}
 					
@@ -2568,7 +2568,7 @@ public class Neighbour {
 
 						@Override
 						public String getColumnName(int columnIndex) {
-							return "Contig";
+							return "Sequence";
 						}
 
 						@Override
@@ -2609,22 +2609,22 @@ public class Neighbour {
 					if( r != -1 ) i = table.convertRowIndexToModel( r );
 					if( i != -1 ) {
 						if( forward.isSelected() ) {
-							Tegeval con = cont.getEndTegeval().getNext();
+							Annotation con = cont.getEndAnnotation().getNext();
 							while( con != null ) {
-								cont = con.getContshort();
-								con = cont.isReverse() ? cont.getStartTegeval().getPrevious() : cont.getEndTegeval().getNext();
+								cont = (Sequence)con.getContig();
+								con = cont.isReverse() ? cont.getStartAnnotation().getPrevious() : cont.getEndAnnotation().getNext();
 								
-								if( con != null && con.getContshort().equals( cont ) ) {
+								if( con != null && con.getContig().equals( cont ) ) {
 									break;
 								}
 							}
 						} else {
-							Tegeval con = cont.getStartTegeval().getPrevious();
+							Annotation con = cont.getStartAnnotation().getPrevious();
 							while( con != null ) {
-								cont = con.getContshort();
-								con = cont.isReverse() ? cont.getStartTegeval().getPrevious() : cont.getEndTegeval().getNext();
+								cont = (Sequence)con.getContig();
+								con = cont.isReverse() ? cont.getStartAnnotation().getPrevious() : cont.getEndAnnotation().getNext();
 								
-								if( con != null && con.getContshort().equals( cont ) ) {
+								if( con != null && con.getContig().equals( cont ) ) {
 									break;
 								}
 							}
@@ -2639,7 +2639,7 @@ public class Neighbour {
 			popup.add( new AbstractAction("Delete") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					Set<Tegeval>	ste = new HashSet<Tegeval>();
+					Set<Annotation>	ste = new HashSet<Annotation>();
 					int[] rr = rowheader.getSelectedRows();
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
@@ -2663,7 +2663,7 @@ public class Neighbour {
 					int[] rr = rowheader.getSelectedRows();
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
-						Tegeval te = hteg.get( i );
+						Annotation te = hteg.get( i );
 						hteg.set( i, te.getNext() == null ? te : te.getNext() );
 					}
 					c.repaint();
@@ -2675,7 +2675,7 @@ public class Neighbour {
 					int[] rr = rowheader.getSelectedRows();
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
-						Tegeval te = hteg.get( i );
+						Annotation te = hteg.get( i );
 						hteg.set( i, te.getPrevious() == null ? te : te.getPrevious() );
 					}
 					c.repaint();
@@ -2695,7 +2695,7 @@ public class Neighbour {
 				@Override
 				public void keyPressed(KeyEvent e) {
 					if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
-						Set<Tegeval>	ste = new HashSet<Tegeval>();
+						Set<Annotation>	ste = new HashSet<Annotation>();
 						int[] rr = rowheader.getSelectedRows();
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel( r );
@@ -2730,7 +2730,7 @@ public class Neighbour {
 
 				@Override
 				public String getColumnName(int columnIndex) {
-					if( columnIndex == 1 ) return "Contig";
+					if( columnIndex == 1 ) return "Sequence";
 					else if( columnIndex == 2 ) return "Length";
 					else if( columnIndex == 3 ) return "Orientation";
 					return "Species";
@@ -2751,16 +2751,16 @@ public class Neighbour {
 				@Override
 				public Object getValueAt(int rowIndex, int columnIndex) {
 					//String species = speclist.get( rowIndex );
-					Tegeval te = hteg.get(rowIndex);
+					Annotation te = hteg.get(rowIndex);
 					if( columnIndex == 0 ) return te.getSpecies();
-					else if( columnIndex == 1 ) return te.getContshort().getName();
+					else if( columnIndex == 1 ) return te.getContig().getName();
 					else if( columnIndex == 2 ) return te.getLength();
-					else if( columnIndex == 3 ) return te.getContshort().isReverse();
+					else if( columnIndex == 3 ) return te.getContig().isReverse();
 					/*for( Gene selectedGene : selectedGenes ) {
 						if( selectedGene.species.containsKey( species ) ) {
 							Teginfo ti = selectedGene.species.get( species );
 							for( Tegeval te : ti.tset ) {
-								return te.getContshort().getName();
+								return te.getContig().getName();
 							}
 						}
 					}*/
@@ -2871,9 +2871,9 @@ public class Neighbour {
 						
 						if( support.isDataFlavorSupported( ndf ) ) {						
 							Object obj = support.getTransferable().getTransferData( ndf );
-							List<Tegeval>	seqs = (ArrayList<Tegeval>)obj;
+							List<Annotation>	seqs = (ArrayList<Annotation>)obj;
 							
-							List<Tegeval> newlist = new ArrayList<Tegeval>( hteg.size() );
+							List<Annotation> newlist = new ArrayList<Annotation>( hteg.size() );
 							for( int r = 0; r < rowheader.getRowCount(); r++ ) {
 								int i = rowheader.convertRowIndexToModel(r);
 								newlist.add( hteg.get(i) );
@@ -2885,7 +2885,7 @@ public class Neighbour {
 							int k = rowheader.rowAtPoint( p );
 							
 							hteg.removeAll( seqs );
-							for( Tegeval tv : seqs ) {
+							for( Annotation tv : seqs ) {
 								hteg.add(k++, tv);
 							}
 							
