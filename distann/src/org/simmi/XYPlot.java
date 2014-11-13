@@ -43,25 +43,26 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
-import org.simmi.shared.Contig;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 
 public class XYPlot {
-	List<Contig>	spec1Conts = new ArrayList<Contig>();
-	List<Contig>	spec2Conts = new ArrayList<Contig>();
+	List<Sequence>	spec1Conts = new ArrayList<Sequence>();
+	List<Sequence>	spec2Conts = new ArrayList<Sequence>();
 	int fsum1;
 	int fsum2;
 	String spec1;
 	String spec2;
 	
-	public void initSpecConts( Map<String,List<Contig>> speccontigMap, String spec1, String spec2 ) {
+	public void initSpecConts( Map<String,List<Sequence>> speccontigMap, String spec1, String spec2 ) {
 		//spec1Conts.clear();
 		//spec2Conts.clear();
 		
 		/*for( String ctname : GeneSet.contigmap.keySet() ) {
-			Contig ct = GeneSet.contigmap.get( ctname );
+			Sequence ct = GeneSet.contigmap.get( ctname );
 			if( ct.getSpec().equals( spec1 ) ) {
 				spec1Conts.add( ct );
 			}
@@ -76,24 +77,24 @@ public class XYPlot {
 		spec2Conts = speccontigMap.get( spec2 );
 		
 		int sum1 = 0;
-		for( Contig ct : spec1Conts ) {
-			//System.err.println( ct.getName() + "  " + ct.getGeneCount() + "  " + ct.getSequence().length() );
+		for( Sequence ct : spec1Conts ) {
+			//System.err.println( ct.getName() + "  " + ct.getAnnotationCount() + "  " + ct.getSequence().length() );
 			
-			sum1 += ct.getGeneCount();
+			sum1 += ct.getAnnotationCount();
 		}
 		fsum1 = sum1;
 		
 		int sum2 = 0;
-		for( Contig ct : spec2Conts ) {
-			sum2 += ct.getGeneCount();
+		for( Sequence ct : spec2Conts ) {
+			sum2 += ct.getAnnotationCount();
 		}
 		fsum2 = sum2;
 		
 		System.err.println( fsum1 + "  " + fsum2 );
 	}
 	
-	Contig	contigx;
-	Contig	contigy;
+	Sequence	contigx;
+	Sequence	contigy;
 	Point	mouseSel;
 	public void xyPlot( final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
 		final JTable 				table = geneset.getGeneTable();
@@ -186,7 +187,7 @@ public class XYPlot {
 				//g.setColor( Color.blue );
 				
 				int count = 0;
-				for( Contig ct : spec1Conts ) {
+				for( Sequence ct : spec1Conts ) {
 					int ermcount = 0;
 					if( ct.getAnnotations() != null ) {
 						if( ct.isReverse() ) {
@@ -207,11 +208,11 @@ public class XYPlot {
 										int k = spec2Conts.indexOf( tv2.getContshort() );
 										if( k != -1 ) {
 											for( int i = 0; i < k; i++ ) {
-												Contig ct2 = spec2Conts.get( i );
-												count2 += ct2.getGeneCount();
+												Sequence ct2 = spec2Conts.get( i );
+												count2 += ct2.getAnnotationCount();
 											}
-											Contig ct2 = spec2Conts.get( k );
-											count2 += (ct2.isReverse() ? ct2.getGeneCount() - tv2.getNum() - 1 : tv2.getNum());
+											Sequence ct2 = spec2Conts.get( k );
+											count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
 											
 											if( gccolor.isSelected() ) {
 												/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
@@ -246,7 +247,7 @@ public class XYPlot {
 								
 								/*Tegeval next = val.getNext();
 								if( next != null ) {
-									Contig nextcontig = next.getContshort();
+									Sequence nextcontig = next.getContshort();
 									if( nextcontig == null || !nextcontig.equals(val.getContshort()) ) {
 										next = null;
 									}
@@ -272,11 +273,11 @@ public class XYPlot {
 										int k = spec2Conts.indexOf( tv2.getContshort() );
 										if( k != -1 ) {
 											for( int i = 0; i < k; i++ ) {
-												Contig ct2 = spec2Conts.get( i );
-												count2 += ct2.getGeneCount();
+												Sequence ct2 = spec2Conts.get( i );
+												count2 += ct2.getAnnotationCount();
 											}
-											Contig ct2 = spec2Conts.get( k );
-											count2 += (ct2.isReverse() ? ct2.getGeneCount() - tv2.getNum() - 1 : tv2.getNum());
+											Sequence ct2 = spec2Conts.get( k );
+											count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
 											
 											if( gccolor.isSelected() ) {
 												/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
@@ -311,7 +312,7 @@ public class XYPlot {
 								
 								/*Tegeval next = val.getNext();
 								if( next != null ) {
-									Contig nextcontig = next.getContshort();
+									Sequence nextcontig = next.getContshort();
 									if( nextcontig == null || !nextcontig.equals(val.getContshort()) ) {
 										next = null;
 									}
@@ -335,8 +336,8 @@ public class XYPlot {
 				if( showgrid.isSelected() ) {
 					g.setColor( Color.gray );
 					count = 0;
-					for( Contig ct : spec2Conts ) {
-						count += ct.getGeneCount();
+					for( Sequence ct : spec2Conts ) {
+						count += ct.getAnnotationCount();
 						int y = (int)(count*this.getHeight()/fsum2);
 						g.drawLine( 0, y, this.getWidth(), y );
 					}
@@ -351,10 +352,10 @@ public class XYPlot {
 				if( mouseSel != null ) {
 					int x = mouseSel.x;
 					
-					Contig contig = null;
+					Sequence contig = null;
 					int count = 0;
-					for( Contig ct : spec1Conts ) {
-						count += ct.getGeneCount();
+					for( Sequence ct : spec1Conts ) {
+						count += ct.getAnnotationCount();
 						
 						if( x < count*drawc.getWidth()/fsum1 ) {
 							contig = ct;
@@ -374,10 +375,10 @@ public class XYPlot {
 				if( mouseSel != null ) {
 					int y = mouseSel.y;
 					
-					Contig contig = null;
+					Sequence contig = null;
 					int count = 0;
-					for( Contig ct : spec2Conts ) {
-						count += ct.getGeneCount();
+					for( Sequence ct : spec2Conts ) {
+						count += ct.getAnnotationCount();
 						
 						if( y < count*drawc.getHeight()/fsum2 ) {
 							contig = ct;
@@ -405,7 +406,7 @@ public class XYPlot {
 		swap.setAction( new AbstractAction("Transpose") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				List<Contig>	tmpct = spec1Conts;
+				List<Sequence>	tmpct = spec1Conts;
 				spec1Conts = spec2Conts;
 				spec2Conts = tmpct;
 				
@@ -426,17 +427,17 @@ public class XYPlot {
 				mouseSel = e.getPoint();
 				if( e.getClickCount() == 2 ) {
 					//System.err.println( spec1Conts.size() + "  " + spec2Conts.size() );
-					for( Contig ct : spec1Conts ) {
-						Tegeval tv = ct.getFirst();
-						while( tv != null && tv.getContshort().equals(ct) ) {
+					for( Sequence ct : spec1Conts ) {
+						Annotation tv = ct.getFirst();
+						while( tv != null && tv.getContig().equals(ct) ) {
 							tv.setSelected( false );
 							tv = tv.getNext();
 						}
 					}
 					
-					for( Contig ct : spec2Conts ) {
-						Tegeval tv = ct.getFirst();
-						while( tv != null && tv.getContshort().equals(ct) ) {
+					for( Sequence ct : spec2Conts ) {
+						Annotation tv = ct.getFirst();
+						while( tv != null && tv.getContig().equals(ct) ) {
 							tv.setSelected( false );
 							tv = tv.getNext();
 						}
@@ -447,8 +448,8 @@ public class XYPlot {
 				} else if( showgrid.isSelected() ) {
 					int x = mouseSel.x;
 					int count = 0;
-					for( Contig ct : spec1Conts ) {
-						count += ct.getGeneCount();
+					for( Sequence ct : spec1Conts ) {
+						count += ct.getAnnotationCount();
 						
 						if( x < count*drawc.getWidth()/fsum1 ) {
 							contigx = ct;
@@ -458,8 +459,8 @@ public class XYPlot {
 					
 					int y = mouseSel.y;
 					count = 0;
-					for( Contig ct : spec2Conts ) {
-						count += ct.getGeneCount();
+					for( Sequence ct : spec2Conts ) {
+						count += ct.getAnnotationCount();
 						
 						if( y < count*drawc.getHeight()/fsum2 ) {
 							contigy = ct;
@@ -477,15 +478,15 @@ public class XYPlot {
 					int xmax = Math.max( mouseSel.x, relmouse.x )*fsum1/drawc.getWidth();
 					for( int x = xmin; x < xmax; x++ ) {
 						int count = 0;
-						Contig tct = null;
-						for( Contig ct : spec1Conts ) {
-							if( ct.getGeneCount()+count < x ) count += ct.getGeneCount();
+						Sequence tct = null;
+						for( Sequence ct : spec1Conts ) {
+							if( ct.getAnnotationCount()+count < x ) count += ct.getAnnotationCount();
 							else {
 								tct = ct;
 								break;
 							}
 						}
-						Tegeval te = tct.getIndex( x-count );
+						Annotation te = tct.getIndex( x-count );
 						
 						if( te != null ) {
 							te.setSelected( true );
@@ -517,15 +518,15 @@ public class XYPlot {
 					int ymax = Math.max( mouseSel.y, relmouse.y )*fsum2/drawc.getHeight();
 					for( int y = ymin; y < ymax; y++ ) {
 						int count = 0;
-						Contig tct = null;
-						for( Contig ct : spec2Conts ) {
-							if( ct.getGeneCount()+count < y ) count += ct.getGeneCount();
+						Sequence tct = null;
+						for( Sequence ct : spec2Conts ) {
+							if( ct.getAnnotationCount()+count < y ) count += ct.getAnnotationCount();
 							else {
 								tct = ct;
 								break;
 							}
 						}
-						Tegeval te = tct.getIndex( y-count );
+						Annotation te = tct.getIndex( y-count );
 						
 						if( te != null ) {
 							te.setSelected( true );
@@ -556,9 +557,9 @@ public class XYPlot {
 				} else if( showgrid.isSelected() ) {
 					int x = relmouse.x;
 					int count = 0;
-					Contig ctx = null;
-					for( Contig ct : spec1Conts ) {
-						count += ct.getGeneCount();
+					Sequence ctx = null;
+					for( Sequence ct : spec1Conts ) {
+						count += ct.getAnnotationCount();
 						
 						if( x < count*drawc.getWidth()/fsum1 ) {
 							ctx = ct;
@@ -568,9 +569,9 @@ public class XYPlot {
 					
 					int y = relmouse.y;
 					count = 0;
-					Contig cty = null;
-					for( Contig ct : spec2Conts ) {
-						count += ct.getGeneCount();
+					Sequence cty = null;
+					for( Sequence ct : spec2Conts ) {
+						count += ct.getAnnotationCount();
 						
 						if( y < count*drawc.getHeight()/fsum2 ) {
 							cty = ct;
@@ -613,19 +614,19 @@ public class XYPlot {
 			public void mouseMoved(MouseEvent e) {
 				Point p = e.getPoint();
 				int cnt = 0;
-				Contig selcontx = null;
-				for( Contig c : spec1Conts ) {
+				Sequence selcontx = null;
+				for( Sequence c : spec1Conts ) {
 					selcontx = c;
-					cnt += c.getGeneCount();
+					cnt += c.getAnnotationCount();
 					if( p.x < cnt*drawc.getWidth()/fsum1 ) {
 						break;
 					}
 				}
 				cnt = 0;
-				Contig selconty = null;
-				for( Contig c : spec2Conts ) {
+				Sequence selconty = null;
+				for( Sequence c : spec2Conts ) {
 					selconty = c;
-					cnt += c.getGeneCount();
+					cnt += c.getAnnotationCount();
 					if( p.y < cnt*drawc.getHeight()/fsum2 ) {
 						break;
 					}

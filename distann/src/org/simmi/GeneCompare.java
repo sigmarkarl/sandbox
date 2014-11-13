@@ -64,14 +64,14 @@ import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
 
 public class GeneCompare {
-	List<Contig> contigs;
+	List<Sequence> contigs;
 	
 	public void rearrangeContigs( String spec1, GeneSet geneset ) {
 		if( spec1 != null && geneset.speccontigMap.containsKey( spec1 ) ) {
-			final List<Contig> lcont = geneset.speccontigMap.get( spec1 );
+			final List<Sequence> lcont = geneset.speccontigMap.get( spec1 );
 			
-			List<Contig> newcontigs = new ArrayList<Contig>();
-			for( Contig c : lcont ) {
+			List<Sequence> newcontigs = new ArrayList<Sequence>();
+			for( Sequence c : lcont ) {
 				if( contigs.contains( c ) ) newcontigs.add( c );
 			}
 			contigs = newcontigs;
@@ -81,7 +81,7 @@ public class GeneCompare {
 	int total = 0;
 	int ptotal = 0;
 	public void selectContigs( Container comp, String spec1, GeneSet geneset ) {
-		final List<Contig> lcont = geneset.speccontigMap.get( spec1 );
+		final List<Sequence> lcont = geneset.speccontigMap.get( spec1 );
 		
 		System.err.println( lcont.size() );
 		
@@ -131,27 +131,27 @@ public class GeneCompare {
 		});
 		JScrollPane	sp = new JScrollPane( cseltable );
 		JOptionPane.showMessageDialog(comp, sp);
-		contigs = new ArrayList<Contig>();
+		contigs = new ArrayList<Sequence>();
 		for( int r : cseltable.getSelectedRows() ) {
 			int i = cseltable.convertRowIndexToModel(r);
-			Contig ctg = lcont.get( i );
+			Sequence ctg = lcont.get( i );
 			contigs.add( ctg );
-			if( ctg.isPlasmid() ) ptotal += ctg.getGeneCount();
-			else total += ctg.getGeneCount();
+			if( ctg.isPlasmid() ) ptotal += ctg.getAnnotationCount();
+			else total += ctg.getAnnotationCount();
 		}
 		
 		/*if( contigs.size() <= 3 ) {
 			int max = 0;
 			Contig chromosome = null;
 			for( Contig ctg : contigs ) {
-				if( ctg.getGeneCount() > max ) {
-					max = ctg.getGeneCount();
+				if( ctg.getAnnotationCount() > max ) {
+					max = ctg.getAnnotationCount();
 					chromosome = ctg;
 				}
 			}
 			
-			ptotal = total - chromosome.getGeneCount();
-			total = chromosome.getGeneCount();
+			ptotal = total - chromosome.getAnnotationCount();
+			total = chromosome.getAnnotationCount();
 		}*/
 	}
 	
@@ -488,15 +488,15 @@ public class GeneCompare {
 								int i = 0;
 								int loc = 0;
 								for( i = 0; i < contigs.size(); i++ ) {
-									Contig c = contigs.get(i);
-									if( loc + c.getGeneCount() > mloc ) {
+									Sequence c = contigs.get(i);
+									if( loc + c.getAnnotationCount() > mloc ) {
 										break;
-									} else loc += c.getGeneCount();
+									} else loc += c.getAnnotationCount();
 								}
-								Contig c = contigs.get(i);
+								Sequence c = contigs.get(i);
 								
-								if( mloc-loc < c.getGeneCount() ) {
-									//loc += c.getGeneCount();
+								if( mloc-loc < c.getAnnotationCount() ) {
+									//loc += c.getAnnotationCount();
 									//c = contigs.get( i%contigs.size() );
 									Tegeval tv = (Tegeval)c.annset.get(mloc-loc);
 									Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
@@ -510,7 +510,7 @@ public class GeneCompare {
 										
 										if( ct1 == ct2 ) ct1.setReverse( !ct1.isReverse() );
 										else {
-											List<Contig> conts2 = geneset.speccontigMap.get(spec);
+											List<Sequence> conts2 = geneset.speccontigMap.get(spec);
 											int k2 = conts2.indexOf( ct2 );
 											conts2.remove( ct1 );
 											conts2.add(k2, ct1);
@@ -537,13 +537,13 @@ public class GeneCompare {
 							
 							int i = 0;
 							int loc = 0;
-							Contig c = null;
+							Sequence c = null;
 							if( contigs != null ) {
 								for( i = 0; i < contigs.size(); i++ ) {
 									c = contigs.get(i);
-									if( loc + c.getGeneCount() > minloc ) {
+									if( loc + c.getAnnotationCount() > minloc ) {
 										break;
-									} else loc += c.getGeneCount();
+									} else loc += c.getAnnotationCount();
 								}
 								//c = contigs.get(i);
 							}
@@ -568,8 +568,8 @@ public class GeneCompare {
 										geneset.table.addRowSelectionInterval(k, k);
 									}
 								} else for( int k = minloc; k < maxloc; k++ ) {
-									if( k-loc >= c.getGeneCount() ) {
-										loc += c.getGeneCount();
+									if( k-loc >= c.getAnnotationCount() ) {
+										loc += c.getAnnotationCount();
 										i++;
 										c = contigs.get( i%contigs.size() );
 									}
@@ -712,7 +712,7 @@ public class GeneCompare {
 		cmp.repaint();
 	}
 	
-	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal ) {
+	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Sequence> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal ) {
 		draw( g2, spec1, geneset, w, h, contigs, spec2s, blosumap, total, ptotal, 0 );
 	}
 	
@@ -905,24 +905,24 @@ public class GeneCompare {
 	}
 	
 	static int ctgoff = 0;
-	public static Color gradientColor( String spec1, String spec2, List<Contig> contigs2, double ratio, double pratio, int offset2, GeneGroup gg, boolean contiglanes, Tegeval tv ) {
+	public static Color gradientColor( String spec1, String spec2, List<Sequence> contigs2, double ratio, double pratio, int offset2, GeneGroup gg, boolean contiglanes, Annotation tv ) {
 		//Contig chromosome = null;
 		int total2 = 0;
 		int ptotal2 = 0;
 		
 		int chromstart = -1;
-		for( Contig ctg2 : contigs2 ) {
-			if( ctg2.isPlasmid() ) ptotal2 += ctg2.getGeneCount();
+		for( Sequence ctg2 : contigs2 ) {
+			if( ctg2.isPlasmid() ) ptotal2 += ctg2.getAnnotationCount();
 			else {
 				if( chromstart == -1 ) chromstart = ptotal2;
-				total2 += ctg2.getGeneCount();
+				total2 += ctg2.getAnnotationCount();
 			}
 		}
 		
 		/*int tot2 = 0;
 		int ptot2 = 0;
 		for( Contig ctg2 : contigs2 ) {
-			tot2 += ctg2.getGeneCount();
+			tot2 += ctg2.getAnnotationCount();
 		}
 		
 		int chromstart = 0;//total2;
@@ -930,12 +930,12 @@ public class GeneCompare {
 			int max = 0;
 			int ccount = 0;
 			for( Contig ctg2 : contigs2 ) {
-				if( ctg2.getGeneCount() > max ) {
+				if( ctg2.getAnnotationCount() > max ) {
 					chromosome = ctg2;
 					chromstart = ccount;
-					max = ctg2.getGeneCount();
+					max = ctg2.getAnnotationCount();
 				}
-				ccount += ctg2.getGeneCount();
+				ccount += ctg2.getAnnotationCount();
 			}
 			
 			ptot2 = tot2 - max;
@@ -946,13 +946,13 @@ public class GeneCompare {
 		double pratio2 = -1.0;
 		Teginfo gene2s = gg.getGenes( spec2 );
 		
-		Contig hit = null;
+		Sequence hit = null;
 		if( spec1.equals(spec2) ) {
 			for( Tegeval tv2 : gene2s.tset ) {
 				int count2 = 0;
 				
 				if( ptotal2 > 0 ) {
-					for( Contig ctg2 : contigs2 ) {
+					for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
 							int idx = ctg2.annset.indexOf( tv2 );
 							if( idx != -1 ) {
@@ -963,13 +963,13 @@ public class GeneCompare {
 					}
 					
 					if( hit != null && hit.isPlasmid() ) {
-						for( Contig c2 : contigs2 ) {
+						for( Sequence c2 : contigs2 ) {
 							if( c2.isPlasmid() && c2.annset != null ) {
 								int idx = c2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
-									count2 += c2.getGeneCount();
+									count2 += c2.getAnnotationCount();
 								} else {
-									count2 += c2.isReverse() ? c2.getGeneCount() - idx - 1 : idx;
+									count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 									break;
 								}
 							}
@@ -977,13 +977,13 @@ public class GeneCompare {
 						double prat2 = (double)count2/(double)ptotal2;
 						if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
 					} else {
-						for( Contig c2 : contigs2 ) {
+						for( Sequence c2 : contigs2 ) {
 							if( c2.annset != null ) {
 								int idx = c2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
-									count2 += c2.getGeneCount();
+									count2 += c2.getAnnotationCount();
 								} else {
-									count2 += c2.isReverse() ? c2.getGeneCount() - idx - 1 : idx;
+									count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 									hit = c2;
 									break;
 								}
@@ -998,9 +998,9 @@ public class GeneCompare {
 								if( ctg2 != chromosome && ctg2.annset != null ) {
 									idx = ctg2.annset.indexOf( tv2 );
 									if( idx == -1 ) {
-										count2 += ctg2.getGeneCount();
+										count2 += ctg2.getAnnotationCount();
 									} else {
-										count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx; 
+										count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx; 
 										//count2 += idx;
 										break;
 									}
@@ -1008,16 +1008,16 @@ public class GeneCompare {
 							}
 							double prat2 = (double)count2/(double)ptotal2;
 							if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
-						} else count2 = chromosome.isReverse() ? chromosome.getGeneCount() - idx - 1 : idx;
+						} else count2 = chromosome.isReverse() ? chromosome.getAnnotationCount() - idx - 1 : idx;
 					}*/
 				} else {
-					for( Contig ctg2 : contigs2 ) {
+					for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
 							int idx = ctg2.annset.indexOf( tv2 );
 							if( idx == -1 ) {
-								count2 += ctg2.getGeneCount();
+								count2 += ctg2.getAnnotationCount();
 							} else {
-								count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+								count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 								hit = ctg2;
 								break;
 							}
@@ -1050,7 +1050,7 @@ public class GeneCompare {
 					int count2 = 0;
 					
 					if( ptotal2 > 0 ) {
-						for( Contig ctg2 : contigs2 ) {
+						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx != -1 ) {
@@ -1061,13 +1061,13 @@ public class GeneCompare {
 						}
 						
 						if( hit != null && hit.isPlasmid() ) {
-							for( Contig c2 : contigs2 ) {
+							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
 									int idx = c2.annset.indexOf( tv2 );
 									if( idx == -1 ) {
-										count2 += c2.getGeneCount();
+										count2 += c2.getAnnotationCount();
 									} else {
-										count2 += c2.isReverse() ? c2.getGeneCount() - idx - 1 : idx;
+										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										break;
 									}
 								}
@@ -1075,13 +1075,13 @@ public class GeneCompare {
 							double prat2 = (double)count2/(double)ptotal2;
 							if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
 						} else {
-							for( Contig c2 : contigs2 ) {
+							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
 									int idx = c2.annset.indexOf( tv2 );
 									if( idx == -1 ) {
-										count2 += c2.getGeneCount();
+										count2 += c2.getAnnotationCount();
 									} else {
-										count2 += c2.isReverse() ? c2.getGeneCount() - idx - 1 : idx;
+										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										hit = c2;
 										break;
 									}
@@ -1096,9 +1096,9 @@ public class GeneCompare {
 									if( ctg2 != chromosome && ctg2.annset != null ) {
 										idx = ctg2.annset.indexOf( tv2 );
 										if( idx == -1 ) {
-											count2 += ctg2.getGeneCount();
+											count2 += ctg2.getAnnotationCount();
 										} else {
-											count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx; 
+											count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx; 
 											//count2 += idx;
 											break;
 										}
@@ -1106,16 +1106,16 @@ public class GeneCompare {
 								}
 								double prat2 = (double)count2/(double)ptotal2;
 								if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
-							} else count2 = chromosome.isReverse() ? chromosome.getGeneCount() - idx - 1 : idx;
+							} else count2 = chromosome.isReverse() ? chromosome.getAnnotationCount() - idx - 1 : idx;
 						}*/
 					} else {
-						for( Contig ctg2 : contigs2 ) {
+						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
-									count2 += ctg2.getGeneCount();
+									count2 += ctg2.getAnnotationCount();
 								} else {
-									count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+									count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 									hit = ctg2;
 									break;
 								}
@@ -1143,7 +1143,7 @@ public class GeneCompare {
 					int count2 = 0;
 					int simcount = 0;
 					if( ptotal2 > 0 ) {
-						for( Contig ctg2 : contigs2 ) {
+						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx != -1 ) {
@@ -1154,13 +1154,13 @@ public class GeneCompare {
 						}
 						
 						if( hit != null && hit.isPlasmid() ) {
-							for( Contig c2 : contigs2 ) {
+							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
 									int idx = c2.annset.indexOf( tv2 );
 									if( idx == -1 ) {
-										count2 += c2.getGeneCount();
+										count2 += c2.getAnnotationCount();
 									} else {
-										count2 += c2.isReverse() ? c2.getGeneCount() - idx - 1 : idx;
+										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										break;
 									}
 								}
@@ -1168,10 +1168,10 @@ public class GeneCompare {
 							double prat2 = (double)count2/(double)ptotal2;
 							//if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
 							
-							Tegeval n = tv.getNext();
-							Tegeval p = tv.getPrevious();
-							Tegeval n2 = tv2.getNext();
-							Tegeval p2 = tv2.getPrevious();
+							Annotation n = tv.getNext();
+							Annotation p = tv.getPrevious();
+							Annotation n2 = tv2.getNext();
+							Annotation p2 = tv2.getPrevious();
 							
 							if( n != null ) {
 								GeneGroup ngg = n.getGene().getGeneGroup();
@@ -1200,13 +1200,13 @@ public class GeneCompare {
 								msimcount = simcount;
 							}
 						} else {
-							for( Contig c2 : contigs2 ) {
+							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
 									int idx = c2.annset.indexOf( tv2 );
 									if( idx == -1 ) {
-										count2 += c2.getGeneCount();
+										count2 += c2.getAnnotationCount();
 									} else {
-										count2 += c2.isReverse() ? c2.getGeneCount() - idx - 1 : idx;
+										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										hit = c2;
 										break;
 									}
@@ -1214,13 +1214,13 @@ public class GeneCompare {
 							}
 						}
 					} else {
-						for( Contig ctg2 : contigs2 ) {
+						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
-									count2 += ctg2.getGeneCount();
+									count2 += ctg2.getAnnotationCount();
 								} else {
-									count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+									count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 									hit = ctg2;
 									break;
 								}
@@ -1233,10 +1233,10 @@ public class GeneCompare {
 					
 					double rat2 = (double)val2/(double)total2;
 					
-					Tegeval n = tv.getNext();
-					Tegeval p = tv.getPrevious();
-					Tegeval n2 = tv2.getNext();
-					Tegeval p2 = tv2.getPrevious();
+					Annotation n = tv.getNext();
+					Annotation p = tv.getPrevious();
+					Annotation n2 = tv2.getNext();
+					Annotation p2 = tv2.getPrevious();
 					
 					if( n != null ) {
 						GeneGroup ngg = n.getGene().getGeneGroup();
@@ -1317,23 +1317,23 @@ public class GeneCompare {
 		return c;
 	}
 	
-	public static double invertedGradientPlasmidRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg ) {
+	public static double invertedGradientPlasmidRatio( String spec2, Collection<Sequence> contigs2, double ratio, GeneGroup gg ) {
 		Teginfo gene2s = gg.getGenes(spec2);
 		
 		int total2 = 0;
-		for( Contig ctg2 : contigs2 ) {
-			if( ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
+		for( Sequence ctg2 : contigs2 ) {
+			if( ctg2.isPlasmid() ) total2 += ctg2.getAnnotationCount();
 		}
 		double ratio2 = -1.0;
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
-			for( Contig ctg2 : contigs2 ) {
+			for( Sequence ctg2 : contigs2 ) {
 				if( ctg2.isPlasmid() && ctg2.annset != null ) {
 					int idx = ctg2.annset.indexOf( tv2 );
 					if( idx == -1 ) {
-						count2 += ctg2.getGeneCount();
+						count2 += ctg2.getAnnotationCount();
 					} else {
-						count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx; 
+						count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx; 
 						break;
 					}
 				}
@@ -1347,20 +1347,20 @@ public class GeneCompare {
 		return ratio2;
 	}
 	
-	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, Tegeval tv2 ) {
+	public static double invertedGradientRatio( String spec2, Collection<Sequence> contigs2, Tegeval tv2 ) {
 		int total2 = 0;
-		for( Contig ctg2 : contigs2 ) {
-			if( !ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
+		for( Sequence ctg2 : contigs2 ) {
+			if( !ctg2.isPlasmid() ) total2 += ctg2.getAnnotationCount();
 		}
 		int count2 = 0;
-		for( Contig ctg2 : contigs2 ) {
+		for( Sequence ctg2 : contigs2 ) {
 			if( ctg2.annset != null && !ctg2.isPlasmid() ) {
 				int idx = ctg2.annset.indexOf( tv2 );
 				if( idx == -1 ) {
-					count2 += ctg2.getGeneCount();
+					count2 += ctg2.getAnnotationCount();
 				} else {
 					//if( ctg2.isPlasmid() ) return -1;
-					count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+					count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 					break;
 				}
 			}
@@ -1369,13 +1369,13 @@ public class GeneCompare {
 		return ratio2;
 	}
 	
-	public static double invertedGradientRatio( String spec2, Collection<Contig> contigs2, double ratio, GeneGroup gg, Tegeval tv ) {
+	public static double invertedGradientRatio( String spec2, Collection<Sequence> contigs2, double ratio, GeneGroup gg, Annotation tv ) {
 		Teginfo gene2s = gg.getGenes(spec2);
 		
 		int msimcount = 0;
 		int total2 = 0;
-		for( Contig ctg2 : contigs2 ) {
-			if( !ctg2.isPlasmid() ) total2 += ctg2.getGeneCount();
+		for( Sequence ctg2 : contigs2 ) {
+			if( !ctg2.isPlasmid() ) total2 += ctg2.getAnnotationCount();
 		}
 		double ratio2 = -1.0;
 		if( gene2s != null && gene2s.tset != null ) {
@@ -1383,14 +1383,14 @@ public class GeneCompare {
 				for( Tegeval tv2 : gene2s.tset ) {
 					int count2 = 0;
 					int simcount = 0;
-					for( Contig ctg2 : contigs2 ) {
+					for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null && !ctg2.isPlasmid() ) {
 							int idx = ctg2.annset.indexOf( tv2 );
 							if( idx == -1 ) {
-								count2 += ctg2.getGeneCount();
+								count2 += ctg2.getAnnotationCount();
 							} else {
 								//if( ctg2.isPlasmid() ) return -1;
-								count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+								count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 								break;
 							}
 						}
@@ -1401,10 +1401,10 @@ public class GeneCompare {
 					if( ratio != -1.0 ) {
 						if( ratio2 == -1.0 || Math.abs(ratio - rat2) < Math.abs(ratio - ratio2) ) ratio2 = rat2;
 					} else {
-						Tegeval n = tv.getNext();
-						Tegeval p = tv.getPrevious();
-						Tegeval n2 = tv2.getNext();
-						Tegeval p2 = tv2.getPrevious();
+						Annotation n = tv.getNext();
+						Annotation p = tv.getPrevious();
+						Annotation n2 = tv2.getNext();
+						Annotation p2 = tv2.getPrevious();
 						
 						if( n != null ) {
 							GeneGroup ngg = n.getGene().getGeneGroup();
@@ -1443,10 +1443,10 @@ public class GeneCompare {
 							if( ctg2.annset != null && !ctg2.isPlasmid() ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
-									count2 += ctg2.getGeneCount();
+									count2 += ctg2.getAnnotationCount();
 								} else {
 									//if( ctg2.isPlasmid() ) return -1;
-									count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+									count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 									break;
 								}
 							}
@@ -1463,10 +1463,10 @@ public class GeneCompare {
 							if( ctg2.annset != null && !ctg2.isPlasmid() ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx == -1 ) {
-									count2 += ctg2.getGeneCount();
+									count2 += ctg2.getAnnotationCount();
 								} else {
 									//if( ctg2.isPlasmid() ) return -1;
-									count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+									count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 									break;
 								}
 							}
@@ -1522,21 +1522,21 @@ public class GeneCompare {
 		return ratio2;
 	}
 	
-	public static double invertedGradientTotalRatio( String spec2, Collection<Contig> contigs2, Teginfo gene2s, double ratio, GeneGroup gg ) {
+	public static double invertedGradientTotalRatio( String spec2, Collection<Sequence> contigs2, Teginfo gene2s, double ratio, GeneGroup gg ) {
 		int total2 = 0;
-		for( Contig ctg2 : contigs2 ) {
-			total2 += ctg2.getGeneCount();
+		for( Sequence ctg2 : contigs2 ) {
+			total2 += ctg2.getAnnotationCount();
 		}
 		double ratio2 = -1.0;
 		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
 			int count2 = 0;
-			for( Contig ctg2 : contigs2 ) {
+			for( Sequence ctg2 : contigs2 ) {
 				if( ctg2.annset != null ) {
 					int idx = ctg2.annset.indexOf( tv2 );
 					if( idx == -1 ) {
-						count2 += ctg2.getGeneCount();
+						count2 += ctg2.getAnnotationCount();
 					} else {
-						count2 += ctg2.isReverse() ? ctg2.getGeneCount() - idx - 1 : idx;
+						count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 						break;
 					}
 				}
@@ -1607,7 +1607,7 @@ public class GeneCompare {
 		return c;
 	}
 	
-	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal, int synbr ) {
+	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Sequence> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal, int synbr ) {
 		boolean contiglanesb = contiglanes != null && contiglanes.isSelected();
 		
 		g2.setBackground( Color.white );
@@ -1704,15 +1704,15 @@ public class GeneCompare {
 					
 					for( String spec2 : spec2s ) {
 						if( gg.species.containsKey(spec2) ) {
-							final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
+							final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
 							Teginfo gene2s = gg.getGenes( spec2 );
 							for( Tegeval tv2 : gene2s.tset ) {
 								int count2 = 0;
-								for( Contig ctg2 : contigs2 ) {
+								for( Sequence ctg2 : contigs2 ) {
 									if( ctg2.annset != null ) {
 										int idx = ctg2.annset.indexOf( tv2 );
 										if( idx == -1 ) {
-											count2 += ctg2.getGeneCount();
+											count2 += ctg2.getAnnotationCount();
 										} else {
 											count2 += idx;
 											break;
@@ -1729,15 +1729,15 @@ public class GeneCompare {
 					
 					for( String spec2 : spec2s ) {
 						if( gg.species.containsKey(spec2) ) {
-							final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
+							final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
 							Teginfo gene2s = gg.getGenes( spec2 );
 							for( Tegeval tv2 : gene2s.tset ) {
 								int count2 = 0;
-								for( Contig ctg2 : contigs2 ) {
+								for( Sequence ctg2 : contigs2 ) {
 									if( ctg2.annset != null ) {
 										int idx = ctg2.annset.indexOf( tv2 );
 										if( idx == -1 ) {
-											count2 += ctg2.getGeneCount();
+											count2 += ctg2.getAnnotationCount();
 										} else {
 											count2 += idx;
 											break;
@@ -1754,13 +1754,13 @@ public class GeneCompare {
 			int count = 0;
 			int pcount = 0;
 			int current = 0;
-			for( Contig ctg : contigs ) {
-				Tegeval prev = null;
+			for( Sequence ctg : contigs ) {
+				Annotation prev = null;
 				if( ctg.annset != null ) {
 					current = count;
 					if( ctg.isReverse() ) {
 						for( int i = ctg.annset.size()-1; i >= 0; i-- ) {
-							Tegeval tv = (Tegeval)ctg.annset.get( i );
+							Annotation tv = ctg.annset.get( i );
 							Sequence seq = tv.getAlignedSequence();
 							GeneGroup gg = tv.getGene().getGeneGroup();
 							
@@ -1775,7 +1775,7 @@ public class GeneCompare {
 						}
 					} else {
 						for( Annotation ann : ctg.getAnnotations() ) {
-							Tegeval tv = (Tegeval)ann;
+							Annotation tv = ann;
 							Sequence seq = tv.getAlignedSequence();
 							GeneGroup gg = tv.getGene().getGeneGroup();
 							
@@ -1848,7 +1848,7 @@ public class GeneCompare {
 		}
 	}
 	
-	public void subDraw( Graphics2D g2, Tegeval tv, Tegeval prev, GeneSet geneset, String spec1, int count, Map<String,Integer> offsetMap, Contig ctg, int r, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, int ii, GeneGroup gg, Sequence seq, int total, int ptotal ) {
+	public void subDraw( Graphics2D g2, Annotation tv, Annotation prev, GeneSet geneset, String spec1, int count, Map<String,Integer> offsetMap, Sequence ctg, int r, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, int ii, GeneGroup gg, Sequence seq, int total, int ptotal ) {
 		boolean rs = false;
 		if( geneset.table.getModel() == geneset.groupModel ) {
 			r = geneset.table.convertRowIndexToView( ii );
@@ -1892,7 +1892,7 @@ public class GeneCompare {
 				}
 			}
 			
-			/*if( ctg.getGeneCount() == total ) {
+			/*if( ctg.getAnnotationCount() == total ) {
 				int val = count - offset;
 				if( val < 0 ) val = total + (count-offset);
 				
@@ -1923,7 +1923,7 @@ public class GeneCompare {
 		
 		int scount = 0;
 		for( String spec2 : spec2s ) {
-			final List<Contig> contigs2;
+			final List<Sequence> contigs2;
 			boolean speceq = false;
 			if( spec1 != null ) speceq = spec1.equals(spec2);
 			contigs2 = speceq ? contigs : geneset.speccontigMap.get( spec2 );
@@ -2095,7 +2095,7 @@ public class GeneCompare {
 									Teginfo ti = (Teginfo)value;
 									for( Tegeval tvv : ti.tset ) {
 										String tspec = tvv.getGene().getSpecies();
-										List<Contig> scontigs = geneset.speccontigMap.get( tspec );
+										List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
 										
 										GeneGroup ggg = tvv.getGene().getGeneGroup();
 										//Teginfo gene2s = ggg.getGenes(tspec);

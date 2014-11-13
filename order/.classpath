@@ -20,6 +20,6 @@
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/ooxml-lib/dom4j-1.6.1.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/ooxml-lib/stax-api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/ooxml-lib/xmlbeans-2.3.0.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 7 [1.7.0_51]"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
