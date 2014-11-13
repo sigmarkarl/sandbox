@@ -18,6 +18,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -1061,19 +1062,36 @@ public class Order extends JApplet {
 	}
 	
 	public String loadEmp() throws IOException {
-		//URL url = new URL( "http://www.matis.is/um-matis-ohf/starfsfolk/svid/" );
-		InputStream stream = this.getClass().getResourceAsStream("/emp.txt");//url.openStream();
-		
-		int r = stream.read(bb);
 		String ret = "";
-		while( r > 0 ) {
-			ret += new String( bb, 0, r, "UTF-8" );
-			r = stream.read(bb);
+		boolean failed = false;
+		try {
+			URL url = new URL( "http://www.matis.is/um-matis-ohf/starfsfolk/svid/" );
+			//InputStream stream = this.getClass().getResourceAsStream("/emp.txt");
+			InputStream stream = url.openStream();
+			
+			int r = stream.read(bb);
+			while( r > 0 ) {
+				ret += new String( bb, 0, r, "UTF-8" );
+				r = stream.read(bb);
+			}
+			stream.close();
+			
+			//FileWriter ff = new FileWriter("/home/sigmar/emp.txt");
+			//ff.write(ret);
+			//ff.close();
+		} catch( Exception e ) {
+			failed = true;
 		}
 		
-		//FileWriter ff = new FileWriter("/home/sigmar/emp.txt");
-		//ff.write(ret);
-		//ff.close();
+		if( failed ) {
+			InputStream stream = this.getClass().getResourceAsStream("/emp.txt");
+			int r = stream.read(bb);
+			while( r > 0 ) {
+				ret += new String( bb, 0, r, "UTF-8" );
+				r = stream.read(bb);
+			}
+			stream.close();
+		}
 		
 		return ret;
 	}
@@ -1835,6 +1853,7 @@ public class Order extends JApplet {
 		}*/
 		//System.err.println( domain );
 		user = System.getProperty("user.name");
+		//user = "johanna";
 		System.err.println( "trying user: " + user );
 		if( user == null || user.length() < 3 ) {
 			//NTSystem ntsys = new NTSystem();
@@ -2859,9 +2878,16 @@ public class Order extends JApplet {
 										urlstr = urlstr.replace(" ", "%20");
 										
 										url = new URL( urlstr );
-										Image image = ImageIO.read( url );
+										BufferedImage image = (BufferedImage)ImageIO.read( url );
+										BufferedImage nimage = new BufferedImage( 120, (120*image.getHeight())/image.getWidth(), BufferedImage.TYPE_INT_RGB );
+										Graphics2D g2 = nimage.createGraphics();
+										g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+										g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+										g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+										g2.drawImage( image, 0, 0, nimage.getWidth(), nimage.getHeight(), 0, 0, image.getWidth(), image.getHeight(), null );
+										g2.dispose();
 										
-										faces.put(name, image);
+										faces.put(name, nimage);
 										
 										if( !big ) {
 											int selr = ptable.getSelectedRow();
@@ -2869,7 +2895,7 @@ public class Order extends JApplet {
 												String name = (String)ptable.getValueAt(selr, 4);
 												Order.this.image = getImage( name, false );
 											} else {
-												Order.this.image = image;
+												Order.this.image = nimage;
 											}
 											cpantanir.repaint();
 										} else {
@@ -3052,36 +3078,39 @@ public class Order extends JApplet {
 		
 		Order order = new Order();
 		
-		try {
-			Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
-			fieldSysPath.setAccessible( true );
-			fieldSysPath.set( null, null );
-			
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			byte[] bb = new byte[2048];
-			InputStream is = System.getProperty("sun.arch.data.model").contains("64") ? order.getClass().getResourceAsStream("/windows_x64/sqljdbc_auth.dll") : order.getClass().getResourceAsStream("/windows_x86/sqljdbc_auth.dll");
-			int r = is.read(bb);
-			while( r > 0 ) {
-				baos.write(bb, 0, r);
-				r = is.read( bb );
+		String OS = System.getProperty("os.name").toLowerCase();
+		if( OS.indexOf("win") >= 0 ) {
+			try {
+				Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
+				fieldSysPath.setAccessible( true );
+				fieldSysPath.set( null, null );
+				
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				byte[] bb = new byte[2048];
+				InputStream is = System.getProperty("sun.arch.data.model").contains("64") ? order.getClass().getResourceAsStream("/windows_x64/sqljdbc_auth.dll") : order.getClass().getResourceAsStream("/windows_x86/sqljdbc_auth.dll");
+				int r = is.read(bb);
+				while( r > 0 ) {
+					baos.write(bb, 0, r);
+					r = is.read( bb );
+				}
+				is.close();
+				Path path = Paths.get( userhome );
+				Path subpath = path.resolve("sqljdbc_auth.dll");
+				Files.write( subpath, baos.toByteArray(), StandardOpenOption.CREATE );
+				String strpath = subpath.toAbsolutePath().toString();
+				System.err.println( "writing " + strpath );
+				System.load( strpath );
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (NoSuchFieldException e) {
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
 			}
-			is.close();
-			Path path = Paths.get( userhome );
-			Path subpath = path.resolve("sqljdbc_auth.dll");
-			Files.write( subpath, baos.toByteArray(), StandardOpenOption.CREATE );
-			String strpath = subpath.toAbsolutePath().toString();
-			System.err.println( "writing " + strpath );
-			System.load( strpath );
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
 		}
 		
 		order.initGUI( frame );

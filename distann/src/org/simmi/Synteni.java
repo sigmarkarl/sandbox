@@ -37,9 +37,11 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import org.simmi.shared.Annotation;
 import org.simmi.shared.Contig;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 
 public class Synteni {
@@ -142,9 +144,9 @@ public class Synteni {
 					g.fillRect( 0, h, this.getWidth(), 1 );
 					
 					int loc = 0;
-					List<Contig>	cannset = geneset.speccontigMap.get( spec );
-					for( Contig c : cannset ) {
-						loc += c.getGeneCount();
+					List<Sequence>	cannset = geneset.speccontigMap.get( spec );
+					for( Sequence c : cannset ) {
+						loc += c.getAnnotationCount();
 						
 						int nloc = loc*this.getWidth()/FASTI;
 						g.fillRect( nloc, h-2, 1, 5 );
@@ -153,7 +155,7 @@ public class Synteni {
 				
 				String selsyn = (String)geneset.syncolorcomb.getSelectedItem();
 				if( selsyn != null && selsyn.length() > 0 ) {
-					List<Contig> scannset = geneset.speccontigMap.get(selsyn);
+					List<Sequence> scannset = geneset.speccontigMap.get(selsyn);
 					for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 						int l = rowheader.convertRowIndexToModel( k );
 						String spec = selspec.get( l );
@@ -161,8 +163,8 @@ public class Synteni {
 						int h = k*rowheader.getRowHeight()+rowheader.getRowHeight()/2;
 						
 						int loc = 0;
-						List<Contig>	cannset = geneset.speccontigMap.get( spec );
-						for( Contig c : cannset ) {
+						List<Sequence>	cannset = geneset.speccontigMap.get( spec );
+						for( Sequence c : cannset ) {
 							if( c.getAnnotations() != null ) {
 								if( c.isReverse() ) {
 									for( int i = c.getAnnotations().size()-1; i >= 0; i-- ) {
@@ -181,7 +183,7 @@ public class Synteni {
 									}
 								} else {
 									for( int i = 0; i < c.getAnnotations().size(); i++ ) {
-										Tegeval tv = (Tegeval)c.getAnnotation(i);
+										Annotation tv = c.getAnnotation(i);
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										
 										if( gg != null ) {
@@ -204,7 +206,7 @@ public class Synteni {
 										}
 									}
 								}
-								loc += c.getGeneCount();
+								loc += c.getAnnotationCount();
 								
 								//int nloc = loc*this.getWidth()/3000;
 								//g.fillRect( nloc, h-2, 1, 5 );
@@ -317,7 +319,7 @@ public class Synteni {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
-					Set<Tegeval>	ste = new HashSet<Tegeval>();
+					Set<Annotation>	ste = new HashSet<Annotation>();
 					int[] rr = rowheader.getSelectedRows();
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );

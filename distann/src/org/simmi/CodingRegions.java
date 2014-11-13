@@ -25,6 +25,7 @@ import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Contig;
+import org.simmi.shared.Sequence;
 
 public class CodingRegions {
 	public void coderegPlot( GeneSet geneset, Container comp ) {
@@ -82,7 +83,7 @@ public class CodingRegions {
 		final BufferedImage bimg = new BufferedImage( 2048, 2048, BufferedImage.TYPE_INT_ARGB );
 		final Graphics2D g2 = bimg.createGraphics();
 		
-		final List<Contig> contigs = geneset.speccontigMap.get( spec );
+		final List<Sequence> contigs = geneset.speccontigMap.get( spec );
 		draw( g2, spec, geneset, bimg.getWidth(), bimg.getHeight(), contigs );
 		JComponent cmp = new JComponent() {
 			public void paintComponent( Graphics g ) {
@@ -117,7 +118,7 @@ public class CodingRegions {
 		frame.setVisible( true );
 	}
 	
-	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Contig> contigs ) {		
+	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Sequence> contigs ) {		
 		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
         g2.setBackground( Color.white );
@@ -125,13 +126,13 @@ public class CodingRegions {
 		g2.setColor( Color.black );
 		
 		int total = 0;
-		for( Contig ctg : contigs ) {
+		for( Sequence ctg : contigs ) {
 			total += ctg.length();
 		}
 		System.err.println( total );
 		
 		int count = 0;
-		for( Contig ctg : contigs ) {
+		for( Sequence ctg : contigs ) {
 			if( ctg.getAnnotations() != null ) {
 				for( Annotation tv : ctg.getAnnotations() ) {						
 					//double theta = count*Math.PI*2.0/total;
