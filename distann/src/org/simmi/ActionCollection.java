@@ -89,7 +89,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.GeneSet.StackBarData;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Cog;
-import org.simmi.shared.Contig;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -193,7 +193,7 @@ public class ActionCollection {
 		return restext;
 	}
 	
-	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Contig>> speccontigMap, boolean withHtml ) {
+	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Sequence>> speccontigMap, boolean withHtml ) {
 		final StringWriter fw = new StringWriter();
 		if( withHtml ) fw.write("<html><head></head><body>");
 		fw.write("<table border=1><tr><td>Species</td>");
@@ -210,15 +210,15 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>DNA, total number of bases</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			
-			for( Contig c : lcont ) {
+			for( Sequence c : lcont ) {
 				System.err.println( c );
 			}
 			
 			int len = 0;
 			if( lcont != null )
-			for( Contig ct : lcont ) {
+			for( Sequence ct : lcont ) {
 				len += ct.length();
 			}
 			fw.write( "<td>"+len+"</td>" );
@@ -226,10 +226,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>DNA coding number of bases</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int len = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				total += ct.length();
 				if( ct.getAnnotations() != null ) for( Annotation ann : ct.getAnnotations() ) {
 					len += ann.getLength();
@@ -242,10 +242,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>DNA, G+C number of bases</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int len = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				total += ct.length();
 				len += ct.getGCCount();
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
@@ -259,16 +259,16 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>DNA contigs</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int size = lcont != null ? lcont.size() : 0;
 			fw.write( "<td>"+size+"</td>" );
 			fw.write( "<td>100%</td>" );
 		}
 		fw.write("</tr><tr><td>Genes total number</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) total += ct.getAnnotations().size();
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
@@ -279,10 +279,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) count++;
@@ -297,10 +297,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>RNA genes</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type != null && ann.type.contains("rna") ) count++;
@@ -315,10 +315,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>rRNA genes</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type != null && ann.type.contains("rrna") ) count++;
@@ -333,10 +333,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>5S rRNA</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -353,10 +353,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>16S rRNA</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -383,10 +383,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>23S rRNA</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -406,10 +406,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>tRNA genes</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if( ann.type != null && ann.type.contains("trna") ) count++;
@@ -424,10 +424,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -446,10 +446,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes with function prediction</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -468,10 +468,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes with enzymes</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -498,10 +498,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes with COG function prediction</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -530,10 +530,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes connected to MetaCyc pathways</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -557,10 +557,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG reactions</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -596,10 +596,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -695,10 +695,10 @@ public class ActionCollection {
 		}
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG Orthology (KO)</td>");
 		for( String spec : selspecs) {
-			List<Contig> lcont = speccontigMap.get(spec);
+			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
-			if( lcont != null ) for( Contig ct : lcont ) {
+			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
@@ -775,7 +775,7 @@ public class ActionCollection {
 	
 	public static void addAll( JMenu menu, 
 			final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, 
-			final GeneSet geneset, final Map<String,List<Contig>> speccontigMap, 
+			final GeneSet geneset, final Map<String,List<Sequence>> speccontigMap, 
 			final JTable table, final Container comp, final ChatServer cs ) {
 		//JButton matrixbutton = new JButton(matrixaction);
 		
@@ -1364,19 +1364,19 @@ public class ActionCollection {
 					cell.setCellValue("GC%");
 					
 					int k = 0;
-					List<Contig> sctg = geneset.speccontigMap.get(spc);
+					List<Sequence> sctg = geneset.speccontigMap.get(spc);
 					
 					cell = row1.createCell(i);
 					cell.setCellValue( sctg.size() );
 					
-					Collections.sort( sctg, new Comparator<Contig>() {
+					Collections.sort( sctg, new Comparator<Sequence>() {
 						@Override
-						public int compare(Contig o1, Contig o2) {
+						public int compare(Sequence o1, Sequence o2) {
 							return o2.length() - o1.length();
 						}
 					});
 					
-					for( Contig ctg : sctg ) {
+					for( Sequence ctg : sctg ) {
 						Row nrow;
 						if( k >= rows.size() ) {
 							nrow = sheet.createRow(k+2);
@@ -1389,7 +1389,7 @@ public class ActionCollection {
 						Cell ctlen = nrow.createCell(i+1);
 						ctlen.setCellValue( ctg.length() );
 						Cell ctgen = nrow.createCell(i+2);
-						ctgen.setCellValue( ctg.getGeneCount() );
+						ctgen.setCellValue( ctg.getAnnotationCount() );
 						Cell ctctg = nrow.createCell(i+3);
 						ctctg.setCellValue( ctg.getNumberOfSubContigs() );
 						Cell ctpla = nrow.createCell(i+4);
@@ -1423,15 +1423,15 @@ public class ActionCollection {
 				
 				for( int y = 0; y < speclist.size(); y++ ) {
 					String spec1 = speclist.get(y);
-					List<Contig> lcont1 = speccontigMap.get( spec1 );
+					List<Sequence> lcont1 = speccontigMap.get( spec1 );
 					
 					for( int x = y+1; x < speclist.size(); x++ ) {
 						String spec2 = speclist.get(x);
 					
 						int count = 0;
 						
-						for( Contig c : lcont1 ) {
-							List<Annotation> ltv = c.getTegevalsList();
+						for( Sequence c : lcont1 ) {
+							List<Annotation> ltv = c.getAnnotations();
 							if( ltv != null ) {
 								Tegeval prev = null;
 								for( Annotation ann : ltv ) {
@@ -1443,8 +1443,10 @@ public class ActionCollection {
 										List<Tegeval> ltv2 = gg.getTegevals( spec2 );
 										boolean bp = true;
 										for( Tegeval tv2 : ltv2 ) {
-											GeneGroup fwgg = tv2.getNext() != null ? tv2.getNext().getGene().getGeneGroup() : null;
-											GeneGroup bkgg = tv2.getPrevious() != null ? tv2.getPrevious().getGene().getGeneGroup() : null;
+											Annotation anext = tv2.getNext();
+											Annotation aprev = tv2.getPrevious();
+											GeneGroup fwgg = anext != null && anext instanceof Tegeval ? ((Tegeval)anext).getGene().getGeneGroup() : null;
+											GeneGroup bkgg = aprev != null && aprev instanceof Tegeval ? ((Tegeval)aprev).getGene().getGeneGroup() : null;
 											if( pg.equals( fwgg ) || pg.equals( bkgg ) ) {
 												bp = false;
 												break;
@@ -1511,7 +1513,7 @@ public class ActionCollection {
 								//int sec = tv.cont.indexOf("_", first + 1);
 
 								//String cname = tv.cont.substring(0, sec);
-								//contigmap.put(cname, new Contig(cname));
+								//contigmap.put(cname, new Sequence(cname));
 					}
 					Tegeval.locsort = true;
 					Collections.sort(ltv);
@@ -1531,7 +1533,7 @@ public class ActionCollection {
 									//int sec = tv.cont.indexOf("_", first + 1);
 
 									//String cname = tv.cont.substring(0, sec);
-									//contigmap.put(cname, new Contig(cname));
+									//contigmap.put(cname, new Sequence(cname));
 						}
 						Tegeval.locsort = true;
 						Collections.sort(subltv);
@@ -2114,12 +2116,12 @@ public class ActionCollection {
 					int total = 0;
 					
 					if( contigs.isSelected() ) {
-						Contig ct = geneset.contigmap.get( spec );
+						Sequence ct = geneset.contigmap.get( spec );
 						total = ct.length();
 						//len = ct.getGCCount();
 					} else {
-						List<Contig> lcont = speccontigMap.get(spec);
-						for( Contig ct : lcont ) {
+						List<Sequence> lcont = speccontigMap.get(spec);
+						for( Sequence ct : lcont ) {
 							total += ct.length();
 							//len += ct.getGCCount();
 						}
@@ -2219,14 +2221,14 @@ public class ActionCollection {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                	 geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Contig sizes" : "Genome sizes" );
+					                	 geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" );
 					                 }
 					            });
 							} else {
 								Platform.runLater(new Runnable() {
 					                 @Override
 					                 public void run() {
-					                	 geneset.initBarChart( null, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Contig sizes" : "Genome sizes" );
+					                	 geneset.initBarChart( null, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" );
 					                 }
 					            });
 							}						
@@ -2254,9 +2256,9 @@ public class ActionCollection {
 				for( String spec : selspec ) {
 					restext.append( ",\n['"+spec+"', " );
 					
-					List<Contig> lcont = speccontigMap.get(spec);
+					List<Sequence> lcont = speccontigMap.get(spec);
 					int total = 0;
-					for( Contig ct : lcont ) {
+					for( Sequence ct : lcont ) {
 						if( ct.getAnnotations() != null ) total += ct.getAnnotations().size();
 						/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 							len += tv.getLength();
@@ -2455,12 +2457,12 @@ public class ActionCollection {
 					int total = 0;
 					
 					if( contigs.isSelected() ) {
-						Contig ct = geneset.contigmap.get( spec );
+						Sequence ct = geneset.contigmap.get( spec );
 						total = ct.length();
 						len = ct.getGCCount();
 					} else {
-						List<Contig> lcont = speccontigMap.get(spec);
-						for( Contig ct : lcont ) {
+						List<Sequence> lcont = speccontigMap.get(spec);
+						for( Sequence ct : lcont ) {
 							total += ct.length();
 							len += ct.getGCCount();
 							/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
@@ -2723,7 +2725,7 @@ public class ActionCollection {
 				
 				r = table.getSelectedRow();
 				final String selspec = (String)table.getValueAt( r, 0 );
-				final List<Contig>	clist = speccontigMap.get( selspec );
+				final List<Sequence>	clist = speccontigMap.get( selspec );
 				
 				model = new TableModel() {
 					@Override
@@ -2743,7 +2745,7 @@ public class ActionCollection {
 
 					@Override
 					public Class<?> getColumnClass(int columnIndex) {
-						return Contig.class;
+						return Sequence.class;
 					}
 
 					@Override
@@ -2777,7 +2779,7 @@ public class ActionCollection {
 				c2.add( scroll );
 				JOptionPane.showMessageDialog(comp, c2);
 				
-				final List<Contig> selclist = new ArrayList<Contig>();
+				final List<Sequence> selclist = new ArrayList<Sequence>();
 				int[] rr = table.getSelectedRows();
 				for( int row : rr ) {
 					i = table.convertRowIndexToModel( row );
@@ -2787,7 +2789,7 @@ public class ActionCollection {
 				int size = 0;
 				final Graphics2D g2 = bimg.createGraphics();
 				g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-				for( Contig ctg : selclist ) {
+				for( Sequence ctg : selclist ) {
 					size += ctg.length();
 				}
 				g2.setColor( Color.white );
@@ -2805,11 +2807,11 @@ public class ActionCollection {
 				popup.add( new AbstractAction("Auto invert") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						Map<Contig,Double>	val = new HashMap<Contig,Double>();
+						Map<Sequence,Double>	val = new HashMap<Sequence,Double>();
 						int total = 0;
 						//boolean[] boo = new boolean[ selclist.size() ];
 						//Arrays.fill(boo, false);
-						for( Contig ctg : selclist ) {
+						for( Sequence ctg : selclist ) {
 							for( int i = 0; i < ctg.length(); i+=500 ) {
 								int gcount = 0;
 								int ccount = 0;
@@ -2844,7 +2846,7 @@ public class ActionCollection {
 						for( int i = 0; i < Math.pow(2.0, selclist.size()); i++ ) {
 							double dval = 0.0;
 							int k = 0;
-							for( Contig ctg : selclist ) {
+							for( Sequence ctg : selclist ) {
 								double calc = 0.0;
 								if( val.containsKey(ctg) ) calc = val.get(ctg);//*ctg.length();
 								else {
@@ -2861,7 +2863,7 @@ public class ActionCollection {
 						}
 						
 						int i = 0;
-						for( Contig ctg : selclist ) {
+						for( Sequence ctg : selclist ) {
 							if( (mini & (1 << i)) > 0 ) ctg.setReverse( !ctg.isReverse() );
 							i++;
 						}
@@ -2872,7 +2874,7 @@ public class ActionCollection {
 				popup.add( new AbstractAction("Auto connect") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						for( Contig ctg : selclist ) {
+						for( Sequence ctg : selclist ) {
 							
 						}
 					}
@@ -2937,7 +2939,7 @@ public class ActionCollection {
 				c.addMouseListener( new MouseListener() {
 					int x;
 					int y;
-					Contig sctg;
+					Sequence sctg;
 					
 					@Override
 					public void mouseReleased(MouseEvent e) {
@@ -2949,8 +2951,8 @@ public class ActionCollection {
 							int val = (int)( (double)(horn*fsize)/(double)(2*Math.PI) );
 							
 							int tot = 0;
-							Contig sctg2 = null;
-							for( Contig ctg : selclist ) {
+							Sequence sctg2 = null;
+							for( Sequence ctg : selclist ) {
 								if( tot > val ) break;
 								tot += ctg.length();
 								sctg2 = ctg;
@@ -2978,7 +2980,7 @@ public class ActionCollection {
 						int val = (int)( (double)(horn*fsize)/(double)(2*Math.PI) );
 						
 						int tot = 0;
-						for( Contig ctg : selclist ) {
+						for( Sequence ctg : selclist ) {
 							if( tot > val ) break;
 							tot += ctg.length();
 							sctg = ctg;
@@ -3709,7 +3711,7 @@ public class ActionCollection {
 			public void actionPerformed(ActionEvent e) {
 				Set<GeneGroup>	ggset = new HashSet<GeneGroup>();
 				for( String str : geneset.contigmap.keySet() ) {
-					Contig c = geneset.contigmap.get( str );
+					Sequence c = geneset.contigmap.get( str );
 					
 					if( c != null && c.getAnnotations() != null && c.getAnnotations().size() > 0 ) {
 						ggset.add( ((Tegeval)c.getAnnotation( 0 )).getGene().getGeneGroup() );
@@ -3745,7 +3747,7 @@ public class ActionCollection {
 				
 				ctgs.setSelected( true );
 				
-				List<Contig> contigs = geneset.getSelspecContigs( complist );
+				List<Sequence> contigs = geneset.getSelspecContigs( complist );
 				//int[] rr = ctable.getSelectedRows();
 				
 				JFrame frame = new JFrame();
@@ -3754,9 +3756,9 @@ public class ActionCollection {
 				
 				if( check.isSelected() ) {
 					JTextArea	text = new JTextArea();
-					for( Contig ctg : contigs ) {
+					for( Sequence ctg : contigs ) {
 						//int i = ctable.convertRowIndexToModel( row );
-						//Contig ctg = contigs.get( i );
+						//Sequence ctg = contigs.get( i );
 						if( ctg.getAnnotations() != null ) {
 							if( ctg.isReverse() ) {
 								Tegeval tv0 = (Tegeval)ctg.getAnnotation(0);
@@ -3790,9 +3792,9 @@ public class ActionCollection {
 					jf.initGui(frame);
 
 					if( gaps.isSelected() ) {
-						for( Contig ctg : contigs ) {
+						for( Sequence ctg : contigs ) {
 							//int i = ctable.convertRowIndexToModel( row );
-							//Contig ctg = contigs.get( i );
+							//Sequence ctg = contigs.get( i );
 							
 							List<Integer> starts = new ArrayList<Integer>();
 							List<Integer> stops = new ArrayList<Integer>();
@@ -3822,9 +3824,9 @@ public class ActionCollection {
 							}
 						}
 					} else {
-						for( Contig ctg : contigs ) {
+						for( Sequence ctg : contigs ) {
 							//int i = ctable.convertRowIndexToModel( row );
-							//Contig ctg = contigs.get( i );
+							//Sequence ctg = contigs.get( i );
 							Sequence seq = new Sequence(ctg.getName(), null);
 							if( ctg.length() <= 200 ) {
 								seq.append( ctg.sb );
@@ -3850,9 +3852,9 @@ public class ActionCollection {
 		AbstractAction showcontigsaction = new AbstractAction("Show contigs") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				final List<Contig>	allcontigs = new ArrayList<Contig>();
+				final List<Sequence>	allcontigs = new ArrayList<Sequence>();
 				for( String spec : speccontigMap.keySet() ) {
-					List<Contig>	ctgs = speccontigMap.get( spec );
+					List<Sequence>	ctgs = speccontigMap.get( spec );
 					allcontigs.addAll( ctgs );
 				}
 				
@@ -3869,7 +3871,7 @@ public class ActionCollection {
 
 					@Override
 					public String getColumnName(int columnIndex) {
-						return "Contig";
+						return "Sequence";
 					}
 
 					@Override
@@ -3919,7 +3921,7 @@ public class ActionCollection {
 				int[] rr = table.getSelectedRows();
 				for( int r : rr ) {
 					int i = table.convertRowIndexToModel( r );
-					Contig ctg = allcontigs.get( i );
+					Sequence ctg = allcontigs.get( i );
 					serifier.addSequence( ctg );
 				}
 				
