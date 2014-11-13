@@ -573,7 +573,7 @@ public class GeneSet extends JApplet {
 					
 					name = lname.substring(u+1, i).trim();
 					
-					u = Contig.specCheck( contigstr );
+					u = Sequence.specCheck( contigstr );
 					
 					if( u == -1 ) {
 						u = Serifier.contigIndex( contigstr );
@@ -627,7 +627,7 @@ public class GeneSet extends JApplet {
 				
 				if( !refmap.containsKey(id) ) {
 					Tegeval tv = new Tegeval();
-					Contig contig;
+					Sequence contig;
 					if( contigmap.containsKey( contigstr ) ) {
 						contig = contigmap.get( contigstr );
 					} else {
@@ -641,7 +641,7 @@ public class GeneSet extends JApplet {
 					aas.put( lname, tv );
 					
 					//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
-					contig.add( tv );
+					contig.addAnnotation( tv );
 					
 					String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 					Gene gene = new Gene( null, id, newname, origin );
@@ -703,7 +703,7 @@ public class GeneSet extends JApplet {
 				} else {
 					Gene g = refmap.get(id);
 					
-					Contig contig;
+					Sequence contig;
 					if( contigmap.containsKey( contigstr ) ) {
 						contig = contigmap.get( contigstr );
 					} else {
@@ -711,7 +711,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					g.tegeval.init( lname, contig, contloc, start, stop, dir );
-					contig.add( g.tegeval );
+					contig.addAnnotation( g.tegeval );
 					//g.tegeval.name = line;
 					//ac.setName( lname );
 					//tv.setAlignedSequence( ac );
@@ -829,7 +829,7 @@ public class GeneSet extends JApplet {
 						
 						name = lname.substring(u+1, i).trim();
 						
-						u = Contig.specCheck( contigstr );
+						u = Sequence.specCheck( contigstr );
 						
 						if( u == -1 ) {
 							/*u = contigstr.indexOf("contig");
@@ -908,7 +908,7 @@ public class GeneSet extends JApplet {
 					}*/
 					
 					if( !refmap.containsKey(id) ) {
-						Contig contig = null;
+						Sequence contig = null;
 						if( contigstr != null ) {
 							if( contigmap.containsKey( contigstr ) ) {
 								contig = contigmap.get( contigstr );
@@ -924,7 +924,7 @@ public class GeneSet extends JApplet {
 						aas.put( lname, tv );
 						
 						//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
-						if( contig != null ) contig.add( tv );
+						if( contig != null ) contig.addAnnotation( tv );
 						
 						String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 						Gene gene = new Gene( null, id, newname, origin );
@@ -1015,8 +1015,8 @@ public class GeneSet extends JApplet {
 						gene.tegeval = tv;
 						
 						/*if( preval != null ) {
-							Contig precontig = preval.getContshort();
-							Contig curcontig = tv.getContshort();
+							Sequence precontig = preval.getContshort();
+							Sequence curcontig = tv.getContshort();
 							boolean bu = precontig.equals( curcontig );
 							//System.err.println( bu + "  " + precontig.toString().equals( curcontig.toString()) + "  " + (precontig == curcontig) );
 							if( bu ) {
@@ -1114,7 +1114,7 @@ public class GeneSet extends JApplet {
 				}
 				name = lname.substring(u+1, i).trim();
 				
-				u = Contig.specCheck( contigstr );
+				u = Sequence.specCheck( contigstr );
 				
 				if( u == -1 ) {
 					u = Serifier.contigIndex( contigstr );
@@ -1161,7 +1161,7 @@ public class GeneSet extends JApplet {
 			}
 			
 			if( !refmap.containsKey(id) ) {
-				Contig contig = null;
+				Sequence contig = null;
 				if( contigstr != null ) {
 					if( contigmap.containsKey( contigstr ) ) {
 						contig = contigmap.get( contigstr );
@@ -1174,7 +1174,7 @@ public class GeneSet extends JApplet {
 				//tv.setAlignedSequence( ac );
 				aas.put(lname, tv );
 				
-				if( contig != null ) contig.add( tv );
+				if( contig != null ) contig.addAnnotation( tv );
 				// aass.add( new Aas(name, ac, start, stop, dir) );
 				
 				String newname = addname.length() == 0 ? name : addname.substring(1);
@@ -1213,7 +1213,7 @@ public class GeneSet extends JApplet {
 	
 	public void sortLoci() {
 		for( String cstr : contigmap.keySet() ) {
-			Contig ct = contigmap.get( cstr );
+			Sequence ct = contigmap.get( cstr );
 			ct.sortLocs();
 		}
 	}
@@ -1232,19 +1232,19 @@ public class GeneSet extends JApplet {
 						System.err.println();
 					}*/
 					
-					Contig contig = new Contig( name, ac );
+					Sequence contig = new Contig( name, ac );
 					
 					String spec = contig.getSpec();
-					List<Contig>	ctlist;
+					List<Sequence>	ctlist;
 					if( speccontigMap.containsKey( spec ) ) {
 						ctlist = speccontigMap.get( spec );
 					} else {
-						ctlist = new ArrayList<Contig>();
+						ctlist = new ArrayList<Sequence>();
 						speccontigMap.put( spec, ctlist );
 					}
 					
 					boolean cont = false;
-					for( Contig c : ctlist ) {
+					for( Sequence c : ctlist ) {
 						if( c.name.equals(name) ) {
 							cont = true;
 							break;
@@ -1276,21 +1276,21 @@ public class GeneSet extends JApplet {
 		}
 		
 		if (ac.length() > 0) {
-			Contig contig = new Contig( name, ac );
+			Sequence contig = new Contig( name, ac );
 			contigmap.put( name, contig );
 			
-			List<Contig>	ctlist;
+			List<Sequence>	ctlist;
 			String spec = contig.getSpec();
 			
 			if( speccontigMap.containsKey( spec ) ) {
 				ctlist = speccontigMap.get( spec );
 			} else {
-				ctlist = new ArrayList<Contig>();
+				ctlist = new ArrayList<Sequence>();
 				speccontigMap.put( spec, ctlist );
 			}
 			
 			boolean cont = false;
-			for( Contig c : ctlist ) {
+			for( Sequence c : ctlist ) {
 				if( c.name.equals(name) ) {
 					cont = true;
 					break;
@@ -1304,30 +1304,30 @@ public class GeneSet extends JApplet {
 		}
 		
 		for( String spec : speccontigMap.keySet() ) {
-			List<Contig> ctg = speccontigMap.get(spec);
+			List<Sequence> ctg = speccontigMap.get(spec);
 			
 			//System.err.println( spec + " " + ctg.size() );
 			
 			if( ctg.size() < 4 && ctg.size() > 1 ) {
-				Contig chrom = null;
-				for( Contig c : ctg ) {
+				Sequence chrom = null;
+				for( Sequence c : ctg ) {
 					if( chrom == null || c.length() > chrom.length() ) chrom = c;
 				}
-				for( Contig c : ctg ) {
+				for( Sequence c : ctg ) {
 					if( c != chrom ) c.plasmid = true;
 				}
 			} else {
-				for( Contig c : ctg ) {
+				for( Sequence c : ctg ) {
 					c.plasmid = plasmids.contains( c.toString() );
 				}
 			}
 		}
 		
 		for( String spec : speccontigMap.keySet() ) {
-			List<Contig> ctg = speccontigMap.get(spec);
+			List<Sequence> ctg = speccontigMap.get(spec);
 			
-			List<Contig> plasmids = new ArrayList<Contig>();
-			for( Contig c : ctg ) {
+			List<Sequence> plasmids = new ArrayList<Sequence>();
+			for( Sequence c : ctg ) {
 				if( c.isPlasmid() ) plasmids.add( c );
 			}
 			ctg.removeAll( plasmids );
@@ -5899,12 +5899,12 @@ public class GeneSet extends JApplet {
 		final Map<String,Integer>	blosumap = JavaFasta.getBlosumMap();
 		
 		if( spec1 != null && spec1.length() > 0 ) {
-			List<Contig> clist = speccontigMap.get(spec1);
+			List<Sequence> clist = speccontigMap.get(spec1);
 			int total = 0;
 			int ptotal = 0;
-			for( Contig ctg : clist ) {
-				if( ctg.isPlasmid() ) ptotal += ctg.getGeneCount();
-				else total += ctg.getGeneCount();
+			for( Sequence ctg : clist ) {
+				if( ctg.isPlasmid() ) ptotal += ctg.getAnnotationCount();
+				else total += ctg.getAnnotationCount();
 			}
 		
 			gc.draw(g2, spec1, GeneSet.this, 1024, 1024, clist, specList, blosumap, total, ptotal);
@@ -6142,7 +6142,7 @@ public class GeneSet extends JApplet {
 						g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 						
 						if( spec1 != null && spec1.length() > 0 ) {
-							List<Contig> clist = speccontigMap.get(spec1);
+							List<Sequence> clist = speccontigMap.get(spec1);
 							sg.drawImage( GeneSet.this, g2, spec1, clist, specList, w, h );
 						} else sg.drawImage( GeneSet.this, g2, null, null, specList, w, h );
 						
@@ -7228,12 +7228,12 @@ public class GeneSet extends JApplet {
 			
 			if( onlygenes ) {
 				genefilterset.add( gene.index );
-				Tegeval next = gene.tegeval.getNext();
+				Annotation next = gene.tegeval.getNext();
 				if( next != null ) {
 					Gene ng = next.getGene();
 					if( ng != null ) genefilterset.add( ng.index );
 				}
-				Tegeval prev = gene.tegeval.getPrevious();
+				Annotation prev = gene.tegeval.getPrevious();
 				if( prev != null ) {
 					Gene pg = prev.getGene();
 					if( pg != null ) genefilterset.add( pg.index );
@@ -7244,7 +7244,7 @@ public class GeneSet extends JApplet {
 			} else {
 				genefilterset.add( gg.index );
 				for( Gene g : gg.genes ) {
-					Tegeval next = g.tegeval.getNext();
+					Annotation next = g.tegeval.getNext();
 					if( next != null ) {
 						
 						/*Gene n = next.getGene();
@@ -7261,7 +7261,7 @@ public class GeneSet extends JApplet {
 							int tot = 0;
 							int mot = 0;
 							for( String cstr : contigmap.keySet() ) {
-								Contig ctg = contigmap.get( cstr );
+								Sequence ctg = contigmap.get( cstr );
 								if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
 									Gene gn = tv.getGene();
 									
@@ -7278,7 +7278,7 @@ public class GeneSet extends JApplet {
 							System.err.println();
 						}*/
 					}
-					Tegeval prev = g.tegeval.getPrevious();
+					Annotation prev = g.tegeval.getPrevious();
 					if( prev != null ) {
 						GeneGroup pgg = prev.getGene().getGeneGroup();
 						if( pgg != null ) genefilterset.add( pgg.index );
@@ -7316,7 +7316,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	public List getSelspecContigs( List<JComponent> complist, final String ... selspec ) {
-		List<Contig>				contigs = null;
+		List<Sequence>				contigs = null;
 		final List<String>			specs = new ArrayList<String>( speccontigMap.keySet() );
 		final JTable				stable = new JTable();
 		stable.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
@@ -7371,7 +7371,7 @@ public class GeneSet extends JApplet {
 				int 			r = stable.getSelectedRow();
 				String 			spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(r, 0);
 				if( spec != null ) {
-					List<Contig>	contigs = speccontigMap.get( spec );
+					List<Sequence>	contigs = speccontigMap.get( spec );
 					return contigs.size();
 				}
 				return 0;
@@ -7389,7 +7389,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
-				return Contig.class;
+				return Sequence.class;
 			}
 
 			@Override
@@ -7401,7 +7401,7 @@ public class GeneSet extends JApplet {
 			public Object getValueAt(int rowIndex, int columnIndex) {
 				int 		r = stable.getSelectedRow();
 				String 		spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(r, 0);
-				List<Contig>	contigs = speccontigMap.get( spec );
+				List<Sequence>	contigs = speccontigMap.get( spec );
 				return contigs.get(rowIndex);
 			}
 
@@ -7452,9 +7452,9 @@ public class GeneSet extends JApplet {
 			int 			sr = stable.getSelectedRow();
 			String 			spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(sr, 0);
 			if( spec != null ) {
-				List<Contig> ctgs = speccontigMap.get( spec );
+				List<Sequence> ctgs = speccontigMap.get( spec );
 				rr = ctable.getSelectedRows();
-				contigs = new ArrayList<Contig>();
+				contigs = new ArrayList<Sequence>();
 				for( int r : rr ) {
 					int i = ctable.convertRowIndexToModel(r);
 					contigs.add( ctgs.get(i) );
@@ -7474,7 +7474,7 @@ public class GeneSet extends JApplet {
 		JScrollPane	scroll = new JScrollPane( table );
 		table.setAutoCreateRowSorter( true );
 		
-		final List<Contig> ctgs = new ArrayList<Contig>( contigmap.values() );
+		final List<Sequence> ctgs = new ArrayList<Sequence>( contigmap.values() );
 		final TableModel contigmodel = new TableModel() {
 			@Override
 			public int getRowCount() {
@@ -8016,11 +8016,11 @@ public class GeneSet extends JApplet {
 		jf.initGui(frame);
 
 		for( Tegeval tv : tset ) {
-			Contig cont = tv.getContshort();
+			Sequence cont = tv.getContshort();
 			if( cont != null ) {
 				String contig = cont.getSpec();//tv.getContig();
 				StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
-				Sequence seq = new Sequence( getGeneName(names, tv.getGene()), seqstr, serifier.mseq );
+				Sequence seq = new Sequence( nameFix(tv.getSpecies())/*getGeneName(names, tv.getGene())*/, seqstr, serifier.mseq );
 				serifier.addSequence(seq);
 			}
 		}
@@ -8126,7 +8126,7 @@ public class GeneSet extends JApplet {
 				//for (String sp : gg.species.keySet()) {
 				//	Teginfo stv = gg.species.get(sp);
 			for( Tegeval tv : ggroup.getTegevals() ) {
-				Contig cont = tv.getContshort();
+				Sequence cont = tv.getContshort();
 				if( cont != null ) {
 					String selspec = cont.getSpec();//tv.getContig();
 					if( specs == null || specs.contains(selspec ) ) {
@@ -8817,6 +8817,7 @@ public class GeneSet extends JApplet {
 						BufferedReader br = new BufferedReader( rdr );
 						String line = br.readLine();
 						while( line != null ) {
+							//System.err.println( line );
 							if( line.startsWith("> ") ) {
 								int i = line.indexOf(' ', 2);
 								if( i == -1 ) i = line.length();
@@ -8912,12 +8913,12 @@ public class GeneSet extends JApplet {
 					try {
 						OutputStream pos = mp.getOutputStream();
 						for( String cname : contigmap.keySet() ) {
-							Contig c = contigmap.get( cname );
+							Sequence c = contigmap.get( cname );
 							if( ids ) pos.write( (">" + c.id + "\n").getBytes() );
 							else {
 								pos.write( (">" + c.name + "\n").getBytes() );
 							}
-							StringBuilder sb = c.getSequenceString();
+							StringBuilder sb = c.getStringBuilder();
 							for( int i = 0; i < sb.length(); i+=70 ) {
 								pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
 							}
@@ -9016,7 +9017,7 @@ public class GeneSet extends JApplet {
 									rr.run( stuff );
 									//res += line+"\n";
 								}
-							} else*/ 
+							} //else*/
 							line = br.readLine();
 						}
 						br.close();
@@ -9371,7 +9372,7 @@ public class GeneSet extends JApplet {
 								label.setBackground( Color.green );
 								for( Tegeval tv : ti.tset ) {
 									String tspec = tv.getGene().getSpecies();
-									List<Contig> scontigs = speccontigMap.get( tspec );
+									List<Sequence> scontigs = speccontigMap.get( tspec );
 									GeneGroup gg = tv.getGene().getGeneGroup();
 									double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
 									if( ratio == -1 ) {
@@ -9388,7 +9389,7 @@ public class GeneSet extends JApplet {
 							} else if( value instanceof Tegeval ) {
 								Tegeval tv = (Tegeval)value;
 								String tspec = tv.getGene().getSpecies();
-								List<Contig> scontigs = speccontigMap.get( tspec );
+								List<Sequence> scontigs = speccontigMap.get( tspec );
 								GeneGroup gg = tv.getGene().getGeneGroup();
 								double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
 								if( ratio == -1 ) {
@@ -9401,7 +9402,7 @@ public class GeneSet extends JApplet {
 								}
 							}
 						} else {
-							List<Contig> contigs = speccontigMap.get( spec );
+							List<Sequence> contigs = speccontigMap.get( spec );
 							if( value instanceof Teginfo ) {
 								//Teginfo ti = (Teginfo)value;
 								label.setBackground( Color.green );
@@ -9426,10 +9427,10 @@ public class GeneSet extends JApplet {
 									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
 										int simcount = 0;
 										
-										Tegeval n = tv1.getNext();
-										Tegeval p = tv1.getPrevious();
-										Tegeval n2 = tv2.getNext();
-										Tegeval p2 = tv2.getPrevious();
+										Annotation n = tv1.getNext();
+										Annotation p = tv1.getPrevious();
+										Annotation n2 = tv2.getNext();
+										Annotation p2 = tv2.getPrevious();
 										
 										if( n != null ) {
 											GeneGroup ngg = n.getGene().getGeneGroup();
@@ -9483,10 +9484,10 @@ public class GeneSet extends JApplet {
 									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
 										int simcount = 0;
 										
-										Tegeval n = tv1.getNext();
-										Tegeval p = tv1.getPrevious();
-										Tegeval n2 = tv.getNext();
-										Tegeval p2 = tv.getPrevious();
+										Annotation n = tv1.getNext();
+										Annotation p = tv1.getPrevious();
+										Annotation n2 = tv.getNext();
+										Annotation p2 = tv.getPrevious();
 										
 										if( n != null ) {
 											GeneGroup ngg = n.getGene().getGeneGroup();
@@ -10560,7 +10561,7 @@ public class GeneSet extends JApplet {
 			@Override
 			public void sorterChanged(RowSorterEvent e) {
 				for (String cstr : contigmap.keySet()) {
-					Contig c = contigmap.get(cstr);
+					Sequence c = contigmap.get(cstr);
 					//c.count = 0;
 					c.loc = 0.0;
 				}
@@ -10570,9 +10571,9 @@ public class GeneSet extends JApplet {
 						Tegeval tv = g.tegeval;
 							// int first = tv.cont.indexOf('_');
 							// int sec = tv.cont.indexOf('_',first+1);
-						Contig cont = tv.getContshort(); // tv.cont.substring(0,sec);
+						Sequence cont = tv.getContshort(); // tv.cont.substring(0,sec);
 						if( cont != null && contigmap.containsKey(cont.getName()) ) {
-							Contig c = contigmap.get(cont.getName());
+							Sequence c = contigmap.get(cont.getName());
 							//c.count++;
 							int val = table.convertRowIndexToView(g.index);
 							c.loc += (double) val;
@@ -10711,7 +10712,7 @@ public class GeneSet extends JApplet {
 				int r = table.getSelectedRow();
 				int i = table.convertRowIndexToModel( r );
 				Gene g = genelist.get(i);
-				Contig contig = g.tegeval.getContshort();
+				Sequence contig = g.tegeval.getContshort();
 				String contigstr = contig.toString();
 				contig.plasmid = !plasmids.contains( contigstr );
 				if( contig.plasmid ) plasmids.add( contigstr );
@@ -12026,7 +12027,7 @@ public class GeneSet extends JApplet {
 		return splitpane;
 	}
 	
-	public void repaintGCSkew( List<Contig> selclist, Graphics2D g2, int size, GeneGroup gg, String selspec ) {
+	public void repaintGCSkew( List<Sequence> selclist, Graphics2D g2, int size, GeneGroup gg, String selspec ) {
 		g2.setColor( Color.white );
 		g2.fillRect(0, 0, 1024, 1024);
 		g2.setFont( g2.getFont().deriveFont(10.0f) );
@@ -12034,8 +12035,8 @@ public class GeneSet extends JApplet {
 		int g = 0;
 		int c = 0;
 		double gcstotal = 0.0;
-		for( Contig ctg : selclist ) {
-			//Contig ctg = clist.get( u );
+		for( Sequence ctg : selclist ) {
+			//Sequence ctg = clist.get( u );
 			if( gg != null ) {
 				for( Tegeval tv : gg.getTegevals() ) {
 					if( tv.getContshort() == ctg ) {					
@@ -12399,7 +12400,7 @@ public class GeneSet extends JApplet {
 				String cont = trim.substring(k+1, trim.length()-1);
 				String spec;
 				String contshort;
-				int u = Contig.specCheck( cont );
+				int u = Sequence.specCheck( cont );
 				
 				if( u == -1 ) {
 					u = Serifier.contigIndex(cont);
@@ -12451,7 +12452,7 @@ public class GeneSet extends JApplet {
 				Gene g = new Gene( gg, name, name, spec );
 				g.setIdStr( idstr );
 				
-				Contig contig = contigmap.get( cont );
+				Sequence contig = contigmap.get( cont );
 				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(1,trim.length()-1), contig, contshort, start, stop, rev ? -1 : 1 );
 				tegeval.type = tag;
 				g.setTegeval( tegeval );
@@ -12524,8 +12525,8 @@ public class GeneSet extends JApplet {
 				}
 				Gene g = new Gene( gg, cont+"_"+loc, name, spec );
 				
-				Contig contig = contigmap.get( cont );
-				/*Contig contig = null;
+				Sequence contig = contigmap.get( cont );
+				/*Sequence contig = null;
 				if( spec.contains("SG0") ) {
 					int us = spec.lastIndexOf('_');
 					us = spec.lastIndexOf('_', us-1);
@@ -12690,7 +12691,7 @@ public class GeneSet extends JApplet {
 			}
 			Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
 			
-			Contig contig = contigmap.get( cont );
+			Sequence contig = contigmap.get( cont );
 			Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
 			tegeval.type = "trna";
 			g.setTegeval( tegeval );
@@ -13068,7 +13069,7 @@ public class GeneSet extends JApplet {
 			/*int tot = 0;
 			int mot = 0;
 			for( String cstr : contigmap.keySet() ) {
-				Contig ctg = contigmap.get( cstr );
+				Sequence ctg = contigmap.get( cstr );
 				if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
 					Gene gn = tv.getGene();
 					
@@ -13103,7 +13104,7 @@ public class GeneSet extends JApplet {
 			
 			
 			/*for( String cstr : contigmap.keySet() ) {
-				Contig c = contigmap.get(cstr);
+				Sequence c = contigmap.get(cstr);
 				if( c.annset != null ) for( Annotation a : c.annset ) {
 					if( cstr.contains("00270") ) {
 						System.err.println( a.name );
@@ -13335,7 +13336,7 @@ public class GeneSet extends JApplet {
 						
 						String scont = cont.substring(b+1, u);
 						
-						int l = Contig.specCheck( scont );
+						int l = Sequence.specCheck( scont );
 						
 						if( l == -1 ) {
 							l = scont.indexOf("contig");
@@ -13518,7 +13519,7 @@ public class GeneSet extends JApplet {
 			
 			
 			/*for( String cstr : contigmap.keySet() ) {
-				Contig c = contigmap.get(cstr);
+				Sequence c = contigmap.get(cstr);
 				if( c.annset != null ) for( Annotation a : c.annset ) {
 					if( cstr.contains("00270") ) {
 						System.err.println( a.name );
@@ -13578,17 +13579,17 @@ public class GeneSet extends JApplet {
 				List<Tegeval> tegevals = gg.getTegevals();
 				
 				/*for( Tegeval te : tegevals ) {
-					Contig contig = te.getContshort();
+					Sequence contig = te.getContshort();
 										
 					//if( contig.getName().contains("antrani") && contig.getName().contains("contig00006") ) {
-					//	System.err.println( contig.getGeneCount() );
+					//	System.err.println( contig.getAnnotationCount() );
 					//}
 					
 					if( contig != null ) {
 						contig.add( te );
 						
 						if( te.getGene().getName().contains("Met") ) {
-							System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getGeneCount() );
+							System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getAnnotationCount() );
 						}
 						/*Tegeval ste = check( contig );
 						
@@ -13651,8 +13652,8 @@ public class GeneSet extends JApplet {
 			
 			for( String spec : speccontigMap.keySet() ) {
 				System.err.println( spec );
-				List<Contig> ctgs = speccontigMap.get( spec );
-				for( Contig c : ctgs ) {
+				List<Sequence> ctgs = speccontigMap.get( spec );
+				for( Sequence c : ctgs ) {
 					System.err.println( c );
 					int im = 0;
 					if( c.getAnnotations() != null ) for( Annotation tv : c.getAnnotations() ) {
@@ -13666,16 +13667,16 @@ public class GeneSet extends JApplet {
 				List<Tegeval> tegevals = gg.getTegevals();
 				
 				/*for( Tegeval te : tegevals ) {
-					Contig contig = te.getContshort();
+					Sequence contig = te.getContshort();
 					if( te.getGene().getName().contains("Met") ) {
-						System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getGeneCount() );
+						System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getAnnotationCount() );
 					}
 				}*/
 			}
 			
 			System.err.println("starting ......................................");
 			for( String str : speccontigMap.keySet() ) {
-				List<Contig> cts = speccontigMap.get(str);
+				List<Sequence> cts = speccontigMap.get(str);
 				System.err.println( str + "  " + cts.size() );
 			}
 			
@@ -13687,7 +13688,7 @@ public class GeneSet extends JApplet {
 				String line = br.readLine();
 				if( line != null ) line = br.readLine();
 				while( line != null ) {
-					Contig prevctg = null;
+					Sequence prevctg = null;
 					i = 0;
 					int ni1 = line.indexOf('/', i+1);
 					int ni2 = line.indexOf('\\', i+1);
@@ -13697,12 +13698,12 @@ public class GeneSet extends JApplet {
 					while( n != line.length() ) {
 						char c = line.charAt(i);
 						String ctgn = line.substring(i+1, n);
-						Contig ctg = contigmap.get( ctgn );
+						Sequence ctg = contigmap.get( ctgn );
 						
 						if( ctg != null ) {
 							String spec = ctg.getSpec();
 							
-							List<Contig> splct = speccontigMap.get( spec );
+							List<Sequence> splct = speccontigMap.get( spec );
 							
 							if( c == '\\' ) ctg.setReverse( true );
 							if( prevctg != null ) {
@@ -13733,9 +13734,9 @@ public class GeneSet extends JApplet {
 					}
 					char c = line.charAt(i);
 					String ctgn = line.substring(i+1, n);
-					Contig ctg = contigmap.get( ctgn );
+					Sequence ctg = contigmap.get( ctgn );
 					if( ctg != null ) {
-						List<Contig> splct = speccontigMap.get( ctg.getSpec() );
+						List<Sequence> splct = speccontigMap.get( ctg.getSpec() );
 						if( c == '\\' ) ctg.setReverse( true );
 						if( prevctg != null ) {
 							prevctg.setConnection( ctg, ctg.isReverse(), !prevctg.isReverse() );
@@ -13755,7 +13756,7 @@ public class GeneSet extends JApplet {
 			
 			System.err.println("starting ......................................");
 			for( String str : speccontigMap.keySet() ) {
-				List<Contig> cts = speccontigMap.get(str);
+				List<Sequence> cts = speccontigMap.get(str);
 				System.err.println( str + "  " + cts.size() );
 			}
 			System.err.println("ending ......................................");
@@ -14211,7 +14212,7 @@ public class GeneSet extends JApplet {
 		return showGeneTable(null, jb, comp, applet, selcomblocal);// clustInfoMap// );
 	}
 	
-	public Tegeval check( Contig contig ) {
+	public Tegeval check( Sequence contig ) {
 		for( GeneGroup sgg : allgenegroups ) {
 			for( Tegeval ste : sgg.getTegevals() ) {
 				if( ste.getContig() != null && ste.getContshort().equals( contig ) ) {
@@ -14301,8 +14302,8 @@ public class GeneSet extends JApplet {
 		//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
 		BufferedWriter bf = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
 		for( String spec : speccontigMap.keySet() ) {
-			List<Contig>	lct = speccontigMap.get( spec );
-			for( Contig ct : lct ) {
+			List<Sequence>	lct = speccontigMap.get( spec );
+			for( Sequence ct : lct ) {
 				bf.write( (ct.isReverse() ? "\\" : "/")+ct.getName() );
 			}
 			bf.write("\n");
@@ -14313,18 +14314,18 @@ public class GeneSet extends JApplet {
 		/*FileWriter fw = new FileWriter("/home/sigmar/sandbox/distann/src/contigorder.txt");
 		fw.write("co\n");
 		for( String spec : speccontigMap.keySet() ) {
-			List<Contig>	lct = speccontigMap.get( spec );
-			for( Contig ct : lct ) {
+			List<Sequence>	lct = speccontigMap.get( spec );
+			for( Sequence ct : lct ) {
 				fw.write( (ct.isReverse() ? "\\" : "/")+ct.getName() );
 			}
 			fw.write("\n");
 		}*/
 		
-		//Set<Contig>	saved = new HashSet<Contig>();
+		//Set<Sequence>	saved = new HashSet<Sequence>();
 		/*for( String cs : GeneSet.contigmap.keySet() ) {
-			Contig c = GeneSet.contigmap.get( cs );
+			Sequence c = GeneSet.contigmap.get( cs );
 			if( !saved.contains( c ) && (c.prev != null || c.next != null) ) {
-				Contig prev = c.isReverse() ? c.next : c.prev;
+				Sequence prev = c.isReverse() ? c.next : c.prev;
 				
 				int i = 0;
 				while( prev != null ) {
@@ -14342,7 +14343,7 @@ public class GeneSet extends JApplet {
 				i = 0;
 				saved.add( c );
 				fw.write( (c.isReverse() ? "\\" : "/") + c.name );
-				Contig next = c.isReverse() ? c.prev : c.next;
+				Sequence next = c.isReverse() ? c.prev : c.next;
 				while( next != null ) {
 					c = next;
 					saved.add( c );
@@ -14440,9 +14441,9 @@ public class GeneSet extends JApplet {
 			if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
 				for( String spec : lspec ) {
 					Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
-					List<Contig> contigs = speccontigMap.get(spec);
+					List<Sequence> contigs = speccontigMap.get(spec);
 					Serifier serifier = new Serifier();
-					for( Contig c : contigs ) {
+					for( Sequence c : contigs ) {
 						serifier.addSequence(c);
 						serifier.mseq.put(c.getName(), c);
 						
@@ -14473,9 +14474,9 @@ public class GeneSet extends JApplet {
 			}
 		} else {
 			Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
-			List<Contig> contigs = (List<Contig>)scl;
+			List<Sequence> contigs = (List<Sequence>)scl;
 			Serifier serifier = new Serifier();
-			for( Contig c : contigs ) {
+			for( Sequence c : contigs ) {
 				serifier.addSequence(c);
 				serifier.mseq.put(c.getName(), c);
 				
@@ -15785,7 +15786,7 @@ public class GeneSet extends JApplet {
 					if (jfc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 						File f = jfc.getSelectedFile();
 
-						Set<Contig> contset = new HashSet<Contig>();
+						Set<Sequence> contset = new HashSet<Sequence>();
 						int[] rr = table.getSelectedRows();
 						for (int r : rr) {
 							int cr = table.convertRowIndexToModel(r);
@@ -15795,7 +15796,7 @@ public class GeneSet extends JApplet {
 						}
 
 						FileWriter fw = new FileWriter(f);
-						for (Contig contig : contset) {
+						for (Sequence contig : contset) {
 							fw.append(">" + contig + "\n");
 							if (contigmap.containsKey(contig)) {
 								StringBuilder dna = contigmap.get(contig).getStringBuilder();
@@ -15826,7 +15827,7 @@ public class GeneSet extends JApplet {
 				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 				jf.initGui(frame);
 
-				Set<Contig> contset = new HashSet<Contig>();
+				Set<Sequence> contset = new HashSet<Sequence>();
 				Set<Tegeval> tvset = new HashSet<Tegeval>();
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
@@ -15842,13 +15843,13 @@ public class GeneSet extends JApplet {
 						for( Tegeval tv : gg.getTegevals() ) {
 							tv.color = Color.red;
 							tvset.add( tv );
-							Contig contig = tv.getContshort();
+							Sequence contig = tv.getContshort();
 							contset.add( contig );							
 							//serifier.addAnnotation( tv );
 						}
 					}
 					/*Sequence seq;
-					Contig contig = tv.getContshort();
+					Sequence contig = tv.getContshort();
 					/*if (contset.containsKey(contig)) {
 						seq = contset.get(contig);
 					} else {
@@ -15869,7 +15870,7 @@ public class GeneSet extends JApplet {
 					// seq.addAnnotation( new Annotation( seq, ) );
 				}
 
-				for (Contig contig : contset) {
+				for (Sequence contig : contset) {
 					int start = Integer.MAX_VALUE;
 					int stop = Integer.MIN_VALUE;
 					for( Tegeval tv : tvset ) {
@@ -15931,7 +15932,7 @@ public class GeneSet extends JApplet {
 				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 				jf.initGui(frame);
 
-				//Map<Contig, Sequence> contset = new HashMap<Contig, Sequence>();
+				//Map<Sequence, Sequence> contset = new HashMap<Sequence, Sequence>();
 				/*int[] rr = table.getSelectedRows();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
@@ -15941,7 +15942,7 @@ public class GeneSet extends JApplet {
 							Teginfo stv = gg.species.get(sp);
 							for (Tegeval tv : stv.tset) {
 								Sequence seq;
-								Contig contig = tv.getContshort();
+								Sequence contig = tv.getContshort();
 								if (contset.containsKey(contig)) {
 									seq = contset.get(contig);
 								} else {
@@ -15969,7 +15970,7 @@ public class GeneSet extends JApplet {
 					}
 				}*/
 
-				Set<Contig> contigs = new HashSet<Contig>();
+				Set<Sequence> contigs = new HashSet<Sequence>();
 				int[] rr = table.getSelectedRows();
 				for (int r : rr) {
 					int cr = table.convertRowIndexToModel(r);
@@ -15977,7 +15978,7 @@ public class GeneSet extends JApplet {
 						Gene g = genelist.get( cr );
 						Tegeval tv = g.tegeval;
 						tv.color = Color.red;
-						Contig contig = tv.getContshort();
+						Sequence contig = tv.getContshort();
 						contig.offset = -tv.start;
 						contigs.add( contig );
 						/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
@@ -15991,7 +15992,7 @@ public class GeneSet extends JApplet {
 						GeneGroup gg = allgenegroups.get( cr );
 						for( Tegeval tv : gg.getTegevals() ) {
 							tv.color = Color.red;
-							Contig contig = tv.getContshort();
+							Sequence contig = tv.getContshort();
 							contig.offset = -tv.start;
 							contigs.add( contig );					
 							/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
@@ -16010,7 +16011,7 @@ public class GeneSet extends JApplet {
 						//for (String sp : g.species.keySet()) {
 				}
 
-				for( Contig contig : contigs ) {
+				for( Sequence contig : contigs ) {
 					for( Annotation ann : contig.getAnnotations() ) {
 						serifier.addAnnotation( ann );
 					}
@@ -16039,9 +16040,9 @@ public class GeneSet extends JApplet {
 				jf.initGui(frame);
 				
 				for( String spec : selspec ) {
-					List<Contig> contigs = speccontigMap.get( spec );
+					List<Sequence> contigs = speccontigMap.get( spec );
 
-					for( Contig contig : contigs ) {
+					for( Sequence contig : contigs ) {
 						List<Annotation> lann = contig.getAnnotations();
 						if( lann != null ) for( Annotation ann : lann ) {
 							serifier.addAnnotation( ann );
@@ -16595,11 +16596,11 @@ public class GeneSet extends JApplet {
 					for( String spec : selspec ) {
 						Path p = Paths.get("/Users/sigmar/"+spec+".gbk");
 						//BufferedWriter fw = Files.newBufferedWriter( p );
-						List<Contig> clist = speccontigMap.get( spec );
+						List<Sequence> clist = speccontigMap.get( spec );
 						
 						Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
 						Serifier serifier = new Serifier();
-						for( Contig c : clist ) {
+						for( Sequence c : clist ) {
 							serifier.addSequence(c);
 							serifier.mseq.put(c.getName(), c);
 							
@@ -16652,8 +16653,8 @@ public class GeneSet extends JApplet {
 				for( Gene g : genelist ) {
 					if( !spec.equals( g.getSpecies() ) && g.getSpecies().contains("eggert") ) {
 						Tegeval tv2 = g.tegeval;
-						Tegeval n2 = tv2.getNext();
-						Tegeval p2 = tv2.getPrevious();
+						Annotation n2 = tv2.getNext();
+						Annotation p2 = tv2.getPrevious();
 						
 						GeneGroup gg = g.getGeneGroup();
 						
@@ -16667,8 +16668,8 @@ public class GeneSet extends JApplet {
 							for( Tegeval tv1 : ti.tset ) {
 								int simcount = 0;
 								
-								Tegeval n = tv1.getNext();
-								Tegeval p = tv1.getPrevious();
+								Annotation n = tv1.getNext();
+								Annotation p = tv1.getPrevious();
 								
 								GeneGroup ggg = tv1.getGene().getGeneGroup();
 								if( n2 != null ) {
@@ -16676,7 +16677,7 @@ public class GeneSet extends JApplet {
 										simcount++;
 									}
 									
-									Tegeval nn2 = n2.getNext();
+									Annotation nn2 = n2.getNext();
 									if( nn2 != null ) {
 										if( ggg == nn2.getGene().getGeneGroup() ) {
 											simcount++;
@@ -16689,7 +16690,7 @@ public class GeneSet extends JApplet {
 										simcount++;
 									}
 									
-									Tegeval pp2 = p2.getPrevious();
+									Annotation pp2 = p2.getPrevious();
 									if( pp2 != null ) {
 										if( ggg == pp2.getGene().getGeneGroup() ) {
 											simcount++;
@@ -16716,7 +16717,7 @@ public class GeneSet extends JApplet {
 										}
 									}
 									
-									Tegeval nn = n.getNext();
+									Annotation nn = n.getNext();
 									if( nn != null ) {
 										ngg = nn.getGene().getGeneGroup();
 										
@@ -16757,7 +16758,7 @@ public class GeneSet extends JApplet {
 										}
 									}
 									
-									Tegeval pp = p.getPrevious();
+									Annotation pp = p.getPrevious();
 									if( pp != null ) {
 										pgg = pp.getGene().getGeneGroup();
 										
@@ -16797,8 +16798,8 @@ public class GeneSet extends JApplet {
 					}
 					rr++;
 				}
-				/*List<Contig> contigs = speccontigMap.get( spec );
-				for( Contig c : contigs ) {
+				/*List<Sequence> contigs = speccontigMap.get( spec );
+				for( Sequence c : contigs ) {
 					for( Annotation ann : c.annset ) {
 						Tegeval tv = (Tegeval)ann;
 						
@@ -17242,34 +17243,34 @@ public class GeneSet extends JApplet {
 	}
 	
 	/*static class Connection {
-		Contig	contig;
+		Sequence	contig;
 		boolean	ori;
 	}*/
 
 	List<JSplitPane> 				splitpaneList = new ArrayList<JSplitPane>();
 
 	JFrame 							frame = new JFrame();
-	public Map<String, Contig> 		contigmap = new TreeMap<String, Contig>();
-	Map<String, List<Contig>>		speccontigMap = new TreeMap<String, List<Contig>>();
-	//Map<Contig, List<Tegeval>>		contigLocMap = new HashMap<Contig, List<Tegeval>>();
+	public Map<String, Sequence> 		contigmap = new TreeMap<String, Sequence>();
+	Map<String, List<Sequence>>		speccontigMap = new TreeMap<String, List<Sequence>>();
+	//Map<Sequence, List<Tegeval>>		contigLocMap = new HashMap<Sequence, List<Tegeval>>();
 	//static final List<Tegeval> 	ltv = new ArrayList<Tegeval>();
-	//final List<Contig> 			contigs = new ArrayList<Contig>();
+	//final List<Sequence> 			contigs = new ArrayList<Sequence>();
 	
 	/**
 	 * Deprecated
 	 * @param species
 	 * @return
 	 */
-	public Map<String,List<Contig>> getSpecContigMap( Collection<String> species ) {
-		final Map<String,List<Contig>>	specContMap = new HashMap<String,List<Contig>>();
+	public Map<String,List<Sequence>> getSpecContigMap( Collection<String> species ) {
+		final Map<String,List<Sequence>>	specContMap = new HashMap<String,List<Sequence>>();
 		for( String ctname : contigmap.keySet() ) {
 			for( String spec : species ) {
 				if( ctname.contains( spec ) ) {
-					List<Contig>	contlist;
+					List<Sequence>	contlist;
 					if( specContMap.containsKey( spec ) ) {
 						contlist = specContMap.get( spec );
 					} else {
-						contlist = new ArrayList<Contig>();
+						contlist = new ArrayList<Sequence>();
 						specContMap.put( spec, contlist );
 					}
 					contlist.add( contigmap.get( ctname ) );
@@ -17280,15 +17281,15 @@ public class GeneSet extends JApplet {
 		return specContMap;
 	}
 	
-	public int getGlobalIndex( Tegeval tv ) {
+	public int getGlobalIndex( Annotation tv ) {
 		int count = 0;
-		List<Contig>	ctlist = speccontigMap.get( tv.getContshort().getSpec() );
+		List<Sequence>	ctlist = speccontigMap.get( tv.getContig().getSpec() );
 		
-		if( ctlist != null ) for( Contig ct : ctlist ) {
-			if( ct != tv.getContshort() ) {
-				count += ct.getGeneCount();
+		if( ctlist != null ) for( Sequence ct : ctlist ) {
+			if( ct != tv.getContig() ) {
+				count += ct.getAnnotationCount();
 			} else {
-				count += ct.isReverse() ? ct.getGeneCount() - tv.getNum() : tv.getNum();
+				count += ct.isReverse() ? ct.getAnnotationCount() - tv.getNum() : tv.getNum();
 				break;
 			}
 		}

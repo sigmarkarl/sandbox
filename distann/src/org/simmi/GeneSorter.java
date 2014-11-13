@@ -38,6 +38,7 @@ import javax.swing.table.TableModel;
 import org.simmi.shared.Contig;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 
@@ -461,7 +462,7 @@ public class GeneSorter {
 		frame.setVisible(true);
 	}
 	
-	public List<Contig> loadContigs( List<GeneGroup> genegroups, Map<String,Contig> contigmap ) {
+	public List<Sequence> loadContigs( List<GeneGroup> genegroups, Map<String,Sequence> contigmap ) {
 		/*for (GeneGroup gg : genegroups) {
 			for( Gene g : gg.genes ) {
 				// for( String sp : g.species.keySet() ) {
@@ -486,7 +487,7 @@ public class GeneSorter {
 			}
 		}*/
 
-		List<Contig>	contigs = new ArrayList<Contig>();
+		List<Sequence>	contigs = new ArrayList<Sequence>();
 		//contigs.clear();
 		for (String c : contigmap.keySet()) {
 			contigs.add( contigmap.get(c) );
@@ -494,7 +495,7 @@ public class GeneSorter {
 		return contigs;
 	}
 	
-	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<String> speclist, final List<Gene> genelist, final JTable sorting, final Map<String,Contig> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
+	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<String> speclist, final List<Gene> genelist, final JTable sorting, final Map<String,Sequence> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
 		final JCheckBox	collapsed = new JCheckBox("Collapsed");
 		
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
@@ -508,7 +509,7 @@ public class GeneSorter {
 		final JTable rowheader = new JTable();
 		JSplitPane splitpane = new JSplitPane();
 		if (true) { //gsplitpane == null) {
-			final List<Contig> contigs = loadContigs( geneGroups, contigmap );
+			final List<Sequence> contigs = loadContigs( geneGroups, contigmap );
 			
 			JCheckBox	check = new JCheckBox("All positions");
 			JOptionPane.showMessageDialog( null, check );
@@ -896,7 +897,7 @@ public class GeneSorter {
 						}
 						return speclist.get(rowIndex);
 					} else {
-						Contig ctg = contigs.get(rowIndex);
+						Sequence ctg = contigs.get(rowIndex);
 						if (columnIndex == 2) {
 							//if (c.count > 0)
 							//	return (int) ((c.loc) / c.count);
