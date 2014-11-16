@@ -62,7 +62,6 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.simmi.shared.Annotation;
-import org.simmi.shared.Sequence;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -553,109 +552,125 @@ public class Neighbour {
 					while( next != null && xoff <= 5500 && clip.x+clip.width > xoff ) {
 						double len = next.getProteinLength()*neighbourscale;
 						Gene gene = next.getGene();
-						if( gene != null ) {
-							/*String genename = gene.getName();
-							if( commonname.isSelected() && (genename == null || genename.contains("_")) ) {
+						//if( gene != null ) {
+						/*String genename = gene.getName();
+						if( commonname.isSelected() && (genename == null || genename.contains("_")) ) {
+							GeneGroup gg = gene.getGeneGroup();
+							if( gg != null ) genename = gg.getCommonName();
+						}
+						if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
+						String genename = gene != null ? geneset.getGeneName(showNames, gene) : "mummer";
+						
+						if( xoff+len > clip.x ) {
+							if( funcol.isSelected() ) {
+								g.setColor( Color.green );
 								GeneGroup gg = gene.getGeneGroup();
-								if( gg != null ) genename = gg.getCommonName();
-							}
-							if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
-							String genename = geneset.getGeneName(showNames, gene);
-							
-							if( xoff+len > clip.x ) {
-								if( funcol.isSelected() ) {
-									g.setColor( Color.green );
-									GeneGroup gg = gene.getGeneGroup();
-									Set<Function> funcset = gg != null ? gg.getFunctions() : null;
-									if( funcset != null && funcset.size() > 0 ) {
-										if( funcMap.containsKey( funcset ) ) {
-											g.setColor( funcMap.get( funcset ) );
-										} else {
-											Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
-											g.setColor( rc );
-											funcMap.put( funcset, rc );
-										}
+								Set<Function> funcset = gg != null ? gg.getFunctions() : null;
+								if( funcset != null && funcset.size() > 0 ) {
+									if( funcMap.containsKey( funcset ) ) {
+										g.setColor( funcMap.get( funcset ) );
+									} else {
+										Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+										g.setColor( rc );
+										funcMap.put( funcset, rc );
 									}
-								} else if( abucol.isSelected() ) {
+								}
+							} else if( abucol.isSelected() ) {
+								GeneGroup gg = next.getGene().getGeneGroup();
+								int numspec = (gg != null && gg.species != null) ? Math.min( gg.species.size(), 37 ) : 0;
+								float abu = numspec/37.0f;
+								Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
+								g.setColor( rc );
+							} else if( relcol.isSelected() ) {
+								if( spec1 != null ) {
+									
+									//StringBuilder seq = next.seq;
+									Color rc = Color.green;
 									GeneGroup gg = next.getGene().getGeneGroup();
-									int numspec = (gg != null && gg.species != null) ? Math.min( gg.species.size(), 37 ) : 0;
-									float abu = numspec/37.0f;
-									Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
-									g.setColor( rc );
-								} else if( relcol.isSelected() ) {
-									if( spec1 != null ) {
-										
-										//StringBuilder seq = next.seq;
-										Color rc = Color.green;
-										GeneGroup gg = next.getGene().getGeneGroup();
-										List<Tegeval> ltv = gg.getTegevals( spec1 );
-										if( ltv != null && ltv.size() > 0 ) {
-											rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, next.getSpecies(), gg, blosumap, false );
-										} else {
-											rc = Color.white;
-										}
-										if( rc != null ) g.setColor( rc );
+									List<Tegeval> ltv = gg.getTegevals( spec1 );
+									if( ltv != null && ltv.size() > 0 ) {
+										rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false );
+									} else {
+										rc = Color.white;
 									}
-								} else if( sgradcol.isSelected() ) {
-									if( spec1 != null ) {													
-										//StringBuilder seq = next.seq;
-										Color rc = Color.black;
-										GeneGroup gg = next.getGene().getGeneGroup();
-										List<Tegeval> ltv = null;
-										if( gg != null ) {
-											ltv = gg.getTegevals( spec1 );
-										} else {
-											System.err.println();
-										}
-										if( ltv != null && ltv.size() > 0 ) {
-											//String spec2 = next.getSpecies();
-											final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
-											
-											/*double ratio = 0.0;
-											double pratio = 0.0;
-											if( ptotal > 0 ) {
-												if( ctg.getAnnotationCount() == total ) {
-													int val = count - offset;
-													if( val < 0 ) val = total + (count-offset);
-													
-													ratio = (double)(val-current)/(double)total;
-												} else {
-													if( count - total >= 0 ) {
-														pratio = (double)(count-total)/(double)ptotal;
-													} else {
-														pratio = (double)(count)/(double)ptotal;
-													}
-												}
-											} else {
+									if( rc != null ) g.setColor( rc );
+								}
+							} else if( sgradcol.isSelected() ) {
+								if( spec1 != null ) {													
+									//StringBuilder seq = next.seq;
+									Color rc = Color.black;
+									GeneGroup gg = next.getGene().getGeneGroup();
+									List<Tegeval> ltv = null;
+									if( gg != null ) {
+										ltv = gg.getTegevals( spec1 );
+									} else {
+										System.err.println();
+									}
+									if( ltv != null && ltv.size() > 0 ) {
+										//String spec2 = next.getSpecies();
+										final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+										
+										/*double ratio = 0.0;
+										double pratio = 0.0;
+										if( ptotal > 0 ) {
+											if( ctg.getAnnotationCount() == total ) {
 												int val = count - offset;
 												if( val < 0 ) val = total + (count-offset);
 												
-												ratio = (double)val/(double)total;
-											}*/
-											
-											//int offset2 = 0;
-											//if( offsetMap.containsKey( spec2 ) ) offset2 = offsetMap.get(spec2);
-											//rc = GeneCompare.gradientColor( spec1, spec2, contigs2, 0.0, 0.0, offset2, gg );
-											double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, next);
-											//rc = GeneCompare.invertedGradientColor( ratio );
-											if( ratio == -1 ) {
-												ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
-												rc = GeneCompare.gradientGrayscaleColor( ratio );
-											} else rc = GeneCompare.gradientColor( ratio );
+												ratio = (double)(val-current)/(double)total;
+											} else {
+												if( count - total >= 0 ) {
+													pratio = (double)(count-total)/(double)ptotal;
+												} else {
+													pratio = (double)(count)/(double)ptotal;
+												}
+											}
 										} else {
-											rc = Color.white;
-										}
-										if( rc != null ) g.setColor( rc );
+											int val = count - offset;
+											if( val < 0 ) val = total + (count-offset);
+											
+											ratio = (double)val/(double)total;
+										}*/
+										
+										//int offset2 = 0;
+										//if( offsetMap.containsKey( spec2 ) ) offset2 = offsetMap.get(spec2);
+										//rc = GeneCompare.gradientColor( spec1, spec2, contigs2, 0.0, 0.0, offset2, gg );
+										double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, next);
+										//rc = GeneCompare.invertedGradientColor( ratio );
+										if( ratio == -1 ) {
+											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
+											rc = GeneCompare.gradientGrayscaleColor( ratio );
+										} else rc = GeneCompare.gradientColor( ratio );
+									} else {
+										rc = Color.white;
 									}
-								} else if( precol.isSelected() ) {
-									Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
-									shanmap.clear();
-									double res = 0.0;
-									
-									List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
-									int total = tegevals.size();
+									if( rc != null ) g.setColor( rc );
+								}
+							} else if( precol.isSelected() ) {
+								Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
+								shanmap.clear();
+								double res = 0.0;
+								
+								List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
+								int total = tegevals.size();
+								for( Tegeval tev : tegevals ) {
+									Annotation thenext = tev.getNext();
+									GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+									int val = 0;
+									if( shanmap.containsKey(c) ) val = shanmap.get(c);
+									shanmap.put( c, val+1 );
+								}
+								for( GeneGroup c : shanmap.keySet() ) {
+									int val = shanmap.get(c);
+									double p = (double)val/(double)total;
+									res -= p*Math.log(p)/Math.log(2.0);
+								}
+								
+								if( next.getNext() != null ) {
+									tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
+									total = tegevals.size();
 									for( Tegeval tev : tegevals ) {
-										Annotation thenext = tev.getNext();
+										Annotation thenext = tev.getPrevious();
 										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -666,46 +681,36 @@ public class Neighbour {
 										double p = (double)val/(double)total;
 										res -= p*Math.log(p)/Math.log(2.0);
 									}
-									
-									if( next.getNext() != null ) {
-										tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
-										total = tegevals.size();
-										for( Tegeval tev : tegevals ) {
-											Annotation thenext = tev.getPrevious();
-											GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
-											int val = 0;
-											if( shanmap.containsKey(c) ) val = shanmap.get(c);
-											shanmap.put( c, val+1 );
-										}
-										for( GeneGroup c : shanmap.keySet() ) {
-											int val = shanmap.get(c);
-											double p = (double)val/(double)total;
-											res -= p*Math.log(p)/Math.log(2.0);
-										}
-									}
-									float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
-									Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
-									g.setColor( rc );
-								} else if( gcskewcol.isSelected() ) {
-									g.setColor( next.getGCSkewColor() );
-								} else {
-									g.setColor( next.getGCColor() );
-									/*if( next.getGCPerc() <= 0 ) {
-										Color rc = new Color( 1.0f, 1.0f, 1.0f );
-										g.setColor( rc );
-									} else {
-										float gc = Math.max( 0.0f, Math.min(((float)next.getGCPerc()-0.5f)*4.0f, 1.0f) );
-										Color rc = new Color( 1.0f-gc, gc, 1.0f );
-										g.setColor( rc );
-									}*/
 								}
-								
-								Sequence ncont = next.getContig();
-								boolean revis = (next.ori == -1) ^ (ncont != null && ncont.isReverse());
-								int addon = revis ? -5 : 5;
-								int offset = revis ? 5 : 0;
-								
-								int y = i;
+								float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
+								Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
+								g.setColor( rc );
+							} else if( gcskewcol.isSelected() ) {
+								g.setColor( next.getGCSkewColor() );
+							} else {
+								g.setColor( next.getGCColor() );
+								/*if( next.getGCPerc() <= 0 ) {
+									Color rc = new Color( 1.0f, 1.0f, 1.0f );
+									g.setColor( rc );
+								} else {
+									float gc = Math.max( 0.0f, Math.min(((float)next.getGCPerc()-0.5f)*4.0f, 1.0f) );
+									Color rc = new Color( 1.0f-gc, gc, 1.0f );
+									g.setColor( rc );
+								}*/
+							}
+							
+							Sequence ncont = next.getContig();
+							boolean revis = (next.ori == -1) ^ (ncont != null && ncont.isReverse());
+							int addon = revis ? -5 : 5;
+							int offset = revis ? 5 : 0;
+							
+							int y = i;
+							
+							if( next.type != null && next.type.equals("mummer") ) {
+								g.fillRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
+								g.setColor( next.isSelected() ? Color.black : Color.gray );
+								g.drawRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
+							} else {
 								xPoints[0] = xoff+offset; yPoints[0] = y * rowheight+2;
 								xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheight+2;
 								xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheight+2+(rowheight-4)/2;
@@ -715,58 +720,59 @@ public class Neighbour {
 								g.fillPolygon(xPoints, yPoints, nPoints);
 								g.setColor( next.isSelected() ? Color.black : Color.gray );
 								g.drawPolygon(xPoints, yPoints, nPoints);
-						
-								/*int gap = next.unresolvedGap();
-								g.setColor( Color.red );
-								if( (gap & 1) > 0 ) {
-									//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-									if( !next.getContig().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-									else g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-								}
-								if( (gap & 2) > 0 ) {
-									//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-									if( !next.getContig().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-									else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-								}*/
-								
-								Color fc = next.getFrontFlankingGapColor();
-								if( fc == Color.red ) {
-									g.setColor( fc );
-									int val = (int)(rowheight-4)/2;
-									if( revis ) {
-										g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
-									} else {
-										g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
-									}
-								}
-								
-								Color bc = next.getBackFlankingGapColor();
-								if( bc == Color.red ) {
-									g.setColor( bc );
-									int val = (int)(rowheight-4)/2;
-									if( revis ) {
-										g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
-									} else {
-										g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
-									}
-								}
-								
-								g.setColor( Color.black );
-								//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
-								
-								int strlen = g.getFontMetrics().stringWidth( genename );
-								while( strlen > len ) {
-									genename = genename.substring(0, genename.length()-1);
-									strlen = g.getFontMetrics().stringWidth( genename );
-								}
-								
-								if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-									if( relcol.isSelected() ) g.setColor( Color.white );
-									else g.setColor( Color.black );
-									g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+							}
+					
+							/*int gap = next.unresolvedGap();
+							g.setColor( Color.red );
+							if( (gap & 1) > 0 ) {
+								//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+								if( !next.getContig().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+								else g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+							}
+							if( (gap & 2) > 0 ) {
+								//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+								if( !next.getContig().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+								else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+							}*/
+							
+							Color fc = next.getFrontFlankingGapColor();
+							if( fc == Color.red ) {
+								g.setColor( fc );
+								int val = (int)(rowheight-4)/2;
+								if( revis ) {
+									g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+								} else {
+									g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
 								}
 							}
+							
+							Color bc = next.getBackFlankingGapColor();
+							if( bc == Color.red ) {
+								g.setColor( bc );
+								int val = (int)(rowheight-4)/2;
+								if( revis ) {
+									g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
+								} else {
+									g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+								}
+							}
+							
+							g.setColor( Color.black );
+							//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
+							
+							int strlen = g.getFontMetrics().stringWidth( genename );
+							while( strlen > len ) {
+								genename = genename.substring(0, genename.length()-1);
+								strlen = g.getFontMetrics().stringWidth( genename );
+							}
+							
+							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
+								if( relcol.isSelected() ) g.setColor( Color.white );
+								else g.setColor( Color.black );
+								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+							}
 						}
+						//}
 						
 						Annotation thenext = next.getNext();
 						int bil = 10;
@@ -877,77 +883,93 @@ public class Neighbour {
 						}*/
 						
 						Gene gene = prev.getGene();
-						if( gene != null ) {
-							/*String genename = prev.getGene().getName();
-							if( commonname.isSelected() && genename.contains("_") ) {
-								GeneGroup gg = prev.getGene().getGeneGroup();
-								if( gg != null ) genename = gg.getCommonName();
-							}
-							genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;*/
-							String genename = geneset.getGeneName(showNames, prev.getGene());
-							
-							if( clip.x+clip.width > xoff ) {
-								if( funcol.isSelected() ) {
-									g.setColor( Color.green );
-									GeneGroup gg = gene.getGeneGroup();
-									Set<Function> funcset = gg != null ? gg.getFunctions() : null;
-									if( funcset != null && funcset.size() > 0 ) {
-										if( funcMap.containsKey( funcset ) ) {
-											g.setColor( funcMap.get( funcset ) );
-										} else {
-											Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
-											g.setColor( rc );
-											funcMap.put( funcset, rc );
-										}
-									}
-								} else if( abucol.isSelected() ) {
-									GeneGroup gg = prev.getGene().getGeneGroup();
-									int numspec = Math.min( 39, gg.species.size() );
-									float abu = numspec/39.0f;
-									Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
-									g.setColor( rc );
-								} else if( relcol.isSelected() ) {												
-									//StringBuilder seq = next.seq;
-									Color rc = Color.green;
-									GeneGroup gg = prev.getGene().getGeneGroup();
-									List<Tegeval> ltv = gg.getTegevals( spec1 );
-									if( ltv != null && ltv.size() > 0 ) {
-										rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, prev.getSpecies(), gg, blosumap, false );
+						//if( gene != null ) {
+						/*String genename = prev.getGene().getName();
+						if( commonname.isSelected() && genename.contains("_") ) {
+							GeneGroup gg = prev.getGene().getGeneGroup();
+							if( gg != null ) genename = gg.getCommonName();
+						}
+						genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;*/
+						String genename = gene != null ? geneset.getGeneName(showNames, prev.getGene()) : "mummer";
+						
+						if( clip.x+clip.width > xoff ) {
+							if( funcol.isSelected() ) {
+								g.setColor( Color.green );
+								GeneGroup gg = gene.getGeneGroup();
+								Set<Function> funcset = gg != null ? gg.getFunctions() : null;
+								if( funcset != null && funcset.size() > 0 ) {
+									if( funcMap.containsKey( funcset ) ) {
+										g.setColor( funcMap.get( funcset ) );
 									} else {
-										rc = Color.white;
+										Color rc = new Color( rand.nextFloat(), rand.nextFloat(), rand.nextFloat() );
+										g.setColor( rc );
+										funcMap.put( funcset, rc );
 									}
-									if( rc != null ) g.setColor( rc );												
-								} else if( sgradcol.isSelected() ) {
-									if( spec1 != null ) {													
-										//StringBuilder seq = next.seq;
-										Color rc = Color.black;
-										GeneGroup gg = prev.getGene().getGeneGroup();
-										if( gg != null ) {
-											List<Tegeval> ltv = gg.getTegevals( spec1 );
-											if( ltv != null && ltv.size() > 0 ) {
-												final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
-												
-												double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, prev);
-												//rc = GeneCompare.invertedGradientColor( ratio );
-												if( ratio == -1 ) {
-													ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
-													rc = GeneCompare.gradientGrayscaleColor( ratio );
-												} else rc = GeneCompare.gradientColor( ratio );
-											} else {
-												rc = Color.white;
-											}
+								}
+							} else if( abucol.isSelected() ) {
+								GeneGroup gg = prev.getGene().getGeneGroup();
+								int numspec = Math.min( 39, gg.species.size() );
+								float abu = numspec/39.0f;
+								Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
+								g.setColor( rc );
+							} else if( relcol.isSelected() ) {												
+								//StringBuilder seq = next.seq;
+								Color rc = Color.green;
+								GeneGroup gg = prev.getGene().getGeneGroup();
+								List<Tegeval> ltv = gg.getTegevals( spec1 );
+								if( ltv != null && ltv.size() > 0 ) {
+									rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), prev.getSpecies(), gg, blosumap, false );
+								} else {
+									rc = Color.white;
+								}
+								if( rc != null ) g.setColor( rc );												
+							} else if( sgradcol.isSelected() ) {
+								if( spec1 != null ) {													
+									//StringBuilder seq = next.seq;
+									Color rc = Color.black;
+									GeneGroup gg = prev.getGene().getGeneGroup();
+									if( gg != null ) {
+										List<Tegeval> ltv = gg.getTegevals( spec1 );
+										if( ltv != null && ltv.size() > 0 ) {
+											final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
+											
+											double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, prev);
+											//rc = GeneCompare.invertedGradientColor( ratio );
+											if( ratio == -1 ) {
+												ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
+												rc = GeneCompare.gradientGrayscaleColor( ratio );
+											} else rc = GeneCompare.gradientColor( ratio );
+										} else {
+											rc = Color.white;
 										}
-										if( rc != null ) g.setColor( rc );
 									}
-								} else if( precol.isSelected() ) {
-									Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
-									shanmap.clear();
-									double res = 0.0;
-									
-									List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
-									int total = tegevals.size();
-									for( Tegeval tev : tegevals ) {
-										Annotation thenext = tev.getNext();
+									if( rc != null ) g.setColor( rc );
+								}
+							} else if( precol.isSelected() ) {
+								Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
+								shanmap.clear();
+								double res = 0.0;
+								
+								List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
+								int total = tegevals.size();
+								for( Tegeval tev : tegevals ) {
+									Annotation thenext = tev.getNext();
+									GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+									int val = 0;
+									if( shanmap.containsKey(c) ) val = shanmap.get(c);
+									shanmap.put( c, val+1 );
+								}
+								for( GeneGroup c : shanmap.keySet() ) {
+									int val = shanmap.get(c);
+									double p = (double)val/(double)total;
+									res -= p*Math.log(p)/Math.log(2.0);
+								}
+								
+								if( prev.getNext() != null ) {
+									tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
+									total = tegevals.size();
+									for( Annotation tev : tegevals ) {
+										Annotation thenext = tev.getPrevious();
 										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
@@ -958,46 +980,36 @@ public class Neighbour {
 										double p = (double)val/(double)total;
 										res -= p*Math.log(p)/Math.log(2.0);
 									}
-									
-									if( prev.getNext() != null ) {
-										tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
-										total = tegevals.size();
-										for( Annotation tev : tegevals ) {
-											Annotation thenext = tev.getPrevious();
-											GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
-											int val = 0;
-											if( shanmap.containsKey(c) ) val = shanmap.get(c);
-											shanmap.put( c, val+1 );
-										}
-										for( GeneGroup c : shanmap.keySet() ) {
-											int val = shanmap.get(c);
-											double p = (double)val/(double)total;
-											res -= p*Math.log(p)/Math.log(2.0);
-										}
-									}
-									
-									float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
-									Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
-									g.setColor( rc );
-								} else if( gcskewcol.isSelected() ) {
-									g.setColor( prev.getGCSkewColor() );
-								} else {
-									g.setColor( prev.getGCColor() );
-									/*if( prev.getGCPerc() <= 0 ) {
-										Color rc = new Color( 1.0f, 1.0f, 1.0f );
-										g.setColor( rc );
-									} else {
-										float gc = Math.max( 0.0f, Math.min(((float)prev.getGCPerc()-0.5f)*4.0f, 1.0f) );
-										Color rc = new Color( 1.0f-gc, gc, 1.0f );
-										g.setColor( rc );
-									}*/
 								}
 								
-								boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
-								int addon = revis ? -5 : 5;
-								int offset = revis ? 5 : 0;
-								//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
-								int y = i;
+								float gc = Math.min( 1.0f, Math.max( 0.0f, (float)res/20.0f ) );
+								Color rc = new Color( 1.0f, 1.0f-gc, 1.0f-gc );
+								g.setColor( rc );
+							} else if( gcskewcol.isSelected() ) {
+								g.setColor( prev.getGCSkewColor() );
+							} else {
+								g.setColor( prev.getGCColor() );
+								/*if( prev.getGCPerc() <= 0 ) {
+									Color rc = new Color( 1.0f, 1.0f, 1.0f );
+									g.setColor( rc );
+								} else {
+									float gc = Math.max( 0.0f, Math.min(((float)prev.getGCPerc()-0.5f)*4.0f, 1.0f) );
+									Color rc = new Color( 1.0f-gc, gc, 1.0f );
+									g.setColor( rc );
+								}*/
+							}
+							
+							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
+							int addon = revis ? -5 : 5;
+							int offset = revis ? 5 : 0;
+							//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
+							int y = i;
+							
+							if( prev.type != null && prev.type.equals("mummer") ) {
+								g.fillRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
+								g.setColor( prev.isSelected() ? Color.black : Color.gray );
+								g.drawRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
+							} else {
 								xPoints[0] = xoff+offset; yPoints[0] = y * rowheight+2;
 								xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheight+2;
 								xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheight+2+(rowheight-4)/2;
@@ -1007,57 +1019,58 @@ public class Neighbour {
 								g.fillPolygon(xPoints, yPoints, nPoints);
 								g.setColor( prev.isSelected() ? Color.black : Color.gray );
 								g.drawPolygon(xPoints, yPoints, nPoints);
-								
-								/*int gap = prev.unresolvedGap();
-								g.setColor( Color.red );
-								if( (gap & 1) > 0 ) {
-									//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-									if( !prev.getContig().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-									else g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-								}
-								if( (gap & 2) > 0 ) {
-									//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-									if( !prev.getContig().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
-									else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
-								}*/
-								
-								Color fc = prev.getFrontFlankingGapColor();
-								if( fc != Color.lightGray ) {
-									g.setColor( fc );
-									int val = (int)(rowheight-4)/2;
-									if( revis ) {
-										g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
-									} else {
-										g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
-									}
-								}
-								
-								Color bc = prev.getBackFlankingGapColor();
-								if( bc != Color.lightGray ) {
-									g.setColor( bc );
-									int val = (int)(rowheight-4)/2;
-									if( revis ) {
-										g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
-									} else {
-										g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
-									}
-								}
-								
-								g.setColor( Color.black );
-								
-								int strlen = g.getFontMetrics().stringWidth( genename );
-								while( strlen > len ) {
-									genename = genename.substring(0, genename.length()-1);
-									strlen = g.getFontMetrics().stringWidth( genename );
-								}
-								
-								if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-									if( relcol.isSelected() ) g.setColor( Color.white );
-									else g.setColor( Color.black );
-									g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+							}
+							
+							/*int gap = prev.unresolvedGap();
+							g.setColor( Color.red );
+							if( (gap & 1) > 0 ) {
+								//g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+								if( !prev.getContig().isReverse() ) g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+								else g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+							}
+							if( (gap & 2) > 0 ) {
+								//g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+								if( !prev.getContig().isReverse() ) g.fillRect(xPoints[2]+1, yPoints[2]-2, 5, 5);
+								else g.fillRect(xPoints[0]-4, yPoints[2]-2, 5, 5);
+							}*/
+							
+							Color fc = prev.getFrontFlankingGapColor();
+							if( fc != Color.lightGray ) {
+								g.setColor( fc );
+								int val = (int)(rowheight-4)/2;
+								if( revis ) {
+									g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+								} else {
+									g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
 								}
 							}
+							
+							Color bc = prev.getBackFlankingGapColor();
+							if( bc != Color.lightGray ) {
+								g.setColor( bc );
+								int val = (int)(rowheight-4)/2;
+								if( revis ) {
+									g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
+								} else {
+									g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
+								}
+							}
+							
+							g.setColor( Color.black );
+							
+							int strlen = g.getFontMetrics().stringWidth( genename );
+							while( strlen > len ) {
+								genename = genename.substring(0, genename.length()-1);
+								strlen = g.getFontMetrics().stringWidth( genename );
+							}
+							
+							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
+								if( relcol.isSelected() ) g.setColor( Color.white );
+								else g.setColor( Color.black );
+								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+							}
 						}
+						//}
 						
 						if( theprev == null ) {
 							Sequence prevcont = prev.getContig();
@@ -1173,7 +1186,7 @@ public class Neighbour {
 									GeneGroup gg = next.getGene().getGeneGroup();
 									List<Tegeval> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
-										rc = GeneCompare.blosumColor( ltv.get(0).alignedsequence, next.getSpecies(), gg, blosumap, false );
+										rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false );
 									} else {
 										rc = Color.white;
 									}
@@ -2313,8 +2326,8 @@ public class Neighbour {
 					List<Sequence> lseq = new ArrayList<Sequence>();
 					int[] rr = rowheader.getSelectedRows();
 					
-					int upph = -4000;
-					int endh = 6000;
+					int upph = -5000;
+					int endh = 5000;
 					
 					if( rr == null || rr.length == 0 ) {
 						for( GeneGroup gg : selectedGenesGroups ) {
@@ -2322,7 +2335,7 @@ public class Neighbour {
 							for( Tegeval tv : ltv ) {
 								//int start = Math.max( 0, tv.start-3000 );
 								//int stop = Math.min( tv.getContig().sb.length(), tv.stop+3000 );
-								Sequence seq = new Sequence( tv.getSpecies(), null );
+								Sequence seq = new Sequence( geneset.nameFix(tv.getSpecies()), null );
 								String str = tv.ori == -1 ? tv.getSubstring(-endh-tv.start+tv.stop-1, -upph-tv.start+tv.stop-1) : tv.getSubstring(upph, endh);
 								seq.append( str ); //tv.getLength()+3000) );
 								
@@ -2752,7 +2765,9 @@ public class Neighbour {
 				public Object getValueAt(int rowIndex, int columnIndex) {
 					//String species = speclist.get( rowIndex );
 					Annotation te = hteg.get(rowIndex);
-					if( columnIndex == 0 ) return te.getSpecies();
+					if( columnIndex == 0 ) {
+						return geneset.nameFix( te.getSpecies() );
+					}
 					else if( columnIndex == 1 ) return te.getContig().getName();
 					else if( columnIndex == 2 ) return te.getLength();
 					else if( columnIndex == 3 ) return te.getContig().isReverse();
@@ -2807,7 +2822,7 @@ public class Neighbour {
 						List<Sequence>	selseq = new ArrayList<Sequence>( rr.length );
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel(r);
-							selseq.add( hteg.get(i).alignedsequence );
+							selseq.add( hteg.get(i).getAlignedSequence() );
 						}
 						return selseq;
 					} else {
