@@ -3946,7 +3946,7 @@ public class ActionCollection {
 					if( commonName != null && (commonName.contains("contig") || commonName.contains("scaffold")) ) {
 						Tegeval tv = gg.getLongestSequence();
 						Sequence seq = tv.getAlignedSequence();
-						seq.name = commonName;
+						seq.setName( commonName );
 						seq.removeGaps();
 						if( seq.sb.indexOf("X") == -1 ) {
 							serifier.addSequence( seq );
@@ -3999,7 +3999,7 @@ public class ActionCollection {
 							Teginfo ti = gg.species.get( spec1 );
 							for( int n = m+1; n < speclist.size(); n++ ) {
 								String spec2 = speclist.get( n );
-								double val = GeneCompare.blosumVal(ti.best.alignedsequence, spec2, gg, blosumap);
+								double val = GeneCompare.blosumVal(ti.best.getAlignedSequence(), spec2, gg, blosumap);
 								sdb[u++] = val;
 								norm += val*val;
 							}

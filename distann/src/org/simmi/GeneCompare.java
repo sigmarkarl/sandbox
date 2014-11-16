@@ -70,10 +70,13 @@ public class GeneCompare {
 		if( spec1 != null && geneset.speccontigMap.containsKey( spec1 ) ) {
 			final List<Sequence> lcont = geneset.speccontigMap.get( spec1 );
 			
-			List<Sequence> newcontigs = new ArrayList<Sequence>();
+			List<Sequence> newcontigs = new ArrayList<Sequence>( lcont );
+			/*List<Sequence> newcontigs = new ArrayList<Sequence>();
 			for( Sequence c : lcont ) {
 				if( contigs.contains( c ) ) newcontigs.add( c );
 			}
+			contigs = newcontigs;*/
+			
 			contigs = newcontigs;
 		}
 	}
@@ -669,7 +672,7 @@ public class GeneCompare {
 		contiglanes.addChangeListener( new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				repaintCompare(g2, bimg, spec2s, specombo, geneset, blosumap, cmp);
+				//repaintCompare(g2, bimg, spec2s, specombo, geneset, blosumap, cmp);
 			}
 		});
 		tb.add( contiglanes );
@@ -1774,10 +1777,17 @@ public class GeneCompare {
 							}*/
 						}
 					} else {
-						for( Annotation ann : ctg.getAnnotations() ) {
+						List<Annotation> lann = ctg.getAnnotations();
+						for( Annotation ann : lann ) {
 							Annotation tv = ann;
 							Sequence seq = tv.getAlignedSequence();
 							GeneGroup gg = tv.getGene().getGeneGroup();
+							
+							/*if( gg.species.size() > 1 ) {
+								System.err.println( "commonname large " + gg.getCommonName() );
+							} else {
+								//System.err.println( "commonname small " + gg.getCommonName() );
+							}*/
 							
 							int ii = geneset.allgenegroups.indexOf( gg );
 							if( ii >= 0 && ii < geneset.table.getRowCount() ) {
