@@ -344,9 +344,7 @@ public class GeneSet extends JApplet {
 					int u = lname.indexOf(' ');
 					int k = lname.indexOf(']', i+1);
 					id = lname.substring(0, u);
-					if( id.contains("..") ) {
-						id = lname.substring(i+1, k) + "_" + id;
-					}
+					id = idFix( id, lname.substring(i+1, k) );
 				}
 			} else if( line.startsWith(">") ) {
 				String val = line.substring(1);
@@ -486,6 +484,26 @@ public class GeneSet extends JApplet {
 		} else if( selectedItem.equals("Group names") ) {
 			String genename = gene.getGeneGroup() != null ? gene.getGeneGroup().getCommonName() : "";
 			//if( genename.contains("_") ) genename = gene.getGeneGroup().getCommonName();
+			
+			if( genename.contains("CRISPR") ) {
+				int k = genename.indexOf('(');
+				if( k == -1 ) k = genename.length();
+				genename = genename.substring(0,k);
+				genename = genename.replace("CRISPR-associated","");
+				genename = genename.replace("CRISPR","");
+				genename = genename.replace("helicase","");
+				genename = genename.replace("endonuclease","");
+				genename = genename.replace("Cas3-HD","");
+				genename = genename.replace("/","");
+				genename = genename.replace(",","");
+				genename = genename.replace("type I-E","");
+				genename = genename.replace("ECOLI-associated","");
+				genename = genename.replace("family","");
+				genename = genename.replace("protein","");
+				genename = genename.replace("RAMP","");
+				genename = genename.trim();
+			}
+			
 			return genename.contains("hypothetical") ? "hth-p" : genename;
 		} else if( selectedItem.equals("Species") ) {
 			gene.getSpecies();
@@ -501,6 +519,15 @@ public class GeneSet extends JApplet {
 			if( cazy != null ) return cazy;
 		}
 		return "";
+	}
+	
+	public String idFix( String id, String contigstr ) {
+		if( id.contains("..") ) {
+			int k = id.lastIndexOf('_');
+			if( k != -1 ) return contigstr + "_" + id.substring(k+1);
+			else return id = contigstr + "_" + id;
+		}
+		return id;
 	}
 	
 	private void loci2aaseq( List<Set<String>> lclust, Map<String,Gene> refmap, Map<String,String> designations ) {
@@ -566,10 +593,8 @@ public class GeneSet extends JApplet {
 					int u = lname.indexOf(' ');
 					id = lname.substring(0, u);
 					
-					String spec = lname.substring(i+1, n);
-					if( id.contains("..") ) {
-						id = spec + "_" + id;
-					}
+					//String spec = lname.substring(i+1, n);
+					id = idFix( contigstr, id );
 					
 					name = lname.substring(u+1, i).trim();
 					
@@ -710,6 +735,9 @@ public class GeneSet extends JApplet {
 						 contig = new Contig( contigstr );
 					}
 					
+					if( contig == null ) {
+						System.err.println();
+					}
 					g.tegeval.init( lname, contig, contloc, start, stop, dir );
 					contig.addAnnotation( g.tegeval );
 					//g.tegeval.name = line;
@@ -823,9 +851,7 @@ public class GeneSet extends JApplet {
 						contigstr = lname.substring(i+1, n);
 						int u = lname.indexOf(' ');
 						id = lname.substring(0, u);
-						if( id.contains("..") ) {
-							id = lname.substring(i+1, n) + "_" + id;
-						}
+						id = idFix( id, contigstr );
 						
 						name = lname.substring(u+1, i).trim();
 						
@@ -917,6 +943,9 @@ public class GeneSet extends JApplet {
 							}
 						}
 						
+						if( contig == null ) {
+							System.err.println();
+						}
 						tv.init( lname, contig, contloc, start, stop, dir );
 						tv.name = prevline.substring(1);
 						//ac.setName( lname );
@@ -1109,9 +1138,7 @@ public class GeneSet extends JApplet {
 				contigstr = lname.substring(i+1, n);
 				int u = lname.indexOf(' ');
 				id = lname.substring(0, u);
-				if( id.contains("..") ) {
-					id = lname.substring(i+1, n) + "_" + id;
-				}
+				id = idFix( id, contigstr );
 				name = lname.substring(u+1, i).trim();
 				
 				u = Sequence.specCheck( contigstr );
@@ -1168,6 +1195,10 @@ public class GeneSet extends JApplet {
 					} else {
 						 contig = new Contig( contigstr );
 					}
+				}
+				
+				if( contig == null ) {
+					System.err.println();
 				}
 				tv.init( lname, contig, contloc, start, stop, dir );
 				tv.name = prevline.substring(1);
@@ -1245,7 +1276,7 @@ public class GeneSet extends JApplet {
 					
 					boolean cont = false;
 					for( Sequence c : ctlist ) {
-						if( c.name.equals(name) ) {
+						if( c.getName().equals(name) ) {
 							cont = true;
 							break;
 						}
@@ -1291,7 +1322,7 @@ public class GeneSet extends JApplet {
 			
 			boolean cont = false;
 			for( Sequence c : ctlist ) {
-				if( c.name.equals(name) ) {
+				if( c.getName().equals(name) ) {
 					cont = true;
 					break;
 				}
@@ -1490,8 +1521,8 @@ public class GeneSet extends JApplet {
 							int tscore = 1;
 							for( Tegeval tv1 : ti1.tset ) {
 								for( Tegeval tv2 : ti2.tset ) {
-									Sequence seq1 = tv1.alignedsequence;
-									Sequence seq2 = tv2.alignedsequence;
+									Sequence seq1 = tv1.getAlignedSequence();
+									Sequence seq2 = tv2.getAlignedSequence();
 									if( seq1 != null && seq2 != null ) {
 										int mest = 0;
 										int tmest = 0;
@@ -8036,7 +8067,7 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	boolean isthermus = true;
+	boolean isthermus = false;
 	String nameFix( String selspec ) {
 		String ret = selspec;
 		if( isthermus ) {
@@ -8916,7 +8947,7 @@ public class GeneSet extends JApplet {
 							Sequence c = contigmap.get( cname );
 							if( ids ) pos.write( (">" + c.id + "\n").getBytes() );
 							else {
-								pos.write( (">" + c.name + "\n").getBytes() );
+								pos.write( (">" + c.getName() + "\n").getBytes() );
 							}
 							StringBuilder sb = c.getStringBuilder();
 							for( int i = 0; i < sb.length(); i+=70 ) {
@@ -13329,9 +13360,7 @@ public class GeneSet extends JApplet {
 						
 						if( gid == null ) {
 							gid = cont.substring(0, k);
-							if( gid.contains("..") ) {
-								gid = cont.substring(b+1, u) + "_" + gid;
-							}
+							gid = idFix( gid, cont.substring(b+1, u) );
 						}
 						
 						String scont = cont.substring(b+1, u);
@@ -14942,8 +14971,8 @@ public class GeneSet extends JApplet {
 					//s.mseq = aas;
 					for( String gk : refmap.keySet() ) {
 						Gene g = refmap.get( gk );
-						if( g.tegeval.alignedsequence != null ) System.err.println( g.tegeval.alignedsequence.name );
-						s.mseq.put(gk, g.tegeval.alignedsequence);
+						if( g.tegeval.getAlignedSequence() != null ) System.err.println( g.tegeval.getAlignedSequence().getName() );
+						s.mseq.put( gk, g.tegeval.getAlignedSequence() );
 					}
 					
 					Map<String,String>	idspec = new HashMap<String,String>();
@@ -15178,6 +15207,38 @@ public class GeneSet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JOptionPane.showMessageDialog( comp, "CompGen 1.0" );
+			}
+		});
+		help.add( new AbstractAction("Test") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				/*for( Gene g : genelist ) {
+					Sequence seq = g.tegeval.getContig();
+					if( seq == null ) {
+						System.err.println();
+					}
+				}*/
+				
+				for( String spec : speccontigMap.keySet() ) {
+					if( spec.contains("RAST") ) {
+						List<Sequence> lseq = speccontigMap.get(spec);
+						for( Sequence seq : lseq ) {
+							for( Annotation a : seq.getAnnotations() ) {
+								System.err.println( a.getGene().getGeneGroup().species );
+								/*Sequence tseq = a.getContig();
+								if( tseq == null ) {
+									System.err.println();
+								}*/
+							}
+						}
+					}
+				}
+				
+				/*for( GeneGroup gg : allgenegroups ) {
+					if( gg.species.size() > 1 ) {
+						System.err.println( gg.species );
+					}
+				}*/
 			}
 		});
 		help.addSeparator();
@@ -15896,7 +15957,7 @@ public class GeneSet extends JApplet {
 					start = rstart;
 					stop = rstop;
 					
-					Sequence newseq = new Sequence( contig.name, new StringBuilder(contig.getSubstring(start, stop, 1)), serifier.mseq);
+					Sequence newseq = new Sequence( contig.getName(), new StringBuilder(contig.getSubstring(start, stop, 1)), serifier.mseq);
 					/*if( contig.isReverse() ) {
 						newseq.reverse();
 						newseq.complement();
@@ -16049,7 +16110,7 @@ public class GeneSet extends JApplet {
 						}
 						
 						serifier.addSequence( contig );
-						serifier.mseq.put( contig.name, contig );
+						serifier.mseq.put( contig.getName(), contig );
 					}
 				}
 				
@@ -16386,8 +16447,8 @@ public class GeneSet extends JApplet {
 									int tscore = 1;
 									for( Tegeval tv1 : ti1.tset ) {
 										for( Tegeval tv2 : ti2.tset ) {
-											Sequence seq1 = tv1.alignedsequence;
-											Sequence seq2 = tv2.alignedsequence;
+											Sequence seq1 = tv1.getAlignedSequence();
+											Sequence seq2 = tv2.getAlignedSequence();
 											if( seq1 != null && seq2 != null ) {
 												int mest = 0;
 												int tmest = 0;
