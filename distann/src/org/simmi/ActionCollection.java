@@ -80,7 +80,6 @@ import javax.swing.table.TableModel;
 
 import netscape.javascript.JSObject;
 
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -89,7 +88,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.GeneSet.StackBarData;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Cog;
-import org.simmi.shared.Sequence;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -125,12 +123,12 @@ public class ActionCollection {
 			lsbd.add( sbd );
 		}
 		
-		Collections.sort( lsbd, new Comparator<StackBarData>() {
+		/*Collections.sort( lsbd, new Comparator<StackBarData>() {
 			@Override
 			public int compare(StackBarData o1, StackBarData o2) {
 				return o1.name.compareTo( o2.name );
 			}
-		});
+		});*/
 		
 		boolean avg = false;
 		if( avg ) {
@@ -1988,6 +1986,11 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ) );
+				
+				for( String spec : selspec ) {
+					System.err.println( spec );
+				}
+				
 				
 				final String[] categories = { "Core: ", "Accessory: " };
 				final List<StackBarData> lsbd = new ArrayList<StackBarData>();
