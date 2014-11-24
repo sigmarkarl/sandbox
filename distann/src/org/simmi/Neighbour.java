@@ -2326,8 +2326,8 @@ public class Neighbour {
 					List<Sequence> lseq = new ArrayList<Sequence>();
 					int[] rr = rowheader.getSelectedRows();
 					
-					int upph = -5000;
-					int endh = 5000;
+					int upph = -7000;
+					int endh = 7000;
 					
 					if( rr == null || rr.length == 0 ) {
 						for( GeneGroup gg : selectedGenesGroups ) {
@@ -2335,17 +2335,20 @@ public class Neighbour {
 							for( Tegeval tv : ltv ) {
 								//int start = Math.max( 0, tv.start-3000 );
 								//int stop = Math.min( tv.getContig().sb.length(), tv.stop+3000 );
-								Sequence seq = new Sequence( geneset.nameFix(tv.getSpecies()), null );
-								String str = tv.ori == -1 ? tv.getSubstring(-endh-tv.start+tv.stop-1, -upph-tv.start+tv.stop-1) : tv.getSubstring(upph, endh);
+								Sequence seq = new Sequence( Sequence.nameFix(tv.getSpecies(),true)+(tv.ori == 1 ? "->" : "<-"), null );
+								String str = tv.ori == -1 ? tv.getPaddedSubstring(-endh-tv.start+tv.stop-1, -upph-tv.start+tv.stop-1) : tv.getPaddedSubstring(upph, endh);
 								seq.append( str ); //tv.getLength()+3000) );
 								
-								int offset = 0;
-								if( str.length() < endh-upph ) {
+								int offset = 0; //tv.ori == -1 ? tv.getSubstringOffset(-endh-tv.start+tv.stop-1, -upph-tv.start+tv.stop-1) : tv.getSubstringOffset(upph, endh);;
+								/*if( str.length() < endh-upph ) {
 									offset = endh-upph-str.length();
 									offset = -offset;
-								}
+								}*/
 								//if( tv.ori == -1 ) {
-									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, tv.name);
+									String name = tv.gene == null ? tv.name : tv.gene.getGeneGroup().getCommonName();
+									//name += tv.ori == 1 ? "->" : "<-";
+									
+									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, name);
 									newann.color = Color.gray;
 									seq.addAnnotation( newann );
 									serifier.addAnnotation(newann);
@@ -2353,16 +2356,19 @@ public class Neighbour {
 									Color color = Color.lightGray;
 									Annotation ntev = tv.getNext();
 									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
+										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										//name += ntev.ori == 1 ? "->" : "<-";
+										
 										if( tv.ori == -1 ) {
 											int bil = ntev.stop-tv.start;
 											int len = tv.stop-tv.start;
 											
 											int start = -upph+offset+len-bil;
 											int nlen = ntev.stop-ntev.start;
-											newann = new Annotation(seq, start, start+nlen, 1, ntev.name);
+											newann = new Annotation(seq, start, start+nlen, 1, name);
 										} else {
 											int bil = ntev.start-tv.start;
-											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, ntev.name);
+											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, name);
 										}
 										
 										newann.color = color;
@@ -2377,15 +2383,18 @@ public class Neighbour {
 									color = Color.lightGray;
 									ntev = tv.getPrevious();
 									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
+										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										//name += ntev.ori == 1 ? "->" : "<-";
+										
 										if( tv.ori == -1 ) {
 											int bil = ntev.stop-tv.start;
 											int len = tv.stop-tv.start;
 											int start = -upph+offset+len-bil;
 											int nlen = ntev.stop-ntev.start;
-											newann = new Annotation(seq, start, start+nlen, 1, ntev.name);
+											newann = new Annotation(seq, start, start+nlen, 1, name);
 										} else {
 											int bil = ntev.start-tv.start;
-											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, ntev.name);
+											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, name);
 										}
 										newann.color = color;
 										seq.addAnnotation( newann );
