@@ -16536,7 +16536,7 @@ public class GeneSet extends JApplet {
 					int x = 0;
 					for( String spec : species ) {
 						//if( !spec.equals(dbspec) ) {
-							List<Sequence> lseq = speccontigMap.get(spec);
+							final List<Sequence> lseq = speccontigMap.get(spec);
 							ProcessBuilder pb = new ProcessBuilder("/usr/local/ncbi/blast/bin/blastn","-db",dbspec,
 									"-num_threads",Integer.toString(Runtime.getRuntime().availableProcessors()),
 									"-num_alignments","1","-num_descriptions","1"); //,"-max_hsps","1");
