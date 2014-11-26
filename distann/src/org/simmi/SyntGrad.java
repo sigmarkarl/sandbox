@@ -473,7 +473,7 @@ public class SyntGrad {
 	
 	public void doTv( GeneSet geneset, Graphics2D g2, Annotation tv, int tvn, int total, int ptvn, int ptotal, String spec1, List<Sequence> contigs1, int w2, int h2, int rad, double radscale ) {
 		Gene gene = tv.getGene();
-		boolean phage = gene != null ? gene.isPhage() : false;
+		boolean phage = gene != null ? tv.isPhage() : false;
 		boolean plasmid = tv.getContig().isPlasmid();
 		
 		GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
