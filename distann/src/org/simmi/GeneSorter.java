@@ -135,7 +135,7 @@ public class GeneSorter {
 								else
 									g.setColor(dr);
 							} else {
-								boolean phage = gene.isPhage();
+								boolean phage = gene.tegeval.isPhage();
 								boolean plasmid = gene.tegeval.getContshort().isPlasmid();
 								
 								GeneGroup gg = gene.getGeneGroup();
@@ -574,7 +574,7 @@ public class GeneSorter {
 									boolean phage;
 									boolean plasmid;
 									if( tgene != null ) {
-										phage = tgene.isPhage();
+										phage = tgene.tegeval.isPhage();
 										plasmid = tgene.tegeval.getContshort().isPlasmid();
 									} else {
 										phage = genegroup.isInAnyPhage();
@@ -717,7 +717,7 @@ public class GeneSorter {
 												} else {
 													boolean phage;
 													boolean plasmid;
-													phage = tv.getGene().isPhage();
+													phage = tv.isPhage();
 													plasmid = tv.getContshort().isPlasmid();
 													
 													if( tgene != null ) {

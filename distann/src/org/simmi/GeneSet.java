@@ -468,7 +468,7 @@ public class GeneSet extends JApplet {
 					val = val.trim();
 					n = val.indexOf(']');
 				
-					map.put( "MAT"+id, val.substring(0, n+1) );
+					map.put( id, val.substring(0, n+1) );
 				}
 			}
 			line = br.readLine();
@@ -655,7 +655,7 @@ public class GeneSet extends JApplet {
 					
 					String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 					Gene gene = new Gene( null, id, newname, origin );
-					gene.designation = designations != null ? designations.get( id ) : null;
+					gene.tegeval.designation = designations != null ? designations.get( id ) : null;
 					gene.refid = newid;
 					gene.setIdStr( idstr );
 					gene.allids = new HashSet<String>();
@@ -732,7 +732,7 @@ public class GeneSet extends JApplet {
 					g.name = name;
 					g.id = id;
 					
-					g.designation = designations != null ? designations.get( id ) : null;
+					g.tegeval.designation = designations != null ? designations.get( id ) : null;
 					g.refid = newid;
 					g.setIdStr( idstr );
 					g.allids = new HashSet<String>();
@@ -940,7 +940,7 @@ public class GeneSet extends JApplet {
 						
 						String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 						Gene gene = new Gene( null, id, newname, origin );
-						gene.designation = designations != null ? designations.get( id ) : null;
+						gene.tegeval.designation = designations != null ? designations.get( id ) : null;
 						gene.refid = newid;
 						gene.setIdStr( idstr );
 						gene.allids = new HashSet<String>();
@@ -1205,7 +1205,7 @@ public class GeneSet extends JApplet {
 				
 				String newname = addname.length() == 0 ? name : addname.substring(1);
 				Gene gene = new Gene( null, id, newname, origin );
-				gene.designation = designations != null ? designations.get( id ) : null;
+				gene.tegeval.designation = designations != null ? designations.get( id ) : null;
 				gene.refid = newid;
 				gene.allids = new HashSet<String>();
 				gene.allids.add( newid );
@@ -1465,7 +1465,7 @@ public class GeneSet extends JApplet {
 		if( designation != null && designation.length() > 0 ) {
 			Set<String> sset = new TreeSet<String>();
 			for( Gene g : genelist ) {
-				if( g.designation != null && g.designation.equals( designation ) ) {
+				if( g.tegeval.designation != null && g.tegeval.designation.equals( designation ) ) {
 					sset.add( g.getSpecies() );
 				}
 			}
@@ -1691,7 +1691,7 @@ public class GeneSet extends JApplet {
 		if( designation.length() > 0 ) {
 			specset = new TreeSet<String>();
 			for( Gene g : genelist ) {
-				if( g.designation != null && g.designation.equals( designation ) ) {
+				if( g.tegeval.designation != null && g.tegeval.designation.equals( designation ) ) {
 					specset.add( g.getSpecies() );
 				}
 			}
@@ -1733,7 +1733,7 @@ public class GeneSet extends JApplet {
 		Map<String,Set<GeneGroup>>	ggMap = new HashMap<String,Set<GeneGroup>>();
 		if( designation.length() > 0 ) {
 			for( Gene g : genelist ) {
-				if( g.designation != null && g.designation.equals(designation) ) {
+				if( g.tegeval.designation != null && g.tegeval.designation.equals(designation) ) {
 					String spec = g.getSpecies();
 					
 					if( geneMap.containsKey( spec ) ) {
@@ -9649,7 +9649,7 @@ public class GeneSet extends JApplet {
 						boolean plasmid = false;
 						boolean phage = false;
 						for( Tegeval tv : ti.tset ) {
-							phage = phage | tv.getGene().isPhage();
+							phage = phage | tv.isPhage();
 							
 							Sequence seq = tv.getContshort();
 							
@@ -9679,7 +9679,7 @@ public class GeneSet extends JApplet {
 						GeneGroup gg = g.getGeneGroup();
 						Teginfo ti = gg.species.get( g.getSpecies() );
 						
-						boolean phage = g.isPhage();
+						boolean phage = tv.isPhage();
 						boolean plasmid = tv.getContshort().isPlasmid();
 						if( phage && plasmid ) {
 							if( ti.tset.size() > 1 ) label.setBackground( darkmag );
@@ -10879,7 +10879,7 @@ public class GeneSet extends JApplet {
 				for( int r : rr ) {
 					int i = table.convertRowIndexToModel( r );
 					Gene g = genelist.get(i);
-					g.designation = val;
+					g.tegeval.designation = val;
 					if( g.id != null ) {
 						designations.put( g.id, val );
 					} else {
@@ -13099,6 +13099,8 @@ public class GeneSet extends JApplet {
 			
 			nf = zipfilesystem.getPath("/allthermus.fna");
 			if( Files.exists( nf ) ) specList = loadcontigs( Files.newBufferedReader(nf), "" );
+			nf = zipfilesystem.getPath("/454LargeContigs.fna");
+			if( Files.exists( nf ) ) specList = loadcontigs( Files.newBufferedReader(nf), "" );
 			//else {
 			for( Path root : zipfilesystem.getRootDirectories() ) {
 				Files.list(root).filter( new Predicate<Path>() {
@@ -13145,6 +13147,8 @@ public class GeneSet extends JApplet {
 				});
 			}// else {
 			nf = zipfilesystem.getPath("/allthermus_aligned.aa");
+			if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
+			nf = zipfilesystem.getPath("/genes.faa");
 			if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
 			//else {
 			

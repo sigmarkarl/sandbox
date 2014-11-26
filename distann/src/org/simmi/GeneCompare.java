@@ -2179,7 +2179,7 @@ public class GeneCompare {
 							
 							Teginfo ti = gg.getGenes( spec2 );
 							for( Tegeval tv2 : ti.tset ) {
-	                        	phage |= tv2.getGene().isPhage();
+	                        	phage |= tv2.isPhage();
 	                        	plasmid |= tv2.getContshort().isPlasmid();
 	                        }
 							
