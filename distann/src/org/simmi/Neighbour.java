@@ -2326,8 +2326,8 @@ public class Neighbour {
 					List<Sequence> lseq = new ArrayList<Sequence>();
 					int[] rr = rowheader.getSelectedRows();
 					
-					int upph = -7000;
-					int endh = 7000;
+					int upph = -8000;
+					int endh = 8000;
 					
 					if( rr == null || rr.length == 0 ) {
 						for( GeneGroup gg : selectedGenesGroups ) {
