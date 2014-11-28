@@ -940,7 +940,7 @@ public class GeneSet extends JApplet {
 						
 						String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 						Gene gene = new Gene( null, id, newname, origin );
-						gene.tegeval.designation = designations != null ? designations.get( id ) : null;
+						tv.designation = designations != null ? designations.get( id ) : null;
 						gene.refid = newid;
 						gene.setIdStr( idstr );
 						gene.allids = new HashSet<String>();
@@ -1205,7 +1205,7 @@ public class GeneSet extends JApplet {
 				
 				String newname = addname.length() == 0 ? name : addname.substring(1);
 				Gene gene = new Gene( null, id, newname, origin );
-				gene.tegeval.designation = designations != null ? designations.get( id ) : null;
+				tv.designation = designations != null ? designations.get( id ) : null;
 				gene.refid = newid;
 				gene.allids = new HashSet<String>();
 				gene.allids.add( newid );
