@@ -655,7 +655,7 @@ public class GeneSet extends JApplet {
 					
 					String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 					Gene gene = new Gene( null, id, newname, origin );
-					gene.tegeval.designation = designations != null ? designations.get( id ) : null;
+					tv.designation = designations != null ? designations.get( id ) : null;
 					gene.refid = newid;
 					gene.setIdStr( idstr );
 					gene.allids = new HashSet<String>();
@@ -6021,7 +6021,7 @@ public class GeneSet extends JApplet {
 								//cs.sendToAll( res );
 							}
 						};
-						doBlast( message, evalstr, true, run );
+						doBlast( message, evalstr, true, run, false );
 					} else if( message.contains("ready") ) {
 						cs.sendToAll( "simmi" ); //cs.message );
 					} else if( message.contains("cogchart:") ) {
@@ -8183,7 +8183,7 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	public void showSelectedSequences( Component comp, Set<Tegeval> tset, boolean dna, String names ) {
+	public void showSelectedSequences( Component comp, Set<Annotation> tset, boolean dna, String names ) {
 		JFrame frame = new JFrame();
 		frame.setSize(800, 600);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -8192,10 +8192,10 @@ public class GeneSet extends JApplet {
 		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
 		jf.initGui(frame);
 
-		for( Tegeval tv : tset ) {
-			Sequence cont = tv.getContshort();
+		for( Annotation tv : tset ) {
+			Sequence cont = tv.getContig();
 			if( cont != null ) {
-				String contig = cont.getSpec();//tv.getContig();
+				//String contig = cont.getSpec();//tv.getContig();
 				StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
 				Sequence seq = new Sequence( nameFix(tv.getSpecies())/*getGeneName(names, tv.getGene())*/, seqstr, serifier.mseq );
 				serifier.addSequence(seq);
@@ -8799,7 +8799,7 @@ public class GeneSet extends JApplet {
 		return v;
 	}
 	
-	public void doBlast( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr ) {
+	public void doBlast( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr, boolean x ) {
 		File blastn;
 		File blastp;
 		File makeblastdb;
@@ -8890,7 +8890,7 @@ public class GeneSet extends JApplet {
 				}
 			}.run();
 			
-			File blastFile = blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+			File blastFile = x ? blastx : blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
 			
 			String[] 		cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
 			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
@@ -8980,7 +8980,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	public void doBlastn( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr ) {
+	public void doBlastn( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr, boolean show ) {
 		File blastn;
 		File blastp;
 		File makeblastdb;
@@ -9059,7 +9059,10 @@ public class GeneSet extends JApplet {
 			
 			File blastFile = blastn; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
 			
-			String[] 		cmds = { blastFile.getAbsolutePath(), "-dust", "no", "-word_size", "22", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			String[] 		cmds1 = { blastFile.getAbsolutePath(), "-dust", "no", "-word_size", "22", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			String[] 		cmds2 = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			String[]		cmds = show ? cmds2 : cmds1;
+			
 			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
 			//String[] exts = extrapar.trim().split("[\t ]+");
 			
@@ -9087,13 +9090,72 @@ public class GeneSet extends JApplet {
 						InputStreamReader rdr = new InputStreamReader( p.getInputStream() );
 						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
 						
+						int o = 0;
 						StringBuilder res = new StringBuilder();
 						BufferedReader br = new BufferedReader( rdr );
 						String line = br.readLine();
 						while( line != null ) {
 							res.append( line+"\n" );
-							/*if( line.startsWith("> ") ) {
-								int i = line.indexOf(' ', 2);
+							if( line.startsWith("Query= ") ) {
+								line = br.readLine();
+								res.append( line+"\n" );
+								while( !line.startsWith("Length") ) {
+									line = br.readLine();
+									res.append( line+"\n" );
+								}
+								o = Integer.parseInt( line.substring(7) );
+							} else if( line.startsWith("> ") ) {
+								String contname = line.substring(1).trim();
+								//line = br.readLine();
+								//res.append( line+"\n" );
+								//int o = Integer.parseInt( line.substring(7) );
+								
+								Sequence cont = contigmap.get(contname);
+								
+								if( cont != null ) {
+									int start = -1;
+									int stop = 0;
+									line = br.readLine();
+									res.append( line+"\n" );
+									while( line != null && !line.startsWith(">") && !line.contains("Expect =") ) {
+										if( line.startsWith("Sbjct") ) {
+											String[] split = line.split("[\t ]+");
+											int k = Integer.parseInt( split[1] );
+											int m = Integer.parseInt( split[3] );
+											
+											if( start == -1 ) start = k;
+											else stop = m;
+										}
+										line = br.readLine();
+										res.append( line+"\n" );
+									}
+									
+									if( start > stop ) {
+										int tmp = start;
+										start = stop;
+										stop = tmp;
+									}
+									
+									//if( stop - start < o*2 ) {
+										List<Annotation> lann = cont.getAnnotations();
+										if( lann != null ) for( Annotation ann : lann ) {
+											if( ann.stop > start && ann.start < stop ) {
+												Gene g = ann.getGene();
+												if( g != null ) {
+													GeneGroup gg = g.getGeneGroup();
+													
+													int ggindex = allgenegroups.indexOf( gg );
+													int i = table.convertRowIndexToView( ggindex );
+													table.addRowSelectionInterval(i, i);
+												}
+											}
+										}
+									//}
+									continue;
+								}
+							}
+							
+								/*int i = line.indexOf(' ', 2);
 								if( i == -1 ) i = line.length();
 								String id = line.substring(2, i);
 								
@@ -9124,25 +9186,31 @@ public class GeneSet extends JApplet {
 									rr.run( stuff );
 									//res += line+"\n";
 								}
-							} //else*/
+								} //else*/
 							line = br.readLine();
 						}
 						br.close();
 						p.destroy();
 						
-						JFrame frame = new JFrame();
-						frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-						frame.setSize(800, 600);
-						
-						JTextArea ta = new JTextArea();
-						ta.setFont( new Font("monospaced", Font.PLAIN, 12) );
-						ta.append( res.toString() );
-						JScrollPane sp = new JScrollPane( ta );
-						frame.add( sp );
-						
-						frame.setVisible( true );
-						
-						if( rr != null ) rr.run("close");
+						//if( !show ) {
+							JFrame frame = new JFrame();
+							frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+							frame.setSize(800, 600);
+							
+							JTextArea ta = new JTextArea();
+							ta.setFont( new Font("monospaced", Font.PLAIN, 12) );
+							ta.append( res.toString() );
+							JScrollPane sp = new JScrollPane( ta );
+							frame.add( sp );
+							
+							frame.setVisible( true );
+							
+							FileWriter fw = new FileWriter("/Users/sigmar/file.txt");
+							fw.write( res.toString() );
+							fw.close();
+							
+							if( rr != null ) rr.run("close");
+						//}
 						
 						/*if( rr != null ) {
 							rr.run( res );
@@ -9159,7 +9227,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	public void blastn() {
+	public void blastn( boolean show ) {
 		String dbname = null;
 		
 		final JTextArea ta = new JTextArea();
@@ -9172,10 +9240,10 @@ public class GeneSet extends JApplet {
 		Object[] objs = new Object[] { sp, tf };
 		JOptionPane.showMessageDialog(GeneSet.this, objs);
 		
-		doBlastn( ta.getText(), tf.getText(), false, null );
+		doBlastn( ta.getText(), tf.getText(), false, null, show );
 	}
 	
-	public void blast() {
+	public void blast( boolean x ) {
 		//String dbname = null;
 		
 		/*try {
@@ -9243,7 +9311,7 @@ public class GeneSet extends JApplet {
 		Object[] objs = new Object[] { sp, tf };
 		JOptionPane.showMessageDialog(GeneSet.this, objs);
 		
-		doBlast( ta.getText(), tf.getText(), true, null );
+		doBlast( ta.getText(), tf.getText(), true, null, x );
 	}
 	
 	JRadioButtonMenuItem	gb;
@@ -17434,13 +17502,25 @@ public class GeneSet extends JApplet {
 		select.add( new AbstractAction("Blast select") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				blast();
+				blast( false );
+			}
+		});
+		select.add( new AbstractAction("Blastx select") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				blast( true );
+			}
+		});
+		select.add( new AbstractAction("Blastn select") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				blastn( true );
 			}
 		});
 		select.add( new AbstractAction("Blast search") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				blastn();
+				blastn( false );
 			}
 		});
 		
