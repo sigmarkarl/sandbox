@@ -42,7 +42,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
-import org.simmi.shared.Sequence;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;

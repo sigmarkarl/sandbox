@@ -25,6 +25,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1702,7 +1703,7 @@ public class Neighbour {
 					Annotation te = getSelectedTe(p, rowheader, sequenceView, realView, hteg, rowheader.getRowHeight());
 					if( te != null ) {
 						Gene g = te.getGene();
-						GeneGroup gg = g.getGeneGroup();
+						GeneGroup gg = g != null ? g.getGeneGroup() : null;
 						if( gg != null ) return "<html>"+
 											//(g.getName().equals( g.refid ) ? gg.getCommonName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
 											gg.getCommonName() + "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
@@ -1949,8 +1950,7 @@ public class Neighbour {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
 							for( Annotation ann : tv.getContig().annset ) {
-								Tegeval tv2 = (Tegeval)ann;
-								tv2.selected = false;
+								ann.selected = false;
 							}
 						}
 					}
@@ -2204,13 +2204,12 @@ public class Neighbour {
 			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					Set<Tegeval>	tset = new HashSet<Tegeval>();
+					Set<Annotation>	tset = new HashSet<Annotation>();
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
 							for( Annotation ann : tv.getContig().annset ) {
-								Tegeval tv2 = (Tegeval)ann;
-								if( tv2.isSelected() ) tset.add( tv2 );
+								if( ann.isSelected() ) tset.add( ann );
 							}
 						}
 					}
@@ -2220,13 +2219,12 @@ public class Neighbour {
 			showselecteddnaseqs.setAction( new AbstractAction("Selected DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					Set<Tegeval>	tset = new HashSet<Tegeval>();
+					Set<Annotation>	tset = new HashSet<Annotation>();
 					for( GeneGroup gg : selectedGenesGroups ) {
 						List<Tegeval> ltv = gg.getTegevals();
 						for( Tegeval tv : ltv ) {
 							for( Annotation ann : tv.getContig().annset ) {
-								Tegeval tv2 = (Tegeval)ann;
-								if( tv2.isSelected() ) tset.add( tv2 );
+								if( ann.isSelected() ) tset.add( ann );
 							}
 						}
 					}
@@ -2336,6 +2334,9 @@ public class Neighbour {
 					Color cb = new Color(100,100,150);
 					Color cdb = new Color(50,50,100);
 					
+					Set<Color> darkColors = new HashSet<Color>( Arrays.asList(new Color[] {Color.gray,cdg,cdr,cdb}) );
+					Set<Color> colors = new HashSet<Color>( Arrays.asList(new Color[] {Color.lightGray,cg,cr,cb}) );
+					
 					if( rr == null || rr.length == 0 ) {
 						for( GeneGroup gg : selectedGenesGroups ) {
 							List<Tegeval> ltv = gg.getTegevals();
@@ -2358,11 +2359,12 @@ public class Neighbour {
 									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, name);
 									newann.group = tv.gene != null && tv.gene.getGeneGroup() != null ? Integer.toString(tv.gene.getGeneGroup().index) : "";
 									newann.designation = tv.designation;
-									newann.color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.gray;
+									Color color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.gray;
+									newann.color = color;
 									seq.addAnnotation( newann );
 									serifier.addAnnotation(newann);
 									
-									Color color = tv.type != null && tv.type.contains("mummer") ? cb : tv.isPhage() ? cg : tv.seq.isPlasmid() ? cr : Color.lightGray;
+									// = tv.type != null && tv.type.contains("mummer") ? cb : tv.isPhage() ? cg : tv.seq.isPlasmid() ? cr : Color.lightGray;
 									Annotation ntev = tv.getNext();
 									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
 										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
@@ -2380,17 +2382,18 @@ public class Neighbour {
 											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, name);
 										}
 										
+										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
+										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
+										
 										newann.group = ntev.gene != null && ntev.gene.getGeneGroup() != null ? Integer.toString(ntev.gene.getGeneGroup().index) : "";
 										newann.color = color;
 										seq.addAnnotation( newann );
 										serifier.addAnnotation(newann);
 										
-										if( color == Color.lightGray ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
-										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
 										ntev = ntev.getNext();
 									}
 									
-									color = tv.type != null && tv.type.contains("mummer") ? cb : tv.isPhage() ? cg : tv.seq.isPlasmid() ? cr : Color.lightGray;;
+									color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.darkGray;;
 									ntev = tv.getPrevious();
 									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
 										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
@@ -2407,13 +2410,14 @@ public class Neighbour {
 											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, name);
 										}
 										
+										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
+										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
+										
 										newann.group = ntev.gene != null && ntev.gene.getGeneGroup() != null ? Integer.toString(ntev.gene.getGeneGroup().index) : "";
 										newann.color = color;
 										seq.addAnnotation( newann );
 										serifier.addAnnotation(newann);
 										
-										if( color == Color.lightGray ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
-										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
 										ntev = ntev.getPrevious();
 									}
 								/*} else {
