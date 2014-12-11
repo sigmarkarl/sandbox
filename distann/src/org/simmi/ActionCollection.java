@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -21,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
@@ -44,6 +46,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -189,6 +192,80 @@ public class ActionCollection {
 			restext.insert( 0, "['Species', 'Pan: "+pan.size()+"', 'Core: "+core.size()+"']" );
 		}
 		return restext;
+	}
+	
+	public static String longestCommonSubstring(String str1, String str2) {
+		if (str1 == null || str1.length() == 0 || str2 == null || str2.length() == 0 )
+			return "";
+	 
+		String ret = "";
+		for( int i = 0; i < str1.length(); i++ ) {
+			int count = 0;
+			for( int y = 0; y < Math.min(str2.length(),str1.length()-i); y++ ) {
+				char c1 = str1.charAt(i+y);
+				char c2 = str2.charAt(y);
+				
+				if( c1 == c2 ) {
+					count++;
+				} else {
+					if( count > ret.length() ) {
+						ret = str1.substring(i,count+i);
+					}
+					count = 0;
+				}
+			}
+			
+			if( count > ret.length() ) {
+				ret = str1.substring(i,count+i);
+			}
+		}
+		
+		for( int i = 0; i < str2.length(); i++ ) {
+			int count = 0;
+			for( int y = 0; y < Math.min(str1.length(),str2.length()-i); y++ ) {
+				char c1 = str2.charAt(i+y);
+				char c2 = str1.charAt(y);
+				
+				if( c1 == c2 ) {
+					count++;
+				} else {
+					if( count > ret.length() ) {
+						ret = str2.substring(i,count+i);
+					}
+					count = 0;
+				}
+			}
+			
+			if( count > ret.length() ) {
+				ret = str2.substring(i,count+i);
+			}
+		}
+		
+		return ret;
+		
+		/*int[][] num = new int[str1.length()][str2.length()];
+		String maxstr = "";
+	 
+		for (int i = 0; i < str1.length(); i++)
+		{
+			for (int j = 0; j < str2.length(); j++)
+			{
+				if (str1.charAt(i) != str2.charAt(j))
+					num[i][j] = 0;
+				else
+				{
+					if ((i == 0) || (j == 0))
+						num[i][j] = 1;
+					else
+						num[i][j] = 1 + num[i - 1][j - 1];
+	 
+					if (num[i][j] > maxstr.length()) {
+						maxstr = str1.substring(i,num[i][j]-i);
+					}
+				}
+			}
+		}
+		return maxstr;*/
 	}
 	
 	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Sequence>> speccontigMap, boolean withHtml ) {
@@ -1408,6 +1485,327 @@ public class ActionCollection {
 					e1.printStackTrace();
 				}
 			}
+		};
+		AbstractAction	crispraction = new AbstractAction("CRISPR-table") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = geneset.table.getSelectedRows();
+				if( rr.length > 0 ) {
+					Workbook wb = new XSSFWorkbook();
+					for( int r : rr ) {
+						int i = geneset.table.convertRowIndexToModel(r);
+						GeneGroup gg = geneset.allgenegroups.get(i);
+						
+						Sheet sheet = wb.createSheet( gg.getCommonName() );
+						
+						Map<String,String> sspec = new TreeMap<String,String>();
+						for( String spec : gg.getSpecies() ) {
+							sspec.put( Sequence.nameFix(spec, true), spec );
+						}
+						
+						Row row = sheet.createRow(0);
+						Cell cell = row.createCell( 0 );
+						cell.setCellValue( "Strain" );
+						cell = row.createCell( 1 );
+						cell.setCellValue( "Location" );
+						cell = row.createCell( 2 );
+						cell.setCellValue( "Upstream repeats" );
+						cell = row.createCell( 3 );
+						cell.setCellValue( "Spacer sequence" );
+						cell = row.createCell( 4 );
+						cell.setCellValue( "Phage hits" );
+						cell = row.createCell( 5 );
+						cell.setCellValue( "Phage hits - not identical" );
+						cell = row.createCell( 6 );
+						cell.setCellValue( "Downstream repeats" );
+						cell = row.createCell( 7 );
+						cell.setCellValue( "Spacer sequence" );
+						cell = row.createCell( 8 );
+						cell.setCellValue( "Phage hits" );
+						cell = row.createCell( 9 );
+						cell.setCellValue( "Phage hits - not identical" );
+						int k = 1;
+						
+						for( String spec : sspec.keySet() ) {
+							String sp = sspec.get(spec);
+							row = sheet.createRow(k++);
+							cell = row.createCell( 0 );
+							cell.setCellValue( spec );
+							cell = row.createCell( 1 );
+							
+							String loc = "";
+							
+							Tegeval best = null;
+							List<Tegeval> ltv = gg.getTegevals(sp);
+							for( Tegeval tv : ltv ) {
+								if( tv.seq.isPlasmid() ) {
+									loc += "plasmid";
+								} else {
+									loc += "chromosome";
+								}
+								best = tv;
+							}
+							cell.setCellValue( loc );
+							
+							String lcs = "";
+							String plcs = "";
+							int count = 0;
+							int pcount = 0;
+							
+							Map<String,Integer> uphage = new HashMap<String,Integer>();
+							Map<String,Integer> dphage = new HashMap<String,Integer>();
+							
+							Map<String,Integer> uphage_n = new HashMap<String,Integer>();
+							Map<String,Integer> dphage_n = new HashMap<String,Integer>();
+							
+							String spacers = "";
+							int u = 0;
+							Annotation before = best;
+							Annotation next = best.getNext();
+							while( next != null ) {
+								if( next.type != null && next.type.contains("mummer") ) {
+									count++;
+									
+									if( before.type != null && before.type.contains("mummer") ) {
+										/*if( before.stop < -10 || next.start < -10 || before.stop > next.start) {
+											System.err.println( before.start + "  " + before.stop + "  " + next.start + "  " + next.stop );
+										}
+										int up = Math.min(before.stop,next.start)+1;
+										int en = Math.max(before.stop,next.start)-1;*/
+										
+										int up;
+										int en;
+										if( next.start > before.start ) {
+											up = before.stop+1;
+											en = next.start-1;
+										} else {
+											up = next.stop+1;
+											en = before.start-1;
+										}
+										
+										String spacer = best.seq.getSubstring(up, en, 1);
+										if( spacer.length() > 0 ) spacers += ">"+u+"\n"+spacer+"\n";
+									}
+									
+									String newstr = next.getName();
+									int o = newstr.indexOf('-');
+									if( o != -1 ) {
+										newstr = newstr.substring(o+1);
+									}
+									if( lcs.length() > 0 ) {
+										lcs = longestCommonSubstring(lcs,newstr.toUpperCase());
+									} else {
+										lcs = newstr.toUpperCase();
+									}
+								} else if( before.type != null && before.type.contains("mummer") ) {
+									break;
+								} else if( u > 100 ) {
+									break;
+								}
+								
+								before = next;
+								next = next.getNext();
+								
+								u++;
+							}
+							
+							//spacers = ">1\nACGTCGCTAGCTCGATCGCT\n";
+							if( spacers.length() > 0 ) {
+								ProcessBuilder pb = new ProcessBuilder("blastn","-db","phage_radir.fna","-word_size","20","-num_threads","4");//,"-num_alignments","1","-num_descriptions","1");
+								pb.directory( new File( System.getProperty("user.home") ) );
+								try {
+									Process p = pb.start();
+									final byte[] sbytes = spacers.getBytes();
+									Thread t = new Thread() {
+										public void run() {
+											try {
+												OutputStream os = p.getOutputStream();
+												os.write( sbytes );
+												os.close();
+											} catch (IOException e) {
+												e.printStackTrace();
+											}
+										}
+									};
+									t.start();
+									
+									InputStream is = p.getInputStream();
+									BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+									String line = br.readLine();
+									
+									Set<String>	allready = new HashSet<String>();
+									while( line != null ) {
+										if( line.startsWith("Query=") ) {
+											allready.clear();
+										} else if( line.startsWith(">") ) {
+											String trim = line.substring(1).trim();
+											String phage = trim.substring(0,trim.indexOf('-') );
+											
+											if( !allready.contains( phage ) ) {
+												line = br.readLine();
+												while( !line.contains("Gaps") ) {
+													line = br.readLine();
+												}
+												int ik = line.indexOf("Gaps");
+												if( line.substring( ik+7, line.indexOf('/',ik+7) ).trim().equals("0") ) {
+													if( !uphage.containsKey(phage) ) {
+														uphage.put(phage, 1);
+													} else {
+														uphage.put(phage, uphage.get(phage)+1);
+													}
+												} else {
+													if( !uphage_n.containsKey(phage) ) {
+														uphage_n.put(phage, 1);
+													} else {
+														uphage_n.put(phage, uphage_n.get(phage)+1);
+													}
+												}
+												allready.add( phage );
+											}
+										}
+										line = br.readLine();
+									}
+									is.close();
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							}
+							
+							spacers = "";
+							u = 0;
+							before = best;
+							Annotation prev = best.getPrevious();
+							while( prev != null ) {
+								if( prev.type != null && prev.type.contains("mummer") ) {
+									pcount++;
+									
+									if( before.type != null && before.type.contains("mummer") ) {
+										int up;
+										int en;
+										if( prev.start > before.start ) {
+											up = before.stop+1;
+											en = prev.start-1;
+										} else {
+											up = prev.stop+1;
+											en = before.start-1;
+										}
+										
+										String spacer = best.seq.getSubstring(up, en, 1);
+										if( spacer.length() > 0 ) spacers += ">"+u+"\n"+spacer+"\n";
+									}
+									
+									String newstr = prev.getName();
+									int o = newstr.indexOf('-');
+									if( o != -1 ) {
+										newstr = newstr.substring(o+1);
+									}
+									if( plcs.length() > 0 ) {
+										plcs = longestCommonSubstring(plcs,newstr.toUpperCase());
+									} else {
+										plcs = newstr.toUpperCase();
+									}
+								} else if( before.type != null && before.type.contains("mummer") ) {
+									break;
+								} else if( u > 100 ) {
+									break;
+								}
+								
+								before = prev;
+								prev = prev.getPrevious();
+								
+								u++;
+							}
+							
+							if( spacers.length() > 0 ) {
+								ProcessBuilder pb = new ProcessBuilder("blastn","-db","phage_radir.fna","-word_size","20","-num_threads","4","-num_alignments","1","-num_descriptions","1");
+								pb.directory( new File( System.getProperty("user.home") ) );
+								try {
+									Process p = pb.start();
+									final byte[] sbytes = spacers.getBytes();
+									Thread t = new Thread() {
+										public void run() {
+											try {
+												OutputStream os = p.getOutputStream();
+												os.write( sbytes );
+												os.close();
+											} catch (IOException e) {
+												e.printStackTrace();
+											}
+										}
+									};
+									t.start();
+									
+									InputStream is = p.getInputStream();
+									BufferedReader br = new BufferedReader( new InputStreamReader(is) );
+									String line = br.readLine();
+									while( line != null ) {
+										if( line.startsWith(">") ) {
+											String trim = line.substring(1).trim();
+											String phage = trim.substring(0,trim.indexOf('-') );
+											
+											line = br.readLine();
+											while( !line.contains("Gaps") ) {
+												line = br.readLine();
+											}
+											int ik = line.indexOf("Gaps");
+											if( line.substring( ik+7, line.indexOf('/',ik+7) ).trim().equals("0") ) {
+												if( !dphage.containsKey(phage) ) {
+													dphage.put(phage, 1);
+												} else {
+													dphage.put(phage, dphage.get(phage)+1);
+												}
+											} else {
+												if( !dphage_n.containsKey(phage) ) {
+													dphage_n.put(phage, 1);
+												} else {
+													dphage_n.put(phage, dphage_n.get(phage)+1);
+												}
+											}
+										}
+										line = br.readLine();
+									}
+									is.close();
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							}
+							
+							cell = row.createCell( 2 );
+							cell.setCellValue( count );
+							cell = row.createCell( 3 );
+							cell.setCellValue( lcs );
+							cell = row.createCell( 4 );
+							cell.setCellValue( uphage.toString() );
+							cell = row.createCell( 5 );
+							cell.setCellValue( uphage_n.toString() );
+							
+							
+							cell = row.createCell( 6 );
+							cell.setCellValue( pcount );
+							cell = row.createCell( 7 );
+							cell.setCellValue( plcs );
+							cell = row.createCell( 8 );
+							cell.setCellValue( dphage.toString() );
+							cell = row.createCell( 9 );
+							cell.setCellValue( dphage_n.toString() );
+						}
+					}
+					
+					File file = new File("/Users/sigmar/crispr.xlsx");
+					try {
+						FileOutputStream fos = new FileOutputStream(file);
+						wb.write( fos );
+						fos.close();
+						Desktop.getDesktop().open(file);
+					} catch (FileNotFoundException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+			
 		};
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
 			@Override
@@ -4184,6 +4582,7 @@ public class ActionCollection {
 		menu.add( genomestataction );
 		menu.add( seqstat );
 		menu.add( shuffletreeaction );
+		menu.add( crispraction );
 		menu.add( presabsaction );
 		menu.add( freqdistaction );
 		menu.add( gcpaction );
