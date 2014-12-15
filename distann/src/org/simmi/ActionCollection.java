@@ -1615,7 +1615,7 @@ public class ActionCollection {
 								ProcessBuilder pb = new ProcessBuilder("blastn","-db","phage_radir.fna","-word_size","20","-num_threads","4");//,"-num_alignments","1","-num_descriptions","1");
 								pb.directory( new File( System.getProperty("user.home") ) );
 								try {
-									Process p = pb.start();
+									final Process p = pb.start();
 									final byte[] sbytes = spacers.getBytes();
 									Thread t = new Thread() {
 										public void run() {
@@ -1721,7 +1721,7 @@ public class ActionCollection {
 								ProcessBuilder pb = new ProcessBuilder("blastn","-db","phage_radir.fna","-word_size","20","-num_threads","4","-num_alignments","1","-num_descriptions","1");
 								pb.directory( new File( System.getProperty("user.home") ) );
 								try {
-									Process p = pb.start();
+									final Process p = pb.start();
 									final byte[] sbytes = spacers.getBytes();
 									Thread t = new Thread() {
 										public void run() {
