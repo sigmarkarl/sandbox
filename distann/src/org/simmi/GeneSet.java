@@ -13233,7 +13233,7 @@ public class GeneSet extends JApplet {
 					public boolean test(Path t) {
 						String filename = t.getFileName().toString();
 						//System.err.println("filename " + filename);
-						boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
+						boolean b = (filename.endsWith(".aa") || filename.endsWith(".faa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
 						return b;
 					}
 				}).forEach( new Consumer<Path>() {
