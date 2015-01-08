@@ -8213,7 +8213,7 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	boolean isthermus = false;
+	boolean isthermus = true;
 	String nameFix( String spec ) {
 		return Sequence.nameFix( spec, isthermus );
 	}
