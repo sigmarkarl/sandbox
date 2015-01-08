@@ -46,7 +46,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -1492,6 +1491,8 @@ public class ActionCollection {
 			public void actionPerformed(ActionEvent e) {
 				int[] rr = geneset.table.getSelectedRows();
 				if( rr.length > 0 ) {
+					Set<String> includeSpecs = geneset.getSelspec(geneset, geneset.specList, null);
+					
 					Workbook wb = new XSSFWorkbook();
 					for( int r : rr ) {
 						int i = geneset.table.convertRowIndexToModel(r);
@@ -1501,7 +1502,7 @@ public class ActionCollection {
 						
 						Map<String,String> sspec = new TreeMap<String,String>();
 						for( String spec : gg.getSpecies() ) {
-							sspec.put( Sequence.nameFix(spec, true), spec );
+							if( includeSpecs.contains(spec) ) sspec.put( Sequence.nameFix(spec, true), spec );
 						}
 						
 						Row row = sheet.createRow(0);
@@ -1512,7 +1513,7 @@ public class ActionCollection {
 						cell = row.createCell( 2 );
 						cell.setCellValue( "Upstream repeats" );
 						cell = row.createCell( 3 );
-						cell.setCellValue( "Spacer sequence" );
+						cell.setCellValue( "Repeat sequence" );
 						cell = row.createCell( 4 );
 						cell.setCellValue( "Phage hits" );
 						cell = row.createCell( 5 );
@@ -1520,12 +1521,14 @@ public class ActionCollection {
 						cell = row.createCell( 6 );
 						cell.setCellValue( "Downstream repeats" );
 						cell = row.createCell( 7 );
-						cell.setCellValue( "Spacer sequence" );
+						cell.setCellValue( "Repeat sequence" );
 						cell = row.createCell( 8 );
 						cell.setCellValue( "Phage hits" );
 						cell = row.createCell( 9 );
 						cell.setCellValue( "Phage hits - not identical" );
 						int k = 1;
+						
+						Map<String,List<String>>	specudSpacers = new LinkedHashMap<String,List<String>>();
 						
 						for( String spec : sspec.keySet() ) {
 							String sp = sspec.get(spec);
@@ -1559,6 +1562,7 @@ public class ActionCollection {
 							Map<String,Integer> uphage_n = new HashMap<String,Integer>();
 							Map<String,Integer> dphage_n = new HashMap<String,Integer>();
 							
+							List<String>	upSpacers = new ArrayList<String>();
 							String spacers = "";
 							int u = 0;
 							Annotation before = best;
@@ -1585,7 +1589,10 @@ public class ActionCollection {
 										}
 										
 										String spacer = best.seq.getSubstring(up, en, 1);
-										if( spacer.length() > 0 ) spacers += ">"+u+"\n"+spacer+"\n";
+										if( spacer.length() > 0 ) {
+											upSpacers.add( spacer );
+											spacers += ">"+u+"\n"+spacer+"\n";
+										}
 									}
 									
 									String newstr = next.getName();
@@ -1672,6 +1679,7 @@ public class ActionCollection {
 								}
 							}
 							
+							List<String>	downSpacers = new ArrayList<String>();
 							spacers = "";
 							u = 0;
 							before = best;
@@ -1692,7 +1700,10 @@ public class ActionCollection {
 										}
 										
 										String spacer = best.seq.getSubstring(up, en, 1);
-										if( spacer.length() > 0 ) spacers += ">"+u+"\n"+spacer+"\n";
+										if( spacer.length() > 0 ) {
+											downSpacers.add( spacer );
+											spacers += ">"+u+"\n"+spacer+"\n";
+										}
 									}
 									
 									String newstr = prev.getName();
@@ -1789,6 +1800,37 @@ public class ActionCollection {
 							cell.setCellValue( dphage.toString() );
 							cell = row.createCell( 9 );
 							cell.setCellValue( dphage_n.toString() );
+							
+							if( upSpacers.size() > 0 ) specudSpacers.put(spec+"up", upSpacers);
+							if( downSpacers.size() > 0 ) specudSpacers.put(spec+"down", downSpacers);
+						}
+						
+						row = sheet.createRow(k);
+						row.createCell(0).setCellValue("Spacers");
+						row = sheet.createRow(++k);
+						int u = 0;
+						for( String spec : specudSpacers.keySet() ) {
+							Cell cl = row.createCell(u++);
+							cl.setCellValue(spec);
+						}
+						
+						int l = 0;
+						boolean empty = false;
+						while( !empty ) {
+							row = sheet.createRow(++k);
+							empty = true;
+							u = 0;
+							for( String spec : specudSpacers.keySet() ) {
+								List<String> ss = specudSpacers.get(spec);
+								if( l < ss.size() ) {
+									empty = false;
+									Cell cl = row.createCell(u);
+									String spcr = ss.get(l).toUpperCase();
+									cl.setCellValue( spcr.substring(0, Math.min(50,spcr.length())) );
+								}
+								u++;
+							}
+							l++;
 						}
 					}
 					
