@@ -790,7 +790,10 @@ public class GeneSet extends JApplet {
 	
 	Set<String>	mu = new HashSet<String>();
 	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
-		//BufferedReader br = new BufferedReader(rd);
+		/*if( filename.contains("timi") ) {
+			System.err.println();
+		}*/
+		
 		String line = br.readLine();
 		String lname = null;
 		String prevline = null;
@@ -10708,6 +10711,9 @@ public class GeneSet extends JApplet {
 					return gene.getGroupCoverage() == 35 && gene.getGroupCount() == 35 ? gene.corr16s : -1;
 				} else {
 					String spec = specList.get( columnIndex-26 );
+					/*if( spec.contains("timidus") ) {
+						System.err.println();
+					}*/
 					//Teginfo set = gene.species.equals(spec) ? gene.teginfo : null;
 					if( gene.getSpecies().equals( spec ) ) {
 						return gene.tegeval;
