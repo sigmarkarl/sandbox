@@ -12584,6 +12584,10 @@ public class GeneSet extends JApplet {
 				int k = trim.indexOf('[');
 				
 				String loc = trim.substring(1,i);
+				if( i+1 < 0 || k-1 < 0 || i+1 > trim.length() || k-1 > trim.length() ) {
+					
+					System.err.println();
+				}
 				String name = trim.substring(i+1, k-1);
 				String cont = trim.substring(k+1, trim.length()-1);
 				String spec;
@@ -12667,7 +12671,15 @@ public class GeneSet extends JApplet {
 				String cont = trim.substring(6, b).replace(".fna", "");
 				int end = cont.indexOf("_contig");
 				if( end == -1 ) end = cont.indexOf("_scaffold");
-				if( end == -1 && cont.charAt(0) == 'J' && cont.charAt(4) == '0' ) end = 4;
+				if( end == -1 ) end = cont.indexOf("_chromosome");
+				if( end == -1 ) end = cont.indexOf("_plasmid");
+				if( end == -1 && (cont.charAt(0) == 'J' || cont.charAt(0) == 'A') && cont.charAt(4) == '0' ) end = 4;
+				if( end == -1 ) {
+					int k = cont.indexOf("uid");
+					if( k != -1 ) {
+						end = cont.indexOf('_', k);
+					}
+				}
 				if( end == -1 ) end = cont.length();
 				String spec = cont.substring(0,end);
 				
@@ -13639,6 +13651,29 @@ public class GeneSet extends JApplet {
 			if( Files.exists( nf ) ) i  = loadTrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
 			nf = zipfilesystem.getPath("/rrnas.txt");
 			if( Files.exists( nf ) ) i = loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
+			else {
+				for( Path root : zipfilesystem.getRootDirectories() ) {
+					Files.list(root).filter( new Predicate<Path>() {
+						@Override
+						public boolean test(Path t) {
+							String filename = t.getFileName().toString();
+							//System.err.println("filename " + filename);
+							boolean b = filename.endsWith(".lsu") || filename.endsWith(".ssu") || filename.endsWith(".tsu");
+							return b;
+						}
+					}).forEach( new Consumer<Path>() {
+						@Override
+						public void accept(Path t) {
+							if( Files.exists( t ) )
+								try {
+									loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0 );
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+						}
+					});
+				}
+			}
 			
 			nf = zipfilesystem.getPath("/allthermus.trna");
 			if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "trna" );
