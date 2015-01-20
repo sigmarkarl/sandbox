@@ -267,7 +267,15 @@ public class ActionCollection {
 		return maxstr;*/
 	}
 	
-	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Sequence>> speccontigMap, boolean withHtml ) {
+	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Sequence>> speccontigMap, boolean withHtml ) throws IOException {
+		Workbook wb = new XSSFWorkbook();
+		Sheet sh = wb.createSheet("genome stats");
+		
+		int k = 0;
+		Row rw = sh.createRow(0);
+		rw.createCell(k).setCellValue("Species");
+		k++;
+		
 		final StringWriter fw = new StringWriter();
 		if( withHtml ) fw.write("<html><head></head><body>");
 		fw.write("<table border=1><tr><td>Species</td>");
@@ -276,12 +284,26 @@ public class ActionCollection {
 			//if( i == -1 ) i = spec.length();
 			String specstr = geneset.nameFix( spec ); //spec.substring(0, i);
 			fw.write( "<td colspan=2>"+specstr+"</td>" );
+			
+			rw.createCell(k).setCellValue(specstr);
+			k+=2;
 		}
+		
+		k=1;
+		rw = sh.createRow(1);
+		//rw.createCell(1).setCellValue("");
 		fw.write("</tr><tr><td></td>");
-		for( String spec : selspecs) {
+		for( String spec : selspecs ) {
 			fw.write( "<td>Number</td>" );
 			fw.write( "<td>% of total</td>" );
+			
+			rw.createCell(k++).setCellValue("Number");
+			rw.createCell(k++).setCellValue("% of total");
 		}
+		
+		k=0;
+		rw = sh.createRow(2);
+		rw.createCell(k++).setCellValue("DNA, total number of bases");
 		fw.write("</tr><tr><td>DNA, total number of bases</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -297,7 +319,14 @@ public class ActionCollection {
 			}
 			fw.write( "<td>"+len+"</td>" );
 			fw.write( "<td>100%</td>" );
+			
+			rw.createCell(k++).setCellValue(len);
+			rw.createCell(k++).setCellValue("100%");
 		}
+		
+		k=0;
+		rw = sh.createRow(3);
+		rw.createCell(k++).setCellValue("DNA coding number of bases");
 		fw.write("</tr><tr><td>DNA coding number of bases</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -313,7 +342,14 @@ public class ActionCollection {
 			double d = (double)len/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(len);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(4);
+		rw.createCell(k++).setCellValue("DNA, G+C number of bases");
 		fw.write("</tr><tr><td>DNA, G+C number of bases</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -330,14 +366,28 @@ public class ActionCollection {
 			double d = (double)len/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(len);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(5);
+		rw.createCell(k++).setCellValue("DNA contigs");
 		fw.write("</tr><tr><td>DNA contigs</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
 			int size = lcont != null ? lcont.size() : 0;
 			fw.write( "<td>"+size+"</td>" );
 			fw.write( "<td>100%</td>" );
+			
+			rw.createCell(k++).setCellValue(size);
+			rw.createCell(k++).setCellValue(100+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(6);
+		rw.createCell(k++).setCellValue("Genes total number");
 		fw.write("</tr><tr><td>Genes total number</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -350,7 +400,14 @@ public class ActionCollection {
 			}
 			fw.write( "<td>"+total+"</td>" );
 			fw.write( "<td>100%</td>" );
+			
+			rw.createCell(k++).setCellValue(total);
+			rw.createCell(k++).setCellValue("100%");
 		}
+		
+		k=0;
+		rw = sh.createRow(7);
+		rw.createCell(k++).setCellValue("Protein coding genes");
 		fw.write("</tr><tr><td>Protein coding genes</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -368,7 +425,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(8);
+		rw.createCell(k++).setCellValue("RNA genes");
 		fw.write("</tr><tr><td>RNA genes</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -386,7 +450,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(9);
+		rw.createCell(k++).setCellValue("rRNA genes");
 		fw.write("</tr><tr><td>rRNA genes</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -404,7 +475,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(10);
+		rw.createCell(k++).setCellValue("5S rRNA");
 		fw.write("</tr><tr><td>5S rRNA</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -424,7 +502,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(11);
+		rw.createCell(k++).setCellValue("16S rRNA");
 		fw.write("</tr><tr><td>16S rRNA</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -454,7 +539,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(12);
+		rw.createCell(k++).setCellValue("23S rRNA");
 		fw.write("</tr><tr><td>23S rRNA</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -477,7 +569,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(13);
+		rw.createCell(k++).setCellValue("tRNA genes");
 		fw.write("</tr><tr><td>tRNA genes</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -495,8 +594,15 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
-		fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
+		
+		k=0;
+		rw = sh.createRow(14);
+		rw.createCell(k++).setCellValue("Genes in paralog clusters");
+		fw.write("</tr><tr><td>Genes in paralog clusters</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
@@ -505,7 +611,15 @@ public class ActionCollection {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
-						if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
+						int cc = 0;
+						//String spec = tv.getGene().getSpecies();
+						for( Gene g : tv.getGene().getGeneGroup().genes ) {
+							if( g.getSpecies().equals(spec) ) cc++;
+						}
+						if( cc >= 2 ) {
+							count++;
+						}
+						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -517,7 +631,49 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(15);
+		rw.createCell(k++).setCellValue("Protein coding genes with enzyme/function prediction");
+		fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Tegeval tv = (Tegeval)ann;
+						for( Gene g : tv.getGene().getGeneGroup().genes ) {
+							if( (g.funcentries != null && g.funcentries.size() > 0) || (g.ecid != null && g.ecid.length() > 0) ) {
+								count++;
+								break;
+							}
+						}
+						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+		
+		k=0;
+		rw = sh.createRow(16);
+		rw.createCell(k++).setCellValue("Protein coding genes with function prediction");
 		fw.write("</tr><tr><td>Protein coding genes with function prediction</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -539,7 +695,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(17);
+		rw.createCell(k++).setCellValue("Protein coding genes with enzymes");
 		fw.write("</tr><tr><td>Protein coding genes with enzymes</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -569,7 +732,15 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(18);
+		rw.createCell(k++).setCellValue("Protein coding genes with COG function prediction");
+		
 		fw.write("</tr><tr><td>Protein coding genes with COG function prediction</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -601,7 +772,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(19);
+		rw.createCell(k++).setCellValue("Protein coding genes connected to MetaCyc pathways");
 		fw.write("</tr><tr><td>Protein coding genes connected to MetaCyc pathways</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -628,7 +806,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(20);
+		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG reactions");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG reactions</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -667,7 +852,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(21);
+		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG pathways");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -766,7 +958,14 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
+		
+		k=0;
+		rw = sh.createRow(22);
+		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG Orthology (KO)");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG Orthology (KO)</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -840,9 +1039,133 @@ public class ActionCollection {
 			double d = (double)count/(double)total;
 			d = Math.round( d*10000.0 )/100.0;
 			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
 		}
 		fw.write("</tr></table>" );
 		if( withHtml ) fw.write("</body></html>");
+		
+		k=0;
+		rw = sh.createRow(23);
+		rw.createCell(k++).setCellValue("Paralogous groups");
+		fw.write("</tr><tr><td>Paralogous groups</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					Set<Gene> gset = new HashSet<Gene>();
+					for( Annotation ann : ct.getAnnotations() ) {
+						Tegeval tv = (Tegeval)ann;
+						int cc = 0;
+						//String spec = tv.getGene().getSpecies();
+						for( Gene g : tv.getGene().getGeneGroup().genes ) {
+							if( g.getSpecies().equals(spec) ) {
+								if( gset.add(g) ) cc++;
+							}
+						}
+						if( cc >= 2 ) {
+							count++;
+						}
+						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+		
+		k=0;
+		rw = sh.createRow(24);
+		rw.createCell(k++).setCellValue("Genes with signal peptides");
+		fw.write("</tr><tr><td>Genes with signal peptides</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().signalp ) {
+							count++;
+						}
+						/*for( Gene g : tv.getGene().getGeneGroup().genes ) {
+							if( g.getSpecies().equals(spec) ) {
+								if( gset.add(g) ) cc++;
+							}
+						}*/
+						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+		
+		k=0;
+		rw = sh.createRow(25);
+		rw.createCell(k++).setCellValue("Genes with transmembrane helices");
+		fw.write("</tr><tr><td>Genes with transmembrane helices</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Tegeval tv = (Tegeval)ann;
+						if( tv.getGene().transm ) {
+							count++;
+						}
+						/*for( Gene g : tv.getGene().getGeneGroup().genes ) {
+							if( g.getSpecies().equals(spec) ) {
+								if( gset.add(g) ) cc++;
+							}
+						}*/
+						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+			
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+		
+		File f = new File("/Users/sigmar/genstat.xlsx");
+		FileOutputStream fos = new FileOutputStream( f );
+		wb.write( fos );
+		fos.close();
+		
+		Desktop.getDesktop().open(f);
 		
 		return fw.toString();
 	}
@@ -1366,7 +1689,12 @@ public class ActionCollection {
 					selspecs.add( spec );
 				}
 				
-				String htmlstr = htmlTable( geneset, selspecs, speccontigMap, true );
+				String htmlstr = null;
+				try {
+					htmlstr = htmlTable( geneset, selspecs, speccontigMap, true );
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
 				
 				JSObject window = null;
 				try {
@@ -1476,8 +1804,12 @@ public class ActionCollection {
 					i+=6;
 				}
 				
+				File f = new File("/Users/sigmar/wb.xlsx");
 				try {
-					workbook.write( new FileOutputStream("/Users/sigmar/wb.xlsx") );
+					FileOutputStream fos = new FileOutputStream(f);
+					workbook.write( fos );
+					fos.close();
+					Desktop.getDesktop().open(f);
 				} catch (FileNotFoundException e1) {
 					e1.printStackTrace();
 				} catch (IOException e1) {
@@ -2960,6 +3292,8 @@ public class ActionCollection {
 					if( contigs.isSelected() ) {
 						int k = spec.indexOf("contig");
 						if( k == -1 ) k = spec.indexOf("scaffold");
+						if( k == -1 ) k = spec.indexOf("chromosome");
+						if( k == -1 ) k = spec.indexOf("plasmid");
 						if( k == -1 ) k = spec.lastIndexOf('_');
 						if( k == -1 ) {
 							names[i] = spec;
@@ -3802,6 +4136,37 @@ public class ActionCollection {
 					final Map<String,String>					all = new TreeMap<String,String>();
 					final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap<String, Map<Character,Integer>>();
 					geneset.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
+					
+					Map<Character,Row> rl = new HashMap<Character,Row>();
+					
+					Workbook	wb = new XSSFWorkbook();
+					Sheet sh = wb.createSheet("COG");
+					
+					int k = 0;
+					for( String sp : map.keySet() ) {
+						Map<Character,Integer> mm = map.get(sp);
+						if( mm != null ) for( char c : mm.keySet() ) {
+							int cn = mm.get(c);
+							
+							if( !rl.containsKey(c) ) {
+								rl.put( c, sh.createRow(rl.size()) );
+							}
+							
+							Row r = rl.get(c);
+							r.createCell(k).setCellValue( ""+c );
+							r.createCell(k+1).setCellValue( cn );
+						}
+						k+=2;
+					}
+					
+					File f = new File("/Users/sigmar/tmp.xlsx");
+					FileOutputStream fos = new FileOutputStream( f );
+					wb.write(fos);
+					fos.close();
+					
+					Desktop.getDesktop().open(f);
+					
+					
 					StringWriter fw = geneset.writeCog( map, includedCogs, uniform.isSelected() );
 					String repl = fw.toString();
 					
@@ -3928,15 +4293,15 @@ public class ActionCollection {
 					}
 					geneset.zipfilesystem.close();
 					
-					JFrame f = new JFrame("GC% chart");
-					f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-					f.setSize( 800, 600 );
+					JFrame fr = new JFrame("GC% chart");
+					fr.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+					fr.setSize( 800, 600 );
 					
 					JTextArea	ta = new JTextArea();
 					ta.setText( repl + "\n" + stuff );
 					JScrollPane	sp = new JScrollPane(ta);
-					f.add( sp );
-					f.setVisible( true );
+					fr.add( sp );
+					fr.setVisible( true );
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}

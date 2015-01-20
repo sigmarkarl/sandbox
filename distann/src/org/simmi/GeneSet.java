@@ -6202,7 +6202,12 @@ public class GeneSet extends JApplet {
 							str = new HashSet<String>( Arrays.asList(sp) );
 						}
 						
-						String htmlstr = ActionCollection.htmlTable(GeneSet.this, str, speccontigMap, false);
+						String htmlstr = "";
+						try {
+							htmlstr = ActionCollection.htmlTable(GeneSet.this, str, speccontigMap, false);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 						String ans = Base64.getEncoder().encodeToString( htmlstr.getBytes() );
 						cs.sendToAll(ans);
 					} else if( message.contains("neigh:") ) {
@@ -8345,11 +8350,27 @@ public class GeneSet extends JApplet {
 			for( String spec : selspec ) {
 				Map<Character,Integer>	submap = new HashMap<Character,Integer>();
 				map.put(spec, submap);
+				
+				List<Sequence> sctg = speccontigMap.get(spec);
+				for( Sequence c : sctg ) {
+					if( c.getAnnotations() != null ) for( Annotation a : c.getAnnotations() ) {
+						Cog cog = a.getGene().cog;
+						if( cog == null ) {
+							cog = cogmap.get(a.getGene().id);
+						}
+						if( cog != null && cog.symbol != null ) {
+							int val = 0;
+							if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
+							submap.put(cog.symbol, val+1);
+						}
+					}
+				}
 			}
 			
-			for( int r = 0; r < table.getRowCount(); r++ ) {
-				int i = table.convertRowIndexToModel(r);
-				if( i >= 0 && i < allgenegroups.size() ) {
+			/*for( int r = 0; r < table.getRowCount(); r++ ) {
+				//int i = table.convertRowIndexToModel(r);
+				//if( i >= 0 && i < allgenegroups.size() ) {
+			for( int i = 0; i < allgenegroups.size(); i++ ) {
 					GeneGroup gg = allgenegroups.get(i);
 					Cog cog = gg.getCommonCog(cogmap);
 					if( cog != null && includedCogs.contains(cog.symbol) ) {
@@ -8365,20 +8386,20 @@ public class GeneSet extends JApplet {
 									} else {
 										int val = 0;
 										//if( map.containsKey( tv.getSpecies() ) ) {
-											submap = map.get( tv.getSpecies() );
-											if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
+										submap = map.get( tv.getSpecies() );
+										if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
 										/*} else {
 											submap = new HashMap<Character,Integer>();
 											map.put(spec, submap);
-										}*/
+										}*
 										submap.put( cog.symbol, val+1 );
 									}
 								}
 							}
 						}
 					}
-				}
-			}
+				//}
+			}*/
 		} else {
 			
 		}
@@ -9120,7 +9141,7 @@ public class GeneSet extends JApplet {
 									int stop = 0;
 									line = br.readLine();
 									res.append( line+"\n" );
-									while( line != null && !line.startsWith(">") && !line.contains("Expect =") ) {
+									while( line != null && !line.startsWith(">") /*&& !line.contains("Expect =")*/ ) {
 										if( line.startsWith("Sbjct") ) {
 											String[] split = line.split("[\t ]+");
 											int k = Integer.parseInt( split[1] );
@@ -9145,11 +9166,17 @@ public class GeneSet extends JApplet {
 											if( ann.stop > start && ann.start < stop ) {
 												Gene g = ann.getGene();
 												if( g != null ) {
-													GeneGroup gg = g.getGeneGroup();
-													
-													int ggindex = allgenegroups.indexOf( gg );
-													int i = table.convertRowIndexToView( ggindex );
-													table.addRowSelectionInterval(i, i);
+													if( table.getModel() == groupModel ) {
+														GeneGroup gg = g.getGeneGroup();
+														
+														int ggindex = allgenegroups.indexOf( gg );
+														int i = table.convertRowIndexToView( ggindex );
+														table.addRowSelectionInterval(i, i);
+													} else if( table.getModel() == defaultModel ) {
+														int gindex = genelist.indexOf( g );
+														int i = table.convertRowIndexToView( gindex );
+														table.addRowSelectionInterval(i, i);
+													}
 												}
 											}
 										}
@@ -10251,7 +10278,7 @@ public class GeneSet extends JApplet {
 
 			@Override
 			public int getColumnCount() {
-				return 29+specList.size();
+				return 31+specList.size();
 			}
 
 			@Override
@@ -10314,8 +10341,12 @@ public class GeneSet extends JApplet {
 					return "# Cyc";
 				} else if (columnIndex == 28) {
 					return "16S Corr";
+				} else if (columnIndex == 29) {
+					return "SingalP";
+				} else if (columnIndex == 30) {
+					return "TransM";
 				} else {
-					String spec = specList.get( columnIndex - 29 );
+					String spec = specList.get( columnIndex - 31 );
 					if( spec != null ) {
 						if( spec.toLowerCase().contains("thermus") ) {
 							int i = spec.indexOf('_');
@@ -10391,7 +10422,7 @@ public class GeneSet extends JApplet {
 					return Double.class;
 				else if(columnIndex == 9 || (columnIndex >= 16 && columnIndex <= 27) )
 					return Integer.class;
-				else if (columnIndex >= 29)
+				else if (columnIndex >= 31)
 					return Teg.class;
 				return String.class;
 			}
@@ -10477,8 +10508,12 @@ public class GeneSet extends JApplet {
 					return gg.getMaxCyc();
 				} else if (columnIndex == 28) {
 					return gg.getGroupCoverage() == 39 && gg.getGroupCount() == 39 ? 0 : -1;
+				} else if (columnIndex == 29) {
+					return gg.getCommonSignalP();
+				} else if (columnIndex == 30) {
+					return gg.getCommonTransM();
 				} else {
-					String spec = specList.get( columnIndex - 29 );
+					String spec = specList.get( columnIndex - 31 );
 					Teginfo ret = getGroupTes( gg, spec );
 					return ret;
 				}
@@ -11731,7 +11766,7 @@ public class GeneSet extends JApplet {
 			public void keyPressed(KeyEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( e.getKeyCode() == KeyEvent.VK_ENTER ) {
-					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, searchi, e.isAltDown(), 7, 8, 9 ) : searchTable( table, text, searchi, e.isAltDown(), 0 );
+					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, searchi, e.isAltDown(), 7, 8, 9, 15 ) : searchTable( table, text, searchi, e.isAltDown(), 0 );
 				}
 			}
 		});
@@ -11740,27 +11775,27 @@ public class GeneSet extends JApplet {
 			public void changedUpdate(DocumentEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 7, 8, 9 );
+					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 7, 8, 9, 15 );
 					else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
 				} else {
-					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 7, 8, 9 ) : searchTable( table, text, 0, false, 0 );
+					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 7, 8, 9, 15 ) : searchTable( table, text, 0, false, 0 );
 				}
 			}
 
 			public void insertUpdate(DocumentEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(1, text, table, genefilter, genefilterset, label, 7, 8, 9);
+					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(1, text, table, genefilter, genefilterset, label, 7, 8, 9, 15);
 					else updateFilter(1, text, table, genefilter, genefilterset, label, 0);
 				} else {
-					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 7, 8, 9 ) : searchTable( table, text, 0, false, 0 );
+					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 7, 8, 9, 15 ) : searchTable( table, text, 0, false, 0 );
 				}
 			}
 
 			public void removeUpdate(DocumentEvent e) {
 				String text = textfield.getText().toLowerCase();
 				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(2, text, table, genefilter, genefilterset, label, 7, 8, 9 );
+					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(2, text, table, genefilter, genefilterset, label, 7, 8, 9, 15 );
 					else updateFilter(2, text, table, genefilter, genefilterset, label, 0);
 				} else {
 					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
@@ -12572,6 +12607,30 @@ public class GeneSet extends JApplet {
 		return dret;
 	}
 	
+	public void loadtransm( Set<String> tmids, BufferedReader r ) throws IOException {
+		String line = r.readLine();
+		String current = null;
+		while( line != null ) {
+			if( line.startsWith(">") ) {
+				current = line.substring(1,line.indexOf(' '));
+			} else if( line.startsWith("%pred NB(0): i") ) {
+				tmids.add( current );
+			}
+			line = r.readLine();
+		}
+	}
+	
+	public void loadsignalp( Set<String> spids, BufferedReader r ) throws IOException {
+		String line = r.readLine();
+		while( line != null ) {
+			String[] split = line.split("[\t ]+");
+			if( split[split.length-3].equals("Y") ) {
+				spids.add( split[0] );
+			}
+			line = r.readLine();
+		}
+	}
+	
 	public int loadrnas( Map<String,GeneGroup>	ggmap, Reader reader, int groupIndex, String tag ) throws IOException {
 		//List<Gene> genelist = new ArrayList<Gene>();
 		
@@ -12868,6 +12927,8 @@ public class GeneSet extends JApplet {
 			String name = "tRNA-"+split[4];
 			int end = cont.indexOf("_contig");
 			if( end == -1 ) end = cont.indexOf("_scaffold");
+			if( end == -1 ) end = cont.indexOf("_chromosome");
+			if( end == -1 ) end = cont.indexOf("_plasmid");
 			if( end == -1 ) {
 				System.err.println();
 			}
@@ -13753,6 +13814,63 @@ public class GeneSet extends JApplet {
 			}
 			System.err.println();*/
 			
+			
+			
+			final Set<String>	spids = new HashSet<String>();
+			for( Path root : zipfilesystem.getRootDirectories() ) {
+				Files.list(root).filter( new Predicate<Path>() {
+					@Override
+					public boolean test(Path t) {
+						String filename = t.getFileName().toString();
+						//System.err.println("filename " + filename);
+						boolean b = filename.endsWith(".signalp");
+						return b;
+					}
+				}).forEach( new Consumer<Path>() {
+					@Override
+					public void accept(Path t) {
+						if( Files.exists( t ) )
+							try {
+								loadsignalp( spids, Files.newBufferedReader(t) );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+					}
+				});
+			}
+			for( Gene g : genelist ) {
+				if( spids.contains(g.id) ) {
+					g.signalp = true;
+				}
+			}
+			
+			final Set<String>	tmids = new HashSet<String>();
+			for( Path root : zipfilesystem.getRootDirectories() ) {
+				Files.list(root).filter( new Predicate<Path>() {
+					@Override
+					public boolean test(Path t) {
+						String filename = t.getFileName().toString();
+						//System.err.println("filename " + filename);
+						boolean b = filename.endsWith(".tm");
+						return b;
+					}
+				}).forEach( new Consumer<Path>() {
+					@Override
+					public void accept(Path t) {
+						if( Files.exists( t ) )
+							try {
+								loadtransm( tmids, Files.newBufferedReader(t) );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+					}
+				});
+			}
+			for( Gene g : genelist ) {
+				if( tmids.contains(g.id) ) {
+					g.transm = true;
+				}
+			}
 			
 			
 			
