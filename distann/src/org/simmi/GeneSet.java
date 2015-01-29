@@ -78,6 +78,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -215,6 +216,10 @@ public class GeneSet extends JApplet {
 	 */
 	
 	static SerifyApplet currentSerify = null;
+	static Map<String,String> keggMap = new HashMap<String,String>();
+	static {
+		
+	}
 
 	/*private static StringBuilder dnaSearch(String query) {
 		/*
@@ -9083,7 +9088,7 @@ public class GeneSet extends JApplet {
 			
 			File blastFile = blastn; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
 			
-			String[] 		cmds1 = { blastFile.getAbsolutePath(), "-dust", "no", "-word_size", "22", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			String[] 		cmds1 = { blastFile.getAbsolutePath(), "-dust", "no", "-perc_identity", "99", "-word_size", "22", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
 			String[] 		cmds2 = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
 			String[]		cmds = show ? cmds2 : cmds1;
 			
@@ -9107,20 +9112,39 @@ public class GeneSet extends JApplet {
 			};
 			t.start();
 			
-			final Thread t2 = new Thread() {
-				public void run() {
+			Map<String,Set<String>>	tph = new HashMap<String,Set<String>>();
+			Map<String,Set<String>>	tvp = new HashMap<String,Set<String>>();
+			Map<String,Set<String>>	tmr = new HashMap<String,Set<String>>();
+			
+			Map<String,Integer>		specindex = new LinkedHashMap<String,Integer>();
+			Map<String,Integer>		phindex = new LinkedHashMap<String,Integer>();
+			
+			/*final Thread t2 = new Thread() {
+				public void run() {*/
 					try {
 						System.err.println("WHY NOT");
 						InputStreamReader rdr = new InputStreamReader( p.getInputStream() );
 						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
 						
+						String qspec = null;
+						String query = null;
+						Annotation at  = new Annotation();
 						int o = 0;
 						StringBuilder res = new StringBuilder();
 						BufferedReader br = new BufferedReader( rdr );
 						String line = br.readLine();
+						res.append( line+"\n" );
 						while( line != null ) {
-							res.append( line+"\n" );
 							if( line.startsWith("Query= ") ) {
+								query = line.substring(7,line.length());
+								int e = query.indexOf("CRISPR")-1;
+								if( e > 0 ) {
+									qspec = query.substring(0, e);
+									qspec = Sequence.getSpec(qspec);
+								} else {
+									System.err.println();
+								}
+								
 								line = br.readLine();
 								res.append( line+"\n" );
 								while( !line.startsWith("Length") ) {
@@ -9141,14 +9165,16 @@ public class GeneSet extends JApplet {
 									int stop = 0;
 									line = br.readLine();
 									res.append( line+"\n" );
-									while( line != null && !line.startsWith(">") /*&& !line.contains("Expect =")*/ ) {
+									String lastmatch = null;
+									while( line != null && !line.startsWith(">") && !line.startsWith("Query=") /*&& !line.contains("Expect =")*/ ) {
 										if( line.startsWith("Sbjct") ) {
 											String[] split = line.split("[\t ]+");
 											int k = Integer.parseInt( split[1] );
 											int m = Integer.parseInt( split[3] );
+											lastmatch = split[2];
 											
 											if( start == -1 ) start = k;
-											else stop = m;
+											stop = m;
 										}
 										line = br.readLine();
 										res.append( line+"\n" );
@@ -9160,9 +9186,100 @@ public class GeneSet extends JApplet {
 										stop = tmp;
 									}
 									
+									at.start = start;
+									at.stop = stop;
+									
+									
+									if( start == 759299 || stop == 759299 ) {
+										System.err.println();
+									}
+									
 									//if( stop - start < o*2 ) {
-										List<Annotation> lann = cont.getAnnotations();
-										if( lann != null ) for( Annotation ann : lann ) {
+									List<Annotation> lann = cont.getAnnotations();
+									if( lann != null ) {
+										int k = Collections.binarySearch(lann, at);
+										
+										//System.err.println( "kkk  " + k + "   " + lann.size() );
+										
+										if( k < 0 ) k = -(k+1)-1;
+											
+										Annotation ann = lann.get(Math.max(0,k));
+										
+										boolean yes = true;
+										if( ann.type != null && ann.type.contains("ummer") ) {
+											yes = false;
+										}
+										
+										int u = k-1;
+										Annotation nann = null;
+										if( u >= 0 && u < lann.size() ) nann = lann.get(u);
+										
+										u = k+1;
+										Annotation rann = null;
+										if( u >= 0 && u < lann.size() ) rann = lann.get(u);
+										
+										if( nann != null && nann.type != null && nann.type.contains("ummer") ) {
+											yes = false;
+										}
+												
+										if( rann != null && rann.type != null && rann.type.contains("ummer") ) {
+											yes = false;
+										}
+										
+										if( !yes ) {
+											//System.err.println();
+										}
+										
+										Gene g = ann.getGene();
+										String desig = ann.designation;
+										
+										if( yes && g != null ) { //ann.stop > at.start && ann.start < at.stop ) {
+											GeneGroup gg = g.getGeneGroup();
+											if( desig != null && desig.contains("phage") ) {
+												if( !phindex.containsKey( desig ) ) phindex.put(desig, phindex.size());
+												
+												Set<String> tvps;
+												String specname = qspec;//Sequence.nameFix(qspec, true);
+												if( !specindex.containsKey( specname ) ) specindex.put(specname, specindex.size());
+												
+												if( tvp.containsKey(specname) ) {
+													tvps = tvp.get(specname);
+												} else {
+													tvps = new HashSet<String>();
+													tvp.put(specname, tvps);
+												}
+												tvps.add( desig );
+												
+												String contspec = cont.getSpec();
+												System.err.println( query + " asdf " + contspec + " " + lastmatch + "  " + at.start + " " + at.stop + "  " + ann.start + " " + ann.stop + " rann " + (rann != null ? rann.start + "  " + rann.stop : "") + " nann " + (nann != null ? nann.start + "  " + nann.stop : "") );
+												if( qspec.equals(contspec) ) {
+													if( tmr.containsKey(specname) ) {
+														tvps = tmr.get(specname);
+													} else {
+														tvps = new HashSet<String>();
+														tmr.put(specname, tvps);
+													}
+													tvps.add( desig );
+												}
+												
+												/*if( specname.contains("brockianus_MAT_338") ) {
+													System.err.println();
+												}*/
+											}
+												
+											if( table.getModel() == groupModel ) {
+												int ggindex = allgenegroups.indexOf( gg );
+												int i = table.convertRowIndexToView( ggindex );
+												if( i != -1 ) table.addRowSelectionInterval(i, i);
+											} else if( table.getModel() == defaultModel ) {
+												int gindex = genelist.indexOf( g );
+												int i = table.convertRowIndexToView( gindex );
+												table.addRowSelectionInterval(i, i);
+											}
+										}
+									
+										
+										/*for( Annotation ann : lann ) {
 											if( ann.stop > start && ann.start < stop ) {
 												Gene g = ann.getGene();
 												if( g != null ) {
@@ -9179,7 +9296,8 @@ public class GeneSet extends JApplet {
 													}
 												}
 											}
-										}
+										}*/
+									}
 									//}
 									continue;
 								}
@@ -9218,9 +9336,134 @@ public class GeneSet extends JApplet {
 								}
 								} //else*/
 							line = br.readLine();
+							res.append( line+"\n" );
 						}
 						br.close();
 						p.destroy();
+						
+						for( String specname : speccontigMap.keySet() ) {
+							List<Sequence> lseq = speccontigMap.get(specname);
+							for( Sequence seq : lseq ) {
+								List<Annotation> lann = seq.getAnnotations();
+								if( lann != null ) {
+									for( Annotation a : lann ) {
+										String desig = a.designation;
+										if( desig != null && desig.contains("phage") && phindex.containsKey(desig) ) {
+											if( !specindex.containsKey( specname ) ) specindex.put(specname, specindex.size());
+											
+											Set<String> tvps;
+											if( tph.containsKey(specname) ) {
+												tvps = tph.get(specname);
+											} else {
+												tvps = new HashSet<String>();
+												tph.put(specname, tvps);
+											}
+											tvps.add( desig );
+										}
+									}
+								}
+							}
+						}
+						
+						int k = 0;
+						int u = 0;
+						Workbook wb = new XSSFWorkbook();
+						Sheet sh = wb.createSheet("Phage");
+						Row rw = sh.createRow(u++);
+						//res = new StringBuilder();
+						for( String ph : phindex.keySet() ) {
+							res.append("\t"+ph);
+							rw.createCell(++k).setCellValue( ph );
+						}
+						res.append("\n");
+						for( String rspec : specindex.keySet() ) {
+							String spec = Sequence.nameFix(rspec, true);
+							rw = sh.createRow(u++);
+							k = 0;
+							rw.createCell(k++).setCellValue(spec);
+							
+							Set<String> set = tvp.get(rspec);
+							res.append(spec);
+							if( set != null ) {
+								for( String ph : phindex.keySet() ) {
+									if( set.contains(ph) ) {
+										res.append("\tyes");
+										rw.createCell(k).setCellValue("yes");
+									} else {
+										res.append("\t");
+									}
+									
+									k++;
+								}
+							}
+							res.append("\n");
+						}
+						
+						for( String ph : phindex.keySet() ) {
+							res.append("\t"+ph);
+						}
+						res.append("\n");
+						
+						u++;
+						for( String rspec : specindex.keySet() ) {
+							String spec = Sequence.nameFix(rspec, true);
+							
+							rw = sh.createRow(u++);
+							k = 0;
+							rw.createCell(k++).setCellValue(spec);
+							
+							Set<String> set = tmr.get(rspec);
+							res.append(spec);
+							if( set != null ) {
+								for( String ph : phindex.keySet() ) {
+									if( set.contains(ph) ) {
+										res.append("\tyes");
+										rw.createCell(k).setCellValue("yes");
+									}
+									else res.append("\t");
+									
+									k++;
+								}
+							}
+							res.append("\n");
+						}
+						
+						u++;
+						for( String rspec : specindex.keySet() ) {
+							String spec = Sequence.nameFix(rspec, true);
+							
+							rw = sh.createRow(u++);
+							k = 0;
+							rw.createCell(k++).setCellValue(spec);
+							
+							Set<String> set = tph.get(rspec);
+							Set<String> setvp = tvp.get(rspec);
+							res.append(spec);
+							if( set != null ) {
+								for( String ph : phindex.keySet() ) {
+									if( set.contains(ph) ) {
+										if( setvp != null && setvp.contains(ph) ) {
+											res.append("\tyes wspacer");
+											rw.createCell(k).setCellValue("yes wspacer");
+										} else {
+											res.append("\tyes");
+											rw.createCell(k).setCellValue("yes");
+										}
+									}
+									else res.append("\t");
+									
+									k++;
+								}
+							}
+							res.append("\n");
+						}
+						
+						File 				file = new File("/Users/sigmar/phage.xlsx");
+						FileOutputStream 	fos = new FileOutputStream(file);
+						wb.write(fos);
+						fos.close();
+						
+						Desktop.getDesktop().open(file);
 						
 						//if( !show ) {
 							JFrame frame = new JFrame();
@@ -9248,9 +9491,9 @@ public class GeneSet extends JApplet {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-				}
+			/*	}
 			};
-			t2.start();
+			t2.start();*/
 			//fr.close();
 		} catch (IOException e2) {
 			e2.printStackTrace();
@@ -16354,8 +16597,10 @@ public class GeneSet extends JApplet {
 						Tegeval tv = g.tegeval;
 						tv.color = Color.red;
 						Sequence contig = tv.getContshort();
-						contig.offset = -tv.start;
+						//contig.offset = -tv.start;
 						contigs.add( contig );
+						
+						
 						/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 						a.setStart(tv.start);
 						a.setStop(tv.stop);
@@ -16368,8 +16613,10 @@ public class GeneSet extends JApplet {
 						for( Tegeval tv : gg.getTegevals() ) {
 							tv.color = Color.red;
 							Sequence contig = tv.getContshort();
-							contig.offset = -tv.start;
+							//contig.offset = -tv.start;
 							contigs.add( contig );					
+							
+							
 							/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
 							a.setStart(tv.start);
 							a.setStop(tv.stop);
@@ -16392,6 +16639,7 @@ public class GeneSet extends JApplet {
 					}
 					
 					serifier.addSequence( contig );
+					serifier.mseq.put( contig.getName(), contig );
 					//if(contig.getAnnotations() != null)
 					//	Collections.sort(contig.getAnnotations());
 				}

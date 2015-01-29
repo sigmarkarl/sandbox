@@ -585,6 +585,7 @@ public class Navisionexplorer implements EntryPoint {
 		return subwork;
 	}
 	
+	double rad = 200.0;
 	Canvas mcanvas;
 	public void mrepaint( List<? extends Kronas> subverk, String verkname ) {
 		Context2d context = mcanvas.getContext2d();
@@ -616,7 +617,7 @@ public class Navisionexplorer implements EntryPoint {
 			context.moveTo(w2, h2);
 			//context.lineTo( w2+250.0*Math.cos(next), h2+250.0*Math.sin(next) );
 			//console( i + "  " + next + "  " + val );
-			context.arc( w2, h2, 250.0, next, val );
+			context.arc( w2, h2, rad, next, val );
 			context.lineTo(w2, h2);
 			//context.closePath();
 			context.fill();
@@ -631,13 +632,13 @@ public class Navisionexplorer implements EntryPoint {
 				u += 0.5*total;
 				context.translate( w2, h2 );
 				context.rotate( Math.PI*2.0*u/total );
-				context.fillText(kr.getName(), -255-strw, 0 );
+				context.fillText(kr.getName(), -rad-5-strw, 0 );
 				context.rotate( -Math.PI*2.0*u/total );
 				context.translate( -w2, -h2 );
 			} else {
 				context.translate( w2, h2 );
 				context.rotate( Math.PI*2.0*u/total );
-				context.fillText(kr.getName(), 255, 0 );
+				context.fillText(kr.getName(), rad+5, 0 );
 				context.rotate( -Math.PI*2.0*u/total );
 				context.translate( -w2, -h2 );
 			}
@@ -654,7 +655,7 @@ public class Navisionexplorer implements EntryPoint {
 				
 				context.beginPath();
 				context.moveTo( w2, h2 );
-				context.arc( w2, h2, 250.0, next, val );
+				context.arc( w2, h2, rad, next, val );
 				context.lineTo( w2, h2 );
 				context.fill();
 				
@@ -679,13 +680,13 @@ public class Navisionexplorer implements EntryPoint {
 					u += 0.5*total;
 					context.translate( w2, h2 );
 					context.rotate( Math.PI*2.0*u/total );
-					context.fillText(kr.getName(), -255-strw, 0.0 );
+					context.fillText(kr.getName(), -rad-5-strw, 0.0 );
 					context.rotate( -Math.PI*2.0*u/total );
 					context.translate( -w2, -h2 );
 				} else {
 					context.translate( w2, h2 );
 					context.rotate( Math.PI*2.0*u/total );
-					context.fillText(kr.getName(), 255, 0.0 );
+					context.fillText(kr.getName(), rad+5, 0.0 );
 					context.rotate( -Math.PI*2.0*u/total );
 					context.translate( -w2, -h2 );
 				}
@@ -726,28 +727,29 @@ public class Navisionexplorer implements EntryPoint {
 			context.moveTo(w2, h2);
 			//context.lineTo( w2+250.0*Math.cos(next), h2+250.0*Math.sin(next) );
 			//console( i + "  " + next + "  " + val );
-			context.arc( w2, h2, 250.0, next, val );
+			context.arc( w2, h2, rad, next, val );
 			context.lineTo(w2, h2);
 			//context.closePath();
 			context.fill();
 			//g2.fillArc(w/2-250, h/2-250, 500, 500, next, val-next );
 			next = val;
 			
+			String str = hour.getName() + " ("+hour.getHours()+")";
 			context.setFillStyle( "#000000" );
 			double u = k+d/2.0;
 			if( u > 0.25*total && u < 0.75*total ) {
-				TextMetrics tm = context.measureText( hour.getName() );
+				TextMetrics tm = context.measureText( str );
 				double strw = tm.getWidth();
 				u += 0.5*total;
 				context.translate( w2, h2 );
 				context.rotate( Math.PI*2.0*u/total );
-				context.fillText(hour.getName(), -255-strw, 0 );
+				context.fillText(str, -rad-5-strw, 0 );
 				context.rotate( -Math.PI*2.0*u/total );
 				context.translate( -w2, -h2 );
 			} else {
 				context.translate( w2, h2 );
 				context.rotate( Math.PI*2.0*u/total );
-				context.fillText(hour.getName(), 255, 0 );
+				context.fillText(str, rad+5, 0 );
 				context.rotate( -Math.PI*2.0*u/total );
 				context.translate( -w2, -h2 );
 			}
@@ -764,7 +766,7 @@ public class Navisionexplorer implements EntryPoint {
 				
 				context.beginPath();
 				context.moveTo( w2, h2 );
-				context.arc( w2, h2, 250.0, next, val );
+				context.arc( w2, h2, rad, next, val );
 				context.lineTo( w2, h2 );
 				context.fill();
 				
@@ -783,19 +785,20 @@ public class Navisionexplorer implements EntryPoint {
 					//baos.reset();
 				}
 				
+				str = hour.getName() + " (" + hour.getHours() + ")";
 				if( u > 0.25*total && u < 0.75*total ) {
-					TextMetrics tm = context.measureText( hour.getName() );
+					TextMetrics tm = context.measureText( str );
 					double strw = tm.getWidth();
 					u += 0.5*total;
 					context.translate( w2, h2 );
 					context.rotate( Math.PI*2.0*u/total );
-					context.fillText(hour.getName(), -255-strw, 0.0 );
+					context.fillText(str, -rad-5-strw, 0.0 );
 					context.rotate( -Math.PI*2.0*u/total );
 					context.translate( -w2, -h2 );
 				} else {
 					context.translate( w2, h2 );
 					context.rotate( Math.PI*2.0*u/total );
-					context.fillText(hour.getName(), 255, 0.0 );
+					context.fillText(str, rad+5, 0.0 );
 					context.rotate( -Math.PI*2.0*u/total );
 					context.translate( -w2, -h2 );
 				}				
