@@ -1411,22 +1411,22 @@ public class GeneCompare {
 						
 						if( n != null ) {
 							GeneGroup ngg = n.getGene().getGeneGroup();
-							if( n2 != null ) {
+							if( n2 != null && n2.getGene() != null ) {
 								if( ngg == n2.getGene().getGeneGroup() ) simcount++;
 							}
 							
-							if( p2 != null ) {
+							if( p2 != null && p2.getGene() != null ) {
 								if( ngg == p2.getGene().getGeneGroup() ) simcount++;
 							}
 						}
 						
 						if( p != null ) {
 							GeneGroup pgg = p.getGene().getGeneGroup();
-							if( n2 != null ) {
+							if( n2 != null && n2.getGene() != null ) {
 								if( pgg == n2.getGene().getGeneGroup() ) simcount++;
 							}
 							
-							if( p2 != null ) {
+							if( p2 != null && p2.getGene() != null ) {
 								if( pgg == p2.getGene().getGeneGroup() ) simcount++;
 							}
 						}
