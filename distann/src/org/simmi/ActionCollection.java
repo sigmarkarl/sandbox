@@ -30,7 +30,9 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -48,6 +50,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1623,6 +1627,135 @@ public class ActionCollection {
 			}
 		};
 		//JButton presabsbutton = new JButton( presabsaction );
+		
+		
+		AbstractAction	keggaction = new AbstractAction("KEGG pathway") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Map<String,String> env = new HashMap<String,String>();
+				env.put("create", "true");
+				
+				String uristr = "jar:" + geneset.zippath.toUri();
+				URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+				final List<Path>	lbi = new ArrayList<Path>();
+				try {
+					geneset.zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+						try {
+							Files.list(root).filter( new Predicate<Path>() {
+								@Override
+								public boolean test(Path t) {
+									String filename = t.getFileName().toString();
+									//System.err.println("filename " + filename);
+									boolean b = filename.startsWith("t") && filename.length() == 4;
+									return b;
+								}
+							}).forEach( new Consumer<Path>() {
+								@Override
+								public void accept(Path t) {
+									if( Files.exists( t ) ) {
+										try {
+											Files.list(t).filter( new Predicate<Path>() {
+												@Override
+												public boolean test(Path t) {
+													String filename = t.getFileName().toString();
+													return filename.endsWith(".png");
+												}
+											}).forEach( new Consumer<Path>() {
+												@Override
+												public void accept(Path t) {
+													lbi.add( t );
+												}
+											});
+										} catch (IOException e) {
+											e.printStackTrace();
+										}
+									}
+								}
+							});
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+					
+					JTable tb = new JTable();
+					JScrollPane	sc = new JScrollPane( tb );
+					tb.setModel( new TableModel() {
+						@Override
+						public int getRowCount() {
+							return lbi.size();
+						}
+
+						@Override
+						public int getColumnCount() {
+							return 1;
+						}
+
+						@Override
+						public String getColumnName(int columnIndex) {
+							return "Img";
+						}
+
+						@Override
+						public Class<?> getColumnClass(int columnIndex) {
+							return BufferedImage.class;
+						}
+
+						@Override
+						public boolean isCellEditable(int rowIndex, int columnIndex) {
+							return false;
+						}
+
+						@Override
+						public Object getValueAt(int rowIndex, int columnIndex) {
+							return lbi.get(rowIndex);
+						}
+
+						@Override
+						public void setValueAt(Object aValue, int rowIndex,
+								int columnIndex) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						@Override
+						public void addTableModelListener(TableModelListener l) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						@Override
+						public void removeTableModelListener(TableModelListener l) {
+							// TODO Auto-generated method stub
+							
+						}
+					});
+					JOptionPane.showMessageDialog(geneset, sc);
+					int 	r = tb.getSelectedRow();
+					final BufferedImage selimg = ImageIO.read( Files.newInputStream( lbi.get(r) ) );
+					JFrame 	frame = new JFrame("KEGG");
+					frame.setSize(800, 600);
+					final JComponent c = new JComponent() {
+						public void paintComponent( Graphics g ) {
+							super.paintComponent(g);
+							g.drawImage(selimg, 0, 0, this);
+						}
+					};
+					Dimension dim = new Dimension( selimg.getWidth(), selimg.getHeight() );
+					c.setSize(dim);
+					c.setPreferredSize(dim);
+					JScrollPane sc2 = new JScrollPane( c );
+					frame.add( sc2 );
+					frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+					frame.setVisible(true);
+					
+					geneset.zipfilesystem.close();
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
+			}
+		};
+		
 		
 		AbstractAction	genomestataction = new AbstractAction("Genome statistics") {
 			@Override
@@ -4986,6 +5119,7 @@ public class ActionCollection {
 		
 		menu.add( checkbox );
 		menu.addSeparator();
+		menu.add( keggaction );
 		menu.add( genomestataction );
 		menu.add( seqstat );
 		menu.add( shuffletreeaction );
