@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="apache-sshd-0.13.0/sshd-core/src/main/java"/>
 	<classpathentry kind="lib" path="/jdk/jdk8/deploy.jar"/>
 	<classpathentry kind="lib" path="/jdk/jdk8/javaws.jar"/>
 	<classpathentry kind="lib" path="/jdk/jdk8/plugin.jar"/>
@@ -23,5 +24,10 @@
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-ooxml-schemas-3.10-beta2-20130904.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-scratchpad-3.10-beta2-20130904.jar"/>
 	<classpathentry kind="lib" path="ejml-0.24.jar"/>
+	<classpathentry kind="lib" path="/Users/sigmar/Downloads/crypto-151/jars/bcprov-jdk15on-151.jar"/>
+	<classpathentry kind="lib" path="/Users/sigmar/Downloads/crypto-151/jars/bcpg-jdk15on-151.jar"/>
+	<classpathentry kind="lib" path="/Users/sigmar/Downloads/crypto-151/jars/bcpkix-jdk15on-151.jar"/>
+	<classpathentry kind="lib" path="commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="slf4j-api-1.7.10.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
