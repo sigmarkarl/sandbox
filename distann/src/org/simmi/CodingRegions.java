@@ -24,7 +24,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
-import org.simmi.shared.Contig;
 import org.simmi.shared.Sequence;
 
 public class CodingRegions {
