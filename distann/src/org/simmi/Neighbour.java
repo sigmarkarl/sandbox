@@ -2325,7 +2325,7 @@ public class Neighbour {
 					int[] rr = rowheader.getSelectedRows();
 					
 					int upph = -8000;
-					int endh = 8000;
+					int endh = 16000;
 					
 					Color cg = new Color(100,150,100);
 					Color cdg = new Color(50,100,50);
@@ -2341,9 +2341,19 @@ public class Neighbour {
 						for( GeneGroup gg : selectedGenesGroups ) {
 							List<Tegeval> ltv = gg.getTegevals();
 							for( Tegeval tv : ltv ) {
+								String seqname = Sequence.nameFix(tv.getSpecies(),true);
+								boolean aq = false;
+								System.err.println( seqname );
+							
+								if( seqname.contains("calidit") ) {
+									aq = true;
+								}
+								
+								int uh = tv.ori != -1 ? upph : -endh;
+								int eh = tv.ori != -1 ? endh : -upph;
 								//int start = Math.max( 0, tv.start-3000 );
 								//int stop = Math.min( tv.getContig().sb.length(), tv.stop+3000 );
-								Sequence seq = new Sequence( Sequence.nameFix(tv.getSpecies(),true)+(tv.ori == 1 ? "->" : "<-"), null );
+								Sequence seq = new Sequence( seqname+(tv.ori == 1 ? "->" : "<-"), null );
 								String str = tv.ori == -1 ? tv.getPaddedSubstring(-endh-tv.start+tv.stop-1, -upph-tv.start+tv.stop-1) : tv.getPaddedSubstring(upph, endh);
 								seq.append( str ); //tv.getLength()+3000) );
 								
@@ -2366,19 +2376,23 @@ public class Neighbour {
 									
 									// = tv.type != null && tv.type.contains("mummer") ? cb : tv.isPhage() ? cg : tv.seq.isPlasmid() ? cr : Color.lightGray;
 									Annotation ntev = tv.getNext();
-									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
+									int bil = tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+									//int bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+									while( ntev != null && bil < eh && bil > uh ) {
+										if( aq ) System.err.println( bil + " nxt " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
+										
 										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
 										//name += ntev.ori == 1 ? "->" : "<-";
 										
 										if( tv.ori == -1 ) {
-											int bil = ntev.stop-tv.start;
+											//int bil = ntev.stop-tv.start;
 											int len = tv.stop-tv.start;
 											
 											int start = -upph+offset+len-bil;
 											int nlen = ntev.stop-ntev.start;
 											newann = new Annotation(seq, start, start+nlen, 1, name);
 										} else {
-											int bil = ntev.start-tv.start;
+											//int bil = ntev.start-tv.start;
 											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, name);
 										}
 										
@@ -2391,23 +2405,38 @@ public class Neighbour {
 										serifier.addAnnotation(newann);
 										
 										ntev = ntev.getNext();
+										
+										if( ntev != null ) {
+											bil = tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+											//bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+											
+											if( aq ) {
+												System.err.println( "nxt2 " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
+												System.err.println( bil + "  " + "  " + uh + "  " + eh );
+											}
+										}
 									}
 									
 									color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.darkGray;;
 									ntev = tv.getPrevious();
-									while( ntev != null && ntev.start-tv.start < endh && ntev.stop-tv.start > upph ) {
+									bil = tv.ori == -1 ? ntev.start-tv.stop : ntev.start-tv.start;
+									int bbil = tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+									//bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+									while( ntev != null && bil < eh && bil > uh ) {
+										if( aq ) System.err.println( bil + "prv " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
+										
 										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
 										//name += ntev.ori == 1 ? "->" : "<-";
 										
 										if( tv.ori == -1 ) {
-											int bil = ntev.stop-tv.start;
+											//int bil = ntev.stop-tv.start;
 											int len = tv.stop-tv.start;
-											int start = -upph+offset+len-bil;
+											int start = -upph+offset+len-bbil;
 											int nlen = ntev.stop-ntev.start;
 											newann = new Annotation(seq, start, start+nlen, 1, name);
 										} else {
-											int bil = ntev.start-tv.start;
-											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, name);
+											//int bil = ntev.start-tv.start;
+											newann = new Annotation(seq, -upph+offset+bbil, -upph+offset+bbil+ntev.stop-ntev.start, 1, name);
 										}
 										
 										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
@@ -2419,6 +2448,15 @@ public class Neighbour {
 										serifier.addAnnotation(newann);
 										
 										ntev = ntev.getPrevious();
+										
+										
+										if( ntev != null ) {
+											bil = tv.ori == -1 ? ntev.start-tv.stop : ntev.start-tv.start;
+											bbil = tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+											if( aq ) System.err.println( bil + "prv " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") + ntev.start + "  " + ntev.stop + "  " + tv.start );
+											
+											//bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+										}
 									}
 								/*} else {
 									Annotation newann = new Annotation(seq, 3000, 3000+tv.stop-tv.start, 1, tv.name);
@@ -2455,6 +2493,41 @@ public class Neighbour {
 							Sequence seq = new Sequence( ((Tegeval)tv).getSpecies(), null );
 							seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
 							serifier.addSequence( seq );
+						}
+					}
+					
+					int max = 0;
+					for( Sequence seq : serifier.lseq ) {
+						List<Annotation> lann = seq.getAnnotations();
+						if( lann != null ) {
+							for( Annotation a : lann ) {
+								if( a.getName().contains("Cmr6") ) {
+									max = Math.max(max, a.stop);
+								}
+							}
+						}
+					}
+						
+					for( Sequence seq : serifier.lseq ) {
+						List<Annotation> lann = seq.getAnnotations();
+						if( lann != null ) {
+							int hit = -1;
+							for( Annotation a : lann ) {
+								if( hit != -1 ) {
+									a.start += hit;
+									a.stop += hit;
+								}
+								
+								if( a.getName().contains("Cmr6") ) {
+									hit = max-a.stop;
+									while( hit > 0 ) {
+										seq.sb.insert(a.stop, '-');
+										//seq.sb.append('-')
+										hit--;
+									}
+									hit = max-a.stop;
+								}
+							}
 						}
 					}
 					geneset.showSomeSequences( comp, serifier );
