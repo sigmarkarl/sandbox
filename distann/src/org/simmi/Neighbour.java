@@ -63,6 +63,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.Cog;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -560,7 +561,7 @@ public class Neighbour {
 							if( gg != null ) genename = gg.getCommonName();
 						}
 						if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
-						String genename = gene != null ? geneset.getGeneName(showNames, gene) : "mummer";
+						String genename = gene != null ? geneset.getGeneName(showNames, gene) : next.type;
 						
 						if( xoff+len > clip.x ) {
 							if( funcol.isSelected() ) {
@@ -707,7 +708,7 @@ public class Neighbour {
 							
 							int y = i;
 							
-							if( next.type != null && next.type.equals("mummer") ) {
+							if( gene == null || next.ori == 0 ) { //next.type != null && next.type.equals("mummer") ) {
 								g.fillRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
 								g.setColor( next.isSelected() ? Color.black : Color.gray );
 								g.drawRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
@@ -891,7 +892,7 @@ public class Neighbour {
 							if( gg != null ) genename = gg.getCommonName();
 						}
 						genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;*/
-						String genename = gene != null ? geneset.getGeneName(showNames, prev.getGene()) : "mummer";
+						String genename = gene != null ? geneset.getGeneName(showNames, prev.getGene()) : prev.type;
 						
 						if( clip.x+clip.width > xoff ) {
 							if( funcol.isSelected() ) {
@@ -1006,7 +1007,7 @@ public class Neighbour {
 							//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
 							int y = i;
 							
-							if( prev.type != null && prev.type.equals("mummer") ) {
+							if( gene == null || prev.ori == 0 ) {
 								g.fillRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
 								g.setColor( prev.isSelected() ? Color.black : Color.gray );
 								g.drawRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
@@ -2362,8 +2363,25 @@ public class Neighbour {
 									offset = endh-upph-str.length();
 									offset = -offset;
 								}*/
+								
 								//if( tv.ori == -1 ) {
-									String name = tv.gene == null ? tv.name : tv.gene.getGeneGroup().getCommonName();
+									Gene tgene = tv.getGene();
+									String symb = null;
+									String name = null;
+									if( tv.id == null || !tv.id.equals(tv.name) ) {
+										if( tgene != null ) {
+											symb = tgene.getGeneGroup().getCommonSymbol();
+											if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
+												symb = null;
+												Cog cog = tgene.getGeneGroup().getCommonCog(geneset.cogmap);
+												if( cog != null ) {
+													symb = cog.genesymbol;
+												}
+											}
+										}
+										name = symb != null ? symb : tv.gene == null ? tv.name : tv.gene.getGeneGroup().getCommonName();
+									}
+									if( name != null && name.contains("hypo") ) name = "hyp";
 									//name += tv.ori == 1 ? "->" : "<-";
 									
 									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, name);
@@ -2376,13 +2394,30 @@ public class Neighbour {
 									
 									// = tv.type != null && tv.type.contains("mummer") ? cb : tv.isPhage() ? cg : tv.seq.isPlasmid() ? cr : Color.lightGray;
 									Annotation ntev = tv.getNext();
-									int bil = tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+									int bil = ntev != null ? (tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start) : -1;
 									//int bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
 									while( ntev != null && bil < eh && bil > uh ) {
 										if( aq ) System.err.println( bil + " nxt " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
 										
-										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										//name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
 										//name += ntev.ori == 1 ? "->" : "<-";
+										name = null;
+										symb = null;
+										tgene = ntev.getGene();
+										if( ntev.id == null || !ntev.id.equals(ntev.name) ) {
+											if( tgene != null ) {
+												symb = tgene.getGeneGroup().getCommonSymbol();
+												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
+													symb = null;
+													Cog cog = tgene.getGeneGroup().getCommonCog(geneset.cogmap);
+													if( cog != null ) {
+														symb = cog.genesymbol;
+													}
+												}
+											}
+											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										}
+										if( name != null && name.contains("hypo") ) name = "hyp";
 										
 										if( tv.ori == -1 ) {
 											//int bil = ntev.stop-tv.start;
@@ -2419,14 +2454,32 @@ public class Neighbour {
 									
 									color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.darkGray;;
 									ntev = tv.getPrevious();
-									bil = tv.ori == -1 ? ntev.start-tv.stop : ntev.start-tv.start;
-									int bbil = tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start;
+									bil = ntev != null ? (tv.ori == -1 ? ntev.start-tv.stop : ntev.start-tv.start) : -1;
+									int bbil = ntev != null ? (tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start) : -1;
 									//bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
 									while( ntev != null && bil < eh && bil > uh ) {
 										if( aq ) System.err.println( bil + "prv " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
 										
-										name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										//name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
 										//name += ntev.ori == 1 ? "->" : "<-";
+										
+										name = null;
+										symb = null;
+										tgene = ntev.getGene();
+										if( ntev.id == null || !ntev.id.equals(ntev.name) ) {
+											if( tgene != null ) {
+												symb = tgene.getGeneGroup().getCommonSymbol();
+												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
+													symb = null;
+													Cog cog = tgene.getGeneGroup().getCommonCog(geneset.cogmap);
+													if( cog != null ) {
+														symb = cog.genesymbol;
+													}
+												}
+											}
+											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										}
+										if( name != null && name.contains("hypo") ) name = "hyp";
 										
 										if( tv.ori == -1 ) {
 											//int bil = ntev.stop-tv.start;
@@ -2448,7 +2501,6 @@ public class Neighbour {
 										serifier.addAnnotation(newann);
 										
 										ntev = ntev.getPrevious();
-										
 										
 										if( ntev != null ) {
 											bil = tv.ori == -1 ? ntev.start-tv.stop : ntev.start-tv.start;
@@ -2496,38 +2548,9 @@ public class Neighbour {
 						}
 					}
 					
-					int max = 0;
 					for( Sequence seq : serifier.lseq ) {
-						List<Annotation> lann = seq.getAnnotations();
-						if( lann != null ) {
-							for( Annotation a : lann ) {
-								if( a.getName().contains("Cmr6") ) {
-									max = Math.max(max, a.stop);
-								}
-							}
-						}
-					}
-						
-					for( Sequence seq : serifier.lseq ) {
-						List<Annotation> lann = seq.getAnnotations();
-						if( lann != null ) {
-							int hit = -1;
-							for( Annotation a : lann ) {
-								if( hit != -1 ) {
-									a.start += hit;
-									a.stop += hit;
-								}
-								
-								if( a.getName().contains("Cmr6") ) {
-									hit = max-a.stop;
-									while( hit > 0 ) {
-										seq.sb.insert(a.stop, '-');
-										//seq.sb.append('-')
-										hit--;
-									}
-									hit = max-a.stop;
-								}
-							}
+						if( seq.getAnnotations() != null ) {
+							Collections.sort( seq.getAnnotations() );
 						}
 					}
 					geneset.showSomeSequences( comp, serifier );
