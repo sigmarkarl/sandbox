@@ -118,6 +118,7 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
+import org.simmi.unsigned.FlxReader;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.NativeRun;
 
@@ -1799,15 +1800,114 @@ public class SerifyApplet extends JApplet {
 	*/
 	
 	public void doProdigal( Path dir, Container c, final Path fs, List<Path> urls ) throws IOException {
-		JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-			Path selectedfile = fc.getSelectedFile().toPath();
-			if( !Files.isDirectory(selectedfile) ) selectedfile = selectedfile.getParent();
+		//JFileChooser fc = new JFileChooser();
+		//fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+		//if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
+		//	Path selectedfile = fc.getSelectedFile().toPath();
+		//	if( !Files.isDirectory(selectedfile) ) selectedfile = selectedfile.getParent();
 		
+		JTextField host = new JTextField("localhost");
+		JOptionPane.showMessageDialog(null, host);
+		
+		for( Path path : urls ) {
+			//URL url = path.toUri().toURL();
+			
+			String file = path.getFileName().toString();
+			String[] split = file.split("/");
+			String fname = split[ split.length-1 ];
+			split = fname.split("\\.");
+			final String title = split[0];
+			Path infile = dir.resolve( fname ); //new File( dir, fname );
+			if( Files.exists(infile) ) {
+				infile = dir.resolve( "tmp_"+fname );
+			}
+			
+			//FileOutputStream fos = new FileOutputStream( infile );
+			Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );
+			/*InputStream is = url.openStream();
+			byte[] bb = new byte[100000];
+			int r = is.read(bb);
+			while( r > 0 ) {
+				fos.write(bb, 0, r);
+				r = is.read(bb);
+			}
+			is.close();
+			fos.close();*/
+			
+			String userhome = System.getProperty("user.home");
+			String username = System.getProperty("user.name");
+			String hostname = host.getText();
+			Path selectedfile = new File( userhome ).toPath();
+			String tmpout = title+".prodigal.fsa";
+			final Path pathD = selectedfile.resolve( title+".prodigal.fna" );
+			final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
+			final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
+			final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
+			//NativeRun.fixPath( infile.toAbsolutePath().toString() )
+			String[] cmds;
+			if( host.getText().equals("localhost") ) cmds = new String[] { "prodigal", "-a", outPathA }; //"-d", outPathD };
+			else {
+				cmds = new String[] { "ssh", username+"@"+hostname, "prodigal", "-a", tmpout };
+			}
+			
+			List<Object>	lscmd = new ArrayList<Object>();
+			//String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			lscmd.add( new Path[] { infile, null, dir } );
+			lscmd.add( Arrays.asList( cmds ) );
+			
+			final Object[] cont = new Object[3];
+			Runnable run = new Runnable() {
+				public void run() {
+					if( cont[0] != null ) {
+						System.err.println( cont[0] );
+						
+						try {
+							if( host.getText().equals("localhost") ) {
+								Files.copy(pathA, fs.resolve( tmpout ) );
+							} else {
+								ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, outPathA);
+								Process pc = pb.start();
+								InputStream is = pc.getInputStream();
+								while( is.read() != -1 );
+								InputStream es = pc.getErrorStream();
+								while( es.read() != -1 );
+								pc.waitFor();
+								System.err.println("done " + outPathA);
+							}
+							addSequences( title+".aa", pathA, null );
+						} catch (IOException | URISyntaxException | InterruptedException e) {
+							e.printStackTrace();
+						}
+						/*try {
+							addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
+							addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
+						} catch (URISyntaxException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}*/
+					}
+				}
+			};
+			nrun.runProcessBuilder( "Running prodigal", lscmd, run, cont, false );
+				//JSObject js = JSObject.getWindow( SerifyApplet.this );
+				//js = (JSObject)js.getMember("document");
+				//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+		}
+		//infile.delete();
+	}
+	
+	public void doRnammer( Path dir, Container c, final Path fs, List<Path> urls ) throws IOException {
+		JTextField host = new JTextField("localhost");
+		JOptionPane.showMessageDialog(null, host);
+		String userhome = System.getProperty("user.home");
+		String username = System.getProperty("user.name");
+		String hostname = host.getText();
+		
+		String[] sus = new String[] {"SSU", "LSU", "TSU"};
+		
+		for( String su : sus ) {
 			for( Path path : urls ) {
-				//URL url = path.toUri().toURL();
-				
 				String file = path.getFileName().toString();
 				String[] split = file.split("/");
 				String fname = split[ split.length-1 ];
@@ -1818,24 +1918,19 @@ public class SerifyApplet extends JApplet {
 					infile = dir.resolve( "tmp_"+fname );
 				}
 				
-				//FileOutputStream fos = new FileOutputStream( infile );
 				Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );
-				/*InputStream is = url.openStream();
-				byte[] bb = new byte[100000];
-				int r = is.read(bb);
-				while( r > 0 ) {
-					fos.write(bb, 0, r);
-					r = is.read(bb);
-				}
-				is.close();
-				fos.close();*/
-				
-				final Path pathD = selectedfile.resolve( title+".prodigal.fna" );
-				final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
+				Path selectedfile = new File( userhome ).toPath();
+				String tmpout = title+"."+su.toLowerCase();
+				final Path pathD = selectedfile.resolve( tmpout );
+				//final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
 				final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
-				final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
+				//final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
 				//NativeRun.fixPath( infile.toAbsolutePath().toString() )
-				String[] cmds = new String[] { "prodigal", "-a", outPathA }; //"-d", outPathD };
+				String[] cmds;
+				if( host.getText().equals("localhost") ) cmds = new String[] { "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", outPathD }; //"-d", outPathD };
+				else {
+					cmds = new String[] { "ssh", username+"@"+hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
+				}
 				
 				List<Object>	lscmd = new ArrayList<Object>();
 				//String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
@@ -1849,30 +1944,28 @@ public class SerifyApplet extends JApplet {
 							System.err.println( cont[0] );
 							
 							try {
-								Files.copy(pathA, fs.resolve( title+".prodigal.fsa") );
-								addSequences( title+".aa", pathA, null );
-							} catch (IOException | URISyntaxException e) {
+								if( host.getText().equals("localhost") ) {
+									Files.copy(pathD, fs.resolve( tmpout ) );
+								} else {
+									ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, outPathD);
+									Process pc = pb.start();
+									InputStream is = pc.getInputStream();
+									while( is.read() != -1 );
+									InputStream es = pc.getErrorStream();
+									while( es.read() != -1 );
+									pc.waitFor();
+									System.err.println("done " + outPathD);
+								}
+								addSequences( title+"."+su.toLowerCase(), pathD, null );
+							} catch (IOException | URISyntaxException | InterruptedException e) {
 								e.printStackTrace();
 							}
-							/*try {
-								addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
-								addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
-							} catch (URISyntaxException e) {
-								e.printStackTrace();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}*/
 						}
 					}
 				};
-				nrun.runProcessBuilder( "Running prodigal", lscmd, run, cont, false );
-					//JSObject js = JSObject.getWindow( SerifyApplet.this );
-					//js = (JSObject)js.getMember("document");
-					//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
+				nrun.runProcessBuilder( "Running rnammer", lscmd, run, cont, false );
 			}
 		}
-		
-		//infile.delete();
 	}
 	
 	public void init( final Container c ) {
@@ -3138,6 +3231,36 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
+		popup.add( new AbstractAction("Rnammer") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					List<Path> urls = new ArrayList<Path>();
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						//int r = table.getSelectedRow();
+						Path path = (Path)table.getValueAt( r, 3 );
+						urls.add( path );
+					}
+					
+					String userhome = System.getProperty("user.home");	
+					Path dir = Paths.get( userhome );
+					//File f = nrun.checkProdigalInstall( dir, urls );
+					//if( f != null && f.exists() ) {
+					Path root = null;
+					for( Path p: fs.getRootDirectories() ) {
+						root = p;
+						break;
+					}
+					doRnammer( dir, c, root, urls );
+					//} else System.err.println( "no prodigal installed" );
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
+			}
+		});
 		popup.add( new AbstractAction("Flanking") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -4157,8 +4280,31 @@ public class SerifyApplet extends JApplet {
 				try {
 					if( obj != null && obj instanceof List ) {
 						List<File> lf = (List<File>)obj;
+						FlxReader flx = new FlxReader();
+						
+						String comp = null;
+						byte[] bb = null;
+						int r = table.getSelectedRow();
+						if( r != -1 ) {
+							int i = table.convertRowIndexToModel(r);
+							Sequences seqs = serifier.getSequencesList().get(i);
+							
+							comp = seqs.getName();
+							Path filepath = seqs.getPath();
+							bb = Files.readAllBytes(filepath);
+						}
 						for( File f : lf ) {
-							addSequences( f.getName(), f.toPath(), null );
+							if( f.isDirectory() ) {
+								Path dest = root.resolve(f.getName()+".fna");
+								//Files.copy(f.t, dest, StandardCopyOption.REPLACE_EXISTING);
+								//addSequences( f.getName(), dest, null );
+								//File nf = new File(f, f.getName()+".fna");
+								Writer fw = Files.newBufferedWriter(dest, StandardOpenOption.CREATE);
+								flx.start( f.getParentFile().getAbsolutePath()+"/", f.getName(), false, fw, comp, bb);
+								fw.close();
+								
+								addSequences( f.getName(), dest, null );
+							} else addSequences( f.getName(), f.toPath(), null );
 						}
 					} else if( obj instanceof Image ) {
 						
