@@ -133,6 +133,8 @@ public class SerifyApplet extends JApplet {
 	String 				globaluser = null;
 	NativeRun			nrun = new NativeRun();
 	
+	Map<Path,Sequences> mseq = new HashMap<Path,Sequences>();
+	
 	public SerifyApplet( FileSystem fs ) {
 		this();
 		this.fs = fs;
@@ -1705,6 +1707,7 @@ public class SerifyApplet extends JApplet {
 		for (int r : rr) {
 			int cr = table.convertRowIndexToModel(r);
 			Sequences seqs = getSequences(cr);
+			if( rr.length == 1 ) jf.setCurrentPath( seqs.getPath() );
 			
 			//int nseq = 0;
 			serifier.appendSequenceInJavaFasta( seqs, contset, rr.length == 1 );
@@ -1766,16 +1769,34 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void windowClosed(WindowEvent e) {
 				if( jf.isEdited() && JOptionPane.showConfirmDialog( SerifyApplet.this, "Do you wan't to save?" ) == JOptionPane.YES_OPTION ) {
-					JFileChooser jfc = new JFileChooser();
-					if( jfc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+					Path cp = jf.getCurrentPath();
+					if( cp == null ) {
+						JFileChooser jfc = new JFileChooser();
+						if( jfc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+							try {
+								File f = jfc.getSelectedFile();
+								FileWriter fw = new FileWriter( f );
+								serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
+								fw.close();
+								
+								SerifyApplet.this.addSequences( f.getName(), f.toPath(), null );
+							} catch (IOException | URISyntaxException e1) {
+								e1.printStackTrace();
+							}
+						}
+					} else {
+						//Sequence.write
 						try {
-							File f = jfc.getSelectedFile();
-							FileWriter fw = new FileWriter( f );
-							serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
-							fw.close();
+							BufferedWriter bw = Files.newBufferedWriter(cp, StandardOpenOption.TRUNCATE_EXISTING);
+							serifier.writeFasta( serifier.lseq, bw, null );
+							bw.close();
 							
-							SerifyApplet.this.addSequences( f.getName(), f.toPath(), null );
-						} catch (IOException | URISyntaxException e1) {
+							Sequences seqs = mseq.get(cp);
+							if( seqs != null ) {
+								seqs.nseq = serifier.lseq.size();
+								table.tableChanged( new TableModelEvent(table.getModel()) );
+							}
+						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
 					}
@@ -2711,16 +2732,54 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser	filechooser = new JFileChooser();
+				filechooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 				filechooser.setMultiSelectionEnabled( true );
 				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
 					//File cd = filechooser.getCurrentDirectory();
 					//String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
 					
 					try {
+						String comp = null;
+						FlxReader flx = new FlxReader();
 						for( File f : filechooser.getSelectedFiles() ) {
-							Path dest = root.resolve(f.getName());
-							Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
-							addSequences( f.getName(), dest, null );
+							if( f.isDirectory() ) {
+								List<Sequence> bb = null;
+								if( comp == null ) {
+									int r = table.getSelectedRow();
+									if( r != -1 ) {
+										int i = table.convertRowIndexToModel(r);
+										Sequences seqs = serifier.getSequencesList().get(i);
+										
+										comp = seqs.getName();
+										Path filepath = seqs.getPath();
+										bb = Sequence.readFasta(filepath, null);
+									}
+								}
+								
+								Path dest = root.resolve(f.getName()+".fna");
+								//Files.copy(f.t, dest, StandardCopyOption.REPLACE_EXISTING);
+								//addSequences( f.getName(), dest, null );
+								//File nf = new File(f, f.getName()+".fna");
+								Writer fw = Files.newBufferedWriter(dest, StandardOpenOption.CREATE);
+								flx.start( f.getParentFile().getAbsolutePath()+"/", f.getName(), false, fw, comp, bb);
+								fw.close();
+								
+								JavaFasta	jf = new JavaFasta(flx.serifier);
+								JFrame		frame = new JFrame();
+								frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+								frame.setSize(800, 600);
+								jf.initGui(frame);
+								jf.updateView();
+								frame.setVisible( true );
+								
+								System.err.println("about to add seqs " + f.getName());
+								
+								addSequences( f.getName(), dest, null );
+							} else {
+								Path dest = root.resolve(f.getName());
+								Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
+								addSequences( f.getName(), dest, null );
+							}
 						}
 					} catch (URISyntaxException e1) {
 						e1.printStackTrace();
@@ -4283,7 +4342,8 @@ public class SerifyApplet extends JApplet {
 						FlxReader flx = new FlxReader();
 						
 						String comp = null;
-						byte[] bb = null;
+						List<Sequence> bb = null;
+						//byte[] bb = null;
 						int r = table.getSelectedRow();
 						if( r != -1 ) {
 							int i = table.convertRowIndexToModel(r);
@@ -4291,7 +4351,7 @@ public class SerifyApplet extends JApplet {
 							
 							comp = seqs.getName();
 							Path filepath = seqs.getPath();
-							bb = Files.readAllBytes(filepath);
+							bb = Sequence.readFasta(filepath, null);
 						}
 						for( File f : lf ) {
 							if( f.isDirectory() ) {
@@ -4303,8 +4363,22 @@ public class SerifyApplet extends JApplet {
 								flx.start( f.getParentFile().getAbsolutePath()+"/", f.getName(), false, fw, comp, bb);
 								fw.close();
 								
+								JavaFasta	jf = new JavaFasta(flx.serifier);
+								JFrame		frame = new JFrame();
+								frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+								frame.setSize(800, 600);
+								jf.initGui(frame);
+								jf.updateView();
+								frame.setVisible( true );
+								
+								System.err.println("about to add seqs " + f.getName());
+								
 								addSequences( f.getName(), dest, null );
-							} else addSequences( f.getName(), f.toPath(), null );
+							} else {
+								
+								System.err.println("about to add seqs2 " + f.getName());
+								addSequences( f.getName(), f.toPath(), null );
+							}
 						}
 					} else if( obj instanceof Image ) {
 						
@@ -4394,6 +4468,9 @@ public class SerifyApplet extends JApplet {
 	
 	public void updateSequences( final String user, final String name, final String type, final Path path, final int nseq, final String key ) {
 		Sequences seqs = new Sequences( user, name, type, path, nseq );
+		
+		mseq.put( path, seqs );
+		
 		seqs.setKey( key );
 		serifier.addSequences( seqs );
 		//serifier.sequences.add( seqs );
