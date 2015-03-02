@@ -199,6 +199,7 @@ import org.simmi.shared.Teginfo;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
+import org.simmi.unsigned.FlxReader;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.NativeRun;
 import org.simmi.unsigned.SmithWater;
@@ -17493,6 +17494,144 @@ public class GeneSet extends JApplet {
 			}
 		};
 		windowmenu.add( genexyplotaction );
+		
+		AbstractAction refalignaction = new AbstractAction("Reference align") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final JTable 				table = getGeneTable();
+				final Collection<String> 	specset = getSpecies(); //speciesFromCluster( clusterMap );
+				final List<String>			species = new ArrayList<String>( specset );
+				
+				TableModel model = new TableModel() {
+					@Override
+					public int getRowCount() {
+						return species.size();
+					}
+
+					@Override
+					public int getColumnCount() {
+						return 1;
+					}
+
+					@Override
+					public String getColumnName(int columnIndex) {
+						return null;
+					}
+
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						return String.class;
+					}
+
+					@Override
+					public boolean isCellEditable(int rowIndex, int columnIndex) {
+						return false;
+					}
+
+					@Override
+					public Object getValueAt(int rowIndex, int columnIndex) {
+						return nameFix( species.get( rowIndex ) );
+					}
+
+					@Override
+					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+					@Override
+					public void addTableModelListener(TableModelListener l) {}
+
+					@Override
+					public void removeTableModelListener(TableModelListener l) {}
+				};
+				JTable table1 = new JTable( model );
+				JTable table2 = new JTable( model );
+				
+				table1.getSelectionModel().setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+				table2.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+				
+				JScrollPane	scroll1 = new JScrollPane( table1 );
+				JScrollPane	scroll2 = new JScrollPane( table2 );
+				
+				FlowLayout flowlayout = new FlowLayout();
+				JComponent c = new JComponent() {};
+				c.setLayout( flowlayout );
+				
+				c.add( scroll1 );
+				c.add( scroll2 );
+				
+				JOptionPane.showMessageDialog(comp, c);
+				
+				int r = table1.getSelectedRow();
+				int i = table1.convertRowIndexToModel(r);
+				String spec = i == -1 ? null : species.get( i );
+				List<Sequence> lcont = speccontigMap.get(spec);
+				
+				r = table2.getSelectedRow();
+				i = table2.convertRowIndexToModel(r);
+				String refspec = i == -1 ? null : species.get( i );
+				List<Sequence> lrefcont = speccontigMap.get(spec);
+				
+				/*ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				Writer fw = new OutputStreamWriter( baos );
+				try {
+					List<Sequence> lcont = speccontigMap.get(spec);
+					for( Sequence seq : lcont ) {
+						seq.writeSequence(fw);
+					}
+					fw.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				String comp = spec;
+				byte[] bb = baos.toByteArray();*/
+				
+				FlxReader flx = new FlxReader();
+				
+				Map<String,String> env = new HashMap<String,String>();
+				env.put("create", "true");
+				//String uristr = "jar:" + zippath.toUri();
+				//URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+				
+				try {
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					for( Path root : zipfilesystem.getRootDirectories() ) {
+						Path subf = root.resolve(spec+".grp");
+						if( Files.exists(subf) ) {
+							BufferedReader br = Files.newBufferedReader(subf);
+							Map<String,Map<String,String>> mm = flx.loadContigGraph(br);
+							br.close();
+							
+							String home = System.getProperty("user.home")+"/";
+							StringBuilder sb = comp != null ? flx.referenceAssembly( home, spec, refspec, lrefcont, lcont ) : null;
+							Sequence cseq = new Sequence(spec+"_chromosome", null);
+							if( sb != null && sb.length() > 0 ) {
+								br = new BufferedReader(new StringReader( sb.toString() ));
+							} else {
+								Path sca = root.resolve(spec+".csc");
+								if( !Files.exists(sca) ) {
+									sca = root.resolve(spec+".sca");
+								}
+								br = Files.newBufferedReader(sca);
+							}
+							//br = new BufferedReader( fr );
+							
+							flx.connectContigs(br, cseq, false, new FileWriter(home+spec+"_new.fna"), spec);
+							br.close();
+						}
+						
+						break;
+					}
+				} catch( Exception ex ) {
+					ex.printStackTrace();
+				} finally {
+					try{ zipfilesystem.close(); } catch( IOException ie ) { ie.printStackTrace(); };
+				}
+				
+				//flx.start( f.getParentFile().getAbsolutePath()+"/", f.getName(), false, fw, comp, bb);
+			}
+		};
+		windowmenu.add( refalignaction );
+		
 		windowmenu.addSeparator();
 		windowmenu.add( new AbstractAction("Run antismash") {
 			@Override
