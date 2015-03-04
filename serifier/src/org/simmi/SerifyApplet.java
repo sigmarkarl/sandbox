@@ -582,7 +582,6 @@ public class SerifyApplet extends JApplet {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
 		if( homedir ) selectedpath = new File( userhome ).toPath();
-		
 		/*System.out.println("run blast in applet");
 		File blastn;
 		File blastp;
@@ -606,7 +605,13 @@ public class SerifyApplet extends JApplet {
 			}
 		}
 		
-			List<Object>	lscmd = new ArrayList<Object>();
+		JTextField host = new JTextField("localhost");
+		JOptionPane.showMessageDialog(null, host);
+		
+		String username = System.getProperty("user.name");
+		String hostname = host.getText();
+		
+		List<Object>	lscmd = new ArrayList<Object>();
 			//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 			//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
 			//if( makeblastdb.exists() ) {
@@ -623,7 +628,12 @@ public class SerifyApplet extends JApplet {
 			}*/
 			
 			
-			String[] cmds = new String[] { "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			String[] cmds;
+			if( host.getText().equals("localhost") ) cmds = new String[] { "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			else {
+				cmds = new String[] { "ssh", username+"@"+hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+				//new String[] { "ssh", username+"@"+hostname, "prodigal", "-a", tmpout };
+			}
 			lscmd.add( new Path[] { dbPath, null, selectedpath } );
 			lscmd.add( Arrays.asList( cmds ) );
 			//}
@@ -693,7 +703,9 @@ public class SerifyApplet extends JApplet {
 				int procs = Runtime.getRuntime().availableProcessors();
 				
 				List<String>	lcmd = new ArrayList<String>();
-				String[] bcmds = { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				String[] bcmds;
+				if( host.getText().equals("localhost") ) bcmds = new String[] { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				else bcmds  = new String[] { "ssh", username+"@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
 				String[] exts = extrapar.trim().split("[\t ]+");
 				
 				//String[] nxst = { "-out", outPathFixed };
@@ -2785,6 +2797,8 @@ public class SerifyApplet extends JApplet {
 						e1.printStackTrace();
 					} catch (IOException e1) {
 						e1.printStackTrace();
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
 					}
 				}
 			}
@@ -4448,6 +4462,8 @@ public class SerifyApplet extends JApplet {
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (URISyntaxException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 
