@@ -19,12 +19,14 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.SplashScreen;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -6444,6 +6446,8 @@ public class GeneSet extends JApplet {
 	}
 	
 	public static void main(String[] args) {
+		//SplashScreen.getSplashScreen().
+		
 		if( args.length == 0 ) {
 		
 			/*String[] stra = {"A", "B", "C", "D"};
@@ -15805,30 +15809,80 @@ public class GeneSet extends JApplet {
 		AbstractAction	importidmappingaction = new AbstractAction("Import idmapping") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						//Path path = zipfile.toPath();
-						String uristr = "jar:" + zippath.toUri();
-						zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						
-						Path nf = zipfilesystem.getPath("/idmapping_short.dat");
-						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-						
-						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-						if( unimap != null ) unimap.clear();
-						unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-						
-						bw.close();
-						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-						zipfilesystem.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
+				final JTextField 	tf = new JTextField();
+				JButton				btn = new JButton("File");
+				JComponent 			comp = new JComponent() {};
+				comp.setLayout( new BorderLayout() );
+				comp.add( tf );
+				comp.add(btn, BorderLayout.EAST);
+				
+				final File[] file = new File[1];
+				btn.addActionListener( new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						JFileChooser fc = new JFileChooser();
+						if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+							file[0] = fc.getSelectedFile();
+							try {
+								tf.setText( fc.getSelectedFile().toURI().toURL().toString() );
+							} catch (MalformedURLException e1) {
+								e1.printStackTrace();
+							}
+						}
 					}
+				});
+				
+				JOptionPane.showMessageDialog(GeneSet.this, comp);
+				
+				//Thread t = new Thread() {
+				//	public void run() {
+				try {
+					Map<String,String> env = new HashMap<String,String>();
+					env.put("create", "true");
+					//Path path = zipfile.toPath();
+					String uristr = "jar:" + zippath.toUri();
+					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					
+					Path nf = zipfilesystem.getPath("/idmapping_short.dat");
+					final BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+					
+					InputStream fis;
+					if( file[0] != null ) fis = new FileInputStream( file[0] );
+					else {
+						Object[] cont = new Object[3];
+						Runnable run = new Runnable() {
+							public void run() {
+								try {
+									bw.close();
+									zipfilesystem.close();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+						};
+						
+						//NativeRun nrun = new NativeRun();
+						//nrun.runProcessBuilder("Idmapping", Arrays.asList( tf.getText().split(" ") ), run, cont, false);
+						ProcessBuilder pb = new ProcessBuilder( tf.getText().split(" ") );
+						Process p = pb.start();
+						fis = p.getInputStream();
+					}
+					
+					InputStream is = new GZIPInputStream( fis );
+					if( unimap != null ) unimap.clear();
+					unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+					is.close();
+					fis.close();
+					
+					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+				} catch (IOException e1) {
+					e1.printStackTrace();
 				}
+				//	}
+				//};
+				//t.start();
+				//}
 			}
 		};
 		AbstractAction	cogblastaction = new AbstractAction("Cog blast") {
