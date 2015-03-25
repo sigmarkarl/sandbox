@@ -19,7 +19,6 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.SplashScreen;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -66,11 +65,16 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -134,8 +138,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -176,6 +182,8 @@ import javax.swing.table.TableRowSorter;
 
 import netscape.javascript.JSObject;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -220,9 +228,9 @@ public class GeneSet extends JApplet {
 	
 	static SerifyApplet currentSerify = null;
 	static Map<String,String> keggMap = new HashMap<String,String>();
-	static {
-		
-	}
+	static {}
+	
+	public static String user;
 
 	/*private static StringBuilder dnaSearch(String query) {
 		/*
@@ -2734,8 +2742,8 @@ public class GeneSet extends JApplet {
 								for (String loci : sout) {
 									String gene = lociMap.get(loci);
 									if (gene == null) {
-										StringBuilder aa = ((Tegeval)aas.get(loci)).getProteinSequence();
-										gene = aa.toString();
+										Sequence aa = ((Tegeval)aas.get(loci)).getProteinSequence();
+										gene = aa.sb.toString();
 									}
 
 									if (gene == null) {
@@ -2777,7 +2785,7 @@ public class GeneSet extends JApplet {
 					for (String gene : genes) {
 						String aa = lociMap.get(gene);
 
-						StringBuilder aastr = ((Tegeval)aas.get(gene)).getProteinSequence();
+						Sequence aastr = ((Tegeval)aas.get(gene)).getProteinSequence();
 						if (aa == null) {
 							aa = "Not found\t" + aastr;
 						}
@@ -6257,7 +6265,7 @@ public class GeneSet extends JApplet {
 								for( Tegeval tv : gg.getTegevals() ) {
 									Sequence alseq = tv.getAlignedSequence();
 									if( alseq == null ) {
-										StringBuilder sb = tv.getProteinSequence();
+										Sequence sb = tv.getProteinSequence();
 										int l = sb.length();
 										if( l > max ) max = l;
 									} else {
@@ -6271,7 +6279,7 @@ public class GeneSet extends JApplet {
 						
 						Serifier serifier = getConcatenatedSequences(false, genegroups, specset, true);
 						serifier.renameDuplicates();
-						String tree = serifier.getFastTree( serifier.lseq );
+						String tree = serifier.getFastTree( serifier.lseq, user, true );
 						cs.sendToAll( tree );
 						//Serifier serifier = getConcatenatedSequences( false );
 					} else if( message.contains("query:") ) {
@@ -6914,6 +6922,7 @@ public class GeneSet extends JApplet {
 			System.setOut(ps);
 		}*/
 
+		int i = 0;
 		List<String> list = new ArrayList<String>();
 		boolean tone = false;
 		// FileReader fr = new FileReader(idfile);
@@ -6921,6 +6930,12 @@ public class GeneSet extends JApplet {
 		String line = br.readLine();
 		String last = "";
 		while (line != null) {
+			i++;
+			
+			if( i%1000000 == 0 ) {
+				System.err.println( "reading line " + i );
+			}
+			
 			String[] split = line.split("\t");
 			if (split.length > ind) {
 				if (!split[secind].equals(last)) {
@@ -7049,19 +7064,20 @@ public class GeneSet extends JApplet {
 					public boolean test(Path t) {
 						String filename = t.getFileName().toString();
 						//System.err.println("filename " + filename);
-						boolean b = filename.startsWith("t") && filename.length() == 4;
+						boolean b = filename.length() == 4;
 						return b;
 					}
 				}).forEach( new Consumer<Path>() {
 					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) ) {
+					public void accept(Path pt) {
+						if( Files.exists( pt ) ) {
 							try {
-								Files.list(t).filter( new Predicate<Path>() {
+								Files.list(pt).filter( new Predicate<Path>() {
 									@Override
 									public boolean test(Path t) {
 										String filename = t.getFileName().toString();
-										return filename.endsWith(".list");
+										System.err.println( "filename: " + filename + "   " + pt.getFileName() );
+										return filename.equals(pt.getFileName().toString().subSequence(0, 3)+".list");
 									}
 								}).forEach( new Consumer<Path>() {
 									@Override
@@ -7223,6 +7239,10 @@ public class GeneSet extends JApplet {
 	public void funcMappingUni(BufferedReader br, Map<String, Gene> uniids, BufferedWriter bw ) throws IOException {
 		// FileReader fr = new FileReader( sp2go );
 		//BufferedReader br = new BufferedReader(rd);
+		
+		int i = 0;
+		
+		System.err.println( uniids.keySet() );
 		String line = br.readLine();
 		while (line != null) {
 			String[] split = line.split("=");
@@ -7242,6 +7262,10 @@ public class GeneSet extends JApplet {
 				if (bw != null) bw.write(line + "\n");
 			}
 
+			i++;
+			
+			if( i%1000000 == 0 ) System.err.println("funcmapping line "+i);
+			
 			line = br.readLine();
 		}
 		//br.close();
@@ -8279,8 +8303,9 @@ public class GeneSet extends JApplet {
 			Sequence cont = tv.getContig();
 			if( cont != null ) {
 				//String contig = cont.getSpec();//tv.getContig();
-				StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
-				Sequence seq = new Sequence( nameFix(tv.getSpecies())/*getGeneName(names, tv.getGene())*/, seqstr, serifier.mseq );
+				Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+				seq.setName( nameFix(tv.getSpecies()) );
+				//Sequence seq = new Sequence( nameFix(tv.getSpecies())/*getGeneName(names, tv.getGene())*/, seqstr, serifier.mseq );
 				serifier.addSequence(seq);
 			}
 		}
@@ -8324,19 +8349,22 @@ public class GeneSet extends JApplet {
 				if( cont != null ) {
 					String selspec = cont.getSpec();//tv.getContig();
 					if( genename ) {
-						StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
-						Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
+						Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+						seq.setName( tv.gene != null ? tv.gene.name : tv.name );
+						serifier.mseq.put( seq.getName(), seq );
+						//Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
 						serifier.addSequence(seq);
 					} else if( specs == null || specs.contains(selspec ) ) {
 						String spec = nameFix( selspec );
 						
-						StringBuilder seqstr = dna ? new StringBuilder(tv.getSequence()) : tv.getProteinSequence();
+						Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+						seq.setName( spec );
 						/*String name = tv.getGene().id;
 						String cazy = tv.getGene().getGeneGroup().getCommonCazy(cazymap);
 						String ec = tv.getGene().getGeneGroup().getCommonEc();
 						if( cazy != null ) name += " " + cazy;
 						if( ec != null ) name += " " + ec;*/
-						Sequence seq = new Sequence( spec, seqstr, serifier.mseq );
+						//Sequence seq = new Sequence( spec, seqstr, serifier.mseq );
 						serifier.addSequence(seq);
 					}
 				}
@@ -8376,8 +8404,8 @@ public class GeneSet extends JApplet {
 		frame.setVisible(true);
 	}
 	
-	public StringBuilder getSelectedASeqs( JTable table, List<Gene> genelist, JApplet applet, Collection<String> species ) {
-		StringBuilder sb = new StringBuilder();
+	public StringBuffer getSelectedASeqs( JTable table, List<Gene> genelist, JApplet applet, Collection<String> species ) throws IOException {
+		StringWriter sb = new StringWriter();
 		
 		Set<String> selectedSpecies = getSelspec( applet, new ArrayList<String>( species ) );
 		int[] rr = table.getSelectedRows();
@@ -8390,9 +8418,11 @@ public class GeneSet extends JApplet {
 				//for( String sp : selectedSpecies ) {
 			if( selectedSpecies.contains(species) ) {
 				Tegeval tv = gg.tegeval;
-				sb.append(">" + tv.name + " " + tv.teg + " " + tv.eval + "\n");
-				StringBuilder protseq = tv.getProteinSequence();
-				for (int i = 0; i < tv.getProteinLength(); i += 70) {
+				//sb.append(">" + tv.name + " " + tv.teg + " " + tv.eval + "\n");
+				Sequence protseq = tv.getProteinSequence();
+				protseq.setName( tv.name + " " + tv.teg + " " + tv.eval );
+				protseq.writeSequence(sb);
+				/*for (int i = 0; i < tv.getProteinLength(); i += 70) {
 					int end = Math.min(i + 70, tv.getProteinLength());
 					sb.append( protseq.substring(i, end) + "\n"); // new
 																		// String(
@@ -8400,12 +8430,12 @@ public class GeneSet extends JApplet {
 																		// i,
 																		// Math.min(i+70,tv.seq.length())
 																		// )+"\n");
-				}
+				}*/
 					// textarea.append( ">" + tv.cont + " " + tv.teg
 					// + " " + tv.eval + "\n" + tv.seq + "\n" );
 			}
 		}
-		return sb;
+		return sb.getBuffer();
 	}
 	
 	public static StringBuilder getSelectedSeqs( JTable table, List<Gene> genelist ) {
@@ -8907,7 +8937,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	public void doBlast( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr, boolean x ) {
-		File blastn;
+		/*File blastn;
 		File blastp;
 		File makeblastdb;
 		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastx.exe" );
@@ -8930,10 +8960,10 @@ public class GeneSet extends JApplet {
 			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastp.exe" );
 			
 			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\makeblastdb.exe" );
-		}
+		}*/
 		
 		int procs = Runtime.getRuntime().availableProcessors();
-		String[] mcmds = { makeblastdb.getAbsolutePath(), "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
+		String[] mcmds = { "makeblastdb", "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
 		List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
 		
 		final ProcessBuilder mpb = new ProcessBuilder( lcmd );
@@ -8945,12 +8975,14 @@ public class GeneSet extends JApplet {
 				public void run() {
 					try {
 						OutputStream pos = mp.getOutputStream();
+						Writer ow = new OutputStreamWriter( pos );
 						for( Gene g : genelist ) {
 							if( g.getTag() == null || g.getTag().length() == 0 ) {
 								GeneGroup gg = g.getGeneGroup();
 							
 								if( gg != null ) {
-									if( ids ) pos.write( (">" + g.id + "\n").getBytes() );
+									String name;
+									if( ids ) name = g.id;
 									else {
 										String addstr = "";
 										Cog cog = gg.getCommonCog( cogmap );
@@ -8961,16 +8993,21 @@ public class GeneSet extends JApplet {
 											addstr += "_"+cazy;
 										}
 										if( addstr.length() > 0 ) addstr += "_";
-										pos.write( (">" + g.name + addstr + "[" + g.id + "]\n").getBytes() );
+										
+										name = g.name + addstr + "[" + g.id + "]";
+										//pos.write( (">" + g.name + addstr + "[" + g.id + "]\n").getBytes() );
 									}
-									StringBuilder sb = g.tegeval.getProteinSequence();
-									for( int i = 0; i < sb.length(); i+=70 ) {
+									Sequence sb = g.tegeval.getProteinSequence();
+									sb.setName( name );
+									sb.writeSequence(ow);
+									/*for( int i = 0; i < sb.length(); i+=70 ) {
 										pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
 									}
-									pos.write( '\n' );
+									pos.write( '\n' );*/
 								}
 							}
 						}
+						ow.close();
 						pos.close();
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -8997,9 +9034,9 @@ public class GeneSet extends JApplet {
 				}
 			}.run();
 			
-			File blastFile = x ? blastx : blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+			//File blastFile = x ? blastx : blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
 			
-			String[] 		cmds = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			String[] 		cmds = { "blastp", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
 			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
 			//String[] exts = extrapar.trim().split("[\t ]+");
 			
@@ -9088,7 +9125,7 @@ public class GeneSet extends JApplet {
 	}
 	
 	public void doBlastn( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr, boolean show ) {
-		File blastn;
+		/*File blastn;
 		File blastp;
 		File makeblastdb;
 		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastx.exe" );
@@ -9111,10 +9148,10 @@ public class GeneSet extends JApplet {
 			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastp.exe" );
 			
 			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\makeblastdb.exe" );
-		}
+		}*/
 		
 		int procs = Runtime.getRuntime().availableProcessors();
-		String[] mcmds = { makeblastdb.getAbsolutePath(), "-dbtype", "nucl", "-title", "tmp", "-out", "tmp" };
+		String[] mcmds = { "makeblastdb", "-dbtype", "nucl", "-title", "tmp", "-out", "tmp" };
 		List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
 		
 		final ProcessBuilder mpb = new ProcessBuilder( lcmd );
@@ -9164,10 +9201,10 @@ public class GeneSet extends JApplet {
 				}
 			}.run();
 			
-			File blastFile = blastn; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
+			//File blastFile = blastn; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
 			
-			String[] 		cmds1 = { blastFile.getAbsolutePath(), "-dust", "no", "-perc_identity", "99", "-word_size", "21", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
-			String[] 		cmds2 = { blastFile.getAbsolutePath(), "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			String[] 		cmds1 = { "blastn", "-dust", "no", "-perc_identity", "99", "-word_size", "21", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
+			String[] 		cmds2 = { "blastn", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
 			String[]		cmds = show ? cmds2 : cmds1;
 			
 			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
@@ -10151,7 +10188,7 @@ public class GeneSet extends JApplet {
 
 		Set<String> current = null;
 		Set<String> currentko = null;
-		InputStream is = GeneSet.class.getResourceAsStream("/kegg_pathways");
+		InputStream is = GeneSet.class.getResourceAsStream("kegg_pathways");
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		String line = br.readLine();
 		while (line != null) {
@@ -11292,7 +11329,7 @@ public class GeneSet extends JApplet {
 					}
 					zipfilesystem.close();
 				} catch( Exception ex ) {
-					
+					ex.printStackTrace();
 				}
 			}
 		});
@@ -11476,7 +11513,7 @@ public class GeneSet extends JApplet {
 				}*/
 				
 				Serifier 	serifier = getConcatenatedSequences( false, true );
-				String 		tree = serifier.getFastTree( serifier.lseq );
+				String 		tree = serifier.getFastTree( serifier.lseq, user, false );
 				
 				TreeUtil 	tu = new TreeUtil();
 				Node 		n = tu.parseTreeRecursive( tree, false );
@@ -11632,7 +11669,7 @@ public class GeneSet extends JApplet {
 						serifier.addSequence( seq );			
 					}
 
-					String tree = serifier.getFastTree( serifier.lseq );
+					String tree = serifier.getFastTree( serifier.lseq, user, false );
 					Node n = treeutil.parseTreeRecursive( tree, false );
 					treeutil.setLoc( 0 );
 					n.nodeCalcMap( nmap );
@@ -13525,21 +13562,23 @@ public class GeneSet extends JApplet {
 	
 	public void showKeggPathway( String sub, Path p ) throws IOException {
 		final BufferedImage selimg = ImageIO.read( Files.newInputStream( p ) );
-		JFrame 	frame = new JFrame( sub );
-		frame.setSize(800, 600);
-		final JComponent c = new JComponent() {
-			public void paintComponent( Graphics g ) {
-				super.paintComponent(g);
-				g.drawImage(selimg, 0, 0, this);
-			}
-		};
-		Dimension dim = new Dimension( selimg.getWidth(), selimg.getHeight() );
-		c.setSize(dim);
-		c.setPreferredSize(dim);
-		JScrollPane sc2 = new JScrollPane( c );
-		frame.add( sc2 );
-		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-		frame.setVisible(true);
+		if( selimg != null ) {
+			JFrame 	frame = new JFrame( sub );
+			frame.setSize(800, 600);
+			final JComponent c = new JComponent() {
+				public void paintComponent( Graphics g ) {
+					super.paintComponent(g);
+					g.drawImage(selimg, 0, 0, this);
+				}
+			};
+			Dimension dim = new Dimension( selimg.getWidth(), selimg.getHeight() );
+			c.setSize(dim);
+			c.setPreferredSize(dim);
+			JScrollPane sc2 = new JScrollPane( c );
+			frame.add( sc2 );
+			frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+			frame.setVisible(true);
+		}
 	}
 	
 	Map<String, Gene> 			refmap = new HashMap<String, Gene>();
@@ -13624,29 +13663,33 @@ public class GeneSet extends JApplet {
 			nf = zipfilesystem.getPath("/plasmids.txt");
 			if( Files.exists( nf ) ) plasmids = loadPlasmids( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
 			
-			/*zipfilesystem.close();			
+			/*zipfilesystem.close();
 			path = zipfile.toPath();
 			String uristr = "jar:" + path.toUri();
 			zipuri = URI.create( uristr /*.replace("file://", "file:")* );
 			zipfilesystem = FileSystems.newFileSystem( zipuri, env );*/
 			
 			nf = zipfilesystem.getPath("/allthermus.fna");
-			if( Files.exists( nf ) ) specList = loadcontigs( Files.newBufferedReader(nf), "" );
+			if( Files.exists( nf ) ) {
+				specList = loadcontigs( Files.newBufferedReader(nf), "" );
+			}
 			nf = zipfilesystem.getPath("/454LargeContigs.fna");
-			if( Files.exists( nf ) ) specList = loadcontigs( Files.newBufferedReader(nf), "" );
+			if( Files.exists( nf ) ) {
+				specList = loadcontigs( Files.newBufferedReader(nf), "" );
+			}
 			//else {
 			for( Path root : zipfilesystem.getRootDirectories() ) {
 				Files.list(root).filter( new Predicate<Path>() {
 					@Override
 					public boolean test(Path t) {
 						String filename = t.getFileName().toString();
-						return filename.endsWith(".fna") && !filename.equals("allthermus.fna");
+						return (filename.endsWith(".fna") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
 					}
 				}).forEach( new Consumer<Path>() {
 					@Override
 					public void accept(Path t) {
 						try {
-							String filename = t.getFileName().toString().replace(".fna", "");
+							String filename = t.getFileName().toString().replace(".fna", "").replace(".fastg", "");
 							specList = loadcontigs( Files.newBufferedReader(t), "" );
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -14714,7 +14757,9 @@ public class GeneSet extends JApplet {
 				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
 				
 				nf = zipfilesystem.getPath("/sp2go_short.txt");
-				if( Files.exists( nf ) ) funcMappingUni( new BufferedReader( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) )), unimap, null );
+				if( Files.exists( nf ) ) {
+					funcMappingUni( new BufferedReader( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) )), unimap, null );
+				}
 				
 				nf = zipfilesystem.getPath("/ko2go.txt");
 				if( Files.exists(nf) ) {
@@ -14758,7 +14803,7 @@ public class GeneSet extends JApplet {
 				ze = zipin.getNextEntry();
 			}
 			zipin.close();*/
-			is = GeneSet.class.getResourceAsStream("/gene_ontology_ext.obo");
+			is = GeneSet.class.getResourceAsStream("go.obo");
 			//Map<String,Function> funcmap = 
 			if( is != null ) {
 				readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
@@ -14828,7 +14873,7 @@ public class GeneSet extends JApplet {
 			Set<String> set = new TreeSet<String>();
 			for (Gene g : genelist) {
 				Tegeval tv = g.tegeval;
-				if (tv.eval <= 0.00001 && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
+				if (tv.eval <= 0.00001 && tv.teg != null && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
 					set.add(tv.teg);
 			}
 	
@@ -14853,7 +14898,9 @@ public class GeneSet extends JApplet {
 			System.err.println( me + "  " + mu );
 		}
 		
-		File idf = new File("/Users/sigmar/idspec.txt");
+		String userhome = System.getProperty("user.home");
+		File f = new File( userhome );
+		File idf = new File(f, "idspec.txt");
 		BufferedWriter bw = new BufferedWriter( new FileWriter(idf) ); //Files.newBufferedWriter(idf.toPath(), OpenOption.);
 		for( String id : refmap.keySet() ) {
 			Gene g = refmap.get(id);
@@ -15180,9 +15227,12 @@ public class GeneSet extends JApplet {
 						List<Annotation> lann = new ArrayList<Annotation>();
 						if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
 							Tegeval tv = (Tegeval)ann;
-							Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, tv.getGene().getName() );
-							anno.type = "CDS";
 							GeneGroup gg = tv.getGene().getGeneGroup();
+							
+							Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, gg != null ? gg.getCommonName() : tv.getGene().getName() );
+							anno.type = "CDS";
+							anno.id = tv.getGene().id;
+							
 							String cazy = gg != null ? gg.getCommonCazy(cazymap) : null;
 							if( cazy != null ) anno.addDbRef( "CAZY:"+cazy );
 							Cog cog = gg != null ? gg.getCommonCog(cogmap) : null;
@@ -15213,9 +15263,12 @@ public class GeneSet extends JApplet {
 				List<Annotation> lann = new ArrayList<Annotation>();
 				if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
 					Tegeval tv = (Tegeval)ann;
-					Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, tv.getGene().getName() );
-					anno.type = "CDS";
 					GeneGroup gg = tv.getGene().getGeneGroup();
+					
+					Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori,  gg != null ? gg.getCommonName() : tv.getGene().getName() );
+					anno.type = "CDS";
+					anno.id = tv.getGene().id;
+					
 					String cazy = gg != null ? gg.getCommonCazy(cazymap) : null;
 					if( cazy != null ) anno.addDbRef( "CAZY:"+cazy );
 					lann.add( anno );
@@ -15256,14 +15309,14 @@ public class GeneSet extends JApplet {
 			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 			
 			final SerifyApplet	sa = new SerifyApplet( zipfilesystem );
-			sa.init( frame );
+			sa.init( frame, user );
 			
 			for( Path root : zipfilesystem.getRootDirectories() ) {
 				Files.list(root).filter( new Predicate<Path>() {
 					@Override
 					public boolean test(Path t) {
 						String fname = t.getFileName().toString();
-						return /*fname.endsWith(".gbk") || */fname.endsWith(".fna") || fname.endsWith(".fsa") || fname.endsWith(".fa") || fname.endsWith(".fasta") || fname.endsWith(".aa") || fname.endsWith(".nn") || fname.endsWith(".trna") || fname.endsWith(".rrna");
+						return /*fname.endsWith(".gbk") || */fname.endsWith(".fna") || fname.endsWith("fastg") || fname.endsWith(".fsa") || fname.endsWith(".fa") || fname.endsWith(".fasta") || fname.endsWith(".aa") || fname.endsWith(".nn") || fname.endsWith(".trna") || fname.endsWith(".rrna") || fname.endsWith(".ssu") || fname.endsWith(".lsu") || fname.endsWith(".tsu");
 					}
 				}).forEach( new Consumer<Path>() {
 					@Override
@@ -15349,6 +15402,43 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
+	public void traverseTar( TarArchiveInputStream taris, TarArchiveEntry tae, Path p ) throws IOException {
+		Path newp = p.resolve(tae.getName());
+		if( tae.isDirectory() ) {
+			if( !Files.exists(newp) ) Files.createDirectory(newp);
+			for( TarArchiveEntry taes : tae.getDirectoryEntries() ) {
+				traverseTar(taris, taes, newp);
+			}
+		} else if( tae.isFile() ) {
+			File file = tae.getFile();
+			if( file != null ) {
+				Path dpath = file.toPath();
+				Files.copy(dpath, newp);
+			} else {
+				//long size = tae.getSize();
+				//tae.get
+				//byte[] bb = new byte[(int)size];
+				
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				int total = 0;
+				int r = taris.read();
+				while( r != -1 ) {
+					total++;
+					baos.write(r);
+					r = taris.read();
+				}
+				byte[] bb = baos.toByteArray();
+				System.err.println( total + " dd " + bb.length );
+				if( !Files.exists(newp) ) Files.write(newp, bb);
+				else Files.write(newp, bb, StandardOpenOption.TRUNCATE_EXISTING);
+				System.err.println("file null " + newp.toString());
+			}
+		} else {
+			System.err.println( newp.toString() );
+			System.err.println( tae.getName() );
+		}
+	}
+	
 	TextField tb1 = null;
 	TextField tb2 = null;
 	TextField epar = null;
@@ -15357,6 +15447,10 @@ public class GeneSet extends JApplet {
 
 	Component comp;
 	public void init(final Container comp) {
+		user = System.getProperty("user.name");
+		JavaFasta.user = user;
+		//SerifyApplet.user = user;
+		
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 		} catch (ClassNotFoundException e) {
@@ -15368,6 +15462,50 @@ public class GeneSet extends JApplet {
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
+		
+		String userhome = System.getProperty("user.home");
+		boolean windows = false;
+		try {
+			InputStream isk = GeneSet.this.getClass().getResourceAsStream("genesetkey");
+			//Path gkey = Paths.get( url.toURI() );
+			InputStream iskp = GeneSet.this.getClass().getResourceAsStream("genesetkey.pub");
+			//Path gkeypub = Paths.get( url.toURI() );
+			
+			Path gkeyssh = Paths.get(userhome);
+			//Path gkeyssh = userpath.resolve(".ssh");
+			if( !Files.exists(gkeyssh) ) Files.createDirectory(gkeyssh);
+			Path gkeylocal = gkeyssh.resolve("genesetkey");
+			Path gkeylocalpub = gkeyssh.resolve("genesetkey.pub");
+			if( !Files.exists(gkeylocal) ) {
+				Files.copy(isk, gkeylocal);
+			}
+			if( !Files.exists(gkeylocalpub) ) {
+				Files.copy(iskp, gkeylocalpub);
+			}
+			
+			Set<PosixFilePermission> poset = new HashSet<PosixFilePermission>();
+			poset.add( PosixFilePermission.OWNER_READ );
+			poset.add( PosixFilePermission.OWNER_WRITE );
+			Files.setPosixFilePermissions(gkeylocal, poset);
+			Files.setPosixFilePermissions(gkeylocalpub, poset);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		} catch( UnsupportedOperationException e2 ) {
+			windows = true;
+			e2.printStackTrace();
+		}
+		
+		if( windows ) {
+			File f = new File( userhome+"\\genesetkey" );
+			f.setExecutable(false, false);
+			f.setWritable(false, false);
+			f.setReadable(false, false);
+			
+			f.setWritable(true, true);
+			f.setReadable(true, true);
+		}
+		
+		
 		this.comp = comp;
 		selcomb = new JComboBox<String>();
 		searchcolcomb = new JComboBox<String>();
@@ -15509,7 +15647,9 @@ public class GeneSet extends JApplet {
 					try {
 						Set<String> species = getSelspec(null, getSpecies(), null);
 						
-						Path queryPath = Files.createTempFile("all", ".fsa");
+						String userhome = System.getProperty("user.home");
+						Path userhomepath = Paths.get( userhome );
+						Path queryPath = userhomepath.resolve("tmp_cluster.fsa");//Files.createTempFile("all", ".fsa");
 						BufferedWriter qbw = Files.newBufferedWriter(queryPath);
 						
 						Path dbPath = Files.createTempFile("db", ".fsa");
@@ -15517,24 +15657,36 @@ public class GeneSet extends JApplet {
 						for( Gene g : genelist ) {
 							if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
 								if( species.contains( g.getSpecies() ) ) {
-									StringBuilder gs = g.tegeval.getProteinSequence();
-									qbw.append(">" + g.id + "\n");
+									Sequence gs = g.tegeval.getProteinSequence();
+									if( gs != null ) {
+										gs.setName( g.id );
+										gs.writeSequence(qbw);
+									}
+									/*qbw.append(">" + g.id + "\n");
 									for (int i = 0; i < gs.length(); i += 70) {
 										qbw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-									}
+									}*/
 								}
 								
-								StringBuilder gs = g.tegeval.getProteinSequence();
-								bw.append(">" + g.id + "\n");
+								Sequence gs = g.tegeval.getProteinSequence();
+								if( gs != null ) {
+									gs.setName( g.id );
+									gs.writeSequence(bw);
+								}/* else {
+									System.err.println(g.getSpecies());
+									System.err.println();
+								}
+								
+								/*bw.append(">" + g.id + "\n");
 								for (int i = 0; i < gs.length(); i += 70) {
 									bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-								}
+								}*/
 							}
 						}
 						bw.close();
 						qbw.close();
 						NativeRun nrun = new NativeRun();
-						SerifyApplet.blastRun(nrun, queryPath, dbPath, "prot", "-evalue 0.00001", null, true);
+						SerifyApplet.blastRun(nrun, queryPath, dbPath, "prot", "-evalue 0.00001", null, true, user);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
@@ -15779,30 +15931,146 @@ public class GeneSet extends JApplet {
 		AbstractAction	functionmappingaction = new AbstractAction("Function mapping") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						//Path path = zipfile.toPath();
-						String uristr = "jar:" + zippath.toUri();
-						zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						
-						Path nf = zipfilesystem.getPath("/sp2go_short.txt");
-						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-						
-						BufferedReader br = new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) ) ) );
-						if( unimap != null ) unimap.clear();
-						//unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-						funcMappingUni( br, unimap, bw );
-						
-						bw.close();
-						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-						zipfilesystem.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
+				final JTextField 	tf = new JTextField();
+				JButton				btn = new JButton("File");
+				JComponent 			comp = new JComponent() {};
+				comp.setLayout( new BorderLayout() );
+				comp.add( tf );
+				comp.add(btn, BorderLayout.EAST);
+				tf.setText("http://130.208.252.239/data/sp2go.txt.gz");
+				
+				final File[] file = new File[1];
+				btn.addActionListener( new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						JFileChooser fc = new JFileChooser();
+						if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
+							file[0] = fc.getSelectedFile();
+							try {
+								tf.setText( fc.getSelectedFile().toURI().toURL().toString() );
+							} catch (MalformedURLException e1) {
+								e1.printStackTrace();
+							}
+						}
 					}
+				});
+				
+				try {
+					Map<String,String> env = new HashMap<String,String>();
+					env.put("create", "true");
+					//Path path = zipfile.toPath();
+					String uristr = "jar:" + zippath.toUri();
+					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					
+					Path nf = zipfilesystem.getPath("/sp2go_short.txt");
+					BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
+					
+					JOptionPane.showMessageDialog(GeneSet.this, comp);
+					
+					final JDialog	dialog = new JDialog();
+					dialog.setTitle( "Function mapping" );
+					dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+					dialog.setSize(400, 300);
+					
+					comp = new JComponent() {};
+					comp.setLayout( new BorderLayout() );
+					
+					final JTextArea		ta = new JTextArea();
+					/*final InputStream fis;
+					if( file[0] != null ) fis = new FileInputStream( file[0] );
+					else {
+						JTextField host = new JTextField("localhost");
+						JOptionPane.showMessageDialog(null, host);
+						
+						String username = System.getProperty("user.name");
+						String hostname = host.getText();
+						
+						List<String> commandsList = Arrays.asList( new String[] {"ssh",username+"@"+hostname,"cat",tf.getText()} );
+						ProcessBuilder pb = new ProcessBuilder( commandsList );
+						Process p = pb.start();
+						
+						for( Object commands : commandsList ) {
+							if( commands instanceof List ) {
+								for( Object cmd : (List)commands ) {
+									ta.append(cmd+" ");
+								}
+								ta.append("\n");
+							} else {
+								ta.append(commands+" ");
+							}
+						}
+						ta.append("\n");
+						
+						fis = p.getInputStream();
+					}*/
+					
+					final JProgressBar	pbar = new JProgressBar();
+					final Thread t = new Thread() {
+						public void run() {
+							try {
+								URL url = new URL(tf.getText());
+								InputStream fis = url.openStream();
+								
+								BufferedReader br = new BufferedReader( new InputStreamReader( new GZIPInputStream( fis ) ) );
+								//if( unimap != null ) unimap.clear();
+								//unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+								funcMappingUni( br, unimap, bw );
+								
+								fis.close();
+								bw.close();
+								
+								try { zipfilesystem.close(); } catch( Exception e2 ) { e2.printStackTrace(); };
+								
+								pbar.setIndeterminate(false);
+								pbar.setEnabled(false);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					};
+					
+					ta.setEditable( false );
+					final JScrollPane	sp = new JScrollPane( ta );
+					
+					dialog.add( comp );
+					comp.add( pbar, BorderLayout.NORTH );
+					comp.add( sp, BorderLayout.CENTER );
+					pbar.setIndeterminate( true );
+					
+					t.start();
+					dialog.addWindowListener( new WindowListener() {
+						
+						@Override
+						public void windowOpened(WindowEvent e) {}
+						
+						@Override
+						public void windowIconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+						
+						@Override
+						public void windowClosing(WindowEvent e) {}
+						
+						@Override
+						public void windowClosed(WindowEvent e) {
+							if( pbar.isEnabled() ) {
+								pbar.setIndeterminate( false );
+								pbar.setEnabled( false );
+							}
+						}
+						
+						@Override
+						public void windowActivated(WindowEvent e) {}
+					});
+					dialog.setVisible( true );
+					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+				} catch (IOException e1) {
+					e1.printStackTrace();
 				}
 			}
 		};
@@ -15815,6 +16083,7 @@ public class GeneSet extends JApplet {
 				comp.setLayout( new BorderLayout() );
 				comp.add( tf );
 				comp.add(btn, BorderLayout.EAST);
+				tf.setText("ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping.dat.gz");
 				
 				final File[] file = new File[1];
 				btn.addActionListener( new ActionListener() {
@@ -15847,10 +16116,20 @@ public class GeneSet extends JApplet {
 					Path nf = zipfilesystem.getPath("/idmapping_short.dat");
 					final BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
 					
-					InputStream fis;
+					final JDialog	dialog = new JDialog();
+					dialog.setTitle( "Id mapping" );
+					dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
+					dialog.setSize(400, 300);
+					
+					comp = new JComponent() {};
+					comp.setLayout( new BorderLayout() );
+					
+					final JTextArea		ta = new JTextArea();
+					
+					/*final InputStream fis;
 					if( file[0] != null ) fis = new FileInputStream( file[0] );
 					else {
-						Object[] cont = new Object[3];
+						/*Object[] cont = new Object[3];
 						Runnable run = new Runnable() {
 							public void run() {
 								try {
@@ -15860,24 +16139,127 @@ public class GeneSet extends JApplet {
 									e.printStackTrace();
 								}
 							}
-						};
+						};*
 						
-						//NativeRun nrun = new NativeRun();
-						//nrun.runProcessBuilder("Idmapping", Arrays.asList( tf.getText().split(" ") ), run, cont, false);
-						ProcessBuilder pb = new ProcessBuilder( tf.getText().split(" ") );
+						JTextField host = new JTextField("localhost");
+						JOptionPane.showMessageDialog(null, host);
+						
+						String username = System.getProperty("user.name");
+						String hostname = host.getText();
+						
+						List<String> commandsList = Arrays.asList( new String[] {"ssh",username+"@"+hostname,"cat",tf.getText()} );
+						ProcessBuilder pb = new ProcessBuilder( commandsList );
 						Process p = pb.start();
+						
+						for( Object commands : commandsList ) {
+							if( commands instanceof List ) {
+								for( Object cmd : (List)commands ) {
+									ta.append(cmd+" ");
+								}
+								ta.append("\n");
+							} else {
+								ta.append(commands+" ");
+							}
+						}
+						ta.append("\n");
+						
 						fis = p.getInputStream();
-					}
+					}*/
 					
-					InputStream is = new GZIPInputStream( fis );
-					if( unimap != null ) unimap.clear();
-					unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-					is.close();
-					fis.close();
+					final JProgressBar	pbar = new JProgressBar();
+					final Thread t = new Thread() {
+						public void run() {
+							try {
+								URL url = new URL(tf.getText());
+								InputStream fis = url.openStream();
+								InputStream is = new GZIPInputStream( fis );
+								if( unimap != null ) unimap.clear();
+								unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+								is.close();
+								fis.close();
+								bw.close();
+								
+								try { zipfilesystem.close(); } catch(Exception ep) { ep.printStackTrace(); };
+								
+								pbar.setIndeterminate(false);
+								pbar.setEnabled(false);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					};
+					
+					ta.setEditable( false );
+					final JScrollPane	sp = new JScrollPane( ta );
+					
+					dialog.add( comp );
+					comp.add( pbar, BorderLayout.NORTH );
+					comp.add( sp, BorderLayout.CENTER );
+					pbar.setIndeterminate( true );
+					
+					t.start();
+						
+						/*System.err.println( "about to run" );
+						for( Object commands : commandsList ) {
+							if( commands instanceof List ) {
+								for( Object c : (List)commands ) {
+									System.err.print( c+" " );
+								}
+								System.err.println();
+							} else {
+								System.err.print( commands+" " );
+							}
+						}
+						System.err.println();*/
+					dialog.addWindowListener( new WindowListener() {
+						
+						@Override
+						public void windowOpened(WindowEvent e) {}
+						
+						@Override
+						public void windowIconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeiconified(WindowEvent e) {}
+						
+						@Override
+						public void windowDeactivated(WindowEvent e) {}
+						
+						@Override
+						public void windowClosing(WindowEvent e) {}
+						
+						@Override
+						public void windowClosed(WindowEvent e) {
+							if( pbar.isEnabled() ) {
+								/*String result = ta.getText().trim();
+								if( run != null ) {
+									cont[0] = null;
+									cont[1] = result;
+									cont[2] = new Date( System.currentTimeMillis() ).toString();
+									run.run();
+								}*/
+								
+								pbar.setIndeterminate( false );
+								pbar.setEnabled( false );
+							}
+						}
+						
+						@Override
+						public void windowActivated(WindowEvent e) {}
+					});
+					dialog.setVisible( true );
+						
+					/*NativeRun nrun = new NativeRun();
+					nrun.runProcessBuilder("Idmapping", Arrays.asList( tf.getText().split(" ") ), run, cont, false);
+					ProcessBuilder pb = new ProcessBuilder( tf.getText().split(" ") );
+					Process p = pb.start();
+					fis = p.getInputStream();
+					}*/
 					
 					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
 				} catch (IOException e1) {
 					e1.printStackTrace();
+					try { zipfilesystem.close(); } catch( Exception e2 ) { e2.printStackTrace(); };
 				}
 				//	}
 				//};
@@ -15891,16 +16273,20 @@ public class GeneSet extends JApplet {
 				try {
 					Set<String> species = getSelspec(null, getSpecies(), null);
 					
-					StringBuilder sb = new StringBuilder();
-					Path dbPath = Paths.get("/data/Cog");
+					StringWriter sb = new StringWriter();
+					String dbPath = "/data/Cog";
 					for( Gene g : genelist ) {
 						if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
 							if( species.contains( g.getSpecies() ) ) {
-								StringBuilder gs = g.tegeval.getProteinSequence();
-								sb.append(">" + g.id + "\n");
+								Sequence gs = g.tegeval.getProteinSequence();
+								if( gs != null ) {
+									gs.setName( g.id );
+									gs.writeSequence( sb );
+								}
+								/*sb.append(">" + g.id + "\n");
 								for (int i = 0; i < gs.length(); i += 70) {
 									sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-								}
+								}*/
 							}
 						}
 					}
@@ -15913,10 +16299,128 @@ public class GeneSet extends JApplet {
 					Path resPath = zipfilesystem.getPath("/cog.blastout");
 					
 					NativeRun nrun = new NativeRun();
-					SerifyApplet.rpsBlastRun(nrun, sb, dbPath, resPath, "", null, true, zipfilesystem);
+					SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, zipfilesystem, user);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
+			}
+		};
+		AbstractAction	unresolvedblastaction = new AbstractAction("Unresolved blast") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					Set<String> species = getSelspec(null, getSpecies(), null);
+					
+					StringWriter sb = new StringWriter();
+					Path dbPath = Paths.get("/data/nr");
+					int[] rr = table.getSelectedRows();
+					if( rr != null && rr.length > 0 ) {
+						if( table.getModel() == defaultModel ) {
+							for( int r : rr ) {
+								int i = table.convertRowIndexToModel(r);
+								Gene g = genelist.get(i);
+								Sequence gs = g.tegeval.getProteinSequence();
+								gs.setName( g.id );
+								gs.writeSequence( sb );
+							}
+						} else {
+							for( int r : rr ) {
+								int i = table.convertRowIndexToModel(r);
+								GeneGroup gg = allgenegroups.get(i);
+								Gene g = null;
+								for( Gene gene : gg.genes ) {
+									g = gene;
+									break;
+								}
+								Sequence gs = g.tegeval.getProteinSequence();
+								gs.setName( g.id );
+								gs.writeSequence( sb );
+							}
+						}
+					} else {
+						for( Gene g : genelist ) {
+							if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
+								if( species.contains( g.getSpecies() ) ) {
+									Sequence gs = g.tegeval.getProteinSequence();
+									gs.setName( g.id );
+									gs.writeSequence( sb );
+									
+									/*sb.append(">" + g.id + "\n");
+									for (int i = 0; i < gs.length(); i += 70) {
+										sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+									}*/
+								}
+							}
+						}
+					}
+					
+					Map<String,String> env = new HashMap<String,String>();
+					env.put("create", "true");
+					String uristr = "jar:" + zippath.toUri();
+					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+					Path resPath = zipfilesystem.getPath("/unresolved.blastout");
+					
+					NativeRun nrun = new NativeRun();
+					SerifyApplet.blastpRun(nrun, sb.getBuffer(), dbPath, resPath, "-evalue 0.00001", null, true, zipfilesystem, user);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		};
+		
+		AbstractAction	importkeggpathwayaction = new AbstractAction("Import kegg pathways") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<String> keggids = new HashSet<String>();
+				for( Gene g : genelist ) {
+					if( g.keggid != null ) {
+						int i = g.keggid.indexOf(':');
+						if( i > 0 ) {
+							keggids.add( g.keggid.substring(0, i) );
+						}
+					}
+				}
+				System.err.println( keggids );
+				
+				JTextField tf = new JTextField("http://130.208.252.239/organisms/");
+				JOptionPane.showMessageDialog(null, tf);
+				
+				Map<String,String> env = new HashMap<String,String>();
+				env.put("create", "true");
+				
+				Path rootp = null;
+				try {
+					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+				} catch( Exception ee ) { ee.printStackTrace(); }
+				
+				for( Path root : zipfilesystem.getRootDirectories() ) {
+					rootp = root;
+					break;
+				}
+				
+				
+				for( String kegg : keggids ) {
+					try {
+						URL url = new URL( tf.getText() + kegg + ".tar.gz" );
+						InputStream is = url.openStream();
+						GZIPInputStream gz = new GZIPInputStream(is);
+					
+						TarArchiveInputStream tar = new TarArchiveInputStream(gz);
+						TarArchiveEntry tae = (TarArchiveEntry)tar.getNextEntry();
+						while( tae != null ) {
+							traverseTar( tar, tae, rootp );
+							
+							tae = (TarArchiveEntry)tar.getNextEntry();
+						}
+						
+						is.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+				
+				try { zipfilesystem.close(); } catch( Exception ee ) { ee.printStackTrace(); };
 			}
 		};
 		
@@ -15929,8 +16433,10 @@ public class GeneSet extends JApplet {
 		edit.add( importcazyaction );
 		edit.add( functionmappingaction );
 		edit.add( importidmappingaction );
+		edit.add( importkeggpathwayaction );
 		edit.addSeparator();
 		edit.add( cogblastaction );
+		edit.add( unresolvedblastaction );
 		
 		JMenu		view = new JMenu("View");
 		gb = new JRadioButtonMenuItem( new AbstractAction("Genes") {
@@ -15992,6 +16498,23 @@ public class GeneSet extends JApplet {
 				}*/
 			}
 		});
+		help.addSeparator();
+		
+		JCheckBoxMenuItem cbmi = new JCheckBoxMenuItem("Use geneset user");
+		help.add( cbmi );
+		
+		cbmi.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if( cbmi.isSelected() ) {
+					user = "geneset";
+				} else user = System.getProperty("user.name");
+				
+				JavaFasta.user = user;
+				if( currentSerify != null ) currentSerify.user = user;
+			}
+		});
+		
 		help.addSeparator();
 		help.add( new AbstractAction("Help & Tutorial") {
 			@Override
@@ -16067,7 +16590,7 @@ public class GeneSet extends JApplet {
 					});
 					
 					SerifyApplet sa = new SerifyApplet( zipfilesystem );
-					sa.init( frame );
+					sa.init( frame, user );
 					//frame.add( )
 					currentSerify = sa;
 				}/* else frame = (JFrame)currentSerify.cnt;*/
@@ -16143,28 +16666,30 @@ public class GeneSet extends JApplet {
 					}
 				}
 				
-				StringBuilder sb = new StringBuilder();
-				for( int gi : ups.keySet() ) {
-					String name = ups.get(gi);
-					List<Tegeval>	tlist = ups2.get(gi);
-					
-					sb.append(name.replace('/', '-') + ":\n");
-					if( tlist.size() < 28 ) {
-						for( Tegeval tv : tlist ) {
-							System.err.println( tv.name );
-						}
-						System.err.println();
-					}
-					for( Tegeval tv : tlist ) {
-						StringBuilder ps = tv.getProteinSequence();
-						sb.append(">" + tv.name.substring(0, tv.name.indexOf('_')) + "\n");
-						for (int i = 0; i < ps.length(); i += 70) {
-							sb.append( ps.substring(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
-						}
-					}
-				}
-				
 				try {
+					StringWriter sb = new StringWriter();
+					for( int gi : ups.keySet() ) {
+						String name = ups.get(gi);
+						List<Tegeval>	tlist = ups2.get(gi);
+						
+						sb.append(name.replace('/', '-') + ":\n");
+						if( tlist.size() < 28 ) {
+							for( Tegeval tv : tlist ) {
+								System.err.println( tv.name );
+							}
+							System.err.println();
+						}
+						for( Tegeval tv : tlist ) {
+							Sequence ps = tv.getProteinSequence();
+							ps.setName( tv.name.substring(0, tv.name.indexOf('_')) );
+							ps.writeSequence(sb);
+							/*sb.append(">" + tv.name.substring(0, tv.name.indexOf('_')) + "\n");
+							for (int i = 0; i < ps.length(); i += 70) {
+								sb.append( ps.substring(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
+							}*/
+						}
+					}
+				
 					currentSerify.addSequences("uh", new StringReader( sb.toString() ), Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
@@ -16315,8 +16840,10 @@ public class GeneSet extends JApplet {
 					Gene gg = genelist.get(cr);
 					Tegeval tv = gg.tegeval;
 					String contig = tv.getContshort().getName();
-					StringBuilder aa = tv.getProteinSequence();
-					Sequence seq = new Sequence( contig, aa, serifier.mseq );
+					Sequence seq = tv.getProteinSequence();
+					seq.setName(contig);
+					serifier.mseq.put( seq.getName(), seq );
+					//Sequence seq = new Sequence( contig, aa, serifier.mseq );
 					serifier.addSequence(seq);
 				}
 				jf.updateView();
@@ -16409,9 +16936,10 @@ public class GeneSet extends JApplet {
 							//Sequence seq = new Sequence( contig, seqstr, null );
 							serifier.addSequence(seq);
 						} else {
-							StringBuilder sb = tv.getProteinSequence();
-							Sequence sseq = new Sequence( spec, sb, serifier.mseq );
-							serifier.addSequence( sseq );
+							Sequence sb = tv.getProteinSequence();
+							sb.setName(spec);
+							//Sequence sseq = new Sequence( spec, sb, serifier.mseq );
+							serifier.addSequence( sb );
 						}
 					}
 				}
@@ -16421,20 +16949,19 @@ public class GeneSet extends JApplet {
 		sequencemenu.add(new AbstractAction("Split/Show sequences") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				StringBuilder sb = getSelectedASeqs( table, genelist, GeneSet.this, specList );
-				if( currentSerify == null ) {
-					JFrame frame = new JFrame();
-					frame.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-					frame.setSize(800, 600);
-					
-					SerifyApplet sa = new SerifyApplet( zipfilesystem );
-					sa.init( frame );
-					currentSerify = sa;
-					
-					frame.setVisible( true );
-				}
-				
 				try {
+					StringBuffer sb = getSelectedASeqs( table, genelist, GeneSet.this, specList );
+					if( currentSerify == null ) {
+						JFrame frame = new JFrame();
+						frame.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+						frame.setSize(800, 600);
+						
+						SerifyApplet sa = new SerifyApplet( zipfilesystem );
+						sa.init( frame, user );
+						currentSerify = sa;
+						
+						frame.setVisible( true );
+					}
 					currentSerify.addSequences("uh", new StringReader( sb.toString() ), Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
@@ -17694,19 +18221,27 @@ public class GeneSet extends JApplet {
 					Serifier ser = new Serifier();
 					Set<String> selspec = getSelspec(null, getSpecies(), null);
 					
-					Path[] pt = null;
+					JTextField host = new JTextField("localhost");
+					JOptionPane.showMessageDialog(null, host);
+					
+					String username = System.getProperty("user.name");
+					String hostname = host.getText();
+					
+					/*Path[] pt = null;
 					JFileChooser fc = new JFileChooser();
 					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 					if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
 						pt = new Path[3];
 						pt[2] = fc.getSelectedFile().toPath();
-					}
+					}*/
 					
 					List<Object> commands = new ArrayList<Object>();
 					//commands.add(genexyplotaction)
 					
 					for( String spec : selspec ) {
-						Path p = Paths.get("/Users/sigmar/"+spec+".gbk");
+						String userhome = System.getProperty("user.home");
+						Path pp = Paths.get( userhome );
+						Path p = pp.resolve(spec+".gbk");
 						//BufferedWriter fw = Files.newBufferedWriter( p );
 						List<Sequence> clist = speccontigMap.get( spec );
 						
@@ -17719,9 +18254,17 @@ public class GeneSet extends JApplet {
 							List<Annotation> lann = new ArrayList<Annotation>();
 							if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
 								Tegeval tv = (Tegeval)ann;
-								Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, tv.getGene().getName() );
+								
+								Gene g = tv.getGene();
+								GeneGroup gg = g.getGeneGroup();
+								String name = g.getName();
+								if( gg != null && name.contains(spec) ) {
+									name = gg.getCommonName();
+								}
+								Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, name );
+								anno.id = tv.getGene().getId();
 								anno.type = "CDS";
-								GeneGroup gg = tv.getGene().getGeneGroup();
+								
 								String cazy = gg != null ? gg.getCommonCazy(cazymap) : null;
 								if( cazy != null ) anno.addDbRef( "CAZY:"+cazy );
 								lann.add( anno );
@@ -17735,20 +18278,72 @@ public class GeneSet extends JApplet {
 						//fw.close();
 						
 						String apath = p.toAbsolutePath().toString();
-						String[] cmds = {"/Users/sigmar/antiSMASH2/run_antismash.py", apath};
-						commands.add( pt );
-						commands.add( Arrays.asList( cmds ) );
+						if( hostname.equals("localhost") ) {
+							String[] cmds = {"run_antismash", apath};
+							//commands.add( pt );
+							commands.add( Arrays.asList( cmds ) );
+						} else {
+							String aname = p.getFileName().toString();
+							String adir = aname.substring(0, aname.length()-4);
+							String[] cmds = {"scp",apath,hostname+":~",";","ssh",hostname,"run_antismash",aname,";","scp","-r",hostname+":~/"+adir,userhome};//userhome+"~"};
+							//commands.add( pt );
+							commands.add( Arrays.asList( cmds ) );
+						}
 					}
 					
 					Runnable run = new Runnable() {
 						@Override
 						public void run() {
-							
+							for( String spec : selspec ) {
+								Path p = Paths.get(userhome, spec);
+								
+								Map<String,String> env = new HashMap<String,String>();
+								env.put("create", "true");
+								
+								String uristr = "jar:" + zippath.toUri();
+								URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+								final List<Path>	lbi = new ArrayList<Path>();
+								try {
+									zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+									for( Path root : zipfilesystem.getRootDirectories() ) {
+										Path specdir = root;
+										Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
+											@Override
+										      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+										        final Path destFile = Paths.get(specdir.toString(),file.toString());
+										        //System.out.printf("Extracting file %s to %s\n", file, destFile);
+										        Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
+										        return FileVisitResult.CONTINUE;
+										      }
+										 
+										      @Override
+										      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+										    	String specdirstr = specdir.toString();
+										    	String dirstr = dir.toString();
+										    	final Path dirToCreate = specdir.resolve( dirstr.substring(userhome.length()+1) );
+										        if( Files.notExists(dirToCreate) ) {
+										          System.out.printf("Creating directory %s\n", dirToCreate);
+										          Files.createDirectory(dirToCreate);
+										        }
+										        return FileVisitResult.CONTINUE;
+										      }
+										});
+										break;
+									}
+									
+									URI uri = new URI("file://"+userhome+"/"+spec+"/index.html");
+									Desktop.getDesktop().browse(uri);
+								} catch( Exception ex ) {
+									ex.printStackTrace();
+								} finally {
+									try { zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
+								}
+							}
 						}
 					};
 					
 					NativeRun nr = new NativeRun();
-					nr.runProcessBuilder("antismash", commands, run, new Object[3], true);
+					nr.runProcessBuilder("antismash", commands, run, new Object[3], false);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}

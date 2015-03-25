@@ -2,17 +2,10 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="loc"/>
-	<classpathentry kind="lib" path="/jdk/plugin.jar"/>
-	<classpathentry kind="lib" path="/jdk/deploy.jar"/>
-	<classpathentry kind="lib" path="/jdk/javaws.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
-	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-3.10-beta2-20130904.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-examples-3.10-beta2-20130904.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-excelant-3.10-beta2-20130904.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-ooxml-3.10-beta2-20130904.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-ooxml-schemas-3.10-beta2-20130904.jar"/>
-	<classpathentry kind="lib" path="/poi/poi-3.10-beta2/poi-scratchpad-3.10-beta2-20130904.jar"/>
-	<classpathentry kind="lib" path="/hvaderimatnum/war/lib/swingx-all-1.6.4.jar"/>
+	<classpathentry kind="lib" path="/poi/poi-3.11/poi-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="/Library/Java/JavaVirtualMachines/jdk1.8.0_40.jdk/Contents/Home/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="swingx-all-1.6.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
