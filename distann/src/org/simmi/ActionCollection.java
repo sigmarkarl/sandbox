@@ -94,7 +94,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.GeneSet.StackBarData;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Cog;
-import org.simmi.shared.Contig;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -104,6 +103,7 @@ import org.simmi.shared.Serifier;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
+import org.simmi.unsigned.NativeRun;
 
 import flobb.ChatServer;
 
@@ -1165,12 +1165,18 @@ public class ActionCollection {
 			rw.createCell(k++).setCellValue(d+"%");
 		}
 		
-		File f = new File("/Users/sigmar/genstat.xlsx");
+		String userhome = System.getProperty("user.home");
+		File df = new File( userhome );
+		File f = new File( df, "genstat.xlsx" );
 		FileOutputStream fos = new FileOutputStream( f );
 		wb.write( fos );
 		fos.close();
 		
-		Desktop.getDesktop().open(f);
+		try {
+			Desktop.getDesktop().open(f);
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
 		
 		return fw.toString();
 	}
@@ -1246,7 +1252,7 @@ public class ActionCollection {
 				}
 				
 				final StringBuilder sb = new StringBuilder();
-				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
+				InputStream is = GeneSet.class.getResourceAsStream("chart.html");
 				try {
 					int c = is.read();
 					while( c != -1 ) {
@@ -1363,7 +1369,7 @@ public class ActionCollection {
 					}
 					
 					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
+					InputStream is = GeneSet.class.getResourceAsStream("columnchart.html");
 					try {
 						int c = is.read();
 						while( c != -1 ) {
@@ -1648,7 +1654,7 @@ public class ActionCollection {
 								public boolean test(Path t) {
 									String filename = t.getFileName().toString();
 									//System.err.println("filename " + filename);
-									boolean b = filename.startsWith("t") && filename.length() == 4;
+									boolean b = filename.toLowerCase().equals(filename) && filename.length() == 4;
 									return b;
 								}
 							}).forEach( new Consumer<Path>() {
@@ -1729,11 +1735,11 @@ public class ActionCollection {
 					});
 					JOptionPane.showMessageDialog(geneset, sc);
 					int 	r = tb.getSelectedRow();
-					geneset.showKeggPathway( "KEGG", lbi.get(r) );
-					
-					geneset.zipfilesystem.close();
+					if( r != -1 ) geneset.showKeggPathway( "KEGG", lbi.get(r) );
 				} catch (IOException e2) {
 					e2.printStackTrace();
+				} finally {
+					try { geneset.zipfilesystem.close(); } catch( Exception e1 ) { e1.printStackTrace(); };
 				}
 			}
 		};
@@ -1830,14 +1836,15 @@ public class ActionCollection {
 						exc.printStackTrace();
 					}
 				} else if( Desktop.isDesktopSupported() ) {
-					try {					
-						FileWriter fww = new FileWriter( "/Users/sigmar/genstat.html" );
+					try {
+						String userhome = System.getProperty("user.home");
+						File f = new File(userhome);
+						File nf = new File( f, "genstat.html" );
+						FileWriter fww = new FileWriter( nf );
 						fww.write( htmlstr );
 						fww.close();
-						Desktop.getDesktop().browse( new URI("file:///Users/sigmar/genstat.html") );
+						Desktop.getDesktop().browse( nf.toURI() );
 					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
 						e1.printStackTrace();
 					}
 				}
@@ -1994,9 +2001,11 @@ public class ActionCollection {
 					}
 				}
 				
-				File f = new File("/Users/sigmar/wb.xlsx");
+				String userhome = System.getProperty("user.home");
+				File f = new File( userhome );
+				File nf = new File(f, "wb.xlsx");
 				try {
-					FileOutputStream fos = new FileOutputStream(f);
+					FileOutputStream fos = new FileOutputStream(nf);
 					workbook.write( fos );
 					fos.close();
 					Desktop.getDesktop().open(f);
@@ -2387,7 +2396,9 @@ public class ActionCollection {
 						}
 					}
 					
-					File file = new File("/Users/sigmar/crispr.xlsx");
+					String userhome = System.getProperty("user.home");
+					File f = new File( userhome );
+					File file = new File(f,"crispr.xlsx");
 					try {
 						FileOutputStream fos = new FileOutputStream(file);
 						wb.write( fos );
@@ -2870,7 +2881,10 @@ public class ActionCollection {
 					}
 				} else {
 					try {
-						FileWriter tmpf = new FileWriter("/Users/sigmar/kolist.txt");
+						String userhome = System.getProperty("user.home");
+						File f = new File( userhome );
+						File ttf = new File(f,"kolist.txt");
+						FileWriter tmpf = new FileWriter( ttf );
 						if( colorstr != null && colorstr.length() > 0 ) {
 							for( String id : ids ) {
 								tmpf.write( id + " " + colorstr + "\n" );
@@ -2882,7 +2896,7 @@ public class ActionCollection {
 						}
 						tmpf.close();
 						
-						Desktop.getDesktop().browse( new URI("file:///Users/sigmar/kolist.txt") );
+						Desktop.getDesktop().browse( ttf.toURI() );
 					} catch( Exception e1 ) {
 						e1.printStackTrace();
 					}
@@ -2948,7 +2962,7 @@ public class ActionCollection {
 				AccessController.doPrivileged( new PrivilegedAction<String>() {
 					@Override
 					public String run() {
-						//NativeRun nrun = new NativeRun();
+						NativeRun nrun = new NativeRun();
 						
 						final Object[] cont = new Object[3];
 						Runnable run = new Runnable() {
@@ -2958,16 +2972,16 @@ public class ActionCollection {
 							}
 						};
 						
-						File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
-						if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
-						if( makeblastdb.exists() ) {
-							/*String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
-							try {
-								nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}*/
+						//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
+						//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
+						//if( makeblastdb.exists() ) {
+						String[] cmds = new String[] { "makeblastdb", "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
+						try {
+							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont, false );
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
+						//}
 						
 						return "";
 					}
@@ -2994,7 +3008,7 @@ public class ActionCollection {
 				f.setSize( 800, 600 );
 				
 				final StringBuilder sb = new StringBuilder();
-				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
+				InputStream is = GeneSet.class.getResourceAsStream("chart.html");
 				try {
 					int c = is.read();
 					while( c != -1 ) {
@@ -3183,7 +3197,7 @@ public class ActionCollection {
 				
 				if( window != null ) {
 					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
+					InputStream is = GeneSet.class.getResourceAsStream("columnchart.html");
 					try {
 						int c = is.read();
 						while( c != -1 ) {
@@ -3540,7 +3554,7 @@ public class ActionCollection {
 				
 				if( window != null ) {
 					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("/columnchart.html");
+					InputStream is = GeneSet.class.getResourceAsStream("columnchart.html");
 					try {
 						int c = is.read();
 						while( c != -1 ) {
@@ -4380,7 +4394,9 @@ public class ActionCollection {
 						k+=2;
 					}
 					
-					File f = new File("/Users/sigmar/tmp.xlsx");
+					String userhome = System.getProperty("user.home");
+					File tf = new File(userhome);
+					File f = new File(tf, "tmp.xlsx");
 					FileOutputStream fos = new FileOutputStream( f );
 					wb.write(fos);
 					fos.close();
@@ -4396,7 +4412,7 @@ public class ActionCollection {
 					
 					String stxt = "";
 					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("/cogchart.html");
+					InputStream is = GeneSet.class.getResourceAsStream("cogchart.html");
 					if( is != null ) {
 						try {
 							int c = is.read();
@@ -4474,10 +4490,12 @@ public class ActionCollection {
 						
 						if( Desktop.isDesktopSupported() ) {
 							try {
-								FileWriter fwr = new FileWriter("/Users/sigmar/smuck.html");
+								//File uf = new File(userhome);
+								File smf = new File( tf, "smuck.html" );
+								FileWriter fwr = new FileWriter( smf );
 								fwr.write( smuck );
 								fwr.close();
-								Desktop.getDesktop().browse( new URI("file:///Users/sigmar/smuck.html") );
+								Desktop.getDesktop().browse( smf.toURI() );
 							} catch( Exception exc ) {
 								exc.printStackTrace();
 							}
@@ -4541,7 +4559,7 @@ public class ActionCollection {
 					frame.setSize(400, 300);
 					
 					SerifyApplet sa = new SerifyApplet( geneset.zipfilesystem );
-					sa.init( frame );
+					sa.init( frame, GeneSet.user );
 					//frame.add( )
 					geneset.currentSerify = sa;
 				} /*else {
