@@ -130,10 +130,12 @@ public class SerifyApplet extends JApplet {
 	
 	JTable				table;
 	Serifier			serifier;
-	String 				globaluser = null;
+	//String 				globaluser = null;
 	NativeRun			nrun = new NativeRun();
 	
 	Map<Path,Sequences> mseq = new HashMap<Path,Sequences>();
+	
+	public String user;
 	
 	public SerifyApplet( FileSystem fs ) {
 		this();
@@ -328,7 +330,7 @@ public class SerifyApplet extends JApplet {
 		System.setOut( po );
 		System.setErr( po );*/
 		
-		init( this );
+		init( this, System.getProperty("user.name") );
 	}
 	
 	public void browse( final String url ) {
@@ -516,7 +518,7 @@ public class SerifyApplet extends JApplet {
 		js.call( "getBlastParameters", new Object[] {} );
 	}
 	
-	public static void rpsBlastRun( NativeRun nrun, StringBuilder query, Path dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs ) throws IOException {
+	public static void blastpRun( NativeRun nrun, StringBuffer query, Path dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
 		if( homedir ) selectedpath = new File( userhome ).toPath();
@@ -529,17 +531,25 @@ public class SerifyApplet extends JApplet {
 			}
 		}
 		
+		JTextField host = new JTextField("localhost");
+		JOptionPane.showMessageDialog(null, host);
+		
+		String username = System.getProperty("user.name");
+		String hostname = host.getText();
+		
+		String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
+		
 		List<Object>	lscmd = new ArrayList<Object>();
 		if( table != null ) {
 			int[] rr = table.getSelectedRows();
 			for( int r : rr ) {
 				Path	path = (Path)table.getValueAt( r, 3 );
-				String blastFile = "rpsblast+";
+				//String blastFile = "rpsblast+";
 				Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
 				int procs = Runtime.getRuntime().availableProcessors();
 				
 				List<String>	lcmd = new ArrayList<String>();
-				String[] bcmds = { blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				String[] bcmds = { "blastp", "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
 				String[] exts = extrapar.trim().split("[\t ]+");
 				
 				lcmd.addAll( Arrays.asList(bcmds) );
@@ -552,7 +562,13 @@ public class SerifyApplet extends JApplet {
 			int procs = Runtime.getRuntime().availableProcessors();
 			
 			List<String>	lcmd = new ArrayList<String>();
-			String[] bcmds = { "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.toString(), "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			String[] bcmds;
+			//String[] cmds;
+			if( host.getText().equals("localhost") ) bcmds = new String[] { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.toString(), "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1" };
+			else {
+				if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.toString(), "-num_threads", "32", "-num_alignments", "1", "-num_descriptions", "1" };
+				else bcmds = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.toString(), "-num_threads", "32", "-num_alignments", "1", "-num_descriptions", "1" };
+			}
 			String[] exts = extrapar.trim().split("[\t ]+");
 			
 			lcmd.addAll( Arrays.asList(bcmds) );
@@ -578,7 +594,83 @@ public class SerifyApplet extends JApplet {
 		nrun.runProcessBuilder( "Performing blast", lscmd, run, cont, false );
 	}
 	
-	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir ) throws IOException {
+	public static void rpsBlastRun( NativeRun nrun, StringBuffer query, String dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user ) throws IOException {
+		String userhome = System.getProperty("user.home");
+		Path selectedpath = null;
+		if( homedir ) selectedpath = new File( userhome ).toPath();
+		else {
+			JFileChooser fc = new JFileChooser();
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				selectedpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) selectedpath = selectedpath.getParent();
+			}
+		}
+		
+		JTextField host = new JTextField("localhost");
+		JOptionPane.showMessageDialog(null, host);
+		
+		String username = System.getProperty("user.name");
+		String hostname = host.getText();
+		
+		String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
+		
+		List<Object>	lscmd = new ArrayList<Object>();
+		if( table != null ) {
+			int[] rr = table.getSelectedRows();
+			for( int r : rr ) {
+				Path	path = (Path)table.getValueAt( r, 3 );
+				//String blastFile = "rpsblast+";
+				Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
+				int procs = Runtime.getRuntime().availableProcessors();
+				
+				List<String>	lcmd = new ArrayList<String>();
+				String[] bcmds = { "rpsblast+", "-db", dbPath, "-num_threads", Integer.toString(procs) };
+				String[] exts = extrapar.trim().split("[\t ]+");
+				
+				lcmd.addAll( Arrays.asList(bcmds) );
+				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+				
+				lscmd.add( new Path[] {path, res, selectedpath} );
+				lscmd.add( lcmd );
+			}
+		} else {
+			int procs = Runtime.getRuntime().availableProcessors();
+			
+			List<String>	lcmd = new ArrayList<String>();
+			String[] bcmds;
+			//String[] cmds;
+			if( host.getText().equals("localhost") ) bcmds = new String[] { "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			else {
+				if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+				bcmds = new String[] { "ssh", hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			}
+			String[] exts = extrapar.trim().split("[\t ]+");
+			
+			lcmd.addAll( Arrays.asList(bcmds) );
+			if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+			
+			lscmd.add( new Object[] {query.toString().getBytes(), resPath, selectedpath} );
+			lscmd.add( lcmd );
+		}
+		
+		final Object[] cont = new Object[3];
+		Runnable run = new Runnable() {
+			public void run() {					
+				if( cont[0] != null ) {
+					
+				}
+				try {
+					fs.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		nrun.runProcessBuilder( "Performing rpsblast", lscmd, run, cont, false );
+	}
+	
+	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir, final String user ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
 		if( homedir ) selectedpath = new File( userhome ).toPath();
@@ -611,6 +703,8 @@ public class SerifyApplet extends JApplet {
 		String username = System.getProperty("user.name");
 		String hostname = host.getText();
 		
+		String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
+		
 		List<Object>	lscmd = new ArrayList<Object>();
 			//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 			//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
@@ -631,7 +725,8 @@ public class SerifyApplet extends JApplet {
 			String[] cmds;
 			if( host.getText().equals("localhost") ) cmds = new String[] { "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
 			else {
-				cmds = new String[] { "ssh", username+"@"+hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+				cmds = new String[] { "ssh", hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
 				//new String[] { "ssh", username+"@"+hostname, "prodigal", "-a", tmpout };
 			}
 			lscmd.add( new Path[] { dbPath, null, selectedpath } );
@@ -705,7 +800,10 @@ public class SerifyApplet extends JApplet {
 				List<String>	lcmd = new ArrayList<String>();
 				String[] bcmds;
 				if( host.getText().equals("localhost") ) bcmds = new String[] { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
-				else bcmds  = new String[] { "ssh", username+"@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
+				else {
+					if( user.equals("geneset") ) bcmds  = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
+					else bcmds  = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
+				}
 				String[] exts = extrapar.trim().split("[\t ]+");
 				
 				//String[] nxst = { "-out", outPathFixed };
@@ -745,14 +843,13 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public Object run() {
 				try {
-					blastRun( nrun, dbPath, dbPath, dbType, extrapar, table, false );
+					blastRun( nrun, dbPath, dbPath, dbType, extrapar, table, false, user );
 				} catch( Exception e ) {
 					e.printStackTrace();
 				}
 				
 				return null;
 			}
-			
 		});
 	}
 	
@@ -1845,18 +1942,27 @@ public class SerifyApplet extends JApplet {
 		for( Path path : urls ) {
 			//URL url = path.toUri().toURL();
 			
-			String file = path.getFileName().toString();
+			/*String file = path.getFileName().toString();
 			String[] split = file.split("/");
-			String fname = split[ split.length-1 ];
-			split = fname.split("\\.");
+			String fname = split[ split.length-1 ];*/
+			
+			String fname = path.getFileName().toString();
+			String[] split = fname.split("\\.");
 			final String title = split[0];
-			Path infile = dir.resolve( fname ); //new File( dir, fname );
+			
+			/*Path infile = dir.resolve( fname ); //new File( dir, fname );
 			if( Files.exists(infile) ) {
 				infile = dir.resolve( "tmp_"+fname );
-			}
+			}*/
 			
 			//FileOutputStream fos = new FileOutputStream( infile );
-			Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );
+			
+			
+			
+			//Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );
+			
+			
+			
 			/*InputStream is = url.openStream();
 			byte[] bb = new byte[100000];
 			int r = is.read(bb);
@@ -1876,17 +1982,21 @@ public class SerifyApplet extends JApplet {
 			final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
 			final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
 			final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
+			final String cygPathA = NativeRun.cygPath( pathA.toAbsolutePath().toString() );
 			//NativeRun.fixPath( infile.toAbsolutePath().toString() )
 			String[] cmds;
 			if( host.getText().equals("localhost") ) cmds = new String[] { "prodigal", "-a", outPathA }; //"-d", outPathD };
 			else {
-				cmds = new String[] { "ssh", username+"@"+hostname, "prodigal", "-a", tmpout };
+				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", NativeRun.cygPath(userhome+"/genesetkey"), "geneset@"+hostname, "prodigal", "-a", tmpout };
+				else cmds = new String[] { "ssh", hostname, "prodigal", "-a", tmpout };
 			}
 			
 			List<Object>	lscmd = new ArrayList<Object>();
 			//String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
-			lscmd.add( new Path[] { infile, null, dir } );
+			lscmd.add( new Path[] { path, null, dir } );
 			lscmd.add( Arrays.asList( cmds ) );
+			
+			Path resp = fs.resolve( tmpout );
 			
 			final Object[] cont = new Object[3];
 			Runnable run = new Runnable() {
@@ -1895,22 +2005,22 @@ public class SerifyApplet extends JApplet {
 						System.err.println( cont[0] );
 						
 						try {
-							if( host.getText().equals("localhost") ) {
-								Files.copy(pathA, fs.resolve( tmpout ) );
-							} else {
-								ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, outPathA);
+							if( !host.getText().equals("localhost") ) {
+								ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, cygPathA);
 								Process pc = pb.start();
 								InputStream is = pc.getInputStream();
 								while( is.read() != -1 );
 								InputStream es = pc.getErrorStream();
 								while( es.read() != -1 );
 								pc.waitFor();
-								System.err.println("done " + outPathA);
+								System.err.println("done " + outPathA + "  " + cygPathA);
 							}
-							addSequences( title+".aa", pathA, null );
+							Files.copy(pathA, resp);
+							addSequences( title+".aa", resp, null );
 						} catch (IOException | URISyntaxException | InterruptedException e) {
 							e.printStackTrace();
 						}
+						
 						/*try {
 							addSequences(title+".nn", new File( outPathD ).toURI().toURL().toString() );
 							addSequences(title+".aa", new File( outPathA ).toURI().toURL().toString() );
@@ -1937,6 +2047,8 @@ public class SerifyApplet extends JApplet {
 		String username = System.getProperty("user.name");
 		String hostname = host.getText();
 		
+		String cygpathstr = NativeRun.cygPath(userhome)+"/genesetkey";
+		
 		String[] sus = new String[] {"SSU", "LSU", "TSU"};
 		
 		for( String su : sus ) {
@@ -1946,28 +2058,30 @@ public class SerifyApplet extends JApplet {
 				String fname = split[ split.length-1 ];
 				split = fname.split("\\.");
 				final String title = split[0];
-				Path infile = dir.resolve( fname ); //new File( dir, fname );
+				/*Path infile = dir.resolve( fname ); //new File( dir, fname );
 				if( Files.exists(infile) ) {
 					infile = dir.resolve( "tmp_"+fname );
 				}
 				
-				Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );
+				Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 				Path selectedfile = new File( userhome ).toPath();
 				String tmpout = title+"."+su.toLowerCase();
 				final Path pathD = selectedfile.resolve( tmpout );
 				//final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
 				final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
+				final String cygPathD = NativeRun.cygPath( pathD.toAbsolutePath().toString() );
 				//final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
 				//NativeRun.fixPath( infile.toAbsolutePath().toString() )
 				String[] cmds;
 				if( host.getText().equals("localhost") ) cmds = new String[] { "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", outPathD }; //"-d", outPathD };
 				else {
-					cmds = new String[] { "ssh", username+"@"+hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
+					if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "genset@"+hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
+					else cmds = new String[] { "ssh", hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
 				}
 				
 				List<Object>	lscmd = new ArrayList<Object>();
 				//String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
-				lscmd.add( new Path[] { infile, null, dir } );
+				lscmd.add( new Path[] { path, null, dir } );
 				lscmd.add( Arrays.asList( cmds ) );
 				
 				final Object[] cont = new Object[3];
@@ -1980,7 +2094,7 @@ public class SerifyApplet extends JApplet {
 								if( host.getText().equals("localhost") ) {
 									Files.copy(pathD, fs.resolve( tmpout ) );
 								} else {
-									ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, outPathD);
+									ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, cygPathD);
 									Process pc = pb.start();
 									InputStream is = pc.getInputStream();
 									while( is.read() != -1 );
@@ -2001,13 +2115,13 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void init( final Container c ) {
+	public void init( final Container c, String tuser ) {
 		nrun.cnt = c;
-		globaluser = System.getProperty("user.name");
+		user = tuser;
 		
 		try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
-			globaluser = (String)js.call("getUser", new Object[] {});
+			user = (String)js.call("getUser", new Object[] {});
 		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
 		}
@@ -3676,6 +3790,28 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		popup.addSeparator();
+		popup.add( new AbstractAction("Append filename") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int rear = table.convertRowIndexToModel( r );
+					Sequences seqs = getSequences(rear);
+					
+					String filename = seqs.getPath().getFileName().toString();
+					filename = "fn_"+filename;
+					Path outp = seqs.getPath().getParent().resolve( filename );
+					//File outf = outp.toFile();
+					try {
+						serifier.appendFilename(seqs, outp);
+						Sequences nseqs = new Sequences( seqs.user, filename, seqs.type, outp, seqs.nseq );
+						addSequences(nseqs);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
 		popup.add( new AbstractAction("Append") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -4783,7 +4919,7 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public String getUser() {
-		return globaluser;
+		return user;
 	}
 	
 	public static boolean inPath( Node leaf, Node n ) {
@@ -5965,7 +6101,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}*/
 		
-		sa.init( frame );
+		sa.init( frame, System.getProperty("user.name") );
 		frame.setVisible( true );
 	}
 }

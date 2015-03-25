@@ -17,10 +17,11 @@ import java.util.Set;
 
 import org.simmi.shared.Contig;
 import org.simmi.shared.Gene;
+import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 
 public class Blast {
-	private StringBuilder aaSearch(String query, Map<String,Tegeval> aas) {
+	private Sequence aaSearch(String query, Map<String,Tegeval> aas) {
 		/*
 		 * aquery.name = query; int ind = Arrays.binarySearch(aas, aquery); if(
 		 * ind < 0 ) { System.err.println(); } return ind < 0 ? null : aas[ ind
@@ -461,8 +462,8 @@ public class Blast {
 				if( !addon ) {
 					Gene gene;
 	
-					StringBuilder aa = aaSearch(query, aas);
-					String aaid = "_"+aa;
+					Sequence aa = aaSearch(query, aas);
+					String aaid = "_"+aa.sb.toString();
 					
 					
 					/*String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
