@@ -46,11 +46,12 @@ import org.simmi.shared.Tegeval;
 public class Synteni {
 	final int FASTI = 3632;
 	
-	public void syntenyMynd( final GeneSet geneset, final Container comp, final List<Gene> genes ) {
+	public void syntenyMynd( final GeneSetHead genesethead, final Container comp, final List<Gene> genes ) {
+		GeneSet geneset = genesethead.geneset;
 		Set<String>	tspecies = new HashSet<String>();
-		final JTable sorting = geneset.getGeneTable();
+		final JTable sorting = genesethead.getGeneTable();
 		int[] rr = sorting.getSelectedRows();
-		if( sorting.getModel() == geneset.groupModel ) {
+		if( sorting.getModel() == genesethead.groupModel ) {
 			for( int r : rr ) {
 				int i = sorting.convertRowIndexToModel( r );
 				GeneGroup gg = geneset.allgenegroups.get( i );
@@ -64,7 +65,7 @@ public class Synteni {
 			}
 		}
 		
-		final List<String>	selspec = new ArrayList( geneset.getSelspec( geneset, new ArrayList<String>(tspecies), (JCheckBox[])null) );
+		final List<String>	selspec = new ArrayList( genesethead.getSelspec( genesethead, new ArrayList<String>(tspecies), (JCheckBox[])null) );
 		final JTable rowheader = new JTable();
 		TableModel model = new TableModel() {
 			@Override
@@ -152,7 +153,7 @@ public class Synteni {
 					}
 				}
 				
-				String selsyn = (String)geneset.syncolorcomb.getSelectedItem();
+				String selsyn = (String)genesethead.syncolorcomb.getSelectedItem();
 				if( selsyn != null && selsyn.length() > 0 ) {
 					List<Sequence> scannset = geneset.speccontigMap.get(selsyn);
 					for( int k = 0; k < rowheader.getRowCount(); k++ ) {
@@ -216,7 +217,7 @@ public class Synteni {
 				
 				//g.setColor( Color.blue );
 				int[] rr = sorting.getSelectedRows();
-				if( sorting.getModel() == geneset.groupModel ) {
+				if( sorting.getModel() == genesethead.groupModel ) {
 					for( int r : rr ) {
 						int i = sorting.convertRowIndexToModel( r );
 						GeneGroup gg = geneset.allgenegroups.get( i );
@@ -356,7 +357,7 @@ public class Synteni {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setLeftComponent(rowheaderscroll);
 		splitpane.setRightComponent(scrollpane);
-		geneset.splitpaneList.add( splitpane );
+		genesethead.splitpaneList.add( splitpane );
 
 		JComponent fillup = new JComponent() {};
 		fillup.setPreferredSize(new Dimension(6000, 20));

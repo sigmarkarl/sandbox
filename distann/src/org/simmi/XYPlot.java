@@ -95,9 +95,9 @@ public class XYPlot {
 	Sequence	contigx;
 	Sequence	contigy;
 	Point	mouseSel;
-	public void xyPlot( final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
-		final JTable 				table = geneset.getGeneTable();
-		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
+	public void xyPlot( final GeneSetHead genesethead, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
+		final JTable 				table = genesethead.getGeneTable();
+		final Collection<String> 	specset = genesethead.geneset.getSpecies(); //speciesFromCluster( clusterMap );
 		final List<String>			species = new ArrayList<String>( specset );
 		//final List<String>	specList = new ArrayList<String>( species );
 		
@@ -162,7 +162,7 @@ public class XYPlot {
 		spec1 = (String)table1.getValueAt( table1.getSelectedRow(), 0 );
 		spec2 = (String)table2.getValueAt( table2.getSelectedRow(), 0 );
 		
-		initSpecConts( geneset.speccontigMap, spec1, spec2 );
+		initSpecConts( genesethead.geneset.speccontigMap, spec1, spec2 );
 		
 		final JRadioButton	oricolor = new JRadioButton("Orientation");
 		final JRadioButton	gccolor = new JRadioButton("GC%");
@@ -193,7 +193,7 @@ public class XYPlot {
 							for( int u = ct.getAnnotations().size()-1; u >= 0; u-- ) {
 								Tegeval val = (Tegeval)ct.getAnnotation( u );
 								GeneGroup gg = val.getGene().getGeneGroup();
-								int a = geneset.allgenegroups.indexOf( gg );
+								int a = genesethead.geneset.allgenegroups.indexOf( gg );
 								
 								int l = -1;
 								if( a != -1 ) l = table.convertRowIndexToView( a );
@@ -220,7 +220,7 @@ public class XYPlot {
 												g.setColor( tv2.getGCColor() );
 											} else {
 												boolean sel = false;
-												if( table.getModel() == geneset.groupModel ) {
+												if( table.getModel() == genesethead.groupModel ) {
 													int r = table.convertRowIndexToView( val.getGene().getGeneGroup().index );
 													if( r != -1 ) {
 														sel = table.isRowSelected( r );
@@ -258,7 +258,7 @@ public class XYPlot {
 							for( Annotation ann : ct.getAnnotations() ) {
 								Tegeval val = (Tegeval)ann;
 								GeneGroup gg = val.getGene().getGeneGroup();
-								int a = geneset.allgenegroups.indexOf( gg );
+								int a = genesethead.geneset.allgenegroups.indexOf( gg );
 								
 								int l = -1;
 								if( a != -1 ) l = table.convertRowIndexToView( a );
@@ -285,7 +285,7 @@ public class XYPlot {
 												g.setColor( tv2.getGCColor() );
 											} else {
 												boolean sel = false;
-												if( table.getModel() == geneset.groupModel ) {
+												if( table.getModel() == genesethead.groupModel ) {
 													int r = table.convertRowIndexToView( val.getGene().getGeneGroup().index );
 													if( r != -1 ) {
 														sel = table.isRowSelected( r );
@@ -491,8 +491,8 @@ public class XYPlot {
 							te.setSelected( true );
 							
 							int i;
-							if( table.getModel() == geneset.groupModel ) {
-								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+							if( table.getModel() == genesethead.groupModel ) {
+								i = genesethead.geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genelist.indexOf( te.getGene() );
 							}
@@ -531,8 +531,8 @@ public class XYPlot {
 							te.setSelected( true );
 							
 							int i;
-							if( table.getModel() == geneset.groupModel ) {
-								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+							if( table.getModel() == genesethead.groupModel ) {
+								i = genesethead.geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genelist.indexOf( te.getGene() );
 							}
@@ -729,14 +729,14 @@ public class XYPlot {
 		comb1.addItemListener( new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				initSpecConts( genesethead.geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
 				drawc.repaint();
 			}
 		});
 		comb2.addItemListener( new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+				initSpecConts( genesethead.geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
 				drawc.repaint();
 			}
 		});

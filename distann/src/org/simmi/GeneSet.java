@@ -73,11 +73,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -95,34 +93,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.embed.swing.JFXPanel;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.event.EventHandler;
-import javafx.geometry.Side;
-import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.PieChart;
-import javafx.scene.chart.PieChart.Data;
-import javafx.scene.chart.ScatterChart;
-import javafx.scene.chart.StackedBarChart;
-import javafx.scene.chart.XYChart;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.image.WritableImage;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.HBox;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 
 import javax.imageio.ImageIO;
 import javax.jnlp.ClipboardService;
@@ -154,6 +126,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -180,8 +153,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import netscape.javascript.JSObject;
-
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.poi.ss.usermodel.Cell;
@@ -189,7 +160,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.java_websocket.WebSocket;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -215,8 +185,35 @@ import org.simmi.unsigned.NativeRun;
 import org.simmi.unsigned.SmithWater;
 
 import flobb.ChatServer;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.embed.swing.JFXPanel;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.event.EventHandler;
+import javafx.geometry.Side;
+import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
+import javafx.scene.chart.PieChart.Data;
+import javafx.scene.chart.ScatterChart;
+import javafx.scene.chart.StackedBarChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.HBox;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 
-public class GeneSet extends JApplet {
+public class GeneSet {
 	/**
 	 * 
 	 */
@@ -243,23 +240,6 @@ public class GeneSet extends JApplet {
 			return dnaa.get(query);
 		return null;
 	}*/
-	
-	static TableModel nullmodel = new AbstractTableModel() {
-		@Override
-		public Object getValueAt(int rowIndex, int columnIndex) {
-			return null;
-		}
-		
-		@Override
-		public int getRowCount() {
-			return 0;
-		}
-		
-		@Override
-		public int getColumnCount() {
-			return 0;
-		}
-	};
 	
 	public static void recursiveSet(int fin, int val) {
 		if (val < fin) {
@@ -292,15 +272,19 @@ public class GeneSet extends JApplet {
 		String hit = null;
 		String evalue = null;
 		while( line != null ) {
-			if( line.startsWith("Query:") ) {
+			if( line.startsWith("Query:") || line.startsWith("Query=") ) {
 				if( hit != null && id != null ) {
 					cazymap.put( id, hit );
 				}
 				String[] split = line.split("[\t ]+");
 				
-				//line = br.readLine();
 				//int k = line.lastIndexOf('[');
 				id = split[1]; //line.substring( k+1, line.indexOf(']', k+1) ).trim()+"_"+split[1].trim();
+				line = br.readLine();
+				while( line.length() > 0 ) {
+					id += line;
+					line = br.readLine();
+				}
 				
 				if( id.contains("..") ) {
 					line = br.readLine();
@@ -314,14 +298,20 @@ public class GeneSet extends JApplet {
 				
 				hit = null;
 				evalue = null;
-			} else if( hit == null && line.trim().startsWith("E-value") ) {
-				line = br.readLine();
+			} else if( hit != null && line.contains("Expect =") ) {
+				/*line = br.readLine();
 				line = br.readLine().trim();
 				if( line.startsWith("--") ) line = br.readLine().trim();
-				String[] split = line.split("[ ]+");
-				evalue = split[0];
-			} else if( hit == null && line.startsWith(">>") ) {
-				hit = line.substring( 3, line.indexOf('.') ) + "("+evalue+")";
+				String[] split = line.split("[ ]+");*/
+				int i = line.indexOf("Expect =");
+				evalue = line.substring(i+8,line.indexOf(',',i+8)).trim();
+				
+				double e = Double.parseDouble(evalue);
+				if( e < 0.01 ) {
+					hit += "("+evalue+")";
+				} else hit = null;
+			} else if( hit == null && line.startsWith(">") ) {
+				hit = line.substring( 2, line.length() );
 			}
 			
 			line = br.readLine();
@@ -722,6 +712,10 @@ public class GeneSet extends JApplet {
 					}
 					refmap.put( id, gene );
 					
+					if( id.contains("hypot") ) {
+						System.err.println();
+					}
+					
 					tv.setGene( gene );
 					tv.setTegund( origin );
 					
@@ -1036,6 +1030,10 @@ public class GeneSet extends JApplet {
 						//refmap.put( newid, gene );
 						refmap.put( id, gene );
 						
+						if( id.contains("hypot") ) {
+							System.err.println();
+						}
+						
 						tv.setGene( gene );
 						tv.setTegund( origin );
 						
@@ -1233,6 +1231,10 @@ public class GeneSet extends JApplet {
 				//if( !newid.equals(id) ) 
 				//refmap.put( newid, gene );
 				refmap.put(id, gene);
+				
+				if( id.contains("hypot") ) {
+					System.err.println();
+				}
 				
 				tv.setGene( gene );
 				tv.setTegund( origin );
@@ -5942,522 +5944,19 @@ public class GeneSet extends JApplet {
 		public void run( String res );
 	};
 	
-	public BufferedImage gatest( String spec1 ) {
-		GeneCompare gc = new GeneCompare(); //comparePlot( GeneSet.this, comp, genelist, clusterMap );
-		final BufferedImage bimg = new BufferedImage( 1024, 1024, BufferedImage.TYPE_INT_RGB );
-		final Graphics2D g2 = bimg.createGraphics();
-		final Map<String,Integer>	blosumap = JavaFasta.getBlosumMap();
-		
-		if( spec1 != null && spec1.length() > 0 ) {
-			List<Sequence> clist = speccontigMap.get(spec1);
-			int total = 0;
-			int ptotal = 0;
-			for( Sequence ctg : clist ) {
-				if( ctg.isPlasmid() ) ptotal += ctg.getAnnotationCount();
-				else total += ctg.getAnnotationCount();
-			}
-		
-			gc.draw(g2, spec1, GeneSet.this, 1024, 1024, clist, specList, blosumap, total, ptotal);
-		} else {
-			gc.draw(g2, null, GeneSet.this, 1024, 1024, null, specList, blosumap, table.getRowCount(), 0 );
-		}
-		g2.dispose();
-		
-		return bimg;
-	}
-	
+	//GeneSetHead gsh;
 	ChatServer cs;
 	public GeneSet() {
 		super();
-		
-		try {
-			cs = new ChatServer( 8887 ) {
-				String evalstr = "0.00001";
-				Set<String> specset = new HashSet<String>();
-				
-				@Override
-				public void onMessage( WebSocket conn, String message ) {
-					//System.err.println( message );
-					if( message.startsWith(">") ) {
-						final RunnableResult run = new RunnableResult() {
-							public void run( String resl ) {
-								//BufferedReader br = new BufferedReader( new StringReader( resl ) );
-								/*try {
-									String line = br.readLine();
-									while( line != null ) {
-										/*if( rr != null ) {
-											rr.run( line+"\n" );
-											//res += line+"\n";
-										}*
-										
-										String res = line+"\n";
-										if( line.startsWith("> ") ) {
-											int i = line.indexOf(' ', 2);
-											if( i == -1 ) i = line.length();
-											String id = line.substring(2, i);
-											
-											/*line = br.readLine();
-											while( line != null && !line.startsWith("Query=") && !line.startsWith(">") ) {
-												res += line+"\n";
-												line = br.readLine();
-											}*/
-									
-								if( resl.equals("close") ) cs.sendToAll(resl);
-								else {
-									byte[] bb = Base64.getEncoder().encode(resl.getBytes());
-												
-									int i = resl.indexOf(' ', 2);
-									int k = resl.indexOf('\n', 2);
-									if( i == -1 ) i = resl.length();
-									if( k == -1 ) k = resl.length();
-									
-									i = Math.min(i, k);
-									
-									String id = resl.substring(2, i);
-									Gene g = genemap.get( id );
-									if( g != null && (specset.isEmpty() || specset.contains(g.getSpecies())) ) {
-										GeneGroup gg = g.getGeneGroup();
-										
-										String ec = gg.getCommonEc();
-										Set<String> kegg = new TreeSet<String>();
-										
-										for( String pathw : pathwaymap.keySet() ) {
-											Set<String> ecs = pathwaymap.get( pathw );
-											int u = pathw.lastIndexOf(' ');
-											if( ecs.contains(ec) ) kegg.add( pathw.substring(u) + "=" + pathw.substring(0,u).replace(",", "") );
-										}
-										
-										Cog cog = gg.getCommonCog(cogmap);
-										String cogid = cog != null ? cog.id : null;
-										String symbol = gg.getCommonSymbol();
-										if( cog != null && symbol == null ) symbol = cog.genesymbol;
-										
-										String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\t" + new String(bb) + "\n";
-										//String old =  g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(false, true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n";
-										cs.sendToAll( seqstr );
-									}
-								}
-								//cs.sendToAll( res );
-							}
-						};
-						doBlast( message, evalstr, true, run, false );
-					} else if( message.contains("ready") ) {
-						cs.sendToAll( "simmi" ); //cs.message );
-					} else if( message.contains("cogchart:") ) {
-						boolean uniform = false;
-						if( message.substring(0).contains("uniform") ) uniform = true;
-						//Set<String> species = getSelspec( GeneSet.this, specList );
-						Set<String> selspec = new HashSet<String>( specList );
-						
-						Set<Character> includedCogs = Cog.charcog.keySet();
-						final Map<String,String>					all = new TreeMap<String,String>();
-						final Map<String, Map<Character,Integer>> 	map = new TreeMap<String, Map<Character,Integer>>();
-						try {
-							GeneSet.this.cogCalc( null, includedCogs, map, selspec, false );
-							StringWriter fw = GeneSet.this.writeCog( map, includedCogs, uniform );
-							//String repl = fw.toString();
-							
-							//final String smuck = sb.toString().replace("smuck", restext.toString());
-							cs.sendToAll( fw.toString() );
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					} else if( message.contains("pancore:") ) {
-						//Set<String> species = getSelspec( GeneSet.this, specList );
-						Set<String> selspec = new HashSet<String>( specList );
-						
-						final String[] categories = { "Core: ", "Accessory: " };
-						final List<StackBarData> lsbd = new ArrayList<StackBarData>();
-						StringBuilder restext = ActionCollection.panCore( GeneSet.this, selspec, categories, lsbd );
-						
-						//final String smuck = sb.toString().replace("smuck", restext.toString());
-						cs.sendToAll( restext.toString() );
-					} else if( message.contains("anim:") ) {
-						String spcstr = message.substring(5);
-						//Set<String> species = getSelspec( GeneSet.this, specList );
-						List<String> spcsl = specList;
-						if( spcstr.length() > 0 ) {
-							String[] spcs = spcstr.split(",");
-							spcsl = Arrays.asList(spcs);
-						}
-						Set<String> species = new HashSet<String>( spcsl );
-						BufferedImage bimg = animatrix( species, clusterMap, null, allgenegroups );
-						ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						try {
-							ImageIO.write(bimg, "png", baos);
-							baos.close();
-							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
-							cs.sendToAll(str);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					} else if( message.contains("geneatlas:") ) {
-						String spec1 = message.substring(10);
-						BufferedImage bimg = gatest( spec1 );
-						
-						ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						try {
-							ImageIO.write(bimg, "jpg", baos);
-							baos.close();
-							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
-							cs.sendToAll(str);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					} else if( message.contains("syntgrad:") ) {
-						String spec1 = message.substring(9);
-						
-						Set<GeneGroup> sgg = new HashSet<GeneGroup>();
-						int keggind = spec1.indexOf("kegg:");
-						if( keggind != -1 ) {
-							String[] sp = spec1.substring(keggind+5,spec1.length()).split(",");
-							Set<String> str = new HashSet<String>( Arrays.asList(sp) );
-							
-							spec1 = spec1.substring(0,keggind);
-							for( Gene g : genelist ) {
-								if( specset.isEmpty() || specset.contains(g.getSpecies()) ) {
-									String gref = g.name;
-									GeneGroup gg = g.getGeneGroup();
-									String ec = gg.getCommonEc();
-									
-									boolean cont = false;
-									for( String sval : str ) {
-										if( sval.startsWith("EC") ) {
-											String ecstr = sval.substring(2).trim();
-											if( ecstr.equals(ec) ) cont = true; 
-										} else {
-											cont = gref.toLowerCase().contains(sval.toLowerCase());
-											for( String pathw : pathwaymap.keySet() ) {
-												//int k = pathw.lastIndexOf(' ');
-												String pname = pathw.replace(",", "");
-												if( sval.equals( pname ) ) {
-													Set<String> ecs = pathwaymap.get( pathw );
-													if( ecs.contains(ec) ) {
-														cont = true;
-													}
-												}
-											}
-										}
-										
-										if( cont ) break;
-									}
-									
-									//boolean keggcont = false;
-									//for( String kc : )
-									
-									if( cont ) {
-										sgg.add( gg );
-									} else {
-										String cazy = cazymap.get( g.refid );
-										if( cazy != null ) {
-											//String ec = g.getGeneGroup().getCommonEc();
-											String kegg = null;
-											
-											for( String pathw : pathwaymap.keySet() ) {
-												Set<String> ecs = pathwaymap.get( pathw );
-												if( ecs.contains(ec) ) kegg = pathw.substring(pathw.lastIndexOf(' '));
-											}
-											
-											int i = cazy.indexOf('(');
-											if( i == -1 ) i = cazy.length();
-											cazy = cazy.substring(0,i);
-											if( str.contains(cazy) ) {
-												sgg.add( gg );
-											}
-										}
-									}
-								}
-							}
-							
-							if( sgg.size() > 0 ) {
-								for (int r = 0; r < table.getRowCount(); r++) {
-									int mr = table.convertRowIndexToModel(r);
-									GeneGroup ngg = allgenegroups.get(mr);
-									if( sgg.contains(ngg) ) {
-										genefilterset.add(mr);
-									}
-								}
-								updateFilter(table, genefilter, label);
-							}
-						}
-						
-						int w = 1024;
-						int h = 1024;
-						
-						SyntGrad sg = new SyntGrad();
-						final BufferedImage bi = new BufferedImage( w, h, BufferedImage.TYPE_INT_RGB );
-						
-						final Graphics2D g2 = bi.createGraphics();
-						g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
-						g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-						
-						if( spec1 != null && spec1.length() > 0 ) {
-							List<Sequence> clist = speccontigMap.get(spec1);
-							sg.drawImage( GeneSet.this, g2, spec1, clist, specList, w, h );
-						} else sg.drawImage( GeneSet.this, g2, null, null, specList, w, h );
-						
-						if( sgg.size() > 0 ) {
-							genefilterset.clear();
-							updateFilter(table, null, label);
-						}
-						
-						ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						try {
-							ImageIO.write(bi, "png", baos);
-							baos.close();
-							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
-							cs.sendToAll(str);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					} else if( message.contains("stat:") ) {
-						String querystr = message.substring(5).trim();
-						Collection<String> str = specList;
-						if( querystr.length() > 0 ) {
-							String[] sp = querystr.split(",");
-							str = new HashSet<String>( Arrays.asList(sp) );
-						}
-						
-						String htmlstr = "";
-						try {
-							htmlstr = ActionCollection.htmlTable(GeneSet.this, str, speccontigMap, false);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-						String ans = Base64.getEncoder().encodeToString( htmlstr.getBytes() );
-						cs.sendToAll(ans);
-					} else if( message.contains("neigh:") ) {
-						//Set<String> species = getSelspec( GeneSet.this, specList );
-						//Set<String> species = new HashSet<String>( specList );
-						
-						String trim = message.substring(6).trim();
-						Gene g = refmap.get( trim );
-						GeneGroup[] gg = { g.getGeneGroup() };
-						
-						Neighbour nb = new Neighbour( new HashSet<GeneGroup>( Arrays.asList(gg) ) );
-						nb.forward();
-						nb.setZoomLevel( 0.3 );
-						nb.names.setSelectedItem("Default names");
-						BufferedImage bimg = nb.getImage( GeneSet.this, 50, 6000 );
-						try {
-							//nb.neighbourMynd( GeneSet.this, (Container)comp, genelist, new HashSet<GeneGroup>( Arrays.asList(gg) ), contigmap );
-							//BufferedImage bimg = animatrix( species, clusterMap, null, allgenegroups );
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							ImageIO.write(bimg, "png", baos);
-							baos.close();
-							String str = Base64.getEncoder().encodeToString( baos.toByteArray() );
-							cs.sendToAll(str);
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-					} else if( message.contains("tree:") ) {
-						String querystr = message.substring(5);
-						String[] sp = querystr.split(",");
-						Set<String> str = new HashSet<String>( Arrays.asList(sp) );
-						
-						int max = 0;
-						Set<String>							specset = new HashSet<String>();
-						Map<GeneGroup,Integer>				genegroups = new HashMap<GeneGroup,Integer>();
-						for( Gene g : genelist ) {
-							if( str.contains(g.refid) ) {
-								GeneGroup gg = g.getGeneGroup();
-								specset.addAll( gg.getSpecies() );
-								for( Tegeval tv : gg.getTegevals() ) {
-									Sequence alseq = tv.getAlignedSequence();
-									if( alseq == null ) {
-										Sequence sb = tv.getProteinSequence();
-										int l = sb.length();
-										if( l > max ) max = l;
-									} else {
-										int l = alseq.length();
-										if( l > max ) max = l;
-									}
-								}
-								genegroups.put( gg, max );
-							}
-						}
-						
-						Serifier serifier = getConcatenatedSequences(false, genegroups, specset, true);
-						serifier.renameDuplicates();
-						String tree = serifier.getFastTree( serifier.lseq, user, true );
-						cs.sendToAll( tree );
-						//Serifier serifier = getConcatenatedSequences( false );
-					} else if( message.contains("query:") ) {
-						StringBuilder sb = new StringBuilder();
-						//int i = 0;
-						
-						Set<String> specset = new HashSet<String>();
-						int indsp = message.indexOf("spec:");
-						if( indsp == -1 ) indsp = message.length();
-						else {
-							String[] specspl = message.substring( indsp+5, message.length() ).split(",");
-							specset.addAll( Arrays.asList( specspl ) );
-						}
-						
-						String querystr = message.substring(6, indsp);
-						String[] sp = querystr.split(",");
-						Set<String> str = new HashSet<String>( Arrays.asList(sp) );
-						for( Gene g : genelist ) {
-							if( specset.isEmpty() || specset.contains(g.getSpecies()) ) {
-								String gref = g.name;
-								GeneGroup gg = g.getGeneGroup();
-								String ec = gg.getCommonEc();
-								
-								boolean cont = false;
-								for( String sval : str ) {
-									if( sval.startsWith("EC") ) {
-										String ecstr = sval.substring(2).trim();
-										if( ecstr.equals(ec) ) cont = true; 
-									} else {
-										cont = gref.toLowerCase().contains(sval.toLowerCase());
-										for( String pathw : pathwaymap.keySet() ) {
-											//int k = pathw.lastIndexOf(' ');
-											String pname = pathw.replace(",", "");
-											if( sval.equals( pname ) ) {
-												Set<String> ecs = pathwaymap.get( pathw );
-												if( ecs.contains(ec) ) {
-													cont = true;
-												}
-											}
-										}
-									}
-									
-									if( cont ) break;
-								}
-								
-								//boolean keggcont = false;
-								//for( String kc : )
-								
-								if( cont ) {
-									Set<String> kegg = new TreeSet<String>();
-									
-									for( String pathw : pathwaymap.keySet() ) {
-										Set<String> ecs = pathwaymap.get( pathw );
-										int k = pathw.lastIndexOf(' ');
-										if( ecs.contains(ec) ) kegg.add( pathw.substring(k) + "=" + pathw.substring(0,k).replace(",", "") );
-									}
-									
-									Cog cog = gg.getCommonCog(cogmap);
-									String cogid = cog != null ? cog.id : null;
-									String symbol = gg.getCommonSymbol();
-									String go = gg.getCommonGO(false, true, null);
-									if( cog != null && symbol == null ) symbol = cog.genesymbol;
-									String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + go + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n";
-									sb.append( seqstr );
-								} else {
-									String cazy = cazymap.get( g.refid );
-									if( cazy != null ) {
-										//String ec = g.getGeneGroup().getCommonEc();
-										String kegg = null;
-										
-										for( String pathw : pathwaymap.keySet() ) {
-											Set<String> ecs = pathwaymap.get( pathw );
-											if( ecs.contains(ec) ) kegg = pathw.substring(pathw.lastIndexOf(' '));
-										}
-										
-										int i = cazy.indexOf('(');
-										if( i == -1 ) i = cazy.length();
-										cazy = cazy.substring(0,i);
-										if( str.contains(cazy) ) {
-											//GeneGroup gg = g.getGeneGroup();
-											Cog cog = gg.getCommonCog(cogmap);
-											String cogid = cog != null ? cog.id : null;
-											String symbol = gg.getCommonSymbol();
-											if( cog != null && symbol == null ) symbol = cog.genesymbol;
-											sb.append( g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n" );
-										}
-									}
-								}
-							}
-						}
-						/*for( Gene g : genelist ) {
-							GeneGroup gg = g.getGeneGroup();
-							sb.append( g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(true, null) + "\n" );
-						
-							if( i++ > 10 ) break;
-						}*/
-						if( sb.length() > 0 ) {
-							cs.sendToAll( sb.toString() );
-							cs.sendToAll( "close" );
-						}
-					} else if( message.contains("request:") ) {
-						String idlist = message.substring(8).trim();
-						String[] split = idlist.split(",");
-						StringBuilder sb = new StringBuilder();
-						for( String id : split ) {
-							Gene g = refmap.get(id);
-							if( g != null ) {
-								try {
-									g.getFasta( sb, false );
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-						}
-						cs.sendToAll( sb.toString() );
-					} else if( message.contains("evalue:") ) {
-						specset.clear();
-						int sind = message.indexOf("spec:");
-						if( sind == -1 ) sind = message.length();
-						else {
-							String[] specspl = message.substring(sind+5,message.length()).split(",");
-							specset.addAll( Arrays.asList(specspl) );
-						}
-						evalstr = message.substring(7,sind).trim();
-					} else if( message.contains("specs:") ) {
-						Set<String> cz = new TreeSet<String>();
-						for( Gene g : genelist ) {
-							String cazy = cazymap.get( g.refid );
-							if( cazy != null ) {
-								int i = cazy.indexOf('(');
-								if( i == -1 ) i = cazy.length();
-								cazy = cazy.substring(0,i);
-								cz.add( cazy );
-							}
-						}
-						
-						Set<String> keggset = new TreeSet<String>();
-						for( Gene g : genelist ) {
-							String ec = g.getGeneGroup().getCommonEc();
-							for( String pathw : pathwaymap.keySet() ) {
-								Set<String> ecs = pathwaymap.get( pathw );
-								//int k = pathw.lastIndexOf(' ');
-								if( ecs.contains(ec) ) keggset.add( /*pathw.substring(k) + "=" + */pathw.replace(",", "") );
-							}
-						}
-						
-						StringBuilder sb = new StringBuilder();
-						for( String spec : specList ) {
-							if( sb.length() == 0 ) sb.append( "specs:"+spec );
-							else sb.append( ","+spec );
-						}
-						int l = sb.length();
-						for( String cazy : cz ) {
-							if( sb.length() == l ) sb.append( "cazy:"+cazy );
-							else sb.append( ","+cazy );
-						}
-						l = sb.length();
-						for( String kegg : keggset ) {
-							if( sb.length() == l ) sb.append( "kegg:"+kegg );
-							else sb.append( ","+kegg );
-						}
-						
-						System.err.println( sb.toString() );
-						cs.sendToAll( sb.toString() );
-					}
-				}
-			};
-			cs.start();
-		} catch (UnknownHostException e1) {
-			e1.printStackTrace();
-		}
+		//gsh = new GeneSetHead( this );
 	}
 	
 	public static void main(String[] args) {
 		//SplashScreen.getSplashScreen().
 		
 		if( args.length == 0 ) {
-		
+			GeneSet	gs = new GeneSet();
+			GeneSetHead gsh = new GeneSetHead( gs );
 			/*String[] stra = {"A", "B", "C", "D"};
 			corrInd = Arrays.asList( stra );
 			double[] dd = { 0.0, 17.0, 21.0, 27.0, 17.0, 0.0, 12.0, 18.0, 21.0, 12.0, 0.0, 14.0, 27.0, 18.0, 14.0, 0.0 };
@@ -6466,11 +5965,19 @@ public class GeneSet extends JApplet {
 			
 			JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
 			JFrame.EXIT_ON_CLOSE );
-			 
 			frame.setSize(800, 600); 
-			GeneSet gs = new GeneSet();
-			gs.init( frame );
+			
+			gsh.init( frame );
 			frame.setVisible( true );
+		} else if( args[0].endsWith(".zip") ) {
+			GeneSet	gs = new GeneSet();
+			Path p = Paths.get(args[0]);
+			try {
+				gs.loadStuff( p );
+				gs.clusterGenes( gs.getSpecies(), true );
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} else {
 			Serifier.main(args);
 		}
@@ -6490,9 +5997,9 @@ public class GeneSet extends JApplet {
 				
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
 			
-	/*FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
-	GZIPInputStream gi = new GZIPInputStream( fi );
-	funcMappingStatic( new InputStreamReader( gi ) );*/
+	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
+	//GZIPInputStream gi = new GZIPInputStream( fi );
+	//funcMappingStatic( new InputStreamReader( gi ) );
 	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
 	//GZIPInputStream gi = new GZIPInputStream( fi );
 	//funcMappingStatic( new InputStreamReader( gi ) );
@@ -6911,6 +6418,14 @@ public class GeneSet extends JApplet {
 		Map<String, String> ref2ko = new HashMap<String, String>();
 		Map<String, String> ref2cog = new HashMap<String, String>();
 
+		Map<String,Gene> nrefids = new HashMap<String,Gene>();
+		for( String key : refids.keySet() ) {
+			Gene g = refids.get(key);
+			nrefids.put(g.refid, g);
+			
+			//System.err.println( g.refid );
+		}
+		
 		/*PrintWriter ps = null;
 		if( out != null ) {
 			ps = new PrintWriter( out );
@@ -6967,8 +6482,8 @@ public class GeneSet extends JApplet {
 				if( genmap != null ) {
 					if( split[1].startsWith("RefSeq") ) {
 						String refid = split[ind];
-						if( refids.containsKey(refid) ) {
-							Gene gene = refids.get(refid);
+						if( nrefids.containsKey(refid) ) {
+							Gene gene = nrefids.get(refid);
 							gene.uniid = split[secind];
 							unimap.put(gene.uniid, gene);
 							
@@ -6998,8 +6513,8 @@ public class GeneSet extends JApplet {
 					}
 				} else {
 					String refid = split[ind];
-					if( refids.containsKey(refid) ) {
-						Gene gene = refids.get(refid);
+					if( nrefids.containsKey(refid) ) {
+						Gene gene = nrefids.get(refid);
 						String genid = split[secind];
 						gene.genid = genid;
 						unimap.put(genid, gene);
@@ -7270,596 +6785,16 @@ public class GeneSet extends JApplet {
 		}
 		//br.close();
 	}
-
-	public void updateFilter(JTable table, RowFilter filter, JLabel label) {
-		DefaultRowSorter<TableModel, Integer> rowsorter = (DefaultRowSorter<TableModel, Integer>) table.getRowSorter();
-		rowsorter.setRowFilter(filter);
-		if (label != null)
-			label.setText(table.getRowCount() + "/" + table.getSelectedRowCount());
-	}
 	
 	public void scrollToSelection( JTable table ) {
 		int r = table.getSelectedRow();
 		Rectangle rct = table.getCellRect(r, 0, true);
 		table.scrollRectToVisible( rct );
 	}
-
-	private static void relati(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, List<Set<String>> uclusterlist, boolean remove) {
-		Set<String> ct = new HashSet<String>();
- 		for (int r : rr) {
-			int cr = table.convertRowIndexToModel(r);
-			Gene gg = genelist.get(cr);
-			GeneGroup ggroup = gg.getGeneGroup();
-			for( Gene g : ggroup.genes ) {
-				ct.add( g.refid );
-			}
-			// genefilterset.add( gg.index );
-			/*Tegeval tv = gg.tegeval;
-				//System.err.println( tv.cont );
-				//int li = tv.cont.lastIndexOf('_');
-				//String tvshort = tv.contshort+tv.cont.substring(li);
-			for (Set<String> uset : uclusterlist) {
-				if (uset.contains(tv.cont)) {
-					System.err.println( uset );
-					ct.addAll(uset);
-					break;
-				}
-			}*/
-		}
-
-		for (Gene g : genelist) {
-			//Tegeval tv = g.tegeval;
-				//System.err.println( tv.cont );
-				//int li = tv.cont.lastIndexOf('_');
-				//String tvshort = tv.contshort+tv.cont.substring(li);
-			if( ct.contains(g.refid) ) {
-				if (remove)
-					genefilterset.remove( genelist.indexOf( g ) );
-				else
-					genefilterset.add( genelist.indexOf( g ) );
-				//break;
-			}
-		}
-		System.err.println( genefilterset.size() + "  " + ct.size() );
-	}
-
-	private void proxi(JTable table, int[] rr, List<Gene> genelist, Set<Integer> genefilterset, boolean remove, boolean onlygenes) {
-		/*Set<String> ct = new HashSet<String>();
-		for (int r : rr) {
-			int cr = table.convertRowIndexToModel(r);
-			
-			GeneGroup gg;
-			if( table.getModel() == groupModel ) {
-				gg = allgenegroups.get( cr );
-			} else {
-				gg = genelist.get(cr).getGeneGroup();
-			}
-			// genefilterset.add( gg.index );
-			for( Gene g : gg.genes ) {
-				Tegeval tv = g.tegeval;
-				ct.add(tv.cont);
-				int ind = tv.cont.lastIndexOf("_");
-				int val = Integer.parseInt(tv.cont.substring(ind + 1));
-
-				String next = tv.cont.substring(0, ind + 1) + (val + 1);
-				System.err.println(next);
-				ct.add(next);
-				if (val > 1) {
-					String prev = tv.cont.substring(0, ind + 1) + (val - 1);
-					ct.add(prev);
-				}
-			}
-		}*/
-		
-		for (int r : rr) {
-			int cr = table.convertRowIndexToModel(r);
-			
-			Gene gene = null;
-			GeneGroup gg;
-			if( table.getModel() == groupModel ) {
-				gg = allgenegroups.get( cr );
-			} else {
-				gene = genelist.get(cr);
-				gg = gene.getGeneGroup();
-			}
-			
-			if( onlygenes ) {
-				genefilterset.add( gene.index );
-				Annotation next = gene.tegeval.getNext();
-				if( next != null ) {
-					Gene ng = next.getGene();
-					if( ng != null ) genefilterset.add( ng.index );
-				}
-				Annotation prev = gene.tegeval.getPrevious();
-				if( prev != null ) {
-					Gene pg = prev.getGene();
-					if( pg != null ) genefilterset.add( pg.index );
-					else {
-						System.err.println();
-					}
-				}
-			} else {
-				genefilterset.add( gg.index );
-				for( Gene g : gg.genes ) {
-					Annotation next = g.tegeval.getNext();
-					if( next != null ) {
-						
-						/*Gene n = next.getGene();
-						int k = this.genelist.indexOf(n);
-						System.err.println( k );
-						
-						n = g.tegeval.gene;
-						k = this.genelist.indexOf(n);
-						System.err.println( k );*/
-						
-						GeneGroup ngg = next.getGene().getGeneGroup();
-						if( ngg != null ) genefilterset.add( ngg.index );
-						/*else {
-							int tot = 0;
-							int mot = 0;
-							for( String cstr : contigmap.keySet() ) {
-								Sequence ctg = contigmap.get( cstr );
-								if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
-									Gene gn = tv.getGene();
-									
-									if( tv == next ) {
-										System.err.println( gn );
-									}
-									
-									if( gn.getGeneGroup() != null ) {
-										tot++;
-									} else mot++;
-								}
-							}
-							System.err.println( tot + "  " + mot );
-							System.err.println();
-						}*/
-					}
-					Annotation prev = g.tegeval.getPrevious();
-					if( prev != null ) {
-						GeneGroup pgg = prev.getGene().getGeneGroup();
-						if( pgg != null ) genefilterset.add( pgg.index );
-						else {
-							System.err.println();
-						}
-					}
-				}
-			}
-		}
-		
-		/*if( table.getModel() == groupModel ) {
-			for( Gene g : genelist ) {
-				Tegeval tv = g.tegeval;
-				if( ct.contains(tv.cont) ) {
-					if (remove)
-						genefilterset.remove(g.getGeneGroup().index);
-					else
-						genefilterset.add(g.getGeneGroup().index);
-					break;
-				}
-			}
-		} else {
-			for( Gene g : genelist ) {
-				Tegeval tv = g.tegeval;
-				//if( ct.contains(tv.cont) ) {
-					if (remove)
-						genefilterset.remove(g.index);
-					else
-						genefilterset.add(g.index);
-					break;
-				//}
-			}
-		}*/
-	}
-	
-	public List getSelspecContigs( List<JComponent> complist, final String ... selspec ) {
-		List<Sequence>				contigs = null;
-		final List<String>			specs = new ArrayList<String>( speccontigMap.keySet() );
-		final JTable				stable = new JTable();
-		stable.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-		final TableModel					stablemodel = new TableModel() {
-			@Override
-			public int getRowCount() {
-				return specs.size();
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 1;
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				return "Species";
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				return String.class;
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return false;
-			}
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				if( rowIndex >= 0 && rowIndex < specs.size() ) return specs.get(rowIndex);
-				return null;
-			}
-
-			@Override
-			public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
-
-			@Override
-			public void addTableModelListener(TableModelListener l) {}
-
-			@Override
-			public void removeTableModelListener(TableModelListener l) {}
-		};
-		stable.setModel( stablemodel );
-		
-		final JTable				ctable = new JTable();
-		ctable.setAutoCreateRowSorter( true );
-		final TableModel			ctablemodel = new TableModel() {
-			@Override
-			public int getRowCount() {
-				int 			r = stable.getSelectedRow();
-				String 			spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(r, 0);
-				if( spec != null ) {
-					List<Sequence>	contigs = speccontigMap.get( spec );
-					return contigs.size();
-				}
-				return 0;
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 1;
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				return "Contigs";
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				return Sequence.class;
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return false;
-			}
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				int 		r = stable.getSelectedRow();
-				String 		spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(r, 0);
-				List<Sequence>	contigs = speccontigMap.get( spec );
-				return contigs.get(rowIndex);
-			}
-
-			@Override
-			public void setValueAt(Object aValue, int rowIndex,	int columnIndex) {}
-
-			@Override
-			public void addTableModelListener(TableModelListener l) {}
-
-			@Override
-			public void removeTableModelListener(TableModelListener l) {}
-		};
-		ctable.setModel( ctablemodel );
-		
-		JScrollPane	sscrollpane = new JScrollPane( stable );
-		JScrollPane	cscrollpane = new JScrollPane( ctable );
-		
-		FlowLayout flowlayout = new FlowLayout();
-		JComponent c = new JComponent() {};
-		c.setLayout( flowlayout );
-		if( selspec.length == 0 ) c.add( sscrollpane );
-		c.add( cscrollpane );
-		
-		if( complist != null ) {
-			for( JComponent comp : complist ) {
-				c.add( comp );
-			}
-		}
-		
-		stable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				ctable.tableChanged( new TableModelEvent( ctablemodel ) );
-			}
-		});
-		JOptionPane.showMessageDialog(this, c);
-		
-		int[] rr = stable.getSelectedRows();
-		if( rr.length > 1 ) {
-			List slist = new ArrayList();
-			for( int r : rr ) {
-				int i = stable.convertRowIndexToModel(r);
-				slist.add( specs.get(i) );
-			}
-			
-			return slist;
-		} else {
-			int 			sr = stable.getSelectedRow();
-			String 			spec = selspec.length > 0 ? selspec[0] : (String)stable.getValueAt(sr, 0);
-			if( spec != null ) {
-				List<Sequence> ctgs = speccontigMap.get( spec );
-				rr = ctable.getSelectedRows();
-				contigs = new ArrayList<Sequence>();
-				for( int r : rr ) {
-					int i = ctable.convertRowIndexToModel(r);
-					contigs.add( ctgs.get(i) );
-				}
-			}
-			
-			return contigs;
-		}
-	}
 	
 	/*public Set<String> getSelspec( Component comp, final List<String>	specs ) {
 		return getSelspec( comp, specs, null );
 	}*/
-	
-	int[]		currentRowSelection;
-	public TransferHandler dragRows( final JTable table, final List<String> specs ) {
-		TransferHandler th = null;
-		try {
-			final DataFlavor ndf = new DataFlavor( DataFlavor.javaJVMLocalObjectMimeType );
-			final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();
-			final String charset = df.getParameter("charset");
-			final Transferable transferable = new Transferable() {
-				@Override
-				public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {					
-					if( arg0.equals( ndf ) ) {
-						int[] rr = currentRowSelection; //table.getSelectedRows();
-						List<String>	selseq = new ArrayList<String>( rr.length );
-						for( int r : rr ) {
-							int i = table.convertRowIndexToModel(r);
-							selseq.add( specs.get(i) );
-						}
-						return selseq;
-					} else {
-						String ret = "";//makeCopyString();
-						for( int r = 0; r < table.getRowCount(); r++ ) {
-							Object o = table.getValueAt(r, 0);
-							if( o != null ) {
-								ret += o.toString();
-							} else {
-								ret += "";
-							}
-							for( int c = 1; c < table.getColumnCount(); c++ ) {
-								o = table.getValueAt(r, c);
-								if( o != null ) {
-									ret += "\t"+o.toString();
-								} else {
-									ret += "\t";
-								}
-							}
-							ret += "\n";
-						}
-						//return arg0.getReaderForText( this );
-						return new ByteArrayInputStream( ret.getBytes( charset ) );
-					}
-					//return ret;
-				}
-
-				@Override
-				public DataFlavor[] getTransferDataFlavors() {
-					return new DataFlavor[] { df, ndf };
-				}
-
-				@Override
-				public boolean isDataFlavorSupported(DataFlavor arg0) {
-					if( arg0.equals(df) || arg0.equals(ndf) ) {
-						return true;
-					}
-					return false;
-				}
-			};
-			
-			th = new TransferHandler() {
-				private static final long serialVersionUID = 1L;
-				
-				public int getSourceActions(JComponent c) {
-					return TransferHandler.COPY_OR_MOVE;
-				}
-
-				public boolean canImport(TransferHandler.TransferSupport support) {					
-					return true;
-				}
-
-				protected Transferable createTransferable(JComponent c) {
-					currentRowSelection = table.getSelectedRows();
-					
-					return transferable;
-				}
-
-				public boolean importData(TransferHandler.TransferSupport support) {
-					try {
-						System.err.println( table.getSelectedRows().length );
-						
-						DataFlavor[] dfs = support.getDataFlavors();
-						if( support.isDataFlavorSupported( ndf ) ) {					
-							Object obj = support.getTransferable().getTransferData( ndf );
-							ArrayList<String>	seqs = (ArrayList<String>)obj;
-							
-							/*ArrayList<String> newlist = new ArrayList<String>( serifier.lgse.size() );
-							for( int r = 0; r < table.getRowCount(); r++ ) {
-								int i = table.convertRowIndexToModel(r);
-								newlist.add( specs.get(i) );
-							}
-							serifier.lgseq.clear();
-							serifier.lgseq = newlist;*/
-							
-							Point p = support.getDropLocation().getDropPoint();
-							int k = table.rowAtPoint( p );
-							
-							specs.removeAll( seqs );
-							for( String s : seqs ) {
-								specs.add(k++, s);
-							}
-							
-							TableRowSorter<TableModel>	trs = (TableRowSorter<TableModel>)table.getRowSorter();
-							trs.setSortKeys( null );
-							
-							table.tableChanged( new TableModelEvent(table.getModel()) );
-							
-							return true;
-						}/* else if( support.isDataFlavorSupported( df ) ) {							
-							Object obj = support.getTransferable().getTransferData( df );
-							InputStream is = (InputStream)obj;
-							
-							System.err.println( charset );
-							importReader( new BufferedReader(new InputStreamReader(is, charset)) );
-							
-							updateView();
-							
-							return true;
-						}  else if( support.isDataFlavorSupported( DataFlavor.stringFlavor ) ) {							
-							Object obj = support.getTransferable().getTransferData( DataFlavor.stringFlavor );
-							String str = (String)obj;
-							importReader( new BufferedReader( new StringReader(str) ) );
-							
-							updateView();
-							
-							return true;
-						}*/
-					} catch (UnsupportedFlavorException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					return false;
-				}
-			};
-		} catch( Exception e ) {
-			e.printStackTrace();
-		}
-		return th;
-	}
-	
-	public Set<String> getSelspec( Component comp, final List<String> specs, final JCheckBox ... contigs ) {
-		final JTable	table = new JTable();
-		table.setDragEnabled( true );
-		JScrollPane	scroll = new JScrollPane( table );
-		table.setAutoCreateRowSorter( true );
-		
-		final List<Sequence> ctgs = new ArrayList<Sequence>( contigmap.values() );
-		final TableModel contigmodel = new TableModel() {
-			@Override
-			public int getRowCount() {
-				return ctgs.size();
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 1;
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				return "Contigs/Scaffolds";
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				return String.class;
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return false;
-			}
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				return ctgs.get( rowIndex ).toString();
-			}
-
-			@Override
-			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-			@Override
-			public void addTableModelListener(TableModelListener l) {}
-
-			@Override
-			public void removeTableModelListener(TableModelListener l) {}
-		};
-		final TableModel specmodel = new TableModel() {
-			@Override
-			public int getRowCount() {
-				return specs.size();
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 1;
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				return "Spec";
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				return String.class;
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return false;
-			}
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				return specs.get(rowIndex);
-			}
-
-			@Override
-			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-			@Override
-			public void addTableModelListener(TableModelListener l) {}
-
-			@Override
-			public void removeTableModelListener(TableModelListener l) {}
-		};
-		table.setModel( specmodel );
-		
-		TransferHandler th = dragRows( table, specs );
-		table.setTransferHandler( th );
-		
-		if( contigs != null && contigs.length > 0 && !contigs[0].getText().equals("Plasmid") ) contigs[0].addChangeListener( new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				if( contigs[0] != null && contigs[0].isSelected() ) table.setModel( contigmodel );
-				else table.setModel( specmodel );
-			}
-		});
-		
-		Object[] ctls = new Object[] { scroll, contigs };
-		//Object[] ctls2 = new Object[] { scroll };
-		
-		//if( contigs != null ) 
-		JOptionPane.showMessageDialog( comp, ctls );
-		//else JOptionPane.showMessageDialog( comp, ctls2 );
-		Set<String>	selspec = new LinkedHashSet<String>();
-		for( int i = 0; i < table.getRowCount(); i++ ) {
-			if( table.isRowSelected(i) ) {
-				String spec = (String)table.getValueAt(i, 0);
-				System.err.println("test " + spec);
-				selspec.add( spec );
-			}
-		}
-		return selspec;
-	}
 	
 	public int containmentCount( Set<String> set1, Set<String> set2 ) {
 		int r = 0;
@@ -7867,139 +6802,6 @@ public class GeneSet extends JApplet {
 			if( set2.contains( s1 ) ) r++;
 		}
 		return r;
-	}
-	
-	public Serifier getConcatenatedSequencesMaxLength() {
-		Map<String,Sequence>	smap = new HashMap<String,Sequence>();
-		Set<String>				specset = new HashSet<String>();
-		Map<GeneGroup,Integer>	genegroups = new HashMap<GeneGroup,Integer>();
-		int[] rr = table.getSelectedRows();
-		if( table.getModel() == groupModel ) {
-			for (int r : rr) {
-				int cr = table.convertRowIndexToModel(r);
-				int max = 0;
-				GeneGroup gg = allgenegroups.get(cr);
-				specset.addAll( gg.getSpecies() );
-				
-				for( Tegeval tv : gg.getTegevals() ) {
-					int l = tv.getAlignedSequence().length();
-					if( l > max ) max = l;
-				}
-				genegroups.put( gg, max );
-			}
-		} else {
-			for (int r : rr) {
-				int cr = table.convertRowIndexToModel(r);
-				Gene g = genelist.get(cr);
-				int max = 0;
-				GeneGroup gg = g.getGeneGroup();
-				specset.addAll( gg.getSpecies() );
-				for( Tegeval tv : gg.getTegevals() ) {
-					int l = tv.getAlignedSequence().length();
-					if( l > max ) max = l;
-				}
-				genegroups.put( gg, max );
-			}
-		}
-		
-		//List<Sequence>	seqs = new ArrayList<Sequence>();
-		/*Map<String>	specset = new HashMap<String,Integer>();
-		for( GeneGroup ggroup : genegroups ) {
-			int max = 0;
-			for( Tegeval tv : ggroup.getTegevals() ) {
-				int len = tv.getAlignedSequence().length();
-				if( len > max ) {
-					max = len;
-					specset.put( tv.getContshort().getSpec(), max );
-				}
-			}
-		}*/
-		
-		for( GeneGroup ggroup : genegroups.keySet() ) {
-			int len = genegroups.get( ggroup );
-			for( String selspec : specset ) {				
-				List<Tegeval> ltv = ggroup.getTegevals(selspec);
-				
-				String spec;
-				if( selspec.contains("hermus") ) spec = selspec;
-				else {
-					Matcher m = Pattern.compile("\\d").matcher(selspec);
-					int firstDigitLocation = m.find() ? m.start() : 0;
-					if( firstDigitLocation == 0 ) spec = "Thermus_" + selspec;
-					else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
-				}
-				
-				Sequence seq;
-				if( smap.containsKey( spec ) ) {
-					seq = smap.get( spec );
-				} else {					
-					seq = new Sequence( spec, null );					
-					smap.put( spec, seq );
-				}
-				
-				int max = 0;
-				StringBuilder 	seqstr = null;
-				for( Tegeval tv : ltv ) {
-					int seqlen = tv.getLength();
-					if( seqlen > max ) {
-						seqstr = tv.getAlignedSequence().getStringBuilder();
-						max = seqlen;
-					}
-					
-					/*if( seqstr != null && seqstr.length() > 0 ) {
-						break;
-					}*/
-				}
-				
-				if( seqstr != null && seqstr.length() > 0 ) {
-					seq.append( seqstr );
-				} else {
-					for( int i = 0; i < len; i++ ) seq.append( "-" );
-				}
-			}
-		}
-		
-		Serifier			serifier = new Serifier();
-		for( String spec : smap.keySet() ) {
-			Sequence seq = smap.get( spec );
-			serifier.addSequence( seq );
-		}
-		return serifier;
-	}
-	
-	public Serifier getConcatenatedSequences( boolean proximityJoin, boolean namefix ) {
-		Set<String>							specset = new HashSet<String>();
-		Map<GeneGroup,Integer>				genegroups = new HashMap<GeneGroup,Integer>();
-		int[] rr = table.getSelectedRows();
-		if( table.getModel() == groupModel ) {
-			for (int r : rr) {
-				int cr = table.convertRowIndexToModel(r);
-				int max = 0;
-				GeneGroup gg = allgenegroups.get(cr);
-				specset.addAll( gg.getSpecies() );
-				
-				for( Tegeval tv : gg.getTegevals() ) {
-					Sequence seq = tv.getAlignedSequence();
-					int l = seq != null ? seq.length() : 0;
-					if( l > max ) max = l;
-				}
-				genegroups.put( gg, max );
-			}
-		} else {
-			for (int r : rr) {
-				int cr = table.convertRowIndexToModel(r);
-				Gene g = genelist.get(cr);
-				int max = 0;
-				GeneGroup gg = g.getGeneGroup();
-				specset.addAll( gg.getSpecies() );
-				for( Tegeval tv : gg.getTegevals() ) {
-					int l = tv.getAlignedSequence().length();
-					if( l > max ) max = l;
-				}
-				genegroups.put( gg, max );
-			}
-		}
-		return getConcatenatedSequences(proximityJoin, genegroups, specset, namefix);
 	}
 	
 	public Serifier getConcatenatedSequences( boolean proximityJoin, Map<GeneGroup,Integer> genegroups, Set<String> specset, boolean namefix ) {
@@ -8258,184 +7060,9 @@ public class GeneSet extends JApplet {
 		return serifier;
 	}
 	
-	public void showAlignedSequences( Component comp, Serifier	serifier ) {
-		JFrame frame = new JFrame();
-		frame.setSize(800, 600);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
-		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-		jf.initGui(frame);
-		jf.updateView();
-
-		frame.setVisible(true);
-	}
-	
-	public void showSomeSequences( Component comp, Serifier serifier ) {
-		JFrame frame = new JFrame();
-		frame.setSize(800, 600);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
-		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-		jf.initGui(frame);
-
-		/*for( String contig : contset.keySet() ) {
-			Sequence seq = contset.get(contig);
-			serifier.addSequence(seq);
-			if (seq.getAnnotations() != null)
-				Collections.sort(seq.getAnnotations());
-		}*/
-		jf.getSerifier().checkMaxMin();
-		jf.updateView();
-
-		frame.setVisible(true);
-	}
-	
-	public void showSelectedSequences( Component comp, Set<Annotation> tset, boolean dna, String names ) {
-		JFrame frame = new JFrame();
-		frame.setSize(800, 600);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
-		Serifier	serifier = new Serifier();
-		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-		jf.initGui(frame);
-
-		for( Annotation tv : tset ) {
-			Sequence cont = tv.getContig();
-			if( cont != null ) {
-				//String contig = cont.getSpec();//tv.getContig();
-				Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-				seq.setName( nameFix(tv.getSpecies()) );
-				//Sequence seq = new Sequence( nameFix(tv.getSpecies())/*getGeneName(names, tv.getGene())*/, seqstr, serifier.mseq );
-				serifier.addSequence(seq);
-			}
-		}
-
-		/*for( String contig : contset.keySet() ) {
-			Sequence seq = contset.get(contig);
-			serifier.addSequence(seq);
-			if (seq.getAnnotations() != null)
-				Collections.sort(seq.getAnnotations());
-		}*/
-		jf.updateView();
-
-		frame.setVisible(true);
-	}
-	
 	boolean isthermus = true;
 	String nameFix( String spec ) {
 		return Sequence.nameFix( spec, isthermus );
-	}
-	
-	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs ) {
-		showSequences(comp, ggset, dna, specs, false);
-	}
-	
-	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs, boolean genename ) {
-		JFrame frame = new JFrame();
-		frame.setSize(800, 600);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
-		Serifier	serifier = new Serifier();
-		JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-		jf.initGui(frame);
-
-		for( GeneGroup ggroup : ggset ) {
-		//for( Gene gg : ggroup.genes ) {
-			//if (gg.species != null) {
-				//for (String sp : gg.species.keySet()) {
-				//	Teginfo stv = gg.species.get(sp);
-			for( Tegeval tv : ggroup.getTegevals() ) {
-				Sequence cont = tv.getContshort();
-				if( cont != null ) {
-					String selspec = cont.getSpec();//tv.getContig();
-					if( genename ) {
-						Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-						seq.setName( tv.gene != null ? tv.gene.name : tv.name );
-						serifier.mseq.put( seq.getName(), seq );
-						//Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
-						serifier.addSequence(seq);
-					} else if( specs == null || specs.contains(selspec ) ) {
-						String spec = nameFix( selspec );
-						
-						Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-						seq.setName( spec );
-						/*String name = tv.getGene().id;
-						String cazy = tv.getGene().getGeneGroup().getCommonCazy(cazymap);
-						String ec = tv.getGene().getGeneGroup().getCommonEc();
-						if( cazy != null ) name += " " + cazy;
-						if( ec != null ) name += " " + ec;*/
-						//Sequence seq = new Sequence( spec, seqstr, serifier.mseq );
-						serifier.addSequence(seq);
-					}
-				}
-				//contset.put( contig, seq );
-				
-				/*String contig = tv.contshort;
-				if (contset.containsKey(contig)) {
-					seq = contset.get(contig);
-				} else {
-					if (GeneSet.contigs.containsKey(contig)) {
-						StringBuilder dna = GeneSet.contigs.get(contig);
-						seq = new Sequence(contig, dna, jf.mseq);
-					} else
-						seq = new Sequence(contig, jf.mseq);
-					contset.put(contig, seq);
-				}
-
-				Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
-				a.setStart(tv.start);
-				a.setStop(tv.stop);
-				a.setOri(tv.ori);
-				a.setGroup(gg.name);
-				a.setType("gene");
-				jf.addAnnotation(a);*/
-				// seq.addAnnotation( new Annotation( seq, ) );
-			}
-		}
-
-		/*for( String contig : contset.keySet() ) {
-			Sequence seq = contset.get(contig);
-			serifier.addSequence(seq);
-			if (seq.getAnnotations() != null)
-				Collections.sort(seq.getAnnotations());
-		}*/
-		jf.updateView();
-
-		frame.setVisible(true);
-	}
-	
-	public StringBuffer getSelectedASeqs( JTable table, List<Gene> genelist, JApplet applet, Collection<String> species ) throws IOException {
-		StringWriter sb = new StringWriter();
-		
-		Set<String> selectedSpecies = getSelspec( applet, new ArrayList<String>( species ) );
-		int[] rr = table.getSelectedRows();
-		for (int r : rr) {
-			int cr = table.convertRowIndexToModel(r);
-			Gene gg = genelist.get(cr);
-			//if (gg.species != null) {
-			sb.append(gg.name + ":\n");
-				//for (String sp : gg.species.keySet()) {
-				//for( String sp : selectedSpecies ) {
-			if( selectedSpecies.contains(species) ) {
-				Tegeval tv = gg.tegeval;
-				//sb.append(">" + tv.name + " " + tv.teg + " " + tv.eval + "\n");
-				Sequence protseq = tv.getProteinSequence();
-				protseq.setName( tv.name + " " + tv.teg + " " + tv.eval );
-				protseq.writeSequence(sb);
-				/*for (int i = 0; i < tv.getProteinLength(); i += 70) {
-					int end = Math.min(i + 70, tv.getProteinLength());
-					sb.append( protseq.substring(i, end) + "\n"); // new
-																		// String(
-																		// tv.seq,
-																		// i,
-																		// Math.min(i+70,tv.seq.length())
-																		// )+"\n");
-				}*/
-					// textarea.append( ">" + tv.cont + " " + tv.teg
-					// + " " + tv.eval + "\n" + tv.seq + "\n" );
-			}
-		}
-		return sb.getBuffer();
 	}
 	
 	public static StringBuilder getSelectedSeqs( JTable table, List<Gene> genelist ) {
@@ -8456,67 +7083,6 @@ public class GeneSet extends JApplet {
 		}
 		
 		return sb;
-	}
-	
-	public void cogCalc( String filename, Set<Character> includedCogs, Map<String,Map<Character,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
-		if( table.getModel() == groupModel ) {
-			for( String spec : selspec ) {
-				Map<Character,Integer>	submap = new HashMap<Character,Integer>();
-				map.put(spec, submap);
-				
-				List<Sequence> sctg = speccontigMap.get(spec);
-				for( Sequence c : sctg ) {
-					if( c.getAnnotations() != null ) for( Annotation a : c.getAnnotations() ) {
-						Cog cog = a.getGene().cog;
-						if( cog == null ) {
-							cog = cogmap.get(a.getGene().id);
-						}
-						if( cog != null && cog.symbol != null ) {
-							int val = 0;
-							if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
-							submap.put(cog.symbol, val+1);
-						}
-					}
-				}
-			}
-			
-			/*for( int r = 0; r < table.getRowCount(); r++ ) {
-				//int i = table.convertRowIndexToModel(r);
-				//if( i >= 0 && i < allgenegroups.size() ) {
-			for( int i = 0; i < allgenegroups.size(); i++ ) {
-					GeneGroup gg = allgenegroups.get(i);
-					Cog cog = gg.getCommonCog(cogmap);
-					if( cog != null && includedCogs.contains(cog.symbol) ) {
-						for( String spec : selspec ) {
-							if( gg.species.containsKey( spec ) ) {
-								Teginfo ti = gg.species.get( spec );
-								for( Tegeval tv : ti.tset ) {
-									Map<Character,Integer> submap;
-									if( contigs ) {
-										if( map.containsKey( tv.contloc ) ) {
-											
-										}
-									} else {
-										int val = 0;
-										//if( map.containsKey( tv.getSpecies() ) ) {
-										submap = map.get( tv.getSpecies() );
-										if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
-										/*} else {
-											submap = new HashMap<Character,Integer>();
-											map.put(spec, submap);
-										}*
-										submap.put( cog.symbol, val+1 );
-									}
-								}
-							}
-						}
-					}
-				//}
-			}*/
-		} else {
-			
-		}
-		//cogCalc(filename, br, map, selspec, contigs);
 	}
 	
 	public void cogCalc( String filename, BufferedReader br, Map<String,Map<Character,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
@@ -8784,7 +7350,7 @@ public class GeneSet extends JApplet {
 		return fw;
 	}
 	
-	private void assignGain( Node n, Map<Node,List<GeneGroup>> gainMap, PrintStream ps ) {
+	public void assignGain( Node n, Map<Node,List<GeneGroup>> gainMap, PrintStream ps ) {
 		Set<String>	specs = n.getLeaveNames();
 		
 		List<GeneGroup> lgg = ggSpecMap.get( specs );
@@ -8807,7 +7373,7 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	private void assignLoss( Node n, Map<Node,List<GeneGroup>> lossMap, PrintStream ps ) {
+	public void assignLoss( Node n, Map<Node,List<GeneGroup>> lossMap, PrintStream ps ) {
 		//Set<String>	specs = n.getLeaveNames();
 		
 		/*List<GeneGroup> lgg = ggSpecMap.get( specs );
@@ -8865,854 +7431,11 @@ public class GeneSet extends JApplet {
 		return teginfo;
 	}
 	
-	public JTable getGeneTable() {
-		return table;
-	}
-	
-	public JTable getFunctionTable() {
-		return ftable;
-	}
-	
 	public final class StackBarData {		
 		String 				name;
 		String				oname;
 		Map<String,Integer> b = new HashMap<String,Integer>();
 	}
-	
-	int searchi = 0;
-	public int searchTable( JTable table, String text, int i, boolean back, int ... columns ) {
-		int v;
-		if( back ) {
-			v = i-1;
-			if( v == -1 ) v = table.getRowCount();
-		} else v = (i+1)%table.getRowCount();
-		if( table.getModel() == defaultModel ) {
-			while( v != i ) {
-				//int m = table.convertRowIndexToModel(v);
-				//if( m != -1 ) {
-					//Gene g = genelist.get(m);
-					//String name = column == 7 || column[0] == 8 ? g.getGeneGroup().getCommonSymbol() + ", " + g.getGeneGroup().getCommonKOName( ko2name ) + ", " +  : g.getGeneGroup().getCommonName();
-					
-				String name = "";
-				for( int k : columns ) name += table.getValueAt(v, k);
-				
-				if( name.toLowerCase().contains( text ) ) {
-					//int r = table.convertRowIndexToView(v);
-					Rectangle rect = table.getCellRect(v, 0, true);
-					table.scrollRectToVisible( rect );
-					break;
-				}
-				if( back ) {
-					v--;
-					if( v == -1 ) v = table.getRowCount()-1;
-				} else v = (v+1)%table.getRowCount();
-					
-				//} else break;
-			}
-		} else {
-			while( v != i ) {
-				//int m = table.convertRowIndexToModel(v);
-				//if( m != -1 ) {
-					
-				//GeneGroup gg = allgenegroups.get(m);
-				//String name = gg.getCommonName();
-				String name = "";
-				for( int k : columns ) name += table.getValueAt(v, k);
-				
-				if( name.toLowerCase().contains( text ) ) {
-					//int r = table.convertRowIndexToView(i);
-					Rectangle rect = table.getCellRect(v, 0, true);
-					table.scrollRectToVisible( rect );
-					break;
-				}
-				if( back ) {
-					v--;
-					if( v == -1 ) v = table.getRowCount()-1;
-				} else v = (v+1)%table.getRowCount();
-				
-				//} else break;
-			}
-		}
-		return v;
-	}
-	
-	public void doBlast( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr, boolean x ) {
-		/*File blastn;
-		File blastp;
-		File makeblastdb;
-		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastx.exe" );
-		if( !blastx.exists() ) {
-			blastx = new File( "/opt/ncbi-blast-2.2.29+/bin/blastx" );
-			if( !blastx.exists() ) {
-				blastx = new File( "/usr/local/ncbi/blast/bin/blastx" );
-				blastn = new File( "/usr/local/ncbi/blast/bin/blastn" );
-				blastp = new File( "/usr/local/ncbi/blast/bin/blastp" );
-				
-				makeblastdb = new File( "/usr/local/ncbi/blast/bin/makeblastdb" );
-			} else {
-				blastn = new File( "/opt/ncbi-blast-2.2.29+/bin/blastn" );
-				blastp = new File( "/opt/ncbi-blast-2.2.29+/bin/blastp" );
-				
-				makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
-			}
-		} else {
-			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastn.exe" );
-			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastp.exe" );
-			
-			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\makeblastdb.exe" );
-		}*/
-		
-		int procs = Runtime.getRuntime().availableProcessors();
-		String[] mcmds = { "makeblastdb", "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
-		List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
-		
-		final ProcessBuilder mpb = new ProcessBuilder( lcmd );
-		mpb.redirectErrorStream( true );
-		try {
-			final Process mp = mpb.start();
-			
-			new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = mp.getOutputStream();
-						Writer ow = new OutputStreamWriter( pos );
-						for( Gene g : genelist ) {
-							if( g.getTag() == null || g.getTag().length() == 0 ) {
-								GeneGroup gg = g.getGeneGroup();
-							
-								if( gg != null ) {
-									String name;
-									if( ids ) name = g.id;
-									else {
-										String addstr = "";
-										Cog cog = gg.getCommonCog( cogmap );
-										String cazy = gg.getCommonCazy( cazymap );
-										if( cog != null ) addstr += "_"+cog.id;
-										if( cazy != null ) {
-											if( addstr.length() > 0 ) addstr += cazy;
-											addstr += "_"+cazy;
-										}
-										if( addstr.length() > 0 ) addstr += "_";
-										
-										name = g.name + addstr + "[" + g.id + "]";
-										//pos.write( (">" + g.name + addstr + "[" + g.id + "]\n").getBytes() );
-									}
-									Sequence sb = g.tegeval.getProteinSequence();
-									sb.setName( name );
-									sb.writeSequence(ow);
-									/*for( int i = 0; i < sb.length(); i+=70 ) {
-										pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
-									}
-									pos.write( '\n' );*/
-								}
-							}
-						}
-						ow.close();
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}.start();
-			
-			new Thread() {
-				public void run() {
-					try {
-						InputStream pin = mp.getInputStream();
-						InputStreamReader rdr = new InputStreamReader( pin );
-						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
-						BufferedReader br = new BufferedReader( rdr );
-						String line = br.readLine();
-						while( line != null ) {
-							System.out.println( line );
-							line = br.readLine();
-						}
-						pin.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}.run();
-			
-			//File blastFile = x ? blastx : blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
-			
-			String[] 		cmds = { "blastp", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
-			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
-			//String[] exts = extrapar.trim().split("[\t ]+");
-			
-			ProcessBuilder pb = new ProcessBuilder( lcmd );
-			pb.redirectErrorStream( true );
-			final Process p = pb.start();
-		
-			final Thread t = new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = p.getOutputStream();
-						pos.write( fasta.getBytes() );
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			t.start();
-			
-			final Thread t2 = new Thread() {
-				public void run() {
-					try {
-						System.err.println("WHY NOT");
-						InputStreamReader rdr = new InputStreamReader( p.getInputStream() );
-						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
-						
-						String res = "";
-						BufferedReader br = new BufferedReader( rdr );
-						String line = br.readLine();
-						while( line != null ) {
-							//System.err.println( line );
-							if( line.startsWith("> ") ) {
-								int i = line.indexOf(' ', 2);
-								if( i == -1 ) i = line.length();
-								String id = line.substring(2, i);
-								
-								Gene g = genemap.get( id );
-								if( g != null ) {
-									if( table.getModel() == groupModel ) {
-										i = allgenegroups.indexOf( g.getGeneGroup() );
-										if( i != -1 && i < table.getRowCount() ) {
-											int r = table.convertRowIndexToView( i );
-											table.addRowSelectionInterval(r, r);
-										}
-									} else {
-										i = genelist.indexOf( g );
-										if( i != -1 && i < table.getRowCount() ) {
-											int r = table.convertRowIndexToView( i );
-											table.addRowSelectionInterval(r, r);
-										}
-									}
-								}
-								
-								String stuff = line+"\n";
-								line = br.readLine();
-								while( line != null && !line.startsWith("Query=") && !line.startsWith("> ") ) {
-									stuff += line+"\n";
-									line = br.readLine();
-								}
-								if( rr != null ) {
-									rr.run( stuff );
-									//res += line+"\n";
-								}
-							} else line = br.readLine();
-						}
-						br.close();
-						//System.err.println("wn done");
-						p.destroy();
-						
-						if( rr != null ) rr.run("close");
-						
-						/*if( rr != null ) {
-							rr.run( res );
-						}*/
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			t2.start();
-			//fr.close();
-		} catch (IOException e2) {
-			e2.printStackTrace();
-		}
-	}
-	
-	public void doBlastn( final String fasta, final String evaluestr, final boolean ids, final RunnableResult rr, boolean show ) {
-		/*File blastn;
-		File blastp;
-		File makeblastdb;
-		File blastx = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastx.exe" );
-		if( !blastx.exists() ) {
-			blastx = new File( "/opt/ncbi-blast-2.2.29+/bin/blastx" );
-			if( !blastx.exists() ) {
-				blastx = new File( "/usr/local/ncbi/blast/bin/blastx" );
-				blastn = new File( "/usr/local/ncbi/blast/bin/blastn" );
-				blastp = new File( "/usr/local/ncbi/blast/bin/blastp" );
-				
-				makeblastdb = new File( "/usr/local/ncbi/blast/bin/makeblastdb" );
-			} else {
-				blastn = new File( "/opt/ncbi-blast-2.2.29+/bin/blastn" );
-				blastp = new File( "/opt/ncbi-blast-2.2.29+/bin/blastp" );
-				
-				makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
-			}
-		} else {
-			blastn = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastn.exe" );
-			blastp = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\blastp.exe" );
-			
-			makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.29+\\bin\\makeblastdb.exe" );
-		}*/
-		
-		int procs = Runtime.getRuntime().availableProcessors();
-		String[] mcmds = { "makeblastdb", "-dbtype", "nucl", "-title", "tmp", "-out", "tmp" };
-		List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
-		
-		final ProcessBuilder mpb = new ProcessBuilder( lcmd );
-		mpb.redirectErrorStream( true );
-		try {
-			final Process mp = mpb.start();
-			
-			new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = mp.getOutputStream();
-						for( String cname : contigmap.keySet() ) {
-							Sequence c = contigmap.get( cname );
-							if( ids ) pos.write( (">" + c.id + "\n").getBytes() );
-							else {
-								pos.write( (">" + c.getName() + "\n").getBytes() );
-							}
-							StringBuilder sb = c.getStringBuilder();
-							for( int i = 0; i < sb.length(); i+=70 ) {
-								pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
-							}
-							pos.write( '\n' );
-						}
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}.start();
-			
-			new Thread() {
-				public void run() {
-					try {
-						InputStream pin = mp.getInputStream();
-						InputStreamReader rdr = new InputStreamReader( pin );
-						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
-						BufferedReader br = new BufferedReader( rdr );
-						String line = br.readLine();
-						while( line != null ) {
-							System.out.println( line );
-							line = br.readLine();
-						}
-						pin.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}.run();
-			
-			//File blastFile = blastn; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
-			
-			String[] 		cmds1 = { "blastn", "-dust", "no", "-perc_identity", "99", "-word_size", "21", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
-			String[] 		cmds2 = { "blastn", "-query", "-", "-db", "tmp", "-evalue", evaluestr, "-num_threads", Integer.toString(procs) };
-			String[]		cmds = show ? cmds2 : cmds1;
-			
-			lcmd = new ArrayList<String>( Arrays.asList(cmds) );
-			//String[] exts = extrapar.trim().split("[\t ]+");
-			
-			ProcessBuilder pb = new ProcessBuilder( lcmd );
-			pb.redirectErrorStream( true );
-			final Process p = pb.start();
-		
-			final Thread t = new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = p.getOutputStream();
-						pos.write( fasta.getBytes() );
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			t.start();
-			
-			Map<String,Set<String>>	tph = new HashMap<String,Set<String>>();
-			Map<String,Map<String,String>>	tvp = new HashMap<String,Map<String,String>>();
-			Map<String,Map<String,String>>	tmr = new HashMap<String,Map<String,String>>();
-			
-			Map<String,Integer>		specindex = new LinkedHashMap<String,Integer>();
-			Map<String,Integer>		phindex = new LinkedHashMap<String,Integer>();
-			
-			/*final Thread t2 = new Thread() {
-				public void run() {*/
-					try {
-						System.err.println("WHY NOT");
-						InputStreamReader rdr = new InputStreamReader( p.getInputStream() );
-						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
-						
-						String qspec = null;
-						String query = null;
-						String ctype = null;
-						Annotation at  = new Annotation();
-						int o = 0;
-						StringBuilder res = new StringBuilder();
-						BufferedReader br = new BufferedReader( rdr );
-						String line = br.readLine();
-						res.append( line+"\n" );
-						while( line != null ) {
-							if( line.startsWith("Query= ") ) {
-								query = line.substring(7,line.length());
-								int e = query.indexOf("CRISPR")-1;
-								if( e > 0 ) {
-									qspec = query.substring(0, e);
-									qspec = Sequence.getSpec(qspec);
-									String rest = query.substring(e+8);
-									int ri = rest.lastIndexOf('-');
-									if( ri != -1 ) ctype = rest.substring(ri+1);
-								} else {
-									System.err.println();
-								}
-								
-								line = br.readLine();
-								res.append( line+"\n" );
-								while( !line.startsWith("Length") ) {
-									line = br.readLine();
-									res.append( line+"\n" );
-								}
-								o = Integer.parseInt( line.substring(7) );
-							} else if( line.startsWith("> ") ) {
-								String contname = line.substring(1).trim();
-								//line = br.readLine();
-								//res.append( line+"\n" );
-								//int o = Integer.parseInt( line.substring(7) );
-								
-								Sequence cont = contigmap.get(contname);
-								
-								if( cont != null ) {
-									int start = -1;
-									int stop = 0;
-									line = br.readLine();
-									res.append( line+"\n" );
-									String lastmatch = null;
-									while( line != null && !line.startsWith(">") && !line.startsWith("Query=") /*&& !line.contains("Expect =")*/ ) {
-										if( line.startsWith("Sbjct") ) {
-											String[] split = line.split("[\t ]+");
-											int k = Integer.parseInt( split[1] );
-											int m = Integer.parseInt( split[3] );
-											lastmatch = split[2];
-											
-											if( start == -1 ) start = k;
-											stop = m;
-										}
-										line = br.readLine();
-										res.append( line+"\n" );
-									}
-									
-									if( start > stop ) {
-										int tmp = start;
-										start = stop;
-										stop = tmp;
-									}
-									
-									at.start = start;
-									at.stop = stop;
-									
-									//if( stop - start < o*2 ) {
-									List<Annotation> lann = cont.getAnnotations();
-									if( lann != null ) {
-										int k = Collections.binarySearch(lann, at);
-										
-										//System.err.println( "kkk  " + k + "   " + lann.size() );
-										
-										if( k < 0 ) k = -(k+1)-1;
-											
-										Annotation ann = lann.get(Math.max(0,k));
-										
-										boolean yes = true;
-										if( ann.type != null && ann.type.contains("ummer") ) {
-											yes = false;
-										}
-										
-										int u = k-1;
-										Annotation nann = null;
-										if( u >= 0 && u < lann.size() ) nann = lann.get(u);
-										
-										u = k+1;
-										Annotation rann = null;
-										if( u >= 0 && u < lann.size() ) rann = lann.get(u);
-										
-										if( nann != null && nann.type != null && nann.type.contains("ummer") ) {
-											yes = false;
-										}
-												
-										if( rann != null && rann.type != null && rann.type.contains("ummer") ) {
-											yes = false;
-										}
-										
-										if( !yes ) {
-											//System.err.println();
-										}
-										
-										Gene g = ann.getGene();
-										String desig = ann.designation;
-										
-										if( yes && g != null ) { //ann.stop > at.start && ann.start < at.stop ) {
-											GeneGroup gg = g.getGeneGroup();
-											if( desig != null && desig.contains("phage") ) {
-												if( !phindex.containsKey( desig ) ) phindex.put(desig, phindex.size());
-												
-												Map<String,String> tvps;
-												String specname = qspec;//Sequence.nameFix(qspec, true);
-												if( !specindex.containsKey( specname ) ) specindex.put(specname, specindex.size());
-												
-												if( tvp.containsKey(specname) ) {
-													tvps = tvp.get(specname);
-												} else {
-													tvps = new HashMap<String,String>();
-													tvp.put(specname, tvps);
-												}
-												tvps.put( desig, ctype );
-												
-												String contspec = cont.getSpec();
-												System.err.println( query + " asdf " + contspec + " " + lastmatch + "  " + at.start + " " + at.stop + "  " + ann.start + " " + ann.stop + " rann " + (rann != null ? rann.start + "  " + rann.stop : "") + " nann " + (nann != null ? nann.start + "  " + nann.stop : "") );
-												if( qspec.equals(contspec) ) {
-													if( tmr.containsKey(specname) ) {
-														tvps = tmr.get(specname);
-													} else {
-														tvps = new HashMap<String,String>();
-														tmr.put(specname, tvps);
-													}
-													tvps.put( desig, ctype );
-												}
-												
-												/*if( specname.contains("brockianus_MAT_338") ) {
-													System.err.println();
-												}*/
-											}
-												
-											if( table.getModel() == groupModel ) {
-												int ggindex = allgenegroups.indexOf( gg );
-												int i = table.convertRowIndexToView( ggindex );
-												if( i != -1 ) table.addRowSelectionInterval(i, i);
-											} else if( table.getModel() == defaultModel ) {
-												int gindex = genelist.indexOf( g );
-												int i = table.convertRowIndexToView( gindex );
-												table.addRowSelectionInterval(i, i);
-											}
-										}
-									
-										
-										/*for( Annotation ann : lann ) {
-											if( ann.stop > start && ann.start < stop ) {
-												Gene g = ann.getGene();
-												if( g != null ) {
-													if( table.getModel() == groupModel ) {
-														GeneGroup gg = g.getGeneGroup();
-														
-														int ggindex = allgenegroups.indexOf( gg );
-														int i = table.convertRowIndexToView( ggindex );
-														table.addRowSelectionInterval(i, i);
-													} else if( table.getModel() == defaultModel ) {
-														int gindex = genelist.indexOf( g );
-														int i = table.convertRowIndexToView( gindex );
-														table.addRowSelectionInterval(i, i);
-													}
-												}
-											}
-										}*/
-									}
-									//}
-									continue;
-								}
-							}
-							
-								/*int i = line.indexOf(' ', 2);
-								if( i == -1 ) i = line.length();
-								String id = line.substring(2, i);
-								
-								Gene g = genemap.get( id );
-								if( g != null ) {
-									if( table.getModel() == groupModel ) {
-										i = allgenegroups.indexOf( g.getGeneGroup() );
-										if( i != -1 && i < table.getRowCount() ) {
-											int r = table.convertRowIndexToView( i );
-											table.addRowSelectionInterval(r, r);
-										}
-									} else {
-										i = genelist.indexOf( g );
-										if( i != -1 && i < table.getRowCount() ) {
-											int r = table.convertRowIndexToView( i );
-											table.addRowSelectionInterval(r, r);
-										}
-									}
-								}
-								
-								String stuff = line+"\n";
-								line = br.readLine();
-								while( line != null && !line.startsWith("Query=") && !line.startsWith("> ") ) {
-									stuff += line+"\n";
-									line = br.readLine();
-								}
-								if( rr != null ) {
-									rr.run( stuff );
-									//res += line+"\n";
-								}
-								} //else*/
-							line = br.readLine();
-							res.append( line+"\n" );
-						}
-						br.close();
-						p.destroy();
-						
-						for( String specname : speccontigMap.keySet() ) {
-							List<Sequence> lseq = speccontigMap.get(specname);
-							for( Sequence seq : lseq ) {
-								List<Annotation> lann = seq.getAnnotations();
-								if( lann != null ) {
-									for( Annotation a : lann ) {
-										String desig = a.designation;
-										if( desig != null && desig.contains("phage") && phindex.containsKey(desig) ) {
-											if( !specindex.containsKey( specname ) ) specindex.put(specname, specindex.size());
-											
-											Set<String> tvps;
-											if( tph.containsKey(specname) ) {
-												tvps = tph.get(specname);
-											} else {
-												tvps = new HashSet<String>();
-												tph.put(specname, tvps);
-											}
-											tvps.add( desig );
-										}
-									}
-								}
-							}
-						}
-						
-						int k = 0;
-						int u = 0;
-						Workbook wb = new XSSFWorkbook();
-						Sheet sh = wb.createSheet("Phage");
-						Row rw = sh.createRow(u++);
-						//res = new StringBuilder();
-						for( String ph : phindex.keySet() ) {
-							res.append("\t"+ph);
-							rw.createCell(++k).setCellValue( ph );
-						}
-						res.append("\n");
-						for( String rspec : specindex.keySet() ) {
-							String spec = Sequence.nameFix(rspec, true);
-							rw = sh.createRow(u++);
-							k = 0;
-							rw.createCell(k++).setCellValue(spec);
-							
-							Map<String,String> set = tvp.get(rspec);
-							res.append(spec);
-							if( set != null ) {
-								for( String ph : phindex.keySet() ) {
-									if( set.containsKey(ph) ) {
-										String type = set.get(ph);
-										if( type == null || type.length() == 0 ) type = "yes";
-										res.append("\t"+type);
-										rw.createCell(k).setCellValue(type);
-									} else {
-										res.append("\t");
-									}
-									
-									k++;
-								}
-							}
-							res.append("\n");
-						}
-						
-						for( String ph : phindex.keySet() ) {
-							res.append("\t"+ph);
-						}
-						res.append("\n");
-						
-						u++;
-						for( String rspec : specindex.keySet() ) {
-							String spec = Sequence.nameFix(rspec, true);
-							
-							rw = sh.createRow(u++);
-							k = 0;
-							rw.createCell(k++).setCellValue(spec);
-							
-							Map<String,String> set = tmr.get(rspec);
-							res.append(spec);
-							if( set != null ) {
-								for( String ph : phindex.keySet() ) {
-									if( set.containsKey(ph) ) {
-										String type = set.get(ph);
-										if( type == null || type.length() == 0 ) type = "yes";
-										res.append("\t"+type);
-										rw.createCell(k).setCellValue(type);
-									}
-									else res.append("\t");
-									
-									k++;
-								}
-							}
-							res.append("\n");
-						}
-						
-						u++;
-						for( String rspec : specindex.keySet() ) {
-							String spec = Sequence.nameFix(rspec, true);
-							
-							rw = sh.createRow(u++);
-							k = 0;
-							rw.createCell(k++).setCellValue(spec);
-							
-							Set<String> set = tph.get(rspec);
-							Map<String,String> setvp = tvp.get(rspec);
-							res.append(spec);
-							if( set != null ) {
-								for( String ph : phindex.keySet() ) {
-									if( set.contains(ph) ) {
-										if( setvp != null && setvp.containsKey(ph) ) {
-											res.append("\tyes wspacer");
-											rw.createCell(k).setCellValue("yes wspacer");
-										} else {
-											res.append("\tyes");
-											rw.createCell(k).setCellValue("yes");
-										}
-									}
-									else res.append("\t");
-									
-									k++;
-								}
-							}
-							res.append("\n");
-						}
-						
-						File 				file = new File("/Users/sigmar/phage.xlsx");
-						FileOutputStream 	fos = new FileOutputStream(file);
-						wb.write(fos);
-						fos.close();
-						
-						Desktop.getDesktop().open(file);
-						
-						//if( !show ) {
-							JFrame frame = new JFrame();
-							frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-							frame.setSize(800, 600);
-							
-							JTextArea ta = new JTextArea();
-							ta.setFont( new Font("monospaced", Font.PLAIN, 12) );
-							ta.append( res.toString() );
-							JScrollPane sp = new JScrollPane( ta );
-							frame.add( sp );
-							
-							frame.setVisible( true );
-							
-							FileWriter fw = new FileWriter("/Users/sigmar/file.txt");
-							fw.write( res.toString() );
-							fw.close();
-							
-							if( rr != null ) rr.run("close");
-						//}
-						
-						/*if( rr != null ) {
-							rr.run( res );
-						}*/
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-			/*	}
-			};
-			t2.start();*/
-			//fr.close();
-		} catch (IOException e2) {
-			e2.printStackTrace();
-		}
-	}
-	
-	public void blastn( boolean show ) {
-		String dbname = null;
-		
-		final JTextArea ta = new JTextArea();
-		JScrollPane sp = new JScrollPane( ta );
-		Dimension dim = new Dimension( 400, 300 );
-		sp.setSize( dim );
-		sp.setPreferredSize( dim );
-		JTextField	tf = new JTextField();
-		tf.setText( "0.00001" );
-		Object[] objs = new Object[] { sp, tf };
-		JOptionPane.showMessageDialog(GeneSet.this, objs);
-		
-		doBlastn( ta.getText(), tf.getText(), false, null, show );
-	}
-	
-	public void blast( boolean x ) {
-		//String dbname = null;
-		
-		/*try {
-			Map<String,String> env = new HashMap<String,String>();
-			Path path = zipfile.toPath();
-			String uristr = "jar:" + path.toUri();
-			zipuri = URI.create( uristr /*.replace("file://", "file:")* );
-			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-			
-			final PathMatcher pm = zipfilesystem.getPathMatcher("*.p??");
-			for( Path p : zipfilesystem.getRootDirectories() ) {
-				Files.walkFileTree( p, new SimpleFileVisitor<Path>() {
-					@Override
-					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						if( pm.matches( file ) ) {
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							byte[] bb = new byte[1024];
-							int r = zipm.read( bb );
-							while( r > 0 ) {
-								baos.write(bb, 0, r);
-								r = zipm.read( bb );
-							}
-							Files.write( new File("c:/"+file.getFileName().).toPath(), baos.toByteArray(), StandardOpenOption.CREATE);
-							//unresolvedmap = loadunresolvedmap( new InputStreamReader( zipm ) );
-							
-							dbname = zname.substring(0, zname.length()-4);
-						}
-						return null;*
-					}
-				});
-			}*/
-			//Path nf = zipfilesystem.getPath("/unresolved.blastout");
-			//unresolvedmap = loadunresolvedmap( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
-			
-			/*ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
-			ZipEntry ze = zipm.getNextEntry();
-			while( ze != null ) {
-				String zname = ze.getName();
-				if( zname.endsWith(".phr") || zname.endsWith(".pin") || zname.endsWith(".psq") ) {
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					byte[] bb = new byte[1024];
-					int r = zipm.read( bb );
-					while( r > 0 ) {
-						baos.write(bb, 0, r);
-						r = zipm.read( bb );
-					}
-					Files.write( new File("c:/"+zname).toPath(), baos.toByteArray(), StandardOpenOption.CREATE);
-					//unresolvedmap = loadunresolvedmap( new InputStreamReader( zipm ) );
-					
-					dbname = zname.substring(0, zname.length()-4);
-				}
-				ze = zipm.getNextEntry();
-			}*
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}*/
-		
-		final JTextArea ta = new JTextArea();
-		JScrollPane sp = new JScrollPane( ta );
-		Dimension dim = new Dimension( 400, 300 );
-		sp.setSize( dim );
-		sp.setPreferredSize( dim );
-		JTextField	tf = new JTextField();
-		tf.setText( "0.00001" );
-		Object[] objs = new Object[] { sp, tf };
-		JOptionPane.showMessageDialog(GeneSet.this, objs);
-		
-		doBlast( ta.getText(), tf.getText(), true, null, x );
-	}
-	
-	JRadioButtonMenuItem	gb;
-	JRadioButtonMenuItem	ggb;
-	
-	JTable		table;
-	JTable		ftable;
-	TableModel	ftablemodel;
-	TableModel	defaultModel;
-	TableModel	groupModel;
 	
 	//refmap, genelist, funclist, iclusterlist, uclusterlist, specset
 	Map<String, Gene> genemap;
@@ -9723,3142 +7446,7 @@ public class GeneSet extends JApplet {
 	Map<Set<String>, ShareNum> specset;
 	
 	Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap;
-	BufferedImage bimg;
-	
-	JComboBox<String> selcomb;
-	JComboBox<String> searchcolcomb;
-	JComboBox<String> syncolorcomb;
 	Map<String,Function> funcmap = new HashMap<String,Function>();
-	
-	final Set<Integer> filterset = new HashSet<Integer>();
-	final Set<Integer> genefilterset = new HashSet<Integer>();
-	
-	final JLabel label = new JLabel();
-	
-	final RowFilter rowfilter = new RowFilter() {
-		@Override
-		public boolean include(Entry entry) {
-			return filterset.isEmpty() || filterset.contains(entry.getIdentifier());
-		}
-	};
-	final RowFilter genefilter = new RowFilter() {
-		@Override
-		public boolean include(Entry entry) {
-			return genefilterset.isEmpty() || genefilterset.contains(entry.getIdentifier());
-		}
-	};
-	
-	private JComponent showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
-			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
-			final Map<Set<String>, ShareNum> specset,*/ final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
-			final Container comp, final JApplet applet, final JComboBox selcomblocal) throws IOException {
-		JSplitPane splitpane = new JSplitPane();
-		splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		splitpane.setDividerLocation(400);
-		JScrollPane scrollpane = new JScrollPane();
-		table = new JTable() {
-			public String getToolTipText(MouseEvent me) {
-				Point p = me.getPoint();
-				int r = rowAtPoint(p);
-				int c = columnAtPoint(p);
-				if (r >= 0 && r < super.getRowCount()) {
-					Object ret = super.getValueAt(r, c);
-					if (ret != null) {
-						return ret.toString(); // super.getToolTipText( me );
-					}
-				}
-				return "";
-			}
-		};
-
-		table.setDragEnabled(true);
-		try {
-			final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
-			// System.err.println( df.getHumanPresentableName() + " " +
-			// df.getPrimaryType() + " " + df.getSubType() + " " +
-			// df.getMimeType() );
-			// DataFlavor df1 = DataFlavor.getTextPlainUnicodeFlavor();
-			// System.err.println( df.getHumanPresentableName() + " " +
-			// df.getPrimaryType() + " " + df.getSubType() + " " +
-			// df.getMimeType() );
-			TransferHandler th = new TransferHandler() {
-				/**
-				 * 
-				 */
-				private static final long serialVersionUID = 1L;
-
-				public int getSourceActions(JComponent c) {
-					return TransferHandler.COPY_OR_MOVE;
-				}
-
-				public boolean canImport(TransferHandler.TransferSupport support) {
-					return true;
-				}
-
-				protected Transferable createTransferable(JComponent c) {
-					return new Transferable() {
-						@Override
-						public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-							Map<String, List<Tegeval>> contigs = new HashMap<String, List<Tegeval>>();
-							StringBuilder ret = new StringBuilder();
-							int[] rr = table.getSelectedRows();
-							for (int r : rr) {
-								int cr = table.convertRowIndexToModel(r);
-								Gene gg = genelist.get(cr);
-								//if (gg.species != null) {
-									// ret.append( gg.name + ":\n" );
-									//for (String sp : gg.species.keySet()) {
-								Tegeval tv = gg.tegeval;
-								if (!contigs.containsKey(tv.getContshort())) {
-									List<Tegeval> ltv = new ArrayList<Tegeval>();
-									ltv.add(tv);
-									contigs.put(tv.getContshort().getName(), ltv);
-								} else {
-									List<Tegeval> ltv = contigs.get(tv.getContshort());
-									ltv.add(tv);
-								}
-											/*
-											 * ret.append( ">" + tv.cont + " " +
-											 * tv.teg + " " + tv.eval + "\n" );
-											 * if( tv.dna != null ) { for( int i
-											 * = 0; i < tv.dna.length(); i+=70 )
-											 * { ret.append(tv.dna.substring( i,
-											 * Math.min(i+70,tv.dna.length())
-											 * )+"\n"); } }
-											 */
-							}
-							for (String cont : contigs.keySet()) {
-								List<Tegeval> tv = contigs.get(cont);
-								String dna = tv.get(0).getSequence();
-								ret.append(">" + cont + "\n"); // + " " + tv.teg
-																// + " " +
-																// tv.eval +
-																// "\n" );
-								if (dna != null) {
-									for (int i = 0; i < dna.length(); i += 70) {
-										ret.append(dna.substring(i, Math.min(i + 70, dna.length())) + "\n");
-									}
-								}
-							}
-							for (String cont : contigs.keySet()) {
-								List<Tegeval> ltv = contigs.get(cont);
-								ret.append(">" + cont + "\n"); // + " " + tv.teg
-																// + " " +
-																// tv.eval +
-																// "\n" );
-								for (Tegeval tv : ltv) {
-									ret.append("erm\t#0000ff\t" + tv.start + "\t" + tv.stop + "\n");
-								}
-							}
-
-							return new ByteArrayInputStream(ret.toString().getBytes());
-						}
-
-						@Override
-						public DataFlavor[] getTransferDataFlavors() {
-							return new DataFlavor[] { df };
-						}
-
-						@Override
-						public boolean isDataFlavorSupported(DataFlavor arg0) {
-							if (arg0.equals(df)) {
-								return true;
-							}
-							return false;
-						}
-					};
-				}
-
-				public boolean importData(TransferHandler.TransferSupport support) {
-					Object obj = null;
-
-					System.err.println(support.getDataFlavors().length);
-					int b = Arrays.binarySearch(support.getDataFlavors(), DataFlavor.javaFileListFlavor, new Comparator<DataFlavor>() {
-						@Override
-						public int compare(DataFlavor o1, DataFlavor o2) {
-							return o1 == o2 ? 1 : 0;
-						}
-					});
-
-					try {
-						obj = support.getTransferable().getTransferData(DataFlavor.imageFlavor);
-					} catch (UnsupportedFlavorException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-					try {
-						if (obj != null && obj instanceof File[]) {
-							// File[] ff = (File[])obj;
-							// wbStuff( ff[0].getCanonicalPath() );
-						} else if (obj instanceof Image) {
-
-						} else {
-							obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-							System.err.println(obj);
-							URL url = null;
-							try {
-								url = new URL((String) obj);
-								Image image = ImageIO.read(url);
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}
-					} catch (UnsupportedFlavorException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-					return true;
-				}
-			};
-			table.setTransferHandler(th);
-		} catch (ClassNotFoundException e2) {
-			e2.printStackTrace();
-		}
-
-		final Color darkgreen = new Color( 0, 128, 0 );
-		final Color darkred = new Color( 128, 0, 0 );
-		final Color darkblue = new Color( 0, 0, 128 );
-		final Color darkmag = new Color( 128, 0, 128 );
-		table.setDefaultRenderer(Teg.class, new DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-				Component label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-				if( value == null ) {
-					label.setBackground(Color.white);
-				} else {
-					String spec = (String)syncolorcomb.getSelectedItem();
-					if( spec.length() > 0 ) {
-						if( spec.equals("All") ) {
-							if( value instanceof Teginfo ) {
-								Teginfo ti = (Teginfo)value;
-								label.setBackground( Color.green );
-								for( Tegeval tv : ti.tset ) {
-									String tspec = tv.getGene().getSpecies();
-									List<Sequence> scontigs = speccontigMap.get( tspec );
-									GeneGroup gg = tv.getGene().getGeneGroup();
-									double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
-									if( ratio == -1 ) {
-										ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
-										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-										label.setForeground( Color.white );
-									} else {
-										label.setBackground( GeneCompare.gradientColor( ratio ) );
-										label.setForeground( Color.black );
-									}
-									break;
-									//GeneCompare.gradientColor();
-								}
-							} else if( value instanceof Tegeval ) {
-								Tegeval tv = (Tegeval)value;
-								String tspec = tv.getGene().getSpecies();
-								List<Sequence> scontigs = speccontigMap.get( tspec );
-								GeneGroup gg = tv.getGene().getGeneGroup();
-								double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
-								if( ratio == -1 ) {
-									ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
-									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-									label.setForeground( Color.white );
-								} else {
-									label.setBackground( GeneCompare.gradientColor( ratio ) );
-									label.setForeground( Color.black );
-								}
-							}
-						} else {
-							List<Sequence> contigs = speccontigMap.get( spec );
-							if( value instanceof Teginfo ) {
-								//Teginfo ti = (Teginfo)value;
-								label.setBackground( Color.green );
-								
-								//GeneGroup 	gg = ti.best.getGene().getGeneGroup();
-								//Teginfo		gene2s = gg.getGenes(spec);
-								//double ratio = -1.0;
-								int msimcount = 0;
-								
-								GeneGroup gg = null;
-								Tegeval tv = null;
-								Tegeval tv2 = null;
-								if( table.getModel() == defaultModel ) {
-									int i = table.convertRowIndexToModel(row);
-									Gene g = genelist.get(i);
-									gg = g.getGeneGroup();
-									tv2 = g.tegeval;
-								}
-								
-								if( gg != null ) {
-									Teginfo		gene2s = gg.getGenes(spec);
-									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
-										int simcount = 0;
-										
-										Annotation n = tv1.getNext();
-										Annotation p = tv1.getPrevious();
-										Annotation n2 = tv2.getNext();
-										Annotation p2 = tv2.getPrevious();
-										
-										if( n != null ) {
-											GeneGroup ngg = n.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( ngg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( ngg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										if( p != null ) {
-											GeneGroup pgg = p.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( pgg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( pgg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										if( simcount >= msimcount ) {
-											tv = tv1;
-											msimcount = simcount;
-										}
-										
-										//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										//GeneCompare.gradientColor();
-									}
-								}
-								
-								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv);
-								if( ratio == -1 ) {
-									if( gg != null ) ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
-									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-									label.setForeground( Color.black );
-								} else {
-									label.setBackground( GeneCompare.gradientColor( ratio ) );
-									label.setForeground( Color.black );
-								}
-							} else if( value instanceof Tegeval ) {
-								Tegeval tv = (Tegeval)value;
-								Tegeval tv2 = null;
-								GeneGroup gg = tv.getGene().getGeneGroup();
-								int msimcount = 0;
-								if( gg != null ) {
-									Teginfo		gene2s = gg.getGenes(spec);
-									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
-										int simcount = 0;
-										
-										Annotation n = tv1.getNext();
-										Annotation p = tv1.getPrevious();
-										Annotation n2 = tv.getNext();
-										Annotation p2 = tv.getPrevious();
-										
-										if( n != null ) {
-											GeneGroup ngg = n.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( ngg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( ngg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										if( p != null ) {
-											GeneGroup pgg = p.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( pgg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( pgg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										if( simcount >= msimcount ) {
-											tv2 = tv1;
-											msimcount = simcount;
-										}
-										
-										//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										//GeneCompare.gradientColor();
-									}
-								}
-								//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv2);
-								if( ratio == -1 ) {
-									ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
-									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-									label.setForeground( Color.black );
-								} else {
-									label.setBackground( GeneCompare.gradientColor( ratio ) );
-									label.setForeground( Color.black );
-								}
-								
-								
-								/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
-								label.setBackground( GeneCompare.gradientColor( ratio ) );*/
-							}
-						}
-					} else if( value instanceof Teginfo ) {
-						Teginfo ti = (Teginfo)value;						
-						boolean plasmid = false;
-						boolean phage = false;
-						for( Tegeval tv : ti.tset ) {
-							phage = phage | tv.isPhage();
-							
-							Sequence seq = tv.getContshort();
-							
-							if( seq == null ) {
-								//System.err.println();
-							}
-							
-							plasmid = plasmid | (seq != null && seq.isPlasmid());
-						}
-						
-						if( phage && plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkmag );
-							else label.setBackground( Color.magenta );
-						} else if( phage ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkblue );
-							else label.setBackground( Color.blue );
-						} else if( plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkred );
-							else label.setBackground( Color.red );
-						} else {
-							if( ti.tset.size() > 1 ) label.setBackground( darkgreen );
-							else label.setBackground( Color.green );
-						}
-					} else {
-						Tegeval tv = (Tegeval)value;
-						Gene g = tv.getGene();
-						GeneGroup gg = g.getGeneGroup();
-						Teginfo ti = gg.species.get( g.getSpecies() );
-						
-						boolean phage = tv.isPhage();
-						boolean plasmid = tv.getContshort().isPlasmid();
-						if( phage && plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkmag );
-							else label.setBackground( Color.magenta );
-						} else if( phage ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkblue );
-							else label.setBackground( Color.blue );
-						} else if( plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkred );
-							else label.setBackground( Color.red );
-						} else {
-							if( ti.tset.size() > 1 ) label.setBackground( darkgreen );
-							else label.setBackground( Color.green );
-						}
-					}
-					// label.setText( value.toString() );
-					/*if (colorCodes[0] == null)
-						GeneSet.setColors();
-					if (tv.best.eval == 0) {
-						label.setBackground(colorCodes[0]);
-					} else if (tv.best.eval < 1e-100)
-						label.setBackground(colorCodes[0]);
-					else if (tv.best.eval < 1e-50)
-						label.setBackground(colorCodes[1]);
-					else if (tv.best.eval < 1e-24)
-						label.setBackground(colorCodes[2]);
-					else if (tv.best.eval < 1e-10)
-						label.setBackground(colorCodes[3]);
-					else if (tv.best.eval < 1e-5)
-						label.setBackground(colorCodes[4]);
-					else if (tv.best.eval < 1e-2)
-						label.setBackground(colorCodes[5]);
-					else if (tv.best.eval < 1e-1)
-						label.setBackground(colorCodes[6]);
-					else if (tv.best.eval < 1e0)
-						label.setBackground(colorCodes[7]);
-					else if (tv.best.eval < 1e10)
-						label.setBackground(colorCodes[8]);*/
-				}
-				return label;
-			}
-		});
-
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		table.setAutoCreateRowSorter(true);
-		scrollpane.setViewportView(table);
-
-		Set<String> current = null;
-		Set<String> currentko = null;
-		InputStream is = GeneSet.class.getResourceAsStream("kegg_pathways");
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line = br.readLine();
-		while (line != null) {
-			if (line.startsWith(">")) {
-				current = new HashSet<String>();
-				currentko = new HashSet<String>();
-				pathwaymap.put(line.substring(1), current);
-				pathwaykomap.put(line.substring(1), currentko);
-			} else if( !line.startsWith("K") ) {
-				if (current != null) {
-					String str = line.split("[\t ]+")[0];
-					current.add(str);
-				}
-			} else {
-				if (currentko != null) {
-					String str = line.split("[\t ]+")[0];
-					currentko.add(str);
-				}
-			}
-			line = br.readLine();
-		}
-		br.close();
-		
-		//FileReader fr = new FileReader("/vg454flx/ko2go.txt");
-		/*is = GeneSet.class.getResourceAsStream("/ko2go.txt");
-		InputStreamReader isr = new InputStreamReader( is );
-		br = new BufferedReader( isr );
-		line = br.readLine();
-		while (line != null) {
-			String[] split = line.split(" = ");
-			String[] subsplit = split[1].split(" ");
-			Set<String> gos = new HashSet<String>();
-			for( String go : subsplit ) {
-				gos.add( go );
-			}
-			ko2go.put( split[0], gos );
-			line = br.readLine();
-		}
-		br.close();*/
-		
-		
-
-		final JTextField textfield = new JTextField();
-		JComponent topcomp = new JComponent() {};
-		topcomp.setLayout(new BorderLayout());
-		topcomp.add(scrollpane);
-
-		textfield.setPreferredSize(new Dimension(350, 25));
-		
-		final JRadioButton	search = new JRadioButton("Search");
-		final JRadioButton	filter = new JRadioButton("Filter");
-		
-		ButtonGroup bgsf = new ButtonGroup();
-		bgsf.add( search );
-		bgsf.add( filter );
-		
-		filter.setSelected( true );
-		
-		JToolBar topcombo = new JToolBar();
-		// topcombo.
-		// topcombo.setLayout( new FlowLayout() );
-		
-		specombo = new JComboBox<String>();
-		combo = new JComboBox<String>();
-				
-		specombo.addItem("Select blast species");
-		combo.addItem("Select pathway");
-		topcombo.add(combo);
-		topcombo.add(specombo);
-		topcomp.add(topcombo, BorderLayout.SOUTH);
-
-		JComponent ttopcom = new JComponent() {};
-		ttopcom.setLayout(new FlowLayout());
-
-/*				frame.setVisible( true );
-			}
-		};
-		AbstractAction	sharenumaction = new AbstractAction("Update share numbers") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> specs = getSelspec(GeneSet.this, specList, null);
-				updateShareNum(specs);
-			}
-		};
-		AbstractAction	importgenesymbolaction = new AbstractAction("Import gene symbols") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						Path path = zipfile.toPath();
-						String uristr = "jar:" + path.toUri();
-						zipuri = URI.create( uristr /*.replace("file://", "file:")* );
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						
-						Path nf = zipfilesystem.getPath("/smap_short.txt");
-						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-						
-						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-						uni2symbol(new InputStreamReader(is), bw, unimap);
-						
-						bw.close();
-						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-						zipfilesystem.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		};
-		
-		AbstractAction	importidmappingaction = new AbstractAction("Id mapping") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						Path path = zipfile.toPath();
-						String uristr = "jar:" + path.toUri();
-						zipuri = URI.create( uristr /*.replace("file://", "file:")/ );
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						
-						Path nf = zipfilesystem.getPath("/idmapping_short.dat");
-						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-						
-						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-						if( unimap != null ) unimap.clear();
-						unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-						
-						bw.close();
-						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-						zipfilesystem.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		};
-		
-		final JCheckBoxMenuItem checkbox = new JCheckBoxMenuItem();
-		checkbox.setAction(new AbstractAction("Sort by location") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Tegeval.locsort = checkbox.isSelected();
-			}
-		});
-		AbstractAction saveselAction = new AbstractAction("Save selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				if( rr.length > 0 ) {
-					String val = Integer.toString( table.convertRowIndexToModel(rr[0]) );
-					for( int i = 1; i < rr.length; i++ ) {
-						val += ","+table.convertRowIndexToModel(rr[i]);
-					}
-					String selname = JOptionPane.showInputDialog("Selection name");
-					if( comp instanceof Applet ) {
-						try {
-							((GeneSet)comp).saveSel( selname, val);
-						} catch (Exception e1) {
-							e1.printStackTrace();
-						}
-					}
-				}
-			}
-		};
-		
-		JMenuBar	menubar = new JMenuBar();
-		JMenu		menu = new JMenu("Functions");
-		menu.add( importidmappingaction );
-		menu.add( functionmappingaction );
-		menu.add( importgenesymbolaction );
-		menu.add( fetchaction );
-		menu.add( blast2action );
-		menu.add( sharenumaction );
-		menu.addSeparator();
-		menu.add( checkbox );
-		menu.add( saveselAction );
-		menu.addSeparator();
-		menu.add( genomestataction );
-		menu.add( selectsharingaction );
-		menu.add( shuffletreeaction );
-		menu.add( presabsaction );
-		menu.add( freqdistaction );
-		menu.add( gcpaction );
-		menu.add( matrixaction );
-		menu.add( pancoreaction );
-		menu.add( blastaction );
-		menu.add( koexportaction );
-		menu.add( genomesizeaction );
-		menu.add( gcaction );
-		menu.add( gcskewaction );
-		menu.add( mltreemapaction );
-		menu.add( sevenaction );
-		menu.add( cogaction );
-		menu.add( genexyplotaction );
-		menu.add( compareplotaction );
-		menu.add( syntenygradientaction );
-		menu.add( codregaction );
-		menu.add( fetchcoreaction );
-		menu.add( loadcontiggraphaction );
-		menu.add( selectflankingaction );
-		menu.add( showflankingaction );
-		menu.add( showcontigsaction );
-		menu.add( showunresolved );
-		menu.add( genephyl );
-		
-		menubar.add( menu );
-		ttopcom.add( menubar );
-		
-		JMenu		view = new JMenu("View");
-		menubar.add( view );
-		
-		gb = new JRadioButtonMenuItem( new AbstractAction("Genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				table.setModel( defaultModel );
-			}
-		});
-		view.add( gb );
-		ggb = new JRadioButtonMenuItem( new AbstractAction("Gene groups") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				table.setModel( groupModel );
-			}
-			
-		});
-		ButtonGroup	bg = new ButtonGroup();
-		bg.add( gb );
-		bg.add( ggb );
-		
-		ggb.setSelected( true );
-		
-		view.add( ggb );*/
-		
-		//ttopcom.add( shuffletreebutton );
-		//ttopcom.add( presabsbutton );
-		//ttopcom.add(freqdistbutton);
-		//ttopcom.add(matrixbutton);
-		
-		ttopcom.add(textfield);
-		ttopcom.add(search);
-		ttopcom.add(filter);
-		ttopcom.add(label);
-
-		selcomblocal.addItemListener( new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				String key = (String)e.getItem();
-				if( ((GeneSet)comp).selectionMap.containsKey(key) ) {
-					Set<Integer> val = ((GeneSet)comp).selectionMap.get(key);
-					if( val != null ) {
-						table.clearSelection();
-						for( int i : val ) {
-							int r = table.convertRowIndexToView(i);
-							table.addRowSelectionInterval(r, r);
-						}
-					} else {
-						System.err.println( "null "+key );
-					}
-				} else {
-					System.err.println( "no "+key );
-				}
-			}
-		});
-		ttopcom.add(selcomblocal);
-		
-		
-		/*syncolorcomb.addItemListener( new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				String spec = (String)syncolorcomb.getSelectedItem();
-				//if( spec.length() > 0 )
-			}
-		});*/
-		ttopcom.add( searchcolcomb );
-		ttopcom.add( syncolorcomb );
-		topcomp.add(ttopcom, BorderLayout.NORTH);
-
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				label.setText(table.getRowCount() + "/" + table.getSelectedRowCount());
-				for( JSplitPane gsplitpane : splitpaneList ) {
-					gsplitpane.repaint();
-				}
-			}
-		});
-
-		/*JButton but = new JButton(new AbstractAction("Gene sorter") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					GeneSorter.mynd(genelist, table, "t.scotoductusSA01", contigs);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});*/
-		
-		JScrollPane fscrollpane = new JScrollPane();
-		final JTextField ftextfield = new JTextField();
-		JComponent botcomp = new JComponent() {};
-		botcomp.setLayout(new BorderLayout());
-		botcomp.add(fscrollpane);
-
-		// JButton sbutt = new JButton("Find conserved terms");
-		ftextfield.setPreferredSize(new Dimension(500, 25));
-		JComponent botcombo = new JComponent() {
-		};
-		botcombo.setLayout(new FlowLayout());
-		botcombo.add( ftextfield );
-		//botcombo.add( but );
-
-		JComboBox scombo = new JComboBox();
-		scombo.addItem("5S/8S");
-		scombo.addItem("16S/18S");
-		scombo.addItem("23S/28S");
-		scombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {
-					String name = e.getItem().toString().split("/")[0];
-					InputStream is = GeneSet.class.getResourceAsStream("/all" + name + ".fsa");
-					InputStreamReader isr = new InputStreamReader(is);
-					BufferedReader br = new BufferedReader(isr);
-
-					JTextArea textarea = new JTextArea();
-					JScrollPane scrollpane = new JScrollPane(textarea);
-
-					try {
-						String line = br.readLine();
-						while (line != null) {
-							textarea.append(line + "\n");
-
-							line = br.readLine();
-						}
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-
-					JFrame frame = new JFrame();
-					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-					frame.add(scrollpane);
-					frame.setSize(400, 300);
-					frame.setVisible(true);
-				}
-			}
-		});
-		botcombo.add(scombo);
-
-		JButton swsearch = new JButton(new AbstractAction("SW Search") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComponent c = new JComponent() {};
-				final JProgressBar pb = new JProgressBar();
-				final JTextArea textarea = new JTextArea();
-				JButton searchbut = new JButton(new AbstractAction("Blast") {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						final String fasta = textarea.getText();
-						final SmithWater sw = new SmithWater();
-						final InputStream is = GeneSet.class.getResourceAsStream("/allthermus.aa");
-						new Thread() {
-							public void run() {
-								try {
-									sw.fasta_align(new StringReader(fasta), new InputStreamReader(is), pb);
-									List<SmithWater.ALN> alns = sw.getAlignments();
-									SmithWater.ALN first = null;
-									int count = 0;
-									String result = "";
-									Set<String> regnames = new HashSet<String>();
-									for (SmithWater.ALN aln : alns) {
-										if (first == null) {
-											first = aln;
-										} else if (aln.getScore() < 3.0f * (first.getScore() / 4.0f))
-											break;
-										result += aln.toString();
-										regnames.add(aln.getShortDestName());
-
-										if (++count == 10)
-											break;
-									}
-									textarea.setText(result);
-
-									for (Gene g : genelist) {
-										boolean found = false;
-										Tegeval tv = g.tegeval;
-										if (regnames.contains(tv.name)) {
-											found = true;
-											break;
-										}
-										if (found) {
-											int rr = table.convertRowIndexToView(g.index);
-											if (rr != -1)
-												table.addRowSelectionInterval(rr, rr);
-											break;
-										}
-									}
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-						}.start();
-					}
-				});
-				c.setLayout(new BorderLayout());
-				JScrollPane scrollpane = new JScrollPane(textarea);
-				c.add(scrollpane);
-				c.add(pb, BorderLayout.NORTH);
-				c.add(searchbut, BorderLayout.SOUTH);
-
-				JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.add(c);
-				frame.setSize(400, 300);
-				frame.setVisible(true);
-			}
-		});
-		botcombo.add(swsearch);
-		
-		/*Action blastsearchaction = new AbstractAction("Blast") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				blast();
-			}
-		};*/
-		//JButton blastb = new JButton( blastsearchaction );
-		//botcombo.add( blastb );
-		
-		botcombo.add(jb);
-
-		// botcombo.add( sbutt );
-		botcomp.add(botcombo, BorderLayout.SOUTH);
-
-		splitpane.setBottomComponent(botcomp);
-		splitpane.setTopComponent(topcomp);
-
-		groupModel = new TableModel() {
-			@Override
-			public int getRowCount() {
-				return allgenegroups == null ? 0 : allgenegroups.size();
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 32+specList.size();
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				if (columnIndex == 0) {
-					return "Desc";
-				} else if (columnIndex == 1) {
-					return "Origin";
-				} else if (columnIndex == 2) {
-					return "Genid";
-				} else if (columnIndex == 3) {
-					return "Refid";
-				} else if (columnIndex == 4) {
-					return "Unid";
-				} else if (columnIndex == 5) {
-					return "Keggid";
-				} else if (columnIndex == 6) {
-					return "Kegg pathway";
-				} else if (columnIndex == 7) {
-					return "KO";
-				} else if (columnIndex == 8) {
-					return "KSymbol";
-				} else if (columnIndex == 9) {
-					return "Symbol";
-				} else if (columnIndex == 10) {
-					return "KO name";
-				} else if (columnIndex == 11) {
-					return "Pdbid";
-				} else if (columnIndex == 12) {
-					return "EC";
-				} else if (columnIndex == 13) {
-					return "Cog name";
-				} else if (columnIndex == 14) {
-					return "Cog";
-				} else if (columnIndex == 15) {
-					return "Cog annotation";
-				} else if (columnIndex == 16) {
-					return "Cog symbol";
-				} else if (columnIndex == 17) {
-					return "Cazy";
-				} else if (columnIndex == 18) {
-					return "Present in";
-				} else if (columnIndex == 19) {
-					return "Group index";
-				} else if (columnIndex == 20) {
-					return "Group coverage";
-				} else if (columnIndex == 21) {
-					return "Group size";
-				} else if (columnIndex == 22) {
-					return "Locprev";
-				} else if (columnIndex == 23) {
-					return "Avg GC%";
-				} else if (columnIndex == 24) {
-					return "# of locus";
-				} else if (columnIndex == 25) {
-					return "# of loc in group";
-				} else if (columnIndex == 26) {
-					return "max length";
-				} else if (columnIndex == 27) {
-					return "sharing number";
-				} else if (columnIndex == 28) {
-					return "# Cyc";
-				} else if (columnIndex == 29) {
-					return "16S Corr";
-				} else if (columnIndex == 30) {
-					return "SingalP";
-				} else if (columnIndex == 31) {
-					return "TransM";
-				} else {
-					String spec = specList.get( columnIndex - 32 );
-					if( spec != null ) {
-						if( spec.toLowerCase().contains("thermus") ) {
-							int i = spec.indexOf('_');
-							return spec.substring(i+1, spec.length());
-						} else return spec;
-					}
-					return "";
-				}
-				/* else if (columnIndex == 19) {
-					return "T.tSG0";
-				} else if (columnIndex == 20) {
-					return "T.tJL18";
-				} else if (columnIndex == 21) {
-					return "T.tHB8";
-				} else if (columnIndex == 22) {
-					return "T.tHB27";
-				} else if (columnIndex == 23) {
-					return "T.scotoSA01";
-				} else if (columnIndex == 24) {
-					return "T.aqua";
-				} else if (columnIndex == 25) {
-					return "T.eggert";
-				} else if (columnIndex == 26) {
-					return "T.island";
-				} else if (columnIndex == 27) {
-					return "T.antan";
-				} else if (columnIndex == 28) {
-					return "T.scoto346";
-				} else if (columnIndex == 29) {
-					return "T.scoto1572";
-				} else if (columnIndex == 30) {
-					return "T.scoto252";
-				} else if (columnIndex == 31) {
-					return "T.scoto2101";
-				} else if (columnIndex == 32) {
-					return "T.scoto2127";
-				} else if (columnIndex == 33) {
-					return "T.scoto4063";
-				} else if (columnIndex == 34) {
-					return "T.oshimai";
-				} else if (columnIndex == 35) {
-					return "T.brockianus";
-				} else if (columnIndex == 36) {
-					return "T.filiformis";
-				} else if (columnIndex == 37) {
-					return "T.igniterrae";
-				} else if (columnIndex == 38) {
-					return "T.kawarayensis";
-				} else if (columnIndex == 39) {
-					return "T.arciformis";
-				} else if (columnIndex == 40) {
-					return "T.spCCB";
-				} else if (columnIndex == 41) {
-					return "T.spRLM";
-				} else if (columnIndex == 42) {
-					return "T.oshimaiJL2";
-				} else if (columnIndex == 43) {
-					return "MT.silvianus";
-				} else if (columnIndex == 44) {
-					return "MT.ruber";
-				} else if (columnIndex == 45) {
-					return "M.hydro";
-				} else if (columnIndex == 46) {
-					return "O.profu";
-				}*/
-				
-				//return "";
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 19 || columnIndex == 20 || columnIndex == 28 )
-					return Double.class;
-				else if(columnIndex == 10 || (columnIndex >= 17 && columnIndex <= 28) )
-					return Integer.class;
-				else if (columnIndex >= 32)
-					return Teg.class;
-				return String.class;
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return false;
-			}
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				GeneGroup gg = allgenegroups.get(rowIndex);
-				if (columnIndex == 0) {
-					return gg.getCommonName();
-				} else if (columnIndex == 1) {
-					return gg.getCommonOrigin();
-				} else if (columnIndex == 2) {
-					return null;//gene.genid;
-				} else if (columnIndex == 3) {
-					return gg.getCommonRefId();
-				} else if (columnIndex == 4) {
-					return gg.getCommonUnId();
-				} else if (columnIndex == 5) {
-					return gg.getKeggid();
-				} else if (columnIndex == 6) {
-					return gg.getKeggPathway();
-				} else if (columnIndex == 7) {
-					return gg.getCommonKO();
-				} else if (columnIndex == 8) {
-					return gg.getCommonKSymbol();
-				} else if (columnIndex == 9) {
-					return gg.getCommonSymbol(); //ko2name != null ? ko2name.get( gg.getCommonKO() ) : null;
-				} else if (columnIndex == 10) {
-					String ret = ko2name != null ? ko2name.get( gg.getCommonKO() ) : null;
-					if( ret == null ) {
-						String symbol = gg.getCommonSymbol();
-						if( symbol != null ) {
-							if( symbol.length() <= 5 ) ret = symbol;
-						}
-					}
-					return ret;
-				} else if (columnIndex == 11) {
-					return null;//gene.pdbid;
-				} else if (columnIndex == 12) {
-					return gg.getCommonEc();
-				} else if (columnIndex == 13) {
-					Cog cog = gg.getCommonCog( cogmap );
-					if( cog != null ) {
-						if( cog.name == null ) cog.name = cogidmap.get( cog.id );
-						return cog.name;
-					}
-					return null;
-				} else if (columnIndex == 14) {
-					Cog cog = gg.getCommonCog( cogmap );
-					return cog != null ? cog.id : null;
-				} else if (columnIndex == 15) {
-					Cog cog = gg.getCommonCog( cogmap );
-					return cog != null ? cog.annotation : null;
-				} else if (columnIndex == 16) {
-					Cog cog = gg.getCommonCog( cogmap );
-					return cog != null ? cog.genesymbol : null;
-				} else if (columnIndex == 17) {
-					return gg.getCommonCazy( cazymap );
-				} else if (columnIndex == 18) {
-					return gg.getSpecies().size();
-				} else if (columnIndex == 19) {
-					return gg.groupIndex;
-				} else if (columnIndex == 20) {
-					return gg.getGroupCoverage();
-				} else if (columnIndex == 21) {
-					return gg.getGroupGeneCount();
-				} else if (columnIndex == 22) {
-					return null;//gene.proximityGroupPreservation;
-				} else if (columnIndex == 23) {
-					return gg.getAvgGCPerc();
-				} else if (columnIndex == 24) {
-					return gg.genes.size();
-				} else if (columnIndex == 25) {
-					return gg.getGroupCount();
-				} else if (columnIndex == 26) {
-					return gg.getMaxLength();
-				} else if (columnIndex == 27) {
-					return specset.get( gg.getSpecies() );
-				} else if (columnIndex == 28) {
-					return gg.getMaxCyc();
-				} else if (columnIndex == 29) {
-					return gg.getGroupCoverage() == 39 && gg.getGroupCount() == 39 ? 0 : -1;
-				} else if (columnIndex == 30) {
-					return gg.getCommonSignalP();
-				} else if (columnIndex == 31) {
-					return gg.getCommonTransM();
-				} else {
-					String spec = specList.get( columnIndex - 32 );
-					Teginfo ret = getGroupTes( gg, spec );
-					return ret;
-				}
-				//return columnIndex >= 11 ? null : "";
-			}
-
-			@Override
-			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-			@Override
-			public void addTableModelListener(TableModelListener l) {}
-
-			@Override
-			public void removeTableModelListener(TableModelListener l) {}
-		};
-		defaultModel = new TableModel() {
-			@Override
-			public int getRowCount() {
-				int gs = genelist.size();
-				return gs;
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 26+specList.size();
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				if (columnIndex == 0) {
-					return "Desc";
-				} else if (columnIndex == 1) {
-					return "Origin";
-				} else if (columnIndex == 2) {
-					return "Genid";
-				} else if (columnIndex == 3) {
-					return "Refid";
-				} else if (columnIndex == 4) {
-					return "Unid";
-				} else if (columnIndex == 5) {
-					return "Keggid";
-				} else if (columnIndex == 6) {
-					return "KOid";
-				} else if (columnIndex == 7) {
-					return "KSymbol";
-				} else if (columnIndex == 8) {
-					return "Symbol";
-				} else if (columnIndex == 9) {
-					return "KOname";
-				} else if (columnIndex == 10) {
-					return "Pdbid";
-				} else if (columnIndex == 11) {
-					return "ecid";
-				} else if (columnIndex == 12) {
-					return "COG";
-				} else if (columnIndex == 13) {
-					return "COG name";
-				} else if (columnIndex == 14) {
-					return "Present in";
-				} else if (columnIndex == 15) {
-					return "Group index";
-				} else if (columnIndex == 16) {
-					return "Group coverage";
-				} else if (columnIndex == 17) {
-					return "Group size";
-				} else if (columnIndex == 18) {
-					return "Locprev";
-				} else if (columnIndex == 19) {
-					return "Avg GC%";
-				} else if (columnIndex == 20) {
-					return "# of locus";
-				} else if (columnIndex == 21) {
-					return "# of loc in group";
-				} else if (columnIndex == 22) {
-					return "max length";
-				} else if (columnIndex == 23) {
-					return "sharing number";
-				} else if (columnIndex == 24) {
-					return "# Cyc";
-				} else if (columnIndex == 25) {
-					return "16S Corr";
-				} else {
-					return specList.get( columnIndex - 26 );
-				} /*else if (columnIndex == 19) {
-					return "T.tSG0";
-				} else if (columnIndex == 20) {
-					return "T.tJL18";
-				} else if (columnIndex == 21) {
-					return "T.tHB8";
-				} else if (columnIndex == 22) {
-					return "T.tHB27";
-				} else if (columnIndex == 23) {
-					return "T.scotoSA01";
-				} else if (columnIndex == 24) {
-					return "T.aqua";
-				} else if (columnIndex == 25) {
-					return "T.eggert";
-				} else if (columnIndex == 26) {
-					return "T.island";
-				} else if (columnIndex == 27) {
-					return "T.antan";
-				} else if (columnIndex == 28) {
-					return "T.scoto346";
-				} else if (columnIndex == 29) {
-					return "T.scoto1572";
-				} else if (columnIndex == 30) {
-					return "T.scoto252";
-				} else if (columnIndex == 31) {
-					return "T.scoto2101";
-				} else if (columnIndex == 32) {
-					return "T.scoto2127";
-				} else if (columnIndex == 33) {
-					return "T.scoto4063";
-				} else if (columnIndex == 34) {
-					return "T.oshimai";
-				} else if (columnIndex == 35) {
-					return "T.brockianus";
-				} else if (columnIndex == 36) {
-					return "T.filiformis";
-				} else if (columnIndex == 37) {
-					return "T.igniterrae";
-				} else if (columnIndex == 38) {
-					return "T.kawarayensis";
-				} else if (columnIndex == 39) {
-					return "T.arciformis";
-				} else if (columnIndex == 40) {
-					return "T.spCCB";
-				} else if (columnIndex == 41) {
-					return "T.spRLM";
-				} else if (columnIndex == 42) {
-					return "T.oshimaiJL2";
-				} else if (columnIndex == 43) {
-					return "MT.silvianus";
-				} else if (columnIndex == 44) {
-					return "MT.ruber";
-				} else if (columnIndex == 45) {
-					return "M.hydro";
-				} else if (columnIndex == 46) {
-					return "O.profu";
-				}*/
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 16 || columnIndex == 19 || columnIndex == 25 )
-					return Double.class;
-				else if(columnIndex >= 13 && columnIndex <= 24)
-					return Integer.class;
-				else if (columnIndex >= 26)
-					return Teg.class;
-				return String.class;
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return false;
-			}
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				Gene gene = genelist.get(rowIndex);
-				if (columnIndex == 0) {
-					GeneGroup gg = gene.getGeneGroup();
-					return gg != null ? gene.getGeneGroup().getCommonName() : null;
-				} else if (columnIndex == 1) {
-					return gene.getSpecies();
-				} else if (columnIndex == 2) {
-					return gene.genid;
-				} else if (columnIndex == 3) {
-					return gene.refid;
-				} else if (columnIndex == 4) {
-					return gene.uniid;
-				} else if (columnIndex == 5) {
-					return gene.keggid;
-				} else if (columnIndex == 6) {
-					GeneGroup gg = gene.getGeneGroup();
-					return gg != null ? gg.getCommonKO() : null;
-				} else if (columnIndex == 7) {
-					GeneGroup gg = gene.getGeneGroup();
-					return gg != null ? gg.getCommonKSymbol() : null;
-				} else if (columnIndex == 8) {
-					GeneGroup gg = gene.getGeneGroup();
-					return gg != null ? gg.getCommonSymbol() : null; //gene.symbol
-				} else if (columnIndex == 9) {
-					GeneGroup gg = gene.getGeneGroup();
-					return gg != null ? gg.getCommonKOName( ko2name ) : null;
-				} else if (columnIndex == 10) {
-					return gene.pdbid;
-				} else if (columnIndex == 11) {
-					return gene.ecid;
-				} else if (columnIndex == 12) {
-					Cog cog = gene.getGeneGroup() != null ? gene.getGeneGroup().getCommonCog( cogmap ) : null;
-					if( cog != null ) return cog.id;
-					return null;
-				} else if (columnIndex == 13) {
-					Cog cog = gene.getGeneGroup() != null ? gene.getGeneGroup().getCommonCog( cogmap ) : null;
-					if( cog != null ) return cog.name;
-					return null;
-				} else if (columnIndex == 14) {
-					return gene.getGeneGroup().getSpecies().size();
-				} else if (columnIndex == 15) {
-					return gene.getGroupIndex();
-				} else if (columnIndex == 16) {
-					return gene.getGroupCoverage();
-				} else if (columnIndex == 17) {
-					return gene.getGroupGenCount();
-				} else if (columnIndex == 18) {
-					return gene.proximityGroupPreservation;
-				} else if (columnIndex == 19) {
-					return gene.getGCPerc();
-				} else if (columnIndex == 20) {
-					/*int val = 0;
-					for (String str : gene.species.keySet()) {
-						val += gene.species.get(str).tset.size();
-					}*/
-					return 1;
-				} else if (columnIndex == 21) {
-					return gene.getGroupCount();
-				} else if (columnIndex == 22) {
-					return gene.getMaxLength();
-				} else if (columnIndex == 23) {
-					GeneGroup gg = gene.getGeneGroup();
-					if( gg != null && gg.getSpecies() != null ) {
-						return specset.get( gg.getSpecies() );
-					}
-					return null;
-				} else if (columnIndex == 24) {
-					gene.getMaxCyc();
-				} else if (columnIndex == 25) {
-					return gene.getGroupCoverage() == 35 && gene.getGroupCount() == 35 ? gene.corr16s : -1;
-				} else {
-					String spec = specList.get( columnIndex-26 );
-					/*if( spec.contains("timidus") ) {
-						System.err.println();
-					}*/
-					//Teginfo set = gene.species.equals(spec) ? gene.teginfo : null;
-					if( gene.getSpecies().equals( spec ) ) {
-						return gene.tegeval;
-					} else {
-						return gene.getGeneGroup().species.get( spec );
-					}
-				}
-				return columnIndex >= 17 ? null : "";
-			}
-
-			@Override
-			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-			@Override
-			public void addTableModelListener(TableModelListener l) {}
-
-			@Override
-			public void removeTableModelListener(TableModelListener l) {}
-		};
-		table.setModel( groupModel );
-		//table.setModel( defaultModel );
-
-		/*
-		 * Comparator<Tegeval> wrapMe = new Comparator<Tegeval>() { public int
-		 * compare(Tegeval o1, Tegeval o2) { return o1.compareTo(o2); } };
-		 * DefaultRowSorter<TableModel, Integer> rowsorter =
-		 * (DefaultRowSorter<TableModel,Integer>)table.getRowSorter(); for( int
-		 * i = 10; i < 23; i++ ) { rowsorter.setComparator(i,
-		 * NullComparators.atEnd(wrapMe)); }
-		 */
-
-		table.getRowSorter().addRowSorterListener( new RowSorterListener() {
-			@Override
-			public void sorterChanged(RowSorterEvent e) {
-				for (String cstr : contigmap.keySet()) {
-					Sequence c = contigmap.get(cstr);
-					//c.count = 0;
-					c.loc = 0.0;
-				}
-
-				if( table.getModel() == defaultModel ) {
-					for (Gene g : genelist) {
-						Tegeval tv = g.tegeval;
-							// int first = tv.cont.indexOf('_');
-							// int sec = tv.cont.indexOf('_',first+1);
-						Sequence cont = tv.getContshort(); // tv.cont.substring(0,sec);
-						if( cont != null && contigmap.containsKey(cont.getName()) ) {
-							Sequence c = contigmap.get(cont.getName());
-							//c.count++;
-							int val = table.convertRowIndexToView(g.index);
-							c.loc += (double) val;
-						}
-					}
-				}
-				for( JSplitPane gsplitpane : splitpaneList ) {
-					gsplitpane.repaint();
-				}
-			}
-		});
-
-		ftable = new JTable() {
-			public String getToolTipText(MouseEvent me) {
-				Point p = me.getPoint();
-				int r = rowAtPoint(p);
-				int c = columnAtPoint(p);
-				if (r >= 0 && r < super.getRowCount()) {
-					Object ret = super.getValueAt(r, c);
-					if (ret != null) {
-						return ret.toString(); // super.getToolTipText( me );
-					}
-				}
-				return "";
-			}
-		};
-
-		JPopupMenu fpopup = new JPopupMenu();
-		fpopup.add(new AbstractAction("Amigo lookup") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = ftable.getSelectedRow();
-				if (r >= 0) {
-					String go = (String) ftable.getValueAt(r, 0);
-					try {
-						// GeneSet.this.getAppletContext().
-						Desktop.getDesktop().browse(new URI("http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=" + go));
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		});
-		fpopup.add(new AbstractAction("KEGG lookup") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = ftable.getSelectedRow();
-				if (r >= 0) {
-					String kegg = (String) ftable.getValueAt(r, 3);
-					try {
-						Desktop.getDesktop().browse(new URI("http://www.genome.jp/dbget-bin/www_bget?rn:" + kegg));
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		});
-		fpopup.add(new AbstractAction("EC lookup") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = ftable.getSelectedRow();
-				if (r >= 0) {
-					String ec = (String) ftable.getValueAt(r, 1);
-					try {
-						Desktop.getDesktop().browse(new URI("http://www.expasy.ch/cgi-bin/nicezyme.pl?" + ec));
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		});
-		fpopup.addSeparator();
-		fpopup.add( new AbstractAction("Excel report") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Workbook workbook = new XSSFWorkbook();
-				Sheet sheet = workbook.createSheet("enzyme");
-				int k = 0;
-				int[] rr = ftable.getSelectedRows();
-				for( int r : rr ) {
-					//String ec = (String)ftable.getValueAt(r, 1);
-					//String go = (String)ftable.getValueAt(r, 0);
-					
-					int i = ftable.convertRowIndexToModel(r);
-					Function f = funclist.get(i);
-					for( GeneGroup gg : f.getGeneGroups() ) {
-						for( String spec : gg.getSpecies() ) {
-							Teginfo ti = gg.getGenes(spec);
-							
-							Row 	row = sheet.createRow(k++);
-							Cell 	ecell = row.createCell(0);
-							ecell.setCellValue( "EC:"+f.ec );
-							Cell 	ncell = row.createCell(1);
-							ncell.setCellValue( f.name );
-							Cell 	spell = row.createCell(2);
-							spell.setCellValue( spec );
-							Cell 	seqcell = row.createCell(3);
-							seqcell.setCellValue( ti.tset.size() );
-						}
-						/*for( Gene g :gg.genes ) {
-							Row 	row = sheet.createRow(k++);
-							Cell 	ecell = row.createCell(0);
-							ecell.setCellValue( "EC:"+f.ec );
-							Cell 	ncell = row.createCell(1);
-							ncell.setCellValue( f.name );
-							Cell 	spell = row.createCell(2);
-							spell.setCellValue( g.getSpecies() );
-							Cell 	seqcell = row.createCell(3);
-							seqcell.setCellValue( g.tegeval.getAlignedSequence().toString() );
-						}*/
-					}
-					sheet.createRow(k++);
-				}
-				
-				try {
-					workbook.write( new FileOutputStream("/u0/excel.xlsx") );
-				} catch (FileNotFoundException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		ftable.setComponentPopupMenu(fpopup);
-
-		JPopupMenu popup = new JPopupMenu();
-		popup.add( new AbstractAction("Show KEGG pathway") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				int i = table.convertRowIndexToModel( r );
-				GeneGroup gg = allgenegroups.get(i);
-				
-				Map<String,String> env = new HashMap<String,String>();
-				env.put("create", "true");
-				
-				String uristr = "jar:" + zippath.toUri();
-				URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-				final List<Path>	lbi = new ArrayList<Path>();
-				try {
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					for( Path root : zipfilesystem.getRootDirectories() ) {
-						for( Gene g : gg.genes ) {
-							if( g.keggpathway != null ) {
-								String sub = g.keggpathway.substring(0,3);
-								Path subf = root.resolve(sub);
-								if( Files.exists(subf) ) {
-									String[] split = g.keggpathway.split(" ");
-									for( String s : split ) {
-										Path pimg = subf.resolve(s+".png");
-										if( Files.exists(pimg) ) {
-											showKeggPathway( sub, pimg );
-										}
-									}
-								}
-							}
-						}
-						break;
-					}
-					zipfilesystem.close();
-				} catch( Exception ex ) {
-					ex.printStackTrace();
-				}
-			}
-		});
-		popup.add( new AbstractAction("Plasmid") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				int i = table.convertRowIndexToModel( r );
-				Gene g = genelist.get(i);
-				Sequence contig = g.tegeval.getContshort();
-				String contigstr = contig.toString();
-				contig.plasmid = !plasmids.contains( contigstr );
-				if( contig.plasmid ) plasmids.add( contigstr );
-				else plasmids.remove( contigstr );
-				
-				try {
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					//Path path = zipfile.toPath();
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					
-					//fs = FileSystems.newFileSystem( uri, env );
-					//FileSystem fs = FileSystems.newFileSystem(uri, env);
-
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					for( String contigname : plasmids ) {
-				    	baos.write( (contigname + "\n").getBytes() );
-					}
-					
-					Path nf = zipfilesystem.getPath("/plasmids.txt");
-					long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-					//System.err.println( "eeerm " + bl );
-					zipfilesystem.close();
-				    
-				    /*Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
-				    for( String phage : phageset ) {
-				    	writer.write( phage + "\n" );
-				    }
-				    writer.close();*/
-				    
-				    
-				    //writer.write("hello");
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		popup.add( new AbstractAction("Designate") {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComboBox<String>	descombo = new JComboBox<String>( deset.toArray( new String[deset.size()] ) );
-				descombo.setEditable( true );
-				JOptionPane.showMessageDialog(GeneSet.this, descombo);
-				String val = descombo.getSelectedItem().toString();
-				deset.add( val );
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					int i = table.convertRowIndexToModel( r );
-					Gene g = genelist.get(i);
-					g.tegeval.designation = val;
-					if( g.id != null ) {
-						designations.put( g.id, val );
-					} else {
-						System.err.println( g.refid );
-					}
-					//ta.append( g.tegeval.id + "\n" );
-				}
-				
-				try {
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					//Path path = zipfile.toPath();
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					
-					//fs = FileSystems.newFileSystem( uri, env );
-					//FileSystem fs = FileSystems.newFileSystem(uri, env);
-
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					for( String geneid : designations.keySet() ) {
-						String design = designations.get( geneid );
-				    	baos.write( (geneid + "\t" + design + "\n").getBytes() );
-					}
-					
-					Path nf = zipfilesystem.getPath("/designations.txt");
-					long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING);
-					//System.err.println( "eeerm " + bl );
-					zipfilesystem.close();
-				    
-				    /*Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
-				    for( String phage : phageset ) {
-				    	writer.write( phage + "\n" );
-				    }
-				    writer.close();*/
-				    
-				    
-				    //writer.write("hello");
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				
-				/*JFrame frame = new JFrame("Ids");
-				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-				frame.setSize(800, 600);
-				JTextArea	ta = new JTextArea();
-				JScrollPane sp = new JScrollPane( ta );
-				frame.add( sp );
-				
-				frame.setVisible( true );*/
-			}
-		});
-		popup.add( new AbstractAction("KO to name") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String>	koids = new HashSet<String>();
-				for( Gene g : genelist ) {
-					if( g.koid != null && g.koid.length() > 0 && !ko2name.containsKey( g.koid ) ) koids.add( g.koid );
-				}
-				
-				try {
-					Map<String,String>	ko2name = new HashMap<String,String>();
-					int cnt = 0;
-					for( String koid : koids ) {
-						URL url = new URL("http://www.kegg.jp/dbget-bin/www_bget?ko:"+koid);
-						InputStream is = url.openStream();
-						StringBuilder sb = new StringBuilder();
-						BufferedReader br = new BufferedReader( new InputStreamReader(is) );
-						String line = br.readLine();
-						while( line != null ) {
-							sb.append( line );
-							line = br.readLine();
-						}
-						br.close();
-						
-						int i = sb.indexOf("<nobr>Name</nobr>");
-						if( i != -1 ) {
-							int k = sb.indexOf(":hidden\">");
-							if( k != -1 ) {
-								String koname = sb.substring(k+9, sb.indexOf("<br>", k) );
-								ko2name.put( koid, koname );
-								
-								System.err.println( koid + "\t" + koname );
-							}
-						}
-						
-						//System.err.println( ko2name.size() + " " + koids.size() );
-						//if( cnt++ > 20 ) break;
-					}
-					
-					FileWriter fw = new FileWriter("c:/ko2name.txt");
-					for( String koid : ko2name.keySet() ) {
-						fw.write( koid + "\t" + ko2name.get(koid) + "\n" );
-					}
-					fw.close();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Gene gain/loss") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Map<Node,List<GeneGroup>>	nodeGainMap = new HashMap<Node,List<GeneGroup>>();
-				Map<Node,List<GeneGroup>>	nodeLossMap = new HashMap<Node,List<GeneGroup>>();
-				
-				/*String treestr = "";
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( applet ) == JFileChooser.APPROVE_OPTION ) {
-					File file = fc.getSelectedFile();
-					try {
-						byte[] bb = Files.readAllBytes( Paths.get(file.toURI()) );
-						treestr = new String( bb );
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}*/
-				
-				Serifier 	serifier = getConcatenatedSequences( false, true );
-				String 		tree = serifier.getFastTree( serifier.lseq, user, false );
-				
-				TreeUtil 	tu = new TreeUtil();
-				Node 		n = tu.parseTreeRecursive( tree, false );
-				
-				TableModel model = new TableModel() {
-					@Override
-					public int getRowCount() {
-						return GeneSet.this.getSpecies().size();
-					}
-
-					@Override
-					public int getColumnCount() {
-						return 1;
-					}
-
-					@Override
-					public String getColumnName(int columnIndex) {
-						return null;
-					}
-
-					@Override
-					public Class<?> getColumnClass(int columnIndex) {
-						return String.class;
-					}
-
-					@Override
-					public boolean isCellEditable(int rowIndex, int columnIndex) {
-						return false;
-					}
-
-					@Override
-					public Object getValueAt(int rowIndex, int columnIndex) {
-						return GeneSet.this.getSpecies().get( rowIndex );
-					}
-
-					@Override
-					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-					@Override
-					public void addTableModelListener(TableModelListener l) {}
-
-					@Override
-					public void removeTableModelListener(TableModelListener l) {}
-				};
-				JTable table = new JTable( model );
-				table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-				JScrollPane	scroll = new JScrollPane( table );
-				FlowLayout flowlayout = new FlowLayout();
-				JComponent c = new JComponent() {};
-				c.setLayout( flowlayout );
-				c.add( scroll );
-				JOptionPane.showMessageDialog(comp, c);
-				
-				List<String>	rootgroup = new ArrayList<String>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					rootgroup.add( (String)table.getValueAt(r, 0) );
-				}
-				
-				//String[] sobj = {"mt.ruber", "mt.silvanus", "o.profundus", "m.hydrothermalis"};
-				Node newnode = tu.getParent( n, new HashSet<String>( rootgroup ) );
-				tu.rerootRecur( n, newnode );
-				
-				File f = new File("/home/sigmar/gain_list.txt");
-				try {
-					PrintStream ps = new PrintStream( f );
-					assignGain( newnode, nodeGainMap, ps );
-					ps.close();
-				} catch (FileNotFoundException e1) {
-					e1.printStackTrace();
-				}
-				
-				f = new File("/home/sigmar/loss_list.txt");
-				try {
-					PrintStream ps = new PrintStream( f );
-					assignLoss( newnode, nodeLossMap, ps );
-					ps.close();
-				} catch (FileNotFoundException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		popup.add( new AbstractAction("Concatenate tree") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Serifier serifier = getConcatenatedSequences( false, true );
-				
-				boolean succ = true;
-				if( comp instanceof Applet ) {
-					try {
-						JSObject win = JSObject.getWindow( (Applet)comp );
-						StringWriter sw = new StringWriter();
-						serifier.writeFasta(serifier.lseq, sw, null);
-						sw.close();
-						win.call("fasttree", new Object[] { sw.toString() });
-					} catch( NoSuchMethodError | Exception e1 ) {
-						e1.printStackTrace();
-						succ = false;
-					}
-				}
-				
-				/*if( !succ ) {
-					String 				tree = serifier.getFastTree();
-					if( cs.connections().size() > 0 ) {
-			    		cs.sendToAll( tree );
-			    	} else if( Desktop.isDesktopSupported() ) {
-			    		cs.message = tree;
-			    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
-			    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
-						try {
-							Desktop.getDesktop().browse( new URI(uristr) );
-						} catch (IOException | URISyntaxException e1) {
-							e1.printStackTrace();
-						}
-			    	}
-					System.err.println( tree );
-				}*/
-				showAlignedSequences( comp, serifier );
-			}
-		});
-		popup.add( new AbstractAction("Majority rule consensus") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Serifier serifier = new Serifier();
-				
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
-				int[] rr = table.getSelectedRows();
-				if( table.getModel() == groupModel ) {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						GeneGroup gg = allgenegroups.get(cr);
-						genegroups.add( gg );
-					}
-				} else {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						Gene gg = genelist.get(cr);
-						genegroups.add( gg.getGeneGroup() );
-					}
-				}
-				
-				TreeUtil treeutil = new TreeUtil();
-				Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
-				for( GeneGroup ggroup : genegroups ) {
-					//List<Sequence>	seqlist = new ArrayList<Sequence>();
-					
-					for( Tegeval tv : ggroup.getTegevals() ) {
-						String spec = tv.getContshort().getSpec();
-						Sequence seq = tv.getAlignedSequence();
-						
-						//Sequence seq = new Sequence( spec, null );
-						//if( seqstr != null && seqstr.length() > 0 ) seq.append( seqstr );
-						serifier.addSequence( seq );			
-					}
-
-					String tree = serifier.getFastTree( serifier.lseq, user, false );
-					Node n = treeutil.parseTreeRecursive( tree, false );
-					treeutil.setLoc( 0 );
-					n.nodeCalcMap( nmap );
-				}
-		    	
-				Node guidetree = null;
-				
-				/*********************************** Serifier serifier = getConcatenatedSequences();
-				String tree = serifier.getFastTree();
-				guidetree = treeutil.parseTreeRecursive( tree, false );*/
-				
-				Node root = DataTable.majoRuleConsensus(treeutil, nmap, guidetree, false);
-				String tree = root.toString();
-				
-				if( cs.connections().size() > 0 ) {
-		    		cs.sendToAll( tree );
-		    	} else if( Desktop.isDesktopSupported() ) {
-		    		cs.message = tree;
-		    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
-		    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
-					try {
-						Desktop.getDesktop().browse( new URI(uristr) );
-					} catch (IOException | URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-		    	}
-			}
-		});
-		popup.add(new AbstractAction("Add similar") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				int c = table.getSelectedColumn();
-
-				Object o = table.getValueAt(r, c);
-
-				if (c >= 18) {
-					for (int i = 0; i < table.getRowCount(); i++) {
-						Object no = table.getValueAt(i, c);
-						if (no != null && !table.isRowSelected(i))
-							table.addRowSelectionInterval(i, i);
-					}
-				} else {
-					for (int i = 0; i < table.getRowCount(); i++) {
-						Object no = table.getValueAt(i, c);
-						if (o.equals(no) && !table.isRowSelected(i))
-							table.addRowSelectionInterval(i, i);
-					}
-				}
-			}
-		});
-		popup.add(new AbstractAction("Select similar") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				int c = table.getSelectedColumn();
-
-				Object o = table.getValueAt(r, c);
-
-				table.removeRowSelectionInterval(0, table.getRowCount() - 1);
-				if (c >= 18) {
-					for (int i = 0; i < table.getRowCount(); i++) {
-						Object no = table.getValueAt(i, c);
-						if (no != null)
-							table.addRowSelectionInterval(i, i);
-					}
-				} else {
-					for (int i = 0; i < table.getRowCount(); i++) {
-						Object no = table.getValueAt(i, c);
-						if (o.equals(no))
-							table.addRowSelectionInterval(i, i);
-					}
-				}
-			}
-		});
-		popup.add(new AbstractAction("Table text") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JTextArea ta = new JTextArea();
-				ta.setDragEnabled(true);
-				JScrollPane scrollpane = new JScrollPane(ta);
-
-				StringBuilder sb = new StringBuilder();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					for (int c = 0; c < table.getColumnCount() - 1; c++) {
-						Object o = table.getValueAt(r, c);
-						if (c > 18) {
-							if (o != null) {
-								String val = o.toString();
-								int k = val.indexOf(' ');
-								sb.append(val.substring(0, k));
-								sb.append("\t" + val.substring(k + 1));
-							} else
-								sb.append("\t");
-						} else {
-							if (o != null) {
-								sb.append(o.toString());
-							}
-						}
-						sb.append("\t");
-					}
-					Object o = table.getValueAt(r, table.getColumnCount() - 1);
-					if (o != null) {
-						String val = o.toString();
-						int k = val.indexOf(' ');
-						sb.append(val.substring(0, k));
-						sb.append("\t" + val.substring(k + 1));
-					} else
-						sb.append("\t");
-					sb.append("\n");
-				}
-
-				ta.setText(sb.toString());
-				JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.add(scrollpane);
-				frame.setSize(400, 300);
-				frame.setVisible(true);
-			}
-		});
-		popup.addSeparator();
-		popup.add(new AbstractAction("NCBI lookup") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				if (r >= 0) {
-					String ref = (String) table.getValueAt(r, 2);
-					try {
-						Desktop.getDesktop().browse(new URI("http://www.ncbi.nlm.nih.gov/gene?term=" + ref));
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		});
-		table.setComponentPopupMenu(popup);
-
-		ftable.setAutoCreateRowSorter(true);
-		ftablemodel = new TableModel() {
-			@Override
-			public int getRowCount() {
-				return funclist.size();
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 9;
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				if (columnIndex == 0)
-					return "GO";
-				else if (columnIndex == 1)
-					return "EC";
-				else if (columnIndex == 2)
-					return "MetaCyc";
-				else if (columnIndex == 3)
-					return "KEGG";
-				else if (columnIndex == 4)
-					return "Function coverage";
-				else if (columnIndex == 5)
-					return "Number of proteins";
-				else if (columnIndex == 6)
-					return "Name";
-				else if (columnIndex == 7)
-					return "Namespace";
-				else if (columnIndex == 8)
-					return "Def";
-				return "";
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				if( columnIndex == 4 || columnIndex == 5 )
-					return Integer.class;
-				return String.class;
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return false;
-			}
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				Function func = funclist.get(rowIndex);
-				if( columnIndex == 0 )
-					return func.go;
-				else if( columnIndex == 1 )
-					return func.ec;
-				else if( columnIndex == 2 )
-					return func.metacyc;
-				else if( columnIndex == 3 )
-					return func.kegg;
-				else if( columnIndex == 4 )
-					return func.getSpeciesCount();
-				else if( columnIndex == 5 )
-					return table.getModel() == groupModel ? func.getGroupSize() : func.getGeneCount();
-				else if( columnIndex == 6 )
-					return func.name;
-				else if( columnIndex == 7 )
-					return func.namespace;
-				else if( columnIndex == 8 )
-					return func.desc;
-				return null;
-			}
-
-			@Override
-			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-			}
-
-			@Override
-			public void addTableModelListener(TableModelListener l) {
-			}
-
-			@Override
-			public void removeTableModelListener(TableModelListener l) {
-			}
-		};
-		ftable.setModel( ftablemodel );
-		fscrollpane.setViewportView(ftable);
-
-		updateFilter(ftable, rowfilter, null);
-		updateFilter(table, genefilter, label);
-
-		combo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				String sel = (String) e.getItem();
-				filterset.clear();
-				if (pathwaymap.containsKey(sel)) {
-					Set<String> enz = pathwaymap.get(sel);
-					for (Function f : funclist) {
-						if (f.ec != null && enz.contains(f.ec)) {
-							filterset.add(f.index);
-						}
-					}
-				}
-				updateFilter(ftable, rowfilter, null);
-			}
-		});
-
-		specombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				String sel = (String) e.getItem();
-				genefilterset.clear();
-				for (Gene g : genelist) {
-					Tegeval tv = g.tegeval;
-					if (sel.equals(tv.teg)) {
-						//System.out.println(g.name + " " + sp + " " + sel + "  " + tv.eval);
-						genefilterset.add(g.index);
-					}
-				}
-				updateFilter(table, genefilter, label);
-			}
-		});
-
-		fpopup.add(new AbstractAction("Find conserved terms") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<Integer> res = new HashSet<Integer>();
-				for (Function f : funclist) {
-					if (f.getGeneGroups() != null) {
-						Set<String> check = new HashSet<String>();
-						for( GeneGroup g : f.getGeneGroups() ) {
-							//Gene g = genemap.get(str);
-							if (g.species != null) {
-								if (check.isEmpty())
-									check.addAll(g.species.keySet());
-								else if (!(check.size() == g.species.size() && check.containsAll(g.species.keySet()))) {
-									check.clear();
-									break;
-								}
-							}
-						}
-						if (!check.isEmpty())
-							res.add(f.index);
-					}
-				}
-				filterset.clear();
-				for (int i : res) {
-					filterset.add(i);
-				}
-				updateFilter(ftable, rowfilter, null);
-			}
-		});
-		fpopup.addSeparator();
-		fpopup.add(new AbstractAction("Show genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = ftable.getSelectedRows();
-				genefilterset.clear();
-				for (int r : rr) {
-					int fr = ftable.convertRowIndexToModel(r);
-					Function f = funclist.get(fr);
-					if( table.getModel() == groupModel ) {
-						Set<GeneGroup> sset = f.getGeneGroups();
-						if( sset != null ) for (GeneGroup gg : sset) {
-							//Gene g = genemap.get(s);
-							genefilterset.add(gg.index);
-						}
-					} else {
-						Set<Gene> sset = f.getGeneentries();
-						for (Gene g : sset) {
-							//Gene g = genemap.get(s);
-							genefilterset.add(g.index);
-						}
-					}
-				}
-				updateFilter(table, genefilter, label);
-			}
-		});
-
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				// table.clearSelection();
-				tableisselecting = true;
-				if (!ftableisselecting && filterset.isEmpty()) {
-					//ftable.removeRowSelectionInterval(0, ftable.getRowCount() - 1);
-					int[] rr = table.getSelectedRows();
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						if( table.getModel() == groupModel ) {
-							GeneGroup gg = allgenegroups.get(cr);
-							for( Function f : gg.getFunctions() ) {
-								try {
-									int rf = ftable.convertRowIndexToView(f.index);
-									if( rf >= 0 && rf < ftable.getRowCount() ) ftable.addRowSelectionInterval(rf, rf);
-								} catch( Exception ex ) {
-									ex.printStackTrace();
-								}
-							}
-						} else {
-							Gene g = genelist.get(cr);
-							if (g.funcentries != null) {
-								for( Function f : g.funcentries) {
-									//Function f = funcmap.get(go);
-									try {
-										int rf = ftable.convertRowIndexToView(f.index);
-										if( rf >= 0 && rf < ftable.getRowCount() ) ftable.addRowSelectionInterval(rf, rf);
-									} catch( Exception ex ) {
-										ex.printStackTrace();
-									}
-								}
-							}
-						}
-					}
-				}
-				tableisselecting = false;
-			}
-		});
-
-		ftable.addKeyListener(new KeyAdapter() {
-			public void keyPressed(KeyEvent ke) {
-				if (ke.getKeyCode() == KeyEvent.VK_ESCAPE) {
-					filterset.clear();
-					updateFilter(ftable, rowfilter, null);
-				}
-			}
-		});
-
-		table.addKeyListener(new KeyAdapter() {
-			public void keyPressed(KeyEvent ke) {
-				if (ke.getKeyCode() == KeyEvent.VK_ESCAPE) {
-					genefilterset.clear();
-					updateFilter(table, genefilter, label);
-					scrollToSelection( table );
-				}
-			}
-		});
-
-		table.addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) {
-				tableisselecting = true;
-				if (!ftableisselecting && e.getClickCount() == 2) {
-					/*
-					 * int[] rr = ftable.getSelectedRows(); int minr =
-					 * ftable.getRowCount(); int maxr = 0; for( int r : rr ) {
-					 * if( r < minr ) minr = r; if( r > maxr ) maxr = r; }
-					 * ftable.removeRowSelectionInterval(minr, maxr);
-					 */
-					// ftable.removeRowSelectionInterval(0, filterset.isEmpty()
-					// ? ftable.getRowCount()-1 : filterset.size()-1 );
-					filterset.clear();
-					int[] rr = table.getSelectedRows();
-					if( table.getModel() == groupModel ) {
-						for (int r : rr) {
-							int cr = table.convertRowIndexToModel(r);
-							GeneGroup gg = allgenegroups.get(cr);
-							for( Function f : gg.getFunctions() ) {
-								filterset.add(f.index);
-							}
-						}
-					} else {
-						for (int r : rr) {
-							int cr = table.convertRowIndexToModel(r);
-							Gene g = genelist.get(cr);
-							if (g.funcentries != null) {
-								for( Function f : g.funcentries ) {
-									//Function f = funcmap.get(go);
-									// ftable.getRowSorter().convertRowIndexToView(index)
-									// int rf = ftable.convertRowIndexToView(
-									// f.index );
-									filterset.add(f.index);
-									// ftable.addRowSelectionInterval(rf, rf);
-								}
-							}
-						}
-					}
-					updateFilter(ftable, rowfilter, null);
-					// ftable.sorterChanged( new RowSorterEvent(
-					// ftable.getRowSorter() ) );
-					// ftable.tableChanged( new TableModelEvent(
-					// ftable.getModel() ) );
-				}
-				tableisselecting = false;
-			}
-		});
-
-		ftable.addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) {
-				ftableisselecting = true;
-				if (!tableisselecting && e.getClickCount() == 2) {
-					genefilterset.clear();
-					int[] rr = ftable.getSelectedRows();
-					for (int r : rr) {
-						int cr = ftable.convertRowIndexToModel(r);
-
-						Function f = funclist.get(cr);
-						if (f.getGeneentries() != null) {
-							if( table.getModel() == groupModel ) {
-								for( Gene g : f.getGeneentries() ) {
-									GeneGroup gg = g.getGeneGroup();
-									if( gg != null ) genefilterset.add( gg.getIndex() );
-								}
-							} else {
-								for( Gene g : f.getGeneentries() ) {
-									//Gene g = genemap.get(ref);
-									// int rf = table.convertRowIndexToView( g.index
-									// );
-									// table.addRowSelectionInterval(rf, rf);
-									genefilterset.add(g.index);
-								}
-							}
-						}
-					}
-					updateFilter(table, genefilter, label);
-					// ftable.sorterChanged( new RowSorterEvent(
-					// ftable.getRowSorter() ) );
-					// ftable.tableChanged( new TableModelEvent(
-					// ftable.getModel() ) );
-				}
-				ftableisselecting = false;
-			}
-		});
-
-		ftable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				// ftable.clearSelection();
-				ftableisselecting = true;
-				if (!tableisselecting && genefilterset.isEmpty()) {
-					table.removeRowSelectionInterval(0, table.getRowCount() - 1);
-					int[] rr = ftable.getSelectedRows();
-					for (int r : rr) {
-						int cr = ftable.convertRowIndexToModel(r);
-						Function f = funclist.get(cr);
-						if( f.getGeneentries() != null ) {
-							for( Gene g : f.getGeneentries() ) {
-								//Gene g = genemap.get(ref);
-								int i = g.getGroupIndex();
-								if( i >= 0 && i <= table.getRowCount() ) {
-									int rf = table.convertRowIndexToView(i);
-									table.addRowSelectionInterval(rf, rf);
-								}
-							}
-						}
-					}
-				}
-				ftableisselecting = false;
-			}
-		});
-		
-		textfield.addKeyListener( new KeyListener() {			
-			@Override
-			public void keyTyped(KeyEvent e) {}
-			
-			@Override
-			public void keyReleased(KeyEvent e) {}
-			
-			@Override
-			public void keyPressed(KeyEvent e) {
-				String text = textfield.getText().toLowerCase();
-				if( e.getKeyCode() == KeyEvent.VK_ENTER ) {
-					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, searchi, e.isAltDown(), 8, 9, 10, 16 ) : searchTable( table, text, searchi, e.isAltDown(), 0 );
-				}
-			}
-		});
-
-		textfield.getDocument().addDocumentListener(new DocumentListener() {
-			public void changedUpdate(DocumentEvent e) {
-				String text = textfield.getText().toLowerCase();
-				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
-					else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
-				} else {
-					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 8, 9, 10, 16 ) : searchTable( table, text, 0, false, 0 );
-				}
-			}
-
-			public void insertUpdate(DocumentEvent e) {
-				String text = textfield.getText().toLowerCase();
-				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(1, text, table, genefilter, genefilterset, label, 8, 9, 10, 16);
-					else updateFilter(1, text, table, genefilter, genefilterset, label, 0);
-				} else {
-					searchi = searchcolcomb.getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 8, 9, 10, 16 ) : searchTable( table, text, 0, false, 0 );
-				}
-			}
-
-			public void removeUpdate(DocumentEvent e) {
-				String text = textfield.getText().toLowerCase();
-				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectedItem().equals("Symbol") ) updateFilter(2, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
-					else updateFilter(2, text, table, genefilter, genefilterset, label, 0);
-				} else {
-					searchi = searchTable( table, text, 0, false, searchcolcomb.getSelectedItem().equals("Symbol") ? 7 : 0 );
-				}
-			}
-		});
-
-		ftextfield.getDocument().addDocumentListener(new DocumentListener() {
-			public void changedUpdate(DocumentEvent e) {
-				updateFilter(0, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
-			}
-
-			public void insertUpdate(DocumentEvent e) {
-				updateFilter(1, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
-			}
-
-			public void removeUpdate(DocumentEvent e) {
-				updateFilter(2, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
-			}
-		});
-		popup.add(new AbstractAction("KEGG gene lookup") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				if (r != -1) {
-					int rr = table.convertRowIndexToModel(r);
-					Gene g = genelist.get(rr);
-					try {
-						Desktop.getDesktop().browse(new URI("http://www.genome.jp/dbget-bin/www_bget?" + g.keggid));
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		});
-		popup.add(new AbstractAction("Show genes with same sharing") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int r = table.getSelectedRow();
-				if (r >= 0) {
-					int cr = table.convertRowIndexToModel(r);
-					GeneGroup gg = allgenegroups.get(cr);
-					for (GeneGroup g : allgenegroups) {
-						if (gg.species != null && g.species != null) {
-							Set<String> ggset = gg.species.keySet();
-							Set<String> gset = g.species.keySet();
-
-							if (gset.size() == ggset.size() && gset.containsAll(ggset)) {
-								genefilterset.add(g.index);
-							}
-						}
-					}
-					updateFilter(table, genefilter, label);
-				}
-			}
-		});
-		popup.add(new AbstractAction("Show shared function") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				filterset.clear();
-				int[] rr = table.getSelectedRows();
-				Set<Function> startfunc = new HashSet<Function>();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					if( table.getModel() == defaultModel ) {
-						Gene gg = genelist.get(cr);
-						if (gg.funcentries != null) {
-							if( startfunc.isEmpty() ) {
-								startfunc.addAll( gg.funcentries );
-							} else {
-								startfunc.retainAll( gg.funcentries );
-							}
-						}
-							/*if (startfunc == null)
-								startfunc = new HashSet<Function>(gg.funcentries);
-							else {
-								startfunc.retainAll(gg.funcentries);
-							}*/
-					} else {
-						GeneGroup gg = allgenegroups.get(cr);
-						Set<Function> fset = gg.getFunctions();
-						if( startfunc.isEmpty() ) {
-							startfunc.addAll( fset );
-						} else {
-							startfunc.retainAll( fset );
-						}
-					}
-				}
-				for( Function f : funclist ) {
-					filterset.add( f.index );
-				}
-				updateFilter(ftable, rowfilter, null);
-			}
-		});
-		popup.add(new AbstractAction("Show all functions") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				filterset.clear();
-				int[] rr = table.getSelectedRows();
-				Set<Function> startfunc = null;
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					if( table.getModel() == defaultModel ) {
-						Gene gg = genelist.get(cr);
-						if (gg.funcentries != null) {
-							for( Function f : gg.funcentries ) {
-								filterset.add( f.index );
-							}
-						}
-					} else {
-						GeneGroup gg = allgenegroups.get(cr);
-						Set<Function> fset = gg.getFunctions();
-						for( Function f : fset ) {
-							filterset.add( f.index );
-						}
-					}
-				}
-				updateFilter(ftable, rowfilter, null);
-			}
-		});
-		popup.addSeparator();
-		popup.add(new AbstractAction("Show gene groups in proximity") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				proxi(table, rr, genelist, genefilterset, false, false);
-				updateFilter(table, genefilter, label);
-			}
-		});
-		popup.add(new AbstractAction("Select gene groups in proximity") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				proxi(table, rr, genelist, genefilterset, false, false);
-				for( int i : genefilterset ) {
-					int r = table.convertRowIndexToView( i );
-					if( r != -1 ) {
-						table.addRowSelectionInterval( r, r );
-					}
-				}
-				//table.tableChanged( new TableModelEvent( table.getModel() ) );
-				if (label != null) label.setText(table.getRowCount() + "/" + table.getSelectedRowCount());
-				//updateFilter(table, genefilter, label);
-			}
-		});
-		popup.add(new AbstractAction("Select genes in proximity") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				proxi(table, rr, genelist, genefilterset, false, true);
-				for( int i : genefilterset ) {
-					int r = table.convertRowIndexToView( i );
-					if( r != -1 ) {
-						table.addRowSelectionInterval( r, r );
-					}
-				}
-				//table.tableChanged( new TableModelEvent( table.getModel() ) );
-				if (label != null) label.setText(table.getRowCount() + "/" + table.getSelectedRowCount());
-				//updateFilter(table, genefilter, label);
-			}
-		});
-		popup.add(new AbstractAction("Add gene groups in proximity") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				proxi(table, rr, genelist, genefilterset, false, false);
-				updateFilter(table, genefilter, label);
-			}
-		});
-		popup.add(new AbstractAction("Remove gene groups in proximity") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				if (genefilterset.isEmpty()) {
-					Set<Integer> ii = new HashSet<Integer>();
-					for (int r : rr)
-						ii.add(r);
-					for (int i = 0; i < genelist.size(); i++) {
-						if (!ii.contains(i))
-							genefilterset.add(i);
-					}
-				}
-				proxi(table, rr, genelist, genefilterset, true, false);
-				updateFilter(table, genefilter, label);
-			}
-		});
-		popup.addSeparator();
-		popup.add(new AbstractAction("Show related genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				relati(table, rr, genelist, genefilterset, uclusterlist, false);
-				updateFilter(table, genefilter, label);
-			}
-		});
-		popup.add(new AbstractAction("Add related genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				relati(table, rr, genelist, genefilterset, uclusterlist, false);
-				updateFilter(table, genefilter, label);
-			}
-		});
-		popup.add(new AbstractAction("Remove related genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				if (genefilterset.isEmpty()) {
-					Set<Integer> ii = new HashSet<Integer>();
-					for (int r : rr)
-						ii.add(r);
-					for (int i = 0; i < genelist.size(); i++) {
-						if (!ii.contains(i))
-							genefilterset.add(i);
-					}
-				}
-				relati(table, rr, genelist, genefilterset, uclusterlist, true);
-				updateFilter(table, genefilter, label);
-			}
-		});
-		popup.addSeparator();
-		popup.add(new AbstractAction("Show closely related genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				Set<String> ct = new HashSet<String>();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					// genefilterset.add( gg.index );
-					Tegeval tv = gg.tegeval;
-					for (Set<String> uset : iclusterlist) {
-						if (uset.contains(tv.name)) {
-							ct.addAll(uset);
-							break;
-						}
-					}
-				}
-
-				for (Gene g : genelist) {
-					Tegeval tv = g.tegeval;
-					if (ct.contains(tv.name)) {
-						genefilterset.add(g.index);
-						break;
-					}
-				}
-
-				updateFilter(table, genefilter, label);
-			}
-		});
-		popup.add(new AbstractAction("Show distance matrix") {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				JTextArea textarea = new JTextArea();
-				
-				try {
-					if (clipboardService == null)
-						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
-					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
-					textarea.getActionMap().put("copy", action);
-					grabFocus = true;
-				} catch (Exception ee) {
-					ee.printStackTrace();
-					System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-				}
-				textarea.setDragEnabled(true);
-
-				JScrollPane scrollpane = new JScrollPane(textarea);
-
-				int r = table.getSelectedRow();
-				int cr = table.convertRowIndexToModel(r);
-				Gene gg = genelist.get(cr);
-				if (gg.getSpecies() != null) {
-					for (String s : corrInd) {
-						if (s.equals(corrInd.get(0)))
-							textarea.append(s);
-						else
-							textarea.append("\t" + s);
-					}
-
-					int i = 0;
-					int j = 0;
-					
-					int len = 16;
-					double[] min = new double[len];
-					double[] max = new double[len];
-					
-					for( i = 0; i < len; i++ ) {
-						min[i] = Double.MAX_VALUE;
-						max[i] = 0.0;
-					}
-					
-					double[] corrarr = gg.corrarr;
-					boolean symmetrize = true;
-					if( symmetrize ) {
-						for( i = 0; i < len; i++ ) {
-							for( int k = i+1; k < len; k++ ) {
-								corrarr[i*len+k] = (corrarr[k*len+i]+corrarr[i*len+k])/2.0;
-								corrarr[k*len+i] = corrarr[i*len+k];
-							}
-						}
-					}
-					
-					for (i = 0; i < len; i++) {
-						for (int k = 0; k < len; k++) {
-							if (corrarr[i * len + k] < min[i])
-								min[i] = corrarr[i * len + k];
-							if (corrarr[i * len + k] > max[i])
-								max[i] = corrarr[i * len + k];
-						}
-
-						/*for (int k = 0; k < len; k++) {
-							corrarr[i * 16 + k] = corrarr[i * 16 + k] - min;
-						}*/
-					}
-					
-					i = 0;
-					for (double d : corrarr) {
-						double dval = d;
-						if (i % len == 0)
-							textarea.append("\n" + dval);
-						else
-							textarea.append("\t" + dval);
-
-						i++;
-					}
-					textarea.append("\n");
-
-					i = 0;
-					for (double d : corrarr) {
-						double dval = Math.exp( (d-min[i/len]) / 20.0 + 1.0) / 100.0; // 0.0 ?
-																		// 0.0 :
-																		// 100.0/d;
-						if (i % len == 0)
-							textarea.append("\n" + dval);
-						else
-							textarea.append("\t" + dval);
-
-						i++;
-					}
-					double[] newcorr = Arrays.copyOf(corrarr, corrarr.length);
-					textarea.append("\nD matrix\n");
-					i = 0;
-					for (double d : corrarr) {
-						double dval = max[i/len]-d;
-						newcorr[i] = dval;
-						if (i % len == 0)
-							textarea.append("\n" + dval);
-						else
-							textarea.append("\t" + dval);
-
-						i++;
-					}
-					
-					TreeUtil treeutil = new TreeUtil();
-					treeutil.neighborJoin( newcorr, corrInd, null, true, true );
-				}
-				
-				/*
-				 * int[] rr = table.getSelectedRows(); for( int r : rr ) { int
-				 * cr = table.convertRowIndexToModel(r); Gene gg =
-				 * genelist.get(cr); if( gg.species != null ) { textarea.append(
-				 * gg.name + ":\n" ); for( String sp : gg.species.keySet() ) {
-				 * Teginfo stv = gg.species.get( sp ); for( Tegeval tv :
-				 * stv.tset ) { textarea.append( ">" + tv.cont + " " + tv.teg +
-				 * " " + tv.eval + "\n" ); for( int i = 0; i < tv.seq.length();
-				 * i+=70 ) { int end = Math.min(i+70,tv.seq.length());
-				 * textarea.append( tv.seq.substring(i, end)+"\n" ); //new
-				 * String( tv.seq, i, Math.min(i+70,tv.seq.length()) )+"\n"); }
-				 * //textarea.append( ">" + tv.cont + " " + tv.teg + " " +
-				 * tv.eval + "\n" + tv.seq + "\n" ); } } } }
-				 */
-				JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.add(scrollpane);
-				frame.setSize(400, 300);
-				frame.setVisible(true);
-			}
-		});
-
-		/*
-		 * final List<String> reglist = new ArrayList<String>(); final
-		 * Map<String,Gene> regidx = new TreeMap<String,Gene>();
-		 * 
-		 * for( Gene g : genelist ) { if( g.species != null ) { for( String key
-		 * : g.species.keySet() ) { Set<Tegeval> stv = g.species.get(key); for(
-		 * Tegeval tv : stv ) { regidx.put(tv.cont, g); } } } }
-		 * 
-		 * for( String key : regidx.keySet() ) { reglist.add(key); }
-		 * 
-		 * final JTable contigtable = new JTable();
-		 * contigtable.setAutoCreateRowSorter( true ); contigtable.setModel( new
-		 * TableModel() {
-		 * 
-		 * @Override public int getRowCount() { return reglist.size(); }
-		 * 
-		 * @Override public int getColumnCount() { return 1; }
-		 * 
-		 * @Override public String getColumnName(int columnIndex) { return
-		 * "Region"; }
-		 * 
-		 * @Override public Class<?> getColumnClass(int columnIndex) { return
-		 * String.class; }
-		 * 
-		 * @Override public boolean isCellEditable(int rowIndex, int
-		 * columnIndex) { return false; }
-		 * 
-		 * @Override public Object getValueAt(int rowIndex, int columnIndex) {
-		 * return reglist.get(rowIndex); }
-		 * 
-		 * @Override public void setValueAt(Object aValue, int rowIndex, int
-		 * columnIndex) { // TODO Auto-generated method stub
-		 * 
-		 * }
-		 * 
-		 * @Override public void addTableModelListener(TableModelListener l) {
-		 * // TODO Auto-generated method stub
-		 * 
-		 * }
-		 * 
-		 * @Override public void removeTableModelListener(TableModelListener l)
-		 * { // TODO Auto-generated method stub
-		 * 
-		 * } });
-		 * 
-		 * contigtable.getSelectionModel().addListSelectionListener( new
-		 * ListSelectionListener() {
-		 * 
-		 * @Override public void valueChanged(ListSelectionEvent e) {
-		 * genefilterset.clear(); int[] rr = contigtable.getSelectedRows(); for(
-		 * int r : rr ) { String s = (String)contigtable.getValueAt(r, 0); Gene
-		 * g = regidx.get( s );
-		 * 
-		 * genefilterset.add( g.index ); updateFilter(table, genefilter, label);
-		 * //int k = table.convertRowIndexToView(g.index); //if( k != -1
-		 * )table.addRowSelectionInterval(k, k); } } }); JScrollPane
-		 * contigscroll = new JScrollPane( contigtable );
-		 * 
-		 * JSplitPane mainsplit = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT );
-		 * mainsplit.setLeftComponent( contigscroll );
-		 * mainsplit.setRightComponent( splitpane );
-		 */
-
-		return splitpane;
-	}
-	
-	public void repaintGCSkew( List<Sequence> selclist, Graphics2D g2, int size, GeneGroup gg, String selspec ) {
-		g2.setColor( Color.white );
-		g2.fillRect(0, 0, 1024, 1024);
-		g2.setFont( g2.getFont().deriveFont(10.0f) );
-		int total = 0;
-		int g = 0;
-		int c = 0;
-		double gcstotal = 0.0;
-		for( Sequence ctg : selclist ) {
-			//Sequence ctg = clist.get( u );
-			if( gg != null ) {
-				for( Tegeval tv : gg.getTegevals() ) {
-					if( tv.getContshort() == ctg ) {					
-						int i = tv.start;
-						
-						int x1 = (int)(512.0+(384.0-100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-						int y1 = (int)(512.0+(384.0-100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-						int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-						int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-						
-						g2.setColor( Color.green );
-						g2.drawLine(x1, y1, x2, y2);
-					}
-				}
-			}
-			
-			double horn = total*2.0*Math.PI/size;
-			double horn2 = (total+ctg.length())*2.0*Math.PI/size;
-			
-			int x1 = (int)(512.0+(384.0-100.0)*Math.cos( horn ));
-			int y1 = (int)(512.0+(384.0-100.0)*Math.sin( horn ));
-			int x2 = (int)(512.0+(384.0+100.0)*Math.cos( horn ));
-			int y2 = (int)(512.0+(384.0+100.0)*Math.sin( horn ));
-			g2.setColor( Color.black );
-			g2.drawLine(x1, y1, x2, y2);
-			
-			int xoff = (int)(512.0+(384.0+100.0)*Math.cos( horn2 ));
-			int yoff = (int)(512.0+(384.0+100.0)*Math.sin( horn2 ));
-			if( horn < Math.PI ) {
-				g2.translate( x2, y2 );
-				g2.rotate(horn+Math.PI/2.0);
-				g2.drawString(ctg.getName(), 0, 0);
-				g2.rotate(-horn-Math.PI/2.0);
-				g2.translate( -x2, -y2 );
-			} else {
-				g2.translate( xoff, yoff );
-				g2.rotate(horn2+Math.PI/2.0);
-				g2.drawString(ctg.getName(), -g2.getFontMetrics().stringWidth(ctg.getName()), 0);
-				g2.rotate(-horn2-Math.PI/2.0);
-				g2.translate( -xoff, -yoff );
-			}
-			
-			for( int i = 0; i < ctg.length(); i+=500 ) {
-				for( int k = i; k < Math.min( ctg.length(), i+500 ); k++ ) {
-					char chr = ctg.getCharAt( k );
-					if( chr == 'g' || chr == 'G' ) {
-						g++;
-					} else if( chr == 'c' || chr == 'C' ) {
-						c++;
-					}
-				}
-				
-				int gcount = 0;
-				int ccount = 0;
-				int acount = 0;
-				int tcount = 0;
-				for( int k = i; k < Math.min( ctg.length(), i+10000 ); k++ ) {
-					char chr = k-5000 < 0 ? ctg.getCharAt( ctg.length()+(k-5000) ) : ctg.getCharAt(k-5000);
-					if( chr == 'g' || chr == 'G' ) {
-						gcount++;
-					} else if( chr == 'c' || chr == 'C' ) {
-						ccount++;
-					}
-					else if( chr == 'a' || chr == 'A' ) acount++;
-					else if( chr == 't' || chr == 'T' ) tcount++;
-				}
-				
-				if( gcount > 0 || ccount > 0 ) {
-					double gcskew = (gcount-ccount)/(double)(gcount+ccount);
-					
-					gcstotal += gcskew;
-					
-					x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-					x2 = (int)(512.0+(384.0+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y2 = (int)(512.0+(384.0+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-					
-					if( gcskew >= 0 ) g2.setColor( Color.blue );
-					else g2.setColor( Color.red );
-					g2.drawLine(x1, y1, x2, y2);
-				}
-				
-				if( acount > 0 || tcount > 0 ) {
-					double atskew = (acount-tcount)/(double)(acount+tcount);
-					
-					x1 = (int)(512.0+(300.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y1 = (int)(512.0+(300.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-					x2 = (int)(512.0+(300.0+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y2 = (int)(512.0+(300.0+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-					
-					if( atskew >= 0 ) g2.setColor( Color.blue );
-					else g2.setColor( Color.red );
-					g2.drawLine(x1, y1, x2, y2);
-				}
-			}
-			total += ctg.length();
-		}
-		
-		g2.setColor( Color.black );
-		g2.setFont( g2.getFont().deriveFont( java.awt.Font.ITALIC ).deriveFont(32.0f) );
-		String[] specsplit; // = selspec.split("_");
-		
-		if( selspec.contains("hermus") ) specsplit = selspec.split("_");
-		else {
-			Matcher m = Pattern.compile("\\d").matcher(selspec); 
-			int firstDigitLocation = m.find() ? m.start() : 0;
-			if( firstDigitLocation == 0 ) specsplit = new String[] {"Thermus", selspec};
-			else specsplit = new String[] {"Thermus", selspec.substring(0,firstDigitLocation), selspec.substring(firstDigitLocation)};
-		}
-		
-		int k = 0;
-		for( String spec : specsplit ) {
-			int strw = g2.getFontMetrics().stringWidth( spec );
-			g2.drawString( spec, (1024-strw)/2, 1024/2 - specsplit.length*32/2 + 32 + k*32 );
-			k++;
-		}
-		
-		/*double gcs = gcstotal/total; //(g-c)/(g+c);
-		String gcstr = Double.toString( Math.round( gcs*1000000.0 ) );
-		g2.drawString( gcstr+"ppm", 768, 512 );*/
-	}
-
-	static ClipboardService clipboardService;
-	static boolean grabFocus;
-
-	public static void copyData(Component source) {
-		JTextArea textarea = (JTextArea) source;
-		String s = textarea.getText();
-
-		if (s == null || s.trim().length() == 0) {
-			JOptionPane.showMessageDialog(source, "There is no data selected!");
-		} else {
-			StringSelection selection = new StringSelection(s);
-			clipboardService.setContents(selection);
-		}
-
-		if (grabFocus) {
-			source.requestFocus();
-		}
-	}
-
-	static class CopyAction extends AbstractAction {
-		public CopyAction(String text, ImageIcon icon, String desc, Integer mnemonic) {
-			super(text, icon);
-			putValue(SHORT_DESCRIPTION, desc);
-			putValue(MNEMONIC_KEY, mnemonic);
-		}
-
-		public void actionPerformed(ActionEvent e) {
-			copyData((Component) e.getSource());
-		}
-	}
-
-	public void updateFilter(int val, String ustr, JTable table, RowFilter filter, Set<Integer> filterset, JLabel label, int ... ind ) {
-		filterset.clear();
-		TableModel model = table.getModel();
-		for (int r = 0; r < model.getRowCount(); r++) {
-			for( int i = 0; i < ind.length; i++ ) {
-				String vstr = (String)model.getValueAt(r, ind[i]);
-				String s = vstr != null ? vstr.toLowerCase() : null;
-				
-				if( (s != null && s.contains(ustr)) ) {
-					filterset.add(r);
-					break;
-				}
-			}
-		}
-		
-		if( filterset.isEmpty() ) {
-			int i = 0;
-			if( table.getModel() == groupModel ) {
-				for( GeneGroup gg : allgenegroups ) {
-					for( Gene g : gg.genes ) {
-						if( g.refid.toLowerCase().contains(ustr) ) {
-							filterset.add(i);
-							break;
-						}
-					}
-					i++;
-				}
-			} else {
-				for( Gene g : genelist ) {
-					if( g.refid.toLowerCase().contains(ustr) ) {
-						filterset.add(i);
-					}
-					i++;
-				}
-			}
-		}
-		
-		updateFilter(table, filter, label);
-	}
-
-	boolean ftableisselecting = false;
-	boolean tableisselecting = false;
 
 	private void readGoInfo(Reader rd, Map<Function, Set<Gene>> gofilter, String outfile) throws IOException {
 		FileWriter fw = null;
@@ -13028,7 +7616,7 @@ public class GeneSet extends JApplet {
 		String line = r.readLine();
 		while( line != null ) {
 			String[] split = line.split("[\t ]+");
-			if( split[split.length-3].equals("Y") ) {
+			if( split[split.length-3].trim().equals("Y") ) {
 				spids.add( split[0] );
 			}
 			line = r.readLine();
@@ -13136,7 +7724,7 @@ public class GeneSet extends JApplet {
 				if( end == -1 ) end = cont.indexOf("_scaffold");
 				if( end == -1 ) end = cont.indexOf("_chromosome");
 				if( end == -1 ) end = cont.indexOf("_plasmid");
-				if( end == -1 && (cont.charAt(0) == 'J' || cont.charAt(0) == 'A') && cont.charAt(4) == '0' ) end = 4;
+				if( end == -1 && (cont.charAt(0) == 'J' || cont.charAt(0) == 'A' || cont.charAt(0) == 'B' || cont.charAt(0) == 'L') && cont.charAt(4) == '0' ) end = 4;
 				if( end == -1 ) {
 					int k = cont.indexOf("uid");
 					if( k != -1 ) {
@@ -13325,28 +7913,99 @@ public class GeneSet extends JApplet {
 	public int loadTrnas( Map<String,GeneGroup>	ggmap, Reader reader, int groupIndex ) throws IOException {
 		BufferedReader br = new BufferedReader( reader );
 		String line = br.readLine();
+		String cont = null;
+		int start = 0;
+		int laststart = -1;
+		int stop = -1;
+		int ori = 1;
+		String name = null;
+		String spec = null;
+		boolean compl = false;
+		final String seqstart = "sequence name=";
+		final String startposstr = "start position=";
+		final String endposstr = "end position=";
+		final String predict = "tRNA predict as a";
 		while( line != null ) {
-			String[] split = line.split("[\t ]+");
-			String cont = split[0].replace(".fna", "");
-			String name = "tRNA-"+split[4];
-			int end = cont.indexOf("_contig");
-			if( end == -1 ) end = cont.indexOf("_scaffold");
-			if( end == -1 ) end = cont.indexOf("_chromosome");
-			if( end == -1 ) end = cont.indexOf("_plasmid");
-			if( end == -1 ) {
-				System.err.println();
-			}
-			String spec = cont.substring(0, end);
-			int start = Integer.parseInt( split[2] );
-			int stop = Integer.parseInt( split[3] );
-			int ori = 1;
-			if( start > stop ) {
-				ori = stop;
-				stop = start;
-				start = ori;
-				ori = -1;
+			//String[] split = line.split("[\t ]+");
+			//String cont = split[0].replace(".fna", "");
+			
+			if( line.startsWith(seqstart) ) {
+				if( name != null ) {
+					GeneGroup 	gg;
+					if( ggmap.containsKey( name ) ) {
+						gg = ggmap.get( name );
+					} else {
+						gg = new GeneGroup( groupIndex++ );
+						ggmap.put( name, gg );
+					}
+					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
+					
+					Sequence contig = contigmap.get( cont );
+					Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
+					tegeval.type = "trna";
+					g.setTegeval( tegeval );
+					gg.addGene( g );
+				}
+				
+				cont = line.substring(seqstart.length()).trim();
+				compl = false;
+				name = null;
+				laststart = -1;
+				
+				int end = cont.indexOf("_contig");
+				if( end == -1 ) end = cont.indexOf("_scaffold");
+				if( end == -1 ) end = cont.indexOf("_chromosome");
+				if( end == -1 ) end = cont.indexOf("_plasmid");
+				if( end == -1 ) {
+					System.err.println();
+				}
+				spec = cont.substring(0, end);
+			} else if( cont != null ) {
+				if( line.startsWith("complementary strand") ) compl = true;
+				else if( line.startsWith(startposstr) ) {
+					if( name != null && laststart != start ) {
+						GeneGroup 	gg;
+						if( ggmap.containsKey( name ) ) {
+							gg = ggmap.get( name );
+						} else {
+							gg = new GeneGroup( groupIndex++ );
+							ggmap.put( name, gg );
+						}
+						Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
+						
+						System.err.println("adding " + spec + "  " + name + "  " + start + "  " + stop );
+						
+						Sequence contig = contigmap.get( cont );
+						Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
+						tegeval.type = "trna";
+						g.setTegeval( tegeval );
+						gg.addGene( g );
+					}
+					
+					int k = line.indexOf(endposstr);
+					laststart = start;
+					start = Integer.parseInt( line.substring(startposstr.length(), k).trim() );
+					stop = Integer.parseInt( line.substring(k+endposstr.length()).trim() );
+					ori = 1;
+					if( start > stop ) {
+						ori = stop;
+						stop = start;
+						start = ori;
+						ori = -1;
+					}
+				} else if( line.startsWith(predict) ) {
+					int e = line.indexOf(':',predict.length());
+					name = line.substring(predict.length(), e).trim();
+				}
+				
+				//int start = Integer.parseInt( split[2] );
+				//int stop = Integer.parseInt( split[3] );
 			}
 			
+			line = br.readLine();
+		}
+		
+		if( name != null ) {
 			GeneGroup 	gg;
 			if( ggmap.containsKey( name ) ) {
 				gg = ggmap.get( name );
@@ -13361,8 +8020,6 @@ public class GeneSet extends JApplet {
 			tegeval.type = "trna";
 			g.setTegeval( tegeval );
 			gg.addGene( g );
-			
-			line = br.readLine();
 		}
 		
 		return groupIndex;
@@ -13405,24 +8062,6 @@ public class GeneSet extends JApplet {
 		}
 		locgene.clear();
 	}
-	
-	Map<String, Set<String>> 				ko2go = new TreeMap<String, Set<String>>();
-	
-	JComboBox<String> 						specombo;
-	JComboBox<String> 						combo;
-	Map<String, Set<String>> 				pathwaymap = new TreeMap<String, Set<String>>();
-	Map<String, Set<String>> 				pathwaykomap = new TreeMap<String, Set<String>>();
-	List<String> 							corrInd;
-	public List<GeneGroup>							allgenegroups;
-	Map<Set<String>,List<GeneGroup>> 		ggSpecMap;
-	Map<String,Set<GeneGroup>>				specGroupMap;
-	List<String>							specList = new ArrayList<String>();
-	//byte[] 									zipf;
-	Map<String,Cog>							cogmap = new HashMap<String,Cog>();
-	Map<String,String>						cogidmap = new HashMap<String,String>();
-	Map<String,String>						unresolvedmap = new HashMap<String,String>();
-	Map<String,String>						namemap = new HashMap<String,String>();
-	Map<String,String>						cazymap = new HashMap<String,String>();
 	
 	/*private Map<String,String> loadCog() {
 		Map<String,String>	cogmap = new HashMap<String,String>();
@@ -13524,6 +8163,1269 @@ public class GeneSet extends JApplet {
 		return cogmap;
 	}*/
 	
+	Map<String, Gene> 			refmap = new HashMap<String, Gene>();
+	Map<String, Gene> 			genmap = new HashMap<String, Gene>();
+	Map<String, Gene> 			unimap = new HashMap<String, Gene>();
+	Map<String, Gene> 			gimap = new HashMap<String, Gene>();
+	
+	Map<String, String> 		allgenes = new HashMap<String, String>();
+	Map<String, Set<String>> 	geneset = new HashMap<String, Set<String>>();
+	Map<String, Set<String>> 	geneloc = new HashMap<String, Set<String>>();
+	Set<String> 				poddur = new HashSet<String>();
+	Map<String, Gene> 			locgene = new HashMap<String, Gene>();
+	
+	Path		zippath;
+	//File		zipfile;
+	FileSystem	zipfilesystem;
+	URI			zipuri;
+	Map<String,String>	ko2name;
+	Map<String,String>	designations = new HashMap<String,String>();
+	Set<String>			deset = new HashSet<String>();
+	
+	Map<String, Set<String>> 				pathwaymap = new TreeMap<String, Set<String>>();
+	Map<String, Set<String>> 				pathwaykomap = new TreeMap<String, Set<String>>();
+	List<String> 							corrInd;
+	public List<GeneGroup>							allgenegroups;
+	Map<Set<String>,List<GeneGroup>> 		ggSpecMap;
+	Map<String,Set<GeneGroup>>				specGroupMap;
+	List<String>							specList = new ArrayList<String>();
+	//byte[] 									zipf;
+	Map<String,Cog>							cogmap = new HashMap<String,Cog>();
+	Map<String,String>						cogidmap = new HashMap<String,String>();
+	Map<String,String>						unresolvedmap = new HashMap<String,String>();
+	Map<String,String>						namemap = new HashMap<String,String>();
+	Map<String,String>						cazymap = new HashMap<String,String>();
+	
+	Map<String, Set<String>> 				ko2go = new TreeMap<String, Set<String>>();
+	
+	public void loadStuff( Path zipp ) throws IOException {
+		Map<String,String> env = new HashMap<String,String>();
+		zippath = zipp;
+		//Path path = zipfile.toPath();
+		String uristr = "jar:" + zippath.toUri();
+		zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+		zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+		
+		Path nf = zipfilesystem.getPath("/unresolved.blastout");
+		if( Files.exists( nf ) ) unresolvedmap = loadunresolvedmap( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+		nf = zipfilesystem.getPath("/namemap.txt");
+		if( Files.exists( nf ) ) namemap = loadnamemap( Files.newBufferedReader(nf) );
+		nf = zipfilesystem.getPath("/designations.txt");
+		if( Files.exists( nf ) ) designations = loadDesignations( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), deset );
+		nf = zipfilesystem.getPath("/plasmids.txt");
+		if( Files.exists( nf ) ) plasmids = loadPlasmids( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
+		
+		/*zipfilesystem.close();
+		path = zipfile.toPath();
+		String uristr = "jar:" + path.toUri();
+		zipuri = URI.create( uristr /*.replace("file://", "file:")* );
+		zipfilesystem = FileSystems.newFileSystem( zipuri, env );*/
+		
+		nf = zipfilesystem.getPath("/allthermus.fna");
+		if( Files.exists( nf ) ) {
+			specList = loadcontigs( Files.newBufferedReader(nf), "" );
+		}
+		nf = zipfilesystem.getPath("/454LargeContigs.fna");
+		if( Files.exists( nf ) ) {
+			specList = loadcontigs( Files.newBufferedReader(nf), "" );
+		}
+		//else {
+		for( Path root : zipfilesystem.getRootDirectories() ) {
+			Files.list(root).filter( new Predicate<Path>() {
+				@Override
+				public boolean test(Path t) {
+					String filename = t.getFileName().toString();
+					return (filename.endsWith(".fna") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
+				}
+			}).forEach( new Consumer<Path>() {
+				@Override
+				public void accept(Path t) {
+					try {
+						String filename = t.getFileName().toString().replace(".fna", "").replace(".fastg", "");
+						specList = loadcontigs( Files.newBufferedReader(t), "" );
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		}
+		//}
+		
+		nf = zipfilesystem.getPath("/aligned");
+		if( Files.exists(nf) ) {
+			Files.list(nf).filter( new Predicate<Path>() {
+				@Override
+				public boolean test(Path t) {
+					String filename = t.getFileName().toString();
+					//System.err.println("filename " + filename);
+					boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
+					return b;
+				}
+			}).forEach( new Consumer<Path>() {
+				@Override
+				public void accept(Path t) {
+					if( Files.exists( t ) )
+						try {
+							String filename = t.getFileName().toString().replace(".fna", "");
+							loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+				}
+			});
+		}// else {
+		nf = zipfilesystem.getPath("/allthermus_aligned.aa");
+		if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
+		nf = zipfilesystem.getPath("/genes.faa");
+		if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
+		//else {
+		
+		/*for( String id : refmap.keySet() ) {
+			Gene g = refmap.get( id );
+			if( g.getSpecies().contains("MAT4685") ) {
+				System.err.println();
+			}
+		}*/
+		
+		for( Path root : zipfilesystem.getRootDirectories() ) {
+			Files.list(root).filter( new Predicate<Path>() {
+				@Override
+				public boolean test(Path t) {
+					String filename = t.getFileName().toString();
+					//System.err.println("filename " + filename);
+					boolean b = (filename.endsWith(".aa") || filename.endsWith(".faa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
+					return b;
+				}
+			}).forEach( new Consumer<Path>() {
+				@Override
+				public void accept(Path t) {
+					if( Files.exists( t ) )
+						try {
+							String filename = t.getFileName().toString().replace(".fna", "");
+							loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+				}
+			});
+		}
+		//}
+		//}
+		
+		/*int tot = 0;
+		int mot = 0;
+		for( String cstr : contigmap.keySet() ) {
+			Sequence ctg = contigmap.get( cstr );
+			if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
+				Gene gn = tv.getGene();
+				
+				if( gn.getGeneGroup() != null ) {
+					tot++;
+				} else mot++;
+			}
+		}
+		System.err.println( tot + "  " + mot );
+		tot = 0;
+		mot = 0;
+		for( Gene gn : genelist ) {	
+			if( gn.getGeneGroup() != null ) {
+				tot++;
+			} else mot++;
+		}
+		System.err.println( tot + "  " + mot );
+		System.err.println();*/
+		
+		nf = zipfilesystem.getPath("/clusters.txt");
+		if( Files.exists( nf ) ) {
+			uclusterlist = loadSimpleClusters( Files.newBufferedReader(nf) );
+			//if( refmap.size() == 0 ) {
+			loci2aaseq( uclusterlist, refmap, designations );
+			//}
+		}
+		nf = zipfilesystem.getPath("/cog.blastout");
+		if( Files.exists( nf ) ) cogmap = loadcogmap( Files.newBufferedReader(nf) );
+		nf = zipfilesystem.getPath("/cazy");
+		if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
+		
+		/*for( String cstr : contigmap.keySet() ) {
+			Sequence c = contigmap.get(cstr);
+			if( c.annset != null ) for( Annotation a : c.annset ) {
+				if( cstr.contains("00270") ) {
+					System.err.println( a.name );
+				}
+			}
+		}
+		System.err.println();*/
+		
+		
+		
+		
+		/*int zcount = 0;
+		while( zcount < 3 ) {
+			zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
+			ze = zipm.getNextEntry();
+			while( ze != null ) {
+				String zname = ze.getName();
+				if( zcount == 0 && (zname.equals("allthermus.fna") || zname.equals("allglobus.fna") || zname.equals("allrhodo.fna")) ) {
+					specList = loadcontigs( new InputStreamReader( zipm ) );
+					zcount = 1;
+				} else if( zcount == 1 && (zname.equals("allthermus_aligned.fsa") || zname.equals("allthermus_aligned.aa") || zname.equals("allglobus_aligned.aa") || zname.equals("allrhodo_aligned.aa")) ) {
+					loci2aasequence( new InputStreamReader( zipm ), refmap, designations );
+					zcount = 2;
+				} else if( zcount == 2 && zname.equals("clusters.txt") ) {
+					uclusterlist = loadSimpleClusters( new InputStreamReader( zipm ) );
+					zcount = 3;
+				} else if( zname.equals("cog.blastout") ) {
+					cogmap = loadcogmap( new InputStreamReader( zipm ) );
+				} else if( zname.endsWith(".cazy") ) {
+					loadcazymap( cazymap, new InputStreamReader( zipm ) );
+				}
+				
+			/*int size = (int)ze.getSize();
+			byte[] bb = new byte[ size ];
+			//ByteArrayOutputStream baos = new ByteArrayOutputStream( size );
+			int total = 0;
+			r = zipm.read( bb );
+			total += r;
+			while( total < size ) {
+				r = zipm.read(bb, total, size-total);
+				total += r;
+			}
+			/*while( r > 0 ) {
+				baos.write( bb, 0, r );
+				r = zipm.read( bb );
+			}*
+			//baos.close();
+			//mop.put( ze.getName(), bb );
+				ze = zipm.getNextEntry();
+			}
+		}*/
+		genemap = refmap;
+		//loadCog();
+		
+		//specList = loadcontigs( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.fna") ) ) );			
+		//loci2aasequence( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.aa") ) ), refmap );
+		//List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader( new ByteArrayInputStream( mop.remove("clusters.txt") ) ) );
+		/*try {
+			is = GeneSet.class.getResourceAsStream("/allthermus.fna");
+			//InputStream cois = GeneSet.class.getResourceAsStream("/contigorder.txt");
+			//is = GeneSet.class.getResourceAsStream("/all.fsa");
+			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
+			if (is != null)
+				loadcontigs(new InputStreamReader(is));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
+		is = GeneSet.class.getResourceAsStream("/allthermus.aa");
+		// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
+		if (is != null)
+			loci2aasequence(new InputStreamReader(is));*/
+
+		// URL url = new URL("http://192.168.1.69/all.nn");
+		/*try {
+			is = GeneSet.class.getResourceAsStream("/allthermus.nn");
+			//is = GeneSet.class.getResourceAsStream("/all.nn");
+			// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
+			if (is != null)
+				loci2dnasequence(new InputStreamReader(is));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}*/
+
+		// url = new URL("http://192.168.1.69/all.fsa");
+
+		//is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
+		//List<Set<String>> iclusterlist = null; //loadSimpleClusters(new InputStreamReader(is));
+
+		//is = GeneSet.class.getResourceAsStream("/thermus_unioncluster.txt");
+		//is = GeneSet.class.getResourceAsStream("/allthermus_unioncluster2.txt");
+		//is = GeneSet.class.getResourceAsStream("/thomas1.clust");
+		
+		//is = GeneSet.class.getResourceAsStream("/allthermus_new.clust");
+		//List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
+		
+		//is = GeneSet.class.getResourceAsStream("/results.uc");
+		//List<Set<String>> uclusterlist = loadUClusters( new InputStreamReader(is) );
+
+		/*System.err.println( uclusterlist.size() );
+		for( Set<String> clust : uclusterlist ) {
+			/*if( clust.size() == 4 ) {
+				for( String s : clust ) {
+					System.err.print( "  " + s );
+				}
+				System.err.println();
+			}// else System.err.println( uclusterlist.size() );
+			if( clust.size() > 10 ) System.err.println( "   " + clust.size() );
+		}*/
+
+		//is = GeneSet.class.getResourceAsStream("/thermus_nr.blastout");
+		//panCoreFromNRBlast( new InputStreamReader(is), "c:/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
+		//is = GeneSet.class.getResourceAsStream("/thermus_nr_short.blastout");
+		//is = new FileInputStream( "/home/sigmar/thermus_nr_short.blastout" );
+		//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
+		
+		//is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
+		//is = GeneSet.class.getResourceAsStream("/ncbithermus_short.blastout");		
+		//InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
+		
+		/*is = GeneSet.class.getResourceAsStream("/thermus_ncbi_short.blastout");
+		InputStream nis = null;//GeneSet.class.getResourceAsStream("/exp_short.blastout");
+		Blast blast = new Blast();
+		blast.panCoreFromNRBlast(new InputStreamReader(is), null/*new InputStreamReader(nis)*, null/*"/u0/sandbox/distann/src/thermus_ncbi_short.blastout"*, null /*"/u0/sandbox/distann/src/exp_short.blastout"*, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, aas, contigmap);*/
+
+		geneloc.clear();
+		allgenes.clear();
+		geneset.clear();
+		poddur.clear();
+		
+		/*FileReader fr = new FileReader("/vg454flx/cogthermus.blastout");
+		cogmap = loadcogmap( fr );
+		fr.close();*/
+		
+		// Map<String,Gene> refmap = new TreeMap<String,Gene>();
+		for (String genedesc : refmap.keySet()) {
+			Gene gene = refmap.get(genedesc);
+			if( namemap.containsKey(genedesc) ) {
+				gene.koname = namemap.get( genedesc );
+			}
+			// refmap.put(gene.refid, gene);
+			gene.index = genelist.size();
+			genelist.add(gene);
+			
+			/*if( gene.species.size() == 4 ) {
+				if( gene.species.containsKey("t.oshimai") && gene.species.containsKey("mt.silvanus") ) {
+					System.err.println( gene.index );
+					for( String spec : gene.species.keySet() ) {
+						System.err.print( "  " + spec );
+					}
+					System.err.println();
+				}
+			}*/
+
+			/*
+			 * if( gene.species != null ) { for( Set<String> ucluster :
+			 * uclusterlist ) { for( String str : gene.species.keySet() ) {
+			 * Teginfo stv = gene.species.get(str); for( Tegeval tv : stv.tset )
+			 * { if( ucluster.contains(tv.cont) ) { gene.group = ucluster;
+			 * break; } } if( gene.group != null ) break; } if( gene.group !=
+			 * null ) break; } }
+			 */
+		}
+
+		int id = 0;
+		// Map<Set<String>,ClusterInfo> clustInfoMap = new
+		// HashMap<Set<String>,ClusterInfo>();
+
+		corrInd = new ArrayList<String>();
+		InputStream is = GeneSet.class.getResourceAsStream("/thermus16S.blastout");
+		double[] corr16sArray = is == null ? new double[0] : load16SCorrelation(new InputStreamReader(is), corrInd);
+
+		if( uclusterlist != null ) Collections.sort(uclusterlist, new Comparator<Set<String>>() {
+			@Override
+			public int compare(Set<String> o1, Set<String> o2) {
+				return o1.size() - o2.size();
+			}
+		});
+
+		Map<Set<String>, double[]> corrList = new HashMap<Set<String>, double[]>();
+
+		List<GeneGroup>	ggList = new ArrayList<GeneGroup>();
+		int i = 0;
+		//Set<String> ss = new HashSet<String>();
+		Set<String> gs = new HashSet<String>();	
+		
+		int countclust = 0;
+		if( uclusterlist != null ) for (Set<String> cluster : uclusterlist) {
+			//ss.clear();
+			gs.clear();
+			
+			/*if( cluster.size() == 1 ) {
+				String s = "";
+				for( String u : cluster ) s = u;
+			}*/
+
+			Set<Gene> gset = new HashSet<Gene>();
+			for( String cont : cluster ) {
+				String gid = null;
+				//String spec;
+				int b = cont.lastIndexOf('[');
+				if( b != -1 ) {
+					int u = cont.indexOf(']', b+1);
+					int k = cont.indexOf(' ');
+					
+					/*int n = cont.lastIndexOf('#');
+					if( n != -1 ) {
+						int m = cont.lastIndexOf(';', n+1);
+						if( m != -1 ) {
+							gid = cont.substring(m+1);
+						}
+					}*/
+					
+					if( gid == null ) {
+						gid = cont.substring(0, k);
+						gid = idFix( gid, cont.substring(b+1, u) );
+					}
+					
+					String scont = cont.substring(b+1, u);
+					
+					int l = Sequence.specCheck( scont );
+					
+					if( l == -1 ) {
+						l = scont.indexOf("contig");
+						//spec = scont.substring(0, l-1);
+					} else {
+						int m = scont.indexOf('_', l+1);
+						if( m == -1 ) {
+							m = scont.length(); //"monster";
+						}
+						//spec = scont.substring(0, m);
+					}
+				} else {
+					int k = cont.indexOf('#');
+					if( k == -1 ) k = cont.length();
+					gid = cont.substring(0, k).trim();
+					
+					//int k = cont.indexOf("contig");
+					//spec = cont.substring(0, k-1);
+				}
+				//String[] split = cont.split("_");
+				
+				//ss.add( spec );
+				Gene g = refmap.get(gid);
+				
+				if (g != null) {
+					gs.add(g.refid);
+					gset.add(g);
+					countclust++;
+				} else {
+					if( mu.contains( gid ) ) {
+						System.err.println("e " + gid);
+					} else {
+						System.err.println("r " + gid);
+					}
+				}
+			}
+
+			int val = gset.size();	
+			/*int len = 20; //16
+			if (val == len && ss.size() == len) {
+				corrList.put(cluster, new double[20*20]);
+			}*/
+
+			GeneGroup gg = new GeneGroup( i );
+			ggList.add( gg );
+			//gg.addSpecies( ss );
+			gg.setGroupCount( val );
+			//gg.setGroupGeneCount( gs.size() );
+			
+			if( gset.size() == 0 ) {
+				System.err.println();
+			}
+			for (Gene g : gset) {
+				g.setGeneGroup( gg );
+				/*g.groupIdx = i;
+				g.groupCoverage = ss.size();
+				g.groupGenCount = gs.size();
+				g.groupCount = val;*/
+				
+				//gg.addGene( g );
+			}
+
+			i++;
+
+			// ClusterInfo cInfo = new ClusterInfo(id++,ss.size(),gs.size());
+			// clustInfoMap.put( cluster, cInfo);
+		}// else {
+		
+		for( Gene g : genelist ) {
+			if( g.getGeneGroup() == null ) {
+				GeneGroup gg = new GeneGroup( i++ );
+				ggList.add( gg );
+				gg.setGroupCount( 1 );
+				
+				g.setGeneGroup( gg );
+			}
+		}
+		//}
+		System.err.println( countclust + "  " + genelist.size() );
+		int me = 0;
+		int mu = 0;
+		for( Gene g : genelist ) {
+			if( g.getGeneGroup() != null ) me++;
+			else mu++;
+		}
+		System.err.println( me + "  " + mu );
+		
+		final Map<String,GeneGroup>	rnamap = new HashMap<String,GeneGroup>();
+		//is = GeneSet.class.getResourceAsStream("/rrna.fasta");
+		//InputStream tis = //GeneSet.class.getResourceAsStream("/trna.txt"); //GeneSet.class.getResourceAsStream("/trna_sub.txt");
+		/*ZipInputStream zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+		ze = zipin.getNextEntry();
+		while( ze != null ) {
+			if( ze.getName().equals("trnas.txt") ) {
+				i  = loadTrnas( rnamap, new InputStreamReader( zipin ), i );
+			} else if( ze.getName().equals("rrnas.fasta") ) {
+				i = loadRrnas( rnamap, new InputStreamReader( zipin ), i );
+			} else if( ze.getName().equals("allthermus.trna") || ze.getName().equals("allglobus.trna") ) {
+				i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "trna" );
+			} else if( ze.getName().equals("allthermus.rrna") || ze.getName().equals("allglobus.rrna") ) {
+				i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "rrna" );
+			}
+			
+			ze = zipin.getNextEntry();
+		}
+		zipin.close();*/
+		
+		nf = zipfilesystem.getPath("/trnas.txt");
+		//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+		if( Files.exists( nf ) ) i  = loadTrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
+		nf = zipfilesystem.getPath("/rrnas.txt");
+		if( Files.exists( nf ) ) i = loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
+		else {
+			for( Path root : zipfilesystem.getRootDirectories() ) {
+				Files.list(root).filter( new Predicate<Path>() {
+					@Override
+					public boolean test(Path t) {
+						String filename = t.getFileName().toString();
+						//System.err.println("filename " + filename);
+						boolean b = filename.endsWith(".lsu") || filename.endsWith(".ssu") || filename.endsWith(".tsu");
+						return b;
+					}
+				}).forEach( new Consumer<Path>() {
+					@Override
+					public void accept(Path t) {
+						if( Files.exists( t ) )
+							try {
+								loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0 );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+					}
+				});
+			}
+		}
+		
+		nf = zipfilesystem.getPath("/allthermus.trna");
+		if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "trna" );
+		else {
+			for( Path root : zipfilesystem.getRootDirectories() ) {
+				Files.list(root).filter( new Predicate<Path>() {
+					@Override
+					public boolean test(Path t) {
+						String filename = t.getFileName().toString();
+						//System.err.println("filename " + filename);
+						boolean b = filename.endsWith(".trna") && !filename.contains("allthermus");
+						return b;
+					}
+				}).forEach( new Consumer<Path>() {
+					@Override
+					public void accept(Path t) {
+						if( Files.exists( t ) )
+							try {
+								loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "trna" );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+					}
+				});
+			}
+		}
+		
+		nf = zipfilesystem.getPath("/allthermus.rrna");
+		if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "rrna" );
+		else {
+			for( Path root : zipfilesystem.getRootDirectories() ) {
+				Files.list(root).filter( new Predicate<Path>() {
+					@Override
+					public boolean test(Path t) {
+						String filename = t.getFileName().toString();
+						//System.err.println("filename " + filename);
+						boolean b = filename.endsWith(".rrna") && !filename.contains("allthermus");
+						return b;
+					}
+				}).forEach( new Consumer<Path>() {
+					@Override
+					public void accept(Path t) {
+						if( Files.exists( t ) )
+							try {
+								loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "rrna" );
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+					}
+				});
+			}
+		}
+		//zipfilesystem.close();
+		
+		//loadRrnas( new InputStreamReader(is), new InputStreamReader(tis), i );
+		for( String ggname : rnamap.keySet() ) {
+			GeneGroup gg = rnamap.get( ggname );
+			ggList.add( gg );
+			
+			for( Gene g : gg.genes ) {
+				refmap.put( g.refid, g );
+				if( g.refid.contains("hypot") ) {
+					System.err.println();
+				}
+				
+				genelist.add( g );
+				
+				//gg.addSpecies( g.species );
+			}
+		}
+		
+		
+		System.err.println("fuck2");
+		for( String k : refmap.keySet() ) {
+			if( !k.contains("scaffold") && !k.contains("contig") ) {
+				System.err.println( k );
+			}
+		}
+		
+		
+		
+		/*for( String cstr : contigmap.keySet() ) {
+			Sequence c = contigmap.get(cstr);
+			if( c.annset != null ) for( Annotation a : c.annset ) {
+				if( cstr.contains("00270") ) {
+					System.err.println( a.name );
+				}
+			}
+		}
+		System.err.println();*/
+		
+		
+		
+		final Set<String>	spids = new HashSet<String>();
+		for( Path root : zipfilesystem.getRootDirectories() ) {
+			Files.list(root).filter( new Predicate<Path>() {
+				@Override
+				public boolean test(Path t) {
+					String filename = t.getFileName().toString();
+					//System.err.println("filename " + filename);
+					boolean b = filename.endsWith(".signalp");
+					return b;
+				}
+			}).forEach( new Consumer<Path>() {
+				@Override
+				public void accept(Path t) {
+					if( Files.exists( t ) )
+						try {
+							System.err.println("loading " + t.toString() );
+							loadsignalp( spids, Files.newBufferedReader(t) );
+							System.err.println("spids " + spids.size() );
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+				}
+			});
+		}
+		for( Gene g : genelist ) {
+			System.err.println( g.id );
+			if( spids.contains(g.id) ) {
+				g.signalp = true;
+			}
+		}
+		
+		final Set<String>	tmids = new HashSet<String>();
+		for( Path root : zipfilesystem.getRootDirectories() ) {
+			Files.list(root).filter( new Predicate<Path>() {
+				@Override
+				public boolean test(Path t) {
+					String filename = t.getFileName().toString();
+					//System.err.println("filename " + filename);
+					boolean b = filename.endsWith(".tm");
+					return b;
+				}
+			}).forEach( new Consumer<Path>() {
+				@Override
+				public void accept(Path t) {
+					if( Files.exists( t ) )
+						try {
+							loadtransm( tmids, Files.newBufferedReader(t) );
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+				}
+			});
+		}
+		for( Gene g : genelist ) {
+			if( tmids.contains(g.id) ) {
+				g.transm = true;
+			}
+		}
+		
+		
+		
+		
+		ggSpecMap = new HashMap<Set<String>,List<GeneGroup>>();
+		for( GeneGroup gg : ggList ) {
+			List<GeneGroup>	speclist;
+			Set<String> specset = gg.species.keySet();
+			if( ggSpecMap.containsKey( specset ) ) {
+				speclist = ggSpecMap.get(specset);
+			} else {
+				speclist = new ArrayList<GeneGroup>();
+				ggSpecMap.put( specset, speclist );
+			}
+			speclist.add( gg );
+		}
+		
+		specGroupMap = new HashMap<String,Set<GeneGroup>>();
+		int ind = 0;
+		for( GeneGroup gg : ggList ) {
+			/*if( gg.genes.size() == 0 ) {
+				System.err.println();
+			}*/
+			
+			for( String spec : gg.species.keySet() ) {
+				Set<GeneGroup>	ggset;
+				if( !specGroupMap.containsKey( spec ) ) {
+					ggset = new HashSet<GeneGroup>();
+					specGroupMap.put( spec, ggset );
+				} else ggset = specGroupMap.get( spec );
+				ggset.add( gg );
+			}
+			/*if( ind == 4049 ) {
+				System.err.println( gg.species.keySet() );
+				System.err.println();
+			}*/
+			gg.setIndex( ind++ );
+		}
+		allgenegroups = ggList;
+		
+		for( Gene g : genelist ) {
+			if( g.getGeneGroup() != null ) me++;
+			else mu++;
+		}
+		System.err.println( me + " agargargargarg " + mu );
+		
+		
+		System.err.println("fuck3");
+		for( String k : refmap.keySet() ) {
+			if( !k.contains("scaffold") && !k.contains("contig") ) {
+				System.err.println( k );
+			}
+		}
+		
+		/*if( rnamap != null ) for( String ggname : rnamap.keySet() ) {
+			GeneGroup gg = rnamap.get( ggname );
+			List<Tegeval> tegevals = gg.getTegevals();
+			
+			/*for( Tegeval te : tegevals ) {
+				Sequence contig = te.getContshort();
+									
+				//if( contig.getName().contains("antrani") && contig.getName().contains("contig00006") ) {
+				//	System.err.println( contig.getAnnotationCount() );
+				//}
+				
+				if( contig != null ) {
+					contig.add( te );
+					
+					if( te.getGene().getName().contains("Met") ) {
+						System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getAnnotationCount() );
+					}
+					/*Tegeval ste = check( contig );
+					
+					if( ste != null ) {
+						while( te.start < ste.start ) {
+							Tegeval prev = ste.getPrevious();
+							if( prev == null ) break;
+							else ste = prev;
+						}	
+						while( te.start > ste.start ) {
+							Tegeval next = ste.getNext();
+							if( next == null ) break;
+							else ste = next;
+						}
+ 						
+						if( te.start < ste.start ) {
+							Tegeval prevprev = ste.setPrevious( te );
+							if( prevprev != null ) {
+								//prevprev.setNext( te );
+								te.setPrevious( prevprev );
+								
+								System.err.println( prevprev.getGene().getName() );
+							} else {
+								contig.start = te;
+							}
+							
+							te.setNum( ste.getNum() );
+							Tegeval next = te.getNext();
+							while( next != null ) {
+								next.setNum( next.getPrevious().getNum()+1 );
+								next = next.getNext();
+							}
+						} else {
+							Tegeval prevnext = ste.setNext( te );
+							te.setPrevious( ste );
+							if( prevnext != null ) {
+								prevnext.setPrevious( te );
+								
+								System.err.println( prevnext.getGene().getName() );
+							} else {
+								contig.end = te;
+							}
+							
+							te.setNum( ste.getNum()+1 );
+							Tegeval next = te.getNext();
+							while( next != null ) {
+								next.setNum( next.getPrevious().getNum()+1 );
+								next = next.getNext();
+							}
+						}
+					} else {
+						contig.start = te;
+						contig.end = te;
+						te.setNum( 0 );
+					}*
+				}
+			}*
+		}*/
+		sortLoci();
+		
+		for( String spec : speccontigMap.keySet() ) {
+			System.err.println( spec );
+			List<Sequence> ctgs = speccontigMap.get( spec );
+			for( Sequence c : ctgs ) {
+				System.err.println( c );
+				int im = 0;
+				if( c.getAnnotations() != null ) for( Annotation tv : c.getAnnotations() ) {
+					((Tegeval)tv).unresolvedGap( im++ );
+				}
+			}
+		}
+		
+		for( String ggname : rnamap.keySet() ) {
+			GeneGroup gg = rnamap.get( ggname );
+			List<Tegeval> tegevals = gg.getTegevals();
+			
+			/*for( Tegeval te : tegevals ) {
+				Sequence contig = te.getContshort();
+				if( te.getGene().getName().contains("Met") ) {
+					System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getAnnotationCount() );
+				}
+			}*/
+		}
+		
+		System.err.println("fuck4");
+		for( String k : refmap.keySet() ) {
+			if( !k.contains("scaffold") && !k.contains("contig") ) {
+				System.err.println( k );
+			}
+		}
+		
+		System.err.println("starting ......................................");
+		for( String str : speccontigMap.keySet() ) {
+			List<Sequence> cts = speccontigMap.get(str);
+			System.err.println( str + "  " + cts.size() );
+		}
+		
+		nf = zipfilesystem.getPath("/contigorder.txt");
+		//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+		if( Files.exists( nf ) ) {
+			is = Files.newInputStream(nf, StandardOpenOption.READ);
+			BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
+			String line = br.readLine();
+			if( line != null ) line = br.readLine();
+			while( line != null ) {
+				Sequence prevctg = null;
+				i = 0;
+				int ni1 = line.indexOf('/', i+1);
+				int ni2 = line.indexOf('\\', i+1);
+				ni1 = ni1 == -1 ? line.length() : ni1; 
+				ni2 = ni2 == -1 ? line.length() : ni2;
+				int n = Math.min( ni1, ni2 );
+				while( n != line.length() ) {
+					char c = line.charAt(i);
+					String ctgn = line.substring(i+1, n);
+					Sequence ctg = contigmap.get( ctgn );
+					
+					if( ctg != null ) {
+						String spec = ctg.getSpec();
+						
+						List<Sequence> splct = speccontigMap.get( spec );
+						
+						if( c == '\\' ) ctg.setReverse( true );
+						if( prevctg != null ) {
+							prevctg.setConnection( ctg, ctg.isReverse(), !prevctg.isReverse() );
+							
+							splct.remove( ctg );
+							int k = splct.indexOf( prevctg );
+							splct.add( k+1, ctg );
+						} else {
+							splct.remove( ctg );
+							splct.add( 0, ctg );
+						}
+						prevctg = ctg;
+					} else {
+						/*for( String key : contigmap.keySet() ) {
+							if( key.contains("eiot") ) {
+								System.err.println( key );
+							}
+						}*/
+					}
+					
+					i = n;
+					ni1 = line.indexOf('/', i+1);
+					ni2 = line.indexOf('\\', i+1);
+					ni1 = ni1 == -1 ? line.length() : ni1;
+					ni2 = ni2 == -1 ? line.length() : ni2;
+					n = Math.min( ni1, ni2 );
+				}
+				char c = line.charAt(i);
+				String ctgn = line.substring(i+1, n);
+				Sequence ctg = contigmap.get( ctgn );
+				if( ctg != null ) {
+					List<Sequence> splct = speccontigMap.get( ctg.getSpec() );
+					if( c == '\\' ) ctg.setReverse( true );
+					if( prevctg != null ) {
+						prevctg.setConnection( ctg, ctg.isReverse(), !prevctg.isReverse() );
+						
+						splct.remove( ctg );
+						int k = splct.indexOf( prevctg );
+						splct.add( k+1, ctg );
+					} else {
+						splct.remove( ctg );
+						splct.add( 0, ctg );
+					}
+				}					
+				line = br.readLine();
+			}
+			br.close();
+		}
+		
+		System.err.println("starting ......................................");
+		for( String str : speccontigMap.keySet() ) {
+			List<Sequence> cts = speccontigMap.get(str);
+			System.err.println( str + "  " + cts.size() );
+		}
+		System.err.println("ending ......................................");
+		
+		/*FileWriter fw = null; // new FileWriter("all_short.blastout");
+		//is = GeneSet.class.getResourceAsStream("/all_short.blastout");
+		is = GeneSet.class.getResourceAsStream("/all_short.blastout");
+		BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		String line = br.readLine();
+		while (line != null) {
+			if (line.startsWith("Query=")) {
+				if (fw != null)
+					fw.write(line + "\n");
+				int k = line.indexOf('#');
+				if (k != -1) {
+					Set<String> cluster = null;
+					String query = line.substring(7, k - 1).trim();
+					for (Set<String> thecluster : corrList.keySet()) {
+						if (thecluster.contains(query)) {
+							cluster = thecluster;
+							break;
+						}
+					}
+
+					if (cluster != null) {
+						double[] da = corrList.get(cluster);
+
+						int vi = query.indexOf('_');
+						int ki = 16 * corrInd.indexOf(query.substring(0, vi));
+
+						line = br.readLine();
+						while (line != null && !line.startsWith(">") && !line.startsWith("Query=")) {
+							String trim = line.trim();
+
+							String[] split = trim.split("[ ]+");
+							String val = split[0];
+							if (cluster.contains(val)) {
+								if (fw != null)
+									fw.write(line + "\n");
+								vi = val.indexOf('_');
+								int ni = corrInd.indexOf(val.substring(0, vi));
+
+								double el = -10.0;
+								try {
+									el = Double.parseDouble(split[split.length - 2]);
+								} catch (Exception e) {
+								}
+								da[ki + ni] = el;
+							}
+
+							line = br.readLine();
+						}
+
+						if (line == null || line.startsWith("Query="))
+							continue;
+					}
+				}
+			}
+			line = br.readLine();
+		}
+		br.close();
+		// if( fw != null ) fw.close();*/		
+
+		double davg = 1.0 / corr16sArray.length;
+		for (Set<String> cluster : corrList.keySet()) {
+			double[] dcorr = corrList.get(cluster);
+
+			double dsum = 0.0;
+			for (i = 0; i < dcorr.length; i++) {
+				dsum += dcorr[i];
+			}
+			/*
+			 * for( i = 0; i < dcorr.length; i++ ) { dcorr[i] /= dsum; }
+			 */
+
+			double cval = 0.0;
+			double xval = 0.0;
+			double yval = 0.0;
+			for (i = 0; i < dcorr.length; i++) {
+				double xx = (dcorr[i] / dsum - davg);
+				double yy = (corr16sArray[i] - davg);
+
+				cval += xx * yy;
+				xval += xx * xx;
+				yval += yy * yy;
+			}
+
+			double r = cval / (Math.sqrt(xval) * Math.sqrt(yval));
+
+			Set<Gene> gset = new HashSet<Gene>();
+			for (String cont : cluster) {
+				String[] split = cont.split("_");
+				//ss.add(split[0]);
+				Gene g = locgene.get(cont);
+
+				if (g != null) {
+					gs.add(g.refid);
+					gset.add(g);
+				}
+			}
+
+			for (Gene g : gset) {
+				g.corr16s = r;
+				g.corrarr = dcorr;
+			}
+		}
+
+		//proxPreserve( locgene );
+
+		// genemap = idMapping( "/home/sigmar/blastout/nilli.blastout",
+		// "/mnt/tmp/gene2refseq.txt", "/home/sigmar/idmapping_short2.dat", 5,
+		// 1, genemap );
+		// genemap = idMapping( "/home/sigmar/blastout/nilli.blastout",
+		// "/home/sigmar/thermus/newthermus/idmapping.dat",
+		// "/home/sigmar/idmapping_short.dat", 2, 0, genemap );
+
+		/*
+		 * Map<String,Gene> unimap = idMapping( "/home/sigmar/idmap.dat",
+		 * "/home/sigmar/workspace/distann/idmapping_short.dat", 2, 0, refmap,
+		 * false ); Map<String,Gene> genmap = idMapping(
+		 * "/mnt/tmp/gene2refseq.txt",
+		 * "/home/sigmar/workspace/distann/gene2refseq_short.txt", 5, 1, refmap,
+		 * true ); funcMapping( "/home/sigmar/asgard-bio/data/gene2go", genmap,
+		 * "/home/sigmar/workspace/distann/gene2go_short.txt" ); funcMappingUni(
+		 * "/home/sigmar/asgard-bio/data/sp2go.txt", unimap,
+		 * "/home/sigmar/workspace/distann/sp2go_short.txt" );
+		 */
+
+		//Map<String, Gene> unimap = null;
+		//Map<String, Gene> genmap = null;
+		//Map<String, Gene> gimap = new HashMap<String,Gene>();
+		
+		nf = zipfilesystem.getPath("/gene2refseq_short.txt");
+		if( Files.exists( nf ) ) genmap = idMapping(new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), null, 5, 1, refmap, genmap, gimap);
+		//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
+		
+		/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+		ze = zipin.getNextEntry();
+		while( ze != null ) {
+			if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, genmap, gimap);
+			
+			ze = zipin.getNextEntry();
+		}
+		zipin.close();*/
+		
+		//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt");
+		//is = new GZIPInputStream( new FileInputStream("/data/gene2refseq.gz") );
+		//genmap = idMapping(new InputStreamReader(is), "/home/sigmar/gene2refseq_short.txt", 5, 1, refmap, genmap, gimap);
+		//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");
+		//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
+		//funcMapping(new InputStreamReader(is), genmap, "/home/sigmar/thermus/gene2go_short.txt");
+		
+		/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+		ze = zipin.getNextEntry();
+		while( ze != null ) {
+			if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, genmap, gimap);
+			else if( ze.getName().equals("ko2name.txt") ) ko2name = ko2nameMapping( new InputStreamReader(zipin) );
+			
+			ze = zipin.getNextEntry();
+		}
+		zipin.close();*/
+		
+		nf = zipfilesystem.getPath("/idmapping_short.dat");
+		if( Files.exists( nf ) ) {
+			unimap = idMapping(new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), null, 2, 0, refmap, genmap, gimap);
+		}
+		
+		nf = zipfilesystem.getPath("/smap_short.txt");
+		if( Files.exists( nf ) && !unimap.isEmpty() ) loadSmap( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), unimap );
+		nf = zipfilesystem.getPath("/ko2name.txt");
+		if( Files.exists( nf ) ) ko2name = ko2nameMapping( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
+		
+		if( ko2name != null && !ko2name.isEmpty() ) {
+			for( Gene g : genelist ) {
+				if( ko2name.containsKey( g.koid ) ) {
+					String name = ko2name.get( g.koid );
+					if( name.startsWith("E") ) {
+						int k = name.indexOf(',');
+						if( k == -1 ) k = name.length(); 
+						else ko2name.put( g.koid, name.substring(k+1).trim() );
+						g.ecid = name.substring(1, k);
+					} else if( name.contains(",") ) {
+						if( name.charAt(1) >= 'A' && name.charAt(1) <= 'Z' ) {
+							String[] split = name.split(",");
+							String newname = "";
+							for( int m = 1; m < split.length; m++ ) {
+								newname += split[m].trim()+", ";
+							}
+							newname += split[0];
+							ko2name.put( g.koid, newname );
+						}
+					}
+				}
+			}
+		}
+		
+		//is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
+		//is = new GZIPInputStream( new FileInputStream("/data/idmapping.dat.gz") );
+		//is = new FileInputStream("/u0/idmapping_short.dat");
+		//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/idmapping_short.dat", 2, 0, refmap, genmap, gimap);
+		
+		if( unimap != null ) {
+			/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+			ze = zipin.getNextEntry();
+			while( ze != null ) {
+				if( ze.getName().equals("sp2go_short.txt") ) {
+					funcMappingUni( new InputStreamReader( zipin ), unimap, null );
+				} else if( ze.getName().equals("ko2go.txt") ) {
+					BufferedReader br = new BufferedReader( new InputStreamReader(zipin) );
+					String line = br.readLine();
+					while (line != null) {
+						String[] split = line.split(" = ");
+						String[] subsplit = split[1].split(" ");
+						Set<String> gos = new HashSet<String>();
+						for( String go : subsplit ) {
+							gos.add( go );
+						}
+						ko2go.put( split[0], gos );
+						line = br.readLine();
+					}
+				}
+				//else if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
+				
+				ze = zipin.getNextEntry();
+			}
+			zipin.close();*/
+			//is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
+			//is = new GZIPInputStream( new FileInputStream( "/data/sp2go.txt.gz" ) );
+			//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
+			
+			nf = zipfilesystem.getPath("/sp2go_short.txt");
+			if( Files.exists( nf ) ) {
+				funcMappingUni( new BufferedReader( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) )), unimap, null );
+			}
+			
+			nf = zipfilesystem.getPath("/ko2go.txt");
+			if( Files.exists(nf) ) {
+				BufferedReader br = new BufferedReader( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
+				String line = br.readLine();
+				while (line != null) {
+					String[] split = line.split(" = ");
+					String[] subsplit = split[1].split(" ");
+					Set<String> gos = new HashSet<String>();
+					for( String go : subsplit ) {
+						gos.add( go );
+					}
+					ko2go.put( split[0], gos );
+					line = br.readLine();
+				}
+			}
+		}
+		if( genmap != null ) genmap.clear();
+		
+		Map<Function, Set<Gene>> totalgo = new HashMap<Function, Set<Gene>>();
+		for (Gene g : genelist) {
+			if (g.funcentries != null) {
+				for( Function f : g.funcentries) {
+					Set<Gene> set;
+					if (totalgo.containsKey(f)) {
+						set = totalgo.get(f);
+					} else {
+						set = new HashSet<Gene>();
+						totalgo.put(f, set);
+					}
+					set.add(g);
+				}
+			}
+		}
+		
+		/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+		ze = zipin.getNextEntry();
+		while( ze != null ) {
+			if( ze.getName().equals("go_short.obo") ) readGoInfo( new InputStreamReader(zipin), totalgo, null);
+			
+			ze = zipin.getNextEntry();
+		}
+		zipin.close();*/
+		is = GeneSet.class.getResourceAsStream("go.obo");
+		//Map<String,Function> funcmap = 
+		if( is != null ) {
+			readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
+		}
+		
+		//is = GeneSet.class.getResourceAsStream("/go_short.obo");
+		//readGoInfo(new InputStreamReader(is), totalgo, null);
+		for (String go : funcmap.keySet()) {
+			Function f = funcmap.get(go);
+			f.index = funclist.size();
+			funclist.add(f);
+		}
+		totalgo.clear();
+		
+		Map<String,String>	jgiGeneMap = new HashMap<String,String>();
+		/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+		ze = zipin.getNextEntry();
+		while( ze != null ) {
+			if( ze.getName().equals("genes.faa") ) jgiGeneMap = jgiGeneMap( new InputStreamReader(zipin) );
+			
+			ze = zipin.getNextEntry();
+		}
+		zipin.close();
+		
+		zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
+		ze = zipin.getNextEntry();
+		while( ze != null ) {
+			if( ze.getName().equals("ko.tab.txt") ) jgiGene2KO( new InputStreamReader(zipin), jgiGeneMap, refmap );
+			
+			ze = zipin.getNextEntry();
+		}
+		zipin.close();*/
+		
+		System.err.println("fuck8");
+		for( String k : refmap.keySet() ) {
+			if( !k.contains("scaffold") && !k.contains("contig") ) {
+				System.err.println( k );
+			}
+		}
+		
+		nf = zipfilesystem.getPath("/genes.faa");
+		if( Files.exists( nf ) ) jgiGeneMap = jgiGeneMap( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
+		nf = zipfilesystem.getPath("/ko.tab.txt");
+		if( Files.exists( nf ) ) jgiGene2KO( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), jgiGeneMap, refmap );
+		zipfilesystem.close();
+	}
+	
 	public void cleanUp() {
 		refmap.clear();
 		genmap.clear();
@@ -13560,1356 +9462,7 @@ public class GeneSet extends JApplet {
 		if( contigmap!= null ) contigmap.clear();
 	}
 	
-	public void showKeggPathway( String sub, Path p ) throws IOException {
-		final BufferedImage selimg = ImageIO.read( Files.newInputStream( p ) );
-		if( selimg != null ) {
-			JFrame 	frame = new JFrame( sub );
-			frame.setSize(800, 600);
-			final JComponent c = new JComponent() {
-				public void paintComponent( Graphics g ) {
-					super.paintComponent(g);
-					g.drawImage(selimg, 0, 0, this);
-				}
-			};
-			Dimension dim = new Dimension( selimg.getWidth(), selimg.getHeight() );
-			c.setSize(dim);
-			c.setPreferredSize(dim);
-			JScrollPane sc2 = new JScrollPane( c );
-			frame.add( sc2 );
-			frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-			frame.setVisible(true);
-		}
-	}
-	
-	Map<String, Gene> 			refmap = new HashMap<String, Gene>();
-	Map<String, Gene> 			genmap = new HashMap<String, Gene>();
-	Map<String, Gene> 			unimap = new HashMap<String, Gene>();
-	Map<String, Gene> 			gimap = new HashMap<String, Gene>();
-	
-	Map<String, String> 		allgenes = new HashMap<String, String>();
-	Map<String, Set<String>> 	geneset = new HashMap<String, Set<String>>();
-	Map<String, Set<String>> 	geneloc = new HashMap<String, Set<String>>();
-	Set<String> 				poddur = new HashSet<String>();
-	Map<String, Gene> 			locgene = new HashMap<String, Gene>();
-	
-	Path		zippath;
-	//File		zipfile;
-	FileSystem	zipfilesystem;
-	URI			zipuri;
-	Map<String,String>	ko2name;
-	Map<String,String>	designations = new HashMap<String,String>();
-	Set<String>			deset = new HashSet<String>();
-	private void importStuff() throws IOException, UnavailableServiceException {
-		boolean fail = true;
-		InputStream	is = null;
-		/*try {
-			FileOpenService fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
-			FileContents fc = fos.openFileDialog(null, null);
-			is = fc.getInputStream();
-		} catch( Exception e ) {
-			fail = true;
-		}*/
-		
-		if( fail && zippath == null ) {
-			JFileChooser fc = new JFileChooser();
-			if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-				zippath = fc.getSelectedFile().toPath();				
-				//is = new FileInputStream( zipfile );
-			}
-		}
-		
-		//if( is != null ) {
-		/*ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		byte[] bab = new byte[1024];
-		int rd = is.read( bab );
-		while( rd > 0 ) {
-			baos.write(bab, 0, rd);
-			rd = is.read( bab );
-		}
-		baos.close();
-		zipf = baos.toByteArray();*/
-		
-		/*ZipInputStream zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
-		ZipEntry ze = zipm.getNextEntry();
-		while( ze != null ) {
-			String zname = ze.getName();
-			if( zname.equals("unresolved.blastout") ) {
-				unresolvedmap = loadunresolvedmap( new InputStreamReader( zipm ) );
-			} else if( zname.equals("namemap.txt") ) {
-				namemap = loadnamemap( new InputStreamReader( zipm ) );
-			} else if( ze.getName().equals("designations.txt") ) {
-				designations = loadDesignations( new InputStreamReader(zipm), deset );
-			} else if( ze.getName().equals("plasmids.txt") ) {
-				plasmids = loadPlasmids( new InputStreamReader(zipm) );
-			}
-			ze = zipm.getNextEntry();
-		}
-		if( designations == null ) designations = new TreeMap<String,String>();
-		//List<Set<String>> uclusterlist = null;*/
-			
-		if( zippath != null ) {
-			Map<String,String> env = new HashMap<String,String>();
-			//Path path = zipfile.toPath();
-			String uristr = "jar:" + zippath.toUri();
-			zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-			
-			Path nf = zipfilesystem.getPath("/unresolved.blastout");
-			if( Files.exists( nf ) ) unresolvedmap = loadunresolvedmap( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
-			nf = zipfilesystem.getPath("/namemap.txt");
-			if( Files.exists( nf ) ) namemap = loadnamemap( Files.newBufferedReader(nf) );
-			nf = zipfilesystem.getPath("/designations.txt");
-			if( Files.exists( nf ) ) designations = loadDesignations( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), deset );
-			nf = zipfilesystem.getPath("/plasmids.txt");
-			if( Files.exists( nf ) ) plasmids = loadPlasmids( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
-			
-			/*zipfilesystem.close();
-			path = zipfile.toPath();
-			String uristr = "jar:" + path.toUri();
-			zipuri = URI.create( uristr /*.replace("file://", "file:")* );
-			zipfilesystem = FileSystems.newFileSystem( zipuri, env );*/
-			
-			nf = zipfilesystem.getPath("/allthermus.fna");
-			if( Files.exists( nf ) ) {
-				specList = loadcontigs( Files.newBufferedReader(nf), "" );
-			}
-			nf = zipfilesystem.getPath("/454LargeContigs.fna");
-			if( Files.exists( nf ) ) {
-				specList = loadcontigs( Files.newBufferedReader(nf), "" );
-			}
-			//else {
-			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						return (filename.endsWith(".fna") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						try {
-							String filename = t.getFileName().toString().replace(".fna", "").replace(".fastg", "");
-							specList = loadcontigs( Files.newBufferedReader(t), "" );
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-				});
-			}
-			//}
-			
-			nf = zipfilesystem.getPath("/aligned");
-			if( Files.exists(nf) ) {
-				Files.list(nf).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						//System.err.println("filename " + filename);
-						boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								String filename = t.getFileName().toString().replace(".fna", "");
-								loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
-			}// else {
-			nf = zipfilesystem.getPath("/allthermus_aligned.aa");
-			if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
-			nf = zipfilesystem.getPath("/genes.faa");
-			if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
-			//else {
-			
-			/*for( String id : refmap.keySet() ) {
-				Gene g = refmap.get( id );
-				if( g.getSpecies().contains("MAT4685") ) {
-					System.err.println();
-				}
-			}*/
-			
-			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						//System.err.println("filename " + filename);
-						boolean b = (filename.endsWith(".aa") || filename.endsWith(".faa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								String filename = t.getFileName().toString().replace(".fna", "");
-								loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
-			}
-			//}
-			//}
-			
-			/*int tot = 0;
-			int mot = 0;
-			for( String cstr : contigmap.keySet() ) {
-				Sequence ctg = contigmap.get( cstr );
-				if( ctg.tlist != null ) for( Tegeval tv : ctg.tlist ) {
-					Gene gn = tv.getGene();
-					
-					if( gn.getGeneGroup() != null ) {
-						tot++;
-					} else mot++;
-				}
-			}
-			System.err.println( tot + "  " + mot );
-			tot = 0;
-			mot = 0;
-			for( Gene gn : genelist ) {	
-				if( gn.getGeneGroup() != null ) {
-					tot++;
-				} else mot++;
-			}
-			System.err.println( tot + "  " + mot );
-			System.err.println();*/
-			
-			nf = zipfilesystem.getPath("/clusters.txt");
-			if( Files.exists( nf ) ) {
-				uclusterlist = loadSimpleClusters( Files.newBufferedReader(nf) );
-				//if( refmap.size() == 0 ) {
-				loci2aaseq( uclusterlist, refmap, designations );
-				//}
-			}
-			nf = zipfilesystem.getPath("/cog.blastout");
-			if( Files.exists( nf ) ) cogmap = loadcogmap( Files.newBufferedReader(nf) );
-			nf = zipfilesystem.getPath("/cazy");
-			if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
-				
-			
-			
-			/*for( String cstr : contigmap.keySet() ) {
-				Sequence c = contigmap.get(cstr);
-				if( c.annset != null ) for( Annotation a : c.annset ) {
-					if( cstr.contains("00270") ) {
-						System.err.println( a.name );
-					}
-				}
-			}
-			System.err.println();*/
-			
-			
-			
-			
-			/*int zcount = 0;
-			while( zcount < 3 ) {
-				zipm = new ZipInputStream( new ByteArrayInputStream( zipf ) );
-				ze = zipm.getNextEntry();
-				while( ze != null ) {
-					String zname = ze.getName();
-					if( zcount == 0 && (zname.equals("allthermus.fna") || zname.equals("allglobus.fna") || zname.equals("allrhodo.fna")) ) {
-						specList = loadcontigs( new InputStreamReader( zipm ) );
-						zcount = 1;
-					} else if( zcount == 1 && (zname.equals("allthermus_aligned.fsa") || zname.equals("allthermus_aligned.aa") || zname.equals("allglobus_aligned.aa") || zname.equals("allrhodo_aligned.aa")) ) {
-						loci2aasequence( new InputStreamReader( zipm ), refmap, designations );
-						zcount = 2;
-					} else if( zcount == 2 && zname.equals("clusters.txt") ) {
-						uclusterlist = loadSimpleClusters( new InputStreamReader( zipm ) );
-						zcount = 3;
-					} else if( zname.equals("cog.blastout") ) {
-						cogmap = loadcogmap( new InputStreamReader( zipm ) );
-					} else if( zname.endsWith(".cazy") ) {
-						loadcazymap( cazymap, new InputStreamReader( zipm ) );
-					}
-					
-				/*int size = (int)ze.getSize();
-				byte[] bb = new byte[ size ];
-				//ByteArrayOutputStream baos = new ByteArrayOutputStream( size );
-				int total = 0;
-				r = zipm.read( bb );
-				total += r;
-				while( total < size ) {
-					r = zipm.read(bb, total, size-total);
-					total += r;
-				}
-				/*while( r > 0 ) {
-					baos.write( bb, 0, r );
-					r = zipm.read( bb );
-				}*
-				//baos.close();
-				//mop.put( ze.getName(), bb );
-					ze = zipm.getNextEntry();
-				}
-			}*/
-			genemap = refmap;
-			
-			//syncolorcomb = new JComboBox();
-			syncolorcomb.removeAllItems();
-			syncolorcomb.addItem("");
-			for( String spec : speccontigMap.keySet() ) {
-				syncolorcomb.addItem( spec );
-			}
-			syncolorcomb.addItem("All");
-			//loadCog();
-			
-			//specList = loadcontigs( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.fna") ) ) );			
-			//loci2aasequence( new InputStreamReader( new ByteArrayInputStream( mop.remove("allthermus.aa") ) ), refmap );
-			//List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader( new ByteArrayInputStream( mop.remove("clusters.txt") ) ) );
-			/*try {
-				is = GeneSet.class.getResourceAsStream("/allthermus.fna");
-				//InputStream cois = GeneSet.class.getResourceAsStream("/contigorder.txt");
-				//is = GeneSet.class.getResourceAsStream("/all.fsa");
-				// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
-				if (is != null)
-					loadcontigs(new InputStreamReader(is));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-			//InputStream is = GeneSet.class.getResourceAsStream("/all.aa");
-			is = GeneSet.class.getResourceAsStream("/allthermus.aa");
-			// InputStream is = GeneSet.class.getResourceAsStream("/arciformis.aa");
-			if (is != null)
-				loci2aasequence(new InputStreamReader(is));*/
-	
-			// URL url = new URL("http://192.168.1.69/all.nn");
-			/*try {
-				is = GeneSet.class.getResourceAsStream("/allthermus.nn");
-				//is = GeneSet.class.getResourceAsStream("/all.nn");
-				// is = GeneSet.class.getResourceAsStream("/arciformis.nn");
-				if (is != null)
-					loci2dnasequence(new InputStreamReader(is));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}*/
-	
-			// url = new URL("http://192.168.1.69/all.fsa");
-	
-			//is = GeneSet.class.getResourceAsStream("/intersect_cluster.txt");
-			//List<Set<String>> iclusterlist = null; //loadSimpleClusters(new InputStreamReader(is));
-	
-			//is = GeneSet.class.getResourceAsStream("/thermus_unioncluster.txt");
-			//is = GeneSet.class.getResourceAsStream("/allthermus_unioncluster2.txt");
-			//is = GeneSet.class.getResourceAsStream("/thomas1.clust");
-			
-			//is = GeneSet.class.getResourceAsStream("/allthermus_new.clust");
-			//List<Set<String>> uclusterlist = loadSimpleClusters( new InputStreamReader(is) );
-			
-			//is = GeneSet.class.getResourceAsStream("/results.uc");
-			//List<Set<String>> uclusterlist = loadUClusters( new InputStreamReader(is) );
-	
-			/*System.err.println( uclusterlist.size() );
-			for( Set<String> clust : uclusterlist ) {
-				/*if( clust.size() == 4 ) {
-					for( String s : clust ) {
-						System.err.print( "  " + s );
-					}
-					System.err.println();
-				}// else System.err.println( uclusterlist.size() );
-				if( clust.size() > 10 ) System.err.println( "   " + clust.size() );
-			}*/
-	
-			//is = GeneSet.class.getResourceAsStream("/thermus_nr.blastout");
-			//panCoreFromNRBlast( new InputStreamReader(is), "c:/sandbox/distann/src/thermus_nr_short.blastout", refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist ); 
-			//is = GeneSet.class.getResourceAsStream("/thermus_nr_short.blastout");
-			//is = new FileInputStream( "/home/sigmar/thermus_nr_short.blastout" );
-			//is = new FileInputStream( "/home/sigmar/thermus_nr_ftp_short.blastout" );
-			
-			//is = GeneSet.class.getResourceAsStream("/thermus_nr_ftp_short.blastout");
-			//is = GeneSet.class.getResourceAsStream("/ncbithermus_short.blastout");		
-			//InputStream nis = GeneSet.class.getResourceAsStream("/exp.blastout");
-			
-			/*is = GeneSet.class.getResourceAsStream("/thermus_ncbi_short.blastout");
-			InputStream nis = null;//GeneSet.class.getResourceAsStream("/exp_short.blastout");
-			Blast blast = new Blast();
-			blast.panCoreFromNRBlast(new InputStreamReader(is), null/*new InputStreamReader(nis)*, null/*"/u0/sandbox/distann/src/thermus_ncbi_short.blastout"*, null /*"/u0/sandbox/distann/src/exp_short.blastout"*, refmap, allgenes, geneset, geneloc, locgene, poddur, uclusterlist, aas, contigmap);*/
-	
-			geneloc.clear();
-			allgenes.clear();
-			geneset.clear();
-			poddur.clear();
-			
-			/*FileReader fr = new FileReader("/vg454flx/cogthermus.blastout");
-			cogmap = loadcogmap( fr );
-			fr.close();*/
-			
-			// Map<String,Gene> refmap = new TreeMap<String,Gene>();
-			for (String genedesc : refmap.keySet()) {
-				Gene gene = refmap.get(genedesc);
-				if( namemap.containsKey(genedesc) ) {
-					gene.koname = namemap.get( genedesc );
-				}
-				// refmap.put(gene.refid, gene);
-				gene.index = genelist.size();
-				genelist.add(gene);
-				
-				/*if( gene.species.size() == 4 ) {
-					if( gene.species.containsKey("t.oshimai") && gene.species.containsKey("mt.silvanus") ) {
-						System.err.println( gene.index );
-						for( String spec : gene.species.keySet() ) {
-							System.err.print( "  " + spec );
-						}
-						System.err.println();
-					}
-				}*/
-	
-				/*
-				 * if( gene.species != null ) { for( Set<String> ucluster :
-				 * uclusterlist ) { for( String str : gene.species.keySet() ) {
-				 * Teginfo stv = gene.species.get(str); for( Tegeval tv : stv.tset )
-				 * { if( ucluster.contains(tv.cont) ) { gene.group = ucluster;
-				 * break; } } if( gene.group != null ) break; } if( gene.group !=
-				 * null ) break; } }
-				 */
-			}
-	
-			int id = 0;
-			// Map<Set<String>,ClusterInfo> clustInfoMap = new
-			// HashMap<Set<String>,ClusterInfo>();
-	
-			corrInd = new ArrayList<String>();
-			is = GeneSet.class.getResourceAsStream("/thermus16S.blastout");
-			double[] corr16sArray = is == null ? new double[0] : load16SCorrelation(new InputStreamReader(is), corrInd);
-	
-			if( uclusterlist != null ) Collections.sort(uclusterlist, new Comparator<Set<String>>() {
-				@Override
-				public int compare(Set<String> o1, Set<String> o2) {
-					return o1.size() - o2.size();
-				}
-			});
-	
-			Map<Set<String>, double[]> corrList = new HashMap<Set<String>, double[]>();
-	
-			List<GeneGroup>	ggList = new ArrayList<GeneGroup>();
-			int i = 0;
-			//Set<String> ss = new HashSet<String>();
-			Set<String> gs = new HashSet<String>();	
-			
-			int countclust = 0;
-			if( uclusterlist != null ) for (Set<String> cluster : uclusterlist) {
-				//ss.clear();
-				gs.clear();
-				
-				/*if( cluster.size() == 1 ) {
-					String s = "";
-					for( String u : cluster ) s = u;
-				}*/
-	
-				Set<Gene> gset = new HashSet<Gene>();
-				for( String cont : cluster ) {
-					String gid = null;
-					//String spec;
-					int b = cont.lastIndexOf('[');
-					if( b != -1 ) {
-						int u = cont.indexOf(']', b+1);
-						int k = cont.indexOf(' ');
-						
-						/*int n = cont.lastIndexOf('#');
-						if( n != -1 ) {
-							int m = cont.lastIndexOf(';', n+1);
-							if( m != -1 ) {
-								gid = cont.substring(m+1);
-							}
-						}*/
-						
-						if( gid == null ) {
-							gid = cont.substring(0, k);
-							gid = idFix( gid, cont.substring(b+1, u) );
-						}
-						
-						String scont = cont.substring(b+1, u);
-						
-						int l = Sequence.specCheck( scont );
-						
-						if( l == -1 ) {
-							l = scont.indexOf("contig");
-							//spec = scont.substring(0, l-1);
-						} else {
-							int m = scont.indexOf('_', l+1);
-							if( m == -1 ) {
-								m = scont.length(); //"monster";
-							}
-							//spec = scont.substring(0, m);
-						}
-					} else {
-						int k = cont.indexOf('#');
-						if( k == -1 ) k = cont.length();
-						gid = cont.substring(0, k).trim();
-						
-						//int k = cont.indexOf("contig");
-						//spec = cont.substring(0, k-1);
-					}
-					//String[] split = cont.split("_");
-					
-					//ss.add( spec );
-					Gene g = refmap.get(gid);
-					
-					if (g != null) {
-						gs.add(g.refid);
-						gset.add(g);
-						countclust++;
-					} else {
-						if( mu.contains( gid ) ) {
-							System.err.println("e " + gid);
-						} else {
-							System.err.println("r " + gid);
-						}
-					}
-				}
-	
-				int val = gset.size();	
-				/*int len = 20; //16
-				if (val == len && ss.size() == len) {
-					corrList.put(cluster, new double[20*20]);
-				}*/
-	
-				GeneGroup gg = new GeneGroup( i );
-				ggList.add( gg );
-				//gg.addSpecies( ss );
-				gg.setGroupCount( val );
-				//gg.setGroupGeneCount( gs.size() );
-				
-				if( gset.size() == 0 ) {
-					System.err.println();
-				}
-				for (Gene g : gset) {
-					g.setGeneGroup( gg );
-					/*g.groupIdx = i;
-					g.groupCoverage = ss.size();
-					g.groupGenCount = gs.size();
-					g.groupCount = val;*/
-					
-					//gg.addGene( g );
-				}
-	
-				i++;
-	
-				// ClusterInfo cInfo = new ClusterInfo(id++,ss.size(),gs.size());
-				// clustInfoMap.put( cluster, cInfo);
-			}// else {
-			
-			for( Gene g : genelist ) {
-				if( g.getGeneGroup() == null ) {
-					GeneGroup gg = new GeneGroup( i++ );
-					ggList.add( gg );
-					gg.setGroupCount( 1 );
-					
-					g.setGeneGroup( gg );
-				}
-			}
-			//}
-			System.err.println( countclust + "  " + genelist.size() );
-			int me = 0;
-			int mu = 0;
-			for( Gene g : genelist ) {
-				if( g.getGeneGroup() != null ) me++;
-				else mu++;
-			}
-			System.err.println( me + "  " + mu );
-			
-			final Map<String,GeneGroup>	rnamap = new HashMap<String,GeneGroup>();
-			//is = GeneSet.class.getResourceAsStream("/rrna.fasta");
-			//InputStream tis = //GeneSet.class.getResourceAsStream("/trna.txt"); //GeneSet.class.getResourceAsStream("/trna_sub.txt");
-			/*ZipInputStream zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-			ze = zipin.getNextEntry();
-			while( ze != null ) {
-				if( ze.getName().equals("trnas.txt") ) {
-					i  = loadTrnas( rnamap, new InputStreamReader( zipin ), i );
-				} else if( ze.getName().equals("rrnas.fasta") ) {
-					i = loadRrnas( rnamap, new InputStreamReader( zipin ), i );
-				} else if( ze.getName().equals("allthermus.trna") || ze.getName().equals("allglobus.trna") ) {
-					i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "trna" );
-				} else if( ze.getName().equals("allthermus.rrna") || ze.getName().equals("allglobus.rrna") ) {
-					i = loadrnas( rnamap, new InputStreamReader( zipin ), i, "rrna" );
-				}
-				
-				ze = zipin.getNextEntry();
-			}
-			zipin.close();*/
-			
-			nf = zipfilesystem.getPath("/trnas.txt");
-			//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
-			if( Files.exists( nf ) ) i  = loadTrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
-			nf = zipfilesystem.getPath("/rrnas.txt");
-			if( Files.exists( nf ) ) i = loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
-			else {
-				for( Path root : zipfilesystem.getRootDirectories() ) {
-					Files.list(root).filter( new Predicate<Path>() {
-						@Override
-						public boolean test(Path t) {
-							String filename = t.getFileName().toString();
-							//System.err.println("filename " + filename);
-							boolean b = filename.endsWith(".lsu") || filename.endsWith(".ssu") || filename.endsWith(".tsu");
-							return b;
-						}
-					}).forEach( new Consumer<Path>() {
-						@Override
-						public void accept(Path t) {
-							if( Files.exists( t ) )
-								try {
-									loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0 );
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-						}
-					});
-				}
-			}
-			
-			nf = zipfilesystem.getPath("/allthermus.trna");
-			if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "trna" );
-			else {
-				for( Path root : zipfilesystem.getRootDirectories() ) {
-					Files.list(root).filter( new Predicate<Path>() {
-						@Override
-						public boolean test(Path t) {
-							String filename = t.getFileName().toString();
-							//System.err.println("filename " + filename);
-							boolean b = filename.endsWith(".trna") && !filename.contains("allthermus");
-							return b;
-						}
-					}).forEach( new Consumer<Path>() {
-						@Override
-						public void accept(Path t) {
-							if( Files.exists( t ) )
-								try {
-									loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "trna" );
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-						}
-					});
-				}
-			}
-			
-			nf = zipfilesystem.getPath("/allthermus.rrna");
-			if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "rrna" );
-			else {
-				for( Path root : zipfilesystem.getRootDirectories() ) {
-					Files.list(root).filter( new Predicate<Path>() {
-						@Override
-						public boolean test(Path t) {
-							String filename = t.getFileName().toString();
-							//System.err.println("filename " + filename);
-							boolean b = filename.endsWith(".rrna") && !filename.contains("allthermus");
-							return b;
-						}
-					}).forEach( new Consumer<Path>() {
-						@Override
-						public void accept(Path t) {
-							if( Files.exists( t ) )
-								try {
-									loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "rrna" );
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-						}
-					});
-				}
-			}
-			//zipfilesystem.close();
-			
-			//loadRrnas( new InputStreamReader(is), new InputStreamReader(tis), i );
-			for( String ggname : rnamap.keySet() ) {
-				GeneGroup gg = rnamap.get( ggname );
-				ggList.add( gg );
-				
-				for( Gene g : gg.genes ) {
-					refmap.put( g.refid, g );
-					genelist.add( g );
-					
-					//gg.addSpecies( g.species );
-				}
-			}
-			
-			
-			
-			/*for( String cstr : contigmap.keySet() ) {
-				Sequence c = contigmap.get(cstr);
-				if( c.annset != null ) for( Annotation a : c.annset ) {
-					if( cstr.contains("00270") ) {
-						System.err.println( a.name );
-					}
-				}
-			}
-			System.err.println();*/
-			
-			
-			
-			final Set<String>	spids = new HashSet<String>();
-			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						//System.err.println("filename " + filename);
-						boolean b = filename.endsWith(".signalp");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								loadsignalp( spids, Files.newBufferedReader(t) );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
-			}
-			for( Gene g : genelist ) {
-				if( spids.contains(g.id) ) {
-					g.signalp = true;
-				}
-			}
-			
-			final Set<String>	tmids = new HashSet<String>();
-			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						//System.err.println("filename " + filename);
-						boolean b = filename.endsWith(".tm");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								loadtransm( tmids, Files.newBufferedReader(t) );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
-			}
-			for( Gene g : genelist ) {
-				if( tmids.contains(g.id) ) {
-					g.transm = true;
-				}
-			}
-			
-			
-			
-			
-			ggSpecMap = new HashMap<Set<String>,List<GeneGroup>>();
-			for( GeneGroup gg : ggList ) {
-				List<GeneGroup>	speclist;
-				Set<String> specset = gg.species.keySet();
-				if( ggSpecMap.containsKey( specset ) ) {
-					speclist = ggSpecMap.get(specset);
-				} else {
-					speclist = new ArrayList<GeneGroup>();
-					ggSpecMap.put( specset, speclist );
-				}
-				speclist.add( gg );
-			}
-			
-			specGroupMap = new HashMap<String,Set<GeneGroup>>();
-			int ind = 0;
-			for( GeneGroup gg : ggList ) {
-				/*if( gg.genes.size() == 0 ) {
-					System.err.println();
-				}*/
-				
-				for( String spec : gg.species.keySet() ) {
-					Set<GeneGroup>	ggset;
-					if( !specGroupMap.containsKey( spec ) ) {
-						ggset = new HashSet<GeneGroup>();
-						specGroupMap.put( spec, ggset );
-					} else ggset = specGroupMap.get( spec );
-					ggset.add( gg );
-				}
-				/*if( ind == 4049 ) {
-					System.err.println( gg.species.keySet() );
-					System.err.println();
-				}*/
-				gg.setIndex( ind++ );
-			}
-			allgenegroups = ggList;
-			
-			for( Gene g : genelist ) {
-				if( g.getGeneGroup() != null ) me++;
-				else mu++;
-			}
-			System.err.println( me + " agargargargarg " + mu );
-			
-			/*if( rnamap != null ) for( String ggname : rnamap.keySet() ) {
-				GeneGroup gg = rnamap.get( ggname );
-				List<Tegeval> tegevals = gg.getTegevals();
-				
-				/*for( Tegeval te : tegevals ) {
-					Sequence contig = te.getContshort();
-										
-					//if( contig.getName().contains("antrani") && contig.getName().contains("contig00006") ) {
-					//	System.err.println( contig.getAnnotationCount() );
-					//}
-					
-					if( contig != null ) {
-						contig.add( te );
-						
-						if( te.getGene().getName().contains("Met") ) {
-							System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getAnnotationCount() );
-						}
-						/*Tegeval ste = check( contig );
-						
-						if( ste != null ) {
-							while( te.start < ste.start ) {
-								Tegeval prev = ste.getPrevious();
-								if( prev == null ) break;
-								else ste = prev;
-							}	
-							while( te.start > ste.start ) {
-								Tegeval next = ste.getNext();
-								if( next == null ) break;
-								else ste = next;
-							}
-	 						
-							if( te.start < ste.start ) {
-								Tegeval prevprev = ste.setPrevious( te );
-								if( prevprev != null ) {
-									//prevprev.setNext( te );
-									te.setPrevious( prevprev );
-									
-									System.err.println( prevprev.getGene().getName() );
-								} else {
-									contig.start = te;
-								}
-								
-								te.setNum( ste.getNum() );
-								Tegeval next = te.getNext();
-								while( next != null ) {
-									next.setNum( next.getPrevious().getNum()+1 );
-									next = next.getNext();
-								}
-							} else {
-								Tegeval prevnext = ste.setNext( te );
-								te.setPrevious( ste );
-								if( prevnext != null ) {
-									prevnext.setPrevious( te );
-									
-									System.err.println( prevnext.getGene().getName() );
-								} else {
-									contig.end = te;
-								}
-								
-								te.setNum( ste.getNum()+1 );
-								Tegeval next = te.getNext();
-								while( next != null ) {
-									next.setNum( next.getPrevious().getNum()+1 );
-									next = next.getNext();
-								}
-							}
-						} else {
-							contig.start = te;
-							contig.end = te;
-							te.setNum( 0 );
-						}*
-					}
-				}*
-			}*/
-			sortLoci();
-			
-			for( String spec : speccontigMap.keySet() ) {
-				System.err.println( spec );
-				List<Sequence> ctgs = speccontigMap.get( spec );
-				for( Sequence c : ctgs ) {
-					System.err.println( c );
-					int im = 0;
-					if( c.getAnnotations() != null ) for( Annotation tv : c.getAnnotations() ) {
-						((Tegeval)tv).unresolvedGap( im++ );
-					}
-				}
-			}
-			
-			for( String ggname : rnamap.keySet() ) {
-				GeneGroup gg = rnamap.get( ggname );
-				List<Tegeval> tegevals = gg.getTegevals();
-				
-				/*for( Tegeval te : tegevals ) {
-					Sequence contig = te.getContshort();
-					if( te.getGene().getName().contains("Met") ) {
-						System.err.println( contig.getName() + "  " + te.getGene().getName() + "  " + contig.getTegevalsList().indexOf( te ) + "  " + contig.getAnnotationCount() );
-					}
-				}*/
-			}
-			
-			System.err.println("starting ......................................");
-			for( String str : speccontigMap.keySet() ) {
-				List<Sequence> cts = speccontigMap.get(str);
-				System.err.println( str + "  " + cts.size() );
-			}
-			
-			nf = zipfilesystem.getPath("/contigorder.txt");
-			//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
-			if( Files.exists( nf ) ) {
-				is = Files.newInputStream(nf, StandardOpenOption.READ);
-				BufferedReader br = new BufferedReader( new InputStreamReader( is ) );
-				String line = br.readLine();
-				if( line != null ) line = br.readLine();
-				while( line != null ) {
-					Sequence prevctg = null;
-					i = 0;
-					int ni1 = line.indexOf('/', i+1);
-					int ni2 = line.indexOf('\\', i+1);
-					ni1 = ni1 == -1 ? line.length() : ni1; 
-					ni2 = ni2 == -1 ? line.length() : ni2;
-					int n = Math.min( ni1, ni2 );
-					while( n != line.length() ) {
-						char c = line.charAt(i);
-						String ctgn = line.substring(i+1, n);
-						Sequence ctg = contigmap.get( ctgn );
-						
-						if( ctg != null ) {
-							String spec = ctg.getSpec();
-							
-							List<Sequence> splct = speccontigMap.get( spec );
-							
-							if( c == '\\' ) ctg.setReverse( true );
-							if( prevctg != null ) {
-								prevctg.setConnection( ctg, ctg.isReverse(), !prevctg.isReverse() );
-								
-								splct.remove( ctg );
-								int k = splct.indexOf( prevctg );
-								splct.add( k+1, ctg );
-							} else {
-								splct.remove( ctg );
-								splct.add( 0, ctg );
-							}
-							prevctg = ctg;
-						} else {
-							/*for( String key : contigmap.keySet() ) {
-								if( key.contains("eiot") ) {
-									System.err.println( key );
-								}
-							}*/
-						}
-						
-						i = n;
-						ni1 = line.indexOf('/', i+1);
-						ni2 = line.indexOf('\\', i+1);
-						ni1 = ni1 == -1 ? line.length() : ni1;
-						ni2 = ni2 == -1 ? line.length() : ni2;
-						n = Math.min( ni1, ni2 );
-					}
-					char c = line.charAt(i);
-					String ctgn = line.substring(i+1, n);
-					Sequence ctg = contigmap.get( ctgn );
-					if( ctg != null ) {
-						List<Sequence> splct = speccontigMap.get( ctg.getSpec() );
-						if( c == '\\' ) ctg.setReverse( true );
-						if( prevctg != null ) {
-							prevctg.setConnection( ctg, ctg.isReverse(), !prevctg.isReverse() );
-							
-							splct.remove( ctg );
-							int k = splct.indexOf( prevctg );
-							splct.add( k+1, ctg );
-						} else {
-							splct.remove( ctg );
-							splct.add( 0, ctg );
-						}
-					}					
-					line = br.readLine();
-				}
-				br.close();
-			}
-			
-			System.err.println("starting ......................................");
-			for( String str : speccontigMap.keySet() ) {
-				List<Sequence> cts = speccontigMap.get(str);
-				System.err.println( str + "  " + cts.size() );
-			}
-			System.err.println("ending ......................................");
-			
-			/*FileWriter fw = null; // new FileWriter("all_short.blastout");
-			//is = GeneSet.class.getResourceAsStream("/all_short.blastout");
-			is = GeneSet.class.getResourceAsStream("/all_short.blastout");
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			String line = br.readLine();
-			while (line != null) {
-				if (line.startsWith("Query=")) {
-					if (fw != null)
-						fw.write(line + "\n");
-					int k = line.indexOf('#');
-					if (k != -1) {
-						Set<String> cluster = null;
-						String query = line.substring(7, k - 1).trim();
-						for (Set<String> thecluster : corrList.keySet()) {
-							if (thecluster.contains(query)) {
-								cluster = thecluster;
-								break;
-							}
-						}
-	
-						if (cluster != null) {
-							double[] da = corrList.get(cluster);
-	
-							int vi = query.indexOf('_');
-							int ki = 16 * corrInd.indexOf(query.substring(0, vi));
-	
-							line = br.readLine();
-							while (line != null && !line.startsWith(">") && !line.startsWith("Query=")) {
-								String trim = line.trim();
-	
-								String[] split = trim.split("[ ]+");
-								String val = split[0];
-								if (cluster.contains(val)) {
-									if (fw != null)
-										fw.write(line + "\n");
-									vi = val.indexOf('_');
-									int ni = corrInd.indexOf(val.substring(0, vi));
-	
-									double el = -10.0;
-									try {
-										el = Double.parseDouble(split[split.length - 2]);
-									} catch (Exception e) {
-									}
-									da[ki + ni] = el;
-								}
-	
-								line = br.readLine();
-							}
-	
-							if (line == null || line.startsWith("Query="))
-								continue;
-						}
-					}
-				}
-				line = br.readLine();
-			}
-			br.close();
-			// if( fw != null ) fw.close();*/		
-	
-			double davg = 1.0 / corr16sArray.length;
-			for (Set<String> cluster : corrList.keySet()) {
-				double[] dcorr = corrList.get(cluster);
-	
-				double dsum = 0.0;
-				for (i = 0; i < dcorr.length; i++) {
-					dsum += dcorr[i];
-				}
-				/*
-				 * for( i = 0; i < dcorr.length; i++ ) { dcorr[i] /= dsum; }
-				 */
-	
-				double cval = 0.0;
-				double xval = 0.0;
-				double yval = 0.0;
-				for (i = 0; i < dcorr.length; i++) {
-					double xx = (dcorr[i] / dsum - davg);
-					double yy = (corr16sArray[i] - davg);
-	
-					cval += xx * yy;
-					xval += xx * xx;
-					yval += yy * yy;
-				}
-	
-				double r = cval / (Math.sqrt(xval) * Math.sqrt(yval));
-	
-				Set<Gene> gset = new HashSet<Gene>();
-				for (String cont : cluster) {
-					String[] split = cont.split("_");
-					//ss.add(split[0]);
-					Gene g = locgene.get(cont);
-	
-					if (g != null) {
-						gs.add(g.refid);
-						gset.add(g);
-					}
-				}
-	
-				for (Gene g : gset) {
-					g.corr16s = r;
-					g.corrarr = dcorr;
-				}
-			}
-	
-			//proxPreserve( locgene );
-	
-			// genemap = idMapping( "/home/sigmar/blastout/nilli.blastout",
-			// "/mnt/tmp/gene2refseq.txt", "/home/sigmar/idmapping_short2.dat", 5,
-			// 1, genemap );
-			// genemap = idMapping( "/home/sigmar/blastout/nilli.blastout",
-			// "/home/sigmar/thermus/newthermus/idmapping.dat",
-			// "/home/sigmar/idmapping_short.dat", 2, 0, genemap );
-	
-			/*
-			 * Map<String,Gene> unimap = idMapping( "/home/sigmar/idmap.dat",
-			 * "/home/sigmar/workspace/distann/idmapping_short.dat", 2, 0, refmap,
-			 * false ); Map<String,Gene> genmap = idMapping(
-			 * "/mnt/tmp/gene2refseq.txt",
-			 * "/home/sigmar/workspace/distann/gene2refseq_short.txt", 5, 1, refmap,
-			 * true ); funcMapping( "/home/sigmar/asgard-bio/data/gene2go", genmap,
-			 * "/home/sigmar/workspace/distann/gene2go_short.txt" ); funcMappingUni(
-			 * "/home/sigmar/asgard-bio/data/sp2go.txt", unimap,
-			 * "/home/sigmar/workspace/distann/sp2go_short.txt" );
-			 */
-	
-			//Map<String, Gene> unimap = null;
-			//Map<String, Gene> genmap = null;
-			//Map<String, Gene> gimap = new HashMap<String,Gene>();
-			
-			nf = zipfilesystem.getPath("/gene2refseq_short.txt");
-			if( Files.exists( nf ) ) genmap = idMapping(new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), null, 5, 1, refmap, genmap, gimap);
-			//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
-			
-			/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-			ze = zipin.getNextEntry();
-			while( ze != null ) {
-				if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, genmap, gimap);
-				
-				ze = zipin.getNextEntry();
-			}
-			zipin.close();*/
-			
-			//is = GeneSet.class.getResourceAsStream("/gene2refseq_short.txt");
-			//is = new GZIPInputStream( new FileInputStream("/data/gene2refseq.gz") );
-			//genmap = idMapping(new InputStreamReader(is), "/home/sigmar/gene2refseq_short.txt", 5, 1, refmap, genmap, gimap);
-			//is = GeneSet.class.getResourceAsStream("/gene2go_short.txt");
-			//is = new GZIPInputStream( new FileInputStream("/home/sigmar/gene2go.gz") );
-			//funcMapping(new InputStreamReader(is), genmap, "/home/sigmar/thermus/gene2go_short.txt");
-			
-			/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-			ze = zipin.getNextEntry();
-			while( ze != null ) {
-				if( ze.getName().equals("idmapping_short.dat") ) unimap = idMapping(new InputStreamReader(zipin), null, 2, 0, refmap, genmap, gimap);
-				else if( ze.getName().equals("ko2name.txt") ) ko2name = ko2nameMapping( new InputStreamReader(zipin) );
-				
-				ze = zipin.getNextEntry();
-			}
-			zipin.close();*/
-			
-			nf = zipfilesystem.getPath("/idmapping_short.dat");
-			if( Files.exists( nf ) ) unimap = idMapping(new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), null, 2, 0, refmap, genmap, gimap);
-			nf = zipfilesystem.getPath("/smap_short.txt");
-			if( Files.exists( nf ) && !unimap.isEmpty() ) loadSmap( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), unimap );
-			nf = zipfilesystem.getPath("/ko2name.txt");
-			if( Files.exists( nf ) ) ko2name = ko2nameMapping( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
-			
-			if( ko2name != null && !ko2name.isEmpty() ) {
-				for( Gene g : genelist ) {
-					if( ko2name.containsKey( g.koid ) ) {
-						String name = ko2name.get( g.koid );
-						if( name.startsWith("E") ) {
-							int k = name.indexOf(',');
-							if( k == -1 ) k = name.length(); 
-							else ko2name.put( g.koid, name.substring(k+1).trim() );
-							g.ecid = name.substring(1, k);
-						} else if( name.contains(",") ) {
-							if( name.charAt(1) >= 'A' && name.charAt(1) <= 'Z' ) {
-								String[] split = name.split(",");
-								String newname = "";
-								for( int m = 1; m < split.length; m++ ) {
-									newname += split[m].trim()+", ";
-								}
-								newname += split[0];
-								ko2name.put( g.koid, newname );
-							}
-						}
-					}
-				}
-			}
-			
-			//is = GeneSet.class.getResourceAsStream("/idmapping_short.dat"); // ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/
-			//is = new GZIPInputStream( new FileInputStream("/data/idmapping.dat.gz") );
-			//is = new FileInputStream("/u0/idmapping_short.dat");
-			//unimap = idMapping(new InputStreamReader(is), "/home/sigmar/idmapping_short.dat", 2, 0, refmap, genmap, gimap);
-			
-			if( unimap != null ) {
-				/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-				ze = zipin.getNextEntry();
-				while( ze != null ) {
-					if( ze.getName().equals("sp2go_short.txt") ) {
-						funcMappingUni( new InputStreamReader( zipin ), unimap, null );
-					} else if( ze.getName().equals("ko2go.txt") ) {
-						BufferedReader br = new BufferedReader( new InputStreamReader(zipin) );
-						String line = br.readLine();
-						while (line != null) {
-							String[] split = line.split(" = ");
-							String[] subsplit = split[1].split(" ");
-							Set<String> gos = new HashSet<String>();
-							for( String go : subsplit ) {
-								gos.add( go );
-							}
-							ko2go.put( split[0], gos );
-							line = br.readLine();
-						}
-					}
-					//else if( ze.getName().equals("gene2refseq_short.txt") ) genmap = idMapping(new InputStreamReader(zipin), null, 5, 1, refmap, true);
-					
-					ze = zipin.getNextEntry();
-				}
-				zipin.close();*/
-				//is = GeneSet.class.getResourceAsStream("/sp2go_short.txt");
-				//is = new GZIPInputStream( new FileInputStream( "/data/sp2go.txt.gz" ) );
-				//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
-				
-				nf = zipfilesystem.getPath("/sp2go_short.txt");
-				if( Files.exists( nf ) ) {
-					funcMappingUni( new BufferedReader( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) )), unimap, null );
-				}
-				
-				nf = zipfilesystem.getPath("/ko2go.txt");
-				if( Files.exists(nf) ) {
-					BufferedReader br = new BufferedReader( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
-					String line = br.readLine();
-					while (line != null) {
-						String[] split = line.split(" = ");
-						String[] subsplit = split[1].split(" ");
-						Set<String> gos = new HashSet<String>();
-						for( String go : subsplit ) {
-							gos.add( go );
-						}
-						ko2go.put( split[0], gos );
-						line = br.readLine();
-					}
-				}
-			}
-			if( genmap != null ) genmap.clear();
-	
-			Map<Function, Set<Gene>> totalgo = new HashMap<Function, Set<Gene>>();
-			for (Gene g : genelist) {
-				if (g.funcentries != null) {
-					for( Function f : g.funcentries) {
-						Set<Gene> set;
-						if (totalgo.containsKey(f)) {
-							set = totalgo.get(f);
-						} else {
-							set = new HashSet<Gene>();
-							totalgo.put(f, set);
-						}
-						set.add(g);
-					}
-				}
-			}
-			
-			/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-			ze = zipin.getNextEntry();
-			while( ze != null ) {
-				if( ze.getName().equals("go_short.obo") ) readGoInfo( new InputStreamReader(zipin), totalgo, null);
-				
-				ze = zipin.getNextEntry();
-			}
-			zipin.close();*/
-			is = GeneSet.class.getResourceAsStream("go.obo");
-			//Map<String,Function> funcmap = 
-			if( is != null ) {
-				readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
-			}
-			
-			//is = GeneSet.class.getResourceAsStream("/go_short.obo");
-			//readGoInfo(new InputStreamReader(is), totalgo, null);
-			for (String go : funcmap.keySet()) {
-				Function f = funcmap.get(go);
-				f.index = funclist.size();
-				funclist.add(f);
-			}
-			totalgo.clear();
-			
-			Map<String,String>	jgiGeneMap = new HashMap<String,String>();
-			/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-			ze = zipin.getNextEntry();
-			while( ze != null ) {
-				if( ze.getName().equals("genes.faa") ) jgiGeneMap = jgiGeneMap( new InputStreamReader(zipin) );
-				
-				ze = zipin.getNextEntry();
-			}
-			zipin.close();
-			
-			zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
-			ze = zipin.getNextEntry();
-			while( ze != null ) {
-				if( ze.getName().equals("ko.tab.txt") ) jgiGene2KO( new InputStreamReader(zipin), jgiGeneMap, refmap );
-				
-				ze = zipin.getNextEntry();
-			}
-			zipin.close();*/
-			
-			nf = zipfilesystem.getPath("/genes.faa");
-			if( Files.exists( nf ) ) jgiGeneMap = jgiGeneMap( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
-			nf = zipfilesystem.getPath("/ko.tab.txt");
-			if( Files.exists( nf ) ) jgiGene2KO( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), jgiGeneMap, refmap );
-			zipfilesystem.close();
-			
-			/*
-			 * is = GeneSet.class.getResourceAsStream(""); Map<String,String> komap
-			 * = koMapping( new FileReader("/home/sigmar/asgard-bio/data/ko"),
-			 * funclist, genelist ); for( Function f : funclist ) { if(
-			 * komap.containsKey( f.ec ) ) { for( String gn : f.geneentries ) { Gene
-			 * g = refmap.get(gn); if( g.keggid == null ) g.keggid =
-			 * komap.get(f.ec); } } }
-			 */
-	
-			updateShareNum( specList );
-			
-			Set<String> allecs = new HashSet<String>();
-			for( Function f : funclist ) {
-				if (f.ec != null)
-					allecs.add(f.ec);
-			}
-	
-			for (String val : pathwaymap.keySet()) {
-				Set<String> set = pathwaymap.get(val);
-				for (String s : set) {
-					if (allecs.contains(s)) {
-						combo.addItem(val);
-						break;
-					}
-				}
-			}
-	
-			Set<String> set = new TreeSet<String>();
-			for (Gene g : genelist) {
-				Tegeval tv = g.tegeval;
-				if (tv.eval <= 0.00001 && tv.teg != null && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
-					set.add(tv.teg);
-			}
-	
-			for (String sp : set) {
-				specombo.addItem(sp);
-			}
-			
-			if( uclusterlist != null ) clusterMap = Serifier.initClusterNew(uclusterlist, null, null);	
-			//table.tableChanged( new TableModelEvent( table.getModel() ) );
-			//ftable.tableChanged( new TableModelEvent( ftable.getModel() ) );
-			table.setModel( nullmodel );
-			ftable.setModel( nullmodel );
-			table.setModel( groupModel );
-			ftable.setModel( ftablemodel );
-			
-			me = 0;
-			mu = 0;
-			for( Gene g : genelist ) {
-				if( g.getGeneGroup() != null ) me++;
-				else mu++;
-			}
-			System.err.println( me + "  " + mu );
-		}
-		
-		String userhome = System.getProperty("user.home");
-		File f = new File( userhome );
-		File idf = new File(f, "idspec.txt");
-		BufferedWriter bw = new BufferedWriter( new FileWriter(idf) ); //Files.newBufferedWriter(idf.toPath(), OpenOption.);
-		for( String id : refmap.keySet() ) {
-			Gene g = refmap.get(id);
-			bw.write( id + "\t" + g.getSpecies() + "\n" );
-		}
-		bw.close();
-	}
-	
-	private void updateShareNum( Collection<String> specs ) {
+	public void updateShareNum( Collection<String> specs ) {
 		if( specset != null ) specset.clear();
 		else specset = new HashMap<Set<String>, ShareNum>();
 		
@@ -14977,17 +9530,6 @@ public class GeneSet extends JApplet {
 		}
 		return jgimap;
 	}
-
-	private JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
-		/*InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
-		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
-		String line2 = br2.readLine();
-		br2.close();*/
-		// aas.clear();
-
-		// return new JComponent() {};
-		return showGeneTable(null, jb, comp, applet, selcomblocal);// clustInfoMap// );
-	}
 	
 	public Tegeval check( Sequence contig ) {
 		for( GeneGroup sgg : allgenegroups ) {
@@ -15024,47 +9566,6 @@ public class GeneSet extends JApplet {
 		}
 
 		return ret;
-	}
-
-	KeyListener keylistener;
-
-	public void initFSKeyListener(final Window window) {
-		keylistener = new KeyListener() {
-			@Override
-			public void keyTyped(KeyEvent e) {
-
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-				if (e.getKeyCode() == KeyEvent.VK_F11 && gd.isFullScreenSupported()) {
-					Window w = gd.getFullScreenWindow();
-					if (w != null) {
-						gd.setFullScreenWindow(null);
-					} else {
-						gd.setFullScreenWindow(window);
-					}
-				}
-			}
-		};
-	}
-
-	private static void setColors() {
-		Sequence.colorCodes[0] = new Color(180, 255, 180);
-		Sequence.colorCodes[1] = new Color(180, 245, 190);
-		Sequence.colorCodes[2] = new Color(180, 235, 200);
-		Sequence.colorCodes[3] = new Color(180, 225, 210);
-		Sequence.colorCodes[4] = new Color(180, 215, 220);
-		Sequence.colorCodes[5] = new Color(180, 205, 230);
-		Sequence.colorCodes[6] = new Color(180, 195, 240);
-		Sequence.colorCodes[7] = new Color(180, 185, 250);
-		Sequence.colorCodes[8] = new Color(180, 180, 255);
 	}
 
 	public void saveContigOrder() throws IOException {
@@ -15139,269 +9640,6 @@ public class GeneSet extends JApplet {
 		//fw.close();
 	}
 	
-	public void stop() {
-		super.stop();
-		try {
-			if( zippath != null ) saveContigOrder();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void exportProteinSequences() {
-		JFileChooser filechooser = new JFileChooser();
-		if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
-			try {
-				Path dbPath = filechooser.getSelectedFile().toPath();
-				BufferedWriter bw = Files.newBufferedWriter(dbPath);
-				for( Gene g : genelist ) {
-					if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-						g.getFasta( bw, true );
-						/*StringBuilder sb = g.tegeval.getProteinSequence();
-						if( sb.toString().contains("0") ) {
-							System.err.println( g.id );
-						}
-						bw.append(">" + g.id + "\n");
-						for (int i = 0; i < sb.length(); i += 70) {
-							bw.append( sb.substring(i, Math.min(i + 70, sb.length())) + "\n");
-						}*/
-					}
-				}
-				bw.close();
-				//serifier.writeGenebank( filechooser.getSelectedFile(), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public void exportGeneClusters() {
-		JFileChooser filechooser = new JFileChooser();
-		filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
-			try {
-				Path dbPath = filechooser.getSelectedFile().toPath();
-				for( GeneGroup gg : allgenegroups ) {
-					if( gg != null && gg.getCommonTag() == null ) {
-						Path file = dbPath.resolve( gg.getCommonId()+".aa" );
-						BufferedWriter bw = Files.newBufferedWriter( file );
-						gg.getFasta( bw, true );
-						bw.close();
-						/*StringBuilder sb = g.tegeval.getProteinSequence();
-						if( sb.toString().contains("0") ) {
-							System.err.println( g.id );
-						}
-						bw.append(">" + g.id + "\n");
-						for (int i = 0; i < sb.length(); i += 70) {
-							bw.append( sb.substring(i, Math.min(i + 70, sb.length())) + "\n");
-						}*/
-					}
-				}
-				//serifier.writeGenebank( filechooser.getSelectedFile(), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public void exportGenomes() {
-		JCheckBox	joincontigs = new JCheckBox("Join contigs");
-		JCheckBox	translations = new JCheckBox("Include translations");
-		JComponent[] comps = new JComponent[] { joincontigs, translations };
-		List scl = getSelspecContigs( Arrays.asList( comps ) );
-		
-		if( scl.get(0) instanceof String ) {
-			List<String> lspec = (List<String>)scl;
-			
-			JFileChooser filechooser = new JFileChooser();
-			filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-			if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
-				for( String spec : lspec ) {
-					Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
-					List<Sequence> contigs = speccontigMap.get(spec);
-					Serifier serifier = new Serifier();
-					for( Sequence c : contigs ) {
-						serifier.addSequence(c);
-						serifier.mseq.put(c.getName(), c);
-						
-						List<Annotation> lann = new ArrayList<Annotation>();
-						if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
-							Tegeval tv = (Tegeval)ann;
-							GeneGroup gg = tv.getGene().getGeneGroup();
-							
-							Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, gg != null ? gg.getCommonName() : tv.getGene().getName() );
-							anno.type = "CDS";
-							anno.id = tv.getGene().id;
-							
-							String cazy = gg != null ? gg.getCommonCazy(cazymap) : null;
-							if( cazy != null ) anno.addDbRef( "CAZY:"+cazy );
-							Cog cog = gg != null ? gg.getCommonCog(cogmap) : null;
-							if( cog != null ) anno.addDbRef( "COG:"+cog.id );
-							String ec = gg != null ? gg.getCommonEc() : null;
-							if( ec != null ) anno.addDbRef( "EC:"+ec );
-							
-							lann.add( anno );
-						}
-						mapan.put( c.getName(), lann );
-					}
-					Sequences s = new Sequences(null,spec,"nucl",null,contigs.size());
-					try {
-						serifier.writeGenebank( filechooser.getSelectedFile().toPath().resolve(spec+".gbk"), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		} else {
-			Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
-			List<Sequence> contigs = (List<Sequence>)scl;
-			Serifier serifier = new Serifier();
-			for( Sequence c : contigs ) {
-				serifier.addSequence(c);
-				serifier.mseq.put(c.getName(), c);
-				
-				List<Annotation> lann = new ArrayList<Annotation>();
-				if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
-					Tegeval tv = (Tegeval)ann;
-					GeneGroup gg = tv.getGene().getGeneGroup();
-					
-					Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori,  gg != null ? gg.getCommonName() : tv.getGene().getName() );
-					anno.type = "CDS";
-					anno.id = tv.getGene().id;
-					
-					String cazy = gg != null ? gg.getCommonCazy(cazymap) : null;
-					if( cazy != null ) anno.addDbRef( "CAZY:"+cazy );
-					lann.add( anno );
-				}
-				mapan.put( c.getName(), lann );
-			}
-			Sequences s = new Sequences(null,contigs.get(0).getSpec(),"nucl",null,contigs.size());
-			
-			JFileChooser filechooser = new JFileChooser();
-			if( filechooser.showSaveDialog( this ) == JFileChooser.APPROVE_OPTION ) {
-				try {
-					serifier.writeGenebank( filechooser.getSelectedFile().toPath(), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			//serifier.addSequences(seqs);
-		}
-	}
-	
-	public void fetchGenomes() {
-		if( zippath == null ) {
-			newFile();
-		}
-		
-		JFrame frame = new JFrame("Fetch genomes");
-		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-		frame.setSize(400, 600);
-		
-		//frame.add(topcomp)
-		
-		try {
-			Map<String,String> env = new HashMap<String,String>();
-			env.put("create", "true");
-			//Path path = zipfile.toPath();
-			String uristr = "jar:" + zippath.toUri();
-			zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-			
-			final SerifyApplet	sa = new SerifyApplet( zipfilesystem );
-			sa.init( frame, user );
-			
-			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String fname = t.getFileName().toString();
-						return /*fname.endsWith(".gbk") || */fname.endsWith(".fna") || fname.endsWith("fastg") || fname.endsWith(".fsa") || fname.endsWith(".fa") || fname.endsWith(".fasta") || fname.endsWith(".aa") || fname.endsWith(".nn") || fname.endsWith(".trna") || fname.endsWith(".rrna") || fname.endsWith(".ssu") || fname.endsWith(".lsu") || fname.endsWith(".tsu");
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						try {
-							sa.addSequences(t.getFileName().toString(), t, null);
-						} catch (URISyntaxException | IOException e) {
-							e.printStackTrace();
-						}
-					}
-				});;
-			}
-		} catch (IOException e1) {
-			try {
-				zipfilesystem.close();
-			} catch (IOException e2) {
-				e2.printStackTrace();
-			}
-			e1.printStackTrace();
-		}
-		
-		//BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-		
-		//InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-		//uni2symbol(new InputStreamReader(is), bw, unimap);
-		
-		//bw.close();
-		//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-		
-		frame.addWindowListener( new WindowListener() {
-			
-			@Override
-			public void windowOpened(WindowEvent e) {}
-			
-			@Override
-			public void windowIconified(WindowEvent e) {}
-			
-			@Override
-			public void windowDeiconified(WindowEvent e) {}
-			
-			@Override
-			public void windowDeactivated(WindowEvent e) {}
-			
-			@Override
-			public void windowClosing(WindowEvent e) {}
-			
-			@Override
-			public void windowClosed(WindowEvent e) {
-				try {
-					zipfilesystem.close();
-
-					cleanUp();
-					importStuff();
-				} catch (IOException | UnavailableServiceException e1) {
-					e1.printStackTrace();
-				}
-			}
-			
-			@Override
-			public void windowActivated(WindowEvent e) {}
-		});
-		
-		frame.setVisible( true );
-	}
-	
-	public void newFile() {
-		JFileChooser fc = new JFileChooser();
-		javax.swing.filechooser.FileFilter ff = new javax.swing.filechooser.FileFilter() {
-			@Override
-			public boolean accept(File f) {
-				return f.getName().toLowerCase().endsWith(".zip")||f.isDirectory();
-			}
-
-			@Override
-			public String getDescription() {
-				return "Zip files (*.zip)";
-			}
-		};
-		fc.setFileFilter(ff);
-		if( fc.showSaveDialog( comp ) == JFileChooser.APPROVE_OPTION ) {
-			zippath = fc.getSelectedFile().toPath();
-			//is = new FileInputStream( zipfile );
-		}
-	}
-	
 	public void traverseTar( TarArchiveInputStream taris, TarArchiveEntry tae, Path p ) throws IOException {
 		Path newp = p.resolve(tae.getName());
 		if( tae.isDirectory() ) {
@@ -15439,3546 +9677,75 @@ public class GeneSet extends JApplet {
 		}
 	}
 	
-	TextField tb1 = null;
-	TextField tb2 = null;
-	TextField epar = null;
-	final JFXPanel fxpanel = new JFXPanel();
-	Scene fxs = null;
-
-	Component comp;
-	public void init(final Container comp) {
-		user = System.getProperty("user.name");
-		JavaFasta.user = user;
-		//SerifyApplet.user = user;
-		
+	public void clusterGenes( Collection<String> species, boolean headless ) {
 		try {
-			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (UnsupportedLookAndFeelException e) {
-			e.printStackTrace();
-		}
-		
-		String userhome = System.getProperty("user.home");
-		boolean windows = false;
-		try {
-			InputStream isk = GeneSet.this.getClass().getResourceAsStream("genesetkey");
-			//Path gkey = Paths.get( url.toURI() );
-			InputStream iskp = GeneSet.this.getClass().getResourceAsStream("genesetkey.pub");
-			//Path gkeypub = Paths.get( url.toURI() );
+			Map<String,String> env = new HashMap<String,String>();
+			env.put("create", "true");
+			String uristr = "jar:" + zippath.toUri();
+			zipuri = URI.create( uristr );
+			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+			//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
+			Path resPath = zipfilesystem.getPath("cluster.blastout");
 			
-			Path gkeyssh = Paths.get(userhome);
-			//Path gkeyssh = userpath.resolve(".ssh");
-			if( !Files.exists(gkeyssh) ) Files.createDirectory(gkeyssh);
-			Path gkeylocal = gkeyssh.resolve("genesetkey");
-			Path gkeylocalpub = gkeyssh.resolve("genesetkey.pub");
-			if( !Files.exists(gkeylocal) ) {
-				Files.copy(isk, gkeylocal);
-			}
-			if( !Files.exists(gkeylocalpub) ) {
-				Files.copy(iskp, gkeylocalpub);
-			}
-			
-			Set<PosixFilePermission> poset = new HashSet<PosixFilePermission>();
-			poset.add( PosixFilePermission.OWNER_READ );
-			poset.add( PosixFilePermission.OWNER_WRITE );
-			Files.setPosixFilePermissions(gkeylocal, poset);
-			Files.setPosixFilePermissions(gkeylocalpub, poset);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		} catch( UnsupportedOperationException e2 ) {
-			windows = true;
-			e2.printStackTrace();
-		}
-		
-		if( windows ) {
-			File f = new File( userhome+"\\genesetkey" );
-			f.setExecutable(false, false);
-			f.setWritable(false, false);
-			f.setReadable(false, false);
-			
-			f.setWritable(true, true);
-			f.setReadable(true, true);
-		}
-		
-		
-		this.comp = comp;
-		selcomb = new JComboBox<String>();
-		searchcolcomb = new JComboBox<String>();
-		syncolorcomb = new JComboBox<String>();
-		
-		searchcolcomb.addItem("Name");
-		searchcolcomb.addItem("Symbol");
-		
-		setColors();
-
-		JMenuBar	menubar = new JMenuBar();
-		JMenu		file = new JMenu("File");
-		file.add( new AbstractAction("New") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				newFile();
-			}
-		});
-		file.add( new AbstractAction("Open") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					importStuff();
-				} catch (IOException | UnavailableServiceException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		file.addSeparator();
-		file.add( new AbstractAction("Import genomes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				fetchGenomes();
-			}
-		});
-		file.add( new AbstractAction("Export genomes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				exportGenomes();
-			}
-		});
-		file.addSeparator();
-		file.add( new AbstractAction("Export protein sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				exportProteinSequences();
-			}
-		});
-		file.add( new AbstractAction("Export gene clusters") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				exportGeneClusters();
-			}
-		});
-		file.addSeparator();
-		file.add( new AbstractAction("Quit") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				System.exit( 0 );
-			}
-		});
-		JMenu		edit = new JMenu("Edit");
-		AbstractAction	clustergenes = new AbstractAction("Cluster genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				//fxpanel.setScene( null );
-				/*Platform.runLater(new Runnable() {
-		            @Override
-		            public void run() {
-		            	Label label1 = new Label("Id:");
-						tb1 = new TextField("0.5");
-						Label label2 = new Label("Len:");
-						tb2 = new TextField("0.5");
-						
-						VBox vbox = new VBox();
-						HBox hbox1 = new HBox();
-						hbox1.getChildren().addAll( label1, tb1 );
-						HBox hbox2 = new HBox();
-						hbox2.getChildren().addAll( label2, tb2 );
-						
-						epar = new TextField();
-						vbox.getChildren().add( epar );
-						
-						vbox.getChildren().addAll( hbox1, hbox2 );
-						if( fxs == null ) fxs = new Scene( vbox );
-						fxs.setRoot( vbox );
-						
-						fxpanel.setScene( fxs );
-		            }
-				});*/
-				
-				JPanel panel = new JPanel();
-				GridBagLayout grid = new GridBagLayout();
-				GridBagConstraints c = new GridBagConstraints();
-				panel.setLayout( grid );
-				
-				/*JLabel label1 = new JLabel("Id:");
-				JTextField tb1 = new JTextField("0.5");
-				JLabel label2 = new JLabel("Len:");
-				JTextField tb2 = new JTextField("0.5");
-				
-				Dimension d = new Dimension( 300, 30 );
-				JTextField epar = new JTextField();
-				epar.setSize( d );
-				epar.setPreferredSize( d );
-				
-				c.fill = GridBagConstraints.HORIZONTAL;
-				c.gridwidth = 1;
-				c.gridheight = 1;
-				
-				c.gridx = 0;
-				c.gridy = 0;
-				panel.add( label1, c );
-				c.gridx = 1;
-				c.gridy = 0;
-				panel.add( tb1, c );
-				c.gridx = 0;
-				c.gridy = 1;
-				panel.add( label2, c );
-				c.gridx = 1;
-				c.gridy = 1;
-				panel.add( tb2, c );
-				c.gridx = 0;
-				c.gridy = 2;
-				c.gridwidth = 2;
-				panel.add( epar, c );
-				
-				JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );*/
-				
-				/*if( tb1 != null ) {
-					float id = Float.parseFloat( tb1.getText() );
-					float len = Float.parseFloat( tb2.getText() );
-					String expar = epar.getText();
-					
-					tb1 = null;
-					tb2 = null;
-					epar = null;*/
-					
+			Runnable run = new Runnable() {
+				@Override
+				public void run() {
 					try {
-						Set<String> species = getSelspec(null, getSpecies(), null);
-						
-						String userhome = System.getProperty("user.home");
-						Path userhomepath = Paths.get( userhome );
-						Path queryPath = userhomepath.resolve("tmp_cluster.fsa");//Files.createTempFile("all", ".fsa");
-						BufferedWriter qbw = Files.newBufferedWriter(queryPath);
-						
-						Path dbPath = Files.createTempFile("db", ".fsa");
-						BufferedWriter bw = Files.newBufferedWriter(dbPath);
-						for( Gene g : genelist ) {
-							if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-								if( species.contains( g.getSpecies() ) ) {
-									Sequence gs = g.tegeval.getProteinSequence();
-									if( gs != null ) {
-										gs.setName( g.id );
-										gs.writeSequence(qbw);
-									}
-									/*qbw.append(">" + g.id + "\n");
-									for (int i = 0; i < gs.length(); i += 70) {
-										qbw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-									}*/
-								}
-								
-								Sequence gs = g.tegeval.getProteinSequence();
-								if( gs != null ) {
-									gs.setName( g.id );
-									gs.writeSequence(bw);
-								}/* else {
-									System.err.println(g.getSpecies());
-									System.err.println();
-								}
-								
-								/*bw.append(">" + g.id + "\n");
-								for (int i = 0; i < gs.length(); i += 70) {
-									bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-								}*/
-							}
-						}
-						bw.close();
-						qbw.close();
-						NativeRun nrun = new NativeRun();
-						SerifyApplet.blastRun(nrun, queryPath, dbPath, "prot", "-evalue 0.00001", null, true, user);
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				//}
-			}
-		};
-		AbstractAction	alignclusters = new AbstractAction("Align clusters") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr );
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
-					Path aldir = zipfilesystem.getPath("aligned");
-					final Path aligneddir = Files.exists( aldir ) ? aldir : Files.createDirectory( aldir );
-					
-					NativeRun nrun = new NativeRun();
-					Runnable run = new Runnable() {
-						@Override
-						public void run() {
-							try {
-								zipfilesystem.close();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					};
-					
-					//ExecutorService es = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-					
-					Object[] cont = new Object[3];
-					
-					Collection<GeneGroup> ggset;
-					int[] rr = table.getSelectedRows();
-					ggset = new HashSet<GeneGroup>();
-					if( rr.length == 0 ) {
-						for( GeneGroup gg : allgenegroups ) {
-							//GeneGroup gg = allgenegroups.get(table.convertRowIndexToModel(r));
-							//gg.getCommonTag()
-							if( gg != null && gg.getCommonTag() == null && gg.size() > 1 ) ggset.add( gg );
-						}
-					} else {
-						for( int r : rr ) {
-							GeneGroup gg = allgenegroups.get(table.convertRowIndexToModel(r));
-							//gg.getCommonTag()
-							if( gg != null && gg.getCommonTag() == null && gg.size() > 1 ) ggset.add( gg );
-						}
-					}
-					
-					//int i = 0;
-					List commandsList = new ArrayList();
-					for( GeneGroup gg : ggset ) {
-						/*if( gg.size() > 1 ) {
-							System.err.println( gg.size() );
-						}*/
-						String fasta = gg.getFasta( true );
-						String[] cmds = new String[] {"/usr/bin/muscle"};
-						Object[] paths = new Object[] {fasta.getBytes(), aligneddir.resolve(gg.getCommonId()+".aa"), null};
-						commandsList.add( paths );
-						commandsList.add( Arrays.asList(cmds) );
-						
-						//if( i++ > 5000 ) break;
-					}
-					nrun.runProcessBuilder("Running muscle", commandsList, run, cont, true);
-				} catch (IOException e1) {
-					if( zipfilesystem != null ) {
-						try {
-							zipfilesystem.close();
-						} catch (IOException e2) {
-							e2.printStackTrace();
-						}
-					}
-					e1.printStackTrace();
-				}
-			}
-		};
-		AbstractAction	sharenumaction = new AbstractAction("Update share numbers") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> specs = getSelspec(GeneSet.this, specList, null);
-				updateShareNum(specs);
-			}
-		};
-		AbstractAction	importgeneclusteringaction = new AbstractAction("Import gene clustering") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JPanel panel = new JPanel();
-				GridBagLayout grid = new GridBagLayout();
-				GridBagConstraints c = new GridBagConstraints();
-				panel.setLayout( grid );
-				
-				JLabel label1 = new JLabel("Id:");
-				JTextField tb1 = new JTextField("0.5");
-				JLabel label2 = new JLabel("Len:");
-				JTextField tb2 = new JTextField("0.5");
-				
-				Dimension d = new Dimension( 300, 30 );
-				JTextField epar = new JTextField();
-				epar.setSize( d );
-				epar.setPreferredSize( d );
-				
-				c.fill = GridBagConstraints.HORIZONTAL;
-				c.gridwidth = 1;
-				c.gridheight = 1;
-				
-				c.gridx = 0;
-				c.gridy = 0;
-				panel.add( label1, c );
-				c.gridx = 1;
-				c.gridy = 0;
-				panel.add( tb1, c );
-				c.gridx = 0;
-				c.gridy = 1;
-				panel.add( label2, c );
-				c.gridx = 1;
-				c.gridy = 1;
-				panel.add( tb2, c );
-				c.gridx = 0;
-				c.gridy = 2;
-				c.gridwidth = 2;
-				panel.add( epar, c );
-				
-				JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );
-				
-				float id = Float.parseFloat( tb1.getText() );
-				float len = Float.parseFloat( tb2.getText() );
-				
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					Path p = fc.getSelectedFile().toPath();
-					Serifier s = new Serifier();
-					//s.mseq = aas;
-					for( String gk : refmap.keySet() ) {
-						Gene g = refmap.get( gk );
-						if( g.tegeval.getAlignedSequence() != null ) System.err.println( g.tegeval.getAlignedSequence().getName() );
-						s.mseq.put( gk, g.tegeval.getAlignedSequence() );
-					}
-					
-					Map<String,String>	idspec = new HashMap<String,String>();
-					for( String idstr : refmap.keySet() ) {
-						if( idstr.contains(" ") ) {
-							System.err.println( "coooonnnnnni " + idstr );
-						}
-						
-						Gene gene = refmap.get( idstr );
-						idspec.put(idstr, gene.getSpecies());
-					}
-					//Sequences seqs = new Sequences(user, name, type, path, nseq)
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						String uristr = "jar:" + zippath.toUri();
-						zipuri = URI.create( uristr );
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						
-						List<Set<String>> cluster = uclusterlist == null ? new ArrayList<Set<String>>() : new ArrayList<Set<String>>( uclusterlist );
-						/*for( Set<String> specs : clusterMap.keySet() ) {
-							Set<Map<String,Set<String>>> uset = clusterMap.get( specs );
-							for( Map<String,Set<String>> umap : uset ) {
-								for( String val : umap.keySet() ) {
-									Set<String> sset = umap.get(val);
-									
-									/*Set<String> ss = new HashSet<String>();
-									for( String str : sset ) {
-										int k = str.indexOf(' ');
-										if( k == -1 ) k = str.length();
-										ss.add( str.substring(0,k) );
-										/*if( str.contains(" ") ) {
-											System.err.println( "coooonnnnnni2 " + str );
-										}*
-									}*
-									cluster.add( sset );
-								}
-							}
-						}*/
-						
-						//p = null;
-						s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1, id, len, idspec, cluster, refmap);
-						
-						System.err.println( cluster.get(0) );
-						if( uclusterlist != null ) System.err.println( uclusterlist.get(0) );
-						
 						zipfilesystem.close();
-					} catch (IOException e1) {
-						if( zipfilesystem != null ) {
-							try {
-								zipfilesystem.close();
-							} catch (IOException e2) {
-								e2.printStackTrace();
-							}
-						}
-						e1.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
 				}
-			}
-		};
-		AbstractAction	importgenesymbolaction = new AbstractAction("Import gene symbols") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						//Path path = zipfile.toPath();
-						String uristr = "jar:" + zippath.toUri();
-						zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-						
-						Path nf = zipfilesystem.getPath("/smap_short.txt");
-						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-						
-						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-						uni2symbol(new InputStreamReader(is), bw, unimap);
-						
-						bw.close();
-						//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-						zipfilesystem.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		};
-		AbstractAction	importcazyaction = new AbstractAction("Import Cazy") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-					try {
-						BufferedReader rd = Files.newBufferedReader(fc.getSelectedFile().toPath());
-						loadcazymap(cazymap, rd);
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		};
-		AbstractAction	functionmappingaction = new AbstractAction("Function mapping") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				final JTextField 	tf = new JTextField();
-				JButton				btn = new JButton("File");
-				JComponent 			comp = new JComponent() {};
-				comp.setLayout( new BorderLayout() );
-				comp.add( tf );
-				comp.add(btn, BorderLayout.EAST);
-				tf.setText("http://130.208.252.239/data/sp2go.txt.gz");
-				
-				final File[] file = new File[1];
-				btn.addActionListener( new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						JFileChooser fc = new JFileChooser();
-						if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-							file[0] = fc.getSelectedFile();
-							try {
-								tf.setText( fc.getSelectedFile().toURI().toURL().toString() );
-							} catch (MalformedURLException e1) {
-								e1.printStackTrace();
-							}
-						}
-					}
-				});
-				
-				try {
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					//Path path = zipfile.toPath();
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					
-					Path nf = zipfilesystem.getPath("/sp2go_short.txt");
-					BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-					
-					JOptionPane.showMessageDialog(GeneSet.this, comp);
-					
-					final JDialog	dialog = new JDialog();
-					dialog.setTitle( "Function mapping" );
-					dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-					dialog.setSize(400, 300);
-					
-					comp = new JComponent() {};
-					comp.setLayout( new BorderLayout() );
-					
-					final JTextArea		ta = new JTextArea();
-					/*final InputStream fis;
-					if( file[0] != null ) fis = new FileInputStream( file[0] );
-					else {
-						JTextField host = new JTextField("localhost");
-						JOptionPane.showMessageDialog(null, host);
-						
-						String username = System.getProperty("user.name");
-						String hostname = host.getText();
-						
-						List<String> commandsList = Arrays.asList( new String[] {"ssh",username+"@"+hostname,"cat",tf.getText()} );
-						ProcessBuilder pb = new ProcessBuilder( commandsList );
-						Process p = pb.start();
-						
-						for( Object commands : commandsList ) {
-							if( commands instanceof List ) {
-								for( Object cmd : (List)commands ) {
-									ta.append(cmd+" ");
-								}
-								ta.append("\n");
-							} else {
-								ta.append(commands+" ");
-							}
-						}
-						ta.append("\n");
-						
-						fis = p.getInputStream();
-					}*/
-					
-					final JProgressBar	pbar = new JProgressBar();
-					final Thread t = new Thread() {
-						public void run() {
-							try {
-								URL url = new URL(tf.getText());
-								InputStream fis = url.openStream();
-								
-								BufferedReader br = new BufferedReader( new InputStreamReader( new GZIPInputStream( fis ) ) );
-								//if( unimap != null ) unimap.clear();
-								//unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-								funcMappingUni( br, unimap, bw );
-								
-								fis.close();
-								bw.close();
-								
-								try { zipfilesystem.close(); } catch( Exception e2 ) { e2.printStackTrace(); };
-								
-								pbar.setIndeterminate(false);
-								pbar.setEnabled(false);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					};
-					
-					ta.setEditable( false );
-					final JScrollPane	sp = new JScrollPane( ta );
-					
-					dialog.add( comp );
-					comp.add( pbar, BorderLayout.NORTH );
-					comp.add( sp, BorderLayout.CENTER );
-					pbar.setIndeterminate( true );
-					
-					t.start();
-					dialog.addWindowListener( new WindowListener() {
-						
-						@Override
-						public void windowOpened(WindowEvent e) {}
-						
-						@Override
-						public void windowIconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeiconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeactivated(WindowEvent e) {}
-						
-						@Override
-						public void windowClosing(WindowEvent e) {}
-						
-						@Override
-						public void windowClosed(WindowEvent e) {
-							if( pbar.isEnabled() ) {
-								pbar.setIndeterminate( false );
-								pbar.setEnabled( false );
-							}
-						}
-						
-						@Override
-						public void windowActivated(WindowEvent e) {}
-					});
-					dialog.setVisible( true );
-					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		};
-		AbstractAction	importidmappingaction = new AbstractAction("Import idmapping") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				final JTextField 	tf = new JTextField();
-				JButton				btn = new JButton("File");
-				JComponent 			comp = new JComponent() {};
-				comp.setLayout( new BorderLayout() );
-				comp.add( tf );
-				comp.add(btn, BorderLayout.EAST);
-				tf.setText("ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping.dat.gz");
-				
-				final File[] file = new File[1];
-				btn.addActionListener( new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						JFileChooser fc = new JFileChooser();
-						if( fc.showOpenDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-							file[0] = fc.getSelectedFile();
-							try {
-								tf.setText( fc.getSelectedFile().toURI().toURL().toString() );
-							} catch (MalformedURLException e1) {
-								e1.printStackTrace();
-							}
-						}
-					}
-				});
-				
-				JOptionPane.showMessageDialog(GeneSet.this, comp);
-				
-				//Thread t = new Thread() {
-				//	public void run() {
-				try {
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					//Path path = zipfile.toPath();
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					
-					Path nf = zipfilesystem.getPath("/idmapping_short.dat");
-					final BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
-					
-					final JDialog	dialog = new JDialog();
-					dialog.setTitle( "Id mapping" );
-					dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-					dialog.setSize(400, 300);
-					
-					comp = new JComponent() {};
-					comp.setLayout( new BorderLayout() );
-					
-					final JTextArea		ta = new JTextArea();
-					
-					/*final InputStream fis;
-					if( file[0] != null ) fis = new FileInputStream( file[0] );
-					else {
-						/*Object[] cont = new Object[3];
-						Runnable run = new Runnable() {
-							public void run() {
-								try {
-									bw.close();
-									zipfilesystem.close();
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-						};*
-						
-						JTextField host = new JTextField("localhost");
-						JOptionPane.showMessageDialog(null, host);
-						
-						String username = System.getProperty("user.name");
-						String hostname = host.getText();
-						
-						List<String> commandsList = Arrays.asList( new String[] {"ssh",username+"@"+hostname,"cat",tf.getText()} );
-						ProcessBuilder pb = new ProcessBuilder( commandsList );
-						Process p = pb.start();
-						
-						for( Object commands : commandsList ) {
-							if( commands instanceof List ) {
-								for( Object cmd : (List)commands ) {
-									ta.append(cmd+" ");
-								}
-								ta.append("\n");
-							} else {
-								ta.append(commands+" ");
-							}
-						}
-						ta.append("\n");
-						
-						fis = p.getInputStream();
-					}*/
-					
-					final JProgressBar	pbar = new JProgressBar();
-					final Thread t = new Thread() {
-						public void run() {
-							try {
-								URL url = new URL(tf.getText());
-								InputStream fis = url.openStream();
-								InputStream is = new GZIPInputStream( fis );
-								if( unimap != null ) unimap.clear();
-								unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-								is.close();
-								fis.close();
-								bw.close();
-								
-								try { zipfilesystem.close(); } catch(Exception ep) { ep.printStackTrace(); };
-								
-								pbar.setIndeterminate(false);
-								pbar.setEnabled(false);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					};
-					
-					ta.setEditable( false );
-					final JScrollPane	sp = new JScrollPane( ta );
-					
-					dialog.add( comp );
-					comp.add( pbar, BorderLayout.NORTH );
-					comp.add( sp, BorderLayout.CENTER );
-					pbar.setIndeterminate( true );
-					
-					t.start();
-						
-						/*System.err.println( "about to run" );
-						for( Object commands : commandsList ) {
-							if( commands instanceof List ) {
-								for( Object c : (List)commands ) {
-									System.err.print( c+" " );
-								}
-								System.err.println();
-							} else {
-								System.err.print( commands+" " );
-							}
-						}
-						System.err.println();*/
-					dialog.addWindowListener( new WindowListener() {
-						
-						@Override
-						public void windowOpened(WindowEvent e) {}
-						
-						@Override
-						public void windowIconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeiconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeactivated(WindowEvent e) {}
-						
-						@Override
-						public void windowClosing(WindowEvent e) {}
-						
-						@Override
-						public void windowClosed(WindowEvent e) {
-							if( pbar.isEnabled() ) {
-								/*String result = ta.getText().trim();
-								if( run != null ) {
-									cont[0] = null;
-									cont[1] = result;
-									cont[2] = new Date( System.currentTimeMillis() ).toString();
-									run.run();
-								}*/
-								
-								pbar.setIndeterminate( false );
-								pbar.setEnabled( false );
-							}
-						}
-						
-						@Override
-						public void windowActivated(WindowEvent e) {}
-					});
-					dialog.setVisible( true );
-						
-					/*NativeRun nrun = new NativeRun();
-					nrun.runProcessBuilder("Idmapping", Arrays.asList( tf.getText().split(" ") ), run, cont, false);
-					ProcessBuilder pb = new ProcessBuilder( tf.getText().split(" ") );
-					Process p = pb.start();
-					fis = p.getInputStream();
-					}*/
-					
-					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-					try { zipfilesystem.close(); } catch( Exception e2 ) { e2.printStackTrace(); };
-				}
-				//	}
-				//};
-				//t.start();
-				//}
-			}
-		};
-		AbstractAction	cogblastaction = new AbstractAction("Cog blast") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Set<String> species = getSelspec(null, getSpecies(), null);
-					
-					StringWriter sb = new StringWriter();
-					String dbPath = "/data/Cog";
-					for( Gene g : genelist ) {
-						if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-							if( species.contains( g.getSpecies() ) ) {
-								Sequence gs = g.tegeval.getProteinSequence();
-								if( gs != null ) {
-									gs.setName( g.id );
-									gs.writeSequence( sb );
-								}
-								/*sb.append(">" + g.id + "\n");
-								for (int i = 0; i < gs.length(); i += 70) {
-									sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-								}*/
-							}
-						}
-					}
-					
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					Path resPath = zipfilesystem.getPath("/cog.blastout");
-					
-					NativeRun nrun = new NativeRun();
-					SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, zipfilesystem, user);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		};
-		AbstractAction	unresolvedblastaction = new AbstractAction("Unresolved blast") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Set<String> species = getSelspec(null, getSpecies(), null);
-					
-					StringWriter sb = new StringWriter();
-					Path dbPath = Paths.get("/data/nr");
-					int[] rr = table.getSelectedRows();
-					if( rr != null && rr.length > 0 ) {
-						if( table.getModel() == defaultModel ) {
-							for( int r : rr ) {
-								int i = table.convertRowIndexToModel(r);
-								Gene g = genelist.get(i);
-								Sequence gs = g.tegeval.getProteinSequence();
-								gs.setName( g.id );
-								gs.writeSequence( sb );
-							}
-						} else {
-							for( int r : rr ) {
-								int i = table.convertRowIndexToModel(r);
-								GeneGroup gg = allgenegroups.get(i);
-								Gene g = null;
-								for( Gene gene : gg.genes ) {
-									g = gene;
-									break;
-								}
-								Sequence gs = g.tegeval.getProteinSequence();
-								gs.setName( g.id );
-								gs.writeSequence( sb );
-							}
-						}
-					} else {
-						for( Gene g : genelist ) {
-							if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-								if( species.contains( g.getSpecies() ) ) {
-									Sequence gs = g.tegeval.getProteinSequence();
-									gs.setName( g.id );
-									gs.writeSequence( sb );
-									
-									/*sb.append(">" + g.id + "\n");
-									for (int i = 0; i < gs.length(); i += 70) {
-										sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-									}*/
-								}
-							}
-						}
-					}
-					
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					Path resPath = zipfilesystem.getPath("/unresolved.blastout");
-					
-					NativeRun nrun = new NativeRun();
-					SerifyApplet.blastpRun(nrun, sb.getBuffer(), dbPath, resPath, "-evalue 0.00001", null, true, zipfilesystem, user);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		};
-		
-		AbstractAction	importkeggpathwayaction = new AbstractAction("Import kegg pathways") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> keggids = new HashSet<String>();
-				for( Gene g : genelist ) {
-					if( g.keggid != null ) {
-						int i = g.keggid.indexOf(':');
-						if( i > 0 ) {
-							keggids.add( g.keggid.substring(0, i) );
-						}
-					}
-				}
-				System.err.println( keggids );
-				
-				JTextField tf = new JTextField("http://130.208.252.239/organisms/");
-				JOptionPane.showMessageDialog(null, tf);
-				
-				Map<String,String> env = new HashMap<String,String>();
-				env.put("create", "true");
-				
-				Path rootp = null;
-				try {
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-				} catch( Exception ee ) { ee.printStackTrace(); }
-				
-				for( Path root : zipfilesystem.getRootDirectories() ) {
-					rootp = root;
-					break;
-				}
-				
-				
-				for( String kegg : keggids ) {
-					try {
-						URL url = new URL( tf.getText() + kegg + ".tar.gz" );
-						InputStream is = url.openStream();
-						GZIPInputStream gz = new GZIPInputStream(is);
-					
-						TarArchiveInputStream tar = new TarArchiveInputStream(gz);
-						TarArchiveEntry tae = (TarArchiveEntry)tar.getNextEntry();
-						while( tae != null ) {
-							traverseTar( tar, tae, rootp );
-							
-							tae = (TarArchiveEntry)tar.getNextEntry();
-						}
-						
-						is.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-				
-				try { zipfilesystem.close(); } catch( Exception ee ) { ee.printStackTrace(); };
-			}
-		};
-		
-		edit.add( clustergenes );
-		edit.add( alignclusters );
-		edit.addSeparator();
-		edit.add( sharenumaction );
-		edit.add( importgeneclusteringaction );
-		edit.add( importgenesymbolaction );
-		edit.add( importcazyaction );
-		edit.add( functionmappingaction );
-		edit.add( importidmappingaction );
-		edit.add( importkeggpathwayaction );
-		edit.addSeparator();
-		edit.add( cogblastaction );
-		edit.add( unresolvedblastaction );
-		
-		JMenu		view = new JMenu("View");
-		gb = new JRadioButtonMenuItem( new AbstractAction("Genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				table.setModel( defaultModel );
-			}
-		});
-		view.add( gb );
-		ggb = new JRadioButtonMenuItem( new AbstractAction("Gene groups") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				table.setModel( groupModel );
-			}
-		});
-		ButtonGroup	bg = new ButtonGroup();
-		bg.add( gb );
-		bg.add( ggb );
-		ggb.setSelected( true );
-		view.add( ggb );
-		ActionCollection.addAll( view, clusterMap, GeneSet.this, speccontigMap, table, comp, cs );
-		
-		JMenu		help = new JMenu("Help");
-		help.add( new AbstractAction("About") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JOptionPane.showMessageDialog( comp, "CompGen 1.0" );
-			}
-		});
-		help.add( new AbstractAction("Test") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				/*for( Gene g : genelist ) {
-					Sequence seq = g.tegeval.getContig();
-					if( seq == null ) {
+			};
+			NativeRun nrun = new NativeRun( run );
+			
+			String userhome = System.getProperty("user.home");
+			Path userhomepath = Paths.get( userhome );
+			Path queryPath = userhomepath.resolve("tmp_cluster.fsa");//Files.createTempFile("all", ".fsa");
+			BufferedWriter qbw = Files.newBufferedWriter(queryPath);
+			
+			Path dbPath = Files.createTempFile("db", ".fsa");
+			BufferedWriter bw = Files.newBufferedWriter(dbPath);
+			for( Gene g : genelist ) {
+				if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
+					System.err.println("asdfasdf " + g.getSpecies());
+					if( g.getSpecies().contains("Eva") ) {
 						System.err.println();
 					}
-				}*/
-				
-				for( String spec : speccontigMap.keySet() ) {
-					if( spec.contains("RAST") ) {
-						List<Sequence> lseq = speccontigMap.get(spec);
-						for( Sequence seq : lseq ) {
-							for( Annotation a : seq.getAnnotations() ) {
-								System.err.println( a.getGene().getGeneGroup().species );
-								/*Sequence tseq = a.getContig();
-								if( tseq == null ) {
-									System.err.println();
-								}*/
-							}
+					if( species.contains( g.getSpecies() ) ) {
+						Sequence gs = g.tegeval.getProteinSequence();
+						//System.err.println("stuff "+g.id + " bllbleh " + species + "  " + g.getSpecies());
+						if( gs != null ) {
+							gs.setName( g.id );
+							gs.writeSequence(qbw);
 						}
-					}
-				}
-				
-				/*for( GeneGroup gg : allgenegroups ) {
-					if( gg.species.size() > 1 ) {
-						System.err.println( gg.species );
-					}
-				}*/
-			}
-		});
-		help.addSeparator();
-		
-		JCheckBoxMenuItem cbmi = new JCheckBoxMenuItem("Use geneset user");
-		help.add( cbmi );
-		
-		cbmi.addActionListener( new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if( cbmi.isSelected() ) {
-					user = "geneset";
-				} else user = System.getProperty("user.name");
-				
-				JavaFasta.user = user;
-				if( currentSerify != null ) currentSerify.user = user;
-			}
-		});
-		
-		help.addSeparator();
-		help.add( new AbstractAction("Help & Tutorial") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Desktop.getDesktop().browse( new URI("http://thermusgenes.appspot.com/pancore.html") );
-				} catch (IOException | URISyntaxException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		
-		JMenu		sequencemenu = new JMenu("Sequence");
-		sequencemenu.add( new AbstractAction("Show group sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				//JTextArea textarea = new JTextArea();
-				//JScrollPane scrollpane = new JScrollPane(textarea);
-
-				/*try {
-					if (clipboardService == null)
-						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
-					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
-					textarea.getActionMap().put("copy", action);
-					grabFocus = true;
-				} catch (Exception ee) {
-					ee.printStackTrace();
-					System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-				}
-
-				textarea.setDragEnabled(true);*/
-				
-				JFrame frame = null;
-				if( currentSerify == null ) {
-					frame = new JFrame();
-					frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-					frame.setSize(400, 300);
-					
-					Map<String,String> env = new HashMap<String,String>();
-					//Path path = zipfile.toPath();
-					String uristr = "jar:" + zippath.toUri();
-					zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					try {
-						zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					
-					frame.addWindowListener( new WindowListener() {
-						
-						@Override
-						public void windowOpened(WindowEvent e) {}
-						
-						@Override
-						public void windowIconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeiconified(WindowEvent e) {}
-						
-						@Override
-						public void windowDeactivated(WindowEvent e) {}
-						
-						@Override
-						public void windowClosing(WindowEvent e) {}
-						
-						@Override
-						public void windowClosed(WindowEvent e) {
-							
-						}
-						
-						@Override
-						public void windowActivated(WindowEvent e) {}
-					});
-					
-					SerifyApplet sa = new SerifyApplet( zipfilesystem );
-					sa.init( frame, user );
-					//frame.add( )
-					currentSerify = sa;
-				}/* else frame = (JFrame)currentSerify.cnt;*/
-				
-				String[] farr = new String[] {"o.profundus", "mt.silvanus", "mt.ruber", "m.hydrothermalis", "t.thermophilus_SG0_5JP17_16", 
-						"t.thermophilusJL18", "t.thermophilusHB8", "t.thermophilusHB27", "t.scotoductusSA01", "t.scotoductus4063",
-						"t.scotoductus1572", "t.scotoductus2101", "t.scotoductus2127", "t.scotoductus346",
-						"t.scotoductus252", "t.antranikiani", "t.kawarayensis", "t.brockianus", "t.igniterrae", "t.eggertsoni", 
-						"t.RLM", "t.oshimai_JL2", "t.oshimai", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB"};
-
-				Map<Integer,String>			ups = new HashMap<Integer,String>();
-				Set<Integer>				stuck = new HashSet<Integer>();
-				Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					if (gg.getSpecies() != null) {
-						if( gg.genid != null && gg.genid.length() > 0 ) {
-							ups.put( gg.getGroupIndex(), gg.name );
-							stuck.add( gg.getGroupIndex() );
-						}
-						if( !stuck.contains(gg.getGroupIndex()) ) {
-							if( !ups.containsKey(gg.getGroupIndex()) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.getGroupIndex(), gg.name );
-						}
-						
-						List<Tegeval>	tlist;
-						if( ups2.containsKey( gg.getGroupIndex() ) ) tlist = ups2.get( gg.getGroupIndex() );
-						else {
-							tlist = new ArrayList<Tegeval>();
-							ups2.put( gg.getGroupIndex(), tlist );
-						}
-						
-						//Set<String>	 specs = new HashSet<String>();
-						//textarea.append(gg.name + ":\n");
-						//for (String sp : gg.species.keySet()) {
-						int count = 0;
-						for(String sp : farr) {
-							//Teginfo stv = gg.species.equals(sp) ? gg.teginfo : null;
-							
-							if( gg.getSpecies().equals(sp) ) tlist.add( gg.tegeval );
-							/*for( String key : gg.species.keySet() ) {
-								if( key.contains("JL2") ) {
-									System.err.println( " erm " + key );
-								}
-							}*/
-							/*if( stv == null && gg.species.size() == 28 ) {
-								System.err.println( gg.species );
-								System.err.println( sp );
-							}*/
-							//System.err.println( gg.species.keySet() );
-							/*if( stv == null ) {
-								//System.err.println( sp );
-							} else {
-								count++;
-								//specs.add( sp );
-								for (Tegeval tv : stv.tset) {
-									tlist.add( tv );
-									/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-									if (tv.dna != null) {
-										for (int i = 0; i < tv.dna.length(); i += 70) {
-											textarea.append(tv.dna.gg.speciessubstring(i, Math.min(i + 70, tv.dna.length())) + "\n");
-										}
-									}*
-								}
-							}*/
-						}
-						//if( count < gg.species.size() ) {
-						//	System.err.println( gg.species );
-						//	System.err.println();
-						//}
-						//if( specs.size() < 28 ) System.err.println("mu " + specs);
-					}
-				}
-				
-				try {
-					StringWriter sb = new StringWriter();
-					for( int gi : ups.keySet() ) {
-						String name = ups.get(gi);
-						List<Tegeval>	tlist = ups2.get(gi);
-						
-						sb.append(name.replace('/', '-') + ":\n");
-						if( tlist.size() < 28 ) {
-							for( Tegeval tv : tlist ) {
-								System.err.println( tv.name );
-							}
-							System.err.println();
-						}
-						for( Tegeval tv : tlist ) {
-							Sequence ps = tv.getProteinSequence();
-							ps.setName( tv.name.substring(0, tv.name.indexOf('_')) );
-							ps.writeSequence(sb);
-							/*sb.append(">" + tv.name.substring(0, tv.name.indexOf('_')) + "\n");
-							for (int i = 0; i < ps.length(); i += 70) {
-								sb.append( ps.substring(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
-							}*/
-						}
-					}
-				
-					currentSerify.addSequences("uh", new StringReader( sb.toString() ), Paths.get("/"), null);
-				} catch (URISyntaxException | IOException e1) {
-					e1.printStackTrace();
-				}
-				frame.setVisible(true);
-			}
-		});
-		sequencemenu.add( new AbstractAction("Show group DNA sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				final JTextArea textarea = new JTextArea();
-				JScrollPane scrollpane = new JScrollPane(textarea);
-
-				try {
-					if (clipboardService == null)
-						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
-					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
-					textarea.getActionMap().put("copy", action);
-					grabFocus = true;
-				} catch (Exception ee) {
-					ee.printStackTrace();
-					System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-				}
-
-				textarea.setDragEnabled(true);
-				
-				try {
-					final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
-					TransferHandler th = new TransferHandler() {
-						/**
-						 * 
-						 */
-						private static final long serialVersionUID = 1L;
-	
-						public int getSourceActions(JComponent c) {
-							return TransferHandler.COPY_OR_MOVE;
-						}
-	
-						public boolean canImport(TransferHandler.TransferSupport support) {
-							return false;
-						}
-	
-						protected Transferable createTransferable(JComponent c) {
-							return new Transferable() {
-								@Override
-								public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-									if (arg0.equals(df) ) {
-										return new ByteArrayInputStream( textarea.getText().getBytes() );
-									} else {
-										return textarea.getText();
-									}
-								}
-	
-								@Override
-								public DataFlavor[] getTransferDataFlavors() {
-									return new DataFlavor[] { df, DataFlavor.stringFlavor };
-								}
-	
-								@Override
-								public boolean isDataFlavorSupported(DataFlavor arg0) {
-									if (arg0.equals(df) || arg0.equals(DataFlavor.stringFlavor)) {
-										return true;
-									}
-									return false;
-								}
-							};
-						}
-	
-						public boolean importData(TransferHandler.TransferSupport support) {
-							return false;
-						}
-					};
-					textarea.setTransferHandler( th );
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
-
-				Map<Integer,String>			ups = new HashMap<Integer,String>();
-				Set<Integer>				stuck = new HashSet<Integer>();
-				Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					if (gg.getSpecies() != null) {
-						if( gg.genid != null && gg.genid.length() > 0 ) {
-							ups.put( gg.getGroupIndex(), gg.name );
-							stuck.add( gg.getGroupIndex() );
-						}
-						if( !stuck.contains(gg.getGroupIndex()) ) {
-							if( !ups.containsKey(gg.getGroupIndex()) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.getGroupIndex(), gg.name );
-						}
-						
-						List<Tegeval>	tlist;
-						if( ups2.containsKey( gg.getGroupIndex() ) ) tlist = ups2.get( gg.getGroupIndex() );
-						else {
-							tlist = new ArrayList<Tegeval>();
-							ups2.put( gg.getGroupIndex(), tlist );
-						}
-						
-						//textarea.append(gg.name + ":\n");
-						tlist.add( gg.tegeval );
-							/*textarea.append(">" + tv.cont + " " + tv.teg + " " + tv.eval + "\n");
-							if (tv.dna != null) {
-								for (int i = 0; i < tv.dna.length(); i += 70) {
-									textarea.append(tv.dna.substring(i, Math.min(i + 70, tv.dna.length())) + "\n");
-								}
-							}*/
-					}
-				}
-				
-				for( int gi : ups.keySet() ) {
-					String name = ups.get(gi);
-					List<Tegeval>	tlist = ups2.get(gi);
-					
-					textarea.append(name.replace('/', '-') + ":\n");
-					for( Tegeval tv : tlist ) {
-						textarea.append(">" + tv.name.substring(0, tv.name.indexOf('_')) + "\n");
-						for (int i = 0; i < tv.getLength(); i += 70) {
-							textarea.append(tv.getSubstring(i, Math.min(i + 70, tv.getLength())) + "\n");
-						}
-					}
-				}
-				
-				JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.add(scrollpane);
-				frame.setSize(400, 300);
-				frame.setVisible(true);
-			}
-		});
-		sequencemenu.addSeparator();
-		sequencemenu.add(new AbstractAction("Show all sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-				jf.initGui(frame);
-
-				Map<String, Sequence> contset = new HashMap<String, Sequence>();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					Tegeval tv = gg.tegeval;
-					String contig = tv.getContshort().getName();
-					Sequence seq = tv.getProteinSequence();
-					seq.setName(contig);
-					serifier.mseq.put( seq.getName(), seq );
-					//Sequence seq = new Sequence( contig, aa, serifier.mseq );
-					serifier.addSequence(seq);
-				}
-				jf.updateView();
-
-				frame.setVisible(true);
-			}
-		});
-		sequencemenu.add(new AbstractAction("Show sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
-				int[] rr = table.getSelectedRows();
-				if( table.getModel() == groupModel ) {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						GeneGroup gg = allgenegroups.get(cr);
-						genegroups.add( gg );
-					}
-				} else {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						Gene gg = genelist.get(cr);
-						genegroups.add( gg.getGeneGroup() );
-					}
-				}
-				Set<String>	specs = null;
-				if( rr.length > 1 ) specs = getSelspec(comp, specList, null);
-				showSequences( comp, genegroups, false, specs );
-			}
-		});
-		sequencemenu.add(new AbstractAction("Show sequences w/genenames") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
-				int[] rr = table.getSelectedRows();
-				if( table.getModel() == groupModel ) {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						GeneGroup gg = allgenegroups.get(cr);
-						genegroups.add( gg );
-					}
-				} else {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						Gene gg = genelist.get(cr);
-						genegroups.add( gg.getGeneGroup() );
-					}
-				}
-				//Set<String>	specs = null;
-				//if( rr.length > 1 ) specs = getSelspec(comp, specList, null);
-				showSequences( comp, genegroups, false, null, true );
-			}
-		});
-		sequencemenu.add(new AbstractAction("Show aligned sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
-				int[] rr = table.getSelectedRows();
-				if( table.getModel() == groupModel ) {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						GeneGroup gg = allgenegroups.get(cr);
-						genegroups.add( gg );
-					}
-				} else {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						Gene gg = genelist.get(cr);
-						genegroups.add( gg.getGeneGroup() );
-					}
-				}
-				
-				Serifier	serifier = new Serifier();
-				for( GeneGroup ggroup : genegroups ) {
-					for( Tegeval tv : ggroup.getTegevals() ) {
-						String selspec = tv.getContshort().getSpec();//tv.getContig();
-						String spec = nameFix( selspec );
-						/*if( selspec.contains("hermus") ) spec = selspec;
-						else {
-							Matcher m = Pattern.compile("\\d").matcher(selspec); 
-							int firstDigitLocation = m.find() ? m.start() : 0;
-							if( firstDigitLocation == 0 ) spec = "Thermus_" + selspec;
-							else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
+						/*qbw.append(">" + g.id + "\n");
+						for (int i = 0; i < gs.length(); i += 70) {
+							qbw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						}*/
-						
-						Sequence seq = tv.getAlignedSequence();
-						//System.err.println( "seqlen " + seq.length() );
-						if( seq != null ) {
-							seq.setName( spec );
-							//Sequence seq = new Sequence( contig, seqstr, null );
-							serifier.addSequence(seq);
-						} else {
-							Sequence sb = tv.getProteinSequence();
-							sb.setName(spec);
-							//Sequence sseq = new Sequence( spec, sb, serifier.mseq );
-							serifier.addSequence( sb );
-						}
-					}
-				}
-				showAlignedSequences( comp, serifier );
-			}
-		});
-		sequencemenu.add(new AbstractAction("Split/Show sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					StringBuffer sb = getSelectedASeqs( table, genelist, GeneSet.this, specList );
-					if( currentSerify == null ) {
-						JFrame frame = new JFrame();
-						frame.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-						frame.setSize(800, 600);
-						
-						SerifyApplet sa = new SerifyApplet( zipfilesystem );
-						sa.init( frame, user );
-						currentSerify = sa;
-						
-						frame.setVisible( true );
-					}
-					currentSerify.addSequences("uh", new StringReader( sb.toString() ), Paths.get("/"), null);
-				} catch (URISyntaxException | IOException e1) {
-					e1.printStackTrace();
-				}
-				
-				//JTextArea textarea = new JTextArea();
-				//textarea.append( sb.toString() );
-				
-				/*try {
-					if (clipboardService == null)
-						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
-					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
-					textarea.getActionMap().put("copy", action);
-					grabFocus = true;
-				} catch (Exception ee) {
-					ee.printStackTrace();
-					System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-				}
-
-				*
-				 * final DataFlavor df =
-				 * DataFlavor.getTextPlainUnicodeFlavor();//new
-				 * DataFlavor("text/plain;charset=utf-8"); final String charset
-				 * = df.getParameter("charset"); final Transferable transferable
-				 * = new Transferable() {
-				 * 
-				 * @Override public Object getTransferData(DataFlavor arg0)
-				 * throws UnsupportedFlavorException, IOException { String ret =
-				 * makeCopyString( detailTable ); return new
-				 * ByteArrayInputStream( ret.getBytes( charset ) ); }
-				 * 
-				 * @Override public DataFlavor[] getTransferDataFlavors() {
-				 * return new DataFlavor[] { df }; }
-				 * 
-				 * @Override public boolean isDataFlavorSupported(DataFlavor
-				 * arg0) { if( arg0.equals(df) ) { return true; } return false;
-				 * } };
-				 * 
-				 * TransferHandler th = new TransferHandler() { private static
-				 * final long serialVersionUID = 1L;
-				 * 
-				 * public int getSourceActions(JComponent c) { return
-				 * TransferHandler.COPY_OR_MOVE; }
-				 * 
-				 * public boolean canImport(TransferHandler.TransferSupport
-				 * support) { return false; }
-				 * 
-				 * protected Transferable createTransferable(JComponent c) {
-				 * return transferable; }
-				 * 
-				 * public boolean importData(TransferHandler.TransferSupport
-				 * support) { /*try { Object obj =
-				 * support.getTransferable().getTransferData( df ); InputStream
-				 * is = (InputStream)obj;
-				 * 
-				 * byte[] bb = new byte[2048]; int r = is.read(bb);
-				 * 
-				 * //importFromText( new String(bb,0,r) ); } catch
-				 * (UnsupportedFlavorException e) { e.printStackTrace(); } catch
-				 * (IOException e) { e.printStackTrace(); }* return false; } };
-				 * textarea.setTransferHandler( th );
-				 *
-				textarea.setDragEnabled(true);
-
-				JScrollPane scrollpane = new JScrollPane(textarea);
-				
-				JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.add(scrollpane);
-				frame.setSize(400, 300);
-				frame.setVisible(true);*/
-			}
-		});
-		sequencemenu.add( new AbstractAction("Show DNA sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
-				int[] rr = table.getSelectedRows();
-				if( table.getModel() == groupModel ) {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						GeneGroup gg = allgenegroups.get(cr);
-						genegroups.add( gg );
-					}
-				} else {
-					for (int r : rr) {
-						int cr = table.convertRowIndexToModel(r);
-						Gene gg = genelist.get(cr);
-						genegroups.add( gg.getGeneGroup() );
-					}
-				}
-				Set<String> specs = null;
-				if( rr.length > 1 ) specs = getSelspec( comp, specList, null );
-				showSequences( comp, genegroups, true, specs );
-				
-				/*StringBuilder sb = getSelectedSeqs( table, genelist );
-				
-				if( currentSerify == null ) {
-					JFrame frame = new JFrame();
-					frame.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
-					frame.setSize(800, 600);
-					
-					SerifyApplet sa = new SerifyApplet();
-					sa.init( frame );
-					
-					try {
-						sa.addSequences("uh", new StringReader( sb.toString() ), "/");
-					} catch (URISyntaxException | IOException e1) {
-						e1.printStackTrace();
 					}
 					
-					frame.setVisible( true );
-				}
-				
-				JTextArea textarea = new JTextArea();
-				JScrollPane scrollpane = new JScrollPane(textarea);
-
-				try {
-					if (clipboardService == null)
-						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
-					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
-					textarea.getActionMap().put("copy", action);
-					grabFocus = true;
-				} catch (Exception ee) {
-					ee.printStackTrace();
-					System.err.println("Copy services not available.  Copy using 'Ctrl-c'.");
-				}
-
-				textarea.setDragEnabled(true);
-				textarea.append( sb.toString() );
-				
-				JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.add(scrollpane);
-				frame.setSize(400, 300);
-				frame.setVisible(true);*/
-			}
-		});
-		sequencemenu.add(new AbstractAction("Export all DNA sequences") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser jfc = new JFileChooser();
-				jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-				try {
-					Map<Integer, FileWriter> lfw = new HashMap<Integer, FileWriter>();
-					if (jfc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-						File f = jfc.getSelectedFile();
-
-						int[] rr = table.getSelectedRows();
-						for (int r : rr) {
-							int cr = table.convertRowIndexToModel(r);
-							Gene gg = genelist.get(cr);
-							FileWriter fw = null;
-							if (lfw.containsKey(gg.getGroupIndex())) {
-								fw = lfw.get(gg.getGroupIndex());
-							} else {
-								fw = new FileWriter(new File(f, "group_" + gg.getGroupIndex() + ".fasta"));
-								lfw.put(gg.getGroupIndex(), fw);
-							}
-
-							Tegeval tv = gg.tegeval;
-							fw.append(">" + tv.name + " " + tv.teg + " " + tv.eval + "\n");
-							for (int i = 0; i < tv.getLength(); i += 70) {
-								fw.append( tv.getSubstring(i, Math.min(i + 70, tv.getLength()) ) + "\n");
-							}
-						}
-					}
-					for (int gi : lfw.keySet()) {
-						lfw.get(gi).close();
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		sequencemenu.add(new AbstractAction("Export relevant contigs") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser jfc = new JFileChooser();
-
-				try {
-					Map<Integer, FileWriter> lfw = new HashMap<Integer, FileWriter>();
-					if (jfc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-						File f = jfc.getSelectedFile();
-
-						Set<Sequence> contset = new HashSet<Sequence>();
-						int[] rr = table.getSelectedRows();
-						for (int r : rr) {
-							int cr = table.convertRowIndexToModel(r);
-							Gene gg = genelist.get(cr);
-							Tegeval tv = gg.tegeval;
-							contset.add( tv.getContshort() );
-						}
-
-						FileWriter fw = new FileWriter(f);
-						for (Sequence contig : contset) {
-							fw.append(">" + contig + "\n");
-							if (contigmap.containsKey(contig)) {
-								StringBuilder dna = contigmap.get(contig).getStringBuilder();
-								for (int i = 0; i < dna.length(); i += 70) {
-									fw.append(dna.substring(i, Math.min(i + 70, dna.length())) + "\n");
-								}
-							}
-						}
-						fw.close();
-					}
-					for (int gi : lfw.keySet()) {
-						lfw.get(gi).close();
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		sequencemenu.addSeparator();
-		sequencemenu.add(new AbstractAction("View selected range") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-				jf.initGui(frame);
-
-				Set<Sequence> contset = new HashSet<Sequence>();
-				Set<Tegeval> tvset = new HashSet<Tegeval>();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					if( table.getModel() == defaultModel ) {
-						Gene gg = genelist.get(cr);
-						Tegeval tv = gg.tegeval;
-						tvset.add( tv );
-						//serifier.addAnnotation( tv );
-						contset.add( tv.getContshort() );
-					} else {
-						GeneGroup gg = allgenegroups.get(cr);
-						for( Tegeval tv : gg.getTegevals() ) {
-							tv.color = Color.red;
-							tvset.add( tv );
-							Sequence contig = tv.getContshort();
-							contset.add( contig );							
-							//serifier.addAnnotation( tv );
-						}
-					}
-					/*Sequence seq;
-					Sequence contig = tv.getContshort();
-					/*if (contset.containsKey(contig)) {
-						seq = contset.get(contig);
-					} else {
-						if( contigmap.containsKey(contig) ) {
-							StringBuilder dna = contigmap.get(contig).getStringBuilder();
-							seq = new Sequence(contig.getName(), dna, serifier.mseq);
-						} else
-							seq = new Sequence(contig.getName(), serifier.mseq);
-						contset.put(contig, seq);
-					}
-
-					Annotation a = new Annotation(contig, contig.getName(), Color.green, serifier.mann);
-					a.setStart(tv.start);
-					a.setStop(tv.stop);
-					a.setOri(tv.ori);
-					a.setGroup(gg.name);
-					a.setType("gene");*/
-					// seq.addAnnotation( new Annotation( seq, ) );
-				}
-
-				for (Sequence contig : contset) {
-					int start = Integer.MAX_VALUE;
-					int stop = Integer.MIN_VALUE;
-					for( Tegeval tv : tvset ) {
-						if( contig == tv.seq ) {
-							start = Math.min(start, tv.start);
-							stop = Math.max(stop, tv.stop);
-						}
+					Sequence gs = g.tegeval.getProteinSequence();
+					if( gs != null ) {
+						gs.setName( g.id );
+						gs.writeSequence(bw);
+					}/* else {
+						System.err.println(g.getSpecies());
+						System.err.println();
 					}
 					
-					int rstart = 0;
-					int rstop = contig.length();
-					if( contig.annset != null ) for( Annotation tv : contig.annset ) {
-						if( contig == tv.seq ) {
-							if( tv.stop < start && tv.stop > rstart ) {
-								rstart = tv.stop;
-							}
-							if( tv.start > stop && tv.start < rstop ) {
-								rstop = tv.start;
-							}
-						}
-					}
-					
-					start = rstart;
-					stop = rstop;
-					
-					Sequence newseq = new Sequence( contig.getName(), new StringBuilder(contig.getSubstring(start, stop, 1)), serifier.mseq);
-					/*if( contig.isReverse() ) {
-						newseq.reverse();
-						newseq.complement();
-					}*/
-					
-					serifier.addSequence( newseq );
-					for( Tegeval tv : tvset ) {
-						Annotation newann = new Annotation(newseq, tv.start-start, tv.stop-start, tv.ori, tv.name);
-						if( contig == tv.seq ) {
-							newseq.addAnnotation( newann );
-						}
-						serifier.addAnnotation(newann);
-					}
-					/*for( Annotation ann : contig.getAnnotations() ) {
-						serifier.addAnnotation( ann );
-					}*/
-					/*if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());*/
-				}
-				jf.updateView();
-
-				frame.setVisible(true);
-			}
-		});
-		sequencemenu.add(new AbstractAction("View whole contigs for selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-				jf.initGui(frame);
-
-				//Map<Sequence, Sequence> contset = new HashMap<Sequence, Sequence>();
-				/*int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					Gene gg = genelist.get(cr);
-					if (gg.species != null) {
-						for (String sp : gg.species.keySet()) {
-							Teginfo stv = gg.species.get(sp);
-							for (Tegeval tv : stv.tset) {
-								Sequence seq;
-								Sequence contig = tv.getContshort();
-								if (contset.containsKey(contig)) {
-									seq = contset.get(contig);
-								} else {
-									if( GeneSet.contigmap.containsKey(contig) ) {
-										//StringBuilder dna = GeneSet.contigmap.get(contig).seq;
-										StringBuilder dna = contig.getSequence().getStringBuilder();
-										seq = new Sequence(contig.getName(), dna, serifier.mseq);
-									} else {
-										seq = new Sequence(contig.getName(), serifier.mseq);
-									}
-
-									contset.put(contig, seq);
-								}
-
-								/*
-								 * Annotation a = jf.new Annotation( seq,
-								 * contig, Color.red ); a.setStart( tv.start );
-								 * a.setStop( tv.stop ); a.setOri( tv.ori );
-								 * a.setGroup( gg.name ); a.setType( "gene" );
-								 * jf.addAnnotation( a );
-								 *
-								// seq.addAnnotation( new Annotation( seq, ) );
-							}
-						}
-					}
-				}*/
-
-				Set<Sequence> contigs = new HashSet<Sequence>();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					if( table.getModel() == defaultModel ) {
-						Gene g = genelist.get( cr );
-						Tegeval tv = g.tegeval;
-						tv.color = Color.red;
-						Sequence contig = tv.getContshort();
-						//contig.offset = -tv.start;
-						contigs.add( contig );
-						
-						
-						/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
-						a.setStart(tv.start);
-						a.setStop(tv.stop);
-						a.setOri(tv.ori);
-						a.setGroup(g.name);
-						a.setType("gene");*/
-						//serifier.addAnnotation( tv );
-					} else {
-						GeneGroup gg = allgenegroups.get( cr );
-						for( Tegeval tv : gg.getTegevals() ) {
-							tv.color = Color.red;
-							Sequence contig = tv.getContshort();
-							//contig.offset = -tv.start;
-							contigs.add( contig );					
-							
-							
-							/*Annotation a = new Annotation(contig, contig.getName(), Color.red, serifier.mann);
-							a.setStart(tv.start);
-							a.setStop(tv.stop);
-							a.setOri(tv.ori);
-							a.setGroup(gg.getCommonName());
-							a.setType("gene");*/
-							//serifier.addAnnotation( tv );
-						}
-						
-					}
-					//Gene gg = genelist.get(cr);
-					//for (Gene g : genelist) {
-					//if (g.species != null) {
-						//for (String sp : g.species.keySet()) {
-				}
-
-				for( Sequence contig : contigs ) {
-					for( Annotation ann : contig.getAnnotations() ) {
-						serifier.addAnnotation( ann );
-					}
-					
-					serifier.addSequence( contig );
-					serifier.mseq.put( contig.getName(), contig );
-					//if(contig.getAnnotations() != null)
-					//	Collections.sort(contig.getAnnotations());
-				}
-				jf.updateView();
-
-				frame.setVisible(true);
-			}
-		});
-		sequencemenu.addSeparator();
-		sequencemenu.add( new AbstractAction("View species sequence") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> selspec = getSelspec(GeneSet.this, specList);
-				
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-				jf.initGui(frame);
-				
-				for( String spec : selspec ) {
-					List<Sequence> contigs = speccontigMap.get( spec );
-
-					for( Sequence contig : contigs ) {
-						List<Annotation> lann = contig.getAnnotations();
-						if( lann != null ) for( Annotation ann : lann ) {
-							serifier.addAnnotation( ann );
-						}
-						
-						serifier.addSequence( contig );
-						serifier.mseq.put( contig.getName(), contig );
-					}
-				}
-				
-				jf.updateView();
-
-				frame.setVisible(true);
-			}
-		});
-		
-		JMenu		windowmenu = new JMenu("Tools");
-		windowmenu.add( new AbstractAction("Sequence viewer") {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
-				jf.initGui(frame);
-				jf.updateView();
-
-				frame.setVisible(true);
-			}
-		});
-		windowmenu.addSeparator();
-		windowmenu.add( new AbstractAction("Gene sorter") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					//if( gb.isSelected() ) new GeneSorter().mynd( GeneSet.this, genelist, table, null, contigmap );
-					//else 
-					new GeneSorter().groupMynd( GeneSet.this, allgenegroups, specList, genelist, table, contigmap, specset );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		AbstractAction specorderaction = new AbstractAction("Order species list") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				TreeUtil tu = new TreeUtil();
-				/*corrInd.clear();
-				for( String spec : specList ) {
-					corrInd.add( nameFix( spec ) );
-				}*/
-				
-				Serifier serifier = getConcatenatedSequences( false, false );
-				
-				Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
-				double[] dmat = new double[ serifier.lseq.size()*serifier.lseq.size() ];
-				Sequence.distanceMatrixNumeric( serifier.lseq, dmat, null, false, false, null, blosumap );
-				
-				List<String>	ret = new ArrayList<String>();
-				for( Sequence seqname : serifier.lseq ) {
-					ret.add( seqname.getName() ); //.replace(' ', '_') );
-				}
-				//List<String>	corrInd = currentjavafasta.getNames();
-				
-				//Sequence.distanceMatrixNumeric(serifier.lseq, dmat, idxs, bootstrap, cantor, ent, blosum);
-				Node n = tu.neighborJoin(dmat, ret, null, false, false);
-				
-				Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
-					@Override
-					public int compare(Node o1, Node o2) {
-						int c1 = o1.countLeaves();
-						int c2 = o2.countLeaves();
-						
-						if( c1 > c2 ) return 1;
-						else if( c1 == c2 ) return 0;
-						
-						return -1;
-					}
-				};
-				tu.arrange( n, comp );
-				//corrInd.clear();
-				List<String> ordInd = n.traverse();
-				
-				for( String spec : ordInd ) {
-					System.err.println( spec );
-				}
-				
-				for( String oldspec : specList ) {
-					if( !ordInd.contains( oldspec ) ) {
-						ordInd.add( oldspec );
-					}
-				}
-				specList = ordInd;
-				
-				TableModel model = table.getModel();
-				table.setModel( nullmodel );
-				table.setModel( model );
-				//table.tableChanged( new TableModelEvent( table.getModel() ) );
-				//table.getColumnModel().
-				System.err.println( specList.size() );
-			}
-		};
-		AbstractAction matrixaction = new AbstractAction("Relation matrix") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComboBox<String>	descombo = new JComboBox<String>( deset.toArray( new String[deset.size()] ) );
-				JCheckBox			anicheck = new JCheckBox("ANImatrix");
-				descombo.insertItemAt("", 0);
-				descombo.setSelectedIndex( 0 );
-				JOptionPane.showMessageDialog( GeneSet.this, new Object[] { descombo, anicheck } );
-				String val = descombo.getSelectedItem().toString();
-				
-				Collection<GeneGroup> ss = new HashSet<GeneGroup>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					ss.add( allgenegroups.get( table.convertRowIndexToModel(r) ) );
-				}
-				if( ss.isEmpty() ) ss = allgenegroups;
-				
-				Set<String> species = getSelspec( GeneSet.this, specList );
-				bimg = anicheck.isSelected() ? animatrix( species, clusterMap, val, ss ) : bmatrix( species, clusterMap, val );
-				
-				JFrame f = new JFrame("Relation matrix");
-				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				f.setSize(500, 500);
-
-				/*
-				 * { public void paintComponent( Graphics g ) {
-				 * super.paintComponent(g); g.drawImage(bimg, 0, 0, this); } };
-				 */
-
-				try {
-					final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
-					final Transferable transferable = new Transferable() {
-						@Override
-						public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-							StringBuilder ret = new StringBuilder();
-
-							int i = 0;
-							for (String spc : specList) {
-								if (++i == specList.size())
-									ret.append(spc + "\n");
-								else
-									ret.append(spc + "\t");
-							}
-
-							int where = 0;
-							for (String spc1 : specList) {
-								int wherex = 0;
-								for (String spc2 : specList) {
-									int spc1tot = 0;
-									int spc2tot = 0;
-									int totot = 0;
-
-									int spc1totwocore = 0;
-									int spc2totwocore = 0;
-									int tototwocore = 0;
-									for (Set<String> set : clusterMap.keySet()) {
-										Set<Map<String, Set<String>>> erm = clusterMap.get(set);
-										if (set.contains(spc1)) {
-											if (set.size() < specList.size()) {
-												spc1totwocore += erm.size();
-												for (Map<String, Set<String>> sm : erm) {
-													Set<String> hset = sm.get(spc1);
-													tototwocore += hset.size();
-												}
-
-												if (set.contains(spc2)) {
-													spc2totwocore += erm.size();
-												}
-
-												if (spc2totwocore > spc1totwocore)
-													System.err.println("okoko " + spc1totwocore + " " + spc2totwocore);
-											}
-
-											spc1tot += erm.size();
-											for (Map<String, Set<String>> sm : erm) {
-												Set<String> hset = sm.get(spc1);
-												totot += hset.size();
-											}
-
-											if (set.contains(spc2)) {
-												spc2tot += erm.size();
-											}
-										}
-									}
-
-									if (where == wherex) {
-										if (where == specList.size() - 1)
-											ret.append(0 + "\n");
-										else
-											ret.append(0 + "\t");
-									} else {
-										double hlut = (double) spc2totwocore / (double) spc1totwocore;
-										double sval = hlut; // 1.0/( 1.1-hlut );
-										double val = Math.pow(50.0, sval - 0.3) - 1.0;
-										double dval = Math.round(100.0 * (val)) / 100.0;
-
-										if (wherex == specList.size() - 1)
-											ret.append(dval + "\n");
-										else
-											ret.append(dval + "\t");
-									}
-									wherex++;
-								}
-								where++;
-							}
-
-							return new ByteArrayInputStream(ret.toString().getBytes());
-						}
-
-						@Override
-						public DataFlavor[] getTransferDataFlavors() {
-							return new DataFlavor[] { df };
-						}
-
-						@Override
-						public boolean isDataFlavorSupported(DataFlavor arg0) {
-							if (arg0.equals(df)) {
-								return true;
-							}
-							return false;
-						}
-					};
-					final TransferComponent comp = new TransferComponent(bimg, transferable);
-
-					TransferHandler th = new TransferHandler() {
-						private static final long serialVersionUID = 1L;
-
-						public int getSourceActions(JComponent c) {
-							return TransferHandler.COPY_OR_MOVE;
-						}
-
-						public boolean canImport(TransferHandler.TransferSupport support) {
-							return false;
-						}
-
-						protected Transferable createTransferable(JComponent c) {
-							return transferable;
-						}
-
-						public boolean importData(TransferHandler.TransferSupport support) {
-							return true;
-						}
-					};
-					comp.setTransferHandler(th);
-
-					comp.setEnabled(true);
-					JScrollPane fsc = new JScrollPane(comp);
-					comp.setPreferredSize(new Dimension(bimg.getWidth(), bimg.getHeight()));
-
-					JPopupMenu	popup = new JPopupMenu();
-					popup.add( new AbstractAction("Save image") {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							FileSaveService fss = null;
-					        FileContents fileContents = null;
-					    	 
-					        try {
-					        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						        OutputStreamWriter	osw = new OutputStreamWriter( baos );
-								ImageIO.write(bimg, "png", baos);
-								baos.close();
-
-						    	try {
-						    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
-						    	} catch( UnavailableServiceException e1 ) {
-						    		fss = null;
-						    	}
-						    	 
-						        if (fss != null) {
-						        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
-						            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
-						            bais.close();
-						            OutputStream os = fileContents.getOutputStream(true);
-						            os.write( baos.toByteArray() );
-						            os.close();
-						        } else {
-						        	JFileChooser jfc = new JFileChooser();
-						        	if( jfc.showSaveDialog( GeneSet.this ) == JFileChooser.APPROVE_OPTION ) {
-						        		 File f = jfc.getSelectedFile();
-						        		 FileOutputStream fos = new FileOutputStream( f );
-						        		 fos.write( baos.toByteArray() );
-						        		 fos.close();
-						        		 
-						        		 Desktop.getDesktop().browse( f.toURI() );
-						        	}
-						        }
-							} catch (IOException e2) {
-								e2.printStackTrace();
-							}
-						}
-					});
-					comp.setComponentPopupMenu( popup );
-					
-					f.add(fsc);
-					f.setVisible(true);
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
-			}
-		};
-		AbstractAction tniaction = new AbstractAction("TNI/ANI") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> species = getSelspec( GeneSet.this, specList );
-				for( String spec : species ) {
-					List<Sequence> lseq = speccontigMap.get(spec);
-					ProcessBuilder pb = new ProcessBuilder("makeblastdb","-dbtype","nucl","-title",spec,"-out",spec);
-					File dir = new File( System.getProperty("user.home") );
-					
-					
-					
-					
-					/*try {
-						FileWriter w = new FileWriter( new File(dir, spec+".fna") );
-						for( Sequence seq : lseq ) {
-							seq.writeSequence(w);
-						}
-						w.close();
-					} catch (IOException e2) {
-						e2.printStackTrace();
-					}*/
-					
-					
-					
-					
-					pb.directory( dir );
-					try {
-						Process p = pb.start();
-						Writer fw = new OutputStreamWriter( p.getOutputStream() );
-						for( Sequence seq : lseq ) {
-							seq.writeSequence(fw);
-						}
-						fw.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-				
-				int y = 0;
-				double[] matrix = new double[ species.size()*species.size() ];
-				for( String dbspec : species ) {
-					int x = 0;
-					for( String spec : species ) {
-						//if( !spec.equals(dbspec) ) {
-							final List<Sequence> lseq = speccontigMap.get(spec);
-							ProcessBuilder pb = new ProcessBuilder("/usr/local/ncbi/blast/bin/blastn","-db",dbspec,
-									"-num_threads",Integer.toString(Runtime.getRuntime().availableProcessors()),
-									"-num_alignments","1","-num_descriptions","1"); //,"-max_hsps","1");
-							File dir = new File( System.getProperty("user.home") );
-							pb.directory( dir );
-							try {
-								Process p = pb.start();
-								final BufferedWriter fw = new BufferedWriter( new OutputStreamWriter( p.getOutputStream() ) );
-								Thread t = new Thread() {
-									public void run() {
-										try {
-											for( Sequence seq : lseq ) {
-												seq.writeSplitSequence(fw);
-												//seq.writeSequence(fw);
-											}
-											fw.close();
-										} catch (IOException e1) {
-											e1.printStackTrace();
-										}
-									}
-								};
-								t.start();
-								//Path path = Paths.get("/Users/sigmar/"+spec+"_"+dbspec+".blastout");
-								//Files.copy(p.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-								
-								int tnum = 0;
-								int tdenum = 0;
-								double avg = 0.0;
-								int count = 0;
-								
-								BufferedReader br = new BufferedReader( new InputStreamReader(p.getInputStream()) );
-								String line = br.readLine();
-								while( line != null ) {
-									if( line.startsWith(" Identities") ) {
-										int i = line.indexOf('(');
-										String sub = line.substring(14,i-1);
-										String[] split = sub.split("/");
-										int num = Integer.parseInt(split[0]);
-										int denum = Integer.parseInt(split[1]);
-										
-										avg += (double)num/(double)denum;
-										
-										tnum += num;
-										tdenum += denum;
-										count++;
-									}
-									line = br.readLine();
-								}
-								br.close();
-								
-								if( count > 0 ) avg /= count;
-								double val = (double)tnum/(double)tdenum;
-								matrix[y*species.size()+x] = avg;//val;
-								System.err.println( spec + " on " + dbspec + " " + val );
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						//}
-							x++;
-					}
-					y++;
-				}
-				
-				corrInd.clear();
-				for( String spec : species ) {
-					corrInd.add( nameFix( spec ) );
-				}
-				
-				final BufferedImage bi = showRelation( corrInd, matrix, false );
-				JFrame f = new JFrame("TNI matrix");
-				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				f.setSize(500, 500);
-				
-				JComponent comp = new JComponent() {
-					public void paintComponent( Graphics g ) {
-						super.paintComponent(g);
-						g.drawImage(bi, 0, 0, bi.getWidth(), bi.getHeight(), 0, 0, bi.getWidth(), bi.getHeight(), this);
-					}
-				};
-				Dimension dim = new Dimension(bi.getWidth(),bi.getHeight());
-				comp.setPreferredSize(dim);
-				comp.setSize( dim );
-				JScrollPane scroll = new JScrollPane(comp);
-				f.add(scroll);
-				
-				f.setVisible( true );
-			}
-		};
-		AbstractAction anitreeaction = new AbstractAction("ANI tree") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> species = getSelspec( GeneSet.this, specList );
-				List<String> speclist = new ArrayList<String>( species );
-				
-				Collection<GeneGroup> allgg = new HashSet<GeneGroup>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					allgg.add( allgenegroups.get( table.convertRowIndexToModel(r) ) );
-				}
-				if( allgg.isEmpty() ) allgg = allgenegroups;
-				
-				Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
-				
-				double[] corrarr = new double[ speclist.size()*speclist.size() ];
-				int where = 0;
-				for (String spec1 : speclist) {
-					int wherex = 0;
-					
-					String spc1 = nameFix( spec1 );
-					
-					//String spc1 = nameFix( spec1 );
-					for (String spec2 : speclist) {
-						if( where != wherex ) {
-							int totalscore = 0;
-							int totaltscore = 1;
-							for( GeneGroup gg : allgg ) {
-								if( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2) ) {
-									Teginfo ti1 = gg.species.get(spec1);
-									Teginfo ti2 = gg.species.get(spec2);
-									//if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
-										//double bval = 0.0;
-									
-									int score = 0;
-									int tscore = 1;
-									for( Tegeval tv1 : ti1.tset ) {
-										for( Tegeval tv2 : ti2.tset ) {
-											Sequence seq1 = tv1.getAlignedSequence();
-											Sequence seq2 = tv2.getAlignedSequence();
-											if( seq1 != null && seq2 != null ) {
-												int mest = 0;
-												int tmest = 0;
-												
-												int startcheck = 0;
-												int start = -1;
-												int stopcheck = 0;
-												int stop = -1;
-												for( int i = 0; i < seq1.length(); i++ ) {
-													if( seq1.getCharAt(i) != '-' ) {
-														startcheck |= 1;
-													}
-													if( seq2.getCharAt(i) != '-' ) {
-														startcheck |= 2;
-													}
-													
-													if( start == -1 && startcheck == 3 ) {
-														start = i;
-														break;
-													}
-												}
-												
-												for( int i = seq1.length()-1; i >= 0; i-- ) {
-													if( seq1.getCharAt(i) != '-' ) {
-														stopcheck |= 1;
-													}
-													if( seq2.getCharAt(i) != '-' ) {
-														stopcheck |= 2;
-													}
-													
-													if( stop == -1 && stopcheck == 3 ) {
-														stop = i+1;
-														break;
-													}
-												}
-												//count += stop-start;
-												
-										        for( int i = start; i < stop; i++ ) {
-										        	char lc = seq1.getCharAt(i);
-										        	char c = Character.toUpperCase( lc );
-										        	//if( )
-										        	String comb = c+""+c;
-										        	if( blosumap.containsKey(comb) ) tmest += blosumap.get(comb);
-										        }
-										        
-										        for( int i = start; i < stop; i++ ) {
-										        	char lc = seq1.getCharAt( i );
-										        	char c = Character.toUpperCase( lc );
-										        	char lc2 = seq2.getCharAt( i );
-										        	char c2 = Character.toUpperCase( lc2 );
-										        	
-										        	String comb = c+""+c2;
-										        	if( blosumap.containsKey(comb) ) mest += blosumap.get(comb);
-										        }
-										        
-										        double tani = (double)mest/(double)tmest;
-										        if( tani > (double)score/(double)tscore ) {
-										        	score = mest;
-										        	tscore = tmest;
-										        }
-										        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
-												//return ret;
-											}
-											//if( where == 0 ) d1.add( gg.getCommonName() );
-											//else d2.add( gg.getCommonName() );
-										}
-									}
-									totalscore += score;
-									totaltscore += tscore;
-										
-										/*if( bval > 0 ) {
-											ani += bval;
-											count++;
-										}*/
-									//}
-								}
-							}
-							double ani = (double)(totaltscore-totalscore)/(double)totaltscore;
-							corrarr[ where*speclist.size()+wherex ] = ani;
-						}
-						wherex++;
-					}
-					where++;
-				}
-				TreeUtil tu = new TreeUtil();
-				corrInd.clear();
-				for( String spec : speclist ) {
-					corrInd.add( nameFix( spec ) );
-				}
-				Node n = tu.neighborJoin(corrarr, corrInd, null, false, false);
-				System.err.println( n );
-			
-			}
-		};
-		windowmenu.add( specorderaction );
-		windowmenu.add( matrixaction );
-		windowmenu.add( tniaction );
-		windowmenu.add( anitreeaction );
-		windowmenu.add( new AbstractAction("Neighbourhood") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Set<GeneGroup>	geneset = new HashSet<GeneGroup>();
-					int[] rr = table.getSelectedRows();
-					if( table.getModel() == groupModel ) {
-						for( int rowIndex : rr ) {
-							int r = table.convertRowIndexToModel( rowIndex );
-							GeneGroup gg = allgenegroups.get( r );
-							geneset.add( gg );
-						}
-					} else {
-						for( int rowIndex : rr ) {
-							int r = table.convertRowIndexToModel( rowIndex );
-							Gene gene = genelist.get( r );
-							geneset.add( gene.getGeneGroup() );
-						}
-					}
-					new Neighbour( geneset ).neighbourMynd( GeneSet.this, comp, genelist, contigmap );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		windowmenu.add( new AbstractAction("Synteny") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				//Set<String> species = speciesFromCluster( clusterMap );
-				new Synteni().syntenyMynd( GeneSet.this, comp, genelist );
-			}
-		});
-		AbstractAction compareplotaction = new AbstractAction("Gene atlas") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					new GeneCompare().comparePlot( GeneSet.this, comp, genelist, clusterMap, 4096, 4096 );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				
-				/*gatest("MAT4726");
-				
-				final JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-				frame.setSize(800, 600);
-				
-				final JComponent c = new JComponent() {
-					public void paintComponent( Graphics g ) {
-						g.drawImage(bimg, 0, 0, frame);
-					}
-				};
-				c.setPreferredSize( new Dimension(bimg.getWidth(), bimg.getHeight()) );
-				JScrollPane	scrollpane = new JScrollPane( c );
-				frame.add( scrollpane );
-				frame.setVisible( true );*/
-			}
-		};
-		windowmenu.add( compareplotaction );
-		
-		AbstractAction syntenygradientaction = new AbstractAction("Synteny gradient") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> presel = new HashSet<String>();
-				if( table.getModel() == defaultModel ) {
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						int i = table.convertRowIndexToModel(r);
-						presel.addAll( genelist.get(i).getGeneGroup().getSpecies() );
-					}
-				} else {
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						int i = table.convertRowIndexToModel(r);
-						presel.addAll( allgenegroups.get(i).getSpecies() );
-					}
-				}
-				new SyntGrad().syntGrad( GeneSet.this, 2048, 2048, presel );
-			}
-		};
-		windowmenu.add( syntenygradientaction );
-		
-		AbstractAction genexyplotaction = new AbstractAction("Gene XY plot") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new XYPlot().xyPlot( GeneSet.this, comp, genelist, clusterMap );
-			}
-		};
-		windowmenu.add( genexyplotaction );
-		
-		AbstractAction refalignaction = new AbstractAction("Reference align") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				final JTable 				table = getGeneTable();
-				final Collection<String> 	specset = getSpecies(); //speciesFromCluster( clusterMap );
-				final List<String>			species = new ArrayList<String>( specset );
-				
-				TableModel model = new TableModel() {
-					@Override
-					public int getRowCount() {
-						return species.size();
-					}
-
-					@Override
-					public int getColumnCount() {
-						return 1;
-					}
-
-					@Override
-					public String getColumnName(int columnIndex) {
-						return null;
-					}
-
-					@Override
-					public Class<?> getColumnClass(int columnIndex) {
-						return String.class;
-					}
-
-					@Override
-					public boolean isCellEditable(int rowIndex, int columnIndex) {
-						return false;
-					}
-
-					@Override
-					public Object getValueAt(int rowIndex, int columnIndex) {
-						return nameFix( species.get( rowIndex ) );
-					}
-
-					@Override
-					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-					@Override
-					public void addTableModelListener(TableModelListener l) {}
-
-					@Override
-					public void removeTableModelListener(TableModelListener l) {}
-				};
-				JTable table1 = new JTable( model );
-				JTable table2 = new JTable( model );
-				
-				table1.getSelectionModel().setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
-				table2.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-				
-				JScrollPane	scroll1 = new JScrollPane( table1 );
-				JScrollPane	scroll2 = new JScrollPane( table2 );
-				
-				FlowLayout flowlayout = new FlowLayout();
-				JComponent c = new JComponent() {};
-				c.setLayout( flowlayout );
-				
-				c.add( scroll1 );
-				c.add( scroll2 );
-				
-				JOptionPane.showMessageDialog(comp, c);
-				
-				int r = table1.getSelectedRow();
-				int i = table1.convertRowIndexToModel(r);
-				String spec = i == -1 ? null : species.get( i );
-				List<Sequence> lcont = speccontigMap.get(spec);
-				
-				r = table2.getSelectedRow();
-				i = table2.convertRowIndexToModel(r);
-				String refspec = i == -1 ? null : species.get( i );
-				List<Sequence> lrefcont = speccontigMap.get(spec);
-				
-				/*ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				Writer fw = new OutputStreamWriter( baos );
-				try {
-					List<Sequence> lcont = speccontigMap.get(spec);
-					for( Sequence seq : lcont ) {
-						seq.writeSequence(fw);
-					}
-					fw.close();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				
-				String comp = spec;
-				byte[] bb = baos.toByteArray();*/
-				
-				FlxReader flx = new FlxReader();
-				
-				Map<String,String> env = new HashMap<String,String>();
-				env.put("create", "true");
-				//String uristr = "jar:" + zippath.toUri();
-				//URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-				
-				try {
-					zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-					for( Path root : zipfilesystem.getRootDirectories() ) {
-						Path subf = root.resolve(spec+".grp");
-						if( Files.exists(subf) ) {
-							BufferedReader br = Files.newBufferedReader(subf);
-							Map<String,Map<String,String>> mm = flx.loadContigGraph(br);
-							br.close();
-							
-							String home = System.getProperty("user.home")+"/";
-							StringBuilder sb = comp != null ? flx.referenceAssembly( home, spec, refspec, lrefcont, lcont ) : null;
-							Sequence cseq = new Sequence(spec+"_chromosome", null);
-							if( sb != null && sb.length() > 0 ) {
-								br = new BufferedReader(new StringReader( sb.toString() ));
-							} else {
-								Path sca = root.resolve(spec+".csc");
-								if( !Files.exists(sca) ) {
-									sca = root.resolve(spec+".sca");
-								}
-								br = Files.newBufferedReader(sca);
-							}
-							//br = new BufferedReader( fr );
-							
-							flx.connectContigs(br, cseq, false, new FileWriter(home+spec+"_new.fna"), spec);
-							br.close();
-						}
-						
-						break;
-					}
-				} catch( Exception ex ) {
-					ex.printStackTrace();
-				} finally {
-					try{ zipfilesystem.close(); } catch( IOException ie ) { ie.printStackTrace(); };
-				}
-				
-				//flx.start( f.getParentFile().getAbsolutePath()+"/", f.getName(), false, fw, comp, bb);
-			}
-		};
-		windowmenu.add( refalignaction );
-		
-		windowmenu.addSeparator();
-		windowmenu.add( new AbstractAction("Run antismash") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Serifier ser = new Serifier();
-					Set<String> selspec = getSelspec(null, getSpecies(), null);
-					
-					JTextField host = new JTextField("localhost");
-					JOptionPane.showMessageDialog(null, host);
-					
-					String username = System.getProperty("user.name");
-					String hostname = host.getText();
-					
-					/*Path[] pt = null;
-					JFileChooser fc = new JFileChooser();
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
-						pt = new Path[3];
-						pt[2] = fc.getSelectedFile().toPath();
-					}*/
-					
-					List<Object> commands = new ArrayList<Object>();
-					//commands.add(genexyplotaction)
-					
-					for( String spec : selspec ) {
-						String userhome = System.getProperty("user.home");
-						Path pp = Paths.get( userhome );
-						Path p = pp.resolve(spec+".gbk");
-						//BufferedWriter fw = Files.newBufferedWriter( p );
-						List<Sequence> clist = speccontigMap.get( spec );
-						
-						Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
-						Serifier serifier = new Serifier();
-						for( Sequence c : clist ) {
-							serifier.addSequence(c);
-							serifier.mseq.put(c.getName(), c);
-							
-							List<Annotation> lann = new ArrayList<Annotation>();
-							if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
-								Tegeval tv = (Tegeval)ann;
-								
-								Gene g = tv.getGene();
-								GeneGroup gg = g.getGeneGroup();
-								String name = g.getName();
-								if( gg != null && name.contains(spec) ) {
-									name = gg.getCommonName();
-								}
-								Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, name );
-								anno.id = tv.getGene().getId();
-								anno.type = "CDS";
-								
-								String cazy = gg != null ? gg.getCommonCazy(cazymap) : null;
-								if( cazy != null ) anno.addDbRef( "CAZY:"+cazy );
-								lann.add( anno );
-							}
-							mapan.put( c.getName(), lann );
-						}
-						Sequences s = new Sequences(null,spec,"nucl",null,clist.size());
-						//serifier.addSequences(seqs);
-						serifier.writeGenebank( p, false, true, s, mapan);
-						
-						//fw.close();
-						
-						String apath = p.toAbsolutePath().toString();
-						if( hostname.equals("localhost") ) {
-							String[] cmds = {"run_antismash", apath};
-							//commands.add( pt );
-							commands.add( Arrays.asList( cmds ) );
-						} else {
-							String aname = p.getFileName().toString();
-							String adir = aname.substring(0, aname.length()-4);
-							String[] cmds = {"scp",apath,hostname+":~",";","ssh",hostname,"run_antismash",aname,";","scp","-r",hostname+":~/"+adir,userhome};//userhome+"~"};
-							//commands.add( pt );
-							commands.add( Arrays.asList( cmds ) );
-						}
-					}
-					
-					Runnable run = new Runnable() {
-						@Override
-						public void run() {
-							for( String spec : selspec ) {
-								Path p = Paths.get(userhome, spec);
-								
-								Map<String,String> env = new HashMap<String,String>();
-								env.put("create", "true");
-								
-								String uristr = "jar:" + zippath.toUri();
-								URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-								final List<Path>	lbi = new ArrayList<Path>();
-								try {
-									zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-									for( Path root : zipfilesystem.getRootDirectories() ) {
-										Path specdir = root;
-										Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
-											@Override
-										      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-										        final Path destFile = Paths.get(specdir.toString(),file.toString());
-										        //System.out.printf("Extracting file %s to %s\n", file, destFile);
-										        Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
-										        return FileVisitResult.CONTINUE;
-										      }
-										 
-										      @Override
-										      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-										    	String specdirstr = specdir.toString();
-										    	String dirstr = dir.toString();
-										    	final Path dirToCreate = specdir.resolve( dirstr.substring(userhome.length()+1) );
-										        if( Files.notExists(dirToCreate) ) {
-										          System.out.printf("Creating directory %s\n", dirToCreate);
-										          Files.createDirectory(dirToCreate);
-										        }
-										        return FileVisitResult.CONTINUE;
-										      }
-										});
-										break;
-									}
-									
-									URI uri = new URI("file://"+userhome+"/"+spec+"/index.html");
-									Desktop.getDesktop().browse(uri);
-								} catch( Exception ex ) {
-									ex.printStackTrace();
-								} finally {
-									try { zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
-								}
-							}
-						}
-					};
-					
-					NativeRun nr = new NativeRun();
-					nr.runProcessBuilder("antismash", commands, run, new Object[3], false);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		
-		JMenu		select = new JMenu("Select");
-		AbstractAction breakpointselAction = new AbstractAction("Select breakpoints") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String spec = (String)syncolorcomb.getSelectedItem();
-				
-				int rr = 0;
-				for( Gene g : genelist ) {
-					if( !spec.equals( g.getSpecies() ) && g.getSpecies().contains("eggert") ) {
-						Tegeval tv2 = g.tegeval;
-						Annotation n2 = tv2.getNext();
-						Annotation p2 = tv2.getPrevious();
-						
-						GeneGroup gg = g.getGeneGroup();
-						
-						if( gg.getCommonName().contains("rhodane") ) {
-							System.err.println();
-						}
-						
-						Teginfo ti = gg.getGenes( spec );
-						int msimcount = 0;
-						if( ti != null ) {
-							for( Tegeval tv1 : ti.tset ) {
-								int simcount = 0;
-								
-								Annotation n = tv1.getNext();
-								Annotation p = tv1.getPrevious();
-								
-								GeneGroup ggg = tv1.getGene().getGeneGroup();
-								if( n2 != null ) {
-									if( ggg == n2.getGene().getGeneGroup() ) {
-										simcount++;
-									}
-									
-									Annotation nn2 = n2.getNext();
-									if( nn2 != null ) {
-										if( ggg == nn2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-									}
-								}
-								
-								if( p2 != null ) {
-									if( ggg == p2.getGene().getGeneGroup() ) {
-										simcount++;
-									}
-									
-									Annotation pp2 = p2.getPrevious();
-									if( pp2 != null ) {
-										if( ggg == pp2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-									}
-								}
-								
-								if( n != null ) {
-									GeneGroup ngg = n.getGene().getGeneGroup();
-								
-									if( ngg == tv2.getGene().getGeneGroup() ) {
-										simcount++;
-									}
-									
-									if( n2 != null ) {
-										if( ngg == n2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-									}
-									
-									if( p2 != null ) {
-										if( ngg == p2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-									}
-									
-									Annotation nn = n.getNext();
-									if( nn != null ) {
-										ngg = nn.getGene().getGeneGroup();
-										
-										if( ngg == tv2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-										
-										if( n2 != null ) {
-											if( ngg == n2.getGene().getGeneGroup() ) {
-												simcount++;
-											}
-										}
-										
-										if( p2 != null ) {
-											if( ngg == p2.getGene().getGeneGroup() ) {
-												simcount++;
-											}
-										}
-									}
-								}
-								
-								if( p != null ) {
-									GeneGroup pgg = p.getGene().getGeneGroup();
-									
-									if( pgg == tv2.getGene().getGeneGroup() ) {
-										simcount++;
-									}
-									
-									if( n2 != null ) {
-										if( pgg == n2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-									}
-									
-									if( p2 != null ) {
-										if( pgg == p2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-									}
-									
-									Annotation pp = p.getPrevious();
-									if( pp != null ) {
-										pgg = pp.getGene().getGeneGroup();
-										
-										if( pgg == tv2.getGene().getGeneGroup() ) {
-											simcount++;
-										}
-										
-										if( n2 != null ) {
-											if( pgg == n2.getGene().getGeneGroup() ) {
-												simcount++;
-											}
-										}
-										
-										if( p2 != null ) {
-											if( pgg == p2.getGene().getGeneGroup() ) {
-												simcount++;
-											}
-										}
-									}
-								}
-								
-								//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-								if( simcount >= msimcount ) {
-									//tv = tv1;
-									msimcount = simcount;
-								}
-								
-								//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-								//GeneCompare.gradientColor();
-							}
-							
-							if( msimcount < 2 ) {
-								int i = table.convertRowIndexToView(g.index);
-								table.addRowSelectionInterval(i, i);
-							}
-						}
-					}
-					rr++;
-				}
-				/*List<Sequence> contigs = speccontigMap.get( spec );
-				for( Sequence c : contigs ) {
-					for( Annotation ann : c.annset ) {
-						Tegeval tv = (Tegeval)ann;
-						
-					}
-				}*/
-			}
-		};
-		AbstractAction saveselAction = new AbstractAction("Save selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				if( rr.length > 0 ) {
-					String val = Integer.toString( table.convertRowIndexToModel(rr[0]) );
-					for( int i = 1; i < rr.length; i++ ) {
-						val += ","+table.convertRowIndexToModel(rr[i]);
-					}
-					String selname = JOptionPane.showInputDialog("Selection name");
-					if( comp instanceof Applet ) {
-						try {
-							((GeneSet)comp).saveSel( selname, val);
-						} catch (Exception e1) {
-							e1.printStackTrace();
-						}
-					}
-				}
-			}
-		};
-		select.add( breakpointselAction );
-		select.add( saveselAction );
-		select.addSeparator();
-		select.add(new AbstractAction("Show all") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				updateFilter(table, genefilter, label);
-			}
-		});
-		select.add(new AbstractAction("Crop to selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int mr = table.convertRowIndexToModel(r);
-					genefilterset.add(mr);
-				}
-				updateFilter(table, genefilter, label);
-			}
-		});
-		select.add(new AbstractAction("Crop to inverted selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				Set<Integer> iset = new HashSet<Integer>();
-				for( int r : rr ) {
-					iset.add( r );
-				}
-				for (int r = 0; r < table.getRowCount(); r++) {
-					if( !iset.contains(r) ) {
-						int mr = table.convertRowIndexToModel(r);
-						genefilterset.add(mr);
-					}
-				}
-				updateFilter(table, genefilter, label);
-			}
-		});
-		select.add(new AbstractAction("Remove selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				if (genefilterset.isEmpty()) {
-					Set<Integer> ii = new HashSet<Integer>();
-					for (int r : rr)
-						ii.add(r);
-					for (int i = 0; i < genelist.size(); i++) {
-						if (!ii.contains(i))
-							genefilterset.add(i);
-					}
-				} else {
-					for (int r : rr) {
-						int mr = table.convertRowIndexToModel(r);
-						genefilterset.remove(mr);
-					}
-				}
-				updateFilter(table, genefilter, label);
-			}
-		});
-		select.add(new AbstractAction("Invert selection") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// genefilterset.clear();
-				int[] rr = table.getSelectedRows();
-				Set<Integer> iset = new HashSet<Integer>();
-				for( int r : rr ) {
-					iset.add( r );
-				}
-				table.clearSelection();
-				for (int r = 0; r < table.getRowCount(); r++) {
-					if( !iset.contains(r) ) table.addRowSelectionInterval(r, r);
-					/*if (table.isRowSelected(r))
-						table.removeRowSelectionInterval(r, r);
-					else
-						table.addRowSelectionInterval(r, r);*/
-				}
-			}
-		});
-		//select.addSeparator();
-		select.addSeparator();
-		select.add(new AbstractAction("Select single copy genes found in multiple strains") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> specset = getSelspec(GeneSet.this, specList);
-				for( GeneGroup gg : allgenegroups ) {
-					Set<String> checkspec = new HashSet<String>( gg.species.keySet() );
-					checkspec.retainAll( specset );
-					if( gg.getCommonTag() == null && checkspec.size() > 1 && gg.getTegevals().size() == gg.species.size() ) {//gg.getTegevals(checkspec).size() == checkspec.size() ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-						//table.setro
-					}
-				}
-			}
-		});
-		select.add(new AbstractAction("Select single copy genes in accessory genome of multiple strains") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> specset = getSelspec(GeneSet.this, specList);
-				for( GeneGroup gg : allgenegroups ) {
-					Set<String> checkspec = new HashSet<String>( gg.species.keySet() );
-					checkspec.retainAll( specset );
-					if( gg.getCommonTag() == null && checkspec.size() > 1 && checkspec.size() < specset.size() && gg.getTegevals().size() == gg.species.size() ) {//gg.getTegevals(checkspec).size() == checkspec.size() ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-						//table.setro
-					}
-				}
-			}
-		});
-		select.add(new AbstractAction("Select single copy genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<String> specset = getSelspec(GeneSet.this, specList);
-				for( GeneGroup gg : allgenegroups ) {
-					if( gg.getTegevals().size() == gg.species.size() ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-						//table.setro
-					}
-				}
-			}
-		});
-		select.add(new AbstractAction("Select duplicated genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				for( GeneGroup gg : allgenegroups ) {
-					int cnt = 0;
-					for( String spec : gg.species.keySet() ) {
-						Teginfo ti = gg.species.get( spec );
-						if( ti.tset.size() == 2 ) {
-							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
-							if( ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) cnt++;
-						}
-					}
-					if( (float)cnt / (float)gg.species.size() > 0.7 ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-					}
-				}
-			}
-		});
-		select.add(new AbstractAction("Select triplicated genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				for( GeneGroup gg : allgenegroups ) {
-					int cnt = 0;
-					for( String spec : gg.species.keySet() ) {
-						Teginfo ti = gg.species.get( spec );
-						if( ti.tset.size() == 3 ) {
-							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
-							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) 
-									&& (ta.get(1).getNext() == ta.get(2) || ta.get(1).getPrevious() == ta.get(2))) cnt++;
-						}
-					}
-					if( (float)cnt / (float)gg.species.size() > 0.7 ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-					}
-				}
-			}
-		});
-		select.add(new AbstractAction("Select plasmid genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				for( GeneGroup gg : allgenegroups ) {
-					if( gg.isOnAnyPlasmid() ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-					}
-					/*int cnt = 0;
-					for( String spec : gg.species.keySet() ) {
-						Teginfo ti = gg.species.get( spec );
-						if( ti.tset.size() == 3 ) {
-							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
-							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) && (ta.get(1).getNext() == ta.get(2) || ta.get(1).getPrevious() == ta.get(2))) cnt++;
-						}
-					}
-					if( (float)cnt / (float)gg.species.size() > 0.7 ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
+					/*bw.append(">" + g.id + "\n");
+					for (int i = 0; i < gs.length(); i += 70) {
+						bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					}*/
 				}
 			}
-		});
-		select.add(new AbstractAction("Select phage genes") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				for( GeneGroup gg : allgenegroups ) {
-					if( gg.isInAnyPhage() ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-					}
-					/*int cnt = 0;
-					for( String spec : gg.species.keySet() ) {
-						Teginfo ti = gg.species.get( spec );
-						if( ti.tset.size() == 3 ) {
-							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
-							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) && (ta.get(1).getNext() == ta.get(2) || ta.get(1).getPrevious() == ta.get(2))) cnt++;
-						}
-					}
-					if( (float)cnt / (float)gg.species.size() > 0.7 ) {
-						int r = table.convertRowIndexToView(gg.index);
-						table.addRowSelectionInterval(r, r);
-					}*/
-				}
-			}
-		});
-		select.addSeparator();
-		AbstractAction	selectsharingaction = new AbstractAction("Select sharing") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JRadioButton panbtn = new JRadioButton("Pan");
-				JRadioButton corebtn = new JRadioButton("Core");
-				JRadioButton blehbtn = new JRadioButton("Only in");
-				ButtonGroup	bg = new ButtonGroup();
-				bg.add( panbtn );
-				bg.add( corebtn );
-				bg.add( blehbtn );
-				corebtn.setSelected( true );
-				//Object[] objs = new Object[] { panbtn, corebtn };
-				//JOptionPane.showMessageDialog( geneset, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
-				
-				final List<String> species = getSpecies();
-				TableModel model = new TableModel() {
-					@Override
-					public int getRowCount() {
-						return species.size();
-					}
-
-					@Override
-					public int getColumnCount() {
-						return 1;
-					}
-
-					@Override
-					public String getColumnName(int columnIndex) {
-						return null;
-					}
-
-					@Override
-					public Class<?> getColumnClass(int columnIndex) {
-						return String.class;
-					}
-
-					@Override
-					public boolean isCellEditable(int rowIndex, int columnIndex) {
-						return false;
-					}
-
-					@Override
-					public Object getValueAt(int rowIndex, int columnIndex) {
-						return species.get( rowIndex );
-					}
-
-					@Override
-					public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-
-					@Override
-					public void addTableModelListener(TableModelListener l) {}
-
-					@Override
-					public void removeTableModelListener(TableModelListener l) {}
-				};
-				JTable table = new JTable( model );
-				table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-				JScrollPane	scroll = new JScrollPane( table );
-				
-				FlowLayout flowlayout = new FlowLayout();
-				JComponent c = new JComponent() {};
-				c.setLayout( flowlayout );
-				c.add( scroll );
-				c.add( panbtn );
-				c.add( corebtn );
-				c.add( blehbtn );
-				
-				JOptionPane.showMessageDialog(comp, c);
-				
-				final Set<String>	specs = new HashSet<String>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					String spec = (String)table.getValueAt(r, 0);
-					specs.add( spec );
-				}
-				
-				for( GeneGroup gg : allgenegroups ) {
-					if( blehbtn.isSelected() ) {
-						Set<String> ss = new HashSet<String>( gg.species.keySet() );
-						ss.removeAll( specs );
-						if( ss.size() == 0 ) {
-							int r = GeneSet.this.table.convertRowIndexToView( gg.index );
-							if( r >= 0 && r < GeneSet.this.table.getRowCount() ) GeneSet.this.table.addRowSelectionInterval( r, r );
-						}
-					} else if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
-						int r = GeneSet.this.table.convertRowIndexToView( gg.index );
-						if( r >= 0 && r < GeneSet.this.table.getRowCount() ) {
-							GeneSet.this.table.addRowSelectionInterval( r, r );
-						}
-					}
-				}
-			}
-		};
-		select.add( selectsharingaction );
-		AbstractAction	selectdirtyaction = new AbstractAction("Select dirty") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if( table.getModel() == groupModel ) {
-					int i = 0;
-					for( GeneGroup gg : allgenegroups ) {
-						if( gg.containsDirty() ) {
-							int r = table.convertRowIndexToView( i );
-							if( r != -1 ) table.addRowSelectionInterval( r, r );
-						}
-						i++;
-					}
-				}
-			}
-		};
-		select.add( selectdirtyaction );
-		AbstractAction	selectdesignationaction = new AbstractAction("Select designation") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComboBox<String>	descombo = new JComboBox<String>( deset.toArray( new String[deset.size()] ) );
-				descombo.insertItemAt("", 0);
-				descombo.setSelectedIndex( 0 );
-				
-				JOptionPane.showMessageDialog(GeneSet.this, descombo);
-				String seldes = (String)descombo.getSelectedItem();
-				if( table.getModel() == groupModel ) {
-					int i = 0;
-					for( GeneGroup gg : allgenegroups ) {
-						if( gg.genes != null ) for( Gene g : gg.genes ) {
-							if( seldes.equals(g.tegeval.designation) ) {
-								int r = table.convertRowIndexToView(i);
-								if( r >= 0 && r < table.getRowCount() ) table.addRowSelectionInterval(r, r);
-							}
-						}
-						i++;
-					}
-				}
-			}
-		};
-		select.add( selectdesignationaction );
-		select.add( new AbstractAction("Blast select") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				blast( false );
-			}
-		});
-		select.add( new AbstractAction("Blastx select") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				blast( true );
-			}
-		});
-		select.add( new AbstractAction("Blastn select") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				blastn( true );
-			}
-		});
-		select.add( new AbstractAction("Blast search") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				blastn( false );
-			}
-		});
-		
-		menubar.add( file );
-		menubar.add( edit );
-		menubar.add( view );
-		menubar.add( sequencemenu );
-		menubar.add( windowmenu );
-		menubar.add( select );
-		menubar.add( help );
-		
-		final Window window = SwingUtilities.windowForComponent(comp);
-		initFSKeyListener(window);
-		if ( comp instanceof JFrame || window instanceof JFrame) {
-			JFrame frame = (JFrame)( window == null ? comp : window );
-			if (!frame.isResizable())
-				frame.setResizable(true);
-
-			frame.addKeyListener(keylistener);
-			frame.setJMenuBar(menubar);
+			bw.close();
+			qbw.close();
+			SerifyApplet.blastRun(nrun, queryPath, dbPath, resPath, "prot", "-evalue 0.00001", null, true, user, headless);
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
-
-		final JButton jb = new JButton(new AbstractAction("Atlas") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					URL url = new URL("file:///home/sigmar/workspace/distann/bin/circle.html");
-					GeneSet.this.getAppletContext().showDocument(url, "_blank");
-				} catch (MalformedURLException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-
-		if( comp instanceof Applet )
-			try {
-				((GeneSet)comp).saveSel( null, null);
-			} catch ( NoSuchMethodError | Exception e1 ) {
-				e1.printStackTrace();
-			}
-		
-		try {
-			comp.add(newSoft(jb, comp, GeneSet.this, selcomb));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void saveSel( String name, String val) throws Exception, NoSuchMethodError {
-		JSObject jso = JSObject.getWindow( this );
-		jso.call("saveSel", new Object[] { name, val });
-	}
-
-	Map<String, Set<Integer>> selectionMap = new HashMap<String, Set<Integer>>();
-	public void fillSelectionSave(String json) throws JSONException {
-		selectionMap.clear();
-		selcomb.removeAllItems();
-		
-		System.err.println( json.toString() );
-		JSONObject jsono = new JSONObject(json);
-		Iterator<String> keys = jsono.keys();
-		while (keys.hasNext()) {
-			String key = keys.next();
-			System.err.println( "key: "+key );
-			selcomb.addItem(key);
-			JSONArray jo = jsono.getJSONArray(key);
-			System.err.println( "array: "+jo.toString() );
-			Set<Integer> selset = new HashSet<Integer>();
-			for (int i = 0; i < jo.length(); i++) {
-				selset.add(jo.getInt(i));
-			}
-			selectionMap.put(key, selset);
-		}
-	}
-
-	public void init() {
-		init(this);
 	}
 
 	private static void blastAlign(Reader r, String main, String second) {
@@ -18990,9 +9757,6 @@ public class GeneSet extends JApplet {
 		boolean	ori;
 	}*/
 
-	List<JSplitPane> 				splitpaneList = new ArrayList<JSplitPane>();
-
-	JFrame 							frame = new JFrame();
 	public Map<String, Sequence> 		contigmap = new TreeMap<String, Sequence>();
 	Map<String, List<Sequence>>		speccontigMap = new TreeMap<String, List<Sequence>>();
 	//Map<Sequence, List<Tegeval>>		contigLocMap = new HashMap<Sequence, List<Tegeval>>();

@@ -1627,8 +1627,10 @@ public class Neighbour {
 	static List<Annotation>	hteg;
 	//static int colorscheme = 0;
 	//static List<String>	speclist;
-	public void neighbourMynd( final GeneSet geneset, final Container comp, final List<Gene> genes, final Map<String,Sequence> contigmap ) throws IOException {
-		final JTable sorting = geneset.getGeneTable();
+	public void neighbourMynd( final GeneSetHead genesethead, final Container comp, final List<Gene> genes, final Map<String,Sequence> contigmap ) throws IOException {
+		GeneSet geneset = genesethead.geneset;
+		
+		final JTable sorting = genesethead.getGeneTable();
 		
 		final JButton	zoomIn = new JButton("+");
 		final JButton	zoomOut = new JButton("-");
@@ -1868,7 +1870,7 @@ public class Neighbour {
 			mvmnu.add( new AbstractAction("Connect contig")  {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					List<Sequence> contigs = geneset.getSelspecContigs(null, currentTe.getSpecies());
+					List<Sequence> contigs = genesethead.getSelspecContigs(null, geneset.speccontigMap, currentTe.getSpecies());
 					if( contigs.size() > 0 ) {
 						Sequence sctg = contigs.get(0);
 						
@@ -2193,13 +2195,13 @@ public class Neighbour {
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					geneset.showSequences( comp, selectedGenesGroups, false, null );
+					genesethead.showSequences( comp, selectedGenesGroups, false, null );
 				}
 			});
 			showdnaseqs.setAction( new AbstractAction("DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					geneset.showSequences( comp, selectedGenesGroups, true, null );
+					genesethead.showSequences( comp, selectedGenesGroups, true, null );
 				}
 			});
 			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
@@ -2214,7 +2216,7 @@ public class Neighbour {
 							}
 						}
 					}
-					geneset.showSelectedSequences( comp, tset, false, names.getSelectedItem().toString() );
+					genesethead.showSelectedSequences( comp, tset, false, names.getSelectedItem().toString() );
 				}
 			});
 			showselecteddnaseqs.setAction( new AbstractAction("Selected DNA sequences") {
@@ -2229,7 +2231,7 @@ public class Neighbour {
 							}
 						}
 					}
-					geneset.showSelectedSequences( comp, tset, true, names.getSelectedItem().toString() );
+					genesethead.showSelectedSequences( comp, tset, true, names.getSelectedItem().toString() );
 				}
 			});
 			showflankingseqs.setAction( new AbstractAction("Show flanking sequences") {
@@ -2272,7 +2274,7 @@ public class Neighbour {
 							}
 						}
 					}
-					geneset.showSomeSequences( comp, serifier );
+					genesethead.showSomeSequences( comp, serifier );
 				}
 			});
 			showbackflankingseqs.setAction( new AbstractAction("Show back flanking sequences") {
@@ -2315,7 +2317,7 @@ public class Neighbour {
 							}
 						}
 					}
-					geneset.showSomeSequences( comp, serifier );
+					genesethead.showSomeSequences( comp, serifier );
 				}
 			});
 			showareaseqs.setAction( new AbstractAction("Show area") {
@@ -2553,7 +2555,7 @@ public class Neighbour {
 							Collections.sort( seq.getAnnotations() );
 						}
 					}
-					geneset.showSomeSequences( comp, serifier );
+					genesethead.showSomeSequences( comp, serifier );
 				}
 			});
 			
@@ -2597,7 +2599,7 @@ public class Neighbour {
 						} else {
 							te.setSelected( !te.isSelected() );
 							int i;
-							if( sorting.getModel() == geneset.groupModel ) {
+							if( sorting.getModel() == genesethead.groupModel ) {
 								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
 							} else {
 								i = genes.indexOf( te.getGene() );
