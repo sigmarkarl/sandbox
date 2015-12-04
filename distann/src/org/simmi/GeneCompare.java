@@ -11,6 +11,9 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -18,9 +21,19 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -46,10 +59,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
+import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import netscape.javascript.JSObject;
 
@@ -169,11 +185,152 @@ public class GeneCompare {
 	JRadioButtonMenuItem	isyntgrad;
 	
 	JCheckBox				contiglanes;
+	List<String>			species;
 	
-	public void comparePlot(  final GeneSet geneset, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap, int w, int h ) throws IOException {
-		final JTable 				table = geneset.getGeneTable();
+	int[]		currentRowSelection;
+	public TransferHandler dragRows( final JTable table, final List<String> specs ) {
+		TransferHandler th = null;
+		try {
+			final DataFlavor ndf = new DataFlavor( DataFlavor.javaJVMLocalObjectMimeType );
+			final DataFlavor df = DataFlavor.getTextPlainUnicodeFlavor();
+			final String charset = df.getParameter("charset");
+			final Transferable transferable = new Transferable() {
+				@Override
+				public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {					
+					if( arg0.equals( ndf ) ) {
+						int[] rr = currentRowSelection; //table.getSelectedRows();
+						List<String>	selseq = new ArrayList<String>( rr.length );
+						for( int r : rr ) {
+							int i = table.convertRowIndexToModel(r);
+							selseq.add( specs.get(i) );
+						}
+						return selseq;
+					} else {
+						String ret = "";//makeCopyString();
+						for( int r = 0; r < table.getRowCount(); r++ ) {
+							Object o = table.getValueAt(r, 0);
+							if( o != null ) {
+								ret += o.toString();
+							} else {
+								ret += "";
+							}
+							for( int c = 1; c < table.getColumnCount(); c++ ) {
+								o = table.getValueAt(r, c);
+								if( o != null ) {
+									ret += "\t"+o.toString();
+								} else {
+									ret += "\t";
+								}
+							}
+							ret += "\n";
+						}
+						//return arg0.getReaderForText( this );
+						return new ByteArrayInputStream( ret.getBytes( charset ) );
+					}
+					//return ret;
+				}
+
+				@Override
+				public DataFlavor[] getTransferDataFlavors() {
+					return new DataFlavor[] { df, ndf };
+				}
+
+				@Override
+				public boolean isDataFlavorSupported(DataFlavor arg0) {
+					if( arg0.equals(df) || arg0.equals(ndf) ) {
+						return true;
+					}
+					return false;
+				}
+			};
+			
+			th = new TransferHandler() {
+				private static final long serialVersionUID = 1L;
+				
+				public int getSourceActions(JComponent c) {
+					return TransferHandler.COPY_OR_MOVE;
+				}
+
+				public boolean canImport(TransferHandler.TransferSupport support) {					
+					return true;
+				}
+
+				protected Transferable createTransferable(JComponent c) {
+					currentRowSelection = table.getSelectedRows();
+					
+					return transferable;
+				}
+
+				public boolean importData(TransferHandler.TransferSupport support) {
+					try {
+						System.err.println( table.getSelectedRows().length );
+						
+						DataFlavor[] dfs = support.getDataFlavors();
+						if( support.isDataFlavorSupported( ndf ) ) {					
+							Object obj = support.getTransferable().getTransferData( ndf );
+							ArrayList<String>	seqs = (ArrayList<String>)obj;
+							
+							/*ArrayList<String> newlist = new ArrayList<String>( serifier.lgse.size() );
+							for( int r = 0; r < table.getRowCount(); r++ ) {
+								int i = table.convertRowIndexToModel(r);
+								newlist.add( specs.get(i) );
+							}
+							serifier.lgseq.clear();
+							serifier.lgseq = newlist;*/
+							
+							Point p = support.getDropLocation().getDropPoint();
+							int k = table.rowAtPoint( p );
+							
+							specs.removeAll( seqs );
+							for( String s : seqs ) {
+								specs.add(k++, s);
+							}
+							
+							TableRowSorter<TableModel>	trs = (TableRowSorter<TableModel>)table.getRowSorter();
+							trs.setSortKeys( null );
+							
+							table.tableChanged( new TableModelEvent(table.getModel()) );
+							
+							return true;
+						}/* else if( support.isDataFlavorSupported( df ) ) {							
+							Object obj = support.getTransferable().getTransferData( df );
+							InputStream is = (InputStream)obj;
+							
+							System.err.println( charset );
+							importReader( new BufferedReader(new InputStreamReader(is, charset)) );
+							
+							updateView();
+							
+							return true;
+						}  else if( support.isDataFlavorSupported( DataFlavor.stringFlavor ) ) {							
+							Object obj = support.getTransferable().getTransferData( DataFlavor.stringFlavor );
+							String str = (String)obj;
+							importReader( new BufferedReader( new StringReader(str) ) );
+							
+							updateView();
+							
+							return true;
+						}*/
+					} catch (UnsupportedFlavorException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					return false;
+				}
+			};
+		} catch( Exception e ) {
+			e.printStackTrace();
+		}
+		return th;
+	}
+	
+	public void comparePlot(  final GeneSetHead genesethead, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap, int w, int h ) throws IOException {
+		final GeneSet geneset = genesethead.geneset;
+		
+		final JTable 				table = genesethead.getGeneTable();
 		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
-		final List<String>			species = new ArrayList<String>( specset );
+		species = new ArrayList<String>( specset );
 		
 		TableModel model = new TableModel() {
 			@Override
@@ -231,6 +388,12 @@ public class GeneCompare {
 		c.add( scroll1 );
 		c.add( scroll2 );
 		
+		table2.setDragEnabled( true );
+		
+		TransferHandler th = dragRows( table2, species );
+		scroll2.setTransferHandler( th );
+		table2.setTransferHandler( th );
+		
 		JOptionPane.showMessageDialog(comp, c);
 		
 		int rsel = table1.getSelectedRow();
@@ -250,13 +413,13 @@ public class GeneCompare {
 		if( spec1 != null ) {
 			selectContigs(comp, spec1, geneset);
 		} else {
-			total = geneset.table.getRowCount();
+			total = genesethead.table.getRowCount();
 			ptotal = 0;
 		}
 		
 		final BufferedImage bimg = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 		final Graphics2D g2 = bimg.createGraphics();
-		draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
+		draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
 		
 		relcol = new JRadioButtonMenuItem("Rel color");
 		oricol = new JRadioButtonMenuItem("Ori color");
@@ -299,7 +462,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
 				cmp.repaint();
 			}
 		});
@@ -308,7 +471,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -10 );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -10 );
 				cmp.repaint();
 			}
 		});
@@ -317,7 +480,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 				cmp.repaint();
 			}
 		});
@@ -326,7 +489,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 				cmp.repaint();
 			}
 		});
@@ -335,7 +498,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 1 );
 				cmp.repaint();
 			}
 		});
@@ -344,7 +507,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, 2 );
 				cmp.repaint();
 			}
 		});
@@ -353,7 +516,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal );
 				cmp.repaint();
 			}
 		});
@@ -362,7 +525,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -1 );
 				cmp.repaint();
 			}
 		});
@@ -371,7 +534,7 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, null, total, ptotal, -2 );
 				cmp.repaint();
 			}
 		});
@@ -382,7 +545,7 @@ public class GeneCompare {
 				//spec1 = (String)e.getItem()
 				String spec1 = (String)specombo.getSelectedItem();
 				//int total = selectContigs( comp, spec1, geneset );
-				draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, relcol.isSelected() ? blosumap : null, total, ptotal );
+				draw( g2, spec1, genesethead, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, relcol.isSelected() ? blosumap : null, total, ptotal );
 				cmp.repaint();
 			}
 		});
@@ -391,7 +554,7 @@ public class GeneCompare {
 		popup.add( new AbstractAction("Repaint") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				repaintCompare(g2, bimg, spec2s, specombo, geneset, blosumap, cmp);
+				repaintCompare(g2, bimg, spec2s, specombo, genesethead, blosumap, cmp);
 			}
 		});
 		popup.addSeparator();
@@ -522,7 +685,7 @@ public class GeneCompare {
 								}
 							}
 							
-							repaintCompare( g2, bimg, spec2s, specombo, geneset, blosumap, cmp );
+							repaintCompare( g2, bimg, spec2s, specombo, genesethead, blosumap, cmp );
 						} else {						
 							double t1 = Math.atan2( dy, dx );
 							double t2 = Math.atan2( ndy, ndx );
@@ -563,12 +726,12 @@ public class GeneCompare {
 								Sequence seq = new Sequence("phage_"+from+"_"+to, null);
 								seq.append( seqstr );
 								serifier.addSequence( seq );
-								geneset.showSomeSequences( geneset, serifier );
+								genesethead.showSomeSequences( genesethead, serifier );
 							} else {
 								if( c == null ) {
-									geneset.table.clearSelection();
+									genesethead.table.clearSelection();
 									for( int k = minloc; k < maxloc; k++ ) {
-										geneset.table.addRowSelectionInterval(k, k);
+										genesethead.table.addRowSelectionInterval(k, k);
 									}
 								} else for( int k = minloc; k < maxloc; k++ ) {
 									if( k-loc >= c.getAnnotationCount() ) {
@@ -581,17 +744,17 @@ public class GeneCompare {
 										Set<GeneGroup>	gset = new HashSet<GeneGroup>();
 										gset.add( tv.getGene().getGeneGroup() );
 										try {
-											new Neighbour( gset ).neighbourMynd( geneset, comp, genelist, geneset.contigmap );
+											new Neighbour( gset ).neighbourMynd( genesethead, comp, genelist, geneset.contigmap );
 										} catch (IOException e1) {
 											e1.printStackTrace();
 										}
 										break;
 									} else {
 										int r;
-										if( geneset.table.getModel() == geneset.groupModel ) {
+										if( genesethead.table.getModel() == genesethead.groupModel ) {
 											int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
-											r = geneset.table.convertRowIndexToView(u);
-											geneset.table.addRowSelectionInterval( r, r );
+											r = genesethead.table.convertRowIndexToView(u);
+											genesethead.table.addRowSelectionInterval( r, r );
 										} else {
 											int ind = (int)((rad-250.0)/15.0);
 											String spec = spec2s.get( ind );
@@ -599,12 +762,12 @@ public class GeneCompare {
 											int selr = -1;
 											if( ti != null && ti.tset != null ) for( Tegeval te : ti.tset ) {
 												int u = geneset.genelist.indexOf( te.getGene() );
-												r = geneset.table.convertRowIndexToView(u);
+												r = genesethead.table.convertRowIndexToView(u);
 												if( selr == -1 ) selr = r;
-												geneset.table.addRowSelectionInterval( r, r );
+												genesethead.table.addRowSelectionInterval( r, r );
 											}
-											Rectangle rect = geneset.table.getCellRect(selr, 0, true);
-											geneset.table.scrollRectToVisible(rect);
+											Rectangle rect = genesethead.table.getCellRect(selr, 0, true);
+											genesethead.table.scrollRectToVisible(rect);
 										}
 									}
 								}
@@ -689,9 +852,9 @@ public class GeneCompare {
 		frame.setVisible( true );
 	}
 	
-	public void repaintCompare( Graphics2D g2, BufferedImage bimg, List<String> spec2s, JComboBox<String> specombo, GeneSet geneset, Map<String,Integer> blosumap, JComponent cmp ) {
+	public void repaintCompare( Graphics2D g2, BufferedImage bimg, List<String> spec2s, JComboBox<String> specombo, GeneSetHead geneset, Map<String,Integer> blosumap, JComponent cmp ) {
 		String spec1 = (String)specombo.getSelectedItem();
-		rearrangeContigs(spec1, geneset);
+		rearrangeContigs(spec1, geneset.geneset);
 		if( relcol.isSelected() ) {
 			draw( g2, spec1, geneset, bimg.getWidth(), bimg.getHeight(), contigs, spec2s, blosumap, total, ptotal );
 		} else if( gccol.isSelected() ) {
@@ -715,7 +878,7 @@ public class GeneCompare {
 		cmp.repaint();
 	}
 	
-	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Sequence> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal ) {
+	public void draw( Graphics2D g2, String spec1, GeneSetHead geneset, int w, int h, Collection<Sequence> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal ) {
 		draw( g2, spec1, geneset, w, h, contigs, spec2s, blosumap, total, ptotal, 0 );
 	}
 	
@@ -1610,7 +1773,9 @@ public class GeneCompare {
 		return c;
 	}
 	
-	public void draw( Graphics2D g2, String spec1, GeneSet geneset, int w, int h, Collection<Sequence> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal, int synbr ) {
+	public void draw( Graphics2D g2, String spec1, GeneSetHead genesethead, int w, int h, Collection<Sequence> contigs, List<String> spec2s, Map<String,Integer> blosumap, int total, int ptotal, int synbr ) {
+		GeneSet geneset = genesethead.geneset;
+		
 		boolean contiglanesb = contiglanes != null && contiglanes.isSelected();
 		
 		g2.setBackground( Color.white );
@@ -1646,11 +1811,11 @@ public class GeneCompare {
 		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 		
 		if( spec1 == null ) {
-			int rowcount = geneset.table.getRowCount();
+			int rowcount = genesethead.table.getRowCount();
 			for( int r = 0; r < rowcount; r++ ) {
-				int i = geneset.table.convertRowIndexToModel(r);
+				int i = genesethead.table.convertRowIndexToModel(r);
 				GeneGroup gg = geneset.allgenegroups.get( i );
-				subDraw(g2, null, null, geneset, spec1, r, null, null, rowcount, spec2s, synbr, w, h, blosumap, i, gg, null, total, ptotal);
+				subDraw(g2, null, null, genesethead, spec1, r, null, null, rowcount, spec2s, synbr, w, h, blosumap, i, gg, null, total, ptotal);
 			}
 			
 			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f);
@@ -1698,11 +1863,11 @@ public class GeneCompare {
 			}
 		} else {
 			Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
-			int r = geneset.table.getSelectedRow();
-			if( r >= 0 && r < geneset.table.getRowCount() ) {
-				int i = geneset.table.convertRowIndexToModel(r);
+			int r = genesethead.table.getSelectedRow();
+			if( r >= 0 && r < genesethead.table.getRowCount() ) {
+				int i = genesethead.table.convertRowIndexToModel(r);
 				
-				if( geneset.table.getModel() == geneset.groupModel ) {
+				if( genesethead.table.getModel() == genesethead.groupModel ) {
 					GeneGroup gg = geneset.allgenegroups.get( i );
 					
 					for( String spec2 : spec2s ) {
@@ -1768,8 +1933,8 @@ public class GeneCompare {
 							GeneGroup gg = tv.getGene().getGeneGroup();
 							
 							int ii = geneset.allgenegroups.indexOf( gg );
-							if( ii >= 0 && ii < geneset.table.getRowCount() ) {
-								subDraw( g2, tv, prev, geneset, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq, total, ptotal );
+							if( ii >= 0 && ii < genesethead.table.getRowCount() ) {
+								subDraw( g2, tv, prev, genesethead, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq, total, ptotal );
 								count++;
 								prev = tv;
 							}/* else {
@@ -1790,8 +1955,8 @@ public class GeneCompare {
 							}*/
 							
 							int ii = geneset.allgenegroups.indexOf( gg );
-							if( ii >= 0 && ii < geneset.table.getRowCount() ) {
-								subDraw( g2, tv, prev, geneset, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq, total, ptotal );
+							if( ii >= 0 && ii < genesethead.table.getRowCount() ) {
+								subDraw( g2, tv, prev, genesethead, spec1, count, offsetMap, ctg, r, spec2s, synbr, w, h, blosumap, ii, gg, seq, total, ptotal );
 								count++;
 								prev = tv;
 							}
@@ -1858,15 +2023,16 @@ public class GeneCompare {
 		}
 	}
 	
-	public void subDraw( Graphics2D g2, Annotation tv, Annotation prev, GeneSet geneset, String spec1, int count, Map<String,Integer> offsetMap, Sequence ctg, int r, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, int ii, GeneGroup gg, Sequence seq, int total, int ptotal ) {
+	public void subDraw( Graphics2D g2, Annotation tv, Annotation prev, GeneSetHead genesethead, String spec1, int count, Map<String,Integer> offsetMap, Sequence ctg, int r, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, int ii, GeneGroup gg, Sequence seq, int total, int ptotal ) {
+		GeneSet geneset = genesethead.geneset;
 		boolean rs = false;
-		if( geneset.table.getModel() == geneset.groupModel ) {
-			r = geneset.table.convertRowIndexToView( ii );
-			rs = geneset.table.isRowSelected( r );
+		if( genesethead.table.getModel() == genesethead.groupModel ) {
+			r = genesethead.table.convertRowIndexToView( ii );
+			rs = genesethead.table.isRowSelected( r );
 		} else {
 			for( Gene g : gg.genes ) {
-				r = geneset.table.convertRowIndexToView( g.index );
-				rs = geneset.table.isRowSelected( r );
+				r = genesethead.table.convertRowIndexToView( g.index );
+				rs = genesethead.table.isRowSelected( r );
 				if( rs ) break;
 			}
 		}
@@ -2021,14 +2187,14 @@ public class GeneCompare {
                     }
                     
                     int i;
-                    if( geneset.table.getModel() == geneset.groupModel ) {
+                    if( genesethead.table.getModel() == genesethead.groupModel ) {
                     	i = geneset.allgenegroups.indexOf( gg );
                     } else {
                     	i = geneset.genelist.indexOf( tv.getGene() );
                     }
                     if( i != -1 ) {
-                    	int rv = geneset.table.convertRowIndexToView(i);
-                    	boolean isr = geneset.table.isRowSelected(rv);
+                    	int rv = genesethead.table.convertRowIndexToView(i);
+                    	boolean isr = genesethead.table.isRowSelected(rv);
                     	if( isr ) {
                     		g2.setColor( Color.black );
                        	 
@@ -2097,7 +2263,7 @@ public class GeneCompare {
 	                        }
 						}
 					} else {
-						String spec = (String)geneset.syncolorcomb.getSelectedItem();
+						String spec = (String)genesethead.syncolorcomb.getSelectedItem();
 						if( spec.length() > 0 ) {
 							if( spec.equals("All") ) {
 								Teginfo value = gg.getGenes( spec2 );
@@ -2219,14 +2385,14 @@ public class GeneCompare {
                     }
                     
                     int i;
-                    if( geneset.table.getModel() == geneset.groupModel ) {
+                    if( genesethead.table.getModel() == genesethead.groupModel ) {
                     	i = geneset.allgenegroups.indexOf( gg );
                     } else {
                     	i = geneset.genelist.indexOf( tv.getGene() );
                     }
                     if( i != -1 ) {
-                    	int rv = geneset.table.convertRowIndexToView(i);
-                    	boolean isr = geneset.table.isRowSelected(rv);
+                    	int rv = genesethead.table.convertRowIndexToView(i);
+                    	boolean isr = genesethead.table.isRowSelected(rv);
                     	if( isr ) {
                     		g2.setColor( Color.black );
                        	 
