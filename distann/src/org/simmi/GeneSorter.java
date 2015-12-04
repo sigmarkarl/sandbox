@@ -495,7 +495,9 @@ public class GeneSorter {
 		return contigs;
 	}
 	
-	public void groupMynd( final GeneSet geneset, final List<GeneGroup> geneGroups, final List<String> speclist, final List<Gene> genelist, final JTable sorting, final Map<String,Sequence> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
+	public void groupMynd( final GeneSetHead genesethead, final List<GeneGroup> geneGroups, final List<String> speclist, final List<Gene> genelist, final JTable sorting, final Map<String,Sequence> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
+		GeneSet geneset = genesethead.geneset;
+		
 		final JCheckBox	collapsed = new JCheckBox("Collapsed");
 		
 		final JRadioButton	binaryColorScheme = new JRadioButton("Binary");
@@ -515,7 +517,7 @@ public class GeneSorter {
 			JOptionPane.showMessageDialog( null, check );
 			final boolean allpos = check.isSelected();
 			
-			final int hey = sorting.getModel() == geneset.groupModel ? geneGroups.size() : genelist.size(); // ltv.get(ltv.size()-1).stop/1000;
+			final int hey = sorting.getModel() == genesethead.groupModel ? geneGroups.size() : genelist.size(); // ltv.get(ltv.size()-1).stop/1000;
 			final JComponent c = new JComponent() {
 				// Color dg = Color.green.darker();
 
@@ -533,7 +535,7 @@ public class GeneSorter {
 							GeneGroup genegroup;
 							Gene 		tgene = null;
 							int r = sorting.convertRowIndexToModel(i);
-							if( sorting.getModel() == geneset.groupModel ) {
+							if( sorting.getModel() == genesethead.groupModel ) {
 								genegroup = geneset.allgenegroups.get( r );
 							} else {
 								tgene = genelist.get( r );
@@ -554,7 +556,7 @@ public class GeneSorter {
 						GeneGroup genegroup;
 						Gene 		tgene = null;
 						int r = sorting.convertRowIndexToModel(i);
-						if( sorting.getModel() == geneset.groupModel ) {
+						if( sorting.getModel() == genesethead.groupModel ) {
 							genegroup = geneset.allgenegroups.get( r );
 						} else {
 							tgene = genelist.get( r );

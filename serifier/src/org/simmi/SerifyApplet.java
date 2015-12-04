@@ -103,8 +103,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import netscape.javascript.JSObject;
-
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.vfs2.FileContent;
@@ -121,6 +119,8 @@ import org.simmi.shared.TreeUtil.NodeSet;
 import org.simmi.unsigned.FlxReader;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.NativeRun;
+
+import netscape.javascript.JSObject;
 
 public class SerifyApplet extends JApplet {
 	/**
@@ -591,7 +591,8 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		};
-		nrun.runProcessBuilder( "Performing blast", lscmd, run, cont, false );
+		nrun.setRun( run );
+		nrun.runProcessBuilder( "Performing blast", lscmd, cont, false, run, false );
 	}
 	
 	public static void rpsBlastRun( NativeRun nrun, StringBuffer query, String dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user ) throws IOException {
@@ -667,13 +668,14 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		};
-		nrun.runProcessBuilder( "Performing rpsblast", lscmd, run, cont, false );
+		nrun.setRun( run );
+		nrun.runProcessBuilder( "Performing rpsblast", lscmd, cont, false, run, false );
 	}
 	
-	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, String dbType, String extrapar, JTable table, boolean homedir, final String user ) throws IOException {
+	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, Path resPath, String dbType, String extrapar, JTable table, boolean homedir, final String user, final boolean headless ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
-		if( homedir ) selectedpath = new File( userhome ).toPath();
+		if( homedir || headless ) selectedpath = new File( userhome ).toPath();
 		/*System.out.println("run blast in applet");
 		File blastn;
 		File blastp;
@@ -697,14 +699,15 @@ public class SerifyApplet extends JApplet {
 			}
 		}
 		
-		JTextField host = new JTextField("localhost");
-		JOptionPane.showMessageDialog(null, host);
+		String hostname = "localhost";
+		if( !headless ) {
+			JTextField host = new JTextField("localhost");
+			JOptionPane.showMessageDialog(null, host);
+			hostname = host.getText();
+		}
 		
 		String username = System.getProperty("user.name");
-		String hostname = host.getText();
-		
 		String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
-		
 		List<Object>	lscmd = new ArrayList<Object>();
 			//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 			//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
@@ -721,9 +724,10 @@ public class SerifyApplet extends JApplet {
 				if( !Files.isDirectory(selectedpath) ) blastpath = blastpath.getParent();
 			}*/
 			
+			String OS = System.getProperty("os.name").toLowerCase();
 			
 			String[] cmds;
-			if( host.getText().equals("localhost") ) cmds = new String[] { "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			if( hostname.equals("localhost") ) cmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/makeblastdb" : "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
 			else {
 				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
 				cmds = new String[] { "ssh", hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
@@ -777,7 +781,7 @@ public class SerifyApplet extends JApplet {
 					int procs = Runtime.getRuntime().availableProcessors();
 					
 					List<String>	lcmd = new ArrayList<String>();
-					String[] bcmds = { blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+					String[] bcmds = { OS.indexOf("mac") >= 0 ? "/usr/local/bin/"+blastFile : blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
 					String[] exts = extrapar.trim().split("[\t ]+");
 					
 					//String[] nxst = { "-out", outPathFixed };
@@ -790,7 +794,7 @@ public class SerifyApplet extends JApplet {
 				}
 			} else {
 				//Path res = Files.createTempFile("all", "blastout"); 
-				Path res = selectedpath.resolve( "tmp.blastout.gz" ); //path.getFileName().toString()+".blastout");
+				Path res = resPath != null ? resPath : selectedpath.resolve( "tmp.blastout.gz" ); //path.getFileName().toString()+".blastout");
 				
 				//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
 				//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
@@ -799,10 +803,10 @@ public class SerifyApplet extends JApplet {
 				
 				List<String>	lcmd = new ArrayList<String>();
 				String[] bcmds;
-				if( host.getText().equals("localhost") ) bcmds = new String[] { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				if( hostname.equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/blastp" : "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
 				else {
 					if( user.equals("geneset") ) bcmds  = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
-					else bcmds  = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
+					else bcmds  = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32"}; //, "|", "gzip", "-c" };
 				}
 				String[] exts = extrapar.trim().split("[\t ]+");
 				
@@ -817,7 +821,7 @@ public class SerifyApplet extends JApplet {
 			
 			final String start = new Date( System.currentTimeMillis() ).toString();								
 			final Object[] cont = new Object[3];
-			Runnable run = new Runnable() {
+			/*Runnable run = new Runnable() {
 				public void run() {					
 					//infile.delete();
 					//System.err.println( "ok " + (cont[0] == null ? "null" : "something else" ) );
@@ -828,12 +832,13 @@ public class SerifyApplet extends JApplet {
 						//  js.call( "addResult", new Object[] {getUser(), title, outPathFixed, split[0], start, cont[2], cont[1]} );
 					}
 				}
-			};
+			};*/
 			/*for( String cmd : lcmd ) {
 				System.err.println(cmd);
 			}
 			Thread.sleep(10000);*/
-			nrun.runProcessBuilder( "Performing blast", lscmd, run, cont, false );
+			//nrun.setRun( run );
+			nrun.runProcessBuilder( "Performing blast", lscmd, cont, false, nrun.run, headless );
 		//}
 		//} else System.err.println( "no blast installed" );
 	}
@@ -843,7 +848,7 @@ public class SerifyApplet extends JApplet {
 			@Override
 			public Object run() {
 				try {
-					blastRun( nrun, dbPath, dbPath, dbType, extrapar, table, false, user );
+					blastRun( nrun, dbPath, dbPath, null, dbType, extrapar, table, false, user, false );
 				} catch( Exception e ) {
 					e.printStackTrace();
 				}
@@ -1985,7 +1990,7 @@ public class SerifyApplet extends JApplet {
 			final String cygPathA = NativeRun.cygPath( pathA.toAbsolutePath().toString() );
 			//NativeRun.fixPath( infile.toAbsolutePath().toString() )
 			String[] cmds;
-			if( host.getText().equals("localhost") ) cmds = new String[] { "prodigal", "-a", outPathA }; //"-d", outPathD };
+			if( host.getText().equals("localhost") ) cmds = new String[] { "/usr/local/bin/prodigal", "-a", outPathA }; //"-d", outPathD };
 			else {
 				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", NativeRun.cygPath(userhome+"/genesetkey"), "geneset@"+hostname, "prodigal", "-a", tmpout };
 				else cmds = new String[] { "ssh", hostname, "prodigal", "-a", tmpout };
@@ -2032,7 +2037,8 @@ public class SerifyApplet extends JApplet {
 					}
 				}
 			};
-			nrun.runProcessBuilder( "Running prodigal", lscmd, run, cont, false );
+			nrun.setRun( run );
+			nrun.runProcessBuilder( "Running prodigal", lscmd, cont, false, run, false );
 				//JSObject js = JSObject.getWindow( SerifyApplet.this );
 				//js = (JSObject)js.getMember("document");
 				//js.call( "addDb", new Object[] {getUser(), title, "nucl", outPath, result} );
@@ -2047,7 +2053,8 @@ public class SerifyApplet extends JApplet {
 		String username = System.getProperty("user.name");
 		String hostname = host.getText();
 		
-		String cygpathstr = NativeRun.cygPath(userhome)+"/genesetkey";
+		String cygcheck = NativeRun.cygPath(userhome);
+		String cygpathstr = cygcheck+"/genesetkey";
 		
 		String[] sus = new String[] {"SSU", "LSU", "TSU"};
 		
@@ -2064,16 +2071,19 @@ public class SerifyApplet extends JApplet {
 				}
 				
 				Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
-				Path selectedfile = new File( userhome ).toPath();
 				String tmpout = title+"."+su.toLowerCase();
-				final Path pathD = selectedfile.resolve( tmpout );
+				final Path pathD = fs.resolve( tmpout );
 				//final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
-				final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
-				final String cygPathD = NativeRun.cygPath( pathD.toAbsolutePath().toString() );
+				
+				
+				//final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
+				//final String cygPathD = NativeRun.cygPath( pathD.toAbsolutePath().toString() );
+				
+				
 				//final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
 				//NativeRun.fixPath( infile.toAbsolutePath().toString() )
 				String[] cmds;
-				if( host.getText().equals("localhost") ) cmds = new String[] { "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", outPathD }; //"-d", outPathD };
+				if( host.getText().equals("localhost") ) cmds = new String[] { "/usr/local/bin/rnammer", "-s", "BAC", "-m", su, "-f", tmpout }; //"-d", outPathD };
 				else {
 					if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "genset@"+hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
 					else cmds = new String[] { "ssh", hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
@@ -2092,16 +2102,41 @@ public class SerifyApplet extends JApplet {
 							
 							try {
 								if( host.getText().equals("localhost") ) {
-									Files.copy(pathD, fs.resolve( tmpout ) );
+									Path uh = Paths.get(userhome);
+									Files.copy(uh.resolve( tmpout ), pathD, StandardCopyOption.REPLACE_EXISTING);
 								} else {
-									ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, cygPathD);
+									Path uh = Paths.get(cygcheck);
+									System.err.println( "about to scp " + tmpout );
+									ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, tmpout);
+									pb.directory( uh.toFile() );
 									Process pc = pb.start();
 									InputStream is = pc.getInputStream();
-									while( is.read() != -1 );
+									ByteArrayOutputStream bab = new ByteArrayOutputStream();
+									int r = is.read();
+									while( r != -1 ) {
+										bab.write( r );
+										r = is.read();
+									}
+									bab.close();
+									System.err.println( bab.toString() );
+									
+									bab = new ByteArrayOutputStream();
 									InputStream es = pc.getErrorStream();
-									while( es.read() != -1 );
+									r = es.read();
+									while( r != -1 ) {
+										bab.write( r );
+										r = es.read();
+									}
+									bab.close();
+									System.err.println( bab.toString() );
+									
 									pc.waitFor();
-									System.err.println("done " + outPathD);
+									
+									//System.err.println("done " + cygPathD);
+									Path from = uh.resolve( tmpout );
+									System.err.println("exists " + Files.exists(from));
+									Files.copy(from, pathD, StandardCopyOption.REPLACE_EXISTING);
+									//System.err.println("done " + outPathD);
 								}
 								addSequences( title+"."+su.toLowerCase(), pathD, null );
 							} catch (IOException | URISyntaxException | InterruptedException e) {
@@ -2110,7 +2145,8 @@ public class SerifyApplet extends JApplet {
 						}
 					}
 				};
-				nrun.runProcessBuilder( "Running rnammer", lscmd, run, cont, false );
+				nrun.setRun( run );
+				nrun.runProcessBuilder( "Running rnammer", lscmd, cont, false, run, false );
 			}
 		}
 	}
@@ -3125,7 +3161,8 @@ public class SerifyApplet extends JApplet {
 						if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
 						if( makeblastdb.exists() ) {
 							String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", nrun.fixPath( infile.getAbsolutePath() ), "-title", title, "-dbtype", dbtype, "-out", outPath };
-							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont, false );
+							nrun.setRun( run );
+							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), cont, false, run, false );
 						}
 					}
 					
@@ -3550,7 +3587,7 @@ public class SerifyApplet extends JApplet {
 									String[] cmds = {"clustalo", "-i "+inputPathFixed, "-o "+newpath};
 									cmdarr = Arrays.asList( cmds );
 								}
-								nrun.runProcessBuilder("Clustal alignment", cmdarr, run, cont, false);
+								nrun.runProcessBuilder("Clustal alignment", cmdarr, cont, false, run, false);
 							} catch (IOException e1) {
 								e1.printStackTrace();
 							}

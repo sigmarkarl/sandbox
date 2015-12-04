@@ -1,5 +1,7 @@
 package org.simmi;
 
+import java.util.stream.IntStream;
+
 public final class Aas implements Comparable<Aas> {
 	String name;
 	final StringBuilder aas;
@@ -13,6 +15,8 @@ public final class Aas implements Comparable<Aas> {
 		this.start = start;
 		this.stop = stop;
 		this.dir = dir;
+		
+		IntStream.builder().add(10);
 	}
 
 	@Override
