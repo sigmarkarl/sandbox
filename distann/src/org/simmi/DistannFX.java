@@ -25,8 +25,9 @@ public class DistannFX extends Application {
         final SwingNode swing = new SwingNode();
 
         GeneSet gs = new GeneSet();
+        GeneSetHead gsh = new GeneSetHead( gs );
         final JPanel panel = new JPanel();
-        gs.init( panel );
+        gsh.init( panel );
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

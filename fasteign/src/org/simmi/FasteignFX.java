@@ -191,7 +191,7 @@ public class FasteignFX extends Application {
                             }
                             iblist.add(ib);
 
-                            if (iblist.size() < 50) {
+                            //if (iblist.size() < 50) {
                                 for (String urlstr : ibmap.keySet()) {
                                     Ibud tib = ibmap.get(urlstr);
                                     if (tib.getFasteignaMat() == -1) {
@@ -216,7 +216,7 @@ public class FasteignFX extends Application {
                                         break;
                                     }
                                 }
-                            }
+                            //}
                         }
                     } else if (!loc.contains("leit")) {
                         NodeList nl = doc.getElementsByTagName("input");
@@ -352,129 +352,133 @@ public class FasteignFX extends Application {
                             NodeList nl = div.getChildNodes();
                             for (int i = 0; i < nl.getLength(); i++) {
                                 Node n = nl.item(i);
-                                if (n != null && n instanceof HTMLDivElement && ((HTMLDivElement) n).getId().contains("realestate-result")) {
-                                    String imgurl = "";
-                                    String url = "";
-                                    String nafn = null;
-                                    String pnr = null;
-                                    int verd = -1;
-                                    int herb = -1;
-                                    String tegund = null;
-                                    double staerd = -1;
+                                if (n != null && n instanceof HTMLDivElement ) {
+                                	HTMLDivElement hdiv = (HTMLDivElement)n;
+                                	String id = hdiv.getId();
+                                	if( id.contains("realestate-result") ) {
+	                                    String imgurl = "";
+	                                    String url = "";
+	                                    String nafn = null;
+	                                    String pnr = null;
+	                                    int verd = -1;
+	                                    int herb = -1;
+	                                    String tegund = null;
+	                                    double staerd = -1;
+	
+	                                    NodeList subnl = n.getChildNodes();
+	                                    for (int k = 0; k < subnl.getLength(); k++) {
+	                                        Node subn = subnl.item(k);
+	                                        if (subn != null) {
+	                                            if (subn instanceof HTMLDivElement) {
+	                                                NodeList ssubnl = subn.getChildNodes();
+	                                                for (int m = 0; m < ssubnl.getLength(); m++) {
+	                                                    Node then = ssubnl.item(m);
+	                                                    if (then instanceof HTMLAnchorElement) {
+	                                                        NodeList ssuban = then.getChildNodes();
+	                                                        for (int u = 0; u < ssuban.getLength(); u++) {
+	                                                            Node img = ssuban.item(u);
+	                                                            if (img != null && img instanceof HTMLImageElement) {
+	                                                                imgurl = img.getAttributes().getNamedItem("src").getTextContent();
+	                                                                break;
+	                                                            }
+	                                                        }
+	                                                    } else if (then != null && then instanceof HTMLDivElement) {
+	                                                        HTMLDivElement head = (HTMLDivElement) then;
+	                                                        NodeList nl2 = head.getChildNodes();
+	                                                        if (head.getClassName().contains("head")) {
+	                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
+	                                                                Node n2 = nl2.item(m2);
+	                                                                if (n2 != null && n2 instanceof HTMLAnchorElement) {
+	                                                                    url = n2.getAttributes().getNamedItem("href").getTextContent();
+	                                                                    NodeList nl3 = n2.getChildNodes();
+	                                                                    for (int m3 = 0; m3 < nl3.getLength(); m3++) {
+	                                                                        Node n3 = nl3.item(m3);
+	                                                                        if (n3 != null && n3 instanceof HTMLHeadingElement) {
+	                                                                            if (nafn == null) {
+	                                                                                nafn = n3.getTextContent();
+	                                                                            } else {
+	                                                                                pnr = n3.getTextContent();
+	                                                                            }
+	                                                                        }
+	                                                                    }
+	                                                                }
+	                                                            }
+	                                                        } else if (head.getClassName().contains("properties")) {
+	                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
+	                                                                Node n2 = nl2.item(m2);
+	                                                                if (n2 != null && n2 instanceof HTMLElement && n2.getNodeName().equals("SPAN")) {
+	                                                                    String type = n2.getTextContent();
+	                                                                    if (type.contains("Verð")) {
+	                                                                        NodeList spannodes = n2.getChildNodes();
+	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+	                                                                            Node n3 = spannodes.item(m3);
+	                                                                            if (n3.getNodeName().equals("STRONG")) {
+	                                                                                String val = n3.getTextContent().trim();
+	                                                                                try {
+	                                                                                    verd = Integer.parseInt(val.split("[ ]+")[0].replace(".", ""));
+	                                                                                } catch (Exception e) {
+	
+	                                                                                }
+	                                                                                break;
+	                                                                            }
+	                                                                        }
+	                                                                    } else if (type.contains("Herb")) {
+	                                                                        NodeList spannodes = n2.getChildNodes();
+	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+	                                                                            Node n3 = spannodes.item(m3);
+	                                                                            if (n3.getNodeName().equals("STRONG")) {
+	                                                                                String val = n3.getTextContent().trim();
+	                                                                                herb = Integer.parseInt(val);
+	                                                                                break;
+	                                                                            }
+	                                                                        }
+	                                                                    } else if (type.contains("Tegund")) {
+	                                                                        NodeList spannodes = n2.getChildNodes();
+	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+	                                                                            Node n3 = spannodes.item(m3);
+	                                                                            if (n3.getNodeName().equals("STRONG")) {
+	                                                                                String val = n3.getTextContent().trim();
+	                                                                                tegund = val;
+	                                                                                break;
+	                                                                            }
+	                                                                        }
+	                                                                    } else if (type.contains("Stærð")) {
+	                                                                        NodeList spannodes = n2.getChildNodes();
+	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+	                                                                            Node n3 = spannodes.item(m3);
+	                                                                            if (n3.getNodeName().equals("STRONG")) {
+	                                                                                String val = n3.getTextContent().trim();
+	                                                                                staerd = Double.parseDouble(val.split("[ ]+")[0]);
+	                                                                                break;
+	                                                                            }
+	                                                                        }
+	                                                                    }
+	                                                                }
+	                                                            }
+	                                                        }
+	                                                    }
+	                                                }
+	                                            }
+	                                        }
+	                                    }
 
-                                    NodeList subnl = n.getChildNodes();
-                                    for (int k = 0; k < subnl.getLength(); k++) {
-                                        Node subn = subnl.item(k);
-                                        if (subn != null) {
-                                            if (subn instanceof HTMLAnchorElement) {
-                                                NodeList ssubnl = subn.getChildNodes();
-                                                for (int m = 0; m < ssubnl.getLength(); m++) {
-                                                    Node then = ssubnl.item(m);
-                                                    if (then != null && then instanceof HTMLImageElement) {
-                                                        imgurl = then.getAttributes().getNamedItem("src").getTextContent();
-                                                        break;
-                                                    }
-                                                }
-                                            } else if (subn instanceof HTMLDivElement) {
-                                                NodeList ssubnl = subn.getChildNodes();
-                                                for (int m = 0; m < ssubnl.getLength(); m++) {
-                                                    Node then = ssubnl.item(m);
-                                                    if (then != null && then instanceof HTMLDivElement) {
-                                                        HTMLDivElement head = (HTMLDivElement) then;
-                                                        NodeList nl2 = head.getChildNodes();
-                                                        if (head.getClassName().contains("head")) {
-                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
-                                                                Node n2 = nl2.item(m2);
-                                                                if (n2 != null && n2 instanceof HTMLAnchorElement) {
-                                                                    url = n2.getAttributes().getNamedItem("href").getTextContent();
-                                                                    NodeList nl3 = n2.getChildNodes();
-                                                                    for (int m3 = 0; m3 < nl3.getLength(); m3++) {
-                                                                        Node n3 = nl3.item(m3);
-                                                                        if (n3 != null && n3 instanceof HTMLHeadingElement) {
-                                                                            if (nafn == null) {
-                                                                                nafn = n3.getTextContent();
-                                                                            } else {
-                                                                                pnr = n3.getTextContent();
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        } else if (head.getClassName().contains("properties")) {
-                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
-                                                                Node n2 = nl2.item(m2);
-                                                                if (n2 != null && n2 instanceof HTMLElement && n2.getNodeName().equals("SPAN")) {
-                                                                    String type = n2.getTextContent();
-                                                                    if (type.contains("Verð")) {
-                                                                        NodeList spannodes = n2.getChildNodes();
-                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-                                                                            Node n3 = spannodes.item(m3);
-                                                                            if (n3.getNodeName().equals("STRONG")) {
-                                                                                String val = n3.getTextContent().trim();
-                                                                                try {
-                                                                                    verd = Integer.parseInt(val.split("[ ]+")[0].replace(".", ""));
-                                                                                } catch (Exception e) {
-
-                                                                                }
-                                                                                break;
-                                                                            }
-                                                                        }
-                                                                    } else if (type.contains("Herb")) {
-                                                                        NodeList spannodes = n2.getChildNodes();
-                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-                                                                            Node n3 = spannodes.item(m3);
-                                                                            if (n3.getNodeName().equals("STRONG")) {
-                                                                                String val = n3.getTextContent().trim();
-                                                                                herb = Integer.parseInt(val);
-                                                                                break;
-                                                                            }
-                                                                        }
-                                                                    } else if (type.contains("Tegund")) {
-                                                                        NodeList spannodes = n2.getChildNodes();
-                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-                                                                            Node n3 = spannodes.item(m3);
-                                                                            if (n3.getNodeName().equals("STRONG")) {
-                                                                                String val = n3.getTextContent().trim();
-                                                                                tegund = val;
-                                                                                break;
-                                                                            }
-                                                                        }
-                                                                    } else if (type.contains("Stærð")) {
-                                                                        NodeList spannodes = n2.getChildNodes();
-                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-                                                                            Node n3 = spannodes.item(m3);
-                                                                            if (n3.getNodeName().equals("STRONG")) {
-                                                                                String val = n3.getTextContent().trim();
-                                                                                staerd = Double.parseDouble(val.split("[ ]+")[0]);
-                                                                                break;
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    String urlstr = base + url;
-                                    if (!ibmap.containsKey(urlstr)) {
-                                        Ibud ib = new Ibud(nafn);
-                                        ib.setUrl(urlstr);
-                                        ib.imgurl = base + imgurl;
-                                        ib.pnr = pnr;
-                                        ib.setVerd(verd);
-                                        ib.setTegund(tegund);
-                                        ib.setFermetrar(staerd);
-                                        ib.setHerbergi(herb);
-						        		//avgverdfm.bind( ib.verdfmProperty() );
-                                        //iblist.add( ib );
-                                        ibmap.put(ib.getUrlString(), ib);
-						        		//fasteign.iblist.add( ib );
-                                        //fasteign.refreshTables();
-                                    }
+	                                    String urlstr = base + url;
+	                                    if (!ibmap.containsKey(urlstr)) {
+	                                        Ibud ib = new Ibud(nafn);
+	                                        ib.setUrl(urlstr);
+	                                        ib.imgurl = base + imgurl;
+	                                        ib.pnr = pnr;
+	                                        ib.setVerd(verd);
+	                                        ib.setTegund(tegund);
+	                                        ib.setFermetrar(staerd);
+	                                        ib.setHerbergi(herb);
+							        		//avgverdfm.bind( ib.verdfmProperty() );
+	                                        //iblist.add( ib );
+	                                        ibmap.put(ib.getUrlString(), ib);
+							        		//fasteign.iblist.add( ib );
+	                                        //fasteign.refreshTables();
+	                                    }
+	                                }
                                 }
                             }
 
@@ -484,7 +488,8 @@ public class FasteignFX extends Application {
                                 HTMLAnchorElement anchor = (HTMLAnchorElement) nl.item(i);
                                 if (anchor.getTextContent().contains("Næsta")) {
                                     String urlstr = anchor.getHref();
-                                    //System.err.println( "about to " + urlstr );
+                                    System.err.println( "about to " + urlstr );
+                                    if( !urlstr.contains("mbl.is") ) urlstr = base + urlstr;
                                     foundnext = true;
 
                                     loadWorker.cancel();
@@ -500,7 +505,7 @@ public class FasteignFX extends Application {
                                         baos.close();
                                         currentloc = urlstr;
 
-                                        System.err.println("about to load " + currentloc);
+                                        System.err.println("about to load " + currentloc+ "currentsize " + ibmap.size());
                                         webEngine.loadContent(baos.toString());
                                     } catch (IOException e) {
                                         e.printStackTrace();
@@ -510,6 +515,7 @@ public class FasteignFX extends Application {
                                 }
                             }
 
+                            //foundnext = false;
                             if (!foundnext) {
                                 for (String urlstr : ibmap.keySet()) {
                                     Ibud tib = ibmap.get(urlstr);
@@ -565,7 +571,7 @@ public class FasteignFX extends Application {
                     @Override
                     public void updateItem(Image image, boolean empty) {
                         if (image != null) {
-                            iv.setImage(image);
+                        	iv.setImage(image);
                         }
                     }
                 };
