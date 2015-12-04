@@ -108,7 +108,8 @@ import org.simmi.unsigned.NativeRun;
 import flobb.ChatServer;
 
 public class ActionCollection {
-	public static StringBuilder panCore( GeneSet geneset, Set<String> selspec, final String[] categories, final List<StackBarData>	lsbd ) {
+	public static StringBuilder panCore( GeneSetHead genesethead, Set<String> selspec, final String[] categories, final List<StackBarData>	lsbd ) {
+		GeneSet geneset = genesethead.geneset;
 		Set<GeneGroup>	pan = new HashSet<GeneGroup>();
 		Set<GeneGroup>	core = new HashSet<GeneGroup>();
 		StringBuilder	restext = new StringBuilder();
@@ -1183,14 +1184,15 @@ public class ActionCollection {
 	
 	public static void addAll( JMenu menu, 
 			final Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, 
-			final GeneSet geneset, final Map<String,List<Sequence>> speccontigMap, 
+			final GeneSetHead genesethead, final Map<String,List<Sequence>> speccontigMap, 
 			final JTable table, final Container comp, final ChatServer cs ) {
+		GeneSet geneset = genesethead.geneset;
 		//JButton matrixbutton = new JButton(matrixaction);
 		
 		AbstractAction codregaction = new AbstractAction("Coding regions") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new CodingRegions().coderegPlot( geneset, comp );
+				new CodingRegions().coderegPlot( genesethead, comp );
 			}
 		};
 		
@@ -1355,7 +1357,7 @@ public class ActionCollection {
 				
 				JSObject window = null;
 				try {
-					window = JSObject.getWindow( geneset );
+					window = JSObject.getWindow( genesethead );
 				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
@@ -1519,7 +1521,7 @@ public class ActionCollection {
 				JCheckBox	output = new JCheckBox("Output fasta");
 				JOptionPane.showMessageDialog( comp, new Object[] {check, align, output} );
 				
-				Set<String>	selspec = geneset.getSelspec( geneset, geneset.specList );
+				Set<String>	selspec = genesethead.getSelspec( genesethead, geneset.specList );
 				
 				boolean succ = true;
 				String restext = null;
@@ -1733,9 +1735,9 @@ public class ActionCollection {
 							
 						}
 					});
-					JOptionPane.showMessageDialog(geneset, sc);
+					JOptionPane.showMessageDialog(genesethead, sc);
 					int 	r = tb.getSelectedRow();
-					if( r != -1 ) geneset.showKeggPathway( "KEGG", lbi.get(r) );
+					if( r != -1 ) genesethead.showKeggPathway( "KEGG", lbi.get(r) );
 				} catch (IOException e2) {
 					e2.printStackTrace();
 				} finally {
@@ -1818,7 +1820,7 @@ public class ActionCollection {
 				
 				JSObject window = null;
 				try {
-					window = JSObject.getWindow( geneset );
+					window = JSObject.getWindow( genesethead );
 				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
@@ -1886,7 +1888,7 @@ public class ActionCollection {
 				
 				List<List<Object>>	lobj = new ArrayList<List<Object>>();
 				int k = 2;
-				Set<String> specs = geneset.getSelspec(geneset, geneset.specList);
+				Set<String> specs = genesethead.getSelspec(genesethead, geneset.specList);
 				for( String spc : specs ) {
 					List<Sequence> sctg = geneset.speccontigMap.get(spc);
 					
@@ -2035,20 +2037,20 @@ public class ActionCollection {
 					}
 				}
 				String spacerfasta = w.toString();
-				geneset.doBlastn( spacerfasta, "0.00001", false, null, false );
+				genesethead.doBlastn( spacerfasta, "0.00001", false, null, false );
 			}
 		};
 		AbstractAction	crispraction = new AbstractAction("CRISPR-table") {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int[] rr = geneset.table.getSelectedRows();
+				int[] rr = genesethead.table.getSelectedRows();
 				if( rr.length > 0 ) {
-					Set<String> includeSpecs = geneset.getSelspec(geneset, geneset.specList, null);
+					Set<String> includeSpecs = genesethead.getSelspec(genesethead, geneset.specList, null);
 					
 					Workbook wb = new XSSFWorkbook();
 					for( int r : rr ) {
-						int i = geneset.table.convertRowIndexToModel(r);
+						int i = genesethead.table.convertRowIndexToModel(r);
 						GeneGroup gg = geneset.allgenegroups.get(i);
 						
 						Sheet sheet = wb.createSheet( gg.getCommonName() );
@@ -2416,7 +2418,7 @@ public class ActionCollection {
 		AbstractAction	shuffletreeaction = new AbstractAction("Recomb tree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>		selspec = geneset.getSelspec( geneset, new ArrayList<String>( geneset.specList ) );
+				Set<String>		selspec = genesethead.getSelspec( genesethead, new ArrayList<String>( geneset.specList ) );
 				List<String>	speclist = new ArrayList<String>( selspec );
 				double[] 		mat = new double[selspec.size()*selspec.size()];
 				for( int y = 0; y < speclist.size(); y++ ) {
@@ -2799,28 +2801,28 @@ public class ActionCollection {
 				JScrollPane	scroll = new JScrollPane( conflict );
 				
 				Object[] objs = new Object[] { kobtn, ecbtn, cogbtn, gibtn, tf, scroll };
-				JOptionPane.showMessageDialog( geneset, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
+				JOptionPane.showMessageDialog( genesethead, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
 				
 				Set<String> ids = new HashSet<String>();
-				int[] rr = geneset.table.getSelectedRows();
+				int[] rr = genesethead.table.getSelectedRows();
 				for( int r : rr ) {
 					if( kobtn.isSelected() ) {
-						String ko = (String)geneset.table.getValueAt(r, 6);
+						String ko = (String)genesethead.table.getValueAt(r, 6);
 						if( ko != null ) ids.add( ko );
 					}
 					
 					if( ecbtn.isSelected() ) {
-						String ec = (String)geneset.table.getValueAt(r, 10);
+						String ec = (String)genesethead.table.getValueAt(r, 10);
 						if( ec != null ) ids.add( "E"+ec.replace(":", "") );
 					}
 					
 					if( cogbtn.isSelected() ) {
-						String cog = (String)geneset.table.getValueAt(r, 11);
+						String cog = (String)genesethead.table.getValueAt(r, 11);
 						if( cog != null ) ids.add( cog.substring( cog.lastIndexOf(' ')+1 ) );
 					}
 					
 					if( gibtn.isSelected() ) {
-						int i = geneset.table.convertRowIndexToModel(r);
+						int i = genesethead.table.convertRowIndexToModel(r);
 						if( i != -1 ) {
 							GeneGroup gg = geneset.allgenegroups.get(i);
 							for( Gene g : gg.genes ) {
@@ -2836,7 +2838,7 @@ public class ActionCollection {
 					}
 					
 					if( ecbtn.isSelected() ) {
-						int i = geneset.table.convertRowIndexToModel(r);
+						int i = genesethead.table.convertRowIndexToModel(r);
 						if( i != -1 ) {
 							GeneGroup gg = geneset.allgenegroups.get(i);
 							for( Function f : gg.getFunctions() ) {
@@ -2866,7 +2868,7 @@ public class ActionCollection {
 				
 				JSObject window = null;
 				try {
-					window = JSObject.getWindow( geneset );
+					window = JSObject.getWindow( genesethead );
 				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
@@ -2962,8 +2964,6 @@ public class ActionCollection {
 				AccessController.doPrivileged( new PrivilegedAction<String>() {
 					@Override
 					public String run() {
-						NativeRun nrun = new NativeRun();
-						
 						final Object[] cont = new Object[3];
 						Runnable run = new Runnable() {
 							@Override
@@ -2971,13 +2971,14 @@ public class ActionCollection {
 								
 							}
 						};
+						NativeRun nrun = new NativeRun( run );
 						
 						//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 						//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.28+/bin/makeblastdb" );
 						//if( makeblastdb.exists() ) {
 						String[] cmds = new String[] { "makeblastdb", "-in", nrun.fixPath( "/tmp/thermus.fasta" ), "-title", "thermus", "-dbtype", "prot", "-out", "/tmp/thermus" };
 						try {
-							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), run, cont, false );
+							nrun.runProcessBuilder( "Creating database", Arrays.asList( cmds ), cont, false, run, false );
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -2992,7 +2993,7 @@ public class ActionCollection {
 		AbstractAction pancoreaction = new AbstractAction("Pan-core") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ) );
+				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ) );
 				
 				for( String spec : selspec ) {
 					System.err.println( spec );
@@ -3001,7 +3002,7 @@ public class ActionCollection {
 				
 				final String[] categories = { "Core: ", "Accessory: " };
 				final List<StackBarData> lsbd = new ArrayList<StackBarData>();
-				StringBuilder restext = panCore( geneset, selspec, categories, lsbd );
+				StringBuilder restext = panCore( genesethead, selspec, categories, lsbd );
 				
 				JFrame f = new JFrame("Pan-core chart");
 				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
@@ -3023,7 +3024,7 @@ public class ActionCollection {
 				//String b64str = Base64.encodeBase64String( smuck.getBytes() );
 				JSObject window = null;
 				try {
-					window = JSObject.getWindow( geneset );
+					window = JSObject.getWindow( genesethead );
 				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
@@ -3112,7 +3113,7 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final JCheckBox	contigs = new JCheckBox("Show contigs");
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs );
+				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs );
 				StringBuilder	restext = new StringBuilder();
 				
 				Map<String,Integer>	map = new TreeMap<String,Integer>();
@@ -3190,7 +3191,7 @@ public class ActionCollection {
 				
 				JSObject window = null;
 				try {
-					window = JSObject.getWindow( geneset );
+					window = JSObject.getWindow( genesethead );
 				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
@@ -3453,7 +3454,7 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final JCheckBox	contigs = new JCheckBox("Show contigs");
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs );
+				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs );
 				StringBuilder	restext = new StringBuilder();
 				
 				Map<String,Double>	map = new TreeMap<String,Double>();
@@ -3547,7 +3548,7 @@ public class ActionCollection {
 				
 				JSObject window = null;
 				try {
-					window = JSObject.getWindow( geneset );
+					window = JSObject.getWindow( genesethead );
 				} catch( NoSuchMethodError | Exception exc ) {
 					exc.printStackTrace();
 				}
@@ -3658,9 +3659,9 @@ public class ActionCollection {
 				final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
 				
 				final GeneGroup	gg;
-				int r = geneset.table.getSelectedRow();
+				int r = genesethead.table.getSelectedRow();
 				int i = -1;
-				if( r != -1 ) i = geneset.table.convertRowIndexToModel( r );
+				if( r != -1 ) i = genesethead.table.convertRowIndexToModel( r );
 				if( i != -1 ) {
 					gg = geneset.allgenegroups.get( i );
 				} else gg = null;
@@ -3813,7 +3814,7 @@ public class ActionCollection {
 				popup.add( new AbstractAction("Repaint") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						geneset.repaintGCSkew(selclist, g2, fsize, gg, selspec);
+						genesethead.repaintGCSkew(selclist, g2, fsize, gg, selspec);
 					}
 				});
 				popup.add( new AbstractAction("Auto invert") {
@@ -3880,7 +3881,7 @@ public class ActionCollection {
 							i++;
 						}
 						
-						geneset.repaintGCSkew(selclist, g2, fsize, gg, selspec);
+						genesethead.repaintGCSkew(selclist, g2, fsize, gg, selspec);
 					}
 				});
 				popup.add( new AbstractAction("Auto connect") {
@@ -3909,7 +3910,7 @@ public class ActionCollection {
 							baos.close();
 							String b64str = Base64.getEncoder().encodeToString( baos.toByteArray() );
 							
-							JSObject window = JSObject.getWindow( geneset );
+							JSObject window = JSObject.getWindow( genesethead );
 							window.call( "string2Blob", new Object[] {b64str, "image/png"} );
 						} catch(Exception e1) {
 							succ = false;
@@ -3978,7 +3979,7 @@ public class ActionCollection {
 							clist.remove( sctg );
 							clist.add( i, sctg );
 							
-							geneset.repaintGCSkew(selclist, g2, fsize, gg, selspec);
+							genesethead.repaintGCSkew(selclist, g2, fsize, gg, selspec);
 							c.repaint();
 						}
 					}
@@ -4000,7 +4001,7 @@ public class ActionCollection {
 						
 						if( e.getClickCount() == 2 ) {							
 							sctg.setReverse( !sctg.isReverse() );
-							geneset.repaintGCSkew(selclist, g2, fsize, gg, selspec);
+							genesethead.repaintGCSkew(selclist, g2, fsize, gg, selspec);
 							c.repaint();
 						}
 					}
@@ -4015,7 +4016,7 @@ public class ActionCollection {
 					public void mouseClicked(MouseEvent e) {}
 				});
 				
-				geneset.repaintGCSkew( selclist, g2, size, gg, selspec );				
+				genesethead.repaintGCSkew( selclist, g2, size, gg, selspec );				
 				frame.setVisible( true );
 			}
 		};
@@ -4026,14 +4027,14 @@ public class ActionCollection {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JCheckBox cb = new JCheckBox("Plasmid");
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), cb );
+				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), cb );
 				
 				char nohit = '*';
 				final Map<Character,Integer>	mip = new HashMap<Character,Integer>();
 				final Map<Character,Integer>	map = new HashMap<Character,Integer>();
-				if( geneset.table.getModel() == geneset.groupModel ) {
-					for( int r = 0; r < geneset.table.getRowCount(); r++ ) {
-						int i = geneset.table.convertRowIndexToModel(r);
+				if( genesethead.table.getModel() == genesethead.groupModel ) {
+					for( int r = 0; r < genesethead.table.getRowCount(); r++ ) {
+						int i = genesethead.table.convertRowIndexToModel(r);
 						if( i >= 0 && i < geneset.allgenegroups.size() ) {
 							GeneGroup gg = geneset.allgenegroups.get(i);
 							Cog cog = gg.getCommonCog(geneset.cogmap);
@@ -4309,7 +4310,7 @@ public class ActionCollection {
 					BufferedReader br = Files.newBufferedReader(nf);*/
 					final JCheckBox	contigs = new JCheckBox("Show contigs");
 					final JCheckBox	uniform = new JCheckBox("Uniform");
-					Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), contigs, uniform );
+					Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs, uniform );
 					
 					final List<Character> coglist = new ArrayList<Character>( Cog.charcog.keySet() );
 					HashSet<Character>	includedCogs = new HashSet<Character>();
@@ -4361,7 +4362,7 @@ public class ActionCollection {
 					};
 					cogtable.setModel( cogmodel );
 					JScrollPane cogscroll = new JScrollPane( cogtable );
-					JOptionPane.showMessageDialog( geneset, cogscroll );
+					JOptionPane.showMessageDialog( genesethead, cogscroll );
 					
 					int[] rr = cogtable.getSelectedRows();
 					for( int r : rr ) {
@@ -4370,7 +4371,7 @@ public class ActionCollection {
 					
 					final Map<String,String>					all = new TreeMap<String,String>();
 					final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap<String, Map<Character,Integer>>();
-					geneset.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
+					genesethead.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
 					
 					Map<Character,Row> rl = new HashMap<Character,Row>();
 					
@@ -4550,7 +4551,7 @@ public class ActionCollection {
 		AbstractAction fetchcoreaction = new AbstractAction("Fetch core") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ) );
+				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ) );
 				
 				JFrame frame = null;
 				if( geneset.currentSerify == null ) {
@@ -4794,7 +4795,7 @@ public class ActionCollection {
 				
 				ctgs.setSelected( true );
 				
-				List<Sequence> contigs = geneset.getSelspecContigs( complist );
+				List<Sequence> contigs = genesethead.getSelspecContigs( complist, geneset.speccontigMap );
 				//int[] rr = ctable.getSelectedRows();
 				
 				JFrame frame = new JFrame();
@@ -5018,12 +5019,12 @@ public class ActionCollection {
 				final double[] b2;
 				final String[] names;
 				if( blosumap != null ) {
-					int[] rr = geneset.table.getSelectedRows();
+					int[] rr = genesethead.table.getSelectedRows();
 					
 					double[] mat = new double[ rr.length*rr.length ];
 					Arrays.fill( mat, 0.0 );
 					
-					int selr = geneset.table.convertRowIndexToModel( rr[0] );
+					int selr = genesethead.table.convertRowIndexToModel( rr[0] );
 					GeneGroup gg = geneset.allgenegroups.get(selr);
 					List<String>	speclist = new ArrayList<String>( gg.species.keySet() );
 					
@@ -5033,7 +5034,7 @@ public class ActionCollection {
 					Map<GeneGroup,double[]>	valmap = new HashMap<GeneGroup,double[]>();
 					names = new String[ rr.length ];
 					for( int k = 0; k < rr.length; k++ ) {
-						int i = geneset.table.convertRowIndexToModel( rr[k] );
+						int i = genesethead.table.convertRowIndexToModel( rr[k] );
 						gg = geneset.allgenegroups.get(i);
 						names[k] = gg.getCommonName();
 						
