@@ -27,8 +27,9 @@ import org.simmi.shared.Annotation;
 import org.simmi.shared.Sequence;
 
 public class CodingRegions {
-	public void coderegPlot( GeneSet geneset, Container comp ) {
-		final JTable 				table = geneset.getGeneTable();
+	public void coderegPlot( GeneSetHead genesethead, Container comp ) {
+		GeneSet geneset = genesethead.geneset;
+		final JTable 				table = genesethead.getGeneTable();
 		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
 		final List<String>			species = new ArrayList<String>( specset );
 		
