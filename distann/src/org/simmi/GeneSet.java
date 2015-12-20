@@ -5967,7 +5967,7 @@ public class GeneSet {
 			JFrame.EXIT_ON_CLOSE );
 			frame.setSize(800, 600); 
 			
-			gsh.init( frame );
+			gsh.init( frame, null, null );
 			frame.setVisible( true );
 		} else if( args[0].endsWith(".zip") ) {
 			GeneSet	gs = new GeneSet();
