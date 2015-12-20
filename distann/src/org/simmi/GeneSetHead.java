@@ -187,6 +187,7 @@ import org.simmi.unsigned.NativeRun;
 import org.simmi.unsigned.SmithWater;
 
 import javafx.embed.swing.JFXPanel;
+import javafx.embed.swing.SwingNode;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import netscape.javascript.JSObject;
@@ -2278,7 +2279,7 @@ public class GeneSetHead extends JApplet {
 	JComboBox<String> 						combo;
 
 	Component comp;
-	public void init(final Container comp) {
+	public void init(final Container comp, final SwingNode upper, final SwingNode lower, final MenuBar menubar) {
 		geneset.user = System.getProperty("user.name");
 		JavaFasta.user = geneset.user;
 		//SerifyApplet.user = user;
@@ -2336,7 +2337,6 @@ public class GeneSetHead extends JApplet {
 			f.setWritable(true, true);
 			f.setReadable(true, true);
 		}
-		
 		
 		this.comp = comp;
 		selcomb = new JComboBox<String>();
@@ -5984,15 +5984,17 @@ public class GeneSetHead extends JApplet {
 		menubar.add( select );
 		menubar.add( help );
 		
-		final Window window = SwingUtilities.windowForComponent(comp);
-		initFSKeyListener(window);
-		if ( comp instanceof JFrame || window instanceof JFrame) {
-			JFrame frame = (JFrame)( window == null ? comp : window );
-			if (!frame.isResizable())
-				frame.setResizable(true);
-
-			frame.addKeyListener(keylistener);
-			frame.setJMenuBar(menubar);
+		if( comp != null ) {
+			final Window window = SwingUtilities.windowForComponent(comp);
+			initFSKeyListener(window);
+			if ( comp instanceof JFrame || window instanceof JFrame) {
+				JFrame frame = (JFrame)( window == null ? comp : window );
+				if (!frame.isResizable())
+					frame.setResizable(true);
+	
+				frame.addKeyListener(keylistener);
+				frame.setJMenuBar(menubar);
+			}
 		}
 
 		final JButton jb = new JButton(new AbstractAction("Atlas") {
@@ -6006,18 +6008,21 @@ public class GeneSetHead extends JApplet {
 				}
 			}
 		});
-
-		if( comp instanceof Applet )
-			try {
-				((GeneSetHead)comp).saveSel( null, null);
-			} catch ( NoSuchMethodError | Exception e1 ) {
-				e1.printStackTrace();
-			}
 		
+		JComponent cc = null;
 		try {
-			comp.add(newSoft(jb, comp, GeneSetHead.this, selcomb));
+			cc = newSoft(jb, comp, upper, lower, GeneSetHead.this, selcomb);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		if( comp != null ) {
+			if( comp instanceof Applet )
+				try {
+					((GeneSetHead)comp).saveSel( null, null);
+				} catch ( NoSuchMethodError | Exception e1 ) {
+					e1.printStackTrace();
+				}
+			comp.add( cc );
 		}
 	}
 	
@@ -6150,7 +6155,7 @@ public class GeneSetHead extends JApplet {
 	
 	private JComponent showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
-			final Map<Set<String>, ShareNum> specset,*/ final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb,
+			final Map<Set<String>, ShareNum> specset,*/ final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb, final SwingNode upper, final SwingNode lower,
 			final Container comp, final JApplet applet, final JComboBox selcomblocal) throws IOException {
 		JSplitPane splitpane = new JSplitPane();
 		splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -7028,8 +7033,17 @@ public class GeneSetHead extends JApplet {
 		// botcombo.add( sbutt );
 		botcomp.add(botcombo, BorderLayout.SOUTH);
 
-		splitpane.setBottomComponent(botcomp);
-		splitpane.setTopComponent(topcomp);
+		if( upper != null ) {
+			SwingUtilities.invokeLater( new Runnable() {
+				public void run() {
+					upper.setContent( botcomp );
+					lower.setContent( topcomp );
+				}
+			});
+		} else {
+			splitpane.setBottomComponent(botcomp);
+			splitpane.setTopComponent(topcomp);
+		}
 
 		groupModel = new TableModel() {
 			@Override
@@ -9096,7 +9110,7 @@ public class GeneSetHead extends JApplet {
 		System.err.println( genefilterset.size() + "  " + ct.size() );
 	}
 	
-	private JComponent newSoft(JButton jb, Container comp, JApplet applet, JComboBox selcomblocal) throws IOException {
+	private JComponent newSoft(JButton jb, Container comp, SwingNode upper, SwingNode lower, JApplet applet, JComboBox selcomblocal) throws IOException {
 		/*InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
 		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
 		String line2 = br2.readLine();
@@ -9104,11 +9118,11 @@ public class GeneSetHead extends JApplet {
 		// aas.clear();
 
 		// return new JComponent() {};
-		return showGeneTable(null, jb, comp, applet, selcomblocal);// clustInfoMap// );
+		return showGeneTable(null, jb, upper, lower, comp, applet, selcomblocal);// clustInfoMap// );
 	}
 	
 	public void init() {
-		init(this);
+		init(this, null, null, null);
 	}
 	
 	public void exportGenomes( Map<String,List<Sequence>> speccontigMap ) {
