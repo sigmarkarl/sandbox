@@ -1,17 +1,23 @@
 package org.simmi;
 
+import org.simmi.shared.Function;
+import org.simmi.shared.Gene;
+import org.simmi.shared.GeneGroup;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
 import javafx.application.Application;
-import javafx.embed.swing.SwingNode;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.SplitPane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.control.TableView;
+import javafx.scene.control.ToolBar;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
@@ -22,21 +28,29 @@ public class DistannFX extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+    	final VBox 		vbox = new VBox();
     	final MenuBar	menubar = new MenuBar();
-    	final SwingNode upper = new SwingNode();
-        final SwingNode	lower = new SwingNode();
-    	final SplitPane	splitpane = new SplitPane(upper, lower);
+    	final ToolBar	toolbar = new ToolBar();
+    	final ToolBar	btoolbar = new ToolBar();
+    	final TableView<Function> 	upper = new TableView<Function>();
+        final TableView<GeneGroup>	lower = new TableView<GeneGroup>();
+        final TableView<Gene>		gene = new TableView<Gene>();
+    	final SplitPane	splitpane = new SplitPane(lower, upper);
     	splitpane.setOrientation( Orientation.VERTICAL );
+    	
+    	vbox.getChildren().add( menubar );
+    	vbox.getChildren().add( toolbar );
 
         GeneSet gs = new GeneSet();
         GeneSetHead gsh = new GeneSetHead( gs );
         //final JPanel panel = new JPanel();
         //panel.setLayout( new BorderLayout() );
-        gsh.init( null, upper, lower, menubar );
+        gsh.init( null, splitpane, gene, upper, lower, menubar, toolbar, btoolbar );
         
-        StackPane root = new StackPane();
-        root.getChildren().add(menubar);
-        root.getChildren().add(splitpane);
+        BorderPane root = new BorderPane();
+        root.setTop( vbox );
+        root.setBottom( btoolbar );
+        root.setCenter( splitpane );
 
         Scene scene = new Scene(root, 800, 600);
 

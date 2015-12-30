@@ -43,25 +43,23 @@ import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 
+import javafx.scene.control.TableView;
+
 public class Synteni {
 	final int FASTI = 3632;
 	
 	public void syntenyMynd( final GeneSetHead genesethead, final Container comp, final List<Gene> genes ) {
 		GeneSet geneset = genesethead.geneset;
 		Set<String>	tspecies = new HashSet<String>();
-		final JTable sorting = genesethead.getGeneTable();
-		int[] rr = sorting.getSelectedRows();
-		if( sorting.getModel() == genesethead.groupModel ) {
-			for( int r : rr ) {
-				int i = sorting.convertRowIndexToModel( r );
-				GeneGroup gg = geneset.allgenegroups.get( i );
+		if( !genesethead.isGeneview() ) {
+			final TableView<GeneGroup> sorting = genesethead.getGeneGroupTable();
+			for( GeneGroup gg : sorting.getSelectionModel().getSelectedItems() ) {
 				tspecies.addAll( gg.getSpecies() );
 			}
 		} else {
-			for( int r : rr ) {
-				int i = sorting.convertRowIndexToModel( r );
-				GeneGroup gg = genes.get(i).getGeneGroup();
-				tspecies.addAll( gg.getSpecies() );
+			final TableView<Gene> sorting = genesethead.getGeneTable();
+			for( Gene g : sorting.getSelectionModel().getSelectedItems() ) {
+				tspecies.add( g.getSpecies() );
 			}
 		}
 		
@@ -153,7 +151,7 @@ public class Synteni {
 					}
 				}
 				
-				String selsyn = (String)genesethead.syncolorcomb.getSelectedItem();
+				String selsyn = genesethead.syncolorcomb.getSelectionModel().getSelectedItem();
 				if( selsyn != null && selsyn.length() > 0 ) {
 					List<Sequence> scannset = geneset.speccontigMap.get(selsyn);
 					for( int k = 0; k < rowheader.getRowCount(); k++ ) {
@@ -216,11 +214,9 @@ public class Synteni {
 				}
 				
 				//g.setColor( Color.blue );
-				int[] rr = sorting.getSelectedRows();
-				if( sorting.getModel() == genesethead.groupModel ) {
-					for( int r : rr ) {
-						int i = sorting.convertRowIndexToModel( r );
-						GeneGroup gg = geneset.allgenegroups.get( i );
+				if( !genesethead.isGeneview() ) {
+					TableView<GeneGroup> sorting = genesethead.getGeneGroupTable();
+					for( GeneGroup gg : sorting.getSelectionModel().getSelectedItems() ) {
 						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 							int l = rowheader.convertRowIndexToModel( k );
 							String spec1 = selspec.get( l );
@@ -245,9 +241,8 @@ public class Synteni {
 						}
 					}
 				} else {
-					for( int r : rr ) {
-						int i = sorting.convertRowIndexToModel( r );
-						Gene gene = geneset.genelist.get( i );
+					TableView<Gene> sorting = genesethead.getGeneTable();
+					for( Gene gene : sorting.getSelectionModel().getSelectedItems() ) {
 						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 							int l = rowheader.convertRowIndexToModel( k );
 							String spec1 = selspec.get( l );
@@ -295,11 +290,14 @@ public class Synteni {
 
 			public void mouseReleased(MouseEvent me) {
 				Point np = me.getPoint();
-
+				TableView sorting = genesethead.isGeneview() ? genesethead.getGeneTable() : genesethead.getGeneGroupTable();
 				if (np.x > p.x) {
+					/*sorting.get
 					Rectangle rect = sorting.getCellRect(p.x, 0, false);
 					rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
-					sorting.scrollRectToVisible(rect);
+					sorting.scrollRectToVisible(rect);*/
+					
+					//sorting.get
 					//sorting.setRowSelectionInterval(p.x, np.x);
 				}
 			}

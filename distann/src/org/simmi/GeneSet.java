@@ -1,49 +1,17 @@
 package org.simmi;
 
-import java.applet.Applet;
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Window;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -51,29 +19,17 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -81,9 +37,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,78 +44,14 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.ClipboardService;
-import javax.jnlp.FileContents;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultRowSorter;
-import javax.swing.ImageIcon;
-import javax.swing.JApplet;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JProgressBar;
-import javax.swing.JRadioButton;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JSplitPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.ListSelectionModel;
-import javax.swing.RowFilter;
-import javax.swing.SwingUtilities;
-import javax.swing.TransferHandler;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.RowSorterEvent;
-import javax.swing.event.RowSorterListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Cog;
 import org.simmi.shared.Contig;
@@ -171,18 +60,13 @@ import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
-import org.simmi.shared.Sequences;
 import org.simmi.shared.Serifier;
-import org.simmi.shared.Teg;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.shared.TreeUtil;
 import org.simmi.shared.TreeUtil.Node;
-import org.simmi.shared.TreeUtil.NodeSet;
-import org.simmi.unsigned.FlxReader;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.NativeRun;
-import org.simmi.unsigned.SmithWater;
 
 import flobb.ChatServer;
 import javafx.collections.FXCollections;
@@ -204,14 +88,13 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import netscape.javascript.JSObject;
 
 public class GeneSet {
 	/**
@@ -490,7 +373,7 @@ public class GeneSet {
 			//if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
 			return genename.contains("hypothetical") ? "hth-p" : genename;
 		} else if( selectedItem.equals("Group names") ) {
-			String genename = gene.getGeneGroup() != null ? gene.getGeneGroup().getCommonName() : "";
+			String genename = gene.getGeneGroup() != null ? gene.getGeneGroup().getName() : "";
 			//if( genename.contains("_") ) genename = gene.getGeneGroup().getCommonName();
 			
 			return genename.contains("hypothetical") ? "hth-p" : genename;
@@ -501,7 +384,7 @@ public class GeneSet {
 		} else if( selectedItem.equals("Refids") ) {
 			return gene.refid;
 		} else if( selectedItem.equals("Cog") ) {
-			Cog cog = gene.getGeneGroup().getCommonCog(cogmap);
+			Cog cog = gene.getGeneGroup().getCog(cogmap);
 			if( cog != null ) return cog.id;
 		} else if( selectedItem.equals("Cazy") ) {
 			String cazy = gene.getGeneGroup().getCommonCazy(cazymap);
@@ -5967,7 +5850,7 @@ public class GeneSet {
 			JFrame.EXIT_ON_CLOSE );
 			frame.setSize(800, 600); 
 			
-			gsh.init( frame, null, null );
+			gsh.init( frame, null, null, null, null, null, null, null );
 			frame.setVisible( true );
 		} else if( args[0].endsWith(".zip") ) {
 			GeneSet	gs = new GeneSet();
@@ -6786,10 +6669,8 @@ public class GeneSet {
 		//br.close();
 	}
 	
-	public void scrollToSelection( JTable table ) {
-		int r = table.getSelectedRow();
-		Rectangle rct = table.getCellRect(r, 0, true);
-		table.scrollRectToVisible( rct );
+	public void scrollToSelection( TableView table ) {
+		table.scrollTo( table.getSelectionModel().getSelectedIndex() );
 	}
 	
 	/*public Set<String> getSelspec( Component comp, final List<String>	specs ) {
@@ -7362,7 +7243,7 @@ public class GeneSet {
 			for( Gene g : gg.genes ) {
 				nset.add( g.name );
 			}*/
-			ps.println( "\t" + gg.getCommonName() );
+			ps.println( "\t" + gg.getName() );
 		}
 		
 		List<Node> nodes = n.getNodes();
@@ -7415,7 +7296,7 @@ public class GeneSet {
 							for( Gene g : gg.genes ) {
 								nset.add( g.name );
 							}*/
-							ps.println( "\t" + gg.getCommonName() );
+							ps.println( "\t" + gg.getName() );
 						}
 						lossMap.put(nnode, lgg);
 					}
@@ -7481,20 +7362,20 @@ public class GeneSet {
 					on = true;
 				}
 			} else if (line.startsWith("name:")) {
-				f.name = line.substring(6);
+				f.setName( line.substring(6) );
 			} else if (line.startsWith("namespace:")) {
-				f.namespace = line.substring(11);
+				f.setNamespace( line.substring(11) );
 			} else if (line.startsWith("def:")) {
-				f.desc = line.substring(5);
+				f.setDesc( line.substring(5) );
 			} else if (line.startsWith("xref:")) {
 				if (line.contains("EC:")) {
-					f.ec = line.substring(line.indexOf("EC:") + 3);
+					f.setEc( line.substring(line.indexOf("EC:") + 3) );
 				} else if (line.contains("MetaCyc:")) {
-					f.metacyc = line.substring(line.indexOf("MetaCyc:") + 8);
+					f.setMetaCyc( line.substring(line.indexOf("MetaCyc:") + 8) );
 				} else if (line.contains("KEGG:")) {
-					f.kegg = line.substring(line.indexOf("KEGG:") + 5);
+					f.setKegg( line.substring(line.indexOf("KEGG:") + 5) );
 				} else if (line.contains("KO:")) {
-					f.ko = line.substring(line.indexOf("KO:") + 3);
+					f.setKO( line.substring(line.indexOf("KO:") + 3) );
 				}
 			} else if (line.startsWith("is_a:")) {
 				if (line.contains("GO:")) {
@@ -8190,7 +8071,7 @@ public class GeneSet {
 	Map<String,Set<GeneGroup>>				specGroupMap;
 	List<String>							specList = new ArrayList<String>();
 	//byte[] 									zipf;
-	Map<String,Cog>							cogmap = new HashMap<String,Cog>();
+	public Map<String,Cog>					cogmap = new HashMap<String,Cog>();
 	Map<String,String>						cogidmap = new HashMap<String,String>();
 	Map<String,String>						unresolvedmap = new HashMap<String,String>();
 	Map<String,String>						namemap = new HashMap<String,String>();

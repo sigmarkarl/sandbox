@@ -42,6 +42,8 @@ import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 
+import javafx.scene.control.TableView;
+
 public class GeneSorter {
 	public List<Contig> loadContigs( Collection<Gene> genes, final Map<String,Contig> contigmap ) {
 		/*final List<Tegeval> ltv = new ArrayList<Tegeval>();
@@ -495,7 +497,7 @@ public class GeneSorter {
 		return contigs;
 	}
 	
-	public void groupMynd( final GeneSetHead genesethead, final List<GeneGroup> geneGroups, final List<String> speclist, final List<Gene> genelist, final JTable sorting, final Map<String,Sequence> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
+	public void groupMynd( final GeneSetHead genesethead, final List<GeneGroup> geneGroups, final List<String> speclist, final List<Gene> genelist, final TableView sorting, final Map<String,Sequence> contigmap, final Map<Set<String>, ShareNum> specset) throws IOException {
 		GeneSet geneset = genesethead.geneset;
 		
 		final JCheckBox	collapsed = new JCheckBox("Collapsed");
@@ -517,7 +519,7 @@ public class GeneSorter {
 			JOptionPane.showMessageDialog( null, check );
 			final boolean allpos = check.isSelected();
 			
-			final int hey = sorting.getModel() == genesethead.groupModel ? geneGroups.size() : genelist.size(); // ltv.get(ltv.size()-1).stop/1000;
+			final int hey = !genesethead.isGeneview() ? geneGroups.size() : genelist.size(); // ltv.get(ltv.size()-1).stop/1000;
 			final JComponent c = new JComponent() {
 				// Color dg = Color.green.darker();
 
@@ -534,8 +536,8 @@ public class GeneSorter {
 						for( int i = 0; i < (int) rc.getMinX(); i++ ) {
 							GeneGroup genegroup;
 							Gene 		tgene = null;
-							int r = sorting.convertRowIndexToModel(i);
-							if( sorting.getModel() == genesethead.groupModel ) {
+							int r = 0;//sorting.convertRowIndexToModel(i);
+							if( !genesethead.isGeneview() ) {
 								genegroup = geneset.allgenegroups.get( r );
 							} else {
 								tgene = genelist.get( r );
@@ -552,11 +554,11 @@ public class GeneSorter {
 						}
 					}
 					
-					for( int i = (int) rc.getMinX(); i < (int) Math.min(sorting.getRowCount(), rc.getMaxX()); i++ ) {
+					for( int i = (int) rc.getMinX(); i < (int) Math.min(sorting.getItems().size(), rc.getMaxX()); i++ ) {
 						GeneGroup genegroup;
 						Gene 		tgene = null;
-						int r = sorting.convertRowIndexToModel(i);
-						if( sorting.getModel() == genesethead.groupModel ) {
+						int r = 0;//sorting.convertRowIndexToModel(i);
+						if( !genesethead.isGeneview() ) {
 							genegroup = geneset.allgenegroups.get( r );
 						} else {
 							tgene = genelist.get( r );
@@ -567,7 +569,7 @@ public class GeneSorter {
 							if( allpos ) ggset.clear();
 							
 							if( binaryColorScheme.isSelected() ) {
-								if (sorting.isRowSelected(i)) {
+								if (sorting.getSelectionModel().isSelected(i)) {
 									if (i % 2 == 0)
 										g.setColor(rd);
 									else
@@ -616,7 +618,7 @@ public class GeneSorter {
 										g.setColor(dg);*/
 								}
 							} else if( gcColorScheme.isSelected() ) {
-								if (sorting.isRowSelected(i)) {
+								if (sorting.getSelectionModel().isSelected(i)) {
 									double gcp = Math.min( Math.max( 0.5, genegroup.getAvgGCPerc() ), 0.8 );
 									g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );
 								} else {
@@ -624,7 +626,7 @@ public class GeneSorter {
 									g.setColor( new Color( (float)(gcp-0.5)/0.3f, (float)(0.8-gcp)/0.3f, 0.0f ) );
 								}
 							} else if( locprevColorScheme.isSelected() ) {
-								if (sorting.isRowSelected(i)) {
+								if (sorting.getSelectionModel().isSelected(i)) {
 									double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
 									g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
 								} else {
@@ -632,7 +634,7 @@ public class GeneSorter {
 									g.setColor( new Color( (float)locprev/5.0f, 0.0f, 0.0f ) );
 								}
 							} else if( freqColorScheme.isSelected() ) {
-								if (sorting.isRowSelected(i)) {
+								if (sorting.getSelectionModel().isSelected(i)) {
 									//double locprev = Math.min( 5.0, tgene.proximityGroupPreservation );
 									//g.setColor( new Color( 1.0f-(float)locprev/5.0f, 1.0f, 1.0f ) );
 								} else {
@@ -645,7 +647,7 @@ public class GeneSorter {
 							} else if( cycColorScheme.isSelected() ) {
 								int max = genegroup.getMaxCyc();
 								
-								if (sorting.isRowSelected(i)) {								
+								if (sorting.getSelectionModel().isSelected(i)) {								
 									//double locprev = max; //Math.min( , max );
 									g.setColor( new Color( 1.0f-(float)max/27.0f, 1.0f, 1.0f ) );
 								} else {
@@ -654,14 +656,14 @@ public class GeneSorter {
 							} else if( lenColorScheme.isSelected() ) {
 								int max = genegroup.getMaxLength();
 								
-								if (sorting.isRowSelected(i)) {								
+								if (sorting.getSelectionModel().isSelected(i)) {								
 									//double locprev = max; //Math.min( , max );
 									g.setColor( new Color( 1.0f-(float)(max+1)/2800.0f, 1.0f, 1.0f ) );
 								} else {
 									g.setColor( new Color( (float)(max+1)/2800.0f, 0.0f, 0.0f ) );
 								}
 							} else if( shareColorScheme.isSelected() ) {
-								if (sorting.isRowSelected(i)) {
+								if (sorting.getSelectionModel().isSelected(i)) {
 									int numshare = specset.get( genegroup.getSpecies() ).numshare;
 									if( numshare != prevnumshare ) {
 										altcol = altcol == Color.lightGray ? Color.darkGray : Color.lightGray;
@@ -711,7 +713,7 @@ public class GeneSorter {
 										//Teginfo stv = gene.species.get(spec);
 										for (Tegeval tv : ltv /*stv.tset*/ ) {
 											if( binaryColorScheme.isSelected() ) {
-												if (sorting.isRowSelected(i)) {
+												if (sorting.getSelectionModel().isSelected(i)) {
 													if (i % 2 == 0)
 														g.setColor(rd);
 													else
@@ -834,12 +836,12 @@ public class GeneSorter {
 				public void mouseReleased(MouseEvent me) {
 					Point np = me.getPoint();
 
-					if (np.x > p.x) {
+					/*if (np.x > p.x) {
 						Rectangle rect = sorting.getCellRect(p.x, 0, false);
 						rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
 						sorting.scrollRectToVisible(rect);
 						sorting.setRowSelectionInterval(p.x, np.x);
-					}
+					}*/
 					
 					c.repaint();
 				}
