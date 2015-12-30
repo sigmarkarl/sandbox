@@ -73,6 +73,8 @@ import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
 
+import javafx.scene.control.TableView;
+
 public class Neighbour {
 	public Neighbour( Set<GeneGroup> sgg ) {
 		selectedGenesGroups = sgg;
@@ -558,7 +560,7 @@ public class Neighbour {
 						/*String genename = gene.getName();
 						if( commonname.isSelected() && (genename == null || genename.contains("_")) ) {
 							GeneGroup gg = gene.getGeneGroup();
-							if( gg != null ) genename = gg.getCommonName();
+							if( gg != null ) genename = gg.getName();
 						}
 						if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
 						String genename = gene != null ? geneset.getGeneName(showNames, gene) : next.type;
@@ -779,7 +781,7 @@ public class Neighbour {
 						Annotation thenext = next.getNext();
 						int bil = 10;
 						if( thenext != null && realView.isSelected() ) {
-							/*if( next.getGene().getGeneGroup().getCommonName().contains("Elongation") && next.getSpecies().contains("antranik") ) {
+							/*if( next.getGene().getGeneGroup().getName().contains("Elongation") && next.getSpecies().contains("antranik") ) {
 								System.err.println();
 							}*/
 							
@@ -871,7 +873,7 @@ public class Neighbour {
 						Annotation theprev = prev.getPrevious();
 						bil = 10;
 						if( theprev != null && realView.isSelected() ) {
-							/*if( prev.getGene().getGeneGroup().getCommonName().contains("Elongation") && prev.getSpecies().contains("antranik") ) {
+							/*if( prev.getGene().getGeneGroup().getName().contains("Elongation") && prev.getSpecies().contains("antranik") ) {
 								System.err.println();
 							}*/
 							
@@ -889,7 +891,7 @@ public class Neighbour {
 						/*String genename = prev.getGene().getName();
 						if( commonname.isSelected() && genename.contains("_") ) {
 							GeneGroup gg = prev.getGene().getGeneGroup();
-							if( gg != null ) genename = gg.getCommonName();
+							if( gg != null ) genename = gg.getName();
 						}
 						genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;*/
 						String genename = gene != null ? geneset.getGeneName(showNames, prev.getGene()) : prev.type;
@@ -1147,11 +1149,11 @@ public class Neighbour {
 							String genename = geneset.getGeneName(showNames, next.getGene());
 							/*if( names.getSelectedItem().equals("Default names") ) {
 								genename = next.getGene().getName();
-								//if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
+								//if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getName();
 								genename = genename.contains("hypothetical") ? "hth-p" : genename;
 							} else if( names.getSelectedItem().equals("Group names") ) {
 								genename = next.getGene().getName();
-								if( genename.contains("_") ) genename = next.getGene().getGeneGroup().getCommonName();
+								if( genename.contains("_") ) genename = next.getGene().getGeneGroup().getName();
 								genename = genename.contains("hypothetical") ? "hth-p" : genename;
 							} else if( names.getSelectedItem().equals("Cog") ) {
 								genename = next.getGene().getGeneGroup().getCommonCog(geneset.cogmap).id;
@@ -1409,7 +1411,7 @@ public class Neighbour {
 						if( te.getGene() != null ) {
 							String genename = geneset.getGeneName( showNames, prev.getGene() );
 							/*String genename = prev.getGene().getName();
-							if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getCommonName();
+							if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getName();
 							genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
 							
 							double len = te.getProteinLength()*neighbourscale;
@@ -1630,7 +1632,7 @@ public class Neighbour {
 	public void neighbourMynd( final GeneSetHead genesethead, final Container comp, final List<Gene> genes, final Map<String,Sequence> contigmap ) throws IOException {
 		GeneSet geneset = genesethead.geneset;
 		
-		final JTable sorting = genesethead.getGeneTable();
+		final TableView<GeneGroup> sorting = genesethead.getGeneGroupTable();
 		
 		final JButton	zoomIn = new JButton("+");
 		final JButton	zoomOut = new JButton("-");
@@ -1708,8 +1710,8 @@ public class Neighbour {
 						Gene g = te.getGene();
 						GeneGroup gg = g != null ? g.getGeneGroup() : null;
 						if( gg != null ) return "<html>"+
-											//(g.getName().equals( g.refid ) ? gg.getCommonName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
-											gg.getCommonName() + "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
+											//(g.getName().equals( g.refid ) ? gg.getName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
+											gg.getName() + "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
 											+ "</html>";
 					}
 					return null;
@@ -2245,7 +2247,7 @@ public class Neighbour {
 							//Tegeval prevprev = null;
 							for( Annotation ann : tv.getContig().annset ) {
 								Tegeval tv2 = (Tegeval)ann;
-								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getCommonName().contains("Elongation") ) {
+								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getName().contains("Elongation") ) {
 									System.err.println();
 								}*/
 								
@@ -2254,7 +2256,7 @@ public class Neighbour {
 									int stop = tv2.start;
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
-										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
+										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getName(), null );
 										seq.append( prev.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
@@ -2263,7 +2265,7 @@ public class Neighbour {
 									int stop = tv2.start;
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
-										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
+										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getName(), null );
 										seq.append( tv2.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
@@ -2288,7 +2290,7 @@ public class Neighbour {
 							//Tegeval prevprev = null;
 							for( Annotation ann : tv.getContig().annset ) {
 								Tegeval tv2 = (Tegeval)ann;
-								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getCommonName().contains("Elongation") ) {
+								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getName().contains("Elongation") ) {
 									System.err.println();
 								}*/
 								
@@ -2297,7 +2299,7 @@ public class Neighbour {
 									int stop = tv2.start;
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
-										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getCommonName(), null );
+										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getName(), null );
 										seq.append( prev.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
@@ -2306,7 +2308,7 @@ public class Neighbour {
 									int stop = tv2.start;
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
-										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getCommonName(), null );
+										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getName(), null );
 										seq.append( tv2.getContig().sb.substring(start, stop) );
 										serifier.addSequence( seq );
 									}
@@ -2372,16 +2374,16 @@ public class Neighbour {
 									String name = null;
 									if( tv.id == null || !tv.id.equals(tv.name) ) {
 										if( tgene != null ) {
-											symb = tgene.getGeneGroup().getCommonSymbol();
+											symb = tgene.getGeneGroup().getSymbol();
 											if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
 												symb = null;
-												Cog cog = tgene.getGeneGroup().getCommonCog(geneset.cogmap);
+												Cog cog = tgene.getGeneGroup().getCog(geneset.cogmap);
 												if( cog != null ) {
 													symb = cog.genesymbol;
 												}
 											}
 										}
-										name = symb != null ? symb : tv.gene == null ? tv.name : tv.gene.getGeneGroup().getCommonName();
+										name = symb != null ? symb : tv.gene == null ? tv.name : tv.gene.getGeneGroup().getName();
 									}
 									if( name != null && name.contains("hypo") ) name = "hyp";
 									//name += tv.ori == 1 ? "->" : "<-";
@@ -2399,25 +2401,25 @@ public class Neighbour {
 									int bil = ntev != null ? (tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start) : -1;
 									//int bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
 									while( ntev != null && bil < eh && bil > uh ) {
-										if( aq ) System.err.println( bil + " nxt " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
+										if( aq ) System.err.println( bil + " nxt " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getName() : "") );
 										
-										//name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										//name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getName();
 										//name += ntev.ori == 1 ? "->" : "<-";
 										name = null;
 										symb = null;
 										tgene = ntev.getGene();
 										if( ntev.id == null || !ntev.id.equals(ntev.name) ) {
 											if( tgene != null ) {
-												symb = tgene.getGeneGroup().getCommonSymbol();
+												symb = tgene.getGeneGroup().getSymbol();
 												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
 													symb = null;
-													Cog cog = tgene.getGeneGroup().getCommonCog(geneset.cogmap);
+													Cog cog = tgene.getGeneGroup().getCog(geneset.cogmap);
 													if( cog != null ) {
 														symb = cog.genesymbol;
 													}
 												}
 											}
-											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getName();
 										}
 										if( name != null && name.contains("hypo") ) name = "hyp";
 										
@@ -2448,7 +2450,7 @@ public class Neighbour {
 											//bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
 											
 											if( aq ) {
-												System.err.println( "nxt2 " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
+												System.err.println( "nxt2 " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getName() : "") );
 												System.err.println( bil + "  " + "  " + uh + "  " + eh );
 											}
 										}
@@ -2460,9 +2462,9 @@ public class Neighbour {
 									int bbil = ntev != null ? (tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start) : -1;
 									//bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
 									while( ntev != null && bil < eh && bil > uh ) {
-										if( aq ) System.err.println( bil + "prv " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") );
+										if( aq ) System.err.println( bil + "prv " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getName() : "") );
 										
-										//name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+										//name = ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getName();
 										//name += ntev.ori == 1 ? "->" : "<-";
 										
 										name = null;
@@ -2470,16 +2472,16 @@ public class Neighbour {
 										tgene = ntev.getGene();
 										if( ntev.id == null || !ntev.id.equals(ntev.name) ) {
 											if( tgene != null ) {
-												symb = tgene.getGeneGroup().getCommonSymbol();
+												symb = tgene.getGeneGroup().getSymbol();
 												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
 													symb = null;
-													Cog cog = tgene.getGeneGroup().getCommonCog(geneset.cogmap);
+													Cog cog = tgene.getGeneGroup().getCog(geneset.cogmap);
 													if( cog != null ) {
 														symb = cog.genesymbol;
 													}
 												}
 											}
-											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getCommonName();
+											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getName();
 										}
 										if( name != null && name.contains("hypo") ) name = "hyp";
 										
@@ -2507,7 +2509,7 @@ public class Neighbour {
 										if( ntev != null ) {
 											bil = tv.ori == -1 ? ntev.start-tv.stop : ntev.start-tv.start;
 											bbil = tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start;
-											if( aq ) System.err.println( bil + "prv " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getCommonName() : "") + ntev.start + "  " + ntev.stop + "  " + tv.start );
+											if( aq ) System.err.println( bil + "prv " + (ntev.getGene() != null ? ntev.getGene().getGeneGroup().getName() : "") + ntev.start + "  " + ntev.stop + "  " + tv.start );
 											
 											//bil2 = tv.ori != -1 ? ntev.stop-tv.start : ntev.start-tv.start;
 										}
@@ -2598,26 +2600,10 @@ public class Neighbour {
 							//c.sett
 						} else {
 							te.setSelected( !te.isSelected() );
-							int i;
-							if( sorting.getModel() == genesethead.groupModel ) {
-								i = geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+							if( !genesethead.isGeneview() ) {
+								genesethead.getGeneGroupTable().getSelectionModel().select( te.getGene().getGeneGroup() );
 							} else {
-								i = genes.indexOf( te.getGene() );
-							}
-							if( i != -1 ) {
-								int r = sorting.convertRowIndexToView(i);
-								if( te.isSelected() ) {
-									currentTe = te;
-									if( r >= 0 && r < sorting.getRowCount() ) {
-										sorting.addRowSelectionInterval(r, r);
-										sorting.scrollRectToVisible( sorting.getCellRect(r, 0, false) );
-									}
-								} else {
-									if( r >= 0 && r < sorting.getRowCount() ) {
-										sorting.removeRowSelectionInterval(r, r);
-										sorting.scrollRectToVisible( sorting.getCellRect(r, 0, false) );
-									}
-								}
+								genesethead.getGeneTable().getSelectionModel().select( te.getGene() );
 							}
 							c.repaint();
 						}
@@ -2628,9 +2614,12 @@ public class Neighbour {
 					Point np = me.getPoint();
 
 					if (p != null && np.x > p.x) {
-						Rectangle rect = sorting.getCellRect(p.x, 0, false);
-						rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
-						sorting.scrollRectToVisible(rect);
+						//Rectangle rect = sorting.getCellRect(p.x, 0, false);
+						//rect = rect.union(sorting.getCellRect(np.x, sorting.getColumnCount() - 1, false));
+						
+						sorting.scrollTo(0); /*object*/
+						
+						//sorting.scrollRectToVisible(rect);
 						//sorting.setRowSelectionInterval(p.x, np.x);
 					}
 				}
