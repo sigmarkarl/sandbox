@@ -88,7 +88,7 @@ public class WSServer {
 									if( g != null && (specset.isEmpty() || specset.contains(g.getSpecies())) ) {
 										GeneGroup gg = g.getGeneGroup();
 										
-										String ec = gg.getCommonEc();
+										String ec = gg.getEc();
 										Set<String> kegg = new TreeSet<String>();
 										
 										for( String pathw : geneset.pathwaymap.keySet() ) {
@@ -97,12 +97,12 @@ public class WSServer {
 											if( ecs.contains(ec) ) kegg.add( pathw.substring(u) + "=" + pathw.substring(0,u).replace(",", "") );
 										}
 										
-										Cog cog = gg.getCommonCog(geneset.cogmap);
+										Cog cog = gg.getCog(geneset.cogmap);
 										String cogid = cog != null ? cog.id : null;
-										String symbol = gg.getCommonSymbol();
+										String symbol = gg.getSymbol();
 										if( cog != null && symbol == null ) symbol = cog.genesymbol;
 										
-										String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\t" + new String(bb) + "\n";
+										String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\t" + new String(bb) + "\n";
 										//String old =  g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(false, true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n";
 										cs[0].sendToAll( seqstr );
 									}
@@ -188,7 +188,7 @@ public class WSServer {
 								if( specset.isEmpty() || specset.contains(g.getSpecies()) ) {
 									String gref = g.name;
 									GeneGroup gg = g.getGeneGroup();
-									String ec = gg.getCommonEc();
+									String ec = gg.getEc();
 									
 									boolean cont = false;
 									for( String sval : str ) {
@@ -240,11 +240,9 @@ public class WSServer {
 							}
 							
 							if( sgg.size() > 0 ) {
-								for (int r = 0; r < genesethead.table.getRowCount(); r++) {
-									int mr = genesethead.table.convertRowIndexToModel(r);
-									GeneGroup ngg = geneset.allgenegroups.get(mr);
+								for (GeneGroup ngg : genesethead.table.getItems()) {
 									if( sgg.contains(ngg) ) {
-										genesethead.genefilterset.add(mr);
+										genesethead.genefilterset.add(ngg.groupIndex);
 									}
 								}
 								genesethead.updateFilter(genesethead.table, genesethead.genefilter, genesethead.label);
@@ -371,7 +369,7 @@ public class WSServer {
 							if( specset.isEmpty() || specset.contains(g.getSpecies()) ) {
 								String gref = g.name;
 								GeneGroup gg = g.getGeneGroup();
-								String ec = gg.getCommonEc();
+								String ec = gg.getEc();
 								
 								boolean cont = false;
 								for( String sval : str ) {
@@ -407,12 +405,12 @@ public class WSServer {
 										if( ecs.contains(ec) ) kegg.add( pathw.substring(k) + "=" + pathw.substring(0,k).replace(",", "") );
 									}
 									
-									Cog cog = gg.getCommonCog(geneset.cogmap);
+									Cog cog = gg.getCog(geneset.cogmap);
 									String cogid = cog != null ? cog.id : null;
-									String symbol = gg.getCommonSymbol();
+									String symbol = gg.getSymbol();
 									String go = gg.getCommonGO(false, true, null);
 									if( cog != null && symbol == null ) symbol = cog.genesymbol;
-									String seqstr = g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + go + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n";
+									String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + go + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n";
 									sb.append( seqstr );
 								} else {
 									String cazy = geneset.cazymap.get( g.refid );
@@ -430,11 +428,11 @@ public class WSServer {
 										cazy = cazy.substring(0,i);
 										if( str.contains(cazy) ) {
 											//GeneGroup gg = g.getGeneGroup();
-											Cog cog = gg.getCommonCog(geneset.cogmap);
+											Cog cog = gg.getCog(geneset.cogmap);
 											String cogid = cog != null ? cog.id : null;
-											String symbol = gg.getCommonSymbol();
+											String symbol = gg.getSymbol();
 											if( cog != null && symbol == null ) symbol = cog.genesymbol;
-											sb.append( g.id + "\t" + gg.getCommonName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n" );
+											sb.append( g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n" );
 										}
 									}
 								}
@@ -488,7 +486,7 @@ public class WSServer {
 						
 						Set<String> keggset = new TreeSet<String>();
 						for( Gene g : geneset.genelist ) {
-							String ec = g.getGeneGroup().getCommonEc();
+							String ec = g.getGeneGroup().getEc();
 							for( String pathw : geneset.pathwaymap.keySet() ) {
 								Set<String> ecs = geneset.pathwaymap.get( pathw );
 								//int k = pathw.lastIndexOf(' ');
