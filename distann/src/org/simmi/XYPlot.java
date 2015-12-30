@@ -48,6 +48,8 @@ import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Tegeval;
 
+import javafx.scene.control.TableView;
+
 public class XYPlot {
 	List<Sequence>	spec1Conts = new ArrayList<Sequence>();
 	List<Sequence>	spec2Conts = new ArrayList<Sequence>();
@@ -96,7 +98,7 @@ public class XYPlot {
 	Sequence	contigy;
 	Point	mouseSel;
 	public void xyPlot( final GeneSetHead genesethead, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
-		final JTable 				table = genesethead.getGeneTable();
+		final TableView<GeneGroup> 	table = genesethead.getGeneGroupTable();
 		final Collection<String> 	specset = genesethead.geneset.getSpecies(); //speciesFromCluster( clusterMap );
 		final List<String>			species = new ArrayList<String>( specset );
 		//final List<String>	specList = new ArrayList<String>( species );
@@ -193,54 +195,42 @@ public class XYPlot {
 							for( int u = ct.getAnnotations().size()-1; u >= 0; u-- ) {
 								Tegeval val = (Tegeval)ct.getAnnotation( u );
 								GeneGroup gg = val.getGene().getGeneGroup();
-								int a = genesethead.geneset.allgenegroups.indexOf( gg );
 								
-								int l = -1;
-								if( a != -1 ) l = table.convertRowIndexToView( a );
-									
-								if( l != -1 ) {
-									boolean rs = table.isRowSelected( l );
-									List<Tegeval> tv2list = gg.getTegevals( spec2 );
-									for( Tegeval tv2 : tv2list ) {
-										tv2.setSelected( rs );
-										int count2 = 0;
-										int k = spec2Conts.indexOf( tv2.getContshort() );
-										if( k != -1 ) {
-											for( int i = 0; i < k; i++ ) {
-												Sequence ct2 = spec2Conts.get( i );
-												count2 += ct2.getAnnotationCount();
-											}
-											Sequence ct2 = spec2Conts.get( k );
-											count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
-											
-											if( gccolor.isSelected() ) {
-												/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
-												double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
-												g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );*/
-												g.setColor( tv2.getGCColor() );
-											} else {
-												boolean sel = false;
-												if( table.getModel() == genesethead.groupModel ) {
-													int r = table.convertRowIndexToView( val.getGene().getGeneGroup().index );
-													if( r != -1 ) {
-														sel = table.isRowSelected( r );
-													}
-												} else {
-													int r = table.convertRowIndexToView( val.getGene().index );
-													if( r != -1 ) {
-														sel = table.isRowSelected( r );
-													}
-												}
-												if( val.isSelected() || tv2.isSelected() || sel ) g.setColor( Color.red );
-												else g.setColor( Color.blue );
-											}
-											if( count == count2 ) {
-												ermcount++;
-											}
-											g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
-										} else {
-											//System.err.println();
+								boolean rs = table.getSelectionModel().getSelectedItems().indexOf(gg) != -1;
+								List<Tegeval> tv2list = gg.getTegevals( spec2 );
+								for( Tegeval tv2 : tv2list ) {
+									tv2.setSelected( rs );
+									int count2 = 0;
+									int k = spec2Conts.indexOf( tv2.getContshort() );
+									if( k != -1 ) {
+										for( int i = 0; i < k; i++ ) {
+											Sequence ct2 = spec2Conts.get( i );
+											count2 += ct2.getAnnotationCount();
 										}
+										Sequence ct2 = spec2Conts.get( k );
+										count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
+										
+										if( gccolor.isSelected() ) {
+											/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
+											double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
+											g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );*/
+											g.setColor( tv2.getGCColor() );
+										} else {
+											boolean sel = false;
+											if( !genesethead.isGeneview() ) {
+												sel = table.getSelectionModel().getSelectedItems().indexOf( val.getGene().getGeneGroup() ) != -1;
+											} else {
+												sel = genesethead.getGeneTable().getSelectionModel().getSelectedItems().indexOf( val.getGene() ) != -1;
+											}
+											if( val.isSelected() || tv2.isSelected() || sel ) g.setColor( Color.red );
+											else g.setColor( Color.blue );
+										}
+										if( count == count2 ) {
+											ermcount++;
+										}
+										g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
+									} else {
+										//System.err.println();
 									}
 								}
 								
@@ -258,54 +248,42 @@ public class XYPlot {
 							for( Annotation ann : ct.getAnnotations() ) {
 								Tegeval val = (Tegeval)ann;
 								GeneGroup gg = val.getGene().getGeneGroup();
-								int a = genesethead.geneset.allgenegroups.indexOf( gg );
 								
-								int l = -1;
-								if( a != -1 ) l = table.convertRowIndexToView( a );
-									
-								if( l != -1 ) {
-									boolean rs = table.isRowSelected( l );
-									List<Tegeval> tv2list = gg.getTegevals( spec2 );
-									for( Tegeval tv2 : tv2list ) {
-										tv2.setSelected( rs );
-										int count2 = 0;
-										int k = spec2Conts.indexOf( tv2.getContshort() );
-										if( k != -1 ) {
-											for( int i = 0; i < k; i++ ) {
-												Sequence ct2 = spec2Conts.get( i );
-												count2 += ct2.getAnnotationCount();
-											}
-											Sequence ct2 = spec2Conts.get( k );
-											count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
-											
-											if( gccolor.isSelected() ) {
-												/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
-												double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
-												g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );*/
-												g.setColor( tv2.getGCColor() );
-											} else {
-												boolean sel = false;
-												if( table.getModel() == genesethead.groupModel ) {
-													int r = table.convertRowIndexToView( val.getGene().getGeneGroup().index );
-													if( r != -1 ) {
-														sel = table.isRowSelected( r );
-													}
-												} else {
-													int r = table.convertRowIndexToView( val.getGene().index );
-													if( r != -1 ) {
-														sel = table.isRowSelected( r );
-													}
-												}
-												if( val.isSelected() || tv2.isSelected() || sel ) g.setColor( Color.red );
-												else g.setColor( Color.blue );
-											}
-											if( count == count2 ) {
-												ermcount++;
-											}
-											g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
-										} else {
-											//System.err.println();
+								boolean rs = table.getSelectionModel().getSelectedItems().indexOf(gg) != -1;
+								List<Tegeval> tv2list = gg.getTegevals( spec2 );
+								for( Tegeval tv2 : tv2list ) {
+									tv2.setSelected( rs );
+									int count2 = 0;
+									int k = spec2Conts.indexOf( tv2.getContshort() );
+									if( k != -1 ) {
+										for( int i = 0; i < k; i++ ) {
+											Sequence ct2 = spec2Conts.get( i );
+											count2 += ct2.getAnnotationCount();
 										}
+										Sequence ct2 = spec2Conts.get( k );
+										count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
+										
+										if( gccolor.isSelected() ) {
+											/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
+											double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
+											g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );*/
+											g.setColor( tv2.getGCColor() );
+										} else {
+											boolean sel = false;
+											if( !genesethead.isGeneview() ) {
+												sel = table.getSelectionModel().getSelectedItems().indexOf( val.getGene().getGeneGroup() ) != -1;
+											} else {
+												sel = genesethead.getGeneTable().getSelectionModel().getSelectedItems().indexOf( val.getGene() ) != -1;
+											}
+											if( val.isSelected() || tv2.isSelected() || sel ) g.setColor( Color.red );
+											else g.setColor( Color.blue );
+										}
+										if( count == count2 ) {
+											ermcount++;
+										}
+										g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
+									} else {
+										//System.err.println();
 									}
 								}
 								
@@ -441,7 +419,7 @@ public class XYPlot {
 							tv = tv.getNext();
 						}
 					}
-					table.clearSelection();
+					table.getSelectionModel().clearSelection();
 					//table.removeRowSelectionInterval(0, table.getRowCount());
 					drawc.repaint();
 				} else if( showgrid.isSelected() ) {
@@ -490,14 +468,15 @@ public class XYPlot {
 						if( te != null ) {
 							te.setSelected( true );
 							
-							int i;
-							if( table.getModel() == genesethead.groupModel ) {
-								i = genesethead.geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+							if( !genesethead.isGeneview() ) {
+								table.getSelectionModel().select( te.getGene().getGeneGroup() );
+								table.scrollTo( te.getGene().getGeneGroup() );
 							} else {
-								i = genelist.indexOf( te.getGene() );
+								genesethead.getGeneTable().getSelectionModel().select( te.getGene() );
+								genesethead.getGeneTable().scrollTo( te.getGene() );
 							}
 							
-							int r = table.convertRowIndexToView(i);
+							/*int r = table.convertRowIndexToView(i);
 							if( te.isSelected() ) {
 								Neighbour.currentTe = te;
 								if( r >= 0 && r < table.getRowCount() ) {
@@ -509,7 +488,7 @@ public class XYPlot {
 									table.removeRowSelectionInterval(r, r);
 									table.scrollRectToVisible( table.getCellRect(r, 0, false) );
 								}
-							}
+							}*/
 						}
 					}
 					
@@ -530,13 +509,15 @@ public class XYPlot {
 						if( te != null ) {
 							te.setSelected( true );
 							
-							int i;
-							if( table.getModel() == genesethead.groupModel ) {
-								i = genesethead.geneset.allgenegroups.indexOf( te.getGene().getGeneGroup() );
+							if( !genesethead.isGeneview() ) {
+								table.getSelectionModel().select( te.getGene().getGeneGroup() );
+								table.scrollTo( te.getGene().getGeneGroup() );
 							} else {
-								i = genelist.indexOf( te.getGene() );
+								genesethead.getGeneTable().getSelectionModel().select( te.getGene() );
+								genesethead.getGeneTable().scrollTo( te.getGene() );
 							}
-							int r = table.convertRowIndexToView(i);
+							
+							/*int r = table.convertRowIndexToView(i);
 							if( te.isSelected() ) {
 								Neighbour.currentTe = te;
 								if( r >= 0 && r < table.getRowCount() ) {
@@ -548,7 +529,7 @@ public class XYPlot {
 									table.removeRowSelectionInterval(r, r);
 									table.scrollRectToVisible( table.getCellRect(r, 0, false) );
 								}
-							}
+							}*/
 						}
 					}
 					

@@ -24,12 +24,15 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.simmi.shared.Annotation;
+import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+
+import javafx.scene.control.TableView;
 
 public class CodingRegions {
 	public void coderegPlot( GeneSetHead genesethead, Container comp ) {
 		GeneSet geneset = genesethead.geneset;
-		final JTable 				table = genesethead.getGeneTable();
+		final TableView<GeneGroup> 	table = genesethead.getGeneGroupTable();
 		final Collection<String> 	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
 		final List<String>			species = new ArrayList<String>( specset );
 		
