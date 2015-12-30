@@ -9,7 +9,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -57,11 +56,10 @@ public class SyntGrad {
 	JButton		repaint = new JButton("Repaint");
 	
 	public void syntGrad( final GeneSetHead genesethead, final int w, final int h, Set<String> presel ) {
-		GeneSet	geneset = genesethead.geneset;
-		final JTable 				table = genesethead.getGeneTable();
-		//final Collection<String> 	specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
-		final Collection<String>	specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
-		final List<String>			species = new ArrayList<String>( specset );
+		GeneSet									geneset = genesethead.geneset;
+		//final Collection<String> 				specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
+		final Collection<String>				specset = geneset.getSpecies(); //speciesFromCluster( clusterMap );
+		final List<String>						species = new ArrayList<String>( specset );
 		
 		TableModel model = new TableModel() {
 			@Override
@@ -367,10 +365,10 @@ public class SyntGrad {
 								seq.append( seqstr );
 								geneset.showSomeSequences( geneset, Arrays.asList( new Sequence[] {seq} ) );*/
 							} else {
-								genesethead.table.clearSelection();
+								genesethead.getGeneGroupTable().getSelectionModel().clearSelection();
 								if( c == null ) {
 									for( int k = minloc; k < maxloc; k++ ) {
-										genesethead.table.addRowSelectionInterval(k, k);
+										genesethead.getGeneGroupTable().getSelectionModel().select(k);
 									}
 								} else for( int k = minloc; k < maxloc; k++ ) {
 									if( k-loc >= c.getAnnotationCount() ) {
@@ -390,21 +388,14 @@ public class SyntGrad {
 										break;
 									} else {
 										int r;
-										if( genesethead.table.getModel() == genesethead.groupModel ) {
-											int u = geneset.allgenegroups.indexOf( tv.getGene().getGeneGroup() );
-											r = genesethead.table.convertRowIndexToView(u);
-											if( r >= 0 && r < genesethead.table.getRowCount() ) genesethead.table.addRowSelectionInterval( r, r );
+										if( !genesethead.isGeneview() ) {
+											genesethead.getGeneGroupTable().getSelectionModel().select( tv.getGene().getGeneGroup() );
 										} else {
 											Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
-											int selr = -1;
 											for( Tegeval te : ti.tset ) {
-												int u = geneset.genelist.indexOf( te.getGene() );
-												r = genesethead.table.convertRowIndexToView(u);
-												if( selr == -1 ) selr = r;
-												if( r >= 0 && r < genesethead.table.getRowCount() ) genesethead.table.addRowSelectionInterval( r, r );
+												genesethead.getGeneTable().getSelectionModel().select( te.getGene() );
 											}
-											Rectangle rect = genesethead.table.getCellRect(selr, 0, true);
-											genesethead.table.scrollRectToVisible(rect);
+											genesethead.getGeneTable().scrollTo( ti.best.getGene() );
 										}
 									}
 								}
@@ -525,20 +516,25 @@ public class SyntGrad {
 				count = ti.tset.size();
 				
 				int i = 0;
-				if( genesethead.table.getModel() == genesethead.defaultModel ) {
-					i = geneset.genelist.indexOf(gene);
-				} else {
-					i = geneset.allgenegroups.indexOf(gg);
-				}
-				
-				if( i != -1 ) {
-					int rv = genesethead.table.convertRowIndexToView(i);
-					if( rv >= 0 && rv < genesethead.table.getRowCount() ) {
+				if( genesethead.isGeneview() ) {
+					int rv = genesethead.getGeneTable().getItems().indexOf(gene);
+					if( rv >= 0 && rv < genesethead.getGeneTable().getItems().size() ) {
 						visible = true; //geneset.table.isRowSelected( rv );
 						
 						if( syntcol.isSelected() ) {
 							//double ratio = (double)gg.index/(double)geneset.allgenegroups.size(); 
-							double ratio = (double)rv/(double)genesethead.table.getRowCount();
+							double ratio = (double)rv/(double)genesethead.getGeneTable().getItems().size();
+							color = GeneCompare.gradientColor(ratio);
+						}
+					}
+				} else {
+					int rv = genesethead.getGeneGroupTable().getItems().indexOf(gg);
+					if( rv >= 0 && rv < genesethead.getGeneGroupTable().getItems().size() ) {
+						visible = true; //geneset.table.isRowSelected( rv );
+						
+						if( syntcol.isSelected() ) {
+							//double ratio = (double)gg.index/(double)geneset.allgenegroups.size(); 
+							double ratio = (double)rv/(double)genesethead.getGeneGroupTable().getItems().size();
 							color = GeneCompare.gradientColor(ratio);
 						}
 					}
@@ -575,16 +571,23 @@ public class SyntGrad {
 			
 			if( selcheck.isSelected() ) {
 				int i = 0;
-				if( genesethead.table.getModel() == genesethead.defaultModel ) {
-					i = geneset.genelist.indexOf(gene);
+				if( genesethead.isGeneview() ) {
+					int rv = genesethead.getGeneTable().getItems().indexOf(gene);
+					if( rv >= 0 && rv < genesethead.getGeneTable().getItems().size() ) {
+						if( genesethead.getGeneTable().getSelectionModel().isSelected( rv ) ) {
+							g2.setColor( Color.black );
+							g2.translate(w2, h2);
+							g2.rotate( rr );
+							g2.setColor( Color.magenta );
+							g2.drawLine(rad+15, 0, rad+100, 0);
+							g2.rotate( -rr );
+							g2.translate(-w2, -h2);
+						}
+					}
 				} else {
-					i = geneset.allgenegroups.indexOf(gg);
-				}
-				
-				if( i != -1 ) {
-					int rv = genesethead.table.convertRowIndexToView(i);
-					if( rv >= 0 && rv < genesethead.table.getRowCount() ) {
-						if( genesethead.table.isRowSelected( rv ) ) {
+					int rv = genesethead.getGeneGroupTable().getItems().indexOf(gg);
+					if( rv >= 0 && rv < genesethead.getGeneGroupTable().getItems().size() ) {
+						if( genesethead.getGeneGroupTable().getSelectionModel().isSelected( rv ) ) {
 							g2.setColor( Color.black );
 							g2.translate(w2, h2);
 							g2.rotate( rr );
@@ -691,123 +694,77 @@ public class SyntGrad {
 			int ptvn = 0;
 			
 			boolean succ = false;
-			int rr = genesethead.table.getSelectedRow();
-			if( rr != -1 ) {
-				Tegeval te = null;
-				int i = genesethead.table.convertRowIndexToModel(rr);
-				if( genesethead.table.getModel() == genesethead.defaultModel ) {
-					Gene gene = geneset.genelist.get(i);
-					te = gene.tegeval;
-				} else {
-					GeneGroup gg = geneset.allgenegroups.get(i);
-					Teginfo t = gg.getGenes(spec);
-					if( t != null ) {
-						te = t.best;
-					}
+			Tegeval te = null;
+			
+			if( genesethead.isGeneview() ) {
+				Gene gene = genesethead.getGeneTable().getSelectionModel().getSelectedItem();
+				te = gene.tegeval;
+			} else {
+				GeneGroup gg = genesethead.getGeneGroupTable().getSelectionModel().getSelectedItem();
+				Teginfo t = gg.getGenes(spec);
+				if( t != null ) {
+					te = t.best;
 				}
+			}
+			
+			if( te != null ) {
+				succ = true;
+				
+				int ci = 0;
+				int k = -1;
+				//Tegeval te = t.best;
+				/*if( te == null ) {
+					for( Tegeval tv : t.tset ) {
+						te = tv;
+						if( te != null ) break;
+					}
+				}*/
 				
 				if( te != null ) {
-					succ = true;
-					
-					int ci = 0;
-					int k = -1;
-					//Tegeval te = t.best;
-					/*if( te == null ) {
-						for( Tegeval tv : t.tset ) {
-							te = tv;
-							if( te != null ) break;
-						}
-					}*/
-					
-					if( te != null ) {
-						if( te.getContshort().isPlasmid() ) {
-							for( Sequence c : scontigs ) {
-								if( c.isPlasmid() ) {
-									if( c.annset != null ) {
-										k = c.indexOf( te );
-										if( k != -1 ) {
-											ptvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
-											break;
-										}
-									}
-									/*if( k != -1 ) {
+					if( te.getContshort().isPlasmid() ) {
+						for( Sequence c : scontigs ) {
+							if( c.isPlasmid() ) {
+								if( c.annset != null ) {
+									k = c.indexOf( te );
+									if( k != -1 ) {
+										ptvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
 										break;
-									}*/
-									ptvn += c.getAnnotationCount();
-								}
-								ci++;
-							}
-						} else {
-							for( Sequence c : scontigs ) {
-								if( !c.isPlasmid() ) {
-									if( c.annset != null ) {
-										k = c.indexOf( te );
-										if( k != -1 ) {
-											tvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
-											break;
-										}
 									}
-									/*if( k != -1 ) {
-										break;
-									}*/
-									tvn += c.getAnnotationCount();
 								}
-								ci++;
+								/*if( k != -1 ) {
+									break;
+								}*/
+								ptvn += c.getAnnotationCount();
 							}
+							ci++;
 						}
-						
-						for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
-							int cii = cci%scontigs.size();
-							Sequence c = scontigs.get(cii);
-							if( cii == ci ) {
-								Annotation tv = c.getAnnotation(k);
-								if( cci == ci ) {
-									while( tv != null ) {
-										doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
-										Annotation prev = tv;
-										
-										boolean plas = tv.getContig().isPlasmid();
-										if( plas ) {
-											ptvn = (ptvn+1)%ptotal;
-										} else {
-											tvn = (tvn+1)%total;
-										}
-										tv = c.getNext(tv);
-										
-										if( tv != null && tv.start == prev.start ) {
-											System.err.println( tv.name + "   " + prev.name );
-											System.err.println( tv == prev );
-											
-											break;
-										}
-									}
-								} else {
-									Annotation ftv = c.getFirst();
-									while( ftv != tv ) {
-										doTv( genesethead, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
-										Annotation prev = ftv;
-										
-										boolean plas = tv.getContig().isPlasmid();
-										if( plas ) {
-											ptvn = (ptvn+1)%ptotal;
-										} else {
-											tvn = (tvn+1)%total;
-										}
-										ftv = c.getNext( ftv );
-										
-										if( ftv != null && ftv.start == prev.start ) {
-											System.err.println( ftv.name + "   " + prev.name );
-											System.err.println( ftv == prev );
-											
-											break;
-										}
+					} else {
+						for( Sequence c : scontigs ) {
+							if( !c.isPlasmid() ) {
+								if( c.annset != null ) {
+									k = c.indexOf( te );
+									if( k != -1 ) {
+										tvn += c.isReverse() ? c.getAnnotationCount() - k - 1 : k;
+										break;
 									}
 								}
-							} else {
-								Annotation tv = c.getFirst();
+								/*if( k != -1 ) {
+									break;
+								}*/
+								tvn += c.getAnnotationCount();
+							}
+							ci++;
+						}
+					}
+					
+					for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
+						int cii = cci%scontigs.size();
+						Sequence c = scontigs.get(cii);
+						if( cii == ci ) {
+							Annotation tv = c.getAnnotation(k);
+							if( cci == ci ) {
 								while( tv != null ) {
 									doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
-									
 									Annotation prev = tv;
 									
 									boolean plas = tv.getContig().isPlasmid();
@@ -816,7 +773,7 @@ public class SyntGrad {
 									} else {
 										tvn = (tvn+1)%total;
 									}
-									tv = c.getNext( tv );
+									tv = c.getNext(tv);
 									
 									if( tv != null && tv.start == prev.start ) {
 										System.err.println( tv.name + "   " + prev.name );
@@ -824,32 +781,75 @@ public class SyntGrad {
 										
 										break;
 									}
+								}
+							} else {
+								Annotation ftv = c.getFirst();
+								while( ftv != tv ) {
+									doTv( genesethead, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
+									Annotation prev = ftv;
 									
-									/*if( tv == c.getFirst() ) {
+									boolean plas = tv.getContig().isPlasmid();
+									if( plas ) {
+										ptvn = (ptvn+1)%ptotal;
+									} else {
+										tvn = (tvn+1)%total;
+									}
+									ftv = c.getNext( ftv );
+									
+									if( ftv != null && ftv.start == prev.start ) {
+										System.err.println( ftv.name + "   " + prev.name );
+										System.err.println( ftv == prev );
+										
 										break;
-									}*/
+									}
 								}
 							}
-							
-							if( contcheck.isSelected() ) {
-								double r = 2.0*Math.PI*( (c.isPlasmid() ? (double)(total+ptvn) : (double)tvn)/(double)(ptotal+total) );
-								g2.translate(w2, h2);
-								g2.rotate( r );
-								g2.setColor( Color.black );
-								g2.drawLine(rad, 0, rad+100, 0);
-								g2.rotate( -r );
-								g2.translate(-w2, -h2);
-							}
-							
-							/*Tegeval prev = tv;
-							
-							if( tv != null && tv.start == prev.start ) {
-								System.err.println( tv.name + "   " + prev.name );
-								System.err.println( tv == prev );
+						} else {
+							Annotation tv = c.getFirst();
+							while( tv != null ) {
+								doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 								
-								break;
-							}*/
+								Annotation prev = tv;
+								
+								boolean plas = tv.getContig().isPlasmid();
+								if( plas ) {
+									ptvn = (ptvn+1)%ptotal;
+								} else {
+									tvn = (tvn+1)%total;
+								}
+								tv = c.getNext( tv );
+								
+								if( tv != null && tv.start == prev.start ) {
+									System.err.println( tv.name + "   " + prev.name );
+									System.err.println( tv == prev );
+									
+									break;
+								}
+								
+								/*if( tv == c.getFirst() ) {
+									break;
+								}*/
+							}
 						}
+						
+						if( contcheck.isSelected() ) {
+							double r = 2.0*Math.PI*( (c.isPlasmid() ? (double)(total+ptvn) : (double)tvn)/(double)(ptotal+total) );
+							g2.translate(w2, h2);
+							g2.rotate( r );
+							g2.setColor( Color.black );
+							g2.drawLine(rad, 0, rad+100, 0);
+							g2.rotate( -r );
+							g2.translate(-w2, -h2);
+						}
+						
+						/*Tegeval prev = tv;
+						
+						if( tv != null && tv.start == prev.start ) {
+							System.err.println( tv.name + "   " + prev.name );
+							System.err.println( tv == prev );
+							
+							break;
+						}*/
 					}
 				}
 			}
