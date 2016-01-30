@@ -53,6 +53,7 @@ public class DistannFX extends Application {
         root.setCenter( splitpane );
 
         Scene scene = new Scene(root, 800, 600);
+        scene.getStylesheets().add("view/mystyle.css");
 
         primaryStage.setTitle("Genav");
         primaryStage.setScene(scene);
