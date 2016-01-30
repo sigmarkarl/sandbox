@@ -20,6 +20,6 @@
 	<classpathentry kind="lib" path="/poi/poi-3.11/poi-ooxml-schemas-3.11-20141221.jar"/>
 	<classpathentry kind="lib" path="/poi/poi-3.11/poi-scratchpad-3.11-20141221.jar"/>
 	<classpathentry kind="lib" path="commons-compress-1.9.jar"/>
-	<classpathentry kind="lib" path="/Library/Java/JavaVirtualMachines/jdk1.8.0_66.jdk/Contents/Home/jre/lib/javaws.jar"/>
+	<classpathentry kind="lib" path="/Library/Java/JavaVirtualMachines/jdk1.8.0_72.jdk/Contents/Home/jre/lib/javaws.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
