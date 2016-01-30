@@ -173,12 +173,16 @@ import org.simmi.unsigned.NativeRun;
 import org.simmi.unsigned.SmithWater;
 
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
@@ -191,6 +195,7 @@ import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -439,6 +444,10 @@ public class GeneSetHead extends JApplet {
 		}
 	};
 	
+	FilteredList<GeneGroup>					filteredData;
+	SortedList<GeneGroup>					sortedData;
+	FilteredList<Function>					ffilteredData;
+	SortedList<Function>					fsortedData;
 	private void importStuff() throws IOException, UnavailableServiceException {
 		boolean fail = true;
 		InputStream	is = null;
@@ -544,11 +553,66 @@ public class GeneSetHead extends JApplet {
 			//ftable.setModel( ftablemodel );
 			//ftable.setItems( geneset.f);
 			
+			for( String spec : geneset.specList ) {
+				TableColumn<GeneGroup, Teginfo> speccol = new TableColumn(spec);
+				//speccol.getStyleClass().add("tabstyle");
+				speccol.setCellFactory( cell -> {
+					final TableCell<GeneGroup,Teginfo> tc = new TableCell<GeneGroup,Teginfo>() {
+						@Override
+				        protected void updateItem(Teginfo item, boolean empty) {
+				            super.updateItem(item, empty);
+
+				            if (item == null || item.toString().length() == 0 || empty) {
+				                setText(null);
+				                setStyle("");
+				                //getStyleClass().remove("tabcellstyle");
+				            } else {
+				            	setText(item.toString());
+				            	cellRender( this, item, 0 );
+				                //getStyleClass().add("tabcellstyle");
+				                /*if( (this.getTableRow() != null && getTableRow().isSelected()) || isSelected() ) {
+				                	//setTextFill( javafx.scene.paint.Color.WHITE );
+				                	setStyle("-fx-background-color: darkgreen");
+				                } else {
+				                	//setTextFill( javafx.scene.paint.Color.BLACK );
+				                	setStyle("-fx-background-color: green");
+				                }*/
+				            }
+				        }
+					};
+					return tc;
+				});
+				speccol.setCellValueFactory( cellValue -> {
+					Teginfo tes = cellValue.getValue().getTes( spec );
+					return new ReadOnlyObjectWrapper<Teginfo>(tes);
+					//return new SimpleStringProperty( tes != null ? tes.toString() : "" );
+					//Teginfo ret = geneset.getGroupTes( cellValue.getValue(), spec );
+					//return new ObservableValue<String>( ret.toString() );
+					//return ret;
+				});
+				table.getColumns().add( speccol );
+				
+				TableColumn<Gene, String> gspeccol = new TableColumn(spec);
+				gspeccol.setCellValueFactory( cellValue -> {
+					return new SimpleStringProperty( cellValue.getValue().toString() );
+					//Teginfo ret = geneset.getGroupTes( cellValue.getValue(), spec );
+					//return new ObservableValue<String>( ret.toString() );
+					//return ret;
+				});
+				gtable.getColumns().add( gspeccol );
+			}
+			
 			ObservableList<Function> ofunc = FXCollections.observableList( geneset.funclist );
-			ftable.setItems( ofunc );
+			ffilteredData = new FilteredList<Function>(ofunc, p -> true);
+			fsortedData = new SortedList<Function>( ffilteredData );
+			fsortedData.comparatorProperty().bind(ftable.comparatorProperty());
+			ftable.setItems( fsortedData );
 			
 			ObservableList<GeneGroup> ogenegroup = FXCollections.observableList( geneset.allgenegroups );
-			table.setItems( ogenegroup );
+			filteredData = new FilteredList<GeneGroup>(ogenegroup, p -> true);
+			sortedData = new SortedList<GeneGroup>( filteredData );
+			sortedData.comparatorProperty().bind(table.comparatorProperty());
+			table.setItems( sortedData );
 			
 			ObservableList<Gene> ogene = FXCollections.observableList( geneset.genelist );
 			gtable.setItems( ogene );
@@ -2390,7 +2454,7 @@ public class GeneSetHead extends JApplet {
 	}
 	
 	public boolean isGeneview() {
-		return true;
+		return splitpane.getItems().contains( gtable );
 	}
 	
 	public int getSelectionSize() {
@@ -2411,11 +2475,14 @@ public class GeneSetHead extends JApplet {
 	
 	ComboBox<String> 						specombo;
 	ComboBox<String> 						combo;
+	
+	SplitPane		splitpane;
 
 	Component comp;
 	public void init(final Container comp, final SplitPane splitpane, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower, final MenuBar menubar, final ToolBar toolbar, final ToolBar btoolbar ) {
 		geneset.user = System.getProperty("user.name");
 		JavaFasta.user = geneset.user;
+		this.splitpane = splitpane;
 		//SerifyApplet.user = user;
 		
 		/*try {
@@ -3340,14 +3407,14 @@ public class GeneSetHead extends JApplet {
 		gb = new RadioMenuItem("Genes");
 		gb.setOnAction( actionEvent -> {
 			splitpane.getItems().remove( table );
-			splitpane.getItems().add( gtable );
+			splitpane.getItems().add( 0, gtable );
 			//table.setModel( defaultModel );
 		});
 		view.getItems().add( gb );
 		ggb = new RadioMenuItem("Gene groups");
 		ggb.setOnAction( actionEvent -> {
 			splitpane.getItems().remove( gtable );
-			splitpane.getItems().add( table );
+			splitpane.getItems().add( 0, table );
 			//table.setModel( groupModel );
 		});
 		
@@ -6019,15 +6086,13 @@ public class GeneSetHead extends JApplet {
 			}
 		}
 
-		final JButton jb = new JButton(new AbstractAction("Atlas") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					URL url = new URL("file:///home/sigmar/workspace/distann/bin/circle.html");
-					GeneSetHead.this.getAppletContext().showDocument(url, "_blank");
-				} catch (MalformedURLException e1) {
-					e1.printStackTrace();
-				}
+		final Button jb = new Button("Atlas");
+		jb.setOnAction( event -> {
+			try {
+				URL url = new URL("file:///home/sigmar/workspace/distann/bin/circle.html");
+				GeneSetHead.this.getAppletContext().showDocument(url, "_blank");
+			} catch (MalformedURLException e1) {
+				e1.printStackTrace();
 			}
 		});
 		
@@ -6050,6 +6115,256 @@ public class GeneSetHead extends JApplet {
 	public void saveSel( String name, String val) throws Exception, NoSuchMethodError {
 		JSObject jso = JSObject.getWindow( this );
 		jso.call("saveSel", new Object[] { name, val });
+	}
+	
+	public void cellRender( TableCell<GeneGroup,Teginfo> cell, Object value, int row ) {
+		String spec = (String)syncolorcomb.getSelectionModel().getSelectedItem();
+		if( spec != null && spec.length() > 0 ) {
+			if( spec.equals("All") ) {
+				if( value instanceof Teginfo ) {
+					Teginfo ti = (Teginfo)value;
+					cell.setStyle( "-fx-background-color: green" );
+					for( Tegeval tv : ti.tset ) {
+						String tspec = tv.getGene().getSpecies();
+						List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
+						GeneGroup gg = tv.getGene().getGeneGroup();
+						double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
+						if( ratio == -1 ) {
+							ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
+							cell.setStyle( "-fx-background-color: "+GeneCompare.gradientGrayscaleColor( ratio ) );
+							//label.setForeground( Color.white );
+						} else {
+							cell.setStyle( "-fx-background-color: "+GeneCompare.gradientColor( ratio ) );
+							//label.setForeground( Color.black );
+						}
+						break;
+						//GeneCompare.gradientColor();
+					}
+				} else if( value instanceof Tegeval ) {
+					Tegeval tv = (Tegeval)value;
+					String tspec = tv.getGene().getSpecies();
+					List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
+					GeneGroup gg = tv.getGene().getGeneGroup();
+					double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
+					if( ratio == -1 ) {
+						ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
+						cell.setStyle( "-fx-background-color: "+GeneCompare.gradientGrayscaleColor( ratio ) );
+						//label.setForeground( Color.white );
+					} else {
+						cell.setStyle( "-fx-background-color: "+GeneCompare.gradientColor( ratio ) );
+						//label.setForeground( Color.black );
+					}
+				}
+			} else {
+				List<Sequence> contigs = geneset.speccontigMap.get( spec );
+				if( value instanceof Teginfo ) {
+					//Teginfo ti = (Teginfo)value;
+					cell.setStyle( "-fx-background-color: green" );
+					
+					//GeneGroup 	gg = ti.best.getGene().getGeneGroup();
+					//Teginfo		gene2s = gg.getGenes(spec);
+					//double ratio = -1.0;
+					int msimcount = 0;
+					
+					GeneGroup gg = null;
+					Tegeval tv = null;
+					Tegeval tv2 = null;
+					if( isGeneview() ) {
+						Gene g = gtable.getItems().get(row);
+						//Gene g = geneset.genelist.get(i);
+						gg = g.getGeneGroup();
+						tv2 = g.tegeval;
+					}
+					
+					if( gg != null ) {
+						Teginfo		gene2s = gg.getGenes(spec);
+						if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
+							int simcount = 0;
+							
+							Annotation n = tv1.getNext();
+							Annotation p = tv1.getPrevious();
+							Annotation n2 = tv2.getNext();
+							Annotation p2 = tv2.getPrevious();
+							
+							if( n != null ) {
+								GeneGroup ngg = n.getGene().getGeneGroup();
+								if( n2 != null ) {
+									if( ngg == n2.getGene().getGeneGroup() ) simcount++;
+								}
+								
+								if( p2 != null ) {
+									if( ngg == p2.getGene().getGeneGroup() ) simcount++;
+								}
+							}
+							
+							if( p != null ) {
+								GeneGroup pgg = p.getGene().getGeneGroup();
+								if( n2 != null ) {
+									if( pgg == n2.getGene().getGeneGroup() ) simcount++;
+								}
+								
+								if( p2 != null ) {
+									if( pgg == p2.getGene().getGeneGroup() ) simcount++;
+								}
+							}
+							
+							//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+							if( simcount >= msimcount ) {
+								tv = tv1;
+								msimcount = simcount;
+							}
+							
+							//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+							//GeneCompare.gradientColor();
+						}
+					}
+					
+					double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv);
+					if( ratio == -1 ) {
+						if( gg != null ) ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
+						cell.setStyle( "-fx-background-color: "+GeneCompare.gradientGrayscaleColor( ratio ) );
+						//label.setForeground( Color.black );
+					} else {
+						cell.setStyle( "-fx-background-color: "+GeneCompare.gradientColor( ratio ) );
+						//label.setForeground( Color.black );
+					}
+				} else if( value instanceof Tegeval ) {
+					Tegeval tv = (Tegeval)value;
+					Tegeval tv2 = null;
+					GeneGroup gg = tv.getGene().getGeneGroup();
+					int msimcount = 0;
+					if( gg != null ) {
+						Teginfo		gene2s = gg.getGenes(spec);
+						if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
+							int simcount = 0;
+							
+							Annotation n = tv1.getNext();
+							Annotation p = tv1.getPrevious();
+							Annotation n2 = tv.getNext();
+							Annotation p2 = tv.getPrevious();
+							
+							if( n != null ) {
+								GeneGroup ngg = n.getGene().getGeneGroup();
+								if( n2 != null ) {
+									if( ngg == n2.getGene().getGeneGroup() ) simcount++;
+								}
+								
+								if( p2 != null ) {
+									if( ngg == p2.getGene().getGeneGroup() ) simcount++;
+								}
+							}
+							
+							if( p != null ) {
+								GeneGroup pgg = p.getGene().getGeneGroup();
+								if( n2 != null ) {
+									if( pgg == n2.getGene().getGeneGroup() ) simcount++;
+								}
+								
+								if( p2 != null ) {
+									if( pgg == p2.getGene().getGeneGroup() ) simcount++;
+								}
+							}
+							
+							//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+							if( simcount >= msimcount ) {
+								tv2 = tv1;
+								msimcount = simcount;
+							}
+							
+							//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+							//GeneCompare.gradientColor();
+						}
+					}
+					//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+					double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv2);
+					if( ratio == -1 ) {
+						ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
+						cell.setStyle( "-fx-background-color: "+GeneCompare.gradientGrayscaleColor( ratio ) );
+						//label.setForeground( Color.black );
+					} else {
+						cell.setStyle( "-fx-background-color: "+GeneCompare.gradientColor( ratio ) );
+						//label.setForeground( Color.black );
+					}
+					
+					
+					/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
+					label.setBackground( GeneCompare.gradientColor( ratio ) );*/
+				}
+			}
+		} else if( value instanceof Teginfo ) {
+			Teginfo ti = (Teginfo)value;						
+			boolean plasmid = false;
+			boolean phage = false;
+			for( Tegeval tv : ti.tset ) {
+				phage = phage | tv.isPhage();
+				
+				Sequence seq = tv.getContshort();
+				
+				if( seq == null ) {
+					//System.err.println();
+				}
+				
+				plasmid = plasmid | (seq != null && seq.isPlasmid());
+			}
+			
+			if( phage && plasmid ) {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkmagenta" );
+				else cell.setStyle( "-fx-background-color: magenta" );
+			} else if( phage ) {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkblue" );
+				else cell.setStyle( "-fx-background-color: blue" );
+			} else if( plasmid ) {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkred" );
+				else cell.setStyle( "-fx-background-color: red" );
+			} else {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkgreen" );
+				else cell.setStyle( "-fx-background-color: green" );
+			}
+		} else {
+			Tegeval tv = (Tegeval)value;
+			Gene g = tv.getGene();
+			GeneGroup gg = g.getGeneGroup();
+			Teginfo ti = gg.species.get( g.getSpecies() );
+			
+			boolean phage = tv.isPhage();
+			boolean plasmid = tv.getContshort().isPlasmid();
+			if( phage && plasmid ) {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkmagenta" );
+				else cell.setStyle( "-fx-background-color: magenta" );
+			} else if( phage ) {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkblue" );
+				else cell.setStyle( "-fx-background-color: blue" );
+			} else if( plasmid ) {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkred" );
+				else cell.setStyle( "-fx-background-color: red" );
+			} else {
+				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkgreen" );
+				else cell.setStyle( "-fx-background-color: green" );
+			}
+		}
+		// label.setText( value.toString() );
+		/*if (colorCodes[0] == null)
+			GeneSet.setColors();
+		if (tv.best.eval == 0) {
+			label.setBackground(colorCodes[0]);
+		} else if (tv.best.eval < 1e-100)
+			label.setBackground(colorCodes[0]);
+		else if (tv.best.eval < 1e-50)
+			label.setBackground(colorCodes[1]);
+		else if (tv.best.eval < 1e-24)
+			label.setBackground(colorCodes[2]);
+		else if (tv.best.eval < 1e-10)
+			label.setBackground(colorCodes[3]);
+		else if (tv.best.eval < 1e-5)
+			label.setBackground(colorCodes[4]);
+		else if (tv.best.eval < 1e-2)
+			label.setBackground(colorCodes[5]);
+		else if (tv.best.eval < 1e-1)
+			label.setBackground(colorCodes[6]);
+		else if (tv.best.eval < 1e0)
+			label.setBackground(colorCodes[7]);
+		else if (tv.best.eval < 1e10)
+			label.setBackground(colorCodes[8]);*/
 	}
 	
 	public void stop() {
@@ -6176,7 +6491,7 @@ public class GeneSetHead extends JApplet {
 	
 	private void showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
-			final Map<Set<String>, ShareNum> specset,*/ final Map<Set<String>, ClusterInfo> clustInfoMap, final JButton jb, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower,
+			final Map<Set<String>, ShareNum> specset,*/ final Map<Set<String>, ClusterInfo> clustInfoMap, final Button jb, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower,
 			final ToolBar toolbar, final ToolBar btoolbar, final Container comp, final JApplet applet, final ComboBox<String> selcomblocal) throws IOException {
 		//JSplitPane splitpane = new JSplitPane();
 		//splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -6354,253 +6669,7 @@ public class GeneSetHead extends JApplet {
 				if( value == null ) {
 					label.setBackground(Color.white);
 				} else {
-					String spec = (String)syncolorcomb.getSelectionModel().getSelectedItem();
-					if( spec.length() > 0 ) {
-						if( spec.equals("All") ) {
-							if( value instanceof Teginfo ) {
-								Teginfo ti = (Teginfo)value;
-								label.setBackground( Color.green );
-								for( Tegeval tv : ti.tset ) {
-									String tspec = tv.getGene().getSpecies();
-									List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
-									GeneGroup gg = tv.getGene().getGeneGroup();
-									double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
-									if( ratio == -1 ) {
-										ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
-										label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-										label.setForeground( Color.white );
-									} else {
-										label.setBackground( GeneCompare.gradientColor( ratio ) );
-										label.setForeground( Color.black );
-									}
-									break;
-									//GeneCompare.gradientColor();
-								}
-							} else if( value instanceof Tegeval ) {
-								Tegeval tv = (Tegeval)value;
-								String tspec = tv.getGene().getSpecies();
-								List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
-								GeneGroup gg = tv.getGene().getGeneGroup();
-								double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
-								if( ratio == -1 ) {
-									ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
-									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-									label.setForeground( Color.white );
-								} else {
-									label.setBackground( GeneCompare.gradientColor( ratio ) );
-									label.setForeground( Color.black );
-								}
-							}
-						} else {
-							List<Sequence> contigs = geneset.speccontigMap.get( spec );
-							if( value instanceof Teginfo ) {
-								//Teginfo ti = (Teginfo)value;
-								label.setBackground( Color.green );
-								
-								//GeneGroup 	gg = ti.best.getGene().getGeneGroup();
-								//Teginfo		gene2s = gg.getGenes(spec);
-								//double ratio = -1.0;
-								int msimcount = 0;
-								
-								GeneGroup gg = null;
-								Tegeval tv = null;
-								Tegeval tv2 = null;
-								if( table.getModel() == defaultModel ) {
-									int i = table.convertRowIndexToModel(row);
-									Gene g = geneset.genelist.get(i);
-									gg = g.getGeneGroup();
-									tv2 = g.tegeval;
-								}
-								
-								if( gg != null ) {
-									Teginfo		gene2s = gg.getGenes(spec);
-									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
-										int simcount = 0;
-										
-										Annotation n = tv1.getNext();
-										Annotation p = tv1.getPrevious();
-										Annotation n2 = tv2.getNext();
-										Annotation p2 = tv2.getPrevious();
-										
-										if( n != null ) {
-											GeneGroup ngg = n.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( ngg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( ngg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										if( p != null ) {
-											GeneGroup pgg = p.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( pgg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( pgg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										if( simcount >= msimcount ) {
-											tv = tv1;
-											msimcount = simcount;
-										}
-										
-										//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										//GeneCompare.gradientColor();
-									}
-								}
-								
-								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv);
-								if( ratio == -1 ) {
-									if( gg != null ) ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
-									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-									label.setForeground( Color.black );
-								} else {
-									label.setBackground( GeneCompare.gradientColor( ratio ) );
-									label.setForeground( Color.black );
-								}
-							} else if( value instanceof Tegeval ) {
-								Tegeval tv = (Tegeval)value;
-								Tegeval tv2 = null;
-								GeneGroup gg = tv.getGene().getGeneGroup();
-								int msimcount = 0;
-								if( gg != null ) {
-									Teginfo		gene2s = gg.getGenes(spec);
-									if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
-										int simcount = 0;
-										
-										Annotation n = tv1.getNext();
-										Annotation p = tv1.getPrevious();
-										Annotation n2 = tv.getNext();
-										Annotation p2 = tv.getPrevious();
-										
-										if( n != null ) {
-											GeneGroup ngg = n.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( ngg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( ngg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										if( p != null ) {
-											GeneGroup pgg = p.getGene().getGeneGroup();
-											if( n2 != null ) {
-												if( pgg == n2.getGene().getGeneGroup() ) simcount++;
-											}
-											
-											if( p2 != null ) {
-												if( pgg == p2.getGene().getGeneGroup() ) simcount++;
-											}
-										}
-										
-										//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										if( simcount >= msimcount ) {
-											tv2 = tv1;
-											msimcount = simcount;
-										}
-										
-										//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-										//GeneCompare.gradientColor();
-									}
-								}
-								//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-								double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv2);
-								if( ratio == -1 ) {
-									ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
-									label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-									label.setForeground( Color.black );
-								} else {
-									label.setBackground( GeneCompare.gradientColor( ratio ) );
-									label.setForeground( Color.black );
-								}
-								
-								
-								/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
-								label.setBackground( GeneCompare.gradientColor( ratio ) );*
-							}
-						}
-					} else if( value instanceof Teginfo ) {
-						Teginfo ti = (Teginfo)value;						
-						boolean plasmid = false;
-						boolean phage = false;
-						for( Tegeval tv : ti.tset ) {
-							phage = phage | tv.isPhage();
-							
-							Sequence seq = tv.getContshort();
-							
-							if( seq == null ) {
-								//System.err.println();
-							}
-							
-							plasmid = plasmid | (seq != null && seq.isPlasmid());
-						}
-						
-						if( phage && plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkmag );
-							else label.setBackground( Color.magenta );
-						} else if( phage ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkblue );
-							else label.setBackground( Color.blue );
-						} else if( plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkred );
-							else label.setBackground( Color.red );
-						} else {
-							if( ti.tset.size() > 1 ) label.setBackground( darkgreen );
-							else label.setBackground( Color.green );
-						}
-					} else {
-						Tegeval tv = (Tegeval)value;
-						Gene g = tv.getGene();
-						GeneGroup gg = g.getGeneGroup();
-						Teginfo ti = gg.species.get( g.getSpecies() );
-						
-						boolean phage = tv.isPhage();
-						boolean plasmid = tv.getContshort().isPlasmid();
-						if( phage && plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkmag );
-							else label.setBackground( Color.magenta );
-						} else if( phage ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkblue );
-							else label.setBackground( Color.blue );
-						} else if( plasmid ) {
-							if( ti.tset.size() > 1 ) label.setBackground( darkred );
-							else label.setBackground( Color.red );
-						} else {
-							if( ti.tset.size() > 1 ) label.setBackground( darkgreen );
-							else label.setBackground( Color.green );
-						}
-					}
-					// label.setText( value.toString() );
-					/*if (colorCodes[0] == null)
-						GeneSet.setColors();
-					if (tv.best.eval == 0) {
-						label.setBackground(colorCodes[0]);
-					} else if (tv.best.eval < 1e-100)
-						label.setBackground(colorCodes[0]);
-					else if (tv.best.eval < 1e-50)
-						label.setBackground(colorCodes[1]);
-					else if (tv.best.eval < 1e-24)
-						label.setBackground(colorCodes[2]);
-					else if (tv.best.eval < 1e-10)
-						label.setBackground(colorCodes[3]);
-					else if (tv.best.eval < 1e-5)
-						label.setBackground(colorCodes[4]);
-					else if (tv.best.eval < 1e-2)
-						label.setBackground(colorCodes[5]);
-					else if (tv.best.eval < 1e-1)
-						label.setBackground(colorCodes[6]);
-					else if (tv.best.eval < 1e0)
-						label.setBackground(colorCodes[7]);
-					else if (tv.best.eval < 1e10)
-						label.setBackground(colorCodes[8]);*
+					cellRender();
 				}
 				return label;
 			}
@@ -6898,8 +6967,14 @@ public class GeneSetHead extends JApplet {
 		toolbar.getItems().add( syncolorcomb );
 		//topcomp.add(ttopcom, BorderLayout.NORTH);
 
+		table.getSelectionModel().setSelectionMode( SelectionMode.MULTIPLE );
 		table.getSelectionModel().selectedItemProperty().addListener( e -> {
 			label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedItems().size());
+		});
+		
+		gtable.getSelectionModel().setSelectionMode( SelectionMode.MULTIPLE );
+		gtable.getSelectionModel().selectedItemProperty().addListener( e -> {
+			label.setText(gtable.getItems().size() + "/" + gtable.getSelectionModel().getSelectedItems().size());
 		});
 
 		/*JButton but = new JButton(new AbstractAction("Gene sorter") {
@@ -6913,138 +6988,107 @@ public class GeneSetHead extends JApplet {
 			}
 		});*/
 		
-		JScrollPane fscrollpane = new JScrollPane();
-		final JTextField ftextfield = new JTextField();
-		JComponent botcomp = new JComponent() {};
-		botcomp.setLayout(new BorderLayout());
-		botcomp.add(fscrollpane);
+		final TextField ftextfield = new TextField();
+		btoolbar.getItems().add( ftextfield );
 
-		// JButton sbutt = new JButton("Find conserved terms");
-		ftextfield.setPreferredSize(new Dimension(500, 25));
-		JComponent botcombo = new JComponent() {
-		};
-		botcombo.setLayout(new FlowLayout());
-		botcombo.add( ftextfield );
-		//botcombo.add( but );
+		ComboBox<String> scombo = new ComboBox();
+		scombo.getItems().add("5S/8S");
+		scombo.getItems().add("16S/18S");
+		scombo.getItems().add("23S/28S");
+		scombo.getSelectionModel().selectedItemProperty().addListener( e -> {
+			String name = e.toString().split("/")[0];
+			InputStream iss = GeneSet.class.getResourceAsStream("/all" + name + ".fsa");
+			InputStreamReader isr = new InputStreamReader(iss);
+			BufferedReader brr = new BufferedReader(isr);
 
-		JComboBox scombo = new JComboBox();
-		scombo.addItem("5S/8S");
-		scombo.addItem("16S/18S");
-		scombo.addItem("23S/28S");
-		scombo.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {
-					String name = e.getItem().toString().split("/")[0];
-					InputStream is = GeneSet.class.getResourceAsStream("/all" + name + ".fsa");
-					InputStreamReader isr = new InputStreamReader(is);
-					BufferedReader br = new BufferedReader(isr);
+			JTextArea textarea = new JTextArea();
+			JScrollPane scrollpane = new JScrollPane(textarea);
 
-					JTextArea textarea = new JTextArea();
-					JScrollPane scrollpane = new JScrollPane(textarea);
+			try {
+				String ln = brr.readLine();
+				while (ln != null) {
+					textarea.append(ln + "\n");
 
-					try {
-						String line = br.readLine();
-						while (line != null) {
-							textarea.append(line + "\n");
-
-							line = br.readLine();
-						}
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-
-					JFrame frame = new JFrame();
-					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-					frame.add(scrollpane);
-					frame.setSize(400, 300);
-					frame.setVisible(true);
+					ln = brr.readLine();
 				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
 			}
+
+			JFrame frame = new JFrame();
+			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			frame.add(scrollpane);
+			frame.setSize(400, 300);
+			frame.setVisible(true);
 		});
-		botcombo.add(scombo);
+		btoolbar.getItems().add(scombo);
 
-		JButton swsearch = new JButton(new AbstractAction("SW Search") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComponent c = new JComponent() {};
-				final JProgressBar pb = new JProgressBar();
-				final JTextArea textarea = new JTextArea();
-				JButton searchbut = new JButton(new AbstractAction("Blast") {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						final String fasta = textarea.getText();
-						final SmithWater sw = new SmithWater();
-						final InputStream is = GeneSet.class.getResourceAsStream("/allthermus.aa");
-						new Thread() {
-							public void run() {
-								try {
-									sw.fasta_align(new StringReader(fasta), new InputStreamReader(is), pb);
-									List<SmithWater.ALN> alns = sw.getAlignments();
-									SmithWater.ALN first = null;
-									int count = 0;
-									String result = "";
-									Set<String> regnames = new HashSet<String>();
-									for (SmithWater.ALN aln : alns) {
-										if (first == null) {
-											first = aln;
-										} else if (aln.getScore() < 3.0f * (first.getScore() / 4.0f))
-											break;
-										result += aln.toString();
-										regnames.add(aln.getShortDestName());
+		Button swsearch = new Button("SW Search");
+		swsearch.setOnAction( e -> {
+			JComponent c = new JComponent() {};
+			final JProgressBar pb = new JProgressBar();
+			final JTextArea textarea = new JTextArea();
+			JButton searchbut = new JButton(new AbstractAction("Blast") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					final String fasta = textarea.getText();
+					final SmithWater sw = new SmithWater();
+					final InputStream is = GeneSet.class.getResourceAsStream("/allthermus.aa");
+					new Thread() {
+						public void run() {
+							try {
+								sw.fasta_align(new StringReader(fasta), new InputStreamReader(is), pb);
+								List<SmithWater.ALN> alns = sw.getAlignments();
+								SmithWater.ALN first = null;
+								int count = 0;
+								String result = "";
+								Set<String> regnames = new HashSet<String>();
+								for (SmithWater.ALN aln : alns) {
+									if (first == null) {
+										first = aln;
+									} else if (aln.getScore() < 3.0f * (first.getScore() / 4.0f))
+										break;
+									result += aln.toString();
+									regnames.add(aln.getShortDestName());
 
-										if (++count == 10)
-											break;
-									}
-									textarea.setText(result);
-
-									for (Gene g : geneset.genelist) {
-										boolean found = false;
-										Tegeval tv = g.tegeval;
-										if (regnames.contains(tv.name)) {
-											found = true;
-											break;
-										}
-										if (found) {
-											gtable.getSelectionModel().select(g);
-											break;
-										}
-									}
-								} catch (IOException e) {
-									e.printStackTrace();
+									if (++count == 10)
+										break;
 								}
+								textarea.setText(result);
+
+								for (Gene g : geneset.genelist) {
+									boolean found = false;
+									Tegeval tv = g.tegeval;
+									if (regnames.contains(tv.name)) {
+										found = true;
+										break;
+									}
+									if (found) {
+										gtable.getSelectionModel().select(g);
+										break;
+									}
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
 							}
-						}.start();
-					}
-				});
-				c.setLayout(new BorderLayout());
-				JScrollPane scrollpane = new JScrollPane(textarea);
-				c.add(scrollpane);
-				c.add(pb, BorderLayout.NORTH);
-				c.add(searchbut, BorderLayout.SOUTH);
+						}
+					}.start();
+				}
+			});
+			c.setLayout(new BorderLayout());
+			JScrollPane scrollpane = new JScrollPane(textarea);
+			c.add(scrollpane);
+			c.add(pb, BorderLayout.NORTH);
+			c.add(searchbut, BorderLayout.SOUTH);
 
-				JFrame frame = new JFrame();
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.add(c);
-				frame.setSize(400, 300);
-				frame.setVisible(true);
-			}
+			JFrame frame = new JFrame();
+			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			frame.add(c);
+			frame.setSize(400, 300);
+			frame.setVisible(true);
 		});
-		botcombo.add(swsearch);
-		
-		/*Action blastsearchaction = new AbstractAction("Blast") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				blast();
-			}
-		};*/
-		//JButton blastb = new JButton( blastsearchaction );
-		//botcombo.add( blastb );
-		
-		botcombo.add(jb);
-
-		// botcombo.add( sbutt );
-		botcomp.add(botcombo, BorderLayout.SOUTH);
+		btoolbar.getItems().add(swsearch);
+		btoolbar.getItems().add(jb);
 
 		TableColumn<GeneGroup, String> namedesccol = new TableColumn("Desc");
 		namedesccol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("name"));
@@ -7126,17 +7170,6 @@ public class GeneSetHead extends JApplet {
 		TableColumn<GeneGroup, String> numlocgroupcol = new TableColumn("#Loc group");
 		numlocgroupcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("numlocgroup"));
 		table.getColumns().add( numlocgroupcol );
-		
-		for( String spec : geneset.specList ) {
-			TableColumn<GeneGroup, String> speccol = new TableColumn(spec);
-			speccol.setCellValueFactory( cellValue -> {
-				return new SimpleStringProperty( cellValue.getValue().getTes( spec ).toString() );
-				//Teginfo ret = geneset.getGroupTes( cellValue.getValue(), spec );
-				//return new ObservableValue<String>( ret.toString() );
-				//return ret;
-			});
-			table.getColumns().add( speccol );
-		}
 		
 		/*if( upper != null ) {
 			SwingUtilities.invokeLater( new Runnable() {
@@ -7743,7 +7776,7 @@ public class GeneSetHead extends JApplet {
 		ecl.setOnAction( e -> {
 			String ec = ((Function)ftable.getSelectionModel().getSelectedItem()).getEc();
 			try {
-				Desktop.getDesktop().browse(new URI("http://www.expasy.ch/cgi-bin/nicezyme.pl?" + ec));
+				Desktop.getDesktop().browse(new URI("http://enzyme.expasy.org/EC/" + ec));
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			} catch (URISyntaxException e1) {
@@ -7794,7 +7827,12 @@ public class GeneSetHead extends JApplet {
 			}
 			
 			try {
-				workbook.write( new FileOutputStream("/u0/excel.xlsx") );
+				Path tempfile = Files.createTempFile("enzyme",".xlsx");
+				OutputStream os = Files.newOutputStream( tempfile );
+				workbook.write( os );
+				os.close();
+				
+				Desktop.getDesktop().open( tempfile.toFile() );
 			} catch (FileNotFoundException e1) {
 				e1.printStackTrace();
 			} catch (IOException e1) {
@@ -8480,22 +8518,31 @@ public class GeneSetHead extends JApplet {
 		MenuItem showgen = new MenuItem("Show genes");
 		showgen.setOnAction( e -> {
 			genefilterset.clear();
+			Set<GeneGroup> sset = new HashSet<GeneGroup>();
 			for (Function f : (ObservableList<Function>)ftable.getSelectionModel().getSelectedItems()) {
 				if( !isGeneview() ) {
-					Set<GeneGroup> sset = f.getGeneGroups();
-					if( sset != null ) for (GeneGroup gg : sset) {
+					sset.addAll( f.getGeneGroups() );
+					/*if( sset != null ) for (GeneGroup gg : sset) {
 						//Gene g = genemap.get(s);
 						genefilterset.add(gg.index);
-					}
+					}*/
 				} else {
-					Set<Gene> sset = f.getGeneentries();
+					/*Set<Gene> sset = f.getGeneentries();
 					for (Gene g : sset) {
 						//Gene g = genemap.get(s);
 						genefilterset.add(g.index);
-					}
+					}*/
 				}
 			}
-			updateFilter(table, genefilter, label);
+			
+			//int[] rows = sset.stream().mapToInt( gg -> sortedData.indexOf(gg) ).toArray();
+			//table.getSelectionModel().selectIndices(rows[0], rows);
+			
+			filteredData.setPredicate(genegroup -> {
+                return sset.contains(genegroup);
+            });
+			if (label != null)
+				label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
 		});
 		fpopup.getItems().add( showgen );
 
@@ -8538,17 +8585,24 @@ public class GeneSetHead extends JApplet {
 
 		ftable.setOnKeyPressed( ke -> {
 			if (ke.getCode() == KeyCode.ESCAPE) {
-				filterset.clear();
-				updateFilter(ftable, rowfilter, null);
+				ffilteredData.setPredicate(null);
 			}
 		});
 
 		table.setOnKeyPressed( ke -> {
-				if (ke.getCode() == KeyCode.ESCAPE) {
-					genefilterset.clear();
-					updateFilter(table, genefilter, label);
-					geneset.scrollToSelection( table );
-				}
+			if (ke.getCode() == KeyCode.ESCAPE) {
+				List<GeneGroup> sel = new ArrayList<GeneGroup>( filteredData );
+				filteredData.setPredicate(null);
+				int[] rows = sel.stream().mapToInt( gg -> sortedData.indexOf(gg) ).toArray();
+				table.getSelectionModel().selectIndices(rows[0], rows);
+				if (label != null)
+					label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
+				
+				table.scrollTo( sel.get(0) );
+				//genefilterset.clear();
+				//updateFilter(table, genefilter, label);
+				//geneset.scrollToSelection( table );
+			}
 		});
 
 		table.setOnMousePressed( e -> {
@@ -8562,12 +8616,12 @@ public class GeneSetHead extends JApplet {
 					 */
 					// ftable.removeRowSelectionInterval(0, filterset.isEmpty()
 					// ? ftable.getRowCount()-1 : filterset.size()-1 );
+					
+					Set<Function> fset = new HashSet<Function>();
 					filterset.clear();
 					if( !isGeneview() ) {
 						for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
-							for( Function f : gg.getFunctions() ) {
-								filterset.add(f.index);
-							}
+							fset.addAll( gg.getFunctions() );
 						}
 					} else {
 						for (Gene g : gtable.getSelectionModel().getSelectedItems()) {
@@ -8583,26 +8637,20 @@ public class GeneSetHead extends JApplet {
 							}
 						}
 					}
-					updateFilter(ftable, rowfilter, null);
-					// ftable.sorterChanged( new RowSorterEvent(
-					// ftable.getRowSorter() ) );
-					// ftable.tableChanged( new TableModelEvent(
-					// ftable.getModel() ) );
+					ffilteredData.setPredicate( p -> fset.contains(p) );
 				}
 				tableisselecting = false;
 		});
 
 		ftable.setOnMousePressed( e -> {
 			ftableisselecting = true;
+			Set<GeneGroup> ggset = new HashSet<GeneGroup>();
 			if (!tableisselecting && e.getClickCount() == 2) {
 				genefilterset.clear();
 				for (Function f : (ObservableList<Function>)ftable.getSelectionModel().getSelectedItems()) {
 					if (f.getGeneentries() != null) {
 						if( !isGeneview() ) {
-							for( Gene g : f.getGeneentries() ) {
-								GeneGroup gg = g.getGeneGroup();
-								if( gg != null ) genefilterset.add( gg.getIndex() );
-							}
+							ggset.addAll( f.getGeneGroups() );
 						} else {
 							for( Gene g : f.getGeneentries() ) {
 								//Gene g = genemap.get(ref);
@@ -8614,11 +8662,7 @@ public class GeneSetHead extends JApplet {
 						}
 					}
 				}
-				updateFilter(table, genefilter, label);
-				// ftable.sorterChanged( new RowSorterEvent(
-				// ftable.getRowSorter() ) );
-				// ftable.tableChanged( new TableModelEvent(
-				// ftable.getModel() ) );
+				filteredData.setPredicate( p -> ggset.contains(p) );
 			}
 			ftableisselecting = false;
 		});
@@ -8655,12 +8699,30 @@ public class GeneSetHead extends JApplet {
 
 		textfield.textProperty().addListener( new javafx.beans.value.ChangeListener<String>() {
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				String text = textfield.getText().toLowerCase();
+				//String text = textfield.getText().toLowerCase();
 				if( filter.isSelected() ) {
-					if( searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
-					else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
+					filteredData.setPredicate(genegroup -> {
+		                // If filter text is empty, display all persons.
+		                if (newValue == null || newValue.isEmpty()) {
+		                    return true;
+		                }
+
+		                // Compare first name and last name of every person with filter text.
+		                String lowerCaseFilter = newValue.toLowerCase();
+
+		                if (genegroup.getName().toLowerCase().contains(lowerCaseFilter)) {
+		                    return true; // Filter matches first name.
+		                }/* else if (genegroup.getLastName().toLowerCase().contains(lowerCaseFilter)) {
+		                    return true; // Filter matches last name.
+		                }*/
+		                return false; // Does not match.
+		            });
+					if (label != null)
+						label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
+					//if( searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
+					//else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
 				} else {
-					searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 8, 9, 10, 16 ) : searchTable( table, text, 0, false, 0 );
+					//searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 8, 9, 10, 16 ) : searchTable( table, text, 0, false, 0 );
 				}
 			}
 		});
@@ -8696,7 +8758,7 @@ public class GeneSetHead extends JApplet {
 			}
 		});*/
 
-		ftextfield.getDocument().addDocumentListener(new DocumentListener() {
+		/*ftextfield.getDocument().addDocumentListener(new DocumentListener() {
 			public void changedUpdate(DocumentEvent e) {
 				updateFilter(0, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
 			}
@@ -8708,7 +8770,7 @@ public class GeneSetHead extends JApplet {
 			public void removeUpdate(DocumentEvent e) {
 				updateFilter(2, ftextfield.getText(), ftable, rowfilter, filterset, null, 6);
 			}
-		});
+		});*/
 		MenuItem kegggl = new MenuItem("KEGG gene lookup");
 		kegggl.setOnAction( e -> {
 				Gene g = gtable.getSelectionModel().getSelectedItem();
@@ -9133,7 +9195,7 @@ public class GeneSetHead extends JApplet {
 		System.err.println( genefilterset.size() + "  " + ct.size() );
 	}
 	
-	private void newSoft(JButton jb, Container comp, TableView<Gene> genetable, TableView<Function> upper, TableView<GeneGroup> lower, ToolBar toolbar, ToolBar btoolbar, JApplet applet, ComboBox selcomblocal) throws IOException {
+	private void newSoft(Button jb, Container comp, TableView<Gene> genetable, TableView<Function> upper, TableView<GeneGroup> lower, ToolBar toolbar, ToolBar btoolbar, JApplet applet, ComboBox selcomblocal) throws IOException {
 		/*InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
 		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
 		String line2 = br2.readLine();
