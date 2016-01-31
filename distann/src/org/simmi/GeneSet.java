@@ -60,6 +60,7 @@ import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
 import org.simmi.shared.Serifier;
+import org.simmi.shared.ShareNum;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.shared.TreeUtil;
@@ -70,8 +71,6 @@ import org.simmi.unsigned.NativeRun;
 import flobb.ChatServer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
@@ -7571,7 +7570,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++ );
+					gg = new GeneGroup( groupIndex++, specset );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, name, name, spec );
@@ -7653,7 +7652,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++ );
+					gg = new GeneGroup( groupIndex++, specset );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, cont+"_"+loc, name, spec );
@@ -7817,7 +7816,7 @@ public class GeneSet {
 					if( ggmap.containsKey( name ) ) {
 						gg = ggmap.get( name );
 					} else {
-						gg = new GeneGroup( groupIndex++ );
+						gg = new GeneGroup( groupIndex++, specset );
 						ggmap.put( name, gg );
 					}
 					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7850,7 +7849,7 @@ public class GeneSet {
 						if( ggmap.containsKey( name ) ) {
 							gg = ggmap.get( name );
 						} else {
-							gg = new GeneGroup( groupIndex++ );
+							gg = new GeneGroup( groupIndex++, specset );
 							ggmap.put( name, gg );
 						}
 						Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7892,7 +7891,7 @@ public class GeneSet {
 			if( ggmap.containsKey( name ) ) {
 				gg = ggmap.get( name );
 			} else {
-				gg = new GeneGroup( groupIndex++ );
+				gg = new GeneGroup( groupIndex++, specset );
 				ggmap.put( name, gg );
 			}
 			Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -8496,7 +8495,7 @@ public class GeneSet {
 				corrList.put(cluster, new double[20*20]);
 			}*/
 
-			GeneGroup gg = new GeneGroup( i );
+			GeneGroup gg = new GeneGroup( i, specset );
 			ggList.add( gg );
 			//gg.addSpecies( ss );
 			gg.setGroupCount( val );
@@ -8523,7 +8522,7 @@ public class GeneSet {
 		
 		for( Gene g : genelist ) {
 			if( g.getGeneGroup() == null ) {
-				GeneGroup gg = new GeneGroup( i++ );
+				GeneGroup gg = new GeneGroup( i++, specset );
 				ggList.add( gg );
 				gg.setGroupCount( 1 );
 				
@@ -9366,6 +9365,7 @@ public class GeneSet {
 			Set<String>	species = gg.getSpecies();
 			Set<String>	tmpspec = new HashSet<String>( species );
 			tmpspec.retainAll( specs );
+			gg.setSpecSet( this.specset );
 			
 			if( species != null ) {
 				ShareNum sharenum = null;

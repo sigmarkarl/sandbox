@@ -701,9 +701,11 @@ public class SyntGrad {
 				te = gene.tegeval;
 			} else {
 				GeneGroup gg = genesethead.getGeneGroupTable().getSelectionModel().getSelectedItem();
-				Teginfo t = gg.getGenes(spec);
-				if( t != null ) {
-					te = t.best;
+				if( gg != null ) {
+					Teginfo t = gg.getGenes(spec);
+					if( t != null ) {
+						te = t.best;
+					}
 				}
 			}
 			
