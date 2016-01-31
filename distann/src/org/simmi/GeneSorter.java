@@ -39,6 +39,7 @@ import org.simmi.shared.Contig;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
 import org.simmi.shared.Sequence;
+import org.simmi.shared.ShareNum;
 import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 
