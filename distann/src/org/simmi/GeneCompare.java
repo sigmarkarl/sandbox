@@ -9,7 +9,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -68,6 +67,7 @@ import org.simmi.shared.Tegeval;
 import org.simmi.shared.Teginfo;
 import org.simmi.unsigned.JavaFasta;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableView;
 import netscape.javascript.JSObject;
@@ -722,10 +722,14 @@ public class GeneCompare {
 								genesethead.showSomeSequences( genesethead, serifier );
 							} else {
 								if( c == null ) {
-									genesethead.getGeneGroupTable().getSelectionModel().clearSelection();
-									for( int k = minloc; k < maxloc; k++ ) {
-										genesethead.getGeneGroupTable().getSelectionModel().select(k);
-									}
+									Platform.runLater(new Runnable() {
+										public void run() {
+											genesethead.getGeneGroupTable().getSelectionModel().clearSelection();
+											for( int k = minloc; k < maxloc; k++ ) {
+												genesethead.getGeneGroupTable().getSelectionModel().select(k);
+											}
+										}
+									});
 								} else for( int k = minloc; k < maxloc; k++ ) {
 									if( k-loc >= c.getAnnotationCount() ) {
 										loc += c.getAnnotationCount();
@@ -1324,8 +1328,8 @@ public class GeneCompare {
 							double prat2 = (double)count2/(double)ptotal2;
 							//if( prat2 == -1.0 || Math.abs(pratio - prat2) < Math.abs(pratio - pratio2) ) pratio2 = prat2;
 							
-							Annotation n = tv.getNext();
-							Annotation p = tv.getPrevious();
+							Annotation n = tv != null ? tv.getNext() : null;
+							Annotation p = tv != null ? tv.getPrevious() : null;
 							Annotation n2 = tv2.getNext();
 							Annotation p2 = tv2.getPrevious();
 							
@@ -1389,8 +1393,8 @@ public class GeneCompare {
 					
 					double rat2 = (double)val2/(double)total2;
 					
-					Annotation n = tv.getNext();
-					Annotation p = tv.getPrevious();
+					Annotation n = tv != null ? tv.getNext() : null;
+					Annotation p = tv != null ? tv.getPrevious() : null;
 					Annotation n2 = tv2.getNext();
 					Annotation p2 = tv2.getPrevious();
 					
@@ -1800,7 +1804,7 @@ public class GeneCompare {
 		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 		
-		if( spec1 == null ) {
+		if( spec1 == null || spec1.length() == 0 ) {
 			ObservableList<GeneGroup> lgg = genesethead.getGeneGroupTable().getItems();
 			int rowcount = lgg.size();
 			for( int r = 0; r < rowcount; r++ ) {
@@ -1857,25 +1861,27 @@ public class GeneCompare {
 				
 			if( !genesethead.isGeneview() ) {
 				GeneGroup gg = genesethead.getGeneGroupTable().getSelectionModel().getSelectedItem();
-				for( String spec2 : spec2s ) {
-					if( gg.species.containsKey(spec2) ) {
-						final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
-						Teginfo gene2s = gg.getGenes( spec2 );
-						for( Tegeval tv2 : gene2s.tset ) {
-							int count2 = 0;
-							for( Sequence ctg2 : contigs2 ) {
-								if( ctg2.annset != null ) {
-									int idx = ctg2.annset.indexOf( tv2 );
-									if( idx == -1 ) {
-										count2 += ctg2.getAnnotationCount();
-									} else {
-										count2 += idx;
-										break;
+				if( gg != null ) {
+					for( String spec2 : spec2s ) {
+						if( gg.species != null && gg.species.containsKey(spec2) ) {
+							final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
+							Teginfo gene2s = gg.getGenes( spec2 );
+							for( Tegeval tv2 : gene2s.tset ) {
+								int count2 = 0;
+								for( Sequence ctg2 : contigs2 ) {
+									if( ctg2.annset != null ) {
+										int idx = ctg2.annset.indexOf( tv2 );
+										if( idx == -1 ) {
+											count2 += ctg2.getAnnotationCount();
+										} else {
+											count2 += idx;
+											break;
+										}
 									}
 								}
+								//System.err.println( spec2 + "   " + count2 );
+								offsetMap.put(spec2, count2);
 							}
-							//System.err.println( spec2 + "   " + count2 );
-							offsetMap.put(spec2, count2);
 						}
 					}
 				}
@@ -1908,7 +1914,7 @@ public class GeneCompare {
 			int count = 0;
 			int pcount = 0;
 			int current = 0;
-			for( Sequence ctg : contigs ) {
+			if( contigs != null ) for( Sequence ctg : contigs ) {
 				Annotation prev = null;
 				if( ctg.annset != null ) {
 					current = count;
@@ -2235,7 +2241,7 @@ public class GeneCompare {
 						}
 					} else {
 						String spec = genesethead.syncolorcomb.getSelectionModel().getSelectedItem();
-						if( spec.length() > 0 ) {
+						if( spec != null && spec.length() > 0 ) {
 							if( spec.equals("All") ) {
 								Teginfo value = gg.getGenes( spec2 );
 								//if( value instanceof Teginfo ) {
