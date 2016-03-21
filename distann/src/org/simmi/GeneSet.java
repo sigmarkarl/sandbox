@@ -830,8 +830,6 @@ public class GeneSet {
 						//ac.setName( lname );
 						//tv.setAlignedSequence( ac );
 						aas.put( lname, tv );
-						
-						//System.err.println( "erm " + start + "   " + stop + "   " + contig.toString() );
 						if( contig != null ) contig.addAnnotation( tv );
 						
 						String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
