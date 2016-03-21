@@ -5837,14 +5837,14 @@ public class GeneSet {
 	public static void main(String[] args) {
 		//SplashScreen.getSplashScreen().
 		
-		if( args.length == 0 ) {
+		/*if( args.length == 0 ) {
 			GeneSet	gs = new GeneSet();
 			GeneSetHead gsh = new GeneSetHead( gs );
 			/*String[] stra = {"A", "B", "C", "D"};
 			corrInd = Arrays.asList( stra );
 			double[] dd = { 0.0, 17.0, 21.0, 27.0, 17.0, 0.0, 12.0, 18.0, 21.0, 12.0, 0.0, 14.0, 27.0, 18.0, 14.0, 0.0 };
 			TreeUtil treeutil = new TreeUtil();
-			treeutil.neighborJoin( dd, 4, corrInd );*/
+			treeutil.neighborJoin( dd, 4, corrInd );*
 			
 			JFrame frame = new JFrame(); frame.setDefaultCloseOperation(
 			JFrame.EXIT_ON_CLOSE );
@@ -5863,7 +5863,7 @@ public class GeneSet {
 			}
 		} else {
 			Serifier.main(args);
-		}
+		}*/
 		 
 
 		// System.err.println( Runtime.getRuntime().availableProcessors() );
@@ -5883,9 +5883,9 @@ public class GeneSet {
 	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
 	//GZIPInputStream gi = new GZIPInputStream( fi );
 	//funcMappingStatic( new InputStreamReader( gi ) );
-	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
-	//GZIPInputStream gi = new GZIPInputStream( fi );
-	//funcMappingStatic( new InputStreamReader( gi ) );
+	FileInputStream fi = new FileInputStream( "/Users/sigmar/gene_association.goa_uniprot.gz" );
+	GZIPInputStream gi = new GZIPInputStream( fi );
+	funcMappingStatic( new InputStreamReader( gi ) );
 			
 			/*Map<String,String>	sp2ko = new HashMap<String,String>();
 			FileReader fr = new FileReader("/vg454flx/sp2ko.txt");
@@ -6600,7 +6600,7 @@ public class GeneSet {
 	public static void funcMappingStatic( Reader rd ) throws IOException {
 		//Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
 		Map<String,String>	symbolmap = new HashMap<String,String>();
-		FileWriter fw = new FileWriter("/home/sigmar/sp2go.txt");
+		FileWriter fw = new FileWriter("/Users/sigmar/sp2go.txt");
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		String prev = null;
@@ -6626,7 +6626,7 @@ public class GeneSet {
 		br.close();
 		fw.close();
 		
-		fw = new FileWriter( "/home/sigmar/smap.txt" );
+		fw = new FileWriter( "/Users/sigmar/smap.txt" );
 		for( String id : symbolmap.keySet() ) {
 			String sm = symbolmap.get( id );
 			fw.write(id + "\t" + sm + "\n");
@@ -7570,7 +7570,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++, specset );
+					gg = new GeneGroup( groupIndex++, specset, cogmap );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, name, name, spec );
@@ -7652,7 +7652,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++, specset );
+					gg = new GeneGroup( groupIndex++, specset, cogmap );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, cont+"_"+loc, name, spec );
@@ -7816,7 +7816,7 @@ public class GeneSet {
 					if( ggmap.containsKey( name ) ) {
 						gg = ggmap.get( name );
 					} else {
-						gg = new GeneGroup( groupIndex++, specset );
+						gg = new GeneGroup( groupIndex++, specset, cogmap );
 						ggmap.put( name, gg );
 					}
 					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7849,7 +7849,7 @@ public class GeneSet {
 						if( ggmap.containsKey( name ) ) {
 							gg = ggmap.get( name );
 						} else {
-							gg = new GeneGroup( groupIndex++, specset );
+							gg = new GeneGroup( groupIndex++, specset, cogmap );
 							ggmap.put( name, gg );
 						}
 						Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7891,7 +7891,7 @@ public class GeneSet {
 			if( ggmap.containsKey( name ) ) {
 				gg = ggmap.get( name );
 			} else {
-				gg = new GeneGroup( groupIndex++, specset );
+				gg = new GeneGroup( groupIndex++, specset, cogmap );
 				ggmap.put( name, gg );
 			}
 			Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -8495,7 +8495,7 @@ public class GeneSet {
 				corrList.put(cluster, new double[20*20]);
 			}*/
 
-			GeneGroup gg = new GeneGroup( i, specset );
+			GeneGroup gg = new GeneGroup( i, specset, cogmap );
 			ggList.add( gg );
 			//gg.addSpecies( ss );
 			gg.setGroupCount( val );
@@ -8522,7 +8522,7 @@ public class GeneSet {
 		
 		for( Gene g : genelist ) {
 			if( g.getGeneGroup() == null ) {
-				GeneGroup gg = new GeneGroup( i++, specset );
+				GeneGroup gg = new GeneGroup( i++, specset, cogmap );
 				ggList.add( gg );
 				gg.setGroupCount( 1 );
 				
