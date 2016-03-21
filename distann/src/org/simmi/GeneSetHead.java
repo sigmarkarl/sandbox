@@ -581,8 +581,9 @@ public class GeneSetHead extends JApplet {
 					return tc;
 				});
 				speccol.setCellValueFactory( cellValue -> {
-					Teginfo tes = cellValue.getValue().getTes( spec );
-					return new ReadOnlyObjectWrapper<Teginfo>(tes);
+					GeneGroup gg = cellValue.getValue();
+					Teginfo tes = gg.getTes( spec );
+					return new ReadOnlyObjectWrapper(tes);
 					//return new SimpleStringProperty( tes != null ? tes.toString() : "" );
 					//Teginfo ret = geneset.getGroupTes( cellValue.getValue(), spec );
 					//return new ObservableValue<String>( ret.toString() );
