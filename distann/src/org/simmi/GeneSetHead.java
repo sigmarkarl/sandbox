@@ -2744,13 +2744,16 @@ public class GeneSetHead extends JApplet {
 		});
 		
 		MenuItem	sharenumaction = new MenuItem("Update share numbers");
-		sharenumaction.setOnAction( actionEvent -> {
+		sharenumaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				Set<String> specs = getSelspec(GeneSetHead.this, geneset.specList, null);
 				geneset.updateShareNum(specs);
-		});
+			}
+		}));
 		
 		MenuItem	importgeneclusteringaction = new MenuItem("Import gene clustering");
-		importgeneclusteringaction.setOnAction( actionEvent -> {
+		importgeneclusteringaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				JPanel panel = new JPanel();
 				GridBagLayout grid = new GridBagLayout();
 				GridBagConstraints c = new GridBagConstraints();
@@ -2860,9 +2863,11 @@ public class GeneSetHead extends JApplet {
 					}
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		MenuItem importgenesymbolaction = new MenuItem("Import gene symbols");
-		importgenesymbolaction.setOnAction( actionEvent -> {
+		importgenesymbolaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				JFileChooser fc = new JFileChooser();
 				if( fc.showOpenDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
 					try {
@@ -2876,7 +2881,9 @@ public class GeneSetHead extends JApplet {
 						Path nf = geneset.zipfilesystem.getPath("/smap_short.txt");
 						BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE);
 						
-						InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+						File f = fc.getSelectedFile();
+						InputStream is = new FileInputStream( f );
+						if( f.getName().endsWith(".gz") ) is = new GZIPInputStream( is );
 						geneset.uni2symbol(new InputStreamReader(is), bw, geneset.unimap);
 						
 						bw.close();
@@ -2886,10 +2893,12 @@ public class GeneSetHead extends JApplet {
 						e1.printStackTrace();
 					}
 				}
-		});
+			}
+		}));
 		
 		MenuItem	importcazyaction = new MenuItem("Import Cazy");
-		importcazyaction.setOnAction( actionEvent -> {
+		importcazyaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				JFileChooser fc = new JFileChooser();
 				if( fc.showOpenDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
 					try {
@@ -2899,10 +2908,12 @@ public class GeneSetHead extends JApplet {
 						e1.printStackTrace();
 					}
 				}
-		});
+			}
+		}));
 		
 		MenuItem	functionmappingaction = new MenuItem("Function mapping");
-		functionmappingaction.setOnAction( actionEvent -> {
+		functionmappingaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				final JTextField 	tf = new JTextField();
 				JButton				btn = new JButton("File");
 				JComponent 			comp2 = new JComponent() {};
@@ -3044,9 +3055,11 @@ public class GeneSetHead extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		MenuItem	importidmappingaction = new MenuItem("Import idmapping");
-		importidmappingaction.setOnAction( actionEvent -> {
+		importidmappingaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				final JTextField 	tf = new JTextField();
 				JButton				btn = new JButton("File");
 				JComponent 			comp2 = new JComponent() {};
@@ -3235,14 +3248,18 @@ public class GeneSetHead extends JApplet {
 				//};
 				//t.start();
 				//}
-		});
+			}
+		}));
 		MenuItem	cogblastaction = new MenuItem("Cog blast");
-		cogblastaction.setOnAction( actionEvent -> {
+		cogblastaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				try {
 					Set<String> species = getSelspec(null, geneset.getSpecies(), null);
 					
 					StringWriter sb = new StringWriter();
 					String dbPath = "/data/Cog";
+					JTextField tf = new JTextField( dbPath );
+					JOptionPane.showMessageDialog( null, tf );
 					for( Gene g : geneset.genelist ) {
 						if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
 							if( species.contains( g.getSpecies() ) ) {
@@ -3267,13 +3284,15 @@ public class GeneSetHead extends JApplet {
 					Path resPath = geneset.zipfilesystem.getPath("/cog.blastout");
 					
 					NativeRun nrun = new NativeRun();
-					SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, geneset.zipfilesystem, geneset.user);
+					SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), tf.getText(), resPath, "", null, true, geneset.zipfilesystem, geneset.user);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		MenuItem	unresolvedblastaction = new MenuItem("Unresolved blast");
-		unresolvedblastaction.setOnAction(  actionEvent -> {
+		unresolvedblastaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
 				try {
 					Set<String> species = getSelspec(null, geneset.getSpecies(), null);
 					
@@ -3332,7 +3351,8 @@ public class GeneSetHead extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		
 		MenuItem	importkeggpathwayaction = new MenuItem("Import kegg pathways");
 		importkeggpathwayaction.setOnAction( actionEvent -> {
