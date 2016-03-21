@@ -638,10 +638,11 @@ public class SerifyApplet extends JApplet {
 		} else {
 			int procs = Runtime.getRuntime().availableProcessors();
 			
+			String OS = System.getProperty("os.name").toLowerCase();
 			List<String>	lcmd = new ArrayList<String>();
 			String[] bcmds;
 			//String[] cmds;
-			if( host.getText().equals("localhost") ) bcmds = new String[] { "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			if( host.getText().equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/ncbi/blast/bin/rpsblast" : "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
 			else {
 				if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
 				bcmds = new String[] { "ssh", hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
@@ -2075,18 +2076,19 @@ public class SerifyApplet extends JApplet {
 				final Path pathD = fs.resolve( tmpout );
 				//final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
 				
-				
 				//final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
 				//final String cygPathD = NativeRun.cygPath( pathD.toAbsolutePath().toString() );
 				
-				
 				//final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
 				//NativeRun.fixPath( infile.toAbsolutePath().toString() )
+				
+				String OS = System.getProperty("os.name").toLowerCase();
+				
 				String[] cmds;
-				if( host.getText().equals("localhost") ) cmds = new String[] { "/usr/local/bin/rnammer", "-s", "BAC", "-m", su, "-f", tmpout }; //"-d", outPathD };
+				if( host.getText().equals("localhost") ) cmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/rnammer" : "rnammer", "-s", "BAC", "-m", su, "-f", tmpout }; //"-d", outPathD };
 				else {
-					if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "genset@"+hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
-					else cmds = new String[] { "ssh", hostname, "/opt/rnammer/rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
+					if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "genset@"+hostname, "rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
+					else cmds = new String[] { "ssh", hostname, "rnammer", "-s", "BAC", "-m", su, "-f", tmpout };
 				}
 				
 				List<Object>	lscmd = new ArrayList<Object>();
