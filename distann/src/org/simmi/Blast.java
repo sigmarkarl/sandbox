@@ -59,7 +59,7 @@ public class Blast {
 						
 						if( newgene == null ) {
 							newgene = new Gene(null, gene.refid + " new", desc, teg);
-							newgene.allids = new HashSet<String>();
+							newgene.allids = new HashSet();
 							//newgene.species = new HashMap<String, Teginfo>();
 							//newgene.refid = gene.refid + " new";
 							ret.put( newgene.refid, newgene );
