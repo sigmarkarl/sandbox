@@ -5043,13 +5043,11 @@ public class GeneSetHead extends JApplet {
 		windowmenu.getItems().add( syntenygradientaction );
 		
 		MenuItem genexyplotaction = new MenuItem("Gene XY plot");
-		genexyplotaction.setOnAction( actionEvent -> {
-			SwingUtilities.invokeLater( new Runnable() {
-				public void run() {
-					new XYPlot().xyPlot( GeneSetHead.this, comp, geneset.genelist, geneset.clusterMap );
-				}
-			});
-		});
+		genexyplotaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
+				new XYPlot().xyPlot( GeneSetHead.this, comp, geneset.genelist, geneset.clusterMap );
+			}
+		}));
 		windowmenu.getItems().add( genexyplotaction );
 		
 		MenuItem refalignaction = new MenuItem("Reference align");
@@ -5194,7 +5192,8 @@ public class GeneSetHead extends JApplet {
 		windowmenu.getItems().add( new SeparatorMenuItem() );
 		
 		MenuItem runantismash = new MenuItem("Run antismash");
-		runantismash.setOnAction( actionEvent -> {
+		runantismash.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {	
 				try {
 					Serifier ser = new Serifier();
 					Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
@@ -5325,100 +5324,104 @@ public class GeneSetHead extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		windowmenu.getItems().add( runantismash );
 		
 		MenuItem runsignalp = new MenuItem("Run signalP");
-		runsignalp.setOnAction( actionEvent -> {
+		runsignalp.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {	
+				try {
+					Serifier ser = new Serifier();
+					Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
+					
+					JTextField host = new JTextField("localhost");
+					JOptionPane.showMessageDialog(null, host);
+					
+					String username = System.getProperty("user.name");
+					String hostname = host.getText();
+					
+					/*Path[] pt = null;
+					JFileChooser fc = new JFileChooser();
+					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
+						pt = new Path[3];
+						pt[2] = fc.getSelectedFile().toPath();
+					}*/
+					
+					List<Object> commands = new ArrayList<Object>();
+					//commands.add(genexyplotaction)
+					
 					try {
-						Serifier ser = new Serifier();
-						Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
+						Map<String,String> env = new HashMap<String,String>();
+						env.put("create", "true");
 						
-						JTextField host = new JTextField("localhost");
-						JOptionPane.showMessageDialog(null, host);
+						String uristr = "jar:" + geneset.zippath.toUri();
+						URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
 						
-						String username = System.getProperty("user.name");
-						String hostname = host.getText();
-						
-						/*Path[] pt = null;
-						JFileChooser fc = new JFileChooser();
-						fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-						if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
-							pt = new Path[3];
-							pt[2] = fc.getSelectedFile().toPath();
-						}*/
-						
-						List<Object> commands = new ArrayList<Object>();
-						//commands.add(genexyplotaction)
-						
-						try {
-							Map<String,String> env = new HashMap<String,String>();
-							env.put("create", "true");
-							
-							String uristr = "jar:" + geneset.zippath.toUri();
-							URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-							
-							geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-							for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-								for( String spec : selspec ) {
-									/*Path specdir = root.resolve(spec+".prodigal.fsa");
-									if( !Files.exists(specdir) ) {
-										if( spec.startsWith("MAT") ) {
-											specdir = root.resolve(spec+".gbk.aa");
-										} else specdir = root.resolve("fn_"+spec+"_scaffolds.prodigal.fsa");
-									}*/
-									Stream<Gene> genestream = geneset.genelist.stream().filter( gene -> spec.equals(gene.getSpecies()) && (gene.tegeval.type == null || gene.tegeval.type.length() == 0) );
-									Path sigout = root.resolve(spec+".signalp");
-									Path[] pt = new Path[] {null,sigout,null};
-									if( hostname.equals("localhost") ) {
-										String[] cmds = {"signalp", "-t", "gram-", "-"};
-										commands.add( pt );
-										commands.add( Arrays.asList( cmds ) );
-									} else {
-										Path p = Paths.get(spec+".signalp");
-										BufferedWriter bw = Files.newBufferedWriter(p, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-										genestream.forEachOrdered( gene -> {
-											try {
-												gene.writeGeneIdFasta(bw);
-											} catch (Exception e1) {
-												e1.printStackTrace();
-											}
-										});
-										bw.close();
-										
-										
-										//Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
-										
-										String[] cmds = {"scp",spec+".signalp",hostname+":~",";","ssh",hostname,"signalp","-t","gram-",spec+".signalp"};
-										//String[] cmds = {"ssh",hostname,"signalp","-t","gram-","-"};
-										commands.add( pt );
-										commands.add( Arrays.asList( cmds ) );
-									}
+						geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+						for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+							for( String spec : selspec ) {
+								/*Path specdir = root.resolve(spec+".prodigal.fsa");
+								if( !Files.exists(specdir) ) {
+									if( spec.startsWith("MAT") ) {
+										specdir = root.resolve(spec+".gbk.aa");
+									} else specdir = root.resolve("fn_"+spec+"_scaffolds.prodigal.fsa");
+								}*/
+								Stream<Gene> genestream = geneset.genelist.stream().filter( gene -> spec.equals(gene.getSpecies()) && (gene.tegeval.type == null || gene.tegeval.type.length() == 0) );
+								Path sigout = root.resolve(spec+".signalp");
+								Path[] pt = new Path[] {null,sigout,null};
+								if( hostname.equals("localhost") ) {
+									String[] cmds = {"signalp", "-t", "gram-", "-"};
+									commands.add( pt );
+									commands.add( Arrays.asList( cmds ) );
+								} else {
+									Path p = Paths.get(spec+".signalp");
+									BufferedWriter bw = Files.newBufferedWriter(p, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+									genestream.forEachOrdered( gene -> {
+										try {
+											gene.writeGeneIdFasta(bw);
+										} catch (Exception e1) {
+											e1.printStackTrace();
+										}
+									});
+									bw.close();
+									
+									
+									//Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
+									
+									String[] cmds = {"scp",spec+".signalp",hostname+":~",";","ssh",hostname,"signalp","-t","gram-",spec+".signalp"};
+									//String[] cmds = {"ssh",hostname,"signalp","-t","gram-","-"};
+									commands.add( pt );
+									commands.add( Arrays.asList( cmds ) );
 								}
-								
-								break;
 							}
-						} catch( Exception ex ) {
-							ex.printStackTrace();
+							
+							break;
 						}
-						
-						Runnable run = new Runnable() {
-							@Override
-							public void run() {
-								try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
-							}
-						};
-						
-						NativeRun nr = new NativeRun( run );
-						nr.runProcessBuilder("signalp", commands, new Object[3], false, run, false);
-					} catch (IOException e1) {
-						e1.printStackTrace();
+					} catch( Exception ex ) {
+						ex.printStackTrace();
 					}
-		});
+					
+					Runnable run = new Runnable() {
+						@Override
+						public void run() {
+							try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
+						}
+					};
+					
+					NativeRun nr = new NativeRun( run );
+					nr.runProcessBuilder("signalp", commands, new Object[3], false, run, false);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		}));
 		windowmenu.getItems().add( runsignalp );
 		
 		MenuItem runtransm = new MenuItem("Run TransM");
-		runtransm.setOnAction( actionEvent -> {
+		runtransm.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {	
 				try {
 					Serifier ser = new Serifier();
 					Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
@@ -5506,11 +5509,13 @@ public class GeneSetHead extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		windowmenu.getItems().add( runtransm );
 		
 		MenuItem runtrnascan = new MenuItem("tRNAscan");
-		runtrnascan.setOnAction( actionEvent -> {
+		runtrnascan.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			public void run() {	
 				try {
 					Serifier ser = new Serifier();
 					Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
@@ -5587,7 +5592,8 @@ public class GeneSetHead extends JApplet {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		windowmenu.getItems().add( runtrnascan );
 		
 		Menu		select = new Menu("Select");

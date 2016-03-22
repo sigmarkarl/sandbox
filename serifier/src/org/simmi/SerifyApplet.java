@@ -1990,8 +1990,11 @@ public class SerifyApplet extends JApplet {
 			final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
 			final String cygPathA = NativeRun.cygPath( pathA.toAbsolutePath().toString() );
 			//NativeRun.fixPath( infile.toAbsolutePath().toString() )
+			
+			String OS = System.getProperty("os.name").toLowerCase();
+			
 			String[] cmds;
-			if( host.getText().equals("localhost") ) cmds = new String[] { "/usr/local/bin/prodigal", "-a", outPathA }; //"-d", outPathD };
+			if( host.getText().equals("localhost") ) cmds = new String[] { (OS.indexOf("mac") >= 0) ? "/usr/local/bin/prodigal" : "prodigal", "-a", outPathA }; //"-d", outPathD };
 			else {
 				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", NativeRun.cygPath(userhome+"/genesetkey"), "geneset@"+hostname, "prodigal", "-a", tmpout };
 				else cmds = new String[] { "ssh", hostname, "prodigal", "-a", tmpout };
@@ -2150,6 +2153,108 @@ public class SerifyApplet extends JApplet {
 				nrun.setRun( run );
 				nrun.runProcessBuilder( "Running rnammer", lscmd, cont, false, run, false );
 			}
+		}
+	}
+	
+	public void doBarrnap( Path dir, Container c, final Path fs, List<Path> urls ) throws IOException {
+		JTextField host = new JTextField("localhost");
+		JOptionPane.showMessageDialog(null, host);
+		String userhome = System.getProperty("user.home");
+		String username = System.getProperty("user.name");
+		String hostname = host.getText();
+		
+		String cygcheck = NativeRun.cygPath(userhome);
+		String cygpathstr = cygcheck+"/genesetkey";
+		
+		for( Path path : urls ) {
+			String file = path.getFileName().toString();
+			String[] split = file.split("/");
+			String fname = split[ split.length-1 ];
+			split = fname.split("\\.");
+			final String title = split[0];
+			/*Path infile = dir.resolve( fname ); //new File( dir, fname );
+			if( Files.exists(infile) ) {
+				infile = dir.resolve( "tmp_"+fname );
+			}
+			
+			Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
+			String tmpout = title;
+			final Path pathD = fs.resolve( tmpout );
+			//final Path pathA = selectedfile.resolve( title+".prodigal.fsa" );
+			
+			//final String outPathD = NativeRun.fixPath( pathD.toAbsolutePath().toString() );
+			//final String cygPathD = NativeRun.cygPath( pathD.toAbsolutePath().toString() );
+			
+			//final String outPathA = NativeRun.fixPath( pathA.toAbsolutePath().toString() );
+			//NativeRun.fixPath( infile.toAbsolutePath().toString() )
+			
+			String OS = System.getProperty("os.name").toLowerCase();
+			
+			String[] cmds;
+			if( host.getText().equals("localhost") ) cmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/barrnap" : "barrnap", "--kingdom", "bac", "-f", tmpout }; //"-d", outPathD };
+			else {
+				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "genset@"+hostname, "barrnap", "--kingdom", "bac", "-f", tmpout };
+				else cmds = new String[] { "ssh", hostname, "barrnap", "--kingdom", "bac", "-f", tmpout };
+			}
+			
+			List<Object>	lscmd = new ArrayList();
+			//String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+			lscmd.add( new Path[] { path, null, dir } );
+			lscmd.add( Arrays.asList( cmds ) );
+			
+			final Object[] cont = new Object[3];
+			Runnable run = new Runnable() {
+				public void run() {
+					if( cont[0] != null ) {
+						System.err.println( cont[0] );
+						
+						try {
+							if( host.getText().equals("localhost") ) {
+								Path uh = Paths.get(userhome);
+								Files.copy(uh.resolve( tmpout ), pathD, StandardCopyOption.REPLACE_EXISTING);
+							} else {
+								Path uh = Paths.get(cygcheck);
+								System.err.println( "about to scp " + tmpout );
+								ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, tmpout);
+								pb.directory( uh.toFile() );
+								Process pc = pb.start();
+								InputStream is = pc.getInputStream();
+								ByteArrayOutputStream bab = new ByteArrayOutputStream();
+								int r = is.read();
+								while( r != -1 ) {
+									bab.write( r );
+									r = is.read();
+								}
+								bab.close();
+								System.err.println( bab.toString() );
+								
+								bab = new ByteArrayOutputStream();
+								InputStream es = pc.getErrorStream();
+								r = es.read();
+								while( r != -1 ) {
+									bab.write( r );
+									r = es.read();
+								}
+								bab.close();
+								System.err.println( bab.toString() );
+								
+								pc.waitFor();
+								
+								//System.err.println("done " + cygPathD);
+								Path from = uh.resolve( tmpout );
+								System.err.println("exists " + Files.exists(from));
+								Files.copy(from, pathD, StandardCopyOption.REPLACE_EXISTING);
+								//System.err.println("done " + outPathD);
+							}
+							addSequences( title, pathD, null );
+						} catch (IOException | URISyntaxException | InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			};
+			nrun.setRun( run );
+			nrun.runProcessBuilder( "Running barrnap", lscmd, cont, false, run, false );
 		}
 	}
 	
@@ -3479,6 +3584,36 @@ public class SerifyApplet extends JApplet {
 						break;
 					}
 					doRnammer( dir, c, root, urls );
+					//} else System.err.println( "no prodigal installed" );
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
+			}
+		});
+		popup.add( new AbstractAction("Barrnap") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					List<Path> urls = new ArrayList<Path>();
+					int[] rr = table.getSelectedRows();
+					for( int r : rr ) {
+						//int r = table.getSelectedRow();
+						Path path = (Path)table.getValueAt( r, 3 );
+						urls.add( path );
+					}
+					
+					String userhome = System.getProperty("user.home");	
+					Path dir = Paths.get( userhome );
+					//File f = nrun.checkProdigalInstall( dir, urls );
+					//if( f != null && f.exists() ) {
+					Path root = null;
+					for( Path p: fs.getRootDirectories() ) {
+						root = p;
+						break;
+					}
+					doBarrnap( dir, c, root, urls );
 					//} else System.err.println( "no prodigal installed" );
 				} catch (MalformedURLException e1) {
 					e1.printStackTrace();
