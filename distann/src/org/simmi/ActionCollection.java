@@ -1416,7 +1416,9 @@ public class ActionCollection {
 		codregaction.setOnAction( actionEvent -> new CodingRegions().coderegPlot( genesethead, comp ) );
 		
 		MenuItem freqdistaction = new MenuItem("Freq dist");
-		freqdistaction.setOnAction( actionEvent -> {
+		freqdistaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				JFrame f = new JFrame("Genome frequency distribution");
 				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				f.setSize(500, 500);
@@ -1532,11 +1534,14 @@ public class ActionCollection {
 				jsp.setViewportView( comp );
 				f.add( jsp );
 				f.setVisible( true );*/
-		});
+			}
+		}));
 		//JButton freqdistbutton = new JButton(freqdistaction);
 		
 		MenuItem gcpaction = new MenuItem("Gene GC% histogram");
-		gcpaction.setOnAction( actionEvent -> {
+		gcpaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				JFrame f = new JFrame("Gene GC% histogram");
 				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				f.setSize(500, 500);
@@ -1726,7 +1731,8 @@ public class ActionCollection {
 				jsp.setViewportView( comp );
 				f.add( jsp );
 				f.setVisible( true );*/
-		});
+			}
+		}));
 
 		MenuItem presabsaction = new MenuItem("Pres-Abs tree");
 		presabsaction.setOnAction( actionEvent -> {
@@ -1957,9 +1963,19 @@ public class ActionCollection {
 		});
 		
 		MenuItem genomestataction = new MenuItem("Genome statistics");
-		genomestataction.setOnAction( actionEvent -> stats( comp, genesethead, speccontigMap ) );
+		genomestataction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
+				stats( comp, genesethead, speccontigMap );
+			}
+		}));
 		MenuItem	seqstat = new MenuItem("Sequence statistics");
-		seqstat.setOnAction( actionEvent -> seqstats( genesethead ) );
+		seqstat.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
+				seqstats( genesethead );
+			}
+		}));
 		MenuItem	spaceraction = new MenuItem("Blast spacers");
 		spaceraction.setOnAction( actionEvent -> {
 				StringWriter w = new StringWriter();
@@ -3783,7 +3799,9 @@ public class ActionCollection {
 				f.setVisible( true );
 		});
 		MenuItem cogaction = new MenuItem("COG chart data");
-		cogaction.setOnAction( actionEvent -> {
+		cogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				try {
 					/*Map<String,String> env = new HashMap<String,String>();
 					//env.put("create", "true");
@@ -4038,10 +4056,13 @@ public class ActionCollection {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-		});
+			}
+		}));
 		
 		MenuItem fetchcoreaction = new MenuItem("Fetch core");
-		fetchcoreaction.setOnAction( actionEvent -> {
+		fetchcoreaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ) );
 				
 				JFrame frame = null;
@@ -4193,10 +4214,13 @@ public class ActionCollection {
 				JScrollPane	sp = new JScrollPane(ta);
 				f.add( sp );
 				f.setVisible( true );*/
-		});
+			}
+		}));
 		
 		MenuItem loadcontiggraphaction = new MenuItem("Load contig graph");
-		loadcontiggraphaction.setOnAction( actionEvent -> {
+		loadcontiggraphaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				JFileChooser jfc = new JFileChooser();
 				int res = jfc.showOpenDialog( comp );
 				if( res == JFileChooser.APPROVE_OPTION ) {
@@ -4240,11 +4264,12 @@ public class ActionCollection {
 						e1.printStackTrace();
 					}
 				}
-		});
+			}
+		}));
 		
 		MenuItem selectflankingaction = new MenuItem("Select flanking");
 		selectflankingaction.setOnAction( actionEvent -> {
-				Set<GeneGroup>	ggset = new HashSet<GeneGroup>();
+				Set<GeneGroup>	ggset = new HashSet();
 				for( String str : geneset.contigmap.keySet() ) {
 					Sequence c = geneset.contigmap.get( str );
 					
@@ -4260,7 +4285,9 @@ public class ActionCollection {
 		});
 		
 		MenuItem showflankingaction = new MenuItem("Show flanking");
-		showflankingaction.setOnAction( actionEvent -> {
+		showflankingaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				List<JComponent> complist = new ArrayList<JComponent>();
 				
 				JCheckBox	check = new JCheckBox("Genes");
@@ -4376,11 +4403,14 @@ public class ActionCollection {
 					jf.updateView();
 				}
 				frame.setVisible(true);
-		});
+			}
+		}));
 		
 		MenuItem showcontigsaction = new MenuItem("Show contigs");
-		showcontigsaction.setOnAction( actionEvent -> {
-				final List<Sequence>	allcontigs = new ArrayList<Sequence>();
+		showcontigsaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
+				final List<Sequence>	allcontigs = new ArrayList();
 				for( String spec : speccontigMap.keySet() ) {
 					List<Sequence>	ctgs = speccontigMap.get( spec );
 					allcontigs.addAll( ctgs );
@@ -4455,10 +4485,13 @@ public class ActionCollection {
 				
 				jf.updateView();
 				frame.setVisible(true);
-		});
+			}
+		}));
 		
 		MenuItem showunresolved = new MenuItem("Show unresolved genes");
-		showunresolved.setOnAction( acionEvent -> {
+		showunresolved.setOnAction( acionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				JFrame frame = new JFrame();
 				frame.setSize(800, 600);
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -4481,7 +4514,8 @@ public class ActionCollection {
 				}
 				jf.updateView();
 				frame.setVisible( true );
-		});
+			}
+		}));
 		
 		//PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();
 		//pca.
