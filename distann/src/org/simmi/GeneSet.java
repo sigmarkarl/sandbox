@@ -49,6 +49,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JTable;
 
+import javafx.stage.Stage;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.simmi.shared.Annotation;
@@ -5517,20 +5518,20 @@ public class GeneSet {
         Scene scene = createScene( names, xdata, ydata );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
-    
-    public void initWebPage( JFXPanel fxPanel, String webp ) {
-        Scene scene = createScene( webp );
-        if( fxPanel != null ) fxPanel.setScene(scene);
-    }
+
+	public void initWebPage(Stage stage, String webp ) {
+		Scene scene = createScene( webp );
+		if( stage != null ) stage.setScene(scene);
+	}
     
     public void initDualPieChart( JFXPanel fxPanel, Map<Character,Integer> map, Map<Character,Integer> mip ) {
         Scene scene = createDualPieChartScene( map, mip );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    public void initStackedBarChart( JFXPanel fxPanel, Map<String,String> all, Map<String,Map<Character,Integer>> map, boolean uniform ) {
+    public void initStackedBarChart( Stage stage, Map<String,String> all, Map<String,Map<Character,Integer>> map, boolean uniform ) {
         Scene scene = createStackedBarChartScene( all, map, uniform );
-        if( fxPanel != null ) fxPanel.setScene(scene);
+        if( stage != null ) stage.setScene(scene);
     }
     
     public void initStackedBarChart( JFXPanel fxPanel, List<StackBarData> lsbd, String[] categories ) {
@@ -5881,9 +5882,9 @@ public class GeneSet {
 	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
 	//GZIPInputStream gi = new GZIPInputStream( fi );
 	//funcMappingStatic( new InputStreamReader( gi ) );
-	FileInputStream fi = new FileInputStream( "/Users/sigmar/gene_association.goa_uniprot.gz" );
-	GZIPInputStream gi = new GZIPInputStream( fi );
-	funcMappingStatic( new InputStreamReader( gi ) );
+	//FileInputStream fi = new FileInputStream( "/Users/sigmar/gene_association.goa_uniprot.gz" );
+	//GZIPInputStream gi = new GZIPInputStream( fi );
+	//funcMappingStatic( new InputStreamReader( gi ) );
 			
 			/*Map<String,String>	sp2ko = new HashMap<String,String>();
 			FileReader fr = new FileReader("/vg454flx/sp2ko.txt");
