@@ -138,6 +138,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import javafx.stage.Stage;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.poi.ss.usermodel.Cell;
@@ -2476,12 +2477,14 @@ public class GeneSetHead extends JApplet {
 	ComboBox<String> 						combo;
 	
 	SplitPane		splitpane;
+	Stage			primaryStage;
 
 	Component comp;
-	public void init(final Container comp, final SplitPane splitpane, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower, final MenuBar menubar, final ToolBar toolbar, final ToolBar btoolbar ) {
+	public void init(final Stage primaryStage, final Container comp, final SplitPane splitpane, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower, final MenuBar menubar, final ToolBar toolbar, final ToolBar btoolbar ) {
 		geneset.user = System.getProperty("user.name");
 		JavaFasta.user = geneset.user;
 		this.splitpane = splitpane;
+		this.primaryStage = primaryStage;
 		//SerifyApplet.user = user;
 		
 		/*try {
@@ -3348,7 +3351,7 @@ public class GeneSetHead extends JApplet {
 					Path resPath = geneset.zipfilesystem.getPath("/unresolved.blastout");
 					
 					NativeRun nrun = new NativeRun();
-					SerifyApplet.blastpRun(nrun, sb.getBuffer(), dbPath, resPath, "-evalue 0.00001", null, true, geneset.zipfilesystem, geneset.user);
+					SerifyApplet.blastpRun(nrun, sb.getBuffer(), dbPath, resPath, "-evalue 0.00001", null, true, geneset.zipfilesystem, geneset.user, primaryStage);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -9290,7 +9293,7 @@ public class GeneSetHead extends JApplet {
 	}
 	
 	public void init() {
-		init(this, null, null, null, null, null, null, null);
+		init(primaryStage, this, null, null, null, null, null, null, null);
 	}
 	
 	public void exportGenomes( Map<String,List<Sequence>> speccontigMap ) {
@@ -9313,7 +9316,7 @@ public class GeneSetHead extends JApplet {
 						serifier.addSequence(c);
 						serifier.mseq.put(c.getName(), c);
 						
-						List<Annotation> lann = new ArrayList<Annotation>();
+						List<Annotation> lann = new ArrayList();
 						if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
 							Tegeval tv = (Tegeval)ann;
 							GeneGroup gg = tv.getGene().getGeneGroup();
