@@ -74,6 +74,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import javafx.scene.Scene;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -2538,7 +2543,6 @@ public class ActionCollection {
 					System.err.println( spec );
 				}
 				
-				
 				final String[] categories = { "Core: ", "Accessory: " };
 				final List<StackBarData> lsbd = new ArrayList<StackBarData>();
 				StringBuilder restext = panCore( genesethead, selspec, categories, lsbd );
@@ -3179,7 +3183,9 @@ public class ActionCollection {
 		});
 		
 		MenuItem gcskewaction = new MenuItem("GC skew chart");
-		gcskewaction.setOnAction( actionEvent -> {
+		gcskewaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
 				
 				final GeneGroup	gg = table.getSelectionModel().getSelectedItem();
@@ -3535,12 +3541,15 @@ public class ActionCollection {
 				
 				genesethead.repaintGCSkew( selclist, g2, size, gg, selspec );				
 				frame.setVisible( true );
-		});
+			}
+		}));
 		
 		//Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), null );
 		
 		MenuItem totalcogaction = new MenuItem("COG total");
-		totalcogaction.setOnAction( actionEvent -> {
+		totalcogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
+			@Override
+			public void run() {
 				JCheckBox cb = new JCheckBox("Plasmid");
 				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), cb );
 				
@@ -3797,7 +3806,8 @@ public class ActionCollection {
 				JScrollPane	sp = new JScrollPane(ta);
 				f.add( sp );
 				f.setVisible( true );
-		});
+			}
+		}));
 		MenuItem cogaction = new MenuItem("COG chart data");
 		cogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
 			@Override
@@ -3871,20 +3881,28 @@ public class ActionCollection {
 						public void removeTableModelListener(TableModelListener l) {}
 						
 					};
+					boolean web = true;
+					
+					JCheckBox webbox = new JCheckBox("Web based");
+					webbox.setSelected( true );
+					
 					cogtable.setModel( cogmodel );
 					JScrollPane cogscroll = new JScrollPane( cogtable );
-					JOptionPane.showMessageDialog( genesethead, cogscroll );
+
+					Object[] objs = new Object[] { cogscroll, webbox };
+					JOptionPane.showMessageDialog( genesethead, objs );
+					web = webbox.isSelected();
 					
 					int[] rr = cogtable.getSelectedRows();
 					for( int r : rr ) {
 						includedCogs.add( coglist.get(r) );
 					}
 					
-					final Map<String,String>					all = new TreeMap<String,String>();
-					final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap<String, Map<Character,Integer>>();
+					final Map<String,String>					all = new TreeMap();
+					final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap();
 					genesethead.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
 					
-					Map<Character,Row> rl = new HashMap<Character,Row>();
+					Map<Character,Row> rl = new HashMap();
 					
 					Workbook	wb = new XSSFWorkbook();
 					Sheet sh = wb.createSheet("COG");
@@ -3914,7 +3932,6 @@ public class ActionCollection {
 					fos.close();
 					
 					Desktop.getDesktop().open(f);
-					
 					
 					StringWriter fw = geneset.writeCog( map, includedCogs, uniform.isSelected() );
 					String repl = fw.toString();
@@ -3946,33 +3963,22 @@ public class ActionCollection {
 					} catch( NoSuchMethodError | Exception exc ) {
 						exc.printStackTrace();
 					}*/
-					
-					boolean web = true;
 						
 					if( web ) {
-						if( geneset.fxframe == null ) {
-							geneset.fxframe = new JFrame("COG");
-							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-							geneset.fxframe.setSize(800, 600);
-							
-							final JFXPanel	fxpanel = new JFXPanel();
-							geneset.fxframe.add( fxpanel );
-							
-							Platform.runLater(new Runnable() {
-				                 @Override
-				                 public void run() {
-				                	 geneset.initWebPage( fxpanel, smuck );
-				                 }
-				            });
-						} else {
-							Platform.runLater(new Runnable() {
-				                 @Override
-				                 public void run() {
-				                	 geneset.initWebPage( null, smuck );
-				                 }
-				            });
-						}						
-						geneset.fxframe.setVisible( true );
+						Platform.runLater(new Runnable() {
+							 @Override
+							 public void run() {
+								final Stage dialog = new Stage();
+								dialog.initModality(Modality.APPLICATION_MODAL);
+								dialog.initOwner( genesethead.primaryStage );
+								VBox dialogVbox = new VBox(20);
+								dialogVbox.getChildren().add(new Text("This is a Dialog"));
+								Scene dialogScene = new Scene(dialogVbox, 300, 200);
+								dialog.setScene(dialogScene);
+								geneset.initWebPage( dialog, smuck );
+								dialog.show();
+							 }
+						});
 						
 						/*boolean succ = true;
 						try {
@@ -4013,33 +4019,19 @@ public class ActionCollection {
 							}
 						}
 					} else {
-						SwingUtilities.invokeLater( new Runnable() {
-							@Override
-							public void run() {
-								if( geneset.fxframe == null ) {
-									geneset.fxframe = new JFrame("COG");
-									geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-									geneset.fxframe.setSize(800, 600);
-									
-									final JFXPanel	fxpanel = new JFXPanel();
-									geneset.fxframe.add( fxpanel );
-									
-									Platform.runLater(new Runnable() {
-						                 @Override
-						                 public void run() {
-						                     geneset.initStackedBarChart( fxpanel, all, map, uniform.isSelected() );
-						                 }
-						            });
-								} else {
-									Platform.runLater(new Runnable() {
-						                 @Override
-						                 public void run() {
-						                     geneset.initStackedBarChart( null, all, map, uniform.isSelected() );
-						                 }
-						            });
-								}						
-								geneset.fxframe.setVisible( true );
-							}
+						Platform.runLater(new Runnable() {
+							 @Override
+							 public void run() {
+								final Stage dialog = new Stage();
+								dialog.initModality(Modality.APPLICATION_MODAL);
+								dialog.initOwner( genesethead.primaryStage );
+								VBox dialogVbox = new VBox(20);
+								dialogVbox.getChildren().add(new Text("This is a Dialog"));
+								Scene dialogScene = new Scene(dialogVbox, 300, 200);
+								dialog.setScene(dialogScene);
+								geneset.initStackedBarChart( dialog, all, map, uniform.isSelected() );
+								dialog.show();
+							 }
 						});
 					}
 					geneset.zipfilesystem.close();
