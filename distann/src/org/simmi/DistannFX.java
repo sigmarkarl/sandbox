@@ -45,7 +45,7 @@ public class DistannFX extends Application {
         GeneSetHead gsh = new GeneSetHead( gs );
         //final JPanel panel = new JPanel();
         //panel.setLayout( new BorderLayout() );
-        gsh.init( null, splitpane, gene, upper, lower, menubar, toolbar, btoolbar );
+        gsh.init( primaryStage, null, splitpane, gene, upper, lower, menubar, toolbar, btoolbar );
         
         BorderPane root = new BorderPane();
         root.setTop( vbox );
