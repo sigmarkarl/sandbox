@@ -1,5 +1,6 @@
 package org.simmi;
 
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -101,7 +102,15 @@ public class Ibud {
 
 				@Override
 				public Image getValue() {
-					if( img == null ) img = new Image( imgurl );
+					if( img == null ) {
+						URL noimgurl = Ibud.class.getResource("/noimage.jpg");
+						img = new Image( noimgurl.toString() );
+						new Thread() {
+							public void run() {
+								img = new Image( imgurl );
+							}
+						}.start();
+					}
 					return img;
 				}
 

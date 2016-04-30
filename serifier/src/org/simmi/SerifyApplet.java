@@ -1,21 +1,12 @@
 package org.simmi;
 
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
@@ -37,7 +28,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.lang.reflect.Field;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -66,7 +56,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,30 +67,20 @@ import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.swing.AbstractAction;
-import javax.swing.JApplet;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -121,29 +100,53 @@ import org.simmi.unsigned.FlxReader;
 import org.simmi.unsigned.JavaFasta;
 import org.simmi.unsigned.NativeRun;
 
+import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.embed.swing.JFXPanel;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import netscape.javascript.JSObject;
 
-public class SerifyApplet extends JApplet {
+public class SerifyApplet {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	JTable				table;
-	Serifier			serifier;
-	//String 				globaluser = null;
-	NativeRun			nrun = new NativeRun();
+	TableView<Sequences>			table;
+	Serifier						serifier;
+	//String 						globaluser = null;
+	NativeRun						nrun = new NativeRun();
 	
 	Map<Path,Sequences> mseq = new HashMap<Path,Sequences>();
 	
@@ -163,8 +166,8 @@ public class SerifyApplet extends JApplet {
 		root = fs.getPath( System.getProperty("user.home") );
 	}
 	
-	public List<Sequences> initSequences( int rowcount ) {		
-		try {
+	public ObservableList<Sequences> initSequences() {		
+		/*try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "getSequences", new Object[] {rowcount == 0} );
 		} catch( NoSuchMethodError | Exception e ) {
@@ -204,15 +207,15 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}
 		
-		try {
+		/*try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "initMachines", new Object[] {hostname, procs} );
 		} catch( NoSuchMethodError | Exception e ) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
-	public TableModel createModel( final List<?> datalist ) {
+	/*public TableModel createModel( final List<?> datalist ) {
 		Class cls = null;
 		if( cls == null && datalist.size() > 0 ) cls = datalist.get(0).getClass();
 		return createModel( datalist, cls );
@@ -264,7 +267,7 @@ public class SerifyApplet extends JApplet {
 							/*if( ret != null && !ret.getClass().isInstance(f.getType()) ) {
 								System.err.println( ret.getClass() + "  " + f.getType() );
 								ret = null;
-							}*/
+							}*
 						}
 					}
 				} catch (IllegalArgumentException e) {
@@ -309,10 +312,10 @@ public class SerifyApplet extends JApplet {
 	
 	public void console( String log ) {
 		System.err.println( log );
-	}
+	}*/
 	
 	public void init() {
-		try {
+		/*try {
 			JSObject jso = JSObject.getWindow( this );
 			final JSObject con = (JSObject)jso.getMember("console");
 		} catch( NoSuchMethodError | Exception e ) {
@@ -342,29 +345,16 @@ public class SerifyApplet extends JApplet {
 		System.setOut( po );
 		System.setErr( po );*/
 		
-		init( this, System.getProperty("user.name") );
+		init( null, null, System.getProperty("user.name") );
 	}
 	
 	public void browse( final String url ) {
-		//System.err.println("");
-		
-		AccessController.doPrivileged( new PrivilegedAction() {
-			@Override
-			public Object run() {
-				try {
-					URI uri = new URI( url );
-					Desktop.getDesktop().browse( uri );
-					Desktop.getDesktop().open( new File( uri ) );
-					SerifyApplet.this.getAppletContext().showDocument( uri.toURL() );
-				} catch (URISyntaxException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
-				return null;
-			}
-		});
+		try {
+			Desktop.getDesktop().browse( URI.create(url) );
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 	
 	public Sequences getSequences( int i ) {
@@ -386,26 +376,20 @@ public class SerifyApplet extends JApplet {
 	public void deleteSeqs() {
 		Set<String>	keys = new TreeSet<String>();
 		Set<Sequences>	rselset = new TreeSet<Sequences>();
-		int[] rr = table.getSelectedRows();
-		for( int r : rr ) {
-			int ind = table.convertRowIndexToModel( r );
-			if( ind >= 0 ) {
-				Sequences seqs = getSequences(ind);
-				rselset.add( seqs );
-				if( seqs.getKey() != null ) keys.add( seqs.getKey() );
-				
-				try {
-					Files.delete( seqs.getPath() );
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				//sequences.remove( ind );
-				//table.tableChanged( new TableModelEvent(table.getModel()) );
+		ObservableList<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+		for( Sequences seqs : lseqs ) {
+			rselset.add( seqs );
+			if( seqs.getKey() != null ) keys.add( seqs.getKey() );
+			
+			try {
+				Files.delete( seqs.getPath() );
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 		
 		boolean unsucc = false;
-		try {
+		/*try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			for( String key : keys ) {
 				js.call( "deleteSequenceKey", new Object[] {key} );
@@ -419,10 +403,10 @@ public class SerifyApplet extends JApplet {
 				int ind = table.convertRowIndexToModel( r );
 				rselset.add( getSequences(ind) );
 			}
-		}
+		}*/
 		
 		removeAllSequences( rselset );
-		table.tableChanged( new TableModelEvent(table.getModel()) );
+		//table.tableChanged( new TableModelEvent(table.getModel()) );
 	}
 	
 	public void deleteSequence( String key ) {
@@ -432,7 +416,7 @@ public class SerifyApplet extends JApplet {
 		}
 		if( selseq != null ) {
 			removeSequences( selseq );		
-			table.tableChanged( new TableModelEvent(table.getModel()) );
+			//okoktable.tableChanged( new TableModelEvent(table.getModel()) );
 		}
 	}
 	
@@ -729,7 +713,7 @@ public class SerifyApplet extends JApplet {
 		nrun.runProcessBuilder( "Performing rpsblast", lscmd, cont, false, run, false );
 	}
 	
-	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, Path resPath, String dbType, String extrapar, JTable table, boolean homedir, final String user, final boolean headless ) throws IOException {
+	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, Path resPath, String dbType, String extrapar, TableView table, boolean homedir, final String user, final boolean headless ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
 		if( homedir || headless ) selectedpath = new File( userhome ).toPath();
@@ -748,10 +732,10 @@ public class SerifyApplet extends JApplet {
 		if( blastx.exists() ) {*/
 		//String dbPathFixed = nrun.fixPath( dbPath );	
 		else {
-			JFileChooser fc = new JFileChooser();
-			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-				selectedpath = fc.getSelectedFile().toPath();
+			DirectoryChooser fc = new DirectoryChooser();
+			File f = fc.showDialog( null );
+			if( f != null ) {
+				selectedpath = f.toPath();
 				if( !Files.isDirectory(selectedpath) ) selectedpath = selectedpath.getParent();
 			}
 		}
@@ -795,10 +779,10 @@ public class SerifyApplet extends JApplet {
 			//}
 			
 			if( table != null ) {
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					Path	path = (Path)table.getValueAt( r, 3 );
-					String 	type = (String)table.getValueAt( r, 2 );
+				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+				for( Sequences seqs : lseqs ) {
+					Path	path = seqs.getPath();
+					String 	type = seqs.getType();
 					
 					//String blasttype = dbType.equals("nucl") ? type.equals("prot") ? "blastx" : "blastn" : "blastp";
 					String blastFile = dbType.equals("prot") ? type.equals("prot") ? "blastp" : "blastx" : "blastn";
@@ -1830,10 +1814,8 @@ public class SerifyApplet extends JApplet {
 		
 		int nseq = 0;
 		BufferedWriter bw = null;
-		int[] rr = table.getSelectedRows();
-		for( int r : rr ) {
-			int rrr = table.convertRowIndexToModel( r );
-			final Sequences seqs = getSequences( rrr );
+		List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+		for( Sequences seqs : lseqs ) {
 			InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 			
 			if( seqs.getPath().endsWith(".gz") ) {
@@ -1874,14 +1856,12 @@ public class SerifyApplet extends JApplet {
 	
 	public void loadSequencesInJavaFasta( JavaFasta jf ) {
 		Map<String, Sequence> contset = new HashMap<String, Sequence>();
-		int[] rr = table.getSelectedRows();
-		for (int r : rr) {
-			int cr = table.convertRowIndexToModel(r);
-			Sequences seqs = getSequences(cr);
-			if( rr.length == 1 ) jf.setCurrentPath( seqs.getPath() );
+		List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+		for ( Sequences seqs : lseqs ) {
+			if( lseqs.size() == 1 ) jf.setCurrentPath( seqs.getPath() );
 			
 			//int nseq = 0;
-			serifier.appendSequenceInJavaFasta( seqs, contset, rr.length == 1 );
+			serifier.appendSequenceInJavaFasta( seqs, contset, lseqs.size() == 1 );
 						/*Annotation a = jf.new Annotation(seq, contig, Color.red);
 						a.setStart(tv.start);
 						a.setStop(tv.stop);
@@ -1912,72 +1892,76 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	public void load() {
-		JFrame frame = new JFrame();
-		frame.setSize(800, 600);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		final JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
-		jf.initGui(frame);
-		serifier.clearAll();
-		loadSequencesInJavaFasta( jf );
-		jf.updateView();
-
-		frame.addWindowListener( new WindowListener() {
-			@Override
-			public void windowOpened(WindowEvent e) {}
-			
-			@Override
-			public void windowIconified(WindowEvent e) {}
-			
-			@Override
-			public void windowDeiconified(WindowEvent e) {}
-			
-			@Override
-			public void windowDeactivated(WindowEvent e) {}
-			
-			@Override
-			public void windowClosing(WindowEvent e) {}
-			
-			@Override
-			public void windowClosed(WindowEvent e) {
-				if( jf.isEdited() && JOptionPane.showConfirmDialog( SerifyApplet.this, "Do you wan't to save?" ) == JOptionPane.YES_OPTION ) {
-					Path cp = jf.getCurrentPath();
-					if( cp == null ) {
-						JFileChooser jfc = new JFileChooser();
-						if( jfc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-							try {
-								File f = jfc.getSelectedFile();
-								FileWriter fw = new FileWriter( f );
-								serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
-								fw.close();
-								
-								SerifyApplet.this.addSequences( f.getName(), f.toPath(), null );
-							} catch (IOException | URISyntaxException e1) {
-								e1.printStackTrace();
+		Platform.runLater( new Runnable() {
+			public void run() {
+				JFrame frame = new JFrame();
+				frame.setSize(800, 600);
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				final JavaFasta jf = new JavaFasta( null, serifier, null );
+				jf.initGui(frame);
+				serifier.clearAll();
+				loadSequencesInJavaFasta( jf );
+				jf.updateView();
+		
+				frame.addWindowListener( new WindowListener() {
+					@Override
+					public void windowOpened(WindowEvent e) {}
+					
+					@Override
+					public void windowIconified(WindowEvent e) {}
+					
+					@Override
+					public void windowDeiconified(WindowEvent e) {}
+					
+					@Override
+					public void windowDeactivated(WindowEvent e) {}
+					
+					@Override
+					public void windowClosing(WindowEvent e) {}
+					
+					@Override
+					public void windowClosed(WindowEvent e) {
+						if( jf.isEdited() && JOptionPane.showConfirmDialog( null, "Do you wan't to save?" ) == JOptionPane.YES_OPTION ) {
+							Path cp = jf.getCurrentPath();
+							if( cp == null ) {
+								FileChooser jfc = new FileChooser();
+								File f = jfc.showOpenDialog(null);
+								if( f != null ) {
+									try {
+										FileWriter fw = new FileWriter( f );
+										serifier.writeFasta( serifier.lseq, fw, jf.getSelectedRect() );
+										fw.close();
+										
+										SerifyApplet.this.addSequences( f.getName(), f.toPath(), null );
+									} catch (IOException | URISyntaxException e1) {
+										e1.printStackTrace();
+									}
+								}
+							} else {
+								//Sequence.write
+								try {
+									BufferedWriter bw = Files.newBufferedWriter(cp, StandardOpenOption.TRUNCATE_EXISTING);
+									serifier.writeFasta( serifier.lseq, bw, null );
+									bw.close();
+									
+									Sequences seqs = mseq.get(cp);
+									if( seqs != null ) {
+										seqs.nseq = serifier.lseq.size();
+										//okoktable.tableChanged( new TableModelEvent(table.getModel()) );
+									}
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
 							}
-						}
-					} else {
-						//Sequence.write
-						try {
-							BufferedWriter bw = Files.newBufferedWriter(cp, StandardOpenOption.TRUNCATE_EXISTING);
-							serifier.writeFasta( serifier.lseq, bw, null );
-							bw.close();
-							
-							Sequences seqs = mseq.get(cp);
-							if( seqs != null ) {
-								seqs.nseq = serifier.lseq.size();
-								table.tableChanged( new TableModelEvent(table.getModel()) );
-							}
-						} catch (IOException e1) {
-							e1.printStackTrace();
 						}
 					}
-				}
+					
+					@Override
+					public void windowActivated(WindowEvent e) {}
+				});
+				frame.setVisible(true);
 			}
-			
-			@Override
-			public void windowActivated(WindowEvent e) {}
 		});
-		frame.setVisible(true);
 	}
 	
 	FileSystem 	fs = null;
@@ -2314,11 +2298,11 @@ public class SerifyApplet extends JApplet {
 		}
 	}
 	
-	public void init( final Container c, String tuser ) {
+	public void init( final Container c, final VBox vbox, String tuser ) {
 		nrun.cnt = c;
 		user = tuser;
 		
-		try {
+		/*try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			user = (String)js.call("getUser", new Object[] {});
 		} catch( NoSuchMethodError | Exception e ) {
@@ -2341,43 +2325,64 @@ public class SerifyApplet extends JApplet {
 		if (window instanceof JFrame) {
 			JFrame frame = (JFrame)window;
 			if (!frame.isResizable()) frame.setResizable(true);
-		}
+		}*/
 		
 		//final String[] 	columns = new String[] {"user", "name", "path", "type", "#seq"};
 		//final Class[]	types = new Class[] {String.class, String.class, String.class, String.class, Integer.class};
 		
-		Color bgcolor = Color.white;
-		SerifyApplet.this.getContentPane().setBackground(bgcolor);
-		SerifyApplet.this.setBackground(bgcolor);
-		SerifyApplet.this.getRootPane().setBackground(bgcolor);
+		//Color bgcolor = Color.white;
+		//SerifyApplet.this.getContentPane().setBackground(bgcolor);
+		//SerifyApplet.this.setBackground(bgcolor);
+		//SerifyApplet.this.getRootPane().setBackground(bgcolor);
 		
-		table = new JTable();
-		//table.setBackground( bgcolor );
+		table = new TableView<Sequences>();
+		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+		TableColumn<Sequences, String> usercol = new TableColumn<>("User");
+		usercol.setCellValueFactory( new PropertyValueFactory<Sequences,String>("user"));
+		table.getColumns().add( usercol );
+		TableColumn<Sequences, String> namedesccol = new TableColumn<>("Name");
+		namedesccol.setCellValueFactory( new PropertyValueFactory<Sequences,String>("name"));
+		table.getColumns().add( namedesccol );
+		TableColumn<Sequences, String> typecol = new TableColumn<>("Type");
+		typecol.setCellValueFactory( new PropertyValueFactory<Sequences,String>("type"));
+		table.getColumns().add( typecol );
+		TableColumn<Sequences, Path> pathcol = new TableColumn<>("Path");
+		pathcol.setCellValueFactory( new PropertyValueFactory<Sequences,Path>("path"));
+		table.getColumns().add( pathcol );
+		TableColumn<Sequences, Integer> nseqcol = new TableColumn<>("NSeq");
+		nseqcol.setCellValueFactory( new PropertyValueFactory<Sequences,Integer>("nseq"));
+		table.getColumns().add( nseqcol );
 		
-		List<Sequences> sequences = initSequences( table.getRowCount() );
+		ObservableList<Sequences> sequences = initSequences();
 		initMachines();
-		table.setAutoCreateRowSorter( true );
 		serifier.setSequencesList( sequences );
-		TableModel model = createModel( sequences, Sequences.class );
-		table.setModel( model );
+		table.setItems( sequences );
+		//TableModel model = createModel( sequences, Sequences.class );
+		//table.setModel( model );
 		
-		Field[] odecl = Sequences.class.getDeclaredFields();
+		/*Field[] odecl = Sequences.class.getDeclaredFields();
 		Set<TableColumn>			remcol = new HashSet<TableColumn>();
 		Enumeration<TableColumn>	taben = table.getColumnModel().getColumns();
 		while( taben.hasMoreElements() ) {
 			TableColumn tc = taben.nextElement();
 			String name = odecl[tc.getModelIndex()].getName();
-			System.err.println( name );
 			if( name.startsWith("_") ) {
 				remcol.add( tc );
 			}
 		}
 		for( TableColumn tc : remcol ) {
 			table.removeColumn( tc );
-		}
+		}*/
 		
-		table.addMouseListener( new MouseAdapter() {
-			public void mousePressed( MouseEvent me ) {
+		table.setOnMouseClicked( new EventHandler<MouseEvent>() {
+			public void handle( MouseEvent me ) {
+				if( me.getClickCount() == 2 ) {
+					load();
+				}
+			}
+		});
+			/*public void mousePressed( MouseEvent me ) {
 				if( me.getClickCount() == 2 ) {
 					load();
 					
@@ -2398,29 +2403,25 @@ public class SerifyApplet extends JApplet {
 						SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
 					} catch (MalformedURLException e) {
 						e.printStackTrace();
-					}*/
+					}*
 					
 					//browse( path );
 				}
 			}
-		});
-		table.addKeyListener( new KeyListener() {
-			
-			@Override
-			public void keyTyped(KeyEvent e) {}
-			
-			@Override
-			public void keyReleased(KeyEvent e) {}
-			
-			@Override
-			public void keyPressed(KeyEvent e) {
-				int keycode = e.getKeyCode();
-				if( keycode == KeyEvent.VK_DELETE ) {
+
+			public void changed(ObservableValue<? extends Sequences> observable, Sequences oldValue, S newValue) {
+				// TODO Auto-generated method stub
+				
+			}*/
+		//});
+		
+		table.setOnKeyPressed( new EventHandler<KeyEvent>() {
+			public void handle(KeyEvent e) {
+				KeyCode keycode = e.getCode();
+				if( keycode == KeyCode.DELETE ) {
 					deleteSeqs();
-				} else if( keycode == KeyEvent.VK_ENTER ) {
-					int r = table.getSelectedRow();
-					String path = (String)table.getValueAt( r, 3 );
-					
+				} else if( keycode == KeyCode.ENTER ) {
+					String path = table.getSelectionModel().getSelectedItem().getPath().toString();
 					/*try {
 						SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
 					} catch (MalformedURLException e) {
@@ -2432,8 +2433,10 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		
-		JMenu popup = new JMenu("File");
-		if( c instanceof JFrame ) {
+		MenuBar mb = new MenuBar();
+		Menu popup = new Menu("File");
+		mb.getMenus().add( popup );
+		/*if( c instanceof JFrame ) {
 			JFrame fr = (JFrame)c;
 			JMenuBar mb = new JMenuBar();
 			//c
@@ -2446,12 +2449,12 @@ public class SerifyApplet extends JApplet {
 			JMenuBar mb = new JMenuBar();
 			mb.add( popup );
 			ap.setJMenuBar( mb );
-		}
+		}*/
 		
-		popup.add( new AbstractAction("JGI Fetch") {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
+		MenuItem jgifetch = new MenuItem("JGI Fetch");
+		popup.getItems().add( jgifetch );
+		jgifetch.setOnAction( new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
 				try {
 					CookieManager cm = new CookieManager( null, CookiePolicy.ACCEPT_ALL );
 					CookieHandler.setDefault( cm );
@@ -2538,15 +2541,17 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("NCBI Fetch") {
+		MenuItem ncbifetch = new MenuItem("NCBI Fetch");
+		popup.getItems().add( ncbifetch );
+		ncbifetch.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				final Path cd;
 				if( fs == null ) {
-					JFileChooser	filechooser = new JFileChooser();
-					filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						cd = filechooser.getSelectedFile().toPath();
+					DirectoryChooser	filechooser = new DirectoryChooser();
+					File selectedFile = filechooser.showDialog(null);
+					if( selectedFile != null ) {
+						cd = selectedFile.toPath();
 					} else cd = null;
 				} else {
 					cd = fs.getPath("/");
@@ -3052,33 +3057,30 @@ public class SerifyApplet extends JApplet {
 				nrun.runProcess("NCBI Fetch", run, dialog, pbar);
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Import fasta") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem importfasta = new MenuItem("Import fasta");
+		popup.getItems().add( importfasta );
+		importfasta.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser	filechooser = new JFileChooser();
-				filechooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-				filechooser.setMultiSelectionEnabled( true );
-				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
+			public void handle(ActionEvent e) {
+				FileChooser	filechooser = new FileChooser();
+				List<File> lfile = filechooser.showOpenMultipleDialog(null);
+				//filechooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+				if( lfile != null  ) {
 					//File cd = filechooser.getCurrentDirectory();
 					//String path = JOptionPane.showInputDialog("Select path", cd.toURI().toString());
 					
 					try {
 						String comp = null;
 						FlxReader flx = new FlxReader();
-						for( File f : filechooser.getSelectedFiles() ) {
+						for( File f : lfile ) {
 							if( f.isDirectory() ) {
 								List<Sequence> bb = null;
 								if( comp == null ) {
-									int r = table.getSelectedRow();
-									if( r != -1 ) {
-										int i = table.convertRowIndexToModel(r);
-										Sequences seqs = serifier.getSequencesList().get(i);
-										
-										comp = seqs.getName();
-										Path filepath = seqs.getPath();
-										bb = Sequence.readFasta(filepath, null);
-									}
+									Sequences seqs = table.getSelectionModel().getSelectedItem();
+									comp = seqs.getName();
+									Path filepath = seqs.getPath();
+									bb = Sequence.readFasta(filepath, null);
 								}
 								
 								Path dest = root.resolve(f.getName()+".fna");
@@ -3089,15 +3091,19 @@ public class SerifyApplet extends JApplet {
 								flx.start( f.getParentFile().getAbsolutePath()+"/", f.getName(), false, fw, comp, bb);
 								fw.close();
 								
-								JavaFasta	jf = new JavaFasta(flx.serifier);
-								JFrame		frame = new JFrame();
-								frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-								frame.setSize(800, 600);
-								jf.initGui(frame);
-								jf.updateView();
-								frame.setVisible( true );
-								
-								System.err.println("about to add seqs " + f.getName());
+								Platform.runLater( new Runnable() {
+									public void run() {
+										JavaFasta	jf = new JavaFasta(flx.serifier);
+										JFrame		frame = new JFrame();
+										frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+										frame.setSize(800, 600);
+										jf.initGui(frame);
+										jf.updateView();
+										frame.setVisible( true );
+										
+										System.err.println("about to add seqs " + f.getName());
+									}
+								});
 								
 								addSequences( f.getName(), dest, null );
 							} else {
@@ -3116,17 +3122,19 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Concatenate") {
+		MenuItem concatenate = new MenuItem("Concatenate");
+		popup.getItems().add( concatenate );
+		concatenate.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser	filechooser = new JFileChooser();
-				if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-					final File f = filechooser.getSelectedFile();
+			public void handle(ActionEvent e) {
+				FileChooser	filechooser = new FileChooser();
+				File f = filechooser.showOpenDialog(null);
+				if( f != null ) {
 					try {
 						List<BufferedReader>	lrd = new ArrayList<BufferedReader>();
-						int[] rr = table.getSelectedRows();
-						for( int r : rr ) {
-							Path path = (Path)table.getValueAt( r, 3 );
+						List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+						for( Sequences seqs : lseqs ) {
+							Path path = seqs.getPath();
 							//URL url = new URL( path );
 							lrd.add( Files.newBufferedReader( path, Charset.defaultCharset() ) );
 						}
@@ -3244,32 +3252,36 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("View sequences") {
+		MenuItem viewsequences = new MenuItem("View sequences");
+		popup.getItems().add( viewsequences );
+		viewsequences.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				load();
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Delete") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem delete = new MenuItem("Delete");
+		delete.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				deleteSeqs();
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Create database") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem createdatabase = new MenuItem("Create database");
+		createdatabase.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				try {
 					String userhome = System.getProperty("user.home");	
 					File dir = new File( userhome );
 					
 					nrun.checkInstall( dir );
 						
-					int r = table.getSelectedRow();
-					final String dbtype = (String)table.getValueAt( r, 2 );
-					final String path = (String)table.getValueAt( r, 3 );
+					Sequences seqs = table.getSelectionModel().getSelectedItem();
+					final String dbtype = seqs.getType();
+					final String path = seqs.getPath().toString();
 					URL url = new URL( path );
 					
 					String file = url.getFile();
@@ -3283,7 +3295,7 @@ public class SerifyApplet extends JApplet {
 					InputStream is = url.openStream();
 					
 					byte[] bb = new byte[100000];
-					r = is.read(bb);
+					int r = is.read(bb);
 					while( r > 0 ) {
 						fos.write(bb, 0, r);
 						r = is.read(bb);
@@ -3291,10 +3303,9 @@ public class SerifyApplet extends JApplet {
 					is.close();
 					fos.close();
 					
-					JFileChooser fc = new JFileChooser();
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-						File selectedfile = fc.getSelectedFile();
+					DirectoryChooser fc = new DirectoryChooser();
+					File selectedfile = fc.showDialog( null );
+					if( selectedfile != null ) {
 						if( !selectedfile.isDirectory() ) selectedfile = selectedfile.getParentFile();
 						
 						final String outPath = nrun.fixPath( new File( selectedfile, title ).getAbsolutePath() );
@@ -3304,7 +3315,7 @@ public class SerifyApplet extends JApplet {
 								if( cont[0] != null ) {
 									infile.delete();
 								
-									if( cont[0] != null ) {
+									/*if( cont[0] != null ) {
 										try {
 											JSObject js = JSObject.getWindow( SerifyApplet.this );
 											//js = (JSObject)js.getMember("document");
@@ -3315,7 +3326,7 @@ public class SerifyApplet extends JApplet {
 										} catch( NoSuchMethodError | Exception e ) {
 											
 										}
-									}
+									}*/
 								}
 							}
 						};
@@ -3338,14 +3349,16 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Link database") {
+		MenuItem linkdatabase = new MenuItem("Link database");
+		popup.getItems().add( linkdatabase );
+		linkdatabase.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				String userhome = System.getProperty("user.home");	
 					
-				JFileChooser fc = new JFileChooser();
-				if( fc.showOpenDialog( c ) == JFileChooser.APPROVE_OPTION ) {
-					File selectedfile = fc.getSelectedFile();
+				FileChooser fc = new FileChooser();
+				File selectedfile = fc.showOpenDialog(null);
+				if( selectedfile != null ) {
 					String title = selectedfile.getName();
 					String dbtype = "prot";
 					int i = title.lastIndexOf('.');
@@ -3367,18 +3380,20 @@ public class SerifyApplet extends JApplet {
 					final String outPath = nrun.fixPath( selectedfile.getParentFile().getAbsolutePath()+System.getProperty("file.separator")+title );
 					//String[] cmds = new String[] { makeblastdb.getAbsolutePath(), "-in", fixPath( infile.getAbsolutePath() ), "-out", outPath, "-title", title };
 					
-					JSObject js = JSObject.getWindow( SerifyApplet.this );
+					//okokJSObject js = JSObject.getWindow( SerifyApplet.this );
 					//js = (JSObject)js.getMember("document");
 					
-					String machineinfo = getMachine();
-					String[] split = machineinfo.split("\t");
-					js.call( "addDb", new Object[] {getUser(), title, dbtype, outPath, split[0], ""} );
+					//String machineinfo = getMachine();
+					//String[] split = machineinfo.split("\t");
+					//js.call( "addDb", new Object[] {getUser(), title, dbtype, outPath, split[0], ""} );
 				}
 			}
 		});
-		popup.add( new AbstractAction("Blast") {
+		MenuItem blast = new MenuItem("Blast");
+		popup.getItems().add( blast );
+		blast.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				boolean success = false;
 				/*try {
 					String userhome = System.getProperty("user.home");
@@ -3451,36 +3466,32 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("tBlast") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem genbankfromblast = new MenuItem("Genbank from blast");
+		popup.getItems().add( genbankfromblast );
+		genbankfromblast.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {}
-		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Genbank from blast") {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
+			public void handle(ActionEvent arg0) {
 				String addon = "nnnttaattaattaannn";
 				List<Integer>	startlist = new ArrayList<Integer>();
-				int[] rr = table.getSelectedRows();
-				JFileChooser	fc = new JFileChooser();
+				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+				FileChooser fc = new FileChooser();
 				File dir = null;
-				if( rr.length > 1 ) {
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						dir = fc.getSelectedFile();
-						fc.setFileSelectionMode( JFileChooser.FILES_ONLY );
+				if( lseqs.size() > 1 ) {
+					DirectoryChooser dc = new DirectoryChooser();
+					dir = dc.showDialog(null);
+					if( dir != null ) {
+						
 					}
 				}
-				for( int r : rr ) {
-					int i = table.convertRowIndexToModel( r );
-					Sequences s = getSequences(i);
-					if( fc.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						File blastFile = fc.getSelectedFile();
+				for( Sequences s : table.getSelectionModel().getSelectedItems() ) {
+					File blastFile = fc.showOpenDialog(null);
+					if( blastFile != null ) {
 						File f = null;
 						if( dir != null ) {
 							f = new File( dir, s.getName()+".gb" );
-						} else if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-							f = fc.getSelectedFile();
+						} else {
+							f = fc.showSaveDialog(null);
 						}
 						try {
 							serifier.genbankFromBlast(s, blastFile, f);
@@ -3493,31 +3504,27 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Genbank from nr") {
+		MenuItem genbankfromnr = new MenuItem("Genbank from nr");
+		popup.getItems().add( genbankfromnr );
+		genbankfromnr.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent arg0) {
+			public void handle(ActionEvent arg0) {
 				List<Integer>	startlist = new ArrayList<Integer>();
-				int[] rr = table.getSelectedRows();
-				JFileChooser	fc = new JFileChooser();
+				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+				DirectoryChooser	dc = new DirectoryChooser();
 				File dir = null;
-				if( rr.length > 1 ) {
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						dir = fc.getSelectedFile();
-						fc.setFileSelectionMode( JFileChooser.FILES_ONLY );
-					}
+				if( lseqs.size() > 1 ) {
+					dir = dc.showDialog(null);
 				}
-				for( int r : rr ) {
-					int i = table.convertRowIndexToModel( r );
-					Sequences s = getSequences(i);
-					
-					if( fc.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						File blastFile = fc.getSelectedFile();
+				FileChooser fc = new FileChooser();
+				for( Sequences s : lseqs ) {
+					File blastFile = fc.showOpenDialog(null);
+					if( blastFile != null ) {
 						File f = null;
 						if( dir != null ) {
 							f = new File( dir, s.getName()+".gb" );
-						} else if( fc.showSaveDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-							f = fc.getSelectedFile();
+						} else {
+							f = fc.showSaveDialog(null);
 						}
 						
 						try {
@@ -3531,19 +3538,18 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Download files") {
+		MenuItem downloadfiles = new MenuItem("Download files");
+		popup.getItems().add( downloadfiles );
+		downloadfiles.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
+			public void handle(ActionEvent e) {
+				DirectoryChooser dc = new DirectoryChooser();
+				File f = dc.showDialog(null);
+				if( f != null ) {
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
-				
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						String path = (String)table.getValueAt( r, 3 );
+					for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
+						String path = seqs.getPath().toString();
 						try {
 							URL url = new URL( path );
 							String[] str = path.split("\\/");
@@ -3551,7 +3557,7 @@ public class SerifyApplet extends JApplet {
 							FileOutputStream	fos = new FileOutputStream( f );
 							InputStream is = url.openStream();
 							byte[] bb = new byte[2048];
-							r = is.read(bb);
+							int r = is.read(bb);
 							while( r > 0 ) {
 								fos.write(bb,0,r);
 								r = is.read(bb);
@@ -3573,11 +3579,13 @@ public class SerifyApplet extends JApplet {
 				}*/
 			}
 		});
-		popup.add( new AbstractAction("Show file") {
+		MenuItem showfile = new MenuItem("Show file");
+		popup.getItems().add( showfile );
+		showfile.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				String path = (String)table.getValueAt( r, 3 );
+			public void handle(ActionEvent e) {
+				Sequences seqs = table.getSelectionModel().getSelectedItem();
+				String path = seqs.getPath().toString();
 				
 				/*try {
 					SerifyApplet.this.getAppletContext().showDocument( new URL(path) );
@@ -3588,15 +3596,16 @@ public class SerifyApplet extends JApplet {
 				browse( path );
 			}
 		});
-		popup.add( new AbstractAction("Prodigal") {
+		MenuItem prodigal = new MenuItem("Prodigal");
+		popup.getItems().add( prodigal );
+		prodigal.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				try {
 					List<Path> urls = new ArrayList<Path>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
+					for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
 						//int r = table.getSelectedRow();
-						Path path = (Path)table.getValueAt( r, 3 );
+						Path path = seqs.getPath();
 						urls.add( path );
 					}
 					
@@ -3618,15 +3627,16 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Rnammer") {
+		MenuItem rnammer = new MenuItem("Rnammer");
+		popup.getItems().add( rnammer );
+		rnammer.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				try {
 					List<Path> urls = new ArrayList<Path>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
+					for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
 						//int r = table.getSelectedRow();
-						Path path = (Path)table.getValueAt( r, 3 );
+						Path path = (Path)seqs.getPath();
 						urls.add( path );
 					}
 					
@@ -3648,15 +3658,16 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Barrnap") {
+		MenuItem barrnap = new MenuItem("Barrnap");
+		popup.getItems().add( barrnap );
+		barrnap.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				try {
 					List<Path> urls = new ArrayList<Path>();
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
+					for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
 						//int r = table.getSelectedRow();
-						Path path = (Path)table.getValueAt( r, 3 );
+						Path path = seqs.getPath();
 						urls.add( path );
 					}
 					
@@ -3678,39 +3689,98 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Flanking") {
+		MenuItem flanking = new MenuItem("Flanking");
+		popup.getItems().add( flanking );
+		flanking.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
+			public void handle(ActionEvent e) {
+				DirectoryChooser fc = new DirectoryChooser();
+				File f = fc.showDialog(null);
+				if( f != null ) {
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
+					final Sequences seqs = table.getSelectionModel().getSelectedItem();
 					
-					int r = table.getSelectedRow();
-					int rr = table.convertRowIndexToModel( r );
-					if( rr >= 0 ) {
-						final Sequences seqs = getSequences( rr );
+					try {
+						InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 						
-						try {
+						String fname = seqs.getName();
+						String endn = ".fasta";
+						int li = fname.lastIndexOf('.');
+						if( li != -1 ) {
+							endn = fname.substring(li);
+							fname = fname.substring(0,li);
+						}
+						
+						File file = new File( dir, fname+"_flanking"+endn );
+						OutputStream os = new FileOutputStream( file );
+						
+						int nseq = flankingFasta(is, os);
+						addSequences(file.getName(), seqs.getType(), file.toPath(), nseq);
+					} catch (MalformedURLException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem clustal = new MenuItem("Clustal");
+		popup.getItems().add( clustal );
+		clustal.setOnAction( new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent e) {
+				DirectoryChooser fc = new DirectoryChooser();
+				File f = fc.showDialog(null);
+				if( f != null ) {
+					if( !f.exists() ) f.mkdirs();
+					else if( !f.isDirectory() ) f = f.getParentFile();
+					
+					for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
+						final String seqtype = seqs.getType();
+						try {								
+							String file = seqs.getPath().getFileName().toString();
+							String[] split = file.split("/");
+							String fname = split[ split.length-1 ];
+							split = fname.split("\\.");
+							final String title = split[0];
+							
+							final File infile = new File( f, "tmp_"+fname );
+							
+							FileOutputStream fos = new FileOutputStream( infile );
 							InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 							
-							String fname = seqs.getName();
-							String endn = ".fasta";
-							int li = fname.lastIndexOf('.');
-							if( li != -1 ) {
-								endn = fname.substring(li);
-								fname = fname.substring(0,li);
+							byte[] bb = new byte[100000];
+							int r = is.read(bb);
+							while( r > 0 ) {
+								fos.write(bb, 0, r);
+								r = is.read(bb);
 							}
+							is.close();
+							fos.close();
+					
+							String inputPathFixed = NativeRun.fixPath( infile.getAbsolutePath() ).trim();
+							final String newname = seqs.getName()+"_aligned";
+							String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
+							final Path newurl = new File( newpath ).toPath();
+							final Object[] cont = new Object[3];
+							Runnable run = new Runnable() {
+								public void run() {										
+									infile.delete();
+									addSequences(newname, seqtype, newurl, seqs.getNSeq());
+								}
+							};
 							
-							File file = new File( dir, fname+"_flanking"+endn );
-							OutputStream os = new FileOutputStream( file );
-							
-							int nseq = flankingFasta(is, os);
-							addSequences(file.getName(), seqs.getType(), file.toPath(), nseq);
-						} catch (MalformedURLException e1) {
-							e1.printStackTrace();
+							List<String> cmdarr = null;
+							if( seqtype.equals("nucl") ) {
+								String[] cmds = {"clustalw", "-infile="+inputPathFixed, "-align", "-outfile="+newpath, "-output=FASTA"};
+								cmdarr = Arrays.asList( cmds );
+							} else {
+								String[] cmds = {"clustalo", "-i "+inputPathFixed, "-o "+newpath};
+								cmdarr = Arrays.asList( cmds );
+							}
+							nrun.runProcessBuilder("Clustal alignment", cmdarr, cont, false, run, false);
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
@@ -3718,85 +3788,16 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Clustal") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem concattree = new MenuItem("Concatenated tree");
+		popup.getItems().add( concattree );
+		concattree.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
-					if( !f.exists() ) f.mkdirs();
-					else if( !f.isDirectory() ) f = f.getParentFile();
-					
-					int[] rr = table.getSelectedRows();
-					//String seqtype = "nucl";
-					//String joinname = f.getName();
-					//int nseq = 0;
-					for( int r : rr ) {
-						int rear = table.convertRowIndexToModel( r );
-						if( rear >= 0 ) {
-							final Sequences s = getSequences( rear );
-							final String seqtype = s.getType();
-							
-							try {								
-								String file = s.getPath().getFileName().toString();
-								String[] split = file.split("/");
-								String fname = split[ split.length-1 ];
-								split = fname.split("\\.");
-								final String title = split[0];
-								
-								final File infile = new File( f, "tmp_"+fname );
-								
-								FileOutputStream fos = new FileOutputStream( infile );
-								InputStream is = Files.newInputStream( s.getPath(), StandardOpenOption.READ );
-								
-								byte[] bb = new byte[100000];
-								r = is.read(bb);
-								while( r > 0 ) {
-									fos.write(bb, 0, r);
-									r = is.read(bb);
-								}
-								is.close();
-								fos.close();
-						
-								String inputPathFixed = NativeRun.fixPath( infile.getAbsolutePath() ).trim();
-								final String newname = s.getName()+"_aligned";
-								String newpath = f.getAbsolutePath()+"/"+newname+".fasta";
-								final Path newurl = new File( newpath ).toPath();
-								final Object[] cont = new Object[3];
-								Runnable run = new Runnable() {
-									public void run() {										
-										infile.delete();
-										addSequences(newname, seqtype, newurl, s.getNSeq());
-									}
-								};
-								
-								List<String> cmdarr = null;
-								if( seqtype.equals("nucl") ) {
-									String[] cmds = {"clustalw", "-infile="+inputPathFixed, "-align", "-outfile="+newpath, "-output=FASTA"};
-									cmdarr = Arrays.asList( cmds );
-								} else {
-									String[] cmds = {"clustalo", "-i "+inputPathFixed, "-o "+newpath};
-									cmdarr = Arrays.asList( cmds );
-								}
-								nrun.runProcessBuilder("Clustal alignment", cmdarr, cont, false, run, false);
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						}
-					}
-				}
-			}
-		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Concatenated tree") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				JCheckBox	jukes = new JCheckBox("Jukes-cantor correction");
 				JCheckBox	exgaps = new JCheckBox("Exclude gaps");
 				JCheckBox	boots = new JCheckBox("Bootstrap");
-				JOptionPane.showMessageDialog( SerifyApplet.this, new Object[] {jukes, exgaps, boots} );
+				JOptionPane.showMessageDialog( null, new Object[] {jukes, exgaps, boots} );
 				boolean cantor = jukes.isSelected();
 				boolean bootstrap = boots.isSelected();
 				boolean excludeGaps = exgaps.isSelected();
@@ -3806,9 +3807,8 @@ public class SerifyApplet extends JApplet {
 				Map<String,StringBuilder>	seqmap = new HashMap<String,StringBuilder>();
 				
 				try {
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						String path = (String)table.getValueAt( r, 3 );
+					for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
+						String path = seqs.getPath().toString();
 						URL url = new URL( path );
 						StringBuilder	sb = null;
 						InputStream is = url.openStream();
@@ -3887,28 +3887,29 @@ public class SerifyApplet extends JApplet {
 					tree.append("\n");
 				}
 				System.err.println( tree.toString() );
-				JSObject win = JSObject.getWindow( SerifyApplet.this );
-				win.call("showTree", new Object[] {tree.toString()});
+				//okokJSObject win = JSObject.getWindow( SerifyApplet.this );
+				//win.call("showTree", new Object[] {tree.toString()});
 			}
 		});
-		popup.add( new AbstractAction("Majority rule consensus tree") {
+		/*popup.add( new AbstractAction("Majority rule consensus tree") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
 			}
-		});
-		popup.add( new AbstractAction("Gene evolution phylogeny (distance matrix correlation)") {
+		});*/
+		MenuItem distmatcorr = new MenuItem("Gene evolution phylogeny (distance matrix correlation)");
+		popup.getItems().add( distmatcorr );
+		distmatcorr.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				List<double[]>	ldmat = new ArrayList<double[]>();
 				List<String>	names = new ArrayList<String>();
 				
 				try {
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						String path = (String)table.getValueAt( r, 3 );
-						
-						String name = (String)table.getValueAt( r, 1 );
+					List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+					for( Sequences seqs : lseqs ) {
+						String path = seqs.getPath().toString();
+						String name = seqs.getName();
 						int l = name.lastIndexOf('.');
 						if( l != -1 ) name = name.substring(0, l);
 						name = name.replace("(", "").replace(")", "").replace(",", "");
@@ -3948,7 +3949,7 @@ public class SerifyApplet extends JApplet {
 						Sequence.distanceMatrixNumeric(lseq, dmat, null, false, false, null, null);
 					}
 					
-					if( ldmat.size() == rr.length ) {
+					if( ldmat.size() == lseqs.size() ) {
 						double[]	submat = new double[ ldmat.size()*ldmat.size() ];
 						for( int i = 0; i < ldmat.size(); i++ ) {
 							submat[i*ldmat.size()+i] = 0.0;
@@ -3991,23 +3992,23 @@ public class SerifyApplet extends JApplet {
 						fw.write( treestr );
 						fw.close();*/
 						//System.err.println( tree.toString() );
-						JSObject win = JSObject.getWindow( SerifyApplet.this );
-						win.call("showTree", new Object[] {treestr});
+						//okokJSObject win = JSObject.getWindow( SerifyApplet.this );
+						//win.call("showTree", new Object[] {treestr});
 					}
 				} catch( Exception e1 ) {
 					e1.printStackTrace();
 				}
 			}
 		});
-		popup.add( new AbstractAction("Gene evolution phylogeny (nni distance)") {
+		MenuItem nnidistance = new MenuItem("Gene evolution phylogeny (nni distance)");
+		popup.getItems().add( nnidistance );
+		nnidistance.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				Map<String,String> namePath = new HashMap<String,String>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					String path = (String)table.getValueAt( r, 3 );
-					
-					String name = (String)table.getValueAt( r, 1 );
+				for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
+					String path = seqs.getPath().toString();
+					String name = seqs.getName();
 					int l = name.lastIndexOf('.');
 					if( l != -1 ) name = name.substring(0, l);
 					name = name.replace("(", "").replace(")", "").replace(",", "");
@@ -4015,19 +4016,16 @@ public class SerifyApplet extends JApplet {
 					namePath.put( name, path );
 				}
 				String tree = genePhylogenyNNI( namePath, false );
-				JSObject win = JSObject.getWindow( SerifyApplet.this );
-				win.call("showTree", new Object[] { tree });
+				//okokJSObject win = JSObject.getWindow( SerifyApplet.this );
+				//win.call("showTree", new Object[] { tree });
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Append filename") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem appendfilename = new MenuItem("Append filename");
+		appendfilename.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					int rear = table.convertRowIndexToModel( r );
-					Sequences seqs = getSequences(rear);
-					
+			public void handle(ActionEvent e) {
+				for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
 					String filename = seqs.getPath().getFileName().toString();
 					filename = "fn_"+filename;
 					Path outp = seqs.getPath().getParent().resolve( filename );
@@ -4042,9 +4040,11 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Append") {
+		MenuItem append = new MenuItem("Append");
+		popup.getItems().add( append );
+		append.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				Path dest = null;
 				if( fs == null ) {
 					JFileChooser fc = new JFileChooser();
@@ -4056,24 +4056,18 @@ public class SerifyApplet extends JApplet {
 					}
 				} else dest = fs.getPath("/joined.aa");
 					
-				List<Sequences> lseqs = new ArrayList<Sequences>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					int rear = table.convertRowIndexToModel( r );
-					if( rear >= 0 ) {
-						Sequences s = getSequences( rear );
-						lseqs.add( s );
-					}
-				}
+				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
 				List<Sequences> retlseqs = serifier.join( dest, lseqs, true, null, false );
 				for( Sequences seqs : retlseqs ) {
 					addSequences( seqs );
 				}
 			}
 		});
-		popup.add( new AbstractAction("Join") {
+		MenuItem join = new MenuItem("Join");
+		popup.getItems().add( join );
+		join.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				Path dest = null;
 				if( fs == null ) {
 					JFileChooser fc = new JFileChooser();
@@ -4085,50 +4079,48 @@ public class SerifyApplet extends JApplet {
 					}
 				} else dest = fs.getPath("/joined.aa");
 					
-					List<Sequences> lseqs = new ArrayList<Sequences>();
-				int[] rr = table.getSelectedRows();
-				for( int r : rr ) {
-					int rear = table.convertRowIndexToModel( r );
-					if( rear >= 0 ) {
-						Sequences s = getSequences( rear );
-						lseqs.add( s );
-					}
-				}
+				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
 				List<Sequences> retlseqs = serifier.join( dest, lseqs, true, null, true );
 				for( Sequences seqs : retlseqs ) {
 					addSequences( seqs );
 				}
 			}
 		});
-		popup.add( new AbstractAction("Min length filter") {
+		MenuItem minlenfilt = new MenuItem("Min length filter");
+		popup.getItems().add( minlenfilt );
+		minlenfilt.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
 					File f = fc.getSelectedFile();
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
-					final JSpinner spinner = new JSpinner();
-					spinner.setValue( 500 ); //seqs.getNSeq() );
-					spinner.setPreferredSize( new Dimension(100,25) );
+					final Spinner spinner = new Spinner();
+					//spinner.setValue( 500 ); //seqs.getNSeq() );
+					//spinner.setPreferredSize( new Dimension(100,25) );
 					final JDialog dl;
-					Window window = SwingUtilities.windowForComponent(nrun.cnt);
+					java.awt.Window window = SwingUtilities.windowForComponent(nrun.cnt);
 					if( window != null ) dl = new JDialog( window );
 					else dl = new JDialog();
 					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-					JComponent c = new JComponent() {};
+					JFXPanel c = new JFXPanel();
 					c.setLayout( new FlowLayout() );
 					dl.setTitle("Number of sequences in each file");
-					JButton button = new JButton( new AbstractAction("Ok") {
+					Button button = new Button("Ok");
+					button.setOnAction( new EventHandler<ActionEvent>() {
 						@Override
-						public void actionPerformed(ActionEvent e) {
+						public void handle(ActionEvent e) {
 							dl.setVisible( false );
 							dl.dispose();
 						}
 					});
-					c.add( spinner );
-					c.add( button );
+					HBox hbox = new HBox();
+					Scene scene = new Scene( hbox );
+					hbox.getChildren().add( spinner );
+					hbox.getChildren().add( button );
+					c.setScene( scene );
 					dl.add( c );
 					dl.setSize(200, 60);
 					
@@ -4142,14 +4134,10 @@ public class SerifyApplet extends JApplet {
 						@Override
 						public void windowClosed(WindowEvent e) {
 							int spin = (Integer)spinner.getValue();
-							int[] ra = table.getSelectedRows();
-							for( int r : ra ) {
-								int rr = table.convertRowIndexToModel( r );
-								if( rr >= 0 ) {
-									final Sequences seqs = getSequences( rr );
-									Sequences nseqs = serifier.filtit( spin, seqs, dir );
-									serifier.addSequences( nseqs );
-								}
+							List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+							for( Sequences seqs : lseqs ) {
+								Sequences nseqs = serifier.filtit( spin, seqs, dir );
+								serifier.addSequences( nseqs );
 							}
 						}
 
@@ -4169,19 +4157,20 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Tag split") {
+		MenuItem tagsplit = new MenuItem("Tag split");
+		popup.getItems().add( tagsplit );
+		tagsplit.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
+			public void handle(ActionEvent e) {
+				DirectoryChooser dfc = new DirectoryChooser();
+				File f = dfc.showDialog(null);
+				if( f != null ) {
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
 					
-					fc.setFileSelectionMode( JFileChooser.FILES_ONLY );
-					if( fc.showOpenDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-						File fo = fc.getSelectedFile();
+					FileChooser fc = new FileChooser();
+					File fo = fc.showOpenDialog(null);
+					if( fo != null ) {
 						Path pt = Paths.get( fo.toURI() );
 						Map<String,String>	tagmap = new HashMap<String,String>();
 						try {
@@ -4194,47 +4183,61 @@ public class SerifyApplet extends JApplet {
 							e1.printStackTrace();
 						}
 						
-						int[] ra = table.getSelectedRows();
-						for( int r : ra ) {
-							int rr = table.convertRowIndexToModel( r );
-							if( rr >= 0 ) {
-								final Sequences seqs = getSequences( rr );
-								tagsplit( tagmap, seqs, dir, SerifyApplet.this );
-							}
+						for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
+							tagsplit( tagmap, seqs, dir, SerifyApplet.this );
 						}
 					}
 				}
 			}
 		});
-		popup.add( new AbstractAction("Split") {
+		MenuItem split = new MenuItem("Split");
+		popup.getItems().add( split );
+		split.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
+			public void handle(ActionEvent e) {
+				DirectoryChooser fc = new DirectoryChooser();
+				File f = fc.showDialog( null );
+				if( f != null ) {
 					if( !f.isDirectory() ) f = f.getParentFile();
 					final File dir = f;
-					final JSpinner spinner = new JSpinner();
-					spinner.setValue( 1 ); //seqs.getNSeq() );
-					spinner.setPreferredSize( new Dimension(100,25) );
+					final Spinner spinner = new Spinner();
+					spinner.setValueFactory( new SpinnerValueFactory<Integer>() {
+
+						@Override
+						public void decrement(int steps) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						@Override
+						public void increment(int steps) {
+							// TODO Auto-generated method stub
+							
+						}
+					});
+					//spinner.setValue( 1 ); //seqs.getNSeq() );
+					//spinner.setPreferredSize( new Dimension(100,25) );
 					final JDialog dl;
-					Window window = SwingUtilities.windowForComponent(nrun.cnt);
+					java.awt.Window window = SwingUtilities.windowForComponent(nrun.cnt);
 					if( window != null ) dl = new JDialog( window );
 					else dl = new JDialog();
 					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-					JComponent c = new JComponent() {};
+					JFXPanel c = new JFXPanel() {};
 					c.setLayout( new FlowLayout() );
 					dl.setTitle("Number of sequences in each file");
-					JButton button = new JButton( new AbstractAction("Ok") {
+					Button button = new Button("Ok");
+					button.setOnAction( new EventHandler<ActionEvent>() {
 						@Override
-						public void actionPerformed(ActionEvent e) {
+						public void handle(ActionEvent e) {
 							dl.setVisible( false );
 							dl.dispose();
 						}
 					});
-					c.add( spinner );
-					c.add( button );
+					HBox hbox = new HBox();
+					Scene scene = new Scene( hbox );
+					c.setScene( scene );
+					hbox.getChildren().add(spinner);
+					hbox.getChildren().add(button);
 					dl.add( c );
 					dl.setSize(200, 60);
 					
@@ -4248,15 +4251,10 @@ public class SerifyApplet extends JApplet {
 						@Override
 						public void windowClosed(WindowEvent e) {
 							int spin = (Integer)spinner.getValue();
-							int[] ra = table.getSelectedRows();
-							for( int r : ra ) {
-								int rr = table.convertRowIndexToModel( r );
-								if( rr >= 0 ) {
-									final Sequences seqs = getSequences( rr );
-									List<Sequences> lseqs = serifier.splitit( spin, seqs, dir );
-									for( Sequences nseqs : lseqs ) {
-										addSequences( nseqs );
-									}
+							for( final Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
+								List<Sequences> lseqs = serifier.splitit( spin, seqs, dir );
+								for( Sequences nseqs : lseqs ) {
+									addSequences( nseqs );
 								}
 							}
 						}
@@ -4277,9 +4275,11 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Cut") {
+		MenuItem cut = new MenuItem("Cut");
+		popup.getItems().add( cut );
+		cut.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
@@ -4287,52 +4287,49 @@ public class SerifyApplet extends JApplet {
 					if( !f1.isDirectory() ) f1 = f1.getParentFile();
 					final File dir = f1;
 					
-					int r = table.getSelectedRow();
-					int rr = table.convertRowIndexToModel( r );
-					if( rr >= 0 ) {
-						final Sequences seqs = getSequences( rr );
+					final Sequences seqs = table.getSelectionModel().getSelectedItem();
+					String val = JOptionPane.showInputDialog("Select character", "_");
+					try {
+						//URI uri = new URI( seqs.getPath() );
+						//seqs.getPath().toUri();
+						InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
 						
-						String val = JOptionPane.showInputDialog("Select character", "_");
-						try {
-							//URI uri = new URI( seqs.getPath() );
-							//seqs.getPath().toUri();
-							InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
-							
-							if( seqs.getPath().endsWith(".gz") ) {
-								is = new GZIPInputStream( is );
-							}
-							
-							//URL url = uri.toURL();
-							String urlstr = seqs.getPath().toUri().toString();
-							String[] erm = urlstr.split("\\/");
-							String name = erm[ erm.length-1 ];
-							int ind = name.lastIndexOf('.');
-							
-							String sff = name;
-							String sf2 = "";
-							if( ind != -1 ) {
-								sff = name.substring(0, ind);
-								sf2 = name.substring(ind+1,name.length());
-							}
-							
-							String trimname = sff+"_cut";
-							File f = new File( dir, trimname+"."+sf2 );
-							FileWriter fw = new FileWriter(f);
-							
-							cutFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), val.charAt(0) );
-							SerifyApplet.this.addSequences( trimname, seqs.getType(), f.toPath(), seqs.getNSeq() );
-						} catch (MalformedURLException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
+						if( seqs.getPath().endsWith(".gz") ) {
+							is = new GZIPInputStream( is );
 						}
+						
+						//URL url = uri.toURL();
+						String urlstr = seqs.getPath().toUri().toString();
+						String[] erm = urlstr.split("\\/");
+						String name = erm[ erm.length-1 ];
+						int ind = name.lastIndexOf('.');
+						
+						String sff = name;
+						String sf2 = "";
+						if( ind != -1 ) {
+							sff = name.substring(0, ind);
+							sf2 = name.substring(ind+1,name.length());
+						}
+						
+						String trimname = sff+"_cut";
+						File f = new File( dir, trimname+"."+sf2 );
+						FileWriter fw = new FileWriter(f);
+						
+						cutFasta( new BufferedReader( new InputStreamReader( is ) ), new BufferedWriter( fw ), val.charAt(0) );
+						SerifyApplet.this.addSequences( trimname, seqs.getType(), f.toPath(), seqs.getNSeq() );
+					} catch (MalformedURLException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
 					}
 				}
 			}
 		});
-		popup.add( new AbstractAction("Trim") {
+		MenuItem trim = new MenuItem("Trim");
+		popup.getItems().add( trim );
+		trim.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
 				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
@@ -4340,38 +4337,44 @@ public class SerifyApplet extends JApplet {
 					if( !f1.isDirectory() ) f1 = f1.getParentFile();
 					final File dir = f1;
 					
-					final JTextField spinner = new JTextField();
+					final TextField spinner = new TextField();
 					//spinner.setValue( seqs.getNSeq() );
-					spinner.setPreferredSize( new Dimension(600,25) );
+					//spinner.setPreferredSize( new Dimension(600,25) );
 
 					final JDialog dl;
-					Window window = SwingUtilities.windowForComponent(nrun.cnt);
+					java.awt.Window window = SwingUtilities.windowForComponent(nrun.cnt);
 					if( window != null ) dl = new JDialog( window );
 					else dl = new JDialog();
 					
 					dl.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-					JComponent c = new JComponent() {};
+					JFXPanel c = new JFXPanel();
 					c.setLayout( new FlowLayout() );
 					dl.setTitle("Filter sequences");
-					JButton browse = new JButton( new AbstractAction("Browse") {
+					Button browse = new Button("Browse");
+					browse.setOnAction( new EventHandler<ActionEvent>() {
 						@Override
-						public void actionPerformed(ActionEvent e) {
-							JFileChooser	filechooser = new JFileChooser();
-							if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-								spinner.setText( filechooser.getSelectedFile().toURI().toString() );
+						public void handle(ActionEvent e) {
+							FileChooser	filechooser = new FileChooser();
+							File f = filechooser.showOpenDialog(null);
+							if( f != null ) {
+								spinner.setText( f.toURI().toString() );
 							}
 						}
 					});
-					JButton button = new JButton( new AbstractAction("Ok") {
+					Button button = new Button("Ok");
+					button.setOnAction( new EventHandler<ActionEvent>() {
 						@Override
-						public void actionPerformed(ActionEvent e) {
+						public void handle(ActionEvent e) {
 							dl.setVisible( false );
 							dl.dispose();
 						}
 					});
-					c.add( spinner );
-					c.add( browse );
-					c.add( button );
+					HBox hbox = new HBox();
+					Scene scene = new Scene( hbox );
+					c.setScene( scene );
+					hbox.getChildren().add( spinner );
+					hbox.getChildren().add( browse );
+					hbox.getChildren().add( button );
 					dl.add( c );
 					dl.setSize(800, 60);
 					
@@ -4404,24 +4407,24 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Transpose") {
+		MenuItem transpose = new MenuItem("Transpose");
+		popup.getItems().add( transpose );
+		transpose.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				try {
-					JFileChooser fc = new JFileChooser();
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-						File f1 = fc.getSelectedFile();
+					DirectoryChooser fc = new DirectoryChooser();
+					File f1 = fc.showDialog( null );
+					if( f1 != null ) {
 						if( !f1.isDirectory() ) f1 = f1.getParentFile();
 						final File dir = f1;
 						
 						Map<String,Map<String,StringBuilder>>	seqmap = new HashMap<String,Map<String,StringBuilder>>();
 						
-						int[] rr = table.getSelectedRows();
-						for( int r : rr ) {
-							String path = (String)table.getValueAt( r, 3 );
-							
-							String name = (String)table.getValueAt( r, 1 );
+						List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+						for( Sequences seqs : lseqs ) {
+							String path = seqs.getPath().toString();
+							String name = seqs.getName();
 							int l = name.lastIndexOf('.');
 							if( l != -1 ) name = name.substring(0, l);
 							
@@ -4469,25 +4472,25 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Remove gaps") {
+		MenuItem removegaps = new MenuItem("Remove gaps");
+		popup.getItems().add( removegaps );
+		removegaps.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f1 = fc.getSelectedFile();
+			public void handle(ActionEvent e) {
+				DirectoryChooser fc = new DirectoryChooser();
+				File f1 = fc.showDialog(null);
+				if( f1 != null ) {
 					if( !f1.isDirectory() ) f1 = f1.getParentFile();
 					final File dir = f1;
 					
 					Map<String,Map<String,StringBuilder>>	seqmap = new HashMap<String,Map<String,StringBuilder>>();
 					
-					JavaFasta jf = new JavaFasta( SerifyApplet.this, serifier, null );
+					JavaFasta jf = new JavaFasta( null, serifier, null );
 					jf.initDataStructures();
 					
-					int[] rr = table.getSelectedRows();
-					for( int r : rr ) {
-						String name = (String)table.getValueAt( r, 1 );
-						String path = (String)table.getValueAt( r, 3 );
+					for( Sequences seqs : table.getSelectionModel().getSelectedItems() ) {
+						String name = seqs.getName();
+						String path = seqs.getPath().toString();
 						
 						serifier.lseq.clear();
 						try {
@@ -4506,16 +4509,18 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("Blast join") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem blastjoin = new MenuItem("Blast join");
+		popup.getItems().add( blastjoin );
+		blastjoin.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JSObject	jso = JSObject.getWindow(SerifyApplet.this);
-				String s = (String)jso.call("getSelectedBlast", new Object[] {} );
+			public void handle(ActionEvent e) {
+				//JSObject	jso = JSObject.getWindow(SerifyApplet.this);
+				String s = null;//(String)jso.call("getSelectedBlast", new Object[] {} );
 				
-				JFileChooser fc = new JFileChooser();
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
+				FileChooser fc = new FileChooser();
+				File f = fc.showSaveDialog(null);
+				if( f != null ) {
 					try {
 						blastJoin( new FileInputStream(s), new PrintStream(new FileOutputStream(f)) );
 					} catch (FileNotFoundException e1) {
@@ -4526,31 +4531,34 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Make clusters") {
+		MenuItem makeclusters = new MenuItem("Make clusters");
+		popup.getItems().add( makeclusters );
+		makeclusters.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void handle(ActionEvent e) {
 				InputStream is = null;
-				try {
+				/*try {
 					JSObject	jso = JSObject.getWindow(SerifyApplet.this);
 					String s = (String)jso.call("getSelectedBlast", new Object[] {} );
 					is = new FileInputStream(s);
 				} catch( Exception ex ) {
 					
-				}
+				}*/
 				
-				JFileChooser fc = new JFileChooser();
+				FileChooser fc = new FileChooser();
 				if( is == null ) {
-					if( fc.showOpenDialog(nrun.cnt) == JFileChooser.APPROVE_OPTION ) {
+					File f = fc.showOpenDialog(null);
+					if( f != null ) {
 						try {
-							is = new FileInputStream( fc.getSelectedFile() );
+							is = new FileInputStream( f );
 						} catch (FileNotFoundException e1) {
 							e1.printStackTrace();
 						}
 					}
 				}
 				
-				if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-					File f = fc.getSelectedFile();
+				File f = fc.showSaveDialog(null);
+				if( f != null ) {
 					try {
 						List<Set<String>> cluster = new ArrayList<Set<String>>();
 						serifier.makeBlastCluster( new BufferedReader( new InputStreamReader(is) ), null, 1, 0.5f, 0.5f, null, cluster, null );
@@ -4579,19 +4587,13 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.addSeparator();
-		popup.add( new AbstractAction("FastTree prepare") {
+		popup.getItems().add( new SeparatorMenuItem() );
+		MenuItem fasttree = new MenuItem("FastTree prepare");
+		popup.getItems().add( fasttree );
+		fasttree.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {				
-				List<Sequences> lseqs = new ArrayList<Sequences>();
-				int[] rr = table.getSelectedRows();
-				for (int r : rr) {
-					int cr = table.convertRowIndexToModel(r);
-					Sequences seqs = getSequences(cr);
-					
-					lseqs.add( seqs );
-				}
-				
+			public void handle(ActionEvent e) {				
+				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
 				List<Sequences> retlseqs = serifier.fastTreePrepare( lseqs );
 				for( Sequences seqs : retlseqs ) {
 					try {
@@ -4602,29 +4604,29 @@ public class SerifyApplet extends JApplet {
 				}
 			}
 		});
-		popup.add( new AbstractAction("Blast rename") {
+		MenuItem bren = new MenuItem("Blast rename");
+		popup.getItems().add( bren );
+		bren.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				int r = table.getSelectedRow();
-				int rr = table.convertRowIndexToModel( r );
-				if( rr >= 0 ) {
-					JFileChooser fc = new JFileChooser();
-					if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-						File f = fc.getSelectedFile();
-						
-						final Sequences seqs = getSequences( rr );
+			public void handle(ActionEvent e) {
+				Sequences seqs = table.getSelectionModel().getSelectedItem();
+				if( seqs != null ) {
+					FileChooser fc = new FileChooser();
+					File f = fc.showOpenDialog(null);
+					if( f != null ) {
 						String s = null;
-						try {
+						/*try {
 							JSObject	jso = JSObject.getWindow(SerifyApplet.this);
 							s = (String)jso.call("getSelectedBlast", new Object[] {} );
 						} catch( Exception exp ) {
 							exp.printStackTrace();
-						}
+						}*/
 						
 						if( s == null ) {
-							JFileChooser filechooser = new JFileChooser();
-							if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-								s = filechooser.getSelectedFile().getAbsolutePath();
+							FileChooser filechooser = new FileChooser();
+							File sf = filechooser.showOpenDialog(null);
+							if( sf != null ) {
+								s = sf.getAbsolutePath();
 							}
 						}
 					
@@ -4638,10 +4640,12 @@ public class SerifyApplet extends JApplet {
 		});
 		
 		//table.setComponentPopupMenu( popup );
-		JScrollPane	scrollpane = new JScrollPane( table );
+		//JScrollPane	scrollpane = new JScrollPane( table );
 		//scrollpane.setComponentPopupMenu( popup );
-		scrollpane.setBackground( bgcolor );
-		scrollpane.getViewport().setBackground( bgcolor );
+		//scrollpane.setBackground( bgcolor );
+		//scrollpane.getViewport().setBackground( bgcolor );
+		
+		JScrollPane	scrollpane = new JScrollPane();
 		scrollpane.setTransferHandler( new TransferHandler() {
 			public int getSourceActions(JComponent c) {
 				return TransferHandler.COPY_OR_MOVE;
@@ -4724,11 +4728,8 @@ public class SerifyApplet extends JApplet {
 						String comp = null;
 						List<Sequence> bb = null;
 						//byte[] bb = null;
-						int r = table.getSelectedRow();
-						if( r != -1 ) {
-							int i = table.convertRowIndexToModel(r);
-							Sequences seqs = serifier.getSequencesList().get(i);
-							
+						Sequences seqs = table.getSelectionModel().getSelectedItem();
+						if( seqs != null ) {
 							comp = seqs.getName();
 							Path filepath = seqs.getPath();
 							bb = Sequence.readFasta(filepath, null);
@@ -4837,15 +4838,10 @@ public class SerifyApplet extends JApplet {
 			}
 		});
 		
-		c.add( scrollpane );
-	}
-	
-	public void paint( Graphics g ) {
-		super.paint( g );
-	}
-	
-	public void update( Graphics g ) {
-		super.update( g );
+		vbox.getChildren().add( mb );
+		vbox.getChildren().add( table );
+		
+		vbox.setVgrow(table, Priority.ALWAYS);
 	}
 	
 	public void updateSequences( final String user, final String name, final String type, final Path path, final int nseq, final String key ) {
@@ -4881,9 +4877,9 @@ public class SerifyApplet extends JApplet {
 							succ = false;
 						}
 						
-						if( succ ) {
+						/*if( succ ) {
 							table.tableChanged( new TableModelEvent( table.getModel() ) );
-						}
+						}*/
 					}
 				}.start();
 				
@@ -4894,12 +4890,12 @@ public class SerifyApplet extends JApplet {
 	
 	public void addSequences( Sequences seqs ) {
 		boolean unsucc = false;
-		try {
+		/*try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "addSequences", new Object[] {seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), seqs.getNSeq()} );
 		} catch( NoSuchMethodError | Exception e ) {
 			unsucc = true;
-		}
+		}*/
 		
 		if( unsucc ) {
 			updateSequences( seqs.getUser(), seqs.getName(), seqs.getType(), seqs.getPath(), seqs.getNSeq(), null ); 
@@ -4908,13 +4904,13 @@ public class SerifyApplet extends JApplet {
 	}
 	
 	private void addSequences( String user, String name, String type, Path path, int nseq ) {
-		boolean unsucc = false;
-		try {
+		boolean unsucc = true;
+		/*try {
 			JSObject js = JSObject.getWindow( SerifyApplet.this );
 			js.call( "addSequences", new Object[] {user, name, type, path, nseq} );
 		} catch( NoSuchMethodError | Exception e ) {
 			unsucc = true;
-		}
+		}*/
 		
 		if( unsucc ) {
 			updateSequences(user, name, type, path, nseq, null);
@@ -4940,10 +4936,10 @@ public class SerifyApplet extends JApplet {
 		
 			if( line != null ) {
 				if( line.endsWith(":") ) {
-					JFileChooser	filechooser = new JFileChooser();
-					filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-						File dir = filechooser.getSelectedFile();
+					DirectoryChooser	dirchooser = new DirectoryChooser();
+					//filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					File dir = dirchooser.showDialog(null);
+					if( dir != null ) {
 						if( !dir.exists() ) dir.mkdirs();
 						
 						//Set<String>	curset = new HashSet<String>();
@@ -5017,10 +5013,9 @@ public class SerifyApplet extends JApplet {
 					}
 				} else if( line.startsWith(">") ) {
 					if( path == null ) {
-						JFileChooser	filechooser = new JFileChooser();
-						filechooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-						if( filechooser.showOpenDialog( SerifyApplet.this ) == JFileChooser.APPROVE_OPTION ) {
-							File f = filechooser.getSelectedFile();
+						DirectoryChooser	dirchooser = new DirectoryChooser();
+						File f = dirchooser.showDialog( null );
+						if( f != null ) {
 							path = f.toPath();
 						}
 					}
@@ -5126,7 +5121,7 @@ public class SerifyApplet extends JApplet {
 		//boolean succ = true;
 		InputStream is = null;
 		try {
-			is = Files.newInputStream( path, StandardOpenOption.READ );
+			if( Files.exists(path) ) is = Files.newInputStream( path, StandardOpenOption.READ );
 		} catch( Exception e ) {
 			//succ = false;
 			e.printStackTrace();
@@ -6331,7 +6326,7 @@ public class SerifyApplet extends JApplet {
 			e.printStackTrace();
 		}*/
 		
-		sa.init( frame, System.getProperty("user.name") );
+		sa.init( frame, null, System.getProperty("user.name") );
 		frame.setVisible( true );
 	}
 }
