@@ -4064,7 +4064,7 @@ public class ActionCollection {
 					frame.setSize(400, 300);
 					
 					SerifyApplet sa = new SerifyApplet( geneset.zipfilesystem );
-					sa.init( frame, GeneSet.user );
+					sa.init( frame, null, GeneSet.user );
 					//frame.add( )
 					geneset.currentSerify = sa;
 				} /*else {
