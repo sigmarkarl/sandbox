@@ -2351,7 +2351,7 @@ public class SerifyApplet {
 		pathcol.setCellValueFactory( new PropertyValueFactory<Sequences,Path>("path"));
 		table.getColumns().add( pathcol );
 		TableColumn<Sequences, Integer> nseqcol = new TableColumn<>("NSeq");
-		nseqcol.setCellValueFactory( new PropertyValueFactory<Sequences,Integer>("nseq"));
+		nseqcol.setCellValueFactory( new PropertyValueFactory<Sequences,Integer>("nSeq"));
 		table.getColumns().add( nseqcol );
 		
 		ObservableList<Sequences> sequences = initSequences();
@@ -2435,7 +2435,11 @@ public class SerifyApplet {
 		
 		MenuBar mb = new MenuBar();
 		Menu popup = new Menu("File");
+		Menu edit = new Menu("Edit");
+		Menu programs = new Menu("Programs");
 		mb.getMenus().add( popup );
+		mb.getMenus().add(edit);
+		mb.getMenus().add(programs);
 		/*if( c instanceof JFrame ) {
 			JFrame fr = (JFrame)c;
 			JMenuBar mb = new JMenuBar();
@@ -3262,6 +3266,7 @@ public class SerifyApplet {
 		});
 		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem delete = new MenuItem("Delete");
+		popup.getItems().add( delete );
 		delete.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3468,7 +3473,7 @@ public class SerifyApplet {
 		});
 		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem genbankfromblast = new MenuItem("Genbank from blast");
-		popup.getItems().add( genbankfromblast );
+		programs.getItems().add( genbankfromblast );
 		genbankfromblast.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
@@ -3505,7 +3510,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem genbankfromnr = new MenuItem("Genbank from nr");
-		popup.getItems().add( genbankfromnr );
+		programs.getItems().add( genbankfromnr );
 		genbankfromnr.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
@@ -3539,7 +3544,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem downloadfiles = new MenuItem("Download files");
-		popup.getItems().add( downloadfiles );
+		programs.getItems().add( downloadfiles );
 		downloadfiles.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3580,7 +3585,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem showfile = new MenuItem("Show file");
-		popup.getItems().add( showfile );
+		programs.getItems().add( showfile );
 		showfile.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3597,7 +3602,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem prodigal = new MenuItem("Prodigal");
-		popup.getItems().add( prodigal );
+		programs.getItems().add( prodigal );
 		prodigal.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3628,7 +3633,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem rnammer = new MenuItem("Rnammer");
-		popup.getItems().add( rnammer );
+		programs.getItems().add( rnammer );
 		rnammer.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3659,7 +3664,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem barrnap = new MenuItem("Barrnap");
-		popup.getItems().add( barrnap );
+		programs.getItems().add( barrnap );
 		barrnap.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3690,7 +3695,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem flanking = new MenuItem("Flanking");
-		popup.getItems().add( flanking );
+		programs.getItems().add( flanking );
 		flanking.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3725,9 +3730,8 @@ public class SerifyApplet {
 				}
 			}
 		});
-		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem clustal = new MenuItem("Clustal");
-		popup.getItems().add( clustal );
+		programs.getItems().add( clustal );
 		clustal.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -3788,7 +3792,6 @@ public class SerifyApplet {
 				}
 			}
 		});
-		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem concattree = new MenuItem("Concatenated tree");
 		popup.getItems().add( concattree );
 		concattree.setOnAction( new EventHandler<ActionEvent>() {
@@ -4022,6 +4025,7 @@ public class SerifyApplet {
 		});
 		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem appendfilename = new MenuItem("Append filename");
+		edit.getItems().add(appendfilename);
 		appendfilename.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4041,7 +4045,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem append = new MenuItem("Append");
-		popup.getItems().add( append );
+		edit.getItems().add( append );
 		append.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4064,7 +4068,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem join = new MenuItem("Join");
-		popup.getItems().add( join );
+		edit.getItems().add( join );
 		join.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4087,7 +4091,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem minlenfilt = new MenuItem("Min length filter");
-		popup.getItems().add( minlenfilt );
+		edit.getItems().add( minlenfilt );
 		minlenfilt.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4158,7 +4162,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem tagsplit = new MenuItem("Tag split");
-		popup.getItems().add( tagsplit );
+		edit.getItems().add( tagsplit );
 		tagsplit.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4191,7 +4195,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem split = new MenuItem("Split");
-		popup.getItems().add( split );
+		edit.getItems().add( split );
 		split.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4276,7 +4280,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem cut = new MenuItem("Cut");
-		popup.getItems().add( cut );
+		edit.getItems().add( cut );
 		cut.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4326,7 +4330,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem trim = new MenuItem("Trim");
-		popup.getItems().add( trim );
+		edit.getItems().add( trim );
 		trim.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4408,7 +4412,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem transpose = new MenuItem("Transpose");
-		popup.getItems().add( transpose );
+		edit.getItems().add( transpose );
 		transpose.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4473,7 +4477,7 @@ public class SerifyApplet {
 			}
 		});
 		MenuItem removegaps = new MenuItem("Remove gaps");
-		popup.getItems().add( removegaps );
+		edit.getItems().add( removegaps );
 		removegaps.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
@@ -4509,7 +4513,6 @@ public class SerifyApplet {
 				}
 			}
 		});
-		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem blastjoin = new MenuItem("Blast join");
 		popup.getItems().add( blastjoin );
 		blastjoin.setOnAction( new EventHandler<ActionEvent>() {
