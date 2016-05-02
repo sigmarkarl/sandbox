@@ -71,24 +71,12 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -136,6 +124,10 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.poi.ss.usermodel.Cell;
@@ -178,25 +170,6 @@ import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckMenuItem;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.RadioMenuItem;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.ToolBar;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
@@ -7906,16 +7879,106 @@ public class GeneSetHead extends JApplet {
 		ftable.setContextMenu( fpopup );
 
 		ContextMenu popup = new ContextMenu();
+		MenuItem splitaction = new MenuItem("Split");
+		splitaction.setOnAction( e -> {
+			Dialog<List<GeneGroup>> dialog = new Dialog<>();
+
+			GridPane grid = new GridPane();
+			grid.setHgap(10);
+			grid.setVgap(10);
+			grid.setPadding(new Insets(20, 150, 10, 10));
+
+			TextField len = new TextField();
+			len.setPromptText("0.5");
+			TextField id = new TextField();
+			id.setPromptText("0.5");
+
+			grid.add(new Label("%Length:"), 0, 0);
+			grid.add(len, 1, 0);
+			grid.add(new Label("%Identity:"), 0, 1);
+			grid.add(id, 1, 1);
+
+			final ListView<GeneGroup> list = new ListView<>();
+			grid.add(list, 0, 2, 2, 1);
+
+			final GeneGroup gg = table.getSelectionModel().getSelectedItem();
+			list.setItems( FXCollections.singletonObservableList(gg) );
+
+			Label groupsize = new Label(""+gg.genes.size());
+			grid.add(groupsize, 0, 3, 2, 1);
+
+			len.textProperty().addListener((observable, oldValue, newValue) -> {
+				if( !newValue.equals(oldValue) ) {
+					double d = 0;
+					try {
+						d = Double.parseDouble(newValue);
+					} catch( Exception ex ) {}
+
+					if( d > 0 ) {
+						Map<Gene,GeneGroup> ggmap = new HashMap<>();
+						Map<String,Integer> blosumMap = JavaFasta.getBlosumMap();
+						List<Gene> lgene = new ArrayList<>( gg.genes );
+						for( Gene gene : lgene ) {
+							//!ggmap.containsKey(gene) &&
+							if( ggmap.entrySet().stream().flatMap( f -> f.getValue().genes.stream() ).noneMatch( p -> gene.equals(p) ) ) {
+								Set<Gene> ggset = new HashSet<>();
+								Sequence seq1 = gene.tegeval.getAlignedSequence();
+								for (Gene cgene : lgene) {
+									Sequence seq2 = cgene.tegeval.getAlignedSequence();
+									int tscore = GeneCompare.blosumValue(seq1, seq1, seq2, blosumMap);
+									int sscore = GeneCompare.blosumValue(seq1, seq2, blosumMap);
+
+									double dval = (double) sscore / (double) tscore;
+
+									if (dval > d) {
+										ggset.add(cgene);
+									}
+								}
+								Gene hitgene = null;
+								for (Gene hg : ggset) {
+									if (ggmap.containsKey(hg)) {
+										hitgene = hg;
+										break;
+									}
+								}
+
+								GeneGroup subgg;
+								if( hitgene != null ) {
+									subgg = ggmap.get(hitgene);
+								} else {
+									subgg = new GeneGroup();
+									ggmap.put( gene, subgg );
+								}
+								subgg.genes.addAll( ggset );
+								subgg.genes.add( gene );
+							}
+						}
+						Set<GeneGroup> lgg = ggmap.entrySet().stream().map( f -> f.getValue() ).collect(Collectors.toSet());
+						list.setItems( FXCollections.observableList( new ArrayList(lgg) ) );
+					}
+				}
+			});
+
+			dialog.getDialogPane().setContent( grid );
+			dialog.getDialogPane().getButtonTypes().add( ButtonType.OK );
+			dialog.getDialogPane().getButtonTypes().add( ButtonType.CANCEL );
+			Optional<List<GeneGroup>> ogg = dialog.showAndWait();
+		});
+		popup.getItems().add( splitaction );
+		MenuItem joinaction = new MenuItem("Join");
+		
+		popup.getItems().add( joinaction );
+		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem showkegg = new MenuItem("Show KEGG pathway");
 		showkegg.setOnAction( e -> {
 			GeneGroup gg = table.getSelectionModel().getSelectedItem();
 			
-			Map<String,String> env = new HashMap<String,String>();
+			Map<String,String> env = new HashMap<>();
 			env.put("create", "true");
 			
 			String uristr = "jar:" + geneset.zippath.toUri();
 			URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-			final List<Path>	lbi = new ArrayList<Path>();
+			final List<Path>	lbi = new ArrayList<>();
 			try {
 				geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 				for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
