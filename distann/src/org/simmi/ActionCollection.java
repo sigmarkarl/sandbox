@@ -4527,12 +4527,12 @@ public class ActionCollection {
 					Arrays.fill( mat, 0.0 );
 					
 					GeneGroup tgg = lgg.get(0);
-					List<String>	speclist = new ArrayList<String>( tgg.species.keySet() );
+					List<String>	speclist = new ArrayList<>( tgg.species.keySet() );
 					
 					int samplesize = (speclist.size()-1)*(speclist.size())/2;
 					PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();
 					pca.setup(samplesize, lgg.size() );
-					Map<GeneGroup,double[]>	valmap = new HashMap<GeneGroup,double[]>();
+					Map<GeneGroup,double[]>	valmap = new HashMap<>();
 					names = new String[ lgg.size() ];
 					int k = 0;
 					for( GeneGroup gg : lgg ) {
