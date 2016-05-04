@@ -128,6 +128,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import javafx.util.Callback;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.poi.ss.usermodel.Cell;
@@ -7785,7 +7786,7 @@ public class GeneSetHead extends JApplet {
 		ContextMenu fpopup = new ContextMenu();
 		MenuItem amigo = new MenuItem("Amigo lookup");
 		amigo.setOnAction( e -> {
-			String go = ((Function)ftable.getSelectionModel().getSelectedItem()).getGo();
+			String go = ftable.getSelectionModel().getSelectedItem().getGo();
 			try {
 				// GeneSetHead.this.getAppletContext().
 				Desktop.getDesktop().browse(new URI("http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=" + go));
@@ -7798,7 +7799,7 @@ public class GeneSetHead extends JApplet {
 		fpopup.getItems().add( amigo );
 		MenuItem keggl = new MenuItem("KEGG lookup");
 		keggl.setOnAction( e -> {
-			String kegg = ((Function)ftable.getSelectionModel().getSelectedItem()).getKegg();
+			String kegg = ftable.getSelectionModel().getSelectedItem().getKegg();
 			try {
 				Desktop.getDesktop().browse(new URI("http://www.genome.jp/dbget-bin/www_bget?rn:" + kegg));
 			} catch (IOException e1) {
@@ -7810,7 +7811,7 @@ public class GeneSetHead extends JApplet {
 		fpopup.getItems().add( keggl );
 		MenuItem ecl = new MenuItem("EC lookup");
 		ecl.setOnAction( e -> {
-			String ec = ((Function)ftable.getSelectionModel().getSelectedItem()).getEc();
+			String ec = ftable.getSelectionModel().getSelectedItem().getEc();
 			try {
 				Desktop.getDesktop().browse(new URI("http://enzyme.expasy.org/EC/" + ec));
 			} catch (IOException e1) {
@@ -7827,7 +7828,7 @@ public class GeneSetHead extends JApplet {
 			Workbook workbook = new XSSFWorkbook();
 			Sheet sheet = workbook.createSheet("enzyme");
 			int k = 0;
-			for( Function f : (ObservableList<Function>)ftable.getSelectionModel().getSelectedItems() ) {
+			for( Function f : ftable.getSelectionModel().getSelectedItems() ) {
 				//String ec = (String)ftable.getValueAt(r, 1);
 				//String go = (String)ftable.getValueAt(r, 0);
 				
@@ -7882,11 +7883,12 @@ public class GeneSetHead extends JApplet {
 		MenuItem splitaction = new MenuItem("Split");
 		splitaction.setOnAction( e -> {
 			Dialog<List<GeneGroup>> dialog = new Dialog<>();
+			dialog.setResizable( true );
 
 			GridPane grid = new GridPane();
 			grid.setHgap(10);
 			grid.setVgap(10);
-			grid.setPadding(new Insets(20, 150, 10, 10));
+			grid.setPadding(new Insets(20, 20, 10, 10));
 
 			TextField len = new TextField();
 			len.setPromptText("0.5");
@@ -7899,6 +7901,7 @@ public class GeneSetHead extends JApplet {
 			grid.add(id, 1, 1);
 
 			final ListView<GeneGroup> list = new ListView<>();
+			list.setPrefWidth(400);
 			grid.add(list, 0, 2, 2, 1);
 
 			final GeneGroup gg = table.getSelectionModel().getSelectedItem();
@@ -7915,46 +7918,50 @@ public class GeneSetHead extends JApplet {
 					} catch( Exception ex ) {}
 
 					if( d > 0 ) {
-						Map<Gene,GeneGroup> ggmap = new HashMap<>();
-						Map<String,Integer> blosumMap = JavaFasta.getBlosumMap();
-						List<Gene> lgene = new ArrayList<>( gg.genes );
-						for( Gene gene : lgene ) {
-							//!ggmap.containsKey(gene) &&
-							if( ggmap.entrySet().stream().flatMap( f -> f.getValue().genes.stream() ).noneMatch( p -> gene.equals(p) ) ) {
+						Set<GeneGroup> ggmap = new HashSet<>();
+						Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( false );
+						for( Gene gene : gg.genes ) {
+							if( ggmap.stream().flatMap( f -> f.genes.stream() ).noneMatch( p -> gene == p ) ) {
 								Set<Gene> ggset = new HashSet<>();
 								Sequence seq1 = gene.tegeval.getAlignedSequence();
-								for (Gene cgene : lgene) {
+								for (Gene cgene : gg.genes) {
 									Sequence seq2 = cgene.tegeval.getAlignedSequence();
-									int tscore = GeneCompare.blosumValue(seq1, seq1, seq2, blosumMap);
+									int[] tscore = GeneCompare.blosumValue(seq1, seq1, seq2, blosumMap);
 									int sscore = GeneCompare.blosumValue(seq1, seq2, blosumMap);
 
-									double dval = (double) sscore / (double) tscore;
-
+									double dval = (double) (sscore - tscore[1]) / (double) (tscore[0] - tscore[1]);
 									if (dval > d) {
 										ggset.add(cgene);
 									}
 								}
-								Gene hitgene = null;
-								for (Gene hg : ggset) {
-									if (ggmap.containsKey(hg)) {
-										hitgene = hg;
-										break;
-									}
-								}
+								System.err.println( ggset.size() );
 
+								Set<GeneGroup> osubgg = ggmap.stream().filter( f -> {
+									Set<Gene> gs = new HashSet<>(ggset); gs.retainAll(f.genes); return gs.size() > 0;
+								}).collect(Collectors.toSet());
 								GeneGroup subgg;
-								if( hitgene != null ) {
-									subgg = ggmap.get(hitgene);
+								if( osubgg.size() > 0 ) {
+									Iterator<GeneGroup> git = osubgg.iterator();
+									subgg = git.next();
+									while( git.hasNext() ) {
+										GeneGroup remgg = git.next();
+										subgg.addGenes( remgg.genes );
+										ggmap.remove( remgg );
+									}
 								} else {
 									subgg = new GeneGroup();
-									ggmap.put( gene, subgg );
+									subgg.setCogMap( gg.getCogMap() );
+									subgg.setSpecSet( gg.getSpecSet() );
+									ggmap.add( subgg );
 								}
-								subgg.genes.addAll( ggset );
-								subgg.genes.add( gene );
+								subgg.addGenes( ggset );
 							}
 						}
-						Set<GeneGroup> lgg = ggmap.entrySet().stream().map( f -> f.getValue() ).collect(Collectors.toSet());
-						list.setItems( FXCollections.observableList( new ArrayList(lgg) ) );
+						Set<GeneGroup> sgg = ggmap.stream().collect(Collectors.toSet());
+
+						List<GeneGroup> lgg = new ArrayList(sgg);
+						list.setItems( FXCollections.observableList( lgg ) );
+						dialog.setResultConverter(param -> lgg);
 					}
 				}
 			});
@@ -7963,6 +7970,46 @@ public class GeneSetHead extends JApplet {
 			dialog.getDialogPane().getButtonTypes().add( ButtonType.OK );
 			dialog.getDialogPane().getButtonTypes().add( ButtonType.CANCEL );
 			Optional<List<GeneGroup>> ogg = dialog.showAndWait();
+
+			ogg.ifPresent( c -> {
+				geneset.allgenegroups.remove(gg);
+				geneset.allgenegroups.addAll( c );
+
+				Map<String,String> env = new HashMap<>();
+				env.put("create", "true");
+				try {
+					geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+					for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+						Files.walk(root).filter( f -> f.toString().startsWith("/aligned") ).filter( f -> f.toString().endsWith(".aa") ).filter( f -> {
+							String filename = f.getFileName().toString();
+							return gg.genes.stream().anyMatch( g -> {
+								String fnid = filename.substring(0,filename.length()-3);
+								//System.err.println("comparing " + g.name + "  " + fnid);
+								return g.name.equals(fnid);
+							});
+						}).forEach( p -> System.err.println("found path: "+p) );
+						/*for( Gene g : gg.genes ) {
+							if( g.keggpathway != null ) {
+								String sub = g.keggpathway.substring(0,3);
+								Path subf = root.resolve(sub);
+								if( Files.exists(subf) ) {
+									String[] split = g.keggpathway.split(" ");
+									for( String s : split ) {
+										Path pimg = subf.resolve(s+".png");
+										if( Files.exists(pimg) ) {
+											showKeggPathway( sub, pimg );
+										}
+									}
+								}
+							}
+						}*/
+						break;
+					}
+					geneset.zipfilesystem.close();
+				} catch( Exception ex ) {
+					ex.printStackTrace();
+				}
+			});
 		});
 		popup.getItems().add( splitaction );
 		MenuItem joinaction = new MenuItem("Join");
@@ -7976,9 +8023,9 @@ public class GeneSetHead extends JApplet {
 			Map<String,String> env = new HashMap<>();
 			env.put("create", "true");
 			
-			String uristr = "jar:" + geneset.zippath.toUri();
-			URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-			final List<Path>	lbi = new ArrayList<>();
+			/*String uristr = "jar:" + geneset.zippath.toUri();
+			URI zipuri = URI.create( uristr /*.replace("file://", "file:")* );
+			final List<Path>	lbi = new ArrayList<>();*/
 			try {
 				geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 				for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
@@ -8798,7 +8845,7 @@ public class GeneSetHead extends JApplet {
 			if (!tableisselecting && genefilterset.isEmpty()) {
 				table.getSelectionModel().clearSelection();
 				//table.removeRowSelectionInterval(0, table.getRowCount() - 1);
-				for (Function f : (ObservableList<Function>)ftable.getSelectionModel().getSelectedItems()) {
+				for (Function f : ftable.getSelectionModel().getSelectedItems()) {
 					if( f.getGeneentries() != null ) {
 						for( Gene g : f.getGeneentries() ) {
 							table.getSelectionModel().select( g.getGeneGroup() );
@@ -8836,11 +8883,17 @@ public class GeneSetHead extends JApplet {
 		                // Compare first name and last name of every person with filter text.
 		                String lowerCaseFilter = newValue.toLowerCase();
 
-		                if (genegroup.getName().toLowerCase().contains(lowerCaseFilter)) {
-		                    return true; // Filter matches first name.
-		                }/* else if (genegroup.getLastName().toLowerCase().contains(lowerCaseFilter)) {
-		                    return true; // Filter matches last name.
-		                }*/
+						if( searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ) {
+							if( (genegroup.getCogsymbol() != null && genegroup.getCogsymbol().toLowerCase().contains(lowerCaseFilter)) || (genegroup.getSymbol() != null && genegroup.getSymbol().toLowerCase().contains(lowerCaseFilter)) ) {
+								return true; // Filter matches first name.
+							}
+						} else {
+							if (genegroup.getName().toLowerCase().contains(lowerCaseFilter) || genegroup.genes.stream().anyMatch(gg -> gg.getName().toLowerCase().contains(lowerCaseFilter))) {
+								return true; // Filter matches first name.
+							}/* else if (genegroup.getLastName().toLowerCase().contains(lowerCaseFilter)) {
+								return true; // Filter matches last name.
+							}*/
+						}
 		                return false; // Does not match.
 		            });
 					if (label != null)
