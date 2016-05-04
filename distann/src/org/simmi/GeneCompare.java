@@ -957,12 +957,13 @@ public class GeneCompare {
 		return blosumValue( seq1, seq2, blosumap, 0, Math.min( seq1.length(), seq2.length() ) );
 	}
 
-	public static int blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap ) {
+	public static int[] blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap ) {
 		return blosumValue( seq1, seq2, seq3, blosumap, 0, Math.min( seq1.length(), Math.min( seq2.length(), seq3.length() ) ) );
 	}
 
-	public static int blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap, int start , int stop ) {
-		int sscore = 0;
+	public static int[] blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap, int start , int stop ) {
+		int[] sscore = new int[2];
+		//int count = 0;
 		for( int i = start; i < stop; i++ ) {
 			char lc = seq1.getCharAt( i );
 			char c = Character.toUpperCase( lc );
@@ -973,8 +974,13 @@ public class GeneCompare {
 
 			String comb = c+""+c2;
 			String comb2 = c+""+c3;
-			if( blosumap.containsKey(comb) && blosumap.containsKey(comb2) ) sscore += blosumap.get(comb);
+			if( blosumap.containsKey(comb) && blosumap.containsKey(comb2) ) {
+				sscore[0] += blosumap.get(comb);
+				sscore[1] -= 4;
+				//count++;
+			}
 		}
+		//System.err.println("count " + count);
 		return sscore;
 	}
 
