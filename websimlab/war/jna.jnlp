@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://websimlab.appspot.com/" href="jna.jnlp">
+<information>
+  <title>JNA</title>
+  <vendor>Huldufolk ehf.</vendor>
+  <homepage href="http://websimlab.appstore.com" />
+  <description>JNA</description>
+</information>
+<offline-allowed/>
+<security>
+  <all-permissions/>
+</security>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="jna.jar"/>
+</resources>
+<component-desc />
+</jnlp>

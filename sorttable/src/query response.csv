@@ -1,0 +1,102 @@
+Code,Descriptor,ScopeNote,Remarks
+01,"Mjólk, mjólkurvörur",NULL,NULL
+01.01,"Nýmjólk, léttmjólk, undanrenna, rjómi, kakómjólk, kakó, bragðbættir mjólkurdrykkir",NULL,NULL
+01.02,"Sýrðar mjólkurvörur, sýrður rjómi, jógúrt, jógúrtdrykkir og skyr",NULL,NULL
+01.03,"Mjólkurgrautar og súpur, mjólkurbúðingar, rjómabúðingar, tiramisú",NULL,NULL
+01.04,"Nýmjólkurduft, undanrennuduft",NULL,NULL
+02,Ostar,NULL,NULL
+02.01,Allir ostar úr mjólk eða mjólkurvörum,NULL,NULL
+02.02,Ostar úr soja eða öðru jurtapróteini,NULL,NULL
+03,Ís,NULL,NULL
+03.01,"Mjólkurís, rjómaís, jógúrtís",NULL,NULL
+03.02,Jurtaís,NULL,NULL
+03.03,Vatnsís,NULL,NULL
+04,"Kornmatur, brauð og kökur",NULL,NULL
+04.01,"Ómalað og heilmalað korn.0 Hrísgrjón, maís og hafragrjón",NULL,NULL
+04.02,Mjöl,NULL,NULL
+04.03,"Morgunverðarkorn, mjölgrautar",NULL,NULL
+04.04,"Brauð, hrökkbrauð, tvíbökur, bruður, skonsur",NULL,NULL
+04.05,"Kex, sætt, ósætt, smákökur",NULL,NULL
+04.06,"Kökur, tertur, ostakökur, kleinur",NULL,NULL
+04.07,"Pasta, kús-kús",NULL,NULL
+05,Grænmeti og kartöflur,NULL,NULL
+05.01,"Nýir, frystir rótarávextir, nema kartöflur",NULL,NULL
+05.02,"Nýtt, fryst grænmeti: stönglar, blöð, aldin",NULL,NULL
+05.03,Nýjar kartöflur,NULL,NULL
+05.04,"Nýjar, frystar baunir, ertur",NULL,NULL
+05.05,Nýir sveppir,NULL,NULL
+05.06,Ferskar kryddjurtir,NULL,NULL
+05.07,"Niðursoðið og niðurlagt grænmeti, tómatmauk",NULL,NULL
+05.08,"Þurrkað grænmeti, kartöfluduft",NULL,NULL
+05.09,Franskar kartöflur,NULL,NULL
+06,"Ávextir, ber, hnetur og fræ",NULL,NULL
+06.01,"Nýir, frystir ávextir",NULL,NULL
+06.02,"Ný, fryst ber",NULL,NULL
+06.03,"Hnetur, fræ",NULL,NULL
+06.04,"Niðursoðnir ávextir, ber, ávaxtagrautar, ávaxtamauk",NULL,NULL
+06.05,Þurrkaðir ávextir og ber,NULL,NULL
+06.06,Sultur,NULL,NULL
+07,Kjöt og kjötvörur.0 Fuglakjöt,NULL,NULL
+07.01,"Lambakjöt, kindakjöt, nýtt, fryst, saltað, reykt, hakkað",NULL,NULL
+07.02,Nautakjöt,NULL,NULL
+07.03,Svínakjöt,NULL,NULL
+07.04,Hrossakjöt,NULL,NULL
+07.05,Hreindýra- hvalkjöt,NULL,NULL
+07.06,Alifuglar,NULL,NULL
+07.07,Sjófuglar og aðrir villtir fuglar,NULL,NULL
+07.08,"Fars, farsvörur, pylsur, bjúgu, áleggspylsur",NULL,NULL
+07.09,"Innmatur, slátur, svið, kæfa",NULL,NULL
+07.10,Niðursoðin kjötvara,NULL,NULL
+08,"Fiskur, fiskafurðir og skeldýr",NULL,NULL
+08.01,"Ferskur og frystur fiskur.0 Fiskhakk, hrogn, lifur",NULL,NULL
+08.02,Þurrkaður og hertur fiskur,NULL,NULL
+08.03,"Fiskfars og farsvörur, fiskipate",NULL,NULL
+08.04,"Saltfiskur, reyktur fiskur, siginn, kæstur og grafinn fiskur",NULL,NULL
+08.05,Niðurlagður og niðursoðinn fiskur og skeldýr,NULL,NULL
+08.06,Fersk og fryst skeldýr,NULL,NULL
+09,Egg og eggjavörur,NULL,NULL
+09.01,"Egg, ný, fryst, heil eða fljótandi",NULL,NULL
+09.02,Þurrkaðar eggjavörur,NULL,NULL
+10,"Feitmeti: smjör, smjörlíki, olíur o.0fl",NULL,NULL
+10.01,"Jurtaolíur, jurtafeiti",NULL,NULL
+10.02,"Fiskolíur, lýsi",NULL,NULL
+10.03,"Tólg, mör, kjötfita",NULL,NULL
+10.04,"Smjör, Smjörvi, Létt og laggott, Klípa",NULL,NULL
+10.05,"Smjörlíki, hert fita",NULL,NULL
+10.06,"Hnetusmjör, fræsmjör",NULL,NULL
+11,"Sykur, hunang og sælgæti",NULL,NULL
+11.01,"Sykur, púðursykur, flórsykur",NULL,NULL
+11.02,Hunang,NULL,NULL
+11.03,Sælgæti,NULL,NULL
+12,"Drykkir, nema mjólkurdrykkir",NULL,NULL
+12.01,"Te, kaffi, kakóduft",NULL,NULL
+12.02,"Gosdrykkir, svaladrykkir",NULL,NULL
+12.03,"Blandaðir ávaxta- og berjadrykkir, saft",NULL,NULL
+12.04,"Hreinir safar, ávaxtasafar, berjasafar, grænmetissafar",NULL,NULL
+12.05,Íþrótta- og orkudrykkir,NULL,NULL
+12.06,"Bjór, pilsner, maltöl",NULL,NULL
+12.07,Borðvín,NULL,NULL
+12.08,"Millisterk vín, brennd vín, líkjör",NULL,NULL
+12.09,"Vatn, sódavatn með og án bragðefna",NULL,NULL
+13,"Matarsalt, edik, ger, krydd og kraftur",NULL,NULL
+13.01,"Matarsalt, edik, krydd og kraftur",NULL,NULL
+13.02,Ger og hjálparefni,NULL,NULL
+13.03,Gervisætuefni,NULL,NULL
+14,"Snakk: poppkorn, flögur o.0fl.0",NULL,NULL
+14.01,Poppkorn,NULL,NULL
+14.02,"Flögur, skrúfur, kornstangir, annað snakk",NULL,NULL
+15,"Sósur, súpur og áleggssalöt",NULL,NULL
+15.01,"Allar sósur og ídýfur: Salatsósur, majones og majonessósur, olíusósur, rjóma- og ostasósur, sinnep, tómatsósur, sósur úr grænmeti, uppbakaðar, jafnaðar sósur, súr-sætar sósur o.0fl.0",NULL,NULL
+15.02,"Súpur, súpuduft",NULL,NULL
+15.03,"Áleggssalöt, majonessalöt, salöt úr sýrðum rjóma",NULL,NULL
+16,Tilbúnir réttir,NULL,NULL
+16.01,"Pitsur, samlokur, pitur, brauðréttir, hamborgarar, pylsa í brauði",NULL,NULL
+16.02,"Pastaréttir, lasagna",NULL,NULL
+16.03,Kjötréttir,NULL,NULL
+16.04,Fiskréttir,NULL,NULL
+16.05,Grænmetisréttir,NULL,NULL
+16.06,Eggjaréttir,NULL,NULL
+17,"Fæðubótarefni, næringardrykkir, sérfæði",NULL,NULL
+17.01,"Vítamín, steinefni, önnur fæðubótarefni",NULL,NULL
+17.02,"Megrunar- og próteindrykkir, næringardrykkir, próteinstykki",NULL,NULL
+ZZZ,Vantar,NULL,NULL

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://thermusgenes.appspot.com/" href="treedraw_extension.jnlp">
+<information>
+  <title>Treedraw</title>
+  <vendor>Huldufolk ehf.</vendor>
+  <homepage href="http://thermusgenes.appspot.com" />
+  <description>Treedraw</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.7" />
+  <jar href="treedraw.jar"/>
+</resources>
+<component-desc />
+</jnlp>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://pontunarkerfi.appspot.com/">
+<information>
+  <title>SQL Server JDBC</title>
+  <vendor>Microsoft</vendor>
+  <homepage href="http://www.matis.is" />
+  <description>SQL Server JDBC</description>
+</information>
+<offline-allowed/>
+<security>
+  <all-permissions/>
+</security>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="sqljdbc4.jar"/>
+</resources>
+<component-desc />
+</jnlp>

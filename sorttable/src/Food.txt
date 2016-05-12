@@ -1,0 +1,945 @@
+0130	GOSDRYKKUR, appelsín	Soft drink, orange flavour			12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0534	ÝSA, ofnbökuð, m lauk og osti	Haddock, roasted, w onion & cheese	null	null	16.04	16	4	null	null	null	null	null	0	null	null	null	null
+0145	LÉTT OG LAGGOTT	Butter with soyabean oil, fat 40%		Smjör mýkt með sojaolíu. Minarine.	10.04	10	4	16	null	null	null	null	0	null	null	null	null
+0925	NÚÐLURÉTTUR, hrísgrjóna-, tilbúinn	Noodle dish, rice noodle, ready to serve			16.02	16	2		null	null	null	null	0	null	null	null	null
+0576	ÝSUHAKK, hrátt	Haddock, minced, raw	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0211	RAUÐPIPAR	Pepper, hot chili, raw	Capsicum frutescens	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+1263	ÞORSKSVIL	Cod milt			08.01	8	1		null	null	null	null	0	null	null	null	null
+0830	BLEIKJA, eldisbleikja, hrá	Arctic char, farmed, raw	Salvelinus alpinus	Silungur	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0817	ABT - MJÓLK, með berjum og múslí	Milk, cultured, w berries & muesli	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0290	VATN, drykkjarvatn	Water, drinking water, tap	null	null	12.09	12	9	33	null	null	null	null	0	null	null	null	null
+0649	NÆPUR, hráar	Turnip, hráar	Brassica rapa	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0065	BRAUÐ, ítölsk, ólífubrauð	Bread, Italian, olive bread	null	null	04.04	4	4	null	null	null	null	null	0	null	null	null	null
+0105	LAMBAHJÖRTU, fitusnyrt, hrá	Lamb heart, raw			07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0405	SÆTUEFNI, sakkarín	Sweetener, saccharin			13.03	13	3	33	null	null	null	null	0	null	null	null	null
+0373	GELLUR, hráar	Fish, part of fish head	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0565	SÓSA, Bearnaisesósa	Sauce, Bearnaise-	null	null	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0837	MARSIPAN	Marzipan			11.03	11	3	33	null	null	null	null	0	null	null	null	null
+0728	NAUTALUNDIR, fitusnyrtar, hráar	Beef, fillet, defatted, raw	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0688	ÞYKKMJÓLK, með ávöxtum og súkkulaði	Milk, cultured, with cream, fruits, and chocolate			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0870	SELLERÍRÓT	Celery root	Apium graveolens	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0044	RAUÐMAGI, hrár	Lumpsucker, male, raw	Cyclopterus lumpus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0270	SÓSA, TÓMAT-, tómatsósa	Tomato ketchup, bottled	null	null	15.01	15	1	33	null	null	null	null	0	null	null	null	null
+0259	SVALADRYKKUR, djús, sykurskertur	Drink, low sugar	null	null	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0748	HNOÐMÖR	Suet, fermented	null	null	10.03	10	3	18	null	null	null	null	0	null	null	null	null
+0090	BEIKON, hrátt	Bacon, raw	null	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+0772	SAUÐAMJÓLK	Sheeps milk, raw	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0451	RASP	Bread-crumbs	null	null	04.02	4	2	23	null	null	null	null	0	null	null	null	null
+0269	SULTA, berjasulta	Jam, berries	null	null	06.06	6	6	33	null	null	null	null	0	null	null	null	null
+0005	FISKBOLLUR, niðursoðnar	Fish balls, canned	null	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0443	LÍKJÖR	Liqueur, average values	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0834	SÓSA, graflaxsósa	Sauce, for salmon graflax	null	null	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0778	KARTÖFLUR, soðnar	Potatoes, boiled	Solanum tuberosum	null	05.03	5	3	33	null	null	null	null	0	null	null	null	null
+1194	ORKUDRYKKUR, Energy, Euroshopper	Energy drink, Energy, Euroshopper			12.05	12	5		null	null	null	null	0	null	null	null	null
+0083	SKINKA, soðin	Ham, smoked and cooked			07.08	7	8	7	null	null	null	null	0	null	null	null	null
+0422	HRÖKKBRAUÐ, fínt	Crispbread, wheat, fine	null	null	04.04	4	4	21	null	null	null	null	0	null	null	null	null
+0116	RAUÐMAGI, reyktur	Lumpsucker, male, smoked	Cyclopterus lumpus	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+1052	MORGUNKORN, Rice krispies, Kelloggs	Breakfast cereal, rice krispies, Ke	null	null	04.03	4	3	null	null	null	null	null	0	null	null	null	null
+0622	MAÍS, hrár	Sweetcorn, raw	Zea mays L.	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+1145	TÚNFISKUR, hrár	Tuna, raw	Thunnus thymus		08.01	8	1		null	null	null	null	0	null	null	null	null
+0306	HVALKJÖT, hrátt	Whale meat (fin whale & sei whale)	Balaenoptera physalus & B. borealis	null	07.05	7	5	9	null	null	null	null	0	null	null	null	null
+1178	SÓSA, MAJONES, 3% fita	Sauce, mayonnaise, 3% fat		Majones, extra light	15.01	15	1		null	null	null	null	0	null	null	null	null
+0517	BRAUÐTERTA, m. rækjusalati	Bread cake w shrimp & mayonnaise	null	null	16.01	16	1	21	null	null	null	null	0	null	null	null	null
+0151	SKYR, hefðbundið	Skyr, traditional			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1202	BJÓR, Lite, 4,4% alkóhól af rúmmáli	Beer, Lite, alcohol 4,4% by vol.			12.06	12	06		null	null	null	null	0	null	null	null	null
+0758	LAKKRÍSKONFEKT	Liquorice allsorts	null	null	11.03	11	3	26	null	null	null	null	0	null	null	null	null
+0716	BRODDMJÓLK, þynnt	Colostrum, diluted	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0340	RÚGMJÖL, gróft	Rye flour, whole meal	Secale cereale	null	04.02	4	2	23	null	null	null	null	0	null	null	null	null
+0886	SOJAOLÍA, hálfhert	Soya oil, partially hydrogenated	null	null	10.05	10	5	18	null	null	null	null	0	null	null	null	null
+0520	HAMBORGARI, steiktur, með brauði, grænmi og sósu	Hamburger, with bread, vegetables and dressing			16.01	16	1	6	null	null	null	null	0	null	null	null	null
+0505	OSTUR, mysuostur, fastur	Cheese, whey, firm	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1018	LAMBALUNDIR, hráar	Lamb tenderloin, raw	null	null	07.01	7	1	null	null	null	null	null	0	null	null	null	null
+0435	KANILL	Cinnamon, ground	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+1087	SÓSA, SALATSÓSA, þúsundeyja, 15%	Dressing, thousand island, low fat			15.01	15	1		null	null	null	null	0	null	null	null	null
+1161	BRAUÐ, pólarbrauð, Extrem	Bread, polarbrauð, Extrem			04.04	4	4		null	null	null	null	0	null	null	null	null
+0132	SVALADRYKKUR, djús, sykurlaus	Drink, sugar free	null	null	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+1128	SVÍNAKJÖT, millifeitt, steikt	Pork, fat 15%, fried	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+0366	SÓLBLÓMAOLÍA	Sunflower oil	null	null	10.01	10	1	20	null	null	null	null	0	null	null	null	null
+0816	ABT - MJÓLK, með múslí	Milk, cultured, with muesli	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0409	EDIK	Vinegar	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0190	RAUÐRÓFUR, niðursoðnar	Beet, red, canned	Beta vulgaris var. conditiva	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+1022	SVÍNAGÚLLAS, hrátt	Pork, stewing meat, raw	null	null	07.03	7	3	null	null	null	null	null	0	null	null	null	null
+0593	PÍTUBRAUÐ, án fyllingar	Pita bread	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0167	OSTUR, gráðaostur	Cheese, blue cheese	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0358	KEILA, flök, hrá	Tusk, fillet, raw	Brosme brosme	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0203	GULRÆTUR, hráar	Carrot, raw	Daucus carota sativus	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0461	TE, lagað, án mjólkur og sykurs	Tea, beverage, without milk and sugar			12.01	12	1	33	null	null	null	null	0	null	null	null	null
+0935	BAUNIR, kjúklingabaunir, soðnar	Peas, chick-peas, boiled			05.04	5	4		null	null	null	null	0	null	null	null	null
+0450	PERUR	Pear, raw			06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0216	LAMBAHRYGGUR, með fitu, hrár	Lamb, loin, with fat, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0768	HVÍTLAUKSDUFT	Garlic, dried, powder	Allium sativum	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0651	LAMBAÞINDAR, hráar	Lamb diaphragm, raw	null	null	07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0425	HNETUR, jarðhnetur, saltaðar, olía	Nut, peanut, salted, oilroasted	null	null	06.03	6	3	24	null	null	null	null	0	null	null	null	null
+1160	KÓKOSMJÓLK, létt, niðursoðin	Coconut milk, low fat, canned			06.03	6	3		null	null	null	null	0	null	null	null	null
+0348	PÖNNUKÖKUR	Pancake	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0393	KÚMEN	Caraway seed	Carum carvi	null	13.01	13	1	24	null	null	null	null	0	null	null	null	null
+0069	ÞORSKUR, steiktur	Cod, fillet, breaded, fried	Gadus morhua	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+1170	KRYDDSULTA,  með mangó	Chutney, with mango		Kryddað mangómauk	06.06	6	6		null	null	null	null	0	null	null	null	null
+0488	BRAUÐ, dökk hveitibrauð	Bread, dark wheat bred	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0204	KARTÖFLUR, hráar	Potato, raw	Solanum tuberosum	null	05.03	5	3	33	null	null	null	null	0	null	null	null	null
+0448	SPAGHETTÍ, hrátt	Spaghetti, raw	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+0327	SÓSA, MAJONES-, kokkteilsósa, 67%	Sauce, mayonnaise with ketchup		Tómatolíusósa	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0318	HANGIÁLEGG, soðið, fituskert	Lamb meat, smoked, low fat, sliced	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0199	JÖKLASALAT	Iceberg lettuce, raw	Lactuca sativa var. capitata	Íssalat	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0404	BAUNIR, sojabaunir, þurrkaðar	Beans, soy, dried	Glycine max	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0236	KARTÖFLUDUFT	Potatoes, mashed, dehydrated	null	null	05.08	5	8	33	null	null	null	null	0	null	null	null	null
+0766	PAPRIKA, rauð	Pepper, sweet, red, raw	Capsicum annuum var grossum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0347	SNÚÐAR	Roll	null	null	04.06	4	6	23	null	null	null	null	0	null	null	null	null
+0375	ÍS, jógúrtís	Ice cream, made from joghurt			03.01	3	1		null	null	null	null	0	null	null	null	null
+0284	SÚKKULAÐI, rjómasúkkulaði, rúsínur	Chocolate, milk, with raisin	null	null	11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0912	HRÍSKÖKUR, saltaðar	Rice biscuit, salted	null	null	04.05	4	5	null	null	null	null	null	0	null	null	null	null
+0996	SMJÖRLÍKI, Olivía	Margarine, Olivia			10.05	10	5	17	null	null	null	null	0	null	null	null	null
+0582	HAMBORGARI, hrár, án brauðs	Hamburger, without bread, raw			07.02	7	2	6	null	null	null	null	0	null	null	null	null
+1250	HNETUR, furuhnetur	Nuts, pine nuts	Pinus spp.		06.03	6	3		null	null	null	null	0	null	null	null	null
+0697	PEPPERONI	Pepperoni	null	null	07.08	7	8	null	null	null	null	null	0	null	null	null	null
+0467	LAUKUR, steiktur í jurtaolíu	Onions, fried in vegetable oil	null	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0805	MANGÓÁVÖXTUR	Mango, raw	Mangifera indica		06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0143	SMJÖR, sérsaltað	Butter, 2.5% salt added	null	null	10.04	10	4	14	null	null	null	null	0	null	null	null	null
+0400	BAUNIR, gular, þurrkaðar	Peas, yellow, dry, raw	Pisum sativum	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0632	TVÍBÖKUR, grófar	Rusk, wholemeal		Bruður.	04.04	4	4	21	null	null	null	null	0	null	null	null	null
+0579	GRÁSLEPPA, sigin, hrá	Lumpsucker, female, dried, raw	Cyclopterus lumpus	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0202	BLÓMKÁL, hrátt	Cauliflower, raw	Brassica oleracea	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0747	ÝSA, steikt	Haddock, fillet, broiled	Melanogrammus aeglefinus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0200	KÍNAKÁL, hrátt	Cabbage, Chinese, raw	Brassica pekinensis		05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0343	BRAUÐ, fjölkornabrauð	Bread, white, whole grain and seed	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0735	AÐALBLÁBERJASULTA	Bilberry jam	null	null	06.06	6	6	33	null	null	null	null	0	null	null	null	null
+1010	JÓGÚRT, ávaxtajógúrt, Pascual	Yoghurt, fruit, Pascual	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0273	SÚPUTENINGAR	Meat extract, cube	null	null	13.01	13	1	6	null	null	null	null	0	null	null	null	null
+0010	SÚKKULAÐI, Prins Póló	Cholcolate wafer, Prince Polo	null	null	11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0431	JARÐARBER	Strawberry, raw	Fragaria x ananassa	null	06.02	6	2	33	null	null	null	null	0	null	null	null	null
+0822	LAMBAKÓTILETTUR, hráar	Lamb, cutlets	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0161	SÝRÐUR RJÓMI, 18% fita	Cream, cultured, fat 18%	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0491	MAGÁLL, reyktur	Lamb, flank, smoked	null	null	07.01	7	1	11	null	null	null	null	0	null	null	null	null
+0952	KAKÓDRYKKUR, Swiss Miss án viðb sykurs	Cocoa drink, Swiss Miss, no sugar added			12.01	12	1		null	null	null	null	0	null	null	null	null
+0941	GULRÆTUR, soðnar	Carrots, boiled	null	null	05.01	5	1	null	null	null	null	null	0	null	null	null	null
+0511	EGG, hænuegg, soðin	Egg, chicken, whole, boiled	null	null	09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0849	OSTUR, fastur, 30% fita	Cheese, firm, fat 30%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0255	KEX, heilhveitikex	Biscuit, wholemeal	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0555	KARTÖFLUSALAT, með majonesi	Potatoes with mayonnaise, onion and mustard			15.03	15	3	33	null	null	null	null	0	null	null	null	null
+0086	SPÆGIPYLSA	Salami	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0857	REPJUOLÍA	Rapeseed oil		Rapsolía	10.01	10	1	20	null	null	null	null	0	null	null	null	null
+0001	EGG, svartfuglsegg, hrá	Egg, guillemot, whole, raw		Langvíuegg, stuttnefjuegg	09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0354	BRAUÐ, sigtibrauð	Bread, white, rye and wheat		Normalbrauð	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+1197	NAGGAR, kjúklinganaggar, forsteiktir	Breaded minced chicken pieces, prefried			07.08	07	08		null	null	null	null	0	null	null	null	null
+1180	ÞORSKUR, siginn, soðinn	Cod, partly dried, boiled	Gadus morhua	null	08.04	8	4	null	null	null	null	null	0	null	null	null	null
+0893	POPPKORN, örbylgju-	Pop corn, microwave-, popped			14.01	14	1	30	null	null	null	null	0	null	null	null	null
+0943	HVÍTLAUKUR, í olíu	Garlic, in vegetable oil	null	null	05.01	5	1	null	null	null	null	null	0	null	null	null	null
+0459	SÍTRÓNUSAFI, hreinn	Lemon juice	null	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+1105	OSTUR, Fetaostur, í olíu	Cheese, Feta, in oil			02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0124	KRÆKIBER	Crow berries, raw	Empetrum nigrum		06.02	6	2	33	null	null	null	null	0	null	null	null	null
+0638	GRÁLÚÐA, flök, hrá	Greenland halibut, fillet, raw	Reinhardtius hippoglossoides	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0056	SPÆRLINGUR, hrár	Norway pout, flesh, raw	Trisopterus esmarki	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0238	HARÐFISKUR, ýsa	Haddock, dried	null	null	08.02	8	2	13	null	null	null	null	0	null	null	null	null
+0577	ÝSUFARS, hrátt	Haddock, emulsion, raw	null	null	08.03	8	3	13	null	null	null	null	0	null	null	null	null
+0741	MANDARÍNUR	Tangerine, raw	Citrus deliciosa	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0955	BORÐSMJÖRLÍKI, Bertolli	Table margarine, Bertolli	null	null	10.05	10	5	null	null	null	null	null	0	null	null	null	null
+0097	LIFRARPYLSA, soðin, súrsuð	Lamb liver sausage, boiled, pickled			07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0179	AB - MJÓLK	Milk, cultured	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0436	MORGUNKORN, hafrahringir, hunangs-	Breakfast cereal, Cheerios, Honey nut		Cheerios, hunangs-	04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0102	KJÚKLINGUR, með skinni, hrár	Chicken, flesh and skin, raw	Gallus domesticus	null	07.06	7	6	10	null	null	null	null	0	null	null	null	null
+1167	ABT-mjólk, m áv, berjum og múslí, fituskert	ABT-milk, w fruit, berries & muesli, low fat			01.02	1	2		null	null	null	null	0	null	null	null	null
+1114	HAKKRÉTTUR, með tómatsósu, án feiti	Minced beef, with tomato sauce, no fat added			16.03	16	3		null	null	null	null	0	null	null	null	null
+0666	ÝSA, ofnbökuð, m súrmjólkursósu	Haddock, roasted, milk sauce	null	null	16.04	16	4	null	null	null	null	null	0	null	null	null	null
+0150	UNDANRENNUDUFT	Milk, dry, skimmed, powder	null	null	01.04	1	4	1	null	null	null	null	0	null	null	null	null
+1182	URRARI, flök, hrá	Gurnard, fillet, raw	Eutrigla gurnardus		08.01	8	1		null	null	null	null	0	null	null	null	null
+0336	FORMKAKA	Sponge cake, formkaka	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0751	ÞORSKUR, siginn, hrár	Cod, partly dried, raw	Gadus morhua	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0175	JÓGÚRT, léttjógúrt, með ávöxtum og klíði	Yoghurt, low fat, with fruit and bran			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0452	RAUÐVÍN	Wine, red	null	null	12.07	12	7	33	null	null	null	null	0	null	null	null	null
+0098	LAMBALÆRI, fitusnyrt, hrátt	Lamb leg, defatted, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0590	BRAUÐ, sojabrauð	Bread, soya flour	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0111	BJÓR, 5% alkóhól af rúmmáli	Beer, alc. 5 % by vol.	null	null	12.06	12	6	33	null	null	null	null	0	null	null	null	null
+0104	LAMBALIFUR, hrá	Liver, lamb, raw			07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0079	KÁLFABJÚGU, soðin	Veal sausage, boiled	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+1121	LAMBAKJÖT, millifeitt, steikt	Lamb, fat 17%, fried	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+1221	ÍS, jurtaís, Hversdagsís	Ice cream substitute, vegetable fat, Hversdagsís			03.02	3	2		null	null	null	null	0	null	null	null	null
+0669	SOJADRYKKUR	Soya drink		Sojamjólk	12.04	12	4	33	null	null	null	null	0	null	null	null	null
+0252	ÁBRYSTIR	Colostrum, heated, firm	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0013	RJÓMALÍKI, úr jurtafitu	Cream substitute, made from vegetable oil		Gervirjómi	10.01	10	1	33	null	null	null	null	0	null	null	null	null
+1163	BRAUÐ, rúgbrauð, danskt	Bread, ryebread, Danish style			04.04	4	4		null	null	null	null	0	null	null	null	null
+0118	UFSALÝSI	Fish liver oil	null	null	10.02	10	2	13	null	null	null	null	0	null	null	null	null
+1249	SÚKKULAÐI, suðusúkkulaði, 70-85% kakóþurrefni	Chocolate, dark, 70-85% cocao solids			11.03	11	3		null	null	null	null	0	null	null	null	null
+0469	HVÍTLAUKUR, hrár	Garlic, raw	Allium sativum	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0415	GÆSIR, kjöt án skinns, hrátt	Goose, flesh only, raw	Anser anser	null	07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0792	KÚRBÍTUR, hrár	Zucchini, raw	Curcubita pepo	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0103	KJÚKLINGABITAR, djúpsteiktir	Chicken pieces, breded, deep fried			07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0205	GRÆNKÁL, hrátt	Kale, raw	Brassica oleracea laciniata	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+1021	SVÍNALUNDIR, hráar	Pork tenderloin, raw	null	null	07.03	7	3	null	null	null	null	null	0	null	null	null	null
+0681	HROSSABJÚGU, hrá	Horse sausage, raw	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0540	KJÖTBOLLUR, farsbollur, steiktar	Meat balls, fried	null	null	07.08	7	8	53	null	null	null	null	0	null	null	null	null
+0560	RAUÐKÁL, soðið	Cabbage, red, boiled	Brassica oleracea var. capitata	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+1131	STOÐMJÓLK, vítamín- og steinefnabætt, fyrir börn 0,5-2 ára	Milk, fortified, for children 0,5-2 year			01.01	1	1		null	null	null	null	0	null	null	null	null
+0881	SMJÖRLÍKI, Ljóma	Margarine, Ljóma			10.05	10	5	17	null	null	null	null	0	null	null	null	null
+0391	KJÖTSOÐ	Meat broth			15.02	15	2	53	null	null	null	null	0	null	null	null	null
+0428	HVEITIKORN, heil	Wheat, kernels, whole/cracked	Triticum aestivum	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0117	ÞORSKALÝSI	Cod liver oil	null	null	10.02	10	2	13	null	null	null	null	0	null	null	null	null
+0508	OSTUR, kotasæla með ananas	Cheese, cottage, with ananas	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0810	LÉTTSÚRMJÓLK	Milk, cultured, low fat			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1098	ÍÞRÓTTADRYKKUR, Powerade	Sport drink, Powerade			12.05	12	5		null	null	null	null	0	null	null	null	null
+0877	JURTAOLÍA, meðalsamsetning	Vegetable oil, average values			10.01	10	1		null	null	null	null	0	null	null	null	null
+1240	ÁVAXTASAFI, þykkur, Trópí	Fruit smoothie, Trópí		Ávaxta Smoothie	12.04	12	4		null	null	null	null	0	null	null	null	null
+0799	HVÍTVÍN, þurrt	Wine, white, dry	null	null	12.07	12	7	33	null	null	null	null	0	null	null	null	null
+0873	OSTUR, Brie, 17% fita	Cheese, Brie, fat 17%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1004	SÓSA, súrsæt, Uncle Ben's	Sauce, sweet & sour, Uncle Bens	null	null	15.01	15	1	null	null	null	null	null	0	null	null	null	null
+0785	SARDÍNUR, niðursoðnar, í tómatsósu	Sardine, canned, in tomato sauce	Clupeidae	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0832	HAMBORGARI, steiktur, án brauðs	Hamburger, without bread, fried	null	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0166	OSTUR, Camembert	Cheese, Camembert	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0957	ÞORSKALÝSI, krakkalýsi	Cod liver oil, for children			10.02	10	2	13	null	null	null	null	0	null	null	null	null
+0732	KRÆKIBERJASAFT	Crow berries juice with sugar	null	null	12.03	12	3	33	null	null	null	null	0	null	null	null	null
+0844	SÓSA, MAJONES-, pítusósa, án eggja, 28% fita	Sauce, pita sauce, witout eggs, fat 28%			15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0253	LAUFABRAUÐ	Thin wheat bread, deep fried	null	null	04.04	4	4	21	null	null	null	null	0	null	null	null	null
+0237	KARTÖFLUMÚS	Potatoes, mashed	null	null	05.03	5	3	33	null	null	null	null	0	null	null	null	null
+0153	RJÓMI	Cream, fat 36%	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0525	BRAUÐSAMLOKA, með roastbeef, lauk og majonesi	Sandwich, with roast beef, onion and mayonnaise			16.01	16	1	23	null	null	null	null	0	null	null	null	null
+0510	SKYRHRÆRINGUR	Porridge with skyr	null	null	01.03	1	3	3	null	null	null	null	0	null	null	null	null
+0552	EGGJAKAKA	Omelet	null	null	16.06	16	6	5	null	null	null	null	0	null	null	null	null
+0187	BAUNIR, grænar, niðursoðnar	Peas, green, canned	Pisum sativum	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+0909	BRAUÐSTANGIR, frá pítsustöðum	Bread sticks	null	null	04.04	4	4	null	null	null	null	null	0	null	null	null	null
+1029	SÚKKULAÐIHNETUR	Chocolate covered peanuts			11.03	11	3		null	null	null	null	0	null	null	null	null
+1175	KORNSTÖNG, Special K	Breakfast cereal bar, Special K			04.03	4	3		null	null	null	null	0	null	null	null	null
+0795	DILL, þurrkað	Dill weed, dried	Anethum graveolens	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0038	OSTUR, Gullostur	Cheese, Gullostur	null	null	02.01	2	1	null	null	null	null	null	0	null	null	null	null
+0807	SVEPPIR, niðursoðnir	Mushroom, canned	Agaricus bisporus formata albus	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+0625	RÚGMJÖL, sigtimjöl	Rye flour	null	null	04.02	4	2	23	null	null	null	null	0	null	null	null	null
+1189	VATNSDRYKKUR, Kristall plús	Drink, Kristall plus			12.09	12	9		null	null	null	null	0	null	null	null	null
+0092	SVIÐASULTA, soðin	Lamb head cheese, cooked	null	null	07.09	7	9	11	null	null	null	null	0	null	null	null	null
+0592	SMJÖRDEIGSHORN	Croissant	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0337	HVEITI	Wheat flour, low protein			04.02	4	2	23	null	null	null	null	0	null	null	null	null
+0356	MORGUNKORN, hafrahringir	Breakfast cereal, Cheerios		Cheerios	04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0700	SMÁMÁL, mjólkurbúðingur með súkkulaði	Milk pudding, with chocolate			01.03	1	3	3	null	null	null	null	0	null	null	null	null
+0458	SVÍNALÆRI, hrátt	Pork, leg with knuckle, raw	null	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+0293	SÝRÐUR RJÓMI, 10% fita	Cream, cultured, fat 10%	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1030	HRÍSKÚLUR, Freyjuhrís	Cocolate covered puffed rice, Freyjuhris			11.03	11	3		null	null	null	null	0	null	null	null	null
+1122	LAMBALÆRI, fitusnyrt, ofnbakað	Lamb leg, defatted, baked	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0731	HREINDÝRAKJÖT, hrátt	Reindeer meat, raw	Rangifer	null	07.05	7	5	9	null	null	null	null	0	null	null	null	null
+0455	SHERRY, millisætt	Sherry, medium	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0226	LUNDI, kjöt, bringur, hráar	Puffin, meat, breast, raw	Fratercula arctica	null	07.07	7	7	9	null	null	null	null	0	null	null	null	null
+0635	EGGALDIN, steikt	Aubergine, fried	Solanum melongena	Eggplant	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0543	HAKKRÉTTUR m grænmeti, steiktur	Minced beef with vegetables	null	null	16.03	16	3	6	null	null	null	null	0	null	null	null	null
+0407	BÓKHVEITI	Buckwheat flour	null	null	04.02	4	2	23	null	null	null	null	0	null	null	null	null
+0101	FOLALDAGÚLLAS, hrátt	Foal goulash, raw	null	null	07.04	7	4	9	null	null	null	null	0	null	null	null	null
+0526	BRAUÐSAMLOKA, með rækjusalati	Sandwich, with shrimp, egg and mayonnaise			16.01	16	1	23	null	null	null	null	0	null	null	null	null
+0529	ÝSA, soðin	Haddock, fillet, boiled	Melanogrammus aeglefinus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0773	KAPLAMJÓLK	Mare's milk	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0438	KARTÖFLUMJÖL	Potato flour	null	null	05.08	5	8	33	null	null	null	null	0	null	null	null	null
+0637	GEIRNYT, flak, hrátt	Rabbitfish, raw	Chimaera momstrosa	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0562	SÓSA, uppbökuð	Sauce, brown, thick	null	null	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+1014	ÍS í súkkulaði, Mars	Chocolate covered ice cream bar, Mars			03.01	3	1		null	null	null	null	0	null	null	null	null
+0023	ÞORSKHROGN, hrá	Cod, roe, raw	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0254	KEX, matarkex, Frón	Biscuit, shortbread, Frón	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0215	LAMBALÆRI, með fitu, hrátt	Lamb, leg, with fat, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0796	PLÓMUR	Plum, raw	Prunus domestica		06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0213	HREÐKUR, hráar	Radish, raw	Raphanus sativus var. sativus	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0538	FISKBAKSTUR, ofnbakaður	Fish dish, with eggs and cheese, baked		Gratín	16.04	16	4	13	null	null	null	null	0	null	null	null	null
+0959	SÚKKULAÐI, Mars	Chocolate, Mars	null	null	11.03	11	3	null	null	null	null	null	0	null	null	null	null
+1253	SÆTUEFNADUFT, Canderel	Sweetener, powder, Canderel		Aspartam-asesúlfam K blanda	13.03	13	3		null	null	null	null	0	null	null	null	null
+0029	AB - MJÓLK, létt	Milk, cultured, low fat	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0147	SÚRMJÓLK	Milk, whole, cultured	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0502	OSTUR, smurostur, 6% fita, hreinn	Cheese spread, fat 6%		Léttostur	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0245	SÍLD, flök, niðursoðin, í sósu	Herring, fillet, canned, in sauce			08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0788	FÍKJUR, þurrkaðar	Figs, dried	Ficus carica	null	06.05	6	5	33	null	null	null	null	0	null	null	null	null
+0271	SÚKKULAÐI, rjómasúkkulaði	Chocolate, milk	null	null	11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0472	SÚKKULAÐIÁLEGG, Nusco	Chocolate nut spread, Nusco	null	null	11.03	11	3	26	null	null	null	null	0	null	null	null	null
+0471	SMÁKÖKUR	Cookie, sweet			04.05	4	5	21	null	null	null	null	0	null	null	null	null
+1136	PRÓTEINSTÖNG, Isopure	Protein bar, Isopure			17.02	17	2		null	null	null	null	0	null	null	null	null
+0430	HVÍTVÍN, millisætt	Wine, white, medium	null	null	12.07	12	7	33	null	null	null	null	0	null	null	null	null
+1191	ORKUDRYKKUR, Cult	Energy drink, Cult			12.05	12	5		null	null	null	null	0	null	null	null	null
+0968	ORKUDRYKKUR, Blue Pig	Energy drink, Blue Pig	null	null	12.05	12	5	null	null	null	null	null	0	null	null	null	null
+0067	ÞORSKUR, soðinn	Cod, fillet, boiled	Gadus morhua	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0131	SVALADRYKKUR, djús	Drink, made from sugar and water	null	null	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0197	PAPRIKA, græn	Pepper, sweet, green, raw	Capsicum annuum var grossum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0981	BRAUÐSAMLOKA, Subway, með grænmeti, kjöti og osti, án sósu	Sandwich, Subway, with vegetables, meat and cheese, without sauce			16.01	16	1		null	null	null	null	0	null	null	null	null
+0556	HRÍSGRJÓN, hvít, póleruð, soðin	Rice, polished, boiled	Oryza sativa	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0828	FOLALDAHAKK, hrátt	Foal, minced, raw	null	null	07.04	7	4	9	null	null	null	null	0	null	null	null	null
+0178	OSTUR, rjómaostur, 27% fita	Cheese, cream, fat 27%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0793	MELÓNUR, hunangsmelónur	Melon, honeydew, raw	Cucumis melo	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0335	JÓLAKAKA	Sponge cake, Christmas cake			04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0954	SMJÖRLÍKI, heimilis-, Kjarnavörur	Margarine, heimilis-			10.05	10	5		null	null	null	null	0	null	null	null	null
+0230	HRÚTSPUNGAR, soðnir, súrsaðir	Ram testicles, boiled, pickled in whey			07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0122	SÍLD, flök, reykt	Herring, fillet, smoked	Clupea harengus		08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0591	BRAUÐ, sólkjarnabrauð	Bread, with seeds	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0779	RÓSAKÁL, hrátt	Brussels sprout, raw	Brassica oleracea var. gemmifera	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+1138	RJÓMI, matreiðslurjómi	Cream, for cooking	null	null	01.01	1	1	null	null	null	null	null	0	null	null	null	null
+0249	MALTÖL	Malt beverage	null	null	12.06	12	6	33	null	null	null	null	0	null	null	null	null
+0980	BIXIMATUR, steiktur	Meat and potatoes, fried			16.03	16	3		null	null	null	null	0	null	null	null	null
+1196	PRÓTEINDRYKKUR, Hámark	Protein drink, Hamark			17.02	17	02		null	null	null	null	0	null	null	null	null
+1113	HAKKRÉTTUR með grænmeti, án feiti, steiktur	Minced beef with vegetables, without added fat, fried			16.03	16	3		null	null	null	null	0	null	null	null	null
+0794	SPÍNAT, hrátt	Spinach, raw	Spinacia oleracea	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0687	ÞYKKMJÓLK, með ávöxtum og korni	Milk, cultured, with cream, fruits and cereals			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1265	RJÓMABOLLA, gerdeigsbolla, með sultu og glassúr	Cream bun, yeast, with jam and icing			04.06	4	6		null	null	null	null	0	null	null	null	null
+0944	FRANSKAR KARTÖFLUR, ofnsteiktar	French fries, baked			05.09	5	9		null	null	null	null	0	null	null	null	null
+0210	GRASLAUKUR, hrár	Chives, raw	Allium schoenoprasum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0960	SÚKKULAÐI, Bounty	Chocolate, Bounty	null	null	11.03	11	3	null	null	null	null	null	0	null	null	null	null
+0261	GOSDRYKKIR, sódavatn	Mineral water, carbonated	null	null	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0820	FJÖRMJÓLK, D vítamínbætt	Milk, low fat, fortified with vitamin D			01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0752	LAMBALÆRISSNEIÐAR, steiktar	Lamb leg, broiled	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0661	ÝSULIFUR, hrá	Haddock liver, raw	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+1019	JURTAOLÍA, ÍSÍÓ4, D vítamínbætt	Vegetable oil, ISIO4,  w vitamin D			10.01	10	1		null	null	null	null	0	null	null	null	null
+0486	ÍS, pinnaís, með súkkilaðihjúp	Ice cream, with chocolate	null	null	03.01	3	1	2	null	null	null	null	0	null	null	null	null
+0757	HARÐFISKUR, steinbítur	Catfish, dried	Anarhichas lupus	null	08.02	8	2	13	null	null	null	null	0	null	null	null	null
+0201	HVÍTKÁL, hrátt	White cabbage, raw	Brassica oleracea	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+1117	BRAUÐSAMLOKA, með hangikjöti og baunasalati	Sandwich, with smoked lamb, peas and mayonnaise			16.01	16	1		null	null	null	null	0	null	null	null	null
+0848	VÍNARPYLSUR, soðnar, fituskertar	Vienna sausage, low fat, cooked	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0855	NAUTAHRYGGVÖÐVI (FÍLE) snyrtur hrár	Beef, striploin, defatted, raw	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0006	SNAKK, kartöfluflögur, fituríkar	Potato chips, fatty	null	null	14.02	14	2	30	null	null	null	null	0	null	null	null	null
+0447	MAÍSSTERKJA	Corn starch	null	null	04.02	4	2	33	null	null	null	null	0	null	null	null	null
+1006	TIRAMISU	Tiramisu	null	null	01.03	1	3	null	null	null	null	null	0	null	null	null	null
+0667	LÝSA, hrá	Whiting, raw	Merlangius merlangus merlangus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0032	KRÆKLINGUR, hrár	Mussel, raw	Mytilus edulis	null	08.06	8	6	13	null	null	null	null	0	null	null	null	null
+0949	TÓMATSAFI	Tomato juice	null	null	12.04	12	4	null	null	null	null	null	0	null	null	null	null
+0737	EGGALDIN, hrá	Aubergine, raw	Solanum melongena	Eggplant	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0313	KAVÍAR, grásleppuhrogn, í krukkum	Caviar, lumpsucker roe, in jars	null	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+1035	SOJADRYKKUR, kalkbættur	Soya drink with added calcium		Sojamjólk	12.04	12	4		null	null	null	null	0	null	null	null	null
+0374	KINNAR, nætursaltaðar, hráar	Fish, part of fish head, salted	null	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0937	BAUNIR, sojabaunir, soðnar	Beans, soy, boiled			05.04	5	4		null	null	null	null	0	null	null	null	null
+0138	SMJÖRLÍKI, meðalsamsetning	Margarine, average values			10.05	10	5	17	null	null	null	null	0	null	null	null	null
+0734	AÐALBLÁBERJASAFT	Bilberry juice with sugar	null	null	12.03	12	3	33	null	null	null	null	0	null	null	null	null
+0965	KAKÓDRYKKUR, Swiss-Miss með sykri	Cocoa drink, Swiss-Miss			12.01	12	1		null	null	null	null	0	null	null	null	null
+0514	FLATKÖKUR	Bread, thin	null	null	04.04	4	4	21	null	null	null	null	0	null	null	null	null
+0218	LAMBASLÖG, hrá	Lamb, flank, with fat, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0054	SKÖTUSELUR, hrár	Angler, fillet, raw	Lophius piscatorius	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0399	ÁVEXTIR, niðursoðnir í sykurlegi	Fruits, cocktail, canned, in syrup			06.04	6	4	33	null	null	null	null	0	null	null	null	null
+0214	SVEPPIR, hráir	Mushroom, raw	Agaricus bisporus	null	05.05	5	5	33	null	null	null	null	0	null	null	null	null
+0626	HÖRFRÆ	Linseeds, raw	Linum usitatissimum L.		06.03	6	3	24	null	null	null	null	0	null	null	null	null
+0950	MELÓNUR, kantalúpmelónur	Melon, cantaloupe	null	null	06.01	6	1	null	null	null	null	null	0	null	null	null	null
+0339	HEILHVEITI	Wheat, flour, wholemeal	Triticum aestivum	null	04.02	4	2	23	null	null	null	null	0	null	null	null	null
+1129	SVÍNAKJÖT, magurt, steikt	Pork, low fat, fried	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+0027	KARFI, hrár	Red-fish / ocean perch	Sebastes marinus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0112	SKYR	Skyr, pasteurized	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0606	HUNANGSKAKA	Cake, honey	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+1237	GULRÓTASAFI, niðursoðinn	Carrot juice, canned			12.04	12	4		null	null	null	null	0	null	null	null	null
+0641	HROSSAFITA	Horse fat	null	null	10.03	10	3	9	null	null	null	null	0	null	null	null	null
+1132	PRÓTEINSTÖNG, Easy body	Protein bar, Easy body			17.02	17	2		null	null	null	null	0	null	null	null	null
+0781	APRÍKÓSUR, niðursoðnar	Apricot, canned	Prunus armeniaca	null	06.04	6	4	33	null	null	null	null	0	null	null	null	null
+0344	SINNEP, sætt	Mustard, prepared, sweet			15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0231	HVALRENGI, súrsað	Whale, white tissue pickled in whey	null	null	07.05	7	5	9	null	null	null	null	0	null	null	null	null
+0568	KARRÍ, duft	Curry powder	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+1079	PRÓTEINDRYKKUR, Herbalife	Protein drink, Herbalife			17.02	17	2		null	null	null	null	0	null	null	null	null
+0840	SOJAKJÖTLÍKI, þurrkað	Soya protein, dried	null	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0740	TÍMÍAN	Thyme, dried, ground	Thymus vulgaris	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0642	HVANNARÆTUR, hráar	Angelica roots,raw	Angelica archangelica	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0890	NAUTAFRAMHRYGGJARSNEIÐAR, hráar	Beef, raw	null	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+1072	MARENSTERTA	Cake, meringue	null	null	04.06	4	6	null	null	null	null	null	0	null	null	null	null
+0403	BAUNIR, grænar, hráar, frystar	Peas, green, frozen	Pisum sativum	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0776	MAKKARÓNUR, hráar	Macaroni, raw	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+0126	KLEINUR	Cruller, deep fried			04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0221	HROSSAKJÖT, hrátt	Horse, meat, raw	null	null	07.04	7	4	9	null	null	null	null	0	null	null	null	null
+0198	SALAT, BLAÐSALAT	Lettuce	Lactuca sativa	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0580	SKATA, kæst	Skate, fermented, raw	Raja batis	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0186	GRÆNMETI, blandað, niðursoðið	Vegetables, mixed, canned	null	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+1130	EPLASÍDER	Apple cider	null	null	12.03	12	3	null	null	null	null	null	0	null	null	null	null
+0174	JÓGÚRT, ávaxtajógúrt	Yoghurt, fruit	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0896	PITSA, frá pítsustöðum	Pizza	null	null	16.01	16	1	22	null	null	null	null	0	null	null	null	null
+0417	GÚRKUR, súrsaðar	Cucumber, pickled	Cucumis sativus	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+0247	MORGUNKORN, múslí, án sykurs	Muesli, without sugar added	null	null	04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0042	MAKRÍLL, hrár	Mackerel, raw	Scomber scombrus		08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0427	HUNANG	Honey	null	null	11.02	11	2	33	null	null	null	null	0	null	null	null	null
+0753	LAMBALÆRISSNEIÐAR,steiktar m. raspi	Lamb leg, breaded, broiled	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0657	SKREIÐ, þorskur	Cod, dried, raw	Gadus morhua	null	08.02	8	2	13	null	null	null	null	0	null	null	null	null
+0322	MORGUNKORN, múslí, með sykri	Muesli, with sugar	null	null	04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0026	HÖRPUDISKUR, hrár	Scallop, muscle, raw	Pecten islandicus	null	08.06	8	6	13	null	null	null	null	0	null	null	null	null
+0429	HVEITIKLÍÐ	Wheat bran	Triticum aestivum	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0395	BYGGMJÖL	Barley flour	Hordeum vulgare		04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0279	BRAUÐ, rúgbrauð, seytt	Bread, rye bread, sweet			04.04	4	4	23	null	null	null	null	0	null	null	null	null
+1227	OSTUR, fetaostur, fituskertur, Léttfeti, í olíu	Cheese, Feta cheese, low fat, Lettfeti, in vegetable oil			02.01	2	1		null	null	null	null	0	null	null	null	null
+0266	GREIPSAFI, hreinn	Grapefruit juice	null	null	12.04	12	4	33	null	null	null	null	0	null	null	null	null
+1203	ORKUDRYKKUR, Burn, með ávaxtasafa	Energy drink, Burn, juiced			12.05	12	5		null	null	null	null	0	null	null	null	null
+0583	HAMBORGARHRYGGUR, hrár	Pork, saddle, smoked, raw	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+1162	BYGG, afhýtt, soðið	Barley, bran partly removed, boiled	Hordeum vulgare	Bankabygg. Byggkorn.	04.01	4	1		null	null	null	null	0	null	null	null	null
+0052	OSTUR, Ricotta	Cheese, Ricotta	null	null	02.01	2	1	null	null	null	null	null	0	null	null	null	null
+0537	PLOKKFISKUR	Haddock w. potatoes,onion,flour	null	null	16.04	16	4	13	null	null	null	null	0	null	null	null	null
+0390	BIRKIFRÆ	Poppy seeds	Papaver somniferum	null	06.03	6	3	24	null	null	null	null	0	null	null	null	null
+0325	HAFRAGRAUTUR, án sykurs og mjólkur	Porridge, oat, without sugar and milk			04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0171	MYSUDRYKKUR, Garpur	Whey drink, Garpur	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1067	MORGUNKORN, Weetos	Breakfast cereal, Weetos			04.03	4	3		null	null	null	null	0	null	null	null	null
+1260	ÞYNGINGARDRYKKUR, Mass-Tech, þynntur m vatni	Drink, body building, Mass-Tech,  diluted w water			17.02	17	2		null	null	null	null	0	null	null	null	null
+0800	KONÍAK	Brandy, cognac	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0363	KÍVÍ	Kiwi fruit, raw	Actinidia chinensis	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0531	LAX, soðinn	Salmon, boiled	Salmo salar	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0045	RÆKJA, soðin	Prawn, boiled	Pandalus borealis	null	08.06	8	6	13	null	null	null	null	0	null	null	null	null
+0051	SKARKOLI, hrár	Plaice, fillet, raw	Pleuronectes platessa	Rauðspretta	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0726	KLÍPA	Butter with soyabean oil, fat 27%	null	null	10.04	10	4	14	null	null	null	null	0	null	null	null	null
+0804	VISKÍ	Whisky	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0055	BRAUÐ, ítölsk, Ciabatta	Bread, Italian, Ciabatta	null	null	04.04	4	4	null	null	null	null	null	0	null	null	null	null
+0134	ÁVAXTAGRAUTUR, sykurskertur	Fruit, mixed, no sugar added			06.04	6	4	33	null	null	null	null	0	null	null	null	null
+0563	SÓSA, jafningur / hvít sósa	Sauce, white, thick	null	null	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0541	HAKKRÉTTUR m tómatsósu, steiktur	Minced beef with tomato sauce	null	null	16.03	16	3	6	null	null	null	null	0	null	null	null	null
+0549	NAUTAGÚLLAS, með lauk, steikt	Beef goulash, with onion, fried	null	null	16.03	16	3	6	null	null	null	null	0	null	null	null	null
+0085	RÚLLUPYLSA, soðin	Rolled lamb flank, boiled	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+1126	NAUTAKJÖT, millifeitt, steikt	Beef, fat 15%, fried	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0640	KJÖTPOTTRÉTTUR, með sósu, án rjóma, soðinn	Meat dish with sauce, no cream, boiled			16.03	16	3		null	null	null	null	0	null	null	null	null
+0418	HAFRAFLÖGUR	Oats, rolled	Avena sativa	Haframjöl. Hafragrjón.	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0856	OSTUR, rjómaostur, 44% fita	Cheese, cream, fat 44%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0286	FÍKJUBITAR	Cake, fig	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0703	ÍDÝFA, úr majonesi	Dressing, made from mayonnaise	null	null	15.01	15	1	29	null	null	null	null	0	null	null	null	null
+0654	SKREIÐ, steinbítur	Catfish, dried, raw	Anarhichas lupus	null	08.02	8	2	13	null	null	null	null	0	null	null	null	null
+1248	ÁVAXTADRYKKUR, vítamínbættur	Nectar, vitamins added			12.04	12	4		null	null	null	null	0	null	null	null	null
+0089	SALTKJÖT, hrátt	Lamb meat, salted, raw	null	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0839	KAKÓDUFT, sykrað, fyrir drykki	Cocoa, instant, for drinks	null	null	12.01	12	1	33	null	null	null	null	0	null	null	null	null
+0049	ÞORSKHROGN, soðin	Cod, roe, boiled	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0341	BRAUÐ, heilhveitibrauð	Bread, wholemeal	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0729	NAUTAINNANLÆRI, fitusnyrt, hrátt	Beef, bottom round, defatted, raw	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+1177	SÓSA, MAJONES-, hamborgara, eggjalaus, fita 21%	Sauce, hamburger sauce, without eggs, fat 21%			15.01	15	1		null	null	null	null	0	null	null	null	null
+0326	SÓSA, jöfnuð brún sósa	Sauce, brown	null	null	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0360	SALT, borðsalt	Salt, table salt	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0377	SKYR, skyr.is, ávaxta-	Skyr, skyr.is, fruit-	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0329	SÚKKULAÐIDRYKKUR, heimatilbúinn	Chocolate drink, home made	null	null	12.01	12	1	33	null	null	null	null	0	null	null	null	null
+0827	FOLALDAINNANLÆRI, hrátt	Foal, top round, raw	null	null	07.04	7	4	9	null	null	null	null	0	null	null	null	null
+0749	LÚÐA, súrsuð, hrá	Halibut, pickled	Hippoglossus hippoglossus	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0062	ÞORSKLIFUR, niðursoðin	Cod liver, canned	null	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0523	BRAUÐSAMLOKA, með grænmeti, eggi og majonesi	Sandwich, with vegetables, egg and mayonnaise			16.01	16	1	23	null	null	null	null	0	null	null	null	null
+0362	BANANAR	Banana	Musa acuminata	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0665	ÞYKKVALÚRA, hrá	Lemon sole, fillet, raw	Microstomus kitt	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0724	OSTUR, rjómaostur, 19% fita	Cheese, cream, fat 19%			02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0512	EGG, hænuegg, steikt	Egg, chicken, whole, fried	null	null	09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0058	STEINBÍTUR, hrár	Catfish, fillet, raw	Anarhichas lupus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0192	SALTFISKUR, útvatnaður, hrár	Salted cod, desalted in water, raw			08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0784	ENDUR, kjöt án skinns, hrátt	Duck, flesh only, raw	Anas platyrhynchos	null	07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0645	LOÐNUHROGN, hrá	Capelin, roe, raw	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0918	KÚSKÚS, soðið	Couscous, cooked	null	null	04.07	4	7	null	null	null	null	null	0	null	null	null	null
+1134	PRÓTEINDRYKKUR, VHT Real protein	Protein drink, VHT			17.02	17	2		null	null	null	null	0	null	null	null	null
+1181	GULLLAX, flök, hrá	Greater argentine	Argentina silus	null	08.01	8	1	null	null	null	null	null	0	null	null	null	null
+0108	RÚLLUPYLSA, úr svínakjöti, soðin	Rolled pork flank, boiled	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0262	GOSDRYKKIR, kóladrykkir	Soft drink, cola	null	null	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0786	RIFSBER	Currant, red, raw	Ribes rubrum	null	06.02	6	2	33	null	null	null	null	0	null	null	null	null
+0268	MARMELAÐI	Marmalade, all types	null	null	06.06	6	6	33	null	null	null	null	0	null	null	null	null
+0413	GER, þurrger	Yeast, dried	null	null	13.02	13	2	33	null	null	null	null	0	null	null	null	null
+0446	MAÍSOLÍA	Corn oil	null	null	10.01	10	1	20	null	null	null	null	0	null	null	null	null
+0818	ENGJAÞYKKNI, m berjum & morgunkorni	Milk, cultured, with berries	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0096	LIFRARPYLSA, soðin	Lamb liver sausage, boiled	null	null	07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0518	RJÓMATERTA	Cake, cream	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0070	FISKFARS, hrátt	Fish, minced	null	null	08.03	8	3	13	null	null	null	null	0	null	null	null	null
+0698	SELSPIK	Seal blubber	null	null	10.03	10	3	9	null	null	null	null	0	null	null	null	null
+0477	SÆTUEFNADUFT, Suprasweet / Euroshopper	Sweetener, powder, Suprasweet / Euroshopper		Aspartam	13.03	13	3	33	null	null	null	null	0	null	null	null	null
+0671	VATN, drykkjarvatn með kolsýru	Water, drinking water, carbonated	null	null	12.09	12	9	33	null	null	null	null	0	null	null	null	null
+0319	HANGIKJÖT, soðið	Lamb, meat, smoked, boiled	null	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0288	ENGJAÞYKKNI, m morgunkorni	Milk, cultured, with cereals	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0783	KALKÚNAR, kjöt án skinns, hrátt	Turkey, flesh only, raw	Meleagris gallopavo	null	07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0168	OSTUR, ábætisostur	Cheese, dessert cheese			02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0581	SKATA, hrá	Skate, raw	Raja batis	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+1173	MORGUNKORN, Havre fras	Breakfast cereal, Havre fras			04.03	4	3		null	null	null	null	0	null	null	null	null
+0883	SMJÖRLÍKI, Akra	Margarine, Akra	null	null	10.05	10	5	17	null	null	null	null	0	null	null	null	null
+0162	SKYR, ávaxtaskyr	Skyr, with fruits	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0444	MATARLÍM	Gelatine	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0787	DÖÐLUR, þurrkaðar	Date, dried	Phoenix dactylifera		06.05	6	5	33	null	null	null	null	0	null	null	null	null
+0739	RÓSMARÍN	Rosemary, dried	Rosmarinus officinalis	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0387	KÓKOSFEITI	Coconut oil	null	null	10.01	10	1	18	null	null	null	null	0	null	null	null	null
+0088	HANGIKJÖT, hrátt	Lamb meat, smoked, raw	null	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0123	BLEIKJA, reykt	Arctic char, smoked fillet	Salvelinus alpinus	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0686	ÞYKKMJÓLK, með ávöxtum	Milk, cultured, with cream and fruits			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0278	EGG, hænuegg, hrá	Egg, chicken, whole, raw	null	null	09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0587	SMJÖRLÍKI, rúllusmjörlíki	Margarine, bakery	null	null	10.05	10	5	19	null	null	null	null	0	null	null	null	null
+1069	KÓKOSBOLLA	Coconut candy ball			11.03	11	3		null	null	null	null	0	null	null	null	null
+0350	SÚKKULAÐIKAKA	Cake, chocolate	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0466	SVÍNAFITA	Pig fat	null	null	10.03	10	3	18	null	null	null	null	0	null	null	null	null
+1119	KJÖTBOLLUR, hakkbollur, steiktar	Meat balls from minced beef, fried			16.03	16	3	2	null	null	null	null	0	null	null	null	null
+0135	BORÐSMJÖRLÍKI, 80% fita, jurtafita	Table margarine, 80%, vegetable	null	null	10.05	10	5	15	null	null	null	null	0	null	null	null	null
+0643	ÞORSKLIFUR, soðin	Cod liver, boiled	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0719	BRJÓSTSYKUR, fylltur	Candy, hard, boiled, filled			11.03	11	3	26	null	null	null	null	0	null	null	null	null
+1234	ORKUDRYKKUR, meðalsamsetning	Energy drink, average			12.05	12	5		null	null	null	null	0	null	null	null	null
+0782	AVÓKADÓ	Avocado, raw	null	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0879	BORÐSMJÖRLÍKI, 40%, Lätta	Table margarine, 40%,  Lätta			10.05	10	5	16	null	null	null	null	0	null	null	null	null
+0457	SVÍNABÓGUR, hrár	Pork, hand, raw	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+0963	ÍÞRÓTTADRYKKUR, Aquarius	Sport drink, Aquarius	null	null	12.05	12	5	null	null	null	null	null	0	null	null	null	null
+0616	RÚLLUTERTA, brún	Cake, cake roll, brown			04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0966	ORKUDRYKKUR, Egils orka	Energy drink, Egils orka			12.05	12	5		null	null	null	null	0	null	null	null	null
+0384	APPELSÍNUÞYKKNI	Orange juice concentrate	null	null	12.04	12	4	33	null	null	null	null	0	null	null	null	null
+0152	MYSA, skyrmysa	Whey, skyrwhey	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1228	BORÐSMJÖRLÍKI, Smyrill	Table margarine, Smyrill			10.05	10	5		null	null	null	null	0	null	null	null	null
+1031	HRÍSKÚLUR, Nóakropp	Cocolate covered puffed rice, Nóakr			11.03	11	3		null	null	null	null	0	null	null	null	null
+0922	MORGUNKORN, Weetabix, vítamínbætt	Breakfast cereal, Weetabix, vitamins added			04.03	4	3		null	null	null	null	0	null	null	null	null
+0951	LGG+, með ávaxtasafa og sykri	LGG+, milk, cultured, w fruit juice & sugar			01.02	1	2		null	null	null	null	0	null	null	null	null
+1239	BRAUÐ, döðlubrauð	Bread, date			04.04	4	4		null	null	null	null	0	null	null	null	null
+0829	LAX, eldislax, hrár	Salmon, farmed	Salmo salar	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0222	KJÚKLINGUR, læri, með skinni, hrátt	Chicken, leg, with skin, raw	Gallus domesticus	null	07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0872	MELÓNUR, vatnsmelónur	Watermelon	Citrullus lanatus	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0478	RÚSÍNUR	Raisin	Vitis spp.	null	06.05	6	5	33	null	null	null	null	0	null	null	null	null
+0875	PASTA, eggjapasta, þurrkað	Pasta, egg, dried	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+0445	MAÍSMJÖL	Corn flour	null	null	04.02	4	2	33	null	null	null	null	0	null	null	null	null
+0934	BAUNIR, gular, soðnar	Peas, yellow, boiled	null	null	05.04	5	4	null	null	null	null	null	0	null	null	null	null
+0355	MORGUNKORN, kornflögur	Breakfast cereal, cornflakes		Maísflögur	04.03	4	3	23	null	null	null	null	0	null	null	null	null
+1238	KÓKOSKÚLUR, úr bakaríum	Coconut candy ball, bakery			11.03	11	3		null	null	null	null	0	null	null	null	null
+0585	BRAUÐ, pylsubrauð	Bread, white			04.04	4	4	23	null	null	null	null	0	null	null	null	null
+1137	GOSBLANDAÐIR ÁFENGIR DRYKKIR	Carbonated alcoholic beverages	null	null	12.06	12	6	null	null	null	null	null	0	null	null	null	null
+1140	SKYR, SMS smáskyr, bragðbætt	Skyr, flavoured	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0263	GOSDRYKKIR, sykraðir	Soft drink, carbonated, with sugar			12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0868	OSTUR, Camembert, 38% fita	Cheese, Camembert, fat 38%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0923	NANBRAUÐ	Nan bread	null	null	04.04	4	4	null	null	null	null	null	0	null	null	null	null
+0434	KAKÓDUFT	Cocoa, powder	null	null	12.01	12	1	33	null	null	null	null	0	null	null	null	null
+1220	ÍS, jurtaís, Heimaís	Ice cream substitute, vegetable fat, Heimaís			03.02	3	2		null	null	null	null	0	null	null	null	null
+0219	SVÍNAHRYGGUR, með fitu, hrár	Pork, loin, with fat, raw	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+1088	BRAUÐ, Heimilisbrauð, Myllan	Bread, Heimilisbrauð, Myllan		Samlokubrauð	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+1017	KJÚKLINGAÁLEGG, soðið	Chicken sausage, boiled, sliced	null	null	07.08	7	8	null	null	null	null	null	0	null	null	null	null
+0911	HRÍSGRJÓN, hýðishrísgrjón, soðin	Rice, brown, boiled	Oryza sativa L.	null	04.01	4	1	null	null	null	null	null	0	null	null	null	null
+1068	MORGUNKORN, kornflögur, súkkulaði-	Breakfast cereal, choco corn flakes	null	null	04.03	4	3	null	null	null	null	null	0	null	null	null	null
+0803	VODKA	Vodka	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+1144	PRÓTEINSTÖNG, EAS Advant Edge	Protein bar, EAS Advant Edge			17.02	17	2		null	null	null	null	0	null	null	null	null
+1187	ORKUDRYKKUR, Burn 	Energy drink, Burn			12.05	12	5		null	null	null	null	0	null	null	null	null
+0383	MORGUNKORN, Bran Flakes, Kelloggs	Breakfast cereals, Bran Flakes, Kelloggs			04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0744	KIRSUBER	Cherry, raw	Prunus avium	null	06.02	6	2	33	null	null	null	null	0	null	null	null	null
+1211	KORNSTÖNG, með kókoshnetum, Corny	Muesli bar with coconut, Corny			04.03	4	3		null	null	null	null	0	null	null	null	null
+0539	KJÖTBOLLUR, farsbollur, soðnar	Meatballs, boiled	null	null	07.08	7	8	53	null	null	null	null	0	null	null	null	null
+0003	SÚKKULAÐI, súkkulíki, til bökunar	Chocolate, artificial, for baking	null	null	11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0264	EPLASAFI, hreinn	Apple juice	null	null	12.04	12	4	33	null	null	null	null	0	null	null	null	null
+0690	SÓSA, MAJONES, 37% fita	Mayonnaise, low fat	null	null	15.01	15	1	29	null	null	null	null	0	null	null	null	null
+0571	PIPAR, svartur	Pepper, black	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+1242	SKYRDRYKKUR, KEA	Skyr drink, KEA			01.02	1	2		null	null	null	null	0	null	null	null	null
+1205	VATNSDRYKKUR, Eðaltoppur með andoxunarefnum	Drink, Eðaltoppur with antioxidants			12.09	12	9		null	null	null	null	0	null	null	null	null
+0535	FISKBÚÐINGUR, steiktur	Fish loaf, fried	null	null	08.03	8	3	13	null	null	null	null	0	null	null	null	null
+0081	LIFRARKÆFA, bökuð	Liver paste, baked	null	null	07.09	7	9	11	null	null	null	null	0	null	null	null	null
+0426	HRÍSGRJÓN, hvít, póleruð, hrá	Rice, polished, raw	Oryza sativa	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0983	HRÍSGRJÓNAGRAUTUR, úr léttmjólk	Rice porridge, from low fat milk	null	null	01.03	1	3	null	null	null	null	null	0	null	null	null	null
+0385	ÁVEXTIR, niðursoðnir í vatni	Fruit cocktail, canned, in water	null	null	06.04	6	4	33	null	null	null	null	0	null	null	null	null
+0406	BRENNIVÍN	Spirits, 70% proof	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0938	BLÓMKÁL, soðið	Cauliflower, boiled	null	null	05.02	5	2	null	null	null	null	null	0	null	null	null	null
+0660	TINDASKATA, hrá	Starry ray, muscle, raw	Raja radiata	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0034	LANGA, hrá	Ling, fillet, raw	Molva molva	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0699	SELKJÖT, hrátt	Seal meat with fat/blubber, raw	null	null	07.05	7	5	9	null	null	null	null	0	null	null	null	null
+1235	KLETTASALAT	Arugula	Eruca sativa		05.02	5	2		null	null	null	null	0	null	null	null	null
+0845	LÉTTMJÓLK, með ab gerlum	Milk, low fat, cultured	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0940	GULRÓFUR, soðnar	Swedes, boiled	null	null	05.01	5	1	null	null	null	null	null	0	null	null	null	null
+1028	SÚKKULAÐIRÚSÍNUR	Chocolate covered raisins	null	null	11.03	11	3	null	null	null	null	null	0	null	null	null	null
+0173	JÓGÚRT, karamellu-/ kaffi-	Yoghurt, flavoured			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0274	VÍNARBRAUÐ	Danish pastry, pretzel	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0884	SMJÖRLÍKI, Kjarnasmjörlíki	Margarine, Kjarnasmjörlíki			10.05	10	5	17	null	null	null	null	0	null	null	null	null
+0298	STEINBÍTUR, með raspi, hrár	Catfish, breaded, raw	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0624	HRÍSGRJÓN, hvít, vítamínrík, hrá	Rice, parboiled, raw	Oryza sativa L.	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0068	ÝSA, ofnbökuð, m rjómasósu & grænm.	Haddock, roasted, w cream & vegetab	null	null	16.04	16	4	null	null	null	null	null	0	null	null	null	null
+0315	LAKKRÍS	Liquorice	null	null	11.03	11	3	26	null	null	null	null	0	null	null	null	null
+0945	RÓSAKÁL, soðið	Brussels sprouts, boiled	null	null	05.02	5	2	null	null	null	null	null	0	null	null	null	null
+0257	KEX, súkkulaðikex	Biscuit, chocolate	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0256	KEX, maríukex, án súkkulaðis	Biscuit, María, without chocolate	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0310	LAX, villtur, hrár	Salmon, wild / ocean ranged, raw	Salmo salar	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0808	SAGÓGRJÓN	Sago	null	null	05.08	5	8	33	null	null	null	null	0	null	null	null	null
+0016	GRÁSLEPPUHROGN, hrá	Lumpsucker, roe, raw			08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0368	NAUTAHAKK, ungnauta 8-12%fita hrátt	Beef, minced, raw	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0878	FEITI, steikingafeiti, meðalsamsetning 2010	Fat, frying, average 2010			10.05	10	5	18	null	null	null	null	0	null	null	null	null
+0414	GREIPALDIN	Grapefruit, raw	null	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0497	OSTUR, Brie	Cheese, Brie	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0277	SARDÍNUR, niðursoðnar, í olíu	Sardine, canned, in oil			08.05	8	5	13	null	null	null	null	0	null	null	null	null
+1151	SKYRDRYKKUR, Skyr.is, án viðbætts sykurs	Skyr drink, Skyr.is, no sugar added			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0806	SÆTAR KARTÖFLUR	Sweet potatoes, raw	Ipomoeta batatas	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+1110	SALTFISKUR, soðinn	Salted cod, boiled	null	null	08.04	8	4	null	null	null	null	null	0	null	null	null	null
+0129	ÁVAXTADRYKKUR, sykurskertur, Svali	Nectar, fruit juice 35%, no sugar added, Svali		Nektar	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0485	ÍS, rjómaís, 14% fita	Ice cream, fat 14%	null	null	03.01	3	1	2	null	null	null	null	0	null	null	null	null
+0862	OSTUR, Fetaostur	Cheese, Feta	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1204	VATNSDRYKKUR, Eðaltoppur með trefjum	Drink, Eðaltoppur with fibers			12.09	12	9		null	null	null	null	0	null	null	null	null
+0869	SELLERÍ, stilksellerí	Celery, stem	null	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0196	GÚRKUR, hráar	Cucumber, raw	Cucumis sativus		05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0276	TVÍBÖKUR	Rusk		Bruður.	04.04	4	4	21	null	null	null	null	0	null	null	null	null
+0993	PITSA, pönnupitsa, með pepperóní, Pizza Hut	Pizza, with pepperoni, Pizza Hut			16.01	16	1		null	null	null	null	0	null	null	null	null
+1236	AVÓKADÓMAUK	Guacamole			06.04	6	4		null	null	null	null	0	null	null	null	null
+1244	OSTUR, fastur, Fjörostur	Cheese, firm, Fjörostur			02.01	2	1		null	null	null	null	0	null	null	null	null
+0165	OSTUR, fastur, 38% fita	Cheese, firm, fat 38%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0811	SPERGILKÁL, hrátt	Broccoli, raw	Brassica oleracea var. botrytis	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0142	SMJÖR, ósaltað	Butter, salt not added	null	null	10.04	10	4	14	null	null	null	null	0	null	null	null	null
+0061	ÞORSKLIFUR, hrá	Cod liver, raw	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0379	LGG+, hreint, með sætuefni	LGG+, milk, cultured, with sweetener			01.02	1	2		null	null	null	null	0	null	null	null	null
+0489	BRAUÐ, trefjaríkt, með hveitiklíði, 7,5% trefjar	Bread, rich in fiber, bran added, fiber 7.5%			04.04	4	4	23	null	null	null	null	0	null	null	null	null
+1225	SÚKKULAÐIBITAR, Æðibitar	Chocolate wafer, Æðibitar			11.03	11	3		null	null	null	null	0	null	null	null	null
+0294	HVALSPIK	Whale, blubber, raw	null	null	10.03	10	3	9	null	null	null	null	0	null	null	null	null
+0536	ÝSA, ofnbökuð, m rjómasósu	Haddock, roasted, w cream sauce	null	null	16.04	16	4	null	null	null	null	null	0	null	null	null	null
+0077	KJÖTFARS, hrátt	Meat emulsion, raw	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0025	HUMAR, hrár	Lobster, raw	Nephrops norvegicus	null	08.06	8	6	13	null	null	null	null	0	null	null	null	null
+0685	KINDAKÆFA, smyrjanleg	Lamb meat pate, soft			07.09	7	9	11	null	null	null	null	0	null	null	null	null
+0217	LAMBAFRAMPARTUR, m. fitu, hrár	Lamb, forequarter, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0493	OSTUR, Dalakollur	Cheese, firm, with surface molds	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0388	LAMBAMÖR	Suet, lamb	null	null	10.03	10	3	18	null	null	null	null	0	null	null	null	null
+0072	GAFFALBITAR, niðursoðnir	Herring, canned	null	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0285	SÚKKULAÐI, rjómasúkkulaði, fyllt	Chocolate, milk, filled	null	null	11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0224	UNGHÆNA, læri með skinni, hrátt	Hen, leg, flesh and skin, raw	Gallus domesticus	null	07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0020	HLÝRI, hrár	Spotted catfish, fillet, raw	Anarhichas minor	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0920	MORGUNKORN, Fruitn Fibre, Kelloggs	Breakfast cereal, Fruitn Fibre, Kelloggs			04.03	4	3		null	null	null	null	0	null	null	null	null
+0208	BLAÐLAUKUR, hrár	Leek, raw	Allium ampeloprasum porrum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0723	SALT, sjávarsalt	Salt, sea salt	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0812	ENGJAÞYKKNI, m súkkulaðikornflögum	Milk, cultured, with corn flakes	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0410	EGGJADUFT	Egg, chicken, whole, dried	null	null	09.02	9	2	5	null	null	null	null	0	null	null	null	null
+0650	LAMBAVAMBIR	Lamb stomach	null	null	07.09	7	9	12	null	null	null	null	0	null	null	null	null
+1150	SKYRDRYKKUR, Skyr.is, ávaxta-	Skyr drink, Skyr.is, fruit			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0802	SHERRY, þurrt	Sherry, dry	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0248	PILSNER	Beer, lager	null	null	12.06	12	6	33	null	null	null	null	0	null	null	null	null
+1032	ÍÞRÓTTADRYKKUR, Gatorade	Sport drink, Gatorade	null	null	12.05	12	5	null	null	null	null	null	0	null	null	null	null
+0099	SVÍNALÆRI, hrátt, fituhreinsað	Pork leg, lean, raw	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+0177	OSTUR, smurostur með rækju	Cheese spread with prawn	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0043	RAUÐMAGALIFUR, hrá	Lumpsucker, male, liver, raw	null	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0317	ÍDÝFA, úr sýrðum rjóma	Dressing, made from cultured cream	null	null	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+1143	LÉTT OG LAGGOTT, með ólífuolíu	Butter with olive oil, fat 40%		Smjör mýkt með ólífuolíu, fita 40%.	10.04	10	4		null	null	null	null	0	null	null	null	null
+0948	TÓMATAR, sólþurrkaðir, í olíu	Tomatoes, dried, in oil	null	null	05.08	5	8	null	null	null	null	null	0	null	null	null	null
+0258	KEX, kremkex, Frón	Biscuit, sweet, with filling, Frón	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0610	VÍNARTERTA	Cake, vínarterta, yellow	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0474	ÓLÍFUOLÍA	Olive oil	null	null	10.01	10	1	20	null	null	null	null	0	null	null	null	null
+0156	OSTUR, kotasæla	Cheese, cottage	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1252	BRAUÐ, byggbrauð	Bread, barley bread			04.04	4	4		null	null	null	null	0	null	null	null	null
+0865	PASTA, þurrkað	Pasta, dried	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+0742	SÍTRÓNUR	Lemon, raw	Citrus limon	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+1195	ORKUDRYKKUR, Red Bull	Energy drink, Red Bull			12.05	12	5		null	null	null	null	0	null	null	null	null
+1109	GOSDRYKKIR, kóladrykir, sykurlausir	Soft drink, cola, diet	null	null	12.02	12	2	null	null	null	null	null	0	null	null	null	null
+0614	PIPARKÖKUR	Cookie, pepper	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0722	SNAKK, kartöflunasl, ýmsar gerðir	Potato chips	null	null	14.02	14	2	30	null	null	null	null	0	null	null	null	null
+0421	HNETUSMJÖR	Peanut butter	null	null	10.06	10	6	24	null	null	null	null	0	null	null	null	null
+0509	OSTUR, partíbomba	Cheese, dessert cheese			02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0184	SVIÐ, niðursoðin	Lamb heads, canned	null	null	07.10	7	10	8	null	null	null	null	0	null	null	null	null
+0932	MORGUNKORN, Magic Stars	Breakfast cereal, Magic Stars	null	null	04.03	4	3	null	null	null	null	null	0	null	null	null	null
+1241	PRÓTEINDRYKKUR, Hleðsla	Protein drink, Hleðsla			17.02	17	2		null	null	null	null	0	null	null	null	null
+1125	NAUTAINNANLÆRI, fitusnyrt, steikt	Beef, bottom round, defatted, fried	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0453	SÓSA, MAJONES-, remúlaði, 68%	Remoulade	null	null	15.01	15	1	29	null	null	null	null	0	null	null	null	null
+0750	ÝSA, reykt	Haddock, fillet, smoked	null	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0082	HANGIÁLEGG, soðið	Lamb meat, smoked, sliced, boiled	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0110	GULRÓFUR, hráar	Swede, raw	Brassica napus rapifera	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+1169	KARRÍMAUK, með jurtaolíu	Curry paste, oil bases			13.01	13	1		null	null	null	null	0	null	null	null	null
+0936	BAUNIR, linsubaunir, soðnar	Lentils, boiled	null	null	05.04	5	4	null	null	null	null	null	0	null	null	null	null
+0260	GOSDRYKKIR, sykurlausir, aðrir en kóladrykkir	Soft drink, without sugar, cola drinks excluded			12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0910	PASTA, eggjapasta, soðið	Pasta, egg pasta, boiled	null	null	04.07	4	7	null	null	null	null	null	0	null	null	null	null
+0588	BRAUÐ, hamborgarabrauð	Bread, white	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0149	NÝMJÓLKURDUFT	Milk, dry, whole, powder	null	null	01.04	1	4	1	null	null	null	null	0	null	null	null	null
+0942	HVÍTKÁL, soðið	White cabbage, boiled	null	null	05.02	5	2	null	null	null	null	null	0	null	null	null	null
+0634	SVEPPIR, steiktir í jurtaolíu	Mushroom, fried in vegetable oil	Agaricus bisporus	null	05.05	5	5	33	null	null	null	null	0	null	null	null	null
+0265	ANANASSAFI, hreinn	Pineapple juice	null	null	12.04	12	4	33	null	null	null	null	0	null	null	null	null
+0157	OSTUR, mysuostur, smyrjanlegur	Cheese, whey, soft	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0824	NAUTAHAKK, nautgr 12-20% fita hrátt	Beef, minced, hrátt	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0733	KRÆKIBERJASULTA	Crow berries jam	null	null	06.06	6	6	33	null	null	null	null	0	null	null	null	null
+0160	RJÓMI, þeytirjómi	Cream, whipping	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0402	LYFTIDUFT	Baking powder	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+1164	BRAUÐ, fittybrauð	Bread, fitty bread		Samlokubrauð með trefjum, fræjum og kalki	04.04	4	4		null	null	null	null	0	null	null	null	null
+0915	KEX, matarkex, gróft, Frón	Biscuit, shortbread,wholemeal, Frón	null	null	04.05	4	5	null	null	null	null	null	0	null	null	null	null
+0234	RJÚPUR, kjöt, hrátt	Ptarmigan, white, meat, raw	Lagopus mutus	null	07.07	7	7	9	null	null	null	null	0	null	null	null	null
+1111	KJÖTPOTTRÉTTUR, með sósu og grænmeti, án rjóma, soðinn	Meat dish, with sauce and vegetables, witout cream, boiled			16.03	16	3		null	null	null	null	0	null	null	null	null
+0342	BRAUÐ, maltbrauð	Bread, rye, fine			04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0046	OSTUR, Mozzarella, 17% fita	Cheese, Mozzarella, 17%	null	null	02.01	2	1	null	null	null	null	null	0	null	null	null	null
+0498	OSTUR, smurostur, 18% fita	Cheese spread, fat 18%			02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0331	FRÓMAS	Fromage		Rjómabúðingur	01.03	1	3	3	null	null	null	null	0	null	null	null	null
+1247	ÍÞRÓTTADRYKKUR, Soccerade	Sport drink, Soccerade			12.05	12	5		null	null	null	null	0	null	null	null	null
+0476	MORGUNKORN, All bran	Breakfast cereal, All bran			04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0456	SVESKJUR	Prune, dried plum	Prunus domestica	null	06.05	6	5	33	null	null	null	null	0	null	null	null	null
+1156	MYSA, ostamysa	Whey, from cheese	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0364	EPLI	Apple, raw	Malus sylvestris Miller		06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0376	SNÚÐAR, með súkkulaði	Roll, with chocolate	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0567	SÚKKAT	Succades, candied	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0561	SÓSA, SALATSÓSA, súrmjólkursósa	Dressing, cultured milk, low fat	null	null	15.01	15	1	28	null	null	null	null	0	null	null	null	null
+1107	SPELTMJÖL, heilmalað	Spelt, flour, whole	Triticum spelta L.	null	04.01	4	1	null	null	null	null	null	0	null	null	null	null
+0060	ÝSA, hrá	Haddock, fillet, raw	Melanogrammus aeglefinus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0076	VÍNARPYLSUR, soðnar	Vienna sausage, cooked			07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0656	SKREIÐ, þorskhausar	Cod heads, dried, raw	null	null	08.02	8	2	13	null	null	null	null	0	null	null	null	null
+0743	APRÍKÓSUR	Apricots, raw	Prunus armeniaca	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0353	KRINGLUR	Rusk	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+1174	MORGUNKORN, Rug fras	Breakfast cereal, Rug fras			04.03	4	3		null	null	null	null	0	null	null	null	null
+0521	PÍTA, með buffi, grænmeti og sósu	Pita, w meat, vegetables&mayonnaise	null	null	16.01	16	1	22	null	null	null	null	0	null	null	null	null
+0141	SMJÖR	Butter	null	null	10.04	10	4	14	null	null	null	null	0	null	null	null	null
+0668	BLÁLANGA, hrá	Blue ling, raw	Molva dypterygia dypterygia	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+1214	ORKUDRYKKUR, Redfin energy	Energy drink, REDFIN			12.05	12	5		null	null	null	null	0	null	null	null	null
+1080	PRÓTEINDRYKKUR, Nupo létt	Protein drink, Nupo létt			17.02	17	2		null	null	null	null	0	null	null	null	null
+0011	SNAKK, kartöfluskrúfur	Potato chips	null	null	14.02	14	2	30	null	null	null	null	0	null	null	null	null
+0176	JÓGÚRT, léttjógúrt, sykurskert, m ávöxtum, grænmeti	Yoghurt, low fat, low sugar, w fruit, vegetables			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0482	BAUNIR, grænar, hráar	Peas, green, raw	Pisum sativum L.	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+1215	ORKUDRYKKUR, Extreme Energy shot	Energy drink, Extreme Energy 6-hours shot			12.05	12	5		null	null	null	null	0	null	null	null	null
+0084	MALAKOFFÁLEGG, soðið	Malakoff sausage, saveloy type	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0501	OSTUR, smurostur, 6% fita, m.rækju	Cheese spread with prawn, fat 6%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0357	MORGUNKORN, Cocoa Puffs	Breakfast cereal, Cocoa Puffs		Frauðkúlur, sykraðar	04.03	4	3	23	null	null	null	null	0	null	null	null	null
+0854	BJÓR, 3,8% alkóhól af rúmmáli	Beer, lager, alcohol 3,8% by vol.	null	null	12.06	12	6	33	null	null	null	null	0	null	null	null	null
+0503	OSTUR, Dalayrja	Cheese, Castello	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0710	BJÓR, 5,6% alkóhól af rúmmáli	Beer, alc. 5,6% by vol.	null	null	12.06	12	6	33	null	null	null	null	0	null	null	null	null
+0059	UFSI, hrár	Saithe / pollock, fillet, raw	Pollachius virens	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0295	SANDHVERFA, hrá	Turbot, fillet, raw	Psetta maxima	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0780	APRÍKÓSUR, þurrkaðar	Apricot, dried	Prunus armeniaca	null	06.05	6	5	33	null	null	null	null	0	null	null	null	null
+0195	TÓMATAR, hráir	Tomato, raw	Lycopersicum esculentum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0035	LITLI KARFI, hrár	Norway haddock, fillet, raw	Sebastes viviparus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0437	FRANSKAR KARTÖFLUR, djúpsteiktar	French fries, deepfried			05.09	5	9	31	null	null	null	null	0	null	null	null	null
+1099	BRAUÐ, hvítlauksbrauð	Bread, with butter and garlic	null	null	04.04	4	4	null	null	null	null	null	0	null	null	null	null
+0394	LAUKUR, þurrkaður	Onion, dehydrated	null	null	05.08	5	8	33	null	null	null	null	0	null	null	null	null
+0212	RABARBARI, hrár	Rhubarb, raw	Rheum rhabarbarum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0073	RÆKJA, niðursoðin	Prawn, canned	Pandalus borealis	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0125	FJALLAGRÖS	Iceland moss, raw	Cetraria islandica	null	05.08	5	8	33	null	null	null	null	0	null	null	null	null
+0470	VÍNBER	Grape	Vitis vinifera		06.02	6	2	33	null	null	null	null	0	null	null	null	null
+0441	KÓKOSMJÖL	Coconut meat, desiccated	null	null	06.05	6	5	33	null	null	null	null	0	null	null	null	null
+1179	SKINKA, lúxus skinka, soðin	Ham, smoked and cooked, high quality			07.08	7	8		null	null	null	null	0	null	null	null	null
+0819	LAMBAFRAMPARTUR, fitusnyrtur, hrár	Lamb, forequarter, trimmed, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0894	PITSA, með pepperóní	Pizza, with pepperoni	null	null	16.01	16	1	22	null	null	null	null	0	null	null	null	null
+0623	RÚGUR, heill/brotinn	Rye kernels, whole/cracked	Secale cereale L.	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0057	BRAUÐ, ítölsk, tómatbrauð	Bread, Italian, tomato bread	null	null	04.04	4	4	null	null	null	null	null	0	null	null	null	null
+0220	SVÍNALIFUR, hrá	Liver, pig, raw	null	null	07.09	7	9	12	null	null	null	null	0	null	null	null	null
+1135	PRÓTEINDRYKKUR, Isopure	Protein drink, Isopure			17.02	17	2		null	null	null	null	0	null	null	null	null
+0144	SMJÖRVI	Butter with soyabean oil, fat 80%		Bregott	10.04	10	4	15	null	null	null	null	0	null	null	null	null
+0791	ÓLÍFUR, grænar, í saltlegi	Olives, green, in brine	Olea europea		06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0500	OSTUR, smurostur, 6%, m. grænmeti	Cheese spread w. vegetables,6% fat	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0987	PASTA, Tortellini með kjöti, soðið	Pasta, Tortellini with meat, boiled	null	null	04.07	4	7	null	null	null	null	null	0	null	null	null	null
+0813	HEILHVEITI, próteinríkt	Wheat, flour, wholemeal, high prot	Triticum aestivum	null	04.02	4	2	23	null	null	null	null	0	null	null	null	null
+1192	SÝRÐUR RJÓMI, 5% fita	Cream, cultured, fat 5%			01.02	1	2		null	null	null	null	0	null	null	null	null
+0627	SESAMFRÆ, án hýðis	Sesame seed, decorticated	Sesamum indicum	null	06.03	6	3	24	null	null	null	null	0	null	null	null	null
+0386	HAMSATÓLG	Tallow			10.03	10	3	18	null	null	null	null	0	null	null	null	null
+0287	JÓGÚRT, ávaxtajógúrt með korni	Yoghurt, fruit and cereals	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1106	SPELTMJÖL, fínt hvítt mjöl	Spelt, flour	Triticum spelta L.	null	04.02	4	2	null	null	null	null	null	0	null	null	null	null
+0419	HAMBORGARI, steiktur, með brauði	Hamburger, with bread			16.01	16	1	6	null	null	null	null	0	null	null	null	null
+0206	RAUÐKÁL, hrátt	Cabbage, red, raw	Brassica oleracea var. capitata	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0282	KARAMELLUR, rjómakaramellur	Toffees, cream	null	null	11.03	11	3	26	null	null	null	null	0	null	null	null	null
+0548	HRÍSGRJÓNAGRAUTUR, úr nýmjólk	Rice porridge, from whole milk	null	null	01.03	1	3	23	null	null	null	null	0	null	null	null	null
+0483	BAUNIR, hvítar, þurrkaðar	Beans, white, dried	Phaseolus vulgaris L.	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0947	LGG+, m ávaxtasafa og sætuefni	LGG+, milk, cultured, w fruit juice & sweetener			01.02	1	2		null	null	null	null	0	null	null	null	null
+0140	NÝMJÓLK	Milk, whole	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0338	HVEITI, vítamín- og járnbætt, Pillsbury best	Wheat flour, enriched, Pillsbury best			04.02	4	2	23	null	null	null	null	0	null	null	null	null
+0095	BLÓÐMÖR, soðinn, súrsaður	Blood sausage, cooked and pickled	null	null	07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0801	PORTVÍN	Port wine	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0113	SKARFAKÁL	Skurvy grass, raw	Cochlearia officinalis	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0774	SPERGILL / ASPARGUS, niðursoðinn	Asparagus, canned	Asparagus officinalis	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+0423	HRÖKKBRAUÐ, gróft	Crispbread, wheat, wholemeal	null	null	04.04	4	4	21	null	null	null	null	0	null	null	null	null
+0321	KEX, tekex	Biscuit, cream cracker		Jacobs Cream Cracker Original	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0756	VANILLUDROPAR	Vanilla liquid	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0631	KLEINUHRINGIR, með súkkulaðihjúp	Doughnut, deep fried, w. chocolate			04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0128	ÁVAXTADRYKKUR, Svali	Nectar, fruit juice 35%, Svali		Nektar	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0475	SOJAOLÍA	Soyabean oil	null	null	10.01	10	1	20	null	null	null	null	0	null	null	null	null
+1071	GULRÓTAKAKA	Carrot cake	null	null	04.06	4	6	null	null	null	null	null	0	null	null	null	null
+0718	KONFEKT	Confection	null	null	11.03	11	3	26	null	null	null	null	0	null	null	null	null
+0798	GIN	Gin	null	null	12.08	12	8	33	null	null	null	null	0	null	null	null	null
+0852	LAMBAKJÖT, súpukjöt, hrátt	Lamb, stew meat, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0223	KJÚKLINGUR, bringur án skinns hráar	Chicken, breast, without skin, raw	Gallus domesticus		07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0946	SPERGILKÁL, soðið	Broccoli, boiled	null	null	05.02	5	2	null	null	null	null	null	0	null	null	null	null
+0823	ÆRKJÖT, innanlæri, hrátt	Mutton, top round, raw	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0684	KINDAKÆFA, föst	Lamb meat pate, firm	null	null	07.09	7	9	11	null	null	null	null	0	null	null	null	null
+0361	APPELSÍNUR	Orange	null	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0506	OSTUR, mysingur	Cheese, whey, soft	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0815	ABT - MJÓLK, hrein	Milk, cultured	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0664	SANDKOLI, hrár	Dab, fillet, raw	Limanda limanda	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0133	ÁVAXTAGRAUTUR	Fruit, mixed, sweetened	null	null	06.04	6	4	33	null	null	null	null	0	null	null	null	null
+0225	UNGHÆNA, bringa með skinni, hrá	Hen, breast, flesh and skin, raw	Gallus domesticus	null	07.06	7	6	10	null	null	null	null	0	null	null	null	null
+0183	SALTFISKUR, hrár	Salted cod, traditional, raw	null	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0683	GOSDRYKKIR, sykurskertir	Soft drink, low sugar	null	null	12.02	12	2	33	null	null	null	null	0	null	null	null	null
+0516	BRAUÐTERTA, m. skinku og osti	Bread cake, with ham and cheese	null	null	16.01	16	1	21	null	null	null	null	0	null	null	null	null
+1104	PRÓTEINSTÖNG, Herbalife	Protein bar, Herbalife			17.02	17	2		null	null	null	null	0	null	null	null	null
+0087	LIFRARKÆFA, niðursoðin	Liver paste, canned	null	null	07.09	7	9	11	null	null	null	null	0	null	null	null	null
+0995	KRYDDMAUK (relish)	Relish	null	null	15.01	15	1	null	null	null	null	null	0	null	null	null	null
+0530	LÚÐA, smálúða, soðin	Halibut, small, fillet, boiled	Hippoglosssus hippoglossus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0115	SÖL, þurrkuð	Dulse, dried	Palmaria palmata	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0009	POPPKORN, venjulegt	Pop corn, popped			14.01	14	1	30	null	null	null	null	0	null	null	null	null
+1155	GRÁSLEPPA, sigin, soðin	Lumpsucker, female, dried, boiled	Cyclopterus lumpus	null	08.04	8	4	null	null	null	null	null	0	null	null	null	null
+0504	OSTUR, rjómaostur, 30% fita	Cheese, cream, fat 30%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0916	KRANSAKAKA	Cake, kransakaka	null	null	04.06	4	6	null	null	null	null	null	0	null	null	null	null
+0621	HVEITIKÍM	Wheat germ	Triticum aestivum	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0843	SÓSA, MAJONES-, pítusósa, 62%	Sauce, pita sauce			15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0547	SNITSEL, lamba- & svína-, steikt	Snitzel, lamb & pork, fried	null	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0487	MJÓLKURHRISTINGUR	Milk shake	null	null	01.01	1	1	3	null	null	null	null	0	null	null	null	null
+1066	OSTUR, Mozzarella, 21% fita	Cheese, Mozzarella, fat 21%	null	null	02.01	2	1	null	null	null	null	null	0	null	null	null	null
+0114	AÐALBLÁBER	Bilberry, raw	Vaccinium Myrtillus	null	06.02	6	2	33	null	null	null	null	0	null	null	null	null
+0412	GER, pressuger	Yeast, baker's, compressed	null	null	13.02	13	2	33	null	null	null	null	0	null	null	null	null
+0021	HREFNUKJÖT, hrátt	Minkwhale meat, raw	Balaenoptera acutorostrata	null	07.05	7	5	13	null	null	null	null	0	null	null	null	null
+1261	BRAUÐ, byggbrauð, Eyrarbrauð	Bread, barley bread, Eyrar bread		Byggbrauð frá Myllunni	04.04	4	4		null	null	null	null	0	null	null	null	null
+1000	SÓSA, MAJONES-, hamborgarasósa	Sauce, mayonnaise, hamburger sauce			15.01	15	1		null	null	null	null	0	null	null	null	null
+0727	KAVÍAR, laxa- og hrognamauk í túpum	Caviar, salmon and roe paste, in tubes			08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0861	JÓGÚRT, rjómajógúrt	Yogurt, with cream and fruits	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0864	GRANATEPLI	Pomegranate	Punica granatum	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0713	SÚRMJÓLK, með hnetum og karamellum	Milk, cultured, with nut & flavour	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0365	SÓSA, MAJONES, 79% fita	Mayonnaise			15.01	15	1	29	null	null	null	null	0	null	null	null	null
+0189	BAUNIR, linsubaunir, þurrkaðar	Lentils, dried	Lens culinaris	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0109	BLEIKJA, vatnableikja, hrá	Arctic char, from lakes, raw	Salvelinus alpinus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0704	ÍDÝFA, úr fituskertu majonesi	Dressing, made from low fat mayonnaise			15.01	15	1	29	null	null	null	null	0	null	null	null	null
+0307	ÍS, límonaðiís	Sorbet	null	null	03.03	3	3	33	null	null	null	null	0	null	null	null	null
+0040	LÚÐA, smálúða, hrá	Halibut, small, fillet, raw	Hippoglossus hippoglossus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0039	OSTUR, Ísbúi	Cheese, firm, Ísbúi	null	null	02.01	2	1	null	null	null	null	null	0	null	null	null	null
+0528	ÍSSÓSA, með súkkulaðibragði	Chocolate liquid, for use with ice cream			11.01	11	1	26	null	null	null	null	0	null	null	null	null
+0041	LÚÐA, stórlúða, hrá	Halibut, big, fillet, raw	Hippoglossus hippoglossus		08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0866	PASTA, soðið	Pasta, boiled	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+0106	LAMBANÝRU, hrá	Lamb kidney, raw	null	null	07.09	7	9	12	null	null	null	null	0	null	null	null	null
+1229	BÆTIEFNI, jurtaolía, Udo olía 3-6-9	Udos oil 3-6-9			17.01	17	1		null	null	null	null	0	null	null	null	null
+0672	SVÍNAFITA, brædd	Lard, pork	null	null	10.03	10	3	18	null	null	null	null	0	null	null	null	null
+1149	ÞORSKALÝSI, ómega-3 fiskiolía, án vítamína	Cod liver oil, omega-3 fish oil, without vitamins			10.02	10	2	13	null	null	null	null	0	null	null	null	null
+0867	PASTA, heilhveiti, þurrkað	Pasta, wholemeal, dried	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+0953	SMJÖRLÍKI, MH	Margarine, MH			10.05	10	5		null	null	null	null	0	null	null	null	null
+0002	RÆKJA, djúpsteikt	Prawn, deep fried	null	null	08.06	8	6	13	null	null	null	null	0	null	null	null	null
+0330	KAKÓDRYKKUR, heimalagaður, nýmjólk	Cocoa drink, made from whole milk			01.01	1	1	33	null	null	null	null	0	null	null	null	null
+0863	ÁSTRÍÐUALDIN	Passion fruit	Passiflora edulis	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0851	LAMBAGRILLLEGGUR /SKANKI, hrár	Lamb shank	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0468	SOJASÓSA	Soya sauce	null	null	13.01	13	1	28	null	null	null	null	0	null	null	null	null
+1082	PRÓTEINSTÖNG, Herbalife gull	Protein bar, Herbalife gold			17.02	17	2		null	null	null	null	0	null	null	null	null
+1123	LAMBAKJÖT, millifeitt, soðið	Lamb, fat 17%, boiled	Ovis aries	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0814	BORÐSMJÖRLÍKI, 65% fita, Sólblóma	Table margarine, 65%, Sólblóma	null	null	10.05	10	5	16	null	null	null	null	0	null	null	null	null
+0093	SVIÐASULTA, soðin, súrsuð	Lamb head cheese, pickled	null	null	07.09	7	9	11	null	null	null	null	0	null	null	null	null
+0382	HVEITI, próteinríkt	Wheat, high protein	null	null	04.02	4	2	23	null	null	null	null	0	null	null	null	null
+0895	PITSA, með nautahakki	Pizza, with minced beef	null	null	16.01	16	1	22	null	null	null	null	0	null	null	null	null
+0352	SKONSUR	Pancake, thick	null	null	04.04	4	4	21	null	null	null	null	0	null	null	null	null
+0169	OSTUR, fastur, 11% fita	Cheese, firm, fat 11%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1011	JÓGÚRT, ávaxta-, fituskert, Pascual	Yoghurt, fruit, low fat, Pascual	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0159	RJÓMI, kaffirjómi	Cream, coffee, fat 12%	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0490	HÁKARL, kæstur	Shark, fermented	Somniosus microcephalus	null	08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0053	BEYGLUR	Bagels			04.04	4	4		null	null	null	null	0	null	null	null	null
+0158	KÓKÓMJÓLK	Milk, with cocoa and sugar	null	null	01.01	1	1	4	null	null	null	null	0	null	null	null	null
+0371	ÝSA, steikt í raspi	Haddock, fried	Melanogrammus aeglefinus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0558	LAMBAKJÖT, súpukjöt, soðið	Lamb, forequarter, boiled	null	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+1207	JÓGÚRTDRYKKUR, FrúTína 	Yoghurt drink, FruTina			01.02	01	02		null	null	null	null	0	null	null	null	null
+0846	SÝRÐUR RJÓMI, 36% fita	Cream, cultured, fat 36%	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0705	BAUNIR, rauðar nýrnab., þurrkaðar	Beans, red kidney beans, dried, raw	Phaseolus vulgaris		05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0075	KINDABJÚGU, soðin	Sheep sausage, smoked, boiled	null	null	07.08	7	8	11	null	null	null	null	0	null	null	null	null
+0311	LAX, grafinn	Salmon, cured, pickled	Salmo salar		08.04	8	4	13	null	null	null	null	0	null	null	null	null
+1124	LAMBAHRYGGVÖÐVAR, án fitu, steiktir	Lamb, tenderloin and striploin, trimmed, fried			07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0424	HNETUR, jarðhnetur	Nut, peanut, dried	null	null	06.03	6	3	24	null	null	null	null	0	null	null	null	null
+1070	RJÓMALÍKI, á þrýstbrúsa	Cream substitute, in pressurized container			10.01	10	1		null	null	null	null	0	null	null	null	null
+0707	ÍSTERTA, með marensbotni	Cake, with marengs & ice cream	null	null	03.01	3	1	2	null	null	null	null	0	null	null	null	null
+0712	OSTAKAKA	Cheese cake	null	null	04.06	4	6	4	null	null	null	null	0	null	null	null	null
+0146	UNDANRENNA	Milk, skimmed	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0777	MAKKARÓNUR, soðnar	Macaroni, boiled	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+1077	SKINKA, brauðskinka, soðin	Ham, smoked & cooked, water added	null	null	07.08	7	8	null	null	null	null	null	0	null	null	null	null
+1259	ENGIFERDRYKKUR, My Secret	Ginger drink, My Secret			12.05	12	5		null	null	null	null	0	null	null	null	null
+0984	LASANJA, grænmetis-, ofnbakað	Lasagne, vegetable lasagne, baked	null	null	16.02	16	2	null	null	null	null	null	0	null	null	null	null
+0797	HNETUR, valhnetur	Walnut, raw	Juglans regia		06.03	6	3	24	null	null	null	null	0	null	null	null	null
+0569	EGGJAHVÍTUR, hænu-, hráar	Egg, chicken, white, raw	null	null	09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0746	NEKTARÍNUR	Nectarine, raw	Prunus persica	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+1190	HAMBORGARHRYGGUR, álegg, soðið	Pork, saddle, smoked, sliced, cooked			07.08	07	08		null	null	null	null	0	null	null	null	null
+0241	SÍLD, flök, marineruð	Herring, fillet, pickled			08.04	8	4	13	null	null	null	null	0	null	null	null	null
+1081	PRÓTEINSTÖNG, Myoplex light	Protein bar, Myoplex light			17.02	17	2		null	null	null	null	0	null	null	null	null
+0194	ÍS, úr ísbúðum	Ice cream, fat 6%	null	null	03.02	3	2	2	null	null	null	null	0	null	null	null	null
+0209	STEINSELJA	Parsley, raw	Petroselium crispum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0228	LUNDABAGGAR, soðnir, súrsaðir	Lamb flank, boiled, pickled in whey			07.01	7	1	11	null	null	null	null	0	null	null	null	null
+0309	LAX, reyktur	Salmon, smoked	Salmo salar		08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0765	PAPRIKA, gul	Pepper, sweet, yellow, raw	Capsicum annuum var grossum	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0515	KEX, hafrakex	Biscuit, digestive			04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0432	KAFFI, lagað	Coffee, beverage	null	null	12.01	12	1	33	null	null	null	null	0	null	null	null	null
+0454	SESAMFRÆ, með hýði	Sesame seed, not decorticated	Sesamum indicum	null	06.03	6	3	24	null	null	null	null	0	null	null	null	null
+0180	LÉTTMJÓLK	Milk, partly skimmed, fat 1.5%	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0312	KAVÍAR, þorskhrognamauk, í túpum	Caviar, cod roe mix, in tubes	null	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+1254	BRAUÐ, speltbrauð	Bread, spelt bread		Samlokubrauð úr spelti	04.04	4	4		null	null	null	null	0	null	null	null	null
+0770	FLÓRSYKUR	Sugar, sucrose, white, powder	null	null	11.01	11	1	33	null	null	null	null	0	null	null	null	null
+0267	SVESKJUSAFI, hreinn	Prune juice	null	null	12.04	12	4	33	null	null	null	null	0	null	null	null	null
+0524	BRAUÐSAMLOKA, með skinku, osti og majonesi	Sandwich, with ham, cheese and mayonnaise			16.01	16	1	23	null	null	null	null	0	null	null	null	null
+0507	OSTUR, rjómamysuostur	Cheese, whey, cream	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1078	PRÓTEINDRYKKUR, Myoplex	Protein drink, Myoplex			17.02	17	2		null	null	null	null	0	null	null	null	null
+0172	JÓGÚRTDRYKKUR, léttur, ávextir / bragðbættur	Yoghurt drink, low fat, fruit / flavoured			01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0885	SMJÖRLÍKI, Flórusmjörlíki	Margarine, Flóra	null	null	10.05	10	5	17	null	null	null	null	0	null	null	null	null
+0351	VÖFFLUR	Pastry, waffles	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+1012	JÓGÚRT, ávaxta-, án fitu, Pascual	Yoghurt, fruit, no fat, Pascual	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+1133	PRÓTEINDRYKKUR, Easy body	Protein drink,  Easy body			17.02	17	2		null	null	null	null	0	null	null	null	null
+0094	BLÓÐMÖR, soðinn	Blood sausage, boiled	null	null	07.09	7	9	12	null	null	null	null	0	null	null	null	null
+1127	SVÍNAKÓTILETTUR, ofnsteiktar	Pork, cutlets, fried	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+1159	LIFRARKÆFA, bökuð, fituskert	Liver paté, low fat			07.09	7	9		null	null	null	null	0	null	null	null	null
+0930	POPPKORN, örbylgju-, létt, Richfood	Pop corn, microwave-, low fat, popped, Richfood			14.01	14	1		null	null	null	null	0	null	null	null	null
+1153	KÓKÓMJÓLK, sykurskert	Milk, low sugar	null	null	01.01	1	1	null	null	null	null	null	0	null	null	null	null
+1171	PASTA, heilhveiti, soðið	Pasta, wholemeal, boiled			04.07	4	7		null	null	null	null	0	null	null	null	null
+0232	LAMBAHJÖRTU, með fitu, hrá	Lamb heart, with fat, raw			07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0479	BAUNASPÍRUR, sojabauna-, hrár	Bean sprouts, soy, raw	Glycine max. (L.) Merr.	null	05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0100	NAUTAGÚLLAS, hrátt	Beef goulash, raw	null	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0913	KANILSNÚÐAR, harðir	Cinnamon roll, firm	null	null	04.06	4	6	null	null	null	null	null	0	null	null	null	null
+0958	SÓSA, SALATSÓSA, olíusalatsósa	Dressing, vinaigrette		Ediksósa. French dressing.	15.01	15	1		null	null	null	null	0	null	null	null	null
+0714	SÚRMJÓLK, ávaxtasúrmjólk	Milk, cultured, fruit	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0154	OSTUR, fastur, 26% fita	Cheese, firm, fat 26%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1188	JÓGÚRT, grísk, hrein	Yoghurt, Greek, without fruit			01.02	1	2		null	null	null	null	0	null	null	null	null
+1222	ÍS, jurtaís, Mjúkís	Ice cream substitute, vegetable fat, Mjúkís			03.02	3	2		null	null	null	null	0	null	null	null	null
+1152	KÓKOSMJÓLK, niðursoðin	Coconut milk, canned			06.03	6	3		null	null	null	null	0	null	null	null	null
+1034	TE, jurtate lagað án mjólkur og sykurs	Tea, herbal, infusion, without milk and sugar			12.01	12	1		null	null	null	null	0	null	null	null	null
+0831	FRANSKAR KARTÖFLUR, forsteiktar, frystar	French fries, prefried, frozen			05.09	5	9	31	null	null	null	null	0	null	null	null	null
+0961	SÚKKULAÐI, Snickers	Chocolate, Snickers	null	null	11.03	11	3	null	null	null	null	null	0	null	null	null	null
+0876	KLEINUHRINGIR, amerískir	Doughnuts, iced	null	null	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+1154	BORÐSMJÖRLÍKI, Flora proactive	Table margarine, Flora proactive	null	null	10.05	10	5	null	null	null	null	null	0	null	null	null	null
+0706	ÍSTERTA, með kransakökubotni	Cake, with ice cream	null	null	03.01	3	1	2	null	null	null	null	0	null	null	null	null
+1146	BORÐSMJÖRLÍKI, Smyrja	Table margarine, Smyrja			10.04	10	4		null	null	null	null	0	null	null	null	null
+0148	JÓGÚRT, hreint	Yoghurt, without fruit	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+0994	PITSA, grænmetispítsa	Pizza, vegetable pizza	null	null	16.01	16	1	null	null	null	null	null	0	null	null	null	null
+0888	FEITI, steikingafeiti, Palmín	Fat, for frying, Palmin	null	null	10.05	10	5	18	null	null	null	null	0	null	null	null	null
+0420	HIRSIFLÖGUR	Millet, flakes	null	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+0281	BRJÓSTSYKUR	Candy, hard, boiled	null	null	11.03	11	3	26	null	null	null	null	0	null	null	null	null
+0251	HVÍTÖL, JÓLAÖL	Malt beverage	null	null	12.06	12	6	33	null	null	null	null	0	null	null	null	null
+0790	ANANAS, niðursoðinn	Pineapple, canned	Ananas comosus	null	06.04	6	4	33	null	null	null	null	0	null	null	null	null
+0644	LOÐNA, heil, hrá	Capelin, whole, raw	Mallotus villosus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+1243	VATNSDRYKKUR, Kristall sport, með sætuefnum	Drink, Kristall sport, with sweeteners			12.09	12	9		null	null	null	null	0	null	null	null	null
+0914	KANILSNÚÐAR, mjúkir, Findus	Cinnamon roll, soft, Findus	null	null	04.06	4	6	null	null	null	null	null	0	null	null	null	null
+0031	KOLMUNNI, hrár	Blue whiting, fillet, raw	Micromesistius poutassou	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+1193	JÓGÚRTDRYKKUR, léttur, m perum, án viðbætts sykurs	Yoghurt drink, low fat, no sugar added, w pears			01.02	01	02		null	null	null	null	0	null	null	null	null
+1016	SNAKK, Tortilla flögur	Tortilla chips	null	null	14.02	14	2	null	null	null	null	null	0	null	null	null	null
+0589	BRAUÐ, hafrabrauð	Bread, oat meal	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0759	NÚÐLUR, eggjanúðlur, þurrkaðar	Noodles, egg, dried	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+0378	SKYR, skyr.is, án viðb. sykurs	Skyr, skyr.is, no sugar added	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0463	TÓMATÞYKKNI 	Tomato paste, concentrated		Tómatpúre.	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+0573	EGG, hettumáfsegg, hrá	Egg, black-headed gull, raw			09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0639	GRÁSLEPPA, hrá	Lumpsucker, female, flesh, raw	Cyclopterus lumpus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0738	PAPRIKUDUFT	Paprika powder	null	null	13.01	13	1	33	null	null	null	null	0	null	null	null	null
+0709	KLEINUHRINGIR, án súkkulaðis	Doughnut, deep fried, without chocolate			04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0460	SÓLBLÓMAFRÆ	Sunflower seeds	Helianthus annuus		06.03	6	3	24	null	null	null	null	0	null	null	null	null
+1245	ORKUDRYKKUR, Burn orkuskot	Energy drink, Burn shot			12.05	12	5		null	null	null	null	0	null	null	null	null
+1139	KAKÓDRYKKUR, Mjólkursams, léttmjólk	Cocoa drink, made from low fat milk			01.01	1	1		null	null	null	null	0	null	null	null	null
+0080	SÓSA, SALATSÓSA, þúsundeyja, 37%	Dressing, Thousand Island			15.01	15	1	28	null	null	null	null	0	null	null	null	null
+0708	BJÓR, 4,5% alkóhól af rúmmáli	Beer, lager, alc. 4,5% by vol.	null	null	12.06	12	6	33	null	null	null	null	0	null	null	null	null
+0917	KÚSKÚS, hrátt	Couscous, dry	null	null	04.07	4	7	null	null	null	null	null	0	null	null	null	null
+0859	HRÍSMJÓLK, með sætri sósu	Milk, with rice, sweetened			01.03	1	3	1	null	null	null	null	0	null	null	null	null
+0825	SVÍNAKÓTILETTUR, hráar	Pork, cutlets, raw	Sus scrofa	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+0574	EGG, svartbaksegg, hrá	Egg, great black-backed gull, raw			09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0838	KAKÓDUFT, fituskert	Cocoa, powder, low fat	null	null	12.01	12	1	33	null	null	null	null	0	null	null	null	null
+1118	HAMBORGARI, steiktur, McDonald	Hamburger, McDonald, fried	null	null	16.01	16	1	6	null	null	null	null	0	null	null	null	null
+0442	LAUKUR, hrár	Onion, raw	Allium cepa	null	05.01	5	1	33	null	null	null	null	0	null	null	null	null
+0871	HNETUR, pistasíuhnetur	Pistachio nuts	Pistacia vera	null	06.03	6	3	24	null	null	null	null	0	null	null	null	null
+0789	ANANAS, hrár	Pinealpple, raw	Ananas comosus	null	06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0283	SÚKKULAÐI, rjómasúkkulaði, hnetur	Chocolate, milk, with nuts	null	null	11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0988	PASTA, Tortellini með osti, soðið	Pasta, Tortellini with cheese, boil	null	null	04.07	4	7	null	null	null	null	null	0	null	null	null	null
+0967	ORKUDRYKKUR, Magic	Energy drink, Magic	null	null	12.05	12	5	null	null	null	null	null	0	null	null	null	null
+0962	ÍÞRÓTTADRYKKUR, Leppin	Sport drink, Leppin	null	null	12.05	12	5	null	null	null	null	null	0	null	null	null	null
+0411	EGGJARAUÐUR, hænu-, hráar	Egg, chicken, yolk, raw	null	null	09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0745	FERSKJUR	Peach, raw	Prunus persica		06.01	6	1	33	null	null	null	null	0	null	null	null	null
+0227	SVARTFUGL, kjöt, bringur, hráar	Guillemot, meat, breast, raw	Uria aalge	null	07.07	7	7	9	null	null	null	null	0	null	null	null	null
+0308	ÍS, jurtaís	Ice cream substitute, vegetable fat	null	null	03.02	3	2	2	null	null	null	null	0	null	null	null	null
+0091	SVIÐ, soðin	Lamb heads, boiled	null	null	07.09	7	9	8	null	null	null	null	0	null	null	null	null
+0280	BLÁBER	Bog bilberry, raw	Vaccinium uliginosum		06.02	6	2	33	null	null	null	null	0	null	null	null	null
+0229	BRINGUKOLLAR, soðnir, súrsaðir	Lamb meat, boiled, pickled in whey	null	null	07.01	7	1	11	null	null	null	null	0	null	null	null	null
+0074	SÍLD, flök, niðursoðin, Kippers	Herring, fillet, canned, Kippers			08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0513	BEIKON, steikt	Bacon, fried	null	null	07.03	7	3	7	null	null	null	null	0	null	null	null	null
+1025	SÍLD, flök, marineruð, í tómatsósu	Herring, fillet, marinated, in tomato sauce			08.04	8	4		null	null	null	null	0	null	null	null	null
+0557	SPAGHETTÍ, soðið	Spaghetti, boiled	null	null	04.07	4	7	23	null	null	null	null	0	null	null	null	null
+1112	KJÖTPOTTRÉTTUR, með grænmeti og rjómasósu, soðinn	Meat dish, with vegetables and cream, boiled			16.03	16	3		null	null	null	null	0	null	null	null	null
+1172	HRÍSGRJÓNADRYKKUR, kalkbættur	Rice drink, calcium added			12.04	12	4		null	null	null	null	0	null	null	null	null
+0633	ÁFIR	Butter milk	null	null	01.01	1	1	1	null	null	null	null	0	null	null	null	null
+0396	KEX, saltkex	Crackers, salted	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+1230	ÍS, límonaðiís, Sun Lolly	Shorbet, Sun Lolly			03.03	3	3		null	null	null	null	0	null	null	null	null
+0600	EPLABAKA	Apple pie		Eplapæ	04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0242	SÍLD, flök, marineruð, í majonessósu	Herring, fillet, pickled, in sauce			08.04	8	4	13	null	null	null	null	0	null	null	null	null
+0874	OSTUR, Parmesan, rifinn	Cheese, Parmesan	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1217	KLEINUR, Myllan	Cruller, deep fried			04.06	4	6	21	null	null	null	null	0	null	null	null	null
+0465	LAMBALIFUR, steikt	Liver, lamb, fried			07.09	7	9	12	null	null	null	null	0	null	null	null	null
+0449	MÖNDLUR	Almound, raw			06.03	6	3	24	null	null	null	null	0	null	null	null	null
+0359	SYKUR	Sugar, sucrose, white		Strásykur. Hvítur sykur.	11.01	11	1	33	null	null	null	null	0	null	null	null	null
+0127	APPELSÍNUSAFI, hreinn	Orange juice	null	null	12.04	12	4	33	null	null	null	null	0	null	null	null	null
+0595	PITSUBOTN	Pizza, bread	null	null	04.04	4	4	22	null	null	null	null	0	null	null	null	null
+0572	EGG, fýlsegg, hrá	Egg, fulmar, whole, raw	null	null	09.01	9	1	5	null	null	null	null	0	null	null	null	null
+0028	FISMJÓLK, með ávöxtum	Milk, cultured, low fat, Fismjólk	null	null	01.02	1	2	null	null	null	null	null	0	null	null	null	null
+0696	BÍÓMJÓLK, ávaxta-	Cultured low fat milk with fruit	null	null	01.02	1	2	1	null	null	null	null	0	null	null	null	null
+1264	RJÓMABOLLA, vatnsdeigsbolla, með sultu og glassúr	Cream bun, no yeast, with jam and icing			04.06	4	6		null	null	null	null	0	null	null	null	null
+1020	LAMBAINNANLÆRI, hrátt	Lamb leg, raw	null	null	07.01	7	1	null	null	null	null	null	0	null	null	null	null
+1015	ÍS í súkkulaði, Snickers	Chocol cover ice cream bar, Snickes	null	null	03.01	3	1	null	null	null	null	null	0	null	null	null	null
+0939	GRÆNMETISSAFI	Vegetable juice	null	null	12.04	12	4	null	null	null	null	null	0	null	null	null	null
+0769	PÚÐURSYKUR	Sugar, brown	null	null	11.01	11	1	33	null	null	null	null	0	null	null	null	null
+0717	SÚKKULAÐIBITAR, Hraun	Chocolate wafer with puffed rice, Hraun			11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0155	OSTUR, fastur, 17% fita	Cheese, firm, fat 17%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0050	SÍLD, flök, hrá	Herring, fillet, raw	Clupea harengus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0725	REGNBOGASILUNGUR, hrár	Rainbow trout, raw	Salmo irideus	null	08.01	8	1	13	null	null	null	null	0	null	null	null	null
+0499	OSTUR, smurostur með grænmeti	Cheese spread with vegetables	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+1085	SNAKK, saltstengur	Snack, salted sticks	null	null	14.02	14	2	null	null	null	null	null	0	null	null	null	null
+0481	SOJAHLAUP (TÓFÚ)	Tofu, soy bean curd		Tófú	02.02	2	2	33	null	null	null	null	0	null	null	null	null
+0462	TÓMATAR, niðursoðnir	Tomato, canned, peeled	Lycopersicon esculentum	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+0763	TÚNFISKUR, niðursoðinn í vatni	Tuna, in water, canned	Thunnus thymus	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0761	RÓFUSTAPPA, niðurlögð	Swede, mashed, canned	null	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null
+0760	TÓLG, bræddur lambamör	Tallow	null	null	10.03	10	3	18	null	null	null	null	0	null	null	null	null
+0655	SKREIÐ, ýsa	Haddock, dried, raw	Melanogrammus aeglefinus	null	08.02	8	2	13	null	null	null	null	0	null	null	null	null
+0367	KINDAHAKK, hrátt	Sheep meat, minced	null	null	07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0464	TÚNFISKUR, niðursoðinn í olíu	Tuna, in oil, canned	Thunnus thymus	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0289	BRAUÐ, franskbrauð	Bread, white	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+1142	LÉTTSÚRMJÓLK, ávaxta-, sykurskert	Milk, cultured, low fat, fruit, no sugar			01.02	1	2		null	null	null	null	0	null	null	null	null
+0570	SÍRÓP	Syrup, kichen	null	null	11.01	11	1	33	null	null	null	null	0	null	null	null	null
+0480	HRÍSGRJÓN, hýðishrísgrjón, hrá	Rice, brown, raw	Oryza sativa L.	null	04.01	4	1	23	null	null	null	null	0	null	null	null	null
+1176	SÓSA, MAJONES-, kokkteilsósa, eggjalaus, 25% fita	Sauce, mayonnaise w ketchup, without eggs, 25% fat			15.01	15	1		null	null	null	null	0	null	null	null	null
+0346	RÚNNSTYKKI	Bread, roll	null	null	04.04	4	4	23	null	null	null	null	0	null	null	null	null
+0494	OSTUR, fastur, 21% fita	Cheese, firm, fat 21%	null	null	02.01	2	1	4	null	null	null	null	0	null	null	null	null
+0522	PITSA, með nautahakki / pepperoni	Pizza, with beef / pepperoni	null	null	16.01	16	1	22	null	null	null	null	0	null	null	null	null
+1262	BYGG, afhýtt	Barley, bran partly removed	Hordeum vulgare	Bankabygg. Byggkorn.	04.01	4	1		null	null	null	null	0	null	null	null	null
+0809	SÓLBER	Currant, black, raw	Ribes nigrum	null	06.02	6	2	33	null	null	null	null	0	null	null	null	null
+0736	BAUNIR, rauðar nýrnabaunir, soðnar	Beans, red kidney beans, boiled	Phaseolus vulgaris		05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0620	VANILLUHRINGIR	Cookie, vanilluhringir	null	null	04.05	4	5	21	null	null	null	null	0	null	null	null	null
+0821	LAMBAHRYGGVÖÐVAR, án fitu, hráir	Lamb, tenderloin and striploin, trimmed, raw			07.01	7	1	8	null	null	null	null	0	null	null	null	null
+0401	BAUNIR, hvítar, niðursoðnar, í tómatsósu	Beans, baked, canned, tomato sauce			05.04	5	4	33	null	null	null	null	0	null	null	null	null
+0730	NAUTAHRYGGVÖÐVI (FÍLE) m fitu hrár	Beef, sirloin, raw	Bos taurus	null	07.02	7	2	6	null	null	null	null	0	null	null	null	null
+0272	SÚKKULAÐI, suðusúkkulaði	Chocolate, bitter	null	null	11.03	11	3	25	null	null	null	null	0	null	null	null	null
+0033	KÚFSKEL, vöðvi, hrár	Black quahog, muscle, raw	Arctica islandica		08.06	8	6	13	null	null	null	null	0	null	null	null	null
+1251	GRASKERSFRÆ, kjarnar, ristaðir	Pumpkin seed kernels, roasted			06.03	6	3		null	null	null	null	0	null	null	null	null
+0921	MORGUNKORN, Special K	Breakfast cereal, Special K			04.03	4	3		null	null	null	null	0	null	null	null	null
+0121	SELKJÖT, lundir, hráar	Seal meat, loin, raw	null	null	07.05	7	5	9	null	null	null	null	0	null	null	null	null
+0004	FISKBÚÐINGUR, niðursoðinn	Fish loaf, canned	null	null	08.05	8	5	13	null	null	null	null	0	null	null	null	null
+0066	ÞORSKUR, flök, hrá	Cod, fillet, raw	Gadus morhua		08.01	8	1	13	null	null	null	null	0	null	null	null	null
+1165	BENECOL, með ávöxtum, sykurskert	Benecol, with fruits, low sugar			01.02	1	2		null	null	null	null	0	null	null	null	null
+0188	MAÍSKORN, niðursoðin	Corn, kernels, canned			04.01	4	1	33	null	null	null	null	0	null	null	null	null
+0775	SPERGILL / ASPARGUS, hrár	Asparagus, raw	Asparagus officinalis	null	05.02	5	2	33	null	null	null	null	0	null	null	null	null
+0919	MORGUNKORN, Fitness, Nestlé	Breakfast cereal, Fitness, Nestlé			04.03	4	3		null	null	null	null	0	null	null	null	null
+1212	KORNSTÖNG, með súkkulaði, Corny	Muesli bar with chocolate, Corny			04.03	4	3		null	null	null	null	0	null	null	null	null
+0519	PYLSA Í BRAUÐI, með öllu	Wienersausage and bread, with onion, mustard, ketchup & mayonnaise			16.01	16	1	11	null	null	null	null	0	null	null	null	null
+0586	SMJÖRLÍKI, hrærismjörlíki	Margarine, for bread and cakes	null	null	10.05	10	5	19	null	null	null	null	0	null	null	null	null
+0185	RAUÐKÁL, niðursoðið	Cabbage, red, canned	Brassica oleracea var. capitata	null	05.07	5	7	33	null	null	null	null	0	null	null	null	null

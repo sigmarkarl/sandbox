@@ -1,0 +1,16 @@
+{
+    "server": "api.getdropbox.com",
+    "content_server": "api-content.getdropbox.com",
+    "port": 80,
+    "trusted_access_token_url": "http://api.getdropbox.com/0/token",
+    "partner_username": "sigmarkarl@gmail.com",
+    "partner_password": "skc.311",
+
+    "consumer_key": "jemmmn3c5ot8rdu",
+    "consumer_secret": "9or8lsn165d44qv",
+    "verifier": "",
+    "username": "sigmarkarl@gmail.com",
+    "password": "skc.311",
+    "testing_user": "sigmarkarl@gmail.com",
+    "testing_password": "skc.311",
+} 

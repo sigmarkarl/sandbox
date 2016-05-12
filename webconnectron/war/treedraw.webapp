@@ -1,0 +1,14 @@
+{
+  "name": "Treedraw",
+  "description": "Draws phylogenetic trees on a HTML5 canvas",
+  "launch_path": "/Treedraw.html",
+  "icons": {
+  	"60": "/icon-60.png",
+    "128": "/icon-128.png"
+  },
+  "developer": {
+    "name": "Sigmar Stefansson",
+    "url": "https://plus.google.com/b/115473796046446928448/115473796046446928448/posts"
+  },
+  "default_locale": "en"
+}

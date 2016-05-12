@@ -1,0 +1,13 @@
+{
+"server": "api.getdropbox.com",
+"content_server": "api-content.getdropbox.com",
+"port": 80,
+"request_token_url": "http://api.getdropbox.com/0/token",
+"access_token_url": "http://api.getdropbox.com/0/oauth/access_token",
+"authorization_url": "http://api.getdropbox.com/0/oauth/authorize",
+"consumer_key": "jemmmn3c5ot8rdu",
+"consumer_secret": "9or8lsn165d44qv",
+"verifier": "",
+"testing_user": "sigmarkarl@gmail.com",
+"testing_password": "skc.311",
+}

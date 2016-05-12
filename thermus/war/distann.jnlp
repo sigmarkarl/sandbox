@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" xmlns:jfx="http://javafx.com" codebase="http://thermusgenes.appspot.com/" href="distann.jnlp">
+<information>
+  <title>Thermusgenes</title>
+  <vendor>Huldufolk ehf.</vendor>
+  <homepage href="http://thermusgenes.appspot.com" />
+  <description>Thermus gene navigator</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.7+" max-heap-size="1500m"/>
+  <!--jfx:javafx-runtime version="2.0+"/-->
+  <jar href="distann.jar"/>
+  <jar href="commons-codec-1.8.jar"/>
+  <extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/>
+  <extension name="javafasta" href="http://webfasta.appspot.com/javafastacomp.jnlp"/>
+  <extension name="serifier" href="http://funblastic.appspot.com/serifycomp.jnlp"/>
+</resources>
+<applet-desc 
+	name="Distann"
+	main-class="org.simmi.GeneSet"
+	width="1280"
+	height="800"> 
+<param name="draggable" value="true"/>
+</applet-desc>
+</jnlp>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="thermus/war/distann.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/distann/distann.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" mainClassHandleIdentifier="=distann/src&lt;org.simmi{GeneSet.java[GeneSet" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/distann/src/columnchart.html"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi"/>
+        <javaElement handleIdentifier="=distann/src&lt;org.simmi"/>
+        <file path="/distann/src/kegg2go.txt"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.json"/>
+        <file path="/distann/src/cogchart.html"/>
+        <javaElement handleIdentifier="=TreeDraw/src&lt;org.simmi.shared"/>
+        <file path="/distann/src/BLOSUM50"/>
+        <file path="/distann/src/sp2go_short.txt"/>
+        <file path="/distann/src/thermus16S.blastout"/>
+        <file path="/distann/src/gene_ontology_ext.obo"/>
+        <file path="/distann/src/trna_sub.txt"/>
+        <file path="/distann/src/chart.html"/>
+        <file path="/distann/src/kegg_pathways"/>
+        <file path="/distann/src/genomesizechart.html"/>
+        <file path="/distann/src/gene2go_short.txt"/>
+        <file path="/distann/src/BLOSUM62"/>
+    </selectedElements>
+</jardesc>

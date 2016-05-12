@@ -1,0 +1,571 @@
+Beyglur	stk=95g
+Brauðstangir (á pizzustöðum)	stk=40g
+Bruður, fínar	stk=8g
+Bruður, grófar	stk=8g
+Croissant	stk=95g
+Croutons f. salat	dl=25g
+Flatkökur	stk=50g (½kaka)
+Franskbrauð	formbr=30g, samlokubr=40g
+Hamborgarabrauð	stk=60g
+Heilhveitibrauð, gróftbrauð	formbr=30g, samlokubr=40g
+Heilhveitihorn	stk=75g
+Hrökkbrauð, gróft	stk=13g
+Hrökkbrauð, fínt	stk=13g
+Hvítlauksbrauð, kódað sem franskbr.m/smjöri	sneið=15g, smjör= 5g
+Ítölskbrauð	ciabatta stk=80g
+Kringlur	stk=70g
+Langloka, gróf	stk=110g
+Langloka, fín	stk=110g
+Maltbrauð	stk=40g
+Nanbrauð	stk=140g
+Ostaslaufur	stk=115g
+Pizzusnúðar	stk=140g
+Pítubrauð	stk=60g
+Pylsubrauð	stk=45g
+Rúgbrauð, seytt	stk=40g
+Rúnnstykki,  gróf	rúnnstk=75g
+Rúnnstykki, fín	rúnnstk=75g
+Skonsur	stk=90g (½kaka)
+Taco skeljar	stk=11g
+Tortilla	lítil=45g, stór=70g
+Brauðterta	dl=100g
+Heitur brauðréttur	dl=100g
+Kjúklingalangloka	stk=220g
+Langloka m/skinku, egg, grænm.& sósu	stk=220g
+Samloka m/egg og grænm. heilsubiti	stk=200g
+Samloka m/hangikjöti og baunasalati	stk=175g
+Samloka m/kalkún og beikoni	stk=200g
+Samloka m/kjúklingi	stk=215g
+Samloka m/piri piri	stk=200g
+Samloka m/miklu kjöti t.d. Hardr., American Style	stk=270g
+Samloka m/roastbeef	stk=175g
+Samloka m/rækusalati	stk=175g
+Samloka m/skinku og osti	stk=135g
+Samloka m/tikka masala	stk=175g
+Subway bræðingur, án sósu	12"(stór) stk=450g
+Subway Club, án sósu              	12"(stór) stk=450g
+Subway klassískur ítalskur, án sósu	12"(stór) stk=450g
+Subway m/kalkún, án sósu      	12"(stór) stk=450g
+Hafrakex, heilhveitikex	ltl(bls31, hrB)=11g, stór (bls31, hrC)=15g
+Hrískökur	stór (bls31, hrD-E)=13g, ferk. ísl=5 g
+Kransakökur	biti=20g
+Kremkex	ltl (bls31, hrB)=13g, stór (bls31, hrC) eða ísl ferk=24g
+Mjólkurkex, fínt	stk=20g
+Mjólkurkex, gróft	stk=20g
+Saltkex	stk=4g
+Smákökur	ltl=5g, venjuleg=10g
+Smákökur, lítil fita t.d. marenstoppar	ltl=5g, venjuleg=10g, 
+Súkkulaðikex	ltl (bls31, hrB)=10g, stór (bls31, hrC)=16g, risastór úr bakaríi=80g
+Tekex	ltl(bls31, hrC)=4g, stór (bls31, hrD-E), ferköntuð=8g
+Eplakaka, paj	
+Gulrótarkaka	biti=150g
+Hjónabandssæla	
+Jólakaka	sn (1,5 cm)=35g
+Kanelsnúður, ömmusnúður	ltl=24g, bakarí=80g
+Kleinuhringir	stk=75g 
+Kleinur	ltl=30g, stór=60g
+Marengsterta	
+Muffins	stk=40g
+Möndlukaka m/bleiku kremi	
+Ostakaka	
+Pönnukökur	stk=30g
+Rjómaterta	biti=120g
+Snúðar, gersnúðar (sænskir)	ltl (Pågens)=22g, Findus=35g
+Snúður (bakarí)	stk=190g
+Súkkulaðikaka	biti=150g
+Tebolla	ltl=30g, stór=120g
+Tíramísúkaka	dl=80g
+Vínarbrauð, smjörkaka	stk=200g, sérb.=90g
+Vínarterta (randalín)	sn (1,5 cm)=35g
+Vöfflur	stk=90g
+Sulta	msk=15g
+Þeyttur rjómi	msk=8g, dl=50g
+Þeyttur jurtarjómi	msk=8g, dl=50g
+Brie	
+Camembert (25%)	
+Dalayrja	
+Fetaostur	 ltl biti=3g
+Gráðaostur 	
+Gullostur	
+Kastali	
+Kotasæla	msk=15g
+Mozzarella ostur 21%	dl=40 g
+Mysuostur, smyrjanlegur	
+Ostur 17%, Létt-Brie, rifinn salatostur	ltl sn=8g, keypt sn=15g
+Ostur 26%, rifinn pasta, pizzu og gratin	ltl sn=8g, keypt sn=15g
+Ostur, 11%	ltl sn=8g, keypt sn=15g
+Parmesanostur	dl=40g rifinn
+Rjómaostur	tsk=5g
+Smurostur 18%	
+Smurostur, létt 6%	
+Sojaostur	sn=19g
+Steyptir, bræddir ábætisost. Mexiko, papríku ofl.	
+Stóri Dimon	
+Egg	sn=7g, stk=55g
+Hangiálegg	sn=13g
+Hangiálegg, fituskert	sn=13g
+Kindakæfa	hálf/heil sneið
+Kjúklingaskinka	sn=15g
+Lifrarkæfa	hálf/heil sneið
+Lifrarpate	
+Malakoff	sn=10g
+Pepperóní	stk=4g
+Roastbeef	sn=18g
+Rúllupylsa	sn=15g
+Skinka	sn=18g
+Spægipylsa	ltl=7g, stór=15g
+Steik	sn=18g
+Áleggspasta (kavíar)	msk=15g
+Lax, silungur, reyktur	
+Rækjur	dl=55g
+Síld, maríneruð	biti=8g, flak=60g
+Síld, maríneruð í sósu	biti=10g
+Ítalskt salat, majónes	msk=15g
+Laxasalat, majónes	msk=15g
+Laxasalat, sýrður rjómi	msk=15g
+Rækjusalat, majónes	msk=15g
+Rækjusalat, sýrður rjómi	msk=15g
+Túnfisksalat, majónes	msk=15g
+Túnfisksalat, sýrður rjómi	msk=15g	
+Hnetusmjör	tsk=5g, msk=15g
+Hunang	tsk=5g, msk=15g
+Sulta/marmelaði	tsk=5g, msk=15g
+Súkkulaðiálegg	tsk=5g, msk=15g	
+Agúrka	sn=5g
+Bananar	sn=5g, stk=100g
+Epli	bátur=15g, meðal stk=150g
+Papríka	strimill=5g, sn=10g, stk=140g
+Tómatur	sn=15g, stk=80g
+All-bran	dl=30g
+Bran-flakes	dl=15g
+Cheerios	dl=12g
+Cocoa Puffs	dl=15g
+Fitness	dl=20g
+Hafragrjón	dl=35g
+Honey nut Cheerios	dl=12g
+Hörfræ	dl=65g, msk=10g
+Kornflögur	dl=12g
+Múslí án sykurs	msk=7 g, dl=50 g
+Múslí sætt	msk=7 g, dl=50 g
+Sesamfræ	dl=70g, msk=11g
+Sólblómafræ	dl=65g, msk=10g
+Special K	dl=15g
+Wheetabix	stk=18g
+AB-mjólk	dl=100g 
+AB-mjólk m/ávöxtum	dl=100g
+ABT-mjólk hrein	dl=100g 
+ABT-mjólk með ávöxtum og múslí	dós=170g, dl=100g
+Bíómjólk 	dl=100g
+Eftirlæti	dós=150g
+Engjaþykkni 	dós=150g
+Hrísmjólk m/sætri sósu	dós=170g
+Jógúrt með ávöxtum	dós=180g, skóla=150g, dl=100g
+Jógúrt, hrein	dl=100g 
+Léttjógúrt 	dós=180g, dl=100g
+Léttjógúrt, sykurskert (melónu)	dós=180g, dl=100g
+Létt-súrmjólk, létt AB-mjólk	dl=100g
+LGG+	fl=65g
+Pasqual, feitt	dós=125g
+Pasqual, fitusnautt	dós=125g
+Pasqual, létt	dós=125g
+Plús	dós=150g
+Rjómaskyr	dl=100g
+Rjómaskyr með ávöxtum	 dl=100g
+Skólaskyr, SMS skyr	dós=125g, SMS=50g
+Skyr	dós=200g, dl=100g
+Skyr með ávöxtum	KEA=200g, skyr.is=170g, 
+Súrmjólk	dl=100g
+Súrmjólk m/ávöxtum eða bragðefnum	dl=100g 
+Þykkmjólk með ávöxtum 	dós=170g	
+sjá diska bls.30 - 1 strik f. hvern dl.	
+Ávaxtagrautur, sykurskertur	dl=100g
+Ávaxtagrautur, venjulegur	dl=100g
+Hafragrautur	dl=100g
+Hrísgrjónagrautur, (úr léttmjólk)	dl=100g
+Hrísgrjónagrautur, (úr nýmjólk)	dl=100g
+Dreitill	dl=100g
+Fjörmjólk	dl=100g
+Léttmjólk	dl=100g
+Nýmjólk, lífrænmjólk	dl=100g
+Undanrenna	dl=100g
+Kaffirjómi	dl=100g
+Rjómi	dl=100g
+Púðursykur	msk=10g
+Sykur	msk=13g
+Ís úr vél	ltl=140g, stór=230g
+Ís, rjómaís, Skafís	dl=55g
+Ís, Hversdagsís, Kjörís	dl=55g
+Jógúrtís	dl=50g
+Íspinni, ísblóm	stöng=30g, milli=60g, stór=90g (magnum, scala ofl.), ísbl=60g
+Frostpinni, klaki	ltl=40g, stór=85g
+Snickers, Mars, Kit Kat ísstykki	stk=50g
+Íssósa	dl=100g
+Bragðarefur	ltl=350g, milli=450g, stór=550g
+Mjólkurhristingur	ltl=300g, milli=400g, stór=500g
+Mjólkurbúðingur	dl=100g
+Rjómabúðingur, frómas	dl=60g
+Þeyttur rjómi	dl=50g
+Þeyttur jurtarjómi	dl=50g
+Baunasúpa (kjöt sér)	dl=100g
+Brauðsúpa	dl=100g
+Grænmetissúpa, heimalöguð	dl=100g
+Grænmetissúpa, heimalöguð m/rjóma	dl=100g
+Grænmetissúpa, tær pakkasúpa	dl=100g
+Grænmetissúpa, þykkt, pakkasúpa	dl=100g
+Kakósúpa	dl=100g
+Kjötsúpa (kjöt sér)	dl=100g
+Pastasúpa	dl=100g
+Sætsúpa, ávaxtasúpa	dl=100g
+Tómats m/rjómaosti, t.d. fiskisúpa (fiskur sér)	dl=100g
+Tómatsúpa, grunnur t.d. fiskisúpa (fiskur sér)	dl=100g
+Fiskibollur úr dós	stk=25g
+Fiskibollur, búðingur, steikt úr steikingarfeiti	meðal=55g, risa stór=100g (Fiskbúðin okkar)
+Fiskur í rjómasósu 	
+Fiskur í rjómasósu m/grænmeti (50:50)	
+Fiskur í tilb.sósu (Hagk. Fiskb.okkar, Nóat.)	
+Gellur, kinnar, soðnar	gellur= 30g, kinnar=100g
+Hrogn, soðin 	stk=120g
+Humar, skötuselur	humar, stk=15g, skötusel.
+Lax, silungur, steikt	
+Lax, silungur, soðið, bakað grillað	
+Lifur, soðin	
+Lúða, karfi, rauðspretta, steinbítur, steikt	
+Lúða, karfi, rauðsp, steinb, soðið, bakað grillað	
+Ofnbakaður fiskur m/lauk og osti	
+Plokkfiskur	dl=100g
+Rækjur	dl=55g
+Rækjur, djúpsteiktar	stk=5g, ltl skammtur (Nings)=235g, stór=390g
+Saltfiskur, reykturfiskur	
+Ýsa, djúpsteikt, skyndibitastað	
+Ýsa, þorskur steikt m/raspi og matarolíu	
+Ýsa, þorskur steikt m/raspi og smjörlíki	
+Ýsa, þorskur steikt m/raspi óþ.steikingarfeiti	
+Ýsa, þorskur án rasps, steikt, grillað í steikingarf.	
+Ýsa, þorskur, soðið eða bakað, grillað án feiti	
+Ýsunaggar	stk=20g
+Harðfiskur, bitafiskur 	flak ýsa=70g, flak steinb.=200g, dl=20g, biti=5g
+Sardínur	stk=15g
+Síld, maríneruð	biti=8 g, flak=60g
+Síld, maríneruð í sósu	biti=10 g 
+Túnfiskur, í vatni	dl=100g
+Chili con carne m/hakki og baunum	
+Hakk m/tómatsósu án steikingarfeiti	
+Hakk m/tómatsósu, m/steikingarfeiti	
+Hakk m/niðurs.tóm & grænm. án steikingarf.	
+Hakk m/niðurs.tóm,grænm m/steikingarf.	
+Hamborgari án brauðs án steikingarfeiti	meðal=65, grill=110
+Hamborgari án brauðs, m/steikingarfeiti	meðal=65, grill=110
+Kjötbollur úr hakki, steiktar m/steikingarfeiti	1944=30g, meðal=55g, stór=100g (Fiskbúðin okkar)
+Lasagna m/hakki 	
+Tortilla m/hakk og grænmetis fyllingu	ltl=115g, stór=180g
+Bixímatur 	
+Bjúgu, soðin	stk=200g
+Kjötfars, steikt m/steikingarfeiti	ltl(goða)=10g, 1944=30g, meðal=55, stór=100g (Fiskbúðin okkar)
+Kjötfars, soðið	1944=30g, meðal=55g, stór=100g
+Pylsur, soðnar	stk=50g
+Kjúklingur m/skinni, grillaður, bakaður	bringa=130g, læri heilt=120g, efrip.læris=60g, leggur=55g,
+Kjúklingur án skinns, grillaður, bakaður, steiktur	bringa=120g, læri heilt=110g, efrip.læris=55g, leggur=50g,
+Kjúklingabitar, djúpsteiktir	biti=90g
+Kjúklingaréttur m/sósu, án rjóma, lítið grænmti	
+Kjúklingaréttur m/rjómasósu, lítið grænmeti	
+Kjúklingarétt. m/sósu og grænm(50:50) án rjóma	
+Kjúklingarétt. m/rjómasósu og grænmeti (50:50)	
+Lambakjöt, magurt, bakað, grillað, steikt	
+Lambakjöt, læri, bakað (lítil fita borðuð)	
+Lambakjöt, millifeitt, bakað, grillað, steikt	
+Lambakjöt, millifeitt soðið 	
+Lambakjöt, feitt,bak,grill,steikt(t.d.kótilettur m/fitu)	
+Lambakjöt, feitt, soðið (t.d.súpukjöt)	
+Lambakjöt, mjög feitt	
+Saltkjöt, magurt	
+Saltkjöt, feitt	
+Hangikjöt, Londonlamb	
+Nautakjöt, magurt, steikt, bakað	
+Nautakjöt, millifeitt, steikt bakað	
+Nautakjöt, feitt, bakað steikt	
+Svínakjöt, magurt,  bakað, steikt	
+Svínakjöt, millifeitt, bakað, steikt	
+Svínaköt, feitt (hnakki), bakað, grillað, steikt	
+Skinka, hamborgarahryggur	
+Hrossakjöt, reykt	
+Hrossakjöt, saltað 	
+Hrossakjöt, soðið	
+Hrossakjöt, steikt	
+Raspsteikt kjöt, t.d. snitsel, naggar steikt	naggar=15 g
+Kjötpottur, gúllas m/sósu, án rjóma	
+Kjötpottur, gúllas m/rjómasósu	
+Kjötpottur m/sósu og grænm.(50:50) án rjóma 	
+Kjötpottréttur m/rjómas. og grænmeti (50:50)	
+Grænmetispottréttur m/litlukjöti (25%)	
+Beikon	sn=10g
+Blóðmör, soðinn	
+Lifrarpylsa, soðin	
+Lifur, steikt	sneið=40g
+Svartfugl, lundi	sv=150g, Lu=100g
+Svið, soðin, sviðasulta	kjammi=200g, sn=100g
+Baunabuff	keypt frosið= 75g, tilbúið á matsölustað=125g
+Bökur m/grænmeti	
+Chili m/baunum, án kjöts	
+Egg, soðin	stk=55g
+Egg, steikt	stk=50g
+Eggjakaka, omeletta	dl=90g
+Gratínerað grænmeti	
+Grænmetislasagna	
+Hvítar niðursoðnar baunir í tómatsósu	dl=108g 
+Núðluréttur, instant	pk (tilb. til neyslu)=320g
+Baunir, soðnar	dl=70g
+Pastar. heitur (feitur),pepperón,grænm,rjómasósa	dl=100g
+Pastaréttur heitur m/skinku,grænm.sýrðum rjóma	dl=100g
+Pastasalat, kalt m grænmeti, án sósu	Sómi=235g, Hagk=275g, Annað=435g
+Pastasalat, kalt m/kjúklingi, skinku, án sósu	Sómi=235g, Hagk=275g, Annað=435g
+Pastasalat, kalt m/túnfiski og grænmeti, án sósu	Sómi=235g, Hagk=275g, Annað=435g
+Pítsa m/grænmeti	8"sn=35g, 12"=85g, 15"=140g
+Pítsa m/pepperóni og lauk	8"sn=30g, 12"=75g, 15"=120g
+Pítsa m/skinku og ananas	8"sn=30g, 12"=75g, 15"=120g
+Pítsu, hvítlauksbrauð, pitsastaðir	8"sn=25g, 12"=50g, 15"=100g
+Sojakjöt	
+Tortellini	dl=65g
+Tortilla, burrito, m/bauna og grænmetisfyllingu	ltl=115g, stór=180g
+Vorrúllur, Kínarúllur	stk=90g
+Fylltar pönnukökur (Crepes)	stk=330g
+Hamborgari m/brauði, grænmeti og sósu	stk=190g
+Hamborgari McDonalds	ltl=105g, big=215g
+Kjúklingabitar	stk=90g
+Píta m/buffi, grænmeti og sósu	stk=300g
+Píta m/grænmeti og sósu	stk=300g
+Pylsa í brauði m/tómatsósu og/eða sinnepi	stk=105
+Pylsa í brauði, m/öllu	stk=115g
+Rækjur, djúpsteiktar	stk=5g, ltl skammtur (Nings)=235g, stór=390g
+Vorrúllur, djúpsteiktar	stk=90g
+Ýsa, djúpsteikt		
+Eggjapasta, núðlur	dl=60g
+Hrísgrjón	dl=80 g
+Hýðishrísgrjón	dl=80 g
+Kartöflugratín m/rjóma	dl=100g
+Kartöflumús 	dl=100g
+Kartöflur, brúnaðar	
+Kartöflur, franskar, af skyndibitastað	
+Kartöflur, franskar, ofnsteiktar, steiktar	
+Kartöflur, soðnar, bakaðar	
+Kartöflusalat m/majónesi	dl=100g
+Kartöflusalat m/sýrðum rjóma	dl=100g
+Kús kús	dl=75g
+Spaghetti, pasta	dl=60g
+Asíur, súrsað grænmeti, relish	dl asíur=65g, dl relish=100g
+Blómkál soðið 	dl=55g
+Eggaldin, steikt 	sneið=25g
+Grænar baunir	dl=60g
+Grænmetisblanda, frosin, soðin	
+Laukur, papríka, gulrætur, steikt í olíu	
+Laukur, papríka, gulrætur, steikt, í smjörlíki	
+Laukur, papríka, gulrætur, steikt, í steikingarfeiti	
+Gulrófur, soðnar	sneið=60g
+Gulrætur, soðnar	stk=60g
+Hvítkál, soðið	
+Hvítlaukur í olíu	stk=2g
+Kúrbítur, steiktur 	sneið=20g
+Laukur, steiktur, í matarolíu	msk=10g
+Laukur, steiktur, í smjörlíki	msk=10g
+Laukur, steiktur, í steikingarfeiti	msk=10g
+Laukur, steikur þurrkaður	msk=7g
+Maískorn	dl=75g, kólfur=125g
+Ólívur	stk=5g
+Rauðkál	dl=80g
+Rauðrófur	sn=15g
+Rósakál	dl=65g
+Sólþurrkaðir tómatar í olíu	stk=6g, dl=70g
+Spergilkál	dl=65g
+Spínat	dl=100g
+Sveppir, niðursoðnir	dl=75g
+Sveppir, steiktir, í matarolíu	msk=10g
+Sveppir, steiktir, í smjörlíki	msk=10g
+Sveppir, steiktir, í steikingarfeiti	msk=10g
+Agúrkur	sn=5g, stk=400g
+Blómkál	
+Gulrófur	sn=60g
+Gulrætur	stk=60g
+Hrásalat (hvítkál, gulrætur, rófur)	dl=40g
+Hrásalat í majonessósu	dl=60g 
+Iceberg, kínakál, blaðsalat	
+Laukur, rauðlaukur, púrrulaukur	msk=10g
+Papríka, græn, gul og rauð	str=5g, sneið=10g, stk=140g
+Salat (iceb, kínak, tómatar, gúrka, papríka)	
+Spergilkál	
+Tómatar	stk=80g
+Appelsínur	stk=150g
+Ávextir, blandaðir, skornir	dl=70g
+Bananar	ltl=80g, meðal=100, stór=140g
+Bláber	dl=60g
+Epli	ltl=80g, meðal=150, stór=250g
+Ferskjur	stk=110g
+Greipaldin	stk=245
+Hunangsmelónur	dl=70g
+Jarðarber	stk=14g, dl=60g
+Kantelópa	dl=70g
+Kíví	stk=65g
+Krækiber	dl=60g
+Mandarínur	stk=70g
+Nektarínur	stk=110g
+Mangó	dl=70g
+Perur	ltl=150g, stór=250g
+Plómur	stk=45g
+Vatnsmelóna	dl=70g
+Vínber	stk=7g
+Niðursoðinn ananas	hringur=55g
+Niðursoðnir blandaðir ávextir 	dl=100g
+Döðlur	stk=15g, dl=75g
+Fíkjur	stk=20g
+Hnetur, salthnetur	dl=60g
+Hnetur, aðrar	dl=60g
+Rúsínur	dl=60g
+Sveskjur	stk=8g
+Þurrkaðir ávextir, aðrir	stk=7g
+Klípa	tsk=5g, msk=15g
+Létt og laggott	tsk=5g, msk=15g
+Létta	tsk=5g, msk=15g
+Olivio	tsk=5g, msk=15g
+Smjör	tsk=5g, msk=15g
+Smjörvi	tsk=5g, msk=15g
+Smyrill	tsk=5g, msk=15g
+Sólblóma 40%	tsk=5g, msk=15g
+Sólblóma 65%	tsk=5g, msk=15g
+Hamsar	tsk=5g, msk=15g
+Olíublanda	tsk=4g, msk=13g
+Ólívuolía	tsk=4g, msk=13g
+Smjörlíkisblanda	tsk=5g, msk=15g
+Bernessósa	dl=100g
+Brún sósa (soðsósa, lítil fita)	dl=100g
+Jafningur (mjólk, smjörlíki)	dl=100g
+Ostasósa (ca 15%)	msk=15g
+Rjómasósa (nær bara rjómi)	dl=100g
+Sósa úr tómötum	dl=100g
+Súrsætsósa	dl=100g
+Tikkamasalasósa ofl. tilbúnar sósur úr krukku	dl=100g
+Uppbökuð sósa, (smjörlíki)	dl=100g
+Diet Pítusósa (40% fita)	msk=15g
+Graflaxsósa	msk=15g
+Grænmetissósa (58%)	msk=15g
+Hamborgarasósa (40% fita)	msk=15g
+Hvítlaukssósa (53% fita)	msk=15g
+Kokteilsósa úr majónesi (70% fita)	msk=15g
+Majónes	msk=15g
+Majónes, létt	msk=15g
+Olíuediksdressing	msk=15g
+Pestósósa	msk=15g
+Pítusósa keypt eða búin til úr majónesi (70%fita)	msk=15g
+Remúlaði (58%fita)	msk=15g
+Salatsósa, salatbar í Hagkaup	msk= 15g, lítið box=50g
+Salsasósa	msk=15g
+Sinnep	msk=15g
+Sinnepssósa (21% fita)	msk=15g
+Súrmjólkursósa, jógúrtsósa	msk=15g
+Sýrður rjómi 10%	msk=15g
+Sýrður rjómi 18%	msk=15g
+Sýrður rjómi 36%	msk=15g
+Thousand Island dressing	msk=15g
+Thousand Island dressing, létt	msk=15g
+Tómatsósa (ketchup)	msk=15g
+Dreitill	dl=100g, lítil ferna=250g
+Drykkjarjógúrt	flaska=250 g
+Fjörmjólk	dl=100g
+Kakó úr nýmjólk, kókómjólk	dl=100g, lítil ferna=250g
+Kakó, úr léttmjólk	dl=100g
+Létt-cappucino drykkur	flaska=330g
+Léttmjólk, Sælumjólk	dl=100g, lítil ferna=250g
+Létt-súkkulaði drykkur	flaska=330g
+Nýmjólk, lífrænmjólk	dl=100g, lítil ferna=250g
+Orkumjólk	flaska=330g
+Sodavatn, Toppur, Egils kristall	flaska=500g
+Sojamjólk	dl=100g
+Swiss miss	dl=100g
+Undanrenna	dl=100g
+Vatn	dl=100g, glas=200g
+Appelsínusafi, greipsafi	dl=100g, lítil ferna=250g, 
+Eplasafi	dl=100g, lítil ferna=250g
+Nektar	dl=100g, lítil ferna=250g
+Svali/Hi-C, djús, sykraður	dl=100g, lítil ferna=250g
+Svali/Hi-C, djús, sykurskertur	dl=100g, lítil ferna=250g
+Gosdrykkir, kóladrykkir sykraðir	flaska, dós lítil=330g, stór=500g
+Gosdrykkir, kóladrykkir sykurlausir	flaska, dós lítil=330g, stór=500g
+Fresca	flaska, dós lítil=330g, stór=500g
+Tab	flaska, dós lítil=330g, stór=500g
+Gosdrykkir sykraðir, aðrir	flaska, dós lítil=330g, stór=500g
+Gosdrykkir sykurlausir, aðrir	flaska, dós lítil=330g, stór=500g
+Maltöl	flaska, dós lítil=330g, stór=500g
+Pilsner	flaska, dós lítil=330g, stór=500g
+Íþróttadrykkir (Aqarius, Gatorade, Leppin)	flaska=500g, stór flaska Gatorade=750g
+Orkudrykkir (Magic, Orkan, Pús Battery)	Mag.dós=250g, Orkan fl=500g, Pús dós=330g
+Bjór 	dós=330, 500, flaska=330
+Brennd vín	einfaldur=30g
+Hvítvín	dl=100g, glas=125g, flaska=750g
+Líkjör	einfaldur=30g
+Rauðvín	dl=100g, glas=125g, flaska=750g
+Sherry, millisterk vín	einfaldur=30g
+Kaffi	bolli=150g, kanna=200g
+Te	bolli=150g, kanna=200g
+Kaffirjómi í kaffi, te	
+Léttmjólk í kaffi, te	
+Nýmjólk í kaffi, te	
+Rjómi í kaffi, te	
+Hunang	tsk=5g
+Nutrasweet í kaffi,te	tsk=0,5g, tafla=0,1g
+Sykur í kaffi, te	tsk=4g
+Bjóstsykur	stk=3g, ltl poki=80g, stór poki=250g
+Bland í poka	fyrir 100 kr=80g
+Bounty	stk=55g
+Buff, staur 	buff=40g, staur=25g
+Hlaup	ltl stk=4g, milli
+Hraun	bitar=10, stórt=30g, risa=70g
+Hrískúlur	dl=30 g, ltl poki=120g, milli st. Freyju og Nóakropp=200g, stór(Bónus)=250g
+Karamellur	ltl=4g, stór=10g
+Kitkat	stk=55g
+Kúlur	stykki=4g, ltl poki=80g, stór=300g
+Lakkrís	biti=5g, lengja=20g, poki=220g, rúlla=8g
+M&M's, Smartís	stk=1g, dl=85g, ltl poki=250, stór=200g
+Mars, Snickers	normal=57g, kingsize=85g, minibar=15g
+Nizza	stk=40g (5 bitar)
+Ópal, Tópas	pakki=20g alls 25stk, Trölla, risa=60g alls 35 stk
+Pipp	stk=40g (5 bitar)
+Prince Polo	normal=40g, kingsize=56g
+Rolo	rúlla=49g, stk=3g
+Síríuslengja	stykki=20g
+Súkkulaði, fyllt	biti lítll=3,5 g, stór=7 g
+Súkkulaði, rjóma	biti lítll=3,5 g, stór=7 g
+Súkkulaði, suðu	biti lítll=3,5 g, stór=7 g
+Súkkulaðihnetur, m&m hnetur	dl=70 g, stk=2g
+Súkkulaðirúsínur	stykki=1g, dl=90 g, ltl poki=200g, stór=300g 
+Twix	normal=58g, kingsize=95g	
+Hnetur, salthnetur	
+Hnetur - allar teg.	dl=60g
+Kartöfluflögur	dl=10g, ltl poki=80g, m=120g, stór=140g
+Nasl, skrúfur	dl=10g, ltl poki=80g, m=120g, stór=140g
+Poppkorn, heimap	glas=6g, 1 ltr=30g
+Poppkorn, tilbúið	1ltr=30g, ltl poki=50g, stór=90g
+Poppkorn, örbylgju	poki=100g, 
+Poppkorn, örbylgju, létt	poki=100g, 
+Saltstangir	stk=1g, dl=30g
+Tortilla, chips		
+B-vítamíntöflur	tafla=1
+C-vítamíntöflur	500 mg tafla=1
+E-vítamíntöflur	130 mg tafla=1
+Fjölvítamín án A- og D-vítamíns	tafla=1
+Fjölvítamín með A- og D-vítamíni	tafla=1
+Fólasíntöflur	400 ug tafla=1
+Frískamín	barnask.=5g, msk=8g
+Hákarlalýsishylki	tafla=1
+Heilsutvenna, vítamíntafla 	tafla=1
+Heilsutvenna, lýsishylki	tafla=3
+Járntöflur	100 mg tafla=1
+Kalktöflur og kalk úr "Lýsi+Dvít&kalk"	500 mg tafla=1
+Krakkalýsi	barnask.=5g, msk=8g
+Lúðulýsisperlur	tafla=1
+Lýsishylki úr "Lýsi + Dvít & kalk"	tafla=1
+Omega-3 hylki	280 mg tafla=1
+Ufsalýsi	barnask.=5g, msk=8g
+Þorskalýsi	barnask.=5g, msk=8g
+Þorskalýsisperlur	tafla=1
+Önnur bætiefni	tafla=1
+Próteindrykkur, Myoplex* 	skammtur (lite)=400g, skammtur venjul.=525
+Próteindrykkur, Herbalife, Nupo létt*	skammtur=275
+Próteinstykki, Myoplex	ltl (lite)=56g, stórt (deluxe)=90g
+Próteinstykki, Herbalife gull	stk=40g
