@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="file:///home/sigmar/sandbox/hvaderimatnum/war/">
+<information>
+  <title>Matisgem</title>
+  <vendor>Matis</vendor>
+  <homepage href="http://www.matis.is" />
+  <description>ISGEM on Facebook</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.7+" />
+  <jar href="food.jar"/>
+  <jar href="swingx.jar"/>
+  <jar href="gdata-core-1.0.jar"/>
+  <jar href="guava-13.0.1.jar"/>
+  <!--extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/-->
+  <!--extension name="dropbox" href="http://dl.dropbox.com/u/10024658/dbsave.jnlp"/-->
+</resources>
+<applet-desc 
+	name="Matisgem"
+	main-class="org.simmi.SortTable"
+	width="1280"
+	height="800">
+<param name="image" value="matis2.gif"/> 
+<param name="centerimage" value="true"/> 
+<param name="boxborder" value="false"/>
+<param name="draggable" value="true"/>
+</applet-desc>
+</jnlp>
+

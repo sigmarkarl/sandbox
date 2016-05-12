@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://webnavision.appspot.com/" href="afstemming.jnlp">
+<information>
+  <title>Afstemming</title>
+  <vendor>Huldufolk ehf.</vendor>
+  <homepage href="http://webnavision.appspot.com" />
+  <description>Java Afstemming</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.7" />
+  <jar href="navisionapplet.jar"/>
+  <extension name="sqljdbc" href="sqljdbc.jnlp"/>
+  <extension name="swingx" href="swingx.jnlp"/>
+</resources>
+<applet-desc 
+	name="JavaFasta"
+	main-class="org.simmi.Afstemming"
+	width="1280"
+	height="800"> 
+<param name="draggable" value="true"/>
+</applet-desc>
+</jnlp>

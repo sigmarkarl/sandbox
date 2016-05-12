@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<link href="https://fonts.googleapis.com/css?family=Headland+One|Life+Savers:400,700" rel="stylesheet" type="text/css">
+<style>
+	caption { font-size: 80%; caption-side: bottom; }
+	figcaption { font-size: 64%; caption-side: bottom; }
+	table { border-spacing: 0; cellpadding: 0; cellspacing: 0; padding-left: 0; padding-right: 0; padding-bottom: 0; padding-top: 0; margin-left: 0; margin-right: 0; margin-bottom: 0; margin-top: 0 }
+	thead { border-bottom: solid 2px black; border-collapse: collapse; }
+	#footer ul li { display: inline; padding-left: 0.5em; }
+	figcaption { font-size: 32px; }
+</style>
+</head>
+<body style="font-family:'Myriad'; padding: 0; margin: 0; text-align : justify; font-size: 32px">
+<header>
+<img src="header.png" width="100%"></img>
+</header>
+<div style="margin-top: 0; margin-left: 1cm; margin-right: 1cm;">
+
+<div style="text-align:center">
+<h1 style="margin-top: 1cm; margin-bottom:0.1cm;">ComGen software for comparative genomics</h1>
+<h3><i>Sigmar Karl Stefánsson<sup>1,2</sup>, Snædís Björnsdóttir<sup>1,2</sup>, Ólafur H. Friðjónsson<sup>1</sup>, Sólveig Pétursdóttir<sup>1</sup>, Guðmundur Ó. Hreggviðsson<sup>1,2</sup></i></h3>
+<h5>1 Matís ltd. Vínlandsleið 12, 113 Reykjavík, Iceland; 2 Faculty of Life and Environmental Sciences, University of Iceland, Sturlugata 7, 101 Reykjavík Iceland</h5>
+</div>
+<p>Horizontal gene transfer is a major force of bacterial evolution. 
+We have performed extensive comparative genomic analysis of thermophilic bacteria that belong to the genus <i>Thermus</i>. 
+These bacteria are very effective in DNA uptake and genetic elements such as plasmids, transposons and prophages were found at many of the numerous shuffling sites within their genomes.
+Genome rearrangements were examined using a new software which identifies orthologs and uses both paralog clustering and novel visualization techniques to extract information from massive sequence data. 
+The software identifies the most likely order of contigs of assembled sequences and predicts genetic islands using conventional methods and genome comparison.
+Analyses of synteny and gene presence-absence as well as of the convergent evolution of duplicated genes are used for the construction of genome phylogenies. 
+Gene loss and gene gain are estimated on the basis of observed geographical and environmental patterns in the phylogeny of individual genes. 
+Metabolic mapping in the context of multiple genomes give the gene sets required for core cellular functions and potentially a deeper insight into the impact of slight genome differences. 
+The software is written in Java and is downloadable as such. It also has a web interface with public and private access. Our results from genome comparison within the genus <i>Thermus</i> exemplify how genome rearrangement occur in nature.
+</p>
+<div style="webkit-column-count:2;
+	-webkit-column-count:2;
+	-moz-column-count:2; 
+	column-count:2;
+	page-break-before:avoid;">
+
+<div style="padding: 0.5em;">
+<h3 style="margin: 0;">Main screen</h3>
+<figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
+<table>
+<tr>
+<td width=50%><img src="mainscreen2.png" width="100%"></img></td>
+<td><img src="seqview.png" width="100%"></img></td>
+</tr><tr>
+<td colspan=2><img src="neighb.png" width="100%"></td>
+</tr>
+</table>
+<figcaption style="text-align: justify; margin-bottom: 0.5em">
+The main screen is split into two tables, the above gene table and the below function table. 
+The tables are linked and double-clicking on an entry highlights the corresponding row in the other table. 
+A search textbox accompanies both tables for easy search and filtering. 
+The function table allows for the selection of specific metabolic pathways. The resulting selection can consequently be viewed in a gene atlas.
+The sequence editor supports different color coding, multiple sequence alignment and the generation of phylogenetic trees.
+The gene aligner view shows the difference of small scale regions between strains.
+</figcaption>
+</figure>
+</div>
+
+<div style="background: #ffffff; padding: 0.5em;">
+<h3 style="margin: 0;">Genetic islands</h3>
+<figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
+<table>
+<tr>
+<td><img src="permut.png" width="100%" /></td>
+<td><img src="synt.png" width="100%" /></td>
+</tr>
+</table>
+<figcaption style="text-align: justify; margin-bottom: 0.5em">
+The gene permutation atlas is used to view sharing of genes between strains. 
+The core genome has been removed and the genes are ordered according to the size of each permutation group.
+The image to the right shows that the largest group of unique genes within the genus <i>Thermus</i> is observed in <i>Thermus filiformis</i>.
+The largest group of genes shared between more than one strain is a prophage found in <i>Thermus brockianus</i> and "Thermus eggertssonii".
+The synteny colors shows the relative gene locations.
+The image to the right shows the same genes in their correct order for each species, which reveals genetic islands as lanes in the circle.
+Prophage genes are colored blue and plasmid genes are colored red.
+</figcaption>
+</figure>
+</div>
+
+<div style="background: #ffffff; padding: 0.5em;">
+<h3 style="margin: 0;">Comparative genomics</h3>
+<figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
+<img src="pancore_thermus.png" width="49%" />
+<img src="cog_thermus.png" width="50%" />
+<figcaption style="text-align: justify; margin-bottom: 0.5em">
+Genomes inserted into the software are automatically annotated. 
+The genes are grouped together using criteria fitting the data, such as the 50-50 rule for inter-genus genomes. 
+The results are stored in an easily portable zip formatted file.
+The software supports automatic and manual connection of contigs based on comparative data.
+The software generates basic comparative genome statistics such as a pan-core graphs, GC%, GC skew, COG-groups and genome size column plots.
+</figcaption>
+</figure>
+</div>
+
+<div style="padding: 0.5em;">
+<h3 style="margin: 0;">Synteny gradients</h3>
+<figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
+<table><tr>
+<td width="50%"><img src="contord_hires.png" width="100%" /></td>
+<td width="50%"><img src="syntgrad_hires.png" width="100%" /></td>
+</tr></table>
+<figcaption style="text-align: justify; margin-bottom: 0.5em">
+The synteny gradient colors are used to visualize genome rearrangements. 
+Plassmids are shown in grayscale.
+The starting point is on the right (blue) indicating the <i>ori</i>.
+The image to the left shows each contig as intact lanes, where uniform synteny color indicates that the order of the genes is preserved between the two strains.
+The image to the right shows four <i>Thermus thermophilus</i> genomes and three genomes from other <i>Thermus</i> species.
+The inverted areas could reveal errors in the published genomes. The smaller case (shown with an arrow) shows a region flanked by 23S region on both sides.
+</figcaption>
+</figure>
+</div>
+
+<div style="background: #ffffff; padding: 0.5em;">
+<h3 style="margin: 0;">Phylogeny</h3>
+<figure style="text-align:center; padding: 0; margin: 0; margin-top: 1em;">
+<table>
+<tr>
+<td width="50%"><img src="anim.png" width="100%" /></td>
+<td><img src="concribo.png" width="100%" /></td>
+</tr>
+<tr>
+<td width="50%"><img src="heattree.png" width="100%" /></td>
+<td><img src="xy2.png" width="100%" /></td>
+</tr>
+</table>
+<figcaption style="text-align: justify; margin-bottom: 0.5em">
+Multiple genes within and between genomes are compared using phylogenetic methods such as sequence concatenation and majority rule consensus.
+Gene duplication sites are used to support the prediction for rooting phylogenetic trees.
+The ANI matrix shows the average nucleotide identity between all species in a phylogenetic order.
+The ANI matrix shows that bacterial species are not always clearly defined.
+An ANI value of 90% was calculated for two strains of <i>Thermus aquaticus</i> 
+while ANI values of at least 95% were calculated for strains that belonged to <i>Thermus antranikianii</i> and <i>Thermus scotoductus</i>.
+The phylogenetic tree viewer supports circular and radial trees and color coded nodes. The web link is http://webconnectron.appspot.com/Treedraw.html
+</figcaption>
+</figure>
+</div>
+</div>
+
+</div>
+<footer id="footer" style="text-align: center; border-top: solid; border-color: #004499;">
+  <h3 style="margin: 0; margin-top: 1em; color: #004499">
+  <ul>
+  <li>Analysis and Consulting</li><li>|</li>
+  <li>Biotechnology and biomolecules</li><li>|</li>
+  <li>Food Safety, Environment and Genetics</li><li>|</li>
+  <li>Innovation and Consumers</li><li>|</li>
+  <li>Value Chain, Processing and Aquaculture</li>
+  </h3>
+  <h4 style="margin: 0; margin-top: 0.5em; color: #00aadd">
+  <ul>
+  <li>Matís ohf.</li><li>&bull;</li>
+  <li>Vínlandsleið 12</li><li>&bull;</li>
+  <li>113 Reykjavík</li><li>&bull;</li>
+  <li>Iceland</li><li>&bull;</li>
+  <li>Tel +354 422 5000</li><li>&bull;</li>
+  <li>Fax +354 422 5001</li><li>&bull;</li>
+  <li><a href="mailto:matis@matis.is">matis@matis.is</a></li><li>&bull;</li>
+  <li><a href="http://www.matis.is">www.matis.is</a></li>
+  </ul>
+  </h4>
+</footer>
+</body>
+</html>

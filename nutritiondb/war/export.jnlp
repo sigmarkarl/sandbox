@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://localhost/">
+<information>
+  <title>Export</title>
+  <vendor>Export</vendor>
+  <homepage href="http://www.matis.is" />
+  <description>ISGEM on Facebook</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="minapplet.jar"/>
+  <extension name="poi" href="http://fasteignaverd.appspot.com/poi/poi.jnlp"/>
+</resources>
+<applet-desc 
+	name="export"
+	main-class="org.simmi.PoiFactory"
+	width="10"
+	height="10">
+</applet-desc>
+</jnlp>
+

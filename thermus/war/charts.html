@@ -1,0 +1,230 @@
+<html>
+<head>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawCharts);
+      
+ 	  var gsizeoptions = {
+          title: 'Genome sizes',
+          fontSize: '12'
+      };
+      
+      var options = {
+          title: 'Pan-core genome',
+          fontSize: '12'
+      };
+      var gcoptions = {
+          title: 'Thermus GC percentage',
+          fontSize: '12'
+      };
+      var cogoptions = {
+          title: 'COG groups',
+          fontSize: '12',
+          isStacked: true
+      };
+      
+      var data;
+      var cog;
+      var gc;
+      var gsize;
+      var mu;
+      
+      function drawCharts() {
+      	mu = google.visualization.arrayToDataTable([['Species','3-hydroxymyristoyl','Amino acid transport and metabolism','Carbohydrate transport and metabolism','Cell cycle control, cell division, chromosome partitioning','Cell division and chromosome partitioning','Cell envelope biogenesis, outer membrane','Cell motility and secretion','Cell wall','Chromatin structure and dynamics','Coenzyme metabolism','DNA replication, recombination, and repair','Defense mechanisms','Energy production and conversion','Function unknown','General function prediction only','Inorganic ion transport and metabolism','Intracellular trafficking and secretion','Lipid metabolism','Nucleotide transport and metabolism','Posttranslational modification, protein turnover, chaperones','RNA processing and modification','Replication, recombination, and repair','Secondary metabolites biosynthesis, transport, and catabolism','Signal transduction mechanisms','Transcription','Translation, ribosomal structure and biogenesis','acetolactate synthase, pyruvate dehydrogenase (cytochrome), glyoxylate carboligase, phosphonopyruvate decarboxylase','acyl-carrier-protein'],
+['MAT4553',0,210,157,2,26,196,54,2,1,114,138,75,135,235,323,136,47,76,64,123,0,4,66,150,131,145,2,4],
+['MAT4555',0,335,191,3,23,149,53,3,5,132,95,49,209,210,286,112,27,111,65,131,1,6,95,110,107,144,7,2],
+['MAT4685',1,208,62,4,34,153,112,4,2,111,155,43,142,204,266,116,50,116,52,135,1,3,51,155,140,152,2,4],
+['MAT4696',0,194,293,5,40,168,90,2,0,119,185,67,152,235,307,107,28,33,70,77,0,6,28,167,207,154,3,1],
+['MAT4705',2,310,110,4,23,192,53,1,1,122,114,35,226,321,322,149,63,124,51,171,0,7,70,107,149,162,12,4],
+['MAT4716',1,202,103,3,25,156,63,3,0,106,116,47,139,239,281,119,63,110,62,147,0,3,63,96,157,152,3,2],
+['MAT4717',1,199,59,4,32,127,113,3,2,119,120,29,170,180,224,105,38,83,63,120,1,1,32,167,115,158,1,3],
+['MAT4784',1,250,169,3,44,124,59,0,1,122,180,45,164,256,300,123,23,100,73,98,0,7,39,122,155,154,2,3],
+['MAT493',0,184,131,3,20,151,58,1,2,99,94,43,137,159,259,123,29,63,65,102,1,6,52,98,99,138,2,3]
+]);
+
+        cog = google.visualization.arrayToDataTable([
+['Species','3-hydroxymyristoyl','Amino acid transport and metabolism','Carbohydrate transport and metabolism','Cell cycle control, cell division, chromosome partitioning','Cell division and chromosome partitioning','Cell envelope biogenesis, outer membrane','Cell motility and secretion','Cell wall','Chromatin structure and dynamics','Coenzyme transport and metabolism','DNA replication, recombination, and repair','Defense mechanisms','Energy production and conversion','Function unknown','General function prediction only','Inorganic ion transport and metabolism','Intracellular trafficking and secretion','Lipid metabolism','Nucleotide transport and metabolism','Posttranslational modification, protein turnover, chaperones','RNA processing and modification','Replication, recombination, and repair','Secondary metabolites biosynthesis, transport, and catabolism','Signal transduction mechanisms','Transcription','Translation, ribosomal structure and biogenesis','acetolactate synthase, pyruvate dehydrogenase (cytochrome), glyoxylate carboligase, phosphonopyruvate decarboxylase','acyl-carrier-protein'],
+['Thermus_CCB_US3_UF1_uid81197',0,229,95,3,23,76,11,2,2,101,86,42,129,134,230,78,18,72,68,83,0,2,43,68,69,144,3,3],
+['Thermus_RLM_uid156767',0,164,74,4,21,69,7,2,1,93,81,22,112,114,212,58,15,52,53,67,0,3,26,47,62,129,1,3],
+['Thermus_antranikianii_DSM_12462',0,208,105,3,24,70,9,2,2,104,97,24,155,140,258,82,14,72,68,75,0,4,41,69,78,147,2,3],
+['Thermus_antranikianii_MATIS',0,234,99,4,26,70,8,2,2,104,101,24,163,156,282,91,16,74,72,85,0,3,43,70,86,144,1,3],
+['Thermus_aquaticus_Y51MC23_uid55053',0,205,80,4,27,84,8,2,2,108,118,42,122,155,251,75,16,74,66,80,0,2,29,56,74,147,1,3],
+['Thermus_arciformis_MATIS',0,220,101,4,30,73,9,2,2,108,126,43,159,161,272,74,16,72,70,90,0,3,35,76,93,146,1,3],
+['Thermus_brockianus_104',0,218,122,4,22,91,13,2,2,118,96,58,157,149,251,88,14,75,69,81,0,1,39,73,84,147,2,2],
+['Thermus_brockianus_MATIS',0,217,118,4,22,99,13,2,2,115,87,53,152,147,257,85,15,70,70,80,0,2,39,76,81,149,2,2],
+['Thermus_eggertsoni_MATIS',0,214,127,4,25,95,9,2,2,115,103,29,158,158,254,87,18,69,70,82,0,2,39,76,92,149,2,2],
+['Thermus_filiformis_MATIS',1,217,107,4,24,80,11,2,2,107,101,48,134,137,237,77,12,84,70,82,0,2,37,63,85,145,1,3],
+['Thermus_igniterrae_ATCC_700962',0,229,86,3,22,71,13,2,2,107,84,33,146,139,237,79,16,70,71,93,0,3,42,65,70,147,2,3],
+['Thermus_igniterrae_MATIS',0,240,108,4,27,80,11,2,2,123,120,38,161,145,258,90,17,71,71,96,0,2,42,68,74,149,2,3],
+['Thermus_islandicus_DSM_21543',0,233,99,3,27,92,12,2,2,94,102,37,134,143,243,77,13,65,68,83,0,2,33,64,79,146,1,3],
+['Thermus_islandicus_MATIS',0,232,101,4,28,91,12,2,2,95,113,39,136,141,243,78,14,66,68,84,0,2,33,64,80,145,1,3],
+['Thermus_kawarayensis_MATIS',0,216,132,4,25,80,12,2,2,91,116,56,146,159,264,77,19,74,69,88,0,2,36,81,92,150,1,3],
+['Thermus_oshimai',0,222,105,4,24,71,12,2,2,116,92,31,162,146,242,84,15,73,69,86,1,2,42,69,87,142,1,3],
+['Thermus_oshimai_DSM_12092',0,224,96,3,25,69,15,2,2,106,97,32,152,143,243,80,13,76,71,93,1,3,45,68,82,143,1,3],
+['Thermus_oshimai_JL_2_uid178948',0,216,103,4,26,80,12,2,2,116,96,30,143,144,245,80,12,72,71,86,1,3,43,66,87,143,1,2],
+['Thermus_scotoductus_1572',0,229,116,4,31,78,11,2,2,95,126,47,161,156,263,85,23,63,64,88,0,3,32,86,80,147,1,2],
+['Thermus_scotoductus_2101_MATIS',0,240,105,4,21,86,9,2,2,109,100,27,152,154,265,86,18,68,69,84,0,2,40,73,77,148,1,3],
+['Thermus_scotoductus_2127_MATIS',0,215,99,4,22,72,9,2,2,108,89,28,156,146,251,80,21,71,68,81,0,2,39,76,75,147,1,3],
+['Thermus_scotoductus_252',0,185,76,4,29,79,11,2,2,100,132,41,128,133,237,75,18,62,67,81,0,2,29,56,68,150,1,2],
+['Thermus_scotoductus_346',0,196,79,4,19,81,9,2,2,103,88,25,136,143,232,75,16,64,67,80,0,3,33,62,61,150,1,2],
+['Thermus_scotoductus_4063',0,225,99,4,23,82,11,2,2,102,92,37,166,161,255,82,20,69,70,87,0,3,37,81,77,150,1,3],
+['Thermus_scotoductus_DSM_8553',0,186,76,3,28,75,11,2,2,100,125,40,128,131,236,75,17,62,67,81,0,2,27,55,69,148,1,2],
+['Thermus_scotoductus_SA_01_uid62273',0,221,100,4,21,80,9,2,2,102,89,37,164,154,248,83,18,69,69,87,0,3,38,79,78,144,1,3],
+['Thermus_thermophilus_791',0,217,107,4,29,76,14,2,2,113,119,28,149,157,262,86,16,77,66,83,0,3,47,66,89,145,1,3],
+['Thermus_thermophilus_ATCC_33923',0,199,103,4,23,82,12,2,2,110,81,48,137,142,247,83,16,72,65,83,0,3,40,56,69,148,2,2],
+['Thermus_thermophilus_HB27_uid58033',0,191,90,4,22,84,11,2,2,109,95,38,125,139,238,72,16,65,65,78,0,4,36,62,66,145,1,3],
+['Thermus_thermophilus_HB8_uid58223',0,189,97,4,26,82,8,2,2,108,92,35,130,137,244,69,16,67,63,80,0,2,39,54,74,147,1,2],
+['Thermus_thermophilus_JL_18_uid162129',0,210,102,4,27,81,14,2,2,109,102,31,136,145,254,79,18,74,60,78,0,3,46,57,84,145,1,3],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537',0,204,114,3,28,87,11,2,2,108,99,33,140,132,250,73,18,64,62,86,0,3,29,56,83,144,1,3]
+]);
+        gc = google.visualization.arrayToDataTable([['Species', 'GC%'],
+['Thermus_CCB_US3_UF1_uid81197', 0.6857933419571918],
+['Thermus_RLM_uid156767', 0.682930865167436],
+['Thermus_antranikianii_DSM_12462', 0.647650740133478],
+['Thermus_antranikianii_MATIS', 0.6473595386887304],
+['Thermus_aquaticus_Y51MC23_uid55053', 0.6804528112093399],
+['Thermus_arciformis_MATIS', 0.688090258831198],
+['Thermus_brockianus_104_MATIS', 0.6687108958413016],
+['Thermus_brockianus_MATIS', 0.6685414832886416],
+['Thermus_eggertsoni_MATIS', 0.6694087432770288],
+['Thermus_filiformis_MATIS', 0.6907953518530809],
+['Thermus_igniterrae_ATCC_700962', 0.687945954663625],
+['Thermus_igniterrae_MATIS', 0.6845559360332351],
+['Thermus_islandicus_DSM_21543', 0.6835051546391753],
+['Thermus_islandicus_MATIS', 0.6832089200488446],
+['Thermus_kawarayensis_MATIS', 0.6853595796023861],
+['Thermus_oshimai_DSM_12092', 0.6872475070257953],
+['Thermus_oshimai_JL_2_uid178948', 0.6855578723281983],
+['Thermus_oshimai_MATIS', 0.6867255890183555],
+['Thermus_scotoductus_1572_MATIS', 0.6540326703468785],
+['Thermus_scotoductus_2101_MATIS', 0.6518883501898026],
+['Thermus_scotoductus_2127_MATIS', 0.650390173442968],
+['Thermus_scotoductus_252_MATIS', 0.6485152914785643],
+['Thermus_scotoductus_346_MATIS', 0.6521652008904866],
+['Thermus_scotoductus_4063_MATIS', 0.6488005900565185],
+['Thermus_scotoductus_DSM_8553', 0.6476286510014251],
+['Thermus_scotoductus_SA_01_uid62273', 0.6488880283765274],
+['Thermus_thermophilus_791_MATIS', 0.6896855598369382],
+['Thermus_thermophilus_ATCC_33923', 0.6941570734870478],
+['Thermus_thermophilus_HB27_uid58033', 0.69407261730064],
+['Thermus_thermophilus_HB8_uid58223', 0.6949598687369333],
+['Thermus_thermophilus_JL_18_uid162129', 0.6897796480807472],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537', 0.6861824735468974]
+]);
+      	gsize = google.visualization.arrayToDataTable([['Species', '# Genes'],
+['Marinithermus_hydrothermalis_DSM_14884_uid65783', 2261],
+['Meiothermus_ruber_DSM_1279_uid198526', 3108],
+['Meiothermus_ruber_DSM_1279_uid46661', 3066],
+['Meiothermus_ruber_H328_uid199487', 3031],
+['Meiothermus_silvanus_DSM_9946_uid49485', 3522],
+['Meiothermus_timidus_DSM_17022_uid199231', 3115],
+['Oceanithermus_profundus_DSM_14977_uid60855', 2423],
+['Thermus_CCB_US3_UF1_uid81197', 2332],
+['Thermus_RLM_uid156767', 2017],
+['Thermus_antranikianii_DSM_12462', 2240],
+['Thermus_antranikianii_MATIS', 2519],
+['Thermus_aquaticus_Y51MC23_uid55053', 2566],
+['Thermus_arciformis_MATIS', 2737],
+['Thermus_brockianus_104_MATIS', 2553],
+['Thermus_brockianus_MATIS', 2561],
+['Thermus_eggertsoni_MATIS', 2671],
+['Thermus_filiformis_MATIS', 2448],
+['Thermus_igniterrae_ATCC_700962', 2262],
+['Thermus_igniterrae_MATIS', 2623],
+['Thermus_islandicus_DSM_21543', 2355],
+['Thermus_islandicus_MATIS', 2496],
+['Thermus_kawarayensis_MATIS', 2694],
+['Thermus_oshimai_DSM_12092', 2336],
+['Thermus_oshimai_JL_2_uid178948', 2477],
+['Thermus_oshimai_MATIS', 2391],
+['Thermus_scotoductus_1572_MATIS', 2635],
+['Thermus_scotoductus_2101_MATIS', 2528],
+['Thermus_scotoductus_2127_MATIS', 2407],
+['Thermus_scotoductus_252_MATIS', 2260],
+['Thermus_scotoductus_346_MATIS', 2118],
+['Thermus_scotoductus_4063_MATIS', 2450],
+['Thermus_scotoductus_DSM_8553', 2176],
+['Thermus_scotoductus_SA_01_uid62273', 2510],
+['Thermus_thermophilus_791_MATIS', 2603],
+['Thermus_thermophilus_ATCC_33923', 2327],
+['Thermus_thermophilus_HB27_uid58033', 2261],
+['Thermus_thermophilus_HB8_uid58223', 2286],
+['Thermus_thermophilus_JL_18_uid162129', 2442],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537', 2389]
+]);
+          data = google.visualization.arrayToDataTable([
+          ['Species', 'Pan', 'Core'],
+['Thermus_CCB_US3_UF1_uid81197', 2028, 2028],
+['Thermus_RLM_uid156767', 1456, 2308],
+['Thermus_antranikianii_DSM_12462', 1366, 2510],
+['Thermus_antranikianii_MATIS', 1351, 2702],
+['Thermus_aquaticus_Y51MC23_uid55053', 1328, 2999],
+['Thermus_arciformis_MATIS', 1312, 3179],
+['Thermus_brockianus_104_MATIS', 1305, 3295],
+['Thermus_brockianus_MATIS', 1303, 3326],
+['Thermus_eggertsoni_MATIS', 1302, 3440],
+['Thermus_filiformis_MATIS', 1274, 3592],
+['Thermus_igniterrae_ATCC_700962', 1272, 3626],
+['Thermus_igniterrae_MATIS', 1272, 3688],
+['Thermus_islandicus_DSM_21543', 1238, 3855],
+['Thermus_islandicus_MATIS', 1238, 3865],
+['Thermus_kawarayensis_MATIS', 1224, 3952],
+['Thermus_oshimai_DSM_12092', 1221, 4022],
+['Thermus_oshimai_JL_2_uid178948', 1219, 4077],
+['Thermus_oshimai_MATIS', 1219, 4114],
+['Thermus_scotoductus_1572_MATIS', 1209, 4199],
+['Thermus_scotoductus_2101_MATIS', 1207, 4236],
+['Thermus_scotoductus_2127_MATIS', 1206, 4302],
+['Thermus_scotoductus_252_MATIS', 1189, 4372],
+['Thermus_scotoductus_346_MATIS', 1186, 4374],
+['Thermus_scotoductus_4063_MATIS', 1185, 4396],
+['Thermus_scotoductus_DSM_8553', 1183, 4401],
+['Thermus_scotoductus_SA_01_uid62273', 1177, 4437],
+['Thermus_thermophilus_791_MATIS', 1169, 4508],
+['Thermus_thermophilus_ATCC_33923', 1167, 4545],
+['Thermus_thermophilus_HB27_uid58033', 1163, 4568],
+['Thermus_thermophilus_HB8_uid58223', 1160, 4586],
+['Thermus_thermophilus_JL_18_uid162129', 1157, 4606],
+['Thermus_thermophilus_SG0_5JP17_16_uid159537', 1151, 4648]
+        ]);
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+        
+        var gsizechart = new google.visualization.BarChart(document.getElementById('gsizechart_div'));
+      	gsizechart.draw(gsize, gsizeoptions);
+      	
+      	var gcchart = new google.visualization.ColumnChart(document.getElementById('gcchart_div'));
+      	gcchart.draw(gc, gcoptions);
+      	
+      	var cogchart = new google.visualization.ColumnChart(document.getElementById('cogchart_div'));
+      	cogchart.draw(mu, cogoptions);
+      }
+      
+      window.onresize = function() {
+      	var cd = document.getElementById('chart_div');
+      	var chart = new google.visualization.LineChart( cd );
+      	chart.draw(data, options);
+      	
+      	cd = document.getElementById('cogchart_div');
+      	chart = new google.visualization.ColumnChart( cd );
+      	chart.draw(mu, cogoptions);
+      	
+      	cd = document.getElementById('gcchart_div');
+      	chart = new google.visualization.ColumnChart( cd );
+      	chart.draw(gc, gcoptions);
+      	
+      	cd = document.getElementById('gsizechart_div');
+      	chart = new google.visualization.BarChart( cd );
+      	chart.draw(gsize, gsizeoptions);
+      }
+ </script>
+ </head>
+ <body>
+ <div id="gsizechart_div" style="width: 1024px; height: 768px; page-break-after:always"></div>
+ <div id="cogchart_div" style="width: 1024px; height: 1024px; page-break-after:always"></div>
+ <div id="gcchart_div" style="width: 1024px; height: 768px; page-break-after:always"></div>
+ <div id="chart_div" style="width: 1024px; height: 768px; page-break-after:always"></div>
+ </body>
+ </html>

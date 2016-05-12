@@ -1,0 +1,6 @@
+<module>
+	<inherits name="com.google.gwt.user.User"/>
+	<inherits name="com.google.gwt.user.theme.standard.Standard"/>
+	<inherits name='com.google.gwt.maps.GoogleMaps'/>
+	<entry-point class="org.simmi.mapviewer.client.Mapviewer"/>
+</module>

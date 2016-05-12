@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://pontunarkerfi.appspot.com" href="order.jnlp">
+<information>
+  <title>Pontunarkerfi</title>
+  <vendor>Matis ohf.</vendor>
+  <homepage href="http://pontunarkerfi.appspot.com" />
+  <description>Make orders</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<security>
+  <all-permissions/>
+</security>
+<resources>
+  <j2se version="1.7+" />
+  <jar href="order.jar"/>
+  <extension name="sqljdbc" href="sqljdbc.jnlp"/>
+  <extension name="javamail" href="mail.jnlp"/>
+  <extension name="poi" href="poi.jnlp"/>
+</resources>
+<resources os="Windows" arch="x86">
+	<nativelib href = "sqljdbc4_x86.jar" />
+	<property name="file.encoding" value="utf-8"/>
+</resources>
+<resources os="Windows" arch="x86_64">
+	<nativelib href = "sqljdbc4_x64.jar" />
+	<property name="file.encoding" value="utf-8"/>
+</resources>
+<resources os="Windows" arch="amd64">
+	<nativelib href = "sqljdbc4_x64.jar" />
+	<property name="file.encoding" value="utf-8"/>
+</resources>
+<resources os="Windows" arch="ia64">
+	<nativelib href = "sqljdbc4_ia64.jar" />
+	<property name="file.encoding" value="utf-8"/>
+</resources>
+<applet-desc 
+	name="Order"
+	main-class="org.simmi.Order"
+	width="1280"
+	height="800"> 
+<param name="image" value="matis2.gif"/>
+<param name="centerimage" value="true"/> 
+<param name="boxborder" value="false"/>
+<param name="draggable" value="true"/>
+</applet-desc>
+</jnlp>

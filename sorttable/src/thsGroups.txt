@@ -1,0 +1,101 @@
+01	Mjólk, mjólkurvörur
+01.01	Nýmjólk, léttmjólk, undanrenna, rjómi, kakómjólk, kakó, bragðbættir mjólkurdrykkir 
+01.02	Sýrðar mjólkurvörur, sýrður rjómi, jógúrt, jógúrtdrykkir og skyr
+01.03	Mjólkurgrautar og –súpur, mjólkurbúðingar, rjómabúðingar, tiramisú 
+01.04	Nýmjólkurduft, undanrennuduft
+02	Ostar 
+02.01	Allir ostar úr mjólk eða mjólkurvörum
+02.02	Ostar úr soja eða öðru jurtapróteini
+03	Ís
+03.01	Mjólkurís, rjómaís, jógúrtís
+03.02	Jurtaís
+03.03	Vatnsís
+04	Kornmatur, brauð og kökur
+04.01	Ómalað og heilmalað korn.0 Hrísgrjón, maís og hafragrjón
+04.02	Mjöl
+04.03	Morgunverðarkorn, mjölgrautar
+04.04	Brauð, hrökkbrauð, tvíbökur, bruður, skonsur
+04.05	Kex, sætt, ósætt, smákökur
+04.06	Kökur, tertur, ostakökur, kleinur
+04.07	Pasta, kús-kús
+05	Grænmeti og kartöflur
+05.01	Nýir, frystir rótarávextir, nema kartöflur
+05.02	Nýtt, fryst grænmeti: stönglar, blöð, aldin
+05.03	Nýjar kartöflur
+05.04	Nýjar, frystar baunir, ertur
+05.05	Nýir sveppir
+05.06	Ferskar kryddjurtir
+05.07	Niðursoðið og niðurlagt grænmeti, tómatmauk
+05.08	Þurrkað grænmeti, kartöfluduft
+05.09	Franskar kartöflur 
+06	Ávextir, ber, hnetur og fræ
+06.01	Nýir, frystir ávextir
+06.02	Ný, fryst ber
+06.03	Hnetur, fræ
+06.04	Niðursoðnir ávextir, ber, ávaxtagrautar, ávaxtamauk
+06.05	Þurrkaðir ávextir og ber
+06.06	Sultur
+07	Kjöt og kjötvörur.0 Fuglakjöt
+07.01	Lambakjöt, kindakjöt, nýtt, fryst, saltað, reykt, hakkað 
+07.02	Nautakjöt
+07.03	Svínakjöt
+07.04	Hrossakjöt
+07.05	Hreindýra- hvalkjöt
+07.06	Alifuglar
+07.07	Sjófuglar og aðrir villtir fuglar
+07.08	Fars, farsvörur, pylsur, bjúgu, áleggspylsur
+07.09	Innmatur, slátur, svið, kæfa
+07.10	Niðursoðin kjötvara
+08	Fiskur, fiskafurðir og skeldýr
+08.01	Ferskur og frystur fiskur.0 Fiskhakk, hrogn, lifur
+08.02	Þurrkaður og hertur fiskur
+08.03	Fiskfars og farsvörur, fiskipate
+08.04	Saltfiskur, reyktur fiskur, siginn, kæstur og grafinn fiskur
+08.05	Niðurlagður og niðursoðinn fiskur og skeldýr
+08.06	Fersk og fryst skeldýr
+09	Egg og eggjavörur
+09.01	Egg, ný, fryst, heil eða fljótandi
+09.02	Þurrkaðar eggjavörur
+10	Feitmeti: smjör, smjörlíki, olíur o.0fl
+10.01	Jurtaolíur, jurtafeiti
+10.02	Fiskolíur, lýsi
+10.03	Tólg, mör, kjötfita
+10.04	Smjör, Smjörvi, Létt og laggott, Klípa
+10.05	Smjörlíki, hert fita
+10.06	Hnetusmjör, fræsmjör
+11	Sykur, hunang og sælgæti
+11.01	Sykur, púðursykur, flórsykur
+11.02	Hunang
+11.03	Sælgæti
+12	Drykkir, nema mjólkurdrykkir
+12.01	Te, kaffi, kakóduft
+12.02	Gosdrykkir, svaladrykkir
+12.03	Blandaðir ávaxta- og berjadrykkir, saft
+12.04	Hreinir safar, ávaxtasafar, berjasafar, grænmetissafar
+12.05	Íþrótta- og orkudrykkir
+12.06	Bjór, pilsner, maltöl
+12.07	Borðvín
+12.08	Millisterk vín, brennd vín, líkjör
+12.09	Vatn, sódavatn með og án bragðefna
+13	Matarsalt, edik, ger, krydd og kraftur
+13.01	Matarsalt, edik, krydd og kraftur
+13.02	Ger og hjálparefni
+13.03	Gervisætuefni
+14	Snakk: poppkorn, flögur o.0fl.0
+14.01	Poppkorn
+14.02	Flögur, skrúfur, kornstangir, annað snakk
+15	Sósur, súpur og áleggssalöt
+15.01	Allar sósur og ídýfur: Salatsósur, majones og majonessósur, olíusósur, rjóma- og ostasósur, sinnep, tómatsósur, sósur úr grænmeti, uppbakaðar, jafnaðar sósur, súr-sætar sósur o.0fl.0 
+15.02	Súpur, súpuduft
+15.03	Áleggssalöt, majonessalöt, salöt úr sýrðum rjóma
+16	Tilbúnir réttir
+16.01	Pitsur, samlokur, pitur, brauðréttir, hamborgarar, pylsa í brauði
+16.02	Pastaréttir, lasagna
+16.03	Kjötréttir
+16.04	Fiskréttir
+16.05	Grænmetisréttir
+16.06	Eggjaréttir
+17	Fæðubótarefni, næringardrykkir, sérfæði
+17.01	Vítamín, steinefni, önnur fæðubótarefni
+17.02	Megrunar- og próteindrykkir, næringardrykkir, próteinstykki
+ZZZ	Vantar

@@ -1,0 +1,189 @@
+<!doctype html>
+<!-- The DOCTYPE declaration above will set the    -->
+<!-- browser's rendering engine into               -->
+<!-- "Standards Mode". Replacing this declaration  -->
+<!-- with a "Quirks Mode" doctype may lead to some -->
+<!-- differences in layout.                        -->
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <!--                                                               -->
+    <!-- Consider inlining CSS to reduce the number of requested files -->
+    <!--                                                               -->
+    <link type="text/css" rel="stylesheet" href="Thermus.css">
+
+    <!--                                           -->
+    <!-- Any title is fine                         -->
+    <!--                                           -->
+    <title>Thermus table</title>
+    <meta property="og:title" content="Thermus table" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="http://thermusgenes.appspot.com/" />
+    <meta property="og:image" content="http://fasteignaverd.appspot.com/ndb.png" />
+    
+     <script type="text/javascript">
+    simmiModule = null;  // Global application object.
+    statusText = 'NO-STATUS';
+
+    // Indicate load success.
+    function moduleDidLoad() {
+      simmiModule = document.getElementById('fasttree');
+      updateStatus('SUCCESS');
+    }
+
+    // The 'message' event handler.  This handler is fired when the NaCl module
+    // posts a message to the browser by calling PPB_Messaging.PostMessage()
+    // (in C) or pp::Instance.PostMessage() (in C++).  This implementation
+    // simply displays the content of the message in an alert panel.
+    function handleMessage(message_event) {
+      //alert(message_event.data);
+      document.appendText( message_event.data );
+    }
+    
+    tot = "";
+    function postModuleMessage( message, size ) {
+    	tot += message;
+    	if( tot.length == size ) { 
+    		simmiModule.postMessage( tot );
+    		tot = "";
+    	}
+    }
+
+    // If the page loads before the Native Client module loads, then set the
+    // status message indicating that the module is still loading.  Otherwise,
+    // do not change the status message.
+    function pageDidLoad() {
+      if (simmiModule == null) {
+        updateStatus('LOADING...');
+      } else {
+        // It's possible that the Native Client module onload event fired
+        // before the page's onload event.  In this case, the status message
+        // will reflect 'SUCCESS', but won't be displayed.  This call will
+        // display the current message.
+        updateStatus();
+      }
+    }
+
+    // Set the global status message.  If the element with id 'statusField'
+    // exists, then set its HTML to the status message as well.
+    // opt_message The message test.  If this is null or undefined, then
+    // attempt to set the element with id 'statusField' to the value of
+    // |statusText|.
+    function updateStatus(opt_message) {
+      if (opt_message)
+        statusText = opt_message;
+      var statusField = document.getElementById('status_field');
+      if (statusField) {
+        statusField.innerHTML = statusText;
+      }
+    }
+    
+    var domain = 'http://webconnectron.appspot.com';
+    var simlabdomain = 'http://websimlab.appspot.com';
+	var treetext = "";
+	var commands = "";
+	var myPopup;
+	function receiveMessage(event) {
+		console.log( 'ready message received' );
+		if (event.origin == "http://webconnectron.appspot.com") {
+			console.log( 'correct origin' );
+			if( treetext.length > 0 ) {
+				myPopup.postMessage(treetext,domain);
+			}
+    	} else if (event.origin == "http://websimlab.appspot.com") {
+			console.log( 'simlab origin' );
+			console.log( commands );
+			if( commands.length > 0 ) {
+				console.log( treetext + " " + treetext.byteLength );
+				myPopup.postMessage(treetext,simlabdomain);
+				//myPopup.postMessage(cmd,simlabdomain);
+			}
+    	}
+  	}
+	window.addEventListener("message", receiveMessage, false);
+	
+	showMatr = function( newmatrix ) {
+		treetext = newmatrix;
+		myPopup = window.open(domain + '/Webconnectron.html?callback=thermusgenes','_blank');
+	}
+	
+	showShannon = function( newshannon, cmd ) {
+		var dbuffer = new Float64Array( newshannon.length );
+		dbuffer.set( newshannon );
+		treetext = dbuffer.buffer;
+		commands = cmd;
+		console.log( cmd );
+		myPopup = window.open(simlabdomain + '/Websimlab.html?callback=thermusgenes','_blank');
+	}
+	
+	blobstuff = function( str, type ) {
+		var aFileParts = [str];
+		var oMyBlob = new Blob(aFileParts, { "type" : type });
+		window.open( window.URL.createObjectURL( oMyBlob ), '_blank' );
+	}
+	
+	blobfetch = function( str, type ) {
+		bbstr = window.atob( str );
+		var rawLength = bbstr.length;
+		var array = new Uint8Array(new ArrayBuffer(rawLength));
+ 
+		for(i = 0; i < rawLength; i++) {
+			array[i] = bbstr.charCodeAt(i);
+		}
+		var aFileParts = [array];
+		var oMyBlob = new Blob(aFileParts, { "type" : type });
+		window.open( window.URL.createObjectURL( oMyBlob ), '_blank' );
+	}
+  </script>
+    <!--                                           -->
+    <!-- This script loads your compiled module.   -->
+    <!-- If you add any GWT meta tags, they must   -->
+    <!-- be added before this line.                -->
+    <!--                                           -->
+    <script type="text/javascript" language="javascript" src="http://www.java.com/js/deployJava.js"></script>
+    <script type="text/javascript" language="javascript" src="org.simmi.Thermustable/org.simmi.Thermustable.nocache.js"></script>
+  </head>
+
+  <!--                                           -->
+  <!-- The body can have arbitrary html, or      -->
+  <!-- you can leave the body empty if you want  -->
+  <!-- to create a completely dynamic UI.        -->
+  <!--                                           -->
+  <body onload="pageDidLoad()">
+
+    <!-- OPTIONAL: include this if you want history support -->
+    <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
+    
+    <!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+    <noscript>
+      <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        Your web browser must have JavaScript enabled
+        in order for this application to display correctly.
+      </div>
+    </noscript>
+    
+     <!--script type="text/javascript" language="javascript">
+    	var attributes = { codebase:'http://127.0.0.1:8888/', archive:'treedraw.jar', code:'org.simmi.DataTable', width:'100%', height:'100%', id:'datatable', name:'datatable' };
+        var parameters = { jnlp_href:'treedraw.jnlp' };
+        deployJava.runApplet(attributes, parameters, '1.6');
+    </script-->
+    
+    <div id="listener" style="width:100%;height:20px">
+    	<script type="text/javascript">
+    	  var listener = document.getElementById('listener');
+    	  listener.addEventListener('load', moduleDidLoad, true);
+    	  listener.addEventListener('message', handleMessage, true);
+    	</script>
+    
+    <embed name="nacl_module"
+       	id="fasttree"
+       	width=0 height=0
+       	src="fasttree.nmf"
+       	type="application/x-nacl" />
+    </div>
+    <div id="status_field" style="width:100%;height:20px">NO-STATUS</div>
+   	</div>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<html>
+<head>
+<script>
+var domain = 'http://webconnectron.appspot.com/';
+function handleMessage(message_event) {
+      var treeenc = encodeURIComponent( message_event.data );
+      window.open(domain + '/Treedraw.html?tree=' + treeenc,'_blank');
+}
+function now() {
+	var ft = document.getElementById('fasttree');
+	ft.addEventListener('message', handleMessage, true);
+	var req = new XMLHttpRequest();
+	function reqlist() {
+	  var treestr = 'f'+this.responseText;
+	  window.console.log( treestr );
+	  ft.postMessage( treestr );
+	};
+	req.onload = reqlist;
+	req.open("GET", "tree.txt");
+	req.send();
+}
+</script>
+</head>
+<body>
+<embed name="nacl_module" style="visibility:hidden" onload="now()"
+       	id="fasttree"
+       	width=0 height=0
+       	src="fasttree.nmf"
+       	type="application/x-nacl" />
+</body>
+</html>

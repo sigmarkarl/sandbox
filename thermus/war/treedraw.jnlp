@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="http://thermusgenes.appspot.com/" href="treedraw.jnlp">
+<information>
+  <title>Thermusgenes</title>
+  <vendor>Huldufolk ehf.</vendor>
+  <homepage href="http://thermusgenes.appspot.com" />
+  <description>Treedraw</description>
+  <shortcut online="true">
+      <desktop />
+  </shortcut>
+</information>
+<offline-allowed/>
+<resources>
+  <j2se version="1.6+" />
+  <jar href="treedraw.jar"/>
+  <extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/>
+  <extension name="gdata" href="http://thermusgenes.appspot.com/gdata.jnlp"/>
+  <extension name="javafasta" href="http://webfasta.appspot.com/javafastacomp.jnlp"/>
+</resources>
+<applet-desc 
+	name="DataTable"
+	main-class="org.simmi.DataTable"
+	width="1280"
+	height="800"> 
+	<param name="draggable" value="true"/>
+</applet-desc>
+</jnlp>
