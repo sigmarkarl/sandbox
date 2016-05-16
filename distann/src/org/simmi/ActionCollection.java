@@ -4345,8 +4345,8 @@ public class ActionCollection {
 							//int i = ctable.convertRowIndexToModel( row );
 							//Sequence ctg = contigs.get( i );
 							
-							List<Integer> starts = new ArrayList<Integer>();
-							List<Integer> stops = new ArrayList<Integer>();
+							List<Integer> starts = new ArrayList<>();
+							List<Integer> stops = new ArrayList<>();
 							
 							int started = -1;
 							for( int k = 0; k < ctg.length(); k++ ) {

@@ -2820,35 +2820,7 @@ public class GeneSetHead extends JApplet {
 					Path root = geneset.zipfilesystem.getPath("/");
 					Path p = geneset.zipfilesystem.getPath("cluster.blastout"); //root.resolve("culster.blastout");
 					
-<<<<<<< HEAD
 					List<Set<String>> cluster = geneset.uclusterlist == null ? new ArrayList<>() : new ArrayList<>( geneset.uclusterlist );
-=======
-					List<Set<String>> cluster = geneset.uclusterlist == null ? new ArrayList<Set<String>>() : new ArrayList<Set<String>>( geneset.uclusterlist );
->>>>>>> 28f892b6d8aabf292c7ecdd985fb0d6537ccaef0
-					/*for( Set<String> specs : clusterMap.keySet() ) {
-						Set<Map<String,Set<String>>> uset = clusterMap.get( specs );
-						for( Map<String,Set<String>> umap : uset ) {
-							for( String val : umap.keySet() ) {
-								Set<String> sset = umap.get(val);
-								
-								/*Set<String> ss = new HashSet<String>();
-								for( String str : sset ) {
-									int k = str.indexOf(' ');
-									if( k == -1 ) k = str.length();
-									ss.add( str.substring(0,k) );
-									/*if( str.contains(" ") ) {
-										System.err.println( "coooonnnnnni2 " + str );
-									}*
-								}*
-								cluster.add( sset );
-							}
-						}
-					}*/
-<<<<<<< HEAD
-=======
-					
-					//p = null;
->>>>>>> 28f892b6d8aabf292c7ecdd985fb0d6537ccaef0
 					s.makeBlastCluster(root, p, 1, id, len, idspec, cluster, geneset.refmap);
 					
 					System.err.println( cluster.get(0) );
@@ -2873,7 +2845,7 @@ public class GeneSetHead extends JApplet {
 				JFileChooser fc = new JFileChooser();
 				if( fc.showOpenDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
 					try {
-						Map<String,String> env = new HashMap<String,String>();
+						Map<String,String> env = new HashMap<>();
 						env.put("create", "true");
 						//Path path = zipfile.toPath();
 						String uristr = "jar:" + geneset.zippath.toUri();
@@ -3373,7 +3345,7 @@ public class GeneSetHead extends JApplet {
 				JTextField tf = new JTextField("http://130.208.252.239/organisms/");
 				JOptionPane.showMessageDialog(null, tf);
 				
-				Map<String,String> env = new HashMap<String,String>();
+				Map<String,String> env = new HashMap<>();
 				env.put("create", "true");
 				
 				Path rootp = null;
@@ -7889,11 +7861,7 @@ public class GeneSetHead extends JApplet {
 		ContextMenu popup = new ContextMenu();
 		MenuItem splitaction = new MenuItem("Split");
 		splitaction.setOnAction( e -> {
-<<<<<<< HEAD
 			Dialog<Set<GeneGroup>> dialog = new Dialog<>();
-=======
-			Dialog<List<GeneGroup>> dialog = new Dialog<>();
->>>>>>> 28f892b6d8aabf292c7ecdd985fb0d6537ccaef0
 			dialog.setResizable( true );
 
 			GridPane grid = new GridPane();
@@ -7972,11 +7940,7 @@ public class GeneSetHead extends JApplet {
 
 						List<GeneGroup> lgg = new ArrayList(sgg);
 						list.setItems( FXCollections.observableList( lgg ) );
-<<<<<<< HEAD
 						dialog.setResultConverter(param -> sgg);
-=======
-						dialog.setResultConverter(param -> lgg);
->>>>>>> 28f892b6d8aabf292c7ecdd985fb0d6537ccaef0
 					}
 				}
 			});
@@ -7984,11 +7948,7 @@ public class GeneSetHead extends JApplet {
 			dialog.getDialogPane().setContent( grid );
 			dialog.getDialogPane().getButtonTypes().add( ButtonType.OK );
 			dialog.getDialogPane().getButtonTypes().add( ButtonType.CANCEL );
-<<<<<<< HEAD
 			Optional<Set<GeneGroup>> ogg = dialog.showAndWait();
-=======
-			Optional<List<GeneGroup>> ogg = dialog.showAndWait();
->>>>>>> 28f892b6d8aabf292c7ecdd985fb0d6537ccaef0
 
 			ogg.ifPresent( c -> {
 				geneset.allgenegroups.remove(gg);
@@ -8003,10 +7963,8 @@ public class GeneSetHead extends JApplet {
 							String filename = f.getFileName().toString();
 							return gg.genes.stream().anyMatch( g -> {
 								String fnid = filename.substring(0,filename.length()-3);
-								//System.err.println("comparing " + g.name + "  " + fnid);
 								return g.name.equals(fnid);
 							});
-<<<<<<< HEAD
 						}).forEach(p -> {
 							try {
 								Files.deleteIfExists(p);
@@ -8014,9 +7972,6 @@ public class GeneSetHead extends JApplet {
 								e1.printStackTrace();
 							}
 						});
-=======
-						}).forEach( p -> System.err.println("found path: "+p) );
->>>>>>> 28f892b6d8aabf292c7ecdd985fb0d6537ccaef0
 						/*for( Gene g : gg.genes ) {
 							if( g.keggpathway != null ) {
 								String sub = g.keggpathway.substring(0,3);
@@ -8032,7 +7987,6 @@ public class GeneSetHead extends JApplet {
 								}
 							}
 						}*/
-<<<<<<< HEAD
 						final Path p = root.resolve("/aligned");
 						c.stream().forEach( fgg -> {
 							Path np = p.resolve(fgg.genes.iterator().next().getName());
@@ -8044,8 +7998,6 @@ public class GeneSetHead extends JApplet {
 								e1.printStackTrace();
 							}
 						});
-=======
->>>>>>> 28f892b6d8aabf292c7ecdd985fb0d6537ccaef0
 						break;
 					}
 					geneset.zipfilesystem.close();
