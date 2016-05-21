@@ -79,7 +79,7 @@ public class Neighbour {
 	public Neighbour( Set<GeneGroup> sgg ) {
 		selectedGenesGroups = sgg;
 		
-		hteg = new ArrayList<Annotation>();
+		hteg = new ArrayList<>();
 		for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
 			for( Gene selectedGene : selectedGeneGroup.genes ) {
 				hteg.add( selectedGene.tegeval );
@@ -88,11 +88,11 @@ public class Neighbour {
 	}
 	
 	public void recenter( JTable rowheader, JComponent c ) {
-		selectedGenesGroups = new HashSet<GeneGroup>();
+		selectedGenesGroups = new HashSet<>();
 		selectedGenesGroups.add( currentTe.getGene().getGeneGroup() );
 		//hteg = loadContigs( selectedGenes, null );
 		hteg.clear();
-		hteg = new ArrayList<Annotation>();
+		hteg = new ArrayList<>();
 		for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
 			for( Gene selectedGene : selectedGeneGroup.genes ) {
 				hteg.add( selectedGene.tegeval );
@@ -1612,7 +1612,7 @@ public class Neighbour {
 	final JRadioButtonMenuItem sgradcol = new JRadioButtonMenuItem("Synteny gradient");
 	final JRadioButtonMenuItem precol = new JRadioButtonMenuItem("Proximity preservation");
 	
-	final Map<Set<Function>,Color>	funcMap = new HashMap<Set<Function>,Color>();
+	final Map<Set<Function>,Color>	funcMap = new HashMap<>();
 	final Random rand = new Random();
 	final JTable rowheader = new JTable();
 	final Map<String,Integer> blosumap = JavaFasta.getBlosumMap();
@@ -1624,7 +1624,7 @@ public class Neighbour {
 	public final JComboBox<String>			names = new JComboBox<String>();
 	JComponent c;
 	double neighbourscale = 1.0;
-	static Annotation currentTe = null;
+	private static Annotation currentTe = null;
 	Set<GeneGroup> selectedGenesGroups;
 	static List<Annotation>	hteg;
 	//static int colorscheme = 0;
@@ -2150,7 +2150,7 @@ public class Neighbour {
 					if( currentTe != null ) {
 						GeneGroup gg = currentTe.getGene().getGeneGroup();
 						List<Tegeval> lte = gg.getTegevals();
-						List<Tegeval> include = new ArrayList<Tegeval>();
+						List<Tegeval> include = new ArrayList<>();
 						for( Tegeval te : lte ) {
 							Sequence ct = te.getContig();
 							for( Annotation ste : hteg ) {
@@ -2599,6 +2599,7 @@ public class Neighbour {
 							c.setToolTipText( "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+"<br>"+ te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>" );
 							//c.sett
 						} else {
+							currentTe = te;
 							te.setSelected( !te.isSelected() );
 							if( !genesethead.isGeneview() ) {
 								genesethead.getGeneGroupTable().getSelectionModel().select( te.getGene().getGeneGroup() );

@@ -245,7 +245,7 @@ public class WSServer {
 										genesethead.genefilterset.add(ngg.groupIndex);
 									}
 								}
-								genesethead.updateFilter(genesethead.table, genesethead.genefilter, genesethead.label);
+								genesethead.updateFilter(genesethead.table, genesethead.label);
 							}
 						}
 						
@@ -266,7 +266,7 @@ public class WSServer {
 						
 						if( sgg.size() > 0 ) {
 							genesethead.genefilterset.clear();
-							genesethead.updateFilter(genesethead.table, null, genesethead.label);
+							genesethead.updateFilter(genesethead.table, genesethead.label);
 						}
 						
 						ByteArrayOutputStream baos = new ByteArrayOutputStream();
