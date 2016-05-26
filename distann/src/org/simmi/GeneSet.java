@@ -7534,7 +7534,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name );
+					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, name, name, spec );
@@ -7616,7 +7616,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name );
+					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, cont+"_"+loc, name, spec );
@@ -7780,7 +7780,7 @@ public class GeneSet {
 					if( ggmap.containsKey( name ) ) {
 						gg = ggmap.get( name );
 					} else {
-						gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name );
+						gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
 						ggmap.put( name, gg );
 					}
 					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7813,7 +7813,7 @@ public class GeneSet {
 						if( ggmap.containsKey( name ) ) {
 							gg = ggmap.get( name );
 						} else {
-							gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name );
+							gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
 							ggmap.put( name, gg );
 						}
 						Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7855,7 +7855,7 @@ public class GeneSet {
 			if( ggmap.containsKey( name ) ) {
 				gg = ggmap.get( name );
 			} else {
-				gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name );
+				gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
 				ggmap.put( name, gg );
 			}
 			Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -8465,7 +8465,7 @@ public class GeneSet {
 				corrList.put(cluster, new double[20*20]);
 			}*/
 
-			GeneGroup gg = new GeneGroup( i, specset, cogmap, ko2name );
+			GeneGroup gg = new GeneGroup( i, specset, cogmap, ko2name, biosystemsmap );
 			ggList.add( gg );
 			//gg.addSpecies( ss );
 			gg.setGroupCount( val );
@@ -8492,7 +8492,7 @@ public class GeneSet {
 		
 		for( Gene g : genelist ) {
 			if( g.getGeneGroup() == null ) {
-				GeneGroup gg = new GeneGroup( i++, specset, cogmap, ko2name );
+				GeneGroup gg = new GeneGroup( i++, specset, cogmap, ko2name, biosystemsmap );
 				ggList.add( gg );
 				gg.setGroupCount( 1 );
 				

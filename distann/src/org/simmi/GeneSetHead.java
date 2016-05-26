@@ -3249,6 +3249,10 @@ public class GeneSetHead extends JApplet {
 
 			TextField gene = new TextField();
 			TextField biosys = new TextField();
+
+			gene.setText("ftp://ftp.ncbi.nlm.nih.gov/pub/biosystems/biosystems.20160519/biosystems_gene_all.gz");
+			biosys.setText("ftp://ftp.ncbi.nlm.nih.gov/pub/biosystems/biosystems.20160519/bsid2info.gz");
+
 			VBox	duo = new VBox();
 			duo.getChildren().add( gene );
 			duo.getChildren().add( biosys );
@@ -3259,19 +3263,25 @@ public class GeneSetHead extends JApplet {
 			dialog.setResultConverter(param -> {
 				if( !param.getButtonData().isCancelButton() ) {
 					Map<String,Set<String>> result = null;
-
-					Path p = Paths.get(gene.getText());
-					Path b = Paths.get(biosys.getText());
-
 					Set<String> geneidset = geneset.genelist.stream().map( g -> g.genid ).collect(Collectors.toSet());
 					try {
-						Map<String,List<String[]>> group = Files.newBufferedReader(p).lines().map(l -> l.split("\t")).filter(s -> geneidset.contains(s[1])).collect( Collectors.groupingBy(s->s[1]) );
+						InputStream p = new URI(gene.getText()).toURL().openStream();
+						InputStream b = new URI(biosys.getText()).toURL().openStream();
+
+						if( gene.getText().endsWith(".gz") ) p = new GZIPInputStream(p);
+						if( biosys.getText().endsWith(".gz") ) b = new GZIPInputStream(b);
+
+						Map<String,List<String[]>> group = new BufferedReader(new InputStreamReader(p)).lines().map(l -> l.split("\t")).filter(s -> geneidset.contains(s[1])).collect( Collectors.groupingBy(s->s[1]) );
 						Set<String> bsids = group.entrySet().stream().flatMap( e -> e.getValue().stream() ).map( s -> s[0] ).collect(Collectors.toSet());
-						Map<String,String> bsid2name = Files.newBufferedReader(b).lines().map( s -> s.split("\t") ).filter( s -> bsids.contains(s[0]) ).collect( Collectors.toMap(s->s[0],s->s[3]) );
+						Map<String,String> bsid2name = new BufferedReader(new InputStreamReader(b)).lines().map( s -> s.split("\t") ).filter( s -> bsids.contains(s[0]) ).collect( Collectors.toMap(s->s[0],s->s[2]+":"+s[3]) );
 						result = group.entrySet().stream().collect( Collectors.toMap(s->s.getKey(),s->s.getValue().stream().map(sub-> bsid2name.get(sub[0]) ).collect(Collectors.toSet())) );
 					} catch (IOException e) {
 						e.printStackTrace();
+					} catch (URISyntaxException e) {
+						e.printStackTrace();
 					}
+					//Path p = Paths.get(gene.getText());
+					//Path b = Paths.get(biosys.getText());
 					return result;
 				}
 				return null;
@@ -3287,10 +3297,10 @@ public class GeneSetHead extends JApplet {
 				try {
 					geneset.zipfilesystem = FileSystems.newFileSystem(geneset.zipuri, env);
 					Path resPath = geneset.zipfilesystem.getPath("/biosystems.txt");
-					BufferedWriter bw = Files.newBufferedWriter( resPath );
+					BufferedWriter bw = Files.newBufferedWriter( resPath, StandardOpenOption.TRUNCATE_EXISTING );
 					geneset.biosystemsmap.entrySet().stream().forEach(e -> {
 						try {
-							bw.write(e.getKey() + "\t" + e.getValue().stream().collect(Collectors.joining(",")) + "\n");
+							bw.write(e.getKey() + "\t" + e.getValue().stream().collect(Collectors.joining(";")) + "\n");
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
@@ -7106,7 +7116,7 @@ public class GeneSetHead extends JApplet {
 		keggidcol.setCellValueFactory( new PropertyValueFactory<>("keggid"));
 		table.getColumns().add( keggidcol );
 		TableColumn<GeneGroup, String> keggpathcol = new TableColumn("Kegg pathway");
-		keggpathcol.setCellValueFactory( new PropertyValueFactory<>("keggpath"));
+		keggpathcol.setCellValueFactory( new PropertyValueFactory<>("keggPathway"));
 		table.getColumns().add( keggpathcol );
 		TableColumn<GeneGroup, String> kocol = new TableColumn("KO");
 		kocol.setCellValueFactory( new PropertyValueFactory<>("ko"));
@@ -8010,6 +8020,7 @@ public class GeneSetHead extends JApplet {
 			/*String uristr = "jar:" + geneset.zippath.toUri();
 			URI zipuri = URI.create( uristr /*.replace("file://", "file:")* );
 			final List<Path>	lbi = new ArrayList<>();*/
+			boolean shown = false;
 			try {
 				geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 				for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
@@ -8023,6 +8034,8 @@ public class GeneSetHead extends JApplet {
 									Path pimg = subf.resolve(s+".png");
 									if( Files.exists(pimg) ) {
 										showKeggPathway( sub, pimg );
+										shown = true;
+										break;
 									}
 								}
 							}
@@ -8033,6 +8046,21 @@ public class GeneSetHead extends JApplet {
 				geneset.zipfilesystem.close();
 			} catch( Exception ex ) {
 				ex.printStackTrace();
+			}
+
+			if( !shown ) {
+				for( Gene g : gg.genes ) {
+					if (g.keggpathway != null) {
+						String[] keggsplit = g.keggpathway.split(";");
+						Arrays.stream(keggsplit).map( s -> s.split(":")[0] ).findFirst().ifPresent(c -> {
+							try {
+								Desktop.getDesktop().browse(URI.create("http://www.genome.jp/dbget-bin/www_bget?map" + c.substring(2)));
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+						});
+					}
+				}
 			}
 		});
 		popup.getItems().add( showkegg );
