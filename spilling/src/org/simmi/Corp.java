@@ -33,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -490,8 +491,8 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 	}
 	
 	public String relCall( String xml ) {
-		URL 		url = null;
 		try {
+			URL 		url = URI.create("http://localhost").toURL();
 			URLConnection connection = url.openConnection();
 			if( connection instanceof HttpURLConnection ) {
 				HttpURLConnection httpConnection = (HttpURLConnection)connection;
