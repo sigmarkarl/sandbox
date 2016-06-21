@@ -1783,7 +1783,7 @@ public class GeneSetHead extends JApplet {
 	public void cogCalc( String filename, Set<Character> includedCogs, Map<String,Map<Character,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
 		if( !isGeneview() ) {
 			for( String spec : selspec ) {
-				Map<Character,Integer>	submap = new HashMap<Character,Integer>();
+				Map<Character,Integer>	submap = new HashMap<>();
 				map.put(spec, submap);
 				
 				List<Sequence> sctg = geneset.speccontigMap.get(spec);
@@ -1797,9 +1797,12 @@ public class GeneSetHead extends JApplet {
 							int val = 0;
 							if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
 							submap.put(cog.symbol, val+1);
+						} else if( cog != null ) {
+							System.err.println("null symbol" + cog.id + "  " + cog.name + "   " + cog.genesymbol + "  " + cog.annotation);
 						}
 					}
 				}
+				System.err.println();
 			}
 			
 			/*for( int r = 0; r < table.getRowCount(); r++ ) {
@@ -2136,78 +2139,72 @@ public class GeneSetHead extends JApplet {
 	}
 	
 	public void showAlignedSequences( Component comp, Serifier	serifier ) {
-		SwingUtilities.invokeLater( new Runnable() {
-			public void run() {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
-				jf.initGui(frame);
-				jf.updateView();
-		
-				frame.setVisible(true);
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            JFrame frame1 = new JFrame();
+            frame1.setSize(800, 600);
+            frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            jf.initGui(frame1);
+            jf.updateView();
+
+            frame1.setVisible(true);
+        });
 	}
 	
 	public void showSomeSequences( Component comp, Serifier serifier ) {
-		SwingUtilities.invokeLater( new Runnable() {
-			public void run() {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
-				jf.initGui(frame);
-		
-				/*for( String contig : contset.keySet() ) {
-					Sequence seq = contset.get(contig);
-					serifier.addSequence(seq);
-					if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());
-				}*/
-				jf.getSerifier().checkMaxMin();
-				jf.updateView();
-		
-				frame.setVisible(true);
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            JFrame frame1 = new JFrame();
+            frame1.setSize(800, 600);
+            frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            jf.initGui(frame1);
+
+            /*for( String contig : contset.keySet() ) {
+                Sequence seq = contset.get(contig);
+                serifier.addSequence(seq);
+                if (seq.getAnnotations() != null)
+                    Collections.sort(seq.getAnnotations());
+            }*/
+            jf.getSerifier().checkMaxMin();
+            jf.updateView();
+
+            frame1.setVisible(true);
+        });
 	}
 	
 	public void showSelectedSequences( Component comp, Set<Annotation> tset, boolean dna, String names ) {
-		SwingUtilities.invokeLater( new Runnable() {
-			public void run() {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier	serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
-				jf.initGui(frame);
-		
-				for( Annotation tv : tset ) {
-					Sequence cont = tv.getContig();
-					if( cont != null ) {
-						//String contig = cont.getSpec();//tv.getContig();
-						Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-						seq.setName( geneset.nameFix(tv.getSpecies()) );
-						//Sequence seq = new Sequence( nameFix(tv.getSpecies())/*getGeneName(names, tv.getGene())*/, seqstr, serifier.mseq );
-						serifier.addSequence(seq);
-					}
-				}
-		
-				/*for( String contig : contset.keySet() ) {
-					Sequence seq = contset.get(contig);
-					serifier.addSequence(seq);
-					if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());
-				}*/
-				jf.updateView();
-		
-				frame.setVisible(true);
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            JFrame frame1 = new JFrame();
+            frame1.setSize(800, 600);
+            frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            Serifier	serifier = new Serifier();
+            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            jf.initGui(frame1);
+
+            for( Annotation tv : tset ) {
+                Sequence cont = tv.getContig();
+                if( cont != null ) {
+                    //String contig = cont.getSpec();//tv.getContig();
+                    Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+                    seq.setName( geneset.nameFix(tv.getSpecies()) );
+                    //Sequence seq = new Sequence( nameFix(tv.getSpecies())/*getGeneName(names, tv.getGene())*/, seqstr, serifier.mseq );
+                    serifier.addSequence(seq);
+                }
+            }
+
+            /*for( String contig : contset.keySet() ) {
+                Sequence seq = contset.get(contig);
+                serifier.addSequence(seq);
+                if (seq.getAnnotations() != null)
+                    Collections.sort(seq.getAnnotations());
+            }*/
+            jf.updateView();
+
+            frame1.setVisible(true);
+        });
 	}
 	
 	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs ) {
@@ -2215,81 +2212,79 @@ public class GeneSetHead extends JApplet {
 	}
 	
 	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs, boolean genename ) {
-		SwingUtilities.invokeLater( new Runnable() {
-			public void run() {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier	serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
-				jf.initGui(frame);
-		
-				for( GeneGroup ggroup : ggset ) {
-				//for( Gene gg : ggroup.genes ) {
-					//if (gg.species != null) {
-						//for (String sp : gg.species.keySet()) {
-						//	Teginfo stv = gg.species.get(sp);
-					for( Tegeval tv : ggroup.getTegevals() ) {
-						Sequence cont = tv.getContshort();
-						if( cont != null ) {
-							String selspec = cont.getSpec();//tv.getContig();
-							if( genename ) {
-								Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-								seq.setName( tv.gene != null ? tv.gene.name : tv.name );
-								serifier.mseq.put( seq.getName(), seq );
-								//Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
-								serifier.addSequence(seq);
-							} else if( specs == null || specs.contains(selspec ) ) {
-								String spec = geneset.nameFix( selspec );
-								
-								Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-								seq.setName( spec );
-								/*String name = tv.getGene().id;
-								String cazy = tv.getGene().getGeneGroup().getCommonCazy(cazymap);
-								String ec = tv.getGene().getGeneGroup().getCommonEc();
-								if( cazy != null ) name += " " + cazy;
-								if( ec != null ) name += " " + ec;*/
-								//Sequence seq = new Sequence( spec, seqstr, serifier.mseq );
-								serifier.addSequence(seq);
-							}
-						}
-						//contset.put( contig, seq );
-						
-						/*String contig = tv.contshort;
-						if (contset.containsKey(contig)) {
-							seq = contset.get(contig);
-						} else {
-							if (GeneSet.contigs.containsKey(contig)) {
-								StringBuilder dna = GeneSet.contigs.get(contig);
-								seq = new Sequence(contig, dna, jf.mseq);
-							} else
-								seq = new Sequence(contig, jf.mseq);
-							contset.put(contig, seq);
-						}
-		
-						Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
-						a.setStart(tv.start);
-						a.setStop(tv.stop);
-						a.setOri(tv.ori);
-						a.setGroup(gg.name);
-						a.setType("gene");
-						jf.addAnnotation(a);*/
-						// seq.addAnnotation( new Annotation( seq, ) );
-					}
-				}
-		
-				/*for( String contig : contset.keySet() ) {
-					Sequence seq = contset.get(contig);
-					serifier.addSequence(seq);
-					if (seq.getAnnotations() != null)
-						Collections.sort(seq.getAnnotations());
-				}*/
-				jf.updateView();
-		
-				frame.setVisible(true);
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            JFrame frame1 = new JFrame();
+            frame1.setSize(800, 600);
+            frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            Serifier	serifier = new Serifier();
+            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            jf.initGui(frame1);
+
+            for( GeneGroup ggroup : ggset ) {
+            //for( Gene gg : ggroup.genes ) {
+                //if (gg.species != null) {
+                    //for (String sp : gg.species.keySet()) {
+                    //	Teginfo stv = gg.species.get(sp);
+                for( Tegeval tv : ggroup.getTegevals() ) {
+                    Sequence cont = tv.getContshort();
+                    if( cont != null ) {
+                        String selspec = cont.getSpec();//tv.getContig();
+                        if( genename ) {
+                            Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+                            seq.setName( tv.gene != null ? tv.gene.name : tv.name );
+                            serifier.mseq.put( seq.getName(), seq );
+                            //Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
+                            serifier.addSequence(seq);
+                        } else if( specs == null || specs.contains(selspec ) ) {
+                            String spec = geneset.nameFix( selspec );
+
+                            Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+                            seq.setName( spec );
+                            /*String name = tv.getGene().id;
+                            String cazy = tv.getGene().getGeneGroup().getCommonCazy(cazymap);
+                            String ec = tv.getGene().getGeneGroup().getCommonEc();
+                            if( cazy != null ) name += " " + cazy;
+                            if( ec != null ) name += " " + ec;*/
+                            //Sequence seq = new Sequence( spec, seqstr, serifier.mseq );
+                            serifier.addSequence(seq);
+                        }
+                    }
+                    //contset.put( contig, seq );
+
+                    /*String contig = tv.contshort;
+                    if (contset.containsKey(contig)) {
+                        seq = contset.get(contig);
+                    } else {
+                        if (GeneSet.contigs.containsKey(contig)) {
+                            StringBuilder dna = GeneSet.contigs.get(contig);
+                            seq = new Sequence(contig, dna, jf.mseq);
+                        } else
+                            seq = new Sequence(contig, jf.mseq);
+                        contset.put(contig, seq);
+                    }
+
+                    Annotation a = seq.new Annotation(seq, contig, Color.red, jf.mann);
+                    a.setStart(tv.start);
+                    a.setStop(tv.stop);
+                    a.setOri(tv.ori);
+                    a.setGroup(gg.name);
+                    a.setType("gene");
+                    jf.addAnnotation(a);*/
+                    // seq.addAnnotation( new Annotation( seq, ) );
+                }
+            }
+
+            /*for( String contig : contset.keySet() ) {
+                Sequence seq = contset.get(contig);
+                serifier.addSequence(seq);
+                if (seq.getAnnotations() != null)
+                    Collections.sort(seq.getAnnotations());
+            }*/
+            jf.updateView();
+
+            frame1.setVisible(true);
+        });
 	}
 	
 	KeyListener keylistener;
@@ -2392,7 +2387,7 @@ public class GeneSetHead extends JApplet {
 			Path gkeylocal = gkeyssh.resolve("org/simmi/genesetkey");
 			Path gkeylocalpub = gkeyssh.resolve("org/simmi/genesetkey.pub");
 			if( !Files.exists(gkeylocal) && isk != null ) {
-				Files.copy(isk, gkeylocal);
+				Files.copy(isk, gkeylocal, StandardCopyOption.REPLACE_EXISTING);
 			}
 			if( !Files.exists(gkeylocalpub) && iskp != null ) {
 				Files.copy(iskp, gkeylocalpub);
@@ -3140,108 +3135,77 @@ public class GeneSetHead extends JApplet {
             //}
         }));
 		MenuItem	cogblastaction = new MenuItem("Cog blast");
-		cogblastaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			public void run() {
-				try {
-					Set<String> species = getSelspec(null, geneset.getSpecies(), null);
-					
-					StringWriter sb = new StringWriter();
-					String dbPath = "/data/Cog";
-					JTextField tf = new JTextField( dbPath );
-					JOptionPane.showMessageDialog( null, tf );
-					for( Gene g : geneset.genelist ) {
-						if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-							if( species.contains( g.getSpecies() ) ) {
-								Sequence gs = g.tegeval.getProteinSequence();
-								if( gs != null ) {
-									gs.setName( g.id );
-									gs.writeSequence( sb );
-								}
-								/*sb.append(">" + g.id + "\n");
-								for (int i = 0; i < gs.length(); i += 70) {
-									sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-								}*/
-							}
-						}
-					}
-					
-					Map<String,String> env = new HashMap<String,String>();
-					env.put("create", "true");
-					String uristr = "jar:" + geneset.zippath.toUri();
-					geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-					Path resPath = geneset.zipfilesystem.getPath("/cog.blastout");
-					
-					NativeRun nrun = new NativeRun();
-					SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), tf.getText(), resPath, "", null, true, geneset.zipfilesystem, geneset.user);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		}));
+		cogblastaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+			Set<String> species = getSelspec(null, geneset.getSpecies(), null);
+
+			String dbPath = "/data/Cog";
+			JTextField tf = new JTextField( dbPath );
+			JTextField host = new JTextField("localhost");
+			JOptionPane.showMessageDialog( null, new Object[] {tf, host} );
+
+            geneset.cogBlast( species, tf.getText(), host.getText(), false );
+        }));
 		MenuItem	unresolvedblastaction = new MenuItem("Unresolved blast");
-		unresolvedblastaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			public void run() {
-				try {
-					Set<String> species = getSelspec(null, geneset.getSpecies(), null);
-					
-					StringWriter sb = new StringWriter();
-					Path dbPath = Paths.get("/data/nr");
-					ObservableList<Gene> genes = gtable.getSelectionModel().getSelectedItems();
-					if( genes.size() > 0 ) {
-						if( isGeneview() ) {
-							for( Gene g : gtable.getSelectionModel().getSelectedItems() ) {
-								//int i = table.convertRowIndexToModel(r);
-								//Gene g = geneset.genelist.get(i);
-								Sequence gs = g.tegeval.getProteinSequence();
-								gs.setName( g.id );
-								gs.writeSequence( sb );
-							}
-						} else {
-							for( GeneGroup gg : table.getSelectionModel().getSelectedItems() ) {
-								//int i = table.convertRowIndexToModel(r);
-								//GeneGroup gg = geneset.allgenegroups.get(i);
-								Gene g = null;
-								for( Gene gene : gg.genes ) {
-									g = gene;
-									break;
-								}
-								Sequence gs = g.tegeval.getProteinSequence();
-								gs.setName( g.id );
-								gs.writeSequence( sb );
-							}
-						}
-					} else {
-						for( Gene g : geneset.genelist ) {
-							if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-								if( species.contains( g.getSpecies() ) ) {
-									Sequence gs = g.tegeval.getProteinSequence();
-									gs.setName( g.id );
-									gs.writeSequence( sb );
-									
-									/*sb.append(">" + g.id + "\n");
-									for (int i = 0; i < gs.length(); i += 70) {
-										sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-									}*/
-								}
-							}
-						}
-					}
-					
-					Map<String,String> env = new HashMap<>();
-					env.put("create", "true");
-					String uristr = "jar:" + geneset.zippath.toUri();
-					geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-					geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-					Path resPath = geneset.zipfilesystem.getPath("/unresolved.blastout");
-					
-					NativeRun nrun = new NativeRun();
-					SerifyApplet.blastpRun(nrun, sb.getBuffer(), dbPath, resPath, "-evalue 0.00001", null, true, geneset.zipfilesystem, geneset.user, primaryStage);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		}));
+		unresolvedblastaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
+            try {
+                Set<String> species = getSelspec(null, geneset.getSpecies(), null);
+
+                StringWriter sb = new StringWriter();
+                Path dbPath = Paths.get("/data/nr");
+                ObservableList<Gene> genes = gtable.getSelectionModel().getSelectedItems();
+                if( genes.size() > 0 ) {
+                    if( isGeneview() ) {
+                        for( Gene g : gtable.getSelectionModel().getSelectedItems() ) {
+                            //int i = table.convertRowIndexToModel(r);
+                            //Gene g = geneset.genelist.get(i);
+                            Sequence gs = g.tegeval.getProteinSequence();
+                            gs.setName( g.id );
+                            gs.writeSequence( sb );
+                        }
+                    } else {
+                        for( GeneGroup gg : table.getSelectionModel().getSelectedItems() ) {
+                            //int i = table.convertRowIndexToModel(r);
+                            //GeneGroup gg = geneset.allgenegroups.get(i);
+                            Gene g = null;
+                            for( Gene gene : gg.genes ) {
+                                g = gene;
+                                break;
+                            }
+                            Sequence gs = g.tegeval.getProteinSequence();
+                            gs.setName( g.id );
+                            gs.writeSequence( sb );
+                        }
+                    }
+                } else {
+                    for( Gene g : geneset.genelist ) {
+                        if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
+                            if( species.contains( g.getSpecies() ) ) {
+                                Sequence gs = g.tegeval.getProteinSequence();
+                                gs.setName( g.id );
+                                gs.writeSequence( sb );
+
+                                /*sb.append(">" + g.id + "\n");
+                                for (int i = 0; i < gs.length(); i += 70) {
+                                    sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+                                }*/
+                            }
+                        }
+                    }
+                }
+
+                Map<String,String> env = new HashMap<>();
+                env.put("create", "true");
+                String uristr = "jar:" + geneset.zippath.toUri();
+                geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+                geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+                Path resPath = geneset.zipfilesystem.getPath("/unresolved.blastout");
+
+                NativeRun nrun = new NativeRun();
+                SerifyApplet.blastpRun(nrun, sb.getBuffer(), dbPath, resPath, "-evalue 0.00001", null, true, geneset.zipfilesystem, geneset.user, primaryStage);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }));
 
 		MenuItem	importbiosystemsaction = new MenuItem("Import biosystems");
 		importbiosystemsaction.setOnAction( actionEvent -> {
@@ -5457,86 +5421,90 @@ public class GeneSetHead extends JApplet {
 		windowmenu.getItems().add( runtransm );
 		
 		MenuItem runtrnascan = new MenuItem("tRNAscan");
-		runtrnascan.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			public void run() {	
-				try {
-					Serifier ser = new Serifier();
-					Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
-					
-					JTextField host = new JTextField("localhost");
-					JOptionPane.showMessageDialog(null, host);
-					
-					String username = System.getProperty("user.name");
-					String hostname = host.getText();
-					
-					/*Path[] pt = null;
-					JFileChooser fc = new JFileChooser();
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
-						pt = new Path[3];
-						pt[2] = fc.getSelectedFile().toPath();
-					}*/
-					
-					List<Object> commands = new ArrayList<Object>();
-					//commands.add(genexyplotaction)
-					
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						
-						String uristr = "jar:" + geneset.zippath.toUri();
-						URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-						
-						geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-						for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-							for( String spec : selspec ) {
-								Path specdir = root.resolve(spec+".fna");
-								if( !Files.exists(specdir) ) {
-									if( spec.startsWith("MAT") ) {
-										specdir = root.resolve(spec+".gbk.fna");
-									} else specdir = root.resolve("fn_"+spec+"_scaffolds.fastg");
-								}
-								
-								System.err.println( Files.exists(specdir) );
-								
-								Path sigout = root.resolve("trnas.txt");
+		runtrnascan.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+            try {
+                Serifier ser = new Serifier();
+                Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
+
+                JTextField host = new JTextField("localhost");
+                JOptionPane.showMessageDialog(null, host);
+
+                String username = System.getProperty("user.name");
+                String hostname = host.getText();
+
+                /*Path[] pt = null;
+                JFileChooser fc = new JFileChooser();
+                fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+                if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
+                    pt = new Path[3];
+                    pt[2] = fc.getSelectedFile().toPath();
+                }*/
+
+                List<Object> commands = new ArrayList<Object>();
+                //commands.add(genexyplotaction)
+
+                try {
+                    Map<String,String> env = new HashMap<String,String>();
+                    env.put("create", "true");
+
+                    String uristr = "jar:" + geneset.zippath.toUri();
+                    URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+
+                    geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+                    for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+                        for( String spec : selspec ) {
+                            Path specdir = root.resolve(spec+".fna");
+                            if( !Files.exists(specdir) ) {
+                                if( spec.startsWith("MAT") ) {
+                                    specdir = root.resolve(spec+".gbk.fna");
+                                } else specdir = root.resolve("fn_"+spec+"_scaffolds.fastg");
+                            }
+
+                            System.err.println( Files.exists(specdir) );
+
+                            Path sigout = root.resolve("trnas.txt");
+                            if( hostname.equals("localhost1") ) {
+								Path[] pt = new Path[] {specdir,sigout,null};
+                                String[] cmds = {"/usr/local/bin/tRNAscan-SE","-B","-"};
+                                commands.add( pt );
+                                commands.add( Arrays.asList( cmds ) );
+                            } else {
 								Path[] pt = new Path[] {null,sigout,null};
+                                Path p = Paths.get(spec+".trnascan");
+                                Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
+
+								List<String> lcmd;
 								if( hostname.equals("localhost") ) {
-									String[] cmds = {"/usr/local/bin/tRNAscan-SE","-B","-"};
-									commands.add( pt );
-									commands.add( Arrays.asList( cmds ) );
+									//String[] cmds = {"/usr/local/bin/trnascan-1.4", spec + ".trnascan"};
+									String[] cmds = {"/usr/local/bin/tRNAscan-SE","-B",spec+".trnascan"};
+									lcmd = Arrays.asList( cmds );
 								} else {
-									Path p = Paths.get(spec+".trnascan");
-									Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
-									
-									String[] cmds = {"scp",spec+".trnascan",hostname+":~",";","ssh",hostname,"trnascan-1.4",spec+".trnascan"};
+									String[] cmds = {"scp", spec + ".trnascan", hostname + ":~", ";", "ssh", hostname, "trnascan-1.4", spec + ".trnascan"};
+									lcmd = Arrays.asList( cmds );
 									//String[] cmds = {"ssh",hostname,"tRNAscan-SE","-B","-"};
-									
-									commands.add( pt );
-									commands.add( Arrays.asList( cmds ) );
 								}
-							}
-							
-							break;
-						}
-					} catch( Exception ex ) {
-						ex.printStackTrace();
-					}
-					
-					Runnable run = new Runnable() {
-						@Override
-						public void run() {
-							try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
-						}
-					};
-					
-					NativeRun nr = new NativeRun( run );
-					nr.runProcessBuilder("tRNAscan", commands, new Object[3], false, run, false);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		}));
+
+                                commands.add( pt );
+                                commands.add( lcmd );
+                            }
+                        }
+
+                        break;
+                    }
+                } catch( Exception ex ) {
+                    ex.printStackTrace();
+                }
+
+                Runnable run = () -> {
+                    try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
+                };
+
+                NativeRun nr = new NativeRun( run );
+                nr.runProcessBuilder("tRNAscan", commands, new Object[3], false, run, false);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }));
 		windowmenu.getItems().add( runtrnascan );
 		
 		Menu		select = new Menu("Select");

@@ -109,7 +109,7 @@ public class GeneSet {
 	 */
 	
 	static SerifyApplet currentSerify = null;
-	static Map<String,String> keggMap = new HashMap<String,String>();
+	static Map<String,String> keggMap = new HashMap<>();
 	static {}
 	
 	public static String user;
@@ -273,7 +273,7 @@ public class GeneSet {
 				}
 				if( k != -1 ) spec = spec.substring(0, k);
 				
-				i = val.indexOf('[');
+				i = val.lastIndexOf('[');
 				n = val.indexOf(']', i+1);
 				/*if( i == -1 || n == -1 ) {
 					System.err.println( val );
@@ -5835,6 +5835,23 @@ public class GeneSet {
 	}
 	
 	public static void main(String[] args) {
+		if( args.length > 1 && args[0].endsWith(".zip") ) {
+			GeneSet	gs = new GeneSet();
+			Path p = Paths.get(args[0]);
+			try {
+				gs.loadStuff( p );
+				if( args[1].equalsIgnoreCase("clusterGenes") ) {
+					gs.clusterGenes(gs.getSpecies(), true);
+				} else if( args[1].equalsIgnoreCase("cogBlast") ) {
+					gs.cogBlast( null, args[2], args.length > 3 ? args[3] : "localhost", true );
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			Serifier.main(args);
+		}
+
 		//SplashScreen.getSplashScreen().
 		
 		/*if( args.length == 0 ) {
@@ -6648,6 +6665,39 @@ public class GeneSet {
 		}
 		return r;
 	}
+
+	public void cogBlast( Set<String> species, String dbPath, String hostname, boolean headless ) {
+		try {
+			StringWriter sb = new StringWriter();
+			for( Gene g : genelist ) {
+				if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
+					if( species == null || species.contains( g.getSpecies() ) ) {
+						Sequence gs = g.tegeval.getProteinSequence();
+						if( gs != null ) {
+							gs.setName( g.id );
+							gs.writeSequence( sb );
+						}
+                            /*sb.append(">" + g.id + "\n");
+                            for (int i = 0; i < gs.length(); i += 70) {
+                                sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+                            }*/
+					}
+				}
+			}
+
+			Map<String,String> env = new HashMap<>();
+			env.put("create", "true");
+			String uristr = "jar:" + zippath.toUri();
+			zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
+			Path resPath = zipfilesystem.getPath("/cog.blastout");
+
+			NativeRun nrun = new NativeRun();
+			SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, zipfilesystem, user, hostname, headless);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
 	
 	public Serifier getConcatenatedSequences( boolean proximityJoin, Map<GeneGroup,Integer> genegroups, Set<String> specset, boolean namefix ) {
 		Map<String,Map<Sequence,String>>	smap = new HashMap<String,Map<Sequence,String>>();
@@ -6665,7 +6715,7 @@ public class GeneSet {
 			}
 		}*/
 		
-		Map<String,Set<Tegeval>>	donetvs = new HashMap<String,Set<Tegeval>>();
+		Map<String,Set<Tegeval>>	donetvs = new HashMap<>();
 		for( GeneGroup ggroup : genegroups.keySet() ) {
 			int len = genegroups.get( ggroup );
 			for( String spec : specset ) {
@@ -7766,15 +7816,89 @@ public class GeneSet {
 		String name = null;
 		String spec = null;
 		boolean compl = false;
-		final String seqstart = "sequence name=";
-		final String startposstr = "start position=";
-		final String endposstr = "end position=";
-		final String predict = "tRNA predict as a";
-		while( line != null ) {
-			//String[] split = line.split("[\t ]+");
-			//String cont = split[0].replace(".fna", "");
-			
-			if( line.startsWith(seqstart) ) {
+
+		if( !line.startsWith("Sequence") ) {
+			final String seqstart = "sequence name=";
+			final String startposstr = "start position=";
+			final String endposstr = "end position=";
+			final String predict = "tRNA predict as a";
+			while (line != null) {
+				//String[] split = line.split("[\t ]+");
+				//String cont = split[0].replace(".fna", "");
+
+				if (line.startsWith(seqstart)) {
+					if (name != null) {
+						GeneGroup gg;
+						if (ggmap.containsKey(name)) {
+							gg = ggmap.get(name);
+						} else {
+							gg = new GeneGroup(groupIndex++, specset, cogmap, ko2name, biosystemsmap);
+							ggmap.put(name, gg);
+						}
+						Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name, spec);
+
+						Sequence contig = contigmap.get(cont);
+						Tegeval tegeval = new Tegeval(g, spec, 0.0, null, contig, null, start, stop, ori);
+						tegeval.type = "trna";
+						g.setTegeval(tegeval);
+						gg.addGene(g);
+					}
+
+					cont = line.substring(seqstart.length()).trim();
+					compl = false;
+					name = null;
+					laststart = -1;
+
+					int end = cont.indexOf("_contig");
+					if (end == -1) end = cont.indexOf("_scaffold");
+					if (end == -1) end = cont.indexOf("_chromosome");
+					if (end == -1) end = cont.indexOf("_plasmid");
+					if (end == -1) {
+						System.err.println();
+					}
+					spec = cont.substring(0, end);
+				} else if (cont != null) {
+					if (line.startsWith("complementary strand")) compl = true;
+					else if (line.startsWith(startposstr)) {
+						if (name != null && laststart != start) {
+							GeneGroup gg;
+							if (ggmap.containsKey(name)) {
+								gg = ggmap.get(name);
+							} else {
+								gg = new GeneGroup(groupIndex++, specset, cogmap, ko2name, biosystemsmap);
+								ggmap.put(name, gg);
+							}
+							Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name, spec);
+
+							System.err.println("adding " + spec + "  " + name + "  " + start + "  " + stop);
+
+							Sequence contig = contigmap.get(cont);
+							Tegeval tegeval = new Tegeval(g, spec, 0.0, null, contig, null, start, stop, ori);
+							tegeval.type = "trna";
+							g.setTegeval(tegeval);
+							gg.addGene(g);
+						}
+
+						int k = line.indexOf(endposstr);
+						laststart = start;
+						start = Integer.parseInt(line.substring(startposstr.length(), k).trim());
+						stop = Integer.parseInt(line.substring(k + endposstr.length()).trim());
+						ori = 1;
+						if (start > stop) {
+							ori = stop;
+							stop = start;
+							start = ori;
+							ori = -1;
+						}
+					} else if (line.startsWith(predict)) {
+						int e = line.indexOf(':', predict.length());
+						name = line.substring(predict.length(), e).trim();
+					}
+
+					//int start = Integer.parseInt( split[2] );
+					//int stop = Integer.parseInt( split[3] );
+				}
+
 				if( name != null ) {
 					GeneGroup 	gg;
 					if( ggmap.containsKey( name ) ) {
@@ -7784,87 +7908,56 @@ public class GeneSet {
 						ggmap.put( name, gg );
 					}
 					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
-					
+
 					Sequence contig = contigmap.get( cont );
 					Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
 					tegeval.type = "trna";
 					g.setTegeval( tegeval );
 					gg.addGene( g );
 				}
-				
-				cont = line.substring(seqstart.length()).trim();
-				compl = false;
-				name = null;
-				laststart = -1;
-				
+
+				line = br.readLine();
+			}
+		} else {
+			while (line != null) {
+				if( line.startsWith("Sequence") ) {
+					br.readLine();
+					br.readLine();
+					line = br.readLine();
+				}
+				String[] split = line.split("[\t ]+");
+				cont = split[0].replace(".fna", "");
+
+				start = Integer.parseInt( split[2] );
+				stop = Integer.parseInt( split[3] );
+				name = split[4];
+
 				int end = cont.indexOf("_contig");
-				if( end == -1 ) end = cont.indexOf("_scaffold");
-				if( end == -1 ) end = cont.indexOf("_chromosome");
-				if( end == -1 ) end = cont.indexOf("_plasmid");
-				if( end == -1 ) {
+				if (end == -1) end = cont.indexOf("_scaffold");
+				if (end == -1) end = cont.indexOf("_chromosome");
+				if (end == -1) end = cont.indexOf("_plasmid");
+				if (end == -1) {
 					System.err.println();
 				}
 				spec = cont.substring(0, end);
-			} else if( cont != null ) {
-				if( line.startsWith("complementary strand") ) compl = true;
-				else if( line.startsWith(startposstr) ) {
-					if( name != null && laststart != start ) {
-						GeneGroup 	gg;
-						if( ggmap.containsKey( name ) ) {
-							gg = ggmap.get( name );
-						} else {
-							gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
-							ggmap.put( name, gg );
-						}
-						Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
-						
-						System.err.println("adding " + spec + "  " + name + "  " + start + "  " + stop );
-						
-						Sequence contig = contigmap.get( cont );
-						Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
-						tegeval.type = "trna";
-						g.setTegeval( tegeval );
-						gg.addGene( g );
-					}
-					
-					int k = line.indexOf(endposstr);
-					laststart = start;
-					start = Integer.parseInt( line.substring(startposstr.length(), k).trim() );
-					stop = Integer.parseInt( line.substring(k+endposstr.length()).trim() );
-					ori = 1;
-					if( start > stop ) {
-						ori = stop;
-						stop = start;
-						start = ori;
-						ori = -1;
-					}
-				} else if( line.startsWith(predict) ) {
-					int e = line.indexOf(':',predict.length());
-					name = line.substring(predict.length(), e).trim();
+
+				GeneGroup 	gg;
+				if( ggmap.containsKey( name ) ) {
+					gg = ggmap.get( name );
+				} else {
+					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
+					ggmap.put( name, gg );
 				}
-				
-				//int start = Integer.parseInt( split[2] );
-				//int stop = Integer.parseInt( split[3] );
+				Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
+
+				Sequence contig = contigmap.get( cont );
+				Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
+				tegeval.type = "trna";
+				g.setTegeval( tegeval );
+				gg.addGene( g );
+
+				line = br.readLine();
 			}
-			
-			line = br.readLine();
-		}
-		
-		if( name != null ) {
-			GeneGroup 	gg;
-			if( ggmap.containsKey( name ) ) {
-				gg = ggmap.get( name );
-			} else {
-				gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
-				ggmap.put( name, gg );
-			}
-			Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
-			
-			Sequence contig = contigmap.get( cont );
-			Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
-			tegeval.type = "trna";
-			g.setTegeval( tegeval );
-			gg.addGene( g );
 		}
 		
 		return groupIndex;

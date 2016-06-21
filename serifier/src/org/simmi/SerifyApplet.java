@@ -635,7 +635,7 @@ public class SerifyApplet {
 		});
 	}
 	
-	public static void rpsBlastRun( NativeRun nrun, StringBuffer query, String dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user ) throws IOException {
+	public static void rpsBlastRun( NativeRun nrun, StringBuffer query, String dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user, final String hostname, boolean headless ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
 		if( homedir ) selectedpath = new File( userhome ).toPath();
@@ -648,15 +648,10 @@ public class SerifyApplet {
 			}
 		}
 		
-		JTextField host = new JTextField("localhost");
-		JOptionPane.showMessageDialog(null, host);
-		
 		String username = System.getProperty("user.name");
-		String hostname = host.getText();
-		
 		String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
 		
-		List<Object>	lscmd = new ArrayList<Object>();
+		List<Object>	lscmd = new ArrayList<>();
 		if( table != null ) {
 			int[] rr = table.getSelectedRows();
 			for( int r : rr ) {
@@ -665,8 +660,8 @@ public class SerifyApplet {
 				Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
 				int procs = Runtime.getRuntime().availableProcessors();
 				
-				List<String>	lcmd = new ArrayList<String>();
-				String[] bcmds = { "rpsblast+", "-db", dbPath, "-num_threads", Integer.toString(procs) };
+				List<String>	lcmd = new ArrayList<>();
+				String[] bcmds = { "rpsblast", "-db", dbPath, "-num_threads", Integer.toString(procs) };
 				String[] exts = extrapar.trim().split("[\t ]+");
 				
 				lcmd.addAll( Arrays.asList(bcmds) );
@@ -682,7 +677,7 @@ public class SerifyApplet {
 			List<String>	lcmd = new ArrayList<String>();
 			String[] bcmds;
 			//String[] cmds;
-			if( host.getText().equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/ncbi/blast/bin/rpsblast" : "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			if( hostname.equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/ncbi/blast/bin/rpsblast" : "rpsblast"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
 			else {
 				if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
 				bcmds = new String[] { "ssh", hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
@@ -697,20 +692,18 @@ public class SerifyApplet {
 		}
 		
 		final Object[] cont = new Object[3];
-		Runnable run = new Runnable() {
-			public void run() {					
-				if( cont[0] != null ) {
-					
-				}
-				try {
-					fs.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		};
+		Runnable run = () -> {
+            if( cont[0] != null ) {
+
+            }
+            try {
+                fs.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
 		nrun.setRun( run );
-		nrun.runProcessBuilder( "Performing rpsblast", lscmd, cont, false, run, false );
+		nrun.runProcessBuilder( "Performing rpsblast", lscmd, cont, false, run, headless );
 	}
 	
 	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, Path resPath, String dbType, String extrapar, TableView table, boolean homedir, final String user, final boolean headless ) throws IOException {

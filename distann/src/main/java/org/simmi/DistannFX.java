@@ -19,6 +19,11 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.simmi.shared.Serifier;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  *
@@ -32,9 +37,9 @@ public class DistannFX extends Application {
     	final MenuBar	menubar = new MenuBar();
     	final ToolBar	toolbar = new ToolBar();
     	final ToolBar	btoolbar = new ToolBar();
-    	final TableView<Function> 	upper = new TableView<Function>();
-        final TableView<GeneGroup>	lower = new TableView<GeneGroup>();
-        final TableView<Gene>		gene = new TableView<Gene>();
+    	final TableView<Function> 	upper = new TableView<>();
+        final TableView<GeneGroup>	lower = new TableView<>();
+        final TableView<Gene>		gene = new TableView<>();
     	final SplitPane	splitpane = new SplitPane(lower, upper);
     	splitpane.setOrientation( Orientation.VERTICAL );
     	
@@ -69,7 +74,11 @@ public class DistannFX extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        launch(args);
+        if( args.length == 0 ) {
+            launch(args);
+		} else {
+            GeneSet.main( args );
+        }
     }
 
 }

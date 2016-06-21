@@ -3809,247 +3809,244 @@ public class ActionCollection {
 			}
 		}));
 		MenuItem cogaction = new MenuItem("COG chart data");
-		cogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				try {
-					/*Map<String,String> env = new HashMap<String,String>();
-					//env.put("create", "true");
-					//Path path = zipfile.toPath();
-					String uristr = "jar:" + geneset.zippath.toUri();
-					geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")* );
-					geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-					
-					Path nf = geneset.zipfilesystem.getPath("/cog.blastout");
-					
-					//InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-					//uni2symbol(new InputStreamReader(is), bw, unimap);
-					
-					//bw.close();
-					//long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
+		cogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+            try {
+                /*Map<String,String> env = new HashMap<String,String>();
+                //env.put("create", "true");
+                //Path path = zipfile.toPath();
+                String uristr = "jar:" + geneset.zippath.toUri();
+                geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")* );
+                geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 
-					BufferedReader br = Files.newBufferedReader(nf);*/
-					final JCheckBox	contigs = new JCheckBox("Show contigs");
-					final JCheckBox	uniform = new JCheckBox("Uniform");
-					Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs, uniform );
-					
-					final List<Character> coglist = new ArrayList<Character>( Cog.charcog.keySet() );
-					HashSet<Character>	includedCogs = new HashSet<Character>();
-					JTable cogtable = new JTable();
-					cogtable.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-					TableModel cogmodel = new TableModel() {
-						@Override
-						public int getRowCount() {
-							return coglist.size();
-						}
+                Path nf = geneset.zipfilesystem.getPath("/cog.blastout");
 
-						@Override
-						public int getColumnCount() {
-							return 2;
-						}
+                //InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
+                //uni2symbol(new InputStreamReader(is), bw, unimap);
 
-						@Override
-						public String getColumnName(int columnIndex) {
-							if( columnIndex == 0 ) return "Symbol";
-							else return "Name";
-						}
+                //bw.close();
+                //long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
 
-						@Override
-						public Class<?> getColumnClass(int columnIndex) {
-							return String.class;
-						}
+                BufferedReader br = Files.newBufferedReader(nf);*/
+                final JCheckBox	contigs = new JCheckBox("Show contigs");
+                final JCheckBox	uniform = new JCheckBox("Uniform");
+                Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs, uniform );
 
-						@Override
-						public boolean isCellEditable(int rowIndex, int columnIndex) {
-							return false;
-						}
+                final List<Character> coglist = new ArrayList<Character>( Cog.charcog.keySet() );
+                HashSet<Character>	includedCogs = new HashSet<Character>();
+                JTable cogtable = new JTable();
+                cogtable.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+                TableModel cogmodel = new TableModel() {
+                    @Override
+                    public int getRowCount() {
+                        return coglist.size();
+                    }
 
-						@Override
-						public Object getValueAt(int rowIndex, int columnIndex) {
-							Character c = coglist.get( rowIndex);
-							if( columnIndex == 0 ) return c.toString();
-							else return Cog.charcog.get( c );
-						}
+                    @Override
+                    public int getColumnCount() {
+                        return 2;
+                    }
 
-						@Override
-						public void setValueAt(Object aValue, int rowIndex,int columnIndex) {}
+                    @Override
+                    public String getColumnName(int columnIndex) {
+                        if( columnIndex == 0 ) return "Symbol";
+                        else return "Name";
+                    }
 
-						@Override
-						public void addTableModelListener(TableModelListener l) {}
+                    @Override
+                    public Class<?> getColumnClass(int columnIndex) {
+                        return String.class;
+                    }
 
-						@Override
-						public void removeTableModelListener(TableModelListener l) {}
-						
-					};
-					boolean web = true;
-					
-					JCheckBox webbox = new JCheckBox("Web based");
-					webbox.setSelected( true );
-					
-					cogtable.setModel( cogmodel );
-					JScrollPane cogscroll = new JScrollPane( cogtable );
+                    @Override
+                    public boolean isCellEditable(int rowIndex, int columnIndex) {
+                        return false;
+                    }
 
-					Object[] objs = new Object[] { cogscroll, webbox };
-					JOptionPane.showMessageDialog( genesethead, objs );
-					web = webbox.isSelected();
-					
-					int[] rr = cogtable.getSelectedRows();
-					for( int r : rr ) {
-						includedCogs.add( coglist.get(r) );
-					}
-					
-					final Map<String,String>					all = new TreeMap();
-					final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap();
-					genesethead.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
-					
-					Map<Character,Row> rl = new HashMap();
-					
-					Workbook	wb = new XSSFWorkbook();
-					Sheet sh = wb.createSheet("COG");
-					
-					int k = 0;
-					for( String sp : map.keySet() ) {
-						Map<Character,Integer> mm = map.get(sp);
-						if( mm != null ) for( char c : mm.keySet() ) {
-							int cn = mm.get(c);
-							
-							if( !rl.containsKey(c) ) {
-								rl.put( c, sh.createRow(rl.size()) );
-							}
-							
-							Row r = rl.get(c);
-							r.createCell(k).setCellValue( ""+c );
-							r.createCell(k+1).setCellValue( cn );
-						}
-						k+=2;
-					}
-					
-					String userhome = System.getProperty("user.home");
-					File tf = new File(userhome);
-					File f = new File(tf, "tmp.xlsx");
-					FileOutputStream fos = new FileOutputStream( f );
-					wb.write(fos);
-					fos.close();
-					
-					Desktop.getDesktop().open(f);
-					
-					StringWriter fw = geneset.writeCog( map, includedCogs, uniform.isSelected() );
-					String repl = fw.toString();
-					
-					fw = geneset.writeSimpleCog( map );
-					String stuff = fw.toString();
-					
-					String stxt = "";
-					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("org/simmi/cogchart.html");
-					if( is != null ) {
-						try {
-							int c = is.read();
-							while( c != -1 ) {
-								sb.append( (char)c );
-								c = is.read();
-							}
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-						stxt = sb.toString().replace("smuck", repl);
-					}
-					final String smuck = stxt;
-					
-					//String b64str = Base64.encodeBase64String( smuck.getBytes() );
-					/*JSObject window = null;
-					try {
-						window = JSObject.getWindow( geneset );
-					} catch( NoSuchMethodError | Exception exc ) {
-						exc.printStackTrace();
-					}*/
-						
-					if( web ) {
-						Platform.runLater(new Runnable() {
-							 @Override
-							 public void run() {
-								final Stage dialog = new Stage();
-								dialog.initModality(Modality.APPLICATION_MODAL);
-								dialog.initOwner( genesethead.primaryStage );
-								VBox dialogVbox = new VBox(20);
-								dialogVbox.getChildren().add(new Text("This is a Dialog"));
-								Scene dialogScene = new Scene(dialogVbox, 300, 200);
-								dialog.setScene(dialogScene);
-								geneset.initWebPage( dialog, smuck );
-								dialog.show();
-							 }
-						});
-						
-						/*boolean succ = true;
-						try {
-							window.setMember("smuck", smuck);
-							//window.eval("var binary = atob(b64str)");
-							//window.eval("var i = binary.length");
-							//window.eval("var view = new Uint8Array(i)");
-						    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-							window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-							window.eval("open( URL.createObjectURL(b), '_blank' )");
-						} catch( Exception exc ) {
-							exc.printStackTrace();
-						}*
+                    @Override
+                    public Object getValueAt(int rowIndex, int columnIndex) {
+                        Character c = coglist.get( rowIndex);
+                        if( columnIndex == 0 ) return c.toString();
+                        else return Cog.charcog.get( c );
+                    }
 
-						try {
-							window.setMember("smuck", smuck);
-							
-							//window.eval("var binary = atob(b64str)");
-							//window.eval("var i = binary.length");
-							//window.eval("var view = new Uint8Array(i)");
-						    //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-							window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-							window.eval("open( URL.createObjectURL(b), '_blank' )");
-						} catch( Exception exc ) {
-							exc.printStackTrace();
-						}*/
-						
-						if( Desktop.isDesktopSupported() ) {
-							try {
-								//File uf = new File(userhome);
-								File smf = new File( tf, "smuck.html" );
-								FileWriter fwr = new FileWriter( smf );
-								fwr.write( smuck );
-								fwr.close();
-								Desktop.getDesktop().browse( smf.toURI() );
-							} catch( Exception exc ) {
-								exc.printStackTrace();
-							}
-						}
-					} else {
-						Platform.runLater(new Runnable() {
-							 @Override
-							 public void run() {
-								final Stage dialog = new Stage();
-								dialog.initModality(Modality.APPLICATION_MODAL);
-								dialog.initOwner( genesethead.primaryStage );
-								VBox dialogVbox = new VBox(20);
-								dialogVbox.getChildren().add(new Text("This is a Dialog"));
-								Scene dialogScene = new Scene(dialogVbox, 300, 200);
-								dialog.setScene(dialogScene);
-								geneset.initStackedBarChart( dialog, all, map, uniform.isSelected() );
-								dialog.show();
-							 }
-						});
-					}
-					geneset.zipfilesystem.close();
-					
-					JFrame fr = new JFrame("GC% chart");
-					fr.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-					fr.setSize( 800, 600 );
-					
-					JTextArea	ta = new JTextArea();
-					ta.setText( repl + "\n" + stuff );
-					JScrollPane	sp = new JScrollPane(ta);
-					fr.add( sp );
-					fr.setVisible( true );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		}));
+                    @Override
+                    public void setValueAt(Object aValue, int rowIndex,int columnIndex) {}
+
+                    @Override
+                    public void addTableModelListener(TableModelListener l) {}
+
+                    @Override
+                    public void removeTableModelListener(TableModelListener l) {}
+
+                };
+                boolean web = true;
+
+                JCheckBox webbox = new JCheckBox("Web based");
+                webbox.setSelected( true );
+
+                cogtable.setModel( cogmodel );
+                JScrollPane cogscroll = new JScrollPane( cogtable );
+
+                Object[] objs = new Object[] { cogscroll, webbox };
+                JOptionPane.showMessageDialog( genesethead, objs );
+                web = webbox.isSelected();
+
+                int[] rr = cogtable.getSelectedRows();
+                for( int r : rr ) {
+                    includedCogs.add( coglist.get(r) );
+                }
+
+                final Map<String,String>					all = new TreeMap();
+                final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap();
+                genesethead.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
+
+                Map<Character,Row> rl = new HashMap();
+
+                Workbook	wb = new XSSFWorkbook();
+                Sheet sh = wb.createSheet("COG");
+
+				Row namerow = sh.createRow(0);
+
+                int k = 0;
+                for( String sp : map.keySet() ) {
+					namerow.createCell(k).setCellValue(sp);
+                    Map<Character,Integer> mm = map.get(sp);
+                    if( mm != null ) for( char c : mm.keySet() ) {
+                        int cn = mm.get(c);
+
+                        if( !rl.containsKey(c) ) {
+                            rl.put( c, sh.createRow(rl.size()+1) );
+                        }
+
+                        Row r = rl.get(c);
+                        r.createCell(k).setCellValue( ""+c );
+                        r.createCell(k+1).setCellValue( cn );
+                    }
+                    k+=2;
+                }
+
+                String userhome = System.getProperty("user.home");
+                File tf = new File(userhome);
+                File f = new File(tf, "tmp.xlsx");
+                FileOutputStream fos = new FileOutputStream( f );
+                wb.write(fos);
+                fos.close();
+
+                Desktop.getDesktop().open(f);
+
+                StringWriter fw = geneset.writeCog( map, includedCogs, uniform.isSelected() );
+                String repl = fw.toString();
+
+                fw = geneset.writeSimpleCog( map );
+                String stuff = fw.toString();
+
+                String stxt = "";
+                final StringBuilder sb = new StringBuilder();
+                InputStream is = GeneSet.class.getResourceAsStream("org/simmi/cogchart.html");
+                if( is != null ) {
+                    try {
+                        int c = is.read();
+                        while( c != -1 ) {
+                            sb.append( (char)c );
+                            c = is.read();
+                        }
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    stxt = sb.toString().replace("smuck", repl);
+                }
+                final String smuck = stxt;
+
+                //String b64str = Base64.encodeBase64String( smuck.getBytes() );
+                /*JSObject window = null;
+                try {
+                    window = JSObject.getWindow( geneset );
+                } catch( NoSuchMethodError | Exception exc ) {
+                    exc.printStackTrace();
+                }*/
+
+                if( web ) {
+                    Platform.runLater(new Runnable() {
+                         @Override
+                         public void run() {
+                            final Stage dialog = new Stage();
+                            dialog.initModality(Modality.APPLICATION_MODAL);
+                            dialog.initOwner( genesethead.primaryStage );
+                            VBox dialogVbox = new VBox(20);
+                            dialogVbox.getChildren().add(new Text("This is a Dialog"));
+                            Scene dialogScene = new Scene(dialogVbox, 300, 200);
+                            dialog.setScene(dialogScene);
+                            geneset.initWebPage( dialog, smuck );
+                            dialog.show();
+                         }
+                    });
+
+                    /*boolean succ = true;
+                    try {
+                        window.setMember("smuck", smuck);
+                        //window.eval("var binary = atob(b64str)");
+                        //window.eval("var i = binary.length");
+                        //window.eval("var view = new Uint8Array(i)");
+                        //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+                        window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
+                        window.eval("open( URL.createObjectURL(b), '_blank' )");
+                    } catch( Exception exc ) {
+                        exc.printStackTrace();
+                    }*
+
+                    try {
+                        window.setMember("smuck", smuck);
+
+                        //window.eval("var binary = atob(b64str)");
+                        //window.eval("var i = binary.length");
+                        //window.eval("var view = new Uint8Array(i)");
+                        //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
+                        window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
+                        window.eval("open( URL.createObjectURL(b), '_blank' )");
+                    } catch( Exception exc ) {
+                        exc.printStackTrace();
+                    }*/
+
+                    if( Desktop.isDesktopSupported() ) {
+                        try {
+                            //File uf = new File(userhome);
+                            File smf = new File( tf, "smuck.html" );
+                            FileWriter fwr = new FileWriter( smf );
+                            fwr.write( smuck );
+                            fwr.close();
+                            Desktop.getDesktop().browse( smf.toURI() );
+                        } catch( Exception exc ) {
+                            exc.printStackTrace();
+                        }
+                    }
+                } else {
+                    Platform.runLater(() -> {
+final Stage dialog = new Stage();
+dialog.initModality(Modality.APPLICATION_MODAL);
+dialog.initOwner( genesethead.primaryStage );
+VBox dialogVbox = new VBox(20);
+dialogVbox.getChildren().add(new Text("This is a Dialog"));
+Scene dialogScene = new Scene(dialogVbox, 300, 200);
+dialog.setScene(dialogScene);
+geneset.initStackedBarChart( dialog, all, map, uniform.isSelected() );
+dialog.show();
+});
+                }
+                geneset.zipfilesystem.close();
+
+                JFrame fr = new JFrame("GC% chart");
+                fr.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+                fr.setSize( 800, 600 );
+
+                JTextArea	ta = new JTextArea();
+                ta.setText( repl + "\n" + stuff );
+                JScrollPane	sp = new JScrollPane(ta);
+                fr.add( sp );
+                fr.setVisible( true );
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }));
 		
 		MenuItem fetchcoreaction = new MenuItem("Fetch core");
 		fetchcoreaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
