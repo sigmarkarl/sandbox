@@ -198,6 +198,7 @@ here:
 				char* here = (char*)&passnext;
 				here += bytesize;
 				simlab val;
+                printf("heyeee %d %d %d\n", value, mul, add);
 				val.buffer = (long)(value*mul+add);
 				val.type = 64;
 				val.length = 0;

@@ -2335,6 +2335,48 @@ public class GeneSetHead extends JApplet {
 		return isGeneview() ? gtable.getSelectionModel().getSelectedIndices().size() : table.getSelectionModel().getSelectedIndices().size();
 	}
 	
+	public void cogBlastDlg( Set<String> species ) {
+		Dialog<String> cogdlg = new Dialog();
+		
+		ToggleGroup group = new ToggleGroup();
+		VBox vbox = new VBox();
+		RadioButton docker = new RadioButton("docker");
+		docker.setToggleGroup( group );
+		RadioButton local = new RadioButton("local");
+		local.setToggleGroup( group );
+		docker.setSelected( true );
+		TextField dbpath = new TextField("/cdd_delta");
+		TextField host = new TextField("geneset");
+		
+		vbox.getChildren().add( docker );
+		vbox.getChildren().add( local );
+		vbox.getChildren().add( dbpath );
+		vbox.getChildren().add( host );
+		
+		cogdlg.getDialogPane().setContent( vbox );
+		
+		/*String dbPath = "/data/Cog";
+		JTextField tf = new JTextField( dbPath );
+		JTextField host = new JTextField("localhost");
+		JOptionPane.showMessageDialog( null, new Object[] {tf, host} );*/
+		
+		cogdlg.getDialogPane().getButtonTypes().add( ButtonType.OK );
+		cogdlg.getDialogPane().getButtonTypes().add( ButtonType.CANCEL );
+		cogdlg.setResultConverter(param -> {
+			if( !param.getButtonData().isCancelButton() ) {
+		        return dbpath.getText();
+			}
+			return "";
+		});
+		Optional<String> ostr = cogdlg.showAndWait();
+		if( ostr.isPresent() ) {
+        	String str = ostr.get();
+        	SwingUtilities.invokeLater(() -> {
+        		geneset.cogBlast( species, dbpath.getText(), host.getText(), false, docker.isSelected() );
+        	});
+        }
+	}
+	
 	TextField tb1 = null;
 	TextField tb2 = null;
 	TextField epar = null;
@@ -3138,12 +3180,11 @@ public class GeneSetHead extends JApplet {
 		cogblastaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
 			Set<String> species = getSelspec(null, geneset.getSpecies(), null);
 
-			String dbPath = "/data/Cog";
-			JTextField tf = new JTextField( dbPath );
-			JTextField host = new JTextField("localhost");
-			JOptionPane.showMessageDialog( null, new Object[] {tf, host} );
-
-            geneset.cogBlast( species, tf.getText(), host.getText(), false );
+			if( species != null && species.size() > 0 ) Platform.runLater( new Runnable() {
+				public void run() {
+					cogBlastDlg( species );
+				}
+			});
         }));
 		MenuItem	unresolvedblastaction = new MenuItem("Unresolved blast");
 		unresolvedblastaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {

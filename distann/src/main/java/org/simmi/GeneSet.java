@@ -274,32 +274,34 @@ public class GeneSet {
 				if( k != -1 ) spec = spec.substring(0, k);
 				
 				i = val.lastIndexOf('[');
-				n = val.indexOf(']', i+1);
+				if( i != -1 ) {
+					n = val.indexOf(']', i+1);
 				/*if( i == -1 || n == -1 ) {
 					System.err.println( val );
 				}*/
-				String cog = val.substring(i+1, n);
-				int u = cog.indexOf('/');
-				if( u != -1 ) cog = cog.substring(0, u);
-				u = cog.indexOf(';');
-				if( u != -1 ) cog = cog.substring(0, u);
-				String erm = cog.replace("  ", " ");
-				while( !erm.equals( cog ) ) {
-					cog = erm;
-					erm = cog.replace("  ", " ");
+					String cog = val.substring(i+1, n);
+					int u = cog.indexOf('/');
+					if( u != -1 ) cog = cog.substring(0, u);
+					u = cog.indexOf(';');
+					if( u != -1 ) cog = cog.substring(0, u);
+					String erm = cog.replace("  ", " ");
+					while( !erm.equals( cog ) ) {
+						cog = erm;
+						erm = cog.replace("  ", " ");
+					}
+					cog = cog.trim();
+					
+					int ci = val.indexOf(" COG");
+					int ce = val.indexOf(',', ci+1);
+					String cogid = val.substring(ci+1, ce);
+					
+					ci = val.lastIndexOf(" COG");
+					ce = val.indexOf(',', ci+1);
+					String cogan = i > ce ? val.substring(ce+1, i).trim() : "";
+					
+					cogidmap.put(cogid, cog);
+					map.put( id, new Cog( cogid, Cog.cogchar.get(cog), cog, cogan ) );
 				}
-				cog = cog.trim();
-				
-				int ci = val.indexOf(" COG");
-				int ce = val.indexOf(',', ci+1);
-				String cogid = val.substring(ci+1, ce);
-				
-				ci = val.lastIndexOf(" COG");
-				ce = val.indexOf(',', ci+1);
-				String cogan = val.substring(ce+1, i).trim();
-				
-				cogidmap.put(cogid, cog);
-				map.put( id, new Cog( cogid, Cog.cogchar.get(cog), cog, cogan ) );
 			}
 			line = br.readLine();
 		}
@@ -5843,7 +5845,7 @@ public class GeneSet {
 				if( args[1].equalsIgnoreCase("clusterGenes") ) {
 					gs.clusterGenes(gs.getSpecies(), true);
 				} else if( args[1].equalsIgnoreCase("cogBlast") ) {
-					gs.cogBlast( null, args[2], args.length > 3 ? args[3] : "localhost", true );
+					gs.cogBlast( null, args[2], args.length > 3 ? args[3] : "localhost", true, true );
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -6666,7 +6668,7 @@ public class GeneSet {
 		return r;
 	}
 
-	public void cogBlast( Set<String> species, String dbPath, String hostname, boolean headless ) {
+	public void cogBlast( Set<String> species, String dbPath, String hostname, boolean headless, boolean docker ) {
 		try {
 			StringWriter sb = new StringWriter();
 			for( Gene g : genelist ) {
@@ -6693,7 +6695,8 @@ public class GeneSet {
 			Path resPath = zipfilesystem.getPath("/cog.blastout");
 
 			NativeRun nrun = new NativeRun();
-			SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, zipfilesystem, user, hostname, headless);
+			if( docker ) SerifyApplet.deltaBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, zipfilesystem, user, hostname, headless, docker);
+			else SerifyApplet.rpsBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, zipfilesystem, user, hostname, headless);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}

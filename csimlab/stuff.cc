@@ -2734,6 +2734,8 @@ JNIEXPORT int create( int type, ... ) {
 
 	va_end( argptr );
 
+    printf("heyhey %d, %d %d\n", type, total, sizeof(int) );
+
 	garbage();
 	data.buffer = (long)malloc( bytelength( type, total ) );
 	data.length = total;

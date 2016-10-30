@@ -10,6 +10,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -58,7 +59,8 @@ public class Mynd extends Application {
         //gc.closePath();
         gc.fill();
 
-        gc.setFont(Font.font(gc.getFont().getSize()+10.0));
+        Font font = Font.font(gc.getFont().getFamily(), FontPosture.ITALIC,gc.getFont().getSize()+10.0);
+        gc.setFont( font );
         fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, 93, 61, "T.scotoductus", "2101", false );
         fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, 60, 36, "T.scotoductus", "2127", false );
         fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, 35, 0, "T.scotoductus", "252", false );
@@ -68,7 +70,7 @@ public class Mynd extends Application {
         fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, -91, -123, "T.islandicus", true );
         fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, -124, -154, "T.oshimai", true );
         fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, -155, -216, "T.scotoductus", "346", false );
-        fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, -217, -266, "T.antranikianii" );
+        fromTo( gc, largeX, largeY, smallX, smallY, fontX, fontY, -217, -266, "T.antranikianii", "and T.scotoductus 1572", false );
 
         WritableImage wim = new WritableImage( (int)canvas.getWidth(), (int)canvas.getHeight() );
         canvas.snapshot(null, wim);
@@ -121,12 +123,13 @@ public class Mynd extends Application {
         }
 
         if( subsp != null ) {
-            gc.setFont(Font.font(gc.getFont().getSize()-10.0));
+            Font font = Font.font(gc.getFont().getFamily(), FontPosture.ITALIC, gc.getFont().getSize()-10.0);
+            gc.setFont( font );
             text = new Text( subsp );
-            sw = text.getLayoutBounds().getWidth()/5.0;//+tscoto.length()/2.0;
+            sw = text.getLayoutBounds().getWidth()/6.0;//+tscoto.length()/2.0;
             for( int i = 0; i < subsp.length(); i++ ) {
                 text = new Text( subsp.substring(0,i) );
-                double fw = text.getLayoutBounds().getWidth()/5.0;//+i*tscoto.length()/20.0;
+                double fw = text.getLayoutBounds().getWidth()/6.0;//+i*tscoto.length()/20.0;
                 double horn = reverse ? middle+fw-sw/2.0 : middle-fw+sw/2.0;
                 double x = (fontX-15) * Math.cos(horn * Math.PI / 180.0);
                 double y = -(fontY-15) * Math.sin(horn * Math.PI / 180.0);
@@ -136,7 +139,8 @@ public class Mynd extends Application {
                 gc.rotate( reverse ? horn+90 : horn-90);
                 gc.translate(-x, -y);
             }
-            gc.setFont(Font.font(gc.getFont().getSize()+10.0));
+            font = Font.font(gc.getFont().getFamily(), FontPosture.ITALIC,gc.getFont().getSize()+10.0);
+            gc.setFont( font );
         }
     }
 }

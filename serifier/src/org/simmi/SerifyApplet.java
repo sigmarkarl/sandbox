@@ -706,6 +706,82 @@ public class SerifyApplet {
 		nrun.runProcessBuilder( "Performing rpsblast", lscmd, cont, false, run, headless );
 	}
 	
+	public static void deltaBlastRun( NativeRun nrun, StringBuffer query, String dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user, final String hostname, boolean headless, boolean docker ) throws IOException {
+		String userhome = System.getProperty("user.home");
+		Path selectedpath = null;
+		if( homedir ) selectedpath = new File( userhome ).toPath();
+		else {
+			JFileChooser fc = new JFileChooser();
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
+				selectedpath = fc.getSelectedFile().toPath();
+				if( !Files.isDirectory(selectedpath) ) selectedpath = selectedpath.getParent();
+			}
+		}
+		
+		String username = System.getProperty("user.name");
+		String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
+		
+		List<Object>	lscmd = new ArrayList<>();
+		if( table != null ) {
+			int[] rr = table.getSelectedRows();
+			for( int r : rr ) {
+				Path	path = (Path)table.getValueAt( r, 3 );
+				//String blastFile = "rpsblast+";
+				Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
+				int procs = Runtime.getRuntime().availableProcessors();
+				
+				List<String>	lcmd = new ArrayList<>();
+				String[] bcmds = { "rpsblast", "-db", dbPath, "-num_threads", Integer.toString(procs) };
+				String[] exts = extrapar.trim().split("[\t ]+");
+				
+				lcmd.addAll( Arrays.asList(bcmds) );
+				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+				
+				lscmd.add( new Path[] {path, res, selectedpath} );
+				lscmd.add( lcmd );
+			}
+		} else {
+			int procs = Runtime.getRuntime().availableProcessors();
+			
+			String OS = System.getProperty("os.name").toLowerCase();
+			List<String>	lcmd = new ArrayList<String>();
+			String[] bcmds;
+			
+			if( docker ) {
+				bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/docker" : "docker", "run", "-i", "geneset", "/ncbi-blast-2.5.0+/bin/deltablast", "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+			} else {
+				//String[] cmds;
+				if( hostname.equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/ncbi-blast-2.5.0+/bin/blast" : "rpsblast"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+				else {
+					if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
+					bcmds = new String[] { "ssh", hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
+				}
+			}
+			String[] exts = extrapar.trim().split("[\t ]+");
+			
+			lcmd.addAll( Arrays.asList(bcmds) );
+			if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+			
+			lscmd.add( new Object[] {query.toString().getBytes(), resPath, selectedpath} );
+			lscmd.add( lcmd );
+		}
+		
+		final Object[] cont = new Object[3];
+		Runnable run = () -> {
+            if( cont[0] != null ) {
+
+            }
+            try {
+                fs.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
+		nrun.setRun( run );
+		nrun.runProcessBuilder( "Performing rpsblast", lscmd, cont, false, run, headless );
+	}
+	
 	public static void blastRun( NativeRun nrun, Path queryPath, Path dbPath, Path resPath, String dbType, String extrapar, TableView table, boolean homedir, final String user, final boolean headless ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;

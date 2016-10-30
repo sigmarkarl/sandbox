@@ -123,7 +123,7 @@ public class Fasteign extends JApplet {
 				ind = str.indexOf(h2);
 				stop = str.indexOf("</h2>", ind);
 				String ibud = str.substring(ind + h2.length(), stop).trim();
-				Ibud ib = new Ibud(ibud);
+				Ibud ib = new Ibud(ibud, null);
 				ib.url = suburlstr;
 				if( !iblist.contains(ib) ) {
 					iblist.add(ib);
