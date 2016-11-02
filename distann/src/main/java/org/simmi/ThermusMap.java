@@ -32,8 +32,6 @@ import javax.swing.event.ChangeListener;
 import java.io.ByteArrayOutputStream;
 import netscape.javascript.JSObject;
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
-
 public class ThermusMap extends JApplet {
 	public void paint( Graphics g ) {
 		super.paint(g);
@@ -160,7 +158,7 @@ public class ThermusMap extends JApplet {
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();
 					ImageIO.write(bi, "png", baos);
 					
-					String dataurl = Base64.encode( baos.getBytes() );
+					String dataurl = null;//Base64.encode( baos.getBytes() );
 					
 					LatLng ll = null;
 					if( m.containsKey(split[0]) ) {
