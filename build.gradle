@@ -1,4 +1,4 @@
-buildscript {
+subprojects {
     repositories {
         jcenter()
         mavenCentral()
@@ -32,6 +32,9 @@ project(':javafasta') {
 		compile project(':TreeDraw')
 		compile files("$System.env.JAVA_HOME" + '/jre/lib/javaws.jar')
 		compile group: 'org.apache.poi', name: 'poi', version: '3.15'
+		compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.15'
+		compile group: 'org.ejml', name: 'all', version: '0.29'
+		compile group: 'com.github.samtools', name: 'htsjdk', version: '2.7.0'
 	}
 }
 

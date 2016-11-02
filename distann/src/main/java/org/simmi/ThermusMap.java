@@ -29,11 +29,10 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
+import java.io.ByteArrayOutputStream;
 import netscape.javascript.JSObject;
 
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 
 public class ThermusMap extends JApplet {
 	public void paint( Graphics g ) {
@@ -158,7 +157,7 @@ public class ThermusMap extends JApplet {
 					
 					//g.drawRect(0, 0, 15, 15);
 					
-					ByteOutputStream baos = new ByteOutputStream();
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
 					ImageIO.write(bi, "png", baos);
 					
 					String dataurl = Base64.encode( baos.getBytes() );
