@@ -27,6 +27,14 @@ project(':TreeDraw') {
 	}
 }
 
+project(':serifier') {
+	dependencies {
+		compile group: 'commons-net', name: 'commons-net', version: '3.5'
+		compile group: 'org.apache.commons', name: 'commons-vfs2', version: '2.1'
+		compile project(':javafasta')
+	}
+}
+
 project(':javafasta') {
 	dependencies {
 		compile project(':TreeDraw')
@@ -41,5 +49,6 @@ project(':javafasta') {
 project(':distann') {
 	dependencies {
 		compile project(':javafasta')
+		compile project(':serifier')
 	}
 }
