@@ -1,0 +1,3 @@
+rootProject.name = 'sandbox'
+include ":javafasta",":distann","TreeDraw"
+project(":javafasta").projectDir = file("../world/javafasta")

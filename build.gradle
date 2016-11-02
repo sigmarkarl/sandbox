@@ -1,0 +1,42 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+}
+
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'java'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    ext.getProjectFullName = {
+        return 'distann' + project.path.replace(':', '-')
+    }
+}
+
+project(':TreeDraw') {
+	dependencies {
+
+	}
+}
+
+project(':javafasta') {
+	dependencies {
+		compile project(':TreeDraw')
+		compile files("$System.env.JAVA_HOME" + '/jre/lib/javaws.jar')
+		compile group: 'org.apache.poi', name: 'poi', version: '3.15'
+	}
+}
+
+project(':distann') {
+	dependencies {
+		compile project(':javafasta')
+	}
+}
