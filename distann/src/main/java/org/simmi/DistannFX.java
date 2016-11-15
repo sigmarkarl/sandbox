@@ -1,5 +1,6 @@
 package org.simmi;
 
+import javafx.stage.Window;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -30,6 +31,11 @@ import java.nio.file.Paths;
  * @author sigmar
  */
 public class DistannFX extends Application {
+    Window owner;
+
+    public Window getOwner() {
+        return owner;
+    }
 
     @Override
     public void start(Stage primaryStage) {
@@ -47,7 +53,7 @@ public class DistannFX extends Application {
     	vbox.getChildren().add( toolbar );
 
         GeneSet gs = new GeneSet();
-        GeneSetHead gsh = new GeneSetHead( gs );
+        GeneSetHead gsh = new GeneSetHead( this, gs );
         //final JPanel panel = new JPanel();
         //panel.setLayout( new BorderLayout() );
         gsh.init( primaryStage, null, splitpane, gene, upper, lower, menubar, toolbar, btoolbar );
@@ -60,6 +66,7 @@ public class DistannFX extends Application {
         Scene scene = new Scene(root, 800, 600);
         scene.getStylesheets().add("view/mystyle.css");
 
+        owner = primaryStage.getOwner();
         primaryStage.setTitle("Genav");
         primaryStage.setScene(scene);
         primaryStage.show();

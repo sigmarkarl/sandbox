@@ -389,7 +389,7 @@ public class ActionCollection {
 	
 	public static void stats( Container comp, GeneSetHead genesethead, Map<String,List<Sequence>> speccontigMap ) {
 		final GeneSet geneset = genesethead.geneset;
-		final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
+		final List<String>			species = new ArrayList<>( speccontigMap.keySet() );
 		
 		TableModel model = new TableModel() {
 			@Override
@@ -399,7 +399,7 @@ public class ActionCollection {
 
 			@Override
 			public int getColumnCount() {
-				return 1;
+				return 2;
 			}
 
 			@Override
@@ -419,7 +419,9 @@ public class ActionCollection {
 
 			@Override
 			public Object getValueAt(int rowIndex, int columnIndex) {
-				return species.get( rowIndex );
+				if( columnIndex == 1 ) {
+					return Sequence.nameFix( species.get(rowIndex), true );
+				} else return species.get( rowIndex );
 			}
 
 			@Override

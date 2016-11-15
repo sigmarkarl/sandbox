@@ -172,7 +172,7 @@ public class Synteni {
 										if( gg != null ) {
 											int nloc = geneset.getGlobalIndex(tv)*this.getWidth()/FASTI; //(loc+(c.annset.size()-i-1))*this.getWidth()/FASTI;
 											
-											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, scannset, gg.getGenes(selsyn), -1.0, gg );
+											double ratio2 = GeneCompare.invertedGradientTotalRatio( scannset, gg.getGenes(selsyn), -1.0 );
 											if( ratio2 != -1 ) {
 												g.setColor( GeneCompare.gradientColor( ratio2 ) );
 												g.fillRect(nloc, h-6, 1, 4);
@@ -187,7 +187,7 @@ public class Synteni {
 										if( gg != null ) {
 											int nloc = geneset.getGlobalIndex(tv)*this.getWidth()/FASTI; //int nloc = (loc+i)*this.getWidth()/FASTI;
 											
-											double ratio2 = GeneCompare.invertedGradientTotalRatio( selsyn, scannset, gg.getGenes(selsyn), -1.0, gg );
+											double ratio2 = GeneCompare.invertedGradientTotalRatio( scannset, gg.getGenes(selsyn), -1.0 );
 											
 											/*String symb = gg.getCommonSymbol();
 											if( symb != null && symb.contains("polA1") ) {
