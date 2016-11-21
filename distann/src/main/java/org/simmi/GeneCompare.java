@@ -2,6 +2,7 @@ package org.simmi;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.scene.control.SelectionModel;
 import javafx.scene.control.TableView;
 import netscape.javascript.JSObject;
 import org.simmi.shared.*;
@@ -1708,7 +1709,7 @@ public class GeneCompare {
 				k++;
 			}
 		} else {
-			Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
+			Map<String,Integer>	offsetMap = new HashMap<>();
 				
 			if( !genesethead.isGeneview() ) {
 				GeneGroup gg = genesethead.getGeneGroupTable().getSelectionModel().getSelectedItem();
@@ -1737,26 +1738,28 @@ public class GeneCompare {
 					}
 				}
 			} else {
-				GeneGroup gg = genesethead.getGeneTable().getSelectionModel().getSelectedItem().getGeneGroup();
-				
-				for( String spec2 : spec2s ) {
-					if( gg.species.containsKey(spec2) ) {
-						final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
-						Teginfo gene2s = gg.getGenes( spec2 );
-						for( Tegeval tv2 : gene2s.tset ) {
-							int count2 = 0;
-							for( Sequence ctg2 : contigs2 ) {
-								if( ctg2.annset != null ) {
-									int idx = ctg2.annset.indexOf( tv2 );
-									if( idx == -1 ) {
-										count2 += ctg2.getAnnotationCount();
-									} else {
-										count2 += idx;
-										break;
+				Gene gene = genesethead.getGeneTable().getSelectionModel().getSelectedItem();
+				if( gene !=  null ) {
+					GeneGroup gg = gene.getGeneGroup();
+					for( String spec2 : spec2s ) {
+						if (gg.species.containsKey(spec2)) {
+							final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get(spec2);
+							Teginfo gene2s = gg.getGenes(spec2);
+							for (Tegeval tv2 : gene2s.tset) {
+								int count2 = 0;
+								for (Sequence ctg2 : contigs2) {
+									if (ctg2.annset != null) {
+										int idx = ctg2.annset.indexOf(tv2);
+										if (idx == -1) {
+											count2 += ctg2.getAnnotationCount();
+										} else {
+											count2 += idx;
+											break;
+										}
 									}
 								}
+								offsetMap.put(spec2, count2);
 							}
-							offsetMap.put(spec2, count2);
 						}
 					}
 				}

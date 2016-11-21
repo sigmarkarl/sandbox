@@ -1366,20 +1366,20 @@ public class GeneSet {
 		ImageIO.write(img, "png", new File(str));
 	}
 	
-	public BufferedImage animatrix( Collection<String> species1, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, String designation, Collection<GeneGroup> allgg ) {
+	public BufferedImage animatrix( Collection<String> species1, Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap, String designation, Collection<GeneGroup> allgg, boolean skipplasmid ) {
 		List<String> specset;// = new ArrayList<String>(species1);
 		if( designation != null && designation.length() > 0 ) {
-			Set<String> sset = new TreeSet<String>();
+			Set<String> sset = new TreeSet<>();
 			for( Gene g : genelist ) {
 				if( g.tegeval.designation != null && g.tegeval.designation.equals( designation ) ) {
 					sset.add( g.getSpecies() );
 				}
 			}
-			specset = new ArrayList<String>( sset );
-		} else specset = new ArrayList<String>(species1);
+			specset = new ArrayList<>( sset );
+		} else specset = new ArrayList<>(species1);
 		
-		Set<String>	d1 = new HashSet<String>();
-		Set<String>	d2 = new HashSet<String>();
+		Set<String>	d1 = new HashSet<>();
+		Set<String>	d2 = new HashSet<>();
 		
 		double[] matrix = new double[ specset.size()*specset.size() ];
 		Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
@@ -1402,76 +1402,80 @@ public class GeneSet {
 							int score = 0;
 							int tscore = 1;
 							for( Tegeval tv1 : ti1.tset ) {
-								for( Tegeval tv2 : ti2.tset ) {
-									Sequence seq1 = tv1.getAlignedSequence();
-									Sequence seq2 = tv2.getAlignedSequence();
-									if( seq1 != null && seq2 != null ) {
-										int mest = 0;
-										int tmest = 0;
-										//bval = Math.max( GeneCompare.blosumVal(tv1.alignedsequence, tv2.alignedsequence, blosumap), bval );
-										
-										//public static double blosumVal( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap ) {
-										int startcheck = 0;
-										int start = -1;
-										int stopcheck = 0;
-										int stop = -1;
-										for( int i = 0; i < seq1.length(); i++ ) {
-											if( seq1.getCharAt(i) != '-' ) {
-												startcheck |= 1;
+								if( !skipplasmid || !tv1.getContig().isPlasmid() ) {
+									for (Tegeval tv2 : ti2.tset) {
+										if( !skipplasmid || !tv2.getContig().isPlasmid() ) {
+											Sequence seq1 = tv1.getAlignedSequence();
+											Sequence seq2 = tv2.getAlignedSequence();
+											if (seq1 != null && seq2 != null) {
+												int mest = 0;
+												int tmest = 0;
+												//bval = Math.max( GeneCompare.blosumVal(tv1.alignedsequence, tv2.alignedsequence, blosumap), bval );
+
+												//public static double blosumVal( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap ) {
+												int startcheck = 0;
+												int start = -1;
+												int stopcheck = 0;
+												int stop = -1;
+												for (int i = 0; i < seq1.length(); i++) {
+													if (seq1.getCharAt(i) != '-') {
+														startcheck |= 1;
+													}
+													if (seq2.getCharAt(i) != '-') {
+														startcheck |= 2;
+													}
+
+													if (start == -1 && startcheck == 3) {
+														start = i;
+														break;
+													}
+												}
+
+												for (int i = seq1.length() - 1; i >= 0; i--) {
+													if (seq1.getCharAt(i) != '-') {
+														stopcheck |= 1;
+													}
+													if (seq2.getCharAt(i) != '-') {
+														stopcheck |= 2;
+													}
+
+													if (stop == -1 && stopcheck == 3) {
+														stop = i + 1;
+														break;
+													}
+												}
+												//count += stop-start;
+
+												for (int i = start; i < stop; i++) {
+													char lc = seq1.getCharAt(i);
+													char c = Character.toUpperCase(lc);
+													//if( )
+													String comb = c + "" + c;
+													if (blosumap.containsKey(comb)) tmest += blosumap.get(comb);
+												}
+
+												for (int i = start; i < stop; i++) {
+													char lc = seq1.getCharAt(i);
+													char c = Character.toUpperCase(lc);
+													char lc2 = seq2.getCharAt(i);
+													char c2 = Character.toUpperCase(lc2);
+
+													String comb = c + "" + c2;
+													if (blosumap.containsKey(comb)) mest += blosumap.get(comb);
+												}
+
+												double tani = (double) mest / (double) tmest;
+												if (tani > (double) score / (double) tscore) {
+													score = mest;
+													tscore = tmest;
+												}
+												//ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
+												//return ret;
 											}
-											if( seq2.getCharAt(i) != '-' ) {
-												startcheck |= 2;
-											}
-											
-											if( start == -1 && startcheck == 3 ) {
-												start = i;
-												break;
-											}
+											//if( where == 0 ) d1.add( gg.getCommonName() );
+											//else d2.add( gg.getCommonName() );
 										}
-										
-										for( int i = seq1.length()-1; i >= 0; i-- ) {
-											if( seq1.getCharAt(i) != '-' ) {
-												stopcheck |= 1;
-											}
-											if( seq2.getCharAt(i) != '-' ) {
-												stopcheck |= 2;
-											}
-											
-											if( stop == -1 && stopcheck == 3 ) {
-												stop = i+1;
-												break;
-											}
-										}
-										//count += stop-start;
-										
-								        for( int i = start; i < stop; i++ ) {
-								        	char lc = seq1.getCharAt(i);
-								        	char c = Character.toUpperCase( lc );
-								        	//if( )
-								        	String comb = c+""+c;
-								        	if( blosumap.containsKey(comb) ) tmest += blosumap.get(comb);
-								        }
-								        
-								        for( int i = start; i < stop; i++ ) {
-								        	char lc = seq1.getCharAt( i );
-								        	char c = Character.toUpperCase( lc );
-								        	char lc2 = seq2.getCharAt( i );
-								        	char c2 = Character.toUpperCase( lc2 );
-								        	
-								        	String comb = c+""+c2;
-								        	if( blosumap.containsKey(comb) ) mest += blosumap.get(comb);
-								        }
-								        
-								        double tani = (double)mest/(double)tmest;
-								        if( tani > (double)score/(double)tscore ) {
-								        	score = mest;
-								        	tscore = tmest;
-								        }
-								        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
-										//return ret;
 									}
-									//if( where == 0 ) d1.add( gg.getCommonName() );
-									//else d2.add( gg.getCommonName() );
 								}
 							}
 							totalscore += score;

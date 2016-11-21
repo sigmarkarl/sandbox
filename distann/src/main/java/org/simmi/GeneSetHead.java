@@ -139,18 +139,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.GeneSet.ClusterInfo;
 import org.simmi.GeneSet.RunnableResult;
-import org.simmi.shared.Annotation;
-import org.simmi.shared.Cog;
-import org.simmi.shared.Function;
-import org.simmi.shared.Gene;
-import org.simmi.shared.GeneGroup;
-import org.simmi.shared.Sequence;
-import org.simmi.shared.Sequences;
-import org.simmi.shared.Serifier;
-import org.simmi.shared.ShareNum;
-import org.simmi.shared.Tegeval;
-import org.simmi.shared.Teginfo;
-import org.simmi.shared.TreeUtil;
+import org.simmi.shared.*;
 import org.simmi.shared.TreeUtil.Node;
 import org.simmi.shared.TreeUtil.NodeSet;
 import org.simmi.unsigned.FlxReader;
@@ -267,7 +256,7 @@ public class GeneSetHead extends JApplet {
 			
 			for( int i = 0; i < ctg.length(); i+=500 ) {
 				for( int k = i; k < Math.min( ctg.length(), i+500 ); k++ ) {
-					char chr = ctg.getCharAt( k );
+					char chr = ctg.charAt( k );
 					if( chr == 'g' || chr == 'G' ) {
 						g++;
 					} else if( chr == 'c' || chr == 'C' ) {
@@ -280,7 +269,7 @@ public class GeneSetHead extends JApplet {
 				int acount = 0;
 				int tcount = 0;
 				for( int k = i; k < Math.min( ctg.length(), i+10000 ); k++ ) {
-					char chr = k-5000 < 0 ? ctg.getCharAt( ctg.length()+(k-5000) ) : ctg.getCharAt(k-5000);
+					char chr = k-5000 < 0 ? ctg.charAt( ctg.length()+(k-5000) ) : ctg.charAt(k-5000);
 					if( chr == 'g' || chr == 'G' ) {
 						gcount++;
 					} else if( chr == 'c' || chr == 'C' ) {
@@ -565,28 +554,46 @@ public class GeneSetHead extends JApplet {
 					//return ret;
 				});
 				table.getColumns().add( speccol );
-				
-				TableColumn<Gene, Tegeval> gspeccol = new TableColumn(spec);
+
+				TableColumn<Gene, Teg> gspeccol = new TableColumn(spec);
+				gspeccol.setComparator((o1, o2) -> {
+					if( o1 == null ) {
+						if( o2 == null ) {
+							return 0;
+						} else return -1;
+					} else if( o1 instanceof Tegeval ) {
+						if( o2 == null || o2 instanceof Teginfo ) {
+							return 1;
+						}
+					} else {
+						if( o2 == null ) {
+							return 1;
+						} else if( o2 instanceof Tegeval ) {
+							return -1;
+						}
+					}
+					return o1.compareTo(o2);
+				});
 				gspeccol.setCellFactory( cell -> {
-					final TableCell<Gene,Tegeval> tc = new TableCell<Gene,Tegeval>() {
+					final TableCell<Gene,Teg> tc = new TableCell<Gene,Teg>() {
 						@Override
-						protected void updateItem(Tegeval item, boolean empty) {
+						protected void updateItem(Teg item, boolean empty) {
 							super.updateItem(item, empty);
 
 							if (item == null || item.toString().length() == 0 || empty) {
-								setText(null);
+								setText("");
 								setStyle("");
-								//getStyleClass().remove("tabcellstyle");
 							} else {
+								boolean render = cellRenderGene( this, item );
 								setText(item.toString());
-								cellRenderGene( this, item );
+								if( !render ) setStyle("");
 								//getStyleClass().add("tabcellstyle");
 				                /*if( (this.getTableRow() != null && getTableRow().isSelected()) || isSelected() ) {
 				                	//setTextFill( javafx.scene.paint.Color.WHITE );
-				                	setStyle("-fx-background-color: darkgreen");
+				                	setStyle("-fx-background-color: white");
 				                } else {
 				                	//setTextFill( javafx.scene.paint.Color.BLACK );
-				                	setStyle("-fx-background-color: green");
+				                	setStyle("-fx-background-color: black");
 				                }*/
 							}
 						}
@@ -597,12 +604,21 @@ public class GeneSetHead extends JApplet {
 					Gene g = cellValue.getValue();
 
 					//Teginfo tes = g.tegeval;//getTes( spec );
-					if( spec.equals(g.getSpecies()) ) return new ReadOnlyObjectWrapper(g.tegeval);
-					else return null;
+					if( spec.equals(g.getSpecies()) ) {
+						return new ReadOnlyObjectWrapper(g.tegeval);
+					} else {
+						GeneGroup gg = g.getGeneGroup();
+						Set<String> specset = gg.getSpecies();
+						if( specset.contains(spec) ) {
+							Teginfo ti = gg.getGenes(spec);
+							return new ReadOnlyObjectWrapper(ti);
+						}
+					}
 					//return new SimpleStringProperty( tes != null ? tes.toString() : "" );
 					//Teginfo ret = geneset.getGroupTes( cellValue.getValue(), spec );
 					//return new ObservableValue<String>( ret.toString() );
 					//return ret;
+					return null;
 				});
 
 				/*gspeccol.setCellValueFactory( cellValue -> {
@@ -2552,6 +2568,9 @@ public class GeneSetHead extends JApplet {
 		JavaFasta.user = geneset.user;
 		this.splitpane = splitpane;
 		this.primaryStage = primaryStage;
+
+		table = lower;
+		gtable = genetable;
 		//SerifyApplet.user = user;
 		
 		/*try {
@@ -3567,11 +3586,7 @@ public class GeneSetHead extends JApplet {
 		
 		Menu		help = new Menu("Help");
 		MenuItem 	about = new MenuItem("About");
-		about.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			public void run() {
-				JOptionPane.showMessageDialog( comp, "CompGen 1.0" );
-			}
-		}));
+		about.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog( comp, "CompGen 1.0" )));
 		help.getItems().add( about );
 		
 		MenuItem test = new MenuItem("Test");
@@ -3962,13 +3977,11 @@ public class GeneSetHead extends JApplet {
 						genegroups.add( gg.getGeneGroup() );
 					}
 				}
-				Platform.runLater( new Runnable() {
-					public void run() {
-						Set<String>	specs = null;
-						if( table.getItems().size() > 1 ) specs = getSelspec(comp, geneset.specList, null);
-						showSequences( comp, genegroups, false, specs );
-					}
-				});
+				Platform.runLater(() -> {
+                    Set<String>	specs = null;
+                    if( table.getItems().size() > 1 ) specs = getSelspec(comp, geneset.specList, null);
+                    showSequences( comp, genegroups, false, specs );
+                });
 		});
 		sequencemenu.getItems().add( showseq );
 		
@@ -4589,338 +4602,343 @@ public class GeneSetHead extends JApplet {
 		});
 		MenuItem matrixaction = new MenuItem("Relation matrix");
 		matrixaction.setOnAction( actionEvent -> {
-			JComboBox<String>	descombo = new JComboBox<String>( geneset.deset.toArray( new String[geneset.deset.size()] ) );
-			JCheckBox			anicheck = new JCheckBox("ANImatrix");
-			descombo.insertItemAt("", 0);
-			descombo.setSelectedIndex( 0 );
-			JOptionPane.showMessageDialog( GeneSetHead.this, new Object[] { descombo, anicheck } );
-			String val = descombo.getSelectedItem().toString();
-			
-			Collection<GeneGroup> ss = new HashSet<GeneGroup>();
-			/*int[] rr = table.getSelectedRows();
-			for( int r : rr ) {
-				ss.add( geneset.allgenegroups.get( table.convertRowIndexToModel(r) ) );
-			}*/
-			ss.addAll( table.getSelectionModel().getSelectedItems() );
-			if( ss.isEmpty() ) ss = geneset.allgenegroups;
-			
-			Set<String> species = getSelspec( GeneSetHead.this, geneset.specList );
-			bimg = anicheck.isSelected() ? geneset.animatrix( species, geneset.clusterMap, val, ss ) : geneset.bmatrix( species, geneset.clusterMap, val );
-			
-			JFrame f = new JFrame("Relation matrix");
-			f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			f.setSize(500, 500);
+			SwingUtilities.invokeLater(() -> {
+                JComboBox<String>	descombo = new JComboBox<String>( geneset.deset.toArray( new String[geneset.deset.size()] ) );
+                JCheckBox			anicheck = new JCheckBox("ANImatrix");
+				JCheckBox			plasmidcheck = new JCheckBox("Skip plasmids");
+                descombo.insertItemAt("", 0);
+                descombo.setSelectedIndex( 0 );
+                JOptionPane.showMessageDialog( GeneSetHead.this, new Object[] { descombo, anicheck, plasmidcheck } );
+                String val = descombo.getSelectedItem().toString();
 
-			/*
-			 * { public void paintComponent( Graphics g ) {
-			 * super.paintComponent(g); g.drawImage(bimg, 0, 0, this); } };
-			 */
+                Collection<GeneGroup> ss = new HashSet<>();
+				/*int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					ss.add( geneset.allgenegroups.get( table.convertRowIndexToModel(r) ) );
+				}*/
+                ss.addAll( table.getSelectionModel().getSelectedItems() );
+                if( ss.isEmpty() ) ss = geneset.allgenegroups;
 
-			try {
-				final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
-				final Transferable transferable = new Transferable() {
-					@Override
-					public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-						StringBuilder ret = new StringBuilder();
+                Set<String> species = getSelspec( GeneSetHead.this, geneset.specList );
+                bimg = anicheck.isSelected() ? geneset.animatrix( species, geneset.clusterMap, val, ss, plasmidcheck.isSelected() ) : geneset.bmatrix( species, geneset.clusterMap, val );
 
-						int i = 0;
-						for (String spc : geneset.specList) {
-							if (++i == geneset.specList.size())
-								ret.append(spc + "\n");
-							else
-								ret.append(spc + "\t");
-						}
+                JFrame f = new JFrame("Relation matrix");
+                f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                f.setSize(500, 500);
 
-						int where = 0;
-						for (String spc1 : geneset.specList) {
-							int wherex = 0;
-							for (String spc2 : geneset.specList) {
-								int spc1tot = 0;
-								int spc2tot = 0;
-								int totot = 0;
+        /*
+         * { public void paintComponent( Graphics g ) {
+         * super.paintComponent(g); g.drawImage(bimg, 0, 0, this); } };
+         */
 
-								int spc1totwocore = 0;
-								int spc2totwocore = 0;
-								int tototwocore = 0;
-								for (Set<String> set : geneset.clusterMap.keySet()) {
-									Set<Map<String, Set<String>>> erm = geneset.clusterMap.get(set);
-									if (set.contains(spc1)) {
-										if (set.size() < geneset.specList.size()) {
-											spc1totwocore += erm.size();
-											for (Map<String, Set<String>> sm : erm) {
-												Set<String> hset = sm.get(spc1);
-												tototwocore += hset.size();
-											}
+                try {
+                    final DataFlavor df = new DataFlavor("text/plain;charset=utf-8");
+                    final Transferable transferable = new Transferable() {
+                        @Override
+                        public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
+                            StringBuilder ret = new StringBuilder();
 
-											if (set.contains(spc2)) {
-												spc2totwocore += erm.size();
-											}
+                            int i = 0;
+                            for (String spc : geneset.specList) {
+                                if (++i == geneset.specList.size())
+                                    ret.append(spc + "\n");
+                                else
+                                    ret.append(spc + "\t");
+                            }
 
-											if (spc2totwocore > spc1totwocore)
-												System.err.println("okoko " + spc1totwocore + " " + spc2totwocore);
-										}
+                            int where = 0;
+                            for (String spc1 : geneset.specList) {
+                                int wherex = 0;
+                                for (String spc2 : geneset.specList) {
+                                    int spc1tot = 0;
+                                    int spc2tot = 0;
+                                    int totot = 0;
 
-										spc1tot += erm.size();
-										for (Map<String, Set<String>> sm : erm) {
-											Set<String> hset = sm.get(spc1);
-											totot += hset.size();
-										}
+                                    int spc1totwocore = 0;
+                                    int spc2totwocore = 0;
+                                    int tototwocore = 0;
+                                    for (Set<String> set : geneset.clusterMap.keySet()) {
+                                        Set<Map<String, Set<String>>> erm = geneset.clusterMap.get(set);
+                                        if (set.contains(spc1)) {
+                                            if (set.size() < geneset.specList.size()) {
+                                                spc1totwocore += erm.size();
+                                                for (Map<String, Set<String>> sm : erm) {
+                                                    Set<String> hset = sm.get(spc1);
+                                                    tototwocore += hset.size();
+                                                }
 
-										if (set.contains(spc2)) {
-											spc2tot += erm.size();
-										}
-									}
-								}
+                                                if (set.contains(spc2)) {
+                                                    spc2totwocore += erm.size();
+                                                }
 
-								if (where == wherex) {
-									if (where == geneset.specList.size() - 1)
-										ret.append(0 + "\n");
-									else
-										ret.append(0 + "\t");
-								} else {
-									double hlut = (double) spc2totwocore / (double) spc1totwocore;
-									double sval = hlut; // 1.0/( 1.1-hlut );
-									double val = Math.pow(50.0, sval - 0.3) - 1.0;
-									double dval = Math.round(100.0 * (val)) / 100.0;
+                                                if (spc2totwocore > spc1totwocore)
+                                                    System.err.println("okoko " + spc1totwocore + " " + spc2totwocore);
+                                            }
 
-									if (wherex == geneset.specList.size() - 1)
-										ret.append(dval + "\n");
-									else
-										ret.append(dval + "\t");
-								}
-								wherex++;
-							}
-							where++;
-						}
+                                            spc1tot += erm.size();
+                                            for (Map<String, Set<String>> sm : erm) {
+                                                Set<String> hset = sm.get(spc1);
+                                                totot += hset.size();
+                                            }
 
-						return new ByteArrayInputStream(ret.toString().getBytes());
-					}
+                                            if (set.contains(spc2)) {
+                                                spc2tot += erm.size();
+                                            }
+                                        }
+                                    }
 
-					@Override
-					public DataFlavor[] getTransferDataFlavors() {
-						return new DataFlavor[] { df };
-					}
+                                    if (where == wherex) {
+                                        if (where == geneset.specList.size() - 1)
+                                            ret.append(0 + "\n");
+                                        else
+                                            ret.append(0 + "\t");
+                                    } else {
+                                        double hlut = (double) spc2totwocore / (double) spc1totwocore;
+                                        double sval = hlut; // 1.0/( 1.1-hlut );
+                                        double val = Math.pow(50.0, sval - 0.3) - 1.0;
+                                        double dval = Math.round(100.0 * (val)) / 100.0;
 
-					@Override
-					public boolean isDataFlavorSupported(DataFlavor arg0) {
-						if (arg0.equals(df)) {
-							return true;
-						}
-						return false;
-					}
-				};
-				final TransferComponent comp2 = new TransferComponent(bimg, transferable);
+                                        if (wherex == geneset.specList.size() - 1)
+                                            ret.append(dval + "\n");
+                                        else
+                                            ret.append(dval + "\t");
+                                    }
+                                    wherex++;
+                                }
+                                where++;
+                            }
 
-				TransferHandler th = new TransferHandler() {
-					private static final long serialVersionUID = 1L;
+                            return new ByteArrayInputStream(ret.toString().getBytes());
+                        }
 
-					public int getSourceActions(JComponent c) {
-						return TransferHandler.COPY_OR_MOVE;
-					}
+                        @Override
+                        public DataFlavor[] getTransferDataFlavors() {
+                            return new DataFlavor[] { df };
+                        }
 
-					public boolean canImport(TransferHandler.TransferSupport support) {
-						return false;
-					}
+                        @Override
+                        public boolean isDataFlavorSupported(DataFlavor arg0) {
+                            if (arg0.equals(df)) {
+                                return true;
+                            }
+                            return false;
+                        }
+                    };
+                    final TransferComponent comp2 = new TransferComponent(bimg, transferable);
 
-					protected Transferable createTransferable(JComponent c) {
-						return transferable;
-					}
+                    TransferHandler th = new TransferHandler() {
+                        private static final long serialVersionUID = 1L;
 
-					public boolean importData(TransferHandler.TransferSupport support) {
-						return true;
-					}
-				};
-				comp2.setTransferHandler(th);
+                        public int getSourceActions(JComponent c) {
+                            return TransferHandler.COPY_OR_MOVE;
+                        }
 
-				comp2.setEnabled(true);
-				JScrollPane fsc = new JScrollPane(comp2);
-				comp2.setPreferredSize(new Dimension(bimg.getWidth(), bimg.getHeight()));
+                        public boolean canImport(TransferSupport support) {
+                            return false;
+                        }
 
-				JPopupMenu	popup = new JPopupMenu();
-				popup.add( new AbstractAction("Save image") {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						FileSaveService fss = null;
-				        FileContents fileContents = null;
-				    	 
-				        try {
-				        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					        OutputStreamWriter	osw = new OutputStreamWriter( baos );
-							ImageIO.write(bimg, "png", baos);
-							baos.close();
+                        protected Transferable createTransferable(JComponent c) {
+                            return transferable;
+                        }
 
-					    	try {
-					    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
-					    	} catch( UnavailableServiceException e1 ) {
-					    		fss = null;
-					    	}
-					    	 
-					        if (fss != null) {
-					        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
-					            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
-					            bais.close();
-					            OutputStream os = fileContents.getOutputStream(true);
-					            os.write( baos.toByteArray() );
-					            os.close();
-					        } else {
-					        	JFileChooser jfc = new JFileChooser();
-					        	if( jfc.showSaveDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
-					        		 File f = jfc.getSelectedFile();
-					        		 FileOutputStream fos = new FileOutputStream( f );
-					        		 fos.write( baos.toByteArray() );
-					        		 fos.close();
-					        		 
-					        		 Desktop.getDesktop().browse( f.toURI() );
-					        	}
-					        }
-						} catch (IOException e2) {
-							e2.printStackTrace();
-						}
-					}
-				});
-				comp2.setComponentPopupMenu( popup );
-				
-				f.add(fsc);
-				f.setVisible(true);
-			} catch (ClassNotFoundException e1) {
-				e1.printStackTrace();
-			}
+                        public boolean importData(TransferSupport support) {
+                            return true;
+                        }
+                    };
+                    comp2.setTransferHandler(th);
+
+                    comp2.setEnabled(true);
+                    JScrollPane fsc = new JScrollPane(comp2);
+                    comp2.setPreferredSize(new Dimension(bimg.getWidth(), bimg.getHeight()));
+
+                    JPopupMenu	popup = new JPopupMenu();
+                    popup.add( new AbstractAction("Save image") {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            FileSaveService fss = null;
+                            FileContents fileContents = null;
+
+                            try {
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                OutputStreamWriter	osw = new OutputStreamWriter( baos );
+                                ImageIO.write(bimg, "png", baos);
+                                baos.close();
+
+                                try {
+                                    fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+                                } catch( UnavailableServiceException e1 ) {
+                                    fss = null;
+                                }
+
+                                if (fss != null) {
+                                    ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
+                                    fileContents = fss.saveFileDialog(null, null, bais, "export.png");
+                                    bais.close();
+                                    OutputStream os = fileContents.getOutputStream(true);
+                                    os.write( baos.toByteArray() );
+                                    os.close();
+                                } else {
+                                    JFileChooser jfc = new JFileChooser();
+                                    if( jfc.showSaveDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
+                                        File f = jfc.getSelectedFile();
+                                        FileOutputStream fos = new FileOutputStream( f );
+                                        fos.write( baos.toByteArray() );
+                                        fos.close();
+
+                                        Desktop.getDesktop().browse( f.toURI() );
+                                    }
+                                }
+                            } catch (IOException e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+                    });
+                    comp2.setComponentPopupMenu( popup );
+
+                    f.add(fsc);
+                    f.setVisible(true);
+                } catch (ClassNotFoundException e1) {
+                    e1.printStackTrace();
+                }
+            });
 		});
 		MenuItem tniaction = new MenuItem("TNI/ANI");
 		tniaction.setOnAction( actionEvent -> {
-				Set<String> species = getSelspec( GeneSetHead.this, geneset.specList );
-				String makeblastdb = "makeblastdb";
-				String OS = System.getProperty("os.name").toLowerCase();
-				if( OS.indexOf("mac") != -1 ) makeblastdb = "/usr/local/bin/makeblastdb";
-				for( String spec : species ) {
-					List<Sequence> lseq = geneset.speccontigMap.get(spec);
-					ProcessBuilder pb = new ProcessBuilder(makeblastdb,"-dbtype","nucl","-title",spec,"-out",spec);
-					File dir = new File( System.getProperty("user.home") );
-					
-					
-					
-					
-					/*try {
-						FileWriter w = new FileWriter( new File(dir, spec+".fna") );
-						for( Sequence seq : lseq ) {
-							seq.writeSequence(w);
-						}
-						w.close();
-					} catch (IOException e2) {
-						e2.printStackTrace();
-					}*/
-					
-					
-					
-					
-					pb.directory( dir );
-					try {
-						Process p = pb.start();
-						Writer fw = new OutputStreamWriter( p.getOutputStream() );
-						for( Sequence seq : lseq ) {
-							seq.writeSequence(fw);
-						}
-						fw.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-				
-				int y = 0;
-				double[] matrix = new double[ species.size()*species.size() ];
-				for( String dbspec : species ) {
-					int x = 0;
-					for( String spec : species ) {
-						//if( !spec.equals(dbspec) ) {
-							final List<Sequence> lseq = geneset.speccontigMap.get(spec);
-							String blastn = "blastn";
-							if( OS.indexOf("mac") != -1 ) blastn = "/usr/local/bin/blastn";
-							ProcessBuilder pb = new ProcessBuilder(blastn,"-db",dbspec,
-									"-num_threads",Integer.toString(Runtime.getRuntime().availableProcessors()),
-									"-num_alignments","1","-num_descriptions","1"); //,"-max_hsps","1");
-							File dir = new File( System.getProperty("user.home") );
-							pb.directory( dir );
-							try {
-								Process p = pb.start();
-								final BufferedWriter fw = new BufferedWriter( new OutputStreamWriter( p.getOutputStream() ) );
-								Thread t = new Thread() {
-									public void run() {
-										try {
-											for( Sequence seq : lseq ) {
-												seq.writeSplitSequence(fw);
-												//seq.writeSequence(fw);
-											}
-											fw.close();
-										} catch (IOException e1) {
-											e1.printStackTrace();
-										}
-									}
-								};
-								t.start();
-								//Path path = Paths.get("/Users/sigmar/"+spec+"_"+dbspec+".blastout");
-								//Files.copy(p.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-								
-								int tnum = 0;
-								int tdenum = 0;
-								double avg = 0.0;
-								int count = 0;
-								
-								BufferedReader br = new BufferedReader( new InputStreamReader(p.getInputStream()) );
-								String line = br.readLine();
-								while( line != null ) {
-									if( line.startsWith(" Identities") ) {
-										int i = line.indexOf('(');
-										String sub = line.substring(14,i-1);
-										String[] split = sub.split("/");
-										int num = Integer.parseInt(split[0]);
-										int denum = Integer.parseInt(split[1]);
-										
-										avg += (double)num/(double)denum;
-										
-										tnum += num;
-										tdenum += denum;
-										count++;
-									}
-									line = br.readLine();
-								}
-								br.close();
-								
-								if( count > 0 ) avg /= count;
-								double val = (double)tnum/(double)tdenum;
-								matrix[y*species.size()+x] = avg;//val;
-								System.err.println( spec + " on " + dbspec + " " + val );
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						//}
-							x++;
-					}
-					y++;
-				}
-				
-				geneset.corrInd.clear();
-				for( String spec : species ) {
-					geneset.corrInd.add( geneset.nameFix( spec ) );
-				}
-				
-				final BufferedImage bi = geneset.showRelation( geneset.corrInd, matrix, false );
-				JFrame f = new JFrame("TNI matrix");
-				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				f.setSize(500, 500);
-				
-				JComponent comp2 = new JComponent() {
-					public void paintComponent( Graphics g ) {
-						super.paintComponent(g);
-						g.drawImage(bi, 0, 0, bi.getWidth(), bi.getHeight(), 0, 0, bi.getWidth(), bi.getHeight(), this);
-					}
-				};
-				Dimension dim = new Dimension(bi.getWidth(),bi.getHeight());
-				comp2.setPreferredSize(dim);
-				comp2.setSize( dim );
-				JScrollPane scroll = new JScrollPane(comp2);
-				f.add(scroll);
-				
-				f.setVisible( true );
+			SwingUtilities.invokeLater(() -> {
+                Set<String> species = getSelspec( GeneSetHead.this, geneset.specList );
+                String makeblastdb = "makeblastdb";
+                String OS = System.getProperty("os.name").toLowerCase();
+                if( OS.indexOf("mac") != -1 ) makeblastdb = "/usr/local/bin/makeblastdb";
+                for( String spec : species ) {
+                    List<Sequence> lseq = geneset.speccontigMap.get(spec);
+                    ProcessBuilder pb = new ProcessBuilder(makeblastdb,"-dbtype","nucl","-title",spec,"-out",spec);
+                    File dir = new File( System.getProperty("user.home") );
+
+
+
+
+                /*try {
+                    FileWriter w = new FileWriter( new File(dir, spec+".fna") );
+                    for( Sequence seq : lseq ) {
+                        seq.writeSequence(w);
+                    }
+                    w.close();
+                } catch (IOException e2) {
+                    e2.printStackTrace();
+                }*/
+
+
+
+
+                    pb.directory( dir );
+                    try {
+                        Process p = pb.start();
+                        Writer fw = new OutputStreamWriter( p.getOutputStream() );
+                        for( Sequence seq : lseq ) {
+                            seq.writeSequence(fw);
+                        }
+                        fw.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+
+                int y = 0;
+                double[] matrix = new double[ species.size()*species.size() ];
+                for( String dbspec : species ) {
+                    int x = 0;
+                    for( String spec : species ) {
+                        //if( !spec.equals(dbspec) ) {
+                        final List<Sequence> lseq = geneset.speccontigMap.get(spec);
+                        String blastn = "blastn";
+                        if( OS.indexOf("mac") != -1 ) blastn = "/usr/local/bin/blastn";
+                        ProcessBuilder pb = new ProcessBuilder(blastn,"-db",dbspec,
+                                "-num_threads",Integer.toString(Runtime.getRuntime().availableProcessors()),
+                                "-num_alignments","1","-num_descriptions","1"); //,"-max_hsps","1");
+                        File dir = new File( System.getProperty("user.home") );
+                        pb.directory( dir );
+                        try {
+                            Process p = pb.start();
+                            final BufferedWriter fw = new BufferedWriter( new OutputStreamWriter( p.getOutputStream() ) );
+                            Thread t = new Thread() {
+                                public void run() {
+                                    try {
+                                        for( Sequence seq : lseq ) {
+                                            seq.writeSplitSequence(fw);
+                                            //seq.writeSequence(fw);
+                                        }
+                                        fw.close();
+                                    } catch (IOException e1) {
+                                        e1.printStackTrace();
+                                    }
+                                }
+                            };
+                            t.start();
+                            //Path path = Paths.get("/Users/sigmar/"+spec+"_"+dbspec+".blastout");
+                            //Files.copy(p.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+                            int tnum = 0;
+                            int tdenum = 0;
+                            double avg = 0.0;
+                            int count = 0;
+
+                            BufferedReader br = new BufferedReader( new InputStreamReader(p.getInputStream()) );
+                            String line = br.readLine();
+                            while( line != null ) {
+                                if( line.startsWith(" Identities") ) {
+                                    int i = line.indexOf('(');
+                                    String sub = line.substring(14,i-1);
+                                    String[] split = sub.split("/");
+                                    int num = Integer.parseInt(split[0]);
+                                    int denum = Integer.parseInt(split[1]);
+
+                                    avg += (double)num/(double)denum;
+
+                                    tnum += num;
+                                    tdenum += denum;
+                                    count++;
+                                }
+                                line = br.readLine();
+                            }
+                            br.close();
+
+                            if( count > 0 ) avg /= count;
+                            double val = (double)tnum/(double)tdenum;
+                            matrix[y*species.size()+x] = avg;//val;
+                            System.err.println( spec + " on " + dbspec + " " + val );
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                        //}
+                        x++;
+                    }
+                    y++;
+                }
+
+                geneset.corrInd.clear();
+                for( String spec : species ) {
+                    geneset.corrInd.add( geneset.nameFix( spec ) );
+                }
+
+                final BufferedImage bi = geneset.showRelation( geneset.corrInd, matrix, false );
+                JFrame f = new JFrame("TNI matrix");
+                f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                f.setSize(500, 500);
+
+                JComponent comp2 = new JComponent() {
+                    public void paintComponent( Graphics g ) {
+                        super.paintComponent(g);
+                        g.drawImage(bi, 0, 0, bi.getWidth(), bi.getHeight(), 0, 0, bi.getWidth(), bi.getHeight(), this);
+                    }
+                };
+                Dimension dim = new Dimension(bi.getWidth(),bi.getHeight());
+                comp2.setPreferredSize(dim);
+                comp2.setSize( dim );
+                JScrollPane scroll = new JScrollPane(comp2);
+                f.add(scroll);
+
+                f.setVisible( true );
+            });
 		});
 		MenuItem anitreeaction = new MenuItem("ANI tree");
 		anitreeaction.setOnAction( actionEvent -> {
@@ -6427,8 +6445,16 @@ public class GeneSetHead extends JApplet {
 			label.setBackground(colorCodes[8]);*/
 	}
 
-	public void cellRenderGene( TableCell<Gene,Tegeval> cell, Tegeval tv ) {
-		cell.setStyle( "-fx-background-color: white" );
+	public boolean cellRenderGene( TableCell<Gene,Teg> cell, Teg tev ) {
+		Tegeval tv;
+		if( tev instanceof Tegeval ) {
+			tv = (Tegeval)tev;
+		} else if( tev instanceof Teginfo ) {
+			tv = ((Teginfo)tev).best;
+		} else {
+			cell.setStyle("-fx-background-color: white");
+			return false;
+		}
 		String spec = syncolorcomb.getSelectionModel().getSelectedItem();
 		if( spec != null && spec.length() > 0 ) {
 			if( spec.equals("All") ) {
@@ -6438,10 +6464,10 @@ public class GeneSetHead extends JApplet {
 				double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
 				if( ratio == -1 ) {
 					ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
-					cell.setStyle( "-fx-background-color: "+colorToString(GeneCompare.gradientGrayscaleColor( ratio ))+";-fx-text-fill: white;" );
+					cell.setStyle( "-fx-background-color: "+colorToString(GeneCompare.gradientGrayscaleColor( ratio ))+(cell.isSelected()?";-fx-text-fill: black;":";-fx-text-fill: white;") );
 					//label.setForeground( Color.white );
 				} else {
-					cell.setStyle( "-fx-background-color: "+colorToString(GeneCompare.gradientColor( ratio ))+";-fx-text-fill: black;" );
+					cell.setStyle( "-fx-background-color: "+colorToString(GeneCompare.gradientColor( ratio ))+(cell.isSelected()?";-fx-text-fill: white;":";-fx-text-fill: black;") );
 					//label.setForeground( Color.black );
 				}
 			} else {
@@ -6496,11 +6522,11 @@ public class GeneSetHead extends JApplet {
 				if( ratio == -1 ) {
 					ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
 					String color = colorToString(GeneCompare.gradientGrayscaleColor( ratio ));
-					cell.setStyle( "-fx-background-color: "+color+";-fx-text-fill: black;" );
+					cell.setStyle( "-fx-background-color: "+color+(cell.isSelected()?";-fx-text-fill: white;":";-fx-text-fill: black;") );
 					//label.setForeground( Color.black );
 				} else {
 					String color = colorToString(GeneCompare.gradientColor( ratio ));
-					cell.setStyle( "-fx-background-color: "+color+";-fx-text-fill: black;" );
+					cell.setStyle( "-fx-background-color: "+color+(cell.isSelected()?";-fx-text-fill: white;":";-fx-text-fill: black;") );
 					//label.setForeground( Color.black );
 				}
 				/*double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, tv.getGene().getGeneGroup());
@@ -6550,6 +6576,7 @@ public class GeneSetHead extends JApplet {
 			label.setBackground(colorCodes[7]);
 		else if (tv.best.eval < 1e10)
 			label.setBackground(colorCodes[8]);*/
+		return true;
 	}
 	
 	public void stop() {
@@ -6583,7 +6610,7 @@ public class GeneSetHead extends JApplet {
 		//frame.setSize(400, 600);
 		
 		try {
-			Map<String,String> env = new HashMap<String,String>();
+			Map<String,String> env = new HashMap<>();
 			env.put("create", "true");
 			//Path path = zipfile.toPath();
 			String uristr = "jar:" + geneset.zippath.toUri();
@@ -6594,22 +6621,16 @@ public class GeneSetHead extends JApplet {
 			sa.init( frame, vbox, geneset.user );
 			
 			for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String fname = t.getFileName().toString();
-						return /*fname.endsWith(".gbk") || */fname.endsWith(".fna") || fname.endsWith("fastg") || fname.endsWith(".fsa") || fname.endsWith(".fa") || fname.endsWith(".fasta") || fname.endsWith(".aa") || fname.endsWith(".nn") || fname.endsWith(".trna") || fname.endsWith(".rrna") || fname.endsWith(".ssu") || fname.endsWith(".lsu") || fname.endsWith(".tsu");
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						try {
-							sa.addSequences(t.getFileName().toString(), t, null);
-						} catch (URISyntaxException | IOException e) {
-							e.printStackTrace();
-						}
-					}
-				});;
+				Files.list(root).filter(t -> {
+                    String fname = t.getFileName().toString();
+                    return /*fname.endsWith(".gbk") || */fname.endsWith(".fna") || fname.endsWith("fastg") || fname.endsWith(".fsa") || fname.endsWith(".fa") || fname.endsWith(".fasta") || fname.endsWith(".aa") || fname.endsWith(".nn") || fname.endsWith(".trna") || fname.endsWith(".rrna") || fname.endsWith(".ssu") || fname.endsWith(".lsu") || fname.endsWith(".tsu");
+                }).forEach(t -> {
+                    try {
+                        sa.addSequences(t.getFileName().toString(), t, null);
+                    } catch (URISyntaxException | IOException e) {
+                        e.printStackTrace();
+                    }
+                });;
 			}
 		} catch (IOException e1) {
 			try {
@@ -6687,9 +6708,6 @@ public class GeneSetHead extends JApplet {
 		//splitpane.setDividerLocation(400);
 		//JScrollPane scrollpane = new JScrollPane();
 		
-		table = lower;
-		gtable = genetable;
-		
 		/*table = new JTable() {
 			public String getToolTipText(MouseEvent me) {
 				Point p = me.getPoint();
@@ -6733,12 +6751,12 @@ public class GeneSetHead extends JApplet {
 					return new Transferable() {
 						@Override
 						public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-							Map<String, List<Tegeval>> contigs = new HashMap<String, List<Tegeval>>();
+							Map<String, List<Tegeval>> contigs = new HashMap<>();
 							StringBuilder ret = new StringBuilder();
 							for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
 								Tegeval tv = gg.tegeval;
 								if (!contigs.containsKey(tv.getContshort())) {
-									List<Tegeval> ltv = new ArrayList<Tegeval>();
+									List<Tegeval> ltv = new ArrayList<>();
 									ltv.add(tv);
 									contigs.put(tv.getContshort().getName(), ltv);
 								} else {
@@ -6801,12 +6819,7 @@ public class GeneSetHead extends JApplet {
 					Object obj = null;
 
 					System.err.println(support.getDataFlavors().length);
-					int b = Arrays.binarySearch(support.getDataFlavors(), DataFlavor.javaFileListFlavor, new Comparator<DataFlavor>() {
-						@Override
-						public int compare(DataFlavor o1, DataFlavor o2) {
-							return o1 == o2 ? 1 : 0;
-						}
-					});
+					int b = Arrays.binarySearch(support.getDataFlavors(), DataFlavor.javaFileListFlavor, (o1, o2) -> o1 == o2 ? 1 : 0);
 
 					try {
 						obj = support.getTransferable().getTransferData(DataFlavor.imageFlavor);
@@ -6936,8 +6949,8 @@ public class GeneSetHead extends JApplet {
 		// topcombo.
 		// topcombo.setLayout( new FlowLayout() );
 		
-		specombo = new ComboBox<String>();
-		combo = new ComboBox<String>();
+		specombo = new ComboBox<>();
+		combo = new ComboBox<>();
 				
 		specombo.getItems().add("Select blast species");
 		combo.getItems().add("Select pathway");
@@ -7123,25 +7136,23 @@ public class GeneSetHead extends JApplet {
 		toolbar.getItems().add(filter);
 		toolbar.getItems().add(label);
 
-		selcomblocal.getSelectionModel().selectedItemProperty().addListener( new javafx.beans.value.ChangeListener<String>() {
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				String key = newValue;
-				if( ((GeneSetHead)comp).selectionMap.containsKey(key) ) {
-					Set<Integer> val = ((GeneSetHead)comp).selectionMap.get(key);
-					if( val != null ) {
-						table.getSelectionModel().clearSelection();
-						for( int i : val ) {
-							//int r = table.convertRowIndexToView(i);
-							table.getSelectionModel().select( i );
-						}
-					} else {
-						System.err.println( "null "+key );
-					}
-				} else {
-					System.err.println( "no "+key );
-				}
-			}
-		});
+		selcomblocal.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String key = newValue;
+            if( ((GeneSetHead)comp).selectionMap.containsKey(key) ) {
+                Set<Integer> val = ((GeneSetHead)comp).selectionMap.get(key);
+                if( val != null ) {
+                    table.getSelectionModel().clearSelection();
+                    for( int i : val ) {
+                        //int r = table.convertRowIndexToView(i);
+                        table.getSelectionModel().select( i );
+                    }
+                } else {
+                    System.err.println( "null "+key );
+                }
+            } else {
+                System.err.println( "no "+key );
+            }
+        });
 		toolbar.getItems().add(selcomblocal);
 		
 		
@@ -7313,28 +7324,28 @@ public class GeneSetHead extends JApplet {
 		konamecol.setCellValueFactory( new PropertyValueFactory<>("koname"));
 		table.getColumns().add( konamecol );
 		TableColumn<GeneGroup, String> pbidcol = new TableColumn("Pbid");
-		pbidcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("pbid"));
+		pbidcol.setCellValueFactory( new PropertyValueFactory<>("pbid"));
 		table.getColumns().add( pbidcol );
 		TableColumn<GeneGroup, String> eccol = new TableColumn("Ec");
-		eccol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("ec"));
+		eccol.setCellValueFactory( new PropertyValueFactory<>("ec"));
 		table.getColumns().add( eccol );
 		TableColumn<GeneGroup, String> cognamecol = new TableColumn("Cog name");
-		cognamecol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("cogname"));
+		cognamecol.setCellValueFactory( new PropertyValueFactory<>("cogname"));
 		table.getColumns().add( cognamecol );
 		TableColumn<GeneGroup, String> cogcol = new TableColumn("Cog");
-		cogcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("cog"));
+		cogcol.setCellValueFactory( new PropertyValueFactory<>("cog"));
 		table.getColumns().add( cogcol );
 		TableColumn<GeneGroup, String> cogannocol = new TableColumn("Cog annotation");
-		cogannocol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("coganno"));
+		cogannocol.setCellValueFactory( new PropertyValueFactory<>("coganno"));
 		table.getColumns().add( cogannocol );
 		TableColumn<GeneGroup, String> cogsymbcol = new TableColumn("Cog symbol");
-		cogsymbcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("cogsymbol"));
+		cogsymbcol.setCellValueFactory( new PropertyValueFactory<>("cogsymbol"));
 		table.getColumns().add( cogsymbcol );
 		TableColumn<GeneGroup, String> cazycol = new TableColumn("Cazy");
-		cazycol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("cazy"));
+		cazycol.setCellValueFactory( new PropertyValueFactory<>("cazy"));
 		table.getColumns().add( cazycol );
 		TableColumn<GeneGroup, String> prescol = new TableColumn("Present in");
-		prescol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("presentin"));
+		prescol.setCellValueFactory( new PropertyValueFactory<>("presentin"));
 		table.getColumns().add( prescol );
 		
 		TableColumn<GeneGroup, Integer> groupindcol = new TableColumn("Group index");
@@ -7348,24 +7359,112 @@ public class GeneSetHead extends JApplet {
 		table.getColumns().add( groupsizecol );
 		
 		TableColumn<GeneGroup, String> locprefcol = new TableColumn("Loc pref");
-		locprefcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("locpref"));
+		locprefcol.setCellValueFactory( new PropertyValueFactory<>("locpref"));
 		table.getColumns().add( locprefcol );
 		TableColumn<GeneGroup, String> avgcpcol = new TableColumn("Avg GC%");
-		avgcpcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("avggcp"));
+		avgcpcol.setCellValueFactory( new PropertyValueFactory<>("avggcp"));
 		table.getColumns().add( avgcpcol );
 		TableColumn<GeneGroup, String> numloccol = new TableColumn("#Loc");
-		numloccol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("numloc"));
+		numloccol.setCellValueFactory( new PropertyValueFactory<>("numloc"));
 		table.getColumns().add( numloccol );
 		TableColumn<GeneGroup, String> numlocgroupcol = new TableColumn("#Loc group");
-		numlocgroupcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("numlocgroup"));
+		numlocgroupcol.setCellValueFactory( new PropertyValueFactory<>("numlocgroup"));
 		table.getColumns().add( numlocgroupcol );
 		
 		TableColumn<GeneGroup, ShareNum> sharenumcol = new TableColumn("Sharing number");
-		sharenumcol.setCellValueFactory( new PropertyValueFactory<GeneGroup,ShareNum>("sharingNumber"));
+		sharenumcol.setCellValueFactory( new PropertyValueFactory<>("sharingNumber"));
 		table.getColumns().add( sharenumcol );
 		TableColumn<GeneGroup, String> maxcyccol = new TableColumn("Max cyc");
-		maxcyccol.setCellValueFactory( new PropertyValueFactory<GeneGroup,String>("maxCyc"));
+		maxcyccol.setCellValueFactory( new PropertyValueFactory<>("maxCyc"));
 		table.getColumns().add( maxcyccol );
+
+		TableColumn<Gene, String> gnamedesccol = new TableColumn("Desc");
+		gnamedesccol.setCellValueFactory( new PropertyValueFactory<>("name"));
+		gtable.getColumns().add( gnamedesccol );
+		TableColumn<Gene, String> gorigincol = new TableColumn("Origin");
+		gorigincol.setCellValueFactory( new PropertyValueFactory<>("origin"));
+		gtable.getColumns().add( gorigincol );
+		TableColumn<Gene, String> ggeneidcol = new TableColumn("Genid");
+		ggeneidcol.setCellValueFactory( new PropertyValueFactory<>("genid"));
+		gtable.getColumns().add( ggeneidcol );
+		TableColumn<Gene, String> grefidcol = new TableColumn("Refid");
+		grefidcol.setCellValueFactory( new PropertyValueFactory<>("refid"));
+		gtable.getColumns().add( grefidcol );
+		TableColumn<Gene, String> gunidcol = new TableColumn("Unid");
+		gunidcol.setCellValueFactory( new PropertyValueFactory<>("unid"));
+		gtable.getColumns().add( gunidcol );
+		TableColumn<Gene, String> gkeggidcol = new TableColumn("Keggid");
+		gkeggidcol.setCellValueFactory( new PropertyValueFactory<>("keggid"));
+		gtable.getColumns().add( gkeggidcol );
+		TableColumn<Gene, String> gkeggpathcol = new TableColumn("Kegg pathway");
+		gkeggpathcol.setCellValueFactory( new PropertyValueFactory<>("keggPathway"));
+		gtable.getColumns().add( gkeggpathcol );
+		TableColumn<Gene, String> gkocol = new TableColumn("KO");
+		gkocol.setCellValueFactory( new PropertyValueFactory<>("ko"));
+		gtable.getColumns().add( gkocol );
+		TableColumn<Gene, String> gksymbcol = new TableColumn("Ksymbol");
+		gksymbcol.setCellValueFactory( new PropertyValueFactory<>("ksymbol"));
+		gtable.getColumns().add( gksymbcol );
+		TableColumn<Gene, String> gsymbcol = new TableColumn("Symbol");
+		gsymbcol.setCellValueFactory( new PropertyValueFactory<>("symbol"));
+		gtable.getColumns().add( gsymbcol );
+		TableColumn<Gene, String> gkonamecol = new TableColumn("KO name");
+		gkonamecol.setCellValueFactory( new PropertyValueFactory<>("koname"));
+		gtable.getColumns().add( gkonamecol );
+		TableColumn<Gene, String> gpbidcol = new TableColumn("Pbid");
+		gpbidcol.setCellValueFactory( new PropertyValueFactory<>("pbid"));
+		gtable.getColumns().add( gpbidcol );
+		TableColumn<Gene, String> geccol = new TableColumn("Ec");
+		geccol.setCellValueFactory( new PropertyValueFactory<>("ec"));
+		gtable.getColumns().add( geccol );
+		TableColumn<Gene, String> gcognamecol = new TableColumn("Cog name");
+		gcognamecol.setCellValueFactory( new PropertyValueFactory<>("cogname"));
+		gtable.getColumns().add( gcognamecol );
+		TableColumn<Gene, String> gcogcol = new TableColumn("Cog");
+		gcogcol.setCellValueFactory( new PropertyValueFactory<>("cog"));
+		gtable.getColumns().add( gcogcol );
+		TableColumn<Gene, String> gcogannocol = new TableColumn("Cog annotation");
+		gcogannocol.setCellValueFactory( new PropertyValueFactory<>("coganno"));
+		gtable.getColumns().add( gcogannocol );
+		TableColumn<Gene, String> gcogsymbcol = new TableColumn("Cog symbol");
+		gcogsymbcol.setCellValueFactory( new PropertyValueFactory<>("cogsymbol"));
+		gtable.getColumns().add( gcogsymbcol );
+		TableColumn<Gene, String> gcazycol = new TableColumn("Cazy");
+		gcazycol.setCellValueFactory( new PropertyValueFactory<>("cazy"));
+		gtable.getColumns().add( gcazycol );
+		TableColumn<Gene, String> gprescol = new TableColumn("Present in");
+		gprescol.setCellValueFactory( new PropertyValueFactory<>("presentin"));
+		gtable.getColumns().add( gprescol );
+
+		TableColumn<Gene, Integer> ggroupindcol = new TableColumn("Group index");
+		ggroupindcol.setCellValueFactory( new PropertyValueFactory<>("groupIndex"));
+		gtable.getColumns().add( ggroupindcol );
+		TableColumn<Gene, Integer> ggroupcovcol = new TableColumn("Group coverage");
+		ggroupcovcol.setCellValueFactory( new PropertyValueFactory<>("groupCoverage"));
+		gtable.getColumns().add( ggroupcovcol );
+		TableColumn<Gene, Integer> ggroupsizecol = new TableColumn("Group size");
+		ggroupsizecol.setCellValueFactory( new PropertyValueFactory<>("groupGeneCount"));
+		gtable.getColumns().add( ggroupsizecol );
+
+		TableColumn<Gene, String> glocprefcol = new TableColumn("Loc pref");
+		glocprefcol.setCellValueFactory( new PropertyValueFactory<>("locpref"));
+		gtable.getColumns().add( glocprefcol );
+		TableColumn<Gene, String> gavgcpcol = new TableColumn("Avg GC%");
+		gavgcpcol.setCellValueFactory( new PropertyValueFactory<>("avggcp"));
+		gtable.getColumns().add( gavgcpcol );
+		TableColumn<Gene, String> gnumloccol = new TableColumn("#Loc");
+		gnumloccol.setCellValueFactory( new PropertyValueFactory<>("numloc"));
+		gtable.getColumns().add( gnumloccol );
+		TableColumn<Gene, String> gnumlocgroupcol = new TableColumn("#Loc group");
+		gnumlocgroupcol.setCellValueFactory( new PropertyValueFactory<>("numlocgroup"));
+		gtable.getColumns().add( gnumlocgroupcol );
+
+		TableColumn<Gene, ShareNum> gsharenumcol = new TableColumn("Sharing number");
+		gsharenumcol.setCellValueFactory( new PropertyValueFactory<>("sharingNumber"));
+		gtable.getColumns().add( gsharenumcol );
+		TableColumn<Gene, String> gmaxcyccol = new TableColumn("Max cyc");
+		gmaxcyccol.setCellValueFactory( new PropertyValueFactory<>("maxCyc"));
+		gtable.getColumns().add( gmaxcyccol );
 		
 		/*if( upper != null ) {
 			SwingUtilities.invokeLater( new Runnable() {

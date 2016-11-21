@@ -553,7 +553,6 @@ public class SyntGrad {
 		if( visible ) {
 			double rr = 2.0*Math.PI*( plasmid ? ptr : tr );
 
-			System.err.println("asdf "+g2.getColor());
 			g2.translate(w2, h2);
 			g2.rotate( rr*radscale );
 			g2.fillRect(rad, -1, 30, 3);
@@ -752,7 +751,7 @@ public class SyntGrad {
 						}
 					}
 					
-					for( int cci = ci; cci < ci+scontigs.size(); cci++ ) {
+					for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
 						int cii = cci%scontigs.size();
 						Sequence c = scontigs.get(cii);
 						if( cii == ci ) {
@@ -779,6 +778,27 @@ public class SyntGrad {
 								}
 							} else {
 								Annotation ftv = c.getFirst();
+
+								if( contcheck.isSelected() ) {
+									if( count == 0 ) {
+										double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
+										g2.translate(w2, h2);
+										g2.rotate(r);
+										g2.setColor(Color.black);
+										g2.drawLine(rad-20, 0, rad, 0);
+										g2.rotate(-r);
+										g2.translate(-w2, -h2);
+									} else {
+										double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
+										g2.translate(w2, h2);
+										g2.rotate(r);
+										g2.setColor(Color.black);
+										g2.drawLine(rad+30, 0, rad + 50, 0);
+										g2.rotate(-r);
+										g2.translate(-w2, -h2);
+									}
+								}
+
 								while( ftv != tv ) {
 									doTv( genesethead, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 									Annotation prev = ftv;
@@ -801,6 +821,27 @@ public class SyntGrad {
 							}
 						} else {
 							Annotation tv = c.getFirst();
+
+							if( contcheck.isSelected() ) {
+								if( count == 0 ) {
+									double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
+									g2.translate(w2, h2);
+									g2.rotate(r);
+									g2.setColor(Color.black);
+									g2.drawLine(rad-20, 0, rad, 0);
+									g2.rotate(-r);
+									g2.translate(-w2, -h2);
+								} else {
+									double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
+									g2.translate(w2, h2);
+									g2.rotate(r);
+									g2.setColor(Color.black);
+									g2.drawLine(rad+30, 0, rad + 50, 0);
+									g2.rotate(-r);
+									g2.translate(-w2, -h2);
+								}
+							}
+
 							while( tv != null ) {
 								doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
 								
@@ -824,26 +865,6 @@ public class SyntGrad {
 								/*if( tv == c.getFirst() ) {
 									break;
 								}*/
-							}
-						}
-						
-						if( contcheck.isSelected() ) {
-							if( count == 0 ) {
-								double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
-								g2.translate(w2, h2);
-								g2.rotate(r);
-								g2.setColor(Color.black);
-								g2.drawLine(rad-20, 0, rad, 0);
-								g2.rotate(-r);
-								g2.translate(-w2, -h2);
-							} else {
-								double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
-								g2.translate(w2, h2);
-								g2.rotate(r);
-								g2.setColor(Color.black);
-								g2.drawLine(rad+30, 0, rad + 50, 0);
-								g2.rotate(-r);
-								g2.translate(-w2, -h2);
 							}
 						}
 						

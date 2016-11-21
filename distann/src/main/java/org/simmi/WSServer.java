@@ -43,73 +43,71 @@ public class WSServer {
 		final ChatServer[] cs = new ChatServer[1];
 			cs[0] = new ChatServer( port ) {
 				String evalstr = "0.00001";
-				Set<String> specset = new HashSet<String>();
+				Set<String> specset = new HashSet<>();
 				
 				@Override
 				public void onMessage( WebSocket conn, String message ) {
 					//System.err.println( message );
 					if( message.startsWith(">") ) {
-						final RunnableResult run = new RunnableResult() {
-							public void run( String resl ) {
-								//BufferedReader br = new BufferedReader( new StringReader( resl ) );
-								/*try {
-									String line = br.readLine();
-									while( line != null ) {
-										/*if( rr != null ) {
-											rr.run( line+"\n" );
-											//res += line+"\n";
-										}*
-										
-										String res = line+"\n";
-										if( line.startsWith("> ") ) {
-											int i = line.indexOf(' ', 2);
-											if( i == -1 ) i = line.length();
-											String id = line.substring(2, i);
-											
-											/*line = br.readLine();
-											while( line != null && !line.startsWith("Query=") && !line.startsWith(">") ) {
-												res += line+"\n";
-												line = br.readLine();
-											}*/
-									
-								if( resl.equals("close") ) cs[0].sendToAll(resl);
-								else {
-									byte[] bb = Base64.getEncoder().encode(resl.getBytes());
-												
-									int i = resl.indexOf(' ', 2);
-									int k = resl.indexOf('\n', 2);
-									if( i == -1 ) i = resl.length();
-									if( k == -1 ) k = resl.length();
-									
-									i = Math.min(i, k);
-									
-									String id = resl.substring(2, i);
-									Gene g = geneset.genemap.get( id );
-									if( g != null && (specset.isEmpty() || specset.contains(g.getSpecies())) ) {
-										GeneGroup gg = g.getGeneGroup();
-										
-										String ec = gg.getEc();
-										Set<String> kegg = new TreeSet<String>();
-										
-										for( String pathw : geneset.pathwaymap.keySet() ) {
-											Set<String> ecs = geneset.pathwaymap.get( pathw );
-											int u = pathw.lastIndexOf(' ');
-											if( ecs.contains(ec) ) kegg.add( pathw.substring(u) + "=" + pathw.substring(0,u).replace(",", "") );
-										}
-										
-										Cog cog = gg.getCog(geneset.cogmap);
-										String cogid = cog != null ? cog.id : null;
-										String symbol = gg.getSymbol();
-										if( cog != null && symbol == null ) symbol = cog.genesymbol;
-										
-										String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\t" + new String(bb) + "\n";
-										//String old =  g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(false, true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n";
-										cs[0].sendToAll( seqstr );
-									}
-								}
-								//cs[0].sendToAll( res );
-							}
-						};
+						final RunnableResult run = resl -> {
+                            //BufferedReader br = new BufferedReader( new StringReader( resl ) );
+                            /*try {
+                                String line = br.readLine();
+                                while( line != null ) {
+                                    /*if( rr != null ) {
+                                        rr.run( line+"\n" );
+                                        //res += line+"\n";
+                                    }*
+
+                                    String res = line+"\n";
+                                    if( line.startsWith("> ") ) {
+                                        int i = line.indexOf(' ', 2);
+                                        if( i == -1 ) i = line.length();
+                                        String id = line.substring(2, i);
+
+                                        /*line = br.readLine();
+                                        while( line != null && !line.startsWith("Query=") && !line.startsWith(">") ) {
+                                            res += line+"\n";
+                                            line = br.readLine();
+                                        }*/
+
+                            if( resl.equals("close") ) cs[0].sendToAll(resl);
+                            else {
+                                byte[] bb = Base64.getEncoder().encode(resl.getBytes());
+
+                                int i = resl.indexOf(' ', 2);
+                                int k = resl.indexOf('\n', 2);
+                                if( i == -1 ) i = resl.length();
+                                if( k == -1 ) k = resl.length();
+
+                                i = Math.min(i, k);
+
+                                String id = resl.substring(2, i);
+                                Gene g = geneset.genemap.get( id );
+                                if( g != null && (specset.isEmpty() || specset.contains(g.getSpecies())) ) {
+                                    GeneGroup gg = g.getGeneGroup();
+
+                                    String ec = gg.getEc();
+                                    Set<String> kegg = new TreeSet<String>();
+
+                                    for( String pathw : geneset.pathwaymap.keySet() ) {
+                                        Set<String> ecs = geneset.pathwaymap.get( pathw );
+                                        int u = pathw.lastIndexOf(' ');
+                                        if( ecs.contains(ec) ) kegg.add( pathw.substring(u) + "=" + pathw.substring(0,u).replace(",", "") );
+                                    }
+
+                                    Cog cog = gg.getCog(geneset.cogmap);
+                                    String cogid = cog != null ? cog.id : null;
+                                    String symbol = gg.getSymbol();
+                                    if( cog != null && symbol == null ) symbol = cog.genesymbol;
+
+                                    String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\t" + new String(bb) + "\n";
+                                    //String old =  g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(false, true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n";
+                                    cs[0].sendToAll( seqstr );
+                                }
+                            }
+                            //cs[0].sendToAll( res );
+                        };
 						genesethead.doBlast( message, evalstr, true, run, false );
 					} else if( message.contains("ready") ) {
 						cs[0].sendToAll( "simmi" ); //cs[0].message );
@@ -117,11 +115,11 @@ public class WSServer {
 						boolean uniform = false;
 						if( message.substring(0).contains("uniform") ) uniform = true;
 						//Set<String> species = getSelspec( GeneSet.this, specList );
-						Set<String> selspec = new HashSet<String>( geneset.specList );
+						Set<String> selspec = new HashSet<>( geneset.specList );
 						
 						Set<Character> includedCogs = Cog.charcog.keySet();
-						final Map<String,String>					all = new TreeMap<String,String>();
-						final Map<String, Map<Character,Integer>> 	map = new TreeMap<String, Map<Character,Integer>>();
+						final Map<String,String>					all = new TreeMap<>();
+						final Map<String, Map<Character,Integer>> 	map = new TreeMap<>();
 						try {
 							genesethead.cogCalc( null, includedCogs, map, selspec, false );
 							StringWriter fw = geneset.writeCog( map, includedCogs, uniform );
@@ -137,7 +135,7 @@ public class WSServer {
 						Set<String> selspec = new HashSet<String>( geneset.specList );
 						
 						final String[] categories = { "Core: ", "Accessory: " };
-						final List<StackBarData> lsbd = new ArrayList<StackBarData>();
+						final List<StackBarData> lsbd = new ArrayList<>();
 						StringBuilder restext = ActionCollection.panCore( genesethead, selspec, categories, lsbd );
 						
 						//final String smuck = sb.toString().replace("smuck", restext.toString());
@@ -150,8 +148,9 @@ public class WSServer {
 							String[] spcs = spcstr.split(",");
 							spcsl = Arrays.asList(spcs);
 						}
-						Set<String> species = new HashSet<String>( spcsl );
-						BufferedImage bimg = geneset.animatrix( species, geneset.clusterMap, null, geneset.allgenegroups );
+						boolean skipplasmid = false;
+						Set<String> species = new HashSet<>( spcsl );
+						BufferedImage bimg = geneset.animatrix( species, geneset.clusterMap, null, geneset.allgenegroups, skipplasmid );
 						ByteArrayOutputStream baos = new ByteArrayOutputStream();
 						try {
 							ImageIO.write(bimg, "png", baos);
@@ -177,11 +176,11 @@ public class WSServer {
 					} else if( message.contains("syntgrad:") ) {
 						String spec1 = message.substring(9);
 						
-						Set<GeneGroup> sgg = new HashSet<GeneGroup>();
+						Set<GeneGroup> sgg = new HashSet<>();
 						int keggind = spec1.indexOf("kegg:");
 						if( keggind != -1 ) {
 							String[] sp = spec1.substring(keggind+5,spec1.length()).split(",");
-							Set<String> str = new HashSet<String>( Arrays.asList(sp) );
+							Set<String> str = new HashSet<>( Arrays.asList(sp) );
 							
 							spec1 = spec1.substring(0,keggind);
 							for( Gene g : geneset.genelist ) {

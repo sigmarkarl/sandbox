@@ -74,6 +74,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import javafx.stage.FileChooser;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -255,18 +256,13 @@ public class ActionCollection {
 		
 		//Row row1 = sheet.createRow(1);
 		
-		List<List<Object>>	lobj = new ArrayList<List<Object>>();
+		List<List<Object>>	lobj = new ArrayList<>();
 		int k = 2;
 		Set<String> specs = genesethead.getSelspec(genesethead, geneset.specList);
 		for( String spc : specs ) {
 			List<Sequence> sctg = geneset.speccontigMap.get(spc);
 			
-			Collections.sort( sctg, new Comparator<Sequence>() {
-				@Override
-				public int compare(Sequence o1, Sequence o2) {
-					return o2.length() - o1.length();
-				}
-			});
+			Collections.sort( sctg, (o1, o2) -> o2.length() - o1.length());
 			
 			int totallen = 0;
 			int totalgen = 0;
@@ -446,7 +442,7 @@ public class ActionCollection {
 		
 		JOptionPane.showMessageDialog(comp, c);
 		
-		final List<String>	selspecs = new ArrayList<String>();
+		final List<String>	selspecs = new ArrayList<>();
 		int[] rr = table.getSelectedRows();
 		for( int r : rr ) {
 			String spec = (String)table.getValueAt(r, 0);
@@ -3188,9 +3184,8 @@ public class ActionCollection {
 		gcskewaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
 			@Override
 			public void run() {
-				final List<String>			species = new ArrayList<String>( speccontigMap.keySet() );
-				
-				final GeneGroup	gg = table.getSelectionModel().getSelectedItem();
+				final List<String>			species = new ArrayList<>( speccontigMap.keySet() );
+				final GeneGroup	gg = table != null && table.getSelectionModel() != null ? table.getSelectionModel().getSelectedItem() : null;
 				TableModel model = new TableModel() {
 					@Override
 					public int getRowCount() {
@@ -3345,7 +3340,7 @@ public class ActionCollection {
 				popup.add( new AbstractAction("Auto invert") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						Map<Sequence,Double>	val = new HashMap<Sequence,Double>();
+						Map<Sequence,Double>	val = new HashMap<>();
 						int total = 0;
 						//boolean[] boo = new boolean[ selclist.size() ];
 						//Arrays.fill(boo, false);
@@ -3421,55 +3416,59 @@ public class ActionCollection {
 				popup.add( new AbstractAction("Save") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						boolean succ = true;
-						try {
-							ImageIO.write(bimg, "png", new File("c:/cir.png") );
-						} catch(Exception e1) {
-							succ = false;
-							e1.printStackTrace();
-						}
-						
-						try {
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							ImageIO.write(bimg, "png", baos);
-							baos.close();
-							String b64str = Base64.getEncoder().encodeToString( baos.toByteArray() );
-							
-							JSObject window = JSObject.getWindow( genesethead );
-							window.call( "string2Blob", new Object[] {b64str, "image/png"} );
-						} catch(Exception e1) {
-							succ = false;
-							e1.printStackTrace();
-						}
-						
-						if( !succ ) {
-							FileSaveService fss = null;
-					        FileContents fileContents = null;
-					    	 
-					        try {
-					        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						        //OutputStreamWriter	osw = new OutputStreamWriter( baos );
-								ImageIO.write(bimg, "png", baos);
-								baos.close();
+						Platform.runLater(() -> {
+                            FileChooser fc = new FileChooser();
+                            File selfile = fc.showSaveDialog(null);
+                            boolean succ = true;
+                            try {
+                                ImageIO.write(bimg, "png", selfile );
+                            } catch(Exception e1) {
+                                succ = false;
+                                e1.printStackTrace();
+                            }
 
-						    	try {
-						    		fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
-						    	} catch( UnavailableServiceException e1 ) {
-						    		fss = null;
-						    	}
-						    	 
-						        if( fss != null ) {
-						        	ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
-						            fileContents = fss.saveFileDialog(null, null, bais, "export.png");
-						            bais.close();
-						            OutputStream os = fileContents.getOutputStream(true);
-						            os.write( baos.toByteArray() );
-						            os.close();
-						        }
-					        } catch( Exception e1 ) {
-					        	e1.printStackTrace();
-					        }
-						}
+                            try {
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                ImageIO.write(bimg, "png", baos);
+                                baos.close();
+                                String b64str = Base64.getEncoder().encodeToString( baos.toByteArray() );
+
+                                JSObject window = JSObject.getWindow( genesethead );
+                                window.call( "string2Blob", new Object[] {b64str, "image/png"} );
+                            } catch(Exception e1) {
+                                succ = false;
+                                e1.printStackTrace();
+                            }
+
+                            if( !succ ) {
+                                FileSaveService fss = null;
+                                FileContents fileContents = null;
+
+                                try {
+                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                    //OutputStreamWriter	osw = new OutputStreamWriter( baos );
+                                    ImageIO.write(bimg, "png", baos);
+                                    baos.close();
+
+                                    try {
+                                        fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
+                                    } catch( UnavailableServiceException e1 ) {
+                                        fss = null;
+                                    }
+
+                                    if( fss != null ) {
+                                        ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
+                                        fileContents = fss.saveFileDialog(null, null, bais, "export.png");
+                                        bais.close();
+                                        OutputStream os = fileContents.getOutputStream(true);
+                                        os.write( baos.toByteArray() );
+                                        os.close();
+                                    }
+                                } catch( Exception e1 ) {
+                                    e1.printStackTrace();
+                                }
+                            }
+                        });
 					}
 				});
 				c.setComponentPopupMenu( popup );
