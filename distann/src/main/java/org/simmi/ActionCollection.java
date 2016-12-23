@@ -113,8 +113,8 @@ import netscape.javascript.JSObject;
 public class ActionCollection {
 	public static StringBuilder panCore( GeneSetHead genesethead, Set<String> selspec, final String[] categories, final List<StackBarData>	lsbd ) {
 		GeneSet geneset = genesethead.geneset;
-		Set<GeneGroup>	pan = new HashSet<GeneGroup>();
-		Set<GeneGroup>	core = new HashSet<GeneGroup>();
+		Set<GeneGroup>	pan = new HashSet<>();
+		Set<GeneGroup>	core = new HashSet<>();
 		StringBuilder	restext = new StringBuilder();
 		
 		for( String spec : selspec ) {
@@ -1008,9 +1008,49 @@ public class ActionCollection {
 			rw.createCell(k++).setCellValue(count);
 			rw.createCell(k++).setCellValue(d+"%");
 		}
-		
+
 		k=0;
 		rw = sh.createRow(19);
+		rw.createCell(k++).setCellValue("Protein coding genes with Pfam function prediction");
+
+		fw.write("</tr><tr><td>Protein coding genes with Pfam function prediction</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Tegeval tv = (Tegeval)ann;
+						Cog cog = geneset.pfammap.get( tv.getGene().id );
+						if( cog != null ) {
+							System.err.println( cog.id + "  " + count );
+							count++;
+						}
+						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+							if( f.metacyc != null && f.metacyc.length() > 0 ) {
+								count++;
+								break;
+							}
+						}*/
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+		
+		k=0;
+		rw = sh.createRow(20);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to MetaCyc pathways");
 		fw.write("</tr><tr><td>Protein coding genes connected to MetaCyc pathways</td>");
 		for( String spec : selspecs) {
@@ -1044,7 +1084,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(20);
+		rw = sh.createRow(21);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG reactions");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG reactions</td>");
 		for( String spec : selspecs) {
@@ -1090,7 +1130,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(21);
+		rw = sh.createRow(22);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG pathways");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways</td>");
 		for( String spec : selspecs) {
@@ -1196,7 +1236,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(22);
+		rw = sh.createRow(23);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG Orthology (KO)");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG Orthology (KO)</td>");
 		for( String spec : selspecs) {
@@ -1279,7 +1319,7 @@ public class ActionCollection {
 		if( withHtml ) fw.write("</body></html>");
 		
 		k=0;
-		rw = sh.createRow(23);
+		rw = sh.createRow(24);
 		rw.createCell(k++).setCellValue("Paralogous groups");
 		fw.write("</tr><tr><td>Paralogous groups</td>");
 		for( String spec : selspecs) {
@@ -1319,7 +1359,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(24);
+		rw = sh.createRow(25);
 		rw.createCell(k++).setCellValue("Genes with signal peptides");
 		fw.write("</tr><tr><td>Genes with signal peptides</td>");
 		for( String spec : selspecs) {
@@ -1356,7 +1396,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(25);
+		rw = sh.createRow(26);
 		rw.createCell(k++).setCellValue("Genes with transmembrane helices");
 		fw.write("</tr><tr><td>Genes with transmembrane helices</td>");
 		for( String spec : selspecs) {
@@ -1966,19 +2006,9 @@ public class ActionCollection {
 		});
 		
 		MenuItem genomestataction = new MenuItem("Genome statistics");
-		genomestataction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				stats( comp, genesethead, speccontigMap );
-			}
-		}));
+		genomestataction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> stats( comp, genesethead, speccontigMap )));
 		MenuItem	seqstat = new MenuItem("Sequence statistics");
-		seqstat.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				seqstats( genesethead );
-			}
-		}));
+		seqstat.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> seqstats( genesethead )));
 		MenuItem	spaceraction = new MenuItem("Blast spacers");
 		spaceraction.setOnAction( actionEvent -> {
 				StringWriter w = new StringWriter();
@@ -2003,8 +2033,8 @@ public class ActionCollection {
 		crispraction.setOnAction( actionEvent -> CRISPR.crispr( genesethead ) );
 		MenuItem	shuffletreeaction = new MenuItem("Recomb tree");
 		shuffletreeaction.setOnAction( actionEvent -> {
-				Set<String>		selspec = genesethead.getSelspec( genesethead, new ArrayList<String>( geneset.specList ) );
-				List<String>	speclist = new ArrayList<String>( selspec );
+				Set<String>		selspec = genesethead.getSelspec( genesethead, new ArrayList<>( geneset.specList ) );
+				List<String>	speclist = new ArrayList<>( selspec );
 				double[] 		mat = new double[selspec.size()*selspec.size()];
 				for( int y = 0; y < speclist.size(); y++ ) {
 					mat[ y*speclist.size()+y ] = 0.0;
@@ -3268,7 +3298,7 @@ public class ActionCollection {
 
 					@Override
 					public int getColumnCount() {
-						return 1;
+						return 2;
 					}
 
 					@Override
@@ -3278,7 +3308,8 @@ public class ActionCollection {
 
 					@Override
 					public Class<?> getColumnClass(int columnIndex) {
-						return Sequence.class;
+						if( columnIndex == 0 ) return Sequence.class;
+						else return Boolean.class;
 					}
 
 					@Override
@@ -3288,7 +3319,9 @@ public class ActionCollection {
 
 					@Override
 					public Object getValueAt(int rowIndex, int columnIndex) {
-						return clist.get( rowIndex );
+						Sequence seq = clist.get( rowIndex );
+						if( columnIndex == 0 ) return seq;
+						else return seq.isPlasmid();
 					}
 
 					@Override
@@ -3967,19 +4000,16 @@ public class ActionCollection {
                 }*/
 
                 if( web ) {
-                    Platform.runLater(new Runnable() {
-                         @Override
-                         public void run() {
-                            final Stage dialog = new Stage();
-                            dialog.initModality(Modality.APPLICATION_MODAL);
-                            dialog.initOwner( genesethead.primaryStage );
-                            VBox dialogVbox = new VBox(20);
-                            dialogVbox.getChildren().add(new Text("This is a Dialog"));
-                            Scene dialogScene = new Scene(dialogVbox, 300, 200);
-                            dialog.setScene(dialogScene);
-                            geneset.initWebPage( dialog, smuck );
-                            dialog.show();
-                         }
+                    Platform.runLater(() -> {
+                       final Stage dialog = new Stage();
+                       dialog.initModality(Modality.APPLICATION_MODAL);
+                       dialog.initOwner( genesethead.primaryStage );
+                       VBox dialogVbox = new VBox(20);
+                       dialogVbox.getChildren().add(new Text("This is a Dialog"));
+                       Scene dialogScene = new Scene(dialogVbox, 300, 200);
+                       dialog.setScene(dialogScene);
+                       geneset.initWebPage( dialog, smuck );
+                       dialog.show();
                     });
 
                     /*boolean succ = true;
@@ -4022,16 +4052,16 @@ public class ActionCollection {
                     }
                 } else {
                     Platform.runLater(() -> {
-final Stage dialog = new Stage();
-dialog.initModality(Modality.APPLICATION_MODAL);
-dialog.initOwner( genesethead.primaryStage );
-VBox dialogVbox = new VBox(20);
-dialogVbox.getChildren().add(new Text("This is a Dialog"));
-Scene dialogScene = new Scene(dialogVbox, 300, 200);
-dialog.setScene(dialogScene);
-geneset.initStackedBarChart( dialog, all, map, uniform.isSelected() );
-dialog.show();
-});
+						final Stage dialog = new Stage();
+						dialog.initModality(Modality.APPLICATION_MODAL);
+						dialog.initOwner( genesethead.primaryStage );
+						VBox dialogVbox = new VBox(20);
+						dialogVbox.getChildren().add(new Text("This is a Dialog"));
+						Scene dialogScene = new Scene(dialogVbox, 300, 200);
+						dialog.setScene(dialogScene);
+						geneset.initStackedBarChart( dialog, all, map, uniform.isSelected() );
+						dialog.show();
+					});
                 }
                 geneset.zipfilesystem.close();
 

@@ -282,7 +282,7 @@ public class WSServer {
 						Collection<String> str = geneset.specList;
 						if( querystr.length() > 0 ) {
 							String[] sp = querystr.split(",");
-							str = new HashSet<String>( Arrays.asList(sp) );
+							str = new HashSet<>( Arrays.asList(sp) );
 						}
 						
 						String htmlstr = "";

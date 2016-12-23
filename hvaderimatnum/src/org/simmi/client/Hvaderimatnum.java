@@ -37,7 +37,7 @@ public class Hvaderimatnum implements EntryPoint {
 
 	public native int initApplet( final String server ) /*-{
 		$wnd.runApplet = function() {
-			var attributes = { codebase:'http://'+server+'/', archive:'pontun.jar', code:'org.simmi.Order', width:'100%', height:'100%', id:'order', name:'order' };
+			var attributes = { codebase:'https://'+server+'/', archive:'pontun.jar', code:'org.simmi.Order', width:'100%', height:'100%', id:'order', name:'order' };
 	    	var parameters = { jnlp_href:'order.jnlp' };
 	    	$wnd.deployJava.runApplet(attributes, parameters, '1.6');
 		}

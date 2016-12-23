@@ -127,6 +127,7 @@ import javax.swing.table.TableRowSorter;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Popup;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.poi.ss.usermodel.Cell;
@@ -175,7 +176,7 @@ import netscape.javascript.JSObject;
 public class GeneSetHead extends JApplet {
 	GeneSet							geneset;
 	DistannFX 						app;
-	List<JSplitPane> 				splitpaneList = new ArrayList<JSplitPane>();
+	List<JSplitPane> 				splitpaneList = new ArrayList<>();
 	JFrame 							frame = new JFrame();
 	
 	public GeneSetHead( DistannFX app, GeneSet geneset ) {
@@ -2502,7 +2503,7 @@ public class GeneSetHead extends JApplet {
 		return isGeneview() ? gtable.getSelectionModel().getSelectedIndices().size() : table.getSelectionModel().getSelectedIndices().size();
 	}
 	
-	public void cogBlastDlg( Set<String> species ) {
+	public void cogBlastDlg( Set<String> species, boolean pfam ) {
 		Dialog<String> cogdlg = new Dialog();
 		
 		ToggleGroup group = new ToggleGroup();
@@ -2539,7 +2540,7 @@ public class GeneSetHead extends JApplet {
 		if( ostr.isPresent() ) {
         	String str = ostr.get();
         	if( str.length() > 0 ) SwingUtilities.invokeLater(() -> {
-        		geneset.cogBlast( species, dbpath.getText(), host.getText(), false, docker.isSelected() );
+        		geneset.cogBlast( species, dbpath.getText(), host.getText(), false, docker.isSelected(), pfam );
         	});
         }
 	}
@@ -2685,89 +2686,91 @@ public class GeneSetHead extends JApplet {
 		Menu		edit = new Menu("Edit");
 		MenuItem	clustergenes = new MenuItem("Cluster genes");
 		clustergenes.setOnAction( actionEvent -> {
-			//fxpanel.setScene( null );
-			/*Platform.runLater(new Runnable() {
-	            @Override
-	            public void run() {
-	            	Label label1 = new Label("Id:");
-					tb1 = new TextField("0.5");
-					Label label2 = new Label("Len:");
-					tb2 = new TextField("0.5");
-					
-					VBox vbox = new VBox();
-					HBox hbox1 = new HBox();
-					hbox1.getChildren().addAll( label1, tb1 );
-					HBox hbox2 = new HBox();
-					hbox2.getChildren().addAll( label2, tb2 );
-					
-					epar = new TextField();
-					vbox.getChildren().add( epar );
-					
-					vbox.getChildren().addAll( hbox1, hbox2 );
-					if( fxs == null ) fxs = new Scene( vbox );
-					fxs.setRoot( vbox );
-					
-					fxpanel.setScene( fxs );
-	            }
-			});*/
-			
-			JPanel panel = new JPanel();
-			GridBagLayout grid = new GridBagLayout();
-			GridBagConstraints c = new GridBagConstraints();
-			panel.setLayout( grid );
-			
-			/*JLabel label1 = new JLabel("Id:");
-			JTextField tb1 = new JTextField("0.5");
-			JLabel label2 = new JLabel("Len:");
-			JTextField tb2 = new JTextField("0.5");
-			
-			Dimension d = new Dimension( 300, 30 );
-			JTextField epar = new JTextField();
-			epar.setSize( d );
-			epar.setPreferredSize( d );
-			
-			c.fill = GridBagConstraints.HORIZONTAL;
-			c.gridwidth = 1;
-			c.gridheight = 1;
-			
-			c.gridx = 0;
-			c.gridy = 0;
-			panel.add( label1, c );
-			c.gridx = 1;
-			c.gridy = 0;
-			panel.add( tb1, c );
-			c.gridx = 0;
-			c.gridy = 1;
-			panel.add( label2, c );
-			c.gridx = 1;
-			c.gridy = 1;
-			panel.add( tb2, c );
-			c.gridx = 0;
-			c.gridy = 2;
-			c.gridwidth = 2;
-			panel.add( epar, c );
-			
-			JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );*/
-			
-			/*if( tb1 != null ) {
-				float id = Float.parseFloat( tb1.getText() );
-				float len = Float.parseFloat( tb2.getText() );
-				String expar = epar.getText();
-				
-				tb1 = null;
-				tb2 = null;
-				epar = null;*/
-				
-			Set<String> species = getSelspec(null, geneset.getSpecies(), null);
-			geneset.clusterGenes( species, false );
-			//}
+			SwingUtilities.invokeLater(() -> {
+                //fxpanel.setScene( null );
+                /*Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        Label label1 = new Label("Id:");
+                        tb1 = new TextField("0.5");
+                        Label label2 = new Label("Len:");
+                        tb2 = new TextField("0.5");
+
+                        VBox vbox = new VBox();
+                        HBox hbox1 = new HBox();
+                        hbox1.getChildren().addAll( label1, tb1 );
+                        HBox hbox2 = new HBox();
+                        hbox2.getChildren().addAll( label2, tb2 );
+
+                        epar = new TextField();
+                        vbox.getChildren().add( epar );
+
+                        vbox.getChildren().addAll( hbox1, hbox2 );
+                        if( fxs == null ) fxs = new Scene( vbox );
+                        fxs.setRoot( vbox );
+
+                        fxpanel.setScene( fxs );
+                    }
+                });*/
+
+                JPanel panel = new JPanel();
+                GridBagLayout grid = new GridBagLayout();
+                GridBagConstraints c = new GridBagConstraints();
+                panel.setLayout( grid );
+
+                /*JLabel label1 = new JLabel("Id:");
+                JTextField tb1 = new JTextField("0.5");
+                JLabel label2 = new JLabel("Len:");
+                JTextField tb2 = new JTextField("0.5");
+
+                Dimension d = new Dimension( 300, 30 );
+                JTextField epar = new JTextField();
+                epar.setSize( d );
+                epar.setPreferredSize( d );
+
+                c.fill = GridBagConstraints.HORIZONTAL;
+                c.gridwidth = 1;
+                c.gridheight = 1;
+
+                c.gridx = 0;
+                c.gridy = 0;
+                panel.add( label1, c );
+                c.gridx = 1;
+                c.gridy = 0;
+                panel.add( tb1, c );
+                c.gridx = 0;
+                c.gridy = 1;
+                panel.add( label2, c );
+                c.gridx = 1;
+                c.gridy = 1;
+                panel.add( tb2, c );
+                c.gridx = 0;
+                c.gridy = 2;
+                c.gridwidth = 2;
+                panel.add( epar, c );
+
+                JOptionPane.showMessageDialog(comp, new Object[] {panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE );*/
+
+                /*if( tb1 != null ) {
+                    float id = Float.parseFloat( tb1.getText() );
+                    float len = Float.parseFloat( tb2.getText() );
+                    String expar = epar.getText();
+
+                    tb1 = null;
+                    tb2 = null;
+                    epar = null;*/
+
+                Set<String> species = getSelspec(null, geneset.getSpecies(), null);
+                geneset.clusterGenes( species, false );
+                //}
+            });
 		});
 		MenuItem	alignclusters = new MenuItem("Align clusters");
 		alignclusters.setOnAction( actionEvent -> {
 				try {
 					String OS = System.getProperty("os.name").toLowerCase();
 					
-					Map<String,String> env = new HashMap<String,String>();
+					Map<String,String> env = new HashMap<>();
 					env.put("create", "true");
 					String uristr = "jar:" + geneset.zippath.toUri();
 					geneset.zipuri = URI.create( uristr );
@@ -2776,16 +2779,13 @@ public class GeneSetHead extends JApplet {
 					Path aldir = geneset.zipfilesystem.getPath("aligned");
 					final Path aligneddir = Files.exists( aldir ) ? aldir : Files.createDirectory( aldir );
 					
-					Runnable run = new Runnable() {
-						@Override
-						public void run() {
-							try {
-								geneset.zipfilesystem.close();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					};
+					Runnable run = () -> {
+                        try {
+                            geneset.zipfilesystem.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    };
 					
 					NativeRun nrun = new NativeRun( run );
 					//ExecutorService es = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
@@ -2794,7 +2794,7 @@ public class GeneSetHead extends JApplet {
 					
 					Collection<GeneGroup> ggset;
 					ObservableList<GeneGroup> ogg = table.getSelectionModel().getSelectedItems();
-					ggset = new HashSet<GeneGroup>();
+					ggset = new HashSet<>();
 					if( ogg.size() == 0 ) {
 						for( GeneGroup gg : geneset.allgenegroups ) {
 							//GeneGroup gg = allgenegroups.get(table.convertRowIndexToModel(r));
@@ -2820,7 +2820,13 @@ public class GeneSetHead extends JApplet {
 						
 						//if( i++ > 5000 ) break;
 					}
-					nrun.runProcessBuilder("Running mafft", commandsList, cont, true, run, false);
+					SwingUtilities.invokeLater(() -> {
+						try {
+							nrun.runProcessBuilder("Running mafft", commandsList, cont, true, run, false);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					});
 				} catch (IOException e1) {
 					if( geneset.zipfilesystem != null ) {
 						try {
@@ -2903,7 +2909,7 @@ public class GeneSetHead extends JApplet {
             }
             //Sequences seqs = new Sequences(user, name, type, path, nseq)
             try {
-                Map<String,String> env = new HashMap<String,String>();
+                Map<String,String> env = new HashMap<>();
                 env.put("create", "true");
                 String uristr = "jar:" + geneset.zippath.toUri();
                 geneset.zipuri = URI.create( uristr );
@@ -3350,8 +3356,14 @@ public class GeneSetHead extends JApplet {
 		cogblastaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
 			Set<String> species = getSelspec(null, geneset.getSpecies(), null);
 
-			if( species != null && species.size() > 0 ) Platform.runLater(() -> cogBlastDlg( species ));
+			if( species != null && species.size() > 0 ) Platform.runLater(() -> cogBlastDlg( species, false ));
         }));
+		MenuItem	pfamblastaction = new MenuItem("Pfam blast");
+		pfamblastaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+			Set<String> species = getSelspec(null, geneset.getSpecies(), null);
+
+			if( species != null && species.size() > 0 ) Platform.runLater(() -> cogBlastDlg( species, true ));
+		}));
 		MenuItem	unresolvedblastaction = new MenuItem("Unresolved blast");
 		unresolvedblastaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
             try {
@@ -3556,6 +3568,7 @@ public class GeneSetHead extends JApplet {
 		edit.getItems().add( importkeggpathwayaction );
 		edit.getItems().add( new SeparatorMenuItem() );
 		edit.getItems().add( cogblastaction );
+		edit.getItems().add( pfamblastaction );
 		edit.getItems().add( unresolvedblastaction );
 		
 		Menu		view = new Menu("View");
@@ -3941,7 +3954,7 @@ public class GeneSetHead extends JApplet {
 				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
 				jf.initGui(frame);
 
-				Map<String, Sequence> contset = new HashMap<String, Sequence>();
+				Map<String, Sequence> contset = new HashMap<>();
 				//int[] rr = table.getSelectedRows();
 				for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
 					//int cr = table.convertRowIndexToModel(r);
@@ -3962,7 +3975,7 @@ public class GeneSetHead extends JApplet {
 		
 		MenuItem showseq = new MenuItem("Show sequences");
 		showseq.setOnAction( actionEvent -> {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+				Set<GeneGroup>	genegroups = new HashSet<>();
 				//int[] rr = table.getSelectedRows();
 				if( !isGeneview() ) {
 					for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
@@ -3977,7 +3990,7 @@ public class GeneSetHead extends JApplet {
 						genegroups.add( gg.getGeneGroup() );
 					}
 				}
-				Platform.runLater(() -> {
+				SwingUtilities.invokeLater(() -> {
                     Set<String>	specs = null;
                     if( table.getItems().size() > 1 ) specs = getSelspec(comp, geneset.specList, null);
                     showSequences( comp, genegroups, false, specs );
@@ -3987,7 +4000,7 @@ public class GeneSetHead extends JApplet {
 		
 		MenuItem showseqwgenenames = new MenuItem("Show sequences w/genenames");
 		showseqwgenenames.setOnAction( actionEvent -> {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+				Set<GeneGroup>	genegroups = new HashSet<>();
 				//int[] rr = table.getSelectedRows();
 				if( !isGeneview() ) {
 					for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
@@ -4010,7 +4023,7 @@ public class GeneSetHead extends JApplet {
 		
 		MenuItem showalignseq = new MenuItem("Show aligned sequences");
 		showalignseq.setOnAction( actionEvent -> {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+				Set<GeneGroup>	genegroups = new HashSet<>();
 				//int[] rr = table.getSelectedRows();
 				if( !isGeneview() ) {
 					for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
@@ -4144,7 +4157,7 @@ public class GeneSetHead extends JApplet {
 		
 		MenuItem showdnaseq = new MenuItem("Show DNA sequences");
 		showdnaseq.setOnAction( actionEvent -> {
-				Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+				Set<GeneGroup>	genegroups = new HashSet<>();
 				int rr = 0;
 				if( !isGeneview() ) {
 					ObservableList<GeneGroup> lgg = table.getSelectionModel().getSelectedItems();
@@ -4210,7 +4223,7 @@ public class GeneSetHead extends JApplet {
 				jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
 				try {
-					Map<Integer, FileWriter> lfw = new HashMap<Integer, FileWriter>();
+					Map<Integer, FileWriter> lfw = new HashMap<>();
 					if (jfc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 						File f = jfc.getSelectedFile();
 						for (Gene gg : getGeneTable().getSelectionModel().getSelectedItems()) {
@@ -4243,11 +4256,11 @@ public class GeneSetHead extends JApplet {
 				JFileChooser jfc = new JFileChooser();
 
 				try {
-					Map<Integer, FileWriter> lfw = new HashMap<Integer, FileWriter>();
+					Map<Integer, FileWriter> lfw = new HashMap<>();
 					if (jfc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 						File f = jfc.getSelectedFile();
 
-						Set<Sequence> contset = new HashSet<Sequence>();
+						Set<Sequence> contset = new HashSet<>();
 						for (Gene gg : getGeneTable().getSelectionModel().getSelectedItems()) {
 							Tegeval tv = gg.tegeval;
 							contset.add( tv.getContshort() );
@@ -4486,34 +4499,39 @@ public class GeneSetHead extends JApplet {
 		sequencemenu.getItems().add( new SeparatorMenuItem() );
 		
 		MenuItem viewspecseq = new MenuItem("View species sequence");
-		viewspecseq.setOnAction( actionEvent -> {
-					Set<String> selspec = getSelspec(GeneSetHead.this, geneset.specList);
-					
-					JFrame frame = new JFrame();
-					frame.setSize(800, 600);
-					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-					
-					Serifier serifier = new Serifier();
-					JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
-					jf.initGui(frame);
-					
-					for( String spec : selspec ) {
-						List<Sequence> contigs = geneset.speccontigMap.get( spec );
+		viewspecseq.setOnAction( (javafx.event.ActionEvent actionEvent) -> {
+		    SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    Set<String> selspec = getSelspec(GeneSetHead.this, geneset.specList);
 
-						for( Sequence contig : contigs ) {
-							List<Annotation> lann = contig.getAnnotations();
-							if( lann != null ) for( Annotation ann : lann ) {
-								serifier.addAnnotation( ann );
-							}
-							
-							serifier.addSequence( contig );
-							serifier.mseq.put( contig.getName(), contig );
-						}
-					}
-					
-					jf.updateView();
+                    JFrame frame = new JFrame();
+                    frame.setSize(800, 600);
+                    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-					frame.setVisible(true);
+                    Serifier serifier = new Serifier();
+                    JavaFasta jf = new JavaFasta((comp instanceof JApplet) ? (JApplet) comp : null, serifier, geneset.cs);
+                    jf.initGui(frame);
+
+                    for (String spec : selspec) {
+                        List<Sequence> contigs = geneset.speccontigMap.get(spec);
+
+                        for (Sequence contig : contigs) {
+                            List<Annotation> lann = contig.getAnnotations();
+                            if (lann != null) for (Annotation ann : lann) {
+                                serifier.addAnnotation(ann);
+                            }
+
+                            serifier.addSequence(contig);
+                            serifier.mseq.put(contig.getName(), contig);
+                        }
+                    }
+
+                    jf.updateView();
+
+                    frame.setVisible(true);
+                }
+            });
 		});
 		sequencemenu.getItems().add( viewspecseq );
 		
@@ -5366,56 +5384,53 @@ public class GeneSetHead extends JApplet {
 						}
 					}
 					
-					Runnable run = new Runnable() {
-						@Override
-						public void run() {
-							for( String spec : selspec ) {
-								Path p = Paths.get(userhome, spec);
-								
-								Map<String,String> env = new HashMap<String,String>();
-								env.put("create", "true");
-								
-								String uristr = "jar:" + geneset.zippath.toUri();
-								URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-								final List<Path>	lbi = new ArrayList<Path>();
-								try {
-									geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-									for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-										Path specdir = root;
-										Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
-											@Override
-										      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-										        final Path destFile = Paths.get(specdir.toString(),file.toString());
-										        //System.out.printf("Extracting file %s to %s\n", file, destFile);
-										        Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
-										        return FileVisitResult.CONTINUE;
-										      }
-										 
-										      @Override
-										      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-										    	String specdirstr = specdir.toString();
-										    	String dirstr = dir.toString();
-										    	final Path dirToCreate = specdir.resolve( dirstr.substring(userhome.length()+1) );
-										        if( Files.notExists(dirToCreate) ) {
-										          System.out.printf("Creating directory %s\n", dirToCreate);
-										          Files.createDirectory(dirToCreate);
-										        }
-										        return FileVisitResult.CONTINUE;
-										      }
-										});
-										break;
-									}
-									
-									URI uri = new URI("file://"+userhome+"/"+spec+"/index.html");
-									Desktop.getDesktop().browse(uri);
-								} catch( Exception ex ) {
-									ex.printStackTrace();
-								} finally {
-									try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
-								}
-							}
-						}
-					};
+					Runnable run = () -> {
+                        for( String spec : selspec ) {
+                            Path p = Paths.get(userhome, spec);
+
+                            Map<String,String> env = new HashMap<>();
+                            env.put("create", "true");
+
+                            String uristr = "jar:" + geneset.zippath.toUri();
+                            URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+                            final List<Path>	lbi = new ArrayList<>();
+                            try {
+                                geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+                                for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+                                    Path specdir = root;
+                                    Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
+                                        @Override
+                                          public FileVisitResult visitFile(Path file1, BasicFileAttributes attrs) throws IOException {
+                                            final Path destFile = Paths.get(specdir.toString(), file1.toString());
+                                            //System.out.printf("Extracting file %s to %s\n", file, destFile);
+                                            Files.copy(file1, destFile, StandardCopyOption.REPLACE_EXISTING);
+                                            return FileVisitResult.CONTINUE;
+                                          }
+
+                                          @Override
+                                          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                                            String specdirstr = specdir.toString();
+                                            String dirstr = dir.toString();
+                                            final Path dirToCreate = specdir.resolve( dirstr.substring(userhome.length()+1) );
+                                            if( Files.notExists(dirToCreate) ) {
+                                              System.out.printf("Creating directory %s\n", dirToCreate);
+                                              Files.createDirectory(dirToCreate);
+                                            }
+                                            return FileVisitResult.CONTINUE;
+                                          }
+                                    });
+                                    break;
+                                }
+
+                                URI uri = new URI("file://"+userhome+"/"+spec+"/index.html");
+                                Desktop.getDesktop().browse(uri);
+                            } catch( Exception ex ) {
+                                ex.printStackTrace();
+                            } finally {
+                                try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
+                            }
+                        }
+                    };
 					
 					NativeRun nr = new NativeRun( run );
 					nr.runProcessBuilder("antismash", commands, new Object[3], false, run, false);
@@ -5427,185 +5442,181 @@ public class GeneSetHead extends JApplet {
 		windowmenu.getItems().add( runantismash );
 		
 		MenuItem runsignalp = new MenuItem("Run signalP");
-		runsignalp.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			public void run() {	
-				try {
-					Serifier ser = new Serifier();
-					Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
-					
-					JTextField host = new JTextField("localhost");
-					JOptionPane.showMessageDialog(null, host);
-					
-					String username = System.getProperty("user.name");
-					String hostname = host.getText();
-					
-					/*Path[] pt = null;
-					JFileChooser fc = new JFileChooser();
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
-						pt = new Path[3];
-						pt[2] = fc.getSelectedFile().toPath();
-					}*/
-					
-					List<Object> commands = new ArrayList<Object>();
-					//commands.add(genexyplotaction)
-					
-					try {
-						Map<String,String> env = new HashMap<String,String>();
-						env.put("create", "true");
-						
-						String uristr = "jar:" + geneset.zippath.toUri();
-						URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-						
-						geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-						for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-							for( String spec : selspec ) {
-								/*Path specdir = root.resolve(spec+".prodigal.fsa");
-								if( !Files.exists(specdir) ) {
-									if( spec.startsWith("MAT") ) {
-										specdir = root.resolve(spec+".gbk.aa");
-									} else specdir = root.resolve("fn_"+spec+"_scaffolds.prodigal.fsa");
-								}*/
-								Stream<Gene> genestream = geneset.genelist.stream().filter( gene -> spec.equals(gene.getSpecies()) && (gene.tegeval.type == null || gene.tegeval.type.length() == 0) );
-								Path sigout = root.resolve(spec+".signalp");
-								Path[] pt = new Path[] {null,sigout,null};
-								if( hostname.equals("localhost") ) {
-									String[] cmds = {"signalp", "-t", "gram-", "-"};
-									commands.add( pt );
-									commands.add( Arrays.asList( cmds ) );
-								} else {
-									Path p = Paths.get(spec+".signalp");
-									BufferedWriter bw = Files.newBufferedWriter(p, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-									genestream.forEachOrdered( gene -> {
-										try {
-											gene.writeGeneIdFasta(bw);
-										} catch (Exception e1) {
-											e1.printStackTrace();
-										}
-									});
-									bw.close();
-									
-									
-									//Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
-									
-									String[] cmds = {"scp",spec+".signalp",hostname+":~",";","ssh",hostname,"signalp","-t","gram-",spec+".signalp"};
-									//String[] cmds = {"ssh",hostname,"signalp","-t","gram-","-"};
-									commands.add( pt );
-									commands.add( Arrays.asList( cmds ) );
-								}
-							}
-							
-							break;
-						}
-					} catch( Exception ex ) {
-						ex.printStackTrace();
-					}
-					
-					Runnable run = new Runnable() {
-						@Override
-						public void run() {
-							try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
-						}
-					};
-					
-					NativeRun nr = new NativeRun( run );
-					nr.runProcessBuilder("signalp", commands, new Object[3], false, run, false);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		}));
+		runsignalp.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+            try {
+                Serifier ser = new Serifier();
+                Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
+
+                JTextField host = new JTextField("localhost");
+                JOptionPane.showMessageDialog(null, host);
+
+                String username = System.getProperty("user.name");
+                String hostname = host.getText();
+
+                /*Path[] pt = null;
+                JFileChooser fc = new JFileChooser();
+                fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+                if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
+                    pt = new Path[3];
+                    pt[2] = fc.getSelectedFile().toPath();
+                }*/
+
+                List<Object> commands = new ArrayList<Object>();
+                //commands.add(genexyplotaction)
+
+                try {
+                    Map<String,String> env = new HashMap<String,String>();
+                    env.put("create", "true");
+
+                    String uristr = "jar:" + geneset.zippath.toUri();
+                    URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+
+                    geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+                    for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+                        for( String spec : selspec ) {
+                            /*Path specdir = root.resolve(spec+".prodigal.fsa");
+                            if( !Files.exists(specdir) ) {
+                                if( spec.startsWith("MAT") ) {
+                                    specdir = root.resolve(spec+".gbk.aa");
+                                } else specdir = root.resolve("fn_"+spec+"_scaffolds.prodigal.fsa");
+                            }*/
+                            Stream<Gene> genestream = geneset.genelist.stream().filter( gene -> spec.equals(gene.getSpecies()) && (gene.tegeval.type == null || gene.tegeval.type.length() == 0) );
+                            Path sigout = root.resolve(spec+".signalp");
+                            Path[] pt = new Path[] {null,sigout,null};
+                            if( hostname.equals("localhost") ) {
+                                String[] cmds = {"/Users/sigmar/signalp-4.1/signalp", "-t", "gram-", "-"};
+                                commands.add( pt );
+                                commands.add( Arrays.asList( cmds ) );
+                            } else {
+                                Path p = Paths.get(spec+".signalp");
+                                BufferedWriter bw = Files.newBufferedWriter(p, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+                                genestream.forEachOrdered( gene -> {
+                                    try {
+                                        gene.writeGeneIdFasta(bw);
+                                    } catch (Exception e1) {
+                                        e1.printStackTrace();
+                                    }
+                                });
+                                bw.close();
+
+
+                                //Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
+
+                                String[] cmds = {"scp",spec+".signalp",hostname+":~",";","ssh",hostname,"signalp","-t","gram-",spec+".signalp"};
+                                //String[] cmds = {"ssh",hostname,"signalp","-t","gram-","-"};
+                                commands.add( pt );
+                                commands.add( Arrays.asList( cmds ) );
+                            }
+                        }
+
+                        break;
+                    }
+                } catch( Exception ex ) {
+                    ex.printStackTrace();
+                }
+
+                Runnable run = new Runnable() {
+                    @Override
+                    public void run() {
+                        try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
+                    }
+                };
+
+                NativeRun nr = new NativeRun( run );
+                nr.runProcessBuilder("/Users/sigmar/signalp-4.1/signalp", commands, new Object[3], false, run, false);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }));
 		windowmenu.getItems().add( runsignalp );
 		
 		MenuItem runtransm = new MenuItem("Run TransM");
-		runtransm.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			public void run() {	
-				try {
-					Serifier ser = new Serifier();
-					Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
-					
-					JTextField host = new JTextField("localhost");
-					JOptionPane.showMessageDialog(null, host);
-					
-					String username = System.getProperty("user.name");
-					String hostname = host.getText();
-					
-					/*Path[] pt = null;
-					JFileChooser fc = new JFileChooser();
-					fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
-						pt = new Path[3];
-						pt[2] = fc.getSelectedFile().toPath();
-					}*/
-					
-					List<Object> commands = new ArrayList<>();
-					//commands.add(genexyplotaction)
-					
-					try {
-						Map<String,String> env = new HashMap<>();
-						env.put("create", "true");
-						
-						String uristr = "jar:" + geneset.zippath.toUri();
-						URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-						
-						geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-						for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-							for( String spec : selspec ) {
-								/*Path specdir = root.resolve(spec+".prodigal.fsa");
-								if( !Files.exists(specdir) ) {
-									if( spec.startsWith("MAT") ) {
-										specdir = root.resolve(spec+".gbk.aa");
-									} else specdir = root.resolve("fn_"+spec+"_scaffolds.prodigal.fsa");
-								}*/
-								
-								Stream<Gene> genestream = geneset.genelist.stream().filter( gene -> spec.equals(gene.getSpecies()) && (gene.tegeval.type == null || gene.tegeval.type.length() == 0) );
-								ByteArrayOutputStream baos = new ByteArrayOutputStream();
-								BufferedWriter bw = new BufferedWriter( new OutputStreamWriter(baos) );
-								genestream.forEach( gene -> {
-									try {
-										gene.writeGeneIdFasta(bw);
-									} catch (Exception e1) {
-										e1.printStackTrace();
-									}
-								});
-								bw.close();
-								baos.close();
-								String seqs = baos.toString();
-								seqs = seqs.replace('*', 'X');
-								byte[] bb = seqs.getBytes();
-								Path sigout = root.resolve(spec+".tm");
-								Object[] pt = new Object[] {bb,sigout,null};
-								if( hostname.equals("localhost") ) {
-									String[] cmds = {"decodeanhmm", "-f", "/opt/tmhmm-2.0c/lib/TMHMM2.0.options", "-modelfile", "/opt/tmhmm-2.0c/lib/TMHMM2.0.model"};
-									commands.add( pt );
-									commands.add( Arrays.asList( cmds ) );
-								} else {
-									//Path p = Paths.get(spec+".tm");
-									//Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
-									
-									String[] cmds = {"ssh",hostname,"decodeanhmm", "-f", "/opt/tmhmm-2.0c/lib/TMHMM2.0.options", "-modelfile", "/opt/tmhmm-2.0c/lib/TMHMM2.0.model"};
-									commands.add( pt );
-									commands.add( Arrays.asList( cmds ) );
-								}
-							}
-							
-							break;
-						}
-					} catch( Exception ex ) {
-						ex.printStackTrace();
-					}
-					
-					Runnable run = () -> {
-                        try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
-                    };
-					
-					NativeRun nr = new NativeRun( run );
-					nr.runProcessBuilder("transm", commands, new Object[3], false, run, false);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		}));
+		runtransm.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+            try {
+                Serifier ser = new Serifier();
+                Set<String> selspec = getSelspec(null, geneset.getSpecies(), null);
+
+                JTextField host = new JTextField("localhost");
+                JOptionPane.showMessageDialog(null, host);
+
+                String username = System.getProperty("user.name");
+                String hostname = host.getText();
+
+                /*Path[] pt = null;
+                JFileChooser fc = new JFileChooser();
+                fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+                if( fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION ) {
+                    pt = new Path[3];
+                    pt[2] = fc.getSelectedFile().toPath();
+                }*/
+
+                List<Object> commands = new ArrayList<>();
+                //commands.add(genexyplotaction)
+
+                try {
+                    Map<String,String> env = new HashMap<>();
+                    env.put("create", "true");
+
+                    String uristr = "jar:" + geneset.zippath.toUri();
+                    URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+
+                    geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+                    for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+                        for( String spec : selspec ) {
+                            /*Path specdir = root.resolve(spec+".prodigal.fsa");
+                            if( !Files.exists(specdir) ) {
+                                if( spec.startsWith("MAT") ) {
+                                    specdir = root.resolve(spec+".gbk.aa");
+                                } else specdir = root.resolve("fn_"+spec+"_scaffolds.prodigal.fsa");
+                            }*/
+
+                            Stream<Gene> genestream = geneset.genelist.stream().filter( gene -> spec.equals(gene.getSpecies()) && (gene.tegeval.type == null || gene.tegeval.type.length() == 0) );
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            BufferedWriter bw = new BufferedWriter( new OutputStreamWriter(baos) );
+                            genestream.forEach( gene -> {
+                                try {
+                                    gene.writeGeneIdAAFasta(bw);
+                                } catch (Exception e1) {
+                                    e1.printStackTrace();
+                                }
+                            });
+                            bw.close();
+                            baos.close();
+                            String seqs = baos.toString();
+                            seqs = seqs.replace('*', 'X');
+                            byte[] bb = seqs.getBytes();
+                            Path sigout = root.resolve(spec+".tm");
+                            Object[] pt = new Object[] {bb,sigout,null};
+                            if( hostname.equals("localhost") ) {
+                                String[] cmds = {"/usr/local/bin/docker","exec","-i","dcaaea383def","/root/tmhmm-2.0c/bin/decodeanhmm.Linux_x86_64", "-f", "/root/tmhmm-2.0c/lib/TMHMM2.0.options", "-modelfile", "/root/tmhmm-2.0c/lib/TMHMM2.0.model"};
+                                commands.add( pt );
+                                commands.add( Arrays.asList( cmds ) );
+                            } else {
+                                //Path p = Paths.get(spec+".tm");
+                                //Files.copy(specdir, p, StandardCopyOption.REPLACE_EXISTING);
+
+                                String[] cmds = {"ssh",hostname,"decodeanhmm", "-f", "/opt/tmhmm-2.0c/lib/TMHMM2.0.options", "-modelfile", "/opt/tmhmm-2.0c/lib/TMHMM2.0.model"};
+                                commands.add( pt );
+                                commands.add( Arrays.asList( cmds ) );
+                            }
+                        }
+
+                        break;
+                    }
+                } catch( Exception ex ) {
+                    ex.printStackTrace();
+                }
+
+                Runnable run = () -> {
+					try { geneset.zipfilesystem.close(); } catch( Exception e ) { e.printStackTrace(); };
+				};
+
+                NativeRun nr = new NativeRun( run );
+                nr.runProcessBuilder("transm", commands, new Object[3], false, run, false);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }));
 		windowmenu.getItems().add( runtransm );
 		
 		MenuItem runtrnascan = new MenuItem("tRNAscan");
@@ -5975,16 +5986,53 @@ public class GeneSetHead extends JApplet {
 				}
 		});
 		select.getItems().add( selsinglemultstrain );
-		
+
+        MenuItem selgeneclusters = new MenuItem("Select gene clusters");
+        selgeneclusters.setOnAction( actionEvent -> {
+            SwingUtilities.invokeLater(() -> {
+                Set<String> specset = getSelspec(GeneSetHead.this, geneset.specList);
+                Platform.runLater(() -> {
+                    int total = 0;
+                    for( GeneGroup gg : geneset.allgenegroups ) {
+                        Set<Tegeval> geneset = new HashSet<>();
+                        for( String spec : specset ) {
+                            if( gg.species.containsKey(spec) ) {
+                                Teginfo ti = gg.species.get(spec);
+                                geneset.addAll(ti.tset);
+                            }
+                        }
+                        if ( geneset.size() > 1 ) {
+                            table.getSelectionModel().select(gg);
+                            total += geneset.size();
+                        }
+                    }
+
+                    Dialog<String> ds = new Dialog<>();
+                    ButtonType loginButtonType = new ButtonType("Ok", ButtonBar.ButtonData.OK_DONE);
+                    ds.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+                    Label tf = new Label();
+                    tf.setText( ""+total );
+                    ds.getDialogPane().setContent(tf);
+                    ds.showAndWait();
+                    //table.setro
+                });
+            });
+        });
+        select.getItems().add( selgeneclusters );
 		MenuItem selsinglecopygenes = new MenuItem("Select single copy genes");
 		selsinglecopygenes.setOnAction( actionEvent -> {
-				Set<String> specset = getSelspec(GeneSetHead.this, geneset.specList);
-				for( GeneGroup gg : geneset.allgenegroups ) {
-					if( gg.getTegevals().size() == gg.species.size() ) {
-						table.getSelectionModel().select(gg);
-						//table.setro
-					}
-				}
+		    SwingUtilities.invokeLater(() -> {
+                Set<String> specset = getSelspec(GeneSetHead.this, geneset.specList);
+                Platform.runLater(() -> {
+                    for (GeneGroup gg : geneset.allgenegroups) {
+                        if (gg.getTegevals().size() == gg.species.size()) {
+                            table.getSelectionModel().select(gg);
+                            //table.setro
+                        }
+                    }
+                });
+            });
 		});
 		select.getItems().add( selsinglecopygenes );
 		MenuItem selduplgenes = new MenuItem("Select duplicated genes");
@@ -6012,7 +6060,7 @@ public class GeneSetHead extends JApplet {
 						Teginfo ti = gg.species.get( spec );
 						if( ti.tset.size() == 3 ) {
 							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
-							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) 
+							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1))
 									&& (ta.get(1).getNext() == ta.get(2) || ta.get(1).getPrevious() == ta.get(2))) cnt++;
 						}
 					}
@@ -6590,8 +6638,8 @@ public class GeneSetHead extends JApplet {
 	
 	public void newFile() {
 		FileChooser fc = new FileChooser();
-		fc.getExtensionFilters().add( new ExtensionFilter("Zip files", "*.zip") );
-		File f = fc.showSaveDialog(null);
+		//fc.getExtensionFilters().add( new ExtensionFilter("Zip files", "*.zip") );
+		File f = fc.showSaveDialog(primaryStage);
 		geneset.zippath = f.toPath();
 	}
 	
@@ -6684,18 +6732,16 @@ public class GeneSetHead extends JApplet {
 		
 		frame.setVisible( true );*/
 		
-		stage.setOnCloseRequest( new EventHandler<WindowEvent>() {
-			public void handle(WindowEvent event) {
-				try {
-					geneset.zipfilesystem.close();
+		stage.setOnCloseRequest(event -> {
+            try {
+                geneset.zipfilesystem.close();
 
-					geneset.cleanUp();
-					importStuff();
-				} catch (IOException | UnavailableServiceException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
+                geneset.cleanUp();
+                importStuff();
+            } catch (IOException | UnavailableServiceException e1) {
+                e1.printStackTrace();
+            }
+        });
 		stage.show();
 	}
 	

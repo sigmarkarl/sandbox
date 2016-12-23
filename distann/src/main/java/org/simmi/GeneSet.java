@@ -207,8 +207,8 @@ public class GeneSet {
 		}
 	}
 	
-	public Map<String,Cog> loadcogmap( Reader rd ) throws IOException {
-		Map<String,Cog>	map = new HashMap<String,Cog>();
+	public Map<String,Cog> loadcogmap( Reader rd, Map<String,String> cogidmap, boolean pfam ) throws IOException {
+		Map<String,Cog>	map = new HashMap<>();
 		
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
@@ -272,35 +272,48 @@ public class GeneSet {
 					k = spec.indexOf('_', k+1);
 				}
 				if( k != -1 ) spec = spec.substring(0, k);
-				
-				i = val.lastIndexOf('[');
-				if( i != -1 ) {
-					n = val.indexOf(']', i+1);
-				/*if( i == -1 || n == -1 ) {
-					System.err.println( val );
-				}*/
-					String cog = val.substring(i+1, n);
-					int u = cog.indexOf('/');
-					if( u != -1 ) cog = cog.substring(0, u);
-					u = cog.indexOf(';');
-					if( u != -1 ) cog = cog.substring(0, u);
-					String erm = cog.replace("  ", " ");
-					while( !erm.equals( cog ) ) {
-						cog = erm;
-						erm = cog.replace("  ", " ");
+
+				if( !pfam ) {
+					i = val.lastIndexOf('[');
+					if (i != -1) {
+						n = val.indexOf(']', i + 1);
+						/*if( i == -1 || n == -1 ) {
+							System.err.println( val );
+						}*/
+						String cog = val.substring(i + 1, n);
+						int u = cog.indexOf('/');
+						if (u != -1) cog = cog.substring(0, u);
+						u = cog.indexOf(';');
+						if (u != -1) cog = cog.substring(0, u);
+						String erm = cog.replace("  ", " ");
+						while (!erm.equals(cog)) {
+							cog = erm;
+							erm = cog.replace("  ", " ");
+						}
+						cog = cog.trim();
+
+						int ci = val.indexOf(" COG");
+						int ce = val.indexOf(',', ci + 1);
+						String cogid = val.substring(ci + 1, ce);
+
+						ci = val.lastIndexOf(" COG");
+						ce = val.indexOf(',', ci + 1);
+						String cogan = i > ce ? val.substring(ce + 1, i).trim() : "";
+
+						cogidmap.put(cogid, cog);
+						map.put(id, new Cog(cogid, Cog.cogchar.get(cog), cog, cogan));
 					}
-					cog = cog.trim();
-					
-					int ci = val.indexOf(" COG");
-					int ce = val.indexOf(',', ci+1);
-					String cogid = val.substring(ci+1, ce);
-					
-					ci = val.lastIndexOf(" COG");
-					ce = val.indexOf(',', ci+1);
-					String cogan = i > ce ? val.substring(ce+1, i).trim() : "";
-					
-					cogidmap.put(cogid, cog);
-					map.put( id, new Cog( cogid, Cog.cogchar.get(cog), cog, cogan ) );
+				} else {
+					int ci = val.indexOf(" pfam");
+					int ce = val.indexOf(',', ci + 1);
+					String pfamid = val.substring(ci + 1, ce);
+
+					ci = val.lastIndexOf(" pfam");
+					ce = val.indexOf(',', ci + 1);
+					String pfaman = i > ce ? val.substring(ce + 1, i).trim() : "";
+
+					cogidmap.put(pfamid, "X");
+					map.put(id, new Cog(pfamid, 'X', "X", pfaman));
 				}
 			}
 			line = br.readLine();
@@ -310,8 +323,8 @@ public class GeneSet {
 		return map;
 	}
 	
-	public Map<String,String> loadnamemap( BufferedReader br ) throws IOException {
-		Map<String,String>	map = new HashMap<String,String>();
+	public Map<String,String> loadnamemap( BufferedReader br, Map<String,String> namemap ) throws IOException {
+		Map<String,String>	map = namemap == null ? new HashMap<>() : namemap;
 		
 		//BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
@@ -325,7 +338,7 @@ public class GeneSet {
 	}
 
 	public Map<String,String> loadunresolvedmap( Reader rd ) throws IOException {
-		Map<String,String>	map = new HashMap<String,String>();
+		Map<String,String>	map = new HashMap<>();
 		
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
@@ -1150,7 +1163,7 @@ public class GeneSet {
 		}
 	}
 
-	Set<String>	plasmids = new HashSet<String>();
+	Set<String>	plasmids = new HashSet<>();
 	private List<String> loadcontigs(BufferedReader br, String filename) throws IOException {		
 		String line = br.readLine();
 		String name = null;
@@ -1171,7 +1184,7 @@ public class GeneSet {
 					if( speccontigMap.containsKey( spec ) ) {
 						ctlist = speccontigMap.get( spec );
 					} else {
-						ctlist = new ArrayList<Sequence>();
+						ctlist = new ArrayList<>();
 						speccontigMap.put( spec, ctlist );
 					}
 					
@@ -3939,7 +3952,7 @@ public class GeneSet {
 				if (mapset.containsKey("ribosomal proteins")) {
 					subset = mapset.get("ribosomal proteins");
 				} else {
-					subset = new TreeSet<String>();
+					subset = new TreeSet<>();
 					mapset.put("ribosomal proteins", subset);
 				}
 				subset.add(gene);
@@ -3948,7 +3961,7 @@ public class GeneSet {
 				if (mapset.containsKey("inase")) {
 					subset = mapset.get("inase");
 				} else {
-					subset = new TreeSet<String>();
+					subset = new TreeSet<>();
 					mapset.put("inase", subset);
 				}
 				subset.add(gene);
@@ -3957,7 +3970,7 @@ public class GeneSet {
 				if (mapset.containsKey("flag")) {
 					subset = mapset.get("flag");
 				} else {
-					subset = new TreeSet<String>();
+					subset = new TreeSet<>();
 					mapset.put("flag", subset);
 				}
 				subset.add(gene);
@@ -3966,7 +3979,7 @@ public class GeneSet {
 				if (mapset.containsKey("ATP")) {
 					subset = mapset.get("ATP");
 				} else {
-					subset = new TreeSet<String>();
+					subset = new TreeSet<>();
 					mapset.put("ATP", subset);
 				}
 				subset.add(gene);
@@ -3975,7 +3988,7 @@ public class GeneSet {
 				if (mapset.containsKey("hypot")) {
 					subset = mapset.get("hypot");
 				} else {
-					subset = new TreeSet<String>();
+					subset = new TreeSet<>();
 					mapset.put("hypot", subset);
 				}
 				subset.add(gene);
@@ -3984,7 +3997,7 @@ public class GeneSet {
 				if (mapset.containsKey("other")) {
 					subset = mapset.get("other");
 				} else {
-					subset = new TreeSet<String>();
+					subset = new TreeSet<>();
 					mapset.put("other", subset);
 				}
 				subset.add(gene);
@@ -4004,7 +4017,7 @@ public class GeneSet {
 	}
 	
 	public static void splitGenes(String dir, String filename) throws IOException {
-		Map<String, List<Gene>> genemap = new HashMap<String, List<Gene>>();
+		Map<String, List<Gene>> genemap = new HashMap<>();
 		File f = new File(dir, filename);
 		BufferedReader br = new BufferedReader(new FileReader(f));
 		String last = null;
@@ -4018,7 +4031,7 @@ public class GeneSet {
 					if (genemap.containsKey(strain)) {
 						genelist = genemap.get(strain);
 					} else {
-						genelist = new ArrayList<Gene>();
+						genelist = new ArrayList<>();
 						genemap.put(strain, genelist);
 					}
 					genelist.add(new Gene(null, last, last, "mool"));
@@ -4035,7 +4048,7 @@ public class GeneSet {
 		if (genemap.containsKey(strain)) {
 			genelist = genemap.get(strain);
 		} else {
-			genelist = new ArrayList<Gene>();
+			genelist = new ArrayList<>();
 			genemap.put(strain, genelist);
 		}
 		genelist.add(new Gene(null, last, last, "moool"));
@@ -4055,7 +4068,7 @@ public class GeneSet {
 	}
 
 	public static void splitGenes(String dir, String filename, int parts) throws IOException {
-		List<Gene> genelist = new ArrayList<Gene>();
+		List<Gene> genelist = new ArrayList<>();
 		File f = new File(dir, filename);
 		BufferedReader br = new BufferedReader(new FileReader(f));
 		String last = null;
@@ -4100,16 +4113,13 @@ public class GeneSet {
 	}
 
 	public static void aaset() throws IOException {
-		Set<String> set1 = new HashSet<String>();
+		Set<String> set1 = new HashSet<>();
 		File fa = new File("/home/sigmar/dtu/27623-AlgoInBio/week7/");
-		File[] ff = fa.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				if (name.length() == 5)
-					return true;
-				return false;
-			}
-		});
+		File[] ff = fa.listFiles((dir, name) -> {
+            if (name.length() == 5)
+                return true;
+            return false;
+        });
 
 		for (File fb : ff) {
 			File f = new File(fb, fb.getName() + ".dat");
@@ -4124,7 +4134,7 @@ public class GeneSet {
 				}
 				br.close();
 
-				Set<String> set2 = new HashSet<String>();
+				Set<String> set2 = new HashSet<>();
 				f = new File("/home/sigmar/dtu/27623-AlgoInBio/project/train2.dat");
 				br = new BufferedReader(new FileReader(f));
 				line = br.readLine();
@@ -4153,15 +4163,12 @@ public class GeneSet {
 
 	public static void newsets() throws IOException {
 		File mf = new File("/home/sigmar/dtu/new/dtu/main_project/code/SMM/");
-		File[] ff = mf.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File pathname) {
-				String name = pathname.getName();
-				if (name.length() == 5 && (name.startsWith("B") || name.startsWith("A")) && pathname.isDirectory())
-					return true;
-				return false;
-			}
-		});
+		File[] ff = mf.listFiles(pathname -> {
+            String name = pathname.getName();
+            if (name.length() == 5 && (name.startsWith("B") || name.startsWith("A")) && pathname.isDirectory())
+                return true;
+            return false;
+        });
 
 		for (File f : ff) {
 			for (int x = 0; x < 5; x++) {
@@ -5844,12 +5851,13 @@ public class GeneSet {
 		if( args.length > 1 && args[0].endsWith(".zip") ) {
 			GeneSet	gs = new GeneSet();
 			Path p = Paths.get(args[0]);
+			boolean pfam = false;
 			try {
 				gs.loadStuff( p );
 				if( args[1].equalsIgnoreCase("clusterGenes") ) {
 					gs.clusterGenes(gs.getSpecies(), true);
 				} else if( args[1].equalsIgnoreCase("cogBlast") ) {
-					gs.cogBlast( null, args[2], args.length > 3 ? args[3] : "localhost", true, true );
+					gs.cogBlast( null, args[2], args.length > 3 ? args[3] : "localhost", true, true, pfam );
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -6274,7 +6282,7 @@ public class GeneSet {
 	}
 	
 	public Map<String,String> ko2nameMapping( InputStreamReader id ) throws IOException {
-		Map<String,String>	ko2name = new HashMap<String,String>();
+		Map<String,String>	ko2name = new HashMap<>();
 		
 		BufferedReader br = new BufferedReader( id );
 		String line = br.readLine();
@@ -6323,6 +6331,7 @@ public class GeneSet {
 		Map<String, String> ref2pdb = new HashMap<>();
 		Map<String, String> ref2ko = new HashMap<>();
 		Map<String, String> ref2cog = new HashMap<>();
+		Map<String, String> ref2pfam = new HashMap<>();
 
 		Map<String,Gene> nrefids = new HashMap<>();
 		for( String key : refids.keySet() ) {
@@ -6672,7 +6681,7 @@ public class GeneSet {
 		return r;
 	}
 
-	public void cogBlast( Set<String> species, String dbPath, String hostname, boolean headless, boolean docker ) {
+	public void cogBlast( Set<String> species, String dbPath, String hostname, boolean headless, boolean docker, boolean pfam ) {
 		try {
 			StringWriter sb = new StringWriter();
 			for( Gene g : genelist ) {
@@ -6696,7 +6705,7 @@ public class GeneSet {
 			String uristr = "jar:" + zippath.toUri();
 			zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
 			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-			Path resPath = zipfilesystem.getPath("/cog.blastout");
+			Path resPath = zipfilesystem.getPath(pfam ? "/pfam.blastout" : "/cog.blastout");
 
 			NativeRun nrun = new NativeRun();
 			if( docker ) SerifyApplet.deltaBlastRun(nrun, sb.getBuffer(), dbPath, resPath, "", null, true, zipfilesystem, user, hostname, headless, docker);
@@ -6707,7 +6716,7 @@ public class GeneSet {
 	}
 	
 	public Serifier getConcatenatedSequences( boolean proximityJoin, Map<GeneGroup,Integer> genegroups, Set<String> specset, boolean namefix ) {
-		Map<String,Map<Sequence,String>>	smap = new HashMap<String,Map<Sequence,String>>();
+		Map<String,Map<Sequence,String>>	smap = new HashMap<>();
 		
 		//List<Sequence>	seqs = new ArrayList<Sequence>();
 		/*Map<String>	specset = new HashMap<String,Integer>();
@@ -6740,7 +6749,7 @@ public class GeneSet {
 					Map<Sequence,String> seqs;
 					if( smap.containsKey( spec ) ) {
 						seqs = smap.get( spec );
-						Map<Sequence,String> addseqs = new HashMap<Sequence,String>();
+						Map<Sequence,String> addseqs = new HashMap<>();
 					
 						for( Sequence seq : seqs.keySet() ) {
 							String loc = seqs.get( seq );
@@ -7119,7 +7128,7 @@ public class GeneSet {
 					if( map.containsKey( spec ) ) {
 						cogmap = map.get(spec);
 					} else {
-						cogmap = new HashMap<Character,Integer>();
+						cogmap = new HashMap<>();
 						map.put( spec, cogmap );
 					}
 					
@@ -7506,7 +7515,8 @@ public class GeneSet {
 		String current = null;
 		while( line != null ) {
 			if( line.startsWith(">") ) {
-				current = line.substring(1,line.indexOf(' '));
+				int end = line.indexOf(' ');
+				current = line.substring(1,end == -1 ? line.length() : end);
 			} else if( line.startsWith("%pred NB(0): i") ) {
 				tmids.add( current );
 			}
@@ -7591,7 +7601,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
+					gg = new GeneGroup( groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, name, name, spec );
@@ -7673,7 +7683,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
+					gg = new GeneGroup( groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, cont+"_"+loc, name, spec );
@@ -7839,7 +7849,7 @@ public class GeneSet {
 						if (ggmap.containsKey(name)) {
 							gg = ggmap.get(name);
 						} else {
-							gg = new GeneGroup(groupIndex++, specset, cogmap, ko2name, biosystemsmap);
+							gg = new GeneGroup(groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap);
 							ggmap.put(name, gg);
 						}
 						Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name, spec);
@@ -7872,7 +7882,7 @@ public class GeneSet {
 							if (ggmap.containsKey(name)) {
 								gg = ggmap.get(name);
 							} else {
-								gg = new GeneGroup(groupIndex++, specset, cogmap, ko2name, biosystemsmap);
+								gg = new GeneGroup(groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap);
 								ggmap.put(name, gg);
 							}
 							Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name, spec);
@@ -7911,7 +7921,7 @@ public class GeneSet {
 					if( ggmap.containsKey( name ) ) {
 						gg = ggmap.get( name );
 					} else {
-						gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
+						gg = new GeneGroup( groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 						ggmap.put( name, gg );
 					}
 					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7952,7 +7962,7 @@ public class GeneSet {
 				if( ggmap.containsKey( name ) ) {
 					gg = ggmap.get( name );
 				} else {
-					gg = new GeneGroup( groupIndex++, specset, cogmap, ko2name, biosystemsmap );
+					gg = new GeneGroup( groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
 				Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
@@ -7989,7 +7999,7 @@ public class GeneSet {
 				}
 			}
 
-			Set<Integer> groupIdxSet = new HashSet<Integer>();
+			Set<Integer> groupIdxSet = new HashSet<>();
 			for (String cont : ct) {
 				Gene g = locgene.get(cont);
 				if (g != null ) {
@@ -8108,24 +8118,24 @@ public class GeneSet {
 		return cogmap;
 	}*/
 	
-	Map<String, Gene> 			refmap = new HashMap<String, Gene>();
-	Map<String, Gene> 			genmap = new HashMap<String, Gene>();
-	Map<String, Gene> 			unimap = new HashMap<String, Gene>();
-	Map<String, Gene> 			gimap = new HashMap<String, Gene>();
+	Map<String, Gene> 			refmap = new HashMap<>();
+	Map<String, Gene> 			genmap = new HashMap<>();
+	Map<String, Gene> 			unimap = new HashMap<>();
+	Map<String, Gene> 			gimap = new HashMap<>();
 	
-	Map<String, String> 		allgenes = new HashMap<String, String>();
-	Map<String, Set<String>> 	geneset = new HashMap<String, Set<String>>();
-	Map<String, Set<String>> 	geneloc = new HashMap<String, Set<String>>();
-	Set<String> 				poddur = new HashSet<String>();
-	Map<String, Gene> 			locgene = new HashMap<String, Gene>();
+	Map<String, String> 		allgenes = new HashMap<>();
+	Map<String, Set<String>> 	geneset = new HashMap<>();
+	Map<String, Set<String>> 	geneloc = new HashMap<>();
+	Set<String> 				poddur = new HashSet<>();
+	Map<String, Gene> 			locgene = new HashMap<>();
 	
 	Path		zippath;
 	//File		zipfile;
 	FileSystem	zipfilesystem;
 	URI			zipuri;
 	Map<String,String>	ko2name;
-	Map<String,String>	designations = new HashMap<String,String>();
-	Set<String>			deset = new HashSet<String>();
+	Map<String,String>	designations = new HashMap<>();
+	Set<String>			deset = new HashSet<>();
 	
 	Map<String, Set<String>> 				pathwaymap = new TreeMap<>();
 	Map<String, Set<String>> 				pathwaykomap = new TreeMap<>();
@@ -8136,7 +8146,11 @@ public class GeneSet {
 	List<String>							specList = new ArrayList<>();
 	//byte[] 									zipf;
 	public Map<String,Cog>					cogmap = new HashMap<>();
+	public Map<String,Cog>					pfammap = new HashMap<>();
+
 	Map<String,String>						cogidmap = new HashMap<>();
+	Map<String,String>						pfamidmap = new HashMap<>();
+
 	Map<String,String>						unresolvedmap = new HashMap<>();
 	Map<String,String>						namemap = new HashMap<>();
 	Map<String,String>						cazymap = new HashMap<>();
@@ -8145,7 +8159,7 @@ public class GeneSet {
 	Map<String, Set<String>> 				ko2go = new TreeMap<>();
 	
 	public void loadStuff( Path zipp ) throws IOException {
-		Map<String,String> env = new HashMap<String,String>();
+		Map<String,String> env = new HashMap<>();
 		zippath = zipp;
 		//Path path = zipfile.toPath();
 		String uristr = "jar:" + zippath.toUri();
@@ -8155,7 +8169,7 @@ public class GeneSet {
 		Path nf = zipfilesystem.getPath("/unresolved.blastout");
 		if( Files.exists( nf ) ) unresolvedmap = loadunresolvedmap( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
 		nf = zipfilesystem.getPath("/namemap.txt");
-		if( Files.exists( nf ) ) namemap = loadnamemap( Files.newBufferedReader(nf) );
+		if( Files.exists( nf ) ) namemap = loadnamemap( Files.newBufferedReader(nf), null );
 		nf = zipfilesystem.getPath("/designations.txt");
 		if( Files.exists( nf ) ) designations = loadDesignations( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), deset );
 		nf = zipfilesystem.getPath("/plasmids.txt");
@@ -8179,48 +8193,48 @@ public class GeneSet {
 		}
 		//else {
 		for( Path root : zipfilesystem.getRootDirectories() ) {
-			Files.list(root).filter( new Predicate<Path>() {
-				@Override
-				public boolean test(Path t) {
-					String filename = t.getFileName().toString();
-					return (filename.endsWith(".fna") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
-				}
-			}).forEach( new Consumer<Path>() {
-				@Override
-				public void accept(Path t) {
-					try {
-						String filename = t.getFileName().toString().replace(".fna", "").replace(".fastg", "");
-						specList = loadcontigs( Files.newBufferedReader(t), "" );
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+			Files.list(root).filter(t -> {
+                String filename = t.getFileName().toString();
+                return (filename.endsWith(".fna") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
+            }).forEach(t -> {
+                try {
+                    String filename = t.getFileName().toString().replace(".fna", "").replace(".fastg", "");
+                    specList = loadcontigs( Files.newBufferedReader(t), "" );
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+		}
+
+		for( Path root : zipfilesystem.getRootDirectories() ) {
+			Files.list(root).filter(t -> {
+				String filename = t.getFileName().toString();
+				return filename.endsWith(".namemap");
+			}).forEach(t -> {
+				try {
+					loadnamemap( Files.newBufferedReader(t), namemap );
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			});
 		}
-		//}
 		
 		nf = zipfilesystem.getPath("/aligned");
 		if( Files.exists(nf) ) {
-			Files.list(nf).filter( new Predicate<Path>() {
-				@Override
-				public boolean test(Path t) {
-					String filename = t.getFileName().toString();
-					//System.err.println("filename " + filename);
-					boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
-					return b;
-				}
-			}).forEach( new Consumer<Path>() {
-				@Override
-				public void accept(Path t) {
-					if( Files.exists( t ) )
-						try {
-							String filename = t.getFileName().toString().replace(".fna", "");
-							loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-				}
-			});
+			Files.list(nf).filter(t -> {
+                String filename = t.getFileName().toString();
+                //System.err.println("filename " + filename);
+                boolean b = (filename.endsWith(".aa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
+                return b;
+            }).forEach(t -> {
+                if( Files.exists( t ) )
+                    try {
+                        String filename = t.getFileName().toString().replace(".fna", "");
+                        loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            });
 		}// else {
 		nf = zipfilesystem.getPath("/allthermus_aligned.aa");
 		if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
@@ -8236,26 +8250,20 @@ public class GeneSet {
 		}*/
 		
 		for( Path root : zipfilesystem.getRootDirectories() ) {
-			Files.list(root).filter( new Predicate<Path>() {
-				@Override
-				public boolean test(Path t) {
-					String filename = t.getFileName().toString();
-					//System.err.println("filename " + filename);
-					boolean b = (filename.endsWith(".aa") || filename.endsWith(".faa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
-					return b;
-				}
-			}).forEach( new Consumer<Path>() {
-				@Override
-				public void accept(Path t) {
-					if( Files.exists( t ) )
-						try {
-							String filename = t.getFileName().toString().replace(".fna", "");
-							loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-				}
-			});
+			Files.list(root).filter(t -> {
+                String filename = t.getFileName().toString();
+                //System.err.println("filename " + filename);
+                boolean b = (filename.endsWith(".aa") || filename.endsWith(".faa") || filename.endsWith(".fsa")) && !filename.contains("allthermus");
+                return b;
+            }).forEach(t -> {
+                if( Files.exists( t ) )
+                    try {
+                        String filename = t.getFileName().toString().replace(".fna", "");
+                        loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            });
 		}
 		//}
 		//}
@@ -8291,7 +8299,9 @@ public class GeneSet {
 			//}
 		}
 		nf = zipfilesystem.getPath("/cog.blastout");
-		if( Files.exists( nf ) ) cogmap = loadcogmap( Files.newBufferedReader(nf) );
+		if( Files.exists( nf ) ) cogmap = loadcogmap( Files.newBufferedReader(nf), cogidmap, false );
+		nf = zipfilesystem.getPath("/pfam.blastout");
+		if( Files.exists( nf ) ) pfammap = loadcogmap( Files.newBufferedReader(nf), pfamidmap, true );
 		nf = zipfilesystem.getPath("/cazy");
 		if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/ko2name.txt");
@@ -8469,23 +8479,18 @@ public class GeneSet {
 		// Map<Set<String>,ClusterInfo> clustInfoMap = new
 		// HashMap<Set<String>,ClusterInfo>();
 
-		corrInd = new ArrayList<String>();
+		corrInd = new ArrayList<>();
 		InputStream is = GeneSet.class.getResourceAsStream("/thermus16S.blastout");
 		double[] corr16sArray = is == null ? new double[0] : load16SCorrelation(new InputStreamReader(is), corrInd);
 
-		if( uclusterlist != null ) Collections.sort(uclusterlist, new Comparator<Set<String>>() {
-			@Override
-			public int compare(Set<String> o1, Set<String> o2) {
-				return o1.size() - o2.size();
-			}
-		});
+		if( uclusterlist != null ) Collections.sort(uclusterlist, (o1, o2) -> o1.size() - o2.size());
 
-		Map<Set<String>, double[]> corrList = new HashMap<Set<String>, double[]>();
+		Map<Set<String>, double[]> corrList = new HashMap<>();
 
 		List<GeneGroup>	ggList = new ArrayList<GeneGroup>();
 		int i = 0;
 		//Set<String> ss = new HashSet<String>();
-		Set<String> gs = new HashSet<String>();	
+		Set<String> gs = new HashSet<>();
 		
 		int countclust = 0;
 		if( uclusterlist != null ) for (Set<String> cluster : uclusterlist) {
@@ -8497,7 +8502,7 @@ public class GeneSet {
 				for( String u : cluster ) s = u;
 			}*/
 
-			Set<Gene> gset = new HashSet<Gene>();
+			Set<Gene> gset = new HashSet<>();
 			for( String cont : cluster ) {
 				String gid = null;
 				//String spec;
@@ -8565,7 +8570,7 @@ public class GeneSet {
 				corrList.put(cluster, new double[20*20]);
 			}*/
 
-			GeneGroup gg = new GeneGroup( i, specset, cogmap, ko2name, biosystemsmap );
+			GeneGroup gg = new GeneGroup( i, specset, cogmap, pfammap, ko2name, biosystemsmap );
 			ggList.add( gg );
 			//gg.addSpecies( ss );
 			gg.setGroupCount( val );
@@ -8592,7 +8597,7 @@ public class GeneSet {
 		
 		for( Gene g : genelist ) {
 			if( g.getGeneGroup() == null ) {
-				GeneGroup gg = new GeneGroup( i++, specset, cogmap, ko2name, biosystemsmap );
+				GeneGroup gg = new GeneGroup( i++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 				ggList.add( gg );
 				gg.setGroupCount( 1 );
 				
@@ -8636,25 +8641,19 @@ public class GeneSet {
 		if( Files.exists( nf ) ) i = loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i );
 		else {
 			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						//System.err.println("filename " + filename);
-						boolean b = filename.endsWith(".lsu") || filename.endsWith(".ssu") || filename.endsWith(".tsu");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0 );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
+				Files.list(root).filter(t -> {
+                    String filename = t.getFileName().toString();
+                    //System.err.println("filename " + filename);
+                    boolean b = filename.endsWith(".lsu") || filename.endsWith(".ssu") || filename.endsWith(".tsu");
+                    return b;
+                }).forEach(t -> {
+                    if( Files.exists( t ) )
+                        try {
+                            loadRrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0 );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                });
 			}
 		}
 		
@@ -8662,25 +8661,19 @@ public class GeneSet {
 		if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "trna" );
 		else {
 			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						//System.err.println("filename " + filename);
-						boolean b = filename.endsWith(".trna") && !filename.contains("allthermus");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "trna" );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
+				Files.list(root).filter(t -> {
+                    String filename = t.getFileName().toString();
+                    //System.err.println("filename " + filename);
+                    boolean b = filename.endsWith(".trna") && !filename.contains("allthermus");
+                    return b;
+                }).forEach(t -> {
+                    if( Files.exists( t ) )
+                        try {
+                            loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "trna" );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                });
 			}
 		}
 		
@@ -8688,25 +8681,19 @@ public class GeneSet {
 		if( Files.exists( nf ) ) i = loadrnas( rnamap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), i, "rrna" );
 		else {
 			for( Path root : zipfilesystem.getRootDirectories() ) {
-				Files.list(root).filter( new Predicate<Path>() {
-					@Override
-					public boolean test(Path t) {
-						String filename = t.getFileName().toString();
-						//System.err.println("filename " + filename);
-						boolean b = filename.endsWith(".rrna") && !filename.contains("allthermus");
-						return b;
-					}
-				}).forEach( new Consumer<Path>() {
-					@Override
-					public void accept(Path t) {
-						if( Files.exists( t ) )
-							try {
-								loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "rrna" );
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-					}
-				});
+				Files.list(root).filter(t -> {
+                    String filename = t.getFileName().toString();
+                    //System.err.println("filename " + filename);
+                    boolean b = filename.endsWith(".rrna") && !filename.contains("allthermus");
+                    return b;
+                }).forEach(t -> {
+                    if( Files.exists( t ) )
+                        try {
+                            loadrnas( rnamap, new InputStreamReader( Files.newInputStream(t, StandardOpenOption.READ) ), 0, "rrna" );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                });
 			}
 		}
 		//zipfilesystem.close();
@@ -8750,29 +8737,23 @@ public class GeneSet {
 		
 		
 		
-		final Set<String>	spids = new HashSet<String>();
+		final Set<String>	spids = new HashSet<>();
 		for( Path root : zipfilesystem.getRootDirectories() ) {
-			Files.list(root).filter( new Predicate<Path>() {
-				@Override
-				public boolean test(Path t) {
-					String filename = t.getFileName().toString();
-					//System.err.println("filename " + filename);
-					boolean b = filename.endsWith(".signalp");
-					return b;
-				}
-			}).forEach( new Consumer<Path>() {
-				@Override
-				public void accept(Path t) {
-					if( Files.exists( t ) )
-						try {
-							System.err.println("loading " + t.toString() );
-							loadsignalp( spids, Files.newBufferedReader(t) );
-							System.err.println("spids " + spids.size() );
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-				}
-			});
+			Files.list(root).filter(t -> {
+                String filename = t.getFileName().toString();
+                //System.err.println("filename " + filename);
+                boolean b = filename.endsWith(".signalp");
+                return b;
+            }).forEach(t -> {
+                if( Files.exists( t ) )
+                    try {
+                        System.err.println("loading " + t.toString() );
+                        loadsignalp( spids, Files.newBufferedReader(t) );
+                        System.err.println("spids " + spids.size() );
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            });
 		}
 		for( Gene g : genelist ) {
 			System.err.println( g.id );
@@ -8781,27 +8762,21 @@ public class GeneSet {
 			}
 		}
 		
-		final Set<String>	tmids = new HashSet<String>();
+		final Set<String>	tmids = new HashSet<>();
 		for( Path root : zipfilesystem.getRootDirectories() ) {
-			Files.list(root).filter( new Predicate<Path>() {
-				@Override
-				public boolean test(Path t) {
-					String filename = t.getFileName().toString();
-					//System.err.println("filename " + filename);
-					boolean b = filename.endsWith(".tm");
-					return b;
-				}
-			}).forEach( new Consumer<Path>() {
-				@Override
-				public void accept(Path t) {
-					if( Files.exists( t ) )
-						try {
-							loadtransm( tmids, Files.newBufferedReader(t) );
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-				}
-			});
+			Files.list(root).filter(t -> {
+                String filename = t.getFileName().toString();
+                //System.err.println("filename " + filename);
+                boolean b = filename.endsWith(".tm");
+                return b;
+            }).forEach(t -> {
+                if( Files.exists( t ) )
+                    try {
+                        loadtransm( tmids, Files.newBufferedReader(t) );
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            });
 		}
 		for( Gene g : genelist ) {
 			if( tmids.contains(g.id) ) {
@@ -8812,20 +8787,20 @@ public class GeneSet {
 		
 		
 		
-		ggSpecMap = new HashMap<Set<String>,List<GeneGroup>>();
+		ggSpecMap = new HashMap<>();
 		for( GeneGroup gg : ggList ) {
 			List<GeneGroup>	speclist;
 			Set<String> specset = gg.species.keySet();
 			if( ggSpecMap.containsKey( specset ) ) {
 				speclist = ggSpecMap.get(specset);
 			} else {
-				speclist = new ArrayList<GeneGroup>();
+				speclist = new ArrayList<>();
 				ggSpecMap.put( specset, speclist );
 			}
 			speclist.add( gg );
 		}
 		
-		specGroupMap = new HashMap<String,Set<GeneGroup>>();
+		specGroupMap = new HashMap<>();
 		int ind = 0;
 		for( GeneGroup gg : ggList ) {
 			/*if( gg.genes.size() == 0 ) {
@@ -9396,6 +9371,9 @@ public class GeneSet {
 		
 		if( cogidmap != null ) cogidmap.clear();
 		if( cogmap != null ) cogmap.clear();
+
+		if( pfamidmap != null ) pfamidmap.clear();
+		if( pfammap != null ) pfammap.clear();
 		
 		if( ko2go != null ) ko2go.clear();
 		if( ko2name != null ) ko2name.clear();

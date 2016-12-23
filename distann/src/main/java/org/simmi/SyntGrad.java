@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import javafx.application.Platform;
 import org.simmi.shared.Annotation;
 import org.simmi.shared.Gene;
 import org.simmi.shared.GeneGroup;
@@ -268,85 +269,88 @@ public class SyntGrad {
 
 					int ind = (int)((rad-500.0)/30.0);
 					String spec = ind >= 0 && ind < spec2s.size() ? spec2s.get( ind ) : null;
-
-					List<Sequence> scontigs = geneset.speccontigMap.get( spec );
-					int size = 0;
-					for( Sequence seq : scontigs ) {
-						size += seq.getAnnotationCount();
-					}
-					
-					if( doubleclicked || isbeingdragged ) {
-						double t = Math.atan2( dy, dx );
-						double nt = Math.atan2( ndy, ndx );
-						double nrad = Math.sqrt( ndx*ndx + ndy*ndy );
-						
-						if( t < 0 ) t += Math.PI*2.0;
-						int mloc = (int)(t*size/(2*Math.PI));
-						
-						if( nt < 0 ) nt += Math.PI*2.0;
-						int nloc = (int)(nt*size/(2*Math.PI));
-
-						int i = 0;
-						int loc = 0;
-						for( i = 0; i < scontigs.size(); i++ ) {
-							Sequence c = scontigs.get(i);
-							if( loc + c.getAnnotationCount() > mloc ) {
-								break;
-							} else loc += c.getAnnotationCount();
+					if( spec != null ) {
+						List<Sequence> scontigs = geneset.speccontigMap.get(spec);
+						int size = 0;
+						for (Sequence seq : scontigs) {
+							size += seq.getAnnotationCount();
 						}
-						Sequence ct1 = scontigs.get(i);
 
-						i = 0;
-						loc = 0;
-						for( i = 0; i < scontigs.size(); i++ ) {
-							Sequence c = scontigs.get(i);
-							if( loc + c.getAnnotationCount() > nloc ) {
-								break;
-							} else loc += c.getAnnotationCount();
-						}
-						Sequence ct2 = scontigs.get(i);
+						if (doubleclicked || isbeingdragged) {
+							double t = Math.atan2(dy, dx);
+							double nt = Math.atan2(ndy, ndx);
+							double nrad = Math.sqrt(ndx * ndx + ndy * ndy);
 
-						if( ct1 == ct2 ) ct1.setReverse( !ct1.isReverse() );
-						else {
-							int k2 = scontigs.indexOf( ct2 );
-							scontigs.remove( ct1 );
-							scontigs.add(k2, ct1);
-						}
-						drawImage( genesethead, g2, spec1, contigs1, spec2s, w, h );
-					} else {						
-						double t1 = Math.atan2( dy, dx );
-						double t2 = Math.atan2( ndy, ndx );
-						
-						if( t1 < 0 ) t1 += Math.PI*2.0;
-						if( t2 < 0 ) t2 += Math.PI*2.0;
-						
-						if( spec != null ) {
-							List<Sequence> contigs = geneset.speccontigMap.get( spec );
-							int total = 0;
-							for( Sequence c : contigs ) {
-								total += c.getAnnotationCount();
-							}
-							
-							int loc1 = (int)(t1*total/(2*Math.PI));
-							int loc2 = (int)(t2*total/(2*Math.PI));
-							
-							int minloc = Math.min( loc1, loc2 );
-							int maxloc = Math.max( loc1, loc2 );
-							
-							int i = 0;
+							if (t < 0) t += Math.PI * 2.0;
+							int mloc = (int) (t * size / (2 * Math.PI));
+
+							if (nt < 0) nt += Math.PI * 2.0;
+							int nloc = (int) (nt * size / (2 * Math.PI));
+
+							int i;
 							int loc = 0;
-							Sequence c = null;
-							if( contigs != null ) {
-								for( i = 0; i < contigs.size(); i++ ) {
-									c = contigs.get(i);
-									if( loc + c.getAnnotationCount() > minloc ) {
-										break;
-									} else loc += c.getAnnotationCount();
-								}
-								//c = contigs.get(i);
+							for (i = 0; i < scontigs.size(); i++) {
+								Sequence c = scontigs.get(i);
+								if (loc + c.getAnnotationCount() > mloc) {
+									break;
+								} else loc += c.getAnnotationCount();
 							}
-							
-							if( e.isAltDown() ) {
+							Sequence ct1 = scontigs.get(i);
+							System.err.println("from " + i + " " + ct1.getName() + " " + mloc + "  " + size + " " + scontigs.size());
+							int k = i;
+
+							loc = 0;
+							for (i = 0; i < scontigs.size(); i++) {
+								Sequence c = scontigs.get(i);
+								if (loc + c.getAnnotationCount() > nloc) {
+									break;
+								} else loc += c.getAnnotationCount();
+							}
+							Sequence ct2 = scontigs.get(i);
+							System.err.println("dest " + i + " " + ct1.getName() + " " + nloc);
+
+							if (ct1 == ct2) ct1.setReverse(!ct1.isReverse());
+							else {
+								//int k2 = scontigs.indexOf(ct2);
+								scontigs.remove(k);
+								scontigs.add(i, ct1);
+							}
+							drawImage(genesethead, g2, spec1, contigs1, spec2s, w, h);
+							c.repaint();
+						} else {
+							double t1 = Math.atan2(dy, dx);
+							double t2 = Math.atan2(ndy, ndx);
+
+							if (t1 < 0) t1 += Math.PI * 2.0;
+							if (t2 < 0) t2 += Math.PI * 2.0;
+
+							if (spec != null) {
+								List<Sequence> contigs = geneset.speccontigMap.get(spec);
+								int total = 0;
+								for (Sequence c : contigs) {
+									total += c.getAnnotationCount();
+								}
+
+								int loc1 = (int) (t1 * total / (2 * Math.PI));
+								int loc2 = (int) (t2 * total / (2 * Math.PI));
+
+								int minloc = Math.min(loc1, loc2);
+								int maxloc = Math.max(loc1, loc2);
+
+								int i = 0;
+								int loc = 0;
+								Sequence c = null;
+								if (contigs != null) {
+									for (i = 0; i < contigs.size(); i++) {
+										c = contigs.get(i);
+										if (loc + c.getAnnotationCount() > minloc) {
+											break;
+										} else loc += c.getAnnotationCount();
+									}
+									//c = contigs.get(i);
+								}
+
+								if (e.isAltDown()) {
 								/*Tegeval tv1 = c.annset.get(minloc-loc);
 								Tegeval tv2 = c.annset.get(maxloc-loc);
 								
@@ -357,38 +361,43 @@ public class SyntGrad {
 								Sequence seq = new Sequence("phage_"+from+"_"+to, null);
 								seq.append( seqstr );
 								geneset.showSomeSequences( geneset, Arrays.asList( new Sequence[] {seq} ) );*/
-							} else {
-								genesethead.getGeneGroupTable().getSelectionModel().clearSelection();
-								if( c == null ) {
-									for( int k = minloc; k < maxloc; k++ ) {
-										genesethead.getGeneGroupTable().getSelectionModel().select(k);
-									}
-								} else for( int k = minloc; k < maxloc; k++ ) {
-									if( k-loc >= c.getAnnotationCount() ) {
-										loc += c.getAnnotationCount();
-										i++;
-										c = contigs.get( i%contigs.size() );
-									}
-									Tegeval tv = (Tegeval)(c.isReverse() ? c.getAnnotation( c.getAnnotations().size()-1-(k-loc) ) : c.getAnnotation(k-loc));
-									if( e.isShiftDown() ) {
-										Set<GeneGroup>	gset = new HashSet<GeneGroup>();
-										gset.add( tv.getGene().getGeneGroup() );
-										try {
-											new Neighbour( gset ).neighbourMynd( genesethead, comp, geneset.genelist, geneset.contigmap );
-										} catch (IOException e1) {
-											e1.printStackTrace();
-										}
-										break;
-									} else {
-										int r;
-										if( !genesethead.isGeneview() ) {
-											genesethead.getGeneGroupTable().getSelectionModel().select( tv.getGene().getGeneGroup() );
-										} else {
-											Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
-											for( Tegeval te : ti.tset ) {
-												genesethead.getGeneTable().getSelectionModel().select( te.getGene() );
+								} else {
+									if (c == null) {
+										Platform.runLater(() -> {
+											genesethead.getGeneGroupTable().getSelectionModel().clearSelection();
+											for (int k = minloc; k < maxloc; k++) {
+												genesethead.getGeneGroupTable().getSelectionModel().select(k);
 											}
-											genesethead.getGeneTable().scrollTo( ti.best.getGene() );
+										});
+									} else for (int k = minloc; k < maxloc; k++) {
+										if (k - loc >= c.getAnnotationCount()) {
+											loc += c.getAnnotationCount();
+											i++;
+											c = contigs.get(i % contigs.size());
+										}
+										Tegeval tv = (Tegeval) (c.isReverse() ? c.getAnnotation(c.getAnnotations().size() - 1 - (k - loc)) : c.getAnnotation(k - loc));
+										if (e.isShiftDown()) {
+											Set<GeneGroup> gset = new HashSet<>();
+											gset.add(tv.getGene().getGeneGroup());
+											try {
+												new Neighbour(gset).neighbourMynd(genesethead, comp, geneset.genelist, geneset.contigmap);
+											} catch (IOException e1) {
+												e1.printStackTrace();
+											}
+											break;
+										} else {
+											Platform.runLater(() -> {
+												genesethead.getGeneGroupTable().getSelectionModel().clearSelection();
+                                                if (!genesethead.isGeneview()) {
+                                                    genesethead.getGeneGroupTable().getSelectionModel().select(tv.getGene().getGeneGroup());
+                                                } else {
+                                                    Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
+                                                    for (Tegeval te : ti.tset) {
+                                                        genesethead.getGeneTable().getSelectionModel().select(te.getGene());
+                                                    }
+                                                    genesethead.getGeneTable().scrollTo(ti.best.getGene());
+                                                }
+                                            });
 										}
 									}
 								}
