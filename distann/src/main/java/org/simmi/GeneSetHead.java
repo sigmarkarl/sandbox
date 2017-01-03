@@ -667,9 +667,9 @@ public class GeneSetHead extends JApplet {
 	}
 	
 	public Serifier getConcatenatedSequencesMaxLength() {
-		Map<String,Sequence>	smap = new HashMap<String,Sequence>();
-		Set<String>				specset = new HashSet<String>();
-		Map<GeneGroup,Integer>	genegroups = new HashMap<GeneGroup,Integer>();
+		Map<String,Sequence>	smap = new HashMap<>();
+		Set<String>				specset = new HashSet<>();
+		Map<GeneGroup,Integer>	genegroups = new HashMap<>();
 		//int[] rr = table.getSelectedRows();
 		if( !isGeneview() ) {
 			for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
@@ -2898,7 +2898,7 @@ public class GeneSetHead extends JApplet {
                 s.mseq.put( gk, g.tegeval.getAlignedSequence() );
             }
 
-            Map<String,String>	idspec = new HashMap<String,String>();
+            Map<String,String>	idspec = new HashMap<>();
             for( String idstr : geneset.refmap.keySet() ) {
                 if( idstr.contains(" ") ) {
                     System.err.println( "coooonnnnnni " + idstr );
@@ -4576,7 +4576,7 @@ public class GeneSetHead extends JApplet {
 				double[] dmat = new double[ serifier.lseq.size()*serifier.lseq.size() ];
 				Sequence.distanceMatrixNumeric( serifier.lseq, dmat, null, false, false, null, blosumap );
 				
-				List<String>	ret = new ArrayList<String>();
+				List<String>	ret = new ArrayList<>();
 				for( Sequence seqname : serifier.lseq ) {
 					ret.add( seqname.getName() ); //.replace(' ', '_') );
 				}
@@ -7410,6 +7410,9 @@ public class GeneSetHead extends JApplet {
 		TableColumn<GeneGroup, String> avgcpcol = new TableColumn("Avg GC%");
 		avgcpcol.setCellValueFactory( new PropertyValueFactory<>("avggcp"));
 		table.getColumns().add( avgcpcol );
+		TableColumn<GeneGroup, String> maxlencol = new TableColumn("Max length");
+		maxlencol.setCellValueFactory( new PropertyValueFactory<>("maxLength"));
+		table.getColumns().add( maxlencol );
 		TableColumn<GeneGroup, String> numloccol = new TableColumn("#Loc");
 		numloccol.setCellValueFactory( new PropertyValueFactory<>("numloc"));
 		table.getColumns().add( numloccol );
@@ -7498,6 +7501,9 @@ public class GeneSetHead extends JApplet {
 		TableColumn<Gene, String> gavgcpcol = new TableColumn("Avg GC%");
 		gavgcpcol.setCellValueFactory( new PropertyValueFactory<>("avggcp"));
 		gtable.getColumns().add( gavgcpcol );
+		TableColumn<Gene, String> gmaxlencol = new TableColumn("Max length");
+		gmaxlencol.setCellValueFactory( new PropertyValueFactory<>("maxLength"));
+		gtable.getColumns().add( gmaxlencol );
 		TableColumn<Gene, String> gnumloccol = new TableColumn("#Loc");
 		gnumloccol.setCellValueFactory( new PropertyValueFactory<>("numloc"));
 		gtable.getColumns().add( gnumloccol );
@@ -8216,12 +8222,13 @@ public class GeneSetHead extends JApplet {
 
 			len.textProperty().addListener((observable, oldValue, newValue) -> {
 				if( !newValue.equals(oldValue) ) {
+					boolean failed = false;
 					double d = 0;
 					try {
 						d = Double.parseDouble(newValue);
-					} catch( Exception ex ) {}
+					} catch( Exception ex ) { failed = true; }
 
-					if( d > 0 ) {
+					if( !failed && d > 0 ) {
 						Set<GeneGroup> ggmap = new HashSet<>();
 						Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( false );
 						for( Gene gene : gg.genes ) {

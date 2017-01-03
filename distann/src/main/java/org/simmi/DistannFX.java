@@ -1,5 +1,6 @@
 package org.simmi;
 
+import javafx.application.Platform;
 import javafx.stage.Window;
 import org.simmi.shared.Function;
 import org.simmi.shared.Gene;
@@ -48,6 +49,8 @@ public class DistannFX extends Application {
         final TableView<Gene>		gene = new TableView<>();
     	final SplitPane	splitpane = new SplitPane(lower, upper);
     	splitpane.setOrientation( Orientation.VERTICAL );
+
+    	primaryStage.setOnCloseRequest( c -> Platform.exit() );
     	
     	vbox.getChildren().add( menubar );
     	vbox.getChildren().add( toolbar );

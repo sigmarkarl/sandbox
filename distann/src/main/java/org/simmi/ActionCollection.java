@@ -375,7 +375,7 @@ public class ActionCollection {
 			FileOutputStream fos = new FileOutputStream(nf);
 			workbook.write( fos );
 			fos.close();
-			Desktop.getDesktop().open(f);
+			Desktop.getDesktop().open(nf);
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {

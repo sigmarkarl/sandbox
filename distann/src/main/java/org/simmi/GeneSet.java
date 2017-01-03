@@ -8810,7 +8810,7 @@ public class GeneSet {
 			for( String spec : gg.species.keySet() ) {
 				Set<GeneGroup>	ggset;
 				if( !specGroupMap.containsKey( spec ) ) {
-					ggset = new HashSet<GeneGroup>();
+					ggset = new HashSet<>();
 					specGroupMap.put( spec, ggset );
 				} else ggset = specGroupMap.get( spec );
 				ggset.add( gg );
@@ -8920,7 +8920,12 @@ public class GeneSet {
 				System.err.println( c );
 				int im = 0;
 				if( c.getAnnotations() != null ) for( Annotation tv : c.getAnnotations() ) {
-					((Tegeval)tv).unresolvedGap( im++ );
+					Tegeval ttv = (Tegeval)tv;
+					if( !tv.getContig().equals(c) ) {
+						System.err.println("contig replacement " + tv);
+						tv.setContig( c );
+					}
+					ttv.unresolvedGap( im++ );
 				}
 			}
 		}
@@ -9607,7 +9612,7 @@ public class GeneSet {
 	
 	public void clusterGenes( Collection<String> species, boolean headless ) {
 		try {
-			Map<String,String> env = new HashMap<String,String>();
+			Map<String,String> env = new HashMap<>();
 			env.put("create", "true");
 			String uristr = "jar:" + zippath.toUri();
 			zipuri = URI.create( uristr );
@@ -9615,16 +9620,13 @@ public class GeneSet {
 			//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
 			Path resPath = zipfilesystem.getPath("cluster.blastout");
 			
-			Runnable run = new Runnable() {
-				@Override
-				public void run() {
-					try {
-						zipfilesystem.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
+			Runnable run = () -> {
+                try {
+                    zipfilesystem.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            };
 			NativeRun nrun = new NativeRun( run );
 			
 			String userhome = System.getProperty("user.home");
@@ -9636,7 +9638,6 @@ public class GeneSet {
 			BufferedWriter bw = Files.newBufferedWriter(dbPath);
 			for( Gene g : genelist ) {
 				if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-					System.err.println("asdfasdf " + g.getSpecies());
 					if( g.getSpecies().contains("Eva") ) {
 						System.err.println();
 					}

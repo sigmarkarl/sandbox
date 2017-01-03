@@ -804,7 +804,7 @@ public class SerifyApplet {
 		
 		String username = System.getProperty("user.name");
 		String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
-		List<Object>	lscmd = new ArrayList<Object>();
+		List<Object>	lscmd = new ArrayList<>();
 			//File makeblastdb = new File( "c:\\\\Program files\\NCBI\\blast-2.2.28+\\bin\\makeblastdb.exe" );
 			//if( !makeblastdb.exists() ) makeblastdb = new File( "/opt/ncbi-blast-2.2.29+/bin/makeblastdb" );
 			//if( makeblastdb.exists() ) {
