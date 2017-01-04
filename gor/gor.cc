@@ -28,8 +28,7 @@ int inflate(const void *src, int srcLen, void *dst, int dstLen) {
              inflateEnd(&strm);
              return err;
         }
-    }
-    else {
+    } else {
         inflateEnd(&strm);
         return err;
     }
@@ -101,10 +100,10 @@ inline int compare( char* chr, int pos, char* buffer, int & i, int & tpos, int &
 	return scmp != 0 ? scmp : pos - tpos;
 }
 
-searchresult search( FILE* f, char buffer[], int buflen, char* chr, int pos, long s, long e ) {
+searchresult search( FILE* f, char buffer[], int buflen, char* chr, int pos, long b, long s, long e ) {
 	long l = e-s;
 	long d = (e+s)/2;
-	long d2 = max( s, (e+s-buflen)/2 );
+	long d2 = max( b, (e+s-buflen)/2 );
 
 	int m = fseek( f, d2, SEEK_SET );
 	int r = fread( buffer, 1, buflen, f );
@@ -122,7 +121,6 @@ searchresult search( FILE* f, char buffer[], int buflen, char* chr, int pos, lon
 			sr.siz = r;
 			sr.pos = tpos;
 			sr.end = -1;
-			//while( i > 0 && buffer[--i] != '\n' );
 			sr.start = zeropos+2;
 			return sr;
 		} else if( r < buflen ) {
@@ -130,7 +128,7 @@ searchresult search( FILE* f, char buffer[], int buflen, char* chr, int pos, lon
 			sr.chr = NULL;
 			return sr;
 		} else {
-			return search( f, buffer, buflen, chr, pos, d, e );
+			return search( f, buffer, buflen, chr, pos, b, d, e );
 		}
 	}
 
@@ -142,13 +140,9 @@ searchresult search( FILE* f, char buffer[], int buflen, char* chr, int pos, lon
 		i++;
 	}
 	if( zeropos != i ) cmp = compare( chr, pos, buffer, i, tpos, zeropos );
-
-	//if( i == r ) return search( f, buffer, buflen, chr, pos, s-l/2, e );
-	//bool lesspos = scmp < 0 || (scmp == 0 && pos < tpos);
-	//if( (lesspos && l < buflen) || r < buflen ) {
-	if( cmp >= 0 ) {
+	if( cmp >= 0 || d2 == b ) {
 		searchresult sr;
-		sr.chr = (char*)buffer+i+1; //lesspos ? (char*)schr : NULL;
+		sr.chr = (char*)buffer+i+1;
 		sr.siz = r;
 		sr.pos = tpos;
 		i = zeropos+1;
@@ -157,54 +151,50 @@ searchresult search( FILE* f, char buffer[], int buflen, char* chr, int pos, lon
 		sr.end = i-1;
 
 		return sr;
-	} else return search( f, buffer, buflen, chr, pos, s, d );
+	} else {
+		return search( f, buffer, buflen, chr, pos, b, s, d );
+	}
 }
 
 int searchUnzipped( char* dst, int l, int s, int e, char* chr, int pos, int last, int cmp ) {
 	int d = (s+e)/2;
 
 	int i = d;
-	while( i < l && dst[i++] != '\n' );
+	while( i > 0 && dst[--i] != '\n' );
+	if( dst[i] == '\n' ) i++;
+	int zeropos = i;
 
 	if( i == last ) {
-		if( cmp > 0 ) {
-			//printf("hehe\n");
-			while( cmp > 0 ) {
-				while( i < l && dst[i++] != '\n' );
-				if( i < l ) {
-					while( dst[i++] != '\t' );
-					char* spos = dst+i;
-					while( dst[++i] != '\t' );
-					dst[i] = 0;
-					cmp = pos-atoi(spos);
-					dst[i] = '\t';
-				} else {
-					//printf("bb %d %d\n", i, l);
-					break;
-				}
+		//if( cmp > 0 )
+		while( cmp > 0 ) {
+			while( i < l && dst[i++] != '\n' );
+			if( i < l ) {
+				while( dst[i++] != '\t' );
+				char* spos = dst+i;
+				while( dst[++i] != '\t' );
+				dst[i] = 0;
+				cmp = pos-atoi(spos);
+				dst[i] = '\t';
+			} else {
+				break;
 			}
-		}	else if( cmp < 0 ) {
-			//printf("hoho\n");
+		}/*	else if( cmp < 0 ) {
 			int k = i - 2;
 			while( k > 0 && dst[k] != '\n' ) k--;
 			if( k == 0 ) return k;
-		}
+		}*/
 		return i;
 	} else last = i;
 
 	char* schr = dst+i;
-	while( i < l && dst[++i] != '\t' );
-
-	if( i == l ) return l;
+	while( dst[++i] != '\t' );
 
 	dst[i] = 0;
 	int scmp = strcmp( chr, schr );
 	dst[i] = '\t';
 
 	char* spos = dst+i+1;
-	while( i < l && dst[++i] != '\t' );
-
-	if( i == l ) return l;
+	while( dst[++i] != '\t' );
 
 	dst[i] = 0;
 	int tpos = atoi( spos );
@@ -213,9 +203,9 @@ int searchUnzipped( char* dst, int l, int s, int e, char* chr, int pos, int last
 	cmp = scmp != 0 ? scmp : pos - tpos;
 
 	if( cmp > 0 ) {
-		return searchUnzipped( dst, l, d, e, chr, pos, last, cmp );
+		return searchUnzipped( dst, l, zeropos, e, chr, pos, last, cmp );
 	} else if( cmp < 0 ) {
-		return searchUnzipped( dst, l, s, d, chr, pos, last, cmp );
+		return searchUnzipped( dst, l, s, zeropos-1, chr, pos, last, cmp );
 	} else return last;
 }
 
@@ -228,9 +218,9 @@ int main( int argc, char* argv[] ) {
 		int r = fread( buffer, 1, 1000, f );
 
 		int i = 0;
-		while( i < r && buffer[++i] != '\n' );
+		while( buffer[i++] != '\n' );
 
-		fwrite( buffer, 1, i+1, stdout );
+		fwrite( buffer, 1, i, stdout );
 
 		int m = fseek( f, 0L, SEEK_END );
 		long filesize = ftell( f );
@@ -253,7 +243,7 @@ int main( int argc, char* argv[] ) {
 		}
 
 		int l = sizeof(buffer);
-		searchresult loc = search( f, buffer, l, chr, s, i, filesize );
+		searchresult loc = search( f, buffer, l, chr, s, i, i, filesize );
 		if( loc.chr != NULL ) {
 			int beg = loc.start;
 			int end = loc.end;
