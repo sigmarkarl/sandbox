@@ -83,6 +83,7 @@ import javax.swing.TransferHandler;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import com.sun.xml.internal.xsom.impl.scd.Iterators;
 import javafx.scene.control.*;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -795,11 +796,12 @@ public class SerifyApplet {
 			}
 		}
 		
-		String hostname = "localhost";
+		String command = "";
 		if( !headless ) {
-			JTextField host = new JTextField("localhost");
+			command = "/usr/local/bin/";
+			JTextField host = new JTextField(command);
 			JOptionPane.showMessageDialog(null, host);
-			hostname = host.getText();
+			command = host.getText();
 		}
 		
 		String username = System.getProperty("user.name");
@@ -821,16 +823,21 @@ public class SerifyApplet {
 			}*/
 			
 			String OS = System.getProperty("os.name").toLowerCase();
-			
-			String[] cmds;
-			if( hostname.equals("localhost") ) cmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/makeblastdb" : "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+
+			List<String> commandsplit = Arrays.asList(command.split("[ ]+"));
+			List<String> cmds = new ArrayList<>( commandsplit );
+			int cmdsize = cmds.size();
+			cmds.set(cmdsize-1, cmds.get(cmdsize-1)+"makeblastdb");
+			List<String> rest = Arrays.asList( new String[] {"-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString()} );
+			cmds.addAll( rest );
+			/*if( hostname.equals("localhost") ) cmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/makeblastdb" : "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
 			else {
-				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
-				cmds = new String[] { "ssh", hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*/, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+				if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
+				cmds = new String[] { "ssh", hostname, "makeblastdb"/*blastpath.resolve("makeblastdb").toString()*, "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
 				//new String[] { "ssh", username+"@"+hostname, "prodigal", "-a", tmpout };
-			}
+			}*/
 			lscmd.add( new Path[] { dbPath, null, selectedpath } );
-			lscmd.add( Arrays.asList( cmds ) );
+			lscmd.add( cmds );
 			//}
 			
 			if( table != null ) {
@@ -874,15 +881,14 @@ public class SerifyApplet {
 					//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
 					//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
 					
-					int procs = Runtime.getRuntime().availableProcessors();
-					
-					List<String>	lcmd = new ArrayList<String>();
-					String[] bcmds = { OS.indexOf("mac") >= 0 ? "/usr/local/bin/"+blastFile : blastFile, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+					List<String>	lcmd = new ArrayList<>( commandsplit );
+					cmdsize = lcmd.size();
+					lcmd.set(cmdsize-1, cmds.get(cmdsize-1)+blastFile);
+					rest = Arrays.asList( new String[] {"-db", dbPath.getFileName().toString()} );
+					lcmd.addAll( rest );
 					String[] exts = extrapar.trim().split("[\t ]+");
-					
-					//String[] nxst = { "-out", outPathFixed };
-					lcmd.addAll( Arrays.asList(bcmds) );
-					if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+
+					lcmd.addAll( Arrays.asList(exts) );
 					//lcmd.addAll( Arrays.asList(nxst) );
 					
 					lscmd.add( new Path[] {path, res, selectedpath} );
@@ -895,19 +901,22 @@ public class SerifyApplet {
 				//OutputStream output = Files.newOutputStream(res, StandardOpenOption.CREATE);
 				//final String outPathFixed = nrun.fixPath( new File( selectedfile, path.getFileName().toString()+".blastout" ).getAbsolutePath() ).trim();
 				
-				int procs = Runtime.getRuntime().availableProcessors();
-				
-				List<String>	lcmd = new ArrayList<String>();
-				String[] bcmds;
-				if( hostname.equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/blastp" : "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
+				List<String>	lcmd = new ArrayList<>();
+				rest = Arrays.asList( new String[] {"-db", dbPath.getFileName().toString()} );
+				List<String> 	bcmds = new ArrayList<>( commandsplit );
+				cmdsize = bcmds.size();
+				bcmds.set(cmdsize-1, bcmds.get(cmdsize-1)+"blastp");
+				bcmds.addAll( rest );
+
+				/*if( hostname.equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/blastp" : "blastp"/*blastpath.resolve("blastp").toString()*, "-db", dbPath.getFileName().toString(), "-num_threads", Integer.toString(procs) };
 				else {
-					if( user.equals("geneset") ) bcmds  = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
-					else bcmds  = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath.getFileName().toString(), "-num_threads", "32"}; //, "|", "gzip", "-c" };
-				}
+					if( user.equals("geneset") ) bcmds  = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*, "-db", dbPath.getFileName().toString(), "-num_threads", "32" };
+					else bcmds  = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*, "-db", dbPath.getFileName().toString(), "-num_threads", "32"}; //, "|", "gzip", "-c" };
+				}*/
 				String[] exts = extrapar.trim().split("[\t ]+");
 				
 				//String[] nxst = { "-out", outPathFixed };
-				lcmd.addAll( Arrays.asList(bcmds) );
+				lcmd.addAll( bcmds );
 				if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
 				//lcmd.addAll( Arrays.asList(nxst) );
 				
@@ -940,18 +949,15 @@ public class SerifyApplet {
 	}
 	
 	public void runBlastInApplet( final String extrapar, final Path dbPath, final String dbType ) {
-		AccessController.doPrivileged( new PrivilegedAction<Object>() {
-			@Override
-			public Object run() {
-				try {
-					blastRun( nrun, dbPath, dbPath, null, dbType, extrapar, table, false, user, false );
-				} catch( Exception e ) {
-					e.printStackTrace();
-				}
-				
-				return null;
-			}
-		});
+		AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            try {
+                blastRun( nrun, dbPath, dbPath, null, dbType, extrapar, table, false, user, false );
+            } catch( Exception e ) {
+                e.printStackTrace();
+            }
+
+            return null;
+        });
 	}
 	
 	public void blastClusters( final BufferedReader is, final BufferedWriter os ) {
@@ -989,7 +995,7 @@ public class SerifyApplet {
 				
 				if( !interrupted ) {
 					try {
-						List<Set<String>> total = new ArrayList<Set<String>>();
+						List<Set<String>> total = new ArrayList<>();
 						serifier.makeBlastCluster( is, os, 0, 0.5f, 0.5f, null, total, null );
 					} catch (IOException e1) {
 						e1.printStackTrace();
@@ -1038,7 +1044,7 @@ public class SerifyApplet {
 		
 		//PrintStream ps = new PrintStream( os );
 		
-		Map<String,Map<String,Set<String>>>	specmap = new HashMap<String,Map<String,Set<String>>>();
+		Map<String,Map<String,Set<String>>>	specmap = new HashMap<>();
 		
 		String stuff = null;
 		String subject = null;
@@ -1064,7 +1070,7 @@ public class SerifyApplet {
 						if( specmap.containsKey(spec) ) {
 							contigmap = specmap.get(spec);
 						} else {
-							contigmap = new HashMap<String,Set<String>>();
+							contigmap = new HashMap<>();
 							specmap.put(spec, contigmap );
 						}
 						
@@ -2035,24 +2041,24 @@ public class SerifyApplet {
 		//	Path selectedfile = fc.getSelectedFile().toPath();
 		//	if( !Files.isDirectory(selectedfile) ) selectedfile = selectedfile.getParent();
 		SwingUtilities.invokeLater(() -> {
-            JTextField host = new JTextField("localhost");
+            JTextField host = new JTextField("prodigal");
             JOptionPane.showMessageDialog(null, host);
 
             for( Path path : urls ) {
                 //URL url = path.toUri().toURL();
 
-        /*String file = path.getFileName().toString();
-        String[] split = file.split("/");
-        String fname = split[ split.length-1 ];*/
+				/*String file = path.getFileName().toString();
+				String[] split = file.split("/");
+				String fname = split[ split.length-1 ];*/
 
                 String fname = path.getFileName().toString();
                 String[] split = fname.split("\\.");
                 final String title = split[0];
 
-        /*Path infile = dir.resolve( fname ); //new File( dir, fname );
-        if( Files.exists(infile) ) {
-            infile = dir.resolve( "tmp_"+fname );
-        }*/
+				/*Path infile = dir.resolve( fname ); //new File( dir, fname );
+				if( Files.exists(infile) ) {
+					infile = dir.resolve( "tmp_"+fname );
+				}*/
 
                 //FileOutputStream fos = new FileOutputStream( infile );
 
@@ -2086,12 +2092,12 @@ public class SerifyApplet {
 
                 String OS = System.getProperty("os.name").toLowerCase();
 
-                String[] cmds;
-                if( host.getText().equals("localhost") ) cmds = new String[] { (OS.indexOf("mac") >= 0) ? "/usr/local/bin/prodigal" : "prodigal", "-a", outPathA }; //"-d", outPathD };
+                String[] cmds = {host.getText(), "-a", outPathA};
+                /*if( host.getText().equals("localhost") ) cmds = new String[] { (OS.indexOf("mac") >= 0) ? "/usr/local/bin/prodigal" : "prodigal", "-a", outPathA }; //"-d", outPathD };
                 else {
                     if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", NativeRun.cygPath(userhome+"/genesetkey"), "geneset@"+hostname, "prodigal", "-a", tmpout };
                     else cmds = new String[] { "ssh", hostname, "prodigal", "-a", tmpout };
-                }
+                }*/
 
                 List<Object>	lscmd = new ArrayList<>();
                 //String[] cmds = new String[] { "makeblastdb", "-dbtype", dbType, "-title", dbPath.getFileName().toString(), "-out", dbPath.getFileName().toString() };
@@ -2106,7 +2112,7 @@ public class SerifyApplet {
                         System.err.println( cont[0] );
 
                         try {
-                            if( !host.getText().equals("localhost") ) {
+                            /*if( !host.getText().equals("localhost") ) {
                                 ProcessBuilder pb = new ProcessBuilder("scp", "-q", username+"@"+hostname+":~/"+tmpout, cygPathA);
                                 Process pc = pb.start();
                                 InputStream is = pc.getInputStream();
@@ -2115,10 +2121,10 @@ public class SerifyApplet {
                                 while( es.read() != -1 );
                                 pc.waitFor();
                                 System.err.println("done " + outPathA + "  " + cygPathA);
-                            }
+                            }*/
                             Files.copy(pathA, resp);
                             addSequences( title+".aa", resp, null );
-                        } catch (IOException | URISyntaxException | InterruptedException e) {
+                        } catch (IOException | URISyntaxException e) {
                             e.printStackTrace();
                         }
 
@@ -3582,41 +3588,38 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem genbankfromblast = new MenuItem("Genbank from blast");
 		programs.getItems().add( genbankfromblast );
-		genbankfromblast.setOnAction( new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				String addon = "nnnttaattaattaannn";
-				List<Integer>	startlist = new ArrayList<Integer>();
-				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
-				FileChooser fc = new FileChooser();
-				File dir = null;
-				if( lseqs.size() > 1 ) {
-					DirectoryChooser dc = new DirectoryChooser();
-					dir = dc.showDialog(null);
-					if( dir != null ) {
-						
-					}
-				}
-				for( Sequences s : table.getSelectionModel().getSelectedItems() ) {
-					File blastFile = fc.showOpenDialog(null);
-					if( blastFile != null ) {
-						File f = null;
-						if( dir != null ) {
-							f = new File( dir, s.getName()+".gb" );
-						} else {
-							f = fc.showSaveDialog(null);
-						}
-						try {
-							serifier.genbankFromBlast(s, blastFile, f);
-						} catch (MalformedURLException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-			}
-		});
+		genbankfromblast.setOnAction(arg0 -> {
+            String addon = "nnnttaattaattaannn";
+            List<Integer>	startlist = new ArrayList<>();
+            List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+            FileChooser fc = new FileChooser();
+            File dir = null;
+            if( lseqs.size() > 1 ) {
+                DirectoryChooser dc = new DirectoryChooser();
+                dir = dc.showDialog(null);
+                if( dir != null ) {
+
+                }
+            }
+            for( Sequences s : table.getSelectionModel().getSelectedItems() ) {
+                File blastFile = fc.showOpenDialog(null);
+                if( blastFile != null ) {
+                    File f = null;
+                    if( dir != null ) {
+                        f = new File( dir, s.getName()+".gb" );
+                    } else {
+                        f = fc.showSaveDialog(null);
+                    }
+                    try {
+                        serifier.genbankFromBlast(s, blastFile, f);
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
 		MenuItem genbankfromnr = new MenuItem("Genbank from nr");
 		programs.getItems().add( genbankfromnr );
 		genbankfromnr.setOnAction( new EventHandler<ActionEvent>() {

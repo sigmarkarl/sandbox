@@ -210,10 +210,10 @@ int searchUnzipped( char* dst, int l, int s, int e, char* chr, int pos, int last
 }
 
 int main( int argc, char* argv[] ) {
-	char	buffer[100000];
-	char	dst[200000];
-
 	if( strcmp( argv[1], "-p" ) == 0 ) {
+		char	buffer[100000];
+		char	dst[100000];
+
 		FILE* f = fopen( argv[3], "r" );
 		int r = fread( buffer, 1, 1000, f );
 
@@ -281,7 +281,7 @@ int main( int argc, char* argv[] ) {
 			}
 
 			int len = to8BitInplace( buffer, beg, end-beg );
-			int inf = inflate( buffer+beg, len, dst, 200000 );
+			int inf = inflate( buffer+beg, len, dst, sizeof(dst) );
 
 			int start = searchUnzipped( dst, inf, 0, inf, chr, s, 0, 0 );
 			int endpos = searchUnzipped( dst, inf, start, inf, chr, e, 0, 0 );
@@ -307,7 +307,7 @@ int main( int argc, char* argv[] ) {
 					end = i;
 
 					len = to8BitInplace( buffer, beg, end-beg );
-					inf = inflate( buffer+beg, len, dst, 200000 );
+					inf = inflate( buffer+beg, len, dst, sizeof(dst) );
 
 					start = startnotfound ? searchUnzipped( dst, inf, 0, inf, chr, s, 0, 0 ) : 0;
 					endpos = searchUnzipped( dst, inf, start, inf, chr, e, 0, 0 );
@@ -316,6 +316,9 @@ int main( int argc, char* argv[] ) {
 		}
 		fclose( f );
 	} else {
+		char	buffer[1000000];
+		char	dst[100000];
+
 		FILE* f = fopen( argv[1], "r" );
 		int l = sizeof(buffer);
 		int r = fread( buffer, 1, l, f );
@@ -340,7 +343,7 @@ int main( int argc, char* argv[] ) {
 			int end = i;
 
 			int len = to8BitInplace( buffer, start, end-start );
-			int inf = inflate( buffer+start, len, dst, 200000 );
+			int inf = inflate( buffer+start, len, dst, sizeof(dst) );
 
 			if( inf > 0 ) fwrite( dst, 1, inf, stdout );
 		}

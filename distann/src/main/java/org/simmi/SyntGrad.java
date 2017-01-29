@@ -779,7 +779,7 @@ public class SyntGrad {
 									tv = c.getNext(tv);
 									
 									if( tv != null && tv.start == prev.start ) {
-										System.err.println( tv.name + "   " + prev.name );
+										System.err.println( tv.getName() + "   " + prev.getName() );
 										System.err.println( tv == prev );
 										
 										break;
@@ -821,7 +821,7 @@ public class SyntGrad {
 									ftv = c.getNext( ftv );
 									
 									if( ftv != null && ftv.start == prev.start ) {
-										System.err.println( ftv.name + "   " + prev.name );
+										System.err.println( ftv.getName() + "   " + prev.getName() );
 										System.err.println( ftv == prev );
 										
 										break;
@@ -865,7 +865,7 @@ public class SyntGrad {
 								tv = c.getNext( tv );
 								
 								if( tv != null && tv.start == prev.start ) {
-									System.err.println( tv.name + "   " + prev.name );
+									System.err.println( tv.getName() + "   " + prev.getName() );
 									System.err.println( tv == prev );
 									
 									break;
@@ -908,7 +908,7 @@ public class SyntGrad {
 						tv = c.getNext( tv );
 						
 						if( tv != null && tv.start == prev.start ) {
-							System.err.println( tv.name + "   " + prev.name );
+							System.err.println( tv.getName() + "   " + prev.getName() );
 							System.err.println( tv == prev );
 							
 							break;

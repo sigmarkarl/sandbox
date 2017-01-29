@@ -239,7 +239,7 @@ public class GeneSorter {
 								String spec = contig.substring(0, und);
 								if( gene.getSpecies().equals(spec) ) {
 									Tegeval tv = gene.tegeval;
-									if( tv.name != null && tv.name.startsWith(contig)) {
+									if( tv.getName() != null && tv.getName().startsWith(contig)) {
 										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 									}
 								}

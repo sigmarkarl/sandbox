@@ -4193,7 +4193,7 @@ public class ActionCollection {
 						System.err.println();
 					}*/
 					for( Tegeval tv : annset ) {
-						sb.append(">" + tv.name.substring(0, tv.name.indexOf('_')) + "\n");
+						sb.append(">" + tv.getName().substring(0, tv.getName().indexOf('_')) + "\n");
 						for (int i = 0; i < tv.getProteinLength(); i += 70) {
 							sb.append( tv.getProteinSubsequence(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
 						}

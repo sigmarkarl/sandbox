@@ -492,8 +492,15 @@ public class GeneSet {
 					
 					if( u == -1 ) {
 						u = Serifier.contigIndex( contigstr );
-						origin = contigstr.substring(0, u-1);
-						contloc = contigstr.substring(u, contigstr.length());
+						if( u > 0 ) {
+							origin = contigstr.substring(0, u - 1);
+							contloc = contigstr.substring(u, contigstr.length());
+						} else {
+							u = contigstr.indexOf('_');
+							if( u == -1 ) u = contigstr.length();
+							origin = contigstr.substring(0, u);
+							contloc = contigstr;
+						}
 					} else {
 						n = contigstr.indexOf("_", u+1);
 						if( n == -1 ) n = contigstr.length();
@@ -551,7 +558,7 @@ public class GeneSet {
 					}*/
 					
 					tv.init( lname, contig, contloc, start, stop, dir );
-					tv.name = line;
+					tv.setName( line );
 					//ac.setName( lname );
 					//tv.setAlignedSequence( ac );
 					aas.put( lname, tv );
@@ -564,7 +571,7 @@ public class GeneSet {
 					tv.designation = designations != null ? designations.get( id ) : null;
 					gene.refid = newid;
 					gene.setIdStr( idstr );
-					gene.allids = new HashSet<String>();
+					gene.allids = new HashSet<>();
 					gene.allids.add( newid );
 					if( idstr != null ) {
 						int ec = idstr.indexOf("EC");
@@ -698,7 +705,7 @@ public class GeneSet {
 		//System.err.println();
 	}
 	
-	Set<String>	mu = new HashSet<String>();
+	Set<String>	mu = new HashSet<>();
 	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
 		/*if( filename.contains("timi") ) {
 			System.err.println();
@@ -718,9 +725,6 @@ public class GeneSet {
 		//Tegeval preval = null;
 		while (line != null) {
 			if (line.startsWith(">")) {
-				/*if( line.contains("Colwellia_Colwellia") ) {
-					System.err.println();
-				}*/
 				if (tv.getSequenceLength() > 0) {
 					String contigstr = null;
 					String contloc = null;
@@ -731,20 +735,33 @@ public class GeneSet {
 					int i = lname.lastIndexOf('[');
 					if( i == -1 ) {
 						i = Sequence.parseSpec( lname );
-						
-						/*if( i == 4 ) {
-							System.err.println();
-						}*/
+
 						//if( i == -1 ) i = 5;
 						int u = lname.lastIndexOf('_');
 						if( u != -1 ) contigstr = lname.substring(0, u);
-						
-						if( i != -1 ) {
+
+						if( i == 0 ) {
+							int k = filename.indexOf('_');
+							if( k == -1 ) k = filename.length();
+							origin = filename.substring(0, k);
+							contloc = lname;
+
+							name = origin+"_"+lname;
+							id = origin+"_"+lname;
+						} else if( i != -1 ) {
 							origin = lname.substring(0, i-1);
 							contloc = lname.substring(i, lname.length());
+
+							name = lname;
+							id = lname;
+						} else {
+							int k = lname.indexOf('_');
+							if( k == -1 ) k = lname.length();
+							origin = lname.substring(0, k);
+							contloc = lname;
+							name = lname;
+							id = lname;
 						}
-						name = lname;
-						id = lname;
 					} else {
 						int n = lname.indexOf(']', i+1);
 						contigstr = lname.substring(i+1, n);
@@ -828,10 +845,6 @@ public class GeneSet {
 						if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 					}
 					
-					/*if( contigstr.contains("MAT4696_contig00270") ) {
-						System.err.println();
-					}*/
-					
 					if( !refmap.containsKey(id) ) {
 						Sequence contig = null;
 						if( contigstr != null ) {
@@ -843,7 +856,7 @@ public class GeneSet {
 						}
 						
 						tv.init( lname, contig, contloc, start, stop, dir );
-						tv.name = prevline.substring(1);
+						tv.setName( prevline.substring(1) );
 						//ac.setName( lname );
 						//tv.setAlignedSequence( ac );
 						aas.put( lname, tv );
@@ -854,7 +867,7 @@ public class GeneSet {
 						tv.designation = designations != null ? designations.get( id ) : null;
 						gene.refid = newid;
 						gene.setIdStr( idstr );
-						gene.allids = new HashSet<String>();
+						gene.allids = new HashSet<>();
 						gene.allids.add( newid );
 						if( idstr != null ) {
 							int ec = idstr.indexOf("EC");
@@ -886,7 +899,7 @@ public class GeneSet {
 								int ngo = idstr.indexOf("GO:", go+1);
 								
 								if (gene.funcentries == null)
-									gene.funcentries = new HashSet<Function>();
+									gene.funcentries = new HashSet<>();
 								
 								String goid = null;
 								if( ngo != -1 ) goid = idstr.substring(go, ngo);
@@ -901,9 +914,6 @@ public class GeneSet {
 									}
 									
 									while( goid.length() < 10 ) {
-										/*if( goid.length() < 4 ) {
-											System.err.println();
-										}*/
 										goid = "GO:0"+goid.substring(3);
 									}
 								}
@@ -980,16 +990,11 @@ public class GeneSet {
 
 				tv = new Tegeval();
 				String cont = line.substring(1) + "";
-				int o = cont.indexOf("Colwellia_Colwellia");
-				if( o != -1 ) {
-					cont = cont.substring(o+10);
-				}
 				String[] split = cont.split("#");
 				lname = split[0].trim().replace(".fna", "");
-				
-				/*if( !lname.contains("_") ) {
-					System.err.println();
-				}*/
+				if( lname.startsWith("contig") ) {
+					lname = filename + "_" + lname;
+				}
 				
 				prevline = line;
 				
@@ -1111,7 +1116,7 @@ public class GeneSet {
 				}
 				
 				tv.init( lname, contig, contloc, start, stop, dir );
-				tv.name = prevline.substring(1);
+				tv.setName( prevline.substring(1) );
 				//tv.setAlignedSequence( ac );
 				aas.put(lname, tv );
 				
@@ -1171,12 +1176,7 @@ public class GeneSet {
 		int size = 0;
 		while (line != null) {
 			if (line.startsWith(">")) {
-				System.err.println("mu " + line);
 				if( size > 0 ) {
-					/*if( name == null ) {
-						System.err.println();
-					}*/
-					
 					Sequence contig = new Contig( name, ac );
 					
 					String spec = contig.getSpec();
@@ -1207,8 +1207,13 @@ public class GeneSet {
 
 				int i = line.indexOf(' ');
 				if( i == -1 ) i = line.length();
-				name = filename+line.substring(1, i).replace(".fna", "");
-				
+				String ln = line.substring(1, i).replace(".fna", "").replace(".fasta", "");
+				int k = filename.indexOf('_');
+				if( k == -1 ) k = filename.length();
+				String fn = filename.substring(0,k);
+				name = line.startsWith(">contig") || line.startsWith(">scaffold") ? fn+"_"+ln : ln;
+
+				System.err.println( "name " + name );
 				//int first = tv.cont.indexOf("_");
 				//int sec = tv.cont.indexOf("_", first + 1);
 
@@ -1230,7 +1235,7 @@ public class GeneSet {
 			if( speccontigMap.containsKey( spec ) ) {
 				ctlist = speccontigMap.get( spec );
 			} else {
-				ctlist = new ArrayList<Sequence>();
+				ctlist = new ArrayList<>();
 				speccontigMap.put( spec, ctlist );
 			}
 			
@@ -1271,7 +1276,7 @@ public class GeneSet {
 		for( String spec : speccontigMap.keySet() ) {
 			List<Sequence> ctg = speccontigMap.get(spec);
 			
-			List<Sequence> plasmids = new ArrayList<Sequence>();
+			List<Sequence> plasmids = new ArrayList<>();
 			for( Sequence c : ctg ) {
 				if( c.isPlasmid() ) plasmids.add( c );
 			}
@@ -1279,7 +1284,7 @@ public class GeneSet {
 			ctg.addAll( plasmids );
 		}
 		
-		return new ArrayList<String>( speccontigMap.keySet() );
+		return new ArrayList<>( speccontigMap.keySet() );
 	}
 
 	/*private static void loci2dnasequence(Reader rd) throws IOException {
@@ -6934,7 +6939,7 @@ public class GeneSet {
 						}
 						seqs.putAll( addseqs );
 					} else {
-						seqs = new HashMap<Sequence,String>();
+						seqs = new HashMap<>();
 						if( ltv != null && ltv.size() > 0 ) {
 							for( Tegeval tv : ltv ) {
 								//if( tvals.add( tv ) ) {
@@ -6987,7 +6992,7 @@ public class GeneSet {
 			sb.append(gg.name + ":\n");
 			//for (String sp : gg.species.keySet()) {
 			Tegeval tv = gg.tegeval;
-			sb.append(">" + tv.name + " " + tv.teg + " " + tv.eval + "\n");
+			sb.append(">" + tv.getName() + " " + tv.teg + " " + tv.eval + "\n");
 			for (int i = 0; i < tv.getLength(); i += 70) {
 				sb.append( tv.getSubstring(i, Math.min(i + 70, tv.getLength())) + "\n");
 			}
@@ -7984,17 +7989,17 @@ public class GeneSet {
 		int count = 0;
 		System.err.println( "blehehe " + genelist.size() );
 		for (Gene gg : genelist) {
-			Set<String> ct = new HashSet<String>();
+			Set<String> ct = new HashSet<>();
 			Tegeval tv = gg.tegeval;
-			if( tv.name != null ) {
-				ct.add(tv.name);
-				int idx = tv.name.lastIndexOf("_");
-				int val = Integer.parseInt(tv.name.substring(idx + 1));
+			if( tv.getName() != null ) {
+				ct.add(tv.getName());
+				int idx = tv.getName().lastIndexOf("_");
+				int val = Integer.parseInt(tv.getName().substring(idx + 1));
 
-				String next = tv.name.substring(0, idx + 1) + (val + 1);
+				String next = tv.getName().substring(0, idx + 1) + (val + 1);
 				ct.add(next);
 				if (val > 1) {
-					String prev = tv.name.substring(0, idx + 1) + (val - 1);
+					String prev = tv.getName().substring(0, idx + 1) + (val - 1);
 					ct.add(prev);
 				}
 			}
@@ -8004,7 +8009,7 @@ public class GeneSet {
 				Gene g = locgene.get(cont);
 				if (g != null ) {
 					Tegeval tv2 = g.tegeval;
-					if (ct.contains(tv2.name)) {
+					if (ct.contains(tv2.getName())) {
 						groupIdxSet.add( g.getGroupIndex() );
 						// if( remove ) genefilterset.remove(
 						// g.index );
@@ -8195,11 +8200,11 @@ public class GeneSet {
 		for( Path root : zipfilesystem.getRootDirectories() ) {
 			Files.list(root).filter(t -> {
                 String filename = t.getFileName().toString();
-                return (filename.endsWith(".fna") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
+                return (filename.endsWith(".fna") || filename.endsWith(".fasta") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
             }).forEach(t -> {
                 try {
                     String filename = t.getFileName().toString().replace(".fna", "").replace(".fastg", "");
-                    specList = loadcontigs( Files.newBufferedReader(t), "" );
+                    specList = loadcontigs( Files.newBufferedReader(t), filename );
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -8487,9 +8492,8 @@ public class GeneSet {
 
 		Map<Set<String>, double[]> corrList = new HashMap<>();
 
-		List<GeneGroup>	ggList = new ArrayList<GeneGroup>();
+		List<GeneGroup>	ggList = new ArrayList<>();
 		int i = 0;
-		//Set<String> ss = new HashSet<String>();
 		Set<String> gs = new HashSet<>();
 		
 		int countclust = 0;
@@ -9611,69 +9615,73 @@ public class GeneSet {
 	}
 	
 	public void clusterGenes( Collection<String> species, boolean headless ) {
-		try {
-			Map<String,String> env = new HashMap<>();
-			env.put("create", "true");
-			String uristr = "jar:" + zippath.toUri();
-			zipuri = URI.create( uristr );
-			zipfilesystem = FileSystems.newFileSystem( zipuri, env );
-			//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
-			Path resPath = zipfilesystem.getPath("cluster.blastout");
-			
-			Runnable run = () -> {
-                try {
-                    zipfilesystem.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            };
-			NativeRun nrun = new NativeRun( run );
-			
-			String userhome = System.getProperty("user.home");
-			Path userhomepath = Paths.get( userhome );
-			Path queryPath = userhomepath.resolve("tmp_cluster.fsa");//Files.createTempFile("all", ".fsa");
-			BufferedWriter qbw = Files.newBufferedWriter(queryPath);
-			
-			Path dbPath = Files.createTempFile("db", ".fsa");
-			BufferedWriter bw = Files.newBufferedWriter(dbPath);
-			for( Gene g : genelist ) {
-				if( g.getTag() == null || g.getTag().equalsIgnoreCase("gene") ) {
-					if( g.getSpecies().contains("Eva") ) {
-						System.err.println();
+		if( zippath != null ) {
+			try {
+				Map<String, String> env = new HashMap<>();
+				env.put("create", "true");
+				String uristr = "jar:" + zippath.toUri();
+				zipuri = URI.create(uristr);
+				zipfilesystem = FileSystems.newFileSystem(zipuri, env);
+				//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
+				Path resPath = zipfilesystem.getPath("cluster.blastout");
+
+				Runnable run = () -> {
+					try {
+						zipfilesystem.close();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-					if( species.contains( g.getSpecies() ) ) {
-						Sequence gs = g.tegeval.getProteinSequence();
-						//System.err.println("stuff "+g.id + " bllbleh " + species + "  " + g.getSpecies());
-						if( gs != null ) {
-							gs.setName( g.id );
-							gs.writeSequence(qbw);
+				};
+				NativeRun nrun = new NativeRun(run);
+
+				String userhome = System.getProperty("user.home");
+				Path userhomepath = Paths.get(userhome);
+				Path queryPath = userhomepath.resolve("tmp_cluster.fsa");//Files.createTempFile("all", ".fsa");
+				BufferedWriter qbw = Files.newBufferedWriter(queryPath);
+
+				Path dbPath = Files.createTempFile("db", ".fsa");
+				BufferedWriter bw = Files.newBufferedWriter(dbPath);
+				for (Gene g : genelist) {
+					if (g.getTag() == null || g.getTag().equalsIgnoreCase("gene")) {
+						if (g.getSpecies().contains("Eva")) {
+							System.err.println();
 						}
-						/*qbw.append(">" + g.id + "\n");
+						if (species.contains(g.getSpecies())) {
+							Sequence gs = g.tegeval.getProteinSequence();
+							//System.err.println("stuff "+g.id + " bllbleh " + species + "  " + g.getSpecies());
+							if (gs != null) {
+								gs.setName(g.id);
+								gs.writeSequence(qbw);
+							}
+							/*qbw.append(">" + g.id + "\n");
+							for (int i = 0; i < gs.length(); i += 70) {
+								qbw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+							}*/
+						}
+
+						Sequence gs = g.tegeval.getProteinSequence();
+						if (gs != null) {
+							gs.setName(g.id);
+							gs.writeSequence(bw);
+						}/* else {
+							System.err.println(g.getSpecies());
+							System.err.println();
+						}
+
+						/*bw.append(">" + g.id + "\n");
 						for (int i = 0; i < gs.length(); i += 70) {
-							qbw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+							bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						}*/
 					}
-					
-					Sequence gs = g.tegeval.getProteinSequence();
-					if( gs != null ) {
-						gs.setName( g.id );
-						gs.writeSequence(bw);
-					}/* else {
-						System.err.println(g.getSpecies());
-						System.err.println();
-					}
-					
-					/*bw.append(">" + g.id + "\n");
-					for (int i = 0; i < gs.length(); i += 70) {
-						bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-					}*/
 				}
+				bw.close();
+				qbw.close();
+
+				int procs = Runtime.getRuntime().availableProcessors();
+				SerifyApplet.blastRun(nrun, queryPath, dbPath, resPath, "prot", "-num_threads " + Integer.toString(procs) + " -evalue 0.00001", null, true, user, headless);
+			} catch (IOException e1) {
+				e1.printStackTrace();
 			}
-			bw.close();
-			qbw.close();
-			SerifyApplet.blastRun(nrun, queryPath, dbPath, resPath, "prot", "-evalue 0.00001", null, true, user, headless);
-		} catch (IOException e1) {
-			e1.printStackTrace();
 		}
 	}
 
@@ -9686,8 +9694,8 @@ public class GeneSet {
 		boolean	ori;
 	}*/
 
-	public Map<String, Sequence> 		contigmap = new TreeMap<String, Sequence>();
-	Map<String, List<Sequence>>		speccontigMap = new TreeMap<String, List<Sequence>>();
+	public Map<String, Sequence> 		contigmap = new TreeMap<>();
+	Map<String, List<Sequence>>		speccontigMap = new TreeMap<>();
 	//Map<Sequence, List<Tegeval>>		contigLocMap = new HashMap<Sequence, List<Tegeval>>();
 	//static final List<Tegeval> 	ltv = new ArrayList<Tegeval>();
 	//final List<Sequence> 			contigs = new ArrayList<Sequence>();
@@ -9698,7 +9706,7 @@ public class GeneSet {
 	 * @return
 	 */
 	public Map<String,List<Sequence>> getSpecContigMap( Collection<String> species ) {
-		final Map<String,List<Sequence>>	specContMap = new HashMap<String,List<Sequence>>();
+		final Map<String,List<Sequence>>	specContMap = new HashMap<>();
 		for( String ctname : contigmap.keySet() ) {
 			for( String spec : species ) {
 				if( ctname.contains( spec ) ) {
@@ -9706,7 +9714,7 @@ public class GeneSet {
 					if( specContMap.containsKey( spec ) ) {
 						contlist = specContMap.get( spec );
 					} else {
-						contlist = new ArrayList<Sequence>();
+						contlist = new ArrayList<>();
 						specContMap.put( spec, contlist );
 					}
 					contlist.add( contigmap.get( ctname ) );

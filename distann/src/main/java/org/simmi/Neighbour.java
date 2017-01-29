@@ -2372,7 +2372,7 @@ public class Neighbour {
 									Gene tgene = tv.getGene();
 									String symb = null;
 									String name = null;
-									if( tv.id == null || !tv.id.equals(tv.name) ) {
+									if( tv.id == null || !tv.id.equals(tv.getName()) ) {
 										if( tgene != null ) {
 											symb = tgene.getGeneGroup().getSymbol();
 											if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
@@ -2383,7 +2383,7 @@ public class Neighbour {
 												}
 											}
 										}
-										name = symb != null ? symb : tv.gene == null ? tv.name : tv.gene.getGeneGroup().getName();
+										name = symb != null ? symb : tv.gene == null ? tv.getName() : tv.gene.getGeneGroup().getName();
 									}
 									if( name != null && name.contains("hypo") ) name = "hyp";
 									//name += tv.ori == 1 ? "->" : "<-";
@@ -2408,7 +2408,7 @@ public class Neighbour {
 										name = null;
 										symb = null;
 										tgene = ntev.getGene();
-										if( ntev.id == null || !ntev.id.equals(ntev.name) ) {
+										if( ntev.id == null || !ntev.id.equals(ntev.getName()) ) {
 											if( tgene != null ) {
 												symb = tgene.getGeneGroup().getSymbol();
 												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
@@ -2419,7 +2419,7 @@ public class Neighbour {
 													}
 												}
 											}
-											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getName();
+											name = symb != null ? symb : ntev.gene == null ? ntev.getName() : ntev.gene.getGeneGroup().getName();
 										}
 										if( name != null && name.contains("hypo") ) name = "hyp";
 										
@@ -2470,7 +2470,7 @@ public class Neighbour {
 										name = null;
 										symb = null;
 										tgene = ntev.getGene();
-										if( ntev.id == null || !ntev.id.equals(ntev.name) ) {
+										if( ntev.id == null || !ntev.id.equals(ntev.getName()) ) {
 											if( tgene != null ) {
 												symb = tgene.getGeneGroup().getSymbol();
 												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
@@ -2481,7 +2481,7 @@ public class Neighbour {
 													}
 												}
 											}
-											name = symb != null ? symb : ntev.gene == null ? ntev.name : ntev.gene.getGeneGroup().getName();
+											name = symb != null ? symb : ntev.gene == null ? ntev.getName() : ntev.gene.getGeneGroup().getName();
 										}
 										if( name != null && name.contains("hypo") ) name = "hyp";
 										
