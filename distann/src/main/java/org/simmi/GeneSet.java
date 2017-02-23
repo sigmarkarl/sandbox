@@ -491,7 +491,7 @@ public class GeneSet {
 					u = Sequence.specCheck( contigstr );
 					
 					if( u == -1 ) {
-						u = Serifier.contigIndex( contigstr );
+						u = Sequence.parseSpec( contigstr );
 						if( u > 0 ) {
 							origin = contigstr.substring(0, u - 1);
 							contloc = contigstr.substring(u, contigstr.length());
@@ -707,10 +707,6 @@ public class GeneSet {
 	
 	Set<String>	mu = new HashSet<>();
 	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
-		/*if( filename.contains("timi") ) {
-			System.err.println();
-		}*/
-		
 		String line = br.readLine();
 		String lname = null;
 		String prevline = null;
@@ -742,6 +738,7 @@ public class GeneSet {
 
 						if( i == 0 ) {
 							int k = filename.indexOf('_');
+							if( k == -1 ) k = filename.indexOf('.');
 							if( k == -1 ) k = filename.length();
 							origin = filename.substring(0, k);
 							contloc = lname;
@@ -777,7 +774,7 @@ public class GeneSet {
 							/*u = contigstr.indexOf("contig");
 							if( u == -1 ) u = contigstr.indexOf("scaffold");
 							if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
-							u = Serifier.contigIndex( contigstr );
+							u = Sequence.parseSpec( contigstr );
 							if( u == 0 ) {
 								System.err.println();
 							}
@@ -1062,7 +1059,7 @@ public class GeneSet {
 				u = Sequence.specCheck( contigstr );
 				
 				if( u == -1 ) {
-					u = Serifier.contigIndex( contigstr );
+					u = Sequence.parseSpec( contigstr );
 					/*u = contigstr.indexOf("contig");
 					if( u == -1 ) u = contigstr.indexOf("scaffold");
 					if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
@@ -1178,8 +1175,18 @@ public class GeneSet {
 			if (line.startsWith(">")) {
 				if( size > 0 ) {
 					Sequence contig = new Contig( name, ac );
-					
+
 					String spec = contig.getSpec();
+					if( spec == null ) {
+						spec = Contig.getSpec( name );
+						if( spec == null ) {
+							int di = filename.indexOf('_');
+							if (di == -1) di = filename.indexOf('.');
+							if (di == -1) di = filename.length();
+							spec = filename.substring(0, di);
+						}
+						contig.setGroup(spec);
+					}
 					List<Sequence>	ctlist;
 					if( speccontigMap.containsKey( spec ) ) {
 						ctlist = speccontigMap.get( spec );
@@ -1231,6 +1238,16 @@ public class GeneSet {
 			
 			List<Sequence>	ctlist;
 			String spec = contig.getSpec();
+			if( spec == null ) {
+				spec = Contig.getSpec( name );
+				if( spec == null ) {
+					int di = filename.indexOf('_');
+					if (di == -1) di = filename.indexOf('.');
+					if (di == -1) di = filename.length();
+					spec = filename.substring(0, di);
+				}
+				contig.setGroup(spec);
+			}
 			
 			if( speccontigMap.containsKey( spec ) ) {
 				ctlist = speccontigMap.get( spec );
@@ -6790,7 +6807,7 @@ public class GeneSet {
 						}
 						seqs.putAll( addseqs );
 					} else {
-						seqs = new HashMap<Sequence,String>();
+						seqs = new HashMap<>();
 						
 						if( ltv != null && ltv.size() > 0 ) {
 							for( Tegeval tv : ltv ) {
@@ -6830,14 +6847,14 @@ public class GeneSet {
 					if( donetvs.containsKey(spec) ) {
 						tvals = donetvs.get( spec );
 					} else {
-						tvals = new HashSet<Tegeval>();
+						tvals = new HashSet<>();
 						donetvs.put( spec, tvals );
 					}
 					
 					if( smap.containsKey( spec ) ) {
 						seqs = smap.get( spec );
-						Map<Sequence,String> 	addseqs = new HashMap<Sequence,String>();
-						Set<Tegeval>			accountedfor = new HashSet<Tegeval>();
+						Map<Sequence,String> 	addseqs = new HashMap<>();
+						Set<Tegeval>			accountedfor = new HashSet<>();
 						
 						for( Sequence seq : seqs.keySet() ) {
 							String loc = seqs.get( seq );
@@ -7052,7 +7069,7 @@ public class GeneSet {
 									else name = "Thermus_" + nspec.substring(0,firstDigitLocation) + "_" + nspec.substring(firstDigitLocation);
 								}*/
 								
-								int k = Serifier.contigIndex(name);
+								int k = Sequence.parseSpec(name);
 								if( k == -1 ) {
 									name = spec;
 								} else {
@@ -7563,7 +7580,7 @@ public class GeneSet {
 				int u = Sequence.specCheck( cont );
 				
 				if( u == -1 ) {
-					u = Serifier.contigIndex(cont);
+					u = Sequence.parseSpec(cont);
 					spec = cont.substring( 0, u-1 );
 					contshort = cont.substring( u, cont.length() );
 				} else {

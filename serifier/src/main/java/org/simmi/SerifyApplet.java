@@ -5045,7 +5045,7 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 								nseq++;
 								
 								if( nseq % 1000 == 0 ) System.err.println( "seq counting: "+nseq );
-							} else if( type.equals("nucl") && !line.matches("^[acgtykvrswmunxACGTDYKVRSWMUNX]+$") ) {
+							} else if( type.equals("nucl") && line.length() > 0 && !line.matches("^[acgtbdykhvrswmunxACGTBDYKHVRSWMUNX]+$") ) {
 								type = "prot";
 							}
 							line = br.readLine();
