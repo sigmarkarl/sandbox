@@ -767,7 +767,6 @@ public class GeneSet {
 						id = idFix( id, contigstr );
 						
 						name = lname.substring(u+1, i).trim();
-						
 						u = Sequence.specCheck( contigstr );
 						
 						if( u == -1 ) {
@@ -775,11 +774,12 @@ public class GeneSet {
 							if( u == -1 ) u = contigstr.indexOf("scaffold");
 							if( u == -1 ) u = contigstr.lastIndexOf('_')+1;*/
 							u = Sequence.parseSpec( contigstr );
-							if( u == 0 ) {
+							if( u <= 0 ) {
 								System.err.println();
+							} else {
+								origin = contigstr.substring(0, u - 1);
+								contloc = contigstr.substring(u, contigstr.length());
 							}
-							origin = contigstr.substring(0, u-1);
-							contloc = contigstr.substring(u, contigstr.length());
 						} else {
 							n = contigstr.indexOf("_", u+1);
 							if( n == -1 ) n = contigstr.length();
@@ -798,7 +798,7 @@ public class GeneSet {
 							}
 						}
 					}
-					
+
 						//i = query.indexOf('_', i);
 						//String[] qsplit = query.substring(i+5).split("_");
 					
