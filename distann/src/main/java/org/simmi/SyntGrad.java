@@ -484,7 +484,7 @@ public class SyntGrad {
 				
 				boolean inplasmid = false;
 				if( gene2s != null && gene2s.tset != null ) for( Tegeval tee : gene2s.tset ) {
-					if( tee.getContshort().isPlasmid() ) {
+					if( tee.getContshort() != null && tee.getContshort().isPlasmid() ) {
 						inplasmid = true;
 						break;
 					}
@@ -564,7 +564,12 @@ public class SyntGrad {
 
 			g2.translate(w2, h2);
 			g2.rotate( rr*radscale );
-			g2.fillRect(rad, -1, 30, 3);
+			if( total + ptotal > 200 ) {
+				g2.fillRect(rad, -1, 30, 3);
+			} else {
+				g2.fillRect(rad, -3, 30, 5);
+			}
+
 			//g2.drawLine(rad, 0, rad+15, 0);
 			g2.rotate( -rr*radscale );
 			g2.translate(-w2, -h2);
@@ -759,7 +764,8 @@ public class SyntGrad {
 							ci++;
 						}
 					}
-					
+
+					tvn = 0;
 					for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
 						int cii = cci%scontigs.size();
 						Sequence c = scontigs.get(cii);

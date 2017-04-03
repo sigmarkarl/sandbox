@@ -3865,8 +3865,8 @@ public class ActionCollection {
                 final JCheckBox	uniform = new JCheckBox("Uniform");
                 Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs, uniform );
 
-                final List<Character> coglist = new ArrayList<Character>( Cog.charcog.keySet() );
-                HashSet<Character>	includedCogs = new HashSet<Character>();
+                final List<Character> coglist = new ArrayList<>( Cog.charcog.keySet() );
+                HashSet<Character>	includedCogs = new HashSet<>();
                 JTable cogtable = new JTable();
                 cogtable.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
                 TableModel cogmodel = new TableModel() {

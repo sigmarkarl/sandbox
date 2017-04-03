@@ -64,6 +64,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -505,121 +506,116 @@ public class SerifyApplet {
 	
 	public static void blastpRun( NativeRun nrun, StringBuffer query, Path dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user, final Stage primaryStage ) throws IOException {
 		String userhome = System.getProperty("user.home");
-		final Path selectedpath;
+		Path selectedpath = null;
 		if( homedir ) selectedpath = new File( userhome ).toPath();
 		else {
-			JFileChooser fc = new JFileChooser();
-			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-			if( fc.showSaveDialog( nrun.cnt ) == JFileChooser.APPROVE_OPTION ) {
-				Path path = fc.getSelectedFile().toPath();
-				if( !Files.isDirectory(path) ) selectedpath = path.getParent();
+			DirectoryChooser fc = new DirectoryChooser();
+			File dir = fc.showDialog( null );
+			if( dir != null && dir.exists() ) {
+				Path path = dir.toPath();
+				if (!Files.isDirectory(path)) selectedpath = path.getParent();
 				else selectedpath = path;
-			} else selectedpath = null;
+			}
 		}
-		
-		Platform.runLater(new Runnable() {
-			 @Override
-			 public void run() {
-				final Dialog<Pair<String,String>> dialog = new Dialog();
-				dialog.setTitle("Select host and blast db path");
-				dialog.setHeaderText("Host and blast db selection");
-				
-				dialog.initModality(Modality.APPLICATION_MODAL);
-				dialog.initOwner( primaryStage );
-				
-				dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-				
-				GridPane grid = new GridPane();
-				grid.setHgap(10);
-				grid.setVgap(10);
-				grid.setPadding(new Insets(20, 150, 10, 10));
 
-				TextField hostfield = new TextField("localhost");
-				TextField pathfield = new TextField( dbPath.toString() );
-				
-				grid.add(new Label("Host:"), 0, 0);
-				grid.add(hostfield, 1, 0);
-				grid.add(new Label("Dbpath:"), 0, 1);
-				grid.add(pathfield, 1, 1);
-				
-				dialog.getDialogPane().setContent(grid);
-				
-				dialog.setResultConverter(dialogButton -> {
-				    if (dialogButton == ButtonType.OK) {
-				        return new Pair<>(hostfield.getText(), pathfield.getText());
-				    }
-				    return null;
-				});
-				
-				Optional<Pair<String, String>> result = dialog.showAndWait();
-				
-				if( result.isPresent() ) {
-					String username = System.getProperty("user.name");
-					String hostname = result.get().getKey();
-					String pathname = result.get().getValue();
-					
-					String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
-					
-					List<Object>	lscmd = new ArrayList<>();
-					if( table != null ) {
-						int[] rr = table.getSelectedRows();
-						for( int r : rr ) {
-							Path	path = (Path)table.getValueAt( r, 3 );
-							//String blastFile = "rpsblast+";
-							Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
-							int procs = Runtime.getRuntime().availableProcessors();
-							
-							List<String>	lcmd = new ArrayList<>();
-							String[] bcmds = { "blastp", "-db", pathname, "-num_threads", Integer.toString(procs) };
-							String[] exts = extrapar.trim().split("[\t ]+");
-							
-							lcmd.addAll( Arrays.asList(bcmds) );
-							if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
-							
-							lscmd.add( new Path[] {path, res, selectedpath} );
-							lscmd.add( lcmd );
-						}
-					} else {
-						int procs = Runtime.getRuntime().availableProcessors();
-						
-						List<String>	lcmd = new ArrayList<>();
-						String[] bcmds;
-						//String[] cmds;
-						if( hostfield.getText().equals("localhost") ) bcmds = new String[] { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", pathname, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1" };
-						else {
-							if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", pathname, "-num_threads", "32", "-num_alignments", "1", "-num_descriptions", "1" };
-							else bcmds = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", pathname, "-num_threads", "32", "-num_alignments", "1", "-num_descriptions", "1" };
-						}
-						String[] exts = extrapar.trim().split("[\t ]+");
-						
-						lcmd.addAll( Arrays.asList(bcmds) );
-						if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
-						
-						lscmd.add( new Object[] {query.toString().getBytes(), resPath, selectedpath} );
-						lscmd.add( lcmd );
-					}
-					
-					final Object[] cont = new Object[3];
-					Runnable run = () -> {
-                        if( cont[0] != null ) {
+	   final Dialog<Pair<String,String>> dialog = new Dialog();
+	   dialog.setTitle("Select host and blast db path");
+	   dialog.setHeaderText("Host and blast db selection");
 
-                        }
-                        try {
-                            fs.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    };
-					nrun.setRun( run );
-					
-					try {
-						nrun.runProcessBuilder( "Performing blast", lscmd, cont, false, run, false );
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			 }
-		});
+	   dialog.initModality(Modality.APPLICATION_MODAL);
+	   dialog.initOwner( primaryStage );
+
+	   dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+	   GridPane grid = new GridPane();
+	   grid.setHgap(10);
+	   grid.setVgap(10);
+	   grid.setPadding(new Insets(20, 150, 10, 10));
+
+	   TextField hostfield = new TextField("localhost");
+	   TextField pathfield = new TextField( dbPath.toString() );
+
+	   grid.add(new Label("Host:"), 0, 0);
+	   grid.add(hostfield, 1, 0);
+	   grid.add(new Label("Dbpath:"), 0, 1);
+	   grid.add(pathfield, 1, 1);
+
+	   dialog.getDialogPane().setContent(grid);
+
+	   dialog.setResultConverter(dialogButton -> {
+		   if (dialogButton == ButtonType.OK) {
+			   return new Pair<>(hostfield.getText(), pathfield.getText());
+		   }
+		   return null;
+	   });
+
+	   Optional<Pair<String, String>> result = dialog.showAndWait();
+
+	   if( result.isPresent() ) {
+		   String username = System.getProperty("user.name");
+		   String hostname = result.get().getKey();
+		   String pathname = result.get().getValue();
+
+		   String cygpathstr = NativeRun.cygPath( userhome+"/genesetkey" );
+
+		   List<Object>	lscmd = new ArrayList<>();
+		   if( table != null ) {
+			   int[] rr = table.getSelectedRows();
+			   for( int r : rr ) {
+				   Path	path = (Path)table.getValueAt( r, 3 );
+				   //String blastFile = "rpsblast+";
+				   Path res = selectedpath.resolve(path.getFileName().toString()+".blastout");
+				   int procs = Runtime.getRuntime().availableProcessors();
+
+				   List<String>	lcmd = new ArrayList<>();
+				   String[] bcmds = { "blastp", "-db", pathname, "-num_threads", Integer.toString(procs) };
+				   String[] exts = extrapar.trim().split("[\t ]+");
+
+				   lcmd.addAll( Arrays.asList(bcmds) );
+				   if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+
+				   lscmd.add( new Path[] {path, res, selectedpath} );
+				   lscmd.add( lcmd );
+			   }
+		   } else {
+			   int procs = Runtime.getRuntime().availableProcessors();
+
+			   List<String>	lcmd = new ArrayList<>();
+			   String[] bcmds;
+			   //String[] cmds;
+			   if( hostfield.getText().equals("localhost") ) bcmds = new String[] { "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", pathname, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1" };
+			   else {
+				   if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", pathname, "-num_threads", "32", "-num_alignments", "1", "-num_descriptions", "1" };
+				   else bcmds = new String[] { "ssh", hostname, "blastp"/*blastpath.resolve("blastp").toString()*/, "-db", pathname, "-num_threads", "32", "-num_alignments", "1", "-num_descriptions", "1" };
+			   }
+			   String[] exts = extrapar.trim().split("[\t ]+");
+
+			   lcmd.addAll( Arrays.asList(bcmds) );
+			   if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
+
+			   lscmd.add( new Object[] {query.toString().getBytes(), resPath, selectedpath} );
+			   lscmd.add( lcmd );
+		   }
+
+		   final Object[] cont = new Object[3];
+		   Runnable run = () -> {
+if( cont[0] != null ) {
+
+}
+try {
+fs.close();
+} catch (IOException e) {
+e.printStackTrace();
+}
+};
+		   nrun.setRun( run );
+
+		   try {
+			   nrun.runProcessBuilder( "Performing blast", lscmd, cont, false, run, false );
+		   } catch (IOException e) {
+			   e.printStackTrace();
+		   }
+	   }
 	}
 	
 	public static void rpsBlastRun( NativeRun nrun, StringBuffer query, String dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user, final String hostname, boolean headless ) throws IOException {
@@ -2092,7 +2088,12 @@ public class SerifyApplet {
 
                 String OS = System.getProperty("os.name").toLowerCase();
 
-                String[] cmds = {host.getText(), "-a", outPathA};
+                String[] cmdsplit = host.getText().split("[ ]+");
+				Stream.Builder<String> builder = Stream.builder();
+				for( String cmd : cmdsplit ) builder.add(cmd);
+				builder.add("-a");
+				builder.add(outPathA);
+                String[] cmds = builder.build().toArray( size -> new String[size] );
                 /*if( host.getText().equals("localhost") ) cmds = new String[] { (OS.indexOf("mac") >= 0) ? "/usr/local/bin/prodigal" : "prodigal", "-a", outPathA }; //"-d", outPathD };
                 else {
                     if( user.equals("geneset") ) cmds = new String[] { "ssh", "-i", NativeRun.cygPath(userhome+"/genesetkey"), "geneset@"+hostname, "prodigal", "-a", tmpout };

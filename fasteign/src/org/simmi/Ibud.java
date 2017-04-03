@@ -105,7 +105,7 @@ public class Ibud {
 				@Override
 				public Image getValue() {
 					if( img == null ) {
-						URL noimgurl = Ibud.class.getResource("/noimage.jpg");
+						URL noimgurl = Ibud.class.getResource("noimage.jpg");
 						img = new Image( noimgurl.toString() );
 						new Thread() {
 							public void run() {

@@ -213,8 +213,45 @@ int main( int argc, char* argv[] ) {
 	if( strcmp( argv[1], "-p" ) == 0 ) {
 		char	buffer[100000];
 		char	dst[100000];
+		char	loc[1000];
 
-		FILE* f = fopen( argv[3], "r" );
+		char* chr;
+		int s = 0;
+		int e = 1000000000;
+		int filestart;
+		if( argv[2][0] == 'c' && argv[2][1] == 'h' && argv[2][2] == 'r' ) {
+			filestart = 3;
+			chr = argv[2];
+			int k = 0;
+			while( chr[k] != 0 && chr[k] != ':' ) k++;
+			if( chr[k] == ':' ) {
+				chr[k] = 0;
+				k++;
+				char* pos = chr+k;
+				while( chr[k] != 0 && chr[k] != '-' ) k++;
+				if( chr[k] == '-' ) {
+					chr[k] = 0;
+					char* end = chr+k+1;
+					e = atoi(end);
+				}
+				s = atoi(pos);
+			}
+		} else {
+			filestart = 2;
+			getline( loc, sizeof(loc), stdin );
+			chr = loc;
+			char* sloc = loc;
+			while( *sloc != '\t' ) sloc++;
+			*sloc = 0;
+			sloc++;
+			char* eloc = sloc;
+			while( *eloc != '\t' ) eloc++;
+			*eloc = 0;
+			s = atoi(sloc)
+			eloc++;
+		}
+
+		FILE* f = fopen( argv[filestart], "r" );
 		int r = fread( buffer, 1, 1000, f );
 
 		int i = 0;
@@ -224,23 +261,6 @@ int main( int argc, char* argv[] ) {
 
 		int m = fseek( f, 0L, SEEK_END );
 		long filesize = ftell( f );
-		char* chr = argv[2];
-		int k = 0;
-		while( chr[k] != 0 && chr[k] != ':' ) k++;
-		int s = 0;
-		int e = 1000000000;
-		if( chr[k] == ':' ) {
-			chr[k] = 0;
-			k++;
-			char* pos = chr+k;
-			while( chr[k] != 0 && chr[k] != '-' ) k++;
-			if( chr[k] == '-' ) {
-				chr[k] = 0;
-				char* end = chr+k+1;
-				e = atoi(end);
-			}
-			s = atoi(pos);
-		}
 
 		int l = sizeof(buffer);
 		searchresult loc = search( f, buffer, l, chr, s, i, i, filesize );

@@ -113,6 +113,7 @@ public class GeneSet {
 	static {}
 	
 	public static String user;
+	public String projectname = "geneset";
 
 	/*private static StringBuilder dnaSearch(String query) {
 		/*
@@ -718,10 +719,12 @@ public class GeneSet {
 		// StringBuffer ac = new StringBuffer();
 		// List<Aas> aass = new ArrayList<Aas>();
 
+		int count = 0;
 		//Tegeval preval = null;
 		while (line != null) {
 			if (line.startsWith(">")) {
 				if (tv.getSequenceLength() > 0) {
+					System.err.println("count " + (count++));
 					String contigstr = null;
 					String contloc = null;
 					
@@ -841,7 +844,19 @@ public class GeneSet {
 						if( n != -1 ) addname = ":" + map.substring(l+1,n).trim();
 						if( e != -1 ) neworigin = map.substring(n+1,e).trim();
 					}
-					
+
+					if( refmap.containsKey(id) ) {
+						Gene g = refmap.get(id);
+						/*if( g.getSpecies() == null || origin == null ) {
+							System.err.println();
+						}
+						if( g.getSpecies() == null ) {
+							System.err.println();
+						}*/
+						if( g.getSpecies() != null && !g.getSpecies().equals(origin) ) {
+							id = id + "_" + origin;
+						}
+					}
 					if( !refmap.containsKey(id) ) {
 						Sequence contig = null;
 						if( contigstr != null ) {
@@ -1437,9 +1452,9 @@ public class GeneSet {
 							int score = 0;
 							int tscore = 1;
 							for( Tegeval tv1 : ti1.tset ) {
-								if( !skipplasmid || !tv1.getContig().isPlasmid() ) {
+								if( !skipplasmid || (tv1.getContig() != null && !tv1.getContig().isPlasmid()) ) {
 									for (Tegeval tv2 : ti2.tset) {
-										if( !skipplasmid || !tv2.getContig().isPlasmid() ) {
+										if( !skipplasmid || (tv2.getContig() != null && !tv2.getContig().isPlasmid()) ) {
 											Sequence seq1 = tv1.getAlignedSequence();
 											Sequence seq2 = tv2.getAlignedSequence();
 											if (seq1 != null && seq2 != null) {

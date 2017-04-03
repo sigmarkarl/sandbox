@@ -85,7 +85,7 @@ function nloadListener () {
 var idx;
 function nloadendListener () {
     idx = [];
-    
+
     currentgor = this.responseText;
     var gor = currentgor;
     var c = document.getElementById("gortable");
@@ -172,7 +172,7 @@ function start() {
                 respUrl = this.responseURL;
             }
         };
-        req.open("POST", "http://52.70.161.146/gorserver/gor/pipes?lines=1000000007&zip=N&cache=N");
+        req.open("POST", "http://nc-dev-gor001/gorserver/gor/pipes?lines=1000000007&zip=N&cache=N");
         //req.setRequestHeader("Access-Control-Request-Headers", "X-Custom-Header");
         //req.setRequestHeader("Access-Control-Request-Methods", "POST");
         //req.open("GET", "http://localhost:8887/gorserver/gor/status");
