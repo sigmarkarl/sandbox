@@ -42,6 +42,11 @@ public class SyntGrad {
 	JCheckBox	homol = new JCheckBox("Show homologs");
 	JButton		repaint = new JButton("Repaint");
 
+	JRadioButton chromandplasm = new JRadioButton("Chrom&Plasm");
+	JRadioButton onlychrom = new JRadioButton("Chrom");
+	JRadioButton onlyplasm = new JRadioButton("Plasm");
+	JRadioButton plasmcolor = new JRadioButton("PlasmColor");
+
 	boolean isbeingdragged = false;
 
 	public void syntGrad( final GeneSetHead genesethead, final int w, final int h, Set<String> presel ) {
@@ -436,6 +441,14 @@ public class SyntGrad {
 		panel.setLayout( new BorderLayout() );
 		panel.add( tb, BorderLayout.NORTH );
 		panel.add( scrollpane );*/
+
+		ButtonGroup bg = new ButtonGroup();
+		bg.add(chromandplasm);
+		bg.add(onlychrom);
+		bg.add(onlyplasm);
+		bg.add(plasmcolor);
+
+		chromandplasm.setSelected(true);
 		
 		JToolBar toolbar = new JToolBar();
 		toolbar.add( contcheck );
@@ -443,6 +456,10 @@ public class SyntGrad {
 		toolbar.add( vischeck );
 		toolbar.add( syntcol );
 		toolbar.add( homol );
+		toolbar.add( chromandplasm );
+		toolbar.add( onlychrom );
+		toolbar.add( onlyplasm );
+		toolbar.add( plasmcolor );
 		toolbar.add( repaint );
 		
 		repaint.addActionListener(e -> {
@@ -457,12 +474,20 @@ public class SyntGrad {
 		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 		frame.setVisible( true );
 	}
-	
-	public void drawImage( GeneSetHead genesethead, Graphics2D g2, String spec1, List<Sequence> contigs1, List<String> spec2s, int w, int h ) {
-		drawImage(genesethead, g2, spec1, contigs1, spec2s, w, h, 1.0);
+
+	public int getInclusion() {
+		if( chromandplasm.isSelected() ) return 3;
+		else if( onlychrom.isSelected() ) return 1;
+		else if( onlyplasm.isSelected() ) return 2;
+		else if( plasmcolor.isSelected() ) return 4;
+		return 0;
 	}
 	
-	public void doTv( GeneSetHead genesethead, Graphics2D g2, Annotation tv, int tvn, int total, int ptvn, int ptotal, String spec1, List<Sequence> contigs1, int w2, int h2, int rad, double radscale ) {
+	public void drawImage( GeneSetHead genesethead, Graphics2D g2, String spec1, List<Sequence> contigs1, List<String> spec2s, int w, int h ) {
+		drawImage(genesethead, g2, spec1, contigs1, spec2s, w, h, 1.0, getInclusion());
+	}
+	
+	public void doTv( GeneSetHead genesethead, Graphics2D g2, Annotation tv, int tvn, int total, int ptvn, int ptotal, String spec1, List<Sequence> contigs1, int w2, int h2, int rad, double radscale, int inclusion ) {
 		GeneSet geneset = genesethead.geneset;
 		Gene gene = tv.getGene();
 		boolean phage = gene != null ? tv.isPhage() : false;
@@ -498,7 +523,7 @@ public class SyntGrad {
 				}
 				
 				if( ratio >= 0.0 ) {
-					Color color = inplasmid ? GeneCompare.gradientGrayscaleColor( ratio ) : GeneCompare.gradientColor( ratio );
+					Color color = inplasmid && !(inclusion == 4) ? GeneCompare.gradientGrayscaleColor( ratio ) : GeneCompare.gradientColor( ratio );
 					g2.setColor( color );
 				} else {
 					//System.err.println( "kukur " + ratio + " " + r );
@@ -560,11 +585,11 @@ public class SyntGrad {
 		}
 		
 		if( visible ) {
-			double rr = 2.0*Math.PI*( plasmid ? ptr : tr );
+			double rr = 2.0*Math.PI*(inclusion == 3 ? (plasmid ? ptr : tr) : (inclusion == 1 ? r : pr));
 
 			g2.translate(w2, h2);
 			g2.rotate( rr*radscale );
-			if( total + ptotal > 200 ) {
+			if( (inclusion == 3 && total + ptotal > 200) || ((inclusion == 2 || inclusion == 4) && ptotal > 200) || (inclusion == 1 && total > 200) ) {
 				g2.fillRect(rad, -1, 30, 3);
 			} else {
 				g2.fillRect(rad, -3, 30, 5);
@@ -583,8 +608,9 @@ public class SyntGrad {
 							g2.setColor( Color.black );
 							g2.translate(w2, h2);
 							g2.rotate( rr );
-							g2.setColor( Color.magenta );
-							g2.drawLine(rad+30, 0, rad+100, 0);
+							//g2.setColor( Color.magenta );
+							//g2.drawLine(rad+30, 0, rad+100, 0);
+							g2.fillRect(rad+30, -1, 100, 3);
 							g2.rotate( -rr );
 							g2.translate(-w2, -h2);
 						}
@@ -596,8 +622,9 @@ public class SyntGrad {
 							g2.setColor( Color.black );
 							g2.translate(w2, h2);
 							g2.rotate( rr );
-							g2.setColor( Color.magenta );
-							g2.drawLine(rad+30, 0, rad+100, 0);
+							//g2.setColor( Color.magenta );
+							//g2.drawLine(rad+30, 0, rad+200, 0);
+							g2.fillRect(rad+30, -1, 100, 3);
 							g2.rotate( -rr );
 							g2.translate(-w2, -h2);
 						}
@@ -676,7 +703,7 @@ public class SyntGrad {
 		}
 	}
 	
-	public void drawImage( GeneSetHead genesethead, Graphics2D g2, String spec1, List<Sequence> contigs1, List<String> spec2s, int w, int h, double radscale ) {
+	public void drawImage( GeneSetHead genesethead, Graphics2D g2, String spec1, List<Sequence> contigs1, List<String> spec2s, int w, int h, double radscale, int inclusion ) {
 		GeneSet geneset = genesethead.geneset;
 		
 		int w2 = w/2;
@@ -728,7 +755,7 @@ public class SyntGrad {
 					}
 				}*/
 				
-				if( te != null ) {
+				if( te != null && te.getContshort() != null ) {
 					if( te.getContshort().isPlasmid() ) {
 						for( Sequence c : scontigs ) {
 							if( c.isPlasmid() ) {
@@ -773,7 +800,7 @@ public class SyntGrad {
 							Annotation tv = c.getAnnotation(k);
 							if( cci == ci ) {
 								while( tv != null ) {
-									doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
+									doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
 									Annotation prev = tv;
 									
 									boolean plas = tv.getContig().isPlasmid();
@@ -815,7 +842,7 @@ public class SyntGrad {
 								}
 
 								while( ftv != tv ) {
-									doTv( genesethead, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
+									doTv( genesethead, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
 									Annotation prev = ftv;
 									
 									boolean plas = tv.getContig().isPlasmid();
@@ -858,7 +885,7 @@ public class SyntGrad {
 							}
 
 							while( tv != null ) {
-								doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
+								doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
 								
 								Annotation prev = tv;
 								
@@ -900,7 +927,7 @@ public class SyntGrad {
 				for( Sequence c : scontigs ) {
 					Annotation tv = c.getFirst();
 					while( tv != null ) {
-						doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale );
+						doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
 						
 						Annotation prev = tv;
 						
