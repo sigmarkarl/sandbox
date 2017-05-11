@@ -6632,7 +6632,7 @@ public class GeneSet {
 	
 	public static void funcMappingStatic( Reader rd ) throws IOException {
 		//Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
-		Map<String,String>	symbolmap = new HashMap<String,String>();
+		Map<String,String>	symbolmap = new HashMap<>();
 		FileWriter fw = new FileWriter("/Users/sigmar/sp2go.txt");
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
