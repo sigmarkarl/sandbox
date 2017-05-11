@@ -84,7 +84,6 @@ import javax.swing.TransferHandler;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-import com.sun.xml.internal.xsom.impl.scd.Iterators;
 import javafx.scene.control.*;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;

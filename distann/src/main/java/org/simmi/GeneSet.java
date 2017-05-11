@@ -5900,7 +5900,7 @@ public class GeneSet {
 				e.printStackTrace();
 			}
 		} else {
-			Serifier.main(args);
+			//Serifier.main(args);
 		}
 
 		//SplashScreen.getSplashScreen().
@@ -5948,9 +5948,9 @@ public class GeneSet {
 				
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
 			
-	//FileInputStream fi = new FileInputStream( "/data/gene_association.goa_uniprot.gz" );
-	//GZIPInputStream gi = new GZIPInputStream( fi );
-	//funcMappingStatic( new InputStreamReader( gi ) );
+	FileInputStream fi = new FileInputStream( "/root/goa_uniprot_all.gaf.gz" );
+	GZIPInputStream gi = new GZIPInputStream( fi );
+	funcMappingStatic( new InputStreamReader( gi ) );
 	//FileInputStream fi = new FileInputStream( "/Users/sigmar/gene_association.goa_uniprot.gz" );
 	//GZIPInputStream gi = new GZIPInputStream( fi );
 	//funcMappingStatic( new InputStreamReader( gi ) );
@@ -6633,7 +6633,7 @@ public class GeneSet {
 	public static void funcMappingStatic( Reader rd ) throws IOException {
 		//Map<String,Set<String>> unipGo = new HashMap<String,Set<String>>();
 		Map<String,String>	symbolmap = new HashMap<String,String>();
-		FileWriter fw = new FileWriter("/Users/sigmar/sp2go.txt");
+		FileWriter fw = new FileWriter("/root/sp2go.txt");
 		BufferedReader br = new BufferedReader(rd);
 		String line = br.readLine();
 		String prev = null;
@@ -6659,7 +6659,7 @@ public class GeneSet {
 		br.close();
 		fw.close();
 		
-		fw = new FileWriter( "/Users/sigmar/smap.txt" );
+		fw = new FileWriter( "/root/smap.txt" );
 		for( String id : symbolmap.keySet() ) {
 			String sm = symbolmap.get( id );
 			fw.write(id + "\t" + sm + "\n");
@@ -9200,7 +9200,7 @@ public class GeneSet {
 		//Map<String, Gene> genmap = null;
 		//Map<String, Gene> gimap = new HashMap<String,Gene>();
 		
-		nf = zipfilesystem.getPath("/org/simmi/gene2refseq_short.txt");
+		nf = zipfilesystem.getPath("/gene2refseq_short.txt");
 		if( Files.exists( nf ) ) genmap = idMapping(new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ), null, 5, 1, refmap, null, gimap);
 		//loadcazymap( cazymap, new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) ) );
 		
@@ -9230,7 +9230,7 @@ public class GeneSet {
 		}
 		zipin.close();*/
 		
-		nf = zipfilesystem.getPath("/org/simmi/idmapping_short.dat");
+		nf = zipfilesystem.getPath("/idmapping_short.dat");
 		if( Files.exists( nf ) ) {
 			unimap = idMapping(new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), null, 2, 0, refmap, genmap, gimap);
 		}
@@ -9296,7 +9296,7 @@ public class GeneSet {
 			//is = new GZIPInputStream( new FileInputStream( "/data/sp2go.txt.gz" ) );
 			//funcMappingUni(new InputStreamReader(is), unimap, "/home/sigmar/sp2go_short.txt");
 			
-			nf = zipfilesystem.getPath("/org/simmi/sp2go_short.txt");
+			nf = zipfilesystem.getPath("/sp2go_short.txt");
 			if( Files.exists( nf ) ) {
 				funcMappingUni( new BufferedReader( new InputStreamReader( Files.newInputStream(nf, StandardOpenOption.READ) )), unimap, null );
 			}
@@ -9343,7 +9343,7 @@ public class GeneSet {
 			ze = zipin.getNextEntry();
 		}
 		zipin.close();*/
-		is = GeneSet.class.getResourceAsStream("org/simmi/go.obo");
+		is = GeneSet.class.getResourceAsStream("/go.obo");
 		//Map<String,Function> funcmap = 
 		if( is != null ) {
 			readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
