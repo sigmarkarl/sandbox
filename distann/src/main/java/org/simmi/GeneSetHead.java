@@ -3043,7 +3043,7 @@ public class GeneSetHead extends JApplet {
 					if( path.getFileName().toString().endsWith(".gz") ) {
 						is = new GZIPInputStream( is );
 					}
-					Path nf = geneset.zipfilesystem.getPath("/org/simmi/gene2refseq_short.txt");
+					Path nf = geneset.zipfilesystem.getPath("/gene2refseq_short.txt");
 					BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 					geneset.idMapping(new InputStreamReader(is), bw, 5, 1, geneset.refmap, null, geneset.gimap);
 					bw.close();
@@ -3090,7 +3090,7 @@ public class GeneSetHead extends JApplet {
                 geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
                 geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 
-                Path nf = geneset.zipfilesystem.getPath("/org/simmi/sp2go_short.txt");
+                Path nf = geneset.zipfilesystem.getPath("/sp2go_short.txt");
                 BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 
                 JOptionPane.showMessageDialog(GeneSetHead.this, comp2);
@@ -3228,14 +3228,14 @@ public class GeneSetHead extends JApplet {
             //Thread t = new Thread() {
             //	public void run() {
             try {
-                Map<String,String> env = new HashMap<String,String>();
+                Map<String,String> env = new HashMap<>();
                 env.put("create", "true");
                 //Path path = zipfile.toPath();
                 String uristr = "jar:" + geneset.zippath.toUri();
                 geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
                 geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 
-                Path nf = geneset.zipfilesystem.getPath("/org/simmi/idmapping_short.dat");
+                Path nf = geneset.zipfilesystem.getPath("/idmapping_short.dat");
                 final BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 
                 final JDialog	dialog = new JDialog();
