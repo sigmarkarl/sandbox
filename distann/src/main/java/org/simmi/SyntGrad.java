@@ -228,6 +228,12 @@ public class SyntGrad {
 				}
 				drawImage( genesethead, g2, spec1, contigs1, spec2s, w, h );
 				c.repaint();
+
+				try {
+					geneset.saveContigOrder();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 		popup.add( new AbstractAction("Save") {
@@ -473,6 +479,18 @@ public class SyntGrad {
 		frame.setSize( dim );
 		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 		frame.setVisible( true );
+
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				super.windowClosing(e);
+				try {
+					geneset.saveContigOrder();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 	}
 
 	public int getInclusion() {
@@ -523,7 +541,7 @@ public class SyntGrad {
 				}
 				
 				if( ratio >= 0.0 ) {
-					Color color = inplasmid && !(inclusion == 4) ? GeneCompare.gradientGrayscaleColor( ratio ) : GeneCompare.gradientColor( ratio );
+					Color color = inplasmid ^ inclusion == 4 ? GeneCompare.gradientGrayscaleColor( ratio ) : GeneCompare.gradientColor( ratio );
 					g2.setColor( color );
 				} else {
 					//System.err.println( "kukur " + ratio + " " + r );
@@ -793,6 +811,7 @@ public class SyntGrad {
 					}
 
 					tvn = 0;
+					ptvn = 0;
 					for( int cci = ci; cci <= ci+scontigs.size(); cci++ ) {
 						int cii = cci%scontigs.size();
 						Sequence c = scontigs.get(cii);
@@ -800,10 +819,9 @@ public class SyntGrad {
 							Annotation tv = c.getAnnotation(k);
 							if( cci == ci ) {
 								while( tv != null ) {
-									doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
-									Annotation prev = tv;
-									
 									boolean plas = tv.getContig().isPlasmid();
+									if( inclusion == 3 || (plas && inclusion > 1) || (!plas && (inclusion&1) == 1) ) doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
+									Annotation prev = tv;
 									if( plas ) {
 										ptvn = (ptvn+1)%ptotal;
 									} else {
@@ -820,7 +838,6 @@ public class SyntGrad {
 								}
 							} else {
 								Annotation ftv = c.getFirst();
-
 								if( contcheck.isSelected() ) {
 									if( count == 0 ) {
 										double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
@@ -842,10 +859,9 @@ public class SyntGrad {
 								}
 
 								while( ftv != tv ) {
-									doTv( genesethead, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
-									Annotation prev = ftv;
-									
 									boolean plas = tv.getContig().isPlasmid();
+									if( inclusion == 3 || (plas && inclusion > 1) || (!plas && (inclusion&1) == 1) )  doTv( genesethead, g2, ftv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
+									Annotation prev = ftv;
 									if( plas ) {
 										ptvn = (ptvn+1)%ptotal;
 									} else {
@@ -863,7 +879,6 @@ public class SyntGrad {
 							}
 						} else {
 							Annotation tv = c.getFirst();
-
 							if( contcheck.isSelected() ) {
 								if( count == 0 ) {
 									double r = 2.0 * Math.PI * ((c.isPlasmid() ? (double) (total + ptvn) : (double) tvn) / (double) (ptotal + total));
@@ -885,11 +900,10 @@ public class SyntGrad {
 							}
 
 							while( tv != null ) {
-								doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
+								boolean plas = tv.getContig().isPlasmid();
+								if( inclusion == 3 || (plas && inclusion > 1) || (!plas && (inclusion&1) == 1) ) doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
 								
 								Annotation prev = tv;
-								
-								boolean plas = tv.getContig().isPlasmid();
 								if( plas ) {
 									ptvn = (ptvn+1)%ptotal;
 								} else {
@@ -927,11 +941,10 @@ public class SyntGrad {
 				for( Sequence c : scontigs ) {
 					Annotation tv = c.getFirst();
 					while( tv != null ) {
-						doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
+						boolean plas = tv.getContig().isPlasmid();
+						if( inclusion == 3 || (plas && inclusion > 1) || (!plas && (inclusion&1) == 1) ) doTv( genesethead, g2, tv, tvn, total, ptvn, ptotal, spec1, contigs1, w2, h2, rad, radscale, inclusion );
 						
 						Annotation prev = tv;
-						
-						boolean plas = tv.getContig().isPlasmid();
 						if( plas ) {
 							ptvn = (ptvn+1)%ptotal;
 						} else {

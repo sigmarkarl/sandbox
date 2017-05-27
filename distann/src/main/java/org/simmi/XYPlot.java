@@ -100,7 +100,7 @@ public class XYPlot {
 	public void xyPlot( final GeneSetHead genesethead, final Container comp, final List<Gene> genelist, Map<Set<String>,Set<Map<String,Set<String>>>> clusterMap ) {
 		final TableView<GeneGroup> 	table = genesethead.getGeneGroupTable();
 		final Collection<String> 	specset = genesethead.geneset.getSpecies(); //speciesFromCluster( clusterMap );
-		final List<String>			species = new ArrayList<String>( specset );
+		final List<String>			species = new ArrayList<>( specset );
 		//final List<String>	specList = new ArrayList<String>( species );
 		
 		TableModel model = new TableModel() {
@@ -185,11 +185,9 @@ public class XYPlot {
 				
 				Graphics2D g2 = (Graphics2D)g;
 				g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-				//g.setColor( Color.blue );
 				
 				int count = 0;
 				for( Sequence ct : spec1Conts ) {
-					int ermcount = 0;
 					if( ct.getAnnotations() != null ) {
 						if( ct.isReverse() ) {
 							for( int u = ct.getAnnotations().size()-1; u >= 0; u-- ) {
@@ -226,11 +224,9 @@ public class XYPlot {
 											else g.setColor( Color.blue );
 										}
 										if( count == count2 ) {
-											ermcount++;
+											//ermcount++;
 										}
 										g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
-									} else {
-										//System.err.println();
 									}
 								}
 								
@@ -279,11 +275,9 @@ public class XYPlot {
 											else g.setColor( Color.blue );
 										}
 										if( count == count2 ) {
-											ermcount++;
+											//ermcount++;
 										}
 										g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
-									} else {
-										//System.err.println();
 									}
 								}
 								

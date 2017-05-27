@@ -405,6 +405,8 @@ public class GeneSetHead extends JApplet {
 	
 	FilteredList<GeneGroup>					filteredData;
 	SortedList<GeneGroup>					sortedData;
+	FilteredList<Gene>						geneFilteredList;
+	SortedList<Gene>						geneSortedList;
 	FilteredList<Function>					ffilteredData;
 	SortedList<Function>					fsortedData;
 	private void importStuff() throws IOException, UnavailableServiceException {
@@ -637,9 +639,12 @@ public class GeneSetHead extends JApplet {
 			sortedData = new SortedList<>( filteredData );
 			sortedData.comparatorProperty().bind(table.comparatorProperty());
 			table.setItems( sortedData );
-			
+
 			ObservableList<Gene> ogene = FXCollections.observableList( geneset.genelist );
-			gtable.setItems( ogene );
+			geneFilteredList = new FilteredList<>(ogene, p -> true);
+			geneSortedList = new SortedList<>( geneFilteredList );
+			geneSortedList.comparatorProperty().bind(gtable.comparatorProperty());
+			gtable.setItems( geneSortedList );
 			
 			int me = 0;
 			int mu = 0;
@@ -6050,19 +6055,31 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		select.getItems().add( showall );
 		MenuItem croptosel = new MenuItem("Crop to selection");
 		croptosel.setOnAction( actionEvent -> {
-			Set<GeneGroup> selitems = new HashSet<>( table.getSelectionModel().getSelectedItems() );
-			filteredData.setPredicate( p -> selitems.contains(p) );
+			if( isGeneview() ) {
+				Set<Gene> selitems = new HashSet<>( gtable.getSelectionModel().getSelectedItems() );
+				geneFilteredList.setPredicate( p -> selitems.contains(p) );
+			} else {
+				Set<GeneGroup> selitems = new HashSet<>( table.getSelectionModel().getSelectedItems() );
+				filteredData.setPredicate( p -> selitems.contains(p) );
+			}
 		});
 		select.getItems().add( croptosel );
 		MenuItem croptoinvsel = new MenuItem("Crop to inverted selection");
 		croptoinvsel.setOnAction( actionEvent -> {
-				genefilterset.clear();
+			if( isGeneview() ) {
+				Set<Gene> selitems = new HashSet<>( gtable.getSelectionModel().getSelectedItems() );
+				geneFilteredList.setPredicate( p -> !selitems.contains(p) );
+			} else {
+				Set<GeneGroup> selitems = new HashSet<>( table.getSelectionModel().getSelectedItems() );
+				filteredData.setPredicate( p -> !selitems.contains(p) );
+			}
+				/*genefilterset.clear();
 				for (int i = 0; i < table.getItems().size(); i++) {
 					if( !table.getSelectionModel().isSelected(i) ) {
 						genefilterset.add(i);
 					}
 				}
-				updateFilter(table, label);
+				updateFilter(table, label);*/
 		});
 		select.getItems().add( croptoinvsel );
 		MenuItem removesel = new MenuItem("Remove selection");
@@ -6537,58 +6554,60 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				GeneGroup gg = table.getItems().get(row);
 				if (gg != null) {
 					Teginfo gene2s = gg.getGenes(spec);
-					Tegeval tv = gene2s.best;
-					tv2 = gene2s.best;
-					if (gene2s != null && gene2s.tset != null) for (Tegeval tv1 : gene2s.tset) {
-						int simcount = 0;
+					if( gene2s != null ) {
+						Tegeval tv = gene2s.best;
+						tv2 = gene2s.best;
+						if (gene2s != null && gene2s.tset != null) for (Tegeval tv1 : gene2s.tset) {
+							int simcount = 0;
 
-						Annotation n = tv1.getNext();
-						Annotation p = tv1.getPrevious();
-						Annotation n2 = tv2.getNext();
-						Annotation p2 = tv2.getPrevious();
+							Annotation n = tv1.getNext();
+							Annotation p = tv1.getPrevious();
+							Annotation n2 = tv2.getNext();
+							Annotation p2 = tv2.getPrevious();
 
-						if (n != null) {
-							GeneGroup ngg = n.getGene().getGeneGroup();
-							if (n2 != null) {
-								if (ngg == n2.getGene().getGeneGroup()) simcount++;
+							if (n != null) {
+								GeneGroup ngg = n.getGene().getGeneGroup();
+								if (n2 != null) {
+									if (ngg == n2.getGene().getGeneGroup()) simcount++;
+								}
+
+								if (p2 != null) {
+									if (ngg == p2.getGene().getGeneGroup()) simcount++;
+								}
 							}
 
-							if (p2 != null) {
-								if (ngg == p2.getGene().getGeneGroup()) simcount++;
+							if (p != null) {
+								GeneGroup pgg = p.getGene().getGeneGroup();
+								if (n2 != null) {
+									if (pgg == n2.getGene().getGeneGroup()) simcount++;
+								}
+
+								if (p2 != null) {
+									if (pgg == p2.getGene().getGeneGroup()) simcount++;
+								}
 							}
+
+							//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+							if (simcount >= msimcount) {
+								tv = tv1;
+								msimcount = simcount;
+							}
+
+							//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
+							//GeneCompare.gradientColor();
 						}
 
-						if (p != null) {
-							GeneGroup pgg = p.getGene().getGeneGroup();
-							if (n2 != null) {
-								if (pgg == n2.getGene().getGeneGroup()) simcount++;
-							}
-
-							if (p2 != null) {
-								if (pgg == p2.getGene().getGeneGroup()) simcount++;
-							}
+						double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv);
+						if (ratio == -1) {
+							if (gg != null) ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
+							String color = colorToString(GeneCompare.gradientGrayscaleColor(ratio));
+							cell.setStyle("-fx-background-color: " + color);
+							//label.setForeground( Color.black );
+						} else {
+							String color = colorToString(GeneCompare.gradientColor(ratio));
+							cell.setStyle("-fx-background-color: " + color);
+							//label.setForeground( Color.black );
 						}
-
-						//double rat = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-						if (simcount >= msimcount) {
-							tv = tv1;
-							msimcount = simcount;
-						}
-
-						//double ratio = GeneCompare.invertedGradientRatio(spec, contigs, -1.0, gg, tv);
-						//GeneCompare.gradientColor();
-					}
-
-					double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv);
-					if (ratio == -1) {
-						if (gg != null) ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
-						String color = colorToString(GeneCompare.gradientGrayscaleColor(ratio));
-						cell.setStyle("-fx-background-color: " + color);
-						//label.setForeground( Color.black );
-					} else {
-						String color = colorToString(GeneCompare.gradientColor(ratio));
-						cell.setStyle("-fx-background-color: " + color);
-						//label.setForeground( Color.black );
 					}
 				}
 			}
@@ -6739,7 +6758,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			Teginfo ti = gg.species.get( g.getSpecies() );
 
 			boolean phage = tv.isPhage();
-			boolean plasmid = tv.getContshort().isPlasmid();
+			boolean plasmid = tv.getContshort() != null && tv.getContshort().isPlasmid();
 			if( phage && plasmid ) {
 				if( ti.tset.size() > 1 ) cell.setStyle( "-fx-background-color: darkmagenta" );
 				else cell.setStyle( "-fx-background-color: magenta" );
@@ -9329,6 +9348,19 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 		});
 
+		gtable.setOnKeyPressed( ke -> {
+			if (ke.getCode() == KeyCode.ESCAPE) {
+				Gene selg = gtable.getSelectionModel().getSelectedItem();
+
+				List<Gene> sel = new ArrayList<>( geneFilteredList );
+				geneFilteredList.setPredicate(null);
+				int[] rows = sel.stream().mapToInt( g -> geneSortedList.indexOf(g) ).toArray();
+				if( rows.length > 0 ) gtable.getSelectionModel().selectIndices(rows[0], rows);
+				if (label != null) label.setText(gtable.getItems().size() + "/" + gtable.getSelectionModel().getSelectedIndices().size());
+				gtable.scrollTo( selg );
+			}
+		});
+
 		table.setOnMousePressed( e -> {
 				tableisselecting = true;
 				if (!ftableisselecting && e.getClickCount() == 2) {
@@ -9371,7 +9403,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			Set<GeneGroup> ggset = new HashSet<>();
 			if (!tableisselecting && e.getClickCount() == 2) {
 				genefilterset.clear();
-				for (Function f : (ObservableList<Function>)ftable.getSelectionModel().getSelectedItems()) {
+				for (Function f : ftable.getSelectionModel().getSelectedItems()) {
 					if (f.getGeneentries() != null) {
 						if( !isGeneview() ) {
 							ggset.addAll( f.getGeneGroups() );
@@ -9417,46 +9449,88 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		textfield.setOnKeyPressed( e -> {
 				String text = textfield.getText().toLowerCase();
 				if( e.getCode() == KeyCode.ENTER ) {
-					searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable( table, text, searchi, e.isAltDown(), 8, 9, 10, 16 ) : searchTable( table, text, searchi, e.isAltDown(), 0 );
+					if (isGeneview()) {
+						searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable(gtable, text, searchi, e.isAltDown(), 8, 9, 10, 16) : searchTable(gtable, text, searchi, e.isAltDown(), 0);
+					} else {
+						searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable(table, text, searchi, e.isAltDown(), 8, 9, 10, 16) : searchTable(table, text, searchi, e.isAltDown(), 0);
+					}
 				}
 		});
 
 		textfield.textProperty().addListener((observable, oldValue, newValue) -> {
             //String text = textfield.getText().toLowerCase();
             String lowerCaseFilter = newValue.toLowerCase();
-            Predicate<GeneGroup> p = genegroup -> {
-				if (newValue == null || newValue.isEmpty()) {
-					return true;
-				}
 
-				if (searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol")) {
-					if ((genegroup.getCogsymbol() != null && genegroup.getCogsymbol().toLowerCase().contains(lowerCaseFilter)) || (genegroup.getSymbol() != null && genegroup.getSymbol().toLowerCase().contains(lowerCaseFilter)) || (genegroup.getKoname() != null && genegroup.getKoname().toLowerCase().contains(lowerCaseFilter))) {
-						return true; // Filter matches first name.
+			if( isGeneview() ) {
+				Predicate<Gene> p = gene -> {
+					GeneGroup genegroup = gene.getGeneGroup();
+					if (newValue == null || newValue.isEmpty()) {
+						return true;
 					}
-				} else {
-					if (genegroup.getName().toLowerCase().contains(lowerCaseFilter) || genegroup.genes.stream().anyMatch(gg -> gg.getName().toLowerCase().contains(lowerCaseFilter))) {
-						return true; // Filter matches first name.
-					}/* else if (genegroup.getLastName().toLowerCase().contains(lowerCaseFilter)) {
+
+					if (searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol")) {
+						if ((genegroup.getCogsymbol() != null && genegroup.getCogsymbol().toLowerCase().contains(lowerCaseFilter)) || (genegroup.getSymbol() != null && genegroup.getSymbol().toLowerCase().contains(lowerCaseFilter)) || (genegroup.getKoname() != null && genegroup.getKoname().toLowerCase().contains(lowerCaseFilter))) {
+							return true; // Filter matches first name.
+						}
+					} else {
+						if (genegroup.getName().toLowerCase().contains(lowerCaseFilter) || genegroup.genes.stream().anyMatch(gg -> gg.getName().toLowerCase().contains(lowerCaseFilter))) {
+							return true; // Filter matches first name.
+						}/* else if (genegroup.getLastName().toLowerCase().contains(lowerCaseFilter)) {
 						return true; // Filter matches last name.
 					}*/
+					}
+					return false; // Does not match.
+				};
+				if (filter.isSelected()) {
+					geneFilteredList.setPredicate(p);
+					if (label != null)
+						label.setText(gtable.getItems().size() + "/" + gtable.getSelectionModel().getSelectedIndices().size());
+					//if( searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
+					//else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
+				} else {
+					Optional<Gene> og = geneFilteredList.stream().filter(p).findFirst();
+					if (og.isPresent()) {
+						Gene g = og.get();
+						gtable.getSelectionModel().select(g);
+						gtable.scrollTo(g);
+					}
+					//searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 8, 9, 10, 16 ) : searchTable( table, text, 0, false, 0 );
 				}
-				return false; // Does not match.
-			};
-			if( filter.isSelected() ) {
-                filteredData.setPredicate( p );
-                if (label != null)
-                    label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
-                //if( searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
-                //else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
-            } else {
-                Optional<GeneGroup> ogg = filteredData.stream().filter( p ).findFirst();
-                if( ogg.isPresent() ) {
-                    GeneGroup gg = ogg.get();
-                    table.getSelectionModel().select( gg );
-                    table.scrollTo( gg );
-                }
-                //searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 8, 9, 10, 16 ) : searchTable( table, text, 0, false, 0 );
-            }
+			} else {
+				Predicate<GeneGroup> p = genegroup -> {
+					if (newValue == null || newValue.isEmpty()) {
+						return true;
+					}
+
+					if (searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol")) {
+						if ((genegroup.getCogsymbol() != null && genegroup.getCogsymbol().toLowerCase().contains(lowerCaseFilter)) || (genegroup.getSymbol() != null && genegroup.getSymbol().toLowerCase().contains(lowerCaseFilter)) || (genegroup.getKoname() != null && genegroup.getKoname().toLowerCase().contains(lowerCaseFilter))) {
+							return true; // Filter matches first name.
+						}
+					} else {
+						if (genegroup.getName().toLowerCase().contains(lowerCaseFilter) || genegroup.genes.stream().anyMatch(gg -> gg.getName().toLowerCase().contains(lowerCaseFilter))) {
+							return true; // Filter matches first name.
+						}/* else if (genegroup.getLastName().toLowerCase().contains(lowerCaseFilter)) {
+						return true; // Filter matches last name.
+					}*/
+					}
+					return false; // Does not match.
+				};
+				if (filter.isSelected()) {
+					filteredData.setPredicate(p);
+					if (label != null)
+						label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
+					//if( searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
+					//else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
+				} else {
+					Optional<GeneGroup> ogg = filteredData.stream().filter(p).findFirst();
+					if (ogg.isPresent()) {
+						GeneGroup gg = ogg.get();
+						table.getSelectionModel().select(gg);
+						table.scrollTo(gg);
+					}
+					//searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable( table, text, 0, false, 8, 9, 10, 16 ) : searchTable( table, text, 0, false, 0 );
+				}
+			}
         });
 		/*textfield.getDocument().addDocumentListener(new DocumentListener() {
 			public void changedUpdate(DocumentEvent e) {
@@ -9563,7 +9637,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		MenuItem showshared = new MenuItem("Show shared function");
 		showshared.setOnAction( e -> {
 				filterset.clear();
-				Set<Function> startfunc = new HashSet<Function>();
+				Set<Function> startfunc = new HashSet<>();
 				if( isGeneview() ) {
 					for( Gene gg : gtable.getSelectionModel().getSelectedItems() ) {
 						if (gg.funcentries != null) {
