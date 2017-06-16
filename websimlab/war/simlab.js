@@ -23,7 +23,7 @@ var init = function() {
 	echo( 'Welcome to Simlab\n' );
 
 	ind = textarea.value.length;
-	textarea.onkeypress = function( e ) {
+	textarea.onkeyup = function( e ) {
 		if( e.keyCode == 13 ) {
 			var command = textarea.value.substring( ind );
 			//window.console.log( command );
@@ -78,9 +78,9 @@ var welcome = function() {
 }
 
 var echo = function( str ) {
-	process.stdout.write( str );
+	//process.stdout.write( str );
 	//console.log( str );
-	//textarea.value = textarea.value + str;
+	textarea.value = textarea.value + str;
 }
 
 var flip = function( val ) {
@@ -119,10 +119,57 @@ var integ = function( clen ) {
 	}
 }
 
-var add = function( val ) {
-	if( typeof val == 'number' )
-	for( i = 0; i < current.length; i++ ) {
-		current[i] += val;
+var set = function( val, x ) {
+	if( typeof val == 'number' ) {
+		if( typeof x == 'undefined' ) {
+			for( i = 0; i < current.length; i++ ) {
+				current[i] = val;
+			}
+		} else {
+			for( i = 0; i < x.length; i++ ) {
+				current[i] = val;
+			}
+		}
+	} else {
+		if( typeof x == 'undefined' ) {
+			for( i = 0; i < current.length; i++ ) {
+				current[i] = val.next();
+			}
+		} else {
+			console.log('bleh');
+			for( i = 0; i < x.length; i++ ) {
+				let valn = val.next()
+				console.log('bleh ' + i + '  ' + (typeof valn));
+				x[i] = valn;
+			}
+		}
+	}
+}
+
+var add = function( val, x ) {
+	if( typeof val == 'number' ) {
+		if( typeof x == 'undefined' ) {
+			for( i = 0; i < current.length; i++ ) {
+				current[i] += val;
+			}
+		} else {
+			for( i = 0; i < x.length; i++ ) {
+				current[i] += val;
+			}
+		}
+	} else {
+		if( typeof x == 'undefined' ) {
+			for( i = 0; i < current.length; i++ ) {
+				current[i] += val.next();
+			}
+		} else {
+			console.log('bleh');
+			for( i = 0; i < x.length; i++ ) {
+				let valn = val.next()
+				console.log('bleh ' + i + '  ' + valn);
+				x[i] += valn;
+			}
+		}
 	}
 }
 
@@ -421,8 +468,14 @@ var play = function() {
 	});
 }
 
-var print = function( val ) {
-	if( typeof val == 'number' ) {
+function* indexer( len ) {
+	for( var i = 0; i < len; i++ ) {
+		yield i;
+	}
+}
+
+var print = function( nd ) {
+	/*if( typeof val == 'number' ) {
 		var nval = new Int32Array(1);
 		nval[0] = val;
 		val = nval;
@@ -436,10 +489,19 @@ var print = function( val ) {
 	for( i = 0; i < current.length; i++ ) {
 		echo( current[i]+'\t' );
 	}
+	echo( '\n' );*/
+	for( let n of nd ) {
+		echo( n+'\t' );
+	}
 	echo( '\n' );
 }
 
+var require = function(r) {
+
+}
+
 var readline = require('readline');
+var module = null
 
 var parse = function( rl ) {
 	rl.question("", function( command ) {

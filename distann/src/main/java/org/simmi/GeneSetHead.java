@@ -12,22 +12,9 @@
 package org.simmi;
 
 import java.applet.Applet;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Point;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -69,6 +56,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -123,6 +111,13 @@ import javax.swing.table.TableRowSorter;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.*;
 import javafx.stage.WindowEvent;
@@ -163,6 +158,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser.ExtensionFilter;
 import netscape.javascript.JSObject;
+import sun.nio.cs.ext.MacThai;
 
 /**
  *
@@ -206,6 +202,11 @@ public class GeneSetHead extends JApplet {
 		int g = 0;
 		int c = 0;
 		double gcstotal = 0.0;
+		int count = 0;
+		Stroke basicStroke = new BasicStroke(10);
+		Stroke oStroke = g2.getStroke();
+		int alt = 0;
+		double skewrad = 364.0;
 		for( Sequence ctg : selclist ) {
 			//Sequence ctg = clist.get( u );
 			if( gg != null ) {
@@ -213,10 +214,10 @@ public class GeneSetHead extends JApplet {
 					if( tv.getContshort() == ctg ) {					
 						int i = tv.start;
 						
-						int x1 = (int)(512.0+(384.0-100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-						int y1 = (int)(512.0+(384.0-100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-						int x2 = (int)(512.0+(384.0+100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-						int y2 = (int)(512.0+(384.0+100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+						int x1 = (int)(512.0+(skewrad-100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+						int y1 = (int)(512.0+(skewrad-100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+						int x2 = (int)(512.0+(skewrad+100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+						int y2 = (int)(512.0+(skewrad+100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
 						
 						g2.setColor( Color.green );
 						g2.drawLine(x1, y1, x2, y2);
@@ -226,16 +227,16 @@ public class GeneSetHead extends JApplet {
 			
 			double horn = total*2.0*Math.PI/size;
 			double horn2 = (total+ctg.length())*2.0*Math.PI/size;
-			
-			int x1 = (int)(512.0+(384.0-100.0)*Math.cos( horn ));
-			int y1 = (int)(512.0+(384.0-100.0)*Math.sin( horn ));
-			int x2 = (int)(512.0+(384.0+100.0)*Math.cos( horn ));
-			int y2 = (int)(512.0+(384.0+100.0)*Math.sin( horn ));
+
+			int x1 = (int)(512.0+(skewrad-100.0)*Math.cos( horn ));
+			int y1 = (int)(512.0+(skewrad-100.0)*Math.sin( horn ));
+			int x2 = (int)(512.0+(skewrad+100.0)*Math.cos( horn ));
+			int y2 = (int)(512.0+(skewrad+100.0)*Math.sin( horn ));
 			g2.setColor( Color.black );
 			g2.drawLine(x1, y1, x2, y2);
 			
-			int xoff = (int)(512.0+(384.0+100.0)*Math.cos( horn2 ));
-			int yoff = (int)(512.0+(384.0+100.0)*Math.sin( horn2 ));
+			int xoff = (int)(512.0+(skewrad+100.0)*Math.cos( horn2 ));
+			int yoff = (int)(512.0+(skewrad+100.0)*Math.sin( horn2 ));
 			if( horn < Math.PI ) {
 				g2.translate( x2, y2 );
 				g2.rotate(horn+Math.PI/2.0);
@@ -249,7 +250,37 @@ public class GeneSetHead extends JApplet {
 				g2.rotate(-horn2-Math.PI/2.0);
 				g2.translate( -xoff, -yoff );
 			}
-			
+
+			List<Annotation> alist = ctg != null ? ctg.getAnnotations() : null;
+			if( alist != null ) for( Annotation a : alist ) {
+				double ah = (total+a.getStart())*2*Math.PI/size;
+				double ah2 = (total+a.getEnd())*2*Math.PI/size;
+				double hornid = (ah+ah2)/2;
+
+				int x = (int)(512.0+(skewrad+80.0)*Math.cos( hornid ));
+				int y = (int)(512.0+(skewrad+80.0)*Math.sin( hornid ));
+
+				g2.setStroke( basicStroke );
+				Gene gn = a.getGene();
+				if( gn != null && gn.getGeneGroup() != null ) {
+					Cog cg = gn.getGeneGroup().getCog( geneset.cogmap );
+					if( cg != null ) {
+						Color colr = Cog.charcogcol.get(cg.symbol);
+						g2.setColor( colr );
+					} else g2.setColor( Color.black );
+				} else g2.setColor( Color.black );
+
+				g2.translate( x, y );
+				g2.rotate(hornid+Math.PI/2.0);
+				g2.fillRect( 0, a.isReverse() ? 20 : 0,1,20);
+				g2.rotate(-hornid-Math.PI/2.0);
+				g2.translate( -x, -y );
+
+				//if( a.isReverse() ) g2.drawArc(100, 100, 824, 824, (int)(ah), (int)Math.max(1,(ah2-ah)));
+				//else g2.drawArc(120, 120, 784, 784, (int)(ah), (int)Math.max(1,(ah2-ah)));
+				g2.setStroke( oStroke );
+			}
+
 			for( int i = 0; i < ctg.length(); i+=500 ) {
 				for( int k = i; k < Math.min( ctg.length(), i+500 ); k++ ) {
 					char chr = ctg.charAt( k );
@@ -279,11 +310,11 @@ public class GeneSetHead extends JApplet {
 					double gcskew = (gcount-ccount)/(double)(gcount+ccount);
 					
 					gcstotal += gcskew;
-					
-					x1 = (int)(512.0+(384.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y1 = (int)(512.0+(384.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-					x2 = (int)(512.0+(384.0+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y2 = (int)(512.0+(384.0+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+
+					x1 = (int)(512.0+(skewrad)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y1 = (int)(512.0+(skewrad)*Math.sin( (i+total)*2.0*Math.PI/size ));
+					x2 = (int)(512.0+(skewrad+gcskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y2 = (int)(512.0+(skewrad+gcskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
 					
 					if( gcskew >= 0 ) g2.setColor( Color.blue );
 					else g2.setColor( Color.red );
@@ -292,17 +323,42 @@ public class GeneSetHead extends JApplet {
 				
 				if( acount > 0 || tcount > 0 ) {
 					double atskew = (acount-tcount)/(double)(acount+tcount);
-					
-					x1 = (int)(512.0+(300.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y1 = (int)(512.0+(300.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
-					x2 = (int)(512.0+(300.0+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
-					y2 = (int)(512.0+(300.0+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
+
+					double inskewrad = 280.0;
+					x1 = (int)(512.0+(inskewrad)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y1 = (int)(512.0+(inskewrad)*Math.sin( (i+total)*2.0*Math.PI/size ));
+					x2 = (int)(512.0+(inskewrad+atskew*100.0)*Math.cos( (i+total)*2.0*Math.PI/size ));
+					y2 = (int)(512.0+(inskewrad+atskew*100.0)*Math.sin( (i+total)*2.0*Math.PI/size ));
 					
 					if( atskew >= 0 ) g2.setColor( Color.blue );
 					else g2.setColor( Color.red );
 					g2.drawLine(x1, y1, x2, y2);
 				}
+
+				if( count % 100 == 0 ) {
+					double h = (i+total)*2.0*Math.PI/size;
+					int x = (int)(512.0+(200.0)*Math.cos( h ));
+					int y = (int)(512.0+(200.0)*Math.sin( h ));
+
+					String str = (total+i)/1000+"kb";
+					int strw = g2.getFontMetrics().stringWidth(str);
+				    g2.setColor( Color.black );
+					g2.translate( x, y );
+					g2.rotate(h+Math.PI/2.0);
+					g2.fillRect(0,0,1,3);
+					g2.rotate(-h-Math.PI/2.0);
+					g2.translate( -x, -y );
+					if( count % 500 == 0 ) {
+						if( horn < Math.PI ) g2.drawString(str, x-strw, y);
+						else g2.drawString(str, x, y);
+					}
+				}
+				count++;
 			}
+			g2.setStroke( basicStroke );
+			g2.setColor( alt++ % 2 == 0 ? Color.gray : Color.darkGray );
+			g2.drawArc(18, 18, 1000, 1000, (int)(180*horn/Math.PI), (int)(180*(horn2-horn)/Math.PI));
+			g2.setStroke( oStroke );
 			total += ctg.length();
 		}
 		
