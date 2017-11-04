@@ -23,5 +23,5 @@ dependencies {
     compile "org.apache.commons:commons-jexl:2.1.1"
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 9
+targetCompatibility = 9

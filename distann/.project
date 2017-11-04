@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 	<name>distann</name>
-	<comment></comment>
+	<comment>Project distann created by Buildship.</comment>
 	<projects>
 	</projects>
 	<buildSpec>
@@ -10,20 +10,14 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>classes</name>
-			<type>2</type>
-			<location>/Users/sigmar/classes</location>
-		</link>
-		<link>
-			<name>java</name>
-			<type>2</type>
-			<location>/Users/sigmar/sandbox/distann/src/main/java</location>
-		</link>
-	</linkedResources>
 </projectDescription>

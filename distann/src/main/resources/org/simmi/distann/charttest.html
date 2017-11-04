@@ -1,0 +1,60 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      
+      var data;
+      var chart;
+      var options = {
+          title: 'Pan-core genome';
+      };
+      function drawChart() {
+        data = google.visualization.arrayToDataTable([
+          ['Species', 'Pan', 'Core'],
+['t.thermophilusSG0', 2114, 2114],
+['t.scotoductus1572', 1713, 2597],
+['mt.silvanus', 1332, 4087],
+['t.spCCB', 1289, 4268],
+['t.igniterrae', 1284, 4384],
+['t.eggertssoniae', 1278, 4613],
+['t.kawarayensis', 1265, 4744],
+['t.RLM', 1225, 4816],
+['t.thermophilusJL18', 1224, 4873],
+['t.arciformis', 1221, 4940],
+['t.aquaticus', 1214, 5078],
+['m.hydrothermalis', 1089, 5576],
+['t.brockianus', 1088, 5644],
+['t.thermophilusHB27', 1084, 5677],
+['o.profundus', 984, 6440],
+['mt.ruber', 938, 7127],
+['t.antranikiani', 937, 7206],
+['t.oshimai', 937, 7276],
+['t.scotoductus346', 935, 7288],
+['t.thermophilusHB8', 934, 7304],
+['t.islandicus', 923, 7396],
+['t.scotoductus2127', 922, 7463],
+['t.filiformis', 917, 7582],
+['t.scotoductusSA01', 917, 7614],
+['t.scotoductus252', 915, 7669],
+['t.scotoductus2101', 914, 7699],
+['t.oshimaiJL2', 914, 7737],
+['t.scotoductus4063', 914, 7742]
+        ]);
+
+        chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+      window.onresize = function() {
+      	var cd = document.getElementById('chart_div')
+      	cd.style.width = window.innerWidth;
+      	cd.style.height = window.innerHeight;
+      	chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="chart_div" style="width: 800px; height: 600px;"></div>
+  </body>
+</html>
