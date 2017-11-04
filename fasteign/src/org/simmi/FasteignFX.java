@@ -150,91 +150,91 @@ public class FasteignFX extends Application {
         final WebEngine webEngine = webview.getEngine();
         webEngine.setJavaScriptEnabled(true);
         final Worker<Void> loadWorker = webEngine.getLoadWorker();
-        loadWorker.stateProperty().addListener(new ChangeListener<State>() {
-            public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
-                Document doc = webEngine.getDocument();
-                System.err.println(newState);
-                if (newState == State.SUCCEEDED) {
-                    String loc = webEngine.getLocation();
-                    if (loc == null || loc.length() == 0) {
-                        loc = currentloc;
+        final TableView<Ibud> tableNode = new TableView<>(iblist);
+        loadWorker.stateProperty().addListener((ov, oldState, newState) -> {
+            Document doc = webEngine.getDocument();
+            System.err.println(newState);
+            if (newState == State.SUCCEEDED) {
+                String loc = webEngine.getLocation();
+                if (loc == null || loc.length() == 0) {
+                    loc = currentloc;
+                }
+                if (loc.contains("fasteign/")) {
+                    //int i = loc.indexOf("fasteign/");
+                    //int id = Integer.parseInt( loc.substring(i+9, loc.indexOf('/', i+9) ) );
+
+                    if (ibmap.containsKey(loc)) {
+                        Ibud ib = ibmap.get(loc);
+                        NodeList nl = doc.getElementsByTagName("td");
+                        int m = 0;
+                        for (int k = 0; k < nl.getLength(); k++) {
+                            HTMLTableCellElement td = (HTMLTableCellElement) nl.item(k);
+                            if (td.getClassName() != null && td.getClassName().equals("value")) {
+                                if (m == 1) {
+                                    String cont = td.getTextContent().trim().split("[ ]+")[0].replace(".", "");
+                                    try {
+                                        ib.setFasteignaMat(Integer.parseInt(cont));
+                                    } catch (Exception e) {
+                                        ib.setFasteignaMat(0);
+                                    }
+                                } else if (m == 2) {
+                                    String cont = td.getTextContent().trim().split("[ ]+")[0].replace(".", "");
+                                    try {
+                                        ib.setBrunabotaMat(Integer.parseInt(cont));
+                                    } catch (Exception e) {
+                                        ib.setBrunabotaMat(0);
+                                    }
+                                    break;
+                                }
+                                m++;
+                            }
+                        }
+                        iblist.add(ib);
+
+                        //if (iblist.size() < 50) {
+                            for (String urlstr : ibmap.keySet()) {
+                                Ibud tib = ibmap.get(urlstr);
+                                if (tib.getFasteignaMat() == -1) {
+                                    loadWorker.cancel();
+                                    try {
+                                        URL url = new URL(tib.getUrlString());
+                                        InputStream is = url.openStream();
+                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                        int r = is.read(smallbuffer);
+                                        while (r > 0) {
+                                            baos.write(smallbuffer, 0, r);
+                                            r = is.read(smallbuffer);
+                                        }
+                                        baos.close();
+                                        currentloc = tib.getUrlString();
+
+                                        webEngine.loadContent(baos.toString());
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    //webEngine.load( tib.getUrlString() );
+                                    break;
+                                }
+                            }
+                        //}
                     }
-                    if (loc.contains("fasteign/")) {
-		        		//int i = loc.indexOf("fasteign/");
-                        //int id = Integer.parseInt( loc.substring(i+9, loc.indexOf('/', i+9) ) );
-
-                        if (ibmap.containsKey(loc)) {
-                            Ibud ib = ibmap.get(loc);
-                            NodeList nl = doc.getElementsByTagName("td");
-                            int m = 0;
-                            for (int k = 0; k < nl.getLength(); k++) {
-                                HTMLTableCellElement td = (HTMLTableCellElement) nl.item(k);
-                                if (td.getClassName() != null && td.getClassName().equals("value")) {
-                                    if (m == 1) {
-                                        String cont = td.getTextContent().trim().split("[ ]+")[0].replace(".", "");
-                                        try {
-                                            ib.setFasteignaMat(Integer.parseInt(cont));
-                                        } catch (Exception e) {
-                                            ib.setFasteignaMat(0);
-                                        }
-                                    } else if (m == 2) {
-                                        String cont = td.getTextContent().trim().split("[ ]+")[0].replace(".", "");
-                                        try {
-                                            ib.setBrunabotaMat(Integer.parseInt(cont));
-                                        } catch (Exception e) {
-                                            ib.setBrunabotaMat(0);
-                                        }
-                                        break;
-                                    }
-                                    m++;
-                                }
-                            }
-                            iblist.add(ib);
-
-                            //if (iblist.size() < 50) {
-                                for (String urlstr : ibmap.keySet()) {
-                                    Ibud tib = ibmap.get(urlstr);
-                                    if (tib.getFasteignaMat() == -1) {
-                                        loadWorker.cancel();
-                                        try {
-                                            URL url = new URL(tib.getUrlString());
-                                            InputStream is = url.openStream();
-                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                            int r = is.read(smallbuffer);
-                                            while (r > 0) {
-                                                baos.write(smallbuffer, 0, r);
-                                                r = is.read(smallbuffer);
-                                            }
-                                            baos.close();
-                                            currentloc = tib.getUrlString();
-
-                                            webEngine.loadContent(baos.toString());
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
-                                        //webEngine.load( tib.getUrlString() );
-                                        break;
-                                    }
-                                }
-                            //}
-                        }
-                    } else if (!loc.contains("leit")) {
-                        NodeList nl = doc.getElementsByTagName("input");
-                        for (int i = 0; i < nl.getLength(); i++) {
-                            Node n = nl.item(i);
-                            if (n instanceof HTMLInputElement) {
-                                HTMLInputElement hie = (HTMLInputElement) n;
-                                NamedNodeMap nnm = hie.getAttributes();
-                                for (int m = 0; m < nnm.getLength(); m++) {
-                                    Node node = nnm.item(m);
-                                    String val = node.getNodeValue();
-                                    if (val.equals("Hefja leit")) {
-                                        //hie.click();
-                                        thehie = hie;
-                                    }
+                } else if (!loc.contains("leit")) {
+                    NodeList nl = doc.getElementsByTagName("input");
+                    for (int i = 0; i < nl.getLength(); i++) {
+                        Node n = nl.item(i);
+                        if (n instanceof HTMLInputElement) {
+                            HTMLInputElement hie = (HTMLInputElement) n;
+                            NamedNodeMap nnm = hie.getAttributes();
+                            for (int m = 0; m < nnm.getLength(); m++) {
+                                Node node = nnm.item(m);
+                                String val = node.getNodeValue();
+                                if (val.equals("Hefja leit")) {
+                                    //hie.click();
+                                    thehie = hie;
                                 }
                             }
                         }
+                    }
 
                         einb = (HTMLInputElement) doc.getElementById("einb");
                         fjolb = (HTMLInputElement) doc.getElementById("fjolb");
@@ -268,242 +268,246 @@ public class FasteignFX extends Application {
                         sqm_from = (HTMLSelectElement) doc.getElementById("sqm-from");
                         sqm_to = (HTMLSelectElement) doc.getElementById("sqm-to");
 
-                        if (fjolb != null) {
-                            String val = typcomb.getValue();
-                            /*fjolb.setChecked(false);
-                             einb.setChecked(false);
-                             haedir.setChecked(false);
-                             radpar.setChecked(false);*/
-                            if (val.equals("Einbýli")) {
-                                einb.click();
-                            } else if (val.equals("Fjölbýli")) {
-                                fjolb.click();
-                            } else if (val.equals("Hæðir")) {
-                                haedir.click();
-                            } else if (val.equals("Raðhús/Parhús")) {
-                                radpar.click();
-                            }
+                    if (fjolb != null) {
+                        String val = typcomb.getValue();
+                        /*fjolb.setChecked(false);
+                         einb.setChecked(false);
+                         haedir.setChecked(false);
+                         radpar.setChecked(false);*/
+                        if (val.equals("Einbýli")) {
+                            einb.click();
+                        } else if (val.equals("Fjölbýli")) {
+                            fjolb.click();
+                        } else if (val.equals("Hæðir")) {
+                            haedir.click();
+                        } else if (val.equals("Parhús/Raðhús")) {
+                            radpar.click();
                         }
-                        if (chk101 != null && loccomb.getValue() != null) {
-                            String val = loccomb.getValue().substring(0, 3);
-                            if (val.equals("101")) {
-                                chk101.click();
-                            } else if (val.equals("103")) {
-                                chk103.click();
-                            } else if (val.equals("104")) {
-                                chk104.click();
-                            } else if (val.equals("105")) {
-                                chk105.click();
-                            } else if (val.equals("107")) {
-                                chk107.click();
-                            } else if (val.equals("108")) {
-                                chk108.click();
-                            } else if (val.equals("109")) {
-                                chk109.click();
-                            } else if (val.equals("110")) {
-                                chk110.click();
-                            } else if (val.equals("111")) {
-                                chk111.click();
-                            } else if (val.equals("112")) {
-                                chk112.click();
-                            } else if (val.equals("113")) {
-                                chk113.click();
-                            } else if (val.equals("116")) {
-                                chk116.click();
-                            } else if (val.equals("170")) {
-                                chk170.click();
-                            } else if (val.equals("190")) {
-                                chk190.click();
-                            } else if (val.equals("200")) {
-                                chk200.click();
-                            } else if (val.equals("201")) {
-                                chk201.click();
-                            } else if (val.equals("202")) {
-                                chk202.click();
-                            } else if (val.equals("203")) {
-                                chk203.click();
-                            } else if (val.equals("210")) {
-                                chk210.click();
-                            } else if (val.equals("211")) {
-                                chk211.click();
-                            } else if (val.equals("220")) {
-                                chk220.click();
-                            } else if (val.equals("221")) {
-                                chk221.click();
-                            } else if (val.equals("225")) {
-                                chk225.click();
-                            }
+                    }
+                    if (chk101 != null && loccomb.getValue() != null) {
+                        String val = loccomb.getValue().substring(0, 3);
+                        if (val.equals("101")) {
+                            chk101.click();
+                        } else if (val.equals("103")) {
+                            chk103.click();
+                        } else if (val.equals("104")) {
+                            chk104.click();
+                        } else if (val.equals("105")) {
+                            chk105.click();
+                        } else if (val.equals("107")) {
+                            chk107.click();
+                        } else if (val.equals("108")) {
+                            chk108.click();
+                        } else if (val.equals("109")) {
+                            chk109.click();
+                        } else if (val.equals("110")) {
+                            chk110.click();
+                        } else if (val.equals("111")) {
+                            chk111.click();
+                        } else if (val.equals("112")) {
+                            chk112.click();
+                        } else if (val.equals("113")) {
+                            chk113.click();
+                        } else if (val.equals("116")) {
+                            chk116.click();
+                        } else if (val.equals("170")) {
+                            chk170.click();
+                        } else if (val.equals("190")) {
+                            chk190.click();
+                        } else if (val.equals("200")) {
+                            chk200.click();
+                        } else if (val.equals("201")) {
+                            chk201.click();
+                        } else if (val.equals("202")) {
+                            chk202.click();
+                        } else if (val.equals("203")) {
+                            chk203.click();
+                        } else if (val.equals("210")) {
+                            chk210.click();
+                        } else if (val.equals("211")) {
+                            chk211.click();
+                        } else if (val.equals("220")) {
+                            chk220.click();
+                        } else if (val.equals("221")) {
+                            chk221.click();
+                        } else if (val.equals("225")) {
+                            chk225.click();
                         }
-                        if (sqm_from != null) {
-                            //sqm_from.setSelectedIndex( sqmfrom.getSelectionModel().getSelectedIndex() );
-                            sqm_from.setValue(Integer.toString(sqmfrom.getValue()));
-                        }
-                        if (sqm_to != null) {
-                            //sqm_to.setSelectedIndex( sqmto.getSelectionModel().getSelectedIndex() );
-                            sqm_to.setValue(Integer.toString(sqmto.getValue()));
-                        }
-                        if (thehie != null) {
-                            loadWorker.cancel();
-                            thehie.click();
-                        }
-                    } else {
-                        HTMLDivElement div = (HTMLDivElement) doc.getElementById("resultlist");
-                        if (div != null) {
-                            NodeList nl = div.getChildNodes();
-                            for (int i = 0; i < nl.getLength(); i++) {
-                                Node n = nl.item(i);
-                                if (n != null && n instanceof HTMLDivElement ) {
-                                	HTMLDivElement hdiv = (HTMLDivElement)n;
-                                	String id = hdiv.getId();
-                                	if( id.contains("realestate-result") ) {
-	                                    String imgurl = "";
-	                                    String url = "";
-	                                    String nafn = null;
-	                                    String pnr = null;
-	                                    int verd = -1;
-	                                    int herb = -1;
-	                                    String tegund = null;
-	                                    double staerd = -1;
-	
-	                                    NodeList subnl = n.getChildNodes();
-	                                    for (int k = 0; k < subnl.getLength(); k++) {
-	                                        Node subn = subnl.item(k);
-	                                        if (subn != null) {
-	                                            if (subn instanceof HTMLDivElement) {
-	                                                NodeList ssubnl = subn.getChildNodes();
-	                                                for (int m = 0; m < ssubnl.getLength(); m++) {
-	                                                    Node then = ssubnl.item(m);
-	                                                    if (then instanceof HTMLAnchorElement) {
-	                                                        NodeList ssuban = then.getChildNodes();
-	                                                        for (int u = 0; u < ssuban.getLength(); u++) {
-	                                                            Node img = ssuban.item(u);
-	                                                            if (img != null && img instanceof HTMLImageElement) {
-	                                                                imgurl = img.getAttributes().getNamedItem("src").getTextContent();
-	                                                                break;
-	                                                            }
-	                                                        }
-	                                                    } else if (then != null && then instanceof HTMLDivElement) {
-	                                                        HTMLDivElement head = (HTMLDivElement) then;
-	                                                        NodeList nl2 = head.getChildNodes();
-	                                                        if (head.getClassName().contains("head")) {
-	                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
-	                                                                Node n2 = nl2.item(m2);
-	                                                                if (n2 != null && n2 instanceof HTMLAnchorElement) {
-	                                                                    url = n2.getAttributes().getNamedItem("href").getTextContent();
-	                                                                    NodeList nl3 = n2.getChildNodes();
-	                                                                    for (int m3 = 0; m3 < nl3.getLength(); m3++) {
-	                                                                        Node n3 = nl3.item(m3);
-	                                                                        if (n3 != null && n3 instanceof HTMLHeadingElement) {
-	                                                                            if (nafn == null) {
-	                                                                                nafn = n3.getTextContent();
-	                                                                            } else {
-	                                                                                pnr = n3.getTextContent();
-	                                                                            }
-	                                                                        }
-	                                                                    }
-	                                                                }
-	                                                            }
-	                                                        } else if (head.getClassName().contains("properties")) {
-	                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
-	                                                                Node n2 = nl2.item(m2);
-	                                                                if (n2 != null && n2 instanceof HTMLElement && n2.getNodeName().equals("SPAN")) {
-	                                                                    String type = n2.getTextContent();
-	                                                                    if (type.contains("Verð")) {
-	                                                                        NodeList spannodes = n2.getChildNodes();
-	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-	                                                                            Node n3 = spannodes.item(m3);
-	                                                                            if (n3.getNodeName().equals("STRONG")) {
-	                                                                                String val = n3.getTextContent().trim();
-	                                                                                try {
-	                                                                                    verd = Integer.parseInt(val.split("[ ]+")[0].replace(".", ""));
-	                                                                                } catch (Exception e) {
-	
-	                                                                                }
-	                                                                                break;
-	                                                                            }
-	                                                                        }
-	                                                                    } else if (type.contains("Herb")) {
-	                                                                        NodeList spannodes = n2.getChildNodes();
-	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-	                                                                            Node n3 = spannodes.item(m3);
-	                                                                            if (n3.getNodeName().equals("STRONG")) {
-	                                                                                String val = n3.getTextContent().trim();
-	                                                                                herb = Integer.parseInt(val);
-	                                                                                break;
-	                                                                            }
-	                                                                        }
-	                                                                    } else if (type.contains("Tegund")) {
-	                                                                        NodeList spannodes = n2.getChildNodes();
-	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-	                                                                            Node n3 = spannodes.item(m3);
-	                                                                            if (n3.getNodeName().equals("STRONG")) {
-	                                                                                String val = n3.getTextContent().trim();
-	                                                                                tegund = val;
-	                                                                                break;
-	                                                                            }
-	                                                                        }
-	                                                                    } else if (type.contains("Stærð")) {
-	                                                                        NodeList spannodes = n2.getChildNodes();
-	                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
-	                                                                            Node n3 = spannodes.item(m3);
-	                                                                            if (n3.getNodeName().equals("STRONG")) {
-	                                                                                String val = n3.getTextContent().trim();
-	                                                                                staerd = Double.parseDouble(val.split("[ ]+")[0]);
-	                                                                                break;
-	                                                                            }
-	                                                                        }
-	                                                                    }
-	                                                                }
-	                                                            }
-	                                                        }
-	                                                    }
-	                                                }
-	                                            }
-	                                        }
-	                                    }
+                    }
+                    if (sqm_from != null && sqmfrom != null) {
+                        //sqm_from.setSelectedIndex( sqmfrom.getSelectionModel().getSelectedIndex() );
+                        Integer sqmval = sqmfrom.getValue();
+                        if( sqmval != null ) sqm_from.setValue(sqmval.toString());
+                    }
+                    if (sqm_to != null && sqmto != null) {
+                        //sqm_to.setSelectedIndex( sqmto.getSelectionModel().getSelectedIndex() );
+                        Integer sqmval = sqmto.getValue();
+                        if( sqmval != null ) sqm_to.setValue(sqmval.toString());
+                    }
+                    if (thehie != null) {
+                        loadWorker.cancel();
+                        thehie.click();
+                    }
+                } else {
+                    HTMLDivElement div = (HTMLDivElement) doc.getElementById("resultlist");
+                    if (div != null) {
+                        NodeList nl = div.getChildNodes();
+                        for (int i = 0; i < nl.getLength(); i++) {
+                            Node n = nl.item(i);
+                            if (n != null && n instanceof HTMLDivElement ) {
+                                HTMLDivElement hdiv = (HTMLDivElement)n;
+                                String id = hdiv.getId();
+                                if( id.contains("realestate-result") ) {
+                                    String imgurl = "";
+                                    String url = "";
+                                    String nafn = null;
+                                    String pnr = null;
+                                    int verd = -1;
+                                    int herb = -1;
+                                    String tegund = null;
+                                    double staerd = -1;
 
-	                                    String urlstr = base + url;
-	                                    if (!ibmap.containsKey(urlstr)) {
-	                                        Ibud ib = new Ibud(nafn);
-	                                        ib.setUrl(urlstr);
-	                                        ib.imgurl = base + imgurl;
-	                                        ib.pnr = pnr;
-	                                        ib.setVerd(verd);
-	                                        ib.setTegund(tegund);
-	                                        ib.setFermetrar(staerd);
-	                                        ib.setHerbergi(herb);
-							        		//avgverdfm.bind( ib.verdfmProperty() );
-	                                        //iblist.add( ib );
-	                                        ibmap.put(ib.getUrlString(), ib);
-							        		//fasteign.iblist.add( ib );
-	                                        //fasteign.refreshTables();
-	                                    }
-	                                }
+                                    NodeList subnl = n.getChildNodes();
+                                    for (int k = 0; k < subnl.getLength(); k++) {
+                                        Node subn = subnl.item(k);
+                                        if (subn != null) {
+                                            if (subn instanceof HTMLDivElement) {
+                                                NodeList ssubnl = subn.getChildNodes();
+                                                for (int m = 0; m < ssubnl.getLength(); m++) {
+                                                    Node then = ssubnl.item(m);
+                                                    if (then instanceof HTMLAnchorElement) {
+                                                        NodeList ssuban = then.getChildNodes();
+                                                        for (int u = 0; u < ssuban.getLength(); u++) {
+                                                            Node img = ssuban.item(u);
+                                                            if (img != null && img instanceof HTMLImageElement) {
+                                                                imgurl = img.getAttributes().getNamedItem("src").getTextContent();
+                                                                break;
+                                                            }
+                                                        }
+                                                    } else if (then != null && then instanceof HTMLDivElement) {
+                                                        HTMLDivElement head = (HTMLDivElement) then;
+                                                        NodeList nl2 = head.getChildNodes();
+                                                        if (head.getClassName().contains("head")) {
+                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
+                                                                Node n2 = nl2.item(m2);
+                                                                if (n2 != null && n2 instanceof HTMLAnchorElement) {
+                                                                    url = n2.getAttributes().getNamedItem("href").getTextContent();
+                                                                    NodeList nl3 = n2.getChildNodes();
+                                                                    for (int m3 = 0; m3 < nl3.getLength(); m3++) {
+                                                                        Node n3 = nl3.item(m3);
+                                                                        if (n3 != null && n3 instanceof HTMLHeadingElement) {
+                                                                            if (nafn == null) {
+                                                                                nafn = n3.getTextContent();
+                                                                            } else {
+                                                                                pnr = n3.getTextContent();
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        } else if (head.getClassName().contains("properties")) {
+                                                            for (int m2 = 0; m2 < nl2.getLength(); m2++) {
+                                                                Node n2 = nl2.item(m2);
+                                                                if (n2 != null && n2 instanceof HTMLElement && n2.getNodeName().equals("SPAN")) {
+                                                                    String type = n2.getTextContent();
+                                                                    if (type.contains("Verð")) {
+                                                                        NodeList spannodes = n2.getChildNodes();
+                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+                                                                            Node n3 = spannodes.item(m3);
+                                                                            if (n3.getNodeName().equals("STRONG")) {
+                                                                                String val = n3.getTextContent().trim();
+                                                                                try {
+                                                                                    verd = Integer.parseInt(val.split("[ ]+")[0].replace(".", ""));
+                                                                                } catch (Exception e) {
+
+                                                                                }
+                                                                                break;
+                                                                            }
+                                                                        }
+                                                                    } else if (type.contains("Herb")) {
+                                                                        NodeList spannodes = n2.getChildNodes();
+                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+                                                                            Node n3 = spannodes.item(m3);
+                                                                            if (n3.getNodeName().equals("STRONG")) {
+                                                                                String val = n3.getTextContent().trim();
+                                                                                herb = Integer.parseInt(val);
+                                                                                break;
+                                                                            }
+                                                                        }
+                                                                    } else if (type.contains("Tegund")) {
+                                                                        NodeList spannodes = n2.getChildNodes();
+                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+                                                                            Node n3 = spannodes.item(m3);
+                                                                            if (n3.getNodeName().equals("STRONG")) {
+                                                                                String val = n3.getTextContent().trim();
+                                                                                tegund = val;
+                                                                                break;
+                                                                            }
+                                                                        }
+                                                                    } else if (type.contains("Stærð")) {
+                                                                        NodeList spannodes = n2.getChildNodes();
+                                                                        for (int m3 = 0; m3 < spannodes.getLength(); m3++) {
+                                                                            Node n3 = spannodes.item(m3);
+                                                                            if (n3.getNodeName().equals("STRONG")) {
+                                                                                String val = n3.getTextContent().trim();
+                                                                                staerd = Double.parseDouble(val.split("[ ]+")[0]);
+                                                                                break;
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    String urlstr = base + url;
+                                    if (!ibmap.containsKey(urlstr)) {
+                                        Ibud ib = new Ibud(nafn, tableNode);
+                                        ib.setUrl(urlstr);
+                                        ib.imgurl = imgurl;
+                                        ib.pnr = pnr;
+                                        ib.setVerd(verd);
+                                        ib.setTegund(tegund);
+                                        ib.setFermetrar(staerd);
+                                        ib.setHerbergi(herb);
+                                        //avgverdfm.bind( ib.verdfmProperty() );
+                                        //iblist.add( ib );
+                                        ibmap.put(ib.getUrlString(), ib);
+                                        //fasteign.iblist.add( ib );
+                                        //fasteign.refreshTables();
+                                    }
                                 }
                             }
+                        }
 
-                            boolean foundnext = false;
-                            nl = doc.getElementsByTagName("a");
-                            for (int i = 0; i < nl.getLength(); i++) {
-                                HTMLAnchorElement anchor = (HTMLAnchorElement) nl.item(i);
-                                if (anchor.getTextContent().contains("Næsta")) {
-                                    String urlstr = anchor.getHref();
-                                    System.err.println( "about to " + urlstr );
-                                    if( !urlstr.contains("mbl.is") ) urlstr = base + urlstr;
-                                    foundnext = true;
+                        boolean foundnext = false;
+                        nl = doc.getElementsByTagName("a");
+                        for (int i = 0; i < nl.getLength(); i++) {
+                            HTMLAnchorElement anchor = (HTMLAnchorElement) nl.item(i);
+                            if (anchor.getTextContent().contains("Næsta")) {
+                                String urlstr = anchor.getHref();
+                                System.err.println( "about to " + urlstr );
+                                if( !urlstr.contains("mbl.is") ) urlstr = base + urlstr;
+                                foundnext = true;
 
-                                    loadWorker.cancel();
-                                    try {
-                                        URL url = new URL(urlstr);
-                                        InputStream is = url.openStream();
-                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                        int r = is.read(smallbuffer);
-                                        while (r > 0) {
-                                            baos.write(smallbuffer, 0, r);
-                                            r = is.read(smallbuffer);
-                                        }
-                                        baos.close();
-                                        currentloc = urlstr;
+
+
+                                loadWorker.cancel();
+                                try {
+                                    URL url = new URL(urlstr);
+                                    InputStream is = url.openStream();
+                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                    int r = is.read(smallbuffer);
+                                    while (r > 0) {
+                                        baos.write(smallbuffer, 0, r);
+                                        r = is.read(smallbuffer);
+                                    }
+                                    baos.close();
+                                    currentloc = urlstr;
 
                                         System.err.println("about to load " + currentloc+ "currentsize " + ibmap.size());
                                         webEngine.loadContent(baos.toString());
@@ -516,43 +520,40 @@ public class FasteignFX extends Application {
                             }
 
                             //foundnext = false;
-                            if (!foundnext) {
-                                for (String urlstr : ibmap.keySet()) {
-                                    Ibud tib = ibmap.get(urlstr);
-                                    if (tib.getFasteignaMat() == -1 || tib.getFasteignaMat() == 0) {
-                                        loadWorker.cancel();
-                                        try {
-                                            URL url = new URL(tib.getUrlString());
-                                            InputStream is = url.openStream();
-                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                            int r = is.read(smallbuffer);
-                                            while (r > 0) {
-                                                baos.write(smallbuffer, 0, r);
-                                                r = is.read(smallbuffer);
-                                            }
-                                            baos.close();
-                                            currentloc = tib.getUrlString();
-
-                                            System.err.println("about to load " + currentloc);
-                                            webEngine.loadContent(baos.toString());
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
+                        if (!foundnext) {
+                            for (String urlstr : ibmap.keySet()) {
+                                Ibud tib = ibmap.get(urlstr);
+                                if (tib.getFasteignaMat() == -1 || tib.getFasteignaMat() == 0) {
+                                    loadWorker.cancel();
+                                    try {
+                                        URL url = new URL(tib.getUrlString());
+                                        InputStream is = url.openStream();
+                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                        int r = is.read(smallbuffer);
+                                        while (r > 0) {
+                                            baos.write(smallbuffer, 0, r);
+                                            r = is.read(smallbuffer);
                                         }
-                                        break;
+                                        baos.close();
+                                        currentloc = tib.getUrlString();
+
+                                        System.err.println("about to load " + currentloc);
+                                        webEngine.loadContent(baos.toString());
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
                                     }
+                                    break;
                                 }
                             }
-                        } else {
-                            printDoc(doc);
                         }
+                    } else {
+                        printDoc(doc);
                     }
-                } else {
-                    //printDoc( doc );
                 }
+            } else {
+                //printDoc( doc );
             }
         });
-
-        final TableView<Ibud> tableNode = new TableView<Ibud>(iblist);
 
         TableColumn<Ibud, Image> imageCol = new TableColumn<Ibud, Image>("Mynd");
         imageCol.setCellFactory(new Callback<TableColumn<Ibud, Image>, TableCell<Ibud, Image>>() {
@@ -675,6 +676,8 @@ public class FasteignFX extends Application {
                     List<Ibud> rem = new ArrayList<Ibud>(sel);
                     System.err.println(sel.size() + " " + rem.size());
                     iblist.removeAll(rem);
+                    tableNode.getSelectionModel().clearSelection();
+                    tableNode.refresh();
                     /*if( !sel.isEmpty() ) {				
                      iblist.removeAll( sel );
                      }
@@ -754,12 +757,7 @@ public class FasteignFX extends Application {
 
         leita = new Button("Leita");
         //leita.setDisable( true );
-        leita.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent arg0) {
-                webEngine.load(base + "/fasteignir");
-            }
-        });
+        leita.setOnAction(arg0 -> webEngine.load(base + "/fasteignir"));
 
         VBox vbox = new VBox();
         HBox hbox = new HBox();

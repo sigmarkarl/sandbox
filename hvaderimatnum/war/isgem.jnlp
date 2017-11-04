@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="file:///home/sigmar/sandbox/hvaderimatnum/war/">
+<jnlp spec="1.0+" codebase="https://hvaderimatnum.appspot.com/">
 <information>
   <title>Matisgem</title>
   <vendor>Matis</vendor>
@@ -16,6 +16,9 @@
   <jar href="swingx.jar"/>
   <jar href="gdata-core-1.0.jar"/>
   <jar href="guava-13.0.1.jar"/>
+  <!--jar href="swingx.jar"/-->
+  <!--jar href="gdata-core-1.0.jar"/-->
+  <!--jar href="guava-13.0.1.jar"/-->
   <!--extension name="poi" href="http://test.matis.is/isgem/poi38b4/poi.jnlp"/-->
   <!--extension name="dropbox" href="http://dl.dropbox.com/u/10024658/dbsave.jnlp"/-->
 </resources>

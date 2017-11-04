@@ -94,6 +94,10 @@ import elemental.html.WebSocket;
 //import elemental.client.Browser;
 //import elemental.html.Console;
 
+/**
+ *
+ * @version $Id:  $
+ */
 public class Treedraw implements EntryPoint {
 	Canvas				canvas;
 	Node				root;

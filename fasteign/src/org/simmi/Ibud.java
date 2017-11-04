@@ -20,6 +20,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 
 public class Ibud {
@@ -53,6 +54,7 @@ public class Ibud {
 		mmap.put("desember", 12);
 	}
 	
+	TableView<Ibud>	tv;
 	StringProperty nafn;
 	IntegerProperty verd;
 	IntegerProperty fastmat;
@@ -103,11 +105,12 @@ public class Ibud {
 				@Override
 				public Image getValue() {
 					if( img == null ) {
-						URL noimgurl = Ibud.class.getResource("/noimage.jpg");
+						URL noimgurl = Ibud.class.getResource("noimage.jpg");
 						img = new Image( noimgurl.toString() );
 						new Thread() {
 							public void run() {
 								img = new Image( imgurl );
+								tv.refresh();
 							}
 						}.start();
 					}
@@ -238,11 +241,12 @@ public class Ibud {
         return ferm;
     }
 
-	public Ibud(String nafn) {
+	public Ibud(String nafn, TableView<Ibud> tv) {
 		setNafn( nafn );
+		this.tv = tv;
 	}
 
-	public Ibud(String nafn, int verd, int fastm, int brunm, String teg, int ferm, int herb, String dat, String url) throws ParseException {
+	public Ibud(String nafn, int verd, int fastm, int brunm, String teg, int ferm, int herb, String dat, String url, TableView<Ibud> tv) throws ParseException {
 		setNafn( nafn );
 		setVerd( verd );
 		setFasteignaMat( fastm );
@@ -250,6 +254,7 @@ public class Ibud {
 		setTegund( teg );
 		setFermetrar( ferm );
 		setHerbergi( herb );
+		this.tv = tv;
 		this.dat = DateFormat.getDateInstance().parse(dat);
 	}
 	

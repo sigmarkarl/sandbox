@@ -17,7 +17,7 @@
   </servlet-mapping>
   
   <welcome-file-list>
-    <welcome-file>sorttable.html</welcome-file>
+    <welcome-file>Hvaderimatnum.html</welcome-file>
   </welcome-file-list>
 
 </web-app>
