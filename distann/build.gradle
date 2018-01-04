@@ -22,6 +22,3 @@ repositories {
 dependencies {
     compile "org.apache.commons:commons-jexl:2.1.1"
 }
-
-sourceCompatibility = 9
-targetCompatibility = 9

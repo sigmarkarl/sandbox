@@ -3,9 +3,6 @@ allprojects {
     apply plugin: 'eclipse'
     apply plugin: 'java'
 
-    sourceCompatibility = 9
-    targetCompatibility = 9
-
     ext.getProjectFullName = {
         return 'distann' + project.path.replace(':', '-')
     }
@@ -81,7 +78,7 @@ project(':javafasta') {
 		compile project(':TreeDraw')
         //compile group: 'org.apache.poi', name: 'poi', version: '3.17'
 		//compile group: 'org.ejml', name: 'all', version: '0.29'
-		//compile group: 'com.github.samtools', name: 'htsjdk', version: '2.11.0'
+		compile group: 'com.github.samtools', name: 'htsjdk', version: '2.13.1'
         compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
     }
 }
@@ -92,6 +89,10 @@ project(':distann') {
 		compile project(':serifier')
 		compile project(':spilling')
 
+        compile group: 'org.apache.poi', name: 'poi', version: '3.17'
+        compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
+        //compile files('poi-3.17.jar')
+        compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
         compile group: 'org.apache.commons', name: 'commons-compress', version: '1.14'
         compile group: 'org.apache.commons', name: 'commons-vfs2', version: '2.2'
 	}

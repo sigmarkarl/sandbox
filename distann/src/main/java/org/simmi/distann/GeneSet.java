@@ -100,6 +100,7 @@ public class GeneSet implements GenomeSet {
 	
 	public static String user;
 	public String projectname = "geneset";
+	public boolean noseq = false;
 
 	/*private static StringBuilder dnaSearch(String query) {
 		/*
@@ -7392,13 +7393,10 @@ public class GeneSet implements GenomeSet {
 	Map<Set<String>, Set<Map<String, Set<String>>>> clusterMap;
 	Map<String,Function> funcmap = new HashMap<String,Function>();
 
-	private void readGoInfo(Reader rd, Map<Function, Set<Gene>> gofilter, String outfile) throws IOException {
+	private void readGoInfo(BufferedReader br, Map<Function, Set<Gene>> gofilter, String outfile) throws IOException {
 		FileWriter fw = null;
 		if (outfile != null)
 			fw = new FileWriter(outfile);
-
-		// FileReader fr = new FileReader( obo );
-		BufferedReader br = new BufferedReader(rd);
 
 		boolean on = false;
 		Function f = null;
@@ -8204,6 +8202,11 @@ public class GeneSet implements GenomeSet {
 	Map<String,Set<String>>					biosystemsmap = new HashMap<>();
 	
 	Map<String, Set<String>> 				ko2go = new TreeMap<>();
+
+	Path getResource(String res) {
+		//return GeneSet.class.getResourceAsStream(res);
+		return Paths.get("distann/src/main/java"+res);
+	}
 	
 	public void loadStuff( Path zipp ) throws IOException {
 		Map<String,String> env = new HashMap<>();
@@ -9369,10 +9372,10 @@ public class GeneSet implements GenomeSet {
 			ze = zipin.getNextEntry();
 		}
 		zipin.close();*/
-		is = GeneSet.class.getResourceAsStream("/go.obo");
+		Path gobo = getResource("/go.obo");
 		//Map<String,Function> funcmap = 
-		if( is != null ) {
-			readGoInfo( new InputStreamReader(is), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
+		if( gobo != null ) {
+			readGoInfo( Files.newBufferedReader(gobo), totalgo, null ); // "/home/sigmar/MAT/go_short.obo");
 		}
 		
 		//is = GeneSet.class.getResourceAsStream("/go_short.obo");

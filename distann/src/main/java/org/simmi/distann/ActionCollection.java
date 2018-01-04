@@ -13,16 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -49,10 +40,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.FileContents;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
+//import javax.jnlp.FileContents;
+//import javax.jnlp.FileSaveService;
+//import javax.jnlp.ServiceManager;
+//import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JApplet;
@@ -78,6 +69,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;*/
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simmi.serifier.SerifyApplet;
 import org.simmi.spilling.Connectron;
 import org.simmi.spilling.Corp;
@@ -229,7 +225,7 @@ public class ActionCollection {
 	public static void seqstats( GeneSetHead genesethead ) {
 		GeneSet geneset = genesethead.geneset;
 		
-		/*Workbook workbook = new XSSFWorkbook();
+		Workbook workbook = new XSSFWorkbook();
 		Sheet sheet = workbook.createSheet("genome");
 		
 		//List<Row>	rows = new ArrayList<Row>();
@@ -284,7 +280,7 @@ public class ActionCollection {
 					rows.add( nrow );
 				} else {
 					nrow = rows.get(k);
-				}*
+				}*/
 				Cell ctname = nrow.createCell(0);
 				ctname.setCellValue( ctg.getName() );
 				Cell ctlen = nrow.createCell(1);
@@ -375,7 +371,7 @@ public class ActionCollection {
 			e1.printStackTrace();
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}*/
+		}
 	}
 	
 	public static void stats( Container comp, GeneSetHead genesethead, Map<String,List<Sequence>> speccontigMap ) {
@@ -452,12 +448,6 @@ public class ActionCollection {
 		}
 		
 		JSObject window = null;
-		try {
-			window = JSObject.getWindow( genesethead );
-		} catch( NoSuchMethodError | Exception exc ) {
-			exc.printStackTrace();
-		}
-		
 		if( window != null ) {
 			try {
 				window.setMember("smuck", htmlstr);
@@ -495,7 +485,7 @@ public class ActionCollection {
 	}
 	
 	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Sequence>> speccontigMap, boolean withHtml ) throws IOException {
-		/*Workbook wb = new XSSFWorkbook();
+		Workbook wb = new XSSFWorkbook();
 		Sheet sh = wb.createSheet("genome stats");
 		
 		int k = 0;
@@ -587,7 +577,7 @@ public class ActionCollection {
 				len += ct.getGCCount();
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+len+"</td>" );
 			double d = (double)len/(double)total;
@@ -623,7 +613,7 @@ public class ActionCollection {
 				if( ct.getAnnotations() != null ) total += ct.getAnnotations().size();
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+total+"</td>" );
 			fw.write( "<td>100%</td>" );
@@ -750,7 +740,7 @@ public class ActionCollection {
 						String lowername = tv.getGene().getName().toLowerCase();
 						boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
 						
-						if( rrna /*^ ssu16s* ) {
+						if( rrna /*^ ssu16s*/ ) {
 							System.err.println( "16S erm: " + spec + "  " + tv.getGene().getName() + " bbo " + ssu16s );
 						}
 						
@@ -852,7 +842,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -887,7 +877,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -916,7 +906,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -953,7 +943,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -987,13 +977,13 @@ public class ActionCollection {
 								count++;
 								break;
 							}
-						}*
+						}*/
 					}
 					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1027,13 +1017,13 @@ public class ActionCollection {
 								count++;
 								break;
 							}
-						}*
+						}*/
 					}
 					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1057,7 +1047,7 @@ public class ActionCollection {
 					for( Annotation ann : ct.getAnnotations() ) {
 						Tegeval tv = (Tegeval)ann;
 						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-							if( f.getMetaCyc() != null && f.getMetaCyc().length() > 0 ) {
+							if( f.getMetacyc() != null && f.getMetacyc().length() > 0 ) {
 								count++;
 								break;
 							}
@@ -1067,7 +1057,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1113,7 +1103,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1170,7 +1160,7 @@ public class ActionCollection {
 										found = true;
 										break;
 									}
-								}*
+								}*/
 							}
 							
 							if( !found ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
@@ -1186,7 +1176,7 @@ public class ActionCollection {
 										found = true;
 										break;
 									}
-								}*
+								}*/
 								
 								if( f.getKo() != null && f.getKo().length() > 0 ) {
 									for( String pw : geneset.pathwaykomap.keySet() ) {
@@ -1219,7 +1209,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1266,7 +1256,7 @@ public class ActionCollection {
 											found = true;
 											break;
 										}
-									}*
+									}*/
 									
 									if( found ) break;
 								}
@@ -1300,7 +1290,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1342,7 +1332,7 @@ public class ActionCollection {
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1372,14 +1362,14 @@ public class ActionCollection {
 							if( g.getSpecies().equals(spec) ) {
 								if( gset.add(g) ) cc++;
 							}
-						}*
+						}*/
 						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
 					}
 					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1409,14 +1399,14 @@ public class ActionCollection {
 							if( g.getSpecies().equals(spec) ) {
 								if( gset.add(g) ) cc++;
 							}
-						}*
+						}*/
 						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
 					}
 					total += ct.getAnnotations().size();
 				}
 				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 					len += tv.getLength();
-				}*
+				}*/
 			}
 			fw.write( "<td>"+count+"</td>" );
 			double d = (double)count/(double)total;
@@ -1440,8 +1430,7 @@ public class ActionCollection {
 			e.printStackTrace();
 		}
 		
-		return fw.toString();*/
-		return "";
+		return fw.toString();
 	}
 	
 	public static void addAll( Menu menu, 
@@ -1616,12 +1605,6 @@ public class ActionCollection {
 				}
 				
 				JSObject window = null;
-				try {
-					window = JSObject.getWindow( genesethead );
-				} catch( NoSuchMethodError | Exception exc ) {
-					exc.printStackTrace();
-				}
-				
 				if( window != null ) {
 					StringBuilder restext = new StringBuilder();
 					restext.append("['a', ' ']");
@@ -3469,7 +3452,7 @@ public class ActionCollection {
                             }
 
                             if( !succ ) {
-                                FileSaveService fss = null;
+                                /*FileSaveService fss = null;
                                 FileContents fileContents = null;
 
                                 try {
@@ -3494,7 +3477,7 @@ public class ActionCollection {
                                     }
                                 } catch( Exception e1 ) {
                                     e1.printStackTrace();
-                                }
+                                }*/
                             }
                         });
 					}
@@ -4086,7 +4069,7 @@ public class ActionCollection {
 					frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 					frame.setSize(400, 300);
 					
-					SerifyApplet sa = new SerifyApplet( geneset.zipfilesystem );
+					SerifyApplet sa = new SerifyApplet( geneset.zipfilesystem, geneset.noseq );
 					sa.init( frame, null, GeneSet.user );
 					//frame.add( )
 					geneset.currentSerify = sa;
@@ -4200,8 +4183,10 @@ public class ActionCollection {
 					/*FileWriter fw = new FileWriter("/root/erm.fasta");
 					fw.write( fastaStr );
 					fw.close();*/
-					
-					geneset.currentSerify.addSequences("uh", new StringReader( fastaStr ), Paths.get("/"), null);
+
+					Reader rd = new StringReader( fastaStr );
+					BufferedReader br = new BufferedReader(rd);
+					geneset.currentSerify.addSequences("uh", br, Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
 				}

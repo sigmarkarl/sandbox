@@ -65,6 +65,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -125,24 +126,22 @@ import javafx.util.Pair;
 import netscape.javascript.JSObject;
 
 public class SerifyApplet {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	
+
 	TableView<Sequences>			table;
 	Serifier						serifier;
 	//String 						globaluser = null;
 	NativeRun						nrun = new NativeRun();
+	boolean 						noseq = false;
 	
-	Map<Path,Sequences> mseq = new HashMap<Path,Sequences>();
+	Map<Path,Sequences> mseq = new HashMap<>();
 	
 	public String user;
 	
-	public SerifyApplet( FileSystem fs ) {
+	public SerifyApplet( FileSystem fs, boolean noseq ) {
 		this();
 		this.fs = fs;
 		this.root = fs.getPath("/");
+		this.noseq = noseq;
 	}
 	
 	public SerifyApplet() {
@@ -2016,8 +2015,8 @@ e.printStackTrace();
         });
 	}
 	
-	FileSystem 	fs = null;
-	Path		root = null;
+	FileSystem 	fs;
+	Path		root;
 	/*
 	ACDK	Clostridium_sp-7-2-43FAA
 	AWST	Clostridium_sp-KLE-1755
@@ -3227,9 +3226,16 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 
                             addSequences( f.getName(), dest, null );
                         } else {
-                            Path dest = root.resolve(f.getName());
-                            Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
-                            addSequences( f.getName(), dest, null );
+                        	String filename = f.getName().toString();
+                        	Path dest;
+                        	if( filename.toLowerCase().endsWith(".gz") ) {
+                        		dest = root.resolve(filename.substring(0,filename.length()-3));
+                        		Files.copy(new GZIPInputStream(Files.newInputStream(f.toPath())), dest, StandardCopyOption.REPLACE_EXISTING);
+							} else {
+								dest = root.resolve(f.getName());
+								Files.copy(f.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
+							}
+							addSequences( f.getName(), dest, null );
                         }
                     }
                 } catch (URISyntaxException e1) {
@@ -4786,16 +4792,13 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 					} else if( obj instanceof String ) {
 						//obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
 						String filelistStr = (String)obj;
-						
 						if( filelistStr.contains("\n>") ) {
-							Map<String,Reader>	isrmap = new HashMap<String,Reader>();
-							InputStreamReader isr = new InputStreamReader( new ByteArrayInputStream(filelistStr.getBytes()) );
-							isrmap.put("", isr);
+							Map<String,BufferedReader>	isrmap = new HashMap<>();
+							BufferedReader br = new BufferedReader(new InputStreamReader( new ByteArrayInputStream(filelistStr.getBytes()) ));
+							isrmap.put("", br);
 							addSequences(null, isrmap, null, null);
 						} else {
 							String[] fileStr = filelistStr.split("\n");
-							
-							System.err.println( filelistStr );
 							for( String fileName : fileStr ) {
 								Path val = Paths.get( fileName );
 								//File f = new File( new URI( fileName ) );
@@ -4804,7 +4807,6 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 							}
 						}
 					} else if( obj instanceof Reader ) {
-						System.err.println("Reader");
 						//obj = support.getTransferable().getTransferData(DataFlavor.stringFlavor);
 						
 						CharArrayWriter	caw = new CharArrayWriter();
@@ -4934,21 +4936,20 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		}
 	}
 	
-	public void addSequences( String name, Reader rd, Path path, String replace ) throws URISyntaxException, IOException {
-		Map<String,Reader> rds = new HashMap<>();
+	public void addSequences( String name, BufferedReader rd, Path path, String replace ) throws URISyntaxException, IOException {
+		Map<String,BufferedReader> rds = new HashMap<>();
 		rds.put( name, rd );
 		addSequences(name, rds, path, replace);
 	}
-	
-	public void addSequences( String name, Map<String,Reader> rds, Path path, String replace ) throws URISyntaxException, IOException {
+
+	public void addSequences( String name, Map<String,BufferedReader> rds, Path path, String replace ) throws URISyntaxException, IOException {
 		String type = "nucl";
 		int nseq = 0;
 		
-		Map<String,StringBuilder>	gbks = new HashMap<>();
+		Map<String,Stream<String>>	gbks = new HashMap<>();
 		for( String tag : rds.keySet() ) {
-			Reader rd = rds.get( tag );
+			BufferedReader br = rds.get( tag );
 			//String path = paths.get( tag );
-			BufferedReader br = new BufferedReader( rd );
 			String line = br.readLine();
 		
 			if( line != null ) {
@@ -4968,7 +4969,7 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 						String curname = line.substring( idx+1, Math.min( 128+idx+1, line.length()-1 ) ).replace(' ', '_');;
 						//curset.add( curname );
 						
-						List<FileWriter>	lfw = new ArrayList<FileWriter>();
+						List<FileWriter>	lfw = new ArrayList<>();
 						File subdir = new File( dir, "all" );
 						subdir.mkdir();
 						File f = new File( subdir, curname+".fasta" );
@@ -5054,18 +5055,20 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 						} else System.err.println( "no sequences in file" );
 					}
 				} else {
-					StringBuilder filetext = new StringBuilder();
+					/*StringBuilder filetext = new StringBuilder();
 					while( line != null ) {
 						filetext.append( line+"\n" );
 						line = br.readLine();
-					}
-					gbks.put(tag, filetext);
+					}*/
+					Stream<String> strstr = Stream.<String>builder().add(line).build();
+					Stream<String> gbff = Stream.concat(strstr, br.lines());
+					gbks.put(tag, gbff);
 					
 					//boolean amino = true;
 					//String[] annoarray = {"tRNA", "rRNA"};//{"CDS", "tRNA", "rRNA", "mRNA"};
 					//String[] annoarray = {"CDS"};
 				}
-				br.close();
+				//br.close();
 			}
 		}
 		
@@ -5093,7 +5096,7 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 			/*uri = new URI(path+".namemap");
 			map.put( "nameMap", uri );*/
 			
-			GBK2AminoFasta.handleText( gbks, map, out, path, replace );
+			GBK2AminoFasta.handleText( gbks, map, out, path, replace, noseq );
 			
 			//+firsturi.toString().replace(name, "")
 			addSequences( name+".fna", firsturi, null );
@@ -5106,18 +5109,17 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 	
 	public void addSequencesPath( String name, Map<String,Path> urimap, Path p, String replace ) throws URISyntaxException, IOException {
 		try {
-			Map<String,Reader>	isrmap = new HashMap<>();
+			Map<String,BufferedReader>	isrmap = new HashMap<>();
 			for( String tag : urimap.keySet() ) {
 				Path uripath = urimap.get( tag );
-				InputStream is = Files.newInputStream( uripath, StandardOpenOption.READ );
-				
-				if( is != null ) {
-					if( uripath.endsWith(".gz") ) is = new GZIPInputStream(is);
-					InputStreamReader isr = new InputStreamReader( is );
-					isrmap.put( tag, isr );
-					//FileReader	fr = new FileReader( f );
-				}
-				
+				BufferedReader br;
+				if( uripath.endsWith(".gz") ) {
+					InputStream is = Files.newInputStream( uripath, StandardOpenOption.READ );
+					is = new GZIPInputStream(is);
+					br = new BufferedReader( new InputStreamReader(is) );
+				} else br = Files.newBufferedReader(uripath);
+
+				isrmap.put( tag, br );
 				p = uripath;
 			}
 			Path path = p;
@@ -5145,21 +5147,26 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		//URI uri = path.toUri();
 
 		//boolean succ = true;
-		InputStream is = null;
+		BufferedReader br = null;
 		try {
-			if( Files.exists(path) ) is = Files.newInputStream( path, StandardOpenOption.READ );
+			if( Files.exists(path) ) {
+				if( path.toString().endsWith(".gz") ) {
+					InputStream is = Files.newInputStream( path, StandardOpenOption.READ );
+					is = new GZIPInputStream(is);
+					InputStreamReader isr = new InputStreamReader( is );
+					br = new BufferedReader(isr);
+				} else {
+					br = Files.newBufferedReader(path);
+				}
+			}
 		} catch( Exception e ) {
 			//succ = false;
 			e.printStackTrace();
 		}
 		
-		if( is != null ) {
-			if( path.endsWith(".gz") ) is = new GZIPInputStream(is);
-			InputStreamReader isr = new InputStreamReader( is );
-			
-			Map<String,Reader>	isrmap = new HashMap<>();
-			isrmap.put( name.substring(0, name.lastIndexOf('.')), isr);
-			
+		if( br != null ) {
+			Map<String,BufferedReader>	isrmap = new HashMap<>();
+			isrmap.put( name.substring(0, name.lastIndexOf('.')), br);
 			addSequences( name, isrmap, path, replace );
 			//FileReader	fr = new FileReader( f );
 		}

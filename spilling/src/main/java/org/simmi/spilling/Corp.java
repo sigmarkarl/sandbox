@@ -49,10 +49,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.BasicService;
-import javax.jnlp.FileContents;
-import javax.jnlp.PersistenceService;
-import javax.jnlp.ServiceManager;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -225,7 +221,7 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 		if( autosave ) {
 			boolean succ = false;
 			try {
-				PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
+				/*PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
 				BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
 				 
 				String name = "spoil_" + this.getName().trim();
@@ -258,7 +254,7 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 					
 					i++;
 				}
-				writeSave( ow, hashs );
+				writeSave( ow, hashs );*/
 				
 				succ = true;
 			} catch( NoClassDefFoundError e ) {
@@ -310,7 +306,7 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 	public void load() throws IOException {
 		boolean succ = false;
 		try {
-			PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
+			/*PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
 			BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
 			 
 			URL url = new URL( bs.getCodeBase().toString() + "spoil_" + this.getName().trim() );
@@ -318,7 +314,7 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 			FileContents fc = ps.get( url );
 			InputStream is = fc.getInputStream();
 			InputStreamReader isr = new InputStreamReader( is );
-			loadFile( isr, bs.getCodeBase().toString() );
+			loadFile( isr, bs.getCodeBase().toString() );*/
 			
 			succ = true;
 		} catch( NoClassDefFoundError e ) {
@@ -339,7 +335,7 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 	private void deleteSave() {
 		boolean succ = false;
 		try {
-			PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
+			/*PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
 			BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
 			 
 			String name = "spoil_" + this.getName().trim();
@@ -348,11 +344,9 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 			if( nameset.contains(name) ) {
 				URL url = new URL( bs.getCodeBase().toString() + name );
 				ps.delete( url );
-			}
+			}*/
 			
 			succ = true;
-			
-			System.err.println( "deleting " + name );
 		} catch( NoClassDefFoundError e ) {
 			e.printStackTrace();
 		} catch( Exception e ) {
@@ -436,7 +430,7 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 				
 				boolean succ = false;
 				try {
-					PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
+					/*PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
 					BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
 					 
 					String[] names = ps.getNames( bs.getCodeBase() );
@@ -450,7 +444,7 @@ public class Corp extends JComponent implements MouseListener, MouseMotionListen
 							images.add( ImageIO.read( is ) );
 							imageNames.add( url.toString() );
 						}
-					}
+					}*/
 					
 					succ = true;
 				} catch( NoClassDefFoundError e ) {

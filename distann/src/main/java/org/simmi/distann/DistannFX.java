@@ -41,8 +41,14 @@ public class DistannFX extends Application {
     	final ToolBar	btoolbar = new ToolBar();
     	final TableView<Function> 	upper = new TableView<>();
         final TableView<GeneGroup>	lower = new TableView<>();
+        final TableView<GeneGroup>  ggresults = new TableView<>();
         final TableView<Gene>		gene = new TableView<>();
-    	final SplitPane	splitpane = new SplitPane(lower, upper);
+        final TableView<Gene>       gresults = new TableView<>();
+        final SplitPane ggsplit = new SplitPane(lower, ggresults);
+        ggsplit.setOrientation(Orientation.HORIZONTAL );
+        final SplitPane gsplit = new SplitPane(gene, gresults);
+        gsplit.setOrientation(Orientation.HORIZONTAL );
+    	final SplitPane	splitpane = new SplitPane(ggsplit, upper);
     	splitpane.setOrientation( Orientation.VERTICAL );
 
     	primaryStage.setOnCloseRequest( c -> Platform.exit() );
@@ -54,7 +60,7 @@ public class DistannFX extends Application {
         GeneSetHead gsh = new GeneSetHead( this, gs );
         //final JPanel panel = new JPanel();
         //panel.setLayout( new BorderLayout() );
-        gsh.init( primaryStage, null, splitpane, gene, upper, lower, menubar, toolbar, btoolbar );
+        gsh.init( primaryStage, null, splitpane, ggsplit, gsplit, gene, upper, lower, ggresults, gresults, menubar, toolbar, btoolbar );
         
         BorderPane root = new BorderPane();
         root.setTop( vbox );

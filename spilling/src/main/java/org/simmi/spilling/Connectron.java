@@ -40,12 +40,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import javax.jnlp.BasicService;
-import javax.jnlp.FileContents;
-import javax.jnlp.FileOpenService;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.PersistenceService;
-import javax.jnlp.ServiceManager;
 import javax.swing.AbstractAction;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
@@ -1573,7 +1567,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				boolean succ = false;
-			    try {
+			    /*try {
 			    	FileOpenService fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
 			    	FileContents fc = fos.openFileDialog( null, new String[] {"xls", "xlsx"} );
 			    	importExcel( fc.getInputStream() );
@@ -1582,7 +1576,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			        er.printStackTrace();
 			    } catch( Exception ex ) { 
 			        ex.printStackTrace();
-			    }
+			    }*/
 			    
 			    if( !succ ) {
 					JFileChooser fc = new JFileChooser();
@@ -1601,7 +1595,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				boolean succ = false;
-			    try {
+			    /*try {
 			    	FileSaveService fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
 			    	ByteArrayOutputStream	baos = new ByteArrayOutputStream();
 			    	exportExcel( baos );
@@ -1612,7 +1606,7 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 			        er.printStackTrace();
 			    } catch( Exception ex ) { 
 			        ex.printStackTrace();
-			    }
+			    }*/
 			    
 			    if( !succ ) {
 				
@@ -1679,16 +1673,16 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 	public void loadAll() throws IOException {
 		boolean succ = false;
 		try {
-			PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
-			BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+			//PersistenceService ps = (PersistenceService)ServiceManager.lookup("javax.jnlp.PersistenceService");
+			//BasicService bs = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
 			 
-			String[] names = ps.getNames( bs.getCodeBase() );
+			/*String[] names = ps.getNames( bs.getCodeBase() );
 			for( String name : names ) {
 				if( name.startsWith("spoil_") ) {
 					Corp corp = new Corp( name.substring(6) );
 					c.add( corp );
 				}
-			}
+			}*/
 			
 			//URL url = new URL( bs.getCodeBase().toString() + "spoil_" + this.getName() );
 			//ps.create( url, 1000 );

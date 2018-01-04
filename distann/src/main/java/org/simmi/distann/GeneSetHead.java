@@ -11,48 +11,79 @@
 
 package org.simmi.distann;
 
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.*;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import netscape.javascript.JSObject;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+/*import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;*/
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.simmi.javafasta.DataTable;
+import org.simmi.javafasta.shared.*;
+import org.simmi.javafasta.unsigned.FlxReader;
+import org.simmi.javafasta.unsigned.JavaFasta;
+import org.simmi.javafasta.unsigned.NativeRun;
+import org.simmi.javafasta.unsigned.SmithWater;
+import org.simmi.serifier.SerifyApplet;
+import org.simmi.treedraw.shared.TreeUtil.Node;
+import org.simmi.treedraw.shared.TreeUtil.NodeSet;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.applet.Applet;
 import java.awt.*;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.io.*;
+import java.net.*;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
@@ -64,96 +95,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
-import javax.imageio.ImageIO;
-import javax.jnlp.ClipboardService;
-import javax.jnlp.FileContents;
-import javax.jnlp.FileSaveService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.DefaultRowSorter;
-import javax.swing.ImageIcon;
-import javax.swing.JApplet;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.RowFilter;
-import javax.swing.SwingUtilities;
-import javax.swing.TransferHandler;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-
-import javafx.geometry.Insets;
-import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
-import javafx.stage.*;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-/*import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;*/
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.simmi.javafasta.DataTable;
-import org.simmi.javafasta.shared.*;
-import org.simmi.serifier.SerifyApplet;
-import org.simmi.javafasta.unsigned.JavaFasta;
-import org.simmi.javafasta.unsigned.NativeRun;
-import org.simmi.javafasta.unsigned.SmithWater;
-import org.simmi.treedraw.shared.TreeUtil.Node;
-import org.simmi.treedraw.shared.TreeUtil.NodeSet;
-import org.simmi.javafasta.unsigned.FlxReader;
-
-import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import netscape.javascript.JSObject;
-
-import static org.simmi.serifier.SerifyApplet.*;
+import static org.simmi.serifier.SerifyApplet.blastpRun;
 
 /**
  *
@@ -433,7 +375,7 @@ public class GeneSetHead extends JApplet {
 		g2.drawString( gcstr+"ppm", 768, 512 );*/
 	}
 
-	static ClipboardService clipboardService;
+	//static ClipboardService clipboardService;
 	static boolean grabFocus;
 
 	public static void copyData(Component source) {
@@ -444,7 +386,7 @@ public class GeneSetHead extends JApplet {
 			JOptionPane.showMessageDialog(source, "There is no data selected!");
 		} else {
 			StringSelection selection = new StringSelection(s);
-			clipboardService.setContents(selection);
+			//clipboardService.setContents(selection);
 		}
 
 		if (grabFocus) {
@@ -505,14 +447,14 @@ public class GeneSetHead extends JApplet {
 			return 0;
 		}
 	};
-	
+
 	FilteredList<GeneGroup>					filteredData;
 	SortedList<GeneGroup>					sortedData;
 	FilteredList<Gene>						geneFilteredList;
 	SortedList<Gene>						geneSortedList;
 	FilteredList<Function>					ffilteredData;
 	SortedList<Function>					fsortedData;
-	private void importStuff() throws IOException, UnavailableServiceException {
+	private void importStuff( Path zipp ) throws IOException {
 		boolean fail = true;
 		/*try {
 			FileOpenService fos = (FileOpenService)ServiceManager.lookup("javax.jnlp.FileOpenService");
@@ -521,8 +463,7 @@ public class GeneSetHead extends JApplet {
 		} catch( Exception e ) {
 			fail = true;
 		}*/
-		
-		Path zipp = null;
+
 		if( fail && zipp == null ) {
 			FileChooser fc = new FileChooser();
 			File f = fc.showOpenDialog( app.getOwner() );
@@ -654,7 +595,7 @@ public class GeneSetHead extends JApplet {
 					//return new ObservableValue<String>( ret.toString() );
 					//return ret;
 				});
-				table.getColumns().add( speccol );
+				results.getColumns().add( speccol );
 
 				TableColumn<Gene, Teg> gspeccol = new TableColumn(spec);
 				gspeccol.setComparator((o1, o2) -> {
@@ -728,7 +669,7 @@ public class GeneSetHead extends JApplet {
 					//return new ObservableValue<String>( ret.toString() );
 					//return ret;
 				});*/
-				gtable.getColumns().add( gspeccol );
+				gresults.getColumns().add( gspeccol );
 			}
 			
 			ObservableList<Function> ofunc = FXCollections.observableList( geneset.funclist );
@@ -741,13 +682,25 @@ public class GeneSetHead extends JApplet {
 			filteredData = new FilteredList<>(ogenegroup, p -> true);
 			sortedData = new SortedList<>( filteredData );
 			sortedData.comparatorProperty().bind(table.comparatorProperty());
+			sortedData.comparatorProperty().bind(results.comparatorProperty());
+			ScrollBar scrollBarOne = (ScrollBar)table.lookup(".scroll-bar:vertical");
+			ScrollBar scrollBarTwo = (ScrollBar)results.lookup(".scroll-bar:vertical");
+			scrollBarOne.valueProperty().bindBidirectional(scrollBarTwo.valueProperty());
+			results.selectionModelProperty().bindBidirectional(table.selectionModelProperty());
+
 			table.setItems( sortedData );
+			results.setItems( sortedData );
+
+			scrollBarOne.setVisible(false);
+			scrollBarOne.setMaxWidth(0.0);
 
 			ObservableList<Gene> ogene = FXCollections.observableList( geneset.genelist );
 			geneFilteredList = new FilteredList<>(ogene, p -> true);
 			geneSortedList = new SortedList<>( geneFilteredList );
 			geneSortedList.comparatorProperty().bind(gtable.comparatorProperty());
+			geneSortedList.comparatorProperty().bind(gresults.comparatorProperty());
 			gtable.setItems( geneSortedList );
+			gresults.setItems( geneSortedList );
 			
 			int me = 0;
 			int mu = 0;
@@ -2303,7 +2256,9 @@ public class GeneSetHead extends JApplet {
 	RadioMenuItem	ggb;
 	
 	TableView<GeneGroup>		table;
+	TableView<GeneGroup>        results;
 	TableView<Gene>				gtable;
+	TableView<Gene>             gresults;
 	TableView<Function>			ftable;
 	TableModel	defaultModel;
 	TableModel	groupModel;
@@ -2679,17 +2634,23 @@ public class GeneSetHead extends JApplet {
 	ComboBox<String> 						combo;
 	
 	SplitPane		splitpane;
+	SplitPane		ggsplit;
+	SplitPane		gsplit;
 	Stage			primaryStage;
 
 	Component comp;
-	public void init(final Stage primaryStage, final Container comp, final SplitPane splitpane, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower, final MenuBar menubar, final ToolBar toolbar, final ToolBar btoolbar ) {
+	public void init(final Stage primaryStage, final Container comp, final SplitPane splitpane, final SplitPane ggsplit, final SplitPane gsplit, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower, final TableView<GeneGroup> ggresults, final TableView<Gene> g_results, final MenuBar menubar, final ToolBar toolbar, final ToolBar btoolbar ) {
 		geneset.user = System.getProperty("user.name");
 		JavaFasta.user = geneset.user;
 		this.splitpane = splitpane;
 		this.primaryStage = primaryStage;
+		this.ggsplit = ggsplit;
+		this.gsplit = gsplit;
 
 		table = lower;
+		results = ggresults;
 		gtable = genetable;
+		gresults = g_results;
 		//SerifyApplet.user = user;
 		
 		/*try {
@@ -2767,10 +2728,8 @@ public class GeneSetHead extends JApplet {
 		MenuItem openitem = new MenuItem("Open");
 		openitem.setOnAction( actionEvent -> {
 			try {
-				 importStuff();
+				 importStuff( null );
 			} catch (IOException e3) {
-				e3.printStackTrace();
-			} catch (UnavailableServiceException e3) {
 				e3.printStackTrace();
 			}
 		});
@@ -3773,15 +3732,15 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		Menu		view = new Menu("View");
 		gb = new RadioMenuItem("Genes");
 		gb.setOnAction( actionEvent -> {
-			splitpane.getItems().remove( table );
-			splitpane.getItems().add( 0, gtable );
+			splitpane.getItems().remove( ggsplit );
+			splitpane.getItems().add( 0, gsplit );
 			//table.setModel( defaultModel );
 		});
 		view.getItems().add( gb );
 		ggb = new RadioMenuItem("Gene groups");
 		ggb.setOnAction( actionEvent -> {
-			splitpane.getItems().remove( gtable );
-			splitpane.getItems().add( 0, table );
+			splitpane.getItems().remove( gsplit );
+			splitpane.getItems().add( 0, ggsplit );
 			//table.setModel( groupModel );
 		});
 		
@@ -3907,7 +3866,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						e1.printStackTrace();
 					}
 
-					SerifyApplet sa = new SerifyApplet(geneset.zipfilesystem);
+					SerifyApplet sa = new SerifyApplet(geneset.zipfilesystem, geneset.noseq);
 					sa.init(frame, null, geneset.user);
 					//frame.add( )
 					geneset.currentSerify = sa;
@@ -4009,7 +3968,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						}
 					}
 
-					geneset.currentSerify.addSequences("uh", new StringReader(sb.toString()), Paths.get("/"), null);
+					Reader rd = new StringReader(sb.toString());
+					BufferedReader br = new BufferedReader(rd);
+					geneset.currentSerify.addSequences("uh", br, Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
 				}
@@ -4025,8 +3986,6 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				JScrollPane scrollpane = new JScrollPane(textarea);
 
 				try {
-					if (clipboardService == null)
-						clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
 					Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
 					textarea.getActionMap().put("copy", action);
 					grabFocus = true;
@@ -4286,13 +4245,15 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 						frame.setSize(800, 600);
 
-						SerifyApplet sa = new SerifyApplet(geneset.zipfilesystem);
+						SerifyApplet sa = new SerifyApplet(geneset.zipfilesystem, geneset.noseq);
 						sa.init(frame, null, geneset.user);
 						geneset.currentSerify = sa;
 
 						frame.setVisible(true);
 					}
-					geneset.currentSerify.addSequences("uh", new StringReader(sb.toString()), Paths.get("/"), null);
+					Reader rd = new StringReader(sb.toString());
+					BufferedReader br = new BufferedReader(rd);
+					geneset.currentSerify.addSequences("uh", br, Paths.get("/"), null);
 				} catch (URISyntaxException | IOException e1) {
 					e1.printStackTrace();
 				}
@@ -4660,7 +4621,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					}
 				}*/
 
-				Set<Sequence> contigs = new HashSet<Sequence>();
+				Set<Sequence> contigs = new HashSet<>();
 				if (isGeneview()) {
 					for (Gene gg : getGeneTable().getSelectionModel().getSelectedItems()) {
 						Tegeval tv = gg.tegeval;
@@ -5075,8 +5036,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                     popup.add( new AbstractAction("Save image") {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            FileSaveService fss = null;
-                            FileContents fileContents = null;
+                            //FileSaveService fss = null;
+                            //FileContents fileContents = null;
 
                             try {
                                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -5084,20 +5045,20 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                                 ImageIO.write(bimg, "png", baos);
                                 baos.close();
 
-                                try {
+                                /*try {
                                     fss = (FileSaveService)ServiceManager.lookup("javax.jnlp.FileSaveService");
                                 } catch( UnavailableServiceException e1 ) {
                                     fss = null;
-                                }
+                                }*/
 
-                                if (fss != null) {
+                                /*if (fss != null) {
                                     ByteArrayInputStream bais = new ByteArrayInputStream( baos.toByteArray() );
                                     fileContents = fss.saveFileDialog(null, null, bais, "export.png");
                                     bais.close();
                                     OutputStream os = fileContents.getOutputStream(true);
                                     os.write( baos.toByteArray() );
                                     os.close();
-                                } else {
+                                } else {*/
                                 	Platform.runLater(() -> {
                                         FileChooser fc = new FileChooser();
                                         File sf = fc.showSaveDialog( null );
@@ -5110,7 +5071,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 											e1.printStackTrace();
 										}
                                     });
-                                }
+                                //}
                             } catch (IOException e2) {
                                 e2.printStackTrace();
                             }
@@ -5673,7 +5634,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                     }
                     Sequences s = new Sequences(null,spec,"nucl",null,clist.size());
                     //serifier.addSequences(seqs);
-                    serifier.writeGenebank( p, false, true, s, mapan);
+                    serifier.writeGenebank( p, false, true, s, mapan, false);
 
                     //fw.close();
 
@@ -6962,19 +6923,19 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 	}
 
 	public void excelExport( String sheetname ) throws IOException {
-		/*Workbook workbook = new XSSFWorkbook();
+		Workbook workbook = new XSSFWorkbook();
 		Sheet sheet = workbook.createSheet(sheetname);
 		Row header = sheet.createRow(0);
 		if( isGeneview() ) {
 			int cn = 0;
 			for( TableColumn tc : gtable.getColumns() ) {
-				Cell cell = header.createCell(cn++);
+				org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
 				cell.setCellValue( tc.getText() );
 			}
 		} else {
 			int cn = 0;
 			for( TableColumn tc : table.getColumns() ) {
-				Cell cell = header.createCell(cn++);
+				org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
 				cell.setCellValue( tc.getText() );
 			}
 
@@ -6985,7 +6946,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				for( TableColumn tc : table.getColumns() ) {
 					Object o = tc.getCellData(r);
 					if( o != null ) {
-						Cell cell = row.createCell(cn);
+						org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
 						cell.setCellValue( o.toString() );
 						XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
 						cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
@@ -7007,7 +6968,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			e1.printStackTrace();
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}*/
+		}
 	}
 	
 	public void fetchGenomes() {
@@ -7025,16 +6986,17 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		//frame.setSize(400, 600);
 		
 		try {
-			Map<String,String> env = new HashMap<>();
+			Map<String,Object> env = new HashMap<>();
 			env.put("create", "true");
+			env.put("useTempFile", Boolean.TRUE);
 			//Path path = zipfile.toPath();
 			String uristr = "jar:" + geneset.zippath.toUri();
 			geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
 			geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 			
-			final SerifyApplet	sa = new SerifyApplet( geneset.zipfilesystem );
+			final SerifyApplet	sa = new SerifyApplet( geneset.zipfilesystem, geneset.noseq );
 			sa.init( frame, vbox, geneset.user );
-			
+
 			for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
 				Files.list(root).filter(t -> {
                     String fname = t.getFileName().toString();
@@ -7102,14 +7064,17 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		stage.setOnCloseRequest(event -> {
             try {
                 geneset.zipfilesystem.close();
-
                 geneset.cleanUp();
-                importStuff();
-            } catch (IOException | UnavailableServiceException e1) {
+                importStuff( geneset.zippath );
+            } catch (IOException e1) {
                 e1.printStackTrace();
             }
         });
 		stage.show();
+	}
+
+	private Path getResource(String res) {
+		return Paths.get("distann/src/main/java/"+res );
 	}
 	
 	private void showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
@@ -7296,14 +7261,13 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 		Set<String> current = null;
 		Set<String> currentko = null;
-		InputStream is = GeneSetHead.class.getModule().getResourceAsStream("/org/simmi/distann/kegg_pathways");
-		if( is == null ) is = GeneSetHead.class.getModule().getResourceAsStream("/kegg_pathways");
-		if( is == null ) is = GeneSetHead.class.getModule().getResourceAsStream("kegg_pathways");
-		if( is == null ) is = GeneSetHead.class.getModule().getResourceAsStream("org/simmi/distann/kegg_pathways");
-		if( is == null ) is = GeneSetHead.class.getModule().getResourceAsStream("org.simmi.distann/kegg_pathways");
-		if( is == null ) is = GeneSetHead.class.getModule().getResourceAsStream("/org.simmi.distann/kegg_pathways");
 
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		//FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+		//Path jrtroot = fs.getPath(".");
+		//Files.walk(jrtroot).filter( p -> p.toString().contains("distann")).forEach( System.err::println );
+
+		Path keggres = getResource("kegg_pathways");
+		BufferedReader br = Files.newBufferedReader(keggres);
 		String line = br.readLine();
 		while (line != null) {
 			if (line.startsWith(">")) {
@@ -7661,7 +7625,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								SmithWater.ALN first = null;
 								int count = 0;
 								String result = "";
-								Set<String> regnames = new HashSet<String>();
+								Set<String> regnames = new HashSet<>();
 								for (SmithWater.ALN aln : alns) {
 									if (first == null) {
 										first = aln;
@@ -8533,14 +8497,14 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					for( String spec : gg.getSpecies() ) {
 						Teginfo ti = gg.getGenes(spec);
 						
-						Row 	row = sheet.createRow(k++);
-						Cell 	ecell = row.createCell(0);
+						Row row = sheet.createRow(k++);
+						org.apache.poi.ss.usermodel.Cell ecell = row.createCell(0);
 						ecell.setCellValue( "EC:"+f.getEc() );
-						Cell 	ncell = row.createCell(1);
+						org.apache.poi.ss.usermodel.Cell ncell = row.createCell(1);
 						ncell.setCellValue( f.getName() );
-						Cell 	spell = row.createCell(2);
+						org.apache.poi.ss.usermodel.Cell spell = row.createCell(2);
 						spell.setCellValue( spec );
-						Cell 	seqcell = row.createCell(3);
+						org.apache.poi.ss.usermodel.Cell seqcell = row.createCell(3);
 						seqcell.setCellValue( ti.tset.size() );
 					}
 					/*for( Gene g :gg.genes ) {
@@ -9512,6 +9476,18 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 		});
 
+		results.setOnKeyPressed( ke -> {
+			if (ke.getCode() == KeyCode.ESCAPE) {
+				GeneGroup selgg = table.getSelectionModel().getSelectedItem();
+				List<GeneGroup> sel = new ArrayList<>( filteredData );
+				filteredData.setPredicate(null);
+				int[] rows = sel.stream().mapToInt( gg -> sortedData.indexOf(gg) ).toArray();
+				if( rows.length > 0 ) table.getSelectionModel().selectIndices(rows[0], rows);
+				if (label != null) label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
+				table.scrollTo( selgg );
+			}
+		});
+
 		gtable.setOnKeyPressed( ke -> {
 			if (ke.getCode() == KeyCode.ESCAPE) {
 				Gene selg = gtable.getSelectionModel().getSelectedItem();
@@ -9526,40 +9502,63 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		});
 
 		table.setOnMousePressed( e -> {
-				tableisselecting = true;
-				if (!ftableisselecting && e.getClickCount() == 2) {
-					/*
-					 * int[] rr = ftable.getSelectedRows(); int minr =
-					 * ftable.getRowCount(); int maxr = 0; for( int r : rr ) {
-					 * if( r < minr ) minr = r; if( r > maxr ) maxr = r; }
-					 * ftable.removeRowSelectionInterval(minr, maxr);
-					 */
-					// ftable.removeRowSelectionInterval(0, filterset.isEmpty()
-					// ? ftable.getRowCount()-1 : filterset.size()-1 );
-					
-					Set<Function> fset = new HashSet<>();
-					filterset.clear();
-					if( !isGeneview() ) {
-						for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
-							fset.addAll( gg.getFunctions() );
-						}
-					} else {
-						for (Gene g : gtable.getSelectionModel().getSelectedItems()) {
-							if (g.funcentries != null) {
-								for( Function f : g.funcentries ) {
-									//Function f = funcmap.get(go);
-									// ftable.getRowSorter().convertRowIndexToView(index)
-									// int rf = ftable.convertRowIndexToView(
-									// f.index );
-									filterset.add(f.index);
-									// ftable.addRowSelectionInterval(rf, rf);
-								}
+			tableisselecting = true;
+			if (!ftableisselecting && e.getClickCount() == 2) {
+				/*
+				 * int[] rr = ftable.getSelectedRows(); int minr =
+				 * ftable.getRowCount(); int maxr = 0; for( int r : rr ) {
+				 * if( r < minr ) minr = r; if( r > maxr ) maxr = r; }
+				 * ftable.removeRowSelectionInterval(minr, maxr);
+				 */
+				// ftable.removeRowSelectionInterval(0, filterset.isEmpty()
+				// ? ftable.getRowCount()-1 : filterset.size()-1 );
+
+				Set<Function> fset = new HashSet<>();
+				filterset.clear();
+				if( !isGeneview() ) {
+					for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
+						fset.addAll( gg.getFunctions() );
+					}
+				} else {
+					for (Gene g : gtable.getSelectionModel().getSelectedItems()) {
+						if (g.funcentries != null) {
+							for( Function f : g.funcentries ) {
+								//Function f = funcmap.get(go);
+								// ftable.getRowSorter().convertRowIndexToView(index)
+								// int rf = ftable.convertRowIndexToView(
+								// f.index );
+								filterset.add(f.index);
+								// ftable.addRowSelectionInterval(rf, rf);
 							}
 						}
 					}
-					ffilteredData.setPredicate( p -> fset.contains(p) );
 				}
-				tableisselecting = false;
+				ffilteredData.setPredicate( p -> fset.contains(p) );
+			}
+			tableisselecting = false;
+		});
+
+		results.setOnMousePressed( e -> {
+			tableisselecting = true;
+			if (!ftableisselecting && e.getClickCount() == 2) {
+				Set<Function> fset = new HashSet<>();
+				filterset.clear();
+				if( !isGeneview() ) {
+					for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
+						fset.addAll( gg.getFunctions() );
+					}
+				} else {
+					for (Gene g : gtable.getSelectionModel().getSelectedItems()) {
+						if (g.funcentries != null) {
+							for( Function f : g.funcentries ) {
+								filterset.add(f.index);
+							}
+						}
+					}
+				}
+				ffilteredData.setPredicate( p -> fset.contains(p) );
+			}
+			tableisselecting = false;
 		});
 
 		ftable.setOnMousePressed( e -> {
@@ -9611,14 +9610,14 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		});
 		
 		textfield.setOnKeyPressed( e -> {
-				String text = textfield.getText().toLowerCase();
-				if( e.getCode() == KeyCode.ENTER ) {
-					if (isGeneview()) {
-						searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable(gtable, text, searchi, e.isAltDown(), 8, 9, 10, 16) : searchTable(gtable, text, searchi, e.isAltDown(), 0);
-					} else {
-						searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable(table, text, searchi, e.isAltDown(), 8, 9, 10, 16) : searchTable(table, text, searchi, e.isAltDown(), 0);
-					}
+			String text = textfield.getText().toLowerCase();
+			if( e.getCode() == KeyCode.ENTER ) {
+				if (isGeneview()) {
+					searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable(gtable, text, searchi, e.isAltDown(), 8, 9, 10, 16) : searchTable(gtable, text, searchi, e.isAltDown(), 0);
+				} else {
+					searchi = searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ? searchTable(table, text, searchi, e.isAltDown(), 8, 9, 10, 16) : searchTable(table, text, searchi, e.isAltDown(), 0);
 				}
+			}
 		});
 
 		textfield.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -9971,8 +9970,6 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			JTextArea textarea = new JTextArea();
 			
 			try {
-				if (clipboardService == null)
-					clipboardService = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
 				Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
 				textarea.getActionMap().put("copy", action);
 				grabFocus = true;
@@ -10204,14 +10201,15 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 	}
 	
 	public void init() {
-		init(primaryStage, this, null, null, null, null, null, null, null);
+		init(primaryStage, this, null, null, null, null, null, null, null, null, null, null, null);
 	}
 	
 	public void exportGenomes( Map<String,List<Sequence>> speccontigMap ) {
 		SwingUtilities.invokeLater(() -> {
 			JCheckBox joincontigs = new JCheckBox("Join contigs");
 			JCheckBox translations = new JCheckBox("Include translations");
-			JComponent[] comps = new JComponent[]{joincontigs, translations};
+			JCheckBox editdefaults = new JCheckBox("Edit defaults");
+			JComponent[] comps = new JComponent[]{joincontigs, translations, editdefaults};
 			List scl = getSelspecContigs(Arrays.asList(comps), speccontigMap);
 
 			if (scl.get(0) instanceof String) {
@@ -10251,7 +10249,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                             }
                             Sequences s = new Sequences(null, spec, "nucl", null, contigs.size());
                             try {
-                                serifier.writeGenebank(f.toPath().resolve(spec + ".gbk"), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
+                                serifier.writeGenebank(f.toPath().resolve(spec + ".gbk"), !joincontigs.isSelected(), translations.isSelected(), s, mapan, false);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -10288,7 +10286,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                     File f = filechooser.showSaveDialog(null);
                     if ( f != null ) {
                         try {
-                            serifier.writeGenebank(f.toPath(), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
+                            serifier.writeGenebank(f.toPath(), !joincontigs.isSelected(), translations.isSelected(), s, mapan, editdefaults.isSelected());
+                            Desktop.getDesktop().open(f);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
