@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.samtools:htsjdk:2.13.+">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/Could not resolve com.github.samtools:htsjdk:2.13.+." />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

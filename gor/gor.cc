@@ -696,7 +696,7 @@ RowDecoder* getDecoder(char* src, int pos, int type, int rowcnt, map<int, char*>
     }
 }
 
-int decode(char* src, int off, char* dest, int destOffset, map<int, map<int, char*>> * mapExternalTables) {
+int decode(char* src, int off, char* dest, int destOffset, map<int, map<int, char*> > * mapExternalTables) {
     // Read the rowcnt
     unsigned short rowcnt = readUnsignedShortBigEndian(src, off);//*((unsigned short*)(src+off));
     // Read the types

@@ -35,13 +35,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-import org.simmi.javafasta.shared.GeneGroup;
-import org.simmi.javafasta.shared.ShareNum;
-import org.simmi.javafasta.shared.Teginfo;
-import org.simmi.javafasta.shared.Contig;
-import org.simmi.javafasta.shared.Gene;
-import org.simmi.javafasta.shared.Sequence;
-import org.simmi.javafasta.shared.Tegeval;
+import org.simmi.javafasta.shared.*;
 
 import javafx.scene.control.TableView;
 
@@ -226,7 +220,7 @@ public class GeneSorter {
 								for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
 									String spec = speclist.get(y);
 									if( gene.getSpecies().equals(spec) ) {
-										Tegeval tv = gene.tegeval;
+										Annotation tv = gene.tegeval;
 										//if( tv.cont != null && tv.cont.startsWith(contig)) {
 										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 										//}
@@ -238,7 +232,7 @@ public class GeneSorter {
 								int und = contig.indexOf("_");
 								String spec = contig.substring(0, und);
 								if( gene.getSpecies().equals(spec) ) {
-									Tegeval tv = gene.tegeval;
+									Annotation tv = gene.tegeval;
 									if( tv.getName() != null && tv.getName().startsWith(contig)) {
 										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 									}
@@ -710,9 +704,9 @@ public class GeneSorter {
 										System.err.println();
 									}*/
 									if( genegroup.getSpecies().contains(spec) ) {
-										List<Tegeval>	ltv = genegroup.getTegevals( spec );
+										List<Annotation>	ltv = genegroup.getTegevals( spec );
 										//Teginfo stv = gene.species.get(spec);
-										for (Tegeval tv : ltv /*stv.tset*/ ) {
+										for (Annotation tv : ltv /*stv.tset*/ ) {
 											if( binaryColorScheme.isSelected() ) {
 												if (sorting.getSelectionModel().isSelected(i)) {
 													if (i % 2 == 0)
@@ -932,12 +926,7 @@ public class GeneSorter {
 			// scrollpane.setCorner( JScrollPane.UPPER_LEFT_CORNER,
 			// rowheader.getTableHeader() );
 
-			rowheader.getRowSorter().addRowSorterListener(new RowSorterListener() {
-				@Override
-				public void sorterChanged(RowSorterEvent e) {
-					c.repaint();
-				}
-			});
+			rowheader.getRowSorter().addRowSorterListener(e -> c.repaint());
 
 			splitpane.setLeftComponent(rowheaderscroll);
 			splitpane.setRightComponent(scrollpane);

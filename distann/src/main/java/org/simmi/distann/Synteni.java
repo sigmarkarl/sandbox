@@ -50,7 +50,7 @@ public class Synteni {
 	
 	public void syntenyMynd( final GeneSetHead genesethead, final Container comp, final List<Gene> genes ) {
 		GeneSet geneset = genesethead.geneset;
-		Set<String>	tspecies = new HashSet<String>();
+		Set<String>	tspecies = new HashSet<>();
 		if( !genesethead.isGeneview() ) {
 			final TableView<GeneGroup> sorting = genesethead.getGeneGroupTable();
 			for( GeneGroup gg : sorting.getSelectionModel().getSelectedItems() ) {
@@ -220,17 +220,17 @@ public class Synteni {
 						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 							int l = rowheader.convertRowIndexToModel( k );
 							String spec1 = selspec.get( l );
-							List<Tegeval> tvlist = gg.getTegevals( spec1 );
+							List<Annotation> tvlist = gg.getTegevals( spec1 );
 							
 							if( k < rowheader.getRowCount()-1 ) {
 								int rh2 = rowheader.getRowHeight()/2;
-								for( Tegeval tv : tvlist ) {
+								for( Annotation tv : tvlist ) {
 									int m = rowheader.convertRowIndexToModel( k+1 );
 									String spec2 = selspec.get( m );
-									List<Tegeval> tvlist2 = gg.getTegevals( spec2 );
+									List<Annotation> tvlist2 = gg.getTegevals( spec2 );
 									
 									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/FASTI;
-									for( Tegeval tv2 : tvlist2 ) {
+									for( Annotation tv2 : tvlist2 ) {
 										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/FASTI;
 										if( tv.ori != tv2.ori ^ tv.getContshort().isReverse() != tv2.getContshort().isReverse() ) g.setColor( Color.red );
 										else g.setColor( Color.blue );
@@ -246,20 +246,20 @@ public class Synteni {
 						for( int k = 0; k < rowheader.getRowCount(); k++ ) {
 							int l = rowheader.convertRowIndexToModel( k );
 							String spec1 = selspec.get( l );
-							List<Tegeval> tvlist = gene.getGeneGroup().getTegevals( spec1 );
+							List<Annotation> tvlist = gene.getGeneGroup().getTegevals( spec1 );
 							
 							if( k < rowheader.getRowCount()-1 ) {
 								int rh2 = rowheader.getRowHeight()/2;
-								for( Tegeval tv : tvlist ) {
+								for( Annotation tv : tvlist ) {
 									int m = rowheader.convertRowIndexToModel( k+1 );
 									String spec2 = selspec.get( m );
-									List<Tegeval> tvlist2 = gene.getGeneGroup().getTegevals( spec2 );
+									List<Annotation> tvlist2 = gene.getGeneGroup().getTegevals( spec2 );
 									
 									int gind = geneset.getGlobalIndex( tv )*this.getWidth()/FASTI;
 									if( tvlist2.isEmpty() ) {
 										g.setColor( Color.blue );
 										g.drawLine(gind, k*rowheader.getRowHeight()+rh2, gind, k*rowheader.getRowHeight()+rh2+5 );
-									} else for( Tegeval tv2 : tvlist2 ) {
+									} else for( Annotation tv2 : tvlist2 ) {
 										int gind2 = geneset.getGlobalIndex( tv2 )*this.getWidth()/FASTI;
 										if( tv.ori != tv2.ori ^ tv.getContshort().isReverse() != tv2.getContshort().isReverse() ) g.setColor( Color.red );
 										else g.setColor( Color.blue );

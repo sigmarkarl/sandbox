@@ -15,10 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.simmi.javafasta.shared.Contig;
-import org.simmi.javafasta.shared.Gene;
-import org.simmi.javafasta.shared.Sequence;
-import org.simmi.javafasta.shared.Tegeval;
+import org.simmi.javafasta.shared.*;
 
 public class Blast {
 	private Sequence aaSearch(String query, Map<String,Tegeval> aas) {
@@ -53,7 +50,7 @@ public class Blast {
 					}
 				}*/
 				if( clusterset.contains( query ) ) {
-					Tegeval tvl = gene.tegeval;
+					Annotation tvl = gene.tegeval;
 					if( !clusterset.contains( tvl.getName() ) ) {
 						Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
 						

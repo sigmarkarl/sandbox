@@ -195,8 +195,8 @@ public class XYPlot {
 								GeneGroup gg = val.getGene().getGeneGroup();
 								
 								boolean rs = table.getSelectionModel().getSelectedItems().indexOf(gg) != -1;
-								List<Tegeval> tv2list = gg.getTegevals( spec2 );
-								for( Tegeval tv2 : tv2list ) {
+								List<Annotation> tv2list = gg.getTegevals( spec2 );
+								for( Annotation tv2 : tv2list ) {
 									tv2.setSelected( rs );
 									int count2 = 0;
 									int k = spec2Conts.indexOf( tv2.getContshort() );
@@ -246,8 +246,8 @@ public class XYPlot {
 								GeneGroup gg = val.getGene().getGeneGroup();
 								
 								boolean rs = table.getSelectionModel().getSelectedItems().indexOf(gg) != -1;
-								List<Tegeval> tv2list = gg.getTegevals( spec2 );
-								for( Tegeval tv2 : tv2list ) {
+								List<Annotation> tv2list = gg.getTegevals( spec2 );
+								for( Annotation tv2 : tv2list ) {
 									tv2.setSelected( rs );
 									int count2 = 0;
 									int k = spec2Conts.indexOf( tv2.getContshort() );

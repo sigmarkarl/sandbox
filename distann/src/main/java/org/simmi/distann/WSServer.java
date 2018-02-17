@@ -22,12 +22,7 @@ import java.util.TreeSet;
 import javax.imageio.ImageIO;
 
 import org.java_websocket.WebSocket;
-import org.simmi.javafasta.shared.Cog;
-import org.simmi.javafasta.shared.Gene;
-import org.simmi.javafasta.shared.GeneGroup;
-import org.simmi.javafasta.shared.Sequence;
-import org.simmi.javafasta.shared.Serifier;
-import org.simmi.javafasta.shared.Tegeval;
+import org.simmi.javafasta.shared.*;
 
 import flobb.ChatServer;
 
@@ -321,13 +316,13 @@ public class WSServer {
 						Set<String> str = new HashSet<String>( Arrays.asList(sp) );
 						
 						int max = 0;
-						Set<String>							specset = new HashSet<String>();
-						Map<GeneGroup,Integer>				genegroups = new HashMap<GeneGroup,Integer>();
+						Set<String>							specset = new HashSet<>();
+						Map<GeneGroup,Integer>				genegroups = new HashMap<>();
 						for( Gene g : geneset.genelist ) {
 							if( str.contains(g.refid) ) {
 								GeneGroup gg = g.getGeneGroup();
 								specset.addAll( gg.getSpecies() );
-								for( Tegeval tv : gg.getTegevals() ) {
+								for( Annotation tv : gg.getTegevals() ) {
 									Sequence alseq = tv.getAlignedSequence();
 									if( alseq == null ) {
 										Sequence sb = tv.getProteinSequence();

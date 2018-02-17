@@ -171,7 +171,7 @@ public class GeneSetHead extends JApplet {
 		for( Sequence ctg : selclist ) {
 			//Sequence ctg = clist.get( u );
 			if( gg != null ) {
-				for( Tegeval tv : gg.getTegevals() ) {
+				for( Annotation tv : gg.getTegevals() ) {
 					if( tv.getContshort() == ctg ) {					
 						int i = tv.start;
 						
@@ -539,7 +539,7 @@ public class GeneSetHead extends JApplet {
 	
 			Set<String> set = new TreeSet<>();
 			for (Gene g : geneset.genelist) {
-				Tegeval tv = g.tegeval;
+				Annotation tv = g.tegeval;
 				if (tv.eval <= 0.00001 && tv.teg != null && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
 					set.add(tv.teg);
 			}
@@ -734,7 +734,7 @@ public class GeneSetHead extends JApplet {
 				//GeneGroup gg = geneset.allgenegroups.get(cr);
 				specset.addAll( gg.getSpecies() );
 				
-				for( Tegeval tv : gg.getTegevals() ) {
+				for( Annotation tv : gg.getTegevals() ) {
 					int l = tv.getAlignedSequence().length();
 					if( l > max ) max = l;
 				}
@@ -747,7 +747,7 @@ public class GeneSetHead extends JApplet {
 				int max = 0;
 				GeneGroup gg = g.getGeneGroup();
 				specset.addAll( gg.getSpecies() );
-				for( Tegeval tv : gg.getTegevals() ) {
+				for( Annotation tv : gg.getTegevals() ) {
 					int l = tv.getAlignedSequence().length();
 					if( l > max ) max = l;
 				}
@@ -771,7 +771,7 @@ public class GeneSetHead extends JApplet {
 		for( GeneGroup ggroup : genegroups.keySet() ) {
 			int len = genegroups.get( ggroup );
 			for( String selspec : specset ) {				
-				List<Tegeval> ltv = ggroup.getTegevals(selspec);
+				List<Annotation> ltv = ggroup.getTegevals(selspec);
 				
 				String spec;
 				if( selspec.contains("hermus") ) spec = selspec;
@@ -792,7 +792,7 @@ public class GeneSetHead extends JApplet {
 				
 				int max = 0;
 				StringBuilder 	seqstr = null;
-				for( Tegeval tv : ltv ) {
+				for( Annotation tv : ltv ) {
 					int seqlen = tv.getLength();
 					if( seqlen > max ) {
 						seqstr = tv.getAlignedSequence().getStringBuilder();
@@ -831,7 +831,7 @@ public class GeneSetHead extends JApplet {
 				//GeneGroup gg = geneset.allgenegroups.get(cr);
 				specset.addAll( gg.getSpecies() );
 				
-				for( Tegeval tv : gg.getTegevals() ) {
+				for( Annotation tv : gg.getTegevals() ) {
 					Sequence seq = tv.getAlignedSequence();
 					int l = seq != null ? seq.length() : 0;
 					if( l > max ) max = l;
@@ -845,7 +845,7 @@ public class GeneSetHead extends JApplet {
 				int max = 0;
 				GeneGroup gg = g.getGeneGroup();
 				specset.addAll( gg.getSpecies() );
-				for( Tegeval tv : gg.getTegevals() ) {
+				for( Annotation tv : gg.getTegevals() ) {
 					int l = tv.getAlignedSequence().length();
 					if( l > max ) max = l;
 				}
@@ -1982,7 +1982,7 @@ public class GeneSetHead extends JApplet {
 				//for (String sp : gg.species.keySet()) {
 				//for( String sp : selectedSpecies ) {
 			if( selectedSpecies.contains(species) ) {
-				Tegeval tv = gg.tegeval;
+				Annotation tv = gg.tegeval;
 				//sb.append(">" + tv.name + " " + tv.teg + " " + tv.eval + "\n");
 				Sequence protseq = tv.getProteinSequence();
 				protseq.setName( tv.getName() + " " + tv.teg + " " + tv.eval );
@@ -2467,7 +2467,7 @@ public class GeneSetHead extends JApplet {
                 //if (gg.species != null) {
                     //for (String sp : gg.species.keySet()) {
                     //	Teginfo stv = gg.species.get(sp);
-                for( Tegeval tv : ggroup.getTegevals() ) {
+                for( Annotation tv : ggroup.getTegevals() ) {
                     Sequence cont = tv.getContshort();
                     if( cont != null ) {
                         String selspec = cont.getSpec();//tv.getContig();
@@ -3878,9 +3878,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						"t.scotoductus252", "t.antranikiani", "t.kawarayensis", "t.brockianus", "t.igniterrae", "t.eggertsoni",
 						"t.RLM", "t.oshimai_JL2", "t.oshimai", "t.filiformis", "t.arciformis", "t.islandicus", "t.aquaticus", "t.spCCB"};
 
-				Map<Integer, String> ups = new HashMap<Integer, String>();
-				Set<Integer> stuck = new HashSet<Integer>();
-				Map<Integer, List<Tegeval>> ups2 = new HashMap<Integer, List<Tegeval>>();
+				Map<Integer, String> ups = new HashMap<>();
+				Set<Integer> stuck = new HashSet<>();
+				Map<Integer, List<Annotation>> ups2 = new HashMap<>();
 				//int[] rr = table.getSelectedRows();
 				for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
 					//int cr = table.convertRowIndexToModel(r);
@@ -3895,10 +3895,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								ups.put(gg.getGroupIndex(), gg.name);
 						}
 
-						List<Tegeval> tlist;
+						List<Annotation> tlist;
 						if (ups2.containsKey(gg.getGroupIndex())) tlist = ups2.get(gg.getGroupIndex());
 						else {
-							tlist = new ArrayList<Tegeval>();
+							tlist = new ArrayList<>();
 							ups2.put(gg.getGroupIndex(), tlist);
 						}
 
@@ -3948,16 +3948,16 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					StringWriter sb = new StringWriter();
 					for (int gi : ups.keySet()) {
 						String name = ups.get(gi);
-						List<Tegeval> tlist = ups2.get(gi);
+						List<Annotation> tlist = ups2.get(gi);
 
 						sb.append(name.replace('/', '-') + ":\n");
 						if (tlist.size() < 28) {
-							for (Tegeval tv : tlist) {
+							for (Annotation tv : tlist) {
 								System.err.println(tv.getName());
 							}
 							System.err.println();
 						}
-						for (Tegeval tv : tlist) {
+						for (Annotation tv : tlist) {
 							Sequence ps = tv.getProteinSequence();
 							ps.setName(tv.getName().substring(0, tv.getName().indexOf('_')));
 							ps.writeSequence(sb);
@@ -4049,7 +4049,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 				Map<Integer, String> ups = new HashMap<>();
 				Set<Integer> stuck = new HashSet<>();
-				Map<Integer, List<Tegeval>> ups2 = new HashMap<>();
+				Map<Integer, List<Annotation>> ups2 = new HashMap<>();
 				//int[] rr = table.getSelectedRows();
 				for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
 					//int cr = table.convertRowIndexToModel(r);
@@ -4064,7 +4064,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								ups.put(gg.getGroupIndex(), gg.name);
 						}
 
-						List<Tegeval> tlist;
+						List<Annotation> tlist;
 						if (ups2.containsKey(gg.getGroupIndex())) tlist = ups2.get(gg.getGroupIndex());
 						else {
 							tlist = new ArrayList<>();
@@ -4084,10 +4084,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 				for (int gi : ups.keySet()) {
 					String name = ups.get(gi);
-					List<Tegeval> tlist = ups2.get(gi);
+					List<Annotation> tlist = ups2.get(gi);
 
 					textarea.append(name.replace('/', '-') + ":\n");
-					for (Tegeval tv : tlist) {
+					for (Annotation tv : tlist) {
 						textarea.append(">" + tv.getName().substring(0, tv.getName().indexOf('_')) + "\n");
 						for (int i = 0; i < tv.getLength(); i += 70) {
 							textarea.append(tv.getSubstring(i, Math.min(i + 70, tv.getLength())) + "\n");
@@ -4121,7 +4121,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
 					//int cr = table.convertRowIndexToModel(r);
 					//Gene gg = geneset.genelist.get(cr);
-					Tegeval tv = gg.tegeval;
+					Annotation tv = gg.tegeval;
 					String contig = tv.getContshort().getName();
 					Sequence seq = tv.getProteinSequence();
 					seq.setName(contig);
@@ -4205,7 +4205,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 				Serifier serifier = new Serifier();
 				for (GeneGroup ggroup : genegroups) {
-					for (Tegeval tv : ggroup.getTegevals()) {
+					for (Annotation tv : ggroup.getTegevals()) {
 						String selspec = tv.getContshort().getSpec();//tv.getContig();
 						String spec = geneset.nameFix(selspec);
 						/*if( selspec.contains("hermus") ) spec = selspec;
@@ -4411,7 +4411,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								lfw.put(gg.getGroupIndex(), fw);
 							}
 
-							Tegeval tv = gg.tegeval;
+							Annotation tv = gg.tegeval;
 							fw.append(">" + tv.getName() + " " + tv.teg + " " + tv.eval + "\n");
 							for (int i = 0; i < tv.getLength(); i += 70) {
 								fw.append(tv.getSubstring(i, Math.min(i + 70, tv.getLength())) + "\n");
@@ -4440,7 +4440,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 						Set<Sequence> contset = new HashSet<>();
 						for (Gene gg : getGeneTable().getSelectionModel().getSelectedItems()) {
-							Tegeval tv = gg.tegeval;
+							Annotation tv = gg.tegeval;
 							contset.add(tv.getContshort());
 						}
 
@@ -4479,17 +4479,17 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				jf.initGui(frame);
 
 				Set<Sequence> contset = new HashSet<>();
-				Set<Tegeval> tvset = new HashSet<>();
+				Set<Annotation> tvset = new HashSet<>();
 				if (isGeneview()) {
 					for (Gene gg : getGeneTable().getSelectionModel().getSelectedItems()) {
-						Tegeval tv = gg.tegeval;
+						Annotation tv = gg.tegeval;
 						tvset.add(tv);
 						//serifier.addAnnotation( tv );
 						contset.add(tv.getContshort());
 					}
 				} else {
 					for (GeneGroup gg : getGeneGroupTable().getSelectionModel().getSelectedItems()) {
-						for (Tegeval tv : gg.getTegevals()) {
+						for (Annotation tv : gg.getTegevals()) {
 							tv.color = Color.red;
 							tvset.add(tv);
 							Sequence contig = tv.getContshort();
@@ -4522,7 +4522,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				for (Sequence contig : contset) {
 					int start = Integer.MAX_VALUE;
 					int stop = Integer.MIN_VALUE;
-					for (Tegeval tv : tvset) {
+					for (Annotation tv : tvset) {
 						if (contig == tv.seq) {
 							start = Math.min(start, tv.start);
 							stop = Math.max(stop, tv.stop);
@@ -4552,7 +4552,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					}*/
 
 					serifier.addSequence(newseq);
-					for (Tegeval tv : tvset) {
+					for (Annotation tv : tvset) {
 						Annotation newann = new Annotation(newseq, tv.start - start, tv.stop - start, tv.ori, tv.getName());
 						if (contig == tv.seq) {
 							newseq.addAnnotation(newann);
@@ -4624,7 +4624,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				Set<Sequence> contigs = new HashSet<>();
 				if (isGeneview()) {
 					for (Gene gg : getGeneTable().getSelectionModel().getSelectedItems()) {
-						Tegeval tv = gg.tegeval;
+						Annotation tv = gg.tegeval;
 						tv.color = Color.red;
 						Sequence contig = tv.getContshort();
 						//contig.offset = -tv.start;
@@ -4641,7 +4641,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					//serifier.addAnnotation( tv );
 				} else {
 					for (GeneGroup gg : getGeneGroupTable().getSelectionModel().getSelectedItems()) {
-						for (Tegeval tv : gg.getTegevals()) {
+						for (Annotation tv : gg.getTegevals()) {
 							tv.color = Color.red;
 							Sequence contig = tv.getContshort();
 							//contig.offset = -tv.start;
@@ -5256,8 +5256,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 									int score = 0;
 									int tscore = 1;
-									for (Tegeval tv1 : ti1.tset) {
-										for (Tegeval tv2 : ti2.tset) {
+									for (Annotation tv1 : ti1.tset) {
+										for (Annotation tv2 : ti2.tset) {
 											Sequence seq1 = tv1.getAlignedSequence();
 											Sequence seq2 = tv2.getAlignedSequence();
 											if (seq1 != null && seq2 != null) {
@@ -5979,7 +5979,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				int rr = 0;
 				for( Gene g : geneset.genelist ) {
 					if( !spec.equals( g.getSpecies() ) && g.getSpecies().contains("eggert") ) {
-						Tegeval tv2 = g.tegeval;
+						Annotation tv2 = g.tegeval;
 						Annotation n2 = tv2.getNext();
 						Annotation p2 = tv2.getPrevious();
 						
@@ -5992,7 +5992,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						Teginfo ti = gg.getGenes( spec );
 						int msimcount = 0;
 						if( ti != null ) {
-							for( Tegeval tv1 : ti.tset ) {
+							for( Annotation tv1 : ti.tset ) {
 								int simcount = 0;
 								
 								Annotation n = tv1.getNext();
@@ -6271,7 +6271,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                 Platform.runLater(() -> {
                     int total = 0;
                     for( GeneGroup gg : geneset.allgenegroups ) {
-                        Set<Tegeval> geneset = new HashSet<>();
+                        Set<Annotation> geneset = new HashSet<>();
                         for( String spec : specset ) {
                             if( gg.species.containsKey(spec) ) {
                                 Teginfo ti = gg.species.get(spec);
@@ -6319,7 +6319,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					for( String spec : gg.species.keySet() ) {
 						Teginfo ti = gg.species.get( spec );
 						if( ti.tset.size() == 2 ) {
-							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
+							List<Annotation> ta = new ArrayList<>( ti.tset );
 							if( ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1)) cnt++;
 						}
 					}
@@ -6336,7 +6336,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					for( String spec : gg.species.keySet() ) {
 						Teginfo ti = gg.species.get( spec );
 						if( ti.tset.size() == 3 ) {
-							List<Tegeval> ta = new ArrayList<Tegeval>( ti.tset );
+							List<Annotation> ta = new ArrayList<>( ti.tset );
 							if( (ta.get(0).getNext() == ta.get(1) || ta.get(0).getPrevious() == ta.get(1))
 									&& (ta.get(1).getNext() == ta.get(2) || ta.get(1).getPrevious() == ta.get(2))) cnt++;
 						}
@@ -6632,7 +6632,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		if( spec != null && spec.length() > 0 ) {
 			if( spec.equals("All") ) {
 				cell.setStyle( "-fx-background-color: green" );
-				for( Tegeval tv : ti.tset ) {
+				for( Annotation tv : ti.tset ) {
 					String tspec = tv.getGene().getSpecies();
 					List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
 					GeneGroup gg = tv.getGene().getGeneGroup();
@@ -6656,15 +6656,15 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				//Teginfo		gene2s = gg.getGenes(spec);
 				//double ratio = -1.0;
 				int msimcount = 0;
-				Tegeval tv2 = null;
+				Annotation tv2 = null;
 
 				GeneGroup gg = table.getItems().get(row);
 				if (gg != null) {
 					Teginfo gene2s = gg.getGenes(spec);
 					if( gene2s != null ) {
-						Tegeval tv = gene2s.best;
+						Annotation tv = gene2s.best;
 						tv2 = gene2s.best;
-						if (gene2s != null && gene2s.tset != null) for (Tegeval tv1 : gene2s.tset) {
+						if (gene2s != null && gene2s.tset != null) for (Annotation tv1 : gene2s.tset) {
 							int simcount = 0;
 
 							Annotation n = tv1.getNext();
@@ -6721,7 +6721,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		} else {
 			boolean plasmid = false;
 			boolean phage = false;
-			for( Tegeval tv : ti.tset ) {
+			for( Annotation tv : ti.tset ) {
 				phage = phage | tv.isPhage();
 				
 				Sequence seq = tv.getContshort();
@@ -6773,7 +6773,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 	}
 
 	public boolean cellRenderGene( TableCell<Gene,Teg> cell, Teg tev ) {
-		Tegeval tv;
+		Annotation tv;
 		if( tev instanceof Tegeval ) {
 			tv = (Tegeval)tev;
 		} else if( tev instanceof Teginfo ) {
@@ -6799,12 +6799,12 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 			} else {
 				List<Sequence> contigs = geneset.speccontigMap.get( spec );
-				Tegeval tv2 = null;
+				Annotation tv2 = null;
 				GeneGroup gg = tv.getGene().getGeneGroup();
 				int msimcount = 0;
 				if( gg != null ) {
 					Teginfo		gene2s = gg.getGenes(spec);
-					if( gene2s != null && gene2s.tset != null ) for( Tegeval tv1 : gene2s.tset ) {
+					if( gene2s != null && gene2s.tset != null ) for( Annotation tv1 : gene2s.tset ) {
 						int simcount = 0;
 
 						Annotation n = tv1.getNext();
@@ -7073,8 +7073,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		stage.show();
 	}
 
-	private Path getResource(String res) {
-		return Paths.get("distann/src/main/java/"+res );
+	private BufferedReader getResource(String res) {
+		InputStream is = GeneSet.class.getClassLoader().getResourceAsStream(res);
+		InputStreamReader isr = new InputStreamReader(is);
+		return new BufferedReader(isr);
+		//return Paths.get("distann/src/main/java/"+res );
 	}
 	
 	private void showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
@@ -7129,16 +7132,16 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					return new Transferable() {
 						@Override
 						public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {
-							Map<String, List<Tegeval>> contigs = new HashMap<>();
+							Map<String, List<Annotation>> contigs = new HashMap<>();
 							StringBuilder ret = new StringBuilder();
 							for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
-								Tegeval tv = gg.tegeval;
+								Annotation tv = gg.tegeval;
 								if (!contigs.containsKey(tv.getContshort())) {
-									List<Tegeval> ltv = new ArrayList<>();
+									List<Annotation> ltv = new ArrayList<>();
 									ltv.add(tv);
 									contigs.put(tv.getContshort().getName(), ltv);
 								} else {
-									List<Tegeval> ltv = contigs.get(tv.getContshort());
+									List<Annotation> ltv = contigs.get(tv.getContshort());
 									ltv.add(tv);
 								}
 											/*
@@ -7152,7 +7155,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 											 */
 							}
 							for (String cont : contigs.keySet()) {
-								List<Tegeval> tv = contigs.get(cont);
+								List<Annotation> tv = contigs.get(cont);
 								String dna = tv.get(0).getSequence();
 								ret.append(">" + cont + "\n"); // + " " + tv.teg
 																// + " " +
@@ -7165,12 +7168,12 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								}
 							}
 							for (String cont : contigs.keySet()) {
-								List<Tegeval> ltv = contigs.get(cont);
+								List<Annotation> ltv = contigs.get(cont);
 								ret.append(">" + cont + "\n"); // + " " + tv.teg
 																// + " " +
 																// tv.eval +
 																// "\n" );
-								for (Tegeval tv : ltv) {
+								for (Annotation tv : ltv) {
 									ret.append("erm\t#0000ff\t" + tv.start + "\t" + tv.stop + "\n");
 								}
 							}
@@ -7266,8 +7269,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		//Path jrtroot = fs.getPath(".");
 		//Files.walk(jrtroot).filter( p -> p.toString().contains("distann")).forEach( System.err::println );
 
-		Path keggres = getResource("kegg_pathways");
-		BufferedReader br = Files.newBufferedReader(keggres);
+		BufferedReader br = getResource("kegg_pathways");
 		String line = br.readLine();
 		while (line != null) {
 			if (line.startsWith(">")) {
@@ -7641,7 +7643,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 								for (Gene g : geneset.genelist) {
 									boolean found = false;
-									Tegeval tv = g.tegeval;
+									Annotation tv = g.tegeval;
 									if (regnames.contains(tv.getName())) {
 										found = true;
 										break;
@@ -9055,11 +9057,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 			
 			org.simmi.treedraw.shared.TreeUtil treeutil = new org.simmi.treedraw.shared.TreeUtil();
-			Map<Set<String>,NodeSet> nmap = new HashMap<Set<String>,NodeSet>();
+			Map<Set<String>,NodeSet> nmap = new HashMap<>();
 			for( GeneGroup ggroup : genegroups ) {
 				//List<Sequence>	seqlist = new ArrayList<Sequence>();
 				
-				for( Tegeval tv : ggroup.getTegevals() ) {
+				for( Annotation tv : ggroup.getTegevals() ) {
 					String spec = tv.getContshort().getSpec();
 					Sequence seq = tv.getAlignedSequence();
 					
@@ -9345,7 +9347,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
             String sel = newValue;
             genefilterset.clear();
             for (Gene g : geneset.genelist) {
-                Tegeval tv = g.tegeval;
+                Annotation tv = g.tegeval;
                 if (sel.equals(tv.teg)) {
                     //System.out.println(g.name + " " + sp + " " + sel + "  " + tv.eval);
                     genefilterset.add(g.index);
@@ -9945,7 +9947,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			Set<String> ct = new HashSet<>();
 			for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
 				// genefilterset.add( gg.index );
-				Tegeval tv = gg.tegeval;
+				Annotation tv = gg.tegeval;
 				for (Set<String> uset : geneset.iclusterlist) {
 					if (uset.contains(tv.getName())) {
 						ct.addAll(uset);
@@ -9955,7 +9957,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 
 			for (Gene g : geneset.genelist) {
-				Tegeval tv = g.tegeval;
+				Annotation tv = g.tegeval;
 				if (ct.contains(tv.getName())) {
 					genefilterset.add(g.index);
 					break;

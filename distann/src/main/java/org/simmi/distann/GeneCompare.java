@@ -579,7 +579,7 @@ public class GeneCompare {
 												int ind = (int) ((rad - 250.0) / 15.0);
 												String spec = spec2s.get(ind);
 												Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
-												if (ti != null && ti.tset != null) for (Tegeval te : ti.tset) {
+												if (ti != null && ti.tset != null) for (Annotation te : ti.tset) {
 													/*int u = geneset.genelist.indexOf( te.getGene() );
 													r = genesethead.table.convertRowIndexToView(u);
 													if( selr == -1 ) selr = r;
@@ -841,7 +841,7 @@ public class GeneCompare {
             
             int score = 0;
             Teginfo gene2s = gg.getGenes( spec2 );
-            for( Tegeval tv2 : gene2s.tset ) {
+            for( Annotation tv2 : gene2s.tset ) {
                 Sequence seq2 = tv2.getAlignedSequence();
                 
                 int sscore = blosumValue( seq, seq2, blosumap );
@@ -867,7 +867,7 @@ public class GeneCompare {
             
             int score = 0;
             Teginfo gene2s = gg.getGenes( spec2 );
-            for( Tegeval tv2 : gene2s.tset ) {
+            for( Annotation tv2 : gene2s.tset ) {
                 Sequence seq2 = tv2.getAlignedSequence();
                 
                 if( seq == null || seq2 == null ) {
@@ -885,7 +885,7 @@ public class GeneCompare {
             color = rs ? new Color( 255, cval, cval ) : new Color( cval, cval, cval );
 		} else {
 			Teginfo gene2s = gg.getGenes( spec2 );
-            for( Tegeval tv2 : gene2s.tset ) {
+            for( Annotation tv2 : gene2s.tset ) {
             	if( tv2.getGene().getTag() != null && !tv2.getGene().getTag().equalsIgnoreCase("gene") )
             		color = tv2.getGene().getTag().equals("rrna") ? Color.red : Color.blue;
             	else color = Color.black;
@@ -940,7 +940,7 @@ public class GeneCompare {
 		
 		Sequence hit = null;
 		if( spec1.equals(spec2) ) {
-			for( Tegeval tv2 : gene2s.tset ) {
+			for( Annotation tv2 : gene2s.tset ) {
 				int count2 = 0;
 				
 				if( ptotal2 > 0 ) {
@@ -1042,7 +1042,7 @@ public class GeneCompare {
 			}
 		} else {
 			if( gene2s.tset.size() == 1 ) {
-				for( Tegeval tv2 : gene2s.tset ) {
+				for( Annotation tv2 : gene2s.tset ) {
 					int count2 = 0;
 					
 					if( ptotal2 > 0 ) {
@@ -1141,7 +1141,7 @@ public class GeneCompare {
 				}
 			} else {
 				int msimcount = 0;
-				for( Tegeval tv2 : gene2s.tset ) {
+				for( Annotation tv2 : gene2s.tset ) {
 					int count2 = 0;
 					int simcount = 0;
 					if( ptotal2 > 0 ) {
@@ -1328,7 +1328,7 @@ public class GeneCompare {
 			if( ctg2.isPlasmid() ) total2 += ctg2.getAnnotationCount();
 		}
 		double ratio2 = -1.0;
-		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
+		if( gene2s != null && gene2s.tset != null ) for( Annotation tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Sequence ctg2 : contigs2 ) {
 				if( ctg2.isPlasmid() && ctg2.annset != null ) {
@@ -1350,7 +1350,7 @@ public class GeneCompare {
 		return ratio2;
 	}
 	
-	public static double invertedGradientRatio( String spec2, Collection<Sequence> contigs2, Tegeval tv2 ) {
+	public static double invertedGradientRatio( String spec2, Collection<Sequence> contigs2, Annotation tv2 ) {
 		int total2 = 0;
 		for( Sequence ctg2 : contigs2 ) {
 			if( !ctg2.isPlasmid() ) total2 += ctg2.getAnnotationCount();
@@ -1383,7 +1383,7 @@ public class GeneCompare {
 		double ratio2 = -1.0;
 		if( gene2s != null && gene2s.tset != null ) {
 			//if( spec2.equals( tv.getSpecies() ) ) {
-				for( Tegeval tv2 : gene2s.tset ) {
+				for( Annotation tv2 : gene2s.tset ) {
 					int count2 = 0;
 					int simcount = 0;
 					for( Sequence ctg2 : contigs2 ) {
@@ -1538,7 +1538,7 @@ public class GeneCompare {
 	}
 
 	public static boolean isContigEnd( Collection<Sequence> contigs2, Teginfo gene2s ) {
-		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
+		if( gene2s != null && gene2s.tset != null ) for( Annotation tv2 : gene2s.tset ) {
 			return isContigEnd( contigs2, tv2 );
 		}
 		return false;
@@ -1550,7 +1550,7 @@ public class GeneCompare {
 			total2 += ctg2.getAnnotationCount();
 		}
 		double ratio2 = -1.0;
-		if( gene2s != null && gene2s.tset != null ) for( Tegeval tv2 : gene2s.tset ) {
+		if( gene2s != null && gene2s.tset != null ) for( Annotation tv2 : gene2s.tset ) {
 			int count2 = 0;
 			for( Sequence ctg2 : contigs2 ) {
 				if( ctg2.annset != null ) {
@@ -1728,7 +1728,7 @@ public class GeneCompare {
 						if( gg.species != null && gg.species.containsKey(spec2) ) {
 							final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
 							Teginfo gene2s = gg.getGenes( spec2 );
-							for( Tegeval tv2 : gene2s.tset ) {
+							for( Annotation tv2 : gene2s.tset ) {
 								int count2 = 0;
 								for( Sequence ctg2 : contigs2 ) {
 									if( ctg2.annset != null ) {
@@ -1755,7 +1755,7 @@ public class GeneCompare {
 						if (gg.species != null && gg.species.containsKey(spec2)) {
 							final Collection<Sequence> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get(spec2);
 							Teginfo gene2s = gg.getGenes(spec2);
-							for (Tegeval tv2 : gene2s.tset) {
+							for (Annotation tv2 : gene2s.tset) {
 								int count2 = 0;
 								for (Sequence ctg2 : contigs2) {
 									if (ctg2.annset != null) {
@@ -1964,7 +1964,7 @@ public class GeneCompare {
 					//final Collection<Contig> contigs2 = spec1.equals(spec2) ? contigs : geneset.speccontigMap.get( spec2 );
 					
 					Teginfo gene2s = gg.getGenes( spec2 );
-                    for( Tegeval tv2 : gene2s.tset ) {
+                    for( Annotation tv2 : gene2s.tset ) {
                     	g2.setColor( tv2.ori == -1 ? Color.red : Color.blue );
                     	break;
                     }
@@ -2109,7 +2109,7 @@ public class GeneCompare {
 					if( prev != null ) {
 						Teginfo gene2s = gg.getGenes( spec2 );
 						Color c = null;
-                        for( Tegeval tv2 : gene2s.tset ) {
+                        for( Annotation tv2 : gene2s.tset ) {
                         	GeneGroup fwgg = tv2.getNext() != null ? tv2.getNext().getGene().getGeneGroup() : null;
                         	GeneGroup bkgg = tv2.getPrevious() != null ? tv2.getPrevious().getGene().getGeneGroup() : null;
                         	
@@ -2142,19 +2142,19 @@ public class GeneCompare {
 							color = blosumColor(seq, spec2, gg, blosumap, rs);
 						} else if( gcskewcol.isSelected() ) {
 							Teginfo gene2s = gg.getGenes( spec2 );
-	                        for( Tegeval tv2 : gene2s.tset ) {
+	                        for( Annotation tv2 : gene2s.tset ) {
 	                        	color = tv2.getGCSkewColor();
 	                        	break;
 	                        }
 						} else if( gapcol.isSelected() ) {
 							Teginfo gene2s = gg.getGenes( spec2 );
-	                        for( Tegeval tv2 : gene2s.tset ) {
+	                        for( Annotation tv2 : gene2s.tset ) {
 	                        	color = tv2.getFrontFlankingGapColor();
 	                        	break;
 	                        }
 						} else {
 							Teginfo gene2s = gg.getGenes( spec2 );
-	                        for( Tegeval tv2 : gene2s.tset ) {
+	                        for( Annotation tv2 : gene2s.tset ) {
 	                        	color = tv2.getGCColor();
 	                        	break;
 	                        }
@@ -2166,7 +2166,7 @@ public class GeneCompare {
 								Teginfo value = gg.getGenes( spec2 );
 								//if( value instanceof Teginfo ) {
 									Teginfo ti = (Teginfo)value;
-									for( Tegeval tvv : ti.tset ) {
+									for( Annotation tvv : ti.tset ) {
 										String tspec = tvv.getGene().getSpecies();
 										List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
 										
@@ -2241,7 +2241,7 @@ public class GeneCompare {
 							boolean plasmid = false;//gg.isOnAnyPlasmid();
 							
 							Teginfo ti = gg.getGenes( spec2 );
-							for( Tegeval tv2 : ti.tset ) {
+							for( Annotation tv2 : ti.tset ) {
 	                        	phage |= tv2.isPhage();
 	                        	plasmid |= tv2.getContshort().isPlasmid();
 	                        }

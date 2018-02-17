@@ -2038,9 +2038,9 @@ public class ActionCollection {
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										GeneGroup pg = prev.getGene().getGeneGroup();
 										
-										List<Tegeval> ltv2 = gg.getTegevals( spec2 );
+										List<Annotation> ltv2 = gg.getTegevals( spec2 );
 										boolean bp = true;
-										for( Tegeval tv2 : ltv2 ) {
+										for( Annotation tv2 : ltv2 ) {
 											Annotation anext = tv2.getNext();
 											Annotation aprev = tv2.getPrevious();
 											GeneGroup fwgg = anext != null && anext instanceof Tegeval ? ((Tegeval)anext).getGene().getGeneGroup() : null;
@@ -4161,7 +4161,7 @@ public class ActionCollection {
 				//for( int gi : ups.keySet() ) {
 				for( GeneGroup genegroup : includedGroups ) {
 					String name = genegroup.getName(); //ups.get(gi);
-					List<Tegeval>	annset = genegroup.getTegevals( selspec ); //ups2.get(gi);
+					List<Annotation>	annset = genegroup.getTegevals( selspec ); //ups2.get(gi);
 					
 					sb.append( "[" + genegroup.getCommonFunction( false, fggmap.keySet() ) + "]" + genegroup.groupIndex + "_" + name.replace('/', '-') + ":\n");
 					/*if( annset.size() < 28 ) {
@@ -4170,7 +4170,7 @@ public class ActionCollection {
 						}
 						System.err.println();
 					}*/
-					for( Tegeval tv : annset ) {
+					for( Annotation tv : annset ) {
 						sb.append(">" + tv.getName().substring(0, tv.getName().indexOf('_')) + "\n");
 						for (int i = 0; i < tv.getProteinLength(); i += 70) {
 							sb.append( tv.getProteinSubsequence(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
@@ -4503,7 +4503,7 @@ public class ActionCollection {
 				for( GeneGroup gg : geneset.allgenegroups ) {
 					String commonName = gg.getName();
 					if( commonName != null && (commonName.contains("contig") || commonName.contains("scaffold")) ) {
-						Tegeval tv = gg.getLongestSequence();
+						Annotation tv = gg.getLongestSequence();
 						Sequence seq = tv.getAlignedSequence();
 						seq.setName( commonName );
 						seq.removeGaps();

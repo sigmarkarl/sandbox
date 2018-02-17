@@ -498,7 +498,7 @@ public class Neighbour {
 				final Collection<Sequence> contigs2 = geneset.speccontigMap.get( spec2 );
 				if( contigs2 != null ) {
 					Teginfo gene2s = gg.getGenes( spec2 );
-					for( Tegeval tv2 : gene2s.tset ) {
+					for( Annotation tv2 : gene2s.tset ) {
 						int count2 = 0;
 						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
@@ -591,7 +591,7 @@ public class Neighbour {
 									//StringBuilder seq = next.seq;
 									Color rc = Color.green;
 									GeneGroup gg = next.getGene().getGeneGroup();
-									List<Tegeval> ltv = gg.getTegevals( spec1 );
+									List<Annotation> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
 										rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false );
 									} else {
@@ -604,7 +604,7 @@ public class Neighbour {
 									//StringBuilder seq = next.seq;
 									Color rc = Color.black;
 									GeneGroup gg = next.getGene().getGeneGroup();
-									List<Tegeval> ltv = null;
+									List<Annotation> ltv = null;
 									if( gg != null ) {
 										ltv = gg.getTegevals( spec1 );
 									} else {
@@ -655,9 +655,9 @@ public class Neighbour {
 								shanmap.clear();
 								double res = 0.0;
 								
-								List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
+								List<Annotation> tegevals = next.getGene().getGeneGroup().getTegevals();
 								int total = tegevals.size();
-								for( Tegeval tev : tegevals ) {
+								for( Annotation tev : tegevals ) {
 									Annotation thenext = tev.getNext();
 									GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 									int val = 0;
@@ -673,7 +673,7 @@ public class Neighbour {
 								if( next.getNext() != null ) {
 									tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
 									total = tegevals.size();
-									for( Tegeval tev : tegevals ) {
+									for( Annotation tev : tegevals ) {
 										Annotation thenext = tev.getPrevious();
 										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
@@ -920,7 +920,7 @@ public class Neighbour {
 								//StringBuilder seq = next.seq;
 								Color rc = Color.green;
 								GeneGroup gg = prev.getGene().getGeneGroup();
-								List<Tegeval> ltv = gg.getTegevals( spec1 );
+								List<Annotation> ltv = gg.getTegevals( spec1 );
 								if( ltv != null && ltv.size() > 0 ) {
 									rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), prev.getSpecies(), gg, blosumap, false );
 								} else {
@@ -933,7 +933,7 @@ public class Neighbour {
 									Color rc = Color.black;
 									GeneGroup gg = prev.getGene().getGeneGroup();
 									if( gg != null ) {
-										List<Tegeval> ltv = gg.getTegevals( spec1 );
+										List<Annotation> ltv = gg.getTegevals( spec1 );
 										if( ltv != null && ltv.size() > 0 ) {
 											final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 											
@@ -954,9 +954,9 @@ public class Neighbour {
 								shanmap.clear();
 								double res = 0.0;
 								
-								List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
+								List<Annotation> tegevals = prev.getGene().getGeneGroup().getTegevals();
 								int total = tegevals.size();
-								for( Tegeval tev : tegevals ) {
+								for( Annotation tev : tegevals ) {
 									Annotation thenext = tev.getNext();
 									GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 									int val = 0;
@@ -1188,7 +1188,7 @@ public class Neighbour {
 									//StringBuilder seq = next.seq;
 									Color rc = Color.green;
 									GeneGroup gg = next.getGene().getGeneGroup();
-									List<Tegeval> ltv = gg.getTegevals( spec1 );
+									List<Annotation> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
 										rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false );
 									} else {
@@ -1200,7 +1200,7 @@ public class Neighbour {
 										//StringBuilder seq = next.seq;
 										Color rc = Color.black;
 										GeneGroup gg = next.getGene().getGeneGroup();
-										List<Tegeval> ltv = gg.getTegevals( spec1 );
+										List<Annotation> ltv = gg.getTegevals( spec1 );
 										if( ltv != null && ltv.size() > 0 ) {
 											final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 											
@@ -1220,7 +1220,7 @@ public class Neighbour {
 									shanmap.clear();
 									double res = 0.0;
 									
-									List<Tegeval> tegevals = next.getGene().getGeneGroup().getTegevals();
+									List<Annotation> tegevals = next.getGene().getGeneGroup().getTegevals();
 									int total = tegevals.size();
 									for( Annotation tev : tegevals ) {
 										Annotation thenext = tev.getNext();
@@ -1454,7 +1454,7 @@ public class Neighbour {
 									//StringBuilder seq = next.seq;
 									Color rc = Color.black;
 									GeneGroup gg = prev.getGene().getGeneGroup();
-									List<Tegeval> ltv = gg.getTegevals( spec1 );
+									List<Annotation> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
 										final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 										double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, prev);
@@ -1468,13 +1468,13 @@ public class Neighbour {
 									if( rc != null ) g.setColor( rc );
 								}
 							} else if( precol.isSelected() ) {
-								Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+								Map<GeneGroup,Integer>	shanmap = new HashMap<>();
 								shanmap.clear();
 								double res = 0.0;
 								
-								List<Tegeval> tegevals = prev.getGene().getGeneGroup().getTegevals();
+								List<Annotation> tegevals = prev.getGene().getGeneGroup().getTegevals();
 								int total = tegevals.size();
-								for( Tegeval tev : tegevals ) {
+								for( Annotation tev : tegevals ) {
 									Annotation thenext = tev.getNext();
 									GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 									int val = 0;
@@ -1490,7 +1490,7 @@ public class Neighbour {
 								if( prev.getNext() != null ) {
 									tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
 									total = tegevals.size();
-									for( Tegeval tev : tegevals ) {
+									for( Annotation tev : tegevals ) {
 										Annotation thenext = tev.getPrevious();
 										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
@@ -1952,8 +1952,8 @@ public class Neighbour {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					for( GeneGroup gg : selectedGenesGroups ) {
-						List<Tegeval> ltv = gg.getTegevals();
-						for( Tegeval tv : ltv ) {
+						List<Annotation> ltv = gg.getTegevals();
+						for( Annotation tv : ltv ) {
 							for( Annotation ann : tv.getContig().annset ) {
 								ann.selected = false;
 							}
@@ -1970,7 +1970,7 @@ public class Neighbour {
 					String spec = (String)rowheader.getValueAt( r, 0 );
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
-						for( Tegeval tv : ti.tset ) {
+						for( Annotation tv : ti.tset ) {
 							int k = tv.getContig().annset.indexOf( tv );
 							for( int i = k+1; i < tv.getContig().annset.size(); i++ ) {
 								Tegeval tv2 = (Tegeval)tv.getContig().annset.get(i);
@@ -1992,7 +1992,7 @@ public class Neighbour {
 					String spec = (String)rowheader.getValueAt( r, 0 );
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
-						for( Tegeval tv : ti.tset ) {
+						for( Annotation tv : ti.tset ) {
 							int k = tv.getContig().annset.indexOf( tv );
 							for( int i = k-1; i >= 0; i-- ) {
 								Tegeval tv2 = (Tegeval)tv.getContig().annset.get(i);
@@ -2018,7 +2018,7 @@ public class Neighbour {
 					String spec = (String)rowheader.getValueAt( r, 0 );
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
-						for( Tegeval tv : ti.tset ) {
+						for( Annotation tv : ti.tset ) {
 							//currentTe = tv.getContig().getLast();
 							Sequence cont = tv.getContig();
 							int k = cont.partof.indexOf(tv.getContig());
@@ -2051,7 +2051,7 @@ public class Neighbour {
 					String spec = (String)rowheader.getValueAt( r, 0 );
 					for( GeneGroup gg : selectedGenesGroups ) {
 						Teginfo ti = gg.species.get( spec );
-						for( Tegeval tv : ti.tset ) {
+						for( Annotation tv : ti.tset ) {
 							Sequence cont = tv.getContig();
 							int k = cont.partof.indexOf( cont );
 							//if( cont.isReverse() ) {
@@ -2149,9 +2149,9 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					if( currentTe != null ) {
 						GeneGroup gg = currentTe.getGene().getGeneGroup();
-						List<Tegeval> lte = gg.getTegevals();
-						List<Tegeval> include = new ArrayList<>();
-						for( Tegeval te : lte ) {
+						List<Annotation> lte = gg.getTegevals();
+						List<Annotation> include = new ArrayList<>();
+						for( Annotation te : lte ) {
 							Sequence ct = te.getContig();
 							for( Annotation ste : hteg ) {
 								if( ste.getContig() == ct ) {
@@ -2178,8 +2178,8 @@ public class Neighbour {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					if( currentTe != null ) {
-						List<Tegeval> lte = currentTe.getGene().getGeneGroup().getTegevals();
-						for( Tegeval te : lte ) {
+						List<Annotation> lte = currentTe.getGene().getGeneGroup().getTegevals();
+						for( Annotation te : lte ) {
 							te.setSelected( true );
 						}
 						c.repaint();
@@ -2209,10 +2209,10 @@ public class Neighbour {
 			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					Set<Annotation>	tset = new HashSet<Annotation>();
+					Set<Annotation>	tset = new HashSet<>();
 					for( GeneGroup gg : selectedGenesGroups ) {
-						List<Tegeval> ltv = gg.getTegevals();
-						for( Tegeval tv : ltv ) {
+						List<Annotation> ltv = gg.getTegevals();
+						for( Annotation tv : ltv ) {
 							for( Annotation ann : tv.getContig().annset ) {
 								if( ann.isSelected() ) tset.add( ann );
 							}
@@ -2224,10 +2224,10 @@ public class Neighbour {
 			showselecteddnaseqs.setAction( new AbstractAction("Selected DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					Set<Annotation>	tset = new HashSet<Annotation>();
+					Set<Annotation>	tset = new HashSet<>();
 					for( GeneGroup gg : selectedGenesGroups ) {
-						List<Tegeval> ltv = gg.getTegevals();
-						for( Tegeval tv : ltv ) {
+						List<Annotation> ltv = gg.getTegevals();
+						for( Annotation tv : ltv ) {
 							for( Annotation ann : tv.getContig().annset ) {
 								if( ann.isSelected() ) tset.add( ann );
 							}
@@ -2241,8 +2241,8 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					Serifier serifier = new Serifier();
 					for( GeneGroup gg : selectedGenesGroups ) {
-						List<Tegeval> ltv = gg.getTegevals();
-						for( Tegeval tv : ltv ) {
+						List<Annotation> ltv = gg.getTegevals();
+						for( Annotation tv : ltv ) {
 							Tegeval prev = null;
 							//Tegeval prevprev = null;
 							for( Annotation ann : tv.getContig().annset ) {
@@ -2284,12 +2284,12 @@ public class Neighbour {
 				public void actionPerformed(ActionEvent e) {
 					Serifier serifier = new Serifier();
 					for( GeneGroup gg : selectedGenesGroups ) {
-						List<Tegeval> ltv = gg.getTegevals();
-						for( Tegeval tv : ltv ) {
-							Tegeval prev = null;
+						List<Annotation> ltv = gg.getTegevals();
+						for( Annotation tv : ltv ) {
+							Annotation prev = null;
 							//Tegeval prevprev = null;
 							for( Annotation ann : tv.getContig().annset ) {
-								Tegeval tv2 = (Tegeval)ann;
+								Annotation tv2 = ann;
 								/*if( tv2.getSpecies().contains("antra") && tv2.getGene().getGeneGroup().getName().contains("Elongation") ) {
 									System.err.println();
 								}*/
@@ -2339,13 +2339,13 @@ public class Neighbour {
 					Color cb = new Color(100,100,150);
 					Color cdb = new Color(50,50,100);
 					
-					Set<Color> darkColors = new HashSet<Color>( Arrays.asList(new Color[] {Color.gray,cdg,cdr,cdb}) );
-					Set<Color> colors = new HashSet<Color>( Arrays.asList(new Color[] {Color.lightGray,cg,cr,cb}) );
+					Set<Color> darkColors = new HashSet<>( Arrays.asList(new Color[] {Color.gray,cdg,cdr,cdb}) );
+					Set<Color> colors = new HashSet<>( Arrays.asList(new Color[] {Color.lightGray,cg,cr,cb}) );
 					
 					if( rr == null || rr.length == 0 ) {
 						for( GeneGroup gg : selectedGenesGroups ) {
-							List<Tegeval> ltv = gg.getTegevals();
-							for( Tegeval tv : ltv ) {
+							List<Annotation> ltv = gg.getTegevals();
+							for( Annotation tv : ltv ) {
 								String seqname = Sequence.nameFix(tv.getSpecies(),true);
 								boolean aq = false;
 								System.err.println( seqname );

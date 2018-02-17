@@ -403,7 +403,7 @@ public class SyntGrad {
                                                     genesethead.getGeneGroupTable().getSelectionModel().select(tv.getGene().getGeneGroup());
                                                 } else {
                                                     Teginfo ti = tv.getGene().getGeneGroup().getGenes(spec);
-                                                    for (Tegeval te : ti.tset) {
+                                                    for (Annotation te : ti.tset) {
                                                         genesethead.getGeneTable().getSelectionModel().select(te.getGene());
                                                     }
                                                     genesethead.getGeneTable().scrollTo(ti.best.getGene());
@@ -526,7 +526,7 @@ public class SyntGrad {
 				visible = true;
 				
 				boolean inplasmid = false;
-				if( gene2s != null && gene2s.tset != null ) for( Tegeval tee : gene2s.tset ) {
+				if( gene2s != null && gene2s.tset != null ) for( Annotation tee : gene2s.tset ) {
 					if( tee.getContshort() != null && tee.getContshort().isPlasmid() ) {
 						inplasmid = true;
 						break;
@@ -660,7 +660,7 @@ public class SyntGrad {
 						//System.err.println( "tiname " + rr + " " + ti.tset.size() + "  " + ti.best.name );
 						
 						g2.setColor( Color.black );
-						for( Tegeval te : ti.tset ) {
+						for( Annotation te : ti.tset ) {
 							if( te != tv ) {
 								g2.translate(w2, h2);
 								
@@ -745,7 +745,7 @@ public class SyntGrad {
 			int ptvn = 0;
 			
 			boolean succ = false;
-			Tegeval te = null;
+			Annotation te = null;
 			
 			if( genesethead.isGeneview() ) {
 				Gene gene = genesethead.getGeneTable().getSelectionModel().getSelectedItem();
