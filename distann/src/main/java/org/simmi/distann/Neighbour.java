@@ -376,14 +376,14 @@ public class Neighbour {
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectBefore( currentTe, te );
 			} else {
 				/*Tegeval next = currentTe.getNext();
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectAfter( currentTe, te );
 			}
 			c.repaint();
@@ -397,14 +397,14 @@ public class Neighbour {
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectAfter( currentTe, te );
 			} else {
 				/*Tegeval previous = currentTe.getPrevious();
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
+				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectBefore( currentTe, te );
 			}
 			c.repaint();
@@ -492,7 +492,7 @@ public class Neighbour {
 	}
 	
 	public void makeStuff( Graphics g, Rectangle clip, GeneSet geneset, int rowheight, int rowcount, String showNames, boolean seqView ) {
-		Map<String,Integer>	offsetMap = new HashMap<String,Integer>();
+		Map<String,Integer>	offsetMap = new HashMap<>();
 		for( GeneGroup gg : selectedGenesGroups ) {
 			for( String spec2 : gg.getSpecies() ) {
 				final Collection<Sequence> contigs2 = geneset.speccontigMap.get( spec2 );

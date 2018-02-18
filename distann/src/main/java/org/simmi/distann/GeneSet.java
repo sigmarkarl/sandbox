@@ -544,7 +544,7 @@ public class GeneSet implements GenomeSet {
 					}/* else {
 						 contig = new Contig( contigstr );
 					}*/
-					tv.init( lname, contig, contloc, start, stop, dir );
+					tv.init( lname, contig, start, stop, dir );
 					tv.setName( line );
 					//ac.setName( lname );
 					//tv.setAlignedSequence( ac );
@@ -554,7 +554,8 @@ public class GeneSet implements GenomeSet {
 					if( contig != null ) contig.addAnnotation( tv );
 					
 					String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
-					Gene gene = new Gene( null, id, newname, origin );
+					Gene gene = new Gene( null, id, newname );
+					tv.teg = origin;
 					tv.designation = designations != null ? designations.get( id ) : null;
 					gene.refid = newid;
 					gene.setIdStr( idstr );
@@ -627,7 +628,7 @@ public class GeneSet implements GenomeSet {
 						 //contig = new Contig( contigstr );
 					}
 					
-					((Tegeval)g.tegeval).init( lname, contig, contloc, start, stop, dir );
+					((Tegeval)g.tegeval).init( lname, contig, start, stop, dir );
 					if( contig != null ) contig.addAnnotation( g.tegeval );
 					//g.tegeval.name = line;
 					//ac.setName( lname );
@@ -840,7 +841,7 @@ public class GeneSet implements GenomeSet {
 								}*/
 				}
 
-				((Tegeval)tv).init(lname, contig, contloc, start, stop, dir);
+				((Tegeval)tv).init(lname, contig, start, stop, dir);
 				tv.setName(prevline.substring(1));
 				//ac.setName( lname );
 				//tv.setAlignedSequence( ac );
@@ -848,7 +849,8 @@ public class GeneSet implements GenomeSet {
 				if (contig != null) contig.addAnnotation(tv);
 
 				String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
-				Gene gene = new Gene(null, id, newname, origin);
+				Gene gene = new Gene(null, id, newname);
+				tv.teg = origin;
 				tv.designation = designations != null ? designations.get(id) : null;
 				gene.refid = newid;
 				gene.setIdStr(idstr);
@@ -1123,7 +1125,7 @@ public class GeneSet implements GenomeSet {
 					}*/
 				}
 				
-				((Tegeval)tv).init( lname, contig, contloc, start, stop, dir );
+				((Tegeval)tv).init( lname, contig, start, stop, dir );
 				tv.setName( prevline.substring(1) );
 				//tv.setAlignedSequence( ac );
 				aas.put(lname, tv );
@@ -1132,7 +1134,8 @@ public class GeneSet implements GenomeSet {
 				// aass.add( new Aas(name, ac, start, stop, dir) );
 				
 				String newname = addname.length() == 0 ? name : addname.substring(1);
-				Gene gene = new Gene( null, id, newname, origin );
+				Gene gene = new Gene( null, id, newname);
+				tv.teg = origin;
 				tv.designation = designations != null ? designations.get( id ) : null;
 				gene.refid = newid;
 				gene.allids = new HashSet<>();
@@ -1257,38 +1260,6 @@ public class GeneSet implements GenomeSet {
 				contig.partof = ctlist;
 			}
 		}
-		
-		for( String spec : speccontigMap.keySet() ) {
-			List<Sequence> ctg = speccontigMap.get(spec);
-			
-			//System.err.println( spec + " " + ctg.size() );
-			
-			if( ctg.size() < 4 && ctg.size() > 1 ) {
-				Sequence chrom = null;
-				for( Sequence c : ctg ) {
-					if( chrom == null || c.length() > chrom.length() ) chrom = c;
-				}
-				for( Sequence c : ctg ) {
-					if( c != chrom ) c.plasmid = true;
-				}
-			} else {
-				for( Sequence c : ctg ) {
-					c.plasmid = plasmids.contains( c.toString() );
-				}
-			}
-		}
-		
-		for( String spec : speccontigMap.keySet() ) {
-			List<Sequence> ctg = speccontigMap.get(spec);
-			
-			List<Sequence> plasmids = new ArrayList<>();
-			for( Sequence c : ctg ) {
-				if( c.isPlasmid() ) plasmids.add( c );
-			}
-			ctg.removeAll( plasmids );
-			ctg.addAll( plasmids );
-		}
-		
 		return new ArrayList<>( speccontigMap.keySet() );
 	}
 
@@ -4068,7 +4039,7 @@ public class GeneSet implements GenomeSet {
 						genelist = new ArrayList<>();
 						genemap.put(strain, genelist);
 					}
-					genelist.add(new Gene(null, last, last, "mool"));
+					genelist.add(new Gene(null, last, last));
 				}
 				last = line + "\n";
 				// aa = "";
@@ -4085,7 +4056,7 @@ public class GeneSet implements GenomeSet {
 			genelist = new ArrayList<>();
 			genemap.put(strain, genelist);
 		}
-		genelist.add(new Gene(null, last, last, "moool"));
+		genelist.add(new Gene(null, last, last));
 		br.close();
 
 		for (String str : genemap.keySet()) {
@@ -4111,7 +4082,7 @@ public class GeneSet implements GenomeSet {
 		while (line != null) {
 			if (line.startsWith(">")) {
 				if (last != null) {
-					Gene g = new Gene(null, last, last, "mool");
+					Gene g = new Gene(null, last, last);
 					g.setAa(aa);
 					genelist.add(g);
 				}
@@ -4122,7 +4093,7 @@ public class GeneSet implements GenomeSet {
 			}
 			line = br.readLine();
 		}
-		Gene g = new Gene(null, last, last, "mool");
+		Gene g = new Gene(null, last, last);
 		g.setAa(aa);
 		genelist.add(g);
 		br.close();
@@ -4974,7 +4945,7 @@ public class GeneSet implements GenomeSet {
 	}
 	
 	private Scene createDualPieChartScene( Map<Character,Integer> map, Map<Character,Integer> mip ) {
-        List<String> speclist = new ArrayList<String>();
+        List<String> speclist = new ArrayList<>();
         /*for( String spec : mip.keySet() ) {
         	speclist.add( nameFix(spec) );
         }*/
@@ -5142,14 +5113,14 @@ public class GeneSet implements GenomeSet {
         
         xAxis.setTickLabelRotation( 90.0 );
         
-        List<String> speclist = new ArrayList<String>();
+        List<String> speclist = new ArrayList<>();
         for( String spec : map.keySet() ) {
         	speclist.add( nameFix(spec) );
         }
         xAxis.setCategories( FXCollections.<String>observableArrayList( speclist ) );
         //yAxis.
         
-        final StackedBarChart<String,Number> sc = new StackedBarChart<String,Number>(xAxis,yAxis);
+        final StackedBarChart<String,Number> sc = new StackedBarChart<>(xAxis,yAxis);
         sc.setLegendSide( Side.RIGHT );
         xAxis.setLabel("");
         yAxis.setLabel("");
@@ -7640,11 +7611,11 @@ public class GeneSet implements GenomeSet {
 					gg = new GeneGroup( GeneSet.this, groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
-				Gene g = new Gene( gg, name, name, spec );
+				Gene g = new Gene( gg, name, name );
 				g.setIdStr( idstr );
 				
 				Sequence contig = contigmap.get( cont );
-				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(1,trim.length()-1), contig, contshort, start, stop, rev ? -1 : 1 );
+				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(1,trim.length()-1), contig, start, stop, rev ? -1 : 1 );
 				tegeval.type = tag;
 				g.setTegeval( tegeval );
 				gg.addGene( g );
@@ -7722,7 +7693,7 @@ public class GeneSet implements GenomeSet {
 					gg = new GeneGroup( GeneSet.this, groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
-				Gene g = new Gene( gg, cont+"_"+loc, name, spec );
+				Gene g = new Gene( gg, cont+"_"+loc, name );
 				
 				Sequence contig = contigmap.get( cont );
 				/*Sequence contig = null;
@@ -7846,7 +7817,7 @@ public class GeneSet implements GenomeSet {
 				}
 				else if( spec.contains("RLM") ) spec = "t.RLM";*/
 				
-				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(6, i+4), contig, loc, start, stop, rev ? -1 : 1 );
+				Tegeval tegeval = new Tegeval( g, spec, 0.0, trim.substring(6, i+4), contig, start, stop, rev ? -1 : 1 );
 				tegeval.type = "rrna";
 				g.setTegeval( tegeval );
 				gg.addGene( g );
@@ -7888,10 +7859,10 @@ public class GeneSet implements GenomeSet {
 							gg = new GeneGroup(GeneSet.this, groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap);
 							ggmap.put(name, gg);
 						}
-						Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name, spec);
+						Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name);
 
 						Sequence contig = contigmap.get(cont);
-						Tegeval tegeval = new Tegeval(g, spec, 0.0, null, contig, null, start, stop, ori);
+						Tegeval tegeval = new Tegeval(g, spec, 0.0, null, contig, start, stop, ori);
 						tegeval.type = "trna";
 						g.setTegeval(tegeval);
 						gg.addGene(g);
@@ -7921,12 +7892,12 @@ public class GeneSet implements GenomeSet {
 								gg = new GeneGroup(GeneSet.this, groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap);
 								ggmap.put(name, gg);
 							}
-							Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name, spec);
+							Gene g = new Gene(gg, cont + "_" + start + "_" + stop, name);
 
 							System.err.println("adding " + spec + "  " + name + "  " + start + "  " + stop);
 
 							Sequence contig = contigmap.get(cont);
-							Tegeval tegeval = new Tegeval(g, spec, 0.0, null, contig, null, start, stop, ori);
+							Tegeval tegeval = new Tegeval(g, spec, 0.0, null, contig, start, stop, ori);
 							tegeval.type = "trna";
 							g.setTegeval(tegeval);
 							gg.addGene(g);
@@ -7960,10 +7931,10 @@ public class GeneSet implements GenomeSet {
 						gg = new GeneGroup( GeneSet.this, groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 						ggmap.put( name, gg );
 					}
-					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
+					Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name);
 
 					Sequence contig = contigmap.get( cont );
-					Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
+					Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, start, stop, ori );
 					tegeval.type = "trna";
 					g.setTegeval( tegeval );
 					gg.addGene( g );
@@ -8001,10 +7972,10 @@ public class GeneSet implements GenomeSet {
 					gg = new GeneGroup( GeneSet.this, groupIndex++, specset, cogmap, pfammap, ko2name, biosystemsmap );
 					ggmap.put( name, gg );
 				}
-				Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name, spec );
+				Gene g = new Gene( gg, cont+"_"+start+"_"+stop, name);
 
 				Sequence contig = contigmap.get( cont );
-				Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, null, start, stop, ori );
+				Tegeval tegeval = new Tegeval( g, spec, 0.0, null, contig, start, stop, ori );
 				tegeval.type = "trna";
 				g.setTegeval( tegeval );
 				gg.addGene( g );
@@ -8281,11 +8252,13 @@ public class GeneSet implements GenomeSet {
 								a.gene.name = a.getName();
 								a.gene.id = a.id;
 								a.gene.refid = a.id;
+								a.gene.tegeval.teg = fileName;
 								refmap.put(a.gene.id, a.gene);
 							}
 						}
 					}
 					speccontigMap.put(fileName, seqs);
+					specList.addAll( speccontigMap.keySet() );
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -8407,7 +8380,36 @@ public class GeneSet implements GenomeSet {
 		nf = zipfilesystem.getPath("/ko2name.txt");
 		if( Files.exists( nf ) ) ko2name = ko2nameMapping( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
 
-		
+		for( String spec : speccontigMap.keySet() ) {
+			List<Sequence> ctg = speccontigMap.get(spec);
+			if( ctg.size() < 4 && ctg.size() > 1 ) {
+				Sequence chrom = null;
+				for( Sequence c : ctg ) {
+					if( chrom == null || c.length() > chrom.length() ) chrom = c;
+				}
+				for( Sequence c : ctg ) {
+					if( c != chrom ) c.setPlasmid( true );
+				}
+			} else {
+				for( Sequence c : ctg ) {
+					c.setPlasmid( plasmids.contains( c.toString() ) );
+				}
+			}
+		}
+
+		for( String spec : speccontigMap.keySet() ) {
+			List<Sequence> ctg = speccontigMap.get(spec);
+
+			List<Sequence> plasmids = new ArrayList<>();
+			for( Sequence c : ctg ) {
+				if( c.isPlasmid() ) plasmids.add( c );
+			}
+			ctg.removeAll( plasmids );
+			ctg.addAll( plasmids );
+		}
+
+
+
 		/*for( String cstr : contigmap.keySet() ) {
 			Sequence c = contigmap.get(cstr);
 			if( c.annset != null ) for( Annotation a : c.annset ) {
@@ -9495,7 +9497,7 @@ public class GeneSet implements GenomeSet {
 	
 	public void updateShareNum( Collection<String> specs ) {
 		if( specset != null ) specset.clear();
-		else specset = new HashMap<Set<String>, ShareNum>();
+		else specset = new HashMap<>();
 		
 		int sn = 0;
 		/*for (Gene g : genelist) {
@@ -9509,11 +9511,11 @@ public class GeneSet implements GenomeSet {
 				}
 			}
 		}*/
-		Map<Set<String>, ShareNum> subset = new HashMap<Set<String>, ShareNum>();
+		Map<Set<String>, ShareNum> subset = new HashMap<>();
 		
 		for (GeneGroup gg : allgenegroups) {
 			Set<String>	species = gg.getSpecies();
-			Set<String>	tmpspec = new HashSet<String>( species );
+			Set<String>	tmpspec = new HashSet<>( species );
 			tmpspec.retainAll( specs );
 			gg.setSpecSet( this.specset );
 			

@@ -55,7 +55,7 @@ public class Blast {
 						Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
 						
 						if( newgene == null ) {
-							newgene = new Gene(null, gene.refid + " new", desc, teg);
+							newgene = new Gene(null, gene.refid + " new", desc);
 							newgene.allids = new HashSet();
 							//newgene.species = new HashMap<String, Teginfo>();
 							//newgene.refid = gene.refid + " new";
@@ -357,8 +357,8 @@ public class Blast {
 						gene.allids.remove( check );
 					}
 				} else {
-					gene = new Gene(null, id, desc, teg);
-					gene.allids = new HashSet<String>();
+					gene = new Gene(null, id, desc);
+					gene.allids = new HashSet<>();
 					//gene.species = new HashMap<String, Teginfo>();
 					ret.put(val, gene);
 				}
@@ -367,7 +367,6 @@ public class Blast {
 				
 				//aa, dn
 				Tegeval tv = aas.get( query );//new Tegeval(gene, teg, deval, query, contig, contloc, start, stop, ori);
-				
                 if( tv == null || tv.ori != ori || tv.start != start || tv.stop != stop ) {
 					System.err.println();
 				}
@@ -487,9 +486,9 @@ public class Blast {
 					if (ret.containsKey(aaid)) {
 						gene = ret.get(aaid);
 					} else {
-						gene = new Gene(null, aaid, aaid, padda);
+						gene = new Gene(null, aaid, aaid);
 						ret.put(aaid, gene);
-						gene.allids = new HashSet<String>();
+						gene.allids = new HashSet<>();
 						//gene.species = new HashMap<String, Teginfo>();
 						ret.put(aaid, gene);
 						gene.refid = aaid;

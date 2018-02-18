@@ -5099,11 +5099,12 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 			GBK2AminoFasta.handleText( gbks, map, out, path, replace, noseq );
 			
 			//+firsturi.toString().replace(name, "")
-			addSequences( name+".fna", firsturi, null );
+
+			/*addSequences( name+".fna", firsturi, null );
 			for( String tg : map.keySet() ) {
 				uri = map.get( tg );
 				addSequences( name+"."+tg, uri, null );
-			}
+			}*/
 		}
 	}
 	

@@ -5597,7 +5597,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                     pt[2] = fc.getSelectedFile().toPath();
                 }*/
 
-                List<Object> commands = new ArrayList<Object>();
+                List<Object> commands = new ArrayList<>();
                 //commands.add(genexyplotaction)
 
                 for( String spec : selspec ) {
@@ -8754,8 +8754,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			Gene g = gtable.getSelectionModel().getSelectedItem();
 			Sequence contig = g.tegeval.getContshort();
 			String contigstr = contig.toString();
-			contig.plasmid = !geneset.plasmids.contains( contigstr );
-			if( contig.plasmid ) geneset.plasmids.add( contigstr );
+			contig.setPlasmid( !geneset.plasmids.contains( contigstr ) );
+			if( contig.isPlasmid() ) geneset.plasmids.add( contigstr );
 			else geneset.plasmids.remove( contigstr );
 			
 			try {
