@@ -8236,7 +8236,7 @@ public class GeneSet implements GenomeSet {
 		for( Path root : zipfilesystem.getRootDirectories() ) {
 			Files.list(root).filter(t -> {
 				String filename = t.getFileName().toString();
-				return (filename.endsWith(".gbk") || filename.endsWith(".gbff"));
+				return (filename.endsWith(".gb") || filename.endsWith(".gbk") || filename.endsWith(".gbff"));
 			}).forEach(t -> {
 				try {
 					Map<String,Stream<String>> filetextmap = new HashMap<>();
@@ -8244,21 +8244,25 @@ public class GeneSet implements GenomeSet {
 					String fileName = t.getFileName().toString();
 					filetextmap.put(fileName, br.lines());
 
-					List<Sequence> seqs = GBK2AminoFasta.handleText(filetextmap, annoset, null, null, null, false);
-					for( Sequence seq : seqs ) {
-						contigmap.put(seq.getName(),seq);
-						for( Annotation a : seq.getAnnotations() ) {
-							if( a.gene != null ) {
-								a.gene.name = a.getName();
-								a.gene.id = a.id;
-								a.gene.refid = a.id;
-								a.gene.tegeval.teg = fileName;
-								refmap.put(a.gene.id, a.gene);
+					Map<String,List<Sequence>> seqmap = GBK2AminoFasta.handleText(filetextmap, annoset, null, null, null, false);
+					for( String org : seqmap.keySet() ) {
+						List<Sequence> seqs = seqmap.get(org);
+						for (Sequence seq : seqs) {
+							if (seq.getName() != null) contigmap.put(seq.getName(), seq);
+							if (seq.getAnnotations() != null) for (Annotation a : seq.getAnnotations()) {
+								Gene gene = a.getGene();
+								if (gene != null) {
+									gene.name = a.getName();
+									gene.id = a.id;
+									gene.refid = a.id;
+									gene.tegeval.teg = org;
+									refmap.put(gene.id, gene);
+								}
 							}
 						}
+						speccontigMap.put(org, seqs);
+						specList.add( org );
 					}
-					speccontigMap.put(fileName, seqs);
-					specList.addAll( speccontigMap.keySet() );
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -9737,7 +9741,7 @@ public class GeneSet implements GenomeSet {
 				BufferedWriter qbw = Files.newBufferedWriter(queryPath);
 
 				Path dbPath = Files.createTempFile("db", ".fsa");
-				BufferedWriter bw = Files.newBufferedWriter(dbPath);
+ 				BufferedWriter bw = Files.newBufferedWriter(dbPath);
 				for (Gene g : genelist) {
 					if (g.getTag() == null || g.getTag().equalsIgnoreCase("gene")) {
 						if (g.getSpecies().contains("Eva")) {

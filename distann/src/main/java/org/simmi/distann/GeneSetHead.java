@@ -2473,7 +2473,7 @@ public class GeneSetHead extends JApplet {
                         String selspec = cont.getSpec();//tv.getContig();
                         if( genename ) {
                             Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-                            seq.setName( tv.gene != null ? tv.gene.name : tv.getName() );
+                            seq.setName( tv.getGene() != null ? tv.getGene().name : tv.getName() );
                             serifier.mseq.put( seq.getName(), seq );
                             //Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
                             serifier.addSequence(seq);
@@ -6723,13 +6723,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			boolean phage = false;
 			for( Annotation tv : ti.tset ) {
 				phage = phage | tv.isPhage();
-				
 				Sequence seq = tv.getContshort();
-				
-				if( seq == null ) {
-					//System.err.println();
-				}
-				
 				plasmid = plasmid | (seq != null && seq.isPlasmid());
 			}
 			
@@ -6919,7 +6913,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		FileChooser fc = new FileChooser();
 		//fc.getExtensionFilters().add( new ExtensionFilter("Zip files", "*.zip") );
 		File f = fc.showSaveDialog(primaryStage);
-		geneset.zippath = f.toPath();
+		if( f != null ) geneset.zippath = f.toPath();
 	}
 
 	public void excelExport( String sheetname ) throws IOException {
