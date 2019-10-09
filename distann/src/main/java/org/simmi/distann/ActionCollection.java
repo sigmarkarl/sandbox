@@ -1,14 +1,6 @@
 package org.simmi.distann;
 
-import java.applet.Applet;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -68,6 +60,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;*/
+import netscape.javascript.JSObject;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -98,7 +91,6 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
-import netscape.javascript.JSObject;
 
 public class ActionCollection {
 	public static StringBuilder panCore( GeneSetHead genesethead, Set<String> selspec, final String[] categories, final List<StackBarData>	lsbd ) {
@@ -1603,51 +1595,7 @@ public class ActionCollection {
 					}
 				}
 				
-				JSObject window = null;
-				if( window != null ) {
-					StringBuilder restext = new StringBuilder();
-					restext.append("['a', ' ']");
-					for( Integer k : frqmap.keySet() ) {
-						int h = frqmap.get( k );
-						restext.append(",\n["+(k*bil/50.0+min)+", "+h+"]");
-					}
-					
-					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("org/simmi/javafasta/columnchart.html");
-					try {
-						int c = is.read();
-						while( c != -1 ) {
-							sb.append( (char)c );
-							c = is.read();
-						}
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					final String smuck = sb.toString().replace("smuck", restext.toString());
-					String b64str = Base64.getEncoder().encodeToString( smuck.getBytes() );
-					
-					boolean succ = true;
-					try {
-						window.call("string2Blob", new Object[] {b64str,"text/html"});
-					} catch( Exception exc ) {
-						succ = false;
-						exc.printStackTrace();
-					}
-				
-					if( succ == false ) {
-						try {
-							window.setMember("b64str", b64str);
-							window.eval("var binary = atob(b64str)");
-							window.eval("var i = binary.length");
-							window.eval("var view = new Uint8Array(i)");
-						    window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-							window.eval("var b = new Blob( [view], { \"type\" : \"text\\/html\" } );");
-							window.eval("open( URL.createObjectURL(b), '_blank' )");
-						} catch( Exception exc ) {
-							exc.printStackTrace();
-						}
-					}
-				} else if( Desktop.isDesktopSupported() ) {
+				if( Desktop.isDesktopSupported() ) {
 					final String[] 	names = new String[ frqmap.size() ];
 					final int[]		vals = new int[ names.length ];
 					int i = 0;
@@ -1757,69 +1705,69 @@ public class ActionCollection {
 
 		MenuItem presabsaction = new MenuItem("Pres-Abs tree");
 		presabsaction.setOnAction( actionEvent -> {
-				JCheckBox	check = new JCheckBox("Skip core");
-				JCheckBox	align = new JCheckBox("Show alignment");
-				JCheckBox	output = new JCheckBox("Output fasta");
-				JOptionPane.showMessageDialog( comp, new Object[] {check, align, output} );
-				
-				Set<String>	selspec = genesethead.getSelspec( genesethead, geneset.specList );
+			JCheckBox check = new JCheckBox("Skip core");
+			JCheckBox align = new JCheckBox("Show alignment");
+			JCheckBox output = new JCheckBox("Output fasta");
+			JOptionPane.showMessageDialog(comp, new Object[]{check, align, output});
 
-				String restext = null;
-				if( !align.isSelected() ) {
-					StringBuilder distmat = new StringBuilder();
-					distmat.append("\t"+selspec.size()+"\n");
-					for( String spec1 : selspec ) {
-						distmat.append( spec1 );
-						for( String spec2 : selspec ) {
-							if( spec1.equals(spec2) ) distmat.append( "\t0.0" );
-							else {
-								int total = 0;
-								int count = 0;
-								for( Set<String> specset : clusterMap.keySet() ) {
-									if( specset.size() > 1 && (!check.isSelected() || geneset.containmentCount(specset, selspec) < selspec.size()) ) {
-										boolean b1 = specset.contains(spec1);
-										boolean b2 = specset.contains(spec2);
-										Set<Map<String,Set<String>>>	sm = clusterMap.get( specset );
-										if( b1 || b2 ) {
-											total += sm.size();
-											if( b1 && b2 ) count += sm.size();
-										}
-									}/* else {
+			Set<String> selspec = genesethead.getSelspec(genesethead, geneset.specList);
+
+			String restext = null;
+			if (!align.isSelected()) {
+				StringBuilder distmat = new StringBuilder();
+				distmat.append("\t" + selspec.size() + "\n");
+				for (String spec1 : selspec) {
+					distmat.append(spec1);
+					for (String spec2 : selspec) {
+						if (spec1.equals(spec2)) distmat.append("\t0.0");
+						else {
+							int total = 0;
+							int count = 0;
+							for (Set<String> specset : clusterMap.keySet()) {
+								if (specset.size() > 1 && (!check.isSelected() || geneset.containmentCount(specset, selspec) < selspec.size())) {
+									boolean b1 = specset.contains(spec1);
+									boolean b2 = specset.contains(spec2);
+									Set<Map<String, Set<String>>> sm = clusterMap.get(specset);
+									if (b1 || b2) {
+										total += sm.size();
+										if (b1 && b2) count += sm.size();
+									}
+								}/* else {
 										System.err.println("blehbheh");
 									}*/
-								}
-								distmat.append( "\t"+(double)(total-count)/(double)total );
 							}
-						}
-						distmat.append("\n");
-					}
-					
-					restext = distmat.toString();
-				} else {
-					char one = output.isSelected() ? 'A' : '1';
-					char zero = output.isSelected() ? 'C' : '0';
-					
-					Map<String,StringBuilder>	sbmap = new HashMap<String,StringBuilder>();
-					for( Set<String> specset : clusterMap.keySet() ) {
-						if( specset.size() > 1 && (!check.isSelected() || geneset.containmentCount(specset, selspec) < selspec.size()) ) {
-							for( String spec : selspec ) {
-								StringBuilder sb;
-								if( sbmap.containsKey( spec ) ) {
-									sb = sbmap.get( spec );
-								} else {
-									sb = new StringBuilder();
-									sbmap.put( spec, sb );
-								}
-								
-								Set<Map<String,Set<String>>> cset = clusterMap.get( specset );
-								if( specset.contains( spec ) ) {
-									for( int i = 0; i < cset.size(); i++ ) sb.append(one);
-								} else {
-									for( int i = 0; i < cset.size(); i++ ) sb.append(zero);
-								}
-							}
+							distmat.append("\t" + (double) (total - count) / (double) total);
 						}
 					}
+					distmat.append("\n");
+				}
+
+				restext = distmat.toString();
+			} else {
+				char one = output.isSelected() ? 'A' : '1';
+				char zero = output.isSelected() ? 'C' : '0';
+
+				Map<String, StringBuilder> sbmap = new HashMap<String, StringBuilder>();
+				for (Set<String> specset : clusterMap.keySet()) {
+					if (specset.size() > 1 && (!check.isSelected() || geneset.containmentCount(specset, selspec) < selspec.size())) {
+						for (String spec : selspec) {
+							StringBuilder sb;
+							if (sbmap.containsKey(spec)) {
+								sb = sbmap.get(spec);
+							} else {
+								sb = new StringBuilder();
+								sbmap.put(spec, sb);
+							}
+
+							Set<Map<String, Set<String>>> cset = clusterMap.get(specset);
+							if (specset.contains(spec)) {
+								for (int i = 0; i < cset.size(); i++) sb.append(one);
+							} else {
+								for (int i = 0; i < cset.size(); i++) sb.append(zero);
+							}
+						}
+					}
+				}
 					
 					/*StringBuilder sb = new StringBuilder();
 					for( String s : sbmap.keySet() ) {
@@ -1830,45 +1778,43 @@ public class ActionCollection {
 						}
 					}
 					restext = sb.toString();*/
-					
-					List<Sequence> ls = new ArrayList<Sequence>();
-					for( String s : sbmap.keySet() ) {
-						StringBuilder sb = sbmap.get(s);
-						Sequence seq = new Sequence( s, s, sb, null );
-						ls.add( seq );
-					}
-					if( output.isSelected() ) {
-						Serifier ser = new Serifier();
-						ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						OutputStreamWriter osw = new OutputStreamWriter( baos );
-						try {
-							ser.writeFasta(ls, osw, null);
-							osw.close();
-							baos.close();
-							restext = baos.toString();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-					} else {
-						restext = Sequence.getPhylip( ls, false );
-					}
+
+				List<Sequence> ls = new ArrayList<Sequence>();
+				for (String s : sbmap.keySet()) {
+					StringBuilder sb = sbmap.get(s);
+					Sequence seq = new Sequence(s, s, sb, null);
+					ls.add(seq);
 				}
-				
-				if( !succ ) {
-					JFrame f = new JFrame("Pres-Abs dist matrix");
-					f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-					f.setSize( 800, 600 );
-					
-					JTextArea	ta = new JTextArea();
-					ta.setText( restext );
-					JScrollPane	sp = new JScrollPane(ta);
-					f.add( sp );
-					f.setVisible( true );
+				if (output.isSelected()) {
+					Serifier ser = new Serifier();
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					OutputStreamWriter osw = new OutputStreamWriter(baos);
+					try {
+						ser.writeFasta(ls, osw, null);
+						osw.close();
+						baos.close();
+						restext = baos.toString();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				} else {
+					restext = Sequence.getPhylip(ls, false);
 				}
+			}
+
+			JFrame f = new JFrame("Pres-Abs dist matrix");
+			f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			f.setSize(800, 600);
+
+			JTextArea ta = new JTextArea();
+			ta.setText(restext);
+			JScrollPane sp = new JScrollPane(ta);
+			f.add(sp);
+			f.setVisible(true);
 		});
 		//JButton presabsbutton = new JButton( presabsaction );
 		
-		MenuItem	keggaction = new MenuItem("KEGG pathway");
+		MenuItem keggaction = new MenuItem("KEGG pathway");
 		keggaction.setOnAction( actionEvent -> {
 				Map<String,String> env = new HashMap<String,String>();
 				env.put("create", "true");
@@ -2408,7 +2354,7 @@ public class ActionCollection {
 					}
 				}
 				
-				Set<String>	conflicting = new HashSet<String>();
+				Set<String>	conflicting = new HashSet<>();
 				String text = conflict.getText();
 				String[] lines = text.split("\n");
 				for( String line : lines ) {

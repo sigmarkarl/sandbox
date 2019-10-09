@@ -1,15 +1,30 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'org.openjfx:javafx-plugin:0.0.8'
+    }
+}
+
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.0.8'
+}
+
 allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
     apply plugin: 'java'
-    apply plugin: 'application'
+    apply plugin: 'org.openjfx.javafxplugin'
 
     ext.getProjectFullName = {
         return 'distann' + project.path.replace(':', '-')
     }
 }
 
-jar {
+/*jar {
     archiveName = "geneset.jar"
 
     from {
@@ -27,7 +42,7 @@ jar {
     }
 
     exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
-}
+}*/
 
 subprojects {
     repositories {
@@ -38,7 +53,7 @@ subprojects {
         }
     }
 
-		task fatJar(type: Jar) {
+		/*task fatJar(type: Jar) {
         baseName = getProjectFullName() + '-all'
         destinationDir = file("${buildDir}/distributions")
 				manifest {
@@ -48,7 +63,7 @@ subprojects {
 
         }
         with jar
-    }
+    }*/
 }
 
 project(':spilling') {
@@ -66,6 +81,11 @@ project(':TreeDraw') {
 }
 
 project(':serifier') {
+    javafx {
+        version = '13'
+        modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
+    }
+
 	dependencies {
 		compile group: 'commons-net', name: 'commons-net', version: '3.5'
 		compile group: 'org.apache.commons', name: 'commons-vfs2', version: '2.1'
@@ -74,6 +94,11 @@ project(':serifier') {
 }
 
 project(':javafasta') {
+    javafx {
+        version = '13'
+        modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
+    }
+
 	dependencies {
 		compile project(':TreeDraw')
         compile group: 'org.apache.poi', name: 'poi', version: '3.17'
@@ -81,10 +106,16 @@ project(':javafasta') {
 		compile group: 'org.ejml', name: 'all', version: '0.29'
 		compile group: 'com.github.samtools', name: 'htsjdk', version: '2.13.+'
         compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
+        compile group: 'org.json', name: 'json', version: '20190722'
     }
 }
 
 project(':distann') {
+    javafx {
+        version = '13'
+        modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
+    }
+
 	dependencies {
 		compile project(':javafasta')
 		compile project(':serifier')
