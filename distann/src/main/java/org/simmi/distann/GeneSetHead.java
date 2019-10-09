@@ -70,7 +70,6 @@ import javax.swing.event.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import java.applet.Applet;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -101,7 +100,7 @@ import static org.simmi.serifier.SerifyApplet.blastpRun;
  *
  * @version $Id:  $
  */
-public class GeneSetHead extends JApplet {
+public class GeneSetHead extends JPanel {
 	GeneSet							geneset;
 	DistannFX 						app;
 	List<JSplitPane> 				splitpaneList = new ArrayList<>();
@@ -1972,7 +1971,7 @@ public class GeneSetHead extends JApplet {
 		//cogCalc(filename, br, map, selspec, contigs);
 	}
 	
-	public StringBuffer getSelectedASeqs( TableView table, List<Gene> genelist, JApplet applet, Collection<String> species ) throws IOException {
+	public StringBuffer getSelectedASeqs( TableView table, List<Gene> genelist, JPanel applet, Collection<String> species ) throws IOException {
 		StringWriter sb = new StringWriter();
 		
 		Set<String> selectedSpecies = getSelspec( applet, new ArrayList<>( species ) );
@@ -2385,7 +2384,7 @@ public class GeneSetHead extends JApplet {
             frame1.setSize(800, 600);
             frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            JavaFasta jf = new JavaFasta( null, serifier, geneset.cs );
             jf.initGui(frame1);
             jf.updateView();
 
@@ -2399,7 +2398,7 @@ public class GeneSetHead extends JApplet {
             frame1.setSize(800, 600);
             frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            JavaFasta jf = new JavaFasta( null, serifier, geneset.cs );
             jf.initGui(frame1);
 
             /*for( String contig : contset.keySet() ) {
@@ -2422,7 +2421,7 @@ public class GeneSetHead extends JApplet {
             frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
             Serifier	serifier = new Serifier();
-            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            JavaFasta jf = new JavaFasta( null, serifier, geneset.cs );
             jf.initGui(frame1);
 
             for( Annotation tv : tset ) {
@@ -2459,7 +2458,7 @@ public class GeneSetHead extends JApplet {
             frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
             Serifier	serifier = new Serifier();
-            JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, geneset.cs );
+            JavaFasta jf = new JavaFasta( null, serifier, geneset.cs );
             jf.initGui(frame1);
 
             for( GeneGroup ggroup : ggset ) {
@@ -4113,7 +4112,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta((comp instanceof JApplet) ? (JApplet) comp : null, serifier, geneset.cs);
+				JavaFasta jf = new JavaFasta(null, serifier, geneset.cs);
 				jf.initGui(frame);
 
 				Map<String, Sequence> contset = new HashMap<>();
@@ -4475,7 +4474,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta((comp instanceof JApplet) ? (JApplet) comp : null, serifier, geneset.cs);
+				JavaFasta jf = new JavaFasta(null, serifier, geneset.cs);
 				jf.initGui(frame);
 
 				Set<Sequence> contset = new HashSet<>();
@@ -4580,7 +4579,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta((comp instanceof JApplet) ? (JApplet) comp : null, serifier, geneset.cs);
+				JavaFasta jf = new JavaFasta(null, serifier, geneset.cs);
 				jf.initGui(frame);
 
 				//Map<Sequence, Sequence> contset = new HashMap<Sequence, Sequence>();
@@ -4691,7 +4690,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
                 Serifier serifier = new Serifier();
-                JavaFasta jf = new JavaFasta((comp instanceof JApplet) ? (JApplet) comp : null, serifier, geneset.cs);
+                JavaFasta jf = new JavaFasta(null, serifier, geneset.cs);
                 jf.initGui(frame);
 
                 for (String spec : selspec) {
@@ -4801,7 +4800,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta((comp instanceof JApplet) ? (JApplet) comp : null, serifier, geneset.cs);
+				JavaFasta jf = new JavaFasta(null, serifier, geneset.cs);
 				jf.initGui(frame);
 				jf.updateView();
 
@@ -6578,7 +6577,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		jb.setOnAction( event -> {
 			try {
 				URL url = new URL("file:///home/sigmar/workspace/distann/bin/circle.html");
-				GeneSetHead.this.getAppletContext().showDocument(url, "_blank");
+				//GeneSetHead.this.getAppletContext().showDocument(url, "_blank");
 			} catch (MalformedURLException e1) {
 				e1.printStackTrace();
 			}
@@ -6589,22 +6588,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if( comp != null ) {
-			if( comp instanceof Applet )
-				try {
-					((GeneSetHead)comp).saveSel( null, null);
-				} catch ( NoSuchMethodError | Exception e1 ) {
-					e1.printStackTrace();
-				}
-			//comp.add( cc );
-		}
 	}
-	
-	public void saveSel( String name, String val) throws Exception, NoSuchMethodError {
-		JSObject jso = JSObject.getWindow( this );
-		jso.call("saveSel", new Object[] { name, val });
-	}
-
 
 	public String colorToRGBString( Color c ) {
 		int r = c.getRed();
@@ -6901,7 +6885,6 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 	}
 	
 	public void stop() {
-		super.stop();
 		try {
 			if( geneset.zippath != null ) geneset.saveContigOrder();
 		} catch (IOException e) {
@@ -7077,7 +7060,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 	private void showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
 			final Map<Set<String>, ShareNum> specset,*/ final Map<Set<String>, GeneSet.ClusterInfo> clustInfoMap, final Button jb, final TableView<Gene> genetable, final TableView<Function> upper, final TableView<GeneGroup> lower,
-							   final ToolBar toolbar, final ToolBar btoolbar, final Container comp, final JApplet applet, final ComboBox<String> selcomblocal) throws IOException {
+							   final ToolBar toolbar, final ToolBar btoolbar, final Container comp, final JPanel applet, final ComboBox<String> selcomblocal) throws IOException {
 		//JSplitPane splitpane = new JSplitPane();
 		//splitpane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		//splitpane.setDividerLocation(400);
@@ -9004,20 +8987,6 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		concattree.setOnAction( e -> {
 			Serifier serifier = getConcatenatedSequences( false, true );
 			
-			boolean succ = true;
-			if( comp instanceof Applet ) {
-				try {
-					JSObject win = JSObject.getWindow( (Applet)comp );
-					StringWriter sw = new StringWriter();
-					serifier.writeFasta(serifier.lseq, sw, null);
-					sw.close();
-					win.call("fasttree", new Object[] { sw.toString() });
-				} catch( NoSuchMethodError | Exception e1 ) {
-					e1.printStackTrace();
-					succ = false;
-				}
-			}
-			
 			/*if( !succ ) {
 				String 				tree = serifier.getFastTree();
 				if( cs.connections().size() > 0 ) {
@@ -10185,7 +10154,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		System.err.println( genefilterset.size() + "  " + ct.size() );
 	}
 	
-	private void newSoft(Button jb, Container comp, TableView<Gene> genetable, TableView<Function> upper, TableView<GeneGroup> lower, ToolBar toolbar, ToolBar btoolbar, JApplet applet, ComboBox selcomblocal) throws IOException {
+	private void newSoft(Button jb, Container comp, TableView<Gene> genetable, TableView<Function> upper, TableView<GeneGroup> lower, ToolBar toolbar, ToolBar btoolbar, JPanel applet, ComboBox selcomblocal) throws IOException {
 		/*InputStream nis2 = GeneSet.class.getResourceAsStream("/exp_short.blastout");
 		BufferedReader br2 = new BufferedReader( new InputStreamReader(nis2) );
 		String line2 = br2.readLine();

@@ -51,21 +51,8 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -123,14 +110,13 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
-import netscape.javascript.JSObject;
 
 public class SerifyApplet {
 
-	TableView<Sequences>			table;
-	Serifier						serifier;
+	TableView<Sequences> table;
+	Serifier serifier;
 	//String 						globaluser = null;
-	NativeRun						nrun = new NativeRun();
+	NativeRun nrun = new NativeRun();
 	boolean 						noseq = false;
 	
 	Map<Path,Sequences> mseq = new HashMap<>();
@@ -495,11 +481,7 @@ public class SerifyApplet {
 			e1.printStackTrace();
 		}
 	}
-	
-	public void getParameters( JSObject js ) {
-		js.call( "getBlastParameters", new Object[] {} );
-	}
-	
+
 	public static void blastpRun( NativeRun nrun, StringBuffer query, Path dbPath, Path resPath, String extrapar, JTable table, boolean homedir, final FileSystem fs, final String user, final Stage primaryStage ) throws IOException {
 		String userhome = System.getProperty("user.home");
 		Path selectedpath = null;
@@ -595,15 +577,15 @@ public class SerifyApplet {
 
 		   final Object[] cont = new Object[3];
 		   Runnable run = () -> {
-if( cont[0] != null ) {
+				if( cont[0] != null ) {
 
-}
-try {
-fs.close();
-} catch (IOException e) {
-e.printStackTrace();
-}
-};
+				}
+				try {
+					fs.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		   };
 		   nrun.setRun( run );
 
 		   try {
@@ -3629,7 +3611,7 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		genbankfromnr.setOnAction( new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
-				List<Integer>	startlist = new ArrayList<Integer>();
+				List<Integer>	startlist = new ArrayList<>();
 				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
 				DirectoryChooser	dc = new DirectoryChooser();
 				File dir = null;

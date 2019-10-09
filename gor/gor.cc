@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
+#include <libdeflate.h>
 #include <map>
 #include <vector>
 
 using namespace std;
 
-int inflate(const void *src, int srcLen, void *dst, int dstLen) {
+int oldinflate(const void *src, int srcLen, void *dst, int dstLen) {
     z_stream strm  = {0};
     strm.total_in  = strm.avail_in  = srcLen;
     strm.total_out = strm.avail_out = dstLen;
@@ -38,6 +39,15 @@ int inflate(const void *src, int srcLen, void *dst, int dstLen) {
     }
 
     inflateEnd(&strm);
+    return ret;
+}
+
+struct libdeflate_decompressor *d;
+
+int inflate(const void *src, int srcLen, void *dst, int dstLen) {
+	size_t ret = -1;
+    libdeflate_result res = libdeflate_zlib_decompress(d, src, srcLen, dst, dstLen, &ret);
+	//printf("%d\n",res);
     return ret;
 }
 
@@ -731,6 +741,9 @@ int decode(char* src, int off, char* dest, int destOffset, map<int, map<int, cha
 }
 
 int main( int argc, char* argv[] ) {
+	d = libdeflate_alloc_decompressor();
+	if (d == NULL) return 1;
+
 	if( strcmp( argv[1], "-p" ) == 0 ) {
 		char	buffer[100000];
 		char	dst[100000];
@@ -960,5 +973,7 @@ int main( int argc, char* argv[] ) {
 		}
 		fclose( f );
 	}
+
+	libdeflate_free_decompressor(d);
 	return 0;
 }

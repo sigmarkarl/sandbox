@@ -46,7 +46,6 @@ import javax.imageio.ImageIO;
 //import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
-import javax.swing.JApplet;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -1764,8 +1763,7 @@ public class ActionCollection {
 				JOptionPane.showMessageDialog( comp, new Object[] {check, align, output} );
 				
 				Set<String>	selspec = genesethead.getSelspec( genesethead, geneset.specList );
-				
-				boolean succ = true;
+
 				String restext = null;
 				if( !align.isSelected() ) {
 					StringBuilder distmat = new StringBuilder();
@@ -1797,15 +1795,7 @@ public class ActionCollection {
 					}
 					
 					restext = distmat.toString();
-					try {
-						JSObject win = JSObject.getWindow( (Applet)comp );
-						win.call("showTree", new Object[] { restext });
-					} catch( Exception e1 ) {
-						succ = false;
-					}
 				} else {
-					succ = false;
-					
 					char one = output.isSelected() ? 'A' : '1';
 					char zero = output.isSelected() ? 'C' : '0';
 					
@@ -2071,32 +2061,20 @@ public class ActionCollection {
 				sb.append( "\n" );
 				
 				String 				tree = sb.toString();
-				
-				boolean succ = true;
-				try {
-					JSObject win = JSObject.getWindow( (Applet)comp );
-					win.call("showTree", new Object[] { tree });
-				} catch( Exception e1 ) {
-					e1.printStackTrace();
-					succ = false;
+				if( cs.connections().size() > 0 ) {
+					cs.sendToAll( tree );
+				} else if( Desktop.isDesktopSupported() ) {
+					cs.message = tree;
+					//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
+					String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
+					try {
+						Desktop.getDesktop().browse( new URI(uristr) );
+					} catch (IOException | URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+					System.err.println( tree );
 				}
-				
-				if( !succ ) {
-					if( cs.connections().size() > 0 ) {
-			    		cs.sendToAll( tree );
-			    	} else if( Desktop.isDesktopSupported() ) {
-			    		cs.message = tree;
-			    		//String uristr = "http://webconnectron.appspot.com/Treedraw.html?tree="+URLEncoder.encode( tree, "UTF-8" );
-			    		String uristr = "http://webconnectron.appspot.com/Treedraw.html?ws=127.0.0.1:8887";
-						try {
-							Desktop.getDesktop().browse( new URI(uristr) );
-						} catch (IOException | URISyntaxException e1) {
-							e1.printStackTrace();
-						}
-						System.err.println( tree );
-			    	}
-				}
-				
+
 				/*for( int y = 0; y < speclist.size(); y++ ) {
 					String spec1 = speclist.get(y);
 					final List<Tegeval> ltv = new ArrayList<Tegeval>();
@@ -2447,23 +2425,7 @@ public class ActionCollection {
 				for( String id : ids ) {
 					tmp.write( id + " " + colorstr + "\n" );
 				}
-				
-				JSObject window = null;
-				try {
-					window = JSObject.getWindow( genesethead );
-				} catch( NoSuchMethodError | Exception exc ) {
-					exc.printStackTrace();
-				}
-				
-				if( window != null ) {
-					try {
-						window.setMember("smuck", tmp.toString());
-						window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/plain\" } );");
-						window.eval("open( URL.createObjectURL(b), '_blank' )");
-					} catch( Exception exc ) {
-						exc.printStackTrace();
-					}
-				} else {
+
 					try {
 						String userhome = System.getProperty("user.home");
 						File f = new File( userhome );
@@ -2484,7 +2446,6 @@ public class ActionCollection {
 					} catch( Exception e1 ) {
 						e1.printStackTrace();
 					}
-				}
 		});
 		
 		/*AbstractAction bsexportaction = new AbstractAction("Export BioSystem ids") {
@@ -2572,58 +2533,21 @@ public class ActionCollection {
 				final String smuck = sb.toString().replace("smuck", restext.toString());
 				
 				//String b64str = Base64.encodeBase64String( smuck.getBytes() );
-				JSObject window = null;
-				try {
-					window = JSObject.getWindow( genesethead );
-				} catch( NoSuchMethodError | Exception exc ) {
-					exc.printStackTrace();
-				}
-				
-				if( window != null ) {
-					/*boolean succ = true;
-					try {
-						window.call("string2Blob", new Object[] {b64str,"text/html"});
-					} catch( Exception exc ) {
-						succ = false;
-						exc.printStackTrace();
-					}
-				
-					if( succ == false ) {*/
-					try {
-						window.setMember("smuck", smuck);
-						window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-						window.eval("open( URL.createObjectURL(b), '_blank' )");
-					} catch( Exception exc ) {
-						exc.printStackTrace();
-					}
-				} else if( Desktop.isDesktopSupported() ) {
-					SwingUtilities.invokeLater( new Runnable() {
-						@Override
-						public void run() {
-							if( geneset.fxframe == null ) {
-								geneset.fxframe = new JFrame("Pan-core");
-								geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-								geneset.fxframe.setSize(800, 600);
-								
-								final JFXPanel	fxpanel = new JFXPanel();
-								geneset.fxframe.add( fxpanel );
-								
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                     geneset.initStackedBarChart( fxpanel, lsbd, categories );
-					                 }
-					            });
-							} else {
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                     geneset.initStackedBarChart( null, lsbd, categories );
-					                 }
-					            });
-							}						
-							geneset.fxframe.setVisible( true );
+				if( Desktop.isDesktopSupported() ) {
+					SwingUtilities.invokeLater(() -> {
+						if( geneset.fxframe == null ) {
+							geneset.fxframe = new JFrame("Pan-core");
+							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+							geneset.fxframe.setSize(800, 600);
+
+							final JFXPanel	fxpanel = new JFXPanel();
+							geneset.fxframe.add( fxpanel );
+
+							Platform.runLater(() -> geneset.initStackedBarChart( fxpanel, lsbd, categories ));
+						} else {
+							Platform.runLater(() -> geneset.initStackedBarChart( null, lsbd, categories ));
 						}
+						geneset.fxframe.setVisible( true );
 					});
 					/*try {
 						FileWriter fw = new FileWriter("c:/smuck.html");
@@ -2737,62 +2661,21 @@ public class ActionCollection {
 				final String xTitle = scaffspec != null ? "Scaffolds/Contigs" : "Species";
 				final String yTitle = scaffspec != null ? scaffspec + " contig size" : "Genome size";
 				
-				JSObject window = null;
-				try {
-					window = JSObject.getWindow( genesethead );
-				} catch( NoSuchMethodError | Exception exc ) {
-					exc.printStackTrace();
-				}
-				
-				if( window != null ) {
-					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("org/simmi/javafasta/columnchart.html");
-					try {
-						int c = is.read();
-						while( c != -1 ) {
-							sb.append( (char)c );
-							c = is.read();
+			 	if( Desktop.isDesktopSupported() ) {
+					SwingUtilities.invokeLater(() -> {
+						if( geneset.fxframe == null ) {
+							geneset.fxframe = new JFrame("Pan-core");
+							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+							geneset.fxframe.setSize(800, 600);
+
+							final JFXPanel	fxpanel = new JFXPanel();
+							geneset.fxframe.add( fxpanel );
+
+							Platform.runLater(() -> geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" ));
+						} else {
+							Platform.runLater(() -> geneset.initBarChart( null, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" ));
 						}
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					final String smuck = sb.toString().replace("smuck", restext.toString());
-					//String b64str = Base64.encodeBase64String( smuck.getBytes() );
-					try {
-						window.setMember("smuck", smuck);
-						window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-						window.eval("open( URL.createObjectURL(b), '_blank' )");
-					} catch( Exception exc ) {
-						exc.printStackTrace();
-					}
-				} else if( Desktop.isDesktopSupported() ) {
-					SwingUtilities.invokeLater( new Runnable() {
-						@Override
-						public void run() {
-							if( geneset.fxframe == null ) {
-								geneset.fxframe = new JFrame("Pan-core");
-								geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-								geneset.fxframe.setSize(800, 600);
-								
-								final JFXPanel	fxpanel = new JFXPanel();
-								geneset.fxframe.add( fxpanel );
-								
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                	 geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" );
-					                 }
-					            });
-							} else {
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                	 geneset.initBarChart( null, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" );
-					                 }
-					            });
-							}						
-							geneset.fxframe.setVisible( true );
-						}
+						geneset.fxframe.setVisible( true );
 					});
 				}
 				
@@ -3083,62 +2966,21 @@ public class ActionCollection {
 				final String xTitle = scaffspec != null ? "Scaffolds/Contigs" : "Species";
 				final String yTitle = scaffspec != null ? scaffspec + " GC%" : "GC%";
 				
-				JSObject window = null;
-				try {
-					window = JSObject.getWindow( genesethead );
-				} catch( NoSuchMethodError | Exception exc ) {
-					exc.printStackTrace();
-				}
-				
-				if( window != null ) {
-					final StringBuilder sb = new StringBuilder();
-					InputStream is = GeneSet.class.getResourceAsStream("org/simmi/javafasta/columnchart.html");
-					try {
-						int c = is.read();
-						while( c != -1 ) {
-							sb.append( (char)c );
-							c = is.read();
+				if( Desktop.isDesktopSupported() ) {
+					SwingUtilities.invokeLater(() -> {
+						if( geneset.fxframe == null ) {
+							geneset.fxframe = new JFrame("Pan-core");
+							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+							geneset.fxframe.setSize(800, 600);
+
+							final JFXPanel	fxpanel = new JFXPanel();
+							geneset.fxframe.add( fxpanel );
+
+							Platform.runLater(() -> geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
+						} else {
+							Platform.runLater(() -> geneset.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
 						}
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					final String smuck = sb.toString().replace("smuck", restext.toString());
-					//String b64str = Base64.encodeBase64String( smuck.getBytes() );
-					try {
-						window.setMember("smuck", smuck);
-						window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-						window.eval("open( URL.createObjectURL(b), '_blank' )");
-					} catch( Exception exc ) {
-						exc.printStackTrace();
-					}
-				} else if( Desktop.isDesktopSupported() ) {
-					SwingUtilities.invokeLater( new Runnable() {
-						@Override
-						public void run() {
-							if( geneset.fxframe == null ) {
-								geneset.fxframe = new JFrame("Pan-core");
-								geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-								geneset.fxframe.setSize(800, 600);
-								
-								final JFXPanel	fxpanel = new JFXPanel();
-								geneset.fxframe.add( fxpanel );
-								
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                	 geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
-					                 }
-					            });
-							} else {
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                	 geneset.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
-					                 }
-					            });
-							}						
-							geneset.fxframe.setVisible( true );
-						}
+						geneset.fxframe.setVisible( true );
 					});
 					/*try {
 						FileWriter fw = new FileWriter("c:/smuck.html");
@@ -3444,8 +3286,8 @@ public class ActionCollection {
                                 baos.close();
                                 String b64str = Base64.getEncoder().encodeToString( baos.toByteArray() );
 
-                                JSObject window = JSObject.getWindow( genesethead );
-                                window.call( "string2Blob", new Object[] {b64str, "image/png"} );
+                                //JSObject window = JSObject.getWindow( genesethead );
+                                //window.call( "string2Blob", new Object[] {b64str, "image/png"} );
                             } catch(Exception e1) {
                                 succ = false;
                                 e1.printStackTrace();
@@ -4345,7 +4187,7 @@ public class ActionCollection {
 					frame.add( text );
 				} else {
 					Serifier serifier = new Serifier();
-					JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+					JavaFasta jf = new JavaFasta( null, serifier, cs );
 					jf.initGui(frame);
 
 					if( gaps.isSelected() ) {
@@ -4473,7 +4315,7 @@ public class ActionCollection {
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+				JavaFasta jf = new JavaFasta( null, serifier, cs );
 				jf.initGui(frame);
 
 				int[] rr = table2.getSelectedRows();
@@ -4497,7 +4339,7 @@ public class ActionCollection {
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				
 				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( (comp instanceof JApplet) ? (JApplet)comp : null, serifier, cs );
+				JavaFasta jf = new JavaFasta( null, serifier, cs );
 				jf.initGui(frame);
 				
 				for( GeneGroup gg : geneset.allgenegroups ) {

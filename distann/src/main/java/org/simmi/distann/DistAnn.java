@@ -17,20 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.AbstractAction;
-import javax.swing.JApplet;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPopupMenu;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -39,7 +26,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-public class DistAnn extends JApplet {
+public class DistAnn extends JPanel {
 	JToolBar	toolbar;
 	JSplitPane	splitpane;
 	JScrollPane	projectpane;
@@ -415,5 +402,9 @@ public class DistAnn extends JApplet {
 		
 		this.add( toolbar, BorderLayout.NORTH );
 		this.add( splitpane );
+	}
+
+	public static void main(String[] args) {
+		DistannFX.main(args);
 	}
 }

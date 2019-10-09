@@ -19,20 +19,12 @@ import java.util.Map;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
-import javax.swing.JApplet;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JSpinner;
-import javax.swing.JToolBar;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.io.ByteArrayOutputStream;
-import netscape.javascript.JSObject;
 
-public class ThermusMap extends JApplet {
+public class ThermusMap extends JPanel {
 	public void paint( Graphics g ) {
 		super.paint(g);
 		
@@ -53,9 +45,6 @@ public class ThermusMap extends JApplet {
 		InputStream is = this.getClass().getResourceAsStream("/locs.txt");
 		BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 		Random r = new Random();
-		JSObject jo = JSObject.getWindow(this);
-		jo.call("clearMarkers", new Object[] {});
-		
 		try {
 			BufferedImage bi = new BufferedImage(16,16,BufferedImage.TYPE_INT_ARGB);
 			Graphics2D g = (Graphics2D)bi.getGraphics();
@@ -163,9 +152,9 @@ public class ThermusMap extends JApplet {
 					LatLng ll = null;
 					if( m.containsKey(split[0]) ) {
 						ll = m.get(split[0]);
-						jo.call("pos", new Object[] {split[split.length-1]+" Ph:"+split[3]+" Temp:"+split[2],ll.lat+r.nextDouble()/100.0,ll.lng+r.nextDouble()/100.0+"",content, "data:image/png;base64,"+dataurl});
+						//jo.call("pos", new Object[] {split[split.length-1]+" Ph:"+split[3]+" Temp:"+split[2],ll.lat+r.nextDouble()/100.0,ll.lng+r.nextDouble()/100.0+"",content, "data:image/png;base64,"+dataurl});
 					} else {
-						jo.call("alert", new Object[] {split[0]});
+						//jo.call("alert", new Object[] {split[0]});
 					}
 				}
 				
