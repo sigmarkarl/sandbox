@@ -1,4 +1,4 @@
-buildscript {
+/*buildscript {
     repositories {
         maven {
             url "https://plugins.gradle.org/m2/"
@@ -7,13 +7,15 @@ buildscript {
     dependencies {
         classpath 'org.openjfx:javafx-plugin:0.0.8'
     }
-}
+}*/
 
 plugins {
+    id 'java'
     id 'org.openjfx.javafxplugin' version '0.0.8'
+    id "com.github.johnrengelman.shadow" version "5.1.0"
 }
 
-allprojects {
+/*allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
     apply plugin: 'java'
@@ -22,11 +24,9 @@ allprojects {
     ext.getProjectFullName = {
         return 'distann' + project.path.replace(':', '-')
     }
-}
+}*/
 
-/*jar {
-    archiveName = "geneset.jar"
-
+jar {
     from {
         configurations.runtime.collect {
             it.isDirectory() ? it : zipTree(it)
@@ -42,7 +42,7 @@ allprojects {
     }
 
     exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
-}*/
+}
 
 subprojects {
     repositories {
@@ -64,67 +64,4 @@ subprojects {
         }
         with jar
     }*/
-}
-
-project(':spilling') {
-	dependencies {
-		compile project(':TreeDraw')
-		//compile group: 'org.apache.poi', name: 'poi', version: '3.17'
-		//compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
-	}
-}
-
-project(':TreeDraw') {
-	dependencies {
-
-	}
-}
-
-project(':serifier') {
-    javafx {
-        version = '13'
-        modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
-    }
-
-	dependencies {
-		compile group: 'commons-net', name: 'commons-net', version: '3.5'
-		compile group: 'org.apache.commons', name: 'commons-vfs2', version: '2.1'
-		compile project(':javafasta')
-	}
-}
-
-project(':javafasta') {
-    javafx {
-        version = '13'
-        modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
-    }
-
-	dependencies {
-		compile project(':TreeDraw')
-        compile group: 'org.apache.poi', name: 'poi', version: '3.17'
-        compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
-		compile group: 'org.ejml', name: 'all', version: '0.29'
-		compile group: 'com.github.samtools', name: 'htsjdk', version: '2.13.+'
-        compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
-        compile group: 'org.json', name: 'json', version: '20190722'
-    }
-}
-
-project(':distann') {
-    javafx {
-        version = '13'
-        modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
-    }
-
-	dependencies {
-		compile project(':javafasta')
-		compile project(':serifier')
-		compile project(':spilling')
-
-        compile group: 'org.apache.poi', name: 'poi', version: '3.17'
-        compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
-        compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
-        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.14'
-        compile group: 'org.apache.commons', name: 'commons-vfs2', version: '2.2'
-	}
 }

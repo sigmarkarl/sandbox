@@ -40,17 +40,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import javax.swing.AbstractAction;
-import javax.swing.JApplet;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-import javax.swing.TransferHandler;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
 
 //import org.apache.poi.xssf.usermodel.XSSFCell;
 //import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -59,7 +49,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.simmi.spilling.Corp.LinkInfo;
 import org.simmi.treedraw.shared.TreeUtil;
 
-public class Connectron extends JApplet implements MouseListener, MouseMotionListener, KeyListener {
+public class Connectron extends JPanel implements MouseListener, MouseMotionListener, KeyListener {
 	/**
 	 * 
 	 */
@@ -1191,8 +1181,6 @@ public class Connectron extends JApplet implements MouseListener, MouseMotionLis
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
-		
-		this.getContentPane().setBackground( Color.white );
 		
 		Corp.prop = new Prop();
 		Corp.prop.setBounds(0, 0, 400, 75);
