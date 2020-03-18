@@ -1241,24 +1241,24 @@ public class GeneCompare {
 					Annotation p2 = tv2.getPrevious();
 					
 					if( n != null ) {
-						GeneGroup ngg = n.getGene().getGeneGroup();
+						GeneGroup ngg = n.getGene() != null ? n.getGene().getGeneGroup() : null;
 						if( n2 != null ) {
-							if( ngg == n2.getGene().getGeneGroup() ) simcount++;
+							if( n2.getGene() != null && ngg == n2.getGene().getGeneGroup() ) simcount++;
 						}
 						
 						if( p2 != null ) {
-							if( ngg == p2.getGene().getGeneGroup() ) simcount++;
+							if( p2.getGene() != null && ngg == p2.getGene().getGeneGroup() ) simcount++;
 						}
 					}
 					
 					if( p != null ) {
-						GeneGroup pgg = p.getGene().getGeneGroup();
+						GeneGroup pgg = p.getGene() != null ? p.getGene().getGeneGroup() : null;
 						if( n2 != null ) {
-							if( pgg == n2.getGene().getGeneGroup() ) simcount++;
+							if( n2.getGene() != null && pgg == n2.getGene().getGeneGroup() ) simcount++;
 						}
 						
 						if( p2 != null ) {
-							if( pgg == p2.getGene().getGeneGroup() ) simcount++;
+							if( p2.getGene() != null && pgg == p2.getGene().getGeneGroup() ) simcount++;
 						}
 					}
 					
@@ -1410,7 +1410,7 @@ public class GeneCompare {
 						Annotation p2 = tv2.getPrevious();
 						
 						if( n != null ) {
-							GeneGroup ngg = n.getGene().getGeneGroup();
+							GeneGroup ngg = n.getGene() == null ? null : n.getGene().getGeneGroup();
 							if( n2 != null && n2.getGene() != null ) {
 								if( ngg == n2.getGene().getGeneGroup() ) simcount++;
 							}
@@ -1421,7 +1421,7 @@ public class GeneCompare {
 						}
 						
 						if( p != null ) {
-							GeneGroup pgg = p.getGene().getGeneGroup();
+							GeneGroup pgg = p.getGene() == null ? null : p.getGene().getGeneGroup();
 							if( n2 != null && n2.getGene() != null ) {
 								if( pgg == n2.getGene().getGeneGroup() ) simcount++;
 							}
@@ -1786,9 +1786,10 @@ public class GeneCompare {
 						for( int i = ctg.annset.size()-1; i >= 0; i-- ) {
 							Annotation tv = ctg.annset.get( i );
 							Sequence seq = tv.getAlignedSequence();
-							GeneGroup gg = tv.getGene().getGeneGroup();
+							Gene gene = tv.getGene();
+							GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
 							
-							subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
+							if( gg != null ) subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
 							count++;
 							prev = tv;
 							/*} else {
@@ -1800,7 +1801,8 @@ public class GeneCompare {
 						for( Annotation ann : lann ) {
 							Annotation tv = ann;
 							Sequence seq = tv.getAlignedSequence();
-							GeneGroup gg = tv.getGene().getGeneGroup();
+							Gene gene = tv.getGene();
+							GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
 							
 							/*if( gg.species.size() > 1 ) {
 								System.err.println( "commonname large " + gg.getCommonName() );
@@ -1808,7 +1810,7 @@ public class GeneCompare {
 								//System.err.println( "commonname small " + gg.getCommonName() );
 							}*/
 							
-							subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
+							if( gg != null ) subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
 							count++;
 							prev = tv;
 						}
@@ -2110,14 +2112,20 @@ public class GeneCompare {
 						Teginfo gene2s = gg.getGenes( spec2 );
 						Color c = null;
                         for( Annotation tv2 : gene2s.tset ) {
-                        	GeneGroup fwgg = tv2.getNext() != null ? tv2.getNext().getGene().getGeneGroup() : null;
-                        	GeneGroup bkgg = tv2.getPrevious() != null ? tv2.getPrevious().getGene().getGeneGroup() : null;
-                        	
-                        	if( prev.getGene().getGeneGroup().equals( bkgg ) ) {
-                        		c = Color.blue;
-                        	} else if( prev.getGene().getGeneGroup().equals( fwgg ) ) {
-                        		if( c == null ) c = Color.red;
-                        	}
+                        	GeneGroup fwgg = tv2.getNext() != null && tv2.getNext().getGene() != null ? tv2.getNext().getGene().getGeneGroup() : null;
+                        	GeneGroup bkgg = tv2.getPrevious() != null && tv2.getPrevious().getGene() != null ? tv2.getPrevious().getGene().getGeneGroup() : null;
+
+                        	Gene prevGene = prev.getGene();
+                        	if( prevGene != null ) {
+                        		GeneGroup prevGeneGroup = prevGene.getGeneGroup();
+                        		if( prevGeneGroup != null ) {
+									if (prevGeneGroup.equals(bkgg)) {
+										c = Color.blue;
+									} else if (prevGeneGroup.equals(fwgg)) {
+										if (c == null) c = Color.red;
+									}
+								}
+							}
                         }
                         
                         if( (synbr < 2 && c != null) || (synbr == 2) ) {

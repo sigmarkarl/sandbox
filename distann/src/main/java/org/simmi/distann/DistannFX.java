@@ -1,6 +1,7 @@
 package org.simmi.distann;
 
 import javafx.application.Platform;
+import javafx.scene.control.*;
 import javafx.stage.Window;
 import org.simmi.javafasta.shared.GeneGroup;
 import org.simmi.javafasta.shared.Function;
@@ -14,10 +15,6 @@ import org.simmi.javafasta.shared.Gene;
 import javafx.application.Application;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TableView;
-import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -60,6 +57,11 @@ public class DistannFX extends Application {
         GeneSetHead gsh = new GeneSetHead( this, gs );
         //final JPanel panel = new JPanel();
         //panel.setLayout( new BorderLayout() );
+
+        /*ggresults.getSelectionModel().setCellSelectionEnabled(true);
+        gresults.getSelectionModel().setCellSelectionEnabled(true);
+        ggresults.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        gresults.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);*/
         gsh.init( primaryStage, null, splitpane, ggsplit, gsplit, gene, upper, lower, ggresults, gresults, menubar, toolbar, btoolbar );
         
         BorderPane root = new BorderPane();

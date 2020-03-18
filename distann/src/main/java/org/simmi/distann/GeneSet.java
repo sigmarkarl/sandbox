@@ -537,6 +537,12 @@ public class GeneSet implements GenomeSet {
 				}
 				
 				if( !refmap.containsKey(id) ) {
+					for(String key : refmap.keySet()) {
+						if(key.contains(id)) {
+							System.err.println();
+						}
+					}
+					
 					Tegeval tv = new Tegeval();
 					Sequence contig = null;
 					if( contigmap.containsKey( contigstr ) ) {
@@ -605,11 +611,7 @@ public class GeneSet implements GenomeSet {
 							go = ngo;
 						}
 					}
-					refmap.put( id, gene );
-					
-					if( id.contains("hypot") ) {
-						System.err.println();
-					}
+					refmapPut( id, gene );
 					
 					tv.setGene( gene );
 					tv.setTegund( origin );
@@ -627,9 +629,13 @@ public class GeneSet implements GenomeSet {
 						
 						 //contig = new Contig( contigstr );
 					}
-					
-					((Tegeval)g.tegeval).init( lname, contig, start, stop, dir );
-					if( contig != null ) contig.addAnnotation( g.tegeval );
+
+					// No need
+					//((Tegeval)g.tegeval).init( lname, contig, start, stop, dir );
+					/*if( contig != null ) {
+						contig.addAnnotation( g.tegeval );
+					}*/
+
 					//g.tegeval.name = line;
 					//ac.setName( lname );
 					//tv.setAlignedSequence( ac );
@@ -705,6 +711,9 @@ public class GeneSet implements GenomeSet {
 			String origin = null;
 			String id;
 			String name;
+			if("TAQDRAFT_RS04010".equals(lname)) {
+				System.err.println();
+			}
 			int i = lname.lastIndexOf('[');
 			if (i == -1) {
 				i = Sequence.parseSpec(lname);
@@ -719,12 +728,15 @@ public class GeneSet implements GenomeSet {
 					if (k == -1) k = filename.length();
 					origin = filename.substring(0, k);
 					contloc = lname;
-
-					name = origin + "_" + lname;
-					id = origin + "_" + lname;
+					//if(origin.startsWith("WP")) {
+						name = lname;
+					/*} else {
+						name = origin + "_" + lname;
+					}*/
+					id = name;
 				} else if (i != -1) {
 					origin = lname.substring(0, i - 1);
-					contloc = lname.substring(i, lname.length());
+					contloc = lname.substring(i);
 
 					name = lname;
 					id = lname;
@@ -923,11 +935,7 @@ public class GeneSet implements GenomeSet {
 
 				//if( !newid.equals(id) )
 				//refmap.put( newid, gene );
-				refmap.put(id, gene);
-
-				if (id.contains("hypot")) {
-					System.err.println();
-				}
+				refmapPut(id, gene);
 
 				tv.setGene(gene);
 				((Tegeval)tv).setTegund(origin);
@@ -995,9 +1003,15 @@ public class GeneSet implements GenomeSet {
 				if( refmap.containsKey(line.substring(1)) ) {
 					if (tv.getSequenceLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
 					tv = refmap.get(line.substring(1)).tegeval;
-					tv.getAlignedSequence().clear();
+					if( tv != null ) {
+						Sequence seq = tv.getAlignedSequence();
+						if( seq != null ) seq.clear();
+						else {
+							System.err.println();
+						}
+					}
 				} else {
-					if (tv.getSequenceLength() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
+					if (tv.getSequenceLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
 					tv = new Tegeval();
 					String cont = line.substring(1) + "";
 					String[] split = cont.split("#");
@@ -1140,7 +1154,7 @@ public class GeneSet implements GenomeSet {
 				gene.refid = newid;
 				gene.allids = new HashSet<>();
 				gene.allids.add( newid );
-				refmap.put(id, gene);
+				refmapPut(id, gene);
 				
 				tv.setGene( gene );
 				tv.setTegund( origin );
@@ -1260,6 +1274,12 @@ public class GeneSet implements GenomeSet {
 				contig.partof = ctlist;
 			}
 		}
+
+		/*if(contigmap.containsKey("Thermus_scotoductus_DSM_8553_NZ_KB905760")) {
+			Sequence seq = contigmap.get("Thermus_scotoductus_DSM_8553_NZ_KB905760");
+			System.err.println();
+		}*/
+
 		return new ArrayList<>( speccontigMap.keySet() );
 	}
 
@@ -6393,7 +6413,10 @@ public class GeneSet implements GenomeSet {
 							Gene gene = nrefids.get(refid);
 							gene.uniid = split[secind];
 							unimap.put(gene.uniid, gene);
-							
+
+							if(gene.allids==null) {
+								gene.allids = new HashSet<>();
+							}
 							gene.allids.add(split[secind]);
 							tone = true;
 						}
@@ -8180,6 +8203,13 @@ public class GeneSet implements GenomeSet {
 		return isr != null ? new BufferedReader(isr) : null;
 	}
 	
+	public void refmapPut(String key, Gene gene) {
+		if(key.startsWith("1..182_JCM12314_RS12035")) {
+			System.err.println();
+		}
+		refmap.put(key,gene);
+	}
+	
 	public void loadStuff( Path zipp ) throws IOException {
 		Map<String,String> env = new HashMap<>();
 		zippath = zipp;
@@ -8213,11 +8243,12 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) {
 			specList = loadcontigs( Files.newBufferedReader(nf), "" );
 		}
+
 		//else {
 		for( Path root : zipfilesystem.getRootDirectories() ) {
 			Files.list(root).filter(t -> {
                 String filename = t.getFileName().toString();
-                return (filename.endsWith(".fna") || filename.endsWith(".fasta") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
+                return !filename.contains(".gbff") && (filename.endsWith(".fna") || filename.endsWith(".fasta") || filename.endsWith(".fastg")) && !filename.equals("allthermus.fna");
             }).forEach(t -> {
                 try {
                     String filename = t.getFileName().toString().replace(".fna", "").replace(".fastg", "");
@@ -8248,15 +8279,18 @@ public class GeneSet implements GenomeSet {
 					for( String org : seqmap.keySet() ) {
 						List<Sequence> seqs = seqmap.get(org);
 						for (Sequence seq : seqs) {
-							if (seq.getName() != null) contigmap.put(seq.getName(), seq);
+							seq.partof = seqs;
+							if (seq.getName() != null) {
+								contigmap.put(seq.getName(), seq);
+							}
 							if (seq.getAnnotations() != null) for (Annotation a : seq.getAnnotations()) {
 								Gene gene = a.getGene();
 								if (gene != null) {
 									gene.name = a.getName();
-									gene.id = a.id;
-									gene.refid = a.id;
+									gene.id = refmap.containsKey(a.id) ? a.tag: a.id;
+									gene.refid = gene.id;
 									gene.tegeval.teg = org;
-									refmap.put(gene.id, gene);
+									refmapPut(gene.id, gene);
 								}
 							}
 						}
@@ -8809,7 +8843,7 @@ public class GeneSet implements GenomeSet {
 			ggList.add( gg );
 			
 			for( Gene g : gg.genes ) {
-				refmap.put( g.refid, g );
+				refmapPut( g.refid, g );
 				genelist.add( g );
 				
 				//gg.addSpecies( g.species );

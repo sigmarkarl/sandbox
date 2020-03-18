@@ -226,7 +226,7 @@ public class Neighbour {
 						if( prevcontig.isChromosome() ) {
 							theprev = prevcontig.getLast();
 						} else {
-							List<Sequence> partof = prevcontig.partof;;
+							List<Sequence> partof = prevcontig.partof;
 							int k = partof.indexOf( prevcontig );
 							k--;
 							if( k < 0 ) k = partof.size()-1;
@@ -846,6 +846,15 @@ public class Neighbour {
 								prev = prevcont.getLast();
 							} else {
 								List<Sequence> partof = prevcont.partof;
+								if( partof == null ) {
+									for( String cname : geneset.contigmap.keySet() ) {
+										Sequence c = geneset.contigmap.get(cname);
+										if(c.partof == null) {
+											System.err.println();
+										}
+									}
+									System.err.println();
+								}
 								int k = partof.indexOf( prevcont );
 								k--;
 								if( k < 0 ) k = partof.size()-1;

@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="geneset">
-    <output-path>$PROJECT_DIR$/classes/artifacts/geneset</output-path>
+    <output-path>$PROJECT_DIR$</output-path>
     <root id="archive" name="geneset.jar">
       <element id="module-output" name="distann_main" />
       <element id="library" level="project" name="Gradle: org.apache.poi:poi-ooxml:3.17" />

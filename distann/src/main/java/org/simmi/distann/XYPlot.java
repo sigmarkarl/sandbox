@@ -191,7 +191,7 @@ public class XYPlot {
 					if( ct.getAnnotations() != null ) {
 						if( ct.isReverse() ) {
 							for( int u = ct.getAnnotations().size()-1; u >= 0; u-- ) {
-								Tegeval val = (Tegeval)ct.getAnnotation( u );
+								Annotation val = ct.getAnnotation( u );
 								GeneGroup gg = val.getGene().getGeneGroup();
 								
 								boolean rs = table.getSelectionModel().getSelectedItems().indexOf(gg) != -1;
@@ -242,53 +242,57 @@ public class XYPlot {
 							}
 						} else {
 							for( Annotation ann : ct.getAnnotations() ) {
-								Tegeval val = (Tegeval)ann;
-								GeneGroup gg = val.getGene().getGeneGroup();
-								
-								boolean rs = table.getSelectionModel().getSelectedItems().indexOf(gg) != -1;
-								List<Annotation> tv2list = gg.getTegevals( spec2 );
-								for( Annotation tv2 : tv2list ) {
-									tv2.setSelected( rs );
-									int count2 = 0;
-									int k = spec2Conts.indexOf( tv2.getContshort() );
-									if( k != -1 ) {
-										for( int i = 0; i < k; i++ ) {
-											Sequence ct2 = spec2Conts.get( i );
-											count2 += ct2.getAnnotationCount();
-										}
-										Sequence ct2 = spec2Conts.get( k );
-										count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
-										
-										if( gccolor.isSelected() ) {
-											/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
-											double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
-											g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );*/
-											g.setColor( tv2.getGCColor() );
-										} else {
-											boolean sel = false;
-											if( !genesethead.isGeneview() ) {
-												sel = table.getSelectionModel().getSelectedItems().indexOf( val.getGene().getGeneGroup() ) != -1;
-											} else {
-												sel = genesethead.getGeneTable().getSelectionModel().getSelectedItems().indexOf( val.getGene() ) != -1;
+								Gene gene = ann.getGene();
+								if( gene != null ) {
+									GeneGroup gg = gene.getGeneGroup();
+									if( gg != null ) {
+										boolean rs = table.getSelectionModel().getSelectedItems().indexOf(gg) != -1;
+										List<Annotation> tv2list = gg.getTegevals(spec2);
+										for (Annotation tv2 : tv2list) {
+											tv2.setSelected(rs);
+											int count2 = 0;
+											int k = spec2Conts.indexOf(tv2.getContshort());
+											if (k != -1) {
+												for (int i = 0; i < k; i++) {
+													Sequence ct2 = spec2Conts.get(i);
+													count2 += ct2.getAnnotationCount();
+												}
+												Sequence ct2 = spec2Conts.get(k);
+												count2 += (ct2.isReverse() ? ct2.getAnnotationCount() - tv2.getNum() - 1 : tv2.getNum());
+
+												if (gccolor.isSelected()) {
+													/*double gc = (val.getGCPerc()+tv2.getGCPerc())/2.0;
+													double gcp = Math.min( Math.max( 0.5, gc ), 0.8 );
+													g.setColor( new Color( (float)(0.8-gcp)/0.3f, (float)(gcp-0.5)/0.3f, 1.0f ) );*/
+													g.setColor(tv2.getGCColor());
+												} else {
+													boolean sel = false;
+													if (!genesethead.isGeneview()) {
+														sel = table.getSelectionModel().getSelectedItems().indexOf(ann.getGene().getGeneGroup()) != -1;
+													} else {
+														sel = genesethead.getGeneTable().getSelectionModel().getSelectedItems().indexOf(ann.getGene()) != -1;
+													}
+													if (ann.isSelected() || tv2.isSelected() || sel)
+														g.setColor(Color.red);
+													else g.setColor(Color.blue);
+												}
+												if (count == count2) {
+													//ermcount++;
+												}
+												g.fillOval((int) ((count - 1) * this.getWidth() / fsum1), (int) ((count2 - 1) * this.getHeight() / fsum2), 3, 3);
 											}
-											if( val.isSelected() || tv2.isSelected() || sel ) g.setColor( Color.red );
-											else g.setColor( Color.blue );
 										}
-										if( count == count2 ) {
-											//ermcount++;
+									}
+
+									/*Tegeval next = val.getNext();
+									if( next != null ) {
+										Sequence nextcontig = next.getContshort();
+										if( nextcontig == null || !nextcontig.equals(val.getContshort()) ) {
+											next = null;
 										}
-										g.fillOval( (int)((count-1)*this.getWidth()/fsum1), (int)((count2-1)*this.getHeight()/fsum2), 3, 3);
 									}
+									val = next;*/
 								}
-								
-								/*Tegeval next = val.getNext();
-								if( next != null ) {
-									Sequence nextcontig = next.getContshort();
-									if( nextcontig == null || !nextcontig.equals(val.getContshort()) ) {
-										next = null;
-									}
-								}
-								val = next;*/
 								count++;
 							}
 						}

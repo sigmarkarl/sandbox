@@ -43,11 +43,11 @@ int oldinflate(const void *src, int srcLen, void *dst, int dstLen) {
 }
 
 struct libdeflate_decompressor *d;
+struct libdeflate_compressor *c;
 
 int inflate(const void *src, int srcLen, void *dst, int dstLen) {
 	size_t ret = -1;
     libdeflate_result res = libdeflate_zlib_decompress(d, src, srcLen, dst, dstLen, &ret);
-	//printf("%d\n",res);
     return ret;
 }
 
@@ -69,7 +69,7 @@ int to8BitInplace(char* ba, int off, int length) {
 
 char* to8Bit(char* ba, int balen) {
     int len = balen;
-		int newlen = (len * 7) / 8;
+	int newlen = (len * 7) / 8;
     char* out = new char[newlen];
     int bit = 0, readPos = 0, writePos = 0;
     while (readPos < len - 1) {
@@ -83,6 +83,25 @@ char* to8Bit(char* ba, int balen) {
         }
     }
     return out;
+}
+
+int to7Bit(char* ba, int len, char* out) {
+	int reslen = (len % 7 == 0) ? (len * 8) / 7 : (len * 8) / 7 + 1;
+
+	for(int outPos = 0; outPos < reslen; outPos++) {
+		int inPos = outPos - outPos / 8;
+		int i = outPos % 8;
+		int lastBits = i == 0 ? 0 : (ba[inPos - 1] & 0xFF) >> (7 - ((outPos - 1) % 8));
+		if (inPos == len) {
+			out[outPos] = lastBits + 33;
+		} else {
+			int b = ba[inPos] & 0xFF;
+			out[outPos] = ((b << i) | lastBits) & 0x7F;
+			out[outPos] += 33; // offset to avoid control chars
+		}
+	}
+
+	return reslen;
 }
 
 struct searchresult {
@@ -155,7 +174,7 @@ searchresult search( FILE* f, char buffer[], int buflen, char* chr, int pos, lon
 		i++;
 	}
 	if( zeropos != i ) cmp = compare( chr, pos, buffer, i, tpos, zeropos );
-	if( cmp >= 0 || d2 == b ){
+	if( cmp >= 0 || d2 == b ) {
 		searchresult sr;
 		sr.chr = (char*)buffer+i+1;
 		sr.siz = r;
@@ -717,7 +736,7 @@ int decode(char* src, int off, char* dest, int destOffset, map<int, map<int, cha
     }
     pos++; // Increment past the zero termination
 
-		RowDecoder *decoders[types.size()];
+	RowDecoder *decoders[types.size()];
     for (int i = 0; i < types.size(); i++) {
         int type = types[i];
         decoders[i] = getDecoder(src, pos, type, rowcnt, NULL);//mapExternalTables[i]);
@@ -737,243 +756,285 @@ int decode(char* src, int off, char* dest, int destOffset, map<int, map<int, cha
             dest[dp++] = '\n';
         }
     }
-		return dp;
+	return dp;
 }
 
 int main( int argc, char* argv[] ) {
-	d = libdeflate_alloc_decompressor();
-	if (d == NULL) return 1;
+	if( strcmp( argv[1], "-o" ) == 0 ) {
+		c = libdeflate_alloc_compressor(1);
+		if (c == NULL) return 1;
 
-	if( strcmp( argv[1], "-p" ) == 0 ) {
-		char	buffer[100000];
-		char	dst[100000];
-		char	zbuf[100000];
+		char	buffer[32768];
+		char	dst[32768];
+		char	enc[32768];
+		size_t siz = fread(buffer, 1, sizeof(buffer), stdin);
+		int start = 0;
+		while(buffer[start++] != '\n');
+		fwrite(buffer, 1, start, stdout);
 
-		char* chr;
-		int s = 0;
-		int e = 1000000000;
-		int filestart;
-		if( argv[2][0] == 'c' && argv[2][1] == 'h' && argv[2][2] == 'r' ) {
-			filestart = 3;
-			chr = argv[2];
-			int k = 0;
-			while( chr[k] != 0 && chr[k] != ':' ) k++;
-			if( chr[k] == ':' ) {
-				chr[k] = 0;
-				k++;
-				char* pos = chr+k;
-				while( chr[k] != 0 && chr[k] != '-' ) k++;
-				if( chr[k] == '-' ) {
+		int end = start;
+		while(buffer[++end] != '\t');
+
+		while( siz > 0 ) {
+			int i = siz;
+			int k,t,n;
+			do {
+				while(buffer[--i] != '\n');
+				k = i;
+				while(buffer[--k] != '\n');
+				t = k;
+				while(buffer[++t] != '\t');
+				n = t;
+				while(buffer[++t] != '\t');
+				
+			} while(memcmp(buffer+start, buffer+k+1, max(end-start,n-k-1))!=0);
+
+			fwrite(&buffer[k+1], 1, t-k, stdout);
+
+			size_t res = libdeflate_zlib_compress(c, buffer+start, i+1-start, dst, sizeof(dst));
+			enc[0] = 0;
+			int sbsize = to7Bit(dst, res, enc+1)+1;
+			enc[sbsize] = '\n';
+
+			fwrite(enc, 1, sbsize+1, stdout);
+
+			int restlen = siz-i-1;
+			memcpy(buffer, buffer+i+1, restlen);
+
+			start = 0;
+			siz = fread(buffer+restlen, 1, sizeof(buffer)-restlen, stdin)+restlen;
+			end = start;
+			while(buffer[++end] != '\t');
+		}
+	} else {
+		d = libdeflate_alloc_decompressor();
+		if (d == NULL) return 1;
+
+		if( strcmp( argv[1], "-p" ) == 0 ) {
+			char	buffer[100000];
+			char	dst[100000];
+			char	zbuf[100000];
+
+			char* chr;
+			int s = 0;
+			int e = 1000000000;
+			int filestart;
+			if( argv[2][0] == 'c' && argv[2][1] == 'h' && argv[2][2] == 'r' ) {
+				filestart = 3;
+				chr = argv[2];
+				int k = 0;
+				while( chr[k] != 0 && chr[k] != ':' ) k++;
+				if( chr[k] == ':' ) {
 					chr[k] = 0;
-					char* end = chr+k+1;
-					e = atoi(end);
+					k++;
+					char* pos = chr+k;
+					while( chr[k] != 0 && chr[k] != '-' ) k++;
+					if( chr[k] == '-' ) {
+						chr[k] = 0;
+						char* end = chr+k+1;
+						e = atoi(end);
+					}
+					s = atoi(pos);
 				}
-				s = atoi(pos);
-			}
-		} else {
-			filestart = 2;
-			size_t sizeloc = 0;
-			getline( &chr, &sizeloc, stdin );
-			char* sloc = chr;
-			while( *sloc != '\t' ) sloc++;
-			*sloc = 0;
-			sloc++;
-			char* eloc = sloc;
-			while( *eloc != '\t' ) eloc++;
-			*eloc = 0;
-			s = atoi(sloc);
-			eloc++;
-		}
-
-		FILE* f = fopen( argv[filestart], "r" );
-		int r = fread( buffer, 1, 1000, f );
-
-		int z = -1;
-		int i = 0;
-		while( buffer[i++] != '\n' ) {
-			if( buffer[i] == 0 ) {
-				z = i;
-			}
-		}
-
-		if( z != -1 ) {
-			buffer[z] = '\n';
-			fwrite( buffer, 1, z+1, stdout );
-			int len = i-z-2;
-			int reslen = to8BitInplace( buffer, z+1, len );
-			int inf = inflate( buffer+z+1, reslen, dst, sizeof(dst) );
-			//fwrite( dst, 1, inf, stdout );
-		} else fwrite( buffer, 1, i, stdout );
-
-		int m = fseek( f, 0L, SEEK_END );
-		long filesize = ftell( f );
-
-		int l = sizeof(buffer);
-		searchresult loc = search( f, buffer, l, chr, s, i, i, filesize );
-		if( loc.chr != NULL ) {
-			int beg = loc.start;
-			int end = loc.end;
-			int tpos = loc.pos;
-			int siz = loc.siz;
-			int i = end;
-
-			int stopval = z != -1 ? 1 : 0;
-
-			int scmp = strcmp( chr, loc.chr );
-			int cmp = scmp != 0 ? scmp : s - tpos;
-			while( cmp >= 0 ) {
-				const char* schr = buffer+i+1;
-				while( i < siz && buffer[++i] != '\t' );
-				buffer[i] = 0;
-				const char* spos = buffer+i+1;
-				while( i < siz && buffer[++i] != '\t' );
-				buffer[i] = 0;
-				tpos = atoi( spos );
-
-				int scmp = strcmp( chr, schr );
-				cmp = scmp != 0 ? scmp : s - tpos;
-				i += 2;
-				beg = i;
-				while( i < siz && buffer[i++] != stopval );
-				if( i == siz ) {
-					end = siz-beg;
-					memcpy( buffer, buffer+beg, end );
-					r = fread( buffer+end, 1, beg, f );
-					beg = 0;
-					i = end;
-					while( /*i < r &&*/ buffer[i++] != stopval );
-				}
-
-				while( buffer[--i] != '\n' );
-				end = i;
-			}
-
-			int len = to8BitInplace( buffer, beg, end-beg );
-			int inf = inflate( buffer+beg, len, dst, sizeof(dst) );
-
-			int start, endpos;
-			if( z != -1 ) {
-				inf = decode( dst, 0, zbuf, 0, NULL );
-				start = searchUnzipped( zbuf, inf, 0, inf, chr, s, 0, 0 );
-				endpos = searchUnzipped( zbuf, inf, start, inf, chr, e, 0, 0 );
 			} else {
-				start = searchUnzipped( dst, inf, 0, inf, chr, s, 0, 0 );
-				endpos = searchUnzipped( dst, inf, start, inf, chr, e, 0, 0 );
+				filestart = 2;
+				size_t sizeloc = 0;
+				getline( &chr, &sizeloc, stdin );
+				char* sloc = chr;
+				while( *sloc != '\t' ) sloc++;
+				*sloc = 0;
+				sloc++;
+				char* eloc = sloc;
+				while( *eloc != '\t' ) eloc++;
+				*eloc = 0;
+				s = atoi(sloc);
+				eloc++;
 			}
 
-			while( endpos == inf ) {
-				bool startnotfound = start == inf;
-				if( !startnotfound ) {
+			FILE* f = fopen( argv[filestart], "r" );
+			int r = fread( buffer, 1, 1000, f );
+
+			int z = -1;
+			int i = 0;
+			while( buffer[i++] != '\n' ) {
+				if( buffer[i] == 0 ) {
+					z = i;
+				}
+			}
+
+			if( z != -1 ) {
+				buffer[z] = '\n';
+				fwrite( buffer, 1, z+1, stdout );
+				int len = i-z-2;
+				int reslen = to8BitInplace( buffer, z+1, len );
+				int inf = inflate( buffer+z+1, reslen, dst, sizeof(dst) );
+				//fwrite( dst, 1, inf, stdout );
+			} else fwrite( buffer, 1, i, stdout );
+
+			int m = fseek( f, 0L, SEEK_END );
+			long filesize = ftell( f );
+
+			int l = sizeof(buffer);
+			searchresult loc = search( f, buffer, l, chr, s, i, i, filesize );
+			if( loc.chr != NULL ) {
+				int beg = loc.start;
+				int end = loc.end;
+				int tpos = loc.pos;
+				int siz = loc.siz;
+				int i = end;
+
+				int stopval = z != -1 ? 1 : 0;
+
+				int scmp = strcmp( chr, loc.chr );
+				int cmp = scmp != 0 ? scmp : s - tpos;
+				while( cmp >= 0 ) {
+					const char* schr = buffer+i+1;
+					while( i < siz && buffer[++i] != '\t' );
+					buffer[i] = 0;
+					const char* spos = buffer+i+1;
+					while( i < siz && buffer[++i] != '\t' );
+					buffer[i] = 0;
+					tpos = atoi( spos );
+
+					int scmp = strcmp( chr, schr );
+					cmp = scmp != 0 ? scmp : s - tpos;
+					i += 2;
+					beg = i;
+					while( i < siz && buffer[i++] != stopval );
+					if( i == siz ) {
+						end = siz-beg;
+						memcpy( buffer, buffer+beg, end );
+						r = fread( buffer+end, 1, beg, f );
+						beg = 0;
+						i = end;
+						while( /*i < r &&*/ buffer[i++] != stopval );
+					}
+
+					while( buffer[--i] != '\n' );
+					end = i;
+				}
+
+				int len = to8BitInplace( buffer, beg, end-beg );
+				int inf = inflate( buffer+beg, len, dst, sizeof(dst) );
+
+				int start, endpos;
+				if( z != -1 ) {
+					inf = decode( dst, 0, zbuf, 0, NULL );
+					start = searchUnzipped( zbuf, inf, 0, inf, chr, s, 0, 0 );
+					endpos = searchUnzipped( zbuf, inf, start, inf, chr, e, 0, 0 );
+				} else {
+					start = searchUnzipped( dst, inf, 0, inf, chr, s, 0, 0 );
+					endpos = searchUnzipped( dst, inf, start, inf, chr, e, 0, 0 );
+				}
+
+				while( endpos == inf ) {
+					bool startnotfound = start == inf;
+					if( !startnotfound ) {
+						if( z != -1 ) {
+							fwrite( zbuf+start, 1, endpos-start, stdout );
+						} else {
+							fwrite( dst+start, 1, endpos-start, stdout );
+						}
+					}
+
+					while( i < siz && buffer[i++] != stopval );
+					beg = i;
+					while( i < siz && buffer[i++] != stopval );
+
+					if( i == l && buffer[i-1] != '\n' ) {
+						end = l-beg;
+						memcpy( buffer, buffer+beg, end );
+						r = fread( buffer+end, 1, beg, f ) + end;
+						i = end;
+						while( /*i < l &&*/ buffer[i++] != stopval );
+						beg = 0;
+					}
+
+					while( buffer[--i] != '\n' );
+					end = i;
+
+					len = to8BitInplace( buffer, beg, end-beg );
+					inf = inflate( buffer+beg, len, dst, sizeof(dst) );
+					if( inf > 0 ) {
+						if( z != -1 ) {
+							inf = decode( dst, 0, zbuf, 0, NULL );
+							start = startnotfound ? searchUnzipped( zbuf, inf, 0, inf, chr, s, 0, 0 ) : 0;
+							endpos = searchUnzipped( zbuf, inf, start, inf, chr, e, 0, 0 );
+						} else {
+							start = startnotfound ? searchUnzipped( dst, inf, 0, inf, chr, s, 0, 0 ) : 0;
+							endpos = searchUnzipped( dst, inf, start, inf, chr, e, 0, 0 );
+						}
+					} //else endpos == -1;
+				}
+				if( inf != -1 && endpos > 0 && endpos > start ) {
 					if( z != -1 ) {
 						fwrite( zbuf+start, 1, endpos-start, stdout );
 					} else {
 						fwrite( dst+start, 1, endpos-start, stdout );
 					}
 				}
+			}
+			fclose( f );
+		} else {
+			char	buffer[1000000];
+			char	zbuf[100000];
+			char	dst[100000];
 
-				while( i < siz && buffer[i++] != stopval );
-				beg = i;
-				while( i < siz && buffer[i++] != stopval );
+			FILE* f = fopen( argv[1], "r" );
+			int l = sizeof(buffer);
+			int r = fread( buffer, 1, l, f );
+			int i = 0;
+			int z = -1;
+			while( buffer[i++] != '\n' ) {
+				if( buffer[i] == 0 ) {
+					z = i;
+				}
+			}
+			if( z != -1 ) {
+				buffer[z] = '\n';
+				fwrite( buffer, 1, z+1, stdout );
+				int len = i-z-2;
+				int reslen = to8BitInplace( buffer, z+1, len );
+				int inf = inflate( buffer+z+1, reslen, dst, sizeof(dst) );
+				fwrite( dst, 1, inf, stdout );
+			} else {
+				fwrite( buffer, 1, i, stdout );
+			}
+
+			int stopval = z != -1 ? 1 : 0;
+			while( i < r-1 || r == l ) {
+				while( i < r && buffer[i++] != stopval );
+				int start = i;
+				while( i < r && buffer[i++] != stopval );
 
 				if( i == l && buffer[i-1] != '\n' ) {
-					end = l-beg;
-					memcpy( buffer, buffer+beg, end );
-					r = fread( buffer+end, 1, beg, f ) + end;
+					int end = l-start;
+					memcpy( buffer, buffer+start, end );
+					r = fread( buffer+end, 1, start, f ) + end;
 					i = end;
 					while( /*i < l &&*/ buffer[i++] != stopval );
-					beg = 0;
+					start = 0;
 				}
 
 				while( buffer[--i] != '\n' );
-				end = i;
+				int end = i;
 
-				len = to8BitInplace( buffer, beg, end-beg );
-				inf = inflate( buffer+beg, len, dst, sizeof(dst) );
+				int prelen = end-start;
+				int len = to8BitInplace( buffer, start, end-start );
+				int inf = inflate( buffer+start, len, dst, sizeof(dst) );
 				if( inf > 0 ) {
 					if( z != -1 ) {
-						inf = decode( dst, 0, zbuf, 0, NULL );
-						start = startnotfound ? searchUnzipped( zbuf, inf, 0, inf, chr, s, 0, 0 ) : 0;
-						endpos = searchUnzipped( zbuf, inf, start, inf, chr, e, 0, 0 );
+						int siz = decode( dst, 0, zbuf, 0, NULL );
+						fwrite( zbuf, 1, siz, stdout );
 					} else {
-						start = startnotfound ? searchUnzipped( dst, inf, 0, inf, chr, s, 0, 0 ) : 0;
-						endpos = searchUnzipped( dst, inf, start, inf, chr, e, 0, 0 );
+						fwrite( dst, 1, inf, stdout );
 					}
 				}
 			}
-			if( endpos > 0 && endpos > start ) {
-				if( z != -1 ) {
-					fwrite( zbuf+start, 1, endpos-start, stdout );
-				} else {
-					fwrite( dst+start, 1, endpos-start, stdout );
-				}
-			}
+			fclose( f );
 		}
-		fclose( f );
-	} else {
-		char	buffer[1000000];
-		char	zbuf[100000];
-		char	dst[100000];
 
-		FILE* f = fopen( argv[1], "r" );
-		int l = sizeof(buffer);
-		int r = fread( buffer, 1, l, f );
-		int i = 0;
-		int z = -1;
-		while( buffer[i++] != '\n' ) {
-			if( buffer[i] == 0 ) {
-				z = i;
-			}
-		}
-		if( z != -1 ) {
-			buffer[z] = '\n';
-			fwrite( buffer, 1, z+1, stdout );
-			int len = i-z-2;
-			int reslen = to8BitInplace( buffer, z+1, len );
-			//fprintf( stdout, "%d %d %d\n", buffer[z+1], buffer[z+2], buffer[z+3] );
-			int inf = inflate( buffer+z+1, reslen, dst, sizeof(dst) );
-			//fprintf( stdout, "%d %d %d\n", len, reslen, inf );
-			fwrite( dst, 1, inf, stdout );
-			//exit(0);
-		} else fwrite( buffer, 1, i, stdout );
-
-		int stopval = z != -1 ? 1 : 0;
-		//printf("bleh %d %d %d\n", i, r, l );
-		while( i < r-1 || r == l ) {
-			while( i < r && buffer[i++] != stopval );
-			int start = i;
-			while( i < r && buffer[i++] != stopval );
-
-			//printf("%d\n", start);
-
-			if( i == l && buffer[i-1] != '\n' ) {
-				int end = l-start;
-				memcpy( buffer, buffer+start, end );
-				r = fread( buffer+end, 1, start, f ) + end;
-				i = end;
-				while( /*i < l &&*/ buffer[i++] != stopval );
-				start = 0;
-			}
-
-			while( buffer[--i] != '\n' );
-			int end = i;
-
-			int prelen = end-start;
-			int len = to8BitInplace( buffer, start, end-start );
-			int inf = inflate( buffer+start, len, dst, sizeof(dst) );
-			//printf("%d %d %d %d %d %d\n", dst[0], dst[1], dst[2], dst[3], inf, len);
-			//printf("bleh %d %d %d %d %d\n", prelen, len, inf, start, end);
-			if( inf > 0 ) {
-				if( z != -1 ) {
-					int siz = decode( dst, 0, zbuf, 0, NULL );
-					fwrite( zbuf, 1, siz, stdout );
-				} else {
-					fwrite( dst, 1, inf, stdout );
-				}
-			}
-		}
-		fclose( f );
+		libdeflate_free_decompressor(d);
 	}
-
-	libdeflate_free_decompressor(d);
 	return 0;
 }
