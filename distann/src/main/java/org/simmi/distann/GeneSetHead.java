@@ -33,6 +33,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
@@ -42,6 +43,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import netscape.javascript.JSObject;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -57,6 +59,9 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.SparkSession;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,6 +74,7 @@ import org.simmi.javafasta.unsigned.SmithWater;
 import org.simmi.serifier.SerifyApplet;
 import org.simmi.treedraw.shared.TreeUtil.Node;
 import org.simmi.treedraw.shared.TreeUtil.NodeSet;
+import scala.Tuple2;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -546,8 +552,8 @@ public class GeneSetHead extends JPanel {
 			Set<String> set = new TreeSet<>();
 			for (Gene g : geneset.genelist) {
 				Annotation tv = g.tegeval;
-				if (tv.eval <= 0.00001 && tv.teg != null && tv.teg.startsWith("[") && tv.teg.endsWith("]"))
-					set.add(tv.teg);
+				if (tv.eval <= 0.00001 && tv.getSpecies() != null && tv.getSpecies().startsWith("[") && tv.getSpecies().endsWith("]"))
+					set.add(tv.getSpecies());
 			}
 	
 			for (String sp : set) {
@@ -2030,7 +2036,7 @@ public class GeneSetHead extends JPanel {
 				Annotation tv = gg.tegeval;
 				//sb.append(">" + tv.name + " " + tv.teg + " " + tv.eval + "\n");
 				Sequence protseq = tv.getProteinSequence();
-				protseq.setName( tv.getName() + " " + tv.teg + " " + tv.eval );
+				protseq.setName( tv.getName() + " " + tv.getSpecies() + " " + tv.eval );
 				protseq.writeSequence(sb);
 				/*for (int i = 0; i < tv.getProteinLength(); i += 70) {
 					int end = Math.min(i + 70, tv.getProteinLength());
@@ -2299,7 +2305,8 @@ public class GeneSetHead extends JPanel {
 	
 	RadioMenuItem	gb;
 	RadioMenuItem	ggb;
-	
+
+	boolean isTableSelectListenerEnabled = true;
 	TableView<GeneGroup>		table;
 	TableView<GeneGroup>        results;
 	TableView<Gene>				gtable;
@@ -2697,6 +2704,8 @@ public class GeneSetHead extends JPanel {
 		gtable = genetable;
 		gresults = g_results;
 
+		table.setEditable(true);
+
 		//SerifyApplet.user = user;
 		
 		/*try {
@@ -2783,13 +2792,7 @@ public class GeneSetHead extends JPanel {
 		file.getItems().add( new SeparatorMenuItem() );
 
 		MenuItem excelitem = new MenuItem("Open selection in Excel");
-		excelitem.setOnAction(actionEvent -> {
-			try {
-				excelExport( geneset.projectname );
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
+		excelitem.setOnAction(actionEvent -> excelExport( geneset.projectname ));
 		file.getItems().add( excelitem );
 		file.getItems().add( new SeparatorMenuItem() );
 		
@@ -2907,84 +2910,13 @@ public class GeneSetHead extends JPanel {
                     epar = null;*/
 
                 Set<String> species = getSelspec(null, geneset.getSpecies(), null);
-                geneset.clusterGenes( species, false );
+                geneset.clusterGenes( species, true );
                 //}
             });
 		});
 		MenuItem	alignclusters = new MenuItem("Align clusters");
-		alignclusters.setOnAction( actionEvent -> {
-			try {
-				String OS = System.getProperty("os.name").toLowerCase();
+		alignclusters.setOnAction(new AlignClusterAction(this));
 
-				Map<String,String> env = new HashMap<>();
-				env.put("create", "true");
-				String uristr = "jar:" + geneset.zippath.toUri();
-				geneset.zipuri = URI.create( uristr );
-				geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-				//s.makeBlastCluster(zipfilesystem.getPath("/"), p, 1);
-				Path aldir = geneset.zipfilesystem.getPath("aligned");
-				final Path aligneddir = Files.exists( aldir ) ? aldir : Files.createDirectory( aldir );
-
-				Runnable run = () -> {
-					try {
-						geneset.zipfilesystem.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				};
-
-				NativeRun nrun = new NativeRun( run );
-				//ExecutorService es = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-
-				Object[] cont = new Object[3];
-
-				Collection<GeneGroup> ggset;
-				ObservableList<GeneGroup> ogg = table.getSelectionModel().getSelectedItems();
-				ggset = new HashSet<>();
-				if( ogg.size() == 0 ) {
-					for( GeneGroup gg : geneset.allgenegroups ) {
-						//GeneGroup gg = allgenegroups.get(table.convertRowIndexToModel(r));
-						//gg.getCommonTag()
-						if( gg != null && gg.size() > 1 && (gg.getCommonTag() == null || gg.getCommonTag().equals("gene")) ) ggset.add( gg );
-					}
-				} else {
-					for( GeneGroup gg : ogg ) {
-						//GeneGroup gg = geneset.allgenegroups.get(table.convertRowIndexToModel(r));
-						//gg.getCommonTag()
-						if( gg != null && gg.getCommonTag() == null && gg.size() > 1 ) ggset.add( gg );
-					}
-				}
-
-				//int i = 0;
-				List commandsList = new ArrayList();
-				for( GeneGroup gg : ggset ) {
-					String fasta = gg.getFasta( true );
-					String[] cmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/mafft" : "/usr/bin/mafft", "-"};
-					Object[] paths = new Object[] {fasta.getBytes(), aligneddir.resolve(gg.getCommonId()+".aa"), null};
-					commandsList.add( paths );
-					commandsList.add( Arrays.asList(cmds) );
-
-					//if( i++ > 5000 ) break;
-				}
-				SwingUtilities.invokeLater(() -> {
-					try {
-						nrun.runProcessBuilder("Running mafft", commandsList, cont, true, run, false);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				});
-			} catch (IOException e1) {
-				if( geneset.zipfilesystem != null ) {
-					try {
-						geneset.zipfilesystem.close();
-					} catch (IOException e2) {
-						e2.printStackTrace();
-					}
-				}
-				e1.printStackTrace();
-			}
-		});
-		
 		MenuItem	sharenumaction = new MenuItem("Update share numbers");
 		sharenumaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
             Set<String> specs = getSelspec(GeneSetHead.this, geneset.specList, null);
@@ -3066,26 +2998,21 @@ public class GeneSetHead extends JPanel {
                 env.put("create", "true");
                 String uristr = "jar:" + geneset.zippath.toUri();
                 geneset.zipuri = URI.create( uristr );
-                geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+                try(FileSystem zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env )) {
+					for (Path root : zipfilesystem.getRootDirectories()) {
+						List<Path> p = Files.list(root).filter(t -> {
+							String fname = t.getFileName().toString();
+							return fname.endsWith(".blastout");
+						}).collect(Collectors.toList());
 
-                Path root = geneset.zipfilesystem.getPath("/");
-                Path p = geneset.zipfilesystem.getPath("cluster.blastout"); //root.resolve("culster.blastout");
+						List<Set<String>> cluster = (geneset.uclusterlist == null || fromscratch.isSelected()) ? new ArrayList<>() : new ArrayList<>(geneset.uclusterlist);
+						s.makeBlastCluster(root, p, 1, id, len, idspec, cluster, geneset.refmap);
 
-                List<Set<String>> cluster = (geneset.uclusterlist == null || fromscratch.isSelected()) ? new ArrayList<>() : new ArrayList<>( geneset.uclusterlist );
-                s.makeBlastCluster(root, p, 1, id, len, idspec, cluster, geneset.refmap);
-
-                System.err.println( cluster.get(0) );
-                if( geneset.uclusterlist != null ) System.err.println( geneset.uclusterlist.get(0) );
-
-                geneset.zipfilesystem.close();
+						System.err.println(cluster.get(0));
+						if (geneset.uclusterlist != null) System.err.println(geneset.uclusterlist.get(0));
+					}
+				}
             } catch (IOException e1) {
-                if( geneset.zipfilesystem != null ) {
-                    try {
-                        geneset.zipfilesystem.close();
-                    } catch (IOException e2) {
-                        e2.printStackTrace();
-                    }
-                }
                 e1.printStackTrace();
             }
         }));
@@ -4463,7 +4390,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 							}
 
 							Annotation tv = gg.tegeval;
-							fw.append(">" + tv.getName() + " " + tv.teg + " " + tv.eval + "\n");
+							fw.append(">" + tv.getName() + " " + tv.getSpecies() + " " + tv.eval + "\n");
 							for (int i = 0; i < tv.getLength(); i += 70) {
 								fw.append(tv.getSubstring(i, Math.min(i + 70, tv.getLength())) + "\n");
 							}
@@ -5136,52 +5063,76 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		tniaction.setOnAction( actionEvent -> {
 			SwingUtilities.invokeLater(() -> {
                 Set<String> species = getSelspec( GeneSetHead.this, geneset.specList );
-                String makeblastdb = "makeblastdb";
-                String OS = System.getProperty("os.name").toLowerCase();
-                if( OS.indexOf("mac") != -1 ) makeblastdb = "/usr/local/bin/makeblastdb";
-                for( String spec : species ) {
-                    List<Sequence> lseq = geneset.speccontigMap.get(spec);
-                    ProcessBuilder pb = new ProcessBuilder(makeblastdb,"-dbtype","nucl","-title",spec,"-out",spec);
-                    File dir = new File( System.getProperty("user.home") );
 
+				SparkSession spark = SparkSession.builder()
+						.master("local[4]")
+						/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
+						.config("spark.submit.deployMode","cluster")
+						.config("spark.driver.memory","4g")
+						.config("spark.driver.cores",2)
+						//.config("spark.executor.instances",10)
+						.config("spark.executor.memory","4g")
+					.config("spark.executor.cores",2)
+					.config("spark.executor.instances",10)
+					.config("spark.kubernetes.namespace","spark")
+					.config("spark.kubernetes.container.image","nextcode/glow:latest")
+					.config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
+					.config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
+					.config("spark.kubernetes.container.image.pullPolicy", "Always")
+						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
+					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
+						.getOrCreate();
 
+				List<String> specList = species.stream().map(spec -> {
+					int ind = spec.indexOf(' ');
+					return ind == -1 ? spec : spec.substring(0,ind);
+				}).collect(Collectors.toList());
+				List<String> fastaSequences = species.stream().map(spec -> geneset.speccontigMap.get(spec).stream().map(s -> {
+					String ret = "";
+					try {
+						int ind = spec.indexOf(' ');
+						String nspec = ind == -1 ? spec : spec.substring(0,ind);
+						ret = nspec+"\n"+s.asFasta();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					return ret;
+				}).collect(Collectors.joining("\n"))).collect(Collectors.toList());
+				List<String> splitFastaSequences = species.stream().map(spec -> geneset.speccontigMap.get(spec).stream().map(s -> {
+					String ret = "";
+					try {
+						int ind = spec.indexOf(' ');
+						String nspec = ind == -1 ? spec : spec.substring(0,ind);
+						ret = nspec+"\n"+s.asSplitFasta();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					return ret;
+				}).collect(Collectors.joining("\n"))).collect(Collectors.toList());
+				Dataset<String> speciesDataset = spark.createDataset(fastaSequences, Encoders.STRING());
+				Dataset<String> splitSpeciesDataset = spark.createDataset(splitFastaSequences, Encoders.STRING());
+				Dataset<org.apache.spark.sql.Row> rowDataset = speciesDataset.crossJoin(splitSpeciesDataset);
+				List<String> res = rowDataset.map(new SparkANI(), Encoders.STRING()).collectAsList();
 
+                double[] matrix = new double[ specList.size()*specList.size() ];
+                res.stream().map(s -> s.split("/")).forEach(s -> {
+                	String spec1 = s[0];
+                	String spec2 = s[1];
+                	int y = specList.indexOf(spec1);
+					int x = specList.indexOf(spec2);
+                	double avg = Double.parseDouble(s[2]);
+					matrix[y*specList.size()+x] = avg;
+				});
 
-                /*try {
-                    FileWriter w = new FileWriter( new File(dir, spec+".fna") );
-                    for( Sequence seq : lseq ) {
-                        seq.writeSequence(w);
-                    }
-                    w.close();
-                } catch (IOException e2) {
-                    e2.printStackTrace();
-                }*/
-
-
-
-
-                    pb.directory( dir );
-                    try {
-                        Process p = pb.start();
-                        Writer fw = new OutputStreamWriter( p.getOutputStream() );
-                        for( Sequence seq : lseq ) {
-                            seq.writeSequence(fw);
-                        }
-                        fw.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                }
-
-                int y = 0;
-                double[] matrix = new double[ species.size()*species.size() ];
-                for( String dbspec : species ) {
+                /*for( String dbspec : species ) {
                     int x = 0;
                     for( String spec : species ) {
                         //if( !spec.equals(dbspec) ) {
                         final List<Sequence> lseq = geneset.speccontigMap.get(spec);
                         String blastn = "blastn";
-                        if( OS.indexOf("mac") != -1 ) blastn = "/usr/local/bin/blastn";
+                        if(OS.contains("mac")) blastn = "/usr/local/bin/blastn";
                         ProcessBuilder pb = new ProcessBuilder(blastn,"-db",dbspec,
                                 "-num_threads",Integer.toString(Runtime.getRuntime().availableProcessors()),
                                 "-num_alignments","1","-num_descriptions","1"); //,"-max_hsps","1");
@@ -5190,19 +5141,17 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                         try {
                             Process p = pb.start();
                             final BufferedWriter fw = new BufferedWriter( new OutputStreamWriter( p.getOutputStream() ) );
-                            Thread t = new Thread() {
-                                public void run() {
-                                    try {
-                                        for( Sequence seq : lseq ) {
-                                            seq.writeSplitSequence(fw);
-                                            //seq.writeSequence(fw);
-                                        }
-                                        fw.close();
-                                    } catch (IOException e1) {
-                                        e1.printStackTrace();
-                                    }
-                                }
-                            };
+                            Thread t = new Thread(() -> {
+								try {
+									for( Sequence seq : lseq ) {
+										seq.writeSplitSequence(fw);
+										//seq.writeSequence(fw);
+									}
+									fw.close();
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							});
                             t.start();
                             //Path path = Paths.get("/Users/sigmar/"+spec+"_"+dbspec+".blastout");
                             //Files.copy(p.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
@@ -5243,10 +5192,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                         x++;
                     }
                     y++;
-                }
+                }*/
 
                 geneset.corrInd.clear();
-                for( String spec : species ) {
+                for( String spec : specList ) {
                     geneset.corrInd.add( geneset.nameFix( spec ) );
                 }
 
@@ -6210,10 +6159,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		croptosel.setOnAction( actionEvent -> {
 			if( isGeneview() ) {
 				Set<Gene> selitems = new HashSet<>( gtable.getSelectionModel().getSelectedItems() );
-				geneFilteredList.setPredicate( p -> selitems.contains(p) );
+				geneFilteredList.setPredicate(selitems::contains);
 			} else {
-				Set<GeneGroup> selitems = new HashSet<>( table.getSelectionModel().getSelectedItems() );
-				filteredData.setPredicate( p -> selitems.contains(p) );
+				Set<GeneGroup> selitems = geneset.allgenegroups.stream().filter(GeneGroup::isSelected).collect(Collectors.toSet()); //new HashSet<>( table.getSelectionModel().getSelectedItems() );
+				filteredData.setPredicate(selitems::contains);
 			}
 		});
 		select.getItems().add( croptosel );
@@ -6237,10 +6186,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		select.getItems().add( croptoinvsel );
 		MenuItem removesel = new MenuItem("Remove selection");
 		removesel.setOnAction( actionEvent -> {
+			geneset.allgenegroups.forEach(p -> p.setSelected(false));
 				// genefilterset.clear();
 			//int[] rr = table.getSelectedRows();
-			if (genefilterset.isEmpty()) {
-				Set<Integer> ii = new HashSet<Integer>();
+			/*if (genefilterset.isEmpty()) {
+				Set<Integer> ii = new HashSet<>();
 				for (int r : table.getSelectionModel().getSelectedIndices())
 					ii.add(r);
 				for (int i = 0; i < geneset.genelist.size(); i++) {
@@ -6252,7 +6202,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					//int mr = table.convertRowIndexToModel(r);
 					genefilterset.remove(r);
 				}
-			}
+			}*/
+			table.getSelectionModel().clearSelection();
 			updateFilter(table, label);
 		});
 		select.getItems().add( removesel );
@@ -6287,7 +6238,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		selsinglemult.setOnAction( actionEvent -> {
 				Set<String> specset = getSelspec(GeneSetHead.this, geneset.specList);
 				for( GeneGroup gg : geneset.allgenegroups ) {
-					Set<String> checkspec = new HashSet<String>( gg.species.keySet() );
+					Set<String> checkspec = new HashSet<>( gg.species.keySet() );
 					checkspec.retainAll( specset );
 					if( gg.getCommonTag() == null && checkspec.size() > 1 && gg.getTegevals().size() == gg.species.size() ) {//gg.getTegevals(checkspec).size() == checkspec.size() ) {
 						table.getSelectionModel().select( gg );
@@ -6443,15 +6394,21 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				RadioButton panbtn = new RadioButton("Pan");
 				RadioButton corebtn = new RadioButton("Core");
 				RadioButton blehbtn = new RadioButton("Only in");
+				RadioButton selcorebtn = new RadioButton("Selection Core");
+				RadioButton selpanbtn = new RadioButton("Selection Pan");
 				ToggleGroup	tg = new ToggleGroup();
 				panbtn.setToggleGroup( tg );
 				corebtn.setToggleGroup( tg );
 				blehbtn.setToggleGroup( tg );
+				selcorebtn.setToggleGroup( tg );
+				selpanbtn.setToggleGroup( tg );
 				
 				HBox sp = new HBox();
 				sp.getChildren().add( panbtn );
 				sp.getChildren().add( corebtn );
 				sp.getChildren().add( blehbtn );
+				sp.getChildren().add( selcorebtn );
+				sp.getChildren().add( selpanbtn );
 				Scene scene = new Scene(sp);
 				
 				//FlowLayout flowlayout = new FlowLayout();
@@ -6472,91 +6429,102 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				//Object[] objs = new Object[] { panbtn, corebtn };
 				//JOptionPane.showMessageDialog( geneset, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
 				
-				SwingUtilities.invokeLater( new Runnable() {
-					public void run() {
-						final List<String> species = geneset.getSpecies();
-						TableModel model = new TableModel() {
-							@Override
-							public int getRowCount() {
-								return species.size();
-							}
-		
-							@Override
-							public int getColumnCount() {
-								return 1;
-							}
-		
-							@Override
-							public String getColumnName(int columnIndex) {
-								return null;
-							}
-		
-							@Override
-							public Class<?> getColumnClass(int columnIndex) {
-								return String.class;
-							}
-		
-							@Override
-							public boolean isCellEditable(int rowIndex, int columnIndex) {
-								return false;
-							}
-		
-							@Override
-							public Object getValueAt(int rowIndex, int columnIndex) {
-								return species.get( rowIndex );
-							}
-		
-							@Override
-							public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
-		
-							@Override
-							public void addTableModelListener(TableModelListener l) {}
-		
-							@Override
-							public void removeTableModelListener(TableModelListener l) {}
-						};
-						JTable table = new JTable( model );
-						table.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-						JScrollPane	scroll = new JScrollPane( table );
-						
-						Object[] objs = new Object[] { scroll, c };
-						JOptionPane.showMessageDialog(comp, objs);
-						
-						final Set<String>	specs = new HashSet<String>();
-						int[] rr = table.getSelectedRows();
-						for( int r : rr ) {
-							String spec = (String)table.getValueAt(r, 0);
-							specs.add( spec );
+				SwingUtilities.invokeLater(() -> {
+					final List<String> species = geneset.getSpecies();
+					TableModel model = new TableModel() {
+						@Override
+						public int getRowCount() {
+							return species.size();
 						}
-						
-						Platform.runLater( new Runnable() {
-							public void run() {
-								for( GeneGroup gg : geneset.allgenegroups ) {
-									if( blehbtn.isSelected() ) {
-										Set<String> ss = new HashSet<String>( gg.species.keySet() );
-										ss.removeAll( specs );
-										if( ss.size() == 0 ) {
-											GeneSetHead.this.table.getSelectionModel().select(gg);
-										}
-									} else if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
-										GeneSetHead.this.table.getSelectionModel().select(gg);
-									}
+
+						@Override
+						public int getColumnCount() {
+							return 1;
+						}
+
+						@Override
+						public String getColumnName(int columnIndex) {
+							return null;
+						}
+
+						@Override
+						public Class<?> getColumnClass(int columnIndex) {
+							return String.class;
+						}
+
+						@Override
+						public boolean isCellEditable(int rowIndex, int columnIndex) {
+							return false;
+						}
+
+						@Override
+						public Object getValueAt(int rowIndex, int columnIndex) {
+							return species.get( rowIndex );
+						}
+
+						@Override
+						public void setValueAt(Object aValue, int rowIndex, int columnIndex) {}
+
+						@Override
+						public void addTableModelListener(TableModelListener l) {}
+
+						@Override
+						public void removeTableModelListener(TableModelListener l) {}
+					};
+					JTable jtable = new JTable( model );
+					jtable.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+					JScrollPane	scroll = new JScrollPane( jtable );
+
+					Object[] objs = new Object[] { scroll, c };
+					JOptionPane.showMessageDialog(comp, objs);
+
+					final Set<String>	specs = new HashSet<>();
+					int[] rr = jtable.getSelectedRows();
+					for( int r : rr ) {
+						String spec = (String)jtable.getValueAt(r, 0);
+						specs.add( spec );
+					}
+
+					Platform.runLater(() -> {
+						isTableSelectListenerEnabled = false;
+						for( GeneGroup gg : geneset.allgenegroups ) {
+							if( blehbtn.isSelected() ) {
+								Set<String> ss = new HashSet<>(gg.species.keySet());
+								ss.removeAll(specs);
+								if (ss.size() == 0) {
+									//int i = GeneSetHead.this.sortedData.indexOf(gg);
+									//System.err.println(i);
+									//ii.add(i);
+									//GeneSetHead.this.table.getSelectionModel().select(gg);
+									gg.setSelected(true);
+								}
+							} else if( selpanbtn.isSelected() ) {
+								Set<String> ss = new HashSet<>(specs);
+								ss.removeAll(gg.species.keySet());
+								if( ss.size() < specs.size() ) {
+									gg.setSelected(true);
+								}
+							} else {
+								if( gg.species.keySet().containsAll( specs ) && (panbtn.isSelected() || specs.size() == gg.species.size()) ) {
+									//GeneSetHead.this.table.getSelectionModel().select(gg);
+									gg.setSelected(true);
 								}
 							}
-						});
-					}
+						}
+						//GeneSetHead.this.table.getSelectionModel().selectIndices(0, ii.stream().mapToInt(i -> i).toArray());
+						isTableSelectListenerEnabled = true;
+						table.refresh();
+					});
 				});
 		});
 		select.getItems().add( selectsharingaction );
 		MenuItem	selectdirtyaction = new MenuItem("Select dirty");
 		selectdirtyaction.setOnAction( actionEvent -> {
 			if( !isGeneview() ) {
-				int i = 0;
 				for( GeneGroup gg : geneset.allgenegroups ) {
 					if( gg.containsDirty() ) {
 						table.getSelectionModel().select(gg);
 					}
-					i++;
 				}
 			}
 		});
@@ -6946,7 +6914,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		if( f != null ) geneset.zippath = f.toPath();
 	}
 
-	public void excelExport( String sheetname ) throws IOException {
+	public void excelExport( String sheetname ) {
 		Workbook workbook = new XSSFWorkbook();
 		Sheet sheet = workbook.createSheet(sheetname);
 		Row header = sheet.createRow(0);
@@ -6962,9 +6930,15 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
 				cell.setCellValue( tc.getText() );
 			}
+			for( TableColumn tc : results.getColumns() ) {
+				org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
+				cell.setCellValue( tc.getText() );
+			}
 
 			int rc = 1;
 			Row row = sheet.createRow(rc++);
+			XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
+			cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
 			for( int r : table.getSelectionModel().getSelectedIndices() ) {
 				cn = 0;
 				for( TableColumn tc : table.getColumns() ) {
@@ -6972,8 +6946,17 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					if( o != null ) {
 						org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
 						cell.setCellValue( o.toString() );
-						XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
-						cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
+						//XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
+						//cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
+					}
+					cn++;
+				}
+				for( TableColumn tc : results.getColumns() ) {
+					Object o = tc.getCellData(r);
+					if( o != null ) {
+						org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
+						cell.setCellValue( o.toString() );
+						cell.setCellStyle(cellstyle);
 					}
 					cn++;
 				}
@@ -6988,8 +6971,6 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			os.close();
 
 			Desktop.getDesktop().open( tempfile.toFile() );
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -7579,9 +7560,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		//topcomp.add(ttopcom, BorderLayout.NORTH);
 
 		table.getSelectionModel().setSelectionMode( SelectionMode.MULTIPLE );
-		table.getSelectionModel().selectedItemProperty().addListener( e -> {
+		/*table.getSelectionModel().selectedItemProperty().addListener( e -> {
 			label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedItems().size());
-		});
+		});*/
 		
 		gtable.getSelectionModel().setSelectionMode( SelectionMode.MULTIPLE );
 		gtable.getSelectionModel().selectedItemProperty().addListener( e -> {
@@ -7645,45 +7626,43 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					final String fasta = textarea.getText();
 					final SmithWater sw = new SmithWater();
 					final InputStream is = GeneSet.class.getResourceAsStream("/allthermus.aa");
-					new Thread() {
-						public void run() {
-							try {
-								sw.fasta_align(new StringReader(fasta), new InputStreamReader(is), pb);
-								List<SmithWater.ALN> alns = sw.getAlignments();
-								SmithWater.ALN first = null;
-								int count = 0;
-								String result = "";
-								Set<String> regnames = new HashSet<>();
-								for (SmithWater.ALN aln : alns) {
-									if (first == null) {
-										first = aln;
-									} else if (aln.getScore() < 3.0f * (first.getScore() / 4.0f))
-										break;
-									result += aln.toString();
-									regnames.add(aln.getShortDestName());
+					new Thread(() -> {
+						try {
+							sw.fasta_align(new StringReader(fasta), new InputStreamReader(is), pb);
+							List<SmithWater.ALN> alns = sw.getAlignments();
+							SmithWater.ALN first = null;
+							int count = 0;
+							String result = "";
+							Set<String> regnames = new HashSet<>();
+							for (SmithWater.ALN aln : alns) {
+								if (first == null) {
+									first = aln;
+								} else if (aln.getScore() < 3.0f * (first.getScore() / 4.0f))
+									break;
+								result += aln.toString();
+								regnames.add(aln.getShortDestName());
 
-									if (++count == 10)
-										break;
-								}
-								textarea.setText(result);
-
-								for (Gene g : geneset.genelist) {
-									boolean found = false;
-									Annotation tv = g.tegeval;
-									if (regnames.contains(tv.getName())) {
-										found = true;
-										break;
-									}
-									if (found) {
-										gtable.getSelectionModel().select(g);
-										break;
-									}
-								}
-							} catch (IOException e) {
-								e.printStackTrace();
+								if (++count == 10)
+									break;
 							}
+							textarea.setText(result);
+
+							for (Gene g : geneset.genelist) {
+								boolean found = false;
+								Annotation tv = g.tegeval;
+								if (regnames.contains(tv.getName())) {
+									found = true;
+									break;
+								}
+								if (found) {
+									gtable.getSelectionModel().select(g);
+									break;
+								}
+							}
+						} catch (IOException e12) {
+							e12.printStackTrace();
 						}
-					}.start();
+					}).start();
 				}
 			});
 			c.setLayout(new BorderLayout());
@@ -7804,6 +7783,12 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<GeneGroup, String> maxcyccol = new TableColumn("Max cyc");
 		maxcyccol.setCellValueFactory( new PropertyValueFactory<>("maxCyc"));
 		table.getColumns().add( maxcyccol );
+
+		TableColumn<GeneGroup, Boolean> selectedcol = new TableColumn<>("Selected");
+		selectedcol.setCellValueFactory(param -> param.getValue().selectedProperty());
+		selectedcol.setCellFactory(CheckBoxTableCell.forTableColumn(selectedcol));
+		selectedcol.setEditable(true);
+		table.getColumns().add( selectedcol );
 
 		TableColumn<Gene, String> gnamedesccol = new TableColumn("Desc");
 		gnamedesccol.setCellValueFactory( new PropertyValueFactory<>("derivedName"));
@@ -9062,7 +9047,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		majocons.setOnAction( e -> {
 			Serifier serifier = new Serifier();
 			
-			Set<GeneGroup>	genegroups = new HashSet<GeneGroup>();
+			Set<GeneGroup>	genegroups = new HashSet<>();
 			if( !isGeneview() ) {
 				genegroups.addAll( table.getSelectionModel().getSelectedItems() );
 			} else {
@@ -9085,7 +9070,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					serifier.addSequence( seq );			
 				}
 
-				String tree = serifier.getFastTree( serifier.lseq, geneset.user, false );
+				String tree = serifier.getFastTree( serifier.lseq, GeneSet.user, false );
 				Node n = treeutil.parseTreeRecursive( tree, false );
 				treeutil.setLoc( 0 );
 				n.nodeCalcMap( nmap );
@@ -9345,10 +9330,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		updateFilter(table, label);
 
 		combo.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            String sel = newValue;
-            filterset.clear();
-            if (geneset.pathwaymap.containsKey(sel)) {
-                Set<String> enz = geneset.pathwaymap.get(sel);
+			filterset.clear();
+            if (geneset.pathwaymap.containsKey(newValue)) {
+                Set<String> enz = geneset.pathwaymap.get(newValue);
                 for (Function f : geneset.funclist) {
                     if (f.getEc() != null && enz.contains(f.getEc())) {
                         filterset.add(f.index);
@@ -9363,7 +9347,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
             genefilterset.clear();
             for (Gene g : geneset.genelist) {
                 Annotation tv = g.tegeval;
-                if (sel.equals(tv.teg)) {
+                if (sel.equals(tv.getSpecies())) {
                     //System.out.println(g.name + " " + sp + " " + sel + "  " + tv.eval);
                     genefilterset.add(g.index);
                 }
@@ -9393,9 +9377,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 			}
 			filterset.clear();
-			for (int i : res) {
-				filterset.add(i);
-			}
+			filterset.addAll(res);
 			updateFilter(ftable, null);
 		});
 		fpopup.getItems().add( findcon );
@@ -9405,7 +9387,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		showgen.setOnAction( e -> {
 			genefilterset.clear();
 			Set<GeneGroup> sset = new HashSet<>();
-			for (Function f : (ObservableList<Function>)ftable.getSelectionModel().getSelectedItems()) {
+			for (Function f : ftable.getSelectionModel().getSelectedItems()) {
 				if( !isGeneview() ) {
 					sset.addAll( f.getGeneGroups() );
 					/*if( sset != null ) for (GeneGroup gg : sset) {
@@ -9424,49 +9406,50 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			//int[] rows = sset.stream().mapToInt( gg -> sortedData.indexOf(gg) ).toArray();
 			//table.getSelectionModel().selectIndices(rows[0], rows);
 			
-			filteredData.setPredicate(genegroup -> {
-                return sset.contains(genegroup);
-            });
+			filteredData.setPredicate(sset::contains);
 			if (label != null)
 				label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
 		});
 		fpopup.getItems().add( showgen );
 
 		table.getSelectionModel().selectedItemProperty().addListener( e -> {
-			// table.clearSelection();
-			tableisselecting = true;
-			if (!ftableisselecting && filterset.isEmpty()) {
-				//ftable.removeRowSelectionInterval(0, ftable.getRowCount() - 1);
-				if( !isGeneview() ) {
-					for( GeneGroup gg : table.getSelectionModel().getSelectedItems() ) {
-						for( Function f : gg.getFunctions() ) {
-							try {
-								ftable.getSelectionModel().select( f );
-								//int rf = ftable.convertRowIndexToView(f.index);
-								//if( rf >= 0 && rf < ftable.getRowCount() ) ftable.addRowSelectionInterval(rf, rf);
-							} catch( Exception ex ) {
-								ex.printStackTrace();
-							}
-						}
-					}
-				} else {
-					for( Gene g : gtable.getSelectionModel().getSelectedItems() ) {
-						if (g.funcentries != null) {
-							for( Function f : g.funcentries) {
-								//Function f = funcmap.get(go);
+			if(isTableSelectListenerEnabled) {
+				label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedItems().size());
+				// table.clearSelection();
+				tableisselecting = true;
+				if (!ftableisselecting && filterset.isEmpty()) {
+					//ftable.removeRowSelectionInterval(0, ftable.getRowCount() - 1);
+					if (!isGeneview()) {
+						for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
+							for (Function f : gg.getFunctions()) {
 								try {
-									ftable.getSelectionModel().select( f );
+									ftable.getSelectionModel().select(f);
 									//int rf = ftable.convertRowIndexToView(f.index);
 									//if( rf >= 0 && rf < ftable.getRowCount() ) ftable.addRowSelectionInterval(rf, rf);
-								} catch( Exception ex ) {
+								} catch (Exception ex) {
 									ex.printStackTrace();
+								}
+							}
+						}
+					} else {
+						for (Gene g : gtable.getSelectionModel().getSelectedItems()) {
+							if (g.funcentries != null) {
+								for (Function f : g.funcentries) {
+									//Function f = funcmap.get(go);
+									try {
+										ftable.getSelectionModel().select(f);
+										//int rf = ftable.convertRowIndexToView(f.index);
+										//if( rf >= 0 && rf < ftable.getRowCount() ) ftable.addRowSelectionInterval(rf, rf);
+									} catch (Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 						}
 					}
 				}
+				tableisselecting = false;
 			}
-			tableisselecting = false;
 		});
 
 		ftable.setOnKeyPressed( ke -> {

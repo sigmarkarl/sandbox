@@ -4161,9 +4161,9 @@ public class ActionCollection {
 								int stop = stops.get(k);
 								
 								Sequence seq = new Sequence(ctg.getName()+"_"+start+"_"+stop, null);
-								seq.append( ctg.sb.substring( Math.max(0, start-100), start ) );
+								seq.append( ctg.getSequence().substring( Math.max(0, start-100), start ) );
 								seq.append( "-----" );
-								seq.append( ctg.sb.substring( stop, Math.min(stop+100, ctg.length()) ) );
+								seq.append( ctg.getSequence().substring( stop, Math.min(stop+100, ctg.length()) ) );
 								
 								serifier.addSequence( seq );
 							}
@@ -4174,11 +4174,11 @@ public class ActionCollection {
 							//Sequence ctg = contigs.get( i );
 							Sequence seq = new Sequence(ctg.getName(), null);
 							if( ctg.length() <= 200 ) {
-								seq.append( ctg.sb );
+								seq.append( ctg.getSequence() );
 							} else {
-								seq.append( ctg.sb.substring(0, 100) );
+								seq.append( ctg.getSequence().substring(0, 100) );
 								seq.append( "-----" );
-								seq.append( ctg.sb.substring(ctg.length()-100, ctg.length()) );
+								seq.append( ctg.getSequence().substring(ctg.length()-100, ctg.length()) );
 							}
 							if( ctg.isReverse() ) {
 								seq.reverse();
@@ -4295,7 +4295,7 @@ public class ActionCollection {
 						Sequence seq = tv.getAlignedSequence();
 						seq.setName( commonName );
 						seq.removeGaps();
-						if( seq.sb.indexOf("X") == -1 ) {
+						if( seq.getSequence().indexOf("X") == -1 ) {
 							serifier.addSequence( seq );
 						}
 					}
@@ -4316,25 +4316,24 @@ public class ActionCollection {
 				final double[] b1;
 				final double[] b2;
 				final String[] names;
-				if( blosumap != null ) {
-					ObservableList<GeneGroup> lgg = genesethead.table.getSelectionModel().getSelectedItems();
-					
-					double[] mat = new double[ lgg.size()*lgg.size() ];
-					Arrays.fill( mat, 0.0 );
-					
-					GeneGroup tgg = lgg.get(0);
-					List<String>	speclist = new ArrayList<>( tgg.species.keySet() );
+			ObservableList<GeneGroup> lgg = genesethead.table.getSelectionModel().getSelectedItems();
 
-					names = new String[ lgg.size() ];
-					int samplesize = (speclist.size()-1)*(speclist.size())/2;
-					PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();
+			double[] mat = new double[ lgg.size()*lgg.size() ];
+			Arrays.fill( mat, 0.0 );
+
+			GeneGroup tgg = lgg.get(0);
+			List<String>	speclist = new ArrayList<>( tgg.species.keySet() );
+
+			names = new String[ lgg.size() ];
+			int samplesize = (speclist.size()-1)*(speclist.size())/2;
+			PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();
 					/*pca.setup(samplesize, lgg.size() );
 					Map<GeneGroup,double[]>	valmap = new HashMap<>();
 					int k = 0;
 					for( GeneGroup gg : lgg ) {
 						names[k] = gg.getName();
 						double[] sdb = new double[ samplesize ];
-						
+
 						int u = 0;
 						double norm = 0.0;
 						for( int m = 0; m < speclist.size()-1; m++ ) {
@@ -4347,7 +4346,7 @@ public class ActionCollection {
 								norm += val*val;
 							}
 						}
-						
+
 						norm = Math.sqrt( norm );
 						for( int v = 0; v < samplesize; v++ ) {
 							sdb[v] /= norm;
@@ -4355,7 +4354,7 @@ public class ActionCollection {
 						valmap.put( gg, sdb );
 						//pca.addSample( sdb );
 					}
-					
+
 					//List<double[]>	dvals = new ArrayList<double[]>();
 					for( int i = 0; i < samplesize; i++ ) {
 						double[] d = new double[ valmap.size() ];
@@ -4367,32 +4366,26 @@ public class ActionCollection {
 						}
 						pca.addSample( d );
 					}
-					
+
 					pca.computeBasis(3);
-					
+
 					b0 = pca.getBasisVector(0);
 					b1 = pca.getBasisVector(1);
 					b2 = pca.getBasisVector(2);
 					System.err.println( b0.length );
-					
+
 					//b0 = Arrays.copyOf( b00, 100 );
 					//b1 = Arrays.copyOf( b11, 100 );
-					
+
 					for( int i = 0; i < b0.length; i++ ) {
 						//b0[i] *= 10000.0;
 						//b1[i] *= 10000.0;
 						System.err.println( b0[i] + "\t" + b1[i] );
 					}*/
 
-					b0 = null;
-					b1 = null;
-					b2 = null;
-				} else {
-					b0 = null;
-					b1 = null;
-					b2 = null;
-					names = null;
-				}
+			b0 = null;
+			b1 = null;
+			b2 = null;
 				
 				/*JFXPanel fxpanel = new JFXPanel();
 				Platform.runLater( new Runnable() {

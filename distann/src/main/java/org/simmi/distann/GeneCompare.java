@@ -753,8 +753,8 @@ public class GeneCompare {
         if( score > tscore ) {
         	System.err.println("ff");
         	
-        	System.err.println( seq1.sb.substring(start, stop) );
-        	System.err.println( seq2.sb.substring(start, stop) );
+        	System.err.println( seq1.getSequence().substring(start, stop) );
+        	System.err.println( seq2.getSequence().substring(start, stop) );
         	/*tscore = 0;
         	for( int i = start; i < stop; i++ ) {
             	char lc = seq1.charAt(i);
@@ -899,6 +899,8 @@ public class GeneCompare {
 	static int ctgoff = 0;
 	public static Color gradientColor( String spec1, String spec2, List<Sequence> contigs2, double ratio, double pratio, int offset2, GeneGroup gg, boolean contiglanes, Annotation tv ) {
 		//Contig chromosome = null;
+		//System.err.println("gradcol " + spec1 + " " + spec2 + " " + gg.getName());
+
 		int total2 = 0;
 		int ptotal2 = 0;
 		
@@ -944,7 +946,8 @@ public class GeneCompare {
 				int count2 = 0;
 				
 				if( ptotal2 > 0 ) {
-					for( Sequence ctg2 : contigs2 ) {
+					hit = tv2.seq;
+					/*for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
 							int idx = ctg2.annset.indexOf( tv2 );
 							if( idx != -1 ) {
@@ -952,15 +955,16 @@ public class GeneCompare {
 								break;
 							}
 						}
-					}
+					}*/
 					
 					if( hit != null && hit.isPlasmid() ) {
 						for( Sequence c2 : contigs2 ) {
 							if( c2.isPlasmid() && c2.annset != null ) {
-								int idx = c2.annset.indexOf( tv2 );
-								if( idx == -1 ) {
+								//int idx = c2.annset.indexOf( tv2 );
+								if( c2 != tv2.seq ) {
 									count2 += c2.getAnnotationCount();
 								} else {
+									int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
 									count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 									break;
 								}
@@ -971,10 +975,11 @@ public class GeneCompare {
 					} else {
 						for( Sequence c2 : contigs2 ) {
 							if( c2.annset != null ) {
-								int idx = c2.annset.indexOf( tv2 );
-								if( idx == -1 ) {
+								//int idx = c2.annset.indexOf( tv2 );
+								if( c2 != tv2.seq ) {
 									count2 += c2.getAnnotationCount();
 								} else {
+									int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
 									count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 									hit = c2;
 									break;
@@ -1005,10 +1010,10 @@ public class GeneCompare {
 				} else {
 					for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
-							int idx = ctg2.annset.indexOf( tv2 );
-							if( idx == -1 ) {
+							if( ctg2 != tv2.seq ) {
 								count2 += ctg2.getAnnotationCount();
 							} else {
+								int idx = tv2.indexOf();
 								count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 								hit = ctg2;
 								break;
@@ -1046,7 +1051,8 @@ public class GeneCompare {
 					int count2 = 0;
 					
 					if( ptotal2 > 0 ) {
-						for( Sequence ctg2 : contigs2 ) {
+						hit = tv2.seq;
+						/*for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx != -1 ) {
@@ -1054,15 +1060,16 @@ public class GeneCompare {
 									break;
 								}
 							}
-						}
+						}*/
 						
 						if( hit != null && hit.isPlasmid() ) {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
-									int idx = c2.annset.indexOf( tv2 );
-									if( idx == -1 ) {
+									//int idx = c2.annset.indexOf( tv2 );
+									if( c2 != tv2.seq ) {
 										count2 += c2.getAnnotationCount();
 									} else {
+										int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
 										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										break;
 									}
@@ -1073,10 +1080,11 @@ public class GeneCompare {
 						} else {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
-									int idx = c2.annset.indexOf( tv2 );
-									if( idx == -1 ) {
+									//int idx = c2.annset.indexOf( tv2 );
+									if( c2 != tv2.seq ) {
 										count2 += c2.getAnnotationCount();
 									} else {
+										int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
 										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										hit = c2;
 										break;
@@ -1107,10 +1115,11 @@ public class GeneCompare {
 					} else {
 						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
-								int idx = ctg2.annset.indexOf( tv2 );
-								if( idx == -1 ) {
+								//int idx = ctg2.annset.indexOf( tv2 );
+								if( ctg2 != tv2.seq ) {
 									count2 += ctg2.getAnnotationCount();
 								} else {
+									int idx = tv2.indexOf(); //ctg2.annset.indexOf( tv2 );
 									count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 									hit = ctg2;
 									break;
@@ -1129,7 +1138,7 @@ public class GeneCompare {
 					double rat2 = (double)val2/(double)total2;
 					ratio2 = rat2;
 
-					System.err.println(ratio2 + "  " + offset2 + "  " + spec1 + "  " + spec2 + "  " + contigs2.size() + "  " + contigs2.get(0).isReverse());
+					//System.err.println(ratio2 + "  " + offset2 + "  " + spec1 + "  " + spec2 + "  " + contigs2.size() + "  " + contigs2.get(0).isReverse());
 					
 					/*if( rat2 > 1.0f || rat2 < 0.0f ) {
 						System.err.println("");
@@ -1145,7 +1154,8 @@ public class GeneCompare {
 					int count2 = 0;
 					int simcount = 0;
 					if( ptotal2 > 0 ) {
-						for( Sequence ctg2 : contigs2 ) {
+						hit = tv2.seq;
+						/*for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
 								if( idx != -1 ) {
@@ -1153,15 +1163,16 @@ public class GeneCompare {
 									break;
 								}
 							}
-						}
+						}*/
 						
 						if( hit != null && hit.isPlasmid() ) {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
-									int idx = c2.annset.indexOf( tv2 );
-									if( idx == -1 ) {
+									//int idx = c2.annset.indexOf( tv2 );
+									if( c2 != tv2.seq ) {
 										count2 += c2.getAnnotationCount();
 									} else {
+										int idx = tv2.indexOf();
 										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										break;
 									}
@@ -1176,23 +1187,23 @@ public class GeneCompare {
 							Annotation p2 = tv2.getPrevious();
 							
 							if( n != null ) {
-								GeneGroup ngg = n.getGene().getGeneGroup();
-								if( n2 != null ) {
+								GeneGroup ngg = n.getGene() != null ? n.getGene().getGeneGroup() : null;
+								if( n2 != null && n2.getGene() != null ) {
 									if( ngg == n2.getGene().getGeneGroup() ) simcount++;
 								}
 								
-								if( p2 != null ) {
+								if( p2 != null && p2.getGene() != null ) {
 									if( ngg == p2.getGene().getGeneGroup() ) simcount++;
 								}
 							}
 							
 							if( p != null ) {
-								GeneGroup pgg = p.getGene().getGeneGroup();
-								if( n2 != null ) {
+								GeneGroup pgg = p.getGene() != null ? p.getGene().getGeneGroup() : null;
+								if( n2 != null && n2.getGene() != null ) {
 									if( pgg == n2.getGene().getGeneGroup() ) simcount++;
 								}
 								
-								if( p2 != null ) {
+								if( p2 != null && p2.getGene() != null ) {
 									if( pgg == p2.getGene().getGeneGroup() ) simcount++;
 								}
 							}
@@ -1204,10 +1215,11 @@ public class GeneCompare {
 						} else {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
-									int idx = c2.annset.indexOf( tv2 );
-									if( idx == -1 ) {
+									//int idx = c2.annset.indexOf( tv2 );
+									if( c2 != tv2.seq ) {
 										count2 += c2.getAnnotationCount();
 									} else {
+										int idx = tv2.indexOf();
 										count2 += c2.isReverse() ? c2.getAnnotationCount() - idx - 1 : idx;
 										hit = c2;
 										break;
@@ -1218,10 +1230,11 @@ public class GeneCompare {
 					} else {
 						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
-								int idx = ctg2.annset.indexOf( tv2 );
-								if( idx == -1 ) {
+								//int idx = ctg2.annset.indexOf( tv2 );
+								if( ctg2 != tv2.seq ) {
 									count2 += ctg2.getAnnotationCount();
 								} else {
+									int idx = tv2.indexOf();
 									count2 += ctg2.isReverse() ? ctg2.getAnnotationCount() - idx - 1 : idx;
 									hit = ctg2;
 									break;

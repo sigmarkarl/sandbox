@@ -32,11 +32,11 @@ public class WebGl extends JApplet {
 	}
 	
 	public void init() {
-		final JSObject jo = JSObject.getWindow(this);
+		/*final JSObject jo = JSObject.getWindow(this);
 		
 		jo.call( "stuff", new Object[] {} );
 		
-		/*final TextRenderer renderer = new TextRenderer( this.getFont() );
+		final TextRenderer renderer = new TextRenderer( this.getFont() );
 		javax.swing.Timer t = new Timer( 1000, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

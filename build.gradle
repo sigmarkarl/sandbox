@@ -11,9 +11,18 @@
 
 plugins {
     id 'java'
-    id "com.palantir.graal" version "0.6.0-69-ga9559b9"
-    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'application'
+    id "com.palantir.graal" version "0.7.1"
+    id 'org.openjfx.javafxplugin' version '0.0.9'
     id "com.github.johnrengelman.shadow" version "5.2.0"
+}
+
+ext {
+    javaMainClass = "org.simmi.distann.DistAnn"
+}
+
+application {
+    mainClassName = javaMainClass
 }
 
 /*allprojects {

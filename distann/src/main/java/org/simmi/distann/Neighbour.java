@@ -376,14 +376,14 @@ public class Neighbour {
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectBefore( currentTe, te );
 			} else {
 				/*Tegeval next = currentTe.getNext();
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectAfter( currentTe, te );
 			}
 			c.repaint();
@@ -397,14 +397,14 @@ public class Neighbour {
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectAfter( currentTe, te );
 			} else {
 				/*Tegeval previous = currentTe.getPrevious();
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
 				currentTe.getContig().injectBefore( currentTe, te );
 			}
 			c.repaint();
@@ -2266,7 +2266,7 @@ public class Neighbour {
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getName(), null );
-										seq.append( prev.getContig().sb.substring(start, stop) );
+										seq.append( prev.getContig().getSequence().substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == -1 ) {
@@ -2275,7 +2275,7 @@ public class Neighbour {
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getName(), null );
-										seq.append( tv2.getContig().sb.substring(start, stop) );
+										seq.append( tv2.getContig().getSequence().substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								}
@@ -2309,7 +2309,7 @@ public class Neighbour {
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( prev.getGene().getGeneGroup().getName(), null );
-										seq.append( prev.getContig().sb.substring(start, stop) );
+										seq.append( prev.getContig().getSequence().substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								} else if( tv2 != null && tv2.isSelected() && tv2.ori == 1 ) {
@@ -2318,7 +2318,7 @@ public class Neighbour {
 									
 									if( stop > start && start >= 0 && stop < tv2.getContig().length() ) {
 										Sequence seq = new Sequence( tv2.getGene().getGeneGroup().getName(), null );
-										seq.append( tv2.getContig().sb.substring(start, stop) );
+										seq.append( tv2.getContig().getSequence().substring(start, stop) );
 										serifier.addSequence( seq );
 									}
 								}

@@ -372,7 +372,7 @@ public class Blast {
 				}
                                 
                 tv.setGene( gene );
-				tv.setTegund( padda );
+				//tv.setTegund( padda );
 				tv.setEval( deval );
 				
 				/*if( preval != null ) {
@@ -459,7 +459,7 @@ public class Blast {
 					Gene gene;
 	
 					Sequence aa = aaSearch(query, aas);
-					String aaid = "_"+aa.sb.toString();
+					String aaid = "_"+aa.getSequence().toString();
 					
 					
 					/*String padda = query.substring(0, query.indexOf('_')); //split("_")[0];
@@ -548,7 +548,7 @@ public class Blast {
 					Tegeval tv = aas.get( query ); //new Tegeval(gene, padda, deval, query, contig, contloc, start, stop, ori);
 							//new Tegeval(gene, padda, deval, aastr, dn, query, contig, contloc, start, stop, ori);
 					tv.setGene( gene );
-					tv.setTegund( padda );
+					//tv.setTegund( padda );
 					tv.setEval( deval );
 					if( tv == null || tv.ori != tv.ori || tv.start != start || tv.stop != stop ) {
 						System.err.println();

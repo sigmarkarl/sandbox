@@ -4,14 +4,15 @@ plugins {
 }
 
 javafx {
-    version = '13'
+    version = '15'
     modules = ['javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web']
 }
 
 dependencies {
-    compile group: 'commons-net', name: 'commons-net', version: '3.5'
+    compile group: 'commons-net', name: 'commons-net', version: '3.7'
     compile group: 'org.apache.commons', name: 'commons-vfs2', version: '2.1'
-    compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '3.0.0-preview'
-    compile group: 'org.apache.spark', name: 'spark-sql_2.12', version: '3.0.0-preview'
+    compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '3.0.0'
+    compile group: 'org.apache.spark', name: 'spark-sql_2.12', version: '3.0.0'
+    compile group: 'org.apache.spark', name: 'spark-kubernetes_2.12', version: '3.0.0'
     compile project(':javafasta')
 }
