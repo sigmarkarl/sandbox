@@ -9,12 +9,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,8 +32,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
@@ -46,13 +40,12 @@ import org.simmi.javafasta.shared.Annotation;
 import org.simmi.javafasta.shared.GeneGroup;
 import org.simmi.javafasta.shared.Sequence;
 import org.simmi.javafasta.shared.Gene;
-import org.simmi.javafasta.shared.Tegeval;
 
 import javafx.scene.control.TableView;
 
 public class XYPlot {
-	List<Sequence>	spec1Conts = new ArrayList<Sequence>();
-	List<Sequence>	spec2Conts = new ArrayList<Sequence>();
+	List<Sequence>	spec1Conts = new ArrayList<>();
+	List<Sequence>	spec2Conts = new ArrayList<>();
 	int fsum1;
 	int fsum2;
 	String spec1;
@@ -644,7 +637,7 @@ public class XYPlot {
 			}
 		});
 		
-		ComboBoxModel<String>	cbmodel1 = new ComboBoxModel<String>() {			
+		ComboBoxModel<String>	cbmodel1 = new ComboBoxModel<>() {
 			@Override
 			public int getSize() {
 				return species.size();
@@ -656,14 +649,16 @@ public class XYPlot {
 			}
 
 			@Override
-			public void addListDataListener(ListDataListener l) {}
+			public void addListDataListener(ListDataListener l) {
+			}
 
 			@Override
-			public void removeListDataListener(ListDataListener l) {}
+			public void removeListDataListener(ListDataListener l) {
+			}
 
 			@Override
 			public void setSelectedItem(Object anItem) {
-				spec1 = (String)anItem;
+				spec1 = (String) anItem;
 			}
 
 			@Override
@@ -673,7 +668,7 @@ public class XYPlot {
 		};
 		comb1.setModel( cbmodel1 );
 		
-		ComboBoxModel<String>	cbmodel2 = new ComboBoxModel<String>() {			
+		ComboBoxModel<String>	cbmodel2 = new ComboBoxModel<>() {
 			@Override
 			public int getSize() {
 				return species.size();
@@ -685,14 +680,16 @@ public class XYPlot {
 			}
 
 			@Override
-			public void addListDataListener(ListDataListener l) {}
+			public void addListDataListener(ListDataListener l) {
+			}
 
 			@Override
-			public void removeListDataListener(ListDataListener l) {}
+			public void removeListDataListener(ListDataListener l) {
+			}
 
 			@Override
 			public void setSelectedItem(Object anItem) {
-				spec2 = (String)anItem;
+				spec2 = (String) anItem;
 			}
 
 			@Override
@@ -705,19 +702,13 @@ public class XYPlot {
 		comb1.setSelectedItem( spec1 );
 		comb2.setSelectedItem( spec2 );
 		
-		comb1.addItemListener( new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( genesethead.geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
-				drawc.repaint();
-			}
+		comb1.addItemListener(e -> {
+			initSpecConts( genesethead.geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+			drawc.repaint();
 		});
-		comb2.addItemListener( new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				initSpecConts( genesethead.geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
-				drawc.repaint();
-			}
+		comb2.addItemListener(e -> {
+			initSpecConts( genesethead.geneset.speccontigMap, (String)comb1.getSelectedItem(), (String)comb2.getSelectedItem() );
+			drawc.repaint();
 		});
 		
 		toolbox.add( comb1 );
@@ -726,18 +717,8 @@ public class XYPlot {
 		toolbox.add( showgrid );
 		toolbox.add( swap );
 		
-		oricolor.addChangeListener( new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				drawc.repaint();
-			}
-		});
-		gccolor.addChangeListener( new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				drawc.repaint();
-			}
-		});
+		oricolor.addChangeListener(e -> drawc.repaint());
+		gccolor.addChangeListener(e -> drawc.repaint());
 		
 		JFrame frame = new JFrame();
 		frame.setLayout( new BorderLayout() );
@@ -746,5 +727,17 @@ public class XYPlot {
 		frame.setSize(800, 600);
 		frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 		frame.setVisible( true );
+
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				super.windowClosed(e);
+				try {
+					genesethead.geneset.saveContigOrder();
+				} catch (IOException ioException) {
+					ioException.printStackTrace();
+				}
+			}
+		});
 	}
 }

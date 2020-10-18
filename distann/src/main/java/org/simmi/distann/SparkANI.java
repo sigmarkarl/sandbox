@@ -34,7 +34,7 @@ public class SparkANI implements MapFunction<Row, String> {
 
         ExecutorService es = Executors.newFixedThreadPool(2);
         ProcessBuilder pb = new ProcessBuilder(makeblastdb,"-dbtype","nucl","-title",spec,"-out",spec);
-        File dir = Paths.get(System.getProperty("user.home")).resolve("rho").toFile();
+        File dir = Paths.get(System.getProperty("user.home")).toFile();
 
         pb.directory( dir );
         Process p = pb.start();
@@ -52,6 +52,12 @@ public class SparkANI implements MapFunction<Row, String> {
         String blastn = "blastn";
         if(OS.contains("mac")) blastn = "/usr/local/bin/blastn";
         pb = new ProcessBuilder(blastn,"-db",spec,
+                "-gapopen", "5",
+                "-gapextend", "2",
+                "-penalty", "-1",
+                "-soft_masking", "false",
+                "-xdrop_gap_final", "150",
+                "-dust", "no",
                 "-num_threads",Integer.toString(Runtime.getRuntime().availableProcessors()),
                 "-num_alignments","1","-num_descriptions","1"); //,"-max_hsps","1");
 
@@ -85,12 +91,16 @@ public class SparkANI implements MapFunction<Row, String> {
                 int num = Integer.parseInt(split[0]);
                 int denum = Integer.parseInt(split[1]);
 
-                avg += (double)num/(double)denum;
+                double fraq = (double)num/(double)denum;
+                if(fraq>0.7&&denum>714) {
+                    avg += fraq;
 
-                //tnum += num;
-                //tdenum += denum;
-                count++;
+                    //tnum += num;
+                    //tdenum += denum;
+                    count++;
+                }
             }
+            //System.err.println(line);
             line = br.readLine();
         }
         br.close();

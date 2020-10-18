@@ -112,11 +112,10 @@ import static org.simmi.serifier.SerifyApplet.blastpRun;
  *
  * @version $Id:  $
  */
-public class GeneSetHead extends JPanel {
+public class GeneSetHead {
 	GeneSet							geneset;
 	DistannFX 						app;
 	List<JSplitPane> 				splitpaneList = new ArrayList<>();
-	JFrame 							frame = new JFrame();
 
 	public class Locus {
 		public Locus(String s, String l) {
@@ -478,7 +477,7 @@ public class GeneSetHead extends JPanel {
 
 		if( fail && zipp == null ) {
 			FileChooser fc = new FileChooser();
-			File f = fc.showOpenDialog( app.getOwner() );
+			File f = fc.showOpenDialog(null);
 			if( f != null ) zipp = f.toPath();
 		}
 		
@@ -917,7 +916,7 @@ public class GeneSetHead extends JPanel {
 		JTextField	tf = new JTextField();
 		tf.setText( "0.00001" );
 		Object[] objs = new Object[] { sp, tf };
-		JOptionPane.showMessageDialog(GeneSetHead.this, objs);
+		JOptionPane.showMessageDialog(null, objs);
 		
 		doBlastn( ta.getText(), tf.getText(), false, null, show );
 	}
@@ -1048,12 +1047,12 @@ public class GeneSetHead extends JPanel {
 		JTextField	tf = new JTextField();
 		tf.setText( "0.00001" );
 		Object[] objs = new Object[] { sp, tf };
-		JOptionPane.showMessageDialog(GeneSetHead.this, objs);
+		JOptionPane.showMessageDialog(null, objs);
 		
 		doBlast( ta.getText(), tf.getText(), true, null, x );
 	}
 	
-	public Set<String> getSelspec( Component comp, final List<String> specs, final JCheckBox ... contigs ) {
+	public Set<String> getSelspec( GeneSetHead comp, final List<String> specs, final JCheckBox ... contigs ) {
 		final JTable	table = new JTable();
 		table.setDragEnabled( true );
 		JScrollPane	scroll = new JScrollPane( table );
@@ -1158,7 +1157,7 @@ public class GeneSetHead extends JPanel {
 		//Object[] ctls2 = new Object[] { scroll };
 		
 		//if( contigs != null ) 
-		JOptionPane.showMessageDialog( comp, ctls );
+		JOptionPane.showMessageDialog( null, ctls );
 		//else JOptionPane.showMessageDialog( comp, ctls2 );
 		Set<String>	selspec = new LinkedHashSet<>();
 		for( int i = 0; i < table.getRowCount(); i++ ) {
@@ -1289,70 +1288,66 @@ public class GeneSetHead extends JPanel {
 		try {
 			final Process mp = mpb.start();
 			
-			new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = mp.getOutputStream();
-						Writer ow = new OutputStreamWriter( pos );
-						for( Gene g : geneset.genelist ) {
-							if( g.getTag() == null || g.getTag().length() == 0 ) {
-								GeneGroup gg = g.getGeneGroup();
-							
-								if( gg != null ) {
-									String name;
-									if( ids ) name = g.id;
-									else {
-										String addstr = "";
-										Cog cog = gg.getCog( geneset.cogmap );
-										String cazy = gg.getCommonCazy( geneset.cazymap );
-										if( cog != null ) addstr += "_"+cog.id;
-										if( cazy != null ) {
-											if( addstr.length() > 0 ) addstr += cazy;
-											addstr += "_"+cazy;
-										}
-										if( addstr.length() > 0 ) addstr += "_";
-										
-										name = g.name + addstr + "[" + g.id + "]";
-										//pos.write( (">" + g.name + addstr + "[" + g.id + "]\n").getBytes() );
+			new Thread(() -> {
+				try {
+					OutputStream pos = mp.getOutputStream();
+					Writer ow = new OutputStreamWriter( pos );
+					for( Gene g : geneset.genelist ) {
+						if( g.getTag() == null || g.getTag().length() == 0 ) {
+							GeneGroup gg = g.getGeneGroup();
+
+							if( gg != null ) {
+								String name;
+								if( ids ) name = g.id;
+								else {
+									String addstr = "";
+									Cog cog = gg.getCog( geneset.cogmap );
+									String cazy = gg.getCommonCazy( geneset.cazymap );
+									if( cog != null ) addstr += "_"+cog.id;
+									if( cazy != null ) {
+										if( addstr.length() > 0 ) addstr += cazy;
+										addstr += "_"+cazy;
 									}
-									Sequence sb = g.tegeval.getProteinSequence();
-									if( sb != null ) {
-										sb.setName(name);
-										sb.writeSequence(ow);
-									}
-									/*for( int i = 0; i < sb.length(); i+=70 ) {
-										pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
-									}
-									pos.write( '\n' );*/
+									if( addstr.length() > 0 ) addstr += "_";
+
+									name = g.name + addstr + "[" + g.id + "]";
+									//pos.write( (">" + g.name + addstr + "[" + g.id + "]\n").getBytes() );
 								}
+								Sequence sb = g.tegeval.getProteinSequence();
+								if( sb != null ) {
+									sb.setName(name);
+									sb.writeSequence(ow);
+								}
+								/*for( int i = 0; i < sb.length(); i+=70 ) {
+									pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
+								}
+								pos.write( '\n' );*/
 							}
 						}
-						ow.close();
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
 					}
+					ow.close();
+					pos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			}.start();
+			}).start();
 			
-			new Thread() {
-				public void run() {
-					try {
-						InputStream pin = mp.getInputStream();
-						InputStreamReader rdr = new InputStreamReader( pin );
-						//FileReader fr = new FileReader( new File("c:/dot.blastout") );
-						BufferedReader br = new BufferedReader( rdr );
-						String line = br.readLine();
-						while( line != null ) {
-							System.out.println( line );
-							line = br.readLine();
-						}
-						pin.close();
-					} catch (IOException e) {
-						e.printStackTrace();
+			new Thread(() -> {
+				try {
+					InputStream pin = mp.getInputStream();
+					InputStreamReader rdr = new InputStreamReader( pin );
+					//FileReader fr = new FileReader( new File("c:/dot.blastout") );
+					BufferedReader br = new BufferedReader( rdr );
+					String line = br.readLine();
+					while( line != null ) {
+						System.out.println( line );
+						line = br.readLine();
 					}
+					pin.close();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			}.run();
+			}).run();
 			
 			//File blastFile = x ? blastx : blastp; //dbType.equals("prot") ? type.equals("prot") ? blastp : blastx : blastn;
 			
@@ -2026,7 +2021,7 @@ public class GeneSetHead extends JPanel {
 	public StringBuffer getSelectedASeqs( TableView table, List<Gene> genelist, JPanel applet, Collection<String> species ) throws IOException {
 		StringWriter sb = new StringWriter();
 		
-		Set<String> selectedSpecies = getSelspec( applet, new ArrayList<>( species ) );
+		Set<String> selectedSpecies = getSelspec( GeneSetHead.this, new ArrayList<>( species ) );
 		for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
 			//if (gg.species != null) {
 			sb.append(gg.name + ":\n");
@@ -2783,7 +2778,7 @@ public class GeneSetHead extends JPanel {
 		MenuItem openitem = new MenuItem("Open");
 		openitem.setOnAction( actionEvent -> {
 			try {
-				 importStuff( null );
+				importStuff( null );
 			} catch (IOException e3) {
 				e3.printStackTrace();
 			}
@@ -3019,7 +3014,7 @@ public class GeneSetHead extends JPanel {
 		MenuItem importgenesymbolaction = new MenuItem("Import gene symbols");
 		importgenesymbolaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
             JFileChooser fc = new JFileChooser();
-            if( fc.showOpenDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
+            if( fc.showOpenDialog( null ) == JFileChooser.APPROVE_OPTION ) {
                 try {
                     Map<String,String> env = new HashMap<>();
                     env.put("create", "true");
@@ -3048,7 +3043,7 @@ public class GeneSetHead extends JPanel {
 		MenuItem	importcazyaction = new MenuItem("Import Cazy");
 		importcazyaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
             JFileChooser fc = new JFileChooser();
-            if( fc.showOpenDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
+            if( fc.showOpenDialog( null ) == JFileChooser.APPROVE_OPTION ) {
                 try {
                     BufferedReader rd = Files.newBufferedReader(fc.getSelectedFile().toPath());
                     geneset.loadcazymap(geneset.cazymap, rd);
@@ -3112,7 +3107,7 @@ public class GeneSetHead extends JPanel {
             final File[] file2 = new File[1];
             btn.addActionListener(e -> {
                 JFileChooser fc = new JFileChooser();
-                if( fc.showOpenDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
+                if( fc.showOpenDialog( null ) == JFileChooser.APPROVE_OPTION ) {
                     file2[0] = fc.getSelectedFile();
                     try {
                         tf.setText( fc.getSelectedFile().toURI().toURL().toString() );
@@ -3133,7 +3128,7 @@ public class GeneSetHead extends JPanel {
                 Path nf = geneset.zipfilesystem.getPath("/sp2go_short.txt");
                 BufferedWriter bw = Files.newBufferedWriter(nf, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 
-                JOptionPane.showMessageDialog(GeneSetHead.this, comp2);
+                JOptionPane.showMessageDialog(null, comp2);
 
                 final JDialog	dialog = new JDialog();
                 dialog.setTitle( "Function mapping" );
@@ -3253,7 +3248,7 @@ public class GeneSetHead extends JPanel {
             final File[] file2 = new File[1];
             btn.addActionListener(e -> {
                 JFileChooser fc = new JFileChooser();
-                if( fc.showOpenDialog( GeneSetHead.this ) == JFileChooser.APPROVE_OPTION ) {
+                if( fc.showOpenDialog( null ) == JFileChooser.APPROVE_OPTION ) {
                     file2[0] = fc.getSelectedFile();
                     try {
                         tf.setText( fc.getSelectedFile().toURI().toURL().toString() );
@@ -3263,7 +3258,7 @@ public class GeneSetHead extends JPanel {
                 }
             });
 
-            JOptionPane.showMessageDialog(GeneSetHead.this, comp2);
+            JOptionPane.showMessageDialog(null, comp2);
 
             //Thread t = new Thread() {
             //	public void run() {
@@ -3774,7 +3769,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		runserver.setOnAction( actionEvent -> {
 			SwingUtilities.invokeLater(() -> {
                 JSpinner	spin = new JSpinner();
-                JOptionPane.showMessageDialog(GeneSetHead.this, spin, "Port", JOptionPane.QUESTION_MESSAGE);
+                JOptionPane.showMessageDialog(null, spin, "Port", JOptionPane.QUESTION_MESSAGE);
                 try {
                     geneset.cs = WSServer.startServer(GeneSetHead.this, (Integer)spin.getValue());
                 } catch (UnknownHostException e1) {
@@ -4134,7 +4129,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 				SwingUtilities.invokeLater(() -> {
 					Set<String> specs = null;
-					if (table.getItems().size() > 1) specs = getSelspec(comp, geneset.specList, null);
+					if (table.getItems().size() > 1) specs = getSelspec(GeneSetHead.this, geneset.specList, null);
 					showSequences(comp, genegroups, false, specs);
 				});
 			});
@@ -4184,8 +4179,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				Serifier serifier = new Serifier();
 				for (GeneGroup ggroup : genegroups) {
 					for (Annotation tv : ggroup.getTegevals()) {
-						String selspec = tv.getContshort().getSpec();//tv.getContig();
-						String spec = geneset.nameFix(selspec);
+						Contig ctg = tv.getContshort();
+						if(ctg!=null) {
+							String selspec = tv.getContshort().getSpec();//tv.getContig();
+							String spec = geneset.nameFix(selspec);
 						/*if( selspec.contains("hermus") ) spec = selspec;
 						else {
 							Matcher m = Pattern.compile("\\d").matcher(selspec); 
@@ -4194,17 +4191,18 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 							else spec = "Thermus_" + selspec.substring(0,firstDigitLocation) + "_" + selspec.substring(firstDigitLocation);
 						}*/
 
-						Sequence seq = tv.getAlignedSequence();
-						//System.err.println( "seqlen " + seq.length() );
-						if (seq != null) {
-							seq.setName(spec);
-							//Sequence seq = new Sequence( contig, seqstr, null );
-							serifier.addSequence(seq);
-						} else {
-							Sequence sb = tv.getProteinSequence();
-							sb.setName(spec);
-							//Sequence sseq = new Sequence( spec, sb, serifier.mseq );
-							serifier.addSequence(sb);
+							Sequence seq = tv.getAlignedSequence();
+							//System.err.println( "seqlen " + seq.length() );
+							if (seq != null) {
+								seq.setName(spec);
+								//Sequence seq = new Sequence( contig, seqstr, null );
+								serifier.addSequence(seq);
+							} else {
+								Sequence sb = tv.getProteinSequence();
+								sb.setName(spec);
+								//Sequence sseq = new Sequence( spec, sb, serifier.mseq );
+								serifier.addSequence(sb);
+							}
 						}
 					}
 				}
@@ -4217,7 +4215,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		splitseq.setOnAction( actionEvent -> {
 			SwingUtilities.invokeLater(() -> {
 				try {
-					StringBuffer sb = getSelectedASeqs(table, geneset.genelist, GeneSetHead.this, geneset.specList);
+					StringBuffer sb = getSelectedASeqs(table, geneset.genelist, null, geneset.specList);
 					if (geneset.currentSerify == null) {
 						JFrame frame = new JFrame();
 						frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -4322,7 +4320,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					}
 				}
 				Set<String> specs = null;
-				if (rr > 1) specs = getSelspec(comp, geneset.specList, null);
+				if (rr > 1) specs = getSelspec(GeneSetHead.this, geneset.specList, null);
 				showSequences(comp, genegroups, true, specs);
 				
 				/*StringBuilder sb = getSelectedSeqs( table, genelist );
@@ -4862,7 +4860,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				JCheckBox			plasmidcheck = new JCheckBox("Skip plasmids");
                 descombo.insertItemAt("", 0);
                 descombo.setSelectedIndex( 0 );
-                JOptionPane.showMessageDialog( GeneSetHead.this, new Object[] { descombo, anicheck, plasmidcheck } );
+                JOptionPane.showMessageDialog( null, new Object[] { descombo, anicheck, plasmidcheck } );
                 String val = descombo.getSelectedItem().toString();
 
                 Collection<GeneGroup> ss = new HashSet<>();
@@ -5062,283 +5060,25 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		MenuItem tniaction = new MenuItem("TNI/ANI");
 		tniaction.setOnAction( actionEvent -> {
 			SwingUtilities.invokeLater(() -> {
-                Set<String> species = getSelspec( GeneSetHead.this, geneset.specList );
-
-				SparkSession spark = SparkSession.builder()
-						.master("local[4]")
-						/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
-						.config("spark.submit.deployMode","cluster")
-						.config("spark.driver.memory","4g")
-						.config("spark.driver.cores",2)
-						//.config("spark.executor.instances",10)
-						.config("spark.executor.memory","4g")
-					.config("spark.executor.cores",2)
-					.config("spark.executor.instances",10)
-					.config("spark.kubernetes.namespace","spark")
-					.config("spark.kubernetes.container.image","nextcode/glow:latest")
-					.config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
-					.config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
-					.config("spark.kubernetes.container.image.pullPolicy", "Always")
-						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
-					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
-						.getOrCreate();
-
-				List<String> specList = species.stream().map(spec -> {
-					int ind = spec.indexOf(' ');
-					return ind == -1 ? spec : spec.substring(0,ind);
-				}).collect(Collectors.toList());
-				List<String> fastaSequences = species.stream().map(spec -> geneset.speccontigMap.get(spec).stream().map(s -> {
-					String ret = "";
-					try {
-						int ind = spec.indexOf(' ');
-						String nspec = ind == -1 ? spec : spec.substring(0,ind);
-						ret = nspec+"\n"+s.asFasta();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					return ret;
-				}).collect(Collectors.joining("\n"))).collect(Collectors.toList());
-				List<String> splitFastaSequences = species.stream().map(spec -> geneset.speccontigMap.get(spec).stream().map(s -> {
-					String ret = "";
-					try {
-						int ind = spec.indexOf(' ');
-						String nspec = ind == -1 ? spec : spec.substring(0,ind);
-						ret = nspec+"\n"+s.asSplitFasta();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					return ret;
-				}).collect(Collectors.joining("\n"))).collect(Collectors.toList());
-				Dataset<String> speciesDataset = spark.createDataset(fastaSequences, Encoders.STRING());
-				Dataset<String> splitSpeciesDataset = spark.createDataset(splitFastaSequences, Encoders.STRING());
-				Dataset<org.apache.spark.sql.Row> rowDataset = speciesDataset.crossJoin(splitSpeciesDataset);
-				List<String> res = rowDataset.map(new SparkANI(), Encoders.STRING()).collectAsList();
-
-                double[] matrix = new double[ specList.size()*specList.size() ];
-                res.stream().map(s -> s.split("/")).forEach(s -> {
-                	String spec1 = s[0];
-                	String spec2 = s[1];
-                	int y = specList.indexOf(spec1);
-					int x = specList.indexOf(spec2);
-                	double avg = Double.parseDouble(s[2]);
-					matrix[y*specList.size()+x] = avg;
-				});
-
-                /*for( String dbspec : species ) {
-                    int x = 0;
-                    for( String spec : species ) {
-                        //if( !spec.equals(dbspec) ) {
-                        final List<Sequence> lseq = geneset.speccontigMap.get(spec);
-                        String blastn = "blastn";
-                        if(OS.contains("mac")) blastn = "/usr/local/bin/blastn";
-                        ProcessBuilder pb = new ProcessBuilder(blastn,"-db",dbspec,
-                                "-num_threads",Integer.toString(Runtime.getRuntime().availableProcessors()),
-                                "-num_alignments","1","-num_descriptions","1"); //,"-max_hsps","1");
-                        File dir = new File( System.getProperty("user.home") );
-                        pb.directory( dir );
-                        try {
-                            Process p = pb.start();
-                            final BufferedWriter fw = new BufferedWriter( new OutputStreamWriter( p.getOutputStream() ) );
-                            Thread t = new Thread(() -> {
-								try {
-									for( Sequence seq : lseq ) {
-										seq.writeSplitSequence(fw);
-										//seq.writeSequence(fw);
-									}
-									fw.close();
-								} catch (IOException e1) {
-									e1.printStackTrace();
-								}
-							});
-                            t.start();
-                            //Path path = Paths.get("/Users/sigmar/"+spec+"_"+dbspec+".blastout");
-                            //Files.copy(p.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-                            int tnum = 0;
-                            int tdenum = 0;
-                            double avg = 0.0;
-                            int count = 0;
-
-                            BufferedReader br = new BufferedReader( new InputStreamReader(p.getInputStream()) );
-                            String line = br.readLine();
-                            while( line != null ) {
-                                if( line.startsWith(" Identities") ) {
-                                    int i = line.indexOf('(');
-                                    String sub = line.substring(14,i-1);
-                                    String[] split = sub.split("/");
-                                    int num = Integer.parseInt(split[0]);
-                                    int denum = Integer.parseInt(split[1]);
-
-                                    avg += (double)num/(double)denum;
-
-                                    tnum += num;
-                                    tdenum += denum;
-                                    count++;
-                                }
-                                line = br.readLine();
-                            }
-                            br.close();
-
-                            if( count > 0 ) avg /= count;
-                            double val = (double)tnum/(double)tdenum;
-                            matrix[y*species.size()+x] = avg;//val;
-                            System.err.println( spec + " on " + dbspec + " " + val );
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
-                        //}
-                        x++;
-                    }
-                    y++;
-                }*/
-
-                geneset.corrInd.clear();
-                for( String spec : specList ) {
-                    geneset.corrInd.add( geneset.nameFix( spec ) );
-                }
-
-                final BufferedImage bi = geneset.showRelation( geneset.corrInd, matrix, false );
-                JFrame f = new JFrame("TNI matrix");
-                f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                f.setSize(500, 500);
-
-                JComponent comp2 = new JComponent() {
-                    public void paintComponent( Graphics g ) {
-                        super.paintComponent(g);
-                        g.drawImage(bi, 0, 0, bi.getWidth(), bi.getHeight(), 0, 0, bi.getWidth(), bi.getHeight(), this);
-                    }
-                };
-                Dimension dim = new Dimension(bi.getWidth(),bi.getHeight());
-                comp2.setPreferredSize(dim);
-                comp2.setSize( dim );
-                JScrollPane scroll = new JScrollPane(comp2);
-                f.add(scroll);
-
-                f.setVisible( true );
+                ANITools.showAni(GeneSetHead.this);
             });
+		});
+		MenuItem aaiaction = new MenuItem("AAI");
+		aaiaction.setOnAction( actionEvent -> {
+			List<GeneGroup> agg = table.getSelectionModel().getSelectedItems();
+			ANITools.aaiAction(GeneSetHead.this,agg);
+			SwingUtilities.invokeLater(() -> {
+				ANITools.showAni(GeneSetHead.this);
+			});
 		});
 		MenuItem anitreeaction = new MenuItem("ANI tree");
 		anitreeaction.setOnAction( actionEvent -> {
 			SwingUtilities.invokeLater(() -> {
 				Set<String> species = getSelspec(GeneSetHead.this, geneset.specList);
-				List<String> speclist = new ArrayList<String>(species);
+				List<String> speclist = new ArrayList<>(species);
+				List<GeneGroup> agg = table.getSelectionModel().getSelectedItems();
 
-				Collection<GeneGroup> allgg = new HashSet<GeneGroup>();
-				allgg.addAll(table.getSelectionModel().getSelectedItems());
-				if (allgg.isEmpty()) allgg = geneset.allgenegroups;
-				Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
-
-				double[] corrarr = new double[speclist.size() * speclist.size()];
-				int where = 0;
-				for (String spec1 : speclist) {
-					int wherex = 0;
-
-					String spc1 = geneset.nameFix(spec1);
-
-					//String spc1 = nameFix( spec1 );
-					for (String spec2 : speclist) {
-						if (where != wherex) {
-							int totalscore = 0;
-							int totaltscore = 1;
-							for (GeneGroup gg : allgg) {
-								if ( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2)) {
-									Teginfo ti1 = gg.species.get(spec1);
-									Teginfo ti2 = gg.species.get(spec2);
-									//if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
-									//double bval = 0.0;
-
-									int score = 0;
-									int tscore = 1;
-									for (Annotation tv1 : ti1.tset) {
-										for (Annotation tv2 : ti2.tset) {
-											Sequence seq1 = tv1.getAlignedSequence();
-											Sequence seq2 = tv2.getAlignedSequence();
-											if (seq1 != null && seq2 != null) {
-												int mest = 0;
-												int tmest = 0;
-
-												int startcheck = 0;
-												int start = -1;
-												int stopcheck = 0;
-												int stop = -1;
-												for (int i = 0; i < seq1.length(); i++) {
-													if (seq1.getCharAt(i) != '-') {
-														startcheck |= 1;
-													}
-													if (seq2.getCharAt(i) != '-') {
-														startcheck |= 2;
-													}
-
-													if (start == -1 && startcheck == 3) {
-														start = i;
-														break;
-													}
-												}
-
-												for (int i = seq1.length() - 1; i >= 0; i--) {
-													if (seq1.getCharAt(i) != '-') {
-														stopcheck |= 1;
-													}
-													if (seq2.getCharAt(i) != '-') {
-														stopcheck |= 2;
-													}
-
-													if (stop == -1 && stopcheck == 3) {
-														stop = i + 1;
-														break;
-													}
-												}
-												//count += stop-start;
-
-												for (int i = start; i < stop; i++) {
-													char lc = seq1.getCharAt(i);
-													char c = Character.toUpperCase(lc);
-													//if( )
-													String comb = c + "" + c;
-													if (blosumap.containsKey(comb)) tmest += blosumap.get(comb);
-												}
-
-												for (int i = start; i < stop; i++) {
-													char lc = seq1.getCharAt(i);
-													char c = Character.toUpperCase(lc);
-													char lc2 = seq2.getCharAt(i);
-													char c2 = Character.toUpperCase(lc2);
-
-													String comb = c + "" + c2;
-													if (blosumap.containsKey(comb)) mest += blosumap.get(comb);
-												}
-
-												double tani = (double) mest / (double) tmest;
-												if (tani > (double) score / (double) tscore) {
-													score = mest;
-													tscore = tmest;
-												}
-												//ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
-												//return ret;
-											}
-											//if( where == 0 ) d1.add( gg.getCommonName() );
-											//else d2.add( gg.getCommonName() );
-										}
-									}
-									totalscore += score;
-									totaltscore += tscore;
-										
-										/*if( bval > 0 ) {
-											ani += bval;
-											count++;
-										}*/
-									//}
-								}
-							}
-							double ani = (double) (totaltscore - totalscore) / (double) totaltscore;
-							corrarr[where * speclist.size() + wherex] = ani;
-						}
-						wherex++;
-					}
-					where++;
-				}
+				double[] corrarr = ANITools.corr(speclist, agg, true);
 				org.simmi.treedraw.shared.TreeUtil tu = new org.simmi.treedraw.shared.TreeUtil();
 				geneset.corrInd.clear();
 				for (String spec : speclist) {
@@ -5351,6 +5091,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		windowmenu.getItems().add( specorderaction );
 		windowmenu.getItems().add( matrixaction );
 		windowmenu.getItems().add( tniaction );
+		windowmenu.getItems().add( aaiaction );
 		windowmenu.getItems().add( anitreeaction );
 		
 		MenuItem neighbourhood = new MenuItem("Neighbourhood");
@@ -6535,7 +6276,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				descombo.insertItemAt("", 0);
 				descombo.setSelectedIndex( 0 );
 				
-				JOptionPane.showMessageDialog(GeneSetHead.this, descombo);
+				JOptionPane.showMessageDialog(null, descombo);
 				String seldes = (String)descombo.getSelectedItem();
 				if( !isGeneview() ) {
 					int i = 0;
@@ -6599,7 +6340,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		});
 		
 		try {
-			newSoft(jb, comp, genetable, upper, lower, toolbar, btoolbar, GeneSetHead.this, selcomb);
+			newSoft(jb, comp, genetable, upper, lower, toolbar, btoolbar, null, selcomb);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -7000,7 +6741,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 			
 			final SerifyApplet	sa = new SerifyApplet( geneset.zipfilesystem, geneset.noseq );
-			sa.init( frame, vbox, geneset.user );
+			sa.init( null, vbox, geneset.user );
 
 			for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
 				Files.list(root).filter(t -> {
@@ -7530,7 +7271,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 		selcomblocal.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             String key = newValue;
-            if( ((GeneSetHead)comp).selectionMap.containsKey(key) ) {
+            /*if( ((GeneSetHead)comp).selectionMap.containsKey(key) ) {
                 Set<Integer> val = ((GeneSetHead)comp).selectionMap.get(key);
                 if( val != null ) {
                     table.getSelectionModel().clearSelection();
@@ -7543,7 +7284,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                 }
             } else {
                 System.err.println( "no "+key );
-            }
+            }*/
         });
 		toolbar.getItems().add(selcomblocal);
 		
@@ -8810,7 +8551,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		designate.setOnAction( e -> { SwingUtilities.invokeLater(() -> {
             JComboBox<String>	descombo = new JComboBox<>( geneset.deset.toArray( new String[geneset.deset.size()] ) );
             descombo.setEditable( true );
-            JOptionPane.showMessageDialog(GeneSetHead.this, descombo);
+            JOptionPane.showMessageDialog(null, descombo);
             String val = descombo.getSelectedItem().toString();
             geneset.deset.add( val );
             for( Gene g : gtable.getSelectionModel().getSelectedItems() ) {
@@ -10201,7 +9942,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 	}
 	
 	public void init() {
-		init(primaryStage, this, null, null, null, null, null, null, null, null, null, null, null);
+		init(primaryStage, null, null, null, null, null, null, null, null, null, null, null, null);
 	}
 	
 	public void exportGenomes( Map<String,List<Sequence>> speccontigMap ) {
@@ -10490,13 +10231,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 		}
 		
-		stable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				ctable.tableChanged( new TableModelEvent( ctablemodel ) );
-			}
-		});
-		JOptionPane.showMessageDialog(this, c);
+		stable.getSelectionModel().addListSelectionListener(e -> ctable.tableChanged( new TableModelEvent( ctablemodel ) ));
+		JOptionPane.showMessageDialog(null, c);
 		
 		int[] rr = stable.getSelectedRows();
 		if( rr.length > 1 ) {

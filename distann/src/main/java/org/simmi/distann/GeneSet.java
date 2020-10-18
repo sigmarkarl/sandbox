@@ -1188,7 +1188,7 @@ public class GeneSet implements GenomeSet {
 				int k = filename.indexOf('_');
 				if( k == -1 ) k = filename.length();
 				String fn = filename.substring(0,k);
-				name = line.startsWith(">contig") || line.startsWith(">scaffold") ? fn+"_"+ln : ln;
+				name = line.startsWith(">contig") || line.startsWith(">scaffold") || line.startsWith(">NODE") ? fn+"_"+ln : ln;
 
 				System.err.println( "name " + name );
 				//int first = tv.cont.indexOf("_");
@@ -8301,7 +8301,10 @@ public class GeneSet implements GenomeSet {
                 if( Files.exists( t ) )
                     try {
                         String filename = t.getFileName().toString().replace(".fna", "");
-                        loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
+						int k = filename.indexOf('_');
+						if( k == -1 ) k = filename.length();
+						String fn = filename.substring(0,k);
+                        loci2aasequence( Files.newBufferedReader(t), refmap, designations, fn );
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -9784,15 +9787,16 @@ public class GeneSet implements GenomeSet {
 
 				Encoder<FastaSequence> seqenc = Encoders.bean(FastaSequence.class);
 				SparkSession spark = SparkSession.builder()
-						.master("local[1]")
+						.master("local[*]")
 						/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
 						.config("spark.submit.deployMode","cluster")
 						.config("spark.driver.memory","4g")
 						.config("spark.driver.cores",2)
-						//.config("spark.executor.instances",10)
-						.config("spark.executor.memory","4g")
-					.config("spark.executor.cores",2)
-					.config("spark.executor.instances",10)
+						.config("spark.executor.instances",16)
+						.config("spark.executor.memory","2g")
+						.config("spark.executor.cores",2)
+						.config("spark.jars","/Users/sigmar/sandbox/distann/build/install/distann/lib/*.jar")
+					/*.config("spark.executor.instances",10)
 					.config("spark.kubernetes.namespace","spark")
 					.config("spark.kubernetes.container.image","nextcode/glow:latest")
 					.config("spark.kubernetes.executor.container.image","nextcode/glow:latest")

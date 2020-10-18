@@ -2681,9 +2681,9 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
                         //String ftpsite = "ftp.rhnet.is";
                         //FTPClientConfig ftpcc = new FTPClientConfig();
                         try {
-							//FtpFetch.ftpFetch(SerifyApplet.this, searchmap, cd, whole.isSelected(), phage.isSelected(), plasmid.isSelected(), interrupted);
-							HttpFetch.httpFetch(SerifyApplet.this, searchmap, cd, whole.isSelected(), phage.isSelected(), plasmid.isSelected(), interrupted);
-                        } catch (IOException | InterruptedException e12) {
+							FtpFetch.ftpFetch(SerifyApplet.this, searchmap, cd, whole.isSelected(), phage.isSelected(), plasmid.isSelected(), interrupted);
+							//HttpFetch.httpFetch(SerifyApplet.this, searchmap, cd, whole.isSelected(), phage.isSelected(), plasmid.isSelected(), interrupted);
+                        } catch (IOException e12) {
                             e12.printStackTrace();
                         }
 

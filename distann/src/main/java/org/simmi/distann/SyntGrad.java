@@ -49,6 +49,37 @@ public class SyntGrad {
 
 	boolean isbeingdragged = false;
 
+	public void changeOrder(List<Sequence> scontigs, List<Sequence> contigs1, String spec1) {
+		for( Sequence c : scontigs ) {
+			List<Double>	dvals = new ArrayList<>();
+			Annotation tv = c.getFirst();
+			while( tv instanceof Tegeval ) {
+				Annotation next = c.getNext( tv );
+				if(next instanceof Tegeval) {
+					Gene gene = tv.getGene();
+					Gene ngene = next.getGene();
+					if(gene!=null && ngene!=null) {
+						GeneGroup gg = gene.getGeneGroup();
+						GeneGroup ngg = ngene.getGeneGroup();
+
+						double val1 = GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv);
+						double val2 = GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, ngg, next);
+
+						dvals.add( val2-val1 );
+					}
+				}
+				tv = next;
+			}
+			if( dvals.size() > 0 ) {
+				Collections.sort( dvals );
+				double rev = dvals.get( dvals.size()/2 );
+				if( rev < 0 ) {
+					c.setReverse( !c.isReverse() );
+				}
+			}
+		}
+	}
+
 	public void syntGrad( final GeneSetHead genesethead, final int w, final int h, Set<String> presel ) {
 		GeneSet									geneset = genesethead.geneset;
 		//final Collection<String> 				specset = geneset.getSelspec(geneset, geneset.getSpecies(), (JCheckBox[])null); 
@@ -128,7 +159,7 @@ public class SyntGrad {
 		scroll2.setTransferHandler( th );
 		table2.setTransferHandler( th );
 		
-		JOptionPane.showMessageDialog(genesethead, cmp);
+		JOptionPane.showMessageDialog(null, cmp);
 		
 		int sr = table1.getSelectedRow();
 		final String 		spec1 = sr != -1 ? species.get( table1.convertRowIndexToModel( sr )) : null; //(String)table1.getValueAt( table1.getSelectedRow(), 0 );
@@ -175,10 +206,12 @@ public class SyntGrad {
                             List<Double> ratios = new ArrayList<>();
                             if( o1.getAnnotations() != null ) {
                                 for( Annotation ann : o1.getAnnotations() ) {
-                                    Tegeval tv = (Tegeval)ann;
-                                    GeneGroup gg = tv.getGene().getGeneGroup();
-                                    double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
-                                    if( val != -1 ) ratios.add( val );
+                                	if(ann instanceof Tegeval) {
+										Tegeval tv = (Tegeval) ann;
+										GeneGroup gg = tv.getGene().getGeneGroup();
+										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
+										if (val != -1) ratios.add(val);
+									}
                                 }
                             }
                             Collections.sort( ratios );
@@ -187,10 +220,12 @@ public class SyntGrad {
                             ratios = new ArrayList<>();
                             if( o2.getAnnotations() != null ) {
                                 for( Annotation ann : o2.getAnnotations() ) {
-                                    Tegeval tv = (Tegeval)ann;
-                                    GeneGroup gg = tv.getGene().getGeneGroup();
-                                    double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
-                                    if( val != -1 ) ratios.add( val );
+                                	if(ann instanceof Tegeval) {
+										Tegeval tv = (Tegeval) ann;
+										GeneGroup gg = tv.getGene().getGeneGroup();
+										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
+										if (val != -1) ratios.add(val);
+									}
                                 }
                             }
                             Collections.sort( ratios );
@@ -198,32 +233,7 @@ public class SyntGrad {
 
                             return Double.compare(r1, r2);
                         });
-						for( Sequence c : scontigs ) {
-							List<Double>	dvals = new ArrayList<>();
-							Annotation tv = c.getFirst();
-							while( tv != null ) {
-								Annotation next = c.getNext( tv );
-								if( next != null ) {
-									Gene gene = null;
-									if( tv instanceof Tegeval ) gene = tv.getGene();
-									GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
-									double val1 = gene != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
-									double val2 = (next instanceof Tegeval && next.getGene() != null) ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
-									
-									if( val1 != -1.0 && val2 != -1.0 ) {
-										dvals.add( val2-val1 );
-									}
-								}
-								tv = next;
-							}
-							if( dvals.size() > 0 ) {
-								Collections.sort( dvals );
-								double rev = dvals.get( dvals.size()/2 );
-								if( rev < 0 ) {
-									c.setReverse( !c.isReverse() );
-								}
-							}
-						}
+						changeOrder(scontigs, contigs1, spec1);
 					}
 				}
 				drawImage( genesethead, g2, spec1, contigs1, spec2s, w, h );
@@ -265,7 +275,7 @@ public class SyntGrad {
 			
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				Container comp = genesethead;
+				//Container comp = genesethead;
 				Point np = e.getPoint();
 				if( p != null ) {
 					doubleclicked = doubleclicked || e.getClickCount() == 2;
@@ -391,7 +401,7 @@ public class SyntGrad {
 											Set<GeneGroup> gset = new HashSet<>();
 											gset.add(tv.getGene().getGeneGroup());
 											try {
-												new Neighbour(gset).neighbourMynd(genesethead, comp, geneset.genelist, geneset.contigmap);
+												new Neighbour(gset).neighbourMynd(genesethead, null, geneset.genelist, geneset.contigmap);
 											} catch (IOException e1) {
 												e1.printStackTrace();
 											}

@@ -2315,7 +2315,7 @@ public class ActionCollection {
 				JScrollPane	scroll = new JScrollPane( conflict );
 				
 				Object[] objs = new Object[] { kobtn, ecbtn, cogbtn, gibtn, tf, scroll };
-				JOptionPane.showMessageDialog( genesethead, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
+				JOptionPane.showMessageDialog( null, objs, "Select id types", JOptionPane.PLAIN_MESSAGE );
 				
 				Set<String> ids = new HashSet<String>();
 				//int[] rr = genesethead.table.getSelectedRows();
@@ -3688,7 +3688,7 @@ public class ActionCollection {
                 JScrollPane cogscroll = new JScrollPane( cogtable );
 
                 Object[] objs = new Object[] { cogscroll, webbox };
-                JOptionPane.showMessageDialog( genesethead, objs );
+                JOptionPane.showMessageDialog( null, objs );
                 web = webbox.isSelected();
 
                 int[] rr = cogtable.getSelectedRows();

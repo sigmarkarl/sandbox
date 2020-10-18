@@ -5,7 +5,7 @@ plugins {
 }
 
 javafx {
-    version = '15'
+    version = '16-ea+2'
     modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
 }
 
@@ -22,14 +22,14 @@ dependencies {
     //compile group: 'org.gorpipe', name: 'gor-spark', version: '0.5.6'
 
     // https://mvnrepository.com/artifact/org.openjfx/javafx
-    compile group: 'org.openjfx', name: 'javafx', version: '15'
+    compile group: 'org.openjfx', name: 'javafx', version: '16-ea+2'
 
-    compile "org.openjfx:javafx-base:15:mac"
-    compile "org.openjfx:javafx-controls:15:mac"
-    compile "org.openjfx:javafx-graphics:15:mac"
-    compile "org.openjfx:javafx-fxml:15:mac"
-    compile "org.openjfx:javafx-web:15:mac"
-    compile "org.openjfx:javafx-swing:15:mac"
+    compile "org.openjfx:javafx-base:16-ea+2:mac"
+    compile "org.openjfx:javafx-controls:16-ea+2:mac"
+    compile "org.openjfx:javafx-graphics:16-ea+2:mac"
+    compile "org.openjfx:javafx-fxml:16-ea+2:mac"
+    compile "org.openjfx:javafx-web:16-ea+2:mac"
+    compile "org.openjfx:javafx-swing:16-ea+2:mac"
 
 }
 
