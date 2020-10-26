@@ -2398,7 +2398,7 @@ public class Neighbour {
 									//name += tv.ori == 1 ? "->" : "<-";
 									
 									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, name);
-									newann.group = tv.getGene() != null && tv.getGene().getGeneGroup() != null ? Integer.toString(tv.getGene().getGeneGroup().index) : "";
+									newann.setGroup(tv.getGene() != null && tv.getGene().getGeneGroup() != null ? Integer.toString(tv.getGene().getGeneGroup().index) : "");
 									newann.designation = tv.designation;
 									Color color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.gray;
 									newann.color = color;
@@ -2447,7 +2447,7 @@ public class Neighbour {
 										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
 										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
 										
-										newann.group = ntev.getGene() != null && ntev.getGene().getGeneGroup() != null ? Integer.toString(ntev.getGene().getGeneGroup().index) : "";
+										newann.setGroup(ntev.getGene() != null && ntev.getGene().getGeneGroup() != null ? Integer.toString(ntev.getGene().getGeneGroup().index) : "");
 										newann.color = color;
 										seq.addAnnotation( newann );
 										serifier.addAnnotation(newann);
@@ -2508,7 +2508,7 @@ public class Neighbour {
 										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
 										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
 										
-										newann.group = ntev.getGene() != null && ntev.getGene().getGeneGroup() != null ? Integer.toString(ntev.getGene().getGeneGroup().index) : "";
+										newann.setGroup(ntev.getGene() != null && ntev.getGene().getGeneGroup() != null ? Integer.toString(ntev.getGene().getGeneGroup().index) : "");
 										newann.color = color;
 										seq.addAnnotation( newann );
 										serifier.addAnnotation(newann);

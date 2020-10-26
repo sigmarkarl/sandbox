@@ -24,7 +24,11 @@ public class ANITools {
         //List<String> speclist = new ArrayList<>(species);
 
         Collection<GeneGroup> allgg = lgg.isEmpty() ? geneset.allgenegroups : lgg;
-        List<FastaSequence> allAligned = allgg.stream().flatMap(gg -> species.stream().map(s -> gg.species.get(s)).filter(Objects::nonNull)).flatMap(t -> t.tset.stream()).filter(Objects::nonNull).map(Annotation::getAlignedSequence).collect(Collectors.toList());
+        List<FastaSequence> allAligned = allgg.stream()
+                .flatMap(gg -> species.stream().map(s -> gg.species.get(s)).filter(Objects::nonNull))
+                .flatMap(t -> t.tset.stream())
+                .filter(Objects::nonNull).map(Annotation::getAlignedSequence)
+                .filter(Objects::nonNull).collect(Collectors.toList());
 
 
         SparkSession spark = SparkSession.builder()
@@ -50,6 +54,7 @@ public class ANITools {
                 .getOrCreate();
 
         Dataset<FastaSequence> dsf = spark.createDataset(allAligned, ExpressionEncoder.javaBean(FastaSequence.class));
+        //dsf.join(dsf, )
 
         //double[] corr = ANITools.corr(speclist, allgg, false);
         //SwingUtilities.invokeLater(() -> ANITools.showAniMatrix(geneset, speclist, corr));
@@ -174,7 +179,7 @@ public class ANITools {
     public static void showAniMatrix(GeneSet geneset, List<String> specList, double[] matrix) {
         geneset.corrInd.clear();
         for( String spec : specList ) {
-            geneset.corrInd.add( geneset.nameFix( spec ) );
+            geneset.corrInd.add( spec ); //geneset.nameFix( spec ) );
         }
 
         final BufferedImage bi = geneset.showRelation( geneset.corrInd, matrix, false );

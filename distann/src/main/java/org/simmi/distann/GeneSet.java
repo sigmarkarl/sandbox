@@ -944,9 +944,17 @@ public class GeneSet implements GenomeSet {
 				}
 			}
 	}
-	
-	Set<String>	mu = new HashSet<>();
+
+	private void loci2alignedaasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
+		loci2aasequence(br,refmap,designations,filename,true);
+	}
+
 	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename) throws IOException {
+		loci2aasequence(br,refmap,designations,filename,false);
+	}
+
+	Set<String>	mu = new HashSet<>();
+	private void loci2aasequence(BufferedReader br, Map<String,Gene> refmap, Map<String,String> designations, String filename,boolean aligned) throws IOException {
 		String line = br.readLine();
 		String lname = null;
 		String prevline = null;
@@ -963,9 +971,10 @@ public class GeneSet implements GenomeSet {
 		while (line != null) {
 			if (line.startsWith(">")) {
 				if( refmap.containsKey(line.substring(1)) ) {
-					if (tv.getSequenceLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
+					if (tv.getLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
 					tv = refmap.get(line.substring(1)).tegeval;
 					if( tv != null ) {
+						if(aligned) tv.setGroup(filename);
 						Sequence seq = tv.getAlignedSequence();
 						if( seq != null ) seq.clear();
 						else {
@@ -973,8 +982,9 @@ public class GeneSet implements GenomeSet {
 						}
 					}
 				} else {
-					if (tv.getSequenceLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
+					if (tv.getLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
 					tv = new Tegeval();
+					if(aligned) tv.setGroup(filename);
 					String cont = line.substring(1) + "";
 					String[] split = cont.split("#");
 					lname = split[0].trim().replace(".fna", "");
@@ -989,6 +999,10 @@ public class GeneSet implements GenomeSet {
 							start = Integer.parseInt(split[i + 1].trim());
 							stop = Integer.parseInt(split[i + 2].trim());
 							dir = Integer.parseInt(split[i + 3].trim());
+
+							tv.setStart(start);
+							tv.setStop(stop);
+							tv.setOri(dir);
 						} catch (Exception e) {
 							succ = false;
 							lname += split[i + 1];
@@ -1004,17 +1018,18 @@ public class GeneSet implements GenomeSet {
 					 */
 				}
 				prevline = line;
-			} else {
+			} else if(aligned) {
 				String str = line.trim();
 				if( str.contains("X") ) tv.dirty = true;
-				tv.append( str );
+				tv.append(str);
+				//else tv.append( str );
 			}
 			// else trimSubstring(ac, line);
 			line = br.readLine();
 			// br.re
 		}
 
-		if (tv.getSequenceLength() > 0 && lname != null) {
+		if (tv.getLength() > 0 && lname != null) {
 			String contigstr = null;
 			String contloc = null;
 			
@@ -8304,7 +8319,7 @@ public class GeneSet implements GenomeSet {
 						int k = filename.indexOf('_');
 						if( k == -1 ) k = filename.length();
 						String fn = filename.substring(0,k);
-                        loci2aasequence( Files.newBufferedReader(t), refmap, designations, fn );
+                        loci2aasequence( Files.newBufferedReader(t), refmap, designations, fn);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -8324,7 +8339,7 @@ public class GeneSet implements GenomeSet {
 				if( Files.exists( t ) )
 					try {
 						String filename = t.getFileName().toString().replace(".fna", "");
-						loci2aasequence( Files.newBufferedReader(t), refmap, designations, filename );
+						loci2alignedaasequence( Files.newBufferedReader(t), refmap, designations, filename );
 					} catch (IOException e) {
 						e.printStackTrace();
 					}

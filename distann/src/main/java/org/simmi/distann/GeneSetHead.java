@@ -1473,28 +1473,26 @@ public class GeneSetHead {
 		try {
 			final Process mp = mpb.start();
 			
-			new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = mp.getOutputStream();
-						for( String cname : geneset.contigmap.keySet() ) {
-							Sequence c = geneset.contigmap.get( cname );
-							if( ids ) pos.write( (">" + c.id + "\n").getBytes() );
-							else {
-								pos.write( (">" + c.getName() + "\n").getBytes() );
-							}
-							StringBuilder sb = c.getStringBuilder();
-							for( int i = 0; i < sb.length(); i+=70 ) {
-								pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
-							}
-							pos.write( '\n' );
+			new Thread(() -> {
+				try {
+					OutputStream pos = mp.getOutputStream();
+					for( String cname : geneset.contigmap.keySet() ) {
+						Sequence c = geneset.contigmap.get( cname );
+						if( ids ) pos.write( (">" + c.getId() + "\n").getBytes() );
+						else {
+							pos.write( (">" + c.getName() + "\n").getBytes() );
 						}
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
+						StringBuilder sb = c.getStringBuilder();
+						for( int i = 0; i < sb.length(); i+=70 ) {
+							pos.write( sb.substring(i, Math.min( sb.length(), i+70) ).getBytes() );
+						}
+						pos.write( '\n' );
 					}
+					pos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			}.start();
+			}).start();
 			
 			new Thread() {
 				public void run() {
@@ -5066,10 +5064,18 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		MenuItem aaiaction = new MenuItem("AAI");
 		aaiaction.setOnAction( actionEvent -> {
 			List<GeneGroup> agg = table.getSelectionModel().getSelectedItems();
-			ANITools.aaiAction(GeneSetHead.this,agg);
+			List<GeneGroup> lagg = agg.isEmpty() ? geneset.allgenegroups : agg;
 			SwingUtilities.invokeLater(() -> {
-				ANITools.showAni(GeneSetHead.this);
+				Set<String> species = getSelspec(GeneSetHead.this, geneset.specList);
+				List<String> speclist = new ArrayList<>(species);
+
+				double[] corrarr = ANITools.corr(speclist, lagg, false);
+				ANITools.showAniMatrix(geneset, speclist, corrarr);
 			});
+			/*SwingUtilities.invokeLater(() -> {
+				ANITools.aaiAction(GeneSetHead.this,agg);
+				ANITools.showAni(GeneSetHead.this);
+			});*/
 		});
 		MenuItem anitreeaction = new MenuItem("ANI tree");
 		anitreeaction.setOnAction( actionEvent -> {
