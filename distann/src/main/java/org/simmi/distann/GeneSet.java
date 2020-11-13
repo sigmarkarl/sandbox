@@ -5908,7 +5908,7 @@ public class GeneSet implements GenomeSet {
 		 */
 		//init( args );
 
-		try {
+		//try {
 			//List<Set<String>> sc = loadSimpleClusters( Files.newBufferedReader( Paths.get("/Users/sigmar/clusters.txt") ) );
 			//System.err.println( sc.size() );
 				
@@ -6116,9 +6116,9 @@ public class GeneSet implements GenomeSet {
 			// splitGenes( "/home/sigmar/thermus/newthermus", "0_t.aa", 64 );
 			// splitGenes( "/home/sigmar/thermus/newthermus/test/", "erm.aa", 64
 			// );
-		} catch (IOException e) {
+		/*} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 
 	static List<String> res = new ArrayList<String>();
