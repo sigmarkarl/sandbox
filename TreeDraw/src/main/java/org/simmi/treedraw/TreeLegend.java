@@ -93,7 +93,7 @@ public class TreeLegend {
 	
 	public static void main(String[] args) {
 		Map<String,Color> locleg = new HashMap<String,Color>();
-		locleg.put("Geysir norður", new Color(0.0f, 0.5f, 1.0f) );
+		/*locleg.put("Geysir norður", new Color(0.0f, 0.5f, 1.0f) );
 		locleg.put("Geysir vestur", new Color(0.0f, 1.0f, 0.5f) );
 		locleg.put("Flúðir", new Color(1.0f, 0.0f, 1.0f) );
 		locleg.put("Ölkelduháls", new Color(1.0f, 1.0f, 0.0f) );
@@ -102,7 +102,7 @@ public class TreeLegend {
 		locleg.put("Vondugil", new Color(1.0f, 0.0f, 0.0f) );
 		locleg.put("Hurðarbak", new Color(1.0f, 0.0f, 0.5f) );
 		locleg.put("Kleppjárnsreykir", new Color(1.0f, 0.5f, 0.0f) );
-		locleg.put("Deildartunguhver", new Color(0.5f, 0.0f, 0.5f) );
+		locleg.put("Deildartunguhver", new Color(0.5f, 0.0f, 0.5f) );*/
 		
 		makeImage( locleg );
 	}
