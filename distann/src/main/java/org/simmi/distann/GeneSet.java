@@ -5914,9 +5914,11 @@ public class GeneSet implements GenomeSet {
 				
 			//ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/gene_association.goa_uniprot.gz
 			
-	FileInputStream fi = new FileInputStream( "/root/goa_uniprot_all.gaf.gz" );
-	GZIPInputStream gi = new GZIPInputStream( fi );
-	funcMappingStatic( new InputStreamReader( gi ) );
+	//FileInputStream fi = new FileInputStream( "/root/goa_uniprot_all.gaf.gz" );
+	//GZIPInputStream gi = new GZIPInputStream( fi );
+	//funcMappingStatic( new InputStreamReader( gi ) );
+
+
 	//FileInputStream fi = new FileInputStream( "/Users/sigmar/gene_association.goa_uniprot.gz" );
 	//GZIPInputStream gi = new GZIPInputStream( fi );
 	//funcMappingStatic( new InputStreamReader( gi ) );
@@ -5960,7 +5962,7 @@ public class GeneSet implements GenomeSet {
 			StringWriter sw = gs.writeCog( all, map );
 			System.out.println( sw );*/
 			
-			dummy();
+			//dummy();
 			//SerifyApplet.blastJoin(new FileInputStream("/home/horfrae/peter/stuff.blastout"), System.out);
 
 			// flankingFasta("/home/sigmar/playground/all.fsa",
@@ -9809,7 +9811,7 @@ public class GeneSet implements GenomeSet {
 					.config("spark.executor.cores",32)
 					.config("spark.task.cpus",32)
 					.config("spark.executor.instances",5)
-					.config("spark.driver.host","130.208.140.56")
+					.config("spark.driver.host","mimir.cs.hi.is")
 					.config("spark.local.dir","/home/sks17/tmp")
 					.config("spark.submit.deployMode","cluster")
 
