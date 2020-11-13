@@ -30,6 +30,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.MapPartitionsFunction;
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.simmi.javafasta.shared.*;
 import org.simmi.serifier.SerifyApplet;
 import org.simmi.treedraw.shared.*;
@@ -8900,9 +8901,6 @@ public class GeneSet implements GenomeSet {
 			}
 		}
 		
-		
-		
-		
 		ggSpecMap = new HashMap<>();
 		for( GeneGroup gg : ggList ) {
 			List<GeneGroup>	speclist;
@@ -9711,125 +9709,152 @@ public class GeneSet implements GenomeSet {
 	float len;
 	public void clusterGenes( Collection<String> species, boolean headless ) {
 		if( zippath != null ) {
-			try {
-				//SwingUtilities.invokeAndWait(() -> {
-					JPanel panel = new JPanel();
-					GridBagLayout grid = new GridBagLayout();
-					GridBagConstraints c = new GridBagConstraints();
-					panel.setLayout(grid);
+		//SwingUtilities.invokeAndWait(() -> {
+			JPanel panel = new JPanel();
+			GridBagLayout grid = new GridBagLayout();
+			GridBagConstraints c = new GridBagConstraints();
+			panel.setLayout(grid);
 
-					JLabel label1 = new JLabel("Id:");
-					JTextField tb11 = new JTextField("0.5");
-					JLabel label2 = new JLabel("Len:");
-					JTextField tb21 = new JTextField("0.5");
+			JLabel label1 = new JLabel("Id:");
+			JTextField tb11 = new JTextField("0.5");
+			JLabel label2 = new JLabel("Len:");
+			JTextField tb21 = new JTextField("0.5");
 
-					Dimension d = new Dimension(300, 30);
-					JTextField epar1 = new JTextField();
-					epar1.setSize(d);
-					epar1.setPreferredSize(d);
+			Dimension d = new Dimension(300, 30);
+			JTextField epar1 = new JTextField();
+			epar1.setSize(d);
+			epar1.setPreferredSize(d);
 
-					JCheckBox fromscratch = new JCheckBox("From scratch");
-					fromscratch.setSelected(true);
+			JCheckBox fromscratch = new JCheckBox("From scratch");
+			fromscratch.setSelected(true);
 
-					c.fill = GridBagConstraints.HORIZONTAL;
-					c.gridwidth = 1;
-					c.gridheight = 1;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.gridwidth = 1;
+			c.gridheight = 1;
 
-					c.gridx = 0;
-					c.gridy = 0;
-					panel.add(label1, c);
-					c.gridx = 1;
-					c.gridy = 0;
-					panel.add(tb11, c);
-					c.gridx = 0;
-					c.gridy = 1;
-					panel.add(label2, c);
-					c.gridx = 1;
-					c.gridy = 1;
-					panel.add(tb21, c);
-					c.gridx = 0;
-					c.gridy = 2;
-					c.gridwidth = 2;
-					panel.add(epar1, c);
-					c.gridx = 0;
-					c.gridy = 3;
-					c.gridwidth = 2;
-					panel.add(fromscratch, c);
+			c.gridx = 0;
+			c.gridy = 0;
+			panel.add(label1, c);
+			c.gridx = 1;
+			c.gridy = 0;
+			panel.add(tb11, c);
+			c.gridx = 0;
+			c.gridy = 1;
+			panel.add(label2, c);
+			c.gridx = 1;
+			c.gridy = 1;
+			panel.add(tb21, c);
+			c.gridx = 0;
+			c.gridy = 2;
+			c.gridwidth = 2;
+			panel.add(epar1, c);
+			c.gridx = 0;
+			c.gridy = 3;
+			c.gridwidth = 2;
+			panel.add(fromscratch, c);
 
-					JOptionPane.showMessageDialog(null, new Object[]{panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE);
+			JOptionPane.showMessageDialog(null, new Object[]{panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE);
 
-					id = Float.parseFloat(tb11.getText());
-					len = Float.parseFloat(tb21.getText());
-				//});
+			id = Float.parseFloat(tb11.getText());
+			len = Float.parseFloat(tb21.getText());
+		//});
 
- 				List<FastaSequence> sparkSeqList = new ArrayList<>();
-				List<FastaSequence> allSeqList = new ArrayList<>();
-				for (Gene g : genelist) {
-					if (g.getTag() == null || g.getTag().equalsIgnoreCase("gene")) {
-						Sequence gs = g.tegeval.getProteinSequence();
-						if (gs != null) {
-							gs.setName(g.id);
-							allSeqList.add(gs);
-							//gs.writeSequence(bw);
+			List<FastaSequence> sparkSeqList = new ArrayList<>();
+			List<FastaSequence> allSeqList = new ArrayList<>();
+			for (Gene g : genelist) {
+				if (g.getTag() == null || g.getTag().equalsIgnoreCase("gene")) {
+					Sequence gs = g.tegeval.getProteinSequence();
+					if (gs != null) {
+						gs.setName(g.id);
+						allSeqList.add(gs);
+						//gs.writeSequence(bw);
 
-							if (species.contains(g.getSpecies())) {
-								if (gs.getGroup() == null) {
-									gs.setGroup(g.tegeval.getSpecies());
-								}
-
-								sparkSeqList.add(gs);
-								/*qbw.append(">" + g.id + "\n");
-								for (int i = 0; i < gs.length(); i += 70) {
-									qbw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-								}*/
+						if (species.contains(g.getSpecies())) {
+							if (gs.getGroup() == null) {
+								gs.setGroup(g.tegeval.getSpecies());
 							}
-						}
 
-						/* else {
-							System.err.println(g.getSpecies());
-							System.err.println();
+							sparkSeqList.add(gs);
+							/*qbw.append(">" + g.id + "\n");
+							for (int i = 0; i < gs.length(); i += 70) {
+								qbw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+							}*/
 						}
-
-						/*bw.append(">" + g.id + "\n");
-						for (int i = 0; i < gs.length(); i += 70) {
-							bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
-						}*/
 					}
+
+					/* else {
+						System.err.println(g.getSpecies());
+						System.err.println();
+					}
+
+					/*bw.append(">" + g.id + "\n");
+					for (int i = 0; i < gs.length(); i += 70) {
+						bw.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
+					}*/
 				}
+			}
 
-				String dbPath = "/Users/sigmar/tmp";
-				 //"/mnt/csa/tmp/glow";
+			String dbPath = "/home/sks17/tmp";
+			String tmpPath = "/tmp";
+			//String dbPath = "/Users/sigmar/tmp";
+			 //"/mnt/csa/tmp/glow";
 
-				Encoder<FastaSequence> seqenc = Encoders.bean(FastaSequence.class);
-				SparkSession spark = SparkSession.builder()
-						.master("local[*]")
-						/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
-						.config("spark.submit.deployMode","cluster")
-						.config("spark.driver.memory","4g")
-						.config("spark.driver.cores",2)
-						.config("spark.executor.instances",16)
-						.config("spark.executor.memory","2g")
-						.config("spark.executor.cores",2)
-						.config("spark.jars","/Users/sigmar/sandbox/distann/build/install/distann/lib/*.jar")
-					/*.config("spark.executor.instances",10)
-					.config("spark.kubernetes.namespace","spark")
-					.config("spark.kubernetes.container.image","nextcode/glow:latest")
-					.config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
-					.config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
-					.config("spark.kubernetes.container.image.pullPolicy", "Always")
-						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
-					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
-					.getOrCreate();
+			Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);
+
+			try(SparkSession spark = SparkSession.builder()
+					.master("spark://mimir.cs.hi.is:7077")
+					.config("spark.driver.memory","2g")
+					.config("spark.driver.cores",1)
+					.config("spark.executor.memory","16g")
+					.config("spark.executor.cores",32)
+					.config("spark.task.cpus",32)
+					.config("spark.executor.instances",5)
+					.config("spark.driver.host","130.208.140.56")
+					.config("spark.local.dir","/home/sks17/tmp")
+					.config("spark.submit.deployMode","cluster")
+
+					//.config("spark.jars","/home/sks17/jars/distann.jar,/home/sks17/jars/javafasta.jar")
+					//.master("local[*]")
+					/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
+                    .config("spark.submit.deployMode","cluster")
+                    .config("spark.driver.memory","4g")
+                    .config("spark.driver.cores",2)
+                    .config("spark.executor.instances",16)
+                    .config("spark.executor.memory","2g")
+                    .config("spark.executor.cores",2)
+                    .config("spark.jars","/Users/sigmar/sandbox/distann/build/install/distann/lib/*.jar")
+                /*.config("spark.executor.instances",10)
+                .config("spark.kubernetes.namespace","spark")
+                .config("spark.kubernetes.container.image","nextcode/glow:latest")
+                .config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
+                .config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
+                .config("spark.kubernetes.container.image.pullPolicy", "Always")
+                    .config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+                    .config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
+                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
+					.getOrCreate()) {
+
+				//String blastp = "/home/sks17/miniconda3/bin/blastp";
+				//String makeblastdb = "/home/sks17/miniconda3/bin/makeblastdb";
+				//String envMap = "";
+
+				String blastp = "/home/sks17/ncbi-blast-2.10.1+/bin/blastp";
+				String makeblastdb = "/home/sks17/ncbi-blast-2.10.1+/bin/makeblastdb";
+				String envMap = "LD_LIBRARY_PATH=/home/sks17/glibc-2.14/lib/:/home/sks17/zlib-1.2.11/";
+
+				/*String blastp = "blastp";
+				String makeblastdb = "makeblastdb";
+				String envMap = "";*/
 
 				Dataset<FastaSequence> allds = spark.createDataset(allSeqList, seqenc);
-				allds.coalesce(1).foreachPartition(new SparkMakedb(dbPath));
+				allds.coalesce(1).foreachPartition(new SparkMakedb(makeblastdb,envMap,dbPath));
 
 				Dataset<FastaSequence> ds = spark.createDataset(sparkSeqList, seqenc);
-				Dataset<String> repart = ds.repartition(ds.col("group"))/*.map((MapFunction<FastaSequence,String>) Object::toString, Encoders.STRING())*/.mapPartitions(new SparkBlast(dbPath), Encoders.STRING());
+				Dataset<String> repart = ds.repartition(ds.col("group"))/*.map((MapFunction<FastaSequence,String>) Object::toString, Encoders.STRING())*/.mapPartitions(new SparkBlast(blastp,envMap,dbPath,tmpPath), Encoders.STRING());
 				//List<String> respath = repart.collectAsList();
-				repart.cache();
+				//repart.cache();
+				//repart.limit(10).collectAsList().forEach(System.err::println);
 
 				//Dataset<String> rds = spark.createDataset(respath, Encoders.STRING()).flatMap((FlatMapFunction<String, String>) s -> Files.lines(Paths.get(s)).iterator(), Encoders.STRING());
 
@@ -9852,7 +9877,14 @@ public class GeneSet implements GenomeSet {
 				String uristr = "jar:" + zippath.toUri();
 				zipuri = URI.create(uristr /*.replace("file://", "file:")*/);
 				try (FileSystem zipfilesystem = FileSystems.newFileSystem(zipuri, env)) {
-					Dataset<String> cluster = repart.flatMap(new ClusterGenes(), Encoders.STRING());
+
+					List<String> uh = repart.limit(10).collectAsList();
+					uh.forEach(System.err::println);
+					Dataset<String> cluster = repart.map(new ClusterGenes(), Encoders.STRING());
+					List<String> strlist = cluster.limit(10).collectAsList();
+					strlist.forEach(System.err::println);
+
+					//cluster.limit(10).collectAsList().forEach(System.err::println);
 					String[] total = cluster.map((MapFunction<String, String[]>) ss -> new String[] {ss},Encoders.javaSerialization(String[].class)).reduce(new ReduceClusters());
 					for (Path root : zipfilesystem.getRootDirectories()) {
 						Path clustersPath = root.resolve("simpleclusters.txt");

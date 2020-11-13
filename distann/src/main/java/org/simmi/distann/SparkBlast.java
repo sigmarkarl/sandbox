@@ -5,8 +5,11 @@ import org.apache.spark.api.java.function.MapPartitionsFunction;
 import org.simmi.javafasta.shared.FastaSequence;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.nio.file.*;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,45 +17,122 @@ import java.util.concurrent.Future;
 
 public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> {
     String root;
+    String tmp;
+    String blastp;
+    String envMap;
 
-    public SparkBlast(String rootpath) {
+    public SparkBlast(String blastp,String env,String rootpath,String tmppath) {
         this.root = rootpath;
+        this.blastp = blastp;
+        this.tmp = tmppath;
+        this.envMap = env;
     }
 
     @Override
     public Iterator<String> call(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
         if (input.hasNext()) {
             Path rootpath = Paths.get(root);
+            Path tmpPath = Paths.get(tmp);
+
+            Random r = new Random();
+            int rnd = r.nextInt();
 
             FastaSequence next = input.next();
             String group = next.getGroup();
             ExecutorService es = Executors.newFixedThreadPool(2);
 
-            Path resPath = rootpath.resolve(group+".blastout");//zipfilesystem.getPath(group + ".blastout");
+            Path resPath = tmpPath.resolve(group+".blastout");//zipfilesystem.getPath(group + ".blastout");
             Path dbpath = rootpath.resolve("db.fsa");
 
             int procs = Runtime.getRuntime().availableProcessors();
-            ProcessBuilder pb = new ProcessBuilder("blastp", "-db", dbpath.toString(), "-out", resPath.toString(), "-num_threads", Integer.toString(procs), "-evalue", "0.00001");
+            ProcessBuilder pb = new ProcessBuilder(blastp, "-db", dbpath.toString(), "-num_threads", Integer.toString(procs), "-evalue", "0.00001"); //"-out", resPath.toString(),
+            if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
             Process pc = pb.start();
-            Future<Long> fout = es.submit(() -> {
+            /*Future<Long> fout = es.submit(() -> {
                 try(InputStream is = pc.getInputStream()) {
                     return is.transferTo(System.out);
                 }
-            });
+            });*/
+            String hostname = InetAddress.getLocalHost().getHostName();
             Future<Long> ferr = es.submit(() -> {
-                try(InputStream is = pc.getErrorStream()) {
-                    return is.transferTo(System.err);
+                try(InputStream is = pc.getErrorStream(); FileOutputStream fos = new FileOutputStream("/home/sks17/tmp/blast"+rnd+".err")) {
+                    fos.write(hostname.getBytes());
+                    fos.write('\n');
+                    return is.transferTo(fos);
                 }
             });
-            try(OutputStream os = pc.getOutputStream()) {
-                Writer w = new OutputStreamWriter(os);
-                next.writeSequence(w);
-                while (input.hasNext()) {
-                    FastaSequence fs = input.next();
-                    fs.writeSequence(w);
+            Future<Long> fout = es.submit(() -> {
+                try (OutputStream os = pc.getOutputStream(); Writer w = new OutputStreamWriter(os)) {
+                    next.writeSequence(w);
+                    while (input.hasNext()) {
+                        FastaSequence fs = input.next();
+                        fs.writeSequence(w);
+                    }
+                    return 0L;
                 }
-            }
-            fout.get();
+            });
+
+            InputStreamReader isr = new InputStreamReader(pc.getInputStream());
+            BufferedReader br = new BufferedReader(isr);
+            Iterator<String> it = br.lines().iterator();
+            return new Iterator<>() {
+                StringBuilder next;
+                String last;
+                boolean closed = true;
+
+                {
+                    while (it.hasNext()) {
+                        last = it.next();
+                        if(last.startsWith("Query=")) {
+                            closed = false;
+                            break;
+                        }
+                    }
+                }
+
+                @Override
+                public boolean hasNext() {
+                    if(!closed) {
+                        next = new StringBuilder();
+                        next.append(last);
+                        closed = true;
+                        while (it.hasNext()) {
+                            last = it.next();
+                            if(last.startsWith("Query=")) {
+                                closed = false;
+                                break;
+                            } else {
+                                next.append('\n');
+                                next.append(last);
+                            }
+                        }
+                        if (closed) {
+                            try {
+                                br.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                try {
+                                    fout.get();
+                                    ferr.get();
+                                    pc.waitFor();
+                                    es.shutdown();
+                                } catch (InterruptedException | ExecutionException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+
+                @Override
+                public String next() {
+                    return next.toString();
+                }
+            };
+            /*fout.get();
             ferr.get();
             pc.waitFor();
             es.shutdown();
@@ -60,8 +140,8 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
             //System.err.println("procs " + procs);
             //SerifyApplet.blastRun(nrun, queryPath, Paths.get(dbpath), resPath, "prot", "-num_threads " + procs + " -evalue 0.00001", null, true, user, true);
 
-            return Iterators.singletonIterator(resPath.toString());
-            //return Files.lines(resPath).iterator();
+            return Iterators.singletonIterator(resPath.toString());*/
+            //return Files.lines(resPath).iterator();*/
         }
         return Iterators.emptyIterator();
     }
