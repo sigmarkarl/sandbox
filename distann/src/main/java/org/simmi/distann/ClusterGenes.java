@@ -6,15 +6,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
+import java.util.function.Function;
 
-public class ClusterGenes implements MapFunction<String, String> {
-    int id;
-    int cmplen;
+public class ClusterGenes implements MapFunction<String, String>, Function<String,Set<String>> {
+    double id;
+    double cmplen;
 
-    public ClusterGenes() {}
+    public ClusterGenes() {
+        id = 0.5;
+        cmplen = 0.5;
+    }
 
-    public String getClusters(String query) throws IOException {
-        Set<java.lang.String> all = new HashSet<>();
+    public Set<String> getClusters(String query) throws IOException {
+        Set<String> all = new HashSet<>();
         StringReader sr = new StringReader(query);
         BufferedReader br = new BufferedReader(sr);
         String line = br.readLine();
@@ -98,11 +102,21 @@ public class ClusterGenes implements MapFunction<String, String> {
             }
             line = br.readLine();
         }
-        return all.toString();
+        return all;
     }
 
     @Override
     public String call(String input) throws Exception {
-        return getClusters(input);
+        return getClusters(input).toString();
+    }
+
+    @Override
+    public Set<String> apply(String s) {
+        try {
+            return getClusters(s);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

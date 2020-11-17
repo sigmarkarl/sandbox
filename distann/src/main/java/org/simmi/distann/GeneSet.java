@@ -9813,7 +9813,7 @@ public class GeneSet implements GenomeSet {
 					.config("spark.executor.instances",5)
 					.config("spark.driver.host","mimir.cs.hi.is")
 					.config("spark.local.dir","/home/sks17/tmp")
-					.config("spark.submit.deployMode","cluster")
+					//.config("spark.submit.deployMode","cluster")
 
 					//.config("spark.jars","/home/sks17/jars/distann.jar,/home/sks17/jars/javafasta.jar")
 					//.master("local[*]")
@@ -9880,14 +9880,16 @@ public class GeneSet implements GenomeSet {
 				zipuri = URI.create(uristr /*.replace("file://", "file:")*/);
 				try (FileSystem zipfilesystem = FileSystems.newFileSystem(zipuri, env)) {
 
-					List<String> uh = repart.limit(10).collectAsList();
-					uh.forEach(System.err::println);
-					Dataset<String> cluster = repart.map(new ClusterGenes(), Encoders.STRING());
-					List<String> strlist = cluster.limit(10).collectAsList();
-					strlist.forEach(System.err::println);
+					/*List<String> uh = repart.limit(10).collectAsList();
+					uh.forEach(System.err::println);*/
+					ReduceClusters	reduceCluster = new ReduceClusters();
+					String cluster = repart.reduce(reduceCluster);
+					String[] total = cluster.split(";");
+					/*List<String> strlist = cluster.limit(10).collectAsList();
+					strlist.forEach(System.err::println);*/
 
 					//cluster.limit(10).collectAsList().forEach(System.err::println);
-					String[] total = cluster.map((MapFunction<String, String[]>) ss -> new String[] {ss},Encoders.javaSerialization(String[].class)).reduce(new ReduceClusters());
+					//String[] total = cluster.map((MapFunction<String, String[]>) ss -> new String[] {ss},Encoders.javaSerialization(String[].class)).reduce(new ReduceClusters());
 					for (Path root : zipfilesystem.getRootDirectories()) {
 						Path clustersPath = root.resolve("simpleclusters.txt");
 						BufferedWriter fos = Files.newBufferedWriter(clustersPath);

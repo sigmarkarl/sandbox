@@ -52,7 +52,8 @@ public class SparkMakedb implements ForeachPartitionFunction<FastaSequence> {
             }
         });
         Future<Long> ferr = es.submit(() -> {
-            try(InputStream is = pc.getErrorStream(); FileOutputStream fos = new FileOutputStream("/home/sks17/tmp/make"+rnd+".err")) {
+            Path berr = root.resolve("make"+rnd+".err");
+            try(InputStream is = pc.getErrorStream(); OutputStream fos = Files.newOutputStream(berr)) {
                 return is.transferTo(fos);
             }
         });
