@@ -3166,29 +3166,27 @@ public class GeneSetHead {
                 }*/
 
                 final JProgressBar	pbar = new JProgressBar();
-                final Thread t = new Thread() {
-                    public void run() {
-                        try {
-                            URL url = new URL(tf.getText());
-                            InputStream fis = url.openStream();
+                final Thread t = new Thread(() -> {
+					try {
+						URL url = new URL(tf.getText());
+						InputStream fis = url.openStream();
 
-                            BufferedReader br = new BufferedReader( new InputStreamReader( new GZIPInputStream( fis ) ) );
-                            //if( unimap != null ) unimap.clear();
-                            //unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
-                            geneset.funcMappingUni( br, geneset.unimap, bw );
+						BufferedReader br = new BufferedReader( new InputStreamReader( new GZIPInputStream( fis ) ) );
+						//if( unimap != null ) unimap.clear();
+						//unimap = idMapping(new InputStreamReader(is), bw, 2, 0, refmap, genmap, gimap);
+						geneset.funcMappingUni( br, geneset.unimap, bw );
 
-                            fis.close();
-                            bw.close();
+						fis.close();
+						bw.close();
 
-                            try { geneset.zipfilesystem.close(); } catch( Exception e2 ) { e2.printStackTrace(); };
+						try { geneset.zipfilesystem.close(); } catch( Exception e2 ) { e2.printStackTrace(); };
 
-                            pbar.setIndeterminate(false);
-                            pbar.setEnabled(false);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
+						pbar.setIndeterminate(false);
+						pbar.setEnabled(false);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
 
                 ta.setEditable( false );
                 final JScrollPane	sp = new JScrollPane( ta );
@@ -8211,10 +8209,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			String go = ftable.getSelectionModel().getSelectedItem().getGo();
 			try {
 				// GeneSetHead.this.getAppletContext().
-				Desktop.getDesktop().browse(new URI("http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=" + go));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			} catch (URISyntaxException e1) {
+				Desktop.getDesktop().browse(new URI("http://amigo.geneontology.org/amigo/medial_search?q=" + go));
+			} catch (IOException | URISyntaxException e1) {
 				e1.printStackTrace();
 			}
 		});
@@ -8224,9 +8220,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			String kegg = ftable.getSelectionModel().getSelectedItem().getKegg();
 			try {
 				Desktop.getDesktop().browse(new URI("http://www.genome.jp/dbget-bin/www_bget?rn:" + kegg));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			} catch (URISyntaxException e1) {
+			} catch (IOException | URISyntaxException e1) {
 				e1.printStackTrace();
 			}
 		});
@@ -8236,9 +8230,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			String ec = ftable.getSelectionModel().getSelectedItem().getEc();
 			try {
 				Desktop.getDesktop().browse(new URI("http://enzyme.expasy.org/EC/" + ec));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			} catch (URISyntaxException e1) {
+			} catch (IOException | URISyntaxException e1) {
 				e1.printStackTrace();
 			}
 		});
@@ -8381,9 +8373,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								subgg.addGenes( ggset );
 							}
 						}
-						Set<GeneGroup> sgg = ggmap.stream().collect(Collectors.toSet());
+						Set<GeneGroup> sgg = new HashSet<>(ggmap);
 
-						List<GeneGroup> lgg = new ArrayList(sgg);
+						List<GeneGroup> lgg = new ArrayList<>(sgg);
 						list.setItems( FXCollections.observableList( lgg ) );
 						dialog.setResultConverter(param -> sgg);
 					}

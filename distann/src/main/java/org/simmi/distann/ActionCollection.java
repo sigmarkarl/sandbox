@@ -358,8 +358,6 @@ public class ActionCollection {
 			workbook.write( fos );
 			fos.close();
 			Desktop.getDesktop().open(nf);
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -699,9 +697,12 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						String lowername = tv.getGene().getName().toLowerCase();
-						if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")) ) count++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							String lowername = tv.getGene().getName().toLowerCase();
+							if (ann.type != null && ann.type.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")))
+								count++;
+						}
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -726,18 +727,20 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						boolean rrna = ann.type != null && ann.type.contains("rrna");
-						String lowername = tv.getGene().getName().toLowerCase();
-						boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
-						
-						if( rrna /*^ ssu16s*/ ) {
-							System.err.println( "16S erm: " + spec + "  " + tv.getGene().getName() + " bbo " + ssu16s );
-						}
-						
-						if( rrna && ssu16s ) {
-							//System.err.println( spec + " " + tv.getGene().getName() );
-							count++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							boolean rrna = ann.type != null && ann.type.contains("rrna");
+							String lowername = tv.getGene().getName().toLowerCase();
+							boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
+
+							if (rrna /*^ ssu16s*/) {
+								System.err.println("16S erm: " + spec + "  " + tv.getGene().getName() + " bbo " + ssu16s);
+							}
+
+							if (rrna && ssu16s) {
+								//System.err.println( spec + " " + tv.getGene().getName() );
+								count++;
+							}
 						}
 					}
 					total += ct.getAnnotations().size();
@@ -763,11 +766,13 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						String lowername = tv.getGene().getName().toLowerCase();
-						if( ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu")) ) {
-							//System.err.println( "eeeerm: "+tv.getSpecies() );
-							count++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							String lowername = tv.getGene().getName().toLowerCase();
+							if (ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu"))) {
+								//System.err.println( "eeeerm: "+tv.getSpecies() );
+								count++;
+							}
 						}
 					}
 					total += ct.getAnnotations().size();
@@ -818,14 +823,16 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						int cc = 0;
-						//String spec = tv.getGene().getSpecies();
-						for( Gene g : tv.getGene().getGeneGroup().genes ) {
-							if( g.getSpecies().equals(spec) ) cc++;
-						}
-						if( cc >= 2 ) {
-							count++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							int cc = 0;
+							//String spec = tv.getGene().getSpecies();
+							for (Gene g : tv.getGene().getGeneGroup().genes) {
+								if (g.getSpecies().equals(spec)) cc++;
+							}
+							if (cc >= 2) {
+								count++;
+							}
 						}
 						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
 					}
@@ -855,11 +862,13 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						for( Gene g : tv.getGene().getGeneGroup().genes ) {
-							if( (g.funcentries != null && g.funcentries.size() > 0) || (g.ecid != null && g.ecid.length() > 0) ) {
-								count++;
-								break;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							for (Gene g : tv.getGene().getGeneGroup().genes) {
+								if ((g.funcentries != null && g.funcentries.size() > 0) || (g.ecid != null && g.ecid.length() > 0)) {
+									count++;
+									break;
+								}
 							}
 						}
 						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
@@ -890,8 +899,11 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0 ) count++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0)
+								count++;
+						}
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -919,13 +931,15 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().ecid != null && tv.getGene().ecid.length() > 0 ) count++;
-						else if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
-							for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-								if( f.getEc() != null && f.getEc().length() > 0 ) {
-									count++;
-									break;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) count++;
+							else if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null) {
+								for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+									if (f.getEc() != null && f.getEc().length() > 0) {
+										count++;
+										break;
+									}
 								}
 							}
 						}
@@ -957,18 +971,20 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						Cog cog = geneset.cogmap.get( tv.getGene().id );
-						if( cog != null ) {
-							System.err.println( cog.id + "  " + count );
-							count++;
-						}
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							Cog cog = geneset.cogmap.get(tv.getGene().id);
+							if (cog != null) {
+								System.err.println(cog.id + "  " + count);
+								count++;
+							}
 						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
 							if( f.metacyc != null && f.metacyc.length() > 0 ) {
 								count++;
 								break;
 							}
 						}*/
+						}
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -997,18 +1013,20 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						Cog cog = geneset.pfammap.get( tv.getGene().id );
-						if( cog != null ) {
-							System.err.println( cog.id + "  " + count );
-							count++;
-						}
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							Cog cog = geneset.pfammap.get(tv.getGene().id);
+							if (cog != null) {
+								System.err.println(cog.id + "  " + count);
+								count++;
+							}
 						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
 							if( f.metacyc != null && f.metacyc.length() > 0 ) {
 								count++;
 								break;
 							}
 						}*/
+						}
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -1036,12 +1054,15 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-							if( f.getMetacyc() != null && f.getMetacyc().length() > 0 ) {
-								count++;
-								break;
-							}
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null)
+								for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+									if (f.getMetacyc() != null && f.getMetacyc().length() > 0) {
+										count++;
+										break;
+									}
+								}
 						}
 					}
 					total += ct.getAnnotations().size();
@@ -1070,23 +1091,25 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
-							for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-								boolean found = false;
-								if( f.getKegg() != null && f.getKegg().length() > 0 ) {
-									count++;
-									found = true;
-								}
-								if( !found && f.isa != null ) for( String nid : f.isa ) {
-									Function nf = geneset.funcmap.get( nid );
-									if( nf != null && nf.getKegg() != null && nf.getKegg().length() > 0 ) {
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null) {
+								for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+									boolean found = false;
+									if (f.getKegg() != null && f.getKegg().length() > 0) {
 										count++;
 										found = true;
-										break;
 									}
+									if (!found && f.isa != null) for (String nid : f.isa) {
+										Function nf = geneset.funcmap.get(nid);
+										if (nf != null && nf.getKegg() != null && nf.getKegg().length() > 0) {
+											count++;
+											found = true;
+											break;
+										}
+									}
+									if (found) break;
 								}
-								if( found ) break;
 							}
 						}
 					}
@@ -1116,34 +1139,35 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
-							boolean found = false;
-							for( Gene g : tv.getGene().getGeneGroup().genes ) {
-								
-								if( g.koid != null && g.koid.length() > 0 ) {
-									for( String pw : geneset.pathwaykomap.keySet() ) {
-										Set<String> s = geneset.pathwaykomap.get( pw );
-										if( s.contains( g.koid ) ) {
-											found = true;
-											break;
-										}
-									}
-								}
-								
-								if( !found ) {
-									if( g.ecid != null && g.ecid.length() > 0 ) {
-										for( String pw : geneset.pathwaymap.keySet() ) {
-											Set<String> s = geneset.pathwaymap.get( pw );
-											if( s.contains( g.ecid ) ) {
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null) {
+								boolean found = false;
+								for (Gene g : tv.getGene().getGeneGroup().genes) {
+
+									if (g.koid != null && g.koid.length() > 0) {
+										for (String pw : geneset.pathwaykomap.keySet()) {
+											Set<String> s = geneset.pathwaykomap.get(pw);
+											if (s.contains(g.koid)) {
 												found = true;
 												break;
 											}
 										}
 									}
-								}
-								
-								if( found ) break;
+
+									if (!found) {
+										if (g.ecid != null && g.ecid.length() > 0) {
+											for (String pw : geneset.pathwaymap.keySet()) {
+												Set<String> s = geneset.pathwaymap.get(pw);
+												if (s.contains(g.ecid)) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+
+									if (found) break;
 								/*if( !found && f.isa != null ) for( String nid : f.isa ) {
 									Function nf = funcmap.get( nid );
 									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
@@ -1152,9 +1176,9 @@ public class ActionCollection {
 										break;
 									}
 								}*/
-							}
-							
-							if( !found ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+								}
+
+								if (!found) for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
 								/*boolean found = false;
 								if( f.kegg != null && f.kegg.length() > 0 ) {
 									count++;
@@ -1168,32 +1192,33 @@ public class ActionCollection {
 										break;
 									}
 								}*/
-								
-								if( f.getKo() != null && f.getKo().length() > 0 ) {
-									for( String pw : geneset.pathwaykomap.keySet() ) {
-										Set<String> s = geneset.pathwaykomap.get( pw );
-										if( s.contains( f.getKo() ) ) {
-											found = true;
-											break;
-										}
-									}
-								}
-								
-								if( !found ) {
-									if( f.getEc() != null && f.getEc().length() > 0 ) {
-										for( String pw : geneset.pathwaymap.keySet() ) {
-											Set<String> s = geneset.pathwaymap.get( pw );
-											if( s.contains( f.getEc() ) ) {
+
+									if (f.getKo() != null && f.getKo().length() > 0) {
+										for (String pw : geneset.pathwaykomap.keySet()) {
+											Set<String> s = geneset.pathwaykomap.get(pw);
+											if (s.contains(f.getKo())) {
 												found = true;
 												break;
 											}
 										}
 									}
-								}										
-								if( found ) break;
+
+									if (!found) {
+										if (f.getEc() != null && f.getEc().length() > 0) {
+											for (String pw : geneset.pathwaymap.keySet()) {
+												Set<String> s = geneset.pathwaymap.get(pw);
+												if (s.contains(f.getEc())) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+									if (found) break;
+								}
+
+								if (found) count++;
 							}
-							
-							if( found ) count++;
 						}
 					}
 					total += ct.getAnnotations().size();
@@ -1222,24 +1247,25 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) {
-							if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null ) {
-								boolean found = false;
-								for( Gene g : tv.getGene().getGeneGroup().genes ) {
-									if( g.koid != null && g.koid.length() > 0 ) {
-										found = true;
-										break;
-									}
-									
-									if( g.funcentries != null && !found ) {
-										for( Function f : g.funcentries ) {
-											if( f.getKo() != null && f.getKo().length() > 0 ) {
-												found = true;
-												break;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null) {
+								if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null) {
+									boolean found = false;
+									for (Gene g : tv.getGene().getGeneGroup().genes) {
+										if (g.koid != null && g.koid.length() > 0) {
+											found = true;
+											break;
+										}
+
+										if (g.funcentries != null && !found) {
+											for (Function f : g.funcentries) {
+												if (f.getKo() != null && f.getKo().length() > 0) {
+													found = true;
+													break;
+												}
 											}
 										}
-									}
 									/*if( !found && f.isa != null ) for( String nid : f.isa ) {
 										Function nf = funcmap.get( nid );
 										if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
@@ -1248,32 +1274,33 @@ public class ActionCollection {
 											break;
 										}
 									}*/
-									
-									if( found ) break;
-								}
-								
-								if( !found ) {
-									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {												
-										if( f.getKo() != null && f.getKo().length() > 0 ) {
-											found = true;
-											break;
-										}
+
+										if (found) break;
 									}
-								}
-								
-								if( !found ) {
-									for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
-										for( String ko : geneset.ko2go.keySet() ) {
-											Set<String> gos = geneset.ko2go.get(ko);
-											if( gos.contains( f.getGo() ) ) {
+
+									if (!found) {
+										for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+											if (f.getKo() != null && f.getKo().length() > 0) {
 												found = true;
 												break;
 											}
 										}
 									}
+
+									if (!found) {
+										for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+											for (String ko : geneset.ko2go.keySet()) {
+												Set<String> gos = geneset.ko2go.get(ko);
+												if (gos.contains(f.getGo())) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+
+									if (found) count++;
 								}
-								
-								if( found ) count++;
 							}
 						}
 					}
@@ -1304,18 +1331,20 @@ public class ActionCollection {
 			int total = 0;
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
-					Set<Gene> gset = new HashSet<Gene>();
+					Set<Gene> gset = new HashSet<>();
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						int cc = 0;
-						//String spec = tv.getGene().getSpecies();
-						for( Gene g : tv.getGene().getGeneGroup().genes ) {
-							if( g.getSpecies().equals(spec) ) {
-								if( gset.add(g) ) cc++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							int cc = 0;
+							//String spec = tv.getGene().getSpecies();
+							for (Gene g : tv.getGene().getGeneGroup().genes) {
+								if (g.getSpecies().equals(spec)) {
+									if (gset.add(g)) cc++;
+								}
 							}
-						}
-						if( cc >= 2 ) {
-							count++;
+							if (cc >= 2) {
+								count++;
+							}
 						}
 						//if( (tv.getGene().funcentries != null && tv.getGene().funcentries.size() > 0) || (tv.getGene().ecid != null && tv.getGene().ecid.length() > 0) ) count++;
 					}
@@ -1345,9 +1374,11 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().signalp ) {
-							count++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().signalp) {
+								count++;
+							}
 						}
 						/*for( Gene g : tv.getGene().getGeneGroup().genes ) {
 							if( g.getSpecies().equals(spec) ) {
@@ -1382,9 +1413,11 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						Tegeval tv = (Tegeval)ann;
-						if( tv.getGene().transm ) {
-							count++;
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().transm) {
+								count++;
+							}
 						}
 						/*for( Gene g : tv.getGene().getGeneGroup().genes ) {
 							if( g.getSpecies().equals(spec) ) {
@@ -2819,115 +2852,118 @@ public class ActionCollection {
 		
 		MenuItem gcaction = new MenuItem("GC% chart data");
 		gcaction.setOnAction( actionEvent -> {
-				final JCheckBox	contigs = new JCheckBox("Show contigs");
-				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs );
-				StringBuilder	restext = new StringBuilder();
-				
-				Map<String,Double>	map = new TreeMap<String,Double>();
-				
-				restext.append( "['Species', 'Size']" );
-				//int i = 0;
-				for( String spec : selspec ) {
-					restext.append( ",\n['"+geneset.nameFix(spec)+"', " );
-					
-					int len = 0;
-					int total = 0;
-					
-					if( contigs.isSelected() ) {
-						Sequence ct = geneset.contigmap.get( spec );
-						total = ct.length();
-						len = ct.getGCCount();
-					} else {
-						List<Sequence> lcont = speccontigMap.get(spec);
-						for( Sequence ct : lcont ) {
-							total += ct.length();
-							len += ct.getGCCount();
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					final JCheckBox	contigs = new JCheckBox("Show contigs");
+					Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs );
+					StringBuilder	restext = new StringBuilder();
+
+					Map<String,Double>	map = new TreeMap<String,Double>();
+
+					restext.append( "['Species', 'Size']" );
+					//int i = 0;
+					for( String spec : selspec ) {
+						restext.append( ",\n['"+geneset.nameFix(spec)+"', " );
+
+						int len = 0;
+						int total = 0;
+
+						if( contigs.isSelected() ) {
+							Sequence ct = geneset.contigmap.get( spec );
+							total = ct.length();
+							len = ct.getGCCount();
+						} else {
+							List<Sequence> lcont = speccontigMap.get(spec);
+							for( Sequence ct : lcont ) {
+								total += ct.length();
+								len += ct.getGCCount();
 							/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
 								len += tv.getLength();
 							}*/
+							}
 						}
-					}
-					double d = (double)len/(double)total;
-					
-					//vals[ i ] = d;
-					
-					String name = null;//names[i];
-					if( contigs.isSelected() ) {
-						if( spec.contains("hermus") ) name = spec;
-						else {
-							Matcher m = Pattern.compile("\\d").matcher(spec); 
-							int firstDigitLocation = m.find() ? m.start() : 0;
-							if( firstDigitLocation == 0 ) name = "Thermus_" + spec;
-							else name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
-						}
-					} else {
+						double d = (double)len/(double)total;
+
+						//vals[ i ] = d;
+
+						String name = null;//names[i];
+						if( contigs.isSelected() ) {
+							if( spec.contains("hermus") ) name = spec;
+							else {
+								Matcher m = Pattern.compile("\\d").matcher(spec);
+								int firstDigitLocation = m.find() ? m.start() : 0;
+								if( firstDigitLocation == 0 ) name = "Thermus_" + spec;
+								else name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
+							}
+						} else {
 						/*if( spec.contains("hermus") ) name = spec.substring( 0, spec.lastIndexOf('_') );
 						else {
-							Matcher m = Pattern.compile("\\d").matcher(spec); 
+							Matcher m = Pattern.compile("\\d").matcher(spec);
 							int firstDigitLocation = m.find() ? m.start() : 0;
 							if( firstDigitLocation == 0 ) name = "Thermus_" + spec;
 							else name = "Thermus_" + spec.substring(0,firstDigitLocation) + "_" + spec.substring(firstDigitLocation);
 						}*/
-						name = geneset.nameFix(spec);
+							name = geneset.nameFix(spec);
+						}
+
+						map.put( name, d );
+
+						//i++;
+
+						//d = Math.round( d*10000.0 )/100.0;
+						//Set<GeneGroup> ggset = specGroupMap.get( spec );
+						//pan.addAll( ggset );
+						//if( core.isEmpty() ) core.addAll( ggset );
+						//else core.retainAll( ggset );
+
+						//restext.append( core.size()+", " );
+						restext.append( d+"]" );
 					}
-					
-					map.put( name, d );
-					
-					//i++;
-					
-					//d = Math.round( d*10000.0 )/100.0;
-					//Set<GeneGroup> ggset = specGroupMap.get( spec );
-					//pan.addAll( ggset );
-					//if( core.isEmpty() ) core.addAll( ggset );
-					//else core.retainAll( ggset );
-					
-					//restext.append( core.size()+", " );
-					restext.append( d+"]" );
-				}
-				
-				final String[] names = new String[ map.size() ];
-				final double[] vals = new double[ map.size() ];
-				
-				String scaffspec = null;
-				int i = 0;
-				for( String spec : map.keySet() ) {
-					if( contigs.isSelected() ) {
-						int k = spec.indexOf("contig");
-						if( k == -1 ) k = spec.indexOf("scaffold");
-						if( k == -1 ) k = spec.indexOf("chromosome");
-						if( k == -1 ) k = spec.indexOf("plasmid");
-						if( k == -1 ) k = spec.lastIndexOf('_');
-						if( k == -1 ) {
-							names[i] = spec;
-							scaffspec = spec;
-						} else {
-							names[i] = spec.substring(k);						
-							scaffspec = spec.substring(0, k-1);
-						}
-					} else names[i] = spec;
-					vals[i] = map.get( spec );
-					i++;
-				}
-				
-				final String xTitle = scaffspec != null ? "Scaffolds/Contigs" : "Species";
-				final String yTitle = scaffspec != null ? scaffspec + " GC%" : "GC%";
-				
-				if( Desktop.isDesktopSupported() ) {
-					SwingUtilities.invokeLater(() -> {
-						if( geneset.fxframe == null ) {
-							geneset.fxframe = new JFrame("Pan-core");
-							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-							geneset.fxframe.setSize(800, 600);
 
-							final JFXPanel	fxpanel = new JFXPanel();
-							geneset.fxframe.add( fxpanel );
+					final String[] names = new String[ map.size() ];
+					final double[] vals = new double[ map.size() ];
 
-							Platform.runLater(() -> geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
-						} else {
-							Platform.runLater(() -> geneset.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
-						}
-						geneset.fxframe.setVisible( true );
-					});
+					String scaffspec = null;
+					int i = 0;
+					for( String spec : map.keySet() ) {
+						if( contigs.isSelected() ) {
+							int k = spec.indexOf("contig");
+							if( k == -1 ) k = spec.indexOf("scaffold");
+							if( k == -1 ) k = spec.indexOf("chromosome");
+							if( k == -1 ) k = spec.indexOf("plasmid");
+							if( k == -1 ) k = spec.lastIndexOf('_');
+							if( k == -1 ) {
+								names[i] = spec;
+								scaffspec = spec;
+							} else {
+								names[i] = spec.substring(k);
+								scaffspec = spec.substring(0, k-1);
+							}
+						} else names[i] = spec;
+						vals[i] = map.get( spec );
+						i++;
+					}
+
+					final String xTitle = scaffspec != null ? "Scaffolds/Contigs" : "Species";
+					final String yTitle = scaffspec != null ? scaffspec + " GC%" : "GC%";
+
+					if( Desktop.isDesktopSupported() ) {
+						SwingUtilities.invokeLater(() -> {
+							if( geneset.fxframe == null ) {
+								geneset.fxframe = new JFrame("Pan-core");
+								geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+								geneset.fxframe.setSize(800, 600);
+
+								final JFXPanel	fxpanel = new JFXPanel();
+								geneset.fxframe.add( fxpanel );
+
+								Platform.runLater(() -> geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
+							} else {
+								Platform.runLater(() -> geneset.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
+							}
+							geneset.fxframe.setVisible( true );
+						});
 					/*try {
 						FileWriter fw = new FileWriter("c:/smuck.html");
 						fw.write( smuck );
@@ -2936,12 +2972,12 @@ public class ActionCollection {
 					} catch( Exception exc ) {
 						exc.printStackTrace();
 					}*/
-				}
-				
-				JFrame f = new JFrame("GC% chart");
-				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-				f.setSize( 800, 600 );
-				
+					}
+
+					JFrame f = new JFrame("GC% chart");
+					f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+					f.setSize( 800, 600 );
+
 				/*final StringBuilder sb = new StringBuilder();
 				InputStream is = GeneSet.class.getResourceAsStream("/chart.html");
 				try {
@@ -2954,14 +2990,14 @@ public class ActionCollection {
 					e1.printStackTrace();
 				}
 				final String smuck = sb.toString().replace("smuck", restext.toString());*/
-				
-				//restext.append( restext.toString() );
-				JTextArea	ta = new JTextArea();
-				ta.setText( restext.toString() );
-				JScrollPane	sp = new JScrollPane(ta);
-				f.add( sp );
-				f.setVisible( true );
-				
+
+					//restext.append( restext.toString() );
+					JTextArea	ta = new JTextArea();
+					ta.setText( restext.toString() );
+					JScrollPane	sp = new JScrollPane(ta);
+					f.add( sp );
+					f.setVisible( true );
+
 				/*SwingUtilities.invokeLater(new Runnable() {
 	                 @Override
 	                 public void run() {
@@ -2970,11 +3006,13 @@ public class ActionCollection {
 	            });*/
 				/*JFXPanel	jfxpanel = new JFXPanel();
 				jfxpanel.add
-				
+
 				JFrame frame = new JFrame();
 				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 				frame.add( jfxpanel );
 				frame.setVisible( true );*/
+				}
+			});
 		});
 		
 		MenuItem gcskewaction = new MenuItem("GC skew chart");

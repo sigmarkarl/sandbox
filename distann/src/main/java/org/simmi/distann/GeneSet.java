@@ -68,15 +68,6 @@ import javafx.scene.web.WebView;
 import scala.Function2;
 
 public class GeneSet implements GenomeSet {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	/**
-	 * @param args
-	 * @throws IOException
-	 */
-	
 	static SerifyApplet currentSerify = null;
 	static Map<String,String> keggMap = new HashMap<>();
 	static {}
@@ -389,6 +380,54 @@ public class GeneSet implements GenomeSet {
 		}
 		return id;
 	}
+
+	private void ecgo(Gene gene, String idstr) {
+		gene.setIdStr( idstr );
+		if (gene.ecid == null) {
+			int ec = idstr.indexOf("EC");
+			if (ec != -1) {
+				//int ecc = name.indexOf(')', ec+1);
+				//if( ecc == -1 ) ecc = name.length();
+				int k = ec + 3;
+				if (k < idstr.length()) {
+					char c = idstr.charAt(k);
+					while ((c >= '0' && c <= '9') || c == '.') {
+						c = idstr.charAt(k++);
+						if (k == idstr.length()) {
+							k++;
+							break;
+						}
+					}
+					gene.ecid = idstr.substring(ec + 2, k - 1).trim();
+				}
+			}
+		}
+
+		int go = idstr.indexOf("GO:");
+		while( go != -1 ) {
+			int ngo = idstr.indexOf("GO:", go+1);
+
+			if (gene.funcentries == null)
+				gene.funcentries = new HashSet<>();
+
+			String goid;
+			if( ngo != -1 ) goid = idstr.substring(go, ngo);
+			else {
+				int ni = go+10;//Math.minname.indexOf(')', go+1);
+				goid = idstr.substring( go, ni );
+			}
+			Function func;
+			if( funcmap.containsKey( goid ) ) {
+				func = funcmap.get( goid );
+			} else {
+				func = new Function( goid );
+				funcmap.put( goid, func );
+			}
+			gene.funcentries.add( func );
+
+			go = ngo;
+		}
+	}
 	
 	private void loci2aaseq( List<Set<String>> lclust, Map<String,Gene> refmap, Map<String,String> designations ) {
 		for( Set<String> clust : lclust ) {
@@ -488,16 +527,6 @@ public class GeneSet implements GenomeSet {
 					}
 				}
 				
-				String idstr = null;
-				int ids = name.lastIndexOf('(');
-				if( ids != -1 ) {
-					int eds = name.indexOf(')', ids+1);
-					if( eds != -1 ) {
-						idstr = name.substring(ids+1,eds);
-						name = name.substring(0, ids);
-					}
-				}
-				
 				String addname = "";
 				String newid = id;
 				//String neworigin = origin;
@@ -510,9 +539,16 @@ public class GeneSet implements GenomeSet {
 					if( l != -1 ) newid = map.substring(f+1,l);
 					if( n != -1 ) addname = ":" + map.substring(l+1,n).trim();
 					//if( e != -1 ) neworigin = map.substring(n+1,e).trim();
-				} else {
-					//System.err.print( id );
-					//System.err.println();
+				}
+
+				String idstr = null;
+				int ids = name.lastIndexOf('(');
+				if( ids != -1 ) {
+					int eds = name.indexOf(')', ids+1);
+					if( eds != -1 ) {
+						idstr = name.substring(ids+1,eds);
+						name = name.substring(0, ids);
+					}
 				}
 				
 				if( !refmap.containsKey(id) ) {
@@ -541,48 +577,7 @@ public class GeneSet implements GenomeSet {
 					gene.allids = new HashSet<>();
 					gene.allids.add( newid );
 					if( idstr != null ) {
-						int ec = idstr.indexOf("EC");
-						if( ec != -1 ) {
-							//int ecc = name.indexOf(')', ec+1);
-							//if( ecc == -1 ) ecc = name.length();
-							int k = ec+3;
-							if( k < idstr.length() ) {
-								char c = idstr.charAt(k);
-								while( (c >= '0' && c <= '9') || c == '.' ) {
-									c = idstr.charAt( k++ );
-									if( k == idstr.length() ) {
-										k++;
-										break;
-									}
-								}
-								gene.ecid = idstr.substring(ec+2, k-1).trim();
-							}
-						}
-					
-						int go = idstr.indexOf("GO:");
-						while( go != -1 ) {
-							int ngo = idstr.indexOf("GO:", go+1);
-							
-							if (gene.funcentries == null)
-								gene.funcentries = new HashSet<Function>();
-							
-							String goid;
-							if( ngo != -1 ) goid = idstr.substring(go, ngo);
-							else {
-								int ni = go+10;//Math.minname.indexOf(')', go+1);
-								goid = idstr.substring( go, ni );
-							}
-							Function func;
-							if( funcmap.containsKey( goid ) ) {
-								func = funcmap.get( goid );
-							} else {
-								func = new Function( goid );
-								funcmap.put( goid, func );
-							}
-							gene.funcentries.add( func );
-							
-							go = ngo;
-						}
+						ecgo(gene, idstr);
 					}
 					refmapPut( id, gene );
 					
@@ -611,50 +606,17 @@ public class GeneSet implements GenomeSet {
 						g.allids = new HashSet<>();
 						g.allids.add(newid);
 					}
+					idstr = null;
+					String aname = g.tegeval.getName();
+					ids = aname.lastIndexOf('(');
+					if( ids != -1 ) {
+						int eds = aname.indexOf(')', ids+1);
+						if( eds != -1 ) {
+							idstr = aname.substring(ids+1,eds);
+						}
+					}
 					if( idstr != null ) {
-						g.setIdStr( idstr );
-						int ec = idstr.indexOf("EC");
-						if( ec != -1 ) {
-							//int ecc = name.indexOf(')', ec+1);
-							//if( ecc == -1 ) ecc = name.length();
-							int k = ec+3;
-							if( k < idstr.length() ) {
-								char c = idstr.charAt(k);
-								while( (c >= '0' && c <= '9') || c == '.' ) {
-									c = idstr.charAt( k++ );
-									if( k == idstr.length() ) {
-										k++;
-										break;
-									}
-								}
-								g.ecid = idstr.substring(ec+2, k-1).trim();
-							}
-						}
-					
-						int go = idstr.indexOf("GO:");
-						while( go != -1 ) {
-							int ngo = idstr.indexOf("GO:", go+1);
-							
-							if (g.funcentries == null)
-								g.funcentries = new HashSet<Function>();
-							
-							String goid;
-							if( ngo != -1 ) goid = idstr.substring(go, ngo);
-							else {
-								int ni = go+10;//Math.minname.indexOf(')', go+1);
-								goid = idstr.substring( go, ni );
-							}
-							Function func;
-							if( funcmap.containsKey( goid ) ) {
-								func = funcmap.get( goid );
-							} else {
-								func = new Function( goid );
-								funcmap.put( goid, func );
-							}
-							g.funcentries.add( func );
-							
-							go = ngo;
-						}
+						ecgo(g,idstr);
 					}
 				}
 			}
@@ -832,67 +794,7 @@ public class GeneSet implements GenomeSet {
 				gene.allids = new HashSet<>();
 				gene.allids.add(newid);
 				if (idstr != null) {
-					int ec = idstr.indexOf("EC");
-					if (ec != -1) {
-						//int ecc = name.indexOf(')', ec+1);
-						//if( ecc == -1 ) ecc = name.length();
-						int k = ec + 3;
-						if (k < idstr.length()) {
-							char c = idstr.charAt(k);
-							while ((c >= '0' && c <= '9') || c == '.') {
-								c = idstr.charAt(k++);
-								if (k == idstr.length()) {
-									k++;
-									break;
-								}
-							}
-							gene.ecid = idstr.substring(ec + 2, k - 1).trim();
-						}
-
-									/*if( ecc > ec+3 ) {
-										gene.ecid = name.substring(ec+3, ecc).trim();
-									} else {
-										System.err.println();
-									}*/
-					}
-
-					int go = idstr.indexOf("GO:");
-					while (go != -1) {
-						int ngo = idstr.indexOf("GO:", go + 1);
-
-						if (gene.funcentries == null)
-							gene.funcentries = new HashSet<>();
-
-						String goid = null;
-						if (ngo != -1) goid = idstr.substring(go, ngo);
-						else {
-							int ni = go + 3;
-							while (ni < go + 10 && ni < idstr.length() && idstr.charAt(ni) >= '0' && idstr.charAt(ni) <= '9') {
-								ni++;
-							}
-							//int ni = go+10;//Math.minname.indexOf(')', go+1);
-							if (ni <= idstr.length()) {
-								goid = idstr.substring(go, ni);
-							}
-
-							while (goid.length() < 10) {
-								goid = "GO:0" + goid.substring(3);
-							}
-						}
-
-						if (goid != null) {
-							Function func;
-							if (funcmap.containsKey(goid)) {
-								func = funcmap.get(goid);
-							} else {
-								func = new Function(goid);
-								funcmap.put(goid, func);
-							}
-							gene.funcentries.add(func);
-						}
-
-						go = ngo;
-					}
+					ecgo(gene,idstr);
 				}
 				//gene.species = new HashMap<String, Teginfo>();
 
@@ -1076,14 +978,12 @@ public class GeneSet implements GenomeSet {
 					origin = contigstr.substring(0, n);
 					contloc = n < contigstr.length() ? contigstr.substring(n+1) : "";
 				}
-				
-				if( prevline != null ) {
-					i = prevline.lastIndexOf('#');
-					if( i != -1 ) {
-						u = prevline.indexOf(';', i+1);
-						if( u != -1 ) {
-							id = prevline.substring(u+1);
-						}
+
+				i = prevline.lastIndexOf('#');
+				if( i != -1 ) {
+					u = prevline.indexOf(';', i+1);
+					if( u != -1 ) {
+						id = prevline.substring(u+1);
 					}
 				}
 			}
@@ -1346,15 +1246,15 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public void testbmatrix(String str) throws IOException {
-		Set<String> testset = new HashSet<String>(Arrays.asList("1s", "2s", "3s", "4s"));
-		Map<Set<String>, Set<Map<String, Set<String>>>> clustermap = new HashMap<Set<String>, Set<Map<String, Set<String>>>>();
-		Set<Map<String, Set<String>>> smap = new HashSet<Map<String, Set<String>>>();
-		smap.add(new HashMap<String, Set<String>>());
-		smap.add(new HashMap<String, Set<String>>());
-		clustermap.put(new HashSet<String>(Arrays.asList("1s")), smap);
-		clustermap.put(new HashSet<String>(Arrays.asList("2s")), smap);
-		clustermap.put(new HashSet<String>(Arrays.asList("3s")), smap);
-		clustermap.put(new HashSet<String>(Arrays.asList("4s")), smap);
+		Set<String> testset = new HashSet<>(Arrays.asList("1s", "2s", "3s", "4s"));
+		Map<Set<String>, Set<Map<String, Set<String>>>> clustermap = new HashMap<>();
+		Set<Map<String, Set<String>>> smap = new HashSet<>();
+		smap.add(new HashMap<>());
+		smap.add(new HashMap<>());
+		clustermap.put(new HashSet<>(Collections.singletonList("1s")), smap);
+		clustermap.put(new HashSet<>(Collections.singletonList("2s")), smap);
+		clustermap.put(new HashSet<>(Collections.singletonList("3s")), smap);
+		clustermap.put(new HashSet<>(Collections.singletonList("4s")), smap);
 
 		BufferedImage img = bmatrix(testset, clustermap, "");
 
@@ -6578,7 +6478,7 @@ public class GeneSet implements GenomeSet {
 			if( split.length > 1 && genids.containsKey(split[1]) ) {
 				Gene gene = genids.get(split[1]);
 				if (gene.funcentries == null)
-					gene.funcentries = new HashSet<Function>();
+					gene.funcentries = new HashSet<>();
 				
 				Function func;
 				if( !funcmap.containsKey( split[2] ) ) {
@@ -6651,7 +6551,7 @@ public class GeneSet implements GenomeSet {
 			if (split.length > 1 && uniids.containsKey(split[0].trim())) {
 				Gene gene = uniids.get(split[0].trim());
 				if (gene.funcentries == null)
-					gene.funcentries = new HashSet<Function>();
+					gene.funcentries = new HashSet<>();
 				
 				for( String erm : split[1].trim().split("[\t ]+") ) {
 					Function func;
@@ -9387,7 +9287,7 @@ public class GeneSet implements GenomeSet {
 		}
 		if( genmap != null ) genmap.clear();
 		
-		Map<Function, Set<Gene>> totalgo = new HashMap<Function, Set<Gene>>();
+		Map<Function, Set<Gene>> totalgo = new HashMap<>();
 		for (Gene g : genelist) {
 			if (g.funcentries != null) {
 				for( Function f : g.funcentries) {
@@ -9395,7 +9295,7 @@ public class GeneSet implements GenomeSet {
 					if (totalgo.containsKey(f)) {
 						set = totalgo.get(f);
 					} else {
-						set = new HashSet<Gene>();
+						set = new HashSet<>();
 						totalgo.put(f, set);
 					}
 					set.add(g);
@@ -9796,15 +9696,15 @@ public class GeneSet implements GenomeSet {
 				}
 			}
 
-			String dbPath = "/home/sks17/tmp";
+			//String dbPath = "/home/sks17/tmp";
 			String tmpPath = "/tmp";
-			//String dbPath = "/Users/sigmar/tmp";
+			String dbPath = "/Users/sigmar/tmp";
 			 //"/mnt/csa/tmp/glow";
 
 			Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);
 
 			try(SparkSession spark = SparkSession.builder()
-					.master("spark://mimir.cs.hi.is:7077")
+					/*.master("spark://mimir.cs.hi.is:7077")
 					.config("spark.driver.memory","2g")
 					.config("spark.driver.cores",1)
 					.config("spark.executor.memory","16g")
@@ -9812,11 +9712,11 @@ public class GeneSet implements GenomeSet {
 					.config("spark.task.cpus",32)
 					.config("spark.executor.instances",5)
 					.config("spark.driver.host","mimir.cs.hi.is")
-					.config("spark.local.dir","/home/sks17/tmp")
+					.config("spark.local.dir","/home/sks17/tmp")*/
 					//.config("spark.submit.deployMode","cluster")
 
 					//.config("spark.jars","/home/sks17/jars/distann.jar,/home/sks17/jars/javafasta.jar")
-					//.master("local[*]")
+					.master("local[*]")
 					/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
                     .config("spark.submit.deployMode","cluster")
                     .config("spark.driver.memory","4g")
@@ -9841,13 +9741,13 @@ public class GeneSet implements GenomeSet {
 				//String makeblastdb = "/home/sks17/miniconda3/bin/makeblastdb";
 				//String envMap = "";
 
-				String blastp = "/home/sks17/ncbi-blast-2.10.1+/bin/blastp";
+				/*String blastp = "/home/sks17/ncbi-blast-2.10.1+/bin/blastp";
 				String makeblastdb = "/home/sks17/ncbi-blast-2.10.1+/bin/makeblastdb";
-				String envMap = "LD_LIBRARY_PATH=/home/sks17/glibc-2.14/lib/:/home/sks17/zlib-1.2.11/";
+				String envMap = "LD_LIBRARY_PATH=/home/sks17/glibc-2.14/lib/:/home/sks17/zlib-1.2.11/";*/
 
-				/*String blastp = "blastp";
+				String blastp = "blastp";
 				String makeblastdb = "makeblastdb";
-				String envMap = "";*/
+				String envMap = "";
 
 				Dataset<FastaSequence> allds = spark.createDataset(allSeqList, seqenc);
 				allds.coalesce(1).foreachPartition(new SparkMakedb(makeblastdb,envMap,dbPath));
