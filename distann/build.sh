@@ -1,0 +1,2 @@
+# ./gradlew installDist
+ /Library/Java/JavaVirtualMachines/jdk-15.jdk/Contents/Home/bin/jpackage --type pkg -i /Users/sigmar/sandbox/distann/build/install/distann --name geneset --app-version 125 --main-jar lib/distann.jar --main-class org.simmi.distann.DistAnn
