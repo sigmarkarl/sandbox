@@ -81,8 +81,8 @@ public class Neighbour {
 		
 		hteg = new ArrayList<>();
 		for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
-			for( Gene selectedGene : selectedGeneGroup.genes ) {
-				hteg.add( selectedGene.tegeval );
+			for( Annotation selectedGene : selectedGeneGroup.genes ) {
+				hteg.add( selectedGene );
 			}
 		}
 	}
@@ -94,8 +94,8 @@ public class Neighbour {
 		hteg.clear();
 		hteg = new ArrayList<>();
 		for( GeneGroup selectedGeneGroup : selectedGenesGroups ) {
-			for( Gene selectedGene : selectedGeneGroup.genes ) {
-				hteg.add( selectedGene.tegeval );
+			for( Annotation selectedGene : selectedGeneGroup.genes ) {
+				hteg.add( selectedGene );
 			}
 		}
 		/*speclist.clear();

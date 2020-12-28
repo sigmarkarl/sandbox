@@ -291,7 +291,7 @@ public class WSServer {
 						//Set<String> species = new HashSet<String>( specList );
 						
 						String trim = message.substring(6).trim();
-						Gene g = geneset.refmap.get( trim );
+						Gene g = geneset.refmap.get( trim ).getGene();
 						GeneGroup[] gg = { g.getGeneGroup() };
 						
 						Neighbour nb = new Neighbour( new HashSet<GeneGroup>( Arrays.asList(gg) ) );
@@ -445,7 +445,7 @@ public class WSServer {
 						String[] split = idlist.split(",");
 						StringBuilder sb = new StringBuilder();
 						for( String id : split ) {
-							Gene g = geneset.refmap.get(id);
+							Gene g = geneset.refmap.get(id).getGene();
 							if( g != null ) {
 								try {
 									g.getFasta( sb, false );

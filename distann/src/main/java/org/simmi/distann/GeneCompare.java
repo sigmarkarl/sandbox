@@ -1899,10 +1899,10 @@ public class GeneCompare {
 			
 			rs = genesethead.getGeneGroupTable().getSelectionModel().getSelectedItems().contains(gg);
 		} else {
-			for( Gene g : gg.genes ) {
+			for( Annotation a : gg.genes ) {
 				//r = genesethead.table.convertRowIndexToView( g.index );
 				//rs = genesethead.table.isRowSelected( r );
-				rs = genesethead.getGeneTable().getSelectionModel().getSelectedItems().contains(g);
+				rs = genesethead.getGeneTable().getSelectionModel().getSelectedItems().contains(a);
 				if( rs ) break;
 			}
 		}

@@ -134,8 +134,8 @@ public class ActionCollection {
 					if( ggset != null ) {
 						Set<GeneGroup> 	theset = new HashSet<GeneGroup>();
 						for( GeneGroup gg : ggset ) {
-							for( Gene g : gg.genes ) {
-								if( g.getMaxLength() >= 100 ) {
+							for( Annotation a : gg.genes ) {
+								if( a.getProteinLength() >= 100 ) {
 									theset.add( gg );
 									break;
 								}
@@ -159,22 +159,20 @@ public class ActionCollection {
 				
 				Set<GeneGroup> theset = new HashSet<GeneGroup>();
 				for( GeneGroup gg : ggset ) {
-					for( Gene g : gg.genes ) {
-						if( g.getMaxLength() >= 100 ) {
+					for( Annotation a : gg.genes ) {
+						if( a.getProteinLength() >= 100 ) {
 							theset.add( gg );
 							break;
 						}
 					}
 				}
-				
-				if( ggset != null ) {
-					pan.addAll( theset );
-					if( core.isEmpty() ) core.addAll( theset );
-					else core.retainAll( theset );
-				}
-				
-				restext.append( core.size()+", " );
-				restext.append( (pan.size()-core.size())+"]" );
+
+				pan.addAll( theset );
+				if( core.isEmpty() ) core.addAll( theset );
+				else core.retainAll( theset );
+
+				restext.append(core.size()).append(", ");
+				restext.append(pan.size() - core.size()).append("]");
 				
 				sbd.b.put( "Core: ", core.size() );
 				sbd.b.put( "Accessory: ", pan.size()-core.size() );
@@ -768,7 +766,7 @@ public class ActionCollection {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if(ann instanceof Tegeval) {
 							Tegeval tv = (Tegeval) ann;
-							String lowername = tv.getGene().getName().toLowerCase();
+							String lowername = tv.getName().toLowerCase();
 							if (ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu"))) {
 								//System.err.println( "eeeerm: "+tv.getSpecies() );
 								count++;
@@ -827,8 +825,9 @@ public class ActionCollection {
 							Tegeval tv = (Tegeval) ann;
 							int cc = 0;
 							//String spec = tv.getGene().getSpecies();
-							for (Gene g : tv.getGene().getGeneGroup().genes) {
-								if (g.getSpecies().equals(spec)) cc++;
+							for (Annotation a : tv.getGeneGroup().genes) {
+								Gene g = a.getGene();
+								if (g != null && g.getSpecies().equals(spec)) cc++;
 							}
 							if (cc >= 2) {
 								count++;
@@ -864,8 +863,9 @@ public class ActionCollection {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if(ann instanceof Tegeval) {
 							Tegeval tv = (Tegeval) ann;
-							for (Gene g : tv.getGene().getGeneGroup().genes) {
-								if ((g.funcentries != null && g.funcentries.size() > 0) || (g.ecid != null && g.ecid.length() > 0)) {
+							for (Annotation a : tv.getGeneGroup().genes) {
+								Gene g = a.getGene();
+								if ((g != null && g.funcentries != null && g.funcentries.size() > 0) || (g.ecid != null && g.ecid.length() > 0)) {
 									count++;
 									break;
 								}
@@ -1143,8 +1143,8 @@ public class ActionCollection {
 							Tegeval tv = (Tegeval) ann;
 							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null) {
 								boolean found = false;
-								for (Gene g : tv.getGene().getGeneGroup().genes) {
-
+								for (Annotation a : tv.getGeneGroup().genes) {
+									Gene g = a.getGene();
 									if (g.koid != null && g.koid.length() > 0) {
 										for (String pw : geneset.pathwaykomap.keySet()) {
 											Set<String> s = geneset.pathwaykomap.get(pw);
@@ -1252,13 +1252,14 @@ public class ActionCollection {
 							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null) {
 								if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null) {
 									boolean found = false;
-									for (Gene g : tv.getGene().getGeneGroup().genes) {
+									for (Annotation a : tv.getGeneGroup().genes) {
+										Gene g = a.getGene();
 										if (g.koid != null && g.koid.length() > 0) {
 											found = true;
 											break;
 										}
 
-										if (g.funcentries != null && !found) {
+										if (g.funcentries != null) {
 											for (Function f : g.funcentries) {
 												if (f.getKo() != null && f.getKo().length() > 0) {
 													found = true;
@@ -1279,7 +1280,7 @@ public class ActionCollection {
 									}
 
 									if (!found) {
-										for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+										for (Function f : tv.getGeneGroup().getFunctions()) {
 											if (f.getKo() != null && f.getKo().length() > 0) {
 												found = true;
 												break;
@@ -1288,7 +1289,7 @@ public class ActionCollection {
 									}
 
 									if (!found) {
-										for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+										for (Function f : tv.getGeneGroup().getFunctions()) {
 											for (String ko : geneset.ko2go.keySet()) {
 												Set<String> gos = geneset.ko2go.get(ko);
 												if (gos.contains(f.getGo())) {
@@ -1331,15 +1332,15 @@ public class ActionCollection {
 			int total = 0;
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
-					Set<Gene> gset = new HashSet<>();
+					Set<Annotation> gset = new HashSet<>();
 					for( Annotation ann : ct.getAnnotations() ) {
 						if(ann instanceof Tegeval) {
 							Tegeval tv = (Tegeval) ann;
 							int cc = 0;
 							//String spec = tv.getGene().getSpecies();
-							for (Gene g : tv.getGene().getGeneGroup().genes) {
-								if (g.getSpecies().equals(spec)) {
-									if (gset.add(g)) cc++;
+							for (Annotation a : tv.getGeneGroup().genes) {
+								if (a.getGene().getSpecies().equals(spec)) {
+									if (gset.add(a)) cc++;
 								}
 							}
 							if (cc >= 2) {
@@ -2369,8 +2370,9 @@ public class ActionCollection {
 					}
 					
 					if( gibtn.isSelected() ) {
-						for( Gene g : gg.genes ) {
-							if( g.genid != null ) {
+						for( Annotation a : gg.genes ) {
+							Gene g = a.getGene();
+							if( g != null && g.genid != null ) {
 								System.err.println( g.genid );
 								ids.add( g.genid );
 							}
@@ -3405,8 +3407,8 @@ public class ActionCollection {
 								if( tmp.size() > 0 ) {
 									int total = gg.size();
 									int p = 0;
-									for( Gene g : gg.genes ) {
-										if( g.getContig().isPlasmid() ) p++;
+									for( Annotation a : gg.genes ) {
+										if( a.getContig().isPlasmid() ) p++;
 									}
 									
 									if( gg.isOnAnyPlasmid() ) { //(float)p/(float)total > 0.9 ) { //gg.isOnAnyPlasmid() ) {
@@ -3466,8 +3468,8 @@ public class ActionCollection {
 								if( tmp.size() > 0 ) {
 									int total = gg.size();
 									int p = 0;
-									for( Gene g : gg.genes ) {
-										if( g.getContig().isPlasmid() ) p++;
+									for( Annotation a : gg.genes ) {
+										if( a.getContig().isPlasmid() ) p++;
 									}
 									
 									if( gg.isOnAnyPlasmid() ) { //(float)p/(float)total > 0.9 ) { //gg.isOnAnyPlasmid() ) {
@@ -3486,7 +3488,7 @@ public class ActionCollection {
 									if( map.containsKey( nohit ) ) k = map.get(nohit);
 									map.put( nohit, k+1 );
 								} else {
-									Set<String> tmp = new HashSet<String>( gg.species.keySet() );
+									Set<String> tmp = new HashSet<>(gg.species.keySet());
 									tmp.removeAll( selspec );
 									
 									if( tmp.size() < gg.species.size() ) {
@@ -3506,10 +3508,10 @@ public class ActionCollection {
 					Set<Character> sc = Cog.coggroups.get(s);
 					if( s.contains("METABOLISM") ) {
 						for( Character c : sc ) {
-							sb.append( "\t"+Cog.charcog.get(c) );
+							sb.append("\t").append(Cog.charcog.get(c));
 						}
 					} else {
-						sb.append( "\t"+s );
+						sb.append("\t").append(s);
 						if( sc.contains('V') ) {
 							sb.append( "\tDefence mechanism" );
 						}

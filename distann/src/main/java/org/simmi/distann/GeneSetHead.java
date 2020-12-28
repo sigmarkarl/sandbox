@@ -766,8 +766,9 @@ public class GeneSetHead {
 		File idf = new File(f, "idspec.txt");
 		BufferedWriter bw = new BufferedWriter( new FileWriter(idf) ); //Files.newBufferedWriter(idf.toPath(), OpenOption.);
 		for( String id : geneset.refmap.keySet() ) {
-			Gene g = geneset.refmap.get(id);
-			bw.write( id + "\t" + g.getSpecies() + "\n" );
+			Annotation a = geneset.refmap.get(id);
+			Gene g = a.getGene();
+			if(g != null) bw.write( id + "\t" + g.getSpecies() + "\n" );
 		}
 		bw.close();
 	}
@@ -927,13 +928,13 @@ public class GeneSetHead {
 				GeneGroup thegg = (GeneGroup)p;
 				for( GeneGroup gg : table.getSelectionModel().getSelectedItems() ) {
 					if( thegg.index == gg.index ) return true;
-					for( Gene g : gg.genes ) {
-						Annotation next = g.tegeval.getNext();
+					for( Annotation a : gg.genes ) {
+						Annotation next = a.getNext();
 						if( next != null ) {
 							GeneGroup ngg = next.getGene().getGeneGroup();
 							if( ngg != null ) if( thegg.index == ngg.index ) return true;
 						}
-						Annotation prev = g.tegeval.getPrevious();
+						Annotation prev = a.getPrevious();
 						if( prev != null ) {
 							GeneGroup pgg = prev.getGene().getGeneGroup();
 							if( pgg != null ) if( thegg.index == pgg.index ) return true;
@@ -962,13 +963,13 @@ public class GeneSetHead {
 						}
 					} else {
 						genefilterset.add(gg.index);
-						for (Gene g : gg.genes) {
-							Annotation next = g.tegeval.getNext();
+						for (Annotation a : gg.genes) {
+							Annotation next = a.getNext();
 							if (next != null) {
 								GeneGroup ngg = next.getGene().getGeneGroup();
 								if (ngg != null) if( thegene.index == ngg.index) return true;
 							}
-							Annotation prev = g.tegeval.getPrevious();
+							Annotation prev = a.getPrevious();
 							if (prev != null) {
 								GeneGroup pgg = prev.getGene().getGeneGroup();
 								if (pgg != null) if( thegene.index == pgg.index) return true;
@@ -2403,8 +2404,9 @@ public class GeneSetHead {
 			int i = 0;
 			if( table.getModel() == groupModel ) {
 				for( GeneGroup gg : geneset.allgenegroups ) {
-					for( Gene g : gg.genes ) {
-						if( g.refid.toLowerCase().contains(ustr) ) {
+					for( Annotation a : gg.genes ) {
+						Gene g = a.getGene();
+						if( g != null && g.refid.toLowerCase().contains(ustr) ) {
 							filterset.add(i);
 							break;
 						}
@@ -2971,9 +2973,9 @@ public class GeneSetHead {
             Serifier s = new Serifier();
             //s.mseq = aas;
             for( String gk : geneset.refmap.keySet() ) {
-                Gene g = geneset.refmap.get( gk );
-                if( g.tegeval.getAlignedSequence() != null ) System.err.println( g.tegeval.getAlignedSequence().getName() );
-                s.mseq.put( gk, g.tegeval.getAlignedSequence() );
+                Annotation a = geneset.refmap.get( gk );
+                //if( a.getAlignedSequence() != null ) System.err.println( g.tegeval.getAlignedSequence().getName() );
+                s.mseq.put( gk, a.getAlignedSequence() );
             }
 
             Map<String,String>	idspec = new HashMap<>();
@@ -2982,7 +2984,8 @@ public class GeneSetHead {
                     System.err.println( "coooonnnnnni " + idstr );
                 }
 
-                Gene gene = geneset.refmap.get( idstr );
+                Annotation a = geneset.refmap.get( idstr );
+                Gene gene = a.getGene();
                 idspec.put(idstr, gene.getSpecies());
             }
             //Sequences seqs = new Sequences(user, name, type, path, nseq)
@@ -3453,13 +3456,13 @@ public class GeneSetHead {
 							for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
 								//int i = table.convertRowIndexToModel(r);
 								//GeneGroup gg = geneset.allgenegroups.get(i);
-								Gene g = null;
-								for (Gene gene : gg.genes) {
-									g = gene;
+								Annotation a = null;
+								for (Annotation anno : gg.genes) {
+									a = anno;
 									break;
 								}
-								Sequence gs = g.tegeval.getProteinSequence();
-								gs.setName(g.id);
+								Sequence gs = a.getProteinSequence();
+								gs.setName(a.id);
 								gs.writeSequence(sb);
 							}
 						}
@@ -6285,8 +6288,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				if( !isGeneview() ) {
 					int i = 0;
 					for( GeneGroup gg : geneset.allgenegroups ) {
-						if( gg.genes != null ) for( Gene g : gg.genes ) {
-							if( seldes.equals(g.tegeval.designation) ) {
+						if( gg.genes != null ) for( Annotation a : gg.genes ) {
+							if( seldes.equals(a.designation) ) {
 								table.getSelectionModel().select(gg);
 							}
 						}
@@ -8335,24 +8338,24 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					if( !failed && d > 0 ) {
 						Set<GeneGroup> ggmap = new HashSet<>();
 						Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( false );
-						for( Gene gene : gg.genes ) {
-							if( ggmap.stream().flatMap( f -> f.genes.stream() ).noneMatch( p -> gene == p ) ) {
-								Set<Gene> ggset = new HashSet<>();
-								Sequence seq1 = gene.tegeval.getAlignedSequence();
-								for (Gene cgene : gg.genes) {
-									Sequence seq2 = cgene.tegeval.getAlignedSequence();
+						for( Annotation a : gg.genes ) {
+							if( ggmap.stream().flatMap( f -> f.genes.stream() ).noneMatch( p -> a == p ) ) {
+								Set<Annotation> ggset = new HashSet<>();
+								Sequence seq1 = a.getAlignedSequence();
+								for (Annotation ca : gg.genes) {
+									Sequence seq2 = ca.getAlignedSequence();
 									int[] tscore = GeneCompare.blosumValue(seq1, seq1, seq2, blosumMap);
 									int sscore = GeneCompare.blosumValue(seq1, seq2, blosumMap);
 
 									double dval = (double) (sscore - tscore[1]) / (double) (tscore[0] - tscore[1]);
 									if (dval > d) {
-										ggset.add(cgene);
+										ggset.add(ca);
 									}
 								}
 								System.err.println( ggset.size() );
 
 								Set<GeneGroup> osubgg = ggmap.stream().filter( f -> {
-									Set<Gene> gs = new HashSet<>(ggset); gs.retainAll(f.genes); return gs.size() > 0;
+									Set<Annotation> gs = new HashSet<>(ggset); gs.retainAll(f.genes); return gs.size() > 0;
 								}).collect(Collectors.toSet());
 								GeneGroup subgg;
 								if( osubgg.size() > 0 ) {
@@ -8400,7 +8403,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 							String filename = f.getFileName().toString();
 							return gg.genes.stream().anyMatch( g -> {
 								String fnid = filename.substring(0,filename.length()-3);
-								return g.name.equals(fnid);
+								return g.getName().equals(fnid);
 							});
 						}).forEach(p -> {
 							try {
@@ -8425,16 +8428,16 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 							}
 						}*/
 						final Path p = root.resolve("/aligned");
-						c.stream().forEach( fgg -> {
+						for (GeneGroup fgg : c) {
 							Path np = p.resolve(fgg.genes.iterator().next().getName());
 							try {
 								Writer w = Files.newBufferedWriter(np);
-								fgg.getFasta( w, false );
+								fgg.getFasta(w, false);
 								w.close();
 							} catch (IOException e1) {
 								e1.printStackTrace();
 							}
-						});
+						}
 						break;
 					}
 					geneset.zipfilesystem.close();
@@ -8462,7 +8465,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			try {
 				geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
 				for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-					for( Gene g : gg.genes ) {
+					for( Annotation a : gg.genes ) {
+						Gene g = a.getGene();
 						if( g.keggpathway != null ) {
 							String sub = g.keggpathway.substring(0,3);
 							Path subf = root.resolve(sub);
@@ -8487,8 +8491,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 
 			if( !shown ) {
-				for( Gene g : gg.genes ) {
-					if (g.keggpathway != null) {
+				for( Annotation a : gg.genes ) {
+					Gene g = a.getGene();
+					if (g != null && g.keggpathway != null) {
 						String[] keggsplit = g.keggpathway.split(";");
 						Arrays.stream(keggsplit).map( s -> s.split(":")[0] ).findFirst().ifPresent(c -> {
 							try {
@@ -9895,7 +9900,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		Set<String> ct = new HashSet<>();
  		for (Gene gg : table.getSelectionModel().getSelectedItems()) {
 			GeneGroup ggroup = gg.getGeneGroup();
-			for( Gene g : ggroup.genes ) {
+			for( Annotation a : ggroup.genes ) {
+				Gene g = a.getGene();
 				ct.add( g.refid );
 			}
 			// genefilterset.add( gg.index );
