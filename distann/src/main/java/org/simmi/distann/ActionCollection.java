@@ -645,7 +645,7 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						if( ann.type != null && ann.type.contains("rna") ) count++;
+						if( ann.type != null && ann.type.toLowerCase().contains("rna") ) count++;
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -670,7 +670,7 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						if( ann.type != null && ann.type.contains("rrna") ) count++;
+						if( ann.type != null && ann.type.toLowerCase().contains("rrna") ) count++;
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -695,12 +695,9 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						if(ann instanceof Tegeval) {
-							Tegeval tv = (Tegeval) ann;
-							String lowername = tv.getGene().getName().toLowerCase();
-							if (ann.type != null && ann.type.contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")))
-								count++;
-						}
+						String lowername = ann.getName().toLowerCase();
+						if (ann.type != null && ann.type.toLowerCase().contains("rrna") && (lowername.contains("5s") || lowername.contains("tsu")))
+							count++;
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -725,20 +722,17 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						if(ann instanceof Tegeval) {
-							Tegeval tv = (Tegeval) ann;
-							boolean rrna = ann.type != null && ann.type.contains("rrna");
-							String lowername = tv.getGene().getName().toLowerCase();
-							boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
+						boolean rrna = ann.type != null && ann.type.toLowerCase().contains("rrna");
+						String lowername = ann.getName().toLowerCase();
+						boolean ssu16s = lowername.contains("16s") || lowername.contains("ssu");
 
-							if (rrna /*^ ssu16s*/) {
-								System.err.println("16S erm: " + spec + "  " + tv.getGene().getName() + " bbo " + ssu16s);
-							}
+						if (rrna /*^ ssu16s*/) {
+							System.err.println("16S erm: " + spec + "  " + ann.getName() + " bbo " + ssu16s);
+						}
 
-							if (rrna && ssu16s) {
-								//System.err.println( spec + " " + tv.getGene().getName() );
-								count++;
-							}
+						if (rrna && ssu16s) {
+							//System.err.println( spec + " " + tv.getGene().getName() );
+							count++;
 						}
 					}
 					total += ct.getAnnotations().size();
@@ -764,13 +758,10 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						if(ann instanceof Tegeval) {
-							Tegeval tv = (Tegeval) ann;
-							String lowername = tv.getName().toLowerCase();
-							if (ann.type != null && ann.type.contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu"))) {
-								//System.err.println( "eeeerm: "+tv.getSpecies() );
-								count++;
-							}
+						String lowername = ann.getName().toLowerCase();
+						if (ann.type != null && ann.type.toLowerCase().contains("rrna") && (lowername.contains("23s") || lowername.contains("lsu"))) {
+							//System.err.println( "eeeerm: "+tv.getSpecies() );
+							count++;
 						}
 					}
 					total += ct.getAnnotations().size();
@@ -796,7 +787,7 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						if( ann.type != null && ann.type.contains("trna") ) count++;
+						if( ann.type != null && ann.type.toLowerCase().contains("trna") ) count++;
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -825,7 +816,8 @@ public class ActionCollection {
 							Tegeval tv = (Tegeval) ann;
 							int cc = 0;
 							//String spec = tv.getGene().getSpecies();
-							for (Annotation a : tv.getGeneGroup().genes) {
+							GeneGroup gg = tv.getGeneGroup();
+							if(gg!=null) for (Annotation a : gg.genes) {
 								Gene g = a.getGene();
 								if (g != null && g.getSpecies().equals(spec)) cc++;
 							}
@@ -863,7 +855,8 @@ public class ActionCollection {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if(ann instanceof Tegeval) {
 							Tegeval tv = (Tegeval) ann;
-							for (Annotation a : tv.getGeneGroup().genes) {
+							GeneGroup gg = tv.getGeneGroup();
+							if(gg!=null) for (Annotation a : gg.genes) {
 								Gene g = a.getGene();
 								if ((g != null && g.funcentries != null && g.funcentries.size() > 0) || (g.ecid != null && g.ecid.length() > 0)) {
 									count++;
@@ -1338,7 +1331,8 @@ public class ActionCollection {
 							Tegeval tv = (Tegeval) ann;
 							int cc = 0;
 							//String spec = tv.getGene().getSpecies();
-							for (Annotation a : tv.getGeneGroup().genes) {
+							GeneGroup gg = tv.getGeneGroup();
+							if(gg!=null) for (Annotation a : gg.genes) {
 								if (a.getGene().getSpecies().equals(spec)) {
 									if (gset.add(a)) cc++;
 								}

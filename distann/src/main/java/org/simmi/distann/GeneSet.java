@@ -8037,7 +8037,7 @@ public class GeneSet implements GenomeSet {
 		return cogmap;
 	}*/
 	
-	Map<String, Annotation> 			refmap = new HashMap<>();
+	Map<String, Annotation> 	refmap = new HashMap<>();
 	Map<String, Gene> 			genmap = new HashMap<>();
 	Map<String, Gene> 			unimap = new HashMap<>();
 	Map<String, Gene> 			gimap = new HashMap<>();
@@ -8049,6 +8049,9 @@ public class GeneSet implements GenomeSet {
 	Map<String, Gene> 			locgene = new HashMap<>();
 
 	Map<String,String>			locusidmap = new HashMap<>();
+
+	Map<String,GeneGroup>		trna = new HashMap<>();
+	Map<String,GeneGroup>		rrna = new HashMap<>();
 	
 	Path		zippath;
 	//File		zipfile;
@@ -8146,7 +8149,7 @@ public class GeneSet implements GenomeSet {
 		}
 
 		Map<String,Path> annoset = new HashMap<>();
-		//annoset.put("CDS", null);
+		annoset.put("CDS", null);
 		annoset.put("tRNA", null);
 		annoset.put("rRNA", null);
 		annoset.put("mRNA", null);
@@ -8651,10 +8654,37 @@ public class GeneSet implements GenomeSet {
 					a.setGeneGroup(gg);
 				}
 			} else {
-				GeneGroup gg = new GeneGroup(GeneSet.this, i++, specset, cogmap, pfammap, ko2name, biosystemsmap);
-				ggList.add(gg);
+				GeneGroup gg;
+				if("trna".equalsIgnoreCase(a.type)) {
+					String name = a.getName();
+					int k = name.indexOf('(');
+					if (k != -1) name = name.substring(0, k);
+					if (trna.containsKey(name)) {
+						gg = trna.get(name);
+					} else {
+						gg = new GeneGroup(GeneSet.this, i++, specset, cogmap, pfammap, ko2name, biosystemsmap);
+						ggList.add(gg);
+						gg.setGroupCount(1);
+						trna.put(name, gg);
+					}
+				} else if("rrna".equalsIgnoreCase(a.type)) {
+					String name = a.getName();
+					int k = name.indexOf('(');
+					if(k!=-1) name = name.substring(0,k);
+					if(rrna.containsKey(name)) {
+						gg = rrna.get(name);
+					} else {
+						gg = new GeneGroup(GeneSet.this, i++, specset, cogmap, pfammap, ko2name, biosystemsmap);
+						ggList.add(gg);
+						gg.setGroupCount(1);
+						rrna.put(name, gg);
+					}
+				} else {
+					gg = new GeneGroup(GeneSet.this, i++, specset, cogmap, pfammap, ko2name, biosystemsmap);
+					ggList.add(gg);
+					gg.setGroupCount(1);
+				}
 				a.setGeneGroup(gg);
-				gg.setGroupCount(1);
 			}
 		}
 		//}
