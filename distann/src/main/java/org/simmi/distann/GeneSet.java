@@ -554,7 +554,7 @@ public class GeneSet implements GenomeSet {
 				if( !refmap.containsKey(id) ) {
 					Tegeval tv = new Tegeval();
 					Sequence contig = null;
-					if( contigmap.containsKey( contigstr ) ) {
+					if( contigstr != null && contigmap.containsKey( contigstr ) ) {
 						contig = contigmap.get( contigstr );
 					}/* else {
 						 contig = new Contig( contigstr );
@@ -8980,7 +8980,8 @@ public class GeneSet implements GenomeSet {
 				System.err.println( c );
 				int im = 0;
 				if( c.getAnnotations() != null ) for( Annotation tv : c.getAnnotations() ) {
-					if (!tv.getContig().equals(c)) {
+					Sequence contig = tv.getContig();
+					if (contig != null && !contig.equals(c)) {
 						System.err.println("contig replacement " + tv);
 						tv.setContig(c);
 					}
@@ -9752,7 +9753,7 @@ public class GeneSet implements GenomeSet {
 
 			//String dbPath = "/home/sks17/tmp";
 			String tmpPath = "/tmp";
-			String dbPath = "/Users/sigmar/tmp";
+			String dbPath = "/Users/sigmarkarl/tmp";
 			 //"/mnt/csa/tmp/glow";
 
 			Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);
@@ -9818,16 +9819,14 @@ public class GeneSet implements GenomeSet {
 				//s.mseq = aas;
 				for( String gk : refmap.keySet() ) {
 					Annotation a = refmap.get( gk );
-					Gene g = a.getGene();
-					if( g.tegeval.getAlignedSequence() != null ) System.err.println( g.tegeval.getAlignedSequence().getName() );
-					s.mseq.put( gk, g.tegeval.getAlignedSequence() );
+					s.mseq.put( gk, a.getAlignedSequence() );
 				}
 
 				Map<String,String>	idspec = new HashMap<>();
 				for( String idstr : refmap.keySet() ) {
 					Annotation a = refmap.get( idstr );
 					Gene gene = a.getGene();
-					idspec.put(idstr, gene.getSpecies());
+					if(gene!=null) idspec.put(idstr, gene.getSpecies());
 				}
 
 				Map<String, String> env = new HashMap<>();

@@ -5349,13 +5349,13 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                     //BufferedWriter fw = Files.newBufferedWriter( p );
                     List<Sequence> clist = geneset.speccontigMap.get( spec );
 
-                    Map<String,List<Annotation>> mapan = new HashMap<String,List<Annotation>>();
+                    Map<String,List<Annotation>> mapan = new HashMap<>();
                     Serifier serifier = new Serifier();
                     for( Sequence c : clist ) {
                         serifier.addSequence(c);
                         serifier.mseq.put(c.getName(), c);
 
-                        List<Annotation> lann = new ArrayList<Annotation>();
+                        List<Annotation> lann = new ArrayList<>();
                         if( c.getAnnotations() != null ) for( Annotation ann : c.getAnnotations() ) {
                             Tegeval tv = (Tegeval)ann;
 
