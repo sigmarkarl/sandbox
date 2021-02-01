@@ -93,7 +93,7 @@ public class GeneCompare {
 		});
 		JScrollPane	sp = new JScrollPane( cseltable );
 		JOptionPane.showMessageDialog(comp, sp);
-		contigs = new ArrayList<Sequence>();
+		contigs = new ArrayList<>();
 		for( int r : cseltable.getSelectedRows() ) {
 			int i = cseltable.convertRowIndexToModel(r);
 			Sequence ctg = lcont.get( i );
@@ -870,15 +870,9 @@ public class GeneCompare {
             for( Annotation tv2 : gene2s.tset ) {
                 Sequence seq2 = tv2.getAlignedSequence();
                 
-                if( seq == null || seq2 == null ) {
-                	System.err.println();	
-                } else {
+                if(seq2 != null) {
 	                int sscore = blosumValue( seq, seq2, blosumap );
 	                if( sscore > score ) score = sscore;
-	                
-	                if( seq == seq2 && sscore != tscore ) {
-	                	//System.err.println();
-	                }
                 }
             }
             int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
@@ -1811,7 +1805,18 @@ public class GeneCompare {
 						}
 					} else {
 						List<Annotation> lann = ctg.getAnnotations();
-						for( Annotation ann : lann ) {
+						for(Annotation tv : lann) {
+							Sequence seq = tv.getAlignedSequence();
+							Gene gene = tv.getGene();
+							GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
+
+							if( gg != null ) {
+								subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
+							}
+							count++;
+							prev = tv;
+						}
+						/*for( Annotation ann : lann ) {
 							Annotation tv = ann;
 							Sequence seq = tv.getAlignedSequence();
 							Gene gene = tv.getGene();
@@ -1821,12 +1826,14 @@ public class GeneCompare {
 								System.err.println( "commonname large " + gg.getCommonName() );
 							} else {
 								//System.err.println( "commonname small " + gg.getCommonName() );
-							}*/
+							}*
 							
-							if( gg != null ) subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
+							if( gg != null ) {
+								subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
+							}
 							count++;
 							prev = tv;
-						}
+						}*/
 					}
 				
 					/*double theta = count*Math.PI*2.0/(total+ptotal);
@@ -2160,7 +2167,7 @@ public class GeneCompare {
 					Color color = Color.red;
 					if( spec1 != null ) {
 						if( blosumap != null ) {
-							color = blosumColor(seq, spec2, gg, blosumap, rs);
+							color = Color.blue;//blosumColor(seq, spec2, gg, blosumap, rs);
 						} else if( gcskewcol.isSelected() ) {
 							Teginfo gene2s = gg.getGenes( spec2 );
 	                        for( Annotation tv2 : gene2s.tset ) {

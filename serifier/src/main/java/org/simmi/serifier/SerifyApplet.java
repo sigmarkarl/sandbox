@@ -45,13 +45,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -115,6 +109,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+
 public class SerifyApplet {
 
 	TableView<Sequences> table;
@@ -126,6 +122,11 @@ public class SerifyApplet {
 	Map<Path,Sequences> mseq = new HashMap<>();
 	
 	public String user;
+
+	Thread watcherThread = null;
+	Map<Path, Path> watchMap = new HashMap<>();
+	WatchService watcher = null;
+	Path filesInEdit = null;
 	
 	public SerifyApplet( FileSystem fs, boolean noseq ) {
 		this();
@@ -2332,6 +2333,47 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 			}
 		});
 	}
+
+	private void startWatcherThread() {
+		watcherThread = new Thread(() -> {
+			while (true) {
+				WatchKey key;
+				try {
+					key = watcher.take();
+				} catch (InterruptedException x) {
+					watcherThread = null;
+					return;
+				}
+
+				try {
+					for (WatchEvent<?> event : key.pollEvents()) {
+						WatchEvent.Kind<?> kind = event.kind();
+						if (kind == ENTRY_MODIFY) {
+							WatchEvent<Path> ev = (WatchEvent<Path>) event;
+							Path savedpath = ev.context();
+							Path pathToSave = filesInEdit.resolve(savedpath);
+
+							Optional<Path> remotepath = watchMap.entrySet().stream().filter(e -> e.getValue().equals(pathToSave)).map(Map.Entry::getKey).findFirst();
+							if (remotepath.isPresent()) {
+								Files.copy(pathToSave, remotepath.get(), StandardCopyOption.REPLACE_EXISTING);
+							}
+						}
+					}
+				} catch (IOException e) {
+					watcherThread = null;
+					key.reset();
+					throw new RuntimeException("Invalid path", e);
+				}
+
+				boolean valid = key.reset();
+				if (!valid) {
+					break;
+				}
+			}
+		});
+		watcherThread.setDaemon(true);
+		watcherThread.start();
+	}
 	
 	public void init( final Container c, final VBox vbox, String tuser ) {
 		nrun.cnt = c;
@@ -2389,11 +2431,121 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		TableColumn<Sequences, Integer> nseqcol = new TableColumn<>("NSeq");
 		nseqcol.setCellValueFactory( new PropertyValueFactory<>("nSeq"));
 		table.getColumns().add( nseqcol );
+		TableColumn<Sequences, Integer> metadatacol = new TableColumn<>("Metadata");
+		metadatacol.setCellValueFactory( new PropertyValueFactory<>("metadata"));
+		table.getColumns().add( metadatacol );
 		
 		ObservableList<Sequences> sequences = initSequences();
 		initMachines();
 		serifier.setSequencesList( sequences );
 		table.setItems( sequences );
+
+
+
+		ContextMenu ctxm = new ContextMenu();
+
+		MenuItem emd = new MenuItem("Edit metadata");
+		emd.setOnAction( e -> {
+			Path ec = table.getSelectionModel().getSelectedItem().getPath();
+			Path path = ec.resolveSibling(ec.getFileName().toString()+".yaml");
+
+			var defaultMeta = """
+					topology: circular
+					comment: 'Matis comment'
+					consortium: 'consortium'
+					sra:
+					    - accession: 'MAT2789'
+					tp_assembly: true
+					organism:
+					    genus_species: 'Thermus thermophilus'
+					    strain: 'replaceme'
+					contact_info:
+					    last_name: 'Stefansson'
+					    first_name: 'Sigmar'
+					    email: 'sigmarkarl@gmail.com'
+					    organization: 'Matis'
+					    department: 'Department of Microbiology'
+					    phone: '354-857-5049'
+					    street: 'Vínlandsleið 8'
+					    city: 'Reykjavík'
+					    postal_code: '110'
+					    country: 'Iceland'
+					   \s
+					authors:
+					    -     author:
+					            first_name: 'Sigmar'
+					            last_name: 'Stefánsson'
+					            middle_initial: 'K'
+					    -     author:
+					            first_name: 'Guðmundur'
+					            last_name: 'Hreggviðsson'
+					bioproject: 'PRJNA9999999'
+					biosample: 'SAMN99999999'     \s
+					# -- Locus tag prefix - optional. Limited to 9 letters. Unless the locus tag prefix was officially assigned by NCBI, ENA, or DDBJ, it will be replaced upon submission of the annotation to NCBI and is therefore temporary and not to be used in publications. If not provided, pgaptmp will be used.
+					#locus_tag_prefix: 'tmp'
+					#publications:
+					#    - publication:
+					#        pmid: 16397293
+					#        title: 'Discrete CHARMm of Klebsiella foobarensis. Journal of Improbable Results, vol. 34, issue 13, pages: 10001-100005, 2018'
+					#        status: published  # this is enum: controlled vocabulary
+					#        authors:
+					#            - author:
+					#                first_name: 'Sigmar'
+					#                last_name: ''
+					#                middle_initial: 'T'
+					#            - author:
+					#                  first_name: 'Linda'
+					#                  last_name: 'Hamilton'
+				     
+					""";
+
+			try {
+				if(!Files.exists(path)) {
+					Files.writeString(path, defaultMeta);
+				}
+
+				Optional<Path> openpath;
+				if (watchMap.containsKey(path)) {
+					openpath = Optional.of(watchMap.get(path));
+				} else {
+					if (watcher == null) {
+						filesInEdit = Files.createTempDirectory("tmp");
+						watcher = FileSystems.getDefault().newWatchService();
+						WatchKey k = filesInEdit.register(watcher, ENTRY_MODIFY);
+					}
+
+					String filename = path.getFileName().toString();
+					Path tmpfile = Files.createTempFile(filesInEdit, "tmp", filename);
+
+					watchMap.put(path, tmpfile);
+					Files.copy(path, tmpfile, StandardCopyOption.REPLACE_EXISTING);
+					Desktop.getDesktop().open(tmpfile.toFile());
+					openpath = Optional.of(tmpfile);
+
+					if (watcherThread == null) startWatcherThread();
+				}
+				Desktop.getDesktop().open(openpath.get().toFile());
+			} catch (IOException ie) {
+				throw new RuntimeException("Invalid path: " + path, ie);
+			}
+			/*try {
+				Path m = Files.createTempFile("stuff",".yaml");
+				if(!Files.exists(sib)) {
+					Files.writeString(m, defaultMeta);
+				} else {
+					Files.copy(sib, m);
+				}
+				Desktop.getDesktop().open(m.toFile());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}*/
+		});
+		ctxm.getItems().add(emd);
+
+
+		table.setContextMenu(ctxm);
+
+
 		//TableModel model = createModel( sequences, Sequences.class );
 		//table.setModel( model );
 		
@@ -4387,29 +4539,18 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 	
 	public void updateSequences( final Sequences seqs ) {
 		AccessController.doPrivileged((PrivilegedAction<String>) () -> {
-            new Thread() {
-                public void run() {
-                    boolean succ = true;
-                    try {
-                        InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
-                        if( is == null ) succ = false;
-                        else is.close();
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                        succ = false;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        succ = false;
-                    } catch( Exception e ) {
-                        e.printStackTrace();
-                        succ = false;
-                    }
+            new Thread(() -> {
+				try {
+					InputStream is = Files.newInputStream( seqs.getPath(), StandardOpenOption.READ );
+					is.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 
-                    /*if( succ ) {
-                        table.tableChanged( new TableModelEvent( table.getModel() ) );
-                    }*/
-                }
-            }.start();
+				/*if( succ ) {
+					table.tableChanged( new TableModelEvent( table.getModel() ) );
+				}*/
+			}).start();
 
             return null;
         });

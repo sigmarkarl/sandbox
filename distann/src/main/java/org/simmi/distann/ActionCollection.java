@@ -132,7 +132,7 @@ public class ActionCollection {
 					Set<GeneGroup> 	ggset = geneset.specGroupMap.get( spec );
 					
 					if( ggset != null ) {
-						Set<GeneGroup> 	theset = new HashSet<GeneGroup>();
+						Set<GeneGroup> 	theset = new HashSet<>();
 						for( GeneGroup gg : ggset ) {
 							for( Annotation a : gg.genes ) {
 								if( a.getProteinLength() >= 100 ) {
@@ -157,7 +157,7 @@ public class ActionCollection {
 				restext.append( ",\n['"+sbd.name+"', " );
 				Set<GeneGroup> ggset = geneset.specGroupMap.get( spec );
 				
-				Set<GeneGroup> theset = new HashSet<GeneGroup>();
+				Set<GeneGroup> theset = new HashSet<>();
 				for( GeneGroup gg : ggset ) {
 					for( Annotation a : gg.genes ) {
 						if( a.getProteinLength() >= 100 ) {
@@ -517,7 +517,6 @@ public class ActionCollection {
 			}
 			
 			int len = 0;
-			if( lcont != null )
 			for( Sequence ct : lcont ) {
 				len += ct.length();
 			}
@@ -819,7 +818,7 @@ public class ActionCollection {
 							GeneGroup gg = tv.getGeneGroup();
 							if(gg!=null) for (Annotation a : gg.genes) {
 								Gene g = a.getGene();
-								if (g != null && g.getSpecies().equals(spec)) cc++;
+								if (g != null && g.getSpecies() != null && g.getSpecies().equals(spec)) cc++;
 							}
 							if (cc >= 2) {
 								count++;
@@ -1333,7 +1332,8 @@ public class ActionCollection {
 							//String spec = tv.getGene().getSpecies();
 							GeneGroup gg = tv.getGeneGroup();
 							if(gg!=null) for (Annotation a : gg.genes) {
-								if (a.getGene().getSpecies().equals(spec)) {
+								Gene g = a.getGene();
+								if (g != null && g.getSpecies() != null && g.getSpecies().equals(spec)) {
 									if (gset.add(a)) cc++;
 								}
 							}
@@ -1470,7 +1470,7 @@ public class ActionCollection {
 				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 				f.setSize(500, 500);
 
-				final Map<Integer,Integer>	frqmap = new TreeMap<Integer,Integer>();
+				final Map<Integer,Integer>	frqmap = new TreeMap<>();
 				//int i = 0;
 				Set<String> ss = new HashSet<String>();
 				//Set<String> gs = new HashSet<String>();
