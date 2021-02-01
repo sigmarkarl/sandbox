@@ -9664,7 +9664,7 @@ public class GeneSet implements GenomeSet {
 
 	float id;
 	float len;
-	public void clusterGenes( Collection<String> species, boolean headless ) {
+	public void clusterGenes( Collection<String> species, boolean headless ) throws IOException {
 		if( zippath != null ) {
 		//SwingUtilities.invokeAndWait(() -> {
 			JPanel panel = new JPanel();
@@ -9751,9 +9751,13 @@ public class GeneSet implements GenomeSet {
 				}
 			}
 
+			String userhome = System.getProperty("user.home");
+			Path userpath = Paths.get(userhome);
+			Path usertmp = userpath.resolve("tmp");
+			Files.createDirectories(usertmp);
 			//String dbPath = "/home/sks17/tmp";
-			String tmpPath = "/tmp";
-			String dbPath = "/home/sigmar/tmp";
+			String tmpPath = System.getProperty("java.io.tmpdir");
+			String dbPath = usertmp.toString();
 			 //"/mnt/csa/tmp/glow";
 
 			Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);
