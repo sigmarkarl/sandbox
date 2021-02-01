@@ -9751,9 +9751,13 @@ public class GeneSet implements GenomeSet {
 				}
 			}
 
+			String userhome = System.getProperty("user.home");
+			Path userpath = Paths.get(userhome);
+			Path usertmp = userpath.resolve("tmp");
+			Files.createDirectories(usertmp);
 			//String dbPath = "/home/sks17/tmp";
-			String tmpPath = "/tmp";
-			String dbPath = "/Users/sigmarkarl/tmp";
+			String tmpPath = System.getProperty("java.io.tmpdir");
+			String dbPath = usertmp.toString();
 			 //"/mnt/csa/tmp/glow";
 
 			Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);
