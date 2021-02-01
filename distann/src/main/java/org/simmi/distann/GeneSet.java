@@ -9753,7 +9753,7 @@ public class GeneSet implements GenomeSet {
 
 			//String dbPath = "/home/sks17/tmp";
 			String tmpPath = "/tmp";
-			String dbPath = "/Users/sigmarkarl/tmp";
+			String dbPath = "/home/sigmar/tmp";
 			 //"/mnt/csa/tmp/glow";
 
 			Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);

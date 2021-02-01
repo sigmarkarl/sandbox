@@ -14,6 +14,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -250,7 +251,8 @@ public class SyntGrad {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ImageIO.write(bi, "png", new File("/Users/sigmar/synt.png"));
+					var userhome = System.getProperty("user.home");
+					ImageIO.write(bi, "png", Paths.get(userhome).resolve("synt.png").toFile());
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}

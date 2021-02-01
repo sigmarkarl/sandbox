@@ -19,6 +19,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
@@ -341,7 +342,8 @@ public class GeneCompare {
 			public void actionPerformed(ActionEvent e) {
 				boolean succ = true;
 				try {
-					ImageIO.write(bimg, "png", new File("/Users/sigmar/cir.png") );
+					var userhome = System.getProperty("user.home");
+					ImageIO.write(bimg, "png", Paths.get(userhome).resolve("cir.png").toFile());
 				} catch(Exception e1) {
 					succ = false;
 					e1.printStackTrace();
