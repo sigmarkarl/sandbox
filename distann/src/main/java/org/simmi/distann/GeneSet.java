@@ -9664,7 +9664,7 @@ public class GeneSet implements GenomeSet {
 
 	float id;
 	float len;
-	public void clusterGenes( Collection<String> species, boolean headless ) {
+	public void clusterGenes( Collection<String> species, boolean headless ) throws IOException {
 		if( zippath != null ) {
 		//SwingUtilities.invokeAndWait(() -> {
 			JPanel panel = new JPanel();
