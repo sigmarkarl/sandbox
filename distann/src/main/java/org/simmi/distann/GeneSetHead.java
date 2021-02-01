@@ -2905,8 +2905,12 @@ public class GeneSetHead {
                     epar = null;*/
 
                 Set<String> species = getSelspec(null, geneset.getSpecies(), null);
-                geneset.clusterGenes( species, true );
-                //}
+				try {
+					geneset.clusterGenes( species, true );
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				//}
             });
 		});
 		MenuItem	alignclusters = new MenuItem("Align clusters");
