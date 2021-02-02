@@ -1377,8 +1377,7 @@ public class GeneCompare {
 				}
 			}
 		}
-		double ratio2 = count2 == total2 ? -1.0 : (double)count2/(double)total2;
-		return ratio2;
+		return count2 == total2 ? -1.0 : (double)count2/(double)total2;
 	}
 	
 	public static double invertedGradientRatio( String spec2, Collection<Sequence> contigs2, double ratio, GeneGroup gg, Annotation tv ) {

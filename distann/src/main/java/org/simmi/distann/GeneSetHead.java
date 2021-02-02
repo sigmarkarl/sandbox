@@ -699,12 +699,22 @@ public class GeneSetHead {
 			scrollBarOne.valueProperty().bindBidirectional(scrollBarTwo.valueProperty());
 			results.selectionModelProperty().bindBidirectional(table.selectionModelProperty());
 
-			results.onMouseClickedProperty().addListener((observable, oldValue, newValue) -> {
+			results.setOnMouseClicked(event -> sortedData.comparatorProperty().bind(results.comparatorProperty()));
+			table.setOnMouseClicked(event -> sortedData.comparatorProperty().bind(table.comparatorProperty()));
+
+			/*results.onMouseClickedProperty().addListener((observable, oldValue, newValue) -> {
 				sortedData.comparatorProperty().bind(results.comparatorProperty());
 			});
 			table.onMouseClickedProperty().addListener((observable, oldValue, newValue) -> {
 				sortedData.comparatorProperty().bind(table.comparatorProperty());
 			});
+
+			results.onMousePressedProperty().addListener((observable, oldValue, newValue) -> {
+				sortedData.comparatorProperty().bind(results.comparatorProperty());
+			});
+			table.onMousePressedProperty().addListener((observable, oldValue, newValue) -> {
+				sortedData.comparatorProperty().bind(table.comparatorProperty());
+			});*/
 
 			table.setItems( sortedData );
 			results.setItems( sortedData );
@@ -712,6 +722,8 @@ public class GeneSetHead {
 			//Bindings.
 			//sortedData.comparatorProperty().bindBidirectional(sortedData2.comparatorProperty());
 			sortedData.comparatorProperty().bind(table.comparatorProperty());
+			//sortedData.comparatorProperty().bind(results.comparatorProperty());
+			//sortedData.comparatorProperty().bind
 			//sortedData2.comparatorProperty().bind(results.comparatorProperty());
 
 
@@ -6384,17 +6396,20 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			if( spec.equals("All") ) {
 				cell.setStyle( "-fx-background-color: green" );
 				for( Annotation tv : ti.tset ) {
-					String tspec = tv.getGene().getSpecies();
-					List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
-					GeneGroup gg = tv.getGene().getGeneGroup();
-					double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
-					if( ratio == -1 ) {
-						ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
-						cell.setStyle( "-fx-background-color: "+colorToString(GeneCompare.gradientGrayscaleColor( ratio )) );
-						//label.setForeground( Color.white );
-					} else {
-						cell.setStyle( "-fx-background-color: "+colorToString(GeneCompare.gradientColor( ratio )) );
-						//label.setForeground( Color.black );
+					Gene gene = tv.getGene();
+					if(gene!=null) {
+						String tspec = gene.getSpecies();
+						List<Sequence> scontigs = geneset.speccontigMap.get(tspec);
+						GeneGroup gg = tv.getGene().getGeneGroup();
+						double ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, gg, tv);
+						if (ratio == -1) {
+							ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, gg);
+							cell.setStyle("-fx-background-color: " + colorToString(GeneCompare.gradientGrayscaleColor(ratio)));
+							//label.setForeground( Color.white );
+						} else {
+							cell.setStyle("-fx-background-color: " + colorToString(GeneCompare.gradientColor(ratio)));
+							//label.setForeground( Color.black );
+						}
 					}
 					break;
 					//GeneCompare.gradientColor();
@@ -6407,7 +6422,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				//Teginfo		gene2s = gg.getGenes(spec);
 				//double ratio = -1.0;
 				int msimcount = 0;
-				Annotation tv2 = null;
+				Annotation tv2;
 
 				GeneGroup gg = table.getItems().get(row);
 				if (gg != null) {
@@ -6415,7 +6430,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					if( gene2s != null ) {
 						Annotation tv = gene2s.best;
 						tv2 = gene2s.best;
-						if (gene2s != null && gene2s.tset != null) for (Annotation tv1 : gene2s.tset) {
+						if (gene2s.tset != null) for (Annotation tv1 : gene2s.tset) {
 							int simcount = 0;
 
 							Annotation n = tv1.getNext();
@@ -6423,7 +6438,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 							Annotation n2 = tv2.getNext();
 							Annotation p2 = tv2.getPrevious();
 
-							if (n != null) {
+							if (n != null && n.getGene() != null) {
 								GeneGroup ngg = n.getGene().getGeneGroup();
 								if (n2 != null && n2.getGene() != null) {
 									if (ngg == n2.getGene().getGeneGroup()) simcount++;
@@ -6434,7 +6449,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								}
 							}
 
-							if (p != null) {
+							if (p != null && p.getGene()!=null) {
 								GeneGroup pgg = p.getGene().getGeneGroup();
 								if (n2 != null && n2.getGene() != null) {
 									if (pgg == n2.getGene().getGeneGroup()) simcount++;
@@ -6457,7 +6472,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 						double ratio = GeneCompare.invertedGradientRatio(spec, contigs, tv);
 						if (ratio == -1) {
-							if (gg != null) ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
+							ratio = GeneCompare.invertedGradientPlasmidRatio(spec, contigs, -1.0, gg);
 							String color = colorToString(GeneCompare.gradientGrayscaleColor(ratio));
 							cell.setStyle("-fx-background-color: " + color);
 							//label.setForeground( Color.black );
@@ -9231,7 +9246,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				filteredData.setPredicate(null);
 				int[] rows = sel.stream().mapToInt( gg -> sortedData.indexOf(gg) ).toArray();
 				if( rows.length > 0 ) table.getSelectionModel().selectIndices(rows[0], rows);
-				if (label != null) label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
+				label.setText(table.getItems().size() + "/" + table.getSelectionModel().getSelectedIndices().size());
 				table.scrollTo( selgg );
 			}
 		});
@@ -9244,7 +9259,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				geneFilteredList.setPredicate(null);
 				int[] rows = sel.stream().mapToInt( g -> geneSortedList.indexOf(g) ).toArray();
 				if( rows.length > 0 ) gtable.getSelectionModel().selectIndices(rows[0], rows);
-				if (label != null) label.setText(gtable.getItems().size() + "/" + gtable.getSelectionModel().getSelectedIndices().size());
+				label.setText(gtable.getItems().size() + "/" + gtable.getSelectionModel().getSelectedIndices().size());
 				gtable.scrollTo( selg );
 			}
 		});
