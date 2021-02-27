@@ -62,7 +62,9 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
             .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
                 .getOrCreate();
 
-        String root = "/Users/sigmar/tmp";//"/mnt/csa/tmp";
+        String userhome = System.getProperty("user.home");
+        Path userhomePath = Paths.get(userhome);
+        String root = userhomePath.resolve("tmp").toString(); //"/Users/sigmar/tmp";//"/mnt/csa/tmp";
         List<Tuple2<String,String>> fastaList = ggset.stream().filter(gg -> gg.getGroupCount() >= 2).map(gg -> {
             try {
                 return new Tuple2<>(gg.getCommonId(), gg.getFasta(true));

@@ -111,6 +111,24 @@ public class GeneSet implements GenomeSet {
 
 		return ac.append(sb, first, last);
 	}
+
+	public void loadeggnog(Map<String,String> cazymap, Map<String,Cog> cogmap, Map<String,Cog> pfammap, Reader rd) {
+		BufferedReader br = new BufferedReader( rd );
+		br.lines().filter(l -> !l.startsWith("#")).map(l -> l.split("\t")).forEach(l -> {
+			String id = l[0].substring(4).replace('|', ':');
+			String cogid = l[4];
+			cogid = cogid.split("\\|")[0];
+			String cogname = l[8];
+			cogname = cogname.split("\\|")[0];
+			String cogsymbol = l[9];
+			String desc = l[10];
+			if(cogsymbol!=null) {
+				Cog cog = new Cog(cogid, cogsymbol, cogname, desc);
+				cog.genesymbol = cogsymbol;
+				cogmap.put(id, cog);
+			}
+		});
+	}
 	
 	public void loadcazymap( Map<String,String> cazymap, Reader rd ) throws IOException {
 		BufferedReader br = new BufferedReader( rd );
@@ -275,7 +293,7 @@ public class GeneSet implements GenomeSet {
 					String pfaman = i > ce ? val.substring(ce + 1, i).trim() : "";
 
 					cogidmap.put(pfamid, "X");
-					map.put(id, new Cog(pfamid, 'X', "X", pfaman));
+					map.put(id, new Cog(pfamid, "X", "X", pfaman));
 				}
 			}
 			line = br.readLine();
@@ -4849,7 +4867,7 @@ public class GeneSet implements GenomeSet {
 		return scene;
 	}
 	
-	private Scene createDualPieChartScene( Map<Character,Integer> map, Map<Character,Integer> mip ) {
+	private Scene createDualPieChartScene( Map<String,Integer> map, Map<String,Integer> mip ) {
         List<String> speclist = new ArrayList<>();
         /*for( String spec : mip.keySet() ) {
         	speclist.add( nameFix(spec) );
@@ -4887,9 +4905,9 @@ public class GeneSet implements GenomeSet {
         
         //PieChart.Data d = new PieChart.Data();
         for( String s : Cog.coggroups.keySet() ) {
-        	Set<Character> schar = Cog.coggroups.get( s );
+        	Set<String> schar = Cog.coggroups.get( s );
 	        if( s.contains("METABOLISM") ) {
-	        	for( Character cogsymbol : schar ) {
+	        	for( String cogsymbol : schar ) {
 		        	if( cogsymbol != null ) {
 			        	int count = 0;
 			        	if( map.containsKey(cogsymbol) ) count = map.get( cogsymbol );
@@ -4913,14 +4931,14 @@ public class GeneSet implements GenomeSet {
 				        	
 					        //last = last+ival;
 				        }*/
-			        	PieChart.Data d = new Data( Character.toString(cogsymbol)/*Cog.charcog.get(cogsymbol)*/, count );
+			        	PieChart.Data d = new Data( cogsymbol/*Cog.charcog.get(cogsymbol)*/, count );
 			        	ObservableList<Data> ob = sc.getData();
 			        	ob.add( d );
 		        	}
 	        	}
 	        } else {
 	        	int count = 0;
-	        	for( Character cogsymbol : schar ) {
+	        	for( String cogsymbol : schar ) {
 		        	if( cogsymbol != null ) {
 			        	if( map.containsKey(cogsymbol) ) count += map.get( cogsymbol );
 		        	}
@@ -4932,20 +4950,20 @@ public class GeneSet implements GenomeSet {
         }
         
         for( String s : Cog.coggroups.keySet() ) {
-        	Set<Character> schar = Cog.coggroups.get( s );
+        	Set<String> schar = Cog.coggroups.get( s );
 	        if( s.contains("METABOLISM") ) {
-	        	for( Character cogsymbol : schar ) {
+	        	for( String cogsymbol : schar ) {
 		        	if( cogsymbol != null ) {
 			        	int count = 0;
 			        	if( mip.containsKey(cogsymbol) ) count = mip.get( cogsymbol );
-			        	PieChart.Data d = new Data( Character.toString(cogsymbol)/*Cog.charcog.get(cogsymbol)*/, count );
+			        	PieChart.Data d = new Data( cogsymbol/*Cog.charcog.get(cogsymbol)*/, count );
 			        	ObservableList<Data> ob = sc2.getData();
 			        	ob.add( d );
 		        	}
 	        	}
 	        } else {
 	        	int count = 0;
-	        	for( Character cogsymbol : schar ) {
+	        	for( String cogsymbol : schar ) {
 		        	if( cogsymbol != null ) {
 		        		if( mip.containsKey(cogsymbol) ) count += mip.get( cogsymbol );
 		        	}
@@ -5012,7 +5030,7 @@ public class GeneSet implements GenomeSet {
         return scene;
     }
 	
-	private Scene createStackedBarChartScene( Map<String,String> all, Map<String,Map<Character,Integer>> map, boolean uniform ) {
+	private Scene createStackedBarChartScene( Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
         final CategoryAxis 	xAxis = new CategoryAxis();
         final NumberAxis 	yAxis = new NumberAxis();
         
@@ -5037,11 +5055,11 @@ public class GeneSet implements GenomeSet {
         sc.getXAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
         sc.getYAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
        
-        Map<String,Integer> countmap = new HashMap<String,Integer>();
+        Map<String,Integer> countmap = new HashMap<>();
         for( String spec : map.keySet() ) {
-        	Map<Character,Integer> submap = map.get(spec);
+        	Map<String,Integer> submap = map.get(spec);
         	int total = 0;
-        	for( Character f : submap.keySet() ) {
+        	for( String f : submap.keySet() ) {
         		total += submap.get(f);
         	}
         	countmap.put( spec, total );
@@ -5050,19 +5068,19 @@ public class GeneSet implements GenomeSet {
         for( String flock : all.keySet() ) {
         	//Map<String,Integer> submap = map.get( spec );
         	String longname = all.get(flock);
-	        XYChart.Series<String,Number> core = new XYChart.Series<String,Number>();
+	        XYChart.Series<String,Number> core = new XYChart.Series<>();
 	        int i = longname.indexOf(',', 50);
 	        if( i == -1 ) i = longname.length();
 	        core.setName( longname.substring(0,i) );
 	        for( String spec : map.keySet() ) {
-	        	Map<Character,Integer> submap = map.get(spec);
+	        	Map<String,Integer> submap = map.get(spec);
 	        	//int last = 0;
 	        	//for( String f : submap.keySet() ) {
 	        	if( submap.containsKey(flock) ) {
 	        		int total = countmap.get(spec);
 		        	int ival = submap.get( flock );
 		        	String fixspec = nameFix(spec);
-		        	XYChart.Data<String,Number> d = uniform ?  new XYChart.Data<String,Number>( fixspec, (double)ival/(double)total ) : new XYChart.Data<String,Number>( fixspec, ival );
+		        	XYChart.Data<String,Number> d = uniform ? new XYChart.Data<>(fixspec, (double) ival / (double) total) : new XYChart.Data<String,Number>( fixspec, ival );
 		        	//Tooltip.install( d.getNode(), new Tooltip( flock ) );
 		        	core.getData().add( d );
 	        	}
@@ -5448,12 +5466,12 @@ public class GeneSet implements GenomeSet {
 		if( stage != null ) stage.setScene(scene);
 	}
     
-    public void initDualPieChart( JFXPanel fxPanel, Map<Character,Integer> map, Map<Character,Integer> mip ) {
+    public void initDualPieChart( JFXPanel fxPanel, Map<String,Integer> map, Map<String,Integer> mip ) {
         Scene scene = createDualPieChartScene( map, mip );
         if( fxPanel != null ) fxPanel.setScene(scene);
     }
     
-    public void initStackedBarChart( Stage stage, Map<String,String> all, Map<String,Map<Character,Integer>> map, boolean uniform ) {
+    public void initStackedBarChart( Stage stage, Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
         Scene scene = createStackedBarChartScene( all, map, uniform );
         if( stage != null ) stage.setScene(scene);
     }
@@ -5464,10 +5482,10 @@ public class GeneSet implements GenomeSet {
     }
     
     public void initBarChart( JFXPanel fxPanel, String[] names, int[] xdata, String xTitle, String yTitle, double start, double stop, double step, String title ) {
-    	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
+    	XYChart.Series<String,Number> data = new XYChart.Series<>();
         //core.setName("Core: " + xdata[xdata.length-1] );
         for( int i = 0; i < xdata.length; i++ ) {
-        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], xdata[i] );
+        	XYChart.Data<String,Number> d = new XYChart.Data<>(names[i], xdata[i]);
         	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
         	data.getData().add( d );
         }
@@ -5477,12 +5495,12 @@ public class GeneSet implements GenomeSet {
     }
     
     public void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata, String xTitle, String yTitle, double start, double stop, double step, String title ) {
-    	XYChart.Series<String,Number> data = new XYChart.Series<String,Number>();
+    	XYChart.Series<String,Number> data = new XYChart.Series<>();
         //core.setName("Core: " + xdata[xdata.length-1] );
         for( int i = 0; i < xdata.length; i++ ) {
         	String name = names[i];
         	double dval = xdata[i];
-        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( name, dval );
+        	XYChart.Data<String,Number> d = new XYChart.Data<>(name, dval);
         	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
         	data.getData().add( d );
         }
@@ -6913,7 +6931,7 @@ public class GeneSet implements GenomeSet {
 		return sb;
 	}
 	
-	public void cogCalc( String filename, BufferedReader br, Map<String,Map<Character,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
+	public void cogCalc( String filename, BufferedReader br, Map<String,Map<String,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {
 		String line = br.readLine();
 		String current = null;
 		
@@ -7041,7 +7059,7 @@ public class GeneSet implements GenomeSet {
 					ki = ki == -1 ? coglong.length() : ki;
 					cog = coglong.substring(0,ki);*/
 					
-					Map<Character,Integer> cogmap;
+					Map<String,Integer> cogmap;
 					if( map.containsKey( spec ) ) {
 						cogmap = map.get(spec);
 					} else {
@@ -7049,7 +7067,7 @@ public class GeneSet implements GenomeSet {
 						map.put( spec, cogmap );
 					}
 					
-					Character cogchar = Cog.cogchar.get( coglong );
+					String cogchar = Cog.cogchar.get( coglong );
 					if( cogchar == null ) {
 						System.err.print( coglong );
 						System.err.println();
@@ -7085,8 +7103,8 @@ public class GeneSet implements GenomeSet {
 			//for( Character cogchar : Cog.charcog.keySet() ) {
 			for( String coggroup : Cog.coggroups.keySet() ) {
 				int val = 0;
-				Set<Character> groupchars = Cog.coggroups.get(coggroup);
-				for( Character cogchar : groupchars ) {
+				Set<String> groupchars = Cog.coggroups.get(coggroup);
+				for( String cogchar : groupchars ) {
 					if( cm.containsKey( cogchar ) ) {
 						val += cm.get(cogchar);
 					}
@@ -7100,21 +7118,21 @@ public class GeneSet implements GenomeSet {
 		return fw;
 	}
 	
-	public StringWriter writeCog( Map<String,Map<Character,Integer>> map, Set<Character> includedCogs, boolean uniform ) throws IOException {
+	public StringWriter writeCog( Map<String,Map<String,Integer>> map, Set<String> includedCogs, boolean uniform ) throws IOException {
 		StringWriter fw = new StringWriter();
 		fw.write("[");
 		fw.write( "['Species" );
-		for( Character cogchar : includedCogs ) {
+		for( String cogchar : includedCogs ) {
 			String coglong = Cog.charcog.get( cogchar );
 			fw.write("','"+coglong);
 		}
 		fw.write("']");
 		
-		Map<String,Integer> totmap = new HashMap<String,Integer>();
+		Map<String,Integer> totmap = new HashMap<>();
 		for( String s : map.keySet() ) {
 			int total = 0;
-			Map<Character,Integer> cm = map.get( s );
-			for( Character cogchar : includedCogs ) {
+			Map<String,Integer> cm = map.get( s );
+			for( String cogchar : includedCogs ) {
 				int val = 0;
 				if( cm.containsKey( cogchar ) ) {
 					val = cm.get(cogchar);
@@ -7128,8 +7146,8 @@ public class GeneSet implements GenomeSet {
 			fw.write(",\n");
 			int total = totmap.get( s );
 			fw.write( "['"+nameFix(s)+"'" );
-			Map<Character,Integer> cm = map.get( s );
-			for( Character cogchar : includedCogs ) {
+			Map<String,Integer> cm = map.get( s );
+			for( String cogchar : includedCogs ) {
 				int val = 0;
 				//String coglong = Cog.charcog.get(cogchar);
 				//Character cogchar = Cog.cogchar.get( coglong );
@@ -8315,6 +8333,9 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) loadcazymap( cazygtmap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/cazypl");
 		if( Files.exists( nf ) ) loadcazymap( cazyplmap, Files.newBufferedReader(nf) );
+
+		nf = zipfilesystem.getPath("/eggnog_results.emapper.annotations");
+		if( Files.exists( nf ) ) loadeggnog( cazyplmap, cogmap, pfammap, Files.newBufferedReader(nf) );
 
 		nf = zipfilesystem.getPath("/ko2name.txt");
 		if( Files.exists( nf ) ) ko2name = ko2nameMapping( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );

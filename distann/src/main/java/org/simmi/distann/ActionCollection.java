@@ -3387,9 +3387,9 @@ public class ActionCollection {
 				JCheckBox cb = new JCheckBox("Plasmid");
 				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), cb );
 				
-				char nohit = '*';
-				final Map<Character,Integer>	mip = new HashMap<Character,Integer>();
-				final Map<Character,Integer>	map = new HashMap<Character,Integer>();
+				String nohit = "-";
+				final Map<String,Integer>	mip = new HashMap<>();
+				final Map<String,Integer>	map = new HashMap<>();
 				if( !genesethead.isGeneview() ) {
 					for( GeneGroup gg : genesethead.table.getItems() ) {
 						Cog cog = gg.getCog(geneset.cogmap);
@@ -3499,9 +3499,9 @@ public class ActionCollection {
 				//Character last = null;
 				StringBuilder sb = new StringBuilder();
 				for( String s : Cog.coggroups.keySet() ) {
-					Set<Character> sc = Cog.coggroups.get(s);
+					Set<String> sc = Cog.coggroups.get(s);
 					if( s.contains("METABOLISM") ) {
-						for( Character c : sc ) {
+						for( String c : sc ) {
 							sb.append("\t").append(Cog.charcog.get(c));
 						}
 					} else {
@@ -3520,9 +3520,9 @@ public class ActionCollection {
 				int mit = 0;
 				int mat = 0;
 				for( String s : Cog.coggroups.keySet() ) {
-					Set<Character> sc = Cog.coggroups.get(s);
+					Set<String> sc = Cog.coggroups.get(s);
 					if( s.contains("METABOLISM") ) {
-						for( Character c : sc ) {
+						for( String c : sc ) {
 							int count = 0;
 							if( map.containsKey(c) ) {
 								int val = map.get(c);
@@ -3535,7 +3535,7 @@ public class ActionCollection {
 						}
 					} else {
 						int count = 0;
-						for( Character c : sc ) {
+						for( String c : sc ) {
 							if( !c.equals('V') && map.containsKey(c) ) {
 								int val = map.get(c);
 								count += val;
@@ -3564,9 +3564,9 @@ public class ActionCollection {
 				else sb.append( "\nAccessory" );
 				
 				for( String s : Cog.coggroups.keySet() ) {
-					Set<Character> sc = Cog.coggroups.get(s);
+					Set<String> sc = Cog.coggroups.get(s);
 					if( s.contains("METABOLISM") ) {
-						for( Character c : sc ) {
+						for( String c : sc ) {
 							count = 0;
 							if( mip.containsKey(c) ) {
 								int val = mip.get(c);
@@ -3577,7 +3577,7 @@ public class ActionCollection {
 						}
 					} else {
 						count = 0;
-						for( Character c : sc ) {
+						for( String c : sc ) {
 							if( !c.equals('V') && mip.containsKey(c) ) {
 								int val = mip.get(c);
 								count += val;
@@ -3613,19 +3613,9 @@ public class ActionCollection {
 							final JFXPanel	fxpanel = new JFXPanel();
 							geneset.fxframe.add( fxpanel );
 							
-							Platform.runLater(new Runnable() {
-				                 @Override
-				                 public void run() {
-				                     geneset.initDualPieChart( fxpanel, map, mip );
-				                 }
-				            });
+							Platform.runLater(() -> geneset.initDualPieChart( fxpanel, map, mip ));
 						} else {
-							Platform.runLater(new Runnable() {
-				                 @Override
-				                 public void run() {
-				                     geneset.initDualPieChart( null, map, mip );
-				                 }
-				            });
+							Platform.runLater(() -> geneset.initDualPieChart( null, map, mip ));
 						}						
 						geneset.fxframe.setVisible( true );
 					}
@@ -3665,8 +3655,8 @@ public class ActionCollection {
                 final JCheckBox	uniform = new JCheckBox("Uniform");
                 Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs, uniform );
 
-                final List<Character> coglist = new ArrayList<>( Cog.charcog.keySet() );
-                HashSet<Character>	includedCogs = new HashSet<>();
+                final List<String> coglist = new ArrayList( Cog.charcog.keySet() );
+                HashSet<String>	includedCogs = new HashSet<>();
                 JTable cogtable = new JTable();
                 cogtable.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
                 TableModel cogmodel = new TableModel() {
@@ -3698,8 +3688,8 @@ public class ActionCollection {
 
                     @Override
                     public Object getValueAt(int rowIndex, int columnIndex) {
-                        Character c = coglist.get( rowIndex);
-                        if( columnIndex == 0 ) return c.toString();
+                        String c = coglist.get( rowIndex);
+                        if( columnIndex == 0 ) return c;
                         else return Cog.charcog.get( c );
                     }
 
@@ -3731,7 +3721,7 @@ public class ActionCollection {
                 }
 
                 final Map<String,String>					all = new TreeMap();
-                final Map<String, Map<Character,Integer>> 	map = new LinkedHashMap();
+                final Map<String, Map<String,Integer>> 	map = new LinkedHashMap();
                 genesethead.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
 
                 /*Map<Character,Row> rl = new HashMap();

@@ -2206,13 +2206,13 @@ public class Neighbour {
 			showseqs.setAction( new AbstractAction("Sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					genesethead.showSequences( comp, selectedGenesGroups, false, null );
+					genesethead.showSequences(selectedGenesGroups, false, null );
 				}
 			});
 			showdnaseqs.setAction( new AbstractAction("DNA sequences") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					genesethead.showSequences( comp, selectedGenesGroups, true, null );
+					genesethead.showSequences(selectedGenesGroups, true, null );
 				}
 			});
 			showselectedseqs.setAction( new AbstractAction("Selected sequences") {
@@ -2227,7 +2227,7 @@ public class Neighbour {
 							}
 						}
 					}
-					genesethead.showSelectedSequences( comp, tset, false, names.getSelectedItem().toString() );
+					genesethead.showSelectedSequences(tset, false, names.getSelectedItem().toString() );
 				}
 			});
 			showselecteddnaseqs.setAction( new AbstractAction("Selected DNA sequences") {
@@ -2242,7 +2242,7 @@ public class Neighbour {
 							}
 						}
 					}
-					genesethead.showSelectedSequences( comp, tset, true, names.getSelectedItem().toString() );
+					genesethead.showSelectedSequences(tset, true, names.getSelectedItem().toString() );
 				}
 			});
 			showflankingseqs.setAction( new AbstractAction("Show flanking sequences") {
@@ -2285,7 +2285,7 @@ public class Neighbour {
 							}
 						}
 					}
-					genesethead.showSomeSequences( comp, serifier );
+					genesethead.showSomeSequences( serifier );
 				}
 			});
 			showbackflankingseqs.setAction( new AbstractAction("Show back flanking sequences") {
@@ -2328,7 +2328,7 @@ public class Neighbour {
 							}
 						}
 					}
-					genesethead.showSomeSequences( comp, serifier );
+					genesethead.showSomeSequences( serifier );
 				}
 			});
 			showareaseqs.setAction( new AbstractAction("Show area") {
@@ -2348,8 +2348,8 @@ public class Neighbour {
 					Color cb = new Color(100,100,150);
 					Color cdb = new Color(50,50,100);
 					
-					Set<Color> darkColors = new HashSet<>( Arrays.asList(new Color[] {Color.gray,cdg,cdr,cdb}) );
-					Set<Color> colors = new HashSet<>( Arrays.asList(new Color[] {Color.lightGray,cg,cr,cb}) );
+					Set<Color> darkColors = new HashSet<>( Arrays.asList(Color.gray,cdg,cdr,cdb) );
+					Set<Color> colors = new HashSet<>( Arrays.asList(Color.lightGray,cg,cr,cb) );
 					
 					if( rr == null || rr.length == 0 ) {
 						for( GeneGroup gg : selectedGenesGroups ) {
@@ -2566,7 +2566,7 @@ public class Neighbour {
 							Collections.sort( seq.getAnnotations() );
 						}
 					}
-					genesethead.showSomeSequences( comp, serifier );
+					genesethead.showSomeSequences( serifier );
 				}
 			});
 			

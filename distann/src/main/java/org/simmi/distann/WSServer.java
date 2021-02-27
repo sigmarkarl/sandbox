@@ -110,9 +110,9 @@ public class WSServer {
 						//Set<String> species = getSelspec( GeneSet.this, specList );
 						Set<String> selspec = new HashSet<>( geneset.specList );
 						
-						Set<Character> includedCogs = Cog.charcog.keySet();
+						Set<String> includedCogs = Cog.charcog.keySet();
 						final Map<String,String>					all = new TreeMap<>();
-						final Map<String, Map<Character,Integer>> 	map = new TreeMap<>();
+						final Map<String, Map<String,Integer>> 	map = new TreeMap<>();
 						try {
 							genesethead.cogCalc( null, includedCogs, map, selspec, false );
 							StringWriter fw = geneset.writeCog( map, includedCogs, uniform );

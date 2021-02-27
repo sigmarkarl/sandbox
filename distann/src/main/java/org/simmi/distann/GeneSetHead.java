@@ -1937,29 +1937,32 @@ public class GeneSetHead {
 		}
 	}
 
-	private void cogSeq( Sequence c, Map<Character,Integer>	submap ) {
+	private void cogSeq( Sequence c, Map<String,Integer>	submap ) {
 		if (c.getAnnotations() != null) for (Annotation a : c.getAnnotations()) {
-			Cog cog = a.getGene().cog;
-			if (cog == null) {
-				cog = geneset.cogmap.get(a.getGene().id);
-			}
-			if (cog != null && cog.symbol != null) {
-				int val = 0;
-				if (submap.containsKey(cog.symbol)) val = submap.get(cog.symbol);
-				submap.put(cog.symbol, val + 1);
-			} else if (cog != null) {
-				System.err.println("null symbol" + cog.id + "  " + cog.name + "   " + cog.genesymbol + "  " + cog.annotation);
+			Gene g = a.getGene();
+			if(g!=null) {
+				Cog cog = a.getGene().cog;
+				if (cog == null) {
+					cog = geneset.cogmap.get(a.getGene().id);
+				}
+				if (cog != null && cog.symbol != null) {
+					int val = 0;
+					if (submap.containsKey(cog.symbol)) val = submap.get(cog.symbol);
+					submap.put(cog.symbol, val + 1);
+				} else if (cog != null) {
+					System.err.println("null symbol" + cog.id + "  " + cog.name + "   " + cog.genesymbol + "  " + cog.annotation);
+				}
 			}
 		}
 	}
 	
-	public void cogCalc( String filename, Set<Character> includedCogs, Map<String,Map<Character,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {		
+	public void cogCalc( String filename, Set<String> includedCogs, Map<String,Map<String,Integer>> map, Set<String> selspec, boolean contigs ) throws IOException {
 		if( !isGeneview() ) {
 			for( String spec : selspec ) {
 
 				if( contigs ) {
 					Sequence seq = geneset.contigmap.get(spec);
-					Map<Character,Integer>	submap;
+					Map<String,Integer>	submap;
 					if( map.containsKey( seq.getGroup() ) ) {
 						submap = map.get( seq.getGroup() );
 					} else {
@@ -1968,7 +1971,7 @@ public class GeneSetHead {
 					}
 					cogSeq( seq, submap );
 				} else {
-					Map<Character,Integer>	submap = new HashMap<>();
+					Map<String,Integer>	submap = new HashMap<>();
 					map.put(spec, submap);
 
 					List<Sequence> sctg = geneset.speccontigMap.get(spec);
@@ -2440,7 +2443,7 @@ public class GeneSetHead {
         });
 	}
 	
-	public void showSomeSequences( Component comp, Serifier serifier ) {
+	public void showSomeSequences( Serifier serifier ) {
 		SwingUtilities.invokeLater(() -> {
             JFrame frame1 = new JFrame();
             frame1.setSize(800, 600);
@@ -2462,7 +2465,7 @@ public class GeneSetHead {
         });
 	}
 	
-	public void showSelectedSequences( Component comp, Set<Annotation> tset, boolean dna, String names ) {
+	public void showSelectedSequences( Set<Annotation> tset, boolean dna, String names ) {
 		SwingUtilities.invokeLater(() -> {
             JFrame frame1 = new JFrame();
             frame1.setSize(800, 600);
@@ -2495,11 +2498,17 @@ public class GeneSetHead {
         });
 	}
 	
-	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs ) {
-		showSequences(comp, ggset, dna, specs, false);
+	public void showSequences( Set<GeneGroup> ggset, boolean dna, Set<String> specs ) {
+		showSequences(ggset, dna, specs, EnumSet.of(ToShow.STRAINS));
 	}
-	
-	public void showSequences( Component comp, Set<GeneGroup> ggset, boolean dna, Set<String> specs, boolean genename ) {
+
+	enum ToShow {
+		STRAINS,
+		GENES,
+		IDS
+	}
+
+	public void showSequences( Set<GeneGroup> ggset, boolean dna, Set<String> specs, EnumSet<ToShow> toShow ) {
 		SwingUtilities.invokeLater(() -> {
             JFrame frame1 = new JFrame();
             frame1.setSize(800, 600);
@@ -2518,7 +2527,13 @@ public class GeneSetHead {
                     Sequence cont = tv.getContshort();
                     if( cont != null ) {
                         String selspec = cont.getSpec();//tv.getContig();
-                        if( genename ) {
+						if(toShow.containsAll(EnumSet.of(ToShow.STRAINS,ToShow.IDS))) {
+							Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+							seq.setName( selspec + "-" + tv.getGeneGroup().getRefid() );
+							serifier.mseq.put( seq.getName(), seq );
+							//Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
+							serifier.addSequence(seq);
+						} else if(toShow.contains(ToShow.GENES)) {
                             Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
                             seq.setName( tv.getGene() != null ? tv.getGene().name : tv.getName() );
                             serifier.mseq.put( seq.getName(), seq );
@@ -4133,7 +4148,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				SwingUtilities.invokeLater(() -> {
 					Set<String> specs = null;
 					if (table.getItems().size() > 1) specs = getSelspec(GeneSetHead.this, geneset.specList, null);
-					showSequences(comp, genegroups, false, specs);
+					showSequences(genegroups, false, specs);
 				});
 			});
 		});
@@ -4159,10 +4174,33 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 				//Set<String>	specs = null;
 				//if( rr.length > 1 ) specs = getSelspec(comp, specList, null);
-				showSequences(comp, genegroups, false, null, true);
+				showSequences(genegroups, false, null, EnumSet.of(ToShow.GENES));
 			});
 		});
 		sequencemenu.getItems().add( showseqwgenenames );
+
+		MenuItem showseqwstraingenenames = new MenuItem("Show sequences w/strainandgenenames");
+		showseqwstraingenenames.setOnAction( actionEvent -> {
+			SwingUtilities.invokeLater(() -> {
+				Set<GeneGroup> genegroups = new HashSet<>();
+				//int[] rr = table.getSelectedRows();
+				if (!isGeneview()) {
+					//int cr = table.convertRowIndexToModel(r);
+					//GeneGroup gg = geneset.allgenegroups.get(cr);
+					genegroups.addAll(table.getSelectionModel().getSelectedItems());
+				} else {
+					for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
+						//int cr = table.convertRowIndexToModel(r);
+						//Gene gg = geneset.genelist.get(cr);
+						genegroups.add(gg.getGeneGroup());
+					}
+				}
+				//Set<String>	specs = null;
+				//if( rr.length > 1 ) specs = getSelspec(comp, specList, null);
+				showSequences(genegroups, false, null, EnumSet.of(ToShow.STRAINS,ToShow.IDS));
+			});
+		});
+		sequencemenu.getItems().add( showseqwstraingenenames );
 		
 		MenuItem showalignseq = new MenuItem("Show aligned sequences");
 		showalignseq.setOnAction( actionEvent -> {
@@ -4324,7 +4362,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 				Set<String> specs = null;
 				if (rr > 1) specs = getSelspec(GeneSetHead.this, geneset.specList, null);
-				showSequences(comp, genegroups, true, specs);
+				showSequences(genegroups, true, specs);
 				
 				/*StringBuilder sb = getSelectedSeqs( table, genelist );
 				

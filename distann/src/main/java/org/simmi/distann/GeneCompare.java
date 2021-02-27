@@ -549,7 +549,7 @@ public class GeneCompare {
 									Sequence seq = new Sequence("phage_" + from + "_" + to, null);
 									seq.append(seqstr);
 									serifier.addSequence(seq);
-									genesethead.showSomeSequences(null, serifier);
+									genesethead.showSomeSequences(serifier);
 								} else {
 									if (c == null) {
 										Platform.runLater(() -> {
