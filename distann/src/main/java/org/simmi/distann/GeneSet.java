@@ -76,6 +76,8 @@ public class GeneSet implements GenomeSet {
 	public String projectname = "geneset";
 	public boolean noseq = false;
 
+	public JFrame	fxframe = null;
+
 	/*private static StringBuilder dnaSearch(String query) {
 		/*
 		 * aquery.name = query; int ind = Arrays.binarySearch(aas, aquery); if(
@@ -4799,591 +4801,26 @@ public class GeneSet implements GenomeSet {
 			}
 		}
 	}
-	
-	static Scene scene = null;
-	JFrame	fxframe = null;
-	private static Scene createScene( String[] names, double[] xdata, double[] ydata ) {
-        final NumberAxis xAxis = new NumberAxis(-0.5, 0.5, 0.025);
-        final NumberAxis yAxis = new NumberAxis(-0.5, 0.5, 0.025);    
-        final ScatterChart<Number,Number> sc = new ScatterChart<Number,Number>(xAxis,yAxis);
-        xAxis.setLabel("Dim 1");
-        yAxis.setLabel("Dim 2");
-        sc.setTitle("Genes");
-       
-        XYChart.Series series1 = new XYChart.Series();
-        series1.setName("PCA");
-        for( int i = 0; i < xdata.length; i++ ) {
-        	XYChart.Data d = new XYChart.Data( xdata[i], ydata[i] );
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	series1.getData().add( d );
-        }
- 
-        sc.getData().addAll(series1);
-        if( scene == null ) {
-        	scene = new Scene( sc );
-        } else scene.setRoot( sc );
-        
-        for (XYChart.Series<Number, Number> s : sc.getData()) {
-        	int i = 0;
-            for (XYChart.Data<Number, Number> d : s.getData()) {
-                Tooltip.install( d.getNode(), new Tooltip( names[i++] ) );
-            }
-        }
-        
-        sc.setBackground( Background.EMPTY );
-        
-        final ContextMenu menu = new ContextMenu();
-        MenuItem mi = new MenuItem();
-        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
-			@Override
-			public void handle(javafx.event.ActionEvent arg0) {
-				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
-				try {
-					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("c:/fximg.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-        menu.getItems().add( mi );
-        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
-        	 @Override
-             public void handle(javafx.scene.input.MouseEvent event) {
-               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
-                 menu.show(sc, event.getScreenX(), event.getScreenY());
-               }
-             }
-        });
-        
-        return scene;
-    }
-	
-	private Scene createWebPageScene( String webp ) {
-		
-		/*if( scene == null ) {
-        	scene = new Scene( sc );
-        } else scene.setRoot( sc );*/
-		
-		return scene;
-	}
-	
-	private Scene createDualPieChartScene( Map<String,Integer> map, Map<String,Integer> mip ) {
-        List<String> speclist = new ArrayList<>();
-        /*for( String spec : mip.keySet() ) {
-        	speclist.add( nameFix(spec) );
-        }*/
-        
-        HBox hbox = new HBox();
-       
-        final PieChart sc = new PieChart();
-        sc.labelsVisibleProperty().set( true );
-        sc.setLegendVisible(false);
-        sc.setLegendSide( Side.RIGHT );
-        sc.setTitle("COG core");
-        
-        final PieChart sc2 = new PieChart();
-        sc2.labelsVisibleProperty().set( true );
-        sc2.setLegendSide( Side.RIGHT );
-        sc2.setVisible( true );
-        sc2.setTitle("COG accessory");
-        
-        
-        
-        //Font f = sc.getXAxis().settic
-        //sc.setStyle( "-fx-font-size: 2.4em;" );
-        //System.err.println( sc.getXAxis().getStyle() );
-       
-       /* Map<String,Integer> countmap = new HashMap<String,Integer>();
-        for( String spec : map.keySet() ) {
-        	Map<Character,Integer> submap = map.get(spec);
-        	int total = 0;
-        	for( Character f : submap.keySet() ) {
-        		total += submap.get(f);
-        	}
-        	countmap.put( spec, total );
-        }*/
-        
-        //PieChart.Data d = new PieChart.Data();
-        for( String s : Cog.coggroups.keySet() ) {
-        	Set<String> schar = Cog.coggroups.get( s );
-	        if( s.contains("METABOLISM") ) {
-	        	for( String cogsymbol : schar ) {
-		        	if( cogsymbol != null ) {
-			        	int count = 0;
-			        	if( map.containsKey(cogsymbol) ) count = map.get( cogsymbol );
-			        	
-				        /*XYChart.Series<String,Number> core = new XYChart.Series<String,Number>();
-				        int i = longname.indexOf(',', 50);
-				        if( i == -1 ) i = longname.length();
-				        core.setName( longname.substring(0,i) );
-				        for( String spec : map.keySet() ) {
-				        	Map<Character,Integer> submap = map.get(spec);
-				        	//int last = 0;
-				        	//for( String f : submap.keySet() ) {
-				        	if( submap.containsKey(flock) ) {
-				        		int total = countmap.get(spec);
-					        	int ival = submap.get( flock );
-					        	String fixspec = nameFix(spec);
-					        	XYChart.Data<String,Number> d = uniform ?  new XYChart.Data<String,Number>( fixspec, (double)ival/(double)total ) : new XYChart.Data<String,Number>( fixspec, ival );
-					        	//Tooltip.install( d.getNode(), new Tooltip( flock ) );
-					        	core.getData().add( d );
-				        	}
-				        	
-					        //last = last+ival;
-				        }*/
-			        	PieChart.Data d = new Data( cogsymbol/*Cog.charcog.get(cogsymbol)*/, count );
-			        	ObservableList<Data> ob = sc.getData();
-			        	ob.add( d );
-		        	}
-	        	}
-	        } else {
-	        	int count = 0;
-	        	for( String cogsymbol : schar ) {
-		        	if( cogsymbol != null ) {
-			        	if( map.containsKey(cogsymbol) ) count += map.get( cogsymbol );
-		        	}
-	        	}
-	        	PieChart.Data d = new Data( s/*Cog.charcog.get(cogsymbol)*/, count );
-	        	ObservableList<Data> ob = sc.getData();
-	        	ob.add( d );
-	        }
-        }
-        
-        for( String s : Cog.coggroups.keySet() ) {
-        	Set<String> schar = Cog.coggroups.get( s );
-	        if( s.contains("METABOLISM") ) {
-	        	for( String cogsymbol : schar ) {
-		        	if( cogsymbol != null ) {
-			        	int count = 0;
-			        	if( mip.containsKey(cogsymbol) ) count = mip.get( cogsymbol );
-			        	PieChart.Data d = new Data( cogsymbol/*Cog.charcog.get(cogsymbol)*/, count );
-			        	ObservableList<Data> ob = sc2.getData();
-			        	ob.add( d );
-		        	}
-	        	}
-	        } else {
-	        	int count = 0;
-	        	for( String cogsymbol : schar ) {
-		        	if( cogsymbol != null ) {
-		        		if( mip.containsKey(cogsymbol) ) count += mip.get( cogsymbol );
-		        	}
-	        	}
-	        	PieChart.Data d = new Data( s/*Cog.charcog.get(cogsymbol)*/, count );
-	        	ObservableList<Data> ob = sc2.getData();
-	        	ob.add( d );
-	        }
-        }
-        
-        /*XYChart.Series<String,Number> pan = new XYChart.Series<String,Number>();
-        pan.setName("Pan");
-        //for( int i = 0; i < ydata.length; i++ ) {
-        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( "dd", 100 );
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	pan.getData().add( d );
-        //}
-        XYChart.Series<String,Number> pan2 = new XYChart.Series<String,Number>();
-        pan2.setName("Core");
-        //for( int i = 0; i < ydata.length; i++ ) {
-        	XYChart.Data<String,Number> d2 = new XYChart.Data<String,Number>( "2", 200 );
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	pan2.getData().add( d2 );
-        //}
-        sc.getData().addAll(pan, pan2);*/
-        
-        hbox.getChildren().addAll( sc, sc2 );
-        if( scene == null ) {
-        	scene = new Scene( hbox );
-        } else scene.setRoot( hbox );
-        
-        /*for (XYChart.Series<String, Number> s : sc.getData()) {
-        	//int i = 0;
-            for (XYChart.Data<String, Number> d : s.getData()) {
-                Tooltip.install( d.getNode(), new Tooltip( s.getName()+": "+d.getYValue() ) );
-            }
-        }*/
-        
-        sc.setBackground( Background.EMPTY );
-        
-        final ContextMenu menu = new ContextMenu();
-        MenuItem mi = new MenuItem();
-        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
-			@Override
-			public void handle(javafx.event.ActionEvent arg0) {
-				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
-				try {
-					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("/Users/sigmar/fximg.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-        menu.getItems().add( mi );
-        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
-        	 @Override
-             public void handle(javafx.scene.input.MouseEvent event) {
-               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
-                 menu.show(sc, event.getScreenX(), event.getScreenY());
-               }
-             }
-        });
-        
-        return scene;
-    }
-	
-	private Scene createStackedBarChartScene( Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
-        final CategoryAxis 	xAxis = new CategoryAxis();
-        final NumberAxis 	yAxis = new NumberAxis();
-        
-        xAxis.setTickLabelRotation( 90.0 );
-        
-        List<String> speclist = new ArrayList<>();
-        for( String spec : map.keySet() ) {
-        	speclist.add( nameFix(spec) );
-        }
-        xAxis.setCategories( FXCollections.observableArrayList( speclist ) );
-        //yAxis.
-        
-        final StackedBarChart<String,Number> sc = new StackedBarChart<>(xAxis,yAxis);
-        sc.setLegendSide( Side.RIGHT );
-        xAxis.setLabel("");
-        yAxis.setLabel("");
-        sc.setTitle("COG catogories");
-        
-        //Font f = sc.getXAxis().settic
-        //sc.setStyle( "-fx-font-size: 2.4em;" );
-        //System.err.println( sc.getXAxis().getStyle() );
-        sc.getXAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
-        sc.getYAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
-       
-        Map<String,Integer> countmap = new HashMap<>();
-        for( String spec : map.keySet() ) {
-        	Map<String,Integer> submap = map.get(spec);
-        	int total = 0;
-        	for( String f : submap.keySet() ) {
-        		total += submap.get(f);
-        	}
-        	countmap.put( spec, total );
-        }
-        
-        for( String flock : all.keySet() ) {
-        	//Map<String,Integer> submap = map.get( spec );
-        	String longname = all.get(flock);
-	        XYChart.Series<String,Number> core = new XYChart.Series<>();
-	        int i = longname.indexOf(',', 50);
-	        if( i == -1 ) i = longname.length();
-	        core.setName( longname.substring(0,i) );
-	        for( String spec : map.keySet() ) {
-	        	Map<String,Integer> submap = map.get(spec);
-	        	//int last = 0;
-	        	//for( String f : submap.keySet() ) {
-	        	if( submap.containsKey(flock) ) {
-	        		int total = countmap.get(spec);
-		        	int ival = submap.get( flock );
-		        	String fixspec = nameFix(spec);
-		        	XYChart.Data<String,Number> d = uniform ? new XYChart.Data<>(fixspec, (double) ival / (double) total) : new XYChart.Data<String,Number>( fixspec, ival );
-		        	//Tooltip.install( d.getNode(), new Tooltip( flock ) );
-		        	core.getData().add( d );
-	        	}
-	        	
-		        //last = last+ival;
-	        }
-	        sc.getData().add( core );
-        }
-        
-        /*XYChart.Series<String,Number> pan = new XYChart.Series<String,Number>();
-        pan.setName("Pan");
-        //for( int i = 0; i < ydata.length; i++ ) {
-        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( "dd", 100 );
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	pan.getData().add( d );
-        //}
-        XYChart.Series<String,Number> pan2 = new XYChart.Series<String,Number>();
-        pan2.setName("Core");
-        //for( int i = 0; i < ydata.length; i++ ) {
-        	XYChart.Data<String,Number> d2 = new XYChart.Data<String,Number>( "2", 200 );
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	pan2.getData().add( d2 );
-        //}
-        sc.getData().addAll(pan, pan2);*/
-        if( scene == null ) {
-        	scene = new Scene( sc );
-        } else scene.setRoot( sc );
-        
-        for (XYChart.Series<String, Number> s : sc.getData()) {
-        	//int i = 0;
-            for (XYChart.Data<String, Number> d : s.getData()) {
-                Tooltip.install( d.getNode(), new Tooltip( s.getName()+": "+d.getYValue() ) );
-            }
-        }
-        
-        sc.setBackground( Background.EMPTY );
-        
-        final ContextMenu menu = new ContextMenu();
-        MenuItem mi = new MenuItem();
-        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
-			@Override
-			public void handle(javafx.event.ActionEvent arg0) {
-				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
-				try {
-					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("c:/fximg.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-        menu.getItems().add( mi );
-        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
-        	 @Override
-             public void handle(javafx.scene.input.MouseEvent event) {
-               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
-                 menu.show(sc, event.getScreenX(), event.getScreenY());
-               }
-             }
-        });
-        
-        return scene;
-    }
-	
-	private static Scene createStackedBarChartScene( List<StackBarData> lsbd, String[] categories ) {
-        final CategoryAxis 	xAxis = new CategoryAxis();
-        final NumberAxis 	yAxis = new NumberAxis();
-        
-        xAxis.setTickLabelRotation( 90.0 );
-        
-        List<String>	names = new ArrayList<String>();
-        for( StackBarData sbd : lsbd ) {
-        	names.add( sbd.name );
-        }
-        xAxis.setCategories( FXCollections.observableArrayList( names ) );
-        //yAxis.
-        
-        final StackedBarChart<String,Number> sc = new StackedBarChart<String,Number>(xAxis,yAxis);
-        xAxis.setLabel("");
-        yAxis.setLabel("");
-        sc.setTitle("Pan-core genome");
-        
-        //Font f = sc.getXAxis().settic
-        //sc.setStyle( "-fx-font-size: 2.4em;" );
-        //System.err.println( sc.getXAxis().getStyle() );
-        sc.getXAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
-        sc.getYAxis().setStyle("-fx-tick-label-font-size: 1.4em;");
-       
-        for( String category : categories ) {
-	        XYChart.Series<String,Number> core = new XYChart.Series<String,Number>();
-	        StackBarData last = lsbd.get( lsbd.size()-1 );
-	        int lastval = last.b.get( category );
-	        core.setName( category + lastval );
-	        for( StackBarData sbd : lsbd ) {
-	        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( sbd.name, sbd.b.get( category ) );
-	        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-	        	core.getData().add( d );
-	        }
-	        
-	        sc.getData().add( core );
-        }
-        /*XYChart.Series<String,Number> pan = new XYChart.Series<String,Number>();
-        pan.setName("Pan: " + ydata[ydata.length-1] );
-        for( int i = 0; i < ydata.length; i++ ) {
-        	XYChart.Data<String,Number> d = new XYChart.Data<String,Number>( names[i], ydata[i]-xdata[i] );
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	pan.getData().add( d );
-        }*/
- 
-        //sc.getData().addAll(core, pan);
-        if( scene == null ) {
-        	scene = new Scene( sc );
-        } else scene.setRoot( sc );
-        
-        /*for (XYChart.Series<Number, Number> s : sc.getData()) {
-        	int i = 0;
-            for (XYChart.Data<Number, Number> d : s.getData()) {
-                Tooltip.install( d.getNode(), new Tooltip( names[i++] ) );
-            }
-        }*/
-        
-        sc.setBackground( Background.EMPTY );
-        
-        final ContextMenu menu = new ContextMenu();
-        MenuItem mi = new MenuItem();
-        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
-			@Override
-			public void handle(javafx.event.ActionEvent arg0) {
-				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
-				try {
-					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("c:/fximg.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-        menu.getItems().add( mi );
-        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
-        	 @Override
-             public void handle(javafx.scene.input.MouseEvent event) {
-               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
-                 menu.show(sc, event.getScreenX(), event.getScreenY());
-               }
-             }
-        });
-        
-        return scene;
-    }
-	
-	private static Scene createBarChartScene( String[] names, XYChart.Series<String,Number> data, String xTitle, String yTitle, double start, double stop, double step, String title ) {
-        final CategoryAxis 	xAxis = new CategoryAxis();
-        final NumberAxis 	yAxis = new NumberAxis( start, stop, step ); // 0.6, 0.7, 0.02
-        //yAxis.set
-        
-        /*yAxis.setTickLabelFormatter( new StringConverter<Number>() {
-			@Override
-			public String toString(Number arg0) {
-				return Double.toString( Math.round( (arg0.doubleValue() + 0.6)*100.0 )/100.0 );
-			}
-			
-			@Override
-			public Number fromString(String arg0) {
-				return Double.parseDouble( arg0 );
-			}
-		});*/
-        
-        xAxis.setTickLabelRotation( 90.0 );
-        
-        xAxis.setCategories( FXCollections.observableArrayList( Arrays.asList(names) ) );
-        //yAxis.
-        
-        final BarChart<String,Number> sc = new BarChart<String,Number>(xAxis,yAxis);
-        xAxis.setLabel( xTitle );
-        yAxis.setLabel( yTitle );
-        sc.setTitle( title );
-        
-        xAxis.setStyle("-fx-tick-label-font-size: 1.4em;");
-        yAxis.setStyle("-fx-tick-label-font-size: 1.4em;");
- 
-        sc.getData().addAll(data);
-        if( scene == null ) {
-        	scene = new Scene( sc );
-        } else scene.setRoot( sc );
-        
-        /*for (XYChart.Series<Number, Number> s : sc.getData()) {
-        	int i = 0;
-            for (XYChart.Data<Number, Number> d : s.getData()) {
-                Tooltip.install( d.getNode(), new Tooltip( names[i++] ) );
-            }
-        }*/
-        
-        sc.setBackground( Background.EMPTY );
-        
-        final ContextMenu menu = new ContextMenu();
-        MenuItem mi = new MenuItem();
-        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
-			@Override
-			public void handle(javafx.event.ActionEvent arg0) {
-				WritableImage fximg = sc.snapshot(new SnapshotParameters(), null);
-				try {
-					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("c:/fximg.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-        menu.getItems().add( mi );
-        sc.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
-        	 @Override
-             public void handle(javafx.scene.input.MouseEvent event) {
-               if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
-                 menu.show(sc, event.getScreenX(), event.getScreenY());
-               }
-             }
-        });
-        
-        return scene;
-    }
-	
-	private Scene createScene( String webp ) {
-        //Group  root  =  new  Group();
-		final WebView	wv = new WebView();
-		wv.setPrefSize(1600, 900);
-		//wv.
-		
-		WebEngine we = wv.getEngine();
-		we.loadContent( webp );
-		
-		ScrollPane	sp = new ScrollPane();
-		sp.setPrefViewportWidth(1600);
-		sp.setPrefViewportHeight(900);
-		sp.setContent( wv );
-		final Scene  scene = new  Scene(sp);
-		/*we.setOnResized(
-	        new EventHandler<WebEvent<Rectangle2D>>() {
-	            public void handle(WebEvent<Rectangle2D> ev) {
-	                Rectangle2D r = ev.getData();
-	                
-	                System.err.println( r.getWidth() + "  " + r.getHeight() );
-	                //stage.setWidth(r.getWidth());
-	                //stage.setHeight(r.getHeight());
-	                scene.getWindow().setWidth( r.getWidth() );
-	                scene.getWindow().setHeight( r.getHeight() );
-	            }
-		 });*/
-		
-		final ContextMenu menu = new ContextMenu();
-        MenuItem mi = new MenuItem("Save");
-        mi.setOnAction( new EventHandler<javafx.event.ActionEvent>() {
-			@Override
-			public void handle(javafx.event.ActionEvent arg0) {
-				SnapshotParameters sp = new SnapshotParameters();
-				//sp.
-				WritableImage fximg = wv.snapshot( sp, null );
-				try {
-					ImageIO.write(SwingFXUtils.fromFXImage(fximg, null), "png", new File("/Users/sigmar/Desktop/chart.png"));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-        menu.getItems().add( mi );
-        scene.setOnMouseClicked( new EventHandler<javafx.scene.input.MouseEvent>() {
-        	 @Override
-             public void handle(javafx.scene.input.MouseEvent event) {
-               //if (javafx.scene.input.MouseButton.SECONDARY.equals(event.getButton())) {
-                 menu.show(wv, event.getScreenX(), event.getScreenY());
-               //}
-             }
-        });
-		/*File file = new File("/Users/sigmar/Desktop/chart.png");
-		WritableImage wi = wv.snapshot( new SnapshotParameters(), null );
-		try {
-		    ImageIO.write(SwingFXUtils.fromFXImage(wi, null), "png", file);
-		} catch (IOException e) {}*/
-		
-        /*Text  text  =  new  Text();
-        text.setX(40);
-        text.setY(100);
-        text.setFont(new Font(25));
-        text.setText("Welcome JavaFX!");
-        root.getChildren().add(text);*/
-        return (scene);
-    }
-	
+
 	public void initAndShowGUI( final String webp ) {
-        // This method is invoked on Swing thread
-        JFrame frame = new JFrame("FX");
-        frame.setSize(800, 600);
-        
-        final Dimension dim = new Dimension(1920*2, 1024*2);
-        final BufferedImage bimg = new BufferedImage(dim.width,dim.height,BufferedImage.TYPE_INT_ARGB);
+		// This method is invoked on Swing thread
+		JFrame frame = new JFrame("FX");
+		frame.setSize(800, 600);
+
+		final Dimension dim = new Dimension(1920*2, 1024*2);
+		final BufferedImage bimg = new BufferedImage(dim.width,dim.height,BufferedImage.TYPE_INT_ARGB);
 		final Graphics2D g2 = bimg.createGraphics();
-        
+
 		/*final JFXPanel fxPanel = new JFXPanel() {
         	public void paintComponent( Graphics g ) {
         		super.paintComponent( g );
         	}
         };
         fxPanel.addMouseListener( new MouseListener() {
-			
+
 			@Override
 			public void mouseReleased(MouseEvent e) {}
-			
+
 			@Override
 			public void mousePressed(MouseEvent e) {
 				fxPanel.setPreferredSize( dim );
@@ -5391,7 +4828,7 @@ public class GeneSet implements GenomeSet {
 		        fxPanel.invalidate();
 		        fxPanel.revalidate();
 		        fxPanel.repaint();
-		        
+
 				fxPanel.paint( g2 );
 				try {
 					ImageIO.write( bimg, "png", new File("/home/sigmar/erm.png") );
@@ -5399,29 +4836,29 @@ public class GeneSet implements GenomeSet {
 					e1.printStackTrace();
 				}
 			}
-			
+
 			@Override
 			public void mouseExited(MouseEvent e) {}
-			
+
 			@Override
 			public void mouseEntered(MouseEvent e) {}
-			
+
 			@Override
 			public void mouseClicked(MouseEvent e) {}
 		});
-        
+
         fxPanel.setPreferredSize( dim );
         fxPanel.setSize( dim );
         JScrollPane	scroll = new JScrollPane( fxPanel );
         frame.add( scroll );
         frame.setVisible(true);
-        
+
         fxPanel.addComponentListener( new ComponentListener() {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				int w = e.getComponent().getWidth();
 				int h = e.getComponent().getHeight();
-				
+
 				System.err.println( e.getComponent().getWidth() + " c " + e.getComponent().getHeight() );
 				BufferedImage bimg = new BufferedImage(w,h,BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g2 = bimg.createGraphics();
@@ -5449,65 +4886,7 @@ public class GeneSet implements GenomeSet {
                 initFX(fxPanel, webp);
             }
         });*/
-    }
-
-    public void initFX(JFXPanel fxPanel, String webp) {
-        Scene scene = createScene( webp );
-        fxPanel.setScene(scene);
-    }
-    
-    public void initFXChart( JFXPanel fxPanel, String[] names, double[] xdata, double[] ydata ) {
-        Scene scene = createScene( names, xdata, ydata );
-        if( fxPanel != null ) fxPanel.setScene(scene);
-    }
-
-	public void initWebPage(Stage stage, String webp ) {
-		Scene scene = createScene( webp );
-		if( stage != null ) stage.setScene(scene);
 	}
-    
-    public void initDualPieChart( JFXPanel fxPanel, Map<String,Integer> map, Map<String,Integer> mip ) {
-        Scene scene = createDualPieChartScene( map, mip );
-        if( fxPanel != null ) fxPanel.setScene(scene);
-    }
-    
-    public void initStackedBarChart( Stage stage, Map<String,String> all, Map<String,Map<String,Integer>> map, boolean uniform ) {
-        Scene scene = createStackedBarChartScene( all, map, uniform );
-        if( stage != null ) stage.setScene(scene);
-    }
-    
-    public void initStackedBarChart( JFXPanel fxPanel, List<StackBarData> lsbd, String[] categories ) {
-        Scene scene = createStackedBarChartScene( lsbd, categories );
-        if( fxPanel != null ) fxPanel.setScene(scene);
-    }
-    
-    public void initBarChart( JFXPanel fxPanel, String[] names, int[] xdata, String xTitle, String yTitle, double start, double stop, double step, String title ) {
-    	XYChart.Series<String,Number> data = new XYChart.Series<>();
-        //core.setName("Core: " + xdata[xdata.length-1] );
-        for( int i = 0; i < xdata.length; i++ ) {
-        	XYChart.Data<String,Number> d = new XYChart.Data<>(names[i], xdata[i]);
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	data.getData().add( d );
-        }
-        
-        Scene scene = createBarChartScene( names, data, xTitle, yTitle, start, stop, step, title );
-        if( fxPanel != null ) fxPanel.setScene(scene);
-    }
-    
-    public void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata, String xTitle, String yTitle, double start, double stop, double step, String title ) {
-    	XYChart.Series<String,Number> data = new XYChart.Series<>();
-        //core.setName("Core: " + xdata[xdata.length-1] );
-        for( int i = 0; i < xdata.length; i++ ) {
-        	String name = names[i];
-        	double dval = xdata[i];
-        	XYChart.Data<String,Number> d = new XYChart.Data<>(name, dval);
-        	//Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
-        	data.getData().add( d );
-        }
-        
-    	Scene scene = createBarChartScene( names, data, xTitle, yTitle, start, stop, step, title );
-        if( fxPanel != null ) fxPanel.setScene(scene);
-    }
 	
 	public void viggo( String fastapath, String qualpath, String blastoutpath, String resultpath ) throws IOException {
 		/*
@@ -6907,7 +6286,7 @@ public class GeneSet implements GenomeSet {
 	}
 	
 	boolean isthermus = true;
-	String nameFix( String spec ) {
+	public String nameFix( String spec ) {
 		return Sequence.nameFix( spec, isthermus );
 	}
 	
@@ -7087,113 +6466,6 @@ public class GeneSet implements GenomeSet {
 			line = br.readLine();
 		}
 		System.out.println( "count " + count );
-	}
-	
-	public StringWriter writeSimpleCog( Map<String,Map<Character,Integer>> map ) throws IOException {
-		StringWriter fw = new StringWriter();
-		fw.write( "['Species" );
-		for( String coggroup : Cog.coggroups.keySet() ) {
-			fw.write("','"+coggroup);
-		}
-		fw.write("']");
-		for( String s : map.keySet() ) {
-			fw.write(",\n");
-			fw.write( "['"+s+"'" );
-			Map<Character,Integer> cm = map.get( s );
-			//for( Character cogchar : Cog.charcog.keySet() ) {
-			for( String coggroup : Cog.coggroups.keySet() ) {
-				int val = 0;
-				Set<String> groupchars = Cog.coggroups.get(coggroup);
-				for( String cogchar : groupchars ) {
-					if( cm.containsKey( cogchar ) ) {
-						val += cm.get(cogchar);
-					}
-				}
-				fw.write(","+val);
-			}
-			fw.write("]");
-		}
-		fw.close();
-		
-		return fw;
-	}
-	
-	public StringWriter writeCog( Map<String,Map<String,Integer>> map, Set<String> includedCogs, boolean uniform ) throws IOException {
-		StringWriter fw = new StringWriter();
-		fw.write("[");
-		fw.write( "['Species" );
-		for( String cogchar : includedCogs ) {
-			String coglong = Cog.charcog.get( cogchar );
-			fw.write("','"+coglong);
-		}
-		fw.write("']");
-		
-		Map<String,Integer> totmap = new HashMap<>();
-		for( String s : map.keySet() ) {
-			int total = 0;
-			Map<String,Integer> cm = map.get( s );
-			for( String cogchar : includedCogs ) {
-				int val = 0;
-				if( cm.containsKey( cogchar ) ) {
-					val = cm.get(cogchar);
-				}
-				total += val;
-			}
-			totmap.put( s, total );
-		}
-		
-		for( String s : map.keySet() ) {
-			fw.write(",\n");
-			int total = totmap.get( s );
-			fw.write( "['"+nameFix(s)+"'" );
-			Map<String,Integer> cm = map.get( s );
-			for( String cogchar : includedCogs ) {
-				int val = 0;
-				//String coglong = Cog.charcog.get(cogchar);
-				//Character cogchar = Cog.cogchar.get( coglong );
-				if( cm.containsKey( cogchar ) ) {
-					val = cm.get(cogchar);
-				}// else val = -1;
-				
-				if( uniform ) {
-					fw.write(","+((double)val/(double)total));
-				} else {
-					fw.write(","+val);
-				}
-			}
-			fw.write("]");
-		}
-		fw.write("]");
-		
-		/*fw.write( "Species" );
-		for( String cog : all.keySet() ) {
-			String coglong = all.get( cog );
-			fw.write("\t"+coglong);
-		}
-		for( String s : map.keySet() ) {
-			int total = 0;
-			fw.write( "\n"+s );
-			Map<String,Integer> cm = map.get( s );
-			for( String cog : all.keySet() ) {
-				int val = 0;
-				if( cm.containsKey( cog ) ) val = cm.get(cog);
-				fw.write("\t"+val);
-			}
-			//fw.write("\n");
-		}
-		
-		/*for( String cog : all ) {
-			fw.write( "\n"+cog );
-			for( String spec : map.keySet() ) {
-				Map<String,Integer> cm = map.get( spec );
-				if( cm.containsKey( cog ) ) fw.write( "\t" + cm.get( cog )  );
-				else fw.write( "\t" + 0  );
-			}
-		}*/
-		
-		fw.close();
-		
-		return fw;
 	}
 	
 	public void assignGain( Node n, Map<Node,List<GeneGroup>> gainMap, PrintStream ps ) {

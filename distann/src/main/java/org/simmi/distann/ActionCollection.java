@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,10 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-//import javax.jnlp.FileContents;
-//import javax.jnlp.FileSaveService;
-//import javax.jnlp.ServiceManager;
-//import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
@@ -54,12 +49,15 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 /*import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;*/
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -1463,272 +1461,249 @@ public class ActionCollection {
 		codregaction.setOnAction( actionEvent -> new CodingRegions().coderegPlot( genesethead, comp ) );
 		
 		MenuItem freqdistaction = new MenuItem("Freq dist");
-		freqdistaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				JFrame f = new JFrame("Genome frequency distribution");
-				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				f.setSize(500, 500);
+		freqdistaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+			JFrame f = new JFrame("Genome frequency distribution");
+			f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			f.setSize(500, 500);
 
-				final Map<Integer,Integer>	frqmap = new TreeMap<>();
-				//int i = 0;
-				Set<String> ss = new HashSet<String>();
-				//Set<String> gs = new HashSet<String>();
-				for (Set<String> cluster : geneset.uclusterlist) {
-					ss.clear();
-					//gs.clear();
+			final Map<Integer,Integer>	frqmap = new TreeMap<>();
+			//int i = 0;
+			Set<String> ss = new HashSet<String>();
+			//Set<String> gs = new HashSet<String>();
+			for (Set<String> cluster : geneset.uclusterlist) {
+				ss.clear();
+				//gs.clear();
 
-					//Set<Gene> gset = new HashSet<Gene>();
-					for (String cont : cluster) {
-						String[] split = cont.split("_");
-						ss.add(split[0]);
-						//Gene g = locgene.get(cont);
-						
-						/*if (g != null) {
-							gs.add(g.refid);
-							gset.add(g);
-						}*/
-					}
-					
-					if( frqmap.containsKey( ss.size() ) ) {
-						frqmap.put( ss.size(), frqmap.get(ss.size())+1 );
-					} else frqmap.put( ss.size(), 1 );
+				//Set<Gene> gset = new HashSet<Gene>();
+				for (String cont : cluster) {
+					String[] split = cont.split("_");
+					ss.add(split[0]);
+					//Gene g = locgene.get(cont);
 
-					/*int val = 0;
-					for (Gene g : gset) {
-						if (g.species != null) {
-							for (String str : g.species.keySet()) {
-								val += g.species.get(str).tset.size();
-							}
+					/*if (g != null) {
+						gs.add(g.refid);
+						gset.add(g);
+					}*/
+				}
+
+				if( frqmap.containsKey( ss.size() ) ) {
+					frqmap.put( ss.size(), frqmap.get(ss.size())+1 );
+				} else frqmap.put( ss.size(), 1 );
+
+				/*int val = 0;
+				for (Gene g : gset) {
+					if (g.species != null) {
+						for (String str : g.species.keySet()) {
+							val += g.species.get(str).tset.size();
 						}
 					}
+				}
 
-					for (Gene g : gset) {
-						g.groupIdx = i;
-						g.groupCoverage = ss.size();
-						g.groupGenCount = gs.size();
-						g.groupCount = val;
-					}
+				for (Gene g : gset) {
+					g.groupIdx = i;
+					g.groupCoverage = ss.size();
+					g.groupGenCount = gs.size();
+					g.groupCount = val;
+				}
 
-					i++;*/
-				}
-				
-				StringBuilder restext = new StringBuilder();
-				restext.append("['a', ' ']");
-				for( Integer k : frqmap.keySet() ) {
-					int h = frqmap.get( k );
-					restext.append(",\n["+k+", "+h+"]");
-				}
-				
-				final StringBuilder sb = new StringBuilder();
-				InputStream is = GeneSet.class.getResourceAsStream("org/simmi/javafasta/chart.html");
-				try {
-					int c = is.read();
-					while( c != -1 ) {
-						sb.append( (char)c );
-						c = is.read();
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				final String smuck = sb.toString().replace("smuck", restext.toString()).replace("Pan-core genome", "Gene frequency distribution");
-				System.err.println( smuck );
-				//restext.append( smuck );
-				
-				//final String smuck = sb.toString();
-				
-				SwingUtilities.invokeLater(new Runnable() {
-	                 @Override
-	                 public void run() {
-	                     geneset.initAndShowGUI( smuck );
-	                 }
-	            });
-				
-				/*JScrollPane	jsp = new JScrollPane();
-				JComponent	comp = new JComponent() {
-					public void paintComponent( Graphics g ) {
-						super.paintComponent(g);
-						g.setColor( Color.white );
-						g.fillRect(0, 0, this.getWidth(), this.getHeight());
-						g.setColor( Color.blue );
-						
-						int min = 30;
-						int max = 0;
-						
-						int minh = 100000000;
-						int maxh = 0;
-						
-						for( Integer k : frqmap.keySet() ) {
-							if( k > max ) max = k;
-							if( k < min ) min = k;
-							
-							int h = frqmap.get( k );
-							if( h > maxh ) maxh = h;
-							if( h < minh ) minh = h;
-						}
-						
-						if( minh != maxh ) {
-							for( Integer k : frqmap.keySet() ) {
-								int h = frqmap.get( k );
-								int x = (k-min)*(this.getWidth()-20)/(max-min)+10;
-								int y = -(h-minh)*(this.getHeight()-20)/(maxh-minh)+(this.getHeight()-10);
-								g.fillOval(x-4, y-4, 8, 8);
-							}
-						}
-					}
-				};
-				comp.setPreferredSize( new Dimension(800,600) );
-				jsp.setViewportView( comp );
-				f.add( jsp );
-				f.setVisible( true );*/
+				i++;*/
 			}
+
+			StringBuilder restext = new StringBuilder();
+			restext.append("['a', ' ']");
+			for( Integer k : frqmap.keySet() ) {
+				int h = frqmap.get( k );
+				restext.append(",\n["+k+", "+h+"]");
+			}
+
+			final StringBuilder sb = new StringBuilder();
+			InputStream is = GeneSet.class.getResourceAsStream("org/simmi/javafasta/chart.html");
+			try {
+				int c = is.read();
+				while( c != -1 ) {
+					sb.append( (char)c );
+					c = is.read();
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			final String smuck = sb.toString().replace("smuck", restext.toString()).replace("Pan-core genome", "Gene frequency distribution");
+			System.err.println( smuck );
+			//restext.append( smuck );
+
+			//final String smuck = sb.toString();
+
+			SwingUtilities.invokeLater(() -> geneset.initAndShowGUI( smuck ));
+
+			/*JScrollPane	jsp = new JScrollPane();
+			JComponent	comp = new JComponent() {
+				public void paintComponent( Graphics g ) {
+					super.paintComponent(g);
+					g.setColor( Color.white );
+					g.fillRect(0, 0, this.getWidth(), this.getHeight());
+					g.setColor( Color.blue );
+
+					int min = 30;
+					int max = 0;
+
+					int minh = 100000000;
+					int maxh = 0;
+
+					for( Integer k : frqmap.keySet() ) {
+						if( k > max ) max = k;
+						if( k < min ) min = k;
+
+						int h = frqmap.get( k );
+						if( h > maxh ) maxh = h;
+						if( h < minh ) minh = h;
+					}
+
+					if( minh != maxh ) {
+						for( Integer k : frqmap.keySet() ) {
+							int h = frqmap.get( k );
+							int x = (k-min)*(this.getWidth()-20)/(max-min)+10;
+							int y = -(h-minh)*(this.getHeight()-20)/(maxh-minh)+(this.getHeight()-10);
+							g.fillOval(x-4, y-4, 8, 8);
+						}
+					}
+				}
+			};
+			comp.setPreferredSize( new Dimension(800,600) );
+			jsp.setViewportView( comp );
+			f.add( jsp );
+			f.setVisible( true );*/
 		}));
 		//JButton freqdistbutton = new JButton(freqdistaction);
 		
 		MenuItem gcpaction = new MenuItem("Gene GC% histogram");
-		gcpaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				JFrame f = new JFrame("Gene GC% histogram");
-				f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				f.setSize(500, 500);
+		gcpaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+			JFrame f = new JFrame("Gene GC% histogram");
+			f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			f.setSize(500, 500);
 
-				final String xTitle = "Gene";
-				final String yTitle = "GC%";
-				
-				final Map<Integer,Integer>	frqmap = new TreeMap<Integer,Integer>();
-				
-				double min = Double.MAX_VALUE;
-				double max = 0.0;
-				for( GeneGroup gg : geneset.allgenegroups ) {
-					double val = gg.getAvgGCPerc();
-					if( val > 0.0 ) {
-						if( val > max ) max = val;
-						if( val < min ) min = val;
+			final String xTitle = "Gene";
+			final String yTitle = "GC%";
+
+			final Map<Integer,Integer>	frqmap = new TreeMap<Integer,Integer>();
+
+			double min = Double.MAX_VALUE;
+			double max = 0.0;
+			for( GeneGroup gg : geneset.allgenegroups ) {
+				double val = gg.getAvgGCPerc();
+				if( val > 0.0 ) {
+					if( val > max ) max = val;
+					if( val < min ) min = val;
+				}
+			}
+
+			double bil = max - min;
+			for( GeneGroup gg : geneset.allgenegroups ) {
+				double val = gg.getAvgGCPerc();
+
+				if( val > 0.0 ) {
+					int bin = (int)((val-min)*49.99/bil);
+
+					if( !frqmap.containsKey( bin ) ) {
+						frqmap.put( bin, 1 );
+					} else {
+						frqmap.put( bin, frqmap.get(bin)+1 );
 					}
 				}
-				
-				double bil = max - min;
-				for( GeneGroup gg : geneset.allgenegroups ) {
-					double val = gg.getAvgGCPerc();
-					
-					if( val > 0.0 ) {
-						int bin = (int)((val-min)*49.99/bil);
-						
-						if( !frqmap.containsKey( bin ) ) {
-							frqmap.put( bin, 1 );
-						} else {
-							frqmap.put( bin, frqmap.get(bin)+1 );
-						}
-					}
+			}
+
+			if( Desktop.isDesktopSupported() ) {
+				final String[] 	names = new String[ frqmap.size() ];
+				final int[]		vals = new int[ names.length ];
+				int i = 0;
+				for( Integer k : frqmap.keySet() ) {
+					int h = frqmap.get( k );
+					names[i] = ""+(k*bil/50.0+min);
+					vals[i] = h;
+
+					i++;
 				}
-				
-				if( Desktop.isDesktopSupported() ) {
-					final String[] 	names = new String[ frqmap.size() ];
-					final int[]		vals = new int[ names.length ];
-					int i = 0;
-					for( Integer k : frqmap.keySet() ) {
-						int h = frqmap.get( k );
-						names[i] = ""+(k*bil/50.0+min);
-						vals[i] = h;
-						
-						i++;
+				Runnable runnable = () -> {
+					CogChart cogChart = new CogChart(genesethead);
+					if( geneset.fxframe == null ) {
+						geneset.fxframe = new JFrame("Pan-core");
+						geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+						geneset.fxframe.setSize(800, 600);
+
+						final JFXPanel	fxpanel = new JFXPanel();
+						geneset.fxframe.add( fxpanel );
+
+						Platform.runLater(() -> cogChart.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
+					} else {
+						Platform.runLater(() -> cogChart.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
 					}
-					Runnable runnable = new Runnable() {
-						@Override
-						public void run() {
-							if( geneset.fxframe == null ) {
-								geneset.fxframe = new JFrame("Pan-core");
-								geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-								geneset.fxframe.setSize(800, 600);
-								
-								final JFXPanel	fxpanel = new JFXPanel();
-								geneset.fxframe.add( fxpanel );
-								
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                     geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
-					                 }
-					            });
-							} else {
-								Platform.runLater(new Runnable() {
-					                 @Override
-					                 public void run() {
-					                	 geneset.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" );
-					                 }
-					            });
-							}						
-							geneset.fxframe.setVisible( true );
-						}
-					};
-					SwingUtilities.invokeLater( runnable );
-					/*try {
-						FileWriter fw = new FileWriter("c:/smuck.html");
-						fw.write( smuck );
-						fw.close();
-						Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
-					} catch( Exception exc ) {
-						exc.printStackTrace();
-					}*/
-				}
-				/*try { 
-					JSObject window = JSObject.getWindow( geneset );
-					window.call("string2Blob", new Object[] {b64str,"text/html"});
+					geneset.fxframe.setVisible( true );
+				};
+				SwingUtilities.invokeLater( runnable );
+				/*try {
+					FileWriter fw = new FileWriter("c:/smuck.html");
+					fw.write( smuck );
+					fw.close();
+					Desktop.getDesktop().browse( new URI("file://c:/smuck.html") );
 				} catch( Exception exc ) {
 					exc.printStackTrace();
 				}*/
-				
-				//System.err.println( smuck );
-				//restext.append( smuck );
-				
-				//final String smuck = sb.toString();
-				
-				/*SwingUtilities.invokeLater(new Runnable() {
-	                 @Override
-	                 public void run() {
-	                     initAndShowGUI( smuck );
-	                 }
-	            });*/
-				
-				/*JScrollPane	jsp = new JScrollPane();
-				JComponent	comp = new JComponent() {
-					public void paintComponent( Graphics g ) {
-						super.paintComponent(g);
-						g.setColor( Color.white );
-						g.fillRect(0, 0, this.getWidth(), this.getHeight());
-						g.setColor( Color.blue );
-						
-						int min = 30;
-						int max = 0;
-						
-						int minh = 100000000;
-						int maxh = 0;
-						
+			}
+			/*try {
+				JSObject window = JSObject.getWindow( geneset );
+				window.call("string2Blob", new Object[] {b64str,"text/html"});
+			} catch( Exception exc ) {
+				exc.printStackTrace();
+			}*/
+
+			//System.err.println( smuck );
+			//restext.append( smuck );
+
+			//final String smuck = sb.toString();
+
+			/*SwingUtilities.invokeLater(new Runnable() {
+				 @Override
+				 public void run() {
+					 initAndShowGUI( smuck );
+				 }
+			});*/
+
+			/*JScrollPane	jsp = new JScrollPane();
+			JComponent	comp = new JComponent() {
+				public void paintComponent( Graphics g ) {
+					super.paintComponent(g);
+					g.setColor( Color.white );
+					g.fillRect(0, 0, this.getWidth(), this.getHeight());
+					g.setColor( Color.blue );
+
+					int min = 30;
+					int max = 0;
+
+					int minh = 100000000;
+					int maxh = 0;
+
+					for( Integer k : frqmap.keySet() ) {
+						if( k > max ) max = k;
+						if( k < min ) min = k;
+
+						int h = frqmap.get( k );
+						if( h > maxh ) maxh = h;
+						if( h < minh ) minh = h;
+					}
+
+					if( minh != maxh ) {
 						for( Integer k : frqmap.keySet() ) {
-							if( k > max ) max = k;
-							if( k < min ) min = k;
-							
 							int h = frqmap.get( k );
-							if( h > maxh ) maxh = h;
-							if( h < minh ) minh = h;
-						}
-						
-						if( minh != maxh ) {
-							for( Integer k : frqmap.keySet() ) {
-								int h = frqmap.get( k );
-								int x = (k-min)*(this.getWidth()-20)/(max-min)+10;
-								int y = -(h-minh)*(this.getHeight()-20)/(maxh-minh)+(this.getHeight()-10);
-								g.fillOval(x-4, y-4, 8, 8);
-							}
+							int x = (k-min)*(this.getWidth()-20)/(max-min)+10;
+							int y = -(h-minh)*(this.getHeight()-20)/(maxh-minh)+(this.getHeight()-10);
+							g.fillOval(x-4, y-4, 8, 8);
 						}
 					}
-				};
-				comp.setPreferredSize( new Dimension(800,600) );
-				jsp.setViewportView( comp );
-				f.add( jsp );
-				f.setVisible( true );*/
-			}
+				}
+			};
+			comp.setPreferredSize( new Dimension(800,600) );
+			jsp.setViewportView( comp );
+			f.add( jsp );
+			f.setVisible( true );*/
 		}));
 
 		MenuItem presabsaction = new MenuItem("Pres-Abs tree");
@@ -1775,7 +1750,7 @@ public class ActionCollection {
 				char one = output.isSelected() ? 'A' : '1';
 				char zero = output.isSelected() ? 'C' : '0';
 
-				Map<String, StringBuilder> sbmap = new HashMap<String, StringBuilder>();
+				Map<String, StringBuilder> sbmap = new HashMap<>();
 				for (Set<String> specset : clusterMap.keySet()) {
 					if (specset.size() > 1 && (!check.isSelected() || geneset.containmentCount(specset, selspec) < selspec.size())) {
 						for (String spec : selspec) {
@@ -2510,6 +2485,7 @@ public class ActionCollection {
 				//String b64str = Base64.encodeBase64String( smuck.getBytes() );
 				if( Desktop.isDesktopSupported() ) {
 					SwingUtilities.invokeLater(() -> {
+						CogChart cogChart = new CogChart(genesethead);
 						if( geneset.fxframe == null ) {
 							geneset.fxframe = new JFrame("Pan-core");
 							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
@@ -2518,9 +2494,9 @@ public class ActionCollection {
 							final JFXPanel	fxpanel = new JFXPanel();
 							geneset.fxframe.add( fxpanel );
 
-							Platform.runLater(() -> geneset.initStackedBarChart( fxpanel, lsbd, categories ));
+							Platform.runLater(() -> cogChart.initStackedBarChart( fxpanel, lsbd, categories ));
 						} else {
-							Platform.runLater(() -> geneset.initStackedBarChart( null, lsbd, categories ));
+							Platform.runLater(() ->cogChart.initStackedBarChart( null, lsbd, categories ));
 						}
 						geneset.fxframe.setVisible( true );
 					});
@@ -2638,6 +2614,7 @@ public class ActionCollection {
 				
 			 	if( Desktop.isDesktopSupported() ) {
 					SwingUtilities.invokeLater(() -> {
+						CogChart cogChart = new CogChart(genesethead);
 						if( geneset.fxframe == null ) {
 							geneset.fxframe = new JFrame("Pan-core");
 							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
@@ -2646,9 +2623,9 @@ public class ActionCollection {
 							final JFXPanel	fxpanel = new JFXPanel();
 							geneset.fxframe.add( fxpanel );
 
-							Platform.runLater(() -> geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" ));
+							Platform.runLater(() -> cogChart.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" ));
 						} else {
-							Platform.runLater(() -> geneset.initBarChart( null, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" ));
+							Platform.runLater(() -> cogChart.initBarChart( null, names, vals, xTitle, yTitle, 0, max, 10000, contigs.isSelected() ? "Sequence sizes" : "Genome sizes" ));
 						}
 						geneset.fxframe.setVisible( true );
 					});
@@ -2946,6 +2923,7 @@ public class ActionCollection {
 
 					if( Desktop.isDesktopSupported() ) {
 						SwingUtilities.invokeLater(() -> {
+							CogChart cogChart = new CogChart(genesethead);
 							if( geneset.fxframe == null ) {
 								geneset.fxframe = new JFrame("Pan-core");
 								geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
@@ -2954,9 +2932,9 @@ public class ActionCollection {
 								final JFXPanel	fxpanel = new JFXPanel();
 								geneset.fxframe.add( fxpanel );
 
-								Platform.runLater(() -> geneset.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
+								Platform.runLater(() -> cogChart.initBarChart( fxpanel, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
 							} else {
-								Platform.runLater(() -> geneset.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
+								Platform.runLater(() -> cogChart.initBarChart( null, names, vals, xTitle, yTitle, 0.6, 0.7, 0.02, "GC%" ));
 							}
 							geneset.fxframe.setVisible( true );
 						});
@@ -3381,652 +3359,171 @@ public class ActionCollection {
 		//Set<String>	selspec = geneset.getSelspec( geneset, new ArrayList( geneset.specList ), null );
 		
 		MenuItem totalcogaction = new MenuItem("COG total");
-		totalcogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				JCheckBox cb = new JCheckBox("Plasmid");
-				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), cb );
-				
-				String nohit = "-";
-				final Map<String,Integer>	mip = new HashMap<>();
-				final Map<String,Integer>	map = new HashMap<>();
-				if( !genesethead.isGeneview() ) {
-					for( GeneGroup gg : genesethead.table.getItems() ) {
-						Cog cog = gg.getCog(geneset.cogmap);
-						if( cog != null /*&& includedCogs.contains(cog.symbol)*/ ) {
-							if( cb.isSelected() ) {
-								Set<String> tmp = new HashSet<String>( gg.species.keySet() );
-								tmp.retainAll( selspec );
-								
-								if( tmp.size() > 0 ) {
-									int total = gg.size();
-									int p = 0;
-									for( Annotation a : gg.genes ) {
-										if( a.getContig().isPlasmid() ) p++;
-									}
-									
-									if( gg.isOnAnyPlasmid() ) { //(float)p/(float)total > 0.9 ) { //gg.isOnAnyPlasmid() ) {
-										int k = 0;
-										if( mip.containsKey( cog.symbol ) ) k = mip.get(cog.symbol);
-										mip.put( cog.symbol, k+1 );
-									} else {
-										int k = 0;
-										if( map.containsKey( cog.symbol ) ) k = map.get(cog.symbol);
-										map.put( cog.symbol, k+1 );
-									}
-								}
-							} else {
-								if( gg.species.keySet().containsAll(selspec) ) {
-									int k = 0;
-									if( map.containsKey( cog.symbol ) ) k = map.get(cog.symbol);
-									map.put( cog.symbol, k+1 );
-								} else {
-									Set<String> tmp = new HashSet<String>( gg.species.keySet() );
-									tmp.removeAll( selspec );
-									
-									if( tmp.size() < gg.species.size() ) {
-										int k = 0;
-										if( mip.containsKey( cog.symbol ) ) k = mip.get(cog.symbol);
-										mip.put( cog.symbol, k+1 );
-									}
-								}
-							}
-							/*for( String spec : selspec ) {
-								if( gg.species.containsKey( spec ) ) {
-									Teginfo ti = gg.species.get( spec );
-									for( Tegeval tv : ti.tset ) {
-										Map<Character,Integer> submap;
-										/*if( contigs ) {
-											if( map.containsKey( tv.contloc ) ) {
-												
-											}
-										} else {*
-											int val = 0;
-											if( map.containsKey( tv.getSpecies() ) ) {
-												submap = map.get( tv.getSpecies() );
-												if( submap.containsKey(cog.symbol) ) val = submap.get(cog.symbol);
-											} else {
-												submap = new HashMap<Character,Integer>();
-												map.put(spec, submap);
-											}
-											submap.put( cog.symbol, val+1 );
-										//}
-									}
-								}
-							}*/
-						} else {
-							if( cb.isSelected() ) {
-								Set<String> tmp = new HashSet<String>( gg.species.keySet() );
-								tmp.retainAll( selspec );
-								
-								if( tmp.size() > 0 ) {
-									int total = gg.size();
-									int p = 0;
-									for( Annotation a : gg.genes ) {
-										if( a.getContig().isPlasmid() ) p++;
-									}
-									
-									if( gg.isOnAnyPlasmid() ) { //(float)p/(float)total > 0.9 ) { //gg.isOnAnyPlasmid() ) {
-										int k = 0;
-										if( mip.containsKey( nohit ) ) k = mip.get(nohit);
-										mip.put( nohit, k+1 );
-									} else {
-										int k = 0;
-										if( map.containsKey( nohit ) ) k = map.get(nohit);
-										map.put( nohit, k+1 );
-									}
-								}
-							} else {
-								if( gg.species.keySet().containsAll(selspec) ) {
-									int k = 0;
-									if( map.containsKey( nohit ) ) k = map.get(nohit);
-									map.put( nohit, k+1 );
-								} else {
-									Set<String> tmp = new HashSet<>(gg.species.keySet());
-									tmp.removeAll( selspec );
-									
-									if( tmp.size() < gg.species.size() ) {
-										int k = 0;
-										if( mip.containsKey( nohit ) ) k = mip.get(nohit);
-										mip.put( nohit, k+1 );
-									}
-								}
-							}
-						}
-					}
-				}
-				
-				//Character last = null;
-				StringBuilder sb = new StringBuilder();
-				for( String s : Cog.coggroups.keySet() ) {
-					Set<String> sc = Cog.coggroups.get(s);
-					if( s.contains("METABOLISM") ) {
-						for( String c : sc ) {
-							sb.append("\t").append(Cog.charcog.get(c));
-						}
-					} else {
-						sb.append("\t").append(s);
-						if( sc.contains('V') ) {
-							sb.append( "\tDefence mechanism" );
-						}
-					}
-					//last = c;
-				}
-				sb.append( "\tNo hit" );
-				
-				if( cb.isSelected() ) sb.append( "\nChromosome" );
-				else sb.append( "\nCore" );
-				
-				int mit = 0;
-				int mat = 0;
-				for( String s : Cog.coggroups.keySet() ) {
-					Set<String> sc = Cog.coggroups.get(s);
-					if( s.contains("METABOLISM") ) {
-						for( String c : sc ) {
-							int count = 0;
-							if( map.containsKey(c) ) {
-								int val = map.get(c);
-								count = val;
-								//if( c.equals(last) ) sb.append("\n");
-								//sb.append("\t");
-								mat += val;
-							}
-							sb.append("\t"+count);
-						}
-					} else {
-						int count = 0;
-						for( String c : sc ) {
-							if( !c.equals('V') && map.containsKey(c) ) {
-								int val = map.get(c);
-								count += val;
-								//if( c.equals(last) ) sb.append("\n");
-								//sb.append("\t");
-								mat += val;
-							}
-						}
-						sb.append( "\t"+count );
-						
-						if( sc.contains('V') ) {
-							count = 0;
-							if( map.containsKey('V') ) {
-								int val = map.get('V');
-								count += val;
-							}
-							sb.append( "\t"+count );
-						}
-					}
-				}
-				int count = 0;
-				if( map.containsKey(nohit) ) count = map.get( nohit );
-				sb.append( "\t"+count );
-				
-				if( cb.isSelected() ) sb.append( "\nPlasmid" );
-				else sb.append( "\nAccessory" );
-				
-				for( String s : Cog.coggroups.keySet() ) {
-					Set<String> sc = Cog.coggroups.get(s);
-					if( s.contains("METABOLISM") ) {
-						for( String c : sc ) {
-							count = 0;
-							if( mip.containsKey(c) ) {
-								int val = mip.get(c);
-								count = val;
-								mit += val;
-							}
-							sb.append("\t"+count);
-						}
-					} else {
-						count = 0;
-						for( String c : sc ) {
-							if( !c.equals('V') && mip.containsKey(c) ) {
-								int val = mip.get(c);
-								count += val;
-								mit += val;
-							}
-						}
-						sb.append( "\t"+count );
-						
-						if( sc.contains('V') ) {
-							count = 0;
-							if( mip.containsKey('V') ) {
-								int val = mip.get('V');
-								count += val;
-							}
-							sb.append( "\t"+count );
-						}
-					}
-				}
-				count = 0;
-				if( mip.containsKey(nohit) ) count = mip.get( nohit );
-				sb.append( "\t"+count );
-				sb.append( "\n" );
-				System.err.println( "map size " + mat + " mip size " + mit );
-				
-				SwingUtilities.invokeLater( new Runnable() {
-					@Override
-					public void run() {
-						if( geneset.fxframe == null ) {
-							geneset.fxframe = new JFrame("COG");
-							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-							geneset.fxframe.setSize(800, 600);
-							
-							final JFXPanel	fxpanel = new JFXPanel();
-							geneset.fxframe.add( fxpanel );
-							
-							Platform.runLater(() -> geneset.initDualPieChart( fxpanel, map, mip ));
-						} else {
-							Platform.runLater(() -> geneset.initDualPieChart( null, map, mip ));
-						}						
-						geneset.fxframe.setVisible( true );
-					}
-				});
-				
-				JFrame f = new JFrame("GC% chart");
-				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-				f.setSize( 800, 600 );
-				
-				JTextArea	ta = new JTextArea();
-				ta.setText( sb.toString() );
-				JScrollPane	sp = new JScrollPane(ta);
-				f.add( sp );
-				f.setVisible( true );
-			}
+		totalcogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+			CogChart cogChart = new CogChart(genesethead);
+			cogChart.cogTotal();
 		}));
 		MenuItem cogaction = new MenuItem("COG chart data");
 		cogaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
-            try {
-                /*Map<String,String> env = new HashMap<String,String>();
-                //env.put("create", "true");
-                //Path path = zipfile.toPath();
-                String uristr = "jar:" + geneset.zippath.toUri();
-                geneset.zipuri = URI.create( uristr /*.replace("file://", "file:")* );
-                geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-
-                Path nf = geneset.zipfilesystem.getPath("/cog.blastout");
-
-                //InputStream is = new GZIPInputStream( new FileInputStream( fc.getSelectedFile() ) );
-                //uni2symbol(new InputStreamReader(is), bw, unimap);
-
-                //bw.close();
-                //long bl = Files.copy( new ByteArrayInputStream( baos.toByteArray() ), nf, StandardCopyOption.REPLACE_EXISTING );
-
-                BufferedReader br = Files.newBufferedReader(nf);*/
-                final JCheckBox	contigs = new JCheckBox("Show contigs");
-                final JCheckBox	uniform = new JCheckBox("Uniform");
-                Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs, uniform );
-
-                final List<String> coglist = new ArrayList( Cog.charcog.keySet() );
-                HashSet<String>	includedCogs = new HashSet<>();
-                JTable cogtable = new JTable();
-                cogtable.getSelectionModel().setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-                TableModel cogmodel = new TableModel() {
-                    @Override
-                    public int getRowCount() {
-                        return coglist.size();
-                    }
-
-                    @Override
-                    public int getColumnCount() {
-                        return 2;
-                    }
-
-                    @Override
-                    public String getColumnName(int columnIndex) {
-                        if( columnIndex == 0 ) return "Symbol";
-                        else return "Name";
-                    }
-
-                    @Override
-                    public Class<?> getColumnClass(int columnIndex) {
-                        return String.class;
-                    }
-
-                    @Override
-                    public boolean isCellEditable(int rowIndex, int columnIndex) {
-                        return false;
-                    }
-
-                    @Override
-                    public Object getValueAt(int rowIndex, int columnIndex) {
-                        String c = coglist.get( rowIndex);
-                        if( columnIndex == 0 ) return c;
-                        else return Cog.charcog.get( c );
-                    }
-
-                    @Override
-                    public void setValueAt(Object aValue, int rowIndex,int columnIndex) {}
-
-                    @Override
-                    public void addTableModelListener(TableModelListener l) {}
-
-                    @Override
-                    public void removeTableModelListener(TableModelListener l) {}
-
-                };
-                boolean web = true;
-
-                JCheckBox webbox = new JCheckBox("Web based");
-                webbox.setSelected( true );
-
-                cogtable.setModel( cogmodel );
-                JScrollPane cogscroll = new JScrollPane( cogtable );
-
-                Object[] objs = new Object[] { cogscroll, webbox };
-                JOptionPane.showMessageDialog( null, objs );
-                web = webbox.isSelected();
-
-                int[] rr = cogtable.getSelectedRows();
-                for( int r : rr ) {
-                    includedCogs.add( coglist.get(r) );
-                }
-
-                final Map<String,String>					all = new TreeMap();
-                final Map<String, Map<String,Integer>> 	map = new LinkedHashMap();
-                genesethead.cogCalc( null, includedCogs, map, selspec, contigs.isSelected() );
-
-                /*Map<Character,Row> rl = new HashMap();
-
-                Workbook	wb = new XSSFWorkbook();
-                Sheet sh = wb.createSheet("COG");
-
-				Row namerow = sh.createRow(0);
-
-                int k = 0;
-                for( String sp : map.keySet() ) {
-					namerow.createCell(k).setCellValue(sp);
-                    Map<Character,Integer> mm = map.get(sp);
-                    if( mm != null ) for( char c : mm.keySet() ) {
-                        int cn = mm.get(c);
-
-                        if( !rl.containsKey(c) ) {
-                            rl.put( c, sh.createRow(rl.size()+1) );
-                        }
-
-                        Row r = rl.get(c);
-                        r.createCell(k).setCellValue( ""+c );
-                        r.createCell(k+1).setCellValue( cn );
-                    }
-                    k+=2;
-                }
-
-                String userhome = System.getProperty("user.home");
-                File tf = new File(userhome);
-                File f = new File(tf, "tmp.xlsx");
-                FileOutputStream fos = new FileOutputStream( f );
-                wb.write(fos);
-                fos.close();
-
-                Desktop.getDesktop().open(f);
-
-                StringWriter fw = geneset.writeCog( map, includedCogs, uniform.isSelected() );
-                String repl = fw.toString();
-
-                fw = geneset.writeSimpleCog( map );
-                String stuff = fw.toString();
-
-                String stxt = "";
-                final StringBuilder sb = new StringBuilder();
-                InputStream is = GeneSet.class.getResourceAsStream("org/simmi/javafasta/cogchart.html");
-                if( is != null ) {
-                    try {
-                        int c = is.read();
-                        while( c != -1 ) {
-                            sb.append( (char)c );
-                            c = is.read();
-                        }
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    stxt = sb.toString().replace("smuck", repl);
-                }
-                final String smuck = stxt;
-
-                //String b64str = Base64.encodeBase64String( smuck.getBytes() );
-                /*JSObject window = null;
-                try {
-                    window = JSObject.getWindow( geneset );
-                } catch( NoSuchMethodError | Exception exc ) {
-                    exc.printStackTrace();
-                }*
-
-                if( web ) {
-                    Platform.runLater(() -> {
-                       final Stage dialog = new Stage();
-                       dialog.initModality(Modality.APPLICATION_MODAL);
-                       dialog.initOwner( genesethead.primaryStage );
-                       VBox dialogVbox = new VBox(20);
-                       dialogVbox.getChildren().add(new Text("This is a Dialog"));
-                       Scene dialogScene = new Scene(dialogVbox, 300, 200);
-                       dialog.setScene(dialogScene);
-                       geneset.initWebPage( dialog, smuck );
-                       dialog.show();
-                    });
-
-                    /*boolean succ = true;
-                    try {
-                        window.setMember("smuck", smuck);
-                        //window.eval("var binary = atob(b64str)");
-                        //window.eval("var i = binary.length");
-                        //window.eval("var view = new Uint8Array(i)");
-                        //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-                        window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-                        window.eval("open( URL.createObjectURL(b), '_blank' )");
-                    } catch( Exception exc ) {
-                        exc.printStackTrace();
-                    }*
-
-                    try {
-                        window.setMember("smuck", smuck);
-
-                        //window.eval("var binary = atob(b64str)");
-                        //window.eval("var i = binary.length");
-                        //window.eval("var view = new Uint8Array(i)");
-                        //window.eval("while(i--) view[i] = binary.charCodeAt(i)");
-                        window.eval("var b = new Blob( [smuck], { \"type\" : \"text\\/html\" } );");
-                        window.eval("open( URL.createObjectURL(b), '_blank' )");
-                    } catch( Exception exc ) {
-                        exc.printStackTrace();
-                    }*
-
-                    if( Desktop.isDesktopSupported() ) {
-                        try {
-                            //File uf = new File(userhome);
-                            File smf = new File( tf, "smuck.html" );
-                            FileWriter fwr = new FileWriter( smf );
-                            fwr.write( smuck );
-                            fwr.close();
-                            Desktop.getDesktop().browse( smf.toURI() );
-                        } catch( Exception exc ) {
-                            exc.printStackTrace();
-                        }
-                    }
-                } else {
-                    Platform.runLater(() -> {
-						final Stage dialog = new Stage();
-						dialog.initModality(Modality.APPLICATION_MODAL);
-						dialog.initOwner( genesethead.primaryStage );
-						VBox dialogVbox = new VBox(20);
-						dialogVbox.getChildren().add(new Text("This is a Dialog"));
-						Scene dialogScene = new Scene(dialogVbox, 300, 200);
-						dialog.setScene(dialogScene);
-						geneset.initStackedBarChart( dialog, all, map, uniform.isSelected() );
-						dialog.show();
-					});
-                }
-                geneset.zipfilesystem.close();
-
-                JFrame fr = new JFrame("GC% chart");
-                fr.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-                fr.setSize( 800, 600 );
-
-                JTextArea	ta = new JTextArea();
-                ta.setText( repl + "\n" + stuff );
-                JScrollPane	sp = new JScrollPane(ta);
-                fr.add( sp );
-                fr.setVisible( true );*/
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
+            CogChart cogChart = new CogChart(genesethead);
+            cogChart.run();
         }));
 		
 		MenuItem fetchcoreaction = new MenuItem("Fetch core");
-		fetchcoreaction.setOnAction( actionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ) );
-				
-				JFrame frame = null;
-				if( geneset.currentSerify == null ) {
-					frame = new JFrame();
-					frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-					frame.setSize(400, 300);
-					
-					SerifyApplet sa = new SerifyApplet( geneset.zipfilesystem, geneset.noseq );
-					sa.init( frame, null, GeneSet.user );
-					//frame.add( )
-					geneset.currentSerify = sa;
-				} /*else {
-					currentSerify.clearSequences();
-					frame = (JFrame)currentSerify.cnt;
-				}*/
+		fetchcoreaction.setOnAction( actionEvent -> SwingUtilities.invokeLater(() -> {
+			Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ) );
 
-				//Map<Integer,String>			ups = new HashMap<Integer,String>();
-				//Set<Integer>				stuck = new HashSet<Integer>();
-				//Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
-				//int[] rr = table.getSelectedRows();
-				List<GeneGroup>	includedGroups = new ArrayList<GeneGroup>();
-				for( GeneGroup genegroup : geneset.allgenegroups ) {
-					//int cr = table.convertRowIndexToModel(r);
-					//Gene gg = genelist.get(cr);
-					if( genegroup.isSingluar() && genegroup.getSpecies().containsAll(selspec) ) {
-						includedGroups.add( genegroup );
-					//if (gg.species != null) {
-						/*if( gg.genid != null && gg.genid.length() > 0 ) {
-							ups.put( gg.getGroupIndex(), gg.name );
-							stuck.add( gg.getGroupIndex() );
-						}
-						if( !stuck.contains(gg.getGroupIndex()) ) {
-							if( !ups.containsKey(gg.getGroupIndex()) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.getGroupIndex(), gg.name );
-						}
-						
-						List<Tegeval>	annset;
-						if( ups2.containsKey( gg.getGroupIndex() ) ) annset = ups2.get( gg.getGroupIndex() );
-						else {
-							annset = new ArrayList<Tegeval>();
-							ups2.put( gg.getGroupIndex(), annset );
-						}
-						
-						//Set<String>	 specs = new HashSet<String>();
-						//textarea.append(gg.name + ":\n");
-						//for (String sp : gg.species.keySet()) {
-						int count = 0;
-						for(String sp : farr) {
-							Teginfo stv = gg.species.get(sp);
-							if( stv == null ) {
-								//System.err.println( sp );
-							} else {
-								count++;
-								//specs.add( sp );
-								for (Tegeval tv : stv.tset) {
-									annset.add( tv );
-								}
-							}
-						}
-						if( count < gg.species.size() ) {
-							System.err.println( gg.species );
-							System.err.println();
-						}*/
-						//if( specs.size() < 28 ) System.err.println("mu " + specs);
+			JFrame frame = null;
+			if( geneset.currentSerify == null ) {
+				frame = new JFrame();
+				frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				frame.setSize(400, 300);
+
+				SerifyApplet sa = new SerifyApplet( geneset.zipfilesystem, geneset.noseq );
+				sa.init( frame, null, GeneSet.user );
+				//frame.add( )
+				geneset.currentSerify = sa;
+			} /*else {
+				currentSerify.clearSequences();
+				frame = (JFrame)currentSerify.cnt;
+			}*/
+
+			//Map<Integer,String>			ups = new HashMap<Integer,String>();
+			//Set<Integer>				stuck = new HashSet<Integer>();
+			//Map<Integer,List<Tegeval>>	ups2 = new HashMap<Integer,List<Tegeval>>();
+			//int[] rr = table.getSelectedRows();
+			List<GeneGroup>	includedGroups = new ArrayList<GeneGroup>();
+			for( GeneGroup genegroup : geneset.allgenegroups ) {
+				//int cr = table.convertRowIndexToModel(r);
+				//Gene gg = genelist.get(cr);
+				if( genegroup.isSingluar() && genegroup.getSpecies().containsAll(selspec) ) {
+					includedGroups.add( genegroup );
+				//if (gg.species != null) {
+					/*if( gg.genid != null && gg.genid.length() > 0 ) {
+						ups.put( gg.getGroupIndex(), gg.name );
+						stuck.add( gg.getGroupIndex() );
 					}
-				}
-				
-				Map<Function,Set<GeneGroup>> fggmap = new HashMap<Function,Set<GeneGroup>>();
-				for( GeneGroup genegroup : includedGroups ) {
-					Set<Function>	funcset = genegroup.getFunctions();
-					for( Function f : funcset ) {
-						Set<GeneGroup>	sgg;
-						if( !fggmap.containsKey( f ) ) {
-							sgg = new HashSet<GeneGroup>();
-							fggmap.put(f, sgg);
-						} else sgg = fggmap.get( f );
-						sgg.add( genegroup );
+					if( !stuck.contains(gg.getGroupIndex()) ) {
+						if( !ups.containsKey(gg.getGroupIndex()) || !(gg.name.contains("unnamed") || gg.name.contains("hypot")) ) ups.put( gg.getGroupIndex(), gg.name );
 					}
-				}
-				
-				Set<Function> delset = new HashSet<Function>();
-				for( Function f1 : fggmap.keySet() ) {
-					Set<GeneGroup> sgg1 = fggmap.get(f1);
-					for( Function f2 : fggmap.keySet() ) {
-						if( !f1.equals(f2) ) {
-							Set<GeneGroup> sgg2 = fggmap.get(f2);
-							if( sgg1.containsAll( sgg2 ) ) {
-								delset.add( f2 );
+
+					List<Tegeval>	annset;
+					if( ups2.containsKey( gg.getGroupIndex() ) ) annset = ups2.get( gg.getGroupIndex() );
+					else {
+						annset = new ArrayList<Tegeval>();
+						ups2.put( gg.getGroupIndex(), annset );
+					}
+
+					//Set<String>	 specs = new HashSet<String>();
+					//textarea.append(gg.name + ":\n");
+					//for (String sp : gg.species.keySet()) {
+					int count = 0;
+					for(String sp : farr) {
+						Teginfo stv = gg.species.get(sp);
+						if( stv == null ) {
+							//System.err.println( sp );
+						} else {
+							count++;
+							//specs.add( sp );
+							for (Tegeval tv : stv.tset) {
+								annset.add( tv );
 							}
 						}
 					}
-				}
-				for( Function f : delset ) {
-					fggmap.remove( f );
-				}
-				
-				StringBuilder sb = new StringBuilder();
-				//for( int gi : ups.keySet() ) {
-				for( GeneGroup genegroup : includedGroups ) {
-					String name = genegroup.getName(); //ups.get(gi);
-					List<Annotation>	annset = genegroup.getTegevals( selspec ); //ups2.get(gi);
-					
-					sb.append( "[" + genegroup.getCommonFunction( false, fggmap.keySet() ) + "]" + genegroup.groupIndex + "_" + name.replace('/', '-') + ":\n");
-					/*if( annset.size() < 28 ) {
-						for( Tegeval tv : annset ) {
-							System.err.println( tv.cont );
-						}
+					if( count < gg.species.size() ) {
+						System.err.println( gg.species );
 						System.err.println();
 					}*/
-					for( Annotation tv : annset ) {
-						sb.append(">" + tv.getName().substring(0, tv.getName().indexOf('_')) + "\n");
-						for (int i = 0; i < tv.getProteinLength(); i += 70) {
-							sb.append( tv.getProteinSubsequence(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
+					//if( specs.size() < 28 ) System.err.println("mu " + specs);
+				}
+			}
+
+			Map<Function,Set<GeneGroup>> fggmap = new HashMap<Function,Set<GeneGroup>>();
+			for( GeneGroup genegroup : includedGroups ) {
+				Set<Function>	funcset = genegroup.getFunctions();
+				for( Function f : funcset ) {
+					Set<GeneGroup>	sgg;
+					if( !fggmap.containsKey( f ) ) {
+						sgg = new HashSet<GeneGroup>();
+						fggmap.put(f, sgg);
+					} else sgg = fggmap.get( f );
+					sgg.add( genegroup );
+				}
+			}
+
+			Set<Function> delset = new HashSet<Function>();
+			for( Function f1 : fggmap.keySet() ) {
+				Set<GeneGroup> sgg1 = fggmap.get(f1);
+				for( Function f2 : fggmap.keySet() ) {
+					if( !f1.equals(f2) ) {
+						Set<GeneGroup> sgg2 = fggmap.get(f2);
+						if( sgg1.containsAll( sgg2 ) ) {
+							delset.add( f2 );
 						}
 					}
 				}
-				
-				try {
-					String fastaStr = sb.toString();
-					/*FileWriter fw = new FileWriter("/root/erm.fasta");
-					fw.write( fastaStr );
-					fw.close();*/
-
-					Reader rd = new StringReader( fastaStr );
-					BufferedReader br = new BufferedReader(rd);
-					geneset.currentSerify.addSequences("uh", br, Paths.get("/"), null);
-				} catch (URISyntaxException | IOException e1) {
-					e1.printStackTrace();
-				}
-				frame.setVisible(true);
-				/*Set<GeneGroup>	pan = new HashSet<GeneGroup>();
-				Set<GeneGroup>	core = new HashSet<GeneGroup>();
-				StringBuilder	restext = new StringBuilder();
-				for( String spec : selspec ) {
-					restext.append( spec );
-					Set<GeneGroup> ggset = specGroupMap.get( spec );
-					pan.addAll( ggset );
-					if( core.isEmpty() ) core.addAll( ggset );
-					else core.retainAll( ggset );
-					
-					restext.append( "\t"+core.size() );
-					restext.append( "\t"+pan.size()+"\n" );
-				}
-				
-				JFrame f = new JFrame("Pan-core chart");
-				f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-				f.setSize( 800, 600 );
-				
-				JTextArea	ta = new JTextArea();
-				ta.setText( restext.toString() );
-				JScrollPane	sp = new JScrollPane(ta);
-				f.add( sp );
-				f.setVisible( true );*/
 			}
+			for( Function f : delset ) {
+				fggmap.remove( f );
+			}
+
+			StringBuilder sb = new StringBuilder();
+			//for( int gi : ups.keySet() ) {
+			for( GeneGroup genegroup : includedGroups ) {
+				String name = genegroup.getName(); //ups.get(gi);
+				List<Annotation>	annset = genegroup.getTegevals( selspec ); //ups2.get(gi);
+
+				sb.append( "[" + genegroup.getCommonFunction( false, fggmap.keySet() ) + "]" + genegroup.groupIndex + "_" + name.replace('/', '-') + ":\n");
+				/*if( annset.size() < 28 ) {
+					for( Tegeval tv : annset ) {
+						System.err.println( tv.cont );
+					}
+					System.err.println();
+				}*/
+				for( Annotation tv : annset ) {
+					sb.append(">" + tv.getName().substring(0, tv.getName().indexOf('_')) + "\n");
+					for (int i = 0; i < tv.getProteinLength(); i += 70) {
+						sb.append( tv.getProteinSubsequence(i, Math.min(i + 70, tv.getProteinLength() )) + "\n");
+					}
+				}
+			}
+
+			try {
+				String fastaStr = sb.toString();
+				/*FileWriter fw = new FileWriter("/root/erm.fasta");
+				fw.write( fastaStr );
+				fw.close();*/
+
+				Reader rd = new StringReader( fastaStr );
+				BufferedReader br = new BufferedReader(rd);
+				geneset.currentSerify.addSequences("uh", br, Paths.get("/"), null);
+			} catch (URISyntaxException | IOException e1) {
+				e1.printStackTrace();
+			}
+			frame.setVisible(true);
+			/*Set<GeneGroup>	pan = new HashSet<GeneGroup>();
+			Set<GeneGroup>	core = new HashSet<GeneGroup>();
+			StringBuilder	restext = new StringBuilder();
+			for( String spec : selspec ) {
+				restext.append( spec );
+				Set<GeneGroup> ggset = specGroupMap.get( spec );
+				pan.addAll( ggset );
+				if( core.isEmpty() ) core.addAll( ggset );
+				else core.retainAll( ggset );
+
+				restext.append( "\t"+core.size() );
+				restext.append( "\t"+pan.size()+"\n" );
+			}
+
+			JFrame f = new JFrame("Pan-core chart");
+			f.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+			f.setSize( 800, 600 );
+
+			JTextArea	ta = new JTextArea();
+			ta.setText( restext.toString() );
+			JScrollPane	sp = new JScrollPane(ta);
+			f.add( sp );
+			f.setVisible( true );*/
 		}));
 		
 		MenuItem loadcontiggraphaction = new MenuItem("Load contig graph");
@@ -4419,33 +3916,21 @@ public class ActionCollection {
 					}
 				});*/
 				
-				SwingUtilities.invokeLater( new Runnable() {
-					@Override
-					public void run() {
-						if( geneset.fxframe == null ) {
-							geneset.fxframe = new JFrame("Gene phyl");
-							geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
-							geneset.fxframe.setSize(800, 600);
-							
-							final JFXPanel	fxpanel = new JFXPanel();
-							geneset.fxframe.add( fxpanel );
-							
-							Platform.runLater(new Runnable() {
-				                 @Override
-				                 public void run() {
-				                     geneset.initFXChart( fxpanel, names, b0, b1 );
-				                 }
-				            });
-						} else {
-							Platform.runLater(new Runnable() {
-				                 @Override
-				                 public void run() {
-				                     geneset.initFXChart( null, names, b0, b1 );
-				                 }
-				            });
-						}						
-						geneset.fxframe.setVisible( true );
+				SwingUtilities.invokeLater(() -> {
+					CogChart chart = new CogChart(genesethead);
+					if( geneset.fxframe == null ) {
+						geneset.fxframe = new JFrame("Gene phyl");
+						geneset.fxframe.setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+						geneset.fxframe.setSize(800, 600);
+
+						final JFXPanel	fxpanel = new JFXPanel();
+						geneset.fxframe.add( fxpanel );
+
+						Platform.runLater(() -> chart.initFXChart( fxpanel, names, b0, b1 ));
+					} else {
+						Platform.runLater(() -> chart.initFXChart( null, names, b0, b1 ));
 					}
+					geneset.fxframe.setVisible( true );
 				});
 				
 				//double[] sdb1 = new double[ (speclist.size()-1)*(speclist.size())/2 ];

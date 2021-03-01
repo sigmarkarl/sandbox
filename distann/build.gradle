@@ -22,14 +22,14 @@ dependencies {
     //compile group: 'org.gorpipe', name: 'gor-spark', version: '0.5.6'
 
     // https://mvnrepository.com/artifact/org.openjfx/javafx
-    compile group: 'org.openjfx', name: 'javafx', version: '16-ea+6'
+    compile group: 'org.openjfx', name: 'javafx', version: '17-ea+2'
 
-    compile "org.openjfx:javafx-base:16-ea+6:mac"
-    compile "org.openjfx:javafx-controls:16-ea+6:mac"
-    compile "org.openjfx:javafx-graphics:16-ea+6:mac"
-    compile "org.openjfx:javafx-fxml:16-ea+6:mac"
-    compile "org.openjfx:javafx-web:16-ea+6:mac"
-    compile "org.openjfx:javafx-swing:16-ea+6:mac"
+    compile "org.openjfx:javafx-base:17-ea+2:mac"
+    compile "org.openjfx:javafx-controls:17-ea+2:mac"
+    compile "org.openjfx:javafx-graphics:17-ea+2:mac"
+    compile "org.openjfx:javafx-fxml:17-ea+2:mac"
+    compile "org.openjfx:javafx-web:17-ea+2:mac"
+    compile "org.openjfx:javafx-swing:17-ea+2:mac"
 
 }
 

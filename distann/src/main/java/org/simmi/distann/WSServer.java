@@ -114,8 +114,10 @@ public class WSServer {
 						final Map<String,String>					all = new TreeMap<>();
 						final Map<String, Map<String,Integer>> 	map = new TreeMap<>();
 						try {
-							genesethead.cogCalc( null, includedCogs, map, selspec, false );
-							StringWriter fw = geneset.writeCog( map, includedCogs, uniform );
+							final Map<String,Set<String>> cogAnnoMap = new TreeMap<>();
+							CogChart cogChart = new CogChart(genesethead);
+							cogChart.cogCalc( null, includedCogs, map, selspec, false, cogAnnoMap);
+							StringWriter fw = cogChart.writeCog( map, includedCogs, uniform );
 							//String repl = fw.toString();
 							
 							//final String smuck = sb.toString().replace("smuck", restext.toString());
@@ -251,7 +253,7 @@ public class WSServer {
 						g2.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 						g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 						
-						if( spec1 != null && spec1.length() > 0 ) {
+						if(spec1.length() > 0) {
 							List<Sequence> clist = geneset.speccontigMap.get(spec1);
 							sg.drawImage( genesethead, g2, spec1, clist, geneset.specList, w, h );
 						} else sg.drawImage( genesethead, g2, null, null, geneset.specList, w, h );
