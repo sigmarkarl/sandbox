@@ -2462,6 +2462,12 @@ public class GeneSetHead {
 							serifier.mseq.put( seq.getName(), seq );
 							//Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
 							serifier.addSequence(seq);
+						} else if(toShow.contains(ToShow.IDS)) {
+							Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
+							seq.setName( tv.getGeneGroup().getRefid() );
+							serifier.mseq.put( seq.getName(), seq );
+							//Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
+							serifier.addSequence(seq);
 						} else if(toShow.contains(ToShow.GENES)) {
                             Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
                             seq.setName( tv.getGene() != null ? tv.getGene().name : tv.getName() );
@@ -4130,6 +4136,29 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			});
 		});
 		sequencemenu.getItems().add( showseqwstraingenenames );
+
+		MenuItem showseqwid = new MenuItem("Show sequences w/id");
+		showseqwid.setOnAction( actionEvent -> {
+			SwingUtilities.invokeLater(() -> {
+				Set<GeneGroup> genegroups = new HashSet<>();
+				//int[] rr = table.getSelectedRows();
+				if (!isGeneview()) {
+					//int cr = table.convertRowIndexToModel(r);
+					//GeneGroup gg = geneset.allgenegroups.get(cr);
+					genegroups.addAll(table.getSelectionModel().getSelectedItems());
+				} else {
+					for (Gene gg : gtable.getSelectionModel().getSelectedItems()) {
+						//int cr = table.convertRowIndexToModel(r);
+						//Gene gg = geneset.genelist.get(cr);
+						genegroups.add(gg.getGeneGroup());
+					}
+				}
+				//Set<String>	specs = null;
+				//if( rr.length > 1 ) specs = getSelspec(comp, specList, null);
+				showSequences(genegroups, false, null, EnumSet.of(ToShow.IDS));
+			});
+		});
+		sequencemenu.getItems().add( showseqwid );
 		
 		MenuItem showalignseq = new MenuItem("Show aligned sequences");
 		showalignseq.setOnAction( actionEvent -> {
