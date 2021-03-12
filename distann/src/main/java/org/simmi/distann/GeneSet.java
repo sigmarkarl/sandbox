@@ -117,7 +117,13 @@ public class GeneSet implements GenomeSet {
 	public void loadeggnog(Map<String,String> cazymap, Map<String,Cog> cogmap, Map<String,Cog> pfammap, Reader rd) {
 		BufferedReader br = new BufferedReader( rd );
 		br.lines().filter(l -> !l.startsWith("#")).map(l -> l.split("\t")).forEach(l -> {
-			String id = l[0].substring(4).replace('|', ':');
+			String id = l[0];
+			String[] ids;
+			if(id.contains("|")) {
+				ids = new String[] {id.substring(4).replace('|', ':')};
+			} else {
+				ids = id.split(",");
+			}
 			String cogid = l[4];
 			cogid = cogid.split("\\|")[0];
 			String cogname = l[8];
@@ -125,9 +131,12 @@ public class GeneSet implements GenomeSet {
 			String cogsymbol = l[9];
 			String desc = l[10];
 			if(cogsymbol!=null) {
-				Cog cog = new Cog(cogid, cogsymbol, cogname, desc);
-				cog.genesymbol = cogsymbol;
-				cogmap.put(id, cog);
+				for(String mapid: ids) {
+					String key = mapid.trim();
+					Cog cog = new Cog(cogid, cogsymbol, cogname, desc);
+					cog.genesymbol = cogsymbol;
+					cogmap.put(key, cog);
+				}
 			}
 		});
 	}

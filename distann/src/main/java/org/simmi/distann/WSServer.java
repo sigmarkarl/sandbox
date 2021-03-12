@@ -116,7 +116,7 @@ public class WSServer {
 						try {
 							final Map<String,Set<String>> cogAnnoMap = new TreeMap<>();
 							CogChart cogChart = new CogChart(genesethead);
-							cogChart.cogCalc( null, includedCogs, map, selspec, false, cogAnnoMap);
+							cogChart.cogCalc( null, includedCogs, map, selspec, false, cogAnnoMap, false);
 							StringWriter fw = cogChart.writeCog( map, includedCogs, uniform );
 							//String repl = fw.toString();
 							

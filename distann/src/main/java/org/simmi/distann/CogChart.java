@@ -400,7 +400,7 @@ public class CogChart {
         return fw;
     }
 
-    private void cogSeq( Sequence c, Map<String,Integer>	submap, Map<String,Set<String>>	descmap ) {
+    private void cogSeq( Sequence c, Map<String,Integer>	submap, Map<String,Set<String>>	descmap, boolean accessory ) {
         if (c.getAnnotations() != null) for (Annotation a : c.getAnnotations()) {
             Gene g = a.getGene();
             if(g!=null) {
@@ -421,15 +421,23 @@ public class CogChart {
                 }
                 if (cog != null && cog.symbol != null) {
                     Cog fcog = cog;
-                    submap.compute(fcog.symbol, (k, v) -> v == null ? 1 : v+1);
-                    descmap.compute(fcog.symbol, (k, v) -> {
-                        if(v == null) {
-                            return new HashSet<>();
-                        } else {
-                            v.add(fcog.annotation);
-                            return v;
-                        }
-                    });
+                    GeneGroup gg = g.getGeneGroup();
+                    if(!accessory || gg.genes.size() < 2) {
+                        fcog.symbol.chars().forEach(cc -> {
+                            String splitSymbol = String.valueOf((char)cc);
+                            submap.compute(splitSymbol, (k, v) -> v == null ? 1 : v + 1);
+                            descmap.compute(splitSymbol, (k, v) -> {
+                                if (v == null) {
+                                    Set<String> vset = new HashSet<>();
+                                    vset.add(fcog.annotation);
+                                    return vset;
+                                } else {
+                                    v.add(fcog.annotation);
+                                    return v;
+                                }
+                            });
+                        });
+                    }
                     /*int val = 0;
                     if (submap.containsKey(cog.symbol)) val = submap.get(cog.symbol);
                     submap.put(cog.symbol, val + 1);*/
@@ -440,7 +448,7 @@ public class CogChart {
         }
     }
 
-    public void cogCalc( String filename, Set<String> includedCogs, Map<String,Map<String,Integer>> map, Set<String> selspec, boolean contigs, Map<String,Set<String>> descmap ) throws IOException {
+    public void cogCalc( String filename, Set<String> includedCogs, Map<String,Map<String,Integer>> map, Set<String> selspec, boolean contigs, Map<String,Set<String>> descmap, boolean accessory ) throws IOException {
         if( !genesethead.isGeneview() ) {
             for( String spec : selspec ) {
                 if( contigs ) {
@@ -452,14 +460,14 @@ public class CogChart {
                         submap = new HashMap<>();
                         map.put( seq.getGroup(), submap );
                     }
-                    cogSeq( seq, submap, descmap );
+                    cogSeq( seq, submap, descmap, accessory );
                 } else {
                     Map<String,Integer>	submap = new HashMap<>();
                     map.put(spec, submap);
 
                     List<Sequence> sctg = genesethead.geneset.speccontigMap.get(spec);
                     for (Sequence c : sctg) {
-                        cogSeq( c, submap, descmap );
+                        cogSeq( c, submap, descmap, accessory );
                     }
                 }
             }
@@ -525,7 +533,8 @@ public class CogChart {
             GeneSet geneset = genesethead.geneset;
             final JCheckBox contigs = new JCheckBox("Show contigs");
             final JCheckBox uniform = new JCheckBox("Uniform");
-            Set<String> selspec = genesethead.getSelspec(genesethead, new ArrayList(geneset.specList), contigs, uniform);
+            final JCheckBox accessory = new JCheckBox("Accessory");
+            Set<String> selspec = genesethead.getSelspec(genesethead, new ArrayList(geneset.specList), contigs, uniform, accessory);
 
             final List<String> coglist = new ArrayList(Cog.charcog.keySet());
             HashSet<String> includedCogs = new HashSet<>();
@@ -553,7 +562,7 @@ public class CogChart {
             final Map<String, String> all = new TreeMap<>();
             final Map<String, Map<String, Integer>> map = new LinkedHashMap<>();
             CogChart cogChart = new CogChart(genesethead);
-            cogChart.cogCalc(null, includedCogs, map, selspec, contigs.isSelected(), cogAnnoMap);
+            cogChart.cogCalc(null, includedCogs, map, selspec, contigs.isSelected(), cogAnnoMap, accessory.isSelected());
 
             Map<String, Row> rl = new HashMap<>();
 
