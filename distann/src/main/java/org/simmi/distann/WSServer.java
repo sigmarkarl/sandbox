@@ -81,7 +81,7 @@ public class WSServer {
                                     GeneGroup gg = g.getGeneGroup();
 
                                     String ec = gg.getEc();
-                                    Set<String> kegg = new TreeSet<String>();
+                                    Set<String> kegg = new TreeSet<>();
 
                                     for( String pathw : geneset.pathwaymap.keySet() ) {
                                         Set<String> ecs = geneset.pathwaymap.get( pathw );
@@ -117,7 +117,7 @@ public class WSServer {
 							final Map<String,Set<String>> cogAnnoMap = new TreeMap<>();
 							CogChart cogChart = new CogChart(genesethead);
 							cogChart.cogCalc( null, includedCogs, map, selspec, false, cogAnnoMap, false);
-							StringWriter fw = cogChart.writeCog( map, includedCogs, uniform );
+							StringWriter fw = cogChart.writeCog( map, includedCogs, uniform, "Species" );
 							//String repl = fw.toString();
 							
 							//final String smuck = sb.toString().replace("smuck", restext.toString());

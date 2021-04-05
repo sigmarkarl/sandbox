@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> {
     String root;
     String tmp;
-    String blastp;
+    List<String> blastp;
     String envMap;
 
-    public SparkBlast(String blastp,String env,String rootpath,String tmppath) {
+    public SparkBlast(String[] blastp,String env,String rootpath,String tmppath) {
         this.root = rootpath;
-        this.blastp = blastp;
+        this.blastp = Arrays.asList(blastp);
         this.tmp = tmppath;
         this.envMap = env;
     }
@@ -40,7 +40,9 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
             Path dbpath = rootpath.resolve("db.fsa");
 
             int procs = Runtime.getRuntime().availableProcessors();
-            ProcessBuilder pb = new ProcessBuilder(blastp, "-db", dbpath.toString(), "-num_threads", Integer.toString(procs), "-evalue", "0.00001"); //"-out", resPath.toString(),
+            List<String> pargs = new ArrayList<>(blastp);
+            pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", "0.00001", "--outfmt", "0"));
+            ProcessBuilder pb = new ProcessBuilder(pargs); //"-out", resPath.toString(),
             if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
             Process pc = pb.start();
             /*Future<Long> fout = es.submit(() -> {
@@ -125,7 +127,9 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
                         }
                     }
                     sq.put(qlist);
-                    if(qlist.size()>0) sq.put(Collections.emptyList());
+                    if(qlist.size()>0) {
+                        sq.put(Collections.emptyList());
+                    }
 
                     return 0L;
                 }
@@ -157,7 +161,9 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
 
                 @Override
                 public String next() {
-                    return queries.stream().map(Object::toString).collect(Collectors.joining(";"));
+                    String ret = queries.stream().map(Object::toString).collect(Collectors.joining(";"));
+                    System.err.println(ret);
+                    return ret;
                 }
             };
 

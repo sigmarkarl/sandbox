@@ -49,9 +49,9 @@ public class ClusterGenes implements MapFunction<String, String>, Function<Strin
                 }*/
 
                 all.add( astr );
-            } else if( line.startsWith("Sequences prod") ) {
+            } else /*if( line.startsWith("Sequences prod") ) {
                 line = br.readLine();
-                while( line != null && !line.startsWith("Query=") ) {
+                while( line != null && !line.startsWith("Query=") ) {*/
                     if( line.startsWith(">") ) {
                         StringBuilder trim = new StringBuilder(line.substring(1).trim());
                         line = br.readLine();
@@ -97,9 +97,9 @@ public class ClusterGenes implements MapFunction<String, String>, Function<Strin
                             }
                         }
                     }
-                    line = br.readLine();
-                }
-            }
+                    //line = br.readLine();
+                //}
+            //}
             line = br.readLine();
         }
         return all;

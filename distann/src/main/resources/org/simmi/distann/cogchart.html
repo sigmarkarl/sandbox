@@ -11,7 +11,12 @@
       var options = {
           title: 'COG groups',
           fontSize: '12',
-          isStacked: true
+          isStacked: true,
+          series: {
+            //0:{color:'#000'},
+            0:{color:'#555'},
+            //2:{color:'#888'}
+          }
       };
       function drawChart() {
         data = google.visualization.arrayToDataTable(

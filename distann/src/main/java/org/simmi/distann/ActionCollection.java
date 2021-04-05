@@ -472,9 +472,10 @@ public class ActionCollection {
 	public static String htmlTable( GeneSet geneset, Collection<String> selspecs, Map<String,List<Sequence>> speccontigMap, boolean withHtml ) throws IOException {
 		Workbook wb = new XSSFWorkbook();
 		Sheet sh = wb.createSheet("genome stats");
-		
+
+		int rr = 0;
 		int k = 0;
-		Row rw = sh.createRow(0);
+		Row rw = sh.createRow(rr++);
 		rw.createCell(k).setCellValue("Species");
 		k++;
 		
@@ -492,7 +493,7 @@ public class ActionCollection {
 		}
 		
 		k=1;
-		rw = sh.createRow(1);
+		rw = sh.createRow(rr++);
 		//rw.createCell(1).setCellValue("");
 		fw.write("</tr><tr><td></td>");
 		for( String spec : selspecs ) {
@@ -504,7 +505,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(2);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("DNA, total number of bases");
 		fw.write("</tr><tr><td>DNA, total number of bases</td>");
 		for( String spec : selspecs) {
@@ -526,7 +527,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(3);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("DNA coding number of bases");
 		fw.write("</tr><tr><td>DNA coding number of bases</td>");
 		for( String spec : selspecs) {
@@ -549,7 +550,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(4);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("DNA, G+C number of bases");
 		fw.write("</tr><tr><td>DNA, G+C number of bases</td>");
 		for( String spec : selspecs) {
@@ -573,7 +574,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(5);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("DNA contigs");
 		fw.write("</tr><tr><td>DNA contigs</td>");
 		for( String spec : selspecs) {
@@ -587,7 +588,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(6);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Genes total number");
 		fw.write("</tr><tr><td>Genes total number</td>");
 		for( String spec : selspecs) {
@@ -607,7 +608,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(7);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes");
 		fw.write("</tr><tr><td>Protein coding genes</td>");
 		for( String spec : selspecs) {
@@ -630,9 +631,104 @@ public class ActionCollection {
 			rw.createCell(k++).setCellValue(count);
 			rw.createCell(k++).setCellValue(d+"%");
 		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes in core genome no paralogs");
+		fw.write("</tr><tr><td>Protein coding genes in core genome no paralogs</td>");
+		for( String spec : selspecs) {
+			Set<GeneGroup> ggs = new HashSet<>();
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) {
+							GeneGroup gg = ann.getGeneGroup();
+							if(!ggs.contains(gg) && gg!=null && gg.getSpecies().size()==geneset.specList.size()) {
+								ggs.add(gg);
+								count++;
+							}
+						}
+					}
+					total += ct.getAnnotations().size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes in core genome");
+		fw.write("</tr><tr><td>Protein coding genes in core genome</td>");
+		//Set<GeneGroup> ggs = new HashSet<>();
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) {
+							GeneGroup gg = ann.getGeneGroup();
+							//!ggs.contains(gg) &&
+							if(gg!=null && gg.getSpecies().size()==geneset.specList.size()) {
+								//ggs.add(gg);
+								count++;
+							}
+						}
+					}
+					total += ct.getAnnotations().size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes in accessory genome");
+		fw.write("</tr><tr><td>Protein coding genes in accessory genome</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						if( ann.type == null || ann.type.length() == 0 || ann.type.equalsIgnoreCase("gene") ) {
+							GeneGroup gg = ann.getGeneGroup();
+							if(gg!=null && gg.getSpecies().size()<geneset.specList.size()) {
+								count++;
+							}
+						}
+					}
+					total += ct.getAnnotations().size();
+				}
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
 		
 		k=0;
-		rw = sh.createRow(8);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("RNA genes");
 		fw.write("</tr><tr><td>RNA genes</td>");
 		for( String spec : selspecs) {
@@ -657,7 +753,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(9);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("rRNA genes");
 		fw.write("</tr><tr><td>rRNA genes</td>");
 		for( String spec : selspecs) {
@@ -682,7 +778,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(10);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("5S rRNA");
 		fw.write("</tr><tr><td>5S rRNA</td>");
 		for( String spec : selspecs) {
@@ -709,7 +805,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(11);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("16S rRNA");
 		fw.write("</tr><tr><td>16S rRNA</td>");
 		for( String spec : selspecs) {
@@ -745,7 +841,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(12);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("23S rRNA");
 		fw.write("</tr><tr><td>23S rRNA</td>");
 		for( String spec : selspecs) {
@@ -774,7 +870,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(13);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("tRNA genes");
 		fw.write("</tr><tr><td>tRNA genes</td>");
 		for( String spec : selspecs) {
@@ -799,7 +895,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(14);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Genes in paralog clusters");
 		fw.write("</tr><tr><td>Genes in paralog clusters</td>");
 		for( String spec : selspecs) {
@@ -840,7 +936,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(15);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes with enzyme/function prediction");
 		fw.write("</tr><tr><td>Protein coding genes with enzyme/function prediction</td>");
 		for( String spec : selspecs) {
@@ -879,7 +975,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(16);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes with function prediction");
 		fw.write("</tr><tr><td>Protein coding genes with function prediction</td>");
 		for( String spec : selspecs) {
@@ -889,11 +985,20 @@ public class ActionCollection {
 			if( lcont != null ) for( Sequence ct : lcont ) {
 				if( ct.getAnnotations() != null ) {
 					for( Annotation ann : ct.getAnnotations() ) {
-						if(ann instanceof Tegeval) {
+						Gene gene = ann.getGene();
+						if(gene!=null) {
+							Cog cog = geneset.cogmap.get(gene.id);
+							if (cog == null && gene.getGeneGroup() != null) {
+								cog = gene.getGeneGroup().getCog(geneset.cogmap);
+								//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+							}
+							if (cog != null) count++;
+						}
+						/*if(ann instanceof Tegeval) {
 							Tegeval tv = (Tegeval) ann;
 							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0)
 								count++;
-						}
+						}*/
 					}
 					total += ct.getAnnotations().size();
 				}
@@ -909,9 +1014,149 @@ public class ActionCollection {
 			rw.createCell(k++).setCellValue(count);
 			rw.createCell(k++).setCellValue(d+"%");
 		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes with function prediction in core genome");
+		fw.write("</tr><tr><td>Protein coding genes with function prediction in core genome</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Gene gene = ann.getGene();
+						if(gene!=null) {
+							Cog cog = geneset.cogmap.get(gene.id);
+							if (cog == null && gene.getGeneGroup() != null) {
+								cog = gene.getGeneGroup().getCog(geneset.cogmap);
+								//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+							}
+							if (cog != null) {
+								GeneGroup gg = ann.getGeneGroup();
+								if(gg!=null && gg.getSpecies().size()==geneset.specList.size()) {
+									count++;
+								}
+							}
+						}
+						/*if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0)
+								count++;
+						}*/
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes with function prediction in core genome no paralogs");
+		fw.write("</tr><tr><td>Protein coding genes with function prediction in core genome no paralogs</td>");
+		for( String spec : selspecs) {
+			Set<GeneGroup> ggs = new HashSet<>();
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Gene gene = ann.getGene();
+						if(gene!=null) {
+							Cog cog = geneset.cogmap.get(gene.id);
+							if (cog == null && gene.getGeneGroup() != null) {
+								cog = gene.getGeneGroup().getCog(geneset.cogmap);
+								//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+							}
+							if (cog != null) {
+								GeneGroup gg = ann.getGeneGroup();
+								if(gg!=null && !ggs.contains(gg) && gg.getSpecies().size()==geneset.specList.size()) {
+									ggs.add(gg);
+									count++;
+								}
+							}
+						}
+						/*if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0)
+								count++;
+						}*/
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes with function prediction in accessory genome");
+		fw.write("</tr><tr><td>Protein coding genes with function prediction accessory genome</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Gene gene = ann.getGene();
+						if(gene!=null) {
+							Cog cog = geneset.cogmap.get(gene.id);
+							if (cog == null && gene.getGeneGroup() != null) {
+								cog = gene.getGeneGroup().getCog(geneset.cogmap);
+								//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+							}
+							if (cog != null) {
+								GeneGroup gg = ann.getGeneGroup();
+								if(gg!=null && gg.getSpecies().size()<geneset.specList.size()) {
+									count++;
+								}
+							}
+						}
+						/*if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null && tv.getGene().getGeneGroup().getFunctions().size() > 0)
+								count++;
+						}*/
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
 		
 		k=0;
-		rw = sh.createRow(17);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes with enzymes");
 		fw.write("</tr><tr><td>Protein coding genes with enzymes</td>");
 		for( String spec : selspecs) {
@@ -948,11 +1193,10 @@ public class ActionCollection {
 			rw.createCell(k++).setCellValue(count);
 			rw.createCell(k++).setCellValue(d+"%");
 		}
-		
+
 		k=0;
-		rw = sh.createRow(18);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes with COG function prediction");
-		
 		fw.write("</tr><tr><td>Protein coding genes with COG function prediction</td>");
 		for( String spec : selspecs) {
 			List<Sequence> lcont = speccontigMap.get(spec);
@@ -963,10 +1207,14 @@ public class ActionCollection {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if(ann instanceof Tegeval) {
 							Tegeval tv = (Tegeval) ann;
-							Cog cog = geneset.cogmap.get(tv.getGene().id);
-							if (cog != null) {
-								System.err.println(cog.id + "  " + count);
-								count++;
+							Gene gene = tv.getGene();
+							if(gene!=null) {
+								Cog cog = geneset.cogmap.get(gene.id);
+								if (cog == null && gene.getGeneGroup() != null) {
+									cog = gene.getGeneGroup().getCog(geneset.cogmap);
+									//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+								}
+								if (cog != null && cog.id.startsWith("COG")) count++;
 							}
 						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
 							if( f.metacyc != null && f.metacyc.length() > 0 ) {
@@ -992,11 +1240,11 @@ public class ActionCollection {
 		}
 
 		k=0;
-		rw = sh.createRow(19);
-		rw.createCell(k++).setCellValue("Protein coding genes with Pfam function prediction");
-
-		fw.write("</tr><tr><td>Protein coding genes with Pfam function prediction</td>");
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes with COG function prediction in core genome no paralogs");
+		fw.write("</tr><tr><td>Protein coding genes with COG function prediction in core genome no paralogs</td>");
 		for( String spec : selspecs) {
+			Set<GeneGroup> ggs = new HashSet<>();
 			List<Sequence> lcont = speccontigMap.get(spec);
 			int count = 0;
 			int total = 0;
@@ -1005,10 +1253,20 @@ public class ActionCollection {
 					for( Annotation ann : ct.getAnnotations() ) {
 						if(ann instanceof Tegeval) {
 							Tegeval tv = (Tegeval) ann;
-							Cog cog = geneset.pfammap.get(tv.getGene().id);
-							if (cog != null) {
-								System.err.println(cog.id + "  " + count);
-								count++;
+							Gene gene = tv.getGene();
+							if(gene!=null) {
+								Cog cog = geneset.cogmap.get(gene.id);
+								if (cog == null && gene.getGeneGroup() != null) {
+									cog = gene.getGeneGroup().getCog(geneset.cogmap);
+									//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+								}
+								if (cog != null && cog.id.startsWith("COG")) {
+									GeneGroup gg = ann.getGeneGroup();
+									if(gg!=null && !ggs.contains(gg) && gg.getSpecies().size()==geneset.specList.size()) {
+										ggs.add(gg);
+										count++;
+									}
+								}
 							}
 						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
 							if( f.metacyc != null && f.metacyc.length() > 0 ) {
@@ -1032,9 +1290,153 @@ public class ActionCollection {
 			rw.createCell(k++).setCellValue(count);
 			rw.createCell(k++).setCellValue(d+"%");
 		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes with COG function prediction in core genome");
+		fw.write("</tr><tr><td>Protein coding genes with COG function prediction in core genome</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							Gene gene = tv.getGene();
+							if(gene!=null) {
+								Cog cog = geneset.cogmap.get(gene.id);
+								if (cog == null && gene.getGeneGroup() != null) {
+									cog = gene.getGeneGroup().getCog(geneset.cogmap);
+									//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+								}
+								if (cog != null && cog.id.startsWith("COG")) {
+									GeneGroup gg = ann.getGeneGroup();
+									if(gg!=null && gg.getSpecies().size()==geneset.specList.size()) {
+										count++;
+									}
+								}
+							}
+						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+							if( f.metacyc != null && f.metacyc.length() > 0 ) {
+								count++;
+								break;
+							}
+						}*/
+						}
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes with COG function prediction in accessory genome");
+
+		fw.write("</tr><tr><td>Protein coding genes with COG function prediction in accessory genome</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							Gene gene = tv.getGene();
+							if(gene!=null) {
+								Cog cog = geneset.cogmap.get(gene.id);
+								if (cog == null && gene.getGeneGroup() != null) {
+									cog = gene.getGeneGroup().getCog(geneset.cogmap);
+									//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+								}
+								if (cog != null && cog.id.startsWith("COG")) {
+									GeneGroup gg = ann.getGeneGroup();
+									if(gg!=null && gg.getSpecies().size()<geneset.specList.size()) {
+										count++;
+									}
+								}
+							}
+						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+							if( f.metacyc != null && f.metacyc.length() > 0 ) {
+								count++;
+								break;
+							}
+						}*/
+						}
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes with Pfam function prediction");
+
+		fw.write("</tr><tr><td>Protein coding genes with Pfam function prediction</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						Gene gene = ann.getGene();
+						if(gene!=null) {
+							Cog cog = geneset.cogmap.get(gene.id);
+							if (cog == null && gene.getGeneGroup() != null) {
+								cog = gene.getGeneGroup().getCog(geneset.cogmap);
+								//if(gene.getGeneGroup().getCog(geneset.cogmap) != null) count++;
+							}
+							if (cog != null && cog.id.startsWith("Pfam")) count++;
+						}
+						/*if( tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().getFunctions() != null ) for( Function f : tv.getGene().getGeneGroup().getFunctions() ) {
+							if( f.metacyc != null && f.metacyc.length() > 0 ) {
+								count++;
+								break;
+							}
+						}*/
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
 		
 		k=0;
-		rw = sh.createRow(20);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to MetaCyc pathways");
 		fw.write("</tr><tr><td>Protein coding genes connected to MetaCyc pathways</td>");
 		for( String spec : selspecs) {
@@ -1071,7 +1473,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(21);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG reactions");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG reactions</td>");
 		for( String spec : selspecs) {
@@ -1119,7 +1521,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(22);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG pathways");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways</td>");
 		for( String spec : selspecs) {
@@ -1135,12 +1537,18 @@ public class ActionCollection {
 								boolean found = false;
 								for (Annotation a : tv.getGeneGroup().genes) {
 									Gene g = a.getGene();
-									if (g.koid != null && g.koid.length() > 0) {
-										for (String pw : geneset.pathwaykomap.keySet()) {
-											Set<String> s = geneset.pathwaykomap.get(pw);
-											if (s.contains(g.koid)) {
-												found = true;
-												break;
+									if(g.keggpathway!=null&&g.keggpathway.length()>0) {
+										found = true;
+									}
+
+									if (!found) {
+										if (g.koid != null && g.koid.length() > 0) {
+											for (String pw : geneset.pathwaykomap.keySet()) {
+												Set<String> s = geneset.pathwaykomap.get(pw);
+												if (s.contains(g.koid)) {
+													found = true;
+													break;
+												}
 											}
 										}
 									}
@@ -1225,9 +1633,247 @@ public class ActionCollection {
 			rw.createCell(k++).setCellValue(count);
 			rw.createCell(k++).setCellValue(d+"%");
 		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG pathways in core genome");
+		fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways in core genome</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null) {
+								boolean found = false;
+								for (Annotation a : tv.getGeneGroup().genes) {
+									Gene g = a.getGene();
+									if(g.keggpathway!=null&&g.keggpathway.length()>0) {
+										found = true;
+									}
+
+									if (!found) {
+										if (g.koid != null && g.koid.length() > 0) {
+											for (String pw : geneset.pathwaykomap.keySet()) {
+												Set<String> s = geneset.pathwaykomap.get(pw);
+												if (s.contains(g.koid)) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+
+									if (!found) {
+										if (g.ecid != null && g.ecid.length() > 0) {
+											for (String pw : geneset.pathwaymap.keySet()) {
+												Set<String> s = geneset.pathwaymap.get(pw);
+												if (s.contains(g.ecid)) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+
+									if (found) break;
+								/*if( !found && f.isa != null ) for( String nid : f.isa ) {
+									Function nf = funcmap.get( nid );
+									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+										count++;
+										found = true;
+										break;
+									}
+								}*/
+								}
+
+								if (!found) for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+								/*boolean found = false;
+								if( f.kegg != null && f.kegg.length() > 0 ) {
+									count++;
+									found = true;
+								}
+								if( !found && f.isa != null ) for( String nid : f.isa ) {
+									Function nf = funcmap.get( nid );
+									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+										count++;
+										found = true;
+										break;
+									}
+								}*/
+
+									if (f.getKo() != null && f.getKo().length() > 0) {
+										for (String pw : geneset.pathwaykomap.keySet()) {
+											Set<String> s = geneset.pathwaykomap.get(pw);
+											if (s.contains(f.getKo())) {
+												found = true;
+												break;
+											}
+										}
+									}
+
+									if (!found) {
+										if (f.getEc() != null && f.getEc().length() > 0) {
+											for (String pw : geneset.pathwaymap.keySet()) {
+												Set<String> s = geneset.pathwaymap.get(pw);
+												if (s.contains(f.getEc())) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+									if (found) break;
+								}
+
+								if (found) {
+									GeneGroup gg = ann.getGeneGroup();
+									if(gg!=null && gg.getSpecies().size()==geneset.specList.size()) {
+										count++;
+									}
+								}
+							}
+						}
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
+
+		k=0;
+		rw = sh.createRow(rr++);
+		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG pathways in accessory genome");
+		fw.write("</tr><tr><td>Protein coding genes connected to KEGG pathways in accessory genome</td>");
+		for( String spec : selspecs) {
+			List<Sequence> lcont = speccontigMap.get(spec);
+			int count = 0;
+			int total = 0;
+			if( lcont != null ) for( Sequence ct : lcont ) {
+				if( ct.getAnnotations() != null ) {
+					for( Annotation ann : ct.getAnnotations() ) {
+						if(ann instanceof Tegeval) {
+							Tegeval tv = (Tegeval) ann;
+							if (tv.getGene().getGeneGroup() != null && tv.getGene().getGeneGroup().genes != null) {
+								boolean found = false;
+								for (Annotation a : tv.getGeneGroup().genes) {
+									Gene g = a.getGene();
+									if(g.keggpathway!=null&&g.keggpathway.length()>0) {
+										found = true;
+									}
+
+									if (!found) {
+										if (g.koid != null && g.koid.length() > 0) {
+											for (String pw : geneset.pathwaykomap.keySet()) {
+												Set<String> s = geneset.pathwaykomap.get(pw);
+												if (s.contains(g.koid)) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+
+									if (!found) {
+										if (g.ecid != null && g.ecid.length() > 0) {
+											for (String pw : geneset.pathwaymap.keySet()) {
+												Set<String> s = geneset.pathwaymap.get(pw);
+												if (s.contains(g.ecid)) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+
+									if (found) break;
+								/*if( !found && f.isa != null ) for( String nid : f.isa ) {
+									Function nf = funcmap.get( nid );
+									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+										count++;
+										found = true;
+										break;
+									}
+								}*/
+								}
+
+								if (!found) for (Function f : tv.getGene().getGeneGroup().getFunctions()) {
+								/*boolean found = false;
+								if( f.kegg != null && f.kegg.length() > 0 ) {
+									count++;
+									found = true;
+								}
+								if( !found && f.isa != null ) for( String nid : f.isa ) {
+									Function nf = funcmap.get( nid );
+									if( nf != null && nf.kegg != null && nf.kegg.length() > 0 ) {
+										count++;
+										found = true;
+										break;
+									}
+								}*/
+
+									if (f.getKo() != null && f.getKo().length() > 0) {
+										for (String pw : geneset.pathwaykomap.keySet()) {
+											Set<String> s = geneset.pathwaykomap.get(pw);
+											if (s.contains(f.getKo())) {
+												found = true;
+												break;
+											}
+										}
+									}
+
+									if (!found) {
+										if (f.getEc() != null && f.getEc().length() > 0) {
+											for (String pw : geneset.pathwaymap.keySet()) {
+												Set<String> s = geneset.pathwaymap.get(pw);
+												if (s.contains(f.getEc())) {
+													found = true;
+													break;
+												}
+											}
+										}
+									}
+									if (found) break;
+								}
+
+								if (found) {
+									GeneGroup gg = ann.getGeneGroup();
+									if(gg!=null && gg.getSpecies().size()<geneset.specList.size()) {
+										count++;
+									}
+								}
+							}
+						}
+					}
+					total += ct.getAnnotations().size();
+				}
+				/*if( c.annset != null ) for( Tegeval tv : c.annset ) {
+					len += tv.getLength();
+				}*/
+			}
+			fw.write( "<td>"+count+"</td>" );
+			double d = (double)count/(double)total;
+			d = Math.round( d*10000.0 )/100.0;
+			fw.write( "<td>"+d+"%</td>" );
+
+			rw.createCell(k++).setCellValue(count);
+			rw.createCell(k++).setCellValue(d+"%");
+		}
 		
 		k=0;
-		rw = sh.createRow(23);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Protein coding genes connected to KEGG Orthology (KO)");
 		fw.write("</tr><tr><td>Protein coding genes connected to KEGG Orthology (KO)</td>");
 		for( String spec : selspecs) {
@@ -1313,7 +1959,7 @@ public class ActionCollection {
 		if( withHtml ) fw.write("</body></html>");
 		
 		k=0;
-		rw = sh.createRow(24);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Paralogous groups");
 		fw.write("</tr><tr><td>Paralogous groups</td>");
 		for( String spec : selspecs) {
@@ -1357,7 +2003,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(25);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Genes with signal peptides");
 		fw.write("</tr><tr><td>Genes with signal peptides</td>");
 		for( String spec : selspecs) {
@@ -1396,7 +2042,7 @@ public class ActionCollection {
 		}
 		
 		k=0;
-		rw = sh.createRow(26);
+		rw = sh.createRow(rr++);
 		rw.createCell(k++).setCellValue("Genes with transmembrane helices");
 		fw.write("</tr><tr><td>Genes with transmembrane helices</td>");
 		for( String spec : selspecs) {
@@ -1824,7 +2470,7 @@ public class ActionCollection {
 				
 				String uristr = "jar:" + geneset.zippath.toUri();
 				URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-				final List<Path>	lbi = new ArrayList<Path>();
+				final List<Path>	lbi = new ArrayList<>();
 				/*try {
 					geneset.zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 					for( Path root : geneset.zipfilesystem.getRootDirectories() ) {

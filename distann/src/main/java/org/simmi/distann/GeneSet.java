@@ -29,6 +29,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.MapPartitionsFunction;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.simmi.javafasta.shared.*;
@@ -66,6 +67,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import scala.Function2;
+import scala.Tuple2;
 
 public class GeneSet implements GenomeSet {
 	static SerifyApplet currentSerify = null;
@@ -130,8 +132,24 @@ public class GeneSet implements GenomeSet {
 			cogname = cogname.split("\\|")[0];
 			String cogsymbol = l[9];
 			String desc = l[10];
+			String genesymbol = l[11];
+			String goid = l[12];
+			String ecid = l[13];
+			String koid = l[14];
+			String keggpathway = l[15];
 			if(cogsymbol!=null) {
 				for(String mapid: ids) {
+					if(refmap.containsKey(mapid)) {
+						Annotation a = refmap.get(mapid);
+						Gene gene = a.getGene();
+						if(gene!=null) {
+							if(genesymbol.length()>1) gene.symbol = genesymbol;
+							if(goid.length()>1) gene.goid = goid;
+							if(ecid.length()>1) gene.ecid = ecid;
+							if(koid.length()>1) gene.koid = koid;
+							if(keggpathway.length()>1) gene.keggpathway = keggpathway;
+						}
+					}
 					String key = mapid.trim();
 					Cog cog = new Cog(cogid, cogsymbol, cogname, desc);
 					cog.genesymbol = cogsymbol;
@@ -7956,18 +7974,20 @@ public class GeneSet implements GenomeSet {
 					a.setGeneGroup(gg);
 				}
 			} else {
-				GeneGroup gg;
+				GeneGroup gg = null;
 				if("trna".equalsIgnoreCase(a.type)) {
 					String name = a.getName();
-					int k = name.indexOf('(');
-					if (k != -1) name = name.substring(0, k);
-					if (trna.containsKey(name)) {
-						gg = trna.get(name);
-					} else {
-						gg = new GeneGroup(GeneSet.this, i++, specset, cogmap, pfammap, ko2name, biosystemsmap);
-						ggList.add(gg);
-						gg.setGroupCount(1);
-						trna.put(name, gg);
+					if(name!=null) {
+						int k = name.indexOf('(');
+						if (k != -1) name = name.substring(0, k);
+						if (trna.containsKey(name)) {
+							gg = trna.get(name);
+						} else {
+							gg = new GeneGroup(GeneSet.this, i++, specset, cogmap, pfammap, ko2name, biosystemsmap);
+							ggList.add(gg);
+							gg.setGroupCount(1);
+							trna.put(name, gg);
+						}
 					}
 				} else if("rrna".equalsIgnoreCase(a.type)) {
 					String name = a.getName();
@@ -7986,7 +8006,7 @@ public class GeneSet implements GenomeSet {
 					ggList.add(gg);
 					gg.setGroupCount(1);
 				}
-				a.setGeneGroup(gg);
+				if(gg!=null) a.setGeneGroup(gg);
 			}
 		}
 		//}
@@ -9077,7 +9097,7 @@ public class GeneSet implements GenomeSet {
 					//.config("spark.submit.deployMode","cluster")
 
 					//.config("spark.jars","/home/sks17/jars/distann.jar,/home/sks17/jars/javafasta.jar")
-					.master("local[*]")
+					.master("local[1]")
 					/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
                     .config("spark.submit.deployMode","cluster")
                     .config("spark.driver.memory","4g")
@@ -9106,20 +9126,28 @@ public class GeneSet implements GenomeSet {
 				String makeblastdb = "/home/sks17/ncbi-blast-2.10.1+/bin/makeblastdb";
 				String envMap = "LD_LIBRARY_PATH=/home/sks17/glibc-2.14/lib/:/home/sks17/zlib-1.2.11/";*/
 
-				String blastp = "blastp";
-				String makeblastdb = "makeblastdb";
+				String[] blastp = {"diamond","blastp"};
+				String[] makeblastdb = {"diamond","makedb"};
 				String envMap = "";
 
 				Dataset<FastaSequence> allds = spark.createDataset(allSeqList, seqenc);
 				allds.coalesce(1).foreachPartition(new SparkMakedb(makeblastdb,envMap,dbPath));
 
 				Dataset<FastaSequence> ds = spark.createDataset(sparkSeqList, seqenc);
-				Dataset<String> repart = ds.repartition(ds.col("group"))/*.map((MapFunction<FastaSequence,String>) Object::toString, Encoders.STRING())*/.mapPartitions(new SparkBlast(blastp,envMap,dbPath,tmpPath), Encoders.STRING());
+				Dataset<String> repart = ds.repartition(ds.col("group"))
+				//Map<String,Integer> lr = ds.repartition(ds.col("group")).javaRDD().mapPartitionsToPair(new PairFunction()).collectAsMap();
+				//.select(ds.col("group")).distinct().collectAsList();
+						/*.map((MapFunction<FastaSequence,String>) Object::toString, Encoders.STRING())*/
+						.mapPartitions(new SparkBlast(blastp,envMap,dbPath,tmpPath), Encoders.STRING());
 				//List<String> respath = repart.collectAsList();
 				//repart.cache();
 				//repart.limit(10).collectAsList().forEach(System.err::println);
+				//System.err.println(lr);
 
 				//Dataset<String> rds = spark.createDataset(respath, Encoders.STRING()).flatMap((FlatMapFunction<String, String>) s -> Files.lines(Paths.get(s)).iterator(), Encoders.STRING());
+
+				//System.err.println("hey "+repart.count());
+				//repart.write().format("csv").option("delimiter","\t").mode(SaveMode.Overwrite).save("/Users/sigmar/bblo");
 
 				Serifier s = new Serifier();
 				//s.mseq = aas;
@@ -9140,12 +9168,15 @@ public class GeneSet implements GenomeSet {
 				String uristr = "jar:" + zippath.toUri();
 				zipuri = URI.create(uristr /*.replace("file://", "file:")*/);
 				try (FileSystem zipfilesystem = FileSystems.newFileSystem(zipuri, env)) {
-
 					/*List<String> uh = repart.limit(10).collectAsList();
 					uh.forEach(System.err::println);*/
+					repart = repart.repartition(10);
 					ReduceClusters	reduceCluster = new ReduceClusters();
 					String cluster = repart.reduce(reduceCluster);
+					//repart.count();
+					//repart.write().format("csv").mode(SaveMode.Overwrite).save("/Users/sigmar/lulli");
 					String[] total = cluster.split(";");
+
 					/*List<String> strlist = cluster.limit(10).collectAsList();
 					strlist.forEach(System.err::println);*/
 

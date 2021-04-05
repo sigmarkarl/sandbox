@@ -7483,6 +7483,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<GeneGroup, String> cogsymbcol = new TableColumn("Cog symbol");
 		cogsymbcol.setCellValueFactory( new PropertyValueFactory<>("cogsymbol"));
 		table.getColumns().add( cogsymbcol );
+
+		TableColumn<GeneGroup, String> oldsymbcol = new TableColumn("Original cogsymbol");
+		oldsymbcol.setCellValueFactory( new PropertyValueFactory<>("oldsymbol"));
+		table.getColumns().add( oldsymbcol );
+
 		TableColumn<GeneGroup, String> cazyaa = new TableColumn("Cazy_AA");
 		cazyaa.setCellValueFactory( new PropertyValueFactory<>("cazyAA"));
 		table.getColumns().add( cazyaa );
