@@ -81,6 +81,7 @@ import org.apache.commons.vfs2.VFS;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 import org.simmi.javafasta.DataTable;
+import org.simmi.javafasta.PGapRunner;
 import org.simmi.javafasta.shared.*;
 import org.simmi.javafasta.unsigned.JavaFasta;
 import org.simmi.treedraw.shared.TreeUtil;
@@ -1879,7 +1880,7 @@ public class SerifyApplet {
 			if( lseqs.size() == 1 ) jf.setCurrentPath( seqs.getPath() );
 			
 			//int nseq = 0;
-			serifier.appendSequenceInJavaFasta( seqs, contset, lseqs.size() == 1 );
+			contset.putAll(serifier.appendSequenceInJavaFasta( seqs, lseqs.size() == 1 ));
 						/*Annotation a = jf.new Annotation(seq, contig, Color.red);
 						a.setStart(tv.start);
 						a.setStop(tv.stop);
@@ -1890,8 +1891,7 @@ public class SerifyApplet {
 						// seq.addAnnotation( new Annotation( seq, ) );*/
 		}
 
-		for (String contig : contset.keySet()) {
-			Sequence seq = contset.get(contig);
+		for (Sequence seq : contset.values()) {
 			//serifier.addSequence(seq);
 			if (seq.getAnnotations() != null)
 				Collections.sort(seq.getAnnotations());
@@ -2449,55 +2449,54 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 			Path ec = table.getSelectionModel().getSelectedItem().getPath();
 			Path path = ec.resolveSibling(ec.getFileName().toString()+".yaml");
 
-			var defaultMeta = """
-					topology: circular
-					comment: 'Matis comment'
-					consortium: 'consortium'
-					sra:
-					    - accession: 'MAT2789'
-					tp_assembly: true
-					organism:
-					    genus_species: 'Thermus thermophilus'
-					    strain: 'replaceme'
-					contact_info:
-					    last_name: 'Stefansson'
-					    first_name: 'Sigmar'
-					    email: 'sigmarkarl@gmail.com'
-					    organization: 'Matis'
-					    department: 'Department of Microbiology'
-					    phone: '354-857-5049'
-					    street: 'Vínlandsleið 8'
-					    city: 'Reykjavík'
-					    postal_code: '110'
-					    country: 'Iceland'
-					   \s
-					authors:
-					    -     author:
-					            first_name: 'Sigmar'
-					            last_name: 'Stefánsson'
-					            middle_initial: 'K'
-					    -     author:
-					            first_name: 'Guðmundur'
-					            last_name: 'Hreggviðsson'
-					bioproject: 'PRJNA9999999'
-					biosample: 'SAMN99999999'     \s
-					# -- Locus tag prefix - optional. Limited to 9 letters. Unless the locus tag prefix was officially assigned by NCBI, ENA, or DDBJ, it will be replaced upon submission of the annotation to NCBI and is therefore temporary and not to be used in publications. If not provided, pgaptmp will be used.
-					#locus_tag_prefix: 'tmp'
-					#publications:
-					#    - publication:
-					#        pmid: 16397293
-					#        title: 'Discrete CHARMm of Klebsiella foobarensis. Journal of Improbable Results, vol. 34, issue 13, pages: 10001-100005, 2018'
-					#        status: published  # this is enum: controlled vocabulary
-					#        authors:
-					#            - author:
-					#                first_name: 'Sigmar'
-					#                last_name: ''
-					#                middle_initial: 'T'
-					#            - author:
-					#                  first_name: 'Linda'
-					#                  last_name: 'Hamilton'
-				     
-					""";
+			var defaultMeta = "\n" +
+					"topology: circular\n" +
+					"comment: 'Matis comment'\n" +
+					"consortium: 'consortium'\n" +
+					"sra:\n" +
+					"    - accession: 'MAT2789'\n" +
+					"tp_assembly: true\n" +
+					"organism:\n" +
+					"    genus_species: 'Thermus thermophilus'\n" +
+					"    strain: 'replaceme'\n" +
+					"contact_info:\n" +
+					"    last_name: 'Stefansson'\n" +
+					"    first_name: 'Sigmar'\n" +
+					"    email: 'sigmarkarl@gmail.com'\n" +
+					"    organization: 'Matis'\n" +
+					"    department: 'Department of Microbiology'\n" +
+					"    phone: '354-857-5049'\n" +
+					"    street: 'Vínlandsleið 8'\n" +
+					"    city: 'Reykjavík'\n" +
+					"    postal_code: '110'\n" +
+					"    country: 'Iceland'\n" +
+					"    \\s\n" +
+					"authors:\n" +
+					"    -     author:\n" +
+					"            first_name: 'Sigmar'\n" +
+					"            last_name: 'Stefánsson'\n" +
+					"            middle_initial: 'K'\n" +
+					"    -     author:\n" +
+					"            first_name: 'Guðmundur'\n" +
+					"            last_name: 'Hreggviðsson'\n" +
+					"bioproject: 'PRJNA9999999'\n" +
+					"biosample: 'SAMN99999999'     \\s\n" +
+					"# -- Locus tag prefix - optional. Limited to 9 letters. Unless the locus tag prefix was officially assigned by NCBI, ENA, or DDBJ, it will be replaced upon submission of the annotation to NCBI and is therefore temporary and not to be used in publications. If not provided, pgaptmp will be used.\n" +
+					"#locus_tag_prefix: 'tmp'\n" +
+					"#publications:\n" +
+					"#    - publication:\n" +
+					"#        pmid: 16397293\n" +
+					"#        title: 'Discrete CHARMm of Klebsiella foobarensis. Journal of Improbable Results, vol. 34, issue 13, pages: 10001-100005, 2018'\n" +
+					"#        status: published  # this is enum: controlled vocabulary\n" +
+					"#        authors:\n" +
+					"#            - author:\n" +
+					"#                first_name: 'Sigmar'\n" +
+					"#                last_name: ''\n" +
+					"#                middle_initial: 'T'\n" +
+					"#            - author:\n" +
+					"#                  first_name: 'Linda'\n" +
+					"#                  last_name: 'Hamilton'\n" +
+					"    ";
 
 			try {
 				if(!Files.exists(path)) {
@@ -3250,70 +3249,78 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 			}
 		});
 		popup.getItems().add( new SeparatorMenuItem() );
+
+		MenuItem pgap = new MenuItem("PGAP");
+		programs.getItems().add( pgap );
+		PGapRunner pGapRunner = new PGapRunner(Paths.get("/Users/sigmarkarl/pgap/"), serifier);
+		pgap.setOnAction(arg0 -> {
+			for( Sequences s : table.getSelectionModel().getSelectedItems() ) {
+				pGapRunner.setSequences(s);
+				pGapRunner.run();
+			}
+		});
+
 		MenuItem genbankfromblast = new MenuItem("Genbank from blast");
 		programs.getItems().add( genbankfromblast );
 		genbankfromblast.setOnAction(arg0 -> {
-            String addon = "nnnttaattaattaannn";
-            List<Integer>	startlist = new ArrayList<>();
-            List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
-            FileChooser fc = new FileChooser();
-            File dir = null;
-            if( lseqs.size() > 1 ) {
-                DirectoryChooser dc = new DirectoryChooser();
-                dir = dc.showDialog(null);
-                if( dir != null ) {
+			String addon = "nnnttaattaattaannn";
+			List<Integer>	startlist = new ArrayList<>();
+			List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+			FileChooser fc = new FileChooser();
+			File dir = null;
+			if( lseqs.size() > 1 ) {
+				DirectoryChooser dc = new DirectoryChooser();
+				dir = dc.showDialog(null);
+				if( dir != null ) {
 
-                }
-            }
-            for( Sequences s : table.getSelectionModel().getSelectedItems() ) {
-                File blastFile = fc.showOpenDialog(null);
-                if( blastFile != null ) {
-                    File f = null;
-                    if( dir != null ) {
-                        f = new File( dir, s.getName()+".gb" );
-                    } else {
-                        f = fc.showSaveDialog(null);
-                    }
-                    try {
-                        serifier.genbankFromBlast(s, blastFile, f);
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+				}
+			}
+			for( Sequences s : table.getSelectionModel().getSelectedItems() ) {
+				File blastFile = fc.showOpenDialog(null);
+				if( blastFile != null ) {
+					File f = null;
+					if( dir != null ) {
+						f = new File( dir, s.getName()+".gb" );
+					} else {
+						f = fc.showSaveDialog(null);
+					}
+					try {
+						serifier.genbankFromBlast(s, blastFile, f);
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
         });
 		MenuItem genbankfromnr = new MenuItem("Genbank from nr");
 		programs.getItems().add( genbankfromnr );
-		genbankfromnr.setOnAction( new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				List<Integer>	startlist = new ArrayList<>();
-				List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
-				DirectoryChooser	dc = new DirectoryChooser();
-				File dir = null;
-				if( lseqs.size() > 1 ) {
-					dir = dc.showDialog(null);
-				}
-				FileChooser fc = new FileChooser();
-				for( Sequences s : lseqs ) {
-					File blastFile = fc.showOpenDialog(null);
-					if( blastFile != null ) {
-						File f = null;
-						if( dir != null ) {
-							f = new File( dir, s.getName()+".gb" );
-						} else {
-							f = fc.showSaveDialog(null);
-						}
-						
-						try {
-							serifier.genbankFromNR( s, blastFile.toPath(), f.toPath(), false );
-						} catch (MalformedURLException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+		genbankfromnr.setOnAction(arg0 -> {
+			List<Integer>	startlist = new ArrayList<>();
+			List<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
+			DirectoryChooser	dc = new DirectoryChooser();
+			File dir = null;
+			if( lseqs.size() > 1 ) {
+				dir = dc.showDialog(null);
+			}
+			FileChooser fc = new FileChooser();
+			for( Sequences s : lseqs ) {
+				File blastFile = fc.showOpenDialog(null);
+				if( blastFile != null ) {
+					File f = null;
+					if( dir != null ) {
+						f = new File( dir, s.getName()+".gb" );
+					} else {
+						f = fc.showSaveDialog(null);
+					}
+
+					try {
+						serifier.genbankFromNR( s, blastFile.toPath(), f.toPath(), false );
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
 				}
 			}

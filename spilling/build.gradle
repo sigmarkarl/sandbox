@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    compile project(':TreeDraw')
+    implementation project(':TreeDraw')
     //compile group: 'org.apache.poi', name: 'poi', version: '3.17'
     //compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
 }
