@@ -1,27 +1,42 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-}
-
 plugins {
-    id "java"
-    id 'maven'
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin'
 }
 
-repositories {
-    mavenCentral()
-
-    // Include the Broad artifactory for intel-gkl snapshots. This is temporary
-    // until intel-gkl is available on maven central.
-    //maven {
-    //    url "https://artifactory.broadinstitute.org/artifactory/libs-snapshot/"
-    //}
+javafx {
+    version = '17-ea+7'
+    modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
 }
 
 dependencies {
-    compile "org.apache.commons:commons-jexl:2.1.1"
+    implementation project(':javafasta')
+    implementation project(':serifier')
+    implementation project(':spilling')
+
+    implementation group: 'org.apache.poi', name: 'poi', version: '3.17'
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
+    implementation group: 'commons-codec', name: 'commons-codec', version: '1.11'
+    implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.14'
+    implementation group: 'org.apache.commons', name: 'commons-vfs2', version: '2.2'
+    //implementation group: 'org.gorpipe', name: 'gor-spark', version: '0.5.6'
+
+    // https://mvnrepository.com/artifact/org.openjfx/javafx
+    implementation group: 'org.openjfx', name: 'javafx', version: '17-ea+3'
+
+    implementation "org.openjfx:javafx-base:17-ea+3:mac"
+    implementation "org.openjfx:javafx-controls:17-ea+3:mac"
+    implementation "org.openjfx:javafx-graphics:17-ea+3:mac"
+    implementation "org.openjfx:javafx-fxml:17-ea+3:mac"
+    implementation "org.openjfx:javafx-web:17-ea+3:mac"
+    implementation "org.openjfx:javafx-swing:17-ea+3:mac"
+
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+ext {
+    javaMainClass = "org.simmi.distann.DistAnn"
+}
+
+application {
+    mainClassName = javaMainClass
+}

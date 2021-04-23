@@ -27,7 +27,11 @@ var init = function() {
 		if( e.keyCode == 13 ) {
 			var command = textarea.value.substring( ind );
 			//window.console.log( command );
-			eval( command );
+			try {
+				eval( command );
+			} catch( e ) {
+				console.log(e);
+			}
 			ind = textarea.value.length;
 		}
 	}
@@ -101,14 +105,14 @@ var flip = function( val ) {
 	}
 }
 
-var diff = function( clen ) {
+/*var diff = function( clen ) {
 	if( clen == null ) clen = current.length;
 	for( k = 0; k < current.length; k+=clen ) {
 		for( i = k+clen-1; i > k; i-- ) {
 			current[i] -= current[i-1];
 		}
 	}
-}
+}*/
 
 var integ = function( clen ) {
 	if( clen == null ) clen = current.length;
@@ -119,7 +123,7 @@ var integ = function( clen ) {
 	}
 }
 
-var set = function( val, x ) {
+/*var set = function( val, x ) {
 	if( typeof val == 'number' ) {
 		if( typeof x == 'undefined' ) {
 			for( i = 0; i < current.length; i++ ) {
@@ -144,7 +148,7 @@ var set = function( val, x ) {
 			}
 		}
 	}
-}
+}*/
 
 var add = function( val, x ) {
 	if( typeof val == 'number' ) {
@@ -179,7 +183,7 @@ var sub = function( val ) {
 	}
 }
 
-var mul = function( val ) {
+/*var mul = function( val ) {
 	for( i = 0; i < current.length; i++ ) {
 		current[i] *= val[i%val.length];
 	}
@@ -189,8 +193,9 @@ var div = function( val ) {
 	for( i = 0; i < current.length; i++ ) {
 		current[i] /= val;
 	}
-}
-var floor = function() {
+}*/
+
+var floor2 = function() {
 	for( i = 0; i < current.length; i++ ) {
 		current[i] = Math.floor( current[i] );
 	}
@@ -208,23 +213,17 @@ var round = function() {
 	}
 }
 
-var sin = function() {
-	for( i = 0; i < current.length; i++ ) {
-		current[i] = Math.sin( current[i] );
-	}
-}
-
 var cos = function() {
 	for( i = 0; i < current.length; i++ ) {
 		current[i] = Math.cos( current[i] );
 	}
 }
 
-var idx = function() {
+/*var idx = function() {
 	for( i = 0; i < current.length; i++ ) {
 		current[i] = i;
 	}
-}
+}*/
 
 var rnd = function() {
 	for( i = 0; i < current.length; i++ ) {
@@ -266,7 +265,7 @@ var matmul = function( mul, val ) {
 	current = ret;
 }
 
-var sum = function( chunk ) {
+var sum2 = function( chunk ) {
 	if( chunk == null ) chunk = current.length;
 	var size = current.length/chunk;
 	if( typeof current == 'Int8Array' ) ret = new Int8Array( size );
@@ -463,10 +462,139 @@ var play = function() {
 	});
 }
 
-function* indexer( len ) {
-	for( var i = 0; i < len; i++ ) {
-		yield i;
+function* limit( gen, len ) {
+	for( let r of gen ) {
+		yield r;
+		if( --len == 0 ) break;
 	}
+}
+
+function* floor( gen ) {
+	for( let g of gen ) {
+		yield Math.floor(g);
+	}
+}
+
+function* index( buf, idx ) {
+	for( let i of idx ) {
+		yield buf[i];
+	}
+}
+
+function shuffle( buf ) {
+	for (var i = buf.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = buf[i];
+        buf[i] = buf[j];
+        buf[j] = tmp;
+  }
+}
+
+//set(res,index(buf,idx),idx())
+function reorder( buf, res, idx ) {
+	var k = 0;
+	for( let i of idx ) {
+		res[k++] = buf[i];
+	}
+}
+
+//set(res,buf,idx)
+function rearrange( buf, res, idx ) {
+	var k = 0;
+	for( let i of idx ) {
+		res[i] = buf[k++];
+	}
+}
+
+function* idx(i) {
+	while(true) yield i++;
+}
+
+function* rev(i) {
+	while(true) yield i--;
+}
+
+function* sin( gen ) {
+	for( let g of gen ) yield Math.sin(g);
+}
+
+function* cnst( val ) {
+	while( true ) yield val;
+}
+
+function* sum( gen1, gen2 ) {
+	for( let g1 of gen1 ) {
+		yield g1+gen2.next().value
+	}
+}
+
+function* mul( gen, mul ) {
+	for( let g of gen ) {
+		yield g*mul.next().value;
+	}
+}
+
+function* div( gen, div ) {
+	for( let g of gen ) {
+		yield g/div.next().value;
+	}
+}
+
+function* integrator( gen ) {
+	var ret = 0;
+	for( let g of gen ) {
+		ret += g;
+		yield ret;
+	}
+}
+
+function* modulus( gen, mod ) {
+	for( let g of gen ) {
+		yield g%mod.next().value;
+	}
+}
+
+function* diff( gen ) {
+	var last = gen.next().value;
+	for( let g of gen ) {
+		yield g - last;
+		last = g;
+	}
+}
+
+function set( dest, gen, idx ) {
+	for( let i of idx ) {
+		dest[i] = gen.next().value;
+	}
+}
+
+/*function idx() {
+    var index = 0;
+
+    return {
+       next: function(){
+           return {value: index++, done: false};
+       }
+    };
+}*/
+
+class ix {
+
+}
+
+function* fibonacci() {
+  var fn1 = 0;
+  var fn2 = 1;
+  while (true) {
+    var current = fn1;
+    fn1 = fn2;
+    fn2 = current + fn1;
+    var reset = yield current;
+    if (reset) {
+        fn1 = 0;
+        fn2 = 1;
+    }
+  }
 }
 
 var print = function( nd ) {
