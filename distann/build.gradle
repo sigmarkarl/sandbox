@@ -5,31 +5,31 @@ plugins {
 }
 
 javafx {
-    version = '17-ea+3'
+    version = '17-ea+7'
     modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
 }
 
 dependencies {
-    compile project(':javafasta')
-    compile project(':serifier')
-    compile project(':spilling')
+    implementation project(':javafasta')
+    implementation project(':serifier')
+    implementation project(':spilling')
 
-    compile group: 'org.apache.poi', name: 'poi', version: '3.17'
-    compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
-    compile group: 'org.apache.commons', name: 'commons-compress', version: '1.14'
-    compile group: 'org.apache.commons', name: 'commons-vfs2', version: '2.2'
-    //compile group: 'org.gorpipe', name: 'gor-spark', version: '0.5.6'
+    implementation group: 'org.apache.poi', name: 'poi', version: '3.17'
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
+    implementation group: 'commons-codec', name: 'commons-codec', version: '1.11'
+    implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.14'
+    implementation group: 'org.apache.commons', name: 'commons-vfs2', version: '2.2'
+    //implementation group: 'org.gorpipe', name: 'gor-spark', version: '0.5.6'
 
     // https://mvnrepository.com/artifact/org.openjfx/javafx
-    compile group: 'org.openjfx', name: 'javafx', version: '17-ea+3'
+    implementation group: 'org.openjfx', name: 'javafx', version: '17-ea+3'
 
-    compile "org.openjfx:javafx-base:17-ea+3:mac"
-    compile "org.openjfx:javafx-controls:17-ea+3:mac"
-    compile "org.openjfx:javafx-graphics:17-ea+3:mac"
-    compile "org.openjfx:javafx-fxml:17-ea+3:mac"
-    compile "org.openjfx:javafx-web:17-ea+3:mac"
-    compile "org.openjfx:javafx-swing:17-ea+3:mac"
+    implementation "org.openjfx:javafx-base:17-ea+3:mac"
+    implementation "org.openjfx:javafx-controls:17-ea+3:mac"
+    implementation "org.openjfx:javafx-graphics:17-ea+3:mac"
+    implementation "org.openjfx:javafx-fxml:17-ea+3:mac"
+    implementation "org.openjfx:javafx-web:17-ea+3:mac"
+    implementation "org.openjfx:javafx-swing:17-ea+3:mac"
 
 }
 
