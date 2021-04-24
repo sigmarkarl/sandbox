@@ -57,11 +57,11 @@ public class CogChart {
         Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList<>( geneset.specList ), cb, bc, lr );
 
         String nohit = "-";
-        final Map<String,Map<String,Integer>>	mm = new HashMap<>();
+        final Map<String,Map<String,Integer>>	mm = new LinkedHashMap<>();
         Map<String,Integer> map = new HashMap<>();
         Map<String,Integer> mip = new HashMap<>();
         mm.put("Core", map);
-        mm.put("Accessory", mip);
+        mm.put("Accessory (avg)", mip);
         selspec.forEach(s -> mm.put(s, new HashMap<>()));
         //final Map<String,Integer>	map = new HashMap<>();
         if( !genesethead.isGeneview() ) {
@@ -498,7 +498,7 @@ public class CogChart {
 
         List<String> includedCogs = new ArrayList<>();
         Set<String> incogs = new HashSet<>(inclCogs);
-        String cogchr = "-";
+        /*String cogchr = "-";
         if(incogs.remove(cogchr)) {
             includedCogs.add(cogchr);
             String coglong = Cog.charcog.get(cogchr);
@@ -517,12 +517,19 @@ public class CogChart {
             includedCogs.add(cogchr);
             String coglong = Cog.charcog.get(cogchr);
             fw.write("','-(" + cogchr + ") " + coglong);
-        }
+        }*/
 
-        for( String cogchar : incogs ) {
-            includedCogs.add(cogchar);
-            String coglong = Cog.charcog.get( cogchar );
-            fw.write("','("+cogchar+") "+coglong);
+        for( String key : Cog.coggroups.keySet() ) {
+            Set<String> iset = Cog.coggroups.get(key);
+            for(String cogchar : iset) {
+                if(incogs.contains(cogchar)) {
+                    includedCogs.add(cogchar);
+                    String coglong = Cog.charcog.get(cogchar);
+                    String group = Cog.coggroups.entrySet().stream().filter(p -> p.getValue().contains(cogchar)).map(Map.Entry::getKey).findFirst().get();
+                    String gshort = Cog.coggroupshort.get(group);
+                    fw.write("','" + gshort + "(" + cogchar + ") " + coglong);
+                }
+            }
         }
         fw.write("']");
 
@@ -545,7 +552,8 @@ public class CogChart {
         for( String s : map.keySet() ) {
             fw.write(",\n");
             int total = totmap.get( s );
-            fw.write( "['"+s+"'" );
+            String sval = s.contains("493") ? "ISCaR-493 Accessory" : (s.contains("Rhodo") ? s.substring(s.indexOf("DSM"))+" Accessory" : s);
+            fw.write( "['"+sval+"'" );
             Map<String,Integer> cm = map.get( s );
             for( String cogchar : includedCogs ) {
                 int val = 0;
@@ -754,8 +762,8 @@ public class CogChart {
                 includedCogs.add(coglist.get(r));
             }
 
-            final Map<String,Set<String>> cogAnnoMap = new TreeMap<>();
-            final Map<String, String> all = new TreeMap<>();
+            final Map<String,Set<String>> cogAnnoMap = new LinkedHashMap<>();
+            final Map<String, String> all = new LinkedHashMap<>();
             final Map<String, Map<String, Integer>> map = new LinkedHashMap<>();
             CogChart cogChart = new CogChart(genesethead);
             cogChart.cogCalc(null, includedCogs, map, selspec, contigs.isSelected(), cogAnnoMap, accessory.isSelected());
