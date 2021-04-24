@@ -13,6 +13,7 @@ dependencies {
     implementation project(':javafasta')
     implementation project(':serifier')
     implementation project(':spilling')
+    implementation project(':TreeDraw')
 
     implementation group: 'org.apache.poi', name: 'poi', version: '3.17'
     implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
@@ -24,12 +25,16 @@ dependencies {
     // https://mvnrepository.com/artifact/org.openjfx/javafx
     implementation group: 'org.openjfx', name: 'javafx', version: '17-ea+3'
 
-    implementation "org.openjfx:javafx-base:17-ea+3:mac"
-    implementation "org.openjfx:javafx-controls:17-ea+3:mac"
-    implementation "org.openjfx:javafx-graphics:17-ea+3:mac"
-    implementation "org.openjfx:javafx-fxml:17-ea+3:mac"
-    implementation "org.openjfx:javafx-web:17-ea+3:mac"
-    implementation "org.openjfx:javafx-swing:17-ea+3:mac"
+    implementation "org.openjfx:javafx-base:17-ea+7:mac"
+    implementation "org.openjfx:javafx-controls:17-ea+7:mac"
+    implementation "org.openjfx:javafx-graphics:17-ea+7:mac"
+    implementation "org.openjfx:javafx-fxml:17-ea+7:mac"
+    implementation "org.openjfx:javafx-web:17-ea+7:mac"
+    implementation "org.openjfx:javafx-swing:17-ea+7:mac"
+
+    implementation group: 'org.apache.spark', name: 'spark-core_2.12', version: '3.1.1'
+    implementation group: 'org.apache.spark', name: 'spark-mllib_2.12', version: '3.1.1'
+    implementation group: 'org.apache.spark', name: 'spark-kubernetes_2.12', version: '3.1.1'
 
 }
 
