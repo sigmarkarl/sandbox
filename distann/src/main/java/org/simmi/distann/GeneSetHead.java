@@ -6837,6 +6837,51 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		}
 		return Files.newBufferedReader(Paths.get("distann/src/main/java/"+res ));
 	}
+
+	Set<GeneGroup> updateSplit(GeneGroup gg, double d, double l) {
+		Set<GeneGroup> ggmap = new HashSet<>();
+		Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( false );
+		for( Annotation a : gg.genes ) {
+			if( ggmap.stream().flatMap( f -> f.genes.stream() ).noneMatch( p -> a == p ) ) {
+				Set<Annotation> ggset = new HashSet<>();
+				Sequence seq1 = a.getAlignedSequence();
+				for (Annotation ca : gg.genes) {
+					Sequence seq2 = ca.getAlignedSequence();
+					int[] tscore = GeneCompare.blosumValue(seq1, seq1, seq2, blosumMap);
+					int sscore = GeneCompare.blosumValue(seq1, seq2, blosumMap);
+
+					double dval = (double) (sscore - tscore[1]) / (double) (tscore[0] - tscore[1]);
+					if (dval > d && lval > l) {
+						ggset.add(ca);
+					}
+				}
+				System.err.println( ggset.size() );
+
+				Set<GeneGroup> osubgg = ggmap.stream().filter( f -> {
+					Set<Annotation> gs = new HashSet<>(ggset); gs.retainAll(f.genes); return gs.size() > 0;
+				}).collect(Collectors.toSet());
+				GeneGroup subgg;
+				if( osubgg.size() > 0 ) {
+					Iterator<GeneGroup> git = osubgg.iterator();
+					subgg = git.next();
+					while( git.hasNext() ) {
+						GeneGroup remgg = git.next();
+						subgg.addGenes( remgg.genes );
+						ggmap.remove( remgg );
+					}
+				} else {
+					subgg = new GeneGroup();
+					subgg.setCogMap( gg.getCogMap() );
+					subgg.setKonameMap( gg.getKonameMap() );
+					subgg.setSpecSet( gg.getSpecSet() );
+					ggmap.add( subgg );
+				}
+				subgg.addGenes( ggset );
+			}
+		}
+		Set<GeneGroup> sgg = new HashSet<>(ggmap);
+		return sgg;
+	}
 	
 	private void showGeneTable(/*final Map<String, Gene> genemap, final List<Gene> genelist, 
 			final List<Function> funclist, final List<Set<String>> iclusterlist, final List<Set<String>> uclusterlist,
@@ -8335,59 +8380,39 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			Label groupsize = new Label(""+gg.genes.size());
 			grid.add(groupsize, 0, 3, 2, 1);
 
+			id.textProperty().addListener((observable, oldValue, newValue) -> {
+				if( !newValue.equals(oldValue) ) {
+					boolean failed = false;
+					double d = 0;
+					double l = 0;
+					try {
+						d = Double.parseDouble(newValue);
+						l = Double.parseDouble(newValue);
+					} catch( Exception ex ) { failed = true; }
+
+					if( !failed && l > 0 ) {
+						Set<GeneGroup> sgg = updateSplit(gg, d, l);
+						List<GeneGroup> lgg = new ArrayList<>(sgg);
+						list.setItems(FXCollections.observableList(lgg));
+						dialog.setResultConverter(param -> sgg);
+					}
+				}
+			});
+
 			len.textProperty().addListener((observable, oldValue, newValue) -> {
 				if( !newValue.equals(oldValue) ) {
 					boolean failed = false;
 					double d = 0;
+					double l = 0;
 					try {
-						d = Double.parseDouble(newValue);
+						d = Double.parseDouble(id.getText());
+						l = Double.parseDouble(newValue);
 					} catch( Exception ex ) { failed = true; }
 
-					if( !failed && d > 0 ) {
-						Set<GeneGroup> ggmap = new HashSet<>();
-						Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( false );
-						for( Annotation a : gg.genes ) {
-							if( ggmap.stream().flatMap( f -> f.genes.stream() ).noneMatch( p -> a == p ) ) {
-								Set<Annotation> ggset = new HashSet<>();
-								Sequence seq1 = a.getAlignedSequence();
-								for (Annotation ca : gg.genes) {
-									Sequence seq2 = ca.getAlignedSequence();
-									int[] tscore = GeneCompare.blosumValue(seq1, seq1, seq2, blosumMap);
-									int sscore = GeneCompare.blosumValue(seq1, seq2, blosumMap);
-
-									double dval = (double) (sscore - tscore[1]) / (double) (tscore[0] - tscore[1]);
-									if (dval > d) {
-										ggset.add(ca);
-									}
-								}
-								System.err.println( ggset.size() );
-
-								Set<GeneGroup> osubgg = ggmap.stream().filter( f -> {
-									Set<Annotation> gs = new HashSet<>(ggset); gs.retainAll(f.genes); return gs.size() > 0;
-								}).collect(Collectors.toSet());
-								GeneGroup subgg;
-								if( osubgg.size() > 0 ) {
-									Iterator<GeneGroup> git = osubgg.iterator();
-									subgg = git.next();
-									while( git.hasNext() ) {
-										GeneGroup remgg = git.next();
-										subgg.addGenes( remgg.genes );
-										ggmap.remove( remgg );
-									}
-								} else {
-									subgg = new GeneGroup();
-									subgg.setCogMap( gg.getCogMap() );
-									subgg.setKonameMap( gg.getKonameMap() );
-									subgg.setSpecSet( gg.getSpecSet() );
-									ggmap.add( subgg );
-								}
-								subgg.addGenes( ggset );
-							}
-						}
-						Set<GeneGroup> sgg = new HashSet<>(ggmap);
-
+					if( !failed && l > 0 ) {
+						Set<GeneGroup> sgg = updateSplit(gg, d, l);
 						List<GeneGroup> lgg = new ArrayList<>(sgg);
-						list.setItems( FXCollections.observableList( lgg ) );
+						list.setItems(FXCollections.observableList(lgg));
 						dialog.setResultConverter(param -> sgg);
 					}
 				}

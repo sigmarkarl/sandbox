@@ -7495,8 +7495,10 @@ public class GeneSet implements GenomeSet {
 									gene.name = a.getName();
 									gene.id = refmap.containsKey(a.id) ? a.tag : a.id;
 									gene.refid = gene.id;
+									refmapPut(gene.id, a);
+								} else {
+									refmapPut(a.id, a);
 								}
-								refmapPut(a.id, a);
 							}
 						}
 						speccontigMap.put(org, seqs);

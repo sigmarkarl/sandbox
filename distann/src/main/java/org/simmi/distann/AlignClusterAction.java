@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class AlignClusterAction implements EventHandler<ActionEvent> {
@@ -48,24 +49,10 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
             }
         }
 
-        SparkSession spark = SparkSession.builder().master("local[*]")
-                /*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
-            .config("spark.executor.memory","4g")
-            .config("spark.executor.cores",2)
-            .config("spark.executor.instances",10)
-            .config("spark.kubernetes.namespace","spark")
-            .config("spark.kubernetes.container.image","nextcode/glow:latest")
-            .config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
-            .config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
-            .config("spark.kubernetes.container.image.pullPolicy", "Always")
-            .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-            .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
-                .getOrCreate();
-
         String userhome = System.getProperty("user.home");
         Path userhomePath = Paths.get(userhome);
         String root = userhomePath.resolve("tmp").toString(); //"/Users/sigmar/tmp";//"/mnt/csa/tmp";
-        List<Tuple2<String,String>> fastaList = ggset.stream().filter(gg -> gg.getGroupCount() >= 2).map(gg -> {
+        List<Tuple2<String, String>> fastaList = ggset.stream().filter(gg -> gg.getGroupCount() >= 2).map(gg -> {
             try {
                 return new Tuple2<>(gg.getCommonId(), gg.getFasta(true));
             } catch (IOException e) {
@@ -74,10 +61,38 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
             }
         }).collect(Collectors.toList());
 
-        Encoder<Tuple2<String,String>> tupEncoder = Encoders.tuple(Encoders.STRING(), Encoders.STRING());
-        Dataset<Tuple2<String,String>> dss = spark.createDataset(fastaList, tupEncoder);
-        Dataset<Tuple2<String,String>> repart = dss.map(new SparkMafft(root), tupEncoder);
-        Map<String,String> resmap = repart.javaRDD().mapToPair((PairFunction<Tuple2<String, String>, String, String>) stringStringTuple2 -> stringStringTuple2).collectAsMap();
+        var mafft = new SparkMafft(root);
+
+        Map<String, String> resmap;
+        boolean local = true;
+        if(local) {
+            resmap = fastaList.parallelStream().map(t -> {
+                try {
+                    return mafft.call(t);
+                } catch (IOException | ExecutionException | InterruptedException e) {
+                    return null;//e.printStackTrace();
+                }
+            }).collect(Collectors.toMap(s -> s._1, s -> s._2));
+        } else {
+            SparkSession spark = SparkSession.builder().master("local[*]")
+                    /*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
+                .config("spark.executor.memory","4g")
+                .config("spark.executor.cores",2)
+                .config("spark.executor.instances",10)
+                .config("spark.kubernetes.namespace","spark")
+                .config("spark.kubernetes.container.image","nextcode/glow:latest")
+                .config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
+                .config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
+                .config("spark.kubernetes.container.image.pullPolicy", "Always")
+                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
+                    .getOrCreate();
+
+            Encoder<Tuple2<String, String>> tupEncoder = Encoders.tuple(Encoders.STRING(), Encoders.STRING());
+            Dataset<Tuple2<String, String>> dss = spark.createDataset(fastaList, tupEncoder);
+            Dataset<Tuple2<String, String>> repart = dss.map(mafft, tupEncoder);
+            resmap = repart.javaRDD().mapToPair((PairFunction<Tuple2<String, String>, String, String>) stringStringTuple2 -> stringStringTuple2).collectAsMap();
+        }
 
         Map<String,String> env = new HashMap<>();
         env.put("create", "true");
