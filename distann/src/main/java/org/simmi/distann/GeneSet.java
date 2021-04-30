@@ -9082,120 +9082,165 @@ public class GeneSet implements GenomeSet {
 			String dbPath = usertmp.toString();
 			 //"/mnt/csa/tmp/glow";
 
-			Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);
+			String[] blastp = {"diamond", "blastp"};
+			String[] makeblastdb = {"diamond", "makedb"};
+			String envMap = "";
 
-			try(SparkSession spark = SparkSession.builder()
-					/*.master("spark://mimir.cs.hi.is:7077")
-					.config("spark.driver.memory","2g")
-					.config("spark.driver.cores",1)
-					.config("spark.executor.memory","16g")
-					.config("spark.executor.cores",32)
-					.config("spark.task.cpus",32)
-					.config("spark.executor.instances",5)
-					.config("spark.driver.host","mimir.cs.hi.is")
-					.config("spark.local.dir","/home/sks17/tmp")*/
-					//.config("spark.submit.deployMode","cluster")
-
-					//.config("spark.jars","/home/sks17/jars/distann.jar,/home/sks17/jars/javafasta.jar")
-					.master("local[1]")
-					/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
-                    .config("spark.submit.deployMode","cluster")
-                    .config("spark.driver.memory","4g")
-                    .config("spark.driver.cores",2)
-                    .config("spark.executor.instances",16)
-                    .config("spark.executor.memory","2g")
-                    .config("spark.executor.cores",2)
-                    .config("spark.jars","/Users/sigmar/sandbox/distann/build/install/distann/lib/*.jar")
-                /*.config("spark.executor.instances",10)
-                .config("spark.kubernetes.namespace","spark")
-                .config("spark.kubernetes.container.image","nextcode/glow:latest")
-                .config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
-                .config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
-                .config("spark.kubernetes.container.image.pullPolicy", "Always")
-                    .config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-                    .config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
-                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
-					.getOrCreate()) {
-
-				//String blastp = "/home/sks17/miniconda3/bin/blastp";
-				//String makeblastdb = "/home/sks17/miniconda3/bin/makeblastdb";
-				//String envMap = "";
-
-				/*String blastp = "/home/sks17/ncbi-blast-2.10.1+/bin/blastp";
-				String makeblastdb = "/home/sks17/ncbi-blast-2.10.1+/bin/makeblastdb";
-				String envMap = "LD_LIBRARY_PATH=/home/sks17/glibc-2.14/lib/:/home/sks17/zlib-1.2.11/";*/
-
-				String[] blastp = {"diamond","blastp"};
-				String[] makeblastdb = {"diamond","makedb"};
-				String envMap = "";
-
-				Dataset<FastaSequence> allds = spark.createDataset(allSeqList, seqenc);
-				allds.coalesce(1).foreachPartition(new SparkMakedb(makeblastdb,envMap,dbPath));
-
-				Dataset<FastaSequence> ds = spark.createDataset(sparkSeqList, seqenc);
-				Dataset<String> repart = ds.repartition(ds.col("group"))
-				//Map<String,Integer> lr = ds.repartition(ds.col("group")).javaRDD().mapPartitionsToPair(new PairFunction()).collectAsMap();
-				//.select(ds.col("group")).distinct().collectAsList();
-						/*.map((MapFunction<FastaSequence,String>) Object::toString, Encoders.STRING())*/
-						.mapPartitions(new SparkBlast(blastp,envMap,dbPath,tmpPath), Encoders.STRING());
-				//List<String> respath = repart.collectAsList();
-				//repart.cache();
-				//repart.limit(10).collectAsList().forEach(System.err::println);
-				//System.err.println(lr);
-
-				//Dataset<String> rds = spark.createDataset(respath, Encoders.STRING()).flatMap((FlatMapFunction<String, String>) s -> Files.lines(Paths.get(s)).iterator(), Encoders.STRING());
-
-				//System.err.println("hey "+repart.count());
-				//repart.write().format("csv").option("delimiter","\t").mode(SaveMode.Overwrite).save("/Users/sigmar/bblo");
-
-				Serifier s = new Serifier();
-				//s.mseq = aas;
-				for( String gk : refmap.keySet() ) {
-					Annotation a = refmap.get( gk );
-					s.mseq.put( gk, a.getAlignedSequence() );
-				}
-
-				Map<String,String>	idspec = new HashMap<>();
-				for( String idstr : refmap.keySet() ) {
-					Annotation a = refmap.get( idstr );
-					Gene gene = a.getGene();
-					if(gene!=null) idspec.put(idstr, gene.getSpecies());
-				}
-
-				Map<String, String> env = new HashMap<>();
-				env.put("create", "true");
-				String uristr = "jar:" + zippath.toUri();
-				zipuri = URI.create(uristr /*.replace("file://", "file:")*/);
-				try (FileSystem zipfilesystem = FileSystems.newFileSystem(zipuri, env)) {
-					/*List<String> uh = repart.limit(10).collectAsList();
-					uh.forEach(System.err::println);*/
-					repart = repart.repartition(10);
-					ReduceClusters	reduceCluster = new ReduceClusters();
-					String cluster = repart.reduce(reduceCluster);
-					//repart.count();
-					//repart.write().format("csv").mode(SaveMode.Overwrite).save("/Users/sigmar/lulli");
-					String[] total = cluster.split(";");
-
-					/*List<String> strlist = cluster.limit(10).collectAsList();
-					strlist.forEach(System.err::println);*/
-
-					//cluster.limit(10).collectAsList().forEach(System.err::println);
-					//String[] total = cluster.map((MapFunction<String, String[]>) ss -> new String[] {ss},Encoders.javaSerialization(String[].class)).reduce(new ReduceClusters());
-					for (Path root : zipfilesystem.getRootDirectories()) {
-						Path clustersPath = root.resolve("simpleclusters.txt");
-						BufferedWriter fos = Files.newBufferedWriter(clustersPath);
-						writeClusters(fos, Arrays.stream(total).map(ss -> new HashSet<>(Arrays.asList(ss.substring(1, ss.length() - 1).split(",\\s*")))).collect(Collectors.toList()));
-						fos.close();
-						break;
+			boolean local = true;
+			if(local) {
+				var sparkMakeDb = new SparkMakedb(makeblastdb, envMap, dbPath);
+				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath);
+				try {
+					sparkMakeDb.call(allSeqList.iterator());
+					Stream<List<Set<String>>> repart = sparkBlast.stream(sparkSeqList.iterator());
+					Serifier s = new Serifier();
+					//s.mseq = aas;
+					for (String gk : refmap.keySet()) {
+						Annotation a = refmap.get(gk);
+						s.mseq.put(gk, a.getAlignedSequence());
 					}
 
-					/*Path resPath = zipfilesystem.getPath("/cluster.blastout");
-					Iterable<String> it = rds::toLocalIterator;
-					Files.write(resPath,it);*/
+					Map<String, String> idspec = new HashMap<>();
+					for (String idstr : refmap.keySet()) {
+						Annotation a = refmap.get(idstr);
+						Gene gene = a.getGene();
+						if (gene != null) idspec.put(idstr, gene.getSpecies());
+					}
+
+					Map<String, String> env = new HashMap<>();
+					env.put("create", "true");
+					String uristr = "jar:" + zippath.toUri();
+					zipuri = URI.create(uristr /*.replace("file://", "file:")*/);
+
+					ReduceClusters reduceCluster = new ReduceClusters();
+					Optional<List<Set<String>>> ototal = repart.reduce(reduceCluster);
+					if(ototal.isPresent()) {
+						try (FileSystem zipfilesystem = FileSystems.newFileSystem(zipuri, env)) {
+							for (Path root : zipfilesystem.getRootDirectories()) {
+								Path clustersPath = root.resolve("simpleclusters.txt");
+								BufferedWriter fos = Files.newBufferedWriter(clustersPath);
+								writeClusters(fos, ototal.get());
+								fos.close();
+								break;
+							}
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			} catch (IOException e1) {
-				e1.printStackTrace();
+
+			} else {
+				Encoder<FastaSequence> seqenc = ExpressionEncoder.javaBean(FastaSequence.class);
+
+				try (SparkSession spark = SparkSession.builder()
+						/*.master("spark://mimir.cs.hi.is:7077")
+						.config("spark.driver.memory","2g")
+						.config("spark.driver.cores",1)
+						.config("spark.executor.memory","16g")
+						.config("spark.executor.cores",32)
+						.config("spark.task.cpus",32)
+						.config("spark.executor.instances",5)
+						.config("spark.driver.host","mimir.cs.hi.is")
+						.config("spark.local.dir","/home/sks17/tmp")*/
+						//.config("spark.submit.deployMode","cluster")
+
+						//.config("spark.jars","/home/sks17/jars/distann.jar,/home/sks17/jars/javafasta.jar")
+						.master("local[1]")
+						/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
+						.config("spark.submit.deployMode","cluster")
+						.config("spark.driver.memory","4g")
+						.config("spark.driver.cores",2)
+						.config("spark.executor.instances",16)
+						.config("spark.executor.memory","2g")
+						.config("spark.executor.cores",2)
+						.config("spark.jars","/Users/sigmar/sandbox/distann/build/install/distann/lib/*.jar")
+					/*.config("spark.executor.instances",10)
+					.config("spark.kubernetes.namespace","spark")
+					.config("spark.kubernetes.container.image","nextcode/glow:latest")
+					.config("spark.kubernetes.executor.container.image","nextcode/glow:latest")
+					.config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
+					.config("spark.kubernetes.container.image.pullPolicy", "Always")
+						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+						.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
+					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+					.config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
+						.getOrCreate()) {
+
+					//String blastp = "/home/sks17/miniconda3/bin/blastp";
+					//String makeblastdb = "/home/sks17/miniconda3/bin/makeblastdb";
+					//String envMap = "";
+
+					/*String blastp = "/home/sks17/ncbi-blast-2.10.1+/bin/blastp";
+					String makeblastdb = "/home/sks17/ncbi-blast-2.10.1+/bin/makeblastdb";
+					String envMap = "LD_LIBRARY_PATH=/home/sks17/glibc-2.14/lib/:/home/sks17/zlib-1.2.11/";*/
+
+					Dataset<FastaSequence> allds = spark.createDataset(allSeqList, seqenc);
+					allds.coalesce(1).foreachPartition(new SparkMakedb(makeblastdb, envMap, dbPath));
+
+					Dataset<FastaSequence> ds = spark.createDataset(sparkSeqList, seqenc);
+					Dataset<String> repart = ds.repartition(ds.col("group"))
+							//Map<String,Integer> lr = ds.repartition(ds.col("group")).javaRDD().mapPartitionsToPair(new PairFunction()).collectAsMap();
+							//.select(ds.col("group")).distinct().collectAsList();
+							/*.map((MapFunction<FastaSequence,String>) Object::toString, Encoders.STRING())*/
+							.mapPartitions(new SparkBlast(blastp, envMap, dbPath, tmpPath), Encoders.STRING());
+					//List<String> respath = repart.collectAsList();
+					//repart.cache();
+					//repart.limit(10).collectAsList().forEach(System.err::println);
+					//System.err.println(lr);
+
+					//Dataset<String> rds = spark.createDataset(respath, Encoders.STRING()).flatMap((FlatMapFunction<String, String>) s -> Files.lines(Paths.get(s)).iterator(), Encoders.STRING());
+
+					//System.err.println("hey "+repart.count());
+					//repart.write().format("csv").option("delimiter","\t").mode(SaveMode.Overwrite).save("/Users/sigmar/bblo");
+
+					Serifier s = new Serifier();
+					//s.mseq = aas;
+					for (String gk : refmap.keySet()) {
+						Annotation a = refmap.get(gk);
+						s.mseq.put(gk, a.getAlignedSequence());
+					}
+
+					Map<String, String> idspec = new HashMap<>();
+					for (String idstr : refmap.keySet()) {
+						Annotation a = refmap.get(idstr);
+						Gene gene = a.getGene();
+						if (gene != null) idspec.put(idstr, gene.getSpecies());
+					}
+
+					Map<String, String> env = new HashMap<>();
+					env.put("create", "true");
+					String uristr = "jar:" + zippath.toUri();
+					zipuri = URI.create(uristr /*.replace("file://", "file:")*/);
+					try (FileSystem zipfilesystem = FileSystems.newFileSystem(zipuri, env)) {
+						/*List<String> uh = repart.limit(10).collectAsList();
+						uh.forEach(System.err::println);*/
+						repart = repart.repartition(10);
+						ReduceClusters reduceCluster = new ReduceClusters();
+						String cluster = repart.reduce(reduceCluster);
+						//repart.count();
+						//repart.write().format("csv").mode(SaveMode.Overwrite).save("/Users/sigmar/lulli");
+						String[] total = cluster.split(";");
+
+						/*List<String> strlist = cluster.limit(10).collectAsList();
+						strlist.forEach(System.err::println);*/
+
+						//cluster.limit(10).collectAsList().forEach(System.err::println);
+						//String[] total = cluster.map((MapFunction<String, String[]>) ss -> new String[] {ss},Encoders.javaSerialization(String[].class)).reduce(new ReduceClusters());
+						for (Path root : zipfilesystem.getRootDirectories()) {
+							Path clustersPath = root.resolve("simpleclusters.txt");
+							BufferedWriter fos = Files.newBufferedWriter(clustersPath);
+							writeClusters(fos, Arrays.stream(total).map(ss -> new HashSet<>(Arrays.asList(ss.substring(1, ss.length() - 1).split(",\\s*")))).collect(Collectors.toList()));
+							fos.close();
+							break;
+						}
+
+						/*Path resPath = zipfilesystem.getPath("/cluster.blastout");
+						Iterable<String> it = rds::toLocalIterator;
+						Files.write(resPath,it);*/
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		}
 	}

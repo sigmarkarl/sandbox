@@ -8,7 +8,10 @@ import java.net.InetAddress;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> {
     String root;
@@ -25,6 +28,15 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
 
     @Override
     public Iterator<String> call(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
+        return stream(input).map(l -> l.stream().map(Object::toString).collect(Collectors.joining(";"))).iterator();
+    }
+
+    public Stream<List<Set<String>>> stream(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
+        var it = iterator(input);
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, 0), false);
+    }
+
+    public Iterator<List<Set<String>>> iterator(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
         if (input.hasNext()) {
             Path rootpath = Paths.get(root);
             Path tmpPath = Paths.get(tmp);
@@ -136,6 +148,24 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
             });
             ClusterGenes clusterGenes = new ClusterGenes();
             ReduceClusters reduceClusters = new ReduceClusters();
+            /*return sq.stream().takeWhile(res -> {
+                int s = res.size();
+                return s > 0;
+            }).onClose(() -> {
+                try {
+                    fin.get();
+                    fout.get();
+                    ferr.get();
+                    pc.waitFor();
+                    es.shutdown();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            })*.map(res -> {
+                Optional<List<Set<String>>> ores = res.stream().parallel().map(clusterGenes).map(Collections::singletonList).reduce(reduceClusters);
+                return ores.orElse(Collections.emptyList());
+            });*/
+
             return new Iterator<>() {
                 List<Set<String>> queries;
 
@@ -160,10 +190,8 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
                 }
 
                 @Override
-                public String next() {
-                    String ret = queries.stream().map(Object::toString).collect(Collectors.joining(";"));
-                    System.err.println(ret);
-                    return ret;
+                public List<Set<String>> next() {
+                    return queries;
                 }
             };
 
