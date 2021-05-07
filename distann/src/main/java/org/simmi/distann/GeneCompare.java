@@ -795,8 +795,12 @@ public class GeneCompare {
 		return blosumValue( seq1, seq2, blosumap, 0, Math.min( seq1.length(), seq2.length() ) );
 	}
 
-	public static int[] blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap ) {
-		return blosumValue( seq1, seq2, seq3, blosumap, 0, Math.min( seq1.length(), Math.min( seq2.length(), seq3.length() ) ) );
+	public static int[] blosumValueCount( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap ) {
+		return blosumValueCount( seq1, seq2, blosumap, 0, Math.min( seq1.length(), seq2.length() ));
+	}
+
+	public static int[] blosumValueCount( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap ) {
+		return blosumValueCount( seq1, seq2, seq3, blosumap, 0, Math.min( seq1.length(), Math.min( seq2.length(), seq3.length() ) ) );
 	}
 
 	public static int[] blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap, int start , int stop ) {
@@ -834,6 +838,61 @@ public class GeneCompare {
 			if( blosumap.containsKey(comb) ) sscore += blosumap.get(comb);
 		}
 		return sscore;
+	}
+
+	public static int[] blosumValueCount( Sequence seq1, Sequence seq2, Map<String,Integer> blosumap, int start , int stop ) {
+		int maxcount = 0;
+		int maxscore = 0;
+
+		int sscore = 0;
+		int scount = 0;
+		for( int i = start; i < stop; i++ ) {
+			char lc = seq1.getCharAt( i );
+			char c = Character.toUpperCase( lc );
+			char lc2 = seq2.getCharAt( i );
+			char c2 = Character.toUpperCase( lc2 );
+
+			String comb = c+""+c2;
+			if( blosumap.containsKey(comb) ) {
+				sscore += blosumap.get(comb);
+				scount++;
+
+				if(sscore > maxscore) {
+					maxscore = sscore;
+					maxcount =
+				}
+			}
+		}
+		return new int[] {maxscore, maxcount};
+	}
+
+	public static int[] blosumValueCount( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap, int start , int stop ) {
+		int maxcount = 0;
+		int maxscore = 0;
+
+		int sscore = 0;
+		int scount = 0;
+		for( int i = start; i < stop; i++ ) {
+			char lc = seq1.getCharAt( i );
+			char c = Character.toUpperCase( lc );
+			char lc2 = seq2.getCharAt( i );
+			char c2 = Character.toUpperCase( lc2 );
+			char lc3 = seq3.getCharAt( i );
+			char c3 = Character.toUpperCase( lc3 );
+
+			String comb = c+""+c2;
+			String comb2 = c+""+c3;
+			if( blosumap.containsKey(comb) && blosumap.containsKey(comb2) ) {
+				sscore += blosumap.get(comb);
+				scount++;
+
+				if(sscore > maxscore) {
+					maxscore = sscore;
+					maxcount = scount;
+				}
+			}
+		}
+		return new int[] {maxscore, maxcount};
 	}
 	
 	public static double blosumVal( Sequence seq, String spec2, GeneGroup gg, Map<String,Integer> blosumap ) {

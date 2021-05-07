@@ -6840,17 +6840,20 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 	Set<GeneGroup> updateSplit(GeneGroup gg, double d, double l) {
 		Set<GeneGroup> ggmap = new HashSet<>();
-		Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( false );
+		Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( true );
 		for( Annotation a : gg.genes ) {
 			if( ggmap.stream().flatMap( f -> f.genes.stream() ).noneMatch( p -> a == p ) ) {
 				Set<Annotation> ggset = new HashSet<>();
 				Sequence seq1 = a.getAlignedSequence();
 				for (Annotation ca : gg.genes) {
 					Sequence seq2 = ca.getAlignedSequence();
-					int[] tscore = GeneCompare.blosumValue(seq1, seq1, seq2, blosumMap);
-					int sscore = GeneCompare.blosumValue(seq1, seq2, blosumMap);
-
-					double dval = (double) (sscore - tscore[1]) / (double) (tscore[0] - tscore[1]);
+					int[] basescore_count = GeneCompare.blosumValueCount(seq1, seq1, seq2, blosumMap);
+					int[] score_count = GeneCompare.blosumValueCount(seq1, seq2, blosumMap);
+					int tscore = basescore_count[0];
+					int sscore = score_count[0];
+					int scount = score_count[1];
+					double dval = (double) (sscore) / (double) (tscore);
+					double lval = (double)scount/(double)seq1.getUnalignedLength();
 					if (dval > d && lval > l) {
 						ggset.add(ca);
 					}
