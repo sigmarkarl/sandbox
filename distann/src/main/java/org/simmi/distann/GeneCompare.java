@@ -803,6 +803,10 @@ public class GeneCompare {
 		return blosumValueCount( seq1, seq2, seq3, blosumap, 0, Math.min( seq1.length(), Math.min( seq2.length(), seq3.length() ) ) );
 	}
 
+	public static int[] blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap ) {
+		return blosumValue(seq1, seq2, seq3, blosumap, 0, Math.min(seq1.length(), Math.min(seq2.length(), seq3.length())));
+	}
+
 	public static int[] blosumValue( Sequence seq1, Sequence seq2, Sequence seq3, Map<String,Integer> blosumap, int start , int stop ) {
 		int[] sscore = new int[2];
 		//int count = 0;
@@ -859,7 +863,7 @@ public class GeneCompare {
 
 				if(sscore > maxscore) {
 					maxscore = sscore;
-					maxcount =
+					//maxcount =
 				}
 			}
 		}

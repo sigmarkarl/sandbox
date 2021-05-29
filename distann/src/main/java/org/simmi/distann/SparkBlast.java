@@ -8,7 +8,7 @@ import java.net.InetAddress;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collector;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -29,6 +29,127 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
     @Override
     public Iterator<String> call(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
         return stream(input).map(l -> l.stream().map(Object::toString).collect(Collectors.joining(";"))).iterator();
+    }
+
+    class SparkFunction implements Function<String,List<Set<String>>> {
+
+        @Override
+        public List<Set<String>> apply(String s) {
+            return null;
+        }
+    }
+
+    public Stream<List<Set<String>>> stream(Stream<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
+        Path rootpath = Paths.get(root);
+        Random r = new Random();
+        int rnd = r.nextInt();
+        ExecutorService es = Executors.newFixedThreadPool(3);
+        Path dbpath = rootpath.resolve("db.fsa");
+
+        int procs = Runtime.getRuntime().availableProcessors();
+        List<String> pargs = new ArrayList<>(blastp);
+        pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", "0.00001", "--outfmt", "0"));
+        ProcessBuilder pb = new ProcessBuilder(pargs); //"-out", resPath.toString(),
+        if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
+        Process pc = pb.start();
+            /*Future<Long> fout = es.submit(() -> {
+                try(InputStream is = pc.getInputStream()) {
+                    return is.transferTo(System.out);
+                }
+            });*/
+        String hostname = InetAddress.getLocalHost().getHostName();
+        Future<Long> ferr = es.submit(() -> {
+            Path berr = rootpath.resolve("blast"+rnd+".err");
+            try(InputStream is = pc.getErrorStream(); OutputStream fos = Files.newOutputStream(berr)) {
+                fos.write(hostname.getBytes());
+                fos.write('\n');
+                return is.transferTo(fos);
+            }
+        });
+        Future<Long> fout = es.submit(() -> {
+            try (OutputStream os = pc.getOutputStream(); Writer w = new OutputStreamWriter(os)) {
+                input.forEach(next -> {
+                    try {
+                        next.writeSequence(w);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+                return 0L;
+            }
+        });
+        InputStreamReader isr = new InputStreamReader(pc.getInputStream());
+        BufferedReader br = new BufferedReader(isr);
+        Stream<String> it = br.lines();
+        var sparkFunction = new SparkFunction();
+        it.
+        return it.map(sparkFunction);
+
+                /*Iterator<String> qit = new Iterator<>() {
+                    StringBuilder next;
+                    String last;
+                    boolean closed = true;
+
+                    {
+                        while (it.hasNext()) {
+                            last = it.next();
+                            if (last.startsWith("Query=")) {
+                                closed = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public boolean hasNext() {
+                        if (!closed) {
+                            next = new StringBuilder();
+                            next.append(last);
+                            closed = true;
+                            while (it.hasNext()) {
+                                last = it.next();
+                                if (last.startsWith("Query=")) {
+                                    closed = false;
+                                    break;
+                                } else {
+                                    next.append('\n');
+                                    next.append(last);
+                                }
+                            }
+                            return true;
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public String next() {
+                        return next.toString();
+                    }
+                };
+
+                List<String> qlist = new ArrayList<>();
+                int count = 0;
+                while(qit.hasNext()) {
+                    String query = qit.next();
+                    qlist.add(query);
+                    if(128 == ++count) {
+                        sq.put(qlist);
+                        qlist = new ArrayList<>();
+                        count = 0;
+                    }
+                }
+                sq.put(qlist);
+                if(qlist.size()>0) {
+                    sq.put(Collections.emptyList());
+                }
+
+                return 0L;
+            }
+        });*/
+
+        /*return input.flatMap(fs -> {
+
+        });*/
     }
 
     public Stream<List<Set<String>>> stream(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
@@ -181,7 +302,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
                             es.shutdown();
                             return false;
                         }
-                        Optional<List<Set<String>>> ores = res.stream().parallel().map(clusterGenes).map(Collections::singletonList).reduce(reduceClusters);
+                        Optional<List<Set<String>>> ores = res.parallelStream().map(clusterGenes).map(Collections::singletonList).reduce(reduceClusters);
                         queries = ores.orElse(Collections.emptyList());
                     } catch (InterruptedException | ExecutionException e) {
                         e.printStackTrace();

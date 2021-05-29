@@ -761,7 +761,7 @@ public class SyntGrad {
 			
 			if( genesethead.isGeneview() ) {
 				Gene gene = genesethead.getGeneTable().getSelectionModel().getSelectedItem();
-				te = gene.tegeval;
+				te = gene.getTegeval();
 			} else {
 				GeneGroup gg = genesethead.getGeneGroupTable().getSelectionModel().getSelectedItem();
 				if( gg != null ) {

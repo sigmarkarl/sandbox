@@ -132,8 +132,8 @@ public class GeneSorter {
 								else
 									g.setColor(dr);
 							} else {
-								boolean phage = gene.tegeval.isPhage();
-								boolean plasmid = gene.tegeval.getContshort().isPlasmid();
+								boolean phage = gene.getTegeval().isPhage();
+								boolean plasmid = gene.getTegeval().getContshort().isPlasmid();
 								
 								GeneGroup gg = gene.getGeneGroup();
 								Teginfo ti = gg.species.get( gene.getSpecies() );
@@ -220,7 +220,7 @@ public class GeneSorter {
 								for (int y = (int) (rc.getMinY() / rowheader.getRowHeight()); y < rc.getMaxY() / rowheader.getRowHeight(); y++) {
 									String spec = speclist.get(y);
 									if( gene.getSpecies().equals(spec) ) {
-										Annotation tv = gene.tegeval;
+										Annotation tv = gene.getTegeval();
 										//if( tv.cont != null && tv.cont.startsWith(contig)) {
 										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 										//}
@@ -232,7 +232,7 @@ public class GeneSorter {
 								int und = contig.indexOf("_");
 								String spec = contig.substring(0, und);
 								if( gene.getSpecies().equals(spec) ) {
-									Annotation tv = gene.tegeval;
+									Annotation tv = gene.getTegeval();
 									if( tv.getName() != null && tv.getName().startsWith(contig)) {
 										g.fillRect(i, y * rowheader.getRowHeight(), 1, rowheader.getRowHeight());
 									}
@@ -573,8 +573,8 @@ public class GeneSorter {
 									boolean phage;
 									boolean plasmid;
 									if( tgene != null ) {
-										phage = tgene.tegeval.isPhage();
-										plasmid = tgene.tegeval.getContshort().isPlasmid();
+										phage = tgene.getTegeval().isPhage();
+										plasmid = tgene.getTegeval().getContshort().isPlasmid();
 									} else {
 										phage = genegroup.isInAnyPhage();
 										plasmid = genegroup.isOnAnyPlasmid();

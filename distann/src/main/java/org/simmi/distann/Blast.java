@@ -50,7 +50,7 @@ public class Blast {
 					}
 				}*/
 				if( clusterset.contains( query ) ) {
-					Annotation tvl = gene.tegeval;
+					Annotation tvl = gene.getTegeval();
 					if( !clusterset.contains( tvl.getName() ) ) {
 						Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
 						
@@ -413,7 +413,7 @@ public class Blast {
 						stv.tset.remove( rem );
 					}
 				}*/
-				gene.tegeval = tv;
+				gene.setTegeval(tv);
 				//stv.add( tv );
 				// gene.blastspec = teg;
 				/*
@@ -426,11 +426,11 @@ public class Blast {
 					allgenes.put(val, teg + " " + id );
 				}
 
-				Set<String> locset = null;
+				Set<String> locset;
 				if (geneloc.containsKey(val)) {
 					locset = geneloc.get(val);
 				} else {
-					locset = new HashSet<String>();
+					locset = new HashSet<>();
 					geneloc.put(val, locset);
 				}
 				// locset.add( swapmap.get(name)+"_"+query + " " + evalue );
@@ -550,11 +550,11 @@ public class Blast {
 					tv.setGene( gene );
 					//tv.setTegund( padda );
 					tv.setEval( deval );
-					if( tv == null || tv.ori != tv.ori || tv.start != start || tv.stop != stop ) {
+					if(tv.ori != ori || tv.start != start || tv.stop != stop) {
 						System.err.println();
 					}
-					
-					gene.tegeval = tv;
+
+					gene.setTegeval(tv);
 					//stv.add( tv );
 					
 					/*if( preval != null ) {
@@ -691,12 +691,12 @@ public class Blast {
 	}
 
 	public Map<String, Gene> panCoreFromNRBlast(String[] names, File dir, Map<String,Tegeval> aas, Map<String,Contig> contigmap) throws IOException {
-		Map<String, Gene> ret = new HashMap<String, Gene>();
+		Map<String, Gene> ret = new HashMap<>();
 
-		Map<String, String> allgenes = new HashMap<String, String>();
-		Map<String, Set<String>> geneset = new HashMap<String, Set<String>>();
-		Map<String, Set<String>> geneloc = new HashMap<String, Set<String>>();
-		Map<String, Gene> locgene = new HashMap<String, Gene>();
+		Map<String, String> allgenes = new HashMap<>();
+		Map<String, Set<String>> geneset = new HashMap<>();
+		Map<String, Set<String>> geneloc = new HashMap<>();
+		Map<String, Gene> locgene = new HashMap<>();
 
 		// PrintStream ps = new PrintStream("/home/sigmar/iron.giant");
 		// System.setOut( ps );
@@ -731,8 +731,8 @@ public class Blast {
 		boolean info = true;
 
 		for (String aname : poddur) {
-			allset = new HashSet<String>(allgenes.keySet());
-			nameset = new HashSet<String>(poddur);
+			allset = new HashSet<>(allgenes.keySet());
+			nameset = new HashSet<>(poddur);
 			nameset.remove(aname);
 			for (String tname : nameset) {
 				allset.removeAll(geneset.get(tname));
@@ -750,15 +750,15 @@ public class Blast {
 		}
 
 		for (String aname : poddur) {
-			allset = new HashSet<String>(allgenes.keySet());
-			nameset = new HashSet<String>(poddur);
+			allset = new HashSet<>(allgenes.keySet());
+			nameset = new HashSet<>(poddur);
 			nameset.remove(aname);
 			allset.removeAll(geneset.get(aname));
 			for (String tname : nameset) {
 				allset.retainAll(geneset.get(tname));
 			}
 
-			Set<String> reset = new HashSet<String>();
+			Set<String> reset = new HashSet<>();
 			for (String name : nameset) {
 				// reset.add( swapmap.get(name) );
 				reset.add(name);

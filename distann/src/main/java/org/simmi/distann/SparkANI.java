@@ -5,6 +5,7 @@ import org.apache.spark.sql.Row;
 
 import java.io.*;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -14,12 +15,16 @@ public class SparkANI implements MapFunction<Row, String> {
 
     @Override
     public String call(Row value) throws Exception {
+        String f1 = value.getString(0);
+        String f2 = value.getString(1);
+
+        return ani(f1, f2);
+    }
+
+    public String ani(String f1, String f2) throws IOException, ExecutionException, InterruptedException {
         String makeblastdb = "makeblastdb";
         String OS = System.getProperty("os.name").toLowerCase();
         if(OS.contains("mac")) makeblastdb = "/usr/local/bin/makeblastdb";
-
-        String f1 = value.getString(0);
-        String f2 = value.getString(1);
 
         int i1 = f1.indexOf('\n');
         int i2 = f2.indexOf('\n');
@@ -71,7 +76,7 @@ public class SparkANI implements MapFunction<Row, String> {
         });
         Future<Long> fout = es.submit(() -> {
             try(OutputStream out2 = p2.getOutputStream()) {
-               out2.write(fasta2.getBytes());
+                out2.write(fasta2.getBytes());
             }
             return 0L;
         });

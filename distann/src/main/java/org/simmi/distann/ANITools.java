@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -300,38 +301,17 @@ public class ANITools {
         GeneSet geneset = genesethead.geneset;
         Set<String> species = genesethead.getSelspec(genesethead, geneset.specList );
 
-        SparkSession spark = SparkSession.builder()
-                .master("local[4]")
-                /*.master("spark://10.42.0.223:7077")
-                //.master("k8s://http://127.0.0.1:8001")
-                //.config("spark.submit.deployMode","cluster")
-                .config("spark.driver.memory","490m")
-                .config("spark.driver.cores",2)
-                //.config("spark.executor.instances",10)
-                .config("spark.executor.memory","490m")
-            .config("spark.executor.cores",2)
-            .config("spark.executor.instances",16)*/
-                /*.config("spark.kubernetes.namespace","spark")
-                .config("spark.kubernetes.container.image","nextcode/spark:3.0.1-redis")
-                .config("spark.kubernetes.executor.container.image","nextcode/spark:3.0.1-redis")
-                .config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
-                .config("spark.kubernetes.container.image.pullPolicy", "Always")*/
-                /*.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-                .config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
-            .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
-            .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
-                .getOrCreate();
-
         List<String> specList = species.stream().map(spec -> {
             int ind = spec.indexOf(' ');
-            return ind == -1 ? spec : spec.substring(0,ind);
+            return ind == -1 ? spec : spec.substring(0, ind);
         }).collect(Collectors.toList());
+
         List<String> fastaSequences = species.stream().map(spec -> geneset.speccontigMap.get(spec).stream().map(s -> {
             String ret = "";
             try {
                 int ind = spec.indexOf(' ');
-                String nspec = ind == -1 ? spec : spec.substring(0,ind);
-                ret = nspec+"\n"+s.asFasta();
+                String nspec = ind == -1 ? spec : spec.substring(0, ind);
+                ret = nspec + "\n" + s.asFasta();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -341,19 +321,59 @@ public class ANITools {
             String ret = "";
             try {
                 int ind = spec.indexOf(' ');
-                String nspec = ind == -1 ? spec : spec.substring(0,ind);
-                ret = nspec+"\n"+s.asSplitFasta(Optional.of(200));
+                String nspec = ind == -1 ? spec : spec.substring(0, ind);
+                ret = nspec + "\n" + s.asSplitFasta(Optional.of(200));
             } catch (IOException e) {
                 e.printStackTrace();
             }
             return ret;
         }).collect(Collectors.joining("\n"))).collect(Collectors.toList());
-        Dataset<String> speciesDataset = spark.createDataset(fastaSequences, Encoders.STRING());
-        Dataset<String> splitSpeciesDataset = spark.createDataset(splitFastaSequences, Encoders.STRING());
-        Dataset<org.apache.spark.sql.Row> rowDataset = speciesDataset.crossJoin(splitSpeciesDataset);
-        List<String> res = rowDataset.map(new SparkANI(), Encoders.STRING()).collectAsList();
 
-        spark.close();
+        var sparkAni = new SparkANI();
+        List<String> res;
+
+        boolean local = true;
+        if (local) {
+            res = new ArrayList<>();
+            fastaSequences.parallelStream().forEach(seq1 -> {
+                for(String seq2: splitFastaSequences) {
+                    try {
+                        res.add(sparkAni.ani(seq1, seq2));
+                    } catch (IOException | ExecutionException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } else {
+            SparkSession spark = SparkSession.builder()
+                    .master("local[4]")
+                    /*.master("spark://10.42.0.223:7077")
+                    //.master("k8s://http://127.0.0.1:8001")
+                    //.config("spark.submit.deployMode","cluster")
+                    .config("spark.driver.memory","490m")
+                    .config("spark.driver.cores",2)
+                    //.config("spark.executor.instances",10)
+                    .config("spark.executor.memory","490m")
+                .config("spark.executor.cores",2)
+                .config("spark.executor.instances",16)*/
+                    /*.config("spark.kubernetes.namespace","spark")
+                    .config("spark.kubernetes.container.image","nextcode/spark:3.0.1-redis")
+                    .config("spark.kubernetes.executor.container.image","nextcode/spark:3.0.1-redis")
+                    .config("spark.kubernetes.container.image.pullSecrets", "dockerhub-nextcode-download-credentials")
+                    .config("spark.kubernetes.container.image.pullPolicy", "Always")*/
+                    /*.config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+                    .config("spark.kubernetes.driver.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")
+                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.options.claimName", "pvc-sparkgor-nfs")
+                .config("spark.kubernetes.executor.volumes.persistentVolumeClaim.mntcsa.mount.path", "/mnt/csa")*/
+                    .getOrCreate();
+
+            Dataset<String> speciesDataset = spark.createDataset(fastaSequences, Encoders.STRING());
+            Dataset<String> splitSpeciesDataset = spark.createDataset(splitFastaSequences, Encoders.STRING());
+            Dataset<org.apache.spark.sql.Row> rowDataset = speciesDataset.crossJoin(splitSpeciesDataset);
+            res = rowDataset.map(sparkAni, Encoders.STRING()).collectAsList();
+
+            spark.close();
+        }
 
         double[] matrix = new double[ specList.size()*specList.size() ];
         res.stream().map(s -> s.split("/")).forEach(s -> {
