@@ -80,72 +80,24 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
         });
         InputStreamReader isr = new InputStreamReader(pc.getInputStream());
         BufferedReader br = new BufferedReader(isr);
-        Stream<String> it = br.lines();
-        var sparkFunction = new SparkFunction();
-        it.
-        return it.map(sparkFunction);
+        ClusterGenes clusterGenes = new ClusterGenes();
+        return clusterGenes.getClusterStream(br).map(Collections::singletonList);
 
-                /*Iterator<String> qit = new Iterator<>() {
-                    StringBuilder next;
-                    String last;
-                    boolean closed = true;
-
-                    {
-                        while (it.hasNext()) {
-                            last = it.next();
-                            if (last.startsWith("Query=")) {
-                                closed = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    @Override
-                    public boolean hasNext() {
-                        if (!closed) {
-                            next = new StringBuilder();
-                            next.append(last);
-                            closed = true;
-                            while (it.hasNext()) {
-                                last = it.next();
-                                if (last.startsWith("Query=")) {
-                                    closed = false;
-                                    break;
-                                } else {
-                                    next.append('\n');
-                                    next.append(last);
-                                }
-                            }
-                            return true;
-                        }
-                        return false;
-                    }
-
-                    @Override
-                    public String next() {
-                        return next.toString();
-                    }
-                };
-
-                List<String> qlist = new ArrayList<>();
-                int count = 0;
-                while(qit.hasNext()) {
-                    String query = qit.next();
-                    qlist.add(query);
-                    if(128 == ++count) {
-                        sq.put(qlist);
-                        qlist = new ArrayList<>();
-                        count = 0;
-                    }
-                }
+        /*List<String> qlist = new ArrayList<>();
+        int count = 0;
+        while(qit.hasNext()) {
+            String query = qit.next();
+            qlist.add(query);
+            if(128 == ++count) {
                 sq.put(qlist);
-                if(qlist.size()>0) {
-                    sq.put(Collections.emptyList());
-                }
-
-                return 0L;
+                qlist = new ArrayList<>();
+                count = 0;
             }
-        });*/
+        }
+        sq.put(qlist);
+        if(qlist.size()>0) {
+            sq.put(Collections.emptyList());
+        }*/
 
         /*return input.flatMap(fs -> {
 

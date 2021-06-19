@@ -9111,38 +9111,62 @@ public class GeneSet implements GenomeSet {
 				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath);
 				try {
 					sparkMakeDb.call(allSeqList.iterator());
-					Stream<List<Set<String>>> repart = sparkSeqMap.entrySet().parallelStream().flatMap(entry -> {
-						var sparkSeqList2 = entry.getValue();
-						Stream<List<Set<String>>> subpart = null;
-						try {
-							subpart = sparkBlast.stream(sparkSeqList2.iterator());
-							/*Serifier s = new Serifier();
-							//s.mseq = aas;
-							for (String gk : refmap.keySet()) {
-								Annotation a = refmap.get(gk);
-								s.mseq.put(gk, a.getAlignedSequence());
-							}
+					ExecutorService es = Executors.newFixedThreadPool(24);//sparkSeqMap.size());
+					List<Future<Optional<List<Set<String>>>>> ll = sparkSeqMap.values().stream().map(fastaSequences -> {
+						var dt = new DiamondThread(sparkBlast, fastaSequences.stream());
+						return es.submit(dt);
+					}).collect(Collectors.toList());
+					es.shutdown();
 
-							Map<String, String> idspec = new HashMap<>();
-							for (String idstr : refmap.keySet()) {
-								Annotation a = refmap.get(idstr);
-								Gene gene = a.getGene();
-								if (gene != null) idspec.put(idstr, gene.getSpecies());
-							}*/
-							return subpart;
-						} catch (IOException | ExecutionException | InterruptedException e) {
-							e.printStackTrace();
+					ReduceClusters reduceCluster = new ReduceClusters();
+					//ForkJoinPool forkJoinPool = new ForkJoinPool(12);
+					Optional<List<Set<String>>> ototal = ll.parallelStream().map(f -> {
+						try {
+							Optional<List<Set<String>>> os = f.get();
+							System.err.println("hey some result "+ Calendar.getInstance().getTime());
+							return os;
+						} catch (InterruptedException | ExecutionException e) {
+							throw new RuntimeException(e);
 						}
-						return subpart;
-					});
+					}).map(Optional::get).reduce(reduceCluster);
+					//forkJoinPool.shutdown();
+
+					/*ForkJoinPool fjp = new ForkJoinPool(sparkSeqMap.size());
+					ForkJoinTask<Optional<List<Set<String>>>> t = fjp.submit(() -> {
+						Stream<List<Set<String>>> repart = sparkSeqMap.entrySet().parallelStream().flatMap(entry -> {
+							var sparkSeqList2 = entry.getValue();
+							Stream<List<Set<String>>> subpart = null;
+							try {
+								subpart = sparkBlast.stream(sparkSeqList2.stream());
+						/*Serifier s = new Serifier();
+						//s.mseq = aas;
+						for (String gk : refmap.keySet()) {
+							Annotation a = refmap.get(gk);
+							s.mseq.put(gk, a.getAlignedSequence());
+						}
+
+						Map<String, String> idspec = new HashMap<>();
+						for (String idstr : refmap.keySet()) {
+							Annotation a = refmap.get(idstr);
+							Gene gene = a.getGene();
+							if (gene != null) idspec.put(idstr, gene.getSpecies());
+						}*
+								return subpart;
+							} catch (IOException | ExecutionException | InterruptedException e) {
+								e.printStackTrace();
+							}
+							return subpart;
+						});
+						ReduceClusters reduceCluster = new ReduceClusters();
+						Optional<List<Set<String>>> ototali = repart.reduce(reduceCluster);
+						return ototali;
+					});*/
 
 					Map<String, String> env = new HashMap<>();
 					env.put("create", "true");
 					String uristr = "jar:" + zippath.toUri();
 					zipuri = URI.create(uristr /*.replace("file://", "file:")*/);
 
-					ReduceClusters reduceCluster = new ReduceClusters();
-					Optional<List<Set<String>>> ototal = repart.reduce(reduceCluster);
 					if(ototal.isPresent()) {
 						try (FileSystem zipfilesystem = FileSystems.newFileSystem(zipuri, env)) {
 							for (Path root : zipfilesystem.getRootDirectories()) {
