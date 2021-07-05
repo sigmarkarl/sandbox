@@ -131,13 +131,15 @@ public class GeneSet implements GenomeSet {
 			cogid = cogid.split("\\|")[0];
 			String cogname = l[8];
 			cogname = cogname.split("\\|")[0];
-			String cogsymbol = l[9];
-			String desc = l[10];
-			String genesymbol = l[11];
-			String goid = l[12];
-			String ecid = l[13];
-			String koid = l[14];
-			String keggpathway = l[15];
+			String cogsymbol = l[6];
+			String desc = l[7];
+			String genesymbol = l[8];
+			String goid = l[9];
+			String ecid = l[10];
+			String koid = l[11];
+			String keggpathway = l[12];
+			String cazy = l[18];
+			cazymap.put(id,cazy);
 			if(cogsymbol!=null) {
 				for(String mapid: ids) {
 					if(refmap.containsKey(mapid)) {
