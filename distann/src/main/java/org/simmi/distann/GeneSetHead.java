@@ -2772,6 +2772,16 @@ public class GeneSetHead {
 			}
 		});
 		file.getItems().add( exportgeneitem );
+
+		MenuItem exportrepgeneitem = new MenuItem("Export representative gene sequence");
+		exportrepgeneitem.setOnAction(actionEvent -> {
+			try {
+				exportRepGeneSeq(geneset.allgenegroups);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+		file.getItems().add( exportrepgeneitem );
 		
 		file.getItems().add( new SeparatorMenuItem() );
 		
@@ -10121,6 +10131,29 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 			bw.close();
 			//serifier.writeGenebank( filechooser.getSelectedFile(), !joincontigs.isSelected(), translations.isSelected(), s, mapan);
+		}
+	}
+
+	public void exportRepGeneSeq( List<GeneGroup> allgenegroups ) throws IOException {
+		FileChooser fc = new FileChooser();
+		fc.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("Fasta file","*.fasta"));
+		File res = fc.showSaveDialog(null);
+		if (res!=null) {
+			var path = res.toPath();
+			BufferedWriter writer = Files.newBufferedWriter(path);;
+			try {
+				for (var geneGroup : allgenegroups) {
+					var sortTe = new ArrayList<>(geneGroup.getTegevals());
+					sortTe.sort(Comparator.comparingInt(Annotation::getLength));
+					var te = sortTe.get(sortTe.size() / 2);
+					var gene = te.getGene();
+					if (gene != null) {
+						te.getProteinSequence().writeIdSequence(writer);
+					}
+				}
+			} finally {
+				writer.close();
+			}
 		}
 	}
 	

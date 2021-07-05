@@ -2580,6 +2580,10 @@ public class GeneSetHead extends JApplet {
 		MenuItem exportgeneitem = new MenuItem("Export gene clusters");
 		exportgeneitem.setOnAction( actionEvent -> exportGeneClusters( geneset.allgenegroups ) );
 		file.getItems().add( exportgeneitem );
+
+		MenuItem exportrepgeneitem = new MenuItem("Export representative gene sequences");
+		exportrepgeneitem.setOnAction( actionEvent -> exportRepGeneSeq( geneset.allgenegroups ) );
+		file.getItems().add( exportrepgeneitem );
 		
 		file.getItems().add( new SeparatorMenuItem() );
 		
@@ -9572,6 +9576,14 @@ public class GeneSetHead extends JApplet {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void exportRepGeneSeq( List<GeneGroup> allgenegroups ) {
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.getExtensionFilters().add( new ExtensionFilter("Fasta files", "*.fasta") );
+		File f = fc.showSaveDialog(null);
+		var selPath = f.toPath();
+		var br = java.nio.files.Files.
 	}
 	
 	public void exportGeneClusters( List<GeneGroup> allgenegroups ) {
