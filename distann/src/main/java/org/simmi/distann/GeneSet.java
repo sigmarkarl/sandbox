@@ -139,6 +139,7 @@ public class GeneSet implements GenomeSet {
 			String koid = l[11];
 			String keggpathway = l[12];
 			String cazy = l[18];
+			String pfam = l[20];
 			cazymap.put(id,cazy);
 			if(cogsymbol!=null) {
 				for(String mapid: ids) {
@@ -150,6 +151,8 @@ public class GeneSet implements GenomeSet {
 							if(goid.length()>1) gene.goid = goid;
 							if(ecid.length()>1) gene.ecid = ecid;
 							if(koid.length()>1) gene.koid = koid;
+							if(pfam.length()>1) gene.pfamid = pfam;
+							if(cazy.length()>1) gene.cazy = cazy;
 							if(keggpathway.length()>1) gene.keggpathway = keggpathway;
 						}
 					}
