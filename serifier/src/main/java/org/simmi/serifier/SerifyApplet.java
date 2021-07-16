@@ -49,6 +49,10 @@ import java.nio.file.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -352,8 +356,8 @@ public class SerifyApplet {
 	}
 	
 	public void deleteSeqs() {
-		Set<String>	keys = new TreeSet<String>();
-		Set<Sequences>	rselset = new TreeSet<Sequences>();
+		Set<String>	keys = new TreeSet<>();
+		Set<Sequences>	rselset = new TreeSet<>();
 		ObservableList<Sequences> lseqs = table.getSelectionModel().getSelectedItems();
 		for( Sequences seqs : lseqs ) {
 			rselset.add( seqs );
@@ -479,11 +483,7 @@ public class SerifyApplet {
 					applet.addSequences( name, urlmap.get( key ), null );
 				}
 			}					
-		} catch (URISyntaxException e1) {
-			e1.printStackTrace();
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
+		} catch (URISyntaxException | IOException e1) {
 			e1.printStackTrace();
 		}
 	}
@@ -712,22 +712,21 @@ public class SerifyApplet {
 			int procs = Runtime.getRuntime().availableProcessors();
 			
 			String OS = System.getProperty("os.name").toLowerCase();
-			List<String>	lcmd = new ArrayList<String>();
 			String[] bcmds;
 			
 			if( docker ) {
-				bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/docker" : "docker", "run", "-i", "geneset", "/ncbi-blast-2.5.0+/bin/deltablast", "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+				bcmds = new String[] {OS.contains("mac") ? "/usr/local/bin/docker" : "docker", "run", "-i", "geneset", "/ncbi-blast-2.5.0+/bin/deltablast", "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
 			} else {
 				//String[] cmds;
-				if( hostname.equals("localhost") ) bcmds = new String[] { OS.indexOf("mac") >= 0 ? "/ncbi-blast-2.5.0+/bin/blast" : "rpsblast"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
+				if( hostname.equals("localhost") ) bcmds = new String[] {OS.contains("mac") ? "/ncbi-blast-2.5.0+/bin/blast" : "rpsblast"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "1", "-num_descriptions", "1", "-evalue", "0.01" };
 				else {
 					if( user.equals("geneset") ) bcmds = new String[] { "ssh", "-i", cygpathstr, "geneset@"+hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
 					bcmds = new String[] { "ssh", hostname, "rpsblast+"/*blastpath.resolve("blastp").toString()*/, "-db", dbPath, "-num_threads", Integer.toString(procs), "-num_alignments", "5", "-num_descriptions", "5", "-evalue", "0.01" };
 				}
 			}
 			String[] exts = extrapar.trim().split("[\t ]+");
-			
-			lcmd.addAll( Arrays.asList(bcmds) );
+
+			List<String> lcmd = new ArrayList<>(Arrays.asList(bcmds));
 			if( exts.length > 1 ) lcmd.addAll( Arrays.asList(exts) );
 			
 			lscmd.add( new Object[] {query.toString().getBytes(), resPath, selectedpath} );
@@ -2440,8 +2439,6 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		serifier.setSequencesList( sequences );
 		table.setItems( sequences );
 
-
-
 		ContextMenu ctxm = new ContextMenu();
 
 		MenuItem emd = new MenuItem("Edit metadata");
@@ -3254,9 +3251,15 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		programs.getItems().add( pgap );
 		PGapRunner pGapRunner = new PGapRunner(Paths.get("/Users/sigmarkarl/pgap/"), serifier);
 		pgap.setOnAction(arg0 -> {
-			for( Sequences s : table.getSelectionModel().getSelectedItems() ) {
-				pGapRunner.setSequences(s);
-				pGapRunner.run();
+			ObservableList<Sequences> seqs = table.getSelectionModel().getSelectedItems();
+			ExecutorService es = Executors.newFixedThreadPool(seqs.size()*2);
+			List<Process> plist = seqs.stream().map(seq -> pGapRunner.run(es, seq)).collect(Collectors.toList());
+			for (Process process : plist) {
+				try {
+					process.waitFor();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		});
 
@@ -4534,10 +4537,14 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 	}
 	
 	public void updateSequences( final String user, final String name, final String type, final Path path, final int nseq, final String key ) {
+		updateSequences(user,name,type,path,nseq,key,null);
+	}
+
+	public void updateSequences( final String user, final String name, final String type, final Path path, final int nseq, final String key, final String meta ) {
 		Sequences seqs = new Sequences( user, name, type, path, nseq );
-		
+		if(meta!=null) seqs.setMetadata(meta);
 		mseq.put( path, seqs );
-		
+
 		seqs.setKey( key );
 		serifier.addSequences( seqs );
 		//serifier.sequences.add( seqs );
@@ -4590,6 +4597,10 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		if( unsucc ) {
 			updateSequences(user, name, type, path, nseq, null);
 		}
+	}
+
+	private void addSequences( String user, String name, String type, Path path, int nseq, String meta ) {
+		updateSequences(user, name, type, path, nseq, null, meta);
 	}
 	
 	public void addSequences( String name, BufferedReader rd, Path path, String replace ) throws URISyntaxException, IOException {
@@ -4695,7 +4706,9 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 					}
 					
 					if( path != null ) {
+						boolean dirty = false;
 						while( line != null ) {
+							dirty |= line.contains("N") || line.contains("n");
 							if( line.startsWith(">") ) {
 								nseq++;
 								
@@ -4705,9 +4718,10 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 							}
 							line = br.readLine();
 						}
+						dirty &= type.equals("nucl");
 						
 						if( nseq > 0 ) {
-							addSequences(name, type, path, nseq);
+							addSequences(name, type, path, nseq, dirty ? "N" : null);
 						} else System.err.println( "no sequences in file" );
 					}
 				} else {
@@ -4831,6 +4845,10 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 	
 	public void addSequences( String name, String type, Path path, int nseq ) {
 		addSequences( getUser(), name, type, path, nseq );
+	}
+
+	public void addSequences( String name, String type, Path path, int nseq, String meta ) {
+		addSequences( getUser(), name, type, path, nseq, meta );
 	}
 	
 	public String getUser() {

@@ -152,7 +152,9 @@ public class GeneSet implements GenomeSet {
 							if(ecid.length()>1) gene.ecid = ecid;
 							if(koid.length()>1) gene.koid = koid;
 							if(pfam.length()>1) gene.pfamid = pfam;
-							if(cazy.length()>1) gene.cazy = cazy;
+							if(cazy.length()>1) {
+								addCazy(gene, cazy);
+							}
 							if(keggpathway.length()>1) gene.keggpathway = keggpathway;
 						}
 					}
@@ -164,17 +166,49 @@ public class GeneSet implements GenomeSet {
 			}
 		});
 	}
+
+	public void loaddbcan(Map<String,String> cazymap, Reader rd) {
+		BufferedReader br = new BufferedReader(rd);
+		br.lines().forEach(line -> {
+			var split = line.split("\t");
+			var id = split[2];
+			var cazy = split[0].substring(0,split[0].length()-4);
+			cazymap.put(id,cazy);
+			addCazy(id, cazy);
+		});
+	}
+
+	public void addCazy(String id, String cazy) {
+		if(refmap.containsKey(id)) {
+			Annotation a = refmap.get(id);
+			Gene gene = a.getGene();
+			if(gene!=null) {
+				addCazy(gene, cazy);
+			}
+		}
+	}
+
+	public void addCazy(Gene gene, String cazy) {
+		if(gene.cazy==null||gene.cazy.isEmpty()) gene.cazy = cazy;
+		else {
+			Set<String> cazys = new HashSet<>(Arrays.asList(gene.cazy.split(",")));
+			cazys.add(cazy);
+			var cazyset = cazys.toString();
+			gene.cazy = cazyset.substring(1,cazyset.length()-1);
+		}
+	}
 	
 	public void loadcazymap( Map<String,String> cazymap, Reader rd ) throws IOException {
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
 		String id = null;
 		String hit = null;
-		String evalue;
+		double evalue = 0.01;
 		while( line != null ) {
 			if( line.startsWith("Query:") || line.startsWith("Query=") ) {
 				if( hit != null && id != null ) {
 					cazymap.put( id, hit );
+					addCazy(id, hit + "("+evalue+")");
 				}
 				String[] split = line.split("[\t ]+");
 				
@@ -197,21 +231,27 @@ public class GeneSet implements GenomeSet {
 				}
 				
 				hit = null;
-				evalue = null;
+				evalue = 0.01;
 			} else if( hit != null && line.contains("Expect =") ) {
 				/*line = br.readLine();
 				line = br.readLine().trim();
 				if( line.startsWith("--") ) line = br.readLine().trim();
 				String[] split = line.split("[ ]+");*/
 				int i = line.indexOf("Expect =");
-				evalue = line.substring(i+8,line.indexOf(',',i+8)).trim();
-				
-				double e = Double.parseDouble(evalue);
-				if( e < 0.01 ) {
-					hit += "("+evalue+")";
-				} else hit = null;
+				int end = line.indexOf(',',i+8);
+				if (end==-1) end = line.length();
+				String eval = line.substring(i+8,end).trim();
+				double e = Double.parseDouble(eval);
+				if( e < 0.01 && e < evalue) {
+					evalue = e;
+					//hit += "("+evalue+")";
+				} else {
+					hit = null;
+					evalue = 0.01;
+				}
 			} else if( hit == null && line.startsWith(">") ) {
 				hit = line.substring( 2);
+				hit = hit.split("\\|")[1];
 			}
 			
 			line = br.readLine();
@@ -219,6 +259,7 @@ public class GeneSet implements GenomeSet {
 		
 		if( hit != null && id != null ) {
 			cazymap.put( id, hit );
+			addCazy(id, hit + "("+evalue+")");
 		}
 	}
 	
@@ -7631,7 +7672,8 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) pfammap = loadcogmap( Files.newBufferedReader(nf), pfamidmap, true );
 		nf = zipfilesystem.getPath("/cazy");
 		if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
-
+		nf = zipfilesystem.getPath("/dbcan");
+		if( Files.exists( nf ) ) loaddbcan( cazymap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/cazyaa");
 		if( Files.exists( nf ) ) loadcazymap( cazyaamap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/cazyce");
@@ -8716,7 +8758,7 @@ public class GeneSet implements GenomeSet {
 		}
 		totalgo.clear();
 		
-		Map<String,String>	jgiGeneMap = new HashMap<String,String>();
+		Map<String,String>	jgiGeneMap = new HashMap<>();
 		/*zipin = new ZipInputStream( new ByteArrayInputStream(zipf) );
 		ze = zipin.getNextEntry();
 		while( ze != null ) {
