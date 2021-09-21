@@ -7529,6 +7529,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<GeneGroup, String> cazy = new TableColumn("Cazy");
 		cazy.setCellValueFactory( new PropertyValueFactory<>("cazy"));
 		table.getColumns().add( cazy );
+
+		TableColumn<GeneGroup, String> dbcan = new TableColumn("Dbcan");
+		dbcan.setCellValueFactory( new PropertyValueFactory<>("dbcan"));
+		table.getColumns().add( dbcan );
+
 		TableColumn<GeneGroup, String> symbcol = new TableColumn("Symbol");
 		symbcol.setCellValueFactory( new PropertyValueFactory<>("symbol"));
 		table.getColumns().add( symbcol );
@@ -7670,6 +7675,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<Gene, String> gcazycol = new TableColumn("Cazy");
 		gcazycol.setCellValueFactory( new PropertyValueFactory<>("cazy"));
 		gtable.getColumns().add( gcazycol );
+
+		TableColumn<Gene, String> gdbcancol = new TableColumn("Dbcan");
+		gdbcancol.setCellValueFactory( new PropertyValueFactory<>("dbcan"));
+		gtable.getColumns().add( gdbcancol );
+
 		TableColumn<Gene, String> gprescol = new TableColumn("Present in");
 		gprescol.setCellValueFactory( new PropertyValueFactory<>("presentin"));
 		gtable.getColumns().add( gprescol );
@@ -9781,7 +9791,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			JTextArea textarea = new JTextArea();
 			
 			try {
-				Action action = new CopyAction("Copy", null, "Copy data", new Integer(KeyEvent.VK_CONTROL + KeyEvent.VK_C));
+				Action action = new CopyAction("Copy", null, "Copy data", KeyEvent.VK_CONTROL + KeyEvent.VK_C);
 				textarea.getActionMap().put("copy", action);
 				grabFocus = true;
 			} catch (Exception ee) {

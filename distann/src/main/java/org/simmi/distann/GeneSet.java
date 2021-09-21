@@ -153,7 +153,7 @@ public class GeneSet implements GenomeSet {
 							if(koid.length()>1) gene.koid = koid;
 							if(pfam.length()>1) gene.pfamid = pfam;
 							if(cazy.length()>1) {
-								addCazy(gene, cazy);
+								//addCazy(gene, cazy);
 							}
 							if(keggpathway.length()>1) gene.keggpathway = keggpathway;
 						}
@@ -174,7 +174,7 @@ public class GeneSet implements GenomeSet {
 			var id = split[2];
 			var cazy = split[0].substring(0,split[0].length()-4);
 			cazymap.put(id,cazy);
-			addCazy(id, cazy);
+			addDbcan(id, cazy);
 		});
 	}
 
@@ -195,6 +195,26 @@ public class GeneSet implements GenomeSet {
 			cazys.add(cazy);
 			var cazyset = cazys.toString();
 			gene.cazy = cazyset.substring(1,cazyset.length()-1);
+		}
+	}
+
+	public void addDbcan(String id, String cazy) {
+		if(refmap.containsKey(id)) {
+			Annotation a = refmap.get(id);
+			Gene gene = a.getGene();
+			if(gene!=null) {
+				addDbcan(gene, cazy);
+			}
+		}
+	}
+
+	public void addDbcan(Gene gene, String dbcan) {
+		if(gene.dbcan==null||gene.dbcan.isEmpty()) gene.dbcan = dbcan;
+		else {
+			Set<String> dbcans = new HashSet<>(Arrays.asList(gene.dbcan.split(",")));
+			dbcans.add(dbcan);
+			var cazyset = dbcans.toString();
+			gene.dbcan = cazyset.substring(1,cazyset.length()-1);
 		}
 	}
 	

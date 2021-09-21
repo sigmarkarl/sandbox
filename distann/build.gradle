@@ -5,7 +5,7 @@ plugins {
 }
 
 javafx {
-    version = '17-ea+14'
+    version = '18-ea+2'
     modules = [ 'javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
 }
 
@@ -23,14 +23,14 @@ dependencies {
     //implementation group: 'org.gorpipe', name: 'gor-spark', version: '0.5.6'
 
     // https://mvnrepository.com/artifact/org.openjfx/javafx
-    implementation group: 'org.openjfx', name: 'javafx', version: '17-ea+14'
+    implementation group: 'org.openjfx', name: 'javafx', version: '18-ea+2'
 
-    implementation "org.openjfx:javafx-base:17-ea+14:mac"
-    implementation "org.openjfx:javafx-controls:17-ea+14:mac"
-    implementation "org.openjfx:javafx-graphics:17-ea+14:mac"
-    implementation "org.openjfx:javafx-fxml:17-ea+14:mac"
-    implementation "org.openjfx:javafx-web:17-ea+14:mac"
-    implementation "org.openjfx:javafx-swing:17-ea+14:mac"
+    implementation "org.openjfx:javafx-base:18-ea+2:mac"
+    implementation "org.openjfx:javafx-controls:18-ea+2:mac"
+    implementation "org.openjfx:javafx-graphics:18-ea+2:mac"
+    implementation "org.openjfx:javafx-fxml:18-ea+2:mac"
+    implementation "org.openjfx:javafx-web:18-ea+2:mac"
+    implementation "org.openjfx:javafx-swing:18-ea+2:mac"
 
     implementation group: 'org.apache.spark', name: 'spark-core_2.12', version: '3.1.2'
     implementation group: 'org.apache.spark', name: 'spark-mllib_2.12', version: '3.1.2'

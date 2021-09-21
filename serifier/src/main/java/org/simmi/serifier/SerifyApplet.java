@@ -3252,15 +3252,16 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 		PGapRunner pGapRunner = new PGapRunner(Paths.get("/Users/sigmarkarl/pgap/"), serifier);
 		pgap.setOnAction(arg0 -> {
 			ObservableList<Sequences> seqs = table.getSelectionModel().getSelectedItems();
-			ExecutorService es = Executors.newFixedThreadPool(seqs.size()*2);
-			List<Process> plist = seqs.stream().map(seq -> pGapRunner.run(es, seq)).collect(Collectors.toList());
-			for (Process process : plist) {
+			ExecutorService es = Executors.newFixedThreadPool(2);
+			seqs.forEach(seq -> {
+				var process = pGapRunner.run(es, seq);
 				try {
 					process.waitFor();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-			}
+			});
+			es.shutdown();
 		});
 
 		MenuItem genbankfromblast = new MenuItem("Genbank from blast");
@@ -5120,8 +5121,8 @@ Files.copy( path, infile, StandardCopyOption.REPLACE_EXISTING );*/
 						BufferedReader	br = new BufferedReader( new InputStreamReader(is) );
 						String line = br.readLine();
 						Sequence seq = null;
-						List<String> 	corrInd = new ArrayList<String>();
-						List<Sequence> 	lseq = new ArrayList<Sequence>();
+						List<String> 	corrInd = new ArrayList<>();
+						List<Sequence> 	lseq = new ArrayList<>();
 						while( line != null ) {
 							if( line.startsWith(">") ) {
 								String subline = line.substring(1);
