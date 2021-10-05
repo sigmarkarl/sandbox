@@ -726,15 +726,17 @@ public class GeneSet implements GenomeSet {
 						}
 						idstr = null;
 						String aname = g.getTegeval().getName();
-						ids = aname.lastIndexOf('(');
-						if (ids != -1) {
-							int eds = aname.indexOf(')', ids + 1);
-							if (eds != -1) {
-								idstr = aname.substring(ids + 1, eds);
+						if(aname!=null) {
+							ids = aname.lastIndexOf('(');
+							if (ids != -1) {
+								int eds = aname.indexOf(')', ids + 1);
+								if (eds != -1) {
+									idstr = aname.substring(ids + 1, eds);
+								}
 							}
-						}
-						if (idstr != null) {
-							ecgo(g, idstr);
+							if (idstr != null) {
+								ecgo(g, idstr);
+							}
 						}
 					}
 				}
