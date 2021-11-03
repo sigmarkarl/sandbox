@@ -6176,8 +6176,9 @@ public class GeneSet implements GenomeSet {
 									} else tseq = seq;
 									
 									//seqs.add( tseq );
-									
-									StringBuilder seqstr = tv.getAlignedSequence().getStringBuilder();
+
+									Sequence alignedSequence = tv.getAlignedSequence();
+									StringBuilder seqstr = alignedSequence != null ? alignedSequence.getStringBuilder() : null;
 									if( seqstr != null && seqstr.length() > 0 ) {
 										if( seqstr.length() != len ) {
 											//System.err.println( "        bleh " + spec + "  " + seqstr.length() + "   " + ggroup.size() + "  " + ggroup.getCommonName() + "  " + ggroup.getIndex() );
@@ -9054,10 +9055,10 @@ public class GeneSet implements GenomeSet {
 				System.err.println( total + " dd " + bb.length );
 				if( !Files.exists(newp) ) Files.write(newp, bb);
 				else Files.write(newp, bb, StandardOpenOption.TRUNCATE_EXISTING);
-				System.err.println("file null " + newp.toString());
+				System.err.println("file null " + newp);
 			}
 		} else {
-			System.err.println( newp.toString() );
+			System.err.println(newp);
 			System.err.println( tae.getName() );
 		}
 	}
@@ -9177,7 +9178,7 @@ public class GeneSet implements GenomeSet {
 			boolean local = true;
 			if(local) {
 				var sparkMakeDb = new SparkMakedb(makeblastdb, envMap, dbPath);
-				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath);
+				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath, id, len);
 				try {
 					sparkMakeDb.call(allSeqList.iterator());
 					ExecutorService es = Executors.newFixedThreadPool(24);//sparkSeqMap.size());

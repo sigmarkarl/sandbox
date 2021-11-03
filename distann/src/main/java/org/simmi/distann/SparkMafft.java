@@ -34,7 +34,7 @@ public class SparkMafft implements MapFunction<Tuple2<String,String>, Tuple2<Str
         });
         Future<Long> ferr = es.submit(() -> {
             try(InputStream is = pc.getErrorStream()) {
-                return is.transferTo(System.err);
+                return is.transferTo(OutputStream.nullOutputStream());
             }
         });
         try(Writer w = new OutputStreamWriter(pc.getOutputStream())) {

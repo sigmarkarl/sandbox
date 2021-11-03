@@ -19,6 +19,11 @@ public class ClusterGenes implements MapFunction<String, String>, Function<Strin
         cmplen = 0.5;
     }
 
+    public ClusterGenes(double id, double len) {
+        this.id = id;
+        this.cmplen = len;
+    }
+
     public Stream<Set<String>> getClusterStream(BufferedReader br) throws IOException {
         var qit = getClusters(br);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(qit, 0), true);

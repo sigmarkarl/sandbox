@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -63,16 +64,23 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
 
         var mafft = new SparkMafft(root);
 
-        Map<String, String> resmap;
+        Map<String, String> resmap = null;
         boolean local = true;
         if(local) {
-            resmap = fastaList.parallelStream().map(t -> {
-                try {
-                    return mafft.call(t);
-                } catch (IOException | ExecutionException | InterruptedException e) {
-                    return null;//e.printStackTrace();
-                }
-            }).collect(Collectors.toMap(s -> s._1, s -> s._2));
+            try {
+                final Map<String, String> rmap = new ConcurrentHashMap<>();
+                fastaList.parallelStream().map(t -> {
+                    try {
+                        return mafft.call(t);
+                    } catch (IOException | ExecutionException | InterruptedException e) {
+                        e.printStackTrace();
+                        return null;//e.printStackTrace();
+                    }
+                }).forEach(s -> rmap.put(s._1, s._2));
+                resmap = rmap;
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
         } else {
             SparkSession spark = SparkSession.builder().master("local[*]")
                     /*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")

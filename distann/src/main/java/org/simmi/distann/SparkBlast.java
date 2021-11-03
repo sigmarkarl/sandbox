@@ -18,12 +18,20 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
     String tmp;
     List<String> blastp;
     String envMap;
+    double id;
+    double len;
 
     public SparkBlast(String[] blastp,String env,String rootpath,String tmppath) {
+        this(blastp, env, rootpath, tmppath, 0.5, 0.5);
+    }
+
+    public SparkBlast(String[] blastp,String env,String rootpath,String tmppath, double id, double len) {
         this.root = rootpath;
         this.blastp = Arrays.asList(blastp);
         this.tmp = tmppath;
         this.envMap = env;
+        this.id = id;
+        this.len = len;
     }
 
     @Override
@@ -80,7 +88,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
         });
         InputStreamReader isr = new InputStreamReader(pc.getInputStream());
         BufferedReader br = new BufferedReader(isr);
-        ClusterGenes clusterGenes = new ClusterGenes();
+        ClusterGenes clusterGenes = new ClusterGenes(id, len);
         return clusterGenes.getClusterStream(br).map(Collections::singletonList);
 
         /*List<String> qlist = new ArrayList<>();
@@ -219,7 +227,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
                     return 0L;
                 }
             });
-            ClusterGenes clusterGenes = new ClusterGenes();
+            ClusterGenes clusterGenes = new ClusterGenes(id, len);
             ReduceClusters reduceClusters = new ReduceClusters();
             /*return sq.stream().takeWhile(res -> {
                 int s = res.size();
