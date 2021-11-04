@@ -250,7 +250,7 @@ public class GeneCompare {
 		bg.add( syntgrad );
 		bg.add( isyntgrad );
 		
-		final JComboBox<String>	specombo = new JComboBox<String>();
+		final JComboBox<String>	specombo = new JComboBox<>();
 		specombo.addItem("");
 		for( String spec : specset ) specombo.addItem( spec );
 		//specombo.addItem("All");
@@ -1980,7 +1980,7 @@ public class GeneCompare {
 		
 		boolean contiglanesb = contiglanes != null && contiglanes.isSelected();
 		int offset = 0;
-		if( spec1 != null && offsetMap.containsKey(spec1) ) offset = offsetMap.get(spec1);
+		if( spec1 != null && offsetMap != null && offsetMap.containsKey(spec1) ) offset = offsetMap.get(spec1);
 		
 		double ratio = 0.0;
 		double pratio = 0.0;
