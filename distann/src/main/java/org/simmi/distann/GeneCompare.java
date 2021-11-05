@@ -2259,23 +2259,26 @@ public class GeneCompare {
 								//if( value instanceof Teginfo ) {
 									Teginfo ti = (Teginfo)value;
 									for( Annotation tvv : ti.tset ) {
-										String tspec = tvv.getGene().getSpecies();
-										List<Sequence> scontigs = geneset.speccontigMap.get( tspec );
-										
-										GeneGroup ggg = tvv.getGene().getGeneGroup();
-										//Teginfo gene2s = ggg.getGenes(tspec);
-										ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, ggg, tvv);
-										if( ratio == -1 ) {
-											ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, ggg);
-											color = GeneCompare.gradientGrayscaleColor( ratio );
-											//label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
-											//label.setForeground( Color.white );
-										} else {
-											color = GeneCompare.gradientColor( ratio );
-											//label.setBackground( GeneCompare.gradientColor( ratio ) );
-											//label.setForeground( Color.black );
+										Gene gene = tvv.getGene();
+										if(gene!=null) {
+											String tspec = tvv.getGene().getSpecies();
+											List<Sequence> scontigs = geneset.speccontigMap.get(tspec);
+
+											GeneGroup ggg = tvv.getGene().getGeneGroup();
+											//Teginfo gene2s = ggg.getGenes(tspec);
+											ratio = GeneCompare.invertedGradientRatio(tspec, scontigs, -1.0, ggg, tvv);
+											if (ratio == -1) {
+												ratio = GeneCompare.invertedGradientPlasmidRatio(tspec, scontigs, -1.0, ggg);
+												color = GeneCompare.gradientGrayscaleColor(ratio);
+												//label.setBackground( GeneCompare.gradientGrayscaleColor( ratio ) );
+												//label.setForeground( Color.white );
+											} else {
+												color = GeneCompare.gradientColor(ratio);
+												//label.setBackground( GeneCompare.gradientColor( ratio ) );
+												//label.setForeground( Color.black );
+											}
+											break;
 										}
-										break;
 										//GeneCompare.gradientColor();
 									}
 								/*} else if( value instanceof Tegeval ) {
