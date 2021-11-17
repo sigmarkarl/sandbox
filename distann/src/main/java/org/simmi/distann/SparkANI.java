@@ -120,6 +120,6 @@ public class SparkANI implements MapFunction<Row, String> {
         //matrix[y*species.size()+x] = avg;//val;
         //System.err.println( spec + " on " + dbspec + " " + val );
 
-        return spec1 + "/" + spec2 + "/" + avg;
+        return spec1 + "/" + spec2 + "/" + avg + "/" + count;
     }
 }

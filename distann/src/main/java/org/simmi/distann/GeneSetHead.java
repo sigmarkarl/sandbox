@@ -5082,8 +5082,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				Set<String> species = getSelspec(GeneSetHead.this, geneset.specList);
 				List<String> speclist = new ArrayList<>(species);
 
-				double[] corrarr = ANITools.corr(speclist, lagg, false);
-				ANITools.showAniMatrix(geneset, speclist, corrarr);
+				ANITools.ANIResult aniResult = ANITools.corr(speclist, lagg, false);
+				ANITools.showAniMatrix(geneset, speclist, aniResult);
 			});
 			/*SwingUtilities.invokeLater(() -> {
 				ANITools.aaiAction(GeneSetHead.this,agg);
@@ -5097,13 +5097,13 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				List<String> speclist = new ArrayList<>(species);
 				List<GeneGroup> agg = table.getSelectionModel().getSelectedItems();
 
-				double[] corrarr = ANITools.corr(speclist, agg, true);
+				ANITools.ANIResult aniResult = ANITools.corr(speclist, agg, true);
 				org.simmi.treedraw.shared.TreeUtil tu = new org.simmi.treedraw.shared.TreeUtil();
 				geneset.corrInd.clear();
 				for (String spec : speclist) {
 					geneset.corrInd.add(geneset.nameFix(spec));
 				}
-				Node n = tu.neighborJoin(corrarr, geneset.corrInd, null, false, false);
+				Node n = tu.neighborJoin(aniResult.corrarr, geneset.corrInd, null, false, false);
 				System.err.println(n);
 			});
 		});
@@ -6261,7 +6261,13 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 							} else if( selpanbtn.isSelected() ) {
 								Set<String> ss = new HashSet<>(specs);
 								ss.removeAll(gg.species.keySet());
-								if( ss.size() < specs.size() ) {
+								if (ss.size() < specs.size()) {
+									gg.setSelected(true);
+								}
+							} else if( selcorebtn.isSelected() ) {
+								Set<String> ss = new HashSet<>(specs);
+								ss.removeAll(gg.species.keySet());
+								if( ss.size() == 0 ) {
 									gg.setSelected(true);
 								}
 							} else {

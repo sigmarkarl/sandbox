@@ -61,10 +61,17 @@ public class ANITools {
         //SwingUtilities.invokeLater(() -> ANITools.showAniMatrix(geneset, speclist, corr));
     }
 
-    public static double[] corr(List<String> speclist, Collection<GeneGroup> agg, boolean diff) {
+    public static class ANIResult {
+        int[] countarr;
+        double[] corrarr;
+    }
+
+    public static ANIResult corr(List<String> speclist, Collection<GeneGroup> agg, boolean diff) {
         Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
         Collection<GeneGroup> allgg = Collections.synchronizedCollection(agg);
 
+        ANIResult aniResult = new ANIResult();
+        int[] countarr = new int[speclist.size() * speclist.size()];
         double[] corrarr = new double[speclist.size() * speclist.size()];
         IntStream.range(0,speclist.size()).parallel().forEach(where -> {
             String spec1 = speclist.get(where);
@@ -76,6 +83,7 @@ public class ANITools {
                 if (where != wherex) {
                     int totalscore = 0;
                     int totaltscore = 1;
+                    int count = 0;
                     for (GeneGroup gg : allgg) {
                         Set<String> species = gg.getSpecies();
                         if ( species != null && species.contains(spec1) && species.contains(spec2)) {
@@ -91,6 +99,8 @@ public class ANITools {
                                     Sequence seq1 = tv1.getAlignedSequence();
                                     Sequence seq2 = tv2.getAlignedSequence();
                                     if (seq1 != null && seq2 != null) {
+                                        count++;
+
                                         int mest = 0;
                                         int tmest = 0;
 
@@ -169,21 +179,24 @@ public class ANITools {
                     }
                     double ani = (diff ? (double) (totaltscore - totalscore) : totalscore) / (double) totaltscore;
                     corrarr[where * speclist.size() + wherex] = ani;
+                    countarr[where * speclist.size() + wherex] = count;
                 }
                 wherex++;
             }
         });
         System.err.println("done");
-        return corrarr;
+        aniResult.countarr = countarr;
+        aniResult.corrarr = corrarr;
+        return aniResult;
     }
 
-    public static void showAniMatrix(GeneSet geneset, List<String> specList, double[] matrix) {
+    public static void showAniMatrix(GeneSet geneset, List<String> specList, ANIResult aniResult) {
         geneset.corrInd.clear();
         for( String spec : specList ) {
             geneset.corrInd.add( spec ); //geneset.nameFix( spec ) );
         }
 
-        final BufferedImage bi = geneset.showRelation( geneset.corrInd, matrix, false );
+        final BufferedImage bi = geneset.showRelation( geneset.corrInd, aniResult, false );
         JFrame f = new JFrame("TNI matrix");
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.setSize(500, 500);
@@ -263,13 +276,19 @@ public class ANITools {
         spark.close();
 
         double[] matrix = new double[ specList.size()*specList.size() ];
+        int[] cmatrix = new int[ specList.size()*specList.size() ];
+        ANIResult aniResult = new ANIResult();
+        aniResult.corrarr = matrix;
+        aniResult.countarr = cmatrix;
         res.stream().map(s -> s.split("/")).forEach(s -> {
             String spec1 = s[0];
             String spec2 = s[1];
             int y = specList.indexOf(spec1);
             int x = specList.indexOf(spec2);
             double avg = Double.parseDouble(s[2]);
+            int cnt = Integer.parseInt(s[3]);
             matrix[y*specList.size()+x] = avg;
+            cmatrix[y*specList.size()+x] = cnt;
         });
 
         geneset.corrInd.clear();
@@ -277,7 +296,7 @@ public class ANITools {
             geneset.corrInd.add( geneset.nameFix( spec ) );
         }
 
-        final BufferedImage bi = geneset.showRelation( geneset.corrInd, matrix, false );
+        final BufferedImage bi = geneset.showRelation( geneset.corrInd, aniResult, false );
         JFrame f = new JFrame("TNI matrix");
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.setSize(500, 500);
@@ -376,13 +395,19 @@ public class ANITools {
         }
 
         double[] matrix = new double[ specList.size()*specList.size() ];
+        int[] cmatrix = new int[ specList.size()*specList.size() ];
+        ANIResult aniResult = new ANIResult();
+        aniResult.corrarr = matrix;
+        aniResult.countarr = cmatrix;
         res.stream().map(s -> s.split("/")).forEach(s -> {
             String spec1 = s[0];
             String spec2 = s[1];
             int y = specList.indexOf(spec1);
             int x = specList.indexOf(spec2);
             double avg = Double.parseDouble(s[2]);
+            int cnt = Integer.parseInt(s[3]);
             matrix[y*specList.size()+x] = avg;
+            cmatrix[y*specList.size()+x] = cnt;
         });
 
                 /*for( String dbspec : species ) {
@@ -453,6 +478,6 @@ public class ANITools {
                     y++;
                 }*/
 
-        showAniMatrix(geneset, specList, matrix);
+        showAniMatrix(geneset, specList, aniResult);
     }
 }

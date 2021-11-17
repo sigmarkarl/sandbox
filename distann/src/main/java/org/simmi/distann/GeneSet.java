@@ -1402,6 +1402,11 @@ public class GeneSet implements GenomeSet {
 		Set<String>	d2 = new HashSet<>();
 		
 		double[] matrix = new double[ specset.size()*specset.size() ];
+		int[] cmatrix = new int[ specset.size()*specset.size() ];
+		ANITools.ANIResult aniResult = new ANITools.ANIResult();
+		aniResult.corrarr = matrix;
+		aniResult.countarr = cmatrix;
+
 		Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
 		int where = 0;
 		for (String spec1 : specset) {
@@ -1412,6 +1417,7 @@ public class GeneSet implements GenomeSet {
 				if( where != wherex ) {
 					int totalscore = 0;
 					int totaltscore = 1;
+					int count = 0;
 					for( GeneGroup gg : allgg ) {
 						if( /*gg.getSpecies().size() > 40 &&*/ gg.getSpecies().contains(spec1) && gg.getSpecies().contains(spec2) ) {
 							Teginfo ti1 = gg.species.get(spec1);
@@ -1428,6 +1434,8 @@ public class GeneSet implements GenomeSet {
 											Sequence seq1 = tv1.getAlignedSequence();
 											Sequence seq2 = tv2.getAlignedSequence();
 											if (seq1 != null && seq2 != null) {
+												count++;
+
 												int mest = 0;
 												int tmest = 0;
 												//bval = Math.max( GeneCompare.blosumVal(tv1.alignedsequence, tv2.alignedsequence, blosumap), bval );
@@ -1445,7 +1453,7 @@ public class GeneSet implements GenomeSet {
 														startcheck |= 2;
 													}
 
-													if (start == -1 && startcheck == 3) {
+													if (startcheck == 3) {
 														start = i;
 														break;
 													}
@@ -1459,7 +1467,7 @@ public class GeneSet implements GenomeSet {
 														stopcheck |= 2;
 													}
 
-													if (stop == -1 && stopcheck == 3) {
+													if (stopcheck == 3) {
 														stop = i + 1;
 														break;
 													}
@@ -1510,6 +1518,7 @@ public class GeneSet implements GenomeSet {
 					}
 					double ani = (double)totalscore/(double)totaltscore;
 					matrix[ where*specset.size()+wherex ] = 1.0-ani;
+					cmatrix[ where*specset.size()+wherex ] = count;
 				}
 				wherex++;
 			}
@@ -1523,17 +1532,14 @@ public class GeneSet implements GenomeSet {
 		}
 		Node n = tu.neighborJoin(matrix, corrInd, null, false, false);
 		
-		Comparator<Node>	comp = new Comparator<TreeUtil.Node>() {
-			@Override
-			public int compare(Node o1, Node o2) {
-				int c1 = o1.countLeaves();
-				int c2 = o2.countLeaves();
-				
-				if( c1 > c2 ) return 1;
-				else if( c1 == c2 ) return 0;
-				
-				return -1;
-			}
+		Comparator<Node>	comp = (o1, o2) -> {
+			int c1 = o1.countLeaves();
+			int c2 = o2.countLeaves();
+
+			if( c1 > c2 ) return 1;
+			else if( c1 == c2 ) return 0;
+
+			return -1;
 		};
 		tu.arrange( n, comp );
 		//corrInd.clear();
@@ -1541,7 +1547,7 @@ public class GeneSet implements GenomeSet {
 		System.err.println( "ordind " + ordInd );
 		System.err.println( "tree " + n );
 	
-		BufferedImage bi = showRelation( ordInd, matrix, true );
+		BufferedImage bi = showRelation( ordInd, aniResult, true );
 		
 		System.err.println( d1.size() + "  " + d2.size() );
 		if( d1.size() > d2.size() ) {
@@ -1555,7 +1561,7 @@ public class GeneSet implements GenomeSet {
 		return bi;
 	}
 	
-	public BufferedImage showRelation( Collection<String> specset, double[] matrix, boolean inverted ) {
+	public BufferedImage showRelation(Collection<String> specset, ANITools.ANIResult aniResult, boolean inverted ) {
 		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2 = (Graphics2D) bi.getGraphics();
 		int mstrw = 0;
@@ -1573,6 +1579,9 @@ public class GeneSet implements GenomeSet {
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		g2.setColor(Color.white);
 		g2.fillRect(0, 0, sss, sss);
+
+		double[] matrix = aniResult.corrarr;
+		int[] cmatrix = aniResult.countarr;
 		
 		int where = 0;
 		for (String spec1 : specset) {
@@ -1591,6 +1600,7 @@ public class GeneSet implements GenomeSet {
 				if( where != wherex ) {
 					int wx = corrInd.indexOf( spec2 );
 					double ani = inverted ? 1.0-matrix[ w*specset.size()+wx ] : matrix[ w*specset.size()+wx ];
+					int count = cmatrix[ w*specset.size()+wx ];
 					
 					//float cval = Math.min( 0.9f, Math.max( 0.0f,4.2f - (float)(4.2*ani) ) );
 					float cval = Math.min( 0.9f, Math.max( 0.0f, 1.2f - (float)(1.2*ani) ) );
@@ -1603,6 +1613,10 @@ public class GeneSet implements GenomeSet {
 					String str = String.format("%.1f%s", (float) (ani * 100.0), "%");
 					int nstrw = g2.getFontMetrics().stringWidth(str);
 					g2.drawString(str, mstrw + 42 + wherex * 72 - nstrw / 2, mstrw + 47 + where * 72 + 15);
+
+					str = String.format("%d", count);
+					nstrw = g2.getFontMetrics().stringWidth(str);
+					g2.drawString(str, mstrw + 42 + wherex * 72 - nstrw / 2, mstrw + 47 + where * 72 + 2);
 				}
 				wherex++;
 			}
