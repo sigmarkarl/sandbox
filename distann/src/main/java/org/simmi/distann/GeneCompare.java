@@ -1962,7 +1962,7 @@ public class GeneCompare {
 	
 	public void subDraw( Graphics2D g2, Map<String,Integer> offsetMap, Annotation tv, Annotation prev, GeneSetHead genesethead, String spec1, int count, Sequence ctg, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, GeneGroup gg, Sequence seq, int total, int ptotal ) {
 		GeneSet geneset = genesethead.geneset;
-		boolean rs = false;
+		boolean rs;
 		if( !genesethead.isGeneview() ) {
 			/*geneseg.allgenegroups[]
 			r = genesethead.table.convertRowIndexToView( ii );

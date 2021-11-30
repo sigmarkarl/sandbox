@@ -701,8 +701,14 @@ public class GeneSetHead {
 			scrollBarOne.valueProperty().bindBidirectional(scrollBarTwo.valueProperty());
 			results.selectionModelProperty().bindBidirectional(table.selectionModelProperty());
 
-			results.setOnMouseClicked(event -> sortedData.comparatorProperty().bind(results.comparatorProperty()));
-			table.setOnMouseClicked(event -> sortedData.comparatorProperty().bind(table.comparatorProperty()));
+			results.setOnMouseClicked(event -> {
+				var y = event.getY();
+				if (y<27) sortedData.comparatorProperty().bind(results.comparatorProperty());
+			});
+			table.setOnMouseClicked(event -> {
+				var y = event.getY();
+				if (y<27) sortedData.comparatorProperty().bind(table.comparatorProperty());
+			});
 
 			/*results.onMouseClickedProperty().addListener((observable, oldValue, newValue) -> {
 				sortedData.comparatorProperty().bind(results.comparatorProperty());
@@ -7539,6 +7545,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<GeneGroup, String> dbcan = new TableColumn("Dbcan");
 		dbcan.setCellValueFactory( new PropertyValueFactory<>("dbcan"));
 		table.getColumns().add( dbcan );
+
+		TableColumn<GeneGroup, String> phaster = new TableColumn("Phaster");
+		phaster.setCellValueFactory( new PropertyValueFactory<>("phaster"));
+		table.getColumns().add( phaster );
 
 		TableColumn<GeneGroup, String> symbcol = new TableColumn("Symbol");
 		symbcol.setCellValueFactory( new PropertyValueFactory<>("symbol"));

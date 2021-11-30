@@ -198,6 +198,26 @@ public class GeneSet implements GenomeSet {
 		}
 	}
 
+	public void addPhaster(String id, String phaster) {
+		if(refmap.containsKey(id)) {
+			Annotation a = refmap.get(id);
+			Gene gene = a.getGene();
+			if(gene!=null) {
+				addPhaster(gene, phaster);
+			}
+		}
+	}
+
+	public void addPhaster(Gene gene, String phaster) {
+		if(gene.phaster==null||gene.phaster.isEmpty()) gene.phaster = phaster;
+		else {
+			Set<String> phasters = new HashSet<>(Arrays.asList(gene.phaster.split(",")));
+			phasters.add(phaster);
+			var phasterset = phasters.toString();
+			gene.phaster = phasterset.substring(1,phasterset.length()-1);
+		}
+	}
+
 	public void addDbcan(String id, String cazy) {
 		if(refmap.containsKey(id)) {
 			Annotation a = refmap.get(id);
@@ -280,6 +300,71 @@ public class GeneSet implements GenomeSet {
 		if( hit != null && id != null ) {
 			cazymap.put( id, hit );
 			addCazy(id, hit + "("+evalue+")");
+		}
+	}
+
+	public void loadphastermap( Map<String,String> cazymap, Reader rd ) throws IOException {
+		BufferedReader br = new BufferedReader( rd );
+		String line = br.readLine();
+		String id = null;
+		String hit = null;
+		double evalue = 0.01;
+		while( line != null ) {
+			if( line.startsWith("Query:") || line.startsWith("Query=") ) {
+				if( hit != null && id != null ) {
+					cazymap.put( id, hit );
+					addPhaster(id, hit + "("+evalue+")");
+				}
+				String[] split = line.split("[\t ]+");
+
+				//int k = line.lastIndexOf('[');
+				id = split[1]; //line.substring( k+1, line.indexOf(']', k+1) ).trim()+"_"+split[1].trim();
+				line = br.readLine();
+				while( line.length() > 0 ) {
+					id += line;
+					line = br.readLine();
+				}
+
+				if( id.contains("..") ) {
+					line = br.readLine();
+					int k = line.indexOf('[');
+					if( k != -1 ) {
+						int u = line.indexOf(']',k+1);
+						String spec = line.substring(k+1,u);
+						id = spec+"_"+id;
+					} //else id =
+				}
+
+				hit = null;
+				evalue = 0.01;
+			} else if( hit != null && line.contains("Expect =") ) {
+				/*line = br.readLine();
+				line = br.readLine().trim();
+				if( line.startsWith("--") ) line = br.readLine().trim();
+				String[] split = line.split("[ ]+");*/
+				int i = line.indexOf("Expect =");
+				int end = line.indexOf(',',i+8);
+				if (end==-1) end = line.length();
+				String eval = line.substring(i+8,end).trim();
+				double e = Double.parseDouble(eval);
+				if( e < 0.01 && e < evalue) {
+					evalue = e;
+					//hit += "("+evalue+")";
+				} else {
+					hit = null;
+					evalue = 0.01;
+				}
+			} else if( hit == null && line.startsWith(">") ) {
+				hit = line.substring(line.lastIndexOf('|')+1,line.lastIndexOf('[')-1);
+				//hit = hit.split("\\|")[1];
+			}
+
+			line = br.readLine();
+		}
+
+		if( hit != null && id != null ) {
+			cazymap.put( id, hit );
+			addPhaster(id, hit + "("+evalue+")");
 		}
 	}
 	
@@ -903,6 +988,7 @@ public class GeneSet implements GenomeSet {
 
 				((Tegeval)tv).init(lname, contig, start, stop, dir);
 				tv.setName(prevline.substring(1));
+				tv.id = id;
 				//ac.setName( lname );
 				//tv.setAlignedSequence( ac );
 				aas.put(lname, tv);
@@ -7480,7 +7566,7 @@ public class GeneSet implements GenomeSet {
 
 	Map<String,String>						unresolvedmap = new HashMap<>();
 	Map<String,String>						namemap = new HashMap<>();
-
+	Map<String,String>						phastermap = new HashMap<>();
 	Map<String,String>						cazymap = new HashMap<>();
 	Map<String,String>						cazyaamap = new HashMap<>();
 	Map<String,String>						cazycemap = new HashMap<>();
@@ -7709,6 +7795,8 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) pfammap = loadcogmap( Files.newBufferedReader(nf), pfamidmap, true );
 		nf = zipfilesystem.getPath("/cazy");
 		if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
+		nf = zipfilesystem.getPath("/phaster");
+		if( Files.exists( nf ) ) loadphastermap( phastermap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/dbcan");
 		if( Files.exists( nf ) ) loaddbcan( cazymap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/cazyaa");
@@ -8855,6 +8943,7 @@ public class GeneSet implements GenomeSet {
 		
 		if( unresolvedmap != null ) unresolvedmap.clear();
 		if( cazymap != null ) cazymap.clear();
+		if( phastermap != null ) phastermap.clear();
 		if( namemap != null ) namemap.clear();
 		
 		if( contigmap!= null ) contigmap.clear();
