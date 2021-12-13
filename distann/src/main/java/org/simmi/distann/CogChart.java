@@ -1759,13 +1759,20 @@ public class CogChart {
     public void initBarChart( JFXPanel fxPanel, String[] names, double[] xdata, String xTitle, String yTitle, double start, double stop, double step, String title ) {
         XYChart.Series<String,Number> data = new XYChart.Series<>();
         //core.setName("Core: " + xdata[xdata.length-1] );
+        start = 1.0;
+        stop = 0.0;
         for( int i = 0; i < xdata.length; i++ ) {
             String name = names[i];
             double dval = xdata[i];
+            start = Math.min(dval,start);
+            stop = Math.max(dval,stop);
             XYChart.Data<String,Number> d = new XYChart.Data<>(name, dval);
             //Tooltip.install( d.getNode(), new Tooltip( names[i] ) );
             data.getData().add( d );
         }
+
+        start = start - (stop-start)*0.2;
+        stop = stop + (stop-start)*0.2;
 
         Scene scene = createBarChartScene( names, data, xTitle, yTitle, start, stop, step, title );
         if( fxPanel != null ) fxPanel.setScene(scene);

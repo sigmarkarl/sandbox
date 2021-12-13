@@ -404,7 +404,7 @@ public class Neighbour {
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, /*currentTe.getStart(), currentTe.getStart(),*/ 1 );
 				currentTe.getContig().injectBefore( currentTe, te );
 			}
 			c.repaint();
@@ -564,7 +564,7 @@ public class Neighbour {
 						}
 						if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
 						String genename = gene != null ? geneset.getGeneName(showNames, gene) : next.type;
-						
+						if (genename==null) genename = "unknown";
 						if( xoff+len > clip.x ) {
 							if( funcol.isSelected() ) {
 								g.setColor( Color.green );
@@ -603,7 +603,7 @@ public class Neighbour {
 								if( spec1 != null ) {													
 									//StringBuilder seq = next.seq;
 									Color rc = Color.black;
-									GeneGroup gg = next.getGene().getGeneGroup();
+									GeneGroup gg = next.getGene() != null ? next.getGene().getGeneGroup() : null;
 									List<Annotation> ltv = null;
 									if( gg != null ) {
 										ltv = gg.getTegevals( spec1 );
@@ -651,7 +651,7 @@ public class Neighbour {
 									if( rc != null ) g.setColor( rc );
 								}
 							} else if( precol.isSelected() ) {
-								Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
+								Map<GeneGroup,Integer>	shanmap = new HashMap<>();
 								shanmap.clear();
 								double res = 0.0;
 								
@@ -675,7 +675,7 @@ public class Neighbour {
 									total = tegevals.size();
 									for( Annotation tev : tegevals ) {
 										Annotation thenext = tev.getPrevious();
-										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+										GeneGroup c = thenext == null || thenext.getGene() != null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
 										shanmap.put( c, val+1 );
@@ -692,7 +692,7 @@ public class Neighbour {
 							} else if( gcskewcol.isSelected() ) {
 								g.setColor( next.getGCSkewColor() );
 							} else {
-								g.setColor( next.getGCColor() );
+								g.setColor( next.getGCColor(selectedGenesGroups.iterator().next()) );
 								/*if( next.getGCPerc() <= 0 ) {
 									Color rc = new Color( 1.0f, 1.0f, 1.0f );
 									g.setColor( rc );
@@ -904,7 +904,7 @@ public class Neighbour {
 						}
 						genename = (gene != null && genename.contains("hypothetical")) ? "hth-p" : genename;*/
 						String genename = gene != null ? geneset.getGeneName(showNames, prev.getGene()) : prev.type;
-						
+						if (genename==null) genename = "unknown";
 						if( clip.x+clip.width > xoff ) {
 							if( funcol.isSelected() ) {
 								g.setColor( Color.green );
@@ -940,7 +940,7 @@ public class Neighbour {
 								if( spec1 != null ) {													
 									//StringBuilder seq = next.seq;
 									Color rc = Color.black;
-									GeneGroup gg = prev.getGene().getGeneGroup();
+									GeneGroup gg = prev.getGene() != null ? prev.getGene().getGeneGroup() : null;
 									if( gg != null ) {
 										List<Annotation> ltv = gg.getTegevals( spec1 );
 										if( ltv != null && ltv.size() > 0 ) {
@@ -959,11 +959,11 @@ public class Neighbour {
 									if( rc != null ) g.setColor( rc );
 								}
 							} else if( precol.isSelected() ) {
-								Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>();
+								Map<GeneGroup,Integer>	shanmap = new HashMap<>();
 								shanmap.clear();
 								double res = 0.0;
 								
-								List<Annotation> tegevals = prev.getGene().getGeneGroup().getTegevals();
+								List<Annotation> tegevals = prev.getGene() != null ? prev.getGene().getGeneGroup().getTegevals() : Collections.emptyList();
 								int total = tegevals.size();
 								for( Annotation tev : tegevals ) {
 									Annotation thenext = tev.getNext();
@@ -983,7 +983,7 @@ public class Neighbour {
 									total = tegevals.size();
 									for( Annotation tev : tegevals ) {
 										Annotation thenext = tev.getPrevious();
-										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
+										GeneGroup c = thenext == null || thenext.getGene() == null ? null : thenext.getGene().getGeneGroup();
 										int val = 0;
 										if( shanmap.containsKey(c) ) val = shanmap.get(c);
 										shanmap.put( c, val+1 );
@@ -1001,7 +1001,7 @@ public class Neighbour {
 							} else if( gcskewcol.isSelected() ) {
 								g.setColor( prev.getGCSkewColor() );
 							} else {
-								g.setColor( prev.getGCColor() );
+								g.setColor( prev.getGCColor(selectedGenesGroups.iterator().next()) );
 								/*if( prev.getGCPerc() <= 0 ) {
 									Color rc = new Color( 1.0f, 1.0f, 1.0f );
 									g.setColor( rc );
@@ -1132,7 +1132,7 @@ public class Neighbour {
 				}
 			}*/
 			
-			List<Annotation>	hteglocal = new ArrayList<Annotation>( hteg );
+			List<Annotation>	hteglocal = new ArrayList<>(hteg);
 			int xoff =  3000;
 			while( xoff < 5500 ) {
 				int max = 0;
@@ -1267,7 +1267,7 @@ public class Neighbour {
 								} else if( gcskewcol.isSelected() ) {
 									g.setColor( next.getGCSkewColor() );
 								} else {
-									g.setColor( next.getGCColor() );
+									g.setColor( next.getGCColor(selectedGenesGroups.iterator().next()) );
 									/*if( next.getGCPerc() <= 0 ) {
 										Color rc = new Color( 1.0f, 1.0f, 1.0f );
 										g.setColor( rc );
@@ -1519,7 +1519,7 @@ public class Neighbour {
 							} else if( gcskewcol.isSelected() ) {
 								g.setColor( prev.getGCSkewColor() );
 							} else {
-								g.setColor( prev.getGCColor() );
+								g.setColor( prev.getGCColor(selectedGenesGroups.iterator().next()) );
 								/*if( prev.getGCPerc() <= 0 ) {
 									Color rc = new Color( 1.0f, 1.0f, 1.0f );
 									g.setColor( rc );
@@ -1820,12 +1820,7 @@ public class Neighbour {
 			abucol.setAction( a );
 			precol.setAction( a );
 			
-			names.addItemListener( new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent e) {
-					c.repaint();
-				}
-			});
+			names.addItemListener(e -> c.repaint());
 			
 			//commonname.setAction( a );
 			//noname.setAction( a );
@@ -2672,6 +2667,17 @@ public class Neighbour {
 					c.repaint();
 				}
 			});
+			popup.add(new AbstractAction("GC/AT") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int r = rowheader.getSelectedRow();
+					int i = rowheader.convertRowIndexToModel( r );
+					Annotation te = hteg.get( i );
+					Sequence 	cont = te.getContig();
+					cont.partof.parallelStream().peek(s -> s.setGC((s.getGC()+1)%4)).flatMap(s -> s.annset.stream()).forEach(a -> a.setGCSkew(-1.0));
+					c.repaint();
+				}
+			});
 			popup.add( new AbstractAction("Connect contig") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -2681,7 +2687,7 @@ public class Neighbour {
 					Sequence 	cont = te.getContig();
 					String		spec = cont.getSpec();
 					
-					final List<Sequence>	specont = new ArrayList<Sequence>();
+					final List<Sequence>	specont = new ArrayList<>();
 					for( String name : contigmap.keySet() ) {
 						Sequence c = contigmap.get( name );
 						if( c != cont && spec.equals( c.getSpec() ) ) specont.add( c );
@@ -2888,7 +2894,7 @@ public class Neighbour {
 					//String species = speclist.get( rowIndex );
 					Annotation te = hteg.get(rowIndex);
 					if( columnIndex == 0 ) {
-						return geneset.nameFix( te.getSpecies() );
+						return te.getSpecies(); //geneset.nameFix( te.getSpecies() );
 					}
 					else if( columnIndex == 1 ) return te.getContig().getName();
 					else if( columnIndex == 2 ) return te.getLength();

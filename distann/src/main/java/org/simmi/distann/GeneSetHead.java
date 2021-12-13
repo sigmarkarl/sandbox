@@ -170,9 +170,9 @@ public class GeneSetHead {
 		Font f20 = g2.getFont().deriveFont(16.0f);
 		Font f32 = g2.getFont().deriveFont(32.0f);
 		int total = 0;
-		int g = 0;
+		/*int g = 0;
 		int c = 0;
-		double gcstotal = 0.0;
+		double gcstotal = 0.0;*/
 		int count = 0;
 		Stroke basicStroke = new BasicStroke(40);
 		Stroke oStroke = g2.getStroke();
@@ -283,14 +283,14 @@ public class GeneSetHead {
 
 			g2.setFont( f20 );
 			for( int i = 0; i < ctg.length(); i+=500 ) {
-				for( int k = i; k < Math.min( ctg.length(), i+500 ); k++ ) {
+				/*for( int k = i; k < Math.min( ctg.length(), i+500 ); k++ ) {
 					char chr = ctg.charAt( k );
 					if( chr == 'g' || chr == 'G' ) {
 						g++;
 					} else if( chr == 'c' || chr == 'C' ) {
 						c++;
 					}
-				}
+				}*/
 				
 				int gcount = 0;
 				int ccount = 0;
@@ -310,7 +310,7 @@ public class GeneSetHead {
 				if( gcount > 0 || ccount > 0 ) {
 					double gcskew = (gcount-ccount)/(double)(gcount+ccount);
 					
-					gcstotal += gcskew;
+					//gcstotal += gcskew;
 
 					x1 = (int)(middle+(skewrad)*Math.cos( (i+total)*2.0*Math.PI/size ));
 					y1 = (int)(middle+(skewrad)*Math.sin( (i+total)*2.0*Math.PI/size ));
@@ -423,7 +423,7 @@ public class GeneSetHead {
 		selectionMap.clear();
 		selcomb.getItems().clear();
 		
-		System.err.println( json.toString() );
+		System.err.println(json);
 		JSONObject jsono = new JSONObject(json);
 		Iterator<String> keys = jsono.keys();
 		while (keys.hasNext()) {
