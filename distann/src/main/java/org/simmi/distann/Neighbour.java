@@ -122,7 +122,7 @@ public class Neighbour {
 	}
 	
 	public Annotation getSelectedTe( Point p, JTable rowheader, JRadioButton sequenceView, JRadioButton realView, List<Annotation> lte, int rowheight ) {
-		if( sequenceView.isSelected() || realView.isSelected() ) {			
+		if( sequenceView.isSelected() || realView.isSelected() ) {
 			for( int y = 0; y < rowheader.getRowCount(); y++ ) {
 				int r = rowheader.convertRowIndexToModel( y );
 				/*	String species = speclist.get( r );
@@ -156,7 +156,7 @@ public class Neighbour {
 						if( ncont.isChromosome() ) {
 							thenext = ncont.getFirst();
 						} else {
-						int k = ncont.partof.indexOf( next.getContig() );
+							int k = ncont.partof.indexOf( next.getContig() );
 							k = (k+1)%ncont.partof.size();
 							Sequence c = ncont.partof.get(k);
 							while( c.annset == null || c.annset.size() == 0 ) {
@@ -376,14 +376,14 @@ public class Neighbour {
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1, false );
 				currentTe.getContig().injectBefore( currentTe, te );
 			} else {
 				/*Tegeval next = currentTe.getNext();
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1, false );
 				currentTe.getContig().injectAfter( currentTe, te );
 			}
 			c.repaint();
@@ -397,14 +397,14 @@ public class Neighbour {
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				te.setPrevious( currentTe );
 				next.setPrevious( te );*/
-				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, 1, false );
 				currentTe.getContig().injectAfter( currentTe, te );
 			} else {
 				/*Tegeval previous = currentTe.getPrevious();
 				Tegeval te = new Tegeval( null, currentTe.getSpecies(), 0.0, null, currentTe.getContig(), null, 0, 0, 1 );
 				currentTe.setPrevious( te );
 				te.setPrevious( previous );*/
-				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, /*currentTe.getStart(), currentTe.getStart(),*/ 1 );
+				Tegeval te = new Tegeval( null, 0.0, null, currentTe.getContig(), 0, 0, /*currentTe.getStart(), currentTe.getStart(),*/ 1, false );
 				currentTe.getContig().injectBefore( currentTe, te );
 			}
 			c.repaint();
