@@ -24,16 +24,7 @@ import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
@@ -76,6 +67,11 @@ import org.simmi.javafasta.unsigned.JavaFasta;
 import javafx.scene.control.TableView;
 
 public class Neighbour {
+	static final int DIM_X = 10000;
+	static final int XOFF_START = DIM_X/2;
+	static final int MARGIN_X = 500;
+	static final int END_X = DIM_X-MARGIN_X;
+
 	public Neighbour( Set<GeneGroup> sgg ) {
 		selectedGenesGroups = sgg;
 		
@@ -109,8 +105,8 @@ public class Neighbour {
 		if (rh == 0) {
 			rh = rowheader.getRowCount() * rowheader.getRowHeight();
 		}
-		c.setPreferredSize( new Dimension(6000, rh) );
-		c.setSize(6000, rh);
+		c.setPreferredSize( new Dimension(DIM_X, rh) );
+		c.setSize(DIM_X, rh);
 		
 		int i = hteg.indexOf( currentTe );
 		if( i != -1 ) {
@@ -132,12 +128,12 @@ public class Neighbour {
 						Teginfo ti = selectedGene.species.get( species );
 						for( Tegeval te : ti.tset ) {*/
 				//for( Tegeval te : lte ) {
-				int xoff = 3000;
+				int xoff = XOFF_START;
 				
 				Annotation te = lte.get(r);
 				Annotation next = te;
 				//int k = 0;
-				while( next != null && xoff < 5500 ) {					
+				while( next != null && xoff < END_X ) {
 					double len = next.getProteinLength()*neighbourscale;											
 					Rectangle rect = new Rectangle(xoff, y * rowheight+2, (int)len, rowheight - 4);
 					
@@ -200,7 +196,7 @@ public class Neighbour {
 					}
 				}
 				
-				xoff = 3000;
+				xoff = XOFF_START;
 				//int k = 0;
 				while( prev != null && xoff > 5 ) {					
 					double len = prev.getProteinLength()*neighbourscale;
@@ -245,10 +241,10 @@ public class Neighbour {
 				//break;
 			}
 		} else {
-			List<Annotation>	hteglocal = new ArrayList<Annotation>( lte );
-			int xoff = 3000;
+			List<Annotation>	hteglocal = new ArrayList<>(lte);
+			int xoff = XOFF_START;
 			//int k = 0;
-			while( xoff < 5500 ) {
+			while( xoff < END_X ) {
 				int max = 0;
 				for( Annotation tes : hteglocal ) {
 					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
@@ -299,9 +295,9 @@ public class Neighbour {
 			for( Annotation te : lte ) {
 				hteglocal.add( te.getPrevious() );
 			}
-			xoff = 3000;	
+			xoff = XOFF_START;
 			//int k = 0;
-			while( xoff > 500 ) {
+			while( xoff > MARGIN_X ) {
 				int max = 0;
 				for( Annotation tes : hteglocal ) {
 					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
@@ -548,12 +544,12 @@ public class Neighbour {
 						for( Tegeval te : ti.tset ) {*/
 			//for( Tegeval te : hteg ) {
 				Annotation te = hteg.get(r);
-				int xoff = 3000;
+				int xoff = XOFF_START;
 				
 				if( clip.x+clip.width > xoff ) {
 					Annotation next = te;
 					//int k = 0;
-					while( next != null && xoff <= 5500 && clip.x+clip.width > xoff ) {
+					while( next != null && xoff <= END_X && clip.x+clip.width > xoff ) {
 						double len = next.getProteinLength()*neighbourscale;
 						Gene gene = next.getGene();
 						//if( gene != null ) {
@@ -825,7 +821,7 @@ public class Neighbour {
 					}
 				}
 				
-				xoff = 3000;
+				xoff = XOFF_START;
 				if( clip.x < xoff ) {
 					Annotation prev = te != null ? te.getPrevious() : null;
 
@@ -876,7 +872,7 @@ public class Neighbour {
 					}
 					
 					//int k = 0;
-					while( prev != null && xoff >= 500 && clip.x < xoff ) {
+					while( prev != null && xoff >= MARGIN_X && clip.x < xoff ) {
 						double len = prev.getProteinLength()*neighbourscale;
 						xoff -= len+bil;
 						Annotation theprev = prev.getPrevious();
@@ -1133,8 +1129,8 @@ public class Neighbour {
 			}*/
 			
 			List<Annotation>	hteglocal = new ArrayList<>(hteg);
-			int xoff =  3000;
-			while( xoff < 5500 ) {
+			int xoff =  XOFF_START;
+			while( xoff < END_X ) {
 				int max = 0;
 				for( Annotation tes : hteglocal ) {
 					//if( te != null && te.getProteinLength() > max ) max = (int)(te.getProteinLength()*neighbourscale);
@@ -1225,7 +1221,7 @@ public class Neighbour {
 										if( rc != null ) g.setColor( rc );
 									}
 								} else if( precol.isSelected() ) {
-									Map<GeneGroup,Integer>	shanmap = new HashMap<GeneGroup,Integer>(); 
+									Map<GeneGroup,Integer>	shanmap = new HashMap<>();
 									shanmap.clear();
 									double res = 0.0;
 									
@@ -1399,8 +1395,8 @@ public class Neighbour {
 				}
 			}*****************************/
 			
-			xoff =  3000;
-			while( xoff > 500 ) {
+			xoff =  XOFF_START;
+			while( xoff > MARGIN_X ) {
 				int max = 0;
 				for( Annotation te : hteglocal ) {
 					int val = 0;
@@ -1630,7 +1626,7 @@ public class Neighbour {
 	final JRadioButton	blocksView = new JRadioButton("Blocks");
 	final JRadioButton	realView = new JRadioButton("Real");
 	
-	public final JComboBox<String>			names = new JComboBox<String>();
+	public final JComboBox<String>			names = new JComboBox<>();
 	JComponent c;
 	double neighbourscale = 1.0;
 	private static Annotation currentTe = null;
@@ -2172,8 +2168,8 @@ public class Neighbour {
 						if (rh == 0) {
 							rh = rowheader.getRowCount() * rowheader.getRowHeight();
 						}
-						c.setPreferredSize( new Dimension(6000, rh) );
-						c.setSize(6000, rh);
+						c.setPreferredSize( new Dimension(DIM_X, rh) );
+						c.setSize(DIM_X, rh);
 						c.repaint();
 					}
 				}
@@ -2222,7 +2218,7 @@ public class Neighbour {
 							}
 						}
 					}
-					genesethead.showSelectedSequences(tset, false, names.getSelectedItem().toString() );
+					genesethead.showSelectedSequences(tset, false, Objects.requireNonNull(names.getSelectedItem()).toString() );
 				}
 			});
 			showselecteddnaseqs.setAction( new AbstractAction("Selected DNA sequences") {
@@ -2237,7 +2233,7 @@ public class Neighbour {
 							}
 						}
 					}
-					genesethead.showSelectedSequences(tset, true, names.getSelectedItem().toString() );
+					genesethead.showSelectedSequences(tset, true, Objects.requireNonNull(names.getSelectedItem()).toString() );
 				}
 			});
 			showflankingseqs.setAction( new AbstractAction("Show flanking sequences") {
@@ -2330,7 +2326,7 @@ public class Neighbour {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					Serifier serifier = new Serifier();
-					List<Sequence> lseq = new ArrayList<Sequence>();
+					List<Sequence> lseq = new ArrayList<>();
 					int[] rr = rowheader.getSelectedRows();
 					
 					int upph = -8000;
@@ -2780,7 +2776,7 @@ public class Neighbour {
 			popup.add( new AbstractAction("Delete") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					Set<Annotation>	ste = new HashSet<Annotation>();
+					Set<Annotation>	ste = new HashSet<>();
 					int[] rr = rowheader.getSelectedRows();
 					for( int r : rr ) {
 						int i = rowheader.convertRowIndexToModel( r );
@@ -2793,8 +2789,8 @@ public class Neighbour {
 					if (rh == 0) {
 						rh = rowheader.getRowCount() * rowheader.getRowHeight();
 					}
-					c.setPreferredSize( new Dimension(6000, rh) );
-					c.setSize(6000, rh);
+					c.setPreferredSize( new Dimension(DIM_X, rh) );
+					c.setSize(DIM_X, rh);
 					c.repaint();
 				}
 			});
@@ -2836,7 +2832,7 @@ public class Neighbour {
 				@Override
 				public void keyPressed(KeyEvent e) {
 					if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
-						Set<Annotation>	ste = new HashSet<Annotation>();
+						Set<Annotation>	ste = new HashSet<>();
 						int[] rr = rowheader.getSelectedRows();
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel( r );
@@ -2849,8 +2845,8 @@ public class Neighbour {
 						if (rh == 0) {
 							rh = rowheader.getRowCount() * rowheader.getRowHeight();
 						}
-						c.setPreferredSize( new Dimension(6000, rh) );
-						c.setSize(6000, rh);
+						c.setPreferredSize( new Dimension(DIM_X, rh) );
+						c.setSize(DIM_X, rh);
 						c.repaint();
 					}
 				}
@@ -2954,26 +2950,26 @@ public class Neighbour {
 						}
 						return selseq;
 					} else {
-						String ret = "";//makeCopyString();
+						StringBuilder ret = new StringBuilder();//makeCopyString();
 						for( int r = 0; r < rowheader.getRowCount(); r++ ) {
 							Object o = rowheader.getValueAt(r, 0);
 							if( o != null ) {
-								ret += o.toString();
+								ret.append(o.toString());
 							} else {
-								ret += "";
+								ret.append("");
 							}
 							for( int c = 1; c < rowheader.getColumnCount(); c++ ) {
 								o = rowheader.getValueAt(r, c);
 								if( o != null ) {
-									ret += "\t"+o.toString();
+									ret.append("\t").append(o);
 								} else {
-									ret += "\t";
+									ret.append("\t");
 								}
 							}
-							ret += "\n";
+							ret.append("\n");
 						}
 						//return arg0.getReaderForText( this );
-						return new ByteArrayInputStream( ret.getBytes( charset ) );
+						return new ByteArrayInputStream( ret.toString().getBytes( charset ) );
 					}
 					//return ret;
 				}
@@ -3040,9 +3036,7 @@ public class Neighbour {
 							
 							return true;
 						}
-					} catch (UnsupportedFlavorException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
+					} catch (UnsupportedFlavorException | IOException e) {
 						e.printStackTrace();
 					}
 					return false;
@@ -3055,7 +3049,7 @@ public class Neighbour {
 			splitpane.setRightComponent(scrollpane);
 
 			JComponent fillup = new JComponent() {};
-			fillup.setPreferredSize(new Dimension(6000, 20));
+			fillup.setPreferredSize(new Dimension(DIM_X, 20));
 			scrollpane.setColumnHeaderView(fillup);
 
 			// JComponent filldown = new JComponent() {};
@@ -3066,8 +3060,8 @@ public class Neighbour {
 			if (rh == 0) {
 				rh = rowheader.getRowCount() * rowheader.getRowHeight();
 			}
-			c.setPreferredSize(new Dimension(6000, rh));
-			c.setSize(6000, rh);
+			c.setPreferredSize(new Dimension(DIM_X, rh));
+			c.setSize(DIM_X, rh);
 		}
 		
 		/*JComponent panel = new JComponent() {};
